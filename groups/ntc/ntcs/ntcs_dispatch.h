@@ -1213,6 +1213,15 @@ struct Dispatch {
         const ntca::ReactorEvent&                   event,
         const bsl::shared_ptr<ntci::Strand>&        destination);
 
+    /// Announce to the specified 'socket' that the specified 'notifications'
+    /// have occured. If the specified 'destination' strand is null, execute
+    /// the announcement immediately. Otherwise, enqueue the announcement to
+    /// be executed on the 'destination' strand.
+    static void announceNotifications(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+        const ntsa::NotificationQueue&              notifications,
+        const bsl::shared_ptr<ntci::Strand>&        destination);
+
     // *** Proactor Socket ***
 
     /// Announce to the specified 'socket' the completion of the acceptance
@@ -1381,6 +1390,23 @@ void Dispatch::announceError(
             NTCCFG_BIND(&ntci::ReactorSocket::processSocketError,
                         socket,
                         event));
+    }
+}
+
+NTCCFG_INLINE
+void Dispatch::announceNotifications(
+    const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+    const ntsa::NotificationQueue&              notifications,
+    const bsl::shared_ptr<ntci::Strand>&        destination)
+{
+    if (NTCCFG_LIKELY(!destination)) {
+        socket->processNotifications(notifications);
+    }
+    else {
+        destination->execute(
+            NTCCFG_BIND(&ntci::ReactorSocket::processNotifications,
+                        socket,
+                        notifications));
     }
 }
 

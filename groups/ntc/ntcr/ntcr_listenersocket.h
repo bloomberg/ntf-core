@@ -113,6 +113,10 @@ class ListenerSocket : public ntci::ListenerSocket,
     void processSocketError(const ntca::ReactorEvent& event)
         BSLS_KEYWORD_OVERRIDE;
 
+    /// Process the specified 'notifications' of the socket.
+    void processNotifications(const ntsa::NotificationQueue& notifications)
+        BSLS_KEYWORD_OVERRIDE;
+
     /// Attempt to dequeue from the backlog after the accept rate limiter
     /// estimates more connections might be able to be accepted.
     void processAcceptRateTimer(const bsl::shared_ptr<ntci::Timer>& timer,

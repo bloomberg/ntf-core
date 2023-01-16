@@ -42,14 +42,11 @@ NTSCFG_TEST_CASE(1)
 
     so.makeTimestampIncomingData(true);
     NTSCFG_TEST_TRUE(so.isTimestampIncomingData());
-    NTSCFG_TEST_TRUE(so.isTimestampIncomingData());
 
     bool& val = so.timestampIncomingData();
     NTSCFG_TEST_TRUE(val);
     val = false;
-
-    NTSCFG_TEST_FALSE(
-        const_cast<const ntsa::SocketOption&>(so).timestampIncomingData());
+    NTSCFG_TEST_FALSE(so.timestampIncomingData());
 
     val = true;
     NTSCFG_TEST_TRUE(so.timestampIncomingData());
@@ -61,8 +58,34 @@ NTSCFG_TEST_CASE(1)
     NTSCFG_TEST_FALSE(so.isTimestampIncomingData());
 }
 
+NTSCFG_TEST_CASE(2)
+{
+    // Concern: test timestampOutgoingData option
+
+    ntsa::SocketOption so;
+    NTSCFG_TEST_FALSE(so.isTimestampOutgoingData());
+
+    so.makeTimestampOutgoingData(true);
+    NTSCFG_TEST_TRUE(so.isTimestampOutgoingData());
+
+    bool& val = so.timestampOutgoingData();
+    NTSCFG_TEST_TRUE(val);
+    val = false;
+    NTSCFG_TEST_FALSE(so.timestampOutgoingData());
+
+    val = true;
+    NTSCFG_TEST_TRUE(so.timestampOutgoingData());
+
+    so.makeTimestampOutgoingData();
+    NTSCFG_TEST_FALSE(so.timestampOutgoingData());
+
+    so.reset();
+    NTSCFG_TEST_FALSE(so.isTimestampOutgoingData());
+}
+
 NTSCFG_TEST_DRIVER
 {
     NTSCFG_TEST_REGISTER(1);
+    NTSCFG_TEST_REGISTER(2);
 }
 NTSCFG_TEST_DRIVER_END;

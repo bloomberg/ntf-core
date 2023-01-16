@@ -555,7 +555,7 @@ namespace ntci {
 /// callback function is invoked with an event context containing an error that
 /// indicates the operation was cancelled. The cancellation of a 'bind' or
 /// 'connect' operation results in the socket being automatically closed. A
-/// 'send' operation may only be succesfully cancelled if the entirety of its
+/// 'send' operation may only be successfully cancelled if the entirety of its
 /// data is queued in the write queue when its deadline is reached. In other
 /// words, once a portion of the data of a send operation is copied to the
 /// socket send buffer the entirety of the remaining data must also be copied

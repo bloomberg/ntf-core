@@ -67,6 +67,12 @@ void SocketConfig::setOption(const ntsa::SocketOption& option)
     else if (option.isInlineOutOfBandData()) {
         d_inlineOutOfBandData = option.inlineOutOfBandData();
     }
+    else if (option.isTimestampIncomingData()) {
+        d_timestampIncomingData = option.timestampIncomingData();
+    }
+    else if (option.isTimestampOutgoingData()) {
+        d_timestampOutgoingData = option.timestampOutgoingData();
+    }
 }
 
 void SocketConfig::getOption(ntsa::SocketOption*           option,
@@ -146,6 +152,16 @@ void SocketConfig::getOption(ntsa::SocketOption*           option,
             option->makeInlineOutOfBandData(d_inlineOutOfBandData.value());
         }
     }
+    else if (type == ntsa::SocketOptionType::e_RX_TIMESTAMPING) {
+        if (!d_timestampIncomingData.isNull()) {
+            option->makeTimestampIncomingData(d_timestampIncomingData.value());
+        }
+    }
+    else if (type == ntsa::SocketOptionType::e_TX_TIMESTAMPING) {
+        if (!d_timestampOutgoingData.isNull()) {
+            option->makeTimestampOutgoingData(d_timestampOutgoingData.value());
+        }
+    }
 }
 
 bool SocketConfig::equals(const SocketConfig& other) const
@@ -161,7 +177,9 @@ bool SocketConfig::equals(const SocketConfig& other) const
            d_debug == other.d_debug && d_linger == other.d_linger &&
            d_broadcast == other.d_broadcast &&
            d_bypassRouting == other.d_bypassRouting &&
-           d_inlineOutOfBandData == other.d_inlineOutOfBandData;
+           d_inlineOutOfBandData == other.d_inlineOutOfBandData &&
+           d_timestampIncomingData == other.d_timestampIncomingData &&
+           d_timestampOutgoingData == other.d_timestampOutgoingData;
 }
 
 bool SocketConfig::less(const SocketConfig& other) const
@@ -270,7 +288,23 @@ bool SocketConfig::less(const SocketConfig& other) const
         return false;
     }
 
-    return d_inlineOutOfBandData < other.d_inlineOutOfBandData;
+    if (d_inlineOutOfBandData < other.d_inlineOutOfBandData) {
+        return true;
+    }
+
+    if (d_inlineOutOfBandData > other.d_inlineOutOfBandData) {
+        return false;
+    }
+
+    if (d_timestampIncomingData < other.d_timestampIncomingData) {
+        return true;
+    }
+
+    if (d_timestampIncomingData > other.d_timestampIncomingData) {
+        return false;
+    }
+
+    return d_timestampOutgoingData < other.d_timestampOutgoingData;
 }
 
 bsl::ostream& SocketConfig::print(bsl::ostream& stream,
@@ -295,6 +329,8 @@ bsl::ostream& SocketConfig::print(bsl::ostream& stream,
     printer.printAttribute("d_broadcast", d_broadcast);
     printer.printAttribute("d_bypassRouting", d_bypassRouting);
     printer.printAttribute("d_inlineOutOfBandData", d_inlineOutOfBandData);
+    printer.printAttribute("d_timestampIncomingData", d_timestampIncomingData);
+    printer.printAttribute("d_timestampOutgoingData", d_timestampOutgoingData);
     printer.end();
     return stream;
 }

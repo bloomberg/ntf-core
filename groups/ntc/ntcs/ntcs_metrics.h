@@ -60,6 +60,10 @@ class Metrics : public ntci::Monitorable, public ntccfg::Shared<Metrics>
     ntci::Metric                   d_numConnectionsSynchronized;
     ntci::Metric                   d_numConnectionsUnsynchronizable;
     ntci::Metric                   d_numBytesAllocated;
+    ntci::Metric                   d_dataSchedDelay;
+    ntci::Metric                   d_dataSendDelay;
+    ntci::Metric                   d_dataAckDelay;
+    ntci::Metric                   d_dataRecvDelay;
     bsl::string                    d_prefix;
     bsl::string                    d_objectName;
     bsl::shared_ptr<ntcs::Metrics> d_parent_sp;
@@ -148,6 +152,18 @@ class Metrics : public ntci::Monitorable, public ntccfg::Shared<Metrics>
     /// Log an allocation of a blob buffer with the specified
     /// 'blobBufferCapacity'.
     void logBlobBufferAllocation(bsl::size_t blobBufferCapacity);
+
+    /// Log the gauge of the specified 'dataSchedDelay'.
+    void logDataSchedDelay(const bsls::TimeInterval& dataSchedDelay);
+
+    /// Log the gauge of the specified 'dataSendDelay'.
+    void logDataSendDelay(const bsls::TimeInterval& dataSendDelay);
+
+    /// Log the gauge of the specified 'dataAckDelay'.
+    void logDataAckDelay(const bsls::TimeInterval& dataAckDelay);
+
+    /// Log the gauge of the specified 'dataRcvDelay'.
+    void logDataRcvDelay(const bsls::TimeInterval& dataRcvDelay);
 
     /// Load into the specified 'result' the array of statistics from the
     /// specified 'snapshot' for this object based on the specified
@@ -376,6 +392,34 @@ MetricsGuard::~MetricsGuard()
         }                                                                     \
     } while (false)
 
+#define NTCS_METRICS_UPDATE_DATA_SCHED_DELAY(dataSchedDelay)                  \
+    do {                                                                      \
+        if (d_metrics_sp) {                                                   \
+            d_metrics_sp->logDataSchedDelay(dataSchedDelay);                  \
+        }                                                                     \
+    } while (false)
+
+#define NTCS_METRICS_UPDATE_DATA_SEND_DELAY(dataSendDelay)                    \
+    do {                                                                      \
+        if (d_metrics_sp) {                                                   \
+            d_metrics_sp->logDataSendDelay(dataSendDelay);                    \
+        }                                                                     \
+    } while (false)
+
+#define NTCS_METRICS_UPDATE_DATA_ACK_DELAY(dataAckDelay)                      \
+    do {                                                                      \
+        if (d_metrics_sp) {                                                   \
+            d_metrics_sp->logDataAckDelay(dataAckDelay);                      \
+        }                                                                     \
+    } while (false)
+
+#define NTCS_METRICS_UPDATE_DATA_RECV_DELAY(dataRecvDelay)                    \
+    do {                                                                      \
+        if (d_metrics_sp) {                                                   \
+            d_metrics_sp->logDataRcvDelay(dataRecvDelay);                     \
+        }                                                                     \
+    } while (false)
+
 #else
 
 #define NTCS_METRICS_UPDATE_ACCEPT_COMPLETE()
@@ -400,6 +444,11 @@ MetricsGuard::~MetricsGuard()
 #define NTCS_METRICS_UPDATE_READ_QUEUE_DELAY(readQueueDelay)
 
 #define NTCS_METRICS_UPDATE_BLOB_BUFFER_ALLOCATIONS(capacity)
+
+#define NTCS_METRICS_UPDATE_DATA_SCHED_DELAY(dataSchedDelay)
+#define NTCS_METRICS_UPDATE_DATA_SEND_DELAY(dataSendDelay)
+#define NTCS_METRICS_UPDATE_DATA_ACK_DELAY(dataAckDelay)
+#define NTCS_METRICS_UPDATE_DATA_RECV_DELAY(dataRecvDelay)
 
 #endif
 

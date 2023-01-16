@@ -86,8 +86,11 @@ struct SocketOptionType {
         /// Place out-of-band data into the normal incoming data stream.
         e_INLINE_OUT_OF_BAND_DATA = 14,
 
-        /// RX timestamping functionality (both SW and HW).
-        e_RX_TIMESTAMPING = 15
+        /// This option type allows to enable or disable receive timestamps.
+        e_RX_TIMESTAMPING = 15,
+
+        /// This option type allows to enable or disable transmit timestamps.
+        e_TX_TIMESTAMPING = 16
     };
 
     /// Return the string representation exactly matching the enumerator

@@ -175,6 +175,12 @@ namespace ntca {
 /// @li @b metrics:
 /// Collect metrics on socket behavior.
 ///
+/// @li @b timestampOutgoingData:
+/// The flag that indicates outgoing data should be timestamped.
+///
+/// @li @b timestampIncomingData:
+/// The flag that indicates incoming data should be timestamped.
+///
 /// @li @b loadBalancingOptions:
 /// The configurable parameters used select a
 ///   reactor or proactor that drives the I/O for the socket.
@@ -212,6 +218,8 @@ class StreamSocketOptions
     bdlb::NullableValue<bsl::size_t>    d_lingerTimeout;
     bdlb::NullableValue<bool>           d_keepHalfOpen;
     bdlb::NullableValue<bool>           d_metrics;
+    bdlb::NullableValue<bool>           d_timestampOutgoingData;
+    bdlb::NullableValue<bool>           d_timestampIncomingData;
     ntca::LoadBalancingOptions          d_loadBalancingOptions;
 
   public:
@@ -322,6 +330,12 @@ class StreamSocketOptions
     /// the specified 'value'.
     void setMetrics(bool value);
 
+    /// Set the flag that indicates outgoing data should be timestamped.
+    void setTimestampOutgoingData(bool value);
+
+    /// Return the flag that indicates incoming data should be timestamped.
+    void setTimestampIncomingData(bool value);
+
     /// Set the load balancing options to the specified 'value'.
     void setLoadBalancingOptions(const ntca::LoadBalancingOptions& value);
 
@@ -414,6 +428,12 @@ class StreamSocketOptions
 
     /// Return the flag indicating per-socket metrics should be collected.
     const bdlb::NullableValue<bool>& metrics() const;
+
+    /// Return the flag that indicates outgoing data should be timestamped.
+    const bdlb::NullableValue<bool>& timestampOutgoingData() const;
+
+    /// Return the flag that indicates incoming data should be timestamped.
+    const bdlb::NullableValue<bool>& timestampIncomingData() const;
 
     /// Return the load balancing options.
     const ntca::LoadBalancingOptions& loadBalancingOptions() const;

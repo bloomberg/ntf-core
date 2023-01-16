@@ -40,6 +40,7 @@ BSLS_IDENT("$Id: $")
 #include <ntcs_shutdowncontext.h>
 #include <ntcs_shutdownstate.h>
 #include <ntcscm_version.h>
+#include <ntcu_timestampcorrelator.h>
 #include <ntsa_endpoint.h>
 #include <ntsa_error.h>
 #include <ntsa_receivecontext.h>
@@ -103,7 +104,10 @@ class DatagramSocket : public ntci::DatagramSocket,
     bsl::shared_ptr<bdlbb::Blob>                 d_receiveBlob_sp;
     bsl::size_t                                  d_maxDatagramSize;
     const bool                                   d_oneShot;
+    bool                                         d_timestampOutgoingData;
     ntca::DatagramSocketOptions                  d_options;
+    ntcu::TimestampCorrelator                    d_timestampCorrelator;
+    bsl::uint32_t                                d_dgramTsIdCounter;
     bslma::Allocator*                            d_allocator_p;
 
   private:
@@ -121,6 +125,10 @@ class DatagramSocket : public ntci::DatagramSocket,
 
     /// Process an descriptor that has occurred on the socket.
     void processSocketError(const ntca::ReactorEvent& event)
+        BSLS_KEYWORD_OVERRIDE;
+
+    /// Process the specified 'notifications' of the socket.
+    void processNotifications(const ntsa::NotificationQueue& notifications)
         BSLS_KEYWORD_OVERRIDE;
 
     /// Attempt to copy from the write queue to the send buffer after the
@@ -333,6 +341,22 @@ class DatagramSocket : public ntci::DatagramSocket,
         const ntca::GetEndpointEvent&          getEndpointEvent,
         const ntca::ConnectOptions&            connectOptions,
         const ntci::ConnectCallback&           connectCallback);
+
+    /// Start timestamping outgoing data. Prepare buffers and request the OS to
+    /// enable transmit timestamps. Return no error in case of success,
+    /// return error otherwise.
+    ntsa::Error startTimestampOutgoingData();
+
+    /// Stop timestamping outgoing data. Return no error in case of success,
+    /// return error otherwise.
+    ntsa::Error stopTimestampOutgoingData();
+
+    /// Request the OS to enable transmit timestamps if the specified 'enable'
+    /// is true. Return true in case of success. Return false otherwise.
+    ntsa::Error privateTimestampOutgoingData(bool enable);
+
+    /// Process notification containing the specified 'timestamp'.
+    void processTimestampNotification(const ntsa::Timestamp& timestamp);
 
   public:
     /// Create a new, initially uninitilialized datagram socket. Optionally
@@ -924,6 +948,13 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// invoked on this object's strand unless an explicit strand is
     /// specified at the time the callback is created.
     void close(const ntci::CloseCallback& callback) BSLS_KEYWORD_OVERRIDE;
+
+    /// Request the implementation to start timestamping outgoing data if the
+    /// specified 'enable' flag is true. Otherwise, request the implementation
+    /// to stop timestamping outgoing data. Return true if operation was
+    /// successful (though it does not guarantee that transmit timestamps would
+    /// be generated). Otherwise return false.
+    ntsa::Error timestampOutgoingData(bool enable) BSLS_KEYWORD_OVERRIDE;
 
     /// Defer the execution of the specified 'functor'.
     void execute(const Functor& functor) BSLS_KEYWORD_OVERRIDE;

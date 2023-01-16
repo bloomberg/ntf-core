@@ -25,6 +25,7 @@ BSLS_IDENT("$Id: $")
 #include <ntsa_error.h>
 #include <ntsa_handle.h>
 #include <ntsa_message.h>
+#include <ntsa_notificationqueue.h>
 #include <ntsa_receivecontext.h>
 #include <ntsa_receiveoptions.h>
 #include <ntsa_sendcontext.h>
@@ -641,6 +642,13 @@ struct SocketUtil {
                                            ntsa::MutableMessage* messages,
                                            bsl::size_t           numMessages,
                                            ntsa::Handle          socket);
+
+    /// Read data from the specified 'socket' error queue. Then if the
+    /// specified 'notifications' is not null parse fetched data to extract
+    /// control messages into the specified 'notifications'. Return the error.
+    static ntsa::Error receiveNotifications(
+        ntsa::NotificationQueue* notifications,
+        ntsa::Handle             socket);
 
     /// Shutdown the socket in the specified 'direction'. Return the error.
     static ntsa::Error shutdown(ntsa::ShutdownType::Value direction,

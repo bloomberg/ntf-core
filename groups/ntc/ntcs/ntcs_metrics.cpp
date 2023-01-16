@@ -73,7 +73,12 @@ const ntci::MetricMetadata Metrics::STATISTICS[] = {
     NTCI_METRIC_METADATA_SUMMARY(connectionsSynchronized),
     NTCI_METRIC_METADATA_SUMMARY(connectionsUnsynchronizable),
 
-    NTCI_METRIC_METADATA_SUMMARY(bytesAllocated)};
+    NTCI_METRIC_METADATA_SUMMARY(bytesAllocated),
+
+    NTCI_METRIC_METADATA_SUMMARY(delayInDataScheduling),
+    NTCI_METRIC_METADATA_SUMMARY(delayInDataSending),
+    NTCI_METRIC_METADATA_SUMMARY(delayInDataAcknowledgement),
+    NTCI_METRIC_METADATA_SUMMARY(delayInDataReception)};
 
 Metrics::Metrics(const bslstl::StringRef& prefix,
                  const bslstl::StringRef& objectName,
@@ -97,6 +102,10 @@ Metrics::Metrics(const bslstl::StringRef& prefix,
 , d_numConnectionsSynchronized()
 , d_numConnectionsUnsynchronizable()
 , d_numBytesAllocated()
+, d_dataSchedDelay()
+, d_dataSendDelay()
+, d_dataAckDelay()
+, d_dataRecvDelay()
 , d_prefix(prefix, basicAllocator)
 , d_objectName(objectName, basicAllocator)
 , d_parent_sp()
@@ -127,6 +136,10 @@ Metrics::Metrics(const bslstl::StringRef&              prefix,
 , d_numConnectionsSynchronized()
 , d_numConnectionsUnsynchronizable()
 , d_numBytesAllocated()
+, d_dataSchedDelay()
+, d_dataSendDelay()
+, d_dataAckDelay()
+, d_dataRecvDelay()
 , d_prefix(basicAllocator)
 , d_objectName(basicAllocator)
 , d_parent_sp(parent)
@@ -303,6 +316,46 @@ void Metrics::logBlobBufferAllocation(bsl::size_t blobBufferCapacity)
     }
 }
 
+void Metrics::logDataSchedDelay(const bsls::TimeInterval& dataSchedDelay)
+{
+    d_dataSchedDelay.update(
+        static_cast<double>(dataSchedDelay.totalMicroseconds()));
+
+    if (d_parent_sp) {
+        d_parent_sp->logDataSchedDelay(dataSchedDelay);
+    }
+}
+
+void Metrics::logDataSendDelay(const bsls::TimeInterval& dataSendDelay)
+{
+    d_dataSendDelay.update(
+        static_cast<double>(dataSendDelay.totalMicroseconds()));
+
+    if (d_parent_sp) {
+        d_parent_sp->logDataSendDelay(dataSendDelay);
+    }
+}
+
+void Metrics::logDataAckDelay(const bsls::TimeInterval& dataAckDelay)
+{
+    d_dataAckDelay.update(
+        static_cast<double>(dataAckDelay.totalMicroseconds()));
+
+    if (d_parent_sp) {
+        d_parent_sp->logDataAckDelay(dataAckDelay);
+    }
+}
+
+void Metrics::logDataRcvDelay(const bsls::TimeInterval& dataRcvDelay)
+{
+    d_dataRecvDelay.update(
+        static_cast<double>(dataRcvDelay.totalMicroseconds()));
+
+    if (d_parent_sp) {
+        d_parent_sp->logDataRcvDelay(dataRcvDelay);
+    }
+}
+
 void Metrics::getStats(bdld::ManagedDatum* result)
 {
     bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
@@ -342,6 +395,11 @@ void Metrics::getStats(bdld::ManagedDatum* result)
     d_numConnectionsUnsynchronizable.collectSummary(&array, &index);
 
     d_numBytesAllocated.collectSummary(&array, &index);
+
+    d_dataSchedDelay.collectSummary(&array, &index);
+    d_dataSendDelay.collectSummary(&array, &index);
+    d_dataAckDelay.collectSummary(&array, &index);
+    d_dataRecvDelay.collectSummary(&array, &index);
 
     // TODO: Calculate and publish derivative metrics.
     // double avgBytesSentPerEvent = 0;

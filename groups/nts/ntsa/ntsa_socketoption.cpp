@@ -77,6 +77,10 @@ SocketOption::SocketOption(const SocketOption& other)
         new (d_inlineOutOfBandData.buffer()) bool(
             other.d_inlineOutOfBandData.object());
         break;
+    case ntsa::SocketOptionType::e_TX_TIMESTAMPING:
+        new (d_timestampOutgoingData.buffer()) bool(
+            other.d_timestampOutgoingData.object());
+        break;
     default:
         BSLS_ASSERT(d_type == ntsa::SocketOptionType::e_UNDEFINED);
     }
@@ -139,6 +143,10 @@ SocketOption& SocketOption::operator=(const SocketOption& other)
     case ntsa::SocketOptionType::e_INLINE_OUT_OF_BAND_DATA:
         new (d_inlineOutOfBandData.buffer()) bool(
             other.d_inlineOutOfBandData.object());
+        break;
+    case ntsa::SocketOptionType::e_TX_TIMESTAMPING:
+        new (d_timestampOutgoingData.buffer()) bool(
+            other.d_timestampOutgoingData.object());
         break;
     default:
         BSLS_ASSERT(d_type == ntsa::SocketOptionType::e_UNDEFINED);
@@ -567,6 +575,34 @@ bool& SocketOption::makeTimestampIncomingData(bool value)
     }
 
     return d_timestampIncomingData.object();
+}
+
+bool& SocketOption::makeTimestampOutgoingData()
+{
+    if (d_type == ntsa::SocketOptionType::e_TX_TIMESTAMPING) {
+        d_timestampOutgoingData.object() = false;
+    }
+    else {
+        this->reset();
+        new (d_timestampOutgoingData.buffer()) bool();
+        d_type = ntsa::SocketOptionType::e_TX_TIMESTAMPING;
+    }
+
+    return d_timestampOutgoingData.object();
+}
+
+bool& SocketOption::makeTimestampOutgoingData(bool value)
+{
+    if (d_type == ntsa::SocketOptionType::e_TX_TIMESTAMPING) {
+        d_timestampOutgoingData.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_timestampOutgoingData.buffer()) bool(value);
+        d_type = ntsa::SocketOptionType::e_TX_TIMESTAMPING;
+    }
+
+    return d_timestampOutgoingData.object();
 }
 
 bool SocketOption::equals(const SocketOption& other) const

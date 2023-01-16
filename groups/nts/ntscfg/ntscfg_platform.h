@@ -215,6 +215,10 @@ struct Platform {
     /// Return 0 on success or a non-zero value representing the system
     /// error otherwise.
     static int exit();
+
+    /// Return true if the version of the operating system running the current
+    /// process supports timestamping incoming and outgoing data, otherwise return false.
+    static bool supportsTimestamps();
 };
 
 /// @internal @brief

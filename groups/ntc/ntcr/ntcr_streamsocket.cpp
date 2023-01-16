@@ -36,6 +36,7 @@ BSLS_IDENT_RCSID(ntcr_streamsocket_cpp, "$Id$ $CSID$")
 #include <ntsa_error.h>
 #include <ntsf_system.h>
 #include <ntsi_streamsocket.h>
+#include <ntsu_socketoptionutil.h>
 #include <bdlbb_blob.h>
 #include <bdlbb_blobutil.h>
 #include <bdlf_bind.h>
@@ -210,6 +211,46 @@ BSLS_IDENT_RCSID(ntcr_streamsocket_cpp, "$Id$ $CSID$")
     NTCI_LOG_TRACE("Stream socket "                                           \
                    "is shutting down transmission")
 
+#define NTCR_STREAMSOCKET_TRACE_TIMESTAMPS 0
+
+#if NTCR_STREAMSOCKET_TRACE_TIMESTAMPS
+
+#define NTCR_STREAMSOCKET_LOG_TIMESTAMP_PROCESSING_ERROR()                    \
+    NTCI_LOG_ERROR("Stream socket: timestamp processing error")
+
+#define NTCR_STREAMSOCKET_LOG_FAILED_TO_CORRELATE_TIMESTAMP(timestamp)        \
+    NTCI_LOG_WARN(                                                            \
+        "Stream socket: failed to correlate timestamp: id %u, type %s",       \
+        timestamp.id(),                                                       \
+        ntsa::TimestampType::toString(timestamp.type()));
+
+#define NTCR_STREAMSOCKET_LOG_TRANSMIT_DELAY(delay, type)                     \
+    {                                                                         \
+        bsl::stringstream ss;                                                 \
+        delay.print(ss);                                                      \
+        NTCI_LOG_TRACE("Stream socket "                                       \
+                       "transmit delay from send() till %s is %s",            \
+                       ntsa::TimestampType::toString(type),                   \
+                       ss.str().c_str());                                     \
+    }
+
+#define NTCR_STREAMSOCKET_LOG_RECEIVE_DELAY(delay, type)                      \
+    {                                                                         \
+        bsl::stringstream ss;                                                 \
+        delay.print(ss);                                                      \
+        NTCI_LOG_TRACE("Stream socket "                                       \
+                       "receive delay measured by %s is %s",                  \
+                       type,                                                  \
+                       ss.str().c_str());                                     \
+    }
+
+#else
+#define NTCR_STREAMSOCKET_LOG_TIMESTAMP_PROCESSING_ERROR()
+#define NTCR_STREAMSOCKET_LOG_FAILED_TO_CORRELATE_TIMESTAMP(timestamp)
+#define NTCR_STREAMSOCKET_LOG_TRANSMIT_DELAY(delay, type)
+#define NTCR_STREAMSOCKET_LOG_RECEIVE_DELAY(delay, type)
+#endif
+
 namespace BloombergLP {
 namespace ntcr {
 
@@ -344,6 +385,23 @@ void StreamSocket::processSocketError(const ntca::ReactorEvent& event)
     }
     else {
         this->privateFail(self, event.error());
+    }
+}
+
+void StreamSocket::processNotifications(
+    const ntsa::NotificationQueue& notifications)
+{
+    const bsl::vector<ntsa::Notification>& nots =
+        notifications.notifications();
+    for (size_t i = 0; i < nots.size(); ++i) {
+        switch (nots[i].type()) {
+        case (ntsa::NotificationType::e_TIMESTAMP): {
+            if (d_timestampOutgoingData) {
+                processTimestampNotification(nots[i].timestamp());
+            }
+        } break;
+        default:;
+        }
     }
 }
 
@@ -910,6 +968,13 @@ ntsa::Error StreamSocket::privateSocketWritableConnection(
 
     d_openState.set(ntcs::OpenState::e_CONNECTED);
 
+    if (d_options.timestampOutgoingData().value_or(false)) {
+        ntsa::Error error = startTimestampOutgoingData();
+        if (error) {
+            NTCR_STREAMSOCKET_LOG_TIMESTAMP_PROCESSING_ERROR();
+        }
+    }
+
     ntci::ConnectCallback connectCallback = d_connectCallback;
     d_connectCallback.reset();
 
@@ -975,8 +1040,7 @@ ntsa::Error StreamSocket::privateSocketWritableIteration(
     {
         return this->privateSocketWritableIterationBatch(self);
     }
-    else
-    {
+    else {
         return this->privateSocketWritableIterationFront(self);
     }
 }
@@ -996,13 +1060,13 @@ ntsa::Error StreamSocket::privateSocketWritableIterationBatch(
 
     bsl::size_t numBytesRemaining = context.bytesSent();
 
-    typedef bsl::vector< bsl::shared_ptr<ntcq::SendCallbackQueueEntry> >
-    SendCallbackQueueEntryVector;
+    typedef bsl::vector<bsl::shared_ptr<ntcq::SendCallbackQueueEntry> >
+        SendCallbackQueueEntryVector;
 
     bdlma::LocalSequentialAllocator<1024> callbackEntryVectorAllocator;
 
     SendCallbackQueueEntryVector callbackEntryVector(
-                                              &callbackEntryVectorAllocator);
+        &callbackEntryVectorAllocator);
 
     while (true) {
         if (numBytesRemaining == 0) {
@@ -1042,13 +1106,13 @@ ntsa::Error StreamSocket::privateSocketWritableIterationBatch(
     NTCS_METRICS_UPDATE_WRITE_QUEUE_SIZE(d_sendQueue.size());
 
     if (!callbackEntryVector.empty()) {
-        for (SendCallbackQueueEntryVector::iterator
-                it  = callbackEntryVector.begin();
-                it != callbackEntryVector.end();
-              ++it)
+        for (SendCallbackQueueEntryVector::iterator it =
+                 callbackEntryVector.begin();
+             it != callbackEntryVector.end();
+             ++it)
         {
             const bsl::shared_ptr<ntcq::SendCallbackQueueEntry>&
-            callbackEntry = *it;
+                callbackEntry = *it;
 
             ntca::SendContext sendContext;
 
@@ -1076,15 +1140,14 @@ ntsa::Error StreamSocket::privateSocketWritableIterationBatch(
             event.setType(ntca::WriteQueueEventType::e_LOW_WATERMARK);
             event.setContext(d_sendQueue.context());
 
-            ntcs::Dispatch::announceWriteQueueLowWatermark(
-                d_session_sp,
-                self,
-                event,
-                d_sessionStrand_sp,
-                d_reactorStrand_sp,
-                self,
-                true,
-                &d_mutex);
+            ntcs::Dispatch::announceWriteQueueLowWatermark(d_session_sp,
+                                                           self,
+                                                           event,
+                                                           d_sessionStrand_sp,
+                                                           d_reactorStrand_sp,
+                                                           self,
+                                                           true,
+                                                           &d_mutex);
         }
     }
 
@@ -2256,7 +2319,20 @@ ntsa::Error StreamSocket::privateEnqueueSendBuffer(
     }
 #endif
 
+    const bsls::TimeInterval sendTime =
+        d_timestampOutgoingData ? this->currentTime() : bsls::TimeInterval();
     error = d_socket_sp->send(context, data, d_sendOptions);
+
+    d_totalBytesSent += context->bytesSent();
+
+    if (d_timestampOutgoingData) {
+        d_totalBytesSentTimestamped +=
+            static_cast<uint32_t>(context->bytesSent());
+        d_timestampCorrelator.saveTimestampBeforeSend(
+            sendTime,
+            d_totalBytesSentTimestamped - 1);
+    }
+
     if (NTCCFG_UNLIKELY(error)) {
         if (NTCCFG_LIKELY(error == ntsa::Error::e_WOULD_BLOCK)) {
             NTCR_STREAMSOCKET_LOG_SEND_BUFFER_OVERFLOW();
@@ -2330,7 +2406,20 @@ ntsa::Error StreamSocket::privateEnqueueSendBuffer(
     }
 #endif
 
+    const bsls::TimeInterval sendTime =
+        d_timestampOutgoingData ? this->currentTime() : bsls::TimeInterval();
     error = d_socket_sp->send(context, data, d_sendOptions);
+
+    d_totalBytesSent += context->bytesSent();
+
+    if (d_timestampOutgoingData) {
+        d_totalBytesSentTimestamped +=
+            static_cast<uint32_t>(context->bytesSent());
+        d_timestampCorrelator.saveTimestampBeforeSend(
+            sendTime,
+            d_totalBytesSentTimestamped - 1);
+    }
+
     if (NTCCFG_UNLIKELY(error)) {
         if (NTCCFG_LIKELY(error == ntsa::Error::e_WOULD_BLOCK)) {
             NTCR_STREAMSOCKET_LOG_SEND_BUFFER_OVERFLOW();
@@ -2536,6 +2625,25 @@ ntsa::Error StreamSocket::privateDequeueReceiveBufferRaw(
     }
 
     error = d_socket_sp->receive(context, data, d_receiveOptions);
+
+    if (d_receiveOptions.wantTimestamp()) {
+        if (context->hardwareTimestamp().has_value()) {
+            const bsls::TimeInterval delay =
+                this->currentTime() - context->hardwareTimestamp().value();
+            NTCS_METRICS_UPDATE_DATA_RECV_DELAY(delay);
+            NTCR_STREAMSOCKET_LOG_RECEIVE_DELAY(delay, "hardware");
+        }
+        else if (context->softwareTimestamp().has_value()) {
+            const bsls::TimeInterval delay =
+                this->currentTime() - context->softwareTimestamp().value();
+            NTCS_METRICS_UPDATE_DATA_RECV_DELAY(delay);
+            NTCR_STREAMSOCKET_LOG_RECEIVE_DELAY(delay, "software");
+        }
+        else {
+            NTCR_STREAMSOCKET_LOG_TIMESTAMP_PROCESSING_ERROR();
+        }
+    }
+
     if (NTCCFG_UNLIKELY(error)) {
         if (NTCCFG_LIKELY(error == ntsa::Error::e_WOULD_BLOCK)) {
             NTCR_STREAMSOCKET_LOG_RECEIVE_BUFFER_UNDERFLOW();
@@ -3238,6 +3346,13 @@ ntsa::Error StreamSocket::privateOpen(
 
         d_openState.set(ntcs::OpenState::e_CONNECTED);
 
+        if (d_options.timestampOutgoingData().value_or(false)) {
+            ntsa::Error error = startTimestampOutgoingData();
+            if (error) {
+                NTCR_STREAMSOCKET_LOG_TIMESTAMP_PROCESSING_ERROR();
+            }
+        }
+
         ntcs::Dispatch::announceEstablished(d_manager_sp,
                                             self,
                                             d_managerStrand_sp,
@@ -3679,6 +3794,93 @@ ntsa::Error StreamSocket::privateRetryConnectToEndpoint(
     return ntsa::Error();
 }
 
+ntsa::Error StreamSocket::privateTimestampOutgoingData(bool enable)
+{
+    ntsa::SocketOption option;
+    option.makeTimestampOutgoingData(enable);
+
+    ntsa::Error error = d_socket_sp->setOption(option);
+    return error;
+}
+
+ntsa::Error StreamSocket::startTimestampOutgoingData()
+{
+    ntsa::Error error;
+
+    if (d_timestampOutgoingData) {
+        return error;
+    }
+
+    ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
+    if (!reactorRef || !reactorRef->supportsNotifications()) {
+        error = ntsa::Error::e_NOT_IMPLEMENTED;
+        return error;
+    }
+
+    d_totalBytesSentTimestamped = 0;
+    d_timestampOutgoingData     = true;
+
+    error = privateTimestampOutgoingData(true);
+
+    if (error) {
+        d_timestampOutgoingData = false;
+    }
+
+    return error;
+}
+
+ntsa::Error StreamSocket::stopTimestampOutgoingData()
+{
+    ntsa::Error error;
+
+    NTCI_LOG_CONTEXT();
+
+    if (!d_timestampOutgoingData) {
+        return error;
+    }
+
+    error = privateTimestampOutgoingData(false);
+    if (error) {
+        NTCI_LOG_ERROR("Failed to stop timestamping of outgoing data.");
+    }
+
+    d_timestampOutgoingData = false;
+    d_timestampCorrelator.reset();
+
+    return error;
+}
+
+void StreamSocket::processTimestampNotification(
+    const ntsa::Timestamp& timestamp)
+{
+#if NTCR_STREAMSOCKET_TRACE_TIMESTAMPS
+    NTCI_LOG_CONTEXT();
+#endif
+
+    const bdlb::NullableValue<bsls::TimeInterval> delay =
+        d_timestampCorrelator.timestampReceived(timestamp);
+    if (delay.has_value()) {
+        NTCR_STREAMSOCKET_LOG_TRANSMIT_DELAY(delay, timestamp.type());
+
+        switch (timestamp.type()) {
+        case (ntsa::TimestampType::e_SCHEDULED): {
+            NTCS_METRICS_UPDATE_DATA_SCHED_DELAY(delay.value());
+        } break;
+        case (ntsa::TimestampType::e_SENT): {
+            NTCS_METRICS_UPDATE_DATA_SEND_DELAY(delay.value());
+        } break;
+        case (ntsa::TimestampType::e_ACKNOWLEDGED): {
+            NTCS_METRICS_UPDATE_DATA_ACK_DELAY(delay.value());
+        } break;
+        default:
+            NTCR_STREAMSOCKET_LOG_TIMESTAMP_PROCESSING_ERROR();
+        }
+    }
+    else {
+        NTCR_STREAMSOCKET_LOG_FAILED_TO_CORRELATE_TIMESTAMP(timestamp);
+    }
+}
+
 StreamSocket::StreamSocket(
     const ntca::StreamSocketOptions&          options,
     const bsl::shared_ptr<ntci::Resolver>&    resolver,
@@ -3723,6 +3925,7 @@ StreamSocket::StreamSocket(
 , d_sendRateTimer_sp()
 , d_sendGreedily(NTCCFG_DEFAULT_STREAM_SOCKET_WRITE_GREEDILY)
 , d_sendCount(0)
+, d_totalBytesSent(0)
 , d_sendData_sp()
 , d_receiveOptions()
 , d_receiveQueue(basicAllocator)
@@ -3746,7 +3949,11 @@ StreamSocket::StreamSocket(
 , d_upgradeTimer_sp()
 , d_upgradeInProgress(false)
 , d_oneShot(reactor->oneShot())
+, d_timestampOutgoingData(false)
 , d_options(options)
+, d_timestampCorrelator(ntsa::TransportMode::e_STREAM,
+                        bslma::Default::allocator(basicAllocator))
+, d_totalBytesSentTimestamped(0)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     if (reactor->maxThreads() > 1) {
@@ -3834,6 +4041,10 @@ StreamSocket::StreamSocket(
     }
     else {
         d_metrics_sp = metrics;
+    }
+
+    if (d_options.timestampIncomingData().value_or(false)) {
+        d_receiveOptions.showTimestamp();
     }
 }
 
@@ -6142,8 +6353,7 @@ bsl::size_t StreamSocket::writeQueueHighWatermark() const
 
 bsl::size_t StreamSocket::totalBytesSent() const
 {
-    // TODO
-    return 0;
+    return d_totalBytesSent;
 }
 
 bsl::size_t StreamSocket::totalBytesReceived() const
@@ -6167,6 +6377,22 @@ const bsl::shared_ptr<bdlbb::BlobBufferFactory>& StreamSocket::
     outgoingBlobBufferFactory() const
 {
     return d_outgoingBufferFactory_sp;
+}
+
+ntsa::Error StreamSocket::timestampOutgoingData(bool enable)
+{
+    ntsa::Error                    error;
+    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+
+    if (!d_timestampOutgoingData && enable) {
+        error = ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    }
+
+    if (d_timestampOutgoingData && !enable) {
+        error = stopTimestampOutgoingData();
+    }
+
+    return error;
 }
 
 }  // close package namespace

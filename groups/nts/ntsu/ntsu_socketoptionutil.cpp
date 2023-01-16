@@ -18,7 +18,9 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntsu_socketoptionutil_cpp, "$Id$ $CSID$")
 
+#include <ntscfg_platform.h>
 #include <ntsu_adapterutil.h>
+#include <ntsu_timestamputil.h>
 
 #include <bsls_assert.h>
 #include <bsls_log.h>
@@ -44,10 +46,6 @@ BSLS_IDENT_RCSID(ntsu_socketoptionutil_cpp, "$Id$ $CSID$")
 #include <unistd.h>
 #if defined(BSLS_PLATFORM_OS_SOLARIS)
 #include <sys/filio.h>
-#endif
-#if defined(BSLS_PLATFORM_OS_LINUX)
-#include <linux/net_tstamp.h>
-#include <linux/version.h>
 #endif
 #endif
 
@@ -81,10 +79,6 @@ BSLS_IDENT_RCSID(ntsu_socketoptionutil_cpp, "$Id$ $CSID$")
 #undef interface
 #endif
 #pragma comment(lib, "ws2_32")
-#endif
-
-#if defined(BSLS_PLATFORM_OS_LINUX)
-#define TIMESTAMPING_SUPPORTED
 #endif
 
 namespace BloombergLP {
@@ -153,6 +147,11 @@ ntsa::Error SocketOptionUtil::setOption(ntsa::Handle              socket,
         return SocketOptionUtil::setTimestampIncomingData(
             socket,
             option.timestampIncomingData());
+    }
+    else if (option.isTimestampOutgoingData()) {
+        return SocketOptionUtil::setTimestampOutgoingData(
+            socket,
+            option.timestampOutgoingData());
     }
     else {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -430,35 +429,36 @@ ntsa::Error SocketOptionUtil::setTimestampIncomingData(
     NTSCFG_WARNING_UNUSED(socket);
     NTSCFG_WARNING_UNUSED(timestampIncomingData);
 
-#if defined(TIMESTAMPING_SUPPORTED)
-    int       domain    = 0;
-    socklen_t domainlen = sizeof(domain);
-    int rc = getsockopt(socket, SOL_SOCKET, SO_DOMAIN, &domain, &domainlen);
-    if (rc != 0) {
-        return ntsa::Error(errno);
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
+    bool        isLocalSock = false;
+    ntsa::Error error       = isLocal(&isLocalSock, socket);
+    if (error) {
+        return error;
     }
 
-    const bool useSoTimestampingItf = (domain != AF_UNIX);
-    const int  optname =
-        useSoTimestampingItf ? SO_TIMESTAMPING : SO_TIMESTAMPNS;
+    const int optname = (isLocalSock == false)
+                            ? TimestampUtil::e_SO_TIMESTAMPING
+                            : TimestampUtil::e_SO_TIMESTAMPNS;
 
     int optionValue = 0;
     if (timestampIncomingData) {
-        if (useSoTimestampingItf) {
-            optionValue =
-                SOF_TIMESTAMPING_RX_HARDWARE | SOF_TIMESTAMPING_RX_SOFTWARE |
-                SOF_TIMESTAMPING_RAW_HARDWARE | SOF_TIMESTAMPING_SOFTWARE;
+        if (isLocalSock == false) {
+            optionValue = TimestampUtil::e_SOF_TIMESTAMPING_RX_HARDWARE |
+                          TimestampUtil::e_SOF_TIMESTAMPING_RX_SOFTWARE |
+                          TimestampUtil::e_SOF_TIMESTAMPING_RAW_HARDWARE |
+                          TimestampUtil::e_SOF_TIMESTAMPING_SOFTWARE;
         }
         else {
             optionValue = 1;
         }
     }
 
-    rc = setsockopt(socket,
-                    SOL_SOCKET,
-                    optname,
-                    &optionValue,
-                    sizeof(optionValue));
+    int rc = setsockopt(socket,
+                        SOL_SOCKET,
+                        optname,
+                        &optionValue,
+                        sizeof(optionValue));
 
     if (rc != 0) {
         return ntsa::Error(errno);
@@ -615,6 +615,70 @@ ntsa::Error SocketOptionUtil::setInlineOutOfBandData(ntsa::Handle socket,
     }
 
     return ntsa::Error();
+}
+
+ntsa::Error SocketOptionUtil::setTimestampOutgoingData(ntsa::Handle socket,
+                                                       bool timestampFlag)
+{
+    NTSCFG_WARNING_UNUSED(socket);
+    NTSCFG_WARNING_UNUSED(timestampFlag);
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
+    if (!ntscfg::Platform::supportsTimestamps()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    {  // Unix domain sockets do not support TX timestamping
+        bool        isLocalSock = false;
+        ntsa::Error error       = isLocal(&isLocalSock, socket);
+        if (error) {
+            return error;
+        }
+        if (isLocalSock) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    bool isStreamSock = false;
+    {
+        ntsa::Error error = isStream(&isStreamSock, socket);
+        if (error) {
+            return error;
+        }
+    }
+
+    int optVal = 0;
+
+    if (timestampFlag) {
+        optVal =
+            // timestamp generation
+            TimestampUtil::e_SOF_TIMESTAMPING_TX_SOFTWARE |
+            TimestampUtil::e_SOF_TIMESTAMPING_TX_SCHED |
+            (isStreamSock ? TimestampUtil::e_SOF_TIMESTAMPING_TX_ACK : 0) |
+
+            // timestamp reporting
+            TimestampUtil::e_SOF_TIMESTAMPING_SOFTWARE |
+
+            // timestamp options
+            TimestampUtil::e_SOF_TIMESTAMPING_OPT_ID |
+            TimestampUtil::e_SOF_TIMESTAMPING_OPT_TSONLY;
+    }
+
+    int rc = setsockopt(socket,
+                        SOL_SOCKET,
+                        SO_TIMESTAMPING,
+                        &optVal,
+                        sizeof(optVal));
+
+    if (rc != 0) {
+        return ntsa::Error(errno);
+    }
+
+    return ntsa::Error();
+#else
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+#endif
 }
 
 ntsa::Error SocketOptionUtil::getKeepAlive(bool*        keepAlive,
@@ -920,22 +984,22 @@ ntsa::Error SocketOptionUtil::getTimestampIncomingData(bool* timestampFlag,
     NTSCFG_WARNING_UNUSED(timestampFlag);
     NTSCFG_WARNING_UNUSED(socket);
 
-#if defined(TIMESTAMPING_SUPPORTED)
-    int       domain    = 0;
-    socklen_t domainlen = sizeof(domain);
-    int rc = getsockopt(socket, SOL_SOCKET, SO_DOMAIN, &domain, &domainlen);
-    if (rc != 0) {
-        return ntsa::Error(errno);
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
+    bool        isLocalSock = false;
+    ntsa::Error error       = isLocal(&isLocalSock, socket);
+    if (error) {
+        return error;
     }
 
-    const bool useSoTimestampingItf = (domain != AF_UNIX);
-    const int  optname =
-        useSoTimestampingItf ? SO_TIMESTAMPING : SO_TIMESTAMPNS;
+    const int optname = (isLocalSock == false)
+                            ? TimestampUtil::e_SO_TIMESTAMPING
+                            : TimestampUtil::e_SO_TIMESTAMPNS;
 
     int       optionValue = 0;
     socklen_t len         = static_cast<socklen_t>(sizeof(optionValue));
 
-    rc = getsockopt(socket, SOL_SOCKET, optname, &optionValue, &len);
+    int rc = getsockopt(socket, SOL_SOCKET, optname, &optionValue, &len);
 
     if (rc != 0) {
         return ntsa::Error(errno);
@@ -1415,6 +1479,43 @@ ntsa::Error SocketOptionUtil::isDatagram(bool* result, ntsa::Handle socket)
 
     *result = optionValue == SOCK_DGRAM;
     return ntsa::Error();
+}
+
+ntsa::Error SocketOptionUtil::isLocal(bool* result, ntsa::Handle socket)
+{
+#if defined(BSLS_PLATFORM_OS_AIX)
+
+    sockaddr  sa;
+    socklen_t len = sizeof(sa);
+    memset(&sa, 0, len);
+
+    int rc = getsockname(socket, &sa, &len);
+
+    if (rc != 0) {
+        return ntsa::Error(errno);
+    }
+
+    *result = (sa.sa_family == AF_UNIX);
+    return ntsa::Error();
+
+#else
+
+    int       optionValue;
+    socklen_t optionSize = sizeof(optionValue);
+
+    int rc = getsockopt(socket,
+                        SOL_SOCKET,
+                        SO_DOMAIN,
+                        reinterpret_cast<char*>(&optionValue),
+                        &optionSize);
+
+    if (rc != 0) {
+        return ntsa::Error(errno);
+    }
+
+    *result = (optionValue == AF_UNIX);
+    return ntsa::Error();
+#endif
 }
 
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)

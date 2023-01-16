@@ -128,6 +128,16 @@ BSLS_IDENT_RCSID(ntcd_machine_cpp, "$Id$ $CSID$")
             << (error).text() << NTCI_LOG_STREAM_END;                         \
     } while (false)
 
+#define NTCD_SESSION_LOG_UPDATE_ENABLE_NOTIFICATIONS_FAILED(machine,          \
+                                                            session,          \
+                                                            error)            \
+    do {                                                                      \
+        NTCI_LOG_STREAM_DEBUG                                                 \
+            << "Machine '" << (machine)->name() << "' session " << (session)  \
+            << " failed to enable notifications: " << (error).text()          \
+            << NTCI_LOG_STREAM_END;                                           \
+    } while (false)
+
 #define NTCD_SESSION_LOG_UPDATE_DISABLE_FAILED(machine,                       \
                                                session,                       \
                                                eventType,                     \
@@ -138,6 +148,16 @@ BSLS_IDENT_RCSID(ntcd_machine_cpp, "$Id$ $CSID$")
             << " failed to disable event "                                    \
             << ntca::ReactorEventType::toString(eventType) << ": "            \
             << (error).text() << NTCI_LOG_STREAM_END;                         \
+    } while (false)
+
+#define NTCD_SESSION_LOG_UPDATE_DISABLE_NOTIFICATIONS_FAILED(machine,         \
+                                                             session,         \
+                                                             error)           \
+    do {                                                                      \
+        NTCI_LOG_STREAM_DEBUG                                                 \
+            << "Machine '" << (machine)->name() << "' session " << (session)  \
+            << " failed to disable event: " << (error).text()                 \
+            << NTCI_LOG_STREAM_END;                                           \
     } while (false)
 
 #define NTCD_MACHINE_LOG_STEP_STARTING()                                      \
@@ -182,6 +202,14 @@ BSLS_IDENT_RCSID(ntcd_machine_cpp, "$Id$ $CSID$")
                               << NTCI_LOG_STREAM_END;                         \
     } while (false)
 
+#define NTCD_MONITOR_LOG_SHOW_NOTIFICATIONS(machine, monitor, session)        \
+    do {                                                                      \
+        NTCI_LOG_STREAM_DEBUG                                                 \
+            << "Machine '" << (machine)->name() << "' monitor " << (monitor)  \
+            << " session " << (session) << " is interested in notifications"  \
+            << NTCI_LOG_STREAM_END;                                           \
+    } while (false)
+
 #define NTCD_MONITOR_LOG_HIDE_READABLE(machine, monitor, session)             \
     do {                                                                      \
         NTCI_LOG_STREAM_DEBUG                                                 \
@@ -206,6 +234,14 @@ BSLS_IDENT_RCSID(ntcd_machine_cpp, "$Id$ $CSID$")
                               << NTCI_LOG_STREAM_END;                         \
     } while (false)
 
+#define NTCD_MONITOR_LOG_HIDE_NOTIFICATIONS(machine, monitor, session)        \
+    do {                                                                      \
+        NTCI_LOG_STREAM_DEBUG                                                 \
+            << "Machine '" << (machine)->name() << "' monitor " << (monitor)  \
+            << " session " << (session)                                       \
+            << " is not interested in notifications" << NTCI_LOG_STREAM_END;  \
+    } while (false)
+
 #define NTCD_MONITOR_LOG_ENABLE_READABLE(machine, monitor, session)           \
     do {                                                                      \
         NTCI_LOG_STREAM_DEBUG << "Machine '" << (machine)->name()             \
@@ -227,6 +263,14 @@ BSLS_IDENT_RCSID(ntcd_machine_cpp, "$Id$ $CSID$")
         NTCI_LOG_STREAM_DEBUG << "Machine '" << (machine)->name()             \
                               << "' monitor " << (monitor) << " session "     \
                               << (session) << " has failed"                   \
+                              << NTCI_LOG_STREAM_END;                         \
+    } while (false)
+
+#define NTCD_MONITOR_LOG_ENABLE_NOTIFICATIONS(machine, monitor, session)      \
+    do {                                                                      \
+        NTCI_LOG_STREAM_DEBUG << "Machine '" << (machine)->name()             \
+                              << "' monitor " << (monitor) << " session "     \
+                              << (session) << " has notifications"            \
                               << NTCI_LOG_STREAM_END;                         \
     } while (false)
 
@@ -345,6 +389,33 @@ bsls::SpinLock       s_defaultMachineLock  = BSLS_SPINLOCK_UNLOCKED;
 ntcd::Machine*       s_defaultMachine_p    = 0;
 bslma::SharedPtrRep* s_defaultMachineRep_p = 0;
 
+/// For the specified 'packet' generate and set id based on the specified
+/// 'tsKey' and generate ntsa::Timestamp with type e_SCHEDULED, then put it
+/// into the specified 'errorQueue'. Use the specified 'idIncrement' to
+/// modify the specified 'tsKey'.
+void generateTransmitTimestampScheduled(
+    ntcd::Packet*                                   packet,
+    bsl::uint32_t*                                  tsKey,
+    bsl::shared_ptr<bsl::list<ntsa::Notification> > errorQueue,
+    bsl::uint32_t                                   idIncrement)
+{
+    *tsKey                       += idIncrement;
+    const bsl::uint32_t packetId = *tsKey - 1;
+    packet->setId(packetId);
+    ntsa::Notification n;
+    ntsa::Timestamp&   t = n.makeTimestamp();
+    t.setType(ntsa::TimestampType::e_SCHEDULED);
+    t.setTime(bdlt::CurrentTime::now());
+    t.setId(packetId);
+    errorQueue->push_back(n);
+}
+
+/// For the specified 'packet' set current time as a timestamp.
+void generateReceiveTimestamp(ntcd::Packet* packet)
+{
+    packet->setRxTimestamp(bdlt::CurrentTime::now());
+}
+
 }  // close unnamed namespace
 
 int PacketType::fromInt(PacketType::Value* result, int number)
@@ -440,6 +511,7 @@ Packet::Packet(bdlbb::BlobBufferFactory* blobBufferFactory,
 , d_sourceSession_wp()
 , d_remoteSession_wp()
 , d_data(blobBufferFactory, basicAllocator)
+, d_rxTimestamp()
 , d_blobBufferFactory_p(blobBufferFactory)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -486,6 +558,18 @@ void Packet::setData(const bdlbb::Blob& data)
     BSLS_ASSERT_OPT(data.length() > 0);
 
     d_data = data;
+}
+
+void Packet::setRxTimestamp(const bsls::TimeInterval& timestamp)
+{
+    BSLS_ASSERT(d_rxTimestamp.isNull());
+    d_rxTimestamp = timestamp;
+}
+
+void Packet::setId(bsl::uint32_t id)
+{
+    BSLS_ASSERT(d_id.isNull());
+    d_id = id;
 }
 
 ntsa::Error Packet::enqueueData(ntsa::SendContext*       context,
@@ -895,6 +979,16 @@ const bdlbb::Blob& Packet::data() const
     return d_data;
 }
 
+const bdlb::NullableValue<bsls::TimeInterval>& Packet::rxTimestamp() const
+{
+    return d_rxTimestamp;
+}
+
+const bdlb::NullableValue<bsl::uint32_t>& Packet::id() const
+{
+    return d_id;
+}
+
 bsl::size_t Packet::length() const
 {
     return d_data.length();
@@ -1035,9 +1129,10 @@ ntsa::Error PacketQueue::setHighWatermark(bsl::size_t highWatermark)
     return ntsa::Error();
 }
 
-ntsa::Error PacketQueue::enqueue(bslmt::Mutex*                        mutex,
-                                 const bsl::shared_ptr<ntcd::Packet>& packet,
-                                 bool                                 block)
+ntsa::Error PacketQueue::enqueue(bslmt::Mutex*                  mutex,
+                                 bsl::shared_ptr<ntcd::Packet>& packet,
+                                 bool                           block,
+                                 PacketFunctor                  packetFunctor)
 {
     while (true) {
         if (block) {
@@ -1060,6 +1155,9 @@ ntsa::Error PacketQueue::enqueue(bslmt::Mutex*                        mutex,
             bsl::size_t newWatermark = oldWatermark + packet->cost();
 
             d_storage.push_back(packet);
+            if (packetFunctor) {
+                packetFunctor(packet.get());
+            }
             d_currentWatermark = newWatermark;
 
             if (oldWatermark < d_lowWatermark &&
@@ -1654,21 +1752,24 @@ void Session::reset()
     d_sessionQueue_sp.reset();
     d_outgoingPacketQueue_sp.reset();
     d_incomingPacketQueue_sp.reset();
+    d_socketErrorQueue_sp.reset();
 
-    d_blocking       = true;
-    d_listening      = false;
-    d_accepted       = false;
-    d_connected      = false;
-    d_readable       = false;
-    d_readableActive = false;
-    d_readableBytes  = 0;
-    d_writable       = false;
-    d_writableActive = false;
-    d_writableBytes  = 0;
-    d_error          = false;
-    d_errorActive    = false;
-    d_errorCode      = 0;
-    d_backlog        = 0;
+    d_blocking         = true;
+    d_listening        = false;
+    d_accepted         = false;
+    d_connected        = false;
+    d_readable         = false;
+    d_readableActive   = false;
+    d_readableBytes    = 0;
+    d_writable         = false;
+    d_writableActive   = false;
+    d_writableBytes    = 0;
+    d_error            = false;
+    d_errorActive      = false;
+    d_errorCode        = 0;
+    d_hasNotifications = false;
+    d_backlog          = 0;
+    d_tsKey            = 0;
 
     d_socketOptions.reset();
 
@@ -1700,6 +1801,8 @@ void Session::reset()
     d_socketOptions.setBroadcast(k_DEFAULT_BROADCAST);
     d_socketOptions.setBypassRouting(k_DEFAULT_BYPASS_ROUTING);
     d_socketOptions.setInlineOutOfBandData(k_DEFAULT_INLINE_OUT_OF_BAND_DATA);
+
+    d_feedbackQueue.removeAll();
 }
 
 void Session::update()
@@ -1795,6 +1898,40 @@ void Session::update()
                 }
             }
             d_writableActive = false;
+        }
+    }
+
+    const bool hasNotifications = this->privateHasNotification();
+    if (hasNotifications) {
+        d_hasNotifications = true;
+
+        if (!d_notificationsActive) {
+            if (d_monitor_sp) {
+                error = d_monitor_sp->enableNotifications(d_handle, self);
+                if (error) {
+                    NTCD_SESSION_LOG_UPDATE_ENABLE_NOTIFICATIONS_FAILED(
+                        d_machine_sp,
+                        this,
+                        error);
+                }
+            }
+            d_notificationsActive = true;
+        }
+    }
+    else {
+        d_hasNotifications = false;
+
+        if (d_notificationsActive) {
+            if (d_monitor_sp) {
+                error = d_monitor_sp->disableNotifications(d_handle, self);
+                if (error) {
+                    NTCD_SESSION_LOG_UPDATE_DISABLE_NOTIFICATIONS_FAILED(
+                        d_machine_sp,
+                        this,
+                        error);
+                }
+            }
+            d_notificationsActive = false;
         }
     }
 
@@ -1972,6 +2109,22 @@ bool Session::privateHasError() const
     }
 }
 
+bool Session::privateHasNotification() const
+{
+    if (d_handle == ntsa::k_INVALID_HANDLE) {
+        return false;
+    }
+
+    BSLS_ASSERT(d_socketErrorQueue_sp);
+
+    if (!d_socketErrorQueue_sp->empty()) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
 Session::Session(const bsl::shared_ptr<ntcd::Machine>& machine,
                  bslma::Allocator*                     basicAllocator)
 : d_mutex()
@@ -1986,6 +2139,8 @@ Session::Session(const bsl::shared_ptr<ntcd::Machine>& machine,
 , d_sessionQueue_sp()
 , d_outgoingPacketQueue_sp()
 , d_incomingPacketQueue_sp()
+, d_socketErrorQueue_sp()
+, d_tsKey(0)
 , d_blocking(true)
 , d_listening(false)
 , d_accepted(false)
@@ -1999,7 +2154,10 @@ Session::Session(const bsl::shared_ptr<ntcd::Machine>& machine,
 , d_error(false)
 , d_errorActive(false)
 , d_errorCode(0)
+, d_hasNotifications(false)
+, d_notificationsActive(false)
 , d_backlog(0)
+, d_feedbackQueue(bslma::Default::allocator(basicAllocator))
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     this->reset();
@@ -2035,6 +2193,7 @@ ntsa::Error Session::open(ntsa::Transport::Value transport)
 
     d_outgoingPacketQueue_sp.createInplace(d_allocator_p, d_allocator_p);
     d_incomingPacketQueue_sp.createInplace(d_allocator_p, d_allocator_p);
+    d_socketErrorQueue_sp.createInplace(d_allocator_p, d_allocator_p);
 
     d_outgoingPacketQueue_sp->setHighWatermark(
         d_socketOptions.sendBufferSize().value());
@@ -2408,6 +2567,9 @@ ntsa::Error Session::connect(const ntsa::Endpoint& endpoint)
         serverSession->d_incomingPacketQueue_sp.createInplace(d_allocator_p,
                                                               d_allocator_p);
 
+        serverSession->d_socketErrorQueue_sp.createInplace(d_allocator_p,
+                                                           d_allocator_p);
+
         serverSession->d_outgoingPacketQueue_sp->setHighWatermark(
             serverSession->d_socketOptions.sendBufferSize().value());
 
@@ -2546,8 +2708,19 @@ ntsa::Error Session::send(ntsa::SendContext*       context,
             return error;
         }
 
-        error =
-            d_outgoingPacketQueue_sp->enqueue(&d_mutex, packet, d_blocking);
+        ntcd::PacketQueue::PacketFunctor functor;
+        if (d_socketOptions.timestampOutgoingData().value_or(false)) {
+            functor = NTCCFG_BIND(&generateTransmitTimestampScheduled,
+                                  NTCCFG_BIND_PLACEHOLDER_1,
+                                  &d_tsKey,
+                                  d_socketErrorQueue_sp,
+                                  1);
+        }
+
+        error = d_outgoingPacketQueue_sp->enqueue(&d_mutex,
+                                                  packet,
+                                                  d_blocking,
+                                                  functor);
         if (error) {
             NTCD_SESSION_LOG_OUTGOING_PACKET_QUEUE_ENQUEUE_ERROR(d_machine_sp,
                                                                  this,
@@ -2596,9 +2769,19 @@ ntsa::Error Session::send(ntsa::SendContext*       context,
                 return error;
             }
 
+            ntcd::PacketQueue::PacketFunctor functor;
+            if (d_socketOptions.timestampOutgoingData().value_or(false)) {
+                functor = NTCCFG_BIND(&generateTransmitTimestampScheduled,
+                                      NTCCFG_BIND_PLACEHOLDER_1,
+                                      &d_tsKey,
+                                      d_socketErrorQueue_sp,
+                                      perPacketContext.bytesSent());
+            }
+
             error = d_outgoingPacketQueue_sp->enqueue(&d_mutex,
                                                       packet,
-                                                      d_blocking);
+                                                      d_blocking,
+                                                      functor);
             if (error) {
                 NTCD_SESSION_LOG_OUTGOING_PACKET_QUEUE_ENQUEUE_ERROR(
                     d_machine_sp,
@@ -2753,8 +2936,19 @@ ntsa::Error Session::send(ntsa::SendContext*       context,
             return error;
         }
 
-        error =
-            d_outgoingPacketQueue_sp->enqueue(&d_mutex, packet, d_blocking);
+        ntcd::PacketQueue::PacketFunctor functor;
+        if (d_socketOptions.timestampOutgoingData().value_or(false)) {
+            functor = NTCCFG_BIND(&generateTransmitTimestampScheduled,
+                                  NTCCFG_BIND_PLACEHOLDER_1,
+                                  &d_tsKey,
+                                  d_socketErrorQueue_sp,
+                                  1);
+        }
+
+        error = d_outgoingPacketQueue_sp->enqueue(&d_mutex,
+                                                  packet,
+                                                  d_blocking,
+                                                  functor);
         if (error) {
             NTCD_SESSION_LOG_OUTGOING_PACKET_QUEUE_ENQUEUE_ERROR(d_machine_sp,
                                                                  this,
@@ -2801,9 +2995,19 @@ ntsa::Error Session::send(ntsa::SendContext*       context,
                 return error;
             }
 
+            ntcd::PacketQueue::PacketFunctor functor;
+            if (d_socketOptions.timestampOutgoingData().value_or(false)) {
+                functor = NTCCFG_BIND(&generateTransmitTimestampScheduled,
+                                      NTCCFG_BIND_PLACEHOLDER_1,
+                                      &d_tsKey,
+                                      d_socketErrorQueue_sp,
+                                      perPacketContext.bytesSent());
+            }
+
             error = d_outgoingPacketQueue_sp->enqueue(&d_mutex,
                                                       packet,
-                                                      d_blocking);
+                                                      d_blocking,
+                                                      functor);
             if (error) {
                 NTCD_SESSION_LOG_OUTGOING_PACKET_QUEUE_ENQUEUE_ERROR(
                     d_machine_sp,
@@ -2905,6 +3109,10 @@ ntsa::Error Session::receive(ntsa::ReceiveContext*       context,
 
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
+
+        if (options.wantTimestamp() && packet->rxTimestamp().has_value()) {
+            context->setSoftwareTimestamp(packet->rxTimestamp().value());
+        }
     }
     else if (transportMode == ntsa::TransportMode::e_STREAM) {
         bsl::shared_ptr<ntcd::Packet> packet;
@@ -2923,6 +3131,19 @@ ntsa::Error Session::receive(ntsa::ReceiveContext*       context,
             if (!d_remoteEndpoint.isUndefined()) {
                 if (packet->sourceEndpoint() != d_remoteEndpoint) {
                     continue;
+                }
+            }
+
+            // Sending back ACK timestamp
+            {
+                bsl::shared_ptr<ntcd::Session> sourceSession =
+                    packet->sourceSession().lock();
+                if (sourceSession) {
+                    ntsa::Timestamp t;
+                    t.setType(ntsa::TimestampType::e_ACKNOWLEDGED);
+                    t.setTime(bdlt::CurrentTime::now());
+                    t.setId(packet->id().value());
+                    sourceSession->d_feedbackQueue.pushBack(t);
                 }
             }
 
@@ -2954,6 +3175,9 @@ ntsa::Error Session::receive(ntsa::ReceiveContext*       context,
                 packet);
 
             return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+        if (options.wantTimestamp() && packet->rxTimestamp().has_value()) {
+            context->setSoftwareTimestamp(packet->rxTimestamp().value());
         }
     }
     else {
@@ -3025,6 +3249,9 @@ ntsa::Error Session::receive(ntsa::ReceiveContext*       context,
 
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
+        if (options.wantTimestamp() && packet->rxTimestamp().has_value()) {
+            context->setSoftwareTimestamp(packet->rxTimestamp().value());
+        }
     }
     else if (transportMode == ntsa::TransportMode::e_STREAM) {
         bsl::shared_ptr<ntcd::Packet> packet;
@@ -3032,6 +3259,7 @@ ntsa::Error Session::receive(ntsa::ReceiveContext*       context,
             error = d_incomingPacketQueue_sp->dequeue(&d_mutex,
                                                       &packet,
                                                       d_blocking);
+
             if (error) {
                 return error;
             }
@@ -3043,6 +3271,19 @@ ntsa::Error Session::receive(ntsa::ReceiveContext*       context,
             if (!d_remoteEndpoint.isUndefined()) {
                 if (packet->sourceEndpoint() != d_remoteEndpoint) {
                     continue;
+                }
+            }
+
+            // Sending back ACK timestamp
+            {
+                bsl::shared_ptr<ntcd::Session> sourceSession =
+                    packet->sourceSession().lock();
+                if (sourceSession) {
+                    ntsa::Timestamp t;
+                    t.setType(ntsa::TimestampType::e_ACKNOWLEDGED);
+                    t.setTime(bdlt::CurrentTime::now());
+                    t.setId(packet->id().value());
+                    sourceSession->d_feedbackQueue.pushBack(t);
                 }
             }
 
@@ -3075,10 +3316,35 @@ ntsa::Error Session::receive(ntsa::ReceiveContext*       context,
 
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
+        if (options.wantTimestamp() && packet->rxTimestamp().has_value()) {
+            context->setSoftwareTimestamp(packet->rxTimestamp().value());
+        }
     }
     else {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
+
+    return ntsa::Error();
+}
+
+ntsa::Error Session::receiveNotifications(
+    ntsa::NotificationQueue* notifications)
+{
+    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+
+    UpdateGuard update(this);
+
+    if (notifications) {
+        for (SocketErrorQueue::const_iterator it =
+                 d_socketErrorQueue_sp->begin();
+             it != d_socketErrorQueue_sp->cend();
+             ++it)
+        {
+            notifications->addNotification(*it);
+        }
+    }
+
+    d_socketErrorQueue_sp->clear();
 
     return ntsa::Error();
 }
@@ -3213,9 +3479,10 @@ ntsa::Error Session::registerMonitor(
         }
     }
     else {
-        d_readableActive = false;
-        d_writableActive = false;
-        d_errorActive    = false;
+        d_readableActive      = false;
+        d_writableActive      = false;
+        d_errorActive         = false;
+        d_notificationsActive = false;
 
         d_monitor_sp = monitor;
 
@@ -3287,6 +3554,17 @@ ntsa::Error Session::step(bool block)
             break;
         }
 
+        if (d_socketOptions.timestampOutgoingData().value_or(false) &&
+            packet->id().has_value())
+        {
+            ntsa::Notification n;
+            ntsa::Timestamp&   t = n.makeTimestamp();
+            t.setType(ntsa::TimestampType::e_SENT);
+            t.setTime(bdlt::CurrentTime::now());
+            t.setId(packet->id().value());
+            d_socketErrorQueue_sp->push_back(n);
+        }
+
         NTCD_SESSION_LOG_TRANSFERRING_PACKET(d_machine_sp, this, packet);
 
         bsl::weak_ptr<ntcd::Session> remoteSession_wp =
@@ -3332,10 +3610,16 @@ ntsa::Error Session::step(bool block)
             continue;
         }
 
-        error = remoteSession->d_incomingPacketQueue_sp->enqueue(
-            &remoteSession->d_mutex,
-            packet,
-            block);
+        ntcd::PacketQueue::PacketFunctor functor;
+        if (remoteSession->d_socketOptions.timestampIncomingData().value_or(
+                false))
+        {
+            functor = NTCCFG_BIND(&generateReceiveTimestamp,
+                                  NTCCFG_BIND_PLACEHOLDER_1);
+        }
+
+        error = remoteSession->d_incomingPacketQueue_sp
+                    ->enqueue(&remoteSession->d_mutex, packet, block, functor);
         if (error) {
             NTCD_SESSION_LOG_TRANSFERRING_PACKET_FAILED(d_machine_sp,
                                                         this,
@@ -3360,6 +3644,15 @@ ntsa::Error Session::step(bool block)
 
     if (!packetsToRetransmit.empty()) {
         d_outgoingPacketQueue_sp->retry(packetsToRetransmit);
+    }
+
+    if (d_socketOptions.timestampOutgoingData().value_or(false)) {
+        ntsa::Timestamp ts;
+        while (d_feedbackQueue.tryPopFront(&ts) == 0) {
+            ntsa::Notification n;
+            n.makeTimestamp(ts);
+            d_socketErrorQueue_sp->push_back(n);
+        }
     }
 
     NTCD_SESSION_LOG_STEP_COMPLETE(d_machine_sp, this);
@@ -3499,6 +3792,9 @@ ntsa::Error Session::setOption(const ntsa::SocketOption& option)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
+    const bool prevTsState =
+        d_socketOptions.timestampOutgoingData().value_or(false);
+
     d_socketOptions.setOption(option);
 
     if (option.isSendBufferSize()) {
@@ -3512,6 +3808,18 @@ ntsa::Error Session::setOption(const ntsa::SocketOption& option)
             d_incomingPacketQueue_sp->setHighWatermark(
                 d_socketOptions.receiveBufferSize().value());
         }
+    }
+
+    if ((prevTsState == false &&
+         d_socketOptions.timestampOutgoingData().value_or(
+             false)) ||  //TS was enabled
+        (prevTsState == true &&
+         !d_socketOptions.timestampOutgoingData().value_or(
+             true)))  // TS was disabled
+    {
+        // (future note) Do not clean the error queue as it can contain not
+        // only timestamps
+        d_tsKey = 0;
     }
 
     return ntsa::Error();
@@ -3572,6 +3880,11 @@ bool Session::hasError() const
     return static_cast<int>(d_errorCode.load()) != 0;
 }
 
+bool Session::hasNotification() const
+{
+    return d_hasNotifications;
+}
+
 /// The struct describes an entry recording a session, the user's
 /// interest in events, and the readiness of events.
 class Monitor::Entry
@@ -3587,6 +3900,8 @@ class Monitor::Entry
     bool                             d_haveWritable;
     bool                             d_wantError;
     bool                             d_haveError;
+    bool                             d_wantNotification;
+    bool                             d_haveNotification;
     ntsa::Error                      d_error;
     Monitor::EntryQueue::iterator    d_iterator;
 
@@ -3614,6 +3929,8 @@ Monitor::Entry::Entry(Monitor::EntryQueue::iterator iterator)
 , d_haveWritable(false)
 , d_wantError(true)
 , d_haveError(false)
+, d_wantNotification(true)
+, d_haveNotification(false)
 , d_error()
 , d_iterator(iterator)
 {
@@ -3660,6 +3977,9 @@ bsl::size_t Monitor::process(bsl::vector<ntca::ReactorEvent>* result)
                 entry->d_wantWritable && entry->d_haveWritable;
 
             const bool matchError = entry->d_wantError && entry->d_haveError;
+
+            const bool matchNotification =
+                entry->d_wantNotification && entry->d_haveNotification;
 
 // MRM
 #if 0
@@ -3759,6 +4079,20 @@ bsl::size_t Monitor::process(bsl::vector<ntca::ReactorEvent>* result)
                 active = true;
                 ++numEvents;
             }
+            if (matchNotification) {
+                ntca::ReactorEvent reactorEvent;
+                reactorEvent.setType(ntca::ReactorEventType::e_ERROR);
+                reactorEvent.setHandle(handle);
+
+                NTCD_MONITOR_LOG_EVENT(d_machine_sp,
+                                       this,
+                                       session.get(),
+                                       reactorEvent);
+
+                result->push_back(reactorEvent);
+                active = true;
+                ++numEvents;
+            }
 
             if (active) {
                 entriesToPrioritize.push_back(it);
@@ -3822,8 +4156,10 @@ void Monitor::insertQueueEntry(const bsl::shared_ptr<Entry>& entry)
     const bool matchReadable = entry->d_wantReadable && entry->d_haveReadable;
     const bool matchWritable = entry->d_wantWritable && entry->d_haveWritable;
     const bool matchError    = entry->d_wantError && entry->d_haveError;
+    const bool matchNotification =
+        entry->d_wantNotification && entry->d_haveNotification;
 
-    if (matchReadable || matchWritable || matchError) {
+    if (matchReadable || matchWritable || matchError || matchNotification) {
         bool wasEmpty     = d_queue.empty();
         entry->d_iterator = d_queue.insert(d_queue.end(), entry);
         if (wasEmpty) {
@@ -3844,8 +4180,11 @@ void Monitor::removeQueueEntry(const bsl::shared_ptr<Entry>& entry)
     const bool matchReadable = entry->d_wantReadable && entry->d_haveReadable;
     const bool matchWritable = entry->d_wantWritable && entry->d_haveWritable;
     const bool matchError    = entry->d_wantError && entry->d_haveError;
+    const bool matchNotification =
+        entry->d_wantNotification && entry->d_haveNotification;
 
-    if (!matchReadable && !matchWritable && !matchError) {
+    if (!matchReadable && !matchWritable && !matchError && !matchNotification)
+    {
         d_queue.erase(entry->d_iterator);
         entry->d_iterator = d_queue.end();
         if (d_queue.empty()) {
@@ -4012,9 +4351,10 @@ ntsa::Error Monitor::update(ntsa::Handle handle, ntcs::Interest interest)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    const bool isReadable = session->isReadable();
-    const bool isWritable = session->isWritable();
-    const bool hasError   = session->hasError();
+    const bool isReadable      = session->isReadable();
+    const bool isWritable      = session->isWritable();
+    const bool hasError        = session->hasError();
+    const bool hasNotification = session->hasNotification();
 
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
@@ -4111,6 +4451,35 @@ ntsa::Error Monitor::update(ntsa::Handle handle, ntcs::Interest interest)
         }
     }
 
+    if (interest.wantNotifications()) {
+        if (!entry->d_wantNotification) {
+            NTCD_MONITOR_LOG_SHOW_NOTIFICATIONS(d_machine_sp,
+                                                this,
+                                                session.get());
+            entry->d_wantNotification = true;
+
+            if (entry->d_haveNotification) {
+                processInsert = true;
+            }
+            else if (hasNotification) {
+                NTCD_MONITOR_LOG_ENABLE_NOTIFICATIONS(d_machine_sp,
+                                                      this,
+                                                      session.get());
+                entry->d_haveNotification = true;
+                processInsert             = true;
+            }
+        }
+    }
+    else {
+        if (entry->d_wantNotification) {
+            NTCD_MONITOR_LOG_HIDE_NOTIFICATIONS(d_machine_sp,
+                                                this,
+                                                session.get());
+            entry->d_wantNotification = false;
+            processRemove             = true;
+        }
+    }
+
     if (!processInsert && !processRemove) {
         return ntsa::Error();
     }
@@ -4118,8 +4487,10 @@ ntsa::Error Monitor::update(ntsa::Handle handle, ntcs::Interest interest)
     const bool matchReadable = entry->d_wantReadable && entry->d_haveReadable;
     const bool matchWritable = entry->d_wantWritable && entry->d_haveWritable;
     const bool matchError    = entry->d_wantError && entry->d_haveError;
+    const bool matchNotification =
+        entry->d_wantNotification && entry->d_haveNotification;
 
-    if (matchReadable || matchWritable || matchError) {
+    if (matchReadable || matchWritable || matchError || matchNotification) {
         if (entry->d_iterator == d_queue.end()) {
             bool wasEmpty     = d_queue.empty();
             entry->d_iterator = d_queue.insert(d_queue.end(), entry);
@@ -4129,7 +4500,9 @@ ntsa::Error Monitor::update(ntsa::Handle handle, ntcs::Interest interest)
             }
         }
     }
-    else if (!matchReadable && !matchWritable && !matchError) {
+    else if (!matchReadable && !matchWritable && !matchError &&
+             !matchNotification)
+    {
         if (entry->d_iterator != d_queue.end()) {
             d_queue.erase(entry->d_iterator);
             entry->d_iterator = d_queue.end();
@@ -4152,9 +4525,10 @@ ntsa::Error Monitor::update(const bsl::shared_ptr<ntcd::Session>& session,
 
     ntsa::Handle handle = session->handle();
 
-    const bool isReadable = session->isReadable();
-    const bool isWritable = session->isWritable();
-    const bool hasError   = session->hasError();
+    const bool isReadable      = session->isReadable();
+    const bool isWritable      = session->isWritable();
+    const bool hasError        = session->hasError();
+    const bool hasNotification = session->hasNotification();
 
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
@@ -4243,6 +4617,35 @@ ntsa::Error Monitor::update(const bsl::shared_ptr<ntcd::Session>& session,
         }
     }
 
+    if (interest.wantNotifications()) {
+        if (!entry->d_wantNotification) {
+            NTCD_MONITOR_LOG_SHOW_NOTIFICATIONS(d_machine_sp,
+                                                this,
+                                                session.get());
+            entry->d_wantNotification = true;
+
+            if (entry->d_haveNotification) {
+                processInsert = true;
+            }
+            else if (hasNotification) {
+                NTCD_MONITOR_LOG_ENABLE_NOTIFICATIONS(d_machine_sp,
+                                                      this,
+                                                      session.get());
+                entry->d_haveNotification = true;
+                processInsert             = true;
+            }
+        }
+    }
+    else {
+        if (entry->d_wantNotification) {
+            NTCD_MONITOR_LOG_HIDE_NOTIFICATIONS(d_machine_sp,
+                                                this,
+                                                session.get());
+            entry->d_wantNotification = false;
+            processRemove             = true;
+        }
+    }
+
     if (!processInsert && !processRemove) {
         return ntsa::Error();
     }
@@ -4250,8 +4653,10 @@ ntsa::Error Monitor::update(const bsl::shared_ptr<ntcd::Session>& session,
     const bool matchReadable = entry->d_wantReadable && entry->d_haveReadable;
     const bool matchWritable = entry->d_wantWritable && entry->d_haveWritable;
     const bool matchError    = entry->d_wantError && entry->d_haveError;
+    const bool matchNotification =
+        entry->d_wantNotification && entry->d_haveNotification;
 
-    if (matchReadable || matchWritable || matchError) {
+    if (matchReadable || matchWritable || matchError || matchNotification) {
         if (entry->d_iterator == d_queue.end()) {
             bool wasEmpty     = d_queue.empty();
             entry->d_iterator = d_queue.insert(d_queue.end(), entry);
@@ -4261,7 +4666,9 @@ ntsa::Error Monitor::update(const bsl::shared_ptr<ntcd::Session>& session,
             }
         }
     }
-    else if (!matchReadable && !matchWritable && !matchError) {
+    else if (!matchReadable && !matchWritable && !matchError &&
+             !matchNotification)
+    {
         if (entry->d_iterator != d_queue.end()) {
             d_queue.erase(entry->d_iterator);
             entry->d_iterator = d_queue.end();
@@ -4304,6 +4711,7 @@ ntsa::Error Monitor::show(const bsl::shared_ptr<ntcd::Session>& session,
     const bool isReadable = session->isReadable();
     const bool isWritable = session->isWritable();
     const bool hasError   = session->hasError();
+    // const bool hasNotification   = session->hasNotification();
 
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
@@ -4479,6 +4887,33 @@ ntsa::Error Monitor::enable(ntsa::Handle                          handle,
     return ntsa::Error();
 }
 
+ntsa::Error Monitor::enableNotifications(
+    ntsa::Handle                          handle,
+    const bsl::shared_ptr<ntcd::Session>& session)
+{
+    NTCI_LOG_CONTEXT();
+
+    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+
+    EntryMap::iterator it = d_map.find(handle);
+    if (it == d_map.end()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    bsl::shared_ptr<Entry>& entry = it->second;
+
+    if (!entry->d_haveNotification) {
+        NTCD_MONITOR_LOG_ENABLE_NOTIFICATIONS(d_machine_sp,
+                                              this,
+                                              session.get());
+        entry->d_haveNotification = true;
+
+        this->insertQueueEntry(entry);
+    }
+
+    return ntsa::Error();
+}
+
 ntsa::Error Monitor::disable(ntsa::Handle                          handle,
                              const bsl::shared_ptr<ntcd::Session>& session,
                              ntca::ReactorEventType::Value         type)
@@ -4521,6 +4956,30 @@ ntsa::Error Monitor::disable(ntsa::Handle                          handle,
     }
     else {
         return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error Monitor::disableNotifications(
+    ntsa::Handle                          handle,
+    const bsl::shared_ptr<ntcd::Session>& session)
+{
+    NTCI_LOG_CONTEXT();
+
+    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+
+    EntryMap::iterator it = d_map.find(handle);
+    if (it == d_map.end()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    bsl::shared_ptr<Entry>& entry = it->second;
+
+    if (entry->d_haveNotification) {
+        NTCD_MONITOR_LOG_DISABLE_ERROR(d_machine_sp, this, session.get());
+        entry->d_haveNotification = false;
+        this->removeQueueEntry(entry);
     }
 
     return ntsa::Error();

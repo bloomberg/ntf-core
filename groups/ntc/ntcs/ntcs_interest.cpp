@@ -79,6 +79,14 @@ bsl::ostream& Interest::print(bsl::ostream& stream,
         empty = false;
     }
 
+    if ((d_value & e_NOTIFICATION) != 0) {
+        if (empty) {
+            stream << ' ';
+        }
+        stream << "NOTIFICATION";
+        empty = false;
+    }
+
     return stream;
 }
 

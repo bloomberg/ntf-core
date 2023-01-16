@@ -114,6 +114,8 @@ class SocketConfig
     bdlb::NullableValue<bool>         d_broadcast;
     bdlb::NullableValue<bool>         d_bypassRouting;
     bdlb::NullableValue<bool>         d_inlineOutOfBandData;
+    bdlb::NullableValue<bool>         d_timestampIncomingData;
+    bdlb::NullableValue<bool>         d_timestampOutgoingData;
 
   public:
     /// Create new send options having the default value.
@@ -195,6 +197,12 @@ class SocketConfig
     /// the normal data input queue to the specified 'value'.
     void setInlineOutOfBandData(bool value);
 
+    /// Return the flag that indicates incoming data should be timestamped.
+    void setTimestampIncomingData(bool value);
+
+    /// Set the flag that indicates outgoing data should be timestamped.
+    void setTimestampOutgoingData(bool value);
+
     /// Load into the specified 'option' the option for the specified
     /// 'type'. Note that if the option for the 'type' is not set, the
     /// resulting 'option->isUndefined()' will be true.
@@ -252,6 +260,12 @@ class SocketConfig
     /// Return the flag that indicates out-of-band data should be placed
     /// into the normal data input queue.
     const bdlb::NullableValue<bool>& inlineOutOfBandData() const;
+
+    /// Return the flag that indicates incoming data should be timestamped.
+    const bdlb::NullableValue<bool>& timestampIncomingData() const;
+
+    /// Return the flag that indicates outgoing data should be timestamped.
+    const bdlb::NullableValue<bool>& timestampOutgoingData() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -329,6 +343,8 @@ SocketConfig::SocketConfig()
 , d_broadcast()
 , d_bypassRouting()
 , d_inlineOutOfBandData()
+, d_timestampIncomingData()
+, d_timestampOutgoingData()
 {
 }
 
@@ -348,6 +364,8 @@ SocketConfig::SocketConfig(const SocketConfig& original)
 , d_broadcast(original.d_broadcast)
 , d_bypassRouting(original.d_bypassRouting)
 , d_inlineOutOfBandData(original.d_inlineOutOfBandData)
+, d_timestampIncomingData(original.d_timestampIncomingData)
+, d_timestampOutgoingData(original.d_timestampOutgoingData)
 {
 }
 
@@ -373,6 +391,8 @@ SocketConfig& SocketConfig::operator=(const SocketConfig& other)
     d_broadcast                 = other.d_broadcast;
     d_bypassRouting             = other.d_bypassRouting;
     d_inlineOutOfBandData       = other.d_inlineOutOfBandData;
+    d_timestampIncomingData     = other.d_timestampIncomingData;
+    d_timestampOutgoingData     = other.d_timestampOutgoingData;
 
     return *this;
 }
@@ -394,6 +414,8 @@ void SocketConfig::reset()
     d_broadcast.reset();
     d_bypassRouting.reset();
     d_inlineOutOfBandData.reset();
+    d_timestampIncomingData.reset();
+    d_timestampOutgoingData.reset();
 }
 
 NTSCFG_INLINE
@@ -478,6 +500,18 @@ NTSCFG_INLINE
 void SocketConfig::setInlineOutOfBandData(bool value)
 {
     d_inlineOutOfBandData = value;
+}
+
+NTSCFG_INLINE
+void SocketConfig::setTimestampIncomingData(bool value)
+{
+    d_timestampIncomingData = value;
+}
+
+NTSCFG_INLINE
+void SocketConfig::setTimestampOutgoingData(bool value)
+{
+    d_timestampOutgoingData = value;
 }
 
 NTSCFG_INLINE
@@ -567,6 +601,18 @@ const bdlb::NullableValue<bool>& SocketConfig::inlineOutOfBandData() const
 }
 
 NTSCFG_INLINE
+const bdlb::NullableValue<bool>& SocketConfig::timestampIncomingData() const
+{
+    return d_timestampIncomingData;
+}
+
+NTSCFG_INLINE
+const bdlb::NullableValue<bool>& SocketConfig::timestampOutgoingData() const
+{
+    return d_timestampOutgoingData;
+}
+
+NTSCFG_INLINE
 bsl::ostream& operator<<(bsl::ostream& stream, const SocketConfig& object)
 {
     return object.print(stream, 0, -1);
@@ -609,6 +655,8 @@ void hashAppend(HASH_ALGORITHM& algorithm, const SocketConfig& value)
     hashAppend(algorithm, value.broadcast());
     hashAppend(algorithm, value.bypassRouting());
     hashAppend(algorithm, value.inlineOutOfBandData());
+    hashAppend(algorithm, value.timestampIncomingData());
+    hashAppend(algorithm, value.timestampOutgoingData());
 }
 
 }  // close package namespace

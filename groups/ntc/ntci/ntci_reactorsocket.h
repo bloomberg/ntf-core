@@ -24,6 +24,7 @@ BSLS_IDENT("$Id: $")
 #include <ntci_strand.h>
 #include <ntcscm_version.h>
 #include <ntsa_error.h>
+#include <ntsa_notificationqueue.h>
 #include <ntsi_descriptor.h>
 #include <bsl_memory.h>
 
@@ -83,6 +84,10 @@ class ReactorSocket : public ntci::ReactorSocketBase, public ntsi::Descriptor
     /// Process the specified 'event' indicating an error was detected for
     /// the socket.
     virtual void processSocketError(const ntca::ReactorEvent& event);
+
+    /// Process the specified 'notifications' of the socket.
+    virtual void processNotifications(
+        const ntsa::NotificationQueue& notifications);
 
     /// Close the stream socket.
     virtual void close() = 0;

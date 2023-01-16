@@ -53,6 +53,8 @@ DatagramSocketOptions::DatagramSocketOptions()
 , d_multicastInterface()
 , d_keepHalfOpen()
 , d_metrics()
+, d_timestampOutgoingData()
+, d_timestampIncomingData()
 , d_loadBalancingOptions()
 {
 }
@@ -88,6 +90,8 @@ DatagramSocketOptions::DatagramSocketOptions(
 , d_multicastInterface(other.d_multicastInterface)
 , d_keepHalfOpen(other.d_keepHalfOpen)
 , d_metrics(other.d_metrics)
+, d_timestampOutgoingData(other.d_timestampOutgoingData)
+, d_timestampIncomingData(other.d_timestampIncomingData)
 , d_loadBalancingOptions(other.d_loadBalancingOptions)
 {
 }
@@ -129,6 +133,8 @@ DatagramSocketOptions& DatagramSocketOptions::operator=(
         d_multicastInterface        = other.d_multicastInterface;
         d_keepHalfOpen              = other.d_keepHalfOpen;
         d_metrics                   = other.d_metrics;
+        d_timestampOutgoingData     = other.d_timestampOutgoingData;
+        d_timestampIncomingData     = other.d_timestampIncomingData;
         d_loadBalancingOptions      = other.d_loadBalancingOptions;
     }
 
@@ -281,6 +287,16 @@ void DatagramSocketOptions::setKeepHalfOpen(bool value)
 void DatagramSocketOptions::setMetrics(bool value)
 {
     d_metrics = value;
+}
+
+void DatagramSocketOptions::setTimestampOutgoingData(bool value)
+{
+    d_timestampOutgoingData = value;
+}
+
+void DatagramSocketOptions::setTimestampIncomingData(bool value)
+{
+    d_timestampIncomingData = value;
 }
 
 void DatagramSocketOptions::setLoadBalancingOptions(
@@ -459,6 +475,18 @@ const ntca::LoadBalancingOptions& DatagramSocketOptions::loadBalancingOptions()
     return d_loadBalancingOptions;
 }
 
+const bdlb::NullableValue<bool>& DatagramSocketOptions::timestampOutgoingData()
+    const
+{
+    return d_timestampOutgoingData;
+}
+
+const bdlb::NullableValue<bool>& DatagramSocketOptions::timestampIncomingData()
+    const
+{
+    return d_timestampIncomingData;
+}
+
 bsl::ostream& DatagramSocketOptions::print(bsl::ostream& stream,
                                            int           level,
                                            int           spacesPerLevel) const
@@ -497,6 +525,8 @@ bsl::ostream& DatagramSocketOptions::print(bsl::ostream& stream,
     printer.printAttribute("multicastInterface", d_multicastInterface);
     printer.printAttribute("keepHalfOpen", d_keepHalfOpen);
     printer.printAttribute("metrics", d_metrics);
+    printer.printAttribute("timestampOutgoingData", d_timestampOutgoingData);
+    printer.printAttribute("timestampIncomingData", d_timestampIncomingData);
     printer.printAttribute("loadBalancingOptions", d_loadBalancingOptions);
     printer.end();
     return stream;
@@ -535,6 +565,8 @@ bool operator==(const DatagramSocketOptions& lhs,
            lhs.multicastInterface() == rhs.multicastInterface() &&
            lhs.keepHalfOpen() == rhs.keepHalfOpen() &&
            lhs.metrics() == rhs.metrics() &&
+           lhs.timestampOutgoingData() == rhs.timestampOutgoingData() &&
+           lhs.timestampIncomingData() == rhs.timestampIncomingData() &&
            lhs.loadBalancingOptions() == rhs.loadBalancingOptions();
 }
 

@@ -28,6 +28,7 @@ BSLS_IDENT_RCSID(ntsu_socketutil_cpp, "$Id$ $CSID$")
 #include <ntsu_adapterutil.h>
 #include <ntsu_bufferutil.h>
 #include <ntsu_socketoptionutil.h>
+#include <ntsu_timestamputil.h>
 
 #include <bdlb_chartype.h>
 #include <bdlb_guid.h>
@@ -80,7 +81,6 @@ BSLS_IDENT_RCSID(ntsu_socketutil_cpp, "$Id$ $CSID$")
 #endif
 #if defined(BSLS_PLATFORM_OS_LINUX)
 #include <linux/errqueue.h>
-#include <linux/version.h>
 #endif
 #endif
 
@@ -337,7 +337,7 @@ OutoingDataStats::~OutoingDataStats()
         return;
     }
 
-    double avgBuffersSendablePerSyscall = 
+    double avgBuffersSendablePerSyscall =
         static_cast<double>(d_totalBuffersSendable) /
         static_cast<double>(d_numSyscalls);
 
@@ -345,9 +345,8 @@ OutoingDataStats::~OutoingDataStats()
         static_cast<double>(d_totalBytesSendable) /
         static_cast<double>(d_numSyscalls);
 
-    double avgBytesSentPerSyscall = 
-        static_cast<double>(d_totalBytesSent) /
-        static_cast<double>(d_numSyscalls);
+    double avgBytesSentPerSyscall = static_cast<double>(d_totalBytesSent) /
+                                    static_cast<double>(d_numSyscalls);
 
     char buffer[4096];
 
@@ -465,7 +464,7 @@ IncomingDataStats::~IncomingDataStats()
         static_cast<double>(d_totalBytesReceivable) /
         static_cast<double>(d_numSyscalls);
 
-    double avgBytesReceivedPerSyscall = 
+    double avgBytesReceivedPerSyscall =
         static_cast<double>(d_totalBytesReceived) /
         static_cast<double>(d_numSyscalls);
 
@@ -543,42 +542,11 @@ void IncomingDataStats::update(const struct iovec* buffersReceivable,
 #if defined(BSLS_PLATFORM_OS_LINUX)
 namespace {
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 17, 0)
-struct scm_timestamping {
-    struct timespec ts[3];
-};
-#endif
+/// Size of a control message buffer depends on this constant
+const size_t k_CTRL_PAYLOAD_SIZE = sizeof(TimestampUtil::ScmTimestamping);
 
-#if defined(SO_TIMESTAMPNS_NEW) && defined(SO_TIMESTAMPNS_OLD)
-#if SO_TIMESTAMPNS == SO_TIMESTAMPNS_OLD
-typedef struct timespec TimestampNsData;
-#elif SO_TIMESTAMPNS == SO_TIMESTAMPNS_NEW
-typedef struct __kernel_timespec  TimestampNsData;
-#else
-BSLMF_ASSERT(false);
-#endif
-#else
-typedef struct timespec TimestampNsData;
-#endif
-
-#if defined(SO_TIMESTAMPING_NEW) && defined(SO_TIMESTAMPING_OLD)
-#if SO_TIMESTAMPING == SO_TIMESTAMPING_OLD
-typedef struct scm_timestamping TimestampingData;
-typedef struct timespec         TimestampingInternalData;
-#elif SO_TIMESTAMPING == SO_TIMESTAMPING_NEW
-typedef struct scm_timestamping64 TimestampingData;
-typedef struct __kernel_timespec  TimestampingInternalData;
-#else
-BSLMF_ASSERT(false);
-#endif
-#else
-typedef struct scm_timestamping TimestampingData;
-typedef struct timespec TimestampingInternalData;
-#endif
-
-BSLMF_ASSERT(sizeof(TimestampingData) >= sizeof(TimestampNsData));
-
-const size_t k_CTRL_PAYLOAD_SIZE = sizeof(TimestampingData);
+/// Control message buffer must be properly aligned in orderto fetch data from
+/// a socket errorqueue
 typedef bsls::AlignedBuffer<static_cast<int>(CMSG_SPACE(k_CTRL_PAYLOAD_SIZE)),
                             bsls::AlignmentFromType<cmsghdr>::VALUE>
     CtrlMsgBuf;
@@ -594,15 +562,12 @@ typedef bsls::AlignedBuffer<static_cast<int>(CMSG_SPACE(k_CTRL_PAYLOAD_SIZE)),
 void extractTimestampsFromCtrlBlock(ntsa::ReceiveContext* ctx,
                                     const msghdr&         msg)
 {
-    const int swTsIndex    = 0;
-    const int hwRawTsIndex = 2;
-
     for (cmsghdr* hdr = CMSG_FIRSTHDR(&msg); hdr != 0;
          hdr          = CMSG_NXTHDR(const_cast<msghdr*>(&msg), hdr))
     {
         if (hdr->cmsg_level == SOL_SOCKET) {
-            if (hdr->cmsg_type == SCM_TIMESTAMPING) {
-                TimestampingData ts;
+            if (hdr->cmsg_type == TimestampUtil::e_SCM_TIMESTAMPING) {
+                TimestampUtil::ScmTimestamping ts;
 
                 if (NTSCFG_UNLIKELY(sizeof(ts) !=
                                     (hdr->cmsg_len - sizeof(cmsghdr))))
@@ -611,23 +576,21 @@ void extractTimestampsFromCtrlBlock(ntsa::ReceiveContext* ctx,
                 }
 
                 memcpy(&ts, CMSG_DATA(hdr), sizeof(ts));
-                const TimestampingInternalData& systime = ts.ts[swTsIndex];
-                const TimestampingInternalData& hwtimeraw =
-                    ts.ts[hwRawTsIndex];
-                if (systime.tv_sec || systime.tv_nsec) {
-                    ctx->setSoftwareTimestamp(
-                        bsls::TimeInterval(systime.tv_sec,
-                                           static_cast<int>(systime.tv_nsec)));
+
+                if (ts.softwareTs.tv_sec || ts.softwareTs.tv_nsec) {
+                    ctx->setSoftwareTimestamp(bsls::TimeInterval(
+                        ts.softwareTs.tv_sec,
+                        static_cast<int>(ts.softwareTs.tv_nsec)));
                 }
-                if (hwtimeraw.tv_sec || hwtimeraw.tv_nsec) {
+                if (ts.hardwareTs.tv_sec || ts.hardwareTs.tv_nsec) {
                     ctx->setHardwareTimestamp(bsls::TimeInterval(
-                        hwtimeraw.tv_sec,
-                        static_cast<int>(hwtimeraw.tv_nsec)));
+                        ts.hardwareTs.tv_sec,
+                        static_cast<int>(ts.hardwareTs.tv_nsec)));
                 }
                 break;
             }
-            else if (hdr->cmsg_type == SCM_TIMESTAMPNS) {
-                TimestampNsData ts;
+            else if (hdr->cmsg_type == TimestampUtil::e_SCM_TIMESTAMPNS) {
+                TimestampUtil::Timespec ts;
 
                 if (NTSCFG_UNLIKELY(sizeof(ts) !=
                                     (hdr->cmsg_len - sizeof(cmsghdr))))
@@ -2963,15 +2926,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
     }
 }
 
-ntsa::Error SocketUtil::
-    receiveFromMultiple(  //TODO: doI need to modify it also?
-        bsl::size_t*          numBytesReceivable,
-        bsl::size_t*          numBytesReceived,
-        bsl::size_t*          numMessagesReceivable,
-        bsl::size_t*          numMessagesReceived,
-        ntsa::MutableMessage* messages,
-        bsl::size_t           numMessages,
-        ntsa::Handle          socket)
+ntsa::Error SocketUtil::receiveFromMultiple(bsl::size_t* numBytesReceivable,
+                                            bsl::size_t* numBytesReceived,
+                                            bsl::size_t* numMessagesReceivable,
+                                            bsl::size_t* numMessagesReceived,
+                                            ntsa::MutableMessage* messages,
+                                            bsl::size_t           numMessages,
+                                            ntsa::Handle          socket)
 {
 #if defined(BSLS_PLATFORM_OS_UNIX)
 #if defined(BSLS_PLATFORM_OS_LINUX) &&                                        \
@@ -3095,6 +3056,130 @@ ntsa::Error SocketUtil::
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED, WSAENOTSUP);
 #else
 #error Not implemented
+#endif
+}
+
+ntsa::Error SocketUtil::receiveNotifications(
+    ntsa::NotificationQueue* notifications,
+    ntsa::Handle             socket)
+{
+    NTSCFG_WARNING_UNUSED(notifications);
+    NTSCFG_WARNING_UNUSED(socket);
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
+    const size_t k_BUF_SIZE = CMSG_SPACE(1024);
+    bsls::AlignedBuffer<static_cast<int>(k_BUF_SIZE),
+                        bsls::AlignmentFromType<cmsghdr>::VALUE>
+        buf;
+
+    while (true) {
+        bsl::memset(buf.buffer(), 0, k_BUF_SIZE);
+
+        msghdr msg;
+        bsl::memset(&msg, 0, sizeof(msg));
+
+        msg.msg_control    = buf.buffer();
+        msg.msg_controllen = k_BUF_SIZE;
+
+        ssize_t recvMsgResult = ::recvmsg(socket, &msg, MSG_ERRQUEUE);
+
+        if (recvMsgResult < 0) {
+            if (errno == EAGAIN) {
+                return ntsa::Error();
+            }
+            else {
+                return ntsa::Error(errno);
+            }
+        }
+
+        if (notifications == 0) {
+            continue;
+        }
+
+        /*
+        It is assumed that timestamp information comes in pairs: meta data + timestamp message.
+        Meta data is sock_extend_err structure (cmsg_level == SOL_IP && cmsg_type == IP_RECVERR)
+        and timestamp information is (cmsg_level == SOL_SOCKET && hdr->cmsg_type == SO_TIMESTAMPING).
+
+        Code below should be ready to handle messages in any order, e.g. IP_RECVERR -> SO_TIMESTAMPING
+        or SO_TIMESTAMPING -> IP_RECVERR
+        */
+        bool tsMetaDataReceied = false;
+        bool timestampReceived = false;
+
+        ntsa::Timestamp    ts;
+        ntsa::Notification notification;
+
+        for (cmsghdr* hdr = CMSG_FIRSTHDR(&msg); hdr != 0;
+             hdr          = CMSG_NXTHDR(&msg, hdr))
+        {
+            if (hdr->cmsg_level == SOL_IP && hdr->cmsg_type == IP_RECVERR) {
+                sock_extended_err ser;
+                std::memcpy(&ser, CMSG_DATA(hdr), sizeof(ser));
+                ts.setId(ser.ee_data);
+                switch (ser.ee_info) {
+                case (TimestampUtil::e_SCM_TSTAMP_SCHED): {
+                    ts.setType(ntsa::TimestampType::e_SCHEDULED);
+                } break;
+                case (TimestampUtil::e_SCM_TSTAMP_SND): {
+                    ts.setType(ntsa::TimestampType::e_SENT);
+                } break;
+                case (TimestampUtil::e_SCM_TSTAMP_ACK): {
+                    ts.setType(ntsa::TimestampType::e_ACKNOWLEDGED);
+                } break;
+                default: {
+                    //error, drop timestamp
+                }
+                }
+                tsMetaDataReceied = true;
+                if (timestampReceived) {
+                    notification.reset();
+                    notification.makeTimestamp(ts);
+
+                    notifications->addNotification(notification);
+                    tsMetaDataReceied = false;
+                    timestampReceived = false;
+                }
+            }
+            else if (hdr->cmsg_level == SOL_SOCKET &&
+                     hdr->cmsg_type == TimestampUtil::e_SCM_TIMESTAMPING)
+            {
+                TimestampUtil::ScmTimestamping sts;
+                std::memcpy(&sts, CMSG_DATA(hdr), sizeof(sts));
+
+                bsls::TimeInterval ti(
+                    static_cast<int>(sts.softwareTs.tv_sec),
+                    static_cast<int>(sts.softwareTs.tv_nsec));
+
+                ts.setTime(ti);
+
+                timestampReceived = true;
+                if (tsMetaDataReceied) {
+                    notification.reset();
+                    notification.makeTimestamp(ts);
+
+                    notifications->addNotification(notification);
+
+                    tsMetaDataReceied = false;
+                    timestampReceived = false;
+                }
+            }
+            else {
+                BSLS_LOG_WARN(
+                    "unexpected ctrl data received: cmsg_level=%d, "
+                    "cmsg_type=%d, tsMetaDataReceied=%d, timestampReceived=%d",
+                    hdr->cmsg_level,
+                    hdr->cmsg_type,
+                    tsMetaDataReceied,
+                    timestampReceived);
+            }
+        }
+    }
+
+    return ntsa::Error();
+#else
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 #endif
 }
 
