@@ -1,0 +1,30 @@
+ntcscm.txt
+
+@PURPOSE: Provide versioning information for 'ntc' library components.
+
+@MNEMONIC: Network Transport Core Source Control Management
+
+@DESCRIPTION: This package provides versioning information that is incorporated
+ into every release of the 'ntc' Package Group Library.  This versioning
+ information is in turn available to all clients of 'ntc' both at run-time and
+ by inspection of appropriate '.o' files.  Note that, except for the package
+ name, this version functionality is repeated in every package group within the
+ BTL library suite.
+
+/Hierarchical Synopsis
+/---------------------
+ The 'ntcscm' package currently has 2 components having 2 levels of physical
+ dependency.  The list below shows the hierarchical ordering of the components.
+..
+  2. ntcscm_version
+
+  1. ntcscm_versiontag
+..
+
+/Component Synopsis
+/------------------
+: 'ntcscm_version':
+:      Provide source control management (versioning) information.
+:
+: 'ntcscm_versiontag':
+:      Provide versioning information for the 'ntc' package group.

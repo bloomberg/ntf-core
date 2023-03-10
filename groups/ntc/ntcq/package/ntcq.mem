@@ -1,0 +1,5 @@
+ntcq_accept
+ntcq_bind
+ntcq_connect
+ntcq_receive
+ntcq_send

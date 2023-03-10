@@ -1,0 +1,346 @@
+ntca.txt
+
+@PURPOSE: Provide value-semantic types for network programming.
+
+@MNEMONIC: Network Transport Core Vocabulary
+
+@DESCRIPTION: This package provides the value-semantics types for the
+vocabulary of network programming. These types include: timer, socket, thread,
+reactor, and proactor configuration; options that control the behavior of
+asynchronous operations; and event system that describes the completion or
+failure of either an explicitly initiated operation, or a passively detected
+condition; and contexts that describe the state of the system at the time of
+an event.
+
+/Hierarchical Synopsis
+/---------------------
+ The 'ntca' package currently has 80 components having 3 levels of physical
+ dependency.  The list below shows the hierarchical ordering of the components.
+ The order of components within each level is not architecturally significant,
+ just alphabetical.
+..
+  3. ntca_datagramsocketevent
+     ntca_listenersocketevent
+     ntca_streamsocketevent
+
+  2. ntca_acceptevent
+     ntca_acceptqueueevent
+     ntca_connectevent
+     ntca_datagramsocketoptions
+     ntca_downgradeevent
+     ntca_encryptionclientoptions
+     ntca_encryptionserveroptions
+     ntca_errorevent
+     ntca_listenersocketoptions
+     ntca_reactorconfig
+     ntca_reactorevent
+     ntca_reactoreventoptions
+     ntca_readqueueevent
+     ntca_receiveevent
+     ntca_receivefromevent
+     ntca_sendevent
+     ntca_sendtoevent
+     ntca_shutdownevent
+     ntca_streamsocketoptions
+     ntca_timerevent
+     ntca_timeroptions
+     ntca_upgradeevent
+     ntca_writequeueevent
+
+  1. ntca_acceptcontext
+     ntca_accepteventtype
+     ntca_acceptoptions
+     ntca_acceptqueuecontext
+     ntca_acceptqueueeventtype
+     ntca_connectcontext
+     ntca_connecteventtype
+     ntca_connectoptions
+     ntca_datagramsocketeventtype
+     ntca_downgradecontext
+     ntca_downgradeeventtype
+     ntca_driverconfig
+     ntca_encryptionauthentication
+     ntca_encryptioncertificateoptions
+     ntca_encryptionkeyoptions
+     ntca_encryptionmethod
+     ntca_encryptionrole
+     ntca_errorcontext
+     ntca_erroreventtype
+     ntca_flowcontrolmode
+     ntca_flowcontroltype
+     ntca_interfaceconfig
+     ntca_listenersocketeventtype
+     ntca_loadbalancingoptions
+     ntca_proactorconfig
+     ntca_ratelimiterconfig
+     ntca_reactorcontext
+     ntca_reactoreventtrigger
+     ntca_reactoreventtype
+     ntca_readqueuecontext
+     ntca_readqueueeventtype
+     ntca_receivecontext
+     ntca_receiveeventtype
+     ntca_receivefromcontext
+     ntca_receivefromeventtype
+     ntca_receivefromoptions
+     ntca_receiveoptions
+     ntca_sendcontext
+     ntca_sendeventtype
+     ntca_sendoptions
+     ntca_sendtocontext
+     ntca_sendtoeventtype
+     ntca_sendtooptions
+     ntca_shutdowncontext
+     ntca_shutdowneventtype
+     ntca_streamsocketeventtype
+     ntca_threadconfig
+     ntca_timercontext
+     ntca_timereventtype
+     ntca_upgradecontext
+     ntca_upgradeeventtype
+     ntca_waiteroptions
+     ntca_writequeuecontext
+     ntca_writequeueeventtype
+..
+
+/Component Synopsis
+/------------------
+: 'ntca_acceptcontext':
+:      Describe the result of an accept operation.
+:
+: 'ntca_acceptevent':
+:      Describe an accept event.
+:
+: 'ntca_accepteventtype':
+:      Provide an enumeration of the accept event types.
+:
+: 'ntca_acceptoptions':
+:      Describe parameters to an accept operation.
+:
+: 'ntca_acceptqueuecontext':
+:      Describe the state of the accept queue at the time of an event.
+:
+: 'ntca_acceptqueueevent':
+:      Describe an accept queue event.
+:
+: 'ntca_acceptqueueeventtype':
+:      Provide an enumeration of the accept queue event types.
+:
+: 'ntca_connectcontext':
+:      Describe the state of a connection attempt at the time of an event.
+:
+: 'ntca_connectevent':
+:      Describe a connect event.
+:
+: 'ntca_connecteventtype':
+:      Provide an enumeration of the connect event types.
+:
+: 'ntca_connectoptions':
+:      Describe parameters to a connect operation.
+:
+: 'ntca_datagramsocketevent':
+:      Describe an event for a datagram socket.
+:
+: 'ntca_datagramsocketeventtype':
+:      Provide an enumeration of the datagram socket event types.
+:
+: 'ntca_datagramsocketoptions':
+:      Provide configuration options for datagram sockets.
+:
+: 'ntca_downgradecontext':
+:      Describe the state of downgrade at the time of an event.
+:
+: 'ntca_downgradeevent':
+:      Describe a downgrade event.
+:
+: 'ntca_downgradeeventtype':
+:      Provide an enumeration of the downgrade event types.
+:
+: 'ntca_driverconfig':
+:      Provide configuration parameters for a driver.
+:
+: 'ntca_encryptionauthentication':
+:      Provide an enumeration of authentication modes.
+:
+: 'ntca_encryptioncertificateoptions':
+:      Provide configuration parameters for certificate generation.
+:
+: 'ntca_encryptionclientoptions':
+:      Provide configuration options for encryption in the client role.
+:
+: 'ntca_encryptionkeyoptions':
+:      Provide configuration parameters for key generation.
+:
+: 'ntca_encryptionmethod':
+:      Provide an enumeration of the methods of encryption.
+:
+: 'ntca_encryptionrole':
+:      Provide an enumeration of the roles in an encryption handshake.
+:
+: 'ntca_encryptionserveroptions':
+:      Provide configuration options for encryption in the server role.
+:
+: 'ntca_errorcontext':
+:      Describe the state of an error.
+:
+: 'ntca_errorevent':
+:      Describe an error event.
+:
+: 'ntca_erroreventtype':
+:      Provide an enumeration of the error event types.
+:
+: 'ntca_flowcontrolmode':
+:      Provide an enumeration of the modes of flow control.
+:
+: 'ntca_flowcontroltype':
+:      Provide an enumeration of the directions of flow control.
+:
+: 'ntca_interfaceconfig':
+:      Provide the configuration parameters of an interface.
+:
+: 'ntca_listenersocketevent':
+:      Describe an event for a listener socket.
+:
+: 'ntca_listenersocketeventtype':
+:      Provide an enumeration of the listener socket event types.
+:
+: 'ntca_listenersocketoptions':
+:      Provide configuration options for listener sockets.
+:
+: 'ntca_loadbalancingoptions':
+:      Provide configuration parameters for I/O load balancing.
+:
+: 'ntca_proactorconfig':
+:      Provide configuration parameters for a driver.
+:
+: 'ntca_ratelimiterconfig':
+:      Provide configuration parameters for a rate limiter.
+:
+: 'ntca_reactorconfig':
+:      Provide configuration parameters for a reactor.
+:
+: 'ntca_reactorcontext':
+:      Describe the state of a reactor socket at the time of an event.
+:
+: 'ntca_reactorevent':
+:      Provide a description of a socket condition detected by a reactor.
+:
+: 'ntca_reactoreventoptions':
+:      Describe parameters to a reactor event registration.
+:
+: 'ntca_reactoreventtrigger':
+:      Provide an enumeration of the reactor event trigger.
+:
+: 'ntca_reactoreventtype':
+:      Provide an enumeration of the reactor event types.
+:
+: 'ntca_readqueuecontext':
+:      Describe the state of the read queue at the time of an event.
+:
+: 'ntca_readqueueevent':
+:      Describe a read queue event.
+:
+: 'ntca_readqueueeventtype':
+:      Provide an enumeration of the read queue event types.
+:
+: 'ntca_receivecontext':
+:      Describe the result of a receive operation.
+:
+: 'ntca_receiveevent':
+:      Describe a receive event.
+:
+: 'ntca_receiveeventtype':
+:      Provide an enumeration of the receive event types.
+:
+: 'ntca_receivefromcontext':
+:      Describe the result of a receive from operation.
+:
+: 'ntca_receivefromevent':
+:      Describe a receive from event.
+:
+: 'ntca_receivefromeventtype':
+:      Provide an enumeration of the receive from event types.
+:
+: 'ntca_receivefromoptions':
+:      Describe parameters to a receive message operation.
+:
+: 'ntca_receiveoptions':
+:      Describe parameters to a receive operation.
+:
+: 'ntca_sendcontext':
+:      Describe the result of a send operation.
+:
+: 'ntca_sendevent':
+:      Describe a send event.
+:
+: 'ntca_sendeventtype':
+:      Provide an enumeration of the send event types.
+:
+: 'ntca_sendoptions':
+:      Describe parameters to a send operation.
+:
+: 'ntca_sendtocontext':
+:      Describe the result of a send to operation.
+:
+: 'ntca_sendtoevent':
+:      Describe a send to event.
+:
+: 'ntca_sendtoeventtype':
+:      Provide an enumeration of the send to event types.
+:
+: 'ntca_sendtooptions':
+:      Describe parameters to a send message operation.
+:
+: 'ntca_shutdowncontext':
+:      Describe the state of shutdown at the time of an event.
+:
+: 'ntca_shutdownevent':
+:      Describe a shutdown event.
+:
+: 'ntca_shutdowneventtype':
+:      Provide an enumeration of the shutdown event types.
+:
+: 'ntca_streamsocketevent':
+:      Describe an event for a stream socket.
+:
+: 'ntca_streamsocketeventtype':
+:      Provide an enumeration of the stream socket event types.
+:
+: 'ntca_streamsocketoptions':
+:      Provide configuration options for stream sockets.
+:
+: 'ntca_threadconfig':
+:      Provide configuration parameters for a thread.
+:
+: 'ntca_timercontext':
+:      Describe the state of a timer at the time of an event.
+:
+: 'ntca_timerevent':
+:      Describe a timer event.
+:
+: 'ntca_timereventtype':
+:      Provide an enumeration of the timer event types.
+:
+: 'ntca_timeroptions':
+:      Describe parameters to a timer operation.
+:
+: 'ntca_upgradecontext':
+:      Describe the state of an upgrade attempt at the time of an event.
+:
+: 'ntca_upgradeevent':
+:      Describe a upgrade event.
+:
+: 'ntca_upgradeeventtype':
+:      Provide an enumeration of the upgrade event types.
+:
+: 'ntca_waiteroptions':
+:      Provide a description of a thread driving a reactor or protactor.
+:
+: 'ntca_writequeuecontext':
+:      Describe the state of the write queue at the time of an event.
+:
+: 'ntca_writequeueevent':
+:      Describe a write queue event.
+:
+: 'ntca_writequeueeventtype':
+:      Provide an enumeration of the write queue event types.

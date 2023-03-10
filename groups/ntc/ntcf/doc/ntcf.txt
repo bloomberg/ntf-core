@@ -1,0 +1,20 @@
+ntcf.txt
+
+@PURPOSE: Provide a factory for creating mechanisms implemented by the system.
+
+@MNEMONIC: Network Transport Core Factory
+
+@DESCRIPTION: This package provides a factory for creating mechanisms
+implemented by the system.
+
+/Hierarchical Synopsis
+/---------------------
+ The 'ntcf' package currently has 1 component.
+..
+  1. ntcf_system
+..
+
+/Component Synopsis
+/------------------
+: 'ntcf_system':
+:      Provide a factory for concrement implementations by the system.

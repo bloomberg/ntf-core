@@ -1,0 +1,295 @@
+ntci.txt
+
+@PURPOSE: Provide abstract mechanisms for asynchronous sockets and timers.
+
+@MNEMONIC: Network Transport Core Interface
+
+@DESCRIPTION: This package provides abstract mechanisms for asynchronous
+sockets and timers, driven by a reactor or proactor by a single thread or
+multiple threads.
+
+/Hierarchical Synopsis
+/---------------------
+ The 'ntci' package currently has 66 components having 12 levels of physical
+ dependency.  The list below shows the hierarchical ordering of the components.
+ The order of components within each level is not architecturally significant,
+ just alphabetical.
+..
+  12. ntci_interface
+      ntci_proactorfactory
+      ntci_reactorfactory
+
+  11. ntci_driverfactory
+      ntci_proactor
+      ntci_reactor
+      ntci_streamsocket
+      ntci_threadfactory
+      ntci_threadpool
+
+  10. ntci_datagramsocket
+      ntci_driver
+      ntci_listenersocket
+      ntci_thread
+
+   9. ntci_timerfactory
+
+   8. ntci_acceptcallbackfactory
+      ntci_closecallbackfactory
+      ntci_connectcallbackfactory
+      ntci_receivecallbackfactory
+      ntci_receivefromcallbackfactory
+      ntci_sendcallbackfactory
+      ntci_sendtocallbackfactory
+      ntci_timercallbackfactory
+
+   7. ntci_acceptcallback
+      ntci_closecallback
+      ntci_connectcallback
+      ntci_receivecallback
+      ntci_receivefromcallback
+      ntci_sendcallback
+      ntci_sendtocallback
+      ntci_timercallback
+
+   6. ntci_callback
+
+   5. ntci_invoker
+
+   4. ntci_authorization
+      ntci_encryptionclientfactory
+      ntci_encryptionserverfactory
+      ntci_listenersocketmanager
+
+   3. ntci_cancellation
+      ntci_datagramsocketmanager
+      ntci_datagramsocketsession
+      ntci_encryptionclient
+      ntci_encryptionserver
+      ntci_listenersocketsession
+      ntci_proactorsocket
+      ntci_reactorsocket
+      ntci_strandfactory
+      ntci_streamsocketmanager
+      ntci_streamsocketsession
+      ntci_timer
+      ntci_timersession
+
+   2. ntci_encryption
+      ntci_encryptioncertificategenerator
+      ntci_encryptionkeygenerator
+      ntci_ratelimiterfactory
+      ntci_strand
+
+   1. ntci_datagramsocketfactory
+      ntci_datapool
+      ntci_encryptioncertificate
+      ntci_encryptionkey
+      ntci_executor
+      ntci_listenersocketfactory
+      ntci_log
+      ntci_proactorpool
+      ntci_ratelimiter
+      ntci_reactorpool
+      ntci_streamsocketfactory
+      ntci_waiter
+..
+
+/Component Synopsis
+/------------------
+: 'ntci_acceptcallback':
+:      Provide a cancelable, strand-aware accept callback.
+:
+: 'ntci_acceptcallbackfactory':
+:      Provide an interface to create accept callbacks.
+:
+: 'ntci_authorization':
+:      Provide a mechanism to authorize and cancel a pending operation.
+:
+: 'ntci_callback':
+:      Provide a bindable function to be invoked on a strand.
+:
+: 'ntci_cancellation':
+:      Provide an interface to abort an asynchronous function
+:
+: 'ntci_closecallback':
+:      Provide a cancelable, strand-aware close callback.
+:
+: 'ntci_closecallbackfactory':
+:      Provide an interface to create close callbacks.
+:
+: 'ntci_connectcallback':
+:      Provide a cancelable, strand-aware connect callback.
+:
+: 'ntci_connectcallbackfactory':
+:      Provide an interface to create connect callbacks.
+:
+: 'ntci_datagramsocket':
+:      Provide an interface to an asynchronous datagram socket.
+:
+: 'ntci_datagramsocketfactory':
+:      Provide an interface to create datagram sockets.
+:
+: 'ntci_datagramsocketmanager':
+:      Provide an interface to manage the application of datagram sockets.
+:
+: 'ntci_datagramsocketsession':
+:      Provide an interface to a datagram socket application protocol.
+:
+: 'ntci_datapool':
+:      Provide a pool of blobs, blob buffers, and data containers.
+:
+: 'ntci_driver':
+:      Provide an interface to drive the I/O for sockets
+:
+: 'ntci_driverfactory':
+:      Provide an interface to create drivers.
+:
+: 'ntci_encryption':
+:      Provide an interface to an encryption/decryption process.
+:
+: 'ntci_encryptioncertificate':
+:      Provide an interface to a X.509 digital certificate.
+:
+: 'ntci_encryptioncertificategenerator':
+:      Provide a certificate generator.
+:
+: 'ntci_encryptionclient':
+:      Provide an interface to create an encryptor in the client role.
+:
+: 'ntci_encryptionclientfactory':
+:      Provide an encryption client factory.
+:
+: 'ntci_encryptionkey':
+:      Provide an interface to a private key.
+:
+: 'ntci_encryptionkeygenerator':
+:      Provide an encryption key generator.
+:
+: 'ntci_encryptionserver':
+:      Provide an interface to create an encryptor in the server role.
+:
+: 'ntci_encryptionserverfactory':
+:      Provide an encryption server factory.
+:
+: 'ntci_executor':
+:      Provide an interface to defer the execution of functions.
+:
+: 'ntci_interface':
+:      Provide an interface to perform asynchronous network I/O.
+:
+: 'ntci_invoker':
+:      Provide a cancellable invoker of a function.
+:
+: 'ntci_listenersocket':
+:      Provide an interface to an asynchronous listener socket.
+:
+: 'ntci_listenersocketfactory':
+:      Provide an interface to create listener sockets.
+:
+: 'ntci_listenersocketmanager':
+:      Provide an interface to manage the application of listener sockets.
+:
+: 'ntci_listenersocketsession':
+:      Provide an interface to a listener socket application protocol.
+:
+: 'ntci_log':
+:      Provide contextual logging.
+:
+: 'ntci_proactor':
+:      Provide an interface to the proactor asynchronous model.
+:
+: 'ntci_proactorfactory':
+:      Provide an interface to create proactors.
+:
+: 'ntci_proactorpool':
+:      Provide a pool of proactors across which sockets are load balanced.
+:
+: 'ntci_proactorsocket':
+:      Provide an asynchronous socket using the proactor paradigm.
+:
+: 'ntci_ratelimiter':
+:      Provide an interface to limit peak and sustained consumption rates.
+:
+: 'ntci_ratelimiterfactory':
+:      Provide a rate limiter factory.
+:
+: 'ntci_reactor':
+:      Provide an interface to the reactor asynchronous model.
+:
+: 'ntci_reactorfactory':
+:      Provide an interface to create reactors.
+:
+: 'ntci_reactorpool':
+:      Provide a pool of reactors across which sockets are load balanced.
+:
+: 'ntci_reactorsocket':
+:      Provide an asynchronous socket using the reactor paradigm.
+:
+: 'ntci_receivecallback':
+:      Provide a cancelable, strand-aware receive callback.
+:
+: 'ntci_receivecallbackfactory':
+:      Provide an interface to create receive callbacks.
+:
+: 'ntci_receivefromcallback':
+:      Provide a cancelable, strand-aware receive from callback.
+:
+: 'ntci_receivefromcallbackfactory':
+:      Provide an interface to create receive from callbacks.
+:
+: 'ntci_sendcallback':
+:      Provide a cancelable, strand-aware send callback.
+:
+: 'ntci_sendcallbackfactory':
+:      Provide an interface to create send callbacks.
+:
+: 'ntci_sendtocallback':
+:      Provide a cancelable, strand-aware send to callback.
+:
+: 'ntci_sendtocallbackfactory':
+:      Provide an interface to create send to callbacks.
+:
+: 'ntci_strand':
+:      Provide a guarantor of sequential, non-concurrent execution
+:
+: 'ntci_strandfactory':
+:      Provide an interface to create strands.
+:
+: 'ntci_streamsocket':
+:      Provide an interface to an asynchronous stream socket.
+:
+: 'ntci_streamsocketfactory':
+:      Provide an interface to create stream sockets.
+:
+: 'ntci_streamsocketmanager':
+:      Provide an interface to manage the application of stream sockets.
+:
+: 'ntci_streamsocketsession':
+:      Provide an interface to a stream socket application protocol.
+:
+: 'ntci_thread':
+:      Provide an interface to an I/O thread.
+:
+: 'ntci_threadfactory':
+:      Provide an interface to create threads.
+:
+: 'ntci_threadpool':
+:      Provide an interface to a pool of I/O threads.
+:
+: 'ntci_timer':
+:      Provide an interface to a one-shot or periodic timer.
+:
+: 'ntci_timercallback':
+:      Provide a cancelable, strand-aware timer callback.
+:
+: 'ntci_timercallbackfactory':
+:      Provide an interface to create timer callbacks.
+:
+: 'ntci_timerfactory':
+:      Provide an interface to create timers.
+:
+: 'ntci_timersession':
+:      Provide a session to process timer events.
+:
+: 'ntci_waiter':
+:      Provide a handle to a thread driving a reactor or proactor.

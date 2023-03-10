@@ -1,0 +1,20 @@
+ntsf.txt
+
+@PURPOSE: Provide a factory for creating mechanisms implemented by the system.
+
+@MNEMONIC: Network Transport System Factory
+
+@DESCRIPTION: This package provides a factory for creating mechanisms
+implemented by the system.
+
+/Hierarchical Synopsis
+/---------------------
+ The 'ntsf' package currently has 1 component.
+..
+  1. ntsf_system
+..
+
+/Component Synopsis
+/------------------
+: 'ntsf_system':
+:      Provide a factory for objects implemented by the system.

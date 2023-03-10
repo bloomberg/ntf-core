@@ -1,0 +1,308 @@
+/// @brief
+/// Provide versioning information.
+namespace BloombergLP::ntcscm { }
+
+/// @brief
+/// Provide platform and build configuration.
+namespace BloombergLP::ntccfg { }
+
+/// @brief
+/// Provide value-semantic types for the vocabulary of asynchronous network
+/// programming.
+namespace BloombergLP::ntca { }
+
+/// @brief
+/// Provide abstract mechanisms for asynchronous sockets, timers, and 
+/// resolvers.
+namespace BloombergLP::ntci { }
+
+/// @internal @brief
+/// Provide a mechanisms to record and collect metrics.
+namespace BloombergLP::ntcm { }
+
+/// @internal @brief
+/// Provide mechanisms and utilities to implement asynchronous sockets.
+namespace BloombergLP::ntcs { }
+
+/// @internal @brief
+/// Provide connect, accept, send, and receive queues.
+namespace BloombergLP::ntcq { }
+
+/// @internal @brief
+/// Provide connect, accept, send, and receive queues.
+namespace BloombergLP::ntcd { }
+
+/// @internal @brief
+/// Provide mechanisms and utilities for debugging and diagnostic.
+namespace BloombergLP::ntcdns { }
+
+/// @internal @brief
+/// Provide implementation details for asynchronous sockets.
+namespace BloombergLP::ntcu { }
+
+/// @internal @brief
+/// Provide asynchronous sockets driven by a reactor.
+namespace BloombergLP::ntcr { }
+
+/// @internal @brief
+/// Provide asynchronous sockets driven by a proactor.
+namespace BloombergLP::ntcp { }
+
+/// @internal @brief
+/// Provide reactors and proactors implemented by the system.
+namespace BloombergLP::ntco { }
+
+/// @brief
+/// Provide factories for creating mechanisms implemented by the system.
+namespace BloombergLP::ntcf { }
+
+/// @defgroup module_ntc NTC
+///
+/// @brief
+/// Provide asynchronous networking facilities.
+
+/// @defgroup module_ntcscm Versioning
+///
+/// @brief
+/// Provide versioning information.
+///
+/// @ingroup module_ntc
+
+/// @defgroup module_ntccfg Configuration
+///
+/// @brief
+/// Provide platform and build configuration.
+///
+/// @ingroup module_ntc
+
+/// @defgroup module_ntci_log Logging
+///
+/// @brief
+/// Provide contextual logging.
+///
+/// @ingroup module_ntc
+
+/// @defgroup module_ntci_metrics Metrics
+///
+/// @brief
+/// Provide facilities to measure, collect, and publish statistics about the
+/// quality and nature of operation.
+///
+/// @ingroup module_ntc
+
+/// @defgroup module_ntci_encryption Encryption
+///
+/// @brief
+/// Provide authentication and encryption.
+///
+/// @ingroup module_ntc
+
+/// @defgroup module_ntci_utility Utilities
+///
+/// @brief
+/// Provide mechanisms to manage resources.
+///
+/// @ingroup module_ntc
+
+/// @defgroup module_ntci_socket Sockets
+///
+/// @brief
+/// Provide asynchronous sockets.
+///
+/// @ingroup module_ntc
+
+/// @defgroup module_ntci_timer Timers
+///
+/// @brief
+/// Provide asynchronous timers.
+///
+/// @ingroup module_ntc
+
+/// @defgroup module_ntci_driver Drivers
+///
+/// @brief
+/// Provide models of asychronous behavior.
+///
+/// @ingroup module_ntc
+
+/// @defgroup module_ntci_reactor Reactors
+///
+/// @brief
+/// Provide a reactor model of asynchronous behavior.
+///
+/// @ingroup module_ntci_driver
+
+/// @defgroup module_ntci_proactor Proactors
+///
+/// @brief
+/// Provide a proactor model of asynchronous behavior.
+///
+/// @ingroup module_ntci_driver
+
+/// @defgroup module_ntci_operation Operation
+///
+/// @brief
+/// Provide asynchronous operations.
+///
+/// @ingroup module_ntc
+
+/// @defgroup module_ntci_operation_resolve Resolve
+///
+/// @brief
+/// Provide asynchronous operations to resolve domain names to IP addresses
+/// and service names to ports.
+///
+/// @ingroup module_ntci_operation
+
+/// @defgroup module_ntci_operation_bind Bind
+///
+/// @brief
+/// Provide asynchronous operations to bind a socket to a local endpoint.
+///
+/// @ingroup module_ntci_operation
+
+/// @defgroup module_ntci_operation_accept Accept
+///
+/// @brief
+/// Provide asynchronous operations to accept a connected socket from a 
+/// listener socket's backlog.
+///
+/// @ingroup module_ntci_operation
+
+/// @defgroup module_ntci_operation_connect Connect
+///
+/// @brief
+/// Provide asynchronous operations to connect a socket to a peer endpoint.
+///
+/// @ingroup module_ntci_operation
+
+/// @defgroup module_ntci_operation_upgrade Upgrade
+///
+/// @brief
+/// Provide asynchronous operations to upgrade a socket from a raw transport
+/// to an authenticated and encrypted transport.
+///
+/// @ingroup module_ntci_operation
+
+/// @defgroup module_ntci_operation_send Send
+///
+/// @brief
+/// Provide asynchronous operations to enqueue data to be transmitted to 
+/// a peer endpoint or set of peer endpoints.
+///
+/// @ingroup module_ntci_operation
+
+/// @defgroup module_ntci_operation_receive Receive
+///
+/// @brief
+/// Provide asynchronous operations to dequeue data transmitted to a local
+/// endpoint.
+///
+/// @ingroup module_ntci_operation
+
+/// @defgroup module_ntci_operation_downgrade Downgrade
+///
+/// @brief
+/// Provide asynchronous operations to downgrade a socket from an authenticated
+/// and encrypted transport back to a raw transport.
+///
+/// @ingroup module_ntci_operation
+
+/// @defgroup module_ntci_operation_shutdown Shutdown
+///
+/// @brief
+/// Provide asynchronous operations to perform a multi-way shutdown sequence.
+///
+/// @ingroup module_ntci_operation
+
+/// @defgroup module_ntci_operation_close Close
+///
+/// @brief
+/// Provide asynchronous operations to close a socket and release all its 
+/// resources.
+///
+/// @ingroup module_ntci_operation
+
+/// @defgroup module_ntci_operation_failure Failure
+///
+/// @brief
+/// Provide error handling. 
+///
+/// @ingroup module_ntci_operation
+
+/// @defgroup module_ntci_runtime Runtime
+///
+/// @brief
+/// Provide mechansims to execute asynchronously.
+///
+/// @ingroup module_ntc
+
+/// @internal @defgroup module_ntc_impl Implementation
+///
+/// @brief
+/// Private implementation details.
+///
+/// @ingroup module_ntc
+
+/// @internal @defgroup module_ntcm Metrics
+/// 
+/// @brief
+/// Provide a mechanisms to record and collect metrics.
+///
+/// @ingroup module_ntc_impl
+
+/// @internal @defgroup module_ntcs Machinery
+///
+/// @brief
+/// Provide mechanisms and utilities to implement asynchronous sockets.
+///
+/// @ingroup module_ntc_impl
+
+/// @internal @defgroup module_ntcq Queueing
+///
+/// @brief
+/// Provide connect, accept, send, and receive queues.
+///
+/// @ingroup module_ntc_impl
+
+/// @internal @defgroup module_ntcd Debugging
+///
+/// @brief
+/// Provide facilities for diagnostics and debugging.
+///
+/// @ingroup module_ntc_impl
+
+/// @internal @defgroup module_ntcdns Resolution
+///
+/// @brief
+/// Provide mechanisms and utilities for debugging and diagnostic.
+///
+/// @ingroup module_ntc_impl
+
+/// @internal @defgroup module_ntcu Utilities
+///
+/// @brief
+/// Provide common implementation details for asynchronous sockets.
+///
+/// @ingroup module_ntc_impl
+
+/// @internal @defgroup module_ntcr Reactive
+///
+/// @brief
+/// Provide asynchronous sockets driven by a reactor.
+///
+/// @ingroup module_ntc_impl
+
+/// @internal @defgroup module_ntcp Proactive
+///
+/// @brief
+/// Provide asynchronous sockets driven by a proactor.
+///
+/// @ingroup module_ntc_impl
+
+/// @internal @defgroup module_ntco Native
+///
+/// @brief
+/// Provide reactors and proactors implemented by the operating system.
+///
+/// @ingroup module_ntc_impl

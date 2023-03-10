@@ -1,0 +1,31 @@
+graph TD;
+
+    ntcf[ntcf<br>System Management and Object Factories];
+    ntco[ntco<br>Reactors and Proactors];
+    ntcr[ntcr<br>Reactor Sockets];
+    ntcp[ntcp<br>Proactor Sockets];
+
+    ntcq[ntcq<br>Accept, Send, and Receive Queues];
+
+    ntcs[ntcs<br>Timers, Strands, Operational State, and Flow Control];
+
+    ntcm[ntcm<br>Metrics Collection and Publication];
+
+    ntci[ntci<br>Abstract Sockets, Timers, Strands, and Thread Pools];
+    ntca[ntca<br>Networking Vocabulary];
+
+    ntcf-->ntco;
+
+    ntco-->ntcr;
+    ntco-->ntcp;
+
+    ntcp-->ntcq;
+    ntcq-->ntcs;
+    ntcs-->ntcm;
+    ntcm-->ntci;
+
+    ntcr-->ntci;
+    ntcr-->ntcq;
+    ntcp-->ntci;
+
+    ntci-->ntca;

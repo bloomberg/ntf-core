@@ -1,0 +1,8 @@
+ntco_devpoll
+ntco_epoll
+ntco_eventport
+ntco_iocp
+ntco_kqueue
+ntco_poll
+ntco_pollset
+ntco_select

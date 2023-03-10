@@ -1,0 +1,141 @@
+/// @brief
+/// Provide an enterprise namespace
+namespace BloombergLP { }
+
+/// @brief
+/// Provide versioning information.
+namespace BloombergLP::ntsscm { }
+
+/// @brief
+/// Provide platform and build configuration.
+namespace BloombergLP::ntscfg { }
+
+/// @brief
+/// Provide value-semantic types for the vocabulary of network programming.
+namespace BloombergLP::ntsa { }
+
+/// @brief
+/// Provide abstract mechanisms for blocking and non-blocking sockets and 
+/// resolvers.
+namespace BloombergLP::ntsi { }
+
+/// @internal @brief
+/// Provide debugging and diagnostic mechanisms and utilities.
+namespace BloombergLP::ntsd { }
+
+/// @internal @brief
+/// Provide low-level utilities for blocking and non-blocking network 
+/// programming.
+namespace BloombergLP::ntsu { }
+
+/// @internal @brief
+/// Provide system implementations of blocking and non-blocking sockets.
+namespace BloombergLP::ntsb { }
+
+/// @internal @brief
+/// Provide system implementations of polling mechanisms.
+namespace BloombergLP::ntso { }
+
+/// @brief
+/// Provide factories for creating mechanisms implemented by the system.
+namespace BloombergLP::ntsf { }
+
+/// @defgroup module_nts NTS
+///
+/// @brief
+/// Provide basic blocking and non-blocking networking facilities.
+
+/// @defgroup module_ntsscm Versioning
+///
+/// @brief
+/// Provide versioning information.
+///
+/// @ingroup module_nts
+
+/// @defgroup module_ntscfg Configuration
+///
+/// @brief
+/// Provide platform and build configuration.
+///
+/// @ingroup module_nts
+
+/// @defgroup module_ntsa Vocabulary
+///
+/// @brief
+/// Provide value-semantic types for the vocabulary of networking programming.
+///
+/// @ingroup module_nts
+
+/// @defgroup module_ntsa_system System
+///
+/// @brief
+/// Provide value-semantic types for the vocabulary of interacting with the
+/// networking facilities of the operating system.
+///
+/// @ingroup module_ntsa
+
+/// @defgroup module_ntsa_identity Identification
+///
+/// @brief
+/// Provide value-semantic types for the vocabulary of identifying sockets,
+/// hosts, and services. 
+///
+/// @ingroup module_ntsa
+
+/// @defgroup module_ntsa_data Data
+///
+/// @brief
+/// Provide various representations of data to transmit to a peer.
+///
+/// @ingroup module_ntsa
+
+/// @defgroup module_ntsa_operation Operation
+///
+/// @brief
+/// Provide descriptions of the auxilliary input and output of basic operations
+/// on sockets and resolvers.
+///
+/// @ingroup module_ntsa
+
+/// @defgroup module_ntsi Mechanisms
+///
+/// @brief
+/// Provide abstract mechanisms for blocking and non-blocking sockets and 
+/// resolvers.
+///
+/// @ingroup module_nts
+
+/// @internal @defgroup module_nts_impl Implementation
+///
+/// @brief
+/// Private implementation details.
+///
+/// @ingroup module_nts
+
+/// @internal @defgroup module_ntsd Diagnostics
+///
+/// @brief
+/// Provide debugging and diagnostic mechanisms and utilities.
+///
+/// @ingroup module_nts_impl
+
+/// @internal @defgroup module_ntsu Utilities
+///
+/// @brief
+/// Provide utilities for basic network programming.
+///
+/// @ingroup module_nts_impl
+
+/// @internal @defgroup module_ntsb Mechanisms
+///
+/// @brief
+/// Provide system implementations of blocking and non-blocking sockets.
+///
+/// @ingroup module_nts_impl
+
+/// @internal @defgroup module_ntso Polling
+///
+/// @brief
+/// Provide an interface to the operating system for socket events.
+///
+/// @ingroup module_nts_impl

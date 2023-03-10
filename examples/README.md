@@ -1,0 +1,47 @@
+# Bloomberg Transport Library Usage Examples
+
+- Communication
+    - Blocking
+        - Sockets
+            - Unicast
+                - Stream
+                    - m_ntsu01: Blocking Unicast TCP/IPv4 Stream Sockets
+                    - m_ntsu02: Blocking Unicast TCP/IPv6 Stream Sockets
+                    - m_ntsu03: Blocking Unicast Local (a.k.a. Unix Domain) Stream Sockets
+                - Datagram
+                    - m_ntsu04: Blocking Unicast UDP/IPv4 Datagram Sockets
+                    - m_ntsu05: Blocking Unicast UDP/IPv6 Datagram Sockets
+                    - m_ntsu06: Blocking Unicast Local (a.k.a. Unix Domain) Datagram Sockets
+            - Multicast
+                - Datagram
+                    - m_ntsu07: Blocking Multicast UDP/IPv4 Datagram Sockets
+                    - m_ntsu08: Blocking Multicast UDP/IPv6 Datagram Sockets
+    - Reactors
+        - Sockets
+            - Unicast
+                - Stream
+                    - m_ntcu01: Non-blocking (Reactive) Unicast TCP/IPv4 Stream Sockets
+                    - m_ntcu02: Non-blocking (Reactive) Unicast TCP/IPv6 Stream Sockets
+                    - m_ntcu03: Non-blocking (Reactive) Unicast Unix Domain Stream Sockets
+                - Datagram
+                    - m_ntcu04: Non-blocking (Reactive) Unicast UDP/IPv4 Datagram Sockets
+                    - m_ntcu05: Non-blocking (Reactive) Unicast UDP/IPv6 Datagram Sockets
+                    - m_ntcu06: Non-blocking (Reactive) Unicast Local (a.k.a. Unix Domain) Datagram Sockets
+            - Multicast
+                - Datagram
+                    - m_ntsu07: Non-blocking (Reactive) Multicast UDP/IPv4 Datagram Sockets
+                    - m_ntsu08: Non-blocking (Reactive) Multicast UDP/IPv6 Datagram Sockets
+    - Threads
+        - m_ntcu09: Single threads driving asynchronous sockets
+    - Asynchronous Sockets and Thread Pools
+        - Sockets and Interfaces (ntci)
+            - Unicast
+                - Stream
+                    - m_ntcu10: Asynchronous (Proactive) Unicast TCP/IPv4 and TLS Stream Sockets
+                    - m_ntcu11: Asynchronous (Proactive) Unicast TCP/IPv6 and TLS Stream Sockets
+                    - m_ntcu12: Asynchronous (Proactive) Unicast Local (a.k.a. Unix Domain) and TLS Stream Sockets
+                - Datagram
+            - Multicast
+                - Datagram
+                    - m_ntcu13: Asynchronous (Proactive) Multicast UDP/IPv4 Datagram Sockets
+                    - m_ntcu14: Asynchronous (Proactive) Multicast UDP/IPv6 Datagram Sockets

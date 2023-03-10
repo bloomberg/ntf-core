@@ -1,0 +1,12 @@
+ntccfg_bind
+ntccfg_foreach
+ntccfg_function
+ntccfg_inline
+ntccfg_likely
+ntccfg_limits
+ntccfg_lock
+ntccfg_object
+ntccfg_platform
+ntccfg_test
+ntccfg_traits
+ntccfg_tune

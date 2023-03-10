@@ -1,0 +1,35 @@
+ntcd.txt
+
+@PURPOSE: Provide debugging and diagnostic mechanisms and utilities.
+
+@MNEMONIC: Network Transport Core Diagnostics
+
+@DESCRIPTION: This package provides mechanisms and utilities for debugging
+and diagnosing the behavior of implementations based upon this library.
+
+/Hierarchical Synopsis
+/---------------------
+ The 'ntcd' package currently has 4 components having 1 level of physical
+ dependency.  The list below shows the hierarchical ordering of the components.
+ The order of components within each level is not architecturally significant,
+ just alphabetical.
+..
+  1. ntcd_datautil
+     ntcd_encryption
+     ntcd_proactor
+     ntcd_reactor
+..
+
+/Component Synopsis
+/------------------
+: 'ntcd_datautil':
+:      Provide a utility to generate data and confirm data.
+:
+: 'ntcd_encryption':
+:      Provide an encryption protocol for debugging.
+:
+: 'ntcd_proactor':
+:      Provide a proactor for debuggin.
+:
+: 'ntcd_reactor':
+:      Provide a reactor for debuggin.

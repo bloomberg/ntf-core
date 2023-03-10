@@ -1,0 +1,194 @@
+---
+Language:        Cpp
+AccessModifierOffset: -2
+AlignAfterOpenBracket: Align
+AlignArrayOfStructures: Right
+AlignConsecutiveMacros: false
+# BDE: RightAlignContinuations: true
+AlignConsecutiveAssignments:
+  Enabled: true
+  AlignCompound: true
+  PadOperators: true
+AlignConsecutiveBitFields: false
+AlignConsecutiveDeclarations:
+  Enabled: true
+  AcrossEmptyLines: false
+# BDE: AlignConsecutiveFunctionsAndData: false
+# BDE: AlignedDeclaratorsPattern: '^[ds]_'
+# BDE: AlignConsecutiveDeclarationsGutter: 1
+AlignEscapedNewlines: Right
+AlignOperands:   Align
+AlignTrailingComments: true
+AllowAllArgumentsOnNextLine: false
+AllowAllConstructorInitializersOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortEnumsOnASingleLine: true
+AllowShortBlocksOnASingleLine: Never
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortLambdasOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+# BDE: AllowShortNamespacesOnASingleLine: true
+AlwaysBreakAfterDefinitionReturnType: None
+AlwaysBreakAfterReturnType: None
+AlwaysBreakBeforeMultilineStrings: false
+AlwaysBreakTemplateDeclarations: Yes
+# BDE: AlwaysBreakAfterInline: true
+BinPackArguments: false
+BinPackParameters: false
+BraceWrapping:
+  AfterCaseLabel:  false
+  AfterClass:      true
+  AfterControlStatement: MultiLine
+  AfterEnum:       false
+  AfterFunction:   true
+  AfterNamespace:  false
+  AfterObjCDeclaration: false
+  AfterStruct:     false
+  AfterUnion:      false
+  AfterExternBlock: false
+  BeforeCatch:     true
+  BeforeElse:      true
+  BeforeLambdaBody: false
+  BeforeWhile:     false
+  IndentBraces:    false
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true
+  SplitEmptyNamespace: true
+BreakBeforeBinaryOperators: None
+BreakBeforeBraces: Custom
+BreakBeforeInheritanceComma: false
+BreakInheritanceList: BeforeColon
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializersBeforeComma: false
+BreakConstructorInitializers: BeforeComma
+BreakAfterJavaFieldAnnotations: false
+BreakStringLiterals: true
+ColumnLimit:     79
+CommentPragmas: '^ ======'
+    #  - '^ class'
+    #  - '^ struct'
+CompactNamespaces: false
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+ConstructorInitializerIndentWidth: 0
+ContinuationIndentWidth: 4
+Cpp11BracedListStyle: true
+DeriveLineEnding: true
+# BDE: DecltypeMacro:   BSLS_COMPILERFEATURES_FORWARD_REF
+# BDE: InlineMacro:     BSLS_PLATFORM_AGGRESSIVE_INLINE
+DerivePointerAlignment: false
+# BDE: DeriveReferenceAlignment: false
+DisableFormat:   false
+ExperimentalAutoDetectBinPacking: false
+FixNamespaceComments: false
+ForEachMacros:
+  - foreach
+  - Q_FOREACH
+  - BOOST_FOREACH
+IncludeBlocks:   Preserve
+IncludeCategories:
+  - Regex:           '<bsl_([A-Za-z0-9.\Q/-_\E])+\.h>'
+    Priority:        7
+    SortPriority:    0
+  - Regex:           '<bsl([A-Za-z0-9.\Q/-_\E])+\.h>'
+    Priority:        6
+    SortPriority:    0
+  - Regex:           '<bdl([A-Za-z0-9.\Q/-_\E])+\.h>'
+    Priority:        5
+    SortPriority:    0
+  - Regex:           '<bde([A-Za-z0-9.\Q/-_\E])+\.h>'
+    Priority:        4
+    SortPriority:    0
+  - Regex:           '<bce([A-Za-z0-9.\Q/-_\E])+\.h>'
+    Priority:        3
+    SortPriority:    0
+  - Regex:           '<nts([A-Za-z0-9.\Q/-_\E])+\.h>'
+    Priority:        2
+    SortPriority:    0
+  - Regex:           '<ntc([A-Za-z0-9.\Q/-_\E])+\.h>'
+    Priority:        1
+    SortPriority:    0
+IncludeIsMainRegex: '(Test)?$'
+IncludeIsMainSourceRegex: ''
+IndentCaseLabels: false
+IndentCaseBlocks: false
+IndentGotoLabels: true
+# BDE: IndentCommentAfterFunctionDeclaration: true
+# BDE: IndentCommentAfterTagDeclaration: true
+# BDE: CaseLabelOffset: 2
+# BDE: KeepCenteredComments: false
+# BDE: CenterBanners:   true
+# BDE: CenterBannersAtIndentWidth: false
+# BDE: RightAlignCommentRETURN: true
+# BDE: RightAlignControlFlowComments: true
+# BDE: InsertSpaceBeforeFirstAttachedCommentWord: false
+IndentPPDirectives: None
+IndentExternBlock: AfterExternBlock
+IndentWidth:     4
+IndentWrappedFunctionNames: false
+InsertTrailingCommas: None
+JavaScriptQuotes: Leave
+JavaScriptWrapImports: true
+KeepEmptyLinesAtTheStartOfBlocks: false
+# BDE: LineFormatAlgorithm: BDE
+# BDE: BDENonFunctionIdentifierPattern: '^BSLMF_.*|(^|_)ASSERT$'
+MacroBlockBegin: ''
+MacroBlockEnd:   ''
+MaxEmptyLinesToKeep: 1
+NamespaceIndentation: None
+ObjCBinPackProtocolList: Auto
+ObjCBlockIndentWidth: 2
+ObjCBreakBeforeNestedBlockParam: true
+ObjCSpaceAfterProperty: false
+ObjCSpaceBeforeProtocolList: true
+PenaltyBreakOpenParenthesis: 0
+PenaltyBreakAssignment: 0
+# BDE: PenaltyBreakAroundNew: 110
+PenaltyBreakBeforeFirstCallParameter: 0
+# BDE: PenaltyBreakBeforeLoneCallParameter: 85
+# BDE: PenaltyBreakBinaryOperator: 26
+PenaltyBreakComment: 30000
+PenaltyBreakFirstLessLess: 120
+PenaltyBreakString: 1000
+PenaltyBreakTemplateDeclaration: 10
+PenaltyExcessCharacter: 1000000
+PenaltyReturnTypeOnItsOwnLine: 6000000
+PointerAlignment: Left
+ReferenceAlignment: Left
+ReflowComments:  false
+SortIncludes:    true
+# BDE: SortIncludesComparisonStyle: Alphanumeric
+SortUsingDeclarations: true
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCpp11BracedList: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatements
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceInEmptyBlock: false
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 2
+SpacesInAngles:  false
+SpacesInConditionalStatement: false
+SpacesInContainerLiterals: true
+SpacesInCStyleCastParentheses: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+SpaceBeforeSquareBrackets: false
+Standard:        c++03
+StatementMacros:
+  - Q_UNUSED
+  - QT_REQUIRE_VERSION
+TabWidth:        4
+UseCRLF:         false
+UseTab:          Never
+WhitespaceSensitiveMacros:
+  - STRINGIZE
+  - PP_STRINGIZE
+  - BOOST_PP_STRINGIZE
+...
+

@@ -1,0 +1,41 @@
+ntsd.txt
+
+@PURPOSE: Provide debugging and diagnostic mechanisms and utilities.
+
+@MNEMONIC: Network Transport System Diagnostics
+
+@DESCRIPTION: This package provides mechanisms and utilities for debugging
+and diagnosing the behavior of implementations based upon this library.
+
+/Hierarchical Synopsis
+/---------------------
+ The 'ntsd' package currently has 5 components having 3 levels of physical
+ dependency.  The list below shows the hierarchical ordering of the components.
+ The order of components within each level is not architecturally significant,
+ just alphabetical.
+..
+  3. ntsd_messageparser
+
+  2. ntsd_message
+
+  1. ntsd_datautil
+     ntsd_messageheader
+     ntsd_messagetype
+..
+
+/Component Synopsis
+/------------------
+: 'ntsd_datautil':
+:      Provide a utility to generate data and confirm data.
+:
+: 'ntsd_message':
+:      Provide a test message.
+:
+: 'ntsd_messageheader':
+:      Provide a test message header.
+:
+: 'ntsd_messageparser':
+:      Provide a parser for test messages.
+:
+: 'ntsd_messagetype':
+:      Provide an enumeration of the test message types.

@@ -1,0 +1,41 @@
+ntcm.txt
+
+@PURPOSE: Provide a system to record and collect metrics.
+
+@MNEMONIC: Network Transport Core Metrics
+
+@DESCRIPTION: This package provides a system to record and collect metrics.
+
+/Hierarchical Synopsis
+/---------------------
+ The 'ntcm' package currently has 5 components having 4 levels of physical
+ dependency.  The list below shows the hierarchical ordering of the components.
+ The order of components within each level is not architecturally significant,
+ just alphabetical.
+..
+  4. ntcm_metric
+
+  3. ntcm_monitorable
+
+  2. ntcm_identifiable
+
+  1. ntcm_guid
+     ntcm_objectid
+..
+
+/Component Synopsis
+/------------------
+: 'ntcm_guid':
+:      Provide a globally unique identifier.
+:
+: 'ntcm_identifiable':
+:      Provide a common base for objects with identity.
+:
+: 'ntcm_metric':
+:      Provide value semantic types for recording measurements
+:
+: 'ntcm_monitorable':
+:      Provide an interface for classes that measure statistics.
+:
+: 'ntcm_objectid':
+:      Provide identity for run-time objects unique to the local process.

@@ -1,0 +1,36 @@
+ntcrs.txt
+
+@PURPOSE: Provide asynchronous sockets driven by a reactor.
+
+@MNEMONIC: Network Transport Core Reactor Drivers
+
+@DESCRIPTION: This package provides asynchronous sockets driven by a reactor.
+
+/Hierarchical Synopsis
+/---------------------
+ The 'ntcrs' package currently has 4 components having 3 levels of physical
+ dependency.  The list below shows the hierarchical ordering of the components.
+ The order of components within each level is not architecturally significant,
+ just alphabetical.
+..
+  3. ntcrs_reactor
+
+  2. ntcrs_listenersocket
+
+  1. ntcrs_datagramsocket
+     ntcrs_streamsocket
+..
+
+/Component Synopsis
+/------------------
+: 'ntcrs_datagramsocket':
+:      Provide an asynchronous, reactively-driven datagram socket.
+:
+: 'ntcrs_listenersocket':
+:      Provide an asynchronous, reactively-driven listener socket.
+:
+: 'ntcrs_reactor':
+:      Provide asynchronous I/O in the reactor paradigm.
+:
+: 'ntcrs_streamsocket':
+:      Provide an asynchronous, reactively-driven stream socket.

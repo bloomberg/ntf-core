@@ -1,0 +1,42 @@
+ntcq.txt
+
+@PURPOSE: Provide connect, accept, send, and receive queues.
+
+@MNEMONIC: Network Transport System Queues
+
+@DESCRIPTION: This package provides connect, accept, send, and receive queues.
+
+/Hierarchical Synopsis
+/---------------------
+ The 'ntcq' package currently has 6 components having 1 level of physical
+ dependency.  The list below shows the hierarchical ordering of the components.
+ The order of components within each level is not architecturally significant,
+ just alphabetical.
+..
+  1. ntcq_accept
+     ntcq_connect
+     ntcq_receive
+     ntcq_receivefrom
+     ntcq_send
+     ntcq_sendto
+..
+
+/Component Synopsis
+/------------------
+: 'ntcq_accept':
+:      Provide an accept callback queue.
+:
+: 'ntcq_connect':
+:      Provide an connect callback.
+:
+: 'ntcq_receive':
+:      Provide a receive callback queue.
+:
+: 'ntcq_receivefrom':
+:      Provide a receive message callback queue.
+:
+: 'ntcq_send':
+:      Provide a send callback queue.
+:
+: 'ntcq_sendto':
+:      Provide a send message callback queue.

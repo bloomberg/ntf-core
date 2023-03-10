@@ -1,0 +1,46 @@
+ntsi.txt
+
+@PURPOSE: Provide abstract mechanisms for blocking and non-blocking sockets.
+
+@MNEMONIC: Network Transport System Interface
+
+@DESCRIPTION: This package provides abstract mechanisms for blocking and
+non-blocking sockets.
+
+/Hierarchical Synopsis
+/---------------------
+ The 'ntsi' package currently has 6 components having 4 levels of physical
+ dependency.  The list below shows the hierarchical ordering of the components.
+ The order of components within each level is not architecturally significant,
+ just alphabetical.
+..
+  4. ntsi_listenersocket
+
+  3. ntsi_datagramsocket
+     ntsi_streamsocket
+
+  2. ntsi_channel
+
+  1. ntsi_descriptor
+     ntsi_resolver
+..
+
+/Component Synopsis
+/------------------
+: 'ntsi_channel':
+:      Provide an interface for an established channel of communication.
+:
+: 'ntsi_datagramsocket':
+:      Provide a blocking or non-blocking datagram socket.
+:
+: 'ntsi_descriptor':
+:      Provide an interface for an object implemented by a system handle.
+:
+: 'ntsi_listenersocket':
+:      Provide a blocking or non-blocking listener socket.
+:
+: 'ntsi_resolver':
+:      Provide a resolver of names and IP addresses.
+:
+: 'ntsi_streamsocket':
+:      Provide a blocking or non-blocking stream socket.

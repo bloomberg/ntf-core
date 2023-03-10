@@ -1,0 +1,132 @@
+ntcs.txt
+
+@PURPOSE: Provide mechanisms and utilities to implement asynchronous sockets.
+
+@MNEMONIC: Network Transport Core Socket Implementations
+
+@DESCRIPTION: This package provides mechanisms and utilities to implement
+asynchronous sockets.
+
+/Hierarchical Synopsis
+/---------------------
+ The 'ntcs' package currently has 29 components having 2 levels of physical
+ dependency.  The list below shows the hierarchical ordering of the components.
+ The order of components within each level is not architecturally significant,
+ just alphabetical.
+..
+  2. ntcs_blobbufferfactory
+     ntcs_flowcontrolstate
+     ntcs_ratelimiter
+     ntcs_shutdownstate
+     ntcs_streamsocketutil
+     ntcs_timer
+
+  1. ntcs_callbackstate
+     ntcs_chronology
+     ntcs_compat
+     ntcs_datagramsocketmanager
+     ntcs_datagramsocketsession
+     ntcs_datagramsocketutil
+     ntcs_datapool
+     ntcs_dispatch
+     ntcs_driver
+     ntcs_flowcontrolcontext
+     ntcs_leakybucket
+     ntcs_listenersocketmanager
+     ntcs_listenersocketsession
+     ntcs_listenersocketutil
+     ntcs_metrics
+     ntcs_shutdowncontext
+     ntcs_strand
+     ntcs_streamsocketmanager
+     ntcs_streamsocketsession
+     ntcs_timersession
+     ntcs_watermarks
+     ntcs_watermarkutil
+..
+
+/Component Synopsis
+/------------------
+: 'ntcs_blobbufferfactory':
+:      Provide an efficient, pooled blob buffer factory
+:
+: 'ntcs_callbackstate':
+:      Provide a state machine to guard the execution of a callback.
+:
+: 'ntcs_chronology':
+:      Provide a priority queue of timers.
+:
+: 'ntcs_compat':
+:      Provide utilities for socket configuration
+:
+: 'ntcs_datagramsocketmanager':
+:      Provide a datagram socket manager.
+:
+: 'ntcs_datagramsocketsession':
+:      Provide a datagram socket session callback proxy.
+:
+: 'ntcs_datagramsocketutil':
+:      Provide utilities for datagram sockets.
+:
+: 'ntcs_datapool':
+:      Provide a pool of blobs, blob buffers, and data containers.
+:
+: 'ntcs_dispatch':
+:      Provide a utility to dispatch the announcement of socket events.
+:
+: 'ntcs_driver':
+:      Provide an interface to drive a reactor or proactor.
+:
+: 'ntcs_flowcontrolcontext':
+:      Describe the result of the application of flow control.
+:
+: 'ntcs_flowcontrolstate':
+:      Provide a mechanism to manage flow control.
+:
+: 'ntcs_leakybucket':
+:      Provide a mechanism to monitor the consumption rate of a resource.
+:
+: 'ntcs_listenersocketmanager':
+:      Provide a listener socket manager.
+:
+: 'ntcs_listenersocketsession':
+:      Provide a listener socket session callback proxy.
+:
+: 'ntcs_listenersocketutil':
+:      Provide utilities for listener sockets.
+:
+: 'ntcs_metrics':
+:      Provide statistics for the runtime behavior of sockets.
+:
+: 'ntcs_ratelimiter':
+:      Provide a mechanism to limit peak and sustained consumption rates.
+:
+: 'ntcs_shutdowncontext':
+:      Describe the result of a shutdown operation.
+:
+: 'ntcs_shutdownstate':
+:      Provide a mechanism to sequence the shutdown of a stream socket
+:
+: 'ntcs_strand':
+:      Provide a guarantor of sequential, non-concurrent execution
+:
+: 'ntcs_streamsocketmanager':
+:      Provide a stream socket manager.
+:
+: 'ntcs_streamsocketsession':
+:      Provide a stream socket session callback proxy.
+:
+: 'ntcs_streamsocketutil':
+:      Provide utilities for implementing stream sockets.
+:
+: 'ntcs_timer':
+:      Provide a timer for the reactor I/O paradigm.
+:
+: 'ntcs_timersession':
+:      Provide a timer session callback proxy.
+:
+: 'ntcs_watermarks':
+:      Describe the low and high watermarks of a queue.
+:
+: 'ntcs_watermarkutil':
+:      Provide a utility for evaluating watermarks.

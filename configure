@@ -1,0 +1,887 @@
+#!/usr/bin/env bash
+
+# Copyright 2020-2023 Bloomberg Finance L.P.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+set -o pipefail
+
+NTF_CONFIGURE_REPOSITORY=$(dirname ${0})
+if [[ -n ${NTF_CONFIGURE_REPOSITORY##/*} ]]; then
+    NTF_CONFIGURE_REPOSITORY=${PWD}/${NTF_CONFIGURE_REPOSITORY#.}
+fi
+NTF_CONFIGURE_REPOSITORY=${NTF_CONFIGURE_REPOSITORY%/}
+
+cd ${NTF_CONFIGURE_REPOSITORY}
+
+NTF_CONFIGURE_UNAME=$(uname)
+if [[ "${NTF_CONFIGURE_UNAME}" == "MINGW32_NT-6.2" ]]; then
+    NTF_CONFIGURE_UNAME="Windows"
+fi
+
+if [[ -z "${NTF_CONFIGURE_UFID}" ]]; then
+    NTF_CONFIGURE_UFID="opt_dbg_exc_mt_64"
+fi
+
+if [[ -z "${NTF_CONFIGURE_REFROOT}" ]]; then
+    if [[ -z "${DISTRIBUTION_REFROOT}" ]]; then
+        NTF_CONFIGURE_REFROOT=""
+    else
+        NTF_CONFIGURE_REFROOT="${DISTRIBUTION_REFROOT}"
+    fi
+fi
+
+if [[ -z "${NTF_CONFIGURE_PREFIX}" ]]; then
+    if [[ -z "${PREFIX}" ]]; then
+        NTF_CONFIGURE_PREFIX="/opt/bb"
+    else
+        NTF_CONFIGURE_PREFIX="${PREFIX}"
+    fi
+fi
+
+if [[ -z "${NTF_CONFIGURE_OUTPUT}" ]]; then
+    NTF_CONFIGURE_OUTPUT="${NTF_CONFIGURE_REPOSITORY}/build"
+fi
+
+if [[ -z "${NTF_CONFIGURE_DISTRIBUTION}" ]]; then
+    NTF_CONFIGURE_DISTRIBUTION="unstable"
+fi
+
+if [[ -z "${NTF_CONFIGURE_GENERATOR}" ]]; then
+    NTF_CONFIGURE_CODE=$(which code 2>&1)
+    if [ ${?} -eq 0 ] || [[ "${NTF_CONFIGURE_UNAME}" == "Darwin" ]]; then
+        NTF_CONFIGURE_GENERATOR="Unix Makefiles"
+    else
+        NTF_CONFIGURE_NINJA=$(which ninja 2>&1)
+        if [ ${?} -eq 0 ]; then
+            NTF_CONFIGURE_GENERATOR="Ninja"
+        else
+            NTF_CONFIGURE_GENERATOR="Unix Makefiles"
+        fi
+    fi
+fi
+
+NTF_CONFIGURE_COMPILER=""
+NTF_CONFIGURE_SANITIZER=""
+
+if [[ -z "${NTF_CONFIGURE_MULTIPLATFORM}" ]]; then
+    NTF_CONFIGURE_MULTIPLATFORM=1
+fi
+
+if [[ -z "${NTF_CONFIGURE_JOBS}" ]]; then
+    NTF_CONFIGURE_JOBS=8
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_BSL}" ]]; then
+    NTF_CONFIGURE_WITH_BSL=1
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_BDL}" ]]; then
+    NTF_CONFIGURE_WITH_BDL=1
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_BAL}" ]]; then
+    NTF_CONFIGURE_WITH_BAL=1
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_NTS}" ]]; then
+    NTF_CONFIGURE_WITH_NTS=1
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_NTC}" ]]; then
+    NTF_CONFIGURE_WITH_NTC=1
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_ADDRESS_FAMILY_IPV4}" ]]; then
+    NTF_CONFIGURE_WITH_ADDRESS_FAMILY_IPV4=1
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_ADDRESS_FAMILY_IPV6}" ]]; then
+    NTF_CONFIGURE_WITH_ADDRESS_FAMILY_IPV6=1
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_ADDRESS_FAMILY_LOCAL}" ]]; then
+    NTF_CONFIGURE_WITH_ADDRESS_FAMILY_LOCAL=1
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_TCP}" ]]; then
+    NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_TCP=1
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_UDP}" ]]; then
+    NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_UDP=1
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_LOCAL}" ]]; then
+    NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_LOCAL=1
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_SELECT}" ]]; then
+    NTF_CONFIGURE_WITH_SELECT=1
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_POLL}" ]]; then
+    NTF_CONFIGURE_WITH_POLL=1
+fi
+
+if [[ "${NTF_CONFIGURE_UNAME}" == "Linux" ]]; then
+    if [[ -z "${NTF_CONFIGURE_WITH_EPOLL}" ]]; then
+        NTF_CONFIGURE_WITH_EPOLL=1
+    fi
+else
+    NTF_CONFIGURE_WITH_EPOLL=0
+fi
+
+if [[ "${NTF_CONFIGURE_UNAME}" == "SunOS" ]]; then
+    if [[ -z "${NTF_CONFIGURE_WITH_DEVPOLL}" ]]; then
+        NTF_CONFIGURE_WITH_DEVPOLL=1
+    fi
+
+    if [[ -z "${NTF_CONFIGURE_WITH_EVENTPORT}" ]]; then
+        NTF_CONFIGURE_WITH_EVENTPORT=1
+    fi
+else
+    NTF_CONFIGURE_WITH_DEVPOLL=0
+    NTF_CONFIGURE_WITH_EVENTPORT=0
+fi
+
+if [[ "${NTF_CONFIGURE_UNAME}" == "AIX" ]]; then
+    if [[ -z "${NTF_CONFIGURE_WITH_POLLSET}" ]]; then
+        NTF_CONFIGURE_WITH_POLLSET=1
+    fi
+else
+    NTF_CONFIGURE_WITH_POLLSET=0
+fi
+
+if [[ "${NTF_CONFIGURE_UNAME}" == "Darwin" ]] || \
+   [[ "${NTF_CONFIGURE_UNAME}" == "FreeBSD" ]] ; then
+    if [[ -z "${NTF_CONFIGURE_WITH_KQUEUE}" ]]; then
+        NTF_CONFIGURE_WITH_KQUEUE=1
+    fi
+else
+    NTF_CONFIGURE_WITH_KQUEUE=0
+fi
+
+if [[ "${NTF_CONFIGURE_UNAME}" == "Windows" ]]; then
+    if [[ -z "${NTF_CONFIGURE_WITH_IOCP}" ]]; then
+        NTF_CONFIGURE_WITH_IOCP=1
+    fi
+else
+    NTF_CONFIGURE_WITH_IOCP=0
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING}" ]]; then
+    NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING=1
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_THREAD_SCALING}" ]]; then
+    NTF_CONFIGURE_WITH_THREAD_SCALING=1
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_DEPRECATED_FEATURES}" ]]; then
+    NTF_CONFIGURE_WITH_DEPRECATED_FEATURES=1
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_LOGGING}" ]]; then
+    NTF_CONFIGURE_WITH_LOGGING=0
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_METRICS}" ]]; then
+    NTF_CONFIGURE_WITH_METRICS=1
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_BRANCH_PREDICTION}" ]]; then
+    NTF_CONFIGURE_WITH_BRANCH_PREDICTION=1
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_SPIN_LOCKS}" ]]; then
+    NTF_CONFIGURE_WITH_SPIN_LOCKS=0
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_RECURSIVE_MUTEXES}" ]]; then
+    NTF_CONFIGURE_WITH_RECURSIVE_MUTEXES=0
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_STACK_TRACE_LEAK_REPORT}" ]]; then
+    NTF_CONFIGURE_WITH_STACK_TRACE_LEAK_REPORT=0
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_STACK_TRACE_TEST_ALLOCATOR}" ]]; then
+    NTF_CONFIGURE_WITH_STACK_TRACE_TEST_ALLOCATOR=0
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_APPLICATIONS}" ]]; then
+    NTF_CONFIGURE_WITH_APPLICATIONS=1
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_USAGE_EXAMPLES}" ]]; then
+    NTF_CONFIGURE_WITH_USAGE_EXAMPLES=1
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_MOCKS}" ]]; then
+    NTF_CONFIGURE_WITH_MOCKS=0
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_INTEGRATION_TESTS}" ]]; then
+    NTF_CONFIGURE_WITH_TESTS=1
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_INTEGRATION_TESTS}" ]]; then
+    NTF_CONFIGURE_WITH_INTEGRATION_TESTS=0
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_WARNINGS}" ]]; then
+    NTF_CONFIGURE_WITH_WARNINGS=1
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_WARNINGS_AS_ERRORS}" ]]; then
+    NTF_CONFIGURE_WITH_WARNINGS_AS_ERRORS=1
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_TIME_TRACE}" ]]; then
+    NTF_CONFIGURE_WITH_TIME_TRACE=0
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_TIME_REPORT}" ]]; then
+    NTF_CONFIGURE_WITH_TIME_REPORT=0
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_COVERAGE}" ]]; then
+    NTF_CONFIGURE_WITH_COVERAGE=0
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_DOCUMENTATION}" ]]; then
+    NTF_CONFIGURE_WITH_DOCUMENTATION=0
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_DOCUMENTATION_INTERNAL}" ]]; then
+    NTF_CONFIGURE_WITH_DOCUMENTATION_INTERNAL=0
+fi
+
+if [[ -z "${NTF_CONFIGURE_FROM_CONTINUOUS_INTEGRATION}" ]]; then
+    NTF_CONFIGURE_FROM_CONTINUOUS_INTEGRATION=0
+fi
+
+if [[ -z "${NTF_CONFIGURE_FROM_PACKAGING}" ]]; then
+    NTF_CONFIGURE_FROM_PACKAGING=0
+fi
+
+NTF_CONFIGURE_VERBOSE=0
+NTF_CONFIGURE_WHAT=0
+NTF_CONFIGURE_CLEAN=1
+
+usage()
+{
+    echo "usage: configure [--clean] [--refroot <path>] [--prefix <path>] [--output <path>] [--distribution <name>] [--debug|release] [--ufid <code>] [--with-<feature> <name>] [--without-<feature> <name>]"
+    echo "where: "
+    echo "    --refroot             <path>       Path to the refroot containing build dependencies [${NTF_CONFIGURE_REFROOT}]"
+    echo "    --prefix              <path>       Path to the refroot where build artifacts will be installed [${NTF_CONFIGURE_PREFIX}]"
+    echo "    --output              <path>       Path to the directory where build artifacts will be staged [${NTF_CONFIGURE_OUTPUT}]"
+    echo "    --distribution        <name>       Name of the distribution [${NTF_CONFIGURE_DISTRIBUTION}]"
+    echo "    --ufid                <code>       The unified flag identifiers for the build system [${NTF_CONFIGURE_UFID}]"
+    echo "    --compiler            <name>       Compiler name, e.g. \"gcc\", \"clang\", etc."
+    echo "    --generator           <name>       CMake generator name: \"Ninja\", \"Unix Makefiles\", \"NMake Makefiles\", or \"msvc\" [\"${NTF_CONFIGURE_GENERATOR}\"]"
+    echo "    --sanitizer           <name>       Sanitizer name: \"asan\" (addressability), \"msan\" (uninitialized memory), \"tsan\" (data races), or \"ubsan\" (undefined behavior)"
+    echo "    --jobs                <number>     Number of parallel build jobs [${NTF_CONFIGURE_JOBS}]"
+    echo "    --clean                            Remove the previous build output, if any, before configuring"
+    echo "    --keep                             Retain the previous build output, if any, while configuring"
+
+    echo "    --debug                            Build the default debug UFID"
+    echo "    --release                          Build the default release UFID"
+
+    echo "    --multiplatform                    Decorate prefix, refroot, and output directories with uname and ufid [${NTF_CONFIGURE_MULTIPLATFORM}]"
+    echo "    --standalone                       Do not decorate prefix, refroot, and output directories with uname and ufid"
+
+    echo "    --with-bsl                         Enable and build features that depend on BSL [${NTF_CONFIGURE_WITH_BSL}]"
+    echo "    --with-bdl                         Enable and build features that depend on BDL [${NTF_CONFIGURE_WITH_BDL}]"
+    echo "    --with-bal                         Enable and build features that depend on BAL [${NTF_CONFIGURE_WITH_BAL}]"
+    echo "    --with-nts                         Enable and build features that depend on NTS [${NTF_CONFIGURE_WITH_NTS}]"
+    echo "    --with-ntc                         Enable and build features that depend on NTC [${NTF_CONFIGURE_WITH_NTC}]"
+
+    echo "    --with-address-family-ipv4         Enable the IPv4 address family [${NTF_CONFIGURE_WITH_ADDRESS_FAMILY_IPV4}]"
+    echo "    --with-address-family-ipv6         Enable the IPv6 address family [${NTF_CONFIGURE_WITH_ADDRESS_FAMILY_IPV6}]"
+    echo "    --with-address-family-local        Enable the local (a.k.a. Unix) address family [${NTF_CONFIGURE_WITH_ADDRESS_FAMILY_LOCAL}]"
+
+    echo "    --with-transport-protocol-tcp      Enable the TCP transport protocol [${NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_TCP}]"
+    echo "    --with-transport-protocol-udp      Enable the UDP transport protocol [${NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_UDP}]"
+    echo "    --with-transport-protocol-local    Enable the local (a.k.a. Unix) transport protocol [${NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_LOCAL}]"
+
+    echo "    --with-select                      Enable the reactor driver implemented with 'select' [${NTF_CONFIGURE_WITH_SELECT}]"
+    echo "    --with-poll                        Enable the reactor driver implemented with 'poll' [${NTF_CONFIGURE_WITH_POLL}]"
+    echo "    --with-epoll                       Enable the reactor driver implemented with 'epoll' (Linux only) [${NTF_CONFIGURE_WITH_EPOLL}]"
+    echo "    --with-devpoll                     Enable the reactor driver implemented with /dev/poll (Solaris only) [${NTF_CONFIGURE_WITH_DEVPOLL}]"
+    echo "    --with-eventport                   Enable the reactor driver implemented with Event Ports (Solaris only) [${NTF_CONFIGURE_WITH_EVENTPORT}]"
+    echo "    --with-pollset                     Enable the reactor driver implemented with 'pollset' (AIX only) [${NTF_CONFIGURE_WITH_POLLSET}]"
+    echo "    --with-kqueue                      Enable the reactor driver implemented with 'kqueue' on (Darwin and FreeBSD only) [${NTF_CONFIGURE_WITH_KQUEUE}]"
+    echo "    --with-iocp                        Enable the proactor driver implemented with I/O completion ports (Windows only) [${NTF_CONFIGURE_WITH_IOCP}]"
+
+    echo "    --with-dynamic-load-balancing      Enable processing I/O on any thread, rather than a single thread [${NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING}]"
+    echo "    --with-thread-scaling              Enable automatic scaling of thread pools [${NTF_CONFIGURE_WITH_THREAD_SCALING}]"
+    echo "    --with-deprecated-features         Enable deprecated features [${NTF_CONFIGURE_WITH_DEPRECATED_FEATURES}]"
+
+    echo "    --with-logging                     Build with logging [${NTF_CONFIGURE_WITH_LOGGING}]"
+    echo "    --with-metrics                     Build with metrics [${NTF_CONFIGURE_WITH_METRICS}]"
+    echo "    --with-branch-prediction           Build with branch prediction [${NTF_CONFIGURE_WITH_BRANCH_PREDICTION}]"
+
+    echo "    --with-spin-locks                  Build with mutually-exclusive locks implemented as spin locks [${NTF_CONFIGURE_WITH_SPIN_LOCKS}]"
+    echo "    --with-recursive-mutexes           Build with mutually-exclusive locks implemented as recursive mutexes [${NTF_CONFIGURE_WITH_RECURSIVE_MUTEXES}]"
+
+    echo "    --with-stack-trace-leak-report     Build chronology with stack traces dumped upon function and timer leaks [${NTF_CONFIGURE_WITH_STACK_TRACE_LEAK_REPORT}]"
+    echo "    --with-stack-trace-test-allocator  Build tests with allocator stack traces dumped upon memory leaks [${NTF_CONFIGURE_WITH_STACK_TRACE_TEST_ALLOCATOR}]"
+
+    echo "    --with-warnings                    Build with warnings enabled [${NTF_CONFIGURE_WITH_WARNINGS}]"
+    echo "    --with-warnings-as-errors          Build with warnings as errors [${NTF_CONFIGURE_WITH_WARNINGS_AS_ERRORS}]"
+    echo "    --with-time-trace                  Build with time traces enabled [${NTF_CONFIGURE_WITH_TIME_TRACE}]"
+    echo "    --with-time-report                 Build with time reports enabled [${NTF_CONFIGURE_WITH_TIME_REPORT}]"
+    echo "    --with-coverage                    Build with code coverage enabled [${NTF_CONFIGURE_WITH_COVERAGE}]"
+
+    echo "    --with-applications                Build applications [${NTF_CONFIGURE_WITH_APPLICATIONS}]"
+    echo "    --with-usage-examples              Build usage examples [${NTF_CONFIGURE_WITH_USAGE_EXAMPLES}]"
+    echo "    --with-mocks                       Build mocks [${NTF_CONFIGURE_WITH_MOCKS}]"
+    echo "    --with-integration-tests           Build integration tests [${NTF_CONFIGURE_WITH_INTEGRATION_TESTS}]"
+
+    echo "    --with-documentation               Build documentation [${NTF_CONFIGURE_WITH_DOCUMENTATION}]"
+    echo "    --with-documentation-internal      Build documentation of internals [${NTF_CONFIGURE_WITH_DOCUMENTATION_INTERNAL}]"
+
+    echo "    --from-continuous-integration      Build from a continuous integration environment [${NTF_CONFIGURE_FROM_CONTINUOUS_INTEGRATION}]"
+    echo "    --from-packaging                   Build from a packaging environment [${NTF_CONFIGURE_FROM_PACKAGING}]"
+
+    echo "    --verbose                          Enable verbose build"
+    echo "    --what                             Print what is being configured"
+    echo "    --dry-run                          Print commands but do not execute them"
+    echo ""
+    echo "example:"
+    echo "    Build in debug mode:"
+    echo "        ./configure --debug"
+    echo ""
+    echo "    Build with some features and without others:"
+    echo "        ./configure --with-poll --without-select"
+    exit 1
+}
+
+while true ; do
+    case "$1" in
+        --help)
+            usage ;;
+        --refroot)
+            NTF_CONFIGURE_REFROOT=$2 ; shift 2 ;;
+        --prefix)
+            NTF_CONFIGURE_PREFIX=$2 ; shift 2 ;;
+        --output)
+            NTF_CONFIGURE_OUTPUT=$2 ; shift 2 ;;
+        --distribution)
+            NTF_CONFIGURE_DISTRIBUTION=$2 ; shift 2 ;;
+        --clean)
+            NTF_CONFIGURE_CLEAN=1 ; shift ;;
+        --keep)
+            NTF_CONFIGURE_CLEAN=0 ; shift ;;
+
+        --ufid)
+            NTF_CONFIGURE_UFID=$2
+
+            if [[ "${NTF_CONFIGURE_UFID}" == *"opt"* ]]; then
+                NTF_CONFIGURE_WITH_LOGGING=0
+            else
+                NTF_CONFIGURE_WITH_LOGGING=1
+            fi
+
+            shift 2 ;;
+        --compiler)
+            NTF_CONFIGURE_COMPILER=$2 ; shift 2 ;;
+        --generator)
+            NTF_CONFIGURE_GENERATOR=$2 ; shift 2 ;;
+        --sanitizer)
+            NTF_CONFIGURE_SANITIZER=$2 ; shift 2 ;;
+        --jobs)
+            NTF_CONFIGURE_JOBS=$2 ; shift 2 ;;
+
+        --debug)
+            NTF_CONFIGURE_UFID="dbg_exc_mt_64"
+            NTF_CONFIGURE_WITH_LOGGING=1
+            shift ;;
+
+        --release)
+            NTF_CONFIGURE_UFID="opt_dbg_exc_mt_64"
+            shift ;;
+
+        --multiplatform)
+            NTF_CONFIGURE_MULTIPLATFORM=1 ; shift ;;
+        --standalone)
+            NTF_CONFIGURE_MULTIPLATFORM=0 ; shift ;;
+
+        --with-warnings)
+            NTF_CONFIGURE_WITH_WARNINGS=1 ; shift ;;
+        --with-warnings-as-errors)
+            NTF_CONFIGURE_WITH_WARNINGS_AS_ERRORS=1 ; shift ;;
+        --with-time-trace)
+            NTF_CONFIGURE_WITH_TIME_TRACE=1 ; shift ;;
+        --with-time-report)
+            NTF_CONFIGURE_WITH_TIME_REPORT=1 ; shift ;;
+        --with-coverage)
+            NTF_CONFIGURE_WITH_COVERAGE=1 ; shift ;;
+
+        --with-bsl)
+            NTF_CONFIGURE_WITH_BSL=1 ; shift ;;
+        --with-bdl)
+            NTF_CONFIGURE_WITH_BDL=1 ; shift ;;
+        --with-bal)
+            NTF_CONFIGURE_WITH_BAL=1 ; shift ;;
+        --with-nts)
+            NTF_CONFIGURE_WITH_NTS=1 ; shift ;;
+        --with-ntc)
+            NTF_CONFIGURE_WITH_NTC=1 ; shift ;;
+
+        --with-address-family-ipv4)
+            NTF_CONFIGURE_WITH_ADDRESS_FAMILY_IPV4=1 ; shift ;;
+        --with-address-family-ipv6)
+            NTF_CONFIGURE_WITH_ADDRESS_FAMILY_IPV6=1 ; shift ;;
+        --with-address-family-local)
+            NTF_CONFIGURE_WITH_ADDRESS_FAMILY_LOCAL=1
+            NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_LOCAL=1
+            shift ;;
+
+        --with-transport-protocol-tcp)
+            NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_TCP=1 ; shift ;;
+        --with-transport-protocol-udp)
+            NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_UDP=1 ; shift ;;
+        --with-transport-protocol-local)
+            NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_LOCAL=1
+            NTF_CONFIGURE_WITH_ADDRESS_FAMILY_LOCAL=1
+            shift ;;
+
+        --with-select)
+            NTF_CONFIGURE_WITH_SELECT=1 ; shift ;;
+        --with-poll)
+            NTF_CONFIGURE_WITH_POLL=1 ; shift ;;
+        --with-epoll)
+            NTF_CONFIGURE_WITH_EPOLL=1 ; shift ;;
+        --with-devpoll)
+            NTF_CONFIGURE_WITH_DEVPOLL=1 ; shift ;;
+        --with-eventport)
+            NTF_CONFIGURE_WITH_EVENTPORT=1 ; shift ;;
+        --with-pollset)
+            NTF_CONFIGURE_WITH_POLLSET=1 ; shift ;;
+        --with-kqueue)
+            NTF_CONFIGURE_WITH_KQUEUE=1 ; shift ;;
+        --with-iocp)
+            NTF_CONFIGURE_WITH_IOCP=1 ; shift ;;
+
+        --with-dynamic-load-balancing)
+            NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING=1 ; shift ;;
+        --with-thread-scaling)
+            NTF_CONFIGURE_WITH_THREAD_SCALING=1 ; shift ;;
+
+        --with-logging)
+            NTF_CONFIGURE_WITH_LOGGING=1 ; shift ;;
+        --with-metrics)
+            NTF_CONFIGURE_WITH_METRICS=1 ; shift ;;
+        --with-branch-prediction)
+            NTF_CONFIGURE_WITH_BRANCH_PREDICTION=1 ; shift ;;
+
+        --with-spin-locks)
+            NTF_CONFIGURE_WITH_SPIN_LOCKS=1 ; shift ;;
+        --with-recursive-mutexes)
+            NTF_CONFIGURE_WITH_RECURSIVE_MUTEXES=1 ; shift ;;
+
+        --with-stack-trace-leak-report)
+            NTF_CONFIGURE_WITH_STACK_TRACE_LEAK_REPORT=1 ; shift ;;
+        --with-stack-trace-test-allocator)
+            NTF_CONFIGURE_WITH_STACK_TRACE_TEST_ALLOCATOR=1 ; shift ;;
+
+        --with-applications)
+            NTF_CONFIGURE_WITH_APPLICATIONS=1 ; shift ;;
+        --with-usage-examples)
+            NTF_CONFIGURE_WITH_USAGE_EXAMPLES=1 ; shift ;;
+        --with-mocks)
+            NTF_CONFIGURE_WITH_MOCKS=1 ; shift ;;
+        --with-integration-tests)
+            NTF_CONFIGURE_WITH_INTEGRATION_TESTS=1 ; shift ;;
+
+        --with-documentation)
+            NTF_CONFIGURE_WITH_DOCUMENTATION=1 ; shift ;;
+        --with-documentation-internal)
+            NTF_CONFIGURE_WITH_DOCUMENTATION_INTERNAL=1 ; shift ;;
+
+        --without-warnings)
+            NTF_CONFIGURE_WITH_WARNINGS=0 ; shift ;;
+        --without-warnings-as-errors)
+            NTF_CONFIGURE_WITH_WARNINGS_AS_ERRORS=0 ; shift ;;
+        --without-time-trace)
+            NTF_CONFIGURE_WITH_TIME_TRACE=0 ; shift ;;
+        --without-time-report)
+            NTF_CONFIGURE_WITH_TIME_REPORT=0 ; shift ;;
+        --without-coverage)
+            NTF_CONFIGURE_WITH_COVERAGE=0 ; shift ;;
+
+        --without-bsl)
+            NTF_CONFIGURE_WITH_BSL=0 ; shift ;;
+        --without-bdl)
+            NTF_CONFIGURE_WITH_BDL=0 ; shift ;;
+        --without-bal)
+            NTF_CONFIGURE_WITH_BAL=0 ; shift ;;
+        --without-nts)
+            NTF_CONFIGURE_WITH_NTS=0 ; shift ;;
+        --without-ntc)
+            NTF_CONFIGURE_WITH_NTC=0 ; shift ;;
+
+        --without-address-family-ipv4)
+            NTF_CONFIGURE_WITH_ADDRESS_FAMILY_IPV4=0 ; shift ;;
+        --without-address-family-ipv6)
+            NTF_CONFIGURE_WITH_ADDRESS_FAMILY_IPV6=0 ; shift ;;
+        --without-address-family-local)
+            NTF_CONFIGURE_WITH_ADDRESS_FAMILY_LOCAL=0
+            NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_LOCAL=0
+            shift ;;
+
+        --without-transport-protocol-tcp)
+            NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_TCP=0 ; shift ;;
+        --without-transport-protocol-udp)
+            NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_UDP=0 ; shift ;;
+        --without-transport-protocol-local)
+            NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_LOCAL=0
+            NTF_CONFIGURE_WITH_ADDRESS_FAMILY_LOCAL=0
+            shift ;;
+
+        --without-select)
+            NTF_CONFIGURE_WITH_SELECT=0 ; shift ;;
+        --without-poll)
+            NTF_CONFIGURE_WITH_POLL=0 ; shift ;;
+        --without-epoll)
+            NTF_CONFIGURE_WITH_EPOLL=0 ; shift ;;
+        --without-devpoll)
+            NTF_CONFIGURE_WITH_DEVPOLL=0 ; shift ;;
+        --without-eventport)
+            NTF_CONFIGURE_WITH_EVENTPORT=0 ; shift ;;
+        --without-pollset)
+            NTF_CONFIGURE_WITH_POLLSET=0 ; shift ;;
+        --without-kqueue)
+            NTF_CONFIGURE_WITH_KQUEUE=0 ; shift ;;
+        --without-iocp)
+            NTF_CONFIGURE_WITH_IOCP=0 ; shift ;;
+
+        --without-dynamic-load-balancing)
+            NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING=0 ; shift ;;
+        --without-thread-scaling)
+            NTF_CONFIGURE_WITH_THREAD_SCALING=0 ; shift ;;
+
+        --without-logging)
+            NTF_CONFIGURE_WITH_LOGGING=0 ; shift ;;
+        --without-metrics)
+            NTF_CONFIGURE_WITH_METRICS=0 ; shift ;;
+        --without-branch-prediction)
+            NTF_CONFIGURE_WITH_BRANCH_PREDICTION=0 ; shift ;;
+
+        --without-spin-locks)
+            NTF_CONFIGURE_WITH_SPIN_LOCKS=0 ; shift ;;
+        --without-recursive-mutexes)
+            NTF_CONFIGURE_WITH_RECURSIVE_MUTEXES=0 ; shift ;;
+
+        --without-stack-trace-leak-report)
+            NTF_CONFIGURE_WITH_STACK_TRACE_LEAK_REPORT=0 ; shift ;;
+        --without-stack-trace-test-allocator)
+            NTF_CONFIGURE_WITH_STACK_TRACE_TEST_ALLOCATOR=0 ; shift ;;
+
+        --without-applications)
+            NTF_CONFIGURE_WITH_APPLICATIONS=0 ; shift ;;
+        --without-usage-examples)
+            NTF_CONFIGURE_WITH_USAGE_EXAMPLES=0 ; shift ;;
+        --without-mocks)
+            NTF_CONFIGURE_WITH_MOCKS=0 ; shift ;;
+        --without-integration-tests)
+            NTF_CONFIGURE_WITH_INTEGRATION_TESTS=0 ; shift ;;
+
+        --without-documentation)
+            NTF_CONFIGURE_WITH_DOCUMENTATION=0 ; shift ;;
+        --without-documentation-internal)
+            NTF_CONFIGURE_WITH_DOCUMENTATION_INTERNAL=0 ; shift ;;
+
+        --from-continuous-integration)
+            NTF_CONFIGURE_FROM_CONTINUOUS_INTEGRATION=1
+            NTF_CONFIGURE_VERBOSE=1
+            shift ;;
+        --from-packaging)
+            NTF_CONFIGURE_FROM_PACKAGING=1 ; shift ;;
+
+        --verbose)
+            NTF_CONFIGURE_VERBOSE=1 ; shift ;;
+        --what)
+            NTF_CONFIGURE_WHAT=1 ; shift ;;
+        --*)
+            echo "Invalid option: ${1}"
+            usage ;;
+          *)
+            NTF_CONFIGURE_TARGET_LIST=$@; break ;;
+    esac
+done
+
+if [ ${NTF_CONFIGURE_WHAT} -eq 1 ]; then
+    echo "NTF version 4.0 on ${NTF_CONFIGURE_UNAME}"
+    exit 0
+fi
+
+if [ ${NTF_CONFIGURE_MULTIPLATFORM} -eq 1 ]; then
+    NTF_CONFIGURE_OUTPUT="${NTF_CONFIGURE_OUTPUT}/${NTF_CONFIGURE_UNAME}/${NTF_CONFIGURE_UFID}"
+fi
+
+export NTF_CONFIGURE_UNAME
+export NTF_CONFIGURE_UFID
+
+export NTF_CONFIGURE_PREFIX
+export NTF_CONFIGURE_REFROOT
+
+export NTF_CONFIGURE_SANITIZER
+
+export NTF_CONFIGURE_WITH_WARNINGS
+export NTF_CONFIGURE_WITH_WARNINGS_AS_ERRORS
+export NTF_CONFIGURE_WITH_TIME_TRACE
+export NTF_CONFIGURE_WITH_TIME_REPORT
+export NTF_CONFIGURE_WITH_COVERAGE
+
+export NTF_CONFIGURE_WITH_BSL
+export NTF_CONFIGURE_WITH_BDL
+export NTF_CONFIGURE_WITH_BAL
+export NTF_CONFIGURE_WITH_NTS
+export NTF_CONFIGURE_WITH_NTC
+
+export NTF_CONFIGURE_WITH_ADDRESS_FAMILY_IPV4
+export NTF_CONFIGURE_WITH_ADDRESS_FAMILY_IPV6
+export NTF_CONFIGURE_WITH_ADDRESS_FAMILY_LOCAL
+
+export NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_TCP
+export NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_UDP
+export NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_LOCAL
+
+export NTF_CONFIGURE_WITH_SELECT
+export NTF_CONFIGURE_WITH_POLL
+export NTF_CONFIGURE_WITH_EPOLL
+export NTF_CONFIGURE_WITH_DEVPOLL
+export NTF_CONFIGURE_WITH_EVENTPORT
+export NTF_CONFIGURE_WITH_POLLSET
+export NTF_CONFIGURE_WITH_KQUEUE
+export NTF_CONFIGURE_WITH_IOCP
+
+export NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING
+export NTF_CONFIGURE_WITH_THREAD_SCALING
+export NTF_CONFIGURE_WITH_DEPRECATED_FEATURES
+
+export NTF_CONFIGURE_WITH_LOGGING
+export NTF_CONFIGURE_WITH_METRICS
+export NTF_CONFIGURE_WITH_BRANCH_PREDICTION
+
+export NTF_CONFIGURE_WITH_SPIN_LOCKS
+export NTF_CONFIGURE_WITH_RECURSIVE_MUTEXES
+
+export NTF_CONFIGURE_WITH_STACK_TRACE_LEAK_REPORT
+export NTF_CONFIGURE_WITH_STACK_TRACE_TEST_ALLOCATOR
+
+export NTF_CONFIGURE_WITH_APPLICATIONS
+export NTF_CONFIGURE_WITH_USAGE_EXAMPLES
+export NTF_CONFIGURE_WITH_MOCKS
+export NTF_CONFIGURE_WITH_INTEGRATION_TESTS
+
+export NTF_CONFIGURE_WITH_DOCUMENTATION
+export NTF_CONFIGURE_WITH_DOCUMENTATION_INTERNAL
+
+export NTF_CONFIGURE_FROM_CONTINUOUS_INTEGRATION
+export NTF_CONFIGURE_FROM_PACKAGING
+
+cd ${NTF_CONFIGURE_REPOSITORY}
+
+if [ ${NTF_CONFIGURE_CLEAN} -eq 1 ]; then
+    rm -rf ${NTF_CONFIGURE_OUTPUT}
+fi
+
+NTF_CONFIGURE_LOG_DIRECTORY=${NTF_CONFIGURE_OUTPUT}
+NTF_CONFIGURE_LOG_PREFIX="${NTF_CONFIGURE_OUTPUT}/${NTF_CONFIGURE_UNAME}-${NTF_CONFIGURE_UFID}-"
+mkdir -p ${NTF_CONFIGURE_LOG_DIRECTORY}
+
+export PATH=${NTF_CONFIGURE_REFROOT}/${NTF_CONFIGURE_PREFIX}/bin:${PATH}
+
+if [[ -z "${NTF_CONFIGURE_CMAKE}" ]]; then
+    NTF_CONFIGURE_CMAKE=$(which cmake 2>/dev/null)
+    if [ ${?} -ne 0 ]; then
+        NTF_CONFIGURE_CMAKE=$(which cmake3 2>/dev/null)
+        if [ ${?} -ne 0 ]; then
+            echo "Failed to find cmake"
+            exit 1
+        fi
+    fi
+fi
+
+if [[ -z "${NTF_CONFIGURE_MAKE}" ]]; then
+    NTF_CONFIGURE_MAKE=$(which gmake 2>/dev/null)
+    if [ ${?} -ne 0 ]; then
+        NTF_CONFIGURE_MAKE=$(which make 2>/dev/null)
+        if [ ${?} -ne 0 ]; then
+            echo "Failed to find make"
+            exit 1
+        fi
+    fi
+fi
+
+if [[ "${NTF_CONFIGURE_GENERATOR}" == "Ninja" ]]; then
+    if [[ -z "${NTF_CONFIGURE_NINJA}" ]]; then
+        NTF_CONFIGURE_NINJA=$(which ninja 2>&1)
+        if [ ${?} -ne 0 ]; then
+            echo "Failed to find ninja"
+            exit 1
+        fi
+    fi
+fi
+
+NTF_CONFIGURE_UFID_CANONICAL="${NTF_CONFIGURE_UFID}"
+
+if [[ -n "${NTF_CONFIGURE_SANITIZER}" ]]; then
+    if [[ "${NTF_CONFIGURE_SANITIZER}" != "asan" ]] &&
+       [[ "${NTF_CONFIGURE_SANITIZER}" != "msan" ]] &&
+       [[ "${NTF_CONFIGURE_SANITIZER}" != "tsan" ]] &&
+       [[ "${NTF_CONFIGURE_SANITIZER}" != "ubsan" ]]; then
+        echo "Invalid sanitizer '"${NTF_CONFIGURE_SANITIZER}"': must be one of 'asan', 'msan', 'tsan', or 'ubsan'"
+        exit 1
+    fi
+fi
+
+if [[ -n "${NTF_CONFIGURE_SANITIZER}" ]]; then
+    NTF_CONFIGURE_UFID_CANONICAL="${NTF_CONFIGURE_UFID_CANONICAL}_${NTF_CONFIGURE_SANITIZER}"
+fi
+
+if [[ "${NTF_CONFIGURE_UNAME}" == "Linux" ]] || \
+   [[ "${NTF_CONFIGURE_UNAME}" == "Darwin" ]] || \
+   [[ "${NTF_CONFIGURE_UNAME}" == "Windows" ]]; then
+    NTF_CONFIGURE_UFID_CANONICAL="${NTF_CONFIGURE_UFID_CANONICAL}_cpp17"
+fi
+
+if [[ "${NTF_CONFIGURE_REFROOT}" != "" ]]; then
+    NTF_CONFIGURE_CMAKE_OPTION_DISTRIBUTION_REFROOT=" -DDISTRIBUTION_REFROOT:STRING=${NTF_CONFIGURE_REFROOT}"
+fi
+
+NTF_CONFIGURE_CMAKE_OPTION_INSTALL_PREFIX=" -DCMAKE_INSTALL_PREFIX:STRING=${NTF_CONFIGURE_PREFIX}"
+
+if [ ${NTF_CONFIGURE_VERBOSE} -ne 0 ]; then
+NTF_CONFIGURE_CMAKE_OPTION_VERBOSE_MAKEFILE=" -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
+else
+NTF_CONFIGURE_CMAKE_OPTION_VERBOSE_MAKEFILE=" -DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
+fi
+
+if ${NTF_CONFIGURE_MAKE} -v 2>&1 | grep "GNU Make" >/dev/null 2>&1; then
+NTF_CONFIGURE_MAKEFLAGS="--no-print-directory"
+fi
+
+mkdir -p ${NTF_CONFIGURE_OUTPUT}
+if [ ${?} -ne 0 ]; then
+    echo "Failed to make cmake build directory '${NTF_CONFIGURE_OUTPUT}'"
+    exit ${EXIT_CODE}
+fi
+
+if [[ "${NTF_CONFIGURE_UFID_CANONICAL}" == *opt* ]] &&
+   [[ "${NTF_CONFIGURE_UFID_CANONICAL}" == *dbg* ]]; then
+NTF_CONFIGURE_CMAKE_OPTION_BUILD_TYPE=" -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo"
+elif [[ "${NTF_CONFIGURE_UFID_CANONICAL}" == *opt* ]]; then
+NTF_CONFIGURE_CMAKE_OPTION_BUILD_TYPE=" -DCMAKE_BUILD_TYPE:STRING=Release"
+elif [[ "${NTF_CONFIGURE_UFID_CANONICAL}" == *dbg* ]]; then
+NTF_CONFIGURE_CMAKE_OPTION_BUILD_TYPE=" -DCMAKE_BUILD_TYPE:STRING=Debug"
+else
+    echo "Failed to deduce CMake built type from UFID ${NTF_CONFIGURE_UFID_CANONICAL}"
+    exit 1
+fi
+
+NTF_CONFIGURE_CMAKE_OPTION_UFID=" -DUFID:STRING=${NTF_CONFIGURE_UFID_CANONICAL}"
+
+cd ${NTF_CONFIGURE_OUTPUT}
+
+echo "${NTF_CONFIGURE_CMAKE}${NTF_CONFIGURE_CMAKE_OPTION_DISTRIBUTION_REFROOT}${NTF_CONFIGURE_CMAKE_OPTION_UFID}${NTF_CONFIGURE_CMAKE_OPTION_BUILD_TYPE}${NTF_CONFIGURE_CMAKE_OPTION_INSTALL_PREFIX}${NTF_CONFIGURE_CMAKE_OPTION_VERBOSE_MAKEFILE} -DCMAKE_TOOLCHAIN_FILE:PATH=${NTF_CONFIGURE_REPOSITORY}/toolchain.cmake -G \"${NTF_CONFIGURE_GENERATOR}\" ${NTF_CONFIGURE_REPOSITORY}/CMakeLists.txt"
+
+${NTF_CONFIGURE_CMAKE}${NTF_CONFIGURE_CMAKE_OPTION_DISTRIBUTION_REFROOT}${NTF_CONFIGURE_CMAKE_OPTION_UFID}${NTF_CONFIGURE_CMAKE_OPTION_BUILD_TYPE}${NTF_CONFIGURE_CMAKE_OPTION_INSTALL_PREFIX}${NTF_CONFIGURE_CMAKE_OPTION_VERBOSE_MAKEFILE} -DCMAKE_TOOLCHAIN_FILE:PATH=${NTF_CONFIGURE_REPOSITORY}/toolchain.cmake -G "${NTF_CONFIGURE_GENERATOR}" ${NTF_CONFIGURE_REPOSITORY}/CMakeLists.txt 2>&1 | tee -a ${NTF_CONFIGURE_LOG_PREFIX}configure.log
+if [ ${?} -ne 0 ]; then
+    echo "Failed to configure"
+    exit 1
+fi
+
+if [[ "${NTF_CONFIGURE_REFROOT}" == "" ]] || [[ "${NTF_CONFIGURE_REFROOT}" == "/" ]]; then
+    NTF_CONFIGURE_INSTALL_PREFIX_OVERRIDE="${NTF_CONFIGURE_PREFIX}"
+else
+    NTF_CONFIGURE_INSTALL_PREFIX_OVERRIDE="${NTF_CONFIGURE_REFROOT}${NTF_CONFIGURE_PREFIX}"
+fi
+
+# Hack to prevent 'sudo make install' from creating this file as root, which
+# then means 'make package' must be run as root.
+touch ${NTF_CONFIGURE_OUTPUT}/install_manifest.txt
+
+cat << EOF > ${NTF_CONFIGURE_REPOSITORY}/makefile
+.PHONY: all build build_test test test_usage coverage install clean verify documentation distribution format package package_source release_major release_minor release_patch help
+
+MAKEFLAGS+=${NTF_CONFIGURE_MAKEFLAGS}
+
+all: build
+
+build:
+	@${NTF_CONFIGURE_CMAKE} --build ${NTF_CONFIGURE_OUTPUT} --parallel ${NTF_CONFIGURE_JOBS} 2>&1 | tee -a ${NTF_CONFIGURE_LOG_PREFIX}build.log
+
+build_test:
+	@${NTF_CONFIGURE_CMAKE} --build ${NTF_CONFIGURE_OUTPUT} --parallel ${NTF_CONFIGURE_JOBS} --target build_test 2>&1 | tee -a ${NTF_CONFIGURE_LOG_PREFIX}build.log
+
+test:
+	@export CTEST_PARALLEL_LEVEL=1
+	@${NTF_CONFIGURE_CMAKE} --build ${NTF_CONFIGURE_OUTPUT} --parallel ${NTF_CONFIGURE_JOBS} --target build_test 2>&1 | tee -a ${NTF_CONFIGURE_LOG_PREFIX}build.log
+	@${NTF_CONFIGURE_CMAKE} --build ${NTF_CONFIGURE_OUTPUT} --parallel 1 --target test 2>&1 | tee -a ${NTF_CONFIGURE_LOG_PREFIX}test.log
+
+test_usage:
+	@${NTF_CONFIGURE_CMAKE} --build ${NTF_CONFIGURE_OUTPUT} --parallel 1 --target test_usage 2>&1 | tee -a ${NTF_CONFIGURE_LOG_PREFIX}test_usage.log
+
+coverage:
+	@${NTF_CONFIGURE_CMAKE} --build ${NTF_CONFIGURE_OUTPUT} --parallel 1 --target coverage 2>&1 | tee -a ${NTF_CONFIGURE_LOG_PREFIX}test.log
+
+install:
+	@${NTF_CONFIGURE_CMAKE} --install ${NTF_CONFIGURE_OUTPUT} --prefix ${NTF_CONFIGURE_INSTALL_PREFIX_OVERRIDE}
+
+clean:
+	@${NTF_CONFIGURE_CMAKE} --build ${NTF_CONFIGURE_OUTPUT} --parallel 1 --target clean
+
+verify:
+	@${NTF_CONFIGURE_CMAKE} --build ${NTF_CONFIGURE_OUTPUT} --parallel 1 --target verify
+
+documentation:
+	@${NTF_CONFIGURE_CMAKE} --build ${NTF_CONFIGURE_OUTPUT} --parallel 1 --target documentation
+
+distribution:
+	@${NTF_CONFIGURE_CMAKE} --build ${NTF_CONFIGURE_OUTPUT} --parallel 1 --target distribution
+
+format:
+	@${NTF_CONFIGURE_CMAKE} --build ${NTF_CONFIGURE_OUTPUT} --parallel 1 --target format
+
+package:
+	@${NTF_CONFIGURE_CMAKE} --build ${NTF_CONFIGURE_OUTPUT} --parallel 1 --target package
+
+package_source:
+	@${NTF_CONFIGURE_CMAKE} --build ${NTF_CONFIGURE_OUTPUT} --parallel 1 --target package_source
+
+release_major:
+	@${NTF_CONFIGURE_CMAKE} --build ${NTF_CONFIGURE_OUTPUT} --parallel 1 --target release_major
+
+release_minor:
+	@${NTF_CONFIGURE_CMAKE} --build ${NTF_CONFIGURE_OUTPUT} --parallel 1 --target release_minor
+
+release_patch:
+	@${NTF_CONFIGURE_CMAKE} --build ${NTF_CONFIGURE_OUTPUT} --parallel 1 --target release_patch
+
+help:
+	@${NTF_CONFIGURE_CMAKE} --build ${NTF_CONFIGURE_OUTPUT} --parallel 1 --target help
+
+%:
+	@${NTF_CONFIGURE_CMAKE} --build ${NTF_CONFIGURE_OUTPUT} --parallel ${NTF_CONFIGURE_JOBS} --target \$@
+EOF
+
+sync
+
+echo "OK."

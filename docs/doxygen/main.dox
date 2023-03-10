@@ -1,0 +1,605 @@
+// Copyright 2020-2023 Bloomberg Finance L.P.
+// SPDX-License-Identifier: Apache-2.0
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/// @mainpage Introduction
+/// 
+/// The Network Transport Framework (NTF) is an open-source collection of libraries
+/// for asynchronous network programming for scalable, high-performance
+/// applications.  This repository contains libraries providing the core APIs
+/// for asynchronous sockets, timers, resolvers, reactors, proactors, and thread
+/// pools.
+/// 
+/// In general, NTF provides building blocks and higher-level abstractions for
+/// asynchronously sending and receiving data between processes. More specifically,
+/// NTF provides an abstraction around the differences in the native networking
+/// APIs offered by the supported operating system, and introduces many useful
+/// features commonly required by networked applications. The principle feature
+/// of the sockets of this library is the introduction of *virtual* *send* *and*
+/// *receive* *queues*, which provide a message-oriented, thread-safe (concurrent),
+/// send and receive API for sockets using transports with either datagram
+/// semantics or stream semantics. Additionally, these virtual queues allow users
+/// to operate sockets both reactively (i.e. in the Unix readiness model) or
+/// proactively (i.e. in the Windows I/O completion model), regardless of the
+/// operating system and interface to that operating system (e.g. *select*,
+/// *kqueue*, *epoll*, *io_uring*, *I/O completion ports* etc.) NTF supports both
+/// stream sockets using TCP and datagram sockets using UDP communicating over
+/// either IPv4 or IPv6 networks. NTF also supports local (aka Unix) domain
+/// sockets for efficiently communicating between processes on the same machine.
+/// 
+/// The mechanisms in NTF are scalable, efficient, and multi-threaded. Its
+/// libraries are intended for applications needing to manage anywhere from
+/// a single socket to many thousands of simultaneous sockets.
+///
+/// For a more complete introduction to the design and features of the NTF
+/// core libraries see the <a href="https://github.com/bloomberg/ntf-core">official repository README</a>.
+///
+/// @section section_installation Installation
+///
+/// Build and install the libraries.
+///
+///     git clone https://github.com/bloomberg/ntf-core <path/to/ntf-core>
+///     cd <path/to/ntf/core>
+///     ./configure [--prefix <path/to/installation>]
+///     make
+///     make install
+///  
+/// Compile and link to the libraries using either the installed CMake 
+/// meta-data or the pkg-config meta-data.
+///
+///
+/// @section section_quick_start Quick Start
+///
+/// The folowing sections are intended to help new users become familiar with
+/// the design, features, and API of the NTF core libraries.
+///
+/// @subsection section_quick_start_nts NTS
+///
+/// The NTS library provides a portable, object-oriented interface to native,
+/// blocking and non-blocking operating system sockets. 
+///
+/// Start exploring the API and features of NTS through the following steps.
+///
+/// -# <i>Create a listener socket</i>
+///     - @link BloombergLP::ntsf::System::createListenerSocket Create@endlink a @link BloombergLP::ntsi::ListenerSocket blocking/non-blocking listener socket@endlink from the @link BloombergLP::ntsf::System operating system@endlink and @link BloombergLP::ntsi::ListenerSocket::open open@endlink it to use a particular
+/// @link BloombergLP::ntsa::Transport transport@endlink (in this example, we'll use @link BloombergLP::ntsa::Transport::e_TCP_IPV4_STREAM TCP/IPv4@endlink)
+///     - @link BloombergLP::ntsi::ListenerSocket::bind Bind@endlink the listener socket to a @link BloombergLP::ntsa::Endpoint endpoint@endlink, which for the transport used by this example will be a @link BloombergLP::ntsa::IpEndpoint IP endpoint@endlink set to an @link BloombergLP::ntsa::Ipv4Address IPv4 address@endlink a port number. 
+///     - Start @link BloombergLP::ntsi::ListenerSocket::listen listening@endlink for incoming connections.
+/// -# <i>Create a stream socket and connect it to the listener socket</i>
+///     - @link BloombergLP::ntsf::System::createStreamSocket Create@endlink a @link BloombergLP::ntsi::StreamSocket blocking/non-blocking stream socket@endlink from the @link BloombergLP::ntsf::System operating system@endlink to act as a client and @link BloombergLP::ntsi::StreamSocket::open open@endlink it to use the same @link BloombergLP::ntsa::Transport transport@endlink as the listener socket.
+///     - @link BloombergLP::ntsi::StreamSocket::connect Connect@endlink the stream socket to the listener socket's @link BloombergLP::ntsi::ListenerSocket::sourceEndpoint source endpoint@endlink. 
+///     - Notice the client socket's @link BloombergLP::ntsi::StreamSocket::remoteEndpoint remote endpoint@endlink matches the listener socket's @link BloombergLP::ntsi::ListenerSocket::sourceEndpoint source endpoint@endlink.
+/// -# <i>Accept a stream socket from the listener socket's backlog</i>
+///     - @link BloombergLP::ntsi::ListenerSocket::accept Accept@endlink a @link BloombergLP::ntsi::StreamSocket blocking/non-blocking stream socket@endlink from the listener socket's backlog to act as a server
+///     - Notice the accepted socket's @link BloombergLP::ntsi::StreamSocket::remoteEndpoint remote endpoint@endlink matches the client socket's @link BloombergLP::ntsi::StreamSocket::sourceEndpoint source endpoint@endlink.
+/// -# <i>Send data from the client socket to the server socket</i>
+///     - Iteratively @link BloombergLP::ntsi::StreamSocket::send send@endlink some @link BloombergLP::ntsa::Data data@endlink through the client socket to the server socket until all the desired data is sent. Examine the resulting @link BloombergLP::ntsa::SendContext send context@endlink to detect how many bytes were actually sent, and adjust the target of the data to send accordingly.
+///     - Iteratively @link BloombergLP::ntsi::StreamSocket::receive receive@endlink some @link BloombergLP::ntsa::Data data@endlink from the server socket until all the expected data sent by the client socket has been received. Examine the resulting @link BloombergLP::ntsa::ReceiveContext receive context@endlink to detect how many bytes were actually received, and adjust the target of the data to receive accordingly.
+/// -# <i>Send data from the server socket to the client socket</i>
+///     - Iteratively @link BloombergLP::ntsi::StreamSocket::send send@endlink some @link BloombergLP::ntsa::Data data@endlink through the server socket to the client socket until all the desired data is sent. Examine the resulting @link BloombergLP::ntsa::SendContext send context@endlink to detect how many bytes were actually sent, and adjust the target of the data to send accordingly.
+///     - Iteratively @link BloombergLP::ntsi::StreamSocket::receive receive@endlink some @link BloombergLP::ntsa::Data data@endlink from the client socket until all the expected data sent by the server socket has been received. Examine the resulting @link BloombergLP::ntsa::ReceiveContext receive context@endlink to detect how many bytes were actually received, and adjust the target of the data to receive accordingly.
+/// -# <i>Initiate the connection shutdown sequence by shutting down transmission from the client side</i>
+///     - @link BloombergLP::ntsi::StreamSocket::shutdown Shutdown@endlink the client socket.
+///     - @link BloombergLP::ntsi::StreamSocket::receive Receive@endlink some @link BloombergLP::ntsa::Data data@endlink from the server socket.
+///     - Notice the receive operation fails with @link BloombergLP::ntsa::Error::e_EOF "end-of-file"@endlink or the resulting @link BloombergLP::ntsa::ReceiveContext receive context@endlink indicates that zero bytes were successfully read. This indicates the peer of the server socket (i.e., the client socket) has shut down transmission from its side of the connection and no more data will be received by the server socket. 
+/// -# <i>Complete the connection shutdown sequence by shutting down transmission by the server side</i>
+///     - @link BloombergLP::ntsi::StreamSocket::shutdown Shutdown@endlink the server socket.
+///     - @link BloombergLP::ntsi::StreamSocket::receive Receive@endlink some @link BloombergLP::ntsa::Data data@endlink from the client socket.
+///     - Notice the receive operation fails with @link BloombergLP::ntsa::Error::e_EOF "end-of-file"@endlink or the resulting @link BloombergLP::ntsa::ReceiveContext receive context@endlink indicates that zero bytes were successfully read. This indicates the peer of the client socket (i.e., the server socket) has shut down transmission from its side of the connection and no more data will be received by the client socket.
+/// -# <i>Release all resources</i>
+///     - @link BloombergLP::ntsi::StreamSocket::close Close@endlink the client and server sockets.
+///     - @link BloombergLP::ntsi::ListenerSocket::close Close@endlink the listener socket.
+///
+/// For example:
+///
+/// To start, initialize the library.
+/// 
+///     ntsf::System::initialize();
+///     ntsf::System::ignore(ntscfg::Signal::e_PIPE);
+/// 
+/// Now, let's create a listener socket, bind it to any port on the loopback
+/// address, then begin listening for connections.
+/// 
+///     bsl::shared_ptr<ntsi::ListenerSocket> listener =
+///                                   ntsf::System::createListenerSocket();
+///
+///     error = listener->open(ntsa::Transport::e_TCP_IPV4_STREAM);
+///     BSLS_ASSERT(!error);
+///
+///     error = listener->bind(
+///         ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0), false);
+///     BSLS_ASSERT(!error);
+///
+///     error = listener->listen(1);
+///     BSLS_ASSERT(!error);
+/// 
+/// Now, let's create a blocking socket for the client, then connect that
+/// socket to the listener socket's local endpoint.
+/// 
+///     bsl::shared_ptr<ntsi::StreamSocket> client =
+///                                 ntsf::System::createStreamSocket();
+///
+///     error = client->open(ntsa::Transport::e_TCP_IPV4_STREAM);
+///     BSLS_ASSERT(!error);
+///
+///     ntsa::Endpoint listenerEndpoint;
+///     error = listener->sourceEndpoint(&listenerEndpoint);
+///     BSLS_ASSERT(!error);
+///
+///     error = client->connect(listenerEndpoint);
+///     BSLS_ASSERT(!error);
+/// 
+/// Now, let's create a blocking socket for the server by accepting the
+/// connection made to the listener socket.
+/// 
+///     bsl::shared_ptr<ntsi::StreamSocket> server;
+///     error = listener->accept(&server);
+///     BSLS_ASSERT(!error);
+/// 
+/// Now, lets' send data from the client to the server. First, enqueue outgoing
+/// data to transmit by the client socket.
+/// 
+///     {
+///         char storage = 'C';
+///
+///         ntsa::Data data(ntsa::ConstBuffer(&storage, 1));
+///
+///         ntsa::SendContext context;
+///         ntsa::SendOptions options;
+///
+///         error = client->send(&context, data, options);
+///         BSLS_ASSERT(!error);
+///
+///         BSLS_ASSERT(context.bytesSent() == 1);
+///     }
+/// 
+/// Next, dequeue incoming data received by the server socket.
+/// 
+///     {
+///         char storage;
+///
+///         ntsa::Data data(ntsa::MutableBuffer(&storage, 1));
+///
+///         ntsa::ReceiveContext context;
+///         ntsa::ReceiveOptions options;
+///
+///         error = server->receive(&context, &data, options);
+///         BSLS_ASSERT(!error);
+///
+///         BSLS_ASSERT(context.bytesReceived() == 1);
+///         BSLS_ASSERT(storage == 'C');
+///     }
+/// 
+/// Now, let's send data from the server to the client. First, enqueue outgoing
+/// data to transmit by the server socket.
+/// 
+///     {
+///         char storage = 'S';
+///
+///         ntsa::Data data(ntsa::ConstBuffer(&storage, 1));
+///
+///         ntsa::SendContext context;
+///         ntsa::SendOptions options;
+///
+///         error = server->send(&context, data, options);
+///         BSLS_ASSERT(!error);
+///
+///         BSLS_ASSERT(context.bytesSent() == 1);
+///     }
+/// 
+/// Next, dequeue incoming data received by the client socket.
+/// 
+///     {
+///         char storage;
+///
+///         ntsa::Data data(ntsa::MutableBuffer(&storage, 1));
+///
+///         ntsa::ReceiveContext context;
+///         ntsa::ReceiveOptions options;
+///
+///         error = client->receive(&context, &data, options);
+///         BSLS_ASSERT(!error);
+///
+///         BSLS_ASSERT(context.bytesReceived() == 1);
+///         BSLS_ASSERT(storage == 'S');
+///     }
+/// 
+/// Now, let's shutdown writing by the client socket.
+/// 
+///     error = client->shutdown(ntsa::ShutdownType::e_SEND);
+///     BSLS_ASSERT(!error);
+/// 
+/// Next, dequeue incoming data received by the server socket, and observe that
+/// either 'ntsa::Error::e_EOF' is returned or zero bytes are successfully
+/// dequeued, indicating the client socket has shut down writing from its side
+/// of the connection.
+/// 
+///     {
+///         char storage;
+///
+///         ntsa::Data data(ntsa::MutableBuffer(&storage, 1));
+///
+///         ntsa::ReceiveContext context;
+///         ntsa::ReceiveOptions options;
+///
+///         error = server->receive(&context, &data, options);
+///         BSLS_ASSERT(!error || error == ntsa::Error::e_EOF);
+///
+///         BSLS_ASSERT(context.bytesReceived() == 0);
+///     }
+/// 
+/// Now, let's shutdown writing by the server socket.
+/// 
+///     error = server->shutdown(ntsa::ShutdownType::e_SEND);
+///     BSLS_ASSERT(!error);
+/// 
+/// Next, dequeue incoming data received by the client socket, and observe that
+/// either 'ntsa::Error::e_EOF' is returned or zero bytes are successfully
+/// dequeued, indicating the server socket has shut down writing from its side
+/// of the connection.
+/// 
+///     {
+///         char storage;
+///
+///         ntsa::Data data(ntsa::MutableBuffer(&storage, 1));
+///
+///         ntsa::ReceiveContext context;
+///         ntsa::ReceiveOptions options;
+///
+///         error = client->receive(&context, &data, options);
+///         BSLS_ASSERT(!error);
+///
+///         BSLS_ASSERT(context.bytesReceived() == 0);
+///     }
+///
+/// @subsection section_quick_start_ntc NTC
+///
+/// The NTC library provides a asynchronous sockets and timers with a rich
+/// set of features on top of the features provided by operating system 
+/// sockets.
+///
+/// Start exploring the API and features of NTC through the following steps.
+///
+/// -# <i>Run a scheduler of asynchronous operation</i>
+///     - @link ntcf::System::createInterface Create@endlink a @link BloombergLP::ntci::Interface scheduler@endlink with a @link BloombergLP::ntca::InterfaceConfig configuration@endlink specifying the minimum and maximum number of desired background threads of execution.
+/// -# <i>Create a listener socket</i>
+///     - @link BloombergLP::ntci::Interface::createListenerSocket Create@endlink an @link BloombergLP::ntci::ListenerSocket asynchronous listener socket@endlink from the @link BloombergLP::ntci::Interface scheduler@endlink and @link BloombergLP::ntci::ListenerSocket::open open@endlink it to use a particular
+/// @link BloombergLP::ntsa::Transport transport@endlink (in this example, we'll use @link BloombergLP::ntsa::Transport::e_TCP_IPV4_STREAM TCP/IPv4@endlink)
+///     - Asynchronously @link BloombergLP::ntci::ListenerSocket::bind bind@endlink the listener socket to a @link BloombergLP::ntsa::Endpoint endpoint@endlink, which for the transport used by this example will be a @link BloombergLP::ntsa::IpEndpoint IP endpoint@endlink set to an @link BloombergLP::ntsa::Ipv4Address IPv4 address@endlink a port number.  Note that the listener socket may alternatively be bound to a name, which will be automatically resolved during the asynchronous bind operation.
+///     - @link BloombergLP::ntci::BindCallback Wait@endlink for the operation to complete. Examine the resulting asynchronous @link BloombergLP::ntca::BindEvent bind event@endlink and its @link BloombergLP::ntca::BindContext context@endlink to determine the success or failure of the asynchronous operation.
+///     - Start @link BloombergLP::ntsi::ListenerSocket::listen listening@endlink for incoming connections.
+/// -# <i>Create a stream socket and connect it to the listener socket</i>
+///     - @link BloombergLP::ntci::Interface::createStreamSocket Create@endlink an @link BloombergLP::ntci::StreamSocket asynchronous stream socket@endlink from the @link BloombergLP::ntci::Interface scheduler@endlink to act as a client and @link BloombergLP::ntci::StreamSocket::open open@endlink it to use the same @link BloombergLP::ntsa::Transport transport@endlink as the listener socket.
+///     - Asynchronously @link BloombergLP::ntci::StreamSocket::connect connect@endlink the stream socket to the listener socket's @link BloombergLP::ntci::ListenerSocket::sourceEndpoint source endpoint@endlink. Note that the stream socket may alternatively connect to a name, which will be automatically resolved during the asynchronous connect operation. 
+///     - @link BloombergLP::ntci::ConnectCallback Wait@endlink for the operation to complete. Examine the resulting asynchronous @link BloombergLP::ntca::ConnectEvent connect event@endlink and its @link BloombergLP::ntca::ConnectContext context@endlink to determine the success or failure of the asynchronous operation.
+///     - Notice the client socket's @link BloombergLP::ntci::StreamSocket::remoteEndpoint remote endpoint@endlink matches the listener socket's @link BloombergLP::ntci::ListenerSocket::sourceEndpoint source endpoint@endlink.
+/// -# <i>Accept a stream socket from the listener socket's backlog</i>
+///     - Asynchronously @link BloombergLP::ntci::ListenerSocket::accept Accept@endlink an @link BloombergLP::ntci::StreamSocket asynchronous stream socket@endlink from the listener socket's backlog to act as a server.
+///     - @link BloombergLP::ntci::AcceptCallback Wait@endlink for the operation to complete. Examine the resulting asynchronous @link BloombergLP::ntca::AcceptEvent accept event@endlink and its @link BloombergLP::ntca::AcceptContext context@endlink to determine the success or failure of the asynchronous operation.
+///     - Notice the accepted socket's @link BloombergLP::ntci::StreamSocket::remoteEndpoint remote endpoint@endlink matches the client socket's @link BloombergLP::ntci::StreamSocket::sourceEndpoint source endpoint@endlink.
+/// -# <i>Send data from the client socket to the server socket</i>
+///     - Asynchronously @link BloombergLP::ntci::StreamSocket::send send@endlink some @link BloombergLP::ntsa::Data data@endlink through the client socket to the server socket. 
+///     - Asynchronously @link BloombergLP::ntci::StreamSocket::receive receive@endlink some data from the server socket until all the expected data sent by the client socket has been received. The amount of data desired to be received is specified in the @link BloombergLP::ntca::ReceiveOptions receive options@endlink.
+///     - @link BloombergLP::ntci::ReceiveCallback Wait@endlink for the operation to complete. Examine the resulting asynchronous @link BloombergLP::ntca::ReceiveEvent receive event@endlink and its @link BloombergLP::ntca::ReceiveContext context@endlink to determine the success or failure of the asynchronous operation.
+/// -# <i>Send data from the server socket to the client socket</i>
+///     - Asynchronously @link BloombergLP::ntci::StreamSocket::send send@endlink some @link BloombergLP::ntsa::Data data@endlink through the server socket to the client socket. 
+///     - Asynchronously @link BloombergLP::ntci::StreamSocket::receive receive@endlink some data from the client socket until all the expected data sent by the server socket has been received. The amount of data desired to be received is specified in the @link BloombergLP::ntca::ReceiveOptions receive options@endlink.
+///     - @link BloombergLP::ntci::ReceiveCallback Wait@endlink for the operation to complete. Examine the resulting asynchronous @link BloombergLP::ntca::ReceiveEvent receive event@endlink and its @link BloombergLP::ntca::ReceiveContext context@endlink to determine the success or failure of the asynchronous operation.
+/// -# <i>Initiate the connection shutdown sequence by shutting down transmission from the client side</i>
+///     - @link BloombergLP::ntci::StreamSocket::shutdown Shutdown@endlink the client socket.
+///     - Asynchronously @link BloombergLP::ntci::StreamSocket::receive receive@endlink some data from the server socket.
+///     - @link BloombergLP::ntci::ReceiveCallback Wait@endlink for the operation to complete. Examine the resulting asynchronous @link BloombergLP::ntca::ReceiveEvent receive event@endlink and its @link BloombergLP::ntca::ReceiveContext context@endlink to determine the success or failure of the asynchronous operation.
+///     - Notice the resulting @link BloombergLP::ntca::ReceiveContext receive context@endlink indicates the fails with @link BloombergLP::ntsa::Error::e_EOF "end-of-file"@endlink. This indicates the peer of the server socket (i.e., the client socket) has shut down transmission from its side of the connection and no more data will be received by the server socket. 
+/// -# <i>Complete the connection shutdown sequence by shutting down transmission by the server side</i>
+///     - @link BloombergLP::ntci::StreamSocket::shutdown Shutdown@endlink the server socket.
+///     - Asynchronously @link BloombergLP::ntci::StreamSocket::receive receive@endlink some data from the client socket.
+///     - @link BloombergLP::ntci::ReceiveCallback Wait@endlink for the operation to complete. Examine the resulting asynchronous @link BloombergLP::ntca::ReceiveEvent receive event@endlink and its @link BloombergLP::ntca::ReceiveContext context@endlink to determine the success or failure of the asynchronous operation.
+///     - Notice the resulting @link BloombergLP::ntca::ReceiveContext receive context@endlink indicates the fails with @link BloombergLP::ntsa::Error::e_EOF "end-of-file"@endlink. This indicates the peer of the server socket (i.e., the server socket) has shut down transmission from its side of the connection and no more data will be received by the client socket. 
+/// -# <i>Release all resources</i>
+///     - Asynchronously @link BloombergLP::ntsi::StreamSocket::close close@endlink the client and server sockets and wait until those operations complete.
+///     - Asynchronously @link BloombergLP::ntsi::ListenerSocket::close close@endlink the listener socket and wait for the operation to complete.
+///     - Note that all sockets must be explicitly closed, and that the close operation is also asynchronous.
+/// -# <i>Stop the scheduler of asynchronous operation</i>
+///     - @link BloombergLP::ntci::Interface::shutdown Shutdown@endlink the @link BloombergLP::ntci::Interface scheduler@endlink and @link ntci::Interface::linger block@endlink until all threads have been joined.
+///
+/// For example:
+///
+/// First, initialize the library.
+///
+///     ntcf::System::initialize();
+///     ntcf::System::ignore(ntscfg::Signal::e_PIPE);
+///
+/// Next, acquire implementations of the 'ntci::ListenerSocketFactory' and
+/// 'ntci::StreamSocketFactory' abstract classes. For this example, create and
+/// start an 'ntci::Interface', which implements both those abstract classes.
+/// Note that stream sockets and listener sockets may also be created from
+/// other objects; see the component documentation for more details.
+///
+///     bsl::shared_ptr<ntci::Interface> interface =
+///         ntcf::System::createInterface(ntca::InterfaceConfig());
+///
+///     interface->start();
+///
+/// Declare an error used to store the synchronous result of each operation,
+/// and a semaphore used to serialize the execution of each asynchronous
+/// operation.
+///
+///     ntsa::Error      error;
+///     bslmt::Semaphore semaphore;
+///
+/// Create a listener socket.
+///
+///     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
+///         interface->createListenerSocket(ntca::ListenerSocketOptions());
+///
+/// Bind the listener socket to any endpoint on the local host and wait for
+/// the operation to complete.
+///
+///     error = listenerSocket->bind(
+///         ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::any(), 0)),
+///         ntca::BindOptions(),
+///         [&](auto bindable, auto event) {
+///             BSLS_ASSERT(bindable == listenerSocket);
+///             BSLS_ASSERT(event.isComplete());
+///             semaphore.post();
+///         });
+///
+///     BSLS_ASSERT(!error);
+///     semaphore.wait();
+///
+/// Begin listening.
+///
+///     error = listenerSocket->listen();
+///     BSLS_ASSERT(!error);
+///
+/// Create a stream socket to act as a client.
+///
+///     bsl::shared_ptr<ntci::StreamSocket> clientStreamSocket =
+///         interface->createStreamSocket(ntca::StreamSocketOptions());
+///
+/// Connect the client stream socket to the endpoint of the listener socket
+/// and wait for the operation to complete.
+///
+///     error = clientStreamSocket->connect(
+///         listenerSocket->sourceEndpoint(),
+///         ntca::ConnectOptions(),
+///         [&](auto connector, auto event) {
+///             BSLS_ASSERT(connector == clientStreamSocket);
+///             BSLS_ASSERT(event.isComplete());
+///             semaphore.post();
+///         });
+///
+///     BSLS_ASSERT(!error);
+///     semaphore.wait();
+///
+/// Accept a stream socket to act as the server and wait for the operation to
+/// complete.
+///
+///     bsl::shared_ptr<ntci::StreamSocket> serverStreamSocket;
+///     error = listenerSocket->accept(
+///         ntca::AcceptOptions(),
+///         [&](auto acceptor, auto streamSocket, auto event) {
+///             BSLS_ASSERT(acceptor == listenerSocket);
+///             BSLS_ASSERT(event.isComplete());
+///             serverStreamSocket = streamSocket;
+///             semaphore.post();
+///         });
+///
+///     BSLS_ASSERT(!error);
+///     semaphore.wait();
+///
+/// Send data from the client stream socket to the server stream socket and
+/// wait for the operation to complete.
+///
+///     const char CLIENT_SEND_DATA[] = "Hello, server!";
+///
+///     bdlbb::Blob clientSendData(
+///         clientStreamSocket->outgoingBlobBufferFactory().get());
+///
+///     bdlbb::BlobUtil::append(
+///         &clientSendData, CLIENT_SEND_DATA, sizeof CLIENT_SEND_DATA - 1);
+///
+///     error = clientStreamSocket->send(
+///         clientSendData,
+///         ntca::SendOptions(),
+///         [&](auto sender, auto event) {
+///             BSLS_ASSERT(sender == clientStreamSocket);
+///             BSLS_ASSERT(event.isComplete());
+///             semaphore.post();
+///         });
+///
+///     BSLS_ASSERT(!error);
+///     semaphore.wait();
+///
+/// Receive data at the server stream socket and wait for the operation to
+/// complete. Require that exactly the amount of data sent by the client has
+/// been received for the operation to complete.
+///
+///     ntca::ReceiveOptions serverReceiveOptions;
+///     serverReceiveOptions.setMinSize(clientSendData.length());
+///     serverReceiveOptions.setMaxSize(clientSendData.length());
+///
+///     error = serverStreamSocket->receive(
+///         serverReceiveOptions,
+///         [&](auto receiver, auto data, auto event) {
+///             BSLS_ASSERT(receiver == serverStreamSocket);
+///             BSLS_ASSERT(event.isComplete());
+///             BSLS_ASSERT(data);
+///             BSLS_ASSERT(bdlbb::BlobUtil::compare(*data, clientSendData)
+///                         == 0);
+///             semaphore.post();
+///         });
+///
+///     BSLS_ASSERT(!error);
+///     semaphore.wait();
+///
+/// Send data from the server stream socket to the client stream socket and
+/// wait for the operation to complete.
+///
+///     const char SERVER_SEND_DATA[] = "Hello, client!";
+///
+///     bdlbb::Blob serverSendData(
+///         serverStreamSocket->outgoingBlobBufferFactory().get());
+///
+///     bdlbb::BlobUtil::append(
+///         &serverSendData, SERVER_SEND_DATA, sizeof SERVER_SEND_DATA - 1);
+///
+///     error = serverStreamSocket->send(
+///         serverSendData,
+///         ntca::SendOptions(),
+///         [&](auto sender, auto event) {
+///             BSLS_ASSERT(sender == serverStreamSocket);
+///             BSLS_ASSERT(event.isComplete());
+///             semaphore.post();
+///         });
+///
+///     BSLS_ASSERT(!error);
+///     semaphore.wait();
+///
+/// Receive data at the client stream socket and wait for the operation to
+/// complete. Require that exactly the amount of data sent by the server has
+/// been received for the receive operation to complete.
+///
+///     ntca::ReceiveOptions clientReceiveOptions;
+///     clientReceiveOptions.setMinSize(serverSendData.length());
+///     clientReceiveOptions.setMaxSize(serverSendData.length());
+///
+///     error = clientStreamSocket->receive(
+///         clientReceiveOptions,
+///         [&](auto receiver, auto data, auto event) {
+///             BSLS_ASSERT(receiver == clientStreamSocket);
+///             BSLS_ASSERT(event.isComplete());
+///             BSLS_ASSERT(data);
+///             BSLS_ASSERT(bdlbb::BlobUtil::compare(*data, serverSendData)
+///                         == 0);
+///             semaphore.post();
+///         });
+///
+///     BSLS_ASSERT(!error);
+///     semaphore.wait();
+///
+/// Shutdown the client socket.
+///
+///     error = clientStreamSocket->shutdown(ntsa::ShutdownType::e_SEND,
+///                                          ntsa::ShutdownMode::e_GRACEFUL);
+///     BSLS_ASSERT(!error);
+///
+/// Receive data at the server stream socket to detect the shutdown by
+/// the client stream socket and wait for the operation to complete, but note
+/// the shutdown by the client stream may have already been detected, in which
+/// case the receive operation synchronously fails with ntsa::Error::e_EOF,
+/// otherwise the shutdown is detected asynchronously.
+///
+///     error = serverStreamSocket->receive(
+///         serverReceiveOptions,
+///         [&](auto receiver, auto data, auto event) {
+///             BSLS_ASSERT(receiver == serverStreamSocket);
+///             BSLS_ASSERT(event.isError());
+///             BSLS_ASSERT(event.context().error() ==
+///                         ntsa::Error(ntsa::Error::e_EOF));
+///             semaphore.post();
+///         });
+///
+///     if (!error) {
+///         semaphore.wait();
+///     }
+///     else {
+///         BSLS_ASSERT(error == ntsa::Error(ntsa::Error::e_EOF));
+///     }
+///
+/// Shutdown the server socket.
+///
+///     error = serverStreamSocket->shutdown(ntsa::ShutdownType::e_SEND,
+///                                          ntsa::ShutdownMode::e_GRACEFUL);
+///     BSLS_ASSERT(!error);
+///
+/// Receive data at the client stream socket to detect the shutdown by
+/// the server stream socket and wait for the operation to complete, but note
+/// the shutdown by the server stream may have already been detected, in which
+/// case the receive operation synchronously fails with ntsa::Error::e_EOF,
+/// otherwise the shutdown is detected asynchronously.
+///
+///     error = clientStreamSocket->receive(
+///         clientReceiveOptions,
+///         [&](auto receiver, auto data, auto event) {
+///             BSLS_ASSERT(receiver == clientStreamSocket);
+///             BSLS_ASSERT(event.isError());
+///             BSLS_ASSERT(event.context().error() ==
+///                         ntsa::Error(ntsa::Error::e_EOF));
+///             semaphore.post();
+///         });
+///
+///     if (!error || error == ntsa::Error(ntsa::Error::e_WOULD_BLOCK)) {
+///         semaphore.wait();
+///     }
+///     else {
+///         BSLS_ASSERT(error == ntsa::Error(ntsa::Error::e_EOF));
+///     }
+///
+/// Close the client stream socket and wait for the operation to complete.
+///
+///     clientStreamSocket->close([&]() {
+///         semaphore.post();
+///     });
+///
+///     semaphore.wait();
+///
+/// Close the server stream socket and wait for the operation to complete.
+///
+///     serverStreamSocket->close([&]() {
+///         semaphore.post();
+///     });
+///
+///     semaphore.wait();
+///
+/// Close the listener socket and wait for the operation to complete.
+///
+///     listenerSocket->close([&]() {
+///         semaphore.post();
+///     });
+///
+///     semaphore.wait();
+///
+/// Finally, stop the interface.
+///
+///     interface->shutdown();
+///     interface->linger();
+///
+/// TODO
+///  
+/// @section section_references References
+///
+/// - <a href="https://pubs.opengroup.org/onlinepubs/9699919799.2018edition/">Portable Operating System Interface (POSIX)</a>
+/// - <a href="https://www.ietf.org/rfc/rfc9293.txt">Transmission Control Protocol (TCP)</a>
+/// - <a href="https://www.ietf.org/rfc/rfc768.txt">User Datagram Protocol (UDP)</a>
+/// - <a href="https://www.ietf.org/rfc/rfc3986.txt">Uniform Resource Identifier (URI)</a>
+/// - <a href="https://www.ietf.org/rfc/rfc2253.txt">Distinguished Names</a>
+/// - <a href="https://www.ietf.org/rfc/rfc1034.txt">Domain Name System (DNS): Concepts</a>
+/// - <a href="https://www.ietf.org/rfc/rfc1035.txt">Domain Name System (DNS): Specification</a>
+///
+/// @section section_copyright License
+///
+/// Copyright 2020-2023 Bloomberg Finance L.P.
+///
+///     Licensed under the Apache License, Version 2.0 (the "License");
+///     you may not use this file except in compliance with the License.
+///     You may obtain a copy of the License at
+///
+///         http://www.apache.org/licenses/LICENSE-2.0
+///
+///     Unless required by applicable law or agreed to in writing, software
+///     distributed under the License is distributed on an "AS IS" BASIS,
+///     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+///     See the License for the specific language governing permissions and
+///     limitations under the License.

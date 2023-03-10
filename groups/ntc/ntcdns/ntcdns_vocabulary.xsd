@@ -1,0 +1,1741 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema'
+           xmlns:bdem='http://bloomberg.com/schemas/bdem'
+           xmlns:tns='urn:ntcdns'
+           targetNamespace='urn:ntcdns'
+           bdem:package='ntcdns'
+           elementFormDefault='qualified'>
+
+  <xs:simpleType name='Type' bdem:preserveEnumOrder='true'>
+    <xs:annotation>
+      <xs:documentation>
+      This structure enumerates the TYPE fields used in resource records. TYPE
+      values are a subset of QTYPE values.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base='xs:string'>
+      <xs:enumeration value='A'  bdem:id='1' bdem:name='ENUM_A'>
+        <xs:annotation>
+          <xs:documentation>
+          IPv4 host address.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='NS'  bdem:id='2' bdem:name='ENUM_NS'>
+        <xs:annotation>
+          <xs:documentation>
+          Authoritative name server.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='MD'  bdem:id='3' bdem:name='ENUM_MD'>
+        <xs:annotation>
+          <xs:documentation>
+          Mail destination (obsolete, use MX).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='MF'  bdem:id='4' bdem:name='ENUM_MF'>
+        <xs:annotation>
+          <xs:documentation>
+          Mail forwarder (obseolete, use MX).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='CNAME'  bdem:id='5' bdem:name='ENUM_CNAME'>
+        <xs:annotation>
+          <xs:documentation>
+          Canonical name of an alias.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='SOA'  bdem:id='6' bdem:name='ENUM_SOA'>
+        <xs:annotation>
+          <xs:documentation>
+          Start of a zone of authority.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='MB'  bdem:id='7' bdem:name='ENUM_MB'>
+        <xs:annotation>
+          <xs:documentation>
+          Mailbox domain name (experimental).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='MG'  bdem:id='8' bdem:name='ENUM_MG'>
+        <xs:annotation>
+          <xs:documentation>
+          Mail group member (experimental).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='MR'  bdem:id='9' bdem:name='ENUM_MR'>
+        <xs:annotation>
+          <xs:documentation>
+          Mail rename domain name (experimental).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='UNDEFINED'  bdem:id='10' bdem:name='ENUM_UNDEFINED'>
+        <xs:annotation>
+          <xs:documentation>
+          Null resource record (experimental).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='WKS'  bdem:id='11' bdem:name='ENUM_WKS'>
+        <xs:annotation>
+          <xs:documentation>
+          Well-known service description.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='PTR'  bdem:id='12' bdem:name='ENUM_PTR'>
+        <xs:annotation>
+          <xs:documentation>
+          Domain name pointer.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='HINFO'  bdem:id='13' bdem:name='ENUM_HINFO'>
+        <xs:annotation>
+          <xs:documentation>
+          Host information.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='MINFO'  bdem:id='14' bdem:name='ENUM_MINFO'>
+        <xs:annotation>
+          <xs:documentation>
+          Mailbox or mail list information.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='MX'  bdem:id='15' bdem:name='ENUM_MX'>
+        <xs:annotation>
+          <xs:documentation>
+          Mail exchange.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='TXT'  bdem:id='16' bdem:name='ENUM_TXT'>
+        <xs:annotation>
+          <xs:documentation>
+          Text strings.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='RP'  bdem:id='17' bdem:name='ENUM_RP'>
+        <xs:annotation>
+          <xs:documentation>
+          Responsible person.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='AFSDB'  bdem:id='18' bdem:name='ENUM_AFSDB'>
+        <xs:annotation>
+          <xs:documentation>
+          AFS database for AFS clients.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='X25'  bdem:id='19' bdem:name='ENUM_X25'>
+        <xs:annotation>
+          <xs:documentation>
+          X.25 PSDN Address provides details on encapsulation via X.25
+          (obsolete).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='ISDN'  bdem:id='20' bdem:name='ENUM_ISDN'>
+        <xs:annotation>
+          <xs:documentation>
+          Assigns the DNS name an ISDN number (obsolete).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='RT'  bdem:id='21' bdem:name='ENUM_RT'>
+        <xs:annotation>
+          <xs:documentation>
+          Provides route-through binding without a WAN address (obsolete).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='NSAP'  bdem:id='22' bdem:name='ENUM_NSAP'>
+        <xs:annotation>
+          <xs:documentation>
+          Enables assignment of domain names to Network Service Access Points
+          (obsolete).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='NSAPPTR'  bdem:id='23' bdem:name='ENUM_NSAPPTR'>
+        <xs:annotation>
+          <xs:documentation>
+          Replaced by PTR (obsolete).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='SIG'  bdem:id='24' bdem:name='ENUM_SIG'>
+        <xs:annotation>
+          <xs:documentation>
+          Signature was replaced by RRSIG (obsolete).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='KEY'  bdem:id='25' bdem:name='ENUM_KEY'>
+        <xs:annotation>
+          <xs:documentation>
+          Key was replaced by IPSECKEY (obsolete).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='PX'  bdem:id='26' bdem:name='ENUM_PX'>
+        <xs:annotation>
+          <xs:documentation>
+          Pointer to X.400 specifies MIXER mapping regulations (obsolete).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='GPOS'  bdem:id='27' bdem:name='ENUM_GPOS'>
+        <xs:annotation>
+          <xs:documentation>
+          Geographical Position was replaced by LOC (obsolete).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='AAAA'  bdem:id='28' bdem:name='ENUM_AAAA'>
+        <xs:annotation>
+          <xs:documentation>
+          IPv6 host address.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='LOC'  bdem:id='29' bdem:name='ENUM_LOC'>
+        <xs:annotation>
+          <xs:documentation>
+          Location information.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='NXT'  bdem:id='30' bdem:name='ENUM_NXT'>
+        <xs:annotation>
+          <xs:documentation>
+          Next was replaced by NSEC (obsolete).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='EID'  bdem:id='31' bdem:name='ENUM_EID'>
+        <xs:annotation>
+          <xs:documentation>
+          Endpoint Identifier is intended for Nimrod Routing Architecture
+          (obsolete).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='NIMLOC'  bdem:id='32' bdem:name='ENUM_NIMLOC'>
+        <xs:annotation>
+          <xs:documentation>
+          Nimrod Locator is intended for Nimrod Routing Architecture
+          (obsolete).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='SVR'  bdem:id='33' bdem:name='ENUM_SVR'>
+        <xs:annotation>
+          <xs:documentation>
+          Service locations.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='ATMA'  bdem:id='34' bdem:name='ENUM_ATMA'>
+        <xs:annotation>
+          <xs:documentation>
+          ATM Address provides information when there are asynchronous
+          transfer modes (obsolete).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='NAPTR'  bdem:id='35' bdem:name='ENUM_NAPTR'>
+        <xs:annotation>
+          <xs:documentation>
+          Naming Authority Pointer is an A record extension that permits the
+          search pattern (regular expressions).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='KX'  bdem:id='36' bdem:name='ENUM_KX'>
+        <xs:annotation>
+          <xs:documentation>
+          Key management for cryptography.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='CERT'  bdem:id='37' bdem:name='ENUM_CERT'>
+        <xs:annotation>
+          <xs:documentation>
+          Saves certificates.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='A6'  bdem:id='38' bdem:name='ENUM_A6'>
+        <xs:annotation>
+          <xs:documentation>
+          A6 was replaced by AAAA.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='DNAME'  bdem:id='39' bdem:name='ENUM_DNAME'>
+        <xs:annotation>
+          <xs:documentation>
+          Aliases for complete domains.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='SINK'  bdem:id='40' bdem:name='ENUM_SINK'>
+        <xs:annotation>
+          <xs:documentation>
+          Kitchen Sink enables the storage of various data (obsolete).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='OPT'  bdem:id='41' bdem:name='ENUM_OPT'>
+        <xs:annotation>
+          <xs:documentation>
+          Pseudo-record type to supprt EDNS.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='APL'  bdem:id='42' bdem:name='ENUM_APL'>
+        <xs:annotation>
+          <xs:documentation>
+          Address Prefix List lists address areas in CIDR format.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='DS'  bdem:id='43' bdem:name='ENUM_DS'>
+        <xs:annotation>
+          <xs:documentation>
+          Delegation Signer identifies DNSSEC-signed zones.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='SSHFP'  bdem:id='44' bdem:name='ENUM_SSHFP'>
+        <xs:annotation>
+          <xs:documentation>
+          SSH Public Key Fingerprint discloses the fingerprint for SSH keys.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='IPSECKEY'  bdem:id='45' bdem:name='ENUM_IPSECKEY'>
+        <xs:annotation>
+          <xs:documentation>
+          IPsec Key contains an IPsec key.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='RRSIG'  bdem:id='46' bdem:name='ENUM_RRSIG'>
+        <xs:annotation>
+          <xs:documentation>
+          RR Signature contains a digital signature for DNSSEC.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='NSEC'  bdem:id='47' bdem:name='ENUM_NSEC'>
+        <xs:annotation>
+          <xs:documentation>
+          Next Secure threads signed zones in DNSSEC.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='DNSKEY'  bdem:id='48' bdem:name='ENUM_DNSKEY'>
+        <xs:annotation>
+          <xs:documentation>
+          DNS Key contains a public key for DNSSEC.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='DHCID'  bdem:id='49' bdem:name='ENUM_DHCID'>
+        <xs:annotation>
+          <xs:documentation>
+          DHCP Identifier links domain names with DHCP clients.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='NSEC3'  bdem:id='50' bdem:name='ENUM_NSEC3'>
+        <xs:annotation>
+          <xs:documentation>
+          Next Secure 3 is an alternative to NSEC.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='NSEC3PARAM'  bdem:id='51'
+                                          bdem:name='ENUM_NSEC3PARAM'>
+        <xs:annotation>
+          <xs:documentation>
+          This record contains Parameter for NSEC3.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='TLSA'  bdem:id='52' bdem:name='ENUM_TLSA'>
+        <xs:annotation>
+          <xs:documentation>
+          This record issues an TLSA Certificate Association with a domain
+          name pertaining to DANE.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='SMIMEA'  bdem:id='53' bdem:name='ENUM_SMIMEA'>
+        <xs:annotation>
+          <xs:documentation>
+          This record issues a S/MIME Certificate Association with a domain
+          name.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <!-- 54 is unassigned. -->
+      <xs:enumeration value='HIP'  bdem:id='55' bdem:name='ENUM_HIP'>
+        <xs:annotation>
+          <xs:documentation>
+          Host Identity Protocol separates endpoint markers and positioning
+          functions from IP addresses.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='NINFO'  bdem:id='56' bdem:name='ENUM_NINFO'>
+        <xs:annotation>
+          <xs:documentation>
+          NINFO provides information on the zone status (obsolete).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='RKEY'  bdem:id='57' bdem:name='ENUM_RKEY'>
+        <xs:annotation>
+          <xs:documentation>
+          RKEY saves keys (obsolete).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='TALINK'  bdem:id='58' bdem:name='ENUM_TALINK'>
+        <xs:annotation>
+          <xs:documentation>
+          Trust Anchor Link connects two domain names (obsolete).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='CDS'  bdem:id='59' bdem:name='ENUM_CDS'>
+        <xs:annotation>
+          <xs:documentation>
+          Child DS is a child copy of a DS record.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='CDNSKEY'  bdem:id='60' bdem:name='ENUM_CDNSKEY'>
+        <xs:annotation>
+          <xs:documentation>
+          Child DNSKEY is a child copy of a DNSKEY record.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='OPENPGPKEY'  bdem:id='61'
+                                          bdem:name='ENUM_OPENPGPKEY'>
+        <xs:annotation>
+          <xs:documentation>
+          OpenPGP Key discloses public keys.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='CSYNC'  bdem:id='62' bdem:name='ENUM_CSYNC'>
+        <xs:annotation>
+          <xs:documentation>
+          Child-to-Parent Synchronization enables the reconciliation of parent
+          and child zones (obsolete).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='ZONEMD'  bdem:id='63' bdem:name='ENUM_ZONEMD'>
+        <xs:annotation>
+          <xs:documentation>
+          Message Digest for DNS Zone is experimental (obsolete).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <!-- 64 through 98 is unassigned. -->
+      <xs:enumeration value='SPF'  bdem:id='99' bdem:name='ENUM_SPF'>
+        <xs:annotation>
+          <xs:documentation>
+          Sender Policy Framework was replaced by the TXT record (obsolete).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='UINFO'  bdem:id='100' bdem:name='ENUM_UINFO'>
+        <xs:annotation>
+          <xs:documentation>
+          Reserved.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='UID'  bdem:id='101' bdem:name='ENUM_UID'>
+        <xs:annotation>
+          <xs:documentation>
+          Reserved.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='GID'  bdem:id='102' bdem:name='ENUM_GID'>
+        <xs:annotation>
+          <xs:documentation>
+          Reserved.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='UNSPEC'  bdem:id='103' bdem:name='ENUM_UNSPEC'>
+        <xs:annotation>
+          <xs:documentation>
+          Reserved
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='NID'  bdem:id='104' bdem:name='ENUM_NID'>
+        <xs:annotation>
+          <xs:documentation>
+          Node identifier (experimental).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='L32'  bdem:id='105' bdem:name='ENUM_L32'>
+        <xs:annotation>
+          <xs:documentation>
+          32-bit locator (experimental).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='L64'  bdem:id='106' bdem:name='ENUM_L64'>
+        <xs:annotation>
+          <xs:documentation>
+          64-bit locator (experimental).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='LP'  bdem:id='107' bdem:name='ENUM_LP'>
+        <xs:annotation>
+          <xs:documentation>
+          Locator pointer.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='EUI48'  bdem:id='108' bdem:name='ENUM_EUI48'>
+        <xs:annotation>
+          <xs:documentation>
+          48-bit Extended Unique Identifier encrypts addresses.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='EUI64'  bdem:id='109' bdem:name='ENUM_EUI64'>
+        <xs:annotation>
+          <xs:documentation>
+          64-bit Extended Unique Identifier encrypts addresses.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+     <!-- 110 through 248 is unassigned. -->
+      <xs:enumeration value='TKEY'  bdem:id='249' bdem:name='ENUM_TKEY'>
+        <xs:annotation>
+          <xs:documentation>
+          Transaction Key enables the exchange of secret keys.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='TSIG'  bdem:id='250' bdem:name='ENUM_TSIG'>
+        <xs:annotation>
+          <xs:documentation>
+          Transaction Signature is used for authentication.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='IXFR'  bdem:id='251' bdem:name='ENUM_IXFR'>
+        <xs:annotation>
+          <xs:documentation>
+          Incremental Zone Transfer enables zone file components to be updated
+          on a second server (obsolete).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='AXFR'  bdem:id='252' bdem:name='ENUM_AXFR'>
+        <xs:annotation>
+          <xs:documentation>
+          Request for transfer of an entire zone.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='MAILB'  bdem:id='253' bdem:name='ENUM_MAILB'>
+        <xs:annotation>
+          <xs:documentation>
+          Request for mailbox-related records (MB, MG, or MR).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='MAILA'  bdem:id='254' bdem:name='ENUM_MAILA'>
+        <xs:annotation>
+          <xs:documentation>
+          Request for mail agent resource records. (Obsolete, see MX).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='ALL'  bdem:id='255' bdem:name='ENUM_ALL'>
+        <xs:annotation>
+          <xs:documentation>
+          Request for all records.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+
+
+      <xs:enumeration value='URI'  bdem:id='256' bdem:name='ENUM_URI'>
+        <xs:annotation>
+          <xs:documentation>
+          Uniform Resource Identifier discloses the mapping of host names to
+          URIs.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='CAA'  bdem:id='257' bdem:name='ENUM_CAA'>
+        <xs:annotation>
+          <xs:documentation>
+          Certificate Authority Authorization specifies a domain's possible
+          CAs.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='AVC'  bdem:id='258' bdem:name='ENUM_AVC'>
+        <xs:annotation>
+          <xs:documentation>
+          Application Visibility and Control contains application metadata for
+          DNS-AS (obsolete).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='DOA'  bdem:id='259' bdem:name='ENUM_DOA'>
+        <xs:annotation>
+          <xs:documentation>
+          DOA is no longer active (obsolete).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='AMTRELAY'  bdem:id='260'
+                                        bdem:name='ENUM_AMTRELAY'>
+        <xs:annotation>
+          <xs:documentation>
+          Automatic Multicast Tunneling Relay enables the finding of AMT
+          relays (obsolete).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <!-- 261 through 32767 is unassigned. -->
+      <xs:enumeration value='TA'  bdem:id='32768' bdem:name='ENUM_TA'>
+        <xs:annotation>
+          <xs:documentation>
+          DNSSEC Trust Authorities enables DNSSEC without signed root.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='DLV'  bdem:id='32769' bdem:name='ENUM_DLV'>
+        <xs:annotation>
+          <xs:documentation>
+          DNSSEC Lookaside Validation discloses trust anchors beyond the
+          standard DNS chain.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <!-- 32770 through 65279 are unassigned. -->
+      <!-- 65280 through 65534 are for private use. -->
+      <!-- 65535 is reserved. -->
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name='Classification' bdem:preserveEnumOrder='true'>
+    <xs:annotation>
+      <xs:documentation>
+      This struct enumerates the CLASS fields that appear in resource records.
+      CLASS values are a subset of QCLASS values.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base='xs:string'>
+      <xs:enumeration value='INTERNET'  bdem:id='1' bdem:name='ENUM_INTERNET'>
+        <xs:annotation>
+          <xs:documentation>
+          The Internet class.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='CSNET'  bdem:id='2' bdem:name='ENUM_CSNET'>
+        <xs:annotation>
+          <xs:documentation>
+          The CSNET class.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='CH'  bdem:id='3' bdem:name='ENUM_CH'>
+        <xs:annotation>
+          <xs:documentation>
+          The CHAOS class.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='HS'  bdem:id='4' bdem:name='ENUM_HS'>
+        <xs:annotation>
+          <xs:documentation>
+          The Hesiod class.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='ANY'  bdem:id='255' bdem:name='ENUM_ANY'>
+        <xs:annotation>
+          <xs:documentation>
+          Any class.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name='Direction' bdem:preserveEnumOrder='true'>
+    <xs:annotation>
+      <xs:documentation>
+      This struct enumerates the values of the DNS header "QR" field.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base='xs:string'>
+      <xs:enumeration value='REQUEST'  bdem:id='0' bdem:name='ENUM_REQUEST'>
+        <xs:annotation>
+          <xs:documentation>
+          The message is a request.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='RESPONSE'  bdem:id='1' bdem:name='ENUM_RESPONSE'>
+        <xs:annotation>
+          <xs:documentation>
+          The message is a response.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name='Operation' bdem:preserveEnumOrder='true'>
+    <xs:annotation>
+      <xs:documentation>
+      This struct enumerates the values of the DNS header "OPCODE" field.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base='xs:string'>
+      <xs:enumeration value='STANDARD'  bdem:id='0' bdem:name='ENUM_STANDARD'>
+        <xs:annotation>
+          <xs:documentation>
+          The message is a standard query.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='INVERSE'  bdem:id='1' bdem:name='ENUM_INVERSE'>
+        <xs:annotation>
+          <xs:documentation>
+          The message is an inverse query.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='STATUS'  bdem:id='2' bdem:name='ENUM_STATUS'>
+        <xs:annotation>
+          <xs:documentation>
+          The message indicates server side status.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name='Error' bdem:preserveEnumOrder='true'>
+    <xs:annotation>
+      <xs:documentation>
+      This struct enumerates the values of a DNS header "RCODE" field.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base='xs:string'>
+      <xs:enumeration value='OK'  bdem:id='0' bdem:name='ENUM_OK'>
+        <xs:annotation>
+          <xs:documentation>
+          The message is successful.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='FORMAT_ERROR'  bdem:id='1' bdem:name='ENUM_FORMAT_ERROR'>
+        <xs:annotation>
+          <xs:documentation>
+          The name server was unable to interpret the query.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='SERVER_FAILURE'  bdem:id='2' bdem:name='ENUM_SERVER_FAILURE'>
+        <xs:annotation>
+          <xs:documentation>
+          The name server was unable to process the query due to a problem
+          with the name server.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='NAME_ERROR'  bdem:id='3' bdem:name='ENUM_NAME_ERROR'>
+        <xs:annotation>
+          <xs:documentation>
+          The domain name referenced in the query does not exist.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='NOT_IMPLEMENTED'  bdem:id='4' bdem:name='ENUM_NOT_IMPLEMENTED'>
+        <xs:annotation>
+          <xs:documentation>
+          The name server does not support the requested kind of query.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value='REFUSED'  bdem:id='5' bdem:name='ENUM_REFUSED'>
+        <xs:annotation>
+          <xs:documentation>
+          The name server refused to perform the specified operation for policy
+          reasons.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name='Label'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes a union of a potentially compressed label within
+      a domain name.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:choice>
+      <xs:element name='text' type='xs:string'>
+        <xs:annotation>
+          <xs:documentation>
+          The label is uncompressed text.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='offset' type='xs:unsignedShort'>
+        <xs:annotation>
+          <xs:documentation>
+          The label is an offset into the DNS header where the uncompressed,
+          length-prefixed text begins.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name='ResourceRecordData'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes a union of resource record type data.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:choice>
+      <xs:element name='canonicalName' type='ResourceRecordDataCname'>
+        <xs:annotation>
+          <xs:documentation>
+          The resource record data in the CNAME format.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='hostInfo' type='ResourceRecordDataHinfo'>
+        <xs:annotation>
+          <xs:documentation>
+          The resource record data in the HINFO format.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='mailExchange' type='ResourceRecordDataMx'>
+        <xs:annotation>
+          <xs:documentation>
+          The resource record data in the MX format.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='nameServer' type='ResourceRecordDataNs'>
+        <xs:annotation>
+          <xs:documentation>
+          The resource record data in the NS format.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='pointer' type='ResourceRecordDataPtr'>
+        <xs:annotation>
+          <xs:documentation>
+          The resource record data in the PTR format.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='zoneAuthority' type='ResourceRecordDataSoa'>
+        <xs:annotation>
+          <xs:documentation>
+          The resource record data in the SOA format.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='wellKnownService' type='ResourceRecordDataWks'>
+        <xs:annotation>
+          <xs:documentation>
+          The resource record data in the WKS format.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='text' type='ResourceRecordDataTxt'>
+        <xs:annotation>
+          <xs:documentation>
+          The resource record data in the TXT format.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='ipv4' type='ResourceRecordDataA'>
+        <xs:annotation>
+          <xs:documentation>
+          The resource record data in the A format.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='ipv6' type='ResourceRecordDataAAAA'>
+        <xs:annotation>
+          <xs:documentation>
+          The resource record data in the AAAA format.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='server' type='ResourceRecordDataSvr'>
+        <xs:annotation>
+          <xs:documentation>
+          The resource record data in the SVR format.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='raw' type='ResourceRecordDataRaw'>
+        <xs:annotation>
+          <xs:documentation>
+          The resource record data in a raw format.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:choice>
+  </xs:complexType>
+
+
+  <xs:complexType name='ResourceRecordDataCname'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes resource record data in the CNAME format.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name='cname' type='xs:string'>
+        <xs:annotation>
+          <xs:documentation>
+           A  domain name which specifies the canonical or primary name for the
+           owner. The owner name is an alias.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name='ResourceRecordDataHinfo'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes resource record data in the HINFO format.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name='cpu' type='xs:string'>
+        <xs:annotation>
+          <xs:documentation>
+          The CPU architecture.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='os' type='xs:string'>
+        <xs:annotation>
+          <xs:documentation>
+          The operating system.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name='ResourceRecordDataMx'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes resource record data in the MX format.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name='preference' type='xs:unsignedShort'>
+        <xs:annotation>
+          <xs:documentation>
+          A 16 bit integer which specifies the preference given to this RR
+          among others at the same owner.  Lower values are preferred.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='exchange' type='xs:string'>
+        <xs:annotation>
+          <xs:documentation>
+          A domain name which specifies a host willing to act as a mail
+          exchange for the owner name.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name='ResourceRecordDataNs'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes resource record data in the NS format.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name='nsdname' type='xs:string'>
+        <xs:annotation>
+          <xs:documentation>
+          A domain name which specifies a host which should be authoritative
+          for the specified class and domain.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name='ResourceRecordDataPtr'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes resource record data in the PTR format.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name='ptrdname' type='xs:string'>
+        <xs:annotation>
+          <xs:documentation>
+          A domain name which points to some location in the domain name
+          space.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name='ResourceRecordDataSoa'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes resource record data in the SOA format.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name='mname' type='xs:string'>
+        <xs:annotation>
+          <xs:documentation>
+          The domain name of the name server that was the original or
+          primary source of data for this zone.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='rname' type='xs:string'>
+        <xs:annotation>
+          <xs:documentation>
+          A domain name which specifies the mailbox of the person
+          responsible for this zone.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='serial' type='xs:unsignedInt'>
+        <xs:annotation>
+          <xs:documentation>
+          The unsigned 32 bit version number of the original copy of the zone.
+          Zone transfers preserve this value. This value wraps and should be
+          compared using sequence space arithmetic.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='refresh' type='xs:unsignedInt'>
+        <xs:annotation>
+          <xs:documentation>
+          A 32 bit time interval before the zone should be refreshed.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='retry' type='xs:unsignedInt'>
+        <xs:annotation>
+          <xs:documentation>
+          A 32 bit time interval that should elapse before a failed refresh
+          should be retried.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='expire' type='xs:unsignedInt'>
+        <xs:annotation>
+          <xs:documentation>
+          A 32 bit time value that specifies the upper limit on the time
+          interval that can elapse before the zone is no longer authoritative.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='minimum' type='xs:unsignedInt'>
+        <xs:annotation>
+          <xs:documentation>
+          The unsigned 32 bit minimum TTL field that should be exported with
+          any RR from this zone.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name='ResourceRecordDataWks'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes resource record data in the WKS format.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name='address' type='xs:unsignedInt'>
+        <xs:annotation>
+          <xs:documentation>
+          The address on which the well-known services are supported.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='protocol' type='xs:unsignedByte'>
+        <xs:annotation>
+          <xs:documentation>
+          The protocol number for the higher-level protocol using the Internet
+          Protocol. For example, 16 is TCP.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='port' type='xs:unsignedShort'
+                              minOccurs='0' maxOccurs='unbounded'>
+        <xs:annotation>
+          <xs:documentation>
+          The bit map that indicates whether service is available on a
+          particular well known port. For example, SSH is assigned the
+          well-known port 22, so if index 22 is set, then the SSH service is
+          available at the address.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name='ResourceRecordDataTxt'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes resource record data in the TXT format.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name='text' type='xs:string' minOccurs='0' maxOccurs='unbounded'>
+        <xs:annotation>
+          <xs:documentation>
+          One or more character strings.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name='ResourceRecordDataA'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes resource record data in the A format.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name='address' type='xs:unsignedInt'>
+        <xs:annotation>
+          <xs:documentation>
+          The 32-bit encoded IPv4 address in network byte order.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name='ResourceRecordDataAAAA'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes resource record data in the AAAA format.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name='address0' type='xs:unsignedInt'>
+        <xs:annotation>
+          <xs:documentation>
+          The 32-bit index 0 of the 128-bit encoded IPv6 address in network
+          byte order.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='address1' type='xs:unsignedInt'>
+        <xs:annotation>
+          <xs:documentation>
+          The 32-bit index 1 of the 128-bit encoded IPv6 address in network
+          byte order.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='address2' type='xs:unsignedInt'>
+        <xs:annotation>
+          <xs:documentation>
+          The 32-bit index 2 of the 128-bit encoded IPv6 address in network
+          byte order.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='address3' type='xs:unsignedInt'>
+        <xs:annotation>
+          <xs:documentation>
+          The 32-bit index 3 of the 128-bit encoded IPv6 address in network
+          byte order.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name='ResourceRecordDataSvr'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes resource record data in the SVR format.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name='name' type='xs:string'>
+        <xs:annotation>
+          <xs:documentation>
+          The symbolic name of the desired service, in the form
+          "_Service._Proto.Name". An underscore (_) is prepended to the service
+          identifier to avoid collisions with DNS labels that occur in nature.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='ttl' type='xs:unsignedInt'>
+        <xs:annotation>
+          <xs:documentation>
+          The time-to-live in seconds of this record.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='classification' type='xs:unsignedShort'>
+        <xs:annotation>
+          <xs:documentation>
+          The classification.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='priority' type='xs:unsignedShort'>
+        <xs:annotation>
+          <xs:documentation>
+          The priority of this target host.  A client MUST attempt to
+          contact the target host with the lowest-numbered priority it can
+          reach; target hosts with the same priority SHOULD be tried in an
+          order defined by the weight field.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='weight' type='xs:unsignedShort'>
+        <xs:annotation>
+          <xs:documentation>
+          A server selection mechanism. The weight field specifies a
+          relative weight for entries with the same priority. Larger
+          weights SHOULD be given a proportionately higher probability of
+          being selected.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='port' type='xs:unsignedShort'>
+        <xs:annotation>
+          <xs:documentation>
+          The port on the target host of the service.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='target' type='xs:string'>
+        <xs:annotation>
+          <xs:documentation>
+          The domain name of the target host.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name='ResourceRecordDataRaw'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes resource record data in the RAW format.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name='data' type='xs:hexBinary'>
+        <xs:annotation>
+          <xs:documentation>
+          The raw encoded data.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name='NameServerAddress'>
+    <xs:annotation>
+      <xs:documentation>
+      This struct describes the address of a name server.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name='host' type='xs:string'>
+        <xs:annotation>
+          <xs:documentation>
+          The host.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='port' type='xs:unsignedShort' minOccurs='0'>
+        <xs:annotation>
+          <xs:documentation>
+          The port. If unspecified, the port is the default DNS port 53.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name='NameServerConfig'>
+    <xs:annotation>
+      <xs:documentation>
+      This struct describes a name server.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name='address' type='NameServerAddress'>
+        <xs:annotation>
+          <xs:documentation>
+          The address of the name server.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name='SortListItem'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes a DNS sort list item.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name='address' type='xs:string'>
+        <xs:annotation>
+          <xs:documentation>
+         The IP address.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='netmask' type='xs:string'>
+        <xs:annotation>
+          <xs:documentation>
+          The netmask.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name='SortList'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes a DNS sort list.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name='item' type='SortListItem'
+                              minOccurs='0' maxOccurs='unbounded'>
+        <xs:annotation>
+          <xs:documentation>
+          The IP address/netmask pairs.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name='HostEntry'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes an association between an address, its canonical
+      hostname, and its aliases.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name='address' type='xs:string'>
+        <xs:annotation>
+          <xs:documentation>
+         The IP address.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='canonicalHostname' type='xs:string'>
+        <xs:annotation>
+          <xs:documentation>
+          The canonical hostname.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='aliases' type='xs:string'
+                                 minOccurs='0' maxOccurs='unbounded'>
+        <xs:annotation>
+          <xs:documentation>
+          The aliases.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='expiration' type='xs:unsignedLong' minOccurs='0'>
+        <xs:annotation>
+          <xs:documentation>
+          The expiration deadline, in absolute seconds since the Unix epoch.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name='HostDatabaseConfig'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes an association of addresses, canonical hostnames,
+      and aliases.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name='entry' type='HostEntry'
+                               minOccurs='0' maxOccurs='unbounded'>
+        <xs:annotation>
+          <xs:documentation>
+          The host/address pairs.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name='PortEntry'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes an association between a service, protocol, and
+      port.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name='service' type='xs:string'>
+        <xs:annotation>
+          <xs:documentation>
+         The service
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='protocol' type='xs:string'>
+        <xs:annotation>
+          <xs:documentation>
+          The protocol.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='port' type='xs:unsignedShort'>
+        <xs:annotation>
+          <xs:documentation>
+          The port.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='expiration' type='xs:unsignedLong' minOccurs='0'>
+        <xs:annotation>
+          <xs:documentation>
+          The expiration deadline, in absolute seconds since the Unix epoch.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name='PortDatabaseConfig'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes an association of services, protocols, and ports.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name='entry' type='PortEntry'
+                               minOccurs='0' maxOccurs='unbounded'>
+        <xs:annotation>
+          <xs:documentation>
+          The service/port pairs.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name='ServerConfig'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes the configurable parameters of a DNS server.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name='timeout' type='xs:unsignedInt'>
+        <xs:annotation>
+          <xs:documentation>
+          The timeout of each request, in seconds.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='nameServer' type='NameServerConfig'>
+        <xs:annotation>
+          <xs:documentation>
+          The endpoint of the name server.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name='ClientConfig'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes the configurable parameters of a DNS client.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+        <xs:element name='nameServer' type='NameServerConfig'
+                                      minOccurs='0' maxOccurs='unbounded'>
+        <xs:annotation>
+          <xs:documentation>
+          The endpoint of each name server. If unspecified, the Google Public
+          Name Server at 8.8.8.8:53 is used.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='domain' type='xs:string' minOccurs='0'>
+        <xs:annotation>
+          <xs:documentation>
+          The local domain name. Most queries for names within this domain
+          can use short names relative to the local domain. If set to '.',
+          the root domain is considered. If unspecified, the domain is
+          determined from the local hostname, where the domain is taken to be
+          everything after the first '.', except when the local hostname does
+          not contain a domain part, in which case the root domain is assumed.
+          The definition of this field is mutually exclusive with the
+          definition of the 'search' field.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='search' type='xs:string'
+                                minOccurs='0' maxOccurs='unbounded'>
+        <xs:annotation>
+          <xs:documentation>
+          The override of the domain search path. By default, the search list
+          is determined from the local domain name. When specified, queries
+          having fewer than 'ndots' will be attempted using each component of
+          the search path in turn until a match is found. The definition of
+          this field is mutually exclusive with the definition of the 'domain'
+          field. When specified, this field is silently capped at 6 entries.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='sortList' type='SortList' minOccurs='0'>
+        <xs:annotation>
+          <xs:documentation>
+          The sort list.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='attempts' type='xs:unsignedInt' minOccurs='0'>
+        <xs:annotation>
+          <xs:documentation>
+          The maximum number of attempts to resolve a name. If unspecified,
+          the default value is the number of name servers configured. The
+          maximum value is silently capped at 5.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='timeout' type='xs:unsignedInt' minOccurs='0'>
+        <xs:annotation>
+          <xs:documentation>
+           The timeout of each request, in seconds. If unspecified, the
+           default value is 5 seconds. The maximum value is silently capped
+           at 30 seconds.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='rotate' type='xs:boolean' minOccurs='0'>
+        <xs:annotation>
+          <xs:documentation>
+          Flag indicating that the name servers should be utilized in
+          round-robin order, not in descending order of priority. If
+          unspecified, the default value is false.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='ndots' type='xs:unsignedInt' minOccurs='0'>
+        <xs:annotation>
+          <xs:documentation>
+          The threshold for the number of dots which must appear in a name
+          before an initial absolute query will be made. If unspecified, the
+          default is 1, meaning that if there are any dots in a name, the
+          name will be tried first as an absolute name before any search list
+          element are appended to it. The maximum value is silently capped
+          at 15.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='debug' type='xs:boolean' minOccurs='0'>
+        <xs:annotation>
+          <xs:documentation>
+          Flag indicating that debug output should be generated. If
+          unspecified, the default value is false.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+
+  <xs:complexType name='ClientConfigSpec'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes the location or parameters of the client
+      configuration.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:choice>
+      <xs:element name='path' type='xs:string'>
+        <xs:annotation>
+          <xs:documentation>
+          The path to the client parameters, typically '/etc/resolv.conf' on
+          POSIX platforms.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='configuration' type='ClientConfig'>
+        <xs:annotation>
+          <xs:documentation>
+          The host database entries
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:choice>
+  </xs:complexType>
+
+
+  <xs:complexType name='HostDatabaseConfigSpec'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes the location or contents of the host database.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:choice>
+      <xs:element name='path' type='xs:string'>
+        <xs:annotation>
+          <xs:documentation>
+          The path to the host database, typically '/etc/hosts' on POSIX
+          platforms.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='configuration' type='HostDatabaseConfig'>
+        <xs:annotation>
+          <xs:documentation>
+          The host database entries.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:choice>
+  </xs:complexType>
+
+
+  <xs:complexType name='PortDatabaseConfigSpec'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes the location or contents of the port database.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:choice>
+      <xs:element name='path' type='xs:string'>
+        <xs:annotation>
+          <xs:documentation>
+          The path to the port database, typically '/etc/services' on POSIX
+          platforms.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='configuration' type='PortDatabaseConfig'>
+        <xs:annotation>
+          <xs:documentation>
+          The port database entries.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:choice>
+  </xs:complexType>
+
+
+  <xs:complexType name='ResolverConfig'>
+    <xs:annotation>
+      <xs:documentation>
+      This class describes the configurable parameters of a resolver.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name='client' type='ClientConfigSpec' minOccurs='0'>
+        <xs:annotation>
+          <xs:documentation>
+          The configurable parameters of the DNS client mechanism. This
+          information is traditionally loaded from "/etc/resolv.conf" on
+          POSIX systems.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='hostDatabase' type='HostDatabaseConfigSpec'
+                                      minOccurs='0'>
+        <xs:annotation>
+          <xs:documentation>
+          The known associations between an addresses, its canonical hostname,
+          and its aliases, if any. This information is traditionally loaded
+          from "/etc/hosts" on POSIX systems.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name='portDatabase' type='PortDatabaseConfigSpec'
+                                      minOccurs='0'>
+        <xs:annotation>
+          <xs:documentation>
+          The known associations between a service, its protocol, and its
+          port within that protocol. This information is traditionally loaded
+          from "/etc/services" on POSIX systems.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+</xs:schema>
