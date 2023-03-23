@@ -23,6 +23,7 @@ BSLS_IDENT_RCSID(ntsu_resolverutil_cpp, "$Id$ $CSID$")
 
 #include <bdlma_bufferedsequentialallocator.h>
 #include <bdlb_chartype.h>
+#include <bdlb_stringviewutil.h>
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
 #include <arpa/inet.h>
@@ -142,49 +143,42 @@ ntsa::Error convertGetAddrInfoError(int rc)
 }
 
 // Load into the specified 'result' the port decoded from the specified
-// 'source' having the specified 'size'. Return 'ntsa::Error::e_INVALID' if the
-// 'source' contains a non-numeric character, 'ntsa::Error::e_LIMIT' if the
-// 'source' contains a valid number that is an invalid port (e.g. the number
-// is greater than 65535) and 'ntsa::Error::e_OK' otherwise.
-ntsa::Error parsePortNumber(ntsa::Port* result,
-                            const char* source,
-                            bsl::size_t size)
+// 'source'. Return 'ntsa::Error::e_INVALID' if the 'source' contains a
+// non-numeric character other than leading and trailing whitespaces,
+// 'ntsa::Error::e_LIMIT' if the 'source' contains a valid number that is an
+// invalid port (e.g. the number is greater than 65535) and 'ntsa::Error::e_OK'
+// otherwise.
+ntsa::Error parsePortNumber(ntsa::Port*      result,
+                            bsl::string_view source)
 {
-    const char* p = source;
-    const char* e = source + size + 1;
+    bsl::string_view s = bdlb::StringViewUtil::trim(source);
+    const char*      p = s.cbegin();
+    const char*      e = s.cend();
 
-    char c;
+    if (p != e && *p == '+') {
+        ++p;
+    }
 
-    if (*p == 0) {
+    if (p == e) {
         return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
-    c = *p++;
-    while (bdlb::CharType::isSpace(c)) {
-        c = *p++;
-    }
-
-    if (c == '-') {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
-    if (c == '+') {
-        c = *p++;
     }
 
     bsl::uint64_t value = 0;
-    while (p != e) {
+
+    do {
+        char c = *p;
+
         if (!bdlb::CharType::isDigit(c)) {
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
 
         value = value * 10 + (c - '0');
-        c     = *p++;
-    }
 
-    if (value > USHRT_MAX) {
-        return ntsa::Error(ntsa::Error::e_LIMIT);
+        if (value > USHRT_MAX) {
+            return ntsa::Error(ntsa::Error::e_LIMIT);
+        }
     }
+    while (++p != e);
 
     *result = static_cast<bsl::uint16_t>(value);
     return ntsa::Error();
@@ -353,8 +347,7 @@ ntsa::Error ResolverUtil::getPort(bsl::vector<ntsa::Port>* result,
 
     {
         ntsa::Port portNumber;
-        error = parsePortNumber(
-            &portNumber, serviceName.data(), serviceName.size());
+        error = parsePortNumber(&portNumber, serviceName);
 
         if (error) {
             if (error == ntsa::Error(ntsa::Error::e_LIMIT)) {

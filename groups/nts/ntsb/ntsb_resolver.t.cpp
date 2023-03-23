@@ -3178,14 +3178,21 @@ NTSCFG_TEST_CASE(11)
             bsl::vector<ntsa::Port> portList;
 
             error = resolver.getPort(
-                &portList, bslstl::StringRef("7000", 4), portOptions);
+                &portList, bslstl::StringRef("70", 1), portOptions);
             NTSCFG_TEST_EQ(error, ntsa::Error());
-
             NTSCFG_TEST_EQ(portList.size(), 1);
+            NTSCFG_TEST_EQ(portList[0], 7);
 
-            NTSCFG_TEST_LOG_DEBUG << "Port = " << portList[0]
-                                  << NTSCFG_TEST_LOG_END;
+            error = resolver.getPort(
+                &portList, bslstl::StringRef(" +70 "), portOptions);
+            NTSCFG_TEST_EQ(error, ntsa::Error());
+            NTSCFG_TEST_EQ(portList.size(), 1);
+            NTSCFG_TEST_EQ(portList[0], 70);
 
+            error = resolver.getPort(
+                &portList, bslstl::StringRef("7000"), portOptions);
+            NTSCFG_TEST_EQ(error, ntsa::Error());
+            NTSCFG_TEST_EQ(portList.size(), 1);
             NTSCFG_TEST_EQ(portList[0], 7000);
         }
 
@@ -3195,6 +3202,11 @@ NTSCFG_TEST_CASE(11)
 
             error = resolver.getPort(
                 &portList, bslstl::StringRef("70000", 5), portOptions);
+            NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+
+            error = resolver.getPort(&portList,
+                                     bslstl::StringRef("18446744073709551616"),
+                                     portOptions);
             NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
         }
 
