@@ -22,6 +22,7 @@ BSLS_IDENT_RCSID(ntsu_resolverutil_cpp, "$Id$ $CSID$")
 #include <ntsu_socketutil.h>
 
 #include <bdlma_bufferedsequentialallocator.h>
+#include <bdlb_chartype.h>
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
 #include <arpa/inet.h>
@@ -44,6 +45,7 @@ BSLS_IDENT_RCSID(ntsu_resolverutil_cpp, "$Id$ $CSID$")
 #endif
 
 #include <bsl_algorithm.h>
+#include <bsl_climits.h>
 #include <bsl_cstdio.h>
 #include <bsl_cstdlib.h>
 #include <bsl_cstring.h>
@@ -137,6 +139,55 @@ ntsa::Error convertGetAddrInfoError(int rc)
 #else
 #error Not implemented
 #endif
+}
+
+// Load into the specified 'result' the port decoded from the specified
+// 'source' having the specified 'size'. Return 'ntsa::Error::e_INVALID' if the
+// 'source' contains a non-numeric character, 'ntsa::Error::e_LIMIT' if the
+// 'source' contains a valid number that is an invalid port (e.g. the number
+// is greater than 65535) and 'ntsa::Error::e_OK' otherwise.
+ntsa::Error parsePortNumber(ntsa::Port* result,
+                            const char* source,
+                            bsl::size_t size)
+{
+    const char* p = source;
+    const char* e = source + size + 1;
+
+    char c;
+
+    if (*p == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    c = *p++;
+    while (bdlb::CharType::isSpace(c)) {
+        c = *p++;
+    }
+
+    if (c == '-') {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (c == '+') {
+        c = *p++;
+    }
+
+    bsl::uint64_t value = 0;
+    while (p != e) {
+        if (!bdlb::CharType::isDigit(c)) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        value = value * 10 + (c - '0');
+        c     = *p++;
+    }
+
+    if (value > USHRT_MAX) {
+        return ntsa::Error(ntsa::Error::e_LIMIT);
+    }
+
+    *result = static_cast<bsl::uint16_t>(value);
+    return ntsa::Error();
 }
 
 }  // close unnamed namespace
@@ -299,6 +350,22 @@ ntsa::Error ResolverUtil::getPort(bsl::vector<ntsa::Port>* result,
 
     ntsa::Error error;
     int         rc;
+
+    {
+        ntsa::Port portNumber;
+        error = parsePortNumber(
+            &portNumber, serviceName.data(), serviceName.size());
+
+        if (error) {
+            if (error == ntsa::Error(ntsa::Error::e_LIMIT)) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+        }
+        else {
+            result->push_back(portNumber);
+            return ntsa::Error();
+        }
+    }
 
     bsl::string             nameString = serviceName;
     bsl::vector<ntsa::Port> portList;

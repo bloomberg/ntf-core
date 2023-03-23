@@ -3161,6 +3161,47 @@ NTSCFG_TEST_CASE(10)
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
+NTSCFG_TEST_CASE(11)
+{
+    // Concern: Test resolution of a service name expressed as a port number.
+    //
+    // Plan:
+
+    ntscfg::TestAllocator ta;
+    {
+        ntsa::Error error;
+
+        ntsb::Resolver resolver(&ta);
+
+        {
+            ntsa::PortOptions       portOptions;
+            bsl::vector<ntsa::Port> portList;
+
+            error = resolver.getPort(
+                &portList, bslstl::StringRef("7000", 4), portOptions);
+            NTSCFG_TEST_EQ(error, ntsa::Error());
+
+            NTSCFG_TEST_EQ(portList.size(), 1);
+
+            NTSCFG_TEST_LOG_DEBUG << "Port = " << portList[0]
+                                  << NTSCFG_TEST_LOG_END;
+
+            NTSCFG_TEST_EQ(portList[0], 7000);
+        }
+
+        {
+            ntsa::PortOptions       portOptions;
+            bsl::vector<ntsa::Port> portList;
+
+            error = resolver.getPort(
+                &portList, bslstl::StringRef("70000", 5), portOptions);
+            NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+        }
+
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
 NTSCFG_TEST_DRIVER
 {
     NTSCFG_TEST_REGISTER(1);
@@ -3175,5 +3216,7 @@ NTSCFG_TEST_DRIVER
     NTSCFG_TEST_REGISTER(9);
 
     NTSCFG_TEST_REGISTER(10);
+
+    NTSCFG_TEST_REGISTER(11);
 }
 NTSCFG_TEST_DRIVER_END;
