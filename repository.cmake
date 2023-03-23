@@ -4538,7 +4538,8 @@ function (ntf_ide_vs_code_c_cpp_properties_create)
     ntf_repository_toolchain_compiler_name_get(OUTPUT compiler_name)
     ntf_repository_toolchain_compiler_path_get(OUTPUT compiler_path)
 
-    if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "arm64")
+    if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "arm64" OR
+       "${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "ARM64")
         set(arch "arm64")
     elseif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
         set(arch "aarch64")
@@ -4567,7 +4568,7 @@ function (ntf_ide_vs_code_c_cpp_properties_create)
       \"compileCommands\": \"${CMAKE_BINARY_DIR}/compile_commands.json\",\n\
       \"cStandard\": \"c11\",\n\
       \"cppStandard\": \"c++17\",\n\
-      \"intelliSenseMode\": \"gcc-${arch}\"\n\
+      \"intelliSenseMode\": \"linux-gcc-${arch}\"\n\
     }\n\
   ]\n\
 }")
@@ -4582,7 +4583,7 @@ function (ntf_ide_vs_code_c_cpp_properties_create)
       \"compileCommands\": \"${CMAKE_BINARY_DIR}/compile_commands.json\",\n\
       \"cStandard\": \"c11\",\n\
       \"cppStandard\": \"c++17\",\n\
-      \"intelliSenseMode\": \"clang-${arch}\",\n\
+      \"intelliSenseMode\": \"macos-clang-${arch}\",\n\
       \"macFrameworkPath\": [ \"/System/Library/Frameworks\", \"/Library/Frameworks\" ]\n\
     }\n\
   ]\n\
@@ -4594,12 +4595,12 @@ function (ntf_ide_vs_code_c_cpp_properties_create)
   \"configurations\": [\n\
     {\n\
       \"name\": \"Win32\",\n\
-      \"windowsSdkVersion\": \"10.0.18362.0\",\n\
+      \"windowsSdkVersion\": \"$ENV{UCRTVersion}\",\n\
       \"compilerPath\": \"${compiler_path}\",\n\
       \"compileCommands\": \"${CMAKE_BINARY_DIR}/compile_commands.json\",\n\
       \"cStandard\": \"c11\",\n\
       \"cppStandard\": \"c++17\",\n\
-      \"intelliSenseMode\": \"msvc-${arch}\"\n\
+      \"intelliSenseMode\": \"windows-msvc-${arch}\"\n\
     }\n\
   ]\n\
 }")
