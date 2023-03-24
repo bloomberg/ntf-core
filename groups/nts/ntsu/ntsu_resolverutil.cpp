@@ -23,6 +23,7 @@ BSLS_IDENT_RCSID(ntsu_resolverutil_cpp, "$Id$ $CSID$")
 
 #include <bdlma_bufferedsequentialallocator.h>
 #include <bdlb_chartype.h>
+#include <bdlb_numericparseutil.h>
 #include <bdlb_stringviewutil.h>
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
@@ -143,44 +144,24 @@ ntsa::Error convertGetAddrInfoError(int rc)
 }
 
 // Load into the specified 'result' the port decoded from the specified
-// 'source'. Return 'ntsa::Error::e_INVALID' if the 'source' contains a
-// non-numeric character other than leading and trailing whitespaces,
-// 'ntsa::Error::e_LIMIT' if the 'source' contains a valid number that is an
-// invalid port (e.g. the number is greater than 65535) and 'ntsa::Error::e_OK'
-// otherwise.
+// 'source'. Return 'ntsa::Error::e_INVALID' if the 'source' doesn't contain
+// a sequence of characters forming a valid <USHORT> optionally surrounded by
+// whitespace characters and 'ntsa::Error::e_OK' otherwise.
 ntsa::Error parsePortNumber(ntsa::Port*      result,
                             bsl::string_view source)
 {
     bsl::string_view s = bdlb::StringViewUtil::trim(source);
-    const char*      p = s.cbegin();
-    const char*      e = s.cend();
+    bsl::string_view remainder;
 
-    if (p != e && *p == '+') {
-        ++p;
-    }
-
-    if (p == e) {
+    unsigned int value = 0;
+    if (0 != bdlb::NumericParseUtil::parseUint(&value, &remainder, s) ||
+            !remainder.empty()) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
-
-    bsl::uint64_t value = 0;
-
-    do {
-        char c = *p;
-
-        if (!bdlb::CharType::isDigit(c)) {
-            return ntsa::Error(ntsa::Error::e_INVALID);
-        }
-
-        value = value * 10 + (c - '0');
-
-        if (value > USHRT_MAX) {
-            return ntsa::Error(ntsa::Error::e_LIMIT);
-        }
+    if (value > USHRT_MAX) {
+        return ntsa::Error(ntsa::Error::e_LIMIT);
     }
-    while (++p != e);
-
-    *result = static_cast<bsl::uint16_t>(value);
+    *result = ntsa::Port(value);
     return ntsa::Error();
 }
 

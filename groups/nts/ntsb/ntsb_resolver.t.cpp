@@ -3171,10 +3171,10 @@ NTSCFG_TEST_CASE(11)
     {
         ntsa::Error error;
 
-        ntsb::Resolver resolver(&ta);
+        ntsb::Resolver    resolver(&ta);
+        ntsa::PortOptions portOptions;
 
         {
-            ntsa::PortOptions       portOptions;
             bsl::vector<ntsa::Port> portList;
 
             error = resolver.getPort(
@@ -3197,8 +3197,11 @@ NTSCFG_TEST_CASE(11)
         }
 
         {
-            ntsa::PortOptions       portOptions;
             bsl::vector<ntsa::Port> portList;
+
+            error = resolver.getPort(
+                &portList, bslstl::StringRef("7a"), portOptions);
+            NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
 
             error = resolver.getPort(
                 &portList, bslstl::StringRef("70000", 5), portOptions);
@@ -3207,7 +3210,7 @@ NTSCFG_TEST_CASE(11)
             error = resolver.getPort(&portList,
                                      bslstl::StringRef("18446744073709551616"),
                                      portOptions);
-            NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+            NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
         }
 
     }
