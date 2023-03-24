@@ -21,10 +21,10 @@ BSLS_IDENT_RCSID(ntsu_resolverutil_cpp, "$Id$ $CSID$")
 #include <ntsu_adapterutil.h>
 #include <ntsu_socketutil.h>
 
-#include <bdlma_bufferedsequentialallocator.h>
 #include <bdlb_chartype.h>
 #include <bdlb_numericparseutil.h>
 #include <bdlb_stringviewutil.h>
+#include <bdlma_bufferedsequentialallocator.h>
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
 #include <arpa/inet.h>
@@ -147,15 +147,15 @@ ntsa::Error convertGetAddrInfoError(int rc)
 // 'source'. Return 'ntsa::Error::e_INVALID' if the 'source' doesn't contain
 // a sequence of characters forming a valid <USHORT> optionally surrounded by
 // whitespace characters and 'ntsa::Error::e_OK' otherwise.
-ntsa::Error parsePortNumber(ntsa::Port*      result,
-                            bsl::string_view source)
+ntsa::Error parsePortNumber(ntsa::Port* result, bsl::string_view source)
 {
     bsl::string_view s = bdlb::StringViewUtil::trim(source);
     bsl::string_view remainder;
 
     unsigned int value = 0;
     if (0 != bdlb::NumericParseUtil::parseUint(&value, &remainder, s) ||
-            !remainder.empty()) {
+        !remainder.empty())
+    {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
     if (value > USHRT_MAX) {
