@@ -5554,7 +5554,7 @@ NTSCFG_TEST_CASE(17)
         // validate RX timestamping functionality
         {
             error =
-                ntsu::SocketOptionUtil::setTimestampIncomingData(server, true);
+                ntsu::SocketOptionUtil::setTimestampIncomingData(client, true);
 #if defined(TIMESTAMPING_SUPPORTED)
             NTSCFG_TEST_OK(error);
 #else  //should faile on other platforms
@@ -5626,7 +5626,7 @@ NTSCFG_TEST_CASE(17)
             // now switch off the option and check that requested timestamp is not available
             {
                 error =
-                    ntsu::SocketOptionUtil::setTimestampIncomingData(server,
+                    ntsu::SocketOptionUtil::setTimestampIncomingData(client,
                                                                      false);
 #if defined(TIMESTAMPING_SUPPORTED)
                 NTSCFG_TEST_OK(error);
