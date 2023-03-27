@@ -287,8 +287,6 @@ class IoRingSubmissionQueue
         
     // Destroy this object.
     ~IoRingSubmissionQueue();
-        
-    // MANIPULATORS
 
     // Map the memory for the submission queue for the specified I/O
     // 'ring' having the specified 'parameters'.
@@ -300,8 +298,6 @@ class IoRingSubmissionQueue
         
     // Unmap the memory for the submission queue.
     void unmap();
-        
-    // ACCESSORS
 
     // Return the index of the head entry in the submission queue.
     bsl::uint32_t headIndex() const;
@@ -375,7 +371,6 @@ class IoRingDevice
     IoRingDevice& operator=(const IoRingDevice&) BSLS_KEYWORD_DELETED;
 
   public:
-    // CREATORS
 
     // Create a new I/O uring. Optionally specify a 'basicAllocator' used to
     // supply memory. If  'basicAllocator' is 0, the currently installed default
@@ -385,8 +380,6 @@ class IoRingDevice
     // Destroy this object.
     ~IoRingDevice();
         
-    // MANIPULATORS
-
     // Submit the specified 'entry' to the submission queue. Return the error.
     ntsa::Error submit(const ::io_uring_sqe& entry);
         
@@ -404,8 +397,7 @@ class IoRingDevice
     // 'entryListCapacity' the next entries from the completion queue. Return
     // the number of entries popped and set in the 'entryList'.
     bsl::size_t flush(::io_uring_cqe *entryList,
-                      bsl::size_t     entryListCapacity);
-        
+                      bsl::size_t     entryListCapacity);    
 };
 
 #else
@@ -512,8 +504,45 @@ class IoRingContext
 /// This struct is thread safe.
 struct IoRingUtil 
 {
+    // Enumerates the Linux kernel system calls used by this implementation.
+    enum SystemCall {
+
+        // Create and configure an I/O ring.
+        k_SYSTEM_CALL_SETUP = 425,
+
+        // Enter an I/O ring.
+        k_SYSTEM_CALL_ENTER = 426,
+
+        // Register resources for an I/O ring.
+        k_SYSTEM_CALL_REGISTER = 427
+    };
+
     // Return the string description of the specified 'opcode'.
     static const char *describeOpCode(int opcode);
+
+    // Create a new I/O ring configured with the specified 'parameters' 
+    // containing the specified number of 'entries' in each queue. Return the
+    // file descriptor of the new I/O ring.
+    static int setup(unsigned int entries, struct io_uring_params *parameters);
+
+    // Enter the specified 'ring', initiate the specified number of
+    // 'submission', and wait for the specified number of 'completions'. If the
+    // specified 'signals' mask is not null, when waiting for completions first
+    // replace current the signal mask with the 'signals' then restore the
+    // current signal mask when done. Return 0 on success and a non-zero value
+    // otherwise.
+    static int enter(int ring, unsigned int submissions, unsigned int completions,
+		   unsigned int flags, sigset_t *signals);
+
+    // Perform the specified control 'operation' on the specified 'ring' using
+    // the specified 'count' number of the specified 'operand' array. Return
+    // 0 on success and a non-zero value otherwise.
+    static int control(int ring, unsigned int operation, void *operand,
+		      unsigned int count);
+
+    // Return true if the runtime properties of the current operating system
+    // support proactors produced by this factory, otherwise return false.
+    static bool isSupported();
 };
 
 IoRingSubmissionList::IoRingSubmissionList(bslma::Allocator *basicAllocator)
@@ -1693,6 +1722,60 @@ const char *IoRingUtil::describeOpCode(int opcode)
     }
 
     return "???";
+}
+
+int IoRingUtil::setup(unsigned int entries, struct io_uring_params *parameters)
+{
+	return static_cast<int>(::syscall(static_cast<long>(k_SYSTEM_CALL_SETUP), entries, parameters));
+}
+
+int IoRingUtil::enter(int ring, 
+                      unsigned int submissions, 
+                      unsigned int completions,
+		              unsigned int flags, 
+                      sigset_t*    signals)
+{
+	return static_cast<int>(::syscall(static_cast<long>(k_SYSTEM_CALL_ENTER), ring, submissions, completions,
+			flags, signals, _NSIG / 8));
+}
+
+int IoRingUtil::control(int ring, unsigned int operation, void *operand,
+		      unsigned int count)
+{
+	return static_cast<int>(
+        ::syscall(static_cast<long>(k_SYSTEM_CALL_REGISTER), ring, operation, operand, count));
+}
+
+bool IoRingUtil::isSupported()
+{
+    #if defined(__NR_io_uring_setup)
+    BSLMF_ASSERT(IoRingUtil::k_SYSTEM_CALL_SETUP == __NR_io_uring_setup);
+    #endif
+
+    #if defined(__NR_io_uring_enter)
+    BSLMF_ASSERT(IoRingUtil::k_SYSTEM_CALL_ENTER == __NR_io_uring_enter);
+    #endif
+
+    #if defined(__NR_io_uring_register)
+    BSLMF_ASSERT(IoRingUtil::k_SYSTEM_CALL_REGISTER == __NR_io_uring_register);
+    #endif
+
+    errno = 0;
+    int rc = IoRingUtil::enter(-1, 1, 0, 0, 0);
+
+    if (rc == 0) {
+        return true;
+    }
+    else 
+    {
+        int lastError = errno;
+        if (lastError == ENOSYS) {
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
 }
 
 /// Provide an implementation of the 'ntci::Proactor' interface implemented
@@ -4207,6 +4290,11 @@ bsl::shared_ptr<ntci::Proactor> IoRingFactory::createProactor(
     proactor.createInplace(allocator, configuration, user, allocator);
 
     return proactor;
+}
+
+bool IoRingFactory::isSupported()
+{
+    return IoRingUtil::isSupported();
 }
 
 }  // close package namespace

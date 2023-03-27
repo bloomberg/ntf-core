@@ -71,6 +71,10 @@ class IoRingFactory : public ntci::ProactorFactory
         const ntca::ProactorConfig&        configuration,
         const bsl::shared_ptr<ntci::User>& user,
         bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
+
+    // Return true if the runtime properties of the current operating system
+    // support proactors produced by this factory, otherwise return false.
+    static bool isSupported();
 };
 
 }  // close package namespace
