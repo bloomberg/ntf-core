@@ -1291,6 +1291,8 @@ NTCCFG_TEST_CASE(1)
         proactorConfig.setMinThreads(1);
         proactorConfig.setMaxThreads(1);
 
+        NTCCFG_TEST_TRUE(ntco::IoRingFactory::isSupported());
+
         bsl::shared_ptr<ntco::IoRingFactory> proactorFactory;
         proactorFactory.createInplace(&ta, &ta);
 

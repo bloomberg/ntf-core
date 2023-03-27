@@ -105,10 +105,12 @@ BSLS_IDENT_RCSID(ntco_ioring_cpp, "$Id$ $CSID$")
 #include <sys/un.h>
 #include <unistd.h>
 
-// MRM: Set during configuration if liburing is available on the build machine.
+// MRM 
+// Set during configuration if liburing is available on the build machine.
 #define NTC_BUILD_WITH_IORING_LIBURING 0
 
-// MRM: Comment or set to zero to disable optimizations in the implementation that
+// MRM
+// Comment or set to zero to disable optimizations in the implementation that
 // try to improve the efficiency of interacting with the I/O ring.
 #define NTC_BUILD_WITH_IORING_LIBURING_OPTIMIZATIONS 1
 
@@ -504,7 +506,7 @@ class IoRingContext
 /// @par Thread Safety
 /// This struct is thread safe.
 struct IoRingUtil {
-    // Enumerates the Linux kernel system calls used by this implementation.
+    // Enumerate the Linux kernel system calls used by this implementation.
     enum SystemCall {
 
         // Create and configure an I/O ring.
@@ -515,6 +517,13 @@ struct IoRingUtil {
 
         // Register resources for an I/O ring.
         k_SYSTEM_CALL_REGISTER = 427
+    };
+
+    // Enumerate the flags that may be specified when performing a system call.
+    enum SystemCallFlags {
+        // Block until the minimum specified number of completetions are
+        // available.
+        k_SYSTEM_CALL_ENTER_GET_EVENTS = (1 << 0)
     };
 
     // Return the string description of the specified 'opcode'.
@@ -981,7 +990,8 @@ IoRingDevice::IoRingDevice(bslma::Allocator* basicAllocator)
     const bsl::uint32_t QUEUE_DEPTH = 1024;
 
     bsl::memset(&d_params, 0, sizeof d_params);
-    d_ring = (int)syscall(__NR_io_uring_setup, QUEUE_DEPTH, &d_params);
+
+    d_ring = ntco::IoRingUtil::setup(QUEUE_DEPTH, &d_params);
     if (d_ring < 0) {
         ntsa::Error error(errno);
         if (errno == ENOMEM) {
@@ -1063,7 +1073,7 @@ ntsa::Error IoRingDevice::submit(const ::io_uring_sqe& entry)
         return error;
     }
 
-    rc = (int)syscall(__NR_io_uring_enter, d_ring, 1, 0, 0, 0, 0);
+    rc = ntco::IoRingUtil::enter(d_ring, 1, 0, 0, 0);
     if (rc < 0) {
         error = ntsa::Error(errno);
         if (entry.user_data != 0) {
@@ -1158,13 +1168,12 @@ bsl::size_t IoRingDevice::wait(
 
             NTCI_LOG_TRACE("I/O ring calling wait");
 
-            rc = (int)syscall(
-                __NR_io_uring_enter,
+            rc = ntco::IoRingUtil::enter(
                 d_ring,
                 0,
                 1,
-                IORING_ENTER_GETEVENTS,
-                0,
+                static_cast<unsigned int>(
+                    IoRingUtil::k_SYSTEM_CALL_ENTER_GET_EVENTS),
                 0);
 
             NTCI_LOG_TRACE("I/O ring leaving wait, rc = %d", rc);
@@ -1246,13 +1255,12 @@ bsl::size_t IoRingDevice::wait(
 
     NTCI_LOG_TRACE("I/O ring calling wait");
 
-    rc = (int)syscall(__NR_io_uring_enter,
-                      d_ring,
-                      0,
-                      1,
-                      IORING_ENTER_GETEVENTS,
-                      0,
-                      0);
+    rc = ntco::IoRingUtil::enter(
+        d_ring,
+        0,
+        1,
+        static_cast<unsigned int>(IoRingUtil::k_SYSTEM_CALL_ENTER_GET_EVENTS),
+        0);
 
     NTCI_LOG_TRACE("I/O ring leaving wait, rc = %d", rc);
 
@@ -1789,9 +1797,14 @@ bool IoRingUtil::isSupported()
     BSLMF_ASSERT(IoRingUtil::k_SYSTEM_CALL_REGISTER == __NR_io_uring_register);
 #endif
 
+#if defined(IORING_ENTER_GETEVENTS)
+    BSLMF_ASSERT(static_cast<unsigned int>(
+                     IoRingUtil::k_SYSTEM_CALL_ENTER_GET_EVENTS) ==
+                 static_cast<unsigned int>(IORING_ENTER_GETEVENTS));
+#endif
+
     errno  = 0;
     int rc = IoRingUtil::enter(-1, 1, 0, 0, 0);
-
     if (rc == 0) {
         return true;
     }
