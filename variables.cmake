@@ -540,6 +540,22 @@ if (NOT DEFINED NTF_BUILD_WITH_IOCP)
     endif()
 endif()
 
+if (NOT DEFINED NTF_BUILD_WITH_IORING)
+    if (DEFINED NTF_CONFIGURE_WITH_IORING)
+        set(NTF_BUILD_WITH_IORING
+            ${NTF_CONFIGURE_WITH_IORING} CACHE INTERNAL "")
+    elseif (DEFINED ENV{NTF_CONFIGURE_WITH_IORING})
+        set(NTF_BUILD_WITH_IORING
+            $ENV{NTF_CONFIGURE_WITH_IORING} CACHE INTERNAL "")
+    else()
+        if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+            set(NTF_BUILD_WITH_IORING FALSE CACHE INTERNAL "")
+        else()
+            set(NTF_BUILD_WITH_IORING FALSE CACHE INTERNAL "")
+        endif()
+    endif()
+endif()
+
 if (NOT DEFINED NTF_BUILD_WITH_DYNAMIC_LOAD_BALANCING)
     if (DEFINED NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING)
         set(NTF_BUILD_WITH_DYNAMIC_LOAD_BALANCING
@@ -811,6 +827,12 @@ if (${NTF_BUILD_WITH_KQUEUE})
     message(STATUS "NTF: Building with kqueue:                      yes")
 else()
     message(STATUS "NTF: Building with kqueue:                      no")
+endif()
+
+if (${NTF_BUILD_WITH_IORING})
+    message(STATUS "NTF: Building with io_uring:                    yes")
+else()
+    message(STATUS "NTF: Building with io_uring:                    no")
 endif()
 
 if (${NTF_BUILD_WITH_IOCP})

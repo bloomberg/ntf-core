@@ -180,6 +180,14 @@ else
     NTF_CONFIGURE_WITH_IOCP=0
 fi
 
+if [[ "${NTF_CONFIGURE_UNAME}" == "Linux" ]]; then
+    if [[ -z "${NTF_CONFIGURE_WITH_IORING}" ]]; then
+        NTF_CONFIGURE_WITH_IORING=0
+    fi
+else
+    NTF_CONFIGURE_WITH_IORING=0
+fi
+
 if [[ -z "${NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING}" ]]; then
     NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING=1
 fi
@@ -323,6 +331,7 @@ usage()
     echo "    --with-pollset                     Enable the reactor driver implemented with 'pollset' (AIX only) [${NTF_CONFIGURE_WITH_POLLSET}]"
     echo "    --with-kqueue                      Enable the reactor driver implemented with 'kqueue' on (Darwin and FreeBSD only) [${NTF_CONFIGURE_WITH_KQUEUE}]"
     echo "    --with-iocp                        Enable the proactor driver implemented with I/O completion ports (Windows only) [${NTF_CONFIGURE_WITH_IOCP}]"
+    echo "    --with-ioring                      Enable the proactor driver implemented with 'io_uring' (Linux only) [${NTF_CONFIGURE_WITH_IORING}]"
 
     echo "    --with-dynamic-load-balancing      Enable processing I/O on any thread, rather than a single thread [${NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING}]"
     echo "    --with-thread-scaling              Enable automatic scaling of thread pools [${NTF_CONFIGURE_WITH_THREAD_SCALING}]"
@@ -472,6 +481,8 @@ while true ; do
             NTF_CONFIGURE_WITH_KQUEUE=1 ; shift ;;
         --with-iocp)
             NTF_CONFIGURE_WITH_IOCP=1 ; shift ;;
+        --with-ioring)
+            NTF_CONFIGURE_WITH_IORING=1 ; shift ;;
 
         --with-dynamic-load-balancing)
             NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING=1 ; shift ;;
@@ -565,6 +576,8 @@ while true ; do
             NTF_CONFIGURE_WITH_KQUEUE=0 ; shift ;;
         --without-iocp)
             NTF_CONFIGURE_WITH_IOCP=0 ; shift ;;
+        --without-ioring)
+            NTF_CONFIGURE_WITH_IORING=0 ; shift ;;
 
         --without-dynamic-load-balancing)
             NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING=0 ; shift ;;
@@ -666,6 +679,7 @@ export NTF_CONFIGURE_WITH_EVENTPORT
 export NTF_CONFIGURE_WITH_POLLSET
 export NTF_CONFIGURE_WITH_KQUEUE
 export NTF_CONFIGURE_WITH_IOCP
+export NTF_CONFIGURE_WITH_IORING
 
 export NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING
 export NTF_CONFIGURE_WITH_THREAD_SCALING

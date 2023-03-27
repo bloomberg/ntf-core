@@ -4542,7 +4542,7 @@ function (ntf_ide_vs_code_c_cpp_properties_create)
        "${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "ARM64")
         set(arch "arm64")
     elseif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
-        set(arch "aarch64")
+        set(arch "arm64")
     elseif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64" OR
            "${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "amd64"  OR
            "${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "AMD64")

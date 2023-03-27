@@ -51,7 +51,7 @@ namespace ntccfg {
 // Build with support for the local (a.k.a. Unix) address family.
 #define NTCCFG_BUILD_WITH_ADDRESS_FAMILY_LOCAL @NTF_BUILD_WITH_ADDRESS_FAMILY_LOCAL@
 
-// Build with support for the Transmission Control Protocol (TCP) transport 
+// Build with support for the Transmission Control Protocol (TCP) transport
 // protocol.
 #define NTCCFG_BUILD_WITH_TRANSPORT_PROTOCOL_TCP @NTF_BUILD_WITH_TRANSPORT_PROTOCOL_TCP@
 
@@ -92,6 +92,10 @@ namespace ntccfg {
 // Build with support for being able to configure I/O completion ports as the
 // driver for a proactor. This driver is available on Windows.
 #define NTC_BUILD_WITH_IOCP @NTF_BUILD_WITH_IOCP@
+
+// Build with support for being able to configure 'io_uring' as the
+// driver for a proactor. This driver is available on Linux.
+#define NTC_BUILD_WITH_IORING @NTF_BUILD_WITH_IORING@
 
 // Build with support for being able to configure a processing model where
 // any thread can process I/O for a socket, rather than just a particular
