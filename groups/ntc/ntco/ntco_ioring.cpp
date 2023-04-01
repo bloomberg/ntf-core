@@ -47,6 +47,7 @@ BSLS_IDENT_RCSID(ntco_ioring_cpp, "$Id$ $CSID$")
 #include <ntsu_bufferutil.h>
 #include <ntsu_socketoptionutil.h>
 #include <ntsu_socketutil.h>
+#include <ntci_mutex.h>
 
 #include <bdlbb_blob.h>
 #include <bdlcc_objectpool.h>
@@ -225,7 +226,13 @@ class IoRingSubmissionList
     // Define a type alias for a sequence of I/O uring submission queue entries.
     typedef bsl::vector< ::io_uring_sqe> EntrySequence;
 
-    mutable bslmt::Mutex d_mutex;
+    // Define a type alias for a mutex.
+    typedef ntci::Mutex Mutex;
+
+    // Define a type alias for a mutex lock guard.
+    typedef ntci::LockGuard LockGuard;
+
+    mutable Mutex                d_mutex;
     EntrySequence        d_data;
     bslma::Allocator*    d_allocator_p;
 
@@ -267,7 +274,13 @@ class IoRingSubmissionList
 /// This class is thread safe.
 class IoRingSubmissionQueue
 {
-    mutable bslmt::Mutex d_mutex;
+    // Define a type alias for a mutex.
+    typedef ntci::Mutex Mutex;
+
+    // Define a type alias for a mutex lock guard.
+    typedef ntci::LockGuard LockGuard;
+
+    mutable Mutex        d_mutex;
     int                  d_ring;
     void*                d_memoryMap_p;
     bsl::uint32_t*       d_head_p;
@@ -315,7 +328,13 @@ class IoRingSubmissionQueue
 /// This class is thread safe.
 class IoRingCompletionQueue
 {
-    mutable bslmt::Mutex d_mutex;
+    // Define a type alias for a mutex.
+    typedef ntci::Mutex Mutex;
+
+    // Define a type alias for a mutex lock guard.
+    typedef ntci::LockGuard LockGuard;
+
+    mutable Mutex        d_mutex;
     int                  d_ring;
     void*                d_memoryMap_p;
     bsl::uint32_t*       d_head_p;
@@ -362,7 +381,13 @@ class IoRingCompletionQueue
 /// This class is thread safe.
 class IoRingDevice
 {
-    mutable bslmt::Mutex  d_mutex;
+    // Define a type alias for a mutex.
+    typedef ntci::Mutex Mutex;
+
+    // Define a type alias for a mutex lock guard.
+    typedef ntci::LockGuard LockGuard;
+
+    mutable Mutex  d_mutex;
     int                   d_ring;
     IoRingSubmissionList  d_submissionList;
     IoRingSubmissionQueue d_submissionQueue;
@@ -461,10 +486,16 @@ class IoRingContext
     // Define a set of events.
     typedef bsl::unordered_set<ntcs::Event*> EventSet;
 
+    // Define a type alias for a mutex.
+    typedef ntci::Mutex Mutex;
+
+    // Define a type alias for a mutex lock guard.
+    typedef ntci::LockGuard LockGuard;
+
     ntsa::Handle d_handle;
 #if NTCO_IORING_CANCELLATION
-    bslmt::Mutex d_pendingEventSetMutex;
-    EventSet     d_pendingEventSet;
+    Mutex    d_pendingEventSetMutex;
+    EventSet d_pendingEventSet;
 #endif
     bslma::Allocator* d_allocator_p;
 
@@ -572,14 +603,14 @@ IoRingSubmissionList::~IoRingSubmissionList()
 
 ntsa::Error IoRingSubmissionList::push(const ::io_uring_sqe& entry)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     d_data.push_back(entry);
     return ntsa::Error();
 }
 
 ntsa::Error IoRingSubmissionList::pop(::io_uring_sqe* result)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (d_data.empty()) {
         return ntsa::Error(ntsa::Error::e_EOF);
@@ -592,13 +623,13 @@ ntsa::Error IoRingSubmissionList::pop(::io_uring_sqe* result)
 
 bsl::size_t IoRingSubmissionList::size() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_data.size();
 }
 
 bool IoRingSubmissionList::empty() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_data.empty();
 }
 
@@ -632,7 +663,7 @@ ntsa::Error IoRingSubmissionQueue::map(int                      ring,
 {
     NTCI_LOG_CONTEXT();
 
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     if (d_ring != -1 && d_memoryMap_p != 0) {
         return ntsa::Error::invalid();
@@ -703,7 +734,7 @@ ntsa::Error IoRingSubmissionQueue::push(const ::io_uring_sqe& entry)
 {
     NTCI_LOG_CONTEXT();
 
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     bsl::uint32_t tail = *d_tail_p;
     bsl::uint32_t next = tail + 1;
@@ -754,7 +785,7 @@ void IoRingSubmissionQueue::unmap()
 
 bsl::uint32_t IoRingSubmissionQueue::headIndex() const
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     if (d_memoryMap_p != 0) {
         NTCO_IORING_READER_BARRIER();
@@ -769,7 +800,7 @@ bsl::uint32_t IoRingSubmissionQueue::headIndex() const
 
 bsl::uint32_t IoRingSubmissionQueue::tailIndex() const
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     if (d_memoryMap_p != 0) {
         NTCO_IORING_READER_BARRIER();
@@ -808,7 +839,7 @@ ntsa::Error IoRingCompletionQueue::map(int                      ring,
 {
     NTCI_LOG_CONTEXT();
 
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     if (d_ring != -1 && d_memoryMap_p != 0) {
         return ntsa::Error::invalid();
@@ -866,7 +897,7 @@ bsl::size_t IoRingCompletionQueue::pop(::io_uring_cqe* result,
 
     BSLS_ASSERT(capacity > 0);
 
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     if (d_memoryMap_p == 0) {
         return 0;
@@ -910,7 +941,7 @@ bsl::size_t IoRingCompletionQueue::pop(::io_uring_cqe* result,
 
 void IoRingCompletionQueue::unmap()
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     if (d_memoryMap_p != 0) {
         int rc =
@@ -925,7 +956,7 @@ void IoRingCompletionQueue::unmap()
 
 bsl::uint32_t IoRingCompletionQueue::headIndex() const
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     if (d_memoryMap_p != 0) {
         NTCO_IORING_READER_BARRIER();
@@ -938,7 +969,7 @@ bsl::uint32_t IoRingCompletionQueue::headIndex() const
 
 bsl::uint32_t IoRingCompletionQueue::tailIndex() const
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     if (d_memoryMap_p != 0) {
         NTCO_IORING_READER_BARRIER();
@@ -1645,7 +1676,7 @@ ntsa::Error IoRingContext::registerEvent(ntcs::Event* event)
 {
 #if NTCO_IORING_CANCELLATION
 
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_pendingEventSetMutex);
+    LockGuard guard(&d_pendingEventSetMutex);
 
     bool insertResult = d_pendingEventSet.insert(event).second;
 
@@ -1662,7 +1693,7 @@ void IoRingContext::completeEvent(ntcs::Event* event)
 {
 #if NTCO_IORING_CANCELLATION
 
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_pendingEventSetMutex);
+    LockGuard guard(&d_pendingEventSetMutex);
 
     bsl::size_t n = d_pendingEventSet.erase(event);
 
@@ -1680,7 +1711,7 @@ void IoRingContext::loadPending(EventList* pendingEventList, bool remove)
 {
 #if NTCO_IORING_CANCELLATION
 
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_pendingEventSetMutex);
+    LockGuard guard(&d_pendingEventSetMutex);
 
     pendingEventList->insert(pendingEventList->end(),
                              d_pendingEventSet.begin(),
@@ -1840,6 +1871,12 @@ class IoRing : public ntci::Proactor,
                                bsl::shared_ptr<ntco::IoRingContext> >
         ContextMap;
 
+    // Define a type alias for a mutex.
+    typedef ntci::Mutex Mutex;
+
+    // Define a type alias for a mutex lock guard.
+    typedef ntci::LockGuard LockGuard;
+
     // Enumerates the types of update.
     enum UpdateType {
         // The device is being modified to gain interest in certain
@@ -1854,9 +1891,9 @@ class IoRing : public ntci::Proactor,
     ntccfg::Object                         d_object;
     ntco::IoRingDevice                     d_device;
     ntcs::EventPool                        d_eventPool;
-    mutable bslmt::Mutex                   d_contextMapMutex;
+    mutable Mutex                  d_contextMapMutex;
     ContextMap                             d_contextMap;
-    mutable bslmt::Mutex                   d_waiterSetMutex;
+    mutable Mutex                   d_waiterSetMutex;
     WaiterSet                              d_waiterSet;
     ntcs::Chronology                       d_chronology;
     bsl::shared_ptr<ntci::User>            d_user_sp;
@@ -1987,6 +2024,78 @@ class IoRing : public ntci::Proactor,
     ntsa::Error send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
                      const bdlbb::Blob&                           data,
                      const ntsa::SendOptions& options) BSLS_KEYWORD_OVERRIDE;
+
+    // Enqueue the specified 'data' to the send buffer of the specified
+    // 'socket' according to the specified 'options'. Return the error.
+    // Note that 'data' must not be modified or destroyed until the
+    // operation completes or fails.
+    ntsa::Error send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
+                     const bdlbb::BlobBuffer&                     data,
+                     const ntsa::SendOptions&                     options);
+
+    // Enqueue the specified 'data' to the send buffer of the specified
+    // 'socket' according to the specified 'options'. Return the error.
+    // Note that 'data' must not be modified or destroyed until the
+    // operation completes or fails.
+    ntsa::Error send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
+                     const ntsa::ConstBuffer&                     data,
+                     const ntsa::SendOptions&                     options);
+
+    // Enqueue the specified 'data' to the send buffer of the specified
+    // 'socket' according to the specified 'options'. Return the error.
+    // Note that 'data' must not be modified or destroyed until the
+    // operation completes or fails.
+    ntsa::Error send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
+                     const ntsa::ConstBufferArray&                data,
+                     const ntsa::SendOptions&                     options);
+
+    // Enqueue the specified 'data' to the send buffer of the specified
+    // 'socket' according to the specified 'options'. Return the error.
+    // Note that 'data' must not be modified or destroyed until the
+    // operation completes or fails.
+    ntsa::Error send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
+                     const ntsa::ConstBufferPtrArray&             data,
+                     const ntsa::SendOptions&                     options);
+
+    // Enqueue the specified 'data' to the send buffer of the specified
+    // 'socket' according to the specified 'options'. Return the error.
+    // Note that 'data' must not be modified or destroyed until the
+    // operation completes or fails.
+    ntsa::Error send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
+                     const ntsa::MutableBuffer&                   data,
+                     const ntsa::SendOptions&                     options);
+
+    // Enqueue the specified 'data' to the send buffer of the specified
+    // 'socket' according to the specified 'options'. Return the error.
+    // Note that 'data' must not be modified or destroyed until the
+    // operation completes or fails.
+    ntsa::Error send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
+                     const ntsa::MutableBufferArray&              data,
+                     const ntsa::SendOptions&                     options);
+
+    // Enqueue the specified 'data' to the send buffer of the specified
+    // 'socket' according to the specified 'options'. Return the error.
+    // Note that 'data' must not be modified or destroyed until the
+    // operation completes or fails.
+    ntsa::Error send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
+                     const ntsa::MutableBufferPtrArray&           data,
+                     const ntsa::SendOptions&                     options);
+
+    // Enqueue the specified 'data' to the send buffer of the specified
+    // 'socket' according to the specified 'options'. Return the error.
+    // Note that 'data' must not be modified or destroyed until the
+    // operation completes or fails.
+    ntsa::Error send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
+                     const ntsa::File&                            data,
+                     const ntsa::SendOptions&                     options);
+
+    // Enqueue the specified 'data' to the send buffer of the specified
+    // 'socket' according to the specified 'options'. Return the error.
+    // Note that 'data' must not be modified or destroyed until the
+    // operation completes or fails.
+    ntsa::Error send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
+                     const bsl::string&                           data,
+                     const ntsa::SendOptions&                     options);
 
     // Enqueue the specified 'data' to the send buffer of the specified
     // 'socket' according to the specified 'options'. Return the error.
@@ -2828,7 +2937,7 @@ ntci::Waiter IoRing::registerWaiter(const ntca::WaiterOptions& waiterOptions)
     bdlb::NullableValue<bslmt::ThreadUtil::Handle> principleThreadHandle;
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_waiterSetMutex);
+        LockGuard lockGuard(&d_waiterSetMutex);
 
         if (result->d_options.threadHandle() == bslmt::ThreadUtil::Handle()) {
             result->d_options.setThreadHandle(bslmt::ThreadUtil::self());
@@ -2887,7 +2996,7 @@ void IoRing::deregisterWaiter(ntci::Waiter waiter)
     bool nowEmpty = false;
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_waiterSetMutex);
+        LockGuard lockGuard(&d_waiterSetMutex);
 
         bsl::size_t n = d_waiterSet.erase(result);
         BSLS_ASSERT_OPT(n == 1);
@@ -2950,7 +3059,7 @@ ntsa::Error IoRing::attachSocket(
     context.createInplace(d_allocator_p, handle, d_allocator_p);
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_contextMapMutex);
+        LockGuard lockGuard(&d_contextMapMutex);
 
         bool insertResult =
             d_contextMap.insert(ContextMap::value_type(socket, context))
@@ -3187,7 +3296,7 @@ ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 }
 
 ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
-                         const ntsa::Data&                            data,
+                         const bdlbb::BlobBuffer&                     data,
                          const ntsa::SendOptions&                     options)
 {
     NTCI_LOG_CONTEXT();
@@ -3204,476 +3313,504 @@ ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     ntsa::Handle handle = context->handle();
     BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
 
+    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
+
+    event->d_type   = ntcs::EventType::e_SEND;
+    event->d_socket = socket;
+
+    event->d_numBytesAttempted = data.size();
+
+    context->registerEvent(event.get());
+
+    ::io_uring_sqe entry = {0};
+
+    entry.opcode    = IORING_OP_SEND;
+    entry.fd        = handle;
+    entry.user_data = reinterpret_cast<__u64>(event.get());
+    entry.flags     = NTCO_IORING_SQE_FLAGS;
+
+    entry.addr = reinterpret_cast<__u64>(data.data());
+    entry.len  = data.size();
+
+    event->d_operationMemory     = data.data();
+    event->d_operationMemorySize = data.size();
+
+    NTCO_IORING_LOG_EVENT_STARTING(event);
+
+    error = this->submit(entry);
+    if (error) {
+        context->completeEvent(event.get());
+        return error;
+    }
+
+    event.release();
+}
+
+ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
+                         const ntsa::ConstBuffer&                     data,
+                         const ntsa::SendOptions&                     options)
+{
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntco::IoRingContext> context =
+        bslstl::SharedPtrUtil::staticCast<ntco::IoRingContext>(
+            socket->getProactorContext());
+    if (!context) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    ntsa::Handle handle = context->handle();
+    BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
+
+    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
+
+    event->d_type   = ntcs::EventType::e_SEND;
+    event->d_socket = socket;
+
+    event->d_numBytesAttempted = data.size();
+
+    context->registerEvent(event.get());
+
+    ::io_uring_sqe entry = {0};
+
+    entry.opcode    = IORING_OP_SEND;
+    entry.fd        = handle;
+    entry.user_data = reinterpret_cast<__u64>(event.get());
+    entry.flags     = NTCO_IORING_SQE_FLAGS;
+
+    entry.addr = reinterpret_cast<__u64>(data.data());
+    entry.len  = data.size();
+
+    event->d_operationMemory     = const_cast<void*>(data.data());
+    event->d_operationMemorySize = data.size();
+
+    NTCO_IORING_LOG_EVENT_STARTING(event);
+
+    error = this->submit(entry);
+    if (error) {
+        context->completeEvent(event.get());
+        return error;
+    }
+
+    event.release();
+}
+
+ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
+                    const ntsa::ConstBufferArray&                data,
+                    const ntsa::SendOptions&                     options)
+{
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntco::IoRingContext> context =
+        bslstl::SharedPtrUtil::staticCast<ntco::IoRingContext>(
+            socket->getProactorContext());
+    if (!context) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    ntsa::Handle handle = context->handle();
+    BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
+
+    bsl::size_t numBuffersTotal = data.numBuffers();
+    bsl::size_t numBytesTotal   = data.numBytes();
+
+    if (numBuffersTotal == 0) {
+        return ntsa::Error::invalid();
+    }
+
+    if (numBytesTotal == 0) {
+        return ntsa::Error::invalid();
+    }
+
+    const ntsa::ConstBuffer* bufferList = &data.buffer(0);
+
+    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
+
+    event->d_type   = ntcs::EventType::e_SEND;
+    event->d_socket = socket;
+
+    BSLS_ASSERT(bsls::AlignmentUtil::is4ByteAligned(bufferList));
+
+    event->d_numBytesAttempted = numBytesTotal;
+
+    context->registerEvent(event.get());
+
+    ::io_uring_sqe entry = {0};
+
+    entry.opcode    = IORING_OP_WRITEV;
+    entry.fd        = handle;
+    entry.user_data = reinterpret_cast<__u64>(event.get());
+    entry.flags     = NTCO_IORING_SQE_FLAGS;
+
+    entry.addr = reinterpret_cast<__u64>(bufferList);
+    entry.len  = numBuffersTotal;
+
+    event->d_operationMemory     = (void*)bufferList;
+    event->d_operationMemorySize = numBuffersTotal;
+
+    NTCO_IORING_LOG_EVENT_STARTING(event);
+
+    error = this->submit(entry);
+    if (error) {
+        context->completeEvent(event.get());
+        return error;
+    }
+
+    event.release();
+}
+
+ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
+                    const ntsa::ConstBufferPtrArray&             data,
+                    const ntsa::SendOptions&                     options)
+{
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntco::IoRingContext> context =
+        bslstl::SharedPtrUtil::staticCast<ntco::IoRingContext>(
+            socket->getProactorContext());
+    if (!context) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    ntsa::Handle handle = context->handle();
+    BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
+
+    bsl::size_t numBuffersTotal = data.numBuffers();
+    bsl::size_t numBytesTotal   = data.numBytes();
+
+    if (numBuffersTotal == 0) {
+        return ntsa::Error::invalid();
+    }
+
+    if (numBytesTotal == 0) {
+        return ntsa::Error::invalid();
+    }
+
+    const ntsa::ConstBuffer* bufferList = &data.buffer(0);
+
+    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
+
+    event->d_type   = ntcs::EventType::e_SEND;
+    event->d_socket = socket;
+
+    BSLS_ASSERT(bsls::AlignmentUtil::is4ByteAligned(bufferList));
+
+    event->d_numBytesAttempted = numBytesTotal;
+
+    context->registerEvent(event.get());
+
+    ::io_uring_sqe entry = {0};
+
+    entry.opcode    = IORING_OP_WRITEV;
+    entry.fd        = handle;
+    entry.user_data = reinterpret_cast<__u64>(event.get());
+    entry.flags     = NTCO_IORING_SQE_FLAGS;
+
+    entry.addr = reinterpret_cast<__u64>(bufferList);
+    entry.len  = numBuffersTotal;
+
+    event->d_operationMemory     = (void*)bufferList;
+    event->d_operationMemorySize = numBuffersTotal;
+
+    NTCO_IORING_LOG_EVENT_STARTING(event);
+
+    error = this->submit(entry);
+    if (error) {
+        context->completeEvent(event.get());
+        return error;
+    }
+
+    event.release();
+}
+
+ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
+                    const ntsa::MutableBuffer&                   data,
+                    const ntsa::SendOptions&                     options)
+{
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntco::IoRingContext> context =
+        bslstl::SharedPtrUtil::staticCast<ntco::IoRingContext>(
+            socket->getProactorContext());
+    if (!context) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    ntsa::Handle handle = context->handle();
+    BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
+
+    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
+
+    event->d_type   = ntcs::EventType::e_SEND;
+    event->d_socket = socket;
+
+    event->d_numBytesAttempted = data.size();
+
+    context->registerEvent(event.get());
+
+    ::io_uring_sqe entry = {0};
+
+    entry.opcode    = IORING_OP_SEND;
+    entry.fd        = handle;
+    entry.user_data = reinterpret_cast<__u64>(event.get());
+    entry.flags     = NTCO_IORING_SQE_FLAGS;
+
+    entry.addr = reinterpret_cast<__u64>(data.data());
+    entry.len  = data.size();
+
+    event->d_operationMemory     = data.data();
+    event->d_operationMemorySize = data.size();
+
+    NTCO_IORING_LOG_EVENT_STARTING(event);
+
+    error = this->submit(entry);
+    if (error) {
+        context->completeEvent(event.get());
+        return error;
+    }
+
+    event.release();
+}
+
+ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
+                    const ntsa::MutableBufferArray&              data,
+                    const ntsa::SendOptions&                     options)
+{
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntco::IoRingContext> context =
+        bslstl::SharedPtrUtil::staticCast<ntco::IoRingContext>(
+            socket->getProactorContext());
+    if (!context) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    ntsa::Handle handle = context->handle();
+    BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
+
+    bsl::size_t numBuffersTotal = data.numBuffers();
+    bsl::size_t numBytesTotal   = data.numBytes();
+
+    if (numBuffersTotal == 0) {
+        return ntsa::Error::invalid();
+    }
+
+    if (numBytesTotal == 0) {
+        return ntsa::Error::invalid();
+    }
+
+    const ntsa::MutableBuffer* bufferList = &data.buffer(0);
+
+    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
+
+    event->d_type   = ntcs::EventType::e_SEND;
+    event->d_socket = socket;
+
+    BSLS_ASSERT(bsls::AlignmentUtil::is4ByteAligned(bufferList));
+
+    event->d_numBytesAttempted = numBytesTotal;
+
+    context->registerEvent(event.get());
+
+    ::io_uring_sqe entry = {0};
+
+    entry.opcode    = IORING_OP_WRITEV;
+    entry.fd        = handle;
+    entry.user_data = reinterpret_cast<__u64>(event.get());
+    entry.flags     = NTCO_IORING_SQE_FLAGS;
+
+    entry.addr = reinterpret_cast<__u64>(bufferList);
+    entry.len  = numBuffersTotal;
+
+    event->d_operationMemory     = (void*)bufferList;
+    event->d_operationMemorySize = numBuffersTotal;
+
+    NTCO_IORING_LOG_EVENT_STARTING(event);
+
+    error = this->submit(entry);
+    if (error) {
+        context->completeEvent(event.get());
+        return error;
+    }
+
+    event.release();
+}
+
+ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
+                         const ntsa::MutableBufferPtrArray&           data,
+                         const ntsa::SendOptions&                     options)
+{
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntco::IoRingContext> context =
+        bslstl::SharedPtrUtil::staticCast<ntco::IoRingContext>(
+            socket->getProactorContext());
+    if (!context) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    ntsa::Handle handle = context->handle();
+    BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
+
+    bsl::size_t numBuffersTotal = data.numBuffers();
+    bsl::size_t numBytesTotal   = data.numBytes();
+
+    if (numBuffersTotal == 0) {
+        return ntsa::Error::invalid();
+    }
+
+    if (numBytesTotal == 0) {
+        return ntsa::Error::invalid();
+    }
+
+    const ntsa::MutableBuffer* bufferList = &data.buffer(0);
+
+    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
+
+    event->d_type   = ntcs::EventType::e_SEND;
+    event->d_socket = socket;
+
+    BSLS_ASSERT(bsls::AlignmentUtil::is4ByteAligned(bufferList));
+
+    event->d_numBytesAttempted = numBytesTotal;
+
+    context->registerEvent(event.get());
+
+    ::io_uring_sqe entry = {0};
+
+    entry.opcode    = IORING_OP_WRITEV;
+    entry.fd        = handle;
+    entry.user_data = reinterpret_cast<__u64>(event.get());
+    entry.flags     = NTCO_IORING_SQE_FLAGS;
+
+    entry.addr = reinterpret_cast<__u64>(bufferList);
+    entry.len  = numBuffersTotal;
+
+    event->d_operationMemory     = (void*)bufferList;
+    event->d_operationMemorySize = numBuffersTotal;
+
+    NTCO_IORING_LOG_EVENT_STARTING(event);
+
+    error = this->submit(entry);
+    if (error) {
+        context->completeEvent(event.get());
+        return error;
+    }
+
+    event.release();
+}
+
+ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
+                    const ntsa::File&                            data,
+                    const ntsa::SendOptions&                     options)
+{
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
+                         const bsl::string&                           data,
+                         const ntsa::SendOptions&                     options)
+{
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntco::IoRingContext> context =
+        bslstl::SharedPtrUtil::staticCast<ntco::IoRingContext>(
+            socket->getProactorContext());
+    if (!context) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    ntsa::Handle handle = context->handle();
+    BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
+
+    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
+
+    event->d_type   = ntcs::EventType::e_SEND;
+    event->d_socket = socket;
+
+    event->d_numBytesAttempted = data.size();
+
+    context->registerEvent(event.get());
+
+    ::io_uring_sqe entry = {0};
+
+    entry.opcode    = IORING_OP_SEND;
+    entry.fd        = handle;
+    entry.user_data = reinterpret_cast<__u64>(event.get());
+    entry.flags     = NTCO_IORING_SQE_FLAGS;
+
+    entry.addr = reinterpret_cast<__u64>(data.data());
+    entry.len  = data.size();
+
+    event->d_operationMemory     = (void*)data.data();
+    event->d_operationMemorySize = data.size();
+
+    NTCO_IORING_LOG_EVENT_STARTING(event);
+
+    error = this->submit(entry);
+    if (error) {
+        context->completeEvent(event.get());
+        return error;
+    }
+
+    event.release();
+}
+
+ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
+                         const ntsa::Data&                            data,
+                         const ntsa::SendOptions&                     options)
+{
     if (NTCCFG_LIKELY(data.isBlob())) {
-        const bdlbb::Blob& blob = data.blob();
-
-        bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
-
-        event->d_type   = ntcs::EventType::e_SEND;
-        event->d_socket = socket;
-
-        BSLMF_ASSERT(sizeof(event->d_operationArena) >= sizeof(iovec));
-        BSLMF_ASSERT(sizeof(event->d_operationArena) % sizeof(iovec) == 0);
-
-        iovec* iovecArray = reinterpret_cast<iovec*>(event->d_operationArena);
-
-        BSLS_ASSERT(bsls::AlignmentUtil::is4ByteAligned(iovecArray));
-
-        bsl::size_t numBytesMax = ntsu::SocketUtil::maxBytesPerSend(handle);
-
-        bsl::size_t numBuffersTotal;
-        bsl::size_t numBytesTotal;
-
-        ntsu::BufferUtil::gather(
-            &numBuffersTotal,
-            &numBytesTotal,
-            reinterpret_cast<ntsa::ConstBuffer*>(iovecArray),
-            sizeof(event->d_operationArena) / sizeof(iovec),
-            blob,
-            numBytesMax);
-
-        if (numBuffersTotal == 0) {
-            return ntsa::Error::invalid();
-        }
-
-        if (numBytesTotal == 0) {
-            return ntsa::Error::invalid();
-        }
-
-        event->d_numBytesAttempted = numBytesTotal;
-
-        context->registerEvent(event.get());
-
-        ::io_uring_sqe entry = {0};
-
-        entry.opcode    = IORING_OP_WRITEV;
-        entry.fd        = handle;
-        entry.user_data = reinterpret_cast<__u64>(event.get());
-        entry.flags     = NTCO_IORING_SQE_FLAGS;
-
-        entry.addr = reinterpret_cast<__u64>(iovecArray);
-        entry.len  = numBuffersTotal;
-
-        event->d_operationMemory     = iovecArray;
-        event->d_operationMemorySize = numBuffersTotal;
-
-        NTCO_IORING_LOG_EVENT_STARTING(event);
-
-        error = this->submit(entry);
-        if (error) {
-            context->completeEvent(event.get());
-            return error;
-        }
-
-        event.release();
+        return this->send(socket, data.blob(), options);
     }
     else if (data.isSharedBlob()) {
-        const bsl::shared_ptr<bdlbb::Blob>& blob = data.sharedBlob();
-
-        bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
-
-        event->d_type   = ntcs::EventType::e_SEND;
-        event->d_socket = socket;
-
-        BSLMF_ASSERT(sizeof(event->d_operationArena) >= sizeof(iovec));
-        BSLMF_ASSERT(sizeof(event->d_operationArena) % sizeof(iovec) == 0);
-
-        iovec* iovecArray = reinterpret_cast<iovec*>(event->d_operationArena);
-
-        BSLS_ASSERT(bsls::AlignmentUtil::is4ByteAligned(iovecArray));
-
-        bsl::size_t numBytesMax = ntsu::SocketUtil::maxBytesPerSend(handle);
-
-        bsl::size_t numBuffersTotal;
-        bsl::size_t numBytesTotal;
-
-        ntsu::BufferUtil::gather(
-            &numBuffersTotal,
-            &numBytesTotal,
-            reinterpret_cast<ntsa::ConstBuffer*>(iovecArray),
-            sizeof(event->d_operationArena) / sizeof(iovec),
-            *blob,
-            numBytesMax);
-
-        if (numBuffersTotal == 0) {
-            return ntsa::Error::invalid();
+        if (data.sharedBlob()) {
+            return this->send(socket, *data.sharedBlob(), options);
         }
-
-        if (numBytesTotal == 0) {
-            return ntsa::Error::invalid();
+        else {
+            return this->send(socket, ntsa::ConstBuffer(), options);
         }
-
-        event->d_numBytesAttempted = numBytesTotal;
-
-        context->registerEvent(event.get());
-
-        ::io_uring_sqe entry = {0};
-
-        entry.opcode    = IORING_OP_WRITEV;
-        entry.fd        = handle;
-        entry.user_data = reinterpret_cast<__u64>(event.get());
-        entry.flags     = NTCO_IORING_SQE_FLAGS;
-
-        entry.addr = reinterpret_cast<__u64>(iovecArray);
-        entry.len  = numBuffersTotal;
-
-        event->d_operationMemory     = iovecArray;
-        event->d_operationMemorySize = numBuffersTotal;
-
-        NTCO_IORING_LOG_EVENT_STARTING(event);
-
-        error = this->submit(entry);
-        if (error) {
-            context->completeEvent(event.get());
-            return error;
-        }
-
-        event.release();
     }
     else if (data.isBlobBuffer()) {
-        const bdlbb::BlobBuffer& blobBuffer = data.blobBuffer();
-
-        bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
-
-        event->d_type   = ntcs::EventType::e_SEND;
-        event->d_socket = socket;
-
-        event->d_numBytesAttempted = blobBuffer.size();
-
-        context->registerEvent(event.get());
-
-        ::io_uring_sqe entry = {0};
-
-        entry.opcode    = IORING_OP_SEND;
-        entry.fd        = handle;
-        entry.user_data = reinterpret_cast<__u64>(event.get());
-        entry.flags     = NTCO_IORING_SQE_FLAGS;
-
-        entry.addr = reinterpret_cast<__u64>(blobBuffer.data());
-        entry.len  = blobBuffer.size();
-
-        event->d_operationMemory     = blobBuffer.data();
-        event->d_operationMemorySize = blobBuffer.size();
-
-        NTCO_IORING_LOG_EVENT_STARTING(event);
-
-        error = this->submit(entry);
-        if (error) {
-            context->completeEvent(event.get());
-            return error;
-        }
-
-        event.release();
+        return this->send(socket, data.blobBuffer(), options);
     }
     else if (data.isConstBuffer()) {
-        const ntsa::ConstBuffer& constBuffer = data.constBuffer();
-
-        bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
-
-        event->d_type   = ntcs::EventType::e_SEND;
-        event->d_socket = socket;
-
-        event->d_numBytesAttempted = constBuffer.size();
-
-        context->registerEvent(event.get());
-
-        ::io_uring_sqe entry = {0};
-
-        entry.opcode    = IORING_OP_SEND;
-        entry.fd        = handle;
-        entry.user_data = reinterpret_cast<__u64>(event.get());
-        entry.flags     = NTCO_IORING_SQE_FLAGS;
-
-        entry.addr = reinterpret_cast<__u64>(constBuffer.data());
-        entry.len  = constBuffer.size();
-
-        event->d_operationMemory     = (void*)constBuffer.data();
-        event->d_operationMemorySize = constBuffer.size();
-
-        NTCO_IORING_LOG_EVENT_STARTING(event);
-
-        error = this->submit(entry);
-        if (error) {
-            context->completeEvent(event.get());
-            return error;
-        }
-
-        event.release();
+        return this->send(socket, data.constBuffer(), options);
     }
     else if (data.isConstBufferArray()) {
-        const ntsa::ConstBufferArray& constBufferArray =
-            data.constBufferArray();
-
-        bsl::size_t numBuffersTotal = constBufferArray.numBuffers();
-        bsl::size_t numBytesTotal   = constBufferArray.numBytes();
-
-        if (numBuffersTotal == 0) {
-            return ntsa::Error::invalid();
-        }
-
-        if (numBytesTotal == 0) {
-            return ntsa::Error::invalid();
-        }
-
-        const ntsa::ConstBuffer* bufferList = &constBufferArray.buffer(0);
-
-        bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
-
-        event->d_type   = ntcs::EventType::e_SEND;
-        event->d_socket = socket;
-
-        BSLS_ASSERT(bsls::AlignmentUtil::is4ByteAligned(bufferList));
-
-        event->d_numBytesAttempted = numBytesTotal;
-
-        context->registerEvent(event.get());
-
-        ::io_uring_sqe entry = {0};
-
-        entry.opcode    = IORING_OP_WRITEV;
-        entry.fd        = handle;
-        entry.user_data = reinterpret_cast<__u64>(event.get());
-        entry.flags     = NTCO_IORING_SQE_FLAGS;
-
-        entry.addr = reinterpret_cast<__u64>(bufferList);
-        entry.len  = numBuffersTotal;
-
-        event->d_operationMemory     = (void*)bufferList;
-        event->d_operationMemorySize = numBuffersTotal;
-
-        NTCO_IORING_LOG_EVENT_STARTING(event);
-
-        error = this->submit(entry);
-        if (error) {
-            context->completeEvent(event.get());
-            return error;
-        }
-
-        event.release();
+        return this->send(socket, data.constBufferArray(), options);
     }
     else if (data.isConstBufferPtrArray()) {
-        const ntsa::ConstBufferPtrArray& constBufferPtrArray =
-            data.constBufferPtrArray();
-
-        bsl::size_t numBuffersTotal = constBufferPtrArray.numBuffers();
-        bsl::size_t numBytesTotal   = constBufferPtrArray.numBytes();
-
-        if (numBuffersTotal == 0) {
-            return ntsa::Error::invalid();
-        }
-
-        if (numBytesTotal == 0) {
-            return ntsa::Error::invalid();
-        }
-
-        const ntsa::ConstBuffer* bufferList = &constBufferPtrArray.buffer(0);
-
-        bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
-
-        event->d_type   = ntcs::EventType::e_SEND;
-        event->d_socket = socket;
-
-        BSLS_ASSERT(bsls::AlignmentUtil::is4ByteAligned(bufferList));
-
-        event->d_numBytesAttempted = numBytesTotal;
-
-        context->registerEvent(event.get());
-
-        ::io_uring_sqe entry = {0};
-
-        entry.opcode    = IORING_OP_WRITEV;
-        entry.fd        = handle;
-        entry.user_data = reinterpret_cast<__u64>(event.get());
-        entry.flags     = NTCO_IORING_SQE_FLAGS;
-
-        entry.addr = reinterpret_cast<__u64>(bufferList);
-        entry.len  = numBuffersTotal;
-
-        event->d_operationMemory     = (void*)bufferList;
-        event->d_operationMemorySize = numBuffersTotal;
-
-        NTCO_IORING_LOG_EVENT_STARTING(event);
-
-        error = this->submit(entry);
-        if (error) {
-            context->completeEvent(event.get());
-            return error;
-        }
-
-        event.release();
+        return this->send(socket, data.constBufferPtrArray(), options);
     }
     else if (data.isMutableBuffer()) {
-        const ntsa::MutableBuffer& mutableBuffer = data.mutableBuffer();
-
-        bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
-
-        event->d_type   = ntcs::EventType::e_SEND;
-        event->d_socket = socket;
-
-        event->d_numBytesAttempted = mutableBuffer.size();
-
-        context->registerEvent(event.get());
-
-        ::io_uring_sqe entry = {0};
-
-        entry.opcode    = IORING_OP_SEND;
-        entry.fd        = handle;
-        entry.user_data = reinterpret_cast<__u64>(event.get());
-        entry.flags     = NTCO_IORING_SQE_FLAGS;
-
-        entry.addr = reinterpret_cast<__u64>(mutableBuffer.data());
-        entry.len  = mutableBuffer.size();
-
-        event->d_operationMemory     = mutableBuffer.data();
-        event->d_operationMemorySize = mutableBuffer.size();
-
-        NTCO_IORING_LOG_EVENT_STARTING(event);
-
-        error = this->submit(entry);
-        if (error) {
-            context->completeEvent(event.get());
-            return error;
-        }
-
-        event.release();
+        return this->send(socket, data.mutableBuffer(), options);
     }
     else if (data.isMutableBufferArray()) {
-        const ntsa::MutableBufferArray& mutableBufferArray =
-            data.mutableBufferArray();
-
-        bsl::size_t numBuffersTotal = mutableBufferArray.numBuffers();
-        bsl::size_t numBytesTotal   = mutableBufferArray.numBytes();
-
-        if (numBuffersTotal == 0) {
-            return ntsa::Error::invalid();
-        }
-
-        if (numBytesTotal == 0) {
-            return ntsa::Error::invalid();
-        }
-
-        const ntsa::MutableBuffer* bufferList = &mutableBufferArray.buffer(0);
-
-        bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
-
-        event->d_type   = ntcs::EventType::e_SEND;
-        event->d_socket = socket;
-
-        BSLS_ASSERT(bsls::AlignmentUtil::is4ByteAligned(bufferList));
-
-        event->d_numBytesAttempted = numBytesTotal;
-
-        context->registerEvent(event.get());
-
-        ::io_uring_sqe entry = {0};
-
-        entry.opcode    = IORING_OP_WRITEV;
-        entry.fd        = handle;
-        entry.user_data = reinterpret_cast<__u64>(event.get());
-        entry.flags     = NTCO_IORING_SQE_FLAGS;
-
-        entry.addr = reinterpret_cast<__u64>(bufferList);
-        entry.len  = numBuffersTotal;
-
-        event->d_operationMemory     = (void*)bufferList;
-        event->d_operationMemorySize = numBuffersTotal;
-
-        NTCO_IORING_LOG_EVENT_STARTING(event);
-
-        error = this->submit(entry);
-        if (error) {
-            context->completeEvent(event.get());
-            return error;
-        }
-
-        event.release();
+        return this->send(socket, data.mutableBufferArray(), options);
     }
     else if (data.isMutableBufferPtrArray()) {
-        const ntsa::MutableBufferPtrArray& mutableBufferPtrArray =
-            data.mutableBufferPtrArray();
-
-        bsl::size_t numBuffersTotal = mutableBufferPtrArray.numBuffers();
-        bsl::size_t numBytesTotal   = mutableBufferPtrArray.numBytes();
-
-        if (numBuffersTotal == 0) {
-            return ntsa::Error::invalid();
-        }
-
-        if (numBytesTotal == 0) {
-            return ntsa::Error::invalid();
-        }
-
-        const ntsa::MutableBuffer* bufferList =
-            &mutableBufferPtrArray.buffer(0);
-
-        bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
-
-        event->d_type   = ntcs::EventType::e_SEND;
-        event->d_socket = socket;
-
-        BSLS_ASSERT(bsls::AlignmentUtil::is4ByteAligned(bufferList));
-
-        event->d_numBytesAttempted = numBytesTotal;
-
-        context->registerEvent(event.get());
-
-        ::io_uring_sqe entry = {0};
-
-        entry.opcode    = IORING_OP_WRITEV;
-        entry.fd        = handle;
-        entry.user_data = reinterpret_cast<__u64>(event.get());
-        entry.flags     = NTCO_IORING_SQE_FLAGS;
-
-        entry.addr = reinterpret_cast<__u64>(bufferList);
-        entry.len  = numBuffersTotal;
-
-        event->d_operationMemory     = (void*)bufferList;
-        event->d_operationMemorySize = numBuffersTotal;
-
-        NTCO_IORING_LOG_EVENT_STARTING(event);
-
-        error = this->submit(entry);
-        if (error) {
-            context->completeEvent(event.get());
-            return error;
-        }
-
-        event.release();
+        return this->send(socket, data.mutableBufferPtrArray(), options);
+    }
+    else if (data.isFile()) {
+        return this->send(socket, data.file(), options);
     }
     else if (data.isString()) {
-        const bsl::string& string = data.string();
-
-        bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
-
-        event->d_type   = ntcs::EventType::e_SEND;
-        event->d_socket = socket;
-
-        event->d_numBytesAttempted = string.size();
-
-        context->registerEvent(event.get());
-
-        ::io_uring_sqe entry = {0};
-
-        entry.opcode    = IORING_OP_SEND;
-        entry.fd        = handle;
-        entry.user_data = reinterpret_cast<__u64>(event.get());
-        entry.flags     = NTCO_IORING_SQE_FLAGS;
-
-        entry.addr = reinterpret_cast<__u64>(string.data());
-        entry.len  = string.size();
-
-        event->d_operationMemory     = (void*)string.data();
-        event->d_operationMemorySize = string.size();
-
-        NTCO_IORING_LOG_EVENT_STARTING(event);
-
-        error = this->submit(entry);
-        if (error) {
-            context->completeEvent(event.get());
-            return error;
-        }
-
-        event.release();
+        return this->send(socket, data.string(), options);
     }
     else {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -3871,7 +4008,7 @@ ntsa::Error IoRing::detachSocket(
     ntsu::SocketOptionUtil::setBlocking(handle, false);
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_contextMapMutex);
+        LockGuard lockGuard(&d_contextMapMutex);
 
         bsl::size_t n = d_contextMap.erase(socket);
         if (n == 0) {
@@ -3888,7 +4025,7 @@ ntsa::Error IoRing::closeAll()
 {
     ContextMap contextMap;
     {
-        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_contextMapMutex);
+        LockGuard lockGuard(&d_contextMapMutex);
         contextMap = d_contextMap;
     }
 
@@ -4027,7 +4164,7 @@ void IoRing::interruptAll()
     else {
         bsl::size_t numWaiters;
         {
-            bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_waiterSetMutex);
+            LockGuard lockGuard(&d_waiterSetMutex);
             numWaiters = d_waiterSet.size();
         }
 
@@ -4097,7 +4234,7 @@ void IoRing::clearTimers()
 
 void IoRing::clearSockets()
 {
-    bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_contextMapMutex);
+    LockGuard lockGuard(&d_contextMapMutex);
     d_contextMap.clear();
 }
 
@@ -4105,7 +4242,7 @@ void IoRing::clear()
 {
     d_chronology.clear();
 
-    bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_contextMapMutex);
+    LockGuard lockGuard(&d_contextMapMutex);
     d_contextMap.clear();
 }
 
@@ -4233,7 +4370,7 @@ void IoRing::createOutgoingBlobBuffer(bdlbb::BlobBuffer* blobBuffer)
 
 bsl::size_t IoRing::numSockets() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_contextMapMutex);
+    LockGuard lockGuard(&d_contextMapMutex);
     return d_contextMap.size();
 }
 
@@ -4259,19 +4396,19 @@ bsl::size_t IoRing::load() const
 
 bslmt::ThreadUtil::Handle IoRing::threadHandle() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_waiterSetMutex);
+    LockGuard lock(&d_waiterSetMutex);
     return d_threadHandle;
 }
 
 bsl::size_t IoRing::threadIndex() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_waiterSetMutex);
+    LockGuard lock(&d_waiterSetMutex);
     return d_threadIndex;
 }
 
 bsl::size_t IoRing::numWaiters() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_waiterSetMutex);
+    LockGuard lock(&d_waiterSetMutex);
     return d_waiterSet.size();
 }
 
