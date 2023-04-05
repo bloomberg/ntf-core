@@ -26,6 +26,7 @@ BSLS_IDENT_RCSID(ntcq_send_cpp, "$Id$ $CSID$")
 #include <bslma_allocator.h>
 #include <bslma_default.h>
 #include <bsls_assert.h>
+#include <bsls_log.h> // MRM
 #include <bsl_limits.h>
 
 namespace BloombergLP {
@@ -103,6 +104,194 @@ SendCallbackQueueEntryPool::~SendCallbackQueueEntryPool()
     BSLS_ASSERT(d_pool.numObjects() == d_pool.numAvailableObjects());
 }
 
+bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*  result,
+                               const ntsa::SendOptions& options) const
+{
+    if (NTCCFG_UNLIKELY(!this->isBatchable())) {
+        return false;
+    }
+
+    if (d_data_sp->isBlob()) {
+        return this->batchNext(result, d_data_sp->blob(), options);
+    }
+    else if (d_data_sp->isSharedBlob()) {
+        if (d_data_sp->sharedBlob()) {
+            return this->batchNext(
+                result, *d_data_sp->sharedBlob(), options);
+        }
+    }
+    else if (d_data_sp->isBlobBuffer()) {
+        return this->batchNext(result, d_data_sp->blobBuffer(), options);
+    }
+    else if (d_data_sp->isConstBuffer()) {
+        return this->batchNext(result, d_data_sp->constBuffer(), options);
+    }
+    else if (d_data_sp->isConstBufferArray()) {
+        return this->batchNext(
+            result, d_data_sp->constBufferArray(), options);
+    }
+    else if (d_data_sp->isConstBufferPtrArray()) {
+        return this->batchNext(
+            result, d_data_sp->constBufferPtrArray(), options);
+    }
+    else if (d_data_sp->isMutableBuffer()) {
+        return this->batchNext(
+            result, d_data_sp->mutableBuffer(), options);
+    }
+    else if (d_data_sp->isMutableBufferArray()) {
+        return this->batchNext(
+            result, d_data_sp->mutableBufferArray(), options);
+    }
+    else if (d_data_sp->isMutableBufferPtrArray()) {
+        return this->batchNext(
+            result, d_data_sp->mutableBufferPtrArray(), options);
+    }
+    else if (d_data_sp->isString()) {
+        return this->batchNext(result, d_data_sp->string(), options);
+    }
+
+    return false;
+}
+
+bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*  result,
+                               const bdlbb::Blob&       blob,
+                               const ntsa::SendOptions& options) const
+{
+    const int numDataBuffers = blob.numDataBuffers();
+
+    for (int i = 0; i < numDataBuffers; ++i) {
+        const bdlbb::BlobBuffer& blobBuffer = blob.buffer(i);
+
+        bsl::size_t size;
+        if (NTCCFG_LIKELY(i != numDataBuffers - 1)) {
+            size = static_cast<bsl::size_t>(blobBuffer.size());
+        }
+        else {
+            size = static_cast<bsl::size_t>(blob.lastDataBufferLength());
+        }
+
+        if (!this->batchNext(result,
+                             ntsa::ConstBuffer(blobBuffer.data(), size),
+                             options))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*  result,
+                               const bdlbb::BlobBuffer& blobBuffer,
+                               const ntsa::SendOptions& options) const
+{
+    return this->batchNext(
+        result,
+        ntsa::ConstBuffer(blobBuffer.data(),
+                          static_cast<bsl::size_t>(blobBuffer.size())),
+        options);
+}
+
+bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*  result,
+                               const ntsa::ConstBuffer& constBuffer,
+                               const ntsa::SendOptions& options) const
+{
+    if (result->numBytes() >= options.maxBytes()) {
+        return false;
+    }
+
+    if (result->numBuffers() >= options.maxBuffers()) {
+        return false;
+    }
+
+    result->append(constBuffer);
+    return true;
+}
+
+bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*       result,
+                               const ntsa::ConstBufferArray& constBufferArray,
+                               const ntsa::SendOptions&      options) const
+{
+    for (bsl::size_t i = 0; i < constBufferArray.numBuffers(); ++i) {
+        if (!this->batchNext(result, constBufferArray.buffer(i), options)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool SendQueueEntry::batchNext(
+        ntsa::ConstBufferArray*          result,
+        const ntsa::ConstBufferPtrArray& constBufferPtrArray,
+        const ntsa::SendOptions&         options) const
+{
+    for (bsl::size_t i = 0; i < constBufferPtrArray.numBuffers(); ++i) {
+        if (!this->batchNext(result, constBufferPtrArray.buffer(i), options)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*    result,
+                               const ntsa::MutableBuffer& mutableBuffer,
+                               const ntsa::SendOptions&   options) const
+{
+    if (result->numBytes() >= options.maxBytes()) {
+        return false;
+    }
+
+    if (result->numBuffers() >= options.maxBuffers()) {
+        return false;
+    }
+
+    result->append(mutableBuffer);
+    return true;
+}
+
+bool SendQueueEntry::batchNext(
+        ntsa::ConstBufferArray*         result,
+        const ntsa::MutableBufferArray& mutableBufferArray,
+        const ntsa::SendOptions&        options) const
+{
+    for (bsl::size_t i = 0; i < mutableBufferArray.numBuffers(); ++i) {
+        if (!this->batchNext(result, mutableBufferArray.buffer(i), options)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool SendQueueEntry::batchNext(
+        ntsa::ConstBufferArray*            result,
+        const ntsa::MutableBufferPtrArray& mutableBufferPtrArray,
+        const ntsa::SendOptions&           options) const
+{
+    for (bsl::size_t i = 0; i < mutableBufferPtrArray.numBuffers(); ++i) {
+        if (!this->batchNext(result,
+                             mutableBufferPtrArray.buffer(i),
+                             options))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*  result,
+                               const bsl::string&       string,
+                               const ntsa::SendOptions& options) const
+{
+    return this->batchNext(
+        result,
+        ntsa::ConstBuffer(string.data(), string.size()),
+        options);
+}
+
 SendQueue::SendQueue(bslma::Allocator* basicAllocator)
 : d_entryList(basicAllocator)
 , d_data_sp()
@@ -121,6 +310,56 @@ SendQueue::SendQueue(bslma::Allocator* basicAllocator)
 
 SendQueue::~SendQueue()
 {
+}
+
+bool SendQueue::batchNext(ntsa::ConstBufferArray   *result,
+                          const ntsa::SendOptions&  options) const
+{
+    result->clear();
+
+    if (d_entryList.size() < 2) {
+        return false;
+    }
+
+    EntryList::const_iterator current = d_entryList.begin();
+    EntryList::const_iterator end     = d_entryList.end();
+
+    bsl::size_t numEntries = 0;
+
+    while (true) {
+        if (current == end) {
+            break;
+        }
+
+        const SendQueueEntry& entry = *current;
+        if (!entry.batchNext(result, options)) {
+            break;
+        }
+
+        ++numEntries;
+        ++current;
+    }
+
+    if (numEntries == 0) {
+        result->clear();
+        return false;
+    }
+
+    // MRM
+#if 0
+    BSLS_LOG_TRACE("MRM: Batching %zu bytes in %zu buffers in %zu entries "
+                  "from send queue having %zu entries "
+                  "to copy to the socket send buffer: "
+                  "limit %zu buffers, %zu bytes",
+                  result->numBytes(),
+                  result->numBuffers(),
+                  numEntries,
+                  d_entryList.size(),
+                  options.maxBuffers(),
+                  options.maxBytes());
+#endif
+
+    return true;
 }
 
 }  // close package namespace

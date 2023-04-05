@@ -32,6 +32,7 @@ BSLS_IDENT("$Id: $")
 #include <ntcscm_version.h>
 #include <ntsa_data.h>
 #include <ntsa_error.h>
+#include <ntsa_sendoptions.h>
 #include <bdlb_nullablevalue.h>
 #include <bdlcc_sharedobjectpool.h>
 #include <bsls_timeinterval.h>
@@ -231,6 +232,75 @@ class SendQueueEntry
     /// Close the timer, if any.
     void closeTimer();
 
+    /// If this entry is batchable, append a reference to this data of this
+    /// entry to the specified 'result' and return true. Otherwise, return
+    /// false.
+    bool batchNext(ntsa::ConstBufferArray*  result,
+                   const ntsa::SendOptions& options) const;
+
+    /// If the specified 'blob' is batchable, append to the specified 'result'
+    /// the data referenced by the 'blob' and return true. Otherwise, return
+    /// false.
+    bool batchNext(ntsa::ConstBufferArray*  result,
+                   const bdlbb::Blob&       blob,
+                   const ntsa::SendOptions& options) const;
+
+    /// If the specified 'blobBuffer' is batchable, append to the specified
+    /// 'result' the data referenced by the 'blobBuffer' and return true.
+    /// Otherwise, return false.
+    bool batchNext(ntsa::ConstBufferArray*  result,
+                   const bdlbb::BlobBuffer& blobBuffer,
+                   const ntsa::SendOptions& options) const;
+
+    /// If the specified 'constBuffer' is batchable, append to the specified
+    /// 'result' the data referenced by the 'constBuffer' and return true.
+    /// Otherwise, return false.
+    bool batchNext(ntsa::ConstBufferArray*  result,
+                   const ntsa::ConstBuffer& constBuffer,
+                   const ntsa::SendOptions& options) const;
+
+    /// If the specified 'constBufferArray' is batchable, append to the
+    /// specified 'result' the data referenced by the 'constBufferArray' and
+    /// return true. Otherwise, return false.
+    bool batchNext(ntsa::ConstBufferArray*       result,
+                   const ntsa::ConstBufferArray& constBufferArray,
+                   const ntsa::SendOptions&      options) const;
+
+    /// If the specified 'constBufferPtrArray' is batchable, append to the
+    /// specified 'result' the data referenced by the 'constBufferPtrArray' and
+    /// return true. Otherwise, return false.
+    bool batchNext(ntsa::ConstBufferArray*          result,
+                   const ntsa::ConstBufferPtrArray& constBufferPtrArray,
+                   const ntsa::SendOptions&         options) const;
+
+    /// If the specified 'mutableBuffer' is batchable, append to the specified
+    /// 'result' the data referenced by the 'mutableBuffer' and return true.
+    /// Otherwise, return false.
+    bool batchNext(ntsa::ConstBufferArray*    result,
+                   const ntsa::MutableBuffer& mutableBuffer,
+                   const ntsa::SendOptions&   options) const;
+
+    /// If the specified 'mutableBufferArray' is batchable, append to the
+    /// specified 'result' the data referenced by the 'mutableBufferArray' and
+    /// return true. Otherwise, return false.
+    bool batchNext(ntsa::ConstBufferArray*         result,
+                   const ntsa::MutableBufferArray& mutableBufferArray,
+                   const ntsa::SendOptions&        options) const;
+
+    /// If the specified 'mutableBufferPtrArray' is batchable, append to the
+    /// specified 'result' the data referenced by the 'mutableBufferPtrArray'
+    /// and return true. Otherwise, return false.
+    bool batchNext(ntsa::ConstBufferArray*            result,
+                   const ntsa::MutableBufferPtrArray& mutableBufferPtrArray,
+                   const ntsa::SendOptions&           options) const;
+
+    /// If the specified 'string' is batchable, append to the specified 'result'
+    /// the data referenced by the 'string' and return true. Otherwise, return
+    /// false.
+    bool batchNext(ntsa::ConstBufferArray*  result,
+                   const bsl::string&       string,
+                   const ntsa::SendOptions& options) const;
+
     /// Return the identifier used to internally time-out the queue entry.
     bsl::uint64_t id() const;
 
@@ -262,6 +332,10 @@ class SendQueueEntry
     /// Return the flag that indicates whether the entry is now in-progress,
     /// i.e. its data has been at least partially copied to the send buffer.
     bool inProgress() const;
+
+    /// Return the flag that indicates the data representation of this entry
+    /// is batchable with other similar representations.
+    bool isBatchable() const;
 };
 
 /// @internal @brief
@@ -274,7 +348,7 @@ class SendQueueEntry
 class SendQueue
 {
     /// This typedef defines a linked list of structures that describe
-    /// the read queue.
+    /// the write queue.
     typedef bsl::list<SendQueueEntry> EntryList;
 
     EntryList                        d_entryList;
@@ -372,6 +446,14 @@ class SendQueue
     /// down to the low watermark, according to the
     /// 'effectiveHighWatermark'.
     bool authorizeHighWatermarkEvent(bsl::size_t effectiveHighWatermark);
+
+    /// Batch together the next range of contiguous entries whose data may be
+    /// attempted to be copied to the socket send buffer all at once. Limit
+    /// the number of bytes and buffers according to the specified 'options'.
+    /// Load into the specified 'result' the representation of each batched
+    /// entry. Return true if batching is possible, and false otherwise.
+    bool batchNext(ntsa::ConstBufferArray*  result,
+                   const ntsa::SendOptions& options) const;
 
     /// Return the data stored in the queue.
     const bsl::shared_ptr<bdlbb::Blob>& data() const;
@@ -624,6 +706,20 @@ NTCCFG_INLINE
 bool SendQueueEntry::inProgress() const
 {
     return d_inProgress;
+}
+
+NTCCFG_INLINE
+bool SendQueueEntry::isBatchable() const
+{
+    if (NTCCFG_UNLIKELY(!d_data_sp)) {
+        return false;
+    }
+
+    if (NTCCFG_UNLIKELY(d_data_sp->isFile())) {
+        return false;
+    }
+
+    return true;
 }
 
 NTCCFG_INLINE

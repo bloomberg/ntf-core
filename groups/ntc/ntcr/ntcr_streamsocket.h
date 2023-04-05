@@ -110,6 +110,7 @@ class StreamSocket : public ntci::StreamSocket,
     bsl::shared_ptr<ntci::Timer>               d_sendRateTimer_sp;
     bool                                       d_sendGreedily;
     bsl::uint64_t                              d_sendCount;
+    bsl::shared_ptr<ntsa::Data>                d_sendData_sp;
     ntsa::ReceiveOptions                       d_receiveOptions;
     ntcq::ReceiveQueue                         d_receiveQueue;
     ntcq::ReceiveFeedback                      d_receiveFeedback;
@@ -210,6 +211,17 @@ class StreamSocket : public ntci::StreamSocket,
     /// Process the writability of the socket by performing one write
     /// iteration.
     ntsa::Error privateSocketWritableIteration(
+        const bsl::shared_ptr<StreamSocket>& self);
+
+    /// Process the writability of the socket by performing one write
+    /// iteration from the contiguous range of suitable entries at the front
+    /// of the write queue.
+    ntsa::Error privateSocketWritableIterationBatch(
+        const bsl::shared_ptr<StreamSocket>& self);
+
+    /// Process the writability of the socket by performing one write
+    /// iteration from the entry at the front of the write queue.
+    ntsa::Error privateSocketWritableIterationFront(
         const bsl::shared_ptr<StreamSocket>& self);
 
     /// Indicate a connection failure has occurred. If the specified 'defer'
