@@ -920,19 +920,19 @@ void Iocp::wait(ntci::Waiter waiter)
             return;
         }
 
-        const bool wantedEndpoint = event->d_operationArenaSize > 0;
+        const bool wantedEndpoint = event->d_numBytesIndicated > 0;
 
         if (wantedEndpoint) {
             const bool haveEndpoint =
-                event->d_operationArenaSize <= sizeof(sockaddr_storage);
+                event->d_numBytesIndicated <= sizeof(sockaddr_storage);
 
             if (haveEndpoint) {
                 ntsa::Endpoint endpoint;
                 error = ntsu::SocketUtil::decodeEndpoint(
                     &endpoint,
                     reinterpret_cast<const sockaddr_storage*>(
-                        event->d_operationArena),
-                    static_cast<bsl::size_t>(event->d_operationArenaSize));
+                        event->d_address),
+                    static_cast<bsl::size_t>(event->d_numBytesIndicated));
                 if (error) {
                     ntcs::Dispatch::announceReceived(
                         event->d_socket,
@@ -1411,7 +1411,7 @@ ntsa::Error Iocp::accept(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
         if (sourceEndpoint.ip().host().isV4()) {
             rc = acceptEx(event->d_socket->handle(),
                           event->d_target,
-                          event->d_operationArena,
+                          event->d_address,
                           0,
                           sizeof(sockaddr_in) + 16,
                           sizeof(sockaddr_in) + 16,
@@ -1421,7 +1421,7 @@ ntsa::Error Iocp::accept(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
         else if (sourceEndpoint.ip().host().isV6()) {
             rc = acceptEx(event->d_socket->handle(),
                           event->d_target,
-                          event->d_operationArena,
+                          event->d_address,
                           0,
                           sizeof(sockaddr_in6) + 16,
                           sizeof(sockaddr_in6) + 16,
@@ -1435,7 +1435,7 @@ ntsa::Error Iocp::accept(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
     else if (sourceEndpoint.isLocal()) {
         rc = acceptEx(event->d_socket->handle(),
                       event->d_target,
-                      event->d_operationArena,
+                      event->d_address,
                       0,
                       sizeof(sockaddr_un) + 16,
                       sizeof(sockaddr_un) + 16,
@@ -1605,7 +1605,7 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         {
             bsl::size_t socketAddressSizeT;
             ntsa::Error error = ntsu::SocketUtil::encodeEndpoint(
-                reinterpret_cast<sockaddr_storage*>(event->d_operationArena),
+                reinterpret_cast<sockaddr_storage*>(event->d_address),
                 &socketAddressSizeT,
                 options.endpoint().value());
             if (error) {
@@ -1623,7 +1623,7 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
                       static_cast<DWORD>(numBuffersTotal),
                       0,
                       0,
-                      reinterpret_cast<sockaddr*>(event->d_operationArena),
+                      reinterpret_cast<sockaddr*>(event->d_address),
                       socketAddressSize,
                       reinterpret_cast<OVERLAPPED*>(event.get()),
                       0);
@@ -1695,7 +1695,7 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     if (specifyEndpoint) {
         bsl::size_t socketAddressSizeT;
         ntsa::Error error = ntsu::SocketUtil::encodeEndpoint(
-            reinterpret_cast<sockaddr_storage*>(event->d_operationArena),
+            reinterpret_cast<sockaddr_storage*>(event->d_address),
             &socketAddressSizeT,
             options.endpoint().value());
         if (error) {
@@ -1745,7 +1745,7 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
                           NTCCFG_WARNING_NARROW(DWORD, numBuffersTotal),
                           0,
                           0,
-                          reinterpret_cast<sockaddr*>(event->d_operationArena),
+                          reinterpret_cast<sockaddr*>(event->d_address),
                           socketAddressSize,
                           reinterpret_cast<OVERLAPPED*>(event.get()),
                           0);
@@ -1811,7 +1811,7 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
                           NTCCFG_WARNING_NARROW(DWORD, numBuffersTotal),
                           0,
                           0,
-                          reinterpret_cast<sockaddr*>(event->d_operationArena),
+                          reinterpret_cast<sockaddr*>(event->d_address),
                           socketAddressSize,
                           reinterpret_cast<OVERLAPPED*>(event.get()),
                           0);
@@ -1853,7 +1853,7 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
                           1,
                           0,
                           0,
-                          reinterpret_cast<sockaddr*>(event->d_operationArena),
+                          reinterpret_cast<sockaddr*>(event->d_address),
                           socketAddressSize,
                           reinterpret_cast<OVERLAPPED*>(event.get()),
                           0);
@@ -1893,7 +1893,7 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
                           1,
                           0,
                           0,
-                          reinterpret_cast<sockaddr*>(event->d_operationArena),
+                          reinterpret_cast<sockaddr*>(event->d_address),
                           socketAddressSize,
                           reinterpret_cast<OVERLAPPED*>(event.get()),
                           0);
@@ -1939,7 +1939,7 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
                           NTCCFG_WARNING_NARROW(DWORD, numBuffersTotal),
                           0,
                           0,
-                          reinterpret_cast<sockaddr*>(event->d_operationArena),
+                          reinterpret_cast<sockaddr*>(event->d_address),
                           socketAddressSize,
                           reinterpret_cast<OVERLAPPED*>(event.get()),
                           0);
@@ -1985,7 +1985,7 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
                           NTCCFG_WARNING_NARROW(DWORD, numBuffersTotal),
                           0,
                           0,
-                          reinterpret_cast<sockaddr*>(event->d_operationArena),
+                          reinterpret_cast<sockaddr*>(event->d_address),
                           socketAddressSize,
                           reinterpret_cast<OVERLAPPED*>(event.get()),
                           0);
@@ -2025,7 +2025,7 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
                           1,
                           0,
                           0,
-                          reinterpret_cast<sockaddr*>(event->d_operationArena),
+                          reinterpret_cast<sockaddr*>(event->d_address),
                           socketAddressSize,
                           reinterpret_cast<OVERLAPPED*>(event.get()),
                           0);
@@ -2071,7 +2071,7 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
                           NTCCFG_WARNING_NARROW(DWORD, numBuffersTotal),
                           0,
                           0,
-                          reinterpret_cast<sockaddr*>(event->d_operationArena),
+                          reinterpret_cast<sockaddr*>(event->d_address),
                           socketAddressSize,
                           reinterpret_cast<OVERLAPPED*>(event.get()),
                           0);
@@ -2118,7 +2118,7 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
                           NTCCFG_WARNING_NARROW(DWORD, numBuffersTotal),
                           0,
                           0,
-                          reinterpret_cast<sockaddr*>(event->d_operationArena),
+                          reinterpret_cast<sockaddr*>(event->d_address),
                           socketAddressSize,
                           reinterpret_cast<OVERLAPPED*>(event.get()),
                           0);
@@ -2160,7 +2160,7 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
                           1,
                           0,
                           0,
-                          reinterpret_cast<sockaddr*>(event->d_operationArena),
+                          reinterpret_cast<sockaddr*>(event->d_address),
                           socketAddressSize,
                           reinterpret_cast<OVERLAPPED*>(event.get()),
                           0);
@@ -2255,9 +2255,9 @@ ntsa::Error Iocp::receive(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     event->d_receiveData_p = data;
 
     if (wantEndpoint) {
-        BSLMF_ASSERT(sizeof(event->d_operationArena) >=
+        BSLMF_ASSERT(sizeof(event->d_address) >=
                      sizeof(sockaddr_storage));
-        event->d_operationArenaSize = sizeof(sockaddr_storage) + 1;
+        event->d_numBytesIndicated = sizeof(sockaddr_storage) + 1;
     }
 
     NTCP_IOCP_LOG_EVENT_STARTING(event);
@@ -2302,8 +2302,8 @@ ntsa::Error Iocp::receive(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
                         NTCCFG_WARNING_NARROW(DWORD, numBuffersTotal),
                         0,
                         &wsaFlags,
-                        reinterpret_cast<sockaddr*>(event->d_operationArena),
-                        &event->d_operationArenaSize,
+                        reinterpret_cast<sockaddr*>(event->d_address),
+                        &event->d_numBytesIndicated,
                         reinterpret_cast<OVERLAPPED*>(event.get()),
                         0);
 

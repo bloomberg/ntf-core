@@ -30,8 +30,10 @@ BSLS_IDENT("$Id: $")
 #include <ntsi_descriptor.h>
 #include <bdlbb_blob.h>
 #include <bdlcc_objectpool.h>
+#include <bslmf_assert.h>
 #include <bslmt_mutex.h>
 #include <bslmt_threadutil.h>
+#include <bsls_assert.h>
 #include <bsls_atomic.h>
 #include <bsls_keyword.h>
 #include <bsls_spinlock.h>
@@ -255,12 +257,24 @@ class Event
     bdlbb::Blob*                          d_receiveData_p;
     bsl::size_t                           d_numBytesAttempted;
     bsl::size_t                           d_numBytesCompleted;
+    int                                   d_numBytesIndicated;
     Functor                               d_function;
     ntsa::Error                           d_error;
-    void*                                 d_operationMemory;
-    bsl::size_t                           d_operationMemorySize;
-    char                                  d_operationArena[256];
-    int                                   d_operationArenaSize;
+
+#if defined(BSLS_PLATFORM_OS_UNIX)
+
+    char                                  d_message[64];
+    char                                  d_address[192];
+    char                                  d_control[256];
+    char                                  d_buffers[1024 * 16];
+
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+
+    char                                  d_address[192];
+
+#else
+#error Not implemented
+#endif
 
   public:
     /// Create a new completion event. Optionally specify a 'basicAllocator'
@@ -284,6 +298,30 @@ class Event
     /// Reset the value of this object to its value upon default
     /// construction.
     void reset();
+
+    /// Return the structure of the parameterized 'TYPE' stored in the message
+    /// arena. The resulting address is guaranteed to be 8-byte aligned.
+    template <typename TYPE>
+    TYPE* message();
+
+    /// Return the array of structures of the parameterized 'TYPE' stored in 
+    /// the buffer arena and load into the specified 'maxBuffers' the maximum
+    /// number of structures that may be stored in the array. The resulting 
+    /// address is guaranteed to be 8-byte aligned.
+    template <typename TYPE>
+    TYPE* buffers(bsl::size_t* maxBuffers);
+
+    /// Return the structure of the parameterized 'TYPE' stored in the address
+    /// arena. The resulting address is guaranteed to be 8-byte aligned.
+    template <typename TYPE>
+    TYPE* address();
+
+    /// Return the structure of the parameterized 'TYPE' stored in the 
+    /// indicator arena. The template will fail to compile if 
+    /// 'sizeof(TYPE) != 4'. The resulting address is guaranteed to be 4-byte
+    /// aligned.
+    template <typename TYPE>
+    TYPE* indicator();
 
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
@@ -353,6 +391,49 @@ class EventPool : public bdlma::Factory<ntcs::Event>
     /// not be invoked directly.
     void deleteObject(ntcs::Event* object) BSLS_KEYWORD_OVERRIDE;
 };
+
+template <typename TYPE>
+NTCCFG_INLINE
+TYPE* Event::message()
+{
+    BSLMF_ASSERT(sizeof(d_message) >= sizeof(TYPE));
+    BSLS_ASSERT_OPT(bsls::AlignmentUtil::is8ByteAligned(d_message));
+
+    return reinterpret_cast<TYPE*>(d_message);
+}
+
+template <typename TYPE>
+NTCCFG_INLINE
+TYPE* Event::buffers(bsl::size_t* maxBuffers)
+{
+    BSLMF_ASSERT(sizeof(d_buffers) >= sizeof(TYPE));
+    BSLMF_ASSERT(sizeof(d_buffers) % sizeof(TYPE) == 0);
+    BSLS_ASSERT_OPT(bsls::AlignmentUtil::is8ByteAligned(d_buffers));
+
+    *maxBuffers = sizeof(d_buffers) / sizeof(TYPE);
+    return reinterpret_cast<TYPE*>(d_buffers);
+}
+
+template <typename TYPE>
+NTCCFG_INLINE
+TYPE* Event::address()
+{
+    BSLMF_ASSERT(sizeof(d_address) >= sizeof(TYPE));
+    BSLS_ASSERT_OPT(bsls::AlignmentUtil::is8ByteAligned(d_address));
+
+    return reinterpret_cast<TYPE*>(d_address);
+}
+
+template <typename TYPE>
+NTCCFG_INLINE
+TYPE* Event::indicator()
+{
+    BSLMF_ASSERT(sizeof(TYPE) == 4);
+    BSLMF_ASSERT(sizeof(d_numBytesIndicated) == 4);
+    BSLS_ASSERT_OPT(bsls::AlignmentUtil::is4ByteAligned(&d_numBytesIndicated));
+
+    return reinterpret_cast<TYPE*>(&d_numBytesIndicated);
+}
 
 NTCCFG_INLINE
 bslma::ManagedPtr<ntcs::Event> EventPool::getManagedObject()
