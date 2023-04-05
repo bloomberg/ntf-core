@@ -272,8 +272,13 @@ struct sockaddr_un_win32 {
 // handles.
 #define NTSU_SOCKETUTIL_DEBUG_LIFETIME_LOG BSLS_LOG_WARN
 
-// Comment or set to 0 to disable logging the creation and closing of handles.
+// Comment or set to 0 to disable logging the parameters and results of
+// sendmsg.
 #define NTSU_SOCKETUTIL_DEBUG_SENDMSG 0
+
+// Comment or set to 0 to disable logging the parameters and results of
+// recvmsg.
+#define NTSU_SOCKETUTIL_DEBUG_RECVMSG 0
 
 namespace BloombergLP {
 namespace ntsu {
@@ -293,11 +298,11 @@ class OutoingDataStats
 {
     // This class tracks the statistics for 'sendmsg'.
 
-    std::size_t d_numSyscalls;
-    std::size_t d_totalBuffersSendable;
-    std::size_t d_totalBytesSendable;
-    std::size_t d_totalBytesSent;
-    std::size_t d_numWouldBlocks;
+    bsls::AtomicUint64 d_numSyscalls;
+    bsls::AtomicUint64 d_totalBuffersSendable;
+    bsls::AtomicUint64 d_totalBytesSendable;
+    bsls::AtomicUint64 d_totalBytesSent;
+    bsls::AtomicUint64 d_numWouldBlocks;
 
   public:
     OutoingDataStats();
@@ -352,8 +357,8 @@ OutoingDataStats::~OutoingDataStats()
     std::sprintf(buffer,
                  "--\n"
                  "NTSU PID:                                   %-20d\n"
-                 "NTSU Total syscalls:                        %-20zu\n"
-                 "NTSU Total EWOULDBLOCK results:             %-20zu\n"
+                 "NTSU Total sendmsg syscalls:                %-20zu\n"
+                 "NTSU Total sendmsg EWOULDBLOCK results:     %-20zu\n"
                  "NTSU Average buffers sendable per syscall:  %-20.2f\n"
                  "NTSU Average bytes sendable per syscall:    %-20.2f\n"
                  "NTSU Average bytes sent per syscall:        %-20.2f\n",
@@ -378,24 +383,24 @@ void OutoingDataStats::update(const struct iovec* buffersSendable,
         bytesSendable += static_cast<std::size_t>(buffersSendable[i].iov_len);
     }
 
-    d_totalBuffersSendable += numBuffersSendable;
-    d_totalBytesSendable   += bytesSendable;
+    d_totalBuffersSendable.addRelaxed(numBuffersSendable);
+    d_totalBytesSendable.addRelaxed(bytesSendable);
 
     if (numBytesSent > 0) {
-        d_totalBytesSent += numBytesSent;
+        d_totalBytesSent.addRelaxed(static_cast<bsl::size_t>(numBytesSent));
     }
 
 #if EWOULDBLOCK != EAGAIN
     if (errorNumber == EWOULDBLOCK || errorNumber == EAGAIN) {
-        ++d_numWouldBlocks;
+        d_numWouldBlocks.addRelaxed(1);
     }
 #else
     if (errorNumber == EWOULDBLOCK) {
-        ++d_numWouldBlocks;
+        d_numWouldBlocks.addRelaxed(1);
     }
 #endif
 
-    ++d_numSyscalls;
+    d_numSyscalls.addRelaxed(1);
 }
 
 #define NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(buffersSendable,                 \
@@ -412,6 +417,138 @@ void OutoingDataStats::update(const struct iovec* buffersSendable,
 #define NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(buffersSendable,                 \
                                              numBuffersSendable,              \
                                              numBytesSent,                    \
+                                             errorNumber)
+
+#endif
+
+#if NTSU_SOCKETUTIL_DEBUG_RECVMSG
+
+class IncomingDataStats
+{
+    // This class tracks the statistics for 'sendmsg'.
+
+    bsls::AtomicUint64 d_numSyscalls;
+    bsls::AtomicUint64 d_totalBuffersReceivable;
+    bsls::AtomicUint64 d_totalBytesReceivable;
+    bsls::AtomicUint64 d_totalBytesReceived;
+    bsls::AtomicUint64 d_numWouldBlocks;
+
+  public:
+    IncomingDataStats();
+
+    ~IncomingDataStats();
+
+    void update(const struct iovec* buffersReceivable,
+                bsl::size_t         numBuffersReceivable,
+                ssize_t             numBytesSent,
+                int                 errorNumber);
+};
+
+IncomingDataStats s_incomingDataStats;
+
+IncomingDataStats::IncomingDataStats()
+: d_numSyscalls(0)
+, d_totalBuffersReceivable(0)
+, d_totalBytesReceivable(0)
+, d_totalBytesReceived(0)
+, d_numWouldBlocks(0)
+{
+}
+
+IncomingDataStats::~IncomingDataStats()
+{
+    if (d_numSyscalls == 0) {
+        return;
+    }
+
+    double avgBuffersReceivablePerSyscall = 0;
+    if (d_numSyscalls > 0) {
+        avgBuffersReceivablePerSyscall =
+            static_cast<double>(d_totalBuffersReceivable) /
+            static_cast<double>(d_numSyscalls);
+    }
+
+    double avgBytesReceivablePerSyscall = 0;
+    if (d_numSyscalls > 0) {
+        avgBytesReceivablePerSyscall =
+            static_cast<double>(d_totalBytesReceivable) /
+            static_cast<double>(d_numSyscalls);
+    }
+
+    double avgBytesReceivedPerSyscall = 0;
+    if (d_numSyscalls > 0) {
+        avgBytesReceivedPerSyscall =
+                           static_cast<double>(d_totalBytesReceived) /
+                           static_cast<double>(d_numSyscalls);
+    }
+
+    char buffer[4096];
+
+    std::sprintf(buffer,
+                 "--\n"
+                 "NTSU PID:                                    %-20d\n"
+                 "NTSU Total recvmsg syscalls:                 %-20zu\n"
+                 "NTSU Total recvmsg EWOULDBLOCK results:      %-20zu\n"
+                 "NTSU Average buffers receivable per syscall: %-20.2f\n"
+                 "NTSU Average bytes receivable per syscall:   %-20.2f\n"
+                 "NTSU Average bytes received per syscall:     %-20.2f\n",
+                 (int)(::getpid()),
+                 (std::size_t)(d_numSyscalls),
+                 (std::size_t)(d_numWouldBlocks),
+                 (double)(avgBuffersReceivablePerSyscall),
+                 (double)(avgBytesReceivablePerSyscall),
+                 (double)(avgBytesReceivedPerSyscall));
+
+    std::fprintf(stdout, "%s", buffer);
+    std::fflush(stdout);
+}
+
+void IncomingDataStats::update(const struct iovec* buffersReceivable,
+                               bsl::size_t         numBuffersReceivable,
+                               ssize_t             numBytesReceived,
+                               int                 errorNumber)
+{
+    std::size_t bytesReceivable = 0;
+    for (std::size_t i = 0; i < numBuffersReceivable; ++i) {
+        bytesReceivable +=
+            static_cast<std::size_t>(buffersReceivable[i].iov_len);
+    }
+
+    d_totalBuffersReceivable.addRelaxed(numBuffersReceivable);
+    d_totalBytesReceivable.addRelaxed(bytesReceivable);
+
+    if (numBytesReceived > 0) {
+        d_totalBytesReceived.addRelaxed(
+            static_cast<bsl::size_t>(numBytesReceived));
+    }
+
+#if EWOULDBLOCK != EAGAIN
+    if (errorNumber == EWOULDBLOCK || errorNumber == EAGAIN) {
+        d_numWouldBlocks.addRelaxed(1);
+    }
+#else
+    if (errorNumber == EWOULDBLOCK) {
+        d_numWouldBlocks.addRelaxed(1);
+    }
+#endif
+
+    d_numSyscalls.addRelaxed(1);
+}
+
+#define NTSU_SOCKETUTIL_DEBUG_RECVMSG_UPDATE(buffersReceivable,               \
+                                             numBuffersReceivable,            \
+                                             numBytesReceived,                \
+                                             errorNumber)                     \
+    s_incomingDataStats.update(buffersReceivable,                             \
+                               numBuffersReceivable,                          \
+                               numBytesReceived,                              \
+                               errorNumber);
+
+#else
+
+#define NTSU_SOCKETUTIL_DEBUG_RECVMSG_UPDATE(buffersReceivable,               \
+                                             numBuffersReceivable,            \
+                                             numBytesReceived,                \
                                              errorNumber)
 
 #endif
@@ -2156,6 +2293,11 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
     ssize_t recvmsgResult =
         ::recvmsg(socket, &msg, NTSU_SOCKETUTIL_RECVMSG_FLAGS);
 
+    NTSU_SOCKETUTIL_DEBUG_RECVMSG_UPDATE(msg.msg_iov,
+                                         msg.msg_iovlen,
+                                         recvmsgResult,
+                                         errno);
+
     if (recvmsgResult < 0) {
         return ntsa::Error(errno);
     }
@@ -2234,6 +2376,11 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
     ssize_t recvmsgResult =
         ::recvmsg(socket, &msg, NTSU_SOCKETUTIL_RECVMSG_FLAGS);
 
+    NTSU_SOCKETUTIL_DEBUG_RECVMSG_UPDATE(msg.msg_iov,
+                                         msg.msg_iovlen,
+                                         recvmsgResult,
+                                         errno);
+
     if (recvmsgResult < 0) {
         return ntsa::Error(errno);
     }
@@ -2307,6 +2454,11 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     ssize_t recvmsgResult =
         ::recvmsg(socket, &msg, NTSU_SOCKETUTIL_RECVMSG_FLAGS);
+
+    NTSU_SOCKETUTIL_DEBUG_RECVMSG_UPDATE(msg.msg_iov,
+                                         msg.msg_iovlen,
+                                         recvmsgResult,
+                                         errno);
 
     if (recvmsgResult < 0) {
         return ntsa::Error(errno);
@@ -2386,6 +2538,11 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
     ssize_t recvmsgResult =
         ::recvmsg(socket, &msg, NTSU_SOCKETUTIL_RECVMSG_FLAGS);
 
+    NTSU_SOCKETUTIL_DEBUG_RECVMSG_UPDATE(msg.msg_iov,
+                                         msg.msg_iovlen,
+                                         recvmsgResult,
+                                         errno);
+
     if (recvmsgResult < 0) {
         return ntsa::Error(errno);
     }
@@ -2463,6 +2620,11 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*        context,
 
     ssize_t recvmsgResult =
         ::recvmsg(socket, &msg, NTSU_SOCKETUTIL_RECVMSG_FLAGS);
+
+    NTSU_SOCKETUTIL_DEBUG_RECVMSG_UPDATE(msg.msg_iov,
+                                         msg.msg_iovlen,
+                                         recvmsgResult,
+                                         errno);
 
     if (recvmsgResult < 0) {
         return ntsa::Error(errno);
@@ -2543,6 +2705,11 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     ssize_t recvmsgResult =
         ::recvmsg(socket, &msg, NTSU_SOCKETUTIL_RECVMSG_FLAGS);
+
+    NTSU_SOCKETUTIL_DEBUG_RECVMSG_UPDATE(msg.msg_iov,
+                                         msg.msg_iovlen,
+                                         recvmsgResult,
+                                         errno);
 
     if (recvmsgResult < 0) {
         return ntsa::Error(errno);
@@ -2643,6 +2810,11 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
     ssize_t recvmsgResult =
         ::recvmsg(socket, &msg, NTSU_SOCKETUTIL_RECVMSG_FLAGS);
 
+    NTSU_SOCKETUTIL_DEBUG_RECVMSG_UPDATE(msg.msg_iov,
+                                         msg.msg_iovlen,
+                                         recvmsgResult,
+                                         errno);
+
     if (recvmsgResult < 0) {
         return ntsa::Error(errno);
     }
@@ -2722,6 +2894,11 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     ssize_t recvmsgResult =
         ::recvmsg(socket, &msg, NTSU_SOCKETUTIL_RECVMSG_FLAGS);
+
+    NTSU_SOCKETUTIL_DEBUG_RECVMSG_UPDATE(msg.msg_iov,
+                                         msg.msg_iovlen,
+                                         recvmsgResult,
+                                         errno);
 
     if (recvmsgResult < 0) {
         return ntsa::Error(errno);
