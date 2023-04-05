@@ -26,7 +26,6 @@ BSLS_IDENT_RCSID(ntcq_send_cpp, "$Id$ $CSID$")
 #include <bslma_allocator.h>
 #include <bslma_default.h>
 #include <bsls_assert.h>
-#include <bsls_log.h> // MRM
 #include <bsl_limits.h>
 
 namespace BloombergLP {
@@ -344,20 +343,6 @@ bool SendQueue::batchNext(ntsa::ConstBufferArray   *result,
         result->clear();
         return false;
     }
-
-    // MRM
-#if 0
-    BSLS_LOG_TRACE("MRM: Batching %zu bytes in %zu buffers in %zu entries "
-                  "from send queue having %zu entries "
-                  "to copy to the socket send buffer: "
-                  "limit %zu buffers, %zu bytes",
-                  result->numBytes(),
-                  result->numBuffers(),
-                  numEntries,
-                  d_entryList.size(),
-                  options.maxBuffers(),
-                  options.maxBytes());
-#endif
 
     return true;
 }
