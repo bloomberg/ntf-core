@@ -33,6 +33,7 @@ BSLS_IDENT_RCSID(ntco_ioring_cpp, "$Id$ $CSID$")
 #include <ntcm_monitorableutil.h>
 
 #include <ntci_log.h>
+#include <ntci_mutex.h>
 #include <ntcs_async.h>
 #include <ntcs_authorization.h>
 #include <ntcs_chronology.h>
@@ -49,7 +50,6 @@ BSLS_IDENT_RCSID(ntco_ioring_cpp, "$Id$ $CSID$")
 #include <ntsu_bufferutil.h>
 #include <ntsu_socketoptionutil.h>
 #include <ntsu_socketutil.h>
-#include <ntci_mutex.h>
 
 #include <bdlbb_blob.h>
 #include <bdlcc_objectpool.h>
@@ -117,9 +117,7 @@ BSLS_IDENT_RCSID(ntco_ioring_cpp, "$Id$ $CSID$")
 // queue entries to have an extra 16-bytes for extra data.
 #define NTCO_IORING_COMPLETION_32 0
 
-
-
-// MRM 
+// MRM
 // Set during configuration if liburing is available on the build machine.
 #define NTC_BUILD_WITH_IORING_LIBURING 0
 
@@ -263,24 +261,24 @@ class IoRingConfig
     bsl::uint32_t d_reserved[3];
 
     bsl::uint32_t d_submissionQueueOffsetToHead;
-	bsl::uint32_t d_submissionQueueOffsetToTail;
-	bsl::uint32_t d_submissionQueueOffsetToRingMask;
-	bsl::uint32_t d_submissionQueueOffsetToRingEntries;
-	bsl::uint32_t d_submissionQueueOffsetToFlags;
-	bsl::uint32_t d_submissionQueueOffsetToDropped;
-	bsl::uint32_t d_submissionQueueOffsetToArray;
-	bsl::uint32_t d_submissionQueueOffsetToResv1;
-	bsl::uint64_t d_submissionQueueOffsetToResv2;
+    bsl::uint32_t d_submissionQueueOffsetToTail;
+    bsl::uint32_t d_submissionQueueOffsetToRingMask;
+    bsl::uint32_t d_submissionQueueOffsetToRingEntries;
+    bsl::uint32_t d_submissionQueueOffsetToFlags;
+    bsl::uint32_t d_submissionQueueOffsetToDropped;
+    bsl::uint32_t d_submissionQueueOffsetToArray;
+    bsl::uint32_t d_submissionQueueOffsetToResv1;
+    bsl::uint64_t d_submissionQueueOffsetToResv2;
 
     bsl::uint32_t d_completionQueueOffsetToHead;
-	bsl::uint32_t d_completionQueueOffsetToTail;
-	bsl::uint32_t d_completionQueueOffsetToRingMask;
-	bsl::uint32_t d_completionQueueOffsetToRingEntries;
-	bsl::uint32_t d_completionQueueOffsetToOverflow;
-	bsl::uint32_t d_completionQueueOffsetToCQEs;
-	bsl::uint32_t d_completionQueueOffsetToFlags;
-	bsl::uint32_t d_completionQueueOffsetToResv1;
-	bsl::uint64_t d_completionQueueOffsetToResv2;
+    bsl::uint32_t d_completionQueueOffsetToTail;
+    bsl::uint32_t d_completionQueueOffsetToRingMask;
+    bsl::uint32_t d_completionQueueOffsetToRingEntries;
+    bsl::uint32_t d_completionQueueOffsetToOverflow;
+    bsl::uint32_t d_completionQueueOffsetToCQEs;
+    bsl::uint32_t d_completionQueueOffsetToFlags;
+    bsl::uint32_t d_completionQueueOffsetToResv1;
+    bsl::uint64_t d_completionQueueOffsetToResv2;
 
   public:
     /// Create a new I/O ring configuration having a default value.
@@ -293,7 +291,7 @@ class IoRingConfig
     /// Destroy this object.
     ~IoRingConfig();
 
-    /// Assign the value of the specified 'object' to this object. Return a 
+    /// Assign the value of the specified 'object' to this object. Return a
     /// reference to this modifiable object.
     IoRingConfig& operator=(const IoRingConfig& other);
 
@@ -315,54 +313,54 @@ class IoRingConfig
     /// Return the submission queue capacity.
     bsl::uint32_t submissionQueueCapacity() const;
 
-    /// Return the offset from the base of the mapped memory for the 
+    /// Return the offset from the base of the mapped memory for the
     /// submission queue to the head index.
     bsl::uint32_t submissionQueueOffsetToHead() const;
 
-    /// Return the offset from the base of the mapped memory for the 
+    /// Return the offset from the base of the mapped memory for the
     /// submission queue to the tail index.
     bsl::uint32_t submissionQueueOffsetToTail() const;
 
-    /// Return the offset from the base of the mapped memory for the 
+    /// Return the offset from the base of the mapped memory for the
     /// submission queue to the ring mask.
     bsl::uint32_t submissionQueueOffsetToRingMask() const;
 
-    /// Return the offset from the base of the mapped memory for the 
+    /// Return the offset from the base of the mapped memory for the
     /// submission queue to the ring entries.
     bsl::uint32_t submissionQueueOffsetToRingEntries() const;
 
-    /// Return the offset from the base of the mapped memory for the 
+    /// Return the offset from the base of the mapped memory for the
     /// submission queue to the ring flags.
     bsl::uint32_t submissionQueueOffsetToFlags() const;
 
-    /// Return the offset from the base of the mapped memory for the 
+    /// Return the offset from the base of the mapped memory for the
     /// submission queue to the array index.
     bsl::uint32_t submissionQueueOffsetToArray() const;
 
     /// Return the completion queue capacity.
     bsl::uint32_t completionQueueCapacity() const;
 
-    /// Return the offset from the base of the mapped memory for the 
+    /// Return the offset from the base of the mapped memory for the
     /// completion queue to the head index.
     bsl::uint32_t completionQueueOffsetToHead() const;
 
-    /// Return the offset from the base of the mapped memory for the 
+    /// Return the offset from the base of the mapped memory for the
     /// completion queue to the tail index.
     bsl::uint32_t completionQueueOffsetToTail() const;
 
-    /// Return the offset from the base of the mapped memory for the 
+    /// Return the offset from the base of the mapped memory for the
     /// completion queue to the ring mask.
     bsl::uint32_t completionQueueOffsetToRingMask() const;
 
-    /// Return the offset from the base of the mapped memory for the 
+    /// Return the offset from the base of the mapped memory for the
     /// completion queue to the ring entries.
     bsl::uint32_t completionQueueOffsetToRingEntries() const;
 
-    /// Return the offset from the base of the mapped memory for the 
+    /// Return the offset from the base of the mapped memory for the
     /// completion queue to the ring flags.
     bsl::uint32_t completionQueueOffsetToFlags() const;
 
-    /// Return the offset from the base of the mapped memory for the 
+    /// Return the offset from the base of the mapped memory for the
     /// completion queue to the completion entries.
     bsl::uint32_t completionQueueOffsetToCQEs() const;
 
@@ -397,7 +395,6 @@ class IoRingConfig
 /// the specified 'stream'.
 bsl::ostream& operator<<(bsl::ostream& stream, const IoRingConfig& object);
 
-
 /// Describe the capabilities of an I/O ring.
 class IoRingCapabilities
 {
@@ -414,7 +411,7 @@ class IoRingCapabilities
     /// Destroy this object.
     ~IoRingCapabilities();
 
-    /// Assign the value of the specified 'object' to this object. Return a 
+    /// Assign the value of the specified 'object' to this object. Return a
     /// reference to this modifiable object.
     IoRingCapabilities& operator=(const IoRingCapabilities& other);
 
@@ -444,7 +441,7 @@ class IoRingCapabilities
 
 /// Write a formatted, human readable description of the specified 'object' to
 /// the specified 'stream'.
-bsl::ostream& operator<<(bsl::ostream&             stream, 
+bsl::ostream& operator<<(bsl::ostream&             stream,
                          const IoRingCapabilities& object);
 
 /// Describe an I/O ring submission entry.
@@ -453,21 +450,21 @@ bsl::ostream& operator<<(bsl::ostream&             stream,
 /// This class is not thread safe.
 class IoRingSubmission
 {
-    bsl::uint8_t  d_operation;   // opcode
-	bsl::uint8_t  d_flags;       // flags
-	bsl::uint16_t d_priority;    // ioprio
-	bsl::int32_t  d_handle;      // fd
-    bsl::uint64_t d_size;        // off
-    bsl::uint64_t d_address;     // addr
-    bsl::uint32_t d_count;       // len
-    bsl::uint32_t d_options;     // msg_flags etc.
-    bsl::uint64_t d_event;       // user_data
-    bsl::uint16_t d_index;       // buf_index/d_buf_group
-    bsl::uint16_t d_personality; // personality
-    bsl::uint32_t d_splice;      // splice_fd_in/d_file_index
+    bsl::uint8_t  d_operation;    // opcode
+    bsl::uint8_t  d_flags;        // flags
+    bsl::uint16_t d_priority;     // ioprio
+    bsl::int32_t  d_handle;       // fd
+    bsl::uint64_t d_size;         // off
+    bsl::uint64_t d_address;      // addr
+    bsl::uint32_t d_count;        // len
+    bsl::uint32_t d_options;      // msg_flags etc.
+    bsl::uint64_t d_event;        // user_data
+    bsl::uint16_t d_index;        // buf_index/d_buf_group
+    bsl::uint16_t d_personality;  // personality
+    bsl::uint32_t d_splice;       // splice_fd_in/d_file_index
 
 #if NTCO_IORING_SUBMISSION_128
-	bsl::uint8_t d_command[80];
+    bsl::uint8_t d_command[80];
 #else
     bsl::uint8_t d_command[16];
 #endif
@@ -483,169 +480,169 @@ class IoRingSubmission
     /// Destroy this object.
     ~IoRingSubmission();
 
-    /// Assign the value of the specified 'object' to this object. Return a 
+    /// Assign the value of the specified 'object' to this object. Return a
     /// reference to this modifiable object.
     IoRingSubmission& operator=(const IoRingSubmission& other);
 
     /// Reset the value of this object to its value upon default construction.
     void reset();
 
-    /// Prepare the submission to initiate a timeout at the specified 
+    /// Prepare the submission to initiate a timeout at the specified
     /// 'deadline', in absolute time since the Unix epoch.
     void prepareTimeout(struct __kernel_timespec* timespec,
                         const bsls::TimeInterval& deadline);
 
     /// Prepare the submission to initiate a callback, i.e. a "no-op"
     /// completion that invokes a callback.
-    void prepareCallback(ntcs::Event*                event, 
+    void prepareCallback(ntcs::Event*                event,
                          const ntcs::Event::Functor& callback);
 
-    /// Prepare the submission to initiate an operation to accept the next 
+    /// Prepare the submission to initiate an operation to accept the next
     /// connection from the backlog of the specified 'socket' identified by the
-    /// specified 'handle'. Load into the specified 'event' the event that 
+    /// specified 'handle'. Load into the specified 'event' the event that
     /// indicates the operation is complete. Return the error.
     ntsa::Error prepareAccept(
-        ntcs::Event*                                 event, 
+        ntcs::Event*                                 event,
         const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         ntsa::Handle                                 handle);
 
-    /// Prepare the submission to initiate an operation to connect the 
-    /// specified 'socket' identified by the specified 'handle' to the 
-    /// specified 'endpoint'. Load into the specified 'event' the event that 
+    /// Prepare the submission to initiate an operation to connect the
+    /// specified 'socket' identified by the specified 'handle' to the
+    /// specified 'endpoint'. Load into the specified 'event' the event that
     /// indicates the operation is complete. Return the error.
     ntsa::Error prepareConnect(
-        ntcs::Event*                                 event, 
+        ntcs::Event*                                 event,
         const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         ntsa::Handle                                 handle,
         const ntsa::Endpoint&                        endpoint);
 
-    /// Prepare the submission to initiate an operation to enqueue the 
-    /// specified 'source' to the send buffer of the specified 'socket' 
-    /// identified by the specified 'handle' according to the specified 
+    /// Prepare the submission to initiate an operation to enqueue the
+    /// specified 'source' to the send buffer of the specified 'socket'
+    /// identified by the specified 'handle' according to the specified
     /// 'options'. Load into the specified 'event' the event that indicates the
     /// operation is complete. Return the error.
     ntsa::Error prepareSend(
-        ntcs::Event*                                 event, 
+        ntcs::Event*                                 event,
         const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         ntsa::Handle                                 handle,
         const ntsa::Data&                            source,
         const ntsa::SendOptions&                     options);
-    
-    /// Prepare the submission to initiate an operation to enqueue the 
-    /// specified 'source' to the send buffer of the specified 'socket' 
-    /// identified by the specified 'handle' according to the specified 
+
+    /// Prepare the submission to initiate an operation to enqueue the
+    /// specified 'source' to the send buffer of the specified 'socket'
+    /// identified by the specified 'handle' according to the specified
     /// 'options'. Load into the specified 'event' the event that indicates the
     /// operation is complete. Return the error.
     ntsa::Error prepareSend(
-        ntcs::Event*                                 event, 
+        ntcs::Event*                                 event,
         const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         ntsa::Handle                                 handle,
         const bdlbb::Blob&                           source,
         const ntsa::SendOptions&                     options);
 
-    /// Prepare the submission to initiate an operation to enqueue the 
-    /// specified 'source' to the send buffer of the specified 'socket' 
-    /// identified by the specified 'handle' according to the specified 
+    /// Prepare the submission to initiate an operation to enqueue the
+    /// specified 'source' to the send buffer of the specified 'socket'
+    /// identified by the specified 'handle' according to the specified
     /// 'options'. Load into the specified 'event' the event that indicates the
     /// operation is complete. Return the error.
     ntsa::Error prepareSend(
-        ntcs::Event*                                 event, 
+        ntcs::Event*                                 event,
         const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         ntsa::Handle                                 handle,
         const bdlbb::BlobBuffer&                     source,
         const ntsa::SendOptions&                     options);
 
-    /// Prepare the submission to initiate an operation to enqueue the 
-    /// specified 'source' to the send buffer of the specified 'socket' 
-    /// identified by the specified 'handle' according to the specified 
+    /// Prepare the submission to initiate an operation to enqueue the
+    /// specified 'source' to the send buffer of the specified 'socket'
+    /// identified by the specified 'handle' according to the specified
     /// 'options'. Load into the specified 'event' the event that indicates the
     /// operation is complete. Return the error.
     ntsa::Error prepareSend(
-        ntcs::Event*                                 event, 
+        ntcs::Event*                                 event,
         const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         ntsa::Handle                                 handle,
         const ntsa::ConstBuffer&                     source,
         const ntsa::SendOptions&                     options);
 
-    /// Prepare the submission to initiate an operation to enqueue the 
-    /// specified 'source' to the send buffer of the specified 'socket' 
-    /// identified by the specified 'handle' according to the specified 
+    /// Prepare the submission to initiate an operation to enqueue the
+    /// specified 'source' to the send buffer of the specified 'socket'
+    /// identified by the specified 'handle' according to the specified
     /// 'options'. Load into the specified 'event' the event that indicates the
     /// operation is complete. Return the error.
     ntsa::Error prepareSend(
-        ntcs::Event*                                 event, 
+        ntcs::Event*                                 event,
         const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         ntsa::Handle                                 handle,
         const ntsa::ConstBufferArray&                source,
         const ntsa::SendOptions&                     options);
 
-    /// Prepare the submission to initiate an operation to enqueue the 
-    /// specified 'source' to the send buffer of the specified 'socket' 
-    /// identified by the specified 'handle' according to the specified 
+    /// Prepare the submission to initiate an operation to enqueue the
+    /// specified 'source' to the send buffer of the specified 'socket'
+    /// identified by the specified 'handle' according to the specified
     /// 'options'. Load into the specified 'event' the event that indicates the
     /// operation is complete. Return the error.
     ntsa::Error prepareSend(
-        ntcs::Event*                                 event, 
+        ntcs::Event*                                 event,
         const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         ntsa::Handle                                 handle,
         const ntsa::ConstBufferPtrArray&             source,
         const ntsa::SendOptions&                     options);
 
-    /// Prepare the submission to initiate an operation to enqueue the 
-    /// specified 'source' to the send buffer of the specified 'socket' 
-    /// identified by the specified 'handle' according to the specified 
+    /// Prepare the submission to initiate an operation to enqueue the
+    /// specified 'source' to the send buffer of the specified 'socket'
+    /// identified by the specified 'handle' according to the specified
     /// 'options'. Load into the specified 'event' the event that indicates the
     /// operation is complete. Return the error.
     ntsa::Error prepareSend(
-        ntcs::Event*                                 event, 
+        ntcs::Event*                                 event,
         const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         ntsa::Handle                                 handle,
         const ntsa::MutableBuffer&                   source,
         const ntsa::SendOptions&                     options);
 
-    /// Prepare the submission to initiate an operation to enqueue the 
-    /// specified 'source' to the send buffer of the specified 'socket' 
-    /// identified by the specified 'handle' according to the specified 
+    /// Prepare the submission to initiate an operation to enqueue the
+    /// specified 'source' to the send buffer of the specified 'socket'
+    /// identified by the specified 'handle' according to the specified
     /// 'options'. Load into the specified 'event' the event that indicates the
     /// operation is complete. Return the error.
     ntsa::Error prepareSend(
-        ntcs::Event*                                 event, 
+        ntcs::Event*                                 event,
         const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         ntsa::Handle                                 handle,
         const ntsa::MutableBufferArray&              source,
         const ntsa::SendOptions&                     options);
 
-    /// Prepare the submission to initiate an operation to enqueue the 
-    /// specified 'source' to the send buffer of the specified 'socket' 
-    /// identified by the specified 'handle' according to the specified 
+    /// Prepare the submission to initiate an operation to enqueue the
+    /// specified 'source' to the send buffer of the specified 'socket'
+    /// identified by the specified 'handle' according to the specified
     /// 'options'. Load into the specified 'event' the event that indicates the
     /// operation is complete. Return the error.
     ntsa::Error prepareSend(
-        ntcs::Event*                                 event, 
+        ntcs::Event*                                 event,
         const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         ntsa::Handle                                 handle,
         const ntsa::MutableBufferPtrArray&           source,
         const ntsa::SendOptions&                     options);
 
-    /// Prepare the submission to initiate an operation to enqueue the 
-    /// specified 'source' to the send buffer of the specified 'socket' 
-    /// identified by the specified 'handle' according to the specified 
+    /// Prepare the submission to initiate an operation to enqueue the
+    /// specified 'source' to the send buffer of the specified 'socket'
+    /// identified by the specified 'handle' according to the specified
     /// 'options'. Load into the specified 'event' the event that indicates the
     /// operation is complete. Return the error.
     ntsa::Error prepareSend(
-        ntcs::Event*                                 event, 
+        ntcs::Event*                                 event,
         const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         ntsa::Handle                                 handle,
         const ntsa::File&                            source,
         const ntsa::SendOptions&                     options);
 
-    /// Prepare the submission to initiate an operation to enqueue the 
-    /// specified 'source' to the send buffer of the specified 'socket' 
-    /// identified by the specified 'handle' according to the specified 
+    /// Prepare the submission to initiate an operation to enqueue the
+    /// specified 'source' to the send buffer of the specified 'socket'
+    /// identified by the specified 'handle' according to the specified
     /// 'options'. Load into the specified 'event' the event that indicates the
     /// operation is complete. Return the error.
     ntsa::Error prepareSend(
-        ntcs::Event*                                 event, 
+        ntcs::Event*                                 event,
         const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         ntsa::Handle                                 handle,
         const bsl::string&                           source,
@@ -657,16 +654,16 @@ class IoRingSubmission
     /// Load into the specified 'event' the event that indicates the operation
     /// is complete. Return the error.
     ntsa::Error prepareReceive(
-            ntcs::Event*                                 event, 
-            const bsl::shared_ptr<ntci::ProactorSocket>& socket,
-            ntsa::Handle                                 handle,
-            bdlbb::Blob*                                 destination,
-            const ntsa::ReceiveOptions&                  options);
+        ntcs::Event*                                 event,
+        const bsl::shared_ptr<ntci::ProactorSocket>& socket,
+        ntsa::Handle                                 handle,
+        bdlbb::Blob*                                 destination,
+        const ntsa::ReceiveOptions&                  options);
 
     /// Prepare the submission to cancel an operation.
     void prepareCancellation(ntcs::Event* event);
 
-    /// Return the handle. 
+    /// Return the handle.
     ntsa::Handle handle() const;
 
     /// Return the event.
@@ -719,9 +716,9 @@ class IoRingSubmissionList
     // Define a type alias for a mutex lock guard.
     typedef ntci::LockGuard LockGuard;
 
-    mutable Mutex        d_mutex;
-    EntrySequence        d_data;
-    bslma::Allocator*    d_allocator_p;
+    mutable Mutex     d_mutex;
+    EntrySequence     d_data;
+    bslma::Allocator* d_allocator_p;
 
   private:
     IoRingSubmissionList(const IoRingSubmissionList&) BSLS_KEYWORD_DELETED;
@@ -767,17 +764,17 @@ class IoRingSubmissionQueue
     // Define a type alias for a mutex lock guard.
     typedef ntci::LockGuard LockGuard;
 
-    mutable Mutex        d_mutex;
-    int                  d_ring;
-    void*                d_memoryMap_p;
-    bsl::uint32_t*       d_head_p;
-    bsl::uint32_t*       d_tail_p;
-    bsl::uint32_t*       d_mask_p;
-    bsl::uint32_t*       d_ring_entries_p;
-    bsl::uint32_t*       d_flags_p;
-    bsl::uint32_t*       d_array_p;
+    mutable Mutex           d_mutex;
+    int                     d_ring;
+    void*                   d_memoryMap_p;
+    bsl::uint32_t*          d_head_p;
+    bsl::uint32_t*          d_tail_p;
+    bsl::uint32_t*          d_mask_p;
+    bsl::uint32_t*          d_ring_entries_p;
+    bsl::uint32_t*          d_flags_p;
+    bsl::uint32_t*          d_array_p;
     ntco::IoRingSubmission* d_entryArray;
-    ntco::IoRingConfig    d_params;
+    ntco::IoRingConfig      d_params;
 
   private:
     IoRingSubmissionQueue(const IoRingSubmissionQueue&) BSLS_KEYWORD_DELETED;
@@ -837,7 +834,7 @@ class IoRingCompletion
     /// Destroy this object.
     ~IoRingCompletion();
 
-    /// Assign the value of the specified 'object' to this object. Return a 
+    /// Assign the value of the specified 'object' to this object. Return a
     /// reference to this modifiable object.
     IoRingCompletion& operator=(const IoRingCompletion& other);
 
@@ -847,7 +844,7 @@ class IoRingCompletion
     /// Return the event.
     ntcs::Event* event() const;
 
-    /// Return the number of bytes copied during the operation. 
+    /// Return the number of bytes copied during the operation.
     bsl::size_t result() const;
 
     /// Return the error.
@@ -903,15 +900,15 @@ class IoRingCompletionQueue
     // Define a type alias for a mutex lock guard.
     typedef ntci::LockGuard LockGuard;
 
-    mutable Mutex        d_mutex;
-    int                  d_ring;
-    void*                d_memoryMap_p;
-    bsl::uint32_t*       d_head_p;
-    bsl::uint32_t*       d_tail_p;
-    bsl::uint32_t*       d_mask_p;
-    bsl::uint32_t*       d_ring_entries_p;
-    ntco::IoRingCompletion*      d_entryArray;
-    ntco::IoRingConfig    d_params;
+    mutable Mutex           d_mutex;
+    int                     d_ring;
+    void*                   d_memoryMap_p;
+    bsl::uint32_t*          d_head_p;
+    bsl::uint32_t*          d_tail_p;
+    bsl::uint32_t*          d_mask_p;
+    bsl::uint32_t*          d_ring_entries_p;
+    ntco::IoRingCompletion* d_entryArray;
+    ntco::IoRingConfig      d_params;
 
   private:
     IoRingCompletionQueue(const IoRingCompletionQueue&) BSLS_KEYWORD_DELETED;
@@ -956,13 +953,13 @@ class IoRingDevice
     // Define a type alias for a mutex lock guard.
     typedef ntci::LockGuard LockGuard;
 
-    mutable Mutex  d_mutex;
-    int                   d_ring;
+    mutable Mutex               d_mutex;
+    int                         d_ring;
     ntco::IoRingSubmissionList  d_submissionList;
     ntco::IoRingSubmissionQueue d_submissionQueue;
     ntco::IoRingCompletionQueue d_completionQueue;
-    ntco::IoRingConfig     d_params;
-    bslma::Allocator*     d_allocator_p;
+    ntco::IoRingConfig          d_params;
+    bslma::Allocator*           d_allocator_p;
 
   private:
     IoRingDevice(const IoRingDevice&) BSLS_KEYWORD_DELETED;
@@ -1006,9 +1003,9 @@ class IoRingDevice
 /// This class is thread safe.
 class IoRingDevice
 {
-    bsls::SpinLock    d_sqeLock;
-    bsls::SpinLock    d_cqeLock;
-    ::io_uring        d_ring;
+    bsls::SpinLock d_sqeLock;
+    bsls::SpinLock d_cqeLock;
+    ::io_uring d_ring;
     ::io_uring_params d_params;
     bslma::Allocator* d_allocator_p;
 
@@ -1034,16 +1031,16 @@ class IoRingDevice
     // has elapsed, or an error occurs. Return the number of entries popped and
     // set in the 'entryList'.
     bsl::size_t wait(
-        ntci::Waiter                                   waiter,
-        ntco::IoRingCompletion*                        entryList,
-        bsl::size_t                                    entryListCapacity,
+        ntci::Waiter waiter,
+        ntco::IoRingCompletion* entryList,
+        bsl::size_t entryListCapacity,
         const bdlb::NullableValue<bsls::TimeInterval>& earliestTimerDue);
 
     //  Load into the specified 'entryList' having the specified
     // 'entryListCapacity' the next entries from the completion queue. Return
     // the number of entries popped and set in the 'entryList'.
     bsl::size_t flush(ntco::IoRingCompletion* entryList,
-                      bsl::size_t             entryListCapacity);
+                      bsl::size_t entryListCapacity);
 };
 
 #endif
@@ -1305,70 +1302,52 @@ bsl::ostream& IoRingConfig::print(bsl::ostream& stream,
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    
-    printer.printAttribute(
-        "submissionQueueCapacity", 
-        this->submissionQueueCapacity());
 
-    printer.printAttribute(
-        "submissionQueueOffsetToHead", 
-        this->submissionQueueOffsetToHead());
+    printer.printAttribute("submissionQueueCapacity",
+                           this->submissionQueueCapacity());
 
-    printer.printAttribute(
-        "submissionQueueOffsetToTail", 
-        this->submissionQueueOffsetToTail());
+    printer.printAttribute("submissionQueueOffsetToHead",
+                           this->submissionQueueOffsetToHead());
 
-    printer.printAttribute(
-        "submissionQueueOffsetToRingMask", 
-        this->submissionQueueOffsetToRingMask());
+    printer.printAttribute("submissionQueueOffsetToTail",
+                           this->submissionQueueOffsetToTail());
 
-    printer.printAttribute(
-        "submissionQueueOffsetToRingEntries", 
-        this->submissionQueueOffsetToRingEntries());
+    printer.printAttribute("submissionQueueOffsetToRingMask",
+                           this->submissionQueueOffsetToRingMask());
 
-    printer.printAttribute(
-        "submissionQueueOffsetToFlags", 
-        this->submissionQueueOffsetToFlags());
+    printer.printAttribute("submissionQueueOffsetToRingEntries",
+                           this->submissionQueueOffsetToRingEntries());
 
-    printer.printAttribute(
-        "submissionQueueOffsetToArray", 
-        this->submissionQueueOffsetToArray());
+    printer.printAttribute("submissionQueueOffsetToFlags",
+                           this->submissionQueueOffsetToFlags());
 
-    printer.printAttribute(
-        "completionQueueCapacity", 
-        this->completionQueueCapacity());
+    printer.printAttribute("submissionQueueOffsetToArray",
+                           this->submissionQueueOffsetToArray());
 
-    printer.printAttribute(
-        "completionQueueOffsetToHead", 
-        this->completionQueueOffsetToHead());
+    printer.printAttribute("completionQueueCapacity",
+                           this->completionQueueCapacity());
 
-    printer.printAttribute(
-        "completionQueueOffsetToTail", 
-        this->completionQueueOffsetToTail());
+    printer.printAttribute("completionQueueOffsetToHead",
+                           this->completionQueueOffsetToHead());
 
-    printer.printAttribute(
-        "completionQueueOffsetToRingMask", 
-        this->completionQueueOffsetToRingMask());
+    printer.printAttribute("completionQueueOffsetToTail",
+                           this->completionQueueOffsetToTail());
 
-    printer.printAttribute(
-        "completionQueueOffsetToRingEntries", 
-        this->completionQueueOffsetToRingEntries());
+    printer.printAttribute("completionQueueOffsetToRingMask",
+                           this->completionQueueOffsetToRingMask());
 
-    printer.printAttribute(
-        "completionQueueOffsetToFlags", 
-        this->completionQueueOffsetToFlags());
+    printer.printAttribute("completionQueueOffsetToRingEntries",
+                           this->completionQueueOffsetToRingEntries());
 
-    printer.printAttribute(
-        "completionQueueOffsetToCQEs", 
-        this->completionQueueOffsetToCQEs());
+    printer.printAttribute("completionQueueOffsetToFlags",
+                           this->completionQueueOffsetToFlags());
 
-    printer.printAttribute(
-        "flags", 
-        this->flags());
+    printer.printAttribute("completionQueueOffsetToCQEs",
+                           this->completionQueueOffsetToCQEs());
 
-    printer.printAttribute(
-        "features", 
-        this->features());
+    printer.printAttribute("flags", this->flags());
+
+    printer.printAttribute("features", this->features());
 
     printer.end();
     return stream;
@@ -1393,10 +1372,11 @@ IoRingCapabilities::~IoRingCapabilities()
 {
 }
 
-IoRingCapabilities& IoRingCapabilities::operator=(const IoRingCapabilities& other)
+IoRingCapabilities& IoRingCapabilities::operator=(
+    const IoRingCapabilities& other)
 {
     if (this != &other) {
-        d_flags =  other.d_flags;
+        d_flags = other.d_flags;
     }
 
     return *this;
@@ -1413,14 +1393,14 @@ bsl::ostream& IoRingCapabilities::print(bsl::ostream& stream,
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    
+
     printer.printAttribute("flags", d_flags);
 
     printer.end();
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&             stream, 
+bsl::ostream& operator<<(bsl::ostream&             stream,
                          const IoRingCapabilities& object)
 {
     return object.print(stream, 0, -1);
@@ -1494,9 +1474,8 @@ void IoRingSubmission::prepareTimeout(struct __kernel_timespec* timespec,
     d_flags     = NTCO_IORING_SQE_FLAGS;
 }
 
-void IoRingSubmission::prepareCallback(
-    ntcs::Event*                event, 
-    const ntcs::Event::Functor& callback)
+void IoRingSubmission::prepareCallback(ntcs::Event*                event,
+                                       const ntcs::Event::Functor& callback)
 {
     event->d_type     = ntcs::EventType::e_CALLBACK;
     event->d_function = callback;
@@ -1508,7 +1487,7 @@ void IoRingSubmission::prepareCallback(
 }
 
 ntsa::Error IoRingSubmission::prepareAccept(
-    ntcs::Event*                                 event, 
+    ntcs::Event*                                 event,
     const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     ntsa::Handle                                 handle)
 {
@@ -1532,7 +1511,7 @@ ntsa::Error IoRingSubmission::prepareAccept(
 }
 
 ntsa::Error IoRingSubmission::prepareConnect(
-    ntcs::Event*                                 event, 
+    ntcs::Event*                                 event,
     const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     ntsa::Handle                                 handle,
     const ntsa::Endpoint&                        endpoint)
@@ -1546,8 +1525,9 @@ ntsa::Error IoRingSubmission::prepareConnect(
     bsl::memset(socketAddress, 0, sizeof(sockaddr_storage));
 
     bsl::size_t socketAddressSize;
-    error = ntsu::SocketUtil::encodeEndpoint(
-        socketAddress, &socketAddressSize, endpoint);
+    error = ntsu::SocketUtil::encodeEndpoint(socketAddress,
+                                             &socketAddressSize,
+                                             endpoint);
     if (error) {
         return error;
     }
@@ -1563,49 +1543,97 @@ ntsa::Error IoRingSubmission::prepareConnect(
 }
 
 ntsa::Error IoRingSubmission::prepareSend(
-        ntcs::Event*                                 event, 
-        const bsl::shared_ptr<ntci::ProactorSocket>& socket,
-        ntsa::Handle                                 handle,
-        const ntsa::Data&                            source,
-        const ntsa::SendOptions&                     options)
+    ntcs::Event*                                 event,
+    const bsl::shared_ptr<ntci::ProactorSocket>& socket,
+    ntsa::Handle                                 handle,
+    const ntsa::Data&                            source,
+    const ntsa::SendOptions&                     options)
 {
     if (NTCCFG_LIKELY(source.isBlob())) {
-        return this->prepareSend(event, socket, handle, source.blob(), options);
+        return this->prepareSend(event,
+                                 socket,
+                                 handle,
+                                 source.blob(),
+                                 options);
     }
     else if (source.isSharedBlob()) {
         if (source.sharedBlob()) {
-            return this->prepareSend(event, socket, handle, *source.sharedBlob(), options);
+            return this->prepareSend(event,
+                                     socket,
+                                     handle,
+                                     *source.sharedBlob(),
+                                     options);
         }
         else {
-            return this->prepareSend(event, socket, handle, ntsa::ConstBuffer(), options);
+            return this->prepareSend(event,
+                                     socket,
+                                     handle,
+                                     ntsa::ConstBuffer(),
+                                     options);
         }
     }
     else if (source.isBlobBuffer()) {
-        return this->prepareSend(event, socket, handle, source.blobBuffer(), options);
+        return this->prepareSend(event,
+                                 socket,
+                                 handle,
+                                 source.blobBuffer(),
+                                 options);
     }
     else if (source.isConstBuffer()) {
-        return this->prepareSend(event, socket, handle, source.constBuffer(), options);
+        return this->prepareSend(event,
+                                 socket,
+                                 handle,
+                                 source.constBuffer(),
+                                 options);
     }
     else if (source.isConstBufferArray()) {
-        return this->prepareSend(event, socket, handle, source.constBufferArray(), options);
+        return this->prepareSend(event,
+                                 socket,
+                                 handle,
+                                 source.constBufferArray(),
+                                 options);
     }
     else if (source.isConstBufferPtrArray()) {
-        return this->prepareSend(event, socket, handle, source.constBufferPtrArray(), options);
+        return this->prepareSend(event,
+                                 socket,
+                                 handle,
+                                 source.constBufferPtrArray(),
+                                 options);
     }
     else if (source.isMutableBuffer()) {
-        return this->prepareSend(event, socket, handle, source.mutableBuffer(), options);
+        return this->prepareSend(event,
+                                 socket,
+                                 handle,
+                                 source.mutableBuffer(),
+                                 options);
     }
     else if (source.isMutableBufferArray()) {
-        return this->prepareSend(event, socket, handle, source.mutableBufferArray(), options);
+        return this->prepareSend(event,
+                                 socket,
+                                 handle,
+                                 source.mutableBufferArray(),
+                                 options);
     }
     else if (source.isMutableBufferPtrArray()) {
-        return this->prepareSend(event, socket, handle, source.mutableBufferPtrArray(), options);
+        return this->prepareSend(event,
+                                 socket,
+                                 handle,
+                                 source.mutableBufferPtrArray(),
+                                 options);
     }
     else if (source.isFile()) {
-        return this->prepareSend(event, socket, handle, source.file(), options);
+        return this->prepareSend(event,
+                                 socket,
+                                 handle,
+                                 source.file(),
+                                 options);
     }
     else if (source.isString()) {
-        return this->prepareSend(event, socket, handle, source.string(), options);
+        return this->prepareSend(event,
+                                 socket,
+                                 handle,
+                                 source.string(),
+                                 options);
     }
     else {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -1615,7 +1643,7 @@ ntsa::Error IoRingSubmission::prepareSend(
 }
 
 ntsa::Error IoRingSubmission::prepareSend(
-    ntcs::Event*                                 event, 
+    ntcs::Event*                                 event,
     const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     ntsa::Handle                                 handle,
     const bdlbb::Blob&                           source,
@@ -1626,16 +1654,16 @@ ntsa::Error IoRingSubmission::prepareSend(
     event->d_type   = ntcs::EventType::e_SEND;
     event->d_socket = socket;
 
-    ::msghdr* message = event->message<::msghdr>();
+    ::msghdr* message = event->message< ::msghdr>();
     bsl::memset(message, 0, sizeof(::msghdr));
 
     if (source.numDataBuffers() == 1) {
         bsl::size_t numBuffersMax;
-        ::iovec* iovecArray = event->buffers<::iovec>(&numBuffersMax);
+        ::iovec*    iovecArray = event->buffers< ::iovec>(&numBuffersMax);
 
         void*       data = source.buffer(0).data();
         bsl::size_t size = source.lastDataBufferLength();
-        
+
         iovecArray[0].iov_base = data;
         iovecArray[0].iov_len  = size;
 
@@ -1646,14 +1674,14 @@ ntsa::Error IoRingSubmission::prepareSend(
     }
     else {
         bsl::size_t numBuffersMaxLimit;
-        ::iovec* iovecArray = event->buffers<::iovec>(&numBuffersMaxLimit);
+        ::iovec*    iovecArray = event->buffers< ::iovec>(&numBuffersMaxLimit);
 
         if (numBuffersMaxLimit > IOV_MAX) {
             numBuffersMaxLimit = IOV_MAX;
         }
 
         bsl::size_t numBytesMax = options.maxBytes();
-        
+
         bsl::size_t numBuffersMax = options.maxBuffers();
         if (numBuffersMax == 0) {
             numBuffersMax = numBuffersMaxLimit;
@@ -1690,12 +1718,13 @@ ntsa::Error IoRingSubmission::prepareSend(
     const bool specifyEndpoint = !options.endpoint().isNull();
 
     if (specifyEndpoint) {
-        ::sockaddr_storage* socketAddress = 
-            event->address<::sockaddr_storage>();
+        ::sockaddr_storage* socketAddress =
+            event->address< ::sockaddr_storage>();
 
         bsl::size_t socketAddressSize;
-        error = ntsu::SocketUtil::encodeEndpoint(
-            socketAddress, &socketAddressSize, options.endpoint().value());
+        error = ntsu::SocketUtil::encodeEndpoint(socketAddress,
+                                                 &socketAddressSize,
+                                                 options.endpoint().value());
 
         message->msg_name    = socketAddress;
         message->msg_namelen = static_cast<socklen_t>(socketAddressSize);
@@ -1711,7 +1740,7 @@ ntsa::Error IoRingSubmission::prepareSend(
 }
 
 ntsa::Error IoRingSubmission::prepareSend(
-    ntcs::Event*                                 event, 
+    ntcs::Event*                                 event,
     const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     ntsa::Handle                                 handle,
     const bdlbb::BlobBuffer&                     source,
@@ -1722,15 +1751,15 @@ ntsa::Error IoRingSubmission::prepareSend(
     event->d_type   = ntcs::EventType::e_SEND;
     event->d_socket = socket;
 
-    ::msghdr* message = event->message<::msghdr>();
+    ::msghdr* message = event->message< ::msghdr>();
     bsl::memset(message, 0, sizeof(::msghdr));
 
     bsl::size_t numBuffersMax;
-    ::iovec* iovecArray = event->buffers<::iovec>(&numBuffersMax);
+    ::iovec*    iovecArray = event->buffers< ::iovec>(&numBuffersMax);
 
     void*       data = source.data();
     bsl::size_t size = source.size();
-    
+
     iovecArray[0].iov_base = data;
     iovecArray[0].iov_len  = size;
 
@@ -1742,12 +1771,13 @@ ntsa::Error IoRingSubmission::prepareSend(
     const bool specifyEndpoint = !options.endpoint().isNull();
 
     if (specifyEndpoint) {
-        ::sockaddr_storage* socketAddress = 
-            event->address<::sockaddr_storage>();
+        ::sockaddr_storage* socketAddress =
+            event->address< ::sockaddr_storage>();
 
         bsl::size_t socketAddressSize;
-        error = ntsu::SocketUtil::encodeEndpoint(
-            socketAddress, &socketAddressSize, options.endpoint().value());
+        error = ntsu::SocketUtil::encodeEndpoint(socketAddress,
+                                                 &socketAddressSize,
+                                                 options.endpoint().value());
 
         message->msg_name    = socketAddress;
         message->msg_namelen = static_cast<socklen_t>(socketAddressSize);
@@ -1763,7 +1793,7 @@ ntsa::Error IoRingSubmission::prepareSend(
 }
 
 ntsa::Error IoRingSubmission::prepareSend(
-    ntcs::Event*                                 event, 
+    ntcs::Event*                                 event,
     const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     ntsa::Handle                                 handle,
     const ntsa::ConstBuffer&                     source,
@@ -1774,15 +1804,15 @@ ntsa::Error IoRingSubmission::prepareSend(
     event->d_type   = ntcs::EventType::e_SEND;
     event->d_socket = socket;
 
-    ::msghdr* message = event->message<::msghdr>();
+    ::msghdr* message = event->message< ::msghdr>();
     bsl::memset(message, 0, sizeof(::msghdr));
 
     bsl::size_t numBuffersMax;
-    ::iovec* iovecArray = event->buffers<::iovec>(&numBuffersMax);
+    ::iovec*    iovecArray = event->buffers< ::iovec>(&numBuffersMax);
 
     void*       data = const_cast<void*>(source.data());
     bsl::size_t size = source.size();
-    
+
     iovecArray[0].iov_base = data;
     iovecArray[0].iov_len  = size;
 
@@ -1794,28 +1824,29 @@ ntsa::Error IoRingSubmission::prepareSend(
     const bool specifyEndpoint = !options.endpoint().isNull();
 
     if (specifyEndpoint) {
-        ::sockaddr_storage* socketAddress = 
-            event->address<::sockaddr_storage>();
+        ::sockaddr_storage* socketAddress =
+            event->address< ::sockaddr_storage>();
 
         bsl::size_t socketAddressSize;
-        error = ntsu::SocketUtil::encodeEndpoint(
-            socketAddress, &socketAddressSize, options.endpoint().value());
+        error = ntsu::SocketUtil::encodeEndpoint(socketAddress,
+                                                 &socketAddressSize,
+                                                 options.endpoint().value());
 
         message->msg_name    = socketAddress;
         message->msg_namelen = static_cast<socklen_t>(socketAddressSize);
     }
 
-    d_operation    = IORING_OP_SENDMSG;
-    d_handle        = handle;
-    d_event = reinterpret_cast<__u64>(event);
+    d_operation = IORING_OP_SENDMSG;
+    d_handle    = handle;
+    d_event     = reinterpret_cast<__u64>(event);
     d_flags     = NTCO_IORING_SQE_FLAGS;
-    d_address      = reinterpret_cast<__u64>(message);
+    d_address   = reinterpret_cast<__u64>(message);
 
     return ntsa::Error();
 }
 
 ntsa::Error IoRingSubmission::prepareSend(
-    ntcs::Event*                                 event, 
+    ntcs::Event*                                 event,
     const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     ntsa::Handle                                 handle,
     const ntsa::ConstBufferArray&                source,
@@ -1826,18 +1857,18 @@ ntsa::Error IoRingSubmission::prepareSend(
     event->d_type   = ntcs::EventType::e_SEND;
     event->d_socket = socket;
 
-    ::msghdr* message = event->message<::msghdr>();
+    ::msghdr* message = event->message< ::msghdr>();
     bsl::memset(message, 0, sizeof(::msghdr));
 
     bsl::size_t numBuffersMaxLimit;
-    ::iovec* iovecArray = event->buffers<::iovec>(&numBuffersMaxLimit);
+    ::iovec*    iovecArray = event->buffers< ::iovec>(&numBuffersMaxLimit);
 
     if (numBuffersMaxLimit > IOV_MAX) {
         numBuffersMaxLimit = IOV_MAX;
     }
 
     bsl::size_t numBytesMax = options.maxBytes();
-    
+
     bsl::size_t numBuffersMax = options.maxBuffers();
     if (numBuffersMax == 0) {
         numBuffersMax = numBuffersMaxLimit;
@@ -1847,7 +1878,7 @@ ntsa::Error IoRingSubmission::prepareSend(
     }
 
     bsl::size_t numBuffersTotal = 0;
-    bsl::size_t numBytesTotal = 0;
+    bsl::size_t numBytesTotal   = 0;
 
     const bsl::size_t sourceBufferCount = source.numBuffers();
 
@@ -1883,28 +1914,29 @@ ntsa::Error IoRingSubmission::prepareSend(
     const bool specifyEndpoint = !options.endpoint().isNull();
 
     if (specifyEndpoint) {
-        ::sockaddr_storage* socketAddress = 
-            event->address<::sockaddr_storage>();
+        ::sockaddr_storage* socketAddress =
+            event->address< ::sockaddr_storage>();
 
         bsl::size_t socketAddressSize;
-        error = ntsu::SocketUtil::encodeEndpoint(
-            socketAddress, &socketAddressSize, options.endpoint().value());
+        error = ntsu::SocketUtil::encodeEndpoint(socketAddress,
+                                                 &socketAddressSize,
+                                                 options.endpoint().value());
 
         message->msg_name    = socketAddress;
         message->msg_namelen = static_cast<socklen_t>(socketAddressSize);
     }
 
-    d_operation    = IORING_OP_SENDMSG;
-    d_handle        = handle;
-    d_event = reinterpret_cast<__u64>(event);
+    d_operation = IORING_OP_SENDMSG;
+    d_handle    = handle;
+    d_event     = reinterpret_cast<__u64>(event);
     d_flags     = NTCO_IORING_SQE_FLAGS;
-    d_address      = reinterpret_cast<__u64>(message);
+    d_address   = reinterpret_cast<__u64>(message);
 
     return ntsa::Error();
 }
 
 ntsa::Error IoRingSubmission::prepareSend(
-    ntcs::Event*                                 event, 
+    ntcs::Event*                                 event,
     const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     ntsa::Handle                                 handle,
     const ntsa::ConstBufferPtrArray&             source,
@@ -1915,18 +1947,18 @@ ntsa::Error IoRingSubmission::prepareSend(
     event->d_type   = ntcs::EventType::e_SEND;
     event->d_socket = socket;
 
-    ::msghdr* message = event->message<::msghdr>();
+    ::msghdr* message = event->message< ::msghdr>();
     bsl::memset(message, 0, sizeof(::msghdr));
 
     bsl::size_t numBuffersMaxLimit;
-    ::iovec* iovecArray = event->buffers<::iovec>(&numBuffersMaxLimit);
+    ::iovec*    iovecArray = event->buffers< ::iovec>(&numBuffersMaxLimit);
 
     if (numBuffersMaxLimit > IOV_MAX) {
         numBuffersMaxLimit = IOV_MAX;
     }
 
     bsl::size_t numBytesMax = options.maxBytes();
-    
+
     bsl::size_t numBuffersMax = options.maxBuffers();
     if (numBuffersMax == 0) {
         numBuffersMax = numBuffersMaxLimit;
@@ -1936,7 +1968,7 @@ ntsa::Error IoRingSubmission::prepareSend(
     }
 
     bsl::size_t numBuffersTotal = 0;
-    bsl::size_t numBytesTotal = 0;
+    bsl::size_t numBytesTotal   = 0;
 
     const bsl::size_t sourceBufferCount = source.numBuffers();
 
@@ -1972,28 +2004,29 @@ ntsa::Error IoRingSubmission::prepareSend(
     const bool specifyEndpoint = !options.endpoint().isNull();
 
     if (specifyEndpoint) {
-        ::sockaddr_storage* socketAddress = 
-            event->address<::sockaddr_storage>();
+        ::sockaddr_storage* socketAddress =
+            event->address< ::sockaddr_storage>();
 
         bsl::size_t socketAddressSize;
-        error = ntsu::SocketUtil::encodeEndpoint(
-            socketAddress, &socketAddressSize, options.endpoint().value());
+        error = ntsu::SocketUtil::encodeEndpoint(socketAddress,
+                                                 &socketAddressSize,
+                                                 options.endpoint().value());
 
         message->msg_name    = socketAddress;
         message->msg_namelen = static_cast<socklen_t>(socketAddressSize);
     }
 
-    d_operation    = IORING_OP_SENDMSG;
-    d_handle        = handle;
-    d_event = reinterpret_cast<__u64>(event);
+    d_operation = IORING_OP_SENDMSG;
+    d_handle    = handle;
+    d_event     = reinterpret_cast<__u64>(event);
     d_flags     = NTCO_IORING_SQE_FLAGS;
-    d_address      = reinterpret_cast<__u64>(message);
+    d_address   = reinterpret_cast<__u64>(message);
 
     return ntsa::Error();
 }
 
 ntsa::Error IoRingSubmission::prepareSend(
-    ntcs::Event*                                 event, 
+    ntcs::Event*                                 event,
     const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     ntsa::Handle                                 handle,
     const ntsa::MutableBuffer&                   source,
@@ -2004,15 +2037,15 @@ ntsa::Error IoRingSubmission::prepareSend(
     event->d_type   = ntcs::EventType::e_SEND;
     event->d_socket = socket;
 
-    ::msghdr* message = event->message<::msghdr>();
+    ::msghdr* message = event->message< ::msghdr>();
     bsl::memset(message, 0, sizeof(::msghdr));
 
     bsl::size_t numBuffersMax;
-    ::iovec* iovecArray = event->buffers<::iovec>(&numBuffersMax);
+    ::iovec*    iovecArray = event->buffers< ::iovec>(&numBuffersMax);
 
     void*       data = source.data();
     bsl::size_t size = source.size();
-    
+
     iovecArray[0].iov_base = data;
     iovecArray[0].iov_len  = size;
 
@@ -2024,28 +2057,29 @@ ntsa::Error IoRingSubmission::prepareSend(
     const bool specifyEndpoint = !options.endpoint().isNull();
 
     if (specifyEndpoint) {
-        ::sockaddr_storage* socketAddress = 
-            event->address<::sockaddr_storage>();
+        ::sockaddr_storage* socketAddress =
+            event->address< ::sockaddr_storage>();
 
         bsl::size_t socketAddressSize;
-        error = ntsu::SocketUtil::encodeEndpoint(
-            socketAddress, &socketAddressSize, options.endpoint().value());
+        error = ntsu::SocketUtil::encodeEndpoint(socketAddress,
+                                                 &socketAddressSize,
+                                                 options.endpoint().value());
 
         message->msg_name    = socketAddress;
         message->msg_namelen = static_cast<socklen_t>(socketAddressSize);
     }
 
-    d_operation    = IORING_OP_SENDMSG;
-    d_handle        = handle;
-    d_event = reinterpret_cast<__u64>(event);
+    d_operation = IORING_OP_SENDMSG;
+    d_handle    = handle;
+    d_event     = reinterpret_cast<__u64>(event);
     d_flags     = NTCO_IORING_SQE_FLAGS;
-    d_address      = reinterpret_cast<__u64>(message);
+    d_address   = reinterpret_cast<__u64>(message);
 
     return ntsa::Error();
 }
 
 ntsa::Error IoRingSubmission::prepareSend(
-    ntcs::Event*                                 event, 
+    ntcs::Event*                                 event,
     const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     ntsa::Handle                                 handle,
     const ntsa::MutableBufferArray&              source,
@@ -2056,18 +2090,18 @@ ntsa::Error IoRingSubmission::prepareSend(
     event->d_type   = ntcs::EventType::e_SEND;
     event->d_socket = socket;
 
-    ::msghdr* message = event->message<::msghdr>();
+    ::msghdr* message = event->message< ::msghdr>();
     bsl::memset(message, 0, sizeof(::msghdr));
 
     bsl::size_t numBuffersMaxLimit;
-    ::iovec* iovecArray = event->buffers<::iovec>(&numBuffersMaxLimit);
+    ::iovec*    iovecArray = event->buffers< ::iovec>(&numBuffersMaxLimit);
 
     if (numBuffersMaxLimit > IOV_MAX) {
         numBuffersMaxLimit = IOV_MAX;
     }
 
     bsl::size_t numBytesMax = options.maxBytes();
-    
+
     bsl::size_t numBuffersMax = options.maxBuffers();
     if (numBuffersMax == 0) {
         numBuffersMax = numBuffersMaxLimit;
@@ -2077,7 +2111,7 @@ ntsa::Error IoRingSubmission::prepareSend(
     }
 
     bsl::size_t numBuffersTotal = 0;
-    bsl::size_t numBytesTotal = 0;
+    bsl::size_t numBytesTotal   = 0;
 
     const bsl::size_t sourceBufferCount = source.numBuffers();
 
@@ -2113,28 +2147,29 @@ ntsa::Error IoRingSubmission::prepareSend(
     const bool specifyEndpoint = !options.endpoint().isNull();
 
     if (specifyEndpoint) {
-        ::sockaddr_storage* socketAddress = 
-            event->address<::sockaddr_storage>();
+        ::sockaddr_storage* socketAddress =
+            event->address< ::sockaddr_storage>();
 
         bsl::size_t socketAddressSize;
-        error = ntsu::SocketUtil::encodeEndpoint(
-            socketAddress, &socketAddressSize, options.endpoint().value());
+        error = ntsu::SocketUtil::encodeEndpoint(socketAddress,
+                                                 &socketAddressSize,
+                                                 options.endpoint().value());
 
         message->msg_name    = socketAddress;
         message->msg_namelen = static_cast<socklen_t>(socketAddressSize);
     }
 
-    d_operation    = IORING_OP_SENDMSG;
-    d_handle        = handle;
-    d_event = reinterpret_cast<__u64>(event);
+    d_operation = IORING_OP_SENDMSG;
+    d_handle    = handle;
+    d_event     = reinterpret_cast<__u64>(event);
     d_flags     = NTCO_IORING_SQE_FLAGS;
-    d_address      = reinterpret_cast<__u64>(message);
+    d_address   = reinterpret_cast<__u64>(message);
 
     return ntsa::Error();
 }
 
 ntsa::Error IoRingSubmission::prepareSend(
-    ntcs::Event*                                 event, 
+    ntcs::Event*                                 event,
     const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     ntsa::Handle                                 handle,
     const ntsa::MutableBufferPtrArray&           source,
@@ -2145,18 +2180,18 @@ ntsa::Error IoRingSubmission::prepareSend(
     event->d_type   = ntcs::EventType::e_SEND;
     event->d_socket = socket;
 
-    ::msghdr* message = event->message<::msghdr>();
+    ::msghdr* message = event->message< ::msghdr>();
     bsl::memset(message, 0, sizeof(::msghdr));
 
     bsl::size_t numBuffersMaxLimit;
-    ::iovec* iovecArray = event->buffers<::iovec>(&numBuffersMaxLimit);
+    ::iovec*    iovecArray = event->buffers< ::iovec>(&numBuffersMaxLimit);
 
     if (numBuffersMaxLimit > IOV_MAX) {
         numBuffersMaxLimit = IOV_MAX;
     }
 
     bsl::size_t numBytesMax = options.maxBytes();
-    
+
     bsl::size_t numBuffersMax = options.maxBuffers();
     if (numBuffersMax == 0) {
         numBuffersMax = numBuffersMaxLimit;
@@ -2166,7 +2201,7 @@ ntsa::Error IoRingSubmission::prepareSend(
     }
 
     bsl::size_t numBuffersTotal = 0;
-    bsl::size_t numBytesTotal = 0;
+    bsl::size_t numBytesTotal   = 0;
 
     const bsl::size_t sourceBufferCount = source.numBuffers();
 
@@ -2202,28 +2237,29 @@ ntsa::Error IoRingSubmission::prepareSend(
     const bool specifyEndpoint = !options.endpoint().isNull();
 
     if (specifyEndpoint) {
-        ::sockaddr_storage* socketAddress = 
-            event->address<::sockaddr_storage>();
+        ::sockaddr_storage* socketAddress =
+            event->address< ::sockaddr_storage>();
 
         bsl::size_t socketAddressSize;
-        error = ntsu::SocketUtil::encodeEndpoint(
-            socketAddress, &socketAddressSize, options.endpoint().value());
+        error = ntsu::SocketUtil::encodeEndpoint(socketAddress,
+                                                 &socketAddressSize,
+                                                 options.endpoint().value());
 
         message->msg_name    = socketAddress;
         message->msg_namelen = static_cast<socklen_t>(socketAddressSize);
     }
 
-    d_operation    = IORING_OP_SENDMSG;
-    d_handle        = handle;
-    d_event = reinterpret_cast<__u64>(event);
+    d_operation = IORING_OP_SENDMSG;
+    d_handle    = handle;
+    d_event     = reinterpret_cast<__u64>(event);
     d_flags     = NTCO_IORING_SQE_FLAGS;
-    d_address      = reinterpret_cast<__u64>(message);
+    d_address   = reinterpret_cast<__u64>(message);
 
     return ntsa::Error();
 }
 
 ntsa::Error IoRingSubmission::prepareSend(
-    ntcs::Event*                                 event, 
+    ntcs::Event*                                 event,
     const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     ntsa::Handle                                 handle,
     const ntsa::File&                            source,
@@ -2239,7 +2275,7 @@ ntsa::Error IoRingSubmission::prepareSend(
 }
 
 ntsa::Error IoRingSubmission::prepareSend(
-    ntcs::Event*                                 event, 
+    ntcs::Event*                                 event,
     const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     ntsa::Handle                                 handle,
     const bsl::string&                           source,
@@ -2250,15 +2286,15 @@ ntsa::Error IoRingSubmission::prepareSend(
     event->d_type   = ntcs::EventType::e_SEND;
     event->d_socket = socket;
 
-    ::msghdr* message = event->message<::msghdr>();
+    ::msghdr* message = event->message< ::msghdr>();
     bsl::memset(message, 0, sizeof(::msghdr));
 
     bsl::size_t numBuffersMax;
-    ::iovec* iovecArray = event->buffers<::iovec>(&numBuffersMax);
+    ::iovec*    iovecArray = event->buffers< ::iovec>(&numBuffersMax);
 
     void* data = const_cast<void*>(static_cast<const void*>(source.c_str()));
     bsl::size_t size = source.size();
-    
+
     iovecArray[0].iov_base = data;
     iovecArray[0].iov_len  = size;
 
@@ -2270,28 +2306,29 @@ ntsa::Error IoRingSubmission::prepareSend(
     const bool specifyEndpoint = !options.endpoint().isNull();
 
     if (specifyEndpoint) {
-        ::sockaddr_storage* socketAddress = 
-            event->address<::sockaddr_storage>();
+        ::sockaddr_storage* socketAddress =
+            event->address< ::sockaddr_storage>();
 
         bsl::size_t socketAddressSize;
-        error = ntsu::SocketUtil::encodeEndpoint(
-            socketAddress, &socketAddressSize, options.endpoint().value());
+        error = ntsu::SocketUtil::encodeEndpoint(socketAddress,
+                                                 &socketAddressSize,
+                                                 options.endpoint().value());
 
         message->msg_name    = socketAddress;
         message->msg_namelen = static_cast<socklen_t>(socketAddressSize);
     }
 
-    d_operation    = IORING_OP_SENDMSG;
-    d_handle        = handle;
-    d_event = reinterpret_cast<__u64>(event);
+    d_operation = IORING_OP_SENDMSG;
+    d_handle    = handle;
+    d_event     = reinterpret_cast<__u64>(event);
     d_flags     = NTCO_IORING_SQE_FLAGS;
-    d_address      = reinterpret_cast<__u64>(message);
+    d_address   = reinterpret_cast<__u64>(message);
 
     return ntsa::Error();
 }
 
 ntsa::Error IoRingSubmission::prepareReceive(
-    ntcs::Event*                                 event, 
+    ntcs::Event*                                 event,
     const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     ntsa::Handle                                 handle,
     bdlbb::Blob*                                 destination,
@@ -2306,10 +2343,10 @@ ntsa::Error IoRingSubmission::prepareReceive(
     BSLMF_ASSERT(sizeof(event->d_buffers) >= sizeof(::iovec));
     BSLMF_ASSERT(sizeof(event->d_buffers) % sizeof(::iovec) == 0);
 
-    ::iovec* iovecArray = reinterpret_cast<::iovec*>(event->d_buffers);
+    ::iovec* iovecArray = reinterpret_cast< ::iovec*>(event->d_buffers);
     BSLS_ASSERT(bsls::AlignmentUtil::is8ByteAligned(iovecArray));
 
-    bsl::size_t numBuffersMaxLimit = 
+    bsl::size_t numBuffersMaxLimit =
         sizeof(event->d_buffers) / sizeof(::iovec);
 
     if (numBuffersMaxLimit > IOV_MAX) {
@@ -2349,7 +2386,7 @@ ntsa::Error IoRingSubmission::prepareReceive(
 
     BSLMF_ASSERT(sizeof(event->d_message) >= sizeof(struct ::msghdr));
 
-    ::msghdr* message = reinterpret_cast<::msghdr*>(event->d_message);
+    ::msghdr* message = reinterpret_cast< ::msghdr*>(event->d_message);
     BSLS_ASSERT(bsls::AlignmentUtil::is8ByteAligned(message));
 
     bsl::memset(message, 0, sizeof(::msghdr));
@@ -2357,24 +2394,24 @@ ntsa::Error IoRingSubmission::prepareReceive(
     const bool wantEndpoint = options.wantEndpoint();
 
     if (wantEndpoint) {
-        ::sockaddr_storage* socketAddress = 
-            reinterpret_cast<::sockaddr_storage*>(event->d_address);
+        ::sockaddr_storage* socketAddress =
+            reinterpret_cast< ::sockaddr_storage*>(event->d_address);
         BSLS_ASSERT(bsls::AlignmentUtil::is8ByteAligned(socketAddress));
 
         bsl::memset(socketAddress, 0, sizeof(::sockaddr_storage));
 
-        message->msg_name = socketAddress;
+        message->msg_name    = socketAddress;
         message->msg_namelen = sizeof(::sockaddr_storage);
     }
 
     message->msg_iov    = iovecArray;
     message->msg_iovlen = static_cast<bsl::size_t>(numBuffersTotal);
 
-    d_operation    = IORING_OP_RECVMSG;
-    d_handle        = handle;
-    d_event = reinterpret_cast<__u64>(event);
+    d_operation = IORING_OP_RECVMSG;
+    d_handle    = handle;
+    d_event     = reinterpret_cast<__u64>(event);
     d_flags     = NTCO_IORING_SQE_FLAGS;
-    d_address      = reinterpret_cast<__u64>(message);
+    d_address   = reinterpret_cast<__u64>(message);
 
     return ntsa::Error();
 }
@@ -2383,9 +2420,9 @@ void IoRingSubmission::prepareCancellation(ntcs::Event* event)
 {
     BSLS_ASSERT(event->d_status == ntcs::EventStatus::e_CANCELLED);
 
-    d_operation    = IORING_OP_ASYNC_CANCEL;
-    d_handle        = -1;
-    d_address      = reinterpret_cast<__u64>(event);
+    d_operation = IORING_OP_ASYNC_CANCEL;
+    d_handle    = -1;
+    d_address   = reinterpret_cast<__u64>(event);
     d_flags     = NTCO_IORING_SQE_FLAGS;
 }
 
@@ -2415,11 +2452,11 @@ bsl::ostream& IoRingSubmission::print(bsl::ostream& stream,
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    
+
     printer.printAttribute("handle", this->handle());
 
-    printer.printAttribute("operation", 
-                            IoRingUtil::describeOpCode(this->opcode()));
+    printer.printAttribute("operation",
+                           IoRingUtil::describeOpCode(this->opcode()));
 
     printer.printAttribute("flags", this->flags());
 
@@ -2503,7 +2540,7 @@ IoRingSubmissionQueue::~IoRingSubmissionQueue()
     }
 }
 
-ntsa::Error IoRingSubmissionQueue::map(int                      ring,
+ntsa::Error IoRingSubmissionQueue::map(int                       ring,
                                        const ntco::IoRingConfig& parameters)
 {
     NTCI_LOG_CONTEXT();
@@ -2514,17 +2551,17 @@ ntsa::Error IoRingSubmissionQueue::map(int                      ring,
         return ntsa::Error::invalid();
     }
 
-    d_ring = ring;
+    d_ring   = ring;
     d_params = parameters;
 
     bsl::uint8_t* submissionQueueBase = reinterpret_cast<bsl::uint8_t*>(
-        ::mmap(
-            0,
-            d_params.submissionQueueOffsetToArray() + d_params.submissionQueueCapacity() * sizeof(bsl::uint32_t),
-            PROT_READ | PROT_WRITE,
-            MAP_SHARED | MAP_POPULATE,
-            d_ring,
-            IORING_OFF_SQ_RING));
+        ::mmap(0,
+               d_params.submissionQueueOffsetToArray() +
+                   d_params.submissionQueueCapacity() * sizeof(bsl::uint32_t),
+               PROT_READ | PROT_WRITE,
+               MAP_SHARED | MAP_POPULATE,
+               d_ring,
+               IORING_OFF_SQ_RING));
 
     if (submissionQueueBase == MAP_FAILED) {
         ntsa::Error error(errno);
@@ -2536,28 +2573,31 @@ ntsa::Error IoRingSubmissionQueue::map(int                      ring,
 
     d_memoryMap_p = submissionQueueBase;
 
-    d_head_p = reinterpret_cast<bsl::uint32_t*>(submissionQueueBase + d_params.submissionQueueOffsetToHead());
+    d_head_p = reinterpret_cast<bsl::uint32_t*>(
+        submissionQueueBase + d_params.submissionQueueOffsetToHead());
 
-    d_tail_p = reinterpret_cast<bsl::uint32_t*>(submissionQueueBase + d_params.submissionQueueOffsetToTail());
+    d_tail_p = reinterpret_cast<bsl::uint32_t*>(
+        submissionQueueBase + d_params.submissionQueueOffsetToTail());
 
-    d_mask_p =
-        reinterpret_cast<bsl::uint32_t*>(submissionQueueBase + d_params.submissionQueueOffsetToRingMask());
+    d_mask_p = reinterpret_cast<bsl::uint32_t*>(
+        submissionQueueBase + d_params.submissionQueueOffsetToRingMask());
 
-    d_ring_entries_p =
-        reinterpret_cast<bsl::uint32_t*>(submissionQueueBase + d_params.submissionQueueOffsetToRingEntries());
+    d_ring_entries_p = reinterpret_cast<bsl::uint32_t*>(
+        submissionQueueBase + d_params.submissionQueueOffsetToRingEntries());
 
-    d_flags_p = reinterpret_cast<bsl::uint32_t*>(submissionQueueBase + d_params.submissionQueueOffsetToFlags());
+    d_flags_p = reinterpret_cast<bsl::uint32_t*>(
+        submissionQueueBase + d_params.submissionQueueOffsetToFlags());
 
-    d_array_p = reinterpret_cast<bsl::uint32_t*>(submissionQueueBase + d_params.submissionQueueOffsetToArray());
+    d_array_p = reinterpret_cast<bsl::uint32_t*>(
+        submissionQueueBase + d_params.submissionQueueOffsetToArray());
 
-    d_entryArray =
-        reinterpret_cast<ntco::IoRingSubmission*>(
-            ::mmap(0,
-            d_params.submissionQueueCapacity() * sizeof(ntco::IoRingSubmission),
-            PROT_READ | PROT_WRITE,
-            MAP_SHARED | MAP_POPULATE,
-            d_ring,
-            IORING_OFF_SQES));
+    d_entryArray = reinterpret_cast<ntco::IoRingSubmission*>(::mmap(
+        0,
+        d_params.submissionQueueCapacity() * sizeof(ntco::IoRingSubmission),
+        PROT_READ | PROT_WRITE,
+        MAP_SHARED | MAP_POPULATE,
+        d_ring,
+        IORING_OFF_SQES));
 
     if (d_entryArray == MAP_FAILED) {
         ntsa::Error error(errno);
@@ -2618,14 +2658,15 @@ void IoRingSubmissionQueue::unmap()
     int rc;
 
     if (d_memoryMap_p != 0) {
-        rc =
-            ::munmap(d_entryArray, 
-                     d_params.submissionQueueCapacity() * sizeof(ntco::IoRingSubmission));
+        rc = ::munmap(d_entryArray,
+                      d_params.submissionQueueCapacity() *
+                          sizeof(ntco::IoRingSubmission));
         BSLS_ASSERT(rc == 0);
 
-        rc = ::munmap(d_memoryMap_p,
-                      d_params.submissionQueueOffsetToArray() +
-                      d_params.submissionQueueCapacity() * sizeof(bsl::uint32_t));
+        rc = ::munmap(
+            d_memoryMap_p,
+            d_params.submissionQueueOffsetToArray() +
+                d_params.submissionQueueCapacity() * sizeof(bsl::uint32_t));
         BSLS_ASSERT(rc == 0);
 
         d_memoryMap_p = 0;
@@ -2673,7 +2714,7 @@ IoRingCompletion::IoRingCompletion()
     d_extraAsQwords[1] = 0;
 #else
     BSLMF_ASSERT(sizeof(IoRingCompletion) == 16);
-#endif    
+#endif
 }
 
 IoRingCompletion::IoRingCompletion(const IoRingCompletion& original)
@@ -2689,7 +2730,6 @@ IoRingCompletion::IoRingCompletion(const IoRingCompletion& original)
 
 IoRingCompletion::~IoRingCompletion()
 {
-
 }
 
 IoRingCompletion& IoRingCompletion::operator=(const IoRingCompletion& other)
@@ -2710,12 +2750,12 @@ IoRingCompletion& IoRingCompletion::operator=(const IoRingCompletion& other)
 void IoRingCompletion::reset()
 {
     d_userData = 0;
-    d_result = 0;
-    d_flags = 0;
+    d_result   = 0;
+    d_flags    = 0;
 #if NTCO_IORING_COMPLETION_32
     d_extraAsQwords[0] = 0;
     d_extraAsQwords[1] = 0;
-#endif  
+#endif
 }
 
 ntcs::Event* IoRingCompletion::event() const
@@ -2771,13 +2811,12 @@ bsl::ostream& IoRingCompletion::print(bsl::ostream& stream,
     printer.start();
 
     if (d_userData != 0) {
-        printer.printAttribute(
-            "event", *reinterpret_cast<ntcs::Event*>(d_userData));
+        printer.printAttribute("event",
+                               *reinterpret_cast<ntcs::Event*>(d_userData));
     }
 
     if (d_result >= 0) {
-        printer.printAttribute(
-            "result", static_cast<bsl::size_t>(d_result));
+        printer.printAttribute("result", static_cast<bsl::size_t>(d_result));
     }
     else {
         printer.printAttribute("error", ntsa::Error(-d_result));
@@ -2814,7 +2853,7 @@ IoRingCompletionQueue::~IoRingCompletionQueue()
     }
 }
 
-ntsa::Error IoRingCompletionQueue::map(int                      ring,
+ntsa::Error IoRingCompletionQueue::map(int                       ring,
                                        const ntco::IoRingConfig& parameters)
 {
     NTCI_LOG_CONTEXT();
@@ -2825,18 +2864,18 @@ ntsa::Error IoRingCompletionQueue::map(int                      ring,
         return ntsa::Error::invalid();
     }
 
-    d_ring = ring;
+    d_ring   = ring;
     d_params = parameters;
 
     bsl::uint8_t* completionQueueBase = reinterpret_cast<bsl::uint8_t*>(
-        ::mmap(
-            0,
-            d_params.completionQueueOffsetToCQEs() +
-                d_params.completionQueueCapacity() * sizeof(ntco::IoRingCompletion),
-            PROT_READ | PROT_WRITE,
-            MAP_SHARED | MAP_POPULATE,
-            d_ring,
-            IORING_OFF_CQ_RING));
+        ::mmap(0,
+               d_params.completionQueueOffsetToCQEs() +
+                   d_params.completionQueueCapacity() *
+                       sizeof(ntco::IoRingCompletion),
+               PROT_READ | PROT_WRITE,
+               MAP_SHARED | MAP_POPULATE,
+               d_ring,
+               IORING_OFF_CQ_RING));
 
     if (completionQueueBase == MAP_FAILED) {
         ntsa::Error error(errno);
@@ -2848,18 +2887,20 @@ ntsa::Error IoRingCompletionQueue::map(int                      ring,
 
     d_memoryMap_p = completionQueueBase;
 
-    d_head_p = reinterpret_cast<bsl::uint32_t*>(completionQueueBase + d_params.completionQueueOffsetToHead());
+    d_head_p = reinterpret_cast<bsl::uint32_t*>(
+        completionQueueBase + d_params.completionQueueOffsetToHead());
 
-    d_tail_p = reinterpret_cast<bsl::uint32_t*>(completionQueueBase + d_params.completionQueueOffsetToTail());
+    d_tail_p = reinterpret_cast<bsl::uint32_t*>(
+        completionQueueBase + d_params.completionQueueOffsetToTail());
 
-    d_mask_p =
-        reinterpret_cast<bsl::uint32_t*>(completionQueueBase + d_params.completionQueueOffsetToRingMask());
+    d_mask_p = reinterpret_cast<bsl::uint32_t*>(
+        completionQueueBase + d_params.completionQueueOffsetToRingMask());
 
-    d_ring_entries_p =
-        reinterpret_cast<bsl::uint32_t*>(completionQueueBase + d_params.completionQueueOffsetToRingEntries());
+    d_ring_entries_p = reinterpret_cast<bsl::uint32_t*>(
+        completionQueueBase + d_params.completionQueueOffsetToRingEntries());
 
-    d_entryArray =
-        reinterpret_cast<ntco::IoRingCompletion*>(completionQueueBase + d_params.completionQueueOffsetToCQEs());
+    d_entryArray = reinterpret_cast<ntco::IoRingCompletion*>(
+        completionQueueBase + d_params.completionQueueOffsetToCQEs());
 
     NTCI_LOG_TRACE("I/O ring mapped completion queue ring buffer: "
                    "head = %u, tail = %u, mask = %u, count = %u",
@@ -2872,7 +2913,7 @@ ntsa::Error IoRingCompletionQueue::map(int                      ring,
 }
 
 bsl::size_t IoRingCompletionQueue::pop(ntco::IoRingCompletion* result,
-                                       bsl::size_t     capacity)
+                                       bsl::size_t             capacity)
 {
     NTCI_LOG_CONTEXT();
 
@@ -2903,7 +2944,8 @@ bsl::size_t IoRingCompletionQueue::pop(ntco::IoRingCompletion* result,
             "I/O ring popping completion queue entry at head index %u",
             index);
 
-        result[count] = *reinterpret_cast<ntco::IoRingCompletion*>(&d_entryArray[index]);
+        result[count] =
+            *reinterpret_cast<ntco::IoRingCompletion*>(&d_entryArray[index]);
         ++count;
 
         ++head;
@@ -2925,10 +2967,10 @@ void IoRingCompletionQueue::unmap()
     LockGuard guard(&d_mutex);
 
     if (d_memoryMap_p != 0) {
-        int rc =
-            ::munmap(d_memoryMap_p,
-                   d_params.completionQueueOffsetToCQEs() +
-                       d_params.completionQueueCapacity() * sizeof(ntco::IoRingCompletion));
+        int rc = ::munmap(d_memoryMap_p,
+                          d_params.completionQueueOffsetToCQEs() +
+                              d_params.completionQueueCapacity() *
+                                  sizeof(ntco::IoRingCompletion));
         BSLS_ASSERT(rc == 0);
 
         d_memoryMap_p = 0;
@@ -3112,7 +3154,6 @@ bsl::size_t IoRingDevice::wait(
 {
     IoRingWaiter* result = static_cast<IoRingWaiter*>(waiter);
 
-
 // This implementation atomically checks the completion queue first, then,
 // if no entries are available calls io_uring_enter(GET_EVENTS). Not sure
 // if this is correct.
@@ -3245,7 +3286,7 @@ IoRingDevice::IoRingDevice(bslma::Allocator* basicAllocator)
     NTCI_LOG_CONTEXT();
 
     ntsa::Error error;
-    int         rc;
+    int rc;
 
     // Ensure the rlimit MEMLOCK is sufficient.
 #if 0
@@ -3320,7 +3361,7 @@ ntsa::Error IoRingDevice::submit(const ntco::IoRingSubmission& entry)
     NTCI_LOG_CONTEXT();
 
     ntsa::Error error;
-    int         rc;
+    int rc;
 
     NTCI_LOG_TRACE("I/O ring pushing submission entry: "
                    "user_data = %p, op = %s, flags = %u, fd = %d",
@@ -3346,7 +3387,7 @@ ntsa::Error IoRingDevice::submit(const ntco::IoRingSubmission& entry)
     {
         bsls::SpinLockGuard lock(&d_sqeLock);
 
-        ntco::IoRingSubmission* target = 
+        ntco::IoRingSubmission* target =
             reinterpret_cast<ntco::IoRingSubmission*>(
                 io_uring_get_sqe(&d_ring));
         bsl::memcpy(target, &entry, sizeof(ntco::IoRingSubmission));
@@ -3373,15 +3414,15 @@ ntsa::Error IoRingDevice::submit(const ntco::IoRingSubmission& entry)
 }
 
 bsl::size_t IoRingDevice::wait(
-    ntci::Waiter                                   waiter,
-    ntco::IoRingCompletion*                        entryList,
-    bsl::size_t                                    entryListCapacity,
+    ntci::Waiter waiter,
+    ntco::IoRingCompletion* entryList,
+    bsl::size_t entryListCapacity,
     const bdlb::NullableValue<bsls::TimeInterval>& earliestTimerDue)
 {
     NTCI_LOG_CONTEXT();
 
     ntsa::Error error;
-    int         rc;
+    int rc;
 
     IoRingWaiter* result = static_cast<IoRingWaiter*>(waiter);
 
@@ -3391,7 +3432,7 @@ bsl::size_t IoRingDevice::wait(
         enum { CQE_ARRAY_CAPACITY = 128 };
 
         ::io_uring_cqe* cqeArray[CQE_ARRAY_CAPACITY];
-        unsigned int    cqeArrayCapacity = CQE_ARRAY_CAPACITY;
+        unsigned int cqeArrayCapacity = CQE_ARRAY_CAPACITY;
         if (entryListCapacity < CQE_ARRAY_CAPACITY) {
             cqeArrayCapacity = entryListCapacity;
         }
@@ -3446,7 +3487,7 @@ bsl::size_t IoRingDevice::wait(
     NTCI_LOG_TRACE("I/O ring calling wait");
 
     ::io_uring_cqe* cqe = 0;
-    rc                  = io_uring_wait_cqe(&d_ring, &cqe);
+    rc = io_uring_wait_cqe(&d_ring, &cqe);
 
     NTCI_LOG_TRACE("I/O ring leaving wait, rc = %d", rc);
 
@@ -3467,14 +3508,14 @@ bsl::size_t IoRingDevice::wait(
 }
 
 bsl::size_t IoRingDevice::flush(ntco::IoRingCompletion* entryList,
-                                bsl::size_t             entryListCapacity)
+                                bsl::size_t entryListCapacity)
 {
     bsls::SpinLockGuard lock(&d_cqeLock);
 
     enum { CQE_ARRAY_CAPACITY = 128 };
 
     ::io_uring_cqe* cqeArray[CQE_ARRAY_CAPACITY];
-    unsigned int    cqeArrayCapacity = CQE_ARRAY_CAPACITY;
+    unsigned int cqeArrayCapacity = CQE_ARRAY_CAPACITY;
     if (entryListCapacity < CQE_ARRAY_CAPACITY) {
         cqeArrayCapacity = entryListCapacity;
     }
@@ -3798,11 +3839,6 @@ class IoRing : public ntci::Proactor,
     IoRing& operator=(const IoRing&) BSLS_KEYWORD_DELETED;
 
   private:
-    // Push the specified 'entry' to the submission queue, blocking
-    // if the queue is full until an entry has been popped by another
-    // thread. Return the error.
-    ntsa::Error submit(const ntco::IoRingSubmission& entry);
-
     // Process an interruption.
     void interruptComplete();
 
@@ -4143,11 +4179,6 @@ class IoRing : public ntci::Proactor,
     const char* name() const BSLS_KEYWORD_OVERRIDE;
 };
 
-ntsa::Error IoRing::submit(const ntco::IoRingSubmission& entry)
-{
-    return d_device.submit(entry);
-}
-
 void IoRing::interruptComplete()
 {
     NTCI_LOG_CONTEXT();
@@ -4169,7 +4200,7 @@ void IoRing::flush()
         typedef bsls::ObjectBuffer<ntco::IoRingCompletion> CompletionArena;
         CompletionArena entryListArena[ENTRY_LIST_CAPACITY];
 
-        ntco::IoRingCompletion* entryList = 
+        ntco::IoRingCompletion* entryList =
             reinterpret_cast<ntco::IoRingCompletion*>(&entryListArena[0]);
 
         bsl::size_t entryCount =
@@ -4251,14 +4282,13 @@ void IoRing::wait(ntci::Waiter waiter)
     typedef bsls::ObjectBuffer<ntco::IoRingCompletion> CompletionArena;
     CompletionArena entryListArena[ENTRY_LIST_CAPACITY];
 
-    ntco::IoRingCompletion* entryList = 
+    ntco::IoRingCompletion* entryList =
         reinterpret_cast<ntco::IoRingCompletion*>(&entryListArena[0]);
 
-    bsl::size_t entryCount =
-        d_device.wait(waiter, 
-                      entryList, 
-                      ENTRY_LIST_CAPACITY, 
-                      earliestTimerDue);
+    bsl::size_t entryCount = d_device.wait(waiter,
+                                           entryList,
+                                           ENTRY_LIST_CAPACITY,
+                                           earliestTimerDue);
 
     for (bsl::size_t entryIndex = 0; entryIndex < entryCount; ++entryIndex) {
         const ntco::IoRingCompletion& entry = entryList[entryIndex];
@@ -4492,8 +4522,11 @@ void IoRing::wait(ntci::Waiter waiter)
 
                 BSLS_ASSERT(event->d_receiveData_p);
 
-                BSLS_ASSERT(static_cast<bsl::size_t>(event->d_receiveData_p->length()) + numBytes <=
-                            static_cast<bsl::size_t>(event->d_receiveData_p->totalSize()));
+                BSLS_ASSERT(static_cast<bsl::size_t>(
+                                event->d_receiveData_p->length()) +
+                                numBytes <=
+                            static_cast<bsl::size_t>(
+                                event->d_receiveData_p->totalSize()));
 
                 event->d_receiveData_p->setLength(
                     event->d_receiveData_p->length() + numBytes);
@@ -4502,16 +4535,16 @@ void IoRing::wait(ntci::Waiter waiter)
 
                 context.setBytesReceived(numBytes);
 
-                ::msghdr* message = 
-                    reinterpret_cast<::msghdr*>(event->d_message);
+                ::msghdr* message =
+                    reinterpret_cast< ::msghdr*>(event->d_message);
 
                 ntsa::Error messageError;
                 if (message->msg_namelen > 0) {
                     ntsa::Endpoint endpoint;
-                    messageError = ntsu::SocketUtil::decodeEndpoint(
-                            &endpoint, 
-                            message->msg_name, 
-                            message->msg_namelen);
+                    messageError =
+                        ntsu::SocketUtil::decodeEndpoint(&endpoint,
+                                                         message->msg_name,
+                                                         message->msg_namelen);
 
                     if (!messageError) {
                         context.setEndpoint(endpoint);
@@ -4721,7 +4754,7 @@ IoRing::IoRing(const ntca::ProactorConfig&        configuration,
         d_metrics_sp = d_user_sp->proactorMetrics();
     }
 
-    d_interruptsHandler = 
+    d_interruptsHandler =
         bdlf::MemFnUtil::memFn(&IoRing::interruptComplete, this);
 }
 
@@ -4740,8 +4773,7 @@ IoRing::~IoRing()
 
 ntci::Waiter IoRing::registerWaiter(const ntca::WaiterOptions& waiterOptions)
 {
-    IoRingWaiter* result =
-        new (*d_allocator_p) IoRingWaiter(d_allocator_p);
+    IoRingWaiter* result = new (*d_allocator_p) IoRingWaiter(d_allocator_p);
 
     result->d_options = waiterOptions;
 
@@ -4914,7 +4946,7 @@ ntsa::Error IoRing::accept(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 
     NTCO_IORING_LOG_EVENT_STARTING(event);
 
-    error = this->submit(entry);
+    error = d_device.submit(entry);
     if (error) {
         context->completeEvent(event.get());
         return error;
@@ -4955,7 +4987,7 @@ ntsa::Error IoRing::connect(
 
     NTCO_IORING_LOG_EVENT_STARTING(event);
 
-    error = this->submit(entry);
+    error = d_device.submit(entry);
     if (error) {
         context->completeEvent(event.get());
         return error;
@@ -4996,7 +5028,7 @@ ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 
     NTCO_IORING_LOG_EVENT_STARTING(event);
 
-    error = this->submit(entry);
+    error = d_device.submit(entry);
     if (error) {
         context->completeEvent(event.get());
         return error;
@@ -5037,7 +5069,7 @@ ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 
     NTCO_IORING_LOG_EVENT_STARTING(event);
 
-    error = this->submit(entry);
+    error = d_device.submit(entry);
     if (error) {
         context->completeEvent(event.get());
         return error;
@@ -5079,7 +5111,7 @@ ntsa::Error IoRing::receive(
 
     NTCO_IORING_LOG_EVENT_STARTING(event);
 
-    error = this->submit(entry);
+    error = d_device.submit(entry);
     if (error) {
         context->completeEvent(event.get());
         return error;
@@ -5160,7 +5192,7 @@ ntsa::Error IoRing::cancel(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
         ntco::IoRingSubmission entry;
         entry.prepareCancellation(event);
 
-        error = this->submit(entry);
+        error = d_device.submit(entry);
         if (error) {
             return error;
         }
@@ -5308,7 +5340,7 @@ void IoRing::interruptOne()
 
     NTCO_IORING_LOG_EVENT_STARTING(event);
 
-    ntsa::Error error = this->submit(entry);
+    ntsa::Error error = d_device.submit(entry);
     if (error) {
         --d_interruptsPending;
         return;
@@ -5361,7 +5393,7 @@ void IoRing::interruptAll()
         ntco::IoRingSubmission entry;
         entry.prepareCallback(event.get(), d_interruptsHandler);
 
-        ntsa::Error error = this->submit(entry);
+        ntsa::Error error = d_device.submit(entry);
         if (error) {
             --d_interruptsPending;
             continue;
