@@ -421,7 +421,7 @@ function (ntf_target_options_common_prolog target)
                 TARGET
                     ${target}
                 VALUE
-                    _FORTIFY_SOURCE=0 _FILE_OFFSET_BITS=64)
+                    _FILE_OFFSET_BITS=64)
         endif()
 
         if (CMAKE_CXX_COMPILER_ID MATCHES "XL")
