@@ -34,6 +34,50 @@ namespace BloombergLP {
 namespace ntco {
 
 /// @internal @brief
+/// Provide a testing mechanism for the 'io_uring' API.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntco
+class IoRingTest
+{
+  public:
+    /// Destroy this object.
+    virtual ~IoRingTest();
+
+    /// Push a unit of work onto the submission queue and immediately submit 
+    /// it. Return the error. 
+    virtual ntsa::Error post() = 0;
+
+    /// Push a unit of work onto the submission queue and but do not submit 
+    /// it until the next call to 'wait'. Return the error. 
+    virtual ntsa::Error defer() = 0;
+
+    /// Block until at least the specified 'count' number of units of work have 
+    /// completed. Return the number of units of work completed.
+    virtual bsl::size_t wait(bsl::size_t count) = 0;
+
+    // Return the index of the head entry in the submission queue.
+    virtual bsl::uint32_t submissionQueueHead() const = 0;
+
+    // Return the index of the tail entry in the submission queue.
+    virtual bsl::uint32_t submissionQueueTail() const = 0;
+
+    // Return the maximum number of entries in the submission queue.
+    virtual bsl::uint32_t submissionQueueCapacity() const = 0;
+
+    // Return the index of the head entry in the completion queue.
+    virtual bsl::uint32_t completionQueueHead() const = 0;
+
+    // Return the index of the tail entry in the completion queue.
+    virtual bsl::uint32_t completionQueueTail() const = 0;
+
+    // Return the maximum number of entries in the completion queue.
+    virtual bsl::uint32_t completionQueueCapacity() const = 0;
+};
+
+/// @internal @brief
 /// Provide a factory to produce proactors implemented using the 'io_uring'
 /// API.
 ///
@@ -71,6 +115,12 @@ class IoRingFactory : public ntci::ProactorFactory
         const ntca::ProactorConfig&        configuration,
         const bsl::shared_ptr<ntci::User>& user,
         bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
+
+    /// Create a new test. Optionally specify a 'basicAllocator' used to 
+    /// supply memory. If 'basicAllocator' is 0, the currently installed 
+    /// default allocator is used. Return the error.
+    static bsl::shared_ptr<ntco::IoRingTest> createText(
+        bslma::Allocator* basicAllocator = 0);
 
     // Return true if the runtime properties of the current operating system
     // support proactors produced by this factory, otherwise return false.
