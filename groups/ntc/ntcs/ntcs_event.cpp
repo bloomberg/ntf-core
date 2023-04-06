@@ -295,6 +295,7 @@ Event::Event(bslma::Allocator* basicAllocator)
 , d_numBytesIndicated(0)
 , d_function(NTCCFG_FUNCTION_INIT(basicAllocator))
 , d_error()
+, d_user(0)
 {
 #if defined(BSLS_PLATFORM_OS_UNIX)
     BSLMF_ASSERT(sizeof(d_message) >= sizeof(struct ::msghdr));
@@ -320,6 +321,7 @@ Event::Event(const Event& other, bslma::Allocator* basicAllocator)
 , d_numBytesIndicated(other.d_numBytesIndicated)
 , d_function(NTCCFG_FUNCTION_COPY(other.d_function, basicAllocator))
 , d_error(other.d_error)
+, d_user(other.d_user)
 {
 #if defined(BSLS_PLATFORM_OS_UNIX)
     bsl::memcpy(d_message, other.d_message, sizeof d_message);
@@ -351,6 +353,7 @@ Event& Event::operator=(const Event& other)
         d_numBytesIndicated   = other.d_numBytesIndicated;
         d_function            = other.d_function;
         d_error               = other.d_error;
+        d_user                = other.d_user;
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
         bsl::memcpy(d_message, other.d_message, sizeof d_message);
@@ -384,6 +387,7 @@ void Event::reset()
     d_numBytesIndicated   = 0;
     d_function            = Functor();
     d_error               = ntsa::Error();
+    d_user                = 0;
 }
 
 
@@ -417,6 +421,10 @@ bsl::ostream& Event::print(bsl::ostream& stream,
     if (d_error) {
         printer.printAttribute("errorCode", d_error.code());
         printer.printAttribute("errorNumber", d_error.number());
+    }
+
+    if (d_user) {
+        printer.printAttribute("id", d_user);
     }
 
     printer.end();

@@ -1272,6 +1272,42 @@ NTCCFG_TEST_CASE(1)
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
 
+    if (!ntco::IoRingFactory::isSupported()) {
+        return;
+    }
+
+    ntccfg::TestAllocator ta;
+    {
+        NTCCFG_TEST_TRUE(ntco::IoRingFactory::isSupported());
+
+        bsl::shared_ptr<ntco::IoRingFactory> proactorFactory;
+        proactorFactory.createInplace(&ta, &ta);
+
+        bsl::shared_ptr<ntco::IoRingTest> test = 
+            proactorFactory->createTest(&ta);
+
+        test->post(1);
+
+        {
+            bsl::vector<bsl::uint64_t> result;
+            test->wait(&result, 1);
+
+            NTCCFG_TEST_EQ(result.size(), 1);
+            NTCCFG_TEST_EQ(result[0], 1);
+        }
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(2)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_CONTEXT_GUARD_OWNER("test");
+
+    if (!ntco::IoRingFactory::isSupported()) {
+        return;
+    }
+
     ntccfg::TestAllocator ta;
     {
         ntsa::Error error;
@@ -1290,8 +1326,6 @@ NTCCFG_TEST_CASE(1)
         proactorConfig.setMetricName("test");
         proactorConfig.setMinThreads(1);
         proactorConfig.setMaxThreads(1);
-
-        NTCCFG_TEST_TRUE(ntco::IoRingFactory::isSupported());
 
         bsl::shared_ptr<ntco::IoRingFactory> proactorFactory;
         proactorFactory.createInplace(&ta, &ta);
@@ -1796,10 +1830,14 @@ bsl::size_t TimerSession::count(ntca::TimerEventType::Value timerEventType)
 }  // close namespace case2
 }  // close namespace test
 
-NTCCFG_TEST_CASE(2)
+NTCCFG_TEST_CASE(3)
 {
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
+
+    if (!ntco::IoRingFactory::isSupported()) {
+        return;
+    }
 
     for (bsl::size_t maskInterestCase = 0; maskInterestCase < 4;
          ++maskInterestCase)
@@ -2092,10 +2130,14 @@ void execute(bslma::Allocator* allocator)
 }  // close namespace case3
 }  // close namespace test
 
-NTCCFG_TEST_CASE(3)
+NTCCFG_TEST_CASE(4)
 {
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
+
+    if (!ntco::IoRingFactory::isSupported()) {
+        return;
+    }
 
     ntccfg::TestAllocator ta;
     {
@@ -2109,6 +2151,7 @@ NTCCFG_TEST_DRIVER
     NTCCFG_TEST_REGISTER(1);
     NTCCFG_TEST_REGISTER(2);
     NTCCFG_TEST_REGISTER(3);
+    NTCCFG_TEST_REGISTER(4);
 }
 NTCCFG_TEST_DRIVER_END;
 

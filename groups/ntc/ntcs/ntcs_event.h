@@ -260,6 +260,7 @@ class Event
     int                                   d_numBytesIndicated;
     Functor                               d_function;
     ntsa::Error                           d_error;
+    bsl::uint64_t                         d_user;
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
 

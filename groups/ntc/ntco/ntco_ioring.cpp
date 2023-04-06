@@ -513,6 +513,10 @@ class IoRingSubmission
     void prepareCallback(ntcs::Event*                event,
                          const ntcs::Event::Functor& callback);
 
+    /// Prepare the submission to initiate a test, i.e. a "no-op"
+    /// completion identified by a 64-bit unsigned integer.
+    void prepareTest(ntcs::Event* event, bsl::uint64_t id);
+
     /// Prepare the submission to initiate an operation to accept the next
     /// connection from the backlog of the specified 'socket' identified by the
     /// specified 'handle'. Load into the specified 'event' the event that
@@ -1015,6 +1019,7 @@ class IoRingDevice
         ntci::Waiter                                   waiter,
         ntco::IoRingCompletion*                        entryList,
         bsl::size_t                                    entryListCapacity,
+        bsl::size_t                                    minimumToComplete,
         const bdlb::NullableValue<bsls::TimeInterval>& earliestTimerDue);
 
     // Load into the specified 'entryList' having the specified
@@ -1022,7 +1027,6 @@ class IoRingDevice
     // the number of entries popped and set in the 'entryList'.
     bsl::size_t flush(ntco::IoRingCompletion* entryList,
                       bsl::size_t             entryListCapacity);
-
 
     // Return the index of the head entry in the submission queue.
     bsl::uint32_t submissionQueueHead() const;
@@ -1050,6 +1054,7 @@ class IoRingDevice
 class IoRingDeviceTest : public IoRingTest
 {
     ntco::IoRingDevice  d_device;
+    ntcs::EventPool     d_eventPool;
     bslma::Allocator   *d_allocator_p;
 
   private:
@@ -1065,17 +1070,21 @@ class IoRingDeviceTest : public IoRingTest
     /// Destroy this object.
     ~IoRingDeviceTest() BSLS_KEYWORD_OVERRIDE;
 
-    /// Push a unit of work onto the submission queue and immediately submit 
-    /// it. Return the error. 
-    ntsa::Error post() BSLS_KEYWORD_OVERRIDE;
+    /// Push a unit of work identified by the specified 'id' onto the 
+    /// submission queue and immediately submit it. Return the error. 
+    ntsa::Error post(bsl::uint64_t id) BSLS_KEYWORD_OVERRIDE;
 
-    /// Push a unit of work onto the submission queue and but do not submit 
-    /// it until the next call to 'wait'. Return the error. 
-    ntsa::Error defer() BSLS_KEYWORD_OVERRIDE;
+    /// Push a unit of work identified by the specified 'id' onto the 
+    /// submission queue and but do not submit it until the next call to 
+    /// 'wait'. Return the error. 
+    ntsa::Error defer(bsl::uint64_t id) BSLS_KEYWORD_OVERRIDE;
 
-    /// Block until at least the specified 'count' number of units of work have 
-    /// completed. Return the number of units of work completed.
-    bsl::size_t wait(bsl::size_t count) BSLS_KEYWORD_OVERRIDE;
+    /// Block until at least the specified 'minimumToComplete' number of units
+    /// of work have completed. Load into the specified 'result' the vector of
+    /// identifiers of units of work completed.
+    void wait(bsl::vector<bsl::uint64_t> *result, 
+              bsl::size_t                 minimumToComplete) 
+              BSLS_KEYWORD_OVERRIDE;
 
     // Return the index of the head entry in the submission queue.
     bsl::uint32_t submissionQueueHead() const BSLS_KEYWORD_OVERRIDE;
@@ -1132,9 +1141,10 @@ class IoRingDevice
     // has elapsed, or an error occurs. Return the number of entries popped and
     // set in the 'entryList'.
     bsl::size_t wait(
-        ntci::Waiter waiter,
-        ntco::IoRingCompletion* entryList,
-        bsl::size_t entryListCapacity,
+        ntci::Waiter                                   waiter,
+        ntco::IoRingCompletion*                        entryList,
+        bsl::size_t                                    entryListCapacity,
+        bsl::size_t                                    minimumToComplete,
         const bdlb::NullableValue<bsls::TimeInterval>& earliestTimerDue);
 
     //  Load into the specified 'entryList' having the specified
@@ -1580,6 +1590,17 @@ void IoRingSubmission::prepareCallback(ntcs::Event*                event,
 {
     event->d_type     = ntcs::EventType::e_CALLBACK;
     event->d_function = callback;
+
+    d_operation = IORING_OP_NOP;
+    d_handle    = -1;
+    d_event     = reinterpret_cast<bsl::uint64_t>(event);
+    d_flags     = NTCO_IORING_SQE_FLAGS;
+}
+
+void IoRingSubmission::prepareTest(ntcs::Event* event, bsl::uint64_t id)
+{
+    event->d_type = ntcs::EventType::e_CALLBACK;
+    event->d_user = id;
 
     d_operation = IORING_OP_NOP;
     d_handle    = -1;
@@ -3271,6 +3292,7 @@ bsl::size_t IoRingDevice::wait(
     ntci::Waiter                                   waiter,
     ntco::IoRingCompletion*                        entryList,
     bsl::size_t                                    entryListCapacity,
+    bsl::size_t                                    minimumToComplete,
     const bdlb::NullableValue<bsls::TimeInterval>& earliestTimerDue)
 {
     IoRingWaiter* result = static_cast<IoRingWaiter*>(waiter);
@@ -3314,7 +3336,7 @@ bsl::size_t IoRingDevice::wait(
             rc = ntco::IoRingUtil::enter(
                 d_ring,
                 0,
-                1,
+                static_cast<unsigned int>(minimumToComplete),
                 static_cast<unsigned int>(
                     IoRingUtil::k_SYSTEM_CALL_ENTER_GET_EVENTS),
                 0);
@@ -3368,7 +3390,7 @@ bsl::size_t IoRingDevice::wait(
     rc = ntco::IoRingUtil::enter(
         d_ring,
         numToSubmit,
-        1,
+        static_cast<unsigned int>(minimumToComplete),
         static_cast<unsigned int>(IoRingUtil::k_SYSTEM_CALL_ENTER_GET_EVENTS),
         0);
 
@@ -3573,9 +3595,10 @@ ntsa::Error IoRingDevice::submit(const ntco::IoRingSubmission& entry)
 }
 
 bsl::size_t IoRingDevice::wait(
-    ntci::Waiter waiter,
-    ntco::IoRingCompletion* entryList,
-    bsl::size_t entryListCapacity,
+    ntci::Waiter                                   waiter,
+    ntco::IoRingCompletion*                        entryList,
+    bsl::size_t                                    entryListCapacity,
+    bsl::size_t                                    minimumToComplete,
     const bdlb::NullableValue<bsls::TimeInterval>& earliestTimerDue)
 {
     NTCI_LOG_CONTEXT();
@@ -3942,6 +3965,7 @@ IoRingTest::~IoRingTest()
 
 IoRingDeviceTest::IoRingDeviceTest(bslma::Allocator *basicAllocator)
 : d_device(basicAllocator)
+, d_eventPool(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
@@ -3950,20 +3974,95 @@ IoRingDeviceTest::~IoRingDeviceTest()
 {
 }
 
-ntsa::Error IoRingDeviceTest::post()
+ntsa::Error IoRingDeviceTest::post(bsl::uint64_t id)
 {
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error error;
+
+    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
+
+    ntco::IoRingSubmission entry;
+    entry.prepareTest(event.get(), id);
+
+    NTCO_IORING_LOG_EVENT_STARTING(event);
+
+    error = d_device.submit(entry, ntco::IoRingSubmissionMode::e_IMMEDIATE);
+    if (error) {
+        return error;
+    }
+
+    event.release();
+
+    return ntsa::Error();
 }
 
-ntsa::Error IoRingDeviceTest::defer()
+ntsa::Error IoRingDeviceTest::defer(bsl::uint64_t id)
 {
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error error;
+
+    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
+
+    ntco::IoRingSubmission entry;
+    entry.prepareTest(event.get(), id);
+
+    NTCO_IORING_LOG_EVENT_STARTING(event);
+
+    error = d_device.submit(entry, ntco::IoRingSubmissionMode::e_DEFERRED);
+    if (error) {
+        return error;
+    }
+
+    event.release();
+
+    return ntsa::Error();
 }
 
-bsl::size_t IoRingDeviceTest::wait(bsl::size_t count)
+void IoRingDeviceTest::wait(bsl::vector<bsl::uint64_t> *result, 
+                            bsl::size_t                 minimumToComplete)
 {
-    NTCCFG_WARNING_UNUSED(count);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error error;
+
+    result->clear();
+
+    enum { ENTRY_LIST_CAPACITY = 128 };
+
+    typedef bsls::ObjectBuffer<ntco::IoRingCompletion> CompletionArena;
+    CompletionArena entryListArena[ENTRY_LIST_CAPACITY];
+
+    ntco::IoRingCompletion* entryList =
+        reinterpret_cast<ntco::IoRingCompletion*>(&entryListArena[0]);
+
+    ntco::IoRingWaiter                      waiter;
+    bdlb::NullableValue<bsls::TimeInterval> timeout;
+    
+    bsl::size_t entryCount = d_device.wait(&waiter,
+                                           entryList,
+                                           ENTRY_LIST_CAPACITY,
+                                           minimumToComplete,
+                                           timeout);
+
+    for (bsl::size_t entryIndex = 0; entryIndex < entryCount; ++entryIndex) {
+        const ntco::IoRingCompletion& entry = entryList[entryIndex];
+
+        NTCI_LOG_TRACE("I/O ring popped completed entry: "
+                       "user_data = %p, flags = %u, result = %d, error = %s",
+                       entry.event(),
+                       entry.flags(),
+                       entry.result(),
+                       entry.error().text().c_str());
+
+        bslma::ManagedPtr<ntcs::Event> event(entry.event(), &d_eventPool);
+
+        BSLS_ASSERT_OPT(!entry.error());
+        BSLS_ASSERT_OPT(entry.result() == 0);
+
+        result->push_back(event->d_user);
+    }
 }
 
 bsl::uint32_t IoRingDeviceTest::submissionQueueHead() const
@@ -4508,6 +4607,7 @@ void IoRing::wait(ntci::Waiter waiter)
     bsl::size_t entryCount = d_device.wait(waiter,
                                            entryList,
                                            ENTRY_LIST_CAPACITY,
+                                           1,
                                            earliestTimerDue);
 
     for (bsl::size_t entryIndex = 0; entryIndex < entryCount; ++entryIndex) {
@@ -5903,7 +6003,7 @@ bsl::shared_ptr<ntci::Proactor> IoRingFactory::createProactor(
     return proactor;
 }
 
-bsl::shared_ptr<ntco::IoRingTest> IoRingFactory::createText(
+bsl::shared_ptr<ntco::IoRingTest> IoRingFactory::createTest(
     bslma::Allocator* basicAllocator)
 {
     bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
