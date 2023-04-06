@@ -115,7 +115,9 @@ class IpAddress
 
     /// Set the value of this object from the value parsed from any of its
     /// textual representations. Return true if the 'text' is in a valid
-    /// format and was parsed successfully, otherwise return false.
+    /// format and was parsed successfully, otherwise return false. If false
+    /// is returned then the value of this object was set to its value upon
+    /// default construction.
     bool parse(const bslstl::StringRef& text);
 
     /// Select the "v4" address representation. Return a reference to the

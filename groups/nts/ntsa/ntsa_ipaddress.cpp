@@ -76,7 +76,7 @@ bool IpAddress::parse(const bslstl::StringRef& text)
     this->reset();
 
     if (text.empty()) {
-        return true;
+        return false;
     }
 
     bool valid;

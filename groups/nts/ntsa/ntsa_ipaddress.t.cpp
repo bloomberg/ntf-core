@@ -53,9 +53,43 @@ NTSCFG_TEST_CASE(2)
     NTSCFG_TEST_EQ(ipAddress.v6(), ntsa::Ipv6Address::loopback());
 }
 
+NTSCFG_TEST_CASE(3)
+{
+    ntsa::IpAddress ipAddress("123.45.67.89");
+
+    const bslstl::StringRef empty;
+    NTSCFG_TEST_FALSE(ipAddress.parse(empty));
+    NTSCFG_TEST_TRUE(ipAddress.isUndefined());
+}
+
+NTSCFG_TEST_CASE(4)
+{
+    ntsa::IpAddress ipAddress;
+
+    const bslstl::StringRef ipv4 = "22.44.66.88";
+    NTSCFG_TEST_TRUE(ipAddress.parse(ipv4));
+    NTSCFG_TEST_FALSE(ipAddress.isUndefined());
+    NTSCFG_TEST_TRUE(ipAddress.isV4());
+    NTSCFG_TEST_EQ(ipAddress.v4(), ntsa::Ipv4Address(ipv4));
+}
+
+NTSCFG_TEST_CASE(5)
+{
+    ntsa::IpAddress ipAddress;
+
+    const bslstl::StringRef ipv6 = "2001:db8:3333:4444:5555:6666:7777:8888";
+    NTSCFG_TEST_TRUE(ipAddress.parse(ipv6));
+    NTSCFG_TEST_FALSE(ipAddress.isUndefined());
+    NTSCFG_TEST_TRUE(ipAddress.isV6());
+    NTSCFG_TEST_EQ(ipAddress.v6(), ntsa::Ipv6Address(ipv6));
+}
+
 NTSCFG_TEST_DRIVER
 {
     NTSCFG_TEST_REGISTER(1);
     NTSCFG_TEST_REGISTER(2);
+    NTSCFG_TEST_REGISTER(3);
+    NTSCFG_TEST_REGISTER(4);
+    NTSCFG_TEST_REGISTER(5);
 }
 NTSCFG_TEST_DRIVER_END;
