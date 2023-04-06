@@ -323,6 +323,21 @@ class Event
     template <typename TYPE>
     TYPE* indicator();
 
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.

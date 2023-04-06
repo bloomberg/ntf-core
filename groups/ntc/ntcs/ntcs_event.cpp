@@ -20,6 +20,7 @@ BSLS_IDENT_RCSID(ntcs_event_cpp, "$Id$ $CSID$")
 
 #include <bdlb_string.h>
 
+#include <bslim_printer.h>
 #include <bslma_allocator.h>
 #include <bslma_default.h>
 #include <bslmf_assert.h>
@@ -385,37 +386,46 @@ void Event::reset()
     d_error               = ntsa::Error();
 }
 
+
+bsl::ostream& Event::print(bsl::ostream& stream,
+                           int           level,
+                           int           spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+
+    printer.printAttribute("type", d_type);
+    printer.printAttribute("status", d_status);
+
+    if (d_socket) {
+        printer.printAttribute("socket", d_socket->handle());
+    }
+
+    if (d_target != ntsa::k_INVALID_HANDLE) {
+        printer.printAttribute("target", d_target);
+    }
+
+    if (d_numBytesAttempted > 0) {
+        printer.printAttribute("attempted", d_numBytesAttempted);
+        printer.printAttribute("completed", d_numBytesCompleted);
+    }
+
+    if (d_numBytesIndicated > 0) {
+        printer.printAttribute("indicated", d_numBytesIndicated);
+    }
+
+    if (d_error) {
+        printer.printAttribute("errorCode", d_error.code());
+        printer.printAttribute("errorNumber", d_error.number());
+    }
+
+    printer.end();
+    return stream;
+}
+
 bsl::ostream& operator<<(bsl::ostream& stream, const ntcs::Event& object)
 {
-    stream << "[ type = " << object.d_type;
-
-    stream << "[ status = " << object.d_status;
-
-    if (object.d_socket) {
-        stream << " socket = " << object.d_socket->handle();
-    }
-
-    if (object.d_target != ntsa::k_INVALID_HANDLE) {
-        stream << " target = " << object.d_target;
-    }
-
-    if (object.d_numBytesAttempted > 0) {
-        stream << " attempted = " << object.d_numBytesAttempted;
-        stream << " completed = " << object.d_numBytesCompleted;
-    }
-
-    if (object.d_numBytesIndicated > 0) {
-        stream << " indicated = " << object.d_numBytesIndicated;
-    }
-
-    if (object.d_error) {
-        stream << " error = " << object.d_error.code() << " ("
-               << object.d_error.number() << ")";
-    }
-
-    stream << " ]";
-
-    return stream;
+    return object.print(stream, 0, -1);
 }
 
 EventPool::EventPool(bslma::Allocator* basicAllocator)
