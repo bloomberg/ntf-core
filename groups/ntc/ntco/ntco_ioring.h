@@ -119,10 +119,12 @@ class IoRingFactory : public ntci::ProactorFactory
         const bsl::shared_ptr<ntci::User>& user,
         bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
 
-    /// Create a new test. Optionally specify a 'basicAllocator' used to 
-    /// supply memory. If 'basicAllocator' is 0, the currently installed 
-    /// default allocator is used. Return the error.
+    /// Create a new test for an I/O ring with the specified suggested 
+    /// 'queueDepth'. Optionally specify a 'basicAllocator' used to supply 
+    /// memory. If 'basicAllocator' is 0, the currently installed default 
+    /// allocator is used. Return the error.
     static bsl::shared_ptr<ntco::IoRingTest> createTest(
+        bsl::size_t       queueDepth,
         bslma::Allocator* basicAllocator = 0);
 
     // Return true if the runtime properties of the current operating system

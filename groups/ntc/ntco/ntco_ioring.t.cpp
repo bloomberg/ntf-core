@@ -1267,6 +1267,32 @@ ntsa::Error ProactorListenerSocket::lastError() const
 }  // close namespace case1
 }  // close test namespace
 
+#define NTCO_IORING_TEST_LOG_OPERATION(test, operationDescription, id) \
+    do { \
+        if (NTCCFG_TEST_VERBOSITY >= 3) { \
+            BSLS_LOG_INFO("%s: ID %zu" \
+                          "\n    Submission queue head: %zu" \
+                          "\n    Submission queue tail: %zu" \
+                          "\n    Completion queue head: %zu" \
+                          "\n    Completion queue tail: %zu", \
+                          operationDescription, \
+                          (bsl::size_t)(id), \
+                          (bsl::size_t)((test)->submissionQueueHead()), \
+                          (bsl::size_t)((test)->submissionQueueTail()), \
+                          (bsl::size_t)((test)->completionQueueHead()), \
+                          (bsl::size_t)((test)->completionQueueTail())); \
+        } \
+    } while (false)
+
+#define NTCO_IORING_TEST_LOG_PUSH_STARTING(test, id) \
+    NTCO_IORING_TEST_LOG_OPERATION(test, "Push starting", id)
+
+#define NTCO_IORING_TEST_LOG_PUSH_COMPLETE(test, id) \
+    NTCO_IORING_TEST_LOG_OPERATION(test, "Push complete", id)
+
+#define NTCO_IORING_TEST_LOG_POPPED(test, id) \
+    NTCO_IORING_TEST_LOG_OPERATION(test, "Popped", id)
+
 NTCCFG_TEST_CASE(1)
 {
     NTCI_LOG_CONTEXT();
@@ -1276,6 +1302,8 @@ NTCCFG_TEST_CASE(1)
         return;
     }
 
+    const bsl::size_t k_QUEUE_DEPTH = 4;
+
     ntccfg::TestAllocator ta;
     {
         NTCCFG_TEST_TRUE(ntco::IoRingFactory::isSupported());
@@ -1284,16 +1312,35 @@ NTCCFG_TEST_CASE(1)
         proactorFactory.createInplace(&ta, &ta);
 
         bsl::shared_ptr<ntco::IoRingTest> test = 
-            proactorFactory->createTest(&ta);
+            proactorFactory->createTest(k_QUEUE_DEPTH, &ta);
 
-        test->post(1);
+        NTCCFG_TEST_EQ(test->submissionQueueCapacity(), k_QUEUE_DEPTH);
+        NTCCFG_TEST_EQ(test->completionQueueCapacity(), k_QUEUE_DEPTH * 2);
 
-        {
+        const bsl::size_t k_ROUND_COUNT = 3;
+        const bsl::size_t k_SUBMISSION_COUNT = 
+            test->completionQueueCapacity() * k_ROUND_COUNT;
+
+        for (bsl::size_t id = 0; id < k_SUBMISSION_COUNT; ++id) {
+            NTCO_IORING_TEST_LOG_PUSH_STARTING(test, id);
+            test->defer(id);
+            NTCO_IORING_TEST_LOG_PUSH_COMPLETE(test, id);
+        }
+
+        for (bsl::size_t round = 0; round < k_ROUND_COUNT; ++round) {
             bsl::vector<bsl::uint64_t> result;
-            test->wait(&result, 1);
+            test->wait(&result, test->completionQueueCapacity());
 
-            NTCCFG_TEST_EQ(result.size(), 1);
-            NTCCFG_TEST_EQ(result[0], 1);
+            NTCCFG_TEST_EQ(result.size(), test->completionQueueCapacity());
+
+            for (bsl::size_t i = 0; i < result.size(); ++i) {
+                const bsl::uint64_t id = 
+                    static_cast<bsl::uint64_t>(
+                        (round * test->completionQueueCapacity()) + i);
+
+                NTCO_IORING_TEST_LOG_POPPED(test, result[i]);
+                NTCCFG_TEST_EQ(result[i], id);
+            }
         }
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);

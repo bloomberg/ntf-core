@@ -109,6 +109,13 @@ BSLS_IDENT_RCSID(ntco_ioring_cpp, "$Id$ $CSID$")
 #include <sys/un.h>
 #include <unistd.h>
 
+// The suggested depth of the I/O ring queues.
+#define NTCO_IORING_QUEUE_DEPTH 1024
+
+// Comment or set to zero to disable an attempt to set the RLIMIT_MEMLOCK
+// resource limit potentially required for the ring buffers.
+#define NTCO_IORING_RLIMIT_MEMLOCK 0
+
 // Initialize I/O rings with IORING_SETUP_SQE128 and cause all submission
 // queue entries to have an extra 80-bytes for extra data.
 #define NTCO_IORING_SUBMISSION_128 0
@@ -116,22 +123,6 @@ BSLS_IDENT_RCSID(ntco_ioring_cpp, "$Id$ $CSID$")
 // Initialize I/O rings with IORING_SETUP_CQE32 and cause all completion
 // queue entries to have an extra 16-bytes for extra data.
 #define NTCO_IORING_COMPLETION_32 0
-
-// MRM
-// Set during configuration if liburing is available on the build machine.
-#define NTC_BUILD_WITH_IORING_LIBURING 0
-
-// MRM
-// Comment or set to zero to disable optimizations in the implementation that
-// try to improve the efficiency of interacting with the I/O ring.
-#define NTC_BUILD_WITH_IORING_LIBURING_OPTIMIZATIONS 1
-
-#if NTC_BUILD_WITH_IORING_LIBURING
-#include <liburing.h>
-#endif
-
-#define NTCO_IORING_READER_BARRIER() __asm__ __volatile__("" ::: "memory")
-#define NTCO_IORING_WRITER_BARRIER() __asm__ __volatile__("" ::: "memory")
 
 // #define NTCO_IORING_SQE_FLAGS IOSQE_ASYNC
 #define NTCO_IORING_SQE_FLAGS 0
@@ -146,6 +137,38 @@ BSLS_IDENT_RCSID(ntco_ioring_cpp, "$Id$ $CSID$")
 
 // Enable logging during debugging.
 #define NTCO_IORING_DEBUG 0
+
+#define NTCO_IORING_READER_BARRIER() __asm__ __volatile__("" ::: "memory")
+#define NTCO_IORING_WRITER_BARRIER() __asm__ __volatile__("" ::: "memory")
+
+#define NTCO_IORING_LOG_CREATED(ring) \
+    NTCI_LOG_TRACE("I/O ring file descriptor %d created", ring)
+
+#define NTCO_IORING_LOG_CLOSED(ring) \
+    NTCI_LOG_TRACE("I/O ring file descriptor %d closed", ring)
+
+#define NTCO_IORING_LOG_SETUP_FAILURE(error) \
+    do { \
+        if ((error).number() == ENOMEM) { \
+            NTCI_LOG_ERROR("I/O ring failed to allocate memory locked pages: " \
+                           "raise per-user ulimit " \
+                           "(see `ulimit -l` and " \
+                           "'setrlimit' RLIMIT_MEMLOCK)"); \
+        } \
+        else { \
+            NTCI_LOG_ERROR("I/O ring failed to setup: %s", (error).text().c_str()); \
+        } \
+    } while (false)
+
+#define NTCO_IORING_LOG_RLIMIT_MEMLOCK_RESULT(limit) \
+    NTCI_LOG_TRACE("I/O ring RLIMIT_MEMLOCK current = %d, maximum = %d", \
+                   (int)((limit).rlim_cur), \
+                   (int)((limit).rlim_max));
+
+#define NTCO_IORING_LOG_RLIMIT_MEMLOCK_FAILURE(error) \
+    NTCI_LOG_WARN("Failed to set RLIMIT_MEMLOCK: %s", \
+                  (error).text().c_str());
+
 
 #define NTCO_IORING_LOG_WAIT_INDEFINITE()                                     \
     NTCI_LOG_TRACE("Polling for socket events indefinitely")
@@ -166,6 +189,10 @@ BSLS_IDENT_RCSID(ntco_ioring_cpp, "$Id$ $CSID$")
         dateTimeDue.printToBuffer(buffer, sizeof buffer);                     \
         NTCI_LOG_TRACE("Polling for sockets events or until %s", buffer);     \
     } while (false)
+
+#define NTCO_IORING_LOG_PUSH_FAILURE(error)                                   \
+    NTCI_LOG_ERROR("Failed to push socket events: %s",                        \
+                   error.text().c_str())
 
 #define NTCO_IORING_LOG_WAIT_FAILURE(error)                                   \
     NTCI_LOG_ERROR("Failed to poll for socket events: %s",                    \
@@ -223,6 +250,84 @@ BSLS_IDENT_RCSID(ntco_ioring_cpp, "$Id$ $CSID$")
 
 #define NTCO_IORING_LOG_EVENT_REFUSED(event)                                  \
     NTCO_IORING_LOG_EVENT_STATUS(event, "refused")
+
+#define NTCO_IORING_LOG_SUBMISSION(submission) \
+    NTCI_LOG_TRACE("I/O ring pushing submission entry: " \
+                   "user_data = %p, op = %s, flags = %u, fd = %d", \
+                   (submission).event(), \
+                   IoRingUtil::describeOpCode((submission).opcode()), \
+                   (submission).flags(), \
+                   (submission).handle())
+
+#define NTCO_IORING_LOG_SUBMISSION_QUEUE_PUSHING( \
+    head, tail, next, headIndex, tailIndex, nextIndex)                  \
+    NTCI_LOG_TRACE("I/O ring pushing submission queue entry" \
+                   "\n    head:       %u" \
+                   "\n    tail:       %u" \
+                   "\n    next:       %u" \
+                   "\n    head index: %u" \
+                   "\n    tail index: %u" \
+                   "\n    next index: %u", \
+                   head, \
+                   tail, \
+                   next, \
+                   headIndex, \
+                   tailIndex, \
+                   nextIndex)
+
+#define NTCO_IORING_LOG_SUBMISSION_QUEUE_FULL()                  \
+    NTCI_LOG_TRACE("I/O ring submission queue is full")
+
+#define NTCO_IORING_LOG_SUBMISSION_FAILED(submission, error)                  \
+    NTCI_LOG_TRACE("I/O ring failed to submit entry: %s", \
+                   (error).text().c_str())
+
+#define NTCO_IORING_LOG_COMPLETION_QUEUE_MAP_COMPLETE( \
+    head, tail, mask, count) \
+    NTCI_LOG_TRACE("I/O ring mapped completion queue ring buffer: " \
+                   "head = %u, tail = %u, mask = %u, count = %u", \
+                   head, \
+                   tail, \
+                   mask, \
+                   count)
+
+#define NTCO_IORING_LOG_COMPLETION_QUEUE_MAP_FAILED(error) \
+    NTCI_LOG_ERROR( \
+            "I/O ring failed to map completion queue ring buffer: %s", \
+            (error).text().c_str());
+
+#define NTCO_IORING_LOG_COMPLETION_QUEUE_POPPING(index) \
+    NTCI_LOG_TRACE( \
+            "I/O ring popping completion queue entry at head index %u", \
+            index)
+
+#define NTCO_IORING_LOG_COMPLETION_POPPED(completion)                         \
+    NTCI_LOG_TRACE("I/O ring popped completed entry: " \
+                   "user_data = %p, flags = %u, result = %d, error = %s", \
+                   (completion).event(), \
+                   (completion).flags(), \
+                   (completion).result(), \
+                   (completion).error().text().c_str())
+
+#define NTCO_IORING_LOG_ENTER_STARTING(numToSubmit, minimumToComplete) \
+    NTCI_LOG_TRACE("I/O ring calling enter " \
+                   "to submit %zu and complete at least %zu", \
+                   (bsl::size_t)(numToSubmit), \
+                   (bsl::size_t)(minimumToComplete))
+
+#define NTCO_IORING_LOG_ENTER_COMPLETE(numToSubmit, minimumToComplete, rc) \
+    NTCI_LOG_TRACE("I/O ring leaving enter " \
+                   "to submit %zu and complete at least %zu: rc = %d", \
+                   (bsl::size_t)(numToSubmit), \
+                   (bsl::size_t)(minimumToComplete), \
+                   (int)(rc))
+
+#define NTCO_IORING_LOG_INTERRUPT_STARTING() \
+    NTCI_LOG_TRACE("I/O ring submitting interrupt")
+
+#define NTCO_IORING_LOG_INTERRUPT_COMPLETE(numPending) \
+    NTCI_LOG_TRACE("I/O ring interrupt complete: numPending = %u", \
+                   (unsigned int)(numPending.load()))
 
 namespace BloombergLP {
 namespace ntco {
@@ -720,58 +825,6 @@ class IoRingSubmission
 /// the specified 'stream'.
 bsl::ostream& operator<<(bsl::ostream& stream, const IoRingSubmission& object);
 
-/// Provide a list of I/O uring submission queue entries waiting to the
-/// submitted to an I/O uring.
-///
-/// @par Thread Safety
-/// This class is thread safe.
-class IoRingSubmissionList
-{
-    // Define a type alias for a sequence of I/O uring submission queue entries.
-    typedef bsl::vector<ntco::IoRingSubmission> EntrySequence;
-
-    // Define a type alias for a mutex.
-    typedef ntci::Mutex Mutex;
-
-    // Define a type alias for a mutex lock guard.
-    typedef ntci::LockGuard LockGuard;
-
-    mutable Mutex     d_mutex;
-    EntrySequence     d_data;
-    bslma::Allocator* d_allocator_p;
-
-  private:
-    IoRingSubmissionList(const IoRingSubmissionList&) BSLS_KEYWORD_DELETED;
-    IoRingSubmissionList& operator=(const IoRingSubmissionList&)
-        BSLS_KEYWORD_DELETED;
-
-  public:
-    // Create a new submission list. Optionally specify a 'basicAllocator'
-    // used to supply memory. If 'basicAllocator' is 0, the currently
-    // installed default allocator is used.
-    explicit IoRingSubmissionList(bslma::Allocator* basicAllocator = 0);
-
-    // Destroy this object.
-    ~IoRingSubmissionList();
-
-    // Push the specified 'entry' onto the submission queue. Return the
-    // error.
-    ntsa::Error push(const IoRingSubmission& entry);
-
-    // Load into the specified 'result' the first entry in the submission
-    // list. Return the error.
-    ntsa::Error pop(IoRingSubmission* result);
-
-    // Return the number of entries in the submission list.
-    bsl::size_t size() const;
-
-    // Return true if there are no entries in the submission list, and
-    // false otherwise.
-    bool empty() const;
-};
-
-#if NTC_BUILD_WITH_IORING_LIBURING == 0
-
 /// Provide a memory mapped submission queue of an I/O ring.
 ///
 /// @par Thread Safety
@@ -819,7 +872,7 @@ class IoRingSubmissionQueue
 
     // Return the number of pending submissions and reset the number of pending
     // submissions to zero.
-    unsigned int gather();
+    bsl::size_t gather();
 
     // Unmap the memory for the submission queue.
     void unmap();
@@ -986,7 +1039,6 @@ class IoRingDevice
 
     mutable Mutex               d_mutex;
     int                         d_ring;
-    ntco::IoRingSubmissionList  d_submissionList;
     ntco::IoRingSubmissionQueue d_submissionQueue;
     ntco::IoRingCompletionQueue d_completionQueue;
     ntco::IoRingConfig          d_params;
@@ -997,10 +1049,12 @@ class IoRingDevice
     IoRingDevice& operator=(const IoRingDevice&) BSLS_KEYWORD_DELETED;
 
   public:
-    // Create a new I/O ring. Optionally specify a 'basicAllocator' used to
-    // supply memory. If  'basicAllocator' is 0, the currently installed 
-    // default allocator is used.
-    explicit IoRingDevice(bslma::Allocator* basicAllocator = 0);
+    // Create a new I/O ring with the specified suggested 'queueDepth'. 
+    // Optionally specify a 'basicAllocator' used to supply memory. If 
+    // 'basicAllocator' is 0, the currently installed default allocator is
+    // used.
+    explicit IoRingDevice(bsl::size_t       queueDepth, 
+                          bslma::Allocator* basicAllocator = 0);
 
     // Destroy this object.
     ~IoRingDevice();
@@ -1062,10 +1116,12 @@ class IoRingDeviceTest : public IoRingTest
     IoRingDeviceTest& operator=(const IoRingDeviceTest&) BSLS_KEYWORD_DELETED;
 
   public:
-    /// Create a new I/O ring device test. Optionally specify a 
-    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
-    /// currently installed default allocator is used.
-    explicit IoRingDeviceTest(bslma::Allocator *basicAllocator = 0);
+    /// Create a new I/O ring device with the specified suggested 'queueDepth'.
+    /// Optionally specify a 'basicAllocator' used to supply memory. If 
+    /// 'basicAllocator' is 0, the currently installed default allocator is 
+    /// used.
+    explicit IoRingDeviceTest(bsl::size_t       queueDepth, 
+                              bslma::Allocator *basicAllocator = 0);
 
     /// Destroy this object.
     ~IoRingDeviceTest() BSLS_KEYWORD_OVERRIDE;
@@ -1104,57 +1160,6 @@ class IoRingDeviceTest : public IoRingTest
     // Return the maximum number of entries in the completion queue.
     bsl::uint32_t completionQueueCapacity() const BSLS_KEYWORD_OVERRIDE;
 };
-
-#else
-
-/// Provide an I/O ring device.
-///
-/// @par Thread Safety
-/// This class is thread safe.
-class IoRingDevice
-{
-    bsls::SpinLock d_sqeLock;
-    bsls::SpinLock d_cqeLock;
-    ::io_uring d_ring;
-    ::io_uring_params d_params;
-    bslma::Allocator* d_allocator_p;
-
-  private:
-    IoRingDevice(const IoRingDevice&) BSLS_KEYWORD_DELETED;
-    IoRingDevice& operator=(const IoRingDevice&) BSLS_KEYWORD_DELETED;
-
-  public:
-    // Create a new I/O uring. Optionally specify a 'basicAllocator' used to
-    // supply memory. If  'basicAllocator' is 0, the currently installed default
-    // allocator is used.
-    explicit IoRingDevice(bslma::Allocator* basicAllocator = 0);
-
-    // Destroy this object.
-    ~IoRingDevice();
-
-    // Submit the specified 'entry' to the submission queue. Return the error.
-    ntsa::Error submit(const ntco::IoRingSubmission& entry);
-
-    // Load into the specified 'entryList' having the specified
-    // 'entryListCapacity' the next entries from the completion queue. Block
-    // until either an entry has completed, or the specified 'earliestTimerDue'
-    // has elapsed, or an error occurs. Return the number of entries popped and
-    // set in the 'entryList'.
-    bsl::size_t wait(
-        ntci::Waiter                                   waiter,
-        ntco::IoRingCompletion*                        entryList,
-        bsl::size_t                                    entryListCapacity,
-        bsl::size_t                                    minimumToComplete,
-        const bdlb::NullableValue<bsls::TimeInterval>& earliestTimerDue);
-
-    //  Load into the specified 'entryList' having the specified
-    // 'entryListCapacity' the next entries from the completion queue. Return
-    // the number of entries popped and set in the 'entryList'.
-    bsl::size_t flush(ntco::IoRingCompletion* entryList,
-                      bsl::size_t entryListCapacity);
-};
-
-#endif
 
 /// Describe the context of a proactor socket managed by a I/O ring.
 ///
@@ -1241,7 +1246,7 @@ struct IoRingUtil {
     // Create a new I/O ring configured with the specified 'parameters'
     // containing the specified number of 'entries' in each queue. Return the
     // file descriptor of the new I/O ring.
-    static int setup(unsigned int entries, ntco::IoRingConfig* parameters);
+    static int setup(bsl::size_t entries, ntco::IoRingConfig* parameters);
 
     // Enter the specified 'ring', initiate the specified number of
     // 'submission', and wait for the specified number of 'completions'. If the
@@ -1249,19 +1254,19 @@ struct IoRingUtil {
     // replace current the signal mask with the 'signals' then restore the
     // current signal mask when done. Return 0 on success and a non-zero value
     // otherwise.
-    static int enter(int          ring,
-                     unsigned int submissions,
-                     unsigned int completions,
-                     unsigned int flags,
-                     sigset_t*    signals);
+    static int enter(int           ring,
+                     bsl::size_t   submissions,
+                     bsl::size_t   completions,
+                     bsl::uint32_t flags,
+                     sigset_t*     signals);
 
     // Perform the specified control 'operation' on the specified 'ring' using
     // the specified 'count' number of the specified 'operand' array. Return
     // 0 on success and a non-zero value otherwise.
-    static int control(int          ring,
-                       unsigned int operation,
-                       void*        operand,
-                       unsigned int count);
+    static int control(int         ring,
+                       bsl::size_t operation,
+                       void*       operand,
+                       bsl::size_t count);
 
     // Return true if the runtime properties of the current operating system
     // support proactors produced by this factory, otherwise return false.
@@ -1599,8 +1604,11 @@ void IoRingSubmission::prepareCallback(ntcs::Event*                event,
 
 void IoRingSubmission::prepareTest(ntcs::Event* event, bsl::uint64_t id)
 {
-    event->d_type = ntcs::EventType::e_CALLBACK;
-    event->d_user = id;
+    BSLS_ASSERT(event->d_status == ntcs::EventStatus::e_FREE);
+
+    event->d_type   = ntcs::EventType::e_CALLBACK;
+    event->d_user   = id;
+    event->d_status = ntcs::EventStatus::e_PENDING;
 
     d_operation = IORING_OP_NOP;
     d_handle    = -1;
@@ -1613,8 +1621,11 @@ ntsa::Error IoRingSubmission::prepareAccept(
     const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     ntsa::Handle                                 handle)
 {
+    BSLS_ASSERT(event->d_status == ntcs::EventStatus::e_FREE);
+
     event->d_type   = ntcs::EventType::e_ACCEPT;
     event->d_socket = socket;
+    event->d_status = ntcs::EventStatus::e_PENDING;
 
     sockaddr_storage* socketAddress     = event->address<sockaddr_storage>();
     socklen_t*        socketAddressSize = event->indicator<socklen_t>();
@@ -1640,8 +1651,11 @@ ntsa::Error IoRingSubmission::prepareConnect(
 {
     ntsa::Error error;
 
+    BSLS_ASSERT(event->d_status == ntcs::EventStatus::e_FREE);
+
     event->d_type   = ntcs::EventType::e_CONNECT;
     event->d_socket = socket;
+    event->d_status = ntcs::EventStatus::e_PENDING;
 
     sockaddr_storage* socketAddress = event->address<sockaddr_storage>();
     bsl::memset(socketAddress, 0, sizeof(sockaddr_storage));
@@ -1773,8 +1787,11 @@ ntsa::Error IoRingSubmission::prepareSend(
 {
     ntsa::Error error;
 
+    BSLS_ASSERT(event->d_status == ntcs::EventStatus::e_FREE);
+
     event->d_type   = ntcs::EventType::e_SEND;
     event->d_socket = socket;
+    event->d_status = ntcs::EventStatus::e_PENDING;
 
     ::msghdr* message = event->message< ::msghdr>();
     bsl::memset(message, 0, sizeof(::msghdr));
@@ -1870,8 +1887,11 @@ ntsa::Error IoRingSubmission::prepareSend(
 {
     ntsa::Error error;
 
+    BSLS_ASSERT(event->d_status == ntcs::EventStatus::e_FREE);
+
     event->d_type   = ntcs::EventType::e_SEND;
     event->d_socket = socket;
+    event->d_status = ntcs::EventStatus::e_PENDING;
 
     ::msghdr* message = event->message< ::msghdr>();
     bsl::memset(message, 0, sizeof(::msghdr));
@@ -1923,8 +1943,11 @@ ntsa::Error IoRingSubmission::prepareSend(
 {
     ntsa::Error error;
 
+    BSLS_ASSERT(event->d_status == ntcs::EventStatus::e_FREE);
+
     event->d_type   = ntcs::EventType::e_SEND;
     event->d_socket = socket;
+    event->d_status = ntcs::EventStatus::e_PENDING;
 
     ::msghdr* message = event->message< ::msghdr>();
     bsl::memset(message, 0, sizeof(::msghdr));
@@ -1976,8 +1999,11 @@ ntsa::Error IoRingSubmission::prepareSend(
 {
     ntsa::Error error;
 
+    BSLS_ASSERT(event->d_status == ntcs::EventStatus::e_FREE);
+
     event->d_type   = ntcs::EventType::e_SEND;
     event->d_socket = socket;
+    event->d_status = ntcs::EventStatus::e_PENDING;
 
     ::msghdr* message = event->message< ::msghdr>();
     bsl::memset(message, 0, sizeof(::msghdr));
@@ -2066,8 +2092,11 @@ ntsa::Error IoRingSubmission::prepareSend(
 {
     ntsa::Error error;
 
+    BSLS_ASSERT(event->d_status == ntcs::EventStatus::e_FREE);
+
     event->d_type   = ntcs::EventType::e_SEND;
     event->d_socket = socket;
+    event->d_status = ntcs::EventStatus::e_PENDING;
 
     ::msghdr* message = event->message< ::msghdr>();
     bsl::memset(message, 0, sizeof(::msghdr));
@@ -2156,8 +2185,11 @@ ntsa::Error IoRingSubmission::prepareSend(
 {
     ntsa::Error error;
 
+    BSLS_ASSERT(event->d_status == ntcs::EventStatus::e_FREE);
+
     event->d_type   = ntcs::EventType::e_SEND;
     event->d_socket = socket;
+    event->d_status = ntcs::EventStatus::e_PENDING;
 
     ::msghdr* message = event->message< ::msghdr>();
     bsl::memset(message, 0, sizeof(::msghdr));
@@ -2209,8 +2241,11 @@ ntsa::Error IoRingSubmission::prepareSend(
 {
     ntsa::Error error;
 
+    BSLS_ASSERT(event->d_status == ntcs::EventStatus::e_FREE);
+
     event->d_type   = ntcs::EventType::e_SEND;
     event->d_socket = socket;
+    event->d_status = ntcs::EventStatus::e_PENDING;
 
     ::msghdr* message = event->message< ::msghdr>();
     bsl::memset(message, 0, sizeof(::msghdr));
@@ -2299,8 +2334,11 @@ ntsa::Error IoRingSubmission::prepareSend(
 {
     ntsa::Error error;
 
+    BSLS_ASSERT(event->d_status == ntcs::EventStatus::e_FREE);
+
     event->d_type   = ntcs::EventType::e_SEND;
     event->d_socket = socket;
+    event->d_status = ntcs::EventStatus::e_PENDING;
 
     ::msghdr* message = event->message< ::msghdr>();
     bsl::memset(message, 0, sizeof(::msghdr));
@@ -2405,8 +2443,11 @@ ntsa::Error IoRingSubmission::prepareSend(
 {
     ntsa::Error error;
 
+    BSLS_ASSERT(event->d_status == ntcs::EventStatus::e_FREE);
+
     event->d_type   = ntcs::EventType::e_SEND;
     event->d_socket = socket;
+    event->d_status = ntcs::EventStatus::e_PENDING;
 
     ::msghdr* message = event->message< ::msghdr>();
     bsl::memset(message, 0, sizeof(::msghdr));
@@ -2458,8 +2499,11 @@ ntsa::Error IoRingSubmission::prepareReceive(
 {
     ntsa::Error error;
 
+    BSLS_ASSERT(event->d_status == ntcs::EventStatus::e_FREE);
+
     event->d_type          = ntcs::EventType::e_RECEIVE;
     event->d_socket        = socket;
+    event->d_status = ntcs::EventStatus::e_PENDING;
     event->d_receiveData_p = destination;
 
     BSLMF_ASSERT(sizeof(event->d_buffers) >= sizeof(::iovec));
@@ -2595,51 +2639,6 @@ bsl::ostream& operator<<(bsl::ostream& stream, const IoRingSubmission& object)
     return object.print(stream, 0, -1);
 }
 
-IoRingSubmissionList::IoRingSubmissionList(bslma::Allocator* basicAllocator)
-: d_mutex()
-, d_data(basicAllocator)
-, d_allocator_p(bslma::Default::allocator(basicAllocator))
-{
-}
-
-IoRingSubmissionList::~IoRingSubmissionList()
-{
-}
-
-ntsa::Error IoRingSubmissionList::push(const IoRingSubmission& entry)
-{
-    LockGuard lock(&d_mutex);
-    d_data.push_back(entry);
-    return ntsa::Error();
-}
-
-ntsa::Error IoRingSubmissionList::pop(IoRingSubmission* result)
-{
-    LockGuard lock(&d_mutex);
-
-    if (d_data.empty()) {
-        return ntsa::Error(ntsa::Error::e_EOF);
-    }
-
-    *result = d_data.front();
-    d_data.erase(d_data.begin());
-    return ntsa::Error();
-}
-
-bsl::size_t IoRingSubmissionList::size() const
-{
-    LockGuard lock(&d_mutex);
-    return d_data.size();
-}
-
-bool IoRingSubmissionList::empty() const
-{
-    LockGuard lock(&d_mutex);
-    return d_data.empty();
-}
-
-#if NTC_BUILD_WITH_IORING_LIBURING == 0
-
 IoRingSubmissionQueue::IoRingSubmissionQueue()
 : d_mutex()
 , d_ring(-1)
@@ -2746,40 +2745,43 @@ ntsa::Error IoRingSubmissionQueue::push(const ntco::IoRingSubmission& entry)
 
     LockGuard guard(&d_mutex);
 
+    bsl::uint32_t mask = *d_mask_p;
+    bsl::uint32_t head = *d_head_p;
     bsl::uint32_t tail = *d_tail_p;
-    // bsl::uint32_t next = tail + 1;
+    bsl::uint32_t next = tail + 1;
 
     NTCO_IORING_READER_BARRIER();
 
-    bsl::uint32_t mask  = *d_mask_p;
-    bsl::uint32_t index = tail & mask;
+    bsl::uint32_t headIndex = head & mask;
+    bsl::uint32_t tailIndex = tail & mask;
+    bsl::uint32_t nextIndex = next & mask;
 
-    // TODO: Detect overflow.
-    // if (tail == head) {
-    //     return ntsa::Error(ENOSPACE);
-    // }
+    NTCO_IORING_LOG_SUBMISSION_QUEUE_PUSHING(
+                   head,
+                   tail,
+                   next,
+                   headIndex,
+                   tailIndex,
+                   nextIndex);
 
-    NTCI_LOG_TRACE("I/O ring pushing submission queue entry to tail index %u",
-                   index);
-
-    d_entryArray[index] = entry;
-
-    d_array_p[index] = index;
-
-    ++d_pending;
-    ++tail;
-
-    if (*d_tail_p != tail) {
-        *d_tail_p = tail;
-        NTCO_IORING_WRITER_BARRIER();
+    if (nextIndex == headIndex) {
+        NTCO_IORING_LOG_SUBMISSION_QUEUE_FULL();
+        return ntsa::Error(ENOSPC);
     }
+
+    d_entryArray[tailIndex] = entry;
+    d_array_p[tailIndex] = tailIndex;
+    ++d_pending;
+    *d_tail_p = next;
+
+    NTCO_IORING_WRITER_BARRIER();
 
     return ntsa::Error();
 }
 
-unsigned int IoRingSubmissionQueue::gather()
+bsl::size_t IoRingSubmissionQueue::gather()
 {
-    return d_pending.swap(0);
+    return static_cast<bsl::size_t>(d_pending.swap(0));
 }
 
 void IoRingSubmissionQueue::unmap()
@@ -2813,8 +2815,6 @@ bsl::uint32_t IoRingSubmissionQueue::head() const
     else {
         return 0;
     }
-
-    return *d_head_p;
 }
 
 bsl::uint32_t IoRingSubmissionQueue::tail() const
@@ -2823,13 +2823,11 @@ bsl::uint32_t IoRingSubmissionQueue::tail() const
 
     if (d_memoryMap_p != 0) {
         NTCO_IORING_READER_BARRIER();
-        return *d_head_p;
+        return *d_tail_p;
     }
     else {
         return 0;
     }
-
-    return *d_tail_p;
 }
 
 bsl::uint32_t IoRingSubmissionQueue::capacity() const
@@ -3013,9 +3011,7 @@ ntsa::Error IoRingCompletionQueue::map(int                       ring,
 
     if (completionQueueBase == MAP_FAILED) {
         ntsa::Error error(errno);
-        NTCI_LOG_ERROR(
-            "I/O ring failed to map completion queue ring buffer: %s",
-            error.text().c_str());
+        NTCO_IORING_LOG_COMPLETION_QUEUE_MAP_FAILED(error);
         return error;
     }
 
@@ -3036,12 +3032,11 @@ ntsa::Error IoRingCompletionQueue::map(int                       ring,
     d_entryArray = reinterpret_cast<ntco::IoRingCompletion*>(
         completionQueueBase + d_params.completionQueueOffsetToCQEs());
 
-    NTCI_LOG_TRACE("I/O ring mapped completion queue ring buffer: "
-                   "head = %u, tail = %u, mask = %u, count = %u",
-                   *d_head_p,
-                   *d_tail_p,
-                   *d_mask_p,
-                   *d_ring_entries_p);
+    NTCO_IORING_LOG_COMPLETION_QUEUE_MAP_COMPLETE(
+        *d_head_p,
+        *d_tail_p,
+        *d_mask_p,
+        *d_ring_entries_p);
 
     return ntsa::Error();
 }
@@ -3074,9 +3069,7 @@ bsl::size_t IoRingCompletionQueue::pop(ntco::IoRingCompletion* result,
         bsl::uint32_t mask  = *d_mask_p;
         bsl::uint32_t index = head & mask;
 
-        NTCI_LOG_TRACE(
-            "I/O ring popping completion queue entry at head index %u",
-            index);
+        NTCO_IORING_LOG_COMPLETION_QUEUE_POPPING(index);
 
         result[count] =
             *reinterpret_cast<ntco::IoRingCompletion*>(&d_entryArray[index]);
@@ -3142,10 +3135,10 @@ bsl::uint32_t IoRingCompletionQueue::capacity() const
     return d_params.completionQueueCapacity();
 }
 
-IoRingDevice::IoRingDevice(bslma::Allocator* basicAllocator)
+IoRingDevice::IoRingDevice(bsl::size_t       queueDepth, 
+                           bslma::Allocator* basicAllocator)
 : d_mutex()
 , d_ring(-1)
-, d_submissionList(basicAllocator)
 , d_submissionQueue()
 , d_completionQueue()
 , d_params()
@@ -3155,8 +3148,7 @@ IoRingDevice::IoRingDevice(bslma::Allocator* basicAllocator)
 
     ntsa::Error error;
 
-// Ensure the rlimit MEMLOCK is sufficient.
-#if 0
+#if NTCO_IORING_RLIMIT_MEMLOCK
     {
         rlimit new_limit = { 0 };
         rlimit old_limit = { 0 };
@@ -3167,43 +3159,27 @@ IoRingDevice::IoRingDevice(bslma::Allocator* basicAllocator)
         int rc = prlimit(getpid(), RLIMIT_MEMLOCK, &new_limit, &old_limit);
         if (rc != 0) {
             ntsa::Error error(errno);
-            NTCI_LOG_WARN("Failed to set RLIMIT_MEMLOCK: %s",
-                            error.text().c_str());
+            NTCO_IORING_LOG_RLIMIT_MEMLOCK_FAILURE(error);
         }
 
-        NTCI_LOG_INFO("I/O ring RLIMIT_MEMLOCK current = %d, maximum = %d",
-                        (int)(old_limit.rlim_cur),
-                        (int)(old_limit.rlim_max));
+        NTCO_IORING_LOG_RLIMIT_MEMLOCK_RESULT(old_limit);
     }
 #endif
 
-    // Setup a new I/O ring.
+    BSLS_ASSERT_OPT(queueDepth <= bsl::numeric_limits<bsl::uint32_t>::max());
 
-    const bsl::uint32_t k_QUEUE_DEPTH = 1024;
-
-    d_ring = ntco::IoRingUtil::setup(k_QUEUE_DEPTH, &d_params);
+    d_ring = ntco::IoRingUtil::setup(queueDepth, &d_params);
     if (d_ring < 0) {
         ntsa::Error error(errno);
-        if (errno == ENOMEM) {
-            NTCI_LOG_ERROR("I/O ring failed to allocate memory locked pages: "
-                           "raise per-user ulimit "
-                           "(see `ulimit -l` and "
-                           "'setrlimit' RLIMIT_MEMLOCK)");
-        }
-        NTCI_LOG_ERROR("I/O ring failed to setup: %s", error.text().c_str());
+        NTCO_IORING_LOG_SETUP_FAILURE(error);
+        NTCCFG_ABORT();
     }
     BSLS_ASSERT(d_ring > 0);
 
-    NTCI_LOG_TRACE("I/O ring file descriptor %d created", d_ring);
-
-    // Map into the virtual memory of this process the submission queue for
-    // the I/O ring.
+    NTCO_IORING_LOG_CREATED(d_ring);
 
     error = d_submissionQueue.map(d_ring, d_params);
     BSLS_ASSERT(!error);
-
-    // Map into the virtual memory of this process the completion queue for
-    // the I/O ring.
 
     error = d_completionQueue.map(d_ring, d_params);
     BSLS_ASSERT(!error);
@@ -3215,18 +3191,13 @@ IoRingDevice::~IoRingDevice()
 
     int rc;
 
-    // Unmap the virtual memory for the submission and completion queue for
-    // the I/O ring.
-
     d_completionQueue.unmap();
     d_submissionQueue.unmap();
-
-    // Close the I/O ring file descriptor.
 
     rc = ::close(d_ring);
     BSLS_ASSERT(rc == 0);
 
-    NTCI_LOG_TRACE("I/O ring file descriptor %d closed", d_ring);
+    NTCO_IORING_LOG_CLOSED(d_ring);
 }
 
 ntsa::Error IoRingDevice::submit(const ntco::IoRingSubmission& entry, 
@@ -3237,51 +3208,54 @@ ntsa::Error IoRingDevice::submit(const ntco::IoRingSubmission& entry,
     ntsa::Error error;
     int         rc;
 
-    NTCI_LOG_TRACE("I/O ring pushing submission entry: "
-                   "user_data = %p, op = %s, flags = %u, fd = %d",
-                   entry.event(),
-                   IoRingUtil::describeOpCode(entry.opcode()),
-                   entry.flags(),
-                   entry.handle());
+    NTCO_IORING_LOG_SUBMISSION(entry);
 
     BSLS_ASSERT(entry.handle() > 0 || entry.handle() == -1);
     BSLS_ASSERT(entry.event() != 0 || entry.opcode() == IORING_OP_TIMEOUT ||
                 entry.opcode() == IORING_OP_ASYNC_CANCEL);
+    BSLS_ASSERT(entry.event() == 0 || entry.event()->d_status == 
+                ntcs::EventStatus::e_PENDING);
 
-    // MRM: Move to individual functions that allocate the event attached
-    // to the SQE.
+    while (true) {
+        bool force = false;
 
-    ntcs::Event* event = entry.event();
-
-    if (event) {
-        BSLS_ASSERT(event->d_status == ntcs::EventStatus::e_FREE);
-        event->d_status = ntcs::EventStatus::e_PENDING;
-    }
-
-    error = d_submissionQueue.push(entry);
-    if (error) {
-        NTCI_LOG_ERROR("I/O ring failed to submit entry: %s",
-                       error.text().c_str());
-        return error;
-    }
-
-    if (mode == ntco::IoRingSubmissionMode::e_IMMEDIATE) {
-        const unsigned int numToSubmit = d_submissionQueue.gather();
-        rc = ntco::IoRingUtil::enter(d_ring, numToSubmit, 0, 0, 0);
-        if (rc < 0) {
-            error = ntsa::Error(errno);
-            if (event) {
-                NTCI_LOG_ERROR("I/O ring failed to enter to submit "
-                            "event type %s: %s",
-                            ntcs::EventType::toString(event->d_type),
-                            error.text().c_str());
+        error = d_submissionQueue.push(entry);
+        if (error) {
+            if (error.number() == ENOSPC) {
+                force = true;
             }
             else {
-                NTCI_LOG_ERROR("I/O ring failed to enter: %s",
-                            error.text().c_str());
+                NTCO_IORING_LOG_SUBMISSION_FAILED(entry, error);
+                return error;
             }
+        }
 
-            return error;
+        if (mode == ntco::IoRingSubmissionMode::e_IMMEDIATE || force) {
+            const bsl::size_t numToSubmit = d_submissionQueue.gather();
+
+            NTCO_IORING_LOG_ENTER_STARTING(numToSubmit, 0);
+
+            rc = ntco::IoRingUtil::enter(
+                d_ring, 
+                numToSubmit, 
+                0, 
+                0, 
+                0);
+
+            NTCO_IORING_LOG_ENTER_COMPLETE(numToSubmit, 0, rc);
+
+            if (rc < 0) {
+                error = ntsa::Error(errno);
+                NTCO_IORING_LOG_PUSH_FAILURE(error);
+                return error;
+            }
+        }
+
+        if (force) {
+            continue;
+        }
+        else {
+            break;
         }
     }
 
@@ -3297,11 +3271,6 @@ bsl::size_t IoRingDevice::wait(
 {
     IoRingWaiter* result = static_cast<IoRingWaiter*>(waiter);
 
-// This implementation atomically checks the completion queue first, then,
-// if no entries are available calls io_uring_enter(GET_EVENTS). Not sure
-// if this is correct.
-#if 0
-
     NTCI_LOG_CONTEXT();
 
     ntsa::Error error;
@@ -3310,8 +3279,7 @@ bsl::size_t IoRingDevice::wait(
     bsl::size_t entryCount = 0;
 
     while (true) {
-        entryCount =
-            d_completionQueue.pop(entryList, entryListCapacity);
+        entryCount = d_completionQueue.pop(entryList, entryListCapacity);
 
         if (entryCount == 0) {
             if (!earliestTimerDue.isNull()) {
@@ -3321,96 +3289,48 @@ bsl::size_t IoRingDevice::wait(
                 ntco::IoRingSubmission entry;
                 entry.prepareTimeout(&result->d_ts, earliestTimerDue.value());
 
-                error = this->submit(
-                    entry, ntco::IoRingSubmissionMode::e_DEFERRED);
-                if (error) {
-                    NTCI_LOG_WARN("I/O ring failed to submit timer");
-                }
+                this->submit(entry, ntco::IoRingSubmissionMode::e_DEFERRED);
             }
             else {
                 NTCO_IORING_LOG_WAIT_INDEFINITE();
             }
 
-            NTCI_LOG_TRACE("I/O ring calling wait");
+            const bsl::size_t numToSubmit = d_submissionQueue.gather();
+
+            NTCO_IORING_LOG_ENTER_STARTING(numToSubmit, 
+                                           minimumToComplete);
 
             rc = ntco::IoRingUtil::enter(
                 d_ring,
-                0,
-                static_cast<unsigned int>(minimumToComplete),
-                static_cast<unsigned int>(
-                    IoRingUtil::k_SYSTEM_CALL_ENTER_GET_EVENTS),
+                numToSubmit,
+                minimumToComplete,
+                IoRingUtil::k_SYSTEM_CALL_ENTER_GET_EVENTS,
                 0);
 
-            NTCI_LOG_TRACE("I/O ring leaving wait, rc = %d", rc);
+            NTCO_IORING_LOG_ENTER_COMPLETE(numToSubmit, 
+                                           minimumToComplete,
+                                           rc);
 
             if (rc < 0) {
                 ntsa::Error error(errno);
-
-                NTCI_LOG_ERROR("I/O ring failed to enter: %s",
-                            error.text().c_str());
+                NTCO_IORING_LOG_WAIT_FAILURE(error);
                 return 0;
             }
 
             continue;
         }
 
-        NTCO_IORING_LOG_WAIT_RESULT(entryCount);
+        if (entryCount == 1 && entryList[0].event() == 0) {
+            NTCO_IORING_LOG_WAIT_TIMEOUT();
+        }
+        else {
+            NTCO_IORING_LOG_WAIT_RESULT(entryCount);
+        }
 
         break;
     }
 
-    BSLS_ASSERT(entryCount > 0);
     return entryCount;
-
-#else
-
-    NTCI_LOG_CONTEXT();
-
-    ntsa::Error error;
-    int         rc;
-
-    if (!earliestTimerDue.isNull()) {
-        NTCO_IORING_LOG_WAIT_TIMED_HIGH_PRECISION(earliestTimerDue.value());
-
-        ntco::IoRingSubmission entry;
-        entry.prepareTimeout(&result->d_ts, earliestTimerDue.value());
-
-        error = this->submit(entry, ntco::IoRingSubmissionMode::e_DEFERRED);
-        if (error) {
-            NTCI_LOG_WARN("I/O ring failed to submit timer");
-        }
-    }
-    else {
-        NTCO_IORING_LOG_WAIT_INDEFINITE();
-    }
-
-    NTCI_LOG_TRACE("I/O ring calling wait");
-
-    const unsigned int numToSubmit = d_submissionQueue.gather();
-    rc = ntco::IoRingUtil::enter(
-        d_ring,
-        numToSubmit,
-        static_cast<unsigned int>(minimumToComplete),
-        static_cast<unsigned int>(IoRingUtil::k_SYSTEM_CALL_ENTER_GET_EVENTS),
-        0);
-
-    NTCI_LOG_TRACE("I/O ring leaving wait, rc = %d", rc);
-
-    if (rc < 0) {
-        ntsa::Error error(errno);
-
-        NTCI_LOG_ERROR("I/O ring failed to enter: %s", error.text().c_str());
-        return 0;
-    }
-
-    bsl::size_t entryCount =
-        d_completionQueue.pop(entryList, entryListCapacity);
-
-    NTCO_IORING_LOG_WAIT_RESULT(entryCount);
-
-    return entryCount;
-
-#endif
 }
 
 bsl::size_t IoRingDevice::flush(ntco::IoRingCompletion* entryList,
@@ -3454,280 +3374,6 @@ bsl::uint32_t IoRingDevice::completionQueueCapacity() const
 {
     return d_completionQueue.capacity();
 }
-
-#else
-
-IoRingDevice::IoRingDevice(bslma::Allocator* basicAllocator)
-: d_sqeLock(bsls::SpinLock::s_unlocked)
-, d_cqeLock(bsls::SpinLock::s_unlocked)
-, d_ring()
-, d_params()
-, d_allocator_p(bslma::Default::allocator(basicAllocator))
-{
-    NTCI_LOG_CONTEXT();
-
-    ntsa::Error error;
-    int rc;
-
-    // Ensure the rlimit MEMLOCK is sufficient.
-#if 0
-    {
-        rlimit new_limit = { 0 };
-        rlimit old_limit = { 0 };
-
-        new_limit.rlim_cur = 1024 * 64;
-        new_limit.rlim_max = 1024 * 64;
-
-        rc = prlimit(getpid(), RLIMIT_MEMLOCK, &new_limit, &old_limit);
-        if (rc != 0) {
-            ntsa::Error error(errno);
-            NTCI_LOG_WARN("Failed to set RLIMIT_MEMLOCK: %s",
-                            error.text().c_str());
-        }
-
-        NTCI_LOG_INFO("I/O ring RLIMIT_MEMLOCK current = %d, maximum = %d",
-                        (int)(old_limit.rlim_cur),
-                        (int)(old_limit.rlim_max));
-    }
-#endif
-
-    // Zero the I/O uring structures.
-
-    bsl::memset(&d_ring, 0, sizeof d_ring);
-    bsl::memset(&d_params, 0, sizeof d_params);
-
-    // Setup a new I/O ring.
-
-    const bsl::uint32_t QUEUE_DEPTH = 1024;
-
-    rc = io_uring_queue_init_params(QUEUE_DEPTH, &d_ring, &d_params);
-    if (rc != 0) {
-        ntsa::Error error(errno);
-        if (errno == ENOMEM) {
-            NTCI_LOG_ERROR("I/O ring failed to allocate memory locked pages: "
-                           "raise per-user ulimit "
-                           "(see `ulimit -l` and "
-                           "'setrlimit' RLIMIT_MEMLOCK)");
-        }
-        NTCI_LOG_ERROR("I/O ring failed to setup: %s", error.text().c_str());
-        bsl::abort();
-    }
-
-    BSLS_ASSERT(d_ring.ring_fd > 0);
-
-    NTCI_LOG_TRACE("I/O ring file descriptor %d created", d_ring.ring_fd);
-}
-
-IoRingDevice::~IoRingDevice()
-{
-    NTCI_LOG_CONTEXT();
-
-    // Unmap the virtual memory for the submission and completion queue for
-    // the I/O ring.
-
-    int fd = d_ring.ring_fd;
-    io_uring_queue_exit(&d_ring);
-
-    // Zero the I/O uring structures.
-
-    bsl::memset(&d_ring, 0, sizeof d_ring);
-    bsl::memset(&d_params, 0, sizeof d_params);
-
-    NTCI_LOG_TRACE("I/O ring file descriptor %d closed", fd);
-}
-
-// Submit the specified 'entry' to the submission queue. Return the error.
-ntsa::Error IoRingDevice::submit(const ntco::IoRingSubmission& entry)
-{
-    NTCI_LOG_CONTEXT();
-
-    ntsa::Error error;
-    int rc;
-
-    NTCI_LOG_TRACE("I/O ring pushing submission entry: "
-                   "user_data = %p, op = %s, flags = %u, fd = %d",
-                   entry.event(),
-                   IoRingUtil::describeOpCode(entry.opcode()),
-                   entry.flags(),
-                   entry.handle());
-
-    BSLS_ASSERT(entry.handle() > 0 || entry.handle() == -1);
-    BSLS_ASSERT(entry.event() != 0 || entry.opcode() == IORING_OP_TIMEOUT ||
-                entry.opcode() == IORING_OP_ASYNC_CANCEL);
-
-    // MRM: Move to individual functions that allocate the event attached
-    // to the SQE.
-
-    ntcs::Event* event = entry.event();
-
-    if (event) {
-        BSLS_ASSERT(event->d_status == ntcs::EventStatus::e_FREE);
-        event->d_status = ntcs::EventStatus::e_PENDING;
-    }
-
-    {
-        bsls::SpinLockGuard lock(&d_sqeLock);
-
-        ntco::IoRingSubmission* target =
-            reinterpret_cast<ntco::IoRingSubmission*>(
-                io_uring_get_sqe(&d_ring));
-        bsl::memcpy(target, &entry, sizeof(ntco::IoRingSubmission));
-
-        rc = io_uring_submit(&d_ring);
-    }
-
-    if (rc < 0) {
-        error = ntsa::Error(errno);
-        if (event) {
-            NTCI_LOG_ERROR("I/O ring failed to submit event type %s: %s",
-                           ntcs::EventType::toString(event->d_type),
-                           error.text().c_str());
-        }
-        else {
-            NTCI_LOG_ERROR("I/O ring failed to submit: %s",
-                           error.text().c_str());
-        }
-
-        return error;
-    }
-
-    return ntsa::Error();
-}
-
-bsl::size_t IoRingDevice::wait(
-    ntci::Waiter                                   waiter,
-    ntco::IoRingCompletion*                        entryList,
-    bsl::size_t                                    entryListCapacity,
-    bsl::size_t                                    minimumToComplete,
-    const bdlb::NullableValue<bsls::TimeInterval>& earliestTimerDue)
-{
-    NTCI_LOG_CONTEXT();
-
-    ntsa::Error error;
-    int rc;
-
-    IoRingWaiter* result = static_cast<IoRingWaiter*>(waiter);
-
-    {
-        bsls::SpinLockGuard lock(&d_cqeLock);
-
-        enum { CQE_ARRAY_CAPACITY = 128 };
-
-        ::io_uring_cqe* cqeArray[CQE_ARRAY_CAPACITY];
-        unsigned int cqeArrayCapacity = CQE_ARRAY_CAPACITY;
-        if (entryListCapacity < CQE_ARRAY_CAPACITY) {
-            cqeArrayCapacity = entryListCapacity;
-        }
-
-        unsigned int cqeCount =
-            io_uring_peek_batch_cqe(&d_ring, cqeArray, entryListCapacity);
-        BSLS_ASSERT(cqeCount <= entryListCapacity);
-
-        if (cqeCount > 0) {
-            NTCO_IORING_LOG_WAIT_RESULT(cqeCount);
-
-            for (unsigned int cqeIndex = 0; cqeIndex < cqeCount; ++cqeIndex) {
-                bsl::memcpy(&entryList[cqeIndex],
-                            cqeArray[cqeIndex],
-                            sizeof(::io_uring_cqe));
-
-#if NTC_BUILD_WITH_IORING_LIBURING_OPTIMIZATIONS == 0
-                io_uring_cqe_seen(&d_ring, cqeArray[cqeIndex]);
-#endif
-            }
-
-#if NTC_BUILD_WITH_IORING_LIBURING_OPTIMIZATIONS
-            io_uring_cq_advance(&d_ring, cqeCount);
-#endif
-
-            return cqeCount;
-        }
-    }
-
-    if (!earliestTimerDue.isNull()) {
-        NTCO_IORING_LOG_WAIT_TIMED_HIGH_PRECISION(earliestTimerDue.value());
-
-        ntco::IoRingSubmission entry;
-        entry.prepareTimeout(&result->d_ts, earliestTimerDue.value());
-
-        error = this->submit(entry);
-        if (error) {
-            NTCI_LOG_WARN("I/O ring failed to submit timer");
-        }
-    }
-    else {
-        NTCO_IORING_LOG_WAIT_INDEFINITE();
-    }
-
-    // TOOD: Handle a resulting CQE with its user_data field set to
-    // LIBURING_UDATA_TIMEOUT, which indicates an internal timeout, when
-    // the liburing functions that internally implement timers are adopted.
-
-    // MRM: We must protect against simultaneous threads waiting on the
-    // completion queue, as when dynamic load balancing is configured.
-
-    NTCI_LOG_TRACE("I/O ring calling wait");
-
-    ::io_uring_cqe* cqe = 0;
-    rc = io_uring_wait_cqe(&d_ring, &cqe);
-
-    NTCI_LOG_TRACE("I/O ring leaving wait, rc = %d", rc);
-
-    if (rc < 0) {
-        ntsa::Error error(-rc);
-        NTCO_IORING_LOG_WAIT_FAILURE(error);
-        return 0;
-    }
-
-    NTCO_IORING_LOG_WAIT_RESULT(1);
-
-    BSLS_ASSERT(cqe);
-
-    bsl::memcpy(&entryList[0], cqe, sizeof(::io_uring_cqe));
-    io_uring_cqe_seen(&d_ring, cqe);
-
-    return 1;
-}
-
-bsl::size_t IoRingDevice::flush(ntco::IoRingCompletion* entryList,
-                                bsl::size_t entryListCapacity)
-{
-    bsls::SpinLockGuard lock(&d_cqeLock);
-
-    enum { CQE_ARRAY_CAPACITY = 128 };
-
-    ::io_uring_cqe* cqeArray[CQE_ARRAY_CAPACITY];
-    unsigned int cqeArrayCapacity = CQE_ARRAY_CAPACITY;
-    if (entryListCapacity < CQE_ARRAY_CAPACITY) {
-        cqeArrayCapacity = entryListCapacity;
-    }
-
-    unsigned int cqeCount =
-        io_uring_peek_batch_cqe(&d_ring, cqeArray, entryListCapacity);
-    BSLS_ASSERT(cqeCount <= entryListCapacity);
-
-    if (cqeCount > 0) {
-        for (unsigned int cqeIndex = 0; cqeIndex < cqeCount; ++cqeIndex) {
-            bsl::memcpy(&entryList[cqeIndex],
-                        cqeArray[cqeIndex],
-                        sizeof(::io_uring_cqe));
-
-#if NTC_BUILD_WITH_IORING_LIBURING_OPTIMIZATIONS == 0
-            io_uring_cqe_seen(&d_ring, cqeArray[cqeIndex]);
-#endif
-        }
-
-#if NTC_BUILD_WITH_IORING_LIBURING_OPTIMIZATIONS
-        io_uring_cq_advance(&d_ring, cqeCount);
-#endif
-
-        return cqeCount;
-    }
-
-    return 0;
-}
-
-#endif
 
 IoRingContext::IoRingContext(ntsa::Handle      handle,
                              bslma::Allocator* basicAllocator)
@@ -3887,39 +3533,39 @@ const char* IoRingUtil::describeOpCode(int opcode)
     return "???";
 }
 
-int IoRingUtil::setup(unsigned int entries, ntco::IoRingConfig* parameters)
+int IoRingUtil::setup(bsl::size_t entries, ntco::IoRingConfig* parameters)
 {
     return static_cast<int>(::syscall(static_cast<long>(k_SYSTEM_CALL_SETUP),
-                                      entries,
+                                      static_cast<unsigned int>(entries),
                                       parameters));
 }
 
-int IoRingUtil::enter(int          ring,
-                      unsigned int submissions,
-                      unsigned int completions,
-                      unsigned int flags,
-                      sigset_t*    signals)
+int IoRingUtil::enter(int           ring,
+                      bsl::size_t   submissions,
+                      bsl::size_t   completions,
+                      bsl::uint32_t flags,
+                      sigset_t*     signals)
 {
     return static_cast<int>(::syscall(static_cast<long>(k_SYSTEM_CALL_ENTER),
                                       ring,
-                                      submissions,
-                                      completions,
-                                      flags,
+                                      static_cast<unsigned int>(submissions),
+                                      static_cast<unsigned int>(completions),
+                                      static_cast<unsigned int>(flags),
                                       signals,
                                       _NSIG / 8));
 }
 
-int IoRingUtil::control(int          ring,
-                        unsigned int operation,
-                        void*        operand,
-                        unsigned int count)
+int IoRingUtil::control(int         ring,
+                        bsl::size_t operation,
+                        void*       operand,
+                        bsl::size_t count)
 {
     return static_cast<int>(
         ::syscall(static_cast<long>(k_SYSTEM_CALL_REGISTER),
                   ring,
-                  operation,
+                  static_cast<unsigned int>(operation),
                   operand,
-                  count));
+                  static_cast<unsigned int>(count)));
 }
 
 bool IoRingUtil::isSupported()
@@ -3963,8 +3609,9 @@ IoRingTest::~IoRingTest()
 {
 }
 
-IoRingDeviceTest::IoRingDeviceTest(bslma::Allocator *basicAllocator)
-: d_device(basicAllocator)
+IoRingDeviceTest::IoRingDeviceTest(bsl::size_t       queueDepth, 
+                                   bslma::Allocator *basicAllocator)
+: d_device(queueDepth, basicAllocator)
 , d_eventPool(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -4049,12 +3696,7 @@ void IoRingDeviceTest::wait(bsl::vector<bsl::uint64_t> *result,
     for (bsl::size_t entryIndex = 0; entryIndex < entryCount; ++entryIndex) {
         const ntco::IoRingCompletion& entry = entryList[entryIndex];
 
-        NTCI_LOG_TRACE("I/O ring popped completed entry: "
-                       "user_data = %p, flags = %u, result = %d, error = %s",
-                       entry.event(),
-                       entry.flags(),
-                       entry.result(),
-                       entry.error().text().c_str());
+        NTCO_IORING_LOG_COMPLETION_POPPED(entry);
 
         bslma::ManagedPtr<ntcs::Event> event(entry.event(), &d_eventPool);
 
@@ -4501,7 +4143,7 @@ class IoRing : public ntci::Proactor,
 void IoRing::interruptComplete()
 {
     NTCI_LOG_CONTEXT();
-    NTCI_LOG_TRACE("I/O ring interrupt complete");
+    NTCO_IORING_LOG_INTERRUPT_COMPLETE(d_interruptsPending);
 
     BSLS_ASSERT(d_interruptsPending > 0);
     --d_interruptsPending;
@@ -4613,12 +4255,7 @@ void IoRing::wait(ntci::Waiter waiter)
     for (bsl::size_t entryIndex = 0; entryIndex < entryCount; ++entryIndex) {
         const ntco::IoRingCompletion& entry = entryList[entryIndex];
 
-        NTCI_LOG_TRACE("I/O ring popped completed entry: "
-                       "user_data = %p, flags = %u, result = %d, error = %s",
-                       entry.event(),
-                       entry.flags(),
-                       entry.result(),
-                       entry.error().text().c_str());
+        NTCO_IORING_LOG_COMPLETION_POPPED(entry);
 
         if (NTCCFG_UNLIKELY(entry.event() == 0)) {
             // Assumed to be a timer or cancellation, since only timers and
@@ -4954,8 +4591,8 @@ bsl::size_t IoRing::maxThreads() const
 IoRing::IoRing(const ntca::ProactorConfig&        configuration,
                const bsl::shared_ptr<ntci::User>& user,
                bslma::Allocator*                  basicAllocator)
-: d_object("ntco::Proactor")
-, d_device(basicAllocator)
+: d_object("ntco::IoRing")
+, d_device(NTCO_IORING_QUEUE_DEPTH, basicAllocator)
 , d_eventPool(basicAllocator)
 , d_contextMapMutex()
 , d_contextMap(basicAllocator)
@@ -5650,7 +5287,7 @@ void IoRing::interruptOne()
         return;
     }
 
-    NTCI_LOG_TRACE("I/O ring submitting interrupt");
+    NTCO_IORING_LOG_INTERRUPT_STARTING();
 
     ++d_interruptsPending;
 
@@ -5704,10 +5341,9 @@ void IoRing::interruptAll()
         return;
     }
 
-    NTCI_LOG_TRACE("I/O ring submitting %zu interrupt(s)",
-                   numInterruptsToPost);
-
     for (bsl::size_t i = 0; i < numInterruptsToPost; ++i) {
+        NTCO_IORING_LOG_INTERRUPT_STARTING();
+
         ++d_interruptsPending;
 
         bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
@@ -6004,12 +5640,13 @@ bsl::shared_ptr<ntci::Proactor> IoRingFactory::createProactor(
 }
 
 bsl::shared_ptr<ntco::IoRingTest> IoRingFactory::createTest(
+    bsl::size_t       queueDepth,
     bslma::Allocator* basicAllocator)
 {
     bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
 
     bsl::shared_ptr<ntco::IoRingDeviceTest> test;
-    test.createInplace(allocator, allocator);
+    test.createInplace(allocator, queueDepth, allocator);
 
     return test;
 }
