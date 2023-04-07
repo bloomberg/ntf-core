@@ -1267,30 +1267,30 @@ ntsa::Error ProactorListenerSocket::lastError() const
 }  // close namespace case1
 }  // close test namespace
 
-#define NTCO_IORING_TEST_LOG_OPERATION(test, operationDescription, id) \
-    do { \
-        if (NTCCFG_TEST_VERBOSITY >= 3) { \
-            BSLS_LOG_INFO("%s: ID %zu" \
-                          "\n    Submission queue head: %zu" \
-                          "\n    Submission queue tail: %zu" \
-                          "\n    Completion queue head: %zu" \
-                          "\n    Completion queue tail: %zu", \
-                          operationDescription, \
-                          (bsl::size_t)(id), \
-                          (bsl::size_t)((test)->submissionQueueHead()), \
-                          (bsl::size_t)((test)->submissionQueueTail()), \
-                          (bsl::size_t)((test)->completionQueueHead()), \
-                          (bsl::size_t)((test)->completionQueueTail())); \
-        } \
+#define NTCO_IORING_TEST_LOG_OPERATION(test, operationDescription, id)        \
+    do {                                                                      \
+        if (NTCCFG_TEST_VERBOSITY >= 3) {                                     \
+            BSLS_LOG_INFO("%s: ID %zu"                                        \
+                          "\n    Submission queue head: %zu"                  \
+                          "\n    Submission queue tail: %zu"                  \
+                          "\n    Completion queue head: %zu"                  \
+                          "\n    Completion queue tail: %zu",                 \
+                          operationDescription,                               \
+                          (bsl::size_t)(id),                                  \
+                          (bsl::size_t)((test)->submissionQueueHead()),       \
+                          (bsl::size_t)((test)->submissionQueueTail()),       \
+                          (bsl::size_t)((test)->completionQueueHead()),       \
+                          (bsl::size_t)((test)->completionQueueTail()));      \
+        }                                                                     \
     } while (false)
 
-#define NTCO_IORING_TEST_LOG_PUSH_STARTING(test, id) \
+#define NTCO_IORING_TEST_LOG_PUSH_STARTING(test, id)                          \
     NTCO_IORING_TEST_LOG_OPERATION(test, "Push starting", id)
 
-#define NTCO_IORING_TEST_LOG_PUSH_COMPLETE(test, id) \
+#define NTCO_IORING_TEST_LOG_PUSH_COMPLETE(test, id)                          \
     NTCO_IORING_TEST_LOG_OPERATION(test, "Push complete", id)
 
-#define NTCO_IORING_TEST_LOG_POPPED(test, id) \
+#define NTCO_IORING_TEST_LOG_POPPED(test, id)                                 \
     NTCO_IORING_TEST_LOG_OPERATION(test, "Popped", id)
 
 NTCCFG_TEST_CASE(1)
@@ -1311,14 +1311,14 @@ NTCCFG_TEST_CASE(1)
         bsl::shared_ptr<ntco::IoRingFactory> proactorFactory;
         proactorFactory.createInplace(&ta, &ta);
 
-        bsl::shared_ptr<ntco::IoRingTest> test = 
+        bsl::shared_ptr<ntco::IoRingTest> test =
             proactorFactory->createTest(k_QUEUE_DEPTH, &ta);
 
         NTCCFG_TEST_EQ(test->submissionQueueCapacity(), k_QUEUE_DEPTH);
         NTCCFG_TEST_EQ(test->completionQueueCapacity(), k_QUEUE_DEPTH * 2);
 
         const bsl::size_t k_ROUND_COUNT = 3;
-        const bsl::size_t k_SUBMISSION_COUNT = 
+        const bsl::size_t k_SUBMISSION_COUNT =
             test->completionQueueCapacity() * k_ROUND_COUNT;
 
         for (bsl::size_t id = 0; id < k_SUBMISSION_COUNT; ++id) {
@@ -1334,9 +1334,8 @@ NTCCFG_TEST_CASE(1)
             NTCCFG_TEST_EQ(result.size(), test->completionQueueCapacity());
 
             for (bsl::size_t i = 0; i < result.size(); ++i) {
-                const bsl::uint64_t id = 
-                    static_cast<bsl::uint64_t>(
-                        (round * test->completionQueueCapacity()) + i);
+                const bsl::uint64_t id = static_cast<bsl::uint64_t>(
+                    (round * test->completionQueueCapacity()) + i);
 
                 NTCO_IORING_TEST_LOG_POPPED(test, result[i]);
                 NTCCFG_TEST_EQ(result[i], id);

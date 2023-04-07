@@ -46,19 +46,19 @@ class IoRingTest
     /// Destroy this object.
     virtual ~IoRingTest();
 
-    /// Push a unit of work identified by the specified 'id' onto the 
-    /// submission queue and immediately submit it. Return the error. 
+    /// Push a unit of work identified by the specified 'id' onto the
+    /// submission queue and immediately submit it. Return the error.
     virtual ntsa::Error post(bsl::uint64_t id) = 0;
 
-    /// Push a unit of work identified by the specified 'id' onto the 
-    /// submission queue and but do not submit it until the next call to 
-    /// 'wait'. Return the error. 
+    /// Push a unit of work identified by the specified 'id' onto the
+    /// submission queue and but do not submit it until the next call to
+    /// 'wait'. Return the error.
     virtual ntsa::Error defer(bsl::uint64_t id) = 0;
 
     /// Block until at least the specified 'minimumToComplete' number of units
     /// of work have completed. Load into the specified 'result' the vector of
     /// identifiers of units of work completed.
-    virtual void wait(bsl::vector<bsl::uint64_t> *result, 
+    virtual void wait(bsl::vector<bsl::uint64_t>* result,
                       bsl::size_t                 minimumToComplete) = 0;
 
     // Return the index of the head entry in the submission queue.
@@ -119,9 +119,9 @@ class IoRingFactory : public ntci::ProactorFactory
         const bsl::shared_ptr<ntci::User>& user,
         bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
 
-    /// Create a new test for an I/O ring with the specified suggested 
-    /// 'queueDepth'. Optionally specify a 'basicAllocator' used to supply 
-    /// memory. If 'basicAllocator' is 0, the currently installed default 
+    /// Create a new test for an I/O ring with the specified suggested
+    /// 'queueDepth'. Optionally specify a 'basicAllocator' used to supply
+    /// memory. If 'basicAllocator' is 0, the currently installed default
     /// allocator is used. Return the error.
     static bsl::shared_ptr<ntco::IoRingTest> createTest(
         bsl::size_t       queueDepth,
