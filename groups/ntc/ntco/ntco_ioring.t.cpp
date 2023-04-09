@@ -236,6 +236,9 @@ class ProactorStreamSocket : public ntci::ProactorSocket,
     // Shutdown the stream socket in the specified 'direction'. Return the
     // error.
 
+    ntsa::Error cancel();
+    // Cancel all pending operations. Return the error.
+
     void abortOnError(bool value);
     // Fail the test if the socket encounters and error according to the
     // specified 'value'.
@@ -750,6 +753,17 @@ ntsa::Error ProactorStreamSocket::shutdown(ntsa::ShutdownType::Value direction)
     return d_proactor_sp->shutdown(self, direction);
 }
 
+ntsa::Error ProactorStreamSocket::cancel()
+{
+    bsl::shared_ptr<ProactorStreamSocket> self = this->getSelf(this);
+
+    ntsa::Error error = d_proactor_sp->cancel(self);
+
+    d_receiveData_sp.reset();
+
+    return error;
+}
+
 void ProactorStreamSocket::abortOnError(bool value)
 {
     d_abortOnErrorFlag = value;
@@ -944,6 +958,9 @@ class ProactorListenerSocket : public ntci::ProactorSocket,
     // Accept the next connection. Invoke the accept callback when the
     // next connection has been acceped or the error callback if the
     // accept fails. Return the error.
+
+    ntsa::Error cancel();
+    // Cancel all pending operations. Return the error.
 
     bsl::shared_ptr<test::case1::ProactorStreamSocket> accepted();
     // Pop and return the next available accepted socket.
@@ -1217,6 +1234,13 @@ ntsa::Error ProactorListenerSocket::accept()
     return d_proactor_sp->accept(self);
 }
 
+ntsa::Error ProactorListenerSocket::cancel()
+{
+    bsl::shared_ptr<ProactorSocket> self = this->getSelf(this);
+
+    return d_proactor_sp->cancel(self);
+}
+
 bsl::shared_ptr<test::case1::ProactorStreamSocket> ProactorListenerSocket::
     accepted()
 {
@@ -1453,6 +1477,20 @@ NTCCFG_TEST_CASE(2)
         while (!client->pollForConnected()) {
             proactor->poll(waiter);
         }
+
+        // Asynchronously accept the next connection.
+
+        error = listener->accept();
+        NTCCFG_TEST_OK(error);
+
+        // Cancel the accept operation.
+
+        error = listener->cancel();
+        NTCCFG_TEST_OK(error);
+
+        // Wait for the accept to be cancelled.
+
+        proactor->poll(waiter);
 
         // Send a single byte to the server.
 
