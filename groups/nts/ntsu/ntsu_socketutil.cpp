@@ -280,11 +280,11 @@ struct sockaddr_un_win32 {
 
 // Comment or set to 0 to disable logging the parameters and results of
 // sendmsg.
-#define NTSU_SOCKETUTIL_DEBUG_SENDMSG 1
+#define NTSU_SOCKETUTIL_DEBUG_SENDMSG 0
 
 // Comment or set to 0 to disable logging the parameters and results of
 // recvmsg.
-#define NTSU_SOCKETUTIL_DEBUG_RECVMSG 1
+#define NTSU_SOCKETUTIL_DEBUG_RECVMSG 0
 
 namespace BloombergLP {
 namespace ntsu {
