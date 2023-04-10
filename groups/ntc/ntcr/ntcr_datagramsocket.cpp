@@ -1083,6 +1083,12 @@ ntsa::Error DatagramSocket::privateRelaxFlowControl(
         if (relaxSend) {
             if (context.enableSend()) {
                 if (d_shutdownState.canSend()) {
+                    ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
+                    if (reactorRef) {
+                        reactorRef->showWritable(self,
+                                                 ntca::ReactorEventOptions());
+                    }
+
                     if (d_session_sp) {
                         ntca::WriteQueueEvent event;
                         event.setType(
@@ -1099,12 +1105,6 @@ ntsa::Error DatagramSocket::privateRelaxFlowControl(
                             defer,
                             &d_mutex);
                     }
-
-                    ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
-                    if (reactorRef) {
-                        reactorRef->showWritable(self,
-                                                 ntca::ReactorEventOptions());
-                    }
                 }
             }
         }
@@ -1112,6 +1112,12 @@ ntsa::Error DatagramSocket::privateRelaxFlowControl(
         if (relaxReceive) {
             if (context.enableReceive()) {
                 if (d_shutdownState.canReceive()) {
+                    ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
+                    if (reactorRef) {
+                        reactorRef->showReadable(self,
+                                                 ntca::ReactorEventOptions());
+                    }
+
                     if (d_session_sp) {
                         ntca::ReadQueueEvent event;
                         event.setType(
@@ -1127,12 +1133,6 @@ ntsa::Error DatagramSocket::privateRelaxFlowControl(
                             self,
                             defer,
                             &d_mutex);
-                    }
-
-                    ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
-                    if (reactorRef) {
-                        reactorRef->showReadable(self,
-                                                 ntca::ReactorEventOptions());
                     }
                 }
             }
@@ -1171,6 +1171,11 @@ ntsa::Error DatagramSocket::privateApplyFlowControl(
     if (d_flowControlState.apply(&context, direction, lock)) {
         if (applySend) {
             if (!context.enableSend()) {
+                ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
+                if (reactorRef) {
+                    reactorRef->hideWritable(self);
+                }
+
                 if (d_session_sp) {
                     ntca::WriteQueueEvent event;
                     event.setType(
@@ -1187,16 +1192,16 @@ ntsa::Error DatagramSocket::privateApplyFlowControl(
                         defer,
                         &d_mutex);
                 }
-
-                ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
-                if (reactorRef) {
-                    reactorRef->hideWritable(self);
-                }
             }
         }
 
         if (applyReceive) {
             if (!context.enableReceive()) {
+                ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
+                if (reactorRef) {
+                    reactorRef->hideReadable(self);
+                }
+
                 if (d_session_sp) {
                     ntca::ReadQueueEvent event;
                     event.setType(
@@ -1212,11 +1217,6 @@ ntsa::Error DatagramSocket::privateApplyFlowControl(
                         self,
                         defer,
                         &d_mutex);
-                }
-
-                ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
-                if (reactorRef) {
-                    reactorRef->hideReadable(self);
                 }
             }
         }

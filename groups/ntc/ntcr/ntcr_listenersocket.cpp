@@ -780,6 +780,12 @@ ntsa::Error ListenerSocket::privateRelaxFlowControl(
         if (relaxReceive) {
             if (context.enableReceive()) {
                 if (d_shutdownState.canReceive()) {
+                    ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
+                    if (reactorRef) {
+                        reactorRef->showReadable(self,
+                                                 ntca::ReactorEventOptions());
+                    }
+
                     if (d_session_sp) {
                         ntca::AcceptQueueEvent event;
                         event.setType(ntca::AcceptQueueEventType::
@@ -795,12 +801,6 @@ ntsa::Error ListenerSocket::privateRelaxFlowControl(
                             self,
                             defer,
                             &d_mutex);
-                    }
-
-                    ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
-                    if (reactorRef) {
-                        reactorRef->showReadable(self,
-                                                 ntca::ReactorEventOptions());
                     }
                 }
             }
@@ -841,6 +841,11 @@ ntsa::Error ListenerSocket::privateApplyFlowControl(
 
         if (applyReceive) {
             if (!context.enableReceive()) {
+                ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
+                if (reactorRef) {
+                    reactorRef->hideReadable(self);
+                }
+
                 if (d_session_sp) {
                     ntca::AcceptQueueEvent event;
                     event.setType(
@@ -856,11 +861,6 @@ ntsa::Error ListenerSocket::privateApplyFlowControl(
                         self,
                         defer,
                         &d_mutex);
-                }
-
-                ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
-                if (reactorRef) {
-                    reactorRef->hideReadable(self);
                 }
             }
         }
