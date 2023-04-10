@@ -261,6 +261,12 @@ struct sockaddr_un_win32 {
 #error Not implemented
 #endif
 
+#if defined(BSLS_PLATFORM_CMP_CLANG)
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#elif defined(BSLS_PLATFORM_CMP_GNU)
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 // Comment or set to zero to disable maintaining a process-wide set of
 // handles opened by this component.
 #define NTSU_SOCKETUTIL_DEBUG_HANDLE_MAP 0
@@ -274,11 +280,11 @@ struct sockaddr_un_win32 {
 
 // Comment or set to 0 to disable logging the parameters and results of
 // sendmsg.
-#define NTSU_SOCKETUTIL_DEBUG_SENDMSG 0
+#define NTSU_SOCKETUTIL_DEBUG_SENDMSG 1
 
 // Comment or set to 0 to disable logging the parameters and results of
 // recvmsg.
-#define NTSU_SOCKETUTIL_DEBUG_RECVMSG 0
+#define NTSU_SOCKETUTIL_DEBUG_RECVMSG 1
 
 namespace BloombergLP {
 namespace ntsu {
@@ -294,10 +300,9 @@ HandleSet                      s_handleSet(bslma::Default::globalAllocator());
 
 #if NTSU_SOCKETUTIL_DEBUG_SENDMSG
 
+// Describe the statistics measured for 'sendmsg'.
 class OutoingDataStats
 {
-    // This class tracks the statistics for 'sendmsg'.
-
     bsls::AtomicUint64 d_numSyscalls;
     bsls::AtomicUint64 d_totalBuffersSendable;
     bsls::AtomicUint64 d_totalBytesSendable;
@@ -332,29 +337,21 @@ OutoingDataStats::~OutoingDataStats()
         return;
     }
 
-    double avgBuffersSendablePerSyscall = 0;
-    if (d_numSyscalls > 0) {
-        avgBuffersSendablePerSyscall =
-            static_cast<double>(d_totalBuffersSendable) /
-            static_cast<double>(d_numSyscalls);
-    }
+    double avgBuffersSendablePerSyscall = 
+        static_cast<double>(d_totalBuffersSendable) /
+        static_cast<double>(d_numSyscalls);
 
-    double avgBytesSendablePerSyscall = 0;
-    if (d_numSyscalls > 0) {
-        avgBytesSendablePerSyscall =
-            static_cast<double>(d_totalBytesSendable) /
-            static_cast<double>(d_numSyscalls);
-    }
+    double avgBytesSendablePerSyscall =
+        static_cast<double>(d_totalBytesSendable) /
+        static_cast<double>(d_numSyscalls);
 
-    double avgBytesSentPerSyscall = 0;
-    if (d_numSyscalls > 0) {
-        avgBytesSentPerSyscall = static_cast<double>(d_totalBytesSent) /
-                                 static_cast<double>(d_numSyscalls);
-    }
+    double avgBytesSentPerSyscall = 
+        static_cast<double>(d_totalBytesSent) /
+        static_cast<double>(d_numSyscalls);
 
     char buffer[4096];
 
-    std::sprintf(buffer,
+    bsl::sprintf(buffer,
                  "--\n"
                  "NTSU PID:                                   %-20d\n"
                  "NTSU Total sendmsg syscalls:                %-20zu\n"
@@ -363,14 +360,14 @@ OutoingDataStats::~OutoingDataStats()
                  "NTSU Average bytes sendable per syscall:    %-20.2f\n"
                  "NTSU Average bytes sent per syscall:        %-20.2f\n",
                  (int)(::getpid()),
-                 (std::size_t)(d_numSyscalls),
-                 (std::size_t)(d_numWouldBlocks),
+                 (bsl::size_t)(d_numSyscalls),
+                 (bsl::size_t)(d_numWouldBlocks),
                  (double)(avgBuffersSendablePerSyscall),
                  (double)(avgBytesSendablePerSyscall),
                  (double)(avgBytesSentPerSyscall));
 
-    std::fprintf(stdout, "%s", buffer);
-    std::fflush(stdout);
+    bsl::fprintf(stdout, "%s", buffer);
+    bsl::fflush(stdout);
 }
 
 void OutoingDataStats::update(const struct iovec* buffersSendable,
@@ -378,9 +375,9 @@ void OutoingDataStats::update(const struct iovec* buffersSendable,
                               ssize_t             numBytesSent,
                               int                 errorNumber)
 {
-    std::size_t bytesSendable = 0;
-    for (std::size_t i = 0; i < numBuffersSendable; ++i) {
-        bytesSendable += static_cast<std::size_t>(buffersSendable[i].iov_len);
+    bsl::size_t bytesSendable = 0;
+    for (bsl::size_t i = 0; i < numBuffersSendable; ++i) {
+        bytesSendable += static_cast<bsl::size_t>(buffersSendable[i].iov_len);
     }
 
     d_totalBuffersSendable.addRelaxed(numBuffersSendable);
@@ -423,10 +420,9 @@ void OutoingDataStats::update(const struct iovec* buffersSendable,
 
 #if NTSU_SOCKETUTIL_DEBUG_RECVMSG
 
+// Describe the statistics measured for 'recvmsg'.
 class IncomingDataStats
 {
-    // This class tracks the statistics for 'sendmsg'.
-
     bsls::AtomicUint64 d_numSyscalls;
     bsls::AtomicUint64 d_totalBuffersReceivable;
     bsls::AtomicUint64 d_totalBytesReceivable;
@@ -461,30 +457,21 @@ IncomingDataStats::~IncomingDataStats()
         return;
     }
 
-    double avgBuffersReceivablePerSyscall = 0;
-    if (d_numSyscalls > 0) {
-        avgBuffersReceivablePerSyscall =
-            static_cast<double>(d_totalBuffersReceivable) /
-            static_cast<double>(d_numSyscalls);
-    }
+    double avgBuffersReceivablePerSyscall =
+        static_cast<double>(d_totalBuffersReceivable) /
+        static_cast<double>(d_numSyscalls);
 
-    double avgBytesReceivablePerSyscall = 0;
-    if (d_numSyscalls > 0) {
-        avgBytesReceivablePerSyscall =
-            static_cast<double>(d_totalBytesReceivable) /
-            static_cast<double>(d_numSyscalls);
-    }
+    double avgBytesReceivablePerSyscall =
+        static_cast<double>(d_totalBytesReceivable) /
+        static_cast<double>(d_numSyscalls);
 
-    double avgBytesReceivedPerSyscall = 0;
-    if (d_numSyscalls > 0) {
-        avgBytesReceivedPerSyscall =
-                           static_cast<double>(d_totalBytesReceived) /
-                           static_cast<double>(d_numSyscalls);
-    }
+    double avgBytesReceivedPerSyscall = 
+        static_cast<double>(d_totalBytesReceived) /
+        static_cast<double>(d_numSyscalls);
 
     char buffer[4096];
 
-    std::sprintf(buffer,
+    bsl::sprintf(buffer,
                  "--\n"
                  "NTSU PID:                                    %-20d\n"
                  "NTSU Total recvmsg syscalls:                 %-20zu\n"
@@ -493,14 +480,14 @@ IncomingDataStats::~IncomingDataStats()
                  "NTSU Average bytes receivable per syscall:   %-20.2f\n"
                  "NTSU Average bytes received per syscall:     %-20.2f\n",
                  (int)(::getpid()),
-                 (std::size_t)(d_numSyscalls),
-                 (std::size_t)(d_numWouldBlocks),
+                 (bsl::size_t)(d_numSyscalls),
+                 (bsl::size_t)(d_numWouldBlocks),
                  (double)(avgBuffersReceivablePerSyscall),
                  (double)(avgBytesReceivablePerSyscall),
                  (double)(avgBytesReceivedPerSyscall));
 
-    std::fprintf(stdout, "%s", buffer);
-    std::fflush(stdout);
+    bsl::fprintf(stdout, "%s", buffer);
+    bsl::fflush(stdout);
 }
 
 void IncomingDataStats::update(const struct iovec* buffersReceivable,
@@ -508,10 +495,10 @@ void IncomingDataStats::update(const struct iovec* buffersReceivable,
                                ssize_t             numBytesReceived,
                                int                 errorNumber)
 {
-    std::size_t bytesReceivable = 0;
-    for (std::size_t i = 0; i < numBuffersReceivable; ++i) {
+    bsl::size_t bytesReceivable = 0;
+    for (bsl::size_t i = 0; i < numBuffersReceivable; ++i) {
         bytesReceivable +=
-            static_cast<std::size_t>(buffersReceivable[i].iov_len);
+            static_cast<bsl::size_t>(buffersReceivable[i].iov_len);
     }
 
     d_totalBuffersReceivable.addRelaxed(numBuffersReceivable);
