@@ -3064,14 +3064,6 @@ ntsa::Error StreamSocket::privateOpen(
         }
     }
 
-    d_sendOptions.setMaxBuffers(bsl::min(
-        streamSocket->maxBuffersPerSend(),
-        static_cast<bsl::size_t>(NTCCFG_DEFAULT_MAX_INPLACE_BUFFERS)));
-
-    d_receiveOptions.setMaxBuffers(bsl::min(
-        streamSocket->maxBuffersPerReceive(),
-        static_cast<bsl::size_t>(NTCCFG_DEFAULT_MAX_INPLACE_BUFFERS)));
-
     {
         ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
         if (!reactorRef) {
