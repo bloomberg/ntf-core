@@ -41,11 +41,6 @@ struct TempUtil {
     // separator, even if the definition of the environment variable does
     // not.
     static bsl::string tempDir();
-
-    // Return the default temporary directory when no environment variables
-    // are defined.  The result is guaranteed to have a trailing path
-    // separator.
-    static bsl::string tempDirDefault();
 };
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
@@ -85,11 +80,6 @@ bsl::string TempUtil::tempDir()
     return result;
 }
 
-bsl::string TempUtil::tempDirDefault()
-{
-    return bsl::string("/tmp/");
-}
-
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
 
 bsl::string TempUtil::tempDir()
@@ -110,26 +100,6 @@ bsl::string TempUtil::tempDir()
         DWORD rc = GetTempPathA(static_cast<DWORD>(sizeof buffer), buffer);
         BSLS_ASSERT_OPT(0 != rc);
     }
-
-    bsl::string result(buffer);
-
-    if (result.empty()) {
-        result = ".";
-    }
-
-    if (result[result.size() - 1] != '/' && result[result.size() - 1] != '\\')
-    {
-        result.push_back('\\');
-    }
-
-    return result;
-}
-
-bsl::string TempUtil::tempDirDefault()
-{
-    char  buffer[MAX_PATH + 1];
-    DWORD rc = GetWindowsDirectoryA(buffer, static_cast<UINT>(sizeof buffer));
-    BSLS_ASSERT_OPT(0 != rc);
 
     bsl::string result(buffer);
 
