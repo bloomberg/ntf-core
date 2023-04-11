@@ -823,6 +823,83 @@ NTCCFG_TEST_CASE(7)
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
+NTCCFG_TEST_CASE(8)
+{
+    // Concern: Batching next suitable entries: limit maximum buffers to the
+    // maximum number sendable per system call (to avoid EMSGBUF).
+
+    ntccfg::TestAllocator ta;
+    {
+        const bsl::size_t k_BLOB_BUFFER_SIZE = 32;
+        const bsl::size_t k_MESSAGE_SIZE     = 1024;
+
+        bdlbb::SimpleBlobBufferFactory blobBufferFactory(k_BLOB_BUFFER_SIZE,
+                                                         &ta);
+
+        ntcq::SendQueue sendQueue(&ta);
+
+        bdlbb::Blob blob1(&blobBufferFactory, &ta);
+        bdlbb::Blob blob2(&blobBufferFactory, &ta);
+
+        ntsd::DataUtil::generateData(&blob1, k_MESSAGE_SIZE * 1, 0, 0);
+        ntsd::DataUtil::generateData(&blob2, k_MESSAGE_SIZE * 2, 0, 1);
+
+        {
+            bsl::shared_ptr<ntsa::Data> data;
+            data.createInplace(&ta, blob1, &blobBufferFactory, &ta);
+
+            ntcq::SendQueueEntry sendQueueEntry;
+            sendQueueEntry.setId(sendQueue.generateEntryId());
+            sendQueueEntry.setData(data);
+            sendQueueEntry.setLength(data->size());
+
+            sendQueue.pushEntry(sendQueueEntry);
+        }
+
+        {
+            bsl::shared_ptr<ntsa::Data> data;
+            data.createInplace(&ta, blob2, &blobBufferFactory, &ta);
+
+            ntcq::SendQueueEntry sendQueueEntry;
+            sendQueueEntry.setId(sendQueue.generateEntryId());
+            sendQueueEntry.setData(data);
+            sendQueueEntry.setLength(data->size());
+
+            sendQueue.pushEntry(sendQueueEntry);
+        }
+
+        NTCCFG_TEST_EQ(
+            sendQueue.size(),
+            static_cast<bsl::size_t>(blob1.length() + blob2.length()));
+
+        ntsa::Data batch(&ta);
+        batch.makeConstBufferArray();
+
+        ntsa::SendOptions sendOptions;
+        sendOptions.setMaxBuffers(
+            static_cast<bsl::size_t>(blob1.numDataBuffers()));
+
+        bool result = sendQueue.batchNext(&batch.constBufferArray(),
+                                          sendOptions);
+        NTCCFG_TEST_TRUE(result);
+
+        NTCCFG_TEST_EQ(batch.constBufferArray().numBuffers(),
+                       static_cast<bsl::size_t>(blob1.numDataBuffers()));
+
+        NTCCFG_TEST_EQ(
+            batch.constBufferArray().numBytes(),
+            static_cast<bsl::size_t>(blob1.length()));
+
+        ntsa::Data batchExpected(&blobBufferFactory, &ta);
+        batchExpected.makeBlob();
+
+        bdlbb::BlobUtil::append(&batchExpected.blob(), blob1);
+
+        NTCCFG_TEST_TRUE(ntsa::DataUtil::equals(batch, batchExpected));
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
 NTCCFG_TEST_DRIVER
 {
     NTCCFG_TEST_REGISTER(1);
@@ -832,5 +909,6 @@ NTCCFG_TEST_DRIVER
     NTCCFG_TEST_REGISTER(5);
     NTCCFG_TEST_REGISTER(6);
     NTCCFG_TEST_REGISTER(7);
+    NTCCFG_TEST_REGISTER(8);
 }
 NTCCFG_TEST_DRIVER_END;

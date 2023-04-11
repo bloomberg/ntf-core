@@ -20,6 +20,7 @@ BSLS_IDENT_RCSID(ntcq_send_cpp, "$Id$ $CSID$")
 
 #include <ntccfg_bind.h>
 #include <ntccfg_limits.h>
+#include <ntsu_socketutil.h>
 #include <bdlf_bind.h>
 #include <bdlf_memfn.h>
 #include <bdlf_placeholder.h>
@@ -110,7 +111,7 @@ bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*  result,
         return false;
     }
 
-    if (d_data_sp->isBlob()) {
+    if (NTCCFG_LIKELY(d_data_sp->isBlob())) {
         return this->batchNext(result, d_data_sp->blob(), options);
     }
     else if (d_data_sp->isSharedBlob()) {
@@ -156,6 +157,13 @@ bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*  result,
                                const bdlbb::Blob&       blob,
                                const ntsa::SendOptions& options) const
 {
+    const bsl::size_t maxBytes = options.maxBytes();
+
+    bsl::size_t maxBuffers = options.maxBuffers();
+    if (NTCCFG_UNLIKELY(maxBuffers == 0)) {
+        maxBuffers = ntsu::SocketUtil::maxBuffersPerSend();
+    }
+
     const int numDataBuffers = blob.numDataBuffers();
 
     for (int i = 0; i < numDataBuffers; ++i) {
@@ -169,12 +177,21 @@ bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*  result,
             size = static_cast<bsl::size_t>(blob.lastDataBufferLength());
         }
 
-        if (!this->batchNext(result,
-                             ntsa::ConstBuffer(blobBuffer.data(), size),
-                             options))
-        {
-            return false;
+        const char* data = blobBuffer.data();
+
+        if (NTCCFG_LIKELY(maxBytes > 0)) {
+            if (NTCCFG_UNLIKELY(result->numBytes() >= maxBytes)) {
+                return false;
+            }
         }
+
+        if (NTCCFG_LIKELY(maxBuffers > 0)) {
+            if (NTCCFG_UNLIKELY(result->numBuffers() >= maxBuffers)) {
+                return false;
+            }
+        }
+
+        result->append(data, size);
     }
 
     return true;
@@ -195,14 +212,21 @@ bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*  result,
                                const ntsa::ConstBuffer& constBuffer,
                                const ntsa::SendOptions& options) const
 {
-    if (options.maxBytes() > 0) {
-        if (result->numBytes() >= options.maxBytes()) {
+    const bsl::size_t maxBytes = options.maxBytes();
+    
+    if (maxBytes > 0) {
+        if (result->numBytes() >= maxBytes) {
             return false;
         }
     }
 
-    if (options.maxBuffers() > 0) {
-        if (result->numBuffers() >= options.maxBuffers()) {
+    bsl::size_t maxBuffers = options.maxBuffers();
+    if (maxBuffers == 0) {
+        maxBuffers = ntsu::SocketUtil::maxBuffersPerSend();
+    }
+
+    if (maxBuffers > 0) {
+        if (result->numBuffers() >= maxBuffers) {
             return false;
         }
     }
@@ -242,14 +266,21 @@ bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*    result,
                                const ntsa::MutableBuffer& mutableBuffer,
                                const ntsa::SendOptions&   options) const
 {
-    if (options.maxBytes() > 0) {
-        if (result->numBytes() >= options.maxBytes()) {
+    const bsl::size_t maxBytes = options.maxBytes();
+    
+    if (maxBytes > 0) {
+        if (result->numBytes() >= maxBytes) {
             return false;
         }
     }
 
-    if (options.maxBuffers() > 0) {
-        if (result->numBuffers() >= options.maxBuffers()) {
+    bsl::size_t maxBuffers = options.maxBuffers();
+    if (maxBuffers == 0) {
+        maxBuffers = ntsu::SocketUtil::maxBuffersPerSend();
+    }
+
+    if (maxBuffers > 0) {
+        if (result->numBuffers() >= maxBuffers) {
             return false;
         }
     }
@@ -325,6 +356,11 @@ bool SendQueue::batchNext(ntsa::ConstBufferArray*  result,
         return false;
     }
 
+    ntsa::SendOptions effectiveOptions = options;
+    if (effectiveOptions.maxBuffers() == 0) {
+        effectiveOptions.setMaxBuffers(ntsu::SocketUtil::maxBuffersPerSend());
+    }
+
     EntryList::const_iterator current = d_entryList.begin();
     EntryList::const_iterator end     = d_entryList.end();
 
@@ -336,16 +372,14 @@ bool SendQueue::batchNext(ntsa::ConstBufferArray*  result,
         }
 
         const SendQueueEntry& entry = *current;
-        if (!entry.batchNext(result, options)) {
+        if (!entry.batchNext(result, effectiveOptions)) {
             break;
         }
 
-        ++numEntries;
         ++current;
     }
 
-    if (numEntries == 0) {
-        result->clear();
+    if (result->numBuffers() == 0) {
         return false;
     }
 

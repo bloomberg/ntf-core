@@ -185,6 +185,79 @@ class SendQueueEntry
     bsl::shared_ptr<SendCallbackQueueEntry> d_callbackEntry_sp;
     bool                                    d_inProgress;
 
+  private:
+    /// If this entry is batchable, append a reference to this data of this
+    /// entry represented as the specified 'blob' to the specified 'result'
+    /// according to the specified 'options'. Return true if more entries
+    /// should be attempted to be batched, and false otherwise.
+    bool batchNext(ntsa::ConstBufferArray*  result,
+                   const bdlbb::Blob&       blob,
+                   const ntsa::SendOptions& options) const;
+
+    /// If this entry is batchable, append a reference to this data of this
+    /// entry represented as the specified 'blobBuffer' to the specified
+    /// 'result' according to the specified 'options'. Return true if more
+    /// entries should be attempted to be batched, and false otherwise.
+    bool batchNext(ntsa::ConstBufferArray*  result,
+                   const bdlbb::BlobBuffer& blobBuffer,
+                   const ntsa::SendOptions& options) const;
+
+    /// If this entry is batchable, append a reference to this data of this
+    /// entry represented as the specified 'constBuffer' to the specified
+    /// 'result' according to the specified 'options'. Return true if more
+    /// entries should be attempted to be batched, and false otherwise.
+    bool batchNext(ntsa::ConstBufferArray*  result,
+                   const ntsa::ConstBuffer& constBuffer,
+                   const ntsa::SendOptions& options) const;
+
+    /// If this entry is batchable, append a reference to this data of this
+    /// entry represented as the specified 'constBufferArray' to the specified
+    /// 'result' according to the specified 'options'. Return true if more
+    /// entries should be attempted to be batched, and false otherwise.
+    bool batchNext(ntsa::ConstBufferArray*       result,
+                   const ntsa::ConstBufferArray& constBufferArray,
+                   const ntsa::SendOptions&      options) const;
+
+    /// If this entry is batchable, append a reference to this data of this
+    /// entry represented as the specified 'constBufferPtrArray' to the
+    /// specified 'result' according to the specified 'options'. Return true if
+    /// more entries should be attempted to be batched, and false otherwise.
+    bool batchNext(ntsa::ConstBufferArray*          result,
+                   const ntsa::ConstBufferPtrArray& constBufferPtrArray,
+                   const ntsa::SendOptions&         options) const;
+
+    /// If this entry is batchable, append a reference to this data of this
+    /// entry represented as the specified 'mutableBuffer' to the specified
+    /// 'result' according to the specified 'options'. Return true if more
+    /// entries should be attempted to be batched, and false otherwise.
+    bool batchNext(ntsa::ConstBufferArray*    result,
+                   const ntsa::MutableBuffer& mutableBuffer,
+                   const ntsa::SendOptions&   options) const;
+
+    /// If this entry is batchable, append a reference to this data of this
+    /// entry represented as the specified 'mutableBufferArray' to the
+    /// specified 'result' according to the specified 'options'. Return true if
+    /// more entries should be attempted to be batched, and false otherwise.
+    bool batchNext(ntsa::ConstBufferArray*         result,
+                   const ntsa::MutableBufferArray& mutableBufferArray,
+                   const ntsa::SendOptions&        options) const;
+
+    /// If this entry is batchable, append a reference to this data of this
+    /// entry represented as the specified 'mutableBufferPtrArray' to the
+    /// specified 'result' according to the specified 'options'. Return true if
+    /// more entries should be attempted to be batched, and false otherwise.
+    bool batchNext(ntsa::ConstBufferArray*            result,
+                   const ntsa::MutableBufferPtrArray& mutableBufferPtrArray,
+                   const ntsa::SendOptions&           options) const;
+
+    /// If this entry is batchable, append a reference to this data of this
+    /// entry represented as the specified 'string' to the specified 'result'
+    /// according to the specified 'options'. Return true if more entries
+    /// should be attempted to be batched, and false otherwise.
+    bool batchNext(ntsa::ConstBufferArray*  result,
+                   const bsl::string&       string,
+                   const ntsa::SendOptions& options) const;
+
   public:
     /// Create a new send queue entry.
     SendQueueEntry();
@@ -239,72 +312,10 @@ class SendQueueEntry
     void closeTimer();
 
     /// If this entry is batchable, append a reference to this data of this
-    /// entry to the specified 'result' and return true. Otherwise, return
-    /// false.
+    /// entry to the specified 'result' according to the specified 'options'.
+    /// Return true if more entries should be attempted to be batched, and
+    /// false otherwise.
     bool batchNext(ntsa::ConstBufferArray*  result,
-                   const ntsa::SendOptions& options) const;
-
-    /// If the specified 'blob' is batchable, append to the specified 'result'
-    /// the data referenced by the 'blob' and return true. Otherwise, return
-    /// false.
-    bool batchNext(ntsa::ConstBufferArray*  result,
-                   const bdlbb::Blob&       blob,
-                   const ntsa::SendOptions& options) const;
-
-    /// If the specified 'blobBuffer' is batchable, append to the specified
-    /// 'result' the data referenced by the 'blobBuffer' and return true.
-    /// Otherwise, return false.
-    bool batchNext(ntsa::ConstBufferArray*  result,
-                   const bdlbb::BlobBuffer& blobBuffer,
-                   const ntsa::SendOptions& options) const;
-
-    /// If the specified 'constBuffer' is batchable, append to the specified
-    /// 'result' the data referenced by the 'constBuffer' and return true.
-    /// Otherwise, return false.
-    bool batchNext(ntsa::ConstBufferArray*  result,
-                   const ntsa::ConstBuffer& constBuffer,
-                   const ntsa::SendOptions& options) const;
-
-    /// If the specified 'constBufferArray' is batchable, append to the
-    /// specified 'result' the data referenced by the 'constBufferArray' and
-    /// return true. Otherwise, return false.
-    bool batchNext(ntsa::ConstBufferArray*       result,
-                   const ntsa::ConstBufferArray& constBufferArray,
-                   const ntsa::SendOptions&      options) const;
-
-    /// If the specified 'constBufferPtrArray' is batchable, append to the
-    /// specified 'result' the data referenced by the 'constBufferPtrArray' and
-    /// return true. Otherwise, return false.
-    bool batchNext(ntsa::ConstBufferArray*          result,
-                   const ntsa::ConstBufferPtrArray& constBufferPtrArray,
-                   const ntsa::SendOptions&         options) const;
-
-    /// If the specified 'mutableBuffer' is batchable, append to the specified
-    /// 'result' the data referenced by the 'mutableBuffer' and return true.
-    /// Otherwise, return false.
-    bool batchNext(ntsa::ConstBufferArray*    result,
-                   const ntsa::MutableBuffer& mutableBuffer,
-                   const ntsa::SendOptions&   options) const;
-
-    /// If the specified 'mutableBufferArray' is batchable, append to the
-    /// specified 'result' the data referenced by the 'mutableBufferArray' and
-    /// return true. Otherwise, return false.
-    bool batchNext(ntsa::ConstBufferArray*         result,
-                   const ntsa::MutableBufferArray& mutableBufferArray,
-                   const ntsa::SendOptions&        options) const;
-
-    /// If the specified 'mutableBufferPtrArray' is batchable, append to the
-    /// specified 'result' the data referenced by the 'mutableBufferPtrArray'
-    /// and return true. Otherwise, return false.
-    bool batchNext(ntsa::ConstBufferArray*            result,
-                   const ntsa::MutableBufferPtrArray& mutableBufferPtrArray,
-                   const ntsa::SendOptions&           options) const;
-
-    /// If the specified 'string' is batchable, append to the specified 'result'
-    /// the data referenced by the 'string' and return true. Otherwise, return
-    /// false.
-    bool batchNext(ntsa::ConstBufferArray*  result,
-                   const bsl::string&       string,
                    const ntsa::SendOptions& options) const;
 
     /// Return the identifier used to internally time-out the queue entry.
