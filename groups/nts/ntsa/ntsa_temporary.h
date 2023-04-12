@@ -35,7 +35,7 @@ namespace ntsa {
 /// temporary directory for the current process whose name is randomly assigned
 /// to guarantee no collisions with other directories or files in the effective
 /// temporary directory. The guarded directory, and all its contents, are
-/// automatically removed when an object of this class is destroyed destroyed.
+/// automatically removed when an object of this class is destroyed.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -128,42 +128,39 @@ class TemporaryFile
     TemporaryFile& operator=(const TemporaryFile&) BSLS_KEYWORD_DELETED;
 
   public:
-    // CREATORS
-    explicit TemporaryFile(bslma::Allocator* basicAllocator = 0);
     // Create a new file in the temporary directory that is removed when
     // this object is destroyed. Optionally specify a 'basicAllocator' used
     // to supply memory. If 'basicAllocator' is 0, the currently installed
     // default allocator is used.
-
-    TemporaryFile(ntsa::TemporaryDirectory* tempDirectory,
-                  bslma::Allocator*         basicAllocator = 0);
+    explicit TemporaryFile(bslma::Allocator* basicAllocator = 0);
+    
     // Create a new file in the specified 'tempDirectory' that is removed
     // when this object is destroyed. Optionally specify a 'basicAllocator'
     // used to supply memory. If 'basicAllocator' is 0, the currently
     // installed default allocator is used.
-
     TemporaryFile(ntsa::TemporaryDirectory* tempDirectory,
-                  const bsl::string&        filename,
                   bslma::Allocator*         basicAllocator = 0);
+    
     // Create a new file in the specified 'tempDirectory' having the
     // specified 'filename' that is removed when this object is destroyed.
     // Optionally specify a 'basicAllocator' used to supply memory. If
     // 'basicAllocator' is 0, the currently installed default allocator is
     // used.
-
-    ~TemporaryFile();
+    TemporaryFile(ntsa::TemporaryDirectory* tempDirectory,
+                  const bsl::string&        filename,
+                  bslma::Allocator*         basicAllocator = 0);
+    
     // Destroy this object.
+    ~TemporaryFile();
 
-    // MANIPULATORS
-    void keep();
     // Do not remove the file upon the destruction of this object.
-
-    ntsa::Error write(const bsl::string& content);
+    void keep();
+    
     // Write the specified 'content' to the file.
+    ntsa::Error write(const bsl::string& content);
 
-    // ACCESSORS
-    const bsl::string& path() const;
     // Return the path to the file.
+    const bsl::string& path() const;
 };
 
 }  // close package namespace

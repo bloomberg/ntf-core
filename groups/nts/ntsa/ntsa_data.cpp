@@ -1872,56 +1872,56 @@ struct DataUtilImpl {
 
     /// *** Copy ***
 
-    /// Copy of the specified 'source' into the specified destination. Return
+    /// Copy the specified 'source' into the specified 'destination'. Return
     /// the error.
     static ntsa::Error copyBlob(bsl::streambuf*    destination,
                                 const bdlbb::Blob& source);
 
-    /// Copy of the specified 'source' into the specified destination. Return
+    /// Copy the specified 'source' into the specified 'destination'. Return
     /// the error.
     static ntsa::Error copyBlobBuffer(bsl::streambuf*          destination,
                                       const bdlbb::BlobBuffer& source);
 
-    /// Copy of the specified 'source' into the specified destination. Return
+    /// Copy the specified 'source' into the specified 'destination'. Return
     /// the error.
     static ntsa::Error copyConstBuffer(bsl::streambuf*          destination,
                                        const ntsa::ConstBuffer& source);
 
-    /// Copy of the specified 'source' into the specified destination. Return
+    /// Copy the specified 'source' into the specified 'destination'. Return
     /// the error.
     static ntsa::Error copyConstBufferArray(
         bsl::streambuf*               destination,
         const ntsa::ConstBufferArray& source);
 
-    /// Copy of the specified 'source' into the specified destination. Return
+    /// Copy the specified 'source' into the specified 'destination'. Return
     /// the error.
     static ntsa::Error copyConstBufferPtrArray(
         bsl::streambuf*                  destination,
         const ntsa::ConstBufferPtrArray& source);
 
-    /// Copy of the specified 'source' into the specified destination. Return
+    /// Copy the specified 'source' into the specified 'destination'. Return
     /// the error.
     static ntsa::Error copyMutableBuffer(bsl::streambuf* destination,
                                          const ntsa::MutableBuffer& source);
 
-    /// Copy of the specified 'source' into the specified destination. Return
+    /// Copy the specified 'source' into the specified 'destination'. Return
     /// the error.
     static ntsa::Error copyMutableBufferArray(
         bsl::streambuf*                 destination,
         const ntsa::MutableBufferArray& source);
 
-    /// Copy of the specified 'source' into the specified destination. Return
+    /// Copy the specified 'source' into the specified 'destination'. Return
     /// the error.
     static ntsa::Error copyMutableBufferPtrArray(
         bsl::streambuf*                    destination,
         const ntsa::MutableBufferPtrArray& source);
 
-    /// Copy of the specified 'source' into the specified destination. Return
+    /// Copy the specified 'source' into the specified 'destination'. Return
     /// the error.
     static ntsa::Error copyFile(bsl::streambuf*   destination,
                                 const ntsa::File& source);
 
-    /// Copy of the specified 'source' into the specified destination. Return
+    /// Copy the specified 'source' into the specified 'destination'. Return
     /// the error.
     static ntsa::Error copyString(bsl::streambuf*    destination,
                                   const bsl::string& source);
@@ -2581,7 +2581,10 @@ void DataUtil::pop(ntsa::Data* data, bsl::size_t numBytes)
 ntsa::Error DataUtil::copy(bsl::streambuf*   destination,
                            const ntsa::Data& source)
 {
-    if (source.isBlob()) {
+    if (source.isUndefined()) {
+        return ntsa::Error();
+    }
+    else if (source.isBlob()) {
         return DataUtilImpl::copyBlob(destination, source.blob());
     }
     else if (source.isBlobBuffer()) {

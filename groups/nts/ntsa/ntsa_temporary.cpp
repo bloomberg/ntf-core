@@ -121,7 +121,6 @@ bsl::string TempUtil::tempDir()
 
 }  // close unnamed namespace
 
-// CREATORS
 TemporaryDirectory::TemporaryDirectory(bslma::Allocator* basicAllocator)
 : d_path(basicAllocator)
 , d_keep(false)
@@ -140,19 +139,16 @@ TemporaryDirectory::~TemporaryDirectory()
     }
 }
 
-// MANIPULATORS
 void TemporaryDirectory::keep()
 {
     d_keep = true;
 }
 
-// ACCESSORS
 const bsl::string& TemporaryDirectory::path() const
 {
     return d_path;
 }
 
-// CREATORS
 TemporaryFile::TemporaryFile(bslma::Allocator* basicAllocator)
 : d_path(basicAllocator)
 , d_keep(false)
@@ -240,7 +236,6 @@ TemporaryFile::~TemporaryFile()
     }
 }
 
-// MANIPULATORS
 void TemporaryFile::keep()
 {
     d_keep = true;
@@ -285,7 +280,6 @@ ntsa::Error TemporaryFile::write(const bsl::string& content)
     return ntsa::Error();
 }
 
-// ACCESSORS
 const bsl::string& TemporaryFile::path() const
 {
     return d_path;
