@@ -34,6 +34,7 @@ BSLS_IDENT_RCSID(ntcs_event_cpp, "$Id$ $CSID$")
 
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
 #include <windows.h>
+#include <winsock2.h>
 #endif
 
 namespace BloombergLP {
@@ -304,7 +305,7 @@ Event::Event(bslma::Allocator* basicAllocator)
 #endif
 
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
-    BSLMF_ASSERT(sizeof(d_address) >= sizeof(struct ::sockaddr_storage));
+    BSLMF_ASSERT(sizeof(d_address) >= sizeof(SOCKADDR_STORAGE));
     BSLS_ASSERT(static_cast<void*>(this) == static_cast<void*>(&d_overlapped));
 #endif
 }
