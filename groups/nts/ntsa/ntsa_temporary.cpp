@@ -33,7 +33,7 @@ namespace ntsa {
 
 namespace {
 
-// Provide utilities for implementing temporary directory and file guards. 
+// Provide utilities for implementing temporary directory and file guards.
 // This struct is thread safe.
 struct TempUtil {
     // Return the effective temporary directory defined for the user and
@@ -41,18 +41,18 @@ struct TempUtil {
     // separator, even if the definition of the environment variable does
     // not.
     static bsl::string tempDir();
-        
+
     // Return the default temporary directory when no environment variables
     // are defined.  The result is guaranteed to have a trailing path
     // separator.
-    static bsl::string tempDirDefault();  
+    static bsl::string tempDirDefault();
 };
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
 bsl::string TempUtil::tempDir()
 {
-    const char *tmp;
+    const char* tmp;
     tmp = std::getenv("TMPDIR");
     if (tmp == 0) {
         tmp = std::getenv("TMP");
@@ -96,7 +96,7 @@ bsl::string TempUtil::tempDir()
 {
     char buffer[MAX_PATH + 1];
 
-    const char *tmp;
+    const char* tmp;
 
     tmp = std::getenv("TMPDIR");
     if (tmp != 0) {
@@ -117,8 +117,8 @@ bsl::string TempUtil::tempDir()
         result = ".";
     }
 
-    if (result[result.size() - 1] != '/' && result[result.size() - 1] !=
-                                                '\\') {
+    if (result[result.size() - 1] != '/' && result[result.size() - 1] != '\\')
+    {
         result.push_back('\\');
     }
 
@@ -137,8 +137,8 @@ bsl::string TempUtil::tempDirDefault()
         result = ".";
     }
 
-    if (result[result.size() - 1] != '/' && result[result.size() - 1] !=
-                                                '\\') {
+    if (result[result.size() - 1] != '/' && result[result.size() - 1] != '\\')
+    {
         result.push_back('\\');
     }
 
@@ -149,10 +149,10 @@ bsl::string TempUtil::tempDirDefault()
 #error Not implemented
 #endif
 
-} // close unnamed namespace
+}  // close unnamed namespace
 
 // CREATORS
-TemporaryDirectory::TemporaryDirectory(bslma::Allocator *basicAllocator)
+TemporaryDirectory::TemporaryDirectory(bslma::Allocator* basicAllocator)
 : d_path(basicAllocator)
 , d_keep(false)
 {
@@ -183,7 +183,7 @@ const bsl::string& TemporaryDirectory::path() const
 }
 
 // CREATORS
-TemporaryFile::TemporaryFile(bslma::Allocator *basicAllocator)
+TemporaryFile::TemporaryFile(bslma::Allocator* basicAllocator)
 : d_path(basicAllocator)
 , d_keep(false)
 {
@@ -198,8 +198,8 @@ TemporaryFile::TemporaryFile(bslma::Allocator *basicAllocator)
     BSLS_ASSERT_OPT(rc == 0);
 }
 
-TemporaryFile::TemporaryFile(ntsa::TemporaryDirectory *tempDirectory, 
-                   bslma::Allocator         *basicAllocator)
+TemporaryFile::TemporaryFile(ntsa::TemporaryDirectory* tempDirectory,
+                             bslma::Allocator*         basicAllocator)
 : d_path(basicAllocator)
 , d_keep(false)
 {
@@ -226,9 +226,9 @@ TemporaryFile::TemporaryFile(ntsa::TemporaryDirectory *tempDirectory,
     BSLS_ASSERT_OPT(rc == 0);
 }
 
-TemporaryFile::TemporaryFile(ntsa::TemporaryDirectory *tempDirectory, 
-                   const bsl::string&        filename, 
-                   bslma::Allocator         *basicAllocator)
+TemporaryFile::TemporaryFile(ntsa::TemporaryDirectory* tempDirectory,
+                             const bsl::string&        filename,
+                             bslma::Allocator*         basicAllocator)
 : d_path(basicAllocator)
 , d_keep(false)
 {
@@ -251,11 +251,10 @@ TemporaryFile::TemporaryFile(ntsa::TemporaryDirectory *tempDirectory,
     rc = bdls::PathUtil::appendIfValid(&d_path, filename.c_str());
     BSLS_ASSERT_OPT(rc == 0);
 
-    bdls::FilesystemUtil::FileDescriptor descriptor = 
-        bdls::FilesystemUtil::open(
-            d_path.c_str(), 
-            bdls::FilesystemUtil::e_CREATE, 
-            bdls::FilesystemUtil::e_READ_WRITE);
+    bdls::FilesystemUtil::FileDescriptor descriptor =
+        bdls::FilesystemUtil::open(d_path.c_str(),
+                                   bdls::FilesystemUtil::e_CREATE,
+                                   bdls::FilesystemUtil::e_READ_WRITE);
 
     BSLS_ASSERT_OPT(descriptor != bdls::FilesystemUtil::k_INVALID_FD);
 
@@ -281,11 +280,10 @@ ntsa::Error TemporaryFile::write(const bsl::string& content)
 {
     int rc;
 
-    bdls::FilesystemUtil::FileDescriptor descriptor = 
-        bdls::FilesystemUtil::open(
-            d_path.c_str(), 
-            bdls::FilesystemUtil::e_OPEN, 
-            bdls::FilesystemUtil::e_READ_WRITE);
+    bdls::FilesystemUtil::FileDescriptor descriptor =
+        bdls::FilesystemUtil::open(d_path.c_str(),
+                                   bdls::FilesystemUtil::e_OPEN,
+                                   bdls::FilesystemUtil::e_READ_WRITE);
 
     BSLS_ASSERT_OPT(descriptor != bdls::FilesystemUtil::k_INVALID_FD);
 
@@ -294,9 +292,11 @@ ntsa::Error TemporaryFile::write(const bsl::string& content)
 
     while (c != 0) {
         const bsl::size_t k_CHUNK_SIZE = 1024 * 32;
-        bsl::size_t numBytesToWrite = c < k_CHUNK_SIZE ? c : k_CHUNK_SIZE;
+        bsl::size_t numBytesToWrite    = c < k_CHUNK_SIZE ? c : k_CHUNK_SIZE;
 
-        rc = bdls::FilesystemUtil::write(descriptor, p, static_cast<int>(numBytesToWrite));
+        rc = bdls::FilesystemUtil::write(descriptor,
+                                         p,
+                                         static_cast<int>(numBytesToWrite));
         if (rc < 0) {
             return ntsa::Error::last();
         }

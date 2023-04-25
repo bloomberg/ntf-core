@@ -115,8 +115,7 @@ bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*  result,
     }
     else if (d_data_sp->isSharedBlob()) {
         if (d_data_sp->sharedBlob()) {
-            return this->batchNext(
-                result, *d_data_sp->sharedBlob(), options);
+            return this->batchNext(result, *d_data_sp->sharedBlob(), options);
         }
     }
     else if (d_data_sp->isBlobBuffer()) {
@@ -126,24 +125,25 @@ bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*  result,
         return this->batchNext(result, d_data_sp->constBuffer(), options);
     }
     else if (d_data_sp->isConstBufferArray()) {
-        return this->batchNext(
-            result, d_data_sp->constBufferArray(), options);
+        return this->batchNext(result, d_data_sp->constBufferArray(), options);
     }
     else if (d_data_sp->isConstBufferPtrArray()) {
-        return this->batchNext(
-            result, d_data_sp->constBufferPtrArray(), options);
+        return this->batchNext(result,
+                               d_data_sp->constBufferPtrArray(),
+                               options);
     }
     else if (d_data_sp->isMutableBuffer()) {
-        return this->batchNext(
-            result, d_data_sp->mutableBuffer(), options);
+        return this->batchNext(result, d_data_sp->mutableBuffer(), options);
     }
     else if (d_data_sp->isMutableBufferArray()) {
-        return this->batchNext(
-            result, d_data_sp->mutableBufferArray(), options);
+        return this->batchNext(result,
+                               d_data_sp->mutableBufferArray(),
+                               options);
     }
     else if (d_data_sp->isMutableBufferPtrArray()) {
-        return this->batchNext(
-            result, d_data_sp->mutableBufferPtrArray(), options);
+        return this->batchNext(result,
+                               d_data_sp->mutableBufferPtrArray(),
+                               options);
     }
     else if (d_data_sp->isString()) {
         return this->batchNext(result, d_data_sp->string(), options);
@@ -221,9 +221,9 @@ bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*       result,
 }
 
 bool SendQueueEntry::batchNext(
-        ntsa::ConstBufferArray*          result,
-        const ntsa::ConstBufferPtrArray& constBufferPtrArray,
-        const ntsa::SendOptions&         options) const
+    ntsa::ConstBufferArray*          result,
+    const ntsa::ConstBufferPtrArray& constBufferPtrArray,
+    const ntsa::SendOptions&         options) const
 {
     for (bsl::size_t i = 0; i < constBufferPtrArray.numBuffers(); ++i) {
         if (!this->batchNext(result, constBufferPtrArray.buffer(i), options)) {
@@ -251,9 +251,9 @@ bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*    result,
 }
 
 bool SendQueueEntry::batchNext(
-        ntsa::ConstBufferArray*         result,
-        const ntsa::MutableBufferArray& mutableBufferArray,
-        const ntsa::SendOptions&        options) const
+    ntsa::ConstBufferArray*         result,
+    const ntsa::MutableBufferArray& mutableBufferArray,
+    const ntsa::SendOptions&        options) const
 {
     for (bsl::size_t i = 0; i < mutableBufferArray.numBuffers(); ++i) {
         if (!this->batchNext(result, mutableBufferArray.buffer(i), options)) {
@@ -265,14 +265,12 @@ bool SendQueueEntry::batchNext(
 }
 
 bool SendQueueEntry::batchNext(
-        ntsa::ConstBufferArray*            result,
-        const ntsa::MutableBufferPtrArray& mutableBufferPtrArray,
-        const ntsa::SendOptions&           options) const
+    ntsa::ConstBufferArray*            result,
+    const ntsa::MutableBufferPtrArray& mutableBufferPtrArray,
+    const ntsa::SendOptions&           options) const
 {
     for (bsl::size_t i = 0; i < mutableBufferPtrArray.numBuffers(); ++i) {
-        if (!this->batchNext(result,
-                             mutableBufferPtrArray.buffer(i),
-                             options))
+        if (!this->batchNext(result, mutableBufferPtrArray.buffer(i), options))
         {
             return false;
         }
@@ -285,10 +283,9 @@ bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*  result,
                                const bsl::string&       string,
                                const ntsa::SendOptions& options) const
 {
-    return this->batchNext(
-        result,
-        ntsa::ConstBuffer(string.data(), string.size()),
-        options);
+    return this->batchNext(result,
+                           ntsa::ConstBuffer(string.data(), string.size()),
+                           options);
 }
 
 SendQueue::SendQueue(bslma::Allocator* basicAllocator)
@@ -311,8 +308,8 @@ SendQueue::~SendQueue()
 {
 }
 
-bool SendQueue::batchNext(ntsa::ConstBufferArray   *result,
-                          const ntsa::SendOptions&  options) const
+bool SendQueue::batchNext(ntsa::ConstBufferArray*  result,
+                          const ntsa::SendOptions& options) const
 {
     result->clear();
 

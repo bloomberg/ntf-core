@@ -61,10 +61,10 @@ struct DataUtil {
     /// Load into the specified 'result' the specified 'size' sequence of
     /// bytes from the specified 'dataset' starting at the specified
     /// 'offset'.
-    static void generateData(ntsa::Data*  result,
-                             bsl::size_t  size,
-                             bsl::size_t  offset  = 0,
-                             bsl::size_t  dataset = 0);
+    static void generateData(ntsa::Data* result,
+                             bsl::size_t size,
+                             bsl::size_t offset  = 0,
+                             bsl::size_t dataset = 0);
 };
 
 }  // close package namespace

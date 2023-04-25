@@ -15,8 +15,8 @@
 
 #include <ntsa_data.h>
 
-#include <ntscfg_test.h>
 #include <ntsa_temporary.h>
+#include <ntscfg_test.h>
 
 #include <bdlbb_blob.h>
 #include <bdlbb_blobstreambuf.h>
@@ -688,16 +688,15 @@ NTSCFG_TEST_CASE(24)
         error = tempFile.write(bsl::string(test::DATA, test::DATA_SIZE));
         NTSCFG_TEST_OK(error);
 
-        bdls::FilesystemUtil::FileDescriptor fileDescriptor = 
-            bdls::FilesystemUtil::open(
-                tempFile.path().c_str(),
-                bdls::FilesystemUtil::e_OPEN,
-                bdls::FilesystemUtil::e_READ_ONLY);
+        bdls::FilesystemUtil::FileDescriptor fileDescriptor =
+            bdls::FilesystemUtil::open(tempFile.path().c_str(),
+                                       bdls::FilesystemUtil::e_OPEN,
+                                       bdls::FilesystemUtil::e_READ_ONLY);
 
         NTSCFG_TEST_NE(fileDescriptor, bdls::FilesystemUtil::k_INVALID_FD);
 
         ntsa::Data data(&ta);
-        {            
+        {
             ntsa::File& file = data.makeFile();
 
             file.setDescriptor(fileDescriptor);
@@ -712,16 +711,6 @@ NTSCFG_TEST_CASE(24)
     }
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
-
-
-
-
-
-
-
-
-
-
 
 NTSCFG_TEST_CASE(25)
 {
@@ -1136,16 +1125,15 @@ NTSCFG_TEST_CASE(36)
         error = tempFile.write(bsl::string(test::DATA, test::DATA_SIZE));
         NTSCFG_TEST_OK(error);
 
-        bdls::FilesystemUtil::FileDescriptor fileDescriptor = 
-            bdls::FilesystemUtil::open(
-                tempFile.path().c_str(),
-                bdls::FilesystemUtil::e_OPEN,
-                bdls::FilesystemUtil::e_READ_ONLY);
+        bdls::FilesystemUtil::FileDescriptor fileDescriptor =
+            bdls::FilesystemUtil::open(tempFile.path().c_str(),
+                                       bdls::FilesystemUtil::e_OPEN,
+                                       bdls::FilesystemUtil::e_READ_ONLY);
 
         NTSCFG_TEST_NE(fileDescriptor, bdls::FilesystemUtil::k_INVALID_FD);
 
         ntsa::Data data(&ta);
-        {            
+        {
             ntsa::File& file = data.makeFile();
 
             file.setDescriptor(fileDescriptor);
@@ -1161,7 +1149,6 @@ NTSCFG_TEST_CASE(36)
     }
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
-
 
 NTSCFG_TEST_DRIVER
 {
@@ -1191,7 +1178,6 @@ NTSCFG_TEST_DRIVER
     NTSCFG_TEST_REGISTER(23);
     NTSCFG_TEST_REGISTER(24);
 
-    
     NTSCFG_TEST_REGISTER(25);
     NTSCFG_TEST_REGISTER(26);
     NTSCFG_TEST_REGISTER(27);

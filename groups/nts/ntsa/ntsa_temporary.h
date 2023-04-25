@@ -19,9 +19,9 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntsa_error.h>
 #include <ntscfg_platform.h>
 #include <ntsscm_version.h>
-#include <ntsa_error.h>
 #include <bdls_filesystemutil.h>
 #include <bsl_string.h>
 
@@ -61,31 +61,33 @@ namespace ntsa {
 ///     BSLS_ASSERT(!bdls::FilesystemUtil::exists(directoryPath));
 ///
 /// @ingroup module_ntsa_system
-class TemporaryDirectory {
+class TemporaryDirectory
+{
     bsl::string d_path;
     bool        d_keep;
 
   private:
     // NOT IMPLEMENTED
     TemporaryDirectory(const TemporaryDirectory&) BSLS_KEYWORD_DELETED;
-    TemporaryDirectory& operator=(const TemporaryDirectory&) BSLS_KEYWORD_DELETED;
+    TemporaryDirectory& operator=(const TemporaryDirectory&)
+        BSLS_KEYWORD_DELETED;
 
   public:
     /// Create a new directory in the temporary directory that is removed
     /// when this object is destroyed. Optionally specify a 'basicAllocator'
     /// used to supply memory. If 'basicAllocator' is 0, the currently
     /// installed default allocator is used.
-    explicit TemporaryDirectory(bslma::Allocator *basicAllocator = 0);
-        
+    explicit TemporaryDirectory(bslma::Allocator* basicAllocator = 0);
+
     /// Destroy this object.
     ~TemporaryDirectory();
 
-    /// Do not remove the directory and all its contents upon the 
+    /// Do not remove the directory and all its contents upon the
     /// destruction of this object.
     void keep();
-        
+
     /// Return the path to the directory.
-    const bsl::string& path() const; 
+    const bsl::string& path() const;
 };
 
 /// Provide a temporary file.
@@ -116,7 +118,8 @@ class TemporaryDirectory {
 ///     BSLS_ASSERT(!bdls::FilesystemUtil::exists(filePath));
 ///
 /// @ingroup module_ntsa_system
-class TemporaryFile {
+class TemporaryFile
+{
     bsl::string d_path;
     bool        d_keep;
 
@@ -126,41 +129,41 @@ class TemporaryFile {
 
   public:
     // CREATORS
-    explicit TemporaryFile(bslma::Allocator *basicAllocator = 0);
-        // Create a new file in the temporary directory that is removed when
-        // this object is destroyed. Optionally specify a 'basicAllocator' used
-        // to supply memory. If 'basicAllocator' is 0, the currently installed
-        // default allocator is used.
+    explicit TemporaryFile(bslma::Allocator* basicAllocator = 0);
+    // Create a new file in the temporary directory that is removed when
+    // this object is destroyed. Optionally specify a 'basicAllocator' used
+    // to supply memory. If 'basicAllocator' is 0, the currently installed
+    // default allocator is used.
 
-    TemporaryFile(ntsa::TemporaryDirectory *tempDirectory, 
-             bslma::Allocator         *basicAllocator = 0);
-        // Create a new file in the specified 'tempDirectory' that is removed
-        // when this object is destroyed. Optionally specify a 'basicAllocator'
-        // used to supply memory. If 'basicAllocator' is 0, the currently 
-        // installed default allocator is used.
+    TemporaryFile(ntsa::TemporaryDirectory* tempDirectory,
+                  bslma::Allocator*         basicAllocator = 0);
+    // Create a new file in the specified 'tempDirectory' that is removed
+    // when this object is destroyed. Optionally specify a 'basicAllocator'
+    // used to supply memory. If 'basicAllocator' is 0, the currently
+    // installed default allocator is used.
 
-    TemporaryFile(ntsa::TemporaryDirectory *tempDirectory, 
-             const bsl::string&        filename, 
-             bslma::Allocator         *basicAllocator = 0);
-        // Create a new file in the specified 'tempDirectory' having the 
-        // specified 'filename' that is removed when this object is destroyed.
-        // Optionally specify a 'basicAllocator' used to supply memory. If 
-        // 'basicAllocator' is 0, the currently installed default allocator is
-        // used.
+    TemporaryFile(ntsa::TemporaryDirectory* tempDirectory,
+                  const bsl::string&        filename,
+                  bslma::Allocator*         basicAllocator = 0);
+    // Create a new file in the specified 'tempDirectory' having the
+    // specified 'filename' that is removed when this object is destroyed.
+    // Optionally specify a 'basicAllocator' used to supply memory. If
+    // 'basicAllocator' is 0, the currently installed default allocator is
+    // used.
 
     ~TemporaryFile();
-        // Destroy this object.
+    // Destroy this object.
 
     // MANIPULATORS
     void keep();
-        // Do not remove the file upon the destruction of this object.
+    // Do not remove the file upon the destruction of this object.
 
     ntsa::Error write(const bsl::string& content);
-        // Write the specified 'content' to the file.
+    // Write the specified 'content' to the file.
 
     // ACCESSORS
     const bsl::string& path() const;
-        // Return the path to the file.
+    // Return the path to the file.
 };
 
 }  // close package namespace

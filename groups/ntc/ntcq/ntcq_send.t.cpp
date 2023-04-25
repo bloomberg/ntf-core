@@ -21,8 +21,8 @@
 #include <ntsa_data.h>
 #include <ntsd_datautil.h>
 #include <bdlbb_blob.h>
-#include <bdlbb_blobutil.h>
 #include <bdlbb_blobstreambuf.h>
+#include <bdlbb_blobutil.h>
 #include <bdlbb_simpleblobbufferfactory.h>
 #include <bdlf_bind.h>
 #include <bdlf_placeholder.h>
@@ -173,16 +173,14 @@ struct EventUtil {
     // Process the specified 'event' from the specified 'sender'. Ensure the
     // event indicates the operation completed successfully. Increment the
     // specified 'numInvoked'.
-    static void processComplete(
-        bsls::AtomicUint*                    numInvoked,
-        const bsl::shared_ptr<ntci::Sender>& sender,
-        const ntca::SendEvent&               event);
+    static void processComplete(bsls::AtomicUint* numInvoked,
+                                const bsl::shared_ptr<ntci::Sender>& sender,
+                                const ntca::SendEvent&               event);
 };
 
-void EventUtil::processComplete(
-        bsls::AtomicUint*                    numInvoked,
-        const bsl::shared_ptr<ntci::Sender>& sender,
-        const ntca::SendEvent&               event)
+void EventUtil::processComplete(bsls::AtomicUint* numInvoked,
+                                const bsl::shared_ptr<ntci::Sender>& sender,
+                                const ntca::SendEvent&               event)
 {
     NTCI_LOG_CONTEXT();
 
@@ -194,7 +192,7 @@ void EventUtil::processComplete(
     ++(*numInvoked);
 }
 
-} // close namespace 'test'
+}  // close namespace 'test'
 
 NTCCFG_TEST_CASE(1)
 {
@@ -332,7 +330,7 @@ NTCCFG_TEST_CASE(2)
         ntca::SendEvent event;
         event.setType(ntca::SendEventType::e_COMPLETE);
 
-        bslmt::Mutex mutex;
+        bslmt::Mutex                   mutex;
         bslmt::LockGuard<bslmt::Mutex> lock(&mutex);
 
         // Test announcement immediately.
@@ -355,13 +353,23 @@ NTCCFG_TEST_CASE(2)
 
             NTCCFG_TEST_EQ(numInvoked, 0);
 
-            Entry::dispatch(
-                entry, sender, event, ntci::Strand::unspecified(), executor, false, &mutex);
+            Entry::dispatch(entry,
+                            sender,
+                            event,
+                            ntci::Strand::unspecified(),
+                            executor,
+                            false,
+                            &mutex);
 
             NTCCFG_TEST_EQ(numInvoked, 1);
 
-            Entry::dispatch(
-                entry, sender, event, ntci::Strand::unspecified(), executor, false, &mutex);
+            Entry::dispatch(entry,
+                            sender,
+                            event,
+                            ntci::Strand::unspecified(),
+                            executor,
+                            false,
+                            &mutex);
 
             NTCCFG_TEST_EQ(numInvoked, 1);
         }
@@ -387,16 +395,26 @@ NTCCFG_TEST_CASE(2)
 
             NTCCFG_TEST_EQ(numInvoked, 0);
 
-            Entry::dispatch(
-                entry, sender, event, ntci::Strand::unspecified(), executor, false, &mutex);
+            Entry::dispatch(entry,
+                            sender,
+                            event,
+                            ntci::Strand::unspecified(),
+                            executor,
+                            false,
+                            &mutex);
 
             NTCCFG_TEST_EQ(numInvoked, 0);
             strand->drain();
             NTCCFG_TEST_EQ(numInvoked, 1);
 
-            Entry::dispatch(
-                entry, sender, event, ntci::Strand::unspecified(), executor, false, &mutex);
-                
+            Entry::dispatch(entry,
+                            sender,
+                            event,
+                            ntci::Strand::unspecified(),
+                            executor,
+                            false,
+                            &mutex);
+
             NTCCFG_TEST_EQ(numInvoked, 1);
             strand->drain();
             NTCCFG_TEST_EQ(numInvoked, 1);
@@ -422,16 +440,26 @@ NTCCFG_TEST_CASE(2)
 
             NTCCFG_TEST_EQ(numInvoked, 0);
 
-            Entry::dispatch(
-                entry, sender, event, ntci::Strand::unspecified(), executor, true, &mutex);
+            Entry::dispatch(entry,
+                            sender,
+                            event,
+                            ntci::Strand::unspecified(),
+                            executor,
+                            true,
+                            &mutex);
 
             NTCCFG_TEST_EQ(numInvoked, 0);
             strand->drain();
             NTCCFG_TEST_EQ(numInvoked, 1);
 
-            Entry::dispatch(
-                entry, sender, event, ntci::Strand::unspecified(), executor, true, &mutex);
-                
+            Entry::dispatch(entry,
+                            sender,
+                            event,
+                            ntci::Strand::unspecified(),
+                            executor,
+                            true,
+                            &mutex);
+
             NTCCFG_TEST_EQ(numInvoked, 1);
             strand->drain();
             NTCCFG_TEST_EQ(numInvoked, 1);
@@ -448,9 +476,9 @@ NTCCFG_TEST_CASE(3)
     ntccfg::TestAllocator ta;
     {
         const bsl::size_t k_ORIGINAL_DATA_SIZE = 1024;
-        const bsl::size_t k_MESSAGE_SIZE = 3;
+        const bsl::size_t k_MESSAGE_SIZE       = 3;
 
-        const bsl::size_t k_LOW_WATERMARK = 0;
+        const bsl::size_t k_LOW_WATERMARK  = 0;
         const bsl::size_t k_HIGH_WATERMARK = 1024 * 1024;
 
         bdlbb::SimpleBlobBufferFactory blobBufferFactory(8, &ta);
@@ -463,17 +491,17 @@ NTCCFG_TEST_CASE(3)
         bsl::shared_ptr<ntsa::Data> originalData;
         originalData.createInplace(&ta, &blobBufferFactory, &ta);
 
-        ntsd::DataUtil::generateData(&originalData->makeBlob(), 
+        ntsd::DataUtil::generateData(&originalData->makeBlob(),
                                      k_ORIGINAL_DATA_SIZE);
         NTCCFG_TEST_EQ(originalData->size(), k_ORIGINAL_DATA_SIZE);
 
         bsl::shared_ptr<ntsa::Data> originalDataRemaining;
-        originalDataRemaining.createInplace(&ta, originalData->blob(), &blobBufferFactory, &ta);
+        originalDataRemaining.createInplace(&ta,
+                                            originalData->blob(),
+                                            &blobBufferFactory,
+                                            &ta);
         NTCCFG_TEST_EQ(originalDataRemaining->size(), k_ORIGINAL_DATA_SIZE);
         NTCCFG_TEST_NE(&originalDataRemaining->blob(), &originalData->blob());
-
-
-
 
         {
             bsl::shared_ptr<ntsa::Data> data;
@@ -487,7 +515,6 @@ NTCCFG_TEST_CASE(3)
             sendQueueEntry.setId(sendQueue.generateEntryId());
             sendQueueEntry.setData(data);
             sendQueueEntry.setLength(data->size());
-
         }
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
@@ -495,7 +522,7 @@ NTCCFG_TEST_CASE(3)
 
 NTCCFG_TEST_CASE(4)
 {
-    // Concern: Batching next suitable entries: empty 
+    // Concern: Batching next suitable entries: empty
     // Plan:
 
     ntccfg::TestAllocator ta;
@@ -518,9 +545,10 @@ NTCCFG_TEST_CASE(5)
     ntccfg::TestAllocator ta;
     {
         const bsl::size_t k_BLOB_BUFFER_SIZE = 32;
-        const bsl::size_t k_MESSAGE_SIZE = 1024;
+        const bsl::size_t k_MESSAGE_SIZE     = 1024;
 
-        bdlbb::SimpleBlobBufferFactory blobBufferFactory(k_BLOB_BUFFER_SIZE, &ta);
+        bdlbb::SimpleBlobBufferFactory blobBufferFactory(k_BLOB_BUFFER_SIZE,
+                                                         &ta);
 
         ntcq::SendQueue sendQueue(&ta);
 
@@ -528,14 +556,10 @@ NTCCFG_TEST_CASE(5)
             bsl::shared_ptr<ntsa::Data> data;
             data.createInplace(&ta, &blobBufferFactory, &ta);
 
-            
-
             ntcq::SendQueueEntry sendQueueEntry;
             sendQueueEntry.setId(sendQueue.generateEntryId());
             sendQueueEntry.setData(data);
             sendQueueEntry.setLength(data->size());
-
-
         }
 
         ntsa::ConstBufferArray bufferArray(&ta);

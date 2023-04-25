@@ -566,24 +566,26 @@ struct DataUtil {
     /// the error. Note that this function may be considerably expensive, as it
     /// performs a deep copy of all data referenced by 'source', including
     /// any data referenced in a file.
-    static ntsa::Error copy(bsl::streambuf *destination, const ntsa::Data& source);
+    static ntsa::Error copy(bsl::streambuf*   destination,
+                            const ntsa::Data& source);
 
     /// Copy of the specified 'source' into the specified destination. Return
     /// the error. Note that this function may be considerably expensive, as it
     /// performs a deep copy of all data referenced by 'source', including
     /// any data referenced in a file.
-    static ntsa::Error copy(ntsa::Data *destination, const ntsa::Data& source);
+    static ntsa::Error copy(ntsa::Data* destination, const ntsa::Data& source);
 
     /// Copy of the specified 'source' into the specified destination. Return
     /// the error. Note that this function may be considerably expensive, as it
     /// performs a deep copy of all data referenced by 'source', including
     /// any data referenced in a file.
-    static ntsa::Error copy(bdlbb::Blob *destination, const ntsa::Data& source);
+    static ntsa::Error copy(bdlbb::Blob*      destination,
+                            const ntsa::Data& source);
 
     /// Return true if the specified 'lhs' refers to data having the same value
     /// as the specified 'rhs', otherwise return false. Note that this function
-    /// may be considerably expensive, as it may perform a deep copy of all 
-    /// data referenced by 'lhs' or 'rhs', including any data referenced in a 
+    /// may be considerably expensive, as it may perform a deep copy of all
+    /// data referenced by 'lhs' or 'rhs', including any data referenced in a
     /// file.
     static bool equals(const ntsa::Data& lhs, const ntsa::Data& rhs);
 };
