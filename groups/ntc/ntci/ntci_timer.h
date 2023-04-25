@@ -98,7 +98,7 @@ namespace ntci {
 ///     ntci::TimerFuture timerFuture;
 ///
 ///     bsl::shared_ptr<ntci::Timer> timer =
-///         s_ntctst::TestUtil::createTimer(timerOptions, timerFuture);
+///         interface->createTimer(timerOptions, timerFuture);
 ///
 /// Schedule the timer 100ms from now.
 ///
@@ -168,7 +168,7 @@ namespace ntci {
 ///     ntci::TimerFuture timerFuture;
 ///
 ///     bsl::shared_ptr<ntci::Timer> timer =
-///         s_ntctst::TestUtil::createTimer(timerOptions, timerFuture);
+///         interface->createTimer(timerOptions, timerFuture);
 ///
 /// Schedule the timer 100ms from now that recurs every 20ms.
 ///
@@ -241,7 +241,7 @@ namespace ntci {
 ///     ntci::TimerFuture timerFuture;
 ///
 ///     bsl::shared_ptr<ntci::Timer> timer =
-///         s_ntctst::TestUtil::createTimer(timerOptions, timerFuture);
+///         interface->createTimer(timerOptions, timerFuture);
 ///
 /// Initially schedule the timer far into the future.
 ///
@@ -318,7 +318,7 @@ namespace ntci {
 ///     ntci::TimerFuture timerFuture;
 ///
 ///     bsl::shared_ptr<ntci::Timer> timer =
-///         s_ntctst::TestUtil::createTimer(timerOptions, timerFuture);
+///         interface->createTimer(timerOptions, timerFuture);
 ///
 /// Initially schedule the timer far into the future.
 ///
@@ -397,7 +397,7 @@ namespace ntci {
 ///     ntci::TimerFuture timerFuture;
 ///
 ///     bsl::shared_ptr<ntci::Timer> timer =
-///         s_ntctst::TestUtil::createTimer(timerOptions, timerFuture);
+///         interface->createTimer(timerOptions, timerFuture);
 ///
 /// Initially schedule the timer far into the future.
 ///
@@ -469,7 +469,7 @@ namespace ntci {
 ///     ntci::TimerFuture timerFuture;
 ///
 ///     bsl::shared_ptr<ntci::Timer> timer =
-///         s_ntctst::TestUtil::createTimer(timerOptions, timerFuture);
+///         interface->createTimer(timerOptions, timerFuture);
 ///
 /// Initially schedule the timer far into the future.
 ///
@@ -541,7 +541,7 @@ namespace ntci {
 ///     ntci::TimerFuture timerFuture;
 ///
 ///     bsl::shared_ptr<ntci::Timer> timer =
-///         s_ntctst::TestUtil::createTimer(timerOptions, timerFuture);
+///         interface->createTimer(timerOptions, timerFuture);
 ///
 /// Initially schedule the timer far into the future.
 ///
@@ -647,7 +647,7 @@ namespace ntci {
 ///     ntci::TimerFuture timerFuture;
 ///
 ///     bsl::shared_ptr<ntci::Timer> timer =
-///         s_ntctst::TestUtil::createTimer(timerOptions, timerFuture);
+///         interface->createTimer(timerOptions, timerFuture);
 ///
 /// Initially schedule the timer far into the future.
 ///
