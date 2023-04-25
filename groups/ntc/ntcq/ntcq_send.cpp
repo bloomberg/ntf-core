@@ -195,12 +195,16 @@ bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*  result,
                                const ntsa::ConstBuffer& constBuffer,
                                const ntsa::SendOptions& options) const
 {
-    if (result->numBytes() >= options.maxBytes()) {
-        return false;
+    if (options.maxBytes() > 0) {
+        if (result->numBytes() >= options.maxBytes()) {
+            return false;
+        }
     }
 
-    if (result->numBuffers() >= options.maxBuffers()) {
-        return false;
+    if (options.maxBuffers() > 0) {
+        if (result->numBuffers() >= options.maxBuffers()) {
+            return false;
+        }
     }
 
     result->append(constBuffer);
@@ -238,12 +242,16 @@ bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*    result,
                                const ntsa::MutableBuffer& mutableBuffer,
                                const ntsa::SendOptions&   options) const
 {
-    if (result->numBytes() >= options.maxBytes()) {
-        return false;
+    if (options.maxBytes() > 0) {
+        if (result->numBytes() >= options.maxBytes()) {
+            return false;
+        }
     }
 
-    if (result->numBuffers() >= options.maxBuffers()) {
-        return false;
+    if (options.maxBuffers() > 0) {
+        if (result->numBuffers() >= options.maxBuffers()) {
+            return false;
+        }
     }
 
     result->append(mutableBuffer);

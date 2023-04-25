@@ -19,6 +19,7 @@
 #include <ntccfg_test.h>
 #include <ntci_mutex.h>
 #include <ntsa_data.h>
+#include <ntsa_temporary.h>
 #include <ntsd_datautil.h>
 #include <bdlbb_blob.h>
 #include <bdlbb_blobstreambuf.h>
@@ -470,51 +471,106 @@ NTCCFG_TEST_CASE(2)
 
 NTCCFG_TEST_CASE(3)
 {
-    // Concern:
-    // Plan:
+    // Concern: Announcement of the low watermark is not authorized until the 
+    // queue is filled up to the high watermark then drained down the low 
+    // watermark. Announcement of the high watermark is authorized once the 
+    // queue is filled up to the high watermark, but not announced again until
+    // the queue is drained down to the low watermark.
 
     ntccfg::TestAllocator ta;
     {
-        const bsl::size_t k_ORIGINAL_DATA_SIZE = 1024;
-        const bsl::size_t k_MESSAGE_SIZE       = 3;
+        const bsl::size_t k_BLOB_BUFFER_SIZE = 32;
+        const bsl::size_t k_MESSAGE_SIZE     = k_BLOB_BUFFER_SIZE * 4;
+        const bsl::size_t k_LOW_WATERMARK    = 0;
+        const bsl::size_t k_HIGH_WATERMARK   = 2 * k_MESSAGE_SIZE;
 
-        const bsl::size_t k_LOW_WATERMARK  = 0;
-        const bsl::size_t k_HIGH_WATERMARK = 1024 * 1024;
-
-        bdlbb::SimpleBlobBufferFactory blobBufferFactory(8, &ta);
+        bdlbb::SimpleBlobBufferFactory blobBufferFactory(k_BLOB_BUFFER_SIZE, 
+                                                         &ta);
 
         ntcq::SendQueue sendQueue(&ta);
 
         sendQueue.setLowWatermark(k_LOW_WATERMARK);
         sendQueue.setHighWatermark(k_HIGH_WATERMARK);
 
-        bsl::shared_ptr<ntsa::Data> originalData;
-        originalData.createInplace(&ta, &blobBufferFactory, &ta);
+        NTCCFG_TEST_EQ(sendQueue.lowWatermark(), k_LOW_WATERMARK);
+        NTCCFG_TEST_EQ(sendQueue.highWatermark(), k_HIGH_WATERMARK);
 
-        ntsd::DataUtil::generateData(&originalData->makeBlob(),
-                                     k_ORIGINAL_DATA_SIZE);
-        NTCCFG_TEST_EQ(originalData->size(), k_ORIGINAL_DATA_SIZE);
+        for (bsl::size_t round = 0; round < 2; ++round) {
+            NTCCFG_TEST_EQ(sendQueue.size(), 0);
 
-        bsl::shared_ptr<ntsa::Data> originalDataRemaining;
-        originalDataRemaining.createInplace(&ta,
-                                            originalData->blob(),
-                                            &blobBufferFactory,
-                                            &ta);
-        NTCCFG_TEST_EQ(originalDataRemaining->size(), k_ORIGINAL_DATA_SIZE);
-        NTCCFG_TEST_NE(&originalDataRemaining->blob(), &originalData->blob());
+            NTCCFG_TEST_TRUE(sendQueue.isLowWatermarkSatisfied());
+            NTCCFG_TEST_FALSE(sendQueue.authorizeLowWatermarkEvent());
 
-        {
-            bsl::shared_ptr<ntsa::Data> data;
-            data.createInplace(&ta, &blobBufferFactory, &ta);
+            NTCCFG_TEST_FALSE(sendQueue.isHighWatermarkViolated());
+            NTCCFG_TEST_FALSE(sendQueue.authorizeHighWatermarkEvent());
 
             {
-                bdlbb::Blob& blob = data->makeBlob();
+                bsl::shared_ptr<ntsa::Data> data;
+                data.createInplace(&ta, &blobBufferFactory, &ta);
+                ntsd::DataUtil::generateData(data.get(), k_MESSAGE_SIZE);
+
+                ntcq::SendQueueEntry sendQueueEntry;
+                sendQueueEntry.setId(sendQueue.generateEntryId());
+                sendQueueEntry.setData(data);
+                sendQueueEntry.setLength(data->size());
+
+                sendQueue.pushEntry(sendQueueEntry);
             }
 
-            ntcq::SendQueueEntry sendQueueEntry;
-            sendQueueEntry.setId(sendQueue.generateEntryId());
-            sendQueueEntry.setData(data);
-            sendQueueEntry.setLength(data->size());
+            NTCCFG_TEST_EQ(sendQueue.size(), k_MESSAGE_SIZE * 1);
+
+            NTCCFG_TEST_FALSE(sendQueue.isLowWatermarkSatisfied());
+            NTCCFG_TEST_FALSE(sendQueue.authorizeLowWatermarkEvent());
+
+            NTCCFG_TEST_FALSE(sendQueue.isHighWatermarkViolated());
+            NTCCFG_TEST_FALSE(sendQueue.authorizeHighWatermarkEvent());
+
+            {
+                bsl::shared_ptr<ntsa::Data> data;
+                data.createInplace(&ta, &blobBufferFactory, &ta);
+                ntsd::DataUtil::generateData(data.get(), k_MESSAGE_SIZE);
+
+                ntcq::SendQueueEntry sendQueueEntry;
+                sendQueueEntry.setId(sendQueue.generateEntryId());
+                sendQueueEntry.setData(data);
+                sendQueueEntry.setLength(data->size());
+
+                sendQueue.pushEntry(sendQueueEntry);    
+            }
+
+            NTCCFG_TEST_EQ(sendQueue.size(), k_MESSAGE_SIZE * 2);
+
+            NTCCFG_TEST_FALSE(sendQueue.isLowWatermarkSatisfied());
+            NTCCFG_TEST_FALSE(sendQueue.authorizeLowWatermarkEvent());
+
+            NTCCFG_TEST_TRUE(sendQueue.isHighWatermarkViolated());
+            NTCCFG_TEST_TRUE(sendQueue.authorizeHighWatermarkEvent());
+
+            NTCCFG_TEST_TRUE(sendQueue.isHighWatermarkViolated());
+            NTCCFG_TEST_FALSE(sendQueue.authorizeHighWatermarkEvent());
+
+            NTCCFG_TEST_FALSE(sendQueue.popEntry());
+
+            NTCCFG_TEST_EQ(sendQueue.size(), k_MESSAGE_SIZE * 1);
+
+            NTCCFG_TEST_FALSE(sendQueue.isLowWatermarkSatisfied());
+            NTCCFG_TEST_FALSE(sendQueue.authorizeLowWatermarkEvent());
+
+            NTCCFG_TEST_FALSE(sendQueue.isHighWatermarkViolated());
+            NTCCFG_TEST_FALSE(sendQueue.authorizeHighWatermarkEvent());
+
+            NTCCFG_TEST_TRUE(sendQueue.popEntry());
+
+            NTCCFG_TEST_EQ(sendQueue.size(), 0);
+
+            NTCCFG_TEST_TRUE(sendQueue.isLowWatermarkSatisfied());
+            NTCCFG_TEST_TRUE(sendQueue.authorizeLowWatermarkEvent());
+
+            NTCCFG_TEST_TRUE(sendQueue.isLowWatermarkSatisfied());
+            NTCCFG_TEST_FALSE(sendQueue.authorizeLowWatermarkEvent());
+
+            NTCCFG_TEST_FALSE(sendQueue.isHighWatermarkViolated());
+            NTCCFG_TEST_FALSE(sendQueue.authorizeHighWatermarkEvent());
         }
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
@@ -523,16 +579,20 @@ NTCCFG_TEST_CASE(3)
 NTCCFG_TEST_CASE(4)
 {
     // Concern: Batching next suitable entries: empty
-    // Plan:
 
     ntccfg::TestAllocator ta;
     {
         ntcq::SendQueue sendQueue(&ta);
 
-        ntsa::ConstBufferArray bufferArray(&ta);
+        ntsa::Data batch(&ta);
+        batch.makeConstBufferArray();
 
-        bool result = sendQueue.batchNext(&bufferArray, ntsa::SendOptions());
+        bool result = sendQueue.batchNext(&batch.constBufferArray(), 
+                                          ntsa::SendOptions());
         NTCCFG_TEST_FALSE(result);
+
+        NTCCFG_TEST_EQ(batch.constBufferArray().numBuffers(), 0);
+        NTCCFG_TEST_EQ(batch.constBufferArray().numBytes(), 0);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
@@ -540,7 +600,6 @@ NTCCFG_TEST_CASE(4)
 NTCCFG_TEST_CASE(5)
 {
     // Concern: Batching next suitable entries: blob
-    // Plan:
 
     ntccfg::TestAllocator ta;
     {
@@ -552,20 +611,34 @@ NTCCFG_TEST_CASE(5)
 
         ntcq::SendQueue sendQueue(&ta);
 
+        bdlbb::Blob blob(&blobBufferFactory, &ta);
+
+        ntsd::DataUtil::generateData(&blob, k_MESSAGE_SIZE, 0, 0);
+
         {
             bsl::shared_ptr<ntsa::Data> data;
-            data.createInplace(&ta, &blobBufferFactory, &ta);
+            data.createInplace(&ta, blob, &blobBufferFactory, &ta);
 
             ntcq::SendQueueEntry sendQueueEntry;
             sendQueueEntry.setId(sendQueue.generateEntryId());
             sendQueueEntry.setData(data);
             sendQueueEntry.setLength(data->size());
+
+            sendQueue.pushEntry(sendQueueEntry);
         }
 
-        ntsa::ConstBufferArray bufferArray(&ta);
+        NTCCFG_TEST_EQ(sendQueue.size(), 
+                       static_cast<bsl::size_t>(blob.length()));
 
-        bool result = sendQueue.batchNext(&bufferArray, ntsa::SendOptions());
+        ntsa::Data batch(&ta);
+        batch.makeConstBufferArray();
+
+        bool result = sendQueue.batchNext(&batch.constBufferArray(), 
+                                          ntsa::SendOptions());
         NTCCFG_TEST_FALSE(result);
+
+        NTCCFG_TEST_EQ(batch.constBufferArray().numBuffers(), 0);
+        NTCCFG_TEST_EQ(batch.constBufferArray().numBytes(), 0);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
@@ -573,43 +646,181 @@ NTCCFG_TEST_CASE(5)
 NTCCFG_TEST_CASE(6)
 {
     // Concern: Batching next suitable entries: blob -> blob
-    // Plan:
 
     ntccfg::TestAllocator ta;
     {
+        const bsl::size_t k_BLOB_BUFFER_SIZE = 32;
+        const bsl::size_t k_MESSAGE_SIZE     = 1024;
+
+        bdlbb::SimpleBlobBufferFactory blobBufferFactory(k_BLOB_BUFFER_SIZE,
+                                                         &ta);
+
+        ntcq::SendQueue sendQueue(&ta);
+
+        bdlbb::Blob blob1(&blobBufferFactory, &ta);
+        bdlbb::Blob blob2(&blobBufferFactory, &ta);
+
+        ntsd::DataUtil::generateData(&blob1, k_MESSAGE_SIZE * 1, 0, 0);
+        ntsd::DataUtil::generateData(&blob2, k_MESSAGE_SIZE * 2, 0, 1);
+
+        {
+            bsl::shared_ptr<ntsa::Data> data;
+            data.createInplace(&ta, blob1, &blobBufferFactory, &ta);
+
+            ntcq::SendQueueEntry sendQueueEntry;
+            sendQueueEntry.setId(sendQueue.generateEntryId());
+            sendQueueEntry.setData(data);
+            sendQueueEntry.setLength(data->size());
+
+            sendQueue.pushEntry(sendQueueEntry);
+        }
+
+        {
+            bsl::shared_ptr<ntsa::Data> data;
+            data.createInplace(&ta, blob2, &blobBufferFactory, &ta);
+
+            ntcq::SendQueueEntry sendQueueEntry;
+            sendQueueEntry.setId(sendQueue.generateEntryId());
+            sendQueueEntry.setData(data);
+            sendQueueEntry.setLength(data->size());
+
+            sendQueue.pushEntry(sendQueueEntry);
+        }
+
+        NTCCFG_TEST_EQ(
+            sendQueue.size(), 
+            static_cast<bsl::size_t>(blob1.length() + blob2.length()));
+
+        ntsa::Data batch(&ta);
+        batch.makeConstBufferArray();
+
+        bool result = sendQueue.batchNext(&batch.constBufferArray(), 
+                                          ntsa::SendOptions());
+        NTCCFG_TEST_TRUE(result);
+
+        NTCCFG_TEST_EQ(batch.constBufferArray().numBuffers(), 
+                       static_cast<bsl::size_t>(blob1.numDataBuffers() + 
+                                                blob2.numDataBuffers()));
+
+        NTCCFG_TEST_EQ(batch.constBufferArray().numBytes(),
+                       static_cast<bsl::size_t>(blob1.length() + 
+                                                blob2.length()));
+
+        ntsa::Data batchExpected(&blobBufferFactory, &ta);
+        batchExpected.makeBlob();
+
+        bdlbb::BlobUtil::append(&batchExpected.blob(), blob1);
+        bdlbb::BlobUtil::append(&batchExpected.blob(), blob2);
+
+        NTCCFG_TEST_TRUE(ntsa::DataUtil::equals(batch, batchExpected));
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
 NTCCFG_TEST_CASE(7)
 {
-    // Concern: Batching next suitable entries: blob -> file
-    // Plan:
+    // Concern: Batching next suitable entries: blob -> blob -> file -> blob
 
     ntccfg::TestAllocator ta;
     {
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
+        const bsl::size_t k_BLOB_BUFFER_SIZE = 32;
+        const bsl::size_t k_MESSAGE_SIZE     = 1024;
 
-NTCCFG_TEST_CASE(8)
-{
-    // Concern: Batching next suitable entries: file -> blob
-    // Plan:
+        bdlbb::SimpleBlobBufferFactory blobBufferFactory(k_BLOB_BUFFER_SIZE,
+                                                         &ta);
 
-    ntccfg::TestAllocator ta;
-    {
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
+        ntcq::SendQueue sendQueue(&ta);
 
-NTCCFG_TEST_CASE(9)
-{
-    // Concern:
-    // Plan:
+        bdlbb::Blob blob1(&blobBufferFactory, &ta);
+        bdlbb::Blob blob2(&blobBufferFactory, &ta);
+        ntsa::File  file3;
+        bdlbb::Blob blob4(&blobBufferFactory, &ta);
 
-    ntccfg::TestAllocator ta;
-    {
+        ntsd::DataUtil::generateData(&blob1, k_MESSAGE_SIZE * 1, 0, 0);
+        ntsd::DataUtil::generateData(&blob2, k_MESSAGE_SIZE * 2, 0, 1);
+
+        file3.setDescriptor((bdls::FilesystemUtil::FileDescriptor)(1));
+        file3.setBytesRemaining(static_cast<bdls::FilesystemUtil::Offset>(1));
+
+        ntsd::DataUtil::generateData(&blob4, k_MESSAGE_SIZE * 4, 0, 0);
+
+        {
+            bsl::shared_ptr<ntsa::Data> data;
+            data.createInplace(&ta, blob1, &blobBufferFactory, &ta);
+
+            ntcq::SendQueueEntry sendQueueEntry;
+            sendQueueEntry.setId(sendQueue.generateEntryId());
+            sendQueueEntry.setData(data);
+            sendQueueEntry.setLength(data->size());
+
+            sendQueue.pushEntry(sendQueueEntry);
+        }
+
+        {
+            bsl::shared_ptr<ntsa::Data> data;
+            data.createInplace(&ta, blob2, &blobBufferFactory, &ta);
+
+            ntcq::SendQueueEntry sendQueueEntry;
+            sendQueueEntry.setId(sendQueue.generateEntryId());
+            sendQueueEntry.setData(data);
+            sendQueueEntry.setLength(data->size());
+
+            sendQueue.pushEntry(sendQueueEntry);
+        }
+
+        {
+            bsl::shared_ptr<ntsa::Data> data;
+            data.createInplace(&ta, file3, &ta);
+
+            ntcq::SendQueueEntry sendQueueEntry;
+            sendQueueEntry.setId(sendQueue.generateEntryId());
+            sendQueueEntry.setData(data);
+            sendQueueEntry.setLength(data->size());
+
+            sendQueue.pushEntry(sendQueueEntry);
+        }
+
+        {
+            bsl::shared_ptr<ntsa::Data> data;
+            data.createInplace(&ta, blob4, &blobBufferFactory, &ta);
+
+            ntcq::SendQueueEntry sendQueueEntry;
+            sendQueueEntry.setId(sendQueue.generateEntryId());
+            sendQueueEntry.setData(data);
+            sendQueueEntry.setLength(data->size());
+
+            sendQueue.pushEntry(sendQueueEntry);
+        }
+
+        NTCCFG_TEST_EQ(
+            sendQueue.size(), 
+            static_cast<bsl::size_t>(blob1.length() + 
+                                     blob2.length() + 
+                                     file3.bytesRemaining() + 
+                                     blob4.length()));
+
+        ntsa::Data batch(&ta);
+        batch.makeConstBufferArray();
+
+        bool result = sendQueue.batchNext(&batch.constBufferArray(), 
+                                          ntsa::SendOptions());
+        NTCCFG_TEST_TRUE(result);
+
+        NTCCFG_TEST_EQ(batch.constBufferArray().numBuffers(), 
+                       static_cast<bsl::size_t>(blob1.numDataBuffers() + 
+                                                blob2.numDataBuffers()));
+
+        NTCCFG_TEST_EQ(batch.constBufferArray().numBytes(),
+                       static_cast<bsl::size_t>(blob1.length() + 
+                                                blob2.length()));
+
+        ntsa::Data batchExpected(&blobBufferFactory, &ta);
+        batchExpected.makeBlob();
+
+        bdlbb::BlobUtil::append(&batchExpected.blob(), blob1);
+        bdlbb::BlobUtil::append(&batchExpected.blob(), blob2);
+
+        NTCCFG_TEST_TRUE(ntsa::DataUtil::equals(batch, batchExpected));
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
@@ -623,7 +834,5 @@ NTCCFG_TEST_DRIVER
     NTCCFG_TEST_REGISTER(5);
     NTCCFG_TEST_REGISTER(6);
     NTCCFG_TEST_REGISTER(7);
-    NTCCFG_TEST_REGISTER(8);
-    NTCCFG_TEST_REGISTER(9);
 }
 NTCCFG_TEST_DRIVER_END;
