@@ -874,6 +874,9 @@ ntsa::Error StreamSocket::privateSocketWritableConnection(
         }
     }
 
+    d_sendOptions.setMaxBuffers(d_socket_sp->maxBuffersPerSend());
+    d_receiveOptions.setMaxBuffers(d_socket_sp->maxBuffersPerReceive());
+
     NTCS_METRICS_UPDATE_CONNECT_COMPLETE();
 
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
@@ -963,13 +966,145 @@ ntsa::Error StreamSocket::privateSocketWritableConnection(
 ntsa::Error StreamSocket::privateSocketWritableIteration(
     const bsl::shared_ptr<StreamSocket>& self)
 {
+    if (!d_sendQueue.hasEntry()) {
+        return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+    }
+
+    if (d_sendQueue.batchNext(&d_sendData_sp->constBufferArray(),
+                              d_sendOptions))
+    {
+        return this->privateSocketWritableIterationBatch(self);
+    }
+    else
+    {
+        return this->privateSocketWritableIterationFront(self);
+    }
+}
+
+ntsa::Error StreamSocket::privateSocketWritableIterationBatch(
+    const bsl::shared_ptr<StreamSocket>& self)
+{
     NTCI_LOG_CONTEXT();
 
     ntsa::Error error;
 
-    if (!d_sendQueue.hasEntry()) {
-        return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+    ntsa::SendContext context;
+    error = this->privateEnqueueSendBuffer(self, &context, *d_sendData_sp);
+    if (NTCCFG_UNLIKELY(error)) {
+        return error;
     }
+
+    bsl::size_t numBytesRemaining = context.bytesSent();
+
+    typedef bsl::vector< bsl::shared_ptr<ntcq::SendCallbackQueueEntry> >
+    SendCallbackQueueEntryVector;
+
+    bdlma::LocalSequentialAllocator<1024> callbackEntryVectorAllocator;
+
+    SendCallbackQueueEntryVector callbackEntryVector(
+                                              &callbackEntryVectorAllocator);
+
+    while (true) {
+        if (numBytesRemaining == 0) {
+            break;
+        }
+
+        ntcq::SendQueueEntry& entry = d_sendQueue.frontEntry();
+
+        const bool hasDeadline = !entry.deadline().isNull();
+
+        if (numBytesRemaining >= entry.length()) {
+            numBytesRemaining -= entry.length();
+
+            NTCS_METRICS_UPDATE_WRITE_QUEUE_DELAY(entry.delay());
+
+            if (entry.callbackEntry()) {
+                callbackEntryVector.push_back(entry.callbackEntry());
+            }
+
+            d_sendQueue.popEntry();
+        }
+        else {
+            if (hasDeadline) {
+                entry.setDeadline(bdlb::NullableValue<bsls::TimeInterval>());
+                entry.closeTimer();
+            }
+            d_sendQueue.popSize(numBytesRemaining);
+            numBytesRemaining = 0;
+
+            break;
+        }
+    }
+
+    NTCR_STREAMSOCKET_LOG_WRITE_QUEUE_DRAINED(d_sendQueue.size(),
+                                              d_sendQueue.highWatermark());
+
+    NTCS_METRICS_UPDATE_WRITE_QUEUE_SIZE(d_sendQueue.size());
+
+    if (!callbackEntryVector.empty()) {
+        for (SendCallbackQueueEntryVector::iterator
+                it  = callbackEntryVector.begin();
+                it != callbackEntryVector.end();
+              ++it)
+        {
+            const bsl::shared_ptr<ntcq::SendCallbackQueueEntry>&
+            callbackEntry = *it;
+
+            ntca::SendContext sendContext;
+
+            ntca::SendEvent sendEvent;
+            sendEvent.setType(ntca::SendEventType::e_COMPLETE);
+            sendEvent.setContext(sendContext);
+
+            ntcq::SendCallbackQueueEntry::dispatch(callbackEntry,
+                                                   self,
+                                                   sendEvent,
+                                                   d_reactorStrand_sp,
+                                                   self,
+                                                   false,
+                                                   &d_mutex);
+        }
+    }
+
+    if (d_sendQueue.authorizeLowWatermarkEvent()) {
+        NTCR_STREAMSOCKET_LOG_WRITE_QUEUE_LOW_WATERMARK(
+            d_sendQueue.lowWatermark(),
+            d_sendQueue.size());
+
+        if (d_session_sp) {
+            ntca::WriteQueueEvent event;
+            event.setType(ntca::WriteQueueEventType::e_LOW_WATERMARK);
+            event.setContext(d_sendQueue.context());
+
+            ntcs::Dispatch::announceWriteQueueLowWatermark(
+                d_session_sp,
+                self,
+                event,
+                d_sessionStrand_sp,
+                d_reactorStrand_sp,
+                self,
+                true,
+                &d_mutex);
+        }
+    }
+
+    if (!d_sendQueue.hasEntry()) {
+        this->privateApplyFlowControl(self,
+                                      ntca::FlowControlType::e_SEND,
+                                      ntca::FlowControlMode::e_IMMEDIATE,
+                                      false,
+                                      false);
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error StreamSocket::privateSocketWritableIterationFront(
+    const bsl::shared_ptr<StreamSocket>& self)
+{
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error error;
 
     ntcq::SendQueueEntry& entry = d_sendQueue.frontEntry();
 
@@ -3064,6 +3199,9 @@ ntsa::Error StreamSocket::privateOpen(
         }
     }
 
+    d_sendOptions.setMaxBuffers(streamSocket->maxBuffersPerSend());
+    d_receiveOptions.setMaxBuffers(streamSocket->maxBuffersPerReceive());
+
     {
         ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
         if (!reactorRef) {
@@ -3585,6 +3723,7 @@ StreamSocket::StreamSocket(
 , d_sendRateTimer_sp()
 , d_sendGreedily(NTCCFG_DEFAULT_STREAM_SOCKET_WRITE_GREEDILY)
 , d_sendCount(0)
+, d_sendData_sp()
 , d_receiveOptions()
 , d_receiveQueue(basicAllocator)
 , d_receiveFeedback()
@@ -3617,6 +3756,10 @@ StreamSocket::StreamSocket(
     }
 
     d_sendQueue.setData(d_dataPool_sp->createOutgoingBlob());
+
+    d_sendData_sp = d_dataPool_sp->createOutgoingData();
+    d_sendData_sp->makeConstBufferArray();
+
     d_receiveQueue.setData(d_dataPool_sp->createIncomingBlob());
     d_receiveBlob_sp = d_dataPool_sp->createIncomingBlob();
 

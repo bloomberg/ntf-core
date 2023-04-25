@@ -78,5 +78,13 @@ void DataUtil::generateData(bdlbb::Blob* result,
     }
 }
 
+void DataUtil::generateData(ntsa::Data* result,
+                            bsl::size_t size,
+                            bsl::size_t offset,
+                            bsl::size_t dataset)
+{
+    DataUtil::generateData(&result->makeBlob(), size, offset, dataset);
+}
+
 }  // close package namespace
 }  // close enterprise namespace

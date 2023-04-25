@@ -671,6 +671,9 @@ void StreamSocket::privateCompleteConnect(
         }
     }
 
+    d_sendOptions.setMaxBuffers(d_socket_sp->maxBuffersPerSend());
+    d_receiveOptions.setMaxBuffers(d_socket_sp->maxBuffersPerReceive());
+
     NTCS_METRICS_UPDATE_CONNECT_COMPLETE();
 
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
@@ -2777,6 +2780,9 @@ ntsa::Error StreamSocket::privateOpen(
             d_receiveOptions.setMaxBytes(receiveBufferSize);
         }
     }
+
+    d_sendOptions.setMaxBuffers(streamSocket->maxBuffersPerSend());
+    d_receiveOptions.setMaxBuffers(streamSocket->maxBuffersPerReceive());
 
     ntcs::ObserverRef<ntci::Proactor> proactorRef(&d_proactor);
     if (!proactorRef) {
