@@ -577,7 +577,6 @@ experienced in the project, please contact us at opensource@bloomberg.net.
 More detailed information is available on certain topics.
 
 - [Package and Component Levelization](docs/levelization.svg)
-- [Frequently Asked Questions](docs/faq.md)
 
 NTF is collection of BDE-style libraries built on top of BDE.  For more
 information about the BDE framework, please see:
