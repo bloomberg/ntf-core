@@ -79,6 +79,17 @@ namespace ntci {
 /// "UNIX Network Programming, Volume 1: The Sockets Networking API", by W.
 /// Richard Stevens.
 ///
+/// @par Closing
+/// Each 'ntci::ListenerSocket' is shared between the user and this library's
+/// asynchronous machinery. It is not sufficient for users to simply release
+/// their reference counts on a listener socket object to close and destroy it.
+/// Users *must* explicitly close each 'ntci::ListenerSocket'. Closing a socket
+/// is asynchronous, users must wait until the close callback is invoked before
+/// assuming the socket is completely closed. After a socket's close callback
+/// is invoked, the socket remains in a valid state but all member functions
+/// with failure modes will return an error. The socket object will be
+/// destroyed only after it has been closed and all references are released.
+///
 /// @par Thread Safety
 /// This class is thread safe.
 ///
