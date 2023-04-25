@@ -304,7 +304,7 @@ ntsa::Error ResolverUtil::getPort(bsl::vector<ntsa::Port>* result,
     ntsa::Error error;
     int         rc;
 
-    bsl::string_view serviceNameTrimmed = 
+    bsl::string_view serviceNameTrimmed =
         bdlb::StringViewUtil::trim(serviceName);
 
     if (serviceNameTrimmed.empty()) {
@@ -320,8 +320,8 @@ ntsa::Error ResolverUtil::getPort(bsl::vector<ntsa::Port>* result,
         bsl::string_view portNumberRemainder;
 
         rc = bdlb::NumericParseUtil::parseUshort(
-            &portNumberLiteral, 
-            &portNumberRemainder, 
+            &portNumberLiteral,
+            &portNumberRemainder,
             serviceNameTrimmed);
 
         if (rc == 0) {
@@ -331,10 +331,12 @@ ntsa::Error ResolverUtil::getPort(bsl::vector<ntsa::Port>* result,
 
             result->push_back(static_cast<ntsa::Port>(portNumberLiteral));
             return ntsa::Error();
-        }        
+        }
     }
 
-    bsl::string             nameString = serviceNameTrimmed;
+    bsl::string nameString(serviceNameTrimmed.data(),
+                           serviceNameTrimmed.size());
+
     bsl::vector<ntsa::Port> portList;
 
     addrinfo hints;
