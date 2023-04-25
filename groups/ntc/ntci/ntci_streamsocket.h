@@ -471,12 +471,17 @@ namespace ntci {
 /// after userspace as indicated the socket should be closed.
 ///
 /// @par Closing
+/// Each 'ntci::StreamSocket' is shared between the user and this library's
+/// asynchronous machinery. It is not sufficient for users to simply release
+/// their reference counts on a stream socket object to close and destroy it.
 /// Users *must* explicitly close each 'ntci::StreamSocket'. Closing a socket
 /// implicitly shuts it down, unless the socket is already shut down or an
 /// "abortive close" is configured. Closing a socket is asynchronous, users
 /// must wait until the close callback is invoked before assuming the socket is
-/// completely closed. Once a socket is closed, no further operations on the
-/// socket are permitted.
+/// completely closed. After a socket's close callback is invoked, the socket
+/// remains in a valid state but all member functions with failure modes
+/// will return an error. The socket object will be destroyed only after it has
+/// been closed and all references are released.
 ///
 /// @par Asynchronous Operation
 /// Asynchronous operation is classified into two categories: operations that

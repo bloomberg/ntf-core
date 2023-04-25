@@ -58,6 +58,23 @@ namespace ntci {
 /// timer deadline event callback is invoked, through the timer context
 /// specified to the timer deadline event callback.
 ///
+/// @par Closing
+/// Each 'ntci::Timer' is shared between the user and this library's
+/// asynchronous machinery. It is not sufficient for users to simply release
+/// their reference counts on a timer object to close and destroy it. Users
+/// *must* explicitly close each non-one-shot 'ntci::Timer'. One-shot timers
+/// are automatically closed after they fire. Closing a timer is asynchronous,
+/// and may race with announcement of a timer's deadline event by another
+/// thread. If such a race needs to be resolved, users must wait until either
+/// the timer callback is invoked with a timer event of type
+/// 'ntca::TimerEventType::e_CLOSED' or the
+/// 'ntci::TimerSession::processTimerClosed' function is invoked (depending on
+/// which notification strategy is registered when the timer is created) before
+/// assuming the timer is completely closed. After a timer is closed, the timer
+/// remains in a valid state but all member functions with failure modes will
+/// return an error. The timer object will be destroyed only after it has
+/// been closed and all references are released.
+///
 /// @par Thread Safety
 /// This class is thread safe.
 ///
