@@ -163,7 +163,6 @@ namespace ntcf {
 /// Next, connect a socket to the listener.
 ///
 ///    ntca::StreamSocketOptions streamSocketOptions;
-///    streamSocketOptions.setRemoteEndpoint(listenerSocket->sourceEndpoint());
 ///
 ///     bsl::shared_ptr<ntci::StreamSocket> clientSocket =
 ///         interface->createStreamSocket(streamSocketOptions);
@@ -175,7 +174,9 @@ namespace ntcf {
 ///                                  bdlf::PlaceHolders::_2,
 ///                                  &semaphore));
 ///
-///     error = clientSocket->connect(ntca::ConnectOptions(), connectCallback);
+///     error = clientSocket->connect(listenerSocket->sourceEndpoint(),
+//                                    ntca::ConnectOptions(),
+//                                    connectCallback);
 ///     BSLS_ASSERT(!error);
 ///
 ///     semaphore.wait();
