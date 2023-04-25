@@ -471,9 +471,9 @@ NTCCFG_TEST_CASE(2)
 
 NTCCFG_TEST_CASE(3)
 {
-    // Concern: Announcement of the low watermark is not authorized until the 
-    // queue is filled up to the high watermark then drained down the low 
-    // watermark. Announcement of the high watermark is authorized once the 
+    // Concern: Announcement of the low watermark is not authorized until the
+    // queue is filled up to the high watermark then drained down the low
+    // watermark. Announcement of the high watermark is authorized once the
     // queue is filled up to the high watermark, but not announced again until
     // the queue is drained down to the low watermark.
 
@@ -484,7 +484,7 @@ NTCCFG_TEST_CASE(3)
         const bsl::size_t k_LOW_WATERMARK    = 0;
         const bsl::size_t k_HIGH_WATERMARK   = 2 * k_MESSAGE_SIZE;
 
-        bdlbb::SimpleBlobBufferFactory blobBufferFactory(k_BLOB_BUFFER_SIZE, 
+        bdlbb::SimpleBlobBufferFactory blobBufferFactory(k_BLOB_BUFFER_SIZE,
                                                          &ta);
 
         ntcq::SendQueue sendQueue(&ta);
@@ -535,7 +535,7 @@ NTCCFG_TEST_CASE(3)
                 sendQueueEntry.setData(data);
                 sendQueueEntry.setLength(data->size());
 
-                sendQueue.pushEntry(sendQueueEntry);    
+                sendQueue.pushEntry(sendQueueEntry);
             }
 
             NTCCFG_TEST_EQ(sendQueue.size(), k_MESSAGE_SIZE * 2);
@@ -587,7 +587,7 @@ NTCCFG_TEST_CASE(4)
         ntsa::Data batch(&ta);
         batch.makeConstBufferArray();
 
-        bool result = sendQueue.batchNext(&batch.constBufferArray(), 
+        bool result = sendQueue.batchNext(&batch.constBufferArray(),
                                           ntsa::SendOptions());
         NTCCFG_TEST_FALSE(result);
 
@@ -627,13 +627,13 @@ NTCCFG_TEST_CASE(5)
             sendQueue.pushEntry(sendQueueEntry);
         }
 
-        NTCCFG_TEST_EQ(sendQueue.size(), 
+        NTCCFG_TEST_EQ(sendQueue.size(),
                        static_cast<bsl::size_t>(blob.length()));
 
         ntsa::Data batch(&ta);
         batch.makeConstBufferArray();
 
-        bool result = sendQueue.batchNext(&batch.constBufferArray(), 
+        bool result = sendQueue.batchNext(&batch.constBufferArray(),
                                           ntsa::SendOptions());
         NTCCFG_TEST_FALSE(result);
 
@@ -688,23 +688,23 @@ NTCCFG_TEST_CASE(6)
         }
 
         NTCCFG_TEST_EQ(
-            sendQueue.size(), 
+            sendQueue.size(),
             static_cast<bsl::size_t>(blob1.length() + blob2.length()));
 
         ntsa::Data batch(&ta);
         batch.makeConstBufferArray();
 
-        bool result = sendQueue.batchNext(&batch.constBufferArray(), 
+        bool result = sendQueue.batchNext(&batch.constBufferArray(),
                                           ntsa::SendOptions());
         NTCCFG_TEST_TRUE(result);
 
-        NTCCFG_TEST_EQ(batch.constBufferArray().numBuffers(), 
-                       static_cast<bsl::size_t>(blob1.numDataBuffers() + 
+        NTCCFG_TEST_EQ(batch.constBufferArray().numBuffers(),
+                       static_cast<bsl::size_t>(blob1.numDataBuffers() +
                                                 blob2.numDataBuffers()));
 
-        NTCCFG_TEST_EQ(batch.constBufferArray().numBytes(),
-                       static_cast<bsl::size_t>(blob1.length() + 
-                                                blob2.length()));
+        NTCCFG_TEST_EQ(
+            batch.constBufferArray().numBytes(),
+            static_cast<bsl::size_t>(blob1.length() + blob2.length()));
 
         ntsa::Data batchExpected(&blobBufferFactory, &ta);
         batchExpected.makeBlob();
@@ -793,26 +793,24 @@ NTCCFG_TEST_CASE(7)
         }
 
         NTCCFG_TEST_EQ(
-            sendQueue.size(), 
-            static_cast<bsl::size_t>(blob1.length() + 
-                                     blob2.length() + 
-                                     file3.bytesRemaining() + 
-                                     blob4.length()));
+            sendQueue.size(),
+            static_cast<bsl::size_t>(blob1.length() + blob2.length() +
+                                     file3.bytesRemaining() + blob4.length()));
 
         ntsa::Data batch(&ta);
         batch.makeConstBufferArray();
 
-        bool result = sendQueue.batchNext(&batch.constBufferArray(), 
+        bool result = sendQueue.batchNext(&batch.constBufferArray(),
                                           ntsa::SendOptions());
         NTCCFG_TEST_TRUE(result);
 
-        NTCCFG_TEST_EQ(batch.constBufferArray().numBuffers(), 
-                       static_cast<bsl::size_t>(blob1.numDataBuffers() + 
+        NTCCFG_TEST_EQ(batch.constBufferArray().numBuffers(),
+                       static_cast<bsl::size_t>(blob1.numDataBuffers() +
                                                 blob2.numDataBuffers()));
 
-        NTCCFG_TEST_EQ(batch.constBufferArray().numBytes(),
-                       static_cast<bsl::size_t>(blob1.length() + 
-                                                blob2.length()));
+        NTCCFG_TEST_EQ(
+            batch.constBufferArray().numBytes(),
+            static_cast<bsl::size_t>(blob1.length() + blob2.length()));
 
         ntsa::Data batchExpected(&blobBufferFactory, &ta);
         batchExpected.makeBlob();
