@@ -138,20 +138,6 @@ function(bdeproj_project_process_uors proj listDir)
             ${listDir}/groups/nts
         )
 
-        if (${NTS_BUILD_WITH_MOCKS})
-            bde_project_process_standalone_packages(
-                ${proj}
-                ${listDir}/adapters/a_ntsdbg
-            )
-        endif()
-
-        if (${NTS_BUILD_WITH_INTEGRATION_TESTS})
-            bde_project_process_standalone_packages(
-                ${proj}
-                ${listDir}/standalones/s_ntstst
-            )
-        endif()
-
         if (${NTS_BUILD_WITH_USAGE_EXAMPLES})
             bde_project_process_applications(
                 ${proj}
@@ -172,20 +158,6 @@ function(bdeproj_project_process_uors proj listDir)
             ${proj}
             ${listDir}/groups/ntc
         )
-
-        if (${NTF_BUILD_WITH_MOCKS})
-            bde_project_process_standalone_packages(
-                ${proj}
-                ${listDir}/adapters/a_ntcdbg
-            )
-        endif()
-
-        if (${NTF_BUILD_WITH_INTEGRATION_TESTS})
-            bde_project_process_standalone_packages(
-                ${proj}
-                ${listDir}/standalones/s_ntctst
-            )
-        endif()
 
         if (${NTF_BUILD_WITH_USAGE_EXAMPLES})
             bde_project_process_applications(
