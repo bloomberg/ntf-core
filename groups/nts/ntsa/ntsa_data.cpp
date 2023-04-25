@@ -2686,8 +2686,6 @@ bool DataUtil::equals(const ntsa::Data& lhs, const ntsa::Data& rhs)
         return false;
     }
 
-    const bsl::size_t size = lhsSize;
-
     if (lhs.isBlob() && rhs.isBlob()) {
         rc = bdlbb::BlobUtil::compare(lhs.blob(), rhs.blob());
         return rc == 0;
