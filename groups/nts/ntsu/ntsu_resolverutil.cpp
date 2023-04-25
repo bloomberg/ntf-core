@@ -143,28 +143,6 @@ ntsa::Error convertGetAddrInfoError(int rc)
 #endif
 }
 
-// Load into the specified 'result' the port decoded from the specified
-// 'source'. Return 'ntsa::Error::e_INVALID' if the 'source' doesn't contain
-// a sequence of characters forming a valid <USHORT> optionally surrounded by
-// whitespace characters and 'ntsa::Error::e_OK' otherwise.
-ntsa::Error parsePortNumber(ntsa::Port* result, bsl::string_view source)
-{
-    bsl::string_view s = bdlb::StringViewUtil::trim(source);
-    bsl::string_view remainder;
-
-    unsigned int value = 0;
-    if (0 != bdlb::NumericParseUtil::parseUint(&value, &remainder, s) ||
-        !remainder.empty())
-    {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-    if (value > USHRT_MAX) {
-        return ntsa::Error(ntsa::Error::e_LIMIT);
-    }
-    *result = ntsa::Port(value);
-    return ntsa::Error();
-}
-
 }  // close unnamed namespace
 
 ntsa::Error ResolverUtil::getIpAddress(bsl::vector<ntsa::IpAddress>* result,
@@ -326,22 +304,37 @@ ntsa::Error ResolverUtil::getPort(bsl::vector<ntsa::Port>* result,
     ntsa::Error error;
     int         rc;
 
-    {
-        ntsa::Port portNumber;
-        error = parsePortNumber(&portNumber, serviceName);
+    bsl::string_view serviceNameTrimmed = 
+        bdlb::StringViewUtil::trim(serviceName);
 
-        if (error) {
-            if (error == ntsa::Error(ntsa::Error::e_LIMIT)) {
-                return ntsa::Error(ntsa::Error::e_INVALID);
-            }
-        }
-        else {
-            result->push_back(portNumber);
-            return ntsa::Error();
-        }
+    if (serviceNameTrimmed.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    bsl::string             nameString = serviceName;
+    if (serviceNameTrimmed[0] == '-') {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    {
+        unsigned short   portNumberLiteral = 0;
+        bsl::string_view portNumberRemainder;
+
+        rc = bdlb::NumericParseUtil::parseUshort(
+            &portNumberLiteral, 
+            &portNumberRemainder, 
+            serviceNameTrimmed);
+
+        if (rc == 0) {
+            if (!portNumberRemainder.empty()) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+
+            result->push_back(static_cast<ntsa::Port>(portNumberLiteral));
+            return ntsa::Error();
+        }        
+    }
+
+    bsl::string             nameString = serviceNameTrimmed;
     bsl::vector<ntsa::Port> portList;
 
     addrinfo hints;

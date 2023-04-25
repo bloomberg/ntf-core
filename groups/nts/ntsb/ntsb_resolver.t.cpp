@@ -3164,8 +3164,6 @@ NTSCFG_TEST_CASE(10)
 NTSCFG_TEST_CASE(11)
 {
     // Concern: Test resolution of a service name expressed as a port number.
-    //
-    // Plan:
 
     ntscfg::TestAllocator ta;
     {
@@ -3174,48 +3172,146 @@ NTSCFG_TEST_CASE(11)
         ntsb::Resolver    resolver(&ta);
         ntsa::PortOptions portOptions;
 
-        {
+        // clang-format off
+        struct Data {
+            const char* d_serviceName;
+            bsl::size_t  d_port;
+            bool        d_success;
+        } DATA[] = {
+            { "", 0, false },
+
+            { "0", 0, true },
+            { " 0", 0, true },
+            { "0 ", 0, true },
+            { " 0 ", 0, true },
+
+            { "+0", 0, true },
+            { " +0", 0, true },
+            { "+0 ", 0, true },
+            { " +0 ", 0, true },
+
+            { "-0", 0, false },
+            { " -0", 0, false },
+            { "-0 ", 0, false },
+            { " -0 ", 0, false },
+
+            { "1", 1, true },
+            { " 1", 1, true },
+            { "1 ", 1, true },
+            { " 1 ", 1, true },
+
+            { "+1", 1, true },
+            { " +1", 1, true },
+            { "+1 ", 1, true },
+            { " +1 ", 1, true },
+
+            { "-1", 0, false },
+            { " -1", 0, false },
+            { "-1 ", 0, false },
+            { " -1 ", 0, false },
+
+            { "8080", 8080, true },
+            { " 8080", 8080, true },
+            { "8080 ", 8080, true },
+            { " 8080 ", 8080, true },
+
+            { "+8080", 8080, true },
+            { " +8080", 8080, true },
+            { "+8080 ", 8080, true },
+            { " +8080 ", 8080, true },
+
+            { "-8080", 0, false },
+            { " -8080", 0, false },
+            { "-8080 ", 0, false },
+            { " -8080 ", 0, false },
+
+            { "65535", 65535, true },
+            { " 65535", 65535, true },
+            { "65535 ", 65535, true },
+            { " 65535 ", 65535, true },
+
+            { "+65535", 65535, true },
+            { " +65535", 65535, true },
+            { "+65535 ", 65535, true },
+            { " +65535 ", 65535, true },
+
+            { "-65535", 0, false },
+            { " -65535", 0, false },
+            { "-65535 ", 0, false },
+            { " -65535 ", 0, false },
+
+            { "4294967296", 0, false },
+            { " 4294967296", 0, false },
+            { "4294967296 ", 0, false },
+            { " 4294967296 ", 0, false },
+
+            { "+4294967296", 0, false },
+            { " +4294967296", 0, false },
+            { "+4294967296 ", 0, false },
+            { " +4294967296 ", 0, false },
+
+            { "-4294967296", 0, false },
+            { " -4294967296", 0, false },
+            { "-4294967296 ", 0, false },
+            { " -4294967296 ", 0, false },
+
+            { "18446744073709551615", 0, false },
+            { " 18446744073709551615", 0, false },
+            { "18446744073709551615 ", 0, false },
+            { " 18446744073709551615 ", 0, false },
+
+            { "+18446744073709551615", 0, false },
+            { " +18446744073709551615", 0, false },
+            { "+18446744073709551615 ", 0, false },
+            { " +18446744073709551615 ", 0, false },
+
+            { "-18446744073709551615", 0, false },
+            { " -18446744073709551615", 0, false },
+            { "-18446744073709551615 ", 0, false },
+            { " -18446744073709551615 ", 0, false },
+
+            { "99999999999999999999", 0, false },
+            { " 99999999999999999999", 0, false },
+            { "99999999999999999999 ", 0, false },
+            { " 99999999999999999999 ", 0, false },
+
+            { "+99999999999999999999", 0, false },
+            { " +99999999999999999999", 0, false },
+            { "+99999999999999999999 ", 0, false },
+            { " +99999999999999999999 ", 0, false },
+
+            { "-99999999999999999999", 0, false },
+            { " -99999999999999999999", 0, false },
+            { "-99999999999999999999 ", 0, false },
+            { " -99999999999999999999 ", 0, false }
+        };
+        // clang-format on
+
+        for (bsl::size_t i = 0; i < sizeof(DATA) / sizeof(DATA[0]); ++i) {
             bsl::vector<ntsa::Port> portList;
-
-            error = resolver.getPort(&portList,
-                                     bslstl::StringRef("70", 1),
+            error = resolver.getPort(&portList, 
+                                     bslstl::StringRef(DATA[i].d_serviceName),
                                      portOptions);
-            NTSCFG_TEST_EQ(error, ntsa::Error());
-            NTSCFG_TEST_EQ(portList.size(), 1);
-            NTSCFG_TEST_EQ(portList[0], 7);
 
-            error = resolver.getPort(&portList,
-                                     bslstl::StringRef(" +70 "),
-                                     portOptions);
-            NTSCFG_TEST_EQ(error, ntsa::Error());
-            NTSCFG_TEST_EQ(portList.size(), 1);
-            NTSCFG_TEST_EQ(portList[0], 70);
+            bsl::size_t portNumber = 0;
+            if (!portList.empty()) {
+                portNumber = static_cast<bsl::size_t>(portList[0]);
+            }
+            
+            BSLS_LOG_DEBUG("Service name '%s' => port %zu: error = %s",
+                           DATA[i].d_serviceName,
+                           portNumber,
+                           error.text().c_str());
 
-            error = resolver.getPort(&portList,
-                                     bslstl::StringRef("7000"),
-                                     portOptions);
-            NTSCFG_TEST_EQ(error, ntsa::Error());
-            NTSCFG_TEST_EQ(portList.size(), 1);
-            NTSCFG_TEST_EQ(portList[0], 7000);
-        }
-
-        {
-            bsl::vector<ntsa::Port> portList;
-
-            error = resolver.getPort(&portList,
-                                     bslstl::StringRef("7a"),
-                                     portOptions);
-            NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
-
-            error = resolver.getPort(&portList,
-                                     bslstl::StringRef("70000", 5),
-                                     portOptions);
-            NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
-
-            error = resolver.getPort(&portList,
-                                     bslstl::StringRef("18446744073709551616"),
-                                     portOptions);
-            NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
+            if (DATA[i].d_success) {
+                NTSCFG_TEST_OK(error);
+                NTSCFG_TEST_EQ(portList.size(), 1);
+                NTSCFG_TEST_EQ(portNumber, DATA[i].d_port);
+            }
+            else {
+                NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+                NTSCFG_TEST_TRUE(portList.empty());
+            }
         }
     }
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
