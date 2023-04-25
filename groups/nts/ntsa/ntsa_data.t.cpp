@@ -16,6 +16,7 @@
 #include <ntsa_data.h>
 
 #include <ntscfg_test.h>
+#include <ntsa_temporary.h>
 
 #include <bdlbb_blob.h>
 #include <bdlbb_blobstreambuf.h>
@@ -674,9 +675,493 @@ NTSCFG_TEST_CASE(24)
 
     ntscfg::TestAllocator ta;
     {
+        ntsa::Error error;
+
+        ntsa::TemporaryFile tempFile(&ta);
+
+        bdlbb::PooledBlobBufferFactory blobBufferFactory(
+            test::BLOB_BUFFER_SIZE,
+            &ta);
+
+        bdlbb::Blob blob(&blobBufferFactory, &ta);
+
+        error = tempFile.write(bsl::string(test::DATA, test::DATA_SIZE));
+        NTSCFG_TEST_OK(error);
+
+        bdls::FilesystemUtil::FileDescriptor fileDescriptor = 
+            bdls::FilesystemUtil::open(
+                tempFile.path().c_str(),
+                bdls::FilesystemUtil::e_OPEN,
+                bdls::FilesystemUtil::e_READ_ONLY);
+
+        NTSCFG_TEST_NE(fileDescriptor, bdls::FilesystemUtil::k_INVALID_FD);
+
+        ntsa::Data data(&ta);
+        {            
+            ntsa::File& file = data.makeFile();
+
+            file.setDescriptor(fileDescriptor);
+            file.setBytesRemaining(test::DATA_SIZE);
+        }
+
+        ntsa::DataUtil::append(&blob, data);
+
+        bdls::FilesystemUtil::close(fileDescriptor);
+
+        NTSCFG_TEST_TRUE(test::BlobUtil::equals(blob, test::DATA));
     }
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
+
+
+
+
+
+
+
+
+
+
+
+NTSCFG_TEST_CASE(25)
+{
+    // Concern: Copy: undefined
+    // Plan:
+
+    ntscfg::TestAllocator ta;
+    {
+        bdlbb::PooledBlobBufferFactory blobBufferFactory(
+            test::BLOB_BUFFER_SIZE,
+            &ta);
+
+        bdlbb::Blob blob(&blobBufferFactory, &ta);
+
+        {
+            ntsa::Data data(&ta);
+            ntsa::DataUtil::copy(&blob, data);
+        }
+
+        NTSCFG_TEST_EQ(blob.length(), 0);
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTSCFG_TEST_CASE(26)
+{
+    // Concern: Copy: bdlbb::BlobBuffer
+    // Plan:
+
+    ntscfg::TestAllocator ta;
+    {
+        bdlbb::PooledBlobBufferFactory blobBufferFactory(
+            test::BLOB_BUFFER_SIZE,
+            &ta);
+
+        bdlbb::Blob blob(&blobBufferFactory, &ta);
+
+        {
+            ntsa::Data data(&ta);
+            {
+                bdlbb::BlobBuffer& blobBuffer = data.makeBlobBuffer();
+
+                bsl::shared_ptr<char> blobBufferData(
+                    static_cast<char*>(ta.allocate(test::DATA_SIZE)),
+                    &ta,
+                    0);
+
+                bsl::memcpy(blobBufferData.get(), test::DATA, test::DATA_SIZE);
+                blobBuffer.reset(blobBufferData, test::DATA_SIZE);
+            }
+
+            ntsa::DataUtil::copy(&blob, data);
+        }
+
+        NTSCFG_TEST_TRUE(test::BlobUtil::equals(blob, test::DATA));
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTSCFG_TEST_CASE(27)
+{
+    // Concern: Copy: ntsa::ConstBuffer
+    // Plan:
+
+    ntscfg::TestAllocator ta;
+    {
+        bdlbb::PooledBlobBufferFactory blobBufferFactory(
+            test::BLOB_BUFFER_SIZE,
+            &ta);
+
+        bdlbb::Blob blob(&blobBufferFactory, &ta);
+
+        {
+            ntsa::Data data(&ta);
+            {
+                ntsa::ConstBuffer& constBuffer = data.makeConstBuffer();
+                constBuffer.setBuffer(test::DATA, test::DATA_SIZE);
+            }
+
+            ntsa::DataUtil::copy(&blob, data);
+        }
+
+        NTSCFG_TEST_TRUE(test::BlobUtil::equals(blob, test::DATA));
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTSCFG_TEST_CASE(28)
+{
+    // Concern: Copy: ntsa::ConstBufferArray
+    // Plan:
+
+    ntscfg::TestAllocator ta;
+    {
+        bdlbb::PooledBlobBufferFactory blobBufferFactory(
+            test::BLOB_BUFFER_SIZE,
+            &ta);
+
+        bdlbb::Blob blob(&blobBufferFactory, &ta);
+
+        {
+            ntsa::Data data(&ta);
+            {
+                ntsa::ConstBufferArray& constBufferArray =
+                    data.makeConstBufferArray();
+
+                constBufferArray.append(test::DATA_A, test::DATA_A_SIZE);
+                constBufferArray.append(test::DATA_B, test::DATA_B_SIZE);
+                constBufferArray.append(test::DATA_C, test::DATA_C_SIZE);
+            }
+
+            ntsa::DataUtil::copy(&blob, data);
+        }
+
+        NTSCFG_TEST_TRUE(test::BlobUtil::equals(blob,
+                                                test::DATA_A,
+                                                test::DATA_B,
+                                                test::DATA_C));
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTSCFG_TEST_CASE(29)
+{
+    // Concern: Copy: ntsa::ConstBufferPtrArray
+    // Plan:
+
+    ntscfg::TestAllocator ta;
+    {
+        bdlbb::PooledBlobBufferFactory blobBufferFactory(
+            test::BLOB_BUFFER_SIZE,
+            &ta);
+
+        bdlbb::Blob blob(&blobBufferFactory, &ta);
+
+        ntsa::ConstBuffer constBufferArray[3];
+        constBufferArray[0].setBuffer(test::DATA_A, test::DATA_A_SIZE);
+        constBufferArray[1].setBuffer(test::DATA_B, test::DATA_B_SIZE);
+        constBufferArray[2].setBuffer(test::DATA_C, test::DATA_C_SIZE);
+
+        {
+            ntsa::Data data(&ta);
+            {
+                ntsa::ConstBufferPtrArray& constBufferPtrArray =
+                    data.makeConstBufferPtrArray();
+
+                constBufferPtrArray.assign(constBufferArray, 3);
+            }
+
+            ntsa::DataUtil::copy(&blob, data);
+        }
+
+        NTSCFG_TEST_TRUE(test::BlobUtil::equals(blob,
+                                                test::DATA_A,
+                                                test::DATA_B,
+                                                test::DATA_C));
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTSCFG_TEST_CASE(30)
+{
+    // Concern: Copy: ntsa::MutableBuffer
+    // Plan:
+
+    ntscfg::TestAllocator ta;
+    {
+        bdlbb::PooledBlobBufferFactory blobBufferFactory(
+            test::BLOB_BUFFER_SIZE,
+            &ta);
+
+        bdlbb::Blob blob(&blobBufferFactory, &ta);
+
+        bsl::string mutableBufferStorage = test::DATA;
+
+        {
+            ntsa::Data data(&ta);
+            {
+                ntsa::MutableBuffer& mutableBuffer = data.makeMutableBuffer();
+
+                mutableBuffer.setBuffer(&mutableBufferStorage[0],
+                                        mutableBufferStorage.size());
+            }
+
+            ntsa::DataUtil::copy(&blob, data);
+        }
+
+        NTSCFG_TEST_TRUE(test::BlobUtil::equals(blob, test::DATA));
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTSCFG_TEST_CASE(31)
+{
+    // Concern: Copy: ntsa::MutableBufferArray
+    // Plan:
+
+    ntscfg::TestAllocator ta;
+    {
+        bdlbb::PooledBlobBufferFactory blobBufferFactory(
+            test::BLOB_BUFFER_SIZE,
+            &ta);
+
+        bdlbb::Blob blob(&blobBufferFactory, &ta);
+
+        bsl::string mutableBufferStorageA = test::DATA_A;
+        bsl::string mutableBufferStorageB = test::DATA_B;
+        bsl::string mutableBufferStorageC = test::DATA_C;
+
+        {
+            ntsa::Data data(&ta);
+            {
+                ntsa::MutableBufferArray& mutableBufferArray =
+                    data.makeMutableBufferArray();
+
+                mutableBufferArray.append(&mutableBufferStorageA[0],
+                                          mutableBufferStorageA.size());
+
+                mutableBufferArray.append(&mutableBufferStorageB[0],
+                                          mutableBufferStorageB.size());
+
+                mutableBufferArray.append(&mutableBufferStorageC[0],
+                                          mutableBufferStorageC.size());
+            }
+
+            ntsa::DataUtil::copy(&blob, data);
+        }
+
+        NTSCFG_TEST_TRUE(test::BlobUtil::equals(blob,
+                                                test::DATA_A,
+                                                test::DATA_B,
+                                                test::DATA_C));
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTSCFG_TEST_CASE(32)
+{
+    // Concern: Copy: ntsa::MutableBufferPtrArray
+    // Plan:
+
+    ntscfg::TestAllocator ta;
+    {
+        bdlbb::PooledBlobBufferFactory blobBufferFactory(
+            test::BLOB_BUFFER_SIZE,
+            &ta);
+
+        bdlbb::Blob blob(&blobBufferFactory, &ta);
+
+        bsl::string mutableBufferStorageA = test::DATA_A;
+        bsl::string mutableBufferStorageB = test::DATA_B;
+        bsl::string mutableBufferStorageC = test::DATA_C;
+
+        ntsa::MutableBuffer mutableBufferArray[3];
+
+        mutableBufferArray[0].setBuffer(&mutableBufferStorageA[0],
+                                        mutableBufferStorageA.size());
+
+        mutableBufferArray[1].setBuffer(&mutableBufferStorageB[0],
+                                        mutableBufferStorageB.size());
+
+        mutableBufferArray[2].setBuffer(&mutableBufferStorageC[0],
+                                        mutableBufferStorageC.size());
+
+        {
+            ntsa::Data data(&ta);
+            {
+                ntsa::MutableBufferPtrArray& mutableBufferPtrArray =
+                    data.makeMutableBufferPtrArray();
+
+                mutableBufferPtrArray.assign(mutableBufferArray, 3);
+            }
+
+            ntsa::DataUtil::copy(&blob, data);
+        }
+
+        NTSCFG_TEST_TRUE(test::BlobUtil::equals(blob,
+                                                test::DATA_A,
+                                                test::DATA_B,
+                                                test::DATA_C));
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTSCFG_TEST_CASE(33)
+{
+    // Concern: Copy: bdlbb::Blob
+    // Plan:
+
+    ntscfg::TestAllocator ta;
+    {
+        bdlbb::PooledBlobBufferFactory blobBufferFactory(
+            test::BLOB_BUFFER_SIZE,
+            &ta);
+
+        bdlbb::Blob blob(&blobBufferFactory, &ta);
+
+        {
+            ntsa::Data data(&blobBufferFactory, &ta);
+            {
+                bdlbb::Blob& dataBlob = data.makeBlob();
+
+                bdlbb::BlobUtil::append(&dataBlob,
+                                        test::DATA_A,
+                                        test::DATA_A_SIZE);
+                bdlbb::BlobUtil::append(&dataBlob,
+                                        test::DATA_B,
+                                        test::DATA_B_SIZE);
+                bdlbb::BlobUtil::append(&dataBlob,
+                                        test::DATA_C,
+                                        test::DATA_C_SIZE);
+            }
+
+            ntsa::DataUtil::copy(&blob, data);
+        }
+
+        NTSCFG_TEST_TRUE(test::BlobUtil::equals(blob,
+                                                test::DATA_A,
+                                                test::DATA_B,
+                                                test::DATA_C));
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTSCFG_TEST_CASE(34)
+{
+    // Concern: Copy: bsl::shared_ptr<bdlbb::Blob>
+    // Plan:
+
+    ntscfg::TestAllocator ta;
+    {
+        bdlbb::PooledBlobBufferFactory blobBufferFactory(
+            test::BLOB_BUFFER_SIZE,
+            &ta);
+
+        bdlbb::Blob blob(&blobBufferFactory, &ta);
+
+        {
+            ntsa::Data data(&blobBufferFactory, &ta);
+            {
+                bsl::shared_ptr<bdlbb::Blob>& dataSharedBlob =
+                    data.makeSharedBlob();
+                dataSharedBlob.createInplace(&ta, &blobBufferFactory, &ta);
+
+                bdlbb::BlobUtil::append(dataSharedBlob.get(),
+                                        test::DATA_A,
+                                        test::DATA_A_SIZE);
+                bdlbb::BlobUtil::append(dataSharedBlob.get(),
+                                        test::DATA_B,
+                                        test::DATA_B_SIZE);
+                bdlbb::BlobUtil::append(dataSharedBlob.get(),
+                                        test::DATA_C,
+                                        test::DATA_C_SIZE);
+            }
+
+            ntsa::DataUtil::copy(&blob, data);
+        }
+
+        NTSCFG_TEST_TRUE(test::BlobUtil::equals(blob,
+                                                test::DATA_A,
+                                                test::DATA_B,
+                                                test::DATA_C));
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTSCFG_TEST_CASE(35)
+{
+    // Concern: Copy: bsl::string
+    // Plan:
+
+    ntscfg::TestAllocator ta;
+    {
+        bdlbb::PooledBlobBufferFactory blobBufferFactory(
+            test::BLOB_BUFFER_SIZE,
+            &ta);
+
+        bdlbb::Blob blob(&blobBufferFactory, &ta);
+
+        {
+            ntsa::Data data(&ta);
+            {
+                bsl::string& dataString = data.makeString();
+                dataString.assign(test::DATA, test::DATA_SIZE);
+            }
+
+            ntsa::DataUtil::copy(&blob, data);
+        }
+
+        NTSCFG_TEST_TRUE(test::BlobUtil::equals(blob, test::DATA));
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTSCFG_TEST_CASE(36)
+{
+    // Concern: Copy: ntsa::File
+    // Plan:
+
+    ntscfg::TestAllocator ta;
+    {
+        ntsa::Error error;
+
+        ntsa::TemporaryFile tempFile(&ta);
+
+        bdlbb::PooledBlobBufferFactory blobBufferFactory(
+            test::BLOB_BUFFER_SIZE,
+            &ta);
+
+        bdlbb::Blob blob(&blobBufferFactory, &ta);
+
+        error = tempFile.write(bsl::string(test::DATA, test::DATA_SIZE));
+        NTSCFG_TEST_OK(error);
+
+        bdls::FilesystemUtil::FileDescriptor fileDescriptor = 
+            bdls::FilesystemUtil::open(
+                tempFile.path().c_str(),
+                bdls::FilesystemUtil::e_OPEN,
+                bdls::FilesystemUtil::e_READ_ONLY);
+
+        NTSCFG_TEST_NE(fileDescriptor, bdls::FilesystemUtil::k_INVALID_FD);
+
+        ntsa::Data data(&ta);
+        {            
+            ntsa::File& file = data.makeFile();
+
+            file.setDescriptor(fileDescriptor);
+            file.setBytesRemaining(test::DATA_SIZE);
+        }
+
+        error = ntsa::DataUtil::copy(&blob, data);
+        NTSCFG_TEST_OK(error);
+
+        bdls::FilesystemUtil::close(fileDescriptor);
+
+        NTSCFG_TEST_TRUE(test::BlobUtil::equals(blob, test::DATA));
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
 
 NTSCFG_TEST_DRIVER
 {
@@ -705,5 +1190,19 @@ NTSCFG_TEST_DRIVER
     NTSCFG_TEST_REGISTER(22);
     NTSCFG_TEST_REGISTER(23);
     NTSCFG_TEST_REGISTER(24);
+
+    
+    NTSCFG_TEST_REGISTER(25);
+    NTSCFG_TEST_REGISTER(26);
+    NTSCFG_TEST_REGISTER(27);
+    NTSCFG_TEST_REGISTER(28);
+    NTSCFG_TEST_REGISTER(29);
+    NTSCFG_TEST_REGISTER(30);
+    NTSCFG_TEST_REGISTER(31);
+    NTSCFG_TEST_REGISTER(32);
+    NTSCFG_TEST_REGISTER(33);
+    NTSCFG_TEST_REGISTER(34);
+    NTSCFG_TEST_REGISTER(35);
+    NTSCFG_TEST_REGISTER(36);
 }
 NTSCFG_TEST_DRIVER_END;

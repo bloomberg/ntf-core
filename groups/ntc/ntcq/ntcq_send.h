@@ -157,6 +157,12 @@ class SendCallbackQueueEntryPool
     /// entry is automatically returned to this pool when its reference
     /// count reaches zero.
     bsl::shared_ptr<ntcq::SendCallbackQueueEntry> create();
+
+    /// Return the total number of objects in the pool.
+    bsl::size_t numObjects() const;
+
+    /// Return the number of un-allocated objects available in the pool.
+    bsl::size_t numObjectsAvailable() const;
 };
 
 /// @internal @brief
@@ -522,6 +528,18 @@ bsl::shared_ptr<ntcq::SendCallbackQueueEntry> SendCallbackQueueEntryPool::
     create()
 {
     return d_pool.getObject();
+}
+
+NTCCFG_INLINE
+bsl::size_t SendCallbackQueueEntryPool::numObjects() const
+{
+    return d_pool.numObjects();
+}
+
+NTCCFG_INLINE
+bsl::size_t SendCallbackQueueEntryPool::numObjectsAvailable() const
+{
+    return d_pool.numAvailableObjects();
 }
 
 NTCCFG_INLINE

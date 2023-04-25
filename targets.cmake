@@ -147,6 +147,7 @@ if (${NTF_BUILD_WITH_NTS})
     ntf_component(NAME ntsa_socketinfo)
     ntf_component(NAME ntsa_socketinfofilter)
     ntf_component(NAME ntsa_socketstate)
+    ntf_component(NAME ntsa_temporary)
     ntf_component(NAME ntsa_transport)
     ntf_component(NAME ntsa_uri)
 

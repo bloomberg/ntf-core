@@ -19,6 +19,8 @@
 BSLS_IDENT_RCSID(ntsa_data_cpp, "$Id$ $CSID$")
 
 #include <bdlbb_blobutil.h>
+#include <bdlbb_blobstreambuf.h>
+#include <bdlbb_simpleblobbufferfactory.h>
 #include <bdls_filesystemutil.h>
 
 #include <bslma_allocator.h>
@@ -1867,6 +1869,48 @@ struct DataUtilImpl {
     /// Pop the specified 'numBytes' from the specified 'data' assuming
     /// 'data' is represented as a file.
     static void popFile(ntsa::Data* data, bsl::size_t numBytes);
+
+    /// *** Copy ***
+
+    /// Copy of the specified 'source' into the specified destination. Return
+    /// the error.
+    static ntsa::Error copyBlob(bsl::streambuf *destination, const bdlbb::Blob& source);
+
+    /// Copy of the specified 'source' into the specified destination. Return
+    /// the error.
+    static ntsa::Error copyBlobBuffer(bsl::streambuf *destination, const bdlbb::BlobBuffer& source);
+
+    /// Copy of the specified 'source' into the specified destination. Return
+    /// the error.
+    static ntsa::Error copyConstBuffer(bsl::streambuf *destination, const ntsa::ConstBuffer& source);
+
+    /// Copy of the specified 'source' into the specified destination. Return
+    /// the error.
+    static ntsa::Error copyConstBufferArray(bsl::streambuf *destination, const ntsa::ConstBufferArray& source);
+
+    /// Copy of the specified 'source' into the specified destination. Return
+    /// the error.
+    static ntsa::Error copyConstBufferPtrArray(bsl::streambuf *destination, const ntsa::ConstBufferPtrArray& source);
+
+    /// Copy of the specified 'source' into the specified destination. Return
+    /// the error.
+    static ntsa::Error copyMutableBuffer(bsl::streambuf *destination, const ntsa::MutableBuffer& source);
+
+    /// Copy of the specified 'source' into the specified destination. Return
+    /// the error.
+    static ntsa::Error copyMutableBufferArray(bsl::streambuf *destination, const ntsa::MutableBufferArray& source);
+
+    /// Copy of the specified 'source' into the specified destination. Return
+    /// the error.
+    static ntsa::Error copyMutableBufferPtrArray(bsl::streambuf *destination, const ntsa::MutableBufferPtrArray& source);
+
+    /// Copy of the specified 'source' into the specified destination. Return
+    /// the error.
+    static ntsa::Error copyFile(bsl::streambuf *destination, const ntsa::File& source);
+
+    /// Copy of the specified 'source' into the specified destination. Return
+    /// the error.
+    static ntsa::Error copyString(bsl::streambuf *destination, const bsl::string& source);
 };
 
 bsl::size_t DataUtilImpl::appendUndefined(bdlbb::Blob*      destination,
@@ -2235,6 +2279,227 @@ void DataUtilImpl::popFile(ntsa::Data* data, bsl::size_t numBytes)
     file->setBytesRemaining(file->bytesRemaining() - numBytesToPop);
 }
 
+ntsa::Error DataUtilImpl::copyBlob(bsl::streambuf *destination, const bdlbb::Blob& source)
+{
+    ntsa::Error error;
+
+    const int numDataBuffers = source.numDataBuffers();
+
+    for (int i = 0; i < numDataBuffers; ++i) {
+        const bdlbb::BlobBuffer& buffer = source.buffer(i);
+
+        int size;
+        if (i != numDataBuffers - 1) {
+            size = buffer.size();
+        }
+        else {
+            size = source.lastDataBufferLength();
+        }
+
+        const char* data = buffer.data();
+
+        error = DataUtilImpl::copyConstBuffer(destination, ntsa::ConstBuffer(data, size));
+        if (error) {
+            return error;
+        }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error DataUtilImpl::copyBlobBuffer(bsl::streambuf *destination, const bdlbb::BlobBuffer& source)
+{
+    return DataUtilImpl::copyConstBuffer(destination, ntsa::ConstBuffer(source.data(), source.size()));
+}
+
+ntsa::Error DataUtilImpl::copyConstBuffer(bsl::streambuf *destination, const ntsa::ConstBuffer& source)
+{
+    const std::streamsize numBytesToCopyMax = 
+        bsl::numeric_limits<std::streamsize>::max();
+
+    const char* currentDataSource = 
+        reinterpret_cast<const char*>(source.data());
+
+    bsl::size_t numBytesRemaining = source.size();
+
+    while (true) {
+        if (numBytesRemaining == 0) {
+            break;
+        }
+
+        std::streamsize numBytesToCopy;
+        if (numBytesRemaining <= numBytesToCopyMax) {
+            numBytesToCopy = static_cast<std::streamsize>(numBytesRemaining);
+        }
+        else {
+            numBytesToCopy = numBytesToCopyMax;
+        }
+    
+        std::streamsize numBytesCopied = 
+            destination->sputn(currentDataSource, numBytesToCopy);
+
+        currentDataSource += numBytesCopied;
+        numBytesRemaining -= numBytesCopied;
+
+        BSLS_ASSERT(numBytesCopied <= numBytesToCopy);
+
+        if (numBytesCopied != numBytesToCopy) {
+            return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+        }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error DataUtilImpl::copyConstBufferArray(bsl::streambuf *destination, const ntsa::ConstBufferArray& source)
+{
+    ntsa::Error error;
+
+    const bsl::size_t numBuffers = source.numBuffers();
+
+    for (bsl::size_t i = 0; i < numBuffers; ++i) {
+        error = DataUtilImpl::copyConstBuffer(destination, source.buffer(i));
+        if (error) {
+            return error;
+        }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error DataUtilImpl::copyConstBufferPtrArray(bsl::streambuf *destination, const ntsa::ConstBufferPtrArray& source)
+{
+    ntsa::Error error;
+
+    const bsl::size_t numBuffers = source.numBuffers();
+
+    for (bsl::size_t i = 0; i < numBuffers; ++i) {
+        error = DataUtilImpl::copyConstBuffer(destination, source.buffer(i));
+        if (error) {
+            return error;
+        }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error DataUtilImpl::copyMutableBuffer(bsl::streambuf *destination, const ntsa::MutableBuffer& source)
+{
+    return DataUtilImpl::copyConstBuffer(destination, ntsa::ConstBuffer(source));
+}
+
+ntsa::Error DataUtilImpl::copyMutableBufferArray(bsl::streambuf *destination, const ntsa::MutableBufferArray& source)
+{
+    ntsa::Error error;
+
+    const bsl::size_t numBuffers = source.numBuffers();
+
+    for (bsl::size_t i = 0; i < numBuffers; ++i) {
+        error = DataUtilImpl::copyConstBuffer(destination, ntsa::ConstBuffer(source.buffer(i)));
+        if (error) {
+            return error;
+        }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error DataUtilImpl::copyMutableBufferPtrArray(bsl::streambuf *destination, const ntsa::MutableBufferPtrArray& source)
+{
+    ntsa::Error error;
+
+    const bsl::size_t numBuffers = source.numBuffers();
+
+    for (bsl::size_t i = 0; i < numBuffers; ++i) {
+        error = DataUtilImpl::copyConstBuffer(destination, ntsa::ConstBuffer(source.buffer(i)));
+        if (error) {
+            return error;
+        }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error DataUtilImpl::copyFile(bsl::streambuf*   destination, 
+                                   const ntsa::File& source)
+{
+    ntsa::Error error;
+
+    bdls::FilesystemUtil::FileDescriptor fileDescriptor = source.descriptor();
+
+    if (fileDescriptor == bdls::FilesystemUtil::k_INVALID_FD) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    bdls::FilesystemUtil::Offset currentPosition =
+        bdls::FilesystemUtil::seek(
+            fileDescriptor, 
+            source.position(), 
+            bdls::FilesystemUtil::e_SEEK_FROM_BEGINNING);
+
+    if (currentPosition != source.position()) {
+        error = ntsa::Error::last();
+        if (!error) {
+            error = ntsa::Error(ntsa::Error::e_EOF);
+        }
+        return error;
+    }
+
+    bdls::FilesystemUtil::Offset numBytesRemaining = source.bytesRemaining();
+
+    while (true) {
+        if (numBytesRemaining == 0) {
+            break;
+        }
+
+        enum { k_BUFFER_SIZE = 512 };
+        char buffer[k_BUFFER_SIZE];
+
+        int numBytesToRead;
+        if (numBytesRemaining < 
+            static_cast<bdls::FilesystemUtil::Offset>(k_BUFFER_SIZE)) 
+        {
+            numBytesToRead = static_cast<int>(numBytesRemaining);
+        }
+        else {
+            numBytesToRead = static_cast<int>(k_BUFFER_SIZE);
+        }
+
+        int numBytesRead = bdls::FilesystemUtil::read(
+            fileDescriptor, &buffer, numBytesToRead);
+
+        BSLS_ASSERT(numBytesRead <= numBytesToRead);
+
+        if (numBytesRead > 0) {
+            error = DataUtilImpl::copyConstBuffer(
+                destination, 
+                ntsa::ConstBuffer(buffer, 
+                                  static_cast<bsl::size_t>(numBytesRead)));
+            if (error) {
+                return error;
+            }
+
+            BSLS_ASSERT(numBytesRemaining >= numBytesRead);
+            numBytesRemaining -= numBytesRead;
+        }
+
+        if (numBytesRead != numBytesToRead) {
+            error = ntsa::Error::last();
+            if (!error) {
+                error = ntsa::Error(ntsa::Error::e_EOF);
+            }
+            return error;
+        }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error DataUtilImpl::copyString(bsl::streambuf *destination, const bsl::string& source)
+{
+    return DataUtilImpl::copyConstBuffer(destination, ntsa::ConstBuffer(source.data(), source.size()));
+}
+
 DataUtilImplAppend s_append[12] = {
     (DataUtilImplAppend)&DataUtilImpl::appendUndefined,
     (DataUtilImplAppend)&DataUtilImpl::appendBlobBuffer,
@@ -2274,6 +2539,132 @@ bsl::size_t DataUtil::append(bdlbb::Blob*      destination,
 void DataUtil::pop(ntsa::Data* data, bsl::size_t numBytes)
 {
     s_pop[data->type()](data, numBytes);
+}
+
+ntsa::Error DataUtil::copy(bsl::streambuf *destination, const ntsa::Data& source)
+{
+    if (source.isBlob()) {
+        return DataUtilImpl::copyBlob(destination, source.blob());
+    }
+    else if (source.isBlobBuffer()) {
+        return DataUtilImpl::copyBlobBuffer(destination, source.blobBuffer());
+    }
+    else if (source.isConstBuffer()) {
+        return DataUtilImpl::copyConstBuffer(destination, source.constBuffer());
+    }
+    else if (source.isConstBufferArray()) {
+        return DataUtilImpl::copyConstBufferArray(destination, source.constBufferArray());
+    }
+    else if (source.isConstBufferPtrArray()) {
+        return DataUtilImpl::copyConstBufferPtrArray(destination, source.constBufferPtrArray());
+    }
+    else if (source.isMutableBuffer()) {
+        return DataUtilImpl::copyMutableBuffer(destination, source.mutableBuffer());
+    }
+    else if (source.isMutableBufferArray()) {
+        return DataUtilImpl::copyMutableBufferArray(destination, source.mutableBufferArray());
+    }
+    else if (source.isMutableBufferPtrArray()) {
+        return DataUtilImpl::copyMutableBufferPtrArray(destination, source.mutableBufferPtrArray());
+    }
+    else if (source.isFile()) {
+        return DataUtilImpl::copyFile(destination, source.file());
+    }
+    else if (source.isString()) {
+        return DataUtilImpl::copyString(destination, source.string());
+    }
+    else if (source.isSharedBlob()) {
+        if (source.sharedBlob()) {
+            return DataUtilImpl::copyBlob(destination, *source.sharedBlob());
+        }
+        else {
+            return ntsa::Error();
+        }
+    }
+    else {
+        return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    }
+}
+
+
+ntsa::Error DataUtil::copy(ntsa::Data *destination, const ntsa::Data& source)
+{
+    destination->reset();
+
+    if (destination->blobBufferFactory() != 0) {
+        return DataUtil::copy(&destination->makeBlob(), source);
+    }
+    else {
+        bdlbb::SimpleBlobBufferFactory blobBufferFactory(
+            1024, bslma::Default::globalAllocator());
+
+        bdlbb::Blob blob(&blobBufferFactory);
+
+        ntsa::Error error = DataUtil::copy(&blob, source);
+        destination->makeBlob(blob);
+
+        BSLS_ASSERT(destination->blobBufferFactory() == 0);
+
+        return error;
+    }
+}
+
+ntsa::Error DataUtil::copy(bdlbb::Blob *destination, const ntsa::Data& source)
+{
+    ntsa::Error error;
+
+    destination->setLength(0);
+    BSLS_ASSERT(destination->length() == 0);
+
+    bdlbb::OutBlobStreamBuf osb(destination);
+    error = DataUtil::copy(&osb, source);
+    osb.pubsync();
+
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+bool DataUtil::equals(const ntsa::Data& lhs, const ntsa::Data& rhs)
+{
+    ntsa::Error error;
+    int         rc;
+
+    const bsl::size_t lhsSize = lhs.size();
+    const bsl::size_t rhsSize = rhs.size();
+
+    if (lhsSize != rhsSize) {
+        return false;
+    }
+
+    const bsl::size_t size = lhsSize;
+
+    if (lhs.isBlob() && rhs.isBlob()) {
+        rc = bdlbb::BlobUtil::compare(lhs.blob(), rhs.blob());
+        return rc == 0;
+    }
+    else {
+        bdlbb::SimpleBlobBufferFactory blobBufferFactory(
+            8192, bslma::Default::globalAllocator());
+
+        bdlbb::Blob lhsBlob(&blobBufferFactory);
+        bdlbb::Blob rhsBlob(&blobBufferFactory);
+
+        error = DataUtil::copy(&lhsBlob, lhs);
+        if (error) {
+            return false;
+        }
+
+        error = DataUtil::copy(&rhsBlob, rhs);
+        if (error) {
+            return false;
+        }
+
+        rc = bdlbb::BlobUtil::compare(lhsBlob, rhsBlob);
+        return rc == 0;
+    }
 }
 
 }  // close package namespace
