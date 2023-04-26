@@ -26,12 +26,12 @@ BSLS_IDENT("$Id: $")
 /// NTS release major version.
 ///
 /// @ingroup module_ntsscm
-#define NTS_VERSION_MAJOR 1
+#define NTS_VERSION_MAJOR 2
 
 /// NTS release minor version.
 ///
 /// @ingroup module_ntsscm
-#define NTS_VERSION_MINOR 2
+#define NTS_VERSION_MINOR 0
 
 /// NTS release patch version.
 ///

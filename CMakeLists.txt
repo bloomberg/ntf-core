@@ -18,7 +18,7 @@ cmake_minimum_required(VERSION 3.22.0)
 project(
     ntf-core
     VERSION
-        1.2.0
+        2.0.0
     DESCRIPTION
         "NTF Core"
     HOMEPAGE_URL
