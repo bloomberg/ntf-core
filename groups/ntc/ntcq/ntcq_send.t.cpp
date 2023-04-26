@@ -652,6 +652,7 @@ NTCCFG_TEST_CASE(6)
     {
         const bsl::size_t k_BLOB_BUFFER_SIZE = 32;
         const bsl::size_t k_MESSAGE_SIZE     = 1024;
+        const bsl::size_t k_MAX_BUFFERS      = 1024;
 
         bdlbb::SimpleBlobBufferFactory blobBufferFactory(k_BLOB_BUFFER_SIZE,
                                                          &ta);
@@ -695,8 +696,11 @@ NTCCFG_TEST_CASE(6)
         ntsa::Data batch(&ta);
         batch.makeConstBufferArray();
 
+        ntsa::SendOptions sendOptions;
+        sendOptions.setMaxBuffers(k_MAX_BUFFERS);
+
         bool result = sendQueue.batchNext(&batch.constBufferArray(),
-                                          ntsa::SendOptions());
+                                          sendOptions);
         NTCCFG_TEST_TRUE(result);
 
         NTCCFG_TEST_EQ(batch.constBufferArray().numBuffers(),
@@ -726,6 +730,7 @@ NTCCFG_TEST_CASE(7)
     {
         const bsl::size_t k_BLOB_BUFFER_SIZE = 32;
         const bsl::size_t k_MESSAGE_SIZE     = 1024;
+        const bsl::size_t k_MAX_BUFFERS      = 1024;
 
         bdlbb::SimpleBlobBufferFactory blobBufferFactory(k_BLOB_BUFFER_SIZE,
                                                          &ta);
@@ -801,8 +806,11 @@ NTCCFG_TEST_CASE(7)
         ntsa::Data batch(&ta);
         batch.makeConstBufferArray();
 
+        ntsa::SendOptions sendOptions;
+        sendOptions.setMaxBuffers(k_MAX_BUFFERS);
+
         bool result = sendQueue.batchNext(&batch.constBufferArray(),
-                                          ntsa::SendOptions());
+                                          sendOptions);
         NTCCFG_TEST_TRUE(result);
 
         NTCCFG_TEST_EQ(batch.constBufferArray().numBuffers(),
