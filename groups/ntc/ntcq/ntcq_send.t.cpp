@@ -323,9 +323,10 @@ NTCCFG_TEST_CASE(2)
 
         bsl::shared_ptr<ntci::Sender> sender;
 
-        bsl::shared_ptr<test::Strand> strand;
-        strand.createInplace(&ta, &ta);
+        bsl::shared_ptr<test::Strand> queue;
+        queue.createInplace(&ta, &ta);
 
+        bsl::shared_ptr<ntci::Strand>   strand   = queue;
         bsl::shared_ptr<ntci::Executor> executor = strand;
 
         ntca::SendEvent event;
@@ -405,7 +406,7 @@ NTCCFG_TEST_CASE(2)
                             &mutex);
 
             NTCCFG_TEST_EQ(numInvoked, 0);
-            strand->drain();
+            queue->drain();
             NTCCFG_TEST_EQ(numInvoked, 1);
 
             Entry::dispatch(entry,
@@ -417,7 +418,7 @@ NTCCFG_TEST_CASE(2)
                             &mutex);
 
             NTCCFG_TEST_EQ(numInvoked, 1);
-            strand->drain();
+            queue->drain();
             NTCCFG_TEST_EQ(numInvoked, 1);
         }
 
@@ -450,7 +451,7 @@ NTCCFG_TEST_CASE(2)
                             &mutex);
 
             NTCCFG_TEST_EQ(numInvoked, 0);
-            strand->drain();
+            queue->drain();
             NTCCFG_TEST_EQ(numInvoked, 1);
 
             Entry::dispatch(entry,
@@ -462,7 +463,7 @@ NTCCFG_TEST_CASE(2)
                             &mutex);
 
             NTCCFG_TEST_EQ(numInvoked, 1);
-            strand->drain();
+            queue->drain();
             NTCCFG_TEST_EQ(numInvoked, 1);
         }
     }
