@@ -213,7 +213,7 @@ bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*  result,
                                const ntsa::SendOptions& options) const
 {
     const bsl::size_t maxBytes = options.maxBytes();
-    
+
     if (maxBytes > 0) {
         if (result->numBytes() >= maxBytes) {
             return false;
@@ -267,7 +267,7 @@ bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*    result,
                                const ntsa::SendOptions&   options) const
 {
     const bsl::size_t maxBytes = options.maxBytes();
-    
+
     if (maxBytes > 0) {
         if (result->numBytes() >= maxBytes) {
             return false;
@@ -363,8 +363,6 @@ bool SendQueue::batchNext(ntsa::ConstBufferArray*  result,
 
     EntryList::const_iterator current = d_entryList.begin();
     EntryList::const_iterator end     = d_entryList.end();
-
-    bsl::size_t numEntries = 0;
 
     while (true) {
         if (current == end) {
