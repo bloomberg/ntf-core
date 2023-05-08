@@ -109,7 +109,7 @@ ntsa::Error checkToken(const bsl::string& name, const bslstl::StringRef& token)
 
 ntsa::Error checkCharacterString(const bsl::string& value)
 {
-    // Verify the specify character-string 'value'. Return the error.
+    // Verify the specified character-string 'value'. Return the error.
 
     NTCI_LOG_CONTEXT();
 
@@ -127,7 +127,7 @@ ntsa::Error checkCharacterString(const bsl::string& value)
 
 ntsa::Error checkRdata(const bdlbb::Blob& value)
 {
-    // Verify the specify resource record 'value'. Return the error.
+    // Verify the specified resource record 'value'. Return the error.
 
     NTCI_LOG_CONTEXT();
 
