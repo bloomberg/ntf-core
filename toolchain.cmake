@@ -31,67 +31,74 @@ if ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "")
         CACHE STRING "Default" FORCE)
 endif()
 
-if("${CMAKE_SYSTEM_NAME}" STREQUAL "FreeBSD")
-    find_program(
-        NTF_TOOLCHAIN_COMPILER_CC_PATH gcc clang cc
-        PATHS /opt/bb/bin
-        REQUIRED)
-    find_program(
-        NTF_TOOLCHAIN_COMPILER_CXX_PATH g++ clang++ c++
-        PATHS /opt/bb/bin
-        REQUIRED)
-elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "OpenBSD")
-    find_program(
-        NTF_TOOLCHAIN_COMPILER_CC_PATH gcc clang cc
-        PATHS /opt/bb/bin
-        REQUIRED)
-    find_program(
-        NTF_TOOLCHAIN_COMPILER_CXX_PATH g++ clang++ c++
-        PATHS /opt/bb/bin
-        REQUIRED)
-elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
-    find_program(
-        NTF_TOOLCHAIN_COMPILER_CC_PATH clang gcc cc
-        PATHS /opt/bb/bin
-        REQUIRED)
-    find_program(
-        NTF_TOOLCHAIN_COMPILER_CXX_PATH clang++ g++ c++
-        PATHS /opt/bb/bin
-        REQUIRED)
-elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-    find_program(
-        NTF_TOOLCHAIN_COMPILER_CC_PATH gcc clang cc
-        PATHS /opt/bb/bin
-        REQUIRED)
-    find_program(
-        NTF_TOOLCHAIN_COMPILER_CXX_PATH g++ clang++ c++
-        PATHS /opt/bb/bin
-        REQUIRED)
-elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS")
-    find_program(
-        NTF_TOOLCHAIN_COMPILER_CC_PATH cc gcc clang
-        PATHS /opt/bb/bin
-        REQUIRED)
-    find_program(
-        NTF_TOOLCHAIN_COMPILER_CXX_PATH CC g++ clang++
-        PATHS /opt/bb/bin
-        REQUIRED)
-elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "AIX")
-    find_program(
-        NTF_TOOLCHAIN_COMPILER_CC_PATH xlc_r gcc clang
-        PATHS /opt/bb/bin
-        REQUIRED)
-    find_program(
-        NTF_TOOLCHAIN_COMPILER_CXX_PATH xlC_r g++ clang++
-        PATHS /opt/bb/bin
-        REQUIRED)
-elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
-    find_program(NTF_TOOLCHAIN_COMPILER_CC_PATH cl clang gcc
-        REQUIRED)
-    find_program(NTF_TOOLCHAIN_COMPILER_CXX_PATH cl clang++ g++
-        REQUIRED)
+if(DEFINED ENV{CC} AND DEFINED ENV{CXX})
+    set(NTF_TOOLCHAIN_COMPILER_CC_PATH $ENV{CC} CACHE FILEPATH "" FORCE)
+    set(NTF_TOOLCHAIN_COMPILER_CXX_PATH $ENV{CXX} CACHE FILEPATH "" FORCE)
+elseif(NOT NTF_TOOLCHAIN_COMPILER_CC_PATH OR NOT NTF_TOOLCHAIN_COMPILER_CXX_PATH)
+    if("${CMAKE_SYSTEM_NAME}" STREQUAL "FreeBSD")
+        find_program(
+            NTF_TOOLCHAIN_COMPILER_CC_PATH gcc clang cc
+            PATHS /opt/bb/bin
+            REQUIRED)
+        find_program(
+            NTF_TOOLCHAIN_COMPILER_CXX_PATH g++ clang++ c++
+            PATHS /opt/bb/bin
+            REQUIRED)
+    elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "OpenBSD")
+        find_program(
+            NTF_TOOLCHAIN_COMPILER_CC_PATH gcc clang cc
+            PATHS /opt/bb/bin
+            REQUIRED)
+        find_program(
+            NTF_TOOLCHAIN_COMPILER_CXX_PATH g++ clang++ c++
+            PATHS /opt/bb/bin
+            REQUIRED)
+    elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+        find_program(
+            NTF_TOOLCHAIN_COMPILER_CC_PATH clang gcc cc
+            PATHS /opt/bb/bin
+            REQUIRED)
+        find_program(
+            NTF_TOOLCHAIN_COMPILER_CXX_PATH clang++ g++ c++
+            PATHS /opt/bb/bin
+            REQUIRED)
+    elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+        find_program(
+            NTF_TOOLCHAIN_COMPILER_CC_PATH gcc clang cc
+            PATHS /opt/bb/bin
+            REQUIRED)
+        find_program(
+            NTF_TOOLCHAIN_COMPILER_CXX_PATH g++ clang++ c++
+            PATHS /opt/bb/bin
+            REQUIRED)
+    elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS")
+        find_program(
+            NTF_TOOLCHAIN_COMPILER_CC_PATH cc gcc clang
+            PATHS /opt/bb/bin
+            REQUIRED)
+        find_program(
+            NTF_TOOLCHAIN_COMPILER_CXX_PATH CC g++ clang++
+            PATHS /opt/bb/bin
+            REQUIRED)
+    elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "AIX")
+        find_program(
+            NTF_TOOLCHAIN_COMPILER_CC_PATH xlc_r gcc clang
+            PATHS /opt/bb/bin
+            REQUIRED)
+        find_program(
+            NTF_TOOLCHAIN_COMPILER_CXX_PATH xlC_r g++ clang++
+            PATHS /opt/bb/bin
+            REQUIRED)
+    elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
+        find_program(NTF_TOOLCHAIN_COMPILER_CC_PATH cl clang gcc
+            REQUIRED)
+        find_program(NTF_TOOLCHAIN_COMPILER_CXX_PATH cl clang++ g++
+            REQUIRED)
+    else()
+        message(FATAL_ERROR "Unsupported platform: ${CMAKE_SYSTEM_NAME}")
+    endif()
 else()
-    message(FATAL_ERROR "Unsupported platform: ${CMAKE_SYSTEM_NAME}")
+    message(FATAL_ERROR "Failed to determine compiler")
 endif()
 
 get_filename_component(
