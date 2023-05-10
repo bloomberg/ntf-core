@@ -7270,14 +7270,15 @@ void concernConnectEndpoint2(const bsl::shared_ptr<ntci::Interface>& interface,
 void concernConnectEndpoint3(const bsl::shared_ptr<ntci::Interface>& interface,
                              bslma::Allocator*                       allocator)
 {
-    // Concern: Connect to endpoint periodically times out until all attempts
-    // are exhausted
-    //
-    // Testing: ETIMEDOUT, connection attempt exhaustion
+    // Concern: Connect to endpoint periodically failes due to either timeouts
+    // or icmp messages leading to e_UNREACHABLE error until all attempts are
+    //exhausted
+    // Testing: e_CONNECTION_TIMEOUT, e_UNREACHABLE, connection attempt
+    // exhaustion
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_WARN("ETIMEDOUT (x5)");
+    BSLS_LOG_WARN("e_CONNECTION_TIMEOUT || e_UNREACHABLE (x5)");
 
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 5;
 
@@ -7300,8 +7301,10 @@ void concernConnectEndpoint3(const bsl::shared_ptr<ntci::Interface>& interface,
 
     // Connect the stream socket to the listener socket.
 
+    // 240.0.0.1 belongs to class E ipv4 address space and it is assumed that
+    // it will never be assigned
     ntsa::Endpoint endpoint(
-        ntsa::IpEndpoint(ntsa::Ipv4Address("192.168.100.200"), 1024));
+        ntsa::IpEndpoint(ntsa::Ipv4Address("240.0.0.1"), 1024));
 
     bsl::size_t numErrors = 0;
     NTCCFG_TEST_GT(k_MAX_CONNECTION_ATTEMPTS, 0);
@@ -7314,10 +7317,10 @@ void concernConnectEndpoint3(const bsl::shared_ptr<ntci::Interface>& interface,
     error = streamSocket->connect(endpoint, connectOptions, connectFuture);
     NTCCFG_TEST_OK(error);
 
-    // Since we assume there is no machine assigned to 192.168.100.200, the
-    // endpoint to which the stream socket is attempting to connect, ensure
-    // there are exactly k_MAX_CONNECTION_ATTEMPTS number of failures, each
-    // indicating ETIMEDOUT.
+    // Since we assume there is no machine assigned to 240.0.0.1, the endpoint
+    // to which the stream socket is attempting to connect, ensure there are
+    // exactly k_MAX_CONNECTION_ATTEMPTS number of failures, each
+    // indicating either e_CONNECTION_TIMEOUT or e_UNREACHABLE.
 
     for (bsl::size_t i = 0; i < k_MAX_CONNECTION_ATTEMPTS; ++i) {
         ntci::ConnectResult connectResult;
@@ -7330,8 +7333,12 @@ void concernConnectEndpoint3(const bsl::shared_ptr<ntci::Interface>& interface,
         NTCCFG_TEST_EQ(connectResult.event().type(),
                        ntca::ConnectEventType::e_ERROR);
 
-        NTCCFG_TEST_EQ(connectResult.event().context().error(),
-                       ntsa::Error(ntsa::Error::e_CONNECTION_TIMEOUT));
+        const bool errorIsExpected =
+            (connectResult.event().context().error() ==
+                 ntsa::Error(ntsa::Error::e_CONNECTION_TIMEOUT) ||
+             connectResult.event().context().error() ==
+                 ntsa::Error(ntsa::Error::e_UNREACHABLE));
+        NTCCFG_TEST_TRUE(errorIsExpected);
 
         ++numErrors;
         NTCCFG_TEST_LE(numErrors, k_MAX_CONNECTION_ATTEMPTS);
