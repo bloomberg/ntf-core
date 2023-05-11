@@ -7556,7 +7556,7 @@ void concernConnectEndpoint5(const bsl::shared_ptr<ntci::Interface>& interface,
     // Connect the stream socket to the listener socket.
 
     ntsa::Endpoint endpoint(
-        ntsa::IpEndpoint(ntsa::Ipv4Address("192.168.100.200"), 1024));
+        ntsa::IpEndpoint(ntsa::Ipv4Address("240.0.0.1"), 1024));
 
     bsl::size_t numErrors = 0;
     NTCCFG_TEST_GT(k_MAX_CONNECTION_ATTEMPTS, 0);
@@ -7569,10 +7569,10 @@ void concernConnectEndpoint5(const bsl::shared_ptr<ntci::Interface>& interface,
     error = streamSocket->connect(endpoint, connectOptions, connectFuture);
     NTCCFG_TEST_OK(error);
 
-    // Since we assume there is no machine assigned to 192.168.100.200, the
-    // endpoint to which the stream socket is attempting to connect, ensure
-    // there are exactly k_MAX_CONNECTION_ATTEMPTS number of failures, each
-    // indicating ETIMEDOUT.
+    // Since we assume there is no machine assigned to 240.0.0.1, the endpoint
+    // to which the stream socket is attempting to connect, ensure there are
+    // exactly k_MAX_CONNECTION_ATTEMPTS number of failures, each indicating
+    // ETIMEDOUT.
 
     for (bsl::size_t i = 0; i < 4; ++i) {
         ntci::ConnectResult connectResult;
@@ -7839,7 +7839,7 @@ void concernConnectEndpoint7(const bsl::shared_ptr<ntci::Interface>& interface,
     // Connect the stream socket to the listener socket.
 
     ntsa::Endpoint endpoint(
-        ntsa::IpEndpoint(ntsa::Ipv4Address("192.168.100.200"), 1024));
+        ntsa::IpEndpoint(ntsa::Ipv4Address("240.0.0.1"), 1024));
 
     bsl::size_t numErrors = 0;
     NTCCFG_TEST_GT(k_MAX_CONNECTION_ATTEMPTS, 0);
@@ -7854,10 +7854,10 @@ void concernConnectEndpoint7(const bsl::shared_ptr<ntci::Interface>& interface,
     error = streamSocket->connect(endpoint, connectOptions, connectFuture);
     NTCCFG_TEST_OK(error);
 
-    // Since we assume there is no machine assigned to 192.168.100.200, the
-    // endpoint to which the stream socket is attempting to connect, ensure
-    // there are exactly k_MAX_CONNECTION_ATTEMPTS number of failures, each
-    // indicating ETIMEDOUT.
+    // Since we assume there is no machine assigned to 240.0.0.1, the endpoint
+    // to which the stream socket is attempting to connect, ensure there are
+    // exactly k_MAX_CONNECTION_ATTEMPTS number of failures, each indicating
+    // ETIMEDOUT.
 
     while (true) {
         ntci::ConnectResult connectResult;
