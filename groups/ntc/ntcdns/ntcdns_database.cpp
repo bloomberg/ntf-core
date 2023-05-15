@@ -505,6 +505,7 @@ ntsa::Error HostDatabase::load(const bsl::shared_ptr<ntcdns::File>& file)
 
     char        current = 0;
     bsl::size_t lines   = 0;
+    NTCCFG_WARNING_UNUSED(lines);
 
     while (true) {
         current = scanner.skipUntilNotWhitespace();
@@ -819,6 +820,7 @@ ntsa::Error PortDatabase::load(const bsl::shared_ptr<ntcdns::File>& file)
 
     char        current = 0;
     bsl::size_t lines   = 0;
+    NTCCFG_WARNING_UNUSED(lines);
 
     while (true) {
         current = scanner.skipUntilNotWhitespace();

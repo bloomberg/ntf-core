@@ -3749,6 +3749,7 @@ Scanner::Scanner(const char* begin, const char* end)
 , d_current(begin)
 , d_end(end)
 {
+    NTSCFG_WARNING_UNUSED(d_begin);
 }
 
 Scanner::~Scanner()
