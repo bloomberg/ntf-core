@@ -28,6 +28,7 @@ extras/
 *.sdf
 *.opensdf
 .vscode
+.idea
 *.VC.db
 *.VC.opendb
 *.VC.db-shm
