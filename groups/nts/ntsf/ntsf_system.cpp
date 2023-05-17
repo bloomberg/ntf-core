@@ -30,11 +30,23 @@ BSLS_IDENT_RCSID(ntsf_system_cpp, "$Id$ $CSID$")
 
 #include <bslma_allocator.h>
 #include <bslma_default.h>
+#include <bslma_newdeleteallocator.h>
+#include <bslmt_lockguard.h>
+#include <bslmt_mutex.h>
 #include <bslmt_once.h>
 #include <bsls_assert.h>
 
 namespace BloombergLP {
 namespace ntsf {
+
+namespace {
+
+bslma::Allocator*    s_globalAllocator_p;
+bslmt::Mutex*        s_globalMutex_p;
+ntsi::Resolver*      s_globalResolver_p;
+bslma::SharedPtrRep* s_globalResolverRep_p;
+
+}  // close unnamed namespace
 
 ntsa::Error System::initialize()
 {
@@ -44,7 +56,19 @@ ntsa::Error System::initialize()
         if (rc != 0) {
             return ntsa::Error(ntsa::Error::last());
         }
+
+        // We use a new delete allocator instead of the global allocator here
+        // because we want prevent a visible "memory leak" if the global
+        // allocator has been replaced in main.  This is because the memory
+        // allocated by the plugins won't be freed until the application exits.
+
+        s_globalAllocator_p = &bslma::NewDeleteAllocator::singleton();
+
+        s_globalMutex_p = new (*s_globalAllocator_p) bslmt::Mutex();
+
+        bsl::atexit(&System::exit);
     }
+
     return ntsa::Error();
 }
 
@@ -350,6 +374,23 @@ bsl::shared_ptr<ntsi::Resolver> System::createResolver(
 
     bsl::shared_ptr<ntsb::Resolver> resolver;
     resolver.createInplace(allocator, allocator);
+
+    return resolver;
+}
+
+bsl::shared_ptr<ntsi::Resolver> System::createResolver(
+    const ntsa::ResolverConfig& configuration,
+    bslma::Allocator*           basicAllocator)
+{
+    ntsa::Error error;
+
+    error = ntsf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
+
+    bsl::shared_ptr<ntsb::Resolver> resolver;
+    resolver.createInplace(allocator, configuration, allocator);
 
     return resolver;
 }
@@ -708,6 +749,164 @@ ntsa::Error System::close(ntsa::Handle socket)
     return ntsu::SocketUtil::close(socket);
 }
 
+ntsa::Error System::setIpAddress(
+    const bslstl::StringRef&            domainName,
+    const bsl::vector<ntsa::IpAddress>& ipAddressList)
+{
+    bsl::shared_ptr<ntsi::Resolver> resolver;
+    System::getDefault(&resolver);
+
+    return resolver->setIpAddress(domainName, ipAddressList);
+}
+
+ntsa::Error System::addIpAddress(
+    const bslstl::StringRef&            domainName,
+    const bsl::vector<ntsa::IpAddress>& ipAddressList)
+{
+    bsl::shared_ptr<ntsi::Resolver> resolver;
+    System::getDefault(&resolver);
+
+    return resolver->addIpAddress(domainName, ipAddressList);
+}
+
+ntsa::Error System::addIpAddress(const bslstl::StringRef& domainName,
+                                 const ntsa::IpAddress&   ipAddress)
+{
+    bsl::shared_ptr<ntsi::Resolver> resolver;
+    System::getDefault(&resolver);
+
+    return resolver->addIpAddress(domainName, ipAddress);
+}
+
+ntsa::Error System::setPort(const bslstl::StringRef&       serviceName,
+                            const bsl::vector<ntsa::Port>& portList,
+                            ntsa::Transport::Value         transport)
+{
+    bsl::shared_ptr<ntsi::Resolver> resolver;
+    System::getDefault(&resolver);
+
+    return resolver->setPort(serviceName, portList, transport);
+}
+
+ntsa::Error System::addPort(const bslstl::StringRef&       serviceName,
+                            const bsl::vector<ntsa::Port>& portList,
+                            ntsa::Transport::Value         transport)
+{
+    bsl::shared_ptr<ntsi::Resolver> resolver;
+    System::getDefault(&resolver);
+
+    return resolver->addPort(serviceName, portList, transport);
+}
+
+ntsa::Error System::addPort(const bslstl::StringRef& serviceName,
+                            ntsa::Port               port,
+                            ntsa::Transport::Value   transport)
+{
+    bsl::shared_ptr<ntsi::Resolver> resolver;
+    System::getDefault(&resolver);
+
+    return resolver->addPort(serviceName, port, transport);
+}
+
+ntsa::Error System::setLocalIpAddress(
+    const bsl::vector<ntsa::IpAddress>& ipAddressList)
+{
+    bsl::shared_ptr<ntsi::Resolver> resolver;
+    System::getDefault(&resolver);
+
+    return resolver->setLocalIpAddress(ipAddressList);
+}
+
+ntsa::Error System::setHostname(const bsl::string& name)
+{
+    bsl::shared_ptr<ntsi::Resolver> resolver;
+    System::getDefault(&resolver);
+
+    return resolver->setHostname(name);
+}
+
+ntsa::Error System::setHostnameFullyQualified(const bsl::string& name)
+{
+    bsl::shared_ptr<ntsi::Resolver> resolver;
+    System::getDefault(&resolver);
+
+    return resolver->setHostnameFullyQualified(name);
+}
+
+ntsa::Error System::getIpAddress(bsl::vector<ntsa::IpAddress>* result,
+                                 const bslstl::StringRef&      domainName,
+                                 const ntsa::IpAddressOptions& options)
+{
+    bsl::shared_ptr<ntsi::Resolver> resolver;
+    System::getDefault(&resolver);
+
+    return resolver->getIpAddress(result, domainName, options);
+}
+
+ntsa::Error System::getDomainName(bsl::string*           result,
+                                  const ntsa::IpAddress& ipAddress)
+{
+    bsl::shared_ptr<ntsi::Resolver> resolver;
+    System::getDefault(&resolver);
+
+    return resolver->getDomainName(result, ipAddress);
+}
+
+ntsa::Error System::getPort(bsl::vector<ntsa::Port>* result,
+                            const bslstl::StringRef& serviceName,
+                            const ntsa::PortOptions& options)
+{
+    bsl::shared_ptr<ntsi::Resolver> resolver;
+    System::getDefault(&resolver);
+
+    return resolver->getPort(result, serviceName, options);
+}
+
+ntsa::Error System::getServiceName(bsl::string*           result,
+                                   ntsa::Port             port,
+                                   ntsa::Transport::Value transport)
+{
+    bsl::shared_ptr<ntsi::Resolver> resolver;
+    System::getDefault(&resolver);
+
+    return resolver->getServiceName(result, port, transport);
+}
+
+ntsa::Error System::getEndpoint(ntsa::Endpoint*              result,
+                                const bslstl::StringRef&     text,
+                                const ntsa::EndpointOptions& options)
+{
+    bsl::shared_ptr<ntsi::Resolver> resolver;
+    System::getDefault(&resolver);
+
+    return resolver->getEndpoint(result, text, options);
+}
+
+ntsa::Error System::getLocalIpAddress(bsl::vector<ntsa::IpAddress>* result,
+                                      const ntsa::IpAddressOptions& options)
+{
+    bsl::shared_ptr<ntsi::Resolver> resolver;
+    System::getDefault(&resolver);
+
+    return resolver->getLocalIpAddress(result, options);
+}
+
+ntsa::Error System::getHostname(bsl::string* result)
+{
+    bsl::shared_ptr<ntsi::Resolver> resolver;
+    System::getDefault(&resolver);
+
+    return resolver->getHostname(result);
+}
+
+ntsa::Error System::getHostnameFullyQualified(bsl::string* result)
+{
+    bsl::shared_ptr<ntsi::Resolver> resolver;
+    System::getDefault(&resolver);
+
+    return resolver->getHostnameFullyQualified(result);
+}
+
 void System::discoverAdapterList(bsl::vector<ntsa::Adapter>* result)
 {
     ntsa::Error error;
@@ -831,6 +1030,79 @@ ntsa::Error System::reportInfo(bsl::vector<ntsa::SocketInfo>* result,
     return ntsu::SocketUtil::reportInfo(result, filter);
 }
 
+void System::setDefault(const bsl::shared_ptr<ntsi::Resolver>& resolver)
+{
+    ntsa::Error error;
+
+    error = ntsf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntsi::Resolver> result;
+
+    bslmt::LockGuard<bslmt::Mutex> lock(s_globalMutex_p);
+
+    if (s_globalResolver_p != 0) {
+        BSLS_ASSERT_OPT(s_globalResolverRep_p);
+
+        s_globalResolverRep_p->releaseRef();
+
+        s_globalResolver_p    = 0;
+        s_globalResolverRep_p = 0;
+    }
+
+    BSLS_ASSERT_OPT(s_globalResolver_p == 0);
+    BSLS_ASSERT_OPT(s_globalResolverRep_p == 0);
+
+    bsl::shared_ptr<ntsi::Resolver>                  temp = resolver;
+    bsl::pair<ntsi::Resolver*, bslma::SharedPtrRep*> pair = temp.release();
+
+    temp.reset();
+
+    s_globalResolver_p    = pair.first;
+    s_globalResolverRep_p = pair.second;
+
+    BSLS_ASSERT_OPT(s_globalResolver_p);
+    BSLS_ASSERT_OPT(s_globalResolverRep_p);
+
+    s_globalResolverRep_p->acquireRef();
+}
+
+void System::getDefault(bsl::shared_ptr<ntsi::Resolver>* result)
+{
+    ntsa::Error error;
+
+    error = ntsf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bslmt::LockGuard<bslmt::Mutex> lock(s_globalMutex_p);
+
+    if (NTSCFG_UNLIKELY(s_globalResolver_p == 0)) {
+        BSLS_ASSERT_OPT(s_globalAllocator_p);
+
+        bsl::shared_ptr<ntsb::Resolver> resolver;
+        resolver.createInplace(s_globalAllocator_p, s_globalAllocator_p);
+
+        bsl::pair<ntsb::Resolver*, bslma::SharedPtrRep*> pair =
+            resolver.release();
+
+        resolver.reset();
+
+        s_globalResolver_p    = pair.first;
+        s_globalResolverRep_p = pair.second;
+
+        BSLS_ASSERT_OPT(s_globalResolverRep_p->numReferences() == 1);
+    }
+
+    BSLS_ASSERT_OPT(s_globalResolver_p);
+    BSLS_ASSERT_OPT(s_globalResolverRep_p);
+
+    s_globalResolverRep_p->acquireRef();
+
+    *result = bsl::shared_ptr<ntsi::Resolver>(s_globalResolver_p,
+                                              s_globalResolverRep_p);
+    BSLS_ASSERT_OPT(*result);
+}
+
 bool System::supportsIpv4()
 {
     ntsa::Error error;
@@ -921,16 +1193,28 @@ bool System::supportsTransport(ntsa::Transport::Value transport)
     return ntsu::AdapterUtil::supportsTransport(transport);
 }
 
-ntsa::Error System::exit()
+void System::exit()
 {
     BSLMT_ONCE_DO
     {
-        int rc = ntscfg::Platform::exit();
-        if (rc != 0) {
-            return ntsa::Error(ntsa::Error::last());
+        if (s_globalResolver_p != 0) {
+            BSLS_ASSERT_OPT(s_globalResolverRep_p);
+            s_globalResolverRep_p->releaseRef();
+            s_globalResolver_p    = 0;
+            s_globalResolverRep_p = 0;
         }
+
+        if (s_globalMutex_p != 0) {
+            BSLS_ASSERT_OPT(s_globalAllocator_p);
+            s_globalAllocator_p->deleteObject(s_globalMutex_p);
+            s_globalMutex_p = 0;
+        }
+
+        s_globalAllocator_p = 0;
+
+        int rc = ntscfg::Platform::exit();
+        BSLS_ASSERT_OPT(rc == 0);
     }
-    return ntsa::Error();
 }
 
 SystemGuard::SystemGuard()

@@ -18,6 +18,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntccfg_platform_cpp, "$Id$ $CSID$")
 
+#include <ntsf_system.h>
 #include <bsls_log.h>
 #include <bsl_cstdlib.h>
 #include <bsl_cstring.h>
@@ -64,17 +65,20 @@ Initializer::~Initializer()
 
 int Platform::initialize()
 {
-    return ntscfg::Platform::initialize();
+    ntsa::Error error = ntsf::System::initialize();
+    return error.number();
 }
 
 int Platform::ignore(ntscfg::Signal::Value signal)
 {
-    return ntscfg::Platform::ignore(signal);
+    ntsa::Error error = ntsf::System::ignore(signal);
+    return error.number();
 }
 
 int Platform::exit()
 {
-    return ntscfg::Platform::exit();
+    ntsf::System::exit();
+    return 0;
 }
 
 }  // close package namespace

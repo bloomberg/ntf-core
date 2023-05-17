@@ -31,6 +31,7 @@ ntsa_port
 ntsa_portoptions
 ntsa_receivecontext
 ntsa_receiveoptions
+ntsa_resolverconfig
 ntsa_sendcontext
 ntsa_sendoptions
 ntsa_shutdowntype

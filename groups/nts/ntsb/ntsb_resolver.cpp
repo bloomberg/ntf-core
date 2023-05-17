@@ -40,7 +40,6 @@ ResolverOverrides::ResolverOverrides(bslma::Allocator* basicAllocator)
 , d_localIpAddressList(basicAllocator)
 , d_hostname(basicAllocator)
 , d_hostnameFullyQualified(basicAllocator)
-, d_active(false)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
@@ -550,6 +549,18 @@ ntsa::Error ResolverOverrides::getHostnameFullyQualified(
 Resolver::Resolver(bslma::Allocator* basicAllocator)
 : d_overrides(basicAllocator)
 , d_overridesExist(false)
+, d_overridesEnabled(true)
+, d_systemEnabled(true)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+Resolver::Resolver(const ntsa::ResolverConfig& configuration,
+                   bslma::Allocator*           basicAllocator)
+: d_overrides(basicAllocator)
+, d_overridesExist(false)
+, d_overridesEnabled(configuration.overridesEnabled().valueOr(true))
+, d_systemEnabled(configuration.overridesEnabled().valueOr(true))
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
@@ -673,7 +684,7 @@ ntsa::Error Resolver::getIpAddress(bsl::vector<ntsa::IpAddress>* result,
                                    const bslstl::StringRef&      domainName,
                                    const ntsa::IpAddressOptions& options)
 {
-    if (d_overridesExist) {
+    if (d_overridesEnabled && d_overridesExist) {
         ntsa::Error error =
             d_overrides.getIpAddress(result, domainName, options);
         if (!error) {
@@ -681,41 +692,53 @@ ntsa::Error Resolver::getIpAddress(bsl::vector<ntsa::IpAddress>* result,
         }
     }
 
-    return ntsu::ResolverUtil::getIpAddress(result, domainName, options);
+    if (d_systemEnabled) {
+        return ntsu::ResolverUtil::getIpAddress(result, domainName, options);
+    }
+
+    return ntsa::Error(ntsa::Error::e_EOF);
 }
 
 ntsa::Error Resolver::getDomainName(bsl::string*           result,
                                     const ntsa::IpAddress& ipAddress)
 {
-    if (d_overridesExist) {
+    if (d_overridesEnabled && d_overridesExist) {
         ntsa::Error error = d_overrides.getDomainName(result, ipAddress);
         if (!error) {
             return ntsa::Error();
         }
     }
 
-    return ntsu::ResolverUtil::getDomainName(result, ipAddress);
+    if (d_systemEnabled) {
+        return ntsu::ResolverUtil::getDomainName(result, ipAddress);
+    }
+
+    return ntsa::Error(ntsa::Error::e_EOF);
 }
 
 ntsa::Error Resolver::getPort(bsl::vector<ntsa::Port>* result,
                               const bslstl::StringRef& serviceName,
                               const ntsa::PortOptions& options)
 {
-    if (d_overridesExist) {
+    if (d_overridesEnabled && d_overridesExist) {
         ntsa::Error error = d_overrides.getPort(result, serviceName, options);
         if (!error) {
             return ntsa::Error();
         }
     }
 
-    return ntsu::ResolverUtil::getPort(result, serviceName, options);
+    if (d_systemEnabled) {
+        return ntsu::ResolverUtil::getPort(result, serviceName, options);
+    }
+
+    return ntsa::Error(ntsa::Error::e_EOF);
 }
 
 ntsa::Error Resolver::getServiceName(bsl::string*           result,
                                      ntsa::Port             port,
                                      ntsa::Transport::Value transport)
 {
-    if (d_overridesExist) {
+    if (d_overridesEnabled && d_overridesExist) {
         ntsa::Error error =
             d_overrides.getServiceName(result, port, transport);
         if (!error) {
@@ -723,7 +746,11 @@ ntsa::Error Resolver::getServiceName(bsl::string*           result,
         }
     }
 
-    return ntsu::ResolverUtil::getServiceName(result, port, transport);
+    if (d_systemEnabled) {
+        return ntsu::ResolverUtil::getServiceName(result, port, transport);
+    }
+
+    return ntsa::Error(ntsa::Error::e_EOF);
 }
 
 ntsa::Error Resolver::getEndpoint(ntsa::Endpoint*              result,
@@ -1023,38 +1050,50 @@ ntsa::Error Resolver::getEndpoint(ntsa::Endpoint*              result,
 ntsa::Error Resolver::getLocalIpAddress(bsl::vector<ntsa::IpAddress>* result,
                                         const ntsa::IpAddressOptions& options)
 {
-    if (d_overridesExist) {
+    if (d_overridesEnabled && d_overridesExist) {
         ntsa::Error error = d_overrides.getLocalIpAddress(result, options);
         if (!error) {
             return ntsa::Error();
         }
     }
 
-    return ntsu::ResolverUtil::getLocalIpAddress(result, options);
+    if (d_systemEnabled) {
+        return ntsu::ResolverUtil::getLocalIpAddress(result, options);
+    }
+
+    return ntsa::Error(ntsa::Error::e_EOF);
 }
 
 ntsa::Error Resolver::getHostname(bsl::string* result)
 {
-    if (d_overridesExist) {
+    if (d_overridesEnabled && d_overridesExist) {
         ntsa::Error error = d_overrides.getHostname(result);
         if (!error) {
             return ntsa::Error();
         }
     }
 
-    return ntsu::ResolverUtil::getHostname(result);
+    if (d_systemEnabled) {
+        return ntsu::ResolverUtil::getHostname(result);
+    }
+
+    return ntsa::Error(ntsa::Error::e_EOF);
 }
 
 ntsa::Error Resolver::getHostnameFullyQualified(bsl::string* result)
 {
-    if (d_overridesExist) {
+    if (d_overridesEnabled && d_overridesExist) {
         ntsa::Error error = d_overrides.getHostnameFullyQualified(result);
         if (!error) {
             return ntsa::Error();
         }
     }
 
-    return ntsu::ResolverUtil::getHostnameFullyQualified(result);
+    if (d_systemEnabled) {
+        return ntsu::ResolverUtil::getHostnameFullyQualified(result);
+    }
+
+    return ntsa::Error(ntsa::Error::e_EOF);
 }
 
 }  // close package namespace

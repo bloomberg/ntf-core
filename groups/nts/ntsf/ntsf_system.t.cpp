@@ -523,10 +523,124 @@ NTSCFG_TEST_CASE(3)
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
+NTSCFG_TEST_CASE(4)
+{
+    // Concern: Resolution from default resolver automatically initialized
+
+    ntscfg::TestAllocator ta;
+    {
+        ntsa::Error error;
+
+        bsl::vector<ntsa::IpAddress> ipAddressListOverride;
+        ipAddressListOverride.push_back(ntsa::IpAddress("4.4.4.4"));
+        ipAddressListOverride.push_back(ntsa::IpAddress("8.8.8.8"));
+
+        error =
+            ntsf::System::setIpAddress("example.com", ipAddressListOverride);
+        NTSCFG_TEST_OK(error);
+
+        bsl::set<ntsa::IpAddress> ipAddressSet(ipAddressListOverride.begin(),
+                                               ipAddressListOverride.end());
+
+        NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
+
+        bsl::vector<ntsa::IpAddress> ipAddressList;
+        ntsa::IpAddressOptions       ipAddressOptions;
+
+        error = ntsf::System::getIpAddress(&ipAddressList,
+                                           "example.com",
+                                           ipAddressOptions);
+        NTSCFG_TEST_FALSE(error);
+
+        for (bsl::vector<ntsa::IpAddress>::const_iterator it =
+                 ipAddressList.begin();
+             it != ipAddressList.end();
+             ++it)
+        {
+            NTSCFG_TEST_LOG_DEBUG << "Address: " << it->text()
+                                  << NTSCFG_TEST_LOG_END;
+
+            bsl::size_t n = ipAddressSet.erase(*it);
+            NTSCFG_TEST_EQ(n, 1);
+        }
+
+        NTSCFG_TEST_TRUE(ipAddressSet.empty());
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTSCFG_TEST_CASE(5)
+{
+    // Concern: Resolution from default resolver explicitly installed
+
+    ntsf::SystemGuard systemGuard(ntscfg::Signal::e_PIPE);
+
+    ntscfg::TestAllocator ta;
+    {
+        ntsa::Error error;
+
+        {
+            ntsa::ResolverConfig resolverConfig;
+            resolverConfig.setOverridesEnabled(true);
+            resolverConfig.setSystemEnabled(false);
+
+            bsl::shared_ptr<ntsi::Resolver> resolver =
+                ntsf::System::createResolver(
+                    resolverConfig,
+                    bslma::Default::globalAllocator());
+
+            ntsf::System::setDefault(resolver);
+
+            bsl::shared_ptr<ntsi::Resolver> resolverDefault;
+            ntsf::System::getDefault(&resolverDefault);
+
+            NTSCFG_TEST_EQ(resolverDefault, resolver);
+        }
+
+        bsl::vector<ntsa::IpAddress> ipAddressListOverride;
+        ipAddressListOverride.push_back(ntsa::IpAddress("4.4.4.4"));
+        ipAddressListOverride.push_back(ntsa::IpAddress("8.8.8.8"));
+
+        error =
+            ntsf::System::setIpAddress("example.com", ipAddressListOverride);
+        NTSCFG_TEST_OK(error);
+
+        bsl::set<ntsa::IpAddress> ipAddressSet(ipAddressListOverride.begin(),
+                                               ipAddressListOverride.end());
+
+        NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
+
+        bsl::vector<ntsa::IpAddress> ipAddressList;
+        ntsa::IpAddressOptions       ipAddressOptions;
+
+        error = ntsf::System::getIpAddress(&ipAddressList,
+                                           "example.com",
+                                           ipAddressOptions);
+        NTSCFG_TEST_FALSE(error);
+
+        for (bsl::vector<ntsa::IpAddress>::const_iterator it =
+                 ipAddressList.begin();
+             it != ipAddressList.end();
+             ++it)
+        {
+            NTSCFG_TEST_LOG_DEBUG << "Address: " << it->text()
+                                  << NTSCFG_TEST_LOG_END;
+
+            bsl::size_t n = ipAddressSet.erase(*it);
+            NTSCFG_TEST_EQ(n, 1);
+        }
+
+        NTSCFG_TEST_TRUE(ipAddressSet.empty());
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
 NTSCFG_TEST_DRIVER
 {
     NTSCFG_TEST_REGISTER(1);
     NTSCFG_TEST_REGISTER(2);
     NTSCFG_TEST_REGISTER(3);
+    NTSCFG_TEST_REGISTER(4);
+    NTSCFG_TEST_REGISTER(5);
 }
 NTSCFG_TEST_DRIVER_END;
