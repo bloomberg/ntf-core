@@ -39,6 +39,16 @@ namespace ntcdns {
 
 namespace {
 
+/// Provide a functor to sort port entries by port.
+struct PortEntrySorter
+{
+    bool operator()(const ntcdns::PortEntry& lhs,
+                    const ntcdns::PortEntry& rhs) const
+    {
+        return lhs.port() < rhs.port();
+    }
+};
+
 /// Provide a scanner of contiguous character data.
 class Scanner
 {
@@ -858,12 +868,12 @@ ntsa::Error PortDatabase::load(const bsl::shared_ptr<ntcdns::File>& file)
 
         if (NTCCFG_UNLIKELY(scanner.isComment(current))) {
             current = scanner.skipLine();
-            break;
+            continue;
         }
 
         if (scanner.isNewLine(current)) {
             current = scanner.skipUntilNotNewLine();
-            break;
+            continue;
         }
 
         const char* const portBegin = scanner.current();
@@ -894,12 +904,12 @@ ntsa::Error PortDatabase::load(const bsl::shared_ptr<ntcdns::File>& file)
 
         if (NTCCFG_UNLIKELY(scanner.isComment(current))) {
             current = scanner.skipLine();
-            break;
+            continue;
         }
 
         if (scanner.isNewLine(current)) {
             current = scanner.skipUntilNotNewLine();
-            break;
+            continue;
         }
 
         if (!scanner.isSlash(current)) {
@@ -922,12 +932,12 @@ ntsa::Error PortDatabase::load(const bsl::shared_ptr<ntcdns::File>& file)
 
         if (NTCCFG_UNLIKELY(scanner.isComment(current))) {
             current = scanner.skipLine();
-            break;
+            continue;
         }
 
         if (scanner.isNewLine(current)) {
             current = scanner.skipUntilNotNewLine();
-            break;
+            continue;
         }
 
         const char* const protocolBegin = scanner.current();
@@ -1409,6 +1419,46 @@ ntsa::Error PortDatabase::getServiceName(
     context->setSource(ntca::ResolverSource::e_DATABASE);
 
     return ntsa::Error();
+}
+
+void PortDatabase::dump(bsl::vector<ntcdns::PortEntry>* result) const
+{
+    result->clear();
+
+    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+
+    result->reserve(d_tcpServiceNameByPort.size() +
+                    d_udpServiceNameByPort.size());
+
+    if (!d_tcpServiceNameByPort.empty()) {
+        for (ServiceNameByPort::const_iterator it =
+            d_tcpServiceNameByPort.begin();
+            it != d_tcpServiceNameByPort.end(); ++it)
+        {
+            ntcdns::PortEntry portEntry;
+            portEntry.service() = it->second;
+            portEntry.port() = it->first;
+            portEntry.protocol() = "tcp";
+
+            result->push_back(portEntry);
+        }
+    }
+
+    if (!d_udpServiceNameByPort.empty()) {
+        for (ServiceNameByPort::const_iterator it =
+            d_udpServiceNameByPort.begin();
+            it != d_udpServiceNameByPort.end(); ++it)
+        {
+            ntcdns::PortEntry portEntry;
+            portEntry.service() = it->second;
+            portEntry.port() = it->first;
+            portEntry.protocol() = "udp";
+
+            result->push_back(portEntry);
+        }
+    }
+
+    bsl::sort(result->begin(), result->end(), PortEntrySorter());
 }
 
 }  // close package namespace

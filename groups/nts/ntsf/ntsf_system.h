@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntsa_adapter.h>
 #include <ntsa_error.h>
+#include <ntsa_resolverconfig.h>
 #include <ntsa_socketinfo.h>
 #include <ntsa_socketinfofilter.h>
 #include <ntsa_socketstate.h>
@@ -895,6 +896,13 @@ struct System {
     static bsl::shared_ptr<ntsi::Resolver> createResolver(
         bslma::Allocator* basicAllocator = 0);
 
+    /// Create a new resolver having the specified 'configuration'. Optionally
+    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
+    /// is 0, the currently installed default allocator is used.
+    static bsl::shared_ptr<ntsi::Resolver> createResolver(
+        const ntsa::ResolverConfig& configuration,
+        bslma::Allocator*           basicAllocator = 0);
+
     /// Bind the specified 'socket' to the specified source 'endpoint'. If
     /// the specified 'reuseAddress' flag is set, allow this socket to bind
     /// to an address already in use by the operating system. Return the
@@ -1235,6 +1243,193 @@ struct System {
     /// Close the specified 'socket'. Return the error.
     static ntsa::Error close(ntsa::Handle socket);
 
+    /// Set the specified 'domainName' to resolve to the specified
+    /// 'ipAddressList', and vice-versa. Return the error. Note that calling
+    /// this function affects the future behavior of the default resolver only:
+    /// 'ipAddressList' will be subsequently returned from calling
+    /// 'getIpAddress()' of 'domainName', and 'domainName' will be returned
+    /// from calling 'getDomainName()' of any of the addresses in
+    /// 'ipAddressList', but this function does not affect any name resolution
+    /// caches maintained elsewhere by the system. Also note that calling this
+    /// function is synonymous with calling the equivalent function on the
+    /// the default resolver.
+    static ntsa::Error setIpAddress(
+        const bslstl::StringRef&            domainName,
+        const bsl::vector<ntsa::IpAddress>& ipAddressList);
+
+    /// Add the specified 'domainName' to resolve to the specified
+    /// 'ipAddressList', and vice-versa, in addition to any previously,
+    /// explicitly defined associations. Return the error. Note that calling
+    /// this function affects the future behavior of the default resolver only:
+    /// 'ipAddressList' will be subsequently returned from calling
+    /// 'getIpAddress()' of 'domainName', and 'domainName' will be returned
+    /// from calling 'getDomainName()' of any of the addresses in
+    /// 'ipAddressList', but this function does not affect any name resolution
+    /// caches maintained elsewhere by the system. Also note that calling this
+    /// function is synonymous with calling the equivalent function on the
+    /// the default resolver.
+    static ntsa::Error addIpAddress(
+        const bslstl::StringRef&            domainName,
+        const bsl::vector<ntsa::IpAddress>& ipAddressList);
+
+    /// Add the specified 'domainName' to resolve to the specified 'ipAddress',
+    /// and vice-versa, in addition to any previously, explicitly defined
+    /// associations. Return the error. Note that calling this function affects
+    /// the future behavior of the default resolver only: 'ipAddress' will be
+    /// subsequently returned from calling 'getIpAddress()' of 'domainName',
+    /// and 'domainName' will be returned from calling 'getDomainName()' of any
+    /// of the addresses in 'ipAddressList', but this function does not affect
+    /// any name resolution caches maintained elsewhere by the system. Also
+    /// note that calling this function is synonymous with calling the
+    /// equivalent function on the the default resolver.
+    static ntsa::Error addIpAddress(const bslstl::StringRef& domainName,
+                                    const ntsa::IpAddress&   ipAddress);
+
+    /// Set the specified 'serviceName' to resolve to the specified 'portList'
+    /// for use by the specified 'transport', and vice-versa. Return the error.
+    /// Note that calling this function affects the future behavior of the
+    /// default resolver only: 'port' will be subsequently returned from
+    /// calling 'getPort()' of 'serviceName', and 'serviceName' will be
+    /// returned from calling 'getServiceName()' of any of the ports in
+    /// 'portList', but this function does not affect any name resolution
+    /// caches maintained elsewhere by the system. Also note that calling this
+    /// function is synonymous with calling the equivalent function on the
+    /// the default resolver.
+    static ntsa::Error setPort(const bslstl::StringRef&       serviceName,
+                               const bsl::vector<ntsa::Port>& portList,
+                               ntsa::Transport::Value         transport);
+
+    /// Add the specified 'serviceName' to resolve to the specified 'portList'
+    /// for use by the specified 'transport', and vice-versa, in addition to
+    /// any previously, explicitly defined associations. Return the error. Note
+    /// that calling this function affects the future behavior of the default
+    /// resolver only: 'port' will be subsequently returned from calling
+    /// 'getPort()' of 'serviceName', and 'serviceName' will be returned from
+    /// calling 'getServiceName()' of any of the ports in 'portList', but this
+    /// function does not affect any name resolution caches maintained
+    /// elsewhere by the system. Also note that calling this function is
+    /// synonymous with calling the equivalent function on the the default
+    /// resolver.
+    static ntsa::Error addPort(const bslstl::StringRef&       serviceName,
+                               const bsl::vector<ntsa::Port>& portList,
+                               ntsa::Transport::Value         transport);
+
+    /// Add the specified 'serviceName' to resolve to the specified 'port' for
+    /// use by the specified 'transport', and vice-versa, in addition to any
+    /// previously, explicitly defined associations. Return the error. Note
+    /// that calling this function affects the future behavior of the default
+    /// resolver only: 'port' will be subsequently returned from calling
+    /// 'getPort()' of 'serviceName', and 'serviceName' will be returned from
+    /// calling 'getServiceName()' of any of the ports in 'portList', but this
+    /// function does not affect any name resolution caches maintained
+    /// elsewhere by the system. Also note that calling this function is
+    /// synonymous with calling the equivalent function on the the default
+    /// resolver.
+    static ntsa::Error addPort(const bslstl::StringRef& serviceName,
+                               ntsa::Port               port,
+                               ntsa::Transport::Value   transport);
+
+    /// Set the local IP addresses assigned to the local machine to the
+    /// specified 'ipAddressList'. Return the error. Note that calling this
+    /// function affects the future behavior of the default resolver only:
+    /// 'ipAddressList' will be subsequently returned from calling
+    /// 'getLocalIpAddress()' but this function does not set the local IP
+    /// addresses of the system or have any wider effect on other objects or
+    /// name resolution functionality in this process. Also note that calling
+    /// this function is synonymous with calling the equivalent function on the
+    /// the default resolver.
+    static ntsa::Error setLocalIpAddress(
+        const bsl::vector<ntsa::IpAddress>& ipAddressList);
+
+    /// Set the hostname of the local machine to the specified 'name'. Return
+    /// the error. Note that calling this function affects the future behavior
+    /// of the default resolver only: 'name' will be subsequently returned from
+    /// calling 'getHostname()' but this function does not set the hostname of
+    /// the system or have any wider effect on other objects or name resolution
+    /// functionality in this process. Also note that calling this function is
+    /// synonymous with calling the equivalent function on the the default
+    /// resolver.
+    static ntsa::Error setHostname(const bsl::string& name);
+
+    /// Set the canonical, fully-qualified hostname of the local machine to the
+    /// specified 'name'. Return the error. Note that calling this function
+    /// affects the future behavior of the default resolver only: 'name' will
+    /// be subsequently returned from calling 'getHostnameFullyQualified()' but
+    /// this function does not set the hostname of the system or have any wider
+    /// effect on other objects or name resolution functionality in this
+    /// process. Also note that calling this function is synonymous with
+    /// calling the equivalent function on the the default resolver.
+    static ntsa::Error setHostnameFullyQualified(const bsl::string& name);
+
+    /// Load into the specified 'result' the IP addresses assigned to the
+    /// specified 'domainName'. Perform all resolution and validation of the
+    /// characteristics of the desired 'result' according to the specified
+    /// 'options'. Return the error. Note that calling this function is
+    /// synonymous with calling the equivalent function on the the default
+    /// resolver.
+    static ntsa::Error getIpAddress(bsl::vector<ntsa::IpAddress>* result,
+                                    const bslstl::StringRef&      domainName,
+                                    const ntsa::IpAddressOptions& options);
+
+    /// Load into the specified 'result' the domain name to which the specified
+    /// 'ipAddress' is assigned. Return the error. Note that calling this
+    /// function is synonymous with calling the equivalent function on the the
+    /// default resolver.
+    static ntsa::Error getDomainName(bsl::string*           result,
+                                     const ntsa::IpAddress& ipAddress);
+
+    /// Load into the specified 'result' the port numbers assigned to the the
+    /// specified 'serviceName'. Perform all resolution and validation of the
+    /// characteristics of the desired 'result' according to the specified
+    /// 'options'. Return the error. Note that calling this function is
+    /// synonymous with calling the equivalent function on the the default
+    /// resolver.
+    static ntsa::Error getPort(bsl::vector<ntsa::Port>* result,
+                               const bslstl::StringRef& serviceName,
+                               const ntsa::PortOptions& options);
+
+    /// Load into the specified 'result' the service name to which the
+    /// specified 'port' is assigned for use by the specified 'transport'.
+    /// Return the error. Note that calling this function is synonymous with
+    /// calling the equivalent function on the the default resolver.
+    static ntsa::Error getServiceName(bsl::string*           result,
+                                      ntsa::Port             port,
+                                      ntsa::Transport::Value transport);
+
+    /// Load into the specified 'result' the endpoint parsed and potentially
+    /// resolved from the components of the specified 'text', in the format of
+    /// '<port>' or '[<host>][:<port>]'. If the optionally specified '<host>'
+    /// component is not an IP address, interpret the '<host>' as a domain name
+    /// and resolve it into an IP address. If the optionally specified '<port>'
+    /// is a name and not a number, interpret the '<port>' as a service name
+    /// and resolve it into a port. Perform all resolution and validation of
+    /// the characteristics of the desired 'result' according to the specified
+    /// 'options'. Return the error. Note that calling this function is
+    /// synonymous with calling the equivalent function on the the default
+    /// resolver.
+    static ntsa::Error getEndpoint(ntsa::Endpoint*              result,
+                                   const bslstl::StringRef&     text,
+                                   const ntsa::EndpointOptions& options);
+
+    /// Load into the specified 'result' the IP addresses assigned to the local
+    /// machine. Perform all resolution and validation of the characteristics
+    /// of the desired 'result' according to the specified 'options'. Return
+    /// the error. Note that calling this function is synonymous with calling
+    /// the equivalent function on the the default resolver.
+    static ntsa::Error getLocalIpAddress(
+        bsl::vector<ntsa::IpAddress>* result,
+        const ntsa::IpAddressOptions& options);
+
+    /// Return the hostname of the local machine. Note that calling this
+    /// function is synonymous with calling the equivalent function on the the
+    /// default resolver.
+    static ntsa::Error getHostname(bsl::string* result);
+
+    /// Return the canonical, fully-qualified hostname of the local machine.
+    /// Note that calling this function is synonymous with calling the
+    /// equivalent function on the the default resolver.
+    static ntsa::Error getHostnameFullyQualified(bsl::string* result);
+
     /// Load into the specified 'result' the list of all the network
     /// adapters of the local machine. Note that this function loads
     /// descriptions of all network adapters currently available on the
@@ -1284,6 +1479,15 @@ struct System {
     /// specified 'filter'. Return the error.
     static ntsa::Error reportInfo(bsl::vector<ntsa::SocketInfo>* result,
                                   const ntsa::SocketInfoFilter&  filter);
+
+    // Install the specified 'resolver' as the default resolver.
+    static void setDefault(const bsl::shared_ptr<ntsi::Resolver>& resolver);
+
+    // Load into the specified 'result' the default resolver. If no default
+    // resolver is explicitly installed, automatically install a default
+    // resolver as if by internally calling 'ntsf::System::createResolver()'
+    // with a default configuration followed by 'ntsf::System::setDefault()'.
+    static void getDefault(bsl::shared_ptr<ntsi::Resolver>* result);
 
     /// Return true if the current machine has any adapter assigned an
     /// IPv4 address, otherwise return false. Note that this function loads
@@ -1345,8 +1549,7 @@ struct System {
     static bool supportsTransport(ntsa::Transport::Value transport);
 
     /// Release the resources necessary for this library's implementation.
-    /// Return the error.
-    static ntsa::Error exit();
+    static void exit();
 };
 
 /// Provide a guard to automatically initialize the resources required by this

@@ -3289,7 +3289,7 @@ NTSCFG_TEST_CASE(11)
 
         for (bsl::size_t i = 0; i < sizeof(DATA) / sizeof(DATA[0]); ++i) {
             bsl::vector<ntsa::Port> portList;
-            error = resolver.getPort(&portList, 
+            error = resolver.getPort(&portList,
                                      bslstl::StringRef(DATA[i].d_serviceName),
                                      portOptions);
 
@@ -3297,7 +3297,7 @@ NTSCFG_TEST_CASE(11)
             if (!portList.empty()) {
                 portNumber = static_cast<bsl::size_t>(portList[0]);
             }
-            
+
             BSLS_LOG_DEBUG("Service name '%s' => port %zu: error = %s",
                            DATA[i].d_serviceName,
                            portNumber,

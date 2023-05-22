@@ -1192,14 +1192,13 @@ ntsa::Error Resolver::getPort(const bslstl::StringRef&     serviceName,
     // enabled.
 
     if (d_portDatabase_sp) {
-        bsl::vector<ntsa::Port> portList;
-        ntca::GetPortContext    getPortContext;
-
         error = d_portDatabase_sp->getPort(&getPortContext,
                                            &portList,
                                            serviceName,
                                            options);
         if (!error) {
+            getPortContext.setSource(ntca::ResolverSource::e_DATABASE);
+
             bsls::TimeInterval endTime = bdlt::CurrentTime::now();
             if (endTime > startTime) {
                 getPortContext.setLatency(endTime - startTime);
@@ -1224,15 +1223,14 @@ ntsa::Error Resolver::getPort(const bslstl::StringRef&     serviceName,
     // Get the ports assigned to the service name from the cache, if enabled.
 
     if (d_cache_sp) {
-        bsl::vector<ntsa::Port> portList;
-        ntca::GetPortContext    getPortContext;
-
         error = d_cache_sp->getPort(&getPortContext,
                                     &portList,
                                     serviceName,
                                     options,
                                     startTime);
         if (!error) {
+            getPortContext.setSource(ntca::ResolverSource::e_CACHE);
+
             bsls::TimeInterval endTime = bdlt::CurrentTime::now();
             if (endTime > startTime) {
                 getPortContext.setLatency(endTime - startTime);
@@ -1260,6 +1258,13 @@ ntsa::Error Resolver::getPort(const bslstl::StringRef&     serviceName,
         error =
             ntsu::ResolverUtil::getPort(&portList, serviceName, portOptions);
         if (!error) {
+            getPortContext.setSource(ntca::ResolverSource::e_SYSTEM);
+
+            bsls::TimeInterval endTime = bdlt::CurrentTime::now();
+            if (endTime > startTime) {
+                getPortContext.setLatency(endTime - startTime);
+            }
+
             ntca::GetPortEvent getPortEvent;
             getPortEvent.setType(ntca::GetPortEventType::e_COMPLETE);
             getPortEvent.setContext(getPortContext);

@@ -754,6 +754,25 @@ ntsa::Error PortDatabase::getServiceName(
     return ntsa::Error();
 }
 
+void dump(const ntcdns::PortDatabase& portDatabase)
+{
+    typedef bsl::vector<ntcdns::PortEntry> PortEntryVector;
+
+    PortEntryVector portEntryVector;
+    portDatabase.dump(&portEntryVector);
+
+    for (bsl::size_t i = 0; i < portEntryVector.size(); ++i) {
+        const ntcdns::PortEntry& portEntry = portEntryVector[i];
+
+        bsl::cout << bsl::setw(10) << bsl::right << i;
+        bsl::cout << bsl::setw(10) << bsl::right << portEntry.port();
+        bsl::cout << bsl::setw(7)  << bsl::right << portEntry.protocol();
+        bsl::cout << "    " << bsl::left << portEntry.service();
+        bsl::cout << bsl::endl;
+
+    }
+}
+
 }  // close namespace test
 
 NTCCFG_TEST_CASE(1)
@@ -1376,8 +1395,18 @@ NTCCFG_TEST_CASE(2)
     "echo                7/tcp    # Echo\n"
     "echo                7/udp    # Echo\n"
     "\n"
+    "                    24/tcp   # Any private service\n"
+    "                    24/udp   # Any private service\n"
+    "\n"
     "test-shared     50000/tcp\n"
     "test-shared     50000/udp\n"
+    "\n"
+    "no-port-1\n"
+    "no-port-2        # 30/tcp\n"
+    "no-protocol-1a     30\n"
+    "no-protocol-1b     30 # /tcp\n"
+    "no-protocol-2a     31/\n"
+    "no-protocol-2a     31/ # tcp\n"
     "\n"
     "test-both       50001/tcp\n"
     "test-both       50002/udp\n"
@@ -1385,6 +1414,9 @@ NTCCFG_TEST_CASE(2)
     "test-tcp        50003/tcp    # Only TCP\n"
     "test-udp        50004/udp    # Only UDP\n"
     "\n"
+    "#\n"
+    "# Many ports assigned to the same service name\n"
+    "#\n"
     "test-many       20001/tcp\n"
     "test-many       20002/tcp\n"
     "test-many       20003/tcp\n"
@@ -2110,10 +2142,13 @@ NTCCFG_TEST_CASE(3)
 
         stopwatch.stop();
 
-        bsl::cout
-            << "Loaded host database in "
-            << bsls::TimeInterval(stopwatch.elapsedTime()).totalMilliseconds()
-            << " milliseconds" << bsl::endl;
+        if (NTCCFG_TEST_VERBOSITY > 0) {
+            bsl::cout
+                << "Loaded host database in "
+                << bsls::TimeInterval(
+                                   stopwatch.elapsedTime()).totalMilliseconds()
+                << " milliseconds" << bsl::endl;
+        }
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
@@ -2140,10 +2175,15 @@ NTCCFG_TEST_CASE(4)
 
         stopwatch.stop();
 
-        bsl::cout
-            << "Loaded port database in "
-            << bsls::TimeInterval(stopwatch.elapsedTime()).totalMilliseconds()
-            << " milliseconds" << bsl::endl;
+        if (NTCCFG_TEST_VERBOSITY > 0) {
+            test::dump(portDatabase);
+
+            bsl::cout
+                << "Loaded port database in "
+                << bsls::TimeInterval(
+                                   stopwatch.elapsedTime()).totalMilliseconds()
+                << " milliseconds" << bsl::endl;
+        }
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }

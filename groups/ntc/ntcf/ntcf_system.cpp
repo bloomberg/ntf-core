@@ -147,9 +147,9 @@ ntsa::Error System::initialize()
 {
     BSLMT_ONCE_DO
     {
-        int rc = ntccfg::Platform::initialize();
-        if (rc != 0) {
-            return ntsa::Error(ntsa::Error::last());
+        ntsa::Error error = ntsf::System::initialize();
+        if (error) {
+            return error;
         }
 
         ntcm::MonitorableUtil::initialize();
@@ -247,11 +247,7 @@ ntsa::Error System::initialize()
 
 ntsa::Error System::ignore(ntscfg::Signal::Value signal)
 {
-    int rc = ntccfg::Platform::ignore(signal);
-    if (rc != 0) {
-        return ntsa::Error(ntsa::Error::last());
-    }
-    return ntsa::Error();
+    return ntsf::System::ignore(signal);
 }
 
 bsl::shared_ptr<ntci::Interface> System::createInterface(
@@ -1992,7 +1988,7 @@ void System::exit()
         ntcs::Plugin::exit();
         ntcm::MonitorableUtil::exit();
 
-        ntccfg::Platform::exit();
+        ntsf::System::exit();
     }
 }
 

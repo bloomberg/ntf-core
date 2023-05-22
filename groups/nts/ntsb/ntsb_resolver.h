@@ -22,6 +22,7 @@ BSLS_IDENT("$Id: $")
 #include <ntsa_error.h>
 #include <ntsa_ipaddress.h>
 #include <ntsa_port.h>
+#include <ntsa_resolverconfig.h>
 #include <ntscfg_platform.h>
 #include <ntsi_resolver.h>
 #include <ntsscm_version.h>
@@ -78,7 +79,6 @@ class ResolverOverrides
     IpAddressVector                  d_localIpAddressList;
     bdlb::NullableValue<bsl::string> d_hostname;
     bdlb::NullableValue<bsl::string> d_hostnameFullyQualified;
-    bsls::AtomicBool                 d_active;
     bslma::Allocator*                d_allocator_p;
 
   private:
@@ -200,6 +200,8 @@ class Resolver : public ntsi::Resolver
 {
     ntsb::ResolverOverrides d_overrides;
     bsls::AtomicBool        d_overridesExist;
+    const bool              d_overridesEnabled;
+    const bool              d_systemEnabled;
     bslma::Allocator*       d_allocator_p;
 
   private:
@@ -207,10 +209,16 @@ class Resolver : public ntsi::Resolver
     Resolver& operator=(const Resolver&) BSLS_KEYWORD_DELETED;
 
   public:
-    /// Create a new object. Optionally specify a 'basicAllocator' used to
+    /// Create a new resolver. Optionally specify a 'basicAllocator' used to
     /// supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
     explicit Resolver(bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new resolver with the specified 'configuration'. Optionally
+    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
+    /// is 0, the currently installed default allocator is used.
+    explicit Resolver(const ntsa::ResolverConfig& configuration,
+                      bslma::Allocator*           basicAllocator = 0);
 
     /// Destroy this object.
     ~Resolver() BSLS_KEYWORD_OVERRIDE;

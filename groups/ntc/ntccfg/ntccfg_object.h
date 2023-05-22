@@ -194,6 +194,8 @@ Object::Object(const char* typeName)
 #else
 #error Not implemented
 #endif
+#else
+    (void)(d_typeName);
 #endif
 }
 
