@@ -75,9 +75,11 @@ const ntci::MetricMetadata Metrics::STATISTICS[] = {
 
     NTCI_METRIC_METADATA_SUMMARY(bytesAllocated),
 
-    NTCI_METRIC_METADATA_SUMMARY(delayInDataScheduling),
-    NTCI_METRIC_METADATA_SUMMARY(delayInDataSending),
-    NTCI_METRIC_METADATA_SUMMARY(delayInDataAcknowledgement),
+    NTCI_METRIC_METADATA_SUMMARY(txDelayBeforeScheduling),
+    NTCI_METRIC_METADATA_SUMMARY(txDelayInSoftware),
+    NTCI_METRIC_METADATA_SUMMARY(txDelay),
+    NTCI_METRIC_METADATA_SUMMARY(txDelayBeforeAcknowledgement),
+
     NTCI_METRIC_METADATA_SUMMARY(rxDelayInHardware),
     NTCI_METRIC_METADATA_SUMMARY(rxDelay)};
 
@@ -103,9 +105,10 @@ Metrics::Metrics(const bslstl::StringRef& prefix,
 , d_numConnectionsSynchronized()
 , d_numConnectionsUnsynchronizable()
 , d_numBytesAllocated()
-, d_dataSchedDelay()
-, d_dataSendDelay()
-, d_dataAckDelay()
+, d_txDelayBeforeScheduling()
+, d_txDelayInSoftware()
+, d_txDelay()
+, d_txDelayBeforeAcknowledgement()
 , d_rxDelayInHardware()
 , d_rxDelay()
 , d_prefix(prefix, basicAllocator)
@@ -138,9 +141,10 @@ Metrics::Metrics(const bslstl::StringRef&              prefix,
 , d_numConnectionsSynchronized()
 , d_numConnectionsUnsynchronizable()
 , d_numBytesAllocated()
-, d_dataSchedDelay()
-, d_dataSendDelay()
-, d_dataAckDelay()
+, d_txDelayBeforeScheduling()
+, d_txDelayInSoftware()
+, d_txDelay()
+, d_txDelayBeforeAcknowledgement()
 , d_rxDelayInHardware()
 , d_rxDelay()
 , d_prefix(basicAllocator)
@@ -319,33 +323,45 @@ void Metrics::logBlobBufferAllocation(bsl::size_t blobBufferCapacity)
     }
 }
 
-void Metrics::logDataSchedDelay(const bsls::TimeInterval& dataSchedDelay)
+void Metrics::logTxDelayBeforeScheduling(
+    const bsls::TimeInterval& txDelayBeforeScheduling)
 {
-    d_dataSchedDelay.update(
-        static_cast<double>(dataSchedDelay.totalMicroseconds()));
+    d_txDelayBeforeScheduling.update(
+        static_cast<double>(txDelayBeforeScheduling.totalMicroseconds()));
 
     if (d_parent_sp) {
-        d_parent_sp->logDataSchedDelay(dataSchedDelay);
+        d_parent_sp->logTxDelayBeforeScheduling(txDelayBeforeScheduling);
     }
 }
 
-void Metrics::logDataSendDelay(const bsls::TimeInterval& dataSendDelay)
+void Metrics::logTxDelayInSoftware(const bsls::TimeInterval& txDelayInSoftware)
 {
-    d_dataSendDelay.update(
-        static_cast<double>(dataSendDelay.totalMicroseconds()));
+    d_txDelayInSoftware.update(
+        static_cast<double>(txDelayInSoftware.totalMicroseconds()));
 
     if (d_parent_sp) {
-        d_parent_sp->logDataSendDelay(dataSendDelay);
+        d_parent_sp->logTxDelayInSoftware(txDelayInSoftware);
     }
 }
 
-void Metrics::logDataAckDelay(const bsls::TimeInterval& dataAckDelay)
+void Metrics::logTxDelay(const bsls::TimeInterval& txDelay)
 {
-    d_dataAckDelay.update(
-        static_cast<double>(dataAckDelay.totalMicroseconds()));
+    d_txDelay.update(static_cast<double>(txDelay.totalMicroseconds()));
 
     if (d_parent_sp) {
-        d_parent_sp->logDataAckDelay(dataAckDelay);
+        d_parent_sp->logTxDelay(txDelay);
+    }
+}
+
+void Metrics::logTxDelayBeforeAcknowledgement(
+    const bsls::TimeInterval& txDelayBeforeAcknowledgement)
+{
+    d_txDelayBeforeAcknowledgement.update(
+        static_cast<double>(txDelayBeforeAcknowledgement.totalMicroseconds()));
+
+    if (d_parent_sp) {
+        d_parent_sp->logTxDelayBeforeAcknowledgement(
+            txDelayBeforeAcknowledgement);
     }
 }
 
@@ -408,9 +424,10 @@ void Metrics::getStats(bdld::ManagedDatum* result)
 
     d_numBytesAllocated.collectSummary(&array, &index);
 
-    d_dataSchedDelay.collectSummary(&array, &index);
-    d_dataSendDelay.collectSummary(&array, &index);
-    d_dataAckDelay.collectSummary(&array, &index);
+    d_txDelayBeforeScheduling.collectSummary(&array, &index);
+    d_txDelayInSoftware.collectSummary(&array, &index);
+    d_txDelay.collectSummary(&array, &index);
+    d_txDelayBeforeAcknowledgement.collectSummary(&array, &index);
     d_rxDelayInHardware.collectSummary(&array, &index);
     d_rxDelay.collectSummary(&array, &index);
 

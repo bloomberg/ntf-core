@@ -60,9 +60,10 @@ class Metrics : public ntci::Monitorable, public ntccfg::Shared<Metrics>
     ntci::Metric                   d_numConnectionsSynchronized;
     ntci::Metric                   d_numConnectionsUnsynchronizable;
     ntci::Metric                   d_numBytesAllocated;
-    ntci::Metric                   d_dataSchedDelay;
-    ntci::Metric                   d_dataSendDelay;
-    ntci::Metric                   d_dataAckDelay;
+    ntci::Metric                   d_txDelayBeforeScheduling;
+    ntci::Metric                   d_txDelayInSoftware;
+    ntci::Metric                   d_txDelay;
+    ntci::Metric                   d_txDelayBeforeAcknowledgement;
     ntci::Metric                   d_rxDelayInHardware;
     ntci::Metric                   d_rxDelay;
     bsl::string                    d_prefix;
@@ -154,14 +155,19 @@ class Metrics : public ntci::Monitorable, public ntccfg::Shared<Metrics>
     /// 'blobBufferCapacity'.
     void logBlobBufferAllocation(bsl::size_t blobBufferCapacity);
 
-    /// Log the gauge of the specified 'dataSchedDelay'.
-    void logDataSchedDelay(const bsls::TimeInterval& dataSchedDelay);
+    /// Log the gauge of the specified 'txDelayBeforeScheduling'.
+    void logTxDelayBeforeScheduling(
+        const bsls::TimeInterval& txDelayBeforeScheduling);
 
-    /// Log the gauge of the specified 'dataSendDelay'.
-    void logDataSendDelay(const bsls::TimeInterval& dataSendDelay);
+    /// Log the gauge of the specified 'txDelayInSoftware'.
+    void logTxDelayInSoftware(const bsls::TimeInterval& txDelayInSoftware);
 
-    /// Log the gauge of the specified 'dataAckDelay'.
-    void logDataAckDelay(const bsls::TimeInterval& dataAckDelay);
+    /// Log the gauge of the specified 'txDelay'.
+    void logTxDelay(const bsls::TimeInterval& txDelay);
+
+    /// Log the gauge of the specified 'txDelayBeforeAcknowledgement'.
+    void logTxDelayBeforeAcknowledgement(
+        const bsls::TimeInterval& txDelayBeforeAcknowledgement);
 
     /// Log the gauge of the specified 'rxDelayInHardware'.
     void logRxDelayInHardware(const bsls::TimeInterval& rxDelayInHardware);
@@ -396,24 +402,31 @@ MetricsGuard::~MetricsGuard()
         }                                                                     \
     } while (false)
 
-#define NTCS_METRICS_UPDATE_DATA_SCHED_DELAY(dataSchedDelay)                  \
+#define NTCS_METRICS_UPDATE_TX_DELAY_BEFORE_SCHEDULING(delay)                 \
     do {                                                                      \
         if (d_metrics_sp) {                                                   \
-            d_metrics_sp->logDataSchedDelay(dataSchedDelay);                  \
+            d_metrics_sp->logTxDelayBeforeScheduling(delay);                  \
         }                                                                     \
     } while (false)
 
-#define NTCS_METRICS_UPDATE_DATA_SEND_DELAY(dataSendDelay)                    \
+#define NTCS_METRICS_UPDATE_TX_DELAY_IN_SOFTWARE(delay)                       \
     do {                                                                      \
         if (d_metrics_sp) {                                                   \
-            d_metrics_sp->logDataSendDelay(dataSendDelay);                    \
+            d_metrics_sp->logTxDelayInSoftware(delay);                        \
         }                                                                     \
     } while (false)
 
-#define NTCS_METRICS_UPDATE_DATA_ACK_DELAY(dataAckDelay)                      \
+#define NTCS_METRICS_UPDATE_TX_DELAY(delay)                                   \
     do {                                                                      \
         if (d_metrics_sp) {                                                   \
-            d_metrics_sp->logDataAckDelay(dataAckDelay);                      \
+            d_metrics_sp->logTxDelay(delay);                                  \
+        }                                                                     \
+    } while (false)
+
+#define NTCS_METRICS_UPDATE_TX_DELAY_BEFORE_ACKNOWLEDGEMENT(delay)            \
+    do {                                                                      \
+        if (d_metrics_sp) {                                                   \
+            d_metrics_sp->logTxDelayBeforeAcknowledgement(delay);             \
         }                                                                     \
     } while (false)
 
@@ -456,9 +469,9 @@ MetricsGuard::~MetricsGuard()
 
 #define NTCS_METRICS_UPDATE_BLOB_BUFFER_ALLOCATIONS(capacity)
 
-#define NTCS_METRICS_UPDATE_DATA_SCHED_DELAY(dataSchedDelay)
-#define NTCS_METRICS_UPDATE_DATA_SEND_DELAY(dataSendDelay)
-#define NTCS_METRICS_UPDATE_DATA_ACK_DELAY(dataAckDelay)
+#define NTCS_METRICS_UPDATE_TX_DELAY_BEFORE_SCHEDULING(delay)
+#define NTCS_METRICS_UPDATE_TX_DELAY_IN_SOFTWARE(delay)
+#define NTCS_METRICS_UPDATE_TX_DELAY_BEFORE_ACKNOWLEDGEMENT(delay)
 
 #define NTCS_METRICS_UPDATE_RX_DELAY_IN_HARDWARE(rxDelayInHardware)
 #define NTCS_METRICS_UPDATE_RX_DELAY(rxDelay)

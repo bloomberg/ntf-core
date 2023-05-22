@@ -224,7 +224,7 @@ BSLS_IDENT_RCSID(ntcr_streamsocket_cpp, "$Id$ $CSID$")
         timestamp.id(),                                                       \
         ntsa::TimestampType::toString(timestamp.type()));
 
-#define NTCR_STREAMSOCKET_LOG_TRANSMIT_DELAY(delay, type)                     \
+#define NTCR_STREAMSOCKET_LOG_TX_DELAY(delay, type)                           \
     {                                                                         \
         bsl::stringstream ss;                                                 \
         delay.print(ss);                                                      \
@@ -256,7 +256,7 @@ BSLS_IDENT_RCSID(ntcr_streamsocket_cpp, "$Id$ $CSID$")
 #else
 #define NTCR_STREAMSOCKET_LOG_TIMESTAMP_PROCESSING_ERROR()
 #define NTCR_STREAMSOCKET_LOG_FAILED_TO_CORRELATE_TIMESTAMP(timestamp)
-#define NTCR_STREAMSOCKET_LOG_TRANSMIT_DELAY(delay, type)
+#define NTCR_STREAMSOCKET_LOG_TX_DELAY(delay, type)
 #define NTCR_STREAMSOCKET_LOG_RX_DELAY_IN_HARDWARE(delay)
 #define NTCR_STREAMSOCKET_LOG_RX_DELAY(delay, type)
 #endif
@@ -3880,17 +3880,20 @@ void StreamSocket::processTimestampNotification(
     const bdlb::NullableValue<bsls::TimeInterval> delay =
         d_timestampCorrelator.timestampReceived(timestamp);
     if (delay.has_value()) {
-        NTCR_STREAMSOCKET_LOG_TRANSMIT_DELAY(delay, timestamp.type());
+        NTCR_STREAMSOCKET_LOG_TX_DELAY(delay, timestamp.type());
 
         switch (timestamp.type()) {
         case (ntsa::TimestampType::e_SCHEDULED): {
-            NTCS_METRICS_UPDATE_DATA_SCHED_DELAY(delay.value());
+            NTCS_METRICS_UPDATE_TX_DELAY_BEFORE_SCHEDULING(delay.value());
         } break;
         case (ntsa::TimestampType::e_SENT): {
-            NTCS_METRICS_UPDATE_DATA_SEND_DELAY(delay.value());
+            NTCS_METRICS_UPDATE_TX_DELAY_IN_SOFTWARE(delay.value());
+            // reusing the same delay as total tx delay metrics while HW
+            // timestamps are not supported
+            NTCS_METRICS_UPDATE_TX_DELAY(delay.value());
         } break;
         case (ntsa::TimestampType::e_ACKNOWLEDGED): {
-            NTCS_METRICS_UPDATE_DATA_ACK_DELAY(delay.value());
+            NTCS_METRICS_UPDATE_TX_DELAY_BEFORE_ACKNOWLEDGEMENT(delay.value());
         } break;
         default:
             NTCR_STREAMSOCKET_LOG_TIMESTAMP_PROCESSING_ERROR();
