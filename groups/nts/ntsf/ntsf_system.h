@@ -896,7 +896,7 @@ struct System {
     static bsl::shared_ptr<ntsi::Resolver> createResolver(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new resolver having the specified 'configurationn'. Optionally
+    /// Create a new resolver having the specified 'configuration'. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
     static bsl::shared_ptr<ntsi::Resolver> createResolver(

@@ -58,7 +58,7 @@ ntsa::Error System::initialize()
         }
 
         // We use a new delete allocator instead of the global allocator here
-        // because we want prevent a visible "memory leak" if the global
+        // because we want to prevent a visible "memory leak" if the global
         // allocator has been replaced in main.  This is because the memory
         // allocated by the plugins won't be freed until the application exits.
 

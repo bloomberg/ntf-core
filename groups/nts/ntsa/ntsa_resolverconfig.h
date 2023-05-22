@@ -55,7 +55,7 @@ class ResolverConfig
     /// Create a new resolver configuration.
     ResolverConfig();
 
-    /// Create  anew resolver configuration having the same value as the
+    /// Create a new resolver configuration having the same value as the
     /// specified 'original' resolver configuration.
     ResolverConfig(const ResolverConfig& original);
 

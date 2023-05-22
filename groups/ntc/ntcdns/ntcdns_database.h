@@ -287,6 +287,9 @@ class PortDatabase
         bsl::string*                       result,
         const ntsa::Port&                  port,
         const ntca::GetServiceNameOptions& options) const;
+
+    /// Load into the specified 'result' each port entry in the database.
+    void dump(bsl::vector<ntcdns::PortEntry>* result) const;
 };
 
 }  // close package namespace
