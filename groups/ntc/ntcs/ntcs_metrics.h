@@ -63,7 +63,8 @@ class Metrics : public ntci::Monitorable, public ntccfg::Shared<Metrics>
     ntci::Metric                   d_dataSchedDelay;
     ntci::Metric                   d_dataSendDelay;
     ntci::Metric                   d_dataAckDelay;
-    ntci::Metric                   d_dataRecvDelay;
+    ntci::Metric                   d_rxDelayInHardware;
+    ntci::Metric                   d_rxDelay;
     bsl::string                    d_prefix;
     bsl::string                    d_objectName;
     bsl::shared_ptr<ntcs::Metrics> d_parent_sp;
@@ -162,8 +163,11 @@ class Metrics : public ntci::Monitorable, public ntccfg::Shared<Metrics>
     /// Log the gauge of the specified 'dataAckDelay'.
     void logDataAckDelay(const bsls::TimeInterval& dataAckDelay);
 
-    /// Log the gauge of the specified 'dataRcvDelay'.
-    void logDataRcvDelay(const bsls::TimeInterval& dataRcvDelay);
+    /// Log the gauge of the specified 'rxDelayInHardware'.
+    void logRxDelayInHardware(const bsls::TimeInterval& rxDelayInHardware);
+
+    /// Log the gauge of the specified 'rxDelay'.
+    void logRxDelay(const bsls::TimeInterval& rxDelay);
 
     /// Load into the specified 'result' the array of statistics from the
     /// specified 'snapshot' for this object based on the specified
@@ -413,10 +417,17 @@ MetricsGuard::~MetricsGuard()
         }                                                                     \
     } while (false)
 
-#define NTCS_METRICS_UPDATE_DATA_RECV_DELAY(dataRecvDelay)                    \
+#define NTCS_METRICS_UPDATE_RX_DELAY_IN_HARDWARE(rxDelayInHardware)           \
     do {                                                                      \
         if (d_metrics_sp) {                                                   \
-            d_metrics_sp->logDataRcvDelay(dataRecvDelay);                     \
+            d_metrics_sp->logRxDelayInHardware(rxDelayInHardware);            \
+        }                                                                     \
+    } while (false)
+
+#define NTCS_METRICS_UPDATE_RX_DELAY(rxDelay)                                 \
+    do {                                                                      \
+        if (d_metrics_sp) {                                                   \
+            d_metrics_sp->logRxDelay(rxDelay);                                \
         }                                                                     \
     } while (false)
 
@@ -448,7 +459,9 @@ MetricsGuard::~MetricsGuard()
 #define NTCS_METRICS_UPDATE_DATA_SCHED_DELAY(dataSchedDelay)
 #define NTCS_METRICS_UPDATE_DATA_SEND_DELAY(dataSendDelay)
 #define NTCS_METRICS_UPDATE_DATA_ACK_DELAY(dataAckDelay)
-#define NTCS_METRICS_UPDATE_DATA_RECV_DELAY(dataRecvDelay)
+
+#define NTCS_METRICS_UPDATE_RX_DELAY_IN_HARDWARE(rxDelayInHardware)
+#define NTCS_METRICS_UPDATE_RX_DELAY(rxDelay)
 
 #endif
 

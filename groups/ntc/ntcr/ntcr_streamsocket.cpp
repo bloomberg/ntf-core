@@ -234,7 +234,16 @@ BSLS_IDENT_RCSID(ntcr_streamsocket_cpp, "$Id$ $CSID$")
                        ss.str().c_str());                                     \
     }
 
-#define NTCR_STREAMSOCKET_LOG_RECEIVE_DELAY(delay, type)                      \
+#define NTCR_STREAMSOCKET_LOG_RX_DELAY_IN_HARDWARE(delay)                     \
+    {                                                                         \
+        bsl::stringstream ss;                                                 \
+        delay.print(ss);                                                      \
+        NTCI_LOG_TRACE("Stream socket "                                       \
+                       "receive delay in hardware is %s",                     \
+                       ss.str().c_str());                                     \
+    }
+
+#define NTCR_STREAMSOCKET_LOG_RX_DELAY(delay, type)                           \
     {                                                                         \
         bsl::stringstream ss;                                                 \
         delay.print(ss);                                                      \
@@ -248,7 +257,8 @@ BSLS_IDENT_RCSID(ntcr_streamsocket_cpp, "$Id$ $CSID$")
 #define NTCR_STREAMSOCKET_LOG_TIMESTAMP_PROCESSING_ERROR()
 #define NTCR_STREAMSOCKET_LOG_FAILED_TO_CORRELATE_TIMESTAMP(timestamp)
 #define NTCR_STREAMSOCKET_LOG_TRANSMIT_DELAY(delay, type)
-#define NTCR_STREAMSOCKET_LOG_RECEIVE_DELAY(delay, type)
+#define NTCR_STREAMSOCKET_LOG_RX_DELAY_IN_HARDWARE(delay)
+#define NTCR_STREAMSOCKET_LOG_RX_DELAY(delay, type)
 #endif
 
 namespace BloombergLP {
@@ -2627,17 +2637,27 @@ ntsa::Error StreamSocket::privateDequeueReceiveBufferRaw(
     error = d_socket_sp->receive(context, data, d_receiveOptions);
 
     if (d_receiveOptions.wantTimestamp()) {
-        if (context->hardwareTimestamp().has_value()) {
-            const bsls::TimeInterval delay =
-                this->currentTime() - context->hardwareTimestamp().value();
-            NTCS_METRICS_UPDATE_DATA_RECV_DELAY(delay);
-            NTCR_STREAMSOCKET_LOG_RECEIVE_DELAY(delay, "hardware");
+        const bdlb::NullableValue<bsls::TimeInterval>& softwareTs =
+            context->softwareTimestamp();
+        const bdlb::NullableValue<bsls::TimeInterval>& hardwareTs =
+            context->hardwareTimestamp();
+        if (softwareTs.has_value() && hardwareTs.has_value()) {
+            const bsls::TimeInterval pureHwDelay =
+                softwareTs.value() - hardwareTs.value();
+            NTCS_METRICS_UPDATE_RX_DELAY_IN_HARDWARE(pureHwDelay);
+            NTCR_STREAMSOCKET_LOG_RX_DELAY_IN_HARDWARE(pureHwDelay);
         }
-        else if (context->softwareTimestamp().has_value()) {
+        if (hardwareTs.has_value()) {
             const bsls::TimeInterval delay =
-                this->currentTime() - context->softwareTimestamp().value();
-            NTCS_METRICS_UPDATE_DATA_RECV_DELAY(delay);
-            NTCR_STREAMSOCKET_LOG_RECEIVE_DELAY(delay, "software");
+                this->currentTime() - hardwareTs.value();
+            NTCS_METRICS_UPDATE_RX_DELAY(delay);
+            NTCR_STREAMSOCKET_LOG_RX_DELAY(delay, "hardware");
+        }
+        else if (softwareTs.has_value()) {
+            const bsls::TimeInterval delay =
+                this->currentTime() - softwareTs.value();
+            NTCS_METRICS_UPDATE_RX_DELAY(delay);
+            NTCR_STREAMSOCKET_LOG_RX_DELAY(delay, "software");
         }
         else {
             NTCR_STREAMSOCKET_LOG_TIMESTAMP_PROCESSING_ERROR();

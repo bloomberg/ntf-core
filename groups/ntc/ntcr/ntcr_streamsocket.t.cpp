@@ -1135,10 +1135,10 @@ void StreamSocketManager::run()
             NTCCFG_TEST_EQ(d.type(), bdld::Datum::DataType::e_ARRAY);
             bdld::DatumArrayRef statsArray = d.theArray();
 
-            const int baseSchedDelayIndex   = 90;
-            const int baseSentDelayIndex    = 95;
-            const int baseAckDelayIndex     = 100;
-            const int baseReceiveDelayIndex = 105;
+            const int baseSchedDelayIndex = 90;
+            const int baseSentDelayIndex  = 95;
+            const int baseAckDelayIndex   = 100;
+            const int baseRxDelayIndex    = 110;
 
             const int countOffset = 0;
             const int totalOffset = 1;
@@ -1151,7 +1151,7 @@ void StreamSocketManager::run()
             /// the esxact amount of TX timestamps received. The implementation
             // of ntcr_datagramsocket does not timestamp any outgoing packet
             /// until the first TX timestamp is received from the reactor
-            const double txTimestampsPercentage = 0.48;
+            const double txTimestampsPercentage = 0.47;
 
             if (!d_parameters.d_timestampOutgoingData) {
                 validateNoMetricsAvailable(statsArray,
@@ -1223,28 +1223,26 @@ void StreamSocketManager::run()
             }
             if (!d_parameters.d_timestampIncomingData) {
                 validateNoMetricsAvailable(statsArray,
-                                           baseReceiveDelayIndex,
+                                           baseRxDelayIndex,
                                            total);
             }
             else {
-                validateMetricsAvailable(statsArray,
-                                         baseReceiveDelayIndex,
-                                         total);
+                validateMetricsAvailable(statsArray, baseRxDelayIndex, total);
 
-                NTCCFG_TEST_EQ(statsArray[baseReceiveDelayIndex + countOffset]
-                                   .theDouble(),
-                               d_parameters.d_numMessages);
-                NTCCFG_TEST_GT(statsArray[baseReceiveDelayIndex + totalOffset]
-                                   .theDouble(),
-                               0);
+                NTCCFG_TEST_EQ(
+                    statsArray[baseRxDelayIndex + countOffset].theDouble(),
+                    d_parameters.d_numMessages);
                 NTCCFG_TEST_GT(
-                    statsArray[baseReceiveDelayIndex + minOffset].theDouble(),
+                    statsArray[baseRxDelayIndex + totalOffset].theDouble(),
                     0);
                 NTCCFG_TEST_GT(
-                    statsArray[baseReceiveDelayIndex + avgOffset].theDouble(),
+                    statsArray[baseRxDelayIndex + minOffset].theDouble(),
                     0);
                 NTCCFG_TEST_GT(
-                    statsArray[baseReceiveDelayIndex + maxOffset].theDouble(),
+                    statsArray[baseRxDelayIndex + avgOffset].theDouble(),
+                    0);
+                NTCCFG_TEST_GT(
+                    statsArray[baseRxDelayIndex + maxOffset].theDouble(),
                     0);
             }
         }

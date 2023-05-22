@@ -5628,8 +5628,8 @@ NTSCFG_TEST_CASE(17)
                         NTSCFG_TEST_TRUE(context.hardwareTimestamp().isNull());
                     }
                     else {
-                        NTSCFG_TEST_FALSE(
-                            context.softwareTimestamp().isNull());
+                        NTSCFG_TEST_TRUE(
+                            context.softwareTimestamp().has_value());
                         NTSCFG_TEST_LE(sysTimeBeforeSending,
                                        context.softwareTimestamp().value());
                         // cannot make any suggestion regarding hw timestamp availability as it strictly OS+NIC dependent

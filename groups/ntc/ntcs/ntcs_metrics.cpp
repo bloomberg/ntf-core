@@ -78,7 +78,8 @@ const ntci::MetricMetadata Metrics::STATISTICS[] = {
     NTCI_METRIC_METADATA_SUMMARY(delayInDataScheduling),
     NTCI_METRIC_METADATA_SUMMARY(delayInDataSending),
     NTCI_METRIC_METADATA_SUMMARY(delayInDataAcknowledgement),
-    NTCI_METRIC_METADATA_SUMMARY(delayInDataReception)};
+    NTCI_METRIC_METADATA_SUMMARY(rxDelayInHardware),
+    NTCI_METRIC_METADATA_SUMMARY(rxDelay)};
 
 Metrics::Metrics(const bslstl::StringRef& prefix,
                  const bslstl::StringRef& objectName,
@@ -105,7 +106,8 @@ Metrics::Metrics(const bslstl::StringRef& prefix,
 , d_dataSchedDelay()
 , d_dataSendDelay()
 , d_dataAckDelay()
-, d_dataRecvDelay()
+, d_rxDelayInHardware()
+, d_rxDelay()
 , d_prefix(prefix, basicAllocator)
 , d_objectName(objectName, basicAllocator)
 , d_parent_sp()
@@ -139,7 +141,8 @@ Metrics::Metrics(const bslstl::StringRef&              prefix,
 , d_dataSchedDelay()
 , d_dataSendDelay()
 , d_dataAckDelay()
-, d_dataRecvDelay()
+, d_rxDelayInHardware()
+, d_rxDelay()
 , d_prefix(basicAllocator)
 , d_objectName(basicAllocator)
 , d_parent_sp(parent)
@@ -346,13 +349,22 @@ void Metrics::logDataAckDelay(const bsls::TimeInterval& dataAckDelay)
     }
 }
 
-void Metrics::logDataRcvDelay(const bsls::TimeInterval& dataRcvDelay)
+void Metrics::logRxDelayInHardware(const bsls::TimeInterval& rxDelayInHardware)
 {
-    d_dataRecvDelay.update(
-        static_cast<double>(dataRcvDelay.totalMicroseconds()));
+    d_rxDelayInHardware.update(
+        static_cast<double>(rxDelayInHardware.totalMicroseconds()));
 
     if (d_parent_sp) {
-        d_parent_sp->logDataRcvDelay(dataRcvDelay);
+        d_parent_sp->logRxDelay(rxDelayInHardware);
+    }
+}
+
+void Metrics::logRxDelay(const bsls::TimeInterval& rxDelay)
+{
+    d_rxDelay.update(static_cast<double>(rxDelay.totalMicroseconds()));
+
+    if (d_parent_sp) {
+        d_parent_sp->logRxDelay(rxDelay);
     }
 }
 
@@ -399,7 +411,8 @@ void Metrics::getStats(bdld::ManagedDatum* result)
     d_dataSchedDelay.collectSummary(&array, &index);
     d_dataSendDelay.collectSummary(&array, &index);
     d_dataAckDelay.collectSummary(&array, &index);
-    d_dataRecvDelay.collectSummary(&array, &index);
+    d_rxDelayInHardware.collectSummary(&array, &index);
+    d_rxDelay.collectSummary(&array, &index);
 
     // TODO: Calculate and publish derivative metrics.
     // double avgBytesSentPerEvent = 0;
