@@ -207,8 +207,8 @@ I/O threads.
 
     ntci::ConnectCallback connectCallback =
         clientSocket->createConnectCallback(
-            [&](const bsl::shared_ptr<ntci::Connect>& connector,
-                const ntca::ConnectEvent&             event)
+            [&](const bsl::shared_ptr<ntci::Connector>& connector,
+                const ntca::ConnectEvent&               event)
     {
         BSLS_ASSERT(!event.context().error());
         semaphore.post();
