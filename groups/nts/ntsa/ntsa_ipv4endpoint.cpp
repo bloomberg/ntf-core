@@ -213,11 +213,11 @@ bool Ipv4Endpoint::equals(const Ipv4Endpoint& other) const
 bool Ipv4Endpoint::less(const Ipv4Endpoint& other) const
 {
     if (d_host.less(other.d_host)) {
-        return false;
+        return true;
     }
 
     if (other.d_host.less(d_host)) {
-        return true;
+        return false;
     }
 
     return d_port < other.d_port;
