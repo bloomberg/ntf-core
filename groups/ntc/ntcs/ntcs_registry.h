@@ -32,6 +32,7 @@ BSLS_IDENT("$Id: $")
 #include <ntsi_descriptor.h>
 #include <bdlma_pool.h>
 #include <bslalg_scalarprimitives.h>
+#include <bslmt_condition.h>
 #include <bslmt_lockguard.h>
 #include <bslmt_mutex.h>
 #include <bsls_alignmentutil.h>
@@ -44,6 +45,9 @@ BSLS_IDENT("$Id: $")
 #include <bsl_unordered_map.h>
 #include <bsl_utility.h>
 #include <bsl_vector.h>
+
+#include <ntci_log.h>
+#include <bsl_iostream.h>  //TODO: smt TMP
 
 namespace BloombergLP {
 namespace ntcs {
@@ -69,7 +73,9 @@ class RegistryEntry
     bsl::shared_ptr<ntci::Strand>        d_unknown_sp;
     bsl::shared_ptr<void>                d_external_sp;
     bsls::AtomicBool                     d_active;
-    bslma::Allocator*                    d_allocator_p;
+    bdlb::NullableValue<bslmt::ThreadUtil::Id>
+                      d_pollingThreadId;  // for select & poll only
+    bslma::Allocator* d_allocator_p;
 
   private:
     RegistryEntry(const RegistryEntry&) BSLS_KEYWORD_DELETED;
@@ -185,11 +191,21 @@ class RegistryEntry
     /// previously fired in one-shot mode and has not yet been re-armed.
     bool announceError(const ntca::ReactorEvent& event);
 
-    /// Close the registry entry but do not clear it nor deactive it.
+    /// Close the registry entry but do not clear it nor deactivate it.
     void close();
 
-    /// Clear the registry entry and deactive it.
+    /// Clear the registry entry and deactivate it.
     void clear();
+
+    void setPollingThreadId(bslmt::ThreadUtil::Id pollingThreadId);
+
+    void setNotPolled()
+    {
+        //        NTCI_LOG_CONTEXT();
+        //        NTCI_LOG_INFO("Setting NotPolled for handle %d", d_handle);
+        BSLS_ASSERT_OPT(d_pollingThreadId.has_value());
+        d_pollingThreadId.reset();
+    }
 
     /// Return true if readability should be shown for the descriptor,
     /// otherwise return false.
@@ -227,6 +243,8 @@ class RegistryEntry
     /// from the registry entry catalog and detached from its reactor socket
     /// context.
     bool active() const;
+
+    const bdlb::NullableValue<bslmt::ThreadUtil::Id>& pollingThreadId() const;
 };
 
 /// @internal @brief
@@ -246,11 +264,17 @@ class RegistryEntryCatalog
     /// handle.
     typedef bsl::vector<bsl::shared_ptr<ntcs::RegistryEntry> > Vector;
 
+    typedef bsl::unordered_map<ntsa::Handle,
+                               bsl::shared_ptr<ntcs::RegistryEntry> >
+        SocketsToDetach;
+
     /// This typedef defines a mutex.
-    typedef ntci::Mutex Mutex;
+    //    typedef ntci::Mutex Mutex;
+    typedef bslmt::Mutex Mutex;
 
     /// This typedef defines a mutex lock guard.
-    typedef ntci::LockGuard LockGuard;
+    //    typedef ntci::LockGuard LockGuard;
+    typedef bslmt::LockGuard<bslmt::Mutex> LockGuard;
 
     // DATA
     ntccfg::Object                   d_object;
@@ -259,6 +283,8 @@ class RegistryEntryCatalog
     bsl::size_t                      d_size;
     ntca::ReactorEventTrigger::Value d_trigger;
     bool                             d_oneShot;
+    bslmt::Condition                 d_detachCondition;
+    SocketsToDetach                  d_socketsToDetach;
     bslma::Allocator*                d_allocator_p;
 
   private:
@@ -270,6 +296,9 @@ class RegistryEntryCatalog
     /// Defines a type alias for a function invoked for each registry entry.
     typedef NTCCFG_FUNCTION(const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
         ForEachCallback;
+
+    typedef NTCCFG_FUNCTION(const ntcs::RegistryEntry& entry)
+        ApplyRemovedUnderLock;
 
     /// Create a new registry entry catalog for sockets that by default
     /// operate as level triggered. Optionally specify a 'basicAllocator'
@@ -309,10 +338,30 @@ class RegistryEntryCatalog
     bsl::shared_ptr<ntcs::RegistryEntry> remove(
         const bsl::shared_ptr<ntci::ReactorSocket>& descriptor);
 
+    /// Remove the specified 'descriptor' only if it is not polled. If it
+    /// is polled then do not remove (put it into a waiting for detahment
+    /// container) and apply the specified 'function' to it
+    bsl::shared_ptr<ntcs::RegistryEntry> tryRemove(
+        const bsl::shared_ptr<ntci::ReactorSocket>& descriptor,
+        ApplyRemovedUnderLock                       function);
+
     /// Remove the specified descriptor 'handle' from the registry. Return
     /// the removed entry, or null if the 'handle' is not contained by the
     /// registry.
     bsl::shared_ptr<ntcs::RegistryEntry> remove(ntsa::Handle handle);
+
+    /// Remove the specified descriptor 'handle' only if it is not polled. If
+    /// it is polled then do not remove (put it into a waitingForDetachment
+    /// container) and apply the specified 'function' to it
+    bsl::shared_ptr<ntcs::RegistryEntry> tryRemove(
+        ntsa::Handle          handle,
+        ApplyRemovedUnderLock function);
+
+    void waitDetached(ntsa::Handle handle);
+
+    /// Lock the mutex, go over the specified 'entries' and mark them as not polled.
+    /// Then if there is a process waiting on a socket to be no longer polled -> wake it
+    void processEntriesNotPolled(const bsl::vector<ntsa::Handle>& entries);
 
     /// Remove all descriptors from the registry except for the specified
     /// 'controller' and load them into the specified 'result'.
@@ -730,6 +779,17 @@ void RegistryEntry::clear()
     }
 
     d_active = false;
+    //    d_pollingThreadId.reset();
+
+    BSLS_ASSERT_OPT(d_pollingThreadId.isNull());  //TODO: temporary
+}
+
+NTCCFG_INLINE
+void RegistryEntry::setPollingThreadId(bslmt::ThreadUtil::Id pollingThreadId)
+{
+    //    NTCI_LOG_CONTEXT();
+    //    NTCI_LOG_INFO("Setting PollingThreadId for handle %d, threadId = %zu", d_handle, pollingThreadId);
+    d_pollingThreadId = pollingThreadId;
 }
 
 NTCCFG_INLINE
@@ -790,6 +850,13 @@ NTCCFG_INLINE
 bool RegistryEntry::active() const
 {
     return d_active;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<bslmt::ThreadUtil::Id>& RegistryEntry::
+    pollingThreadId() const
+{
+    return d_pollingThreadId;
 }
 
 NTCCFG_INLINE
@@ -890,6 +957,9 @@ bsl::shared_ptr<ntcs::RegistryEntry> RegistryEntryCatalog::remove(
     {
         LockGuard lock(&d_mutex);
 
+        BSLS_ASSERT_OPT(d_socketsToDetach.count(handle) ==
+                        0);  //TODO: smt temporary
+
         if (NTCCFG_LIKELY(index < d_vector.size())) {
             if (d_vector[index]) {
                 d_vector[index].swap(entry_sp);
@@ -911,6 +981,41 @@ bsl::shared_ptr<ntcs::RegistryEntry> RegistryEntryCatalog::remove(
 }
 
 NTCCFG_INLINE
+bsl::shared_ptr<ntcs::RegistryEntry> RegistryEntryCatalog::tryRemove(
+    const bsl::shared_ptr<ntci::ReactorSocket>& descriptor,
+    ApplyRemovedUnderLock                       function)
+{
+    ntsa::Handle handle = descriptor->handle();
+    BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
+
+    const bsl::size_t index = static_cast<bsl::size_t>(handle);
+
+    bsl::shared_ptr<ntcs::RegistryEntry> entry_sp;
+
+    {
+        LockGuard lock(&d_mutex);
+
+        if (NTCCFG_LIKELY(index < d_vector.size())) {
+            if (d_vector[index]) {
+                d_vector[index].swap(entry_sp);
+                BSLS_ASSERT_OPT(d_size > 0);
+                --d_size;
+
+                if (entry_sp->pollingThreadId().isNull()) {
+                    entry_sp->clear();
+                }
+                else {
+                    d_socketsToDetach.emplace(entry_sp->handle(), entry_sp);
+                    function(*entry_sp);
+                }
+                return entry_sp;
+            }
+        }
+    }
+    return bsl::shared_ptr<ntcs::RegistryEntry>();
+}
+
+NTCCFG_INLINE
 bsl::shared_ptr<ntcs::RegistryEntry> RegistryEntryCatalog::remove(
     ntsa::Handle handle)
 {
@@ -922,6 +1027,8 @@ bsl::shared_ptr<ntcs::RegistryEntry> RegistryEntryCatalog::remove(
 
     {
         LockGuard lock(&d_mutex);
+
+        BSLS_ASSERT_OPT(d_socketsToDetach.count(handle) == 0);
 
         if (NTCCFG_LIKELY(index < d_vector.size())) {
             if (d_vector[index]) {
@@ -941,6 +1048,93 @@ bsl::shared_ptr<ntcs::RegistryEntry> RegistryEntryCatalog::remove(
     entry_sp->clear();
 
     return entry_sp;
+}
+
+NTCCFG_INLINE
+bsl::shared_ptr<ntcs::RegistryEntry> RegistryEntryCatalog::tryRemove(
+    ntsa::Handle          handle,
+    ApplyRemovedUnderLock function)
+{
+    BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
+
+    const bsl::size_t index = static_cast<bsl::size_t>(handle);
+
+    bsl::shared_ptr<ntcs::RegistryEntry> entry_sp;
+
+    {
+        LockGuard lock(&d_mutex);
+
+        if (NTCCFG_LIKELY(index < d_vector.size())) {
+            if (d_vector[index]) {
+                d_vector[index].swap(entry_sp);
+                BSLS_ASSERT_OPT(d_size > 0);
+                --d_size;
+
+                if (entry_sp->pollingThreadId().isNull()) {
+                    entry_sp->clear();
+                }
+                else if (entry_sp->pollingThreadId().value() ==
+                         bslmt::ThreadUtil::selfId())
+                {
+                    entry_sp->clear();
+                }
+                else {
+                    d_socketsToDetach.emplace(entry_sp->handle(), entry_sp);
+                    function(*entry_sp);
+                }
+                return entry_sp;
+            }
+        }
+    }
+
+    return bsl::shared_ptr<ntcs::RegistryEntry>();
+}
+
+NTCCFG_INLINE
+void RegistryEntryCatalog::waitDetached(ntsa::Handle handle)
+{
+    bslmt::LockGuard detachGuard(&d_mutex);
+    while (d_socketsToDetach.count(handle)) {
+        d_detachCondition.wait(&d_mutex);
+    }
+}
+
+NTCCFG_INLINE
+void RegistryEntryCatalog::processEntriesNotPolled(
+    const bsl::vector<ntsa::Handle>& entries)
+{
+    bsl::size_t initialSize;
+    bsl::size_t sizeAfter;
+
+    {
+        bslmt::LockGuard detachGuard(&d_mutex);
+        initialSize = d_socketsToDetach.size();
+
+        for (bsl::vector<ntsa::Handle>::const_iterator it = entries.cbegin();
+             it != entries.cend();
+             ++it)
+        {
+            {
+                bsl::size_t index = static_cast<bsl::size_t>(*it);
+                if (d_vector[index]) {
+                    d_vector[index]->setNotPolled();
+                }
+                else {
+                    auto iterator = d_socketsToDetach.find(*it);
+                    if (iterator != d_socketsToDetach.end()) {
+                        iterator->second->setNotPolled();
+                        d_socketsToDetach.erase(iterator);
+                    }
+                }
+            }
+        }
+        sizeAfter = d_socketsToDetach.size();
+    }
+    BSLS_ASSERT_OPT(sizeAfter <= initialSize);
+
+    if (sizeAfter != initialSize) {
+        d_detachCondition.broadcast();
+    }
 }
 
 NTCCFG_INLINE

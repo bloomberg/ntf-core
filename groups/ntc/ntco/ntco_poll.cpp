@@ -268,6 +268,8 @@ class Poll : public ntci::Reactor,
     /// Decrement the current number of handle reservations.
     void releaseHandleReservation() BSLS_KEYWORD_OVERRIDE;
 
+    void removingPolledEntry(const ntcs::RegistryEntry& entry);
+
     /// Return the number of reactors in the thread pool.
     bsl::size_t numReactors() const BSLS_KEYWORD_OVERRIDE;
 
@@ -755,6 +757,7 @@ void Poll::link(const bsl::shared_ptr<ntcs::RegistryEntry>& entry,
         struct ::pollfd pfd;
         Poll::specify(&pfd, handle, interest);
         descriptorList->push_back(pfd);
+        entry->setPollingThreadId(bslmt::ThreadUtil::selfId());
     }
 }
 
@@ -1668,20 +1671,43 @@ ntsa::Error Poll::hideError(ntsa::Handle handle)
     }
 }
 
+void Poll::removingPolledEntry(const ntcs::RegistryEntry& entry)
+{
+    const bdlb::NullableValue<bsl::uint64_t>& pollingThreadId =
+        entry.pollingThreadId();
+    if (pollingThreadId.has_value()) {
+        Poll::interruptAll();
+    }
+}
+
 ntsa::Error Poll::detachSocket(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket)
 {
     ntsa::Error error;
 
-    bsl::shared_ptr<ntcs::RegistryEntry> entry = d_registry.remove(socket);
+    ntcs::RegistryEntryCatalog::ApplyRemovedUnderLock function =
+        NTCCFG_BIND(&Poll::removingPolledEntry,
+                    this,
+                    NTCCFG_BIND_PLACEHOLDER_1);
+
+    bsl::shared_ptr<ntcs::RegistryEntry> entry =
+        d_registry.tryRemove(socket, function);
 
     if (NTCCFG_LIKELY(entry)) {
-        error = this->remove(entry->handle());
+        error = this->remove(
+            entry->handle());  // it updates d_generation, that's correct
         if (error) {
             return error;
         }
         if (NTCRO_POLL_INTERRUPT_ALL) {
-            Poll::interruptAll();
+            //            Poll::interruptAll();
+            if (entry->pollingThreadId().has_value()) {
+                d_registry.waitDetached(entry->handle());
+                entry->clear();
+            }
+            else {
+                entry->clear();
+            }
         }
         return ntsa::Error();
     }
@@ -1694,18 +1720,27 @@ ntsa::Error Poll::detachSocket(ntsa::Handle handle)
 {
     ntsa::Error error;
 
-    bsl::shared_ptr<ntcs::RegistryEntry> entry = d_registry.remove(handle);
+    ntcs::RegistryEntryCatalog::ApplyRemovedUnderLock function =
+        NTCCFG_BIND(&Poll::removingPolledEntry,
+                    this,
+                    NTCCFG_BIND_PLACEHOLDER_1);
+
+    bsl::shared_ptr<ntcs::RegistryEntry> entry =
+        d_registry.tryRemove(handle, function);
 
     if (NTCCFG_LIKELY(entry)) {
-        error = this->remove(handle);
+        error = this->remove(
+            entry->handle());  // it updates d_generation, that's correct
         if (error) {
             return error;
         }
-
         if (NTCRO_POLL_INTERRUPT_ALL) {
-            Poll::interruptAll();
+            //            Poll::interruptAll();
+            if (entry->pollingThreadId().has_value()) {
+                d_registry.waitDetached(entry->handle());
+            }
+            entry->clear();
         }
-
         return ntsa::Error();
     }
     else {
@@ -1761,8 +1796,8 @@ void Poll::run(ntci::Waiter waiter)
         {
             LockGuard lock(&d_generationMutex);
 
-            if (d_config.oneShot().value() ||
-                result->d_generation != generation)
+            //            if (d_config.oneShot().value() ||
+            //                result->d_generation != generation) //TODO: smt I want to regenerate it always in order to save polling thread id
             {
                 result->d_generation = generation;
 
@@ -1849,6 +1884,19 @@ void Poll::run(ntci::Waiter waiter)
                     }
                 }
             }
+        }
+
+        {
+            //Mark all entries as no longer polled
+            bsl::vector<ntsa::Handle> noLongerPolled;
+            for (DescriptorList::const_iterator it =
+                     result->d_descriptorList.begin();
+                 it != result->d_descriptorList.end();
+                 ++it)
+            {
+                noLongerPolled.push_back(it->fd);
+            }
+            d_registry.processEntriesNotPolled(noLongerPolled);
         }
 
         if (d_config.maxThreads().value() > 1) {
@@ -2070,6 +2118,7 @@ void Poll::run(ntci::Waiter waiter)
 
 void Poll::poll(ntci::Waiter waiter)
 {
+    BSLS_ASSERT_OPT(false);  //TODO: temporary
     NTCI_LOG_CONTEXT();
 
     int rc;

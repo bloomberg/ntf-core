@@ -49,6 +49,7 @@ RegistryEntry::RegistryEntry(
 , d_unknown_sp(ntci::Strand::unknown())
 , d_external_sp()
 , d_active(true)
+, d_pollingThreadId()
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     BSLS_ASSERT(d_handle != ntsa::k_INVALID_HANDLE);
@@ -70,6 +71,7 @@ RegistryEntry::RegistryEntry(ntsa::Handle                     handle,
 , d_unknown_sp(ntci::Strand::unknown())
 , d_external_sp()
 , d_active(true)
+, d_pollingThreadId()
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     BSLS_ASSERT(d_handle != ntsa::k_INVALID_HANDLE);
@@ -149,6 +151,8 @@ RegistryEntryCatalog::RegistryEntryCatalog(bslma::Allocator* basicAllocator)
 , d_size(0)
 , d_trigger(ntca::ReactorEventTrigger::e_LEVEL)
 , d_oneShot(false)
+, d_detachCondition()
+, d_socketsToDetach(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
@@ -163,6 +167,9 @@ RegistryEntryCatalog::RegistryEntryCatalog(
 , d_size(0)
 , d_trigger(trigger)
 , d_oneShot(oneShot)
+//, d_detachMutex()
+, d_detachCondition()
+, d_socketsToDetach(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
@@ -170,6 +177,7 @@ RegistryEntryCatalog::RegistryEntryCatalog(
 RegistryEntryCatalog::~RegistryEntryCatalog()
 {
     BSLS_ASSERT_OPT(d_size == 0);
+    BSLS_ASSERT_OPT(d_socketsToDetach.empty());
 }
 
 }  // close package namespace
