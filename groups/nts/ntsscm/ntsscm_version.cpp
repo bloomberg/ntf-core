@@ -20,6 +20,7 @@ BSLS_IDENT_RCSID(ntsscm_version_cpp, "$Id$ $CSID$")
 
 #include <bdlb_numericparseutil.h>
 #include <bslscm_patchversion.h>
+#include <bsls_platform.h>
 #include <bsl_cstring.h>
 #include <bsl_string_view.h>
 
@@ -59,7 +60,7 @@ int Version::systemVersion(int* major, int* minor, int* patch, int* build)
     *patch = 0;
     *build = 0;
 
-    utsname u;
+    struct utsname u;
     bsl::memset(&u, 0, sizeof u);
 
     rc = uname(&u);

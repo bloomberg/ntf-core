@@ -59,6 +59,7 @@ using namespace BloombergLP;
 namespace test {
 
 namespace {
+
 /// Validate that the specified 'metrics' does not contain data for
 /// elements starting from the specified 'base' up to 'base' + the
 /// 'specified 'num' (exclusive) in total.
@@ -68,7 +69,7 @@ void validateNoMetricsAvailable(const bdld::DatumArrayRef& metrics,
 {
     NTCCFG_TEST_GE(metrics.length(), base + num);
     for (int i = base; i < base + num; ++i) {
-        NTCCFG_TEST_EQ(metrics[i].type(), bdld::Datum::DataType::e_NIL);
+        NTCCFG_TEST_EQ(metrics[i].type(), bdld::Datum::e_NIL);
     }
 }
 
@@ -81,10 +82,11 @@ void validateMetricsAvailable(const bdld::DatumArrayRef& metrics,
 {
     NTCCFG_TEST_GE(metrics.length(), base + num);
     for (int i = base; i < base + num; ++i) {
-        NTCCFG_TEST_EQ(metrics[i].type(), bdld::Datum::DataType::e_DOUBLE);
+        NTCCFG_TEST_EQ(metrics[i].type(), bdld::Datum::e_DOUBLE);
     }
 }
-}
+
+} // close unnamed namespace
 
 /// Provide a test case execution framework.
 class Framework
@@ -1120,8 +1122,14 @@ void StreamSocketManager::run()
         }
     }
 
+    // Validate RX and TX timestamps using metrics. Note that such validation
+    // is currently only performed on Linux, because while the underlying
+    // reactor implementation may supports timestamping the socket API
+    // functions disallow enabling timestamping except on those platforms
+    // known to natively support timestamping.
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
     {
-        // validate RX & TX timestamps using metrics
         bsl::vector<bsl::shared_ptr<ntci::Monitorable> > monitorables;
         ntcm::MonitorableUtil::loadRegisteredObjects(&monitorables);
         for (bsl::vector<bsl::shared_ptr<ntci::Monitorable> >::iterator it =
@@ -1132,7 +1140,7 @@ void StreamSocketManager::run()
             bdld::ManagedDatum stats;
             (*it)->getStats(&stats);
             const bdld::Datum& d = stats.datum();
-            NTCCFG_TEST_EQ(d.type(), bdld::Datum::DataType::e_ARRAY);
+            NTCCFG_TEST_EQ(d.type(), bdld::Datum::e_ARRAY);
             bdld::DatumArrayRef statsArray = d.theArray();
 
             const int baseSchedDelayIndex = 90;
@@ -1247,6 +1255,7 @@ void StreamSocketManager::run()
             }
         }
     }
+#endif
 
     // Close all the stream sockets.
 

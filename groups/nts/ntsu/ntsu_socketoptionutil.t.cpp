@@ -1701,6 +1701,8 @@ NTSCFG_TEST_CASE(8)
 {
     // Concern: test isLocal
 
+    ntsa::Error error;
+
     const ntsa::Transport::Value SOCKET_TYPES[] = {
         ntsa::Transport::e_TCP_IPV4_STREAM,
         ntsa::Transport::e_TCP_IPV6_STREAM,
@@ -1744,19 +1746,18 @@ NTSCFG_TEST_CASE(8)
             NTSCFG_TEST_OK(error);
         }
 
+        bool isLocal;
+        error = ntsu::SocketOptionUtil::isLocal(&isLocal, socket);
+
         if (transport == ntsa::Transport::e_LOCAL_DATAGRAM ||
             transport == ntsa::Transport::e_LOCAL_STREAM)
         {
-            bool        res   = true;
-            ntsa::Error error = ntsu::SocketOptionUtil::isLocal(&res, socket);
             NTSCFG_TEST_OK(error);
-            NTSCFG_TEST_TRUE(res);
+            NTSCFG_TEST_TRUE(isLocal);
         }
         else {
-            bool        res   = false;
-            ntsa::Error error = ntsu::SocketOptionUtil::isLocal(&res, socket);
             NTSCFG_TEST_OK(error);
-            NTSCFG_TEST_FALSE(res);
+            NTSCFG_TEST_FALSE(isLocal);
         }
     }
 }

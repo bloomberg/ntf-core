@@ -262,7 +262,7 @@ NTCCFG_TEST_CASE(5)
         bsl::vector<Test::Element>        elements(&ta);
         for (int i = 0; i < numTimestamps;) {
             const bsl::uint32_t id = bdlb::Random::generate15(&seed);
-            if (uniqueIds.contains(id)) {
+            if (uniqueIds.count(id) > 0) {
                 continue;
             }
 
@@ -357,7 +357,7 @@ NTCCFG_TEST_CASE(6)
         bsl::vector<Test::Element>        elements(&ta);
         while (elements.size() < numTimestamps) {
             const bsl::uint32_t id = bdlb::Random::generate15(&seed);
-            if (uniqueIds.contains(id)) {
+            if (uniqueIds.count(id) > 0) {
                 continue;
             }
             Test::Element      el(id);

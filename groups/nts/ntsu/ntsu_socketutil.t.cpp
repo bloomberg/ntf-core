@@ -5559,16 +5559,19 @@ NTSCFG_TEST_CASE(17)
             NTSCFG_TEST_ASSERT(buffer == 'S');
         }
 
-        // validate RX timestamping functionality
+        // Validate RX timestamping functionality.
+
         {
             error =
                 ntsu::SocketOptionUtil::setTimestampIncomingData(client, true);
 #if defined(BSLS_PLATFORM_OS_LINUX)
             NTSCFG_TEST_OK(error);
-#else  //should fail on other platforms
+#else
             NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
 #endif
+
             // Enqueue outgoing data to transmit by the client socket.
+
             bsls::TimeInterval sysTimeBeforeSending;
             {
                 char              buffer = 'S';
@@ -5588,6 +5591,7 @@ NTSCFG_TEST_CASE(17)
             }
 
             // Dequeue incoming data received by the server socket.
+
             {
                 char                 buffer;
                 ntsa::ReceiveContext context;
@@ -5612,17 +5616,20 @@ NTSCFG_TEST_CASE(17)
                                                                   &patch,
                                                                   &build) ==
                                    0);
+
                 // Linux kernels versions <= 3.10.0 have restricted
-                // timestamping support
+                // timestamping support.
+
                 if (KERNEL_VERSION(major, minor, patch) <=
                     KERNEL_VERSION(3, 10, 0))
                 {
-                    //then for any stream socket there would be no timestamps
                     NTSCFG_TEST_TRUE(context.softwareTimestamp().isNull());
                     NTSCFG_TEST_TRUE(context.hardwareTimestamp().isNull());
                 }
                 else {
-                    // on a modern kernel timestamps will be present for AF_INET stream sockets only
+                    // On a modern kernel timestamps will be present for
+                    // AF_INET stream sockets only.
+
                     if (transport == ntsa::Transport::e_LOCAL_STREAM) {
                         NTSCFG_TEST_TRUE(context.softwareTimestamp().isNull());
                         NTSCFG_TEST_TRUE(context.hardwareTimestamp().isNull());
@@ -5632,26 +5639,36 @@ NTSCFG_TEST_CASE(17)
                             context.softwareTimestamp().has_value());
                         NTSCFG_TEST_LE(sysTimeBeforeSending,
                                        context.softwareTimestamp().value());
-                        // cannot make any suggestion regarding hw timestamp availability as it strictly OS+NIC dependent
+
+                        // We cannot make any assertion about hardware
+                        // timestamp availability as it strictly OS+NIC
+                        // dependent.
                     }
                 }
 #else
-                //ensure that no timestamp was generated for other platforms except Linux
+                // Ensure that no timestamp was generated for other platforms
+                // except Linux.
+
                 NTSCFG_TEST_TRUE(context.softwareTimestamp().isNull());
                 NTSCFG_TEST_TRUE(context.hardwareTimestamp().isNull());
 #endif
             }
-            // now switch off the option and check that requested timestamp is not available
+
+            // Now switch off the option and check that requested timestamp is
+            // not available.
+
             {
                 error =
                     ntsu::SocketOptionUtil::setTimestampIncomingData(client,
                                                                      false);
 #if defined(BSLS_PLATFORM_OS_LINUX)
                 NTSCFG_TEST_OK(error);
-#else  //should faile on other platforms
+#else
                 NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
 #endif
+
                 // Enqueue outgoing data to transmit by the client socket.
+
                 {
                     char              buffer = 'S';
                     ntsa::SendContext context;
@@ -5670,7 +5687,9 @@ NTSCFG_TEST_CASE(17)
                     NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
                     NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
                 }
+
                 // Dequeue incoming data received by the server socket.
+
                 {
                     char                 buffer;
                     ntsa::ReceiveContext context;
@@ -5694,7 +5713,8 @@ NTSCFG_TEST_CASE(17)
             }
         }
 
-        // validate TX timestamping functionality
+        // Validate TX timestamping functionality.
+
         if (transport != ntsa::Transport::e_TCP_IPV6_STREAM) {
             error =
                 ntsu::SocketOptionUtil::setTimestampOutgoingData(server, true);
@@ -5710,10 +5730,12 @@ NTSCFG_TEST_CASE(17)
                 timestampsAreEnabled = true;
                 NTSCFG_TEST_OK(error);
             }
-#else  //should fail on other platforms
+#else
             NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
 #endif
+
             // Enqueue outgoing data to transmit by the client socket.
+
             bsls::TimeInterval sysTimeBeforeSending;
             {
                 char              buffer = 'S';
@@ -5768,6 +5790,7 @@ NTSCFG_TEST_CASE(17)
             }
 
             // Dequeue incoming data received by the server socket.
+
             {
                 char                 buffer = 'S';
                 ntsa::ReceiveContext context;
@@ -5787,8 +5810,10 @@ NTSCFG_TEST_CASE(17)
                 NTSCFG_TEST_ASSERT(buffer == 'S');
             }
 
-            // now switch off the option and check that requested timestamp is not available
-            // on a local stream socket ::recvmsg(socket, &msg, MSG_ERRQUEUE); hangs
+            // Now switch off the option and check that requested timestamp is
+            // not available on a local stream socket ::recvmsg(socket, &msg,
+            // MSG_ERRQUEUE); hangs.
+
             if (transport != ntsa::Transport::e_LOCAL_STREAM) {
                 error =
                     ntsu::SocketOptionUtil::setTimestampOutgoingData(server,
@@ -5803,10 +5828,12 @@ NTSCFG_TEST_CASE(17)
                 else {
                     NTSCFG_TEST_OK(error);
                 }
-#else  //should faile on other platforms
+#else
                 NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
 #endif
+
                 // Enqueue outgoing data to transmit by the client socket.
+
                 {
                     char              buffer = 'S';
                     ntsa::SendContext context;
@@ -5825,7 +5852,9 @@ NTSCFG_TEST_CASE(17)
                     NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
                     NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
                 }
+
                 // Dequeue incoming data received by the server socket.
+
                 {
                     char                 buffer;
                     ntsa::ReceiveContext context;
@@ -5847,7 +5876,8 @@ NTSCFG_TEST_CASE(17)
                     NTSCFG_TEST_TRUE(context.hardwareTimestamp().isNull());
                 }
 
-                // check that no data on the error queue
+                // Check that no data on the error queue.
+
                 {
                     bslma::TestAllocator ta;
                     {
@@ -5855,9 +5885,15 @@ NTSCFG_TEST_CASE(17)
                         error = ntsu::SocketUtil::receiveNotifications(
                             &notifications,
                             server);
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
                         NTSCFG_TEST_OK(error);
                         NTSCFG_TEST_EQ(notifications.notifications().size(),
                                        0);
+#else
+                        NTSCFG_TEST_ERROR(error,
+                                          ntsa::Error::e_NOT_IMPLEMENTED);
+#endif
                     }
                     NTSCFG_TEST_EQ(ta.numBlocksInUse(), 0);
                 }
@@ -6102,7 +6138,8 @@ NTSCFG_TEST_CASE(18)
             NTSCFG_TEST_ASSERT(buffer == 'C');
         }
 
-        // test RX timestamping functionality
+        // Test RX timestamping functionality.
+
         {
             error =
                 ntsu::SocketOptionUtil::setTimestampIncomingData(server, true);
@@ -6111,7 +6148,9 @@ NTSCFG_TEST_CASE(18)
 #else
             NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
 #endif
+
             // Enqueue outgoing data to transmit by the client socket.
+
             bsls::TimeInterval sysTimeBeforeSending;
             {
                 char              buffer = 'C';
@@ -6157,8 +6196,10 @@ NTSCFG_TEST_CASE(18)
                                                                   &patch,
                                                                   &build) ==
                                    0);
+
                 // Linux kernels versions <= 2.6.32 have restricted
-                // timestamping support
+                // timestamping support.
+
                 if (KERNEL_VERSION(major, minor, patch) >
                     KERNEL_VERSION(2, 6, 32))
                 {
@@ -6186,7 +6227,10 @@ NTSCFG_TEST_CASE(18)
                 NTSCFG_TEST_TRUE(context.hardwareTimestamp().isNull());
 #endif
             }
-            //now switch off the option and check that it is impossible to get a timestamp
+
+            // Now switch off the option and check that it is impossible to get
+            // a timestamp.
+
             {
                 error =
                     ntsu::SocketOptionUtil::setTimestampIncomingData(server,
@@ -6196,7 +6240,9 @@ NTSCFG_TEST_CASE(18)
 #else
                 NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
 #endif
-                //send some data
+
+                // Enqueue outgoing data to transmit by the client socket.
+
                 {
                     char              buffer = 'C';
                     ntsa::SendContext context;
@@ -6216,7 +6262,8 @@ NTSCFG_TEST_CASE(18)
                     NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
                 }
 
-                //receive some data
+                // Dequeue incoming data received by the server socket.
+
                 {
                     char                 buffer;
                     ntsa::ReceiveContext context;
@@ -6241,7 +6288,8 @@ NTSCFG_TEST_CASE(18)
             }
         }
 
-        // validate TX timestamping functionality
+        // Validate TX timestamping functionality.
+
         if (transport != ntsa::Transport::e_UDP_IPV6_DATAGRAM) {
             error =
                 ntsu::SocketOptionUtil::setTimestampOutgoingData(server, true);
@@ -6257,10 +6305,12 @@ NTSCFG_TEST_CASE(18)
                 timestampsAreEnabled = true;
                 NTSCFG_TEST_OK(error);
             }
-#else  //should fail on other platforms
+#else
             NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
 #endif
+
             // Enqueue outgoing data to transmit by the client socket.
+
             bsls::TimeInterval sysTimeBeforeSending;
             {
                 char              buffer = 'C';
@@ -6280,6 +6330,7 @@ NTSCFG_TEST_CASE(18)
             }
 
             // Dequeue incoming data received by the server socket.
+
             {
                 char                 buffer = 'C';
                 ntsa::ReceiveContext context;
@@ -6331,8 +6382,10 @@ NTSCFG_TEST_CASE(18)
                 NTSCFG_TEST_EQ(ta.numBlocksInUse(), 0);
             }
 
-            // now switch off the option and check that requested timestamp is not available
-            // on a local dgram socket ::recvmsg(socket, &msg, MSG_ERRQUEUE); hangs
+            // Now switch off the option and check that requested timestamp is
+            // not available on a local dgram socket ::recvmsg(socket, &msg,
+            // MSG_ERRQUEUE); hangs.
+
             if (transport != ntsa::Transport::e_LOCAL_DATAGRAM) {
                 error =
                     ntsu::SocketOptionUtil::setTimestampOutgoingData(server,
@@ -6347,10 +6400,12 @@ NTSCFG_TEST_CASE(18)
                 else {
                     NTSCFG_TEST_OK(error);
                 }
-#else  //should faile on other platforms
+#else
                 NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
 #endif
+
                 // Enqueue outgoing data to transmit by the client socket.
+
                 {
                     char              buffer = 'C';
                     ntsa::SendContext context;
@@ -6369,7 +6424,9 @@ NTSCFG_TEST_CASE(18)
                     NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
                     NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
                 }
+
                 // Dequeue incoming data received by the server socket.
+
                 {
                     char                 buffer;
                     ntsa::ReceiveContext context;
@@ -6391,7 +6448,8 @@ NTSCFG_TEST_CASE(18)
                     NTSCFG_TEST_TRUE(context.hardwareTimestamp().isNull());
                 }
 
-                // check that no data on the error queue
+                // Check that no data on the error queue.
+
                 {
                     bslma::TestAllocator ta;
                     {
@@ -6399,9 +6457,15 @@ NTSCFG_TEST_CASE(18)
                         error = ntsu::SocketUtil::receiveNotifications(
                             &notifications,
                             server);
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
                         NTSCFG_TEST_OK(error);
                         NTSCFG_TEST_EQ(notifications.notifications().size(),
                                        0);
+#else
+                        NTSCFG_TEST_ERROR(error,
+                                          ntsa::Error::e_NOT_IMPLEMENTED);
+#endif
                     }
                     NTSCFG_TEST_EQ(ta.numBlocksInUse(), 0);
                 }
