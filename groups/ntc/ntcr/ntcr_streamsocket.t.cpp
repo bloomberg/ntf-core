@@ -86,7 +86,7 @@ void validateMetricsAvailable(const bdld::DatumArrayRef& metrics,
     }
 }
 
-} // close unnamed namespace
+}  // close unnamed namespace
 
 /// Provide a test case execution framework.
 class Framework
@@ -1143,10 +1143,12 @@ void StreamSocketManager::run()
             NTCCFG_TEST_EQ(d.type(), bdld::Datum::e_ARRAY);
             bdld::DatumArrayRef statsArray = d.theArray();
 
-            const int baseSchedDelayIndex = 90;
-            const int baseSentDelayIndex  = 95;
-            const int baseAckDelayIndex   = 100;
-            const int baseRxDelayIndex    = 110;
+            const int baseTxDelayBeforeSchedIndex = 90;
+            const int baseTxDelayInSoftwareIndex  = 95;
+            const int baseTxDelayIndex            = 100;
+            const int baseTxDelayBeforeAckIndex   = 105;
+            const int baseRxDelayInHardwareIndex  = 110;
+            const int baseRxDelayIndex            = 115;
 
             const int countOffset = 0;
             const int totalOffset = 1;
@@ -1156,85 +1158,108 @@ void StreamSocketManager::run()
             const int total       = maxOffset + 1;
 
             /// due to multithreaded nature of the tests it's hard to predict
-            /// the esxact amount of TX timestamps received. The implementation
+            /// the exact amount of TX timestamps received. The implementation
             // of ntcr_datagramsocket does not timestamp any outgoing packet
             /// until the first TX timestamp is received from the reactor
-            const double txTimestampsPercentage = 0.47;
+            const double txTimestampsPercentage = 0.45;
 
             if (!d_parameters.d_timestampOutgoingData) {
                 validateNoMetricsAvailable(statsArray,
-                                           baseSchedDelayIndex,
+                                           baseTxDelayBeforeSchedIndex,
                                            total);
                 validateNoMetricsAvailable(statsArray,
-                                           baseSentDelayIndex,
+                                           baseTxDelayInSoftwareIndex,
                                            total);
                 validateNoMetricsAvailable(statsArray,
-                                           baseAckDelayIndex,
+                                           baseTxDelayBeforeAckIndex,
                                            total);
             }
             else {
                 validateMetricsAvailable(statsArray,
-                                         baseSchedDelayIndex,
+                                         baseTxDelayBeforeSchedIndex,
                                          total);
                 validateMetricsAvailable(statsArray,
-                                         baseSentDelayIndex,
+                                         baseTxDelayInSoftwareIndex,
                                          total);
-                validateMetricsAvailable(statsArray, baseAckDelayIndex, total);
+                validateMetricsAvailable(statsArray,
+                                         baseTxDelayBeforeAckIndex,
+                                         total);
 
                 NTCCFG_TEST_GE(
-                    statsArray[baseSchedDelayIndex + countOffset].theDouble(),
+                    statsArray[baseTxDelayBeforeSchedIndex + countOffset]
+                        .theDouble(),
                     d_parameters.d_numMessages * txTimestampsPercentage);
                 NTCCFG_TEST_GT(
-                    statsArray[baseSchedDelayIndex + totalOffset].theDouble(),
+                    statsArray[baseTxDelayBeforeSchedIndex + totalOffset]
+                        .theDouble(),
                     0);
                 NTCCFG_TEST_GT(
-                    statsArray[baseSchedDelayIndex + minOffset].theDouble(),
+                    statsArray[baseTxDelayBeforeSchedIndex + minOffset]
+                        .theDouble(),
                     0);
                 NTCCFG_TEST_GT(
-                    statsArray[baseSchedDelayIndex + avgOffset].theDouble(),
+                    statsArray[baseTxDelayBeforeSchedIndex + avgOffset]
+                        .theDouble(),
                     0);
                 NTCCFG_TEST_GT(
-                    statsArray[baseSchedDelayIndex + maxOffset].theDouble(),
-                    0);
-
-                NTCCFG_TEST_GE(
-                    statsArray[baseSentDelayIndex + countOffset].theDouble(),
-                    d_parameters.d_numMessages * txTimestampsPercentage);
-                NTCCFG_TEST_GT(
-                    statsArray[baseSentDelayIndex + totalOffset].theDouble(),
-                    0);
-                NTCCFG_TEST_GT(
-                    statsArray[baseSentDelayIndex + minOffset].theDouble(),
-                    0);
-                NTCCFG_TEST_GT(
-                    statsArray[baseSentDelayIndex + avgOffset].theDouble(),
-                    0);
-                NTCCFG_TEST_GT(
-                    statsArray[baseSentDelayIndex + maxOffset].theDouble(),
+                    statsArray[baseTxDelayBeforeSchedIndex + maxOffset]
+                        .theDouble(),
                     0);
 
                 NTCCFG_TEST_GE(
-                    statsArray[baseAckDelayIndex + countOffset].theDouble(),
+                    statsArray[baseTxDelayInSoftwareIndex + countOffset]
+                        .theDouble(),
                     d_parameters.d_numMessages * txTimestampsPercentage);
                 NTCCFG_TEST_GT(
-                    statsArray[baseAckDelayIndex + totalOffset].theDouble(),
+                    statsArray[baseTxDelayInSoftwareIndex + totalOffset]
+                        .theDouble(),
                     0);
                 NTCCFG_TEST_GT(
-                    statsArray[baseAckDelayIndex + minOffset].theDouble(),
+                    statsArray[baseTxDelayInSoftwareIndex + minOffset]
+                        .theDouble(),
                     0);
                 NTCCFG_TEST_GT(
-                    statsArray[baseAckDelayIndex + avgOffset].theDouble(),
+                    statsArray[baseTxDelayInSoftwareIndex + avgOffset]
+                        .theDouble(),
                     0);
                 NTCCFG_TEST_GT(
-                    statsArray[baseAckDelayIndex + maxOffset].theDouble(),
+                    statsArray[baseTxDelayInSoftwareIndex + maxOffset]
+                        .theDouble(),
+                    0);
+
+                NTCCFG_TEST_GE(
+                    statsArray[baseTxDelayBeforeAckIndex + countOffset]
+                        .theDouble(),
+                    d_parameters.d_numMessages * txTimestampsPercentage);
+                NTCCFG_TEST_GT(
+                    statsArray[baseTxDelayBeforeAckIndex + totalOffset]
+                        .theDouble(),
+                    0);
+                NTCCFG_TEST_GT(
+                    statsArray[baseTxDelayBeforeAckIndex + minOffset]
+                        .theDouble(),
+                    0);
+                NTCCFG_TEST_GT(
+                    statsArray[baseTxDelayBeforeAckIndex + avgOffset]
+                        .theDouble(),
+                    0);
+                NTCCFG_TEST_GT(
+                    statsArray[baseTxDelayBeforeAckIndex + maxOffset]
+                        .theDouble(),
                     0);
             }
             if (!d_parameters.d_timestampIncomingData) {
                 validateNoMetricsAvailable(statsArray,
                                            baseRxDelayIndex,
                                            total);
+                validateNoMetricsAvailable(statsArray,
+                                           baseRxDelayInHardwareIndex,
+                                           total);
             }
             else {
+                validateNoMetricsAvailable(statsArray,
+                                           baseRxDelayInHardwareIndex,
+                                           total);
                 validateMetricsAvailable(statsArray, baseRxDelayIndex, total);
 
                 NTCCFG_TEST_EQ(
