@@ -50,6 +50,8 @@ RegistryEntry::RegistryEntry(
 , d_unknown_sp(ntci::Strand::unknown())
 , d_external_sp()
 , d_active(true)
+, d_processCounter(0)
+, d_detachRequired(false)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     BSLS_ASSERT(d_handle != ntsa::k_INVALID_HANDLE);
@@ -72,6 +74,8 @@ RegistryEntry::RegistryEntry(ntsa::Handle                     handle,
 , d_unknown_sp(ntci::Strand::unknown())
 , d_external_sp()
 , d_active(true)
+, d_processCounter(0)
+, d_detachRequired(false)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     BSLS_ASSERT(d_handle != ntsa::k_INVALID_HANDLE);
@@ -142,6 +146,13 @@ bool RegistryEntry::announceError(const ntca::ReactorEvent& event)
     }
 
     return process;
+}
+
+void RegistryEntry::announceDetached()
+{
+    if (d_detachCallback) {
+        d_detachCallback.execute(d_unknown_sp);
+    }
 }
 
 RegistryEntryCatalog::RegistryEntryCatalog(bslma::Allocator* basicAllocator)

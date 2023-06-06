@@ -35,14 +35,9 @@ ntsa::Error Reactor::showNotifications(
 ntsa::Error Reactor::showNotifications(
     ntsa::Handle                             handle,
     const ntci::ReactorNotificationCallback& callback)
-{
-    NTCCFG_WARNING_UNUSED(handle);
-    NTCCFG_WARNING_UNUSED(callback);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
-}
 
-ntsa::Error Reactor::hideNotifications(
-    const bsl::shared_ptr<ntci::ReactorSocket>& socket)
+    ntsa::Error Reactor::hideNotifications(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket)
 {
     NTCCFG_WARNING_UNUSED(socket);
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
@@ -51,6 +46,23 @@ ntsa::Error Reactor::hideNotifications(
 ntsa::Error Reactor::hideNotifications(ntsa::Handle handle)
 {
     NTCCFG_WARNING_UNUSED(handle);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error Reactor::detachSocket(
+    const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+    const ntci::SocketDetachedCallback&         callback)
+{
+    NTCCFG_WARNING_UNUSED(socket);
+    NTCCFG_WARNING_UNUSED(callback);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error Reactor::detachSocket(ntsa::Handle                        handle,
+                                  const ntci::SocketDetachedCallback& callback)
+{
+    NTCCFG_WARNING_UNUSED(handle);
+    NTCCFG_WARNING_UNUSED(callback);
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 

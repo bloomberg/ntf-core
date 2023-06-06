@@ -441,12 +441,24 @@ class Epoll : public ntci::Reactor,
     ntsa::Error hideNotifications(ntsa::Handle handle) BSLS_KEYWORD_OVERRIDE;
 
     /// Stop monitoring the specified 'socket' and close the
-    /// 'socket' if it is not already closed. Return the error.
+    /// 'socket' if it is not already closed. Return the error. //TODO: wrong comment! where is close?
     ntsa::Error detachSocket(const bsl::shared_ptr<ntci::ReactorSocket>&
                                  socket) BSLS_KEYWORD_OVERRIDE;
 
+    /// Stop monitoring the specified 'socket'. Invoke the specified 'callback'
+    /// when the socket is detached. Return the error.
+    ntsa::Error detachSocket(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+        const ntci::SocketDetachedCallback& callback) BSLS_KEYWORD_OVERRIDE;
+
     /// Stop monitoring the specified socket 'handle'. Return the error.
     ntsa::Error detachSocket(ntsa::Handle handle) BSLS_KEYWORD_OVERRIDE;
+
+    /// Stop monitoring the specified socket 'handle'. Invoke the specified
+    /// 'callback' when the socket is detached. Return the error.
+    ntsa::Error detachSocket(ntsa::Handle                        handle,
+                             const ntci::SocketDetachedCallback& callback)
+        BSLS_KEYWORD_OVERRIDE {};
 
     /// Close all monitored sockets and timers.
     ntsa::Error closeAll() BSLS_KEYWORD_OVERRIDE;
@@ -1969,6 +1981,7 @@ ntsa::Error Epoll::hideError(ntsa::Handle handle)
     }
 }
 
+<<<<<<< HEAD
 ntsa::Error Epoll::hideNotifications(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket)
 {
@@ -2018,6 +2031,40 @@ ntsa::Error Epoll::hideNotifications(ntsa::Handle handle)
     }
     else {
         return ntsa::Error(ntsa::Error::e_INVALID);
+
+struct FT {
+
+    void operator()() const {};
+
+};
+
+ntsa::Error Epoll::detachSocket(
+    const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+    const ntci::SocketDetachedCallback&         callback)
+{
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntcs::RegistryEntry> entry = d_registry.remove(socket);
+
+    if (NTCCFG_LIKELY(entry)) {
+        error = this->remove(entry->handle());
+        if (error) {
+            return error;
+        }
+//        if (NTCRO_EPOLL_INTERRUPT_ALL) {
+//            Epoll::interruptAll();
+//        }
+
+        FT f;
+        ntci::Executor::Functor f2 = bdlf::BindUtil::bind(f);
+//        auto f2 = bdlf::BindUtil::bind(f);
+//        auto f2 = std::bind(f);
+//        this->execute(callback);
+
+        return ntsa::Error();
+    }
+    else {
+        return ntsa::Error();
     }
 }
 
@@ -2213,7 +2260,7 @@ void Epoll::run(ntci::Waiter waiter)
                 BSLS_ASSERT(descriptorHandle != ntsa::k_INVALID_HANDLE);
 
                 bsl::shared_ptr<ntcs::RegistryEntry> entry;
-                if (!d_registry.lookup(&entry, descriptorHandle)) {
+                if (!d_registry.lookupAndMarkProcessingOngoing(&entry, descriptorHandle)) {
                     continue;
                 }
 
@@ -2328,6 +2375,23 @@ void Epoll::run(ntci::Waiter waiter)
                         }
                     }
                 }
+
+                {
+                    unsigned int numProcessors = entry->d_processCounter.load();
+                    while (entry->d_processCounter.testAndSwap(numProcessors, numProcessors - 1) != numProcessors);
+                    if (numProcessors == 1) {
+                        if (entry->d_detachRequired) {
+                            bool prev =
+                                entry_sp->d_detachRequired.testAndSwap(true,
+                                                                       false);
+                            if (prev == true) {
+                                entry->announceDetached();
+                                entry->clear();
+                            }
+                        }
+                    }
+                }
+
             }
 
             const bsl::size_t numTotal =
