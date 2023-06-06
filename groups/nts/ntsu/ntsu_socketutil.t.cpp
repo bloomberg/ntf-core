@@ -5566,6 +5566,7 @@ NTSCFG_TEST_CASE(17)
                 ntsu::SocketOptionUtil::setTimestampIncomingData(client, true);
 #if defined(BSLS_PLATFORM_OS_LINUX)
             NTSCFG_TEST_OK(error);
+            bslmt::ThreadUtil::microSleep(100000, 0);
 #else
             NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
 #endif
