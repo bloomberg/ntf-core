@@ -27,7 +27,6 @@ TimestampCorrelator::TimestampCorrelator(
     ntsa::TransportMode::Value transportMode,
     bslma::Allocator*          basicAllocator)
 : d_transportMode(transportMode)
-, d_firstTsReceived(false)
 , d_timestampsSend(k_RING_BUFFER_SIZE, basicAllocator)
 , d_timestampsSched(k_RING_BUFFER_SIZE, basicAllocator)
 , d_timestampsAck()
@@ -51,10 +50,6 @@ TimestampCorrelator::~TimestampCorrelator()
 void TimestampCorrelator::saveTimestampBeforeSend(const bsls::TimeInterval& ts,
                                                   ID                        id)
 {
-    if (NTCCFG_UNLIKELY(!d_firstTsReceived)) {
-        return;
-    }
-
     d_timestampsSend.push(id, ts);
     d_timestampsSched.push(id, ts);
 
@@ -67,11 +62,6 @@ bdlb::NullableValue<bsls::TimeInterval> TimestampCorrelator::timestampReceived(
     const ntsa::Timestamp& ts)
 {
     bdlb::NullableValue<bsls::TimeInterval> result;
-
-    if (NTCCFG_UNLIKELY(!d_firstTsReceived)) {
-        d_firstTsReceived = true;
-        return result;
-    }
 
     switch (ts.type()) {
     case (ntsa::TimestampType::e_SENT): {
@@ -109,7 +99,6 @@ bdlb::NullableValue<bsls::TimeInterval> TimestampCorrelator::timestampReceived(
 
 void TimestampCorrelator::reset()
 {
-    d_firstTsReceived = false;
     d_timestampsSend.reset();
     d_timestampsSched.reset();
     if (d_transportMode == ntsa::TransportMode::e_STREAM) {

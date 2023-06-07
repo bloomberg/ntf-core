@@ -133,13 +133,9 @@ NTCCFG_TEST_CASE(2)
         ts.setType(ntsa::TimestampType::e_SCHEDULED);
         ts.setTime(ti + Test::oneSec);
 
+        ts.setId(id);
         bdlb::NullableValue<bsls::TimeInterval> diff =
             tc.timestampReceived(ts);
-        NTCCFG_TEST_FALSE(diff.has_value());  // first timestamp is ignored
-
-        tc.saveTimestampBeforeSend(ti, id + 1);
-        ts.setId(id + 1);
-        diff = tc.timestampReceived(ts);
         NTCCFG_TEST_TRUE(diff.has_value());
         NTCCFG_TEST_EQ(diff.value(), Test::oneSec);
     }
@@ -147,63 +143,6 @@ NTCCFG_TEST_CASE(2)
 }
 
 NTCCFG_TEST_CASE(3)
-{
-    // Concern: check that timestamps are not saved until the first one is
-    // received
-    const int            numTimestamps = 64;
-    bslma::TestAllocator ta;
-    {
-        TimestampCorrelator tc(ntsa::TransportMode::e_STREAM, &ta);
-
-        {  /// Push numTimestamps to the correlator
-            bsls::TimeInterval ti = Test::oneSec;
-            for (int i = 0; i < numTimestamps; ++i) {
-                tc.saveTimestampBeforeSend(ti, i);
-                ti += Test::oneSec;
-            }
-        }
-
-        {
-            // Try to extract all these timestamps: it should not work as these
-            // timestamps were not saved
-            ntsa::Timestamp    ts;
-            bsls::TimeInterval ti = Test::oneSec + Test::oneSec;
-            ts.setId(0);
-            ts.setType(ntsa::TimestampType::e_SENT);
-            ts.setTime(ti);
-
-            bdlb::NullableValue<bsls::TimeInterval> diff =
-                tc.timestampReceived(ts);
-            NTCCFG_TEST_FALSE(diff.has_value());
-
-            ti += Test::oneSec;
-            for (int i = 1; i < numTimestamps; ++i) {
-                ts.setId(i);
-                ts.setTime(ti);
-                ti   += Test::oneSec;
-                diff = tc.timestampReceived(ts);
-                NTCCFG_TEST_FALSE(diff.has_value());
-            }
-        }
-
-        {
-            // Now timestamps can be saved and extracted
-            const int id = 500;
-            tc.saveTimestampBeforeSend(Test::oneSec, id);
-            ntsa::Timestamp ts;
-            ts.setId(id);
-            ts.setType(ntsa::TimestampType::e_SENT);
-            ts.setTime(Test::twoSec + Test::oneSec);
-            bdlb::NullableValue<bsls::TimeInterval> diff =
-                tc.timestampReceived(ts);
-            NTCCFG_TEST_TRUE(diff.has_value());
-            NTCCFG_TEST_EQ(diff.value(), Test::twoSec);
-        }
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(4)
 {
     // Concern: test wrapping of internal ring buffer
 
@@ -248,7 +187,7 @@ NTCCFG_TEST_CASE(4)
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTCCFG_TEST_CASE(5)
+NTCCFG_TEST_CASE(4)
 {
     // Concern: complex test case with pseudo random timestamps,
     // timestamps are fetched in order of their saving
@@ -280,8 +219,6 @@ NTCCFG_TEST_CASE(5)
         }
 
         TimestampCorrelator tc(ntsa::TransportMode::e_STREAM, &ta);
-        NTCCFG_TEST_FALSE(tc.timestampReceived(ntsa::Timestamp()).has_value());
-        // now 'tc'is operational
 
         for (bsl::size_t i = 0; i < TimestampCorrelator::k_RING_BUFFER_SIZE;
              ++i)
@@ -345,7 +282,7 @@ NTCCFG_TEST_CASE(5)
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTCCFG_TEST_CASE(6)
+NTCCFG_TEST_CASE(5)
 {
     // Concern: test that timestamps can be fetched even in random order
     const int numTimestamps = TimestampCorrelator::k_RING_BUFFER_SIZE;
@@ -374,8 +311,6 @@ NTCCFG_TEST_CASE(6)
 
         // now fill the correlator
         TimestampCorrelator tc(ntsa::TransportMode::e_STREAM, &ta);
-        NTCCFG_TEST_FALSE(tc.timestampReceived(ntsa::Timestamp()).has_value());
-        // now 'tc'is operational
 
         for (bsl::size_t i = 0; i < elements.size(); ++i) {
             tc.saveTimestampBeforeSend(elements.at(i).d_reference,
@@ -414,7 +349,7 @@ NTCCFG_TEST_CASE(6)
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTCCFG_TEST_CASE(7)
+NTCCFG_TEST_CASE(6)
 {
     // Concern: test that after reset existing timestamps cannot be fetched
 
@@ -423,8 +358,6 @@ NTCCFG_TEST_CASE(7)
     bslma::TestAllocator ta;
     {
         TimestampCorrelator tc(ntsa::TransportMode::e_STREAM, &ta);
-        NTCCFG_TEST_FALSE(tc.timestampReceived(ntsa::Timestamp()).has_value());
-        // now 'tc'is operational
 
         for (int i = 0; i < numTimestamps; ++i) {
             tc.saveTimestampBeforeSend(bsls::TimeInterval(), i);
@@ -468,6 +401,5 @@ NTCCFG_TEST_DRIVER
     NTCCFG_TEST_REGISTER(4);
     NTCCFG_TEST_REGISTER(5);
     NTCCFG_TEST_REGISTER(6);
-    NTCCFG_TEST_REGISTER(7);
 }
 NTCCFG_TEST_DRIVER_END;

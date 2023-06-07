@@ -49,7 +49,7 @@ class TimestampCorrelator
     typedef bsls::TimeInterval Timestamp;
     typedef bsl::uint32_t      ID;
 
-    enum { k_RING_BUFFER_SIZE = 64 };
+    enum { k_RING_BUFFER_SIZE = 128 };
 
   private:
     /// @internal @brief
@@ -133,7 +133,6 @@ class TimestampCorrelator
 
     const ntsa::TransportMode::Value d_transportMode;
 
-    bool                           d_firstTsReceived;
     RingBuffer                     d_timestampsSend;
     RingBuffer                     d_timestampsSched;
     bsls::ObjectBuffer<RingBuffer> d_timestampsAck;

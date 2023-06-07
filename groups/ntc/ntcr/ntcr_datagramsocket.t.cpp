@@ -1170,6 +1170,15 @@ void DatagramSocketManager::run()
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
     {
+        // If it is required to validate outgoing timestamps mechanism then it
+        // is not enough to wait for all packets to be transferred. It is also
+        // needed to ensure that all notifications with timestamps have been
+        // delivered. At this point there is no good enough mechanism to
+        // provide such synchronization.
+        if (d_parameters.d_timestampOutgoingData) {
+            bslmt::ThreadUtil::microSleep(500 * 1000);
+        }
+
         bsl::vector<bsl::shared_ptr<ntci::Monitorable> > monitorables;
         ntcm::MonitorableUtil::loadRegisteredObjects(&monitorables);
         for (bsl::vector<bsl::shared_ptr<ntci::Monitorable> >::iterator it =
@@ -1177,6 +1186,8 @@ void DatagramSocketManager::run()
              it != monitorables.end();
              ++it)
         {
+
+
             bdld::ManagedDatum stats;
             (*it)->getStats(&stats);
             const bdld::Datum& d = stats.datum();
@@ -1724,11 +1735,11 @@ NTCCFG_TEST_CASE(8)
     parameters.d_numSocketPairs        = 1;
     parameters.d_numMessages           = 100;
     parameters.d_messageSize           = 512;
+    parameters.d_sendBufferSize        = 512;
     parameters.d_useAsyncCallbacks     = false;
     parameters.d_timestampOutgoingData = true;
     parameters.d_collectMetrics        = true;
-
-    parameters.d_sendBufferSize = 512;
+    parameters.d_tolerateDataLoss = false;
 
     test::variation(parameters);
 }
