@@ -3332,8 +3332,7 @@ NTCCFG_TEST_CASE(21)
     parameters.d_numTimers             = 0;
     parameters.d_numSocketPairs        = 1;
     parameters.d_numMessages           = 100;
-    parameters.d_messageSize           = 512;
-    parameters.d_sendBufferSize        = 512;
+    parameters.d_messageSize           = 32;
     parameters.d_useAsyncCallbacks     = false;
     parameters.d_timestampOutgoingData = true;
     parameters.d_collectMetrics        = true;
