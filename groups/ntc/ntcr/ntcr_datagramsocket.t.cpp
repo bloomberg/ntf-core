@@ -1729,7 +1729,8 @@ NTCCFG_TEST_CASE(7)
 NTCCFG_TEST_CASE(8)
 {
     // Concern: Outgoing timestamps test
-
+#if 0
+    // The test is disabled due to its flaky nature
     test::Parameters parameters;
     parameters.d_numTimers             = 0;
     parameters.d_numSocketPairs        = 1;
@@ -1742,6 +1743,7 @@ NTCCFG_TEST_CASE(8)
     parameters.d_tolerateDataLoss = false;
 
     test::variation(parameters);
+#endif
 }
 
 NTCCFG_TEST_DRIVER

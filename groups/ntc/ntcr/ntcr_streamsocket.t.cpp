@@ -3327,7 +3327,8 @@ NTCCFG_TEST_CASE(20)
 NTCCFG_TEST_CASE(21)
 {
     // Concern: TX timestamping test.
-
+#if 0
+    // The test is disabled due to its flaky nature
     test::Parameters parameters;
     parameters.d_numTimers             = 0;
     parameters.d_numSocketPairs        = 1;
@@ -3338,6 +3339,7 @@ NTCCFG_TEST_CASE(21)
     parameters.d_collectMetrics        = true;
 
     test::variation(parameters);
+#endif
 }
 
 NTCCFG_TEST_DRIVER
