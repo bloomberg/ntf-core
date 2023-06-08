@@ -3646,18 +3646,20 @@ ntsa::Error Session::step(bool block)
         d_outgoingPacketQueue_sp->retry(packetsToRetransmit);
     }
 
+    bool newFeedback = false;
     if (d_socketOptions.timestampOutgoingData().value_or(false)) {
         ntsa::Timestamp ts;
         while (d_feedbackQueue.tryPopFront(&ts) == 0) {
             ntsa::Notification n;
             n.makeTimestamp(ts);
             d_socketErrorQueue_sp->push_back(n);
+            newFeedback = true;
         }
     }
 
     NTCD_SESSION_LOG_STEP_COMPLETE(d_machine_sp, this);
 
-    if (numPacketsTransferred == 0) {
+    if (numPacketsTransferred == 0 && !newFeedback) {
         update.dismiss();
     }
 
