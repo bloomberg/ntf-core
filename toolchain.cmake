@@ -119,10 +119,10 @@ get_filename_component(
 
 if("${NTF_TOOLCHAIN_COMPILER_CC_NAME}" STREQUAL "gcc")
     set(NTF_TOOLCHAIN_DEBUGGER_NAME "gdb")
-    find_program(NTF_TOOLCHAIN_DEBUGGER_PATH gdb REQUIRED)
+    find_program(NTF_TOOLCHAIN_DEBUGGER_PATH gdb)
 elseif("${NTF_TOOLCHAIN_COMPILER_CC_NAME}" STREQUAL "clang")
     set(NTF_TOOLCHAIN_DEBUGGER_NAME "lldb")
-    find_program(NTF_TOOLCHAIN_DEBUGGER_PATH lldb REQUIRED)
+    find_program(NTF_TOOLCHAIN_DEBUGGER_PATH lldb)
 endif()
 
 if (DEFINED UFID)
