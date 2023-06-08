@@ -285,6 +285,8 @@ class RegistryEntryCatalog
     /// handle.
     typedef bsl::vector<bsl::shared_ptr<ntcs::RegistryEntry> > Vector;
 
+    typedef bsl::function<ntsa::Error (const bsl::shared_ptr<ntcs::RegistryEntry>&)> EntryFunctor;
+
     /// This typedef defines a mutex.
     typedef ntci::Mutex Mutex;
 
@@ -353,10 +355,11 @@ class RegistryEntryCatalog
     /// registry.
     bsl::shared_ptr<ntcs::RegistryEntry> remove(ntsa::Handle handle);
 
-    bsl::shared_ptr<ntcs::RegistryEntry> tryRemove( //TODO: bad naming, there is no try
-        const bsl::shared_ptr<ntci::ReactorSocket>& descriptor, ntci::SocketDetachedCallback& callback);
+    bsl::shared_ptr<ntcs::RegistryEntry> removeAndGetReadyToDetach( //TODO: bad naming, there is no try
+        const bsl::shared_ptr<ntci::ReactorSocket>& descriptor, const ntci::SocketDetachedCallback& callback, const EntryFunctor& functor);
 
-    bsl::shared_ptr<ntcs::RegistryEntry> tryRemove(ntsa::Handle handle, ntci::SocketDetachedCallback& callback);
+    bsl::shared_ptr<ntcs::RegistryEntry> removeAndGetReadyToDetach( //TODO: bad naming, there is no try
+        ntsa::Handle handle, const ntci::SocketDetachedCallback& callback, const EntryFunctor& functor);
 
     /// Remove all descriptors from the registry except for the specified
     /// 'controller' and load them into the specified 'result'.
@@ -864,8 +867,8 @@ void RegistryEntry::clear()
     }
 
     d_detachCallback.reset();
-    BSLS_ASSERT_OPT(d_processCounter == 0);
-    BSLS_ASSERT_OPT(d_detachRequired == false);
+    BSLS_ASSERT_OPT(d_processCounter == 0); //TODO: change to debug
+    BSLS_ASSERT_OPT(d_detachRequired == false); //TODO: change to debug
 
     d_active = false;
 }
@@ -1089,8 +1092,8 @@ bsl::shared_ptr<ntcs::RegistryEntry> RegistryEntryCatalog::remove(
 }
 
 NTCCFG_INLINE
-bsl::shared_ptr<ntcs::RegistryEntry> RegistryEntryCatalog::tryRemove(
-    const bsl::shared_ptr<ntci::ReactorSocket>& descriptor, ntci::SocketDetachedCallback& callback)
+bsl::shared_ptr<ntcs::RegistryEntry> RegistryEntryCatalog::removeAndGetReadyToDetach(
+    const bsl::shared_ptr<ntci::ReactorSocket>& descriptor, const ntci::SocketDetachedCallback& callback, const EntryFunctor& functor)
 {
     ntsa::Handle handle = descriptor->handle();
     BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
@@ -1110,16 +1113,10 @@ bsl::shared_ptr<ntcs::RegistryEntry> RegistryEntryCatalog::tryRemove(
 
                 entry_sp->d_detachCallback = callback;
                 entry_sp->d_detachRequired.store(true);
-                if (entry_sp->d_processCounter.load() == 0) {
-
-                    bool prev = entry_sp->d_detachRequired.testAndSwap(true, false);
-                    if (prev == true) {
-                        // so this thread marked detached required as false
-                        entry_sp->announceDetached();
-                    }
-
+                ntsa::Error error = functor(entry_sp);
+                if (error) {
+                    return bsl::shared_ptr<ntcs::RegistryEntry>();
                 }
-
 
             }
             else {
@@ -1135,8 +1132,8 @@ bsl::shared_ptr<ntcs::RegistryEntry> RegistryEntryCatalog::tryRemove(
 }
 
 NTCCFG_INLINE
-bsl::shared_ptr<ntcs::RegistryEntry> RegistryEntryCatalog::tryRemove(
-    ntsa::Handle handle, ntci::SocketDetachedCallback& callback)
+bsl::shared_ptr<ntcs::RegistryEntry> RegistryEntryCatalog::removeAndGetReadyToDetach(
+    ntsa::Handle handle, const ntci::SocketDetachedCallback& callback, const EntryFunctor& functor)
 {
     BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
 
@@ -1152,6 +1149,14 @@ bsl::shared_ptr<ntcs::RegistryEntry> RegistryEntryCatalog::tryRemove(
                 d_vector[index].swap(entry_sp);
                 BSLS_ASSERT_OPT(d_size > 0);
                 --d_size;
+
+                entry_sp->d_detachCallback = callback;
+                entry_sp->d_detachRequired.store(true);
+                ntsa::Error error = functor(entry_sp);
+                if (error) {
+                    return bsl::shared_ptr<ntcs::RegistryEntry>();
+                }
+
             }
             else {
                 return bsl::shared_ptr<ntcs::RegistryEntry>();
@@ -1161,8 +1166,6 @@ bsl::shared_ptr<ntcs::RegistryEntry> RegistryEntryCatalog::tryRemove(
             return bsl::shared_ptr<ntcs::RegistryEntry>();
         }
     }
-
-    entry_sp->clear();
 
     return entry_sp;
 }

@@ -458,7 +458,7 @@ class Epoll : public ntci::Reactor,
     /// 'callback' when the socket is detached. Return the error.
     ntsa::Error detachSocket(ntsa::Handle                        handle,
                              const ntci::SocketDetachedCallback& callback)
-        BSLS_KEYWORD_OVERRIDE {};
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Close all monitored sockets and timers.
     ntsa::Error closeAll() BSLS_KEYWORD_OVERRIDE;
@@ -1981,7 +1981,6 @@ ntsa::Error Epoll::hideError(ntsa::Handle handle)
     }
 }
 
-<<<<<<< HEAD
 ntsa::Error Epoll::hideNotifications(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket)
 {
@@ -2038,34 +2037,38 @@ struct FT {
 
 };
 
+
 ntsa::Error Epoll::detachSocket(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket,
     const ntci::SocketDetachedCallback&         callback)
 {
     ntsa::Error error;
 
-    bsl::shared_ptr<ntcs::RegistryEntry> entry = d_registry.remove(socket);
-
-    if (NTCCFG_LIKELY(entry)) {
-        error = this->remove(entry->handle());
+    auto functor = [this](const bsl::shared_ptr<ntcs::RegistryEntry>& entry) {
+        ntsa::Error error = this->remove(entry->handle());
         if (error) {
             return error;
         }
-//        if (NTCRO_EPOLL_INTERRUPT_ALL) {
-//            Epoll::interruptAll();
-//        }
 
-        FT f;
-        ntci::Executor::Functor f2 = bdlf::BindUtil::bind(f);
-//        auto f2 = bdlf::BindUtil::bind(f);
-//        auto f2 = std::bind(f);
-//        this->execute(callback);
+        if (entry->d_processCounter.load() == 0) {
+            bool prev = entry->d_detachRequired.testAndSwap(true, false);
+            if (prev == true) {
+                // so this thread marked detached required as false
+                entry->announceDetached();
+                entry->clear();
+                Epoll::interruptOne();
+            }
+        }
+        return ntsa::Error();
+    };
 
+    bsl::shared_ptr<ntcs::RegistryEntry> entry =
+        d_registry.removeAndGetReadyToDetach(socket, callback, functor);
+
+    if (entry) {
         return ntsa::Error();
     }
-    else {
-        return ntsa::Error();
-    }
+    return ntsa::Error(ntsa::Error::e_INVALID);  // TODO: find a better error;
 }
 
 ntsa::Error Epoll::detachSocket(
@@ -2088,6 +2091,38 @@ ntsa::Error Epoll::detachSocket(
     else {
         return ntsa::Error();
     }
+}
+
+ntsa::Error Epoll::detachSocket(ntsa::Handle                        handle,
+                                const ntci::SocketDetachedCallback& callback)
+{
+    ntsa::Error error;
+
+    auto functor = [this](const bsl::shared_ptr<ntcs::RegistryEntry>& entry) {
+        ntsa::Error error = this->remove(entry->handle());
+        if (error) {
+            return error;
+        }
+
+        if (entry->d_processCounter.load() == 0) {
+            bool prev = entry->d_detachRequired.testAndSwap(true, false);
+            if (prev == true) {
+                // so this thread marked detached required as false
+                entry->announceDetached();
+                entry->clear();
+                Epoll::interruptOne();
+            }
+        }
+        return ntsa::Error();
+    };
+
+    bsl::shared_ptr<ntcs::RegistryEntry> entry =
+        d_registry.removeAndGetReadyToDetach(handle, callback, functor);
+
+    if (entry) {
+        return ntsa::Error();
+    }
+    return ntsa::Error(ntsa::Error::e_INVALID);  // TODO: find a better error;
 }
 
 ntsa::Error Epoll::detachSocket(ntsa::Handle handle)
@@ -2260,7 +2295,10 @@ void Epoll::run(ntci::Waiter waiter)
                 BSLS_ASSERT(descriptorHandle != ntsa::k_INVALID_HANDLE);
 
                 bsl::shared_ptr<ntcs::RegistryEntry> entry;
-                if (!d_registry.lookupAndMarkProcessingOngoing(&entry, descriptorHandle)) {
+                if (!d_registry.lookupAndMarkProcessingOngoing(
+                        &entry,
+                        descriptorHandle))
+                {
                     continue;
                 }
 
@@ -2377,13 +2415,21 @@ void Epoll::run(ntci::Waiter waiter)
                 }
 
                 {
-                    unsigned int numProcessors = entry->d_processCounter.load();
-                    while (entry->d_processCounter.testAndSwap(numProcessors, numProcessors - 1) != numProcessors);
-                    if (numProcessors == 1) {
+                    unsigned int prev = entry->d_processCounter.load();
+                    while (true) {
+                        unsigned int current =
+                            entry->d_processCounter.testAndSwap(prev,
+                                                                prev - 1);
+                        if (prev == current) {
+                            break;
+                        }
+                        prev = current;
+                    }
+                    if (prev == 1) {
                         if (entry->d_detachRequired) {
                             bool prev =
-                                entry_sp->d_detachRequired.testAndSwap(true,
-                                                                       false);
+                                entry->d_detachRequired.testAndSwap(true,
+                                                                    false);
                             if (prev == true) {
                                 entry->announceDetached();
                                 entry->clear();
@@ -2391,7 +2437,6 @@ void Epoll::run(ntci::Waiter waiter)
                         }
                     }
                 }
-
             }
 
             const bsl::size_t numTotal =

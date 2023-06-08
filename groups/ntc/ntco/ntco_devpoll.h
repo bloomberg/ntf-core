@@ -28,7 +28,9 @@ BSLS_IDENT("$Id: $")
 #include <bsl_memory.h>
 
 #if NTC_BUILD_WITH_DEVPOLL
+//#if 1
 #if defined(BSLS_PLATFORM_OS_SOLARIS)
+//#if 1
 
 namespace BloombergLP {
 namespace ntco {

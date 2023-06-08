@@ -19,7 +19,9 @@
 BSLS_IDENT_RCSID(ntco_devpoll_cpp, "$Id$ $CSID$")
 
 #if NTC_BUILD_WITH_DEVPOLL
+//#if 1
 #if defined(BSLS_PLATFORM_OS_SOLARIS)
+//#if 1
 
 #include <ntcr_datagramsocket.h>
 #include <ntcr_listenersocket.h>
@@ -152,6 +154,9 @@ class Devpoll : public ntci::Reactor,
     typedef bsl::vector<struct ::pollfd> DescriptorList;
     // Defines a type alias for a list of poll descriptor structures.
 
+    typedef bsl::vector<bsl::shared_ptr<ntcs::RegistryEntry> > DetachList;
+
+
     struct Result;
     // This struct describes the context of a waiter.
 
@@ -178,6 +183,7 @@ class Devpoll : public ntci::Reactor,
     mutable Mutex                         d_generationMutex;
     bslmt::Semaphore                      d_generationSemaphore;
     DescriptorList                        d_changeList;
+    DetachList                            d_detachList;
     ntcs::RegistryEntryCatalog            d_registry;
     ntcs::Chronology                      d_chronology;
     bsl::shared_ptr<ntci::User>           d_user_sp;
@@ -225,6 +231,8 @@ class Devpoll : public ntci::Reactor,
 
     ntsa::Error remove(ntsa::Handle handle);
     // Remove the specified 'handle' from the device.
+
+    ntsa::Error removeDetached(const bsl::shared_ptr<ntcs::RegistryEntry>& entry);
 
     void reinitializeControl();
     // Reinitialize the control mechanism and add it to the polled set.
@@ -377,8 +385,18 @@ class Devpoll : public ntci::Reactor,
     // Stop monitoring the specified 'socket' and close the
     // 'socket' if it is not already closed. Return the error.
 
+    ntsa::Error detachSocket(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+        const ntci::SocketDetachedCallback& callback) BSLS_KEYWORD_OVERRIDE;
+
     ntsa::Error detachSocket(ntsa::Handle handle) BSLS_KEYWORD_OVERRIDE;
     // Stop monitoring the specified socket 'handle'. Return the error.
+
+    /// Stop monitoring the specified socket 'handle'. Invoke the specified
+    /// 'callback' when the socket is detached. Return the error.
+    ntsa::Error detachSocket(ntsa::Handle                        handle,
+                             const ntci::SocketDetachedCallback& callback)
+        BSLS_KEYWORD_OVERRIDE;
 
     ntsa::Error closeAll() BSLS_KEYWORD_OVERRIDE;
     // Close all monitored sockets and timers.
@@ -796,6 +814,59 @@ ntsa::Error Devpoll::remove(ntsa::Handle handle)
     else {
         LockGuard lock(&d_generationMutex);
         d_changeList.push_back(pfd);
+    }
+
+    NTCO_DEVPOLL_LOG_REMOVE(handle);
+
+    return ntsa::Error();
+}
+
+NTCCFG_INLINE
+ntsa::Error Devpoll::removeDetached(const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
+{
+    NTCI_LOG_CONTEXT();
+
+    const ntsa::Handle handle = entry->handle();
+
+    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(handle);
+
+    struct ::pollfd pfd;
+
+    pfd.fd      = handle;
+    pfd.events  = POLLREMOVE;
+    pfd.revents = 0;
+
+    if (NTCCFG_LIKELY(d_config.maxThreads().value() == 1)) {
+        if (NTCCFG_LIKELY(isWaiter())) {
+            int rc = ::write(d_devpoll, &pfd, sizeof(struct ::pollfd));
+            if (rc != sizeof(struct ::pollfd)) {
+                ntsa::Error error(errno);
+                NTCO_DEVPOLL_LOG_WRITE_FAILURE(sizeof(struct ::pollfd),
+                                               rc,
+                                               error);
+                return error;
+
+                //TODO: smth went wrong, need to detach the socket still
+            }
+            entry->announceDetached(); //it is safe as this socket will never be polled as it is removed from registry
+
+            BSLS_ASSERT(entry->d_detachRequired.load());
+            entry->d_detachRequired.store(false);
+            BSLS_ASSERT(entry->d_processCounter.load() == 0);
+
+            entry->clear();
+        }
+        else {
+            LockGuard lock(&d_generationMutex);
+            d_changeList.push_back(pfd);
+            d_detachList.push_back(entry);
+
+        }
+    }
+    else {
+        LockGuard lock(&d_generationMutex);
+        d_changeList.push_back(pfd);
+        d_detachList.push_back(entry);
     }
 
     NTCO_DEVPOLL_LOG_REMOVE(handle);
@@ -1749,6 +1820,35 @@ ntsa::Error Devpoll::detachSocket(
     }
 }
 
+ntsa::Error Devpoll::detachSocket(
+    const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+    const ntci::SocketDetachedCallback& callback)
+{
+    ntsa::Error error;
+
+    auto functor = [this](const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
+    {
+        ntsa::Error error;
+        this->removeDetached(entry);
+        if (error) {
+            return error;
+        }
+        Devpoll::interruptAll(); //TODO: I need to interrupt only one as only one thread is waiting on poll
+        return error;
+    };
+
+    bsl::shared_ptr<ntcs::RegistryEntry> entry = d_registry.removeAndGetReadyToDetach(socket, callback, functor);
+
+    if (entry)
+    {
+        return ntsa::Error();
+    }
+    else {
+        error = ntsa::Error(ntsa::Error::invalid()); //TODO: deal with errors
+    }
+    return error; //TODO: implement error case handling
+}
+
 ntsa::Error Devpoll::detachSocket(ntsa::Handle handle)
 {
     ntsa::Error error;
@@ -1770,6 +1870,35 @@ ntsa::Error Devpoll::detachSocket(ntsa::Handle handle)
     else {
         return ntsa::Error();
     }
+}
+
+ntsa::Error Devpoll::detachSocket(
+    ntsa::Handle handle,
+    const ntci::SocketDetachedCallback& callback)
+{
+    ntsa::Error error;
+
+    auto functor = [this](const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
+    {
+        ntsa::Error error;
+        this->removeDetached(entry);
+        if (error) {
+            return error;
+        }
+        Devpoll::interruptAll(); //TODO: I need to interrupt only one as only one thread is waiting on poll
+        return error;
+    };
+
+    bsl::shared_ptr<ntcs::RegistryEntry> entry = d_registry.removeAndGetReadyToDetach(handle, callback, functor);
+
+    if (entry)
+    {
+        return ntsa::Error();
+    }
+    else {
+        error = ntsa::Error(ntsa::Error::invalid()); //TODO: deal with errors
+    }
+    return error; //TODO: implement error case handling
 }
 
 ntsa::Error Devpoll::closeAll()
@@ -1833,6 +1962,21 @@ void Devpoll::run(ntci::Waiter waiter)
 
                 d_changeList.clear();
             }
+
+            // go over d_detachList. decrement processing count for each entry. In this thread decrements it till 0 then
+            // schedule detach.
+
+            for(DetachList::const_iterator it = d_detachList.cbegin(); it != d_detachList.cend(); ++it)
+            {
+                ntcs::RegistryEntry& entry = **it;
+                if (entry.d_processCounter.load() == 0) {
+                    bool prev = entry.d_detachRequired.testAndSwap(true, false);
+                    if (prev) { // none other thread is doing anything on the descriptor, I can schedule detachment
+                        entry.announceDetached();
+                    }
+                }
+            }
+            d_detachList.clear();
         }
 
         enum { MAX_EVENTS = 128 };
@@ -1863,7 +2007,7 @@ void Devpoll::run(ntci::Waiter waiter)
                 BSLS_ASSERT(e.revents != 0);
 
                 bsl::shared_ptr<ntcs::RegistryEntry> entry;
-                if (!d_registry.lookup(&entry, e.fd)) {
+                if (!d_registry.lookupAndMarkProcessingOngoing(&entry, e.fd)) {
                     continue;
                 }
 
@@ -2004,6 +2148,30 @@ void Devpoll::run(ntci::Waiter waiter)
                         }
                     }
                 }
+
+                unsigned int prev = entry->d_processCounter.load();
+                while(true) {
+                    unsigned int current = entry->d_processCounter.testAndSwap(prev, prev - 1);
+                    if (prev == current) {
+                        break;
+                    }
+                    prev = current;
+                }
+                if (prev == 1) { //this tread decreased it till 0
+                    if (entry->d_detachRequired) {
+                        bool prev =
+                            entry->d_detachRequired.testAndSwap(true,
+                                                                false);
+                        if (prev == true) {
+                            entry->announceDetached();
+                            entry->clear();
+                        }
+                    }
+                }
+
+
+
+
             }
 
             if (NTCCFG_UNLIKELY(numReadable == 0 && numWritable == 0 &&
