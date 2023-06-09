@@ -7150,6 +7150,16 @@ ntsa::Error SocketUtil::receiveFromMultiple(bsl::size_t* numBytesReceivable,
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
+ntsa::Error SocketUtil::receiveNotifications(
+    ntsa::NotificationQueue* notifications,
+    ntsa::Handle             socket)
+{
+    NTSCFG_WARNING_UNUSED(notifications);
+    NTSCFG_WARNING_UNUSED(socket);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 ntsa::Error SocketUtil::shutdown(ntsa::ShutdownType::Value direction,
                                  ntsa::Handle              socket)
 {

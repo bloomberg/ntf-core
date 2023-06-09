@@ -30,6 +30,11 @@ BSLS_IDENT_RCSID(ntsscm_version_cpp, "$Id$ $CSID$")
 #include <unistd.h>
 #endif
 
+#if defined(BSLS_PLATFORM_OS_WINDOWS)
+#include <windows.h>
+#pragma warning(disable: 4996)
+#endif
+
 namespace BloombergLP {
 namespace ntsscm {
 
