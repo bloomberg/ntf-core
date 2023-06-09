@@ -40,6 +40,12 @@ void ReactorSocket::processSocketError(const ntca::ReactorEvent& event)
     NTCCFG_WARNING_UNUSED(event);
 }
 
+void ReactorSocket::processNotifications(
+    const ntsa::NotificationQueue& notifications)
+{
+    NTCCFG_WARNING_UNUSED(notifications);
+}
+
 const bsl::shared_ptr<ntci::Strand>& ReactorSocket::strand() const
 {
     return ntci::Strand::unspecified();

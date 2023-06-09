@@ -74,7 +74,7 @@ struct SocketOptionUtil {
     /// Set the option for the specified 'socket' that enables or disables
     /// application of both software and hardware timestamps for incoming
     /// data according to the specified 'timestampIncomingData' flag. Note
-    /// that if an error is returned than timestamps will never be
+    /// that if an error is returned then timestamps will never be
     /// generated. If there is no error returned then in some cases OS can
     /// also refuse to generate timestamps.
     static ntsa::Error setTimestampIncomingData(ntsa::Handle socket,
@@ -128,6 +128,14 @@ struct SocketOptionUtil {
     /// 'inlineFlag'.
     static ntsa::Error setInlineOutOfBandData(ntsa::Handle socket,
                                               bool         inlineFlag);
+
+    /// Set the option for the specified 'socket' that enables or disables
+    /// application of timestamps for outgoing data according to the specified
+    /// 'timestampOutgoingData' flag. Note that if an error is returned then
+    /// timestamps will never be generated. If there is no error returned then
+    /// in some cases OS can also refuse to generate timestamps.
+    static ntsa::Error setTimestampOutgoingData(ntsa::Handle socket,
+                                                bool timestampOutgoingData);
 
     /// Load into the specified 'option' the socket option of the specified
     /// 'type' for the specified 'socket'. Return the error.
@@ -263,6 +271,10 @@ struct SocketOptionUtil {
     /// Load into the specified 'result' the flag that indicates if the
     /// socket type is a datagram socket. Return the error.
     static ntsa::Error isDatagram(bool* result, ntsa::Handle socket);
+
+    /// Load into the specified 'result' the flag that indicates if the
+    /// socket type is a local (aka Unix) socket. Return the error.
+    static ntsa::Error isLocal(bool* result, ntsa::Handle socket);
 };
 
 }  // end namespace ntsu

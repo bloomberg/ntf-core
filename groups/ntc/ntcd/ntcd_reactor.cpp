@@ -1245,27 +1245,63 @@ void Reactor::poll(ntci::Waiter waiter)
             NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(descriptorHandle);
 
             NTCD_REACTOR_LOG_EVENT(event);
-
+            bool fatalError = false;
             if (event.isError()) {
-                NTCS_METRICS_UPDATE_ERROR_CALLBACK_TIME_BEGIN();
-                if (entry->announceError(event)) {
-                    ++numErrors;
+                if (event.error()) {
+                    fatalError = true;
+                    NTCS_METRICS_UPDATE_ERROR_CALLBACK_TIME_BEGIN();
+                    if (entry->announceError(event)) {
+                        ++numErrors;
+                    }
+                    NTCS_METRICS_UPDATE_ERROR_CALLBACK_TIME_END();
                 }
-                NTCS_METRICS_UPDATE_ERROR_CALLBACK_TIME_END();
+                else {
+                    bsl::weak_ptr<ntcd::Session> session_wp;
+                    ntsa::Error                  error =
+                        d_machine_sp->lookupSession(&session_wp,
+                                                    descriptorHandle);
+                    if (!error) {
+                        bsl::shared_ptr<ntcd::Session> session_sp =
+                            session_wp.lock();
+                        if (session_sp) {
+                            bdlma::LocalSequentialAllocator<
+                                ntsa::NotificationQueue::
+                                    k_NUM_BYTES_TO_ALLOCATE>
+                                                    lsa(d_allocator_p);
+                            ntsa::NotificationQueue notifications(
+                                event.handle(),
+                                &lsa);
+
+                            error = session_sp->receiveNotifications(
+                                &notifications);
+                            if (!error) {
+                                NTCS_METRICS_UPDATE_ERROR_CALLBACK_TIME_BEGIN();
+                                if (entry->announceNotifications(
+                                        notifications))
+                                {
+                                    ++numErrors;
+                                }
+                                NTCS_METRICS_UPDATE_ERROR_CALLBACK_TIME_END();
+                            }
+                        }
+                    }
+                }
             }
-            else if (event.isWritable()) {
-                NTCS_METRICS_UPDATE_WRITE_CALLBACK_TIME_BEGIN();
-                if (entry->announceWritable(event)) {
-                    ++numWritable;
+            if (!fatalError) {
+                if (event.isWritable()) {
+                    NTCS_METRICS_UPDATE_WRITE_CALLBACK_TIME_BEGIN();
+                    if (entry->announceWritable(event)) {
+                        ++numWritable;
+                    }
+                    NTCS_METRICS_UPDATE_WRITE_CALLBACK_TIME_END();
                 }
-                NTCS_METRICS_UPDATE_WRITE_CALLBACK_TIME_END();
-            }
-            else if (event.isReadable()) {
-                NTCS_METRICS_UPDATE_READ_CALLBACK_TIME_BEGIN();
-                if (entry->announceReadable(event)) {
-                    ++numReadable;
+                else if (event.isReadable()) {
+                    NTCS_METRICS_UPDATE_READ_CALLBACK_TIME_BEGIN();
+                    if (entry->announceReadable(event)) {
+                        ++numReadable;
+                    }
+                    NTCS_METRICS_UPDATE_READ_CALLBACK_TIME_END();
                 }
-                NTCS_METRICS_UPDATE_READ_CALLBACK_TIME_END();
             }
         }
 
@@ -1545,6 +1581,11 @@ bool Reactor::supportsOneShot(bool oneShot) const
 bool Reactor::supportsTrigger(ntca::ReactorEventTrigger::Value trigger) const
 {
     return d_monitor_sp->supportsTrigger(trigger);
+}
+
+bool Reactor::supportsNotifications() const
+{
+    return true;
 }
 
 const bsl::shared_ptr<ntci::Strand>& Reactor::strand() const

@@ -119,6 +119,12 @@ void Controller::processSocketError(const ntca::ReactorEvent& event)
     NTCCFG_WARNING_UNUSED(event);
 }
 
+void Controller::processNotifications(
+    const ntsa::NotificationQueue& notifications)
+{
+    NTCCFG_WARNING_UNUSED(notifications);
+}
+
 void Controller::close()
 {
 #if NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_TCP_SOCKET ||                  \

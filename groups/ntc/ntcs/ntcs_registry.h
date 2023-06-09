@@ -66,6 +66,7 @@ class RegistryEntry
     ntci::ReactorEventCallback           d_readableCallback;
     ntci::ReactorEventCallback           d_writableCallback;
     ntci::ReactorEventCallback           d_errorCallback;
+    ntci::ReactorNotificationCallback    d_notificationCallback;
     bsl::shared_ptr<ntci::Strand>        d_unknown_sp;
     bsl::shared_ptr<void>                d_external_sp;
     bsls::AtomicBool                     d_active;
@@ -139,6 +140,16 @@ class RegistryEntry
         const ntca::ReactorEventOptions&  options,
         const ntci::ReactorEventCallback& callback);
 
+    /// Show notifications for this descriptor. Return the resulting status
+    /// mask.
+    ntcs::Interest showNotifications();
+
+    /// Show notifications for this descriptor and invoke the specified
+    /// 'callback' when the descriptor has notifications. Return the resulting
+    /// interest mask.
+    ntcs::Interest showNotificationsCallback(
+        const ntci::ReactorNotificationCallback& callback);
+
     /// Hide readability for this descriptor. Return the resulting interest
     /// mask.
     ntcs::Interest hideReadable(const ntca::ReactorEventOptions& options);
@@ -164,6 +175,14 @@ class RegistryEntry
     /// Return the resulting interest mask.
     ntcs::Interest hideErrorCallback(const ntca::ReactorEventOptions& options);
 
+    /// Hide notifications for this descriptor. Return the resulting interest
+    /// mask.
+    ntcs::Interest hideNotifications();
+
+    /// Hide notifications for this descriptor and clear the associated
+    /// callback. Return the resulting interest mask.
+    ntcs::Interest hideNotificationsCallback();
+
     /// Announce that the socket is readable, if readability should be
     /// shown. Return true if the announcement is performed, and false if
     /// the announcement was withheld because the user is no longer
@@ -185,6 +204,13 @@ class RegistryEntry
     /// previously fired in one-shot mode and has not yet been re-armed.
     bool announceError(const ntca::ReactorEvent& event);
 
+    /// Announce that the specified 'notifications' have been detected for the
+    /// socket, if notifications should be shown. Return true if the
+    /// announcement is performed, and false if the announcement was withheld
+    /// because the user is no longer interested in the notifications.
+    bool announceNotifications(
+        const ntsa::NotificationQueue& notificationQueue);
+
     /// Close the registry entry but do not clear it nor deactive it.
     void close();
 
@@ -202,6 +228,10 @@ class RegistryEntry
     /// Return true if errors should be shown for the descriptor, otherwise
     /// return false.
     bool wantError() const;
+
+    /// Return true if notifications should be shown for the descriptor,
+    /// otherwise return false.
+    bool wantNotifications() const;
 
     /// Return the descriptor handle.
     ntsa::Handle handle() const;
@@ -468,6 +498,29 @@ ntcs::Interest RegistryEntry::showErrorCallback(
 }
 
 NTCCFG_INLINE
+ntcs::Interest RegistryEntry::showNotifications()
+{
+    bsls::SpinLockGuard guard(&d_lock);
+
+    d_interest.showNotifications();
+
+    return d_interest;
+}
+
+NTCCFG_INLINE
+ntcs::Interest RegistryEntry::showNotificationsCallback(
+    const ntci::ReactorNotificationCallback& callback)
+{
+    bsls::SpinLockGuard guard(&d_lock);
+
+    d_notificationCallback = callback;
+
+    d_interest.showNotifications();
+
+    return d_interest;
+}
+
+NTCCFG_INLINE
 ntcs::Interest RegistryEntry::hideReadable(
     const ntca::ReactorEventOptions& options)
 {
@@ -592,6 +645,28 @@ ntcs::Interest RegistryEntry::hideErrorCallback(
 }
 
 NTCCFG_INLINE
+ntcs::Interest RegistryEntry::hideNotifications()
+{
+    bsls::SpinLockGuard guard(&d_lock);
+
+    d_interest.hideNotifications();
+
+    return d_interest;
+}
+
+NTCCFG_INLINE
+ntcs::Interest RegistryEntry::hideNotificationsCallback()
+{
+    bsls::SpinLockGuard guard(&d_lock);
+
+    d_notificationCallback.reset();
+
+    d_interest.hideNotifications();
+
+    return d_interest;
+}
+
+NTCCFG_INLINE
 bool RegistryEntry::announceReadable(const ntca::ReactorEvent& event)
 {
     bool process = false;
@@ -692,6 +767,48 @@ bool RegistryEntry::announceWritable(const ntca::ReactorEvent& event)
 }
 
 NTCCFG_INLINE
+bool RegistryEntry::announceNotifications(
+    const ntsa::NotificationQueue& notifications)
+{
+    bool process = false;
+
+    if (d_reactorSocket_sp) {
+        {
+            bsls::SpinLockGuard guard(&d_lock);
+
+            if (d_interest.wantNotifications()) {
+                process = true;
+            }
+        }
+
+        if (process) {
+            ntcs::Dispatch::announceNotifications(d_reactorSocket_sp,
+                                                  notifications,
+                                                  d_reactorSocketStrand_sp);
+        }
+    }
+    else {
+        ntci::ReactorNotificationCallback notificationCallback(d_allocator_p);
+        {
+            bsls::SpinLockGuard guard(&d_lock);
+
+            if (d_interest.wantNotifications()) {
+                process              = true;
+                notificationCallback = d_notificationCallback;
+            }
+        }
+
+        if (process) {
+            if (notificationCallback) {
+                notificationCallback(notifications, d_unknown_sp);
+            }
+        }
+    }
+
+    return process;
+}
+
+NTCCFG_INLINE
 void RegistryEntry::close()
 {
     bsl::shared_ptr<ntci::ReactorSocket> reactorSocket;
@@ -751,6 +868,13 @@ bool RegistryEntry::wantError() const
 {
     bsls::SpinLockGuard guard(&d_lock);
     return d_interest.wantError();
+}
+
+NTCCFG_INLINE
+bool RegistryEntry::wantNotifications() const
+{
+    bsls::SpinLockGuard guard(&d_lock);
+    return d_interest.wantNotifications();
 }
 
 NTCCFG_INLINE

@@ -45,11 +45,12 @@ class Interest
     enum Flag {
         // Defines the flags used by this object.
 
-        e_READABLE = 1,
-        e_WRITABLE = 2,
-        e_ERROR    = 4,
-        e_EDGE     = 8,
-        e_ONE_SHOT = 16
+        e_READABLE     = 1,
+        e_WRITABLE     = 2,
+        e_ERROR        = 4,
+        e_EDGE         = 8,
+        e_ONE_SHOT     = 16,
+        e_NOTIFICATION = 32
     };
 
     bsl::uint32_t d_value;
@@ -102,7 +103,7 @@ class Interest
     /// low watermark set for the socket.
     void showWritable();
 
-    /// Load interest in writability.
+    /// Lose interest in writability.
     void hideWritable();
 
     /// Gain interest in errors.
@@ -110,6 +111,12 @@ class Interest
 
     /// Lose interest in errors.
     void hideError();
+
+    /// Gain interest in notifications.
+    void showNotifications();
+
+    /// Lose interest in notifications.
+    void hideNotifications();
 
     /// Reset the value of this object to its value upon default
     /// construction.
@@ -138,6 +145,10 @@ class Interest
     /// Return true if there is interest in errors that have been detected
     /// for the socket.
     bool wantError() const;
+
+    /// Return true if there is interest in notifications that has been
+    /// detected for the socket.
+    bool wantNotifications() const;
 
     /// Return the trigger mode. When events are level-triggered, the event
     /// will occur as long as the conditions for the event continue to be
@@ -210,13 +221,13 @@ void hashAppend(HASH_ALGORITHM& algorithm, const Interest& value);
 
 NTCCFG_INLINE
 Interest::Interest()
-: d_value(e_ERROR)
+: d_value(e_ERROR | e_NOTIFICATION)
 {
 }
 
 NTCCFG_INLINE
 Interest::Interest(ntca::ReactorEventTrigger::Value trigger, bool oneShot)
-: d_value(e_ERROR)
+: d_value(e_ERROR | e_NOTIFICATION)
 {
     if (trigger == ntca::ReactorEventTrigger::e_EDGE) {
         d_value |= e_EDGE;
@@ -304,6 +315,18 @@ void Interest::hideError()
 }
 
 NTCCFG_INLINE
+void Interest::showNotifications()
+{
+    d_value |= e_NOTIFICATION;
+}
+
+NTCCFG_INLINE
+void Interest::hideNotifications()
+{
+    d_value &= ~e_NOTIFICATION;
+}
+
+NTCCFG_INLINE
 void Interest::reset()
 {
     d_value = e_ERROR;
@@ -331,6 +354,12 @@ NTCCFG_INLINE
 bool Interest::wantError() const
 {
     return (d_value & e_ERROR) != 0;
+}
+
+NTCCFG_INLINE
+bool Interest::wantNotifications() const
+{
+    return (d_value & e_NOTIFICATION) != 0;
 }
 
 NTCCFG_INLINE

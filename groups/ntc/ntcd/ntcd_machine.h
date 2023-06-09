@@ -28,6 +28,7 @@ BSLS_IDENT("$Id: $")
 #include <ntsa_endpoint.h>
 #include <ntsa_error.h>
 #include <ntsa_handle.h>
+#include <ntsa_notificationqueue.h>
 #include <ntsa_shutdownmode.h>
 #include <ntsa_shutdowntype.h>
 #include <ntsa_socketconfig.h>
@@ -38,7 +39,7 @@ BSLS_IDENT("$Id: $")
 #include <ntsi_streamsocket.h>
 #include <bdlbb_blob.h>
 #include <bdlbb_pooledblobbufferfactory.h>
-#include <bdlcc_queue.h>
+#include <bdlcc_singleconsumerqueue.h>
 #include <bslh_hash.h>
 #include <bslmt_condition.h>
 #include <bslmt_mutex.h>
@@ -145,15 +146,17 @@ bsl::ostream& operator<<(bsl::ostream& stream, PacketType::Value rhs);
 /// @ingroup module_ntcd
 class Packet
 {
-    ntcd::PacketType::Value      d_type;
-    ntsa::Transport::Value       d_transport;
-    ntsa::Endpoint               d_sourceEndpoint;
-    ntsa::Endpoint               d_remoteEndpoint;
-    bsl::weak_ptr<ntcd::Session> d_sourceSession_wp;
-    bsl::weak_ptr<ntcd::Session> d_remoteSession_wp;
-    bdlbb::Blob                  d_data;
-    bdlbb::BlobBufferFactory*    d_blobBufferFactory_p;
-    bslma::Allocator*            d_allocator_p;
+    ntcd::PacketType::Value                 d_type;
+    ntsa::Transport::Value                  d_transport;
+    ntsa::Endpoint                          d_sourceEndpoint;
+    ntsa::Endpoint                          d_remoteEndpoint;
+    bsl::weak_ptr<ntcd::Session>            d_sourceSession_wp;
+    bsl::weak_ptr<ntcd::Session>            d_remoteSession_wp;
+    bdlbb::Blob                             d_data;
+    bdlb::NullableValue<bsl::uint32_t>      d_id;
+    bdlb::NullableValue<bsls::TimeInterval> d_rxTimestamp;
+    bdlbb::BlobBufferFactory*               d_blobBufferFactory_p;
+    bslma::Allocator*                       d_allocator_p;
 
   private:
     Packet(const Packet&) BSLS_KEYWORD_DELETED;
@@ -194,6 +197,12 @@ class Packet
 
     /// Set the packet data to the specified 'data'.
     void setData(const bdlbb::Blob& data);
+
+    /// Set d_rxTimestamp to the specified 'timestamp'.
+    void setRxTimestamp(const bsls::TimeInterval& timestamp);
+
+    /// Set packet d_id to the specified 'id'.
+    void setId(bsl::uint32_t id);
 
     /// Copy packet data from the specified 'data' according to the
     /// specified 'options'. Load into the specified 'context' the result
@@ -285,6 +294,12 @@ class Packet
 
     /// Return the data, if any.
     const bdlbb::Blob& data() const;
+
+    /// Return the rx timestamp, if any.
+    const bdlb::NullableValue<bsls::TimeInterval>& rxTimestamp() const;
+
+    /// Return the id, if any.
+    const bdlb::NullableValue<bsl::uint32_t>& id() const;
 
     /// Return the length of the data of the packet.
     bsl::size_t length() const;
@@ -378,6 +393,9 @@ class PacketQueue
     /// This typedef defines a vector of packets.
     typedef bsl::vector<bsl::shared_ptr<ntcd::Packet> > PacketVector;
 
+    /// This typedef defines a functor which can be applied to a packet
+    typedef bsl::function<void(ntcd::Packet*)> PacketFunctor;
+
     /// Create a new object. Optionally specify a 'basicAllocator' used to
     /// supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
@@ -394,10 +412,12 @@ class PacketQueue
 
     /// Enqueue the specified 'packet'. If the specified 'block' flag is
     /// true, block until sufficient capacity is availble to store the
-    /// 'packet'. Return the error.
-    ntsa::Error enqueue(bslmt::Mutex*                        mutex,
-                        const bsl::shared_ptr<ntcd::Packet>& packet,
-                        bool                                 block);
+    /// 'packet'. If 'packetFunctor' is set then apply it to the packet in
+    /// case of succesful enqueueing. Return the error.
+    ntsa::Error enqueue(bslmt::Mutex*                  mutex,
+                        bsl::shared_ptr<ntcd::Packet>& packet,
+                        bool                           block,
+                        PacketFunctor packetFunctor = PacketFunctor());
 
     /// Enqueue the specified 'packet' to the front of the packet queue.
     void retry(const bsl::shared_ptr<ntcd::Packet>& packet);
@@ -682,33 +702,40 @@ class Session : public ntsi::DatagramSocket,
     // Provide a guard to automatically update a session's
     // enabled events.
 
-    mutable bslmt::Mutex                d_mutex;
-    ntsa::Handle                        d_handle;
-    ntsa::Transport::Value              d_transport;
-    ntsa::Endpoint                      d_sourceEndpoint;
-    ntsa::Endpoint                      d_remoteEndpoint;
-    ntsa::SocketConfig                  d_socketOptions;
-    bsl::shared_ptr<ntcd::Machine>      d_machine_sp;
-    bsl::shared_ptr<ntcd::Monitor>      d_monitor_sp;
-    bsl::weak_ptr<ntcd::Session>        d_peer_wp;
-    bsl::shared_ptr<ntcd::SessionQueue> d_sessionQueue_sp;
-    bsl::shared_ptr<ntcd::PacketQueue>  d_outgoingPacketQueue_sp;
-    bsl::shared_ptr<ntcd::PacketQueue>  d_incomingPacketQueue_sp;
-    bool                                d_blocking;
-    bool                                d_listening;
-    bool                                d_accepted;
-    bool                                d_connected;
-    bsls::AtomicBool                    d_readable;
-    bsls::AtomicBool                    d_readableActive;
-    bsls::AtomicUint64                  d_readableBytes;
-    bsls::AtomicBool                    d_writable;
-    bsls::AtomicBool                    d_writableActive;
-    bsls::AtomicUint64                  d_writableBytes;
-    bsls::AtomicBool                    d_error;
-    bsls::AtomicBool                    d_errorActive;
-    bsls::AtomicInt                     d_errorCode;
-    bsl::size_t                         d_backlog;
-    bslma::Allocator*                   d_allocator_p;
+    typedef bsl::list<ntsa::Notification> SocketErrorQueue;
+
+    mutable bslmt::Mutex                        d_mutex;
+    ntsa::Handle                                d_handle;
+    ntsa::Transport::Value                      d_transport;
+    ntsa::Endpoint                              d_sourceEndpoint;
+    ntsa::Endpoint                              d_remoteEndpoint;
+    ntsa::SocketConfig                          d_socketOptions;
+    bsl::shared_ptr<ntcd::Machine>              d_machine_sp;
+    bsl::shared_ptr<ntcd::Monitor>              d_monitor_sp;
+    bsl::weak_ptr<ntcd::Session>                d_peer_wp;
+    bsl::shared_ptr<ntcd::SessionQueue>         d_sessionQueue_sp;
+    bsl::shared_ptr<ntcd::PacketQueue>          d_outgoingPacketQueue_sp;
+    bsl::shared_ptr<ntcd::PacketQueue>          d_incomingPacketQueue_sp;
+    bsl::shared_ptr<SocketErrorQueue>           d_socketErrorQueue_sp;
+    bsl::uint32_t                               d_tsKey;
+    bool                                        d_blocking;
+    bool                                        d_listening;
+    bool                                        d_accepted;
+    bool                                        d_connected;
+    bsls::AtomicBool                            d_readable;
+    bsls::AtomicBool                            d_readableActive;
+    bsls::AtomicUint64                          d_readableBytes;
+    bsls::AtomicBool                            d_writable;
+    bsls::AtomicBool                            d_writableActive;
+    bsls::AtomicUint64                          d_writableBytes;
+    bsls::AtomicBool                            d_error;
+    bsls::AtomicBool                            d_errorActive;
+    bsls::AtomicInt                             d_errorCode;
+    bsls::AtomicBool                            d_hasNotifications;
+    bsls::AtomicBool                            d_notificationsActive;
+    bsl::size_t                                 d_backlog;
+    bdlcc::SingleConsumerQueue<ntsa::Timestamp> d_feedbackQueue;
+    bslma::Allocator*                           d_allocator_p;
 
   private:
     Session(const Session&) BSLS_KEYWORD_DELETED;
@@ -739,6 +766,9 @@ class Session : public ntsi::DatagramSocket,
 
     /// Return true if the session has an error, otherwise return false.
     bool privateHasError() const;
+
+    /// Return true if the session has a notification, otherwise return false.
+    bool privateHasNotification() const;
 
   public:
     /// Create a new session on the specified 'machine'. Optionally specify
@@ -837,6 +867,11 @@ class Session : public ntsi::DatagramSocket,
                         ntsa::Data*                 data,
                         const ntsa::ReceiveOptions& options)
         BSLS_KEYWORD_OVERRIDE;
+
+    /// Read data from the socket error queue. Then if the specified
+    /// 'notifications' is not null parse fetched data to extract control
+    /// messages into the specified 'notifications'. Return the error.
+    ntsa::Error receiveNotifications(ntsa::NotificationQueue* notifications);
 
     /// Shutdown the stream socket in the specified 'direction'. Return the
     /// error.
@@ -951,6 +986,9 @@ class Session : public ntsi::DatagramSocket,
 
     /// Return true if the session has an error, otherwise return false.
     bool hasError() const;
+
+    /// Return true if the session has a notification, otherwise return false.
+    bool hasNotification() const;
 };
 
 /// @internal @brief
@@ -1075,11 +1113,24 @@ class Monitor : public ntccfg::Shared<Monitor>
                        const bsl::shared_ptr<ntcd::Session>& session,
                        ntca::ReactorEventType::Value         type);
 
+    /// Start returning events of the e_ERROR type (indicating notifications
+    /// are there)  for the specified 'handle' for the specified 'session' when
+    // polled. Return the error.
+    ntsa::Error enableNotifications(
+        ntsa::Handle                          handle,
+        const bsl::shared_ptr<ntcd::Session>& session);
+
     /// Stop returning events of the specified 'type' for the specified
     /// 'session' when polled. Return the error.
     ntsa::Error disable(ntsa::Handle                          handle,
                         const bsl::shared_ptr<ntcd::Session>& session,
                         ntca::ReactorEventType::Value         type);
+
+    /// Stop returning notifications for the specified 'handle' for the
+    /// specified 'session'.
+    ntsa::Error disableNotifications(
+        ntsa::Handle                          handle,
+        const bsl::shared_ptr<ntcd::Session>& session);
 
     /// Block until one or more events have been enqueued. Dequeue all
     /// available events and append them into the specified 'result'. Return

@@ -29,6 +29,11 @@ BSLS_IDENT_RCSID(ntscfg_platform_cpp, "$Id$ $CSID$")
 #include <errno.h>
 #include <signal.h>
 #include <unistd.h>
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+#include <linux/version.h>
+#endif
+
 #endif
 
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
@@ -80,6 +85,8 @@ Initializer::~Initializer()
 
 #endif
 
+bool s_supportsTimestamps = false;
+
 }  // close unnamed namespace
 
 int Platform::initialize()
@@ -92,7 +99,6 @@ int Platform::initialize()
         ::signal(SIGPIPE, SIG_IGN);
     }
 #endif
-
     return 0;
 
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
@@ -156,6 +162,29 @@ int Platform::exit()
 #else
 #error Not implemented
 #endif
+}
+
+bool Platform::supportsTimestamps()
+{
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    BSLMT_ONCE_DO
+    {
+        int major = 0;
+        int minor = 0;
+        int patch = 0;
+        int build = 0;
+        int rc =
+            ntsscm::Version::systemVersion(&major, &minor, &patch, &build);
+        if (rc == 0) {
+            if (KERNEL_VERSION(major, minor, patch) >=
+                KERNEL_VERSION(4, 18, 0))
+            {
+                s_supportsTimestamps = true;
+            }
+        }
+    }
+#endif
+    return s_supportsTimestamps;
 }
 
 }  // close package namespace

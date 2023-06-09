@@ -61,6 +61,8 @@ ListenerSocketOptions::ListenerSocketOptions()
 , d_lingerTimeout()
 , d_keepHalfOpen()
 , d_metrics()
+, d_timestampOutgoingData()
+, d_timestampIncomingData()
 , d_loadBalancingOptions()
 {
 }
@@ -98,6 +100,8 @@ ListenerSocketOptions::ListenerSocketOptions(
 , d_lingerTimeout(other.d_lingerTimeout)
 , d_keepHalfOpen(other.d_keepHalfOpen)
 , d_metrics(other.d_metrics)
+, d_timestampOutgoingData(other.d_timestampOutgoingData)
+, d_timestampIncomingData(other.d_timestampIncomingData)
 , d_loadBalancingOptions(other.d_loadBalancingOptions)
 {
 }
@@ -143,6 +147,8 @@ ListenerSocketOptions& ListenerSocketOptions::operator=(
         d_lingerTimeout             = other.d_lingerTimeout;
         d_keepHalfOpen              = other.d_keepHalfOpen;
         d_metrics                   = other.d_metrics;
+        d_timestampOutgoingData     = other.d_timestampOutgoingData;
+        d_timestampIncomingData     = other.d_timestampIncomingData;
         d_loadBalancingOptions      = other.d_loadBalancingOptions;
     }
 
@@ -305,6 +311,16 @@ void ListenerSocketOptions::setKeepHalfOpen(bool value)
 void ListenerSocketOptions::setMetrics(bool value)
 {
     d_metrics = value;
+}
+
+void ListenerSocketOptions::setTimestampOutgoingData(bool value)
+{
+    d_timestampOutgoingData = value;
+}
+
+void ListenerSocketOptions::setTimestampIncomingData(bool value)
+{
+    d_timestampIncomingData = value;
 }
 
 void ListenerSocketOptions::setLoadBalancingOptions(
@@ -493,6 +509,18 @@ const ntca::LoadBalancingOptions& ListenerSocketOptions::loadBalancingOptions()
     return d_loadBalancingOptions;
 }
 
+const bdlb::NullableValue<bool>& ListenerSocketOptions::timestampOutgoingData()
+    const
+{
+    return d_timestampOutgoingData;
+}
+
+const bdlb::NullableValue<bool>& ListenerSocketOptions::timestampIncomingData()
+    const
+{
+    return d_timestampIncomingData;
+}
+
 bsl::ostream& ListenerSocketOptions::print(bsl::ostream& stream,
                                            int           level,
                                            int           spacesPerLevel) const
@@ -533,6 +561,8 @@ bsl::ostream& ListenerSocketOptions::print(bsl::ostream& stream,
     printer.printAttribute("lingerTimeout", d_lingerTimeout);
     printer.printAttribute("keepHalfOpen", d_keepHalfOpen);
     printer.printAttribute("metrics", d_metrics);
+    printer.printAttribute("timestampOutgoingData", d_timestampOutgoingData);
+    printer.printAttribute("timestampIncomingData", d_timestampIncomingData);
     printer.printAttribute("loadBalancingOptions", d_loadBalancingOptions);
     printer.end();
     return stream;
@@ -571,6 +601,8 @@ bool operator==(const ListenerSocketOptions& lhs,
            lhs.lingerTimeout() == rhs.lingerTimeout() &&
            lhs.keepHalfOpen() == rhs.keepHalfOpen() &&
            lhs.metrics() == rhs.metrics() &&
+           lhs.timestampOutgoingData() == rhs.timestampOutgoingData() &&
+           lhs.timestampIncomingData() == rhs.timestampIncomingData() &&
            lhs.loadBalancingOptions() == rhs.loadBalancingOptions();
 }
 

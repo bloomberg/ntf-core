@@ -25,5 +25,12 @@ Sender::~Sender()
 {
 }
 
+ntsa::Error Sender::timestampOutgoingData(bool enable)
+{
+    NTCCFG_WARNING_UNUSED(enable);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 }  // close package namespace
 }  // close enterprise namespace

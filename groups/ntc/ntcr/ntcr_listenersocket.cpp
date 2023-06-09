@@ -212,6 +212,12 @@ void ListenerSocket::processSocketError(const ntca::ReactorEvent& event)
     this->privateFail(self, event.error());
 }
 
+void ListenerSocket::processNotifications(
+    const ntsa::NotificationQueue& notifications)
+{
+    NTCCFG_WARNING_UNUSED(notifications);
+}
+
 void ListenerSocket::processAcceptRateTimer(
     const bsl::shared_ptr<ntci::Timer>& timer,
     const ntca::TimerEvent&             event)

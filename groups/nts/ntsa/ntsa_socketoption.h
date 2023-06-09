@@ -60,6 +60,7 @@ class SocketOption
         bsls::ObjectBuffer<bool>         d_bypassRouting;
         bsls::ObjectBuffer<bool>         d_inlineOutOfBandData;
         bsls::ObjectBuffer<bool>         d_timestampIncomingData;
+        bsls::ObjectBuffer<bool>         d_timestampOutgoingData;
     };
 
     ntsa::SocketOptionType::Value d_type;
@@ -201,19 +202,28 @@ class SocketOption
     /// to the modifiable representation.
     bool& makeInlineOutOfBandData();
 
-    /// Select the "timestampIncomingData" representation. Return a
-    /// reference to the modifiable representation.
-    bool& makeTimestampIncomingData();
-
     /// Select the "inlineOutOfBandData" representation initially having the
     /// specified 'value'. Return a reference to the modifiable
     /// representation.
     bool& makeInlineOutOfBandData(bool value);
 
+    /// Select the "timestampIncomingData" representation. Return a
+    /// reference to the modifiable representation.
+    bool& makeTimestampIncomingData();
+
     /// Select the "timestampIncomingData" representation initially having
     /// the specified 'value'. Return a reference to the modifiable
-    /// representation.
+    /// representation
     bool& makeTimestampIncomingData(bool value);
+
+    /// Select the "timestampOutgoingData" representation. Return a reference
+    /// to the modifiable representation.
+    bool& makeTimestampOutgoingData();
+
+    // Select the "timestampOutgoingData" representation initially having the
+    // specified 'value'. Return a reference to the modifiable
+    // representation.
+    bool& makeTimestampOutgoingData(bool value);
 
     /// Return a reference to the modifiable "reuseAddress" representation.
     /// The behavior is undefined unless 'isReuseAddress()' is true.
@@ -283,6 +293,11 @@ class SocketOption
     /// 'isTimestampIncomingData()' is true.
     bool& timestampIncomingData();
 
+    /// Return a reference to the modifiable "timestampOutgoingData"
+    /// representation. The behavior is undefined unless
+    /// 'isTimestampOutOutgoingData()' is true.
+    bool& timestampOutgoingData();
+
     /// Return the non-modifiable "reuseAddress" representation. The
     /// behavior is undefined unless 'isReuseAddress()' is true.
     bool reuseAddress() const;
@@ -346,10 +361,14 @@ class SocketOption
     /// true.
     bool timestampIncomingData() const;
 
-    /// Return the type of the address representation.
+    /// Return the non-modifiable "timestampOutgoingData" representation. The
+    /// behavior is undefined unless 'isTimestampOutgoingData()' is true.
+    bool timestampOutgoingData() const;
+
+    /// Return the type of the option representation.
     enum ntsa::SocketOptionType::Value type() const;
 
-    /// Return true if the address representation is undefined, otherwise
+    /// Return true if the option representation is undefined, otherwise
     /// return false.
     bool isUndefined() const;
 
@@ -412,6 +431,10 @@ class SocketOption
     /// Return true if the "timestampIncomingData" representation is
     /// currently selected, otherwise return false.
     bool isTimestampIncomingData() const;
+
+    /// Return true if the "timestampOutgoingData" representation is
+    /// currently selected, otherwise return false.
+    bool isTimestampOutgoingData() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -591,6 +614,13 @@ bool& SocketOption::timestampIncomingData()
 }
 
 NTSCFG_INLINE
+bool& SocketOption::timestampOutgoingData()
+{
+    BSLS_ASSERT(d_type == ntsa::SocketOptionType::e_TX_TIMESTAMPING);
+    return d_timestampOutgoingData.object();
+}
+
+NTSCFG_INLINE
 bool SocketOption::reuseAddress() const
 {
     BSLS_ASSERT(d_type == ntsa::SocketOptionType::e_REUSE_ADDRESS);
@@ -697,6 +727,13 @@ bool SocketOption::timestampIncomingData() const
 }
 
 NTSCFG_INLINE
+bool SocketOption::timestampOutgoingData() const
+{
+    BSLS_ASSERT(d_type == ntsa::SocketOptionType::e_TX_TIMESTAMPING);
+    return d_timestampOutgoingData.object();
+}
+
+NTSCFG_INLINE
 ntsa::SocketOptionType::Value SocketOption::type() const
 {
     return d_type;
@@ -799,6 +836,12 @@ bool SocketOption::isTimestampIncomingData() const
 }
 
 NTSCFG_INLINE
+bool SocketOption::isTimestampOutgoingData() const
+{
+    return (d_type == ntsa::SocketOptionType::e_TX_TIMESTAMPING);
+}
+
+NTSCFG_INLINE
 bsl::ostream& operator<<(bsl::ostream& stream, const SocketOption& object)
 {
     return object.print(stream, 0, -1);
@@ -871,6 +914,9 @@ void hashAppend(HASH_ALGORITHM& algorithm, const SocketOption& value)
     }
     else if (value.isTimestampIncomingData()) {
         hashAppend(algorithm, value.timestampIncomingData());
+    }
+    else if (value.isTimestampOutgoingData()) {
+        hashAppend(algorithm, value.timestampOutgoingData());
     }
 }
 

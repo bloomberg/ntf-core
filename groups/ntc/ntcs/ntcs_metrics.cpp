@@ -73,7 +73,15 @@ const ntci::MetricMetadata Metrics::STATISTICS[] = {
     NTCI_METRIC_METADATA_SUMMARY(connectionsSynchronized),
     NTCI_METRIC_METADATA_SUMMARY(connectionsUnsynchronizable),
 
-    NTCI_METRIC_METADATA_SUMMARY(bytesAllocated)};
+    NTCI_METRIC_METADATA_SUMMARY(bytesAllocated),
+
+    NTCI_METRIC_METADATA_SUMMARY(txDelayBeforeScheduling),
+    NTCI_METRIC_METADATA_SUMMARY(txDelayInSoftware),
+    NTCI_METRIC_METADATA_SUMMARY(txDelay),
+    NTCI_METRIC_METADATA_SUMMARY(txDelayBeforeAcknowledgement),
+
+    NTCI_METRIC_METADATA_SUMMARY(rxDelayInHardware),
+    NTCI_METRIC_METADATA_SUMMARY(rxDelay)};
 
 Metrics::Metrics(const bslstl::StringRef& prefix,
                  const bslstl::StringRef& objectName,
@@ -97,6 +105,12 @@ Metrics::Metrics(const bslstl::StringRef& prefix,
 , d_numConnectionsSynchronized()
 , d_numConnectionsUnsynchronizable()
 , d_numBytesAllocated()
+, d_txDelayBeforeScheduling()
+, d_txDelayInSoftware()
+, d_txDelay()
+, d_txDelayBeforeAcknowledgement()
+, d_rxDelayInHardware()
+, d_rxDelay()
 , d_prefix(prefix, basicAllocator)
 , d_objectName(objectName, basicAllocator)
 , d_parent_sp()
@@ -127,6 +141,12 @@ Metrics::Metrics(const bslstl::StringRef&              prefix,
 , d_numConnectionsSynchronized()
 , d_numConnectionsUnsynchronizable()
 , d_numBytesAllocated()
+, d_txDelayBeforeScheduling()
+, d_txDelayInSoftware()
+, d_txDelay()
+, d_txDelayBeforeAcknowledgement()
+, d_rxDelayInHardware()
+, d_rxDelay()
 , d_prefix(basicAllocator)
 , d_objectName(basicAllocator)
 , d_parent_sp(parent)
@@ -303,6 +323,67 @@ void Metrics::logBlobBufferAllocation(bsl::size_t blobBufferCapacity)
     }
 }
 
+void Metrics::logTxDelayBeforeScheduling(
+    const bsls::TimeInterval& txDelayBeforeScheduling)
+{
+    d_txDelayBeforeScheduling.update(
+        static_cast<double>(txDelayBeforeScheduling.totalMicroseconds()));
+
+    if (d_parent_sp) {
+        d_parent_sp->logTxDelayBeforeScheduling(txDelayBeforeScheduling);
+    }
+}
+
+void Metrics::logTxDelayInSoftware(const bsls::TimeInterval& txDelayInSoftware)
+{
+    d_txDelayInSoftware.update(
+        static_cast<double>(txDelayInSoftware.totalMicroseconds()));
+
+    if (d_parent_sp) {
+        d_parent_sp->logTxDelayInSoftware(txDelayInSoftware);
+    }
+}
+
+void Metrics::logTxDelay(const bsls::TimeInterval& txDelay)
+{
+    d_txDelay.update(static_cast<double>(txDelay.totalMicroseconds()));
+
+    if (d_parent_sp) {
+        d_parent_sp->logTxDelay(txDelay);
+    }
+}
+
+void Metrics::logTxDelayBeforeAcknowledgement(
+    const bsls::TimeInterval& txDelayBeforeAcknowledgement)
+{
+    d_txDelayBeforeAcknowledgement.update(
+        static_cast<double>(txDelayBeforeAcknowledgement.totalMicroseconds()));
+
+    if (d_parent_sp) {
+        d_parent_sp->logTxDelayBeforeAcknowledgement(
+            txDelayBeforeAcknowledgement);
+    }
+}
+
+void Metrics::logRxDelayInHardware(const bsls::TimeInterval& rxDelayInHardware)
+{
+    d_rxDelayInHardware.update(
+        static_cast<double>(rxDelayInHardware.totalMicroseconds()));
+
+    if (d_parent_sp) {
+        d_parent_sp->logRxDelay(rxDelayInHardware);
+    }
+}
+
+void Metrics::logRxDelay(const bsls::TimeInterval& rxDelay)
+{
+    d_rxDelay.update(static_cast<double>(rxDelay.totalMicroseconds()));
+
+    if (d_parent_sp) {
+        d_parent_sp->logRxDelay(rxDelay);
+    }
+}
+
 void Metrics::getStats(bdld::ManagedDatum* result)
 {
     bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
@@ -342,6 +423,13 @@ void Metrics::getStats(bdld::ManagedDatum* result)
     d_numConnectionsUnsynchronizable.collectSummary(&array, &index);
 
     d_numBytesAllocated.collectSummary(&array, &index);
+
+    d_txDelayBeforeScheduling.collectSummary(&array, &index);
+    d_txDelayInSoftware.collectSummary(&array, &index);
+    d_txDelay.collectSummary(&array, &index);
+    d_txDelayBeforeAcknowledgement.collectSummary(&array, &index);
+    d_rxDelayInHardware.collectSummary(&array, &index);
+    d_rxDelay.collectSummary(&array, &index);
 
     // TODO: Calculate and publish derivative metrics.
     // double avgBytesSentPerEvent = 0;

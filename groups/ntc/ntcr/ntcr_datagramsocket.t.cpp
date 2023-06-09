@@ -23,6 +23,7 @@
 #include <ntcd_reactor.h>
 #include <ntcd_simulation.h>
 #include <ntci_log.h>
+#include <ntcm_monitorableutil.h>
 #include <ntcs_datapool.h>
 #include <ntcs_ratelimiter.h>
 #include <ntcs_user.h>
@@ -50,6 +51,36 @@ using namespace BloombergLP;
 // #define NTCR_DATAGRAM_SOCKET_TEST_DYNAMIC_LOAD_BALANCING true
 
 namespace test {
+
+namespace {
+
+/// Validate that the specified 'metrics' does not contain data for
+/// elements starting from the specified 'base' up to 'base' + the
+/// 'specified 'num' (exclusive) in total.
+void validateNoMetricsAvailable(const bdld::DatumArrayRef& metrics,
+                                int                        base,
+                                int                        num)
+{
+    NTCCFG_TEST_GE(metrics.length(), base + num);
+    for (int i = base; i < base + num; ++i) {
+        NTCCFG_TEST_EQ(metrics[i].type(), bdld::Datum::e_NIL);
+    }
+}
+
+/// Validate that the specified 'metrics' contains data for elements
+/// starting from the specified 'base' up to 'base' + the specified 'num'
+/// (exclusive) in total.
+void validateMetricsAvailable(const bdld::DatumArrayRef& metrics,
+                              int                        base,
+                              int                        num)
+{
+    NTCCFG_TEST_GE(metrics.length(), base + num);
+    for (int i = base; i < base + num; ++i) {
+        NTCCFG_TEST_EQ(metrics[i].type(), bdld::Datum::e_DOUBLE);
+    }
+}
+
+}  // close unnamed namespace
 
 /// Provide a test case execution framework.
 class Framework
@@ -272,6 +303,9 @@ struct Parameters {
     bdlb::NullableValue<bsl::size_t>   d_receiveBufferSize;
     bool                               d_useAsyncCallbacks;
     bool                               d_tolerateDataLoss;
+    bool                               d_timestampIncomingData;
+    bool                               d_timestampOutgoingData;
+    bool                               d_collectMetrics;
 
     Parameters()
     : d_transport(ntsa::Transport::e_UDP_IPV4_DATAGRAM)
@@ -288,6 +322,9 @@ struct Parameters {
     , d_receiveBufferSize()
     , d_useAsyncCallbacks(false)
     , d_tolerateDataLoss(true)
+    , d_timestampIncomingData(false)
+    , d_timestampOutgoingData(false)
+    , d_collectMetrics(false)
     {
     }
 };
@@ -987,6 +1024,10 @@ void DatagramSocketManager::run()
 {
     ntsa::Error error;
 
+    ntca::MonitorableRegistryConfig monitorableRegistryConfig;
+    ntcm::MonitorableUtil::enableMonitorableRegistry(
+        monitorableRegistryConfig);
+
     // Create all the datagram socket pairs.
 
     for (bsl::size_t i = 0; i < d_parameters.d_numSocketPairs; ++i) {
@@ -1004,6 +1045,17 @@ void DatagramSocketManager::run()
             options.setSendGreedily(false);
             options.setReceiveGreedily(false);
             options.setKeepHalfOpen(false);
+            options.setTimestampIncomingData(
+                d_parameters.d_timestampIncomingData);
+            options.setTimestampOutgoingData(
+                d_parameters.d_timestampOutgoingData);
+            options.setMetrics(d_parameters.d_collectMetrics);
+            if (d_parameters.d_timestampIncomingData ||
+                d_parameters.d_timestampOutgoingData)
+            {
+                // Metrics is used to validate timestamps
+                NTCCFG_TEST_TRUE(d_parameters.d_collectMetrics);
+            }
 
             if (!d_parameters.d_sendBufferSize.isNull()) {
                 options.setSendBufferSize(
@@ -1109,6 +1161,176 @@ void DatagramSocketManager::run()
             socket->wait();
         }
     }
+
+    // Validate RX and TX timestamps using metrics. Note that such validation
+    // is currently only performed on Linux, because while the underlying
+    // reactor implementation may supports timestamping the socket API
+    // functions disallow enabling timestamping except on those platforms
+    // known to natively support timestamping.
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    {
+        // If it is required to validate outgoing timestamps mechanism then it
+        // is not enough to wait for all packets to be transferred. It is also
+        // needed to ensure that all notifications with timestamps have been
+        // delivered. At this point there is no good enough mechanism to
+        // provide such synchronization.
+        if (d_parameters.d_timestampOutgoingData) {
+            bslmt::ThreadUtil::microSleep(500 * 1000);
+        }
+
+        bsl::vector<bsl::shared_ptr<ntci::Monitorable> > monitorables;
+        ntcm::MonitorableUtil::loadRegisteredObjects(&monitorables);
+        for (bsl::vector<bsl::shared_ptr<ntci::Monitorable> >::iterator it =
+                 monitorables.begin();
+             it != monitorables.end();
+             ++it)
+        {
+
+
+            bdld::ManagedDatum stats;
+            (*it)->getStats(&stats);
+            const bdld::Datum& d = stats.datum();
+            NTCCFG_TEST_EQ(d.type(), bdld::Datum::e_ARRAY);
+            bdld::DatumArrayRef statsArray = d.theArray();
+
+            const int baseTxDelayBeforeSchedIndex = 90;
+            const int baseTxDelayInSoftwareIndex  = 95;
+            const int baseTxDelayIndex            = 100;
+            const int baseTxDelayBeforeAckIndex   = 105;
+            const int baseRxDelayInHardwareIndex  = 110;
+            const int baseRxDelayIndex            = 115;
+
+            const int countOffset = 0;
+            const int totalOffset = 1;
+            const int minOffset   = 2;
+            const int avgOffset   = 3;
+            const int maxOffset   = 4;
+            const int total       = maxOffset + 1;
+
+            /// due to multithreaded nature of the tests it's hard to predict
+            /// the exact amount of TX timestamps received. The implementation
+            // of ntcr_datagramsocket does not timestamp any outgoing packet
+            /// until the first TX timestamp is received from the reactor
+            const double txTimestampsPercentage = 0.90;
+
+            if (!d_parameters.d_timestampOutgoingData) {
+                validateNoMetricsAvailable(statsArray,
+                                           baseTxDelayBeforeSchedIndex,
+                                           total);
+                validateNoMetricsAvailable(statsArray,
+                                           baseTxDelayInSoftwareIndex,
+                                           total);
+                validateNoMetricsAvailable(statsArray,
+                                           baseTxDelayIndex,
+                                           total);
+                validateNoMetricsAvailable(statsArray,
+                                           baseTxDelayBeforeAckIndex,
+                                           total);
+            }
+            else {
+                validateMetricsAvailable(statsArray,
+                                         baseTxDelayBeforeSchedIndex,
+                                         total);
+                validateMetricsAvailable(statsArray,
+                                         baseTxDelayInSoftwareIndex,
+                                         total);
+                validateMetricsAvailable(statsArray, baseTxDelayIndex, total);
+                validateNoMetricsAvailable(statsArray,
+                                           baseTxDelayBeforeAckIndex,
+                                           total);
+
+                NTCCFG_TEST_GE(
+                    statsArray[baseTxDelayInSoftwareIndex + countOffset]
+                        .theDouble(),
+                    d_parameters.d_numMessages * txTimestampsPercentage);
+                NTCCFG_TEST_GT(
+                    statsArray[baseTxDelayInSoftwareIndex + totalOffset]
+                        .theDouble(),
+                    0);
+                NTCCFG_TEST_GT(
+                    statsArray[baseTxDelayInSoftwareIndex + minOffset]
+                        .theDouble(),
+                    0);
+                NTCCFG_TEST_GT(
+                    statsArray[baseTxDelayInSoftwareIndex + avgOffset]
+                        .theDouble(),
+                    0);
+                NTCCFG_TEST_GT(
+                    statsArray[baseTxDelayInSoftwareIndex + maxOffset]
+                        .theDouble(),
+                    0);
+
+                NTCCFG_TEST_GE(
+                    statsArray[baseTxDelayInSoftwareIndex + countOffset]
+                        .theDouble(),
+                    d_parameters.d_numMessages * txTimestampsPercentage);
+                NTCCFG_TEST_GT(
+                    statsArray[baseTxDelayInSoftwareIndex + totalOffset]
+                        .theDouble(),
+                    0);
+                NTCCFG_TEST_GT(
+                    statsArray[baseTxDelayInSoftwareIndex + minOffset]
+                        .theDouble(),
+                    0);
+                NTCCFG_TEST_GT(
+                    statsArray[baseTxDelayInSoftwareIndex + avgOffset]
+                        .theDouble(),
+                    0);
+                NTCCFG_TEST_GT(
+                    statsArray[baseTxDelayInSoftwareIndex + maxOffset]
+                        .theDouble(),
+                    0);
+
+                NTCCFG_TEST_GE(
+                    statsArray[baseTxDelayIndex + countOffset].theDouble(),
+                    d_parameters.d_numMessages * txTimestampsPercentage);
+                NTCCFG_TEST_GT(
+                    statsArray[baseTxDelayIndex + totalOffset].theDouble(),
+                    0);
+                NTCCFG_TEST_GT(
+                    statsArray[baseTxDelayIndex + minOffset].theDouble(),
+                    0);
+                NTCCFG_TEST_GT(
+                    statsArray[baseTxDelayIndex + avgOffset].theDouble(),
+                    0);
+                NTCCFG_TEST_GT(
+                    statsArray[baseTxDelayIndex + maxOffset].theDouble(),
+                    0);
+            }
+            if (!d_parameters.d_timestampIncomingData) {
+                validateNoMetricsAvailable(statsArray,
+                                           baseRxDelayIndex,
+                                           total);
+                validateNoMetricsAvailable(statsArray,
+                                           baseRxDelayInHardwareIndex,
+                                           total);
+            }
+            else {
+                validateMetricsAvailable(statsArray, baseRxDelayIndex, total);
+                validateNoMetricsAvailable(statsArray,
+                                           baseRxDelayInHardwareIndex,
+                                           total);
+
+                NTCCFG_TEST_EQ(
+                    statsArray[baseRxDelayIndex + countOffset].theDouble(),
+                    d_parameters.d_numMessages);
+                NTCCFG_TEST_GT(
+                    statsArray[baseRxDelayIndex + totalOffset].theDouble(),
+                    0);
+                NTCCFG_TEST_GT(
+                    statsArray[baseRxDelayIndex + minOffset].theDouble(),
+                    0);
+                NTCCFG_TEST_GT(
+                    statsArray[baseRxDelayIndex + avgOffset].theDouble(),
+                    0);
+                NTCCFG_TEST_GT(
+                    statsArray[baseRxDelayIndex + maxOffset].theDouble(),
+                    0);
+            }
+        }
+    }
+#endif
 
     // Close all the datagram sockets.
 
@@ -1488,6 +1710,42 @@ NTCCFG_TEST_CASE(6)
                                          NTCCFG_BIND_PLACEHOLDER_3));
 }
 
+NTCCFG_TEST_CASE(7)
+{
+    // Concern: Incoming timestamps test
+
+    test::Parameters parameters;
+    parameters.d_numTimers             = 0;
+    parameters.d_numSocketPairs        = 1;
+    parameters.d_numMessages           = 10;
+    parameters.d_messageSize           = 32;
+    parameters.d_useAsyncCallbacks     = false;
+    parameters.d_timestampIncomingData = true;
+    parameters.d_collectMetrics        = true;
+
+    test::variation(parameters);
+}
+
+NTCCFG_TEST_CASE(8)
+{
+    // Concern: Outgoing timestamps test
+#if 0
+    // The test is disabled due to its flaky nature
+    test::Parameters parameters;
+    parameters.d_numTimers             = 0;
+    parameters.d_numSocketPairs        = 1;
+    parameters.d_numMessages           = 100;
+    parameters.d_messageSize           = 512;
+    parameters.d_sendBufferSize        = 512;
+    parameters.d_useAsyncCallbacks     = false;
+    parameters.d_timestampOutgoingData = true;
+    parameters.d_collectMetrics        = true;
+    parameters.d_tolerateDataLoss = false;
+
+    test::variation(parameters);
+#endif
+}
+
 NTCCFG_TEST_DRIVER
 {
     NTCCFG_TEST_REGISTER(1);
@@ -1497,5 +1755,7 @@ NTCCFG_TEST_DRIVER
 
     NTCCFG_TEST_REGISTER(5);
     NTCCFG_TEST_REGISTER(6);
+    NTCCFG_TEST_REGISTER(7);
+    NTCCFG_TEST_REGISTER(8);
 }
 NTCCFG_TEST_DRIVER_END;

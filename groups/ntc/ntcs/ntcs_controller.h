@@ -63,6 +63,10 @@ class Controller : public ntci::ReactorSocket
     void processSocketError(const ntca::ReactorEvent& event)
         BSLS_KEYWORD_OVERRIDE;
 
+    /// Process the specified 'notifications' of the socket.
+    void processNotifications(const ntsa::NotificationQueue& notifications)
+        BSLS_KEYWORD_OVERRIDE;
+
     /// Close the socket.
     void close() BSLS_KEYWORD_OVERRIDE;
 

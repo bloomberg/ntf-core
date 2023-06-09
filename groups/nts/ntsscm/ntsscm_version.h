@@ -107,6 +107,11 @@ struct Version {
     /// Return the address of a character string that identifies the version
     /// of the 'nts' package group in use.
     static const char* version();
+
+    /// Load into the specified 'major', 'minor', 'patch', and 'build' the
+    /// version information of the operating system running the current
+    /// process.  Return 0 on success and a non-zero value otherwise.
+    static int systemVersion(int* major, int* minor, int* patch, int* build);
 };
 
 inline const char* Version::version()

@@ -18,11 +18,15 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntsu_socketoptionutil_cpp, "$Id$ $CSID$")
 
+#include <ntscfg_platform.h>
 #include <ntsu_adapterutil.h>
+#include <ntsu_timestamputil.h>
 
 #include <bsls_assert.h>
 #include <bsls_log.h>
 #include <bsls_platform.h>
+#include <bsl_cstdlib.h>
+#include <bsl_cstring.h>
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
 #include <arpa/inet.h>
@@ -44,10 +48,6 @@ BSLS_IDENT_RCSID(ntsu_socketoptionutil_cpp, "$Id$ $CSID$")
 #include <unistd.h>
 #if defined(BSLS_PLATFORM_OS_SOLARIS)
 #include <sys/filio.h>
-#endif
-#if defined(BSLS_PLATFORM_OS_LINUX)
-#include <linux/net_tstamp.h>
-#include <linux/version.h>
 #endif
 #endif
 
@@ -81,10 +81,6 @@ BSLS_IDENT_RCSID(ntsu_socketoptionutil_cpp, "$Id$ $CSID$")
 #undef interface
 #endif
 #pragma comment(lib, "ws2_32")
-#endif
-
-#if defined(BSLS_PLATFORM_OS_LINUX)
-#define TIMESTAMPING_SUPPORTED
 #endif
 
 namespace BloombergLP {
@@ -153,6 +149,11 @@ ntsa::Error SocketOptionUtil::setOption(ntsa::Handle              socket,
         return SocketOptionUtil::setTimestampIncomingData(
             socket,
             option.timestampIncomingData());
+    }
+    else if (option.isTimestampOutgoingData()) {
+        return SocketOptionUtil::setTimestampOutgoingData(
+            socket,
+            option.timestampOutgoingData());
     }
     else {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -430,35 +431,36 @@ ntsa::Error SocketOptionUtil::setTimestampIncomingData(
     NTSCFG_WARNING_UNUSED(socket);
     NTSCFG_WARNING_UNUSED(timestampIncomingData);
 
-#if defined(TIMESTAMPING_SUPPORTED)
-    int       domain    = 0;
-    socklen_t domainlen = sizeof(domain);
-    int rc = getsockopt(socket, SOL_SOCKET, SO_DOMAIN, &domain, &domainlen);
-    if (rc != 0) {
-        return ntsa::Error(errno);
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
+    bool        isLocalSock = false;
+    ntsa::Error error       = isLocal(&isLocalSock, socket);
+    if (error) {
+        return error;
     }
 
-    const bool useSoTimestampingItf = (domain != AF_UNIX);
-    const int  optname =
-        useSoTimestampingItf ? SO_TIMESTAMPING : SO_TIMESTAMPNS;
+    const int optname = (isLocalSock == false)
+                            ? TimestampUtil::e_SO_TIMESTAMPING
+                            : TimestampUtil::e_SO_TIMESTAMPNS;
 
     int optionValue = 0;
     if (timestampIncomingData) {
-        if (useSoTimestampingItf) {
-            optionValue =
-                SOF_TIMESTAMPING_RX_HARDWARE | SOF_TIMESTAMPING_RX_SOFTWARE |
-                SOF_TIMESTAMPING_RAW_HARDWARE | SOF_TIMESTAMPING_SOFTWARE;
+        if (isLocalSock == false) {
+            optionValue = TimestampUtil::e_SOF_TIMESTAMPING_RX_HARDWARE |
+                          TimestampUtil::e_SOF_TIMESTAMPING_RX_SOFTWARE |
+                          TimestampUtil::e_SOF_TIMESTAMPING_RAW_HARDWARE |
+                          TimestampUtil::e_SOF_TIMESTAMPING_SOFTWARE;
         }
         else {
             optionValue = 1;
         }
     }
 
-    rc = setsockopt(socket,
-                    SOL_SOCKET,
-                    optname,
-                    &optionValue,
-                    sizeof(optionValue));
+    int rc = setsockopt(socket,
+                        SOL_SOCKET,
+                        optname,
+                        &optionValue,
+                        sizeof(optionValue));
 
     if (rc != 0) {
         return ntsa::Error(errno);
@@ -617,9 +619,75 @@ ntsa::Error SocketOptionUtil::setInlineOutOfBandData(ntsa::Handle socket,
     return ntsa::Error();
 }
 
+ntsa::Error SocketOptionUtil::setTimestampOutgoingData(ntsa::Handle socket,
+                                                       bool timestampFlag)
+{
+    NTSCFG_WARNING_UNUSED(socket);
+    NTSCFG_WARNING_UNUSED(timestampFlag);
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
+    if (!ntscfg::Platform::supportsTimestamps()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    {  // Unix domain sockets do not support TX timestamping
+        bool        isLocalSock = false;
+        ntsa::Error error       = isLocal(&isLocalSock, socket);
+        if (error) {
+            return error;
+        }
+        if (isLocalSock) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    bool isStreamSock = false;
+    {
+        ntsa::Error error = isStream(&isStreamSock, socket);
+        if (error) {
+            return error;
+        }
+    }
+
+    int optVal = 0;
+
+    if (timestampFlag) {
+        optVal =
+            // timestamp generation
+            TimestampUtil::e_SOF_TIMESTAMPING_TX_SOFTWARE |
+            TimestampUtil::e_SOF_TIMESTAMPING_TX_SCHED |
+            (isStreamSock ? TimestampUtil::e_SOF_TIMESTAMPING_TX_ACK : 0) |
+
+            // timestamp reporting
+            TimestampUtil::e_SOF_TIMESTAMPING_SOFTWARE |
+
+            // timestamp options
+            TimestampUtil::e_SOF_TIMESTAMPING_OPT_ID |
+            TimestampUtil::e_SOF_TIMESTAMPING_OPT_TSONLY;
+    }
+
+    int rc = setsockopt(socket,
+                        SOL_SOCKET,
+                        SO_TIMESTAMPING,
+                        &optVal,
+                        sizeof(optVal));
+
+    if (rc != 0) {
+        return ntsa::Error(errno);
+    }
+
+    return ntsa::Error();
+#else
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+#endif
+}
+
 ntsa::Error SocketOptionUtil::getKeepAlive(bool*        keepAlive,
                                            ntsa::Handle socket)
 {
+    *keepAlive = false;
+
     int       optionValue = 0;
     socklen_t optionSize  = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -640,6 +708,8 @@ ntsa::Error SocketOptionUtil::getKeepAlive(bool*        keepAlive,
 
 ntsa::Error SocketOptionUtil::getNoDelay(bool* noDelay, ntsa::Handle socket)
 {
+    *noDelay = false;
+
     int       optionValue = 0;
     socklen_t optionSize  = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -660,6 +730,8 @@ ntsa::Error SocketOptionUtil::getNoDelay(bool* noDelay, ntsa::Handle socket)
 
 ntsa::Error SocketOptionUtil::getDebug(bool* debugFlag, ntsa::Handle socket)
 {
+    *debugFlag = false;
+
     int       optionValue = 0;
     socklen_t optionSize  = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -681,6 +753,8 @@ ntsa::Error SocketOptionUtil::getDebug(bool* debugFlag, ntsa::Handle socket)
 ntsa::Error SocketOptionUtil::getReuseAddress(bool*        reuseAddress,
                                               ntsa::Handle socket)
 {
+    *reuseAddress = false;
+
     int       optionValue = 0;
     socklen_t optionSize  = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -703,6 +777,9 @@ ntsa::Error SocketOptionUtil::getLinger(bool*               linger,
                                         bsls::TimeInterval* duration,
                                         ntsa::Handle        socket)
 {
+    *linger = false;
+    *duration = bsls::TimeInterval();
+
     struct linger optionValue = {0, 0};
     socklen_t     optionSize  = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -725,6 +802,8 @@ ntsa::Error SocketOptionUtil::getLinger(bool*               linger,
 ntsa::Error SocketOptionUtil::getSendBufferSize(bsl::size_t* size,
                                                 ntsa::Handle socket)
 {
+    *size = 0;
+
     int       optionValue = 0;
     socklen_t optionSize  = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -756,6 +835,8 @@ ntsa::Error SocketOptionUtil::getSendBufferSize(bsl::size_t* size,
 ntsa::Error SocketOptionUtil::getSendBufferLowWatermark(bsl::size_t* size,
                                                         ntsa::Handle socket)
 {
+    *size = 0;
+
     int       optionValue = 0;
     socklen_t optionSize  = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -782,6 +863,8 @@ ntsa::Error SocketOptionUtil::getSendBufferLowWatermark(bsl::size_t* size,
 ntsa::Error SocketOptionUtil::getReceiveBufferSize(bsl::size_t* size,
                                                    ntsa::Handle socket)
 {
+    *size = 0;
+
     int       optionValue = 0;
     socklen_t optionSize  = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -813,6 +896,8 @@ ntsa::Error SocketOptionUtil::getReceiveBufferSize(bsl::size_t* size,
 ntsa::Error SocketOptionUtil::getReceiveBufferLowWatermark(bsl::size_t* size,
                                                            ntsa::Handle socket)
 {
+    *size = 0;
+
     int       optionValue = 0;
     socklen_t optionSize  = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -839,6 +924,8 @@ ntsa::Error SocketOptionUtil::getReceiveBufferLowWatermark(bsl::size_t* size,
 ntsa::Error SocketOptionUtil::getBroadcast(bool*        broadcastFlag,
                                            ntsa::Handle socket)
 {
+    *broadcastFlag = false;
+
     int       optionValue = 0;
     socklen_t optionSize  = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -865,6 +952,8 @@ ntsa::Error SocketOptionUtil::getBroadcast(bool*        broadcastFlag,
 ntsa::Error SocketOptionUtil::getBypassRouting(bool*        bypassFlag,
                                                ntsa::Handle socket)
 {
+    *bypassFlag = false;
+
     int       optionValue = 0;
     socklen_t optionSize  = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -891,6 +980,8 @@ ntsa::Error SocketOptionUtil::getBypassRouting(bool*        bypassFlag,
 ntsa::Error SocketOptionUtil::getInlineOutOfBandData(bool*        inlineFlag,
                                                      ntsa::Handle socket)
 {
+    *inlineFlag = false;
+
     int       optionValue = 0;
     socklen_t optionSize  = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -917,25 +1008,24 @@ ntsa::Error SocketOptionUtil::getInlineOutOfBandData(bool*        inlineFlag,
 ntsa::Error SocketOptionUtil::getTimestampIncomingData(bool* timestampFlag,
                                                        ntsa::Handle socket)
 {
-    NTSCFG_WARNING_UNUSED(timestampFlag);
-    NTSCFG_WARNING_UNUSED(socket);
+    *timestampFlag = false;
 
-#if defined(TIMESTAMPING_SUPPORTED)
-    int       domain    = 0;
-    socklen_t domainlen = sizeof(domain);
-    int rc = getsockopt(socket, SOL_SOCKET, SO_DOMAIN, &domain, &domainlen);
-    if (rc != 0) {
-        return ntsa::Error(errno);
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
+    bool        isLocalSock = false;
+    ntsa::Error error       = isLocal(&isLocalSock, socket);
+    if (error) {
+        return error;
     }
 
-    const bool useSoTimestampingItf = (domain != AF_UNIX);
-    const int  optname =
-        useSoTimestampingItf ? SO_TIMESTAMPING : SO_TIMESTAMPNS;
+    const int optname = (isLocalSock == false)
+                            ? TimestampUtil::e_SO_TIMESTAMPING
+                            : TimestampUtil::e_SO_TIMESTAMPNS;
 
     int       optionValue = 0;
     socklen_t len         = static_cast<socklen_t>(sizeof(optionValue));
 
-    rc = getsockopt(socket, SOL_SOCKET, optname, &optionValue, &len);
+    int rc = getsockopt(socket, SOL_SOCKET, optname, &optionValue, &len);
 
     if (rc != 0) {
         return ntsa::Error(errno);
@@ -950,13 +1040,18 @@ ntsa::Error SocketOptionUtil::getTimestampIncomingData(bool* timestampFlag,
 
     return ntsa::Error();
 #else
+
+    NTSCFG_WARNING_UNUSED(socket);
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+
 #endif
 }
 
 ntsa::Error SocketOptionUtil::getSendBufferRemaining(bsl::size_t* size,
                                                      ntsa::Handle socket)
 {
+    *size = 0;
+
 #if defined(BSLS_PLATFORM_OS_FREEBSD)
 
     int sendBufferCapacityRemaining;
@@ -1060,6 +1155,8 @@ ntsa::Error SocketOptionUtil::getSendBufferRemaining(bsl::size_t* size,
 ntsa::Error SocketOptionUtil::getReceiveBufferAvailable(bsl::size_t* size,
                                                         ntsa::Handle socket)
 {
+    *size = 0;
+
     int value = 0;
 
     int rc = ioctl(socket, FIONREAD, &value);
@@ -1080,6 +1177,8 @@ ntsa::Error SocketOptionUtil::getReceiveBufferAvailable(bsl::size_t* size,
 ntsa::Error SocketOptionUtil::getLastError(ntsa::Error* error,
                                            ntsa::Handle socket)
 {
+    *error = ntsa::Error();
+
     int       optionValue;
     socklen_t optionSize = sizeof(optionValue);
 
@@ -1381,6 +1480,8 @@ ntsa::Error SocketOptionUtil::leaveMulticastGroup(
 
 ntsa::Error SocketOptionUtil::isStream(bool* result, ntsa::Handle socket)
 {
+    *result = false;
+
     int       optionValue;
     socklen_t optionSize = sizeof(optionValue);
 
@@ -1400,6 +1501,8 @@ ntsa::Error SocketOptionUtil::isStream(bool* result, ntsa::Handle socket)
 
 ntsa::Error SocketOptionUtil::isDatagram(bool* result, ntsa::Handle socket)
 {
+    *result = false;
+
     int       optionValue;
     socklen_t optionSize = sizeof(optionValue);
 
@@ -1415,6 +1518,89 @@ ntsa::Error SocketOptionUtil::isDatagram(bool* result, ntsa::Handle socket)
 
     *result = optionValue == SOCK_DGRAM;
     return ntsa::Error();
+}
+
+ntsa::Error SocketOptionUtil::isLocal(bool* result, ntsa::Handle socket)
+{
+#if defined(BSLS_PLATFORM_OS_AIX)
+
+    *result = false;
+
+    int rc;
+
+    sockaddr_storage socketAddress;
+    bsl::memset(&socketAddress, 0, sizeof socketAddress);
+
+    socklen_t socketAddressSize = static_cast<socklen_t>(sizeof socketAddress);
+
+    rc = getsockname(socket,
+                     reinterpret_cast<sockaddr*>(&socketAddress),
+                     &socketAddressSize);
+
+    if (rc != 0) {
+        return ntsa::Error(errno);
+    }
+
+    if (socketAddress.ss_family == AF_UNIX) {
+        *result = true;
+        return ntsa::Error();
+    }
+
+    if (socketAddress.ss_family != AF_UNSPEC) {
+        *result = false;
+        return ntsa::Error();
+    }
+
+    struct peercred_struct credentials;
+    bsl::memset(&credentials, 0, sizeof credentials);
+
+    socklen_t optionSize = static_cast<socklen_t>(sizeof credentials);
+
+    rc = getsockopt(socket,
+                    SOL_SOCKET,
+                    SO_PEERID,
+                    reinterpret_cast<char*>(&credentials),
+                    &optionSize);
+
+    if (rc != 0) {
+        int lastError = errno;
+        if (lastError == ENOPROTOOPT) {
+            *result = false;
+            return ntsa::Error();
+        }
+        else if (lastError == ENOTCONN) {
+            *result = true;
+            return ntsa::Error();
+        }
+        else {
+            *result = false;
+            return ntsa::Error(lastError);
+        }
+    }
+
+    *result = (optionSize > 0);
+    return ntsa::Error();
+
+#else
+
+    *result = false;
+
+    int       optionValue;
+    socklen_t optionSize = sizeof(optionValue);
+
+    int rc = getsockopt(socket,
+                        SOL_SOCKET,
+                        SO_DOMAIN,
+                        reinterpret_cast<char*>(&optionValue),
+                        &optionSize);
+
+    if (rc != 0) {
+        return ntsa::Error(errno);
+    }
+
+    *result = (optionValue == AF_UNIX);
+    return ntsa::Error();
+#endif
 }
 
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
@@ -1661,6 +1847,8 @@ ntsa::Error SocketOptionUtil::setInlineOutOfBandData(ntsa::Handle socket,
 ntsa::Error SocketOptionUtil::getKeepAlive(bool*        keepAlive,
                                            ntsa::Handle socket)
 {
+    *keepAlive = false;
+
     BOOL      optionValue = 0;
     socklen_t optionSize  = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -1681,6 +1869,8 @@ ntsa::Error SocketOptionUtil::getKeepAlive(bool*        keepAlive,
 
 ntsa::Error SocketOptionUtil::getNoDelay(bool* noDelay, ntsa::Handle socket)
 {
+    *noDelay = false;
+
     BOOL      optionValue = 0;
     socklen_t optionSize  = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -1701,6 +1891,8 @@ ntsa::Error SocketOptionUtil::getNoDelay(bool* noDelay, ntsa::Handle socket)
 
 ntsa::Error SocketOptionUtil::getDebug(bool* debugFlag, ntsa::Handle socket)
 {
+    *debugFlag = false;
+
     BOOL      optionValue = 0;
     socklen_t optionSize  = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -1722,6 +1914,8 @@ ntsa::Error SocketOptionUtil::getDebug(bool* debugFlag, ntsa::Handle socket)
 ntsa::Error SocketOptionUtil::getReuseAddress(bool*        reuseAddress,
                                               ntsa::Handle socket)
 {
+    *reuseAddress = false;
+
     BOOL      optionValue = 0;
     socklen_t optionSize  = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -1744,6 +1938,9 @@ ntsa::Error SocketOptionUtil::getLinger(bool*               linger,
                                         bsls::TimeInterval* duration,
                                         ntsa::Handle        socket)
 {
+    *linger = false;
+    *duraction = bsls::TimeInterval();
+
     struct linger optionValue = {};
     socklen_t     optionSize  = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -1766,6 +1963,8 @@ ntsa::Error SocketOptionUtil::getLinger(bool*               linger,
 ntsa::Error SocketOptionUtil::getSendBufferSize(bsl::size_t* size,
                                                 ntsa::Handle socket)
 {
+    *size = 0;
+
     int       optionValue = 0;
     socklen_t optionSize  = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -1792,6 +1991,8 @@ ntsa::Error SocketOptionUtil::getSendBufferSize(bsl::size_t* size,
 ntsa::Error SocketOptionUtil::getSendBufferLowWatermark(bsl::size_t* size,
                                                         ntsa::Handle socket)
 {
+    *size = 0;
+
     int       optionValue = 0;
     socklen_t optionSize  = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -1818,6 +2019,8 @@ ntsa::Error SocketOptionUtil::getSendBufferLowWatermark(bsl::size_t* size,
 ntsa::Error SocketOptionUtil::getReceiveBufferSize(bsl::size_t* size,
                                                    ntsa::Handle socket)
 {
+    *size = 0;
+
     int       optionValue = 0;
     socklen_t optionSize  = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -1844,6 +2047,8 @@ ntsa::Error SocketOptionUtil::getReceiveBufferSize(bsl::size_t* size,
 ntsa::Error SocketOptionUtil::getReceiveBufferLowWatermark(bsl::size_t* size,
                                                            ntsa::Handle socket)
 {
+    *size = 0;
+
     int       optionValue = 0;
     socklen_t optionSize  = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -1870,6 +2075,8 @@ ntsa::Error SocketOptionUtil::getReceiveBufferLowWatermark(bsl::size_t* size,
 ntsa::Error SocketOptionUtil::getBroadcast(bool*        broadcastFlag,
                                            ntsa::Handle socket)
 {
+    *broadcastFlag = false;
+
     BOOL      optionValue = 0;
     socklen_t optionSize  = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -1896,6 +2103,8 @@ ntsa::Error SocketOptionUtil::getBroadcast(bool*        broadcastFlag,
 ntsa::Error SocketOptionUtil::getBypassRouting(bool*        bypassFlag,
                                                ntsa::Handle socket)
 {
+    *bypassFlag = false;
+
     BOOL      optionValue = 0;
     socklen_t optionSize  = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -1922,6 +2131,8 @@ ntsa::Error SocketOptionUtil::getBypassRouting(bool*        bypassFlag,
 ntsa::Error SocketOptionUtil::getInlineOutOfBandData(bool*        inlineFlag,
                                                      ntsa::Handle socket)
 {
+    *inlineFlag = false;
+
     BOOL      optionValue = 0;
     socklen_t optionSize  = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -1948,8 +2159,12 @@ ntsa::Error SocketOptionUtil::getInlineOutOfBandData(bool*        inlineFlag,
 ntsa::Error SocketOptionUtil::getTimestampIncomingData(bool* timestampFlag,
                                                        ntsa::Handle socket)
 {
+    *timestampFlag = false;
+
     NTSCFG_WARNING_UNUSED(timestampFlag);
     NTSCFG_WARNING_UNUSED(socket);
+
+    *timestampFlag = false;
 
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
@@ -1964,6 +2179,8 @@ ntsa::Error SocketOptionUtil::getSendBufferRemaining(bsl::size_t* size,
 ntsa::Error SocketOptionUtil::getReceiveBufferAvailable(bsl::size_t* size,
                                                         ntsa::Handle socket)
 {
+    *size = 0;
+
     u_long value = 0;
     int    rc    = ioctlsocket(socket, FIONREAD, &value);
 
@@ -1979,6 +2196,8 @@ ntsa::Error SocketOptionUtil::getReceiveBufferAvailable(bsl::size_t* size,
 ntsa::Error SocketOptionUtil::getLastError(ntsa::Error* error,
                                            ntsa::Handle socket)
 {
+    *error = ntsa::Error();
+
     int optionValue = 0;
     int optionSize  = sizeof(optionValue);
 
@@ -2280,6 +2499,8 @@ ntsa::Error SocketOptionUtil::leaveMulticastGroup(
 
 ntsa::Error SocketOptionUtil::isStream(bool* result, ntsa::Handle socket)
 {
+    *result = false;
+
     DWORD     optionValue;
     socklen_t optionSize = sizeof(optionValue);
 
@@ -2290,7 +2511,7 @@ ntsa::Error SocketOptionUtil::isStream(bool* result, ntsa::Handle socket)
                         &optionSize);
 
     if (rc != 0) {
-        return ntsa::Error(errno);
+        return ntsa::Error(WSAGetLastError());
     }
 
     *result = optionValue == SOCK_STREAM;
@@ -2299,6 +2520,8 @@ ntsa::Error SocketOptionUtil::isStream(bool* result, ntsa::Handle socket)
 
 ntsa::Error SocketOptionUtil::isDatagram(bool* result, ntsa::Handle socket)
 {
+    *result = false;
+
     DWORD     optionValue;
     socklen_t optionSize = sizeof(optionValue);
 
@@ -2309,10 +2532,63 @@ ntsa::Error SocketOptionUtil::isDatagram(bool* result, ntsa::Handle socket)
                         &optionSize);
 
     if (rc != 0) {
-        return ntsa::Error(errno);
+        return ntsa::Error(WSAGetLastError());
     }
 
     *result = optionValue == SOCK_DGRAM;
+    return ntsa::Error();
+}
+
+ntsa::Error SocketOptionUtil::isLocal(bool* result, ntsa::Handle socket)
+{
+    *result = false;
+
+    int rc;
+
+    sockaddr_storage socketAddress;
+    bsl::memset(&socketAddress, 0, sizeof socketAddress);
+
+    socklen_t socketAddressSize = static_cast<socklen_t>(sizeof socketAddress);
+
+    rc = getsockname(socket,
+                     reinterpret_cast<sockaddr*>(&socketAddress),
+                     &socketAddressSize);
+
+    if (rc != 0) {
+        return ntsa::Error(errno);
+    }
+
+    if (socketAddress.ss_family == AF_UNIX) {
+        *result = true;
+        return ntsa::Error();
+    }
+
+    if (socketAddress.ss_family != AF_UNSPEC) {
+        *result = false;
+        return ntsa::Error();
+    }
+
+    DWORD     optionValue;
+    socklen_t optionSize = sizeof(optionValue);
+
+    int rc = getsockopt(socket,
+                        SOL_SOCKET,
+                        SO_MAXDG,
+                        reinterpret_cast<char*>(&optionValue),
+                        &optionSize);
+
+    if (rc != 0) {
+        DWORD lastError = WSAGetLastError();
+        if (lastError == WSAENOPROTOOPT) {
+            *result = false;
+            return ntsa::Error();
+        }
+        else {
+            return ntsa::Error(lastError);
+        }
+    }
+
+    *result = true;
     return ntsa::Error();
 }
 

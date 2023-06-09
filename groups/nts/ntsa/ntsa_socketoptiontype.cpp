@@ -42,6 +42,7 @@ int SocketOptionType::fromInt(SocketOptionType::Value* result, int number)
     case SocketOptionType::e_BYPASS_ROUTING:
     case SocketOptionType::e_INLINE_OUT_OF_BAND_DATA:
     case SocketOptionType::e_RX_TIMESTAMPING:
+    case SocketOptionType::e_TX_TIMESTAMPING:
         *result = static_cast<SocketOptionType::Value>(number);
         return 0;
     default:
@@ -117,6 +118,10 @@ int SocketOptionType::fromString(SocketOptionType::Value* result,
         *result = e_RX_TIMESTAMPING;
         return 0;
     }
+    if (bdlb::String::areEqualCaseless(string, "TX_TIMESTAMPING")) {
+        *result = e_TX_TIMESTAMPING;
+        return 0;
+    }
 
     return -1;
 }
@@ -171,6 +176,9 @@ const char* SocketOptionType::toString(SocketOptionType::Value value)
     } break;
     case e_RX_TIMESTAMPING: {
         return "RX_TIMESTAMPING";
+    } break;
+    case e_TX_TIMESTAMPING: {
+        return "TX_TIMESTAMPING";
     } break;
     }
 

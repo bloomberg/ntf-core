@@ -543,6 +543,10 @@ class Reactor : public ntci::Reactor,
     bool supportsTrigger(ntca::ReactorEventTrigger::Value trigger) const
         BSLS_KEYWORD_OVERRIDE;
 
+    /// Always return true indicating that the reactor supports notifications
+    /// of the socket.
+    bool supportsNotifications() const BSLS_KEYWORD_OVERRIDE;
+
     /// Return the strand that guarantees sequential, non-current execution
     /// of arbitrary functors on the unspecified threads processing events
     /// for this object.

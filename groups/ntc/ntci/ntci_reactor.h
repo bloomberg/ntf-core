@@ -38,6 +38,7 @@ BSLS_IDENT("$Id: $")
 #include <ntcscm_version.h>
 #include <ntsa_endpoint.h>
 #include <ntsa_error.h>
+#include <ntsa_notificationqueue.h>
 #include <ntsi_descriptor.h>
 #include <bdlbb_blob.h>
 #include <bdls_filesystemutil.h>
@@ -58,6 +59,12 @@ namespace ntci {
 /// becomes readable, writable, or encounters an error.
 typedef ntci::Callback<void(const ntca::ReactorEvent& event)>
     ReactorEventCallback;
+
+/// Define a type alias for a callback invoked on an optional
+/// strand with an optional cancelable authorization mechanism when a socket
+/// needs to process a notification.
+typedef ntci::Callback<void(const ntsa::NotificationQueue& notifications)>
+    ReactorNotificationCallback;
 
 /// Define a type alias for function invoked when a reactor
 /// event occurs.
@@ -449,6 +456,18 @@ class Reactor : public ntci::Driver, public ntci::ReactorPool
         const ntca::ReactorEventOptions&  options,
         const ntci::ReactorEventCallback& callback) = 0;
 
+    /// Start monitoring for notifications of the specified 'socket'. Return
+    /// the error.
+    virtual ntsa::Error showNotifications(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket);
+
+    /// Start monitoring for notifications of the specified socket 'handle'.
+    /// Invoke the specified 'callback' when the socket has a notification.
+    /// Return the error.
+    virtual ntsa::Error showNotifications(
+        ntsa::Handle                             handle,
+        const ntci::ReactorNotificationCallback& callback);
+
     /// Stop monitoring the specified 'socket' for the specified
     /// 'eventType'. Return the error.
     ntsa::Error hide(const bsl::shared_ptr<ntci::ReactorSocket>& socket,
@@ -475,6 +494,15 @@ class Reactor : public ntci::Driver, public ntci::ReactorPool
     /// Stop monitoring for writability of the specified socket
     /// 'handle'. Return the error.
     virtual ntsa::Error hideWritable(ntsa::Handle handle) = 0;
+
+    /// Stop monitoring for notifications of the specified 'socket'. Return the
+    /// error.
+    virtual ntsa::Error hideNotifications(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket);
+
+    /// Stop monitoring for notifications of the specified socket 'handle'.
+    /// Return the error.
+    virtual ntsa::Error hideNotifications(ntsa::Handle handle);
 
     /// Stop monitoring for errors of the specified 'socket'. Return the
     /// error.
@@ -585,6 +613,10 @@ class Reactor : public ntci::Driver, public ntci::ReactorPool
     /// specified 'trigger', otherwise return false.
     virtual bool supportsTrigger(
         ntca::ReactorEventTrigger::Value trigger) const = 0;
+
+    /// Return true if the reactor supports notifications of the socket,
+    /// otherwise return false
+    virtual bool supportsNotifications() const;
 };
 
 NTCCFG_INLINE
@@ -699,6 +731,12 @@ ntsa::Error Reactor::hide(ntsa::Handle                  handle,
     else {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
+}
+
+NTCCFG_INLINE
+bool Reactor::supportsNotifications() const
+{
+    return false;
 }
 
 }  // end namespace ntci

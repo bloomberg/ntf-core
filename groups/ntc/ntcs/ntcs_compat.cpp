@@ -306,6 +306,16 @@ void Compat::convert(ntca::StreamSocketOptions*         result,
         result->setMetrics(options.metrics().value());
     }
 
+    if (!options.timestampOutgoingData().isNull()) {
+        result->setTimestampOutgoingData(
+            options.timestampOutgoingData().value());
+    }
+
+    if (!options.timestampIncomingData().isNull()) {
+        result->setTimestampIncomingData(
+            options.timestampIncomingData().value());
+    }
+
     result->setLoadBalancingOptions(options.loadBalancingOptions());
 }
 
@@ -420,6 +430,16 @@ void Compat::convert(ntca::ListenerSocketOptions*     result,
 
     if (!options.metrics().isNull()) {
         result->setMetrics(options.metrics().value());
+    }
+
+    if (!options.timestampOutgoingData().isNull()) {
+        result->setTimestampOutgoingData(
+            options.timestampOutgoingData().value());
+    }
+
+    if (!options.timestampIncomingData().isNull()) {
+        result->setTimestampIncomingData(
+            options.timestampIncomingData().value());
     }
 
     result->setLoadBalancingOptions(options.loadBalancingOptions());
@@ -1268,6 +1288,38 @@ ntsa::Error Compat::configure(
         }
     }
 
+    if (!options.timestampOutgoingData().isNull()) {
+        ntsa::SocketOption option;
+        option.makeTimestampOutgoingData(
+            options.timestampOutgoingData().value());
+
+        error = socket->setOption(option);
+        if (error) {
+            BSLS_LOG_DEBUG("Failed to set socket option: "
+                           "timestamp outcoming data: %s",
+                           error.text().c_str());
+            if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
+                return error;
+            }
+        }
+    }
+
+    if (!options.timestampIncomingData().isNull()) {
+        ntsa::SocketOption option;
+        option.makeTimestampIncomingData(
+            options.timestampIncomingData().value());
+
+        error = socket->setOption(option);
+        if (error) {
+            BSLS_LOG_DEBUG("Failed to set socket option: "
+                           "timestamp incoming data: %s",
+                           error.text().c_str());
+            if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
+                return error;
+            }
+        }
+    }
+
     return ntsa::Error();
 }
 
@@ -1745,6 +1797,22 @@ ntsa::Error Compat::configure(
         if (error) {
             BSLS_LOG_DEBUG("Failed to set socket option: "
                            "linger: %s",
+                           error.text().c_str());
+            if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
+                return error;
+            }
+        }
+    }
+
+    if (!options.timestampIncomingData().isNull()) {
+        ntsa::SocketOption option;
+        option.makeTimestampIncomingData(
+            options.timestampIncomingData().value());
+
+        error = socket->setOption(option);
+        if (error) {
+            BSLS_LOG_DEBUG("Failed to set socket option: "
+                           "timestamp incoming data: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
                 return error;

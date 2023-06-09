@@ -43,6 +43,7 @@ BSLS_IDENT("$Id: $")
 #include <ntcs_shutdowncontext.h>
 #include <ntcs_shutdownstate.h>
 #include <ntcscm_version.h>
+#include <ntcu_timestampcorrelator.h>
 #include <ntsa_buffer.h>
 #include <ntsa_endpoint.h>
 #include <ntsa_error.h>
@@ -51,6 +52,7 @@ BSLS_IDENT("$Id: $")
 #include <ntsi_channel.h>
 #include <ntsi_descriptor.h>
 #include <bdlbb_blob.h>
+#include <bdlma_aligningallocator.h>
 #include <bdls_filesystemutil.h>
 #include <bslmt_mutex.h>
 #include <bsls_atomic.h>
@@ -110,6 +112,7 @@ class StreamSocket : public ntci::StreamSocket,
     bsl::shared_ptr<ntci::Timer>               d_sendRateTimer_sp;
     bool                                       d_sendGreedily;
     bsl::uint64_t                              d_sendCount;
+    bsl::size_t                                d_totalBytesSent;
     bsl::shared_ptr<ntsa::Data>                d_sendData_sp;
     ntsa::ReceiveOptions                       d_receiveOptions;
     ntcq::ReceiveQueue                         d_receiveQueue;
@@ -133,8 +136,13 @@ class StreamSocket : public ntci::StreamSocket,
     bsl::shared_ptr<ntci::Timer>               d_upgradeTimer_sp;
     bool                                       d_upgradeInProgress;
     const bool                                 d_oneShot;
+    bool                                       d_timestampOutgoingData;
     ntca::StreamSocketOptions                  d_options;
-    bslma::Allocator*                          d_allocator_p;
+
+    ntcu::TimestampCorrelator d_timestampCorrelator;
+    bsl::uint32_t             d_totalBytesSentTimestamped;
+
+    bslma::Allocator* d_allocator_p;
 
   private:
     StreamSocket(const StreamSocket&) BSLS_KEYWORD_DELETED;
@@ -151,6 +159,10 @@ class StreamSocket : public ntci::StreamSocket,
 
     /// Process the specified 'error' for the socket.
     void processSocketError(const ntca::ReactorEvent& event)
+        BSLS_KEYWORD_OVERRIDE;
+
+    /// Process the specified 'notifications' of the socket.
+    void processNotifications(const ntsa::NotificationQueue& notifications)
         BSLS_KEYWORD_OVERRIDE;
 
     /// Fail the connection operation.
@@ -475,6 +487,22 @@ class StreamSocket : public ntci::StreamSocket,
     /// Retry connecting to the remote endpoint. Return the error.
     ntsa::Error privateRetryConnectToEndpoint(
         const bsl::shared_ptr<StreamSocket>& self);
+
+    /// Request the OS to enable transmis timestamps if the specified 'enable'
+    /// is true. Return true in case of success. Return false otherwise.
+    ntsa::Error privateTimestampOutgoingData(bool enable);
+
+    /// Start timestamping outgoing data. Prepare buffers and request the OS to
+    /// enable transmit timestamps. Return no error in case of success,
+    /// return error otherwise.
+    ntsa::Error startTimestampOutgoingData();
+
+    /// Stop timestamping outgoing data. Return no error in case of success,
+    /// return error otherwise.
+    ntsa::Error stopTimestampOutgoingData();
+
+    /// Process notification containing the specified 'timestamp'.
+    void processTimestampNotification(const ntsa::Timestamp& timestamp);
 
   public:
     /// Create a new, initially uninitilialized stream socket. Optionally
@@ -1214,6 +1242,13 @@ class StreamSocket : public ntci::StreamSocket,
     /// buffer allocated from the outgoing blob buffer factory.
     void createOutgoingBlobBuffer(bdlbb::BlobBuffer* blobBuffer)
         BSLS_KEYWORD_OVERRIDE;
+
+    /// Request the implementation to start timestamping outgoing data if the
+    /// specified 'enable' flag is true. Otherwise, request the implementation
+    /// to stop timestamping outgoing data. Return true if operation was
+    /// successful (though it does not guarantee that transmit timestamps would
+    /// be generated). Otherwise return false.
+    ntsa::Error timestampOutgoingData(bool enable) BSLS_KEYWORD_OVERRIDE;
 
     /// Return the descriptor handle.
     ntsa::Handle handle() const BSLS_KEYWORD_OVERRIDE;
