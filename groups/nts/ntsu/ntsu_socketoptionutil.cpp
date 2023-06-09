@@ -1581,6 +1581,39 @@ ntsa::Error SocketOptionUtil::isLocal(bool* result, ntsa::Handle socket)
     *result = (optionSize > 0);
     return ntsa::Error();
 
+#elif defined(BSLS_PLATFORM_OS_DARWIN)
+
+    *result = false;
+
+    int rc;
+
+    sockaddr_storage socketAddress;
+    bsl::memset(&socketAddress, 0, sizeof socketAddress);
+
+    socklen_t socketAddressSize = static_cast<socklen_t>(sizeof socketAddress);
+
+    rc = getsockname(socket,
+                     reinterpret_cast<sockaddr*>(&socketAddress),
+                     &socketAddressSize);
+
+    if (rc != 0) {
+        return ntsa::Error(errno);
+    }
+
+    if (socketAddress.ss_family == AF_UNIX) {
+        *result = true;
+        return ntsa::Error();
+    }
+
+    if (socketAddress.ss_family == AF_INET ||
+        socketAddress.ss_family == AF_INET6)
+    {
+        *result = false;
+        return ntsa::Error();
+    }
+
+    return ntsa::Error(ntsa::Error::e_INVALID);
+
 #else
 
     *result = false;
@@ -1600,6 +1633,7 @@ ntsa::Error SocketOptionUtil::isLocal(bool* result, ntsa::Handle socket)
 
     *result = (optionValue == AF_UNIX);
     return ntsa::Error();
+
 #endif
 }
 
