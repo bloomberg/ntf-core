@@ -3138,7 +3138,7 @@ ntsa::Error Session::receive(ntsa::ReceiveContext*       context,
             {
                 bsl::shared_ptr<ntcd::Session> sourceSession =
                     packet->sourceSession().lock();
-                if (sourceSession) {
+                if (sourceSession && packet->id().has_value()) {
                     ntsa::Timestamp t;
                     t.setType(ntsa::TimestampType::e_ACKNOWLEDGED);
                     t.setTime(bdlt::CurrentTime::now());
@@ -3278,7 +3278,7 @@ ntsa::Error Session::receive(ntsa::ReceiveContext*       context,
             {
                 bsl::shared_ptr<ntcd::Session> sourceSession =
                     packet->sourceSession().lock();
-                if (sourceSession) {
+                if (sourceSession && packet->id().has_value()) {
                     ntsa::Timestamp t;
                     t.setType(ntsa::TimestampType::e_ACKNOWLEDGED);
                     t.setTime(bdlt::CurrentTime::now());

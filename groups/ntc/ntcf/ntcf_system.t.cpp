@@ -7271,8 +7271,8 @@ void concernConnectEndpoint3(const bsl::shared_ptr<ntci::Interface>& interface,
                              bslma::Allocator*                       allocator)
 {
     // Concern: Connect to endpoint periodically failes due to either timeouts
-    // or icmp messages leading to e_UNREACHABLE error until all attempts are
-    //exhausted
+    // or ICMP messages leading to e_UNREACHABLE error until all attempts are
+    // exhausted.
     // Testing: e_CONNECTION_TIMEOUT, e_UNREACHABLE, connection attempt
     // exhaustion
 
@@ -7302,7 +7302,8 @@ void concernConnectEndpoint3(const bsl::shared_ptr<ntci::Interface>& interface,
     // Connect the stream socket to the listener socket.
 
     // 240.0.0.1 belongs to class E ipv4 address space and it is assumed that
-    // it will never be assigned
+    // it will never be assigned.
+
     ntsa::Endpoint endpoint(
         ntsa::IpEndpoint(ntsa::Ipv4Address("240.0.0.1"), 1024));
 
@@ -7590,7 +7591,9 @@ void concernConnectEndpoint5(const bsl::shared_ptr<ntci::Interface>& interface,
             connectResult.event().context().error() ==
                 ntsa::Error(ntsa::Error::e_CONNECTION_TIMEOUT) ||
             connectResult.event().context().error() ==
-                ntsa::Error(ntsa::Error::e_CONNECTION_DEAD))
+                ntsa::Error(ntsa::Error::e_CONNECTION_DEAD) ||
+            connectResult.event().context().error() ==
+                 ntsa::Error(ntsa::Error::e_UNREACHABLE))
         {
             ++numErrors;
             NTCCFG_TEST_LE(numErrors, k_MAX_CONNECTION_ATTEMPTS);
@@ -7632,7 +7635,9 @@ void concernConnectEndpoint5(const bsl::shared_ptr<ntci::Interface>& interface,
             connectResult.event().context().error() ==
                 ntsa::Error(ntsa::Error::e_CONNECTION_TIMEOUT) ||
             connectResult.event().context().error() ==
-                ntsa::Error(ntsa::Error::e_CONNECTION_DEAD))
+                ntsa::Error(ntsa::Error::e_CONNECTION_DEAD) ||
+            connectResult.event().context().error() ==
+                 ntsa::Error(ntsa::Error::e_UNREACHABLE))
         {
             ++numErrors;
             NTCCFG_TEST_LE(numErrors, k_MAX_CONNECTION_ATTEMPTS);
@@ -7875,7 +7880,9 @@ void concernConnectEndpoint7(const bsl::shared_ptr<ntci::Interface>& interface,
             connectResult.event().context().error() ==
                 ntsa::Error(ntsa::Error::e_CONNECTION_TIMEOUT) ||
             connectResult.event().context().error() ==
-                ntsa::Error(ntsa::Error::e_CONNECTION_DEAD))
+                ntsa::Error(ntsa::Error::e_CONNECTION_DEAD) ||
+            connectResult.event().context().error() ==
+                 ntsa::Error(ntsa::Error::e_UNREACHABLE))
         {
             ++numErrors;
             NTCCFG_TEST_LE(numErrors, k_MAX_CONNECTION_ATTEMPTS);
