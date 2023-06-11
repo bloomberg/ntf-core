@@ -849,11 +849,7 @@ ntsa::Error Devpoll::removeDetached(const bsl::shared_ptr<ntcs::RegistryEntry>& 
                 //TODO: smth went wrong, need to detach the socket still
             }
             entry->announceDetached(); //it is safe as this socket will never be polled as it is removed from registry
-
-            BSLS_ASSERT(entry->d_detachRequired.load());
-            entry->d_detachRequired.store(false);
-            BSLS_ASSERT(entry->d_processCounter.load() == 0);
-
+            BSLS_ASSERT(entry->processCounter() == 0);
             entry->clear();
         }
         else {
@@ -1969,10 +1965,10 @@ void Devpoll::run(ntci::Waiter waiter)
             for(DetachList::const_iterator it = d_detachList.cbegin(); it != d_detachList.cend(); ++it)
             {
                 ntcs::RegistryEntry& entry = **it;
-                if (entry.d_processCounter.load() == 0) {
-                    bool prev = entry.d_detachRequired.testAndSwap(true, false);
-                    if (prev) { // none other thread is doing anything on the descriptor, I can schedule detachment
+                if (entry.processCounter() == 0) {
+                    if (entry.requestDetachmentAnnouncement) { // none other thread is doing anything on the descriptor, I can schedule detachment
                         entry.announceDetached();
+                        entry.clear();
                     }
                 }
             }
@@ -2149,24 +2145,10 @@ void Devpoll::run(ntci::Waiter waiter)
                     }
                 }
 
-                unsigned int prev = entry->d_processCounter.load();
-                while(true) {
-                    unsigned int current = entry->d_processCounter.testAndSwap(prev, prev - 1);
-                    if (prev == current) {
-                        break;
-                    }
-                    prev = current;
-                }
-                if (prev == 1) { //this tread decreased it till 0
-                    if (entry->d_detachRequired) {
-                        bool prev =
-                            entry->d_detachRequired.testAndSwap(true,
-                                                                false);
-                        if (prev == true) {
+                if ((entry->decrementProcessCounter() == 1) && (entry->requestDetachmentAnnouncement()))
+                { //this tread decreased it till 0
                             entry->announceDetached();
                             entry->clear();
-                        }
-                    }
                 }
 
 

@@ -70,7 +70,6 @@ class RegistryEntry
     bsl::shared_ptr<ntci::Strand>        d_unknown_sp;
     bsl::shared_ptr<void>                d_external_sp;
     bsls::AtomicBool                     d_active;
-  public: //TODO:  temporary
     bsls::AtomicUint                     d_processCounter;
     bsls::AtomicBool                     d_detachRequired;
     ntci::SocketDetachedCallback         d_detachCallback;
@@ -218,7 +217,16 @@ class RegistryEntry
     bool announceNotifications(
         const ntsa::NotificationQueue& notificationQueue);
 
+    /// Announce that the socket has been detached and clear detachCallback
     void announceDetached();
+
+    /// Atomically check that detachment is required and if it is true then
+    /// set it to false and return true. Otherwise return false
+    bool askForDetachmentAnnouncementPermission();
+
+    /// Set the flag indicating that detachment is required to true and save
+    /// the specified 'callback'
+    void setDetachmentRequired(const ntci::SocketDetachedCallback& callback);
 
     /// Close the registry entry but do not clear it nor deactive it.
     void close();
@@ -266,6 +274,12 @@ class RegistryEntry
     /// from the registry entry catalog and detached from its reactor socket
     /// context.
     bool active() const;
+
+    /// Return number of processes
+    unsigned int processCounter() const;
+
+    /// Atomically decrement process counter and return its previous value
+    unsigned int decrementProcessCounter();
 };
 
 /// @internal @brief
@@ -826,6 +840,20 @@ bool RegistryEntry::announceNotifications(
     }
 
     return process;
+
+bool RegistryEntry::askForDetachmentAnnouncementPermission()
+{
+    return d_detachRequired.testAndSwap(true, false);
+}
+
+NTCCFG_INLINE
+void RegistryEntry::setDetachmentRequired(const ntci::SocketDetachedCallback& callback)
+{
+    BSLS_ASSERT(!d_detachRequired.load());
+    BSLS_ASSERT(!d_detachCallback);
+    // order is important
+    d_detachCallback = callback;
+    d_detachRequired.store(true);
 }
 
 NTCCFG_INLINE
@@ -938,6 +966,27 @@ NTCCFG_INLINE
 bool RegistryEntry::active() const
 {
     return d_active;
+}
+
+NTCCFG_INLINE
+unsigned int RegistryEntry::processCounter() const
+{
+    return d_processCounter.load();
+}
+
+NTCCFG_INLINE
+unsigned int RegistryEntry::decrementProcessCounter()
+{
+    unsigned int current = d_processCounter.load();
+    while (true) {
+        unsigned int prev =
+            d_processCounter.testAndSwap(current, current - 1);
+        if (prev == current) {
+            break;
+        }
+        current = prev;
+    }
+    return current;
 }
 
 NTCCFG_INLINE
@@ -1111,8 +1160,7 @@ bsl::shared_ptr<ntcs::RegistryEntry> RegistryEntryCatalog::removeAndGetReadyToDe
                 BSLS_ASSERT_OPT(d_size > 0);
                 --d_size;
 
-                entry_sp->d_detachCallback = callback;
-                entry_sp->d_detachRequired.store(true);
+                entry_sp->setDetachmentRequired(callback);
                 ntsa::Error error = functor(entry_sp);
                 if (error) {
                     return bsl::shared_ptr<ntcs::RegistryEntry>();
@@ -1150,8 +1198,7 @@ bsl::shared_ptr<ntcs::RegistryEntry> RegistryEntryCatalog::removeAndGetReadyToDe
                 BSLS_ASSERT_OPT(d_size > 0);
                 --d_size;
 
-                entry_sp->d_detachCallback = callback;
-                entry_sp->d_detachRequired.store(true);
+                entry_sp->setDetachmentRequired(callback);
                 ntsa::Error error = functor(entry_sp);
                 if (error) {
                     return bsl::shared_ptr<ntcs::RegistryEntry>();

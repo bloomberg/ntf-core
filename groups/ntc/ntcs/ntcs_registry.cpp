@@ -153,6 +153,7 @@ void RegistryEntry::announceDetached()
     if (d_detachCallback) {
         d_detachCallback.execute(d_unknown_sp);
     }
+    d_detachCallback.reset();
 }
 
 RegistryEntryCatalog::RegistryEntryCatalog(bslma::Allocator* basicAllocator)

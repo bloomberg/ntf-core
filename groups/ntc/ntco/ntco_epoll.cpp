@@ -2050,14 +2050,13 @@ ntsa::Error Epoll::detachSocket(
             return error;
         }
 
-        if (entry->d_processCounter.load() == 0) {
-            bool prev = entry->d_detachRequired.testAndSwap(true, false);
-            if (prev == true) {
+        if ((entry->processCounter() == 0) &&
+            (entry->askForDetachmentAnnouncementPermission()))
+        {
                 // so this thread marked detached required as false
                 entry->announceDetached();
                 entry->clear();
                 Epoll::interruptOne();
-            }
         }
         return ntsa::Error();
     };
@@ -2104,14 +2103,13 @@ ntsa::Error Epoll::detachSocket(ntsa::Handle                        handle,
             return error;
         }
 
-        if (entry->d_processCounter.load() == 0) {
-            bool prev = entry->d_detachRequired.testAndSwap(true, false);
-            if (prev == true) {
-                // so this thread marked detached required as false
-                entry->announceDetached();
-                entry->clear();
-                Epoll::interruptOne();
-            }
+        if ((entry->processCounter() == 0) &&
+            (entry->askForDetachmentAnnouncementPermission()))
+        {
+            // so this thread marked detached required as false
+            entry->announceDetached();
+            entry->clear();
+            Epoll::interruptOne();
         }
         return ntsa::Error();
     };
@@ -2414,27 +2412,10 @@ void Epoll::run(ntci::Waiter waiter)
                     }
                 }
 
-                {
-                    unsigned int prev = entry->d_processCounter.load();
-                    while (true) {
-                        unsigned int current =
-                            entry->d_processCounter.testAndSwap(prev,
-                                                                prev - 1);
-                        if (prev == current) {
-                            break;
-                        }
-                        prev = current;
-                    }
-                    if (prev == 1) {
-                        if (entry->d_detachRequired) {
-                            bool prev =
-                                entry->d_detachRequired.testAndSwap(true,
-                                                                    false);
-                            if (prev == true) {
-                                entry->announceDetached();
-                                entry->clear();
-                            }
-                        }
+                if (entry->decrementProcessCounter() == 1) {
+                    if (entry->askForDetachmentAnnouncementPermission()) {
+                        entry->announceDetached();
+                        entry->clear();
                     }
                 }
             }
