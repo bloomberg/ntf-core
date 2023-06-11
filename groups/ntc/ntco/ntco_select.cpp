@@ -2074,7 +2074,7 @@ void Select::run(ntci::Waiter waiter)
             }
         }
 
-        
+
 
         if (d_config.maxThreads().value() > 1) {
             d_generationSemaphore.post();

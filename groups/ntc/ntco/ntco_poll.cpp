@@ -181,10 +181,13 @@ class Poll : public ntci::Reactor,
     /// This typedef defines a mutex lock guard.
     typedef ntci::LockGuard LockGuard;
 
+    typedef bsl::vector<bsl::shared_ptr<ntcs::RegistryEntry> > DetachList;
+
     ntccfg::Object                        d_object;
     mutable Mutex                         d_generationMutex;
     bslmt::Semaphore                      d_generationSemaphore;
     bsls::AtomicUint64                    d_generation;
+    DetachList                            d_detachList;
     ntcs::RegistryEntryCatalog            d_registry;
     ntcs::Chronology                      d_chronology;
     bsl::shared_ptr<ntci::User>           d_user_sp;
@@ -232,6 +235,8 @@ class Poll : public ntci::Reactor,
 
     /// Remove the specified 'handle' from the device.
     ntsa::Error remove(ntsa::Handle handle);
+
+    ntsa::Error removeDetached(const bsl::shared_ptr<ntcs::RegistryEntry>& entry);
 
     /// Link the specified 'entry' into the specified 'descriptorList'.
     void link(const bsl::shared_ptr<ntcs::RegistryEntry>& entry,
@@ -409,8 +414,16 @@ class Poll : public ntci::Reactor,
     ntsa::Error detachSocket(const bsl::shared_ptr<ntci::ReactorSocket>&
                                  socket) BSLS_KEYWORD_OVERRIDE;
 
+    ntsa::Error detachSocket(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+        const ntci::SocketDetachedCallback& callback) BSLS_KEYWORD_OVERRIDE;
+
     /// Stop monitoring the specified socket 'handle'. Return the error.
     ntsa::Error detachSocket(ntsa::Handle handle) BSLS_KEYWORD_OVERRIDE;
+
+    ntsa::Error detachSocket(ntsa::Handle                        handle,
+                             const ntci::SocketDetachedCallback& callback)
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Close all monitored sockets and timers.
     ntsa::Error closeAll() BSLS_KEYWORD_OVERRIDE;
@@ -770,6 +783,28 @@ ntsa::Error Poll::remove(ntsa::Handle handle)
     return ntsa::Error();
 }
 
+NTCCFG_INLINE
+ntsa::Error Poll::removeDetached(const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
+{
+    ntsa::Handle handle = entry->handle();
+    NTCCFG_WARNING_UNUSED(handle);
+
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(handle);
+
+    NTCO_POLL_LOG_REMOVE(handle);
+
+    ++d_generation;
+
+    {
+        LockGuard lock(&d_generationMutex);
+        d_detachList.push_back(entry);
+    }
+
+    return ntsa::Error();
+}
+
 void Poll::link(const bsl::shared_ptr<ntcs::RegistryEntry>& entry,
                 DescriptorList*                             descriptorList)
 {
@@ -882,6 +917,7 @@ Poll::Poll(const ntca::ReactorConfig&         configuration,
 , d_generationMutex()
 , d_generationSemaphore()
 , d_generation(1)
+, d_detachList(basicAllocator)
 , d_registry(basicAllocator)
 , d_chronology(this, basicAllocator)
 , d_user_sp(user)
@@ -1856,6 +1892,28 @@ ntsa::Error Poll::detachSocket(
     }
 }
 
+ntsa::Error Poll::detachSocket(
+    const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+    const ntci::SocketDetachedCallback & callback)
+{
+    ntsa::Error error;
+
+    auto f = [this](const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
+    {
+        ntsa::Error error;
+        error = this->removeDetached(entry);
+        if (error) {
+            return error;
+        }
+        Poll::interruptOne();
+        return error;
+    };
+
+    bsl::shared_ptr<ntcs::RegistryEntry> entry = d_registry.removeAndGetReadyToDetach(socket, callback, f);
+
+    return error;
+}
+
 ntsa::Error Poll::detachSocket(ntsa::Handle handle)
 {
     ntsa::Error error;
@@ -1877,6 +1935,28 @@ ntsa::Error Poll::detachSocket(ntsa::Handle handle)
     else {
         return ntsa::Error();
     }
+}
+
+ntsa::Error Poll::detachSocket(
+    ntsa::Handle handle,
+    const ntci::SocketDetachedCallback & callback)
+{
+    ntsa::Error error;
+
+    auto f = [this](const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
+    {
+        ntsa::Error error;
+        error = this->removeDetached(entry);
+        if (error) {
+            return error;
+        }
+        Poll::interruptOne();
+        return error;
+    };
+
+    bsl::shared_ptr<ntcs::RegistryEntry> entry = d_registry.removeAndGetReadyToDetach(handle, callback, f);
+
+    return error;
 }
 
 ntsa::Error Poll::closeAll()
@@ -2017,6 +2097,20 @@ void Poll::run(ntci::Waiter waiter)
             }
         }
 
+        {
+            LockGuard lock(&d_generationMutex);
+            for(DetachList::const_iterator it = d_detachList.cbegin(); it != d_detachList.cend(); ++it)
+            {
+                ntcs::RegistryEntry& entry = **it;
+                if (entry.processCounter() == 0) {
+                    if (entry.askForDetachmentAnnouncementPermission()) { // none other thread is doing anything on the descriptor, I can schedule detachment
+                        entry.announceDetached();
+                        entry.clear();
+                    }
+                }
+            }
+        }
+
         if (d_config.maxThreads().value() > 1) {
             d_generationSemaphore.post();
         }
@@ -2030,6 +2124,7 @@ void Poll::run(ntci::Waiter waiter)
             bsl::size_t numReadable = 0;
             bsl::size_t numWritable = 0;
             bsl::size_t numErrors   = 0;
+            bsl::size_t numDetachments = 0;
 
             for (DescriptorList::const_iterator it =
                      result->d_descriptorList.begin();
@@ -2054,7 +2149,7 @@ void Poll::run(ntci::Waiter waiter)
                 NTCO_POLL_LOG_EVENTS(e.fd, e);
 
                 bsl::shared_ptr<ntcs::RegistryEntry> entry;
-                if (!d_registry.lookup(&entry, e.fd)) {
+                if (!d_registry.lookupAndMarkProcessingOngoing(&entry, e.fd)) {
                     continue;
                 }
 
@@ -2174,12 +2269,20 @@ void Poll::run(ntci::Waiter waiter)
                         }
                     }
                 }
+
+                if (entry->decrementProcessCounter() == 1) {
+                    if (entry->askForDetachmentAnnouncementPermission()) {
+                        entry->announceDetached();
+                        entry->clear();
+                        ++numDetachments;
+                    }
+                }
             }
 
             BSLS_ASSERT(numResultsRemaining == 0);
 
             if (NTCCFG_UNLIKELY(numReadable == 0 && numWritable == 0 &&
-                                numErrors == 0))
+                                numErrors == 0 && numDetachments == 0))
             {
                 NTCS_METRICS_UPDATE_SPURIOUS_WAKEUP();
                 bslmt::ThreadUtil::yield();
