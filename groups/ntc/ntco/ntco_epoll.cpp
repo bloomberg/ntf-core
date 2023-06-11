@@ -2030,13 +2030,8 @@ ntsa::Error Epoll::hideNotifications(ntsa::Handle handle)
     }
     else {
         return ntsa::Error(ntsa::Error::e_INVALID);
-
-struct FT {
-
-    void operator()() const {};
-
-};
-
+    }
+}
 
 ntsa::Error Epoll::detachSocket(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket,
@@ -2271,6 +2266,7 @@ void Epoll::run(ntci::Waiter waiter)
             bsl::size_t numWritable = 0;
             bsl::size_t numErrors   = 0;
             bsl::size_t numTimers   = 0;
+            bsl::size_t numDetachments = 0;
 
             for (int i = 0; i < numResults; ++i) {
                 ::epoll_event e = results[i];
@@ -2416,12 +2412,13 @@ void Epoll::run(ntci::Waiter waiter)
                     if (entry->askForDetachmentAnnouncementPermission()) {
                         entry->announceDetached();
                         entry->clear();
+                        ++numDetachments;
                     }
                 }
             }
 
             const bsl::size_t numTotal =
-                numReadable + numWritable + numErrors + numTimers;
+                numReadable + numWritable + numErrors + numTimers + numDetachments;
 
             if (NTCCFG_UNLIKELY(numTotal == 0)) {
                 NTCS_METRICS_UPDATE_SPURIOUS_WAKEUP();

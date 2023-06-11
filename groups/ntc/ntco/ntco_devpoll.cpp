@@ -1966,7 +1966,7 @@ void Devpoll::run(ntci::Waiter waiter)
             {
                 ntcs::RegistryEntry& entry = **it;
                 if (entry.processCounter() == 0) {
-                    if (entry.requestDetachmentAnnouncement) { // none other thread is doing anything on the descriptor, I can schedule detachment
+                    if (entry.askForDetachmentAnnouncementPermission()) { // none other thread is doing anything on the descriptor, I can schedule detachment
                         entry.announceDetached();
                         entry.clear();
                     }

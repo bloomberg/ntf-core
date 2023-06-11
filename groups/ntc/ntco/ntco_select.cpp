@@ -191,6 +191,8 @@ class Select : public ntci::Reactor,
     /// This typedef defines a mutex lock guard.
     typedef ntci::LockGuard LockGuard;
 
+    typedef bsl::vector<bsl::shared_ptr<ntcs::RegistryEntry> > DetachList;
+
     ntccfg::Object                        d_object;
     mutable Mutex                         d_generationMutex;
     bslmt::Semaphore                      d_generationSemaphore;
@@ -199,6 +201,7 @@ class Select : public ntci::Reactor,
     fd_set                                d_writable;
     fd_set                                d_erroring;
     ntsa::Handle                          d_maxHandle;
+    DetachList                            d_detachList;
     ntcs::RegistryEntryCatalog            d_registry;
     ntcs::Chronology                      d_chronology;
     bsl::shared_ptr<ntci::User>           d_user_sp;
@@ -242,6 +245,8 @@ class Select : public ntci::Reactor,
 
     /// Remove the specified 'handle' from the device.
     ntsa::Error remove(ntsa::Handle handle);
+
+    ntsa::Error removeDetached(const bsl::shared_ptr<ntcs::RegistryEntry>& entry);
 
     /// Reinitialize the control mechanism and add it to the polled set.
     void reinitializeControl();
@@ -394,8 +399,16 @@ class Select : public ntci::Reactor,
     ntsa::Error detachSocket(const bsl::shared_ptr<ntci::ReactorSocket>&
                                  socket) BSLS_KEYWORD_OVERRIDE;
 
+    ntsa::Error detachSocket(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+        const ntci::SocketDetachedCallback& callback) BSLS_KEYWORD_OVERRIDE;
+
     /// Stop monitoring the specified socket 'handle'. Return the error.
     ntsa::Error detachSocket(ntsa::Handle handle) BSLS_KEYWORD_OVERRIDE;
+
+    ntsa::Error detachSocket(ntsa::Handle                        handle,
+                             const ntci::SocketDetachedCallback& callback)
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Close all monitored sockets and timers.
     ntsa::Error closeAll() BSLS_KEYWORD_OVERRIDE;
@@ -813,6 +826,43 @@ ntsa::Error Select::remove(ntsa::Handle handle)
     return ntsa::Error();
 }
 
+NTCCFG_INLINE
+ntsa::Error Select::removeDetached(const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
+{
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Handle handle = entry->handle();
+
+    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(handle);
+
+    NTCO_SELECT_LOG_REMOVE(handle);
+
+    LockGuard lock(&d_generationMutex);
+
+    FD_CLR(handle, &d_readable);
+    FD_CLR(handle, &d_writable);
+    FD_CLR(handle, &d_erroring);
+
+    if (handle >= d_maxHandle) {
+        while (d_maxHandle != 0) {
+            if (FD_ISSET(d_maxHandle, &d_readable) ||
+                FD_ISSET(d_maxHandle, &d_writable))
+            {
+                break;
+            }
+
+            --d_maxHandle;
+        }
+    }
+
+    d_detachList.push_back(entry);
+
+    ++d_generation;
+
+    return ntsa::Error();
+}
+
+
 void Select::reinitializeControl()
 {
     if (d_controller_sp) {
@@ -916,6 +966,7 @@ Select::Select(const ntca::ReactorConfig&         configuration,
 , d_writable()
 , d_erroring()
 , d_maxHandle(0)
+, d_detachList(basicAllocator)
 , d_registry(basicAllocator)
 , d_chronology(this, basicAllocator)
 , d_user_sp(user)
@@ -1755,6 +1806,28 @@ ntsa::Error Select::detachSocket(
     }
 }
 
+ntsa::Error Select::detachSocket(
+    const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+    const ntci::SocketDetachedCallback& callback)
+{
+    ntsa::Error error;
+
+    auto f = [this](const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
+    {
+        ntsa::Error error;
+        error = this->removeDetached(entry);
+        if (error) {
+            return error;
+        }
+        Select::interruptOne();
+    };
+
+    bsl::shared_ptr<ntcs::RegistryEntry> entry = d_registry.removeAndGetReadyToDetach(socket, callback, f);
+
+    return ntsa::Error();
+
+}
+
 ntsa::Error Select::detachSocket(ntsa::Handle handle)
 {
     ntsa::Error error;
@@ -1776,6 +1849,28 @@ ntsa::Error Select::detachSocket(ntsa::Handle handle)
     else {
         return ntsa::Error();
     }
+}
+
+ntsa::Error Select::detachSocket(
+    ntsa::Handle handle,
+    const ntci::SocketDetachedCallback& callback)
+{
+    ntsa::Error error;
+
+    auto f = [this](const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
+    {
+        ntsa::Error error;
+        error = this->removeDetached(entry);
+        if (error) {
+            return error;
+        }
+        Select::interruptOne();
+    };
+
+    bsl::shared_ptr<ntcs::RegistryEntry> entry = d_registry.removeAndGetReadyToDetach(handle, callback, f);
+
+    return ntsa::Error();
+
 }
 
 ntsa::Error Select::closeAll()
@@ -1886,84 +1981,100 @@ void Select::run(ntci::Waiter waiter)
 
         int numResults = rc;
 
-        if (rc > 0 && d_config.oneShot().value()) {
+        {
             LockGuard lock(&d_generationMutex);
 
-            int numResultsRemaining = numResults;
+            if (rc > 0 && d_config.oneShot().value()) {
+                int numResultsRemaining = numResults;
 
-            for (bsl::size_t i = 0; i < maxDescriptor; ++i) {
-                if (numResultsRemaining == 0) {
-                    break;
+                for (bsl::size_t i = 0; i < maxDescriptor; ++i) {
+                    if (numResultsRemaining == 0) {
+                        break;
+                    }
+
+                    ntsa::Handle descriptorHandle =
+                        static_cast<ntsa::Handle>(i);
+
+                    if (descriptorHandle == d_controllerDescriptorHandle) {
+                        if (FD_ISSET(descriptorHandle, &result->d_erroring)) {
+                            BSLS_ASSERT(numResultsRemaining > 0);
+                            --numResultsRemaining;
+                        }
+
+                        if (FD_ISSET(descriptorHandle, &result->d_readable)) {
+                            BSLS_ASSERT(numResultsRemaining > 0);
+                            --numResultsRemaining;
+                        }
+
+                        if (FD_ISSET(descriptorHandle, &result->d_writable)) {
+                            BSLS_ASSERT(numResultsRemaining > 0);
+                            --numResultsRemaining;
+                        }
+                    }
+                    else {
+                        if (FD_ISSET(descriptorHandle, &result->d_erroring)) {
+                            if (FD_ISSET(descriptorHandle, &d_erroring)) {
+                                FD_CLR(descriptorHandle, &d_erroring);
+                            }
+                            else {
+                                FD_CLR(descriptorHandle, &result->d_erroring);
+
+                                BSLS_ASSERT(numResults > 0);
+                                --numResults;
+                            }
+
+                            BSLS_ASSERT(numResultsRemaining > 0);
+                            --numResultsRemaining;
+                        }
+
+                        if (FD_ISSET(descriptorHandle, &result->d_readable)) {
+                            if (FD_ISSET(descriptorHandle, &d_readable)) {
+                                FD_CLR(descriptorHandle, &d_readable);
+                            }
+                            else {
+                                FD_CLR(descriptorHandle, &result->d_readable);
+
+                                BSLS_ASSERT(numResults > 0);
+                                --numResults;
+                            }
+
+                            BSLS_ASSERT(numResultsRemaining > 0);
+                            --numResultsRemaining;
+                        }
+
+                        if (FD_ISSET(descriptorHandle, &result->d_writable)) {
+                            if (FD_ISSET(descriptorHandle, &d_writable)) {
+                                FD_CLR(descriptorHandle, &d_writable);
+                            }
+                            else {
+                                FD_CLR(descriptorHandle, &result->d_writable);
+
+                                BSLS_ASSERT(numResults > 0);
+                                --numResults;
+                            }
+
+                            BSLS_ASSERT(numResultsRemaining > 0);
+                            --numResultsRemaining;
+                        }
+                    }
                 }
 
-                ntsa::Handle descriptorHandle = static_cast<ntsa::Handle>(i);
+                BSLS_ASSERT(numResultsRemaining == 0);
+            }
 
-                if (descriptorHandle == d_controllerDescriptorHandle) {
-                    if (FD_ISSET(descriptorHandle, &result->d_erroring)) {
-                        BSLS_ASSERT(numResultsRemaining > 0);
-                        --numResultsRemaining;
-                    }
-
-                    if (FD_ISSET(descriptorHandle, &result->d_readable)) {
-                        BSLS_ASSERT(numResultsRemaining > 0);
-                        --numResultsRemaining;
-                    }
-
-                    if (FD_ISSET(descriptorHandle, &result->d_writable)) {
-                        BSLS_ASSERT(numResultsRemaining > 0);
-                        --numResultsRemaining;
-                    }
-                }
-                else {
-                    if (FD_ISSET(descriptorHandle, &result->d_erroring)) {
-                        if (FD_ISSET(descriptorHandle, &d_erroring)) {
-                            FD_CLR(descriptorHandle, &d_erroring);
-                        }
-                        else {
-                            FD_CLR(descriptorHandle, &result->d_erroring);
-
-                            BSLS_ASSERT(numResults > 0);
-                            --numResults;
-                        }
-
-                        BSLS_ASSERT(numResultsRemaining > 0);
-                        --numResultsRemaining;
-                    }
-
-                    if (FD_ISSET(descriptorHandle, &result->d_readable)) {
-                        if (FD_ISSET(descriptorHandle, &d_readable)) {
-                            FD_CLR(descriptorHandle, &d_readable);
-                        }
-                        else {
-                            FD_CLR(descriptorHandle, &result->d_readable);
-
-                            BSLS_ASSERT(numResults > 0);
-                            --numResults;
-                        }
-
-                        BSLS_ASSERT(numResultsRemaining > 0);
-                        --numResultsRemaining;
-                    }
-
-                    if (FD_ISSET(descriptorHandle, &result->d_writable)) {
-                        if (FD_ISSET(descriptorHandle, &d_writable)) {
-                            FD_CLR(descriptorHandle, &d_writable);
-                        }
-                        else {
-                            FD_CLR(descriptorHandle, &result->d_writable);
-
-                            BSLS_ASSERT(numResults > 0);
-                            --numResults;
-                        }
-
-                        BSLS_ASSERT(numResultsRemaining > 0);
-                        --numResultsRemaining;
+            for(DetachList::const_iterator it = d_detachList.cbegin(); it != d_detachList.cend(); ++it)
+            {
+                ntcs::RegistryEntry& entry = **it;
+                if (entry.processCounter() == 0) {
+                    if (entry.askForDetachmentAnnouncementPermission()) { // none other thread is doing anything on the descriptor, I can schedule detachment
+                        entry.announceDetached();
+                        entry.clear();
                     }
                 }
             }
-
-            BSLS_ASSERT(numResultsRemaining == 0);
         }
+
+        
 
         if (d_config.maxThreads().value() > 1) {
             d_generationSemaphore.post();
@@ -1977,6 +2088,7 @@ void Select::run(ntci::Waiter waiter)
             bsl::size_t numReadable = 0;
             bsl::size_t numWritable = 0;
             bsl::size_t numErrors   = 0;
+            bsl::size_t numDetachments = 0;
 
             for (bsl::size_t i = 0; i < maxDescriptor; ++i) {
                 if (numResultsRemaining == 0) {
@@ -2022,7 +2134,7 @@ void Select::run(ntci::Waiter waiter)
                                        isError);
 
                 bsl::shared_ptr<ntcs::RegistryEntry> entry;
-                if (!d_registry.lookup(&entry, descriptorHandle)) {
+                if (!d_registry.lookupAndMarkProcessingOngoing(&entry, descriptorHandle)) {
                     continue;
                 }
 
@@ -2114,12 +2226,21 @@ void Select::run(ntci::Waiter waiter)
                         }
                     }
                 }
+
+                if (entry->decrementProcessCounter() == 1) {
+                    if (entry->askForDetachmentAnnouncementPermission()) {
+                        entry->announceDetached();
+                        entry->clear();
+                        ++numDetachments;
+                    }
+                }
+
             }
 
             BSLS_ASSERT(numResultsRemaining == 0);
 
             if (NTCCFG_UNLIKELY(numReadable == 0 && numWritable == 0 &&
-                                numErrors == 0))
+                                numErrors == 0 && numDetachments == 0))
             {
                 NTCS_METRICS_UPDATE_SPURIOUS_WAKEUP();
                 NTCO_SELECT_LOG_SPURIOUS_WAKEUP();

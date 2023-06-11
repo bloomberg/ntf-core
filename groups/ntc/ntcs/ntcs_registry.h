@@ -840,7 +840,9 @@ bool RegistryEntry::announceNotifications(
     }
 
     return process;
+}
 
+NTCCFG_INLINE
 bool RegistryEntry::askForDetachmentAnnouncementPermission()
 {
     return d_detachRequired.testAndSwap(true, false);
