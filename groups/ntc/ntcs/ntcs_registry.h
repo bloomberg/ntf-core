@@ -299,8 +299,6 @@ class RegistryEntryCatalog
     /// handle.
     typedef bsl::vector<bsl::shared_ptr<ntcs::RegistryEntry> > Vector;
 
-    typedef bsl::function<ntsa::Error (const bsl::shared_ptr<ntcs::RegistryEntry>&)> EntryFunctor;
-
     /// This typedef defines a mutex.
     typedef ntci::Mutex Mutex;
 
@@ -325,6 +323,8 @@ class RegistryEntryCatalog
     /// Defines a type alias for a function invoked for each registry entry.
     typedef NTCCFG_FUNCTION(const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
         ForEachCallback;
+
+    typedef bsl::function<ntsa::Error (const bsl::shared_ptr<ntcs::RegistryEntry>&)> EntryFunctor;
 
     /// Create a new registry entry catalog for sockets that by default
     /// operate as level triggered. Optionally specify a 'basicAllocator'

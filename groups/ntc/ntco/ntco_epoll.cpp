@@ -216,28 +216,29 @@ class Epoll : public ntci::Reactor,
     /// This typedef defines a mutex lock guard.
     typedef ntci::LockGuard LockGuard;
 
-    ntccfg::Object                        d_object;
-    int                                   d_epoll;
-    int                                   d_timer;
-    bsls::AtomicBool                      d_timerPending;
-    ntcs::RegistryEntryCatalog            d_registry;
-    ntcs::Chronology                      d_chronology;
-    bsl::shared_ptr<ntci::User>           d_user_sp;
-    bsl::shared_ptr<ntci::DataPool>       d_dataPool_sp;
-    bsl::shared_ptr<ntci::Resolver>       d_resolver_sp;
-    bsl::shared_ptr<ntci::Reservation>    d_connectionLimiter_sp;
-    bsl::shared_ptr<ntci::ReactorMetrics> d_metrics_sp;
-    bsl::shared_ptr<ntcs::Controller>     d_controller_sp;
-    ntsa::Handle                          d_controllerDescriptorHandle;
-    mutable Mutex                         d_waiterSetMutex;
-    WaiterSet                             d_waiterSet;
-    bslmt::ThreadUtil::Handle             d_threadHandle;
-    bsl::size_t                           d_threadIndex;
-    bsls::AtomicUint64                    d_threadId;
-    bsls::AtomicUint64                    d_load;
-    bsls::AtomicBool                      d_run;
-    ntca::ReactorConfig                   d_config;
-    bslma::Allocator*                     d_allocator_p;
+    ntccfg::Object                           d_object;
+    int                                      d_epoll;
+    int                                      d_timer;
+    bsls::AtomicBool                         d_timerPending;
+    ntcs::RegistryEntryCatalog::EntryFunctor d_detachFunctor;
+    ntcs::RegistryEntryCatalog               d_registry;
+    ntcs::Chronology                         d_chronology;
+    bsl::shared_ptr<ntci::User>              d_user_sp;
+    bsl::shared_ptr<ntci::DataPool>          d_dataPool_sp;
+    bsl::shared_ptr<ntci::Resolver>          d_resolver_sp;
+    bsl::shared_ptr<ntci::Reservation>       d_connectionLimiter_sp;
+    bsl::shared_ptr<ntci::ReactorMetrics>    d_metrics_sp;
+    bsl::shared_ptr<ntcs::Controller>        d_controller_sp;
+    ntsa::Handle                             d_controllerDescriptorHandle;
+    mutable Mutex                            d_waiterSetMutex;
+    WaiterSet                                d_waiterSet;
+    bslmt::ThreadUtil::Handle                d_threadHandle;
+    bsl::size_t                              d_threadIndex;
+    bsls::AtomicUint64                       d_threadId;
+    bsls::AtomicUint64                       d_load;
+    bsls::AtomicBool                         d_run;
+    ntca::ReactorConfig                      d_config;
+    bslma::Allocator*                        d_allocator_p;
 
   private:
     Epoll(const Epoll&) BSLS_KEYWORD_DELETED;
@@ -260,6 +261,9 @@ class Epoll : public ntci::Reactor,
 
     /// Remove the specified 'handle' from the device.
     ntsa::Error remove(ntsa::Handle handle);
+
+    ntsa::Error removeDetached(
+        const bsl::shared_ptr<ntcs::RegistryEntry>& entry);
 
     /// Reinitialize the control mechanism and add it to the polled set.
     void reinitializeControl();
@@ -876,6 +880,47 @@ ntsa::Error Epoll::remove(ntsa::Handle handle)
     }
 }
 
+NTCCFG_INLINE
+ntsa::Error Epoll::removeDetached(
+    const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
+{
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Handle handle = entry->handle();
+
+    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(handle);
+
+    ::epoll_event e;
+
+    e.data.fd = handle;
+    e.events  = 0;
+
+    int rc = ::epoll_ctl(d_epoll, EPOLL_CTL_DEL, handle, &e);
+    if (rc == 0) {
+        NTCO_EPOLL_LOG_REMOVE(handle);
+
+        if ((entry->processCounter() == 0) &&
+            (entry->askForDetachmentAnnouncementPermission()))
+        {
+            // so this thread marked detached required as false
+            entry->announceDetached();
+            entry->clear();
+            Epoll::interruptOne();
+        }
+
+        return ntsa::Error();
+    }
+    else if (errno != ENOENT) {
+        ntsa::Error error(errno);
+        NTCO_EPOLL_LOG_REMOVE_FAILURE(handle, error);
+        return error;
+    }
+    else {
+        // TODO: NTCO_EPOLL_LOG_REMOVE_IGNORED(handle);
+        return ntsa::Error();
+    }
+}
+
 void Epoll::reinitializeControl()
 {
     if (d_controller_sp) {
@@ -1026,6 +1071,11 @@ Epoll::Epoll(const ntca::ReactorConfig&         configuration,
 , d_epoll(-1)
 , d_timer(-1)
 , d_timerPending(false)
+#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
+, d_detachFunctor([this](const auto& entry){ return this->removeDetached(entry); })
+#else
+, d_detachFunctor(NTCCFG_BIND(&Epoll::removeDetached, this, NTCCFG_BIND_PLACEHOLDER_1);)
+#endif
 , d_registry(basicAllocator)
 , d_chronology(this, basicAllocator)
 , d_user_sp(user)
@@ -2039,25 +2089,8 @@ ntsa::Error Epoll::detachSocket(
 {
     ntsa::Error error;
 
-    auto functor = [this](const bsl::shared_ptr<ntcs::RegistryEntry>& entry) {
-        ntsa::Error error = this->remove(entry->handle());
-        if (error) {
-            return error;
-        }
-
-        if ((entry->processCounter() == 0) &&
-            (entry->askForDetachmentAnnouncementPermission()))
-        {
-                // so this thread marked detached required as false
-                entry->announceDetached();
-                entry->clear();
-                Epoll::interruptOne();
-        }
-        return ntsa::Error();
-    };
-
     bsl::shared_ptr<ntcs::RegistryEntry> entry =
-        d_registry.removeAndGetReadyToDetach(socket, callback, functor);
+        d_registry.removeAndGetReadyToDetach(socket, callback, d_detachFunctor);
 
     if (entry) {
         return ntsa::Error();
@@ -2092,25 +2125,8 @@ ntsa::Error Epoll::detachSocket(ntsa::Handle                        handle,
 {
     ntsa::Error error;
 
-    auto functor = [this](const bsl::shared_ptr<ntcs::RegistryEntry>& entry) {
-        ntsa::Error error = this->remove(entry->handle());
-        if (error) {
-            return error;
-        }
-
-        if ((entry->processCounter() == 0) &&
-            (entry->askForDetachmentAnnouncementPermission()))
-        {
-            // so this thread marked detached required as false
-            entry->announceDetached();
-            entry->clear();
-            Epoll::interruptOne();
-        }
-        return ntsa::Error();
-    };
-
     bsl::shared_ptr<ntcs::RegistryEntry> entry =
-        d_registry.removeAndGetReadyToDetach(handle, callback, functor);
+        d_registry.removeAndGetReadyToDetach(handle, callback, d_detachFunctor);
 
     if (entry) {
         return ntsa::Error();
@@ -2262,10 +2278,10 @@ void Epoll::run(ntci::Waiter waiter)
 
             const int numResults = rc;
 
-            bsl::size_t numReadable = 0;
-            bsl::size_t numWritable = 0;
-            bsl::size_t numErrors   = 0;
-            bsl::size_t numTimers   = 0;
+            bsl::size_t numReadable    = 0;
+            bsl::size_t numWritable    = 0;
+            bsl::size_t numErrors      = 0;
+            bsl::size_t numTimers      = 0;
             bsl::size_t numDetachments = 0;
 
             for (int i = 0; i < numResults; ++i) {
@@ -2417,8 +2433,9 @@ void Epoll::run(ntci::Waiter waiter)
                 }
             }
 
-            const bsl::size_t numTotal =
-                numReadable + numWritable + numErrors + numTimers + numDetachments;
+            const bsl::size_t numTotal = numReadable + numWritable +
+                                         numErrors + numTimers +
+                                         numDetachments;
 
             if (NTCCFG_UNLIKELY(numTotal == 0)) {
                 NTCS_METRICS_UPDATE_SPURIOUS_WAKEUP();

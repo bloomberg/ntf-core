@@ -183,29 +183,30 @@ class Poll : public ntci::Reactor,
 
     typedef bsl::vector<bsl::shared_ptr<ntcs::RegistryEntry> > DetachList;
 
-    ntccfg::Object                        d_object;
-    mutable Mutex                         d_generationMutex;
-    bslmt::Semaphore                      d_generationSemaphore;
-    bsls::AtomicUint64                    d_generation;
-    DetachList                            d_detachList;
-    ntcs::RegistryEntryCatalog            d_registry;
-    ntcs::Chronology                      d_chronology;
-    bsl::shared_ptr<ntci::User>           d_user_sp;
-    bsl::shared_ptr<ntci::DataPool>       d_dataPool_sp;
-    bsl::shared_ptr<ntci::Resolver>       d_resolver_sp;
-    bsl::shared_ptr<ntci::Reservation>    d_connectionLimiter_sp;
-    bsl::shared_ptr<ntci::ReactorMetrics> d_metrics_sp;
-    bsl::shared_ptr<ntcs::Controller>     d_controller_sp;
-    ntsa::Handle                          d_controllerDescriptorHandle;
-    mutable Mutex                         d_waiterSetMutex;
-    WaiterSet                             d_waiterSet;
-    bslmt::ThreadUtil::Handle             d_threadHandle;
-    bsl::size_t                           d_threadIndex;
-    bsls::AtomicUint64                    d_threadId;
-    bsls::AtomicUint64                    d_load;
-    bsls::AtomicBool                      d_run;
-    ntca::ReactorConfig                   d_config;
-    bslma::Allocator*                     d_allocator_p;
+    ntccfg::Object                           d_object;
+    mutable Mutex                            d_generationMutex;
+    bslmt::Semaphore                         d_generationSemaphore;
+    bsls::AtomicUint64                       d_generation;
+    DetachList                               d_detachList;
+    ntcs::RegistryEntryCatalog::EntryFunctor d_detachFunctor;
+    ntcs::RegistryEntryCatalog               d_registry;
+    ntcs::Chronology                         d_chronology;
+    bsl::shared_ptr<ntci::User>              d_user_sp;
+    bsl::shared_ptr<ntci::DataPool>          d_dataPool_sp;
+    bsl::shared_ptr<ntci::Resolver>          d_resolver_sp;
+    bsl::shared_ptr<ntci::Reservation>       d_connectionLimiter_sp;
+    bsl::shared_ptr<ntci::ReactorMetrics>    d_metrics_sp;
+    bsl::shared_ptr<ntcs::Controller>        d_controller_sp;
+    ntsa::Handle                             d_controllerDescriptorHandle;
+    mutable Mutex                            d_waiterSetMutex;
+    WaiterSet                                d_waiterSet;
+    bslmt::ThreadUtil::Handle                d_threadHandle;
+    bsl::size_t                              d_threadIndex;
+    bsls::AtomicUint64                       d_threadId;
+    bsls::AtomicUint64                       d_load;
+    bsls::AtomicBool                         d_run;
+    ntca::ReactorConfig                      d_config;
+    bslma::Allocator*                        d_allocator_p;
 
   private:
     Poll(const Poll&) BSLS_KEYWORD_DELETED;
@@ -236,7 +237,8 @@ class Poll : public ntci::Reactor,
     /// Remove the specified 'handle' from the device.
     ntsa::Error remove(ntsa::Handle handle);
 
-    ntsa::Error removeDetached(const bsl::shared_ptr<ntcs::RegistryEntry>& entry);
+    ntsa::Error removeDetached(
+        const bsl::shared_ptr<ntcs::RegistryEntry>& entry);
 
     /// Link the specified 'entry' into the specified 'descriptorList'.
     void link(const bsl::shared_ptr<ntcs::RegistryEntry>& entry,
@@ -784,7 +786,8 @@ ntsa::Error Poll::remove(ntsa::Handle handle)
 }
 
 NTCCFG_INLINE
-ntsa::Error Poll::removeDetached(const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
+ntsa::Error Poll::removeDetached(
+    const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
 {
     ntsa::Handle handle = entry->handle();
     NTCCFG_WARNING_UNUSED(handle);
@@ -801,6 +804,7 @@ ntsa::Error Poll::removeDetached(const bsl::shared_ptr<ntcs::RegistryEntry>& ent
         LockGuard lock(&d_generationMutex);
         d_detachList.push_back(entry);
     }
+    Poll::interruptOne();
 
     return ntsa::Error();
 }
@@ -918,6 +922,11 @@ Poll::Poll(const ntca::ReactorConfig&         configuration,
 , d_generationSemaphore()
 , d_generation(1)
 , d_detachList(basicAllocator)
+#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
+, d_detachFunctor([this](const auto& entry){ return this->removeDetached(entry); })
+#else
+, d_detachFunctor(NTCCFG_BIND(&Poll::removeDetached, this, NTCCFG_BIND_PLACEHOLDER_1);)
+#endif
 , d_registry(basicAllocator)
 , d_chronology(this, basicAllocator)
 , d_user_sp(user)
@@ -1894,22 +1903,12 @@ ntsa::Error Poll::detachSocket(
 
 ntsa::Error Poll::detachSocket(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket,
-    const ntci::SocketDetachedCallback & callback)
+    const ntci::SocketDetachedCallback&         callback)
 {
     ntsa::Error error;
 
-    auto f = [this](const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
-    {
-        ntsa::Error error;
-        error = this->removeDetached(entry);
-        if (error) {
-            return error;
-        }
-        Poll::interruptOne();
-        return error;
-    };
-
-    bsl::shared_ptr<ntcs::RegistryEntry> entry = d_registry.removeAndGetReadyToDetach(socket, callback, f);
+    bsl::shared_ptr<ntcs::RegistryEntry> entry =
+        d_registry.removeAndGetReadyToDetach(socket, callback, d_detachFunctor);
 
     return error;
 }
@@ -1937,24 +1936,13 @@ ntsa::Error Poll::detachSocket(ntsa::Handle handle)
     }
 }
 
-ntsa::Error Poll::detachSocket(
-    ntsa::Handle handle,
-    const ntci::SocketDetachedCallback & callback)
+ntsa::Error Poll::detachSocket(ntsa::Handle                        handle,
+                               const ntci::SocketDetachedCallback& callback)
 {
     ntsa::Error error;
 
-    auto f = [this](const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
-    {
-        ntsa::Error error;
-        error = this->removeDetached(entry);
-        if (error) {
-            return error;
-        }
-        Poll::interruptOne();
-        return error;
-    };
-
-    bsl::shared_ptr<ntcs::RegistryEntry> entry = d_registry.removeAndGetReadyToDetach(handle, callback, f);
+    bsl::shared_ptr<ntcs::RegistryEntry> entry =
+        d_registry.removeAndGetReadyToDetach(handle, callback, d_detachFunctor);
 
     return error;
 }
@@ -2099,11 +2087,14 @@ void Poll::run(ntci::Waiter waiter)
 
         {
             LockGuard lock(&d_generationMutex);
-            for(DetachList::const_iterator it = d_detachList.cbegin(); it != d_detachList.cend(); ++it)
+            for (DetachList::const_iterator it = d_detachList.cbegin();
+                 it != d_detachList.cend();
+                 ++it)
             {
                 ntcs::RegistryEntry& entry = **it;
                 if (entry.processCounter() == 0) {
-                    if (entry.askForDetachmentAnnouncementPermission()) { // none other thread is doing anything on the descriptor, I can schedule detachment
+                    if (entry.askForDetachmentAnnouncementPermission())
+                    {  // none other thread is doing anything on the descriptor, I can schedule detachment
                         entry.announceDetached();
                         entry.clear();
                     }
@@ -2121,9 +2112,9 @@ void Poll::run(ntci::Waiter waiter)
             int numResults          = rc;
             int numResultsRemaining = numResults;
 
-            bsl::size_t numReadable = 0;
-            bsl::size_t numWritable = 0;
-            bsl::size_t numErrors   = 0;
+            bsl::size_t numReadable    = 0;
+            bsl::size_t numWritable    = 0;
+            bsl::size_t numErrors      = 0;
             bsl::size_t numDetachments = 0;
 
             for (DescriptorList::const_iterator it =
