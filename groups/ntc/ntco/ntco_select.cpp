@@ -972,9 +972,12 @@ Select::Select(const ntca::ReactorConfig&         configuration,
 , d_maxHandle(0)
 , d_detachList(basicAllocator)
 #if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
-, d_detachFunctor([this](const auto& entry){ return this->removeDetached(entry); })
+, d_detachFunctor([this](const auto& entry) {
+    return this->removeDetached(entry);
+})
 #else
-, d_detachFunctor(NTCCFG_BIND(&Select::removeDetached, this, NTCCFG_BIND_PLACEHOLDER_1))
+, d_detachFunctor(
+      NTCCFG_BIND(&Select::removeDetached, this, NTCCFG_BIND_PLACEHOLDER_1))
 #endif
 , d_registry(basicAllocator)
 , d_chronology(this, basicAllocator)
@@ -1822,7 +1825,9 @@ ntsa::Error Select::detachSocket(
     ntsa::Error error;
 
     bsl::shared_ptr<ntcs::RegistryEntry> entry =
-        d_registry.removeAndGetReadyToDetach(socket, callback, d_detachFunctor);
+        d_registry.removeAndGetReadyToDetach(socket,
+                                             callback,
+                                             d_detachFunctor);
 
     return ntsa::Error();
 }
@@ -1856,7 +1861,9 @@ ntsa::Error Select::detachSocket(ntsa::Handle                        handle,
     ntsa::Error error;
 
     bsl::shared_ptr<ntcs::RegistryEntry> entry =
-        d_registry.removeAndGetReadyToDetach(handle, callback, d_detachFunctor);
+        d_registry.removeAndGetReadyToDetach(handle,
+                                             callback,
+                                             d_detachFunctor);
 
     return ntsa::Error();
 }
@@ -1967,8 +1974,8 @@ void Select::run(ntci::Waiter waiter)
 #error Not implemented
 #endif
 
-        int numResults = rc;
-
+        int         numResults     = rc;
+        bsl::size_t numDetachments = 0;
         {
             LockGuard lock(&d_generationMutex);
 
@@ -2060,9 +2067,11 @@ void Select::run(ntci::Waiter waiter)
                     {  // none other thread is doing anything on the descriptor, I can schedule detachment
                         entry.announceDetached();
                         entry.clear();
+                        ++numDetachments;
                     }
                 }
             }
+            d_detachList.clear();
         }
 
         if (d_config.maxThreads().value() > 1) {
@@ -2074,10 +2083,9 @@ void Select::run(ntci::Waiter waiter)
 
             int numResultsRemaining = numResults;
 
-            bsl::size_t numReadable    = 0;
-            bsl::size_t numWritable    = 0;
-            bsl::size_t numErrors      = 0;
-            bsl::size_t numDetachments = 0;
+            bsl::size_t numReadable = 0;
+            bsl::size_t numWritable = 0;
+            bsl::size_t numErrors   = 0;
 
             for (bsl::size_t i = 0; i < maxDescriptor; ++i) {
                 if (numResultsRemaining == 0) {

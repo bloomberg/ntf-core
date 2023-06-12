@@ -923,9 +923,12 @@ Poll::Poll(const ntca::ReactorConfig&         configuration,
 , d_generation(1)
 , d_detachList(basicAllocator)
 #if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
-, d_detachFunctor([this](const auto& entry){ return this->removeDetached(entry); })
+, d_detachFunctor([this](const auto& entry) {
+    return this->removeDetached(entry);
+})
 #else
-, d_detachFunctor(NTCCFG_BIND(&Poll::removeDetached, this, NTCCFG_BIND_PLACEHOLDER_1))
+, d_detachFunctor(
+      NTCCFG_BIND(&Poll::removeDetached, this, NTCCFG_BIND_PLACEHOLDER_1))
 #endif
 , d_registry(basicAllocator)
 , d_chronology(this, basicAllocator)
@@ -1908,7 +1911,9 @@ ntsa::Error Poll::detachSocket(
     ntsa::Error error;
 
     bsl::shared_ptr<ntcs::RegistryEntry> entry =
-        d_registry.removeAndGetReadyToDetach(socket, callback, d_detachFunctor);
+        d_registry.removeAndGetReadyToDetach(socket,
+                                             callback,
+                                             d_detachFunctor);
 
     return error;
 }
@@ -1942,7 +1947,9 @@ ntsa::Error Poll::detachSocket(ntsa::Handle                        handle,
     ntsa::Error error;
 
     bsl::shared_ptr<ntcs::RegistryEntry> entry =
-        d_registry.removeAndGetReadyToDetach(handle, callback, d_detachFunctor);
+        d_registry.removeAndGetReadyToDetach(handle,
+                                             callback,
+                                             d_detachFunctor);
 
     return error;
 }
@@ -2085,10 +2092,10 @@ void Poll::run(ntci::Waiter waiter)
             }
         }
 
-        
         bsl::size_t numDetachments = 0;
         {
             LockGuard lock(&d_generationMutex);
+            //TODO: can I swap the list with an empty one so that mutex is unlocked earlier?
             for (DetachList::const_iterator it = d_detachList.cbegin();
                  it != d_detachList.cend();
                  ++it)
@@ -2103,6 +2110,7 @@ void Poll::run(ntci::Waiter waiter)
                     }
                 }
             }
+            d_detachList.clear();
         }
 
         if (d_config.maxThreads().value() > 1) {
@@ -2115,9 +2123,9 @@ void Poll::run(ntci::Waiter waiter)
             int numResults          = rc;
             int numResultsRemaining = numResults;
 
-            bsl::size_t numReadable    = 0;
-            bsl::size_t numWritable    = 0;
-            bsl::size_t numErrors      = 0;
+            bsl::size_t numReadable = 0;
+            bsl::size_t numWritable = 0;
+            bsl::size_t numErrors   = 0;
 
             for (DescriptorList::const_iterator it =
                      result->d_descriptorList.begin();
