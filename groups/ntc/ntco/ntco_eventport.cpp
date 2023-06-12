@@ -18,8 +18,10 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntco_eventport_cpp, "$Id$ $CSID$")
 
-#if NTC_BUILD_WITH_EVENTPORT
-#if defined(BSLS_PLATFORM_OS_SOLARIS)
+//#if NTC_BUILD_WITH_EVENTPORT
+#if 1
+//#if defined(BSLS_PLATFORM_OS_SOLARIS)
+#if 1
 
 #include <ntcr_datagramsocket.h>
 #include <ntcr_listenersocket.h>
@@ -181,26 +183,27 @@ class EventPort : public ntci::Reactor,
     typedef ntci::LockGuard LockGuard;
     // This typedef defines a mutex lock guard.
 
-    ntccfg::Object                        d_object;
-    int                                   d_port;
-    ntcs::RegistryEntryCatalog            d_registry;
-    ntcs::Chronology                      d_chronology;
-    bsl::shared_ptr<ntci::User>           d_user_sp;
-    bsl::shared_ptr<ntci::DataPool>       d_dataPool_sp;
-    bsl::shared_ptr<ntci::Resolver>       d_resolver_sp;
-    bsl::shared_ptr<ntci::Reservation>    d_connectionLimiter_sp;
-    bsl::shared_ptr<ntci::ReactorMetrics> d_metrics_sp;
-    bsl::shared_ptr<ntcs::Controller>     d_controller_sp;
-    ntsa::Handle                          d_controllerDescriptorHandle;
-    mutable Mutex                         d_waiterSetMutex;
-    WaiterSet                             d_waiterSet;
-    bslmt::ThreadUtil::Handle             d_threadHandle;
-    bsl::size_t                           d_threadIndex;
-    bsls::AtomicUint64                    d_threadId;
-    bsls::AtomicUint64                    d_load;
-    bsls::AtomicBool                      d_run;
-    ntca::ReactorConfig                   d_config;
-    bslma::Allocator*                     d_allocator_p;
+    ntccfg::Object                           d_object;
+    int                                      d_port;
+    ntcs::RegistryEntryCatalog::EntryFunctor d_detachFunctor;
+    ntcs::RegistryEntryCatalog               d_registry;
+    ntcs::Chronology                         d_chronology;
+    bsl::shared_ptr<ntci::User>              d_user_sp;
+    bsl::shared_ptr<ntci::DataPool>          d_dataPool_sp;
+    bsl::shared_ptr<ntci::Resolver>          d_resolver_sp;
+    bsl::shared_ptr<ntci::Reservation>       d_connectionLimiter_sp;
+    bsl::shared_ptr<ntci::ReactorMetrics>    d_metrics_sp;
+    bsl::shared_ptr<ntcs::Controller>        d_controller_sp;
+    ntsa::Handle                             d_controllerDescriptorHandle;
+    mutable Mutex                            d_waiterSetMutex;
+    WaiterSet                                d_waiterSet;
+    bslmt::ThreadUtil::Handle                d_threadHandle;
+    bsl::size_t                              d_threadIndex;
+    bsls::AtomicUint64                       d_threadId;
+    bsls::AtomicUint64                       d_load;
+    bsls::AtomicBool                         d_run;
+    ntca::ReactorConfig                      d_config;
+    bslma::Allocator*                        d_allocator_p;
 
   private:
     EventPort(const EventPort&) BSLS_KEYWORD_DELETED;
@@ -230,6 +233,9 @@ class EventPort : public ntci::Reactor,
 
     ntsa::Error remove(ntsa::Handle handle);
     // Remove the specified 'handle' from the device.
+
+    ntsa::Error removeDetached(
+        const bsl::shared_ptr<ntcs::RegistryEntry>& entry);
 
     void reinitializeControl();
     // Reinitialize the control mechanism and add it to the polled set.
@@ -388,14 +394,14 @@ class EventPort : public ntci::Reactor,
         const bsl::shared_ptr<ntci::ReactorSocket>& socket,
         const ntci::SocketDetachedCallback& callback) BSLS_KEYWORD_OVERRIDE;
 
-
     ntsa::Error detachSocket(ntsa::Handle handle) BSLS_KEYWORD_OVERRIDE;
     // Stop monitoring the specified socket 'handle'. Return the error.
 
     /// Stop monitoring the specified socket 'handle'. Invoke the specified
     /// 'callback' when the socket is detached. Return the error.
-    ntsa::Error detachSocket(ntsa::Handle handle,
-                                     const ntci::SocketDetachedCallback& callback) BSLS_KEYWORD_OVERRIDE;
+    ntsa::Error detachSocket(ntsa::Handle                        handle,
+                             const ntci::SocketDetachedCallback& callback)
+        BSLS_KEYWORD_OVERRIDE;
 
     ntsa::Error closeAll() BSLS_KEYWORD_OVERRIDE;
     // Close all monitored sockets and timers.
@@ -759,6 +765,42 @@ ntsa::Error EventPort::remove(ntsa::Handle handle)
     }
 }
 
+ntsa::Error EventPort::removeDetached(
+    const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
+{
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Handle handle = entry->handle();
+
+    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(handle);
+
+    int rc = port_dissociate(d_port, PORT_SOURCE_FD, handle);
+    if (rc == 0) {
+        NTCO_EVENTPORT_LOG_REMOVE(handle);
+
+        if ((entry->processCounter() == 0) &&
+            (entry->askForDetachmentAnnouncementPermission()))
+        {
+            // so this thread marked detached required as false
+            entry->announceDetached();
+            entry->clear();
+            EventPort::interruptOne();
+        }
+
+        return ntsa::Error();
+    }
+    else {
+        if (errno != ENOENT) {
+            ntsa::Error error(errno);
+            NTCO_EVENTPORT_LOG_REMOVE_FAILURE(handle, error);
+            return error;
+        }
+        else {
+            return ntsa::Error();  //TODO: ???
+        }
+    }
+}
+
 void EventPort::reinitializeControl()
 {
     if (d_controller_sp) {
@@ -856,6 +898,9 @@ EventPort::EventPort(const ntca::ReactorConfig&         configuration,
                      bslma::Allocator*                  basicAllocator)
 : d_object("ntco::EventPort")
 , d_port(-1)
+, d_detachFunctor(NTCCFG_BIND(&EventPort::removeDetached,
+                              this,
+                              NTCCFG_BIND_PLACEHOLDER_1);)
 , d_registry(basicAllocator)
 , d_chronology(this, basicAllocator)
 , d_user_sp(user)
@@ -1700,13 +1745,15 @@ ntsa::Error EventPort::detachSocket(
 }
 
 ntsa::Error EventPort::detachSocket(
-        const bsl::shared_ptr<ntci::ReactorSocket>& socket,
-        const ntci::SocketDetachedCallback& callback)
+    const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+    const ntci::SocketDetachedCallback&         callback)
 {
-    NTCCFG_WARNING_UNUSED(socket);
-    NTCCFG_WARNING_UNUSED(callback);
+    ntsa::Error error;
 
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    /*bsl::shared_ptr<ntcs::RegistryEntry> entry = */ d_registry
+        .removeAndGetReadyToDetach(socket, callback, d_detachFunctor);
+
+    return ntsa::Error();  //TODO:  handle error cases
 }
 
 ntsa::Error EventPort::detachSocket(ntsa::Handle handle)
@@ -1733,13 +1780,13 @@ ntsa::Error EventPort::detachSocket(ntsa::Handle handle)
 }
 
 ntsa::Error EventPort::detachSocket(
-        ntsa::Handle handle,
-        const ntci::SocketDetachedCallback& callback)
+    ntsa::Handle                        handle,
+    const ntci::SocketDetachedCallback& callback)
 {
-    NTCCFG_WARNING_UNUSED(handle);
-    NTCCFG_WARNING_UNUSED(callback);
+    /*bsl::shared_ptr<ntcs::RegistryEntry> entry = */ d_registry
+        .removeAndGetReadyToDetach(handle, callback, d_detachFunctor);
 
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    return ntsa::Error();  //TODO:  handle error cases
 }
 
 ntsa::Error EventPort::closeAll()
@@ -1807,9 +1854,10 @@ void EventPort::run(ntci::Waiter waiter)
                          timeout >= 0 ? &ts : 0);
 
         if (rc == 0 && eventCount > 0) {
-            bsl::size_t numReadable = 0;
-            bsl::size_t numWritable = 0;
-            bsl::size_t numErrors   = 0;
+            bsl::size_t numReadable    = 0;
+            bsl::size_t numWritable    = 0;
+            bsl::size_t numErrors      = 0;
+            bsl::size_t numDetachments = 0;
 
             for (uint_t i = 0; i < eventCount; ++i) {
                 port_event_t event = eventList[i];
@@ -1823,7 +1871,10 @@ void EventPort::run(ntci::Waiter waiter)
                                           event.portev_events);
 
                 bsl::shared_ptr<ntcs::RegistryEntry> entry;
-                if (!d_registry.lookup(&entry, descriptorHandle)) {
+                if (!d_registry.lookupAndMarkProcessingOngoing(
+                        &entry,
+                        descriptorHandle))
+                {
                     continue;
                 }
 
@@ -1948,10 +1999,18 @@ void EventPort::run(ntci::Waiter waiter)
                         }
                     }
                 }
+
+                if (entry->decrementProcessCounter() == 1) {
+                    if (entry->askForDetachmentAnnouncementPermission()) {
+                        entry->announceDetached();
+                        entry->clear();
+                        ++numDetachments;
+                    }
+                }
             }
 
             if (NTCCFG_UNLIKELY(numReadable == 0 && numWritable == 0 &&
-                                numErrors == 0))
+                                numErrors == 0 && numDetachments == 0))
             {
                 NTCS_METRICS_UPDATE_SPURIOUS_WAKEUP();
                 bslmt::ThreadUtil::yield();
