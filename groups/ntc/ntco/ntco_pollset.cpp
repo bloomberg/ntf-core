@@ -19,7 +19,9 @@
 BSLS_IDENT_RCSID(ntco_pollset_cpp, "$Id$ $CSID$")
 
 #if NTC_BUILD_WITH_POLLSET
+//#if 1
 #if defined(BSLS_PLATFORM_OS_AIX)
+//#if 1
 
 #include <ntcr_datagramsocket.h>
 #include <ntcr_listenersocket.h>
@@ -186,6 +188,8 @@ class Pollset : public ntci::Reactor,
     typedef bsl::vector<struct ::pollfd> DescriptorList;
     // Defines a type alias for a list of poll descriptor structures.
 
+    typedef bsl::vector<bsl::shared_ptr<ntcs::RegistryEntry> > DetachList;
+
     struct Result;
     // This struct describes the context of a waiter.
 
@@ -207,29 +211,31 @@ class Pollset : public ntci::Reactor,
     typedef ntci::LockGuard LockGuard;
     // This typedef defines a mutex lock guard.
 
-    ntccfg::Object                        d_object;
-    int                                   d_pollset;
-    mutable Mutex                         d_generationMutex;
-    bslmt::Semaphore                      d_generationSemaphore;
-    ChangeList                            d_changeList;
-    ntcs::RegistryEntryCatalog            d_registry;
-    ntcs::Chronology                      d_chronology;
-    bsl::shared_ptr<ntci::User>           d_user_sp;
-    bsl::shared_ptr<ntci::DataPool>       d_dataPool_sp;
-    bsl::shared_ptr<ntci::Resolver>       d_resolver_sp;
-    bsl::shared_ptr<ntci::Reservation>    d_connectionLimiter_sp;
-    bsl::shared_ptr<ntci::ReactorMetrics> d_metrics_sp;
-    bsl::shared_ptr<ntcs::Controller>     d_controller_sp;
-    ntsa::Handle                          d_controllerDescriptorHandle;
-    mutable Mutex                         d_waiterSetMutex;
-    WaiterSet                             d_waiterSet;
-    bslmt::ThreadUtil::Handle             d_threadHandle;
-    bsl::size_t                           d_threadIndex;
-    bsls::AtomicUint64                    d_threadId;
-    bsls::AtomicUint64                    d_load;
-    bsls::AtomicBool                      d_run;
-    ntca::ReactorConfig                   d_config;
-    bslma::Allocator*                     d_allocator_p;
+    ntccfg::Object                           d_object;
+    int                                      d_pollset;
+    mutable Mutex                            d_generationMutex;
+    bslmt::Semaphore                         d_generationSemaphore;
+    ChangeList                               d_changeList;
+    DetachList                               d_detachList;
+    ntcs::RegistryEntryCatalog::EntryFunctor d_detachFunctor;
+    ntcs::RegistryEntryCatalog               d_registry;
+    ntcs::Chronology                         d_chronology;
+    bsl::shared_ptr<ntci::User>              d_user_sp;
+    bsl::shared_ptr<ntci::DataPool>          d_dataPool_sp;
+    bsl::shared_ptr<ntci::Resolver>          d_resolver_sp;
+    bsl::shared_ptr<ntci::Reservation>       d_connectionLimiter_sp;
+    bsl::shared_ptr<ntci::ReactorMetrics>    d_metrics_sp;
+    bsl::shared_ptr<ntcs::Controller>        d_controller_sp;
+    ntsa::Handle                             d_controllerDescriptorHandle;
+    mutable Mutex                            d_waiterSetMutex;
+    WaiterSet                                d_waiterSet;
+    bslmt::ThreadUtil::Handle                d_threadHandle;
+    bsl::size_t                              d_threadIndex;
+    bsls::AtomicUint64                       d_threadId;
+    bsls::AtomicUint64                       d_load;
+    bsls::AtomicBool                         d_run;
+    ntca::ReactorConfig                      d_config;
+    bslma::Allocator*                        d_allocator_p;
 
   private:
     Pollset(const Pollset&) BSLS_KEYWORD_DELETED;
@@ -260,6 +266,9 @@ class Pollset : public ntci::Reactor,
 
     ntsa::Error remove(ntsa::Handle handle);
     // Remove the specified 'handle' from the device.
+
+    ntsa::Error removeDetached(
+        const bsl::shared_ptr<ntcs::RegistryEntry>& entry);
 
     void reinitializeControl();
     // Reinitialize the control mechanism and add it to the polled set.
@@ -412,8 +421,20 @@ class Pollset : public ntci::Reactor,
     // Stop monitoring the specified 'socket' and close the
     // 'socket' if it is not already closed. Return the error.
 
+    /// Stop monitoring the specified 'socket'. Invoke the specified 'callback'
+    /// when the socket is detached. Return the error.
+    ntsa::Error detachSocket(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+        const ntci::SocketDetachedCallback& callback) BSLS_KEYWORD_OVERRIDE;
+
     ntsa::Error detachSocket(ntsa::Handle handle) BSLS_KEYWORD_OVERRIDE;
     // Stop monitoring the specified socket 'handle'. Return the error.
+
+    /// Stop monitoring the specified socket 'handle'. Invoke the specified
+    /// 'callback' when the socket is detached. Return the error.
+    ntsa::Error detachSocket(ntsa::Handle                        handle,
+                             const ntci::SocketDetachedCallback& callback)
+        BSLS_KEYWORD_OVERRIDE;
 
     ntsa::Error closeAll() BSLS_KEYWORD_OVERRIDE;
     // Close all monitored sockets and timers.
@@ -842,6 +863,46 @@ ntsa::Error Pollset::remove(ntsa::Handle handle)
     return ntsa::Error();
 }
 
+ntsa::Error Pollset::removeDetached(
+    const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
+{
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Handle handle = entry->handle();
+
+    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(handle);
+
+    struct ::poll_ctl ctl;
+    Pollset::specify(&ctl, handle, ntcs::Interest(), PS_DELETE);
+
+    if (NTCCFG_LIKELY(d_config.maxThreads().value() == 1)) {
+        if (NTCCFG_LIKELY(isWaiter())) {
+            int rc = ::pollset_ctl(d_pollset, &ctl, 1);
+            if (rc != 0) {
+                ntsa::Error error(errno);
+                NTCO_POLLSET_LOG_CTL_FAILURE(1, rc, error);
+                return error;
+            }
+        }
+        else {
+            LockGuard lock(&d_generationMutex);
+            d_changeList.push_back(ctl);
+            d_detachList.push_back(entry);
+        }
+    }
+    else {
+        LockGuard lock(&d_generationMutex);
+        d_changeList.push_back(ctl);
+        d_detachList.push_back(entry);
+    }
+
+    NTCO_POLLSET_LOG_REMOVE(handle);
+
+    Pollset::interruptOne();
+
+    return ntsa::Error();
+}
+
 void Pollset::reinitializeControl()
 {
     if (d_controller_sp) {
@@ -941,6 +1002,9 @@ Pollset::Pollset(const ntca::ReactorConfig&         configuration,
 , d_pollset(-1)
 , d_generationMutex()
 , d_generationSemaphore()
+, d_detachList(basicAllocator)
+, d_detachFunctor(
+      NTCCFG_BIND(&Pollset::removeDetached, this, NTCCFG_BIND_PLACEHOLDER_1))
 , d_changeList(basicAllocator)
 , d_registry(basicAllocator)
 , d_chronology(this, basicAllocator)
@@ -1788,6 +1852,18 @@ ntsa::Error Pollset::detachSocket(
     }
 }
 
+ntsa::Error Pollset::detachSocket(
+    const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+    const ntci::SocketDetachedCallback&         callback)
+{
+    ntsa::Error error;
+
+    /*   bsl::shared_ptr<ntcs::RegistryEntry> entry =*/d_registry
+        .removeAndGetReadyToDetach(socket, callback, d_detachFunctor);
+
+    return ntsa::Error();  //TODO: handle error cases
+}
+
 ntsa::Error Pollset::detachSocket(ntsa::Handle handle)
 {
     ntsa::Error error;
@@ -1809,6 +1885,17 @@ ntsa::Error Pollset::detachSocket(ntsa::Handle handle)
     else {
         return ntsa::Error();
     }
+}
+
+ntsa::Error Pollset::detachSocket(ntsa::Handle                        handle,
+                                  const ntci::SocketDetachedCallback& callback)
+{
+    ntsa::Error error;
+
+    /*   bsl::shared_ptr<ntcs::RegistryEntry> entry =*/d_registry
+        .removeAndGetReadyToDetach(handle, callback, d_detachFunctor);
+
+    return ntsa::Error();  //TODO: handle error cases
 }
 
 ntsa::Error Pollset::closeAll()
@@ -1854,6 +1941,8 @@ void Pollset::run(ntci::Waiter waiter)
 
         int timeout = d_chronology.timeoutInMilliseconds();
 
+        bsl::size_t numDetachments = 0;
+
         {
             LockGuard lock(&d_generationMutex);
 
@@ -1896,6 +1985,23 @@ void Pollset::run(ntci::Waiter waiter)
 
                 d_changeList.clear();
             }
+
+            //TODO: can I swap the list with en empty one and oterate then not under a mutex?
+            for (DetachList::const_iterator it = d_detachList.cbegin();
+                 it != d_detachList.cend();
+                 ++it)
+            {
+                ntcs::RegistryEntry& entry = **it;
+                if (entry.processCounter() == 0) {
+                    if (entry.askForDetachmentAnnouncementPermission())
+                    {  // none other thread is doing anything on the descriptor, I can schedule detachment
+                        entry.announceDetached();
+                        entry.clear();
+                        ++numDetachments;
+                    }
+                }
+            }
+            d_detachList.clear();
         }
 
         enum { MAX_EVENTS = 128 };
@@ -1972,7 +2078,7 @@ void Pollset::run(ntci::Waiter waiter)
                 NTCO_POLLSET_LOG_EVENTS(e.fd, e);
 
                 bsl::shared_ptr<ntcs::RegistryEntry> entry;
-                if (!d_registry.lookup(&entry, e.fd)) {
+                if (!d_registry.lookupAndMarkProcessingOngoing(&entry, e.fd)) {
                     continue;
                 }
 
@@ -2066,10 +2172,18 @@ void Pollset::run(ntci::Waiter waiter)
                         }
                     }
                 }
+
+                if ((entry->decrementProcessCounter() == 1) &&
+                    (entry->askForDetachmentAnnouncementPermission()))
+                {
+                    entry->announceDetached();
+                    entry->clear();
+                    ++numDetachments;
+                }
             }
 
             if (NTCCFG_UNLIKELY(numReadable == 0 && numWritable == 0 &&
-                                numErrors == 0))
+                                numErrors == 0 && numDetachments == 0))
             {
                 NTCS_METRICS_UPDATE_SPURIOUS_WAKEUP();
                 bslmt::ThreadUtil::yield();
