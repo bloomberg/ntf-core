@@ -324,8 +324,20 @@ class Reactor : public ntci::Reactor,
     ntsa::Error detachSocket(const bsl::shared_ptr<ntci::ReactorSocket>&
                                  socket) BSLS_KEYWORD_OVERRIDE;
 
+    /// Stop monitoring the specified 'socket'. Invoke the specified 'callback'
+    /// when the socket is detached. Return the error.
+    ntsa::Error detachSocket(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+        const ntci::SocketDetachedCallback& callback) BSLS_KEYWORD_OVERRIDE;
+
     /// Stop monitoring the specified socket 'handle'. Return the error.
     ntsa::Error detachSocket(ntsa::Handle handle) BSLS_KEYWORD_OVERRIDE;
+
+
+    /// Stop monitoring the specified socket 'handle'. Invoke the specified
+    /// 'callback' when the socket is detached. Return the error.
+    ntsa::Error detachSocket(ntsa::Handle handle,
+                                     const ntci::SocketDetachedCallback& callback) BSLS_KEYWORD_OVERRIDE;
 
     /// Close all monitored sockets and timers.
     ntsa::Error closeAll() BSLS_KEYWORD_OVERRIDE;

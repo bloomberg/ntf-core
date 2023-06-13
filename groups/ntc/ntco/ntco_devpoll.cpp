@@ -184,6 +184,7 @@ class Devpoll : public ntci::Reactor,
     bslmt::Semaphore                      d_generationSemaphore;
     DescriptorList                        d_changeList;
     DetachList                            d_detachList;
+    ntcs::RegistryEntryCatalog::EntryFunctor d_detachFunctor;
     ntcs::RegistryEntryCatalog            d_registry;
     ntcs::Chronology                      d_chronology;
     bsl::shared_ptr<ntci::User>           d_user_sp;
@@ -865,6 +866,8 @@ ntsa::Error Devpoll::removeDetached(const bsl::shared_ptr<ntcs::RegistryEntry>& 
         d_detachList.push_back(entry);
     }
 
+    Devpoll::interruptOne();
+
     NTCO_DEVPOLL_LOG_REMOVE(handle);
 
     return ntsa::Error();
@@ -970,6 +973,8 @@ Devpoll::Devpoll(const ntca::ReactorConfig&         configuration,
 , d_generationMutex()
 , d_generationSemaphore()
 , d_changeList(basicAllocator)
+, d_detachList(basicAllocator)
+, d_detachFunctor(NTCCFG_BIND(&Devpoll::removeDetached, this, NTCCFG_BIND_PLACEHOLDER_1))
 , d_registry(basicAllocator)
 , d_chronology(this, basicAllocator)
 , d_user_sp(user)
@@ -1822,18 +1827,7 @@ ntsa::Error Devpoll::detachSocket(
 {
     ntsa::Error error;
 
-    auto functor = [this](const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
-    {
-        ntsa::Error error;
-        this->removeDetached(entry);
-        if (error) {
-            return error;
-        }
-        Devpoll::interruptAll(); //TODO: I need to interrupt only one as only one thread is waiting on poll
-        return error;
-    };
-
-    bsl::shared_ptr<ntcs::RegistryEntry> entry = d_registry.removeAndGetReadyToDetach(socket, callback, functor);
+    bsl::shared_ptr<ntcs::RegistryEntry> entry = d_registry.removeAndGetReadyToDetach(socket, callback, d_detachFunctor);
 
     if (entry)
     {
@@ -1874,18 +1868,7 @@ ntsa::Error Devpoll::detachSocket(
 {
     ntsa::Error error;
 
-    auto functor = [this](const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
-    {
-        ntsa::Error error;
-        this->removeDetached(entry);
-        if (error) {
-            return error;
-        }
-        Devpoll::interruptAll(); //TODO: I need to interrupt only one as only one thread is waiting on poll
-        return error;
-    };
-
-    bsl::shared_ptr<ntcs::RegistryEntry> entry = d_registry.removeAndGetReadyToDetach(handle, callback, functor);
+    bsl::shared_ptr<ntcs::RegistryEntry> entry = d_registry.removeAndGetReadyToDetach(handle, callback, d_detachFunctor);
 
     if (entry)
     {
@@ -2042,6 +2025,7 @@ void Devpoll::run(ntci::Waiter waiter)
             bsl::size_t numReadable = 0;
             bsl::size_t numWritable = 0;
             bsl::size_t numErrors   = 0;
+            bsl::size_t numDetached = 0;
 
             for (int i = 0; i < numResults; ++i) {
                 struct ::pollfd e = results[i];
@@ -2145,19 +2129,17 @@ void Devpoll::run(ntci::Waiter waiter)
                     }
                 }
 
-                if ((entry->decrementProcessCounter() == 1) && (entry->requestDetachmentAnnouncement()))
+                if ((entry->decrementProcessCounter() == 1) && (entry->askForDetachmentAnnouncementPermission()))
                 { //this tread decreased it till 0
-                            entry->announceDetached();
-                            entry->clear();
+                    entry->announceDetached();
+                    entry->clear();
+                    ++numDetached;
                 }
-
-
-
 
             }
 
             if (NTCCFG_UNLIKELY(numReadable == 0 && numWritable == 0 &&
-                                numErrors == 0))
+                                numErrors == 0 && numDetached == 0))
             {
                 NTCS_METRICS_UPDATE_SPURIOUS_WAKEUP();
                 bslmt::ThreadUtil::yield();

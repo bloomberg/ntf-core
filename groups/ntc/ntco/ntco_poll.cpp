@@ -2085,6 +2085,8 @@ void Poll::run(ntci::Waiter waiter)
             }
         }
 
+        
+        bsl::size_t numDetachments = 0;
         {
             LockGuard lock(&d_generationMutex);
             for (DetachList::const_iterator it = d_detachList.cbegin();
@@ -2097,6 +2099,7 @@ void Poll::run(ntci::Waiter waiter)
                     {  // none other thread is doing anything on the descriptor, I can schedule detachment
                         entry.announceDetached();
                         entry.clear();
+                        ++numDetachments;
                     }
                 }
             }
@@ -2115,7 +2118,6 @@ void Poll::run(ntci::Waiter waiter)
             bsl::size_t numReadable    = 0;
             bsl::size_t numWritable    = 0;
             bsl::size_t numErrors      = 0;
-            bsl::size_t numDetachments = 0;
 
             for (DescriptorList::const_iterator it =
                      result->d_descriptorList.begin();

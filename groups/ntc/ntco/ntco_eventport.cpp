@@ -382,8 +382,20 @@ class EventPort : public ntci::Reactor,
     // Stop monitoring the specified 'socket' and close the
     // 'socket' if it is not already closed. Return the error.
 
+    /// Stop monitoring the specified 'socket'. Invoke the specified 'callback'
+    /// when the socket is detached. Return the error.
+    ntsa::Error detachSocket(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+        const ntci::SocketDetachedCallback& callback) BSLS_KEYWORD_OVERRIDE;
+
+
     ntsa::Error detachSocket(ntsa::Handle handle) BSLS_KEYWORD_OVERRIDE;
     // Stop monitoring the specified socket 'handle'. Return the error.
+
+    /// Stop monitoring the specified socket 'handle'. Invoke the specified
+    /// 'callback' when the socket is detached. Return the error.
+    ntsa::Error detachSocket(ntsa::Handle handle,
+                                     const ntci::SocketDetachedCallback& callback) BSLS_KEYWORD_OVERRIDE;
 
     ntsa::Error closeAll() BSLS_KEYWORD_OVERRIDE;
     // Close all monitored sockets and timers.
@@ -1687,6 +1699,16 @@ ntsa::Error EventPort::detachSocket(
     }
 }
 
+ntsa::Error EventPort::detachSocket(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+        const ntci::SocketDetachedCallback& callback)
+{
+    NTCCFG_WARNING_UNUSED(socket);
+    NTCCFG_WARNING_UNUSED(callback);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 ntsa::Error EventPort::detachSocket(ntsa::Handle handle)
 {
     ntsa::Error error;
@@ -1708,6 +1730,16 @@ ntsa::Error EventPort::detachSocket(ntsa::Handle handle)
     else {
         return ntsa::Error();
     }
+}
+
+ntsa::Error EventPort::detachSocket(
+        ntsa::Handle handle,
+        const ntci::SocketDetachedCallback& callback)
+{
+    NTCCFG_WARNING_UNUSED(handle);
+    NTCCFG_WARNING_UNUSED(callback);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error EventPort::closeAll()

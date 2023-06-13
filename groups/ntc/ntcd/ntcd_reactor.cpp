@@ -1127,6 +1127,18 @@ ntsa::Error Reactor::detachSocket(
     }
 }
 
+
+ntsa::Error Reactor::detachSocket(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+        const ntci::SocketDetachedCallback& callback)
+{
+    NTCCFG_WARNING_UNUSED(socket);
+    NTCCFG_WARNING_UNUSED(callback);
+    
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+
 ntsa::Error Reactor::detachSocket(ntsa::Handle handle)
 {
     ntsa::Error error;
@@ -1148,6 +1160,16 @@ ntsa::Error Reactor::detachSocket(ntsa::Handle handle)
     else {
         return ntsa::Error();
     }
+}
+
+ntsa::Error Reactor::detachSocket(
+        ntsa::Handle handle,
+        const ntci::SocketDetachedCallback& callback)
+{
+    NTCCFG_WARNING_UNUSED(handle);
+    NTCCFG_WARNING_UNUSED(callback);
+    
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error Reactor::closeAll()
