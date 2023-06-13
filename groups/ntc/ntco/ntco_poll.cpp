@@ -925,7 +925,7 @@ Poll::Poll(const ntca::ReactorConfig&         configuration,
 #if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
 , d_detachFunctor([this](const auto& entry){ return this->removeDetached(entry); })
 #else
-, d_detachFunctor(NTCCFG_BIND(&Poll::removeDetached, this, NTCCFG_BIND_PLACEHOLDER_1);)
+, d_detachFunctor(NTCCFG_BIND(&Poll::removeDetached, this, NTCCFG_BIND_PLACEHOLDER_1))
 #endif
 , d_registry(basicAllocator)
 , d_chronology(this, basicAllocator)
