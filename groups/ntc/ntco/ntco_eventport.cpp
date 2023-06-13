@@ -18,10 +18,10 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntco_eventport_cpp, "$Id$ $CSID$")
 
-//#if NTC_BUILD_WITH_EVENTPORT
-#if 1
-//#if defined(BSLS_PLATFORM_OS_SOLARIS)
-#if 1
+#if NTC_BUILD_WITH_EVENTPORT
+//#if 1
+#if defined(BSLS_PLATFORM_OS_SOLARIS)
+//#if 1
 
 #include <ntcr_datagramsocket.h>
 #include <ntcr_listenersocket.h>
@@ -900,7 +900,7 @@ EventPort::EventPort(const ntca::ReactorConfig&         configuration,
 , d_port(-1)
 , d_detachFunctor(NTCCFG_BIND(&EventPort::removeDetached,
                               this,
-                              NTCCFG_BIND_PLACEHOLDER_1);)
+                              NTCCFG_BIND_PLACEHOLDER_1))
 , d_registry(basicAllocator)
 , d_chronology(this, basicAllocator)
 , d_user_sp(user)
