@@ -646,7 +646,7 @@ function (ntf_target_options_common_prolog target)
             ntf_target_build_option(
                 TARGET ${target} COMPILE VALUE /Ox /GL /GS- /Gs-)
             ntf_target_build_option(
-                TARGET ${target} LINK /DEBUG:FULL /OPT:REF /LTCG)
+                TARGET ${target} LINK VALUE /DEBUG:FULL /OPT:REF /LTCG)
         elseif(${is_dbg})
             ntf_target_build_option(
                 TARGET ${target} COMPILE VALUE /Od /RTC1)
