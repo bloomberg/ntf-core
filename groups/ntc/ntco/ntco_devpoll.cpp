@@ -18,10 +18,11 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntco_devpoll_cpp, "$Id$ $CSID$")
 
-#if NTC_BUILD_WITH_DEVPOLL
-//#if 1
-#if defined(BSLS_PLATFORM_OS_SOLARIS)
-//#if 1
+#define SMITROFANOV_TMP 0
+
+#if NTC_BUILD_WITH_DEVPOLL || SMITROFANOV_TMP
+
+#if defined(BSLS_PLATFORM_OS_SOLARIS) || SMITROFANOV_TMP
 
 #include <ntcr_datagramsocket.h>
 #include <ntcr_listenersocket.h>
@@ -1929,7 +1930,7 @@ void Devpoll::run(ntci::Waiter waiter)
         int timeout = d_chronology.timeoutInMilliseconds();
 
         bsl::size_t numDetachments = 0;
-
+        DetachList  detachList(d_allocator_p);
         {
             LockGuard lock(&d_generationMutex);
 
@@ -1949,25 +1950,21 @@ void Devpoll::run(ntci::Waiter waiter)
                 d_changeList.clear();
             }
 
-            // go over d_detachList. decrement processing count for each entry. In this thread decrements it till 0 then
-            // schedule detach.
+            detachList.swap(d_detachList);
+        }
 
-            //TODO: can I swap the list with en empty one and oterate then not under a mutex?
-            for (DetachList::const_iterator it = d_detachList.cbegin();
-                 it != d_detachList.cend();
-                 ++it)
+        for (DetachList::const_iterator it = detachList.cbegin();
+             it != detachList.cend();
+             ++it)
+        {
+            ntcs::RegistryEntry& entry = **it;
+            if (entry.processCounter() == 0 &&
+                entry.askForDetachmentAnnouncementPermission())
             {
-                ntcs::RegistryEntry& entry = **it;
-                if (entry.processCounter() == 0) {
-                    if (entry.askForDetachmentAnnouncementPermission())
-                    {  // none other thread is doing anything on the descriptor, I can schedule detachment
-                        entry.announceDetached();
-                        entry.clear();
-                        ++numDetachments;
-                    }
-                }
+                entry.announceDetached();
+                entry.clear();
+                ++numDetachments;
             }
-            d_detachList.clear();
         }
 
         enum { MAX_EVENTS = 128 };
@@ -2140,9 +2137,9 @@ void Devpoll::run(ntci::Waiter waiter)
                     }
                 }
 
-                if ((entry->decrementProcessCounter() == 1) &&
-                    (entry->askForDetachmentAnnouncementPermission()))
-                {  //this tread decreased it till 0
+                if (entry->decrementProcessCounter() == 1 &&
+                    entry->askForDetachmentAnnouncementPermission())
+                {
                     entry->announceDetached();
                     entry->clear();
                     ++numDetachments;
@@ -2214,6 +2211,8 @@ void Devpoll::poll(ntci::Waiter waiter)
 
     int timeout = d_chronology.timeoutInMilliseconds();
 
+    bsl::size_t numDetachments = 0;
+    DetachList  detachList(d_allocator_p);
     {
         LockGuard lock(&d_generationMutex);
 
@@ -2231,6 +2230,21 @@ void Devpoll::poll(ntci::Waiter waiter)
             }
 
             d_changeList.clear();
+        }
+        detachList.swap(d_detachList);
+    }
+
+    for (DetachList::const_iterator it = detachList.cbegin();
+         it != detachList.cend();
+         ++it)
+    {
+        ntcs::RegistryEntry& entry = **it;
+        if (entry.processCounter() == 0 &&
+            entry.askForDetachmentAnnouncementPermission())
+        {
+            entry.announceDetached();
+            entry.clear();
+            ++numDetachments;
         }
     }
 
@@ -2309,7 +2323,7 @@ void Devpoll::poll(ntci::Waiter waiter)
             BSLS_ASSERT(e.revents != 0);
 
             bsl::shared_ptr<ntcs::RegistryEntry> entry;
-            if (!d_registry.lookup(&entry, e.fd)) {
+            if (!d_registry.lookupAndMarkProcessingOngoing(&entry, e.fd)) {
                 continue;
             }
 
@@ -2403,10 +2417,17 @@ void Devpoll::poll(ntci::Waiter waiter)
                     }
                 }
             }
+            if (entry->decrementProcessCounter() == 1 &&
+                entry->askForDetachmentAnnouncementPermission())
+            {
+                entry->announceDetached();
+                entry->clear();
+                ++numDetachments;
+            }
         }
 
         if (NTCCFG_UNLIKELY(numReadable == 0 && numWritable == 0 &&
-                            numErrors == 0))
+                            numErrors == 0 && numDetachments == 0))
         {
             NTCS_METRICS_UPDATE_SPURIOUS_WAKEUP();
             bslmt::ThreadUtil::yield();
