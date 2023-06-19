@@ -1976,6 +1976,7 @@ void Select::run(ntci::Waiter waiter)
 
         int         numResults     = rc;
         bsl::size_t numDetachments = 0;
+        DetachList  detachList(d_allocator_p);
         {
             LockGuard lock(&d_generationMutex);
 
@@ -2057,21 +2058,24 @@ void Select::run(ntci::Waiter waiter)
                 BSLS_ASSERT(numResultsRemaining == 0);
             }
 
-            for (DetachList::const_iterator it = d_detachList.cbegin();
-                 it != d_detachList.cend();
-                 ++it)
-            {
-                ntcs::RegistryEntry& entry = **it;
-                if (entry.processCounter() == 0) {
-                    if (entry.askForDetachmentAnnouncementPermission())
-                    {  // none other thread is doing anything on the descriptor, I can schedule detachment
-                        entry.announceDetached();
-                        entry.clear();
-                        ++numDetachments;
-                    }
+            detachList.swap(d_detachList);
+            // TODO: maybe it's better to allocate detachList by moving the content of d_detachList.
+            // It will allow to save capacity of d_detachList
+        }
+
+        for (DetachList::const_iterator it = detachList.cbegin();
+             it != detachList.cend();
+             ++it)
+        {
+            ntcs::RegistryEntry& entry = **it;
+            if (entry.processCounter() == 0) {
+                if (entry.askForDetachmentAnnouncementPermission())
+                {  // none other thread is doing anything on the descriptor, I can schedule detachment
+                    entry.announceDetached();
+                    entry.clear();
+                    ++numDetachments;
                 }
             }
-            d_detachList.clear();
         }
 
         if (d_config.maxThreads().value() > 1) {
@@ -2393,7 +2397,9 @@ void Select::poll(ntci::Waiter waiter)
 #error Not implemented
 #endif
 
-    int numResults = rc;
+    int         numResults     = rc;
+    bsl::size_t numDetachments = 0;
+    DetachList  detachList(d_allocator_p);
 
     if (rc > 0 && d_config.oneShot().value()) {
         LockGuard lock(&d_generationMutex);
@@ -2472,6 +2478,22 @@ void Select::poll(ntci::Waiter waiter)
         }
 
         BSLS_ASSERT(numResultsRemaining == 0);
+
+        detachList.swap(d_detachList);
+    }
+
+    for (DetachList::const_iterator it = detachList.cbegin();
+         it != detachList.cend();
+         ++it)
+    {
+        ntcs::RegistryEntry& entry = **it;
+        if (entry.processCounter() == 0) {
+            if (entry.askForDetachmentAnnouncementPermission()) {
+                entry.announceDetached();
+                entry.clear();
+                ++numDetachments;
+            }
+        }
     }
 
     if (d_config.maxThreads().value() > 1) {
@@ -2531,7 +2553,9 @@ void Select::poll(ntci::Waiter waiter)
                                    isError);
 
             bsl::shared_ptr<ntcs::RegistryEntry> entry;
-            if (!d_registry.lookup(&entry, descriptorHandle)) {
+            if (!d_registry.lookupAndMarkProcessingOngoing(&entry,
+                                                           descriptorHandle))
+            {
                 continue;
             }
 
@@ -2621,12 +2645,19 @@ void Select::poll(ntci::Waiter waiter)
                     }
                 }
             }
+            if (entry->decrementProcessCounter() == 1) {
+                if (entry->askForDetachmentAnnouncementPermission()) {
+                    entry->announceDetached();
+                    entry->clear();
+                    ++numDetachments;
+                }
+            }
         }
 
         BSLS_ASSERT(numResultsRemaining == 0);
 
         if (NTCCFG_UNLIKELY(numReadable == 0 && numWritable == 0 &&
-                            numErrors == 0))
+                            numErrors == 0 && numDetachments == 0))
         {
             NTCS_METRICS_UPDATE_SPURIOUS_WAKEUP();
             NTCO_SELECT_LOG_SPURIOUS_WAKEUP();
