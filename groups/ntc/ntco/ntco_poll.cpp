@@ -2093,24 +2093,23 @@ void Poll::run(ntci::Waiter waiter)
         }
 
         bsl::size_t numDetachments = 0;
+        DetachList  detachList(d_allocator_p);
         {
             LockGuard lock(&d_generationMutex);
-            //TODO: can I swap the list with an empty one so that mutex is unlocked earlier?
-            for (DetachList::const_iterator it = d_detachList.cbegin();
-                 it != d_detachList.cend();
-                 ++it)
+            detachList.swap(d_detachList);
+        }
+        for (DetachList::const_iterator it = detachList.cbegin();
+             it != detachList.cend();
+             ++it)
+        {
+            ntcs::RegistryEntry& entry = **it;
+            if (entry.processCounter() == 0 &&
+                entry.askForDetachmentAnnouncementPermission())
             {
-                ntcs::RegistryEntry& entry = **it;
-                if (entry.processCounter() == 0) {
-                    if (entry.askForDetachmentAnnouncementPermission())
-                    {  // none other thread is doing anything on the descriptor, I can schedule detachment
-                        entry.announceDetached();
-                        entry.clear();
-                        ++numDetachments;
-                    }
-                }
+                entry.announceDetached();
+                entry.clear();
+                ++numDetachments;
             }
-            d_detachList.clear();
         }
 
         if (d_config.maxThreads().value() > 1) {
@@ -2271,12 +2270,12 @@ void Poll::run(ntci::Waiter waiter)
                     }
                 }
 
-                if (entry->decrementProcessCounter() == 1) {
-                    if (entry->askForDetachmentAnnouncementPermission()) {
-                        entry->announceDetached();
-                        entry->clear();
-                        ++numDetachments;
-                    }
+                if (entry->decrementProcessCounter() == 1 &&
+                    entry->askForDetachmentAnnouncementPermission())
+                {
+                    entry->announceDetached();
+                    entry->clear();
+                    ++numDetachments;
                 }
             }
 
@@ -2466,6 +2465,27 @@ void Poll::poll(ntci::Waiter waiter)
         }
     }
 
+    bsl::size_t numDetachments = 0;
+    DetachList  detachList(d_allocator_p);
+    {
+        LockGuard lock(&d_generationMutex);
+        detachList.swap(d_detachList);
+    }
+
+    for (DetachList::const_iterator it = detachList.cbegin();
+         it != detachList.cend();
+         ++it)
+    {
+        ntcs::RegistryEntry& entry = **it;
+        if (entry.processCounter() == 0 &&
+            entry.askForDetachmentAnnouncementPermission())
+        {
+            entry.announceDetached();
+            entry.clear();
+            ++numDetachments;
+        }
+    }
+
     if (d_config.maxThreads().value() > 1) {
         d_generationSemaphore.post();
     }
@@ -2503,7 +2523,7 @@ void Poll::poll(ntci::Waiter waiter)
             NTCO_POLL_LOG_EVENTS(e.fd, e);
 
             bsl::shared_ptr<ntcs::RegistryEntry> entry;
-            if (!d_registry.lookup(&entry, e.fd)) {
+            if (!d_registry.lookupAndMarkProcessingOngoing(&entry, e.fd)) {
                 continue;
             }
 
@@ -2619,12 +2639,19 @@ void Poll::poll(ntci::Waiter waiter)
                     }
                 }
             }
+            if (entry->decrementProcessCounter() == 1 &&
+                entry->askForDetachmentAnnouncementPermission())
+            {
+                entry->announceDetached();
+                entry->clear();
+                ++numDetachments;
+            }
         }
 
         BSLS_ASSERT(numResultsRemaining == 0);
 
         if (NTCCFG_UNLIKELY(numReadable == 0 && numWritable == 0 &&
-                            numErrors == 0))
+                            numErrors == 0 && numDetachments == 0))
         {
             NTCS_METRICS_UPDATE_SPURIOUS_WAKEUP();
             bslmt::ThreadUtil::yield();
