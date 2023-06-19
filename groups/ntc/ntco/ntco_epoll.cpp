@@ -1072,9 +1072,12 @@ Epoll::Epoll(const ntca::ReactorConfig&         configuration,
 , d_timer(-1)
 , d_timerPending(false)
 #if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
-, d_detachFunctor([this](const auto& entry){ return this->removeDetached(entry); })
+, d_detachFunctor([this](const auto& entry) {
+    return this->removeDetached(entry);
+})
 #else
-, d_detachFunctor(NTCCFG_BIND(&Epoll::removeDetached, this, NTCCFG_BIND_PLACEHOLDER_1))
+, d_detachFunctor(
+      NTCCFG_BIND(&Epoll::removeDetached, this, NTCCFG_BIND_PLACEHOLDER_1))
 #endif
 , d_registry(basicAllocator)
 , d_chronology(this, basicAllocator)
@@ -2090,7 +2093,9 @@ ntsa::Error Epoll::detachSocket(
     ntsa::Error error;
 
     bsl::shared_ptr<ntcs::RegistryEntry> entry =
-        d_registry.removeAndGetReadyToDetach(socket, callback, d_detachFunctor);
+        d_registry.removeAndGetReadyToDetach(socket,
+                                             callback,
+                                             d_detachFunctor);
 
     if (entry) {
         return ntsa::Error();
@@ -2126,7 +2131,9 @@ ntsa::Error Epoll::detachSocket(ntsa::Handle                        handle,
     ntsa::Error error;
 
     bsl::shared_ptr<ntcs::RegistryEntry> entry =
-        d_registry.removeAndGetReadyToDetach(handle, callback, d_detachFunctor);
+        d_registry.removeAndGetReadyToDetach(handle,
+                                             callback,
+                                             d_detachFunctor);
 
     if (entry) {
         return ntsa::Error();
@@ -2424,12 +2431,12 @@ void Epoll::run(ntci::Waiter waiter)
                     }
                 }
 
-                if (entry->decrementProcessCounter() == 1) {
-                    if (entry->askForDetachmentAnnouncementPermission()) {
-                        entry->announceDetached();
-                        entry->clear();
-                        ++numDetachments;
-                    }
+                if (entry->decrementProcessCounter() == 1 &&
+                    entry->askForDetachmentAnnouncementPermission())
+                {
+                    entry->announceDetached();
+                    entry->clear();
+                    ++numDetachments;
                 }
             }
 
@@ -2578,10 +2585,11 @@ void Epoll::poll(ntci::Waiter waiter)
 
         const int numResults = rc;
 
-        bsl::size_t numReadable = 0;
-        bsl::size_t numWritable = 0;
-        bsl::size_t numErrors   = 0;
-        bsl::size_t numTimers   = 0;
+        bsl::size_t numReadable    = 0;
+        bsl::size_t numWritable    = 0;
+        bsl::size_t numErrors      = 0;
+        bsl::size_t numTimers      = 0;
+        bsl::size_t numDetachments = 0;
 
         for (int i = 0; i < numResults; ++i) {
             ::epoll_event e = results[i];
@@ -2604,7 +2612,9 @@ void Epoll::poll(ntci::Waiter waiter)
             BSLS_ASSERT(descriptorHandle != ntsa::k_INVALID_HANDLE);
 
             bsl::shared_ptr<ntcs::RegistryEntry> entry;
-            if (!d_registry.lookup(&entry, descriptorHandle)) {
+            if (!d_registry.lookupAndMarkProcessingOngoing(&entry,
+                                                           descriptorHandle))
+            {
                 continue;
             }
 
@@ -2714,10 +2724,17 @@ void Epoll::poll(ntci::Waiter waiter)
                     }
                 }
             }
+            if (entry->decrementProcessCounter() == 1 &&
+                entry->askForDetachmentAnnouncementPermission())
+            {
+                entry->announceDetached();
+                entry->clear();
+                ++numDetachments;
+            }
         }
 
         const bsl::size_t numTotal =
-            numReadable + numWritable + numErrors + numTimers;
+            numReadable + numWritable + numErrors + numTimers + numDetachments;
 
         if (NTCCFG_UNLIKELY(numTotal == 0)) {
             NTCS_METRICS_UPDATE_SPURIOUS_WAKEUP();
