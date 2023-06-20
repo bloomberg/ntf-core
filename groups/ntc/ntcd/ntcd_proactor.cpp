@@ -1499,6 +1499,13 @@ ntsa::Error Proactor::detachSocket(
     }
 }
 
+ntsa::Error Proactor::detachSocket2(
+    const bsl::shared_ptr<ntci::ProactorSocket>& socket)
+{
+    NTCCFG_WARNING_UNUSED(socket);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 ntsa::Error Proactor::closeAll()
 {
     {

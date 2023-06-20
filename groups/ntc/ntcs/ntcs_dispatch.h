@@ -1298,6 +1298,10 @@ struct Dispatch {
         const bsl::shared_ptr<ntci::Executor>&     executor,
         bool                                       defer);
 
+    static void announceDetached(
+        const bsl::shared_ptr<ntci::ProactorSocket>& socket,
+        const bsl::shared_ptr<ntci::Strand>&         destination);
+
     /// Announce to the specified 'timer' that it has been cancelled. If
     /// the specified 'defer' flag is false and the requirements of the
     /// specified 'destination' strand permits the announcement to be

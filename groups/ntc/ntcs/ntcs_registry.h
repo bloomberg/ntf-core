@@ -222,7 +222,7 @@ class RegistryEntry
         const ntsa::NotificationQueue& notificationQueue);
 
     /// Announce that the socket has been detached and clear detachCallback
-    void a22kotatached();
+    void announceDetached();
 
     /// Atomically check that detachment is required and if it is true then
     /// set it to false and return true. Otherwise return false

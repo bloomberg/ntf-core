@@ -227,6 +227,9 @@ class Iocp : public ntci::Proactor,
     struct Result;
     // This struct describes the context of a waiter.
 
+    struct DetachGuardWaiter;
+    struct DetachGuard;
+
     enum UpdateType {
         // Enumerates the types of update.
 
@@ -402,6 +405,10 @@ class Iocp : public ntci::Proactor,
 
     ntsa::Error detachSocket(const bsl::shared_ptr<ntci::ProactorSocket>&
                                  socket) BSLS_KEYWORD_OVERRIDE;
+    // Detach the specified 'socket' from the proactor. Return the error.
+
+    ntsa::Error detachSocket2(const bsl::shared_ptr<ntci::ProactorSocket>&
+                                  socket) BSLS_KEYWORD_OVERRIDE;
     // Detach the specified 'socket' from the proactor. Return the error.
 
     ntsa::Error closeAll() BSLS_KEYWORD_OVERRIDE;
@@ -638,6 +645,95 @@ Iocp::Result::~Result()
 {
 }
 
+struct Iocp::DetachGuardWaiter {
+  public:
+    const bsl::shared_ptr<ntci::ProactorSocket>& d_socket_sp;
+    bool                                         d_ignore;
+
+  private:
+    DetachGuardWaiter(const DetachGuardWaiter&) BSLS_KEYWORD_DELETED;
+    DetachGuardWaiter& operator=(const DetachGuardWaiter&)
+        BSLS_KEYWORD_DELETED;
+
+  public:
+    DetachGuardWaiter(const bsl::shared_ptr<ntci::ProactorSocket>& socket);
+    ~DetachGuardWaiter();
+    void ignore();
+};
+
+Iocp::DetachGuardWaiter::DetachGuardWaiter(
+    const bsl::shared_ptr<ntci::ProactorSocket>& socket)
+: d_socket_sp(socket)
+, d_ignore(false)
+{
+}
+
+Iocp::DetachGuardWaiter::~DetachGuardWaiter()
+{
+    if (NTCCFG_LIKELY(!d_ignore)) {
+        if (d_socket_sp->decrementProcessCounter() == 1 &&
+            d_socket_sp->trySetDetachScheduled())
+        {
+            ntcs::Dispatch::announceDetached(d_socket_sp,
+                                             d_socket_sp->strand());
+        }
+    }
+}
+
+void Iocp::DetachGuardWaiter::ignore()
+{
+    d_ignore = true;
+}
+
+struct Iocp::DetachGuard {
+  public:
+    const bsl::shared_ptr<ntci::ProactorSocket>& d_socket_sp;
+    Iocp&                                        d_iocp;
+    bool                                         d_ignore;
+
+  private:
+    DetachGuard(const DetachGuard&) BSLS_KEYWORD_DELETED;
+    DetachGuard& operator=(const DetachGuard&) BSLS_KEYWORD_DELETED;
+
+  public:
+    DetachGuard(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
+                Iocp&                                        iocp);
+    ~DetachGuard();
+    void ignore();
+};
+
+Iocp::DetachGuard::DetachGuard(
+    const bsl::shared_ptr<ntci::ProactorSocket>& socket,
+    Iocp&                                        iocp)
+: d_socket_sp(socket)
+, d_iocp(iocp)
+, d_ignore(false)
+{
+    d_socket_sp->incrementProcessCounter();
+}
+
+Iocp::DetachGuard::~DetachGuard()
+{
+    if (NTCCFG_LIKELY(!d_ignore)) {
+        if (d_socket_sp->decrementProcessCounter() == 1 &&
+            d_socket_sp->trySetDetachScheduled())
+        {
+            bslma::ManagedPtr<ntcs::Event> event =
+                d_iocp.d_eventPool.getManagedObject();
+
+            event->d_type     = ntcs::EventType::e_CALLBACK;
+            event->d_function = NTCCFG_BIND(&ntcs::Dispatch::announceDetached,
+                                            d_socket_sp,
+                                            d_socket_sp->strand());
+        }
+    }
+}
+
+void Iocp::DetachGuard::ignore()
+{
+    d_ignore = true;
+}
+
 ntsa::Error Iocp::submit(bslma::ManagedPtr<ntcs::Event>& event)
 {
     BOOL success =
@@ -789,7 +885,9 @@ void Iocp::wait(ntci::Waiter waiter)
         event->d_function();
         return;
     }
-    else if (event->d_type == ntcs::EventType::e_ACCEPT) {
+    DetachGuardWaiter detachGuard(event->d_socket);
+
+    if (event->d_type == ntcs::EventType::e_ACCEPT) {
         BSLS_ASSERT(event->d_socket.get() != 0);
         BSLS_ASSERT(event->d_target != ntsa::k_INVALID_HANDLE);
 
@@ -978,6 +1076,7 @@ void Iocp::wait(ntci::Waiter waiter)
     }
     else {
         NTCP_IOCP_LOG_EVENT_IGNORED(event);
+        detachGuard.ignore();
         return;
     }
 }
@@ -1307,6 +1406,7 @@ ntsa::Error Iocp::attachSocket(
     }
 
     {
+        //        Socket s(socket);
         bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_proactorSocketMapMutex);
 
         bsl::pair<ProactorSocketMap::iterator, bool> insertResult =
@@ -1329,6 +1429,12 @@ ntsa::Error Iocp::attachSocket(
 ntsa::Error Iocp::accept(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 {
     NTCI_LOG_CONTEXT();
+
+    DetachGuard detachGuard(socket, *this);
+
+    if (NTCCFG_UNLIKELY(!socket->noDetach())) {
+        return ntsa::Error::cancelled();
+    }
 
     bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
 
@@ -1450,10 +1556,12 @@ ntsa::Error Iocp::accept(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 
     if (rc != 0) {
         this->submit(event);
+        //TODO: what does this case mean?
         return ntsa::Error();
     }
     else if (lastError == ERROR_IO_PENDING) {
         event.release();
+        detachGuard.ignore();
         return ntsa::Error();
     }
     else {
@@ -1465,6 +1573,12 @@ ntsa::Error Iocp::connect(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
                           const ntsa::Endpoint& endpoint)
 {
     NTCI_LOG_CONTEXT();
+
+    DetachGuard detachGuard(socket, *this);
+
+    if (NTCCFG_UNLIKELY(!socket->noDetach())) {
+        return ntsa::Error::cancelled();
+    }
 
     if (endpoint.isUndefined()) {
         return ntsa::Error::invalid();
@@ -1545,10 +1659,12 @@ ntsa::Error Iocp::connect(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 
     if (rc != 0) {
         this->submit(event);
+        //TODO: what does this case mean?
         return ntsa::Error();
     }
     else if (lastError == ERROR_IO_PENDING) {
         event.release();
+        detachGuard.ignore();
         return ntsa::Error();
     }
     else {
@@ -1561,6 +1677,12 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
                        const ntsa::SendOptions&                     options)
 {
     NTCI_LOG_CONTEXT();
+
+    DetachGuard detachGuard(socket, *this);
+
+    if (NTCCFG_UNLIKELY(!socket->noDetach())) {
+        return ntsa::Error::cancelled();
+    }
 
     bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
 
@@ -1617,6 +1739,7 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 
         SetLastError(0);
 
+        socket->incrementProcessCounter();
         int wsaSendToResult =
             WSASendTo(descriptorHandle,
                       wsaBufArray,
@@ -1632,10 +1755,12 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 
         if (wsaSendToResult == 0) {
             event.release();
+            detachGuard.ignore();
             return ntsa::Error();
         }
         else if (lastError == WSA_IO_PENDING) {
             event.release();
+            detachGuard.ignore();
             return ntsa::Error();
         }
         else {
@@ -1644,6 +1769,8 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     }
     else {
         SetLastError(0);
+
+        socket->incrementProcessCounter();
 
         int wsaSendResult = WSASend(descriptorHandle,
                                     wsaBufArray,
@@ -1657,10 +1784,12 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 
         if (wsaSendResult == 0) {
             event.release();
+            detachGuard.ignore();
             return ntsa::Error();
         }
         else if (lastError == WSA_IO_PENDING) {
             event.release();
+            detachGuard.ignore();
             return ntsa::Error();
         }
         else {
@@ -1674,6 +1803,12 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
                        const ntsa::SendOptions&                     options)
 {
     NTCI_LOG_CONTEXT();
+
+    DetachGuard detachGuard(socket, *this);
+
+    if (NTCCFG_UNLIKELY(!socket->noDetach())) {
+        return ntsa::Error::cancelled();
+    }
 
     const bool specifyEndpoint = !options.endpoint().isNull();
 
@@ -1704,6 +1839,8 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 
         socketAddressSize = static_cast<socklen_t>(socketAddressSizeT);
     }
+
+    socket->incrementProcessCounter();
 
     if (NTCCFG_LIKELY(data.isBlob())) {
         const bdlbb::Blob& blob = data.blob();
@@ -2229,10 +2366,12 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 
     if (lastError == 0) {
         event.release();
+        detachGuard.ignore();
         return ntsa::Error();
     }
     else if (lastError == WSA_IO_PENDING) {
         event.release();
+        detachGuard.ignore();
         return ntsa::Error();
     }
     else {
@@ -2245,6 +2384,12 @@ ntsa::Error Iocp::receive(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
                           const ntsa::ReceiveOptions&                  options)
 {
     NTCI_LOG_CONTEXT();
+
+    DetachGuard detachGuard(socket, *this);
+
+    if (NTCCFG_UNLIKELY(!socket->noDetach())) {
+        return ntsa::Error::cancelled();
+    }
 
     const bool wantEndpoint = options.wantEndpoint();
 
@@ -2311,9 +2456,11 @@ ntsa::Error Iocp::receive(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 
         if (wsaRecvfromResult == 0) {
             event.release();
+            detachGuard.ignore();
             return ntsa::Error();
         }
         else if (lastError == WSA_IO_PENDING) {
+            detachGuard.ignore();
             event.release();
             return ntsa::Error();
         }
@@ -2336,10 +2483,12 @@ ntsa::Error Iocp::receive(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 
         if (wsaRecvResult == 0) {
             event.release();
+            detachGuard.ignore();
             return ntsa::Error();
         }
         else if (lastError == WSA_IO_PENDING) {
             event.release();
+            detachGuard.ignore();
             return ntsa::Error();
         }
         else {
@@ -2394,6 +2543,47 @@ ntsa::Error Iocp::detachSocket(
     }
 
     socket->setProactorContext(bsl::shared_ptr<void>());
+
+    return ntsa::Error();
+}
+
+ntsa::Error Iocp::detachSocket2(
+    const bsl::shared_ptr<ntci::ProactorSocket>& socket)
+{
+    if (socket->handle() == ntsa::k_INVALID_HANDLE) {
+        return ntsa::Error();
+    }
+
+    {
+        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_proactorSocketMapMutex);
+
+        bsl::size_t n = d_proactorSocketMap.erase(socket->handle());
+        if (n == 0) {
+            return ntsa::Error();
+        }
+    }
+
+    socket->setProactorContext(bsl::shared_ptr<void>());
+
+    if (socket->trySetDetachRequired()) {
+        if (socket->processCounter() == 0 && socket->trySetDetachScheduled()) {
+            bslma::ManagedPtr<ntcs::Event> event =
+                d_eventPool.getManagedObject();
+
+            event->d_type     = ntcs::EventType::e_CALLBACK;
+            event->d_function = NTCCFG_BIND(&ntcs::Dispatch::announceDetached,
+                                            socket,
+                                            socket->strand());
+            ntsa::Error error = this->submit(event);
+            if (error) {
+                //TODO:
+            }
+        }
+    }
+    else {
+    TODO:  // return the error
+        return ntsa::Error();
+    }
 
     return ntsa::Error();
 }
