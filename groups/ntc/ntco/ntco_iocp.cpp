@@ -1556,7 +1556,7 @@ ntsa::Error Iocp::accept(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 
     if (rc != 0) {
         this->submit(event);
-        //TODO: what does this case mean?
+        detachGuard.ignore();
         return ntsa::Error();
     }
     else if (lastError == ERROR_IO_PENDING) {
@@ -1659,7 +1659,7 @@ ntsa::Error Iocp::connect(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 
     if (rc != 0) {
         this->submit(event);
-        //TODO: what does this case mean?
+        detachGuard.ignore();
         return ntsa::Error();
     }
     else if (lastError == ERROR_IO_PENDING) {
