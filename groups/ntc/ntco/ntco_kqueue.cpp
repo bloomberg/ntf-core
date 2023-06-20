@@ -18,10 +18,11 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntco_kqueue_cpp, "$Id$ $CSID$")
 
-#if NTC_BUILD_WITH_KQUEUE
-//#if 1
-#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
-//#if 1
+#define SMITROFANOV_TMP 0
+
+#if NTC_BUILD_WITH_KQUEUE || SMITROFANOV_TMP
+#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD) ||  \
+    SMITROFANOV_TMP
 
 #include <ntcr_datagramsocket.h>
 #include <ntcr_listenersocket.h>
@@ -2114,59 +2115,60 @@ void Kqueue::run(ntci::Waiter waiter)
                     }
                 }
 
-                if (entry->decrementProcessCounter() == 1) {
-                    if (entry->askForDetachmentAnnouncementPermission()) {
-                        entry->announceDetached();
-                        entry->clear();
-                        ++numDetachments;
-                    }
+                if (entry->decrementProcessCounter() == 1 &&
+                    entry->askForDetachmentAnnouncementPermission())
+                {
+                    entry->announceDetached();
+                    entry->clear();
+                    ++numDetachments;
                 }
             }
-
-            if (NTCCFG_UNLIKELY(numReadable == 0 && numWritable == 0 &&
-                                numErrors == 0 && numDetached == 0))
-            {
-                NTCS_METRICS_UPDATE_SPURIOUS_WAKEUP();
-                bslmt::ThreadUtil::yield();
-            }
-            else {
-                NTCS_METRICS_UPDATE_POLL(numReadable, numWritable, numErrors);
-            }
-        }
-        else if (rc == 0) {
-            NTCO_KQUEUE_LOG_WAIT_TIMEOUT();
-            NTCS_METRICS_UPDATE_POLL(0, 0, 0);
-        }
-        else if (rc < 0) {
-            if (errno == EINTR) {
-                // MRM: Handle this errno.
-            }
-            else if (errno == EBADF) {
-                // MRM: Handle this errno.
-            }
-            else if (errno == ENOTSOCK) {
-                // MRM: Handle this errno.
-            }
-            else {
-                ntsa::Error error(errno);
-                NTCO_KQUEUE_LOG_WAIT_FAILURE(error);
-            }
         }
 
-        // Invoke functions deferred while processing each polled event and
-        // process all expired timers.
-
-        bsl::size_t numCycles = d_config.maxCyclesPerWait().value();
-        while (numCycles != 0) {
-            if (d_chronology.hasAnyScheduledOrDeferred()) {
-                d_chronology.announce();
-                --numCycles;
-            }
-            else {
-                break;
-            }
+        if (NTCCFG_UNLIKELY(numReadable == 0 && numWritable == 0 &&
+                            numErrors == 0 && numDetachments == 0))
+        {
+            NTCS_METRICS_UPDATE_SPURIOUS_WAKEUP();
+            bslmt::ThreadUtil::yield();
+        }
+        else {
+            NTCS_METRICS_UPDATE_POLL(numReadable, numWritable, numErrors);
         }
     }
+    else if (rc == 0) {
+        NTCO_KQUEUE_LOG_WAIT_TIMEOUT();
+        NTCS_METRICS_UPDATE_POLL(0, 0, 0);
+    }
+    else if (rc < 0) {
+        if (errno == EINTR) {
+            // MRM: Handle this errno.
+        }
+        else if (errno == EBADF) {
+            // MRM: Handle this errno.
+        }
+        else if (errno == ENOTSOCK) {
+            // MRM: Handle this errno.
+        }
+        else {
+            ntsa::Error error(errno);
+            NTCO_KQUEUE_LOG_WAIT_FAILURE(error);
+        }
+    }
+
+    // Invoke functions deferred while processing each polled event and
+    // process all expired timers.
+
+    bsl::size_t numCycles = d_config.maxCyclesPerWait().value();
+    while (numCycles != 0) {
+        if (d_chronology.hasAnyScheduledOrDeferred()) {
+            d_chronology.announce();
+            --numCycles;
+        }
+        else {
+            break;
+        }
+    }
+}
 }
 
 void Kqueue::poll(ntci::Waiter waiter)
@@ -2210,9 +2212,10 @@ void Kqueue::poll(ntci::Waiter waiter)
 
         const int numResults = rc;
 
-        bsl::size_t numReadable = 0;
-        bsl::size_t numWritable = 0;
-        bsl::size_t numErrors   = 0;
+        bsl::size_t numReadable    = 0;
+        bsl::size_t numWritable    = 0;
+        bsl::size_t numErrors      = 0;
+        bsl::size_t numDetachmetns = 0;
 
         for (int i = 0; i < numResults; ++i) {
             struct ::kevent e = results[i];
@@ -2222,7 +2225,9 @@ void Kqueue::poll(ntci::Waiter waiter)
             BSLS_ASSERT(descriptorHandle != ntsa::k_INVALID_HANDLE);
 
             bsl::shared_ptr<ntcs::RegistryEntry> entry;
-            if (!d_registry.lookup(&entry, descriptorHandle)) {
+            if (!d_registry.lookupAndMarkProcessingOngoing(&entry,
+                                                           descriptorHandle))
+            {
                 continue;
             }
 
@@ -2305,51 +2310,59 @@ void Kqueue::poll(ntci::Waiter waiter)
                     }
                 }
             }
-        }
-
-        if (NTCCFG_UNLIKELY(numReadable == 0 && numWritable == 0 &&
-                            numErrors == 0))
-        {
-            NTCS_METRICS_UPDATE_SPURIOUS_WAKEUP();
-            bslmt::ThreadUtil::yield();
-        }
-        else {
-            NTCS_METRICS_UPDATE_POLL(numReadable, numWritable, numErrors);
-        }
-    }
-    else if (rc == 0) {
-        NTCO_KQUEUE_LOG_WAIT_TIMEOUT();
-        NTCS_METRICS_UPDATE_POLL(0, 0, 0);
-    }
-    else if (rc < 0) {
-        if (errno == EINTR) {
-            // MRM: Handle this errno.
-        }
-        else if (errno == EBADF) {
-            // MRM: Handle this errno.
-        }
-        else if (errno == ENOTSOCK) {
-            // MRM: Handle this errno.
-        }
-        else {
-            ntsa::Error error(errno);
-            NTCO_KQUEUE_LOG_WAIT_FAILURE(error);
+            if (entry->decrementProcessCounter() == 1 &&
+                entry->askForDetachmentAnnouncementPermission())
+            {
+                entry->announceDetached();
+                entry->clear();
+                ++numDetachments;
+            }
         }
     }
 
-    // Invoke functions deferred while processing each polled event and process
-    // all expired timers.
-
-    bsl::size_t numCycles = d_config.maxCyclesPerWait().value();
-    while (numCycles != 0) {
-        if (d_chronology.hasAnyScheduledOrDeferred()) {
-            d_chronology.announce();
-            --numCycles;
-        }
-        else {
-            break;
-        }
+    if (NTCCFG_UNLIKELY(numReadable == 0 && numWritable == 0 &&
+                        numErrors == 0 && numDetachmetns == 0))
+    {
+        NTCS_METRICS_UPDATE_SPURIOUS_WAKEUP();
+        bslmt::ThreadUtil::yield();
     }
+    else {
+        NTCS_METRICS_UPDATE_POLL(numReadable, numWritable, numErrors);
+    }
+}
+else if (rc == 0) {
+    NTCO_KQUEUE_LOG_WAIT_TIMEOUT();
+    NTCS_METRICS_UPDATE_POLL(0, 0, 0);
+}
+else if (rc < 0) {
+    if (errno == EINTR) {
+        // MRM: Handle this errno.
+    }
+    else if (errno == EBADF) {
+        // MRM: Handle this errno.
+    }
+    else if (errno == ENOTSOCK) {
+        // MRM: Handle this errno.
+    }
+    else {
+        ntsa::Error error(errno);
+        NTCO_KQUEUE_LOG_WAIT_FAILURE(error);
+    }
+}
+
+// Invoke functions deferred while processing each polled event and process
+// all expired timers.
+
+bsl::size_t numCycles = d_config.maxCyclesPerWait().value();
+while (numCycles != 0) {
+    if (d_chronology.hasAnyScheduledOrDeferred()) {
+        d_chronology.announce();
+        --numCycles;
+    }
+    else {
+        break;
+    }
+}
 }
 
 void Kqueue::interruptOne()
