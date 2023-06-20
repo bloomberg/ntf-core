@@ -18,10 +18,10 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntco_eventport_cpp, "$Id$ $CSID$")
 
-#if NTC_BUILD_WITH_EVENTPORT
-//#if 1
-#if defined(BSLS_PLATFORM_OS_SOLARIS)
-//#if 1
+#define SMITROFANOV_TMP 0
+
+#if NTC_BUILD_WITH_EVENTPORT || SMITROFANOV_TMP
+#if defined(BSLS_PLATFORM_OS_SOLARIS) || SMITROFANOV_TMP
 
 #include <ntcr_datagramsocket.h>
 #include <ntcr_listenersocket.h>
@@ -898,9 +898,8 @@ EventPort::EventPort(const ntca::ReactorConfig&         configuration,
                      bslma::Allocator*                  basicAllocator)
 : d_object("ntco::EventPort")
 , d_port(-1)
-, d_detachFunctor(NTCCFG_BIND(&EventPort::removeDetached,
-                              this,
-                              NTCCFG_BIND_PLACEHOLDER_1))
+, d_detachFunctor(
+      NTCCFG_BIND(&EventPort::removeDetached, this, NTCCFG_BIND_PLACEHOLDER_1))
 , d_registry(basicAllocator)
 , d_chronology(this, basicAllocator)
 , d_user_sp(user)
@@ -2000,12 +1999,12 @@ void EventPort::run(ntci::Waiter waiter)
                     }
                 }
 
-                if (entry->decrementProcessCounter() == 1) {
-                    if (entry->askForDetachmentAnnouncementPermission()) {
-                        entry->announceDetached();
-                        entry->clear();
-                        ++numDetachments;
-                    }
+                if (entry->decrementProcessCounter() == 1 &&
+                    entry->askForDetachmentAnnouncementPermission())
+                {
+                    entry->announceDetached();
+                    entry->clear();
+                    ++numDetachments;
                 }
             }
 
@@ -2100,9 +2099,10 @@ void EventPort::poll(ntci::Waiter waiter)
                      timeout >= 0 ? &ts : 0);
 
     if (rc == 0 && eventCount > 0) {
-        bsl::size_t numReadable = 0;
-        bsl::size_t numWritable = 0;
-        bsl::size_t numErrors   = 0;
+        bsl::size_t numReadable    = 0;
+        bsl::size_t numWritable    = 0;
+        bsl::size_t numErrors      = 0;
+        bsl::size_t numDetachments = 0;
 
         for (uint_t i = 0; i < eventCount; ++i) {
             port_event_t event = eventList[i];
@@ -2115,7 +2115,9 @@ void EventPort::poll(ntci::Waiter waiter)
             NTCO_EVENTPORT_LOG_EVENTS(descriptorHandle, event.portev_events);
 
             bsl::shared_ptr<ntcs::RegistryEntry> entry;
-            if (!d_registry.lookup(&entry, descriptorHandle)) {
+            if (!d_registry.lookupAndMarkProcessingOngoing(&entry,
+                                                           descriptorHandle))
+            {
                 continue;
             }
 
@@ -2240,10 +2242,17 @@ void EventPort::poll(ntci::Waiter waiter)
                     }
                 }
             }
+            if (entry->decrementProcessCounter() == 1 &&
+                entry->askForDetachmentAnnouncementPermission())
+            {
+                entry->announceDetached();
+                entry->clear();
+                ++numDetachments;
+            }
         }
 
         if (NTCCFG_UNLIKELY(numReadable == 0 && numWritable == 0 &&
-                            numErrors == 0))
+                            numErrors == 0 && numDetachments == 0))
         {
             NTCS_METRICS_UPDATE_SPURIOUS_WAKEUP();
             bslmt::ThreadUtil::yield();
