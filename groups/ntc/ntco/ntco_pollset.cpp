@@ -1856,12 +1856,11 @@ ntsa::Error Pollset::detachSocket(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket,
     const ntci::SocketDetachedCallback&         callback)
 {
-    ntsa::Error error;
+    ntsa::Error error = d_registry.removeAndGetReadyToDetach(socket,
+                                                             callback,
+                                                             d_detachFunctor);
 
-    /*   bsl::shared_ptr<ntcs::RegistryEntry> entry =*/d_registry
-        .removeAndGetReadyToDetach(socket, callback, d_detachFunctor);
-
-    return ntsa::Error();  //TODO: handle error cases
+    return error;
 }
 
 ntsa::Error Pollset::detachSocket(ntsa::Handle handle)
@@ -1890,12 +1889,11 @@ ntsa::Error Pollset::detachSocket(ntsa::Handle handle)
 ntsa::Error Pollset::detachSocket(ntsa::Handle                        handle,
                                   const ntci::SocketDetachedCallback& callback)
 {
-    ntsa::Error error;
+    ntsa::Error error = d_registry.removeAndGetReadyToDetach(handle,
+                                                             callback,
+                                                             d_detachFunctor);
 
-    /*   bsl::shared_ptr<ntcs::RegistryEntry> entry =*/d_registry
-        .removeAndGetReadyToDetach(handle, callback, d_detachFunctor);
-
-    return ntsa::Error();  //TODO: handle error cases
+    return error;
 }
 
 ntsa::Error Pollset::closeAll()

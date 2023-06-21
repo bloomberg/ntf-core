@@ -375,14 +375,12 @@ class RegistryEntryCatalog
     /// registry.
     bsl::shared_ptr<ntcs::RegistryEntry> remove(ntsa::Handle handle);
 
-    bsl::shared_ptr<ntcs::RegistryEntry>
-    removeAndGetReadyToDetach(  //TODO: bad naming, there is no try
+    ntsa::Error removeAndGetReadyToDetach(
         const bsl::shared_ptr<ntci::ReactorSocket>& descriptor,
         const ntci::SocketDetachedCallback&         callback,
         const EntryFunctor&                         functor);
 
-    bsl::shared_ptr<ntcs::RegistryEntry>
-    removeAndGetReadyToDetach(  //TODO: bad naming, there is no try
+    ntsa::Error removeAndGetReadyToDetach(
         ntsa::Handle                        handle,
         const ntci::SocketDetachedCallback& callback,
         const EntryFunctor&                 functor);
@@ -1157,11 +1155,10 @@ bsl::shared_ptr<ntcs::RegistryEntry> RegistryEntryCatalog::remove(
 }
 
 NTCCFG_INLINE
-bsl::shared_ptr<ntcs::RegistryEntry> RegistryEntryCatalog::
-    removeAndGetReadyToDetach(
-        const bsl::shared_ptr<ntci::ReactorSocket>& descriptor,
-        const ntci::SocketDetachedCallback&         callback,
-        const EntryFunctor&                         functor)
+ntsa::Error RegistryEntryCatalog::removeAndGetReadyToDetach(
+    const bsl::shared_ptr<ntci::ReactorSocket>& descriptor,
+    const ntci::SocketDetachedCallback&         callback,
+    const EntryFunctor&                         functor)
 {
     ntsa::Handle handle = descriptor->handle();
     BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
@@ -1182,27 +1179,29 @@ bsl::shared_ptr<ntcs::RegistryEntry> RegistryEntryCatalog::
                 entry_sp->setDetachmentRequired(callback);
                 ntsa::Error error = functor(entry_sp);
                 if (error) {
-                    return bsl::shared_ptr<ntcs::RegistryEntry>();
+                    return error;
                 }
             }
             else {
-                return bsl::shared_ptr<ntcs::RegistryEntry>();
+                return ntsa::Error::invalid();
             }
         }
         else {
-            return bsl::shared_ptr<ntcs::RegistryEntry>();
+            return ntsa::Error::invalid();
         }
     }
 
-    return entry_sp;
+    return ntsa::Error();
 }
 
 NTCCFG_INLINE
-bsl::shared_ptr<ntcs::RegistryEntry> RegistryEntryCatalog::
-    removeAndGetReadyToDetach(ntsa::Handle                        handle,
-                              const ntci::SocketDetachedCallback& callback,
-                              const EntryFunctor&                 functor)
+ntsa::Error RegistryEntryCatalog::removeAndGetReadyToDetach(
+    ntsa::Handle                        handle,
+    const ntci::SocketDetachedCallback& callback,
+    const EntryFunctor&                 functor)
 {
+    ntsa::Error error;
+
     BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
 
     const bsl::size_t index = static_cast<bsl::size_t>(handle);
@@ -1221,19 +1220,18 @@ bsl::shared_ptr<ntcs::RegistryEntry> RegistryEntryCatalog::
                 entry_sp->setDetachmentRequired(callback);
                 ntsa::Error error = functor(entry_sp);
                 if (error) {
-                    return bsl::shared_ptr<ntcs::RegistryEntry>();
+                    return error;
                 }
             }
             else {
-                return bsl::shared_ptr<ntcs::RegistryEntry>();
+                return ntsa::Error::invalid();
             }
         }
         else {
-            return bsl::shared_ptr<ntcs::RegistryEntry>();
+            return ntsa::Error::invalid();
         }
     }
-
-    return entry_sp;
+    return ntsa::Error();
 }
 
 NTCCFG_INLINE

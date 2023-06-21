@@ -1915,8 +1915,10 @@ ntsa::Error Kqueue::detachSocket(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket,
     const ntci::SocketDetachedCallback&         callback)
 {
-    d_registry.removeAndGetReadyToDetach(socket, callback, d_detachFunctor);
-    return ntsa::Error();  //TODO: error handling
+    ntsa::Error error = d_registry.removeAndGetReadyToDetach(socket,
+                                                             callback,
+                                                             d_detachFunctor);
+    return error;
 }
 
 ntsa::Error Kqueue::detachSocket(ntsa::Handle handle)
@@ -1945,8 +1947,10 @@ ntsa::Error Kqueue::detachSocket(ntsa::Handle handle)
 ntsa::Error Kqueue::detachSocket(ntsa::Handle                        handle,
                                  const ntci::SocketDetachedCallback& callback)
 {
-    d_registry.removeAndGetReadyToDetach(handle, callback, d_detachFunctor);
-    return ntsa::Error();  //TODO: error handling
+    ntsa::Error error = d_registry.removeAndGetReadyToDetach(handle,
+                                                             callback,
+                                                             d_detachFunctor);
+    return error;
 }
 
 ntsa::Error Kqueue::closeAll()

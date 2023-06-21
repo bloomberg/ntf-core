@@ -2090,17 +2090,14 @@ ntsa::Error Epoll::detachSocket(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket,
     const ntci::SocketDetachedCallback&         callback)
 {
-    ntsa::Error error;
+    ntsa::Error error = d_registry.removeAndGetReadyToDetach(socket,
+                                                             callback,
+                                                             d_detachFunctor);
 
-    bsl::shared_ptr<ntcs::RegistryEntry> entry =
-        d_registry.removeAndGetReadyToDetach(socket,
-                                             callback,
-                                             d_detachFunctor);
-
-    if (entry) {
-        return ntsa::Error();
+    if (error) {
+        return error;
     }
-    return ntsa::Error(ntsa::Error::e_INVALID);  // TODO: find a better error;
+    return error;
 }
 
 ntsa::Error Epoll::detachSocket(
@@ -2128,17 +2125,13 @@ ntsa::Error Epoll::detachSocket(
 ntsa::Error Epoll::detachSocket(ntsa::Handle                        handle,
                                 const ntci::SocketDetachedCallback& callback)
 {
-    ntsa::Error error;
-
-    bsl::shared_ptr<ntcs::RegistryEntry> entry =
-        d_registry.removeAndGetReadyToDetach(handle,
-                                             callback,
-                                             d_detachFunctor);
-
-    if (entry) {
-        return ntsa::Error();
+    ntsa::Error error = d_registry.removeAndGetReadyToDetach(handle,
+                                                             callback,
+                                                             d_detachFunctor);
+    if (error) {
+        return error;
     }
-    return ntsa::Error(ntsa::Error::e_INVALID);  // TODO: find a better error;
+    return error;
 }
 
 ntsa::Error Epoll::detachSocket(ntsa::Handle handle)

@@ -1822,14 +1822,11 @@ ntsa::Error Select::detachSocket(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket,
     const ntci::SocketDetachedCallback&         callback)
 {
-    ntsa::Error error;
+    ntsa::Error error = d_registry.removeAndGetReadyToDetach(socket,
+                                                             callback,
+                                                             d_detachFunctor);
 
-    bsl::shared_ptr<ntcs::RegistryEntry> entry =
-        d_registry.removeAndGetReadyToDetach(socket,
-                                             callback,
-                                             d_detachFunctor);
-
-    return ntsa::Error();
+    return error;
 }
 
 ntsa::Error Select::detachSocket(ntsa::Handle handle)
@@ -1858,14 +1855,11 @@ ntsa::Error Select::detachSocket(ntsa::Handle handle)
 ntsa::Error Select::detachSocket(ntsa::Handle                        handle,
                                  const ntci::SocketDetachedCallback& callback)
 {
-    ntsa::Error error;
+    ntsa::Error error = d_registry.removeAndGetReadyToDetach(handle,
+                                                             callback,
+                                                             d_detachFunctor);
 
-    bsl::shared_ptr<ntcs::RegistryEntry> entry =
-        d_registry.removeAndGetReadyToDetach(handle,
-                                             callback,
-                                             d_detachFunctor);
-
-    return ntsa::Error();
+    return error;
 }
 
 ntsa::Error Select::closeAll()

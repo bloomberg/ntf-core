@@ -1828,20 +1828,11 @@ ntsa::Error Devpoll::detachSocket(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket,
     const ntci::SocketDetachedCallback&         callback)
 {
-    ntsa::Error error;
+    ntsa::Error error = d_registry.removeAndGetReadyToDetach(socket,
+                                                             callback,
+                                                             d_detachFunctor);
 
-    bsl::shared_ptr<ntcs::RegistryEntry> entry =
-        d_registry.removeAndGetReadyToDetach(socket,
-                                             callback,
-                                             d_detachFunctor);
-
-    if (entry) {
-        return ntsa::Error();
-    }
-    else {
-        error = ntsa::Error(ntsa::Error::invalid());  //TODO: deal with errors
-    }
-    return error;  //TODO: implement error case handling
+    return error;
 }
 
 ntsa::Error Devpoll::detachSocket(ntsa::Handle handle)
@@ -1870,20 +1861,11 @@ ntsa::Error Devpoll::detachSocket(ntsa::Handle handle)
 ntsa::Error Devpoll::detachSocket(ntsa::Handle                        handle,
                                   const ntci::SocketDetachedCallback& callback)
 {
-    ntsa::Error error;
+    ntsa::Error error = d_registry.removeAndGetReadyToDetach(handle,
+                                                             callback,
+                                                             d_detachFunctor);
 
-    bsl::shared_ptr<ntcs::RegistryEntry> entry =
-        d_registry.removeAndGetReadyToDetach(handle,
-                                             callback,
-                                             d_detachFunctor);
-
-    if (entry) {
-        return ntsa::Error();
-    }
-    else {
-        error = ntsa::Error(ntsa::Error::invalid());  //TODO: deal with errors
-    }
-    return error;  //TODO: implement error case handling
+    return error;
 }
 
 ntsa::Error Devpoll::closeAll()
