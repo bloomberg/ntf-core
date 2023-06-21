@@ -236,6 +236,8 @@ class EventPort : public ntci::Reactor,
 
     ntsa::Error removeDetached(
         const bsl::shared_ptr<ntcs::RegistryEntry>& entry);
+    // Remove the specified 'entry' from the device and announce its detachment
+    // if possible. Return the error.
 
     void reinitializeControl();
     // Reinitialize the control mechanism and add it to the polled set.

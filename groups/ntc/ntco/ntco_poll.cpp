@@ -237,6 +237,7 @@ class Poll : public ntci::Reactor,
     /// Remove the specified 'handle' from the device.
     ntsa::Error remove(ntsa::Handle handle);
 
+    /// Remove the specified 'entry' from the device. Return the error.
     ntsa::Error removeDetached(
         const bsl::shared_ptr<ntcs::RegistryEntry>& entry);
 

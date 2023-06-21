@@ -262,6 +262,8 @@ class Epoll : public ntci::Reactor,
     /// Remove the specified 'handle' from the device.
     ntsa::Error remove(ntsa::Handle handle);
 
+    /// Remove the specified 'entry' from the device and announce its
+    /// detachment if possible. Return the error.
     ntsa::Error removeDetached(
         const bsl::shared_ptr<ntcs::RegistryEntry>& entry);
 
