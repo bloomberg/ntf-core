@@ -1348,8 +1348,10 @@ bool RegistryEntryCatalog::lookupAndMarkProcessingOngoing(
     const bsl::size_t index = static_cast<bsl::size_t>(handle);
 
     if (NTCCFG_LIKELY(index < d_vector.size())) {
-        d_vector[index]->addOngoingProcess();
         *entry = d_vector[index];
+        if (*entry) {
+            (*entry)->addOngoingProcess();
+        }
         return *entry;
     }
     else {
