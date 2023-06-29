@@ -2087,6 +2087,26 @@ void Poll::run(ntci::Waiter waiter)
             }
         }
 
+        bsl::size_t numDetachments = 0;
+        DetachList  detachList(d_allocator_p);
+        {
+            LockGuard lock(&d_generationMutex);
+            detachList.swap(d_detachList);
+        }
+        for (DetachList::const_iterator it = detachList.cbegin();
+             it != detachList.cend();
+             ++it)
+        {
+            ntcs::RegistryEntry& entry = **it;
+            if (entry.processCounter() == 0 &&
+                entry.askForDetachmentAnnouncementPermission())
+            {
+                entry.announceDetached();
+                entry.clear();
+                ++numDetachments;
+            }
+        }
+
         if (d_config.maxThreads().value() > 1) {
             d_generationSemaphore.post();
         }
@@ -2097,10 +2117,9 @@ void Poll::run(ntci::Waiter waiter)
             int numResults          = rc;
             int numResultsRemaining = numResults;
 
-            bsl::size_t numReadable    = 0;
-            bsl::size_t numWritable    = 0;
-            bsl::size_t numErrors      = 0;
-            bsl::size_t numDetachments = 0;
+            bsl::size_t numReadable = 0;
+            bsl::size_t numWritable = 0;
+            bsl::size_t numErrors   = 0;
 
             for (DescriptorList::const_iterator it =
                      result->d_descriptorList.begin();
@@ -2251,25 +2270,6 @@ void Poll::run(ntci::Waiter waiter)
                 {
                     entry->announceDetached();
                     entry->clear();
-                    ++numDetachments;
-                }
-            }
-
-            DetachList detachList(d_allocator_p);
-            {
-                LockGuard lock(&d_generationMutex);
-                detachList.swap(d_detachList);
-            }
-            for (DetachList::const_iterator it = detachList.cbegin();
-                 it != detachList.cend();
-                 ++it)
-            {
-                ntcs::RegistryEntry& entry = **it;
-                if (entry.processCounter() == 0 &&
-                    entry.askForDetachmentAnnouncementPermission())
-                {
-                    entry.announceDetached();
-                    entry.clear();
                     ++numDetachments;
                 }
             }
@@ -2460,6 +2460,27 @@ void Poll::poll(ntci::Waiter waiter)
         }
     }
 
+    bsl::size_t numDetachments = 0;
+    DetachList  detachList(d_allocator_p);
+    {
+        LockGuard lock(&d_generationMutex);
+        detachList.swap(d_detachList);
+    }
+
+    for (DetachList::const_iterator it = detachList.cbegin();
+         it != detachList.cend();
+         ++it)
+    {
+        ntcs::RegistryEntry& entry = **it;
+        if (entry.processCounter() == 0 &&
+            entry.askForDetachmentAnnouncementPermission())
+        {
+            entry.announceDetached();
+            entry.clear();
+            ++numDetachments;
+        }
+    }
+
     if (d_config.maxThreads().value() > 1) {
         d_generationSemaphore.post();
     }
@@ -2470,10 +2491,9 @@ void Poll::poll(ntci::Waiter waiter)
         int numResults          = rc;
         int numResultsRemaining = numResults;
 
-        bsl::size_t numReadable    = 0;
-        bsl::size_t numWritable    = 0;
-        bsl::size_t numErrors      = 0;
-        bsl::size_t numDetachments = 0;
+        bsl::size_t numReadable = 0;
+        bsl::size_t numWritable = 0;
+        bsl::size_t numErrors   = 0;
 
         for (DescriptorList::const_iterator it =
                  result->d_descriptorList.begin();
@@ -2619,25 +2639,6 @@ void Poll::poll(ntci::Waiter waiter)
             {
                 entry->announceDetached();
                 entry->clear();
-                ++numDetachments;
-            }
-        }
-        
-        DetachList detachList(d_allocator_p);
-        {
-            LockGuard lock(&d_generationMutex);
-            detachList.swap(d_detachList);
-        }
-        for (DetachList::const_iterator it = detachList.cbegin();
-             it != detachList.cend();
-             ++it)
-        {
-            ntcs::RegistryEntry& entry = **it;
-            if (entry.processCounter() == 0 &&
-                entry.askForDetachmentAnnouncementPermission())
-            {
-                entry.announceDetached();
-                entry.clear();
                 ++numDetachments;
             }
         }
