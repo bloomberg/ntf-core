@@ -841,27 +841,29 @@ ntsa::Error Select::removeDetached(
 
     NTCO_SELECT_LOG_REMOVE(handle);
 
-    LockGuard lock(&d_generationMutex);
+    {
+        LockGuard lock(&d_generationMutex);
 
-    FD_CLR(handle, &d_readable);
-    FD_CLR(handle, &d_writable);
-    FD_CLR(handle, &d_erroring);
+        FD_CLR(handle, &d_readable);
+        FD_CLR(handle, &d_writable);
+        FD_CLR(handle, &d_erroring);
 
-    if (handle >= d_maxHandle) {
-        while (d_maxHandle != 0) {
-            if (FD_ISSET(d_maxHandle, &d_readable) ||
-                FD_ISSET(d_maxHandle, &d_writable))
-            {
-                break;
+        if (handle >= d_maxHandle) {
+            while (d_maxHandle != 0) {
+                if (FD_ISSET(d_maxHandle, &d_readable) ||
+                    FD_ISSET(d_maxHandle, &d_writable))
+                {
+                    break;
+                }
+
+                --d_maxHandle;
             }
-
-            --d_maxHandle;
         }
+
+        d_detachList.push_back(entry);
+
+        ++d_generation;
     }
-
-    d_detachList.push_back(entry);
-
-    ++d_generation;
 
     Select::interruptOne();
 
@@ -2729,7 +2731,7 @@ void Select::interruptOne()
         return;
     }
 
-    ntsa::Error error = d_controller_sp->interrupt(1);
+    ntsa::Error error = d_controller_sp->interrupt(1, true);
     if (NTCCFG_UNLIKELY(error)) {
         reinitializeControl();
     }

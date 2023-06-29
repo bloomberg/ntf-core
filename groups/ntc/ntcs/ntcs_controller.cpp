@@ -321,7 +321,7 @@ Controller::~Controller()
 #endif
 }
 
-ntsa::Error Controller::interrupt(unsigned int numWakeups)
+ntsa::Error Controller::interrupt(unsigned int numWakeups, bool force)
 {
 #if NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_TCP_SOCKET ||                  \
     NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_UNIX_DOMAIN_SOCKET
@@ -424,7 +424,12 @@ ntsa::Error Controller::interrupt(unsigned int numWakeups)
     NTCCFG_LOCK_SCOPE_ENTER(&d_mutex);
 
     if (numWakeups <= d_pending) {
-        return ntsa::Error();
+        if (force) {
+            d_pending += numWakeups;
+        }
+        else {
+            return ntsa::Error();
+        }
     }
 
     unsigned int numToWrite =

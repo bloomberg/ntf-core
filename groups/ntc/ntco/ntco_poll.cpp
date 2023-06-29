@@ -2722,7 +2722,7 @@ void Poll::interruptOne()
         return;
     }
 
-    ntsa::Error error = d_controller_sp->interrupt(1);
+    ntsa::Error error = d_controller_sp->interrupt(1, true);
     if (NTCCFG_UNLIKELY(error)) {
         reinitializeControl();
     }
