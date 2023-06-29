@@ -840,28 +840,29 @@ ntsa::Error Select::removeDetached(
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(handle);
 
     NTCO_SELECT_LOG_REMOVE(handle);
+    {
+        LockGuard lock(&d_generationMutex);
 
-    LockGuard lock(&d_generationMutex);
+        FD_CLR(handle, &d_readable);
+        FD_CLR(handle, &d_writable);
+        FD_CLR(handle, &d_erroring);
 
-    FD_CLR(handle, &d_readable);
-    FD_CLR(handle, &d_writable);
-    FD_CLR(handle, &d_erroring);
+        if (handle >= d_maxHandle) {
+            while (d_maxHandle != 0) {
+                if (FD_ISSET(d_maxHandle, &d_readable) ||
+                    FD_ISSET(d_maxHandle, &d_writable))
+                {
+                    break;
+                }
 
-    if (handle >= d_maxHandle) {
-        while (d_maxHandle != 0) {
-            if (FD_ISSET(d_maxHandle, &d_readable) ||
-                FD_ISSET(d_maxHandle, &d_writable))
-            {
-                break;
+                --d_maxHandle;
             }
-
-            --d_maxHandle;
         }
+
+        d_detachList.push_back(entry);
+
+        ++d_generation;
     }
-
-    d_detachList.push_back(entry);
-
-    ++d_generation;
 
     Select::interruptOne();
 
@@ -1969,108 +1970,84 @@ void Select::run(ntci::Waiter waiter)
 #error Not implemented
 #endif
 
-        int         numResults     = rc;
-        bsl::size_t numDetachments = 0;
-        DetachList  detachList(d_allocator_p);
-        {
+        int numResults = rc;
+
+        if (rc > 0 && d_config.oneShot().value()) {
             LockGuard lock(&d_generationMutex);
+            int       numResultsRemaining = numResults;
 
-            if (rc > 0 && d_config.oneShot().value()) {
-                int numResultsRemaining = numResults;
-
-                for (bsl::size_t i = 0; i < maxDescriptor; ++i) {
-                    if (numResultsRemaining == 0) {
-                        break;
-                    }
-
-                    ntsa::Handle descriptorHandle =
-                        static_cast<ntsa::Handle>(i);
-
-                    if (descriptorHandle == d_controllerDescriptorHandle) {
-                        if (FD_ISSET(descriptorHandle, &result->d_erroring)) {
-                            BSLS_ASSERT(numResultsRemaining > 0);
-                            --numResultsRemaining;
-                        }
-
-                        if (FD_ISSET(descriptorHandle, &result->d_readable)) {
-                            BSLS_ASSERT(numResultsRemaining > 0);
-                            --numResultsRemaining;
-                        }
-
-                        if (FD_ISSET(descriptorHandle, &result->d_writable)) {
-                            BSLS_ASSERT(numResultsRemaining > 0);
-                            --numResultsRemaining;
-                        }
-                    }
-                    else {
-                        if (FD_ISSET(descriptorHandle, &result->d_erroring)) {
-                            if (FD_ISSET(descriptorHandle, &d_erroring)) {
-                                FD_CLR(descriptorHandle, &d_erroring);
-                            }
-                            else {
-                                FD_CLR(descriptorHandle, &result->d_erroring);
-
-                                BSLS_ASSERT(numResults > 0);
-                                --numResults;
-                            }
-
-                            BSLS_ASSERT(numResultsRemaining > 0);
-                            --numResultsRemaining;
-                        }
-
-                        if (FD_ISSET(descriptorHandle, &result->d_readable)) {
-                            if (FD_ISSET(descriptorHandle, &d_readable)) {
-                                FD_CLR(descriptorHandle, &d_readable);
-                            }
-                            else {
-                                FD_CLR(descriptorHandle, &result->d_readable);
-
-                                BSLS_ASSERT(numResults > 0);
-                                --numResults;
-                            }
-
-                            BSLS_ASSERT(numResultsRemaining > 0);
-                            --numResultsRemaining;
-                        }
-
-                        if (FD_ISSET(descriptorHandle, &result->d_writable)) {
-                            if (FD_ISSET(descriptorHandle, &d_writable)) {
-                                FD_CLR(descriptorHandle, &d_writable);
-                            }
-                            else {
-                                FD_CLR(descriptorHandle, &result->d_writable);
-
-                                BSLS_ASSERT(numResults > 0);
-                                --numResults;
-                            }
-
-                            BSLS_ASSERT(numResultsRemaining > 0);
-                            --numResultsRemaining;
-                        }
-                    }
+            for (bsl::size_t i = 0; i < maxDescriptor; ++i) {
+                if (numResultsRemaining == 0) {
+                    break;
                 }
 
-                BSLS_ASSERT(numResultsRemaining == 0);
-            }
+                ntsa::Handle descriptorHandle = static_cast<ntsa::Handle>(i);
 
-            detachList.swap(d_detachList);
-            // TODO: maybe it's better to allocate detachList by moving the content of d_detachList.
-            // It will allow to save capacity of d_detachList
-        }
+                if (descriptorHandle == d_controllerDescriptorHandle) {
+                    if (FD_ISSET(descriptorHandle, &result->d_erroring)) {
+                        BSLS_ASSERT(numResultsRemaining > 0);
+                        --numResultsRemaining;
+                    }
 
-        for (DetachList::const_iterator it = detachList.cbegin();
-             it != detachList.cend();
-             ++it)
-        {
-            ntcs::RegistryEntry& entry = **it;
-            if (entry.processCounter() == 0) {
-                if (entry.askForDetachmentAnnouncementPermission())
-                {  // none other thread is doing anything on the descriptor, I can schedule detachment
-                    entry.announceDetached();
-                    entry.clear();
-                    ++numDetachments;
+                    if (FD_ISSET(descriptorHandle, &result->d_readable)) {
+                        BSLS_ASSERT(numResultsRemaining > 0);
+                        --numResultsRemaining;
+                    }
+
+                    if (FD_ISSET(descriptorHandle, &result->d_writable)) {
+                        BSLS_ASSERT(numResultsRemaining > 0);
+                        --numResultsRemaining;
+                    }
+                }
+                else {
+                    if (FD_ISSET(descriptorHandle, &result->d_erroring)) {
+                        if (FD_ISSET(descriptorHandle, &d_erroring)) {
+                            FD_CLR(descriptorHandle, &d_erroring);
+                        }
+                        else {
+                            FD_CLR(descriptorHandle, &result->d_erroring);
+
+                            BSLS_ASSERT(numResults > 0);
+                            --numResults;
+                        }
+
+                        BSLS_ASSERT(numResultsRemaining > 0);
+                        --numResultsRemaining;
+                    }
+
+                    if (FD_ISSET(descriptorHandle, &result->d_readable)) {
+                        if (FD_ISSET(descriptorHandle, &d_readable)) {
+                            FD_CLR(descriptorHandle, &d_readable);
+                        }
+                        else {
+                            FD_CLR(descriptorHandle, &result->d_readable);
+
+                            BSLS_ASSERT(numResults > 0);
+                            --numResults;
+                        }
+
+                        BSLS_ASSERT(numResultsRemaining > 0);
+                        --numResultsRemaining;
+                    }
+
+                    if (FD_ISSET(descriptorHandle, &result->d_writable)) {
+                        if (FD_ISSET(descriptorHandle, &d_writable)) {
+                            FD_CLR(descriptorHandle, &d_writable);
+                        }
+                        else {
+                            FD_CLR(descriptorHandle, &result->d_writable);
+
+                            BSLS_ASSERT(numResults > 0);
+                            --numResults;
+                        }
+
+                        BSLS_ASSERT(numResultsRemaining > 0);
+                        --numResultsRemaining;
+                    }
                 }
             }
+
+            BSLS_ASSERT(numResultsRemaining == 0);
         }
 
         if (d_config.maxThreads().value() > 1) {
@@ -2082,9 +2059,10 @@ void Select::run(ntci::Waiter waiter)
 
             int numResultsRemaining = numResults;
 
-            bsl::size_t numReadable = 0;
-            bsl::size_t numWritable = 0;
-            bsl::size_t numErrors   = 0;
+            bsl::size_t numReadable    = 0;
+            bsl::size_t numWritable    = 0;
+            bsl::size_t numErrors      = 0;
+            bsl::size_t numDetachments = 0;
 
             for (bsl::size_t i = 0; i < maxDescriptor; ++i) {
                 if (numResultsRemaining == 0) {
@@ -2230,6 +2208,26 @@ void Select::run(ntci::Waiter waiter)
                     if (entry->askForDetachmentAnnouncementPermission()) {
                         entry->announceDetached();
                         entry->clear();
+                        ++numDetachments;
+                    }
+                }
+            }
+
+            DetachList detachList(d_allocator_p);
+            {
+                LockGuard lock(&d_generationMutex);
+                detachList.swap(d_detachList);
+            }
+
+            for (DetachList::const_iterator it = detachList.cbegin();
+                 it != detachList.cend();
+                 ++it)
+            {
+                ntcs::RegistryEntry& entry = **it;
+                if (entry.processCounter() == 0) {
+                    if (entry.askForDetachmentAnnouncementPermission()) {
+                        entry.announceDetached();
+                        entry.clear();
                         ++numDetachments;
                     }
                 }
@@ -2392,9 +2390,7 @@ void Select::poll(ntci::Waiter waiter)
 #error Not implemented
 #endif
 
-    int         numResults     = rc;
-    bsl::size_t numDetachments = 0;
-    DetachList  detachList(d_allocator_p);
+    int numResults = rc;
 
     if (rc > 0 && d_config.oneShot().value()) {
         LockGuard lock(&d_generationMutex);
@@ -2473,22 +2469,6 @@ void Select::poll(ntci::Waiter waiter)
         }
 
         BSLS_ASSERT(numResultsRemaining == 0);
-
-        detachList.swap(d_detachList);
-    }
-
-    for (DetachList::const_iterator it = detachList.cbegin();
-         it != detachList.cend();
-         ++it)
-    {
-        ntcs::RegistryEntry& entry = **it;
-        if (entry.processCounter() == 0) {
-            if (entry.askForDetachmentAnnouncementPermission()) {
-                entry.announceDetached();
-                entry.clear();
-                ++numDetachments;
-            }
-        }
     }
 
     if (d_config.maxThreads().value() > 1) {
@@ -2500,9 +2480,10 @@ void Select::poll(ntci::Waiter waiter)
 
         int numResultsRemaining = numResults;
 
-        bsl::size_t numReadable = 0;
-        bsl::size_t numWritable = 0;
-        bsl::size_t numErrors   = 0;
+        bsl::size_t numReadable    = 0;
+        bsl::size_t numWritable    = 0;
+        bsl::size_t numErrors      = 0;
+        bsl::size_t numDetachments = 0;
 
         for (bsl::size_t i = 0; i < maxDescriptor; ++i) {
             if (numResultsRemaining == 0) {
@@ -2644,6 +2625,25 @@ void Select::poll(ntci::Waiter waiter)
                 if (entry->askForDetachmentAnnouncementPermission()) {
                     entry->announceDetached();
                     entry->clear();
+                    ++numDetachments;
+                }
+            }
+        }
+        DetachList detachList(d_allocator_p);
+        {
+            LockGuard lock(&d_generationMutex);
+            detachList.swap(d_detachList);
+        }
+
+        for (DetachList::const_iterator it = detachList.cbegin();
+             it != detachList.cend();
+             ++it)
+        {
+            ntcs::RegistryEntry& entry = **it;
+            if (entry.processCounter() == 0) {
+                if (entry.askForDetachmentAnnouncementPermission()) {
+                    entry.announceDetached();
+                    entry.clear();
                     ++numDetachments;
                 }
             }
