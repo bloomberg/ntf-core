@@ -815,6 +815,9 @@ ntsa::Error DatagramSocket::privateShutdown(
         shutdownSend = true;
     }
 
+    const bool closeAnnouncementRequired =
+        d_closeCallback && d_shutdownState.completed();
+
     if (shutdownReceive) {
         if (d_shutdownState.canReceive()) {
             this->privateShutdownReceive(self,
@@ -840,6 +843,13 @@ ntsa::Error DatagramSocket::privateShutdown(
                 this->privateShutdownSend(self, defer);
             }
         }
+    }
+
+    if (closeAnnouncementRequired) {
+        d_closeCallback.dispatch(ntci::Strand::unknown(),
+                                 self,
+                                 true,
+                                 &d_mutex);
     }
 
     return ntsa::Error();
@@ -912,8 +922,19 @@ void DatagramSocket::privateShutdownSequence(
 
     // First handle flow control and detachment from the reactor, if necessary.
 
+    bool asyncDetachmentStarted = false;
     if (context.shutdownCompleted()) {
-        this->privateCloseFlowControl(self, defer);
+        ntci::SocketDetachedCallback detachCallback(
+            NTCCFG_BIND(&DatagramSocket::privateShutdownSequencePart2,
+                        this,
+                        self,
+                        context,
+                        defer),
+            this->strand(),
+            d_allocator_p);
+
+        asyncDetachmentStarted =
+            this->privateCloseFlowControl(self, defer, detachCallback);
     }
     else {
         if (context.shutdownSend()) {
@@ -932,6 +953,18 @@ void DatagramSocket::privateShutdownSequence(
                                           true);
         }
     }
+
+    if (!asyncDetachmentStarted) {
+        this->privateShutdownSequencePart2(self, context, defer);
+    }
+}
+
+void DatagramSocket::privateShutdownSequencePart2(
+    const bsl::shared_ptr<DatagramSocket>& self,
+    const ntcs::ShutdownContext&           context,
+    bool                                   defer)
+{
+    NTCI_LOG_CONTEXT();
 
     // Second handle socket shutdown.
 
@@ -1155,6 +1188,14 @@ void DatagramSocket::privateShutdownSequence(
                                        defer,
                                        &d_mutex);
 
+        if (d_closeCallback) {
+            d_closeCallback.dispatch(ntci::Strand::unknown(),
+                                     self,
+                                     true,
+                                     &d_mutex);
+            d_closeCallback.reset();  //TODO: is it necessary?
+        }
+
         d_resolver.reset();
 
         d_sessionStrand_sp.reset();
@@ -1334,9 +1375,10 @@ ntsa::Error DatagramSocket::privateApplyFlowControl(
     return ntsa::Error();
 }
 
-ntsa::Error DatagramSocket::privateCloseFlowControl(
+bool DatagramSocket::privateCloseFlowControl(
     const bsl::shared_ptr<DatagramSocket>& self,
-    bool                                   defer)
+    bool                                   defer,
+    const ntci::SocketDetachedCallback&    detachCallback)
 {
     bool applySend    = true;
     bool applyReceive = true;
@@ -1392,11 +1434,12 @@ ntsa::Error DatagramSocket::privateCloseFlowControl(
     if (d_systemHandle != ntsa::k_INVALID_HANDLE) {
         ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
         if (reactorRef) {
-            reactorRef->detachSocket(self);
+            reactorRef->detachSocket(self, detachCallback);
+            return true;
         }
     }
 
-    return ntsa::Error();
+    return false;
 }
 
 ntsa::Error DatagramSocket::privateThrottleSendBuffer(
@@ -2307,6 +2350,7 @@ DatagramSocket::DatagramSocket(
 , d_timestampCorrelator(ntsa::TransportMode::e_DATAGRAM,
                         bslma::Default::allocator(basicAllocator))
 , d_dgramTsIdCounter(0)
+, d_closeCallback(bslma::Default::allocator(basicAllocator))
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     if (reactor->maxThreads() > 1) {
@@ -4163,6 +4207,9 @@ void DatagramSocket::close(const ntci::CloseCallback& callback)
 
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
+    if (d_closeCallback)
+        return;
+
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
@@ -4175,9 +4222,10 @@ void DatagramSocket::close(const ntci::CloseCallback& callback)
                           ntsa::ShutdownMode::e_IMMEDIATE,
                           true);
 
-    if (callback) {
-        callback.dispatch(ntci::Strand::unknown(), self, true, &d_mutex);
-    }
+    //    if (callback) {
+    //        callback.dispatch(ntci::Strand::unknown(), self, true, &d_mutex);
+    //    }
+    d_closeCallback = callback;
 }
 
 ntsa::Error DatagramSocket::timestampOutgoingData(bool enable)

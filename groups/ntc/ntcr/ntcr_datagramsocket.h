@@ -108,6 +108,7 @@ class DatagramSocket : public ntci::DatagramSocket,
     ntca::DatagramSocketOptions                  d_options;
     ntcu::TimestampCorrelator                    d_timestampCorrelator;
     bsl::uint32_t                                d_dgramTsIdCounter;
+    ntci::CloseCallback                          d_closeCallback;
     bslma::Allocator*                            d_allocator_p;
 
   private:
@@ -211,6 +212,11 @@ class DatagramSocket : public ntci::DatagramSocket,
                                  const ntcs::ShutdownContext& context,
                                  bool                         defer);
 
+    void privateShutdownSequencePart2(
+        const bsl::shared_ptr<DatagramSocket>& self,
+        const ntcs::ShutdownContext&           context,
+        bool                                   defer);
+
     /// Enable copying from the socket buffers in the specified 'direction'.
     /// The behavior is undefined unless 'd_mutex' is locked.
     ntsa::Error privateRelaxFlowControl(
@@ -230,10 +236,12 @@ class DatagramSocket : public ntci::DatagramSocket,
         bool                                   lock);
 
     /// Disable copying from socket buffers in both directions and detach
-    /// the socket from the reactor.
-    ntsa::Error privateCloseFlowControl(
+    /// the socket from the reactor. Return true if asynchronous detachment
+    /// started, otherwise return false
+    bool privateCloseFlowControl(
         const bsl::shared_ptr<DatagramSocket>& self,
-        bool                                   defer);
+        bool                                   defer,
+        const ntci::SocketDetachedCallback&    detachCallback);
 
     /// Test if rate limiting is applied to copying to the send buffer, and
     /// if so, determine whether more data is allowed to be copied to the
