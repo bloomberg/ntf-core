@@ -94,6 +94,7 @@ class ListenerSocket : public ntci::ListenerSocket,
     bool                                         d_acceptGreedily;
     const bool                                   d_oneShot;
     ntca::ListenerSocketOptions                  d_options;
+    ntci::CloseCallback                          d_closeCallback;
     bslma::Allocator*                            d_allocator_p;
 
   private:
@@ -181,6 +182,12 @@ class ListenerSocket : public ntci::ListenerSocket,
                                  const ntcs::ShutdownContext& context,
                                  bool                         defer);
 
+    void privateShutdownSequencePart2(
+        const bsl::shared_ptr<ListenerSocket>& self,
+        const ntcs::ShutdownContext&           context,
+        bool                                   defer,
+        bool                                   lock);
+
     /// Enable copying from the socket buffers in the specified 'direction'.
     /// The behavior is undefined unless 'd_mutex' is locked.
     ntsa::Error privateRelaxFlowControl(
@@ -200,10 +207,12 @@ class ListenerSocket : public ntci::ListenerSocket,
         bool                                   lock);
 
     /// Disable copying from socket buffers in both directions and detach
-    /// the socket from the reactor.
-    ntsa::Error privateCloseFlowControl(
+    /// the socket from the reactor. Return true if asynchronous detachment
+    /// started, otherwise return false
+    bool privateCloseFlowControl(
         const bsl::shared_ptr<ListenerSocket>& self,
-        bool                                   defer);
+        bool                                   defer,
+        const ntci::SocketDetachedCallback&    detachCallback);
 
     /// Test if rate limiting is applied to accepting from the backlog,
     /// and if so, determine whether more connections are allowed to be
