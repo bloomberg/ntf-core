@@ -215,7 +215,8 @@ class DatagramSocket : public ntci::DatagramSocket,
     void privateShutdownSequencePart2(
         const bsl::shared_ptr<DatagramSocket>& self,
         const ntcs::ShutdownContext&           context,
-        bool                                   defer);
+        bool                                   defer,
+        bool                                   lock);
 
     /// Enable copying from the socket buffers in the specified 'direction'.
     /// The behavior is undefined unless 'd_mutex' is locked.

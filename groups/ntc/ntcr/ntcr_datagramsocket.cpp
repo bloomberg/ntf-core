@@ -850,6 +850,7 @@ ntsa::Error DatagramSocket::privateShutdown(
                                  self,
                                  true,
                                  &d_mutex);
+        d_closeCallback.reset();
     }
 
     return ntsa::Error();
@@ -929,7 +930,8 @@ void DatagramSocket::privateShutdownSequence(
                         this,
                         self,
                         context,
-                        defer),
+                        defer,
+                        true),
             this->strand(),
             d_allocator_p);
 
@@ -955,16 +957,21 @@ void DatagramSocket::privateShutdownSequence(
     }
 
     if (!asyncDetachmentStarted) {
-        this->privateShutdownSequencePart2(self, context, defer);
+        this->privateShutdownSequencePart2(self, context, defer, false);
     }
 }
 
 void DatagramSocket::privateShutdownSequencePart2(
     const bsl::shared_ptr<DatagramSocket>& self,
     const ntcs::ShutdownContext&           context,
-    bool                                   defer)
+    bool                                   defer,
+    bool                                   lock)
 {
     NTCI_LOG_CONTEXT();
+
+    if (lock) {
+        d_mutex.lock();
+    }
 
     // Second handle socket shutdown.
 
@@ -1193,7 +1200,7 @@ void DatagramSocket::privateShutdownSequencePart2(
                                      self,
                                      true,
                                      &d_mutex);
-            d_closeCallback.reset();  //TODO: is it necessary?
+            d_closeCallback.reset();
         }
 
         d_resolver.reset();
@@ -1203,6 +1210,9 @@ void DatagramSocket::privateShutdownSequencePart2(
 
         d_managerStrand_sp.reset();
         d_manager_sp.reset();
+    }
+    if (lock) {
+        d_mutex.unlock();
     }
 }
 
@@ -1434,7 +1444,9 @@ bool DatagramSocket::privateCloseFlowControl(
     if (d_systemHandle != ntsa::k_INVALID_HANDLE) {
         ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
         if (reactorRef) {
+            d_mutex.unlock();
             reactorRef->detachSocket(self, detachCallback);
+            d_mutex.lock();
             return true;
         }
     }
@@ -4217,6 +4229,7 @@ void DatagramSocket::close(const ntci::CloseCallback& callback)
 
     // MRM: Announce discarded.
 
+    d_closeCallback = callback;
     this->privateShutdown(self,
                           ntsa::ShutdownType::e_BOTH,
                           ntsa::ShutdownMode::e_IMMEDIATE,
@@ -4225,7 +4238,6 @@ void DatagramSocket::close(const ntci::CloseCallback& callback)
     //    if (callback) {
     //        callback.dispatch(ntci::Strand::unknown(), self, true, &d_mutex);
     //    }
-    d_closeCallback = callback;
 }
 
 ntsa::Error DatagramSocket::timestampOutgoingData(bool enable)
