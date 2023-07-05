@@ -905,7 +905,7 @@ ntsa::Error Epoll::removeDetached(
             (entry->askForDetachmentAnnouncementPermission()))
         {
             // so this thread marked detached required as false
-            entry->announceDetached();
+            entry->announceDetached(this->getSelf(this));
             entry->clear();
             Epoll::interruptOne();
         }
@@ -2429,7 +2429,7 @@ void Epoll::run(ntci::Waiter waiter)
                 if (entry->decrementProcessCounter() == 1 &&
                     entry->askForDetachmentAnnouncementPermission())
                 {
-                    entry->announceDetached();
+                    entry->announceDetached(this->getSelf(this));
                     entry->clear();
                     ++numDetachments;
                 }
@@ -2722,7 +2722,7 @@ void Epoll::poll(ntci::Waiter waiter)
             if (entry->decrementProcessCounter() == 1 &&
                 entry->askForDetachmentAnnouncementPermission())
             {
-                entry->announceDetached();
+                entry->announceDetached(this->getSelf(this));
                 entry->clear();
                 ++numDetachments;
             }
@@ -2776,7 +2776,10 @@ void Epoll::poll(ntci::Waiter waiter)
 
 void Epoll::interruptOne()
 {
+    NTCI_LOG_CONTEXT();
+
     if (NTCCFG_LIKELY(isWaiter())) {
+        NTCI_LOG_INFO("Skip interruption due to isWaiter() returns true");
         return;
     }
 

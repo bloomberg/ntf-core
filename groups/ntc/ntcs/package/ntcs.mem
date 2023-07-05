@@ -8,6 +8,7 @@ ntcs_chronology
 ntcs_compat
 ntcs_controller
 ntcs_datapool
+ntcs_detachstate
 ntcs_dispatch
 ntcs_driver
 ntcs_event

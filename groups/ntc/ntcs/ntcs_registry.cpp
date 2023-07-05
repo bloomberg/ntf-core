@@ -148,12 +148,12 @@ bool RegistryEntry::announceError(const ntca::ReactorEvent& event)
     return process;
 }
 
-void RegistryEntry::announceDetached()
+void RegistryEntry::announceDetached(const bsl::shared_ptr<ntci::Executor>& executor)
 {
     if (d_detachCallback) {
-        d_detachCallback.execute(d_unknown_sp);
+        d_detachCallback.dispatch(d_unknown_sp, executor, true, NULL);
+        d_detachCallback.reset();
     }
-    d_detachCallback.reset();
 }
 
 RegistryEntryCatalog::RegistryEntryCatalog(bslma::Allocator* basicAllocator)

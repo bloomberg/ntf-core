@@ -2101,7 +2101,7 @@ void Poll::run(ntci::Waiter waiter)
             if (entry.processCounter() == 0 &&
                 entry.askForDetachmentAnnouncementPermission())
             {
-                entry.announceDetached();
+                entry.announceDetached(this->getSelf(this));
                 entry.clear();
                 ++numDetachments;
             }
@@ -2268,7 +2268,7 @@ void Poll::run(ntci::Waiter waiter)
                 if (entry->decrementProcessCounter() == 1 &&
                     entry->askForDetachmentAnnouncementPermission())
                 {
-                    entry->announceDetached();
+                    entry->announceDetached(this->getSelf(this));
                     entry->clear();
                     ++numDetachments;
                 }
@@ -2475,7 +2475,7 @@ void Poll::poll(ntci::Waiter waiter)
         if (entry.processCounter() == 0 &&
             entry.askForDetachmentAnnouncementPermission())
         {
-            entry.announceDetached();
+            entry.announceDetached(this->getSelf(this));
             entry.clear();
             ++numDetachments;
         }
@@ -2637,7 +2637,7 @@ void Poll::poll(ntci::Waiter waiter)
             if (entry->decrementProcessCounter() == 1 &&
                 entry->askForDetachmentAnnouncementPermission())
             {
-                entry->announceDetached();
+                entry->announceDetached(this->getSelf(this));
                 entry->clear();
                 ++numDetachments;
             }
@@ -2718,9 +2718,14 @@ void Poll::poll(ntci::Waiter waiter)
 
 void Poll::interruptOne()
 {
-    if (NTCCFG_LIKELY(isWaiter())) {
-        return;
-    }
+    NTCI_LOG_CONTEXT();
+
+//    if (NTCCFG_LIKELY(isWaiter())) {
+//        NTCI_LOG_INFO("Skipping interruption because this is a waiter thread");
+//        return;
+//    }
+    //when d_chronology.announce() is called then inside chronology functorsDue are moved to a temporary functor,
+    // so if a functor adds one more callback then it won't be processed
 
     ntsa::Error error = d_controller_sp->interrupt(1, true);
     if (NTCCFG_UNLIKELY(error)) {

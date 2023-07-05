@@ -37,6 +37,7 @@ ntsa::Error Reactor::showNotifications(
     const ntci::ReactorNotificationCallback& callback)
 {
     NTCCFG_WARNING_UNUSED(handle);
+    NTCCFG_WARNING_UNUSED(callback);
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 

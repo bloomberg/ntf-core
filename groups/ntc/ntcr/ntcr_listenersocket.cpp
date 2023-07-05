@@ -964,10 +964,13 @@ bool ListenerSocket::privateCloseFlowControl(
     if (d_systemHandle != ntsa::k_INVALID_HANDLE) {
         ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
         if (reactorRef) {
-            d_mutex.unlock();
-            reactorRef->detachSocket(self, detachCallback);
-            d_mutex.lock();
-            return true;
+            ntsa::Error error = reactorRef->detachSocket(self, detachCallback);
+            if (error) {
+                return false;
+            }
+            else {
+                return true;
+            }
         }
     }
 

@@ -280,6 +280,10 @@ void StreamSocket::processSocketReadable(const ntca::ReactorEvent& event)
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
+    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
+        return; //ignore messages from the reactor while detach is ongoing
+    }
+
     if (!d_shutdownState.canReceive()) {
         return;
     }
@@ -331,6 +335,10 @@ void StreamSocket::processSocketWritable(const ntca::ReactorEvent& event)
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+
+    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
+        return; //ignore messages from the reactor while detach is ongoing
+    }
 
     if (NTCCFG_UNLIKELY(d_connectInProgress)) {
         this->privateSocketWritableConnection(self);
@@ -387,8 +395,12 @@ void StreamSocket::processSocketError(const ntca::ReactorEvent& event)
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
+    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
+        return; //ignore messages from the reactor while detach is ongoing
+    }
+
     if (NTCCFG_UNLIKELY(d_connectInProgress)) {
-        this->privateFailConnect(self, event.error(), false, false);
+            this->privateFailConnect(self, event.error(), false, false);
     }
     else if (NTCCFG_UNLIKELY(d_upgradeInProgress)) {
         this->privateFailUpgrade(self, event.error(), "");
@@ -410,6 +422,10 @@ void StreamSocket::processNotifications(
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+
+    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
+        return; //ignore messages from the reactor while detach is ongoing
+    }
 
     const bsl::vector<ntsa::Notification>& nots =
         notifications.notifications();
@@ -472,17 +488,29 @@ void StreamSocket::processConnectRetryTimer(
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
+//    NTCI_LOG_INFO("processConnectRetryTimer descriptor %d", this->handle());
+
+    //    BSLS_ASSERT_OPT(d_detachState.get() != ntcs::DetachState::e_DETACH_INITIATED);
+
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         if (d_connectInProgress) {
             if (d_connectAttempts > 0) {
-                this->privateFailConnect(
-                    self,
-                    ntsa::Error(ntsa::Error::e_CONNECTION_TIMEOUT),
-                    false,
-                    false);
-            }
+                d_retryConnect =
+                    true;  //indicates that privateRetryConnect will be executed in privateFailConnect
 
-            this->privateRetryConnect(self);
+                if (d_detachState.get() !=
+                    ntcs::DetachState::e_DETACH_INITIATED)
+                {
+                    this->privateFailConnect(
+                        self,
+                        ntsa::Error(ntsa::Error::e_CONNECTION_TIMEOUT),
+                        false,
+                        false);
+                }
+            }
+            else {
+                this->privateRetryConnect(self);
+            }
         }
     }
 }
@@ -1286,6 +1314,9 @@ void StreamSocket::privateFailConnect(
         return;
     }
 
+    BSLS_ASSERT_OPT(d_detachState.get() !=
+                    ntcs::DetachState::e_DETACH_INITIATED);
+
     if (close) {
         d_connectOptions.setRetryCount(0);
     }
@@ -1319,6 +1350,11 @@ void StreamSocket::privateFailConnect(
         connectEvent.setType(ntca::ConnectEventType::e_ERROR);
         connectEvent.setContext(connectContext);
 
+        NTCI_LOG_INFO("remaining attempts in the connectContext: %zu",
+                      connectContext.attemptsRemaining());
+
+        bool asyncDetachmentStarted = false;
+
         if (d_connectOptions.retryCount().valueOr(bsl::size_t(0)) == 0) {
             d_openState.set(ntcs::OpenState::e_CLOSED);
             d_connectInProgress = false;
@@ -1342,10 +1378,33 @@ void StreamSocket::privateFailConnect(
             if (d_systemHandle != ntsa::k_INVALID_HANDLE) {
                 ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
                 if (reactorRef) {
-                    reactorRef->detachSocket(self);
+                    ntci::SocketDetachedCallback detachCallback(
+                        NTCCFG_BIND(&StreamSocket::privateFailConnectPart2,
+                                    this,
+                                    self,
+                                    error,
+                                    defer,
+                                    close,
+                                    connectCallback,
+                                    connectEvent,
+                                    true),
+                        this->strand(),
+                        d_allocator_p);
+
+                    d_detachState.set(ntcs::DetachState::e_DETACH_INITIATED);
+                    ntsa::Error error =
+                        reactorRef->detachSocket(self, detachCallback);
+                    if (error) {
+                        d_detachState.set(ntcs::DetachState::e_DETACHED);
+                        asyncDetachmentStarted = false;
+                    }
+                    else {
+                        asyncDetachmentStarted = true;
+                    }
                 }
             }
 
+            //TODO: should I wait for detachment to finish before releasing reactor reference?
             ntcs::ObserverRef<ntci::ReactorPool> reactorPoolRef(
                 &d_reactorPool);
             if (reactorPoolRef) {
@@ -1361,51 +1420,144 @@ void StreamSocket::privateFailConnect(
             if (d_systemHandle != ntsa::k_INVALID_HANDLE) {
                 ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
                 if (reactorRef) {
-                    reactorRef->detachSocket(self);
+                    ntci::SocketDetachedCallback detachCallback(
+                        NTCCFG_BIND(&StreamSocket::privateFailConnectPart2,
+                                    this,
+                                    self,
+                                    error,
+                                    defer,
+                                    close,
+                                    connectCallback,
+                                    connectEvent,
+                                    true),
+                        this->strand(),
+                        d_allocator_p);
+
+                    d_detachState.set(ntcs::DetachState::e_DETACH_INITIATED);
+                    ntsa::Error error =
+                        reactorRef->detachSocket(self, detachCallback);
+                    if (error) {
+                        d_detachState.set(ntcs::DetachState::e_DETACHED);
+                        asyncDetachmentStarted = false;
+                    }
+                    else {
+                        asyncDetachmentStarted = true;
+                    }
                 }
             }
-
             d_openState.set(ntcs::OpenState::e_WAITING);
         }
 
-        if (d_systemHandle != ntsa::k_INVALID_HANDLE) {
-            if (d_socket_sp) {
-                ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
-                if (reactorRef) {
-                    reactorRef->releaseHandleReservation();
-                }
+        if (!asyncDetachmentStarted) {
+            privateFailConnectPart2(self,
+                                    error,
+                                    defer,
+                                    close,
+                                    connectCallback,
+                                    connectEvent,
+                                    false);
+        }
+    }
+    else {
+        if (d_retryConnect) {
+            NTCI_LOG_INFO(
+                "privateFailConnect going to retryConnect for descriptor %d",
+                this->handle());
+            d_retryConnect = false;
+            this->privateRetryConnect(self);
+        }
+    }
+}
 
-                BSLS_ASSERT(d_socket_sp->handle() == d_publicHandle);
-                BSLS_ASSERT(d_socket_sp->handle() == d_systemHandle);
+void StreamSocket::privateFailConnectPart2(
+    const bsl::shared_ptr<StreamSocket>& self,
+    const ntsa::Error&                   error,
+    bool                                 defer,
+    bool                                 close,
+    const ntci::ConnectCallback&         connectCallback,
+    const ntca::ConnectEvent&            connectEvent,
+    bool                                 lock)
+{
+    NTCI_LOG_CONTEXT();
 
-                d_socket_sp->close();
+    NTCI_LOG_INFO(
+        "privateFailConnectPart2 for descriptor %d, attempts remaining %zu",
+        this->handle(),
+        connectEvent.context().attemptsRemaining());
 
-                NTCI_LOG_TRACE("Stream socket closed descriptor %d",
-                               (int)(d_publicHandle));
+    if (lock) {
+        d_mutex.lock();
+        BSLS_ASSERT_OPT(d_detachState.get() ==
+                        ntcs::DetachState::e_DETACH_INITIATED);
+        d_detachState.set(ntcs::DetachState::e_DETACHED);
+    }
+    else {
+        BSLS_ASSERT_OPT(d_detachState.get() !=
+                        ntcs::DetachState::e_DETACH_INITIATED);
+    }
 
-                d_publicHandle = ntsa::k_INVALID_HANDLE;
-                d_systemHandle = ntsa::k_INVALID_HANDLE;
+    if (d_systemHandle != ntsa::k_INVALID_HANDLE) {
+        if (d_socket_sp) {
+            ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
+            if (reactorRef) {
+                reactorRef->releaseHandleReservation();
             }
+
+            BSLS_ASSERT(d_socket_sp->handle() == d_publicHandle);
+            BSLS_ASSERT(d_socket_sp->handle() == d_systemHandle);
+
+            d_socket_sp->close();
+
+            NTCI_LOG_TRACE("Stream socket closed descriptor %d",
+                           (int)(d_publicHandle));
+
+            d_publicHandle = ntsa::k_INVALID_HANDLE;
+            d_systemHandle = ntsa::k_INVALID_HANDLE;
         }
+    }
 
-        if (connectCallback) {
-            connectCallback.dispatch(self,
-                                     connectEvent,
-                                     d_reactorStrand_sp,
-                                     self,
-                                     defer,
-                                     &d_mutex);
-        }
+    if (connectCallback) {
+        connectCallback.dispatch(self,
+                                 connectEvent,
+                                 d_reactorStrand_sp,
+                                 self,
+                                 defer,
+                                 &d_mutex);
+    }
 
-        if (d_connectOptions.retryCount().valueOr(bsl::size_t(0)) == 0) {
-            d_resolver.reset();
+    if (d_closeCallback) {
+        d_closeCallback.dispatch(ntci::Strand::unknown(),
+                                 self,
+                                 true,
+                                 &d_mutex);
+        d_closeCallback.reset();
+    }
 
-            d_sessionStrand_sp.reset();
-            d_session_sp.reset();
+    if (d_connectOptions.retryCount().valueOr(bsl::size_t(0)) == 0) {
+        d_resolver.reset();
 
-            d_managerStrand_sp.reset();
-            d_manager_sp.reset();
-        }
+        d_sessionStrand_sp.reset();
+        d_session_sp.reset();
+
+        d_managerStrand_sp.reset();
+        d_manager_sp.reset();
+    }
+
+    if (d_retryConnect) {
+        NTCI_LOG_INFO(
+            "privateFailConnectPart2 going to retryConnect for descriptor %d",
+            this->handle());
+        d_retryConnect = false;
+        this->privateRetryConnect(self);
+    }
+    else {
+        NTCI_LOG_INFO(
+            "privateFailConnectPart2 DO NOT retryConnect for descriptor %d",
+            this->handle());
+    }
+
+    if (lock) {
+        d_mutex.unlock();
     }
 }
 
@@ -1552,6 +1704,9 @@ ntsa::Error StreamSocket::privateShutdown(
         shutdownSend = true;
     }
 
+    const bool closeAnnouncementRequired =
+        d_closeCallback && d_shutdownState.completed();
+
     if (shutdownReceive) {
         if (d_shutdownState.canReceive()) {
             this->privateShutdownReceive(self,
@@ -1577,6 +1732,14 @@ ntsa::Error StreamSocket::privateShutdown(
                 this->privateShutdownSend(self, defer);
             }
         }
+    }
+
+    if (closeAnnouncementRequired) {
+        d_closeCallback.dispatch(ntci::Strand::unknown(),
+                                 self,
+                                 true,
+                                 &d_mutex);
+        d_closeCallback.reset();
     }
 
     return ntsa::Error();
@@ -1660,8 +1823,20 @@ void StreamSocket::privateShutdownSequence(
 
     // First handle flow control and detachment from the reactor, if necessary.
 
+    bool asyncDetachmentStarted = false;
+
     if (context.shutdownCompleted()) {
-        this->privateCloseFlowControl(self, defer);
+        ntci::SocketDetachedCallback detachCallback(
+            NTCCFG_BIND(&StreamSocket::privateShutdownSequencePart2,
+                        this,
+                        self,
+                        context,
+                        defer,
+                        true),
+            this->strand(),
+            d_allocator_p);
+        asyncDetachmentStarted =
+            this->privateCloseFlowControl(self, defer, detachCallback);
     }
     else {
         if (context.shutdownSend()) {
@@ -1681,6 +1856,28 @@ void StreamSocket::privateShutdownSequence(
         }
     }
 
+    if (!asyncDetachmentStarted) {
+        privateShutdownSequencePart2(self, context, defer, false);
+    }
+}
+
+void StreamSocket::privateShutdownSequencePart2(
+    const bsl::shared_ptr<StreamSocket>& self,
+    const ntcs::ShutdownContext&         context,
+    bool                                 defer,
+    bool                                 lock)
+{
+    NTCI_LOG_CONTEXT();
+    if (lock) {
+        BSLS_ASSERT_OPT(d_detachState.get() ==
+                        ntcs::DetachState::e_DETACH_INITIATED);
+        d_mutex.lock();
+        d_detachState.set(ntcs::DetachState::e_DETACHED);
+    }
+    else {
+        BSLS_ASSERT_OPT(d_detachState.get() !=
+                        ntcs::DetachState::e_DETACH_INITIATED);
+    }
     // Second handle socket shutdown.
 
     if (context.shutdownSend()) {
@@ -1946,6 +2143,14 @@ void StreamSocket::privateShutdownSequence(
                                        defer,
                                        &d_mutex);
 
+        if (d_closeCallback) {
+            d_closeCallback.dispatch(ntci::Strand::unknown(),
+                                     self,
+                                     true,
+                                     &d_mutex);
+            d_closeCallback.reset();
+        }
+
         d_resolver.reset();
 
         d_sessionStrand_sp.reset();
@@ -1953,6 +2158,9 @@ void StreamSocket::privateShutdownSequence(
 
         d_managerStrand_sp.reset();
         d_manager_sp.reset();
+    }
+    if (lock) {
+        d_mutex.unlock();
     }
 }
 
@@ -2125,9 +2333,10 @@ ntsa::Error StreamSocket::privateApplyFlowControl(
     return ntsa::Error();
 }
 
-ntsa::Error StreamSocket::privateCloseFlowControl(
+bool StreamSocket::privateCloseFlowControl(
     const bsl::shared_ptr<StreamSocket>& self,
-    bool                                 defer)
+    bool                                 defer,
+    const ntci::SocketDetachedCallback&  detachCallback)
 {
     bool applySend    = true;
     bool applyReceive = true;
@@ -2183,11 +2392,19 @@ ntsa::Error StreamSocket::privateCloseFlowControl(
     if (d_systemHandle != ntsa::k_INVALID_HANDLE) {
         ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
         if (reactorRef) {
-            reactorRef->detachSocket(self);
+            d_detachState.set(ntcs::DetachState::e_DETACH_INITIATED);
+            ntsa::Error error = reactorRef->detachSocket(self, detachCallback);
+            if (error) {
+                d_detachState.set(ntcs::DetachState::e_DETACHED);
+                return false;
+            }
+            else {
+                return true;
+            }
         }
     }
 
-    return ntsa::Error();
+    return false;
 }
 
 ntsa::Error StreamSocket::privateThrottleSendBuffer(
@@ -3987,6 +4204,9 @@ StreamSocket::StreamSocket(
 , d_timestampCorrelator(ntsa::TransportMode::e_STREAM,
                         bslma::Default::allocator(basicAllocator))
 , d_totalBytesSentTimestamped(0)
+, d_retryConnect(false)
+, d_detachState(ntcs::DetachState::e_NOT_DETACHED)
+, d_closeCallback(bslma::Default::allocator(basicAllocator))
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     if (reactor->maxThreads() > 1) {
@@ -6132,6 +6352,12 @@ void StreamSocket::close(const ntci::CloseCallback& callback)
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
+    if (d_closeCallback) {
+        return;
+    }
+
+    d_closeCallback = callback;
+
     if (d_connectInProgress) {
         this->privateFailConnect(self,
                                  ntsa::Error(ntsa::Error::e_CANCELLED),
@@ -6147,9 +6373,9 @@ void StreamSocket::close(const ntci::CloseCallback& callback)
                               true);
     }
 
-    if (callback) {
-        callback.dispatch(ntci::Strand::unknown(), self, true, &d_mutex);
-    }
+    //    if (callback) {
+    //        callback.dispatch(ntci::Strand::unknown(), self, true, &d_mutex);
+    //    }
 }
 
 void StreamSocket::execute(const Functor& functor)

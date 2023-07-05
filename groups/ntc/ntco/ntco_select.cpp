@@ -2068,7 +2068,7 @@ void Select::run(ntci::Waiter waiter)
             if (entry.processCounter() == 0) {
                 if (entry.askForDetachmentAnnouncementPermission())
                 {  // none other thread is doing anything on the descriptor, I can schedule detachment
-                    entry.announceDetached();
+                    entry.announceDetached(this->getSelf(this));
                     entry.clear();
                     ++numDetachments;
                 }
@@ -2230,7 +2230,7 @@ void Select::run(ntci::Waiter waiter)
 
                 if (entry->decrementProcessCounter() == 1) {
                     if (entry->askForDetachmentAnnouncementPermission()) {
-                        entry->announceDetached();
+                        entry->announceDetached(this->getSelf(this));
                         entry->clear();
                         ++numDetachments;
                     }
@@ -2486,7 +2486,7 @@ void Select::poll(ntci::Waiter waiter)
         ntcs::RegistryEntry& entry = **it;
         if (entry.processCounter() == 0) {
             if (entry.askForDetachmentAnnouncementPermission()) {
-                entry.announceDetached();
+                entry.announceDetached(this->getSelf(this));
                 entry.clear();
                 ++numDetachments;
             }
@@ -2644,7 +2644,7 @@ void Select::poll(ntci::Waiter waiter)
             }
             if (entry->decrementProcessCounter() == 1) {
                 if (entry->askForDetachmentAnnouncementPermission()) {
-                    entry->announceDetached();
+                    entry->announceDetached(this->getSelf(this));
                     entry->clear();
                     ++numDetachments;
                 }
@@ -2727,9 +2727,10 @@ void Select::poll(ntci::Waiter waiter)
 
 void Select::interruptOne()
 {
-    if (NTCCFG_LIKELY(isWaiter())) {
-        return;
-    }
+//    if (NTCCFG_LIKELY(isWaiter())) {
+//        return;
+//    }
+    // see Poll::interruptOne
 
     ntsa::Error error = d_controller_sp->interrupt(1, true);
     if (NTCCFG_UNLIKELY(error)) {
