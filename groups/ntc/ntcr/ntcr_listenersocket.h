@@ -32,6 +32,7 @@ BSLS_IDENT("$Id: $")
 #include <ntci_strand.h>
 #include <ntci_timer.h>
 #include <ntcq_accept.h>
+#include <ntcs_detachstate.h>
 #include <ntcs_flowcontrolcontext.h>
 #include <ntcs_flowcontrolstate.h>
 #include <ntcs_metrics.h>
@@ -94,6 +95,7 @@ class ListenerSocket : public ntci::ListenerSocket,
     bool                                         d_acceptGreedily;
     const bool                                   d_oneShot;
     ntca::ListenerSocketOptions                  d_options;
+    ntcs::DetachState                            d_detachState;
     ntci::CloseCallback                          d_closeCallback;
     bslma::Allocator*                            d_allocator_p;
 

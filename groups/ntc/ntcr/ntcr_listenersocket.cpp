@@ -155,6 +155,10 @@ void ListenerSocket::processSocketReadable(const ntca::ReactorEvent& event)
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
 
+    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
+        return;
+    }
+
     ntsa::Error error;
     bsl::size_t numIterations = 0;
 
@@ -208,6 +212,10 @@ void ListenerSocket::processSocketError(const ntca::ReactorEvent& event)
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+
+    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
+        return;
+    }
 
     this->privateFail(self, event.error());
 }
@@ -609,6 +617,11 @@ void ListenerSocket::privateShutdownSequencePart2(
 
     if (lock) {
         d_mutex.lock();
+        BSLS_ASSERT(d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED);
+        d_detachState.set(ntcs::DetachState::e_DETACH_IDLE);
+    }
+    else {
+        BSLS_ASSERT(d_detachState.get() != ntcs::DetachState::e_DETACH_INITIATED);
     }
 
     // Second handle socket shutdown.
@@ -964,11 +977,13 @@ bool ListenerSocket::privateCloseFlowControl(
     if (d_systemHandle != ntsa::k_INVALID_HANDLE) {
         ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
         if (reactorRef) {
+            BSLS_ASSERT(d_detachState.get() != ntcs::DetachState::e_DETACH_INITIATED);
             ntsa::Error error = reactorRef->detachSocket(self, detachCallback);
             if (error) {
                 return false;
             }
             else {
+                d_detachState.set(ntcs::DetachState::e_DETACH_INITIATED);
                 return true;
             }
         }
@@ -1524,6 +1539,7 @@ ListenerSocket::ListenerSocket(
 , d_acceptGreedily(NTCCFG_DEFAULT_LISTENER_SOCKET_ACCEPT_GREEDILY)
 , d_oneShot(reactor->oneShot())
 , d_options(options)
+, d_detachState(ntcs::DetachState::e_DETACH_IDLE)
 , d_closeCallback(bslma::Default::allocator(basicAllocator))
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {

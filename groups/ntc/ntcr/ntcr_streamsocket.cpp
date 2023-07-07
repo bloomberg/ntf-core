@@ -488,10 +488,6 @@ void StreamSocket::processConnectRetryTimer(
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
-//    NTCI_LOG_INFO("processConnectRetryTimer descriptor %d", this->handle());
-
-    //    BSLS_ASSERT_OPT(d_detachState.get() != ntcs::DetachState::e_DETACH_INITIATED);
-
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         if (d_connectInProgress) {
             if (d_connectAttempts > 0) {
@@ -1391,14 +1387,13 @@ void StreamSocket::privateFailConnect(
                         this->strand(),
                         d_allocator_p);
 
-                    d_detachState.set(ntcs::DetachState::e_DETACH_INITIATED);
                     ntsa::Error error =
                         reactorRef->detachSocket(self, detachCallback);
                     if (error) {
-                        d_detachState.set(ntcs::DetachState::e_DETACHED);
                         asyncDetachmentStarted = false;
                     }
                     else {
+                        d_detachState.set(ntcs::DetachState::e_DETACH_INITIATED);
                         asyncDetachmentStarted = true;
                     }
                 }
@@ -1433,14 +1428,13 @@ void StreamSocket::privateFailConnect(
                         this->strand(),
                         d_allocator_p);
 
-                    d_detachState.set(ntcs::DetachState::e_DETACH_INITIATED);
                     ntsa::Error error =
                         reactorRef->detachSocket(self, detachCallback);
                     if (error) {
-                        d_detachState.set(ntcs::DetachState::e_DETACHED);
                         asyncDetachmentStarted = false;
                     }
                     else {
+                        d_detachState.set(ntcs::DetachState::e_DETACH_INITIATED);
                         asyncDetachmentStarted = true;
                     }
                 }
@@ -1489,7 +1483,7 @@ void StreamSocket::privateFailConnectPart2(
         d_mutex.lock();
         BSLS_ASSERT_OPT(d_detachState.get() ==
                         ntcs::DetachState::e_DETACH_INITIATED);
-        d_detachState.set(ntcs::DetachState::e_DETACHED);
+        d_detachState.set(ntcs::DetachState::e_DETACH_IDLE);
     }
     else {
         BSLS_ASSERT_OPT(d_detachState.get() !=
@@ -1869,10 +1863,10 @@ void StreamSocket::privateShutdownSequencePart2(
 {
     NTCI_LOG_CONTEXT();
     if (lock) {
+        d_mutex.lock();
         BSLS_ASSERT_OPT(d_detachState.get() ==
                         ntcs::DetachState::e_DETACH_INITIATED);
-        d_mutex.lock();
-        d_detachState.set(ntcs::DetachState::e_DETACHED);
+        d_detachState.set(ntcs::DetachState::e_DETACH_IDLE);
     }
     else {
         BSLS_ASSERT_OPT(d_detachState.get() !=
@@ -2392,13 +2386,12 @@ bool StreamSocket::privateCloseFlowControl(
     if (d_systemHandle != ntsa::k_INVALID_HANDLE) {
         ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
         if (reactorRef) {
-            d_detachState.set(ntcs::DetachState::e_DETACH_INITIATED);
             ntsa::Error error = reactorRef->detachSocket(self, detachCallback);
             if (error) {
-                d_detachState.set(ntcs::DetachState::e_DETACHED);
                 return false;
             }
             else {
+                d_detachState.set(ntcs::DetachState::e_DETACH_INITIATED);
                 return true;
             }
         }
@@ -3696,6 +3689,11 @@ void StreamSocket::processRemoteEndpointResolution(
 
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
+    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
+        NTCI_LOG_INFO("Skip processRemoteEndpointResolution due to ongoing detach");
+        return;
+    }
+
     ntsa::Error error;
 
     if (!d_connectInProgress) {
@@ -4205,7 +4203,7 @@ StreamSocket::StreamSocket(
                         bslma::Default::allocator(basicAllocator))
 , d_totalBytesSentTimestamped(0)
 , d_retryConnect(false)
-, d_detachState(ntcs::DetachState::e_NOT_DETACHED)
+, d_detachState(ntcs::DetachState::e_DETACH_IDLE)
 , d_closeCallback(bslma::Default::allocator(basicAllocator))
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {

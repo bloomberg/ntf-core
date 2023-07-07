@@ -28,7 +28,7 @@ namespace ntcs {
 class DetachState
 {
   public:
-    enum Value { e_NOT_DETACHED, e_DETACH_INITIATED, e_DETACHED };
+    enum Value { e_DETACH_IDLE, e_DETACH_INITIATED };
 
     DetachState();
     explicit DetachState(Value state);
@@ -47,7 +47,7 @@ class DetachState
 
 NTCCFG_INLINE
 DetachState::DetachState()
-: d_state(e_NOT_DETACHED)
+: d_state(e_DETACH_IDLE)
 {
 }
 

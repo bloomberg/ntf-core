@@ -33,6 +33,7 @@ BSLS_IDENT("$Id: $")
 #include <ntci_timer.h>
 #include <ntcq_receive.h>
 #include <ntcq_send.h>
+#include <ntcs_detachstate.h>
 #include <ntcs_flowcontrolcontext.h>
 #include <ntcs_flowcontrolstate.h>
 #include <ntcs_metrics.h>
@@ -108,6 +109,7 @@ class DatagramSocket : public ntci::DatagramSocket,
     ntca::DatagramSocketOptions                  d_options;
     ntcu::TimestampCorrelator                    d_timestampCorrelator;
     bsl::uint32_t                                d_dgramTsIdCounter;
+    ntcs::DetachState                            d_detachState;
     ntci::CloseCallback                          d_closeCallback;
     bslma::Allocator*                            d_allocator_p;
 
