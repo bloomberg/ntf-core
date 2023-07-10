@@ -1453,7 +1453,14 @@ void StreamSocket::privateFailConnect(
         }
     }
     else {
-        if (d_retryConnect) {
+        if (d_closeCallback) {
+            d_closeCallback.dispatch(ntci::Strand::unknown(),
+                                     self,
+                                     true,
+                                     &d_mutex);
+            d_closeCallback.reset();
+        }
+        else if (d_retryConnect) {
             NTCI_LOG_INFO(
                 "privateFailConnect going to retryConnect for descriptor %d",
                 this->handle());

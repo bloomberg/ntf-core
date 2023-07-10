@@ -201,6 +201,7 @@ class Select : public ntci::Reactor,
     fd_set                                   d_writable;
     fd_set                                   d_erroring;
     ntsa::Handle                             d_maxHandle;
+    Mutex                                    d_detachMutex;
     DetachList                               d_detachList;
     ntcs::RegistryEntryCatalog::EntryFunctor d_detachFunctor;
     ntcs::RegistryEntryCatalog               d_registry;
@@ -860,9 +861,12 @@ ntsa::Error Select::removeDetached(
             }
         }
 
-        d_detachList.push_back(entry);
-
         ++d_generation;
+    }
+
+    {
+        LockGuard lock(&d_detachMutex);
+        d_detachList.push_back(entry);
     }
 
     Select::interruptOne();
@@ -973,6 +977,7 @@ Select::Select(const ntca::ReactorConfig&         configuration,
 , d_writable()
 , d_erroring()
 , d_maxHandle(0)
+, d_detachMutex()
 , d_detachList(basicAllocator)
 #if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
 , d_detachFunctor([this](const auto& entry) {
@@ -1971,95 +1976,133 @@ void Select::run(ntci::Waiter waiter)
 #error Not implemented
 #endif
 
-        int         numResults     = rc;
-        bsl::size_t numDetachments = 0;
-        DetachList  detachList(d_allocator_p);
-        {
+        int numResults = rc;
+
+        bsl::size_t numReadable = 0;
+
+        if (rc > 0 && d_config.oneShot().value()) {
             LockGuard lock(&d_generationMutex);
 
-            if (rc > 0 && d_config.oneShot().value()) {
-                int numResultsRemaining = numResults;
+            int numResultsRemaining = numResults;
 
-                for (bsl::size_t i = 0; i < maxDescriptor; ++i) {
-                    if (numResultsRemaining == 0) {
-                        break;
+            for (bsl::size_t i = 0; i < maxDescriptor; ++i) {
+                if (numResultsRemaining == 0) {
+                    break;
+                }
+
+                ntsa::Handle descriptorHandle = static_cast<ntsa::Handle>(i);
+
+                if (descriptorHandle == d_controllerDescriptorHandle) {
+                    if (FD_ISSET(descriptorHandle, &result->d_erroring)) {
+                        BSLS_ASSERT(numResultsRemaining > 0);
+                        --numResultsRemaining;
                     }
 
-                    ntsa::Handle descriptorHandle =
-                        static_cast<ntsa::Handle>(i);
+                    if (FD_ISSET(descriptorHandle, &result->d_readable)) {
+                        BSLS_ASSERT(numResultsRemaining > 0);
+                        --numResultsRemaining;
+                    }
 
-                    if (descriptorHandle == d_controllerDescriptorHandle) {
-                        if (FD_ISSET(descriptorHandle, &result->d_erroring)) {
-                            BSLS_ASSERT(numResultsRemaining > 0);
-                            --numResultsRemaining;
+                    if (FD_ISSET(descriptorHandle, &result->d_writable)) {
+                        BSLS_ASSERT(numResultsRemaining > 0);
+                        --numResultsRemaining;
+                    }
+                }
+                else {
+                    if (FD_ISSET(descriptorHandle, &result->d_erroring)) {
+                        if (FD_ISSET(descriptorHandle, &d_erroring)) {
+                            FD_CLR(descriptorHandle, &d_erroring);
+                        }
+                        else {
+                            FD_CLR(descriptorHandle, &result->d_erroring);
+
+                            BSLS_ASSERT(numResults > 0);
+                            --numResults;
                         }
 
-                        if (FD_ISSET(descriptorHandle, &result->d_readable)) {
-                            BSLS_ASSERT(numResultsRemaining > 0);
-                            --numResultsRemaining;
+                        BSLS_ASSERT(numResultsRemaining > 0);
+                        --numResultsRemaining;
+                    }
+
+                    if (FD_ISSET(descriptorHandle, &result->d_readable)) {
+                        if (FD_ISSET(descriptorHandle, &d_readable)) {
+                            FD_CLR(descriptorHandle, &d_readable);
+                        }
+                        else {
+                            FD_CLR(descriptorHandle, &result->d_readable);
+
+                            BSLS_ASSERT(numResults > 0);
+                            --numResults;
                         }
 
-                        if (FD_ISSET(descriptorHandle, &result->d_writable)) {
-                            BSLS_ASSERT(numResultsRemaining > 0);
-                            --numResultsRemaining;
+                        BSLS_ASSERT(numResultsRemaining > 0);
+                        --numResultsRemaining;
+                    }
+
+                    if (FD_ISSET(descriptorHandle, &result->d_writable)) {
+                        if (FD_ISSET(descriptorHandle, &d_writable)) {
+                            FD_CLR(descriptorHandle, &d_writable);
                         }
+                        else {
+                            FD_CLR(descriptorHandle, &result->d_writable);
+
+                            BSLS_ASSERT(numResults > 0);
+                            --numResults;
+                        }
+
+                        BSLS_ASSERT(numResultsRemaining > 0);
+                        --numResultsRemaining;
+                    }
+                }
+            }
+
+            BSLS_ASSERT(numResultsRemaining == 0);
+        }
+
+        //Process control channel here
+        if (rc > 0) {
+            const bool isError =
+                FD_ISSET(d_controllerDescriptorHandle, &result->d_erroring);
+            if (NTCCFG_UNLIKELY(isError)) {
+                this->reinitializeControl();
+            }
+            else {
+                if (FD_ISSET(d_controllerDescriptorHandle,
+                             &result->d_readable))
+                {
+                    ++numReadable;
+                    const ntsa::Error error =
+                        d_controller_sp->acknowledge();
+                    if (NTCCFG_UNLIKELY(error)) {
+                        this->reinitializeControl();
                     }
                     else {
-                        if (FD_ISSET(descriptorHandle, &result->d_erroring)) {
-                            if (FD_ISSET(descriptorHandle, &d_erroring)) {
-                                FD_CLR(descriptorHandle, &d_erroring);
+                        bsl::shared_ptr<ntcs::RegistryEntry> entry;
+                        //TODO: it is possible to optimize registry and store controller handle there explicitly
+                        if (d_registry.lookup(&entry,
+                                              d_controllerDescriptorHandle))
+                        {
+                            if (entry->oneShot()) {
+                                ntca::ReactorEventOptions options;
+                                ntcs::Interest            interest =
+                                    entry->showReadable(options);
+                                this->update(entry->handle(),
+                                             interest,
+                                             e_INCLUDE);
                             }
-                            else {
-                                FD_CLR(descriptorHandle, &result->d_erroring);
-
-                                BSLS_ASSERT(numResults > 0);
-                                --numResults;
-                            }
-
-                            BSLS_ASSERT(numResultsRemaining > 0);
-                            --numResultsRemaining;
-                        }
-
-                        if (FD_ISSET(descriptorHandle, &result->d_readable)) {
-                            if (FD_ISSET(descriptorHandle, &d_readable)) {
-                                FD_CLR(descriptorHandle, &d_readable);
-                            }
-                            else {
-                                FD_CLR(descriptorHandle, &result->d_readable);
-
-                                BSLS_ASSERT(numResults > 0);
-                                --numResults;
-                            }
-
-                            BSLS_ASSERT(numResultsRemaining > 0);
-                            --numResultsRemaining;
-                        }
-
-                        if (FD_ISSET(descriptorHandle, &result->d_writable)) {
-                            if (FD_ISSET(descriptorHandle, &d_writable)) {
-                                FD_CLR(descriptorHandle, &d_writable);
-                            }
-                            else {
-                                FD_CLR(descriptorHandle, &result->d_writable);
-
-                                BSLS_ASSERT(numResults > 0);
-                                --numResults;
-                            }
-
-                            BSLS_ASSERT(numResultsRemaining > 0);
-                            --numResultsRemaining;
                         }
                     }
                 }
-
-                BSLS_ASSERT(numResultsRemaining == 0);
             }
-
-            detachList.swap(d_detachList);
-            // TODO: maybe it's better to allocate detachList by moving the content of d_detachList.
-            // It will allow to save capacity of d_detachList
         }
 
+        DetachList detachList(d_allocator_p);
+        {
+            LockGuard lock(&d_detachMutex);
+            detachList.swap(d_detachList);
+        }
+
+        bsl::size_t numDetachments = 0;
         for (DetachList::const_iterator it = detachList.cbegin();
              it != detachList.cend();
              ++it)
@@ -2084,7 +2127,6 @@ void Select::run(ntci::Waiter waiter)
 
             int numResultsRemaining = numResults;
 
-            bsl::size_t numReadable = 0;
             bsl::size_t numWritable = 0;
             bsl::size_t numErrors   = 0;
 
@@ -2131,6 +2173,12 @@ void Select::run(ntci::Waiter waiter)
                                        isWritable,
                                        isError);
 
+                if (NTCCFG_UNLIKELY(descriptorHandle ==
+                                    d_controllerDescriptorHandle))
+                {
+                    continue;
+                }
+
                 bsl::shared_ptr<ntcs::RegistryEntry> entry;
                 if (!d_registry.lookupAndMarkProcessingOngoing(
                         &entry,
@@ -2139,91 +2187,61 @@ void Select::run(ntci::Waiter waiter)
                     continue;
                 }
 
-                if (NTCCFG_LIKELY(descriptorHandle !=
-                                  d_controllerDescriptorHandle))
-                {
-                    if (NTCCFG_UNLIKELY(isError)) {
-                        ntsa::Error lastError;
-                        ntsa::Error error =
-                            ntsf::System::getLastError(&lastError,
-                                                       entry->handle());
-                        if (error) {
-                            if (!lastError) {
-                                lastError = ntsa::Error(
-                                    ntsa::Error::e_CONNECTION_DEAD);
-                            }
+                if (NTCCFG_UNLIKELY(isError)) {
+                    ntsa::Error lastError;
+                    ntsa::Error error =
+                        ntsf::System::getLastError(&lastError,
+                                                   entry->handle());
+                    if (error) {
+                        if (!lastError) {
+                            lastError =
+                                ntsa::Error(ntsa::Error::e_CONNECTION_DEAD);
                         }
-                        else {
-                            if (!lastError) {
-                                lastError = ntsa::Error(
-                                    ntsa::Error::e_CONNECTION_DEAD);
-                            }
-                        }
-
-                        ntca::ReactorEvent event;
-                        event.setHandle(descriptorHandle);
-                        event.setType(ntca::ReactorEventType::e_ERROR);
-                        event.setError(lastError);
-
-                        NTCS_METRICS_UPDATE_ERROR_CALLBACK_TIME_BEGIN();
-                        if (entry->announceError(event)) {
-                            ++numErrors;
-                        }
-                        NTCS_METRICS_UPDATE_ERROR_CALLBACK_TIME_END();
                     }
                     else {
-                        if (isWritable) {
-                            if (entry->wantWritable()) {
-                                ntca::ReactorEvent event;
-                                event.setHandle(descriptorHandle);
-                                event.setType(
-                                    ntca::ReactorEventType::e_WRITABLE);
-
-                                NTCS_METRICS_UPDATE_WRITE_CALLBACK_TIME_BEGIN();
-                                if (entry->announceWritable(event)) {
-                                    ++numWritable;
-                                }
-                                NTCS_METRICS_UPDATE_WRITE_CALLBACK_TIME_END();
-                            }
-                        }
-
-                        if (isReadable) {
-                            if (entry->wantReadable()) {
-                                ntca::ReactorEvent event;
-                                event.setHandle(descriptorHandle);
-                                event.setType(
-                                    ntca::ReactorEventType::e_READABLE);
-
-                                NTCS_METRICS_UPDATE_READ_CALLBACK_TIME_BEGIN();
-                                if (entry->announceReadable(event)) {
-                                    ++numReadable;
-                                }
-                                NTCS_METRICS_UPDATE_READ_CALLBACK_TIME_END();
-                            }
+                        if (!lastError) {
+                            lastError =
+                                ntsa::Error(ntsa::Error::e_CONNECTION_DEAD);
                         }
                     }
+
+                    ntca::ReactorEvent event;
+                    event.setHandle(descriptorHandle);
+                    event.setType(ntca::ReactorEventType::e_ERROR);
+                    event.setError(lastError);
+
+                    NTCS_METRICS_UPDATE_ERROR_CALLBACK_TIME_BEGIN();
+                    if (entry->announceError(event)) {
+                        ++numErrors;
+                    }
+                    NTCS_METRICS_UPDATE_ERROR_CALLBACK_TIME_END();
                 }
                 else {
-                    if (NTCCFG_UNLIKELY(isError)) {
-                        this->reinitializeControl();
+                    if (isWritable) {
+                        if (entry->wantWritable()) {
+                            ntca::ReactorEvent event;
+                            event.setHandle(descriptorHandle);
+                            event.setType(ntca::ReactorEventType::e_WRITABLE);
+
+                            NTCS_METRICS_UPDATE_WRITE_CALLBACK_TIME_BEGIN();
+                            if (entry->announceWritable(event)) {
+                                ++numWritable;
+                            }
+                            NTCS_METRICS_UPDATE_WRITE_CALLBACK_TIME_END();
+                        }
                     }
-                    else {
-                        if (isReadable) {
-                            ++numReadable;
-                            ntsa::Error error = d_controller_sp->acknowledge();
-                            if (error) {
-                                this->reinitializeControl();
+
+                    if (isReadable) {
+                        if (entry->wantReadable()) {
+                            ntca::ReactorEvent event;
+                            event.setHandle(descriptorHandle);
+                            event.setType(ntca::ReactorEventType::e_READABLE);
+
+                            NTCS_METRICS_UPDATE_READ_CALLBACK_TIME_BEGIN();
+                            if (entry->announceReadable(event)) {
+                                ++numReadable;
                             }
-                            else {
-                                if (entry->oneShot()) {
-                                    ntca::ReactorEventOptions options;
-                                    ntcs::Interest            interest =
-                                        entry->showReadable(options);
-                                    this->update(entry->handle(),
-                                                 interest,
-                                                 e_INCLUDE);
-                                }
-                            }
+                            NTCS_METRICS_UPDATE_READ_CALLBACK_TIME_END();
                         }
                     }
                 }
@@ -2394,10 +2412,8 @@ void Select::poll(ntci::Waiter waiter)
 #error Not implemented
 #endif
 
-    int         numResults     = rc;
-    bsl::size_t numDetachments = 0;
-    DetachList  detachList(d_allocator_p);
-
+    int         numResults  = rc;
+    bsl::size_t numReadable = 0;
     if (rc > 0 && d_config.oneShot().value()) {
         LockGuard lock(&d_generationMutex);
 
@@ -2475,10 +2491,48 @@ void Select::poll(ntci::Waiter waiter)
         }
 
         BSLS_ASSERT(numResultsRemaining == 0);
+    }
 
+    //Process control channel here
+    if (rc > 0) {
+        const bool isError =
+            FD_ISSET(d_controllerDescriptorHandle, &result->d_erroring);
+        if (NTCCFG_UNLIKELY(isError)) {
+            this->reinitializeControl();
+        }
+        else {
+            if (FD_ISSET(d_controllerDescriptorHandle, &result->d_readable)) {
+                ++numReadable;
+                const ntsa::Error error =
+                    d_controller_sp->acknowledge();
+                if (NTCCFG_UNLIKELY(error)) {
+                    this->reinitializeControl();
+                }
+                else {
+                    bsl::shared_ptr<ntcs::RegistryEntry> entry;
+                    //TODO: it is possible to optimize registry and store controller handle there explicitly
+                    if (d_registry.lookup(&entry,
+                                          d_controllerDescriptorHandle))
+                    {
+                        if (entry->oneShot()) {
+                            ntca::ReactorEventOptions options;
+                            ntcs::Interest            interest =
+                                entry->showReadable(options);
+                            this->update(entry->handle(), interest, e_INCLUDE);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    DetachList detachList(d_allocator_p);
+    {
+        LockGuard lock(&d_detachMutex);
         detachList.swap(d_detachList);
     }
 
+    bsl::size_t numDetachments = 0;
     for (DetachList::const_iterator it = detachList.cbegin();
          it != detachList.cend();
          ++it)
@@ -2549,6 +2603,12 @@ void Select::poll(ntci::Waiter waiter)
                                    isWritable,
                                    isError);
 
+            if (NTCCFG_UNLIKELY(descriptorHandle ==
+                                d_controllerDescriptorHandle))
+            {
+                continue;
+            }
+
             bsl::shared_ptr<ntcs::RegistryEntry> entry;
             if (!d_registry.lookupAndMarkProcessingOngoing(&entry,
                                                            descriptorHandle))
@@ -2556,92 +2616,64 @@ void Select::poll(ntci::Waiter waiter)
                 continue;
             }
 
-            if (NTCCFG_LIKELY(descriptorHandle !=
-                              d_controllerDescriptorHandle))
-            {
-                if (NTCCFG_UNLIKELY(isError)) {
-                    ntsa::Error lastError;
-                    ntsa::Error error =
-                        ntsf::System::getLastError(&lastError,
-                                                   entry->handle());
-                    if (error) {
-                        if (!lastError) {
-                            lastError =
-                                ntsa::Error(ntsa::Error::e_CONNECTION_DEAD);
-                        }
+            if (NTCCFG_UNLIKELY(isError)) {
+                ntsa::Error lastError;
+                ntsa::Error error =
+                    ntsf::System::getLastError(&lastError, entry->handle());
+                if (error) {
+                    if (!lastError) {
+                        lastError =
+                            ntsa::Error(ntsa::Error::e_CONNECTION_DEAD);
                     }
-                    else {
-                        if (!lastError) {
-                            lastError =
-                                ntsa::Error(ntsa::Error::e_CONNECTION_DEAD);
-                        }
-                    }
-
-                    ntca::ReactorEvent event;
-                    event.setHandle(descriptorHandle);
-                    event.setType(ntca::ReactorEventType::e_ERROR);
-                    event.setError(lastError);
-
-                    NTCS_METRICS_UPDATE_ERROR_CALLBACK_TIME_BEGIN();
-                    if (entry->announceError(event)) {
-                        ++numErrors;
-                    }
-                    NTCS_METRICS_UPDATE_ERROR_CALLBACK_TIME_END();
                 }
                 else {
-                    if (isWritable) {
-                        if (entry->wantWritable()) {
-                            ntca::ReactorEvent event;
-                            event.setHandle(descriptorHandle);
-                            event.setType(ntca::ReactorEventType::e_WRITABLE);
-
-                            NTCS_METRICS_UPDATE_WRITE_CALLBACK_TIME_BEGIN();
-                            if (entry->announceWritable(event)) {
-                                ++numWritable;
-                            }
-                            NTCS_METRICS_UPDATE_WRITE_CALLBACK_TIME_END();
-                        }
-                    }
-
-                    if (isReadable) {
-                        if (entry->wantReadable()) {
-                            ntca::ReactorEvent event;
-                            event.setHandle(descriptorHandle);
-                            event.setType(ntca::ReactorEventType::e_READABLE);
-
-                            NTCS_METRICS_UPDATE_READ_CALLBACK_TIME_BEGIN();
-                            if (entry->announceReadable(event)) {
-                                ++numReadable;
-                            }
-                            NTCS_METRICS_UPDATE_READ_CALLBACK_TIME_END();
-                        }
+                    if (!lastError) {
+                        lastError =
+                            ntsa::Error(ntsa::Error::e_CONNECTION_DEAD);
                     }
                 }
+
+                ntca::ReactorEvent event;
+                event.setHandle(descriptorHandle);
+                event.setType(ntca::ReactorEventType::e_ERROR);
+                event.setError(lastError);
+
+                NTCS_METRICS_UPDATE_ERROR_CALLBACK_TIME_BEGIN();
+                if (entry->announceError(event)) {
+                    ++numErrors;
+                }
+                NTCS_METRICS_UPDATE_ERROR_CALLBACK_TIME_END();
             }
             else {
-                if (NTCCFG_UNLIKELY(isError)) {
-                    this->reinitializeControl();
+                if (isWritable) {
+                    if (entry->wantWritable()) {
+                        ntca::ReactorEvent event;
+                        event.setHandle(descriptorHandle);
+                        event.setType(ntca::ReactorEventType::e_WRITABLE);
+
+                        NTCS_METRICS_UPDATE_WRITE_CALLBACK_TIME_BEGIN();
+                        if (entry->announceWritable(event)) {
+                            ++numWritable;
+                        }
+                        NTCS_METRICS_UPDATE_WRITE_CALLBACK_TIME_END();
+                    }
                 }
-                else {
-                    if (isReadable) {
-                        ++numReadable;
-                        ntsa::Error error = d_controller_sp->acknowledge();
-                        if (error) {
-                            this->reinitializeControl();
+
+                if (isReadable) {
+                    if (entry->wantReadable()) {
+                        ntca::ReactorEvent event;
+                        event.setHandle(descriptorHandle);
+                        event.setType(ntca::ReactorEventType::e_READABLE);
+
+                        NTCS_METRICS_UPDATE_READ_CALLBACK_TIME_BEGIN();
+                        if (entry->announceReadable(event)) {
+                            ++numReadable;
                         }
-                        else {
-                            if (entry->oneShot()) {
-                                ntca::ReactorEventOptions options;
-                                ntcs::Interest            interest =
-                                    entry->showReadable(options);
-                                this->update(entry->handle(),
-                                             interest,
-                                             e_INCLUDE);
-                            }
-                        }
+                        NTCS_METRICS_UPDATE_READ_CALLBACK_TIME_END();
                     }
                 }
             }
+
             if (entry->decrementProcessCounter() == 1) {
                 if (entry->askForDetachmentAnnouncementPermission()) {
                     entry->announceDetached(this->getSelf(this));
@@ -2727,12 +2759,12 @@ void Select::poll(ntci::Waiter waiter)
 
 void Select::interruptOne()
 {
-//    if (NTCCFG_LIKELY(isWaiter())) {
-//        return;
-//    }
+    //    if (NTCCFG_LIKELY(isWaiter())) {
+    //        return;
+    //    }
     // see Poll::interruptOne
 
-    ntsa::Error error = d_controller_sp->interrupt(1, true);
+    ntsa::Error error = d_controller_sp->interrupt(1, false);
     if (NTCCFG_UNLIKELY(error)) {
         reinitializeControl();
     }
@@ -2745,7 +2777,7 @@ void Select::interruptAll()
             return;
         }
 
-        ntsa::Error error = d_controller_sp->interrupt(1);
+        ntsa::Error error = d_controller_sp->interrupt(1, false);
         if (NTCCFG_UNLIKELY(error)) {
             reinitializeControl();
         }
@@ -2759,7 +2791,8 @@ void Select::interruptAll()
         }
 
         if (NTCCFG_LIKELY(numWaiters > 0)) {
-            ntsa::Error error = d_controller_sp->interrupt(numWaiters);
+            ntsa::Error error =
+                d_controller_sp->interrupt(numWaiters);
             if (NTCCFG_UNLIKELY(error)) {
                 reinitializeControl();
             }

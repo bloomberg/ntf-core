@@ -331,7 +331,12 @@ ntsa::Error Controller::interrupt(unsigned int numWakeups, bool force)
     NTCCFG_LOCK_SCOPE_ENTER(&d_mutex);
 
     if (numWakeups <= d_pending) {
-        return ntsa::Error();
+        if (force) {
+            numWakeups = d_pending + numWakeups;
+        }
+        else {
+            return ntsa::Error();
+        }
     }
 
     unsigned int numToWrite =
@@ -425,7 +430,7 @@ ntsa::Error Controller::interrupt(unsigned int numWakeups, bool force)
 
     if (numWakeups <= d_pending) {
         if (force) {
-            d_pending += numWakeups;
+            numWakeups = d_pending + numWakeups;
         }
         else {
             return ntsa::Error();
