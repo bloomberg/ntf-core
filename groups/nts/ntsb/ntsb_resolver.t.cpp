@@ -445,7 +445,7 @@ NTSCFG_TEST_CASE(3)
     // Concern: Test resolution of domain names to IP addresses from the
     // system.
     //
-    // Plan: Ensure 'microsoft.com' resolves to at least two of the known
+    // Plan: Ensure 'dns.google.com' resolves to at least two of the known
     // IP addresses at which it has been assigned, as of 2020.
 
     ntscfg::TestAllocator ta;
@@ -455,8 +455,8 @@ NTSCFG_TEST_CASE(3)
         ntsb::Resolver resolver(&ta);
 
         bsl::set<ntsa::IpAddress> ipAddressSet;
-        ipAddressSet.insert(ntsa::IpAddress("20.53.203.50"));
-        ipAddressSet.insert(ntsa::IpAddress("20.84.181.62"));
+        ipAddressSet.insert(ntsa::IpAddress("8.8.8.8"));
+        ipAddressSet.insert(ntsa::IpAddress("8.8.4.4"));
 
         NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
 
@@ -464,7 +464,7 @@ NTSCFG_TEST_CASE(3)
         ntsa::IpAddressOptions       ipAddressOptions;
 
         error = resolver.getIpAddress(&ipAddressList,
-                                      "microsoft.com",
+                                      "dns.google.com",
                                       ipAddressOptions);
         NTSCFG_TEST_FALSE(error);
 

@@ -666,18 +666,18 @@ namespace ntsf {
 ///     bsl::shared_ptr<ntsi::Resolver> resolver =
 ///                                     ntsf::System::createResolver();
 ///
-/// Next, resolve "microsoft.com" to the IP addresses it is assigned.
+/// Next, resolve "dns.google.com" to the IP addresses it is assigned.
 ///
 ///     bsl::vector<ntsa::IpAddress> addressList;
-///     error = resolver->getIpAddress(&addressList, "microsoft.com");
+///     error = resolver->getIpAddress(&addressList, "dns.google.com");
 ///     BSLS_ASSERT(!error);
 ///
-/// Next, verify that the resolver has resolved "microsoft.com" into at least
+/// Next, verify that the resolver has resolved "dns.google.com" into at least
 /// some of the expected IP addresses (assigned as of January 1, 2020.)
 ///
 ///     bsl::set<ntsa::IpAddress> addressSet;
-///     addressSet.insert(ntsa::IpAddress("20.53.203.50"));
-///     addressSet.insert(ntsa::IpAddress("20.84.181.62"));
+///     addressSet.insert(ntsa::IpAddress("8.8.8.8"));
+///     addressSet.insert(ntsa::IpAddress("8.8.4.4"));
 ///
 ///     for (bsl::vector<ntsa::IpAddress>::const_iterator
 ///             it  = addressList.begin();
