@@ -32,6 +32,7 @@ BSLS_IDENT_RCSID(ntci_log_cpp, "$Id$ $CSID$")
 #include <bsl_cstdlib.h>
 #include <bsl_cstring.h>
 #include <bsl_sstream.h>
+#include <bsl_limits.h>
 
 #define NTCI_LOG_UNSET_CONTEXT 1
 
@@ -1851,7 +1852,7 @@ ntsa::Error PrintUtil::printString(PrintOutput         output,
         width = field->width.value();
     }
 
-    bsl::size_t precision = SIZE_MAX;
+    bsl::size_t precision = bsl::numeric_limits<bsl::size_t>::max();
     if (!field->precision.isNull()) {
         precision = field->precision.value();
     }
