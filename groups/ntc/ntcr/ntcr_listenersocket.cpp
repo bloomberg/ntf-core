@@ -565,8 +565,6 @@ void ListenerSocket::privateShutdownSequence(
 {
     NTCCFG_WARNING_UNUSED(origin);
 
-    NTCI_LOG_CONTEXT();
-
     // First handle flow control and detachment from the reactor, if necessary.
 
     bool asyncDetachmentStarted = false;

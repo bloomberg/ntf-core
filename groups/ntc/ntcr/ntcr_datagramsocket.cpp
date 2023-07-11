@@ -926,8 +926,6 @@ void DatagramSocket::privateShutdownSequence(
 
     NTCCFG_WARNING_UNUSED(origin);
 
-    NTCI_LOG_CONTEXT();
-
     bool keepHalfOpen = NTCCFG_DEFAULT_DATAGRAM_SOCKET_KEEP_HALF_OPEN;
     if (!d_options.keepHalfOpen().isNull()) {
         keepHalfOpen = d_options.keepHalfOpen().value();

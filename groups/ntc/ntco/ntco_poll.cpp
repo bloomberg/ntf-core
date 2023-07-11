@@ -2740,7 +2740,6 @@ void Poll::poll(ntci::Waiter waiter)
 
 void Poll::interruptOne()
 {
-    NTCI_LOG_CONTEXT();
 
     //    if (NTCCFG_LIKELY(isWaiter())) {
     //        NTCI_LOG_INFO("Skipping interruption because this is a waiter thread");

@@ -1378,9 +1378,7 @@ void StreamSocket::privateFailConnect(
                         NTCCFG_BIND(&StreamSocket::privateFailConnectPart2,
                                     this,
                                     self,
-                                    error,
                                     defer,
-                                    close,
                                     connectCallback,
                                     connectEvent,
                                     true),
@@ -1419,9 +1417,7 @@ void StreamSocket::privateFailConnect(
                         NTCCFG_BIND(&StreamSocket::privateFailConnectPart2,
                                     this,
                                     self,
-                                    error,
                                     defer,
-                                    close,
                                     connectCallback,
                                     connectEvent,
                                     true),
@@ -1444,9 +1440,7 @@ void StreamSocket::privateFailConnect(
 
         if (!asyncDetachmentStarted) {
             privateFailConnectPart2(self,
-                                    error,
                                     defer,
-                                    close,
                                     connectCallback,
                                     connectEvent,
                                     false);
@@ -1472,9 +1466,7 @@ void StreamSocket::privateFailConnect(
 
 void StreamSocket::privateFailConnectPart2(
     const bsl::shared_ptr<StreamSocket>& self,
-    const ntsa::Error&                   error,
     bool                                 defer,
-    bool                                 close,
     const ntci::ConnectCallback&         connectCallback,
     const ntca::ConnectEvent&            connectEvent,
     bool                                 lock)
@@ -1795,8 +1787,6 @@ void StreamSocket::privateShutdownSequence(
     bool                                 defer)
 {
     NTCCFG_WARNING_UNUSED(origin);
-
-    NTCI_LOG_CONTEXT();
 
     // Forcibly override the indication that the announcements should be
     // deferred on execute on the strand or asynchonrously on the reactor.

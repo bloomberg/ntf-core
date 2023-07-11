@@ -251,9 +251,7 @@ class StreamSocket : public ntci::StreamSocket,
                             bool                                 close);
 
     void privateFailConnectPart2(const bsl::shared_ptr<StreamSocket>& self,
-                                 const ntsa::Error&                   error,
                                  bool                                 defer,
-                                 bool                                 close,
                                  const ntci::ConnectCallback& connectCallback,
                                  const ntca::ConnectEvent&    connectEvent,
                                  bool                         lock);
