@@ -1931,16 +1931,18 @@ NTCCFG_TEST_CASE(20)
         ntca::GetEndpointOptions options;
         options.setIpAddressType(ntsa::IpAddressType::e_V4);
 
-        // Get the endpoint assigned to "microsoft.com:http".
+        // Get the endpoint assigned to "dns.google.com:http".
 
-        error = resolver->getEndpoint("microsoft.com:http", options, callback);
+        error = resolver->getEndpoint(
+            "dns.google.com:http", options, callback);
         NTCCFG_TEST_FALSE(error);
 
         semaphore.wait();
 
-        // Get the endpoint assigned to "microsoft.com:http".
+        // Get the endpoint assigned to "dns.google.com:http".
 
-        error = resolver->getEndpoint("microsoft.com:http", options, callback);
+        error = resolver->getEndpoint(
+            "dns.google.com:http", options, callback);
         NTCCFG_TEST_FALSE(error);
 
         semaphore.wait();

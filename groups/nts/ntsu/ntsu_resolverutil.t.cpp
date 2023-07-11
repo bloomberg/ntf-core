@@ -87,7 +87,7 @@ NTSCFG_TEST_CASE(3)
     // Concern: Test resolution of domain names to IP addresses for use by
     // an unspecified transport.
     //
-    // Plan: Ensure 'microsoft.com' resolves to at least two of the known
+    // Plan: Ensure 'dns.google.com' resolves to at least two of the known
     // IP addresses at which it has been assigned, as of 2020.
 
     ntscfg::TestAllocator ta;
@@ -95,8 +95,8 @@ NTSCFG_TEST_CASE(3)
         ntsa::Error error;
 
         bsl::set<ntsa::IpAddress> ipAddressSet(&ta);
-        ipAddressSet.insert(ntsa::IpAddress("20.53.203.50"));
-        ipAddressSet.insert(ntsa::IpAddress("20.84.181.62"));
+        ipAddressSet.insert(ntsa::IpAddress("8.8.8.8"));
+        ipAddressSet.insert(ntsa::IpAddress("8.8.4.4"));
 
         NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
 
@@ -104,7 +104,7 @@ NTSCFG_TEST_CASE(3)
         ntsa::IpAddressOptions       ipAddressOptions;
 
         error = ntsu::ResolverUtil::getIpAddress(&ipAddressList,
-                                                 "microsoft.com",
+                                                 "dns.google.com",
                                                  ipAddressOptions);
         NTSCFG_TEST_FALSE(error);
 
@@ -128,7 +128,7 @@ NTSCFG_TEST_CASE(4)
 {
     // Concern: Test resolution of domain names to IPv4 addresses.
     //
-    // Plan: Ensure 'microsoft.com' resolves to at least two of the known
+    // Plan: Ensure 'dns.google.com' resolves to at least two of the known
     // IP addresses at which it has been assigned, as of 2020.
 
     ntscfg::TestAllocator ta;
@@ -136,8 +136,8 @@ NTSCFG_TEST_CASE(4)
         ntsa::Error error;
 
         bsl::set<ntsa::IpAddress> ipAddressSet(&ta);
-        ipAddressSet.insert(ntsa::IpAddress("20.53.203.50"));
-        ipAddressSet.insert(ntsa::IpAddress("20.84.181.62"));
+        ipAddressSet.insert(ntsa::IpAddress("8.8.8.8"));
+        ipAddressSet.insert(ntsa::IpAddress("8.8.4.4"));
 
         NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
 
@@ -147,7 +147,7 @@ NTSCFG_TEST_CASE(4)
         ipAddressOptions.setIpAddressType(ntsa::IpAddressType::e_V4);
 
         error = ntsu::ResolverUtil::getIpAddress(&ipAddressList,
-                                                 "microsoft.com",
+                                                 "dns.google.com",
                                                  ipAddressOptions);
         NTSCFG_TEST_FALSE(error);
 
@@ -171,7 +171,7 @@ NTSCFG_TEST_CASE(5)
 {
     // Concern: Test resolution of domain names to IPv6 addresses.
     //
-    // Plan: Ensure 'microsoft.com' resolves to at least two of the known
+    // Plan: Ensure 'dns.google.com' resolves to at least two of the known
     // IP addresses at which it has been assigned, as of 2020.
 
     ntscfg::TestAllocator ta;
@@ -190,7 +190,7 @@ NTSCFG_TEST_CASE(5)
         ipAddressOptions.setIpAddressType(ntsa::IpAddressType::e_V6);
 
         error = ntsu::ResolverUtil::getIpAddress(&ipAddressList,
-                                                 "microsoft.com",
+                                                 "dns.google.com",
                                                  ipAddressOptions);
         // TODO: NTSCFG_TEST_FALSE(error);
 
@@ -216,7 +216,7 @@ NTSCFG_TEST_CASE(6)
     // Concern: Test resolution of domain names to IP addresses for use by
     // a specific TCP/IPv4-based transport.
     //
-    // Plan: Ensure 'microsoft.com' resolves to at least two of the known
+    // Plan: Ensure 'dns.google.com' resolves to at least two of the known
     // IP addresses at which it has been assigned, as of 2020.
 
     ntscfg::TestAllocator ta;
@@ -224,8 +224,8 @@ NTSCFG_TEST_CASE(6)
         ntsa::Error error;
 
         bsl::set<ntsa::IpAddress> ipAddressSet(&ta);
-        ipAddressSet.insert(ntsa::IpAddress("20.53.203.50"));
-        ipAddressSet.insert(ntsa::IpAddress("20.84.181.62"));
+        ipAddressSet.insert(ntsa::IpAddress("8.8.8.8"));
+        ipAddressSet.insert(ntsa::IpAddress("8.8.4.4"));
 
         NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
 
@@ -235,7 +235,7 @@ NTSCFG_TEST_CASE(6)
         ipAddressOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
         error = ntsu::ResolverUtil::getIpAddress(&ipAddressList,
-                                                 "microsoft.com",
+                                                 "dns.google.com",
                                                  ipAddressOptions);
         NTSCFG_TEST_FALSE(error);
 
@@ -260,7 +260,7 @@ NTSCFG_TEST_CASE(7)
     // Concern: Test resolution of domain names to IP addresses for use by
     // a specific UDP/IPv4-based transport.
     //
-    // Plan: Ensure 'microsoft.com' resolves to at least two of the known
+    // Plan: Ensure 'dns.google.com' resolves to at least two of the known
     // IP addresses at which it has been assigned, as of 2020.
 
     ntscfg::TestAllocator ta;
@@ -268,8 +268,8 @@ NTSCFG_TEST_CASE(7)
         ntsa::Error error;
 
         bsl::set<ntsa::IpAddress> ipAddressSet(&ta);
-        ipAddressSet.insert(ntsa::IpAddress("20.53.203.50"));
-        ipAddressSet.insert(ntsa::IpAddress("20.84.181.62"));
+        ipAddressSet.insert(ntsa::IpAddress("8.8.8.8"));
+        ipAddressSet.insert(ntsa::IpAddress("8.8.4.4"));
 
         NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
 
@@ -279,7 +279,7 @@ NTSCFG_TEST_CASE(7)
         ipAddressOptions.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
 
         error = ntsu::ResolverUtil::getIpAddress(&ipAddressList,
-                                                 "microsoft.com",
+                                                 "dns.google.com",
                                                  ipAddressOptions);
         NTSCFG_TEST_FALSE(error);
 
@@ -304,7 +304,7 @@ NTSCFG_TEST_CASE(8)
     // Concern: Test resolution of domain names to IP addresses for use by
     // a specific TCP/IPv6-based transport.
     //
-    // Plan: Ensure 'microsoft.com' resolves to at least two of the known
+    // Plan: Ensure 'dns.google.com' resolves to at least two of the known
     // IP addresses at which it has been assigned, as of 2020.
 
     ntscfg::TestAllocator ta;
@@ -323,7 +323,7 @@ NTSCFG_TEST_CASE(8)
         ipAddressOptions.setTransport(ntsa::Transport::e_TCP_IPV6_STREAM);
 
         error = ntsu::ResolverUtil::getIpAddress(&ipAddressList,
-                                                 "microsoft.com",
+                                                 "dns.google.com",
                                                  ipAddressOptions);
         // TODO: NTSCFG_TEST_FALSE(error);
 
@@ -349,7 +349,7 @@ NTSCFG_TEST_CASE(9)
     // Concern: Test resolution of domain names to IP addresses for use by
     // a specific UDP/IPv6-based transport.
     //
-    // Plan: Ensure 'microsoft.com' resolves to at least two of the known
+    // Plan: Ensure 'dns.google.com' resolves to at least two of the known
     // IP addresses at which it has been assigned, as of 2020.
 
     ntscfg::TestAllocator ta;
@@ -368,7 +368,7 @@ NTSCFG_TEST_CASE(9)
         ipAddressOptions.setTransport(ntsa::Transport::e_UDP_IPV6_DATAGRAM);
 
         error = ntsu::ResolverUtil::getIpAddress(&ipAddressList,
-                                                 "microsoft.com",
+                                                 "dns.google.com",
                                                  ipAddressOptions);
         // TODO: NTSCFG_TEST_FALSE(error);
 
