@@ -281,7 +281,7 @@ void StreamSocket::processSocketReadable(const ntca::ReactorEvent& event)
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
     if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
-        return; //ignore messages from the reactor while detach is ongoing
+        return;  //ignore messages from the reactor while detach is ongoing
     }
 
     if (!d_shutdownState.canReceive()) {
@@ -337,7 +337,7 @@ void StreamSocket::processSocketWritable(const ntca::ReactorEvent& event)
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
     if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
-        return; //ignore messages from the reactor while detach is ongoing
+        return;  //ignore messages from the reactor while detach is ongoing
     }
 
     if (NTCCFG_UNLIKELY(d_connectInProgress)) {
@@ -396,11 +396,11 @@ void StreamSocket::processSocketError(const ntca::ReactorEvent& event)
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
     if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
-        return; //ignore messages from the reactor while detach is ongoing
+        return;  //ignore messages from the reactor while detach is ongoing
     }
 
     if (NTCCFG_UNLIKELY(d_connectInProgress)) {
-            this->privateFailConnect(self, event.error(), false, false);
+        this->privateFailConnect(self, event.error(), false, false);
     }
     else if (NTCCFG_UNLIKELY(d_upgradeInProgress)) {
         this->privateFailUpgrade(self, event.error(), "");
@@ -424,7 +424,7 @@ void StreamSocket::processNotifications(
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
     if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
-        return; //ignore messages from the reactor while detach is ongoing
+        return;  //ignore messages from the reactor while detach is ongoing
     }
 
     const bsl::vector<ntsa::Notification>& nots =
@@ -461,11 +461,21 @@ void StreamSocket::processConnectDeadlineTimer(
 
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         if (d_connectInProgress) {
-            this->privateFailConnect(
-                self,
-                ntsa::Error(ntsa::Error::e_CONNECTION_TIMEOUT),
-                false,
-                true);
+            if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
+                d_retryConnect = false;
+                d_deferredCalls.push_back(
+                    NTCCFG_BIND(&StreamSocket::processConnectDeadlineTimer,
+                                this,
+                                timer,
+                                event));
+            }
+            else {
+                this->privateFailConnect(
+                    self,
+                    ntsa::Error(ntsa::Error::e_CONNECTION_TIMEOUT),
+                    false,
+                    true);
+            }
         }
     }
 }
@@ -1391,7 +1401,8 @@ void StreamSocket::privateFailConnect(
                         asyncDetachmentStarted = false;
                     }
                     else {
-                        d_detachState.set(ntcs::DetachState::e_DETACH_INITIATED);
+                        d_detachState.set(
+                            ntcs::DetachState::e_DETACH_INITIATED);
                         asyncDetachmentStarted = true;
                     }
                 }
@@ -1430,7 +1441,8 @@ void StreamSocket::privateFailConnect(
                         asyncDetachmentStarted = false;
                     }
                     else {
-                        d_detachState.set(ntcs::DetachState::e_DETACH_INITIATED);
+                        d_detachState.set(
+                            ntcs::DetachState::e_DETACH_INITIATED);
                         asyncDetachmentStarted = true;
                     }
                 }
@@ -1447,6 +1459,7 @@ void StreamSocket::privateFailConnect(
         }
     }
     else {
+        //TODO: with deferred functions approach most likely I do not need this processing below of d_closeCallback
         if (d_closeCallback) {
             d_closeCallback.dispatch(ntci::Strand::unknown(),
                                      self,
@@ -1548,6 +1561,8 @@ void StreamSocket::privateFailConnectPart2(
             "privateFailConnectPart2 DO NOT retryConnect for descriptor %d",
             this->handle());
     }
+
+    this->moveAndExecute(&d_deferredCalls, ntci::Executor::Functor());
 
     if (lock) {
         d_mutex.unlock();
@@ -2150,6 +2165,9 @@ void StreamSocket::privateShutdownSequencePart2(
         d_managerStrand_sp.reset();
         d_manager_sp.reset();
     }
+
+    this->moveAndExecute(&d_deferredCalls, ntci::Executor::Functor());
+
     if (lock) {
         d_mutex.unlock();
     }
@@ -3687,7 +3705,8 @@ void StreamSocket::processRemoteEndpointResolution(
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
     if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
-        NTCI_LOG_INFO("Skip processRemoteEndpointResolution due to ongoing detach");
+        NTCI_LOG_INFO(
+            "Skip processRemoteEndpointResolution due to ongoing detach");
         return;
     }
 
@@ -4202,6 +4221,7 @@ StreamSocket::StreamSocket(
 , d_retryConnect(false)
 , d_detachState(ntcs::DetachState::e_DETACH_IDLE)
 , d_closeCallback(bslma::Default::allocator(basicAllocator))
+, d_deferredCalls(bslma::Default::allocator(basicAllocator))
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     if (reactor->maxThreads() > 1) {
@@ -6348,6 +6368,14 @@ void StreamSocket::close(const ntci::CloseCallback& callback)
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
     if (d_closeCallback) {
+        return;
+    }
+    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
+        d_deferredCalls.push_back(NTCCFG_BIND(
+            static_cast<void (StreamSocket::*)(
+                const ntci::CloseCallback& callback)>(&StreamSocket::close),
+            this,
+            callback));
         return;
     }
 

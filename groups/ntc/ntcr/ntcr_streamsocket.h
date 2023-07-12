@@ -144,6 +144,7 @@ class StreamSocket : public ntci::StreamSocket,
     bool                                       d_retryConnect;
     ntcs::DetachState                          d_detachState;
     ntci::CloseCallback                        d_closeCallback;
+    ntci::Executor::FunctorSequence            d_deferredCalls;
     bslma::Allocator*                          d_allocator_p;
 
   private:
