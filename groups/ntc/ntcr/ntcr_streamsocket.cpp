@@ -463,11 +463,16 @@ void StreamSocket::processConnectDeadlineTimer(
         if (d_connectInProgress) {
             if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
                 d_retryConnect = false;
-                d_deferredCalls.push_back(
+
+                ntci::Executor::Functor f =
                     NTCCFG_BIND(&StreamSocket::processConnectDeadlineTimer,
                                 this,
                                 timer,
-                                event));
+                                event);
+                d_deferredCalls.push_back(
+                    NTCCFG_BIND(&StreamSocket::wrapDeferredFunction,
+                                this->getSelf(this),
+                                f));
             }
             else {
                 this->privateFailConnect(
@@ -1563,6 +1568,7 @@ void StreamSocket::privateFailConnectPart2(
     }
 
     this->moveAndExecute(&d_deferredCalls, ntci::Executor::Functor());
+    d_deferredCalls.clear();
 
     if (lock) {
         d_mutex.unlock();
@@ -2167,6 +2173,7 @@ void StreamSocket::privateShutdownSequencePart2(
     }
 
     this->moveAndExecute(&d_deferredCalls, ntci::Executor::Functor());
+    d_deferredCalls.clear();
 
     if (lock) {
         d_mutex.unlock();
@@ -6371,11 +6378,20 @@ void StreamSocket::close(const ntci::CloseCallback& callback)
         return;
     }
     if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
-        d_deferredCalls.push_back(NTCCFG_BIND(
+        //        d_deferredCalls.push_back(NTCCFG_BIND(
+        //            static_cast<void (StreamSocket::*)(
+        //                const ntci::CloseCallback& callback)>(&StreamSocket::close),
+        //            this,
+        //            callback));
+        ntci::Executor::Functor f = NTCCFG_BIND(
             static_cast<void (StreamSocket::*)(
                 const ntci::CloseCallback& callback)>(&StreamSocket::close),
             this,
-            callback));
+            callback);
+        d_deferredCalls.push_back(
+            NTCCFG_BIND(&StreamSocket::wrapDeferredFunction,
+                        this->getSelf(this),
+                        f));
         return;
     }
 
