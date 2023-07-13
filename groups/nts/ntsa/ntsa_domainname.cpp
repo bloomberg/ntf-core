@@ -415,6 +415,10 @@ bool DomainName::equals(const DomainName& other) const
 
 bool DomainName::equals(const bslstl::StringRef& text) const
 {
+    if (d_size != text.size()) {
+        return false;
+    }
+
     const char* first1 = d_buffer;
     const char* last1  = d_buffer + d_size;
 
@@ -429,16 +433,12 @@ bool DomainName::equals(const bslstl::StringRef& text) const
             ch2 = (char)bsl::tolower(static_cast<int>(ch2));
         }
 
-        if (ch1 < ch2) {
-            return true;
-        }
-
-        if (ch1 > ch2) {
+        if (ch1 != ch2) {
             return false;
         }
     }
 
-    return (first1 == last1 && first2 == last2);
+    return true;
 }
 
 bool DomainName::less(const DomainName& other) const
