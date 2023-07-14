@@ -407,8 +407,8 @@ class Iocp : public ntci::Proactor,
                                  socket) BSLS_KEYWORD_OVERRIDE;
     // Detach the specified 'socket' from the proactor. Return the error.
 
-    ntsa::Error detachSocket2(const bsl::shared_ptr<ntci::ProactorSocket>&
-                                  socket) BSLS_KEYWORD_OVERRIDE;
+    ntsa::Error detachSocketAsync(const bsl::shared_ptr<ntci::ProactorSocket>&
+                                      socket) BSLS_KEYWORD_OVERRIDE;
     // Detach the specified 'socket' from the proactor. Return the error.
 
     ntsa::Error closeAll() BSLS_KEYWORD_OVERRIDE;
@@ -666,17 +666,38 @@ Iocp::DetachGuardWaiter::DetachGuardWaiter(
 : d_socket_sp(socket)
 , d_ignore(false)
 {
+    //    NTCI_LOG_CONTEXT();
+    //    NTCI_LOG_INFO("DetachGuardWaiter created for descriptor %d, ctr %u",
+    //                  d_socket_sp->handle(),
+    //                  d_socket_sp->processCounter());
 }
 
 Iocp::DetachGuardWaiter::~DetachGuardWaiter()
 {
+    //    NTCI_LOG_CONTEXT();
+
     if (NTCCFG_LIKELY(!d_ignore)) {
-        if (d_socket_sp->decrementProcessCounter() == 1 &&
-            d_socket_sp->trySetDetachScheduled())
-        {
+        //        if (d_socket_sp->decrementProcessCounter() == 1 &&
+        //            d_socket_sp->trySetDetachScheduled())
+        //        {
+        //            ntcs::Dispatch::announceDetached(d_socket_sp,
+        //                                             d_socket_sp->strand());
+        //        }
+        unsigned int dec = d_socket_sp->decrementProcessCounter();
+
+        //        NTCI_LOG_INFO(
+        //            "DetachGuardWaiter~: prev counter value = %u for descriptor %d",
+        //            dec,
+        //            d_socket_sp->handle());
+
+        if (dec == 1 && d_socket_sp->trySetDetachScheduled()) {
             ntcs::Dispatch::announceDetached(d_socket_sp,
                                              d_socket_sp->strand());
         }
+    }
+    else {
+        //        NTCI_LOG_INFO("DetachGuardWaiter~: ignore detach for descriptor %d",
+        //                      d_socket_sp->handle());
     }
 }
 
@@ -709,15 +730,24 @@ Iocp::DetachGuard::DetachGuard(
 , d_iocp(iocp)
 , d_ignore(false)
 {
+    //    NTCI_LOG_CONTEXT();
+
     d_socket_sp->incrementProcessCounter();
+    //    auto ctr = d_socket_sp->incrementProcessCounter();
+    //    NTCI_LOG_INFO("DetachGuard, descriptor %d, ctr is %u",
+    //                  d_socket_sp->handle(),
+    //                  ctr);
 }
 
 Iocp::DetachGuard::~DetachGuard()
 {
+    //    NTCI_LOG_CONTEXT();
     if (NTCCFG_LIKELY(!d_ignore)) {
-        if (d_socket_sp->decrementProcessCounter() == 1 &&
-            d_socket_sp->trySetDetachScheduled())
-        {
+        unsigned int prev = d_socket_sp->decrementProcessCounter();
+        //        NTCI_LOG_INFO("DetachGuard~ for descriptor %d, prev ctr is %d",
+        //                      prev,
+        //                      d_socket_sp->handle());
+        if (prev == 1 && d_socket_sp->trySetDetachScheduled()) {
             bslma::ManagedPtr<ntcs::Event> event =
                 d_iocp.d_eventPool.getManagedObject();
 
@@ -726,6 +756,10 @@ Iocp::DetachGuard::~DetachGuard()
                                             d_socket_sp,
                                             d_socket_sp->strand());
         }
+    }
+    else {
+        //        NTCI_LOG_INFO("DetachGuard~, ignore decrement for descriptor %d",
+        //                      d_socket_sp->handle());
     }
 }
 
@@ -873,9 +907,18 @@ void Iocp::wait(ntci::Waiter waiter)
 
     event.load(reinterpret_cast<ntcs::Event*>(overlapped), &d_eventPool);
 
+    //    NTCI_LOG_INFO(
+    //        "Got event type %s, descriptor %d",
+    //        ntcs::EventType::toString(event->d_type),
+    //        event->d_socket.get() != 0 ? event->d_socket.get()->handle() : -1);
+
+    //TODO: should I decrement processor counter here?
     if (error && error == ntsa::Error::e_CANCELLED) {
         BSLS_ASSERT(lastError == ERROR_OPERATION_ABORTED);
         NTCP_IOCP_LOG_EVENT_CANCELLED(event);
+        if (NTCCFG_LIKELY(event->d_socket)) {
+            DetachGuardWaiter detachGuardWaiter(event->d_socket);
+        }
         return;
     }
 
@@ -885,7 +928,8 @@ void Iocp::wait(ntci::Waiter waiter)
         event->d_function();
         return;
     }
-    DetachGuardWaiter detachGuard(event->d_socket);
+
+    DetachGuardWaiter detachGuardWaiter(event->d_socket);
 
     if (event->d_type == ntcs::EventType::e_ACCEPT) {
         BSLS_ASSERT(event->d_socket.get() != 0);
@@ -1076,7 +1120,7 @@ void Iocp::wait(ntci::Waiter waiter)
     }
     else {
         NTCP_IOCP_LOG_EVENT_IGNORED(event);
-        detachGuard.ignore();
+        detachGuardWaiter.ignore();
         return;
     }
 }
@@ -1430,6 +1474,7 @@ ntsa::Error Iocp::accept(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 {
     NTCI_LOG_CONTEXT();
 
+    //    NTCI_LOG_INFO("accept: going to create detach guard");
     DetachGuard detachGuard(socket, *this);
 
     if (NTCCFG_UNLIKELY(!socket->noDetach())) {
@@ -1574,6 +1619,7 @@ ntsa::Error Iocp::connect(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 {
     NTCI_LOG_CONTEXT();
 
+    //    NTCI_LOG_INFO("connect: going to create detach guard");
     DetachGuard detachGuard(socket, *this);
 
     if (NTCCFG_UNLIKELY(!socket->noDetach())) {
@@ -1678,6 +1724,7 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 {
     NTCI_LOG_CONTEXT();
 
+    //    NTCI_LOG_INFO("send: going to create detach guard");
     DetachGuard detachGuard(socket, *this);
 
     if (NTCCFG_UNLIKELY(!socket->noDetach())) {
@@ -1739,7 +1786,7 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 
         SetLastError(0);
 
-        socket->incrementProcessCounter();
+        //        socket->incrementProcessCounter(); increment is done via detach guard
         int wsaSendToResult =
             WSASendTo(descriptorHandle,
                       wsaBufArray,
@@ -1770,7 +1817,7 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     else {
         SetLastError(0);
 
-        socket->incrementProcessCounter();
+        //        socket->incrementProcessCounter(); increment is done via detach guard
 
         int wsaSendResult = WSASend(descriptorHandle,
                                     wsaBufArray,
@@ -1804,6 +1851,7 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 {
     NTCI_LOG_CONTEXT();
 
+    //    NTCI_LOG_INFO("send: going to create detach guard");
     DetachGuard detachGuard(socket, *this);
 
     if (NTCCFG_UNLIKELY(!socket->noDetach())) {
@@ -1840,7 +1888,7 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         socketAddressSize = static_cast<socklen_t>(socketAddressSizeT);
     }
 
-    socket->incrementProcessCounter();
+    //    socket->incrementProcessCounter(); //increment is done via detach guard
 
     if (NTCCFG_LIKELY(data.isBlob())) {
         const bdlbb::Blob& blob = data.blob();
@@ -2385,6 +2433,7 @@ ntsa::Error Iocp::receive(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 {
     NTCI_LOG_CONTEXT();
 
+    //    NTCI_LOG_INFO("receive: going to create detach guard");
     DetachGuard detachGuard(socket, *this);
 
     if (NTCCFG_UNLIKELY(!socket->noDetach())) {
@@ -2547,11 +2596,16 @@ ntsa::Error Iocp::detachSocket(
     return ntsa::Error();
 }
 
-ntsa::Error Iocp::detachSocket2(
+ntsa::Error Iocp::detachSocketAsync(
     const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 {
+    //    NTCI_LOG_CONTEXT();
+    //
+    //    NTCI_LOG_INFO("detachSocketAsync called for descriptor %d",
+    //                  socket->handle());
+
     if (socket->handle() == ntsa::k_INVALID_HANDLE) {
-        return ntsa::Error();
+        return ntsa::Error::invalid();
     }
 
     {
@@ -2559,14 +2613,20 @@ ntsa::Error Iocp::detachSocket2(
 
         bsl::size_t n = d_proactorSocketMap.erase(socket->handle());
         if (n == 0) {
-            return ntsa::Error();
+            return ntsa::Error::invalid();
         }
     }
 
     socket->setProactorContext(bsl::shared_ptr<void>());
 
     if (socket->trySetDetachRequired()) {
+        //        NTCI_LOG_INFO(
+        //            "set detach to REQUIRED for descriptor %d, processCounter is %u",
+        //            socket->handle(),
+        //            socket->processCounter());
         if (socket->processCounter() == 0 && socket->trySetDetachScheduled()) {
+            //            NTCI_LOG_INFO("set detach to SCHEDULED for descriptor %d",
+            //                          socket->handle());
             bslma::ManagedPtr<ntcs::Event> event =
                 d_eventPool.getManagedObject();
 
@@ -2574,15 +2634,15 @@ ntsa::Error Iocp::detachSocket2(
             event->d_function = NTCCFG_BIND(&ntcs::Dispatch::announceDetached,
                                             socket,
                                             socket->strand());
-            ntsa::Error error = this->submit(event);
+            const ntsa::Error error = this->submit(event);
             if (error) {
-                //TODO:
+                return error;
             }
         }
     }
     else {
-    TODO:  // return the error
-        return ntsa::Error();
+        BSLS_ASSERT(false);
+        return ntsa::Error::invalid();
     }
 
     return ntsa::Error();

@@ -33,6 +33,7 @@ BSLS_IDENT("$Id: $")
 #include <ntci_timer.h>
 #include <ntcq_receive.h>
 #include <ntcq_send.h>
+#include <ntcs_detachstate.h>
 #include <ntcs_flowcontrolcontext.h>
 #include <ntcs_flowcontrolstate.h>
 #include <ntcs_metrics.h>
@@ -101,6 +102,9 @@ class DatagramSocket : public ntci::DatagramSocket,
     bsl::shared_ptr<bdlbb::Blob>                 d_receiveBlob_sp;
     bsl::size_t                                  d_maxDatagramSize;
     ntca::DatagramSocketOptions                  d_options;
+    ntcs::DetachState                            d_detachState;
+    NTCCFG_FUNCTION()                            d_deferredCall;
+    ntci::CloseCallback                          d_closeCallback;
     bslma::Allocator*                            d_allocator_p;
 
   private:
@@ -122,6 +126,8 @@ class DatagramSocket : public ntci::DatagramSocket,
 
     /// Process the specified 'error' that has occurred on the socket.
     void processSocketError(const ntsa::Error& error) BSLS_KEYWORD_OVERRIDE;
+
+    void processSocketDetached() BSLS_KEYWORD_OVERRIDE;
 
     /// Attempt to copy from the write queue to the send buffer after the
     /// write rate limiter estimates more data might be able to be sent.
@@ -225,6 +231,11 @@ class DatagramSocket : public ntci::DatagramSocket,
                                  const ntcs::ShutdownContext& context,
                                  bool                         defer);
 
+    void privateShutdownSequencePart2(
+        const bsl::shared_ptr<DatagramSocket>& self,
+        const ntcs::ShutdownContext&           context,
+        bool                                   defer);
+
     /// Enable copying from the socket buffers in the specified 'direction'.
     /// The behavior is undefined unless 'd_mutex' is locked.
     ntsa::Error privateRelaxFlowControl(
@@ -245,9 +256,8 @@ class DatagramSocket : public ntci::DatagramSocket,
 
     /// Disable copying from socket buffers in both directions and detach
     /// the socket from the reactor.
-    ntsa::Error privateCloseFlowControl(
-        const bsl::shared_ptr<DatagramSocket>& self,
-        bool                                   defer);
+    bool privateCloseFlowControl(const bsl::shared_ptr<DatagramSocket>& self,
+                                 bool                                   defer);
 
     /// Test if rate limiting is applied to copying to the send buffer, and
     /// if so, determine whether more data is allowed to be copied to the

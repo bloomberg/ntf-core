@@ -293,7 +293,7 @@ class Proactor : public ntci::Proactor,
                                  socket) BSLS_KEYWORD_OVERRIDE;
 
     /// Detach the specified 'socket' from the proactor. Return the error.
-    ntsa::Error detachSocket2(const bsl::shared_ptr<ntci::ProactorSocket>&
+    ntsa::Error detachSocketAsync(const bsl::shared_ptr<ntci::ProactorSocket>&
                                  socket) BSLS_KEYWORD_OVERRIDE;
 
     /// Close all monitored sockets and timers.

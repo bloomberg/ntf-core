@@ -1499,7 +1499,7 @@ ntsa::Error Proactor::detachSocket(
     }
 }
 
-ntsa::Error Proactor::detachSocket2(
+ntsa::Error Proactor::detachSocketAsync(
     const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 {
     NTCCFG_WARNING_UNUSED(socket);

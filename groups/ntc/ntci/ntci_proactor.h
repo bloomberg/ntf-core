@@ -128,7 +128,7 @@ class Proactor : public ntci::Driver, public ntci::ProactorPool
         const bsl::shared_ptr<ntci::ProactorSocket>& socket) = 0;
 
     /// Detach the specified 'socket' from the proactor. Return the error.
-    virtual ntsa::Error detachSocket2(
+    virtual ntsa::Error detachSocketAsync(
         const bsl::shared_ptr<ntci::ProactorSocket>& socket) = 0;
 
     /// Close all monitored sockets and timers.

@@ -464,15 +464,11 @@ void StreamSocket::processConnectDeadlineTimer(
             if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
                 d_retryConnect = false;
 
-                ntci::Executor::Functor f =
-                    NTCCFG_BIND(&StreamSocket::processConnectDeadlineTimer,
-                                this,
-                                timer,
-                                event);
                 d_deferredCalls.push_back(
-                    NTCCFG_BIND(&StreamSocket::wrapDeferredFunction,
-                                this->getSelf(this),
-                                f));
+                    NTCCFG_BIND(&StreamSocket::processConnectDeadlineTimer,
+                                self,
+                                timer,
+                                event));
             }
             else {
                 this->privateFailConnect(
@@ -6378,20 +6374,13 @@ void StreamSocket::close(const ntci::CloseCallback& callback)
         return;
     }
     if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
-        //        d_deferredCalls.push_back(NTCCFG_BIND(
-        //            static_cast<void (StreamSocket::*)(
-        //                const ntci::CloseCallback& callback)>(&StreamSocket::close),
-        //            this,
-        //            callback));
-        ntci::Executor::Functor f = NTCCFG_BIND(
+
+        d_deferredCalls.push_back(NTCCFG_BIND(
             static_cast<void (StreamSocket::*)(
                 const ntci::CloseCallback& callback)>(&StreamSocket::close),
-            this,
-            callback);
-        d_deferredCalls.push_back(
-            NTCCFG_BIND(&StreamSocket::wrapDeferredFunction,
-                        this->getSelf(this),
-                        f));
+            self,
+            callback));
+
         return;
     }
 

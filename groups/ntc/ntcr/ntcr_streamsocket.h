@@ -520,12 +520,6 @@ class StreamSocket : public ntci::StreamSocket,
     /// Process notification containing the specified 'timestamp'.
     void processTimestampNotification(const ntsa::Timestamp& timestamp);
 
-    static void wrapDeferredFunction(const bsl::shared_ptr<StreamSocket>& ptr, const ntci::Executor::Functor& f)
-    {
-        NTCCFG_WARNING_UNUSED(ptr);
-        f();
-    }
-
   public:
     /// Create a new, initially uninitilialized stream socket. Optionally
     /// specify a 'basicAllocator' used to supply memory. If

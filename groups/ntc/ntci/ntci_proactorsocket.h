@@ -73,7 +73,7 @@ class ProactorSocketBase
     const bsl::shared_ptr<void>& getProactorContext() const;
 
     unsigned int processCounter() const;
-    void         incrementProcessCounter();
+    unsigned int incrementProcessCounter();
     unsigned int decrementProcessCounter();
     bool         noDetach() const;
     bool         trySetDetachScheduled();
@@ -174,9 +174,9 @@ unsigned int ProactorSocketBase::processCounter() const
 }
 
 NTCCFG_INLINE
-void ProactorSocketBase::incrementProcessCounter()
+unsigned int ProactorSocketBase::incrementProcessCounter()
 {
-    ++d_processCounter;
+    return ++d_processCounter;
 }
 
 NTCCFG_INLINE

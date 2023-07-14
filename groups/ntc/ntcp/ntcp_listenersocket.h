@@ -32,6 +32,7 @@ BSLS_IDENT("$Id: $")
 #include <ntci_strand.h>
 #include <ntci_timer.h>
 #include <ntcq_accept.h>
+#include <ntcs_detachstate.h>
 #include <ntcs_flowcontrolcontext.h>
 #include <ntcs_flowcontrolstate.h>
 #include <ntcs_metrics.h>
@@ -94,7 +95,10 @@ class ListenerSocket : public ntci::ListenerSocket,
     bool                                         d_acceptPending;
     bool                                         d_acceptGreedily;
     ntca::ListenerSocketOptions                  d_options;
-    bslma::Allocator*                            d_allocator_p;
+    ntcs::DetachState                            d_detachState;
+    NTCCFG_FUNCTION() d_deferredCall;
+    ntci::CloseCallback d_closeCallback;
+    bslma::Allocator*   d_allocator_p;
 
   private:
     ListenerSocket(const ListenerSocket&) BSLS_KEYWORD_DELETED;
@@ -109,6 +113,8 @@ class ListenerSocket : public ntci::ListenerSocket,
 
     /// Process the specified 'error' that has occurred on the socket.
     void processSocketError(const ntsa::Error& error) BSLS_KEYWORD_OVERRIDE;
+
+    void processSocketDetached() BSLS_KEYWORD_OVERRIDE;
 
     /// Attempt to dequeue from the backlog after the accept rate limiter
     /// estimates more connections might be able to be accepted.
@@ -184,6 +190,11 @@ class ListenerSocket : public ntci::ListenerSocket,
                                  const ntcs::ShutdownContext& context,
                                  bool                         defer);
 
+    void privateShutdownSequencePart2(
+        const bsl::shared_ptr<ListenerSocket>& self,
+        const ntcs::ShutdownContext&           context,
+        bool                                   defer);
+
     /// Enable copying from the socket buffers in the specified 'direction'.
     /// The behavior is undefined unless 'd_mutex' is locked.
     ntsa::Error privateRelaxFlowControl(
@@ -204,9 +215,8 @@ class ListenerSocket : public ntci::ListenerSocket,
 
     /// Disable copying from socket buffers in both directions and detach
     /// the socket from the reactor.
-    ntsa::Error privateCloseFlowControl(
-        const bsl::shared_ptr<ListenerSocket>& self,
-        bool                                   defer);
+    bool privateCloseFlowControl(const bsl::shared_ptr<ListenerSocket>& self,
+                                 bool                                   defer);
 
     /// Test if rate limiting is applied to accepting from the backlog,
     /// and if so, determine whether more connections are allowed to be
