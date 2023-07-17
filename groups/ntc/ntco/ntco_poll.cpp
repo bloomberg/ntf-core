@@ -825,13 +825,14 @@ void Poll::link(const bsl::shared_ptr<ntcs::RegistryEntry>& entry,
         struct ::pollfd pfd;
         Poll::specify(&pfd, handle, interest);
         result->d_descriptorList.push_back(pfd);
-    }
-    if (!result->d_controllerHandleFound) {
-        if (handle == d_controllerDescriptorHandle) {
-            result->d_controllerHandleFound = true;
-        }
-        else {
-            result->d_controllerHandleIdx++;
+
+        if (!result->d_controllerHandleFound) {
+            if (handle == d_controllerDescriptorHandle) {
+                result->d_controllerHandleFound = true;
+            }
+            else {
+                result->d_controllerHandleIdx++;
+            }
         }
     }
 }
