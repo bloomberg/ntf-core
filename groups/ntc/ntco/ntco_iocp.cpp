@@ -666,15 +666,15 @@ Iocp::DetachGuardWaiter::DetachGuardWaiter(
 : d_socket_sp(socket)
 , d_ignore(false)
 {
-    //    NTCI_LOG_CONTEXT();
-    //    NTCI_LOG_INFO("DetachGuardWaiter created for descriptor %d, ctr %u",
-    //                  d_socket_sp->handle(),
-    //                  d_socket_sp->processCounter());
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_INFO("DetachGuardWaiter created for descriptor %d, ctr %u",
+                  d_socket_sp->handle(),
+                  d_socket_sp->processCounter());
 }
 
 Iocp::DetachGuardWaiter::~DetachGuardWaiter()
 {
-    //    NTCI_LOG_CONTEXT();
+    NTCI_LOG_CONTEXT();
 
     if (NTCCFG_LIKELY(!d_ignore)) {
         //        if (d_socket_sp->decrementProcessCounter() == 1 &&
@@ -685,10 +685,10 @@ Iocp::DetachGuardWaiter::~DetachGuardWaiter()
         //        }
         unsigned int dec = d_socket_sp->decrementProcessCounter();
 
-        //        NTCI_LOG_INFO(
-        //            "DetachGuardWaiter~: prev counter value = %u for descriptor %d",
-        //            dec,
-        //            d_socket_sp->handle());
+        NTCI_LOG_INFO(
+            "DetachGuardWaiter~: prev counter value = %u for descriptor %d",
+            dec,
+            d_socket_sp->handle());
 
         if (dec == 1 && d_socket_sp->trySetDetachScheduled()) {
             ntcs::Dispatch::announceDetached(d_socket_sp,
@@ -696,8 +696,8 @@ Iocp::DetachGuardWaiter::~DetachGuardWaiter()
         }
     }
     else {
-        //        NTCI_LOG_INFO("DetachGuardWaiter~: ignore detach for descriptor %d",
-        //                      d_socket_sp->handle());
+        NTCI_LOG_INFO("DetachGuardWaiter~: ignore detach for descriptor %d",
+                      d_socket_sp->handle());
     }
 }
 
@@ -730,23 +730,23 @@ Iocp::DetachGuard::DetachGuard(
 , d_iocp(iocp)
 , d_ignore(false)
 {
-    //    NTCI_LOG_CONTEXT();
+    NTCI_LOG_CONTEXT();
 
-    d_socket_sp->incrementProcessCounter();
-    //    auto ctr = d_socket_sp->incrementProcessCounter();
-    //    NTCI_LOG_INFO("DetachGuard, descriptor %d, ctr is %u",
-    //                  d_socket_sp->handle(),
-    //                  ctr);
+    //    d_socket_sp->incrementProcessCounter();
+    auto ctr = d_socket_sp->incrementProcessCounter();
+    NTCI_LOG_INFO("DetachGuard, descriptor %d, ctr is %u",
+                  d_socket_sp->handle(),
+                  ctr);
 }
 
 Iocp::DetachGuard::~DetachGuard()
 {
-    //    NTCI_LOG_CONTEXT();
+    NTCI_LOG_CONTEXT();
     if (NTCCFG_LIKELY(!d_ignore)) {
         unsigned int prev = d_socket_sp->decrementProcessCounter();
-        //        NTCI_LOG_INFO("DetachGuard~ for descriptor %d, prev ctr is %d",
-        //                      prev,
-        //                      d_socket_sp->handle());
+        NTCI_LOG_INFO("DetachGuard~ for descriptor %d, prev ctr is %d",
+                      prev,
+                      d_socket_sp->handle());
         if (prev == 1 && d_socket_sp->trySetDetachScheduled()) {
             bslma::ManagedPtr<ntcs::Event> event =
                 d_iocp.d_eventPool.getManagedObject();
@@ -758,8 +758,8 @@ Iocp::DetachGuard::~DetachGuard()
         }
     }
     else {
-        //        NTCI_LOG_INFO("DetachGuard~, ignore decrement for descriptor %d",
-        //                      d_socket_sp->handle());
+        NTCI_LOG_INFO("DetachGuard~, ignore decrement for descriptor %d",
+                      d_socket_sp->handle());
     }
 }
 
@@ -793,6 +793,7 @@ void Iocp::flush()
     // resulting in those sockets never being destroyed, causing a memory leak.
 
     NTCI_LOG_CONTEXT();
+    NTCI_LOG_INFO("Iocp::flush()");
 
     if (d_chronology.hasAnyScheduledOrDeferred()) {
         d_chronology.announce();
@@ -838,6 +839,10 @@ void Iocp::flush()
 
         event.load(reinterpret_cast<ntcs::Event*>(overlapped), &d_eventPool);
 
+        if (NTCCFG_LIKELY(event->d_socket)) {
+            DetachGuardWaiter detachGuardWaiter(event->d_socket);
+        }
+
         if (error && error == ntsa::Error::e_CANCELLED) {
             BSLS_ASSERT(lastError == ERROR_OPERATION_ABORTED);
             NTCP_IOCP_LOG_EVENT_CANCELLED(event);
@@ -846,6 +851,10 @@ void Iocp::flush()
 
         NTCP_IOCP_LOG_EVENT_ABANDONED(event);
     }
+
+    while (d_chronology.hasAnyScheduledOrDeferred()) {
+        d_chronology.announce();
+    }  //TODO: how to prevent any job to come to proactor by deferred call?
 }
 
 void Iocp::wait(ntci::Waiter waiter)
@@ -907,10 +916,10 @@ void Iocp::wait(ntci::Waiter waiter)
 
     event.load(reinterpret_cast<ntcs::Event*>(overlapped), &d_eventPool);
 
-    //    NTCI_LOG_INFO(
-    //        "Got event type %s, descriptor %d",
-    //        ntcs::EventType::toString(event->d_type),
-    //        event->d_socket.get() != 0 ? event->d_socket.get()->handle() : -1);
+    NTCI_LOG_INFO(
+        "Got event type %s, descriptor %d",
+        ntcs::EventType::toString(event->d_type),
+        event->d_socket.get() != 0 ? event->d_socket.get()->handle() : -1);
 
     //TODO: should I decrement processor counter here?
     if (error && error == ntsa::Error::e_CANCELLED) {
@@ -1438,6 +1447,10 @@ ntsa::Error Iocp::attachSocket(
     const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 {
     if (socket->handle() == ntsa::k_INVALID_HANDLE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (NTCCFG_UNLIKELY(!socket->trySetDetachNotRequired())) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
@@ -2599,10 +2612,10 @@ ntsa::Error Iocp::detachSocket(
 ntsa::Error Iocp::detachSocketAsync(
     const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 {
-    //    NTCI_LOG_CONTEXT();
-    //
-    //    NTCI_LOG_INFO("detachSocketAsync called for descriptor %d",
-    //                  socket->handle());
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_INFO("detachSocketAsync called for descriptor %d",
+                  socket->handle());
 
     if (socket->handle() == ntsa::k_INVALID_HANDLE) {
         return ntsa::Error::invalid();
@@ -2620,13 +2633,14 @@ ntsa::Error Iocp::detachSocketAsync(
     socket->setProactorContext(bsl::shared_ptr<void>());
 
     if (socket->trySetDetachRequired()) {
-        //        NTCI_LOG_INFO(
-        //            "set detach to REQUIRED for descriptor %d, processCounter is %u",
-        //            socket->handle(),
-        //            socket->processCounter());
+        NTCI_LOG_INFO(
+            "set detach to REQUIRED for descriptor %d, processCounter is %u",
+            socket->handle(),
+            socket->processCounter());
         if (socket->processCounter() == 0 && socket->trySetDetachScheduled()) {
-            //            NTCI_LOG_INFO("set detach to SCHEDULED for descriptor %d",
-            //                          socket->handle());
+            NTCI_LOG_INFO("set detach to SCHEDULED for descriptor %d",
+                          socket->handle());
+#if 0
             bslma::ManagedPtr<ntcs::Event> event =
                 d_eventPool.getManagedObject();
 
@@ -2638,6 +2652,10 @@ ntsa::Error Iocp::detachSocketAsync(
             if (error) {
                 return error;
             }
+#endif
+            this->execute(NTCCFG_BIND(&ntcs::Dispatch::announceDetached,
+                                      socket,
+                                      socket->strand()));
         }
     }
     else {

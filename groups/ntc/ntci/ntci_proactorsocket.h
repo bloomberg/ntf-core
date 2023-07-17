@@ -78,6 +78,7 @@ class ProactorSocketBase
     bool         noDetach() const;
     bool         trySetDetachScheduled();
     bool         trySetDetachRequired();
+    bool         trySetDetachNotRequired();
 };
 
 /// Provide an interface to handle the completion of operations initiated
@@ -214,6 +215,14 @@ bool ProactorSocketBase::trySetDetachRequired()
     unsigned int val =
         d_detachState.testAndSwap(e_DETACH_NOT_REQUIRED, e_DETACH_REQUIRED);
     return val == e_DETACH_NOT_REQUIRED;
+}
+
+NTCCFG_INLINE
+bool ProactorSocketBase::trySetDetachNotRequired()
+{
+    unsigned int val =
+        d_detachState.testAndSwap(e_DETACH_SCHEDULED, e_DETACH_NOT_REQUIRED);
+    return (val == e_DETACH_SCHEDULED || val == e_DETACH_NOT_REQUIRED);
 }
 
 }  // end namespace ntci

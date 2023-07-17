@@ -35,6 +35,7 @@ BSLS_IDENT("$Id: $")
 #include <ntcq_connect.h>
 #include <ntcq_receive.h>
 #include <ntcq_send.h>
+#include <ntcs_detachstate.h>
 #include <ntcs_flowcontrolcontext.h>
 #include <ntcs_flowcontrolstate.h>
 #include <ntcs_metrics.h>
@@ -134,6 +135,11 @@ class StreamSocket : public ntci::StreamSocket,
     bsl::shared_ptr<ntci::Timer>               d_upgradeTimer_sp;
     bool                                       d_upgradeInProgress;
     ntca::StreamSocketOptions                  d_options;
+    bool                                       d_retryConnect;
+    ntcs::DetachState                          d_detachState;
+    NTCCFG_FUNCTION()                          d_deferredCall;
+    ntci::CloseCallback                        d_closeCallback;
+    ntci::Executor::FunctorSequence            d_deferredCalls;
     bslma::Allocator*                          d_allocator_p;
 
   private:
@@ -160,6 +166,8 @@ class StreamSocket : public ntci::StreamSocket,
 
     /// Process the specified 'error' that has occurred on the socket.
     void processSocketError(const ntsa::Error& error) BSLS_KEYWORD_OVERRIDE;
+
+    void processSocketDetached() BSLS_KEYWORD_OVERRIDE;
 
     /// Fail the current connection attempt unless it has already completed.
     void processConnectDeadlineTimer(const bsl::shared_ptr<ntci::Timer>& timer,
@@ -221,6 +229,11 @@ class StreamSocket : public ntci::StreamSocket,
                             const ntsa::Error&                   error,
                             bool                                 defer,
                             bool                                 close);
+
+    void privateFailConnectPart2(const bsl::shared_ptr<StreamSocket>& self,
+                                 const ntci::ConnectCallback&         connectCallback,
+                                 const ntca::ConnectEvent&            connectEvent,
+                                 bool                                 defer);
 
     /// Process the failure of the upgrade attempt. The behavior is
     /// undefined unless 'd_mutex' is locked.
@@ -306,6 +319,10 @@ class StreamSocket : public ntci::StreamSocket,
                                  const ntcs::ShutdownContext&         context,
                                  bool                                 defer);
 
+    void privateShutdownSequencePart2(const bsl::shared_ptr<StreamSocket>& self,
+                                 const ntcs::ShutdownContext&         context,
+                                 bool                                 defer);
+
     /// Enable copying from the socket buffers in the specified 'direction'.
     /// The behavior is undefined unless 'd_mutex' is locked.
     ntsa::Error privateRelaxFlowControl(
@@ -326,7 +343,7 @@ class StreamSocket : public ntci::StreamSocket,
 
     /// Disable copying from socket buffers in both directions and detach
     /// the socket from the reactor.
-    ntsa::Error privateCloseFlowControl(
+    bool privateCloseFlowControl(
         const bsl::shared_ptr<StreamSocket>& self,
         bool                                 defer);
 
