@@ -115,6 +115,9 @@ class ProactorSocket : public ntci::ProactorSocketBase, public ntsi::Descriptor
     /// Return true if the proactor socket is a listener for incoming
     /// connection requests, otherwise return false.
     virtual bool isListener() const;
+
+    /// Return the transport used by the socket.
+    virtual ntsa::Transport::Value transport() const;
 };
 
 NTCCFG_INLINE

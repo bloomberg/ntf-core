@@ -77,5 +77,10 @@ bool ProactorSocket::isListener() const
     return false;
 }
 
+ntsa::Transport::Value ProactorSocket::transport() const
+{
+    return ntsa::Transport::e_UNDEFINED;
+}
+
 }  // close package namespace
 }  // close enterprise namespace
