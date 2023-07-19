@@ -717,7 +717,7 @@ void ListenerSocket::privateShutdownSequence(
 {
     NTCCFG_WARNING_UNUSED(origin);
 
-    NTCI_LOG_CONTEXT();
+    // NTCI_LOG_CONTEXT();
 
     // MRM: Always defer to properly clean up pending operations?
     defer = true;

@@ -909,8 +909,10 @@ void RegistryEntry::clear()
     }
 
     d_detachCallback.reset();
-    BSLS_ASSERT_OPT(d_processCounter == 0);      //TODO: change to debug
-    BSLS_ASSERT_OPT(d_detachRequired == false);  //TODO: change to debug
+    // BSLS_ASSERT_OPT(d_processCounter == 0);      //TODO: change to debug
+    // it is possible that d_processCounter equals 0 due to optimization implemented for devpoll in static load balancing
+    // (when waiter thread acts on the socket which is then detached)
+    // BSLS_ASSERT_OPT(d_detachRequired == false);  //TODO: change to debug
 
     d_active = false;
 }
@@ -1186,7 +1188,7 @@ ntsa::Error RegistryEntryCatalog::removeAndGetReadyToDetach(
             return ntsa::Error::invalid();
         }
     }
-    BSLS_ASSERT_OPT(entry_sp); //TODO: switch to non _OPT
+    BSLS_ASSERT_OPT(entry_sp);  //TODO: switch to non _OPT
 
     ntsa::Error error = functor(entry_sp);
     if (error) {
