@@ -179,7 +179,7 @@ NTSCFG_TEST_CASE(1)
         found = parentDomainName.domain(&grandParentDomainName);
         NTSCFG_TEST_TRUE(found);
 
-        equals = parentDomainName.equals("baz");
+        equals = grandParentDomainName.equals("baz");
         NTSCFG_TEST_TRUE(equals);
 
         name = grandParentDomainName.name();

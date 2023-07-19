@@ -1208,7 +1208,7 @@ class StreamSocket : public ntci::StreamSocket,
     /// Return the descriptor handle.
     ntsa::Handle handle() const BSLS_KEYWORD_OVERRIDE;
 
-    /// Return the transport of the datagram socket.
+    /// Return the transport of the stream socket.
     ntsa::Transport::Value transport() const BSLS_KEYWORD_OVERRIDE;
 
     /// Return the source endpoint.

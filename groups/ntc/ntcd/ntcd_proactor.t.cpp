@@ -161,6 +161,9 @@ class ProactorStreamSocket : public ntci::ProactorSocket,
     /// connection requests, otherwise return false.
     bool isListener() const BSLS_KEYWORD_OVERRIDE;
 
+    /// Return the transport used by the socket.
+    ntsa::Transport::Value transport() const BSLS_KEYWORD_OVERRIDE;
+
     /// Return the strand on which this object's functions should be called.
     const bsl::shared_ptr<ntci::Strand>& strand() const BSLS_KEYWORD_OVERRIDE;
 
@@ -518,6 +521,11 @@ bool ProactorStreamSocket::isDatagram() const
 bool ProactorStreamSocket::isListener() const
 {
     return false;
+}
+
+ntsa::Transport::Value ProactorStreamSocket::transport() const
+{
+    return ntsa::Transport::e_TCP_IPV4_STREAM;
 }
 
 const bsl::shared_ptr<ntci::Strand>& ProactorStreamSocket::strand() const
@@ -908,6 +916,9 @@ class ProactorListenerSocket : public ntci::ProactorSocket,
     /// connection requests, otherwise return false.
     bool isListener() const BSLS_KEYWORD_OVERRIDE;
 
+    /// Return the transport used by the socket.
+    ntsa::Transport::Value transport() const BSLS_KEYWORD_OVERRIDE;
+
     /// Return the strand on which this object's functions should be called.
     const bsl::shared_ptr<ntci::Strand>& strand() const BSLS_KEYWORD_OVERRIDE;
 
@@ -1106,6 +1117,11 @@ bool ProactorListenerSocket::isDatagram() const
 bool ProactorListenerSocket::isListener() const
 {
     return true;
+}
+
+ntsa::Transport::Value ProactorListenerSocket::transport() const
+{
+    return ntsa::Transport::e_TCP_IPV4_STREAM;
 }
 
 const bsl::shared_ptr<ntci::Strand>& ProactorListenerSocket::strand() const
