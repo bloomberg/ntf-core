@@ -181,7 +181,7 @@ class Poll : public ntci::Reactor,
     /// This typedef defines a mutex lock guard.
     typedef ntci::LockGuard LockGuard;
 
-    typedef bsl::vector<bsl::shared_ptr<ntcs::RegistryEntry> > DetachList;
+    typedef bsl::list<bsl::shared_ptr<ntcs::RegistryEntry> > DetachList;
 
     ntccfg::Object                           d_object;
     mutable Mutex                            d_generationMutex;
@@ -2027,6 +2027,31 @@ void Poll::run(ntci::Waiter waiter)
             }
         }
 
+        bsl::size_t numDetachments = 0;
+        {
+            LockGuard lock(&d_detachMutex);
+
+            for (DetachList::const_iterator it = d_detachList.cbegin();
+                 it != d_detachList.cend();)
+            {
+                ntcs::RegistryEntry& entry = **it;
+                bool erase = false;
+                if (entry.processCounter() == 0 &&
+                    entry.askForDetachmentAnnouncementPermission())
+                {
+                    entry.announceDetached(this->getSelf(this));
+                    entry.clear();
+                    ++numDetachments;
+                    erase = true;
+                }
+                it = erase ? d_detachList.erase(it) : ++it;
+            }
+        }
+
+        if (numDetachments > 0) {
+            timeout = 0;
+        }
+
         int wait;
         if (timeout >= 0) {
             NTCO_POLL_LOG_WAIT_TIMED(timeout);
@@ -2137,26 +2162,6 @@ void Poll::run(ntci::Waiter waiter)
                         }
                     }
                 }
-            }
-        }
-
-        bsl::size_t numDetachments = 0;
-        DetachList  detachList(d_allocator_p);
-        {
-            LockGuard lock(&d_detachMutex);
-            detachList.swap(d_detachList);
-        }
-        for (DetachList::const_iterator it = detachList.cbegin();
-             it != detachList.cend();
-             ++it)
-        {
-            ntcs::RegistryEntry& entry = **it;
-            if (entry.processCounter() == 0 &&
-                entry.askForDetachmentAnnouncementPermission())
-            {
-                entry.announceDetached(this->getSelf(this));
-                entry.clear();
-                ++numDetachments;
             }
         }
 
@@ -2286,12 +2291,24 @@ void Poll::run(ntci::Waiter waiter)
                     }
                 }
 
-                if (entry->decrementProcessCounter() == 1 &&
-                    entry->askForDetachmentAnnouncementPermission())
+//                if (entry->decrementProcessCounter() == 1 &&
+//                    entry->askForDetachmentAnnouncementPermission())
+//                {
+//                    entry->announceDetached(this->getSelf(this));
+//                    entry->clear();
+//                    ++numDetachments;
+//                }
+                entry->decrementProcessCounter();
+            }
+
+            {
+                bool interrupt = false;
                 {
-                    entry->announceDetached(this->getSelf(this));
-                    entry->clear();
-                    ++numDetachments;
+                    LockGuard detachGuard(&d_detachMutex);
+                    interrupt = !d_detachList.empty();
+                }
+                if (interrupt) {
+                    this->interruptOne();
                 }
             }
 
@@ -2403,6 +2420,31 @@ void Poll::poll(ntci::Waiter waiter)
         }
     }
 
+    bsl::size_t numDetachments = 0;
+    {
+        LockGuard lock(&d_detachMutex);
+
+        for (DetachList::const_iterator it = d_detachList.cbegin();
+             it != d_detachList.cend();)
+        {
+            ntcs::RegistryEntry& entry = **it;
+            bool erase = false;
+            if (entry.processCounter() == 0 &&
+                entry.askForDetachmentAnnouncementPermission())
+            {
+                entry.announceDetached(this->getSelf(this));
+                entry.clear();
+                ++numDetachments;
+                erase = true;
+            }
+            it = erase ? d_detachList.erase(it) : ++it;
+        }
+    }
+
+    if (numDetachments > 0) {
+        timeout = 0;
+    }
+
     int wait;
     if (timeout >= 0) {
         NTCO_POLL_LOG_WAIT_TIMED(timeout);
@@ -2509,26 +2551,6 @@ void Poll::poll(ntci::Waiter waiter)
                     }
                 }
             }
-        }
-    }
-    bsl::size_t numDetachments = 0;
-    DetachList  detachList(d_allocator_p);
-    {
-        LockGuard lock(&d_detachMutex);
-        detachList.swap(d_detachList);
-    }
-
-    for (DetachList::const_iterator it = detachList.cbegin();
-         it != detachList.cend();
-         ++it)
-    {
-        ntcs::RegistryEntry& entry = **it;
-        if (entry.processCounter() == 0 &&
-            entry.askForDetachmentAnnouncementPermission())
-        {
-            entry.announceDetached(this->getSelf(this));
-            entry.clear();
-            ++numDetachments;
         }
     }
 
@@ -2657,12 +2679,24 @@ void Poll::poll(ntci::Waiter waiter)
                 }
             }
 
-            if (entry->decrementProcessCounter() == 1 &&
-                entry->askForDetachmentAnnouncementPermission())
+//            if (entry->decrementProcessCounter() == 1 &&
+//                entry->askForDetachmentAnnouncementPermission())
+//            {
+//                entry->announceDetached(this->getSelf(this));
+//                entry->clear();
+//                ++numDetachments;
+//            }
+            entry->decrementProcessCounter();
+        }
+
+        {
+            bool interrupt = false;
             {
-                entry->announceDetached(this->getSelf(this));
-                entry->clear();
-                ++numDetachments;
+                LockGuard detachGuard(&d_detachMutex);
+                interrupt = !d_detachList.empty();
+            }
+            if (interrupt) {
+                this->interruptOne();
             }
         }
 

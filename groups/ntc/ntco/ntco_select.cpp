@@ -191,7 +191,9 @@ class Select : public ntci::Reactor,
     /// This typedef defines a mutex lock guard.
     typedef ntci::LockGuard LockGuard;
 
-    typedef bsl::vector<bsl::shared_ptr<ntcs::RegistryEntry> > DetachList;
+    typedef bsl::list<bsl::shared_ptr<ntcs::RegistryEntry> > DetachList;
+    //TODO: list can be replaced with a vector and more smart way of erasing nodes (e.g. moving to the end)
+    // keep just a simple list for now as it is a bit easier to implement
 
     ntccfg::Object                           d_object;
     mutable Mutex                            d_generationMutex;
@@ -1924,6 +1926,31 @@ void Select::run(ntci::Waiter waiter)
             maxDescriptor = d_maxHandle + 1;
         }
 
+        bsl::size_t numDetachments = 0;
+        {
+            LockGuard lock(&d_detachMutex);
+
+            for (DetachList::const_iterator it = d_detachList.cbegin();
+                 it != d_detachList.cend();
+            )
+            {
+                ntcs::RegistryEntry& entry = **it;
+                bool erase = false;
+                if (entry.processCounter() == 0) {
+                    if (entry.askForDetachmentAnnouncementPermission()) {
+                        entry.announceDetached(this->getSelf(this));
+                        entry.clear();
+                        ++numDetachments;
+                        erase = true;
+                    }
+                }
+                it = erase ? d_detachList.erase(it) : ++it;
+            }
+        }
+        if (numDetachments > 0) {
+            timeout = 0;
+        }
+
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
         struct ::timeval timeval;
@@ -2096,28 +2123,6 @@ void Select::run(ntci::Waiter waiter)
             }
         }
 
-        DetachList detachList(d_allocator_p);
-        {
-            LockGuard lock(&d_detachMutex);
-            detachList.swap(d_detachList);
-        }
-
-        bsl::size_t numDetachments = 0;
-        for (DetachList::const_iterator it = detachList.cbegin();
-             it != detachList.cend();
-             ++it)
-        {
-            ntcs::RegistryEntry& entry = **it;
-            if (entry.processCounter() == 0) {
-                if (entry.askForDetachmentAnnouncementPermission())
-                {  // none other thread is doing anything on the descriptor, I can schedule detachment
-                    entry.announceDetached(this->getSelf(this));
-                    entry.clear();
-                    ++numDetachments;
-                }
-            }
-        }
-
         if (d_config.maxThreads().value() > 1) {
             d_generationSemaphore.post();
         }
@@ -2246,12 +2251,24 @@ void Select::run(ntci::Waiter waiter)
                     }
                 }
 
-                if (entry->decrementProcessCounter() == 1) {
-                    if (entry->askForDetachmentAnnouncementPermission()) {
-                        entry->announceDetached(this->getSelf(this));
-                        entry->clear();
-                        ++numDetachments;
-                    }
+//                if (entry->decrementProcessCounter() == 1) {
+//                    if (entry->askForDetachmentAnnouncementPermission()) {
+//                        entry->announceDetached(this->getSelf(this));
+//                        entry->clear();
+//                        ++numDetachments;
+//                    }
+//                }
+                entry->decrementProcessCounter();
+            }
+
+            {
+                bool interrupt = false;
+                {
+                    LockGuard detachGuard(&d_detachMutex);
+                    interrupt = !d_detachList.empty();
+                }
+                if (interrupt) {
+                    this->interruptOne();
                 }
             }
 
@@ -2358,6 +2375,31 @@ void Select::poll(ntci::Waiter waiter)
         Select::copyFdSet(&result->d_erroring, d_erroring);
 
         maxDescriptor = d_maxHandle + 1;
+    }
+
+    bsl::size_t numDetachments = 0;
+    {
+        LockGuard lock(&d_detachMutex);
+
+        for (DetachList::const_iterator it = d_detachList.cbegin();
+             it != d_detachList.cend();
+             )
+        {
+            ntcs::RegistryEntry& entry = **it;
+            bool erase = false;
+            if (entry.processCounter() == 0) {
+                if (entry.askForDetachmentAnnouncementPermission()) {
+                    entry.announceDetached(this->getSelf(this));
+                    entry.clear();
+                    ++numDetachments;
+                    erase = true;
+                }
+            }
+            it = erase ? d_detachList.erase(it) : ++it;
+        }
+    }
+    if (numDetachments > 0) {
+        timeout = 0;
     }
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
@@ -2526,27 +2568,6 @@ void Select::poll(ntci::Waiter waiter)
         }
     }
 
-    DetachList detachList(d_allocator_p);
-    {
-        LockGuard lock(&d_detachMutex);
-        detachList.swap(d_detachList);
-    }
-
-    bsl::size_t numDetachments = 0;
-    for (DetachList::const_iterator it = detachList.cbegin();
-         it != detachList.cend();
-         ++it)
-    {
-        ntcs::RegistryEntry& entry = **it;
-        if (entry.processCounter() == 0) {
-            if (entry.askForDetachmentAnnouncementPermission()) {
-                entry.announceDetached(this->getSelf(this));
-                entry.clear();
-                ++numDetachments;
-            }
-        }
-    }
-
     if (d_config.maxThreads().value() > 1) {
         d_generationSemaphore.post();
     }
@@ -2674,12 +2695,24 @@ void Select::poll(ntci::Waiter waiter)
                 }
             }
 
-            if (entry->decrementProcessCounter() == 1) {
-                if (entry->askForDetachmentAnnouncementPermission()) {
-                    entry->announceDetached(this->getSelf(this));
-                    entry->clear();
-                    ++numDetachments;
-                }
+//            if (entry->decrementProcessCounter() == 1) {
+//                if (entry->askForDetachmentAnnouncementPermission()) {
+//                    entry->announceDetached(this->getSelf(this));
+//                    entry->clear();
+//                    ++numDetachments;
+//                }
+//            }
+            entry->decrementProcessCounter();
+        }
+
+        {
+            bool interrupt = false;
+            {
+                LockGuard detachGuard(&d_detachMutex);
+                interrupt = !d_detachList.empty();
+            }
+            if (interrupt) {
+                this->interruptOne();
             }
         }
 
