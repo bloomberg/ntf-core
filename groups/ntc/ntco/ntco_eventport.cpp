@@ -732,6 +732,10 @@ ntsa::Error EventPort::update(ntsa::Handle   handle,
 
     int rc = port_associate(d_port, PORT_SOURCE_FD, handle, events, 0);
 
+    NTCI_LOG_INFO("EventPort::update for descriptor %d, events is %d",
+                  handle,
+                  events);
+
     if (rc == 0) {
         NTCO_EVENTPORT_LOG_UPDATE(handle, mask);
         return ntsa::Error();
@@ -770,6 +774,7 @@ ntsa::Error EventPort::remove(ntsa::Handle handle)
 ntsa::Error EventPort::removeDetached(
     const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
 {
+    ntsa::Error error;
     NTCI_LOG_CONTEXT();
 
     ntsa::Handle handle = entry->handle();
@@ -780,27 +785,41 @@ ntsa::Error EventPort::removeDetached(
     if (rc == 0) {
         NTCO_EVENTPORT_LOG_REMOVE(handle);
 
-        if ((entry->processCounter() == 0) &&
-            (entry->askForDetachmentAnnouncementPermission()))
-        {
-            // so this thread marked detached required as false
-            entry->announceDetached();
-            entry->clear();
-            EventPort::interruptOne();
-        }
-
-        return ntsa::Error();
+        // return ntsa::Error();
     }
     else {
         if (errno != ENOENT) {
-            ntsa::Error error(errno);
+            // ntsa::Error error(errno);
             NTCO_EVENTPORT_LOG_REMOVE_FAILURE(handle, error);
-            return error;
+            // return error;
         }
         else {
-            return ntsa::Error();  //TODO: ???
+            NTCI_LOG_INFO(
+                "removeDetached descriptor %d, rc is %d, errno is %d",
+                handle,
+                rc,
+                errno);
+            // BSLS_ASSERT_OPT(false);
+            // entry->announceDetached(this->getSelf(this));
+            // entry->clear();
+            // EventPort::interruptOne();
+            // return ntsa::Error();  //TODO: ???
         }
     }
+
+    // do not propagate error further, execute detachment announcement
+    if ((entry->processCounter() == 0) &&
+        (entry->askForDetachmentAnnouncementPermission()))
+    {
+        NTCI_LOG_INFO(
+            "removeDetached will call announceDetached for descriptor %d",
+            handle);
+        // so this thread marked detached required as false
+        entry->announceDetached(this->getSelf(this));
+        entry->clear();
+        EventPort::interruptOne();
+    }
+    return error;
 }
 
 void EventPort::reinitializeControl()
@@ -1749,6 +1768,8 @@ ntsa::Error EventPort::detachSocket(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket,
     const ntci::SocketDetachedCallback&         callback)
 {
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_INFO("detach requested for descriptor %d", socket->handle());
     ntsa::Error error = d_registry.removeAndGetReadyToDetach(socket,
                                                              callback,
                                                              d_detachFunctor);
@@ -2001,12 +2022,19 @@ void EventPort::run(ntci::Waiter waiter)
                     }
                 }
 
-                if (entry->decrementProcessCounter() == 1 &&
-                    entry->askForDetachmentAnnouncementPermission())
                 {
-                    entry->announceDetached();
-                    entry->clear();
-                    ++numDetachments;
+                    unsigned int prev = entry->decrementProcessCounter();
+                    NTCI_LOG_INFO(
+                        "descriptor %d, prev value of process counter is %u",
+                        entry->handle(),
+                        prev);
+                    if (prev == 1 &&
+                        entry->askForDetachmentAnnouncementPermission())
+                    {
+                        entry->announceDetached(this->getSelf(this));
+                        entry->clear();
+                        ++numDetachments;
+                    }
                 }
             }
 
@@ -2247,7 +2275,7 @@ void EventPort::poll(ntci::Waiter waiter)
             if (entry->decrementProcessCounter() == 1 &&
                 entry->askForDetachmentAnnouncementPermission())
             {
-                entry->announceDetached();
+                entry->announceDetached(this->getSelf(this));
                 entry->clear();
                 ++numDetachments;
             }

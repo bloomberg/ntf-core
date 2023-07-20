@@ -733,8 +733,28 @@ void Poll::specify(struct ::pollfd* result,
 
 void Poll::flush()
 {
-    if (d_chronology.hasAnyScheduledOrDeferred()) {
-        d_chronology.announce();
+    while (true) {
+        {
+            LockGuard detachGuard(&d_detachMutex);
+            for (DetachList::const_iterator it = d_detachList.cbegin();
+                 it != d_detachList.cend();
+                 ++it)
+            {
+                ntcs::RegistryEntry& entry = **it;
+                entry.announceDetached(this->getSelf(this));
+                entry.clear();
+            }
+            d_detachList.clear();
+        }
+
+        if (d_chronology.hasAnyScheduledOrDeferred()) {
+            d_chronology.announce();
+        }
+
+        if (!d_chronology.hasAnyScheduledOrDeferred() && d_detachList.empty())
+        {
+            break;
+        }
     }
 }
 
@@ -2035,7 +2055,7 @@ void Poll::run(ntci::Waiter waiter)
                  it != d_detachList.cend();)
             {
                 ntcs::RegistryEntry& entry = **it;
-                bool erase = false;
+                bool                 erase = false;
                 if (entry.processCounter() == 0 &&
                     entry.askForDetachmentAnnouncementPermission())
                 {
@@ -2291,13 +2311,13 @@ void Poll::run(ntci::Waiter waiter)
                     }
                 }
 
-//                if (entry->decrementProcessCounter() == 1 &&
-//                    entry->askForDetachmentAnnouncementPermission())
-//                {
-//                    entry->announceDetached(this->getSelf(this));
-//                    entry->clear();
-//                    ++numDetachments;
-//                }
+                //                if (entry->decrementProcessCounter() == 1 &&
+                //                    entry->askForDetachmentAnnouncementPermission())
+                //                {
+                //                    entry->announceDetached(this->getSelf(this));
+                //                    entry->clear();
+                //                    ++numDetachments;
+                //                }
                 entry->decrementProcessCounter();
             }
 
@@ -2428,7 +2448,7 @@ void Poll::poll(ntci::Waiter waiter)
              it != d_detachList.cend();)
         {
             ntcs::RegistryEntry& entry = **it;
-            bool erase = false;
+            bool                 erase = false;
             if (entry.processCounter() == 0 &&
                 entry.askForDetachmentAnnouncementPermission())
             {
@@ -2679,13 +2699,13 @@ void Poll::poll(ntci::Waiter waiter)
                 }
             }
 
-//            if (entry->decrementProcessCounter() == 1 &&
-//                entry->askForDetachmentAnnouncementPermission())
-//            {
-//                entry->announceDetached(this->getSelf(this));
-//                entry->clear();
-//                ++numDetachments;
-//            }
+            //            if (entry->decrementProcessCounter() == 1 &&
+            //                entry->askForDetachmentAnnouncementPermission())
+            //            {
+            //                entry->announceDetached(this->getSelf(this));
+            //                entry->clear();
+            //                ++numDetachments;
+            //            }
             entry->decrementProcessCounter();
         }
 
@@ -2775,7 +2795,6 @@ void Poll::poll(ntci::Waiter waiter)
 
 void Poll::interruptOne()
 {
-
     //    if (NTCCFG_LIKELY(isWaiter())) {
     //        NTCI_LOG_INFO("Skipping interruption because this is a waiter thread");
     //        return;

@@ -693,8 +693,28 @@ void Devpoll::specify(struct ::pollfd* result,
 NTCCFG_INLINE
 void Devpoll::flush()
 {
-    if (d_chronology.hasAnyScheduledOrDeferred()) {
-        d_chronology.announce();
+    while (true) {
+        {
+            LockGuard detachGuard(&d_generationMutex);
+            for (DetachList::const_iterator it = d_detachList.cbegin();
+                 it != d_detachList.cend();
+                 ++it)
+            {
+                ntcs::RegistryEntry& entry = **it;
+                entry.announceDetached(this->getSelf(this));
+                entry.clear();
+            }
+            d_detachList.clear();
+        }
+
+        if (d_chronology.hasAnyScheduledOrDeferred()) {
+            d_chronology.announce();
+        }
+
+        if (!d_chronology.hasAnyScheduledOrDeferred() && d_detachList.empty())
+        {
+            break;
+        }
     }
 }
 

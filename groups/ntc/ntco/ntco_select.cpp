@@ -709,8 +709,28 @@ void Select::copyFdSet(fd_set* destination, const fd_set& source)
 
 void Select::flush()
 {
-    if (d_chronology.hasAnyScheduledOrDeferred()) {
-        d_chronology.announce();
+    while (true) {
+        {
+            LockGuard detachGuard(&d_detachMutex);
+            for (DetachList::const_iterator it = d_detachList.cbegin();
+                 it != d_detachList.cend();
+                 ++it)
+            {
+                ntcs::RegistryEntry& entry = **it;
+                entry.announceDetached(this->getSelf(this));
+                entry.clear();
+            }
+            d_detachList.clear();
+        }
+
+        if (d_chronology.hasAnyScheduledOrDeferred()) {
+            d_chronology.announce();
+        }
+
+        if (!d_chronology.hasAnyScheduledOrDeferred() && d_detachList.empty())
+        {
+            break;
+        }
     }
 }
 
@@ -1931,11 +1951,10 @@ void Select::run(ntci::Waiter waiter)
             LockGuard lock(&d_detachMutex);
 
             for (DetachList::const_iterator it = d_detachList.cbegin();
-                 it != d_detachList.cend();
-            )
+                 it != d_detachList.cend();)
             {
                 ntcs::RegistryEntry& entry = **it;
-                bool erase = false;
+                bool                 erase = false;
                 if (entry.processCounter() == 0) {
                     if (entry.askForDetachmentAnnouncementPermission()) {
                         entry.announceDetached(this->getSelf(this));
@@ -2098,8 +2117,7 @@ void Select::run(ntci::Waiter waiter)
                              &result->d_readable))
                 {
                     ++numReadable;
-                    const ntsa::Error error =
-                        d_controller_sp->acknowledge();
+                    const ntsa::Error error = d_controller_sp->acknowledge();
                     if (NTCCFG_UNLIKELY(error)) {
                         this->reinitializeControl();
                     }
@@ -2251,13 +2269,13 @@ void Select::run(ntci::Waiter waiter)
                     }
                 }
 
-//                if (entry->decrementProcessCounter() == 1) {
-//                    if (entry->askForDetachmentAnnouncementPermission()) {
-//                        entry->announceDetached(this->getSelf(this));
-//                        entry->clear();
-//                        ++numDetachments;
-//                    }
-//                }
+                //                if (entry->decrementProcessCounter() == 1) {
+                //                    if (entry->askForDetachmentAnnouncementPermission()) {
+                //                        entry->announceDetached(this->getSelf(this));
+                //                        entry->clear();
+                //                        ++numDetachments;
+                //                    }
+                //                }
                 entry->decrementProcessCounter();
             }
 
@@ -2382,11 +2400,10 @@ void Select::poll(ntci::Waiter waiter)
         LockGuard lock(&d_detachMutex);
 
         for (DetachList::const_iterator it = d_detachList.cbegin();
-             it != d_detachList.cend();
-             )
+             it != d_detachList.cend();)
         {
             ntcs::RegistryEntry& entry = **it;
-            bool erase = false;
+            bool                 erase = false;
             if (entry.processCounter() == 0) {
                 if (entry.askForDetachmentAnnouncementPermission()) {
                     entry.announceDetached(this->getSelf(this));
@@ -2545,8 +2562,7 @@ void Select::poll(ntci::Waiter waiter)
         else {
             if (FD_ISSET(d_controllerDescriptorHandle, &result->d_readable)) {
                 ++numReadable;
-                const ntsa::Error error =
-                    d_controller_sp->acknowledge();
+                const ntsa::Error error = d_controller_sp->acknowledge();
                 if (NTCCFG_UNLIKELY(error)) {
                     this->reinitializeControl();
                 }
@@ -2695,13 +2711,13 @@ void Select::poll(ntci::Waiter waiter)
                 }
             }
 
-//            if (entry->decrementProcessCounter() == 1) {
-//                if (entry->askForDetachmentAnnouncementPermission()) {
-//                    entry->announceDetached(this->getSelf(this));
-//                    entry->clear();
-//                    ++numDetachments;
-//                }
-//            }
+            //            if (entry->decrementProcessCounter() == 1) {
+            //                if (entry->askForDetachmentAnnouncementPermission()) {
+            //                    entry->announceDetached(this->getSelf(this));
+            //                    entry->clear();
+            //                    ++numDetachments;
+            //                }
+            //            }
             entry->decrementProcessCounter();
         }
 
@@ -2824,8 +2840,7 @@ void Select::interruptAll()
         }
 
         if (NTCCFG_LIKELY(numWaiters > 0)) {
-            ntsa::Error error =
-                d_controller_sp->interrupt(numWaiters);
+            ntsa::Error error = d_controller_sp->interrupt(numWaiters);
             if (NTCCFG_UNLIKELY(error)) {
                 reinitializeControl();
             }
