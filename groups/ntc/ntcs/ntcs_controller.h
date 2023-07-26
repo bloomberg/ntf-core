@@ -85,7 +85,7 @@ class Controller : public ntci::ReactorSocket
     /// acknowledgable. Return the error. Note that the controller's handle
     /// will be polled as readable as long as at least one signal is
     /// unacknowledged.
-    ntsa::Error interrupt(unsigned int numWakeups, bool force = false);
+    ntsa::Error interrupt(unsigned int numWakeups);
 
     /// Read one signal.  Return the error. Note that the controller's
     /// handle will be polled as readable as long as at least one signal is

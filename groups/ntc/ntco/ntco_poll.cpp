@@ -2802,7 +2802,7 @@ void Poll::interruptOne()
     //when d_chronology.announce() is called then inside chronology functorsDue are moved to a temporary functor,
     // so if a functor adds one more callback then it won't be processed
 
-    ntsa::Error error = d_controller_sp->interrupt(1, false);
+    ntsa::Error error = d_controller_sp->interrupt(1);
     if (NTCCFG_UNLIKELY(error)) {
         reinitializeControl();
     }

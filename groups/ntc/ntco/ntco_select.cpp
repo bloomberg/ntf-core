@@ -2396,6 +2396,7 @@ void Select::poll(ntci::Waiter waiter)
     }
 
     bsl::size_t numDetachments = 0;
+    bsl::size_t numReadable = 0;
     {
         LockGuard lock(&d_detachMutex);
 
@@ -2472,7 +2473,6 @@ void Select::poll(ntci::Waiter waiter)
 #endif
 
     int         numResults  = rc;
-    bsl::size_t numReadable = 0;
     if (rc > 0 && d_config.oneShot().value()) {
         LockGuard lock(&d_generationMutex);
 
@@ -2552,6 +2552,7 @@ void Select::poll(ntci::Waiter waiter)
         BSLS_ASSERT(numResultsRemaining == 0);
     }
 
+    
     //Process control channel here
     if (rc > 0) {
         const bool isError =
@@ -2593,7 +2594,6 @@ void Select::poll(ntci::Waiter waiter)
 
         int numResultsRemaining = numResults;
 
-        bsl::size_t numReadable = 0;
         bsl::size_t numWritable = 0;
         bsl::size_t numErrors   = 0;
 
@@ -2813,7 +2813,7 @@ void Select::interruptOne()
     //    }
     // see Poll::interruptOne
 
-    ntsa::Error error = d_controller_sp->interrupt(1, false);
+    ntsa::Error error = d_controller_sp->interrupt(1);
     if (NTCCFG_UNLIKELY(error)) {
         reinitializeControl();
     }
@@ -2826,7 +2826,7 @@ void Select::interruptAll()
             return;
         }
 
-        ntsa::Error error = d_controller_sp->interrupt(1, false);
+        ntsa::Error error = d_controller_sp->interrupt(1);
         if (NTCCFG_UNLIKELY(error)) {
             reinitializeControl();
         }
