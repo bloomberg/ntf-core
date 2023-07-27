@@ -460,23 +460,23 @@ void StreamSocket::processConnectDeadlineTimer(
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
-        if (d_connectInProgress) {
-            if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
-                d_retryConnect = false;
+        if (NTCCFG_UNLIKELY(d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED)) {
+            d_retryConnect = false;
 
-                d_deferredCalls.push_back(
-                    NTCCFG_BIND(&StreamSocket::processConnectDeadlineTimer,
-                                self,
-                                timer,
-                                event));
-            }
-            else {
-                this->privateFailConnect(
-                    self,
-                    ntsa::Error(ntsa::Error::e_CONNECTION_TIMEOUT),
-                    false,
-                    true);
-            }
+            d_deferredCalls.push_back(
+                NTCCFG_BIND(&StreamSocket::processConnectDeadlineTimer,
+                            self,
+                            timer,
+                            event));
+            return;
+        }
+
+        if (d_connectInProgress) {
+            this->privateFailConnect(
+                self,
+                ntsa::Error(ntsa::Error::e_CONNECTION_TIMEOUT),
+                false,
+                true);
         }
     }
 }
@@ -6374,7 +6374,6 @@ void StreamSocket::close(const ntci::CloseCallback& callback)
         return;
     }
     if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
-
         d_deferredCalls.push_back(NTCCFG_BIND(
             static_cast<void (StreamSocket::*)(
                 const ntci::CloseCallback& callback)>(&StreamSocket::close),

@@ -233,6 +233,12 @@ void StreamSocket::processSocketReceived(const ntsa::Error&          error,
 
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
+    if (NTCCFG_UNLIKELY(d_detachState.get() ==
+                        ntcs::DetachState::e_DETACH_INITIATED))
+    {
+        return;
+    }
+
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
@@ -266,6 +272,12 @@ void StreamSocket::processSocketSent(const ntsa::Error&       error,
 
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
+    if (NTCCFG_UNLIKELY(d_detachState.get() ==
+                        ntcs::DetachState::e_DETACH_INITIATED))
+    {
+        return;
+    }
+
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
@@ -295,6 +307,12 @@ void StreamSocket::processSocketError(const ntsa::Error& error)
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+
+    if (NTCCFG_UNLIKELY(d_detachState.get() ==
+                        ntcs::DetachState::e_DETACH_INITIATED))
+    {
+        return;
+    }  // TODO: or it's better to defer it?
 
     NTCI_LOG_CONTEXT();
 
@@ -341,6 +359,19 @@ void StreamSocket::processConnectDeadlineTimer(
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
+        if (NTCCFG_UNLIKELY(d_detachState.get() ==
+                            ntcs::DetachState::e_DETACH_INITIATED))
+        {
+            d_retryConnect = false;
+
+            d_deferredCalls.push_back(
+                NTCCFG_BIND(&StreamSocket::processConnectDeadlineTimer,
+                            self,
+                            timer,
+                            event));
+            return;
+        }
+
         if (d_connectInProgress) {
             this->privateFailConnect(
                 self,
@@ -372,8 +403,11 @@ void StreamSocket::processConnectRetryTimer(
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         if (d_connectInProgress) {
             if (d_connectAttempts > 0) {
-                d_retryConnect = true; // privateRetryConnect will be called in privateFailConnectPart2
-                if (d_detachState.get() != ntcs::DetachState::e_DETACH_INITIATED) {
+                d_retryConnect =
+                    true;  // privateRetryConnect will be called in privateFailConnectPart2
+                if (d_detachState.get() !=
+                    ntcs::DetachState::e_DETACH_INITIATED)
+                {
                     this->privateFailConnect(
                         self,
                         ntsa::Error(ntsa::Error::e_CONNECTION_TIMEOUT),
@@ -897,8 +931,13 @@ void StreamSocket::privateFailConnect(
             d_openState.set(ntcs::OpenState::e_WAITING);
         }
 
-        if (NTCCFG_UNLIKELY(d_detachState.get() != ntcs::DetachState::e_DETACH_INITIATED)) {
-            privateFailConnectPart2(self, connectCallback, connectEvent, defer);
+        if (NTCCFG_UNLIKELY(d_detachState.get() !=
+                            ntcs::DetachState::e_DETACH_INITIATED))
+        {
+            privateFailConnectPart2(self,
+                                    connectCallback,
+                                    connectEvent,
+                                    defer);
         }
     }
     else {
@@ -5561,7 +5600,6 @@ void StreamSocket::close(const ntci::CloseCallback& callback)
     }  //TODO: do I need to ignore close if it was already requested?
 
     if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
-
         d_deferredCalls.push_back(NTCCFG_BIND(
             static_cast<void (StreamSocket::*)(
                 const ntci::CloseCallback& callback)>(&StreamSocket::close),
