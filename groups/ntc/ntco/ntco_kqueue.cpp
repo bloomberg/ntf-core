@@ -692,7 +692,7 @@ Kqueue::Result::~Result()
 
 void Kqueue::flush()
 {
-    if (d_chronology.hasAnyScheduledOrDeferred()) {
+    while (d_chronology.hasAnyScheduledOrDeferred()) {
         d_chronology.announce();
     }
 }
@@ -951,15 +951,16 @@ ntsa::Error Kqueue::removeDetached(
     const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
 {
     ntsa::Error error = this->remove(entry->handle());
-    if (!error) {
-        if ((entry->processCounter() == 0) &&
-            (entry->askForDetachmentAnnouncementPermission()))
-        {
-            // so this thread marked detached required as false
-            entry->announceDetached(this->getSelf(this));
-            entry->clear();
-            Kqueue::interruptOne();
-        }
+    if (NTCCFG_UNLIKELY(error)) {
+        //TODO: log error, but continue with detachment
+    }
+    if ((entry->processCounter() == 0) &&
+        (entry->askForDetachmentAnnouncementPermission()))
+    {
+        // so this thread marked detached required as false
+        entry->announceDetached(this->getSelf(this));
+        entry->clear();
+        Kqueue::interruptOne();
     }
     return error;
 }
@@ -1914,9 +1915,10 @@ ntsa::Error Kqueue::detachSocket(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket,
     const ntci::SocketDetachedCallback&         callback)
 {
-    ntsa::Error error = d_registry.removeAndGetReadyToDetach(socket,
-                                                             callback,
-                                                             d_detachFunctor);
+    const ntsa::Error error =
+        d_registry.removeAndGetReadyToDetach(socket,
+                                             callback,
+                                             d_detachFunctor);
     return error;
 }
 
@@ -1946,9 +1948,10 @@ ntsa::Error Kqueue::detachSocket(ntsa::Handle handle)
 ntsa::Error Kqueue::detachSocket(ntsa::Handle                        handle,
                                  const ntci::SocketDetachedCallback& callback)
 {
-    ntsa::Error error = d_registry.removeAndGetReadyToDetach(handle,
-                                                             callback,
-                                                             d_detachFunctor);
+    const ntsa::Error error =
+        d_registry.removeAndGetReadyToDetach(handle,
+                                             callback,
+                                             d_detachFunctor);
     return error;
 }
 

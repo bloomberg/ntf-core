@@ -740,7 +740,7 @@ Epoll::Result::~Result()
 
 void Epoll::flush()
 {
-    if (d_chronology.hasAnyScheduledOrDeferred()) {
+    while (d_chronology.hasAnyScheduledOrDeferred()) {
         d_chronology.announce();
     }
 }
@@ -886,6 +886,8 @@ NTCCFG_INLINE
 ntsa::Error Epoll::removeDetached(
     const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
 {
+    ntsa::Error error;
+
     NTCI_LOG_CONTEXT();
 
     ntsa::Handle handle = entry->handle();
@@ -900,27 +902,24 @@ ntsa::Error Epoll::removeDetached(
     int rc = ::epoll_ctl(d_epoll, EPOLL_CTL_DEL, handle, &e);
     if (rc == 0) {
         NTCO_EPOLL_LOG_REMOVE(handle);
-
-        if ((entry->processCounter() == 0) &&
-            (entry->askForDetachmentAnnouncementPermission()))
-        {
-            // so this thread marked detached required as false
-            entry->announceDetached(this->getSelf(this));
-            entry->clear();
-            Epoll::interruptOne();
-        }
-
-        return ntsa::Error();
     }
     else if (errno != ENOENT) {
-        ntsa::Error error(errno);
+        error = ntsa::Error(errno);
         NTCO_EPOLL_LOG_REMOVE_FAILURE(handle, error);
-        return error;
     }
     else {
         // TODO: NTCO_EPOLL_LOG_REMOVE_IGNORED(handle);
-        return ntsa::Error();
     }
+
+    if ((entry->processCounter() == 0) &&
+        (entry->askForDetachmentAnnouncementPermission()))
+    {
+        entry->announceDetached(this->getSelf(this));
+        entry->clear();
+        Epoll::interruptOne();
+    }
+
+    return error;
 }
 
 void Epoll::reinitializeControl()
@@ -2092,13 +2091,10 @@ ntsa::Error Epoll::detachSocket(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket,
     const ntci::SocketDetachedCallback&         callback)
 {
-    ntsa::Error error = d_registry.removeAndGetReadyToDetach(socket,
-                                                             callback,
-                                                             d_detachFunctor);
-
-    if (error) {
-        return error;
-    }
+    const ntsa::Error error =
+        d_registry.removeAndGetReadyToDetach(socket,
+                                             callback,
+                                             d_detachFunctor);
     return error;
 }
 
@@ -2127,12 +2123,10 @@ ntsa::Error Epoll::detachSocket(
 ntsa::Error Epoll::detachSocket(ntsa::Handle                        handle,
                                 const ntci::SocketDetachedCallback& callback)
 {
-    ntsa::Error error = d_registry.removeAndGetReadyToDetach(handle,
-                                                             callback,
-                                                             d_detachFunctor);
-    if (error) {
-        return error;
-    }
+    const ntsa::Error error =
+        d_registry.removeAndGetReadyToDetach(handle,
+                                             callback,
+                                             d_detachFunctor);
     return error;
 }
 
