@@ -818,6 +818,9 @@ void StreamSocket::privateFailConnect(
         return;
     }
 
+    BSLS_ASSERT(d_detachState.get() !=
+                ntcs::DetachState::e_DETACH_INITIATED);
+
     if (close) {
         d_connectOptions.setRetryCount(0);
     }
@@ -875,8 +878,6 @@ void StreamSocket::privateFailConnect(
                 ntcs::ObserverRef<ntci::Proactor> proactorRef(&d_proactor);
                 if (proactorRef) {
                     proactorRef->cancel(self);
-                    BSLS_ASSERT(d_detachState.get() !=
-                                ntcs::DetachState::e_DETACH_INITIATED);
                     const ntsa::Error error =
                         proactorRef->detachSocketAsync(self);
                     if (NTCCFG_LIKELY(!error)) {
@@ -910,8 +911,6 @@ void StreamSocket::privateFailConnect(
                 ntcs::ObserverRef<ntci::Proactor> proactorRef(&d_proactor);
                 if (proactorRef) {
                     proactorRef->cancel(self);
-                    BSLS_ASSERT(d_detachState.get() !=
-                                ntcs::DetachState::e_DETACH_INITIATED);
                     const ntsa::Error error =
                         proactorRef->detachSocketAsync(self);
                     if (NTCCFG_LIKELY(!error)) {
@@ -992,6 +991,14 @@ void StreamSocket::privateFailConnectPart2(
 
         d_managerStrand_sp.reset();
         d_manager_sp.reset();
+    }
+
+    if (d_closeCallback) {
+        d_closeCallback.dispatch(ntci::Strand::unknown(),
+                                 self,
+                                 true,
+                                 &d_mutex);
+        d_closeCallback.reset();
     }
 
     if (d_retryConnect) {
@@ -3082,6 +3089,12 @@ void StreamSocket::processRemoteEndpointResolution(
 
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
+    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
+        NTCI_LOG_INFO(
+            "Skip processRemoteEndpointResolution due to ongoing detach");
+        return;
+    }
+
     ntsa::Error error;
 
     if (!d_connectInProgress) {
@@ -3463,6 +3476,7 @@ StreamSocket::StreamSocket(
 , d_retryConnect(false)
 , d_detachState(ntcs::DetachState::e_DETACH_IDLE)
 , d_deferredCall()
+, d_closeCallback(bslma::Default::allocator(basicAllocator))
 , d_deferredCalls(bslma::Default::allocator(basicAllocator))
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
