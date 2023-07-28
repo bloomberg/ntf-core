@@ -155,7 +155,9 @@ void ListenerSocket::processSocketReadable(const ntca::ReactorEvent& event)
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
 
-    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
+    if (NTCCFG_UNLIKELY(d_detachState.get() ==
+                        ntcs::DetachState::e_DETACH_INITIATED))
+    {
         return;
     }
 

@@ -149,6 +149,12 @@ void ListenerSocket::processSocketAccepted(
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
 
+    if (NTCCFG_UNLIKELY(d_detachState.get() ==
+                        ntcs::DetachState::e_DETACH_INITIATED))
+    {
+        return;
+    }
+
     d_acceptPending = false;
 
     if (error) {
@@ -172,6 +178,12 @@ void ListenerSocket::processSocketError(const ntsa::Error& error)
 
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
+    if (NTCCFG_UNLIKELY(d_detachState.get() ==
+                        ntcs::DetachState::e_DETACH_INITIATED))
+    {
+        return;
+    }
+
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
@@ -192,8 +204,9 @@ void ListenerSocket::processSocketDetached()
     d_detachState.set(ntcs::DetachState::e_DETACH_IDLE);
     BSLS_ASSERT(d_deferredCall);
     if (NTCCFG_LIKELY(d_deferredCall)) {
-        d_deferredCall();
-        NTCCFG_FUNCTION()().swap(d_deferredCall);
+        NTCCFG_FUNCTION() deferredCall;
+        deferredCall.swap(d_deferredCall);
+        deferredCall();
     }
 }
 

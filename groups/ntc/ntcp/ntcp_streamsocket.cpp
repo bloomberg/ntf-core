@@ -335,8 +335,9 @@ void StreamSocket::processSocketDetached()
     d_detachState.set(ntcs::DetachState::e_DETACH_IDLE);
     BSLS_ASSERT(d_deferredCall);
     if (NTCCFG_LIKELY(d_deferredCall)) {
-        d_deferredCall();
-        NTCCFG_FUNCTION()().swap(d_deferredCall);
+        NTCCFG_FUNCTION() deferredCall;
+        deferredCall.swap(d_deferredCall);
+        deferredCall();
     }
 }
 

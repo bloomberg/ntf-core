@@ -224,7 +224,9 @@ void DatagramSocket::processSocketReadable(const ntca::ReactorEvent& event)
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
 
-    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
+    if (NTCCFG_UNLIKELY(d_detachState.get() ==
+                        ntcs::DetachState::e_DETACH_INITIATED))
+    {
         return;
     }
 
@@ -279,7 +281,9 @@ void DatagramSocket::processSocketWritable(const ntca::ReactorEvent& event)
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
 
-    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
+    if (NTCCFG_UNLIKELY(d_detachState.get() ==
+                        ntcs::DetachState::e_DETACH_INITIATED))
+    {
         return;
     }
 
@@ -332,7 +336,9 @@ void DatagramSocket::processSocketError(const ntca::ReactorEvent& event)
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
 
-    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
+    if (NTCCFG_UNLIKELY(d_detachState.get() ==
+                        ntcs::DetachState::e_DETACH_INITIATED))
+    {
         return;
     }
 
@@ -351,7 +357,9 @@ void DatagramSocket::processNotifications(
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
 
-    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
+    if (NTCCFG_UNLIKELY(d_detachState.get() ==
+                        ntcs::DetachState::e_DETACH_INITIATED))
+    {
         return;
     }
 
@@ -1463,9 +1471,9 @@ bool DatagramSocket::privateCloseFlowControl(
     if (d_systemHandle != ntsa::k_INVALID_HANDLE) {
         ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
         if (reactorRef) {
-            BSLS_ASSERT_OPT(d_detachState.get() != ntcs::DetachState::e_DETACH_INITIATED);
-            ntsa::Error error = reactorRef->detachSocket(self, detachCallback);
-            if (error) {
+            BSLS_ASSERT(d_detachState.get() != ntcs::DetachState::e_DETACH_INITIATED);
+            const ntsa::Error error = reactorRef->detachSocket(self, detachCallback);
+            if (NTCCFG_UNLIKELY(error)) {
                 return false;
             }
             else {
@@ -4244,8 +4252,9 @@ void DatagramSocket::close(const ntci::CloseCallback& callback)
 
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
-    if (d_closeCallback)
+    if (d_closeCallback) {
         return;
+    }
 
     NTCI_LOG_CONTEXT();
 

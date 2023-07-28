@@ -169,6 +169,12 @@ void DatagramSocket::processSocketReceived(const ntsa::Error&          error,
 
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
+    if (NTCCFG_UNLIKELY(d_detachState.get() ==
+                        ntcs::DetachState::e_DETACH_INITIATED))
+    {
+        return;
+    }
+
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
@@ -217,6 +223,12 @@ void DatagramSocket::processSocketSent(const ntsa::Error&       error,
 
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
+    if (NTCCFG_UNLIKELY(d_detachState.get() ==
+                        ntcs::DetachState::e_DETACH_INITIATED))
+    {
+        return;
+    }
+
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
@@ -247,6 +259,12 @@ void DatagramSocket::processSocketError(const ntsa::Error& error)
 
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
+    if (NTCCFG_UNLIKELY(d_detachState.get() ==
+                        ntcs::DetachState::e_DETACH_INITIATED))
+    {
+        return;
+    }
+
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
@@ -267,8 +285,9 @@ void DatagramSocket::processSocketDetached()
     d_detachState.set(ntcs::DetachState::e_DETACH_IDLE);
     BSLS_ASSERT(d_deferredCall);
     if (NTCCFG_LIKELY(d_deferredCall)) {
-        d_deferredCall();
-        NTCCFG_FUNCTION()().swap(d_deferredCall);
+        NTCCFG_FUNCTION() deferredCall;
+        deferredCall.swap(d_deferredCall);
+        deferredCall();
     }
 }
 
@@ -3659,6 +3678,10 @@ void DatagramSocket::close(const ntci::CloseCallback& callback)
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+
+    if (d_closeCallback) {
+        return;
+    }
 
     NTCI_LOG_CONTEXT();
 

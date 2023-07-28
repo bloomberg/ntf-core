@@ -280,8 +280,10 @@ void StreamSocket::processSocketReadable(const ntca::ReactorEvent& event)
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
-    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
-        return;  //ignore messages from the reactor while detach is ongoing
+    if (NTCCFG_UNLIKELY(d_detachState.get() ==
+                        ntcs::DetachState::e_DETACH_INITIATED))
+    {
+        return;
     }
 
     if (!d_shutdownState.canReceive()) {
@@ -336,8 +338,10 @@ void StreamSocket::processSocketWritable(const ntca::ReactorEvent& event)
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
-    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
-        return;  //ignore messages from the reactor while detach is ongoing
+    if (NTCCFG_UNLIKELY(d_detachState.get() ==
+                        ntcs::DetachState::e_DETACH_INITIATED))
+    {
+        return;
     }
 
     if (NTCCFG_UNLIKELY(d_connectInProgress)) {
@@ -395,8 +399,10 @@ void StreamSocket::processSocketError(const ntca::ReactorEvent& event)
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
-    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
-        return;  //ignore messages from the reactor while detach is ongoing
+    if (NTCCFG_UNLIKELY(d_detachState.get() ==
+                        ntcs::DetachState::e_DETACH_INITIATED))
+    {
+        return;
     }
 
     if (NTCCFG_UNLIKELY(d_connectInProgress)) {
@@ -423,8 +429,10 @@ void StreamSocket::processNotifications(
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
-    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
-        return;  //ignore messages from the reactor while detach is ongoing
+    if (NTCCFG_UNLIKELY(d_detachState.get() ==
+                        ntcs::DetachState::e_DETACH_INITIATED))
+    {
+        return;
     }
 
     const bsl::vector<ntsa::Notification>& nots =
