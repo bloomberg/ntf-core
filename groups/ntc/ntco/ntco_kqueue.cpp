@@ -408,20 +408,20 @@ class Kqueue : public ntci::Reactor,
     // Stop monitoring the specified 'socket' and close the
     // 'socket' if it is not already closed. Return the error.
 
-    /// Stop monitoring the specified 'socket'. Invoke the specified 'callback'
-    /// when the socket is detached. Return the error.
     ntsa::Error detachSocket(
         const bsl::shared_ptr<ntci::ReactorSocket>& socket,
         const ntci::SocketDetachedCallback& callback) BSLS_KEYWORD_OVERRIDE;
+    // Stop monitoring the specified 'socket'. Invoke the specified 'callback'
+    // when the socket is detached. Return the error.
 
     ntsa::Error detachSocket(ntsa::Handle handle) BSLS_KEYWORD_OVERRIDE;
     // Stop monitoring the specified socket 'handle'. Return the error.
 
-    /// Stop monitoring the specified socket 'handle'. Invoke the specified
-    /// 'callback' when the socket is detached. Return the error.
     ntsa::Error detachSocket(ntsa::Handle                        handle,
                              const ntci::SocketDetachedCallback& callback)
         BSLS_KEYWORD_OVERRIDE;
+    // Stop monitoring the specified socket 'handle'. Invoke the specified
+    // 'callback' when the socket is detached. Return the error.
 
     ntsa::Error closeAll() BSLS_KEYWORD_OVERRIDE;
     // Close all monitored sockets and timers.
@@ -957,7 +957,6 @@ ntsa::Error Kqueue::removeDetached(
     if ((entry->processCounter() == 0) &&
         (entry->askForDetachmentAnnouncementPermission()))
     {
-        // so this thread marked detached required as false
         entry->announceDetached(this->getSelf(this));
         entry->clear();
         Kqueue::interruptOne();
