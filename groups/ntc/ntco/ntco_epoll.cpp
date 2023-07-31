@@ -2770,10 +2770,7 @@ void Epoll::poll(ntci::Waiter waiter)
 
 void Epoll::interruptOne()
 {
-    NTCI_LOG_CONTEXT();
-
     if (NTCCFG_LIKELY(isWaiter())) {
-        NTCI_LOG_INFO("Skip interruption due to isWaiter() returns true");
         return;
     }
 

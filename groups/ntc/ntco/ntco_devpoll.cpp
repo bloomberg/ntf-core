@@ -18,13 +18,8 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntco_devpoll_cpp, "$Id$ $CSID$")
 
-// #define SMITROFANOV_TMP 1
-
-#if NTC_BUILD_WITH_DEVPOLL || SMITROFANOV_TMP
-// #if 1
-
-#if defined(BSLS_PLATFORM_OS_SOLARIS) || SMITROFANOV_TMP
-// #if 1
+#if NTC_BUILD_WITH_DEVPOLL
+#if defined(BSLS_PLATFORM_OS_SOLARIS)
 
 #include <ntcr_datagramsocket.h>
 #include <ntcr_listenersocket.h>
@@ -871,19 +866,10 @@ ntsa::Error Devpoll::removeDetached(
                 NTCO_DEVPOLL_LOG_WRITE_FAILURE(sizeof(struct ::pollfd),
                                                rc,
                                                error);
-                return error;
-
-                //TODO: smth went wrong, need to detach the socket still
             }
             entry->announceDetached(this->getSelf(this));
             BSLS_ASSERT(entry->processCounter() <= 1);
             entry->clear();
-            // It is not safe to announce detachment here as this socket can be still planned to be processed later inside a polling loop
-            // Upd. This socket is removed from registry, so it anyway won't be processed inside a polling loop, so it is safe to anounce it's detachment
-            // {
-            //     LockGuard lock(&d_generationMutex);
-            //     d_detachList.push_back(entry);
-            // }
         }
         else {
             LockGuard lock(&d_generationMutex);
@@ -906,8 +892,6 @@ ntsa::Error Devpoll::removeDetached(
 
 void Devpoll::reinitializeControl()
 {
-    NTCI_LOG_CONTEXT();
-
     if (d_controller_sp) {
         bsl::shared_ptr<ntcs::RegistryEntry> entry =
             d_registry.remove(d_controller_sp);
@@ -923,9 +907,6 @@ void Devpoll::reinitializeControl()
         d_registry.add(d_controller_sp);
 
     d_controllerDescriptorHandle = entry->handle();
-
-    NTCI_LOG_INFO("d_controllerDescriptorHandle = %d",
-                  d_controllerDescriptorHandle);
 
     ntca::ReactorEventOptions options;
 
@@ -1862,10 +1843,7 @@ ntsa::Error Devpoll::detachSocket(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket,
     const ntci::SocketDetachedCallback&         callback)
 {
-    NTCI_LOG_CONTEXT();
-    NTCI_LOG_INFO("detachSocket  requested for descriptor %d",
-                  socket->handle());
-    ntsa::Error error = d_registry.removeAndGetReadyToDetach(socket,
+    const ntsa::Error error = d_registry.removeAndGetReadyToDetach(socket,
                                                              callback,
                                                              d_detachFunctor);
 
@@ -1898,7 +1876,7 @@ ntsa::Error Devpoll::detachSocket(ntsa::Handle handle)
 ntsa::Error Devpoll::detachSocket(ntsa::Handle                        handle,
                                   const ntci::SocketDetachedCallback& callback)
 {
-    ntsa::Error error = d_registry.removeAndGetReadyToDetach(handle,
+    const ntsa::Error error = d_registry.removeAndGetReadyToDetach(handle,
                                                              callback,
                                                              d_detachFunctor);
 
@@ -1976,10 +1954,6 @@ void Devpoll::run(ntci::Waiter waiter)
                 ntcs::RegistryEntry& entry = **it;
                 bool                 erase = false;
 
-                NTCI_LOG_INFO("DetachList: Checking for detachment descriptor "
-                              "%d, its process ctr is %u",
-                              entry.handle(),
-                              entry.processCounter());
                 if (entry.processCounter() == 0 &&
                     entry.askForDetachmentAnnouncementPermission())
                 {
@@ -2113,8 +2087,6 @@ void Devpoll::run(ntci::Waiter waiter)
 
                 BSLS_ASSERT(e.fd >= 0);
                 BSLS_ASSERT(e.revents != 0);
-
-                NTCI_LOG_INFO("Polled events for descriptor %d", e.fd);
 
                 if (NTCCFG_UNLIKELY(e.fd == d_controllerDescriptorHandle)) {
                     continue;
@@ -2292,10 +2264,6 @@ void Devpoll::poll(ntci::Waiter waiter)
             ntcs::RegistryEntry& entry = **it;
             bool                 erase = false;
 
-            NTCI_LOG_INFO("DetachList: Checking for detachment descriptor %d, "
-                          "its process ctr is %u",
-                          entry.handle(),
-                          entry.processCounter());
             if (entry.processCounter() == 0 &&
                 entry.askForDetachmentAnnouncementPermission())
             {
@@ -2561,11 +2529,7 @@ void Devpoll::poll(ntci::Waiter waiter)
 
 void Devpoll::interruptOne()
 {
-    // if (NTCCFG_LIKELY(isWaiter())) {
-    //     return;
-    // }
-
-    ntsa::Error error = d_controller_sp->interrupt(1);
+    const ntsa::Error error = d_controller_sp->interrupt(1);
     if (NTCCFG_UNLIKELY(error)) {
         reinitializeControl();
     }
