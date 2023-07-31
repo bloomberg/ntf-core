@@ -18,10 +18,8 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntco_eventport_cpp, "$Id$ $CSID$")
 
-#define SMITROFANOV_TMP 0
-
-#if NTC_BUILD_WITH_EVENTPORT || SMITROFANOV_TMP
-#if defined(BSLS_PLATFORM_OS_SOLARIS) || SMITROFANOV_TMP
+#if NTC_BUILD_WITH_EVENTPORT
+#if defined(BSLS_PLATFORM_OS_SOLARIS)
 
 #include <ntcr_datagramsocket.h>
 #include <ntcr_listenersocket.h>
@@ -390,20 +388,20 @@ class EventPort : public ntci::Reactor,
     // Stop monitoring the specified 'socket' and close the
     // 'socket' if it is not already closed. Return the error.
 
-    /// Stop monitoring the specified 'socket'. Invoke the specified 'callback'
-    /// when the socket is detached. Return the error.
     ntsa::Error detachSocket(
         const bsl::shared_ptr<ntci::ReactorSocket>& socket,
         const ntci::SocketDetachedCallback& callback) BSLS_KEYWORD_OVERRIDE;
+    // Stop monitoring the specified 'socket'. Invoke the specified 'callback'
+    // when the socket is detached. Return the error.
 
     ntsa::Error detachSocket(ntsa::Handle handle) BSLS_KEYWORD_OVERRIDE;
     // Stop monitoring the specified socket 'handle'. Return the error.
 
-    /// Stop monitoring the specified socket 'handle'. Invoke the specified
-    /// 'callback' when the socket is detached. Return the error.
     ntsa::Error detachSocket(ntsa::Handle                        handle,
                              const ntci::SocketDetachedCallback& callback)
         BSLS_KEYWORD_OVERRIDE;
+    // Stop monitoring the specified socket 'handle'. Invoke the specified
+    // 'callback' when the socket is detached. Return the error.
 
     ntsa::Error closeAll() BSLS_KEYWORD_OVERRIDE;
     // Close all monitored sockets and timers.
@@ -732,10 +730,6 @@ ntsa::Error EventPort::update(ntsa::Handle   handle,
 
     int rc = port_associate(d_port, PORT_SOURCE_FD, handle, events, 0);
 
-    NTCI_LOG_INFO("EventPort::update for descriptor %d, events is %d",
-                  handle,
-                  events);
-
     if (rc == 0) {
         NTCO_EVENTPORT_LOG_UPDATE(handle, mask);
         return ntsa::Error();
@@ -774,7 +768,6 @@ ntsa::Error EventPort::remove(ntsa::Handle handle)
 ntsa::Error EventPort::removeDetached(
     const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
 {
-    ntsa::Error error;
     NTCI_LOG_CONTEXT();
 
     ntsa::Handle handle = entry->handle();
@@ -784,42 +777,22 @@ ntsa::Error EventPort::removeDetached(
     int rc = port_dissociate(d_port, PORT_SOURCE_FD, handle);
     if (rc == 0) {
         NTCO_EVENTPORT_LOG_REMOVE(handle);
-
-        // return ntsa::Error();
     }
     else {
         if (errno != ENOENT) {
-            // ntsa::Error error(errno);
+            const ntsa::Error error(errno);
             NTCO_EVENTPORT_LOG_REMOVE_FAILURE(handle, error);
-            // return error;
-        }
-        else {
-            NTCI_LOG_INFO(
-                "removeDetached descriptor %d, rc is %d, errno is %d",
-                handle,
-                rc,
-                errno);
-            // BSLS_ASSERT_OPT(false);
-            // entry->announceDetached(this->getSelf(this));
-            // entry->clear();
-            // EventPort::interruptOne();
-            // return ntsa::Error();  //TODO: ???
         }
     }
 
-    // do not propagate error further, execute detachment announcement
     if ((entry->processCounter() == 0) &&
         (entry->askForDetachmentAnnouncementPermission()))
     {
-        NTCI_LOG_INFO(
-            "removeDetached will call announceDetached for descriptor %d",
-            handle);
-        // so this thread marked detached required as false
         entry->announceDetached(this->getSelf(this));
         entry->clear();
         EventPort::interruptOne();
     }
-    return error;
+    return  ntsa::Error();
 }
 
 void EventPort::reinitializeControl()
@@ -1768,9 +1741,7 @@ ntsa::Error EventPort::detachSocket(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket,
     const ntci::SocketDetachedCallback&         callback)
 {
-    NTCI_LOG_CONTEXT();
-    NTCI_LOG_INFO("detach requested for descriptor %d", socket->handle());
-    ntsa::Error error = d_registry.removeAndGetReadyToDetach(socket,
+    const ntsa::Error error = d_registry.removeAndGetReadyToDetach(socket,
                                                              callback,
                                                              d_detachFunctor);
 
@@ -1804,7 +1775,7 @@ ntsa::Error EventPort::detachSocket(
     ntsa::Handle                        handle,
     const ntci::SocketDetachedCallback& callback)
 {
-    ntsa::Error error = d_registry.removeAndGetReadyToDetach(handle,
+    const ntsa::Error error = d_registry.removeAndGetReadyToDetach(handle,
                                                              callback,
                                                              d_detachFunctor);
 
@@ -2022,20 +1993,13 @@ void EventPort::run(ntci::Waiter waiter)
                     }
                 }
 
-                {
-                    unsigned int prev = entry->decrementProcessCounter();
-                    NTCI_LOG_INFO(
-                        "descriptor %d, prev value of process counter is %u",
-                        entry->handle(),
-                        prev);
-                    if (prev == 1 &&
+                    if (entry->decrementProcessCounter() == 1 &&
                         entry->askForDetachmentAnnouncementPermission())
                     {
                         entry->announceDetached(this->getSelf(this));
                         entry->clear();
                         ++numDetachments;
                     }
-                }
             }
 
             if (NTCCFG_UNLIKELY(numReadable == 0 && numWritable == 0 &&
