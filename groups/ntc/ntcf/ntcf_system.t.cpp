@@ -5505,10 +5505,7 @@ void concern(const ConcernCallback& concernCallback,
 #endif
 
         bsl::vector<bsl::string> driverTypes;
-        driverTypes.push_back("poll");
-        driverTypes.push_back("select");
-        driverTypes.push_back("epoll");
-        //        ntcf::System::loadDriverSupport(&driverTypes, dynamicLoadBalancing);
+        ntcf::System::loadDriverSupport(&driverTypes, dynamicLoadBalancing);
 
         NTCCFG_FOREACH(bsl::size_t, driverTypeIndex, 0, driverTypes.size())
         {
