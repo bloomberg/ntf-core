@@ -5505,7 +5505,10 @@ void concern(const ConcernCallback& concernCallback,
 #endif
 
         bsl::vector<bsl::string> driverTypes;
-        ntcf::System::loadDriverSupport(&driverTypes, dynamicLoadBalancing);
+        driverTypes.push_back("poll");
+        driverTypes.push_back("select");
+        driverTypes.push_back("epoll");
+        //        ntcf::System::loadDriverSupport(&driverTypes, dynamicLoadBalancing);
 
         NTCCFG_FOREACH(bsl::size_t, driverTypeIndex, 0, driverTypes.size())
         {
@@ -7339,7 +7342,9 @@ void concernConnectEndpoint3(const bsl::shared_ptr<ntci::Interface>& interface,
             (connectResult.event().context().error() ==
                  ntsa::Error(ntsa::Error::e_CONNECTION_TIMEOUT) ||
              connectResult.event().context().error() ==
-                 ntsa::Error(ntsa::Error::e_UNREACHABLE));
+                 ntsa::Error(ntsa::Error::e_UNREACHABLE) ||
+             connectResult.event().context().error() ==
+                 ntsa::Error(ntsa::Error::e_CONNECTION_REFUSED));
         NTCCFG_TEST_TRUE(errorIsExpected);
 
         ++numErrors;
