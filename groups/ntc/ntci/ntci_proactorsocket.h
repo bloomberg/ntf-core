@@ -72,12 +72,30 @@ class ProactorSocketBase
     /// Return the context of the proactor socket within its proactor.
     const bsl::shared_ptr<void>& getProactorContext() const;
 
+    /// Return current number of threads actively working with the socket
     unsigned int processCounter() const;
+
+    /// Atomically increment number of threads actively working with the socket
+    /// and return resulting value
     unsigned int incrementProcessCounter();
+
+    /// Atomically increment number of threads actively working with the socket
+    /// and return previously stored value
     unsigned int decrementProcessCounter();
+
+    /// Return true if detachment is not required for the socket.
     bool         noDetach() const;
+
+    /// Atomically try to transit detachment state to e_DETACH_SCHEDULED.
+    /// Return true in case of success and false otherwise.
     bool         trySetDetachScheduled();
+
+    /// Atomically try to transit detachment state to e_DETACH_REQUIRED.
+    /// Return true in case of success and false otherwise.
     bool         trySetDetachRequired();
+
+    /// Atomically try to transit detachment state to e_DETACH_NOT_REQUIRED.
+    /// Return true in case of success and false otherwise.
     bool         trySetDetachNotRequired();
 };
 

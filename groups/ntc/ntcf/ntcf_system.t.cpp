@@ -5487,10 +5487,10 @@ void concern(const ConcernCallback& concernCallback,
 
     const bool DYNAMIC_LOAD_BALANCING[] = {false, true};
 
-    NTCCFG_FOREACH(bsl::size_t, dynamicLoadBalancingIndex, 0, 2)
+//    NTCCFG_FOREACH(bsl::size_t, dynamicLoadBalancingIndex, 0, 2)
     {
-        const bool dynamicLoadBalancing =
-            DYNAMIC_LOAD_BALANCING[dynamicLoadBalancingIndex];
+        const bool dynamicLoadBalancing = true;
+//            DYNAMIC_LOAD_BALANCING[dynamicLoadBalancingIndex];
 
 #if defined(NTCF_SYSTEM_TEST_DYNAMIC_LOAD_BALANCING)
         if (dynamicLoadBalancing != NTCF_SYSTEM_TEST_DYNAMIC_LOAD_BALANCING) {
@@ -5505,7 +5505,8 @@ void concern(const ConcernCallback& concernCallback,
 #endif
 
         bsl::vector<bsl::string> driverTypes;
-        ntcf::System::loadDriverSupport(&driverTypes, dynamicLoadBalancing);
+        driverTypes.push_back("select");
+//        ntcf::System::loadDriverSupport(&driverTypes, dynamicLoadBalancing);
 
         NTCCFG_FOREACH(bsl::size_t, driverTypeIndex, 0, driverTypes.size())
         {
