@@ -327,10 +327,6 @@ void StreamSocket::processSocketDetached()
 {
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
-    NTCI_LOG_CONTEXT();
-    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_INFO("processSocketDetached");
-
     BSLS_ASSERT(d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED);
     d_detachState.set(ntcs::DetachState::e_DETACH_IDLE);
     BSLS_ASSERT(d_deferredCall);
@@ -1003,9 +999,6 @@ void StreamSocket::privateFailConnectPart2(
     }
 
     if (d_retryConnect) {
-        NTCI_LOG_INFO(
-            "privateFailConnectPart2 going to retryConnect for descriptor %d",
-            this->handle());
         d_retryConnect = false;
         this->privateRetryConnect(self);
     }
@@ -1796,8 +1789,6 @@ void StreamSocket::privateShutdownSequence(
     bool                                 defer)
 {
     NTCCFG_WARNING_UNUSED(origin);
-
-    // NTCI_LOG_CONTEXT();
 
     // Forcibly override the indication that the announcements should be
     // deferred on execute on the strand or asynchonrously on the reactor.
@@ -3091,8 +3082,6 @@ void StreamSocket::processRemoteEndpointResolution(
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
     if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
-        NTCI_LOG_INFO(
-            "Skip processRemoteEndpointResolution due to ongoing detach");
         return;
     }
 
@@ -5639,10 +5628,6 @@ void StreamSocket::close(const ntci::CloseCallback& callback)
                               ntsa::ShutdownMode::e_IMMEDIATE,
                               true);
     }
-
-    //    if (callback) {
-    //        callback.dispatch(ntci::Strand::unknown(), self, true, &d_mutex);
-    //    }
 }
 
 void StreamSocket::execute(const Functor& functor)
