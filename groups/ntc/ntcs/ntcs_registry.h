@@ -113,6 +113,7 @@ class RegistryEntry
     /// by a foreign event loop.
     void setExternal(const bsl::shared_ptr<void>& external);
 
+    /// Increment counter of threads working on the entry
     void addOngoingProcess()
     {
         ++d_processCounter;
@@ -279,10 +280,11 @@ class RegistryEntry
     /// context.
     bool active() const;
 
-    /// Return number of processes
+    /// Return number of threads working on the entry
     unsigned int processCounter() const;
 
-    /// Atomically decrement process counter and return its previous value
+    /// Atomically decrement number of threads working on the entry and return
+    /// its previous value
     unsigned int decrementProcessCounter();
 };
 
@@ -375,11 +377,19 @@ class RegistryEntryCatalog
     /// registry.
     bsl::shared_ptr<ntcs::RegistryEntry> remove(ntsa::Handle handle);
 
+    /// Remove the specified 'descriptor' from the registry. Find RegistryEntry
+    /// related to the descriptor and mark that detachment is required for this
+    /// RegistryEntry, save the specified 'callback'. For the related
+    /// RegistryEntry invoke the specified 'functor'.
     ntsa::Error removeAndGetReadyToDetach(
         const bsl::shared_ptr<ntci::ReactorSocket>& descriptor,
         const ntci::SocketDetachedCallback&         callback,
         const EntryFunctor&                         functor);
 
+    /// Remove the specified descriptor 'handle' from the registry. Find
+    /// RegistryEntry related to the descriptor and mark that detachment is
+    /// required for this RegistryEntry, save the specified 'callback'. For the
+    /// related RegistryEntry invoke the specified 'functor'.
     ntsa::Error removeAndGetReadyToDetach(
         ntsa::Handle                        handle,
         const ntci::SocketDetachedCallback& callback,
@@ -400,6 +410,9 @@ class RegistryEntryCatalog
     bool lookup(bsl::shared_ptr<ntcs::RegistryEntry>* entry,
                 ntsa::Handle                          handle) const;
 
+    /// Load into the specified 'entry' the registry entry identified by
+    /// the specified 'handle'. Increment number of threads working in the
+    /// entry. Return true if such an entry exists, and false otherwise.
     bool lookupAndMarkProcessingOngoing(
         bsl::shared_ptr<ntcs::RegistryEntry>* entry,
         ntsa::Handle                          handle) const;
@@ -909,11 +922,6 @@ void RegistryEntry::clear()
     }
 
     d_detachCallback.reset();
-    // BSLS_ASSERT_OPT(d_processCounter == 0);      //TODO: change to debug
-    // it is possible that d_processCounter equals 0 due to optimization implemented for devpoll in static load balancing
-    // (when waiter thread acts on the socket which is then detached)
-    // BSLS_ASSERT_OPT(d_detachRequired == false);  //TODO: change to debug
-
     d_active = false;
 }
 
@@ -1188,7 +1196,7 @@ ntsa::Error RegistryEntryCatalog::removeAndGetReadyToDetach(
             return ntsa::Error::invalid();
         }
     }
-    BSLS_ASSERT_OPT(entry_sp);  //TODO: switch to non _OPT
+    BSLS_ASSERT(entry_sp);
 
     ntsa::Error error = functor(entry_sp);
     if (error) {
