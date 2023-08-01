@@ -242,7 +242,8 @@ class Poll : public ntci::Reactor,
     ntsa::Error removeDetached(
         const bsl::shared_ptr<ntcs::RegistryEntry>& entry);
 
-    /// Link the specified 'entry' into the specified 'descriptorList'.
+    /// Link the specified 'entry' into the specified 'descriptorList'. Use the
+    /// specified 'result' for intermediate storage of linkage results
     void link(const bsl::shared_ptr<ntcs::RegistryEntry>& entry,
               Poll::Result*                               result);
 
@@ -418,6 +419,8 @@ class Poll : public ntci::Reactor,
     ntsa::Error detachSocket(const bsl::shared_ptr<ntci::ReactorSocket>&
                                  socket) BSLS_KEYWORD_OVERRIDE;
 
+    /// Stop monitoring the specified 'socket'. Invoke the specified 'callback'
+    /// when the socket is detached. Return the error.
     ntsa::Error detachSocket(
         const bsl::shared_ptr<ntci::ReactorSocket>& socket,
         const ntci::SocketDetachedCallback& callback) BSLS_KEYWORD_OVERRIDE;
@@ -425,6 +428,8 @@ class Poll : public ntci::Reactor,
     /// Stop monitoring the specified socket 'handle'. Return the error.
     ntsa::Error detachSocket(ntsa::Handle handle) BSLS_KEYWORD_OVERRIDE;
 
+    /// Stop monitoring the specified 'handle'. Invoke the specified 'callback'
+    /// when the socket is detached. Return the error.
     ntsa::Error detachSocket(ntsa::Handle                        handle,
                              const ntci::SocketDetachedCallback& callback)
         BSLS_KEYWORD_OVERRIDE;
@@ -1942,10 +1947,10 @@ ntsa::Error Poll::detachSocket(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket,
     const ntci::SocketDetachedCallback&         callback)
 {
-    ntsa::Error error = d_registry.removeAndGetReadyToDetach(socket,
-                                                             callback,
-                                                             d_detachFunctor);
-
+    const ntsa::Error error =
+        d_registry.removeAndGetReadyToDetach(socket,
+                                             callback,
+                                             d_detachFunctor);
     return error;
 }
 
@@ -1975,10 +1980,10 @@ ntsa::Error Poll::detachSocket(ntsa::Handle handle)
 ntsa::Error Poll::detachSocket(ntsa::Handle                        handle,
                                const ntci::SocketDetachedCallback& callback)
 {
-    ntsa::Error error = d_registry.removeAndGetReadyToDetach(handle,
-                                                             callback,
-                                                             d_detachFunctor);
-
+    const ntsa::Error error =
+        d_registry.removeAndGetReadyToDetach(handle,
+                                             callback,
+                                             d_detachFunctor);
     return error;
 }
 
@@ -2311,13 +2316,6 @@ void Poll::run(ntci::Waiter waiter)
                     }
                 }
 
-                //                if (entry->decrementProcessCounter() == 1 &&
-                //                    entry->askForDetachmentAnnouncementPermission())
-                //                {
-                //                    entry->announceDetached(this->getSelf(this));
-                //                    entry->clear();
-                //                    ++numDetachments;
-                //                }
                 entry->decrementProcessCounter();
             }
 
@@ -2699,13 +2697,6 @@ void Poll::poll(ntci::Waiter waiter)
                 }
             }
 
-            //            if (entry->decrementProcessCounter() == 1 &&
-            //                entry->askForDetachmentAnnouncementPermission())
-            //            {
-            //                entry->announceDetached(this->getSelf(this));
-            //                entry->clear();
-            //                ++numDetachments;
-            //            }
             entry->decrementProcessCounter();
         }
 
@@ -2795,14 +2786,7 @@ void Poll::poll(ntci::Waiter waiter)
 
 void Poll::interruptOne()
 {
-    //    if (NTCCFG_LIKELY(isWaiter())) {
-    //        NTCI_LOG_INFO("Skipping interruption because this is a waiter thread");
-    //        return;
-    //    }
-    //when d_chronology.announce() is called then inside chronology functorsDue are moved to a temporary functor,
-    // so if a functor adds one more callback then it won't be processed
-
-    ntsa::Error error = d_controller_sp->interrupt(1);
+    const ntsa::Error error = d_controller_sp->interrupt(1);
     if (NTCCFG_UNLIKELY(error)) {
         reinitializeControl();
     }
