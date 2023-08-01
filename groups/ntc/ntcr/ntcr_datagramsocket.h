@@ -209,11 +209,16 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// indicates the shutdown sequence has completed, announce the
     /// completion of the shutdown sequence. The behavior is undefined
     /// unless 'd_mutex' is locked.
+    /// If it is required to detach the socket from the proactor then part of
+    /// described functionality will be executed asynchronously using the next
+    /// method.
     void privateShutdownSequence(const bsl::shared_ptr<DatagramSocket>& self,
                                  ntsa::ShutdownOrigin::Value            origin,
                                  const ntcs::ShutdownContext& context,
                                  bool                         defer);
 
+    /// Execute the second part of shutdown sequence when the socket is
+    /// detached. See also "privateShutdownSequence".
     void privateShutdownSequencePart2(
         const bsl::shared_ptr<DatagramSocket>& self,
         const ntcs::ShutdownContext&           context,

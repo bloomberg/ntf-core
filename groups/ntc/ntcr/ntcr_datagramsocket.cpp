@@ -993,11 +993,11 @@ void DatagramSocket::privateShutdownSequencePart2(
 
     if (lock) {
         d_mutex.lock();
-        BSLS_ASSERT_OPT(d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED);
+        BSLS_ASSERT(d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED);
         d_detachState.set(ntcs::DetachState::e_DETACH_IDLE);
     }
     else {
-        BSLS_ASSERT_OPT(d_detachState.get() == ntcs::DetachState::e_DETACH_IDLE);
+        BSLS_ASSERT(d_detachState.get() == ntcs::DetachState::e_DETACH_IDLE);
     }
 
     // Second handle socket shutdown.
@@ -4268,10 +4268,6 @@ void DatagramSocket::close(const ntci::CloseCallback& callback)
                           ntsa::ShutdownType::e_BOTH,
                           ntsa::ShutdownMode::e_IMMEDIATE,
                           true);
-
-    //    if (callback) {
-    //        callback.dispatch(ntci::Strand::unknown(), self, true, &d_mutex);
-    //    }
 }
 
 ntsa::Error DatagramSocket::timestampOutgoingData(bool enable)

@@ -2494,10 +2494,6 @@ void ListenerSocket::close(const ntci::CloseCallback& callback)
                           ntsa::ShutdownType::e_BOTH,
                           ntsa::ShutdownMode::e_IMMEDIATE,
                           true);
-
-//    if (callback) {
-//        callback.dispatch(ntci::Strand::unknown(), self, true, &d_mutex);
-//    }
 }
 
 void ListenerSocket::execute(const Functor& functor)
