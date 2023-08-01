@@ -1298,6 +1298,9 @@ struct Dispatch {
         const bsl::shared_ptr<ntci::Executor>&     executor,
         bool                                       defer);
 
+    /// Announce to the specified socket that it has been detached.
+    /// If the specified 'destination' strand is available then announce it
+    /// on this strand
     static void announceDetached(
         const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         const bsl::shared_ptr<ntci::Strand>&         destination);

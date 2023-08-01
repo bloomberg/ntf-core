@@ -25,18 +25,31 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntcs {
 
+/// @internal @brief
+/// Provide a enumeration that indicates state of a socket detachment process.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntcs
+
 class DetachState
 {
   public:
     enum Value { e_DETACH_IDLE, e_DETACH_INITIATED };
 
+    /// Create a new detachment state initially in idle state.
     DetachState();
+
+    /// Create a new detachment state initially in the specified 'state'.
     explicit DetachState(Value state);
 
+    /// Returns current value of socket detachment state
     Value get() const {
         return d_state;
     }
 
+    /// Sets socket detachment state to the specified 'state'
     void set(Value state) {
         d_state = state;
     }

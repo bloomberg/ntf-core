@@ -1884,16 +1884,12 @@ void Dispatch::announceDetached(
     const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     const bsl::shared_ptr<ntci::Strand>&         destination)
 {
-    NTCI_LOG_CONTEXT();
-    if (NTCCFG_LIKELY(!destination)) {
-        NTCI_LOG_INFO("Dispatch::announceDetached descriptor %d, calling processSocketDetached", socket->handle());
+    if (destination) {
         socket->processSocketDetached();
     }
     else {
-        NTCI_LOG_INFO("Dispatch::announceDetached descriptor %d, calling execute for processSocketDetached", socket->handle());
         destination->execute(
-            NTCCFG_BIND(&ntci::ProactorSocket::processSocketDetached,
-                        socket));
+            NTCCFG_BIND(&ntci::ProactorSocket::processSocketDetached, socket));
     }
 }
 
