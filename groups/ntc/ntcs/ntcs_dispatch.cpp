@@ -1884,7 +1884,7 @@ void Dispatch::announceDetached(
     const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     const bsl::shared_ptr<ntci::Strand>&         destination)
 {
-    if (destination) {
+    if (!destination) {
         socket->processSocketDetached();
     }
     else {
