@@ -815,8 +815,7 @@ void StreamSocket::privateFailConnect(
         return;
     }
 
-    BSLS_ASSERT(d_detachState.get() !=
-                ntcs::DetachState::e_DETACH_INITIATED);
+    BSLS_ASSERT(d_detachState.get() != ntcs::DetachState::e_DETACH_INITIATED);
 
     if (close) {
         d_connectOptions.setRetryCount(0);
@@ -3081,7 +3080,9 @@ void StreamSocket::processRemoteEndpointResolution(
 
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
-    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
+    if (NTCCFG_UNLIKELY(d_detachState.get() ==
+                        ntcs::DetachState::e_DETACH_INITIATED))
+    {
         return;
     }
 
