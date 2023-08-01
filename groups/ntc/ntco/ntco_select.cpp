@@ -405,6 +405,8 @@ class Select : public ntci::Reactor,
     ntsa::Error detachSocket(const bsl::shared_ptr<ntci::ReactorSocket>&
                                  socket) BSLS_KEYWORD_OVERRIDE;
 
+    /// Stop monitoring the specified 'socket'. Invoke the specified 'callback'
+    /// when the socket is detached. Return the error.
     ntsa::Error detachSocket(
         const bsl::shared_ptr<ntci::ReactorSocket>& socket,
         const ntci::SocketDetachedCallback& callback) BSLS_KEYWORD_OVERRIDE;
@@ -412,6 +414,8 @@ class Select : public ntci::Reactor,
     /// Stop monitoring the specified socket 'handle'. Return the error.
     ntsa::Error detachSocket(ntsa::Handle handle) BSLS_KEYWORD_OVERRIDE;
 
+    /// Stop monitoring the specified 'handle'. Invoke the specified 'callback'
+    /// when the socket is detached. Return the error.
     ntsa::Error detachSocket(ntsa::Handle                        handle,
                              const ntci::SocketDetachedCallback& callback)
         BSLS_KEYWORD_OVERRIDE;
@@ -856,7 +860,6 @@ ntsa::Error Select::remove(ntsa::Handle handle)
     return ntsa::Error();
 }
 
-NTCCFG_INLINE
 ntsa::Error Select::removeDetached(
     const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
 {
@@ -1856,9 +1859,10 @@ ntsa::Error Select::detachSocket(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket,
     const ntci::SocketDetachedCallback&         callback)
 {
-    ntsa::Error error = d_registry.removeAndGetReadyToDetach(socket,
-                                                             callback,
-                                                             d_detachFunctor);
+    const ntsa::Error error =
+        d_registry.removeAndGetReadyToDetach(socket,
+                                             callback,
+                                             d_detachFunctor);
 
     return error;
 }
@@ -1889,9 +1893,10 @@ ntsa::Error Select::detachSocket(ntsa::Handle handle)
 ntsa::Error Select::detachSocket(ntsa::Handle                        handle,
                                  const ntci::SocketDetachedCallback& callback)
 {
-    ntsa::Error error = d_registry.removeAndGetReadyToDetach(handle,
-                                                             callback,
-                                                             d_detachFunctor);
+    const ntsa::Error error =
+        d_registry.removeAndGetReadyToDetach(handle,
+                                             callback,
+                                             d_detachFunctor);
 
     return error;
 }
@@ -2273,13 +2278,6 @@ void Select::run(ntci::Waiter waiter)
                     }
                 }
 
-                //                if (entry->decrementProcessCounter() == 1) {
-                //                    if (entry->askForDetachmentAnnouncementPermission()) {
-                //                        entry->announceDetached(this->getSelf(this));
-                //                        entry->clear();
-                //                        ++numDetachments;
-                //                    }
-                //                }
                 entry->decrementProcessCounter();
             }
 
@@ -2400,7 +2398,7 @@ void Select::poll(ntci::Waiter waiter)
     }
 
     bsl::size_t numDetachments = 0;
-    bsl::size_t numReadable = 0;
+    bsl::size_t numReadable    = 0;
     {
         LockGuard lock(&d_detachMutex);
 
@@ -2476,7 +2474,7 @@ void Select::poll(ntci::Waiter waiter)
 #error Not implemented
 #endif
 
-    int         numResults  = rc;
+    int numResults = rc;
     if (rc > 0 && d_config.oneShot().value()) {
         LockGuard lock(&d_generationMutex);
 
@@ -2556,7 +2554,6 @@ void Select::poll(ntci::Waiter waiter)
         BSLS_ASSERT(numResultsRemaining == 0);
     }
 
-    
     //Process control channel here
     if (rc > 0) {
         const bool isError =
@@ -2715,13 +2712,6 @@ void Select::poll(ntci::Waiter waiter)
                 }
             }
 
-            //            if (entry->decrementProcessCounter() == 1) {
-            //                if (entry->askForDetachmentAnnouncementPermission()) {
-            //                    entry->announceDetached(this->getSelf(this));
-            //                    entry->clear();
-            //                    ++numDetachments;
-            //                }
-            //            }
             entry->decrementProcessCounter();
         }
 
@@ -2812,12 +2802,7 @@ void Select::poll(ntci::Waiter waiter)
 
 void Select::interruptOne()
 {
-    //    if (NTCCFG_LIKELY(isWaiter())) {
-    //        return;
-    //    }
-    // see Poll::interruptOne
-
-    ntsa::Error error = d_controller_sp->interrupt(1);
+    const ntsa::Error error = d_controller_sp->interrupt(1);
     if (NTCCFG_UNLIKELY(error)) {
         reinitializeControl();
     }
