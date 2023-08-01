@@ -277,10 +277,6 @@ void DatagramSocket::processSocketDetached()
 {
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
-    NTCI_LOG_CONTEXT();
-    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_INFO("processSocketDetached");
-
     BSLS_ASSERT(d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED);
     d_detachState.set(ntcs::DetachState::e_DETACH_IDLE);
     BSLS_ASSERT(d_deferredCall);
@@ -946,8 +942,6 @@ void DatagramSocket::privateShutdownSequence(
 {
     NTCCFG_WARNING_UNUSED(origin);
 
-    // NTCI_LOG_CONTEXT();
-
     // Forcibly override the indication that the announcements should be
     // deferred on execute on the strand or asynchonrously on the reactor.
     // The announcements must always be deferred, otherwise, the user may
@@ -956,7 +950,7 @@ void DatagramSocket::privateShutdownSequence(
     //
     // This only needs to be done when supported half-open connections.
     // Otherwise, the announcements are always deferred or always processed
-    // immeditiately by the reactor thread.
+    // immediately by the reactor thread.
     //
     // TODO: Remove the 'defer' parameter and always defer the announcements.
 
@@ -1474,7 +1468,7 @@ bool DatagramSocket::privateCloseFlowControl(
             BSLS_ASSERT(d_detachState.get() !=
                         ntcs::DetachState::e_DETACH_INITIATED);
             proactorRef->cancel(
-                self);  //TODO: or maybe it's better to do it inside the proactor?
+                self);
             const ntsa::Error error = proactorRef->detachSocketAsync(self);
             if (NTCCFG_UNLIKELY(error)) {
                 return false;
@@ -3696,10 +3690,6 @@ void DatagramSocket::close(const ntci::CloseCallback& callback)
                           ntsa::ShutdownType::e_BOTH,
                           ntsa::ShutdownMode::e_IMMEDIATE,
                           true);
-
-    //    if (callback) {
-    //        callback.dispatch(ntci::Strand::unknown(), self, true, &d_mutex);
-    //    }
 }
 
 void DatagramSocket::execute(const Functor& functor)

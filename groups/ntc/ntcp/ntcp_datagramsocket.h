@@ -103,7 +103,7 @@ class DatagramSocket : public ntci::DatagramSocket,
     bsl::size_t                                  d_maxDatagramSize;
     ntca::DatagramSocketOptions                  d_options;
     ntcs::DetachState                            d_detachState;
-    NTCCFG_FUNCTION()                            d_deferredCall;
+    bsl::function<void()>                        d_deferredCall;
     ntci::CloseCallback                          d_closeCallback;
     bslma::Allocator*                            d_allocator_p;
 
@@ -127,6 +127,7 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// Process the specified 'error' that has occurred on the socket.
     void processSocketError(const ntsa::Error& error) BSLS_KEYWORD_OVERRIDE;
 
+    /// Process the completion of socket detachment
     void processSocketDetached() BSLS_KEYWORD_OVERRIDE;
 
     /// Attempt to copy from the write queue to the send buffer after the
@@ -226,11 +227,16 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// indicates the shutdown sequence has completed, announce the
     /// completion of the shutdown sequence. The behavior is undefined
     /// unless 'd_mutex' is locked.
+    /// If it is required to detach the socket from the proactor then part of
+    /// described functionality will be executed asynchronously using the next
+    /// method.
     void privateShutdownSequence(const bsl::shared_ptr<DatagramSocket>& self,
                                  ntsa::ShutdownOrigin::Value            origin,
                                  const ntcs::ShutdownContext& context,
                                  bool                         defer);
 
+    /// Execute the second part of shutdown sequence when the socket is
+    /// detached. See also "privateShutdownSequence"
     void privateShutdownSequencePart2(
         const bsl::shared_ptr<DatagramSocket>& self,
         const ntcs::ShutdownContext&           context,
@@ -255,7 +261,8 @@ class DatagramSocket : public ntci::DatagramSocket,
         bool                                   lock);
 
     /// Disable copying from socket buffers in both directions and detach
-    /// the socket from the reactor.
+    /// the socket from the reactor. Return true if asynchronous socket
+    /// detachment process started. Otherwise return false.
     bool privateCloseFlowControl(const bsl::shared_ptr<DatagramSocket>& self,
                                  bool                                   defer);
 

@@ -196,10 +196,6 @@ void ListenerSocket::processSocketDetached()
 {
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
-    NTCI_LOG_CONTEXT();
-    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_INFO("ListenerSocket::processSocketDetached");
-
     BSLS_ASSERT(d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED);
     d_detachState.set(ntcs::DetachState::e_DETACH_IDLE);
     BSLS_ASSERT(d_deferredCall);
@@ -730,8 +726,6 @@ void ListenerSocket::privateShutdownSequence(
 {
     NTCCFG_WARNING_UNUSED(origin);
 
-    // NTCI_LOG_CONTEXT();
-
     // MRM: Always defer to properly clean up pending operations?
     defer = true;
 
@@ -1095,7 +1089,6 @@ bool ListenerSocket::privateCloseFlowControl(
     const bsl::shared_ptr<ListenerSocket>& self,
     bool                                   defer)
 {
-    NTCI_LOG_CONTEXT();
     bool applyReceive = true;
 
     ntcs::FlowControlContext context;
@@ -1130,7 +1123,6 @@ bool ListenerSocket::privateCloseFlowControl(
         if (proactorRef) {
             BSLS_ASSERT(d_detachState.get() !=
                         ntcs::DetachState::e_DETACH_INITIATED);
-            NTCI_LOG_INFO("Listener socket: will call detachSocketAsync");
             proactorRef->cancel(self);
             const ntsa::Error error = proactorRef->detachSocketAsync(self);
             if (NTCCFG_UNLIKELY(error)) {
@@ -2378,10 +2370,6 @@ void ListenerSocket::close(const ntci::CloseCallback& callback)
                           ntsa::ShutdownType::e_BOTH,
                           ntsa::ShutdownMode::e_IMMEDIATE,
                           true);
-
-//    if (callback) {
-//        callback.dispatch(ntci::Strand::unknown(), self, true, &d_mutex);
-//    }
 }
 
 void ListenerSocket::execute(const Functor& functor)
