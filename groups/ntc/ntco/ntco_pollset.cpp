@@ -18,12 +18,8 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntco_pollset_cpp, "$Id$ $CSID$")
 
-#define SMITROFANOV_TMP 0
-
-#if NTC_BUILD_WITH_POLLSET || SMITROFANOV_TMP
-#if defined(BSLS_PLATFORM_OS_AIX) || SMITROFANOV_TMP
-// #if 1
-// #if 1
+#if NTC_BUILD_WITH_POLLSET
+#if defined(BSLS_PLATFORM_OS_AIX)
 
 #include <ntcr_datagramsocket.h>
 #include <ntcr_listenersocket.h>
@@ -424,20 +420,20 @@ class Pollset : public ntci::Reactor,
     // Stop monitoring the specified 'socket' and close the
     // 'socket' if it is not already closed. Return the error.
 
-    /// Stop monitoring the specified 'socket'. Invoke the specified 'callback'
-    /// when the socket is detached. Return the error.
     ntsa::Error detachSocket(
         const bsl::shared_ptr<ntci::ReactorSocket>& socket,
         const ntci::SocketDetachedCallback& callback) BSLS_KEYWORD_OVERRIDE;
+    // Stop monitoring the specified 'socket'. Invoke the specified 'callback'
+    // when the socket is detached. Return the error.
 
     ntsa::Error detachSocket(ntsa::Handle handle) BSLS_KEYWORD_OVERRIDE;
     // Stop monitoring the specified socket 'handle'. Return the error.
 
-    /// Stop monitoring the specified socket 'handle'. Invoke the specified
-    /// 'callback' when the socket is detached. Return the error.
     ntsa::Error detachSocket(ntsa::Handle                        handle,
                              const ntci::SocketDetachedCallback& callback)
         BSLS_KEYWORD_OVERRIDE;
+    // Stop monitoring the specified socket 'handle'. Invoke the specified
+    // 'callback' when the socket is detached. Return the error.
 
     ntsa::Error closeAll() BSLS_KEYWORD_OVERRIDE;
     // Close all monitored sockets and timers.
@@ -729,7 +725,6 @@ void Pollset::specify(struct ::poll_ctl* result,
 
 void Pollset::flush()
 {
-    NTCI_LOG_CONTEXT();
     while (true) {
         {
             LockGuard detachGuard(&d_generationMutex);
@@ -738,9 +733,6 @@ void Pollset::flush()
                  ++it)
             {
                 ntcs::RegistryEntry& entry = **it;
-                NTCI_LOG_INFO(
-                    "flush: going to announce detachment for descriptor %d",
-                    entry.handle());
                 entry.announceDetached(this->getSelf(this));
                 entry.clear();
             }
@@ -751,9 +743,13 @@ void Pollset::flush()
             d_chronology.announce();
         }
 
-        if (!d_chronology.hasAnyScheduledOrDeferred() && d_detachList.empty())
         {
-            break;
+            LockGuard detachGuard(&d_generationMutex);
+            if (!d_chronology.hasAnyScheduledOrDeferred() &&
+                d_detachList.empty())
+            {
+                break;
+            }
         }
     }
 }
@@ -899,8 +895,6 @@ ntsa::Error Pollset::removeDetached(
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(handle);
 
-    NTCI_LOG_INFO("removeDetached: descriptor %d", handle);
-
     struct ::poll_ctl ctl;
     Pollset::specify(&ctl, handle, ntcs::Interest(), PS_DELETE);
 
@@ -908,13 +902,9 @@ ntsa::Error Pollset::removeDetached(
         if (NTCCFG_LIKELY(isWaiter())) {
             int rc = ::pollset_ctl(d_pollset, &ctl, 1);
             if (rc != 0) {
-                ntsa::Error error(errno);
+                const ntsa::Error error(errno);
                 NTCO_POLLSET_LOG_CTL_FAILURE(1, rc, error);
-                return error;
             }
-            NTCI_LOG_INFO("removeDetached: going to announce detachment for "
-                          "descriptor %d",
-                          handle);
             entry->announceDetached(this->getSelf(this));
             BSLS_ASSERT(entry->processCounter() <= 1);
             entry->clear();
@@ -1893,11 +1883,10 @@ ntsa::Error Pollset::detachSocket(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket,
     const ntci::SocketDetachedCallback&         callback)
 {
-    NTCI_LOG_CONTEXT();
-    NTCI_LOG_INFO("detach requested for descriptor %d", socket->handle());
-    ntsa::Error error = d_registry.removeAndGetReadyToDetach(socket,
-                                                             callback,
-                                                             d_detachFunctor);
+    const ntsa::Error error =
+        d_registry.removeAndGetReadyToDetach(socket,
+                                             callback,
+                                             d_detachFunctor);
 
     return error;
 }
@@ -1928,10 +1917,10 @@ ntsa::Error Pollset::detachSocket(ntsa::Handle handle)
 ntsa::Error Pollset::detachSocket(ntsa::Handle                        handle,
                                   const ntci::SocketDetachedCallback& callback)
 {
-    ntsa::Error error = d_registry.removeAndGetReadyToDetach(handle,
-                                                             callback,
-                                                             d_detachFunctor);
-
+    const ntsa::Error error =
+        d_registry.removeAndGetReadyToDetach(handle,
+                                             callback,
+                                             d_detachFunctor);
     return error;
 }
 
@@ -2031,9 +2020,6 @@ void Pollset::run(ntci::Waiter waiter)
                 if (entry.processCounter() == 0 &&
                     entry.askForDetachmentAnnouncementPermission())
                 {
-                    NTCI_LOG_INFO(
-                        "run: going to announce detachment for descriptor %d",
-                        entry.handle());
                     entry.announceDetached(this->getSelf(this));
                     entry.clear();
                     ++numDetachments;
@@ -2235,13 +2221,6 @@ void Pollset::run(ntci::Waiter waiter)
                     }
                 }
 
-                // if ((entry->decrementProcessCounter() == 1) &&
-                //     (entry->askForDetachmentAnnouncementPermission()))
-                // {
-                //     entry->announceDetached(this->getSelf(this));
-                //     entry->clear();
-                //     ++numDetachments;
-                // }
                 entry->decrementProcessCounter();
             }
 
@@ -2574,13 +2553,6 @@ void Pollset::poll(ntci::Waiter waiter)
                 }
             }
 
-            // if (entry->decrementProcessCounter() == 1 &&
-            //     entry->askForDetachmentAnnouncementPermission())
-            // {
-            //     entry->announceDetached(this->getSelf(this));
-            //     entry->clear();
-            //     ++numDetachments;
-            // }
             entry->decrementProcessCounter();
         }
 
@@ -2642,11 +2614,7 @@ void Pollset::poll(ntci::Waiter waiter)
 
 void Pollset::interruptOne()
 {
-    // if (NTCCFG_LIKELY(isWaiter())) {
-    //     return;
-    // }
-
-    ntsa::Error error = d_controller_sp->interrupt(1);
+    const ntsa::Error error = d_controller_sp->interrupt(1);
     if (NTCCFG_UNLIKELY(error)) {
         reinitializeControl();
     }

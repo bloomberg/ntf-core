@@ -706,9 +706,13 @@ void Devpoll::flush()
             d_chronology.announce();
         }
 
-        if (!d_chronology.hasAnyScheduledOrDeferred() && d_detachList.empty())
         {
-            break;
+            LockGuard detachGuard(&d_generationMutex);
+            if (!d_chronology.hasAnyScheduledOrDeferred() &&
+                d_detachList.empty())
+            {
+                break;
+            }
         }
     }
 }

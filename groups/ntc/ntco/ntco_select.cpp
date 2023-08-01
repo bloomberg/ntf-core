@@ -727,9 +727,13 @@ void Select::flush()
             d_chronology.announce();
         }
 
-        if (!d_chronology.hasAnyScheduledOrDeferred() && d_detachList.empty())
         {
-            break;
+            LockGuard detachGuard(&d_detachMutex);
+            if (!d_chronology.hasAnyScheduledOrDeferred() &&
+                d_detachList.empty())
+            {
+                break;
+            }
         }
     }
 }
