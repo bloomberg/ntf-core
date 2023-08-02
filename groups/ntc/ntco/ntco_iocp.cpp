@@ -227,6 +227,10 @@ class Iocp : public ntci::Proactor,
     struct Result;
     // This struct describes the context of a waiter.
 
+    struct DetachGuardWaiter;
+    // This struct implements detachment guard mechanism which should be used
+    // inside wait function
+
     struct DetachGuard;
     // This struct implements detachment guard mechanism which should be used
     // everywhere except wait function
@@ -277,20 +281,15 @@ class Iocp : public ntci::Proactor,
     void flush();
     // Execute all pending jobs.
 
-    void wait(ntci::Waiter waiter, bsl::shared_ptr<ntci::ProactorSocket> *processed);
+    void wait(ntci::Waiter waiter);
     // Block the calling thread, identified by the specified 'waiter',
     // until any registered events for any descriptor in the polling set
     // occurs, or the earliest due timer in the specified 'chronology'
-    // elapses, if any. For each event that has occurred, invoke the
+    // elapses, if any.  For each event that has occurred, invoke the
     // correspond processing function on the associated descriptor. Note
     // that implementations are permitted to wakeup from 'timeout'
-    // prematurely. If the wait function detected event to be processed on a
-    // socket then save its pointer to the specified 'processed' argument. If
-    // the wait function did not detect any socket event then 'processed' won't
-    // be touched, e.g. it is responsibility of the caller to clear 'processed'
-    // before each wait call. The behavior is undefined unless the calling
-    // thread has previously registered the 'waiter'. The behavior is undefined
-    // unless 'processed' is a valid pointer.
+    // prematurely. The behavior is undefined unless the calling thread
+    // has previously registered the 'waiter'.
 
     bsl::shared_ptr<ntci::Proactor> acquireProactor(
         const ntca::LoadBalancingOptions& options) BSLS_KEYWORD_OVERRIDE;
@@ -651,8 +650,59 @@ Iocp::Result::~Result()
 {
 }
 
+struct Iocp::DetachGuardWaiter {
+    // Provide an implementation of detachment guard mechanism which should be
+    // used inside proactor's "wait" function
+
+  public:
+    const bsl::shared_ptr<ntci::ProactorSocket>& d_socket_sp;
+    bool                                         d_ignore;
+
+  private:
+    DetachGuardWaiter(const DetachGuardWaiter&) BSLS_KEYWORD_DELETED;
+    DetachGuardWaiter& operator=(const DetachGuardWaiter&)
+        BSLS_KEYWORD_DELETED;
+
+  public:
+    explicit DetachGuardWaiter(
+        const bsl::shared_ptr<ntci::ProactorSocket>& socket);
+    // Constructs the guard to monitor the specified 'socket'
+
+    ~DetachGuardWaiter();
+    //  Destructs the guard and announces detachment of a socket in case
+    // detachment conditions are satisfied
+
+    void ignore();
+    // Set the flag to ignore detachment announcement on destruction
+};
+
+Iocp::DetachGuardWaiter::DetachGuardWaiter(
+    const bsl::shared_ptr<ntci::ProactorSocket>& socket)
+: d_socket_sp(socket)
+, d_ignore(false)
+{
+}
+
+Iocp::DetachGuardWaiter::~DetachGuardWaiter()
+{
+    if (NTCCFG_UNLIKELY(d_ignore)) {
+        return;
+    }
+    if (d_socket_sp->decrementProcessCounter() == 1 &&
+        d_socket_sp->trySetDetachScheduled())
+    {
+        ntcs::Dispatch::announceDetached(d_socket_sp, d_socket_sp->strand());
+    }
+}
+
+void Iocp::DetachGuardWaiter::ignore()
+{
+    d_ignore = true;
+}
+
 struct Iocp::DetachGuard {
-    // Provide an implementation of detachment guard mechanism
+    // Provide an implementation of detachment guard mechanism which should be
+    // used everywhere but not inside proactor's "wait" function
 
   public:
     const bsl::shared_ptr<ntci::ProactorSocket>& d_socket_sp;
@@ -783,11 +833,7 @@ void Iocp::flush()
         event.load(reinterpret_cast<ntcs::Event*>(overlapped), &d_eventPool);
 
         if (NTCCFG_LIKELY(event->d_socket)) {
-            if (event->d_socket->decrementProcessCounter() == 1 &&
-                event->d_socket->trySetDetachScheduled())
-            {
-                ntcs::Dispatch::announceDetached(event->d_socket, event->d_socket->strand());
-            }
+            DetachGuardWaiter detachGuardWaiter(event->d_socket);
         }
 
         if (error && error == ntsa::Error::e_CANCELLED) {
@@ -804,7 +850,7 @@ void Iocp::flush()
     }
 }
 
-void Iocp::wait(ntci::Waiter waiter, bsl::shared_ptr<ntci::ProactorSocket> *processed)
+void Iocp::wait(ntci::Waiter waiter)
 {
     NTCCFG_WARNING_UNUSED(waiter);
 
@@ -867,7 +913,7 @@ void Iocp::wait(ntci::Waiter waiter, bsl::shared_ptr<ntci::ProactorSocket> *proc
         BSLS_ASSERT(lastError == ERROR_OPERATION_ABORTED);
         NTCP_IOCP_LOG_EVENT_CANCELLED(event);
         if (NTCCFG_LIKELY(event->d_socket)) {
-            *processed = event->d_socket;
+            DetachGuardWaiter detachGuardWaiter(event->d_socket);
         }
         return;
     }
@@ -879,7 +925,7 @@ void Iocp::wait(ntci::Waiter waiter, bsl::shared_ptr<ntci::ProactorSocket> *proc
         return;
     }
 
-    *processed = event->d_socket;
+    DetachGuardWaiter detachGuardWaiter(event->d_socket);
 
     if (event->d_type == ntcs::EventType::e_ACCEPT) {
         BSLS_ASSERT(event->d_socket.get() != 0);
@@ -1070,6 +1116,7 @@ void Iocp::wait(ntci::Waiter waiter, bsl::shared_ptr<ntci::ProactorSocket> *proc
     }
     else {
         NTCP_IOCP_LOG_EVENT_IGNORED(event);
+        detachGuardWaiter.ignore();
         return;
     }
 }
@@ -2617,8 +2664,8 @@ void Iocp::run(ntci::Waiter waiter)
 {
     while (d_run) {
         // Wait for an operation to complete or a timeout.
-        bsl::shared_ptr<ntci::ProactorSocket> processed;
-        this->wait(waiter, &processed);
+
+        this->wait(waiter);
 
         // Invoke functions deferred while processing each polled event and
         // process all expired timers.
@@ -2633,17 +2680,6 @@ void Iocp::run(ntci::Waiter waiter)
                 break;
             }
         }
-
-        if (processed) {
-            if (processed->decrementProcessCounter() == 1 &&
-                processed->trySetDetachScheduled())
-            {
-                ntcs::Dispatch::announceDetached(processed, processed->strand());
-                if (d_chronology.hasAnyScheduledOrDeferred()) {
-                    d_chronology.announce();
-                }
-            }
-        }
     }
 }
 
@@ -2651,8 +2687,7 @@ void Iocp::poll(ntci::Waiter waiter)
 {
     // Wait for an operation to complete or a timeout.
 
-    bsl::shared_ptr<ntci::ProactorSocket> processed;
-    this->wait(waiter, &processed);
+    this->wait(waiter);
 
     // Invoke functions deferred while processing each polled event and process
     // all expired timers.
@@ -2665,17 +2700,6 @@ void Iocp::poll(ntci::Waiter waiter)
         }
         else {
             break;
-        }
-    }
-
-    if (processed) {
-        if (processed->decrementProcessCounter() == 1 &&
-            processed->trySetDetachScheduled())
-        {
-            ntcs::Dispatch::announceDetached(processed, processed->strand());
-            if (d_chronology.hasAnyScheduledOrDeferred()) {
-                d_chronology.announce();
-            }
         }
     }
 }

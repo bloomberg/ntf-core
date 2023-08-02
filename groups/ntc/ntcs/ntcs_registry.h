@@ -220,7 +220,7 @@ class RegistryEntry
     /// announcement is performed, and false if the announcement was withheld
     /// because the user is no longer interested in the notifications.
     bool announceNotifications(
-        const ntsa::NotificationQueue& notifications);
+        const ntsa::NotificationQueue& notificationQueue);
 
     /// Announce that the socket has been detached and clear detachCallback
     void announceDetached(const bsl::shared_ptr<ntci::Executor>& executor);
@@ -283,20 +283,9 @@ class RegistryEntry
     /// Return number of threads working on the entry
     unsigned int processCounter() const;
 
-    /// Atomically increment number of threads working on the entry
-    void incrementProcessCounter();
-
-    /// Atomically increment number of threads working on the entry by the
-    /// specified 'value'
-    void incrementProcessCounter(unsigned int value);
-
     /// Atomically decrement number of threads working on the entry and return
     /// its previous value
     unsigned int decrementProcessCounter();
-
-    /// Atomically decrement number of threads working on the entry by the
-    /// specified 'value'
-    void decrementProcessCounter(unsigned int value);
 };
 
 /// @internal @brief
@@ -755,8 +744,7 @@ bool RegistryEntry::announceReadable(const ntca::ReactorEvent& event)
         if (process) {
             ntcs::Dispatch::announceReadable(d_reactorSocket_sp,
                                              event,
-                                             d_reactorSocketStrand_sp,
-                                             *this);
+                                             d_reactorSocketStrand_sp);
         }
     }
     else {
@@ -779,7 +767,6 @@ bool RegistryEntry::announceReadable(const ntca::ReactorEvent& event)
         if (process) {
             if (readableCallback) {
                 readableCallback(event, d_unknown_sp);
-                decrementProcessCounter();
             }
         }
     }
@@ -807,8 +794,7 @@ bool RegistryEntry::announceWritable(const ntca::ReactorEvent& event)
         if (process) {
             ntcs::Dispatch::announceWritable(d_reactorSocket_sp,
                                              event,
-                                             d_reactorSocketStrand_sp,
-                                             *this);
+                                             d_reactorSocketStrand_sp);
         }
     }
     else {
@@ -831,7 +817,6 @@ bool RegistryEntry::announceWritable(const ntca::ReactorEvent& event)
         if (process) {
             if (writableCallback) {
                 writableCallback(event, d_unknown_sp);
-                decrementProcessCounter();
             }
         }
     }
@@ -857,8 +842,7 @@ bool RegistryEntry::announceNotifications(
         if (process) {
             ntcs::Dispatch::announceNotifications(d_reactorSocket_sp,
                                                   notifications,
-                                                  d_reactorSocketStrand_sp,
-                                                  *this);
+                                                  d_reactorSocketStrand_sp);
         }
     }
     else {
@@ -875,7 +859,6 @@ bool RegistryEntry::announceNotifications(
         if (process) {
             if (notificationCallback) {
                 notificationCallback(notifications, d_unknown_sp);
-                decrementProcessCounter();
             }
         }
     }
@@ -1028,24 +1011,6 @@ unsigned int RegistryEntry::decrementProcessCounter()
         current = prev;
     }
     return current;
-}
-
-NTCCFG_INLINE
-void RegistryEntry::decrementProcessCounter(unsigned int value)
-{
-    d_processCounter -= value;
-}
-
-NTCCFG_INLINE
-void RegistryEntry::incrementProcessCounter()
-{
-    ++d_processCounter;
-}
-
-NTCCFG_INLINE
-void RegistryEntry::incrementProcessCounter(unsigned int value)
-{
-    d_processCounter += value;
 }
 
 NTCCFG_INLINE
