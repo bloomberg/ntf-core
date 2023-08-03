@@ -2588,14 +2588,12 @@ ntsa::Error Iocp::detachSocket(
 ntsa::Error Iocp::detachSocketAsync(
     const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 {
-    NTCI_LOG_CONTEXT();
-
-    NTCI_LOG_INFO("detachSocketAsync called for descriptor %d",
-                  socket->handle());
-
     if (socket->handle() == ntsa::k_INVALID_HANDLE) {
         return ntsa::Error::invalid();
     }
+
+    BSLS_ASSERT((d_config.maxThreads() > 1) ==
+                static_cast<bool>(socket->strand()));
 
     {
         bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_proactorSocketMapMutex);
