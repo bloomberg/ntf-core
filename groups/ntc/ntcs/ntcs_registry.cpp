@@ -23,11 +23,7 @@ BSLS_IDENT_RCSID(ntcs_registry_cpp, "$Id$ $CSID$")
 #include <bslma_allocator.h>
 #include <bslma_default.h>
 #include <bsls_assert.h>
-#include <bsls_log.h>
 #include <bsls_types.h>
-
-#include <bsl_sstream.h>
-#include <bsl_utility.h>
 
 namespace BloombergLP {
 namespace ntcs {
@@ -104,7 +100,8 @@ bool RegistryEntry::announceError(const ntca::ReactorEvent& event)
         if (process) {
             ntcs::Dispatch::announceError(d_reactorSocket_sp,
                                           event,
-                                          d_reactorSocketStrand_sp);
+                                          d_reactorSocketStrand_sp,
+                                          *this);
         }
     }
     else {
@@ -141,6 +138,7 @@ bool RegistryEntry::announceError(const ntca::ReactorEvent& event)
         if (process) {
             if (effectiveCallback) {
                 effectiveCallback(effectiveEvent, d_unknown_sp);
+                decrementProcessCounter();
             }
         }
     }
@@ -148,7 +146,8 @@ bool RegistryEntry::announceError(const ntca::ReactorEvent& event)
     return process;
 }
 
-void RegistryEntry::announceDetached(const bsl::shared_ptr<ntci::Executor>& executor)
+void RegistryEntry::announceDetached(
+    const bsl::shared_ptr<ntci::Executor>& executor)
 {
     if (d_detachCallback) {
         d_detachCallback.dispatch(d_unknown_sp, executor, true, NULL);

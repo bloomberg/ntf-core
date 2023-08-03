@@ -20,9 +20,8 @@ BSLS_IDENT_RCSID(ntcs_dispatch_cpp, "$Id$ $CSID$")
 
 #include <ntccfg_bind.h>
 #include <ntci_log.h>
+#include <ntcs_registry.h>
 #include <bdlf_bind.h>
-#include <bdlf_memfn.h>
-#include <bdlf_placeholder.h>
 #include <bslmt_lockguard.h>
 #include <bsls_assert.h>
 
@@ -1982,6 +1981,152 @@ void Dispatch::announceRemoval(
                                       timer,
                                       event));
     }
+}
+
+// *** Reactor Socket ***
+
+void Dispatch::announceReadable(
+    const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+    const ntca::ReactorEvent&                   event,
+    const bsl::shared_ptr<ntci::Strand>&        destination,
+    ntcs::RegistryEntry&                        entry)
+{
+    if (NTCCFG_LIKELY(!destination)) {
+        socket->processSocketReadable(event);
+        entry.decrementProcessCounter();
+    }
+    else {
+#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
+        destination->execute([&socket, event, &entry]() {
+            socket->processSocketReadable(event);
+            entry.decrementProcessCounter();
+        });
+#else
+        destination->execute(
+            NTCCFG_BIND(&ntcs::Dispatch::announceReadableStrand,
+                        socket,
+                        event,
+                        &entry));
+#endif
+    }
+}
+
+void Dispatch::announceReadableStrand(
+    const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+    const ntca::ReactorEvent&                   event,
+    ntcs::RegistryEntry*                        entry)
+{
+    BSLS_ASSERT(entry);
+    socket->processSocketReadable(event);
+    entry->decrementProcessCounter();
+}
+
+void Dispatch::announceWritable(
+    const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+    const ntca::ReactorEvent&                   event,
+    const bsl::shared_ptr<ntci::Strand>&        destination,
+    ntcs::RegistryEntry&                        entry)
+{
+    if (NTCCFG_LIKELY(!destination)) {
+        socket->processSocketWritable(event);
+        entry.decrementProcessCounter();
+    }
+    else {
+#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
+        destination->execute([&socket, event, &entry]() {
+            socket->processSocketWritable(event);
+            entry.decrementProcessCounter();
+        });
+#else
+        destination->execute(
+            NTCCFG_BIND(&ntcs::Dispatch::announceWritableStrand,
+                        socket,
+                        event,
+                        &entry));
+#endif
+    }
+}
+
+void Dispatch::announceWritableStrand(
+    const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+    const ntca::ReactorEvent&                   event,
+    ntcs::RegistryEntry*                        entry)
+{
+    BSLS_ASSERT(entry);
+    socket->processSocketWritable(event);
+    entry->decrementProcessCounter();
+}
+
+void Dispatch::announceError(
+    const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+    const ntca::ReactorEvent&                   event,
+    const bsl::shared_ptr<ntci::Strand>&        destination,
+    ntcs::RegistryEntry&                        entry)
+{
+    if (NTCCFG_LIKELY(!destination)) {
+        socket->processSocketError(event);
+        entry.decrementProcessCounter();
+    }
+    else {
+#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
+        destination->execute([&socket, event, &entry]() {
+            socket->processSocketError(event);
+            entry.decrementProcessCounter();
+        });
+#else
+        destination->execute(
+            NTCCFG_BIND(&ntcs::Dispatch::announceErrorStrand,
+                        socket,
+                        event,
+                        &entry));
+#endif
+    }
+}
+
+void Dispatch::announceErrorStrand(
+    const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+    const ntca::ReactorEvent&                   event,
+    ntcs::RegistryEntry*                        entry)
+{
+    BSLS_ASSERT(entry);
+    socket->processSocketError(event);
+    entry->decrementProcessCounter();
+}
+
+void Dispatch::announceNotifications(
+    const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+    const ntsa::NotificationQueue&              notifications,
+    const bsl::shared_ptr<ntci::Strand>&        destination,
+    ntcs::RegistryEntry&                        entry)
+{
+    if (NTCCFG_LIKELY(!destination)) {
+        socket->processNotifications(notifications);
+        entry.decrementProcessCounter();
+    }
+    else {
+#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
+        destination->execute([&socket, notifications, &entry]() {
+            socket->processNotifications(notifications);
+            entry.decrementProcessCounter();
+        });
+#else
+        destination->execute(
+            NTCCFG_BIND(&ntcs::Dispatch::announceNotificationsStrand,
+                        socket,
+                        notifications,
+                        &entry));
+#endif
+    }
+}
+
+void Dispatch::announceNotificationsStrand(
+    const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+    const ntsa::NotificationQueue&              notifications,
+    ntcs::RegistryEntry*                        entry)
+{
+    BSLS_ASSERT(entry);
+    socket->processNotifications(notifications);
+    entry->decrementProcessCounter();
 }
 
 }  // close package namespace

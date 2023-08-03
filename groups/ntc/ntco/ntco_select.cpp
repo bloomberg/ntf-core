@@ -1937,8 +1937,10 @@ void Select::run(ntci::Waiter waiter)
 
     NTCS_METRICS_GET();
 
+    const bool dynamicLoadBalancing = (d_config.maxThreads().value() > 1);
+
     while (d_run) {
-        if (d_config.maxThreads().value() > 1) {
+        if (dynamicLoadBalancing) {
             d_generationSemaphore.wait();
         }
 
@@ -2150,9 +2152,10 @@ void Select::run(ntci::Waiter waiter)
             }
         }
 
-        if (d_config.maxThreads().value() > 1) {
+        if (dynamicLoadBalancing) {
             d_generationSemaphore.post();
         }
+
 
         if (NTCCFG_LIKELY(rc > 0)) {
             NTCO_SELECT_LOG_WAIT_RESULT(rc);
@@ -2246,9 +2249,16 @@ void Select::run(ntci::Waiter waiter)
                     if (entry->announceError(event)) {
                         ++numErrors;
                     }
+                    else {
+                        entry->decrementProcessCounter();
+                    }
                     NTCS_METRICS_UPDATE_ERROR_CALLBACK_TIME_END();
                 }
                 else {
+                    if (isWritable && isReadable) {
+                        entry->incrementProcessCounter();
+                    }
+
                     if (isWritable) {
                         if (entry->wantWritable()) {
                             ntca::ReactorEvent event;
@@ -2259,7 +2269,13 @@ void Select::run(ntci::Waiter waiter)
                             if (entry->announceWritable(event)) {
                                 ++numWritable;
                             }
+                            else {
+                                entry->decrementProcessCounter();
+                            }
                             NTCS_METRICS_UPDATE_WRITE_CALLBACK_TIME_END();
+                        }
+                        else {
+                            entry->decrementProcessCounter();
                         }
                     }
 
@@ -2273,22 +2289,15 @@ void Select::run(ntci::Waiter waiter)
                             if (entry->announceReadable(event)) {
                                 ++numReadable;
                             }
+                            else {
+                                entry->decrementProcessCounter();
+                            }
                             NTCS_METRICS_UPDATE_READ_CALLBACK_TIME_END();
                         }
+                        else {
+                            entry->decrementProcessCounter();
+                        }
                     }
-                }
-
-                entry->decrementProcessCounter();
-            }
-
-            {
-                bool interrupt = false;
-                {
-                    LockGuard detachGuard(&d_detachMutex);
-                    interrupt = !d_detachList.empty();
-                }
-                if (interrupt) {
-                    this->interruptOne();
                 }
             }
 
@@ -2362,6 +2371,17 @@ void Select::run(ntci::Waiter waiter)
             }
             else {
                 break;
+            }
+        }
+
+        {
+            bool interrupt = false;
+            {
+                LockGuard detachGuard(&d_detachMutex);
+                interrupt = !d_detachList.empty();
+            }
+            if (interrupt) {
+                this->interruptOne();
             }
         }
     }
@@ -2680,9 +2700,15 @@ void Select::poll(ntci::Waiter waiter)
                 if (entry->announceError(event)) {
                     ++numErrors;
                 }
+                else {
+                    entry->decrementProcessCounter();
+                }
                 NTCS_METRICS_UPDATE_ERROR_CALLBACK_TIME_END();
             }
             else {
+                if (isWritable && isReadable) {
+                    entry->incrementProcessCounter();
+                }
                 if (isWritable) {
                     if (entry->wantWritable()) {
                         ntca::ReactorEvent event;
@@ -2693,7 +2719,13 @@ void Select::poll(ntci::Waiter waiter)
                         if (entry->announceWritable(event)) {
                             ++numWritable;
                         }
+                        else {
+                            entry->decrementProcessCounter();
+                        }
                         NTCS_METRICS_UPDATE_WRITE_CALLBACK_TIME_END();
+                    }
+                    else {
+                        entry->decrementProcessCounter();
                     }
                 }
 
@@ -2707,22 +2739,15 @@ void Select::poll(ntci::Waiter waiter)
                         if (entry->announceReadable(event)) {
                             ++numReadable;
                         }
+                        else {
+                            entry->decrementProcessCounter();
+                        }
                         NTCS_METRICS_UPDATE_READ_CALLBACK_TIME_END();
                     }
+                    else {
+                        entry->decrementProcessCounter();
+                    }
                 }
-            }
-
-            entry->decrementProcessCounter();
-        }
-
-        {
-            bool interrupt = false;
-            {
-                LockGuard detachGuard(&d_detachMutex);
-                interrupt = !d_detachList.empty();
-            }
-            if (interrupt) {
-                this->interruptOne();
             }
         }
 
@@ -2796,6 +2821,17 @@ void Select::poll(ntci::Waiter waiter)
         }
         else {
             break;
+        }
+    }
+
+    {
+        bool interrupt = false;
+        {
+            LockGuard detachGuard(&d_detachMutex);
+            interrupt = !d_detachList.empty();
+        }
+        if (interrupt) {
+            this->interruptOne();
         }
     }
 }

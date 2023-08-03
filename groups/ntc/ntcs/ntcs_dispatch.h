@@ -41,6 +41,8 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntcs {
 
+struct RegistryEntry;
+
 /// @internal @brief
 /// Provide a utility to dispatch the announcement of socket events.
 ///
@@ -1189,38 +1191,74 @@ struct Dispatch {
     /// Announce to the specified 'socket' that it is readable. If the
     /// specified 'destination' strand is null, execute the announcement
     /// immediately. Otherwise, enqueue the announcement to be executed on
-    /// the 'destination' strand.
+    /// the 'destination' strand. Ensure that after readability announcement
+    /// thread counter for the specified 'entry' is decremented
     static void announceReadable(
         const bsl::shared_ptr<ntci::ReactorSocket>& socket,
         const ntca::ReactorEvent&                   event,
-        const bsl::shared_ptr<ntci::Strand>&        destination);
+        const bsl::shared_ptr<ntci::Strand>&        destination,
+        ntcs::RegistryEntry&                        entry);
+
+    /// Announce to the specified 'socket' that it is readable and decrement
+    /// number of threads working on the 'socket'.
+    static void announceReadableStrand(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+        const ntca::ReactorEvent&                   event,
+        ntcs::RegistryEntry*                        entry);
 
     /// Announce to the specified 'socket' that it is writable. If the
     /// specified 'destination' strand is null, execute the announcement
     /// immediately. Otherwise, enqueue the announcement to be executed on
-    /// the 'destination' strand.
+    /// the 'destination' strand. Ensure that after readability announcement
+    /// thread counter for the specified 'entry' is decremented
     static void announceWritable(
         const bsl::shared_ptr<ntci::ReactorSocket>& socket,
         const ntca::ReactorEvent&                   event,
-        const bsl::shared_ptr<ntci::Strand>&        destination);
+        const bsl::shared_ptr<ntci::Strand>&        destination,
+        ntcs::RegistryEntry&                        entry);
+
+    /// Announce to the specified 'socket' that it is writable and decrement
+    /// number of threads working on the 'socket'.
+    static void announceWritableStrand(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+        const ntca::ReactorEvent&                   event,
+        ntcs::RegistryEntry*                        entry);
 
     /// Announce to the specified 'socket' that the specified 'error' has
-    /// occured. If the specified 'destination' strand is null, execute the
+    /// occurred. If the specified 'destination' strand is null, execute the
     /// announcement immediately. Otherwise, enqueue the announcement to be
-    /// executed on the 'destination' strand.
+    /// executed on the 'destination' strand. Ensure that after error
+    /// announcement thread counter for the specified 'entry' is decremented
     static void announceError(
         const bsl::shared_ptr<ntci::ReactorSocket>& socket,
         const ntca::ReactorEvent&                   event,
-        const bsl::shared_ptr<ntci::Strand>&        destination);
+        const bsl::shared_ptr<ntci::Strand>&        destination,
+        ntcs::RegistryEntry&                        entry);
+
+    /// Announce to the specified 'socket' that the specified 'error' has
+    /// occurred
+    static void announceErrorStrand(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+        const ntca::ReactorEvent&                   event,
+        ntcs::RegistryEntry*                        entry);
 
     /// Announce to the specified 'socket' that the specified 'notifications'
-    /// have occured. If the specified 'destination' strand is null, execute
+    /// have occurred. If the specified 'destination' strand is null, execute
     /// the announcement immediately. Otherwise, enqueue the announcement to
-    /// be executed on the 'destination' strand.
+    /// be executed on the 'destination' strand. Ensure that after notification
+    /// announcement thread counter for the specified 'entry' is decremented
     static void announceNotifications(
         const bsl::shared_ptr<ntci::ReactorSocket>& socket,
         const ntsa::NotificationQueue&              notifications,
-        const bsl::shared_ptr<ntci::Strand>&        destination);
+        const bsl::shared_ptr<ntci::Strand>&        destination,
+        ntcs::RegistryEntry&                        entry);
+
+    /// Announce to the specified 'socket' that the specified 'notifications'
+    /// have occurred.
+    static void announceNotificationsStrand(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+        const ntsa::NotificationQueue&              notifications,
+        ntcs::RegistryEntry*                        entry);
 
     // *** Proactor Socket ***
 
@@ -1346,76 +1384,6 @@ struct Dispatch {
         const bsl::shared_ptr<ntci::Executor>&     executor,
         bool                                       defer);
 };
-
-// *** Reactor Socket ***
-
-NTCCFG_INLINE
-void Dispatch::announceReadable(
-    const bsl::shared_ptr<ntci::ReactorSocket>& socket,
-    const ntca::ReactorEvent&                   event,
-    const bsl::shared_ptr<ntci::Strand>&        destination)
-{
-    if (NTCCFG_LIKELY(!destination)) {
-        socket->processSocketReadable(event);
-    }
-    else {
-        destination->execute(
-            NTCCFG_BIND(&ntci::ReactorSocket::processSocketReadable,
-                        socket,
-                        event));
-    }
-}
-
-NTCCFG_INLINE
-void Dispatch::announceWritable(
-    const bsl::shared_ptr<ntci::ReactorSocket>& socket,
-    const ntca::ReactorEvent&                   event,
-    const bsl::shared_ptr<ntci::Strand>&        destination)
-{
-    if (NTCCFG_LIKELY(!destination)) {
-        socket->processSocketWritable(event);
-    }
-    else {
-        destination->execute(
-            NTCCFG_BIND(&ntci::ReactorSocket::processSocketWritable,
-                        socket,
-                        event));
-    }
-}
-
-NTCCFG_INLINE
-void Dispatch::announceError(
-    const bsl::shared_ptr<ntci::ReactorSocket>& socket,
-    const ntca::ReactorEvent&                   event,
-    const bsl::shared_ptr<ntci::Strand>&        destination)
-{
-    if (NTCCFG_LIKELY(!destination)) {
-        socket->processSocketError(event);
-    }
-    else {
-        destination->execute(
-            NTCCFG_BIND(&ntci::ReactorSocket::processSocketError,
-                        socket,
-                        event));
-    }
-}
-
-NTCCFG_INLINE
-void Dispatch::announceNotifications(
-    const bsl::shared_ptr<ntci::ReactorSocket>& socket,
-    const ntsa::NotificationQueue&              notifications,
-    const bsl::shared_ptr<ntci::Strand>&        destination)
-{
-    if (NTCCFG_LIKELY(!destination)) {
-        socket->processNotifications(notifications);
-    }
-    else {
-        destination->execute(
-            NTCCFG_BIND(&ntci::ReactorSocket::processNotifications,
-                        socket,
-                        notifications));
-    }
-}
 
 }  // end namespace ntcs
 }  // end namespace BloombergLP
