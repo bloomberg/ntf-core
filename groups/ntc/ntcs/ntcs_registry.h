@@ -284,7 +284,7 @@ class RegistryEntry
     unsigned int processCounter() const;
 
     /// Atomically decrement number of threads working on the entry and return
-    /// its previous value
+    /// resulting value
     unsigned int decrementProcessCounter();
 };
 
@@ -1002,15 +1002,16 @@ NTCCFG_INLINE
 unsigned int RegistryEntry::decrementProcessCounter()
 {
     //TODO: can I just do return --d_processCounter and return the resulting value?
-    unsigned int current = d_processCounter.load();
-    while (true) {
-        unsigned int prev = d_processCounter.testAndSwap(current, current - 1);
-        if (prev == current) {
-            break;
-        }
-        current = prev;
-    }
-    return current;
+    //    unsigned int current = d_processCounter.load();
+    //    while (true) {
+    //        unsigned int prev = d_processCounter.testAndSwap(current, current - 1);
+    //        if (prev == current) {
+    //            break;
+    //        }
+    //        current = prev;
+    //    }
+    //    return current;
+    return --d_processCounter;
 }
 
 NTCCFG_INLINE

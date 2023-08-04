@@ -688,7 +688,7 @@ Iocp::DetachGuardWaiter::~DetachGuardWaiter()
     if (NTCCFG_UNLIKELY(d_ignore)) {
         return;
     }
-    if (d_socket_sp->decrementProcessCounter() == 1 &&
+    if (d_socket_sp->decrementProcessCounter() == 0 &&
         d_socket_sp->trySetDetachScheduled())
     {
         ntcs::Dispatch::announceDetached(d_socket_sp, d_socket_sp->strand());

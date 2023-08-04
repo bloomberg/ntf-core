@@ -80,23 +80,23 @@ class ProactorSocketBase
     unsigned int incrementProcessCounter();
 
     /// Atomically increment number of threads actively working with the socket
-    /// and return previously stored value
+    /// and return resulting value
     unsigned int decrementProcessCounter();
 
     /// Return true if detachment is not required for the socket.
-    bool         noDetach() const;
+    bool noDetach() const;
 
     /// Atomically try to transit detachment state to e_DETACH_SCHEDULED.
     /// Return true in case of success and false otherwise.
-    bool         trySetDetachScheduled();
+    bool trySetDetachScheduled();
 
     /// Atomically try to transit detachment state to e_DETACH_REQUIRED.
     /// Return true in case of success and false otherwise.
-    bool         trySetDetachRequired();
+    bool trySetDetachRequired();
 
     /// Atomically try to transit detachment state to e_DETACH_NOT_REQUIRED.
     /// Return true in case of success and false otherwise.
-    bool         trySetDetachNotRequired();
+    bool trySetDetachNotRequired();
 };
 
 /// Provide an interface to handle the completion of operations initiated
@@ -202,15 +202,16 @@ NTCCFG_INLINE
 unsigned int ProactorSocketBase::decrementProcessCounter()
 {
     //TODO: can I just do return --d_processCounter and return the resulting value?
-    unsigned int current = d_processCounter.load();
-    while (true) {
-        unsigned int prev = d_processCounter.testAndSwap(current, current - 1);
-        if (prev == current) {
-            break;
-        }
-        current = prev;
-    }
-    return current;
+    //    unsigned int current = d_processCounter.load();
+    //    while (true) {
+    //        unsigned int prev = d_processCounter.testAndSwap(current, current - 1);
+    //        if (prev == current) {
+    //            break;
+    //        }
+    //        current = prev;
+    //    }
+    //    return current;
+    return --d_processCounter;
 }
 
 NTCCFG_INLINE

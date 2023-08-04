@@ -1696,7 +1696,7 @@ void Proactor::poll(ntci::Waiter waiter)
                 }
                 NTCS_PROACTORMETRICS_UPDATE_READ_CALLBACK_TIME_END();
             }
-            if (entry->decrementProcessCounter() == 1 &&
+            if (entry->decrementProcessCounter() == 0 &&
                 entry->askForDetachmentAnnouncementPermission())
             {
                 entry->announceDetached(this->getSelf(this));

@@ -1997,7 +1997,7 @@ void EventPort::run(ntci::Waiter waiter)
                     }
                 }
 
-                    if (entry->decrementProcessCounter() == 1 &&
+                    if (entry->decrementProcessCounter() == 0 &&
                         entry->askForDetachmentAnnouncementPermission())
                     {
                         entry->announceDetached(this->getSelf(this));
@@ -2240,7 +2240,7 @@ void EventPort::poll(ntci::Waiter waiter)
                     }
                 }
             }
-            if (entry->decrementProcessCounter() == 1 &&
+            if (entry->decrementProcessCounter() == 0 &&
                 entry->askForDetachmentAnnouncementPermission())
             {
                 entry->announceDetached(this->getSelf(this));
