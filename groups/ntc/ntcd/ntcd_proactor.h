@@ -93,6 +93,8 @@ class Proactor : public ntci::Proactor,
     bsl::shared_ptr<ntci::DatagramSocketFactory> d_datagramSocketFactory_sp;
     bsl::shared_ptr<ntci::ListenerSocketFactory> d_listenerSocketFactory_sp;
     bsl::shared_ptr<ntci::StreamSocketFactory>   d_streamSocketFactory_sp;
+    bsl::shared_ptr<ntcs::RegistryEntryCatalog::EntryFunctor>
+                                                 d_detachFunctor_sp;
     bsl::shared_ptr<ntcs::RegistryEntryCatalog>  d_registry_sp;
     mutable bslmt::Mutex                         d_waiterSetMutex;
     WaiterSet                                    d_waiterSet;
@@ -131,6 +133,11 @@ class Proactor : public ntci::Proactor,
     /// Return true if the resulting number of handle reservations is
     /// permitted, and false otherwise.
     bool acquireHandleReservation() BSLS_KEYWORD_OVERRIDE;
+
+    /// Remove the specified 'entry' from the device and announce its
+    /// detachment if possible. Return the error.
+    ntsa::Error removeDetached(
+        const bsl::shared_ptr<ntcs::RegistryEntry>& entry);
 
     /// Decrement the current number of handle reservations.
     void releaseHandleReservation() BSLS_KEYWORD_OVERRIDE;

@@ -1011,6 +1011,16 @@ void Proactor::initialize()
                                       d_allocator_p),
         d_allocator_p);
 
+#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
+    d_detachFunctor_sp.createInplace(d_allocator_p, [this](const auto& entry) {
+        return this->removeDetached(entry);
+    });
+#else
+    d_detachFunctor_sp.createInplace(d_allocator_p,
+                                     NTCCFG_BIND(&Proactor::removeDetached,
+                                                 this,
+                                                 NTCCFG_BIND_PLACEHOLDER_1));
+#endif
     d_registry_sp.createInplace(d_allocator_p,
                                 trigger,
                                 oneShot,
@@ -1019,6 +1029,9 @@ void Proactor::initialize()
 
 void Proactor::flush()
 {
+    while (d_chronology_sp->hasAnyScheduledOrDeferred()) {
+        d_chronology_sp->announce();
+    }
 }
 
 bsl::shared_ptr<ntci::Proactor> Proactor::acquireProactor(
@@ -1087,6 +1100,7 @@ Proactor::Proactor(const ntca::ProactorConfig&        configuration,
 , d_datagramSocketFactory_sp()
 , d_listenerSocketFactory_sp()
 , d_streamSocketFactory_sp()
+, d_detachFunctor_sp()
 , d_registry_sp()
 , d_waiterSetMutex()
 , d_waiterSet(basicAllocator)
@@ -1119,6 +1133,7 @@ Proactor::Proactor(const ntca::ProactorConfig&           configuration,
 , d_datagramSocketFactory_sp()
 , d_listenerSocketFactory_sp()
 , d_streamSocketFactory_sp()
+, d_detachFunctor_sp()
 , d_registry_sp()
 , d_waiterSetMutex()
 , d_waiterSet(basicAllocator)
@@ -1502,8 +1517,56 @@ ntsa::Error Proactor::detachSocket(
 ntsa::Error Proactor::detachSocketAsync(
     const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 {
-    NTCCFG_WARNING_UNUSED(socket);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    ntsa::Error error;
+
+    ntsa::Handle handle = socket->handle();
+
+    {
+        bslmt::LockGuard<bslmt::Mutex> lock(&d_workMapMutex);
+
+        WorkMap::iterator it = d_workMap.find(handle);
+        if (it == d_workMap.end()) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        d_workMap.erase(it);
+    }
+
+    socket->setProactorContext(bsl::shared_ptr<void>());
+
+#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
+    ntci::SocketDetachedCallback detachCallback(
+        [socket]() {
+            socket->processSocketDetached();
+        },
+        socket->strand(),
+        d_allocator_p);
+#else
+    ntci::SocketDetachedCallback detachCallback(
+        NTCCFG_BIND(&ntci::ProactorSocket::processSocketDetached, socket),
+        socket->strand(),
+        d_allocator_p);
+#endif
+
+    d_registry_sp->removeAndGetReadyToDetach(handle,
+                                             detachCallback,
+                                             *d_detachFunctor_sp);
+
+    return ntsa::Error();
+}
+
+ntsa::Error Proactor::removeDetached(
+    const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
+{
+    d_monitor_sp->remove(entry->handle());
+    if ((entry->processCounter() == 0) &&
+        (entry->askForDetachmentAnnouncementPermission()))
+    {
+        entry->announceDetached(this->getSelf(this));
+        entry->clear();
+        Proactor::interruptOne();
+    }
+    return ntsa::Error();
 }
 
 ntsa::Error Proactor::closeAll()
@@ -1589,10 +1652,11 @@ void Proactor::poll(ntci::Waiter waiter)
     }
 
     if (numResults > 0) {
-        bsl::size_t numReadable = 0;
-        bsl::size_t numWritable = 0;
-        bsl::size_t numErrors   = 0;
-        bsl::size_t numTimers   = 0;
+        bsl::size_t numReadable    = 0;
+        bsl::size_t numWritable    = 0;
+        bsl::size_t numErrors      = 0;
+        bsl::size_t numTimers      = 0;
+        bsl::size_t numDetachments = 0;
 
         for (bsl::size_t i = 0; i < numResults; ++i) {
             const ntca::ReactorEvent& event = events[i];
@@ -1600,7 +1664,10 @@ void Proactor::poll(ntci::Waiter waiter)
             ntsa::Handle descriptorHandle = event.handle();
 
             bsl::shared_ptr<ntcs::RegistryEntry> entry;
-            if (!d_registry_sp->lookup(&entry, descriptorHandle)) {
+            if (!d_registry_sp->lookupAndMarkProcessingOngoing(
+                    &entry,
+                    descriptorHandle))
+            {
                 continue;
             }
 
@@ -1629,10 +1696,17 @@ void Proactor::poll(ntci::Waiter waiter)
                 }
                 NTCS_PROACTORMETRICS_UPDATE_READ_CALLBACK_TIME_END();
             }
+            if (entry->decrementProcessCounter() == 1 &&
+                entry->askForDetachmentAnnouncementPermission())
+            {
+                entry->announceDetached(this->getSelf(this));
+                entry->clear();
+                ++numDetachments;
+            }
         }
 
         const bsl::size_t numTotal =
-            numReadable + numWritable + numErrors + numTimers;
+            numReadable + numWritable + numErrors + numTimers + numDetachments;
 
         if (NTCCFG_UNLIKELY(numTotal == 0)) {
             NTCS_PROACTORMETRICS_UPDATE_SPURIOUS_WAKEUP();
