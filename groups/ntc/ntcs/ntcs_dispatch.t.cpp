@@ -92,6 +92,31 @@ class StrandMock : public ntci::Strand
     ntci::Executor::Functor d_functor;
 };
 
+class ProactorSocketMock : public ntci::ProactorSocket
+{
+  public:
+    /// Construct the object using the specified 'handle'
+    ProactorSocketMock(const ntsa::Handle handle);
+
+    /// Destroy this object.
+    ~ProactorSocketMock();
+
+    /// Return the handle.
+    ntsa::Handle handle() const BSLS_KEYWORD_OVERRIDE;
+
+    /// Process the completion of socket detachment
+    void processSocketDetached() BSLS_KEYWORD_OVERRIDE;
+
+    /// Close the stream socket.
+    void close() BSLS_KEYWORD_OVERRIDE;
+
+    void setProcessSocketDetachedExpected();
+
+  private:
+    const ntsa::Handle d_handle;
+    bool               d_processSocketDetachedExpected;
+};
+
 ReactorSocketMock::ReactorSocketMock(ntsa::Handle handle)
 : d_handle(handle)
 {
@@ -170,6 +195,37 @@ void StrandMock::checkAndExecuteFunctor()
     d_functor = ntci::Executor::Functor();
 }
 
+ProactorSocketMock::ProactorSocketMock(const ntsa::Handle handle)
+: d_handle(handle)
+, d_processSocketDetachedExpected(false)
+{
+}
+
+ProactorSocketMock::~ProactorSocketMock() BSLS_KEYWORD_NOEXCEPT
+{
+}
+
+ntsa::Handle ProactorSocketMock::handle() const
+{
+    return d_handle;
+}
+
+void ProactorSocketMock::processSocketDetached()
+{
+    NTCCFG_TEST_ASSERT(d_processSocketDetachedExpected && "unexpected call");
+    d_processSocketDetachedExpected = false;
+}
+
+void ProactorSocketMock::close()
+{
+    NTCCFG_TEST_ASSERT(false && "unexpected call");
+}
+
+void ProactorSocketMock::setProcessSocketDetachedExpected()
+{
+    d_processSocketDetachedExpected = true;
+}
+
 }
 
 NTCCFG_TEST_CASE(1)
@@ -222,9 +278,50 @@ NTCCFG_TEST_CASE(2)
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
+NTCCFG_TEST_CASE(3)
+{
+    // Concern: test announceDetached directly
+
+    const ntsa::Handle    h = 22;
+    ntccfg::TestAllocator ta;
+    {
+        bsl::shared_ptr<Test::ProactorSocketMock> socket;
+        socket.createInplace(&ta, h);
+
+        bsl::shared_ptr<Test::StrandMock> strand;
+
+        socket->setProcessSocketDetachedExpected();
+        ntcs::Dispatch::announceDetached(socket, strand);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(4)
+{
+    // Concern: test announceDetached via strand
+
+    const ntsa::Handle    h = 22;
+    ntccfg::TestAllocator ta;
+    {
+        bsl::shared_ptr<Test::ProactorSocketMock> socket;
+        socket.createInplace(&ta, h);
+
+        bsl::shared_ptr<Test::StrandMock> strand;
+        strand.createInplace(&ta);
+
+        ntcs::Dispatch::announceDetached(socket, strand);
+
+        socket->setProcessSocketDetachedExpected();
+        strand->checkAndExecuteFunctor();
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
 NTCCFG_TEST_DRIVER
 {
     NTCCFG_TEST_REGISTER(1);
     NTCCFG_TEST_REGISTER(2);
+    NTCCFG_TEST_REGISTER(3);
+    NTCCFG_TEST_REGISTER(4);
 }
 NTCCFG_TEST_DRIVER_END;
