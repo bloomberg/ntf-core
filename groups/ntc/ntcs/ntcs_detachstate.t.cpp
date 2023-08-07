@@ -17,15 +17,26 @@
 
 #include <ntccfg_test.h>
 
-
 using namespace BloombergLP;
 
 NTCCFG_TEST_CASE(1)
 {
+    ntcs::DetachState state;
+    NTCCFG_TEST_EQ(state.get(), ntcs::DetachState::e_DETACH_IDLE);
+
+    state.set(ntcs::DetachState::e_DETACH_INITIATED);
+    NTCCFG_TEST_EQ(state.get(), ntcs::DetachState::e_DETACH_INITIATED);
+}
+
+NTCCFG_TEST_CASE(2)
+{
+    ntcs::DetachState state(ntcs::DetachState::e_DETACH_INITIATED);
+    NTCCFG_TEST_EQ(state.get(), ntcs::DetachState::e_DETACH_INITIATED);
 }
 
 NTCCFG_TEST_DRIVER
 {
     NTCCFG_TEST_REGISTER(1);
+    NTCCFG_TEST_REGISTER(2);
 }
 NTCCFG_TEST_DRIVER_END;
