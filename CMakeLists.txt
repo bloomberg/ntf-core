@@ -36,6 +36,21 @@ if (NOT "${bde_workspace_path}" STREQUAL "NOTFOUND")
     return()
 endif()
 
+if (BBS_BUILD_SYSTEM)
+    find_package(BDE_BUILD_SYSTEM NAMES BdeBuildSystem)
+
+    if (${BDE_BUILD_SYSTEM_FOUND})
+        message(STATUS "Processing BBS workspace")
+
+        include(${CMAKE_CURRENT_LIST_DIR}/variables.cmake)
+        enable_testing()
+
+        add_subdirectory(groups)
+        return()
+    endif()
+
+endif()
+
 message(STATUS "Processing NTF workspace")
 
 include(${CMAKE_CURRENT_LIST_DIR}/repository.cmake)
