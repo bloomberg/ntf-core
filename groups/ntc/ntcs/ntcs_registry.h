@@ -73,9 +73,7 @@ class RegistryEntry
     bsls::AtomicUint                     d_processCounter;
     bsls::AtomicBool                     d_detachRequired;
     ntci::SocketDetachedCallback         d_detachCallback;
-
-  private:
-    bslma::Allocator* d_allocator_p;
+    bslma::Allocator*                    d_allocator_p;
 
   private:
     RegistryEntry(const RegistryEntry&) BSLS_KEYWORD_DELETED;

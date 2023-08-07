@@ -17,7 +17,8 @@
 
 #include <ntccfg_test.h>
 #include <bdlb_random.h>
-#include <bslma_testallocator.h>
+#include <bslmt_latch.h>
+#include <bsl_thread.h>
 
 using namespace BloombergLP;
 
@@ -70,6 +71,29 @@ struct NotificationCallbackMock {
     void validateNotifications(const ntsa::NotificationQueue& notifications);
 
     bdlb::NullableValue<ntsa::NotificationQueue> d_notifications;
+};
+
+/// This class mocks ntci::Executor interface
+struct ExecutorMock : public ntci::Executor {
+    /// Construct the object
+    ExecutorMock();
+
+    /// Destroy this object.
+    ~ExecutorMock();
+
+    /// Defer the execution of the specified 'functor'.
+    void execute(const Functor& functor) BSLS_KEYWORD_OVERRIDE;
+
+    /// Atomically defer the execution of the specified 'functorSequence'
+    /// immediately followed by the specified 'functor', then clear the
+    /// 'functorSequence'.
+    void moveAndExecute(FunctorSequence* functorSequence,
+                        const Functor&   functor) BSLS_KEYWORD_OVERRIDE;
+
+    void setExecuteExpected();
+
+  private:
+    bool d_executeExpected;
 };
 
 /// Generator of randomly filled NotificationQueues.
@@ -145,6 +169,33 @@ ntsa::NotificationQueue RandomNotificationsGenerator::generate()
         queue.addNotification(n);
     }
     return queue;
+}
+
+ExecutorMock::ExecutorMock()
+: d_executeExpected(false)
+{
+}
+
+ExecutorMock::~ExecutorMock() BSLS_KEYWORD_NOEXCEPT
+{
+}
+
+void ExecutorMock::execute(const BloombergLP::ntci::Executor::Functor& functor)
+{
+    NTCCFG_TEST_ASSERT(d_executeExpected && "not expected to be called");
+    d_executeExpected = false;
+}
+
+void ExecutorMock::moveAndExecute(
+    BloombergLP::ntci::Executor::FunctorSequence* functorSequence,
+    const BloombergLP::ntci::Executor::Functor&   functor)
+{
+    NTCCFG_TEST_ASSERT(false && "not expected to be called");
+}
+
+void ExecutorMock::setExecuteExpected()
+{
+    d_executeExpected = true;
 }
 
 }
@@ -284,11 +335,149 @@ NTCCFG_TEST_CASE(4)
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
+NTCCFG_TEST_CASE(5)
+{
+    const ntsa::Handle handle = 22;
+
+    ntccfg::TestAllocator ta;
+    {
+        ntcs::RegistryEntry entry(handle,
+                                  ntca::ReactorEventTrigger::e_LEVEL,
+                                  false,
+                                  &ta);
+        NTCCFG_TEST_EQ(entry.processCounter(), 0);
+
+        entry.addOngoingProcess();
+        NTCCFG_TEST_EQ(entry.processCounter(), 1);
+        entry.addOngoingProcess();
+        NTCCFG_TEST_EQ(entry.processCounter(), 2);
+
+        NTCCFG_TEST_EQ(entry.decrementProcessCounter(), 1);
+        NTCCFG_TEST_EQ(entry.processCounter(), 1);
+
+        NTCCFG_TEST_EQ(entry.decrementProcessCounter(), 0);
+        NTCCFG_TEST_EQ(entry.processCounter(), 0);
+
+        const int startingCounter = 1000;
+        for (int i = 0; i < startingCounter; i++) {
+            entry.addOngoingProcess();
+        }
+        NTCCFG_TEST_EQ(entry.processCounter(), startingCounter);
+
+        bslmt::Latch latch(3);
+
+        const int   finalCounter = startingCounter + 200;
+        bsl::thread inc([&]() {
+            latch.arrive();
+            for (int i = 0; i < finalCounter; ++i) {
+                entry.addOngoingProcess();
+            }
+        });
+        bsl::thread dec1([&]() {
+            latch.arrive();
+            for (int i = 0; i < startingCounter / 2; ++i) {
+                entry.decrementProcessCounter();
+            }
+        });
+        bsl::thread dec2([&]() {
+            latch.arrive();
+            for (int i = 0; i < startingCounter / 2; ++i) {
+                entry.decrementProcessCounter();
+            }
+        });
+        inc.join();
+        dec1.join();
+        dec2.join();
+        NTCCFG_TEST_EQ(entry.processCounter(), finalCounter);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(6)
+{
+    const ntsa::Handle handle = 22;
+
+    ntccfg::TestAllocator ta;
+    {
+        for (int i = 0; i < 100; ++i) {
+            ntcs::RegistryEntry entry(handle,
+                                      ntca::ReactorEventTrigger::e_LEVEL,
+                                      false,
+                                      &ta);
+
+            const ntci::SocketDetachedCallback callback;
+
+            entry.setDetachmentRequired(callback);
+
+            int detachPermitted = 0;
+
+            bslmt::Latch latch(3);
+            bsl::thread  t1([&]() {
+                latch.arrive();
+                if (entry.askForDetachmentAnnouncementPermission()) {
+                    ++detachPermitted;
+                }
+            });
+            bsl::thread  t2([&]() {
+                latch.arrive();
+                if (entry.askForDetachmentAnnouncementPermission()) {
+                    ++detachPermitted;
+                }
+            });
+            bsl::thread  t3([&]() {
+                latch.arrive();
+                if (entry.askForDetachmentAnnouncementPermission()) {
+                    ++detachPermitted;
+                }
+            });
+            t1.join();
+            t2.join();
+            t3.join();
+            NTCCFG_TEST_EQ(detachPermitted, 1);
+        }
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(7)
+{
+    const ntsa::Handle handle = 22;
+
+    ntccfg::TestAllocator ta;
+    {
+        ntcs::RegistryEntry entry(handle,
+                                  ntca::ReactorEventTrigger::e_LEVEL,
+                                  false,
+                                  &ta);
+
+        bsl::shared_ptr<Test::ExecutorMock> executor =
+            bsl::make_shared<Test::ExecutorMock>();
+
+        const ntci::SocketDetachedCallback callback([]() {}, &ta);
+
+        entry.setDetachmentRequired(callback);
+        NTCCFG_TEST_TRUE(entry.askForDetachmentAnnouncementPermission());
+        executor->setExecuteExpected();
+        entry.announceDetached(executor);
+        entry.announceDetached(executor);
+
+        entry.clear();
+        entry.setDetachmentRequired(callback);
+        NTCCFG_TEST_TRUE(entry.askForDetachmentAnnouncementPermission());
+        executor->setExecuteExpected();
+        entry.announceDetached(executor);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
 NTCCFG_TEST_DRIVER
 {
     NTCCFG_TEST_REGISTER(1);
     NTCCFG_TEST_REGISTER(2);
     NTCCFG_TEST_REGISTER(3);
     NTCCFG_TEST_REGISTER(4);
+    NTCCFG_TEST_REGISTER(5);
+    NTCCFG_TEST_REGISTER(6);
+    NTCCFG_TEST_REGISTER(7);
 }
 NTCCFG_TEST_DRIVER_END;
