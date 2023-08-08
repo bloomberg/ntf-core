@@ -57,6 +57,13 @@ namespace test {
 
 namespace case1 {
 
+// Ensure that flag is false and then set it to true
+void processSocketDetached(bool& flag)
+{
+    BSLS_ASSERT_OPT(flag == false);
+    flag = true;
+}
+
 ntsa::Error processDescriptorEvent(bslmt::Latch*             latch,
                                    const ntca::ReactorEvent& event)
 {
@@ -650,17 +657,36 @@ void execute(bool autoManage, bslma::Allocator* allocator)
 #endif
 
     if (!autoManage) {
+        bool serverDetached   = false;
+        bool clientDetached   = false;
+        bool listenerDetached = false;
+
+        const ntci::SocketDetachedCallback serverDetachCb(
+            NTCCFG_BIND(processSocketDetached, bsl::ref<bool>(serverDetached)),
+            allocator);
+        const ntci::SocketDetachedCallback clientDetachCb(
+            NTCCFG_BIND(processSocketDetached, bsl::ref<bool>(clientDetached)),
+            allocator);
+        const ntci::SocketDetachedCallback listenerDetachCb(
+            NTCCFG_BIND(processSocketDetached,
+                        bsl::ref<bool>(listenerDetached)),
+            allocator);
+
         // Detach the server from the reactor.
 
-        reactor->detachSocket(server->handle());
+        reactor->detachSocket(server->handle(), serverDetachCb);
 
         // Detach the client from the reactor.
 
-        reactor->detachSocket(client->handle());
+        reactor->detachSocket(client->handle(), clientDetachCb);
 
         // Detach the listener from the reactor.
 
-        reactor->detachSocket(listener->handle());
+        reactor->detachSocket(listener->handle(), listenerDetachCb);
+
+        while (!serverDetached || !clientDetached || !listenerDetached) {
+            reactor->poll(waiter);
+        }
     }
 
     NTCCFG_TEST_EQ(reactor->numSockets(), 0);
