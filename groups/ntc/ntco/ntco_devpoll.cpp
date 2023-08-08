@@ -2407,7 +2407,7 @@ void Devpoll::poll(ntci::Waiter waiter)
             BSLS_ASSERT(e.fd >= 0);
             BSLS_ASSERT(e.revents != 0);
 
-            if (NTCCFG_UNLIKELY(e.fd != d_controllerDescriptorHandle)) {
+            if (NTCCFG_UNLIKELY(e.fd == d_controllerDescriptorHandle)) {
                 continue;
             }
 
