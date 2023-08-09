@@ -2567,22 +2567,7 @@ ntsa::Error Iocp::cancel(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 ntsa::Error Iocp::detachSocket(
     const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 {
-    if (socket->handle() == ntsa::k_INVALID_HANDLE) {
-        return ntsa::Error();
-    }
-
-    {
-        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_proactorSocketMapMutex);
-
-        bsl::size_t n = d_proactorSocketMap.erase(socket->handle());
-        if (n == 0) {
-            return ntsa::Error();
-        }
-    }
-
-    socket->setProactorContext(bsl::shared_ptr<void>());
-
-    return ntsa::Error();
+    return detachSocketAsync(socket);
 }
 
 ntsa::Error Iocp::detachSocketAsync(

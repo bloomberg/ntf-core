@@ -1891,23 +1891,7 @@ ntsa::Error Kqueue::hideError(ntsa::Handle handle)
 ntsa::Error Kqueue::detachSocket(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket)
 {
-    ntsa::Error error;
-
-    bsl::shared_ptr<ntcs::RegistryEntry> entry = d_registry.remove(socket);
-
-    if (NTCCFG_LIKELY(entry)) {
-        error = this->remove(entry->handle());
-        if (error) {
-            return error;
-        }
-        if (NTCRO_KQUEUE_INTERRUPT_ALL) {
-            Kqueue::interruptAll();
-        }
-        return ntsa::Error();
-    }
-    else {
-        return ntsa::Error();
-    }
+    return detachSocket(socket, ntci::SocketDetachedCallback());
 }
 
 ntsa::Error Kqueue::detachSocket(
@@ -1925,25 +1909,7 @@ ntsa::Error Kqueue::detachSocket(
 
 ntsa::Error Kqueue::detachSocket(ntsa::Handle handle)
 {
-    ntsa::Error error;
-
-    bsl::shared_ptr<ntcs::RegistryEntry> entry = d_registry.remove(handle);
-
-    if (NTCCFG_LIKELY(entry)) {
-        error = this->remove(handle);
-        if (error) {
-            return error;
-        }
-
-        if (NTCRO_KQUEUE_INTERRUPT_ALL) {
-            Kqueue::interruptAll();
-        }
-
-        return ntsa::Error();
-    }
-    else {
-        return ntsa::Error();
-    }
+    return detachSocket(handle, ntci::SocketDetachedCallback());
 }
 
 ntsa::Error Kqueue::detachSocket(ntsa::Handle                        handle,

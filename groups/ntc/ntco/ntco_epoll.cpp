@@ -2103,23 +2103,7 @@ ntsa::Error Epoll::detachSocket(
 ntsa::Error Epoll::detachSocket(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket)
 {
-    ntsa::Error error;
-
-    bsl::shared_ptr<ntcs::RegistryEntry> entry = d_registry.remove(socket);
-
-    if (NTCCFG_LIKELY(entry)) {
-        error = this->remove(entry->handle());
-        if (error) {
-            return error;
-        }
-        if (NTCRO_EPOLL_INTERRUPT_ALL) {
-            Epoll::interruptAll();
-        }
-        return ntsa::Error();
-    }
-    else {
-        return ntsa::Error();
-    }
+    return detachSocket(socket, ntci::SocketDetachedCallback());
 }
 
 ntsa::Error Epoll::detachSocket(ntsa::Handle                        handle,
@@ -2136,25 +2120,7 @@ ntsa::Error Epoll::detachSocket(ntsa::Handle                        handle,
 
 ntsa::Error Epoll::detachSocket(ntsa::Handle handle)
 {
-    ntsa::Error error;
-
-    bsl::shared_ptr<ntcs::RegistryEntry> entry = d_registry.remove(handle);
-
-    if (NTCCFG_LIKELY(entry)) {
-        error = this->remove(handle);
-        if (error) {
-            return error;
-        }
-
-        if (NTCRO_EPOLL_INTERRUPT_ALL) {
-            Epoll::interruptAll();
-        }
-
-        return ntsa::Error();
-    }
-    else {
-        return ntsa::Error();
-    }
+    return detachSocket(handle, ntci::SocketDetachedCallback());
 }
 
 ntsa::Error Epoll::closeAll()
