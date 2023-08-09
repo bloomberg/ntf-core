@@ -98,8 +98,8 @@ class ProactorSocketMock : public ntci::ProactorSocket
     /// Construct the object using the specified 'handle'
     ProactorSocketMock(const ntsa::Handle handle);
 
-    /// Destroy this object.
-    ~ProactorSocketMock();
+    /// Destroy this object.q
+    ~ProactorSocketMock() BSLS_KEYWORD_NOEXCEPT;
 
     /// Return the handle.
     ntsa::Handle handle() const BSLS_KEYWORD_OVERRIDE;
