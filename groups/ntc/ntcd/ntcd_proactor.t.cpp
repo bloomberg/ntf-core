@@ -112,6 +112,7 @@ class ProactorStreamSocket : public ntci::ProactorSocket,
     bslmt::Semaphore                    d_errorSemaphore;
     bool                                d_abortOnErrorFlag;
     ntsa::Error                         d_lastError;
+    bslmt::Semaphore                    d_detachSemaphore;
     bslma::Allocator*                   d_allocator_p;
 
   private:
@@ -145,6 +146,9 @@ class ProactorStreamSocket : public ntci::ProactorSocket,
 
     /// Process the specified 'error' that has occurred on the socket.
     void processSocketError(const ntsa::Error& error) BSLS_KEYWORD_OVERRIDE;
+
+    /// Process the completion of socket detachment
+    void processSocketDetached() BSLS_KEYWORD_OVERRIDE;
 
     /// Close the socket.
     void close() BSLS_KEYWORD_OVERRIDE;
@@ -281,6 +285,10 @@ class ProactorStreamSocket : public ntci::ProactorSocket,
     /// Poll for the socket to be shutdown. Return true if the socket has
     /// been shutdown, and false otherwise.
     bool pollForShutdown();
+
+    /// Poll for the socket is detached. Return true if the socket has been
+    /// detached, and false otherwise.
+    bool pollForDetachment();
 
     /// Return the source endpoint.
     ntsa::Endpoint sourceEndpoint() const;
@@ -503,6 +511,11 @@ void ProactorStreamSocket::processSocketError(const ntsa::Error& error)
     }
 }
 
+void ProactorStreamSocket::processSocketDetached()
+{
+    d_detachSemaphore.post();
+}
+
 void ProactorStreamSocket::close()
 {
     d_streamSocket_sp->close();
@@ -563,6 +576,7 @@ ProactorStreamSocket::ProactorStreamSocket(
 , d_errorSemaphore()
 , d_abortOnErrorFlag(false)
 , d_lastError()
+, d_detachSemaphore()
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     ntsa::Error error;
@@ -622,6 +636,7 @@ ProactorStreamSocket::ProactorStreamSocket(
 , d_errorSemaphore()
 , d_abortOnErrorFlag(false)
 , d_lastError()
+, d_detachSemaphore()
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     ntsa::Error error;
@@ -818,6 +833,11 @@ bool ProactorStreamSocket::pollForError()
     return d_errorSemaphore.tryWait() == 0;
 }
 
+bool ProactorStreamSocket::pollForDetachment()
+{
+    return d_detachSemaphore.tryWait() == 0;
+}
+
 ntsa::Endpoint ProactorStreamSocket::sourceEndpoint() const
 {
     return d_sourceEndpoint;
@@ -867,6 +887,7 @@ class ProactorListenerSocket : public ntci::ProactorSocket,
     bslmt::Semaphore                      d_errorSemaphore;
     bool                                  d_abortOnErrorFlag;
     ntsa::Error                           d_lastError;
+    bslmt::Semaphore                      d_detachmentSemaphore;
     bslma::Allocator*                     d_allocator_p;
 
   private:
@@ -900,6 +921,9 @@ class ProactorListenerSocket : public ntci::ProactorSocket,
 
     /// Process the specified 'error' that has occurred on the socket.
     void processSocketError(const ntsa::Error& error) BSLS_KEYWORD_OVERRIDE;
+
+    /// Process the completion of socket detachment
+    void processSocketDetached() BSLS_KEYWORD_OVERRIDE;
 
     /// Close the socket.
     void close() BSLS_KEYWORD_OVERRIDE;
@@ -983,6 +1007,10 @@ class ProactorListenerSocket : public ntci::ProactorSocket,
     /// Poll for the socket has encountered an error. Return true
     /// if the socket has encountered an error, and false otherwise.
     bool pollForError();
+
+    /// Poll for the socket is detached. Return true if the socket has been
+    /// detached, and false otherwise.
+    bool pollForDetachment();
 
     /// Return the source endpoint.
     ntsa::Endpoint sourceEndpoint() const;
@@ -1099,6 +1127,11 @@ void ProactorListenerSocket::processSocketError(const ntsa::Error& error)
     }
 }
 
+void ProactorListenerSocket::processSocketDetached()
+{
+    d_detachmentSemaphore.post();
+}
+
 void ProactorListenerSocket::close()
 {
     d_listenerSocket_sp->close();
@@ -1151,6 +1184,7 @@ ProactorListenerSocket::ProactorListenerSocket(
 , d_errorSemaphore()
 , d_abortOnErrorFlag(false)
 , d_lastError()
+, d_detachmentSemaphore()
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     ntsa::Error error;
@@ -1281,6 +1315,11 @@ bool ProactorListenerSocket::pollForAccepted()
 bool ProactorListenerSocket::pollForError()
 {
     return d_errorSemaphore.tryWait() == 0;
+}
+
+bool ProactorListenerSocket::pollForDetachment()
+{
+    return d_detachmentSemaphore.tryWait() == 0;
 }
 
 ntsa::Endpoint ProactorListenerSocket::sourceEndpoint() const
@@ -1621,18 +1660,24 @@ NTCCFG_TEST_CASE(1)
 
         // Detach the server from the proactor.
 
-        error = proactor->detachSocket(server);
+        error = proactor->detachSocketAsync(server);
         NTCCFG_TEST_OK(error);
 
         // Detach the client from the proactor.
 
-        error = proactor->detachSocket(client);
+        error = proactor->detachSocketAsync(client);
         NTCCFG_TEST_OK(error);
 
         // Detach the listener from the proactor.
 
-        proactor->detachSocket(listener);
+        proactor->detachSocketAsync(listener);
         NTCCFG_TEST_OK(error);
+
+        while (!server->pollForDetachment() || !client->pollForDetachment() ||
+               !listener->pollForDetachment())
+        {
+            proactor->poll(waiter);
+        }
 
         // Deregister the waiter.
 

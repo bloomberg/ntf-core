@@ -288,8 +288,8 @@ class ProactorStreamSocket : public ntci::ProactorSocket,
     // been shutdown, and false otherwise.
 
     bool pollForDetachment();
-    // Poll for the socket is detached. Return
-    // true if the socket has been detached, and false otherwise.
+    // Poll for the socket is detached. Return true if the socket has been
+    // detached, and false otherwise.
 
     ntsa::Endpoint sourceEndpoint() const;
     // Return the source endpoint.
@@ -919,7 +919,7 @@ class ProactorListenerSocket : public ntci::ProactorSocket,
     // Process the specified 'error' that has occurred on the socket.
 
     void processSocketDetached() BSLS_KEYWORD_OVERRIDE;
-    // // Process the completion of socket detachment
+    // Process the completion of socket detachment
 
     void close() BSLS_KEYWORD_OVERRIDE;
     // Close the socket.
@@ -1005,8 +1005,8 @@ class ProactorListenerSocket : public ntci::ProactorSocket,
     // if the socket has encountered an error, and false otherwise.
 
     bool pollForDetachment();
-    // Poll for the socket is detached. Return
-    // true if the socket has been detached, and false otherwise.
+    // Poll for the socket is detached. Return true if the socket has been
+    // detached, and false otherwise.
 
     ntsa::Endpoint sourceEndpoint() const;
     // Return the source endpoint.
