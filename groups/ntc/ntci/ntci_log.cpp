@@ -3353,7 +3353,7 @@ bsl::size_t LogUtil::formatContext(char*                   destination,
 
     osb.pubsync();
 
-    bsl::size_t n = osb.length();
+    bsl::size_t n = static_cast<bsl::size_t>(osb.length());
 
     if (n == destinationCapacity) {
         --n;
