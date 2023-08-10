@@ -43,6 +43,7 @@ BSLS_IDENT("$Id: $")
 #include <bdlbb_blob.h>
 #include <bdls_filesystemutil.h>
 #include <bslmt_threadutil.h>
+#include <bsls_deprecatefeature.h>
 #include <bsl_functional.h>
 #include <bsl_list.h>
 #include <bsl_memory.h>
@@ -518,6 +519,9 @@ class Reactor : public ntci::Driver, public ntci::ReactorPool
     virtual ntsa::Error hideError(ntsa::Handle handle) = 0;
 
     /// Stop monitoring the specified 'socket'. Return the error.
+    BSLS_DEPRECATE_FEATURE("ntci",
+                           "socket-detachment",
+                           "use callback version instead")
     virtual ntsa::Error detachSocket(
         const bsl::shared_ptr<ntci::ReactorSocket>& socket) = 0;
 
@@ -525,9 +529,12 @@ class Reactor : public ntci::Driver, public ntci::ReactorPool
     /// when the socket is detached. Return the error.
     virtual ntsa::Error detachSocket(
         const bsl::shared_ptr<ntci::ReactorSocket>& socket,
-        const ntci::SocketDetachedCallback& callback);
+        const ntci::SocketDetachedCallback&         callback);
 
     /// Stop monitoring the specified socket 'handle'. Return the error.
+    BSLS_DEPRECATE_FEATURE("ntci",
+                           "socket-detachment",
+                           "use callback version instead")
     virtual ntsa::Error detachSocket(ntsa::Handle handle) = 0;
 
     /// Stop monitoring the specified socket 'handle'. Invoke the specified
