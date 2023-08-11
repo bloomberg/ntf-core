@@ -275,10 +275,13 @@ void DatagramSocket::processSocketError(const ntsa::Error& error)
 
 void DatagramSocket::processSocketDetached()
 {
+    NTCCFG_OBJECT_GUARD(&d_object);
+
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
-//    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-//    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
 
     BSLS_ASSERT(d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED);
     d_detachState.set(ntcs::DetachState::e_DETACH_IDLE);

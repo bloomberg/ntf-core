@@ -532,22 +532,22 @@ class Iocp : public ntci::Proactor,
 
     bsl::shared_ptr<ntsa::Data> createIncomingData() BSLS_KEYWORD_OVERRIDE;
     // Return a shared pointer to a data container suitable for storing
-    // incoming data. The resulting data container is is automatically
+    // incoming data. The resulting data container is automatically
     // returned to this pool when its reference count reaches zero.
 
     bsl::shared_ptr<ntsa::Data> createOutgoingData() BSLS_KEYWORD_OVERRIDE;
     // Return a shared pointer to a data container suitable for storing
-    // outgoing data. The resulting data container is is automatically
+    // outgoing data. The resulting data container is automatically
     // returned to this pool when its reference count reaches zero.
 
     bsl::shared_ptr<bdlbb::Blob> createIncomingBlob() BSLS_KEYWORD_OVERRIDE;
     // Return a shared pointer to a blob suitable for storing incoming
-    // data. The resulting blob is is automatically returned to this pool
+    // data. The resulting blob is automatically returned to this pool
     // when its reference count reaches zero.
 
     bsl::shared_ptr<bdlbb::Blob> createOutgoingBlob() BSLS_KEYWORD_OVERRIDE;
     // Return a shared pointer to a blob suitable for storing incoming
-    // data. The resulting blob is is automatically returned to this pool
+    // data. The resulting blob is automatically returned to this pool
     // when its reference count reaches zero.
 
     void createIncomingBlobBuffer(bdlbb::BlobBuffer* blobBuffer)
