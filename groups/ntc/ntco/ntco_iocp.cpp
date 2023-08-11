@@ -773,7 +773,6 @@ Iocp::DetachGuardWaiter::~DetachGuardWaiter()
         context->trySetDetachScheduled())
     {
         d_socket_sp->setProactorContext(bsl::shared_ptr<void>());
-        d_iocp.d_socketContextPool.deallocate(context);
 
         d_iocp.execute(NTCCFG_BIND(&ntcs::Dispatch::announceDetached,
                                    d_socket_sp,
@@ -836,7 +835,6 @@ Iocp::DetachGuard::~DetachGuard()
         context->trySetDetachScheduled())
     {
         d_socket_sp->setProactorContext(bsl::shared_ptr<void>());
-        d_iocp.d_socketContextPool.deallocate(context);
 
         d_iocp.execute(NTCCFG_BIND(&ntcs::Dispatch::announceDetached,
                                    d_socket_sp,
@@ -1544,12 +1542,8 @@ ntsa::Error Iocp::attachSocket(
         }
     }
 
-    void* contextMem = d_socketContextPool.allocate();
-    new (contextMem) SocketContext();
-
-    bsl::shared_ptr<void> proactorContext(contextMem,
-                                          bslstl::SharedPtrNilDeleter(),
-                                          0);
+    bsl::shared_ptr<SocketContext> proactorContext;
+    proactorContext.createInplace(d_allocator_p);
 
     BSLS_ASSERT(!socket->getProactorContext());
     socket->setProactorContext(proactorContext);
@@ -2694,7 +2688,6 @@ ntsa::Error Iocp::detachSocketAsync(
         if (context->processCounter() == 0 && context->trySetDetachScheduled())
         {
             socket->setProactorContext(bsl::shared_ptr<void>());
-            d_socketContextPool.deallocate(context);
 
             this->execute(NTCCFG_BIND(&ntcs::Dispatch::announceDetached,
                                       socket,
