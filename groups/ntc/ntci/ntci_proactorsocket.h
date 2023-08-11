@@ -19,8 +19,6 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <bsls_atomic.h>
-
 #include <ntccfg_platform.h>
 #include <ntci_strand.h>
 #include <ntcscm_version.h>
@@ -44,15 +42,6 @@ namespace ntci {
 class ProactorSocketBase
 {
     bsl::shared_ptr<void> d_proactorContext;
-    bsls::AtomicUint      d_processCounter;
-    bsls::AtomicUint      d_detachState;
-
-  public:
-    enum DetachState {
-        e_DETACH_NOT_REQUIRED = 0,
-        e_DETACH_REQUIRED     = 1,
-        e_DETACH_SCHEDULED    = 2
-    };
 
   private:
     ProactorSocketBase(const ProactorSocketBase&) BSLS_KEYWORD_DELETED;
@@ -71,32 +60,6 @@ class ProactorSocketBase
 
     /// Return the context of the proactor socket within its proactor.
     const bsl::shared_ptr<void>& getProactorContext() const;
-
-    /// Return current number of threads actively working with the socket
-    unsigned int processCounter() const;
-
-    /// Atomically increment number of threads actively working with the socket
-    /// and return resulting value
-    unsigned int incrementProcessCounter();
-
-    /// Atomically increment number of threads actively working with the socket
-    /// and return resulting value
-    unsigned int decrementProcessCounter();
-
-    /// Return true if detachment is not required for the socket.
-    bool noDetach() const;
-
-    /// Atomically try to transit detachment state to e_DETACH_SCHEDULED.
-    /// Return true in case of success and false otherwise.
-    bool trySetDetachScheduled();
-
-    /// Atomically try to transit detachment state to e_DETACH_REQUIRED.
-    /// Return true in case of success and false otherwise.
-    bool trySetDetachRequired();
-
-    /// Atomically try to transit detachment state to e_DETACH_NOT_REQUIRED.
-    /// Return true in case of success and false otherwise.
-    bool trySetDetachNotRequired();
 };
 
 /// Provide an interface to handle the completion of operations initiated
@@ -163,8 +126,6 @@ class ProactorSocket : public ntci::ProactorSocketBase, public ntsi::Descriptor
 NTCCFG_INLINE
 ProactorSocketBase::ProactorSocketBase()
 : d_proactorContext()
-, d_processCounter()
-, d_detachState(e_DETACH_NOT_REQUIRED)
 {
 }
 
@@ -184,64 +145,6 @@ NTCCFG_INLINE
 const bsl::shared_ptr<void>& ProactorSocketBase::getProactorContext() const
 {
     return d_proactorContext;
-}
-
-NTCCFG_INLINE
-unsigned int ProactorSocketBase::processCounter() const
-{
-    return d_processCounter.load();
-}
-
-NTCCFG_INLINE
-unsigned int ProactorSocketBase::incrementProcessCounter()
-{
-    return ++d_processCounter;
-}
-
-NTCCFG_INLINE
-unsigned int ProactorSocketBase::decrementProcessCounter()
-{
-    //TODO: can I just do return --d_processCounter and return the resulting value?
-    //    unsigned int current = d_processCounter.load();
-    //    while (true) {
-    //        unsigned int prev = d_processCounter.testAndSwap(current, current - 1);
-    //        if (prev == current) {
-    //            break;
-    //        }
-    //        current = prev;
-    //    }
-    //    return current;
-    return --d_processCounter;
-}
-
-NTCCFG_INLINE
-bool ProactorSocketBase::noDetach() const
-{
-    return d_detachState.load() == e_DETACH_NOT_REQUIRED;
-}
-
-NTCCFG_INLINE
-bool ProactorSocketBase::trySetDetachScheduled()
-{
-    unsigned int val =
-        d_detachState.testAndSwap(e_DETACH_REQUIRED, e_DETACH_SCHEDULED);
-    return val == e_DETACH_REQUIRED;
-}
-
-NTCCFG_INLINE
-bool ProactorSocketBase::trySetDetachRequired()
-{
-    unsigned int val =
-        d_detachState.testAndSwap(e_DETACH_NOT_REQUIRED, e_DETACH_REQUIRED);
-    return val == e_DETACH_NOT_REQUIRED;
-}
-
-NTCCFG_INLINE
-bool ProactorSocketBase::trySetDetachNotRequired()
-{
-    unsigned int val =
-        d_detachState.testAndSwap(e_DETACH_SCHEDULED, e_DETACH_NOT_REQUIRED);
-    return (val == e_DETACH_SCHEDULED || val == e_DETACH_NOT_REQUIRED);
 }
 
 }  // end namespace ntci
