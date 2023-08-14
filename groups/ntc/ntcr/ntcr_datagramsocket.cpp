@@ -330,6 +330,15 @@ void DatagramSocket::processSocketError(const ntca::ReactorEvent& event)
 void DatagramSocket::processNotifications(
     const ntsa::NotificationQueue& notifications)
 {
+    NTCCFG_OBJECT_GUARD(&d_object);
+
+    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+
     const bsl::vector<ntsa::Notification>& nots =
         notifications.notifications();
 
