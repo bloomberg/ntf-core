@@ -25,6 +25,7 @@
 //
 // LINUX KERNEL EVOLUTION
 //
+// 5.19   IORING_ASYNC_CANCEL_FD
 // 5.12   IORING_FEAT_NATIVE_WORKERS
 // 5.11   IORING_FEAT_EXT_ARG
 //  5.5   IORING_FEAT_NODROP
@@ -105,6 +106,7 @@ BSLS_IDENT_RCSID(ntco_ioring_cpp, "$Id$ $CSID$")
 #include <linux/fs.h>
 #include <linux/time_types.h>
 #include <linux/types.h>
+#include <linux/version.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
@@ -518,8 +520,10 @@ bsl::ostream& operator<<(bsl::ostream& stream, const IoRingProbeEntry& object);
 // Describes an I/O ring probe.
 class IoRingProbe
 {
+  public:
     enum { k_ENTRY_COUNT = 256 };
 
+  private:
     bsl::uint8_t     d_maxOperation;
     bsl::uint8_t     d_numEntries;
     bsl::uint16_t    d_reserved1;
@@ -1223,9 +1227,6 @@ class IoRingCompletion
     /// return false.
     bool wasCanceled() const;
 
-    /// Return true if this completion is valid, and false otherwise.
-    bool isValid() const;
-
     /// Format this object to the specified output 'stream' at the
     /// optionally specified indentation 'level' and return a reference to
     /// the modifiable 'stream'.  If 'level' is specified, optionally
@@ -1313,11 +1314,16 @@ class IoRingCompletionQueue
 /// This class is thread safe.
 class IoRingDevice
 {
+    enum {
+        k_SUPPORTS_CANCEL_BY_HANDLE = 1
+    };
+
     int                         d_ring;
     ntco::IoRingSubmissionQueue d_submissionQueue;
     ntco::IoRingCompletionQueue d_completionQueue;
     ntco::IoRingProbe           d_probe;
     ntco::IoRingConfig          d_params;
+    bsl::uint32_t               d_flags;
     bslma::Allocator*           d_allocator_p;
 
   private:
@@ -2169,7 +2175,6 @@ void IoRingSubmission::prepareTimeout(struct __kernel_timespec* timespec,
     d_handle    = -1;
     d_address   = reinterpret_cast<__u64>(timespec);
     d_count     = 1;
-    d_flags     = 0;
 }
 
 void IoRingSubmission::prepareCallback(ntcs::Event*                event,
@@ -2184,7 +2189,6 @@ void IoRingSubmission::prepareCallback(ntcs::Event*                event,
     d_operation = static_cast<bsl::uint8_t>(ntco::IoRingOperation::e_NOP);
     d_handle    = -1;
     d_event     = reinterpret_cast<bsl::uint64_t>(event);
-    d_flags     = 0;
 }
 
 void IoRingSubmission::prepareTest(ntcs::Event* event, bsl::uint64_t id)
@@ -2198,7 +2202,6 @@ void IoRingSubmission::prepareTest(ntcs::Event* event, bsl::uint64_t id)
     d_operation = static_cast<bsl::uint8_t>(ntco::IoRingOperation::e_NOP);
     d_handle    = -1;
     d_event     = reinterpret_cast<bsl::uint64_t>(event);
-    d_flags     = 0;
 }
 
 ntsa::Error IoRingSubmission::prepareAccept(
@@ -2221,7 +2224,6 @@ ntsa::Error IoRingSubmission::prepareAccept(
     d_operation = static_cast<bsl::uint8_t>(ntco::IoRingOperation::e_ACCEPT);
     d_handle    = handle;
     d_event     = reinterpret_cast<bsl::uint64_t>(event);
-    d_flags     = 0;
     d_address   = reinterpret_cast<bsl::uint64_t>(socketAddress);
     d_size      = reinterpret_cast<bsl::uint64_t>(socketAddressSize);
 
@@ -2256,7 +2258,6 @@ ntsa::Error IoRingSubmission::prepareConnect(
     d_operation = static_cast<bsl::uint8_t>(ntco::IoRingOperation::e_CONNECT);
     d_handle    = handle;
     d_event     = reinterpret_cast<__u64>(event);
-    d_flags     = 0;
     d_address   = reinterpret_cast<__u64>(socketAddress);
     d_size      = socketAddressSize;
 
@@ -2457,7 +2458,6 @@ ntsa::Error IoRingSubmission::prepareSend(
     d_operation = static_cast<bsl::uint8_t>(ntco::IoRingOperation::e_SENDMSG);
     d_handle    = handle;
     d_event     = reinterpret_cast<__u64>(event);
-    d_flags     = 0;
     d_address   = reinterpret_cast<__u64>(message);
 
     return ntsa::Error();
@@ -2513,7 +2513,6 @@ ntsa::Error IoRingSubmission::prepareSend(
     d_operation = static_cast<bsl::uint8_t>(ntco::IoRingOperation::e_SENDMSG);
     d_handle    = handle;
     d_event     = reinterpret_cast<__u64>(event);
-    d_flags     = 0;
     d_address   = reinterpret_cast<__u64>(message);
 
     return ntsa::Error();
@@ -2569,7 +2568,6 @@ ntsa::Error IoRingSubmission::prepareSend(
     d_operation = static_cast<bsl::uint8_t>(ntco::IoRingOperation::e_SENDMSG);
     d_handle    = handle;
     d_event     = reinterpret_cast<__u64>(event);
-    d_flags     = 0;
     d_address   = reinterpret_cast<__u64>(message);
 
     return ntsa::Error();
@@ -2662,7 +2660,6 @@ ntsa::Error IoRingSubmission::prepareSend(
     d_operation = static_cast<bsl::uint8_t>(ntco::IoRingOperation::e_SENDMSG);
     d_handle    = handle;
     d_event     = reinterpret_cast<__u64>(event);
-    d_flags     = 0;
     d_address   = reinterpret_cast<__u64>(message);
 
     return ntsa::Error();
@@ -2755,7 +2752,6 @@ ntsa::Error IoRingSubmission::prepareSend(
     d_operation = static_cast<bsl::uint8_t>(ntco::IoRingOperation::e_SENDMSG);
     d_handle    = handle;
     d_event     = reinterpret_cast<__u64>(event);
-    d_flags     = 0;
     d_address   = reinterpret_cast<__u64>(message);
 
     return ntsa::Error();
@@ -2811,7 +2807,6 @@ ntsa::Error IoRingSubmission::prepareSend(
     d_operation = static_cast<bsl::uint8_t>(ntco::IoRingOperation::e_SENDMSG);
     d_handle    = handle;
     d_event     = reinterpret_cast<__u64>(event);
-    d_flags     = 0;
     d_address   = reinterpret_cast<__u64>(message);
 
     return ntsa::Error();
@@ -2904,7 +2899,6 @@ ntsa::Error IoRingSubmission::prepareSend(
     d_operation = static_cast<bsl::uint8_t>(ntco::IoRingOperation::e_SENDMSG);
     d_handle    = handle;
     d_event     = reinterpret_cast<__u64>(event);
-    d_flags     = 0;
     d_address   = reinterpret_cast<__u64>(message);
 
     return ntsa::Error();
@@ -2997,7 +2991,6 @@ ntsa::Error IoRingSubmission::prepareSend(
     d_operation = static_cast<bsl::uint8_t>(ntco::IoRingOperation::e_SENDMSG);
     d_handle    = handle;
     d_event     = reinterpret_cast<__u64>(event);
-    d_flags     = 0;
     d_address   = reinterpret_cast<__u64>(message);
 
     return ntsa::Error();
@@ -3069,7 +3062,6 @@ ntsa::Error IoRingSubmission::prepareSend(
     d_operation = static_cast<bsl::uint8_t>(ntco::IoRingOperation::e_SENDMSG);
     d_handle    = handle;
     d_event     = reinterpret_cast<__u64>(event);
-    d_flags     = 0;
     d_address   = reinterpret_cast<__u64>(message);
 
     return ntsa::Error();
@@ -3161,7 +3153,6 @@ ntsa::Error IoRingSubmission::prepareReceive(
     d_operation = static_cast<bsl::uint8_t>(ntco::IoRingOperation::e_RECVMSG);
     d_handle    = handle;
     d_event     = reinterpret_cast<__u64>(event);
-    d_flags     = 0;
     d_address   = reinterpret_cast<__u64>(message);
 
     return ntsa::Error();
@@ -3188,7 +3179,6 @@ void IoRingSubmission::prepareCancellation(ntcs::Event* event)
 
     d_handle  = -1;
     d_address = reinterpret_cast<bsl::uint64_t>(event);
-    d_flags   = 0;
 }
 
 ntsa::Handle IoRingSubmission::handle() const
@@ -3607,11 +3597,6 @@ bool IoRingCompletion::wasCanceled() const
     return d_result < 0 && d_result == -ECANCELED;
 }
 
-bool IoRingCompletion::isValid() const
-{
-    return true;
-}
-
 bsl::ostream& IoRingCompletion::print(bsl::ostream& stream,
                                       int           level,
                                       int           spacesPerLevel) const
@@ -3824,6 +3809,7 @@ IoRingDevice::IoRingDevice(bsl::size_t       queueDepth,
 , d_completionQueue()
 , d_probe()
 , d_params()
+, d_flags(0)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     NTCI_LOG_CONTEXT();
@@ -3869,6 +3855,9 @@ IoRingDevice::IoRingDevice(bsl::size_t       queueDepth,
 
     error = d_completionQueue.map(d_ring, d_params);
     BSLS_ASSERT_OPT(!error);
+
+    // MRM: Set the k_SUPPORTS_CANCEL_BY_HANDLE if the Linux kernel version
+    // is >= 5.19.
 }
 
 IoRingDevice::~IoRingDevice()
@@ -4096,7 +4085,7 @@ bool IoRingDevice::supportsNativeWorkers() const
 
 bool IoRingDevice::supportsCancelByHandle() const
 {
-    return true;
+    return ((d_flags & k_SUPPORTS_CANCEL_BY_HANDLE) != 0);
 }
 
 IoRingContext::IoRingContext(ntsa::Handle      handle,
@@ -4275,7 +4264,7 @@ int IoRingUtil::probe(int ring, ntco::IoRingProbe* probe)
                                       ring,
                                       k_SYSTEM_CALL_REGISTER_PROBE,
                                       probe,
-                                      256));
+                                      ntco::IoRingProbe::k_ENTRY_COUNT));
 }
 
 bool IoRingUtil::isSupported()
@@ -4878,7 +4867,7 @@ void IoRing::flush()
                     bslstl::SharedPtrUtil::staticCast<ntco::IoRingContext>(
                         event->d_socket->getProactorContext());
                 if (context) {
-                    if (!d_device.supportsCancelByHandle()) {
+                    if (NTCCFG_UNLIKELY(!d_device.supportsCancelByHandle())) {
                         context->completeEvent(event.get());
                     }
                 }
@@ -4968,7 +4957,7 @@ void IoRing::wait(ntci::Waiter waiter)
             handle = event->d_socket->handle();
         }
 
-        if (!d_device.supportsCancelByHandle()) {
+        if (NTCCFG_UNLIKELY(!d_device.supportsCancelByHandle())) {
             if (event->d_socket) {
                 bsl::shared_ptr<ntco::IoRingContext> context =
                     bslstl::SharedPtrUtil::staticCast<ntco::IoRingContext>(
@@ -5537,7 +5526,7 @@ ntsa::Error IoRing::accept(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
         return error;
     }
 
-    if (!d_device.supportsCancelByHandle()) {
+    if (NTCCFG_UNLIKELY(!d_device.supportsCancelByHandle())) {
         context->registerEvent(event.get());
     }
 
@@ -5553,7 +5542,7 @@ ntsa::Error IoRing::accept(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 
     error = d_device.submit(entry, mode);
     if (NTCCFG_UNLIKELY(error)) {
-        if (!d_device.supportsCancelByHandle()) {
+        if (NTCCFG_UNLIKELY(!d_device.supportsCancelByHandle())) {
             context->completeEvent(event.get());
         }
         return error;
@@ -5590,7 +5579,7 @@ ntsa::Error IoRing::connect(
         return error;
     }
 
-    if (!d_device.supportsCancelByHandle()) {
+    if (NTCCFG_UNLIKELY(!d_device.supportsCancelByHandle())) {
         context->registerEvent(event.get());
     }
 
@@ -5606,7 +5595,7 @@ ntsa::Error IoRing::connect(
 
     error = d_device.submit(entry, mode);
     if (NTCCFG_UNLIKELY(error)) {
-        if (!d_device.supportsCancelByHandle()) {
+        if (NTCCFG_UNLIKELY(!d_device.supportsCancelByHandle())) {
             context->completeEvent(event.get());
         }
         return error;
@@ -5643,7 +5632,7 @@ ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         return error;
     }
 
-    if (!d_device.supportsCancelByHandle()) {
+    if (NTCCFG_UNLIKELY(!d_device.supportsCancelByHandle())) {
         context->registerEvent(event.get());
     }
 
@@ -5659,7 +5648,7 @@ ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 
     error = d_device.submit(entry, mode);
     if (NTCCFG_UNLIKELY(error)) {
-        if (!d_device.supportsCancelByHandle()) {
+        if (NTCCFG_UNLIKELY(!d_device.supportsCancelByHandle())) {
             context->completeEvent(event.get());
         }
         return error;
@@ -5696,7 +5685,7 @@ ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         return error;
     }
 
-    if (!d_device.supportsCancelByHandle()) {
+    if (NTCCFG_UNLIKELY(!d_device.supportsCancelByHandle())) {
         context->registerEvent(event.get());
     }
 
@@ -5712,7 +5701,7 @@ ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 
     error = d_device.submit(entry, mode);
     if (NTCCFG_UNLIKELY(error)) {
-        if (!d_device.supportsCancelByHandle()) {
+        if (NTCCFG_UNLIKELY(!d_device.supportsCancelByHandle())) {
             context->completeEvent(event.get());
         }
         return error;
@@ -5750,7 +5739,7 @@ ntsa::Error IoRing::receive(
         return error;
     }
 
-    if (!d_device.supportsCancelByHandle()) {
+    if (NTCCFG_UNLIKELY(!d_device.supportsCancelByHandle())) {
         context->registerEvent(event.get());
     }
 
@@ -5766,7 +5755,7 @@ ntsa::Error IoRing::receive(
 
     error = d_device.submit(entry, mode);
     if (NTCCFG_UNLIKELY(error)) {
-        if (!d_device.supportsCancelByHandle()) {
+        if (NTCCFG_UNLIKELY(!d_device.supportsCancelByHandle())) {
             context->completeEvent(event.get());
         }
         return error;
@@ -5815,7 +5804,7 @@ ntsa::Error IoRing::cancel(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
     ntsa::Handle handle = context->handle();
     BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
 
-    if (!d_device.supportsCancelByHandle()) {
+    if (NTCCFG_UNLIKELY(!d_device.supportsCancelByHandle())) {
         ntco::IoRingContext::EventList eventList;
         context->loadPending(&eventList, true);
 
