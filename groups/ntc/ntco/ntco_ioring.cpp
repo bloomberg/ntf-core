@@ -3856,8 +3856,18 @@ IoRingDevice::IoRingDevice(bsl::size_t       queueDepth,
     error = d_completionQueue.map(d_ring, d_params);
     BSLS_ASSERT_OPT(!error);
 
-    // MRM: Set the k_SUPPORTS_CANCEL_BY_HANDLE if the Linux kernel version
-    // is >= 5.19.
+    int major = 0;
+    int minor = 0;
+    int patch = 0;
+    int build = 0;
+    rc = ntsscm::Version::systemVersion(&major, &minor, &patch, &build);
+    if (rc == 0) {
+        if (KERNEL_VERSION(major, minor, patch) >=
+            KERNEL_VERSION(5, 19, 0))
+        {
+            d_flags &= k_SUPPORTS_CANCEL_BY_HANDLE;
+        }
+    }
 }
 
 IoRingDevice::~IoRingDevice()
