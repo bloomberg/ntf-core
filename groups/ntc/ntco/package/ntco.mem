@@ -2,6 +2,7 @@ ntco_devpoll
 ntco_epoll
 ntco_eventport
 ntco_iocp
+ntco_ioring
 ntco_kqueue
 ntco_poll
 ntco_pollset

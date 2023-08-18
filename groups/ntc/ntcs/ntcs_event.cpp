@@ -20,14 +20,21 @@ BSLS_IDENT_RCSID(ntcs_event_cpp, "$Id$ $CSID$")
 
 #include <bdlb_string.h>
 
+#include <bslim_printer.h>
 #include <bslma_allocator.h>
 #include <bslma_default.h>
 #include <bslmf_assert.h>
 #include <bsls_assert.h>
 #include <bsls_platform.h>
 
+#if defined(BSLS_PLATFORM_OS_UNIX)
+#include <sys/socket.h>
+#include <sys/uio.h>
+#endif
+
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
 #include <windows.h>
+#include <winsock2.h>
 #endif
 
 namespace BloombergLP {
@@ -286,15 +293,19 @@ Event::Event(bslma::Allocator* basicAllocator)
 , d_receiveData_p(0)
 , d_numBytesAttempted(0)
 , d_numBytesCompleted(0)
+, d_numBytesIndicated(0)
 , d_function(NTCCFG_FUNCTION_INIT(basicAllocator))
 , d_error()
-, d_operationMemory(0)
-, d_operationMemorySize(0)
-, d_operationArenaSize(0)
+, d_user(0)
 {
-    bsl::memset(d_operationArena, 0, sizeof d_operationArena);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+    BSLMF_ASSERT(sizeof(d_message) >= sizeof(struct ::msghdr));
+    BSLMF_ASSERT(sizeof(d_address) >= sizeof(struct ::sockaddr_storage));
+    BSLMF_ASSERT((sizeof(d_buffers) / sizeof(struct ::iovec)) >= IOV_MAX);
+#endif
 
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
+    BSLMF_ASSERT(sizeof(d_address) >= sizeof(SOCKADDR_STORAGE));
     BSLS_ASSERT(static_cast<void*>(this) == static_cast<void*>(&d_overlapped));
 #endif
 }
@@ -308,15 +319,21 @@ Event::Event(const Event& other, bslma::Allocator* basicAllocator)
 , d_receiveData_p(other.d_receiveData_p)
 , d_numBytesAttempted(other.d_numBytesAttempted)
 , d_numBytesCompleted(other.d_numBytesCompleted)
+, d_numBytesIndicated(other.d_numBytesIndicated)
 , d_function(NTCCFG_FUNCTION_COPY(other.d_function, basicAllocator))
 , d_error(other.d_error)
-, d_operationMemory(other.d_operationMemory)
-, d_operationMemorySize(other.d_operationMemorySize)
-, d_operationArenaSize(other.d_operationArenaSize)
+, d_user(other.d_user)
 {
-    bsl::memcpy(d_operationArena,
-                other.d_operationArena,
-                sizeof d_operationArena);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+    bsl::memcpy(d_message, other.d_message, sizeof d_message);
+    bsl::memcpy(d_address, other.d_address, sizeof d_address);
+    bsl::memcpy(d_control, other.d_control, sizeof d_control);
+    bsl::memcpy(d_buffers, other.d_buffers, sizeof d_buffers);
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+    bsl::memcpy(d_address, other.d_address, sizeof d_address);
+#else
+#error Not implemented
+#endif
 }
 
 Event::~Event()
@@ -334,14 +351,21 @@ Event& Event::operator=(const Event& other)
         d_receiveData_p       = other.d_receiveData_p;
         d_numBytesAttempted   = other.d_numBytesAttempted;
         d_numBytesCompleted   = other.d_numBytesCompleted;
+        d_numBytesIndicated   = other.d_numBytesIndicated;
         d_function            = other.d_function;
         d_error               = other.d_error;
-        d_operationMemory     = other.d_operationMemory;
-        d_operationMemorySize = other.d_operationMemorySize;
-        bsl::memcpy(d_operationArena,
-                    other.d_operationArena,
-                    sizeof d_operationArena);
-        d_operationArenaSize = other.d_operationArenaSize;
+        d_user                = other.d_user;
+
+#if defined(BSLS_PLATFORM_OS_UNIX)
+        bsl::memcpy(d_message, other.d_message, sizeof d_message);
+        bsl::memcpy(d_address, other.d_address, sizeof d_address);
+        bsl::memcpy(d_control, other.d_control, sizeof d_control);
+        bsl::memcpy(d_buffers, other.d_buffers, sizeof d_buffers);
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+        bsl::memcpy(d_address, other.d_address, sizeof d_address);
+#else
+#error Not implemented
+#endif
     }
 
     return *this;
@@ -351,61 +375,66 @@ Event& Event::operator=(const Event& other)
 void Event::reset()
 {
     d_overlapped.reset();
+
     d_type   = ntcs::EventType::e_UNDEFINED;
     d_status = ntcs::EventStatus::e_FREE;
+
     d_socket.reset();
+
     d_target              = ntsa::k_INVALID_HANDLE;
     d_receiveData_p       = 0;
     d_numBytesAttempted   = 0;
     d_numBytesCompleted   = 0;
+    d_numBytesIndicated   = 0;
     d_function            = Functor();
     d_error               = ntsa::Error();
-    d_operationMemory     = 0;
-    d_operationMemorySize = 0;
-    if (d_operationArenaSize > 0) {
-        BSLS_ASSERT_OPT(static_cast<bsl::size_t>(d_operationArenaSize) <=
-                        sizeof(d_operationArena));
-        bsl::memset(d_operationArena, 0, d_operationArenaSize);
+    d_user                = 0;
+}
+
+
+bsl::ostream& Event::print(bsl::ostream& stream,
+                           int           level,
+                           int           spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+
+    printer.printAttribute("type", d_type);
+    printer.printAttribute("status", d_status);
+
+    if (d_socket) {
+        printer.printAttribute("socket", d_socket->handle());
     }
-    d_operationArenaSize = 0;
+
+    if (d_target != ntsa::k_INVALID_HANDLE) {
+        printer.printAttribute("target", d_target);
+    }
+
+    if (d_numBytesAttempted > 0) {
+        printer.printAttribute("attempted", d_numBytesAttempted);
+        printer.printAttribute("completed", d_numBytesCompleted);
+    }
+
+    if (d_numBytesIndicated > 0) {
+        printer.printAttribute("indicated", d_numBytesIndicated);
+    }
+
+    if (d_error) {
+        printer.printAttribute("errorCode", d_error.code());
+        printer.printAttribute("errorNumber", d_error.number());
+    }
+
+    if (d_user) {
+        printer.printAttribute("id", d_user);
+    }
+
+    printer.end();
+    return stream;
 }
 
 bsl::ostream& operator<<(bsl::ostream& stream, const ntcs::Event& object)
 {
-    stream << "[ type = " << object.d_type;
-
-    stream << "[ status = " << object.d_status;
-
-    if (object.d_socket) {
-        stream << " socket = " << object.d_socket->handle();
-    }
-
-    if (object.d_target != ntsa::k_INVALID_HANDLE) {
-        stream << " target = " << object.d_target;
-    }
-
-    if (object.d_numBytesAttempted > 0) {
-        stream << " attempted = " << object.d_numBytesAttempted;
-        stream << " completed = " << object.d_numBytesCompleted;
-    }
-
-    if (object.d_error) {
-        stream << " error = " << object.d_error.code() << " ("
-               << object.d_error.number() << ")";
-    }
-
-    if (object.d_operationArena[0] != 0) {
-        bsl::size_t size = bsl::strlen(object.d_operationArena);
-
-        if (size > 0) {
-            stream << " info = "
-                   << bslstl::StringRef(object.d_operationArena, size);
-        }
-    }
-
-    stream << " ]";
-
-    return stream;
+    return object.print(stream, 0, -1);
 }
 
 EventPool::EventPool(bslma::Allocator* basicAllocator)

@@ -108,7 +108,8 @@ using namespace BloombergLP;
 // "POLLSET"     Implementation using the pollset API.
 // "KQUEUE"      Implementation using kqueue/kevent
 // "IOCP"        Implementation using I/O completion ports
-// #define NTCF_SYSTEM_TEST_DRIVER_TYPE "EPOLL"
+// "IOCP"        Implementation using I/O rings
+// #define NTCF_SYSTEM_TEST_DRIVER_TYPE "IORING"
 
 // Uncomment to test a specific address family, instead of all address
 // families.
@@ -5474,13 +5475,13 @@ void concern(const ConcernCallback& concernCallback,
 
     const bsl::size_t MIN_THREADS = 4;
     const bsl::size_t MAX_THREADS = 4;
-    const bsl::size_t LOAD_FACTOR = 10;
+    const bsl::size_t LOAD_FACTOR = 10000;
 
 #else
 
     const bsl::size_t MIN_THREADS = 2;
     const bsl::size_t MAX_THREADS = 2;
-    const bsl::size_t LOAD_FACTOR = 10;
+    const bsl::size_t LOAD_FACTOR = 10000;
 
 #endif
 

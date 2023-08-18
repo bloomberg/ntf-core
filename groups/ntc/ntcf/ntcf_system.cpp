@@ -52,6 +52,7 @@ BSLS_IDENT_RCSID(ntcf_system_cpp, "$Id$ $CSID$")
 #include <ntco_epoll.h>
 #include <ntco_eventport.h>
 #include <ntco_iocp.h>
+#include <ntco_ioring.h>
 #include <ntco_kqueue.h>
 #include <ntco_poll.h>
 #include <ntco_pollset.h>
@@ -235,6 +236,16 @@ ntsa::Error System::initialize()
             bsl::shared_ptr<ntco::IocpFactory> iocpFactory;
             iocpFactory.createInplace(allocator, allocator);
             ntcs::Plugin::registerProactorFactory("IOCP", iocpFactory);
+        }
+#endif
+#endif
+
+#if NTC_BUILD_WITH_IORING
+#if defined(BSLS_PLATFORM_OS_LINUX)
+        if (ntco::IoRingFactory::isSupported()) {
+            bsl::shared_ptr<ntco::IoRingFactory> iocpFactory;
+            iocpFactory.createInplace(allocator, allocator);
+            ntcs::Plugin::registerProactorFactory("IORING", iocpFactory);
         }
 #endif
 #endif
