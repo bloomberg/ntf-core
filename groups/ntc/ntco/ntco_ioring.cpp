@@ -1314,9 +1314,7 @@ class IoRingCompletionQueue
 /// This class is thread safe.
 class IoRingDevice
 {
-    enum {
-        k_SUPPORTS_CANCEL_BY_HANDLE = 1
-    };
+    enum { k_SUPPORTS_CANCEL_BY_HANDLE = 1 };
 
     int                         d_ring;
     ntco::IoRingSubmissionQueue d_submissionQueue;
@@ -1847,6 +1845,17 @@ IoRingWaiter::~IoRingWaiter()
 
 IoRingConfig::IoRingConfig()
 {
+    NTCCFG_WARNING_UNUSED(d_submissionQueueThreadCpu);
+    NTCCFG_WARNING_UNUSED(d_submissionQueueThreadIdle);
+    NTCCFG_WARNING_UNUSED(d_wq);
+    NTCCFG_WARNING_UNUSED(d_reserved);
+    NTCCFG_WARNING_UNUSED(d_submissionQueueOffsetToDropped);
+    NTCCFG_WARNING_UNUSED(d_submissionQueueOffsetToResv1);
+    NTCCFG_WARNING_UNUSED(d_submissionQueueOffsetToResv2);
+    NTCCFG_WARNING_UNUSED(d_completionQueueOffsetToOverflow);
+    NTCCFG_WARNING_UNUSED(d_completionQueueOffsetToResv1);
+    NTCCFG_WARNING_UNUSED(d_completionQueueOffsetToResv2);
+
     bsl::memset(this, 0, sizeof(ntco::IoRingConfig));
 }
 
@@ -2117,6 +2126,12 @@ IoRingSubmission::IoRingSubmission()
 #else
     BSLMF_ASSERT(sizeof(ntco::IoRingSubmission) == 128);
 #endif
+
+    NTCCFG_WARNING_UNUSED(d_priority);
+    NTCCFG_WARNING_UNUSED(d_index);
+    NTCCFG_WARNING_UNUSED(d_personality);
+    NTCCFG_WARNING_UNUSED(d_splice);
+    NTCCFG_WARNING_UNUSED(d_command);
 
     bsl::memset(this, 0, sizeof(IoRingSubmission));
 }
@@ -3860,11 +3875,9 @@ IoRingDevice::IoRingDevice(bsl::size_t       queueDepth,
     int minor = 0;
     int patch = 0;
     int build = 0;
-    rc = ntsscm::Version::systemVersion(&major, &minor, &patch, &build);
+    rc        = ntsscm::Version::systemVersion(&major, &minor, &patch, &build);
     if (rc == 0) {
-        if (KERNEL_VERSION(major, minor, patch) >=
-            KERNEL_VERSION(5, 19, 0))
-        {
+        if (KERNEL_VERSION(major, minor, patch) >= KERNEL_VERSION(5, 19, 0)) {
             d_flags &= k_SUPPORTS_CANCEL_BY_HANDLE;
         }
     }
@@ -4627,6 +4640,11 @@ class IoRing : public ntci::Proactor,
     // Detach the specified 'socket' from the proactor. Return the error.
     ntsa::Error detachSocket(const bsl::shared_ptr<ntci::ProactorSocket>&
                                  socket) BSLS_KEYWORD_OVERRIDE;
+
+    // Detach the specified 'socket' from the proactor. The specified 'socket'
+    // will be notified when it's detached. Return the error.
+    ntsa::Error detachSocketAsync(const bsl::shared_ptr<ntci::ProactorSocket>&
+                                      socket) BSLS_KEYWORD_OVERRIDE;
 
     // Close all monitored sockets and timers.
     ntsa::Error closeAll() BSLS_KEYWORD_OVERRIDE;
@@ -5885,6 +5903,14 @@ ntsa::Error IoRing::detachSocket(
     socket->setProactorContext(bsl::shared_ptr<void>());
 
     return ntsa::Error();
+}
+
+ntsa::Error IoRing::detachSocketAsync(
+    const bsl::shared_ptr<ntci::ProactorSocket>& socket)
+{
+    NTCCFG_WARNING_UNUSED(socket);
+    BSLS_ASSERT(false);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error IoRing::closeAll()
