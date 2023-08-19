@@ -36,6 +36,7 @@ BSLS_IDENT_RCSID(ntco_iocp_cpp, "$Id$ $CSID$")
 #include <ntcs_driver.h>
 #include <ntcs_event.h>
 #include <ntcs_nomenclature.h>
+#include <ntcs_proactordetachcontext.h>
 #include <ntcs_proactormetrics.h>
 #include <ntcs_registry.h>
 #include <ntcs_reservation.h>
@@ -51,7 +52,6 @@ BSLS_IDENT_RCSID(ntco_iocp_cpp, "$Id$ $CSID$")
 #include <bdlf_placeholder.h>
 #include <bdlt_datetime.h>
 
-#include <bdlma_concurrentpool.h>
 #include <bslma_allocator.h>
 #include <bslma_default.h>
 #include <bslmt_lockguard.h>
@@ -220,16 +220,8 @@ class Iocp : public ntci::Proactor,
     struct Result;
     // This struct describes the context of a waiter.
 
-    class SocketContext;
-    // This class describes proactor context for a dedicated socket
-
-    class DetachGuardWaiter;
-    // This class implements detachment guard mechanism which should be used
-    // inside wait function
-
     class DetachGuard;
-    // This class implements detachment guard mechanism which should be used
-    // everywhere except wait function
+    // This class implements detachment guard mechanism
 
     enum UpdateType {
         // Enumerates the types of update.
@@ -262,7 +254,6 @@ class Iocp : public ntci::Proactor,
     bsls::AtomicUint64                     d_load;
     bsls::AtomicBool                       d_run;
     ntca::ProactorConfig                   d_config;
-    bdlma::ConcurrentPool                  d_socketContextPool;
     bslma::Allocator*                      d_allocator_p;
 
   private:
@@ -647,145 +638,8 @@ Iocp::Result::~Result()
 {
 }
 
-class Iocp::SocketContext
+class Iocp::DetachGuard
 {
-  public:
-    enum DetachState {
-        e_DETACH_NOT_REQUIRED = 0,
-        e_DETACH_REQUIRED     = 1,
-        e_DETACH_SCHEDULED    = 2
-    };
-
-    SocketContext();
-
-    /// Return current number of threads actively working with the socket
-    unsigned int processCounter() const;
-
-    /// Return true if detachment is not required for the socket.
-    bool noDetach() const;
-
-    /// Atomically increment number of threads actively working with the socket
-    /// and return resulting value
-    unsigned int incrementProcessCounter();
-
-    /// Atomically increment number of threads actively working with the socket
-    /// and return resulting value
-    unsigned int decrementProcessCounter();
-
-    /// Atomically try to transit detachment state to e_DETACH_SCHEDULED.
-    /// Return true in case of success and false otherwise.
-    bool trySetDetachScheduled();
-
-    /// Atomically try to transit detachment state to e_DETACH_REQUIRED.
-    /// Return true in case of success and false otherwise.
-    bool trySetDetachRequired();
-
-  private:
-    bsls::AtomicUint d_processCounter;
-    bsls::AtomicUint d_detachState;
-};
-
-Iocp::SocketContext::SocketContext()
-: d_processCounter()
-, d_detachState(e_DETACH_NOT_REQUIRED)
-{
-}
-
-unsigned int Iocp::SocketContext::processCounter() const
-{
-    return d_processCounter.load();
-}
-
-unsigned int Iocp::SocketContext::incrementProcessCounter()
-{
-    return ++d_processCounter;
-}
-
-unsigned int Iocp::SocketContext::decrementProcessCounter()
-{
-    return --d_processCounter;
-}
-
-bool Iocp::SocketContext::noDetach() const
-{
-    return d_detachState.load() == e_DETACH_NOT_REQUIRED;
-}
-
-bool Iocp::SocketContext::trySetDetachScheduled()
-{
-    unsigned int val =
-        d_detachState.testAndSwap(e_DETACH_REQUIRED, e_DETACH_SCHEDULED);
-    return val == e_DETACH_REQUIRED;
-}
-
-bool Iocp::SocketContext::trySetDetachRequired()
-{
-    unsigned int val =
-        d_detachState.testAndSwap(e_DETACH_NOT_REQUIRED, e_DETACH_REQUIRED);
-    return val == e_DETACH_NOT_REQUIRED;
-}
-
-class Iocp::DetachGuardWaiter {
-    // Provide an implementation of detachment guard mechanism which should be
-    // used inside proactor's "wait" function
-
-  public:
-    const bsl::shared_ptr<ntci::ProactorSocket>& d_socket_sp;
-    Iocp&                                        d_iocp;
-    bool                                         d_ignore;
-
-  private:
-    DetachGuardWaiter(const DetachGuardWaiter&) BSLS_KEYWORD_DELETED;
-    DetachGuardWaiter& operator=(const DetachGuardWaiter&)
-        BSLS_KEYWORD_DELETED;
-
-  public:
-    explicit DetachGuardWaiter(
-        const bsl::shared_ptr<ntci::ProactorSocket>& socket,
-        Iocp&                                        iocp);
-    // Constructs the guard to monitor the specified 'socket'
-
-    ~DetachGuardWaiter();
-    //  Destructs the guard and announces detachment of a socket in case
-    // detachment conditions are satisfied
-
-    void ignore();
-    // Set the flag to ignore detachment announcement on destruction
-};
-
-Iocp::DetachGuardWaiter::DetachGuardWaiter(
-    const bsl::shared_ptr<ntci::ProactorSocket>& socket,
-    Iocp&                                        iocp)
-: d_socket_sp(socket)
-, d_iocp(iocp)
-, d_ignore(false)
-{
-}
-
-Iocp::DetachGuardWaiter::~DetachGuardWaiter()
-{
-    if (NTCCFG_UNLIKELY(d_ignore)) {
-        return;
-    }
-    Iocp::SocketContext* context = static_cast<Iocp::SocketContext*>(
-        d_socket_sp->getProactorContext().get());
-    if (context->decrementProcessCounter() == 0 &&
-        context->trySetDetachScheduled())
-    {
-        d_socket_sp->setProactorContext(bsl::shared_ptr<void>());
-
-        d_iocp.execute(NTCCFG_BIND(&ntcs::Dispatch::announceDetached,
-                                   d_socket_sp,
-                                   d_socket_sp->strand()));
-    }
-}
-
-void Iocp::DetachGuardWaiter::ignore()
-{
-    d_ignore = true;
-}
-
-class Iocp::DetachGuard {
     // Provide an implementation of detachment guard mechanism which should be
     // used everywhere but not inside proactor's "wait" function
 
@@ -819,8 +673,6 @@ Iocp::DetachGuard::DetachGuard(
 , d_iocp(iocp)
 , d_ignore(false)
 {
-    static_cast<Iocp::SocketContext*>(d_socket_sp->getProactorContext().get())
-        ->incrementProcessCounter();
 }
 
 Iocp::DetachGuard::~DetachGuard()
@@ -829,11 +681,10 @@ Iocp::DetachGuard::~DetachGuard()
         return;
     }
 
-    Iocp::SocketContext* context = static_cast<Iocp::SocketContext*>(
-        d_socket_sp->getProactorContext().get());
-    if (context->decrementProcessCounter() == 0 &&
-        context->trySetDetachScheduled())
-    {
+    ntcs::ProactorDetachContext* context =
+        static_cast<ntcs::ProactorDetachContext*>(
+            d_socket_sp->getProactorContext().get());
+    if (context->decrementProcessCounterAndCheckDetachPossible()) {
         d_socket_sp->setProactorContext(bsl::shared_ptr<void>());
 
         d_iocp.execute(NTCCFG_BIND(&ntcs::Dispatch::announceDetached,
@@ -918,7 +769,7 @@ void Iocp::flush()
         event.load(reinterpret_cast<ntcs::Event*>(overlapped), &d_eventPool);
 
         if (NTCCFG_LIKELY(event->d_socket)) {
-            DetachGuardWaiter detachGuardWaiter(event->d_socket, *this);
+            DetachGuard detachGuard(event->d_socket, *this);
         }
 
         if (error && error == ntsa::Error::e_CANCELLED) {
@@ -998,7 +849,7 @@ void Iocp::wait(ntci::Waiter waiter)
         BSLS_ASSERT(lastError == ERROR_OPERATION_ABORTED);
         NTCP_IOCP_LOG_EVENT_CANCELLED(event);
         if (NTCCFG_LIKELY(event->d_socket)) {
-            DetachGuardWaiter detachGuardWaiter(event->d_socket, *this);
+            DetachGuard detachGuard(event->d_socket, *this);
         }
         return;
     }
@@ -1010,7 +861,7 @@ void Iocp::wait(ntci::Waiter waiter)
         return;
     }
 
-    DetachGuardWaiter detachGuardWaiter(event->d_socket, *this);
+    DetachGuard detachGuard(event->d_socket, *this);
 
     if (event->d_type == ntcs::EventType::e_ACCEPT) {
         BSLS_ASSERT(event->d_socket.get() != 0);
@@ -1201,7 +1052,7 @@ void Iocp::wait(ntci::Waiter waiter)
     }
     else {
         NTCP_IOCP_LOG_EVENT_IGNORED(event);
-        detachGuardWaiter.ignore();
+        detachGuard.ignore();
         return;
     }
 }
@@ -1286,7 +1137,6 @@ Iocp::Iocp(const ntca::ProactorConfig&        configuration,
 , d_load(0)
 , d_run(true)
 , d_config(configuration, basicAllocator)
-, d_socketContextPool(sizeof(Iocp::SocketContext), basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     if (d_config.metricName().isNull() ||
@@ -1542,7 +1392,7 @@ ntsa::Error Iocp::attachSocket(
         }
     }
 
-    bsl::shared_ptr<SocketContext> proactorContext;
+    bsl::shared_ptr<ntcs::ProactorDetachContext> proactorContext;
     proactorContext.createInplace(d_allocator_p);
 
     BSLS_ASSERT(!socket->getProactorContext());
@@ -1555,11 +1405,15 @@ ntsa::Error Iocp::accept(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 {
     NTCI_LOG_CONTEXT();
 
-    DetachGuard detachGuard(socket, *this);
+    ntcs::ProactorDetachContext* socketContext =
+        static_cast<ntcs::ProactorDetachContext*>(
+            socket->getProactorContext().get());
+    if (NTCCFG_UNLIKELY(!socketContext)) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
 
-    const SocketContext* socketContext =
-        static_cast<Iocp::SocketContext*>(socket->getProactorContext().get());
-    if (NTCCFG_UNLIKELY(!socketContext->noDetach())) {
+    DetachGuard detachGuard(socket, *this);
+    if (NTCCFG_UNLIKELY(socketContext->incrementAndCheckNoDetach() == false)) {
         return ntsa::Error::cancelled();
     }
 
@@ -1701,11 +1555,15 @@ ntsa::Error Iocp::connect(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 {
     NTCI_LOG_CONTEXT();
 
-    DetachGuard detachGuard(socket, *this);
+    ntcs::ProactorDetachContext* socketContext =
+        static_cast<ntcs::ProactorDetachContext*>(
+            socket->getProactorContext().get());
+    if (NTCCFG_UNLIKELY(!socketContext)) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
 
-    const SocketContext* socketContext =
-        static_cast<Iocp::SocketContext*>(socket->getProactorContext().get());
-    if (NTCCFG_UNLIKELY(!socketContext->noDetach())) {
+    DetachGuard detachGuard(socket, *this);
+    if (NTCCFG_UNLIKELY(socketContext->incrementAndCheckNoDetach() == false)) {
         return ntsa::Error::cancelled();
     }
 
@@ -1807,11 +1665,15 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 {
     NTCI_LOG_CONTEXT();
 
-    DetachGuard detachGuard(socket, *this);
+    ntcs::ProactorDetachContext* socketContext =
+        static_cast<ntcs::ProactorDetachContext*>(
+            socket->getProactorContext().get());
+    if (NTCCFG_UNLIKELY(!socketContext)) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
 
-    const SocketContext* socketContext =
-        static_cast<Iocp::SocketContext*>(socket->getProactorContext().get());
-    if (NTCCFG_UNLIKELY(!socketContext->noDetach())) {
+    DetachGuard detachGuard(socket, *this);
+    if (NTCCFG_UNLIKELY(socketContext->incrementAndCheckNoDetach() == false)) {
         return ntsa::Error::cancelled();
     }
 
@@ -1932,11 +1794,15 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 {
     NTCI_LOG_CONTEXT();
 
-    DetachGuard detachGuard(socket, *this);
+    ntcs::ProactorDetachContext* socketContext =
+        static_cast<ntcs::ProactorDetachContext*>(
+            socket->getProactorContext().get());
+    if (NTCCFG_UNLIKELY(!socketContext)) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
 
-    const SocketContext* socketContext =
-        static_cast<Iocp::SocketContext*>(socket->getProactorContext().get());
-    if (NTCCFG_UNLIKELY(!socketContext->noDetach())) {
+    DetachGuard detachGuard(socket, *this);
+    if (NTCCFG_UNLIKELY(socketContext->incrementAndCheckNoDetach() == false)) {
         return ntsa::Error::cancelled();
     }
 
@@ -2513,11 +2379,15 @@ ntsa::Error Iocp::receive(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 {
     NTCI_LOG_CONTEXT();
 
-    DetachGuard detachGuard(socket, *this);
+    ntcs::ProactorDetachContext* socketContext =
+        static_cast<ntcs::ProactorDetachContext*>(
+            socket->getProactorContext().get());
+    if (NTCCFG_UNLIKELY(!socketContext)) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
 
-    const SocketContext* socketContext =
-        static_cast<Iocp::SocketContext*>(socket->getProactorContext().get());
-    if (NTCCFG_UNLIKELY(!socketContext->noDetach())) {
+    DetachGuard detachGuard(socket, *this);
+    if (NTCCFG_UNLIKELY(socketContext->incrementAndCheckNoDetach() == false)) {
         return ntsa::Error::cancelled();
     }
 
@@ -2530,8 +2400,7 @@ ntsa::Error Iocp::receive(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     event->d_receiveData_p = data;
 
     if (wantEndpoint) {
-        BSLMF_ASSERT(sizeof(event->d_address) >=
-                     sizeof(sockaddr_storage));
+        BSLMF_ASSERT(sizeof(event->d_address) >= sizeof(sockaddr_storage));
         event->d_numBytesIndicated = sizeof(sockaddr_storage) + 1;
     }
 
@@ -2668,6 +2537,12 @@ ntsa::Error Iocp::detachSocketAsync(
     if (socket->handle() == ntsa::k_INVALID_HANDLE) {
         return ntsa::Error::invalid();
     }
+    ntcs::ProactorDetachContext* socketContext =
+        static_cast<ntcs::ProactorDetachContext*>(
+            socket->getProactorContext().get());
+    if (!socketContext) {
+        return ntsa::Error::invalid();
+    }
 
     BSLS_ASSERT((d_config.maxThreads() > 1) ==
                 static_cast<bool>(socket->strand()));
@@ -2681,12 +2556,8 @@ ntsa::Error Iocp::detachSocketAsync(
         }
     }
 
-    Iocp::SocketContext* context =
-        static_cast<Iocp::SocketContext*>(socket->getProactorContext().get());
-    BSLS_ASSERT(context);
-    if (NTCCFG_LIKELY(context->trySetDetachRequired())) {
-        if (context->processCounter() == 0 && context->trySetDetachScheduled())
-        {
+    if (NTCCFG_LIKELY(socketContext->trySetDetachRequired())) {
+        if (socketContext->trySetDetachScheduled()) {
             socket->setProactorContext(bsl::shared_ptr<void>());
 
             this->execute(NTCCFG_BIND(&ntcs::Dispatch::announceDetached,
