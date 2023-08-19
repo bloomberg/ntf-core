@@ -208,6 +208,12 @@ void StreamSocket::processSocketConnected(const ntsa::Error& error)
 
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
+    if (NTCCFG_UNLIKELY(d_detachState.get() ==
+                        ntcs::DetachState::e_DETACH_INITIATED))
+    {
+        return;
+    }
+
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);

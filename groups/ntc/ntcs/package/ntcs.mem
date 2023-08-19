@@ -25,6 +25,7 @@ ntcs_nomenclature
 ntcs_observer
 ntcs_openstate
 ntcs_plugin
+ntcs_proactordetachcontext
 ntcs_proactormetrics
 ntcs_processutil
 ntcs_processmetrics
