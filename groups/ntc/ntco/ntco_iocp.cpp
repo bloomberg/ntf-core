@@ -223,12 +223,12 @@ class Iocp : public ntci::Proactor,
     class SocketContext;
     // This class describes proactor context for a dedicated socket
 
-    struct DetachGuardWaiter;
-    // This struct implements detachment guard mechanism which should be used
+    class DetachGuardWaiter;
+    // This class implements detachment guard mechanism which should be used
     // inside wait function
 
-    struct DetachGuard;
-    // This struct implements detachment guard mechanism which should be used
+    class DetachGuard;
+    // This class implements detachment guard mechanism which should be used
     // everywhere except wait function
 
     enum UpdateType {
@@ -725,7 +725,7 @@ bool Iocp::SocketContext::trySetDetachRequired()
     return val == e_DETACH_NOT_REQUIRED;
 }
 
-struct Iocp::DetachGuardWaiter {
+class Iocp::DetachGuardWaiter {
     // Provide an implementation of detachment guard mechanism which should be
     // used inside proactor's "wait" function
 
@@ -785,7 +785,7 @@ void Iocp::DetachGuardWaiter::ignore()
     d_ignore = true;
 }
 
-struct Iocp::DetachGuard {
+class Iocp::DetachGuard {
     // Provide an implementation of detachment guard mechanism which should be
     // used everywhere but not inside proactor's "wait" function
 
@@ -825,7 +825,7 @@ Iocp::DetachGuard::DetachGuard(
 
 Iocp::DetachGuard::~DetachGuard()
 {
-    if (NTCCFG_UNLIKELY(d_ignore)) {
+    if (NTCCFG_LIKELY(d_ignore)) {
         return;
     }
 
