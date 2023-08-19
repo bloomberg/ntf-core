@@ -28,26 +28,22 @@ class ProactorDetachContext
 {
   public:
     enum DetachState {
-        e_DETACH_NOT_REQUIRED = 0,
-        e_DETACH_REQUIRED     = 1,
-        e_DETACH_SCHEDULED    = 2
+        e_DETACH_NOT_REQUIRED = 0 << 30,
+        e_DETACH_REQUIRED     = 1 << 30,
+        e_DETACH_SCHEDULED    = 2 << 30
     };
 
     ProactorDetachContext();
 
-    /// Return current number of threads actively working with the socket
-    unsigned int processCounter() const;
-
-    /// Return true if detachment is not required for the socket.
-    bool noDetach() const;
+    /// Atomically increment number of threads actively working with the socket
+    /// and check that detach is neither required nor scheduled. Return true if
+    /// so and false otherwise
+    bool incrementAndCheckNoDetach();
 
     /// Atomically increment number of threads actively working with the socket
-    /// and return resulting value
-    unsigned int incrementProcessCounter();
-
-    /// Atomically increment number of threads actively working with the socket
-    /// and return resulting value
-    unsigned int decrementProcessCounter();
+    /// and try to set detachment state to e_DETACH_SCHEDULED. Return true in
+    /// case of success and false otherwise
+    bool decrementProcessCounterAndCheckDetachPossible();
 
     /// Atomically try to transit detachment state to e_DETACH_SCHEDULED.
     /// Return true in case of success and false otherwise.
@@ -58,10 +54,11 @@ class ProactorDetachContext
     bool trySetDetachRequired();
 
   private:
-    bsls::AtomicUint d_processCounter;
-    bsls::AtomicUint d_detachState;
-};
+    bsls::AtomicUint d_stateAndCounter;
 
+    enum { k_STATE_MASK = 0xC0000000 };
+    enum { k_COUNTER_MASK = 0x3FFFFFF };
+};
 
 }  // end namespace ntcs
 }  // end namespace BloombergLP

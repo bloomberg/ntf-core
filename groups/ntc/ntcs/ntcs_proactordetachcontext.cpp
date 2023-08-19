@@ -22,43 +22,62 @@ namespace BloombergLP {
 namespace ntcs {
 
 ProactorDetachContext::ProactorDetachContext()
-: d_processCounter()
-, d_detachState(e_DETACH_NOT_REQUIRED)
+: d_stateAndCounter()
 {
 }
 
-unsigned int ProactorDetachContext::processCounter() const
+bool ProactorDetachContext::incrementAndCheckNoDetach()
 {
-    return d_processCounter.load();
+    unsigned int val = ++d_stateAndCounter;
+    if ((val & k_STATE_MASK) != DetachState::e_DETACH_NOT_REQUIRED) {
+        return false;
+    }
+    return true;
 }
 
-unsigned int ProactorDetachContext::incrementProcessCounter()
+bool ProactorDetachContext::decrementProcessCounterAndCheckDetachPossible()
 {
-    return ++d_processCounter;
-}
-
-unsigned int ProactorDetachContext::decrementProcessCounter()
-{
-    return --d_processCounter;
-}
-
-bool ProactorDetachContext::noDetach() const
-{
-    return d_detachState.load() == e_DETACH_NOT_REQUIRED;
+    unsigned int val = --d_stateAndCounter;
+    if ((val & k_COUNTER_MASK) == 0 &&
+        (val & k_STATE_MASK) == DetachState::e_DETACH_REQUIRED)
+    {
+        unsigned int prev =
+            d_stateAndCounter.testAndSwap(val,
+                                          DetachState::e_DETACH_SCHEDULED);
+        return prev == val;
+    }
+    return false;
 }
 
 bool ProactorDetachContext::trySetDetachScheduled()
 {
-    unsigned int val =
-        d_detachState.testAndSwap(e_DETACH_REQUIRED, e_DETACH_SCHEDULED);
-    return val == e_DETACH_REQUIRED;
+    unsigned int val = d_stateAndCounter.load();
+    if ((val & k_COUNTER_MASK) == 0 &&
+        (val & k_STATE_MASK) == DetachState::e_DETACH_REQUIRED)
+    {
+        unsigned int prev =
+            d_stateAndCounter.testAndSwap(val,
+                                          DetachState::e_DETACH_SCHEDULED);
+        return prev == val;
+    }
+    return false;
 }
 
 bool ProactorDetachContext::trySetDetachRequired()
 {
-    unsigned int val =
-        d_detachState.testAndSwap(e_DETACH_NOT_REQUIRED, e_DETACH_REQUIRED);
-    return val == e_DETACH_NOT_REQUIRED;
+    while (true) {
+        unsigned int current = d_stateAndCounter.load();
+        if ((current & k_STATE_MASK) != e_DETACH_NOT_REQUIRED) {
+            return false;
+        }
+        unsigned int prev =
+            d_stateAndCounter.testAndSwap(current,
+                                          current | e_DETACH_REQUIRED);
+        if (prev == current) {
+            break;
+        }
+    }
+    return true;
 }
 
 }  // close package namespace
