@@ -265,7 +265,7 @@ class Event
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
     char                                  d_message[64];
-    char                                  d_address[192];
+    char                                  d_address[256];
     char                                  d_control[256];
     char                                  d_buffers[1024 * 16];
 
@@ -305,9 +305,9 @@ class Event
     template <typename TYPE>
     TYPE* message();
 
-    /// Return the array of structures of the parameterized 'TYPE' stored in 
+    /// Return the array of structures of the parameterized 'TYPE' stored in
     /// the buffer arena and load into the specified 'maxBuffers' the maximum
-    /// number of structures that may be stored in the array. The resulting 
+    /// number of structures that may be stored in the array. The resulting
     /// address is guaranteed to be 8-byte aligned.
     template <typename TYPE>
     TYPE* buffers(bsl::size_t* maxBuffers);
@@ -317,8 +317,8 @@ class Event
     template <typename TYPE>
     TYPE* address();
 
-    /// Return the structure of the parameterized 'TYPE' stored in the 
-    /// indicator arena. The template will fail to compile if 
+    /// Return the structure of the parameterized 'TYPE' stored in the
+    /// indicator arena. The template will fail to compile if
     /// 'sizeof(TYPE) != 4'. The resulting address is guaranteed to be 4-byte
     /// aligned.
     template <typename TYPE>
