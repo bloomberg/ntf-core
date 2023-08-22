@@ -26,6 +26,7 @@ BSLS_IDENT_RCSID(ntcf_system_cpp, "$Id$ $CSID$")
 #include <ntcs_authorization.h>
 #include <ntcs_compat.h>
 #include <ntcs_datapool.h>
+#include <ntcs_global.h>
 #include <ntcs_metrics.h>
 #include <ntcs_plugin.h>
 #include <ntcs_proactormetrics.h>
@@ -142,6 +143,121 @@ bsl::string defaultProactorDriverName()
 #endif
 }
 
+void createDefaultExecutor(bsl::shared_ptr<ntci::Executor>* result,
+                           bslma::Allocator*                allocator)
+{
+    ntsa::Error error;
+
+    allocator = allocator 
+              ? allocator 
+              : &bslma::NewDeleteAllocator::singleton();
+
+    ntca::ThreadConfig threadConfig;
+    threadConfig.setThreadName("default");
+
+    bsl::shared_ptr<ntci::Thread> thread = 
+        ntcf::System::createThread(threadConfig, allocator);
+
+    error = thread->start();
+    BSLS_ASSERT_OPT(!error);
+
+    *result = thread;
+}
+
+void createDefaultDriver(bsl::shared_ptr<ntci::Driver>* result,
+                         bslma::Allocator*              allocator)
+{
+    allocator = allocator 
+              ? allocator 
+              : &bslma::NewDeleteAllocator::singleton();
+
+    ntca::DriverConfig driverConfig;
+    driverConfig.setMinThreads(1);
+    driverConfig.setMaxThreads(1);
+
+    bsl::shared_ptr<ntci::Driver> driver = 
+        ntcf::System::createDriver(driverConfig, allocator);
+
+    *result = driver;
+}
+
+void createDefaultReactor(bsl::shared_ptr<ntci::Reactor>* result,
+                         bslma::Allocator*               allocator)
+{
+    allocator = allocator 
+              ? allocator 
+              : &bslma::NewDeleteAllocator::singleton();
+
+    ntca::ReactorConfig reactorConfig;
+    reactorConfig.setMinThreads(1);
+    reactorConfig.setMaxThreads(1);
+
+    bsl::shared_ptr<ntci::Reactor> reactor = 
+        ntcf::System::createReactor(reactorConfig, allocator);
+
+    *result = reactor;
+}
+
+void createDefaultProactor(bsl::shared_ptr<ntci::Proactor>* result,
+                           bslma::Allocator*                allocator)
+{
+    allocator = allocator 
+              ? allocator 
+              : &bslma::NewDeleteAllocator::singleton();
+
+    ntca::ProactorConfig proactorConfig;
+    proactorConfig.setMinThreads(1);
+    proactorConfig.setMaxThreads(1);
+
+    bsl::shared_ptr<ntci::Proactor> proactor = 
+        ntcf::System::createProactor(proactorConfig, allocator);
+
+    *result = proactor;
+}
+
+void createDefaultInterface(bsl::shared_ptr<ntci::Interface>* result,
+                            bslma::Allocator*                 allocator)
+{
+    ntsa::Error error;
+
+    allocator = allocator 
+              ? allocator 
+              : &bslma::NewDeleteAllocator::singleton();
+
+    ntca::InterfaceConfig interfaceConfig;
+    interfaceConfig.setThreadName("default");
+    interfaceConfig.setMinThreads(1);
+    interfaceConfig.setMaxThreads(64);
+
+    bsl::shared_ptr<ntci::Interface> interface = 
+        ntcf::System::createInterface(interfaceConfig, allocator);
+
+    error = interface->start();
+    BSLS_ASSERT_OPT(!error);
+
+    *result = interface;
+}
+
+void createDefaultResolver(bsl::shared_ptr<ntci::Resolver>* result,
+                           bslma::Allocator*                allocator)
+{
+    ntsa::Error error;
+    
+    allocator = allocator 
+              ? allocator 
+              : &bslma::NewDeleteAllocator::singleton();
+
+    ntca::ResolverConfig resolverConfig;
+    
+    bsl::shared_ptr<ntci::Resolver> resolver = 
+        ntcf::System::createResolver(resolverConfig, allocator);
+
+    error = resolver->start();
+    BSLS_ASSERT_OPT(!error);
+
+    *result = resolver;
+}
+
 }  // close unnamed namespace
 
 ntsa::Error System::initialize()
@@ -155,6 +271,7 @@ ntsa::Error System::initialize()
 
         ntcm::MonitorableUtil::initialize();
         ntcs::Plugin::initialize();
+        ntcs::Global::initialize();
 
         // We use a new delete allocator instead of the global allocator here
         // because we want prevent a visible "memory leak" if the global
@@ -249,6 +366,13 @@ ntsa::Error System::initialize()
         }
 #endif
 #endif
+
+        ntcs::Global::setDefault(&createDefaultExecutor);
+        ntcs::Global::setDefault(&createDefaultDriver);
+        ntcs::Global::setDefault(&createDefaultReactor);
+        ntcs::Global::setDefault(&createDefaultProactor);
+        ntcs::Global::setDefault(&createDefaultInterface);
+        ntcs::Global::setDefault(&createDefaultResolver);
 
         bsl::atexit(&System::exit);
     }
@@ -1925,17 +2049,32 @@ void System::loadDriverSupport(bsl::vector<bsl::string>* driverNames,
 ntsa::Error System::registerEncryptionDriver(
     const bsl::shared_ptr<ntci::EncryptionDriver>& encryptionDriver)
 {
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
     return ntcs::Plugin::registerEncryptionDriver(encryptionDriver);
 }
 
 ntsa::Error System::deregisterEncryptionDriver(
     const bsl::shared_ptr<ntci::EncryptionDriver>& encryptionDriver)
 {
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
     return ntcs::Plugin::deregisterEncryptionDriver(encryptionDriver);
 }
 
 bool System::supportsEncryptionDriver()
 {
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
     return ntcs::Plugin::supportsEncryptionDriver();
 }
 
@@ -1943,6 +2082,11 @@ ntsa::Error System::registerReactorFactory(
     const bsl::string&                           driverName,
     const bsl::shared_ptr<ntci::ReactorFactory>& reactorFactory)
 {
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
     return ntcs::Plugin::registerReactorFactory(driverName, reactorFactory);
 }
 
@@ -1950,6 +2094,11 @@ ntsa::Error System::deregisterReactorFactory(
     const bsl::string&                           driverName,
     const bsl::shared_ptr<ntci::ReactorFactory>& reactorFactory)
 {
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
     return ntcs::Plugin::deregisterReactorFactory(driverName, reactorFactory);
 }
 
@@ -1957,11 +2106,21 @@ ntsa::Error System::lookupReactorFactory(
     bsl::shared_ptr<ntci::ReactorFactory>* result,
     const bsl::string&                     driverName)
 {
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
     return ntcs::Plugin::lookupReactorFactory(result, driverName);
 }
 
 bool System::supportsReactorFactory(const bsl::string& driverName)
 {
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
     return ntcs::Plugin::supportsReactorFactory(driverName);
 }
 
@@ -1969,6 +2128,11 @@ ntsa::Error System::registerProactorFactory(
     const bsl::string&                            driverName,
     const bsl::shared_ptr<ntci::ProactorFactory>& proactorFactory)
 {
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
     return ntcs::Plugin::registerProactorFactory(driverName, proactorFactory);
 }
 
@@ -1976,6 +2140,11 @@ ntsa::Error System::deregisterProactorFactory(
     const bsl::string&                            driverName,
     const bsl::shared_ptr<ntci::ProactorFactory>& proactorFactory)
 {
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
     return ntcs::Plugin::deregisterProactorFactory(driverName,
                                                    proactorFactory);
 }
@@ -1984,18 +2153,169 @@ ntsa::Error System::lookupProactorFactory(
     bsl::shared_ptr<ntci::ProactorFactory>* result,
     const bsl::string&                      driverName)
 {
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
     return ntcs::Plugin::lookupProactorFactory(result, driverName);
 }
 
 bool System::supportsProactorFactory(const bsl::string& driverName)
 {
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
     return ntcs::Plugin::supportsProactorFactory(driverName);
+}
+
+void System::setDefault(const bsl::shared_ptr<ntci::Executor>& executor)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    ntcs::Global::setDefault(executor);
+}
+
+void System::setDefault(const bsl::shared_ptr<ntci::Strand>& strand)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    ntcs::Global::setDefault(strand);
+}
+
+void System::setDefault(const bsl::shared_ptr<ntci::Driver>& driver)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    ntcs::Global::setDefault(driver);
+}
+
+void System::setDefault(const bsl::shared_ptr<ntci::Reactor>& reactor)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    ntcs::Global::setDefault(reactor);
+}
+
+void System::setDefault(const bsl::shared_ptr<ntci::Proactor>& proactor)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    ntcs::Global::setDefault(proactor);
+}
+
+void System::setDefault(const bsl::shared_ptr<ntci::Interface>& interface)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    ntcs::Global::setDefault(interface);
+}
+
+void System::setDefault(const bsl::shared_ptr<ntci::Resolver>& resolver)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    ntcs::Global::setDefault(resolver);
+}
+
+void System::getDefault(bsl::shared_ptr<ntci::Executor>* result)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    ntcs::Global::getDefault(result);
+}
+
+void System::getDefault(bsl::shared_ptr<ntci::Strand>* result)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    ntcs::Global::getDefault(result);
+}
+
+void System::getDefault(bsl::shared_ptr<ntci::Driver>* result)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    ntcs::Global::getDefault(result);
+}
+
+void System::getDefault(bsl::shared_ptr<ntci::Reactor>* result)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    ntcs::Global::getDefault(result);
+}
+
+void System::getDefault(bsl::shared_ptr<ntci::Proactor>* result)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    ntcs::Global::getDefault(result);
+}
+
+void System::getDefault(bsl::shared_ptr<ntci::Interface>* result)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    ntcs::Global::getDefault(result);
+}
+
+void System::getDefault(bsl::shared_ptr<ntci::Resolver>* result)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    ntcs::Global::getDefault(result);
 }
 
 void System::exit()
 {
     BSLMT_ONCE_DO
     {
+        ntcs::Global::exit();
         ntcs::Plugin::exit();
         ntcm::MonitorableUtil::exit();
 
