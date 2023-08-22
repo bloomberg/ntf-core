@@ -11383,6 +11383,41 @@ NTCCFG_TEST_CASE(61)
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
+NTCCFG_TEST_CASE(62)
+{
+    // Concern: Default executors.
+
+    ntccfg::TestAllocator ta;
+    {
+        bsl::shared_ptr<ntci::Executor> executor;
+        ntcf::System::getDefault(&executor);
+
+        bsl::size_t numReferences = executor.use_count();
+        NTCCFG_TEST_EQ(numReferences, 2);
+
+        bslmt::Latch latch(1);
+        executor->execute(NTCCFG_BIND(&bslmt::Latch::arrive, &latch));
+        latch.wait();
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(63)
+{
+    // Concern: Default interfaces.
+
+    ntccfg::TestAllocator ta;
+    {
+        bsl::shared_ptr<ntci::Interface> interface;
+        ntcf::System::getDefault(&interface);
+
+        bslmt::Latch latch(1);
+        interface->execute(NTCCFG_BIND(&bslmt::Latch::arrive, &latch));
+        latch.wait();
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
 NTCCFG_TEST_DRIVER
 {
     NTCCFG_TEST_REGISTER(1);
@@ -11446,5 +11481,7 @@ NTCCFG_TEST_DRIVER
     NTCCFG_TEST_REGISTER(59);
     NTCCFG_TEST_REGISTER(60);
     NTCCFG_TEST_REGISTER(61);
+    NTCCFG_TEST_REGISTER(62);
+    NTCCFG_TEST_REGISTER(63);
 }
 NTCCFG_TEST_DRIVER_END;

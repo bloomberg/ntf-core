@@ -949,6 +949,62 @@ struct System {
     /// produce proactors implemented by the specified 'driverName', and
     /// false otherwise.
     static bool supportsProactorFactory(const bsl::string& driverName);
+    
+    // Install the specified 'executor' as the default executor.
+    static void setDefault(const bsl::shared_ptr<ntci::Executor>& executor);
+
+    // Install the specified 'strand' as the default strand.
+    static void setDefault(const bsl::shared_ptr<ntci::Strand>& strand);
+
+    // Install the specified 'driver' as the default driver.
+    static void setDefault(const bsl::shared_ptr<ntci::Driver>& driver);
+
+    // Install the specified 'reactor' as the default reactor.
+    static void setDefault(const bsl::shared_ptr<ntci::Reactor>& reactor);
+
+    // Install the specified 'proactor' as the default proactor.
+    static void setDefault(const bsl::shared_ptr<ntci::Proactor>& proactor);
+
+    // Install the specified 'interface' as the default interface.
+    static void setDefault(const bsl::shared_ptr<ntci::Interface>& interface);
+
+    // Install the specified 'resolver' as the default resolver.
+    static void setDefault(const bsl::shared_ptr<ntci::Resolver>& resolver);
+
+    // Load into the specified 'result' the default executor. If no default
+    // executor is explicitly installed, automatically create install a default
+    // executor with a default configuration.
+    static void getDefault(bsl::shared_ptr<ntci::Executor>* result);
+
+    // Load into the specified 'result' the default strand. If no default
+    // strand is explicitly installed, automatically create install a default
+    // strand with a default configuration.
+    static void getDefault(bsl::shared_ptr<ntci::Strand>* result);
+
+    // Load into the specified 'result' the default driver. If no default
+    // driver is explicitly installed, automatically create install a default
+    // driver with a default configuration.
+    static void getDefault(bsl::shared_ptr<ntci::Driver>* result);
+
+    // Load into the specified 'result' the default reactor. If no default
+    // reactor is explicitly installed, automatically create install a default
+    // reactor with a default configuration.
+    static void getDefault(bsl::shared_ptr<ntci::Reactor>* result);
+
+    // Load into the specified 'result' the default proactor. If no default
+    // proactor is explicitly installed, automatically create install a default
+    // proactor with a default configuration.
+    static void getDefault(bsl::shared_ptr<ntci::Proactor>* result);
+
+    // Load into the specified 'result' the default interface. If no default
+    // interface is explicitly installed, automatically create install a default
+    // interface with a default configuration.
+    static void getDefault(bsl::shared_ptr<ntci::Interface>* result);
+
+    // Load into the specified 'result' the default resolver. If no default
+    // resolver is explicitly installed, automatically create install a default
+    // resolver with a default configuration.
+    static void getDefault(bsl::shared_ptr<ntci::Resolver>* result);
 
     /// Release the resources necessary for this library's implementation.
     static void exit();
