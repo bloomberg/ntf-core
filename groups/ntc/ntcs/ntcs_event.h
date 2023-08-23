@@ -265,7 +265,15 @@ class Event
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
     char                                  d_message[64];
+#if defined(BSLS_PLATFORM_OS_LINUX) || defined(BSLS_PLATFORM_OS_DARWIN)
+    char                                  d_address[192];
+#elif defined(BSLS_PLATFORM_OS_SOLARIS)
     char                                  d_address[256];
+#elif defined(BSLS_PLATFORM_OS_AIX)
+    char                                  d_address[2048];
+#else
+#error Not implemented
+#endif
     char                                  d_control[256];
     char                                  d_buffers[1024 * 16];
 
