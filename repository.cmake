@@ -53,8 +53,10 @@ function (ntf_nomenclature_target)
     ntf_assert_defined(${ARG_TARGET})
     ntf_assert_defined(${ARG_OUTPUT})
 
-    string(TOLOWER ${ARG_TARGET} target_lowercase)
-    set(${ARG_OUTPUT} ${target_lowercase} PARENT_SCOPE)
+    # string(TOLOWER ${ARG_TARGET} target_lowercase)
+    # set(${ARG_OUTPUT} ${target_lowercase} PARENT_SCOPE)
+
+    set(${ARG_OUTPUT} ${ARG_TARGET} PARENT_SCOPE)
 endfunction()
 
 # Return the case-appropriate name of a variable.
@@ -304,6 +306,62 @@ function (ntf_target_requires_get)
 
     set(${ARG_OUTPUT} ${result} PARENT_SCOPE)
 endfunction()
+
+# Set the "libs" variable scoped to a target. The contents of this variable
+# is assigned to the "Libs.private" variable in pkg-config metadata.
+#
+# TARGET - The target.
+# VALUE  - The variable value.
+function (ntf_target_libs_set)
+    cmake_parse_arguments(
+        ARG "" "TARGET" "VALUE" ${ARGN})
+
+    ntf_assert_defined(${ARG_TARGET})
+
+    if (NOT "${ARG_VALUE}" STREQUAL "")
+        ntf_target_variable_set(
+            TARGET ${ARG_TARGET} VARIABLE "libs" VALUE ${ARG_VALUE})
+    else()
+        ntf_target_variable_set(
+            TARGET ${ARG_TARGET} VARIABLE "libs" VALUE "")
+    endif()
+endfunction()
+
+# Append to the "libs" variable scoped to a target. The contents of this
+# variable is assigned to the "Libs.private" variable in pkg-config metadata.
+#
+# TARGET - The target.
+# VALUE  - The variable value.
+function (ntf_target_libs_append)
+    cmake_parse_arguments(
+        ARG "" "TARGET" "VALUE" ${ARGN})
+
+    ntf_assert_defined(${ARG_TARGET})
+
+    if (NOT "${ARG_VALUE}" STREQUAL "")
+        ntf_target_variable_append(
+            TARGET ${ARG_TARGET} VARIABLE "libs" VALUE ${ARG_VALUE})
+    endif()
+endfunction()
+
+# Get the "libs" variable scoped to a target. The contents of this variable is
+# assigned to the "Libs.private" variable in pkg-config metadata.
+#
+# TARGET - The target.
+# OUTPUT - The variable name set in the parent scope.
+function (ntf_target_libs_get)
+    cmake_parse_arguments(
+        ARG "" "TARGET;OUTPUT" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_TARGET})
+    ntf_assert_defined(${ARG_OUTPUT})
+
+    ntf_target_variable_get(
+        TARGET ${ARG_TARGET} VARIABLE "libs" OUTPUT result)
+
+    set(${ARG_OUTPUT} ${result} PARENT_SCOPE)
+endfunction()
+
 
 # Add preprocessor defininitions when compiling a target. The definitions
 # are always added with private visibility.
@@ -658,6 +716,13 @@ function (ntf_target_options_common_prolog target)
             ntf_target_build_option(
                 TARGET ${target} LINK VALUE /DEBUG:NONE /OPT:REF /LTCG)
         endif()
+
+        # Force the redefinition of multiple symbols to work around the
+        # problem of different translation units compiled with different
+        # settings of /MD and /MDd.
+
+        ntf_target_build_option(
+            TARGET ${target} LINK VALUE /FORCE)
     endif()
 
 endfunction()
@@ -1251,7 +1316,6 @@ function (ntf_target_dump target)
 
     if(NOT CMAKE_PROPERTY_LIST)
         execute_process(COMMAND cmake --help-property-list OUTPUT_VARIABLE CMAKE_PROPERTY_LIST)
-        # Convert command output into a CMake list
         string(REGEX REPLACE ";" "\\\\;" CMAKE_PROPERTY_LIST "${CMAKE_PROPERTY_LIST}")
         string(REGEX REPLACE "\n" ";" CMAKE_PROPERTY_LIST "${CMAKE_PROPERTY_LIST}")
     endif()
@@ -1265,7 +1329,6 @@ function (ntf_target_dump target)
     foreach(property ${CMAKE_PROPERTY_LIST})
         string(REPLACE "<CONFIG>" "${CMAKE_BUILD_TYPE}" property ${property})
 
-        # Fix https://stackoverflow.com/questions/32197663/how-can-i-remove-the-the-location-property-may-not-be-read-from-target-error-i
         #if(property STREQUAL "LOCATION" OR property MATCHES "^LOCATION_" OR property MATCHES "_LOCATION$")
         #    continue()
         #endif()
@@ -1342,7 +1405,7 @@ endfunction()
 #               suite for the repository.
 function (ntf_executable)
     cmake_parse_arguments(
-        NTF_EXECUTABLE "PRIVATE;TEST;EXAMPLE" "NAME;PATH" "REQUIRES" ${ARGN})
+        NTF_EXECUTABLE "PRIVATE;TEST;EXAMPLE" "NAME;PATH;OUTPUT" "REQUIRES" ${ARGN})
 
     if ("${NTF_EXECUTABLE_NAME}" STREQUAL "")
         message(FATAL_ERROR "Invalid parameter: NAME")
@@ -1374,7 +1437,8 @@ function (ntf_executable)
     ntf_repository_library_output_path_get(OUTPUT library_output_path)
     ntf_repository_runtime_output_path_get(OUTPUT runtime_output_path)
 
-    cmake_path(APPEND main_path ${target_path} "${target}.m.cpp")
+    string(REPLACE "m_" "" target_undecorated "${target}")
+    cmake_path(APPEND main_path ${target_path} "${target_undecorated}.m.cpp")
 
     if (VERBOSE)
         message(STATUS "NTF Build: adding executable '${target}'")
@@ -1402,6 +1466,16 @@ function (ntf_executable)
     set_property(TARGET ${target}
                  PROPERTY RUNTIME_OUTPUT_DIRECTORY ${runtime_output_path})
 
+    if (NOT "${NTF_EXECUTABLE_OUTPUT}" STREQUAL "")
+        set_target_properties(
+            ${target} PROPERTIES OUTPUT_NAME ${NTF_EXECUTABLE_OUTPUT}
+        )
+
+        set_target_properties(
+            ${target} PROPERTIES SUFFIX "${CMAKE_EXECUTABLE_SUFFIX}"
+        )
+    endif()
+
     ntf_target_options(TARGET ${target})
 
     ntf_target_path_set(
@@ -1422,14 +1496,19 @@ function (ntf_executable)
     set(NTF_TARGET_REQUIRES_${target_uppercase} ${NTF_EXECUTABLE_REQUIRES}
         CACHE INTERNAL "")
 
+    target_include_directories(
+        ${target}
+        PUBLIC
+        $<INSTALL_INTERFACE:include>
+        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
+        $<BUILD_INTERFACE:${target_path}>
+    )
+
     ntf_ide_vs_code_tasks_add_target(${target})
     ntf_ide_vs_code_launch_add_target(${target})
 
     foreach(entry ${NTF_EXECUTABLE_REQUIRES})
-        string(TOLOWER ${entry} dependency_lowercase)
-        string(TOUPPER ${entry} dependency_uppercase)
-
-        set(dependency ${dependency_lowercase})
+        set(dependency ${entry})
 
         if (VERBOSE)
             message(STATUS "NTF Build: linking executable '${target}' to target '${dependency}'")
@@ -1488,12 +1567,22 @@ function (ntf_executable)
     endif()
 
     if (NOT ${target_private})
-        if(UNIX)
-            set(executable_basename "${target}")
-        elseif(WINDOWS)
-            set(executable_basename "${target}.exe")
+        if (NOT "${NTF_EXECUTABLE_OUTPUT}" STREQUAL "")
+            if(UNIX)
+                set(executable_basename "${NTF_EXECUTABLE_OUTPUT}")
+            elseif(WIN32)
+                set(executable_basename "${NTF_EXECUTABLE_OUTPUT}.exe")
+            else()
+                message(FATAL_ERROR "Unsupported platform")
+            endif()
         else()
-            message(FATAL_ERROR "Unsupported platform")
+            if(UNIX)
+                set(executable_basename "${target}")
+            elseif(WIN32)
+                set(executable_basename "${target}.exe")
+            else()
+                message(FATAL_ERROR "Unsupported platform")
+            endif()
         endif()
 
         cmake_path(
@@ -1504,7 +1593,7 @@ function (ntf_executable)
         set(executable_destination_relative_path "bin")
 
         install(
-            FILES
+            PROGRAMS
                 ${executable_source_path}
             DESTINATION
                 ${executable_destination_relative_path}
@@ -1572,6 +1661,446 @@ function (ntf_executable_end)
     ntf_target_options_common_epilog(${target})
 
     # TODO: Implement any post-processing for an executable.
+
+endfunction()
+
+# Begin the definition of an adapter.
+#
+# NAME        - The name of the adapter.
+# PATH        - The path to the adapter. If the path is relative, the path
+#               is interpreted relative to the root of the repository.
+# DESCRIPTION - The single line description of the adapter, as it should
+#               appear in package meta-data.
+# REQUIRES    - The intra-repository dependencies of the adapter.
+# PRIVATE     - The flag indicating that all headers and artifacts are private
+#               and should not be installed.
+function (ntf_adapter)
+    cmake_parse_arguments(
+        NTF_ADAPTER "PRIVATE" "NAME;PATH;DESCRIPTION" "REQUIRES" ${ARGN})
+
+    if ("${NTF_ADAPTER_NAME}" STREQUAL "")
+        message(FATAL_ERROR "Invalid parameter: NAME")
+    endif()
+
+    if ("${NTF_ADAPTER_PATH}" STREQUAL "")
+        message(FATAL_ERROR "Invalid parameter: PATH")
+    endif()
+
+    if ("${NTF_ADAPTER_DESCRIPTION}" STREQUAL "")
+        message(FATAL_ERROR "Invalid parameter: DESCRIPTION")
+    endif()
+
+    string(TOLOWER ${NTF_ADAPTER_NAME} target_lowercase)
+    string(TOUPPER ${NTF_ADAPTER_NAME} target_uppercase)
+
+    set(target ${target_lowercase})
+
+    if (IS_ABSOLUTE ${NTF_ADAPTER_PATH})
+        set(target_path ${NTF_ADAPTER_PATH})
+    else()
+        ntf_repository_path_get(OUTPUT repository_path)
+        file(REAL_PATH ${NTF_ADAPTER_PATH} target_path
+             BASE_DIRECTORY ${repository_path})
+    endif()
+
+    set(target_private ${NTF_ADAPTER_PRIVATE})
+    if ("${target_private}" STREQUAL "")
+        set(target_private FALSE)
+    endif()
+
+    ntf_repository_archive_output_path_get(OUTPUT archive_output_path)
+    ntf_repository_library_output_path_get(OUTPUT library_output_path)
+    ntf_repository_runtime_output_path_get(OUTPUT runtime_output_path)
+
+    add_library(${target} STATIC)
+
+    # Set the C++ standard version unless using xlc, which requires
+    # special, non-portable flag for some C++03-like behavior.
+
+    if (NOT CMAKE_CXX_COMPILER_ID MATCHES "XL")
+        ntf_repository_standard_get(OUTPUT cxx_standard)
+        set_property(TARGET ${target} PROPERTY CXX_STANDARD ${cxx_standard})
+    endif()
+
+    set_property(TARGET ${target} PROPERTY EXPORT_COMPILE_COMMANDS TRUE)
+
+    set_property(TARGET ${target}
+                 PROPERTY ARCHIVE_OUTPUT_DIRECTORY ${archive_output_path})
+
+    set_property(TARGET ${target}
+                 PROPERTY LIBRARY_OUTPUT_DIRECTORY ${library_output_path})
+
+    set_property(TARGET ${target}
+                 PROPERTY RUNTIME_OUTPUT_DIRECTORY ${runtime_output_path})
+
+    ntf_target_options(TARGET ${target})
+
+    ntf_target_path_set(
+        TARGET ${target} VALUE ${target_path})
+
+    ntf_target_description_set(
+        TARGET ${target} VALUE ${NTF_ADAPTER_DESCRIPTION})
+
+    ntf_target_private_set(
+        TARGET ${target} VALUE ${target_private})
+
+    ntf_target_requires_set(
+        TARGET ${target} VALUE ${NTF_ADAPTER_REQUIRES})
+
+    target_include_directories(
+        ${target}
+        PUBLIC
+        $<INSTALL_INTERFACE:include>
+        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
+        $<BUILD_INTERFACE:${target_path}>
+    )
+
+    foreach(entry ${NTF_ADAPTER_REQUIRES})
+        set(dependency ${entry})
+
+        if (VERBOSE)
+            message(STATUS "NTF Build: linking adapter '${target}' to target '${dependency}'")
+            message(STATUS "         * target_link_libraries(${target} ${dependency})")
+        endif()
+
+        target_link_libraries(${target} PUBLIC ${dependency})
+    endforeach()
+
+    if (NOT TARGET test_${target})
+        add_custom_target(
+            test_${target}
+            COMMAND ${CMAKE_CTEST_COMMAND} -R ${target})
+    endif()
+
+    if (NOT TARGET format_${target})
+        add_custom_target(format_${target})
+        add_dependencies(format format_${target})
+    endif()
+
+    if (TARGET documentation)
+        add_dependencies(documentation ${target})
+    endif()
+
+endfunction()
+
+# Add a dependency to an adapter, attempting to find the dependency through
+# either CMake, pkg-config, or as a raw library.
+#
+# NAME       - The adapter.
+# DEPENDENCY - The dependency name list.
+# OPTIONAL   - Flag indicating the target is linked to the dependency only if
+#              it exists, otherwise the dependency must be must found
+function (ntf_adapter_requires)
+    cmake_parse_arguments(
+        ARG "OPTIONAL" "NAME" "DEPENDENCY" ${ARGN})
+
+    ntf_assert_defined(${ARG_NAME})
+    ntf_assert_defined(${ARG_DEPENDENCY})
+
+    ntf_nomenclature_target(TARGET ${ARG_NAME} OUTPUT target)
+
+    ntf_assert_target_defined(${target})
+
+    foreach (dependency ${ARG_DEPENDENCY})
+        ntf_target_link_dependency(
+            TARGET ${target} DEPENDENCY ${dependency} OUTPUT result OPTIONAL)
+
+        if (NOT ${result} AND NOT ${ARG_OPTIONAL})
+            ntf_die("The target '${target}' requires dependency '${dependency}' but it cannot be found")
+        endif()
+    endforeach()
+endfunction()
+
+# End the definition of an adapter.
+function (ntf_adapter_end)
+    cmake_parse_arguments(
+        ARG "" "NAME" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_NAME})
+
+    ntf_nomenclature_target(TARGET ${ARG_NAME} OUTPUT target)
+
+    ntf_assert_target_defined(${target})
+
+    ntf_target_private_get(TARGET ${target} OUTPUT target_private)
+
+    ntf_target_options_common_epilog(${target})
+
+    ntf_repository_build_ufid_get(OUTPUT build_ufid)
+    ntf_repository_install_ufid_get(OUTPUT install_ufid)
+
+    ntf_ufid_string_has(UFID ${build_ufid} FLAG "64" OUTPUT is_64_bit)
+
+    if (${is_64_bit} AND NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+        set(lib_name "lib64" CACHE INTERNAL "")
+    else()
+        set(lib_name "lib" CACHE INTERNAL "")
+    endif()
+
+    # Set the relative path to the library directory under the prefix. For
+    # example: lib64
+
+    set(library_relative_path ${lib_name})
+
+    # Set the relative path to the UFID-specific library directory under the
+    # prefix. For example: lib64/dbg_exc_mt
+
+    set(library_install_ufid_relative_path "${lib_name}/${install_ufid}")
+
+    # Define the installation UFIDs that are aliases for this UFID. Building
+    # the alias UFID is synonymous with the original UFID.
+
+    set(alias_install_ufid_list)
+
+    set(alias_install_ufid_pic ${install_ufid})
+    ntf_ufid_add(UFID "${alias_install_ufid_pic}" FLAG "pic" OUTPUT alias_install_ufid_pic)
+    list(APPEND alias_install_ufid_list ${alias_install_ufid_pic})
+
+    if(${is_64_bit})
+        set(alias_install_ufid_pic_64 ${install_ufid})
+        ntf_ufid_add(UFID "${alias_install_ufid_pic_64}" FLAG "pic" OUTPUT alias_install_ufid_pic_64)
+        ntf_ufid_add(UFID "${alias_install_ufid_pic_64}" FLAG "64" OUTPUT alias_install_ufid_pic_64)
+        list(APPEND alias_install_ufid_list ${alias_install_ufid_pic_64})
+    endif()
+
+    # Define the alternate install UFIDs. Other build systems may expect
+    # these paths to exist.
+
+    set(alternate_install_ufid_list)
+
+    list(APPEND alternate_install_ufid_list "!")
+    list(APPEND alternate_install_ufid_list "${install_ufid}")
+
+    if(${is_64_bit})
+        list(APPEND alternate_install_ufid_list "${install_ufid}_64")
+    endif()
+
+    list(APPEND alternate_install_ufid_list ${alias_install_ufid_list})
+
+    # Install CMake target meta-data. TODO: Make this a configuration option.
+
+    set(install_cmake_metadata TRUE)
+
+    if (${install_cmake_metadata})
+        if (NOT ${target_private})
+            install(
+                TARGETS
+                    ${target}
+                EXPORT
+                    ${target}Targets
+                    DESTINATION
+                        ${library_install_ufid_relative_path}
+                RUNTIME
+                    DESTINATION
+                        "bin"
+                    COMPONENT
+                        runtime
+                LIBRARY
+                    DESTINATION
+                        ${library_install_ufid_relative_path}
+                    COMPONENT
+                        runtime
+                ARCHIVE
+                    DESTINATION
+                        ${library_install_ufid_relative_path}
+                    COMPONENT
+                        development
+            )
+
+            foreach (alternate_install_ufid ${alternate_install_ufid_list})
+                set(canonical_library_name ${CMAKE_STATIC_LIBRARY_PREFIX}${target}${CMAKE_STATIC_LIBRARY_SUFFIX})
+
+                if ("${alternate_install_ufid}" STREQUAL "!")
+                    set(alternate_library_name ${canonical_library_name})
+                else()
+                    set(alternate_library_name ${CMAKE_STATIC_LIBRARY_PREFIX}${target}.${alternate_install_ufid}${CMAKE_STATIC_LIBRARY_SUFFIX})
+                endif()
+
+                install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_library_name}\")")
+
+                install(CODE "file(CREATE_LINK ${install_ufid}/${canonical_library_name} \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_library_name} SYMBOLIC)")
+
+            endforeach()
+
+            export(
+                EXPORT
+                    ${target}Targets
+                FILE
+                    "${CMAKE_CURRENT_BINARY_DIR}/${target}Targets.cmake"
+
+                # TODO: Export the target into a CMake namespace, if advisable.
+                # NAMESPACE ${CMAKE_PROJECT_NAME}::
+            )
+
+            write_basic_package_version_file(
+                "${CMAKE_CURRENT_BINARY_DIR}/${target}ConfigVersion.cmake"
+                VERSION
+                    ${CMAKE_PROJECT_VERSION}
+                COMPATIBILITY
+                    AnyNewerVersion
+            )
+
+            # Recursively find dependencies of each "requires" of this
+            # target and manually generate it into the
+            # "${target}-config.cmake" file. Ideally, this should be done
+            # automatically by CMake itself but no version of CMake currently
+            # supports such a feature.
+            #
+            # See the issue described at
+            # https://gitlab.kitware.com/cmake/cmake/-/issues/20511
+
+            ntf_target_requires_get(TARGET ${target} OUTPUT target_requires)
+
+            set(target_config_cmake_content "")
+
+            string(APPEND target_config_cmake_content "\
+include(CMakeFindDependencyMacro)\n\
+if (NOT TARGET ${target})\n\
+    if (UNIX)\n\
+        find_dependency(Threads)\n\
+    endif()\n\
+")
+
+    set(target_requires_reversed ${target_requires})
+    list(REVERSE target_requires_reversed)
+    foreach (dependency ${target_requires_reversed})
+            string(APPEND target_config_cmake_content "\
+    find_dependency(${dependency} PATHS \"\${CMAKE_CURRENT_LIST_DIR}\")\n\
+")
+    endforeach()
+
+            string(APPEND target_config_cmake_content "\
+    include(\"\${CMAKE_CURRENT_LIST_DIR}/${target}Targets.cmake\")\n\
+endif()\n\
+")
+
+            file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${target}Config.cmake"
+                ${target_config_cmake_content})
+
+            set(cmake_metadata_relative_path
+                ${library_install_ufid_relative_path}/cmake)
+
+            install(
+                EXPORT
+                    ${target}Targets
+                FILE
+                    ${target}Targets.cmake
+                DESTINATION
+                    ${cmake_metadata_relative_path}
+                COMPONENT
+                    development
+                # TODO: Export the target into a CMake namespace, if advisable.
+                # NAMESPACE ${CMAKE_PROJECT_NAME}::
+            )
+
+            install(
+                FILES
+                    ${CMAKE_CURRENT_BINARY_DIR}/${target}Config.cmake
+                    ${CMAKE_CURRENT_BINARY_DIR}/${target}ConfigVersion.cmake
+                DESTINATION
+                    ${cmake_metadata_relative_path}
+                COMPONENT
+                    development
+            )
+
+        endif()
+    else()
+        if (NOT ${target_private})
+            if(UNIX)
+                set(archive_basename "lib${target}.a")
+            elseif(WIN32)
+                set(archive_basename "${target}.lib")
+            else()
+                message(FATAL_ERROR "Unsupported platform")
+            endif()
+
+            ntf_repository_archive_output_path_get(OUTPUT archive_output_path)
+
+            cmake_path(
+                APPEND
+                archive_source_path
+                ${archive_output_path} ${archive_basename})
+
+            set(archive_destination_relative_path "${lib_name}")
+
+            install(
+                FILES
+                    ${archive_source_path}
+                DESTINATION
+                    ${archive_destination_relative_path}
+                COMPONENT
+                    development
+            )
+        endif()
+    endif()
+
+    # Install pkg-config meta-data. TODO: Make this a configuration option.
+
+    set(install_pkgconfig_metadata TRUE)
+
+    if (${install_pkgconfig_metadata})
+        if (NOT ${target_private})
+            ntf_target_description_get(TARGET ${target} OUTPUT target_description)
+            ntf_target_requires_get(TARGET ${target} OUTPUT target_requires)
+            ntf_target_libs_get(TARGET ${target} OUTPUT target_libs)
+
+            string (REPLACE ";" " " target_requires_string "${target_requires}")
+
+            set(target_libs_string "")
+            foreach (target_libs_entry ${target_libs})
+                set(target_libs_string "${target_libs_string} -l${target_libs_entry}")
+            endforeach()
+
+            # TODO: Set 'prefix' to "${pcfiledir}/../.." in the top-level
+            # pkgconfig directory, set it to "${pcfiledir}/../../.." in the
+            # UFID-specific pkgconfig directory, and do not install symlinks
+            # in each UFID-specific pkgconfig directory, but separate copies
+            # with prefix set to the directory hierarchy appropriately.
+
+            set(target_pc_content "\
+prefix=${CMAKE_INSTALL_PREFIX}\n\
+libdir=\${prefix}/${library_install_ufid_relative_path}\n\
+includedir=\${prefix}/include\n\
+\n\
+Name: ${target}\n\
+Description: ${target_description}\n\
+URL: ${CMAKE_PROJECT_HOMEPAGE_URL}\n\
+Version: ${CMAKE_PROJECT_VERSION}\n\
+Requires: \n\
+Requires.private: ${target_requires_string}\n\
+Cflags: -I\${includedir}\n\
+Libs: -L\${libdir} -l${target}\n\
+Libs.private:${target_libs_string}\n\
+")
+
+            file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${target}.pc"
+                ${target_pc_content})
+
+            install(
+                FILES ${CMAKE_CURRENT_BINARY_DIR}/${target}.pc
+                DESTINATION ${library_install_ufid_relative_path}/pkgconfig
+            )
+
+            # Install symlinks.
+
+            install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig/${target}.pc\")")
+
+            install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig)")
+            install(CODE "file(CREATE_LINK ../${install_ufid}/pkgconfig/${target}.pc \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig/${target}.pc SYMBOLIC)")
+
+            foreach (alternate_install_ufid ${alternate_install_ufid_list})
+                if (NOT "${alternate_install_ufid}" STREQUAL "!" AND
+                    NOT "${alternate_install_ufid}" STREQUAL "${install_ufid}")
+                    install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig/${target}.pc\")")
+
+                    install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig)")
+                    install(CODE "file(CREATE_LINK ../../${install_ufid}/pkgconfig/${target}.pc \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig/${target}.pc SYMBOLIC)")
+                endif()
+            endforeach()
+
+        endif()
+
+    endif()
 
 endfunction()
 
@@ -1659,10 +2188,7 @@ function (ntf_group)
         TARGET ${target} VALUE ${NTF_GROUP_REQUIRES})
 
     foreach(entry ${NTF_GROUP_REQUIRES})
-        string(TOLOWER ${entry} dependency_lowercase)
-        string(TOUPPER ${entry} dependency_uppercase)
-
-        set(dependency ${dependency_lowercase})
+        set(dependency ${entry})
 
         if (VERBOSE)
             message(STATUS "NTF Build: linking group '${target}' to target '${dependency}'")
@@ -1914,7 +2440,7 @@ endif()\n\
         if (NOT ${target_private})
             if(UNIX)
                 set(archive_basename "lib${target}.a")
-            elseif(WINDOWS)
+            elseif(WIN32)
                 set(archive_basename "${target}.lib")
             else()
                 message(FATAL_ERROR "Unsupported platform")
@@ -1948,8 +2474,14 @@ endif()\n\
         if (NOT ${target_private})
             ntf_target_description_get(TARGET ${target} OUTPUT target_description)
             ntf_target_requires_get(TARGET ${target} OUTPUT target_requires)
+            ntf_target_libs_get(TARGET ${target} OUTPUT target_libs)
 
             string (REPLACE ";" " " target_requires_string "${target_requires}")
+
+            set(target_libs_string "")
+            foreach (target_libs_entry ${target_libs})
+                set(target_libs_string "${target_libs_string} -l${target_libs_entry}")
+            endforeach()
 
             set(target_pc_content "\
 prefix=${CMAKE_INSTALL_PREFIX}\n\
@@ -1964,7 +2496,7 @@ Requires: \n\
 Requires.private: ${target_requires_string}\n\
 Cflags: -I\${includedir}\n\
 Libs: -L\${libdir} -l${target}\n\
-Libs.private: \n\
+Libs.private:${target_libs_string}\n\
 ")
 
             file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${target}.pc"
@@ -2131,10 +2663,7 @@ function (ntf_package)
     target_sources(${group} PRIVATE $<TARGET_OBJECTS:${target}>)
 
     foreach(entry ${NTF_PACKAGE_REQUIRES})
-        string(TOLOWER ${entry} dependency_lowercase)
-        string(TOUPPER ${entry} dependency_uppercase)
-
-        set(dependency ${dependency_lowercase})
+        set(dependency ${entry})
 
         if (VERBOSE)
             message(STATUS "NTF Build: linking package '${target}' to target '${dependency}'")
@@ -2405,10 +2934,7 @@ function (ntf_component)
         ntf_target_requires_get(TARGET ${target} OUTPUT target_requires)
 
         foreach(entry ${target_requires})
-            string(TOLOWER ${entry} dependency_lowercase)
-            string(TOUPPER ${entry} dependency_uppercase)
-
-            set(dependency ${dependency_lowercase})
+            set(dependency ${entry})
 
             if (VERBOSE)
                 message(STATUS "NTF Build: linking component test driver '${component_test_build_target}' to target '${dependency}'")
@@ -2462,17 +2988,18 @@ function (ntf_component)
 
     if (NOT ${component_private})
         if (EXISTS ${component_header_path})
-
-            set(header_destination_relative_path "include")
-
-            install(
-                FILES
-                    ${component_header_path}
-                DESTINATION
-                    ${header_destination_relative_path}
-                COMPONENT
-                    development
-            )
+            get_target_property(target_type ${target} TYPE)
+            if (NOT target_type STREQUAL "EXECUTABLE")
+                set(header_destination_relative_path "include")
+                install(
+                    FILES
+                        ${component_header_path}
+                    DESTINATION
+                        ${header_destination_relative_path}
+                    COMPONENT
+                        development
+                )
+            endif()
         endif()
     endif()
 
@@ -2776,6 +3303,7 @@ function (ntf_target_link_dependency_by_pkgconfig)
     endif()
 
     set(dependency_prefix ${dependency_uppercase})
+    string(REPLACE "-" "_" dependency_prefix "${dependency_prefix}")
 
     set(DEPENDENCY_FOUND "${dependency_prefix}_FOUND")
 
@@ -2820,7 +3348,26 @@ function (ntf_target_link_dependency_by_pkgconfig)
 
     unset(${DEPENDENCY_FOUND})
 
-    pkg_search_module(${dependency_prefix} QUIET ${dependency})
+    string(REPLACE "_" "-" dependency_alternate ${dependency})
+
+    if (NOT ${dependency_alternate} STREQUAL ${dependency})
+        if (VERBOSE)
+            pkg_search_module(${dependency_prefix}
+                              ${dependency}
+                              ${dependency_alternate})
+        else()
+            pkg_search_module(${dependency_prefix}
+                              QUIET
+                              ${dependency}
+                              ${dependency_alternate})
+        endif()
+    else()
+        if (VERBOSE)
+            pkg_search_module(${dependency_prefix} ${dependency})
+        else()
+            pkg_search_module(${dependency_prefix} QUIET ${dependency})
+        endif()
+    endif()
 
     # Restore the original value of the PKG_CONFIG_PATH environment variable,
     # if any.
@@ -2839,7 +3386,7 @@ function (ntf_target_link_dependency_by_pkgconfig)
 
     # Check if the dependency was found.
 
-    if (NOT ${${DEPENDENCY_FOUND}})
+    if ("${${DEPENDENCY_FOUND}}" STREQUAL "" OR NOT ${${DEPENDENCY_FOUND}})
         if (VERBOSE)
             message(STATUS "Target '${target}' dependency '${dependency}' not found by pkg-config")
         endif()
@@ -2905,7 +3452,11 @@ function (ntf_target_link_dependency_by_pkgconfig)
 
     # If true add -L and -l rules to target link libraries, otherwise, add
     # full paths to libraries.
-    set(NTF_BUILD_LINK_USING_L_RULES TRUE)
+
+    set(NTF_BUILD_LINK_USING_L_RULES FALSE)
+
+    # If true use -l rules for all libraries not found in the refroot.
+    set(NTF_BUILD_LINK_USING_L_RULES_FOR_SYSTEM_LIBRARIES TRUE)
 
     if (${NTF_BUILD_LINK_USING_L_RULES})
         set(static_libraries ${${DEPENDENCY_STATIC_LIBRARIES}})
@@ -2915,7 +3466,7 @@ function (ntf_target_link_dependency_by_pkgconfig)
             endif()
             if (UNIX)
                 list(APPEND interface_link_libraries "-l${static_library}")
-            elseif (WINDOWS)
+            elseif (WIN32)
                 list(APPEND interface_link_libraries "${static_library}.lib")
             else()
                 ntf_die("Unknown platform")
@@ -2926,6 +3477,10 @@ function (ntf_target_link_dependency_by_pkgconfig)
         set(system_libraries)
 
         foreach (static_library ${${DEPENDENCY_STATIC_LIBRARIES}})
+            if (VERBOSE)
+                message(STATUS "Dependency '${dependency}' needs link library '${static_library}'")
+            endif()
+
             set(lib_prefix ${CMAKE_STATIC_LIBRARY_PREFIX})
             set(lib_suffix ${CMAKE_STATIC_LIBRARY_SUFFIX})
 
@@ -2953,24 +3508,44 @@ function (ntf_target_link_dependency_by_pkgconfig)
                 NO_CACHE)
 
             if ("${static_library_path}" MATCHES "NOTFOUND")
-                # message(STATUS "Target '${target}' dependency '${static_library}' not found")
-                unset(static_library_path)
-                find_library(
-                    static_library_path
-                    NAMES ${static_library_name_list}
-                    NAMES_PER_DIR
-                    NO_CACHE)
+                if (VERBOSE)
+                    message(STATUS "Target '${target}' dependency '${static_library}' not found as '${static_library_name_list}' in '${static_library_path_list}'")
+                endif()
 
-                if ("${static_library_path}" MATCHES "NOTFOUND")
-                    # message(FATAL_ERROR "Target '${target} dependency '${static_library}' not found")
+                if (${NTF_BUILD_LINK_USING_L_RULES_FOR_SYSTEM_LIBRARIES})
+                    if (VERBOSE)
+                        message(STATUS "Target '${target} dependency '${static_library}' assumed to be system library linked using -l${static_library}")
+                    endif()
+
                     if (UNIX)
                         list(APPEND system_libraries "-l${static_library}")
-                    elseif (WINDOWS)
+                    elseif (WIN32)
                         list(APPEND system_libraries "${static_library}.lib")
                     else()
                         ntf_die("Unknown platform")
                     endif()
                     continue()
+                else()
+                    unset(static_library_path)
+                    find_library(
+                        static_library_path
+                        NAMES ${static_library_name_list}
+                        NAMES_PER_DIR
+                        NO_CACHE)
+
+                    if ("${static_library_path}" MATCHES "NOTFOUND")
+                        if (VERBOSE)
+                            message(STATUS "Target '${target} dependency '${static_library}' not found as '${static_library_name_list}' in system paths")
+                        endif()
+                        if (UNIX)
+                            list(APPEND system_libraries "-l${static_library}")
+                        elseif (WIN32)
+                            list(APPEND system_libraries "${static_library}.lib")
+                        else()
+                            ntf_die("Unknown platform")
+                        endif()
+                        continue()
+                    endif()
                 endif()
             endif()
 
@@ -3927,7 +4502,7 @@ function (ntf_repository)
             ntf_repository_toolchain_compiler_path_set(
                 VALUE ${CMAKE_CXX_COMPILER})
         else()
-            find_program(compiler_path ${CMAKE_CXX_COMPILER} REQUIRED)
+            find_program(compiler_path ${CMAKE_CXX_COMPILER} REQUIRED NO_CACHE)
             ntf_repository_toolchain_compiler_path_set(
                 VALUE ${compiler_path})
         endif()
@@ -3943,22 +4518,22 @@ function (ntf_repository)
                "${compiler_name}" STREQUAL "c++")
                 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
                     ntf_repository_toolchain_debugger_name_set(VALUE "lldb")
-                else()
+                elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
                     ntf_repository_toolchain_debugger_name_set(VALUE "gdb")
+                else()
+                    ntf_repository_toolchain_debugger_name_set(VALUE "")
                 endif()
+            elseif("${compiler_name}" STREQUAL "clang" OR
+                "${compiler_name}" STREQUAL "clang++")
+                ntf_repository_toolchain_debugger_name_set(VALUE "lldb")
             elseif("${compiler_name}" STREQUAL "gcc" OR
                    "${compiler_name}" STREQUAL "g++")
                 ntf_repository_toolchain_debugger_name_set(VALUE "gdb")
-            elseif("${compiler_name}" STREQUAL "clang" OR
-                   "${compiler_name}" STREQUAL "clang++")
-                ntf_repository_toolchain_debugger_name_set(VALUE "lldb")
             else()
-                ntf_repository_toolchain_debugger_name_set(
-                    VALUE "")
+                ntf_repository_toolchain_debugger_name_set(VALUE "")
             endif()
         else()
-            ntf_repository_toolchain_debugger_name_set(
-                VALUE "")
+            ntf_repository_toolchain_debugger_name_set(VALUE "")
         endif()
     endif()
 
@@ -3968,12 +4543,14 @@ function (ntf_repository)
     else()
         ntf_repository_toolchain_debugger_name_get(OUTPUT debugger_name)
         if (NOT "${debugger_name}" STREQUAL "")
-            find_program(debugger_path ${debugger_name} REQUIRED)
+            find_program(debugger_path ${debugger_name} NO_CACHE)
+            if ("${debugger_path}" STREQUAL "debugger_path-NOTFOUND")
+                set(debugger_path "${debugger_name}")
+            endif()
             ntf_repository_toolchain_debugger_path_set(
                 VALUE ${debugger_path})
         else()
-            ntf_repository_toolchain_debugger_path_set(
-                VALUE "")
+            ntf_repository_toolchain_debugger_path_set(VALUE "")
         endif()
     endif()
 
@@ -4434,7 +5011,7 @@ function (ntf_ide_vs_code_tasks_create)
   \"version\": \"2.0.0\",\n\
   \"tasks\": [\n\
     {\n\
-      \"type\": \"shell\",\n\
+      \"type\": \"process\",\n\
       \"label\": \"all\",\n\
       \"command\": \"${CMAKE_COMMAND}\",\n\
       \"args\": [\n\
@@ -4467,7 +5044,7 @@ function (ntf_ide_vs_code_tasks_add_target target)
     set(content "")
     string(APPEND content ",\n\
     {\n\
-      \"type\": \"shell\",\n\
+      \"type\": \"process\",\n\
       \"label\": \"${target}\",\n\
       \"command\": \"${CMAKE_COMMAND}\",\n\
       \"args\": [\n\
@@ -4597,7 +5174,7 @@ function (ntf_ide_vs_code_c_cpp_properties_create)
        "${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "ARM64")
         set(arch "arm64")
     elseif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
-        set(arch "arm64")
+        set(arch "aarch64")
     elseif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64" OR
            "${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "amd64"  OR
            "${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "AMD64")
