@@ -905,5 +905,13 @@ if (${NTF_BUILD_WITH_USAGE_EXAMPLES})
     endif()
 endif()
 
+if (VERBOSE)
+    ntf_target_dump(bsl)
+    ntf_target_dump(bdl)
+    ntf_target_dump(bal)
+    ntf_target_dump(nts)
+    ntf_target_dump(ntc)
+endif()
+
 ntf_repository_end()
 
