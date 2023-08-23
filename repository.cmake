@@ -1266,9 +1266,9 @@ function (ntf_target_dump target)
         string(REPLACE "<CONFIG>" "${CMAKE_BUILD_TYPE}" property ${property})
 
         # Fix https://stackoverflow.com/questions/32197663/how-can-i-remove-the-the-location-property-may-not-be-read-from-target-error-i
-        if(property STREQUAL "LOCATION" OR property MATCHES "^LOCATION_" OR property MATCHES "_LOCATION$")
-            continue()
-        endif()
+        #if(property STREQUAL "LOCATION" OR property MATCHES "^LOCATION_" OR property MATCHES "_LOCATION$")
+        #    continue()
+        #endif()
 
         get_property(was_set TARGET ${target} PROPERTY ${property} SET)
         if(was_set)
@@ -2551,9 +2551,19 @@ function (ntf_target_link_dependency_by_cmake)
     set(DEPENDENCY_FOUND "${dependency_prefix}_FOUND")
     set(DEPENDENCY_CONFIG "${dependency_prefix}_CONFIG")
 
+    set(originalCmakePrefixPath "")
+    if (NOT "${CMAKE_PREFIX_PATH}" STREQUAL "")
+        set(originalCmakePrefixPath ${CMAKE_PREFIX_PATH})
+    endif()
+
     set(search_directory_list)
+
     list(APPEND search_directory_list "${prefixLibraryUfidDir}/cmake")
     list(APPEND search_directory_list "${prefixLibraryDir}/cmake")
+
+    if (NOT "${CMAKE_PREFIX_PATH}" STREQUAL "")
+        list(APPEND search_directory_list ${CMAKE_PREFIX_PATH})
+    endif()
 
     if (VERBOSE)
         message(STATUS "Searching for target '${target}' dependency '${dependency}' using CMake in ${search_directory_list}")
@@ -2561,42 +2571,87 @@ function (ntf_target_link_dependency_by_cmake)
 
     # Attempt to find the dependency using CMake.
 
-    find_package(
-        ${dependency_uppercase} QUIET CONFIG
-        NAMES ${dependency}
-        PATHS ${search_directory_list}
-        NO_DEFAULT_PATH)
+    # Note: HINTS and PATHS are not propogated to any calls to find_dependency
+    # that may be performed inside a dependencies configuration (e.g.
+    # <uor>Config.cmake) to automatically transitively find dependencies of the
+    # dependency. It has been observed that the following call is not
+    # sufficient to correctly find meta-data in some directory layouts on
+    # some systems in some build configurations, e.g. Solaris 64-bit using
+    # a layout strategy like:
+    #
+    #     <refroot>/<prefix>/lib64/cmake/<uor>/<uor>Config.cmake.
+    #
+    # find_package(
+    #     ${dependency_uppercase} QUIET CONFIG
+    #     NAMES ${dependency}
+    #     HINTS ${search_directory_list}
+    #     PATHS ${search_directory_list}
+    #     NO_DEFAULT_PATH
+    # )
 
-    if (NOT ${${DEPENDENCY_FOUND}})
+    foreach (search_directory ${search_directory_list})
         if (VERBOSE)
-            message(STATUS "Target '${target}' dependency '${dependency}' not found by CMake")
+            message(STATUS "Searching for target '${target}' dependency '${dependency}' using CMake in ${search_directory}")
         endif()
 
-        set(${ARG_OUTPUT} FALSE PARENT_SCOPE)
-        return()
-    endif()
+        set(CMAKE_PREFIX_PATH ${search_directory} CACHE INTERNAL "")
 
-    if (NOT TARGET ${dependency})
         if (VERBOSE)
-            message(STATUS "Target '${target}' dependency '${dependency}' found using cmake but no target defined")
+            find_package(
+                ${dependency_uppercase} CONFIG
+                NAMES ${dependency}
+            )
+        else()
+            find_package(
+                ${dependency_uppercase} QUIET CONFIG
+                NAMES ${dependency}
+            )
         endif()
-        set(${ARG_OUTPUT} FALSE PARENT_SCOPE)
+
+        if (NOT ${${DEPENDENCY_FOUND}})
+            if (VERBOSE)
+                message(STATUS "Target '${target}' dependency '${dependency}' not found by CMake in ${search_directory}")
+            endif()
+            continue()
+        endif()
+
+        if (NOT TARGET ${dependency})
+            if (VERBOSE)
+                message(STATUS "Target '${target}' dependency '${dependency}' found using cmake but no target defined in ${search_directory}")
+            endif()
+            continue()
+        endif()
+
+        if (VERBOSE)
+            message(STATUS "Dependency '${dependency}' found using cmake at '${${DEPENDENCY_CONFIG}}'")
+        endif()
+
+        if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
+            target_link_libraries(
+                ${target} INTERFACE ${dependency})
+        else()
+            target_link_libraries(
+                ${target} PUBLIC ${dependency})
+        endif()
+
+        if (NOT "${originalCmakePrefixPath}" STREQUAL "")
+            set(CMAKE_PREFIX_PATH ${originalCmakePrefixPath} CACHE INTERNAL "")
+        endif()
+
+        set(${ARG_OUTPUT} TRUE PARENT_SCOPE)
         return()
-    endif()
+    endforeach()
 
     if (VERBOSE)
-        message(STATUS "Dependency '${dependency}' found using cmake at '${${DEPENDENCY_CONFIG}}'")
+        message(STATUS "Target '${target}' dependency '${dependency}' not found by CMake in ${search_directory_list}")
     endif()
 
-    if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
-        target_link_libraries(
-            ${target} INTERFACE ${dependency})
-    else()
-        target_link_libraries(
-            ${target} PUBLIC ${dependency})
+    if (NOT "${originalCmakePrefixPath}" STREQUAL "")
+        set(CMAKE_PREFIX_PATH ${originalCmakePrefixPath} CACHE INTERNAL "")
     endif()
 
-    set(${ARG_OUTPUT} TRUE PARENT_SCOPE)
+    set(${ARG_OUTPUT} FALSE PARENT_SCOPE)
+    return()
 
 endfunction()
 

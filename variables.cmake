@@ -691,6 +691,8 @@ message(STATUS "NTF: Installation prefix path:                  ${NTF_BUILD_PREF
 message(STATUS "NTF: Platform:                                  ${NTF_BUILD_UNAME}")
 message(STATUS "NTF: UFID:                                      ${NTF_BUILD_UFID}")
 
+message(STATUS "NTF: Bitness:                                   ${CMAKE_SIZEOF_VOID_P}")
+
 if (${NTF_BUILD_FROM_SUPERPROJECT})
     message(STATUS "NTF: Building from superproject:                yes")
 else()
