@@ -34,7 +34,7 @@ bool Linger::less(const Linger& other) const
         return true;
     }
 
-    if (d_enabled > other.d_enabled) {
+    if (other.d_enabled < d_enabled) {
         return false;
     }
 

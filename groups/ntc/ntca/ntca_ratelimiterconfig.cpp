@@ -137,7 +137,7 @@ bool RateLimiterConfig::less(const RateLimiterConfig& other) const
         return true;
     }
 
-    if (d_sustainedRateLimit > other.d_sustainedRateLimit) {
+    if (other.d_sustainedRateLimit < d_sustainedRateLimit) {
         return false;
     }
 
@@ -145,7 +145,7 @@ bool RateLimiterConfig::less(const RateLimiterConfig& other) const
         return true;
     }
 
-    if (d_sustainedRateWindow > other.d_sustainedRateWindow) {
+    if (other.d_sustainedRateWindow < d_sustainedRateWindow) {
         return false;
     }
 
@@ -153,7 +153,7 @@ bool RateLimiterConfig::less(const RateLimiterConfig& other) const
         return true;
     }
 
-    if (d_peakRateLimit > other.d_peakRateLimit) {
+    if (other.d_peakRateLimit < d_peakRateLimit) {
         return false;
     }
 
@@ -161,7 +161,7 @@ bool RateLimiterConfig::less(const RateLimiterConfig& other) const
         return true;
     }
 
-    if (d_peakRateWindow > other.d_peakRateWindow) {
+    if (other.d_peakRateWindow < d_peakRateWindow) {
         return false;
     }
 

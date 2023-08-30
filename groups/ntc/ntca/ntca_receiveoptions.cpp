@@ -44,7 +44,7 @@ bool ReceiveOptions::less(const ReceiveOptions& other) const
         return true;
     }
 
-    if (d_minSize > other.d_minSize) {
+    if (other.d_minSize < d_minSize) {
         return false;
     }
 
@@ -52,7 +52,7 @@ bool ReceiveOptions::less(const ReceiveOptions& other) const
         return true;
     }
 
-    if (d_maxSize > other.d_maxSize) {
+    if (other.d_maxSize < d_maxSize) {
         return false;
     }
 
@@ -60,7 +60,7 @@ bool ReceiveOptions::less(const ReceiveOptions& other) const
         return true;
     }
 
-    if (d_deadline > other.d_deadline) {
+    if (other.d_deadline < d_deadline) {
         return false;
     }
 

@@ -54,7 +54,7 @@ bool ConnectContext::less(const ConnectContext& other) const
         return true;
     }
 
-    if (d_latency > other.d_latency) {
+    if (other.d_latency < d_latency) {
         return false;
     }
 
@@ -62,7 +62,7 @@ bool ConnectContext::less(const ConnectContext& other) const
         return true;
     }
 
-    if (d_source > other.d_source) {
+    if (other.d_source < d_source) {
         return false;
     }
 

@@ -43,7 +43,7 @@ bool SendOptions::less(const SendOptions& other) const
         return true;
     }
 
-    if (d_maxBytes > other.d_maxBytes) {
+    if (other.d_maxBytes < d_maxBytes) {
         return false;
     }
 

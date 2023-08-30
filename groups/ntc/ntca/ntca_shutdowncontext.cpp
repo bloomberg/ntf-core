@@ -35,7 +35,7 @@ bool ShutdownContext::less(const ShutdownContext& other) const
         return true;
     }
 
-    if (d_origin > other.d_origin) {
+    if (other.d_origin < d_origin) {
         return false;
     }
 
@@ -43,7 +43,7 @@ bool ShutdownContext::less(const ShutdownContext& other) const
         return true;
     }
 
-    if (d_send > other.d_send) {
+    if (other.d_send < d_send) {
         return false;
     }
 

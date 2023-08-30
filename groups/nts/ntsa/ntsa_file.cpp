@@ -37,7 +37,7 @@ bool File::less(const File& other) const
         return false;
     }
 
-    if (d_fileDescriptor > other.d_fileDescriptor) {
+    if (other.d_fileDescriptor < d_fileDescriptor) {
         return true;
     }
 
@@ -45,7 +45,7 @@ bool File::less(const File& other) const
         return false;
     }
 
-    if (d_filePosition > other.d_filePosition) {
+    if (other.d_filePosition < d_filePosition) {
         return true;
     }
 
@@ -53,7 +53,7 @@ bool File::less(const File& other) const
         return false;
     }
 
-    if (d_fileBytesRemaining > other.d_fileBytesRemaining) {
+    if (other.d_fileBytesRemaining < d_fileBytesRemaining) {
         return true;
     }
 

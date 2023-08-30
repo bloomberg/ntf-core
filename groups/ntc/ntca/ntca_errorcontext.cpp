@@ -35,7 +35,7 @@ bool ErrorContext::less(const ErrorContext& other) const
         return true;
     }
 
-    if (d_error > other.d_error) {
+    if (other.d_error < d_error) {
         return false;
     }
 

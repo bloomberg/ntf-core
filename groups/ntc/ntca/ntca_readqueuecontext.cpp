@@ -35,7 +35,7 @@ bool ReadQueueContext::less(const ReadQueueContext& other) const
         return true;
     }
 
-    if (d_size > other.d_size) {
+    if (other.d_size < d_size) {
         return false;
     }
 
@@ -43,7 +43,7 @@ bool ReadQueueContext::less(const ReadQueueContext& other) const
         return true;
     }
 
-    if (d_lowWatermark > other.d_lowWatermark) {
+    if (other.d_lowWatermark < d_lowWatermark) {
         return false;
     }
 

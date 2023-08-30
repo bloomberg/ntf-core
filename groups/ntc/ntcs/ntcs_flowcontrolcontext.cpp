@@ -35,7 +35,7 @@ bool FlowControlContext::less(const FlowControlContext& other) const
         return true;
     }
 
-    if (d_enableSend > other.d_enableSend) {
+    if (other.d_enableSend < d_enableSend) {
         return false;
     }
 

@@ -234,7 +234,7 @@ bool DriverConfig::less(const DriverConfig& other) const
         return true;
     }
 
-    if (d_driverName > other.d_driverName) {
+    if (other.d_driverName < d_driverName) {
         return false;
     }
 
@@ -242,7 +242,7 @@ bool DriverConfig::less(const DriverConfig& other) const
         return true;
     }
 
-    if (d_metricName > other.d_metricName) {
+    if (other.d_metricName < d_metricName) {
         return false;
     }
 
@@ -250,7 +250,7 @@ bool DriverConfig::less(const DriverConfig& other) const
         return true;
     }
 
-    if (d_minThreads > other.d_minThreads) {
+    if (other.d_minThreads < d_minThreads) {
         return false;
     }
 
@@ -258,7 +258,7 @@ bool DriverConfig::less(const DriverConfig& other) const
         return true;
     }
 
-    if (d_maxThreads > other.d_maxThreads) {
+    if (other.d_maxThreads < d_maxThreads) {
         return false;
     }
 
@@ -266,7 +266,7 @@ bool DriverConfig::less(const DriverConfig& other) const
         return true;
     }
 
-    if (d_maxEventsPerWait > other.d_maxEventsPerWait) {
+    if (other.d_maxEventsPerWait < d_maxEventsPerWait) {
         return false;
     }
 
@@ -274,7 +274,7 @@ bool DriverConfig::less(const DriverConfig& other) const
         return true;
     }
 
-    if (d_maxTimersPerWait > other.d_maxTimersPerWait) {
+    if (other.d_maxTimersPerWait < d_maxTimersPerWait) {
         return false;
     }
 
@@ -282,7 +282,7 @@ bool DriverConfig::less(const DriverConfig& other) const
         return true;
     }
 
-    if (d_maxCyclesPerWait > other.d_maxCyclesPerWait) {
+    if (other.d_maxCyclesPerWait < d_maxCyclesPerWait) {
         return false;
     }
 
@@ -290,7 +290,7 @@ bool DriverConfig::less(const DriverConfig& other) const
         return true;
     }
 
-    if (d_metricCollection > other.d_metricCollection) {
+    if (other.d_metricCollection < d_metricCollection) {
         return false;
     }
 
@@ -298,7 +298,7 @@ bool DriverConfig::less(const DriverConfig& other) const
         return true;
     }
 
-    if (d_metricCollectionPerWaiter > other.d_metricCollectionPerWaiter) {
+    if (other.d_metricCollectionPerWaiter < d_metricCollectionPerWaiter) {
         return false;
     }
 

@@ -36,7 +36,7 @@ bool DowngradeContext::less(const DowngradeContext& other) const
         return true;
     }
 
-    if (d_send > other.d_send) {
+    if (other.d_send < d_send) {
         return false;
     }
 
@@ -44,7 +44,7 @@ bool DowngradeContext::less(const DowngradeContext& other) const
         return true;
     }
 
-    if (d_receive > other.d_receive) {
+    if (other.d_receive < d_receive) {
         return false;
     }
 
@@ -52,7 +52,7 @@ bool DowngradeContext::less(const DowngradeContext& other) const
         return true;
     }
 
-    if (d_error > other.d_error) {
+    if (other.d_error < d_error) {
         return false;
     }
 

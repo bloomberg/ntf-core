@@ -34,7 +34,7 @@ bool ReactorEventOptions::less(const ReactorEventOptions& other) const
         return true;
     }
 
-    if (d_trigger > other.d_trigger) {
+    if (other.d_trigger < d_trigger) {
         return false;
     }
 

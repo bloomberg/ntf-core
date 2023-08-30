@@ -188,7 +188,7 @@ bool SocketConfig::less(const SocketConfig& other) const
         return true;
     }
 
-    if (d_reuseAddress > other.d_reuseAddress) {
+    if (other.d_reuseAddress < d_reuseAddress) {
         return false;
     }
 
@@ -196,7 +196,7 @@ bool SocketConfig::less(const SocketConfig& other) const
         return true;
     }
 
-    if (d_keepAlive > other.d_keepAlive) {
+    if (other.d_keepAlive < d_keepAlive) {
         return false;
     }
 
@@ -204,7 +204,7 @@ bool SocketConfig::less(const SocketConfig& other) const
         return true;
     }
 
-    if (d_cork > other.d_cork) {
+    if (other.d_cork < d_cork) {
         return false;
     }
 
@@ -212,7 +212,7 @@ bool SocketConfig::less(const SocketConfig& other) const
         return true;
     }
 
-    if (d_delayTransmission > other.d_delayTransmission) {
+    if (other.d_delayTransmission < d_delayTransmission) {
         return false;
     }
 
@@ -220,7 +220,7 @@ bool SocketConfig::less(const SocketConfig& other) const
         return true;
     }
 
-    if (d_delayAcknowledgement > other.d_delayAcknowledgement) {
+    if (other.d_delayAcknowledgement < d_delayAcknowledgement) {
         return false;
     }
 
@@ -228,7 +228,7 @@ bool SocketConfig::less(const SocketConfig& other) const
         return true;
     }
 
-    if (d_sendBufferSize > other.d_sendBufferSize) {
+    if (other.d_sendBufferSize < d_sendBufferSize) {
         return false;
     }
 
@@ -236,7 +236,7 @@ bool SocketConfig::less(const SocketConfig& other) const
         return true;
     }
 
-    if (d_sendBufferLowWatermark > other.d_sendBufferLowWatermark) {
+    if (other.d_sendBufferLowWatermark < d_sendBufferLowWatermark) {
         return false;
     }
 
@@ -244,7 +244,7 @@ bool SocketConfig::less(const SocketConfig& other) const
         return true;
     }
 
-    if (d_receiveBufferSize > other.d_receiveBufferSize) {
+    if (other.d_receiveBufferSize < d_receiveBufferSize) {
         return false;
     }
 
@@ -252,7 +252,7 @@ bool SocketConfig::less(const SocketConfig& other) const
         return true;
     }
 
-    if (d_receiveBufferLowWatermark > other.d_receiveBufferLowWatermark) {
+    if (other.d_receiveBufferLowWatermark < d_receiveBufferLowWatermark) {
         return false;
     }
 
@@ -260,7 +260,7 @@ bool SocketConfig::less(const SocketConfig& other) const
         return true;
     }
 
-    if (d_debug > other.d_debug) {
+    if (other.d_debug < d_debug) {
         return false;
     }
 
@@ -268,7 +268,7 @@ bool SocketConfig::less(const SocketConfig& other) const
         return true;
     }
 
-    if (d_linger > other.d_linger) {
+    if (other.d_linger < d_linger) {
         return false;
     }
 
@@ -276,7 +276,7 @@ bool SocketConfig::less(const SocketConfig& other) const
         return true;
     }
 
-    if (d_broadcast > other.d_broadcast) {
+    if (other.d_broadcast < d_broadcast) {
         return false;
     }
 
@@ -284,7 +284,7 @@ bool SocketConfig::less(const SocketConfig& other) const
         return true;
     }
 
-    if (d_bypassRouting > other.d_bypassRouting) {
+    if (other.d_bypassRouting < d_bypassRouting) {
         return false;
     }
 
@@ -292,7 +292,7 @@ bool SocketConfig::less(const SocketConfig& other) const
         return true;
     }
 
-    if (d_inlineOutOfBandData > other.d_inlineOutOfBandData) {
+    if (other.d_inlineOutOfBandData < d_inlineOutOfBandData) {
         return false;
     }
 
@@ -300,7 +300,7 @@ bool SocketConfig::less(const SocketConfig& other) const
         return true;
     }
 
-    if (d_timestampIncomingData > other.d_timestampIncomingData) {
+    if (other.d_timestampIncomingData < d_timestampIncomingData) {
         return false;
     }
 

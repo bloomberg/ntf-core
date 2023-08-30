@@ -39,7 +39,7 @@ bool SendContext::less(const SendContext& other) const
         return true;
     }
 
-    if (d_bytesSendable > other.d_bytesSendable) {
+    if (other.d_bytesSendable < d_bytesSendable) {
         return false;
     }
 
@@ -47,7 +47,7 @@ bool SendContext::less(const SendContext& other) const
         return true;
     }
 
-    if (d_bytesSent > other.d_bytesSent) {
+    if (other.d_bytesSent < d_bytesSent) {
         return false;
     }
 
@@ -55,7 +55,7 @@ bool SendContext::less(const SendContext& other) const
         return true;
     }
 
-    if (d_buffersSendable > other.d_buffersSendable) {
+    if (other.d_buffersSendable < d_buffersSendable) {
         return false;
     }
 
@@ -63,7 +63,7 @@ bool SendContext::less(const SendContext& other) const
         return true;
     }
 
-    if (d_buffersSent > other.d_buffersSent) {
+    if (other.d_buffersSent < d_buffersSent) {
         return false;
     }
 
@@ -71,7 +71,7 @@ bool SendContext::less(const SendContext& other) const
         return true;
     }
 
-    if (d_messagesSendable > other.d_messagesSendable) {
+    if (other.d_messagesSendable < d_messagesSendable) {
         return false;
     }
 

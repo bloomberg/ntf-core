@@ -35,7 +35,7 @@ bool Watermarks::less(const Watermarks& other) const
         return true;
     }
 
-    if (d_current > other.d_current) {
+    if (other.d_current < d_current) {
         return false;
     }
 
@@ -43,7 +43,7 @@ bool Watermarks::less(const Watermarks& other) const
         return true;
     }
 
-    if (d_low > other.d_low) {
+    if (other.d_low < d_low) {
         return false;
     }
 
