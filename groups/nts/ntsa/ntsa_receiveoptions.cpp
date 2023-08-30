@@ -59,6 +59,7 @@ bsl::ostream& ReceiveOptions::print(bsl::ostream& stream,
     printer.start();
     printer.printAttribute("wantEndpoint", wantEndpoint());
     printer.printAttribute("wantTimestamp", wantTimestamp());
+    printer.printAttribute("wantForeignHandles", wantForeignHandles());
     printer.printAttribute("maxBytes", d_maxBytes);
     printer.printAttribute("maxBuffers", d_maxBuffers);
     printer.end();

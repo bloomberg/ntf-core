@@ -33,7 +33,8 @@ bool ReceiveContext::equals(const ReceiveContext& other) const
            d_messagesReceivable == other.d_messagesReceivable &&
            d_messagesReceived == other.d_messagesReceived &&
            d_softwareTimestamp == other.d_softwareTimestamp &&
-           d_hardwareTimestamp == other.d_hardwareTimestamp;
+           d_hardwareTimestamp == other.d_hardwareTimestamp &&
+           d_foreignHandle == other.d_foreignHandle;
 }
 
 bool ReceiveContext::less(const ReceiveContext& other) const
@@ -86,6 +87,14 @@ bool ReceiveContext::less(const ReceiveContext& other) const
         return false;
     }
 
+    if (d_messagesReceived < other.d_messagesReceived) {
+        return true;
+    }
+
+    if (other.d_messagesReceived < d_messagesReceived) {
+        return false;
+    }
+
     if (d_softwareTimestamp < other.d_softwareTimestamp) {
         return true;
     }
@@ -102,7 +111,7 @@ bool ReceiveContext::less(const ReceiveContext& other) const
         return false;
     }
 
-    return d_messagesReceived < other.d_messagesReceived;
+    return d_foreignHandle < other.d_foreignHandle;
 }
 
 bsl::ostream& ReceiveContext::print(bsl::ostream& stream,
@@ -120,6 +129,7 @@ bsl::ostream& ReceiveContext::print(bsl::ostream& stream,
     printer.printAttribute("messagesReceived", d_messagesReceived);
     printer.printAttribute("softwareTimestamp", d_softwareTimestamp);
     printer.printAttribute("hardwareTimestamp", d_hardwareTimestamp);
+    printer.printAttribute("foreignHandle", d_foreignHandle);
     printer.end();
     return stream;
 }
