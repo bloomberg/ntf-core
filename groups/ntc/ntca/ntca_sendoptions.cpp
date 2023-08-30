@@ -53,7 +53,7 @@ bool SendOptions::less(const SendOptions& other) const
         return true;
     }
 
-    if (d_priority > other.d_priority) {
+    if (other.d_priority < d_priority) {
         return false;
     }
 
@@ -61,7 +61,7 @@ bool SendOptions::less(const SendOptions& other) const
         return true;
     }
 
-    if (d_highWatermark > other.d_highWatermark) {
+    if (other.d_highWatermark < d_highWatermark) {
         return false;
     }
 
@@ -69,7 +69,7 @@ bool SendOptions::less(const SendOptions& other) const
         return true;
     }
 
-    if (d_deadline > other.d_deadline) {
+    if (other.d_deadline < d_deadline) {
         return false;
     }
 

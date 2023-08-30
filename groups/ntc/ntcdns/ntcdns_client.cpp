@@ -1259,11 +1259,13 @@ ntsa::Error ClientNameServer::createDatagramSocket()
 
     error = datagramSocket->registerSession(self);
     if (error) {
+        d_datagramSocket_sp->close();
         return error;
     }
 
     error = datagramSocket->open();
     if (error) {
+        datagramSocket->close();
         return error;
     }
 
@@ -1280,6 +1282,7 @@ ntsa::Error ClientNameServer::createDatagramSocket()
     error =
         datagramSocket->connect(d_endpoint, connectOptions, connectCallback);
     if (error) {
+        datagramSocket->close();
         return error;
     }
 

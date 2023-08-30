@@ -40,7 +40,7 @@ bool GetEndpointOptions::less(const GetEndpointOptions& other) const
         return true;
     }
 
-    if (d_ipAddressFallback > other.d_ipAddressFallback) {
+    if (other.d_ipAddressFallback < d_ipAddressFallback) {
         return false;
     }
 
@@ -48,7 +48,7 @@ bool GetEndpointOptions::less(const GetEndpointOptions& other) const
         return true;
     }
 
-    if (d_ipAddressType > other.d_ipAddressType) {
+    if (other.d_ipAddressType < d_ipAddressType) {
         return false;
     }
 
@@ -56,7 +56,7 @@ bool GetEndpointOptions::less(const GetEndpointOptions& other) const
         return true;
     }
 
-    if (d_ipAddressSelector > other.d_ipAddressSelector) {
+    if (other.d_ipAddressSelector < d_ipAddressSelector) {
         return false;
     }
 
@@ -64,7 +64,7 @@ bool GetEndpointOptions::less(const GetEndpointOptions& other) const
         return true;
     }
 
-    if (d_portFallback > other.d_portFallback) {
+    if (other.d_portFallback < d_portFallback) {
         return false;
     }
 
@@ -72,7 +72,7 @@ bool GetEndpointOptions::less(const GetEndpointOptions& other) const
         return true;
     }
 
-    if (d_portSelector > other.d_portSelector) {
+    if (other.d_portSelector < d_portSelector) {
         return false;
     }
 
@@ -80,7 +80,7 @@ bool GetEndpointOptions::less(const GetEndpointOptions& other) const
         return true;
     }
 
-    if (d_transport > other.d_transport) {
+    if (other.d_transport < d_transport) {
         return false;
     }
 

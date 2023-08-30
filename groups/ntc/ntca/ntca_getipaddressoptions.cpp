@@ -38,7 +38,7 @@ bool GetIpAddressOptions::less(const GetIpAddressOptions& other) const
         return true;
     }
 
-    if (d_ipAddressFallback > other.d_ipAddressFallback) {
+    if (other.d_ipAddressFallback < d_ipAddressFallback) {
         return false;
     }
 
@@ -46,7 +46,7 @@ bool GetIpAddressOptions::less(const GetIpAddressOptions& other) const
         return true;
     }
 
-    if (d_ipAddressType > other.d_ipAddressType) {
+    if (other.d_ipAddressType < d_ipAddressType) {
         return false;
     }
 
@@ -54,7 +54,7 @@ bool GetIpAddressOptions::less(const GetIpAddressOptions& other) const
         return true;
     }
 
-    if (d_ipAddressSelector > other.d_ipAddressSelector) {
+    if (other.d_ipAddressSelector < d_ipAddressSelector) {
         return false;
     }
 
@@ -62,7 +62,7 @@ bool GetIpAddressOptions::less(const GetIpAddressOptions& other) const
         return true;
     }
 
-    if (d_transport > other.d_transport) {
+    if (other.d_transport < d_transport) {
         return false;
     }
 

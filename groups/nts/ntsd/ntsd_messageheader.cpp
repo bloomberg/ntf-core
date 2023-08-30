@@ -44,7 +44,7 @@ bool MessageHeader::less(const MessageHeader& other) const
         return true;
     }
 
-    if (d_magic > other.d_magic) {
+    if (other.d_magic < d_magic) {
         return false;
     }
 
@@ -52,7 +52,7 @@ bool MessageHeader::less(const MessageHeader& other) const
         return true;
     }
 
-    if (d_version > other.d_version) {
+    if (other.d_version < d_version) {
         return false;
     }
 
@@ -60,7 +60,7 @@ bool MessageHeader::less(const MessageHeader& other) const
         return true;
     }
 
-    if (d_crc > other.d_crc) {
+    if (other.d_crc < d_crc) {
         return false;
     }
 
@@ -68,7 +68,7 @@ bool MessageHeader::less(const MessageHeader& other) const
         return true;
     }
 
-    if (d_type > other.d_type) {
+    if (other.d_type < d_type) {
         return false;
     }
 
@@ -76,7 +76,7 @@ bool MessageHeader::less(const MessageHeader& other) const
         return true;
     }
 
-    if (d_machineId > other.d_machineId) {
+    if (other.d_machineId < d_machineId) {
         return false;
     }
 
@@ -84,7 +84,7 @@ bool MessageHeader::less(const MessageHeader& other) const
         return true;
     }
 
-    if (d_userId > other.d_userId) {
+    if (other.d_userId < d_userId) {
         return false;
     }
 
@@ -92,7 +92,7 @@ bool MessageHeader::less(const MessageHeader& other) const
         return true;
     }
 
-    if (d_transactionId > other.d_transactionId) {
+    if (other.d_transactionId < d_transactionId) {
         return false;
     }
 
@@ -100,7 +100,7 @@ bool MessageHeader::less(const MessageHeader& other) const
         return true;
     }
 
-    if (d_sequenceNumber > other.d_sequenceNumber) {
+    if (other.d_sequenceNumber < d_sequenceNumber) {
         return false;
     }
 
@@ -108,7 +108,7 @@ bool MessageHeader::less(const MessageHeader& other) const
         return true;
     }
 
-    if (d_requestSize > other.d_requestSize) {
+    if (other.d_requestSize < d_requestSize) {
         return false;
     }
 
@@ -116,7 +116,7 @@ bool MessageHeader::less(const MessageHeader& other) const
         return true;
     }
 
-    if (d_responseSize > other.d_responseSize) {
+    if (other.d_responseSize < d_responseSize) {
         return false;
     }
 
@@ -124,7 +124,7 @@ bool MessageHeader::less(const MessageHeader& other) const
         return true;
     }
 
-    if (d_requestDelay > other.d_requestDelay) {
+    if (other.d_requestDelay < d_requestDelay) {
         return false;
     }
 
@@ -132,7 +132,7 @@ bool MessageHeader::less(const MessageHeader& other) const
         return true;
     }
 
-    if (d_responseDelay > other.d_responseDelay) {
+    if (other.d_responseDelay < d_responseDelay) {
         return false;
     }
 
@@ -140,7 +140,7 @@ bool MessageHeader::less(const MessageHeader& other) const
         return true;
     }
 
-    if (d_requestTimestamp > other.d_requestTimestamp) {
+    if (other.d_requestTimestamp < d_requestTimestamp) {
         return false;
     }
 

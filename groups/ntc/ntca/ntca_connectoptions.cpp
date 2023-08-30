@@ -66,7 +66,7 @@ bool ConnectOptions::less(const ConnectOptions& other) const
         return true;
     }
 
-    if (d_ipAddressFallback > other.d_ipAddressFallback) {
+    if (other.d_ipAddressFallback < d_ipAddressFallback) {
         return false;
     }
 
@@ -74,7 +74,7 @@ bool ConnectOptions::less(const ConnectOptions& other) const
         return true;
     }
 
-    if (d_ipAddressType > other.d_ipAddressType) {
+    if (other.d_ipAddressType < d_ipAddressType) {
         return false;
     }
 
@@ -82,7 +82,7 @@ bool ConnectOptions::less(const ConnectOptions& other) const
         return true;
     }
 
-    if (d_ipAddressSelector > other.d_ipAddressSelector) {
+    if (other.d_ipAddressSelector < d_ipAddressSelector) {
         return false;
     }
 
@@ -90,7 +90,7 @@ bool ConnectOptions::less(const ConnectOptions& other) const
         return true;
     }
 
-    if (d_portFallback > other.d_portFallback) {
+    if (other.d_portFallback < d_portFallback) {
         return false;
     }
 
@@ -98,7 +98,7 @@ bool ConnectOptions::less(const ConnectOptions& other) const
         return true;
     }
 
-    if (d_portSelector > other.d_portSelector) {
+    if (other.d_portSelector < d_portSelector) {
         return false;
     }
 
@@ -110,7 +110,7 @@ bool ConnectOptions::less(const ConnectOptions& other) const
         return true;
     }
 
-    if (d_deadline > other.d_deadline) {
+    if (other.d_deadline < d_deadline) {
         return false;
     }
 

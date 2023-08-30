@@ -35,7 +35,7 @@ bool ReactorEvent::less(const ReactorEvent& other) const
         return true;
     }
 
-    if (d_handle > other.d_handle) {
+    if (other.d_handle < d_handle) {
         return false;
     }
 
@@ -43,7 +43,7 @@ bool ReactorEvent::less(const ReactorEvent& other) const
         return true;
     }
 
-    if (d_type > other.d_type) {
+    if (other.d_type < d_type) {
         return false;
     }
 

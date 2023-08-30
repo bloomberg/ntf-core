@@ -47,7 +47,7 @@ bool TimerOptions::less(const TimerOptions& other) const
         return true;
     }
 
-    if (d_id > other.d_id) {
+    if (other.d_id < d_id) {
         return false;
     }
 
@@ -55,7 +55,7 @@ bool TimerOptions::less(const TimerOptions& other) const
         return true;
     }
 
-    if (d_flags > other.d_flags) {
+    if (other.d_flags < d_flags) {
         return false;
     }
 

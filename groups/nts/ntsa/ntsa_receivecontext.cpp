@@ -50,7 +50,7 @@ bool ReceiveContext::less(const ReceiveContext& other) const
         return true;
     }
 
-    if (d_bytesReceivable > other.d_bytesReceivable) {
+    if (other.d_bytesReceivable < d_bytesReceivable) {
         return false;
     }
 
@@ -58,7 +58,7 @@ bool ReceiveContext::less(const ReceiveContext& other) const
         return true;
     }
 
-    if (d_bytesReceived > other.d_bytesReceived) {
+    if (other.d_bytesReceived < d_bytesReceived) {
         return false;
     }
 
@@ -66,7 +66,7 @@ bool ReceiveContext::less(const ReceiveContext& other) const
         return true;
     }
 
-    if (d_buffersReceivable > other.d_buffersReceivable) {
+    if (other.d_buffersReceivable < d_buffersReceivable) {
         return false;
     }
 
@@ -74,7 +74,7 @@ bool ReceiveContext::less(const ReceiveContext& other) const
         return true;
     }
 
-    if (d_buffersReceived > other.d_buffersReceived) {
+    if (other.d_buffersReceived < d_buffersReceived) {
         return false;
     }
 
@@ -82,11 +82,7 @@ bool ReceiveContext::less(const ReceiveContext& other) const
         return true;
     }
 
-    if (d_messagesReceivable > other.d_messagesReceivable) {
-        return false;
-    }
-
-    if (d_softwareTimestamp > other.d_softwareTimestamp) {
+    if (other.d_messagesReceivable < d_messagesReceivable) {
         return false;
     }
 
@@ -94,12 +90,16 @@ bool ReceiveContext::less(const ReceiveContext& other) const
         return true;
     }
 
-    if (d_hardwareTimestamp > other.d_hardwareTimestamp) {
+    if (other.d_softwareTimestamp < d_softwareTimestamp) {
         return false;
     }
 
     if (d_hardwareTimestamp < other.d_hardwareTimestamp) {
         return true;
+    }
+
+    if (other.d_hardwareTimestamp < d_hardwareTimestamp) {
+        return false;
     }
 
     return d_messagesReceived < other.d_messagesReceived;

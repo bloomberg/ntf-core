@@ -35,7 +35,7 @@ bool GetServiceNameOptions::less(const GetServiceNameOptions& other) const
         return true;
     }
 
-    if (d_transport > other.d_transport) {
+    if (other.d_transport < d_transport) {
         return false;
     }
 

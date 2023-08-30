@@ -36,7 +36,7 @@ bool PortOptions::less(const PortOptions& other) const
         return true;
     }
 
-    if (d_portFallback > other.d_portFallback) {
+    if (other.d_portFallback < d_portFallback) {
         return false;
     }
 
@@ -44,7 +44,7 @@ bool PortOptions::less(const PortOptions& other) const
         return true;
     }
 
-    if (d_portSelector > other.d_portSelector) {
+    if (other.d_portSelector < d_portSelector) {
         return false;
     }
 

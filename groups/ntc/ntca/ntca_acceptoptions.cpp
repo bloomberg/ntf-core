@@ -43,7 +43,7 @@ bool AcceptOptions::less(const AcceptOptions& other) const
         return true;
     }
 
-    if (d_deadline > other.d_deadline) {
+    if (other.d_deadline < d_deadline) {
         return false;
     }
 

@@ -36,7 +36,7 @@ bool GetEndpointContext::less(const GetEndpointContext& other) const
         return true;
     }
 
-    if (d_authority > other.d_authority) {
+    if (other.d_authority < d_authority) {
         return false;
     }
 
@@ -44,7 +44,7 @@ bool GetEndpointContext::less(const GetEndpointContext& other) const
         return true;
     }
 
-    if (d_latency > other.d_latency) {
+    if (other.d_latency < d_latency) {
         return false;
     }
 
@@ -52,7 +52,7 @@ bool GetEndpointContext::less(const GetEndpointContext& other) const
         return true;
     }
 
-    if (d_source > other.d_source) {
+    if (other.d_source < d_source) {
         return false;
     }
 
@@ -68,7 +68,7 @@ bool GetEndpointContext::less(const GetEndpointContext& other) const
         return true;
     }
 
-    if (d_timeToLive > other.d_timeToLive) {
+    if (other.d_timeToLive < d_timeToLive) {
         return false;
     }
 

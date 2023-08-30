@@ -34,7 +34,7 @@ bool GetEndpointEvent::less(const GetEndpointEvent& other) const
         return true;
     }
 
-    if (d_type > other.d_type) {
+    if (other.d_type < d_type) {
         return false;
     }
 

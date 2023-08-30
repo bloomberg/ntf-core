@@ -33,18 +33,18 @@ bool ReceiveOptions::equals(const ReceiveOptions& other) const
 bool ReceiveOptions::less(const ReceiveOptions& other) const
 {
     if (d_options < other.d_options) {
-        return false;
+        return true;
     }
 
-    if (d_options > other.d_options) {
-        return true;
+    if (other.d_options < d_options) {
+        return false;
     }
 
     if (d_maxBytes < other.d_maxBytes) {
         return true;
     }
 
-    if (d_maxBytes > other.d_maxBytes) {
+    if (other.d_maxBytes < d_maxBytes) {
         return false;
     }
 

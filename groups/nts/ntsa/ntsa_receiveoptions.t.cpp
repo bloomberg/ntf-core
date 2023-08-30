@@ -100,10 +100,10 @@ NTSCFG_TEST_CASE(3)
         NTSCFG_TEST_FALSE(opt1.less(opt2));
 
         opt1.showTimestamp();
-        NTSCFG_TEST_TRUE(opt1.less(opt2));
+        NTSCFG_TEST_FALSE(opt1.less(opt2));
 
         opt2.hideEndpoint();
-        NTSCFG_TEST_FALSE(opt2.less(opt1));
+        NTSCFG_TEST_TRUE(opt2.less(opt1));
     }
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }

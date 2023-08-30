@@ -38,7 +38,7 @@ bool ShutdownContext::less(const ShutdownContext& other) const
         return true;
     }
 
-    if (d_shutdownOrigin > other.d_shutdownOrigin) {
+    if (other.d_shutdownOrigin < d_shutdownOrigin) {
         return false;
     }
 
@@ -46,7 +46,7 @@ bool ShutdownContext::less(const ShutdownContext& other) const
         return true;
     }
 
-    if (d_shutdownInitiated > other.d_shutdownInitiated) {
+    if (other.d_shutdownInitiated < d_shutdownInitiated) {
         return false;
     }
 
@@ -54,7 +54,7 @@ bool ShutdownContext::less(const ShutdownContext& other) const
         return true;
     }
 
-    if (d_shutdownSend > other.d_shutdownSend) {
+    if (other.d_shutdownSend < d_shutdownSend) {
         return false;
     }
 
@@ -62,7 +62,7 @@ bool ShutdownContext::less(const ShutdownContext& other) const
         return true;
     }
 
-    if (d_shutdownReceive > other.d_shutdownReceive) {
+    if (other.d_shutdownReceive < d_shutdownReceive) {
         return false;
     }
 
