@@ -23,6 +23,7 @@ BSLS_IDENT("$Id: $")
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 #include <ntsa_endpoint.h>
+#include <ntsa_handle.h>
 #include <bdlb_nullablevalue.h>
 #include <bslh_hash.h>
 #include <bsls_timeinterval.h>
@@ -42,6 +43,12 @@ namespace ntca {
 /// @li @b endpoint:
 /// The remote endpoint to which the data should be sent. This value might not
 /// be set for connected senders.
+///
+/// @li @b foreignHandle:
+/// The handle to the open socket to send to the peer. If successfully received
+/// the handle is effectively duplicated in the receiving process, but note
+/// that the sender is still responsible for closing the socket handle even if
+/// it has been sent successfully.
 ///
 /// @li @b priority:
 /// The priority of the write on the write queue.
@@ -66,6 +73,7 @@ class SendOptions
 {
     bdlb::NullableValue<ntca::SendToken>    d_token;
     bdlb::NullableValue<ntsa::Endpoint>     d_endpoint;
+    bdlb::NullableValue<ntsa::Handle>       d_foreignHandle;
     bdlb::NullableValue<bsl::size_t>        d_priority;
     bdlb::NullableValue<bsl::size_t>        d_highWatermark;
     bdlb::NullableValue<bsls::TimeInterval> d_deadline;
@@ -97,6 +105,10 @@ class SendOptions
     /// should not be set for connected senders.
     void setEndpoint(const ntsa::Endpoint& endpoint);
 
+    // Set the handle to the open socket to send to the peer to the specified
+    // 'value'.
+    void setForeignHandle(ntsa::Handle value);
+
     /// Set the priority of the write on the write queue to the specified
     /// 'value'.
     void setPriority(bsl::size_t value);
@@ -120,6 +132,9 @@ class SendOptions
     /// Return the remote endpoint to which the data should be sent. This
     /// value might not be set for connected senders.
     const bdlb::NullableValue<ntsa::Endpoint>& endpoint() const;
+
+    /// Return the handle to the open socket to send to the peer.
+    const bdlb::NullableValue<ntsa::Handle>& foreignHandle() const;
 
     /// Return the priority of the write on the write queue.
     const bdlb::NullableValue<bsl::size_t>& priority() const;
@@ -199,6 +214,7 @@ NTCCFG_INLINE
 SendOptions::SendOptions()
 : d_token()
 , d_endpoint()
+, d_foreignHandle()
 , d_priority()
 , d_highWatermark()
 , d_deadline()
@@ -210,6 +226,7 @@ NTCCFG_INLINE
 SendOptions::SendOptions(const SendOptions& original)
 : d_token(original.d_token)
 , d_endpoint(original.d_endpoint)
+, d_foreignHandle(original.d_foreignHandle)
 , d_priority(original.d_priority)
 , d_highWatermark(original.d_highWatermark)
 , d_deadline(original.d_deadline)
@@ -227,6 +244,7 @@ SendOptions& SendOptions::operator=(const SendOptions& other)
 {
     d_token         = other.d_token;
     d_endpoint      = other.d_endpoint;
+    d_foreignHandle = other.d_foreignHandle;
     d_priority      = other.d_priority;
     d_highWatermark = other.d_highWatermark;
     d_deadline      = other.d_deadline;
@@ -239,6 +257,7 @@ void SendOptions::reset()
 {
     d_token.reset();
     d_endpoint.reset();
+    d_foreignHandle.reset();
     d_priority.reset();
     d_highWatermark.reset();
     d_deadline.reset();
@@ -255,6 +274,12 @@ NTCCFG_INLINE
 void SendOptions::setEndpoint(const ntsa::Endpoint& value)
 {
     d_endpoint = value;
+}
+
+NTSCFG_INLINE
+void SendOptions::setForeignHandle(ntsa::Handle value)
+{
+    d_foreignHandle = value;
 }
 
 NTCCFG_INLINE
@@ -291,6 +316,12 @@ NTCCFG_INLINE
 const bdlb::NullableValue<ntsa::Endpoint>& SendOptions::endpoint() const
 {
     return d_endpoint;
+}
+
+NTSCFG_INLINE
+const bdlb::NullableValue<ntsa::Handle>& SendOptions::foreignHandle() const
+{
+    return d_foreignHandle;
 }
 
 NTCCFG_INLINE
@@ -348,6 +379,7 @@ void hashAppend(HASH_ALGORITHM& algorithm, const SendOptions& value)
 
     hashAppend(algorithm, value.token());
     hashAppend(algorithm, value.endpoint());
+    hashAppend(algorithm, value.foreignHandle());
     hashAppend(algorithm, value.priority());
     hashAppend(algorithm, value.highWatermark());
     hashAppend(algorithm, value.deadline());

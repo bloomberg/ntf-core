@@ -496,6 +496,99 @@ void testStreamSocketTransmissionSingleBuffer(ntsa::Transport::Value transport,
     }
 }
 
+void testStreamSocketTransmissionSingleBufferWithControlMsg(
+                                              ntsa::Transport::Value transport,
+                                              ntsa::Handle           server,
+                                              ntsa::Handle           client,
+                                              bslma::Allocator*      allocator)
+{
+    if (transport != ntsa::Transport::e_LOCAL_STREAM) {
+        return;
+    }
+
+    NTSCFG_TEST_LOG_DEBUG << "Testing " << transport << ": send/recv "
+                          << "with ancillary data"
+                          << NTSCFG_TEST_LOG_END;
+
+    ntsa::Error error;
+
+    char DATA[] = "Hello, world!";
+
+    char clientBuffer[sizeof DATA - 1];
+    char serverBuffer[sizeof DATA - 1];
+
+    bsl::memcpy(clientBuffer, DATA, sizeof DATA - 1);
+
+    ntsa::Handle domesticSocket;
+    error = ntsu::SocketUtil::create(&domesticSocket, transport);
+    NTSCFG_TEST_ASSERT(!error);
+
+    error = ntsu::SocketUtil::bind(
+        ntsa::Endpoint(ntsa::LocalName::generateUnique()),
+        false,
+        domesticSocket);
+    NTSCFG_TEST_ASSERT(!error);
+
+    ntsa::Endpoint domesticSourceEndpoint;
+    error = ntsu::SocketUtil::sourceEndpoint(&domesticSourceEndpoint,
+                                             domesticSocket);
+    NTSCFG_TEST_ASSERT(!error);
+
+    // Enqueue outgoing data to transmit by the client socket.
+
+    {
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        options.setForeignHandle(domesticSocket);
+
+        ntsa::Data data(ntsa::ConstBuffer(clientBuffer, sizeof clientBuffer));
+
+        error = ntsu::SocketUtil::send(&context, data, options, client);
+        NTSCFG_TEST_ASSERT(!error);
+
+        NTSCFG_TEST_ASSERT(context.bytesSendable() == sizeof clientBuffer);
+        NTSCFG_TEST_ASSERT(context.bytesSent() == sizeof clientBuffer);
+    }
+
+    // Dequeue incoming data received by the server socket.
+
+    {
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        options.showForeignHandles();
+
+        ntsa::Data data(
+            ntsa::MutableBuffer(serverBuffer, sizeof serverBuffer));
+
+        error = ntsu::SocketUtil::receive(&context, &data, options, server);
+        NTSCFG_TEST_ASSERT(!error);
+
+        NTSCFG_TEST_ASSERT(context.bytesReceivable() == sizeof serverBuffer);
+        NTSCFG_TEST_ASSERT(context.bytesReceived() == sizeof serverBuffer);
+
+        NTSCFG_TEST_ASSERT(
+            bsl::memcmp(serverBuffer, clientBuffer, sizeof clientBuffer) == 0);
+
+        NTSCFG_TEST_TRUE(!context.foreignHandle().isNull());
+
+        ntsa::Endpoint foreignSourceEndpoint;
+        error = ntsu::SocketUtil::sourceEndpoint(
+            &foreignSourceEndpoint,
+            context.foreignHandle().value());
+        NTSCFG_TEST_ASSERT(!error);
+
+        NTSCFG_TEST_EQ(foreignSourceEndpoint, domesticSourceEndpoint);
+
+        error = ntsu::SocketUtil::close(domesticSocket);
+        NTSCFG_TEST_ASSERT(!error);
+
+        error = ntsu::SocketUtil::close(context.foreignHandle().value());
+        NTSCFG_TEST_ASSERT(!error);
+    }
+}
+
 void testStreamSocketTransmissionMultipleBuffers(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
@@ -622,6 +715,221 @@ void testStreamSocketTransmissionBlob(ntsa::Transport::Value transport,
         NTSCFG_TEST_ASSERT(serverBlob.length() == 9);
         NTSCFG_TEST_ASSERT(bdlbb::BlobUtil::compare(serverBlob, clientBlob) ==
                            0);
+    }
+}
+
+void testStreamSocketTransmissionBlobWithControlMsg(
+                                      ntsa::Transport::Value transport,
+                                      ntsa::Handle           server,
+                                      ntsa::Handle           client,
+                                      bslma::Allocator*      allocator)
+{
+    if (transport != ntsa::Transport::e_LOCAL_STREAM) {
+        return;
+    }
+
+    NTSCFG_TEST_LOG_DEBUG << "Testing " << transport
+                          << ": writev/readv (blob) "
+                          << "with ancillary data"
+                          << NTSCFG_TEST_LOG_END;
+
+    ntsa::Error error;
+
+    char DATA[] = "123456789";
+
+    bdlbb::SimpleBlobBufferFactory blobBufferFactory(3, allocator);
+
+    bdlbb::Blob clientBlob(&blobBufferFactory, allocator);
+    bdlbb::BlobUtil::append(&clientBlob, DATA, sizeof DATA - 1);
+
+    bdlbb::Blob serverBlob(&blobBufferFactory, allocator);
+    serverBlob.setLength(sizeof DATA - 1);
+    serverBlob.setLength(0);
+
+    ntsa::Handle domesticSocket;
+    error = ntsu::SocketUtil::create(&domesticSocket, transport);
+    NTSCFG_TEST_ASSERT(!error);
+
+    error = ntsu::SocketUtil::bind(
+        ntsa::Endpoint(ntsa::LocalName::generateUnique()),
+        false,
+        domesticSocket);
+    NTSCFG_TEST_ASSERT(!error);
+
+    ntsa::Endpoint domesticSourceEndpoint;
+    error = ntsu::SocketUtil::sourceEndpoint(&domesticSourceEndpoint,
+                                             domesticSocket);
+    NTSCFG_TEST_ASSERT(!error);
+
+    // Enqueue outgoing data to transmit by the client socket.
+
+    {
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        options.setForeignHandle(domesticSocket);
+
+        error = ntsu::SocketUtil::send(&context, clientBlob, options, client);
+        NTSCFG_TEST_ASSERT(!error);
+
+        NTSCFG_TEST_ASSERT(context.bytesSendable() == 9);
+        NTSCFG_TEST_ASSERT(context.bytesSent() == 9);
+    }
+
+    // Dequeue incoming data received by the server socket.
+
+    {
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        options.showForeignHandles();
+
+        error =
+            ntsu::SocketUtil::receive(&context, &serverBlob, options, server);
+        NTSCFG_TEST_ASSERT(!error);
+
+        NTSCFG_TEST_ASSERT(context.bytesReceivable() == 9);
+        NTSCFG_TEST_ASSERT(context.bytesReceived() == 9);
+
+        NTSCFG_TEST_ASSERT(serverBlob.length() == 9);
+        NTSCFG_TEST_ASSERT(bdlbb::BlobUtil::compare(serverBlob, clientBlob) ==
+                           0);
+
+        NTSCFG_TEST_TRUE(!context.foreignHandle().isNull());
+
+        ntsa::Endpoint foreignSourceEndpoint;
+        error = ntsu::SocketUtil::sourceEndpoint(
+            &foreignSourceEndpoint,
+            context.foreignHandle().value());
+        NTSCFG_TEST_ASSERT(!error);
+
+        NTSCFG_TEST_EQ(foreignSourceEndpoint, domesticSourceEndpoint);
+
+        error = ntsu::SocketUtil::close(domesticSocket);
+        NTSCFG_TEST_ASSERT(!error);
+
+        error = ntsu::SocketUtil::close(context.foreignHandle().value());
+        NTSCFG_TEST_ASSERT(!error);
+    }
+}
+
+void testStreamSocketTransmissionWithControlMsgDropped(
+                                      ntsa::Transport::Value transport,
+                                      ntsa::Handle           server,
+                                      ntsa::Handle           client,
+                                      bslma::Allocator*      allocator)
+{
+    if (transport != ntsa::Transport::e_LOCAL_STREAM) {
+        return;
+    }
+
+    NTSCFG_TEST_LOG_DEBUG << "Testing " << transport
+                          << ": writev/readv (blob) "
+                          << "with ancillary data"
+                          << NTSCFG_TEST_LOG_END;
+
+    ntsa::Error error;
+
+    char DATA[] = "123456789";
+
+    bdlbb::SimpleBlobBufferFactory blobBufferFactory(3, allocator);
+
+    ntsa::Handle domesticSocket;
+    error = ntsu::SocketUtil::create(&domesticSocket, transport);
+    NTSCFG_TEST_ASSERT(!error);
+
+    error = ntsu::SocketUtil::bind(
+        ntsa::Endpoint(ntsa::LocalName::generateUnique()),
+        false,
+        domesticSocket);
+    NTSCFG_TEST_ASSERT(!error);
+
+    ntsa::Endpoint domesticSourceEndpoint;
+    error = ntsu::SocketUtil::sourceEndpoint(&domesticSourceEndpoint,
+                                             domesticSocket);
+    NTSCFG_TEST_ASSERT(!error);
+
+    for (bsl::size_t iteration = 0; iteration < 2; ++iteration) {
+        NTSCFG_TEST_LOG_DEBUG << "Testing iteration " << iteration
+                              << NTSCFG_TEST_LOG_END;
+
+        bdlbb::Blob clientBlob(&blobBufferFactory, allocator);
+        bdlbb::BlobUtil::append(&clientBlob, DATA, sizeof DATA - 1);
+
+        bdlbb::Blob serverBlob(&blobBufferFactory, allocator);
+        serverBlob.setLength(sizeof DATA - 1);
+        serverBlob.setLength(0);
+
+        // Enqueue outgoing data to transmit by the client socket.
+
+        {
+            ntsa::SendContext context;
+            ntsa::SendOptions options;
+
+            if (iteration == 0) {
+                options.setForeignHandle(domesticSocket);
+            }
+
+            error = ntsu::SocketUtil::send(
+                &context, clientBlob, options, client);
+            NTSCFG_TEST_ASSERT(!error);
+
+            NTSCFG_TEST_ASSERT(context.bytesSendable() == 9);
+            NTSCFG_TEST_ASSERT(context.bytesSent() == 9);
+        }
+
+        // Dequeue incoming data received by the server socket.
+
+        {
+            ntsa::ReceiveContext context;
+            ntsa::ReceiveOptions options;
+
+            if (iteration == 1) {
+                options.showForeignHandles();
+            }
+
+            error =
+                ntsu::SocketUtil::receive(
+                    &context, &serverBlob, options, server);
+            NTSCFG_TEST_ASSERT(!error);
+
+            NTSCFG_TEST_ASSERT(context.bytesReceivable() == 9);
+            NTSCFG_TEST_ASSERT(context.bytesReceived() == 9);
+
+            NTSCFG_TEST_ASSERT(serverBlob.length() == 9);
+            NTSCFG_TEST_ASSERT(bdlbb::BlobUtil::compare(serverBlob, clientBlob)
+                               == 0);
+
+            if (iteration == 0) {
+                NTSCFG_TEST_TRUE(context.foreignHandle().isNull());
+            }
+            else if (iteration == 1) {
+                NTSCFG_TEST_TRUE(context.foreignHandle().isNull());
+
+                // Operating system implementation note: a file descriptor
+                // passed using socket control messages that is not "picked up"
+                // immediately when it is available is not subsequently
+                // retrievable with a subsequent call to 'recvmsg'.
+#if 0
+                NTSCFG_TEST_TRUE(!context.foreignHandle().isNull());
+
+                ntsa::Endpoint foreignSourceEndpoint;
+                error = ntsu::SocketUtil::sourceEndpoint(
+                    &foreignSourceEndpoint,
+                    context.foreignHandle().value());
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_EQ(foreignSourceEndpoint, domesticSourceEndpoint);
+
+                error = ntsu::SocketUtil::close(
+                    context.foreignHandle().value());
+                NTSCFG_TEST_ASSERT(!error);
+#endif
+
+                error = ntsu::SocketUtil::close(domesticSocket);
+                NTSCFG_TEST_ASSERT(!error);
+            }
+        }
     }
 }
 
@@ -836,6 +1144,105 @@ void testDatagramSocketTransmissionSingleBuffer(
     }
 }
 
+void testDatagramSocketTransmissionSingleBufferWithControlMsg(
+    ntsa::Transport::Value transport,
+    ntsa::Handle           server,
+    const ntsa::Endpoint&  serverEndpoint,
+    ntsa::Handle           client,
+    const ntsa::Endpoint&  clientEndpoint,
+    bslma::Allocator*      allocator)
+{
+    if (transport != ntsa::Transport::e_LOCAL_DATAGRAM) {
+        return;
+    }
+
+    NTSCFG_TEST_LOG_DEBUG << "Testing " << transport << ": sendto/recvfrom "
+                          << "with ancillary data"
+                          << NTSCFG_TEST_LOG_END;
+
+    ntsa::Error error;
+
+    char DATA[] = "Hello, world!";
+
+    char clientBuffer[sizeof DATA - 1];
+    char serverBuffer[sizeof DATA - 1];
+
+    bsl::memcpy(clientBuffer, DATA, sizeof DATA - 1);
+
+    ntsa::Handle domesticSocket;
+    error = ntsu::SocketUtil::create(&domesticSocket, transport);
+    NTSCFG_TEST_ASSERT(!error);
+
+    error = ntsu::SocketUtil::bind(
+        ntsa::Endpoint(ntsa::LocalName::generateUnique()),
+        false,
+        domesticSocket);
+    NTSCFG_TEST_ASSERT(!error);
+
+    ntsa::Endpoint domesticSourceEndpoint;
+    error = ntsu::SocketUtil::sourceEndpoint(&domesticSourceEndpoint,
+                                             domesticSocket);
+    NTSCFG_TEST_ASSERT(!error);
+
+    // Enqueue outgoing data to transmit by the client socket.
+
+    {
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        options.setEndpoint(serverEndpoint);
+        options.setForeignHandle(domesticSocket);
+
+        ntsa::Data data(ntsa::ConstBuffer(clientBuffer, sizeof clientBuffer));
+
+        error = ntsu::SocketUtil::send(&context, data, options, client);
+        NTSCFG_TEST_ASSERT(!error);
+
+        NTSCFG_TEST_ASSERT(context.bytesSendable() == sizeof clientBuffer);
+        NTSCFG_TEST_ASSERT(context.bytesSent() == sizeof clientBuffer);
+    }
+
+    // Dequeue incoming data received by the server socket.
+
+    {
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        options.showForeignHandles();
+
+        ntsa::Data data(
+            ntsa::MutableBuffer(serverBuffer, sizeof serverBuffer));
+
+        error = ntsu::SocketUtil::receive(&context, &data, options, server);
+        NTSCFG_TEST_ASSERT(!error);
+
+        NTSCFG_TEST_ASSERT(context.bytesReceivable() == sizeof serverBuffer);
+        NTSCFG_TEST_ASSERT(context.bytesReceived() == sizeof serverBuffer);
+
+        NTSCFG_TEST_ASSERT(!context.endpoint().isNull());
+        NTSCFG_TEST_ASSERT(context.endpoint().value() == clientEndpoint);
+
+        NTSCFG_TEST_ASSERT(
+            bsl::memcmp(serverBuffer, clientBuffer, sizeof clientBuffer) == 0);
+
+        NTSCFG_TEST_TRUE(!context.foreignHandle().isNull());
+
+        ntsa::Endpoint foreignSourceEndpoint;
+        error = ntsu::SocketUtil::sourceEndpoint(
+            &foreignSourceEndpoint,
+            context.foreignHandle().value());
+        NTSCFG_TEST_ASSERT(!error);
+
+        NTSCFG_TEST_EQ(foreignSourceEndpoint, domesticSourceEndpoint);
+
+        error = ntsu::SocketUtil::close(domesticSocket);
+        NTSCFG_TEST_ASSERT(!error);
+
+        error = ntsu::SocketUtil::close(context.foreignHandle().value());
+        NTSCFG_TEST_ASSERT(!error);
+    }
+}
+
 void testDatagramSocketTransmissionMultipleBuffers(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
@@ -977,6 +1384,233 @@ void testDatagramSocketTransmissionBlob(ntsa::Transport::Value transport,
         NTSCFG_TEST_ASSERT(serverBlob.length() == 9);
         NTSCFG_TEST_ASSERT(bdlbb::BlobUtil::compare(serverBlob, clientBlob) ==
                            0);
+    }
+}
+
+void testDatagramSocketTransmissionBlobWithControlMsg(
+                                        ntsa::Transport::Value transport,
+                                        ntsa::Handle           server,
+                                        const ntsa::Endpoint&  serverEndpoint,
+                                        ntsa::Handle           client,
+                                        const ntsa::Endpoint&  clientEndpoint,
+                                        bslma::Allocator*      allocator)
+{
+    if (transport != ntsa::Transport::e_LOCAL_DATAGRAM) {
+        return;
+    }
+
+    NTSCFG_TEST_LOG_DEBUG << "Testing " << transport
+                          << ": sendmsg/recvmsg (blob) "
+                          << "with ancillary data"
+                          << NTSCFG_TEST_LOG_END;
+
+    ntsa::Error error;
+
+    char DATA[] = "123456789";
+
+    bdlbb::SimpleBlobBufferFactory blobBufferFactory(3, allocator);
+
+    bdlbb::Blob clientBlob(&blobBufferFactory, allocator);
+    bdlbb::BlobUtil::append(&clientBlob, DATA, sizeof DATA - 1);
+
+    bdlbb::Blob serverBlob(&blobBufferFactory, allocator);
+    serverBlob.setLength(sizeof DATA - 1);
+    serverBlob.setLength(0);
+
+    ntsa::Handle domesticSocket;
+    error = ntsu::SocketUtil::create(&domesticSocket, transport);
+    NTSCFG_TEST_ASSERT(!error);
+
+    error = ntsu::SocketUtil::bind(
+        ntsa::Endpoint(ntsa::LocalName::generateUnique()),
+        false,
+        domesticSocket);
+    NTSCFG_TEST_ASSERT(!error);
+
+    ntsa::Endpoint domesticSourceEndpoint;
+    error = ntsu::SocketUtil::sourceEndpoint(&domesticSourceEndpoint,
+                                             domesticSocket);
+    NTSCFG_TEST_ASSERT(!error);
+
+    // Enqueue outgoing data to transmit by the client socket.
+
+    {
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        options.setEndpoint(serverEndpoint);
+        options.setForeignHandle(domesticSocket);
+
+        error = ntsu::SocketUtil::send(&context, clientBlob, options, client);
+        NTSCFG_TEST_ASSERT(!error);
+
+        NTSCFG_TEST_ASSERT(context.bytesSendable() == 9);
+        NTSCFG_TEST_ASSERT(context.bytesSent() == 9);
+    }
+
+    // Dequeue incoming data received by the server socket.
+
+    {
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        options.showForeignHandles();
+
+        error =
+            ntsu::SocketUtil::receive(&context, &serverBlob, options, server);
+        NTSCFG_TEST_ASSERT(!error);
+
+        NTSCFG_TEST_ASSERT(context.bytesReceivable() == 9);
+        NTSCFG_TEST_ASSERT(context.bytesReceived() == 9);
+
+        NTSCFG_TEST_ASSERT(!context.endpoint().isNull());
+        NTSCFG_TEST_ASSERT(context.endpoint().value() == clientEndpoint);
+
+        NTSCFG_TEST_ASSERT(serverBlob.length() == 9);
+        NTSCFG_TEST_ASSERT(bdlbb::BlobUtil::compare(serverBlob, clientBlob) ==
+                           0);
+
+        NTSCFG_TEST_TRUE(!context.foreignHandle().isNull());
+
+        ntsa::Endpoint foreignSourceEndpoint;
+        error = ntsu::SocketUtil::sourceEndpoint(
+            &foreignSourceEndpoint,
+            context.foreignHandle().value());
+        NTSCFG_TEST_ASSERT(!error);
+
+        NTSCFG_TEST_EQ(foreignSourceEndpoint, domesticSourceEndpoint);
+
+        error = ntsu::SocketUtil::close(domesticSocket);
+        NTSCFG_TEST_ASSERT(!error);
+
+        error = ntsu::SocketUtil::close(context.foreignHandle().value());
+        NTSCFG_TEST_ASSERT(!error);
+    }
+}
+
+void testDatagramSocketTransmissionWithControlMsgDropped(
+                                        ntsa::Transport::Value transport,
+                                        ntsa::Handle           server,
+                                        const ntsa::Endpoint&  serverEndpoint,
+                                        ntsa::Handle           client,
+                                        const ntsa::Endpoint&  clientEndpoint,
+                                        bslma::Allocator*      allocator)
+{
+    if (transport != ntsa::Transport::e_LOCAL_DATAGRAM) {
+        return;
+    }
+
+    NTSCFG_TEST_LOG_DEBUG << "Testing " << transport
+                          << ": sendmsg/recvmsg (blob) "
+                          << "with ancillary data"
+                          << NTSCFG_TEST_LOG_END;
+
+    ntsa::Error error;
+
+    char DATA[] = "123456789";
+
+    bdlbb::SimpleBlobBufferFactory blobBufferFactory(3, allocator);
+
+    ntsa::Handle domesticSocket;
+    error = ntsu::SocketUtil::create(&domesticSocket, transport);
+    NTSCFG_TEST_ASSERT(!error);
+
+    error = ntsu::SocketUtil::bind(
+        ntsa::Endpoint(ntsa::LocalName::generateUnique()),
+        false,
+        domesticSocket);
+    NTSCFG_TEST_ASSERT(!error);
+
+    ntsa::Endpoint domesticSourceEndpoint;
+    error = ntsu::SocketUtil::sourceEndpoint(&domesticSourceEndpoint,
+                                             domesticSocket);
+    NTSCFG_TEST_ASSERT(!error);
+
+    for (bsl::size_t iteration = 0; iteration < 2; ++iteration) {
+        NTSCFG_TEST_LOG_DEBUG << "Testing iteration " << iteration
+                              << NTSCFG_TEST_LOG_END;
+
+        bdlbb::Blob clientBlob(&blobBufferFactory, allocator);
+        bdlbb::BlobUtil::append(&clientBlob, DATA, sizeof DATA - 1);
+
+        bdlbb::Blob serverBlob(&blobBufferFactory, allocator);
+        serverBlob.setLength(sizeof DATA - 1);
+        serverBlob.setLength(0);
+
+        // Enqueue outgoing data to transmit by the client socket.
+
+        {
+            ntsa::SendContext context;
+            ntsa::SendOptions options;
+
+            options.setEndpoint(serverEndpoint);
+
+            if (iteration == 0) {
+                options.setForeignHandle(domesticSocket);
+            }
+
+            error = ntsu::SocketUtil::send(
+                &context, clientBlob, options, client);
+            NTSCFG_TEST_ASSERT(!error);
+
+            NTSCFG_TEST_ASSERT(context.bytesSendable() == 9);
+            NTSCFG_TEST_ASSERT(context.bytesSent() == 9);
+        }
+
+        // Dequeue incoming data received by the server socket.
+
+        {
+            ntsa::ReceiveContext context;
+            ntsa::ReceiveOptions options;
+
+            if (iteration == 1) {
+                options.showForeignHandles();
+            }
+
+            error =
+                ntsu::SocketUtil::receive(
+                    &context, &serverBlob, options, server);
+            NTSCFG_TEST_ASSERT(!error);
+
+            NTSCFG_TEST_ASSERT(context.bytesReceivable() == 9);
+            NTSCFG_TEST_ASSERT(context.bytesReceived() == 9);
+
+            NTSCFG_TEST_ASSERT(!context.endpoint().isNull());
+            NTSCFG_TEST_ASSERT(context.endpoint().value() == clientEndpoint);
+
+            NTSCFG_TEST_ASSERT(serverBlob.length() == 9);
+            NTSCFG_TEST_ASSERT(bdlbb::BlobUtil::compare(serverBlob, clientBlob)
+                               == 0);
+
+            if (iteration == 0) {
+                NTSCFG_TEST_TRUE(context.foreignHandle().isNull());
+            }
+            else if (iteration == 1) {
+                NTSCFG_TEST_TRUE(context.foreignHandle().isNull());
+
+                // Operating system implementation note: a file descriptor
+                // passed using socket control messages that is not "picked up"
+                // immediately when it is available is not subsequently
+                // retrievable with a subsequent call to 'recvmsg'.
+#if 0
+                NTSCFG_TEST_TRUE(!context.foreignHandle().isNull());
+
+                ntsa::Endpoint foreignSourceEndpoint;
+                error = ntsu::SocketUtil::sourceEndpoint(
+                    &foreignSourceEndpoint,
+                    context.foreignHandle().value());
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_EQ(foreignSourceEndpoint, domesticSourceEndpoint);
+
+                error = ntsu::SocketUtil::close(context.foreignHandle().value());
+                NTSCFG_TEST_ASSERT(!error);
+#endif
+
+                error = ntsu::SocketUtil::close(domesticSocket);
+                NTSCFG_TEST_ASSERT(!error);
+            }
+        }
     }
 }
 
@@ -6599,7 +7233,85 @@ NTSCFG_TEST_CASE(18)
 
 NTSCFG_TEST_CASE(19)
 {
-    // Concern: ntsu::SocketUtil::isSocket correctly indicates true if a 
+    // Concern: Datagram socket transmission with control data: single buffer.
+    // Plan:
+
+    ntscfg::TestAllocator ta;
+    {
+        test::executeDatagramSocketTest(
+            &test::testDatagramSocketTransmissionSingleBufferWithControlMsg);
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTSCFG_TEST_CASE(20)
+{
+    // Concern: Datagram socket transmission with control data: blob.
+    // Plan:
+
+    ntscfg::TestAllocator ta;
+    {
+        test::executeDatagramSocketTest(
+            &test::testDatagramSocketTransmissionBlobWithControlMsg);
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTSCFG_TEST_CASE(21)
+{
+    // Concern: Datagram socket transmission with control data: dropped.
+    // Plan:
+
+    ntscfg::TestAllocator ta;
+    {
+        test::executeDatagramSocketTest(
+            &test::testDatagramSocketTransmissionWithControlMsgDropped);
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTSCFG_TEST_CASE(22)
+{
+    // Concern: Stream socket transmission with control data: single buffer.
+    // Plan:
+
+    ntscfg::TestAllocator ta;
+    {
+        test::executeStreamSocketTest(
+            &test::testStreamSocketTransmissionSingleBufferWithControlMsg);
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTSCFG_TEST_CASE(23)
+{
+    // Concern: Stream socket transmission with control data: blob.
+    // Plan:
+
+    ntscfg::TestAllocator ta;
+    {
+        test::executeStreamSocketTest(
+            &test::testStreamSocketTransmissionBlobWithControlMsg);
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTSCFG_TEST_CASE(24)
+{
+    // Concern: Stream socket transmission with control data: dropped
+    // Plan:
+
+    ntscfg::TestAllocator ta;
+    {
+        test::executeStreamSocketTest(
+         &test::testStreamSocketTransmissionWithControlMsgDropped);
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTSCFG_TEST_CASE(25)
+{
+    // Concern: ntsu::SocketUtil::isSocket correctly indicates true if a
     // file descriptor is an alias for a socket, and false, after the file
     // descriptor is closed.
 
@@ -6617,7 +7329,7 @@ NTSCFG_TEST_CASE(19)
 
     {
         ntsa::Handle socket = ntsa::k_INVALID_HANDLE;
-        error = ntsu::SocketUtil::create(&socket, 
+        error = ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_TCP_IPV4_STREAM);
         NTSCFG_TEST_OK(error);
 
@@ -6653,5 +7365,11 @@ NTSCFG_TEST_DRIVER
     NTSCFG_TEST_REGISTER(17);
     NTSCFG_TEST_REGISTER(18);
     NTSCFG_TEST_REGISTER(19);
+    NTSCFG_TEST_REGISTER(20);
+    NTSCFG_TEST_REGISTER(21);
+    NTSCFG_TEST_REGISTER(22);
+    NTSCFG_TEST_REGISTER(23);
+    NTSCFG_TEST_REGISTER(24);
+    NTSCFG_TEST_REGISTER(25);
 }
 NTSCFG_TEST_DRIVER_END;
