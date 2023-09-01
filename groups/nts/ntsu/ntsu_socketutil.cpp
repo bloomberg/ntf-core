@@ -248,6 +248,9 @@ struct sockaddr_un_win32 {
 #define NTSU_SOCKETUTIL_MAX_MESSAGES_PER_RECEIVE 0
 #endif
 
+#define NTSU_SOCKETUTIL_MAX_HANDLES_PER_OUTGOING_CONTROLMSG 1
+#define NTSU_SOCKETUTIL_MAX_HANDLES_PER_INCOMING_CONTROLMSG 1
+
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
 
 #define NTSU_SOCKETUTIL_MAX_BUFFERS_PER_SEND                                  \
@@ -541,9 +544,6 @@ void IncomingDataStats::update(const struct iovec* buffersReceivable,
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
-#define NTSU_SOCKETUTIL_MAX_HANDLES_PER_OUTGOING_CONTROLMSG 1
-#define NTSU_SOCKETUTIL_MAX_HANDLES_PER_INCOMING_CONTROLMSG 1
-
 // Provide a buffer suitable for attaching to a call to 'sendmsg' to send
 // control data to the peer of a socket.
 class SendControl 
@@ -566,7 +566,6 @@ class SendControl
     typedef bsls::AlignedBuffer<k_SEND_CONTROL_BUFFER_SIZE> Arena;
 
     Arena d_arena;
-    bool  d_defined;
 
   private:
     SendControl(const SendControl&) BSLS_KEYWORD_DELETED;
@@ -582,12 +581,6 @@ class SendControl
     // Encode the specified 'options' into the control buffer. Return the 
     // error.
     ntsa::Error encode(msghdr* msg, const ntsa::SendOptions& options);
-
-    // Return the address of the control buffer.
-    void* buffer() const;
-        
-    // Return the size of the control buffer, in bytes.
-    bsl::size_t length() const;
 };
 
 // Provide a buffer suitable for attaching to a call to 'recvmsg' to receive
@@ -637,33 +630,25 @@ class ReceiveControl
     ntsa::Error decode(ntsa::ReceiveContext*       context, 
                        const msghdr&               msg,
                        const ntsa::ReceiveOptions& options);
-
-    // Return the address of the control buffer.
-    void* buffer() const;
-        
-    // Return the size of the control buffer, in bytes.
-    bsl::size_t length() const;
 };
 
-
+NTSCFG_INLINE
 SendControl::SendControl()
-: d_defined(false)
 {
-    
 }
 
+NTSCFG_INLINE
 SendControl::~SendControl()
 {
 }
 
-
 ntsa::Error SendControl::encode(msghdr* msg, const ntsa::SendOptions& options)
 {
+    bsl::memset(d_arena.buffer(), 0, k_SEND_CONTROL_BUFFER_SIZE);
+
     if (options.foreignHandle().isNull()) {
         return ntsa::Error();
     }
-
-    bsl::memset(d_arena.buffer(), 0, k_SEND_CONTROL_BUFFER_SIZE);
 
     msg->msg_control    = d_arena.buffer();
     msg->msg_controllen = static_cast<socklen_t>(k_SEND_CONTROL_BUFFER_SIZE);
@@ -677,42 +662,16 @@ ntsa::Error SendControl::encode(msghdr* msg, const ntsa::SendOptions& options)
     ctl->cmsg_len   = CMSG_LEN(sizeof(int));
 
     bsl::memcpy(CMSG_DATA(ctl), &foreignHandle, sizeof(int));
-
-    d_defined = true;
     
     return ntsa::Error();
 }
 
-void* SendControl::buffer() const
-{
-    if (d_defined) {
-        return const_cast<char*>(d_arena.buffer());
-    }
-    else {
-        return 0;
-    }
-}
-
-bsl::size_t SendControl::length() const
-{
-    if (d_defined) {
-        return static_cast<bsl::size_t>(k_SEND_CONTROL_BUFFER_SIZE);
-    }
-    else {
-        return 0;
-    }
-}
-
-
-
-
-
-
-
+NTSCFG_INLINE
 ReceiveControl::ReceiveControl()
 {
 }
     
+NTSCFG_INLINE
 ReceiveControl::~ReceiveControl()
 {
 }
@@ -722,7 +681,8 @@ void ReceiveControl::initialize(msghdr* msg)
     bsl::memset(d_arena.buffer(), 0, k_RECEIVE_CONTROL_BUFFER_SIZE);
 
     msg->msg_control    = d_arena.buffer();
-    msg->msg_controllen = static_cast<socklen_t>(k_RECEIVE_CONTROL_BUFFER_SIZE);
+    msg->msg_controllen = 
+        static_cast<socklen_t>(k_RECEIVE_CONTROL_BUFFER_SIZE);
 }
 
 ntsa::Error ReceiveControl::decode(ntsa::ReceiveContext*       context, 
@@ -767,12 +727,12 @@ ntsa::Error ReceiveControl::decode(ntsa::ReceiveContext*       context,
                 bsl::memcpy(&ts, CMSG_DATA(hdr), sizeof(ts));
 
                 if (ts.softwareTs.tv_sec || ts.softwareTs.tv_nsec) {
-                    ctx->setSoftwareTimestamp(bsls::TimeInterval(
+                    context->setSoftwareTimestamp(bsls::TimeInterval(
                         ts.softwareTs.tv_sec,
                         static_cast<int>(ts.softwareTs.tv_nsec)));
                 }
                 if (ts.hardwareTs.tv_sec || ts.hardwareTs.tv_nsec) {
-                    ctx->setHardwareTimestamp(bsls::TimeInterval(
+                    context->setHardwareTimestamp(bsls::TimeInterval(
                         ts.hardwareTs.tv_sec,
                         static_cast<int>(ts.hardwareTs.tv_nsec)));
                 }
@@ -789,7 +749,7 @@ ntsa::Error ReceiveControl::decode(ntsa::ReceiveContext*       context,
 
                 bsl::memcpy(&ts, CMSG_DATA(hdr), sizeof(ts));
                 if (ts.tv_sec || ts.tv_nsec) {
-                    ctx->setSoftwareTimestamp(
+                    context->setSoftwareTimestamp(
                         bsls::TimeInterval(ts.tv_sec,
                                            static_cast<int>(ts.tv_nsec)));
                 }
@@ -802,30 +762,6 @@ ntsa::Error ReceiveControl::decode(ntsa::ReceiveContext*       context,
     return ntsa::Error();
 }
 
-void* ReceiveControl::buffer() const
-{
-    return const_cast<char*>(d_arena.buffer());
-}
-
-bsl::size_t ReceiveControl::length() const
-{
-    return static_cast<bsl::size_t>(k_RECEIVE_CONTROL_BUFFER_SIZE);
-}
-
-
-
-
-
-
-
-
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-
-// MRM
-#error Implement parseControlBlock
-
-#else
-#error Not implemented
 #endif
 
 /// Provide utilities for converting between 'ntsa::Endpoint'
