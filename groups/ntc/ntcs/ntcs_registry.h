@@ -114,7 +114,8 @@ class RegistryEntry
     /// Increment counter of threads working on the entry
     void addOngoingProcess()
     {
-        ++d_processCounter;
+        //        ++d_processCounter;
+        d_processCounter.addAcqRel(1);
     }
 
     /// Show readability for this descriptor. Return the resulting interest
@@ -867,18 +868,18 @@ bool RegistryEntry::announceNotifications(
 NTCCFG_INLINE
 bool RegistryEntry::askForDetachmentAnnouncementPermission()
 {
-    return d_detachRequired.testAndSwap(true, false);
+    return d_detachRequired.testAndSwapAcqRel(true, false);
 }
 
 NTCCFG_INLINE
 void RegistryEntry::setDetachmentRequired(
     const ntci::SocketDetachedCallback& callback)
 {
-    BSLS_ASSERT(!d_detachRequired.load());
+    BSLS_ASSERT(!d_detachRequired.loadAcquire());
     BSLS_ASSERT(!d_detachCallback);
     // order is important
     d_detachCallback = callback;
-    d_detachRequired.store(true);
+    d_detachRequired.storeRelease(true);
 }
 
 NTCCFG_INLINE
@@ -920,7 +921,7 @@ void RegistryEntry::clear()
     }
 
     d_detachCallback.reset();
-    d_active = false;
+    d_active.storeRelease(false);
 }
 
 NTCCFG_INLINE
@@ -987,29 +988,19 @@ ntca::ReactorEventTrigger::Value RegistryEntry::trigger() const
 NTCCFG_INLINE
 bool RegistryEntry::active() const
 {
-    return d_active;
+    return d_active.loadAcquire();
 }
 
 NTCCFG_INLINE
 unsigned int RegistryEntry::processCounter() const
 {
-    return d_processCounter.load();
+    return d_processCounter.loadAcquire();
 }
 
 NTCCFG_INLINE
 unsigned int RegistryEntry::decrementProcessCounter()
 {
-    //TODO: can I just do return --d_processCounter and return the resulting value?
-    //    unsigned int current = d_processCounter.load();
-    //    while (true) {
-    //        unsigned int prev = d_processCounter.testAndSwap(current, current - 1);
-    //        if (prev == current) {
-    //            break;
-    //        }
-    //        current = prev;
-    //    }
-    //    return current;
-    return --d_processCounter;
+    return d_processCounter.subtractAcqRel(1);
 }
 
 NTCCFG_INLINE
