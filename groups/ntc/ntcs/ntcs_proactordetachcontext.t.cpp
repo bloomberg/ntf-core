@@ -21,17 +21,37 @@ using namespace BloombergLP;
 
 NTCCFG_TEST_CASE(1)
 {
-    // Concern:
-    // Plan:
+    ntcs::ProactorDetachContext dc;
+    NTCCFG_TEST_FALSE(dc.trySetDetachScheduled());
+    NTCCFG_TEST_TRUE(dc.trySetDetachRequired());
+    NTCCFG_TEST_FALSE(dc.trySetDetachRequired());
+    NTCCFG_TEST_TRUE(dc.trySetDetachScheduled());
+}
 
-    ntccfg::TestAllocator ta;
-    {
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+NTCCFG_TEST_CASE(2)
+{
+    ntcs::ProactorDetachContext dc;
+    NTCCFG_TEST_TRUE(dc.incrementAndCheckNoDetach());
+    NTCCFG_TEST_TRUE(dc.trySetDetachRequired());
+    NTCCFG_TEST_FALSE(dc.incrementAndCheckNoDetach());
+}
+
+NTCCFG_TEST_CASE(3)
+{
+    ntcs::ProactorDetachContext dc;
+    NTCCFG_TEST_TRUE(dc.incrementAndCheckNoDetach());
+    NTCCFG_TEST_TRUE(dc.incrementAndCheckNoDetach());
+    NTCCFG_TEST_TRUE(dc.incrementAndCheckNoDetach());
+    NTCCFG_TEST_FALSE(dc.decrementProcessCounterAndCheckDetachPossible());
+    NTCCFG_TEST_TRUE(dc.trySetDetachRequired());
+    NTCCFG_TEST_FALSE(dc.decrementProcessCounterAndCheckDetachPossible());
+    NTCCFG_TEST_TRUE(dc.decrementProcessCounterAndCheckDetachPossible());
 }
 
 NTCCFG_TEST_DRIVER
 {
     NTCCFG_TEST_REGISTER(1);
+    NTCCFG_TEST_REGISTER(2);
+    NTCCFG_TEST_REGISTER(3);
 }
 NTCCFG_TEST_DRIVER_END;
