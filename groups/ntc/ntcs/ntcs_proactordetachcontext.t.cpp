@@ -17,7 +17,47 @@
 
 #include <ntccfg_test.h>
 
+#include <bslmt_latch.h>
+#include <bslmt_threadutil.h>
+
 using namespace BloombergLP;
+
+namespace Test {
+void increment(ntcs::ProactorDetachContext* dc, bslmt::Latch* latch, int* steps)
+{
+    for (int i = 0; i < 100; ++i) {
+        NTCCFG_TEST_TRUE(dc->incrementAndCheckNoDetach());
+        ++steps;
+    }
+    latch->arriveAndWait();
+    dc->trySetDetachRequired();
+    for (int i = 0; i < 10000; ++i) {
+        bool noDetach = dc->incrementAndCheckNoDetach();
+        ++steps;
+        if (!noDetach) {
+            bool detachPossible =
+                dc->decrementProcessCounterAndCheckDetachPossible();
+            if (detachPossible) {
+                break;
+            }
+        }
+    }
+}
+
+void decrement(ntcs::ProactorDetachContext* dc, bslmt::Latch* latch, int* steps)
+{
+    latch->arriveAndWait();
+    for (int i = 0; i < 10100; ++i) {
+        bool detachPossible =
+            dc->decrementProcessCounterAndCheckDetachPossible();
+        ++steps;
+        if (detachPossible) {
+            break;
+        }
+    }
+}
+
+}
 
 NTCCFG_TEST_CASE(1)
 {
@@ -48,10 +88,33 @@ NTCCFG_TEST_CASE(3)
     NTCCFG_TEST_TRUE(dc.decrementProcessCounterAndCheckDetachPossible());
 }
 
+NTCCFG_TEST_CASE(4)
+{
+    ntcs::ProactorDetachContext dc;
+
+    bslmt::Latch              latch(2);
+    int incSteps = 0;
+    int decSteps = 0;
+
+    bslmt::ThreadUtil::Handle inc = bslmt::ThreadUtil::invalidHandle();
+    bslmt::ThreadUtil::create(&inc, NTCCFG_BIND(Test::increment, &dc, &latch, &incSteps));
+    NTCCFG_TEST_ASSERT(inc != bslmt::ThreadUtil::invalidHandle());
+
+    bslmt::ThreadUtil::Handle dec = bslmt::ThreadUtil::invalidHandle();
+    bslmt::ThreadUtil::create(&dec, NTCCFG_BIND(Test::decrement, &dc, &latch, &decSteps));
+    NTCCFG_TEST_ASSERT(dec != bslmt::ThreadUtil::invalidHandle());
+
+    bslmt::ThreadUtil::join(inc);
+    bslmt::ThreadUtil::join(dec);
+
+    NTCCFG_TEST_TRUE(incSteps == decSteps);
+}
+
 NTCCFG_TEST_DRIVER
 {
     NTCCFG_TEST_REGISTER(1);
     NTCCFG_TEST_REGISTER(2);
     NTCCFG_TEST_REGISTER(3);
+    NTCCFG_TEST_REGISTER(4);
 }
 NTCCFG_TEST_DRIVER_END;
