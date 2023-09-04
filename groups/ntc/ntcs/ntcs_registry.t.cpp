@@ -202,7 +202,7 @@ void testCase5Helper(bslmt::Latch&                latch,
                      int                          iterations,
                      const bsl::function<void()>& functor)
 {
-    latch.arrive();
+    latch.arriveAndWait();
     for (int i = 0; i < iterations; ++i) {
         functor();
     }
@@ -216,7 +216,7 @@ void testCase6Helper(bslmt::Latch&        latch,
                      ntcs::RegistryEntry& entry,
                      int&                 detachPermitted)
 {
-    latch.arrive();
+    latch.arriveAndWait();
     if (entry.askForDetachmentAnnouncementPermission()) {
         ++detachPermitted;
     }
