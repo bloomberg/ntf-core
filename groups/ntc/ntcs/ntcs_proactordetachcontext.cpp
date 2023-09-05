@@ -28,7 +28,7 @@ ProactorDetachContext::ProactorDetachContext()
 
 bool ProactorDetachContext::incrementAndCheckNoDetach()
 {
-    unsigned int val = ++d_stateAndCounter;
+    unsigned int val = d_stateAndCounter.addAcqRel(1);
     if ((val & k_STATE_MASK) != DetachState::e_DETACH_NOT_REQUIRED) {
         return false;
     }
@@ -37,13 +37,13 @@ bool ProactorDetachContext::incrementAndCheckNoDetach()
 
 bool ProactorDetachContext::decrementProcessCounterAndCheckDetachPossible()
 {
-    unsigned int val = --d_stateAndCounter;
+    unsigned int val = d_stateAndCounter.subtractAcqRel(1);
     if ((val & k_COUNTER_MASK) == 0 &&
         (val & k_STATE_MASK) == DetachState::e_DETACH_REQUIRED)
     {
-        unsigned int prev =
-            d_stateAndCounter.testAndSwap(val,
-                                          DetachState::e_DETACH_SCHEDULED);
+        unsigned int prev = d_stateAndCounter.testAndSwapAcqRel(
+            val,
+            DetachState::e_DETACH_SCHEDULED);
         return prev == val;
     }
     return false;
@@ -51,13 +51,13 @@ bool ProactorDetachContext::decrementProcessCounterAndCheckDetachPossible()
 
 bool ProactorDetachContext::trySetDetachScheduled()
 {
-    unsigned int val = d_stateAndCounter.load();
+    unsigned int val = d_stateAndCounter.loadAcquire();
     if ((val & k_COUNTER_MASK) == 0 &&
         (val & k_STATE_MASK) == DetachState::e_DETACH_REQUIRED)
     {
-        unsigned int prev =
-            d_stateAndCounter.testAndSwap(val,
-                                          DetachState::e_DETACH_SCHEDULED);
+        unsigned int prev = d_stateAndCounter.testAndSwapAcqRel(
+            val,
+            DetachState::e_DETACH_SCHEDULED);
         return prev == val;
     }
     return false;
@@ -66,13 +66,13 @@ bool ProactorDetachContext::trySetDetachScheduled()
 bool ProactorDetachContext::trySetDetachRequired()
 {
     while (true) {
-        unsigned int current = d_stateAndCounter.load();
+        unsigned int current = d_stateAndCounter.loadAcquire();
         if ((current & k_STATE_MASK) != e_DETACH_NOT_REQUIRED) {
             return false;
         }
         unsigned int prev =
-            d_stateAndCounter.testAndSwap(current,
-                                          current | e_DETACH_REQUIRED);
+            d_stateAndCounter.testAndSwapAcqRel(current,
+                                                current | e_DETACH_REQUIRED);
         if (prev == current) {
             break;
         }
