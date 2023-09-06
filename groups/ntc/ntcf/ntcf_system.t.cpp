@@ -11356,7 +11356,6 @@ NTCCFG_TEST_CASE(58)
 NTCCFG_TEST_CASE(59)
 {
     ntccfg::TestAllocator ta;
-    bslma::Default::setDefaultAllocatorRaw(&ta);
     {
         test::concernInterfaceResolverGetIpAddressFromOverride(&ta);
     }
@@ -11366,7 +11365,6 @@ NTCCFG_TEST_CASE(59)
 NTCCFG_TEST_CASE(60)
 {
     ntccfg::TestAllocator ta;
-    bslma::Default::setDefaultAllocatorRaw(&ta);
     {
         test::concernInterfaceResolverGetIpAddressFromServer(&ta);
     }
@@ -11376,7 +11374,6 @@ NTCCFG_TEST_CASE(60)
 NTCCFG_TEST_CASE(61)
 {
     ntccfg::TestAllocator ta;
-    bslma::Default::setDefaultAllocatorRaw(&ta);
     {
         test::concernInterfaceResolverGetIpAddressFromSystem(&ta);
     }
