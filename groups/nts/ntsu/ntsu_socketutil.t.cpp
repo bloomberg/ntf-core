@@ -73,6 +73,17 @@ class Storage
     }
 };
 
+bool supportsRxTimestamping(ntsa::Handle socket)
+{
+    return faslse;
+}
+
+
+bool supportsTxTimestamping(ntsa::Handle socket)
+{
+    return faslse;
+}
+
 /// This typedef defines a callback function invoked to test a particular
 /// portion of the component using the specified connected 'server' and
 /// 'client' having the specified stream socket 'transport', supplying
