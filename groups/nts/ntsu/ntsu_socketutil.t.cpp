@@ -17,6 +17,7 @@
 #include <ntsu_adapterutil.h>
 #include <ntsu_socketoptionutil.h>
 #include <ntsu_socketutil.h>
+#include <ntsu_timestamputil.h>
 #include <bdlbb_blob.h>
 #include <bdlbb_blobutil.h>
 #include <bdlbb_simpleblobbufferfactory.h>
@@ -36,6 +37,11 @@
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
 #include <linux/version.h>
+
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <linux/ethtool.h>
+#include <linux/sockios.h>
 #endif
 
 using namespace BloombergLP;
@@ -72,6 +78,63 @@ class Storage
         return N;
     }
 };
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
+bsl::uint32_t timestampingSupport(ntsa::Handle socket)
+{
+    ntsa::Error error;
+    int rc;
+
+    struct ::ethtool_ts_info info;
+    bsl::memset(&info, 0, sizeof info);
+
+    info.cmd = ETHTOOL_GET_TS_INFO;
+
+    struct ::ifreq ifr;
+    bsl::memset(&ifr, 0, sizeof ifr);
+
+    bsl::strcpy(ifr.ifr_ifrn.ifrn_name, "lo");
+    ifr.ifr_ifru.ifru_data = reinterpret_cast<char*>(&info);
+
+    rc = ::ioctl(socket, SIOCETHTOOL, &ifr);
+    if (rc != 0) {
+        error = ntsa::Error(errno);
+        BSLS_LOG_DEBUG("I/O control SIOCETHTOOL failed: %s", 
+                       error.text().c_str());
+        return 0;
+    }
+
+    return static_cast<bsl::uint32_t>(info.so_timestamping);
+}
+
+bool supportsRxTimestamps(ntsa::Handle socket)
+{
+    const bsl::uint32_t flags = timestampingSupport(socket);
+    return (flags & ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_SOFTWARE) != 0;
+}
+
+bool supportsTxTimestamps(ntsa::Handle socket)
+{
+    const bsl::uint32_t flags = timestampingSupport(socket);
+    return (flags & ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_SOFTWARE) != 0;
+}
+
+#else
+
+bool supportsRxTimestamps(ntsa::Handle socket)
+{
+    NTSCFG_WARNING_UNUSED(socket);
+    return false;
+}
+
+bool supportsTxTimestamps(ntsa::Handle socket)
+{
+    NTSCFG_WARNING_UNUSED(socket);
+    return false;
+}
+
+#endif
 
 /// This typedef defines a callback function invoked to test a particular
 /// portion of the component using the specified connected 'server' and
@@ -5637,6 +5700,7 @@ NTSCFG_TEST_CASE(17)
                         NTSCFG_TEST_TRUE(context.hardwareTimestamp().isNull());
                     }
                     else {
+                        BSLS_LOG_DEBUG("Detected RX timestamp"); 
                         NTSCFG_TEST_TRUE(
                             context.softwareTimestamp().has_value());
                         NTSCFG_TEST_LE(sysTimeBeforeSending,
@@ -5756,7 +5820,7 @@ NTSCFG_TEST_CASE(17)
                 NTSCFG_TEST_EQ(context.bytesSent(), 1);
             }
 
-            if (timestampsAreEnabled) {
+            if (timestampsAreEnabled && test::supportsTxTimestamps(server)) {
                 bslma::TestAllocator ta;
                 {
                     ntsa::NotificationQueue notifications(&ta);
@@ -5776,6 +5840,9 @@ NTSCFG_TEST_CASE(17)
                         timestamps.insert(
                             notifications.notifications().at(i).timestamp());
                     }
+
+                    BSLS_LOG_DEBUG("Detected TX timestamp"); 
+
                     NTSCFG_TEST_EQ(timestamps.size(), 3);
                     bsl::set<ntsa::Timestamp,
                              test::TimestampTimeComparator>::const_iterator
@@ -5880,7 +5947,7 @@ NTSCFG_TEST_CASE(17)
 
                 // Check that no data on the error queue.
 
-                {
+                if (test::supportsTxTimestamps(server)) {
                     bslma::TestAllocator ta;
                     {
                         ntsa::NotificationQueue notifications(&ta);
@@ -6220,6 +6287,7 @@ NTSCFG_TEST_CASE(18)
                         NTSCFG_TEST_TRUE(context.softwareTimestamp().isNull());
                     }
                     else {
+                        BSLS_LOG_DEBUG("Detected RX timestamp"); 
                         NTSCFG_TEST_FALSE(
                             context.softwareTimestamp().isNull());
                         NTSCFG_TEST_LE(sysTimeBeforeSending,
@@ -6354,7 +6422,7 @@ NTSCFG_TEST_CASE(18)
                 NTSCFG_TEST_ASSERT(buffer == 'C');
             }
 
-            if (timestampsAreEnabled) {
+            if (timestampsAreEnabled && test::supportsTxTimestamps(server)) {
                 bslma::TestAllocator ta;
                 {
                     ntsa::NotificationQueue notifications(&ta);
@@ -6373,6 +6441,8 @@ NTSCFG_TEST_CASE(18)
                             notifications.notifications().at(i).isTimestamp());
                         timestamps.insert(
                             notifications.notifications().at(i).timestamp());
+
+                        BSLS_LOG_DEBUG("Detected TX timestamp"); 
                     }
                     NTSCFG_TEST_EQ(timestamps.size(), numTimestamps);
                     bsl::set<ntsa::Timestamp,
@@ -6454,7 +6524,7 @@ NTSCFG_TEST_CASE(18)
 
                 // Check that no data on the error queue.
 
-                {
+                if (test::supportsTxTimestamps(server)) {
                     bslma::TestAllocator ta;
                     {
                         ntsa::NotificationQueue notifications(&ta);
