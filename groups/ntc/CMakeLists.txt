@@ -50,7 +50,7 @@ install(
     DESTINATION
         "include"
     COMPONENT
-        ntc
+        ntc-headers
 )
 
 bbs_emit_pkg_config(ntc)
