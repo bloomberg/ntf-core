@@ -26,7 +26,7 @@ configure_file(
 add_library(ntc STATIC)
 
 bbs_setup_target_uor(
-    ntc 
+    ntc
     NO_EMIT_PKG_CONFIG_FILE
     PRIVATE_PACKAGES ntcm ntcs ntcq ntcd ntcdns ntcu ntcr ntcp ntco)
 
@@ -49,6 +49,8 @@ install(
         ${CMAKE_BINARY_DIR}/ntccfg_config.h
     DESTINATION
         "include"
+    COMPONENT
+        ntc
 )
 
 bbs_emit_pkg_config(ntc)
