@@ -26,7 +26,7 @@ configure_file(
 add_library(nts STATIC)
 
 bbs_setup_target_uor(
-    nts 
+    nts
     NO_EMIT_PKG_CONFIG_FILE
     PRIVATE_PACKAGES ntsd ntsu ntsb ntso)
 
@@ -49,6 +49,8 @@ install(
         ${CMAKE_BINARY_DIR}/ntscfg_config.h
     DESTINATION
         "include"
+    COMPONENT
+        nts
 )
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "FreeBSD")
