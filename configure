@@ -15,6 +15,123 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+process_env() {
+  if [ -n "${!1}" ]; then
+    echo "            <env name=\"${1}\" value=\"${!1}\" />" >> "${NTF_CLION_XML}"
+  fi
+}
+
+generate_clion_toolchain () {
+  NTF_CLION_STORAGE="testFolder"
+  NTF_CLION_XML="${NTF_CLION_STORAGE}/cmake.xml"
+
+  mkdir -p ${NTF_CLION_STORAGE}
+
+  if test -f "$NTF_CLION_XML"; then
+    echo "cmake.xml exists, it will be overwritten"
+  fi
+
+  num_threads=$(grep ^processor /proc/cpuinfo | uniq | wc -l)
+
+  {
+    echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+    echo "<project version=\"4\">"
+    echo "  <component name=\"CMakeSharedSettings\">"
+    echo "    <configurations>"
+
+    echo -n "      <configuration PROFILE_NAME=\"${NTF_CONFIGURE_UFID_CANONICAL}\" ENABLED=\"true\""
+    echo -n " GENERATION_DIR=\"${NTF_CONFIGURE_OUTPUT}\" CONFIG_NAME=\"${NTF_CONFIGURE_UFID_CANONICAL}\""
+    echo -n " GENERATION_OPTIONS=\""
+    if [[ "${NTF_CONFIGURE_CMAKE_OPTION_DISTRIBUTION_REFROOT}" != "" ]]; then
+      echo -n " ${NTF_CONFIGURE_CMAKE_OPTION_DISTRIBUTION_REFROOT}"
+    fi
+    echo -n " ${NTF_CONFIGURE_CMAKE_OPTION_UFID} ${NTF_CONFIGURE_CMAKE_OPTION_BUILD_TYPE}"
+    echo -n " ${NTF_CONFIGURE_CMAKE_OPTION_INSTALL_PREFIX} -DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
+    echo -n " ${NTF_CONFIGURE_CMAKE_OPTION_PREFIX_PATH}"
+    echo -n " -DCMAKE_TOOLCHAIN_FILE:PATH=${NTF_CONFIGURE_REPOSITORY}/toolchain.cmake"
+    echo -n " -G &quot;${NTF_CONFIGURE_GENERATOR}&quot; -S ${NTF_CONFIGURE_REPOSITORY}\""
+    echo " BUILD_OPTIONS=\"-j ${num_threads}\">"
+
+    echo "        <ADDITIONAL_GENERATION_ENVIRONMENT>"
+    echo "          <envs>"
+  } > ${NTF_CLION_XML}
+
+  process_env "CC"
+  process_env "CXX"
+
+  #    export NTF_CONFIGURE_UNAME
+  #    export NTF_CONFIGURE_UFID
+  #    export NTF_CONFIGURE_PREFIX
+  #    export NTF_CONFIGURE_REFROOT
+
+  process_env "NTF_CONFIGURE_SANITIZER"
+
+  process_env "NTF_CONFIGURE_WITH_WARNINGS"
+  process_env "NTF_CONFIGURE_WITH_WARNINGS_AS_ERRORS"
+  process_env "NTF_CONFIGURE_WITH_TIME_TRACE"
+  process_env "NTF_CONFIGURE_WITH_TIME_REPORT"
+  process_env "NTF_CONFIGURE_WITH_COVERAGE"
+
+  process_env "NTF_CONFIGURE_WITH_BSL"
+  process_env "NTF_CONFIGURE_WITH_BDL"
+  process_env "NTF_CONFIGURE_WITH_BAL"
+  process_env "NTF_CONFIGURE_WITH_NTS"
+  process_env "NTF_CONFIGURE_WITH_NTC"
+
+  process_env "NTF_CONFIGURE_WITH_ADDRESS_FAMILY_IPV4"
+  process_env "NTF_CONFIGURE_WITH_ADDRESS_FAMILY_IPV6"
+  process_env "NTF_CONFIGURE_WITH_ADDRESS_FAMILY_LOCAL"
+
+  process_env "NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_TCP"
+  process_env "NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_UDP"
+  process_env "NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_LOCAL"
+
+  process_env "NTF_CONFIGURE_WITH_SELECT"
+  process_env "NTF_CONFIGURE_WITH_POLL"
+  process_env "NTF_CONFIGURE_WITH_EPOLL"
+  process_env "NTF_CONFIGURE_WITH_DEVPOLL"
+  process_env "NTF_CONFIGURE_WITH_EVENTPORT"
+  process_env "NTF_CONFIGURE_WITH_POLLSET"
+  process_env "NTF_CONFIGURE_WITH_KQUEUE"
+  process_env "NTF_CONFIGURE_WITH_IOCP"
+  process_env "NTF_CONFIGURE_WITH_IORING"
+
+  process_env "NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING"
+  process_env "NTF_CONFIGURE_WITH_THREAD_SCALING"
+  process_env "NTF_CONFIGURE_WITH_DEPRECATED_FEATURES"
+
+  process_env "NTF_CONFIGURE_WITH_LOGGING"
+  process_env "NTF_CONFIGURE_WITH_METRICS"
+  process_env "NTF_CONFIGURE_WITH_BRANCH_PREDICTION"
+
+  process_env "NTF_CONFIGURE_WITH_SPIN_LOCKS"
+  process_env "NTF_CONFIGURE_WITH_RECURSIVE_MUTEXES"
+
+  process_env "NTF_CONFIGURE_WITH_STACK_TRACE_LEAK_REPORT"
+  process_env "NTF_CONFIGURE_WITH_STACK_TRACE_TEST_ALLOCATOR"
+
+  process_env "NTF_CONFIGURE_WITH_APPLICATIONS"
+  process_env "NTF_CONFIGURE_WITH_USAGE_EXAMPLES"
+  process_env "NTF_CONFIGURE_WITH_MOCKS"
+  process_env "NTF_CONFIGURE_WITH_INTEGRATION_TESTS"
+
+  process_env "NTF_CONFIGURE_WITH_DOCUMENTATION"
+  process_env "NTF_CONFIGURE_WITH_DOCUMENTATION_INTERNAL"
+
+  process_env "NTF_CONFIGURE_FROM_CONTINUOUS_INTEGRATION"
+  process_env "NTF_CONFIGURE_FROM_PACKAGING"
+
+  {
+    echo "          </envs>"
+    echo "        </ADDITIONAL_GENERATION_ENVIRONMENT>"
+
+    echo "      </configuration>"
+    echo "    </configurations>"
+    echo "  </component>"
+    echo "</project>"
+  } >> ${NTF_CLION_XML}
+}
+
 set -o pipefail
 
 NTF_CONFIGURE_REPOSITORY=$(dirname ${0})
@@ -287,6 +404,7 @@ fi
 NTF_CONFIGURE_VERBOSE=0
 NTF_CONFIGURE_WHAT=0
 NTF_CONFIGURE_CLEAN=1
+NTF_GENERATE_CLION_CONFIG=0
 
 usage()
 {
@@ -626,6 +744,8 @@ while true ; do
             NTF_CONFIGURE_VERBOSE=1 ; shift ;;
         --what)
             NTF_CONFIGURE_WHAT=1 ; shift ;;
+        --clion)
+            NTF_GENERATE_CLION_CONFIG=1 ; shift ;;
         --*)
             echo "Invalid option: ${1}"
             usage ;;
@@ -815,7 +935,14 @@ fi
 
 NTF_CONFIGURE_CMAKE_OPTION_UFID=" -DUFID:STRING=${NTF_CONFIGURE_UFID_CANONICAL}"
 
+if [ ${NTF_GENERATE_CLION_CONFIG} -ne 0 ]; then
+  generate_clion_toolchain
+  exit 0
+fi
+
+
 cd ${NTF_CONFIGURE_OUTPUT}
+
 
 echo "${NTF_CONFIGURE_CMAKE}${NTF_CONFIGURE_CMAKE_OPTION_DISTRIBUTION_REFROOT}${NTF_CONFIGURE_CMAKE_OPTION_UFID}${NTF_CONFIGURE_CMAKE_OPTION_BUILD_TYPE}${NTF_CONFIGURE_CMAKE_OPTION_INSTALL_PREFIX}${NTF_CONFIGURE_CMAKE_OPTION_PREFIX_PATH}${NTF_CONFIGURE_CMAKE_OPTION_VERBOSE_MAKEFILE} -DCMAKE_TOOLCHAIN_FILE:PATH=${NTF_CONFIGURE_REPOSITORY}/toolchain.cmake -G \"${NTF_CONFIGURE_GENERATOR}\" -S ${NTF_CONFIGURE_REPOSITORY}"
 
