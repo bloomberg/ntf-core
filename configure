@@ -521,6 +521,8 @@ usage()
     echo "    --verbose                          Enable verbose build"
     echo "    --what                             Print what is being configured"
     echo "    --dry-run                          Print commands but do not execute them"
+
+    echo "    --clion_config      <clean|add>    Generate .idea/cmake.xml with CLion CMake configuration. Generate the file either from scratch or add configuration into the existing one"
     echo ""
     echo "example:"
     echo "    Build in debug mode:"
@@ -528,6 +530,12 @@ usage()
     echo ""
     echo "    Build with some features and without others:"
     echo "        ./configure --with-poll --without-select"
+    echo ""
+    echo "    Generate CLion cmake.xml for the debug build:"
+    echo "        ./configure --clion_config clean --debug"
+    echo ""
+    echo "    Add to the existing CLion cmake.xml release build configuration with warnings enabled:"
+    echo "        ./configure --with-warnings --clion_config add --release"
     exit 1
 }
 
@@ -780,7 +788,7 @@ while true ; do
             NTF_CONFIGURE_VERBOSE=1 ; shift ;;
         --what)
             NTF_CONFIGURE_WHAT=1 ; shift ;;
-        --clion)
+        --clion_config)
             NTF_GENERATE_CLION_CONFIG=$2 ; shift 2 ;;
         --*)
             echo "Invalid option: ${1}"
