@@ -41,14 +41,13 @@ process_env() {
   fi
 }
 
-generate_clion_toolchain () {
+generate_clion_cmake_xml () {
   echo "Generating Clion cmake.xml..."
 
   NTF_CLION_STORAGE="testFolder"
   NTF_CLION_XML="${NTF_CLION_STORAGE}/cmake.xml"
 
   CLION_XML_GENERATION=$1
-  echo "CLION_XML_GENERATION = ${CLION_XML_GENERATION}"
 
   mkdir -p ${NTF_CLION_STORAGE}
 
@@ -69,15 +68,18 @@ generate_clion_toolchain () {
     write_config_header
 
   elif [[ ${CLION_XML_GENERATION} == "add" ]]; then
-    echo "Additional generation"
+    echo "Adding new configuration to existing cmake.xml"
 
     if ! test -f "${NTF_CLION_XML}"; then
       echo "cmake.xml does not exist, aborting"
-      exit -1
+      exit 1
     fi
 
     #save previously available configurations, remove only the end of the cmake.xml
     num_lines=$(grep -n '</configurations>' ${NTF_CLION_XML} | awk '{print $1}')
+    if [[-z ${num_lines} ]]; then
+      echo "Failed to find </configurations> inside ${NTF_CLION_XML}, aborting"
+    fi
     num_lines=${num_lines:0:${#num_lines}-1}
     num_lines=$(($((num_lines))-1))
     head -"${num_lines}" ${NTF_CLION_XML} > clion_tmpfile && mv clion_tmpfile ${NTF_CLION_XML}
@@ -439,7 +441,6 @@ fi
 NTF_CONFIGURE_VERBOSE=0
 NTF_CONFIGURE_WHAT=0
 NTF_CONFIGURE_CLEAN=1
-#NTF_GENERATE_CLION_CONFIG="NO"
 
 usage()
 {
@@ -971,7 +972,7 @@ fi
 NTF_CONFIGURE_CMAKE_OPTION_UFID=" -DUFID:STRING=${NTF_CONFIGURE_UFID_CANONICAL}"
 
 if [ -n "${NTF_GENERATE_CLION_CONFIG}" ]; then
-  generate_clion_toolchain "${NTF_GENERATE_CLION_CONFIG}"
+  generate_clion_cmake_xml "${NTF_GENERATE_CLION_CONFIG}"
   exit 0
 fi
 
