@@ -77,7 +77,7 @@ generate_clion_cmake_xml () {
 
     #save previously available configurations, remove only the end of the cmake.xml
     num_lines=$(grep -n '</configurations>' ${NTF_CLION_XML} | awk '{print $1}')
-    if [[-z ${num_lines} ]]; then
+    if [[ -z ${num_lines} ]]; then
       echo "Failed to find </configurations> inside ${NTF_CLION_XML}, aborting"
     fi
     num_lines=${num_lines:0:${#num_lines}-1}
