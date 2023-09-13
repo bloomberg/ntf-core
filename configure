@@ -44,7 +44,7 @@ process_env() {
 generate_clion_cmake_xml () {
   echo "Generating Clion cmake.xml..."
 
-  NTF_CLION_STORAGE="testFolder"
+  NTF_CLION_STORAGE=".idea"
   NTF_CLION_XML="${NTF_CLION_STORAGE}/cmake.xml"
 
   CLION_XML_GENERATION=$1
@@ -86,6 +86,9 @@ generate_clion_cmake_xml () {
 
     write_config_header
 
+  else
+    echo "--clion_config must be used with either \"clean\" or \"add\", aborting"
+    exit 2
   fi
 
   process_env "CC"
@@ -789,7 +792,13 @@ while true ; do
         --what)
             NTF_CONFIGURE_WHAT=1 ; shift ;;
         --clion_config)
-            NTF_GENERATE_CLION_CONFIG=$2 ; shift 2 ;;
+            if [[ $# -lt 2 ]]; then
+              NTF_GENERATE_CLION_CONFIG="clean"
+              shift 1
+            else
+              NTF_GENERATE_CLION_CONFIG=$2 ;
+              shift 2
+            fi ;;
         --*)
             echo "Invalid option: ${1}"
             usage ;;
