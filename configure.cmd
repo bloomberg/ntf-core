@@ -412,6 +412,10 @@ if not "%1"=="" (
     if "%1"=="--verbose" (
         set NTF_CONFIGURE_VERBOSE=1
     )
+    if "%1"=="--clion_config" (
+        set NTF_GENERATE_CLION_CONFIG=%2
+        shift
+    )
     if "%1"=="--help" (
         call :USAGE
         exit /B 0
@@ -646,8 +650,10 @@ if not exist %NTF_CONFIGURE_OUTPUT% (
     mkdir %NTF_CONFIGURE_OUTPUT%
 )
 
-call :generate_clion_cmake_xml add
-exit /B 0
+if defined NTF_GENERATE_CLION_CONFIG (
+    call :generate_clion_cmake_xml !NTF_GENERATE_CLION_CONFIG!
+    exit
+)
 
 cd %NTF_CONFIGURE_OUTPUT%
 
@@ -763,7 +769,9 @@ exit /B 0
     )
     exit /B
 
+
 :copy_n_lines
+    if exist tmpFile del tmpFile
     set numLinesToCopy=%1
     set /a lineCounter=0
     for /f "delims=" %%a in (%NTF_CLION_XML%) do (
@@ -773,10 +781,10 @@ exit /B 0
         ) else (
             del %NTF_CLION_XML%
             move tmpFile %NTF_CLION_XML%
-            goto :EOF
+            exit /B
         )
     )
-
+    exit /B
 
 
 :write_config_header
@@ -802,8 +810,8 @@ exit /B 0
     >> %NTF_CLION_XML% (
         echo.            ^<env name="%1" value="!%1%!" /^>
     )
-
     exit /B
+
 
 :generate_clion_cmake_xml
     echo Generating Clion cmake.xml...
@@ -812,7 +820,7 @@ exit /B 0
     for %%x in (%*) do Set /A argC+=1
     if /i "%argC%" NEQ "1" (
         echo generate_clion_cmake_xml must be called with exactly 1 argument, aborting"
-        EXIT /B
+        EXIT
     )
 
     set NTF_CLION_STORAGE=testFolder
@@ -823,6 +831,7 @@ exit /B 0
 
     call :get_number_of_threads num_threads
 
+    echo %%CLION_XML_GENERATION%%
     if "%CLION_XML_GENERATION%"=="clean" (
         echo Performing clean generation
         if exist %NTF_CLION_XML%  (
@@ -856,11 +865,8 @@ exit /B 0
                  exit
             )
 
-            echo !num_lines!
-
-            call :copy_n_lines !num_lines
-        )
-        else (
+            call :copy_n_lines !num_lines!
+        ) else (
             echo ERROR
             exit
         )
