@@ -806,6 +806,21 @@ exit /B 0
 
     exit /B
 
+:process_ntf_configure_vars
+    for /f "tokens=*" %%a in ('set') do (
+        set line=%%a
+        if "!line:~0,13!"=="NTF_CONFIGURE" (
+            for /f "tokens=1,* delims==" %%a in ("!line!") do (
+                set "key=%%a"
+                set "value=%%b"
+                >> %NTF_CLION_XML% (
+                    echo.            ^<env name="!key!" value="!value!" /^>
+                )
+            )
+        )
+    )
+    exit /B
+
 :process_param
     >> %NTF_CLION_XML% (
         echo.            ^<env name="%1" value="!%1%!" /^>
@@ -823,7 +838,7 @@ exit /B 0
         EXIT
     )
 
-    set NTF_CLION_STORAGE=testFolder
+    set NTF_CLION_STORAGE=.idea
     set NTF_CLION_XML=%NTF_CLION_STORAGE%\cmake.xml
     set CLION_XML_GENERATION=%1
 
@@ -877,41 +892,7 @@ exit /B 0
     call :process_param CC
     call :process_param CXX
 
-    call :process_param NTF_CONFIGURE_WITH_WARNINGS
-    call :process_param NTF_CONFIGURE_WITH_WARNINGS_AS_ERRORS
-
-    call :process_param NTF_CONFIGURE_WITH_BSL
-    call :process_param NTF_CONFIGURE_WITH_BDL
-    call :process_param NTF_CONFIGURE_WITH_BAL
-    call :process_param NTF_CONFIGURE_WITH_NTS
-    call :process_param NTF_CONFIGURE_WITH_NTC
-
-    call :process_param NTF_CONFIGURE_WITH_ADDRESS_FAMILY_IPV4
-    call :process_param NTF_CONFIGURE_WITH_ADDRESS_FAMILY_IPV6
-    call :process_param NTF_CONFIGURE_WITH_ADDRESS_FAMILY_LOCAL
-
-    call :process_param NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_LOCAL
-    call :process_param NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_UDP
-    call :process_param NTF_CONFIGURE_WITH_TRANSPORT_PROTOCOL_TCP
-
-    call :process_param NTF_CONFIGURE_WITH_SELECT
-    call :process_param NTF_CONFIGURE_WITH_POLL
-    call :process_param NTF_CONFIGURE_WITH_IOCP
-
-    call :process_param NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING
-    call :process_param NTF_CONFIGURE_WITH_THREAD_SCALING
-    call :process_param NTF_CONFIGURE_WITH_DEPRECATED_FEATURES
-
-    call :process_param NTF_CONFIGURE_WITH_LOGGING
-    call :process_param NTF_CONFIGURE_WITH_METRICS
-    call :process_param NTF_CONFIGURE_WITH_BRANCH_PREDICTION
-
-    call :process_param NTF_CONFIGURE_WITH_USAGE_EXAMPLES
-    call :process_param NTF_CONFIGURE_WITH_MOCKS
-    call :process_param NTF_CONFIGURE_WITH_INTEGRATION_TESTS
-
-    call :process_param NTF_CONFIGURE_WITH_DOCUMENTATION
-    call :process_param NTF_CONFIGURE_WITH_DOCUMENTATION_INTERNAL
+    call :process_ntf_configure_vars
 
     (
         echo.          ^</envs^>
@@ -923,6 +904,6 @@ exit /B 0
         echo ^</project^>
     ) >> %NTF_CLION_XML%
 
-  echo Generating Clion cmake.xml done
+    echo Generating Clion cmake.xml done
 
     EXIT /B
