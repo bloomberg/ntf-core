@@ -978,6 +978,8 @@ void ListenerSocket::privateShutdownSequencePart2(
         d_managerStrand_sp.reset();
         d_manager_sp.reset();
     }
+    this->moveAndExecute(&d_deferredCalls, ntci::Executor::Functor());
+    d_deferredCalls.clear();
 }
 
 ntsa::Error ListenerSocket::privateRelaxFlowControl(
@@ -1495,6 +1497,7 @@ ListenerSocket::ListenerSocket(
 , d_detachState(ntcs::DetachState::e_DETACH_IDLE)
 , d_deferredCall()
 , d_closeCallback(bslma::Default::allocator(basicAllocator))
+, d_deferredCalls(bslma::Default::allocator(basicAllocator))
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     if (!d_options.acceptQueueLowWatermark().isNull()) {
@@ -2342,6 +2345,15 @@ void ListenerSocket::close(const ntci::CloseCallback& callback)
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
 
+    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
+        d_deferredCalls.push_back(NTCCFG_BIND(
+            static_cast<void (ListenerSocket::*)(
+                const ntci::CloseCallback& callback)>(&ListenerSocket::close),
+            self,
+            callback));
+        return;
+    }
+
     if (NTCCFG_UNLIKELY(d_acceptQueue.hasEntry())) {
         ntca::AcceptQueueEvent event;
         event.setType(ntca::AcceptQueueEventType::e_DISCARDED);
@@ -2370,6 +2382,7 @@ void ListenerSocket::close(const ntci::CloseCallback& callback)
         }
     }
 
+    BSLS_ASSERT(!d_closeCallback);
     d_closeCallback = callback;
 
     this->privateShutdown(self,
