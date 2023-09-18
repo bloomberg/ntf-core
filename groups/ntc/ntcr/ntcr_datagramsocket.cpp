@@ -1238,6 +1238,10 @@ void DatagramSocket::privateShutdownSequencePart2(
         d_managerStrand_sp.reset();
         d_manager_sp.reset();
     }
+
+    this->moveAndExecute(&d_deferredCalls, ntci::Executor::Functor());
+    d_deferredCalls.clear();
+
     if (lock) {
         d_mutex.unlock();
     }
@@ -2396,6 +2400,7 @@ DatagramSocket::DatagramSocket(
 , d_dgramTsIdCounter(0)
 , d_detachState(ntcs::DetachState::e_DETACH_IDLE)
 , d_closeCallback(bslma::Default::allocator(basicAllocator))
+, d_deferredCalls(bslma::Default::allocator(basicAllocator))
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     if (reactor->maxThreads() > 1) {
@@ -4252,18 +4257,24 @@ void DatagramSocket::close(const ntci::CloseCallback& callback)
 
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
-    if (d_closeCallback) {
-        return;
-    }
-
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
 
-    // MRM: Announce discarded.
+    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
+        d_deferredCalls.push_back(NTCCFG_BIND(
+            static_cast<void (DatagramSocket::*)(
+                const ntci::CloseCallback& callback)>(&DatagramSocket::close),
+            self,
+            callback));
 
+        return;
+    }
+
+    BSLS_ASSERT(!d_closeCallback);
     d_closeCallback = callback;
+
     this->privateShutdown(self,
                           ntsa::ShutdownType::e_BOTH,
                           ntsa::ShutdownMode::e_IMMEDIATE,

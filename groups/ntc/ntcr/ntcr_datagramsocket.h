@@ -111,6 +111,7 @@ class DatagramSocket : public ntci::DatagramSocket,
     bsl::uint32_t                                d_dgramTsIdCounter;
     ntcs::DetachState                            d_detachState;
     ntci::CloseCallback                          d_closeCallback;
+    ntci::Executor::FunctorSequence              d_deferredCalls;
     bslma::Allocator*                            d_allocator_p;
 
   private:

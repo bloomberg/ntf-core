@@ -97,6 +97,7 @@ class ListenerSocket : public ntci::ListenerSocket,
     ntca::ListenerSocketOptions                  d_options;
     ntcs::DetachState                            d_detachState;
     ntci::CloseCallback                          d_closeCallback;
+    ntci::Executor::FunctorSequence              d_deferredCalls;
     bslma::Allocator*                            d_allocator_p;
 
   private:

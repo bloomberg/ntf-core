@@ -6345,9 +6345,6 @@ void StreamSocket::close(const ntci::CloseCallback& callback)
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
-    if (d_closeCallback) {
-        return;
-    }
     if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
         d_deferredCalls.push_back(NTCCFG_BIND(
             static_cast<void (StreamSocket::*)(
@@ -6358,6 +6355,7 @@ void StreamSocket::close(const ntci::CloseCallback& callback)
         return;
     }
 
+    BSLS_ASSERT(!d_closeCallback);
     d_closeCallback = callback;
 
     if (d_connectInProgress) {
