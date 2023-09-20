@@ -1898,8 +1898,6 @@ ntsa::Error Kqueue::detachSocket(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket,
     const ntci::SocketDetachedCallback&         callback)
 {
-    BSLS_ASSERT((d_config.maxThreads().value() > 1) ==
-                static_cast<bool>(callback.strand()));
     const ntsa::Error error =
         d_registry.removeAndGetReadyToDetach(socket,
                                              callback,
@@ -1915,8 +1913,6 @@ ntsa::Error Kqueue::detachSocket(ntsa::Handle handle)
 ntsa::Error Kqueue::detachSocket(ntsa::Handle                        handle,
                                  const ntci::SocketDetachedCallback& callback)
 {
-    BSLS_ASSERT((d_config.maxThreads().value() > 1) ==
-                static_cast<bool>(callback.strand()));
     const ntsa::Error error =
         d_registry.removeAndGetReadyToDetach(handle,
                                              callback,
