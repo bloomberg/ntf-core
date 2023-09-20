@@ -1928,6 +1928,7 @@ void Devpoll::run(ntci::Waiter waiter)
                     entry.announceDetached(this->getSelf(this));
                     entry.clear();
                     ++numDetachments;
+                    erase = true;
                 }
                 it = erase ? d_detachList.erase(it) : ++it;
             }
