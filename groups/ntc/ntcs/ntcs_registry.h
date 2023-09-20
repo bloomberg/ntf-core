@@ -1177,6 +1177,10 @@ ntsa::Error RegistryEntryCatalog::removeAndGetReadyToDetach(
                 --d_size;
 
                 entry_sp->setDetachmentRequired(callback);
+                ntsa::Error error = functor(entry_sp);
+                if (error) {
+                    return error;
+                }
             }
             else {
                 return ntsa::Error::invalid();
@@ -1187,11 +1191,6 @@ ntsa::Error RegistryEntryCatalog::removeAndGetReadyToDetach(
         }
     }
     BSLS_ASSERT(entry_sp);
-
-    ntsa::Error error = functor(entry_sp);
-    if (error) {
-        return error;
-    }
 
     return ntsa::Error();
 }
