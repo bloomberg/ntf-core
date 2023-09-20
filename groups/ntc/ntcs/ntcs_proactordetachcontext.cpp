@@ -67,12 +67,12 @@ bool ProactorDetachContext::trySetDetachRequired()
 {
     while (true) {
         unsigned int current = d_stateAndCounter.loadAcquire();
-        if ((current & k_STATE_MASK) != e_DETACH_NOT_REQUIRED) {
+        if ((current & k_STATE_MASK) != DetachState::e_DETACH_NOT_REQUIRED) {
             return false;
         }
-        unsigned int prev =
-            d_stateAndCounter.testAndSwapAcqRel(current,
-                                                current | e_DETACH_REQUIRED);
+        unsigned int prev = d_stateAndCounter.testAndSwapAcqRel(
+            current,
+            current | DetachState::e_DETACH_REQUIRED);
         if (prev == current) {
             break;
         }

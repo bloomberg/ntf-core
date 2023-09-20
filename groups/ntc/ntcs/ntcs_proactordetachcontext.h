@@ -27,10 +27,12 @@ namespace ntcs {
 class ProactorDetachContext
 {
   public:
-    enum DetachState {
-        e_DETACH_NOT_REQUIRED = 0 << 30,
-        e_DETACH_REQUIRED     = 1 << 30,
-        e_DETACH_SCHEDULED    = 2 << 30
+    struct DetachState {
+        enum Value {
+            e_DETACH_NOT_REQUIRED = 0 << 30,
+            e_DETACH_REQUIRED     = 1 << 30,
+            e_DETACH_SCHEDULED    = 2 << 30
+        };
     };
 
     ProactorDetachContext();
