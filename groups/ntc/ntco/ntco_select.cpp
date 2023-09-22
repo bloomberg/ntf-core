@@ -1930,13 +1930,12 @@ void Select::run(ntci::Waiter waiter)
             {
                 ntcs::RegistryEntry& entry = **it;
                 bool                 erase = false;
-                if (entry.processCounter() == 0) {
-                    if (entry.askForDetachmentAnnouncementPermission()) {
-                        entry.announceDetached(this->getSelf(this));
-                        entry.clear();
-                        ++numDetachments;
-                        erase = true;
-                    }
+                if (entry.processCounter() == 0 &&
+                    entry.announceDetached(this->getSelf(this)))
+                {
+                    entry.clear();
+                    ++numDetachments;
+                    erase = true;
                 }
                 it = erase ? d_detachList.erase(it) : ++it;
             }
@@ -2373,13 +2372,12 @@ void Select::poll(ntci::Waiter waiter)
         {
             ntcs::RegistryEntry& entry = **it;
             bool                 erase = false;
-            if (entry.processCounter() == 0) {
-                if (entry.askForDetachmentAnnouncementPermission()) {
-                    entry.announceDetached(this->getSelf(this));
-                    entry.clear();
-                    ++numDetachments;
-                    erase = true;
-                }
+            if (entry.processCounter() == 0 &&
+                entry.announceDetached(this->getSelf(this)))
+            {
+                entry.clear();
+                ++numDetachments;
+                erase = true;
             }
             it = erase ? d_detachList.erase(it) : ++it;
         }

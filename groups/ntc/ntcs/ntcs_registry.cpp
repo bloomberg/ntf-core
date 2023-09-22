@@ -51,7 +51,7 @@ RegistryEntry::RegistryEntry(
 , d_external_sp()
 , d_active(true)
 , d_processCounter(0)
-, d_detachRequired(false)
+, d_detachRequired(DetachState::IDLE)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     BSLS_ASSERT(d_handle != ntsa::k_INVALID_HANDLE);
@@ -75,7 +75,7 @@ RegistryEntry::RegistryEntry(ntsa::Handle                     handle,
 , d_external_sp()
 , d_active(true)
 , d_processCounter(0)
-, d_detachRequired(false)
+, d_detachRequired(DetachState::IDLE)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     BSLS_ASSERT(d_handle != ntsa::k_INVALID_HANDLE);
@@ -148,12 +148,17 @@ bool RegistryEntry::announceError(const ntca::ReactorEvent& event)
     return process;
 }
 
-void RegistryEntry::announceDetached(const bsl::shared_ptr<ntci::Executor>& executor)
+bool RegistryEntry::announceDetached(const bsl::shared_ptr<ntci::Executor>& executor)
 {
-    if (d_detachCallback) {
-        d_detachCallback.dispatch(d_unknown_sp, executor, true, NULL);
-        d_detachCallback.reset();
+    if (d_detachRequired.testAndSwapAcqRel(DetachState::REGISTERED, DetachState::SCHEDULED) == DetachState::REGISTERED)
+    {
+        if (d_detachCallback) {
+            d_detachCallback.dispatch(d_unknown_sp, executor, true, NULL);
+            d_detachCallback.reset();
+        }
+        return true;
     }
+    return false;
 }
 
 RegistryEntryCatalog::RegistryEntryCatalog(bslma::Allocator* basicAllocator)
