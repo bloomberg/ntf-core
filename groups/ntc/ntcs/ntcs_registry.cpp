@@ -148,14 +148,16 @@ bool RegistryEntry::announceError(const ntca::ReactorEvent& event)
     return process;
 }
 
-bool RegistryEntry::announceDetached(const bsl::shared_ptr<ntci::Executor>& executor)
+bool RegistryEntry::announceDetached(
+    const bsl::shared_ptr<ntci::Executor>& executor)
 {
-    bool process = false;
+    bool                         process = false;
     ntci::SocketDetachedCallback callback(d_allocator_p);
     {
         bsls::SpinLockGuard guard(&d_lock);
         if (d_detachRequired) {
-            process = true;
+            d_detachRequired = false;
+            process          = true;
             callback.swap(d_detachCallback);
         }
     }
