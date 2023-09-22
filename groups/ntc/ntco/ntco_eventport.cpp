@@ -785,7 +785,7 @@ ntsa::Error EventPort::removeDetached(
         }
     }
 
-    if ((entry->processCounter() == 0) &&
+    if (!entry->isProcessing() &&
         (entry->askForDetachmentAnnouncementPermission()))
     {
         entry->announceDetached(this->getSelf(this));

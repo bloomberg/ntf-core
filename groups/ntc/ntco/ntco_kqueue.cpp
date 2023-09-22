@@ -954,7 +954,7 @@ ntsa::Error Kqueue::removeDetached(
     if (NTCCFG_UNLIKELY(error)) {
         //TODO: log error, but continue with detachment
     }
-    if ((entry->processCounter() == 0) &&
+    if (!entry->isProcessing() &&
         (entry->askForDetachmentAnnouncementPermission()))
     {
         entry->announceDetached(this->getSelf(this));

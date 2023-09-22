@@ -294,8 +294,7 @@ ntsa::Error Reactor::removeDetached(
     const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
 {
     d_monitor_sp->remove(entry->handle());
-    if ((entry->processCounter() == 0) &&
-        entry->announceDetached(this->getSelf(this)))
+    if (!entry->isProcessing() && entry->announceDetached(this->getSelf(this)))
     {
         entry->clear();
         Reactor::interruptOne();

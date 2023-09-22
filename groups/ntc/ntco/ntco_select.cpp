@@ -1930,7 +1930,7 @@ void Select::run(ntci::Waiter waiter)
             {
                 ntcs::RegistryEntry& entry = **it;
                 bool                 erase = false;
-                if (entry.processCounter() == 0 &&
+                if (!entry.isProcessing() &&
                     entry.announceDetached(this->getSelf(this)))
                 {
                     entry.clear();
@@ -2372,7 +2372,7 @@ void Select::poll(ntci::Waiter waiter)
         {
             ntcs::RegistryEntry& entry = **it;
             bool                 erase = false;
-            if (entry.processCounter() == 0 &&
+            if (!entry.isProcessing() &&
                 entry.announceDetached(this->getSelf(this)))
             {
                 entry.clear();

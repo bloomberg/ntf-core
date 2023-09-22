@@ -368,26 +368,31 @@ NTCCFG_TEST_CASE(5)
                                   false,
                                   &ta);
         NTCCFG_TEST_EQ(entry.processCounter(), 0);
+        NTCCFG_TEST_FALSE(entry.isProcessing());
 
-        entry.addOngoingProcess();
+        entry.incrementProcessCounter();
         NTCCFG_TEST_EQ(entry.processCounter(), 1);
-        entry.addOngoingProcess();
+        NTCCFG_TEST_TRUE(entry.isProcessing());
+        entry.incrementProcessCounter();
         NTCCFG_TEST_EQ(entry.processCounter(), 2);
+        NTCCFG_TEST_TRUE(entry.isProcessing());
 
         NTCCFG_TEST_EQ(entry.decrementProcessCounter(), 1);
         NTCCFG_TEST_EQ(entry.processCounter(), 1);
+        NTCCFG_TEST_TRUE(entry.isProcessing());
 
         NTCCFG_TEST_EQ(entry.decrementProcessCounter(), 0);
         NTCCFG_TEST_EQ(entry.processCounter(), 0);
+        NTCCFG_TEST_FALSE(entry.isProcessing());
 
         const int startingCounter = 1000;
         for (int i = 0; i < startingCounter; i++) {
-            entry.addOngoingProcess();
+            entry.incrementProcessCounter();
         }
         NTCCFG_TEST_EQ(entry.processCounter(), startingCounter);
 
         const bsl::function<void()> addProcessFunctor =
-            NTCCFG_BIND(&ntcs::RegistryEntry::addOngoingProcess, &entry);
+            NTCCFG_BIND(&ntcs::RegistryEntry::incrementProcessCounter, &entry);
         const bsl::function<void()> decrementProcessFunctor =
             NTCCFG_BIND(&ntcs::RegistryEntry::decrementProcessCounter, &entry);
 

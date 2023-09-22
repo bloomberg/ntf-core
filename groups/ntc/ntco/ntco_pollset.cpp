@@ -1983,10 +1983,9 @@ void Pollset::run(ntci::Waiter waiter)
             {
                 ntcs::RegistryEntry& entry = **it;
                 bool                 erase = false;
-                if (entry.processCounter() == 0 &&
-                    entry.askForDetachmentAnnouncementPermission())
+                if (!entry.isProcessing() &&
+                    entry.announceDetached(this->getSelf(this)))
                 {
-                    entry.announceDetached(this->getSelf(this));
                     entry.clear();
                     ++numDetachments;
                     erase = true;
@@ -2317,10 +2316,9 @@ void Pollset::poll(ntci::Waiter waiter)
         {
             ntcs::RegistryEntry& entry = **it;
             bool                 erase = false;
-            if (entry.processCounter() == 0 &&
-                entry.askForDetachmentAnnouncementPermission())
+            if (!entry.isProcessing() &&
+                entry.announceDetached(this->getSelf(this)))
             {
-                entry.announceDetached(this->getSelf(this));
                 entry.clear();
                 ++numDetachments;
                 erase = true;

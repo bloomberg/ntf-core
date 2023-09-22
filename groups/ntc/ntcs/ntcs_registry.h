@@ -112,9 +112,8 @@ class RegistryEntry
     void setExternal(const bsl::shared_ptr<void>& external);
 
     /// Increment counter of threads working on the entry
-    void addOngoingProcess()
+    void incrementProcessCounter()
     {
-        //        ++d_processCounter;
         d_processCounter.addAcqRel(1);
     }
 
@@ -277,11 +276,15 @@ class RegistryEntry
     /// context.
     bool active() const;
 
-    /// Return number of threads working on the entry
+    /// Return true if at least one thread is working on the entry. Otherwise
+    /// return false.
+    bool isProcessing() const;
+
+    /// Return number of threads working on the entry.
     unsigned int processCounter() const;
 
     /// Atomically decrement number of threads working on the entry and return
-    /// resulting value
+    /// resulting value.
     unsigned int decrementProcessCounter();
 };
 
@@ -987,6 +990,12 @@ bool RegistryEntry::active() const
 }
 
 NTCCFG_INLINE
+bool RegistryEntry::isProcessing() const
+{
+    return processCounter() != 0;
+}
+
+NTCCFG_INLINE
 unsigned int RegistryEntry::processCounter() const
 {
     return d_processCounter.loadAcquire();
@@ -1346,7 +1355,7 @@ bool RegistryEntryCatalog::lookupAndMarkProcessingOngoing(
     if (NTCCFG_LIKELY(index < d_vector.size())) {
         *entry = d_vector[index];
         if (*entry) {
-            (*entry)->addOngoingProcess();
+            (*entry)->incrementProcessCounter();
         }
         return *entry;
     }

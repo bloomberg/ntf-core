@@ -911,8 +911,7 @@ ntsa::Error Epoll::removeDetached(
         // TODO: NTCO_EPOLL_LOG_REMOVE_IGNORED(handle);
     }
 
-    if ((entry->processCounter() == 0) &&
-        entry->announceDetached(this->getSelf(this)))
+    if (!entry->isProcessing() && entry->announceDetached(this->getSelf(this)))
     {
         entry->clear();
         Epoll::interruptOne();
