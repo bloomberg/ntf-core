@@ -57,10 +57,6 @@ namespace ntcs {
 /// @ingroup module_ntcs
 class RegistryEntry
 {
-    struct DetachState {
-        enum Value { IDLE, REQUIRED, REGISTERED, SCHEDULED };
-    };
-
     ntccfg::Object                       d_object;
     mutable bsls::SpinLock               d_lock;
     ntsa::Handle                         d_handle;
@@ -75,7 +71,7 @@ class RegistryEntry
     bsl::shared_ptr<void>                d_external_sp;
     bsls::AtomicBool                     d_active;
     bsls::AtomicUint                     d_processCounter;
-    bsls::AtomicInt                      d_detachRequired;
+    bsls::AtomicBool                     d_detachRequired;
     ntci::SocketDetachedCallback         d_detachCallback;
     bslma::Allocator*                    d_allocator_p;
 
@@ -226,7 +222,11 @@ class RegistryEntry
         const ntsa::NotificationQueue& notificationQueue);
 
     /// Announce that the socket has been detached and clear detachCallback
-    bool announceDetached(const bsl::shared_ptr<ntci::Executor>& executor);
+    void announceDetached(const bsl::shared_ptr<ntci::Executor>& executor);
+
+    /// Atomically check that detachment is required and if it is true then
+    /// set it to false and return true. Otherwise return false
+    bool askForDetachmentAnnouncementPermission();
 
     /// Set the flag indicating that detachment is required to true and save
     /// the specified 'callback'
@@ -866,17 +866,20 @@ bool RegistryEntry::announceNotifications(
 }
 
 NTCCFG_INLINE
+bool RegistryEntry::askForDetachmentAnnouncementPermission()
+{
+    return d_detachRequired.testAndSwapAcqRel(true, false);
+}
+
+NTCCFG_INLINE
 void RegistryEntry::setDetachmentRequired(
     const ntci::SocketDetachedCallback& callback)
 {
-    if (d_detachRequired.testAndSwapAcqRel(DetachState::IDLE,
-                                           DetachState::REQUIRED) ==
-        DetachState::IDLE)
-    {
-        BSLS_ASSERT(!d_detachCallback);
-        d_detachCallback = callback;
-        d_detachRequired.storeRelease(DetachState::REGISTERED);
-    }
+    BSLS_ASSERT(!d_detachRequired.loadAcquire());
+    BSLS_ASSERT(!d_detachCallback);
+    // order is important
+    d_detachCallback = callback;
+    d_detachRequired.storeRelease(true);
 }
 
 NTCCFG_INLINE
@@ -917,7 +920,6 @@ void RegistryEntry::clear()
         d_errorCallback.reset();
     }
 
-    d_detachRequired.storeRelease(DetachState::IDLE);
     d_detachCallback.reset();
     d_active.storeRelease(false);
 }

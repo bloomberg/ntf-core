@@ -912,8 +912,9 @@ ntsa::Error Epoll::removeDetached(
     }
 
     if ((entry->processCounter() == 0) &&
-        entry->announceDetached(this->getSelf(this)))
+        (entry->askForDetachmentAnnouncementPermission()))
     {
+        entry->announceDetached(this->getSelf(this));
         entry->clear();
         Epoll::interruptOne();
     }
@@ -2386,8 +2387,9 @@ void Epoll::run(ntci::Waiter waiter)
                 }
 
                 if (entry->decrementProcessCounter() == 0 &&
-                    entry->announceDetached(this->getSelf(this)))
+                    entry->askForDetachmentAnnouncementPermission())
                 {
+                    entry->announceDetached(this->getSelf(this));
                     entry->clear();
                     ++numDetachments;
                 }
@@ -2678,8 +2680,9 @@ void Epoll::poll(ntci::Waiter waiter)
                 }
             }
             if (entry->decrementProcessCounter() == 0 &&
-                entry->announceDetached(this->getSelf(this)))
+                entry->askForDetachmentAnnouncementPermission())
             {
+                entry->announceDetached(this->getSelf(this));
                 entry->clear();
                 ++numDetachments;
             }

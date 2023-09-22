@@ -1560,8 +1560,9 @@ ntsa::Error Proactor::removeDetached(
 {
     d_monitor_sp->remove(entry->handle());
     if ((entry->processCounter() == 0) &&
-        entry->announceDetached(this->getSelf(this)))
+        (entry->askForDetachmentAnnouncementPermission()))
     {
+        entry->announceDetached(this->getSelf(this));
         entry->clear();
         Proactor::interruptOne();
     }
@@ -1696,8 +1697,9 @@ void Proactor::poll(ntci::Waiter waiter)
                 NTCS_PROACTORMETRICS_UPDATE_READ_CALLBACK_TIME_END();
             }
             if (entry->decrementProcessCounter() == 0 &&
-                entry->announceDetached(this->getSelf(this)))
+                entry->askForDetachmentAnnouncementPermission())
             {
+                entry->announceDetached(this->getSelf(this));
                 entry->clear();
                 ++numDetachments;
             }

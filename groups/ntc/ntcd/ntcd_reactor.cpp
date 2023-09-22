@@ -295,8 +295,9 @@ ntsa::Error Reactor::removeDetached(
 {
     d_monitor_sp->remove(entry->handle());
     if ((entry->processCounter() == 0) &&
-        entry->announceDetached(this->getSelf(this)))
+        (entry->askForDetachmentAnnouncementPermission()))
     {
+        entry->announceDetached(this->getSelf(this));
         entry->clear();
         Reactor::interruptOne();
     }
@@ -1364,8 +1365,9 @@ void Reactor::poll(ntci::Waiter waiter)
             }
 
             if (entry->decrementProcessCounter() == 0 &&
-                entry->announceDetached(this->getSelf(this)))
+                entry->askForDetachmentAnnouncementPermission())
             {
+                entry->announceDetached(this->getSelf(this));
                 entry->clear();
                 ++numDetachments;
             }

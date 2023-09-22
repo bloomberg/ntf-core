@@ -214,10 +214,12 @@ void noop()
 
 void testCase6Helper(bslmt::Latch&        latch,
                      ntcs::RegistryEntry& entry,
-                     const bsl::shared_ptr<Test::ExecutorMock>& executor)
+                     int&                 detachPermitted)
 {
     latch.arriveAndWait();
-    entry.announceDetached(executor);
+    if (entry.askForDetachmentAnnouncementPermission()) {
+        ++detachPermitted;
+    }
 }
 
 }
@@ -443,11 +445,9 @@ NTCCFG_TEST_CASE(6)
 
             entry.setDetachmentRequired(callback);
 
-            bslmt::Latch latch(3);
+            int detachPermitted = 0;
 
-            bsl::shared_ptr<Test::ExecutorMock> executor =
-                bsl::make_shared<Test::ExecutorMock>();
-            executor->setExecuteExpected(); //only once
+            bslmt::Latch latch(3);
 
             bslmt::ThreadUtil::Handle t1 = bslmt::ThreadUtil::invalidHandle();
             bslmt::ThreadUtil::create(
@@ -455,7 +455,7 @@ NTCCFG_TEST_CASE(6)
                 NTCCFG_BIND(Test::testCase6Helper,
                             bsl::ref<bslmt::Latch>(latch),
                             bsl::ref<ntcs::RegistryEntry>(entry),
-                            executor));
+                            bsl::ref<int>(detachPermitted)));
             NTCCFG_TEST_ASSERT(t1 != bslmt::ThreadUtil::invalidHandle());
 
             bslmt::ThreadUtil::Handle t2 = bslmt::ThreadUtil::invalidHandle();
@@ -464,7 +464,7 @@ NTCCFG_TEST_CASE(6)
                 NTCCFG_BIND(Test::testCase6Helper,
                             bsl::ref<bslmt::Latch>(latch),
                             bsl::ref<ntcs::RegistryEntry>(entry),
-                            executor));
+                            bsl::ref<int>(detachPermitted)));
             NTCCFG_TEST_ASSERT(t2 != bslmt::ThreadUtil::invalidHandle());
 
             bslmt::ThreadUtil::Handle t3 = bslmt::ThreadUtil::invalidHandle();
@@ -473,12 +473,13 @@ NTCCFG_TEST_CASE(6)
                 NTCCFG_BIND(Test::testCase6Helper,
                             bsl::ref<bslmt::Latch>(latch),
                             bsl::ref<ntcs::RegistryEntry>(entry),
-                            executor));
+                            bsl::ref<int>(detachPermitted)));
             NTCCFG_TEST_ASSERT(t3 != bslmt::ThreadUtil::invalidHandle());
 
             bslmt::ThreadUtil::join(t1);
             bslmt::ThreadUtil::join(t2);
             bslmt::ThreadUtil::join(t3);
+            NTCCFG_TEST_EQ(detachPermitted, 1);
         }
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
@@ -501,15 +502,16 @@ NTCCFG_TEST_CASE(7)
         const ntci::SocketDetachedCallback callback(Test::noop);
 
         entry.setDetachmentRequired(callback);
+        NTCCFG_TEST_TRUE(entry.askForDetachmentAnnouncementPermission());
         executor->setExecuteExpected();
-        NTCCFG_TEST_TRUE(entry.announceDetached(executor));
-        NTCCFG_TEST_FALSE(entry.announceDetached(executor));
+        entry.announceDetached(executor);
+        entry.announceDetached(executor);
 
         entry.clear();
         entry.setDetachmentRequired(callback);
+        NTCCFG_TEST_TRUE(entry.askForDetachmentAnnouncementPermission());
         executor->setExecuteExpected();
-        NTCCFG_TEST_TRUE(entry.announceDetached(executor));
-        NTCCFG_TEST_FALSE(entry.announceDetached(executor));
+        entry.announceDetached(executor);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
