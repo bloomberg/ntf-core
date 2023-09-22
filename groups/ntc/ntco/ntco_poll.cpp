@@ -2032,9 +2032,8 @@ void Poll::run(ntci::Waiter waiter)
                 ntcs::RegistryEntry& entry = **it;
                 bool                 erase = false;
                 if (entry.processCounter() == 0 &&
-                    entry.askForDetachmentAnnouncementPermission())
+                    entry.announceDetached(this->getSelf(this)))
                 {
-                    entry.announceDetached(this->getSelf(this));
                     entry.clear();
                     ++numDetachments;
                     erase = true;
@@ -2418,9 +2417,8 @@ void Poll::poll(ntci::Waiter waiter)
             ntcs::RegistryEntry& entry = **it;
             bool                 erase = false;
             if (entry.processCounter() == 0 &&
-                entry.askForDetachmentAnnouncementPermission())
+                entry.announceDetached(this->getSelf(this)))
             {
-                entry.announceDetached(this->getSelf(this));
                 entry.clear();
                 ++numDetachments;
                 erase = true;

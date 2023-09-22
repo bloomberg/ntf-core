@@ -71,7 +71,7 @@ class RegistryEntry
     bsl::shared_ptr<void>                d_external_sp;
     bsls::AtomicBool                     d_active;
     bsls::AtomicUint                     d_processCounter;
-    bsls::AtomicBool                     d_detachRequired;
+    bool                                 d_detachRequired;
     ntci::SocketDetachedCallback         d_detachCallback;
     bslma::Allocator*                    d_allocator_p;
 
@@ -221,12 +221,10 @@ class RegistryEntry
     bool announceNotifications(
         const ntsa::NotificationQueue& notificationQueue);
 
-    /// Announce that the socket has been detached and clear detachCallback
-    void announceDetached(const bsl::shared_ptr<ntci::Executor>& executor);
-
-    /// Atomically check that detachment is required and if it is true then
-    /// set it to false and return true. Otherwise return false
-    bool askForDetachmentAnnouncementPermission();
+    /// Check if detachment announcement is required and announce that the
+    /// socket has been detached and clear detachCallback. Return true if the
+    /// announcement is performed and false otherwise.
+    bool announceDetached(const bsl::shared_ptr<ntci::Executor>& executor);
 
     /// Set the flag indicating that detachment is required to true and save
     /// the specified 'callback'
@@ -866,20 +864,16 @@ bool RegistryEntry::announceNotifications(
 }
 
 NTCCFG_INLINE
-bool RegistryEntry::askForDetachmentAnnouncementPermission()
-{
-    return d_detachRequired.testAndSwapAcqRel(true, false);
-}
-
-NTCCFG_INLINE
 void RegistryEntry::setDetachmentRequired(
     const ntci::SocketDetachedCallback& callback)
 {
-    BSLS_ASSERT(!d_detachRequired.loadAcquire());
+    bsls::SpinLockGuard guard(&d_lock);
+
+    BSLS_ASSERT(!d_detachRequired);
     BSLS_ASSERT(!d_detachCallback);
-    // order is important
+
     d_detachCallback = callback;
-    d_detachRequired.storeRelease(true);
+    d_detachRequired = true;
 }
 
 NTCCFG_INLINE
@@ -920,6 +914,7 @@ void RegistryEntry::clear()
         d_errorCallback.reset();
     }
 
+    d_detachRequired = false;
     d_detachCallback.reset();
     d_active.storeRelease(false);
 }

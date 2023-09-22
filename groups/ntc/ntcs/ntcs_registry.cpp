@@ -148,12 +148,23 @@ bool RegistryEntry::announceError(const ntca::ReactorEvent& event)
     return process;
 }
 
-void RegistryEntry::announceDetached(const bsl::shared_ptr<ntci::Executor>& executor)
+bool RegistryEntry::announceDetached(const bsl::shared_ptr<ntci::Executor>& executor)
 {
-    if (d_detachCallback) {
-        d_detachCallback.dispatch(d_unknown_sp, executor, true, NULL);
-        d_detachCallback.reset();
+    bool process = false;
+    ntci::SocketDetachedCallback callback(d_allocator_p);
+    {
+        bsls::SpinLockGuard guard(&d_lock);
+        if (d_detachRequired) {
+            process = true;
+            callback.swap(d_detachCallback);
+        }
     }
+    if (process) {
+        if (NTCCFG_LIKELY(callback)) {
+            callback.dispatch(d_unknown_sp, executor, true, NULL);
+        }
+    }
+    return process;
 }
 
 RegistryEntryCatalog::RegistryEntryCatalog(bslma::Allocator* basicAllocator)
