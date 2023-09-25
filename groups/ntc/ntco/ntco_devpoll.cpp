@@ -1925,9 +1925,8 @@ void Devpoll::run(ntci::Waiter waiter)
                 bool                 erase = false;
 
                 if (!entry.isProcessing() &&
-                    entry.askForDetachmentAnnouncementPermission())
+                    entry.announceDetached(this->getSelf(this)))
                 {
-                    entry.announceDetached(this->getSelf(this));
                     entry.clear();
                     ++numDetachments;
                     erase = true;
@@ -2236,9 +2235,8 @@ void Devpoll::poll(ntci::Waiter waiter)
             bool                 erase = false;
 
             if (!entry.isProcessing() &&
-                entry.askForDetachmentAnnouncementPermission())
+                entry.announceDetached(this->getSelf(this)))
             {
-                entry.announceDetached(this->getSelf(this));
                 entry.clear();
                 ++numDetachments;
             }

@@ -785,14 +785,12 @@ ntsa::Error EventPort::removeDetached(
         }
     }
 
-    if (!entry->isProcessing() &&
-        (entry->askForDetachmentAnnouncementPermission()))
+    if (!entry->isProcessing() && entry->announceDetached(this->getSelf(this)))
     {
-        entry->announceDetached(this->getSelf(this));
         entry->clear();
         EventPort::interruptOne();
     }
-    return  ntsa::Error();
+    return ntsa::Error();
 }
 
 void EventPort::reinitializeControl()
@@ -1725,9 +1723,10 @@ ntsa::Error EventPort::detachSocket(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket,
     const ntci::SocketDetachedCallback&         callback)
 {
-    const ntsa::Error error = d_registry.removeAndGetReadyToDetach(socket,
-                                                             callback,
-                                                             d_detachFunctor);
+    const ntsa::Error error =
+        d_registry.removeAndGetReadyToDetach(socket,
+                                             callback,
+                                             d_detachFunctor);
 
     return error;
 }
@@ -1741,9 +1740,10 @@ ntsa::Error EventPort::detachSocket(
     ntsa::Handle                        handle,
     const ntci::SocketDetachedCallback& callback)
 {
-    const ntsa::Error error = d_registry.removeAndGetReadyToDetach(handle,
-                                                             callback,
-                                                             d_detachFunctor);
+    const ntsa::Error error =
+        d_registry.removeAndGetReadyToDetach(handle,
+                                             callback,
+                                             d_detachFunctor);
 
     return error;
 }
@@ -1959,13 +1959,12 @@ void EventPort::run(ntci::Waiter waiter)
                     }
                 }
 
-                    if (entry->decrementProcessCounter() == 0 &&
-                        entry->askForDetachmentAnnouncementPermission())
-                    {
-                        entry->announceDetached(this->getSelf(this));
-                        entry->clear();
-                        ++numDetachments;
-                    }
+                if (entry->decrementProcessCounter() == 0 &&
+                    entry->announceDetached(this->getSelf(this)))
+                {
+                    entry->clear();
+                    ++numDetachments;
+                }
             }
 
             if (NTCCFG_UNLIKELY(numReadable == 0 && numWritable == 0 &&
@@ -2203,9 +2202,8 @@ void EventPort::poll(ntci::Waiter waiter)
                 }
             }
             if (entry->decrementProcessCounter() == 0 &&
-                entry->askForDetachmentAnnouncementPermission())
+                entry->announceDetached(this->getSelf(this)))
             {
-                entry->announceDetached(this->getSelf(this));
                 entry->clear();
                 ++numDetachments;
             }
