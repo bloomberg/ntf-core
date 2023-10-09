@@ -45,6 +45,9 @@ BSLS_IDENT_RCSID(ntsa_localname_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsa {
 
+const bsl::size_t LocalName::k_MAX_PATH_LENGTH =
+    sizeof(sockaddr_un::sun_path) - 1;
+
 LocalName::LocalName()
 : d_size(0)
 , d_abstract(false)
