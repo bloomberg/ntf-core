@@ -42,16 +42,21 @@ namespace ntsa {
 class LocalName
 {
   public:
-    enum {
-        /// The maximum path length, not including the null terminator.
-        k_MAX_PATH_LENGTH = 92
-    };
+    /// The maximum path length, in case of abstract namespace it does not
+    /// include leading null, in case of real namespace it does not include the
+    /// null terminator
+
+    static const bsl::size_t k_MAX_PATH_LENGTH;
 
   private:
-    char         d_path[k_MAX_PATH_LENGTH + 1];
+#if defined(BSLS_PLATFORM_OS_AIX)
+    enum { k_CAPACITY = 1022 };
+#else
+    enum { k_CAPACITY = 108 };
+#endif
+    char         d_path[k_CAPACITY];
     bsl::uint8_t d_size;
-    bsl::uint8_t d_abstract;
-    bsl::uint8_t d_unused;
+    bool         d_abstract;
 
   public:
     /// Create a new, abstract local name.
@@ -83,9 +88,9 @@ class LocalName
     /// Set the local name to be unnamed. Return the error.
     ntsa::Error setUnnamed();
 
-    /// Set the path of the local name to the specified 'value'. Any
-    /// portion of 'value' after MAX_PATH_LENGTH is truncated. Return the
-    /// error.
+    /// Set the path of the local name to the specified 'value'. If length of
+    /// the 'value' is greater than k_MAX_PATH_LENGTH then operation is not
+    /// performed and error is returned.
     ntsa::Error setValue(const bslstl::StringRef& value);
 
     /// Return the value of the local name.
@@ -139,6 +144,13 @@ class LocalName
     /// Generate a unique local name. The name will be abstract if the
     /// platform supports abstract names (Linux only).
     static ntsa::LocalName generateUnique();
+
+    /// Generate a unique local name and write it to the specified 'name'. The
+    /// name will be abstract if the platform supports abstract names (Linux
+    /// only). In case it is impossible to generate a unique name return the
+    /// error (e.g. it can happen on Windows that absolute path to the file in
+    /// TMP directory is longer than sockaddr_un can store)
+    static ntsa::Error generateUnique(ntsa::LocalName* name);
 
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects

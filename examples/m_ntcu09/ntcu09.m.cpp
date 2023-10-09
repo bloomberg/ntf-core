@@ -31,9 +31,9 @@ using namespace BloombergLP;
 
 namespace example {
 
-void processConnect(bslmt::Semaphore                        *semaphore,
-                    const bsl::shared_ptr<ntci::Connector>&  connector,
-                    const ntca::ConnectEvent&                event)
+void processConnect(bslmt::Semaphore*                       semaphore,
+                    const bsl::shared_ptr<ntci::Connector>& connector,
+                    const ntca::ConnectEvent&               event)
 {
     NTCCFG_WARNING_UNUSED(connector);
 
@@ -41,11 +41,11 @@ void processConnect(bslmt::Semaphore                        *semaphore,
     semaphore->post();
 }
 
-void processAccept(bslmt::Semaphore                           *semaphore,
-                   bsl::shared_ptr<ntci::StreamSocket>        *result,
-                   const bsl::shared_ptr<ntci::Acceptor>&      acceptor,
-                   const bsl::shared_ptr<ntci::StreamSocket>&  streamSocket,
-                   const ntca::AcceptEvent&                    event)
+void processAccept(bslmt::Semaphore*                          semaphore,
+                   bsl::shared_ptr<ntci::StreamSocket>*       result,
+                   const bsl::shared_ptr<ntci::Acceptor>&     acceptor,
+                   const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+                   const ntca::AcceptEvent&                   event)
 {
     NTCCFG_WARNING_UNUSED(acceptor);
 
@@ -54,9 +54,9 @@ void processAccept(bslmt::Semaphore                           *semaphore,
     semaphore->post();
 }
 
-void processSend(bslmt::Semaphore                     *semaphore,
-                 const bsl::shared_ptr<ntci::Sender>&  sender,
-                 const ntca::SendEvent&                event)
+void processSend(bslmt::Semaphore*                    semaphore,
+                 const bsl::shared_ptr<ntci::Sender>& sender,
+                 const ntca::SendEvent&               event)
 {
     NTCCFG_WARNING_UNUSED(sender);
 
@@ -64,11 +64,11 @@ void processSend(bslmt::Semaphore                     *semaphore,
     semaphore->post();
 }
 
-void processReceive(bslmt::Semaphore                       *semaphore,
-                    bdlbb::Blob                            *result,
-                    const bsl::shared_ptr<ntci::Receiver>&  receiver,
-                    const bsl::shared_ptr<bdlbb::Blob>&     data,
-                    const ntca::ReceiveEvent&               event)
+void processReceive(bslmt::Semaphore*                      semaphore,
+                    bdlbb::Blob*                           result,
+                    const bsl::shared_ptr<ntci::Receiver>& receiver,
+                    const bsl::shared_ptr<bdlbb::Blob>&    data,
+                    const ntca::ReceiveEvent&              event)
 {
     NTCCFG_WARNING_UNUSED(receiver);
 
@@ -77,14 +77,14 @@ void processReceive(bslmt::Semaphore                       *semaphore,
     semaphore->post();
 }
 
-void processClose(bslmt::Semaphore *semaphore)
+void processClose(bslmt::Semaphore* semaphore)
 {
     semaphore->post();
 }
 
 namespace usage_tcp_ipv4_cpp03 {
 
-void execute(bslma::Allocator *allocator)
+void execute(bslma::Allocator* allocator)
 {
     NTCCFG_WARNING_UNUSED(allocator);
 
@@ -102,7 +102,7 @@ void execute(bslma::Allocator *allocator)
     interfaceConfig.setThreadName("example");
 
     bsl::shared_ptr<ntci::Interface> interface =
-                                ntcf::System::createInterface(interfaceConfig);
+        ntcf::System::createInterface(interfaceConfig);
 
     error = interface->start();
     BSLS_ASSERT_OPT(!error);
@@ -112,10 +112,10 @@ void execute(bslma::Allocator *allocator)
     ntca::ListenerSocketOptions listenerSocketOptions;
     listenerSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
     listenerSocketOptions.setSourceEndpoint(
-                             ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0));
+        ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0));
 
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
-                        interface->createListenerSocket(listenerSocketOptions);
+        interface->createListenerSocket(listenerSocketOptions);
 
     error = listenerSocket->open();
     BSLS_ASSERT_OPT(!error);
@@ -129,14 +129,14 @@ void execute(bslma::Allocator *allocator)
     streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> clientSocket =
-                            interface->createStreamSocket(streamSocketOptions);
+        interface->createStreamSocket(streamSocketOptions);
 
     ntci::ConnectCallback connectCallback =
-                               clientSocket->createConnectCallback(NTCCFG_BIND(
-                                   &processConnect,
-                                   &semaphore,
-                                   NTCCFG_BIND_PLACEHOLDER_1,
-                                   NTCCFG_BIND_PLACEHOLDER_2));
+        clientSocket->createConnectCallback(
+            NTCCFG_BIND(&processConnect,
+                        &semaphore,
+                        NTCCFG_BIND_PLACEHOLDER_1,
+                        NTCCFG_BIND_PLACEHOLDER_2));
 
     error = clientSocket->connect(listenerSocket->sourceEndpoint(),
                                   ntca::ConnectOptions(),
@@ -150,12 +150,12 @@ void execute(bslma::Allocator *allocator)
     bsl::shared_ptr<ntci::StreamSocket> serverSocket;
 
     ntci::AcceptCallback acceptCallback = listenerSocket->createAcceptCallback(
-                                       NTCCFG_BIND(&processAccept,
-                                                   &semaphore,
-                                                   &serverSocket,
-                                                   NTCCFG_BIND_PLACEHOLDER_1,
-                                                   NTCCFG_BIND_PLACEHOLDER_2,
-                                                   NTCCFG_BIND_PLACEHOLDER_3));
+        NTCCFG_BIND(&processAccept,
+                    &semaphore,
+                    &serverSocket,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2,
+                    NTCCFG_BIND_PLACEHOLDER_3));
 
     error = listenerSocket->accept(ntca::AcceptOptions(), acceptCallback);
     BSLS_ASSERT_OPT(!error || error == ntsa::Error::e_WOULD_BLOCK);
@@ -168,10 +168,10 @@ void execute(bslma::Allocator *allocator)
     bdlbb::BlobUtil::append(&clientData, "Hello, world!", 13);
 
     ntci::SendCallback sendCallback = clientSocket->createSendCallback(
-                                       NTCCFG_BIND(&processSend,
-                                                   &semaphore,
-                                                   NTCCFG_BIND_PLACEHOLDER_1,
-                                                   NTCCFG_BIND_PLACEHOLDER_2));
+        NTCCFG_BIND(&processSend,
+                    &semaphore,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2));
 
     error = clientSocket->send(clientData, ntca::SendOptions(), sendCallback);
     BSLS_ASSERT_OPT(!error);
@@ -186,13 +186,13 @@ void execute(bslma::Allocator *allocator)
     bdlbb::Blob serverData;
 
     ntci::ReceiveCallback receiveCallback =
-                               serverSocket->createReceiveCallback(NTCCFG_BIND(
-                                   &processReceive,
-                                   &semaphore,
-                                   &serverData,
-                                   NTCCFG_BIND_PLACEHOLDER_1,
-                                   NTCCFG_BIND_PLACEHOLDER_2,
-                                   NTCCFG_BIND_PLACEHOLDER_3));
+        serverSocket->createReceiveCallback(
+            NTCCFG_BIND(&processReceive,
+                        &semaphore,
+                        &serverData,
+                        NTCCFG_BIND_PLACEHOLDER_1,
+                        NTCCFG_BIND_PLACEHOLDER_2,
+                        NTCCFG_BIND_PLACEHOLDER_3));
 
     error = serverSocket->receive(receiveOptions, receiveCallback);
     BSLS_ASSERT_OPT(!error || error == ntsa::Error::e_WOULD_BLOCK);
@@ -206,21 +206,21 @@ void execute(bslma::Allocator *allocator)
     // Close the client socket.
 
     clientSocket->close(clientSocket->createCloseCallback(
-                                      NTCCFG_BIND(&processClose, &semaphore)));
+        NTCCFG_BIND(&processClose, &semaphore)));
 
     semaphore.wait();
 
     // Close the server socket.
 
     serverSocket->close(serverSocket->createCloseCallback(
-                                      NTCCFG_BIND(&processClose, &semaphore)));
+        NTCCFG_BIND(&processClose, &semaphore)));
 
     semaphore.wait();
 
     // Close the listener socket.
 
     listenerSocket->close(listenerSocket->createCloseCallback(
-                                      NTCCFG_BIND(&processClose, &semaphore)));
+        NTCCFG_BIND(&processClose, &semaphore)));
 
     semaphore.wait();
 
@@ -234,7 +234,7 @@ void execute(bslma::Allocator *allocator)
 
 namespace usage_tcp_ipv4_cpp11 {
 
-void execute(bslma::Allocator *allocator)
+void execute(bslma::Allocator* allocator)
 {
 #if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
 
@@ -254,7 +254,7 @@ void execute(bslma::Allocator *allocator)
     interfaceConfig.setThreadName("example");
 
     bsl::shared_ptr<ntci::Interface> interface =
-                                ntcf::System::createInterface(interfaceConfig);
+        ntcf::System::createInterface(interfaceConfig);
 
     error = interface->start();
     BSLS_ASSERT_OPT(!error);
@@ -264,10 +264,10 @@ void execute(bslma::Allocator *allocator)
     ntca::ListenerSocketOptions listenerSocketOptions;
     listenerSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
     listenerSocketOptions.setSourceEndpoint(
-                             ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0));
+        ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0));
 
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
-                        interface->createListenerSocket(listenerSocketOptions);
+        interface->createListenerSocket(listenerSocketOptions);
 
     error = listenerSocket->open();
     BSLS_ASSERT_OPT(!error);
@@ -281,11 +281,11 @@ void execute(bslma::Allocator *allocator)
     streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> clientSocket =
-                            interface->createStreamSocket(streamSocketOptions);
+        interface->createStreamSocket(streamSocketOptions);
 
     ntci::ConnectCallback connectCallback =
-          clientSocket->createConnectCallback([&](auto connector, auto event) {
-              NTCCFG_WARNING_UNUSED(connector);
+        clientSocket->createConnectCallback([&](auto connector, auto event) {
+            NTCCFG_WARNING_UNUSED(connector);
             BSLS_ASSERT_OPT(event.type() ==
                             ntca::ConnectEventType::e_COMPLETE);
             semaphore.post();
@@ -321,8 +321,8 @@ void execute(bslma::Allocator *allocator)
     bdlbb::BlobUtil::append(&clientData, "Hello, world!", 13);
 
     ntci::SendCallback sendCallback =
-                clientSocket->createSendCallback([&](auto sender, auto event) {
-                    NTCCFG_WARNING_UNUSED(sender);
+        clientSocket->createSendCallback([&](auto sender, auto event) {
+            NTCCFG_WARNING_UNUSED(sender);
             BSLS_ASSERT_OPT(event.type() == ntca::SendEventType::e_COMPLETE);
             semaphore.post();
         });
@@ -340,15 +340,14 @@ void execute(bslma::Allocator *allocator)
     bdlbb::Blob serverData;
 
     ntci::ReceiveCallback receiveCallback =
-                         serverSocket->createReceiveCallback([&](auto receiver,
-                                                                 auto data,
-                                                                 auto event) {
-                             NTCCFG_WARNING_UNUSED(receiver);
-            BSLS_ASSERT_OPT(event.type() ==
-                            ntca::ReceiveEventType::e_COMPLETE);
-            serverData = *data;
-            semaphore.post();
-        });
+        serverSocket->createReceiveCallback(
+            [&](auto receiver, auto data, auto event) {
+                NTCCFG_WARNING_UNUSED(receiver);
+                BSLS_ASSERT_OPT(event.type() ==
+                                ntca::ReceiveEventType::e_COMPLETE);
+                serverData = *data;
+                semaphore.post();
+            });
 
     error = serverSocket->receive(receiveOptions, receiveCallback);
     BSLS_ASSERT_OPT(!error || error == ntsa::Error::e_WOULD_BLOCK);
@@ -395,7 +394,7 @@ void execute(bslma::Allocator *allocator)
 
 namespace usage_local_cpp03 {
 
-void execute(bslma::Allocator *allocator)
+void execute(bslma::Allocator* allocator)
 {
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
@@ -415,7 +414,7 @@ void execute(bslma::Allocator *allocator)
     interfaceConfig.setThreadName("example");
 
     bsl::shared_ptr<ntci::Interface> interface =
-                                ntcf::System::createInterface(interfaceConfig);
+        ntcf::System::createInterface(interfaceConfig);
 
     error = interface->start();
     BSLS_ASSERT_OPT(!error);
@@ -424,11 +423,15 @@ void execute(bslma::Allocator *allocator)
 
     ntca::ListenerSocketOptions listenerSocketOptions;
     listenerSocketOptions.setTransport(ntsa::Transport::e_LOCAL_STREAM);
-    listenerSocketOptions.setSourceEndpoint(
-                            ntsa::Endpoint(ntsa::LocalName::generateUnique()));
+
+    ntsa::LocalName localName;
+    error = ntsa::LocalName::generateUnique(&localName);
+    BSLS_ASSERT_OPT(!error);
+
+    listenerSocketOptions.setSourceEndpoint(ntsa::Endpoint(localName));
 
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
-                        interface->createListenerSocket(listenerSocketOptions);
+        interface->createListenerSocket(listenerSocketOptions);
 
     error = listenerSocket->open();
     BSLS_ASSERT_OPT(!error);
@@ -442,14 +445,14 @@ void execute(bslma::Allocator *allocator)
     streamSocketOptions.setTransport(ntsa::Transport::e_LOCAL_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> clientSocket =
-                            interface->createStreamSocket(streamSocketOptions);
+        interface->createStreamSocket(streamSocketOptions);
 
     ntci::ConnectCallback connectCallback =
-                               clientSocket->createConnectCallback(NTCCFG_BIND(
-                                   &processConnect,
-                                   &semaphore,
-                                   NTCCFG_BIND_PLACEHOLDER_1,
-                                   NTCCFG_BIND_PLACEHOLDER_2));
+        clientSocket->createConnectCallback(
+            NTCCFG_BIND(&processConnect,
+                        &semaphore,
+                        NTCCFG_BIND_PLACEHOLDER_1,
+                        NTCCFG_BIND_PLACEHOLDER_2));
 
     error = clientSocket->connect(listenerSocket->sourceEndpoint(),
                                   ntca::ConnectOptions(),
@@ -463,12 +466,12 @@ void execute(bslma::Allocator *allocator)
     bsl::shared_ptr<ntci::StreamSocket> serverSocket;
 
     ntci::AcceptCallback acceptCallback = listenerSocket->createAcceptCallback(
-                                       NTCCFG_BIND(&processAccept,
-                                                   &semaphore,
-                                                   &serverSocket,
-                                                   NTCCFG_BIND_PLACEHOLDER_1,
-                                                   NTCCFG_BIND_PLACEHOLDER_2,
-                                                   NTCCFG_BIND_PLACEHOLDER_3));
+        NTCCFG_BIND(&processAccept,
+                    &semaphore,
+                    &serverSocket,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2,
+                    NTCCFG_BIND_PLACEHOLDER_3));
 
     error = listenerSocket->accept(ntca::AcceptOptions(), acceptCallback);
     BSLS_ASSERT_OPT(!error || error == ntsa::Error::e_WOULD_BLOCK);
@@ -481,10 +484,10 @@ void execute(bslma::Allocator *allocator)
     bdlbb::BlobUtil::append(&clientData, "Hello, world!", 13);
 
     ntci::SendCallback sendCallback = clientSocket->createSendCallback(
-                                       NTCCFG_BIND(&processSend,
-                                                   &semaphore,
-                                                   NTCCFG_BIND_PLACEHOLDER_1,
-                                                   NTCCFG_BIND_PLACEHOLDER_2));
+        NTCCFG_BIND(&processSend,
+                    &semaphore,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2));
 
     error = clientSocket->send(clientData, ntca::SendOptions(), sendCallback);
     BSLS_ASSERT_OPT(!error);
@@ -499,13 +502,13 @@ void execute(bslma::Allocator *allocator)
     bdlbb::Blob serverData;
 
     ntci::ReceiveCallback receiveCallback =
-                               serverSocket->createReceiveCallback(NTCCFG_BIND(
-                                   &processReceive,
-                                   &semaphore,
-                                   &serverData,
-                                   NTCCFG_BIND_PLACEHOLDER_1,
-                                   NTCCFG_BIND_PLACEHOLDER_2,
-                                   NTCCFG_BIND_PLACEHOLDER_3));
+        serverSocket->createReceiveCallback(
+            NTCCFG_BIND(&processReceive,
+                        &semaphore,
+                        &serverData,
+                        NTCCFG_BIND_PLACEHOLDER_1,
+                        NTCCFG_BIND_PLACEHOLDER_2,
+                        NTCCFG_BIND_PLACEHOLDER_3));
 
     error = serverSocket->receive(receiveOptions, receiveCallback);
     BSLS_ASSERT_OPT(!error || error == ntsa::Error::e_WOULD_BLOCK);
@@ -519,21 +522,21 @@ void execute(bslma::Allocator *allocator)
     // Close the client socket.
 
     clientSocket->close(clientSocket->createCloseCallback(
-                                      NTCCFG_BIND(&processClose, &semaphore)));
+        NTCCFG_BIND(&processClose, &semaphore)));
 
     semaphore.wait();
 
     // Close the server socket.
 
     serverSocket->close(serverSocket->createCloseCallback(
-                                      NTCCFG_BIND(&processClose, &semaphore)));
+        NTCCFG_BIND(&processClose, &semaphore)));
 
     semaphore.wait();
 
     // Close the listener socket.
 
     listenerSocket->close(listenerSocket->createCloseCallback(
-                                      NTCCFG_BIND(&processClose, &semaphore)));
+        NTCCFG_BIND(&processClose, &semaphore)));
 
     semaphore.wait();
 
@@ -549,7 +552,7 @@ void execute(bslma::Allocator *allocator)
 
 namespace usage_local_cpp11 {
 
-void execute(bslma::Allocator *allocator)
+void execute(bslma::Allocator* allocator)
 {
 #if defined(BSLS_PLATFORM_OS_UNIX)
 #if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
@@ -570,7 +573,7 @@ void execute(bslma::Allocator *allocator)
     interfaceConfig.setThreadName("example");
 
     bsl::shared_ptr<ntci::Interface> interface =
-                                ntcf::System::createInterface(interfaceConfig);
+        ntcf::System::createInterface(interfaceConfig);
 
     error = interface->start();
     BSLS_ASSERT_OPT(!error);
@@ -579,11 +582,15 @@ void execute(bslma::Allocator *allocator)
 
     ntca::ListenerSocketOptions listenerSocketOptions;
     listenerSocketOptions.setTransport(ntsa::Transport::e_LOCAL_STREAM);
-    listenerSocketOptions.setSourceEndpoint(
-                            ntsa::Endpoint(ntsa::LocalName::generateUnique()));
+
+    ntsa::LocalName localName;
+    error = ntsa::LocalName::generateUnique(&localName);
+    BSLS_ASSERT_OPT(!error);
+
+    listenerSocketOptions.setSourceEndpoint(ntsa::Endpoint(localName));
 
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
-                        interface->createListenerSocket(listenerSocketOptions);
+        interface->createListenerSocket(listenerSocketOptions);
 
     error = listenerSocket->open();
     BSLS_ASSERT_OPT(!error);
@@ -597,11 +604,11 @@ void execute(bslma::Allocator *allocator)
     streamSocketOptions.setTransport(ntsa::Transport::e_LOCAL_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> clientSocket =
-                            interface->createStreamSocket(streamSocketOptions);
+        interface->createStreamSocket(streamSocketOptions);
 
     ntci::ConnectCallback connectCallback =
-          clientSocket->createConnectCallback([&](auto connector, auto event) {
-              NTCCFG_WARNING_UNUSED(connector);
+        clientSocket->createConnectCallback([&](auto connector, auto event) {
+            NTCCFG_WARNING_UNUSED(connector);
             BSLS_ASSERT_OPT(event.type() ==
                             ntca::ConnectEventType::e_COMPLETE);
             semaphore.post();
@@ -637,8 +644,8 @@ void execute(bslma::Allocator *allocator)
     bdlbb::BlobUtil::append(&clientData, "Hello, world!", 13);
 
     ntci::SendCallback sendCallback =
-                clientSocket->createSendCallback([&](auto sender, auto event) {
-                    NTCCFG_WARNING_UNUSED(sender);
+        clientSocket->createSendCallback([&](auto sender, auto event) {
+            NTCCFG_WARNING_UNUSED(sender);
             BSLS_ASSERT_OPT(event.type() == ntca::SendEventType::e_COMPLETE);
             semaphore.post();
         });
@@ -656,15 +663,14 @@ void execute(bslma::Allocator *allocator)
     bdlbb::Blob serverData;
 
     ntci::ReceiveCallback receiveCallback =
-                         serverSocket->createReceiveCallback([&](auto receiver,
-                                                                 auto data,
-                                                                 auto event) {
-                             NTCCFG_WARNING_UNUSED(receiver);
-            BSLS_ASSERT_OPT(event.type() ==
-                            ntca::ReceiveEventType::e_COMPLETE);
-            serverData = *data;
-            semaphore.post();
-        });
+        serverSocket->createReceiveCallback(
+            [&](auto receiver, auto data, auto event) {
+                NTCCFG_WARNING_UNUSED(receiver);
+                BSLS_ASSERT_OPT(event.type() ==
+                                ntca::ReceiveEventType::e_COMPLETE);
+                serverData = *data;
+                semaphore.post();
+            });
 
     error = serverSocket->receive(receiveOptions, receiveCallback);
     BSLS_ASSERT_OPT(!error || error == ntsa::Error::e_WOULD_BLOCK);
@@ -716,20 +722,22 @@ void help()
     bsl::cout << "usage: ntcu90.tsk [-v <level>]" << bsl::endl;
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     int verbosity = 0;
     {
         int i = 1;
         while (i < argc) {
             if ((0 == std::strcmp(argv[i], "-?")) ||
-                (0 == std::strcmp(argv[i], "--help"))) {
+                (0 == std::strcmp(argv[i], "--help")))
+            {
                 help();
                 return 0;
             }
 
             if (0 == std::strcmp(argv[i], "-v") ||
-                0 == std::strcmp(argv[i], "--verbosity")) {
+                0 == std::strcmp(argv[i], "--verbosity"))
+            {
                 ++i;
                 if (i >= argc) {
                     help();
@@ -746,21 +754,21 @@ int main(int argc, char **argv)
     }
 
     switch (verbosity) {
-      case 0:
+    case 0:
         break;
-      case 1:
+    case 1:
         bsls::Log::setSeverityThreshold(bsls::LogSeverity::e_ERROR);
         break;
-      case 2:
+    case 2:
         bsls::Log::setSeverityThreshold(bsls::LogSeverity::e_WARN);
         break;
-      case 3:
+    case 3:
         bsls::Log::setSeverityThreshold(bsls::LogSeverity::e_INFO);
         break;
-      case 4:
+    case 4:
         bsls::Log::setSeverityThreshold(bsls::LogSeverity::e_DEBUG);
         break;
-      default:
+    default:
         bsls::Log::setSeverityThreshold(bsls::LogSeverity::e_TRACE);
         break;
     }

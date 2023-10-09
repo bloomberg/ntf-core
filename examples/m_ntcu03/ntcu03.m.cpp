@@ -121,7 +121,11 @@ void execute()
     error = listener->setBlocking(false);
     BSLS_ASSERT_OPT(!error);
 
-    error = listener->bind(ntsa::Endpoint(ntsa::LocalName::generateUnique()),
+    ntsa::LocalName localName;
+    error = ntsa::LocalName::generateUnique(&localName);
+    BSLS_ASSERT_OPT(!error);
+
+    error = listener->bind(ntsa::Endpoint(localName),
                            false);
     BSLS_ASSERT_OPT(!error);
 

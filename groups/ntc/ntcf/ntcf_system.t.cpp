@@ -147,9 +147,14 @@ ntsa::Endpoint EndpointUtil::any(ntsa::Transport::Value transport)
         endpoint.makeIp(ntsa::IpEndpoint(ntsa::Ipv6Address::loopback(), 0));
         break;
     case ntsa::Transport::e_LOCAL_STREAM:
-    case ntsa::Transport::e_LOCAL_DATAGRAM:
-        endpoint.makeLocal(ntsa::LocalName::generateUnique());
+    case ntsa::Transport::e_LOCAL_DATAGRAM: {
+        ntsa::LocalName   localName;
+        const ntsa::Error error = ntsa::LocalName::generateUnique(&localName);
+        NTCCFG_TEST_OK(error);
+
+        endpoint.makeLocal(localName);
         break;
+    }
     default:
         NTCCFG_UNREACHABLE();
     }
@@ -3380,8 +3385,11 @@ void TransferClient::connect(const ntsa::Endpoint& remoteEndpoint)
     options.setTransport(
         remoteEndpoint.transport(ntsa::TransportMode::e_STREAM));
     if (remoteEndpoint.isLocal()) {
-        options.setSourceEndpoint(
-            ntsa::Endpoint(ntsa::LocalName::generateUnique()));
+        ntsa::LocalName localName;
+        error = ntsa::LocalName::generateUnique(&localName);
+        NTCCFG_TEST_OK(error);
+
+        options.setSourceEndpoint(ntsa::Endpoint(localName));
     }
     options.setReadQueueLowWatermark(0);
     options.setReadQueueHighWatermark(d_parameters.d_readQueueHighWatermark);
@@ -4024,7 +4032,11 @@ void TransferServer::listen()
         else if (d_parameters.d_addressFamily ==
                  test::TransferParameters::e_LOCAL)
         {
-            sourceEndpoint.makeLocal(ntsa::LocalName::generateUnique());
+            ntsa::LocalName localName;
+            error = ntsa::LocalName::generateUnique(&localName);
+            NTCCFG_TEST_OK(error);
+
+            sourceEndpoint.makeLocal(localName);
         }
 
         bsl::shared_ptr<ntci::ListenerSocketManager> listenerSocketManager(

@@ -231,11 +231,132 @@ NTSCFG_TEST_CASE(3)
     }
 }
 
+NTSCFG_TEST_CASE(4)
+{
+    // Concern: Try to set explicitly value which is longer than can be stored
+    // Plan:
+
+    bsl::stringstream ss;
+    for (size_t i = 0; i < ntsa::LocalName::k_MAX_PATH_LENGTH; ++i) {
+        const char c = 'a' + (bsl::rand() % ('z' - 'a'));
+        ss << c;
+    }
+    {
+        ntsa::LocalName localName;
+        NTSCFG_TEST_OK(localName.setValue(ss.str()));
+    }
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    {
+        ntsa::LocalName localName;
+        NTSCFG_TEST_OK(localName.setAbstract());
+        NTSCFG_TEST_OK(localName.setValue(ss.str()));
+    }
+#endif
+
+    ss << 'x';  // now string length is k_MAX_PATH_LENGTH
+    {
+        ntsa::LocalName localName;
+        ntsa::Error::Code code = ntsa::Error::e_LIMIT;
+        NTSCFG_TEST_ERROR(localName.setValue(ss.str()), ntsa::Error(code));
+    }
+
+    ss << 'x';  // now string length > k_MAX_PATH_LENGTH
+    {
+        ntsa::LocalName localName;
+        ntsa::Error::Code code = ntsa::Error::e_LIMIT;
+        NTSCFG_TEST_ERROR(localName.setValue(ss.str()), ntsa::Error(code));
+    }
+}
+
+NTSCFG_TEST_CASE(5)
+{
+    // Concern: Test generateUniqueName fails if generated path is long enough
+    // Notes:
+    // 1) Windows and Unixes have different environment variables pointing to a
+    // temporary directory
+    // 2) Linux may not have TMPDIR defined
+    // 3) If environment variable was not defined before the test then it is
+    // needed to undefine it at the end of the test
+
+    {
+        ntsa::LocalName localName;
+        NTSCFG_TEST_OK(ntsa::LocalName::generateUnique(&localName));
+    }
+
+#if defined(BSLS_PLATFORM_OS_WINDOWS)
+    const char* envname = "TMP";
+#else
+    const char* envname = "TMPDIR";
+#endif
+
+    bsl::string orig;
+    char*       origRaw = bsl::getenv(envname);
+
+#if defined(BSLS_PLATFORM_OS_WINDOWS)
+    //assuming that Windows always has such environment variable
+    NTSCFG_TEST_TRUE(origRaw);
+#endif
+
+    if (origRaw) {
+        orig = origRaw;
+    }
+
+    //generate long enough string;
+    bsl::string tmp;
+    {
+        bsl::stringstream ss;
+        ss << envname << '=';
+        for (size_t i = 0; i < ntsa::LocalName::k_MAX_PATH_LENGTH; ++i) {
+            const char c = 'a' + (bsl::rand() % ('z' - 'a'));
+            ss << c;
+        }
+        tmp = ss.str();
+    }
+#if defined(BSLS_PLATFORM_OS_WINDOWS)
+    int rc = _putenv(tmp.c_str());
+#else
+    int rc = putenv(const_cast<char*>(tmp.c_str()));
+#endif
+    NTSCFG_TEST_EQ(rc, 0);
+
+    {
+        ntsa::LocalName   localName;
+        const ntsa::Error error = ntsa::LocalName::generateUnique(&localName);
+
+        //return back the env variable if needed
+        if (!orig.empty()) {
+            bsl::stringstream ss;
+            ss << envname << '=' << orig;
+            bsl::string tmp = ss.str();
+#if defined(BSLS_PLATFORM_OS_WINDOWS)
+            int rc = _putenv(tmp.c_str());
+#else
+            int rc = putenv(const_cast<char*>(tmp.c_str()));
+#endif
+            NTSCFG_TEST_EQ(rc, 0);
+        }
+#if defined(BSLS_PLATFORM_OS_UNIX)
+        else {  //unset env variable
+            int rc = unsetenv(envname);
+            NTSCFG_TEST_EQ(rc, 0);
+        }
+#else
+        else {
+            NTSCFG_TEST_TRUE(false);
+        }
+#endif
+        ntsa::Error::Code code = ntsa::Error::e_LIMIT;
+        NTSCFG_TEST_ERROR(error, ntsa::Error(code));
+    }
+}
+
 NTSCFG_TEST_DRIVER
 {
     NTSCFG_TEST_REGISTER(1);
     NTSCFG_TEST_REGISTER(2);
     NTSCFG_TEST_REGISTER(3);
+    NTSCFG_TEST_REGISTER(4);
+    NTSCFG_TEST_REGISTER(5);
 }
 NTSCFG_TEST_DRIVER_END;
 

@@ -1244,8 +1244,12 @@ ntsa::Error ClientNameServer::createDatagramSocket()
         }
     }
     else if (d_endpoint.isLocal()) {
-        datagramSocketOptions.setSourceEndpoint(
-            ntsa::Endpoint(ntsa::LocalName::generateUnique()));
+        ntsa::LocalName   localName;
+        const ntsa::Error error = ntsa::LocalName::generateUnique(&localName);
+        if (error) {
+            return error;
+        }
+        datagramSocketOptions.setSourceEndpoint(ntsa::Endpoint(localName));
     }
     else {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -1315,8 +1319,12 @@ ntsa::Error ClientNameServer::createStreamSocket()
         }
     }
     else if (d_endpoint.isLocal()) {
-        streamSocketOptions.setSourceEndpoint(
-            ntsa::Endpoint(ntsa::LocalName::generateUnique()));
+        ntsa::LocalName   localName;
+        const ntsa::Error error = ntsa::LocalName::generateUnique(&localName);
+        if (error) {
+            return error;
+        }
+        streamSocketOptions.setSourceEndpoint(ntsa::Endpoint(localName));
     }
     else {
         return ntsa::Error(ntsa::Error::e_INVALID);
