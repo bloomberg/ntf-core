@@ -97,8 +97,6 @@ elseif(NOT NTF_TOOLCHAIN_COMPILER_CC_PATH OR NOT NTF_TOOLCHAIN_COMPILER_CXX_PATH
     else()
         message(FATAL_ERROR "Unsupported platform: ${CMAKE_SYSTEM_NAME}")
     endif()
-else()
-    message(FATAL_ERROR "Failed to determine compiler")
 endif()
 
 get_filename_component(
