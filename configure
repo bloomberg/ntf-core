@@ -15,6 +15,113 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+write_config_header() {
+  {
+    echo -n "      <configuration PROFILE_NAME=\"${NTF_CONFIGURE_UFID_CANONICAL}\" ENABLED=\"true\""
+    echo -n " GENERATION_DIR=\"${NTF_CONFIGURE_OUTPUT}\" CONFIG_NAME=\"${NTF_CONFIGURE_UFID_CANONICAL}\""
+    echo -n " GENERATION_OPTIONS=\""
+    if [[ "${NTF_CONFIGURE_CMAKE_OPTION_DISTRIBUTION_REFROOT}" != "" ]]; then
+      echo -n " ${NTF_CONFIGURE_CMAKE_OPTION_DISTRIBUTION_REFROOT}"
+    fi
+    echo -n " ${NTF_CONFIGURE_CMAKE_OPTION_UFID} ${NTF_CONFIGURE_CMAKE_OPTION_BUILD_TYPE}"
+    echo -n " ${NTF_CONFIGURE_CMAKE_OPTION_INSTALL_PREFIX} -DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
+    echo -n " ${NTF_CONFIGURE_CMAKE_OPTION_PREFIX_PATH}"
+    echo -n " -DCMAKE_TOOLCHAIN_FILE:PATH=${NTF_CONFIGURE_REPOSITORY}/toolchain.cmake"
+    echo -n " -G &quot;${NTF_CONFIGURE_GENERATOR}&quot; -S ${NTF_CONFIGURE_REPOSITORY}\""
+    echo " BUILD_OPTIONS=\"-j ${num_threads}\">"
+
+    echo "        <ADDITIONAL_GENERATION_ENVIRONMENT>"
+    echo "          <envs>"
+  } >> "${NTF_CLION_XML}"
+}
+
+process_ntf_configure_env() {
+    env | while IFS= read -r line; do
+        if [[ "$line" == "NTF_CONFIGURE"* ]]; then
+            key="${line%%=*}"
+            value="${line#*=}"
+            echo "            <env name=\"${key}\" value=\"${value}\" />" >> "${NTF_CLION_XML}"
+        fi
+
+    done
+}
+
+process_env() {
+  if [ -n "${!1}" ]; then
+    echo "            <env name=\"${1}\" value=\"${!1}\" />" >> "${NTF_CLION_XML}"
+  fi
+}
+
+generate_clion_cmake_xml () {
+  echo "Generating Clion cmake.xml..."
+
+  NTF_CLION_STORAGE=".idea"
+  NTF_CLION_XML="${NTF_CLION_STORAGE}/cmake.xml"
+
+  CLION_XML_GENERATION=$1
+
+  mkdir -p ${NTF_CLION_STORAGE}
+
+  num_threads=$(grep ^processor /proc/cpuinfo | uniq | wc -l)
+
+  if [[ ${CLION_XML_GENERATION} == "clean" ]]; then
+    if test -f "$NTF_CLION_XML"; then
+      echo "cmake.xml exists, it will be overwritten"
+    fi
+
+    {
+      echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+      echo "<project version=\"4\">"
+      echo "  <component name=\"CMakeSharedSettings\">"
+      echo "    <configurations>"
+    } > ${NTF_CLION_XML}
+
+    write_config_header
+
+  elif [[ ${CLION_XML_GENERATION} == "add" ]]; then
+    echo "Adding new configuration to existing cmake.xml"
+
+    if ! test -f "${NTF_CLION_XML}"; then
+      echo "cmake.xml does not exist, aborting"
+      exit 1
+    fi
+
+    #save previously available configurations, remove only the end of the cmake.xml
+    num_lines=$(grep -n '</configurations>' ${NTF_CLION_XML} | awk '{print $1}')
+    if [[ -z ${num_lines} ]]; then
+      echo "Failed to find </configurations> inside ${NTF_CLION_XML}, aborting"
+    fi
+    num_lines=${num_lines:0:${#num_lines}-1}
+    num_lines=$(($((num_lines))-1))
+    head -"${num_lines}" ${NTF_CLION_XML} > clion_tmpfile && mv clion_tmpfile ${NTF_CLION_XML}
+
+    write_config_header
+
+  else
+    echo "--clion_config must be used with either \"clean\" or \"add\", aborting"
+    exit 2
+  fi
+
+  process_env "CC"
+  process_env "CXX"
+  process_ntf_configure_env
+
+  {
+    echo "          </envs>"
+    echo "        </ADDITIONAL_GENERATION_ENVIRONMENT>"
+
+    echo "      </configuration>"
+    echo "    </configurations>"
+    echo "  </component>"
+    echo "</project>"
+  } >> ${NTF_CLION_XML}
+
+  echo "Generating Clion cmake.xml done"
+}
+
+
+
+
 set -o pipefail
 
 NTF_CONFIGURE_REPOSITORY=$(dirname ${0})
@@ -367,6 +474,8 @@ usage()
     echo "    --verbose                          Enable verbose build"
     echo "    --what                             Print what is being configured"
     echo "    --dry-run                          Print commands but do not execute them"
+
+    echo "    --clion_config      <clean|add>    Generate .idea/cmake.xml with CLion CMake configuration. Generate the file either from scratch or add configuration into the existing one"
     echo ""
     echo "example:"
     echo "    Build in debug mode:"
@@ -374,6 +483,12 @@ usage()
     echo ""
     echo "    Build with some features and without others:"
     echo "        ./configure --with-poll --without-select"
+    echo ""
+    echo "    Generate CLion cmake.xml for the debug build:"
+    echo "        ./configure --clion_config clean --debug"
+    echo ""
+    echo "    Add to the existing CLion cmake.xml release build configuration with warnings enabled:"
+    echo "        ./configure --with-warnings --clion_config add --release"
     exit 1
 }
 
@@ -626,6 +741,14 @@ while true ; do
             NTF_CONFIGURE_VERBOSE=1 ; shift ;;
         --what)
             NTF_CONFIGURE_WHAT=1 ; shift ;;
+        --clion_config)
+            if [[ $# -lt 2 ]]; then
+              NTF_GENERATE_CLION_CONFIG="clean"
+              shift 1
+            else
+              NTF_GENERATE_CLION_CONFIG=$2 ;
+              shift 2
+            fi ;;
         --*)
             echo "Invalid option: ${1}"
             usage ;;
@@ -814,6 +937,12 @@ else
 fi
 
 NTF_CONFIGURE_CMAKE_OPTION_UFID=" -DUFID:STRING=${NTF_CONFIGURE_UFID_CANONICAL}"
+
+if [ -n "${NTF_GENERATE_CLION_CONFIG}" ]; then
+  generate_clion_cmake_xml "${NTF_GENERATE_CLION_CONFIG}"
+  exit 0
+fi
+
 
 cd ${NTF_CONFIGURE_OUTPUT}
 

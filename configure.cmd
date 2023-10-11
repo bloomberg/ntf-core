@@ -412,6 +412,10 @@ if not "%1"=="" (
     if "%1"=="--verbose" (
         set NTF_CONFIGURE_VERBOSE=1
     )
+    if "%1"=="--clion_config" (
+        set NTF_GENERATE_CLION_CONFIG=%2
+        shift
+    )
     if "%1"=="--help" (
         call :USAGE
         exit /B 0
@@ -646,6 +650,11 @@ if not exist %NTF_CONFIGURE_OUTPUT% (
     mkdir %NTF_CONFIGURE_OUTPUT%
 )
 
+if defined NTF_GENERATE_CLION_CONFIG (
+    call :generate_clion_cmake_xml !NTF_GENERATE_CLION_CONFIG!
+    exit
+)
+
 cd %NTF_CONFIGURE_OUTPUT%
 
 echo cmake%NTF_CONFIGURE_CMAKE_OPTION_DISTRIBUTION_REFROOT%%NTF_CONFIGURE_CMAKE_OPTION_INSTALL_PREFIX%%NTF_CONFIGURE_CMAKE_OPTION_UFID%%NTF_CONFIGURE_CMAKE_OPTION_BUILD_TYPE%%NTF_CONFIGURE_CMAKE_OPTION_VERBOSE% -DCMAKE_TOOLCHAIN_FILE:PATH="%NTF_CONFIGURE_REPOSITORY%\toolchain.cmake" -G "Ninja" -S "%NTF_CONFIGURE_REPOSITORY%"
@@ -749,3 +758,152 @@ exit /B 0
     SET RETVAL=%~f1
     EXIT /B
 
+
+:get_number_of_threads
+    for /f %%x in ('wmic cpu get NumberOfLogicalProcessors') do (
+        SET "var_check="&for /f "delims=0123456789" %%i in ("%%x") do set var_check=%%i
+        if not defined var_check (
+            set /a %~1=%%x
+            exit /B
+        )
+    )
+    exit /B
+
+
+:copy_n_lines
+    if exist tmpFile del tmpFile
+    set numLinesToCopy=%1
+    set /a lineCounter=0
+    for /f "delims=" %%a in (%NTF_CLION_XML%) do (
+        set /a lineCounter+=1
+        if !lineCounter! leq %numLinesToCopy% (
+            echo %%a>>tmpFile
+        ) else (
+            del %NTF_CLION_XML%
+            move tmpFile %NTF_CLION_XML%
+            exit /B
+        )
+    )
+    exit /B
+
+
+:write_config_header
+    rem leading spaces are important for beautiful output
+    set line1=      ^<configuration PROFILE_NAME="!NTF_CONFIGURE_UFID!" ENABLED="true"
+    set line2= CONFIG_NAME="!NTF_CONFIGURE_UFID!" GENERATION_OPTIONS="
+    set line3=!NTF_CONFIGURE_CMAKE_OPTION_DISTRIBUTION_REFROOT!
+    set line4= !NTF_CONFIGURE_CMAKE_OPTION_INSTALL_PREFIX! !NTF_CONFIGURE_CMAKE_OPTION_VERBOSE!
+    set line5= !NTF_CONFIGURE_CMAKE_OPTION_UFID! !NTF_CONFIGURE_CMAKE_OPTION_BUILD_TYPE!
+    set line6= -DCMAKE_TOOLCHAIN_FILE:PATH=!NTF_CONFIGURE_REPOSITORY!\toolchain.cmake
+    set line7= -G ^&quot;!NTF_CONFIGURE_GENERATOR!^&quot;"^>
+
+    echo !line1!!line2!!line3!!line4!!line5!!line6!!line7! >> %NTF_CLION_XML%
+
+    (
+        echo.        ^<ADDITIONAL_GENERATION_ENVIRONMENT^>
+        echo.          ^<envs^>
+    ) >> %NTF_CLION_XML%
+
+    exit /B
+
+:process_ntf_configure_vars
+    for /f "tokens=*" %%a in ('set') do (
+        set line=%%a
+        if "!line:~0,13!"=="NTF_CONFIGURE" (
+            for /f "tokens=1,* delims==" %%a in ("!line!") do (
+                set "key=%%a"
+                set "value=%%b"
+                >> %NTF_CLION_XML% (
+                    echo.            ^<env name="!key!" value="!value!" /^>
+                )
+            )
+        )
+    )
+    exit /B
+
+:process_param
+    >> %NTF_CLION_XML% (
+        echo.            ^<env name="%1" value="!%1%!" /^>
+    )
+    exit /B
+
+
+:generate_clion_cmake_xml
+    echo Generating Clion cmake.xml...
+
+    set /a argC=0
+    for %%x in (%*) do Set /A argC+=1
+    if /i "%argC%" NEQ "1" (
+        echo generate_clion_cmake_xml must be called with exactly 1 argument, aborting"
+        EXIT
+    )
+
+    set NTF_CLION_STORAGE=.idea
+    set NTF_CLION_XML=%NTF_CLION_STORAGE%\cmake.xml
+    set CLION_XML_GENERATION=%1
+
+    if not exist %NTF_CLION_STORAGE% mkdir %NTF_CLION_STORAGE%
+
+    call :get_number_of_threads num_threads
+
+    echo %%CLION_XML_GENERATION%%
+    if "%CLION_XML_GENERATION%"=="clean" (
+        echo Performing clean generation
+        if exist %NTF_CLION_XML%  (
+            echo %NTF_CLION_XML% exists,it will be overwritten
+        )
+
+        (
+          echo ^<?xml version="1.0" encoding="UTF-8"?^>
+          echo ^<project version="4"^>
+          echo.  ^<component name="CMakeSharedSettings"^>
+          echo.    ^<configurations^>
+        ) > %NTF_CLION_XML%
+    ) else (
+        if "%CLION_XML_GENERATION%"=="add" (
+            echo Adding new configuration to existing cmake.xml
+
+            if not exist %NTF_CLION_XML% (
+                  echo cmake.xml does not exist, aborting
+                  rem exit 1
+            )
+
+            for /f %%x in ('findstr /N "</configurations>" %NTF_CLION_XML%') do (
+                if not defined num_lines (
+                    set str=%%x
+                    set /a num_lines=!str:~0,-1!-1
+                )
+            )
+
+            if not defined num_lines (
+                 echo Failed to find ^</configurations^> token, aborting...
+                 exit
+            )
+
+            call :copy_n_lines !num_lines!
+        ) else (
+            echo ERROR
+            exit
+        )
+    )
+
+    call :write_config_header
+
+    call :process_param CC
+    call :process_param CXX
+
+    call :process_ntf_configure_vars
+
+    (
+        echo.          ^</envs^>
+        echo.        ^</ADDITIONAL_GENERATION_ENVIRONMENT^>
+
+        echo.      ^</configuration^>
+        echo.    ^</configurations^>
+        echo.  ^</component^>
+        echo ^</project^>
+    ) >> %NTF_CLION_XML%
+
+    echo Generating Clion cmake.xml done
+
+    EXIT /B
