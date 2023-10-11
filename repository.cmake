@@ -1329,9 +1329,9 @@ function (ntf_target_dump target)
     foreach(property ${CMAKE_PROPERTY_LIST})
         string(REPLACE "<CONFIG>" "${CMAKE_BUILD_TYPE}" property ${property})
 
-        #if(property STREQUAL "LOCATION" OR property MATCHES "^LOCATION_" OR property MATCHES "_LOCATION$")
-        #    continue()
-        #endif()
+        if(property STREQUAL "LOCATION" OR property MATCHES "^LOCATION_" OR property MATCHES "_LOCATION$")
+            continue()
+        endif()
 
         get_property(was_set TARGET ${target} PROPERTY ${property} SET)
         if(was_set)
