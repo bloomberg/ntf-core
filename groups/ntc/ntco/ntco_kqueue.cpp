@@ -952,15 +952,15 @@ ntsa::Error Kqueue::removeDetached(
 {
     ntsa::Error error = this->remove(entry->handle());
     if (NTCCFG_UNLIKELY(error)) {
-        //TODO: log error, but continue with detachment
+        // TODO: log error, but continue with detachment
     }
-    if (!entry->isProcessing() &&
-        (entry->askForDetachmentAnnouncementPermission()))
+
+    if (!entry->isProcessing() && entry->announceDetached(this->getSelf(this)))
     {
-        entry->announceDetached(this->getSelf(this));
         entry->clear();
         Kqueue::interruptOne();
     }
+
     return error;
 }
 
@@ -2087,9 +2087,8 @@ void Kqueue::run(ntci::Waiter waiter)
                 }
 
                 if (entry->decrementProcessCounter() == 0 &&
-                    entry->askForDetachmentAnnouncementPermission())
+                    entry->announceDetached(this->getSelf(this)))
                 {
-                    entry->announceDetached(this->getSelf(this));
                     entry->clear();
                     ++numDetachments;
                 }
@@ -2280,10 +2279,10 @@ void Kqueue::poll(ntci::Waiter waiter)
                     }
                 }
             }
+
             if (entry->decrementProcessCounter() == 0 &&
-                entry->askForDetachmentAnnouncementPermission())
+                entry->announceDetached(this->getSelf(this)))
             {
-                entry->announceDetached(this->getSelf(this));
                 entry->clear();
                 ++numDetachments;
             }
