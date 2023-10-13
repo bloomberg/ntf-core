@@ -44,7 +44,7 @@ BSLS_IDENT_RCSID(ntcs_controller_cpp, "$Id$ $CSID$")
 #elif defined(BSLS_PLATFORM_OS_UNIX)
 #define NTCS_CONTROLLER_IMP NTCS_CONTROLLER_IMP_ANONYMOUS_PIPE
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
-#define NTCS_CONTROLLER_IMP NTCS_CONTROLLER_IMP_TCP_SOCKET
+#define NTCS_CONTROLLER_IMP NTCS_CONTROLLER_IMP_UNIX_DOMAIN_SOCKET
 #else
 #error Not implemented
 #endif
@@ -103,6 +103,158 @@ BSLS_IDENT_RCSID(ntcs_controller_cpp, "$Id$ $CSID$")
 
 namespace BloombergLP {
 namespace ntcs {
+
+namespace {
+
+#if NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_TCP_SOCKET ||                  \
+    defined(BSLS_PLATFORM_OS_WINDOWS) &&                                      \
+        NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_UNIX_DOMAIN_SOCKET
+ntsa::Error initTcpPair(ntsa::Handle* clientHandle, ntsa::Handle* serverHandle)
+{
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error error;
+
+    error = ntsu::SocketUtil::pair(clientHandle,
+                                   serverHandle,
+                                   ntsa::Transport::e_TCP_IPV4_STREAM);
+
+    if (error) {
+        NTCI_LOG_FATAL("Failed to create controller socket pair: %s",
+                       error.text().c_str());
+        return error;
+    }
+
+    error = ntsu::SocketOptionUtil::setNoDelay(*clientHandle, true);
+    if (error) {
+        NTCI_LOG_FATAL("Failed to set TCP_NODELAY: %s", error.text().c_str());
+        return error;
+    }
+
+    error = ntsu::SocketOptionUtil::setBlocking(*clientHandle, true);
+    if (error) {
+        NTCI_LOG_FATAL("Failed to set controller client socket "
+                       "to blocking mode: %s",
+                       error.text().c_str());
+        return error;
+    }
+
+    error = ntsu::SocketOptionUtil::setBlocking(*serverHandle, false);
+    if (error) {
+        NTCI_LOG_FATAL("Failed to set controller server socket "
+                       "to non-blocking mode: %s",
+                       error.text().c_str());
+        return error;
+    }
+
+    NTCI_LOG_TRACE("Created controller with "
+                   "client descriptor %d and server descriptor %d",
+                   *clientHandle,
+                   *serverHandle);
+    return error;
+}
+#endif
+
+#if NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_UNIX_DOMAIN_SOCKET
+ntsa::Error initUdsPair(ntsa::Handle* clientHandle, ntsa::Handle* serverHandle)
+{
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error error;
+
+    error = ntsu::SocketUtil::pair(clientHandle,
+                                   serverHandle,
+                                   ntsa::Transport::e_LOCAL_STREAM);
+
+    if (error) {
+        NTCI_LOG_FATAL("Failed to create controller socket pair: %s",
+                       error.text().c_str());
+        return error;
+    }
+
+    error = ntsu::SocketOptionUtil::setBlocking(*clientHandle, true);
+    if (error) {
+        NTCI_LOG_FATAL("Failed to set controller client socket "
+                       "to blocking mode: %s",
+                       error.text().c_str());
+        return error;
+    }
+
+    error = ntsu::SocketOptionUtil::setBlocking(*serverHandle, false);
+    if (error) {
+        NTCI_LOG_FATAL("Failed to set controller server socket "
+                       "to non-blocking mode: %s",
+                       error.text().c_str());
+        NTCCFG_ABORT();
+    }
+
+    NTCI_LOG_TRACE("Created controller with "
+                   "client descriptor %d and server descriptor %d",
+                   *clientHandle,
+                   *serverHandle);
+    return error;
+}
+#endif
+
+#if NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_ANONYMOUS_PIPE
+ntsa::Error initPipePair(ntsa::Handle* clientHandle,
+                         ntsa::Handle* serverHandle)
+{
+    NTCI_LOG_CONTEXT();
+
+    int pipes[2];
+    int rc = pipe(pipes);
+    if (rc != 0) {
+        ntsa::Error error(errno);
+        NTCI_LOG_FATAL("Failed to create anonymous pipe: %s",
+                       error.text().c_str());
+        return error;
+    }
+
+    ::fcntl(pipes[0], F_SETFL, O_NONBLOCK);
+    ::fcntl(pipes[1], F_SETFL, O_NONBLOCK);
+
+#if defined(FD_CLOEXEC)
+    ::fcntl(pipes[0], F_SETFD, FD_CLOEXEC);
+    ::fcntl(pipes[1], F_SETFD, FD_CLOEXEC);
+#endif
+
+    *serverHandle = pipes[0];
+    *clientHandle = pipes[1];
+
+    NTCI_LOG_TRACE("Created controller with "
+                   "client descriptor %d and server descriptor %d",
+                   d_clientHandle,
+                   d_serverHandle);
+
+    return ntsa::Error();
+}
+#endif
+
+#if NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_EVENTFD
+ntsa::Error initEventFdPair(ntsa::Handle* clientHandle,
+                            ntsa::Handle* serverHandle)
+{
+    NTCI_LOG_CONTEXT();
+
+    *serverHandle = ::eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK | EFD_SEMAPHORE);
+    if (*serverHandle < 0) {
+        ntsa::Error error(errno);
+        NTCI_LOG_FATAL("Failed to create event: %s", error.text().c_str());
+        return error;
+    }
+
+    *clientHandle = *serverHandle;
+
+    NTCI_LOG_TRACE("Created controller with "
+                   "client descriptor %d and server descriptor %d",
+                   *clientHandle,
+                   *serverHandle);
+    return ntsa::Error();
+}
+#endif
+
+}
 
 void Controller::processSocketReadable(const ntca::ReactorEvent& event)
 {
@@ -165,130 +317,38 @@ Controller::Controller()
 {
 #if NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_TCP_SOCKET
 
-    NTCI_LOG_CONTEXT();
-
-    ntsa::Error error;
-
-    error = ntsu::SocketUtil::pair(&d_clientHandle,
-                                   &d_serverHandle,
-                                   ntsa::Transport::e_TCP_IPV4_STREAM);
-
+    const ntsa::Error error = initTcpPair(&d_clientHandle, &d_serverHandle);
     if (error) {
-        NTCI_LOG_FATAL("Failed to create controller socket pair: %s",
-                       error.text().c_str());
         NTCCFG_ABORT();
     }
-
-    error = ntsu::SocketOptionUtil::setNoDelay(d_clientHandle, true);
-    if (error) {
-        NTCI_LOG_FATAL("Failed to set TCP_NODELAY: %s", error.text().c_str());
-        NTCCFG_ABORT();
-    }
-
-    error = ntsu::SocketOptionUtil::setBlocking(d_clientHandle, true);
-    if (error) {
-        NTCI_LOG_FATAL("Failed to set controller client socket "
-                       "to blocking mode: %s",
-                       error.text().c_str());
-        NTCCFG_ABORT();
-    }
-
-    error = ntsu::SocketOptionUtil::setBlocking(d_serverHandle, false);
-    if (error) {
-        NTCI_LOG_FATAL("Failed to set controller server socket "
-                       "to non-blocking mode: %s",
-                       error.text().c_str());
-        NTCCFG_ABORT();
-    }
-
-    NTCI_LOG_TRACE("Created controller with "
-                   "client descriptor %d and server descriptor %d",
-                   d_clientHandle,
-                   d_serverHandle);
 
 #elif NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_UNIX_DOMAIN_SOCKET
 
-    NTCI_LOG_CONTEXT();
-
-    ntsa::Error error;
-
-    error = ntsu::SocketUtil::pair(&d_clientHandle,
-                                   &d_serverHandle,
-                                   ntsa::Transport::e_LOCAL_STREAM);
-
+    ntsa::Error error = initUdsPair(&d_clientHandle, &d_serverHandle);
     if (error) {
-        NTCI_LOG_FATAL("Failed to create controller socket pair: %s",
-                       error.text().c_str());
+#if defined(BSLS_PLATFORM_OS_WINDOWS)
+        error = initTcpPair(&d_clientHandle, &d_serverHandle);
+        if (error) {
+            NTCCFG_ABORT();
+        }
+#else
         NTCCFG_ABORT();
+#endif
     }
-
-    error = ntsu::SocketOptionUtil::setBlocking(d_clientHandle, true);
-    if (error) {
-        NTCI_LOG_FATAL("Failed to set controller client socket "
-                       "to blocking mode: %s",
-                       error.text().c_str());
-        NTCCFG_ABORT();
-    }
-
-    error = ntsu::SocketOptionUtil::setBlocking(d_serverHandle, false);
-    if (error) {
-        NTCI_LOG_FATAL("Failed to set controller server socket "
-                       "to non-blocking mode: %s",
-                       error.text().c_str());
-        NTCCFG_ABORT();
-    }
-
-    NTCI_LOG_TRACE("Created controller with "
-                   "client descriptor %d and server descriptor %d",
-                   d_clientHandle,
-                   d_serverHandle);
 
 #elif NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_ANONYMOUS_PIPE
-
-    NTCI_LOG_CONTEXT();
-
-    int pipes[2];
-    int rc = pipe(pipes);
-    if (rc != 0) {
-        ntsa::Error error(errno);
-        NTCI_LOG_FATAL("Failed to create anonymous pipe: %s",
-                       error.text().c_str());
+    const ntsa::Error error = initPipePair(&d_clientHandle, &d_serverHandle);
+    if (error) {
         NTCCFG_ABORT();
     }
-
-    ::fcntl(pipes[0], F_SETFL, O_NONBLOCK);
-    ::fcntl(pipes[1], F_SETFL, O_NONBLOCK);
-
-#if defined(FD_CLOEXEC)
-    ::fcntl(pipes[0], F_SETFD, FD_CLOEXEC);
-    ::fcntl(pipes[1], F_SETFD, FD_CLOEXEC);
-#endif
-
-    d_serverHandle = pipes[0];
-    d_clientHandle = pipes[1];
-
-    NTCI_LOG_TRACE("Created controller with "
-                   "client descriptor %d and server descriptor %d",
-                   d_clientHandle,
-                   d_serverHandle);
 
 #elif NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_EVENTFD
 
-    NTCI_LOG_CONTEXT();
-
-    d_serverHandle = ::eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK | EFD_SEMAPHORE);
-    if (d_serverHandle < 0) {
-        ntsa::Error error(errno);
-        NTCI_LOG_FATAL("Failed to create event: %s", error.text().c_str());
+    const ntsa::Error error =
+        initEventFdPair(&d_clientHandle, &d_serverHandle);
+    if (error) {
         NTCCFG_ABORT();
     }
-
-    d_clientHandle = d_serverHandle;
-
-    NTCI_LOG_TRACE("Created controller with "
-                   "client descriptor %d and server descriptor %d",
-                   d_clientHandle,
-                   d_serverHandle);
 
 #else
 #error Not implemented
