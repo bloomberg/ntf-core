@@ -18,7 +18,7 @@ cmake_minimum_required(VERSION 3.22.0)
 project(
     ntf-core
     VERSION
-        2.2.3
+        2.2.4
     DESCRIPTION
         "NTF Core"
     HOMEPAGE_URL
@@ -37,18 +37,14 @@ if (NOT "${bde_workspace_path}" STREQUAL "NOTFOUND")
 endif()
 
 if (BBS_BUILD_SYSTEM)
-    find_package(BDE_BUILD_SYSTEM NAMES BdeBuildSystem)
-
-    if (${BDE_BUILD_SYSTEM_FOUND})
+    find_package(BdeBuildSystem)
+    if (${BdeBuildSystem_FOUND})
         message(STATUS "Processing BBS workspace")
-
         include(${CMAKE_CURRENT_LIST_DIR}/variables.cmake)
         enable_testing()
-
         add_subdirectory(groups)
         return()
     endif()
-
 endif()
 
 message(STATUS "Processing NTF workspace")
