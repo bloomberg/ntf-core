@@ -82,6 +82,14 @@ class ListenerSocketSession
         const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
         const ntca::AcceptQueueEvent&                event);
 
+    virtual void processAcceptQueueRateLimitApplied(
+        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+        const ntca::AcceptQueueEvent&                event);
+
+    virtual void processAcceptQueueRateLimitRelaxed(
+        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+        const ntca::AcceptQueueEvent&                event);
+
     /// Process the initiation of the shutdown sequence from the specified
     /// 'origin'.
     virtual void processShutdownInitiated(

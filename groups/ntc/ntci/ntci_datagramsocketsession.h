@@ -83,6 +83,14 @@ class DatagramSocketSession
         const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
         const ntca::ReadQueueEvent&                  event);
 
+    virtual void processReadQueueRateLimitApplied(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::ReadQueueEvent&                  event);
+
+    virtual void processReadQueueRateLimitRelaxed(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::ReadQueueEvent&                  event);
+
     /// Process the condition that write queue flow control has been
     /// relaxed: the write queue is being automatically copied to the socket
     /// send buffer.
@@ -119,6 +127,14 @@ class DatagramSocketSession
     /// Process the condition that the write queue has been discarded
     /// because a non-transient write error asynchronously occured.
     virtual void processWriteQueueDiscarded(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::WriteQueueEvent&                 event);
+
+    virtual void processWriteQueueRateLimitApplied(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::WriteQueueEvent&                 event);
+
+    virtual void processWriteQueueRateLimitRelaxed(
         const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
         const ntca::WriteQueueEvent&                 event);
 

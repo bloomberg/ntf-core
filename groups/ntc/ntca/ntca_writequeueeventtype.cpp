@@ -34,6 +34,8 @@ int WriteQueueEventType::fromInt(WriteQueueEventType::Value* result,
     case WriteQueueEventType::e_LOW_WATERMARK:
     case WriteQueueEventType::e_HIGH_WATERMARK:
     case WriteQueueEventType::e_DISCARDED:
+    case WriteQueueEventType::e_RATE_LIMIT_APPLIED:
+    case WriteQueueEventType::e_RATE_LIMIT_RELAXED:
         *result = static_cast<WriteQueueEventType::Value>(number);
         return 0;
     default:
@@ -64,6 +66,14 @@ int WriteQueueEventType::fromString(WriteQueueEventType::Value* result,
         *result = e_DISCARDED;
         return 0;
     }
+    if (bdlb::String::areEqualCaseless(string, "RATE_LIMIT_APPLIED")) {
+        *result = e_RATE_LIMIT_APPLIED;
+        return 0;
+    }
+    if (bdlb::String::areEqualCaseless(string, "RATE_LIMIT_RELAXED")) {
+        *result = e_RATE_LIMIT_RELAXED;
+        return 0;
+    }
 
     return -1;
 }
@@ -73,19 +83,25 @@ const char* WriteQueueEventType::toString(WriteQueueEventType::Value value)
     switch (value) {
     case e_FLOW_CONTROL_RELAXED: {
         return "FLOW_CONTROL_RELAXED";
-    } break;
+    }
     case e_FLOW_CONTROL_APPLIED: {
         return "FLOW_CONTROL_APPLIED";
-    } break;
+    }
     case e_LOW_WATERMARK: {
         return "LOW_WATERMARK";
-    } break;
+    }
     case e_HIGH_WATERMARK: {
         return "HIGH_WATERMARK";
-    } break;
+    }
     case e_DISCARDED: {
         return "DISCARDED";
-    } break;
+    }
+    case e_RATE_LIMIT_APPLIED: {
+        return "RATE_LIMIT_APPLIED";
+    }
+    case e_RATE_LIMIT_RELAXED: {
+        return "RATE_LIMIT_RELAXED";
+    }
     }
 
     BSLS_ASSERT(!"invalid enumerator");

@@ -53,7 +53,15 @@ struct WriteQueueEventType {
 
         /// The contents of the write queue have been discarded without being
         /// processed.
-        e_DISCARDED = 4
+        e_DISCARDED = 4,
+
+        /// Send rate limit has been reached and send rate limit timer has been
+        /// set
+        e_RATE_LIMIT_APPLIED = 5,
+
+        /// Send rate limit timer has fired and send rate limit has been
+        /// relaxed
+        e_RATE_LIMIT_RELAXED = 6
     };
 
     /// Return the string representation exactly matching the enumerator

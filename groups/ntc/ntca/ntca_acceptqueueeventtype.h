@@ -55,7 +55,15 @@ struct AcceptQueueEventType {
 
         // The contents of the accept queue have been discarded without being
         // processed.
-        e_DISCARDED = 4
+        e_DISCARDED = 4,
+
+        /// Accept rate limit has been reached and accept rate limit timer
+        /// has been set
+        e_RATE_LIMIT_APPLIED = 5,
+
+        /// Accept rate limit timer has fired and accept rate limit has been
+        /// relaxed
+        e_RATE_LIMIT_RELAXED = 6
     };
 
     /// Return the string representation exactly matching the enumerator

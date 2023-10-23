@@ -67,6 +67,22 @@ void DatagramSocketSession::processReadQueueDiscarded(
     NTCCFG_WARNING_UNUSED(event);
 }
 
+void DatagramSocketSession::processReadQueueRateLimitApplied(
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+    const ntca::ReadQueueEvent&                  event)
+{
+    NTCCFG_WARNING_UNUSED(datagramSocket);
+    NTCCFG_WARNING_UNUSED(event);
+}
+
+void DatagramSocketSession::processReadQueueRateLimitRelaxed(
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+    const ntca::ReadQueueEvent&                  event)
+{
+    NTCCFG_WARNING_UNUSED(datagramSocket);
+    NTCCFG_WARNING_UNUSED(event);
+}
+
 void DatagramSocketSession::processWriteQueueFlowControlRelaxed(
     const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
     const ntca::WriteQueueEvent&                 event)
@@ -100,6 +116,22 @@ void DatagramSocketSession::processWriteQueueHighWatermark(
 }
 
 void DatagramSocketSession::processWriteQueueDiscarded(
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+    const ntca::WriteQueueEvent&                 event)
+{
+    NTCCFG_WARNING_UNUSED(datagramSocket);
+    NTCCFG_WARNING_UNUSED(event);
+}
+
+void DatagramSocketSession::processWriteQueueRateLimitApplied(
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+    const ntca::WriteQueueEvent&                 event)
+{
+    NTCCFG_WARNING_UNUSED(datagramSocket);
+    NTCCFG_WARNING_UNUSED(event);
+}
+
+void DatagramSocketSession::processWriteQueueRateLimitRelaxed(
     const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
     const ntca::WriteQueueEvent&                 event)
 {

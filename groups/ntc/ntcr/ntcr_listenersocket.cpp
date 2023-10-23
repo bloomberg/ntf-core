@@ -248,6 +248,22 @@ void ListenerSocket::processAcceptRateTimer(
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         NTCR_LISTENERSOCKET_LOG_BACKLOG_THROTTLE_RELAXED();
 
+        if (d_session_sp) {
+            ntca::AcceptQueueEvent event;
+            event.setType(ntca::AcceptQueueEventType::e_RATE_LIMIT_RELAXED);
+            event.setContext(d_acceptQueue.context());
+
+            ntcs::Dispatch::announceAcceptQueueRateLimitRelaxed(
+                d_session_sp,
+                self,
+                event,
+                d_sessionStrand_sp,
+                ntci::Strand::unknown(),
+                self,
+                true,
+                &d_mutex);
+        }
+
         this->privateRelaxFlowControl(self,
                                       ntca::FlowControlType::e_RECEIVE,
                                       false,
@@ -617,11 +633,13 @@ void ListenerSocket::privateShutdownSequencePart2(
 
     if (lock) {
         d_mutex.lock();
-        BSLS_ASSERT(d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED);
+        BSLS_ASSERT(d_detachState.get() ==
+                    ntcs::DetachState::e_DETACH_INITIATED);
         d_detachState.set(ntcs::DetachState::e_DETACH_IDLE);
     }
     else {
-        BSLS_ASSERT(d_detachState.get() != ntcs::DetachState::e_DETACH_INITIATED);
+        BSLS_ASSERT(d_detachState.get() !=
+                    ntcs::DetachState::e_DETACH_INITIATED);
     }
 
     // Second handle socket shutdown.
@@ -980,7 +998,8 @@ bool ListenerSocket::privateCloseFlowControl(
     if (d_systemHandle != ntsa::k_INVALID_HANDLE) {
         ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
         if (reactorRef) {
-            BSLS_ASSERT(d_detachState.get() != ntcs::DetachState::e_DETACH_INITIATED);
+            BSLS_ASSERT(d_detachState.get() !=
+                        ntcs::DetachState::e_DETACH_INITIATED);
             ntsa::Error error = reactorRef->detachSocket(self, detachCallback);
             if (error) {
                 return false;
@@ -1017,7 +1036,7 @@ ntsa::Error ListenerSocket::privateThrottleBacklog(
                 ntci::TimerCallback timerCallback = this->createTimerCallback(
                     bdlf::MemFnUtil::memFn(
                         &ListenerSocket::processAcceptRateTimer,
-                        this),
+                        self),
                     d_allocator_p);
 
                 d_acceptRateTimer_sp = this->createTimer(timerOptions,
@@ -1034,6 +1053,23 @@ ntsa::Error ListenerSocket::privateThrottleBacklog(
                                           true);
 
             d_acceptRateTimer_sp->schedule(nextAcceptAttemptTime);
+
+            if (d_session_sp) {
+                ntca::AcceptQueueEvent event;
+                event.setType(
+                    ntca::AcceptQueueEventType::e_RATE_LIMIT_APPLIED);
+                event.setContext(d_acceptQueue.context());
+
+                ntcs::Dispatch::announceAcceptQueueRateLimitApplied(
+                    d_session_sp,
+                    self,
+                    event,
+                    d_sessionStrand_sp,
+                    ntci::Strand::unknown(),
+                    self,
+                    true,
+                    &d_mutex);
+            }
 
             return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
         }

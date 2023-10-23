@@ -68,6 +68,22 @@ void ListenerSocketSession::processAcceptQueueDiscarded(
     NTCCFG_WARNING_UNUSED(event);
 }
 
+void ListenerSocketSession::processAcceptQueueRateLimitApplied(
+    const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+    const ntca::AcceptQueueEvent&                event)
+{
+    NTCCFG_WARNING_UNUSED(listenerSocket);
+    NTCCFG_WARNING_UNUSED(event);
+}
+
+void ListenerSocketSession::processAcceptQueueRateLimitRelaxed(
+    const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+    const ntca::AcceptQueueEvent&                event)
+{
+    NTCCFG_WARNING_UNUSED(listenerSocket);
+    NTCCFG_WARNING_UNUSED(event);
+}
+
 void ListenerSocketSession::processShutdownInitiated(
     const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
     const ntca::ShutdownEvent&                   event)

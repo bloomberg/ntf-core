@@ -220,6 +220,26 @@ struct Dispatch {
         bool                                                defer,
         bslmt::Mutex*                                       mutex);
 
+    static void announceReadQueueRateLimitApplied(
+        const bsl::shared_ptr<ntci::DatagramSocketSession>& session,
+        const bsl::shared_ptr<ntci::DatagramSocket>&        socket,
+        const ntca::ReadQueueEvent&                         event,
+        const bsl::shared_ptr<ntci::Strand>&                destination,
+        const bsl::shared_ptr<ntci::Strand>&                source,
+        const bsl::shared_ptr<ntci::Executor>&              executor,
+        bool                                                defer,
+        bslmt::Mutex*                                       mutex);
+
+    static void announceReadQueueRateLimitRelaxed(
+        const bsl::shared_ptr<ntci::DatagramSocketSession>& session,
+        const bsl::shared_ptr<ntci::DatagramSocket>&        socket,
+        const ntca::ReadQueueEvent&                         event,
+        const bsl::shared_ptr<ntci::Strand>&                destination,
+        const bsl::shared_ptr<ntci::Strand>&                source,
+        const bsl::shared_ptr<ntci::Executor>&              executor,
+        bool                                                defer,
+        bslmt::Mutex*                                       mutex);
+
     /// Announce to the specified 'session' the condition that write queue
     /// flow control has been relaxed. If the specified 'defer' flag is
     /// false and the requirements of the specified 'destination' strand
@@ -330,6 +350,26 @@ struct Dispatch {
     /// any thread; a null 'source' strand indicates the source strand is
     /// unknown.
     static void announceWriteQueueDiscarded(
+        const bsl::shared_ptr<ntci::DatagramSocketSession>& session,
+        const bsl::shared_ptr<ntci::DatagramSocket>&        socket,
+        const ntca::WriteQueueEvent&                        event,
+        const bsl::shared_ptr<ntci::Strand>&                destination,
+        const bsl::shared_ptr<ntci::Strand>&                source,
+        const bsl::shared_ptr<ntci::Executor>&              executor,
+        bool                                                defer,
+        bslmt::Mutex*                                       mutex);
+
+    static void announceWriteQueueRateLimitApplied(
+        const bsl::shared_ptr<ntci::DatagramSocketSession>& session,
+        const bsl::shared_ptr<ntci::DatagramSocket>&        socket,
+        const ntca::WriteQueueEvent&                        event,
+        const bsl::shared_ptr<ntci::Strand>&                destination,
+        const bsl::shared_ptr<ntci::Strand>&                source,
+        const bsl::shared_ptr<ntci::Executor>&              executor,
+        bool                                                defer,
+        bslmt::Mutex*                                       mutex);
+
+    static void announceWriteQueueRateLimitRelaxed(
         const bsl::shared_ptr<ntci::DatagramSocketSession>& session,
         const bsl::shared_ptr<ntci::DatagramSocket>&        socket,
         const ntca::WriteQueueEvent&                        event,
@@ -620,6 +660,26 @@ struct Dispatch {
         bool                                                defer,
         bslmt::Mutex*                                       mutex);
 
+    static void announceAcceptQueueRateLimitApplied(
+        const bsl::shared_ptr<ntci::ListenerSocketSession>& session,
+        const bsl::shared_ptr<ntci::ListenerSocket>&        socket,
+        const ntca::AcceptQueueEvent&                       event,
+        const bsl::shared_ptr<ntci::Strand>&                destination,
+        const bsl::shared_ptr<ntci::Strand>&                source,
+        const bsl::shared_ptr<ntci::Executor>&              executor,
+        bool                                                defer,
+        bslmt::Mutex*                                       mutex);
+
+    static void announceAcceptQueueRateLimitRelaxed(
+        const bsl::shared_ptr<ntci::ListenerSocketSession>& session,
+        const bsl::shared_ptr<ntci::ListenerSocket>&        socket,
+        const ntca::AcceptQueueEvent&                       event,
+        const bsl::shared_ptr<ntci::Strand>&                destination,
+        const bsl::shared_ptr<ntci::Strand>&                source,
+        const bsl::shared_ptr<ntci::Executor>&              executor,
+        bool                                                defer,
+        bslmt::Mutex*                                       mutex);
+
     /// Announce to the specified 'session' the initiation of the shutdown
     /// sequence of the specified 'socket' from the specified 'origin'. If
     /// the specified 'defer' flag is false and the requirements of the
@@ -901,6 +961,26 @@ struct Dispatch {
         bool                                              defer,
         bslmt::Mutex*                                     mutex);
 
+    static void announceReadQueueRateLimitApplied(
+        const bsl::shared_ptr<ntci::StreamSocketSession>& session,
+        const bsl::shared_ptr<ntci::StreamSocket>&        socket,
+        const ntca::ReadQueueEvent&                       event,
+        const bsl::shared_ptr<ntci::Strand>&              destination,
+        const bsl::shared_ptr<ntci::Strand>&              source,
+        const bsl::shared_ptr<ntci::Executor>&            executor,
+        bool                                              defer,
+        bslmt::Mutex*                                     mutex);
+
+    static void announceReadQueueRateLimitRelaxed(
+        const bsl::shared_ptr<ntci::StreamSocketSession>& session,
+        const bsl::shared_ptr<ntci::StreamSocket>&        socket,
+        const ntca::ReadQueueEvent&                       event,
+        const bsl::shared_ptr<ntci::Strand>&              destination,
+        const bsl::shared_ptr<ntci::Strand>&              source,
+        const bsl::shared_ptr<ntci::Executor>&            executor,
+        bool                                              defer,
+        bslmt::Mutex*                                     mutex);
+
     /// Announce to the specified 'session' the condition that write queue
     /// flow control has been relaxed. If the specified 'defer' flag is
     /// false and the requirements of the specified 'destination' strand
@@ -1011,6 +1091,26 @@ struct Dispatch {
     /// any thread; a null 'source' strand indicates the source strand is
     /// unknown.
     static void announceWriteQueueDiscarded(
+        const bsl::shared_ptr<ntci::StreamSocketSession>& session,
+        const bsl::shared_ptr<ntci::StreamSocket>&        socket,
+        const ntca::WriteQueueEvent&                      event,
+        const bsl::shared_ptr<ntci::Strand>&              destination,
+        const bsl::shared_ptr<ntci::Strand>&              source,
+        const bsl::shared_ptr<ntci::Executor>&            executor,
+        bool                                              defer,
+        bslmt::Mutex*                                     mutex);
+
+    static void announceWriteQueueRateLimitApplied(
+        const bsl::shared_ptr<ntci::StreamSocketSession>& session,
+        const bsl::shared_ptr<ntci::StreamSocket>&        socket,
+        const ntca::WriteQueueEvent&                      event,
+        const bsl::shared_ptr<ntci::Strand>&              destination,
+        const bsl::shared_ptr<ntci::Strand>&              source,
+        const bsl::shared_ptr<ntci::Executor>&            executor,
+        bool                                              defer,
+        bslmt::Mutex*                                     mutex);
+
+    static void announceWriteQueueRateLimitRelaxed(
         const bsl::shared_ptr<ntci::StreamSocketSession>& session,
         const bsl::shared_ptr<ntci::StreamSocket>&        socket,
         const ntca::WriteQueueEvent&                      event,

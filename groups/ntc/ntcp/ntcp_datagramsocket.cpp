@@ -313,6 +313,22 @@ void DatagramSocket::processSendRateTimer(
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         NTCP_DATAGRAMSOCKET_LOG_SEND_BUFFER_THROTTLE_RELAXED();
 
+        if (d_session_sp) {
+            ntca::WriteQueueEvent event;
+            event.setType(ntca::WriteQueueEventType::e_RATE_LIMIT_RELAXED);
+            event.setContext(d_sendQueue.context());
+
+            ntcs::Dispatch::announceWriteQueueRateLimitRelaxed(
+                d_session_sp,
+                self,
+                event,
+                d_sessionStrand_sp,
+                ntci::Strand::unknown(),
+                self,
+                true,
+                &d_mutex);
+        }
+
         this->privateRelaxFlowControl(self,
                                       ntca::FlowControlType::e_SEND,
                                       false,
@@ -388,6 +404,22 @@ void DatagramSocket::processReceiveRateTimer(
 
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         NTCP_DATAGRAMSOCKET_LOG_RECEIVE_BUFFER_THROTTLE_RELAXED();
+
+        if (d_session_sp) {
+            ntca::ReadQueueEvent event;
+            event.setType(ntca::ReadQueueEventType::e_RATE_LIMIT_RELAXED);
+            event.setContext(d_receiveQueue.context());
+
+            ntcs::Dispatch::announceReadQueueRateLimitRelaxed(
+                d_session_sp,
+                self,
+                event,
+                d_sessionStrand_sp,
+                ntci::Strand::unknown(),
+                self,
+                true,
+                &d_mutex);
+        }
 
         this->privateRelaxFlowControl(self,
                                       ntca::FlowControlType::e_RECEIVE,
@@ -1476,8 +1508,7 @@ bool DatagramSocket::privateCloseFlowControl(
         if (proactorRef) {
             BSLS_ASSERT(d_detachState.get() !=
                         ntcs::DetachState::e_DETACH_INITIATED);
-            proactorRef->cancel(
-                self);
+            proactorRef->cancel(self);
             const ntsa::Error error = proactorRef->detachSocketAsync(self);
             if (NTCCFG_UNLIKELY(error)) {
                 return false;
@@ -1514,7 +1545,7 @@ ntsa::Error DatagramSocket::privateThrottleSendBuffer(
                     timerOptions,
                     ntci::TimerCallback(bdlf::MemFnUtil::memFn(
                         &DatagramSocket::processSendRateTimer,
-                        this)),
+                        self)),
                     d_allocator_p);
             }
 
@@ -1527,6 +1558,22 @@ ntsa::Error DatagramSocket::privateThrottleSendBuffer(
                                           true);
 
             d_sendRateTimer_sp->schedule(nextSendAttemptTime);
+
+            if (d_session_sp) {
+                ntca::WriteQueueEvent event;
+                event.setType(ntca::WriteQueueEventType::e_RATE_LIMIT_APPLIED);
+                event.setContext(d_sendQueue.context());
+
+                ntcs::Dispatch::announceWriteQueueRateLimitApplied(
+                    d_session_sp,
+                    self,
+                    event,
+                    d_sessionStrand_sp,
+                    ntci::Strand::unknown(),
+                    self,
+                    true,
+                    &d_mutex);
+            }
 
             return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
         }
@@ -1559,7 +1606,7 @@ ntsa::Error DatagramSocket::privateThrottleReceiveBuffer(
                     timerOptions,
                     ntci::TimerCallback(bdlf::MemFnUtil::memFn(
                         &DatagramSocket::processReceiveRateTimer,
-                        this)),
+                        self)),
                     d_allocator_p);
             }
 
@@ -1573,6 +1620,22 @@ ntsa::Error DatagramSocket::privateThrottleReceiveBuffer(
                                           true);
 
             d_receiveRateTimer_sp->schedule(nextReceiveAttemptTime);
+
+            if (d_session_sp) {
+                ntca::ReadQueueEvent event;
+                event.setType(ntca::ReadQueueEventType::e_RATE_LIMIT_APPLIED);
+                event.setContext(d_receiveQueue.context());
+
+                ntcs::Dispatch::announceReadQueueRateLimitApplied(
+                    d_session_sp,
+                    self,
+                    event,
+                    d_sessionStrand_sp,
+                    ntci::Strand::unknown(),
+                    self,
+                    true,
+                    &d_mutex);
+            }
 
             return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
         }
@@ -2424,7 +2487,7 @@ ntsa::Error DatagramSocket::send(const bdlbb::Blob&       data,
 
         ntci::TimerCallback timerCallback = this->createTimerCallback(
             bdlf::BindUtil::bind(&DatagramSocket::processSendDeadlineTimer,
-                                 this,
+                                 self,
                                  bdlf::PlaceHolders::_1,
                                  bdlf::PlaceHolders::_2,
                                  entry.id()),
@@ -2528,7 +2591,7 @@ ntsa::Error DatagramSocket::send(const ntsa::Data&        data,
 
         ntci::TimerCallback timerCallback = this->createTimerCallback(
             bdlf::BindUtil::bind(&DatagramSocket::processSendDeadlineTimer,
-                                 this,
+                                 self,
                                  bdlf::PlaceHolders::_1,
                                  bdlf::PlaceHolders::_2,
                                  entry.id()),
@@ -2649,7 +2712,7 @@ ntsa::Error DatagramSocket::send(const bdlbb::Blob&        data,
 
         ntci::TimerCallback timerCallback = this->createTimerCallback(
             bdlf::BindUtil::bind(&DatagramSocket::processSendDeadlineTimer,
-                                 this,
+                                 self,
                                  bdlf::PlaceHolders::_1,
                                  bdlf::PlaceHolders::_2,
                                  entry.id()),
@@ -2768,7 +2831,7 @@ ntsa::Error DatagramSocket::send(const ntsa::Data&         data,
 
         ntci::TimerCallback timerCallback = this->createTimerCallback(
             bdlf::BindUtil::bind(&DatagramSocket::processSendDeadlineTimer,
-                                 this,
+                                 self,
                                  bdlf::PlaceHolders::_1,
                                  bdlf::PlaceHolders::_2,
                                  entry.id()),
@@ -2991,7 +3054,7 @@ ntsa::Error DatagramSocket::receive(const ntca::ReceiveOptions&  options,
             ntci::TimerCallback timerCallback = this->createTimerCallback(
                 bdlf::BindUtil::bind(
                     &DatagramSocket::processReceiveDeadlineTimer,
-                    this,
+                    self,
                     bdlf::PlaceHolders::_1,
                     bdlf::PlaceHolders::_2,
                     callbackEntry),
