@@ -289,6 +289,7 @@ Event::Event(bslma::Allocator* basicAllocator)
 , d_type(ntcs::EventType::e_UNDEFINED)
 , d_status(ntcs::EventStatus::e_FREE)
 , d_socket()
+, d_context_sp()
 , d_target(ntsa::k_INVALID_HANDLE)
 , d_receiveData_p(0)
 , d_numBytesAttempted(0)
@@ -315,6 +316,7 @@ Event::Event(const Event& other, bslma::Allocator* basicAllocator)
 , d_type(other.d_type)
 , d_status(other.d_status)
 , d_socket(other.d_socket)
+, d_context_sp()
 , d_target(other.d_target)
 , d_receiveData_p(other.d_receiveData_p)
 , d_numBytesAttempted(other.d_numBytesAttempted)
@@ -347,6 +349,7 @@ Event& Event::operator=(const Event& other)
         d_type                = other.d_type;
         d_status              = other.d_status;
         d_socket              = other.d_socket;
+        d_context_sp          = other.d_context_sp;
         d_target              = other.d_target;
         d_receiveData_p       = other.d_receiveData_p;
         d_numBytesAttempted   = other.d_numBytesAttempted;
@@ -374,12 +377,24 @@ Event& Event::operator=(const Event& other)
 // Reset the value of this object to its value upon default construction.
 void Event::reset()
 {
+    if (NTCCFG_LIKELY(d_context_sp)) { 
+        const bool announce = d_context_sp->decrementReference();
+        if (NTCCFG_UNLIKELY(announce)) {
+            if (NTCCFG_LIKELY(d_socket)) {
+                d_socket->setProactorContext(bsl::shared_ptr<void>());
+                ntcs::Dispatch::announceDetached(d_socket, 
+                                                 d_socket->strand());
+            }
+        }
+    }
+
     d_overlapped.reset();
 
     d_type   = ntcs::EventType::e_UNDEFINED;
     d_status = ntcs::EventStatus::e_FREE;
 
     d_socket.reset();
+    d_context_sp.reset();
 
     d_target              = ntsa::k_INVALID_HANDLE;
     d_receiveData_p       = 0;

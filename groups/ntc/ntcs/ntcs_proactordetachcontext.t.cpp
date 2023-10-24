@@ -17,102 +17,250 @@
 
 #include <ntccfg_test.h>
 
-#include <bslmt_latch.h>
-#include <bslmt_threadutil.h>
-
 using namespace BloombergLP;
-
-namespace Test {
-void increment(ntcs::ProactorDetachContext* dc, bslmt::Latch* latch, int* steps)
-{
-    for (int i = 0; i < 100; ++i) {
-        NTCCFG_TEST_TRUE(dc->incrementAndCheckNoDetach());
-        ++steps;
-    }
-    latch->arriveAndWait();
-    dc->trySetDetachRequired();
-    for (int i = 0; i < 10000; ++i) {
-        bool noDetach = dc->incrementAndCheckNoDetach();
-        ++steps;
-        if (!noDetach) {
-            bool detachPossible =
-                dc->decrementProcessCounterAndCheckDetachPossible();
-            if (detachPossible) {
-                break;
-            }
-        }
-    }
-}
-
-void decrement(ntcs::ProactorDetachContext* dc, bslmt::Latch* latch, int* steps)
-{
-    latch->arriveAndWait();
-    for (int i = 0; i < 10100; ++i) {
-        bool detachPossible =
-            dc->decrementProcessCounterAndCheckDetachPossible();
-        ++steps;
-        if (detachPossible) {
-            break;
-        }
-    }
-}
-
-}
 
 NTCCFG_TEST_CASE(1)
 {
-    ntcs::ProactorDetachContext dc;
-    NTCCFG_TEST_FALSE(dc.trySetDetachScheduled());
-    NTCCFG_TEST_TRUE(dc.trySetDetachRequired());
-    NTCCFG_TEST_FALSE(dc.trySetDetachRequired());
-    NTCCFG_TEST_TRUE(dc.trySetDetachScheduled());
+    ntsa::Error error;
+    bool        result;
+
+    // Create the context.
+
+    ntcs::ProactorDetachContext context;
+
+    NTCCFG_TEST_EQ(context.numProcessors(), 0);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+
+    // Detach (complete).
+
+    error = context.detach();
+    NTCCFG_TEST_OK(error);
+
+    NTCCFG_TEST_EQ(context.numProcessors(), 0);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHED);
 }
 
 NTCCFG_TEST_CASE(2)
 {
-    ntcs::ProactorDetachContext dc;
-    NTCCFG_TEST_TRUE(dc.incrementAndCheckNoDetach());
-    NTCCFG_TEST_TRUE(dc.trySetDetachRequired());
-    NTCCFG_TEST_FALSE(dc.incrementAndCheckNoDetach());
+    ntsa::Error error;
+    bool        result;
+
+    // Create the context.
+
+    ntcs::ProactorDetachContext context;
+
+    NTCCFG_TEST_EQ(context.numProcessors(), 0);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+
+    // Acquire lease (n = 1).
+
+    result = context.incrementReference();
+
+    NTCCFG_TEST_TRUE(result);
+
+    NTCCFG_TEST_EQ(context.numProcessors(), 1);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+
+    // Release lease (n = 0).
+
+    result = context.decrementReference();
+
+    NTCCFG_TEST_FALSE(result);
+
+    NTCCFG_TEST_EQ(context.numProcessors(), 0);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+
+    // Detach (complete).
+
+    error = context.detach();
+    NTCCFG_TEST_OK(error);
+
+    NTCCFG_TEST_EQ(context.numProcessors(), 0);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHED);
 }
 
 NTCCFG_TEST_CASE(3)
 {
-    ntcs::ProactorDetachContext dc;
-    NTCCFG_TEST_TRUE(dc.incrementAndCheckNoDetach());
-    NTCCFG_TEST_TRUE(dc.incrementAndCheckNoDetach());
-    NTCCFG_TEST_TRUE(dc.incrementAndCheckNoDetach());
-    NTCCFG_TEST_FALSE(dc.decrementProcessCounterAndCheckDetachPossible());
-    NTCCFG_TEST_TRUE(dc.trySetDetachRequired());
-    NTCCFG_TEST_FALSE(dc.decrementProcessCounterAndCheckDetachPossible());
-    NTCCFG_TEST_TRUE(dc.decrementProcessCounterAndCheckDetachPossible());
+    ntsa::Error error;
+    bool        result;
+
+    // Create the context.
+
+    ntcs::ProactorDetachContext context;
+
+    NTCCFG_TEST_EQ(context.numProcessors(), 0);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+
+    // Acquire lease (n = 1).
+
+    result = context.incrementReference();
+
+    NTCCFG_TEST_TRUE(result);
+
+    NTCCFG_TEST_EQ(context.numProcessors(), 1);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+
+    // Detach (pending).
+
+    error = context.detach();
+    NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
+
+    NTCCFG_TEST_EQ(context.numProcessors(), 1);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHING);
+
+    // Release lease (n = 0, complete).
+
+    result = context.decrementReference();
+
+    NTCCFG_TEST_TRUE(result);
+
+    NTCCFG_TEST_EQ(context.numProcessors(), 0);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHED);
 }
 
 NTCCFG_TEST_CASE(4)
 {
-    ntcs::ProactorDetachContext dc;
+    ntsa::Error error;
+    bool        result;
 
-    bslmt::Latch              latch(2);
-    int incSteps = 0;
-    int decSteps = 0;
+    // Create the context.
 
-    bslmt::ThreadUtil::Handle inc = bslmt::ThreadUtil::invalidHandle();
-    bslmt::ThreadUtil::create(&inc, NTCCFG_BIND(Test::increment, &dc, &latch, &incSteps));
-    NTCCFG_TEST_ASSERT(inc != bslmt::ThreadUtil::invalidHandle());
+    ntcs::ProactorDetachContext context;
 
-    bslmt::ThreadUtil::Handle dec = bslmt::ThreadUtil::invalidHandle();
-    bslmt::ThreadUtil::create(&dec, NTCCFG_BIND(Test::decrement, &dc, &latch, &decSteps));
-    NTCCFG_TEST_ASSERT(dec != bslmt::ThreadUtil::invalidHandle());
+    NTCCFG_TEST_EQ(context.numProcessors(), 0);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
 
-    bslmt::ThreadUtil::join(inc);
-    bslmt::ThreadUtil::join(dec);
+    // Acquire lease (n = 1).
 
-    NTCCFG_TEST_TRUE(incSteps == decSteps);
-}
+    result = context.incrementReference();
 
-NTCCFG_TEST_CASE(5)
-{
+    NTCCFG_TEST_TRUE(result);
 
+    NTCCFG_TEST_EQ(context.numProcessors(), 1);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+
+    // Release lease (n = 0).
+
+    result = context.decrementReference();
+
+    NTCCFG_TEST_FALSE(result);
+
+    NTCCFG_TEST_EQ(context.numProcessors(), 0);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+
+    // Acquire lease (n = 1).
+
+    result = context.incrementReference();
+
+    NTCCFG_TEST_TRUE(result);
+
+    NTCCFG_TEST_EQ(context.numProcessors(), 1);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+
+    // Acquire lease (n = 2).
+
+    result = context.incrementReference();
+
+    NTCCFG_TEST_TRUE(result);
+
+    NTCCFG_TEST_EQ(context.numProcessors(), 2);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+
+    // Release lease (n = 1).
+
+    result = context.decrementReference();
+
+    NTCCFG_TEST_FALSE(result);
+
+    NTCCFG_TEST_EQ(context.numProcessors(), 1);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+
+    // Release lease (n = 0).
+
+    result = context.decrementReference();
+
+    NTCCFG_TEST_FALSE(result);
+
+    NTCCFG_TEST_EQ(context.numProcessors(), 0);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+
+    // Acquire lease (n = 1).
+
+    result = context.incrementReference();
+
+    NTCCFG_TEST_TRUE(result);
+
+    NTCCFG_TEST_EQ(context.numProcessors(), 1);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+
+    // Acquire lease (n = 2).
+
+    result = context.incrementReference();
+
+    NTCCFG_TEST_TRUE(result);
+
+    NTCCFG_TEST_EQ(context.numProcessors(), 2);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+
+    // Detach (pending).
+
+    error = context.detach();
+    NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
+
+    NTCCFG_TEST_EQ(context.numProcessors(), 2);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHING);
+
+    // Detach (pending, failed).
+
+    error = context.detach();
+    NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+
+    NTCCFG_TEST_EQ(context.numProcessors(), 2);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHING);
+
+    // Acquire lease (n = 2, failed).
+
+    result = context.incrementReference();
+
+    NTCCFG_TEST_FALSE(result);
+
+    NTCCFG_TEST_EQ(context.numProcessors(), 2);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHING);
+
+    // Release lease (n = 1).
+
+    result = context.decrementReference();
+
+    NTCCFG_TEST_FALSE(result);
+
+    NTCCFG_TEST_EQ(context.numProcessors(), 1);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHING);
+
+    // Release lease (n = 0, complete).
+
+    result = context.decrementReference();
+
+    NTCCFG_TEST_TRUE(result);
+
+    NTCCFG_TEST_EQ(context.numProcessors(), 0);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHED);
+
+    // Acquire lease (n = 0, failed).
+
+    result = context.incrementReference();
+
+    NTCCFG_TEST_FALSE(result);
+
+    NTCCFG_TEST_EQ(context.numProcessors(), 0);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHED);
+
+    // Detach (complete, failed).
+
+    error = context.detach();
+    NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+
+    NTCCFG_TEST_EQ(context.numProcessors(), 0);
+    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHED);
 }
 
 NTCCFG_TEST_DRIVER
@@ -121,8 +269,5 @@ NTCCFG_TEST_DRIVER
     NTCCFG_TEST_REGISTER(2);
     NTCCFG_TEST_REGISTER(3);
     NTCCFG_TEST_REGISTER(4);
-
-
-    NTCCFG_TEST_REGISTER(5);
 }
 NTCCFG_TEST_DRIVER_END;
