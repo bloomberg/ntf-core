@@ -4903,11 +4903,15 @@ IoRing::DetachGuard::~DetachGuard()
     if (NTCCFG_UNLIKELY(d_ignore)) {
         return;
     }
-    ntcs::ProactorDetachContext& context =
+
+    ntcs::ProactorDetachContext& detachContext =
         static_cast<ntco::IoRingContext*>(
             d_socket_sp->getProactorContext().get())
             ->detachContext();
-    if (context.decrementProcessCounterAndCheckDetachPossible()) {
+
+    if (detachContext.decrementReference() == 
+        ntcs::ProactorDetachState::e_DETACHED) 
+    {
         d_socket_sp->setProactorContext(bsl::shared_ptr<void>());
 
         d_ioring.execute(NTCCFG_BIND(&ntcs::Dispatch::announceDetached,
@@ -5625,12 +5629,13 @@ ntsa::Error IoRing::accept(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    DetachGuard detachGuard(socket, *this);
-    if (NTCCFG_UNLIKELY(context->detachContext().incrementAndCheckNoDetach() ==
-                        false))
+    if (NTCCFG_UNLIKELY(context->detachContext().incrementReference() !=
+                        ntcs::ProactorDetachState::e_ATTACHED))
     {
-        return ntsa::Error::cancelled();
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
+
+    DetachGuard detachGuard(socket, *this);
 
     ntsa::Handle handle = context->handle();
     BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
@@ -5686,12 +5691,13 @@ ntsa::Error IoRing::connect(
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    DetachGuard detachGuard(socket, *this);
-    if (NTCCFG_UNLIKELY(context->detachContext().incrementAndCheckNoDetach() ==
-                        false))
+    if (NTCCFG_UNLIKELY(context->detachContext().incrementReference() !=
+                        ntcs::ProactorDetachState::e_ATTACHED))
     {
-        return ntsa::Error::cancelled();
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
+
+    DetachGuard detachGuard(socket, *this);
 
     ntsa::Handle handle = context->handle();
     BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
@@ -5747,12 +5753,13 @@ ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    DetachGuard detachGuard(socket, *this);
-    if (NTCCFG_UNLIKELY(context->detachContext().incrementAndCheckNoDetach() ==
-                        false))
+    if (NTCCFG_UNLIKELY(context->detachContext().incrementReference() !=
+                        ntcs::ProactorDetachState::e_ATTACHED))
     {
-        return ntsa::Error::cancelled();
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
+
+    DetachGuard detachGuard(socket, *this);
 
     ntsa::Handle handle = context->handle();
     BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
@@ -5808,12 +5815,13 @@ ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    DetachGuard detachGuard(socket, *this);
-    if (NTCCFG_UNLIKELY(context->detachContext().incrementAndCheckNoDetach() ==
-                        false))
+    if (NTCCFG_UNLIKELY(context->detachContext().incrementReference() !=
+                        ntcs::ProactorDetachState::e_ATTACHED))
     {
-        return ntsa::Error::cancelled();
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
+
+    DetachGuard detachGuard(socket, *this);
 
     ntsa::Handle handle = context->handle();
     BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
@@ -5870,12 +5878,13 @@ ntsa::Error IoRing::receive(
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    DetachGuard detachGuard(socket, *this);
-    if (NTCCFG_UNLIKELY(context->detachContext().incrementAndCheckNoDetach() ==
-                        false))
+    if (NTCCFG_UNLIKELY(context->detachContext().incrementReference() !=
+                        ntcs::ProactorDetachState::e_ATTACHED))
     {
-        return ntsa::Error::cancelled();
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
+
+    DetachGuard detachGuard(socket, *this);
 
     ntsa::Handle handle = context->handle();
     BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
@@ -6028,15 +6037,19 @@ ntsa::Error IoRing::detachSocketAsync(
         }
     }
 
-    if (NTCCFG_LIKELY(context->detachContext().trySetDetachRequired())) {
-        if (context->detachContext().trySetDetachScheduled()) {
-            socket->setProactorContext(bsl::shared_ptr<void>());
-
-            this->execute(NTCCFG_BIND(&ntcs::Dispatch::announceDetached,
-                                      socket,
-                                      socket->strand()));
+    error = context->detachContext().detach();
+    if (error) {
+        if (error == ntsa::Error(ntsa::Error::e_WOULD_BLOCK) {
+            return ntsa::Error();
         }
+        return error;
     }
+
+    socket->setProactorContext(bsl::shared_ptr<void>());
+
+    this->execute(NTCCFG_BIND(&ntcs::Dispatch::announceDetached,
+                                socket,
+                                socket->strand()));
 
     return ntsa::Error();
 }
