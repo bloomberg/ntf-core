@@ -254,7 +254,7 @@ class Event
     ntcs::EventType::Value                       d_type;
     ntcs::EventStatus::Value                     d_status;
     bsl::shared_ptr<ntci::ProactorSocket>        d_socket;
-    bsl::shared_ptr<ntcs::ProactorDetachContext> d_context_sp;
+    bsl::shared_ptr<ntcs::ProactorDetachContext> d_context;
     ntsa::Handle                                 d_target;
     bdlbb::Blob*                                 d_receiveData_p;
     bsl::size_t                                  d_numBytesAttempted;
@@ -496,16 +496,19 @@ bslma::ManagedPtr<ntcs::Event> EventPool::getManagedObject(
     event->d_socket = socket;
 
     if (NTCCFG_LIKELY(event->d_socket)) {
-        event->d_context_sp =
+        event->d_context =
             bslstl::SharedPtrUtil::staticCast<ntcs::ProactorDetachContext>(
                 event->d_socket->getProactorContext());
 
-        if (NTCCFG_LIKELY(event->d_context_sp)) {
-            if (NTCCFG_UNLIKELY(!event->d_context_sp->incrementReference())) {
+        if (NTCCFG_LIKELY(event->d_context)) {
+            if (NTCCFG_UNLIKELY(!event->d_context->incrementReference())) {
+                event->d_socket.reset();
+                event->d_context.reset();
                 event.reset();
             }
         }
         else {
+            event->d_socket.reset();
             event.reset();
         }
     }
@@ -523,13 +526,16 @@ bslma::ManagedPtr<ntcs::Event> EventPool::getManagedObject(
     event->d_socket = socket;
 
     if (NTCCFG_LIKELY(event->d_socket)) {
-        event->d_context_sp = context;
-        if (NTCCFG_LIKELY(event->d_context_sp)) {
-            if (NTCCFG_UNLIKELY(!event->d_context_sp->incrementReference())) {
+        event->d_context = context;
+        if (NTCCFG_LIKELY(event->d_context)) {
+            if (NTCCFG_UNLIKELY(!event->d_context->incrementReference())) {
+                event->d_socket.reset();
+                event->d_context.reset();
                 event.reset();
             }
         }
         else {
+            event->d_socket.reset();
             event.reset();
         }
     }
