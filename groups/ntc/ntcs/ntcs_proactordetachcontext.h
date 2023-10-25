@@ -86,38 +86,37 @@ struct ProactorDetachState
 /// @ingroup module_ntcs
 class ProactorDetachContext
 {
-    enum {
-        /// The socket is attached to its proactor and the user has not
-        /// initiated a detachment.
-        ///
-        /// Binary representation: 00000000 00000000 00000000 00000000
-        k_ATTACHED = 0,
+    /// The socket is attached to its proactor and the user has not
+    /// initiated a detachment.
+    ///
+    /// Binary representation: 00000000 00000000 00000000 00000000
+    static const unsigned int k_ATTACHED = 0;
 
-        /// The user has initiated a detachment of the socket from its
-        /// proactor, but the callback has not yet been invoked.
-        ///
-        /// Binary representation: 01000000 00000000 00000000 00000000
-        k_DETACHING = 1 << 30,
+    /// The user has initiated a detachment of the socket from its
+    /// proactor, but the callback has not yet been invoked.
+    ///
+    /// Binary representation: 01000000 00000000 00000000 00000000
+    static const unsigned int k_DETACHING = 1 << 30;
 
-        /// The user has initiated a detachment of the socket from its proactor
-        /// and the callback as been invoked (or enqueued onto a strand to be
-        /// invoked asynchronously.)
-        ///
-        /// Binary representation: 10000000 00000000 00000000 00000000
-        k_DETACHED = 1 << 31,
+    /// The user has initiated a detachment of the socket from its proactor
+    /// and the callback as been invoked (or enqueued onto a strand to be
+    /// invoked asynchronously.)
+    ///
+    /// Binary representation: 10000000 00000000 00000000 00000000
+    static const unsigned int k_DETACHED = 1 << 31;
 
-        /// The mask of the bits to store the number of threads actively
-        /// working on the socket.
-        ///
-        /// Binary representation: 00111111 11111111 11111111 11111111
-        k_COUNT_MASK = 0x3FFFFFFF,
+    /// The mask of the bits to store the number of threads actively
+    /// working on the socket.
+    ///
+    /// Binary representation: 00111111 11111111 11111111 11111111
+    static const unsigned int k_COUNT_MASK = 0x3FFFFFFF;
 
-        /// The mask of the bits used to store the detched state.
-        ///
-        /// Binary representation: 11000000 00000000 00000000 00000000
-        k_STATE_MASK = 0xC0000000
-    };
+    /// The mask of the bits used to store the detched state.
+    ///
+    /// Binary representation: 11000000 00000000 00000000 00000000
+    static const unsigned int k_STATE_MASK = 0xC0000000;
 
+    /// The combined state and number of processors.
     bsls::AtomicUint d_value;
 
   private:

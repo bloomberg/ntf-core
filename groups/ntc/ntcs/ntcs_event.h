@@ -487,6 +487,7 @@ bslma::ManagedPtr<ntcs::Event> EventPool::getManagedObject()
     return bslma::ManagedPtr<ntcs::Event>(this->getObject(), this);
 }
 
+NTCCFG_INLINE
 bslma::ManagedPtr<ntcs::Event> EventPool::getManagedObject(
     const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 {
@@ -512,6 +513,7 @@ bslma::ManagedPtr<ntcs::Event> EventPool::getManagedObject(
     return event;
 }
 
+NTCCFG_INLINE
 bslma::ManagedPtr<ntcs::Event> EventPool::getManagedObject(
     const bsl::shared_ptr<ntci::ProactorSocket>&        socket,
     const bsl::shared_ptr<ntcs::ProactorDetachContext>& context)

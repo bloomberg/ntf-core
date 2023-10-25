@@ -94,6 +94,10 @@ class ProactorStreamSocket : public ntci::ProactorSocket,
     // Define a type alias for a function invoked when the
     // socket encounters an error.
 
+    typedef NTCCFG_FUNCTION() DetachCallback;
+    // Define a type alias for a function invoked when the
+    // socket its detached from its proactor.
+
   private:
     bsl::shared_ptr<ntci::Proactor>     d_proactor_sp;
     bsl::shared_ptr<ntsi::StreamSocket> d_streamSocket_sp;
@@ -113,6 +117,8 @@ class ProactorStreamSocket : public ntci::ProactorSocket,
     bslmt::Semaphore                    d_shutdownSemaphore;
     ErrorCallback                       d_errorCallback;
     bslmt::Semaphore                    d_errorSemaphore;
+    DetachCallback                      d_detachCallback;
+    bslmt::Semaphore                    d_detachSemaphore;
     bool                                d_abortOnErrorFlag;
     ntsa::Error                         d_lastError;
     bslma::Allocator*                   d_allocator_p;
@@ -148,6 +154,9 @@ class ProactorStreamSocket : public ntci::ProactorSocket,
 
     void processSocketError(const ntsa::Error& error) BSLS_KEYWORD_OVERRIDE;
     // Process the specified 'error' that has occurred on the socket.
+
+    virtual void processSocketDetached() BSLS_KEYWORD_OVERRIDE;
+    // Process the completion of socket detachment.
 
     void close() BSLS_KEYWORD_OVERRIDE;
     // Close the socket.
@@ -210,6 +219,10 @@ class ProactorStreamSocket : public ntci::ProactorSocket,
     // Set the callback to be invoked when the socket encounters an error
     // to the specified 'callback'.
 
+    void setDetachCallback(const DetachCallback& callback);
+    // Set the callback to be invoked when the socket is detached from its
+    // proactor to the specified 'callback'.
+
     ntsa::Error bind(const ntsa::Endpoint& sourceEndpoint);
     // Bind the socket to the specified 'sourceEndpoint'. Return the
     // error.
@@ -260,6 +273,9 @@ class ProactorStreamSocket : public ntci::ProactorSocket,
     void waitForError();
     // Wait until the socket has encountered an error.
 
+    void waitForDetached();
+    // Wait until the socket is detached from its proactor.
+
     bool pollForConnected();
     // Poll for the socket is connected to its peer. Return
     // true if the proactor has connected, and false otherwise.
@@ -281,6 +297,10 @@ class ProactorStreamSocket : public ntci::ProactorSocket,
     bool pollForShutdown();
     // Poll for the socket to be shutdown. Return true if the socket has
     // been shutdown, and false otherwise.
+
+    bool pollForDetached();
+    // Poll for the socket to be detached from its proactor. Return true if the
+    // socket has been detached, and false otherwise.
 
     ntsa::Endpoint sourceEndpoint() const;
     // Return the source endpoint.
@@ -503,6 +523,14 @@ void ProactorStreamSocket::processSocketError(const ntsa::Error& error)
     }
 }
 
+void ProactorStreamSocket::processSocketDetached()
+{
+    NTCCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor " << d_handle
+                          << " at " << d_sourceEndpoint << " to "
+                          << d_remoteEndpoint << " is detached"
+                          << NTCCFG_TEST_LOG_END;
+}
+
 void ProactorStreamSocket::close()
 {
     d_streamSocket_sp->close();
@@ -554,6 +582,8 @@ ProactorStreamSocket::ProactorStreamSocket(
 , d_shutdownSemaphore()
 , d_errorCallback(NTCCFG_FUNCTION_INIT(basicAllocator))
 , d_errorSemaphore()
+, d_detachCallback(NTCCFG_FUNCTION_INIT(basicAllocator))
+, d_detachSemaphore()
 , d_abortOnErrorFlag(false)
 , d_lastError()
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
@@ -611,6 +641,8 @@ ProactorStreamSocket::ProactorStreamSocket(
 , d_shutdownSemaphore()
 , d_errorCallback(NTCCFG_FUNCTION_INIT(basicAllocator))
 , d_errorSemaphore()
+, d_detachCallback(NTCCFG_FUNCTION_INIT(basicAllocator))
+, d_detachSemaphore()
 , d_abortOnErrorFlag(false)
 , d_lastError()
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
@@ -673,6 +705,11 @@ void ProactorStreamSocket::setShutdownCallback(
 void ProactorStreamSocket::setErrorCallback(const ErrorCallback& callback)
 {
     d_errorCallback = callback;
+}
+
+void ProactorStreamSocket::setDetachCallback(const DetachCallback& callback)
+{
+    d_detachCallback = callback;
 }
 
 ntsa::Error ProactorStreamSocket::bind(const ntsa::Endpoint& sourceEndpoint)
@@ -794,6 +831,11 @@ void ProactorStreamSocket::waitForError()
     d_errorSemaphore.wait();
 }
 
+void ProactorStreamSocket::waitForDetached()
+{
+    d_detachSemaphore.wait();
+}
+
 bool ProactorStreamSocket::pollForConnected()
 {
     return d_connectSemaphore.tryWait() == 0;
@@ -817,6 +859,11 @@ bool ProactorStreamSocket::pollForShutdown()
 bool ProactorStreamSocket::pollForError()
 {
     return d_errorSemaphore.tryWait() == 0;
+}
+
+bool ProactorStreamSocket::pollForDetached()
+{
+    return d_detachSemaphore.tryWait() == 0;
 }
 
 ntsa::Endpoint ProactorStreamSocket::sourceEndpoint() const

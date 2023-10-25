@@ -687,13 +687,13 @@ void Iocp::flush()
 
     NTCI_LOG_CONTEXT();
 
+    ntsa::Error error;
+
     if (d_chronology.hasAnyScheduledOrDeferred()) {
         d_chronology.announce();
     }
 
     while (true) {
-        ntsa::Error error;
-
         bslma::ManagedPtr<ntcs::Event> event;
 
         DWORD       lastError  = 0;
@@ -2439,12 +2439,14 @@ ntsa::Error Iocp::detachSocketAsync(
         return ntsa::Error::invalid();
     }
 
-    bsl::shared_ptr<ntcs::ProactorDetachContext> detachContext =
-        bslstl::SharedPtrUtil::staticCast<ntcs::ProactorDetachContext>(
+    bsl::shared_ptr<ntco::IocpContext> context =
+        bslstl::SharedPtrUtil::staticCast<ntco::IocpContext>(
             socket->getProactorContext());
-    if (!detachContext) {
+    if (!context) {
         return ntsa::Error::invalid();
     }
+
+    this->cancel(socket);
 
     BSLS_ASSERT((d_config.maxThreads() > 1) ==
                 static_cast<bool>(socket->strand()));
@@ -2458,7 +2460,7 @@ ntsa::Error Iocp::detachSocketAsync(
         }
     }
 
-    error = detachContext->detach();
+    error = context->detach();
     if (error) {
         if (error == ntsa::Error(ntsa::Error::e_WOULD_BLOCK)) {
             return ntsa::Error();
