@@ -374,7 +374,6 @@ Event& Event::operator=(const Event& other)
     return *this;
 }
 
-// Reset the value of this object to its value upon default construction.
 void Event::reset()
 {
     if (NTCCFG_LIKELY(d_context)) { 

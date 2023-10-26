@@ -5562,9 +5562,6 @@ ntsa::Error IoRing::accept(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    BSLS_ASSERT(event->d_socket == socket);
-    BSLS_ASSERT(event->d_context_sp == context);
-
     ntco::IoRingSubmission entry;
     error = entry.prepareAccept(event.get(), socket, handle);
     if (NTCCFG_UNLIKELY(error)) {
@@ -5621,9 +5618,6 @@ ntsa::Error IoRing::connect(
     if (NTCCFG_UNLIKELY(!event)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
-
-    BSLS_ASSERT(event->d_socket == socket);
-    BSLS_ASSERT(event->d_context_sp == context);
 
     ntco::IoRingSubmission entry;
     error = entry.prepareConnect(event.get(), socket, handle, endpoint);
@@ -5682,9 +5676,6 @@ ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    BSLS_ASSERT(event->d_socket == socket);
-    BSLS_ASSERT(event->d_context_sp == context);
-
     ntco::IoRingSubmission entry;
     error = entry.prepareSend(event.get(), socket, handle, data, options);
     if (NTCCFG_UNLIKELY(error)) {
@@ -5741,9 +5732,6 @@ ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     if (NTCCFG_UNLIKELY(!event)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
-
-    BSLS_ASSERT(event->d_socket == socket);
-    BSLS_ASSERT(event->d_context_sp == context);
 
     ntco::IoRingSubmission entry;
     error = entry.prepareSend(event.get(), socket, handle, data, options);
@@ -5802,9 +5790,6 @@ ntsa::Error IoRing::receive(
     if (NTCCFG_UNLIKELY(!event)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
-
-    BSLS_ASSERT(event->d_socket == socket);
-    BSLS_ASSERT(event->d_context_sp == context);
 
     ntco::IoRingSubmission entry;
     error = entry.prepareReceive(event.get(), socket, handle, data, options);

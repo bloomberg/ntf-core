@@ -306,8 +306,11 @@ class Event
     /// Return a reference to this modifiable object.
     Event& operator=(const Event& other);
 
-    /// Reset the value of this object to its value upon default
-    /// construction.
+    /// Decrement the processing counter on the underlying proactor socket,
+    /// and if that processing counter is zero and a detachment operation has
+    /// been previously initiated, announce that the proactor socket has been
+    /// detached from its proactor. Regardless, reset the value of this object
+    /// to its value upon default construction.
     void reset();
 
     /// Return the structure of the parameterized 'TYPE' stored in the message
@@ -362,7 +365,25 @@ class Event
 /// @related ntcs::Event
 bsl::ostream& operator<<(bsl::ostream& stream, const ntcs::Event& object);
 
-/// Provide a thread-safe pool of events.
+/// @internal @brief
+/// Provide a factory for completion events.
+///
+/// @details
+/// This class provides a mechanism to efficiently create, pool, and re-use
+/// structures that describe and provide memory for proactively initiated
+/// operations. Each event is associated with either a function, or a socket
+/// operation. If the event is associated with a socket operation, this 
+/// class prevents the initiation of new operations unless the socket is 
+/// neither detaching nor detached. Each event associated with a socket 
+/// operation will automatically cause the announcement of the completion of
+/// the socket's asynchronous detachment operation if detachment for that 
+/// socket has been initiated and the event is the last outstanding event for
+/// that socket.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntcs
 class EventPool : public bdlma::Factory<ntcs::Event>
 {
     /// Define a type alias for a pool of completion events.
@@ -491,29 +512,16 @@ NTCCFG_INLINE
 bslma::ManagedPtr<ntcs::Event> EventPool::getManagedObject(
     const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 {
-    bslma::ManagedPtr<ntcs::Event> event(this->getObject(), this);
-
-    event->d_socket = socket;
-
-    if (NTCCFG_LIKELY(event->d_socket)) {
-        event->d_context =
+    if (NTCCFG_LIKELY(socket)) {
+        bsl::shared_ptr<ntcs::ProactorDetachContext> context = 
             bslstl::SharedPtrUtil::staticCast<ntcs::ProactorDetachContext>(
-                event->d_socket->getProactorContext());
+                socket->getProactorContext());
 
-        if (NTCCFG_LIKELY(event->d_context)) {
-            if (NTCCFG_UNLIKELY(!event->d_context->incrementReference())) {
-                event->d_socket.reset();
-                event->d_context.reset();
-                event.reset();
-            }
-        }
-        else {
-            event->d_socket.reset();
-            event.reset();
-        }
+        return this->getManagedObject(socket, context);
     }
-
-    return event;
+    else {
+        return bslma::ManagedPtr<ntcs::Event>();
+    }
 }
 
 NTCCFG_INLINE
@@ -521,22 +529,15 @@ bslma::ManagedPtr<ntcs::Event> EventPool::getManagedObject(
     const bsl::shared_ptr<ntci::ProactorSocket>&        socket,
     const bsl::shared_ptr<ntcs::ProactorDetachContext>& context)
 {
-    bslma::ManagedPtr<ntcs::Event> event(this->getObject(), this);
+    bslma::ManagedPtr<ntcs::Event> event;
 
-    event->d_socket = socket;
-
-    if (NTCCFG_LIKELY(event->d_socket)) {
-        event->d_context = context;
-        if (NTCCFG_LIKELY(event->d_context)) {
-            if (NTCCFG_UNLIKELY(!event->d_context->incrementReference())) {
-                event->d_socket.reset();
-                event->d_context.reset();
-                event.reset();
+    if (NTCCFG_LIKELY(socket)) {
+        if (NTCCFG_LIKELY(context)) {
+            if (NTCCFG_LIKELY(context->incrementReference())) {
+                event.load(this->getObject(), this);
+                event->d_socket  = socket;
+                event->d_context = context;
             }
-        }
-        else {
-            event->d_socket.reset();
-            event.reset();
         }
     }
 

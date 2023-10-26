@@ -225,7 +225,6 @@ IocpContext::~IocpContext()
 {
 }
 
-
 class Iocp : public ntci::Proactor,
              public ntcs::Driver,
              public ntccfg::Shared<Iocp>
@@ -725,11 +724,22 @@ void Iocp::flush()
                 break;
             }
         }
+        else {
+            error = ntsa::Error();
+        }
 
         BSLS_ASSERT(overlapped);
         BSLS_ASSERT(numBytes >= 0);
 
-        event.load(reinterpret_cast<ntcs::Event*>(overlapped), &d_eventPool);
+        ntcs::Event* eventRaw = reinterpret_cast<ntcs::Event*>(overlapped);
+        event.load(eventRaw, &d_eventPool);
+
+        if (event->d_type == ntcs::EventType::e_ACCEPT) {
+            BSLS_ASSERT(event->d_socket.get() != 0);
+            BSLS_ASSERT(event->d_target != ntsa::k_INVALID_HANDLE);
+
+            ntsf::System::close(event->d_target);
+        }
 
         if (error && error == ntsa::Error::e_CANCELLED) {
             BSLS_ASSERT(lastError == ERROR_OPERATION_ABORTED);
@@ -802,7 +812,8 @@ void Iocp::wait(ntci::Waiter waiter)
     BSLS_ASSERT(overlapped);
     BSLS_ASSERT(numBytes >= 0);
 
-    event.load(reinterpret_cast<ntcs::Event*>(overlapped), &d_eventPool);
+    ntcs::Event* eventRaw = reinterpret_cast<ntcs::Event*>(overlapped);
+    event.load(eventRaw, &d_eventPool);
 
     if (error && error == ntsa::Error::e_CANCELLED) {
         BSLS_ASSERT(lastError == ERROR_OPERATION_ABORTED);
@@ -1358,12 +1369,11 @@ ntsa::Error Iocp::accept(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 {
     NTCI_LOG_CONTEXT();
 
-    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject(socket);
+    bslma::ManagedPtr<ntcs::Event> event = 
+        d_eventPool.getManagedObject(socket);
     if (NTCCFG_UNLIKELY(!event)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
-
-    BSLS_ASSERT(event->d_socket == socket);
 
     event->d_type = ntcs::EventType::e_ACCEPT;
     
@@ -1502,12 +1512,11 @@ ntsa::Error Iocp::connect(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         return ntsa::Error::invalid();
     }
 
-    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject(socket);
+    bslma::ManagedPtr<ntcs::Event> event = 
+        d_eventPool.getManagedObject(socket);
     if (NTCCFG_UNLIKELY(!event)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
-
-    BSLS_ASSERT(event->d_socket == socket);
 
     event->d_type = ntcs::EventType::e_CONNECT;
 
@@ -1598,12 +1607,11 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 {
     NTCI_LOG_CONTEXT();
 
-    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject(socket);
+    bslma::ManagedPtr<ntcs::Event> event = 
+        d_eventPool.getManagedObject(socket);
     if (NTCCFG_UNLIKELY(!event)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
-
-    BSLS_ASSERT(event->d_socket == socket);
 
     event->d_type = ntcs::EventType::e_SEND;
     
@@ -1721,12 +1729,11 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
     }
 
-    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject(socket);
+    bslma::ManagedPtr<ntcs::Event> event = 
+        d_eventPool.getManagedObject(socket);
     if (NTCCFG_UNLIKELY(!event)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
-
-    BSLS_ASSERT(event->d_socket == socket);
 
     event->d_type = ntcs::EventType::e_SEND;
     
@@ -2292,12 +2299,11 @@ ntsa::Error Iocp::receive(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 
     const bool wantEndpoint = options.wantEndpoint();
 
-    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject(socket);
+    bslma::ManagedPtr<ntcs::Event> event = 
+        d_eventPool.getManagedObject(socket);
     if (NTCCFG_UNLIKELY(!event)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
-
-    BSLS_ASSERT(event->d_socket == socket);
 
     event->d_type          = ntcs::EventType::e_RECEIVE;
     event->d_receiveData_p = data;
