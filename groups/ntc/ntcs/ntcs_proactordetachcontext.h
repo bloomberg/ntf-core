@@ -339,12 +339,12 @@ ProactorDetachGuard::ProactorDetachGuard(
 , d_context_sp()
 , d_authorization(false)
 {
-    if (NTCCFG_LIKELY(d_socket_sp)) {
+    if (d_socket_sp) {
         d_context_sp =
             bslstl::SharedPtrUtil::staticCast<ntcs::ProactorDetachContext>(
                 d_socket_sp->getProactorContext());
 
-        if (NTCCFG_LIKELY(d_context_sp)) {
+        if (d_context_sp) {
             d_authorization = d_context_sp->incrementReference();
         }
     }    
@@ -353,11 +353,11 @@ ProactorDetachGuard::ProactorDetachGuard(
 NTCCFG_INLINE
 ProactorDetachGuard::~ProactorDetachGuard()
 {
-    if (NTCCFG_LIKELY(d_context_sp)) {
-        if (NTCCFG_LIKELY(d_authorization)) {
+    if (d_context_sp) {
+        if (d_authorization) {
             const bool announce = d_context_sp->decrementReference();
-            if (NTCCFG_UNLIKELY(announce)) {
-                if (NTCCFG_LIKELY(d_socket_sp)) {
+            if (announce) {
+                if (d_socket_sp) {
                     d_socket_sp->setProactorContext(bsl::shared_ptr<void>());
                     ntcs::Dispatch::announceDetached(d_socket_sp, 
                                                     d_socket_sp->strand());
