@@ -36,8 +36,7 @@ namespace ntcs {
 /// This class is thread safe.
 ///
 /// @ingroup module_ntcs
-struct ProactorDetachState
-{
+struct ProactorDetachState {
     /// Enumerate the attachment state of a proactor socket to its proactor.
     enum Value {
         /// The proactor socket is attached to its proactor. Zero or more
@@ -62,7 +61,7 @@ struct ProactorDetachState
 /// to its detachment from its proactor.
 ///
 /// @par Terminology
-/// The contract and implementation of this class uses the following 
+/// The contract and implementation of this class uses the following
 /// terminology:
 ///
 /// @li @b Attached:
@@ -77,7 +76,7 @@ struct ProactorDetachState
 ///
 /// @li @b Detached:
 /// The user has initiated an asynchronous detachment of a proactor socket and
-/// the completion function for that operation has been (or should be) 
+/// the completion function for that operation has been (or should be)
 /// scheduled to be invoked.
 ///
 /// @par Thread Safety
@@ -121,17 +120,17 @@ class ProactorDetachContext
 
   private:
     ProactorDetachContext(const ProactorDetachContext&) BSLS_KEYWORD_DELETED;
-    ProactorDetachContext& operator=(
-        const ProactorDetachContext&) BSLS_KEYWORD_DELETED;
+    ProactorDetachContext& operator=(const ProactorDetachContext&)
+        BSLS_KEYWORD_DELETED;
 
-    /// Atomically update 'd_state' to the specified 'newValue' if it equals 
-    /// the specified 'oldValue'. Return true if 'd_value' was updated, 
+    /// Atomically update 'd_state' to the specified 'newValue' if it equals
+    /// the specified 'oldValue'. Return true if 'd_value' was updated,
     /// otherwise return false.
     bool update(unsigned int oldValue, unsigned int newValue);
 
   public:
     /// Create a new proactor socket detachment context initially in the
-    /// attached state with zero current threads actively working on the 
+    /// attached state with zero current threads actively working on the
     /// socket.
     ProactorDetachContext();
 
@@ -146,7 +145,7 @@ class ProactorDetachContext
 
     /// Decrement the number of threads actively working on the socket. Return
     /// true if the socket is now detached, and false if the socket is still
-    /// attached or is detaching. Note that when this function returns true 
+    /// attached or is detaching. Note that when this function returns true
     /// it is the caller's responsibility to invoke the asynchronous detachment
     /// completion function.
     bool decrementReference();
@@ -162,7 +161,7 @@ class ProactorDetachContext
     /// completion function.
     ntsa::Error detach();
 
-    /// Return the number of threads actively working on the socket. 
+    /// Return the number of threads actively working on the socket.
     bsl::size_t numProcessors() const;
 
     /// Return the detachment state.
@@ -171,7 +170,7 @@ class ProactorDetachContext
 
 /// @internal @brief
 /// Provide a guard to automatically decrement the number of processors of a
-/// proactor socket and, if appropriate, schedule the completion of the 
+/// proactor socket and, if appropriate, schedule the completion of the
 /// asynchronous detachment operation.
 ///
 /// @par Thread Safety
@@ -186,7 +185,7 @@ class ProactorDetachGuard
 
   private:
     ProactorDetachGuard(const ProactorDetachGuard&) BSLS_KEYWORD_DELETED;
-    ProactorDetachGuard& operator=(const ProactorDetachGuard&) 
+    ProactorDetachGuard& operator=(const ProactorDetachGuard&)
         BSLS_KEYWORD_DELETED;
 
   public:
@@ -196,7 +195,7 @@ class ProactorDetachGuard
     /// the resulting object as a boolean.
     explicit ProactorDetachGuard(
         const bsl::shared_ptr<ntci::ProactorSocket>& socket);
-    
+
     /// Unless otherwise released, decrement the number of processors of the
     /// underlying socket if the guard authorized the caller to operate of the
     /// socket, schedule the completion of the asynchronous socket detach
@@ -212,10 +211,10 @@ class ProactorDetachGuard
 };
 
 NTCCFG_INLINE
-bool ProactorDetachContext::update(unsigned int oldValue, 
+bool ProactorDetachContext::update(unsigned int oldValue,
                                    unsigned int newValue)
 {
-    return d_value.testAndSwap(oldValue, newValue) == oldValue;
+    return d_value.testAndSwapAcqRel(oldValue, newValue) == oldValue;
 }
 
 NTCCFG_INLINE
@@ -233,7 +232,7 @@ NTCCFG_INLINE
 bool ProactorDetachContext::incrementReference()
 {
     while (true) {
-        unsigned int currentValue = d_value.load();
+        unsigned int currentValue = d_value.loadAcquire();
         unsigned int currentState = currentValue & k_STATE_MASK;
         unsigned int currentCount = currentValue & k_COUNT_MASK;
 
@@ -252,7 +251,7 @@ NTCCFG_INLINE
 bool ProactorDetachContext::decrementReference()
 {
     while (true) {
-        const unsigned int currentValue = d_value.load();
+        const unsigned int currentValue = d_value.loadAcquire();
         const unsigned int currentState = currentValue & k_STATE_MASK;
         const unsigned int currentCount = currentValue & k_COUNT_MASK;
 
@@ -285,7 +284,7 @@ NTCCFG_INLINE
 ntsa::Error ProactorDetachContext::detach()
 {
     while (true) {
-        const unsigned int currentValue = d_value.load();
+        const unsigned int currentValue = d_value.loadAcquire();
         const unsigned int currentState = currentValue & k_STATE_MASK;
         const unsigned int currentCount = currentValue & k_COUNT_MASK;
 
@@ -311,7 +310,7 @@ ntsa::Error ProactorDetachContext::detach()
 NTCCFG_INLINE
 bsl::size_t ProactorDetachContext::numProcessors() const
 {
-    const unsigned int currentValue = d_value.load();
+    const unsigned int currentValue = d_value.loadAcquire();
     const unsigned int currentCount = currentValue & k_COUNT_MASK;
 
     return static_cast<bsl::size_t>(currentCount);
@@ -320,13 +319,16 @@ bsl::size_t ProactorDetachContext::numProcessors() const
 NTCCFG_INLINE
 ProactorDetachState::Value ProactorDetachContext::state() const
 {
-    const unsigned int currentValue = d_value.load();
+    const unsigned int currentValue = d_value.loadAcquire();
     const unsigned int currentState = currentValue & k_STATE_MASK;
 
     switch (currentState) {
-      case k_ATTACHED:  return ProactorDetachState::e_ATTACHED;
-      case k_DETACHING: return ProactorDetachState::e_DETACHING;
-      case k_DETACHED:  return ProactorDetachState::e_DETACHED;
+    case k_ATTACHED:
+        return ProactorDetachState::e_ATTACHED;
+    case k_DETACHING:
+        return ProactorDetachState::e_DETACHING;
+    case k_DETACHED:
+        return ProactorDetachState::e_DETACHED;
     }
 
     NTCCFG_UNREACHABLE();
@@ -347,7 +349,7 @@ ProactorDetachGuard::ProactorDetachGuard(
         if (d_context_sp) {
             d_authorization = d_context_sp->incrementReference();
         }
-    }    
+    }
 }
 
 NTCCFG_INLINE
@@ -359,12 +361,12 @@ ProactorDetachGuard::~ProactorDetachGuard()
             if (announce) {
                 if (d_socket_sp) {
                     d_socket_sp->setProactorContext(bsl::shared_ptr<void>());
-                    ntcs::Dispatch::announceDetached(d_socket_sp, 
-                                                    d_socket_sp->strand());
+                    ntcs::Dispatch::announceDetached(d_socket_sp,
+                                                     d_socket_sp->strand());
                 }
             }
         }
-    }  
+    }
 }
 
 NTCCFG_INLINE
