@@ -2454,9 +2454,6 @@ ntsa::Error Iocp::detachSocketAsync(
 
     this->cancel(socket);
 
-    BSLS_ASSERT((d_config.maxThreads() > 1) ==
-                static_cast<bool>(socket->strand()));
-
     {
         bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_proactorSocketMapMutex);
 
