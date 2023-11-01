@@ -36,6 +36,7 @@ BSLS_IDENT_RCSID(ntco_iocp_cpp, "$Id$ $CSID$")
 #include <ntcs_driver.h>
 #include <ntcs_event.h>
 #include <ntcs_nomenclature.h>
+#include <ntcs_proactordetachcontext.h>
 #include <ntcs_proactormetrics.h>
 #include <ntcs_registry.h>
 #include <ntcs_reservation.h>
@@ -47,25 +48,18 @@ BSLS_IDENT_RCSID(ntco_iocp_cpp, "$Id$ $CSID$")
 #include <ntsu_socketutil.h>
 
 #include <bdlbb_blob.h>
-#include <bdlcc_objectpool.h>
 #include <bdlf_bind.h>
-#include <bdlf_memfn.h>
 #include <bdlf_placeholder.h>
 #include <bdlt_datetime.h>
-#include <bdlt_epochutil.h>
-#include <bdlt_localtimeoffset.h>
 
 #include <bslma_allocator.h>
 #include <bslma_default.h>
 #include <bslmt_lockguard.h>
 #include <bslmt_mutex.h>
-#include <bslmt_semaphore.h>
 #include <bslmt_threadutil.h>
 #include <bsls_assert.h>
 #include <bsls_atomic.h>
 #include <bsls_keyword.h>
-#include <bsls_spinlock.h>
-#include <bsls_timeutil.h>
 
 #include <bsl_functional.h>
 #include <bsl_iosfwd.h>
@@ -75,7 +69,6 @@ BSLS_IDENT_RCSID(ntco_iocp_cpp, "$Id$ $CSID$")
 #include <bsl_unordered_map.h>
 #include <bsl_unordered_set.h>
 #include <bsl_utility.h>
-#include <bsl_vector.h>
 
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
 #ifdef NTDDI_VERSION
@@ -207,6 +200,31 @@ void noop()
 
 }  // close unnamed namespace
 
+// Provide a proactor context for an implementation of the 'ntci::Proactor'
+// interface implemented using the I/O completion port API.
+class IocpContext : public ntcs::ProactorDetachContext
+{
+  private:
+    IocpContext(const IocpContext&) BSLS_KEYWORD_DELETED;
+    IocpContext& operator=(const IocpContext&) BSLS_KEYWORD_DELETED;
+
+  public:
+    // Create a new I/O completion port context.
+    IocpContext();
+
+    // Destroy this object.
+    ~IocpContext();
+};
+
+IocpContext::IocpContext()
+: ntcs::ProactorDetachContext()
+{
+}
+
+IocpContext::~IocpContext()
+{
+}
+
 class Iocp : public ntci::Proactor,
              public ntcs::Driver,
              public ntccfg::Shared<Iocp>
@@ -331,7 +349,7 @@ class Iocp : public ntci::Proactor,
     // 'basicAllocator' used to supply memory. If 'basicAllocator' is 0,
     // the currently installed default allocator is used.
 
-    ~Iocp();
+    ~Iocp() BSLS_KEYWORD_OVERRIDE;
     // Destroy this object.
 
     ntci::Waiter registerWaiter(const ntca::WaiterOptions& waiterOptions)
@@ -402,6 +420,10 @@ class Iocp : public ntci::Proactor,
 
     ntsa::Error detachSocket(const bsl::shared_ptr<ntci::ProactorSocket>&
                                  socket) BSLS_KEYWORD_OVERRIDE;
+    // Detach the specified 'socket' from the proactor. Return the error.
+
+    ntsa::Error detachSocketAsync(const bsl::shared_ptr<ntci::ProactorSocket>&
+                                      socket) BSLS_KEYWORD_OVERRIDE;
     // Detach the specified 'socket' from the proactor. Return the error.
 
     ntsa::Error closeAll() BSLS_KEYWORD_OVERRIDE;
@@ -523,22 +545,22 @@ class Iocp : public ntci::Proactor,
 
     bsl::shared_ptr<ntsa::Data> createIncomingData() BSLS_KEYWORD_OVERRIDE;
     // Return a shared pointer to a data container suitable for storing
-    // incoming data. The resulting data container is is automatically
+    // incoming data. The resulting data container is automatically
     // returned to this pool when its reference count reaches zero.
 
     bsl::shared_ptr<ntsa::Data> createOutgoingData() BSLS_KEYWORD_OVERRIDE;
     // Return a shared pointer to a data container suitable for storing
-    // outgoing data. The resulting data container is is automatically
+    // outgoing data. The resulting data container is automatically
     // returned to this pool when its reference count reaches zero.
 
     bsl::shared_ptr<bdlbb::Blob> createIncomingBlob() BSLS_KEYWORD_OVERRIDE;
     // Return a shared pointer to a blob suitable for storing incoming
-    // data. The resulting blob is is automatically returned to this pool
+    // data. The resulting blob is automatically returned to this pool
     // when its reference count reaches zero.
 
     bsl::shared_ptr<bdlbb::Blob> createOutgoingBlob() BSLS_KEYWORD_OVERRIDE;
     // Return a shared pointer to a blob suitable for storing incoming
-    // data. The resulting blob is is automatically returned to this pool
+    // data. The resulting blob is automatically returned to this pool
     // when its reference count reaches zero.
 
     void createIncomingBlobBuffer(bdlbb::BlobBuffer* blobBuffer)
@@ -664,13 +686,13 @@ void Iocp::flush()
 
     NTCI_LOG_CONTEXT();
 
+    ntsa::Error error;
+
     if (d_chronology.hasAnyScheduledOrDeferred()) {
         d_chronology.announce();
     }
 
     while (true) {
-        ntsa::Error error;
-
         bslma::ManagedPtr<ntcs::Event> event;
 
         DWORD       lastError  = 0;
@@ -694,19 +716,30 @@ void Iocp::flush()
                 error = ntsa::Error(lastError);
             }
             else if (lastError == WAIT_TIMEOUT) {
-                return;
+                break;
             }
             else {
                 error = ntsa::Error(lastError);
                 NTCP_IOCP_LOG_WAIT_FAILURE(error);
-                return;
+                break;
             }
+        }
+        else {
+            error = ntsa::Error();
         }
 
         BSLS_ASSERT(overlapped);
         BSLS_ASSERT(numBytes >= 0);
 
-        event.load(reinterpret_cast<ntcs::Event*>(overlapped), &d_eventPool);
+        ntcs::Event* eventRaw = reinterpret_cast<ntcs::Event*>(overlapped);
+        event.load(eventRaw, &d_eventPool);
+
+        if (event->d_type == ntcs::EventType::e_ACCEPT) {
+            BSLS_ASSERT(event->d_socket.get() != 0);
+            BSLS_ASSERT(event->d_target != ntsa::k_INVALID_HANDLE);
+
+            ntsf::System::close(event->d_target);
+        }
 
         if (error && error == ntsa::Error::e_CANCELLED) {
             BSLS_ASSERT(lastError == ERROR_OPERATION_ABORTED);
@@ -715,6 +748,10 @@ void Iocp::flush()
         }
 
         NTCP_IOCP_LOG_EVENT_ABANDONED(event);
+    }
+
+    while (d_chronology.hasAnyScheduledOrDeferred()) {
+        d_chronology.announce();
     }
 }
 
@@ -775,7 +812,8 @@ void Iocp::wait(ntci::Waiter waiter)
     BSLS_ASSERT(overlapped);
     BSLS_ASSERT(numBytes >= 0);
 
-    event.load(reinterpret_cast<ntcs::Event*>(overlapped), &d_eventPool);
+    ntcs::Event* eventRaw = reinterpret_cast<ntcs::Event*>(overlapped);
+    event.load(eventRaw, &d_eventPool);
 
     if (error && error == ntsa::Error::e_CANCELLED) {
         BSLS_ASSERT(lastError == ERROR_OPERATION_ABORTED);
@@ -789,7 +827,8 @@ void Iocp::wait(ntci::Waiter waiter)
         event->d_function();
         return;
     }
-    else if (event->d_type == ntcs::EventType::e_ACCEPT) {
+
+    if (event->d_type == ntcs::EventType::e_ACCEPT) {
         BSLS_ASSERT(event->d_socket.get() != 0);
         BSLS_ASSERT(event->d_target != ntsa::k_INVALID_HANDLE);
 
@@ -1317,10 +1356,10 @@ ntsa::Error Iocp::attachSocket(
         }
     }
 
-    bsl::shared_ptr<void> proactorContext(static_cast<void*>(this),
-                                          bslstl::SharedPtrNilDeleter(),
-                                          0);
+    bsl::shared_ptr<IocpContext> proactorContext;
+    proactorContext.createInplace(d_allocator_p);
 
+    BSLS_ASSERT(!socket->getProactorContext());
     socket->setProactorContext(proactorContext);
 
     return ntsa::Error();
@@ -1330,11 +1369,14 @@ ntsa::Error Iocp::accept(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 {
     NTCI_LOG_CONTEXT();
 
-    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
+    bslma::ManagedPtr<ntcs::Event> event = 
+        d_eventPool.getManagedObject(socket);
+    if (NTCCFG_UNLIKELY(!event)) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
 
-    event->d_type   = ntcs::EventType::e_ACCEPT;
-    event->d_socket = socket;
-
+    event->d_type = ntcs::EventType::e_ACCEPT;
+    
     NTCP_IOCP_LOG_EVENT_STARTING(event);
 
     ntsa::Error error;
@@ -1470,10 +1512,13 @@ ntsa::Error Iocp::connect(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         return ntsa::Error::invalid();
     }
 
-    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
+    bslma::ManagedPtr<ntcs::Event> event = 
+        d_eventPool.getManagedObject(socket);
+    if (NTCCFG_UNLIKELY(!event)) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
 
-    event->d_type   = ntcs::EventType::e_CONNECT;
-    event->d_socket = socket;
+    event->d_type = ntcs::EventType::e_CONNECT;
 
     NTCP_IOCP_LOG_EVENT_STARTING(event);
 
@@ -1562,11 +1607,14 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 {
     NTCI_LOG_CONTEXT();
 
-    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
+    bslma::ManagedPtr<ntcs::Event> event = 
+        d_eventPool.getManagedObject(socket);
+    if (NTCCFG_UNLIKELY(!event)) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
 
-    event->d_type   = ntcs::EventType::e_SEND;
-    event->d_socket = socket;
-
+    event->d_type = ntcs::EventType::e_SEND;
+    
     NTCP_IOCP_LOG_EVENT_STARTING(event);
 
     ntsa::Handle descriptorHandle = socket->handle();
@@ -1681,11 +1729,14 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
     }
 
-    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
+    bslma::ManagedPtr<ntcs::Event> event = 
+        d_eventPool.getManagedObject(socket);
+    if (NTCCFG_UNLIKELY(!event)) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
 
-    event->d_type   = ntcs::EventType::e_SEND;
-    event->d_socket = socket;
-
+    event->d_type = ntcs::EventType::e_SEND;
+    
     NTCP_IOCP_LOG_EVENT_STARTING(event);
 
     ntsa::Handle descriptorHandle  = socket->handle();
@@ -2248,15 +2299,17 @@ ntsa::Error Iocp::receive(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 
     const bool wantEndpoint = options.wantEndpoint();
 
-    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
+    bslma::ManagedPtr<ntcs::Event> event = 
+        d_eventPool.getManagedObject(socket);
+    if (NTCCFG_UNLIKELY(!event)) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
 
     event->d_type          = ntcs::EventType::e_RECEIVE;
-    event->d_socket        = socket;
     event->d_receiveData_p = data;
 
     if (wantEndpoint) {
-        BSLMF_ASSERT(sizeof(event->d_address) >=
-                     sizeof(sockaddr_storage));
+        BSLMF_ASSERT(sizeof(event->d_address) >= sizeof(sockaddr_storage));
         event->d_numBytesIndicated = sizeof(sockaddr_storage) + 1;
     }
 
@@ -2380,20 +2433,49 @@ ntsa::Error Iocp::cancel(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 ntsa::Error Iocp::detachSocket(
     const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 {
+    return detachSocketAsync(socket);
+}
+
+ntsa::Error Iocp::detachSocketAsync(
+    const bsl::shared_ptr<ntci::ProactorSocket>& socket)
+{
+    ntsa::Error error;
+
     if (socket->handle() == ntsa::k_INVALID_HANDLE) {
-        return ntsa::Error();
+        return ntsa::Error::invalid();
     }
+
+    bsl::shared_ptr<ntco::IocpContext> context =
+        bslstl::SharedPtrUtil::staticCast<ntco::IocpContext>(
+            socket->getProactorContext());
+    if (!context) {
+        return ntsa::Error::invalid();
+    }
+
+    this->cancel(socket);
 
     {
         bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_proactorSocketMapMutex);
 
         bsl::size_t n = d_proactorSocketMap.erase(socket->handle());
         if (n == 0) {
-            return ntsa::Error();
+            return ntsa::Error::invalid();
         }
     }
 
+    error = context->detach();
+    if (error) {
+        if (error == ntsa::Error(ntsa::Error::e_WOULD_BLOCK)) {
+            return ntsa::Error();
+        }
+        return error;
+    }
+
     socket->setProactorContext(bsl::shared_ptr<void>());
+
+    this->execute(NTCCFG_BIND(&ntcs::Dispatch::announceDetached,
+                                socket,
+                                socket->strand()));
 
     return ntsa::Error();
 }

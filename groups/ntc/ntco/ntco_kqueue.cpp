@@ -208,26 +208,27 @@ class Kqueue : public ntci::Reactor,
     typedef ntci::LockGuard LockGuard;
     // This typedef defines a mutex lock guard.
 
-    ntccfg::Object                        d_object;
-    int                                   d_kqueue;
-    ntcs::RegistryEntryCatalog            d_registry;
-    ntcs::Chronology                      d_chronology;
-    bsl::shared_ptr<ntci::User>           d_user_sp;
-    bsl::shared_ptr<ntci::DataPool>       d_dataPool_sp;
-    bsl::shared_ptr<ntci::Resolver>       d_resolver_sp;
-    bsl::shared_ptr<ntci::Reservation>    d_connectionLimiter_sp;
-    bsl::shared_ptr<ntci::ReactorMetrics> d_metrics_sp;
-    bsl::shared_ptr<ntcs::Controller>     d_controller_sp;
-    ntsa::Handle                          d_controllerDescriptorHandle;
-    mutable Mutex                         d_waiterSetMutex;
-    WaiterSet                             d_waiterSet;
-    bslmt::ThreadUtil::Handle             d_threadHandle;
-    bsl::size_t                           d_threadIndex;
-    bsls::AtomicUint64                    d_threadId;
-    bsls::AtomicUint64                    d_load;
-    bsls::AtomicBool                      d_run;
-    ntca::ReactorConfig                   d_config;
-    bslma::Allocator*                     d_allocator_p;
+    ntccfg::Object                           d_object;
+    int                                      d_kqueue;
+    ntcs::RegistryEntryCatalog::EntryFunctor d_detachFunctor;
+    ntcs::RegistryEntryCatalog               d_registry;
+    ntcs::Chronology                         d_chronology;
+    bsl::shared_ptr<ntci::User>              d_user_sp;
+    bsl::shared_ptr<ntci::DataPool>          d_dataPool_sp;
+    bsl::shared_ptr<ntci::Resolver>          d_resolver_sp;
+    bsl::shared_ptr<ntci::Reservation>       d_connectionLimiter_sp;
+    bsl::shared_ptr<ntci::ReactorMetrics>    d_metrics_sp;
+    bsl::shared_ptr<ntcs::Controller>        d_controller_sp;
+    ntsa::Handle                             d_controllerDescriptorHandle;
+    mutable Mutex                            d_waiterSetMutex;
+    WaiterSet                                d_waiterSet;
+    bslmt::ThreadUtil::Handle                d_threadHandle;
+    bsl::size_t                              d_threadIndex;
+    bsls::AtomicUint64                       d_threadId;
+    bsls::AtomicUint64                       d_load;
+    bsls::AtomicBool                         d_run;
+    ntca::ReactorConfig                      d_config;
+    bslma::Allocator*                        d_allocator_p;
 
   private:
     Kqueue(const Kqueue&) BSLS_KEYWORD_DELETED;
@@ -250,6 +251,11 @@ class Kqueue : public ntci::Reactor,
 
     ntsa::Error remove(ntsa::Handle handle);
     // Remove the specified 'handle' from the device.
+
+    ntsa::Error removeDetached(
+        const bsl::shared_ptr<ntcs::RegistryEntry>& entry);
+    // Remove the specified 'entry' from the device and announce its detachment
+    // if possible. Return the error.
 
     void reinitializeControl();
     // Reinitialize the control mechanism and add it to the polled set.
@@ -402,8 +408,20 @@ class Kqueue : public ntci::Reactor,
     // Stop monitoring the specified 'socket' and close the
     // 'socket' if it is not already closed. Return the error.
 
+    ntsa::Error detachSocket(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+        const ntci::SocketDetachedCallback& callback) BSLS_KEYWORD_OVERRIDE;
+    // Stop monitoring the specified 'socket'. Invoke the specified 'callback'
+    // when the socket is detached. Return the error.
+
     ntsa::Error detachSocket(ntsa::Handle handle) BSLS_KEYWORD_OVERRIDE;
     // Stop monitoring the specified socket 'handle'. Return the error.
+
+    ntsa::Error detachSocket(ntsa::Handle                        handle,
+                             const ntci::SocketDetachedCallback& callback)
+        BSLS_KEYWORD_OVERRIDE;
+    // Stop monitoring the specified socket 'handle'. Invoke the specified
+    // 'callback' when the socket is detached. Return the error.
 
     ntsa::Error closeAll() BSLS_KEYWORD_OVERRIDE;
     // Close all monitored sockets and timers.
@@ -674,7 +692,7 @@ Kqueue::Result::~Result()
 
 void Kqueue::flush()
 {
-    if (d_chronology.hasAnyScheduledOrDeferred()) {
+    while (d_chronology.hasAnyScheduledOrDeferred()) {
         d_chronology.announce();
     }
 }
@@ -929,6 +947,23 @@ ntsa::Error Kqueue::remove(ntsa::Handle handle)
     return ntsa::Error();
 }
 
+ntsa::Error Kqueue::removeDetached(
+    const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
+{
+    ntsa::Error error = this->remove(entry->handle());
+    if (NTCCFG_UNLIKELY(error)) {
+        // TODO: log error, but continue with detachment
+    }
+
+    if (!entry->isProcessing() && entry->announceDetached(this->getSelf(this)))
+    {
+        entry->clear();
+        Kqueue::interruptOne();
+    }
+
+    return error;
+}
+
 void Kqueue::reinitializeControl()
 {
     if (d_controller_sp) {
@@ -1025,6 +1060,14 @@ Kqueue::Kqueue(const ntca::ReactorConfig&         configuration,
                const bsl::shared_ptr<ntci::User>& user,
                bslma::Allocator*                  basicAllocator)
 : d_object("ntco::Kqueue")
+#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
+, d_detachFunctor([this](const auto& entry) {
+    return this->removeDetached(entry);
+})
+#else
+, d_detachFunctor(
+      NTCCFG_BIND(&Epoll::removeDetached, this, NTCCFG_BIND_PLACEHOLDER_1))
+#endif
 , d_registry(basicAllocator)
 , d_chronology(this, basicAllocator)
 , d_user_sp(user)
@@ -1848,46 +1891,33 @@ ntsa::Error Kqueue::hideError(ntsa::Handle handle)
 ntsa::Error Kqueue::detachSocket(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket)
 {
-    ntsa::Error error;
+    return detachSocket(socket, ntci::SocketDetachedCallback());
+}
 
-    bsl::shared_ptr<ntcs::RegistryEntry> entry = d_registry.remove(socket);
-
-    if (NTCCFG_LIKELY(entry)) {
-        error = this->remove(entry->handle());
-        if (error) {
-            return error;
-        }
-        if (NTCRO_KQUEUE_INTERRUPT_ALL) {
-            Kqueue::interruptAll();
-        }
-        return ntsa::Error();
-    }
-    else {
-        return ntsa::Error();
-    }
+ntsa::Error Kqueue::detachSocket(
+    const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+    const ntci::SocketDetachedCallback&         callback)
+{
+    const ntsa::Error error =
+        d_registry.removeAndGetReadyToDetach(socket,
+                                             callback,
+                                             d_detachFunctor);
+    return error;
 }
 
 ntsa::Error Kqueue::detachSocket(ntsa::Handle handle)
 {
-    ntsa::Error error;
+    return detachSocket(handle, ntci::SocketDetachedCallback());
+}
 
-    bsl::shared_ptr<ntcs::RegistryEntry> entry = d_registry.remove(handle);
-
-    if (NTCCFG_LIKELY(entry)) {
-        error = this->remove(handle);
-        if (error) {
-            return error;
-        }
-
-        if (NTCRO_KQUEUE_INTERRUPT_ALL) {
-            Kqueue::interruptAll();
-        }
-
-        return ntsa::Error();
-    }
-    else {
-        return ntsa::Error();
-    }
+ntsa::Error Kqueue::detachSocket(ntsa::Handle                        handle,
+                                 const ntci::SocketDetachedCallback& callback)
+{
+    const ntsa::Error error =
+        d_registry.removeAndGetReadyToDetach(handle,
+                                             callback,
+                                             d_detachFunctor);
+    return error;
 }
 
 ntsa::Error Kqueue::closeAll()
@@ -1955,9 +1985,10 @@ void Kqueue::run(ntci::Waiter waiter)
 
             const int numResults = rc;
 
-            bsl::size_t numReadable = 0;
-            bsl::size_t numWritable = 0;
-            bsl::size_t numErrors   = 0;
+            bsl::size_t numReadable    = 0;
+            bsl::size_t numWritable    = 0;
+            bsl::size_t numErrors      = 0;
+            bsl::size_t numDetachments = 0;
 
             for (int i = 0; i < numResults; ++i) {
                 struct ::kevent e = results[i];
@@ -1967,7 +1998,10 @@ void Kqueue::run(ntci::Waiter waiter)
                 BSLS_ASSERT(descriptorHandle != ntsa::k_INVALID_HANDLE);
 
                 bsl::shared_ptr<ntcs::RegistryEntry> entry;
-                if (!d_registry.lookup(&entry, descriptorHandle)) {
+                if (!d_registry.lookupAndMarkProcessingOngoing(
+                        &entry,
+                        descriptorHandle))
+                {
                     continue;
                 }
 
@@ -2051,10 +2085,17 @@ void Kqueue::run(ntci::Waiter waiter)
                         }
                     }
                 }
+
+                if (entry->decrementProcessCounter() == 0 &&
+                    entry->announceDetached(this->getSelf(this)))
+                {
+                    entry->clear();
+                    ++numDetachments;
+                }
             }
 
             if (NTCCFG_UNLIKELY(numReadable == 0 && numWritable == 0 &&
-                                numErrors == 0))
+                                numErrors == 0 && numDetachments == 0))
             {
                 NTCS_METRICS_UPDATE_SPURIOUS_WAKEUP();
                 bslmt::ThreadUtil::yield();
@@ -2140,9 +2181,10 @@ void Kqueue::poll(ntci::Waiter waiter)
 
         const int numResults = rc;
 
-        bsl::size_t numReadable = 0;
-        bsl::size_t numWritable = 0;
-        bsl::size_t numErrors   = 0;
+        bsl::size_t numReadable    = 0;
+        bsl::size_t numWritable    = 0;
+        bsl::size_t numErrors      = 0;
+        bsl::size_t numDetachments = 0;
 
         for (int i = 0; i < numResults; ++i) {
             struct ::kevent e = results[i];
@@ -2152,7 +2194,9 @@ void Kqueue::poll(ntci::Waiter waiter)
             BSLS_ASSERT(descriptorHandle != ntsa::k_INVALID_HANDLE);
 
             bsl::shared_ptr<ntcs::RegistryEntry> entry;
-            if (!d_registry.lookup(&entry, descriptorHandle)) {
+            if (!d_registry.lookupAndMarkProcessingOngoing(&entry,
+                                                           descriptorHandle))
+            {
                 continue;
             }
 
@@ -2235,10 +2279,17 @@ void Kqueue::poll(ntci::Waiter waiter)
                     }
                 }
             }
+
+            if (entry->decrementProcessCounter() == 0 &&
+                entry->announceDetached(this->getSelf(this)))
+            {
+                entry->clear();
+                ++numDetachments;
+            }
         }
 
         if (NTCCFG_UNLIKELY(numReadable == 0 && numWritable == 0 &&
-                            numErrors == 0))
+                            numErrors == 0 && numDetachments == 0))
         {
             NTCS_METRICS_UPDATE_SPURIOUS_WAKEUP();
             bslmt::ThreadUtil::yield();

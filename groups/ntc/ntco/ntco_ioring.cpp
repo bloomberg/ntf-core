@@ -58,6 +58,7 @@ BSLS_IDENT_RCSID(ntco_ioring_cpp, "$Id$ $CSID$")
 #include <ntcs_driver.h>
 #include <ntcs_event.h>
 #include <ntcs_nomenclature.h>
+#include <ntcs_proactordetachcontext.h>
 #include <ntcs_proactormetrics.h>
 #include <ntcs_registry.h>
 #include <ntcs_reservation.h>
@@ -1314,9 +1315,7 @@ class IoRingCompletionQueue
 /// This class is thread safe.
 class IoRingDevice
 {
-    enum {
-        k_SUPPORTS_CANCEL_BY_HANDLE = 1
-    };
+    enum { k_SUPPORTS_CANCEL_BY_HANDLE = 1 };
 
     int                         d_ring;
     ntco::IoRingSubmissionQueue d_submissionQueue;
@@ -1469,7 +1468,7 @@ class IoRingDeviceTest : public IoRingTest
 ///
 /// @par Thread Safety
 /// This class is thread safe.
-class IoRingContext
+class IoRingContext : public ntcs::ProactorDetachContext
 {
     // Define a set of events.
     typedef bsl::unordered_set<ntcs::Event*> EventSet;
@@ -1480,10 +1479,10 @@ class IoRingContext
     // Define a type alias for a mutex lock guard.
     typedef ntci::LockGuard LockGuard;
 
-    ntsa::Handle      d_handle;
-    Mutex             d_pendingEventSetMutex;
-    EventSet          d_pendingEventSet;
-    bslma::Allocator* d_allocator_p;
+    ntsa::Handle                d_handle;
+    Mutex                       d_pendingEventSetMutex;
+    EventSet                    d_pendingEventSet;
+    bslma::Allocator*           d_allocator_p;
 
   private:
     IoRingContext(const IoRingContext&) BSLS_KEYWORD_DELETED;
@@ -1847,6 +1846,17 @@ IoRingWaiter::~IoRingWaiter()
 
 IoRingConfig::IoRingConfig()
 {
+    NTCCFG_WARNING_UNUSED(d_submissionQueueThreadCpu);
+    NTCCFG_WARNING_UNUSED(d_submissionQueueThreadIdle);
+    NTCCFG_WARNING_UNUSED(d_wq);
+    NTCCFG_WARNING_UNUSED(d_reserved);
+    NTCCFG_WARNING_UNUSED(d_submissionQueueOffsetToDropped);
+    NTCCFG_WARNING_UNUSED(d_submissionQueueOffsetToResv1);
+    NTCCFG_WARNING_UNUSED(d_submissionQueueOffsetToResv2);
+    NTCCFG_WARNING_UNUSED(d_completionQueueOffsetToOverflow);
+    NTCCFG_WARNING_UNUSED(d_completionQueueOffsetToResv1);
+    NTCCFG_WARNING_UNUSED(d_completionQueueOffsetToResv2);
+
     bsl::memset(this, 0, sizeof(ntco::IoRingConfig));
 }
 
@@ -2117,6 +2127,12 @@ IoRingSubmission::IoRingSubmission()
 #else
     BSLMF_ASSERT(sizeof(ntco::IoRingSubmission) == 128);
 #endif
+
+    NTCCFG_WARNING_UNUSED(d_priority);
+    NTCCFG_WARNING_UNUSED(d_index);
+    NTCCFG_WARNING_UNUSED(d_personality);
+    NTCCFG_WARNING_UNUSED(d_splice);
+    NTCCFG_WARNING_UNUSED(d_command);
 
     bsl::memset(this, 0, sizeof(IoRingSubmission));
 }
@@ -3860,11 +3876,9 @@ IoRingDevice::IoRingDevice(bsl::size_t       queueDepth,
     int minor = 0;
     int patch = 0;
     int build = 0;
-    rc = ntsscm::Version::systemVersion(&major, &minor, &patch, &build);
+    rc        = ntsscm::Version::systemVersion(&major, &minor, &patch, &build);
     if (rc == 0) {
-        if (KERNEL_VERSION(major, minor, patch) >=
-            KERNEL_VERSION(5, 19, 0))
-        {
+        if (KERNEL_VERSION(major, minor, patch) >= KERNEL_VERSION(5, 19, 0)) {
             d_flags &= k_SUPPORTS_CANCEL_BY_HANDLE;
         }
     }
@@ -4100,7 +4114,8 @@ bool IoRingDevice::supportsCancelByHandle() const
 
 IoRingContext::IoRingContext(ntsa::Handle      handle,
                              bslma::Allocator* basicAllocator)
-: d_handle(handle)
+: ntcs::ProactorDetachContext()
+, d_handle(handle)
 , d_pendingEventSetMutex()
 , d_pendingEventSet(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
@@ -4628,6 +4643,11 @@ class IoRing : public ntci::Proactor,
     ntsa::Error detachSocket(const bsl::shared_ptr<ntci::ProactorSocket>&
                                  socket) BSLS_KEYWORD_OVERRIDE;
 
+    // Detach the specified 'socket' from the proactor. The specified 'socket'
+    // will be notified when it's detached. Return the error.
+    ntsa::Error detachSocketAsync(const bsl::shared_ptr<ntci::ProactorSocket>&
+                                      socket) BSLS_KEYWORD_OVERRIDE;
+
     // Close all monitored sockets and timers.
     ntsa::Error closeAll() BSLS_KEYWORD_OVERRIDE;
 
@@ -4846,6 +4866,10 @@ void IoRing::flush()
 
     ntsa::Error error;
 
+    if (d_chronology.hasAnyScheduledOrDeferred()) {
+        d_chronology.announce();
+    }
+
     while (true) {
         enum { ENTRY_LIST_CAPACITY = 128 };
 
@@ -4885,6 +4909,10 @@ void IoRing::flush()
 
             NTCO_IORING_LOG_EVENT_ABANDONED(event);
         }
+    }
+
+    while (d_chronology.hasAnyScheduledOrDeferred()) {
+        d_chronology.announce();
     }
 }
 
@@ -5528,7 +5556,11 @@ ntsa::Error IoRing::accept(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
     ntsa::Handle handle = context->handle();
     BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
 
-    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
+    bslma::ManagedPtr<ntcs::Event> event = 
+        d_eventPool.getManagedObject(socket, context);
+    if (NTCCFG_UNLIKELY(!event)) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
 
     ntco::IoRingSubmission entry;
     error = entry.prepareAccept(event.get(), socket, handle);
@@ -5581,7 +5613,11 @@ ntsa::Error IoRing::connect(
     ntsa::Handle handle = context->handle();
     BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
 
-    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
+    bslma::ManagedPtr<ntcs::Event> event = 
+        d_eventPool.getManagedObject(socket, context);
+    if (NTCCFG_UNLIKELY(!event)) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
 
     ntco::IoRingSubmission entry;
     error = entry.prepareConnect(event.get(), socket, handle, endpoint);
@@ -5634,7 +5670,11 @@ ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     ntsa::Handle handle = context->handle();
     BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
 
-    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
+    bslma::ManagedPtr<ntcs::Event> event = 
+        d_eventPool.getManagedObject(socket, context);
+    if (NTCCFG_UNLIKELY(!event)) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
 
     ntco::IoRingSubmission entry;
     error = entry.prepareSend(event.get(), socket, handle, data, options);
@@ -5687,7 +5727,11 @@ ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     ntsa::Handle handle = context->handle();
     BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
 
-    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
+    bslma::ManagedPtr<ntcs::Event> event = 
+        d_eventPool.getManagedObject(socket, context);
+    if (NTCCFG_UNLIKELY(!event)) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
 
     ntco::IoRingSubmission entry;
     error = entry.prepareSend(event.get(), socket, handle, data, options);
@@ -5741,7 +5785,11 @@ ntsa::Error IoRing::receive(
     ntsa::Handle handle = context->handle();
     BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
 
-    bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
+    bslma::ManagedPtr<ntcs::Event> event = 
+        d_eventPool.getManagedObject(socket, context);
+    if (NTCCFG_UNLIKELY(!event)) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
 
     ntco::IoRingSubmission entry;
     error = entry.prepareReceive(event.get(), socket, handle, data, options);
@@ -5859,14 +5907,22 @@ ntsa::Error IoRing::cancel(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 ntsa::Error IoRing::detachSocket(
     const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 {
+    return detachSocketAsync(socket);
+}
+
+ntsa::Error IoRing::detachSocketAsync(
+    const bsl::shared_ptr<ntci::ProactorSocket>& socket)
+{
     ntsa::Error error;
 
     bsl::shared_ptr<ntco::IoRingContext> context =
         bslstl::SharedPtrUtil::staticCast<ntco::IoRingContext>(
             socket->getProactorContext());
     if (!context) {
-        return ntsa::Error();
+        return ntsa::Error::invalid();
     }
+
+    this->cancel(socket);
 
     ntsa::Handle handle = context->handle();
     BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
@@ -5878,11 +5934,23 @@ ntsa::Error IoRing::detachSocket(
 
         bsl::size_t n = d_contextMap.erase(socket);
         if (n == 0) {
-            return ntsa::Error();
+            return ntsa::Error::invalid();
         }
     }
 
+    error = context->detach();
+    if (error) {
+        if (error == ntsa::Error(ntsa::Error::e_WOULD_BLOCK)) {
+            return ntsa::Error();
+        }
+        return error;
+    }
+
     socket->setProactorContext(bsl::shared_ptr<void>());
+
+    this->execute(NTCCFG_BIND(&ntcs::Dispatch::announceDetached,
+                                socket,
+                                socket->strand()));
 
     return ntsa::Error();
 }

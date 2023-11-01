@@ -181,28 +181,33 @@ class Poll : public ntci::Reactor,
     /// This typedef defines a mutex lock guard.
     typedef ntci::LockGuard LockGuard;
 
-    ntccfg::Object                        d_object;
-    mutable Mutex                         d_generationMutex;
-    bslmt::Semaphore                      d_generationSemaphore;
-    bsls::AtomicUint64                    d_generation;
-    ntcs::RegistryEntryCatalog            d_registry;
-    ntcs::Chronology                      d_chronology;
-    bsl::shared_ptr<ntci::User>           d_user_sp;
-    bsl::shared_ptr<ntci::DataPool>       d_dataPool_sp;
-    bsl::shared_ptr<ntci::Resolver>       d_resolver_sp;
-    bsl::shared_ptr<ntci::Reservation>    d_connectionLimiter_sp;
-    bsl::shared_ptr<ntci::ReactorMetrics> d_metrics_sp;
-    bsl::shared_ptr<ntcs::Controller>     d_controller_sp;
-    ntsa::Handle                          d_controllerDescriptorHandle;
-    mutable Mutex                         d_waiterSetMutex;
-    WaiterSet                             d_waiterSet;
-    bslmt::ThreadUtil::Handle             d_threadHandle;
-    bsl::size_t                           d_threadIndex;
-    bsls::AtomicUint64                    d_threadId;
-    bsls::AtomicUint64                    d_load;
-    bsls::AtomicBool                      d_run;
-    ntca::ReactorConfig                   d_config;
-    bslma::Allocator*                     d_allocator_p;
+    typedef bsl::list<bsl::shared_ptr<ntcs::RegistryEntry> > DetachList;
+
+    ntccfg::Object                           d_object;
+    mutable Mutex                            d_generationMutex;
+    bslmt::Semaphore                         d_generationSemaphore;
+    bsls::AtomicUint64                       d_generation;
+    Mutex                                    d_detachMutex;
+    DetachList                               d_detachList;
+    ntcs::RegistryEntryCatalog::EntryFunctor d_detachFunctor;
+    ntcs::RegistryEntryCatalog               d_registry;
+    ntcs::Chronology                         d_chronology;
+    bsl::shared_ptr<ntci::User>              d_user_sp;
+    bsl::shared_ptr<ntci::DataPool>          d_dataPool_sp;
+    bsl::shared_ptr<ntci::Resolver>          d_resolver_sp;
+    bsl::shared_ptr<ntci::Reservation>       d_connectionLimiter_sp;
+    bsl::shared_ptr<ntci::ReactorMetrics>    d_metrics_sp;
+    bsl::shared_ptr<ntcs::Controller>        d_controller_sp;
+    ntsa::Handle                             d_controllerDescriptorHandle;
+    mutable Mutex                            d_waiterSetMutex;
+    WaiterSet                                d_waiterSet;
+    bslmt::ThreadUtil::Handle                d_threadHandle;
+    bsl::size_t                              d_threadIndex;
+    bsls::AtomicUint64                       d_threadId;
+    bsls::AtomicUint64                       d_load;
+    bsls::AtomicBool                         d_run;
+    ntca::ReactorConfig                      d_config;
+    bslma::Allocator*                        d_allocator_p;
 
   private:
     Poll(const Poll&) BSLS_KEYWORD_DELETED;
@@ -233,9 +238,14 @@ class Poll : public ntci::Reactor,
     /// Remove the specified 'handle' from the device.
     ntsa::Error remove(ntsa::Handle handle);
 
-    /// Link the specified 'entry' into the specified 'descriptorList'.
+    /// Remove the specified 'entry' from the device. Return the error.
+    ntsa::Error removeDetached(
+        const bsl::shared_ptr<ntcs::RegistryEntry>& entry);
+
+    /// Link the specified 'entry' into the specified 'descriptorList'. Use the
+    /// specified 'result' for intermediate storage of linkage results
     void link(const bsl::shared_ptr<ntcs::RegistryEntry>& entry,
-              DescriptorList*                             descriptorList);
+              Poll::Result*                               result);
 
     /// Reinitialize the control mechanism and add it to the polled set.
     void reinitializeControl();
@@ -409,8 +419,20 @@ class Poll : public ntci::Reactor,
     ntsa::Error detachSocket(const bsl::shared_ptr<ntci::ReactorSocket>&
                                  socket) BSLS_KEYWORD_OVERRIDE;
 
+    /// Stop monitoring the specified 'socket'. Invoke the specified 'callback'
+    /// when the socket is detached. Return the error.
+    ntsa::Error detachSocket(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+        const ntci::SocketDetachedCallback& callback) BSLS_KEYWORD_OVERRIDE;
+
     /// Stop monitoring the specified socket 'handle'. Return the error.
     ntsa::Error detachSocket(ntsa::Handle handle) BSLS_KEYWORD_OVERRIDE;
+
+    /// Stop monitoring the specified 'handle'. Invoke the specified 'callback'
+    /// when the socket is detached. Return the error.
+    ntsa::Error detachSocket(ntsa::Handle                        handle,
+                             const ntci::SocketDetachedCallback& callback)
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Close all monitored sockets and timers.
     ntsa::Error closeAll() BSLS_KEYWORD_OVERRIDE;
@@ -663,6 +685,8 @@ struct Poll::Result {
     bsls::AtomicUint64                          d_generation;
     DescriptorList                              d_descriptorList;
     ntcs::RegistryEntryCatalog::ForEachCallback d_forEachCallback;
+    bool                                        d_controllerHandleFound;
+    bsl::size_t                                 d_controllerHandleIdx;
 
   private:
     Result(const Result&) BSLS_KEYWORD_DELETED;
@@ -684,6 +708,8 @@ Poll::Result::Result(bslma::Allocator* basicAllocator)
 , d_generation(0)
 , d_descriptorList(basicAllocator)
 , d_forEachCallback(NTCCFG_FUNCTION_INIT(basicAllocator))
+, d_controllerHandleFound(0)
+, d_controllerHandleIdx(0)
 {
 }
 
@@ -712,8 +738,32 @@ void Poll::specify(struct ::pollfd* result,
 
 void Poll::flush()
 {
-    if (d_chronology.hasAnyScheduledOrDeferred()) {
-        d_chronology.announce();
+    while (true) {
+        {
+            LockGuard detachGuard(&d_detachMutex);
+            for (DetachList::const_iterator it = d_detachList.cbegin();
+                 it != d_detachList.cend();
+                 ++it)
+            {
+                ntcs::RegistryEntry& entry = **it;
+                entry.announceDetached(this->getSelf(this));
+                entry.clear();
+            }
+            d_detachList.clear();
+        }
+
+        if (d_chronology.hasAnyScheduledOrDeferred()) {
+            d_chronology.announce();
+        }
+
+        {
+            LockGuard detachGuard(&d_detachMutex);
+            if (!d_chronology.hasAnyScheduledOrDeferred() &&
+                d_detachList.empty())
+            {
+                break;
+            }
+        }
     }
 }
 
@@ -770,8 +820,32 @@ ntsa::Error Poll::remove(ntsa::Handle handle)
     return ntsa::Error();
 }
 
+NTCCFG_INLINE
+ntsa::Error Poll::removeDetached(
+    const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
+{
+    ntsa::Handle handle = entry->handle();
+    NTCCFG_WARNING_UNUSED(handle);
+
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(handle);
+
+    NTCO_POLL_LOG_REMOVE(handle);
+
+    ++d_generation;
+
+    {
+        LockGuard lock(&d_detachMutex);
+        d_detachList.push_back(entry);
+    }
+    Poll::interruptOne();
+
+    return ntsa::Error();
+}
+
 void Poll::link(const bsl::shared_ptr<ntcs::RegistryEntry>& entry,
-                DescriptorList*                             descriptorList)
+                Poll::Result*                               result)
 {
     ntsa::Handle   handle   = entry->handle();
     ntcs::Interest interest = entry->interest();
@@ -779,7 +853,16 @@ void Poll::link(const bsl::shared_ptr<ntcs::RegistryEntry>& entry,
     if (interest.wantReadableOrWritable()) {
         struct ::pollfd pfd;
         Poll::specify(&pfd, handle, interest);
-        descriptorList->push_back(pfd);
+        result->d_descriptorList.push_back(pfd);
+
+        if (!result->d_controllerHandleFound) {
+            if (handle == d_controllerDescriptorHandle) {
+                result->d_controllerHandleFound = true;
+            }
+            else {
+                result->d_controllerHandleIdx++;
+            }
+        }
     }
 }
 
@@ -882,6 +965,16 @@ Poll::Poll(const ntca::ReactorConfig&         configuration,
 , d_generationMutex()
 , d_generationSemaphore()
 , d_generation(1)
+, d_detachMutex()
+, d_detachList(basicAllocator)
+#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
+, d_detachFunctor([this](const auto& entry) {
+    return this->removeDetached(entry);
+})
+#else
+, d_detachFunctor(
+      NTCCFG_BIND(&Poll::removeDetached, this, NTCCFG_BIND_PLACEHOLDER_1))
+#endif
 , d_registry(basicAllocator)
 , d_chronology(this, basicAllocator)
 , d_user_sp(user)
@@ -1052,10 +1145,8 @@ ntci::Waiter Poll::registerWaiter(const ntca::WaiterOptions& waiterOptions)
 
     bdlb::NullableValue<bslmt::ThreadUtil::Handle> principleThreadHandle;
 
-    result->d_forEachCallback = NTCCFG_BIND(&Poll::link,
-                                            this,
-                                            NTCCFG_BIND_PLACEHOLDER_1,
-                                            &result->d_descriptorList);
+    result->d_forEachCallback =
+        NTCCFG_BIND(&Poll::link, this, NTCCFG_BIND_PLACEHOLDER_1, result);
 
     {
         LockGuard lockGuard(&d_waiterSetMutex);
@@ -1837,46 +1928,33 @@ ntsa::Error Poll::hideNotifications(ntsa::Handle handle)
 ntsa::Error Poll::detachSocket(
     const bsl::shared_ptr<ntci::ReactorSocket>& socket)
 {
-    ntsa::Error error;
+    return detachSocket(socket, ntci::SocketDetachedCallback());
+}
 
-    bsl::shared_ptr<ntcs::RegistryEntry> entry = d_registry.remove(socket);
-
-    if (NTCCFG_LIKELY(entry)) {
-        error = this->remove(entry->handle());
-        if (error) {
-            return error;
-        }
-        if (NTCRO_POLL_INTERRUPT_ALL) {
-            Poll::interruptAll();
-        }
-        return ntsa::Error();
-    }
-    else {
-        return ntsa::Error();
-    }
+ntsa::Error Poll::detachSocket(
+    const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+    const ntci::SocketDetachedCallback&         callback)
+{
+    const ntsa::Error error =
+        d_registry.removeAndGetReadyToDetach(socket,
+                                             callback,
+                                             d_detachFunctor);
+    return error;
 }
 
 ntsa::Error Poll::detachSocket(ntsa::Handle handle)
 {
-    ntsa::Error error;
+    return detachSocket(handle, ntci::SocketDetachedCallback());
+}
 
-    bsl::shared_ptr<ntcs::RegistryEntry> entry = d_registry.remove(handle);
-
-    if (NTCCFG_LIKELY(entry)) {
-        error = this->remove(handle);
-        if (error) {
-            return error;
-        }
-
-        if (NTCRO_POLL_INTERRUPT_ALL) {
-            Poll::interruptAll();
-        }
-
-        return ntsa::Error();
-    }
-    else {
-        return ntsa::Error();
-    }
+ntsa::Error Poll::detachSocket(ntsa::Handle                        handle,
+                               const ntci::SocketDetachedCallback& callback)
+{
+    const ntsa::Error error =
+        d_registry.removeAndGetReadyToDetach(handle,
+                                             callback,
+                                             d_detachFunctor);
+    return error;
 }
 
 ntsa::Error Poll::closeAll()
@@ -1935,8 +2013,37 @@ void Poll::run(ntci::Waiter waiter)
                 result->d_descriptorList.clear();
                 result->d_descriptorList.reserve(d_registry.size() + 1);
 
+                result->d_controllerHandleFound = false;
+                result->d_controllerHandleIdx   = 0;
                 d_registry.forEach(result->d_forEachCallback);
+                BSLS_ASSERT(result->d_controllerHandleFound);
+                BSLS_ASSERT(result->d_controllerHandleIdx <
+                            result->d_descriptorList.size());
             }
+        }
+
+        bsl::size_t numDetachments = 0;
+        {
+            LockGuard lock(&d_detachMutex);
+
+            for (DetachList::const_iterator it = d_detachList.cbegin();
+                 it != d_detachList.cend();)
+            {
+                ntcs::RegistryEntry& entry = **it;
+                bool                 erase = false;
+                if (!entry.isProcessing() &&
+                    entry.announceDetached(this->getSelf(this)))
+                {
+                    entry.clear();
+                    ++numDetachments;
+                    erase = true;
+                }
+                it = erase ? d_detachList.erase(it) : ++it;
+            }
+        }
+
+        if (numDetachments > 0) {
+            timeout = 0;
         }
 
         int wait;
@@ -2017,6 +2124,41 @@ void Poll::run(ntci::Waiter waiter)
             }
         }
 
+        bsl::size_t numReadable = 0;
+
+        if (rc > 0) {
+            const struct ::pollfd& e =
+                result->d_descriptorList[result->d_controllerHandleIdx];
+            if (NTCCFG_UNLIKELY((e.revents & POLLERR) != 0)) {
+                this->reinitializeControl();
+            }
+            else {
+                if (((e.revents & POLLIN) != 0) ||
+                    ((e.revents & POLLHUP) != 0))
+                {
+                    ++numReadable;
+                    ntsa::Error error = d_controller_sp->acknowledge();
+                    if (NTCCFG_UNLIKELY(error)) {
+                        this->reinitializeControl();
+                    }
+                    else {
+                        bsl::shared_ptr<ntcs::RegistryEntry> entry;
+                        //TODO: can be optimized (store controller entry in registry)
+                        if (d_registry.lookup(&entry, e.fd)) {
+                            if (entry->oneShot()) {
+                                ntca::ReactorEventOptions options;
+                                ntcs::Interest            interest =
+                                    entry->showReadable(options);
+                                this->update(entry->handle(),
+                                             interest,
+                                             e_INCLUDE);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         if (d_config.maxThreads().value() > 1) {
             d_generationSemaphore.post();
         }
@@ -2027,7 +2169,6 @@ void Poll::run(ntci::Waiter waiter)
             int numResults          = rc;
             int numResultsRemaining = numResults;
 
-            bsl::size_t numReadable = 0;
             bsl::size_t numWritable = 0;
             bsl::size_t numErrors   = 0;
 
@@ -2053,133 +2194,115 @@ void Poll::run(ntci::Waiter waiter)
 
                 NTCO_POLL_LOG_EVENTS(e.fd, e);
 
-                bsl::shared_ptr<ntcs::RegistryEntry> entry;
-                if (!d_registry.lookup(&entry, e.fd)) {
+                if (NTCCFG_UNLIKELY(e.fd == d_controllerDescriptorHandle)) {
                     continue;
                 }
 
-                if (NTCCFG_LIKELY(e.fd != d_controllerDescriptorHandle)) {
-                    ntsa::Handle descriptorHandle = entry->handle();
+                bsl::shared_ptr<ntcs::RegistryEntry> entry;
+                if (!d_registry.lookupAndMarkProcessingOngoing(&entry, e.fd)) {
+                    continue;
+                }
 
-                    bool fatalSocketError = false;
+                ntsa::Handle descriptorHandle = entry->handle();
 
-                    if (NTCCFG_UNLIKELY((e.revents & POLLNVAL) != 0)) {
-                        continue;
-                    }
-                    else if (NTCCFG_UNLIKELY((e.revents & POLLERR) != 0)) {
-                        ntsa::Error lastError;
-                        ntsa::Error error =
-                            ntsf::System::getLastError(&lastError,
-                                                       descriptorHandle);
-                        if (error) {
-                            if (!lastError) {
-                                lastError = ntsa::Error(
-                                    ntsa::Error::e_CONNECTION_DEAD);
-                            }
+                bool fatalSocketError = false;
+
+                if (NTCCFG_UNLIKELY((e.revents & POLLNVAL) != 0)) {
+                    continue;
+                }
+                else if (NTCCFG_UNLIKELY((e.revents & POLLERR) != 0)) {
+                    ntsa::Error lastError;
+                    ntsa::Error error =
+                        ntsf::System::getLastError(&lastError,
+                                                   descriptorHandle);
+                    if (error) {
+                        if (!lastError) {
+                            lastError =
+                                ntsa::Error(ntsa::Error::e_CONNECTION_DEAD);
                         }
+                    }
+
+                    if (NTCCFG_LIKELY(!lastError)) {
+                        bdlma::LocalSequentialAllocator<
+                            ntsa::NotificationQueue::k_NUM_BYTES_TO_ALLOCATE>
+                                                lsa(d_allocator_p);
+                        ntsa::NotificationQueue queue(descriptorHandle, &lsa);
+
+                        lastError = ntsu::SocketUtil::receiveNotifications(
+                            &queue,
+                            descriptorHandle);
 
                         if (NTCCFG_LIKELY(!lastError)) {
-                            bdlma::LocalSequentialAllocator<
-                                ntsa::NotificationQueue::
-                                    k_NUM_BYTES_TO_ALLOCATE>
-                                                    lsa(d_allocator_p);
-                            ntsa::NotificationQueue queue(descriptorHandle,
-                                                          &lsa);
-
-                            lastError = ntsu::SocketUtil::receiveNotifications(
-                                &queue,
-                                descriptorHandle);
-
-                            if (NTCCFG_LIKELY(!lastError)) {
-                                entry->announceNotifications(queue);
-                            }
-                        }
-                        if (NTCCFG_UNLIKELY(lastError)) {
-                            fatalSocketError = true;
-
-                            ntca::ReactorEvent event;
-                            event.setHandle(descriptorHandle);
-                            event.setType(ntca::ReactorEventType::e_ERROR);
-                            event.setError(lastError);
-
-                            NTCS_METRICS_UPDATE_ERROR_CALLBACK_TIME_BEGIN();
-                            if (entry->announceError(event)) {
-                                ++numErrors;
-                            }
-                            NTCS_METRICS_UPDATE_ERROR_CALLBACK_TIME_END();
+                            entry->announceNotifications(queue);
                         }
                     }
-                    if (NTCCFG_LIKELY(!fatalSocketError)) {
-                        if (((e.revents & POLLOUT) != 0) ||
-                            ((e.revents & POLLHUP) != 0))
-                        {
-                            if (entry->wantWritable()) {
-                                ntca::ReactorEvent event;
-                                event.setHandle(descriptorHandle);
-                                event.setType(
-                                    ntca::ReactorEventType::e_WRITABLE);
+                    if (NTCCFG_UNLIKELY(lastError)) {
+                        fatalSocketError = true;
 
-                                NTCS_METRICS_UPDATE_WRITE_CALLBACK_TIME_BEGIN();
-                                if (entry->announceWritable(event)) {
-                                    ++numWritable;
-                                }
-                                NTCS_METRICS_UPDATE_WRITE_CALLBACK_TIME_END();
-                            }
+                        ntca::ReactorEvent event;
+                        event.setHandle(descriptorHandle);
+                        event.setType(ntca::ReactorEventType::e_ERROR);
+                        event.setError(lastError);
+
+                        NTCS_METRICS_UPDATE_ERROR_CALLBACK_TIME_BEGIN();
+                        if (entry->announceError(event)) {
+                            ++numErrors;
                         }
+                        NTCS_METRICS_UPDATE_ERROR_CALLBACK_TIME_END();
+                    }
+                }
+                if (NTCCFG_LIKELY(!fatalSocketError)) {
+                    if (((e.revents & POLLOUT) != 0) ||
+                        ((e.revents & POLLHUP) != 0))
+                    {
+                        if (entry->wantWritable()) {
+                            ntca::ReactorEvent event;
+                            event.setHandle(descriptorHandle);
+                            event.setType(ntca::ReactorEventType::e_WRITABLE);
 
-                        if (((e.revents & POLLIN) != 0) ||
-                            ((e.revents & POLLHUP) != 0))
-                        {
-                            if (entry->wantReadable()) {
-                                ntca::ReactorEvent event;
-                                event.setHandle(descriptorHandle);
-                                event.setType(
-                                    ntca::ReactorEventType::e_READABLE);
-
-                                NTCS_METRICS_UPDATE_READ_CALLBACK_TIME_BEGIN();
-                                if (entry->announceReadable(event)) {
-                                    ++numReadable;
-                                }
-                                NTCS_METRICS_UPDATE_READ_CALLBACK_TIME_END();
+                            NTCS_METRICS_UPDATE_WRITE_CALLBACK_TIME_BEGIN();
+                            if (entry->announceWritable(event)) {
+                                ++numWritable;
                             }
+                            NTCS_METRICS_UPDATE_WRITE_CALLBACK_TIME_END();
+                        }
+                    }
+
+                    if (((e.revents & POLLIN) != 0) ||
+                        ((e.revents & POLLHUP) != 0))
+                    {
+                        if (entry->wantReadable()) {
+                            ntca::ReactorEvent event;
+                            event.setHandle(descriptorHandle);
+                            event.setType(ntca::ReactorEventType::e_READABLE);
+
+                            NTCS_METRICS_UPDATE_READ_CALLBACK_TIME_BEGIN();
+                            if (entry->announceReadable(event)) {
+                                ++numReadable;
+                            }
+                            NTCS_METRICS_UPDATE_READ_CALLBACK_TIME_END();
                         }
                     }
                 }
-                else {
-                    if (NTCCFG_UNLIKELY((e.revents & POLLNVAL) != 0)) {
-                        continue;
-                    }
-                    else if (NTCCFG_UNLIKELY((e.revents & POLLERR) != 0)) {
-                        this->reinitializeControl();
-                    }
-                    else {
-                        if (((e.revents & POLLIN) != 0) ||
-                            ((e.revents & POLLHUP) != 0))
-                        {
-                            ++numReadable;
-                            ntsa::Error error = d_controller_sp->acknowledge();
-                            if (error) {
-                                this->reinitializeControl();
-                            }
-                            else {
-                                if (entry->oneShot()) {
-                                    ntca::ReactorEventOptions options;
-                                    ntcs::Interest            interest =
-                                        entry->showReadable(options);
-                                    this->update(entry->handle(),
-                                                 interest,
-                                                 e_INCLUDE);
-                                }
-                            }
-                        }
-                    }
+
+                entry->decrementProcessCounter();
+            }
+
+            {
+                bool interrupt = false;
+                {
+                    LockGuard detachGuard(&d_detachMutex);
+                    interrupt = !d_detachList.empty();
+                }
+                if (interrupt) {
+                    this->interruptOne();
                 }
             }
 
             BSLS_ASSERT(numResultsRemaining == 0);
 
             if (NTCCFG_UNLIKELY(numReadable == 0 && numWritable == 0 &&
-                                numErrors == 0))
+                                numErrors == 0 && numDetachments == 0))
             {
                 NTCS_METRICS_UPDATE_SPURIOUS_WAKEUP();
                 bslmt::ThreadUtil::yield();
@@ -2284,6 +2407,30 @@ void Poll::poll(ntci::Waiter waiter)
         }
     }
 
+    bsl::size_t numDetachments = 0;
+    {
+        LockGuard lock(&d_detachMutex);
+
+        for (DetachList::const_iterator it = d_detachList.cbegin();
+             it != d_detachList.cend();)
+        {
+            ntcs::RegistryEntry& entry = **it;
+            bool                 erase = false;
+            if (!entry.isProcessing() &&
+                entry.announceDetached(this->getSelf(this)))
+            {
+                entry.clear();
+                ++numDetachments;
+                erase = true;
+            }
+            it = erase ? d_detachList.erase(it) : ++it;
+        }
+    }
+
+    if (numDetachments > 0) {
+        timeout = 0;
+    }
+
     int wait;
     if (timeout >= 0) {
         NTCO_POLL_LOG_WAIT_TIMED(timeout);
@@ -2362,6 +2509,37 @@ void Poll::poll(ntci::Waiter waiter)
         }
     }
 
+    bsl::size_t numReadable = 0;
+
+    if (rc > 0) {
+        const struct ::pollfd& e =
+            result->d_descriptorList[result->d_controllerHandleIdx];
+        if (NTCCFG_UNLIKELY((e.revents & POLLERR) != 0)) {
+            this->reinitializeControl();
+        }
+        else {
+            if (((e.revents & POLLIN) != 0) || ((e.revents & POLLHUP) != 0)) {
+                ++numReadable;
+                ntsa::Error error = d_controller_sp->acknowledge();
+                if (NTCCFG_UNLIKELY(error)) {
+                    this->reinitializeControl();
+                }
+                else {
+                    bsl::shared_ptr<ntcs::RegistryEntry> entry;
+                    //TODO: can be optimized (store controller entry in registry)
+                    if (d_registry.lookup(&entry, e.fd)) {
+                        if (entry->oneShot()) {
+                            ntca::ReactorEventOptions options;
+                            ntcs::Interest            interest =
+                                entry->showReadable(options);
+                            this->update(entry->handle(), interest, e_INCLUDE);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     if (d_config.maxThreads().value() > 1) {
         d_generationSemaphore.post();
     }
@@ -2372,7 +2550,6 @@ void Poll::poll(ntci::Waiter waiter)
         int numResults          = rc;
         int numResultsRemaining = numResults;
 
-        bsl::size_t numReadable = 0;
         bsl::size_t numWritable = 0;
         bsl::size_t numErrors   = 0;
 
@@ -2398,129 +2575,114 @@ void Poll::poll(ntci::Waiter waiter)
 
             NTCO_POLL_LOG_EVENTS(e.fd, e);
 
-            bsl::shared_ptr<ntcs::RegistryEntry> entry;
-            if (!d_registry.lookup(&entry, e.fd)) {
+            if (NTCCFG_UNLIKELY(e.fd == d_controllerDescriptorHandle)) {
                 continue;
             }
 
-            if (NTCCFG_LIKELY(e.fd != d_controllerDescriptorHandle)) {
-                ntsa::Handle descriptorHandle = entry->handle();
+            bsl::shared_ptr<ntcs::RegistryEntry> entry;
+            if (!d_registry.lookupAndMarkProcessingOngoing(&entry, e.fd)) {
+                continue;
+            }
 
-                bool fatalSocketError = false;
+            ntsa::Handle descriptorHandle = entry->handle();
 
-                if (NTCCFG_UNLIKELY((e.revents & POLLNVAL) != 0)) {
-                    continue;
-                }
-                else if (NTCCFG_UNLIKELY((e.revents & POLLERR) != 0)) {
-                    ntsa::Error lastError;
-                    ntsa::Error error =
-                        ntsf::System::getLastError(&lastError,
-                                                   descriptorHandle);
-                    if (error) {
-                        if (!lastError) {
-                            lastError =
-                                ntsa::Error(ntsa::Error::e_CONNECTION_DEAD);
-                        }
+            bool fatalSocketError = false;
+
+            if (NTCCFG_UNLIKELY((e.revents & POLLNVAL) != 0)) {
+                continue;
+            }
+            else if (NTCCFG_UNLIKELY((e.revents & POLLERR) != 0)) {
+                ntsa::Error lastError;
+                ntsa::Error error =
+                    ntsf::System::getLastError(&lastError, descriptorHandle);
+                if (error) {
+                    if (!lastError) {
+                        lastError =
+                            ntsa::Error(ntsa::Error::e_CONNECTION_DEAD);
                     }
+                }
+
+                if (NTCCFG_LIKELY(!lastError)) {
+                    bdlma::LocalSequentialAllocator<
+                        ntsa::NotificationQueue::k_NUM_BYTES_TO_ALLOCATE>
+                                            lsa(d_allocator_p);
+                    ntsa::NotificationQueue queue(descriptorHandle, &lsa);
+
+                    lastError = ntsu::SocketUtil::receiveNotifications(
+                        &queue,
+                        descriptorHandle);
 
                     if (NTCCFG_LIKELY(!lastError)) {
-                        bdlma::LocalSequentialAllocator<
-                            ntsa::NotificationQueue::k_NUM_BYTES_TO_ALLOCATE>
-                                                lsa(d_allocator_p);
-                        ntsa::NotificationQueue queue(descriptorHandle, &lsa);
-
-                        lastError = ntsu::SocketUtil::receiveNotifications(
-                            &queue,
-                            descriptorHandle);
-
-                        if (NTCCFG_LIKELY(!lastError)) {
-                            entry->announceNotifications(queue);
-                        }
-                    }
-                    if (NTCCFG_UNLIKELY(lastError)) {
-                        fatalSocketError = true;
-
-                        ntca::ReactorEvent event;
-                        event.setHandle(descriptorHandle);
-                        event.setType(ntca::ReactorEventType::e_ERROR);
-                        event.setError(lastError);
-
-                        NTCS_METRICS_UPDATE_ERROR_CALLBACK_TIME_BEGIN();
-                        if (entry->announceError(event)) {
-                            ++numErrors;
-                        }
-                        NTCS_METRICS_UPDATE_ERROR_CALLBACK_TIME_END();
+                        entry->announceNotifications(queue);
                     }
                 }
-                if (NTCCFG_LIKELY(!fatalSocketError)) {
-                    if (((e.revents & POLLOUT) != 0) ||
-                        ((e.revents & POLLHUP) != 0))
-                    {
-                        if (entry->wantWritable()) {
-                            ntca::ReactorEvent event;
-                            event.setHandle(descriptorHandle);
-                            event.setType(ntca::ReactorEventType::e_WRITABLE);
+                if (NTCCFG_UNLIKELY(lastError)) {
+                    fatalSocketError = true;
 
-                            NTCS_METRICS_UPDATE_WRITE_CALLBACK_TIME_BEGIN();
-                            if (entry->announceWritable(event)) {
-                                ++numWritable;
-                            }
-                            NTCS_METRICS_UPDATE_WRITE_CALLBACK_TIME_END();
-                        }
+                    ntca::ReactorEvent event;
+                    event.setHandle(descriptorHandle);
+                    event.setType(ntca::ReactorEventType::e_ERROR);
+                    event.setError(lastError);
+
+                    NTCS_METRICS_UPDATE_ERROR_CALLBACK_TIME_BEGIN();
+                    if (entry->announceError(event)) {
+                        ++numErrors;
                     }
+                    NTCS_METRICS_UPDATE_ERROR_CALLBACK_TIME_END();
+                }
+            }
+            if (NTCCFG_LIKELY(!fatalSocketError)) {
+                if (((e.revents & POLLOUT) != 0) ||
+                    ((e.revents & POLLHUP) != 0))
+                {
+                    if (entry->wantWritable()) {
+                        ntca::ReactorEvent event;
+                        event.setHandle(descriptorHandle);
+                        event.setType(ntca::ReactorEventType::e_WRITABLE);
 
-                    if (((e.revents & POLLIN) != 0) ||
-                        ((e.revents & POLLHUP) != 0))
-                    {
-                        if (entry->wantReadable()) {
-                            ntca::ReactorEvent event;
-                            event.setHandle(descriptorHandle);
-                            event.setType(ntca::ReactorEventType::e_READABLE);
-
-                            NTCS_METRICS_UPDATE_READ_CALLBACK_TIME_BEGIN();
-                            if (entry->announceReadable(event)) {
-                                ++numReadable;
-                            }
-                            NTCS_METRICS_UPDATE_READ_CALLBACK_TIME_END();
+                        NTCS_METRICS_UPDATE_WRITE_CALLBACK_TIME_BEGIN();
+                        if (entry->announceWritable(event)) {
+                            ++numWritable;
                         }
+                        NTCS_METRICS_UPDATE_WRITE_CALLBACK_TIME_END();
+                    }
+                }
+
+                if (((e.revents & POLLIN) != 0) ||
+                    ((e.revents & POLLHUP) != 0))
+                {
+                    if (entry->wantReadable()) {
+                        ntca::ReactorEvent event;
+                        event.setHandle(descriptorHandle);
+                        event.setType(ntca::ReactorEventType::e_READABLE);
+
+                        NTCS_METRICS_UPDATE_READ_CALLBACK_TIME_BEGIN();
+                        if (entry->announceReadable(event)) {
+                            ++numReadable;
+                        }
+                        NTCS_METRICS_UPDATE_READ_CALLBACK_TIME_END();
                     }
                 }
             }
-            else {
-                if (NTCCFG_UNLIKELY((e.revents & POLLNVAL) != 0)) {
-                    continue;
-                }
-                else if (NTCCFG_UNLIKELY((e.revents & POLLERR) != 0)) {
-                    this->reinitializeControl();
-                }
-                else {
-                    if (((e.revents & POLLIN) != 0) ||
-                        ((e.revents & POLLHUP) != 0))
-                    {
-                        ++numReadable;
-                        ntsa::Error error = d_controller_sp->acknowledge();
-                        if (error) {
-                            this->reinitializeControl();
-                        }
-                        else {
-                            if (entry->oneShot()) {
-                                ntca::ReactorEventOptions options;
-                                ntcs::Interest            interest =
-                                    entry->showReadable(options);
-                                this->update(entry->handle(),
-                                             interest,
-                                             e_INCLUDE);
-                            }
-                        }
-                    }
-                }
+
+            entry->decrementProcessCounter();
+        }
+
+        {
+            bool interrupt = false;
+            {
+                LockGuard detachGuard(&d_detachMutex);
+                interrupt = !d_detachList.empty();
+            }
+            if (interrupt) {
+                this->interruptOne();
             }
         }
 
         BSLS_ASSERT(numResultsRemaining == 0);
 
         if (NTCCFG_UNLIKELY(numReadable == 0 && numWritable == 0 &&
-                            numErrors == 0))
+                            numErrors == 0 && numDetachments == 0))
         {
             NTCS_METRICS_UPDATE_SPURIOUS_WAKEUP();
             bslmt::ThreadUtil::yield();
@@ -2592,11 +2754,7 @@ void Poll::poll(ntci::Waiter waiter)
 
 void Poll::interruptOne()
 {
-    if (NTCCFG_LIKELY(isWaiter())) {
-        return;
-    }
-
-    ntsa::Error error = d_controller_sp->interrupt(1);
+    const ntsa::Error error = d_controller_sp->interrupt(1);
     if (NTCCFG_UNLIKELY(error)) {
         reinitializeControl();
     }

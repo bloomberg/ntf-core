@@ -70,6 +70,9 @@ class RegistryEntry
     bsl::shared_ptr<ntci::Strand>        d_unknown_sp;
     bsl::shared_ptr<void>                d_external_sp;
     bsls::AtomicBool                     d_active;
+    bsls::AtomicUint                     d_processCounter;
+    bool                                 d_detachRequired;
+    ntci::SocketDetachedCallback         d_detachCallback;
     bslma::Allocator*                    d_allocator_p;
 
   private:
@@ -107,6 +110,12 @@ class RegistryEntry
     /// external data is typically used to associate some structure required
     /// by a foreign event loop.
     void setExternal(const bsl::shared_ptr<void>& external);
+
+    /// Increment counter of threads working on the entry
+    void incrementProcessCounter()
+    {
+        d_processCounter.addAcqRel(1);
+    }
 
     /// Show readability for this descriptor. Return the resulting interest
     /// mask.
@@ -211,6 +220,15 @@ class RegistryEntry
     bool announceNotifications(
         const ntsa::NotificationQueue& notificationQueue);
 
+    /// Check if detachment announcement is required and announce that the
+    /// socket has been detached and clear detachCallback. Return true if the
+    /// announcement is performed and false otherwise.
+    bool announceDetached(const bsl::shared_ptr<ntci::Executor>& executor);
+
+    /// Set the flag indicating that detachment is required to true and save
+    /// the specified 'callback'
+    void setDetachmentRequired(const ntci::SocketDetachedCallback& callback);
+
     /// Close the registry entry but do not clear it nor deactive it.
     void close();
 
@@ -257,6 +275,17 @@ class RegistryEntry
     /// from the registry entry catalog and detached from its reactor socket
     /// context.
     bool active() const;
+
+    /// Return true if at least one thread is working on the entry. Otherwise
+    /// return false.
+    bool isProcessing() const;
+
+    /// Return number of threads working on the entry.
+    unsigned int processCounter() const;
+
+    /// Atomically decrement number of threads working on the entry and return
+    /// resulting value.
+    unsigned int decrementProcessCounter();
 };
 
 /// @internal @brief
@@ -301,6 +330,10 @@ class RegistryEntryCatalog
     typedef NTCCFG_FUNCTION(const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
         ForEachCallback;
 
+    typedef bsl::function<ntsa::Error(
+        const bsl::shared_ptr<ntcs::RegistryEntry>&)>
+        EntryFunctor;
+
     /// Create a new registry entry catalog for sockets that by default
     /// operate as level triggered. Optionally specify a 'basicAllocator'
     /// used to supply memory. If 'basicAllocator' is 0, the currently
@@ -344,6 +377,24 @@ class RegistryEntryCatalog
     /// registry.
     bsl::shared_ptr<ntcs::RegistryEntry> remove(ntsa::Handle handle);
 
+    /// Remove the specified 'descriptor' from the registry. Find RegistryEntry
+    /// related to the descriptor and mark that detachment is required for this
+    /// RegistryEntry, save the specified 'callback'. For the related
+    /// RegistryEntry invoke the specified 'functor'.
+    ntsa::Error removeAndGetReadyToDetach(
+        const bsl::shared_ptr<ntci::ReactorSocket>& descriptor,
+        const ntci::SocketDetachedCallback&         callback,
+        const EntryFunctor&                         functor);
+
+    /// Remove the specified descriptor 'handle' from the registry. Find
+    /// RegistryEntry related to the descriptor and mark that detachment is
+    /// required for this RegistryEntry, save the specified 'callback'. For the
+    /// related RegistryEntry invoke the specified 'functor'.
+    ntsa::Error removeAndGetReadyToDetach(
+        ntsa::Handle                        handle,
+        const ntci::SocketDetachedCallback& callback,
+        const EntryFunctor&                 functor);
+
     /// Remove all descriptors from the registry except for the specified
     /// 'controller' and load them into the specified 'result'.
     void clear(bsl::vector<bsl::shared_ptr<ntcs::RegistryEntry> >* result,
@@ -358,6 +409,13 @@ class RegistryEntryCatalog
     /// false otherwise.
     bool lookup(bsl::shared_ptr<ntcs::RegistryEntry>* entry,
                 ntsa::Handle                          handle) const;
+
+    /// Load into the specified 'entry' the registry entry identified by
+    /// the specified 'handle'. Increment number of threads working in the
+    /// entry. Return true if such an entry exists, and false otherwise.
+    bool lookupAndMarkProcessingOngoing(
+        bsl::shared_ptr<ntcs::RegistryEntry>* entry,
+        ntsa::Handle                          handle) const;
 
     /// Return the number of descriptors in the registry.
     bsl::size_t size() const;
@@ -809,6 +867,19 @@ bool RegistryEntry::announceNotifications(
 }
 
 NTCCFG_INLINE
+void RegistryEntry::setDetachmentRequired(
+    const ntci::SocketDetachedCallback& callback)
+{
+    bsls::SpinLockGuard guard(&d_lock);
+
+    BSLS_ASSERT(!d_detachRequired);
+    BSLS_ASSERT(!d_detachCallback);
+
+    d_detachCallback = callback;
+    d_detachRequired = true;
+}
+
+NTCCFG_INLINE
 void RegistryEntry::close()
 {
     bsl::shared_ptr<ntci::ReactorSocket> reactorSocket;
@@ -846,7 +917,9 @@ void RegistryEntry::clear()
         d_errorCallback.reset();
     }
 
-    d_active = false;
+    d_detachRequired = false;
+    d_detachCallback.reset();
+    d_active.storeRelease(false);
 }
 
 NTCCFG_INLINE
@@ -913,7 +986,25 @@ ntca::ReactorEventTrigger::Value RegistryEntry::trigger() const
 NTCCFG_INLINE
 bool RegistryEntry::active() const
 {
-    return d_active;
+    return d_active.loadAcquire();
+}
+
+NTCCFG_INLINE
+bool RegistryEntry::isProcessing() const
+{
+    return processCounter() != 0;
+}
+
+NTCCFG_INLINE
+unsigned int RegistryEntry::processCounter() const
+{
+    return d_processCounter.loadAcquire();
+}
+
+NTCCFG_INLINE
+unsigned int RegistryEntry::decrementProcessCounter()
+{
+    return d_processCounter.subtractAcqRel(1);
 }
 
 NTCCFG_INLINE
@@ -1068,6 +1159,87 @@ bsl::shared_ptr<ntcs::RegistryEntry> RegistryEntryCatalog::remove(
 }
 
 NTCCFG_INLINE
+ntsa::Error RegistryEntryCatalog::removeAndGetReadyToDetach(
+    const bsl::shared_ptr<ntci::ReactorSocket>& descriptor,
+    const ntci::SocketDetachedCallback&         callback,
+    const EntryFunctor&                         functor)
+{
+    ntsa::Handle handle = descriptor->handle();
+    BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
+
+    const bsl::size_t index = static_cast<bsl::size_t>(handle);
+
+    bsl::shared_ptr<ntcs::RegistryEntry> entry_sp;
+
+    {
+        LockGuard lock(&d_mutex);
+
+        if (NTCCFG_LIKELY(index < d_vector.size())) {
+            if (d_vector[index]) {
+                d_vector[index].swap(entry_sp);
+                BSLS_ASSERT_OPT(d_size > 0);
+                --d_size;
+
+                entry_sp->setDetachmentRequired(callback);
+                ntsa::Error error = functor(entry_sp);
+                if (error) {
+                    return error;
+                }
+            }
+            else {
+                return ntsa::Error::invalid();
+            }
+        }
+        else {
+            return ntsa::Error::invalid();
+        }
+    }
+    BSLS_ASSERT(entry_sp);
+
+    return ntsa::Error();
+}
+
+NTCCFG_INLINE
+ntsa::Error RegistryEntryCatalog::removeAndGetReadyToDetach(
+    ntsa::Handle                        handle,
+    const ntci::SocketDetachedCallback& callback,
+    const EntryFunctor&                 functor)
+{
+    ntsa::Error error;
+
+    BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
+
+    const bsl::size_t index = static_cast<bsl::size_t>(handle);
+
+    bsl::shared_ptr<ntcs::RegistryEntry> entry_sp;
+
+    {
+        LockGuard lock(&d_mutex);
+
+        if (NTCCFG_LIKELY(index < d_vector.size())) {
+            if (d_vector[index]) {
+                d_vector[index].swap(entry_sp);
+                BSLS_ASSERT_OPT(d_size > 0);
+                --d_size;
+
+                entry_sp->setDetachmentRequired(callback);
+                ntsa::Error error = functor(entry_sp);
+                if (error) {
+                    return error;
+                }
+            }
+            else {
+                return ntsa::Error::invalid();
+            }
+        }
+        else {
+            return ntsa::Error::invalid();
+        }
+    }
+    return ntsa::Error();
+}
+
+NTCCFG_INLINE
 void RegistryEntryCatalog::clear(
     bsl::vector<bsl::shared_ptr<ntcs::RegistryEntry> >* result,
     ntsa::Handle                                        controller)
@@ -1162,6 +1334,29 @@ bool RegistryEntryCatalog::lookup(bsl::shared_ptr<ntcs::RegistryEntry>* entry,
 
     if (NTCCFG_LIKELY(index < d_vector.size())) {
         *entry = d_vector[index];
+        return *entry;
+    }
+    else {
+        return false;
+    }
+}
+
+NTCCFG_INLINE
+bool RegistryEntryCatalog::lookupAndMarkProcessingOngoing(
+    bsl::shared_ptr<ntcs::RegistryEntry>* entry,
+    ntsa::Handle                          handle) const
+{
+    BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
+
+    LockGuard lock(&d_mutex);
+
+    const bsl::size_t index = static_cast<bsl::size_t>(handle);
+
+    if (NTCCFG_LIKELY(index < d_vector.size())) {
+        *entry = d_vector[index];
+        if (*entry) {
+            (*entry)->incrementProcessCounter();
+        }
         return *entry;
     }
     else {

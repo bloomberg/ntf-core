@@ -24,6 +24,7 @@ BSLS_IDENT("$Id: $")
 #include <ntci_proactorsocket.h>
 #include <ntci_timer.h>
 #include <ntcs_driver.h>
+#include <ntcs_proactordetachcontext.h>
 #include <ntcscm_version.h>
 #include <ntsa_endpoint.h>
 #include <ntsa_error.h>
@@ -248,19 +249,20 @@ class Event
     // On Windows the layout of the first portion of this object must
     // correspond to the OVERLAPPED structure.
 
-    ntcs::Overlapped                      d_overlapped;
-    void*                                 d_padding[64];
-    ntcs::EventType::Value                d_type;
-    ntcs::EventStatus::Value              d_status;
-    bsl::shared_ptr<ntci::ProactorSocket> d_socket;
-    ntsa::Handle                          d_target;
-    bdlbb::Blob*                          d_receiveData_p;
-    bsl::size_t                           d_numBytesAttempted;
-    bsl::size_t                           d_numBytesCompleted;
-    int                                   d_numBytesIndicated;
-    Functor                               d_function;
-    ntsa::Error                           d_error;
-    bsl::uint64_t                         d_user;
+    ntcs::Overlapped                             d_overlapped;
+    void*                                        d_padding[64];
+    ntcs::EventType::Value                       d_type;
+    ntcs::EventStatus::Value                     d_status;
+    bsl::shared_ptr<ntci::ProactorSocket>        d_socket;
+    bsl::shared_ptr<ntcs::ProactorDetachContext> d_context;
+    ntsa::Handle                                 d_target;
+    bdlbb::Blob*                                 d_receiveData_p;
+    bsl::size_t                                  d_numBytesAttempted;
+    bsl::size_t                                  d_numBytesCompleted;
+    int                                          d_numBytesIndicated;
+    Functor                                      d_function;
+    ntsa::Error                                  d_error;
+    bsl::uint64_t                                d_user;
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
@@ -304,8 +306,11 @@ class Event
     /// Return a reference to this modifiable object.
     Event& operator=(const Event& other);
 
-    /// Reset the value of this object to its value upon default
-    /// construction.
+    /// Decrement the processing counter on the underlying proactor socket,
+    /// and if that processing counter is zero and a detachment operation has
+    /// been previously initiated, announce that the proactor socket has been
+    /// detached from its proactor. Regardless, reset the value of this object
+    /// to its value upon default construction.
     void reset();
 
     /// Return the structure of the parameterized 'TYPE' stored in the message
@@ -360,7 +365,25 @@ class Event
 /// @related ntcs::Event
 bsl::ostream& operator<<(bsl::ostream& stream, const ntcs::Event& object);
 
-/// Provide a thread-safe pool of events.
+/// @internal @brief
+/// Provide a factory for completion events.
+///
+/// @details
+/// This class provides a mechanism to efficiently create, pool, and re-use
+/// structures that describe and provide memory for proactively initiated
+/// operations. Each event is associated with either a function, or a socket
+/// operation. If the event is associated with a socket operation, this 
+/// class prevents the initiation of new operations unless the socket is 
+/// neither detaching nor detached. Each event associated with a socket 
+/// operation will automatically cause the announcement of the completion of
+/// the socket's asynchronous detachment operation if detachment for that 
+/// socket has been initiated and the event is the last outstanding event for
+/// that socket.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntcs
 class EventPool : public bdlma::Factory<ntcs::Event>
 {
     /// Define a type alias for a pool of completion events.
@@ -389,8 +412,28 @@ class EventPool : public bdlma::Factory<ntcs::Event>
     /// pool.  If this pool is empty, it is replenished according to the
     /// strategy specified at the pool construction (or an
     /// implementation-defined strategy if none was provided). The deleter
-    /// of the managed pointer automatically returns the object to this pool
+    /// of the managed pointer automatically returns the object to this pool.
     bslma::ManagedPtr<ntcs::Event> getManagedObject();
+
+    /// Return a managed pointer to a modifiable object from this object pool
+    /// to be used by the specified 'socket', or null if an operation on the
+    /// 'socket' is not authorized.  If this pool is empty, it is replenished
+    /// according to the strategy specified at the pool construction (or an
+    /// implementation-defined strategy if none was provided). The deleter of
+    /// the managed pointer automatically returns the object to this pool.
+    bslma::ManagedPtr<ntcs::Event> getManagedObject(
+        const bsl::shared_ptr<ntci::ProactorSocket>& socket);
+
+    /// Return a managed pointer to a modifiable object from this object pool
+    /// to be used by the specified 'socket' with the specified 'context', or
+    /// null if an operation on the 'socket' is not authorized.  If this pool
+    /// is empty, it is replenished according to the strategy specified at the
+    /// pool construction (or an implementation-defined strategy if none was
+    /// provided). The deleter of the managed pointer automatically returns the
+    /// object to this pool.
+    bslma::ManagedPtr<ntcs::Event> getManagedObject(
+        const bsl::shared_ptr<ntci::ProactorSocket>&        socket,
+        const bsl::shared_ptr<ntcs::ProactorDetachContext>& context);
 
     /// Return an address of modifiable object from this object pool.  If
     /// this pool is empty, it is replenished according to the strategy
@@ -463,6 +506,42 @@ NTCCFG_INLINE
 bslma::ManagedPtr<ntcs::Event> EventPool::getManagedObject()
 {
     return bslma::ManagedPtr<ntcs::Event>(this->getObject(), this);
+}
+
+NTCCFG_INLINE
+bslma::ManagedPtr<ntcs::Event> EventPool::getManagedObject(
+    const bsl::shared_ptr<ntci::ProactorSocket>& socket)
+{
+    if (NTCCFG_LIKELY(socket)) {
+        bsl::shared_ptr<ntcs::ProactorDetachContext> context = 
+            bslstl::SharedPtrUtil::staticCast<ntcs::ProactorDetachContext>(
+                socket->getProactorContext());
+
+        return this->getManagedObject(socket, context);
+    }
+    else {
+        return bslma::ManagedPtr<ntcs::Event>();
+    }
+}
+
+NTCCFG_INLINE
+bslma::ManagedPtr<ntcs::Event> EventPool::getManagedObject(
+    const bsl::shared_ptr<ntci::ProactorSocket>&        socket,
+    const bsl::shared_ptr<ntcs::ProactorDetachContext>& context)
+{
+    bslma::ManagedPtr<ntcs::Event> event;
+
+    if (NTCCFG_LIKELY(socket)) {
+        if (NTCCFG_LIKELY(context)) {
+            if (NTCCFG_LIKELY(context->incrementReference())) {
+                event.load(this->getObject(), this);
+                event->d_socket  = socket;
+                event->d_context = context;
+            }
+        }
+    }
+
+    return event;
 }
 
 NTCCFG_INLINE

@@ -1880,6 +1880,19 @@ void Dispatch::announceError(
     }
 }
 
+void Dispatch::announceDetached(
+    const bsl::shared_ptr<ntci::ProactorSocket>& socket,
+    const bsl::shared_ptr<ntci::Strand>&         destination)
+{
+    if (NTCCFG_LIKELY(!destination)) {
+        socket->processSocketDetached();
+    }
+    else {
+        destination->execute(
+            NTCCFG_BIND(&ntci::ProactorSocket::processSocketDetached, socket));
+    }
+}
+
 // *** Timer ***
 
 void Dispatch::announceDeadline(

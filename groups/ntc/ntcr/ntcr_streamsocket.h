@@ -35,6 +35,7 @@ BSLS_IDENT("$Id: $")
 #include <ntcq_connect.h>
 #include <ntcq_receive.h>
 #include <ntcq_send.h>
+#include <ntcs_detachstate.h>
 #include <ntcs_flowcontrolcontext.h>
 #include <ntcs_flowcontrolstate.h>
 #include <ntcs_metrics.h>
@@ -138,11 +139,13 @@ class StreamSocket : public ntci::StreamSocket,
     const bool                                 d_oneShot;
     bool                                       d_timestampOutgoingData;
     ntca::StreamSocketOptions                  d_options;
-
-    ntcu::TimestampCorrelator d_timestampCorrelator;
-    bsl::uint32_t             d_totalBytesSentTimestamped;
-
-    bslma::Allocator* d_allocator_p;
+    ntcu::TimestampCorrelator                  d_timestampCorrelator;
+    bsl::uint32_t                              d_totalBytesSentTimestamped;
+    bool                                       d_retryConnect;
+    ntcs::DetachState                          d_detachState;
+    ntci::CloseCallback                        d_closeCallback;
+    ntci::Executor::FunctorSequence            d_deferredCalls;
+    bslma::Allocator*                          d_allocator_p;
 
   private:
     StreamSocket(const StreamSocket&) BSLS_KEYWORD_DELETED;
@@ -243,10 +246,21 @@ class StreamSocket : public ntci::StreamSocket,
     /// in cases when the socket is closed after a previous connection
     /// attempt had failed, but the socket is waiting to retry another
     /// connection attempt) and detach the socket.
+    /// If it is required to detach the socket from the proactor then part of
+    /// described functionality will be executed asynchronously using the next
+    /// method.
     void privateFailConnect(const bsl::shared_ptr<StreamSocket>& self,
                             const ntsa::Error&                   error,
                             bool                                 defer,
                             bool                                 close);
+
+    /// Execute the second part of connection failure processing when the
+    /// socket is detached. See also "privateFailConnect"
+    void privateFailConnectPart2(const bsl::shared_ptr<StreamSocket>& self,
+                                 bool                                 defer,
+                                 const ntci::ConnectCallback& connectCallback,
+                                 const ntca::ConnectEvent&    connectEvent,
+                                 bool                         lock);
 
     /// Indicate a upgrade failure has occurred and detach the socket
     /// from its monitor.
@@ -291,10 +305,21 @@ class StreamSocket : public ntci::StreamSocket,
     /// for receiving and announce the corresponding event; if the 'context'
     /// indicates the shutdown sequence has completed, announce the
     /// completion of the shutdown sequence.
+    /// If it is required to detach the socket from the proactor then part of
+    /// described functionality will be executed asynchronously using the next
+    /// method.
     void privateShutdownSequence(const bsl::shared_ptr<StreamSocket>& self,
                                  ntsa::ShutdownOrigin::Value          origin,
                                  const ntcs::ShutdownContext&         context,
                                  bool                                 defer);
+
+    /// Execute the second part of shutdown sequence when the socket is
+    /// detached. See also "privateShutdownSequence"
+    void privateShutdownSequencePart2(
+        const bsl::shared_ptr<StreamSocket>& self,
+        const ntcs::ShutdownContext&         context,
+        bool                                 defer,
+        bool                                 lock);
 
     /// Enable copying from the socket buffers in the specified 'direction'.
     /// The behavior is undefined unless 'd_mutex' is locked.
@@ -315,10 +340,12 @@ class StreamSocket : public ntci::StreamSocket,
         bool                                 lock);
 
     /// Disable copying from socket buffers in both directions and detach
-    /// the socket from the reactor.
-    ntsa::Error privateCloseFlowControl(
+    /// the socket from the reactor. Return true if asynchronous socket
+    /// detachment has started. Otherwise return false.
+    bool privateCloseFlowControl(
         const bsl::shared_ptr<StreamSocket>& self,
-        bool                                 defer);
+        bool                                 defer,
+        const ntci::SocketDetachedCallback&  detachCallback);
 
     /// Test if rate limiting is applied to copying to the send buffer, and
     /// if so, determine whether more data is allowed to be copied to the

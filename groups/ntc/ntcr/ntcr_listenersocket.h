@@ -32,6 +32,7 @@ BSLS_IDENT("$Id: $")
 #include <ntci_strand.h>
 #include <ntci_timer.h>
 #include <ntcq_accept.h>
+#include <ntcs_detachstate.h>
 #include <ntcs_flowcontrolcontext.h>
 #include <ntcs_flowcontrolstate.h>
 #include <ntcs_metrics.h>
@@ -94,6 +95,9 @@ class ListenerSocket : public ntci::ListenerSocket,
     bool                                         d_acceptGreedily;
     const bool                                   d_oneShot;
     ntca::ListenerSocketOptions                  d_options;
+    ntcs::DetachState                            d_detachState;
+    ntci::CloseCallback                          d_closeCallback;
+    ntci::Executor::FunctorSequence              d_deferredCalls;
     bslma::Allocator*                            d_allocator_p;
 
   private:
@@ -176,10 +180,21 @@ class ListenerSocket : public ntci::ListenerSocket,
     /// for receiving and announce the corresponding event; if the 'context'
     /// indicates the shutdown sequence has completed, announce the
     /// completion of the shutdown sequence.
+    /// If it is required to detach the socket from the proactor then part of
+    /// described functionality will be executed asynchronously using the next
+    /// method.
     void privateShutdownSequence(const bsl::shared_ptr<ListenerSocket>& self,
                                  ntsa::ShutdownOrigin::Value            origin,
                                  const ntcs::ShutdownContext& context,
                                  bool                         defer);
+
+    /// Execute the second part of shutdown sequence when the socket is
+    /// detached. See also "privateShutdownSequence".
+    void privateShutdownSequencePart2(
+        const bsl::shared_ptr<ListenerSocket>& self,
+        const ntcs::ShutdownContext&           context,
+        bool                                   defer,
+        bool                                   lock);
 
     /// Enable copying from the socket buffers in the specified 'direction'.
     /// The behavior is undefined unless 'd_mutex' is locked.
@@ -200,10 +215,12 @@ class ListenerSocket : public ntci::ListenerSocket,
         bool                                   lock);
 
     /// Disable copying from socket buffers in both directions and detach
-    /// the socket from the reactor.
-    ntsa::Error privateCloseFlowControl(
+    /// the socket from the reactor. Return true if asynchronous socket
+    /// detachment started, otherwise return false.
+    bool privateCloseFlowControl(
         const bsl::shared_ptr<ListenerSocket>& self,
-        bool                                   defer);
+        bool                                   defer,
+        const ntci::SocketDetachedCallback&    detachCallback);
 
     /// Test if rate limiting is applied to accepting from the backlog,
     /// and if so, determine whether more connections are allowed to be

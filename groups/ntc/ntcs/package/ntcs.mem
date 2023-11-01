@@ -8,6 +8,7 @@ ntcs_chronology
 ntcs_compat
 ntcs_controller
 ntcs_datapool
+ntcs_detachstate
 ntcs_dispatch
 ntcs_driver
 ntcs_event
@@ -24,6 +25,7 @@ ntcs_nomenclature
 ntcs_observer
 ntcs_openstate
 ntcs_plugin
+ntcs_proactordetachcontext
 ntcs_proactormetrics
 ntcs_processutil
 ntcs_processmetrics

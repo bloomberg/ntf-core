@@ -149,6 +149,12 @@ void ListenerSocket::processSocketAccepted(
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
 
+    if (NTCCFG_UNLIKELY(d_detachState.get() ==
+                        ntcs::DetachState::e_DETACH_INITIATED))
+    {
+        return;
+    }
+
     d_acceptPending = false;
 
     if (error) {
@@ -172,12 +178,38 @@ void ListenerSocket::processSocketError(const ntsa::Error& error)
 
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
+    if (NTCCFG_UNLIKELY(d_detachState.get() ==
+                        ntcs::DetachState::e_DETACH_INITIATED))
+    {
+        return;
+    }
+
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
 
     this->privateFail(self, error);
+}
+
+void ListenerSocket::processSocketDetached()
+{
+    NTCCFG_OBJECT_GUARD(&d_object);
+
+    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+
+    BSLS_ASSERT(d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED);
+    d_detachState.set(ntcs::DetachState::e_DETACH_IDLE);
+    BSLS_ASSERT(d_deferredCall);
+    if (NTCCFG_LIKELY(d_deferredCall)) {
+        NTCCFG_FUNCTION() deferredCall;
+        deferredCall.swap(d_deferredCall);
+        deferredCall();
+    }
 }
 
 void ListenerSocket::processAcceptRateTimer(
@@ -640,6 +672,9 @@ ntsa::Error ListenerSocket::privateShutdown(
         shutdownSend = true;
     }
 
+    const bool closeAnnouncementRequired =
+        d_closeCallback && d_shutdownState.completed();
+
     if (shutdownReceive) {
         if (d_shutdownState.canReceive()) {
             this->privateShutdownReceive(self,
@@ -652,6 +687,14 @@ ntsa::Error ListenerSocket::privateShutdown(
         if (d_shutdownState.canSend()) {
             this->privateShutdownSend(self, defer);
         }
+    }
+
+    if (closeAnnouncementRequired) {
+        d_closeCallback.dispatch(ntci::Strand::unknown(),
+                                 self,
+                                 true,
+                                 &d_mutex);
+        d_closeCallback.reset();
     }
 
     return ntsa::Error();
@@ -689,15 +732,14 @@ void ListenerSocket::privateShutdownSequence(
 {
     NTCCFG_WARNING_UNUSED(origin);
 
-    NTCI_LOG_CONTEXT();
-
     // MRM: Always defer to properly clean up pending operations?
     defer = true;
 
     // First handle flow control and detachment from the reactor, if necessary.
 
+    bool asyncDetachmentStarted = false;
     if (context.shutdownCompleted()) {
-        this->privateCloseFlowControl(self, defer);
+        asyncDetachmentStarted = this->privateCloseFlowControl(self, defer);
     }
     else {
         if (context.shutdownSend()) {
@@ -717,6 +759,26 @@ void ListenerSocket::privateShutdownSequence(
         }
     }
 
+    if (!asyncDetachmentStarted) {
+        privateShutdownSequencePart2(self, context, defer);
+    }
+    else {
+        BSLS_ASSERT(!d_deferredCall);
+        d_deferredCall =
+            NTCCFG_BIND(&ListenerSocket::privateShutdownSequencePart2,
+                        this,
+                        self,
+                        context,
+                        defer);
+    }
+}
+
+void ListenerSocket::privateShutdownSequencePart2(
+    const bsl::shared_ptr<ListenerSocket>& self,
+    const ntcs::ShutdownContext&           context,
+    bool                                   defer)
+{
+    NTCI_LOG_CONTEXT();
     // Second handle socket shutdown.
 
     if (context.shutdownSend()) {
@@ -900,6 +962,14 @@ void ListenerSocket::privateShutdownSequence(
                                        defer,
                                        &d_mutex);
 
+        if (d_closeCallback) {
+            d_closeCallback.dispatch(ntci::Strand::unknown(),
+                                     self,
+                                     true,
+                                     &d_mutex);
+            d_closeCallback.reset();
+        }
+
         d_resolver.reset();
 
         d_sessionStrand_sp.reset();
@@ -908,6 +978,8 @@ void ListenerSocket::privateShutdownSequence(
         d_managerStrand_sp.reset();
         d_manager_sp.reset();
     }
+    this->moveAndExecute(&d_deferredCalls, ntci::Executor::Functor());
+    d_deferredCalls.clear();
 }
 
 ntsa::Error ListenerSocket::privateRelaxFlowControl(
@@ -1021,7 +1093,7 @@ ntsa::Error ListenerSocket::privateApplyFlowControl(
     return ntsa::Error();
 }
 
-ntsa::Error ListenerSocket::privateCloseFlowControl(
+bool ListenerSocket::privateCloseFlowControl(
     const bsl::shared_ptr<ListenerSocket>& self,
     bool                                   defer)
 {
@@ -1057,12 +1129,21 @@ ntsa::Error ListenerSocket::privateCloseFlowControl(
     if (d_systemHandle != ntsa::k_INVALID_HANDLE) {
         ntcs::ObserverRef<ntci::Proactor> proactorRef(&d_proactor);
         if (proactorRef) {
+            BSLS_ASSERT(d_detachState.get() !=
+                        ntcs::DetachState::e_DETACH_INITIATED);
             proactorRef->cancel(self);
-            proactorRef->detachSocket(self);
+            const ntsa::Error error = proactorRef->detachSocketAsync(self);
+            if (NTCCFG_UNLIKELY(error)) {
+                return false;
+            }
+            else {
+                d_detachState.set(ntcs::DetachState::e_DETACH_INITIATED);
+                return true;
+            }
         }
     }
 
-    return ntsa::Error();
+    return false;
 }
 
 ntsa::Error ListenerSocket::privateThrottleBacklog(
@@ -1413,6 +1494,10 @@ ListenerSocket::ListenerSocket(
 , d_acceptPending(false)
 , d_acceptGreedily(NTCCFG_DEFAULT_LISTENER_SOCKET_ACCEPT_GREEDILY)
 , d_options(options)
+, d_detachState(ntcs::DetachState::e_DETACH_IDLE)
+, d_deferredCall()
+, d_closeCallback(bslma::Default::allocator(basicAllocator))
+, d_deferredCalls(bslma::Default::allocator(basicAllocator))
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     if (!d_options.acceptQueueLowWatermark().isNull()) {
@@ -2260,6 +2345,15 @@ void ListenerSocket::close(const ntci::CloseCallback& callback)
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
 
+    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
+        d_deferredCalls.push_back(NTCCFG_BIND(
+            static_cast<void (ListenerSocket::*)(
+                const ntci::CloseCallback& callback)>(&ListenerSocket::close),
+            self,
+            callback));
+        return;
+    }
+
     if (NTCCFG_UNLIKELY(d_acceptQueue.hasEntry())) {
         ntca::AcceptQueueEvent event;
         event.setType(ntca::AcceptQueueEventType::e_DISCARDED);
@@ -2288,14 +2382,13 @@ void ListenerSocket::close(const ntci::CloseCallback& callback)
         }
     }
 
+    BSLS_ASSERT(!d_closeCallback);
+    d_closeCallback = callback;
+
     this->privateShutdown(self,
                           ntsa::ShutdownType::e_BOTH,
                           ntsa::ShutdownMode::e_IMMEDIATE,
                           true);
-
-    if (callback) {
-        callback.dispatch(ntci::Strand::unknown(), self, true, &d_mutex);
-    }
 }
 
 void ListenerSocket::execute(const Functor& functor)

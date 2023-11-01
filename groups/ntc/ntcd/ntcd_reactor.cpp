@@ -234,6 +234,18 @@ void Reactor::initialize()
                                       d_allocator_p),
         d_allocator_p);
 
+#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
+    d_detachFunctor_sp.createInplace(d_allocator_p, [this](const auto& entry) {
+        return this->removeDetached(entry);
+    });
+#else
+    d_detachFunctor_sp.createInplace(d_allocator_p,
+                                     NTCCFG_BIND(&Reactor::removeDetached,
+                                                 this,
+                                                 NTCCFG_BIND_PLACEHOLDER_1));
+
+#endif
+
     d_registry_sp.createInplace(d_allocator_p,
                                 d_config.trigger().value(),
                                 d_config.oneShot().value(),
@@ -242,6 +254,9 @@ void Reactor::initialize()
 
 void Reactor::flush()
 {
+    while (d_chronology_sp->hasAnyScheduledOrDeferred()) {
+        d_chronology_sp->announce();
+    }
 }
 
 ntsa::Error Reactor::add(ntsa::Handle handle, ntcs::Interest interest)
@@ -273,6 +288,18 @@ ntsa::Error Reactor::update(ntsa::Handle   handle,
 ntsa::Error Reactor::remove(ntsa::Handle handle)
 {
     return d_monitor_sp->remove(handle);
+}
+
+ntsa::Error Reactor::removeDetached(
+    const bsl::shared_ptr<ntcs::RegistryEntry>& entry)
+{
+    d_monitor_sp->remove(entry->handle());
+    if (!entry->isProcessing() && entry->announceDetached(this->getSelf(this)))
+    {
+        entry->clear();
+        Reactor::interruptOne();
+    }
+    return ntsa::Error();
 }
 
 bsl::shared_ptr<ntci::Reactor> Reactor::acquireReactor(
@@ -340,6 +367,7 @@ Reactor::Reactor(const ntca::ReactorConfig&         configuration,
 , d_datagramSocketFactory_sp()
 , d_listenerSocketFactory_sp()
 , d_streamSocketFactory_sp()
+, d_detachFunctor_sp()
 , d_registry_sp()
 , d_waiterSetMutex()
 , d_waiterSet(basicAllocator)
@@ -370,6 +398,7 @@ Reactor::Reactor(const ntca::ReactorConfig&            configuration,
 , d_datagramSocketFactory_sp()
 , d_listenerSocketFactory_sp()
 , d_streamSocketFactory_sp()
+, d_detachFunctor_sp()
 , d_registry_sp()
 , d_waiterSetMutex()
 , d_waiterSet(basicAllocator)
@@ -1127,6 +1156,19 @@ ntsa::Error Reactor::detachSocket(
     }
 }
 
+ntsa::Error Reactor::detachSocket(
+    const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+    const ntci::SocketDetachedCallback&         callback)
+{
+    BSLS_ASSERT((d_config.maxThreads().value() > 1) ==
+                static_cast<bool>(callback.strand()));
+    const ntsa::Error error =
+        d_registry_sp->removeAndGetReadyToDetach(socket,
+                                                 callback,
+                                                 *d_detachFunctor_sp);
+    return error;
+}
+
 ntsa::Error Reactor::detachSocket(ntsa::Handle handle)
 {
     ntsa::Error error;
@@ -1148,6 +1190,18 @@ ntsa::Error Reactor::detachSocket(ntsa::Handle handle)
     else {
         return ntsa::Error();
     }
+}
+
+ntsa::Error Reactor::detachSocket(ntsa::Handle                        handle,
+                                  const ntci::SocketDetachedCallback& callback)
+{
+    BSLS_ASSERT((d_config.maxThreads().value() > 1) ==
+                static_cast<bool>(callback.strand()));
+    const ntsa::Error error =
+        d_registry_sp->removeAndGetReadyToDetach(handle,
+                                                 callback,
+                                                 *d_detachFunctor_sp);
+    return error;
 }
 
 ntsa::Error Reactor::closeAll()
@@ -1227,10 +1281,11 @@ void Reactor::poll(ntci::Waiter waiter)
     }
 
     if (numResults > 0) {
-        bsl::size_t numReadable = 0;
-        bsl::size_t numWritable = 0;
-        bsl::size_t numErrors   = 0;
-        bsl::size_t numTimers   = 0;
+        bsl::size_t numReadable    = 0;
+        bsl::size_t numWritable    = 0;
+        bsl::size_t numErrors      = 0;
+        bsl::size_t numTimers      = 0;
+        bsl::size_t numDetachments = 0;
 
         for (bsl::size_t i = 0; i < numResults; ++i) {
             const ntca::ReactorEvent& event = events[i];
@@ -1238,7 +1293,10 @@ void Reactor::poll(ntci::Waiter waiter)
             ntsa::Handle descriptorHandle = event.handle();
 
             bsl::shared_ptr<ntcs::RegistryEntry> entry;
-            if (!d_registry_sp->lookup(&entry, descriptorHandle)) {
+            if (!d_registry_sp->lookupAndMarkProcessingOngoing(
+                    &entry,
+                    descriptorHandle))
+            {
                 continue;
             }
 
@@ -1303,10 +1361,17 @@ void Reactor::poll(ntci::Waiter waiter)
                     NTCS_METRICS_UPDATE_READ_CALLBACK_TIME_END();
                 }
             }
+
+            if (entry->decrementProcessCounter() == 0 &&
+                entry->announceDetached(this->getSelf(this)))
+            {
+                entry->clear();
+                ++numDetachments;
+            }
         }
 
         const bsl::size_t numTotal =
-            numReadable + numWritable + numErrors + numTimers;
+            numReadable + numWritable + numErrors + numTimers + numDetachments;
 
         if (NTCCFG_UNLIKELY(numTotal == 0)) {
             NTCS_METRICS_UPDATE_SPURIOUS_WAKEUP();

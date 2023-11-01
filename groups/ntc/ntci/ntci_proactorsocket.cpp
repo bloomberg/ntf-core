@@ -57,6 +57,10 @@ void ProactorSocket::processSocketError(const ntsa::Error& error)
     NTCCFG_WARNING_UNUSED(error);
 }
 
+void ProactorSocket::processSocketDetached()
+{
+}
+
 const bsl::shared_ptr<ntci::Strand>& ProactorSocket::strand() const
 {
     return ntci::Strand::unspecified();

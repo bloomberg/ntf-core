@@ -42,6 +42,7 @@ BSLS_IDENT("$Id: $")
 #include <ntsi_descriptor.h>
 #include <bdlbb_blob.h>
 #include <bslmt_threadutil.h>
+#include <bsls_deprecatefeature.h>
 #include <bsl_functional.h>
 #include <bsl_list.h>
 #include <bsl_memory.h>
@@ -124,7 +125,15 @@ class Proactor : public ntci::Driver, public ntci::ProactorPool
         const bsl::shared_ptr<ntci::ProactorSocket>& socket) = 0;
 
     /// Detach the specified 'socket' from the proactor. Return the error.
+    BSLS_DEPRECATE_FEATURE("ntci",
+                           "socket-detachment",
+                           "use detachSocketAsync instead")
     virtual ntsa::Error detachSocket(
+        const bsl::shared_ptr<ntci::ProactorSocket>& socket) = 0;
+
+    /// Detach the specified 'socket' from the proactor. The specified 'socket'
+    /// will be notified when it's detached. Return the error.
+    virtual ntsa::Error detachSocketAsync(
         const bsl::shared_ptr<ntci::ProactorSocket>& socket) = 0;
 
     /// Close all monitored sockets and timers.

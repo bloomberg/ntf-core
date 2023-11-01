@@ -87,15 +87,17 @@ class Reactor : public ntci::Reactor,
     bsl::shared_ptr<ntci::DatagramSocketFactory> d_datagramSocketFactory_sp;
     bsl::shared_ptr<ntci::ListenerSocketFactory> d_listenerSocketFactory_sp;
     bsl::shared_ptr<ntci::StreamSocketFactory>   d_streamSocketFactory_sp;
-    bsl::shared_ptr<ntcs::RegistryEntryCatalog>  d_registry_sp;
-    mutable bslmt::Mutex                         d_waiterSetMutex;
-    WaiterSet                                    d_waiterSet;
-    bslmt::ThreadUtil::Handle                    d_threadHandle;
-    bsl::size_t                                  d_threadIndex;
-    bsls::AtomicUint64                           d_load;
-    bsls::AtomicBool                             d_run;
-    ntca::ReactorConfig                          d_config;
-    bslma::Allocator*                            d_allocator_p;
+    bsl::shared_ptr<ntcs::RegistryEntryCatalog::EntryFunctor>
+                                                d_detachFunctor_sp;
+    bsl::shared_ptr<ntcs::RegistryEntryCatalog> d_registry_sp;
+    mutable bslmt::Mutex                        d_waiterSetMutex;
+    WaiterSet                                   d_waiterSet;
+    bslmt::ThreadUtil::Handle                   d_threadHandle;
+    bsl::size_t                                 d_threadIndex;
+    bsls::AtomicUint64                          d_load;
+    bsls::AtomicBool                            d_run;
+    ntca::ReactorConfig                         d_config;
+    bslma::Allocator*                           d_allocator_p;
 
   private:
     Reactor(const Reactor&) BSLS_KEYWORD_DELETED;
@@ -121,6 +123,11 @@ class Reactor : public ntci::Reactor,
 
     /// Remove the specified 'handle' from the device.
     ntsa::Error remove(ntsa::Handle handle);
+
+    /// Remove the specified 'entry' from the device and announce its
+    /// detachment if possible. Return the error.
+    ntsa::Error removeDetached(
+        const bsl::shared_ptr<ntcs::RegistryEntry>& entry);
 
     /// Acquire usage of the most suitable reactor selected according to the
     /// specified load balancing 'options'.
@@ -324,8 +331,20 @@ class Reactor : public ntci::Reactor,
     ntsa::Error detachSocket(const bsl::shared_ptr<ntci::ReactorSocket>&
                                  socket) BSLS_KEYWORD_OVERRIDE;
 
+    /// Stop monitoring the specified 'socket'. Invoke the specified 'callback'
+    /// when the socket is detached. Return the error.
+    ntsa::Error detachSocket(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+        const ntci::SocketDetachedCallback& callback) BSLS_KEYWORD_OVERRIDE;
+
     /// Stop monitoring the specified socket 'handle'. Return the error.
     ntsa::Error detachSocket(ntsa::Handle handle) BSLS_KEYWORD_OVERRIDE;
+
+    /// Stop monitoring the specified socket 'handle'. Invoke the specified
+    /// 'callback' when the socket is detached. Return the error.
+    ntsa::Error detachSocket(ntsa::Handle                        handle,
+                             const ntci::SocketDetachedCallback& callback)
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Close all monitored sockets and timers.
     ntsa::Error closeAll() BSLS_KEYWORD_OVERRIDE;

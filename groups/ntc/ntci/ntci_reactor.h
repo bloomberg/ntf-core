@@ -43,6 +43,7 @@ BSLS_IDENT("$Id: $")
 #include <bdlbb_blob.h>
 #include <bdls_filesystemutil.h>
 #include <bslmt_threadutil.h>
+#include <bsls_deprecatefeature.h>
 #include <bsl_functional.h>
 #include <bsl_list.h>
 #include <bsl_memory.h>
@@ -69,6 +70,10 @@ typedef ntci::Callback<void(const ntsa::NotificationQueue& notifications)>
 /// Define a type alias for function invoked when a reactor
 /// event occurs.
 typedef ReactorEventCallback::FunctionType ReactorEventFunction;
+
+/// Define a type alias for a callback invoked when a socket can be considered
+/// detached from the reactor
+typedef ntci::Callback<void()> SocketDetachedCallback;
 
 /// Provide an interface to the reactor asynchronous model.
 ///
@@ -514,11 +519,28 @@ class Reactor : public ntci::Driver, public ntci::ReactorPool
     virtual ntsa::Error hideError(ntsa::Handle handle) = 0;
 
     /// Stop monitoring the specified 'socket'. Return the error.
+    BSLS_DEPRECATE_FEATURE("ntci",
+                           "socket-detachment",
+                           "use callback version instead")
     virtual ntsa::Error detachSocket(
         const bsl::shared_ptr<ntci::ReactorSocket>& socket) = 0;
 
+    /// Stop monitoring the specified 'socket'. Invoke the specified 'callback'
+    /// when the socket is detached. Return the error.
+    virtual ntsa::Error detachSocket(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+        const ntci::SocketDetachedCallback&         callback);
+
     /// Stop monitoring the specified socket 'handle'. Return the error.
+    BSLS_DEPRECATE_FEATURE("ntci",
+                           "socket-detachment",
+                           "use callback version instead")
     virtual ntsa::Error detachSocket(ntsa::Handle handle) = 0;
+
+    /// Stop monitoring the specified socket 'handle'. Invoke the specified
+    /// 'callback' when the socket is detached. Return the error.
+    virtual ntsa::Error detachSocket(ntsa::Handle handle,
+                                     const ntci::SocketDetachedCallback& callback);
 
     /// Close all monitored sockets and timers.
     virtual ntsa::Error closeAll() = 0;

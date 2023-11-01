@@ -50,6 +50,7 @@
 #include <bdls_processutil.h>
 #include <bslma_defaultallocatorguard.h>
 #include <bslma_testallocator.h>
+#include <bslmt_barrier.h>
 #include <bslmt_latch.h>
 #include <bslmt_lockguard.h>
 #include <bslmt_semaphore.h>
@@ -6544,7 +6545,8 @@ void concernResolverGetEndpoint(bslma::Allocator* allocator)
 
         // Get the endpoint assigned to "dns.google.com:http".
 
-        error = resolver->getEndpoint("dns.google.com:http", options, callback);
+        error =
+            resolver->getEndpoint("dns.google.com:http", options, callback);
         NTCCFG_TEST_OK(error);
 
         semaphore.wait();
@@ -7339,7 +7341,9 @@ void concernConnectEndpoint3(const bsl::shared_ptr<ntci::Interface>& interface,
             (connectResult.event().context().error() ==
                  ntsa::Error(ntsa::Error::e_CONNECTION_TIMEOUT) ||
              connectResult.event().context().error() ==
-                 ntsa::Error(ntsa::Error::e_UNREACHABLE));
+                 ntsa::Error(ntsa::Error::e_UNREACHABLE) ||
+             connectResult.event().context().error() ==
+                 ntsa::Error(ntsa::Error::e_CONNECTION_REFUSED));
         NTCCFG_TEST_TRUE(errorIsExpected);
 
         ++numErrors;
@@ -7594,7 +7598,7 @@ void concernConnectEndpoint5(const bsl::shared_ptr<ntci::Interface>& interface,
             connectResult.event().context().error() ==
                 ntsa::Error(ntsa::Error::e_CONNECTION_DEAD) ||
             connectResult.event().context().error() ==
-                 ntsa::Error(ntsa::Error::e_UNREACHABLE))
+                ntsa::Error(ntsa::Error::e_UNREACHABLE))
         {
             ++numErrors;
             NTCCFG_TEST_LE(numErrors, k_MAX_CONNECTION_ATTEMPTS);
@@ -7638,7 +7642,7 @@ void concernConnectEndpoint5(const bsl::shared_ptr<ntci::Interface>& interface,
             connectResult.event().context().error() ==
                 ntsa::Error(ntsa::Error::e_CONNECTION_DEAD) ||
             connectResult.event().context().error() ==
-                 ntsa::Error(ntsa::Error::e_UNREACHABLE))
+                ntsa::Error(ntsa::Error::e_UNREACHABLE))
         {
             ++numErrors;
             NTCCFG_TEST_LE(numErrors, k_MAX_CONNECTION_ATTEMPTS);
@@ -7883,7 +7887,7 @@ void concernConnectEndpoint7(const bsl::shared_ptr<ntci::Interface>& interface,
             connectResult.event().context().error() ==
                 ntsa::Error(ntsa::Error::e_CONNECTION_DEAD) ||
             connectResult.event().context().error() ==
-                 ntsa::Error(ntsa::Error::e_UNREACHABLE))
+                ntsa::Error(ntsa::Error::e_UNREACHABLE))
         {
             ++numErrors;
             NTCCFG_TEST_LE(numErrors, k_MAX_CONNECTION_ATTEMPTS);
@@ -11415,6 +11419,513 @@ NTCCFG_TEST_CASE(63)
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
+namespace case64 {
+
+class StreamSocketSession : public ntci::StreamSocketSession
+{
+    bsl::string         d_name;
+    ntci::CloseCallback d_closeCallback;
+    bslma::Allocator*   d_allocator_p;
+
+  private:
+    StreamSocketSession(const StreamSocketSession&);
+    StreamSocketSession& operator=(const StreamSocketSession&);
+
+  public:
+    explicit StreamSocketSession(const bsl::string&         name,
+                                 const ntci::CloseCallback& closeCallback,
+                                 bslma::Allocator* basicAllocator = 0);
+
+    ~StreamSocketSession() BSLS_KEYWORD_OVERRIDE;
+
+    void processShutdownInitiated(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::ShutdownEvent& event) BSLS_KEYWORD_OVERRIDE;
+
+    void processShutdownComplete(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::ShutdownEvent& event) BSLS_KEYWORD_OVERRIDE;
+};
+
+StreamSocketSession::StreamSocketSession(
+    const bsl::string&         name,
+    const ntci::CloseCallback& closeCallback,
+    bslma::Allocator*          basicAllocator)
+: d_name(name, basicAllocator)
+, d_closeCallback(closeCallback, basicAllocator)
+, d_allocator_p(basicAllocator)
+{
+}
+
+StreamSocketSession::~StreamSocketSession()
+{
+}
+
+void StreamSocketSession::processShutdownInitiated(
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::ShutdownEvent&                 event)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_INFO("%s shutdown initiated", d_name.c_str());
+}
+
+void StreamSocketSession::processShutdownComplete(
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::ShutdownEvent&                 event)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_INFO("%s shutdown complete", d_name.c_str());
+
+    NTCCFG_TEST_EQ(event.type(), ntca::ShutdownEventType::e_COMPLETE);
+
+    streamSocket->close(d_closeCallback);
+    streamSocket->close(d_closeCallback);
+}
+
+class ListenerSocketSession : public ntci::ListenerSocketSession
+{
+    bsl::string         d_name;
+    ntci::CloseCallback d_closeCallback;
+    bslma::Allocator*   d_allocator_p;
+
+  private:
+    ListenerSocketSession(const ListenerSocketSession&);
+    ListenerSocketSession& operator=(const ListenerSocketSession&);
+
+  public:
+    explicit ListenerSocketSession(const bsl::string&         name,
+                                   const ntci::CloseCallback& closeCallback,
+                                   bslma::Allocator* basicAllocator = 0);
+
+    ~ListenerSocketSession() BSLS_KEYWORD_OVERRIDE;
+
+    void processShutdownInitiated(
+        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+        const ntca::ShutdownEvent& event) BSLS_KEYWORD_OVERRIDE;
+
+    void processShutdownComplete(
+        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+        const ntca::ShutdownEvent& event) BSLS_KEYWORD_OVERRIDE;
+};
+
+ListenerSocketSession::ListenerSocketSession(
+    const bsl::string&         name,
+    const ntci::CloseCallback& closeCallback,
+    bslma::Allocator*          basicAllocator)
+: d_name(name, basicAllocator)
+, d_closeCallback(closeCallback, basicAllocator)
+, d_allocator_p(basicAllocator)
+{
+}
+
+ListenerSocketSession::~ListenerSocketSession()
+{
+}
+
+void ListenerSocketSession::processShutdownInitiated(
+    const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+    const ntca::ShutdownEvent&                   event)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_INFO("%s shutdown initiated", d_name.c_str());
+}
+
+void ListenerSocketSession::processShutdownComplete(
+    const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+    const ntca::ShutdownEvent&                   event)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_INFO("%s shutdown complete", d_name.c_str());
+
+    NTCCFG_TEST_EQ(event.type(), ntca::ShutdownEventType::e_COMPLETE);
+
+    listenerSocket->close(d_closeCallback);
+    listenerSocket->close(d_closeCallback);
+}
+
+void processClosed(bslmt::Semaphore* semaphore, const char* msg)
+{
+    NTCI_LOG_CONTEXT();
+    if (msg) {
+        NTCI_LOG_INFO("%s", msg);
+    }
+    semaphore->post();
+}
+
+void processBarrier(bslmt::Barrier* barrier)
+{
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_INFO("I/O thread suspended");
+
+    barrier->wait();
+
+    NTCI_LOG_INFO("I/O thread released");
+}
+
+}  // close namespace case64
+
+NTCCFG_TEST_CASE(64)
+{
+    // Concern: Any asynchronous close operation results in its callback
+    // invoked, regardless of whether the close operation is initiated from
+    // the main thread or from within the I/O thread during the shutdown
+    // sequence, even when the socket is closed multiple times (i.e. it is
+    // safe for the user to close the socket multiple times; the first close
+    // operation begins the shutdown sequence, and all close callbacks are
+    // invoked after the shutdown sequence completes.)
+
+    ntccfg::TestAllocator ta;
+    {
+        NTCI_LOG_CONTEXT();
+
+        ntsa::Error error;
+
+        ntca::InterfaceConfig interfaceConfig;
+        interfaceConfig.setThreadName("test");
+        interfaceConfig.setMinThreads(1);
+        interfaceConfig.setMaxThreads(1);
+
+        bsl::shared_ptr<ntci::Interface> interface =
+            ntcf::System::createInterface(interfaceConfig, &ta);
+
+        ntci::InterfaceStopGuard interfaceGuard(interface);
+
+        error = interface->start();
+        NTCCFG_TEST_OK(error);
+
+        ntca::ListenerSocketOptions listenerSocketOptions;
+
+        listenerSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+        listenerSocketOptions.setBacklog(1);
+        listenerSocketOptions.setReuseAddress(true);
+
+        listenerSocketOptions.setSourceEndpoint(ntsa::Endpoint(
+            ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)));
+
+        bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
+            interface->createListenerSocket(listenerSocketOptions, &ta);
+
+        ntci::ListenerSocketCloseGuard listenerGuard(listenerSocket);
+
+        error = listenerSocket->open();
+        NTCCFG_TEST_OK(error);
+
+        error = listenerSocket->listen();
+        NTCCFG_TEST_OK(error);
+
+        error =
+            listenerSocket->relaxFlowControl(ntca::FlowControlType::e_RECEIVE);
+        NTCCFG_TEST_OK(error);
+
+        ntca::StreamSocketOptions clientStreamSocketOptions;
+        clientStreamSocketOptions.setTransport(
+            ntsa::Transport::e_TCP_IPV4_STREAM);
+
+        bsl::shared_ptr<ntci::StreamSocket> clientStreamSocket =
+            interface->createStreamSocket(clientStreamSocketOptions, &ta);
+
+        ntci::ConnectFuture connectFuture;
+        error = clientStreamSocket->connect(listenerSocket->sourceEndpoint(),
+                                            ntca::ConnectOptions(),
+                                            connectFuture);
+        NTCCFG_TEST_OK(error);
+
+        ntci::ConnectResult connectResult;
+        error = connectFuture.wait(&connectResult);
+        NTCCFG_TEST_OK(error);
+        NTCCFG_TEST_EQ(connectResult.event().type(),
+                       ntca::ConnectEventType::e_COMPLETE);
+
+        ntci::AcceptFuture acceptFuture;
+        error = listenerSocket->accept(ntca::AcceptOptions(), acceptFuture);
+        NTCCFG_TEST_OK(error);
+
+        ntci::AcceptResult acceptResult;
+        error = acceptFuture.wait(&acceptResult);
+        NTCCFG_TEST_OK(error);
+
+        NTCCFG_TEST_EQ(acceptResult.event().type(),
+                       ntca::AcceptEventType::e_COMPLETE);
+
+        bsl::shared_ptr<ntci::StreamSocket> serverStreamSocket =
+            acceptResult.streamSocket();
+
+        ntci::StreamSocketCloseGuard clientStreamSocketGuard(
+            clientStreamSocket);
+
+        ntci::StreamSocketCloseGuard serverStreamSocketGuard(
+            serverStreamSocket);
+
+        bslmt::Semaphore clientInternalCloseSemaphore;
+        bslmt::Semaphore serverInternalCloseSemaphore;
+        bslmt::Semaphore listenerInternalCloseSemaphore;
+
+        bslmt::Semaphore clientExternalCloseSemaphore;
+        bslmt::Semaphore serverExternalCloseSemaphore;
+        bslmt::Semaphore listenerExternalCloseSemaphore;
+
+        ntci::CloseCallback clientInternalCloseCallback =
+            clientStreamSocket->createCloseCallback(
+                NTCCFG_BIND(&case64::processClosed,
+                            &clientInternalCloseSemaphore,
+                            "Client closed internally from I/O thread"),
+                &ta);
+
+        ntci::CloseCallback serverInternalCloseCallback =
+            serverStreamSocket->createCloseCallback(
+                NTCCFG_BIND(&case64::processClosed,
+                            &serverInternalCloseSemaphore,
+                            "Server closed internally from I/O thread"),
+                &ta);
+
+        ntci::CloseCallback listenerInternalCloseCallback =
+            listenerSocket->createCloseCallback(
+                NTCCFG_BIND(
+                    &case64::processClosed,
+                    &listenerInternalCloseSemaphore,
+                    "Server (listener) closed internally from I/O thread"),
+                &ta);
+
+        ntci::CloseCallback clientExternalCloseCallback =
+            clientStreamSocket->createCloseCallback(
+                NTCCFG_BIND(&case64::processClosed,
+                            &clientExternalCloseSemaphore,
+                            "Client closed externally from main thread"),
+                &ta);
+
+        ntci::CloseCallback serverExternalCloseCallback =
+            serverStreamSocket->createCloseCallback(
+                NTCCFG_BIND(&case64::processClosed,
+                            &serverExternalCloseSemaphore,
+                            "Server closed externally from main thread"),
+                &ta);
+
+        ntci::CloseCallback listenerExternalCloseCallback =
+            listenerSocket->createCloseCallback(
+                NTCCFG_BIND(
+                    &case64::processClosed,
+                    &listenerExternalCloseSemaphore,
+                    "Listener socket closed externally from main thread"),
+                &ta);
+
+        bsl::shared_ptr<case64::StreamSocketSession> clientStreamSocketSession;
+        clientStreamSocketSession.createInplace(&ta,
+                                                "Client",
+                                                clientInternalCloseCallback,
+                                                &ta);
+
+        bsl::shared_ptr<case64::StreamSocketSession> serverStreamSocketSession;
+        serverStreamSocketSession.createInplace(&ta,
+                                                "ServerStream",
+                                                serverInternalCloseCallback,
+                                                &ta);
+
+        bsl::shared_ptr<case64::ListenerSocketSession> listenerSocketSession;
+        listenerSocketSession.createInplace(&ta,
+                                            "ServerListener",
+                                            listenerInternalCloseCallback,
+                                            &ta);
+
+        error = clientStreamSocket->registerSession(clientStreamSocketSession);
+        NTCCFG_TEST_OK(error);
+
+        error = serverStreamSocket->registerSession(serverStreamSocketSession);
+        NTCCFG_TEST_OK(error);
+
+        error = listenerSocket->registerSession(listenerSocketSession);
+        NTCCFG_TEST_OK(error);
+
+        error = clientStreamSocket->relaxFlowControl(
+            ntca::FlowControlType::e_RECEIVE);
+        NTCCFG_TEST_OK(error);
+
+        error = serverStreamSocket->relaxFlowControl(
+            ntca::FlowControlType::e_RECEIVE);
+        NTCCFG_TEST_OK(error);
+
+        bslmt::Barrier barrier(2);
+        interface->execute(NTCCFG_BIND(&case64::processBarrier, &barrier));
+
+        NTCI_LOG_INFO("Closing client");
+
+        clientStreamSocket->close(clientExternalCloseCallback);
+        clientStreamSocket->close(clientExternalCloseCallback);
+
+        NTCI_LOG_INFO("Closing server");
+
+        serverStreamSocket->close(serverExternalCloseCallback);
+        serverStreamSocket->close(serverExternalCloseCallback);
+
+        NTCI_LOG_INFO("Closing server (listener)");
+
+        listenerSocket->close(listenerExternalCloseCallback);
+        listenerSocket->close(listenerExternalCloseCallback);
+
+        barrier.wait();
+
+        clientInternalCloseSemaphore.wait();
+        clientInternalCloseSemaphore.wait();
+
+        clientExternalCloseSemaphore.wait();
+        clientExternalCloseSemaphore.wait();
+
+        serverInternalCloseSemaphore.wait();
+        serverInternalCloseSemaphore.wait();
+
+        serverExternalCloseSemaphore.wait();
+        serverExternalCloseSemaphore.wait();
+
+        listenerInternalCloseSemaphore.wait();
+        listenerInternalCloseSemaphore.wait();
+
+        listenerExternalCloseSemaphore.wait();
+        listenerExternalCloseSemaphore.wait();
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+namespace case65 {
+
+class DatagramSocketSession : public ntci::DatagramSocketSession
+{
+    bsl::string         d_name;
+    ntci::CloseCallback d_closeCallback;
+    bslma::Allocator*   d_allocator_p;
+
+  private:
+    DatagramSocketSession(const DatagramSocketSession&);
+    DatagramSocketSession& operator=(const DatagramSocketSession&);
+
+  public:
+    explicit DatagramSocketSession(const bsl::string&         name,
+                                   const ntci::CloseCallback& closeCallback,
+                                   bslma::Allocator* basicAllocator = 0);
+
+    ~DatagramSocketSession() BSLS_KEYWORD_OVERRIDE;
+
+    void processShutdownInitiated(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::ShutdownEvent& event) BSLS_KEYWORD_OVERRIDE;
+
+    void processShutdownComplete(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::ShutdownEvent& event) BSLS_KEYWORD_OVERRIDE;
+};
+
+DatagramSocketSession::DatagramSocketSession(
+    const bsl::string&         name,
+    const ntci::CloseCallback& closeCallback,
+    bslma::Allocator*          basicAllocator)
+: d_name(name, basicAllocator)
+, d_closeCallback(closeCallback, basicAllocator)
+, d_allocator_p(basicAllocator)
+{
+}
+
+DatagramSocketSession::~DatagramSocketSession()
+{
+}
+
+void DatagramSocketSession::processShutdownInitiated(
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+    const ntca::ShutdownEvent&                   event)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_INFO("%s shutdown initiated", d_name.c_str());
+}
+
+void DatagramSocketSession::processShutdownComplete(
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+    const ntca::ShutdownEvent&                   event)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_INFO("%s shutdown complete", d_name.c_str());
+
+    NTCCFG_TEST_EQ(event.type(), ntca::ShutdownEventType::e_COMPLETE);
+
+    datagramSocket->close(d_closeCallback);
+    datagramSocket->close(d_closeCallback);
+}
+
+void processCloseCb(bslmt::Semaphore* semaphore)
+{
+    semaphore->post();
+}
+
+}  // close namespace case65
+
+NTCCFG_TEST_CASE(65)
+{
+    ntccfg::TestAllocator ta;
+    {
+        NTCI_LOG_CONTEXT();
+
+        ntsa::Error error;
+
+        ntca::InterfaceConfig interfaceConfig;
+        interfaceConfig.setThreadName("test");
+        interfaceConfig.setMinThreads(1);
+        interfaceConfig.setMaxThreads(1);
+
+        bsl::shared_ptr<ntci::Interface> interface =
+            ntcf::System::createInterface(interfaceConfig, &ta);
+
+        ntci::InterfaceStopGuard interfaceGuard(interface);
+
+        error = interface->start();
+        NTCCFG_TEST_OK(error);
+
+        ntca::DatagramSocketOptions datagramSocketOptions;
+        datagramSocketOptions.setTransport(
+            ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+
+        bsl::shared_ptr<ntci::DatagramSocket> datagramSocket =
+            interface->createDatagramSocket(datagramSocketOptions, &ta);
+
+        ntci::DatagramSocketCloseGuard closeGuard(datagramSocket);
+
+        error = datagramSocket->open();
+        NTCCFG_TEST_OK(error);
+
+        bslmt::Semaphore externalCloseSemaphore;
+        bslmt::Semaphore internalCloseSemaphore;
+
+        ntci::CloseCallback externalCloseCallback =
+            datagramSocket->createCloseCallback(
+                NTCCFG_BIND(case65::processCloseCb, &externalCloseSemaphore),
+                &ta);
+
+        ntci::CloseCallback internalCloseCallback =
+            datagramSocket->createCloseCallback(
+                NTCCFG_BIND(case65::processCloseCb, &internalCloseSemaphore),
+                &ta);
+
+        bsl::shared_ptr<case65::DatagramSocketSession> datagramSocketSession;
+        datagramSocketSession.createInplace(&ta,
+                                            "Session",
+                                            internalCloseCallback,
+                                            &ta);
+
+        datagramSocket->registerSession(datagramSocketSession);
+
+        bslmt::Barrier barrier(2);
+        interface->execute(NTCCFG_BIND(&case64::processBarrier, &barrier));
+
+        datagramSocket->close(externalCloseCallback);
+        datagramSocket->close(externalCloseCallback);
+
+        barrier.wait();
+
+        externalCloseSemaphore.wait();
+        externalCloseSemaphore.wait();
+
+        internalCloseSemaphore.wait();
+        internalCloseSemaphore.wait();
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
 NTCCFG_TEST_DRIVER
 {
     NTCCFG_TEST_REGISTER(1);
@@ -11480,5 +11991,7 @@ NTCCFG_TEST_DRIVER
     NTCCFG_TEST_REGISTER(61);
     NTCCFG_TEST_REGISTER(62);
     NTCCFG_TEST_REGISTER(63);
+    NTCCFG_TEST_REGISTER(64);
+    NTCCFG_TEST_REGISTER(65);
 }
 NTCCFG_TEST_DRIVER_END;
