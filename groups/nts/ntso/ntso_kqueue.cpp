@@ -492,12 +492,13 @@ ntsa::Error Kqueue::wait(
         d_outputList.resize(outputListSizeRequired);
     }
 
-    if (NTSCFG_UNLIKELY(!d_changeList.empty())) {
-        BSLS_LOG_TRACE("Applying change list size = %zu", d_changeList.size());
-        for (bsl::size_t i = 0; i < d_changeList.size(); ++i) {
-            NTSO_KQUEUE_LOG_EVENT_APPLY(d_changeList[i]);
-        }
-    }
+    // if (NTSCFG_UNLIKELY(!d_changeList.empty())) {
+    //    BSLS_LOG_TRACE("Applying change list size = %zu", 
+    //                   d_changeList.size());
+    //     for (bsl::size_t i = 0; i < d_changeList.size(); ++i) {
+    //         NTSO_KQUEUE_LOG_EVENT_APPLY(d_changeList[i]);
+    //     }
+    // }
 
     rc = ::kevent(d_kqueue, 
                   &d_changeList[0], 
