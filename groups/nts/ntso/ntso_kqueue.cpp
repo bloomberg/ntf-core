@@ -79,31 +79,59 @@ BSLS_IDENT_RCSID(ntso_kqueue_cpp, "$Id$ $CSID$")
 #define NTSO_KQUEUE_LOG_WAIT_RESULT(numEvents)                                \
     BSLS_LOG_TRACE("Polled %d socket events", numEvents)
 
+#define NTSO_KQUEUE_LOG_EVENT_APPLY(kevent)                                   \
+    BSLS_LOG_TRACE(                                                           \
+        "Reactor 'kqueue' device applying socket descriptor %d update "       \
+        "filter%s%s%s%s%s%s%s flags%s%s%s%s%s%s%s%s%s "                       \
+        "(%zu) fflags %zu data %zu udata %zu",                                \
+        (int)((kevent).ident),                                                \
+        ((((kevent).filter == EVFILT_READ)) ? " READ" : ""),                  \
+        ((((kevent).filter == EVFILT_WRITE)) ? " WRITE" : ""),                \
+        ((((kevent).filter == EVFILT_AIO)) ? " AIO" : ""),                    \
+        ((((kevent).filter == EVFILT_VNODE)) ? " VNODE" : ""),                \
+        ((((kevent).filter == EVFILT_PROC)) ? " PROC" : ""),                  \
+        ((((kevent).filter == EVFILT_SIGNAL)) ? " SIGNAL" : ""),              \
+        ((((kevent).filter == EVFILT_TIMER)) ? " TIMER" : ""),                \
+        ((((kevent).flags & EV_ADD) != 0) ? " ADD" : ""),                     \
+        ((((kevent).flags & EV_ENABLE) != 0) ? " ENABLE" : ""),               \
+        ((((kevent).flags & EV_DISABLE) != 0) ? " DISABLE" : ""),             \
+        ((((kevent).flags & EV_DELETE) != 0) ? " DELETE" : ""),               \
+        ((((kevent).flags & EV_RECEIPT) != 0) ? " RECEIPT" : ""),             \
+        ((((kevent).flags & EV_ONESHOT) != 0) ? " ONESHOT" : ""),             \
+        ((((kevent).flags & EV_CLEAR) != 0) ? " CLEAR" : ""),                 \
+        ((((kevent).flags & EV_EOF) != 0) ? " EOF" : ""),                     \
+        ((((kevent).flags & EV_ERROR) != 0) ? " ERROR" : ""),                 \
+        (bsl::size_t)((kevent).flags),                                        \
+        (bsl::size_t)((kevent).fflags),                                       \
+        (bsl::size_t)((kevent).data),                                         \
+        (bsl::size_t)((kevent).udata))
+
 #define NTSO_KQUEUE_LOG_EVENT_POLL(kevent)                                    \
     BSLS_LOG_TRACE(                                                           \
         "Reactor 'kqueue' device polled socket descriptor %d event "          \
         "filter%s%s%s%s%s%s%s flags%s%s%s%s%s%s%s%s%s "                       \
-        "(%zu) fflags %zu data %zu",                                          \
-        (int)(kevent.ident),                                                  \
-        (((kevent.filter == EVFILT_READ)) ? " READ" : ""),                    \
-        (((kevent.filter == EVFILT_WRITE)) ? " WRITE" : ""),                  \
-        (((kevent.filter == EVFILT_AIO)) ? " AIO" : ""),                      \
-        (((kevent.filter == EVFILT_VNODE)) ? " VNODE" : ""),                  \
-        (((kevent.filter == EVFILT_PROC)) ? " PROC" : ""),                    \
-        (((kevent.filter == EVFILT_SIGNAL)) ? " SIGNAL" : ""),                \
-        (((kevent.filter == EVFILT_TIMER)) ? " TIMER" : ""),                  \
-        (((kevent.flags & EV_ADD) != 0) ? " ADD" : ""),                       \
-        (((kevent.flags & EV_ENABLE) != 0) ? " ENABLE" : ""),                 \
-        (((kevent.flags & EV_DISABLE) != 0) ? " DISABLE" : ""),               \
-        (((kevent.flags & EV_DELETE) != 0) ? " DELETE" : ""),                 \
-        (((kevent.flags & EV_RECEIPT) != 0) ? " RECEIPT" : ""),               \
-        (((kevent.flags & EV_ONESHOT) != 0) ? " ONESHOT" : ""),               \
-        (((kevent.flags & EV_CLEAR) != 0) ? " CLEAR" : ""),                   \
-        (((kevent.flags & EV_EOF) != 0) ? " EOF" : ""),                       \
-        (((kevent.flags & EV_ERROR) != 0) ? " ERROR" : ""),                   \
-        (bsl::size_t)(kevent.flags),                                          \
-        (bsl::size_t)(kevent.fflags),                                         \
-        (bsl::size_t)(kevent.data))
+        "(%zu) fflags %zu data %zu udata %zu",                                \
+        (int)((kevent).ident),                                                \
+        ((((kevent).filter == EVFILT_READ)) ? " READ" : ""),                  \
+        ((((kevent).filter == EVFILT_WRITE)) ? " WRITE" : ""),                \
+        ((((kevent).filter == EVFILT_AIO)) ? " AIO" : ""),                    \
+        ((((kevent).filter == EVFILT_VNODE)) ? " VNODE" : ""),                \
+        ((((kevent).filter == EVFILT_PROC)) ? " PROC" : ""),                  \
+        ((((kevent).filter == EVFILT_SIGNAL)) ? " SIGNAL" : ""),              \
+        ((((kevent).filter == EVFILT_TIMER)) ? " TIMER" : ""),                \
+        ((((kevent).flags & EV_ADD) != 0) ? " ADD" : ""),                     \
+        ((((kevent).flags & EV_ENABLE) != 0) ? " ENABLE" : ""),               \
+        ((((kevent).flags & EV_DISABLE) != 0) ? " DISABLE" : ""),             \
+        ((((kevent).flags & EV_DELETE) != 0) ? " DELETE" : ""),               \
+        ((((kevent).flags & EV_RECEIPT) != 0) ? " RECEIPT" : ""),             \
+        ((((kevent).flags & EV_ONESHOT) != 0) ? " ONESHOT" : ""),             \
+        ((((kevent).flags & EV_CLEAR) != 0) ? " CLEAR" : ""),                 \
+        ((((kevent).flags & EV_EOF) != 0) ? " EOF" : ""),                     \
+        ((((kevent).flags & EV_ERROR) != 0) ? " ERROR" : ""),                 \
+        (bsl::size_t)((kevent).flags),                                        \
+        (bsl::size_t)((kevent).fflags),                                       \
+        (bsl::size_t)((kevent).data),                                         \
+        (bsl::size_t)((kevent).udata))
 
 #define NTSO_KQUEUE_LOG_ADD(handle)                                           \
     BSLS_LOG_TRACE("Descriptor %d added", handle)
@@ -136,6 +164,7 @@ class Kqueue : public ntsi::Reactor
     ntsa::InterestSet d_interestSet;
     EventList         d_outputList;
     EventList         d_changeList;
+    bsl::size_t       d_generation;
     bslma::Allocator *d_allocator_p;
 
   private:
@@ -154,115 +183,31 @@ class Kqueue : public ntsi::Reactor
     /// Add the specified 'socket' to the reactor. Return the error.
     ntsa::Error add(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
 
-    /// Add the specified 'socket' to the reactor. Return the error.
-    ntsa::Error add(const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Add the specified 'socket' to the reactor. Return the error.
-    ntsa::Error add(const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Add the specified 'socket' to the reactor. Return the error.
-    ntsa::Error add(const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
-
     /// Remove the specified 'socket' from the reactor. Return the error.
     ntsa::Error remove(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Remove the specified 'socket' from the reactor. Return the error.
-    ntsa::Error remove(const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Remove the specified 'socket' from the reactor. Return the error.
-    ntsa::Error remove(const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Remove the specified 'socket' from the reactor. Return the error.
-    ntsa::Error remove(const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
 
     /// Unblock any thread waiting on the reactor when the specified
     /// 'socket' is readable. Return the error.
     ntsa::Error showReadable(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
 
     /// Unblock any thread waiting on the reactor when the specified
-    /// 'socket' is readable. Return the error.
-    ntsa::Error showReadable(const bsl::shared_ptr<ntsi::DatagramSocket>&
-                                 socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Unblock any thread waiting on the reactor when the specified
-    /// 'socket' is readable. Return the error.
-    ntsa::Error showReadable(const bsl::shared_ptr<ntsi::ListenerSocket>&
-                                 socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Unblock any thread waiting on the reactor when the specified
-    /// 'socket' is readable. Return the error.
-    ntsa::Error showReadable(const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Unblock any thread waiting on the reactor when the specified
     /// 'socket' is writable. Return the error.
     ntsa::Error showWritable(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Unblock any thread waiting on the reactor when the specified
-    /// 'socket' is writable. Return the error.
-    ntsa::Error showWritable(const bsl::shared_ptr<ntsi::DatagramSocket>&
-                                 socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Unblock any thread waiting on the reactor when the specified
-    /// 'socket' is writable. Return the error.
-    ntsa::Error showWritable(const bsl::shared_ptr<ntsi::ListenerSocket>&
-                                 socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Unblock any thread waiting on the reactor when the specified
-    /// 'socket' is writable. Return the error.
-    ntsa::Error showWritable(const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
 
     /// Do not unblock any thread waiting on the reactor when the specified
     /// 'socket' is readable. Return the error.
     ntsa::Error hideReadable(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
 
     /// Do not unblock any thread waiting on the reactor when the specified
-    /// 'socket' is readable. Return the error.
-    ntsa::Error hideReadable(const bsl::shared_ptr<ntsi::DatagramSocket>&
-                                 socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Do not unblock any thread waiting on the reactor when the specified
-    /// 'socket' is readable. Return the error.
-    ntsa::Error hideReadable(const bsl::shared_ptr<ntsi::ListenerSocket>&
-                                 socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Do not unblock any thread waiting on the reactor when the specified
-    /// 'socket' is readable. Return the error.
-    ntsa::Error hideReadable(const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Do not unblock any thread waiting on the reactor when the specified
     /// 'socket' is writable. Return the error.
     ntsa::Error hideWritable(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Do not unblock any thread waiting on the reactor when the specified
-    /// 'socket' is writable. Return the error.
-    ntsa::Error hideWritable(const bsl::shared_ptr<ntsi::DatagramSocket>&
-                                 socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Do not unblock any thread waiting on the reactor when the specified
-    /// 'socket' is writable. Return the error.
-    ntsa::Error hideWritable(const bsl::shared_ptr<ntsi::ListenerSocket>&
-                                 socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Do not unblock any thread waiting on the reactor when the specified
-    /// 'socket' is writable. Return the error.
-    ntsa::Error hideWritable(const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
 
     /// Block until at least one socket has a condition of interest or the
     /// specified absolute 'deadline', if any, elapses. Load into the specified
     /// 'result' the events that describe the sockets and their conditions.
     /// Return the error.
     ntsa::Error wait(
-        bsl::vector<ntsa::Event>*                      result,
+        ntsa::EventSet*                                result,
         const bdlb::NullableValue<bsls::TimeInterval>& deadline)              
         BSLS_KEYWORD_OVERRIDE;
 };
@@ -272,6 +217,7 @@ Kqueue::Kqueue(bslma::Allocator* basicAllocator)
 , d_interestSet(basicAllocator)
 , d_outputList(basicAllocator)
 , d_changeList(basicAllocator)
+, d_generation(0)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     d_kqueue = ::kqueue();
@@ -303,7 +249,6 @@ Kqueue::~Kqueue()
 ntsa::Error Kqueue::add(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
 
     if (socket < 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -321,21 +266,9 @@ ntsa::Error Kqueue::add(ntsa::Handle socket)
         e.flags  = EV_ADD | EV_DISABLE;
         e.fflags = 0;
         e.data   = 0;
-        e.udata  = 0;
+        e.udata  = (void*)(++d_generation);
 
-        // MRM: NTCO_KQUEUE_LOG_EVENT_APPLY(e);
-
-        do {
-            rc = ::kevent(d_kqueue, &e, 1, 0, 0, 0);
-        } while (rc == -1 && errno == EINTR);
-
-        if (rc != 0) {
-            if (errno != ENOENT) {
-                ntsa::Error error(errno);
-                // MRM: NTCO_KQUEUE_LOG_EVENT_APPLY_FAILURE(error);
-                return error;
-            }
-        }
+        d_changeList.push_back(e);
     }
 
     {
@@ -345,49 +278,19 @@ ntsa::Error Kqueue::add(ntsa::Handle socket)
         e.flags  = EV_ADD | EV_DISABLE;
         e.fflags = 0;
         e.data   = 0;
-        e.udata  = 0;
+        e.udata  = (void*)(++d_generation);
 
-        // MRM: NTCO_KQUEUE_LOG_EVENT_APPLY(e);
-
-        do {
-            rc = ::kevent(d_kqueue, &e, 1, 0, 0, 0);
-        } while (rc == -1 && errno == EINTR);
-
-        if (rc != 0) {
-            if (errno != ENOENT) {
-                ntsa::Error error(errno);
-                // MRM: NTCO_KQUEUE_LOG_EVENT_APPLY_FAILURE(error);
-                return error;
-            }
-        }
+        d_changeList.push_back(e);
     }
-
-    d_outputList.resize(2 * d_interestSet.numSockets());
 
     NTSO_KQUEUE_LOG_ADD(socket);
 
     return ntsa::Error();
 }
 
-ntsa::Error Kqueue::add(const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
-{
-    return this->add(socket->handle());
-}
-
-ntsa::Error Kqueue::add(const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
-{
-    return this->add(socket->handle());
-}
-
-ntsa::Error Kqueue::add(const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-{
-    return this->add(socket->handle());
-}
-
 ntsa::Error Kqueue::remove(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
 
     if (socket < 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -400,28 +303,15 @@ ntsa::Error Kqueue::remove(ntsa::Handle socket)
 
     {
         struct ::kevent e;
-        // MRM: EV_SET(&e, socket, EVFILT_READ, EV_DELETE, 0, 0, 0);
 
         e.ident  = socket;
         e.filter = EVFILT_READ;
         e.flags  = EV_DELETE;
         e.fflags = 0;
         e.data   = 0;
-        e.udata  = 0;
+        e.udata  = (void*)(++d_generation);
 
-        // MRM: NTCO_KQUEUE_LOG_EVENT_APPLY(e);
-
-        do {
-            rc = ::kevent(d_kqueue, &e, 1, 0, 0, 0);
-        } while (rc == -1 && errno == EINTR);
-
-        if (rc != 0) {
-            if (errno != ENOENT) {
-                ntsa::Error error(errno);
-                // MRM: NTCO_KQUEUE_LOG_EVENT_APPLY_FAILURE(error);
-                return error;
-            }
-        }
+        d_changeList.push_back(e);
     }
 
     {
@@ -431,49 +321,19 @@ ntsa::Error Kqueue::remove(ntsa::Handle socket)
         e.flags  = EV_DELETE;
         e.fflags = 0;
         e.data   = 0;
-        e.udata  = 0;
+        e.udata  = (void*)(++d_generation);
 
-        // MRM: NTCO_KQUEUE_LOG_EVENT_APPLY(e);
-
-        do {
-            rc = ::kevent(d_kqueue, &e, 1, 0, 0, 0);
-        } while (rc == -1 && errno == EINTR);
-
-        if (rc != 0) {
-            if (errno != ENOENT) {
-                ntsa::Error error(errno);
-                // MRM: NTCO_KQUEUE_LOG_EVENT_APPLY_FAILURE(error);
-                return error;
-            }
-        }
+        d_changeList.push_back(e);
     }
-
-    d_outputList.resize(2 * d_interestSet.numSockets());
 
     NTSO_KQUEUE_LOG_REMOVE(socket);
 
     return ntsa::Error();
 }
 
-ntsa::Error Kqueue::remove(const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
-{
-    return this->remove(socket->handle());
-}
-
-ntsa::Error Kqueue::remove(const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
-{
-    return this->remove(socket->handle());
-}
-
-ntsa::Error Kqueue::remove(const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-{
-    return this->remove(socket->handle());
-}
-
 ntsa::Error Kqueue::showReadable(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
 
     if (socket < 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -491,21 +351,9 @@ ntsa::Error Kqueue::showReadable(ntsa::Handle socket)
         e.flags  = EV_ADD | EV_ENABLE;
         e.fflags = 0;
         e.data   = 0;
-        e.udata  = 0;
+        e.udata  = (void*)(++d_generation);
 
-        // MRM: NTCO_KQUEUE_LOG_EVENT_APPLY(e);
-
-        do {
-            rc = ::kevent(d_kqueue, &e, 1, 0, 0, 0);
-        } while (rc == -1 && errno == EINTR);
-
-        if (rc != 0) {
-            if (errno != ENOENT) {
-                ntsa::Error error(errno);
-                // MRM: NTCO_KQUEUE_LOG_EVENT_APPLY_FAILURE(error);
-                return error;
-            }
-        }
+        d_changeList.push_back(e);
     }
 
     NTSO_KQUEUE_LOG_UPDATE(socket, d_interestSet);
@@ -513,28 +361,9 @@ ntsa::Error Kqueue::showReadable(ntsa::Handle socket)
     return ntsa::Error();
 }
 
-ntsa::Error Kqueue::showReadable(
-    const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
-{
-    return this->showReadable(socket->handle());
-}
-
-ntsa::Error Kqueue::showReadable(
-    const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
-{
-    return this->showReadable(socket->handle());
-}
-
-ntsa::Error Kqueue::showReadable(
-    const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-{
-    return this->showReadable(socket->handle());
-}
-
 ntsa::Error Kqueue::showWritable(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
     
     if (socket < 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -552,21 +381,9 @@ ntsa::Error Kqueue::showWritable(ntsa::Handle socket)
         e.flags  = EV_ADD | EV_ENABLE;
         e.fflags = 0;
         e.data   = 0;
-        e.udata  = 0;
+        e.udata  = (void*)(++d_generation);
 
-        // MRM: NTCO_KQUEUE_LOG_EVENT_APPLY(e);
-
-        do {
-            rc = ::kevent(d_kqueue, &e, 1, 0, 0, 0);
-        } while (rc == -1 && errno == EINTR);
-
-        if (rc != 0) {
-            if (errno != ENOENT) {
-                ntsa::Error error(errno);
-                // MRM: NTCO_KQUEUE_LOG_EVENT_APPLY_FAILURE(error);
-                return error;
-            }
-        }
+        d_changeList.push_back(e);
     }
 
     NTSO_KQUEUE_LOG_UPDATE(socket, d_interestSet);
@@ -574,28 +391,9 @@ ntsa::Error Kqueue::showWritable(ntsa::Handle socket)
     return ntsa::Error();
 }
 
-ntsa::Error Kqueue::showWritable(
-    const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
-{
-    return this->showWritable(socket->handle());
-}
-
-ntsa::Error Kqueue::showWritable(
-    const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
-{
-    return this->showWritable(socket->handle());
-}
-
-ntsa::Error Kqueue::showWritable(
-    const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-{
-    return this->showWritable(socket->handle());
-}
-
 ntsa::Error Kqueue::hideReadable(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
     
     if (socket < 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -613,21 +411,9 @@ ntsa::Error Kqueue::hideReadable(ntsa::Handle socket)
         e.flags  = EV_ADD | EV_DISABLE;
         e.fflags = 0;
         e.data   = 0;
-        e.udata  = 0;
+        e.udata  = (void*)(++d_generation);
 
-        // MRM: NTCO_KQUEUE_LOG_EVENT_APPLY(e);
-
-        do {
-            rc = ::kevent(d_kqueue, &e, 1, 0, 0, 0);
-        } while (rc == -1 && errno == EINTR);
-
-        if (rc != 0) {
-            if (errno != ENOENT) {
-                ntsa::Error error(errno);
-                // MRM: NTCO_KQUEUE_LOG_EVENT_APPLY_FAILURE(error);
-                return error;
-            }
-        }
+        d_changeList.push_back(e);
     }
 
     NTSO_KQUEUE_LOG_UPDATE(socket, d_interestSet);
@@ -635,28 +421,9 @@ ntsa::Error Kqueue::hideReadable(ntsa::Handle socket)
     return ntsa::Error();
 }
 
-ntsa::Error Kqueue::hideReadable(
-    const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
-{
-    return this->hideReadable(socket->handle());
-}
-
-ntsa::Error Kqueue::hideReadable(
-    const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
-{
-    return this->hideReadable(socket->handle());
-}
-
-ntsa::Error Kqueue::hideReadable(
-    const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-{
-    return this->hideReadable(socket->handle());
-}
-
 ntsa::Error Kqueue::hideWritable(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
     
     if (socket < 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -674,21 +441,9 @@ ntsa::Error Kqueue::hideWritable(ntsa::Handle socket)
         e.flags  = EV_ADD | EV_DISABLE;
         e.fflags = 0;
         e.data   = 0;
-        e.udata  = 0;
+        e.udata  = (void*)(++d_generation);
 
-        // MRM: NTCO_KQUEUE_LOG_EVENT_APPLY(e);
-
-        do {
-            rc = ::kevent(d_kqueue, &e, 1, 0, 0, 0);
-        } while (rc == -1 && errno == EINTR);
-
-        if (rc != 0) {
-            if (errno != ENOENT) {
-                ntsa::Error error(errno);
-                // MRM: NTCO_KQUEUE_LOG_EVENT_APPLY_FAILURE(error);
-                return error;
-            }
-        }
+        d_changeList.push_back(e);
     }
 
     NTSO_KQUEUE_LOG_UPDATE(socket, d_interestSet);
@@ -696,26 +451,8 @@ ntsa::Error Kqueue::hideWritable(ntsa::Handle socket)
     return ntsa::Error();
 }
 
-ntsa::Error Kqueue::hideWritable(
-    const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
-{
-    return this->hideReadable(socket->handle());
-}
-
-ntsa::Error Kqueue::hideWritable(
-    const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
-{
-    return this->hideWritable(socket->handle());
-}
-
-ntsa::Error Kqueue::hideWritable(
-    const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-{
-    return this->hideWritable(socket->handle());
-}
-
 ntsa::Error Kqueue::wait(
-    bsl::vector<ntsa::Event>*                      result,
+    ntsa::EventSet*                                result,
     const bdlb::NullableValue<bsls::TimeInterval>& timeout)
 {
     NTSCFG_WARNING_UNUSED(result);
@@ -751,13 +488,23 @@ ntsa::Error Kqueue::wait(
         NTSO_KQUEUE_LOG_WAIT_INDEFINITE();
     }
 
-    d_outputList.resize(d_outputList.size() /* MRM: + d_changeList.size() */);
+    const bsl::size_t outputListSizeRequired = 
+        (2 * d_interestSet.numSockets()) + d_changeList.size();
 
-    errno = 0;
+    if (d_outputList.size() < outputListSizeRequired) {
+        d_outputList.resize(outputListSizeRequired);
+    }
+
+    if (NTSCFG_UNLIKELY(!d_changeList.empty())) {
+        BSLS_LOG_TRACE("Applying change list size = %zu", d_changeList.size());
+        for (bsl::size_t i = 0; i < d_changeList.size(); ++i) {
+            NTSO_KQUEUE_LOG_EVENT_APPLY(d_changeList[i]);
+        }
+    }
 
     rc = ::kevent(d_kqueue, 
-                  0, // MRM: &d_changeList[0], 
-                  0, // MRM: static_cast<int>(d_changeList.size()), 
+                  &d_changeList[0], 
+                  static_cast<int>(d_changeList.size()), 
                   &d_outputList[0], 
                   static_cast<int>(d_outputList.size()), 
                   tsPtr);
@@ -782,13 +529,23 @@ ntsa::Error Kqueue::wait(
             event.setHandle(handle);
 
             if (NTSCFG_UNLIKELY((e.flags & EV_ERROR) != 0)) {
-                ntsa::Error lastError;
-                error = ntsu::SocketOptionUtil::getLastError(&lastError, handle);
-                if (!error && lastError) {
-                    event.setError(lastError);
+                if (e.data != 0) {
+                    event.setError(ntsa::Error(static_cast<int>(e.data)));
                 }
                 else {
-                    event.setError(ntsa::Error(ntsa::Error::e_INVALID));
+                    ntsa::Error lastError;
+                    ntsa::Error error =
+                        ntsu::SocketOptionUtil::getLastError(&lastError, 
+                                                             handle);
+                    if (error) {
+                        event.setError(error);
+                    }
+                    else if (lastError) {
+                        event.setError(lastError);
+                    }
+                    else {
+                        event.setExceptional();
+                    }
                 }
             }
             else if (e.filter == EVFILT_WRITE) {
@@ -799,18 +556,22 @@ ntsa::Error Kqueue::wait(
                 event.setReadable();
                 event.setBytesReadable(e.data);
             }
+            else {
+                continue;
+            }
             
-            result->push_back(event);
-        } 
-
+            result->merge(event);
+        }
     }
     else if (rc == 0) {
         NTSO_KQUEUE_LOG_WAIT_TIMEOUT();
+        d_changeList.clear();
         return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
     }
     else {
         ntsa::Error error = ntsa::Error::last();
         NTSO_KQUEUE_LOG_WAIT_FAILURE(error);
+        d_changeList.clear();
         return error;
     }
 

@@ -52,13 +52,8 @@ ntsa::Error Event::merge(const ntsa::Event& event)
         }
     }
 
-    if (!event.d_backlog.isNull()) {
-        if (!d_backlog.isNull()) {
-            d_backlog.value() += event.d_backlog.value();
-        }
-        else {
-            d_backlog.makeValue(event.d_backlog.value());
-        }
+    if (event.d_error) {
+        d_error = event.d_error;
     }
 
     return ntsa::Error();
@@ -69,7 +64,7 @@ bool Event::equals(const Event& other) const
     return (d_handle == other.d_handle && d_state == other.d_state &&
             d_bytesReadable == other.d_bytesReadable &&
             d_bytesWritable == other.d_bytesWritable &&
-            d_backlog == other.d_backlog && d_error == other.d_error);
+            d_error == other.d_error);
 }
 
 bool Event::less(const Event& other) const
@@ -103,14 +98,6 @@ bool Event::less(const Event& other) const
     }
 
     if (other.d_bytesWritable < d_bytesWritable) {
-        return false;
-    }
-
-    if (d_backlog < other.d_backlog) {
-        return true;
-    }
-
-    if (other.d_backlog < d_backlog) {
         return false;
     }
 
@@ -200,10 +187,6 @@ bsl::ostream& Event::print(bsl::ostream& stream,
         printer.printAttribute("bytesWritable", d_bytesWritable);
     }
 
-    if (!d_backlog.isNull()) {
-        printer.printAttribute("backlog", d_backlog);
-    }
-
     if (d_error) {
         printer.printAttribute("error", d_error);
     }
@@ -222,12 +205,10 @@ EventSet::EventSet(const EventSet& original, bslma::Allocator* basicAllocator)
 : d_map(original.d_map, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-
 }
 
 EventSet::~EventSet()
 {
-
 }
 
 EventSet& EventSet::operator=(const EventSet& other)
@@ -252,6 +233,11 @@ void EventSet::merge(const ntsa::Event& event)
 void EventSet::clear()
 {
     d_map.clear();
+}
+
+void EventSet::reserve(bsl::size_t size)
+{
+    NTSCFG_WARNING_UNUSED(size);
 }
 
 void EventSet::setReadable(ntsa::Handle socket)
@@ -318,6 +304,28 @@ void EventSet::setError(ntsa::Handle socket, const ntsa::Error& error)
 
     event.setHandle(socket);
     event.setError(error);
+}
+
+EventSet::Iterator EventSet::begin() BSLS_KEYWORD_NOEXCEPT
+{
+    return EventSet::Iterator(this, d_map.begin());
+}
+
+EventSet::Iterator EventSet::end() BSLS_KEYWORD_NOEXCEPT
+{
+    return EventSet::Iterator(this, d_map.end());
+}
+
+bool EventSet::find(ntsa::Event* result, ntsa::Handle socket) const
+{
+    Map::const_iterator it = d_map.find(socket);
+    if (it == d_map.end()) {
+        result->reset();
+        return false;
+    }
+
+    *result = it->second;
+    return true;
 }
 
 bool EventSet::isReadable(ntsa::Handle socket) const
@@ -390,6 +398,37 @@ bool EventSet::isHangup(ntsa::Handle socket) const
     const ntsa::Event& event = it->second;
 
     return event.isHangup();
+}
+
+
+bsl::size_t EventSet::size() const
+{
+    return d_map.size();
+}
+
+bool EventSet::empty() const
+{
+    return d_map.empty();
+}
+
+EventSet::ConstIterator EventSet::begin() const BSLS_KEYWORD_NOEXCEPT
+{
+    return EventSet::ConstIterator(this, d_map.begin());
+}
+
+EventSet::ConstIterator EventSet::end() const BSLS_KEYWORD_NOEXCEPT
+{
+    return EventSet::ConstIterator(this, d_map.end());
+}
+
+EventSet::ConstIterator EventSet::cbegin() const BSLS_KEYWORD_NOEXCEPT
+{
+    return EventSet::ConstIterator(this, d_map.begin());
+}
+
+EventSet::ConstIterator EventSet::cend() const BSLS_KEYWORD_NOEXCEPT
+{
+    return EventSet::ConstIterator(this, d_map.end());
 }
 
 bool EventSet::equals(const EventSet& other) const

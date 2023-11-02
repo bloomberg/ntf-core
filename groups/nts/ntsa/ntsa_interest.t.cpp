@@ -55,8 +55,8 @@ NTSCFG_TEST_CASE(1)
         NTSCFG_TEST_LOG_DEBUG << "Interest set = " << interestSet
                               << NTSCFG_TEST_LOG_END;
 
-        for (ntsa::InterestSet::const_iterator it  = interestSet.begin(); 
-                                               it != interestSet.end(); 
+        for (ntsa::InterestSet::const_iterator it  = interestSet.cbegin(); 
+                                               it != interestSet.cend(); 
                                              ++it)
         {
             NTSCFG_TEST_LOG_DEBUG << "Interest = " << *it 

@@ -73,7 +73,6 @@ class Event
     bsl::uint32_t                    d_state;
     bdlb::NullableValue<bsl::size_t> d_bytesReadable;
     bdlb::NullableValue<bsl::size_t> d_bytesWritable;
-    bdlb::NullableValue<bsl::size_t> d_backlog;
     ntsa::Error                      d_error;
 
   public:
@@ -121,10 +120,6 @@ class Event
     /// 'value'.
     void setBytesWritable(bsl::size_t value);
 
-    /// Set the number of connections in the socket backlog to the specified
-    /// 'value'.
-    void setBacklog(bsl::size_t backlog);
-
     /// Set the error detected for the socket at the time of the event to
     /// the specified 'value'.
     void setError(const ntsa::Error& error);
@@ -143,9 +138,6 @@ class Event
 
     /// Return the number of bytes writable to the socket, if known.
     const bdlb::NullableValue<bsl::size_t>& bytesWritable() const;
-
-    /// Return the number of connections in the socket backlog, if known.
-    const bdlb::NullableValue<bsl::size_t>& backlog() const;
 
     /// Return the error detected for the socket, if any. Note that errors
     /// may be detected for readble or writable events in addition to
@@ -244,12 +236,26 @@ void hashAppend(HASH_ALGORITHM& algorithm, const Event& value);
 /// @ingroup module_ntsa_system
 class EventSet
 {
+    class ConstIterator;
+    friend class ConstIterator;
+
+    class Iterator;
+    friend class Iterator;
+
     typedef bsl::map<ntsa::Handle, ntsa::Event> Map;
 
     Map               d_map;
     bslma::Allocator *d_allocator_p;
 
   public:
+    /// Define a type alias for an iterator over the modifiable elements in the
+    /// set.
+    typedef Iterator iterator;
+    
+    /// Define a type alias for an iterator over the immutable elemtns in the
+    /// set.
+    typedef ConstIterator const_iterator;
+
     /// Create a new, initially empty event set. Optionally specify a
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
     /// currently installed default allocator is used.
@@ -270,6 +276,10 @@ class EventSet
 
     /// Remove all events from the set.
     void clear();
+
+    /// Allocate capacity to store at least the specified 'size' number of
+    /// events. 
+    void reserve(bsl::size_t size);
 
     /// Unconditionally insert the specified 'event' into the set. 
     void overwrite(const ntsa::Event& event);
@@ -304,6 +314,18 @@ class EventSet
     /// event to the specified 'value'.
     void setError(ntsa::Handle socket, const ntsa::Error& error);
 
+    /// Return the iterator to the beginning of the non-modifiable interest
+    /// set.
+    Iterator begin() BSLS_KEYWORD_NOEXCEPT;
+
+    /// Return the iterator to the end of the non-modifiable interest set.
+    Iterator end() BSLS_KEYWORD_NOEXCEPT;
+
+    /// Load into the specified 'result' the event for the specified 'socket'.
+    /// Return true if and event for the 'socket' is found, and false
+    /// otherwise.  
+    bool find(ntsa::Event* result, ntsa::Handle socket) const;
+
     /// Return the flag indicating the socket is readable.
     bool isReadable(ntsa::Handle socket) const;
 
@@ -322,6 +344,26 @@ class EventSet
 
     /// Return the flag indicating the socket is disconnected.
     bool isHangup(ntsa::Handle socket) const;
+
+    /// Return the number of events in the set.
+    bsl::size_t size() const;
+
+    /// Return true if there are no events in the set, otherwise return false. 
+    bool empty() const;
+
+    /// Return the iterator to the beginning of the non-modifiable interest
+    /// set.
+    ConstIterator begin() const BSLS_KEYWORD_NOEXCEPT;
+
+    /// Return the iterator to the end of the non-modifiable interest set.
+    ConstIterator end() const BSLS_KEYWORD_NOEXCEPT;
+
+    /// Return the iterator to the beginning of the non-modifiable interest
+    /// set.
+    ConstIterator cbegin() const BSLS_KEYWORD_NOEXCEPT;
+
+    /// Return the iterator to the end of the non-modifiable interest set.
+    ConstIterator cend() const BSLS_KEYWORD_NOEXCEPT;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -367,13 +409,163 @@ bool operator==(const EventSet& lhs, const EventSet& rhs);
 /// @related ntsa::EventSet
 bool operator!=(const EventSet& lhs, const EventSet& rhs);
 
+/// Provide an iterator over a modifiable set of events.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntsa_system
+class EventSet::ConstIterator
+{
+    typedef bsl::map<ntsa::Handle, ntsa::Event>::const_iterator BaseIterator;
+
+    const EventSet* d_eventSet_p;
+    BaseIterator    d_baseIterator;
+
+  public:
+    /// Define a type alias for the iterator category to which
+    /// this iterator belongs.
+    typedef bsl::forward_iterator_tag iterator_category;
+
+    /// Define a type alias for the type of the result of
+    /// dereferencing this iterator.
+    typedef ntsa::Event value_type;
+
+    /// Define a type alias for the integral type capable of
+    /// representing the difference between two addresses.
+    typedef bsl::ptrdiff_t difference_type;
+
+    /// Define a type alias for the type that is a pointer to
+    /// type that is the result of dererencing this iterator.
+    typedef value_type* pointer;
+
+    /// Define a type alias for the type that is a reference
+    /// to the type that is the result of dereferencing this iterator.
+    typedef value_type& reference;
+
+    /// Create a new, undefined iterator.
+    ConstIterator();
+
+    /// Create a new iterator over the specified 'eventSet' at the specified
+    /// 'baseIterator'.
+    ConstIterator(const EventSet* eventSet, BaseIterator baseIterator);
+
+    /// Create a new iterator having the same value as the specified 'other'
+    /// iterator.
+    ConstIterator(const ConstIterator& original);
+
+    /// Destroy this object.
+    ~ConstIterator();
+
+    /// Assign the value of the specified 'other' object to this object. Return
+    /// a reference to this modifiable object. 
+    ConstIterator operator=(const ConstIterator& other);
+
+    // Increment this iterator to alias the next buffer in the blob and
+    /// return this iterator.
+    ConstIterator& operator++() BSLS_KEYWORD_NOEXCEPT;
+
+    /// Increment this iterator to alias the next buffer in the blob and
+    /// return and iterator that aliases the byte this iterator alias before
+    /// it was incremented.
+    ConstIterator operator++(int) BSLS_KEYWORD_NOEXCEPT;
+
+    /// Return a reference to the non-modifiable buffer aliased by this
+    /// iterator.
+    const value_type& operator*() const BSLS_KEYWORD_NOEXCEPT;
+
+    /// Return true if this iterator aliases the same non-modifiable buffer
+    /// as the specified 'other' iterator, otherwise return false.
+    bool operator==(const ConstIterator& other) const BSLS_KEYWORD_NOEXCEPT;
+
+    /// Return true if this iterator does not alias the same non-modifiable
+    /// buffer as the specified 'other' iterator, otherwise return false.
+    bool operator!=(const ConstIterator& other) const BSLS_KEYWORD_NOEXCEPT;
+};
+
+/// Provide an iterator over an immutable set of events.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntsa_system
+class EventSet::Iterator
+{
+    typedef bsl::map<ntsa::Handle, ntsa::Event>::iterator BaseIterator;
+
+    EventSet*    d_eventSet_p;
+    BaseIterator d_baseIterator;
+
+  public:
+    /// Define a type alias for the iterator category to which
+    /// this iterator belongs.
+    typedef bsl::forward_iterator_tag iterator_category;
+
+    /// Define a type alias for the type of the result of
+    /// dereferencing this iterator.
+    typedef ntsa::Event value_type;
+
+    /// Define a type alias for the integral type capable of
+    /// representing the difference between two addresses.
+    typedef bsl::ptrdiff_t difference_type;
+
+    /// Define a type alias for the type that is a pointer to
+    /// type that is the result of dererencing this iterator.
+    typedef value_type* pointer;
+
+    /// Define a type alias for the type that is a reference
+    /// to the type that is the result of dereferencing this iterator.
+    typedef value_type& reference;
+
+    /// Create a new, undefined iterator.
+    Iterator();
+
+    /// Create a new iterator over the specified 'eventSet' at the specified
+    /// 'baseIterator'.
+    Iterator(EventSet* eventSet, BaseIterator baseIterator);
+
+    /// Create a new iterator having the same value as the specified 'other'
+    /// iterator.
+    Iterator(const Iterator& original);
+
+    /// Destroy this object.
+    ~Iterator();
+
+    /// Assign the value of the specified 'other' object to this object. Return
+    /// a reference to this modifiable object. 
+    Iterator operator=(const Iterator& other);
+
+    // Increment this iterator to alias the next buffer in the blob and
+    /// return this iterator.
+    Iterator& operator++() BSLS_KEYWORD_NOEXCEPT;
+
+    /// Increment this iterator to alias the next buffer in the blob and
+    /// return and iterator that aliases the byte this iterator alias before
+    /// it was incremented.
+    Iterator operator++(int) BSLS_KEYWORD_NOEXCEPT;
+
+    /// Return a reference to the non-modifiable buffer aliased by this
+    /// iterator.
+    value_type& operator*() const BSLS_KEYWORD_NOEXCEPT;
+
+    /// Implicitly convert this object.
+    operator EventSet::ConstIterator() const BSLS_KEYWORD_NOEXCEPT;
+
+    /// Return true if this iterator aliases the same non-modifiable buffer
+    /// as the specified 'other' iterator, otherwise return false.
+    bool operator==(const Iterator& other) const BSLS_KEYWORD_NOEXCEPT;
+
+    /// Return true if this iterator does not alias the same non-modifiable
+    /// buffer as the specified 'other' iterator, otherwise return false.
+    bool operator!=(const Iterator& other) const BSLS_KEYWORD_NOEXCEPT;
+};
+
 NTSCFG_INLINE
 Event::Event()
 : d_handle(ntsa::k_INVALID_HANDLE)
 , d_state(0)
 , d_bytesReadable()
 , d_bytesWritable()
-, d_backlog()
 , d_error()
 {
 }
@@ -384,7 +576,6 @@ Event::Event(const Event& original)
 , d_state(original.d_state)
 , d_bytesReadable(original.d_bytesReadable)
 , d_bytesWritable(original.d_bytesWritable)
-, d_backlog(original.d_backlog)
 , d_error(original.d_error)
 {
 }
@@ -402,7 +593,6 @@ Event& Event::operator=(const Event& other)
         d_state         = other.d_state;
         d_bytesReadable = other.d_bytesReadable;
         d_bytesWritable = other.d_bytesWritable;
-        d_backlog       = other.d_backlog;
         d_error         = other.d_error;
     }
     return *this;
@@ -415,7 +605,6 @@ void Event::reset()
     d_state  = 0;
     d_bytesReadable.reset();
     d_bytesWritable.reset();
-    d_backlog.reset();
     d_error = ntsa::Error();
 }
 
@@ -465,12 +654,6 @@ NTSCFG_INLINE
 void Event::setBytesWritable(bsl::size_t value)
 {
     d_bytesWritable = value;
-}
-
-NTSCFG_INLINE
-void Event::setBacklog(bsl::size_t value)
-{
-    d_backlog = value;
 }
 
 NTSCFG_INLINE
@@ -579,7 +762,6 @@ void hashAppend(HASH_ALGORITHM& algorithm, const Event& value)
     hashAppend(algorithm, value.state());
     hashAppend(algorithm, value.bytesReadable());
     hashAppend(algorithm, value.bytesWritable());
-    hashAppend(algorithm, value.backlog());
     hashAppend(algorithm, value.error());
 }
 
@@ -599,6 +781,173 @@ NTSCFG_INLINE
 bool operator!=(const EventSet& lhs, const EventSet& rhs)
 {
     return !operator==(lhs, rhs);
+}
+
+NTSCFG_INLINE
+EventSet::ConstIterator::ConstIterator()
+: d_eventSet_p(0)
+, d_baseIterator()
+{
+}
+
+NTSCFG_INLINE
+EventSet::ConstIterator::ConstIterator(
+    const EventSet* eventSet, 
+    BaseIterator    baseIterator)
+: d_eventSet_p(eventSet)
+, d_baseIterator(baseIterator)
+{
+}
+
+NTSCFG_INLINE
+EventSet::ConstIterator::ConstIterator(
+        const EventSet::ConstIterator& original)
+: d_eventSet_p(original.d_eventSet_p)
+, d_baseIterator(original.d_baseIterator)
+{
+}
+
+NTSCFG_INLINE
+EventSet::ConstIterator::~ConstIterator()
+{
+}
+
+NTSCFG_INLINE
+EventSet::ConstIterator 
+EventSet::ConstIterator::operator=(
+    const EventSet::ConstIterator& other)
+{
+    if (this != &other) {
+        d_eventSet_p  = other.d_eventSet_p;
+        d_baseIterator = other.d_baseIterator;
+    }
+
+    return *this;
+}
+
+NTSCFG_INLINE
+EventSet::ConstIterator& 
+EventSet::ConstIterator::operator++() BSLS_KEYWORD_NOEXCEPT
+{
+    ++d_baseIterator;
+    return *this;
+}
+
+NTSCFG_INLINE
+EventSet::ConstIterator 
+EventSet::ConstIterator::operator++(int) BSLS_KEYWORD_NOEXCEPT
+{
+    ConstIterator temp(*this);
+    ++(*this);
+    return temp;
+}
+
+NTSCFG_INLINE
+const EventSet::ConstIterator::value_type& 
+EventSet::ConstIterator::operator*() const BSLS_KEYWORD_NOEXCEPT
+{
+    return d_baseIterator->second;
+}
+
+NTSCFG_INLINE
+bool EventSet::ConstIterator::operator==(
+    const EventSet::ConstIterator& other) const BSLS_KEYWORD_NOEXCEPT
+{
+    return (d_eventSet_p  == other.d_eventSet_p &&
+            d_baseIterator == other.d_baseIterator);
+}
+
+NTSCFG_INLINE
+bool EventSet::ConstIterator::operator!=(
+    const EventSet::ConstIterator& other) const BSLS_KEYWORD_NOEXCEPT
+{
+    return !this->operator==(other);
+}
+
+NTSCFG_INLINE
+EventSet::Iterator::Iterator()
+: d_eventSet_p(0)
+, d_baseIterator()
+{
+}
+
+NTSCFG_INLINE
+EventSet::Iterator::Iterator(
+    EventSet*    eventSet, 
+    BaseIterator baseIterator)
+: d_eventSet_p(eventSet)
+, d_baseIterator(baseIterator)
+{
+}
+
+NTSCFG_INLINE
+EventSet::Iterator::Iterator(const EventSet::Iterator& original)
+: d_eventSet_p(original.d_eventSet_p)
+, d_baseIterator(original.d_baseIterator)
+{
+}
+
+NTSCFG_INLINE
+EventSet::Iterator::~Iterator()
+{
+}
+
+NTSCFG_INLINE
+EventSet::Iterator EventSet::Iterator::operator=(
+    const EventSet::Iterator& other)
+{
+    if (this != &other) {
+        d_eventSet_p = other.d_eventSet_p;
+        d_baseIterator = other.d_baseIterator;
+    }
+
+    return *this;
+}
+
+NTSCFG_INLINE
+EventSet::Iterator& 
+EventSet::Iterator::operator++() BSLS_KEYWORD_NOEXCEPT
+{
+    ++d_baseIterator;
+    return *this;
+}
+
+NTSCFG_INLINE
+EventSet::Iterator 
+EventSet::Iterator::operator++(int) BSLS_KEYWORD_NOEXCEPT
+{
+    Iterator temp(*this);
+    ++(*this);
+    return temp;
+}
+
+NTSCFG_INLINE
+EventSet::Iterator::value_type& 
+EventSet::Iterator::operator*() const BSLS_KEYWORD_NOEXCEPT
+{
+    return d_baseIterator->second;
+}
+
+NTSCFG_INLINE
+EventSet::Iterator::operator 
+EventSet::ConstIterator() const BSLS_KEYWORD_NOEXCEPT
+{
+    return EventSet::ConstIterator(d_eventSet_p, d_baseIterator);
+}
+
+NTSCFG_INLINE
+bool EventSet::Iterator::operator==(
+    const EventSet::Iterator& other) const BSLS_KEYWORD_NOEXCEPT
+{
+    return (d_eventSet_p  == other.d_eventSet_p &&
+            d_baseIterator == other.d_baseIterator);
+}
+
+NTSCFG_INLINE
+bool EventSet::Iterator::operator!=(
+    const EventSet::Iterator& other) const BSLS_KEYWORD_NOEXCEPT
+{
+    return !this->operator==(other);
 }
 
 }  // end namespace ntsa

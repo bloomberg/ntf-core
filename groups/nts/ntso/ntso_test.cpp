@@ -35,7 +35,7 @@ void Test::usage(
     {
         const bsl::shared_ptr<ntsi::Reactor>& reactor = *reactorIterator;
 
-        bsl::vector<ntsa::Event> events(allocator);
+        ntsa::EventSet eventSet(allocator);
 
         bdlb::NullableValue<bsls::TimeInterval> deadline;
 
@@ -66,13 +66,12 @@ void Test::usage(
 
         // Wait until the client is writable.
 
-        error = reactor->wait(&events, deadline);
+        error = reactor->wait(&eventSet, deadline);
         NTSCFG_TEST_OK(error);
-        ntso::Test::log(events);
+        ntso::Test::log(eventSet);
 
-        NTSCFG_TEST_EQ(events.size(), 1);
-        NTSCFG_TEST_EQ(events[0].handle(), client->handle());
-        NTSCFG_TEST_TRUE(events[0].isWritable());
+        NTSCFG_TEST_EQ(eventSet.size(), 1);
+        NTSCFG_TEST_TRUE(eventSet.isWritable(client->handle()));
 
         // Send a single byte to the server.
 
@@ -109,13 +108,12 @@ void Test::usage(
 
         // Wait until the server is readable.
 
-        error = reactor->wait(&events, deadline);
+        error = reactor->wait(&eventSet, deadline);
         NTSCFG_TEST_OK(error);
-        ntso::Test::log(events);
+        ntso::Test::log(eventSet);
 
-        NTSCFG_TEST_EQ(events.size(), 1);
-        NTSCFG_TEST_EQ(events[0].handle(), server->handle());
-        NTSCFG_TEST_TRUE(events[0].isReadable());
+        NTSCFG_TEST_EQ(eventSet.size(), 1);
+        NTSCFG_TEST_TRUE(eventSet.isReadable(server->handle()));
 
         // Receive a single byte at the server.
 
@@ -153,13 +151,12 @@ void Test::usage(
 
         // Wait until the server is writable.
 
-        error = reactor->wait(&events, deadline);
+        error = reactor->wait(&eventSet, deadline);
         NTSCFG_TEST_OK(error);
-        ntso::Test::log(events);
+        ntso::Test::log(eventSet);
 
-        NTSCFG_TEST_EQ(events.size(), 1);
-        NTSCFG_TEST_EQ(events[0].handle(), server->handle());
-        NTSCFG_TEST_TRUE(events[0].isWritable());
+        NTSCFG_TEST_EQ(eventSet.size(), 1);
+        NTSCFG_TEST_TRUE(eventSet.isWritable(server->handle()));
 
         // Send a single byte to the client.
 
@@ -196,13 +193,12 @@ void Test::usage(
 
         // Wait until the client is readable.
 
-        error = reactor->wait(&events, deadline);
+        error = reactor->wait(&eventSet, deadline);
         NTSCFG_TEST_OK(error);
-        ntso::Test::log(events);
+        ntso::Test::log(eventSet);
 
-        NTSCFG_TEST_EQ(events.size(), 1);
-        NTSCFG_TEST_EQ(events[0].handle(), client->handle());
-        NTSCFG_TEST_TRUE(events[0].isReadable());
+        NTSCFG_TEST_EQ(eventSet.size(), 1);
+        NTSCFG_TEST_TRUE(eventSet.isReadable(client->handle()));
 
         // Receive a single byte at the client.
 
@@ -248,13 +244,12 @@ void Test::usage(
 
         // Wait until the server is readable.
 
-        error = reactor->wait(&events, deadline);
+        error = reactor->wait(&eventSet, deadline);
         NTSCFG_TEST_OK(error);
-        ntso::Test::log(events);
+        ntso::Test::log(eventSet);
 
-        NTSCFG_TEST_EQ(events.size(), 1);
-        NTSCFG_TEST_EQ(events[0].handle(), server->handle());
-        NTSCFG_TEST_TRUE(events[0].isReadable());
+        NTSCFG_TEST_EQ(eventSet.size(), 1);
+        NTSCFG_TEST_TRUE(eventSet.isReadable(server->handle()));
 
         // Receive a single byte at the server.
 
@@ -304,13 +299,12 @@ void Test::usage(
 
         // Wait until the client is readable.
 
-        error = reactor->wait(&events, deadline);
+        error = reactor->wait(&eventSet, deadline);
         NTSCFG_TEST_OK(error);
-        ntso::Test::log(events);
+        ntso::Test::log(eventSet);
 
-        NTSCFG_TEST_EQ(events.size(), 1);
-        NTSCFG_TEST_EQ(events[0].handle(), client->handle());
-        NTSCFG_TEST_TRUE(events[0].isReadable());
+        NTSCFG_TEST_EQ(eventSet.size(), 1);
+        NTSCFG_TEST_TRUE(eventSet.isReadable(client->handle()));
 
         // Receive a single byte at the client.
 
@@ -363,7 +357,7 @@ void Test::pollingAfterFullShutdown(
     {
         const bsl::shared_ptr<ntsi::Reactor>& reactor = *reactorIterator;
 
-        bsl::vector<ntsa::Event> events(allocator);
+        ntsa::EventSet eventSet(allocator);
 
         bdlb::NullableValue<bsls::TimeInterval> deadline;
 
@@ -394,13 +388,12 @@ void Test::pollingAfterFullShutdown(
 
         // Wait until the client is writable.
 
-        error = reactor->wait(&events, deadline);
+        error = reactor->wait(&eventSet, deadline);
         NTSCFG_TEST_OK(error);
-        ntso::Test::log(events);
+        ntso::Test::log(eventSet);
 
-        NTSCFG_TEST_EQ(events.size(), 1);
-        NTSCFG_TEST_EQ(events[0].handle(), client->handle());
-        NTSCFG_TEST_TRUE(events[0].isWritable());
+        NTSCFG_TEST_EQ(eventSet.size(), 1);
+        NTSCFG_TEST_TRUE(eventSet.isWritable(client->handle()));
 
         // Send a single byte to the server.
 
@@ -437,13 +430,12 @@ void Test::pollingAfterFullShutdown(
 
         // Wait until the server is readable.
 
-        error = reactor->wait(&events, deadline);
+        error = reactor->wait(&eventSet, deadline);
         NTSCFG_TEST_OK(error);
-        ntso::Test::log(events);
+        ntso::Test::log(eventSet);
 
-        NTSCFG_TEST_EQ(events.size(), 1);
-        NTSCFG_TEST_EQ(events[0].handle(), server->handle());
-        NTSCFG_TEST_TRUE(events[0].isReadable());
+        NTSCFG_TEST_EQ(eventSet.size(), 1);
+        NTSCFG_TEST_TRUE(eventSet.isReadable(server->handle()));
 
         // Receive a single byte at the server.
 
@@ -481,13 +473,12 @@ void Test::pollingAfterFullShutdown(
 
         // Wait until the server is writable.
 
-        error = reactor->wait(&events, deadline);
+        error = reactor->wait(&eventSet, deadline);
         NTSCFG_TEST_OK(error);
-        ntso::Test::log(events);
+        ntso::Test::log(eventSet);
 
-        NTSCFG_TEST_EQ(events.size(), 1);
-        NTSCFG_TEST_EQ(events[0].handle(), server->handle());
-        NTSCFG_TEST_TRUE(events[0].isWritable());
+        NTSCFG_TEST_EQ(eventSet.size(), 1);
+        NTSCFG_TEST_TRUE(eventSet.isWritable(server->handle()));
 
         // Send a single byte to the client.
 
@@ -524,13 +515,12 @@ void Test::pollingAfterFullShutdown(
 
         // Wait until the client is readable.
 
-        error = reactor->wait(&events, deadline);
+        error = reactor->wait(&eventSet, deadline);
         NTSCFG_TEST_OK(error);
-        ntso::Test::log(events);
+        ntso::Test::log(eventSet);
 
-        NTSCFG_TEST_EQ(events.size(), 1);
-        NTSCFG_TEST_EQ(events[0].handle(), client->handle());
-        NTSCFG_TEST_TRUE(events[0].isReadable());
+        NTSCFG_TEST_EQ(eventSet.size(), 1);
+        NTSCFG_TEST_TRUE(eventSet.isReadable(client->handle()));
 
         // Receive a single byte at the client.
 
@@ -576,13 +566,12 @@ void Test::pollingAfterFullShutdown(
 
         // Wait until the server is readable.
 
-        error = reactor->wait(&events, deadline);
+        error = reactor->wait(&eventSet, deadline);
         NTSCFG_TEST_OK(error);
-        ntso::Test::log(events);
+        ntso::Test::log(eventSet);
 
-        NTSCFG_TEST_EQ(events.size(), 1);
-        NTSCFG_TEST_EQ(events[0].handle(), server->handle());
-        NTSCFG_TEST_TRUE(events[0].isReadable());
+        NTSCFG_TEST_EQ(eventSet.size(), 1);
+        NTSCFG_TEST_TRUE(eventSet.isReadable(server->handle()));
 
         // Receive a single byte at the server.
 
@@ -632,13 +621,12 @@ void Test::pollingAfterFullShutdown(
 
         // Wait until the client is readable.
 
-        error = reactor->wait(&events, deadline);
+        error = reactor->wait(&eventSet, deadline);
         NTSCFG_TEST_OK(error);
-        ntso::Test::log(events);
+        ntso::Test::log(eventSet);
 
-        NTSCFG_TEST_EQ(events.size(), 1);
-        NTSCFG_TEST_EQ(events[0].handle(), client->handle());
-        NTSCFG_TEST_TRUE(events[0].isReadable());
+        NTSCFG_TEST_EQ(eventSet.size(), 1);
+        NTSCFG_TEST_TRUE(eventSet.isReadable(client->handle()));
 
         // Receive a single byte at the client.
 
@@ -686,14 +674,13 @@ void Test::pollingAfterFullShutdown(
 
         // Wait until the server is readable or has an error.
 
-        error = reactor->wait(&events, deadline);
+        error = reactor->wait(&eventSet, deadline);
         NTSCFG_TEST_OK(error);
-        ntso::Test::log(events);
+        ntso::Test::log(eventSet);
 
-        NTSCFG_TEST_EQ(events.size(), 1);
-        NTSCFG_TEST_EQ(events[0].handle(), server->handle());
-        NTSCFG_TEST_TRUE(events[0].isReadable() || 
-                         events[0].isError());
+        NTSCFG_TEST_EQ(eventSet.size(), 1);
+        NTSCFG_TEST_TRUE(eventSet.isReadable(server->handle()) || 
+                         eventSet.isError(server->handle()));
 
         // Lose interest in the readability of the server.
 
@@ -719,13 +706,13 @@ void Test::pollingAfterFullShutdown(
 
         // Wait until the client is readable or has an error.
 
-        error = reactor->wait(&events, deadline);
+        error = reactor->wait(&eventSet, deadline);
         NTSCFG_TEST_OK(error);
-        ntso::Test::log(events);
+        ntso::Test::log(eventSet);
 
-        NTSCFG_TEST_EQ(events.size(), 1);
-        NTSCFG_TEST_EQ(events[0].handle(), client->handle());
-        NTSCFG_TEST_TRUE(events[0].isReadable() || events[0].isError());
+        NTSCFG_TEST_EQ(eventSet.size(), 1);
+        NTSCFG_TEST_TRUE(eventSet.isReadable(client->handle()) || 
+                         eventSet.isError(client->handle()));
 
         // Lose interest in the readability of the client.
 
@@ -742,7 +729,7 @@ void Test::pollingAfterFullShutdown(
     }
 }
 
-void Test::pollingDuringClose(
+void Test::pollingAfterClose(
         const ReactorVector& reactors, bslma::Allocator* allocator)
 {
     // Concern: Close socket while it still remains added to the reactor.
@@ -756,7 +743,7 @@ void Test::pollingDuringClose(
     {
         const bsl::shared_ptr<ntsi::Reactor>& reactor = *reactorIterator;
 
-        bsl::vector<ntsa::Event> events(allocator);
+        ntsa::EventSet eventSet(allocator);
 
         bdlb::NullableValue<bsls::TimeInterval> deadline;
 
@@ -787,13 +774,12 @@ void Test::pollingDuringClose(
 
         // Wait until the client is writable.
 
-        error = reactor->wait(&events, deadline);
+        error = reactor->wait(&eventSet, deadline);
         NTSCFG_TEST_OK(error);
-        ntso::Test::log(events);
+        ntso::Test::log(eventSet);
 
-        NTSCFG_TEST_EQ(events.size(), 1);
-        NTSCFG_TEST_EQ(events[0].handle(), client->handle());
-        NTSCFG_TEST_TRUE(events[0].isWritable());
+        NTSCFG_TEST_EQ(eventSet.size(), 1);
+        NTSCFG_TEST_TRUE(eventSet.isWritable(client->handle()));
 
         // Send a single byte to the server.
 
@@ -830,13 +816,12 @@ void Test::pollingDuringClose(
 
         // Wait until the server is readable.
 
-        error = reactor->wait(&events, deadline);
+        error = reactor->wait(&eventSet, deadline);
         NTSCFG_TEST_OK(error);
-        ntso::Test::log(events);
+        ntso::Test::log(eventSet);
 
-        NTSCFG_TEST_EQ(events.size(), 1);
-        NTSCFG_TEST_EQ(events[0].handle(), server->handle());
-        NTSCFG_TEST_TRUE(events[0].isReadable());
+        NTSCFG_TEST_EQ(eventSet.size(), 1);
+        NTSCFG_TEST_TRUE(eventSet.isReadable(server->handle()));
 
         // Receive a single byte at the server.
 
@@ -874,13 +859,12 @@ void Test::pollingDuringClose(
 
         // Wait until the server is writable.
 
-        error = reactor->wait(&events, deadline);
+        error = reactor->wait(&eventSet, deadline);
         NTSCFG_TEST_OK(error);
-        ntso::Test::log(events);
+        ntso::Test::log(eventSet);
 
-        NTSCFG_TEST_EQ(events.size(), 1);
-        NTSCFG_TEST_EQ(events[0].handle(), server->handle());
-        NTSCFG_TEST_TRUE(events[0].isWritable());
+        NTSCFG_TEST_EQ(eventSet.size(), 1);
+        NTSCFG_TEST_TRUE(eventSet.isWritable(server->handle()));
 
         // Send a single byte to the client.
 
@@ -917,13 +901,12 @@ void Test::pollingDuringClose(
 
         // Wait until the client is readable.
 
-        error = reactor->wait(&events, deadline);
+        error = reactor->wait(&eventSet, deadline);
         NTSCFG_TEST_OK(error);
-        ntso::Test::log(events);
+        ntso::Test::log(eventSet);
 
-        NTSCFG_TEST_EQ(events.size(), 1);
-        NTSCFG_TEST_EQ(events[0].handle(), client->handle());
-        NTSCFG_TEST_TRUE(events[0].isReadable());
+        NTSCFG_TEST_EQ(eventSet.size(), 1);
+        NTSCFG_TEST_TRUE(eventSet.isReadable(client->handle()));
 
         // Receive a single byte at the client.
 
@@ -966,29 +949,46 @@ void Test::pollingDuringClose(
         // Wait until the server is readable.
 
         error =
-            reactor->wait(&events,
+            reactor->wait(&eventSet,
                           bdlt::CurrentTime::now() + bsls::TimeInterval(1));
         if (error) {
             NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
-            ntso::Test::log(events);
-            NTSCFG_TEST_EQ(events.size(), 0);
+            ntso::Test::log(eventSet);
+            NTSCFG_TEST_EQ(eventSet.size(), 0);
         }
         else {
-            ntso::Test::log(events);
-            NTSCFG_TEST_EQ(events.size(), 1);
-            NTSCFG_TEST_EQ(events[0].handle(), serverHandle);
-            NTSCFG_TEST_TRUE(events[0].isError());
-            NTSCFG_TEST_EQ(events[0].error(), 
-                           ntsa::Error(ntsa::Error::e_CLOSED));
+            ntso::Test::log(eventSet);
+            NTSCFG_TEST_EQ(eventSet.size(), 1);
+            NTSCFG_TEST_TRUE(eventSet.isError(serverHandle));
+
+            ntsa::Event event;
+            const bool found = eventSet.find(&event, serverHandle);
+            NTSCFG_TEST_TRUE(found);
+            NTSCFG_TEST_EQ(event.error(), ntsa::Error(ntsa::Error::e_CLOSED));
         }
     }
 }
 
-void Test::log(const bsl::vector<ntsa::Event>& events)
+void Test::log(const bsl::vector<ntsa::Event>& eventSet)
 {
-    for (bsl::size_t i = 0; i < events.size(); ++i) {
+    for (bsl::size_t i = 0; i < eventSet.size(); ++i) {
         bsl::stringstream ss;
-        ss << events[i];
+        ss << eventSet[i];
+
+        BSLS_LOG_DEBUG("Polled event %s", ss.str().c_str());
+    }
+}
+
+void Test::log(const ntsa::EventSet& eventSet)
+{
+    for (ntsa::EventSet::const_iterator it  = eventSet.cbegin(); 
+                                        it != eventSet.cend(); 
+                                      ++it)
+    {
+        const ntsa::Event& event = *it;
+
+        bsl::stringstream ss;
+        ss << event;
 
         BSLS_LOG_DEBUG("Polled event %s", ss.str().c_str());
     }

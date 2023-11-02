@@ -24,6 +24,167 @@ namespace ntsi {
 Reactor::~Reactor()
 {
 }
+  
+ntsa::Error Reactor::add(ntsa::Handle socket)
+{
+    NTSCFG_WARNING_UNUSED(socket);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error Reactor::add(
+    const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
+{
+    return this->add(socket->handle());
+}
+
+ntsa::Error Reactor::add(
+    const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
+{
+    return this->add(socket->handle());
+}
+
+ntsa::Error Reactor::add(
+    const bsl::shared_ptr<ntsi::StreamSocket>& socket)
+{
+    return this->add(socket->handle());
+}
+
+ntsa::Error Reactor::remove(ntsa::Handle socket)
+{
+    NTSCFG_WARNING_UNUSED(socket);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error Reactor::remove(
+    const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
+{
+    return this->remove(socket->handle());
+}
+
+ntsa::Error Reactor::remove(
+    const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
+{
+    return this->remove(socket->handle());
+}
+
+ntsa::Error Reactor::remove(
+    const bsl::shared_ptr<ntsi::StreamSocket>& socket)
+{
+    return this->remove(socket->handle());
+}
+
+ntsa::Error Reactor::showReadable(ntsa::Handle socket)
+{
+    NTSCFG_WARNING_UNUSED(socket);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error Reactor::showReadable(
+    const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
+{
+    return this->showReadable(socket->handle());
+}
+
+ntsa::Error Reactor::showReadable(
+    const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
+{
+    return this->showReadable(socket->handle());
+}
+
+ntsa::Error Reactor::showReadable(
+    const bsl::shared_ptr<ntsi::StreamSocket>& socket)
+{
+    return this->showReadable(socket->handle());
+}
+
+ntsa::Error Reactor::showWritable(ntsa::Handle socket)
+{
+    NTSCFG_WARNING_UNUSED(socket);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error Reactor::showWritable(
+    const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
+{
+    return this->showWritable(socket->handle());
+}
+
+ntsa::Error Reactor::showWritable(
+    const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
+{
+    return this->showWritable(socket->handle());
+}
+
+ntsa::Error Reactor::showWritable(
+    const bsl::shared_ptr<ntsi::StreamSocket>& socket)
+{
+    return this->showWritable(socket->handle());
+}
+
+ntsa::Error Reactor::hideReadable(ntsa::Handle socket)
+{
+    NTSCFG_WARNING_UNUSED(socket);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error Reactor::hideReadable(
+    const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
+{
+    return this->hideReadable(socket->handle());
+}
+
+ntsa::Error Reactor::hideReadable(
+    const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
+{
+    return this->hideReadable(socket->handle());
+}
+
+ntsa::Error Reactor::hideReadable(
+    const bsl::shared_ptr<ntsi::StreamSocket>& socket)
+{
+    return this->hideReadable(socket->handle());
+}
+
+ntsa::Error Reactor::hideWritable(ntsa::Handle socket)
+{
+    NTSCFG_WARNING_UNUSED(socket);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error Reactor::hideWritable(
+    const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
+{
+    return this->hideWritable(socket->handle());
+}
+
+ntsa::Error Reactor::hideWritable(
+    const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
+{
+    return this->hideWritable(socket->handle());
+}
+
+ntsa::Error Reactor::hideWritable(
+    const bsl::shared_ptr<ntsi::StreamSocket>& socket)
+{
+    return this->hideWritable(socket->handle());
+}
+
+ntsa::Error Reactor::wait(
+    ntsa::EventSet*                                result,
+    const bdlb::NullableValue<bsls::TimeInterval>& deadline)
+{
+    NTSCFG_WARNING_UNUSED(deadline);
+
+    result->clear();
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
 
 }  // close package namespace
 }  // close enterprise namespace

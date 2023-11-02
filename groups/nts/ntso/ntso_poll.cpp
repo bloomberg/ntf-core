@@ -75,10 +75,10 @@ BSLS_IDENT_RCSID(ntso_poll_cpp, "$Id$ $CSID$")
 #pragma comment(lib, "ws2_32")
 #endif
 
-#define NTSO_POLL_LOG_DEVICE_CREATE()                                       \
+#define NTSO_POLL_LOG_DEVICE_CREATE()                                         \
     BSLS_LOG_TRACE("Reactor 'poll' device created")
 
-#define NTSO_POLL_LOG_DEVICE_CLOSE()                                        \
+#define NTSO_POLL_LOG_DEVICE_CLOSE()                                          \
     BSLS_LOG_TRACE("Reactor 'poll' device closed")
 
 #define NTSO_POLL_LOG_WAIT_INDEFINITE()                                       \
@@ -158,133 +158,33 @@ class Poll : public ntsi::Reactor
     /// Add the specified 'socket' to the reactor. Return the error.
     ntsa::Error add(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
 
-    /// Add the specified 'socket' to the reactor. Return the error.
-    ntsa::Error add(const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Add the specified 'socket' to the reactor. Return the error.
-    ntsa::Error add(const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Add the specified 'socket' to the reactor. Return the error.
-    ntsa::Error add(const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
-
     /// Remove the specified 'socket' from the reactor. Return the error.
     ntsa::Error remove(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Remove the specified 'socket' from the reactor. Return the error.
-    ntsa::Error remove(const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Remove the specified 'socket' from the reactor. Return the error.
-    ntsa::Error remove(const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Remove the specified 'socket' from the reactor. Return the error.
-    ntsa::Error remove(const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
 
     /// Unblock any thread waiting on the reactor when the specified
     /// 'socket' is readable. Return the error.
     ntsa::Error showReadable(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
 
     /// Unblock any thread waiting on the reactor when the specified
-    /// 'socket' is readable. Return the error.
-    ntsa::Error showReadable(const bsl::shared_ptr<ntsi::DatagramSocket>&
-                                 socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Unblock any thread waiting on the reactor when the specified
-    /// 'socket' is readable. Return the error.
-    ntsa::Error showReadable(const bsl::shared_ptr<ntsi::ListenerSocket>&
-                                 socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Unblock any thread waiting on the reactor when the specified
-    /// 'socket' is readable. Return the error.
-    ntsa::Error showReadable(const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Unblock any thread waiting on the reactor when the specified
     /// 'socket' is writable. Return the error.
     ntsa::Error showWritable(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Unblock any thread waiting on the reactor when the specified
-    /// 'socket' is writable. Return the error.
-    ntsa::Error showWritable(const bsl::shared_ptr<ntsi::DatagramSocket>&
-                                 socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Unblock any thread waiting on the reactor when the specified
-    /// 'socket' is writable. Return the error.
-    ntsa::Error showWritable(const bsl::shared_ptr<ntsi::ListenerSocket>&
-                                 socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Unblock any thread waiting on the reactor when the specified
-    /// 'socket' is writable. Return the error.
-    ntsa::Error showWritable(const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
 
     /// Do not unblock any thread waiting on the reactor when the specified
     /// 'socket' is readable. Return the error.
     ntsa::Error hideReadable(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
 
     /// Do not unblock any thread waiting on the reactor when the specified
-    /// 'socket' is readable. Return the error.
-    ntsa::Error hideReadable(const bsl::shared_ptr<ntsi::DatagramSocket>&
-                                 socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Do not unblock any thread waiting on the reactor when the specified
-    /// 'socket' is readable. Return the error.
-    ntsa::Error hideReadable(const bsl::shared_ptr<ntsi::ListenerSocket>&
-                                 socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Do not unblock any thread waiting on the reactor when the specified
-    /// 'socket' is readable. Return the error.
-    ntsa::Error hideReadable(const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Do not unblock any thread waiting on the reactor when the specified
     /// 'socket' is writable. Return the error.
     ntsa::Error hideWritable(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Do not unblock any thread waiting on the reactor when the specified
-    /// 'socket' is writable. Return the error.
-    ntsa::Error hideWritable(const bsl::shared_ptr<ntsi::DatagramSocket>&
-                                 socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Do not unblock any thread waiting on the reactor when the specified
-    /// 'socket' is writable. Return the error.
-    ntsa::Error hideWritable(const bsl::shared_ptr<ntsi::ListenerSocket>&
-                                 socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Do not unblock any thread waiting on the reactor when the specified
-    /// 'socket' is writable. Return the error.
-    ntsa::Error hideWritable(const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
 
     /// Block until at least one socket has a condition of interest or the
     /// specified absolute 'deadline', if any, elapses. Load into the specified
     /// 'result' the events that describe the sockets and their conditions.
     /// Return the error.
     ntsa::Error wait(
-        bsl::vector<ntsa::Event>*                      result,
+        ntsa::EventSet*                                result,
         const bdlb::NullableValue<bsls::TimeInterval>& deadline)              
         BSLS_KEYWORD_OVERRIDE;
-
-    // MRM
-    #if 0
-    /// Block until at least one socket in the specified 'readable',
-    /// 'writable', or 'exceptional' sets matches any of those respective
-    /// conditions, or the specified 'timeout' elapses, if any. Load into the
-    /// specified 'result' the events that describe the sockets and their
-    /// conditions. Return the error. 
-    ntsa::Error wait(
-        bsl::vector<ntsa::Event>                       *result, 
-        const bsl::vector<ntsa::Handle>&                readable, 
-        const bsl::vector<ntsa::Handle>&                writable,
-        const bsl::vector<ntsa::Handle>&                exceptional,
-        const bdlb::NullableValue<bsls::TimeInterval>&  timeout) 
-        BSLS_KEYWORD_OVERRIDE;
-    #endif
 };
 
 Poll::Poll(bslma::Allocator* basicAllocator)
@@ -322,21 +222,6 @@ ntsa::Error Poll::add(ntsa::Handle socket)
     return ntsa::Error();
 }
 
-ntsa::Error Poll::add(const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
-{
-    return this->add(socket->handle());
-}
-
-ntsa::Error Poll::add(const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
-{
-    return this->add(socket->handle());
-}
-
-ntsa::Error Poll::add(const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-{
-    return this->add(socket->handle());
-}
-
 ntsa::Error Poll::remove(ntsa::Handle socket)
 {
     ntsa::Error error;
@@ -355,21 +240,6 @@ ntsa::Error Poll::remove(ntsa::Handle socket)
     NTSO_POLL_LOG_REMOVE(socket);
 
     return ntsa::Error();
-}
-
-ntsa::Error Poll::remove(const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
-{
-    return this->remove(socket->handle());
-}
-
-ntsa::Error Poll::remove(const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
-{
-    return this->remove(socket->handle());
-}
-
-ntsa::Error Poll::remove(const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-{
-    return this->remove(socket->handle());
 }
 
 ntsa::Error Poll::showReadable(ntsa::Handle socket)
@@ -392,24 +262,6 @@ ntsa::Error Poll::showReadable(ntsa::Handle socket)
     return ntsa::Error();
 }
 
-ntsa::Error Poll::showReadable(
-    const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
-{
-    return this->showReadable(socket->handle());
-}
-
-ntsa::Error Poll::showReadable(
-    const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
-{
-    return this->showReadable(socket->handle());
-}
-
-ntsa::Error Poll::showReadable(
-    const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-{
-    return this->showReadable(socket->handle());
-}
-
 ntsa::Error Poll::showWritable(ntsa::Handle socket)
 {
     ntsa::Error error;
@@ -428,24 +280,6 @@ ntsa::Error Poll::showWritable(ntsa::Handle socket)
     NTSO_POLL_LOG_UPDATE(socket, d_interestSet);
 
     return ntsa::Error();
-}
-
-ntsa::Error Poll::showWritable(
-    const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
-{
-    return this->showWritable(socket->handle());
-}
-
-ntsa::Error Poll::showWritable(
-    const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
-{
-    return this->showWritable(socket->handle());
-}
-
-ntsa::Error Poll::showWritable(
-    const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-{
-    return this->showWritable(socket->handle());
 }
 
 ntsa::Error Poll::hideReadable(ntsa::Handle socket)
@@ -468,24 +302,6 @@ ntsa::Error Poll::hideReadable(ntsa::Handle socket)
     return ntsa::Error();
 }
 
-ntsa::Error Poll::hideReadable(
-    const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
-{
-    return this->hideReadable(socket->handle());
-}
-
-ntsa::Error Poll::hideReadable(
-    const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
-{
-    return this->hideReadable(socket->handle());
-}
-
-ntsa::Error Poll::hideReadable(
-    const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-{
-    return this->hideReadable(socket->handle());
-}
-
 ntsa::Error Poll::hideWritable(ntsa::Handle socket)
 {
     ntsa::Error error;
@@ -506,26 +322,8 @@ ntsa::Error Poll::hideWritable(ntsa::Handle socket)
     return ntsa::Error();
 }
 
-ntsa::Error Poll::hideWritable(
-    const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
-{
-    return this->hideReadable(socket->handle());
-}
-
-ntsa::Error Poll::hideWritable(
-    const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
-{
-    return this->hideWritable(socket->handle());
-}
-
-ntsa::Error Poll::hideWritable(
-    const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-{
-    return this->hideWritable(socket->handle());
-}
-
 ntsa::Error Poll::wait(
-    bsl::vector<ntsa::Event>*                      result,
+    ntsa::EventSet*                                result,
     const bdlb::NullableValue<bsls::TimeInterval>& timeout)
 {
     int rc;
@@ -646,8 +444,9 @@ ntsa::Error Poll::wait(
                 if (!error && lastError) {
                     event.setError(lastError);
                 }
-
-                event.setExceptional();
+                else {
+                    event.setExceptional();
+                }
             }
 
             if ((e.revents & POLLNVAL) != 0) {
@@ -674,7 +473,7 @@ ntsa::Error Poll::wait(
                 this->remove(e.fd);
             }
 
-            result->push_back(event);
+            result->merge(event);
         }
     }
     else if (rc == 0) {

@@ -79,11 +79,14 @@ struct Test
     ///         from the kqueue interest set maintained internally in the 
     ///         kernel. The polling function thus does not return, unless it
     ///         is given a timeout in which case it times out.
-    static void pollingDuringClose(
+    static void pollingAfterClose(
         const ReactorVector& reactors, bslma::Allocator* allocator);
 
     /// Log the specified 'events'. 
     static void log(const bsl::vector<ntsa::Event>& events);
+
+    /// Log the specified 'eventSet'. 
+    static void log(const ntsa::EventSet& eventSet);
 };
 
 }  // close package namespace

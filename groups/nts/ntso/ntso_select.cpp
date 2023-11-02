@@ -175,115 +175,31 @@ class Select : public ntsi::Reactor
     /// Add the specified 'socket' to the reactor. Return the error.
     ntsa::Error add(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
 
-    /// Add the specified 'socket' to the reactor. Return the error.
-    ntsa::Error add(const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Add the specified 'socket' to the reactor. Return the error.
-    ntsa::Error add(const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Add the specified 'socket' to the reactor. Return the error.
-    ntsa::Error add(const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
-
     /// Remove the specified 'socket' from the reactor. Return the error.
     ntsa::Error remove(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Remove the specified 'socket' from the reactor. Return the error.
-    ntsa::Error remove(const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Remove the specified 'socket' from the reactor. Return the error.
-    ntsa::Error remove(const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Remove the specified 'socket' from the reactor. Return the error.
-    ntsa::Error remove(const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
 
     /// Unblock any thread waiting on the reactor when the specified
     /// 'socket' is readable. Return the error.
     ntsa::Error showReadable(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
 
     /// Unblock any thread waiting on the reactor when the specified
-    /// 'socket' is readable. Return the error.
-    ntsa::Error showReadable(const bsl::shared_ptr<ntsi::DatagramSocket>&
-                                 socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Unblock any thread waiting on the reactor when the specified
-    /// 'socket' is readable. Return the error.
-    ntsa::Error showReadable(const bsl::shared_ptr<ntsi::ListenerSocket>&
-                                 socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Unblock any thread waiting on the reactor when the specified
-    /// 'socket' is readable. Return the error.
-    ntsa::Error showReadable(const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Unblock any thread waiting on the reactor when the specified
     /// 'socket' is writable. Return the error.
     ntsa::Error showWritable(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Unblock any thread waiting on the reactor when the specified
-    /// 'socket' is writable. Return the error.
-    ntsa::Error showWritable(const bsl::shared_ptr<ntsi::DatagramSocket>&
-                                 socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Unblock any thread waiting on the reactor when the specified
-    /// 'socket' is writable. Return the error.
-    ntsa::Error showWritable(const bsl::shared_ptr<ntsi::ListenerSocket>&
-                                 socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Unblock any thread waiting on the reactor when the specified
-    /// 'socket' is writable. Return the error.
-    ntsa::Error showWritable(const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
 
     /// Do not unblock any thread waiting on the reactor when the specified
     /// 'socket' is readable. Return the error.
     ntsa::Error hideReadable(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
 
     /// Do not unblock any thread waiting on the reactor when the specified
-    /// 'socket' is readable. Return the error.
-    ntsa::Error hideReadable(const bsl::shared_ptr<ntsi::DatagramSocket>&
-                                 socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Do not unblock any thread waiting on the reactor when the specified
-    /// 'socket' is readable. Return the error.
-    ntsa::Error hideReadable(const bsl::shared_ptr<ntsi::ListenerSocket>&
-                                 socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Do not unblock any thread waiting on the reactor when the specified
-    /// 'socket' is readable. Return the error.
-    ntsa::Error hideReadable(const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Do not unblock any thread waiting on the reactor when the specified
     /// 'socket' is writable. Return the error.
     ntsa::Error hideWritable(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Do not unblock any thread waiting on the reactor when the specified
-    /// 'socket' is writable. Return the error.
-    ntsa::Error hideWritable(const bsl::shared_ptr<ntsi::DatagramSocket>&
-                                 socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Do not unblock any thread waiting on the reactor when the specified
-    /// 'socket' is writable. Return the error.
-    ntsa::Error hideWritable(const bsl::shared_ptr<ntsi::ListenerSocket>&
-                                 socket) BSLS_KEYWORD_OVERRIDE;
-
-    /// Do not unblock any thread waiting on the reactor when the specified
-    /// 'socket' is writable. Return the error.
-    ntsa::Error hideWritable(const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-        BSLS_KEYWORD_OVERRIDE;
 
     /// Block until at least one socket has a condition of interest or the
     /// specified absolute 'deadline', if any, elapses. Load into the specified
     /// 'result' the events that describe the sockets and their conditions.
     /// Return the error.
     ntsa::Error wait(
-        bsl::vector<ntsa::Event>*                      result,
+        ntsa::EventSet*                                result,
         const bdlb::NullableValue<bsls::TimeInterval>& deadline)              
         BSLS_KEYWORD_OVERRIDE;
 };
@@ -351,21 +267,6 @@ ntsa::Error Select::add(ntsa::Handle socket)
     return ntsa::Error();
 }
 
-ntsa::Error Select::add(const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
-{
-    return this->add(socket->handle());
-}
-
-ntsa::Error Select::add(const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
-{
-    return this->add(socket->handle());
-}
-
-ntsa::Error Select::add(const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-{
-    return this->add(socket->handle());
-}
-
 ntsa::Error Select::remove(ntsa::Handle socket)
 {
     ntsa::Error error;
@@ -401,21 +302,6 @@ ntsa::Error Select::remove(ntsa::Handle socket)
     return ntsa::Error();
 }
 
-ntsa::Error Select::remove(const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
-{
-    return this->remove(socket->handle());
-}
-
-ntsa::Error Select::remove(const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
-{
-    return this->remove(socket->handle());
-}
-
-ntsa::Error Select::remove(const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-{
-    return this->remove(socket->handle());
-}
-
 ntsa::Error Select::showReadable(ntsa::Handle socket)
 {
     ntsa::Error error;
@@ -434,24 +320,6 @@ ntsa::Error Select::showReadable(ntsa::Handle socket)
     NTSO_SELECT_LOG_UPDATE(socket, d_readable, d_writable, d_exceptional);
 
     return ntsa::Error();
-}
-
-ntsa::Error Select::showReadable(
-    const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
-{
-    return this->showReadable(socket->handle());
-}
-
-ntsa::Error Select::showReadable(
-    const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
-{
-    return this->showReadable(socket->handle());
-}
-
-ntsa::Error Select::showReadable(
-    const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-{
-    return this->showReadable(socket->handle());
 }
 
 ntsa::Error Select::showWritable(ntsa::Handle socket)
@@ -474,24 +342,6 @@ ntsa::Error Select::showWritable(ntsa::Handle socket)
     return ntsa::Error();
 }
 
-ntsa::Error Select::showWritable(
-    const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
-{
-    return this->showWritable(socket->handle());
-}
-
-ntsa::Error Select::showWritable(
-    const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
-{
-    return this->showWritable(socket->handle());
-}
-
-ntsa::Error Select::showWritable(
-    const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-{
-    return this->showWritable(socket->handle());
-}
-
 ntsa::Error Select::hideReadable(ntsa::Handle socket)
 {
     ntsa::Error error;
@@ -510,24 +360,6 @@ ntsa::Error Select::hideReadable(ntsa::Handle socket)
     NTSO_SELECT_LOG_UPDATE(socket, d_readable, d_writable, d_exceptional);
 
     return ntsa::Error();
-}
-
-ntsa::Error Select::hideReadable(
-    const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
-{
-    return this->hideReadable(socket->handle());
-}
-
-ntsa::Error Select::hideReadable(
-    const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
-{
-    return this->hideReadable(socket->handle());
-}
-
-ntsa::Error Select::hideReadable(
-    const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-{
-    return this->hideReadable(socket->handle());
 }
 
 ntsa::Error Select::hideWritable(ntsa::Handle socket)
@@ -550,26 +382,8 @@ ntsa::Error Select::hideWritable(ntsa::Handle socket)
     return ntsa::Error();
 }
 
-ntsa::Error Select::hideWritable(
-    const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
-{
-    return this->hideReadable(socket->handle());
-}
-
-ntsa::Error Select::hideWritable(
-    const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
-{
-    return this->hideWritable(socket->handle());
-}
-
-ntsa::Error Select::hideWritable(
-    const bsl::shared_ptr<ntsi::StreamSocket>& socket)
-{
-    return this->hideWritable(socket->handle());
-}
-
 ntsa::Error Select::wait(
-    bsl::vector<ntsa::Event>*                      result,
+    ntsa::EventSet*                                result,
     const bdlb::NullableValue<bsls::TimeInterval>& timeout)
 {
     result->clear();
@@ -630,7 +444,6 @@ ntsa::Error Select::wait(
         ntsa::InterestSet::const_iterator it = d_interestSet.begin();
         ntsa::InterestSet::const_iterator et = d_interestSet.end();
 
-
         for (; it != et; ++it) {
             if (numResultsRemaining == 0) {
                 break;
@@ -663,8 +476,9 @@ ntsa::Error Select::wait(
                 if (!error && lastError) {
                     event.setError(lastError);
                 }
-
-                event.setExceptional();
+                else {
+                    event.setExceptional();
+                }
                
                 ++numResultsFound;
             }
@@ -675,7 +489,7 @@ ntsa::Error Select::wait(
 
             numResultsRemaining -= numResultsFound;
 
-            result->push_back(event);
+            result->merge(event);
         }
     }
     else if (rc == 0) {
@@ -684,7 +498,43 @@ ntsa::Error Select::wait(
     else {
         ntsa::Error error = ntsa::Error::last();
         NTSO_SELECT_LOG_WAIT_FAILURE(error);
-        return error;
+
+        if (error == ntsa::Error(ntsa::Error::e_CLOSED)) {
+            typedef bsl::vector<ntsa::Handle> HandleVector;
+            HandleVector garbage;
+
+            {
+                ntsa::InterestSet::const_iterator it = d_interestSet.begin();
+                ntsa::InterestSet::const_iterator et = d_interestSet.end();
+
+                for (; it != et; ++it) {
+                    const ntsa::Interest interest = *it;
+                    const ntsa::Handle   socket   = interest.handle();
+
+                    if (!ntsu::SocketUtil::isSocket(socket)) {
+                        result->setError(
+                            socket, ntsa::Error(ntsa::Error::e_CLOSED));
+
+                        garbage.push_back(socket);
+                    }
+                }
+            }
+
+            {
+                HandleVector::const_iterator it = garbage.begin();
+                HandleVector::const_iterator et = garbage.end();
+
+                for (; it != et; ++it) {
+                    const ntsa::Handle socket = *it;
+                    this->remove(socket);
+                }
+            }
+
+            return ntsa::Error();
+        }
+        else {
+            return error;
+        }
     }
 
     return ntsa::Error();

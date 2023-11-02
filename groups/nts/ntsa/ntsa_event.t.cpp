@@ -33,6 +33,37 @@ using namespace BloombergLP;
 
 NTSCFG_TEST_CASE(1)
 {
+    // Concern: 
+    // Plan:
+
+    ntscfg::TestAllocator ta;
+    {
+        const ntsa::Handle k_SOCKET_A = 10;
+        const ntsa::Handle k_SOCKET_B = 100;
+        const ntsa::Handle k_SOCKET_C = 1000;
+
+        ntsa::EventSet eventSet(&ta);
+
+        eventSet.setReadable(k_SOCKET_C);
+        eventSet.setWritable(k_SOCKET_C);
+
+        eventSet.setWritable(k_SOCKET_B);
+
+        eventSet.setReadable(k_SOCKET_A);
+
+        NTSCFG_TEST_LOG_DEBUG << "Event set = " << eventSet
+                              << NTSCFG_TEST_LOG_END;
+
+        for (ntsa::EventSet::const_iterator it  = eventSet.cbegin(); 
+                                            it != eventSet.cend(); 
+                                          ++it)
+        {
+            NTSCFG_TEST_LOG_DEBUG << "Event = " << *it 
+                                  << NTSCFG_TEST_LOG_END;
+        }
+
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
 NTSCFG_TEST_DRIVER

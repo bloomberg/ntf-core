@@ -276,6 +276,13 @@ class InterestSet
     /// Return the iterator to the end of the non-modifiable interest set.
     ConstIterator end() const BSLS_KEYWORD_NOEXCEPT;
 
+    /// Return the iterator to the beginning of the non-modifiable interest
+    /// set.
+    ConstIterator cbegin() const BSLS_KEYWORD_NOEXCEPT;
+
+    /// Return the iterator to the end of the non-modifiable interest set.
+    ConstIterator cend() const BSLS_KEYWORD_NOEXCEPT;
+
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
     bool equals(const InterestSet& other) const;
@@ -847,6 +854,18 @@ InterestSet::ConstIterator InterestSet::begin() const BSLS_KEYWORD_NOEXCEPT
 
 NTSCFG_INLINE
 InterestSet::ConstIterator InterestSet::end() const BSLS_KEYWORD_NOEXCEPT
+{
+    return InterestSet::ConstIterator(this, d_set.end());
+}
+
+NTSCFG_INLINE
+InterestSet::ConstIterator InterestSet::cbegin() const BSLS_KEYWORD_NOEXCEPT
+{
+    return InterestSet::ConstIterator(this, d_set.begin());
+}
+
+NTSCFG_INLINE
+InterestSet::ConstIterator InterestSet::cend() const BSLS_KEYWORD_NOEXCEPT
 {
     return InterestSet::ConstIterator(this, d_set.end());
 }
