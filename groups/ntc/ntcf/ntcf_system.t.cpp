@@ -13998,18 +13998,21 @@ NTCCFG_TEST_CASE(70)
 {
     ntccfg::TestAllocator ta;
     {
-        test::concern(&test::concernDatagramSocketReceiveRateLimitTimerClose,
-                      &ta);
+        test::concern(
+            &test::
+                concernDatagramSocketReceiveRateLimitTimerEventNotifications,
+            &ta);
+        NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
     }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
 NTCCFG_TEST_CASE(71)
 {
     ntccfg::TestAllocator ta;
     {
-        test::concern(&test::concernStreamSocketReceiveRateLimitTimerClose,
-                      &ta);
+        test::concern(
+            &test::concernStreamSocketReceiveRateLimitTimerEventNotifications,
+            &ta);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
@@ -14018,8 +14021,9 @@ NTCCFG_TEST_CASE(72)
 {
     ntccfg::TestAllocator ta;
     {
-        test::concern(&test::concernDatagramSocketSendRateLimitTimerClose,
-                      &ta);
+        test::concern(
+            &test::concernDatagramSocketSendRateLimitTimerEventNotifications,
+            &ta);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
@@ -14028,7 +14032,9 @@ NTCCFG_TEST_CASE(73)
 {
     ntccfg::TestAllocator ta;
     {
-        test::concern(&test::concernStreamSocketSendRateLimitTimerClose, &ta);
+        test::concern(
+            &test::concernStreamSocketSendRateLimitTimerEventNotifications,
+            &ta);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
@@ -14037,8 +14043,9 @@ NTCCFG_TEST_CASE(74)
 {
     ntccfg::TestAllocator ta;
     {
-        test::concern(&test::concernListenerSocketAcceptRateLimitTimerClose,
-                      &ta);
+        test::concern(
+            &test::concernListenerSocketAcceptRateLimitTimerEventNotifications,
+            &ta);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
@@ -14066,21 +14073,18 @@ NTCCFG_TEST_CASE(77)
 {
     ntccfg::TestAllocator ta;
     {
-        test::concern(
-            &test::
-                concernDatagramSocketReceiveRateLimitTimerEventNotifications,
-            &ta);
-        NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+        test::concern(&test::concernDatagramSocketReceiveRateLimitTimerClose,
+                      &ta);
     }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
 NTCCFG_TEST_CASE(78)
 {
     ntccfg::TestAllocator ta;
     {
-        test::concern(
-            &test::concernDatagramSocketSendRateLimitTimerEventNotifications,
-            &ta);
+        test::concern(&test::concernDatagramSocketSendRateLimitTimerClose,
+                      &ta);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
@@ -14089,9 +14093,8 @@ NTCCFG_TEST_CASE(79)
 {
     ntccfg::TestAllocator ta;
     {
-        test::concern(
-            &test::concernStreamSocketReceiveRateLimitTimerEventNotifications,
-            &ta);
+        test::concern(&test::concernStreamSocketReceiveRateLimitTimerClose,
+                      &ta);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
@@ -14100,9 +14103,7 @@ NTCCFG_TEST_CASE(80)
 {
     ntccfg::TestAllocator ta;
     {
-        test::concern(
-            &test::concernStreamSocketSendRateLimitTimerEventNotifications,
-            &ta);
+        test::concern(&test::concernStreamSocketSendRateLimitTimerClose, &ta);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
@@ -14111,9 +14112,8 @@ NTCCFG_TEST_CASE(81)
 {
     ntccfg::TestAllocator ta;
     {
-        test::concern(
-            &test::concernListenerSocketAcceptRateLimitTimerEventNotifications,
-            &ta);
+        test::concern(&test::concernListenerSocketAcceptRateLimitTimerClose,
+                      &ta);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
