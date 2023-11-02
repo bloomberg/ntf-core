@@ -592,7 +592,7 @@ void ListenerSocket::privateFailAccept(
 
         ntci::TimerCallback timerCallback = this->createTimerCallback(
             bdlf::MemFnUtil::memFn(&ListenerSocket::processAcceptBackoffTimer,
-                                   this),
+                                   self),
             d_allocator_p);
 
         d_acceptBackoffTimer_sp =

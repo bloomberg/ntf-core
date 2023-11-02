@@ -4135,7 +4135,7 @@ ntsa::Error StreamSocket::upgrade(
         timerOptions.setOneShot(true);
 
         ntci::TimerCallback timerCallback = this->createTimerCallback(
-            bdlf::MemFnUtil::memFn(&StreamSocket::processUpgradeTimer, this),
+            bdlf::MemFnUtil::memFn(&StreamSocket::processUpgradeTimer, self),
             d_allocator_p);
 
         d_upgradeTimer_sp =
