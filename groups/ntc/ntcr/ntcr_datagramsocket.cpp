@@ -1543,12 +1543,14 @@ ntsa::Error DatagramSocket::privateThrottleSendBuffer(
                 timerOptions.hideEvent(ntca::TimerEventType::e_CANCELED);
                 timerOptions.hideEvent(ntca::TimerEventType::e_CLOSED);
 
-                d_sendRateTimer_sp = this->createTimer(
-                    timerOptions,
-                    ntci::TimerCallback(bdlf::MemFnUtil::memFn(
+                ntci::TimerCallback timerCallback = this->createTimerCallback(
+                    bdlf::MemFnUtil::memFn(
                         &DatagramSocket::processSendRateTimer,
-                        self)),
+                        self),
                     d_allocator_p);
+                d_sendRateTimer_sp = this->createTimer(timerOptions,
+                                                       timerCallback,
+                                                       d_allocator_p);
             }
 
             NTCR_DATAGRAMSOCKET_LOG_SEND_BUFFER_THROTTLE_APPLIED(timeToSubmit);
@@ -1604,12 +1606,15 @@ ntsa::Error DatagramSocket::privateThrottleReceiveBuffer(
                 timerOptions.hideEvent(ntca::TimerEventType::e_CANCELED);
                 timerOptions.hideEvent(ntca::TimerEventType::e_CLOSED);
 
-                d_receiveRateTimer_sp = this->createTimer(
-                    timerOptions,
-                    ntci::TimerCallback(bdlf::MemFnUtil::memFn(
+                ntci::TimerCallback timerCallback = ntci::TimerCallback(
+                    bdlf::MemFnUtil::memFn(
                         &DatagramSocket::processReceiveRateTimer,
-                        self)),
+                        self),
                     d_allocator_p);
+
+                d_receiveRateTimer_sp = this->createTimer(timerOptions,
+                                                          timerCallback,
+                                                          d_allocator_p);
             }
 
             NTCR_DATAGRAMSOCKET_LOG_RECEIVE_BUFFER_THROTTLE_APPLIED(
