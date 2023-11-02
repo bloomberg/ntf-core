@@ -9859,8 +9859,7 @@ void concernDatagramSocketReceiveCancellation(
     const bsl::shared_ptr<ntci::Interface>& interface,
     bslma::Allocator*                       allocator)
 {
-    // Concern: validate that receive deadline timer is automatically closed
-    // when the socket is closed and then destroyed
+    // Concern: Receive cancellation.
 
     NTCI_LOG_CONTEXT();
 
