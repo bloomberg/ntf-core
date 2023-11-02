@@ -483,7 +483,43 @@ ntsa::Error Poll::wait(
     else {
         ntsa::Error error = ntsa::Error::last();
         NTSO_POLL_LOG_WAIT_FAILURE(error);
-        return error;
+        
+        if (error == ntsa::Error(ntsa::Error::e_NOT_OPEN) ||
+            error == ntsa::Error(ntsa::Error::e_NOT_SOCKET)) 
+        {
+            typedef bsl::vector<ntsa::Handle> HandleVector;
+            HandleVector garbage;
+
+            {
+                ntsa::InterestSet::const_iterator it = d_interestSet.begin();
+                ntsa::InterestSet::const_iterator et = d_interestSet.end();
+
+                for (; it != et; ++it) {
+                    const ntsa::Interest interest = *it;
+                    const ntsa::Handle   socket   = interest.handle();
+
+                    if (!ntsu::SocketUtil::isSocket(socket)) {
+                        result->setError(socket, error);
+                        garbage.push_back(socket);
+                    }
+                }
+            }
+
+            {
+                HandleVector::const_iterator it = garbage.begin();
+                HandleVector::const_iterator et = garbage.end();
+
+                for (; it != et; ++it) {
+                    const ntsa::Handle socket = *it;
+                    this->remove(socket);
+                }
+            }
+
+            return ntsa::Error();
+        }
+        else {
+            return error;
+        }
     }
 
     return ntsa::Error();

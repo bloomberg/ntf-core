@@ -410,9 +410,14 @@ ntsa::Error Select::wait(
         if (NTSCFG_LIKELY(timeout.value() > now)) {
             const bsls::TimeInterval delta = timeout.value() - now;
 
-            tv.tv_sec = static_cast<time_t>(delta.seconds());
+#if defined(BSLS_PLATFORM_OS_UNIX)
+            tv.tv_sec  = static_cast<time_t>(delta.seconds());
             tv.tv_usec =
                 static_cast<suseconds_t>(delta.nanoseconds() / 1000);
+#else
+            tv.tv_sec  = static_cast<long>(delta.seconds());
+            tv.tv_usec = static_cast<long>(delta.nanoseconds() / 1000);
+#endif
 
             NTSO_SELECT_LOG_WAIT_TIMED(delta.totalMilliseconds());
         }
@@ -494,12 +499,15 @@ ntsa::Error Select::wait(
     }
     else if (rc == 0) {
         NTSO_SELECT_LOG_WAIT_TIMEOUT();
+        return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
     }
     else {
         ntsa::Error error = ntsa::Error::last();
         NTSO_SELECT_LOG_WAIT_FAILURE(error);
 
-        if (error == ntsa::Error(ntsa::Error::e_CLOSED)) {
+        if (error == ntsa::Error(ntsa::Error::e_NOT_OPEN) ||
+            error == ntsa::Error(ntsa::Error::e_NOT_SOCKET)) 
+        {
             typedef bsl::vector<ntsa::Handle> HandleVector;
             HandleVector garbage;
 
@@ -512,9 +520,7 @@ ntsa::Error Select::wait(
                     const ntsa::Handle   socket   = interest.handle();
 
                     if (!ntsu::SocketUtil::isSocket(socket)) {
-                        result->setError(
-                            socket, ntsa::Error(ntsa::Error::e_CLOSED));
-
+                        result->setError(socket, error);
                         garbage.push_back(socket);
                     }
                 }

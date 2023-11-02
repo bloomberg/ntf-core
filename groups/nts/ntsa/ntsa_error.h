@@ -119,8 +119,11 @@ class Error
         /// The operation is not implemented.
         e_NOT_IMPLEMENTED,
 
-        /// The handle has been closed.
-        e_CLOSED
+        /// The handle is not open.
+        e_NOT_OPEN,
+
+        /// The handle is not a socket.
+        e_NOT_SOCKET
     };
 
 #if defined(BSLS_PLATFORM_OS_UNIX)

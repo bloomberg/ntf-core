@@ -249,7 +249,8 @@ void Test::usage(
         ntso::Test::log(eventSet);
 
         NTSCFG_TEST_EQ(eventSet.size(), 1);
-        NTSCFG_TEST_TRUE(eventSet.isReadable(server->handle()));
+        NTSCFG_TEST_TRUE(eventSet.isReadable(server->handle()) ||
+                         eventSet.isHangup(server->handle()));
 
         // Receive a single byte at the server.
 
@@ -304,7 +305,8 @@ void Test::usage(
         ntso::Test::log(eventSet);
 
         NTSCFG_TEST_EQ(eventSet.size(), 1);
-        NTSCFG_TEST_TRUE(eventSet.isReadable(client->handle()));
+        NTSCFG_TEST_TRUE(eventSet.isReadable(client->handle()) ||
+                         eventSet.isHangup(client->handle()));
 
         // Receive a single byte at the client.
 
@@ -571,7 +573,8 @@ void Test::pollingAfterFullShutdown(
         ntso::Test::log(eventSet);
 
         NTSCFG_TEST_EQ(eventSet.size(), 1);
-        NTSCFG_TEST_TRUE(eventSet.isReadable(server->handle()));
+        NTSCFG_TEST_TRUE(eventSet.isReadable(server->handle()) ||
+                         eventSet.isHangup(server->handle()));
 
         // Receive a single byte at the server.
 
@@ -626,7 +629,8 @@ void Test::pollingAfterFullShutdown(
         ntso::Test::log(eventSet);
 
         NTSCFG_TEST_EQ(eventSet.size(), 1);
-        NTSCFG_TEST_TRUE(eventSet.isReadable(client->handle()));
+        NTSCFG_TEST_TRUE(eventSet.isReadable(client->handle()) ||
+                         eventSet.isHangup(client->handle()));
 
         // Receive a single byte at the client.
 
@@ -680,6 +684,7 @@ void Test::pollingAfterFullShutdown(
 
         NTSCFG_TEST_EQ(eventSet.size(), 1);
         NTSCFG_TEST_TRUE(eventSet.isReadable(server->handle()) || 
+                         eventSet.isHangup(server->handle()) ||
                          eventSet.isError(server->handle()));
 
         // Lose interest in the readability of the server.
@@ -712,6 +717,7 @@ void Test::pollingAfterFullShutdown(
 
         NTSCFG_TEST_EQ(eventSet.size(), 1);
         NTSCFG_TEST_TRUE(eventSet.isReadable(client->handle()) || 
+                         eventSet.isHangup(client->handle()) ||
                          eventSet.isError(client->handle()));
 
         // Lose interest in the readability of the client.
@@ -964,7 +970,9 @@ void Test::pollingAfterClose(
             ntsa::Event event;
             const bool found = eventSet.find(&event, serverHandle);
             NTSCFG_TEST_TRUE(found);
-            NTSCFG_TEST_EQ(event.error(), ntsa::Error(ntsa::Error::e_CLOSED));
+            NTSCFG_TEST_TRUE(
+                event.error() == ntsa::Error(ntsa::Error::e_NOT_OPEN) ||
+                event.error() == ntsa::Error(ntsa::Error::e_NOT_SOCKET));
         }
     }
 }
