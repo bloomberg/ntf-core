@@ -34,8 +34,8 @@ namespace ntsi {
 /// Provide a mechanism to poll sockets for events.
 ///
 /// @details
-/// Provide an abstract mechanism to poll sockets for events,
-/// potentially suspending a thread until one or more events occur.
+/// Provide an abstract mechanism to poll sockets for events, potentially 
+/// suspending a thread until one or more events occur.
 ///
 /// @par Thread Safety
 /// This class is thread safe.
@@ -153,20 +153,28 @@ class Reactor
     virtual ntsa::Error hideWritable(
         const bsl::shared_ptr<ntsi::StreamSocket>& socket) = 0;
 
-    /// Block until at least one socket has a condition of interest. Load
-    /// into the specified 'result' the events that describe the sockets
-    /// and their conditions. Return the error.
-    virtual ntsa::Error wait(bsl::vector<ntsa::Event>* result) = 0;
-
     /// Block until at least one socket has a condition of interest or the
-    /// specified absolute 'timeout' elapses. Load into the specified
+    /// specified absolute 'deadline', if any, elapses. Load into the specified
     /// 'result' the events that describe the sockets and their conditions.
     /// Return the error.
-    virtual ntsa::Error wait(bsl::vector<ntsa::Event>* result,
-                             const bsls::TimeInterval& timeout) = 0;
+    virtual ntsa::Error wait(
+        bsl::vector<ntsa::Event>*                      result,
+        const bdlb::NullableValue<bsls::TimeInterval>& deadline) = 0;
 
-    /// Unblock a thread waiting on the reactor. Return the error.
-    virtual void interrupt() = 0;
+    // MRM
+    #if 0
+    /// Block until at least one socket in the specified 'readable',
+    /// 'writable', or 'exceptional' sets matches any of those respective
+    /// conditions, or the specified 'timeout' elapses, if any. Load into the
+    /// specified 'result' the events that describe the sockets and their
+    /// conditions. Return the error. 
+    virtual ntsa::Error wait(
+        bsl::vector<ntsa::Event>                       *result, 
+        const bsl::vector<ntsa::Handle>&                readable, 
+        const bsl::vector<ntsa::Handle>&                writable,
+        const bsl::vector<ntsa::Handle>&                exceptional,
+        const bdlb::NullableValue<bsls::TimeInterval>&  timeout) = 0;
+    #endif
 };
 
 }  // end namespace ntsi

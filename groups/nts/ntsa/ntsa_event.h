@@ -20,12 +20,13 @@
 BSLS_IDENT("$Id: $")
 
 #include <ntsa_error.h>
-#include <ntsa_event.h>
 #include <ntsa_handle.h>
 #include <ntscfg_platform.h>
 #include <ntsscm_version.h>
 #include <bdlb_nullablevalue.h>
 #include <bslh_hash.h>
+#include <bsl_map.h>
+#include <bsl_set.h>
 #include <bsl_cstddef.h>
 #include <bsl_iosfwd.h>
 
@@ -35,7 +36,7 @@ namespace ntsa {
 /// Provide a description of a socket event.
 ///
 /// @details
-/// This class provies a value-semantic type that describes a socket event, or
+/// This class provides a value-semantic type that describes a socket event, or
 /// condition, detected when polling a socket.
 ///
 /// @par Thread Safety
@@ -52,14 +53,20 @@ class Event
         /// The socket is writable.
         e_WRITABLE = 2,
 
-        /// The socket has an error.
-        e_ERROR = 3,
+        /// The socket has an exceptional condition.
+        e_EXCEPTIONAL = 3,
 
-        /// The peer has shutdown the connection.
-        e_SHUTDOWN = 4,
+        /// The socket has an error or an exceptional condition.
+        e_ERROR = 4,
 
-        /// The peer has closed its end of the channel.
-        e_DISCONNECTED = 5
+        /// The remote socket has shut down writing from its side of the 
+        /// connection.
+        e_SHUTDOWN = 5,
+
+        /// Both the source socket and the remote socket have shut down writing
+        /// from their sides of the connection and all data has been received;
+        /// no more data may be sent or received.
+        e_HANGUP = 6
     };
 
     ntsa::Handle                     d_handle;
@@ -97,11 +104,14 @@ class Event
     /// Set the flag indicating the socket is writable.
     void setWritable();
 
+    /// Set the flag indicating the socket is exceptional.
+    void setExceptional();
+
     /// Set the flag indicating the peer has shut down the connection.
     void setShutdown();
 
     /// Set the flag indicating the socket is disconnected.
-    void setDisconnected();
+    void setHangup();
 
     /// Set the number of bytes readable from the socket to the specified
     /// 'value'.
@@ -118,6 +128,9 @@ class Event
     /// Set the error detected for the socket at the time of the event to
     /// the specified 'value'.
     void setError(const ntsa::Error& error);
+
+    /// Merge this event with the specified 'event'. Return the error.
+    ntsa::Error merge(const ntsa::Event& event);
 
     /// Return the socket handle.
     ntsa::Handle handle() const;
@@ -145,6 +158,9 @@ class Event
     /// Return the flag indicating the socket is writable.
     bool isWritable() const;
 
+    /// Return the flag indicating the socket is exceptional. 
+    bool isExceptional() const;
+
     /// Return the flag indicating an error has been detected for
     /// the socket.
     bool isError() const;
@@ -153,7 +169,7 @@ class Event
     bool isShutdown() const;
 
     /// Return the flag indicating the socket is disconnected.
-    bool isDisconnected() const;
+    bool isHangup() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -189,7 +205,7 @@ class Event
 /// 'stream'.
 ///
 /// @related ntsa::Event
-bsl::ostream& operator<<(bsl::ostream& stream, const ntsa::Event& value);
+bsl::ostream& operator<<(bsl::ostream& stream, const Event& value);
 
 /// Return true if the specified 'lhs' has the same value as the specified
 /// 'rhs', otherwise return false.
@@ -215,6 +231,141 @@ bool operator<(const Event& lhs, const Event& rhs);
 /// @related ntsa::Event
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const Event& value);
+
+/// Provide a set of events.
+///
+/// @details
+/// This class provides a data structure to represent a set of events polled
+/// from a reactor.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntsa_system
+class EventSet
+{
+    typedef bsl::map<ntsa::Handle, ntsa::Event> Map;
+
+    Map               d_map;
+    bslma::Allocator *d_allocator_p;
+
+  public:
+    /// Create a new, initially empty event set. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    explicit EventSet(bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new event set having the same value as the specified
+    /// 'original' object. Optionally specify a 'basicAllocator' used to supply
+    /// memory. If 'basicAllocator' is 0, the currently installed default
+    /// allocator is used.
+    EventSet(const EventSet& original, bslma::Allocator* basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EventSet();
+
+    // Assign the value of the specified 'other' event set to this object.
+    // Return a reference to this modifiable object.
+    EventSet& operator=(const EventSet& other);
+
+    /// Remove all events from the set.
+    void clear();
+
+    /// Unconditionally insert the specified 'event' into the set. 
+    void overwrite(const ntsa::Event& event);
+
+    /// Merge the specified 'event' with the existing event, if any, in the
+    /// set. 
+    void merge(const ntsa::Event& event);
+
+    /// Set the flag indicating the specified 'socket' is readable.
+    void setReadable(ntsa::Handle socket);
+
+    /// Set the flag indicating the specified 'socket' is readable.
+    void setReadable(ntsa::Handle socket, bsl::size_t units);
+
+    /// Set the flag indicating the specified 'socket' is writable.
+    void setWritable(ntsa::Handle socket);
+
+    /// Set the flag indicating the specified 'socket' is writable.
+    void setWritable(ntsa::Handle socket, bsl::size_t units);
+
+    /// Set the flag indicating the specified 'socket' is exceptional.
+    void setExceptional(ntsa::Handle socket);
+
+    /// Set the flag indicating the peer of the specified 'socket' has shut
+    /// down the connection.
+    void setShutdown(ntsa::Handle socket);
+
+    /// Set the flag indicating the specified 'socket' is disconnected.
+    void setHangup(ntsa::Handle socket);
+
+    /// Set the error detected for the specified 'socket' at the time of the
+    /// event to the specified 'value'.
+    void setError(ntsa::Handle socket, const ntsa::Error& error);
+
+    /// Return the flag indicating the socket is readable.
+    bool isReadable(ntsa::Handle socket) const;
+
+    /// Return the flag indicating the socket is writable.
+    bool isWritable(ntsa::Handle socket) const;
+
+    /// Return the flag indicating the socket is exceptional. 
+    bool isExceptional(ntsa::Handle socket) const;
+
+    /// Return the flag indicating an error has been detected for
+    /// the socket.
+    bool isError(ntsa::Handle socket) const;
+
+    /// Return the flag indicating the peer has shut down the connection.
+    bool isShutdown(ntsa::Handle socket) const;
+
+    /// Return the flag indicating the socket is disconnected.
+    bool isHangup(ntsa::Handle socket) const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EventSet& other) const;
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EventSet);
+};
+
+/// Insert a formatted, human-readable description of the specified 'value'
+/// into the specified 'stream'. Return a reference to the modifiable
+/// 'stream'.
+///
+/// @related ntsa::EventSet
+bsl::ostream& operator<<(bsl::ostream& stream, const EventSet& value);
+
+/// Return true if the specified 'lhs' has the same value as the specified
+/// 'rhs', otherwise return false.
+///
+/// @related ntsa::EventSet
+bool operator==(const EventSet& lhs, const EventSet& rhs);
+
+/// Return true if the specified 'lhs' does not have the same value as the
+/// specified 'rhs', otherwise return false.
+///
+/// @related ntsa::EventSet
+bool operator!=(const EventSet& lhs, const EventSet& rhs);
 
 NTSCFG_INLINE
 Event::Event()
@@ -277,25 +428,31 @@ void Event::setHandle(ntsa::Handle value)
 NTSCFG_INLINE
 void Event::setReadable()
 {
-    d_state |= (1 << e_READABLE);
+    d_state |= (1U << e_READABLE);
 }
 
 NTSCFG_INLINE
 void Event::setWritable()
 {
-    d_state |= (1 << e_WRITABLE);
+    d_state |= (1U << e_WRITABLE);
+}
+
+NTSCFG_INLINE
+void Event::setExceptional()
+{
+    d_state |= (1U << e_EXCEPTIONAL);
 }
 
 NTSCFG_INLINE
 void Event::setShutdown()
 {
-    d_state |= (1 << e_SHUTDOWN);
+    d_state |= (1U << e_SHUTDOWN);
 }
 
 NTSCFG_INLINE
-void Event::setDisconnected()
+void Event::setHangup()
 {
-    d_state |= (1 << e_DISCONNECTED);
+    d_state |= (1U << e_HANGUP);
 }
 
 NTSCFG_INLINE
@@ -356,31 +513,37 @@ const ntsa::Error& Event::error() const
 NTSCFG_INLINE
 bool Event::isReadable() const
 {
-    return ((d_state & (1 << e_READABLE)) != 0);
+    return ((d_state & (1U << e_READABLE)) != 0);
 }
 
 NTSCFG_INLINE
 bool Event::isWritable() const
 {
-    return ((d_state & (1 << e_WRITABLE)) != 0);
+    return ((d_state & (1U << e_WRITABLE)) != 0);
+}
+
+NTSCFG_INLINE
+bool Event::isExceptional() const
+{
+    return ((d_state & (1U << e_EXCEPTIONAL)) != 0);
 }
 
 NTSCFG_INLINE
 bool Event::isError() const
 {
-    return ((d_state & (1 << e_ERROR)) != 0);
+    return ((d_state & (1U << e_ERROR)) != 0);
 }
 
 NTSCFG_INLINE
 bool Event::isShutdown() const
 {
-    return ((d_state & (1 << e_SHUTDOWN)) != 0);
+    return ((d_state & (1U << e_SHUTDOWN)) != 0);
 }
 
 NTSCFG_INLINE
-bool Event::isDisconnected() const
+bool Event::isHangup() const
 {
-    return ((d_state & (1 << e_DISCONNECTED)) != 0);
+    return ((d_state & (1U << e_HANGUP)) != 0);
 }
 
 NTSCFG_INLINE
@@ -418,6 +581,24 @@ void hashAppend(HASH_ALGORITHM& algorithm, const Event& value)
     hashAppend(algorithm, value.bytesWritable());
     hashAppend(algorithm, value.backlog());
     hashAppend(algorithm, value.error());
+}
+
+NTSCFG_INLINE
+bsl::ostream& operator<<(bsl::ostream& stream, const EventSet& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+NTSCFG_INLINE
+bool operator==(const EventSet& lhs, const EventSet& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+NTSCFG_INLINE
+bool operator!=(const EventSet& lhs, const EventSet& rhs)
+{
+    return !operator==(lhs, rhs);
 }
 
 }  // end namespace ntsa

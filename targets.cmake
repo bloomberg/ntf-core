@@ -118,6 +118,7 @@ if (${NTF_BUILD_WITH_NTS})
     ntf_component(NAME ntsa_guid)
     ntf_component(NAME ntsa_handle)
     ntf_component(NAME ntsa_id)
+    ntf_component(NAME ntsa_interest)
     ntf_component(NAME ntsa_host)
     ntf_component(NAME ntsa_hosttype)
     ntf_component(NAME ntsa_ipendpoint)
@@ -253,7 +254,14 @@ if (${NTF_BUILD_WITH_NTS})
         PRIVATE
     )
 
+    #ntf_component(NAME ntso_devpoll)
     ntf_component(NAME ntso_epoll)
+    #ntf_component(NAME ntso_eventport)
+    ntf_component(NAME ntso_kqueue)
+    ntf_component(NAME ntso_poll)
+    #ntf_component(NAME ntso_pollset)
+    ntf_component(NAME ntso_select)
+    ntf_component(NAME ntso_test)
 
     ntf_package_end(NAME ntso)
 

@@ -139,9 +139,14 @@ BSLS_IDENT_RCSID(ntso_epoll_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntso {
 
-/// Provide an implementation of the 'ntsi::Reactor' interface
-/// to poll for socket events using the 'epoll' API on Linux. This class is
-/// thread safe.
+/// @brief @internal
+/// Provide an implementation of the 'ntsi::Reactor' interface to poll for
+/// socket events using the 'epoll' API on Linux.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntso
 class Epoll : public ntsi::Reactor
 {
     /// This class describes an entry in the interest set.

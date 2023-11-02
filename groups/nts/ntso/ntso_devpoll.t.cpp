@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntso_epoll.h>
+#include <ntso_devpoll.h>
 
 #include <ntso_test.h>
 
@@ -32,7 +32,7 @@ NTSCFG_TEST_CASE(1)
     ntscfg::TestAllocator ta;
     {
         bsl::shared_ptr<ntsi::Reactor> reactor =
-            ntso::EpollUtil::createReactor(&ta);
+            ntso::DevpollUtil::createReactor(&ta);
 
         ntso::Test::ReactorVector reactorVector(&ta);
         reactorVector.push_back(reactor);
@@ -50,7 +50,7 @@ NTSCFG_TEST_CASE(2)
     ntscfg::TestAllocator ta;
     {
         bsl::shared_ptr<ntsi::Reactor> reactor =
-            ntso::EpollUtil::createReactor(&ta);
+            ntso::DevpollUtil::createReactor(&ta);
 
         ntso::Test::ReactorVector reactorVector(&ta);
         reactorVector.push_back(reactor);
@@ -68,7 +68,7 @@ NTSCFG_TEST_CASE(3)
     ntscfg::TestAllocator ta;
     {
         bsl::shared_ptr<ntsi::Reactor> reactor =
-            ntso::EpollUtil::createReactor(&ta);
+            ntso::DevpollUtil::createReactor(&ta);
 
         ntso::Test::ReactorVector reactorVector(&ta);
         reactorVector.push_back(reactor);

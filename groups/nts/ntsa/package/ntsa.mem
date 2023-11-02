@@ -13,6 +13,7 @@ ntsa_file
 ntsa_guid
 ntsa_handle
 ntsa_id
+ntsa_interest
 ntsa_host
 ntsa_hosttype
 ntsa_ipendpoint

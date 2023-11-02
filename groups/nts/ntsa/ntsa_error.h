@@ -117,7 +117,10 @@ class Error
         e_NOT_AUTHORIZED,
 
         /// The operation is not implemented.
-        e_NOT_IMPLEMENTED
+        e_NOT_IMPLEMENTED,
+
+        /// The handle has been closed.
+        e_CLOSED
     };
 
 #if defined(BSLS_PLATFORM_OS_UNIX)

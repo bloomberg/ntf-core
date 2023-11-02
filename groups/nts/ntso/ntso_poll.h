@@ -13,36 +13,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INCLUDED_NTSO_EPOLL
-#define INCLUDED_NTSO_EPOLL
+#ifndef INCLUDED_NTSO_POLL
+#define INCLUDED_NTSO_POLL
 
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
 #include <ntscfg_platform.h>
+#include <ntscfg_config.h>
 #include <ntsi_reactor.h>
 #include <ntsscm_version.h>
 #include <bsl_memory.h>
 
-#if defined(BSLS_PLATFORM_OS_LINUX)
-#define NTSO_EPOLL_ENABLED 1
-#else
-#define NTSO_EPOLL_ENABLED 0
-#endif
+#define NTSO_POLL_ENABLED 1
 
-#if defined(NTSO_EPOLL_ENABLED)
+#if defined(NTSO_POLL_ENABLED)
 namespace BloombergLP {
 namespace ntso {
 
 /// @internal @brief
-/// Provide utilities for creating reactors implemented using the 'epoll' API
-/// on Linux.
+/// Provide utilities for creating reactors implemented using the 'select' API
+/// on all platforms.
 ///
 /// @par Thread Safety
 /// This struct is thread safe.
 ///
 /// @ingroup module_ntso
-struct EpollUtil {
+struct PollUtil {
     /// Create a new reactor. Optionally specify a 'basicAllocator' used to
     /// supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.

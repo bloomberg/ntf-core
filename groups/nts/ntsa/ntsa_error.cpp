@@ -98,6 +98,8 @@ const char* describeErrorCode(ntsa::Error::Code code)
         return "NOT_AUTHORIZED";
     case ntsa::Error::e_NOT_IMPLEMENTED:
         return "NOT_IMPLEMENTED";
+    case ntsa::Error::e_CLOSED:
+        return "CLOSED";
     }
 
     return "???";
@@ -365,7 +367,7 @@ ntsa::Error::Code Error::translate(ntsa::Error::Number number)
     case EALREADY:
         return ntsa::Error::e_INVALID;
     case EBADF:
-        return ntsa::Error::e_INVALID;
+        return ntsa::Error::e_CLOSED;
     case EBADMSG:
         return ntsa::Error::e_INVALID;
     case ECANCELED:
@@ -540,6 +542,8 @@ ntsa::Error::Number Error::translate(ntsa::Error::Code code)
         return EPERM;
     case e_NOT_IMPLEMENTED:
         return EPROTO;
+    case e_CLOSED:
+        return EBADF;
     default:
         return EINVAL;
     };
@@ -603,7 +607,7 @@ ntsa::Error::Code Error::translate(ntsa::Error::Number number)
     case ERROR_NOT_ENOUGH_MEMORY:
         return ntsa::Error::e_LIMIT;
     case ERROR_INVALID_HANDLE:
-        return ntsa::Error::e_INVALID;
+        return ntsa::Error::e_CLOSED;
     case ERROR_INVALID_PARAMETER:
         return ntsa::Error::e_INVALID;
     case ERROR_IO_INCOMPLETE:
@@ -730,6 +734,8 @@ ntsa::Error::Number Error::translate(ntsa::Error::Code code)
         return ERROR_ACCESS_DENIED;
     case e_NOT_IMPLEMENTED:
         return WSAEOPNOTSUPP;
+    case e_CLOSED:
+        return ERROR_INVALID_HANDLE;
     default:
         return WSAEOPNOTSUPP;
     };

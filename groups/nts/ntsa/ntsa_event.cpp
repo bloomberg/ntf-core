@@ -23,6 +23,47 @@ BSLS_IDENT_RCSID(ntsa_event_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsa {
 
+ntsa::Error Event::merge(const ntsa::Event& event)
+{
+    if (d_handle == ntsa::k_INVALID_HANDLE) {
+        d_handle = event.d_handle;
+    }
+    else if (d_handle != event.d_handle) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    d_state |= event.d_state;
+
+    if (!event.d_bytesReadable.isNull()) {
+        if (!d_bytesReadable.isNull()) {
+            d_bytesReadable.value() += event.d_bytesReadable.value();
+        }
+        else {
+            d_bytesReadable.makeValue(event.d_bytesReadable.value());
+        }
+    }
+
+    if (!event.d_bytesWritable.isNull()) {
+        if (!d_bytesWritable.isNull()) {
+            d_bytesWritable.value() += event.d_bytesWritable.value();
+        }
+        else {
+            d_bytesWritable.makeValue(event.d_bytesWritable.value());
+        }
+    }
+
+    if (!event.d_backlog.isNull()) {
+        if (!d_backlog.isNull()) {
+            d_backlog.value() += event.d_backlog.value();
+        }
+        else {
+            d_backlog.makeValue(event.d_backlog.value());
+        }
+    }
+
+    return ntsa::Error();
+}
+
 bool Event::equals(const Event& other) const
 {
     return (d_handle == other.d_handle && d_state == other.d_state &&
@@ -112,6 +153,15 @@ bsl::ostream& Event::print(bsl::ostream& stream,
             ++numFlags;
         }
 
+        if ((d_state & (1 << e_EXCEPTIONAL)) != 0) {
+            if (numFlags > 0) {
+                stateDescription.append(1, ' ');
+            }
+
+            stateDescription.append("EXCEPTIONAL", 11);
+            ++numFlags;
+        }
+
         if ((d_state & (1 << e_ERROR)) != 0) {
             if (numFlags > 0) {
                 stateDescription.append(1, ' ');
@@ -130,12 +180,12 @@ bsl::ostream& Event::print(bsl::ostream& stream,
             ++numFlags;
         }
 
-        if ((d_state & (1 << e_DISCONNECTED)) != 0) {
+        if ((d_state & (1 << e_HANGUP)) != 0) {
             if (numFlags > 0) {
                 stateDescription.append(1, ' ');
             }
 
-            stateDescription.append("DISCONNECTED", 12);
+            stateDescription.append("HANGUP", 12);
             ++numFlags;
         }
 
@@ -159,6 +209,206 @@ bsl::ostream& Event::print(bsl::ostream& stream,
     }
 
     printer.end();
+    return stream;
+}
+
+EventSet::EventSet(bslma::Allocator* basicAllocator)
+: d_map(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EventSet::EventSet(const EventSet& original, bslma::Allocator* basicAllocator)
+: d_map(original.d_map, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+
+}
+
+EventSet::~EventSet()
+{
+
+}
+
+EventSet& EventSet::operator=(const EventSet& other)
+{
+    if (this != &other) {
+        d_map = other.d_map;
+    }
+
+    return *this;
+}
+
+void EventSet::overwrite(const ntsa::Event& event)
+{
+    d_map[event.handle()] = event;
+}
+
+void EventSet::merge(const ntsa::Event& event)
+{
+    d_map[event.handle()].merge(event);
+}
+
+void EventSet::clear()
+{
+    d_map.clear();
+}
+
+void EventSet::setReadable(ntsa::Handle socket)
+{
+    ntsa::Event& event = d_map[socket];
+
+    event.setHandle(socket);
+    event.setReadable();
+}
+
+void EventSet::setReadable(ntsa::Handle socket, bsl::size_t units)
+{
+    ntsa::Event& event = d_map[socket];
+
+    event.setHandle(socket);
+    event.setReadable();
+    event.setBytesReadable(units);
+}
+
+void EventSet::setWritable(ntsa::Handle socket)
+{
+    ntsa::Event& event = d_map[socket];
+
+    event.setHandle(socket);
+    event.setWritable();
+}
+
+void EventSet::setWritable(ntsa::Handle socket, bsl::size_t units)
+{
+    ntsa::Event& event = d_map[socket];
+
+    event.setHandle(socket);
+    event.setWritable();
+    event.setBytesWritable(units);
+}
+
+void EventSet::setExceptional(ntsa::Handle socket)
+{
+    ntsa::Event& event = d_map[socket];
+
+    event.setHandle(socket);
+    event.setExceptional();
+}
+
+void EventSet::setShutdown(ntsa::Handle socket)
+{
+    ntsa::Event& event = d_map[socket];
+
+    event.setHandle(socket);
+    event.setShutdown();
+}
+
+void EventSet::setHangup(ntsa::Handle socket)
+{
+    ntsa::Event& event = d_map[socket];
+
+    event.setHandle(socket);
+    event.setHangup();
+}
+
+void EventSet::setError(ntsa::Handle socket, const ntsa::Error& error)
+{
+    ntsa::Event& event = d_map[socket];
+
+    event.setHandle(socket);
+    event.setError(error);
+}
+
+bool EventSet::isReadable(ntsa::Handle socket) const
+{
+    Map::const_iterator it = d_map.find(socket);
+    if (it == d_map.end()) {
+        return false;
+    }
+
+    const ntsa::Event& event = it->second;
+
+    return event.isReadable();
+}
+
+bool EventSet::isWritable(ntsa::Handle socket) const
+{
+    Map::const_iterator it = d_map.find(socket);
+    if (it == d_map.end()) {
+        return false;
+    }
+
+    const ntsa::Event& event = it->second;
+
+    return event.isWritable();
+}
+
+bool EventSet::isExceptional(ntsa::Handle socket) const
+{
+    Map::const_iterator it = d_map.find(socket);
+    if (it == d_map.end()) {
+        return false;
+    }
+
+    const ntsa::Event& event = it->second;
+
+    return event.isExceptional();
+}
+
+bool EventSet::isError(ntsa::Handle socket) const
+{
+    Map::const_iterator it = d_map.find(socket);
+    if (it == d_map.end()) {
+        return false;
+    }
+
+    const ntsa::Event& event = it->second;
+
+    return event.isError();
+}
+
+bool EventSet::isShutdown(ntsa::Handle socket) const
+{
+    Map::const_iterator it = d_map.find(socket);
+    if (it == d_map.end()) {
+        return false;
+    }
+
+    const ntsa::Event& event = it->second;
+
+    return event.isShutdown();
+}
+
+bool EventSet::isHangup(ntsa::Handle socket) const
+{
+    Map::const_iterator it = d_map.find(socket);
+    if (it == d_map.end()) {
+        return false;
+    }
+
+    const ntsa::Event& event = it->second;
+
+    return event.isHangup();
+}
+
+bool EventSet::equals(const EventSet& other) const
+{
+    return d_map == other.d_map;
+}
+
+bsl::ostream& EventSet::print(bsl::ostream& stream,
+                              int           level,
+                              int           spacesPerLevel) const
+{
+    for (Map::const_iterator it  = d_map.begin();
+                             it != d_map.end();
+                           ++it)
+    {
+        const ntsa::Event& event = it->second;
+        event.print(stream, level, spacesPerLevel);
+    }
+
     return stream;
 }
 
