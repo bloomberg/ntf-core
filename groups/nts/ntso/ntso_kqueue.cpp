@@ -18,7 +18,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntso_kqueue_cpp, "$Id$ $CSID$")
 
-#if defined(NTSO_KQUEUE_ENABLED)
+#if NTSO_KQUEUE_ENABLED
 
 #include <ntsi_reactor.h>
 #include <ntsu_socketoptionutil.h>
@@ -213,7 +213,7 @@ class Kqueue : public ntsi::Reactor
 };
 
 Kqueue::Kqueue(bslma::Allocator* basicAllocator)
-: d_kqueue(-1)
+: d_kqueue(ntsa::k_INVALID_HANDLE)
 , d_interestSet(basicAllocator)
 , d_outputList(basicAllocator)
 , d_changeList(basicAllocator)
@@ -242,7 +242,7 @@ Kqueue::~Kqueue()
         }
 
         NTSO_KQUEUE_LOG_DEVICE_CLOSE(d_kqueue);
-        d_kqueue = -1;
+        d_kqueue = ntsa::k_INVALID_HANDLE;
     }
 }
 
@@ -455,9 +455,6 @@ ntsa::Error Kqueue::wait(
     ntsa::EventSet*                                result,
     const bdlb::NullableValue<bsls::TimeInterval>& timeout)
 {
-    NTSCFG_WARNING_UNUSED(result);
-    NTSCFG_WARNING_UNUSED(timeout);
-
     ntsa::Error error;
     int         rc;
 
@@ -514,7 +511,7 @@ ntsa::Error Kqueue::wait(
 
         int numResults = rc;
 
-        result->reserve(result->size() + numResults);
+        result->reserve(result->size() + static_cast<bsl::size_t>(numResults));
 
         d_changeList.clear();
 
@@ -569,7 +566,7 @@ ntsa::Error Kqueue::wait(
         return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
     }
     else {
-        ntsa::Error error = ntsa::Error::last();
+        error = ntsa::Error::last();
         NTSO_KQUEUE_LOG_WAIT_FAILURE(error);
         d_changeList.clear();
         return error;

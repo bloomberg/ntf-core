@@ -228,17 +228,33 @@ class InterestSet
     /// error.
     ntsa::Error showReadable(ntsa::Handle socket);
 
+    /// Gain interest in readability of the specified 'socket'. Load into the
+    /// specified 'result' the new interest of the 'socket'. Return the error.
+    ntsa::Error showReadable(ntsa::Interest* result, ntsa::Handle socket);
+
     /// Gain interest in writability of the specified 'socket'. Return the
     /// error.
     ntsa::Error showWritable(ntsa::Handle socket);
+
+    /// Gain interest in writability of the specified 'socket'. Load into the
+    /// specified 'result' the new interest of the 'socket'. Return the error.
+    ntsa::Error showWritable(ntsa::Interest* result, ntsa::Handle socket);
 
     /// Lose interest in readability of the specified 'socket'. Return the
     /// error.
     ntsa::Error hideReadable(ntsa::Handle socket);
 
+    /// Lose interest in readability of the specified 'socket'. Load into the
+    /// specified 'result' the new interest of the 'socket'. Return the error.
+    ntsa::Error hideReadable(ntsa::Interest* result, ntsa::Handle socket);
+
     /// Lose interest in writability of the specified 'socket'. Return the
     /// error.
     ntsa::Error hideWritable(ntsa::Handle socket);
+
+    /// Lose interest in writability of the specified 'socket'. Load into the
+    /// specified 'result' the new interest of the 'socket'. Return the error.
+    ntsa::Error hideWritable(ntsa::Interest* result, ntsa::Handle socket);
 
     /// Return the iterator to the beginning of the non-modifiable interest
     /// set.
@@ -689,13 +705,22 @@ ntsa::Error InterestSet::detach(ntsa::Handle socket)
 NTSCFG_INLINE
 ntsa::Error InterestSet::showReadable(ntsa::Handle socket)
 {
+    return this->showReadable(0, socket);
+}
+
+NTSCFG_INLINE
+ntsa::Error InterestSet::showReadable(ntsa::Interest* result, 
+                                      ntsa::Handle    socket)
+{
     const bsl::size_t index = static_cast<bsl::size_t>(socket);
 
     if (NTSCFG_LIKELY(index < d_vector.size())) {
-        if (NTSCFG_LIKELY(d_vector[index].handle() != 
-                          ntsa::k_INVALID_HANDLE)) 
-        {
-            d_vector[index].showReadable();
+        ntsa::Interest& interest = d_vector[index];
+        if (NTSCFG_LIKELY(interest.handle() != ntsa::k_INVALID_HANDLE)) {
+            interest.showReadable();
+            if (result) {
+                *result = interest;
+            }
             return ntsa::Error();
         }
         else {
@@ -710,13 +735,22 @@ ntsa::Error InterestSet::showReadable(ntsa::Handle socket)
 NTSCFG_INLINE
 ntsa::Error InterestSet::showWritable(ntsa::Handle socket)
 {
+    return this->showWritable(0, socket);
+}
+
+NTSCFG_INLINE
+ntsa::Error InterestSet::showWritable(ntsa::Interest* result, 
+                                      ntsa::Handle    socket)
+{
     const bsl::size_t index = static_cast<bsl::size_t>(socket);
 
     if (NTSCFG_LIKELY(index < d_vector.size())) {
-        if (NTSCFG_LIKELY(d_vector[index].handle() != 
-                          ntsa::k_INVALID_HANDLE)) 
-        {
-            d_vector[index].showWritable();
+        ntsa::Interest& interest = d_vector[index];
+        if (NTSCFG_LIKELY(interest.handle() != ntsa::k_INVALID_HANDLE)) {
+            interest.showWritable();
+            if (result) {
+                *result = interest;
+            }
             return ntsa::Error();
         }
         else {
@@ -731,13 +765,22 @@ ntsa::Error InterestSet::showWritable(ntsa::Handle socket)
 NTSCFG_INLINE
 ntsa::Error InterestSet::hideReadable(ntsa::Handle socket)
 {
+    return this->hideReadable(0, socket);
+}
+
+NTSCFG_INLINE
+ntsa::Error InterestSet::hideReadable(ntsa::Interest* result,
+                                      ntsa::Handle    socket)
+{
     const bsl::size_t index = static_cast<bsl::size_t>(socket);
 
     if (NTSCFG_LIKELY(index < d_vector.size())) {
-        if (NTSCFG_LIKELY(d_vector[index].handle() != 
-                          ntsa::k_INVALID_HANDLE)) 
-        {
-            d_vector[index].hideReadable();
+        ntsa::Interest& interest = d_vector[index];
+        if (NTSCFG_LIKELY(interest.handle() != ntsa::k_INVALID_HANDLE)) {
+            interest.hideReadable();
+            if (result) {
+                *result = interest;
+            }
             return ntsa::Error();
         }
         else {
@@ -752,13 +795,22 @@ ntsa::Error InterestSet::hideReadable(ntsa::Handle socket)
 NTSCFG_INLINE
 ntsa::Error InterestSet::hideWritable(ntsa::Handle socket)
 {
+    return this->hideWritable(0, socket);
+}
+
+NTSCFG_INLINE
+ntsa::Error InterestSet::hideWritable(ntsa::Interest* result,
+                                      ntsa::Handle    socket)
+{
     const bsl::size_t index = static_cast<bsl::size_t>(socket);
 
     if (NTSCFG_LIKELY(index < d_vector.size())) {
-        if (NTSCFG_LIKELY(d_vector[index].handle() != 
-                          ntsa::k_INVALID_HANDLE)) 
-        {
-            d_vector[index].hideWritable();
+        ntsa::Interest& interest = d_vector[index];
+        if (NTSCFG_LIKELY(interest.handle() != ntsa::k_INVALID_HANDLE)) {
+            interest.hideWritable();
+            if (result) {
+                *result = interest;
+            }
             return ntsa::Error();
         }
         else {
@@ -790,10 +842,9 @@ bool InterestSet::find(ntsa::Interest* result, ntsa::Handle socket) const
     const bsl::size_t index = static_cast<bsl::size_t>(socket);
 
     if (NTSCFG_LIKELY(index < d_vector.size())) {
-        ntsa::Interest interest = d_vector[index];
+        const ntsa::Interest& interest = d_vector[index];
 
-        if (NTSCFG_LIKELY(d_vector[index].handle() != ntsa::k_INVALID_HANDLE)) 
-        {
+        if (NTSCFG_LIKELY(interest.handle() != ntsa::k_INVALID_HANDLE)) {
             *result = interest;
             return true;
         }

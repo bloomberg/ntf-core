@@ -19,7 +19,7 @@
 
 using namespace BloombergLP;
 
-#if defined(NTSO_KQUEUE_ENABLED)
+#if NTSO_KQUEUE_ENABLED
 
 namespace test {
 

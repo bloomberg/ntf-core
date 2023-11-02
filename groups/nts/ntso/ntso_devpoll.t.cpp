@@ -19,11 +19,7 @@
 
 using namespace BloombergLP;
 
-#if defined(NTSO_SELECT_ENABLED)
-
-namespace test {
-
-}  // close namespace test
+#if NTSO_DEVPOLL_ENABLED
 
 NTSCFG_TEST_CASE(1)
 {

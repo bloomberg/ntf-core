@@ -27,7 +27,7 @@ BSLS_IDENT("$Id: $")
 
 #define NTSO_POLL_ENABLED 1
 
-#if defined(NTSO_POLL_ENABLED)
+#if NTSO_POLL_ENABLED
 namespace BloombergLP {
 namespace ntso {
 

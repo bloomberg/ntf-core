@@ -18,7 +18,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntso_eventport_cpp, "$Id$ $CSID$")
 
-#if defined(NTSO_EVENTPORT_ENABLED)
+#if NTSO_EVENTPORT_ENABLED
 
 #include <ntsi_reactor.h>
 #include <ntsu_socketoptionutil.h>

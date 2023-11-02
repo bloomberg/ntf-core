@@ -30,7 +30,7 @@ BSLS_IDENT("$Id: $")
 #define NTSO_EVENTPORT_ENABLED 0
 #endif
 
-#if defined(NTSO_EVENTPORT_ENABLED)
+#if NTSO_EVENTPORT_ENABLED
 namespace BloombergLP {
 namespace ntso {
 

@@ -31,7 +31,7 @@ BSLS_IDENT("$Id: $")
 #define NTSO_KQUEUE_ENABLED 0
 #endif
 
-#if defined(NTSO_KQUEUE_ENABLED)
+#if NTSO_KQUEUE_ENABLED
 namespace BloombergLP {
 namespace ntso {
 

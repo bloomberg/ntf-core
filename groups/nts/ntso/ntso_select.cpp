@@ -70,7 +70,7 @@ BSLS_IDENT_RCSID(ntso_select_cpp, "$Id$ $CSID$")
 
 #include <ntso_select.h>
 
-#if defined(NTSO_SELECT_ENABLED)
+#if NTSO_SELECT_ENABLED
 
 #include <ntsi_reactor.h>
 #include <ntsu_socketoptionutil.h>

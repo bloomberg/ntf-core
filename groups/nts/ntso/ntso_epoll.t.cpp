@@ -19,11 +19,7 @@
 
 using namespace BloombergLP;
 
-#if defined(NTSO_SELECT_ENABLED)
-
-namespace test {
-
-}  // close namespace test
+#if NTSO_EPOLL_ENABLED
 
 NTSCFG_TEST_CASE(1)
 {
@@ -73,7 +69,7 @@ NTSCFG_TEST_CASE(3)
         ntso::Test::ReactorVector reactorVector(&ta);
         reactorVector.push_back(reactor);
 
-        ntso::Test::pollingDuringClose(reactorVector, &ta);
+        ntso::Test::pollingAfterClose(reactorVector, &ta);
     }
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
