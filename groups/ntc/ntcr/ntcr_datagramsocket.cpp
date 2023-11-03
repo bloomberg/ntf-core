@@ -429,6 +429,11 @@ void DatagramSocket::processSendRateTimer(
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         NTCR_DATAGRAMSOCKET_LOG_SEND_BUFFER_THROTTLE_RELAXED();
 
+        this->privateRelaxFlowControl(self,
+                                      ntca::FlowControlType::e_SEND,
+                                      false,
+                                      true);
+
         if (d_session_sp) {
             ntca::WriteQueueEvent event;
             event.setType(ntca::WriteQueueEventType::e_RATE_LIMIT_RELAXED);
@@ -441,14 +446,9 @@ void DatagramSocket::processSendRateTimer(
                 d_sessionStrand_sp,
                 ntci::Strand::unknown(),
                 self,
-                true,
+                false,
                 &d_mutex);
         }
-
-        this->privateRelaxFlowControl(self,
-                                      ntca::FlowControlType::e_SEND,
-                                      false,
-                                      true);
     }
 }
 
@@ -521,6 +521,11 @@ void DatagramSocket::processReceiveRateTimer(
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         NTCR_DATAGRAMSOCKET_LOG_RECEIVE_BUFFER_THROTTLE_RELAXED();
 
+        this->privateRelaxFlowControl(self,
+                                      ntca::FlowControlType::e_RECEIVE,
+                                      false,
+                                      true);
+
         if (d_session_sp) {
             ntca::ReadQueueEvent event;
             event.setType(ntca::ReadQueueEventType::e_RATE_LIMIT_RELAXED);
@@ -533,14 +538,9 @@ void DatagramSocket::processReceiveRateTimer(
                 d_sessionStrand_sp,
                 ntci::Strand::unknown(),
                 self,
-                true,
+                false,
                 &d_mutex);
         }
-
-        this->privateRelaxFlowControl(self,
-                                      ntca::FlowControlType::e_RECEIVE,
-                                      false,
-                                      true);
     }
 }
 
@@ -1606,7 +1606,7 @@ ntsa::Error DatagramSocket::privateThrottleReceiveBuffer(
                 timerOptions.hideEvent(ntca::TimerEventType::e_CANCELED);
                 timerOptions.hideEvent(ntca::TimerEventType::e_CLOSED);
 
-                ntci::TimerCallback timerCallback = ntci::TimerCallback(
+                ntci::TimerCallback timerCallback = this->createTimerCallback(
                     bdlf::MemFnUtil::memFn(
                         &DatagramSocket::processReceiveRateTimer,
                         self),

@@ -232,6 +232,11 @@ void ListenerSocket::processAcceptRateTimer(
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         NTCP_LISTENERSOCKET_LOG_BACKLOG_THROTTLE_RELAXED();
 
+        this->privateRelaxFlowControl(self,
+                                      ntca::FlowControlType::e_RECEIVE,
+                                      false,
+                                      true);
+
         if (d_session_sp) {
             ntca::AcceptQueueEvent event;
             event.setType(ntca::AcceptQueueEventType::e_RATE_LIMIT_RELAXED);
@@ -244,14 +249,9 @@ void ListenerSocket::processAcceptRateTimer(
                 d_sessionStrand_sp,
                 ntci::Strand::unknown(),
                 self,
-                true,
+                false,
                 &d_mutex);
         }
-
-        this->privateRelaxFlowControl(self,
-                                      ntca::FlowControlType::e_RECEIVE,
-                                      false,
-                                      true);
     }
 }
 
