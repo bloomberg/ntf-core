@@ -29,8 +29,8 @@ void Test::usage(
 
     ntsa::Error error;
 
-    for (ReactorVector::const_iterator reactorIterator  = reactors.begin(); 
-                                       reactorIterator != reactors.end(); 
+    for (ReactorVector::const_iterator reactorIterator  = reactors.begin();
+                                       reactorIterator != reactors.end();
                                      ++reactorIterator)
     {
         const bsl::shared_ptr<ntsi::Reactor>& reactor = *reactorIterator;
@@ -41,13 +41,13 @@ void Test::usage(
 
         // Create a socket pair.
 
-        bsl::shared_ptr<ntsb::StreamSocket> client;
-        bsl::shared_ptr<ntsb::StreamSocket> server;
+        bsl::shared_ptr<ntsi::StreamSocket> client;
+        bsl::shared_ptr<ntsi::StreamSocket> server;
 
-        error = ntsb::StreamSocket::pair(&client,
-                                         &server,
-                                         ntsa::Transport::e_TCP_IPV4_STREAM,
-                                         allocator);
+        error = Test::pair(&client,
+                           &server,
+                           ntsa::Transport::e_TCP_IPV4_STREAM,
+                           allocator);
         NTSCFG_TEST_OK(error);
 
         error = client->setBlocking(false);
@@ -353,8 +353,8 @@ void Test::pollingAfterFullShutdown(
 
     ntsa::Error error;
 
-    for (ReactorVector::const_iterator reactorIterator  = reactors.begin(); 
-                                       reactorIterator != reactors.end(); 
+    for (ReactorVector::const_iterator reactorIterator  = reactors.begin();
+                                       reactorIterator != reactors.end();
                                      ++reactorIterator)
     {
         const bsl::shared_ptr<ntsi::Reactor>& reactor = *reactorIterator;
@@ -365,13 +365,13 @@ void Test::pollingAfterFullShutdown(
 
         // Create a socket pair.
 
-        bsl::shared_ptr<ntsb::StreamSocket> client;
-        bsl::shared_ptr<ntsb::StreamSocket> server;
+        bsl::shared_ptr<ntsi::StreamSocket> client;
+        bsl::shared_ptr<ntsi::StreamSocket> server;
 
-        error = ntsb::StreamSocket::pair(&client,
-                                         &server,
-                                         ntsa::Transport::e_TCP_IPV4_STREAM,
-                                         allocator);
+        error = Test::pair(&client,
+                           &server,
+                           ntsa::Transport::e_TCP_IPV4_STREAM,
+                           allocator);
         NTSCFG_TEST_OK(error);
 
         error = client->setBlocking(false);
@@ -683,7 +683,7 @@ void Test::pollingAfterFullShutdown(
         ntso::Test::log(eventSet);
 
         NTSCFG_TEST_EQ(eventSet.size(), 1);
-        NTSCFG_TEST_TRUE(eventSet.isReadable(server->handle()) || 
+        NTSCFG_TEST_TRUE(eventSet.isReadable(server->handle()) ||
                          eventSet.isHangup(server->handle()) ||
                          eventSet.isError(server->handle()));
 
@@ -716,7 +716,7 @@ void Test::pollingAfterFullShutdown(
         ntso::Test::log(eventSet);
 
         NTSCFG_TEST_EQ(eventSet.size(), 1);
-        NTSCFG_TEST_TRUE(eventSet.isReadable(client->handle()) || 
+        NTSCFG_TEST_TRUE(eventSet.isReadable(client->handle()) ||
                          eventSet.isHangup(client->handle()) ||
                          eventSet.isError(client->handle()));
 
@@ -743,8 +743,8 @@ void Test::pollingAfterClose(
 
     ntsa::Error error;
 
-    for (ReactorVector::const_iterator reactorIterator  = reactors.begin(); 
-                                       reactorIterator != reactors.end(); 
+    for (ReactorVector::const_iterator reactorIterator  = reactors.begin();
+                                       reactorIterator != reactors.end();
                                      ++reactorIterator)
     {
         const bsl::shared_ptr<ntsi::Reactor>& reactor = *reactorIterator;
@@ -755,13 +755,13 @@ void Test::pollingAfterClose(
 
         // Create a socket pair.
 
-        bsl::shared_ptr<ntsb::StreamSocket> client;
-        bsl::shared_ptr<ntsb::StreamSocket> server;
+        bsl::shared_ptr<ntsi::StreamSocket> client;
+        bsl::shared_ptr<ntsi::StreamSocket> server;
 
-        error = ntsb::StreamSocket::pair(&client,
-                                         &server,
-                                         ntsa::Transport::e_TCP_IPV4_STREAM,
-                                         allocator);
+        error = Test::pair(&client,
+                           &server,
+                           ntsa::Transport::e_TCP_IPV4_STREAM,
+                           allocator);
         NTSCFG_TEST_OK(error);
 
         error = client->setBlocking(false);
@@ -987,10 +987,39 @@ void Test::log(const bsl::vector<ntsa::Event>& eventSet)
     }
 }
 
+ntsa::Error Test::pair(bsl::shared_ptr<ntsi::StreamSocket>* client,
+                       bsl::shared_ptr<ntsi::StreamSocket>* server,
+                       ntsa::Transport::Value               type,
+                       bslma::Allocator* basicAllocator)
+{
+    ntsa::Error error;
+
+    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
+
+    client->reset();
+    server->reset();
+
+    bsl::shared_ptr<ntsb::StreamSocket> concreteClient;
+    bsl::shared_ptr<ntsb::StreamSocket> concreteServer;
+
+    error = ntsb::StreamSocket::pair(&concreteClient,
+                                     &concreteServer,
+                                     ntsa::Transport::e_TCP_IPV4_STREAM,
+                                     allocator);
+    if (error) {
+        return error;
+    }
+
+    *client = concreteClient;
+    *server = concreteServer;
+
+    return ntsa::Error();
+}
+
 void Test::log(const ntsa::EventSet& eventSet)
 {
-    for (ntsa::EventSet::const_iterator it  = eventSet.cbegin(); 
-                                        it != eventSet.cend(); 
+    for (ntsa::EventSet::const_iterator it  = eventSet.cbegin();
+                                        it != eventSet.cend();
                                       ++it)
     {
         const ntsa::Event& event = *it;

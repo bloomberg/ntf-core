@@ -146,6 +146,10 @@ class Poll : public ntsi::Reactor
     Poll(const Poll&) BSLS_KEYWORD_DELETED;
     Poll& operator=(const Poll&) BSLS_KEYWORD_DELETED;
 
+  private:
+    /// Return the events that correspond to the specified 'interest'.
+    static short specify(const ntsa::Interest& interest);
+
   public:
     /// Create a new object. Optionally specify a 'basicAllocator' used to
     /// supply memory. If 'basicAllocator' is 0, the currently installed
@@ -183,9 +187,24 @@ class Poll : public ntsi::Reactor
     /// Return the error.
     ntsa::Error wait(
         ntsa::EventSet*                                result,
-        const bdlb::NullableValue<bsls::TimeInterval>& deadline)              
+        const bdlb::NullableValue<bsls::TimeInterval>& deadline)
         BSLS_KEYWORD_OVERRIDE;
 };
+
+short Poll::specify(const ntsa::Interest& interest)
+{
+    short result = 0;
+
+    if (interest.wantReadable()) {
+        result |= POLLIN;
+    }
+
+    if (interest.wantWritable()) {
+        result |= POLLOUT;
+    }
+
+    return result;
+}
 
 Poll::Poll(bslma::Allocator* basicAllocator)
 : d_interestSet(basicAllocator)
@@ -336,7 +355,7 @@ ntsa::Error Poll::wait(
         if (NTSCFG_LIKELY(timeout.value() > now)) {
             const bsls::TimeInterval delta = timeout.value() - now;
 
-            timeoutInMilliseconds = 
+            timeoutInMilliseconds =
                 static_cast<int>(delta.totalMilliseconds());
 
             NTSO_POLL_LOG_WAIT_TIMED(delta.totalMilliseconds());
@@ -362,16 +381,8 @@ ntsa::Error Poll::wait(
 
             struct ::pollfd pfd;
             pfd.fd      = interest.handle();
-            pfd.events  = 0;
+            pfd.events  = Poll::specify(interest);
             pfd.revents = 0;
-
-            if (interest.wantReadable()) {
-                pfd.events |= POLLIN;
-            }
-
-            if (interest.wantWritable()) {
-                pfd.events |= POLLOUT;
-            }
 
             d_descriptorVector.push_back(pfd);
         }
@@ -406,7 +417,7 @@ ntsa::Error Poll::wait(
         DescriptorVector::const_iterator it = d_descriptorVector.begin();
         DescriptorVector::const_iterator et = d_descriptorVector.end();
 
-        for (; it != et; ++it) {            
+        for (; it != et; ++it) {
             if (numResultsRemaining == 0) {
                 break;
             }
@@ -483,9 +494,9 @@ ntsa::Error Poll::wait(
     else {
         ntsa::Error error = ntsa::Error::last();
         NTSO_POLL_LOG_WAIT_FAILURE(error);
-        
+
         if (error == ntsa::Error(ntsa::Error::e_NOT_OPEN) ||
-            error == ntsa::Error(ntsa::Error::e_NOT_SOCKET)) 
+            error == ntsa::Error(ntsa::Error::e_NOT_SOCKET))
         {
             typedef bsl::vector<ntsa::Handle> HandleVector;
             HandleVector garbage;

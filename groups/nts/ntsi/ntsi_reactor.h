@@ -34,7 +34,7 @@ namespace ntsi {
 /// Provide a mechanism to poll sockets for events.
 ///
 /// @details
-/// Provide an abstract mechanism to poll sockets for events, potentially 
+/// Provide an abstract mechanism to poll sockets for events, potentially
 /// suspending a thread until one or more events occur.
 ///
 /// @par Thread Safety
@@ -51,30 +51,30 @@ class Reactor
     virtual ntsa::Error add(ntsa::Handle socket);
 
     /// Add the specified 'socket' to the reactor. Return the error.
-    virtual ntsa::Error add(
+    ntsa::Error add(
         const bsl::shared_ptr<ntsi::DatagramSocket>& socket);
 
     /// Add the specified 'socket' to the reactor. Return the error.
-    virtual ntsa::Error add(
+    ntsa::Error add(
         const bsl::shared_ptr<ntsi::ListenerSocket>& socket);
 
     /// Add the specified 'socket' to the reactor. Return the error.
-    virtual ntsa::Error add(
+    ntsa::Error add(
         const bsl::shared_ptr<ntsi::StreamSocket>& socket);
 
     /// Remove the specified 'socket' from the reactor. Return the error.
     virtual ntsa::Error remove(ntsa::Handle socket);
 
     /// Remove the specified 'socket' from the reactor. Return the error.
-    virtual ntsa::Error remove(
+    ntsa::Error remove(
         const bsl::shared_ptr<ntsi::DatagramSocket>& socket);
 
     /// Remove the specified 'socket' from the reactor. Return the error.
-    virtual ntsa::Error remove(
+    ntsa::Error remove(
         const bsl::shared_ptr<ntsi::ListenerSocket>& socket);
 
     /// Remove the specified 'socket' from the reactor. Return the error.
-    virtual ntsa::Error remove(
+    ntsa::Error remove(
         const bsl::shared_ptr<ntsi::StreamSocket>& socket);
 
     /// Unblock any thread waiting on the reactor when the specified
@@ -83,17 +83,17 @@ class Reactor
 
     /// Unblock any thread waiting on the reactor when the specified
     /// 'socket' is readable. Return the error.
-    virtual ntsa::Error showReadable(
+    ntsa::Error showReadable(
         const bsl::shared_ptr<ntsi::DatagramSocket>& socket);
 
     /// Unblock any thread waiting on the reactor when the specified
     /// 'socket' is readable. Return the error.
-    virtual ntsa::Error showReadable(
+    ntsa::Error showReadable(
         const bsl::shared_ptr<ntsi::ListenerSocket>& socket);
 
     /// Unblock any thread waiting on the reactor when the specified
     /// 'socket' is readable. Return the error.
-    virtual ntsa::Error showReadable(
+    ntsa::Error showReadable(
         const bsl::shared_ptr<ntsi::StreamSocket>& socket);
 
     /// Unblock any thread waiting on the reactor when the specified
@@ -102,17 +102,17 @@ class Reactor
 
     /// Unblock any thread waiting on the reactor when the specified
     /// 'socket' is writable. Return the error.
-    virtual ntsa::Error showWritable(
+    ntsa::Error showWritable(
         const bsl::shared_ptr<ntsi::DatagramSocket>& socket);
 
     /// Unblock any thread waiting on the reactor when the specified
     /// 'socket' is writable. Return the error.
-    virtual ntsa::Error showWritable(
+    ntsa::Error showWritable(
         const bsl::shared_ptr<ntsi::ListenerSocket>& socket);
 
     /// Unblock any thread waiting on the reactor when the specified
     /// 'socket' is writable. Return the error.
-    virtual ntsa::Error showWritable(
+    ntsa::Error showWritable(
         const bsl::shared_ptr<ntsi::StreamSocket>& socket);
 
     /// Do not unblock any thread waiting on the reactor when the specified
@@ -121,17 +121,17 @@ class Reactor
 
     /// Do not unblock any thread waiting on the reactor when the specified
     /// 'socket' is readable. Return the error.
-    virtual ntsa::Error hideReadable(
+    ntsa::Error hideReadable(
         const bsl::shared_ptr<ntsi::DatagramSocket>& socket);
 
     /// Do not unblock any thread waiting on the reactor when the specified
     /// 'socket' is readable. Return the error.
-    virtual ntsa::Error hideReadable(
+    ntsa::Error hideReadable(
         const bsl::shared_ptr<ntsi::ListenerSocket>& socket);
 
     /// Do not unblock any thread waiting on the reactor when the specified
     /// 'socket' is readable. Return the error.
-    virtual ntsa::Error hideReadable(
+    ntsa::Error hideReadable(
         const bsl::shared_ptr<ntsi::StreamSocket>& socket);
 
     /// Do not unblock any thread waiting on the reactor when the specified
@@ -140,17 +140,17 @@ class Reactor
 
     /// Do not unblock any thread waiting on the reactor when the specified
     /// 'socket' is writable. Return the error.
-    virtual ntsa::Error hideWritable(
+    ntsa::Error hideWritable(
         const bsl::shared_ptr<ntsi::DatagramSocket>& socket);
 
     /// Do not unblock any thread waiting on the reactor when the specified
     /// 'socket' is writable. Return the error.
-    virtual ntsa::Error hideWritable(
+    ntsa::Error hideWritable(
         const bsl::shared_ptr<ntsi::ListenerSocket>& socket);
 
     /// Do not unblock any thread waiting on the reactor when the specified
     /// 'socket' is writable. Return the error.
-    virtual ntsa::Error hideWritable(
+    ntsa::Error hideWritable(
         const bsl::shared_ptr<ntsi::StreamSocket>& socket);
 
     /// Block until at least one socket has a condition of interest or the

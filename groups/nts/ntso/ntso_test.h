@@ -46,7 +46,7 @@ namespace ntso {
 // This struct is thread safe.
 ///
 /// @ingroup module_ntso
-struct Test 
+struct Test
 {
     /// Define a type alias for a vector of reactors.
     typedef bsl::vector< bsl::shared_ptr<ntsi::Reactor> > ReactorVector;
@@ -66,26 +66,35 @@ struct Test
     /// select  The polling function fails, but does not indicate which file
     ///         descriptor was invalid. The reactor implementation scans each
     ///         attached file descriptor and checks if the file descriptor is
-    ///         invalid. For each invalid (i.e. file descriptor), it 
+    ///         invalid. For each invalid (i.e. file descriptor), it
     ///         synthesizes an error event and immediately detaches that file
     ///         descriptor from the reactor on behalf of the user.
     ///
-    /// poll    The polling function succeeds and indicates POLLINVAL for the 
+    /// poll    The polling function succeeds and indicates POLLINVAL for the
     ///         offending file descriptor. The reactor implementation returns
-    ///         an error event but immediately detaches the file descriptor 
+    ///         an error event but immediately detaches the file descriptor
     ///         from the reactor on behalf of the user.
     ///
     /// kqueue  When the file descriptor is closed, it is automatically removed
-    ///         from the kqueue interest set maintained internally in the 
+    ///         from the kqueue interest set maintained internally in the
     ///         kernel. The polling function thus does not return, unless it
     ///         is given a timeout in which case it times out.
     static void pollingAfterClose(
         const ReactorVector& reactors, bslma::Allocator* allocator);
 
-    /// Log the specified 'events'. 
+    /// Load into the specified 'client' and 'server' a connected pair of
+    /// stream sockets of the specified 'type'. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0,
+    /// the currently installed default allocator is used. Return the error.
+    static ntsa::Error pair(bsl::shared_ptr<ntsi::StreamSocket>* client,
+                            bsl::shared_ptr<ntsi::StreamSocket>* server,
+                            ntsa::Transport::Value               type,
+                            bslma::Allocator* basicAllocator = 0);
+
+    /// Log the specified 'events'.
     static void log(const bsl::vector<ntsa::Event>& events);
 
-    /// Log the specified 'eventSet'. 
+    /// Log the specified 'eventSet'.
     static void log(const ntsa::EventSet& eventSet);
 };
 

@@ -182,7 +182,7 @@ class Epoll : public ntsi::Reactor
     /// Return the error.
     ntsa::Error wait(
         ntsa::EventSet*                                result,
-        const bdlb::NullableValue<bsls::TimeInterval>& deadline)              
+        const bdlb::NullableValue<bsls::TimeInterval>& deadline)
         BSLS_KEYWORD_OVERRIDE;
 };
 
@@ -462,7 +462,7 @@ ntsa::Error Epoll::wait(
         if (NTSCFG_LIKELY(timeout.value() > now)) {
             const bsls::TimeInterval delta = timeout.value() - now;
 
-            timeoutInMilliseconds = 
+            timeoutInMilliseconds =
                 static_cast<int>(delta.totalMilliseconds());
 
             NTSO_EPOLL_LOG_WAIT_TIMED(delta.totalMilliseconds());

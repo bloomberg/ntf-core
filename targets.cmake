@@ -254,12 +254,12 @@ if (${NTF_BUILD_WITH_NTS})
         PRIVATE
     )
 
-    #ntf_component(NAME ntso_devpoll)
+    ntf_component(NAME ntso_devpoll)
     ntf_component(NAME ntso_epoll)
-    #ntf_component(NAME ntso_eventport)
+    ntf_component(NAME ntso_eventport)
     ntf_component(NAME ntso_kqueue)
     ntf_component(NAME ntso_poll)
-    #ntf_component(NAME ntso_pollset)
+    ntf_component(NAME ntso_pollset)
     ntf_component(NAME ntso_select)
     ntf_component(NAME ntso_test)
 
