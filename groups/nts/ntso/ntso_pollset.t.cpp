@@ -27,8 +27,11 @@ NTSCFG_TEST_CASE(1)
 
     ntscfg::TestAllocator ta;
     {
+        ntsa::ReactorConfig reactorConfig(&ta);
+        reactorConfig.setDriverName("pollset");
+
         bsl::shared_ptr<ntsi::Reactor> reactor =
-            ntso::PollsetUtil::createReactor(&ta);
+            ntso::PollsetUtil::createReactor(reactorConfig, &ta);
 
         ntso::Test::ReactorVector reactorVector(&ta);
         reactorVector.push_back(reactor);
@@ -45,8 +48,11 @@ NTSCFG_TEST_CASE(2)
 
     ntscfg::TestAllocator ta;
     {
+        ntsa::ReactorConfig reactorConfig(&ta);
+        reactorConfig.setDriverName("pollset");
+
         bsl::shared_ptr<ntsi::Reactor> reactor =
-            ntso::PollsetUtil::createReactor(&ta);
+            ntso::PollsetUtil::createReactor(reactorConfig, &ta);
 
         ntso::Test::ReactorVector reactorVector(&ta);
         reactorVector.push_back(reactor);
@@ -63,13 +69,16 @@ NTSCFG_TEST_CASE(3)
 
     ntscfg::TestAllocator ta;
     {
+        ntsa::ReactorConfig reactorConfig(&ta);
+        reactorConfig.setDriverName("pollset");
+
         bsl::shared_ptr<ntsi::Reactor> reactor =
-            ntso::PollsetUtil::createReactor(&ta);
+            ntso::PollsetUtil::createReactor(reactorConfig, &ta);
 
         ntso::Test::ReactorVector reactorVector(&ta);
         reactorVector.push_back(reactor);
 
-        ntso::Test::pollingDuringClose(reactorVector, &ta);
+        ntso::Test::pollingAfterClose(reactorVector, &ta);
     }
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }

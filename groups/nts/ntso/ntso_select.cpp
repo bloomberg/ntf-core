@@ -112,6 +112,9 @@ BSLS_IDENT_RCSID(ntso_select_cpp, "$Id$ $CSID$")
 #define NTSO_SELECT_LOG_WAIT_TIMEOUT()                                        \
     BSLS_LOG_TRACE("Timed out polling for socket events")
 
+#define NTSO_SELECT_LOG_WAIT_INTERRUPTED()                                    \
+    BSLS_LOG_TRACE("Interrupted polling for socket events")
+
 #define NTSO_SELECT_LOG_WAIT_RESULT(numEvents)                                \
     BSLS_LOG_TRACE("Polled %d socket events", numEvents)
 
@@ -135,6 +138,10 @@ BSLS_IDENT_RCSID(ntso_select_cpp, "$Id$ $CSID$")
 #define NTSO_SELECT_LOG_REMOVE(handle)                                        \
     BSLS_LOG_TRACE("Descriptor %d removed", handle)
 
+#if defined(BSLS_PLATFORM_CMP_SUN)
+#pragma error_messages(off, SEC_NULL_PTR_DEREF)
+#endif
+
 namespace BloombergLP {
 namespace ntso {
 
@@ -148,12 +155,13 @@ namespace ntso {
 /// @ingroup module_ntso
 class Select : public ntsi::Reactor
 {
-    ntsa::InterestSet d_interestSet;
-    fd_set            d_readable;
-    fd_set            d_writable;
-    fd_set            d_exceptional;
-    ntsa::Handle      d_maxHandle;
-    bslma::Allocator* d_allocator_p;
+    ntsa::InterestSet   d_interestSet;
+    fd_set              d_readable;
+    fd_set              d_writable;
+    fd_set              d_exceptional;
+    ntsa::Handle        d_maxHandle;
+    ntsa::ReactorConfig d_config;
+    bslma::Allocator*   d_allocator_p;
 
   private:
     Select(const Select&) BSLS_KEYWORD_DELETED;
@@ -164,19 +172,20 @@ class Select : public ntsi::Reactor
     static void copy(fd_set* destination, const fd_set& source);
 
   public:
-    /// Create a new object. Optionally specify a 'basicAllocator' used to
-    /// supply memory. If 'basicAllocator' is 0, the currently installed
-    /// default allocator is used.
-    explicit Select(bslma::Allocator* basicAllocator = 0);
+    /// Create a new reactor having the specified 'configuration'. Optionally
+    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
+    /// is 0, the currently installed default allocator is used.
+    explicit Select(const ntsa::ReactorConfig& configuration,
+                    bslma::Allocator*          basicAllocator = 0);
 
     /// Destroy this object.
     ~Select() BSLS_KEYWORD_OVERRIDE;
 
     /// Add the specified 'socket' to the reactor. Return the error.
-    ntsa::Error add(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
+    ntsa::Error attachSocket(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
 
     /// Remove the specified 'socket' from the reactor. Return the error.
-    ntsa::Error remove(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
+    ntsa::Error detachSocket(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
 
     /// Unblock any thread waiting on the reactor when the specified
     /// 'socket' is readable. Return the error.
@@ -200,7 +209,7 @@ class Select : public ntsi::Reactor
     /// Return the error.
     ntsa::Error wait(
         ntsa::EventSet*                                result,
-        const bdlb::NullableValue<bsls::TimeInterval>& deadline)              
+        const bdlb::NullableValue<bsls::TimeInterval>& deadline)
         BSLS_KEYWORD_OVERRIDE;
 };
 
@@ -226,11 +235,21 @@ void Select::copy(fd_set* destination, const fd_set& source)
 #endif
 }
 
-Select::Select(bslma::Allocator* basicAllocator)
+Select::Select(const ntsa::ReactorConfig& configuration,
+               bslma::Allocator*          basicAllocator)
 : d_interestSet(basicAllocator)
 , d_maxHandle(0)
+, d_config(configuration, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
+    if (d_config.autoAttach().isNull()) {
+        d_config.setAutoAttach(false);
+    }
+
+    if (d_config.autoDetach().isNull()) {
+        d_config.setAutoDetach(false);
+    }
+
     FD_ZERO(&d_readable);
     FD_ZERO(&d_writable);
     FD_ZERO(&d_exceptional);
@@ -243,7 +262,7 @@ Select::~Select()
     NTSO_SELECT_LOG_DEVICE_CLOSE();
 }
 
-ntsa::Error Select::add(ntsa::Handle socket)
+ntsa::Error Select::attachSocket(ntsa::Handle socket)
 {
     ntsa::Error error;
 
@@ -267,7 +286,7 @@ ntsa::Error Select::add(ntsa::Handle socket)
     return ntsa::Error();
 }
 
-ntsa::Error Select::remove(ntsa::Handle socket)
+ntsa::Error Select::detachSocket(ntsa::Handle socket)
 {
     ntsa::Error error;
 
@@ -310,6 +329,15 @@ ntsa::Error Select::showReadable(ntsa::Handle socket)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
+    if (d_config.autoAttach().value()) {
+        if (!d_interestSet.contains(socket)) {
+            error = this->attachSocket(socket);
+            if (error) {
+                return error;
+            }
+        }
+    }
+
     error = d_interestSet.showReadable(socket);
     if (error) {
         return error;
@@ -328,6 +356,15 @@ ntsa::Error Select::showWritable(ntsa::Handle socket)
 
     if (socket < 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (d_config.autoAttach().value()) {
+        if (!d_interestSet.contains(socket)) {
+            error = this->attachSocket(socket);
+            if (error) {
+                return error;
+            }
+        }
     }
 
     error = d_interestSet.showWritable(socket);
@@ -350,7 +387,8 @@ ntsa::Error Select::hideReadable(ntsa::Handle socket)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    error = d_interestSet.hideReadable(socket);
+    ntsa::Interest interest;
+    error = d_interestSet.hideReadable(&interest, socket);
     if (error) {
         return error;
     }
@@ -358,6 +396,15 @@ ntsa::Error Select::hideReadable(ntsa::Handle socket)
     FD_CLR(socket, &d_readable);
 
     NTSO_SELECT_LOG_UPDATE(socket, d_readable, d_writable, d_exceptional);
+
+    if (d_config.autoDetach().value()) {
+        if (interest.wantNone()) {
+            error = this->detachSocket(socket);
+            if (error) {
+                return error;
+            }
+        }
+    }
 
     return ntsa::Error();
 }
@@ -370,7 +417,8 @@ ntsa::Error Select::hideWritable(ntsa::Handle socket)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    error = d_interestSet.hideWritable(socket);
+    ntsa::Interest interest;
+    error = d_interestSet.hideWritable(&interest, socket);
     if (error) {
         return error;
     }
@@ -378,6 +426,15 @@ ntsa::Error Select::hideWritable(ntsa::Handle socket)
     FD_CLR(socket, &d_writable);
 
     NTSO_SELECT_LOG_UPDATE(socket, d_readable, d_writable, d_exceptional);
+
+    if (d_config.autoDetach().value()) {
+        if (interest.wantNone()) {
+            error = this->detachSocket(socket);
+            if (error) {
+                return error;
+            }
+        }
+    }
 
     return ntsa::Error();
 }
@@ -484,7 +541,7 @@ ntsa::Error Select::wait(
                 else {
                     event.setExceptional();
                 }
-               
+
                 ++numResultsFound;
             }
 
@@ -502,44 +559,63 @@ ntsa::Error Select::wait(
         return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
     }
     else {
-        ntsa::Error error = ntsa::Error::last();
-        NTSO_SELECT_LOG_WAIT_FAILURE(error);
-
-        if (error == ntsa::Error(ntsa::Error::e_NOT_OPEN) ||
-            error == ntsa::Error(ntsa::Error::e_NOT_SOCKET)) 
-        {
-            typedef bsl::vector<ntsa::Handle> HandleVector;
-            HandleVector garbage;
-
-            {
-                ntsa::InterestSet::const_iterator it = d_interestSet.begin();
-                ntsa::InterestSet::const_iterator et = d_interestSet.end();
-
-                for (; it != et; ++it) {
-                    const ntsa::Interest interest = *it;
-                    const ntsa::Handle   socket   = interest.handle();
-
-                    if (!ntsu::SocketUtil::isSocket(socket)) {
-                        result->setError(socket, error);
-                        garbage.push_back(socket);
-                    }
-                }
-            }
-
-            {
-                HandleVector::const_iterator it = garbage.begin();
-                HandleVector::const_iterator et = garbage.end();
-
-                for (; it != et; ++it) {
-                    const ntsa::Handle socket = *it;
-                    this->remove(socket);
-                }
-            }
-
+#if defined(BSLS_PLATFORM_OS_UNIX)
+        int lastError = errno;
+        if (lastError == EINTR) {
+            NTSO_SELECT_LOG_WAIT_INTERRUPTED();
             return ntsa::Error();
         }
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+        DWORD lastError = WSAGetLastError();
+        if (lastError == WSAEINTR) {
+            NTSO_SELECT_LOG_WAIT_INTERRUPTED();
+            return ntsa::Error();
+        }
+#else
+#error Not implemented
+#endif
         else {
-            return error;
+            ntsa::Error error(lastError);
+            NTSO_SELECT_LOG_WAIT_FAILURE(error);
+
+            if (error == ntsa::Error(ntsa::Error::e_NOT_OPEN) ||
+                error == ntsa::Error(ntsa::Error::e_NOT_SOCKET))
+            {
+                typedef bsl::vector<ntsa::Handle> HandleVector;
+                HandleVector garbage;
+
+                {
+                    ntsa::InterestSet::const_iterator it =
+                        d_interestSet.begin();
+                    ntsa::InterestSet::const_iterator et =
+                        d_interestSet.end();
+
+                    for (; it != et; ++it) {
+                        const ntsa::Interest interest = *it;
+                        const ntsa::Handle   socket   = interest.handle();
+
+                        if (!ntsu::SocketUtil::isSocket(socket)) {
+                            result->setError(socket, error);
+                            garbage.push_back(socket);
+                        }
+                    }
+                }
+
+                {
+                    HandleVector::const_iterator it = garbage.begin();
+                    HandleVector::const_iterator et = garbage.end();
+
+                    for (; it != et; ++it) {
+                        const ntsa::Handle socket = *it;
+                        this->detachSocket(socket);
+                    }
+                }
+
+                return ntsa::Error();
+            }
+            else {
+                return error;
+            }
         }
     }
 
@@ -547,12 +623,13 @@ ntsa::Error Select::wait(
 }
 
 bsl::shared_ptr<ntsi::Reactor> SelectUtil::createReactor(
-    bslma::Allocator* basicAllocator)
+    const ntsa::ReactorConfig& configuration,
+    bslma::Allocator*          basicAllocator)
 {
     bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
 
     bsl::shared_ptr<ntso::Select> reactor;
-    reactor.createInplace(allocator, allocator);
+    reactor.createInplace(allocator, configuration, allocator);
 
     return reactor;
 }

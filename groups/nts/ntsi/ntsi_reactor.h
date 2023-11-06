@@ -48,33 +48,33 @@ class Reactor
     virtual ~Reactor();
 
     /// Add the specified 'socket' to the reactor. Return the error.
-    virtual ntsa::Error add(ntsa::Handle socket);
+    virtual ntsa::Error attachSocket(ntsa::Handle socket);
 
     /// Add the specified 'socket' to the reactor. Return the error.
-    ntsa::Error add(
+    ntsa::Error attachSocket(
         const bsl::shared_ptr<ntsi::DatagramSocket>& socket);
 
     /// Add the specified 'socket' to the reactor. Return the error.
-    ntsa::Error add(
+    ntsa::Error attachSocket(
         const bsl::shared_ptr<ntsi::ListenerSocket>& socket);
 
     /// Add the specified 'socket' to the reactor. Return the error.
-    ntsa::Error add(
+    ntsa::Error attachSocket(
         const bsl::shared_ptr<ntsi::StreamSocket>& socket);
 
     /// Remove the specified 'socket' from the reactor. Return the error.
-    virtual ntsa::Error remove(ntsa::Handle socket);
+    virtual ntsa::Error detachSocket(ntsa::Handle socket);
 
     /// Remove the specified 'socket' from the reactor. Return the error.
-    ntsa::Error remove(
+    ntsa::Error detachSocket(
         const bsl::shared_ptr<ntsi::DatagramSocket>& socket);
 
     /// Remove the specified 'socket' from the reactor. Return the error.
-    ntsa::Error remove(
+    ntsa::Error detachSocket(
         const bsl::shared_ptr<ntsi::ListenerSocket>& socket);
 
     /// Remove the specified 'socket' from the reactor. Return the error.
-    ntsa::Error remove(
+    ntsa::Error detachSocket(
         const bsl::shared_ptr<ntsi::StreamSocket>& socket);
 
     /// Unblock any thread waiting on the reactor when the specified

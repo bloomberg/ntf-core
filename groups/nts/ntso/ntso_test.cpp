@@ -58,7 +58,7 @@ void Test::usage(
 
         // Gain interest in the writability of the client.
 
-        error = reactor->add(client);
+        error = reactor->attachSocket(client);
         NTSCFG_TEST_OK(error);
 
         error = reactor->showWritable(client);
@@ -95,12 +95,12 @@ void Test::usage(
         error = reactor->hideWritable(client);
         NTSCFG_TEST_OK(error);
 
-        error = reactor->remove(client);
+        error = reactor->detachSocket(client);
         NTSCFG_TEST_OK(error);
 
         // Gain interest in the readability of the server.
 
-        error = reactor->add(server);
+        error = reactor->attachSocket(server);
         NTSCFG_TEST_OK(error);
 
         error = reactor->showReadable(server);
@@ -138,12 +138,12 @@ void Test::usage(
         error = reactor->hideReadable(server);
         NTSCFG_TEST_OK(error);
 
-        error = reactor->remove(server);
+        error = reactor->detachSocket(server);
         NTSCFG_TEST_OK(error);
 
         // Gain interest in the writability of the server.
 
-        error = reactor->add(server);
+        error = reactor->attachSocket(server);
         NTSCFG_TEST_OK(error);
 
         error = reactor->showWritable(server);
@@ -180,12 +180,12 @@ void Test::usage(
         error = reactor->hideWritable(server);
         NTSCFG_TEST_OK(error);
 
-        error = reactor->remove(server);
+        error = reactor->detachSocket(server);
         NTSCFG_TEST_OK(error);
 
         // Gain interest in the readability of the client.
 
-        error = reactor->add(client);
+        error = reactor->attachSocket(client);
         NTSCFG_TEST_OK(error);
 
         error = reactor->showReadable(client);
@@ -223,7 +223,7 @@ void Test::usage(
         error = reactor->hideReadable(client);
         NTSCFG_TEST_OK(error);
 
-        error = reactor->remove(client);
+        error = reactor->detachSocket(client);
         NTSCFG_TEST_OK(error);
 
         // Shutdown writing by the client.
@@ -236,7 +236,7 @@ void Test::usage(
 
         // Gain interest in the readability of the server.
 
-        error = reactor->add(server);
+        error = reactor->attachSocket(server);
         NTSCFG_TEST_OK(error);
 
         error = reactor->showReadable(server);
@@ -279,7 +279,7 @@ void Test::usage(
         error = reactor->hideReadable(server);
         NTSCFG_TEST_OK(error);
 
-        error = reactor->remove(server);
+        error = reactor->detachSocket(server);
         NTSCFG_TEST_OK(error);
 
         // Shutdown writing by the server.
@@ -292,7 +292,7 @@ void Test::usage(
 
         // Gain interest in the readability of the client.
 
-        error = reactor->add(client);
+        error = reactor->attachSocket(client);
         NTSCFG_TEST_OK(error);
 
         error = reactor->showReadable(client);
@@ -335,7 +335,7 @@ void Test::usage(
         error = reactor->hideReadable(client);
         NTSCFG_TEST_OK(error);
 
-        error = reactor->remove(client);
+        error = reactor->detachSocket(client);
         NTSCFG_TEST_OK(error);
 
         // Close the sockets.
@@ -382,7 +382,7 @@ void Test::pollingAfterFullShutdown(
 
         // Gain interest in the writability of the client.
 
-        error = reactor->add(client);
+        error = reactor->attachSocket(client);
         NTSCFG_TEST_OK(error);
 
         error = reactor->showWritable(client);
@@ -419,12 +419,12 @@ void Test::pollingAfterFullShutdown(
         error = reactor->hideWritable(client);
         NTSCFG_TEST_OK(error);
 
-        error = reactor->remove(client);
+        error = reactor->detachSocket(client);
         NTSCFG_TEST_OK(error);
 
         // Gain interest in the readability of the server.
 
-        error = reactor->add(server);
+        error = reactor->attachSocket(server);
         NTSCFG_TEST_OK(error);
 
         error = reactor->showReadable(server);
@@ -462,12 +462,12 @@ void Test::pollingAfterFullShutdown(
         error = reactor->hideReadable(server);
         NTSCFG_TEST_OK(error);
 
-        error = reactor->remove(server);
+        error = reactor->detachSocket(server);
         NTSCFG_TEST_OK(error);
 
         // Gain interest in the writability of the server.
 
-        error = reactor->add(server);
+        error = reactor->attachSocket(server);
         NTSCFG_TEST_OK(error);
 
         error = reactor->showWritable(server);
@@ -504,12 +504,12 @@ void Test::pollingAfterFullShutdown(
         error = reactor->hideWritable(server);
         NTSCFG_TEST_OK(error);
 
-        error = reactor->remove(server);
+        error = reactor->detachSocket(server);
         NTSCFG_TEST_OK(error);
 
         // Gain interest in the readability of the client.
 
-        error = reactor->add(client);
+        error = reactor->attachSocket(client);
         NTSCFG_TEST_OK(error);
 
         error = reactor->showReadable(client);
@@ -547,7 +547,7 @@ void Test::pollingAfterFullShutdown(
         error = reactor->hideReadable(client);
         NTSCFG_TEST_OK(error);
 
-        error = reactor->remove(client);
+        error = reactor->detachSocket(client);
         NTSCFG_TEST_OK(error);
 
         // Shutdown writing by the client.
@@ -560,7 +560,7 @@ void Test::pollingAfterFullShutdown(
 
         // Gain interest in the readability of the server.
 
-        error = reactor->add(server);
+        error = reactor->attachSocket(server);
         NTSCFG_TEST_OK(error);
 
         error = reactor->showReadable(server);
@@ -603,7 +603,7 @@ void Test::pollingAfterFullShutdown(
         error = reactor->hideReadable(server);
         NTSCFG_TEST_OK(error);
 
-        error = reactor->remove(server);
+        error = reactor->detachSocket(server);
         NTSCFG_TEST_OK(error);
 
         // Shutdown writing by the server.
@@ -616,7 +616,7 @@ void Test::pollingAfterFullShutdown(
 
         // Gain interest in the readability of the client.
 
-        error = reactor->add(client);
+        error = reactor->attachSocket(client);
         NTSCFG_TEST_OK(error);
 
         error = reactor->showReadable(client);
@@ -659,7 +659,7 @@ void Test::pollingAfterFullShutdown(
         error = reactor->hideReadable(client);
         NTSCFG_TEST_OK(error);
 
-        error = reactor->remove(client);
+        error = reactor->detachSocket(client);
         NTSCFG_TEST_OK(error);
 
         BSLS_LOG_INFO("Polling server after shutdown complete");
@@ -670,7 +670,7 @@ void Test::pollingAfterFullShutdown(
 
         // Gain interest in the readability of the server.
 
-        error = reactor->add(server);
+        error = reactor->attachSocket(server);
         NTSCFG_TEST_OK(error);
 
         error = reactor->showReadable(server);
@@ -692,7 +692,7 @@ void Test::pollingAfterFullShutdown(
         error = reactor->hideReadable(server);
         NTSCFG_TEST_OK(error);
 
-        error = reactor->remove(server);
+        error = reactor->detachSocket(server);
         NTSCFG_TEST_OK(error);
 
         BSLS_LOG_INFO("Polling client after shutdown complete");
@@ -703,7 +703,7 @@ void Test::pollingAfterFullShutdown(
 
         // Gain interest in the readability of the client.
 
-        error = reactor->add(client);
+        error = reactor->attachSocket(client);
         NTSCFG_TEST_OK(error);
 
         error = reactor->showReadable(client);
@@ -725,7 +725,7 @@ void Test::pollingAfterFullShutdown(
         error = reactor->hideReadable(client);
         NTSCFG_TEST_OK(error);
 
-        error = reactor->remove(client);
+        error = reactor->detachSocket(client);
         NTSCFG_TEST_OK(error);
 
         // Close the sockets.
@@ -772,7 +772,7 @@ void Test::pollingAfterClose(
 
         // Gain interest in the writability of the client.
 
-        error = reactor->add(client);
+        error = reactor->attachSocket(client);
         NTSCFG_TEST_OK(error);
 
         error = reactor->showWritable(client);
@@ -809,12 +809,12 @@ void Test::pollingAfterClose(
         error = reactor->hideWritable(client);
         NTSCFG_TEST_OK(error);
 
-        error = reactor->remove(client);
+        error = reactor->detachSocket(client);
         NTSCFG_TEST_OK(error);
 
         // Gain interest in the readability of the server.
 
-        error = reactor->add(server);
+        error = reactor->attachSocket(server);
         NTSCFG_TEST_OK(error);
 
         error = reactor->showReadable(server);
@@ -852,12 +852,12 @@ void Test::pollingAfterClose(
         error = reactor->hideReadable(server);
         NTSCFG_TEST_OK(error);
 
-        error = reactor->remove(server);
+        error = reactor->detachSocket(server);
         NTSCFG_TEST_OK(error);
 
         // Gain interest in the writability of the server.
 
-        error = reactor->add(server);
+        error = reactor->attachSocket(server);
         NTSCFG_TEST_OK(error);
 
         error = reactor->showWritable(server);
@@ -894,12 +894,12 @@ void Test::pollingAfterClose(
         error = reactor->hideWritable(server);
         NTSCFG_TEST_OK(error);
 
-        error = reactor->remove(server);
+        error = reactor->detachSocket(server);
         NTSCFG_TEST_OK(error);
 
         // Gain interest in the readability of the client.
 
-        error = reactor->add(client);
+        error = reactor->attachSocket(client);
         NTSCFG_TEST_OK(error);
 
         error = reactor->showReadable(client);
@@ -937,12 +937,12 @@ void Test::pollingAfterClose(
         error = reactor->hideReadable(client);
         NTSCFG_TEST_OK(error);
 
-        error = reactor->remove(client);
+        error = reactor->detachSocket(client);
         NTSCFG_TEST_OK(error);
 
         // Gain interest in the readability of the server.
 
-        error = reactor->add(server);
+        error = reactor->attachSocket(server);
         NTSCFG_TEST_OK(error);
 
         error = reactor->showReadable(server);

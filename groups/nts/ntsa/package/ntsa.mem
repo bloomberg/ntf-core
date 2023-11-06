@@ -33,6 +33,7 @@ ntsa_notificationqueue
 ntsa_notificationtype
 ntsa_port
 ntsa_portoptions
+ntsa_reactorconfig
 ntsa_receivecontext
 ntsa_receiveoptions
 ntsa_resolverconfig

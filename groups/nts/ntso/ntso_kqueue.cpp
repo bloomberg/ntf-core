@@ -76,6 +76,9 @@ BSLS_IDENT_RCSID(ntso_kqueue_cpp, "$Id$ $CSID$")
 #define NTSO_KQUEUE_LOG_WAIT_TIMEOUT()                                        \
     BSLS_LOG_TRACE("Timed out polling for socket events")
 
+#define NTSO_KQUEUE_LOG_WAIT_INTERRUPTED()                                    \
+    BSLS_LOG_TRACE("Interrupted polling for socket events")
+
 #define NTSO_KQUEUE_LOG_WAIT_RESULT(numEvents)                                \
     BSLS_LOG_TRACE("Polled %d socket events", numEvents)
 
@@ -160,31 +163,33 @@ class Kqueue : public ntsi::Reactor
 {
     typedef bsl::vector<struct ::kevent> EventList;
 
-    int               d_kqueue;
-    ntsa::InterestSet d_interestSet;
-    EventList         d_outputList;
-    EventList         d_changeList;
-    bsl::size_t       d_generation;
-    bslma::Allocator *d_allocator_p;
+    int                 d_device;
+    ntsa::InterestSet   d_interestSet;
+    EventList           d_outputList;
+    EventList           d_changeList;
+    bsl::size_t         d_generation;
+    ntsa::ReactorConfig d_config;
+    bslma::Allocator*   d_allocator_p;
 
   private:
     Kqueue(const Kqueue&) BSLS_KEYWORD_DELETED;
     Kqueue& operator=(const Kqueue&) BSLS_KEYWORD_DELETED;
 
   public:
-    /// Create a new object. Optionally specify a 'basicAllocator' used to
-    /// supply memory. If 'basicAllocator' is 0, the currently installed
-    /// default allocator is used.
-    explicit Kqueue(bslma::Allocator* basicAllocator = 0);
+    /// Create a new reactor having the specified 'configuration'. Optionally
+    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
+    /// is 0, the currently installed default allocator is used.
+    explicit Kqueue(const ntsa::ReactorConfig& configuration,
+                    bslma::Allocator*          basicAllocator = 0);
 
     /// Destroy this object.
     ~Kqueue() BSLS_KEYWORD_OVERRIDE;
 
     /// Add the specified 'socket' to the reactor. Return the error.
-    ntsa::Error add(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
+    ntsa::Error attachSocket(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
 
     /// Remove the specified 'socket' from the reactor. Return the error.
-    ntsa::Error remove(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
+    ntsa::Error detachSocket(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
 
     /// Unblock any thread waiting on the reactor when the specified
     /// 'socket' is readable. Return the error.
@@ -208,45 +213,56 @@ class Kqueue : public ntsi::Reactor
     /// Return the error.
     ntsa::Error wait(
         ntsa::EventSet*                                result,
-        const bdlb::NullableValue<bsls::TimeInterval>& deadline)              
+        const bdlb::NullableValue<bsls::TimeInterval>& deadline)
         BSLS_KEYWORD_OVERRIDE;
 };
 
-Kqueue::Kqueue(bslma::Allocator* basicAllocator)
-: d_kqueue(ntsa::k_INVALID_HANDLE)
+Kqueue::Kqueue(const ntsa::ReactorConfig& configuration,
+               bslma::Allocator*          basicAllocator)
+: d_device(ntsa::k_INVALID_HANDLE)
 , d_interestSet(basicAllocator)
 , d_outputList(basicAllocator)
 , d_changeList(basicAllocator)
 , d_generation(0)
+, d_config(configuration, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    d_kqueue = ::kqueue();
-    if (d_kqueue < 0) {
-        NTSO_KQUEUE_LOG_DEVICE_CREATE_FAILURE(ntsa::Error(errno));
+    if (d_config.autoAttach().isNull()) {
+        d_config.setAutoAttach(false);
+    }
+
+    if (d_config.autoDetach().isNull()) {
+        d_config.setAutoDetach(false);
+    }
+
+    d_device = ::kqueue();
+    if (d_device < 0) {
+        ntsa::Error error(errno);
+        NTSO_KQUEUE_LOG_DEVICE_CREATE_FAILURE(error);
         NTSCFG_ABORT();
     }
 
-    NTSO_KQUEUE_LOG_DEVICE_CREATE(d_kqueue);
+    NTSO_KQUEUE_LOG_DEVICE_CREATE(d_device);
 }
 
 Kqueue::~Kqueue()
 {
     int rc;
 
-    if (d_kqueue >= 0) {
-        rc = ::close(d_kqueue);
+    if (d_device >= 0) {
+        rc = ::close(d_device);
         if (rc != 0) {
             ntsa::Error error(errno);
-            NTSO_KQUEUE_LOG_DEVICE_CLOSE_FAILURE(d_kqueue, error);
+            NTSO_KQUEUE_LOG_DEVICE_CLOSE_FAILURE(d_device, error);
             NTSCFG_ABORT();
         }
 
-        NTSO_KQUEUE_LOG_DEVICE_CLOSE(d_kqueue);
-        d_kqueue = ntsa::k_INVALID_HANDLE;
+        NTSO_KQUEUE_LOG_DEVICE_CLOSE(d_device);
+        d_device = ntsa::k_INVALID_HANDLE;
     }
 }
 
-ntsa::Error Kqueue::add(ntsa::Handle socket)
+ntsa::Error Kqueue::attachSocket(ntsa::Handle socket)
 {
     ntsa::Error error;
 
@@ -288,7 +304,7 @@ ntsa::Error Kqueue::add(ntsa::Handle socket)
     return ntsa::Error();
 }
 
-ntsa::Error Kqueue::remove(ntsa::Handle socket)
+ntsa::Error Kqueue::detachSocket(ntsa::Handle socket)
 {
     ntsa::Error error;
 
@@ -339,6 +355,15 @@ ntsa::Error Kqueue::showReadable(ntsa::Handle socket)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
+    if (d_config.autoAttach().value()) {
+        if (!d_interestSet.contains(socket)) {
+            error = this->attachSocket(socket);
+            if (error) {
+                return error;
+            }
+        }
+    }
+
     error = d_interestSet.showReadable(socket);
     if (error) {
         return error;
@@ -364,9 +389,18 @@ ntsa::Error Kqueue::showReadable(ntsa::Handle socket)
 ntsa::Error Kqueue::showWritable(ntsa::Handle socket)
 {
     ntsa::Error error;
-    
+
     if (socket < 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (d_config.autoAttach().value()) {
+        if (!d_interestSet.contains(socket)) {
+            error = this->attachSocket(socket);
+            if (error) {
+                return error;
+            }
+        }
     }
 
     error = d_interestSet.showWritable(socket);
@@ -394,7 +428,7 @@ ntsa::Error Kqueue::showWritable(ntsa::Handle socket)
 ntsa::Error Kqueue::hideReadable(ntsa::Handle socket)
 {
     ntsa::Error error;
-    
+
     if (socket < 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
@@ -418,13 +452,22 @@ ntsa::Error Kqueue::hideReadable(ntsa::Handle socket)
 
     NTSO_KQUEUE_LOG_UPDATE(socket, d_interestSet);
 
+    if (d_config.autoDetach().value()) {
+        if (interest.wantNone()) {
+            error = this->detachSocket(socket);
+            if (error) {
+                return error;
+            }
+        }
+    }
+
     return ntsa::Error();
 }
 
 ntsa::Error Kqueue::hideWritable(ntsa::Handle socket)
 {
     ntsa::Error error;
-    
+
     if (socket < 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
@@ -447,6 +490,15 @@ ntsa::Error Kqueue::hideWritable(ntsa::Handle socket)
     }
 
     NTSO_KQUEUE_LOG_UPDATE(socket, d_interestSet);
+
+    if (d_config.autoDetach().value()) {
+        if (interest.wantNone()) {
+            error = this->detachSocket(socket);
+            if (error) {
+                return error;
+            }
+        }
+    }
 
     return ntsa::Error();
 }
@@ -485,7 +537,7 @@ ntsa::Error Kqueue::wait(
         NTSO_KQUEUE_LOG_WAIT_INDEFINITE();
     }
 
-    const bsl::size_t outputListSizeRequired = 
+    const bsl::size_t outputListSizeRequired =
         (2 * d_interestSet.numSockets()) + d_changeList.size();
 
     if (d_outputList.size() < outputListSizeRequired) {
@@ -493,18 +545,18 @@ ntsa::Error Kqueue::wait(
     }
 
     // if (NTSCFG_UNLIKELY(!d_changeList.empty())) {
-    //    BSLS_LOG_TRACE("Applying change list size = %zu", 
+    //    BSLS_LOG_TRACE("Applying change list size = %zu",
     //                   d_changeList.size());
     //     for (bsl::size_t i = 0; i < d_changeList.size(); ++i) {
     //         NTSO_KQUEUE_LOG_EVENT_APPLY(d_changeList[i]);
     //     }
     // }
 
-    rc = ::kevent(d_kqueue, 
-                  &d_changeList[0], 
-                  static_cast<int>(d_changeList.size()), 
-                  &d_outputList[0], 
-                  static_cast<int>(d_outputList.size()), 
+    rc = ::kevent(d_device,
+                  &d_changeList[0],
+                  static_cast<int>(d_changeList.size()),
+                  &d_outputList[0],
+                  static_cast<int>(d_outputList.size()),
                   tsPtr);
 
     if (NTSCFG_LIKELY(rc > 0)) {
@@ -532,17 +584,15 @@ ntsa::Error Kqueue::wait(
                 }
                 else {
                     ntsa::Error lastError;
-                    ntsa::Error error =
-                        ntsu::SocketOptionUtil::getLastError(&lastError, 
+                    error =
+                        ntsu::SocketOptionUtil::getLastError(&lastError,
                                                              handle);
-                    if (error) {
-                        event.setError(error);
-                    }
-                    else if (lastError) {
+                    if (!error && lastError) {
                         event.setError(lastError);
                     }
                     else {
                         event.setExceptional();
+                        event.setHangup();
                     }
                 }
             }
@@ -557,7 +607,7 @@ ntsa::Error Kqueue::wait(
             else {
                 continue;
             }
-            
+
             result->merge(event);
         }
     }
@@ -567,22 +617,31 @@ ntsa::Error Kqueue::wait(
         return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
     }
     else {
-        error = ntsa::Error::last();
-        NTSO_KQUEUE_LOG_WAIT_FAILURE(error);
-        d_changeList.clear();
-        return error;
+        int lastError = errno;
+
+        if (lastError == EINTR) {
+            NTSO_KQUEUE_LOG_WAIT_INTERRUPTED();
+            return ntsa::Error();
+        }
+        else {
+            ntsa::Error error(lastError);
+            NTSO_KQUEUE_LOG_WAIT_FAILURE(error);
+            d_changeList.clear();
+            return error;
+        }
     }
 
     return ntsa::Error();
 }
 
 bsl::shared_ptr<ntsi::Reactor> KqueueUtil::createReactor(
-    bslma::Allocator* basicAllocator)
+    const ntsa::ReactorConfig& configuration,
+    bslma::Allocator*          basicAllocator)
 {
     bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
 
     bsl::shared_ptr<ntso::Kqueue> reactor;
-    reactor.createInplace(allocator, allocator);
+    reactor.createInplace(allocator, configuration, allocator);
 
     return reactor;
 }

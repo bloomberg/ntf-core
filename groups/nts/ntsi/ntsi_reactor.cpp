@@ -24,55 +24,55 @@ namespace ntsi {
 Reactor::~Reactor()
 {
 }
-  
-ntsa::Error Reactor::add(ntsa::Handle socket)
+
+ntsa::Error Reactor::attachSocket(ntsa::Handle socket)
 {
     NTSCFG_WARNING_UNUSED(socket);
 
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
-ntsa::Error Reactor::add(
+ntsa::Error Reactor::attachSocket(
     const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
 {
-    return this->add(socket->handle());
+    return this->attachSocket(socket->handle());
 }
 
-ntsa::Error Reactor::add(
+ntsa::Error Reactor::attachSocket(
     const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
 {
-    return this->add(socket->handle());
+    return this->attachSocket(socket->handle());
 }
 
-ntsa::Error Reactor::add(
+ntsa::Error Reactor::attachSocket(
     const bsl::shared_ptr<ntsi::StreamSocket>& socket)
 {
-    return this->add(socket->handle());
+    return this->attachSocket(socket->handle());
 }
 
-ntsa::Error Reactor::remove(ntsa::Handle socket)
+ntsa::Error Reactor::detachSocket(ntsa::Handle socket)
 {
     NTSCFG_WARNING_UNUSED(socket);
 
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
-ntsa::Error Reactor::remove(
+ntsa::Error Reactor::detachSocket(
     const bsl::shared_ptr<ntsi::DatagramSocket>& socket)
 {
-    return this->remove(socket->handle());
+    return this->detachSocket(socket->handle());
 }
 
-ntsa::Error Reactor::remove(
+ntsa::Error Reactor::detachSocket(
     const bsl::shared_ptr<ntsi::ListenerSocket>& socket)
 {
-    return this->remove(socket->handle());
+    return this->detachSocket(socket->handle());
 }
 
-ntsa::Error Reactor::remove(
+ntsa::Error Reactor::detachSocket(
     const bsl::shared_ptr<ntsi::StreamSocket>& socket)
 {
-    return this->remove(socket->handle());
+    return this->detachSocket(socket->handle());
 }
 
 ntsa::Error Reactor::showReadable(ntsa::Handle socket)

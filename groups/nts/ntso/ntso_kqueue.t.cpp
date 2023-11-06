@@ -31,8 +31,11 @@ NTSCFG_TEST_CASE(1)
 
     ntscfg::TestAllocator ta;
     {
+        ntsa::ReactorConfig reactorConfig(&ta);
+        reactorConfig.setDriverName("kqueue");
+
         bsl::shared_ptr<ntsi::Reactor> reactor =
-            ntso::KqueueUtil::createReactor(&ta);
+            ntso::KqueueUtil::createReactor(reactorConfig, &ta);
 
         ntso::Test::ReactorVector reactorVector(&ta);
         reactorVector.push_back(reactor);
@@ -49,8 +52,11 @@ NTSCFG_TEST_CASE(2)
 
     ntscfg::TestAllocator ta;
     {
+        ntsa::ReactorConfig reactorConfig(&ta);
+        reactorConfig.setDriverName("kqueue");
+
         bsl::shared_ptr<ntsi::Reactor> reactor =
-            ntso::KqueueUtil::createReactor(&ta);
+            ntso::KqueueUtil::createReactor(reactorConfig, &ta);
 
         ntso::Test::ReactorVector reactorVector(&ta);
         reactorVector.push_back(reactor);
@@ -67,8 +73,11 @@ NTSCFG_TEST_CASE(3)
 
     ntscfg::TestAllocator ta;
     {
+        ntsa::ReactorConfig reactorConfig(&ta);
+        reactorConfig.setDriverName("kqueue");
+
         bsl::shared_ptr<ntsi::Reactor> reactor =
-            ntso::KqueueUtil::createReactor(&ta);
+            ntso::KqueueUtil::createReactor(reactorConfig, &ta);
 
         ntso::Test::ReactorVector reactorVector(&ta);
         reactorVector.push_back(reactor);

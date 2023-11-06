@@ -74,6 +74,9 @@ BSLS_IDENT_RCSID(ntso_epoll_cpp, "$Id$ $CSID$")
 #define NTSO_EPOLL_LOG_WAIT_TIMEOUT()                                         \
     BSLS_LOG_TRACE("Timed out polling for socket events")
 
+#define NTSO_EPOLL_LOG_WAIT_INTERRUPTED()                                     \
+    BSLS_LOG_TRACE("Interrupted polling for socket events")
+
 #define NTSO_EPOLL_LOG_WAIT_RESULT(numEvents)                                 \
     BSLS_LOG_TRACE("Polled %d socket events", numEvents)
 
@@ -132,10 +135,11 @@ class Epoll : public ntsi::Reactor
 {
     typedef bsl::vector<struct ::epoll_event> EventList;
 
-    int               d_epoll;
-    ntsa::InterestSet d_interestSet;
-    EventList         d_outputList;
-    bslma::Allocator* d_allocator_p;
+    int                 d_device;
+    ntsa::InterestSet   d_interestSet;
+    EventList           d_outputList;
+    ntsa::ReactorConfig d_config;
+    bslma::Allocator*   d_allocator_p;
 
   private:
     Epoll(const Epoll&) BSLS_KEYWORD_DELETED;
@@ -146,19 +150,20 @@ class Epoll : public ntsi::Reactor
     static bsl::uint32_t specify(const ntsa::Interest& interest);
 
   public:
-    /// Create a new object. Optionally specify a 'basicAllocator' used to
-    /// supply memory. If 'basicAllocator' is 0, the currently installed
-    /// default allocator is used.
-    explicit Epoll(bslma::Allocator* basicAllocator = 0);
+    /// Create a new reactor having the specified 'configuration'. Optionally
+    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
+    /// is 0, the currently installed default allocator is used.
+    explicit Epoll(const ntsa::ReactorConfig& configuration,
+                   bslma::Allocator*          basicAllocator = 0);
 
     /// Destroy this object.
     ~Epoll() BSLS_KEYWORD_OVERRIDE;
 
     /// Add the specified 'socket' to the reactor. Return the error.
-    ntsa::Error add(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
+    ntsa::Error attachSocket(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
 
     /// Remove the specified 'socket' from the reactor. Return the error.
-    ntsa::Error remove(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
+    ntsa::Error detachSocket(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
 
     /// Unblock any thread waiting on the reactor when the specified
     /// 'socket' is readable. Return the error.
@@ -201,40 +206,50 @@ bsl::uint32_t Epoll::specify(const ntsa::Interest& interest)
     return result;
 }
 
-Epoll::Epoll(bslma::Allocator* basicAllocator)
-: d_epoll(ntsa::k_INVALID_HANDLE)
+Epoll::Epoll(const ntsa::ReactorConfig& configuration,
+             bslma::Allocator*          basicAllocator)
+: d_device(ntsa::k_INVALID_HANDLE)
 , d_interestSet(basicAllocator)
 , d_outputList(basicAllocator)
+, d_config(configuration, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    d_epoll = ::epoll_create1(EPOLL_CLOEXEC);
-    if (d_epoll < 0) {
+    if (d_config.autoAttach().isNull()) {
+        d_config.setAutoAttach(false);
+    }
+
+    if (d_config.autoDetach().isNull()) {
+        d_config.setAutoDetach(false);
+    }
+
+    d_device = ::epoll_create1(EPOLL_CLOEXEC);
+    if (d_device < 0) {
         ntsa::Error error(errno);
         NTSO_EPOLL_LOG_DEVICE_CREATE_FAILURE(error);
         NTSCFG_ABORT();
     }
 
-    NTSO_EPOLL_LOG_DEVICE_CREATE(d_epoll);
+    NTSO_EPOLL_LOG_DEVICE_CREATE(d_device);
 }
 
 Epoll::~Epoll()
 {
     int rc;
 
-    if (d_epoll >= 0) {
-        rc = ::close(d_epoll);
+    if (d_device >= 0) {
+        rc = ::close(d_device);
         if (rc != 0) {
             ntsa::Error error(errno);
             NTSO_EPOLL_LOG_DEVICE_CLOSE_FAILURE(error);
             NTSCFG_ABORT();
         }
 
-        NTSO_EPOLL_LOG_DEVICE_CLOSE(d_epoll);
-        d_epoll = ntsa::k_INVALID_HANDLE;
+        NTSO_EPOLL_LOG_DEVICE_CLOSE(d_device);
+        d_device = ntsa::k_INVALID_HANDLE;
     }
 }
 
-ntsa::Error Epoll::add(ntsa::Handle socket)
+ntsa::Error Epoll::attachSocket(ntsa::Handle socket)
 {
     ntsa::Error error;
     int rc;
@@ -254,7 +269,7 @@ ntsa::Error Epoll::add(ntsa::Handle socket)
         e.data.fd = socket;
         e.events  = 0;
 
-        rc = ::epoll_ctl(d_epoll, EPOLL_CTL_ADD, socket, &e);
+        rc = ::epoll_ctl(d_device, EPOLL_CTL_ADD, socket, &e);
         if (rc != 0) {
             int lastError = errno;
             if (lastError != EEXIST) {
@@ -271,7 +286,7 @@ ntsa::Error Epoll::add(ntsa::Handle socket)
     return ntsa::Error();
 }
 
-ntsa::Error Epoll::remove(ntsa::Handle socket)
+ntsa::Error Epoll::detachSocket(ntsa::Handle socket)
 {
     ntsa::Error error;
     int rc;
@@ -291,7 +306,7 @@ ntsa::Error Epoll::remove(ntsa::Handle socket)
         e.data.fd = socket;
         e.events  = 0;
 
-        rc = ::epoll_ctl(d_epoll, EPOLL_CTL_DEL, socket, &e);
+        rc = ::epoll_ctl(d_device, EPOLL_CTL_DEL, socket, &e);
         if (rc != 0) {
             int lastError = errno;
             if (lastError != ENOENT) {
@@ -316,6 +331,15 @@ ntsa::Error Epoll::showReadable(ntsa::Handle socket)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
+    if (d_config.autoAttach().value()) {
+        if (!d_interestSet.contains(socket)) {
+            error = this->attachSocket(socket);
+            if (error) {
+                return error;
+            }
+        }
+    }
+
     ntsa::Interest interest;
     error = d_interestSet.showReadable(&interest, socket);
     if (error) {
@@ -328,7 +352,7 @@ ntsa::Error Epoll::showReadable(ntsa::Handle socket)
         e.data.fd = socket;
         e.events  = Epoll::specify(interest);
 
-        rc = ::epoll_ctl(d_epoll, EPOLL_CTL_MOD, socket, &e);
+        rc = ::epoll_ctl(d_device, EPOLL_CTL_MOD, socket, &e);
         if (rc != 0) {
             error = ntsa::Error(errno);
             NTSO_EPOLL_LOG_UPDATE_FAILURE(socket, error);
@@ -351,6 +375,15 @@ ntsa::Error Epoll::showWritable(ntsa::Handle socket)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
+    if (d_config.autoAttach().value()) {
+        if (!d_interestSet.contains(socket)) {
+            error = this->attachSocket(socket);
+            if (error) {
+                return error;
+            }
+        }
+    }
+
     ntsa::Interest interest;
     error = d_interestSet.showWritable(&interest, socket);
     if (error) {
@@ -363,7 +396,7 @@ ntsa::Error Epoll::showWritable(ntsa::Handle socket)
         e.data.fd = socket;
         e.events  = Epoll::specify(interest);
 
-        rc = ::epoll_ctl(d_epoll, EPOLL_CTL_MOD, socket, &e);
+        rc = ::epoll_ctl(d_device, EPOLL_CTL_MOD, socket, &e);
         if (rc != 0) {
             error = ntsa::Error(errno);
             NTSO_EPOLL_LOG_UPDATE_FAILURE(socket, error);
@@ -398,7 +431,7 @@ ntsa::Error Epoll::hideReadable(ntsa::Handle socket)
         e.data.fd = socket;
         e.events  = Epoll::specify(interest);
 
-        rc = ::epoll_ctl(d_epoll, EPOLL_CTL_MOD, socket, &e);
+        rc = ::epoll_ctl(d_device, EPOLL_CTL_MOD, socket, &e);
         if (rc != 0) {
             error = ntsa::Error(errno);
             NTSO_EPOLL_LOG_UPDATE_FAILURE(socket, error);
@@ -408,6 +441,15 @@ ntsa::Error Epoll::hideReadable(ntsa::Handle socket)
     }
 
     NTSO_EPOLL_LOG_UPDATE(socket, interest);
+
+    if (d_config.autoDetach().value()) {
+        if (interest.wantNone()) {
+            error = this->detachSocket(socket);
+            if (error) {
+                return error;
+            }
+        }
+    }
 
     return ntsa::Error();
 }
@@ -433,7 +475,7 @@ ntsa::Error Epoll::hideWritable(ntsa::Handle socket)
         e.data.fd = socket;
         e.events  = Epoll::specify(interest);
 
-        rc = ::epoll_ctl(d_epoll, EPOLL_CTL_MOD, socket, &e);
+        rc = ::epoll_ctl(d_device, EPOLL_CTL_MOD, socket, &e);
         if (rc != 0) {
             error = ntsa::Error(errno);
             NTSO_EPOLL_LOG_UPDATE_FAILURE(e.data.fd, error);
@@ -443,6 +485,15 @@ ntsa::Error Epoll::hideWritable(ntsa::Handle socket)
     }
 
     NTSO_EPOLL_LOG_UPDATE(socket, interest);
+
+    if (d_config.autoDetach().value()) {
+        if (interest.wantNone()) {
+            error = this->detachSocket(socket);
+            if (error) {
+                return error;
+            }
+        }
+    }
 
     return ntsa::Error();
 }
@@ -482,7 +533,7 @@ ntsa::Error Epoll::wait(
         d_outputList.resize(outputListSizeRequired);
     }
 
-    rc = ::epoll_wait(d_epoll,
+    rc = ::epoll_wait(d_device,
                       &d_outputList[0],
                       static_cast<int>(d_outputList.size()),
                       timeoutInMilliseconds);
@@ -513,13 +564,13 @@ ntsa::Error Epoll::wait(
                 ntsa::Error lastError;
                 error =
                     ntsu::SocketOptionUtil::getLastError(&lastError,
-                                                            e.data.fd);
+                                                         e.data.fd);
                 if (!error && lastError) {
                     event.setError(lastError);
                 }
                 else {
-                    event.setError(
-                        ntsa::Error(ntsa::Error::e_INVALID));
+                    event.setExceptional();
+                    event.setHangup();
                 }
             }
 
@@ -539,21 +590,29 @@ ntsa::Error Epoll::wait(
         return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
     }
     else {
-        error = ntsa::Error::last();
-        NTSO_EPOLL_LOG_WAIT_FAILURE(error);
-        return error;
+        int lastError = errno;
+        if (lastError == EINTR) {
+            NTSO_EPOLL_LOG_WAIT_INTERRUPTED();
+            return ntsa::Error();
+        }
+        else {
+            ntsa::Error error(lastError);
+            NTSO_EPOLL_LOG_WAIT_FAILURE(error);
+            return error;
+        }
     }
 
     return ntsa::Error();
 }
 
 bsl::shared_ptr<ntsi::Reactor> EpollUtil::createReactor(
-    bslma::Allocator* basicAllocator)
+    const ntsa::ReactorConfig& configuration,
+    bslma::Allocator*          basicAllocator)
 {
     bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
 
     bsl::shared_ptr<ntso::Epoll> reactor;
-    reactor.createInplace(allocator, allocator);
+    reactor.createInplace(allocator, configuration, allocator);
 
     return reactor;
 }

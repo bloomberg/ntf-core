@@ -27,6 +27,15 @@ BSLS_IDENT_RCSID(ntsf_system_cpp, "$Id$ $CSID$")
 #include <ntsu_bufferutil.h>
 #include <ntsu_socketoptionutil.h>
 #include <ntsu_socketutil.h>
+#include <ntso_select.h>
+#include <ntso_poll.h>
+#include <ntso_epoll.h>
+#include <ntso_kqueue.h>
+#include <ntso_devpoll.h>
+#include <ntso_eventport.h>
+#include <ntso_pollset.h>
+
+#include <bdlb_string.h>
 
 #include <bslma_allocator.h>
 #include <bslma_default.h>
@@ -361,6 +370,138 @@ ntsa::Error System::createStreamSocketPair(
 
     return ntsa::Error();
 }
+
+bsl::shared_ptr<ntsi::Reactor> System::createReactor(
+    bslma::Allocator* basicAllocator)
+{
+    return System::createReactor(ntsa::ReactorConfig(), basicAllocator);
+}
+
+bsl::shared_ptr<ntsi::Reactor> System::createReactor(
+    const ntsa::ReactorConfig& configuration,
+    bslma::Allocator*          basicAllocator)
+{
+    ntsa::Error error;
+
+    error = ntsf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
+
+    ntsa::ReactorConfig effectiveConfig = configuration;
+    if (effectiveConfig.driverName().isNull() ||
+        effectiveConfig.driverName().value().empty())
+    {
+#if defined(BSLS_PLATFORM_OS_AIX)
+#if NTSO_POLLSET_ENABLED
+        effectiveConfig.setDriverName("pollset");
+#elif NTSO_POLL_ENABLED
+        effectiveConfig.setDriverName("poll");
+#elif NTSO_SELECT_ENABLED
+        effectiveConfig.setDriverName("select");
+#endif
+#elif defined(BSLS_PLATFORM_OS_DARWIN)
+#if NTSO_KQUEUE_ENABLED
+        effectiveConfig.setDriverName("kqueue");
+#elif NTSO_POLL_ENABLED
+        effectiveConfig.setDriverName("poll");
+#elif NTSO_SELECT_ENABLED
+        effectiveConfig.setDriverName("select");
+#endif
+#elif defined(BSLS_PLATFORM_OS_LINUX)
+#if NTSO_EPOLL_ENABLED
+        effectiveConfig.setDriverName("epoll");
+#elif NTSO_POLL_ENABLED
+        effectiveConfig.setDriverName("poll");
+#elif NTSO_SELECT_ENABLED
+        effectiveConfig.setDriverName("select");
+#endif
+#elif defined(BSLS_PLATFORM_OS_SOLARIS)
+#if NTSO_EVENTPORT_ENABLED
+        effectiveConfig.setDriverName("eventport");
+#elif NTSO_DEVPOLL_ENABLED
+        effectiveConfig.setDriverName("devpoll");
+#elif NTSO_POLL_ENABLED
+        effectiveConfig.setDriverName("poll");
+#elif NTSO_SELECT_ENABLED
+        effectiveConfig.setDriverName("select");
+#endif
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+#if NTSO_POLL_ENABLED
+        effectiveConfig.setDriverName("poll");
+#elif NTSO_SELECT_ENABLED
+        effectiveConfig.setDriverName("select");
+#endif
+#else
+#error Not implemented
+#endif
+    }
+
+    if (effectiveConfig.autoAttach().isNull()) {
+        effectiveConfig.setAutoAttach(false);
+    }
+
+    if (effectiveConfig.autoDetach().isNull()) {
+        effectiveConfig.setAutoDetach(false);
+    }
+
+    bsl::shared_ptr<ntsi::Reactor> reactor;
+    if (effectiveConfig.driverName().isNull() ||
+        effectiveConfig.driverName().value().empty())
+    {
+        reactor.createInplace(allocator);
+    }
+#if NTSO_EPOLL_ENABLED
+    else if (bdlb::String::areEqualCaseless(
+                effectiveConfig.driverName().value(), "epoll")) {
+        reactor = ntso::EpollUtil::createReactor(effectiveConfig, allocator);
+    }
+#endif
+#if NTSO_KQUEUE_ENABLED
+    else if (bdlb::String::areEqualCaseless(
+                effectiveConfig.driverName().value(), "kqueue")) {
+        reactor = ntso::KqueueUtil::createReactor(effectiveConfig, allocator);
+    }
+#endif
+#if NTSO_EVENTPORT_ENABLED
+    else if (bdlb::String::areEqualCaseless(
+                effectiveConfig.driverName().value(), "eventport")) {
+        reactor = ntso::EventPortUtil::createReactor(effectiveConfig,
+                                                     allocator);
+    }
+#endif
+#if NTSO_DEVPOLL_ENABLED
+    else if (bdlb::String::areEqualCaseless(
+                effectiveConfig.driverName().value(), "devpoll")) {
+        reactor = ntso::DevpollUtil::createReactor(effectiveConfig, allocator);
+    }
+#endif
+#if NTSO_POLLSET_ENABLED
+    else if (bdlb::String::areEqualCaseless(
+                effectiveConfig.driverName().value(), "pollset")) {
+        reactor = ntso::PollsetUtil::createReactor(effectiveConfig, allocator);
+    }
+#endif
+#if NTSO_POLL_ENABLED
+    else if (bdlb::String::areEqualCaseless(
+                effectiveConfig.driverName().value(), "poll")) {
+        reactor = ntso::PollUtil::createReactor(effectiveConfig, allocator);
+    }
+#endif
+#if NTSO_SELECT_ENABLED
+    else if (bdlb::String::areEqualCaseless(
+                effectiveConfig.driverName().value(), "select")) {
+        reactor = ntso::SelectUtil::createReactor(effectiveConfig, allocator);
+    }
+#endif
+    else {
+        reactor.createInplace(allocator);
+    }
+
+    BSLS_ASSERT_OPT(reactor);
+    return reactor;
+}
+
 
 bsl::shared_ptr<ntsi::Resolver> System::createResolver(
     bslma::Allocator* basicAllocator)

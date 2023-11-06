@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntsa_adapter.h>
 #include <ntsa_error.h>
+#include <ntsa_reactorconfig.h>
 #include <ntsa_resolverconfig.h>
 #include <ntsa_socketinfo.h>
 #include <ntsa_socketinfofilter.h>
@@ -29,6 +30,7 @@ BSLS_IDENT("$Id: $")
 #include <ntscfg_platform.h>
 #include <ntsi_datagramsocket.h>
 #include <ntsi_listenersocket.h>
+#include <ntsi_reactor.h>
 #include <ntsi_resolver.h>
 #include <ntsi_streamsocket.h>
 #include <ntsscm_version.h>
@@ -889,6 +891,19 @@ struct System {
         bsl::shared_ptr<ntsi::StreamSocket>* server,
         ntsa::Transport::Value               type,
         bslma::Allocator*                    basicAllocator = 0);
+
+    /// Create a new reactor. Optionally specify a 'basicAllocator' used to
+    /// supply memory. If 'basicAllocator' is 0, the currently installed
+    /// default allocator is used.
+    static bsl::shared_ptr<ntsi::Reactor> createReactor(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new reactor having the specified 'configuration'. Optionally
+    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
+    /// is 0, the currently installed default allocator is used.
+    static bsl::shared_ptr<ntsi::Reactor> createReactor(
+        const ntsa::ReactorConfig& configuration,
+        bslma::Allocator*          basicAllocator = 0);
 
     /// Create a new resolver. Optionally specify a 'basicAllocator' used to
     /// supply memory. If 'basicAllocator' is 0, the currently installed

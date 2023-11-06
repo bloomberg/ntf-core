@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntscfg_platform.h>
 #include <ntscfg_config.h>
+#include <ntsa_reactorconfig.h>
 #include <ntsi_reactor.h>
 #include <ntsscm_version.h>
 #include <bsl_memory.h>
@@ -44,7 +45,8 @@ struct SelectUtil {
     /// supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
     static bsl::shared_ptr<ntsi::Reactor> createReactor(
-        bslma::Allocator* basicAllocator = 0);
+        const ntsa::ReactorConfig& configuration,
+        bslma::Allocator*          basicAllocator = 0);
 };
 
 }  // close package namespace

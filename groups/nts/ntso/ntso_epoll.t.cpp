@@ -27,8 +27,11 @@ NTSCFG_TEST_CASE(1)
 
     ntscfg::TestAllocator ta;
     {
+        ntsa::ReactorConfig reactorConfig(&ta);
+        reactorConfig.setDriverName("epoll");
+
         bsl::shared_ptr<ntsi::Reactor> reactor =
-            ntso::EpollUtil::createReactor(&ta);
+            ntso::EpollUtil::createReactor(reactorConfig, &ta);
 
         ntso::Test::ReactorVector reactorVector(&ta);
         reactorVector.push_back(reactor);
@@ -45,8 +48,11 @@ NTSCFG_TEST_CASE(2)
 
     ntscfg::TestAllocator ta;
     {
+        ntsa::ReactorConfig reactorConfig(&ta);
+        reactorConfig.setDriverName("epoll");
+
         bsl::shared_ptr<ntsi::Reactor> reactor =
-            ntso::EpollUtil::createReactor(&ta);
+            ntso::EpollUtil::createReactor(reactorConfig, &ta);
 
         ntso::Test::ReactorVector reactorVector(&ta);
         reactorVector.push_back(reactor);
@@ -63,8 +69,11 @@ NTSCFG_TEST_CASE(3)
 
     ntscfg::TestAllocator ta;
     {
+        ntsa::ReactorConfig reactorConfig(&ta);
+        reactorConfig.setDriverName("epoll");
+
         bsl::shared_ptr<ntsi::Reactor> reactor =
-            ntso::EpollUtil::createReactor(&ta);
+            ntso::EpollUtil::createReactor(reactorConfig, &ta);
 
         ntso::Test::ReactorVector reactorVector(&ta);
         reactorVector.push_back(reactor);

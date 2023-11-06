@@ -50,7 +50,7 @@ class Interest
     bsl::uint32_t d_state;
 
   public:
-    /// Create a new event interest representing an invalid handle and no 
+    /// Create a new event interest representing an invalid handle and no
     /// interest.
     Interest();
 
@@ -83,19 +83,31 @@ class Interest
     /// Lose interest in writability.
     void hideWritable();
 
-    /// Return the handle. 
+    /// Return the handle.
     ntsa::Handle handle() const;
 
     /// Return the interest state.
     bsl::uint32_t state() const;
 
-    /// Return true if there is interest in readability, otherwise return 
-    /// false. 
+    /// Return true if there is interest in readability, otherwise return
+    /// false.
     bool wantReadable() const;
 
-    /// Return true if there is interest in writability, otherwise return 
-    /// false. 
+    /// Return true if there is interest in writability, otherwise return
+    /// false.
     bool wantWritable() const;
+
+    /// Return true if there is either interest in readability or writability,
+    /// otherwise return false.
+    bool wantAny() const;
+
+    /// Return true if there is both interest in readability and writability,
+    /// otherwise return false.
+    bool wantBoth() const;
+
+    /// Return true if there is neither interest in readability nor
+    /// writability, otherwise return false.
+    bool wantNone() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -176,7 +188,7 @@ class InterestSet
     class Iterator;
     friend class Iterator;
 
-    /// Define a type alias for of vector of interest, indexed by socket 
+    /// Define a type alias for of vector of interest, indexed by socket
     /// handle.
     typedef bsl::vector<ntsa::Interest> Vector;
 
@@ -191,7 +203,7 @@ class InterestSet
     /// Define a type alias for an iterator over the modifiable elements in the
     /// set.
     typedef Iterator iterator;
-    
+
     /// Define a type alias for an iterator over the immutable elemtns in the
     /// set.
     typedef ConstIterator const_iterator;
@@ -205,7 +217,7 @@ class InterestSet
     /// 'original' object. Optionally specify a 'basicAllocator' used to supply
     /// memory. If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
-    InterestSet(const InterestSet& original, 
+    InterestSet(const InterestSet& original,
                 bslma::Allocator*  basicAllocator = 0);
 
     /// Destroy this object.
@@ -221,10 +233,18 @@ class InterestSet
     // Attach the specified 'socket' to the interest set. Return the error.
     ntsa::Error attach(ntsa::Handle socket);
 
+    // Attach the specified 'socket' to the interest set. Load into the
+    /// specified 'result' the new interest of the 'socket'. Return the error.
+    ntsa::Error attach(ntsa::Interest* result, ntsa::Handle socket);
+
     // Detach the specified 'socket' from the interest set. Return the error.
     ntsa::Error detach(ntsa::Handle socket);
 
-    /// Gain interest in readability of the specified 'socket'. Return the 
+    // Detach the specified 'socket' from the interest set. Load into the
+    /// specified 'result' the new interest of the 'socket'. Return the error.
+    ntsa::Error detach(ntsa::Interest* result, ntsa::Handle socket);
+
+    /// Gain interest in readability of the specified 'socket'. Return the
     /// error.
     ntsa::Error showReadable(ntsa::Handle socket);
 
@@ -263,22 +283,26 @@ class InterestSet
     /// Return the iterator to the end of the non-modifiable interest set.
     Iterator end() BSLS_KEYWORD_NOEXCEPT;
 
-    /// Load into the specified 'result' the interest for the specified 
+    /// Load into the specified 'result' the interest for the specified
     /// 'socket'. Return true if the 'socket' is attached, and false otherwise.
     bool find(ntsa::Interest* result, ntsa::Handle socket) const;
 
-    /// Return true if there is interest in readability of the specified 
-    /// 'socket', otherwise return false. 
+    /// Return true if the interest set contains the specified 'socket',
+    /// otherwise return false.
+    bool contains(ntsa::Handle socket) const;
+
+    /// Return true if there is interest in readability of the specified
+    /// 'socket', otherwise return false.
     bool wantReadable(ntsa::Handle socket) const;
 
-    /// Return true if there is interest in writability of the specified 
-    /// 'socket', otherwise return false. 
+    /// Return true if there is interest in writability of the specified
+    /// 'socket', otherwise return false.
     bool wantWritable(ntsa::Handle socket) const;
 
-    /// Return the number of sockets attached to the interest set. 
+    /// Return the number of sockets attached to the interest set.
     bsl::size_t numSockets() const;
 
-    /// Return the maximum number of sockets attached to the interest set. 
+    /// Return the maximum number of sockets attached to the interest set.
     bsl::size_t maxSockets() const;
 
     /// Return true if no sockets are attached to the interest set, otherwise
@@ -379,7 +403,7 @@ class InterestSet::ConstIterator
     ConstIterator();
 
     /// Create a new iterator over the specified 'interestSet'.
-    ConstIterator(const InterestSet*                     interestSet, 
+    ConstIterator(const InterestSet*                     interestSet,
                   bsl::set<ntsa::Handle>::const_iterator handleIterator);
 
     /// Create a new iterator having the same value as the specified 'other'
@@ -390,7 +414,7 @@ class InterestSet::ConstIterator
     ~ConstIterator();
 
     /// Assign the value of the specified 'other' object to this object. Return
-    /// a reference to this modifiable object. 
+    /// a reference to this modifiable object.
     ConstIterator operator=(const ConstIterator& other);
 
     // Increment this iterator to alias the next buffer in the blob and
@@ -451,7 +475,7 @@ class InterestSet::Iterator
     Iterator();
 
     /// Create a new iterator over the specified 'interestSet'.
-    Iterator(InterestSet*                     interestSet, 
+    Iterator(InterestSet*                     interestSet,
              bsl::set<ntsa::Handle>::iterator handleIterator);
 
     /// Create a new iterator having the same value as the specified 'other'
@@ -462,7 +486,7 @@ class InterestSet::Iterator
     ~Iterator();
 
     /// Assign the value of the specified 'other' object to this object. Return
-    /// a reference to this modifiable object. 
+    /// a reference to this modifiable object.
     Iterator operator=(const Iterator& other);
 
     // Increment this iterator to alias the next buffer in the blob and
@@ -582,6 +606,24 @@ bool Interest::wantWritable() const
 }
 
 NTSCFG_INLINE
+bool Interest::wantAny() const
+{
+    return this->wantReadable() || this->wantWritable();
+}
+
+NTSCFG_INLINE
+bool Interest::wantBoth() const
+{
+    return this->wantReadable() && this->wantWritable();
+}
+
+NTSCFG_INLINE
+bool Interest::wantNone() const
+{
+    return !this->wantReadable() && !this->wantWritable();
+}
+
+NTSCFG_INLINE
 bsl::ostream& operator<<(bsl::ostream& stream, const Interest& object)
 {
     return object.print(stream, 0, -1);
@@ -623,7 +665,7 @@ InterestSet::InterestSet(bslma::Allocator* basicAllocator)
 }
 
 NTSCFG_INLINE
-InterestSet::InterestSet(const InterestSet& original, 
+InterestSet::InterestSet(const InterestSet& original,
                          bslma::Allocator*  basicAllocator)
 : d_vector(original.d_vector, basicAllocator)
 , d_set(original.d_set, basicAllocator)
@@ -657,6 +699,12 @@ void InterestSet::clear()
 NTSCFG_INLINE
 ntsa::Error InterestSet::attach(ntsa::Handle socket)
 {
+    return this->attach(0, socket);
+}
+
+NTSCFG_INLINE
+ntsa::Error InterestSet::attach(ntsa::Interest* result, ntsa::Handle socket)
+{
     if (socket < 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
@@ -672,15 +720,29 @@ ntsa::Error InterestSet::attach(ntsa::Handle socket)
         d_vector.resize(bsl::max(index + 1, d_vector.size() * 2));
     }
 
-    d_vector[index].setHandle(socket);
-
     BSLS_ASSERT(index < d_vector.size());
+
+    ntsa::Interest& interest = d_vector[index];
+
+    interest.setHandle(socket);
+    interest.hideReadable();
+    interest.hideWritable();
+
+    if (result != 0) {
+        *result = interest;
+    }
 
     return ntsa::Error();
 }
 
 NTSCFG_INLINE
 ntsa::Error InterestSet::detach(ntsa::Handle socket)
+{
+    return this->detach(0, socket);
+}
+
+NTSCFG_INLINE
+ntsa::Error InterestSet::detach(ntsa::Interest* result, ntsa::Handle socket)
 {
     if (socket < 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -692,7 +754,13 @@ ntsa::Error InterestSet::detach(ntsa::Handle socket)
 
     if (NTSCFG_LIKELY(n == 1)) {
         if (NTSCFG_LIKELY(index < d_vector.size())) {
-            d_vector[index].reset();
+            ntsa::Interest& interest = d_vector[index];
+
+            interest.reset();
+
+            if (result != 0) {
+                *result = interest;
+            }
         }
     }
     else {
@@ -709,7 +777,7 @@ ntsa::Error InterestSet::showReadable(ntsa::Handle socket)
 }
 
 NTSCFG_INLINE
-ntsa::Error InterestSet::showReadable(ntsa::Interest* result, 
+ntsa::Error InterestSet::showReadable(ntsa::Interest* result,
                                       ntsa::Handle    socket)
 {
     const bsl::size_t index = static_cast<bsl::size_t>(socket);
@@ -739,7 +807,7 @@ ntsa::Error InterestSet::showWritable(ntsa::Handle socket)
 }
 
 NTSCFG_INLINE
-ntsa::Error InterestSet::showWritable(ntsa::Interest* result, 
+ntsa::Error InterestSet::showWritable(ntsa::Interest* result,
                                       ntsa::Handle    socket)
 {
     const bsl::size_t index = static_cast<bsl::size_t>(socket);
@@ -845,16 +913,24 @@ bool InterestSet::find(ntsa::Interest* result, ntsa::Handle socket) const
         const ntsa::Interest& interest = d_vector[index];
 
         if (NTSCFG_LIKELY(interest.handle() != ntsa::k_INVALID_HANDLE)) {
-            *result = interest;
+            if (result != 0) {
+                *result = interest;
+            }
             return true;
         }
         else {
-            return false; 
+            return false;
         }
     }
     else {
         return false;
     }
+}
+
+NTSCFG_INLINE
+bool InterestSet::contains(ntsa::Handle socket) const
+{
+    return this->find(0, socket);
 }
 
 NTSCFG_INLINE
@@ -948,7 +1024,7 @@ InterestSet::ConstIterator::ConstIterator()
 
 NTSCFG_INLINE
 InterestSet::ConstIterator::ConstIterator(
-    const InterestSet*                     interestSet, 
+    const InterestSet*                     interestSet,
     bsl::set<ntsa::Handle>::const_iterator handleIterator)
 : d_interestSet_p(interestSet)
 , d_handleIterator(handleIterator)
@@ -969,7 +1045,7 @@ InterestSet::ConstIterator::~ConstIterator()
 }
 
 NTSCFG_INLINE
-InterestSet::ConstIterator 
+InterestSet::ConstIterator
 InterestSet::ConstIterator::operator=(
     const InterestSet::ConstIterator& other)
 {
@@ -982,7 +1058,7 @@ InterestSet::ConstIterator::operator=(
 }
 
 NTSCFG_INLINE
-InterestSet::ConstIterator& 
+InterestSet::ConstIterator&
 InterestSet::ConstIterator::operator++() BSLS_KEYWORD_NOEXCEPT
 {
     ++d_handleIterator;
@@ -990,7 +1066,7 @@ InterestSet::ConstIterator::operator++() BSLS_KEYWORD_NOEXCEPT
 }
 
 NTSCFG_INLINE
-InterestSet::ConstIterator 
+InterestSet::ConstIterator
 InterestSet::ConstIterator::operator++(int) BSLS_KEYWORD_NOEXCEPT
 {
     ConstIterator temp(*this);
@@ -999,7 +1075,7 @@ InterestSet::ConstIterator::operator++(int) BSLS_KEYWORD_NOEXCEPT
 }
 
 NTSCFG_INLINE
-const InterestSet::ConstIterator::value_type& 
+const InterestSet::ConstIterator::value_type&
 InterestSet::ConstIterator::operator*() const BSLS_KEYWORD_NOEXCEPT
 {
     const bsl::size_t index = static_cast<bsl::size_t>(*d_handleIterator);
@@ -1030,7 +1106,7 @@ InterestSet::Iterator::Iterator()
 
 NTSCFG_INLINE
 InterestSet::Iterator::Iterator(
-    InterestSet*                     interestSet, 
+    InterestSet*                     interestSet,
     bsl::set<ntsa::Handle>::iterator handleIterator)
 : d_interestSet_p(interestSet)
 , d_handleIterator(handleIterator)
@@ -1062,7 +1138,7 @@ InterestSet::Iterator InterestSet::Iterator::operator=(
 }
 
 NTSCFG_INLINE
-InterestSet::Iterator& 
+InterestSet::Iterator&
 InterestSet::Iterator::operator++() BSLS_KEYWORD_NOEXCEPT
 {
     ++d_handleIterator;
@@ -1070,7 +1146,7 @@ InterestSet::Iterator::operator++() BSLS_KEYWORD_NOEXCEPT
 }
 
 NTSCFG_INLINE
-InterestSet::Iterator 
+InterestSet::Iterator
 InterestSet::Iterator::operator++(int) BSLS_KEYWORD_NOEXCEPT
 {
     Iterator temp(*this);
@@ -1079,7 +1155,7 @@ InterestSet::Iterator::operator++(int) BSLS_KEYWORD_NOEXCEPT
 }
 
 NTSCFG_INLINE
-InterestSet::Iterator::value_type& 
+InterestSet::Iterator::value_type&
 InterestSet::Iterator::operator*() const BSLS_KEYWORD_NOEXCEPT
 {
     const bsl::size_t index = static_cast<bsl::size_t>(*d_handleIterator);
@@ -1087,7 +1163,7 @@ InterestSet::Iterator::operator*() const BSLS_KEYWORD_NOEXCEPT
 }
 
 NTSCFG_INLINE
-InterestSet::Iterator::operator 
+InterestSet::Iterator::operator
 InterestSet::ConstIterator() const BSLS_KEYWORD_NOEXCEPT
 {
     return InterestSet::ConstIterator(d_interestSet_p, d_handleIterator);

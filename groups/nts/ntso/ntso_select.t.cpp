@@ -27,8 +27,11 @@ NTSCFG_TEST_CASE(1)
 
     ntscfg::TestAllocator ta;
     {
+        ntsa::ReactorConfig reactorConfig(&ta);
+        reactorConfig.setDriverName("select");
+
         bsl::shared_ptr<ntsi::Reactor> reactor =
-            ntso::SelectUtil::createReactor(&ta);
+            ntso::SelectUtil::createReactor(reactorConfig, &ta);
 
         ntso::Test::ReactorVector reactorVector(&ta);
         reactorVector.push_back(reactor);
@@ -45,8 +48,11 @@ NTSCFG_TEST_CASE(2)
 
     ntscfg::TestAllocator ta;
     {
+        ntsa::ReactorConfig reactorConfig(&ta);
+        reactorConfig.setDriverName("select");
+
         bsl::shared_ptr<ntsi::Reactor> reactor =
-            ntso::SelectUtil::createReactor(&ta);
+            ntso::SelectUtil::createReactor(reactorConfig, &ta);
 
         ntso::Test::ReactorVector reactorVector(&ta);
         reactorVector.push_back(reactor);
@@ -63,8 +69,11 @@ NTSCFG_TEST_CASE(3)
 
     ntscfg::TestAllocator ta;
     {
+        ntsa::ReactorConfig reactorConfig(&ta);
+        reactorConfig.setDriverName("select");
+
         bsl::shared_ptr<ntsi::Reactor> reactor =
-            ntso::SelectUtil::createReactor(&ta);
+            ntso::SelectUtil::createReactor(reactorConfig, &ta);
 
         ntso::Test::ReactorVector reactorVector(&ta);
         reactorVector.push_back(reactor);
