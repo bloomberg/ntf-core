@@ -433,7 +433,8 @@ ntsa::Error Kqueue::hideReadable(ntsa::Handle socket)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    error = d_interestSet.hideReadable(socket);
+    ntsa::Interest interest;
+    error = d_interestSet.hideReadable(&interest, socket);
     if (error) {
         return error;
     }
@@ -472,7 +473,8 @@ ntsa::Error Kqueue::hideWritable(ntsa::Handle socket)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    error = d_interestSet.hideWritable(socket);
+    ntsa::Interest interest;
+    error = d_interestSet.hideWritable(&interest, socket);
     if (error) {
         return error;
     }
