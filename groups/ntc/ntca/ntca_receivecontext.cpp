@@ -25,22 +25,12 @@ namespace ntca {
 
 bool ReceiveContext::equals(const ReceiveContext& other) const
 {
-    return (d_transport == other.d_transport && 
-            d_endpoint == other.d_endpoint &&
-            d_foreignHandle == other.d_foreignHandle &&
-            d_error == other.d_error);
+    return (d_endpoint == other.d_endpoint &&
+            d_transport == other.d_transport && d_error == other.d_error);
 }
 
 bool ReceiveContext::less(const ReceiveContext& other) const
 {
-    if (d_transport < other.d_transport) {
-        return true;
-    }
-
-    if (other.d_transport < d_transport) {
-        return false;
-    }
-
     if (d_endpoint < other.d_endpoint) {
         return true;
     }
@@ -49,11 +39,11 @@ bool ReceiveContext::less(const ReceiveContext& other) const
         return false;
     }
 
-    if (d_foreignHandle < other.d_foreignHandle) {
+    if (d_transport < other.d_transport) {
         return true;
     }
 
-    if (other.d_foreignHandle < d_foreignHandle) {
+    if (other.d_transport < d_transport) {
         return false;
     }
 
@@ -67,16 +57,11 @@ bsl::ostream& ReceiveContext::print(bsl::ostream& stream,
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
 
-    printer.printAttribute("transport", d_transport);
-
     if (!d_endpoint.isNull()) {
         printer.printAttribute("endpoint", d_endpoint);
     }
 
-    if (!d_foreignHandle.isNull()) {
-        printer.printAttribute("foreignHandle", d_foreignHandle);
-    }
-
+    printer.printAttribute("transport", d_transport);
     printer.printAttribute("error", d_error);
     printer.end();
     return stream;

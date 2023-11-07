@@ -23,7 +23,6 @@ BSLS_IDENT("$Id: $")
 #include <ntcscm_version.h>
 #include <ntsa_endpoint.h>
 #include <ntsa_error.h>
-#include <ntsa_handle.h>
 #include <ntsa_transport.h>
 #include <bdlb_nullablevalue.h>
 #include <bslh_hash.h>
@@ -37,16 +36,12 @@ namespace ntca {
 /// @par Attributes
 /// This class is composed of the following attributes.
 ///
-/// @li @b transport:
-/// The transport the receiver.
-///
 /// @li @b endpoint:
 /// The remote endpoint from which the data was sent. This value might be null
 /// for connected receivers.
 ///
-/// @li @b foreignHandle:
-/// The foreign handle sent by the peer, if any. If a foreign handle is 
-/// defined, it is the receivers responsibility to close it.
+/// @li @b transport:
+/// The transport the receiver.
 ///
 /// @li @b error:
 /// The error detected when performing the operation.
@@ -57,9 +52,8 @@ namespace ntca {
 /// @ingroup module_ntci_operation_receive
 class ReceiveContext
 {
-    ntsa::Transport::Value              d_transport;
     bdlb::NullableValue<ntsa::Endpoint> d_endpoint;
-    bdlb::NullableValue<ntsa::Handle>   d_foreignHandle;
+    ntsa::Transport::Value              d_transport;
     ntsa::Error                         d_error;
 
   public:
@@ -81,19 +75,20 @@ class ReceiveContext
     /// construction.
     void reset();
 
-    /// Set the transport of the receiver to the specified 'value'.
-    void setTransport(ntsa::Transport::Value value);
-
     /// Set the endpoint from which the data was sent to the specified
     /// 'endpoint'. This value should not be set for connected receivers.
     void setEndpoint(const ntsa::Endpoint& value);
 
-    /// Set the foreign handle sent by the peer to the specified 'value'. 
-    void setForeignHandle(ntsa::Handle value);
+    /// Set the transport of the receiver to the specified 'value'.
+    void setTransport(ntsa::Transport::Value value);
 
     /// Set the error detected when performing the operation to the
     /// specified 'value'.
     void setError(const ntsa::Error& value);
+
+    /// Return the endpoint from which the data was sent. This value might
+    /// be null for connected receivers.
+    const bdlb::NullableValue<ntsa::Endpoint>& endpoint() const;
 
     /// Return the transport of the receiver.
     ntsa::Transport::Value transport() const;
@@ -112,13 +107,6 @@ class ReceiveContext
     /// provided for convenience; the resulting value is interpreted from
     /// the transport of the receiver.
     ntsa::TransportProtocol::Value transportProtocol() const;
-
-    /// Return the endpoint from which the data was sent. This value might
-    /// be null for connected receivers.
-    const bdlb::NullableValue<ntsa::Endpoint>& endpoint() const;
-
-    /// Return the foreign handle sent by the peer, if any.
-    const bdlb::NullableValue<ntsa::Handle>& foreignHandle() const;
 
     /// Return the error detected when performing the operation.
     const ntsa::Error& error() const;
@@ -185,18 +173,16 @@ void hashAppend(HASH_ALGORITHM& algorithm, const ReceiveContext& value);
 
 NTCCFG_INLINE
 ReceiveContext::ReceiveContext()
-: d_transport(ntsa::Transport::e_UNDEFINED)
-, d_endpoint()
-, d_foreignHandle()
+: d_endpoint()
+, d_transport(ntsa::Transport::e_UNDEFINED)
 , d_error()
 {
 }
 
 NTCCFG_INLINE
 ReceiveContext::ReceiveContext(const ReceiveContext& original)
-: d_transport(original.d_transport)
-, d_endpoint(original.d_endpoint)
-, d_foreignHandle(original.d_foreignHandle)
+: d_endpoint(original.d_endpoint)
+, d_transport(original.d_transport)
 , d_error(original.d_error)
 {
 }
@@ -209,20 +195,24 @@ ReceiveContext::~ReceiveContext()
 NTCCFG_INLINE
 ReceiveContext& ReceiveContext::operator=(const ReceiveContext& other)
 {
-    d_transport     = other.d_transport;
-    d_endpoint      = other.d_endpoint;
-    d_foreignHandle = other.d_foreignHandle;
-    d_error         = other.d_error;
+    d_endpoint  = other.d_endpoint;
+    d_transport = other.d_transport;
+    d_error     = other.d_error;
     return *this;
 }
 
 NTCCFG_INLINE
 void ReceiveContext::reset()
 {
-    d_transport = ntsa::Transport::e_UNDEFINED;
     d_endpoint.reset();
-    d_foreignHandle.reset();
-    d_error = ntsa::Error();
+    d_transport = ntsa::Transport::e_UNDEFINED;
+    d_error     = ntsa::Error();
+}
+
+NTCCFG_INLINE
+void ReceiveContext::setEndpoint(const ntsa::Endpoint& value)
+{
+    d_endpoint = value;
 }
 
 NTCCFG_INLINE
@@ -232,21 +222,15 @@ void ReceiveContext::setTransport(ntsa::Transport::Value value)
 }
 
 NTCCFG_INLINE
-void ReceiveContext::setEndpoint(const ntsa::Endpoint& value)
-{
-    d_endpoint = value;
-}
-
-NTSCFG_INLINE
-void ReceiveContext::setForeignHandle(ntsa::Handle value)
-{
-    d_foreignHandle = value;
-}
-
-NTCCFG_INLINE
 void ReceiveContext::setError(const ntsa::Error& value)
 {
     d_error = value;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<ntsa::Endpoint>& ReceiveContext::endpoint() const
+{
+    return d_endpoint;
 }
 
 NTCCFG_INLINE
@@ -271,18 +255,6 @@ NTCCFG_INLINE
 ntsa::TransportProtocol::Value ReceiveContext::transportProtocol() const
 {
     return ntsa::Transport::getProtocol(d_transport);
-}
-
-NTCCFG_INLINE
-const bdlb::NullableValue<ntsa::Endpoint>& ReceiveContext::endpoint() const
-{
-    return d_endpoint;
-}
-
-NTSCFG_INLINE
-const bdlb::NullableValue<ntsa::Handle>& ReceiveContext::foreignHandle() const
-{
-    return d_foreignHandle;
 }
 
 NTCCFG_INLINE
@@ -320,9 +292,8 @@ void hashAppend(HASH_ALGORITHM& algorithm, const ReceiveContext& value)
 {
     using bslh::hashAppend;
 
-    hashAppend(algorithm, value.transport());
     hashAppend(algorithm, value.endpoint());
-    hashAppend(algorithm, value.foreignHandle());
+    hashAppend(algorithm, value.transport());
     hashAppend(algorithm, value.error());
 }
 

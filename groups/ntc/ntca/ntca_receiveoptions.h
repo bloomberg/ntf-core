@@ -22,7 +22,6 @@ BSLS_IDENT("$Id: $")
 #include <ntca_receivetoken.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
-#include <ntsa_handle.h>
 #include <bdlb_nullablevalue.h>
 #include <bslh_hash.h>
 #include <bsls_timeinterval.h>
