@@ -233,13 +233,17 @@ void AdapterUtil::discoverAdapterList(bsl::vector<ntsa::Adapter>* result)
             continue;
         }
 
+        BSLS_LOG_TRACE("Interface '%s' found", interfaceAddress->ifa_name);
+
         bsl::string adapterName = interfaceAddress->ifa_name;
 
         if ((interfaceAddress->ifa_flags & IFF_UP) == 0) {
+            BSLS_LOG_TRACE("Interface '%s' is NOT UP", interfaceAddress->ifa_name);
             continue;
         }
 
         if ((interfaceAddress->ifa_flags & IFF_RUNNING) == 0) {
+            BSLS_LOG_TRACE("Interface '%s' is NOT RUNNING", interfaceAddress->ifa_name);
             continue;
         }
 
