@@ -56,7 +56,7 @@ class Event
         /// The socket has an exceptional condition.
         e_EXCEPTIONAL = 3,
 
-        /// The socket has an error or an exceptional condition.
+        /// The socket has an error.
         e_ERROR = 4,
 
         /// The remote socket has shut down writing from its side of the 
