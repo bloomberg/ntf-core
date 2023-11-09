@@ -205,7 +205,7 @@ bsl::ostream& Event::print(bsl::ostream& stream,
         bsl::string stateDescription;
         bsl::size_t numFlags = 0;
 
-        if ((d_state & (1 << e_READABLE)) != 0) {
+        if ((d_state & (1 << EventType::e_READABLE)) != 0) {
             if (numFlags > 0) {
                 stateDescription.append(1, ' ');
             }
@@ -214,7 +214,7 @@ bsl::ostream& Event::print(bsl::ostream& stream,
             ++numFlags;
         }
 
-        if ((d_state & (1 << e_WRITABLE)) != 0) {
+        if ((d_state & (1 << EventType::e_WRITABLE)) != 0) {
             if (numFlags > 0) {
                 stateDescription.append(1, ' ');
             }
@@ -223,7 +223,7 @@ bsl::ostream& Event::print(bsl::ostream& stream,
             ++numFlags;
         }
 
-        if ((d_state & (1 << e_EXCEPTIONAL)) != 0) {
+        if ((d_state & (1 << EventType::e_EXCEPTIONAL)) != 0) {
             if (numFlags > 0) {
                 stateDescription.append(1, ' ');
             }
@@ -232,7 +232,7 @@ bsl::ostream& Event::print(bsl::ostream& stream,
             ++numFlags;
         }
 
-        if ((d_state & (1 << e_ERROR)) != 0) {
+        if ((d_state & (1 << EventType::e_ERROR)) != 0) {
             if (numFlags > 0) {
                 stateDescription.append(1, ' ');
             }
@@ -241,7 +241,7 @@ bsl::ostream& Event::print(bsl::ostream& stream,
             ++numFlags;
         }
 
-        if ((d_state & (1 << e_SHUTDOWN)) != 0) {
+        if ((d_state & (1 << EventType::e_SHUTDOWN)) != 0) {
             if (numFlags > 0) {
                 stateDescription.append(1, ' ');
             }
@@ -250,7 +250,7 @@ bsl::ostream& Event::print(bsl::ostream& stream,
             ++numFlags;
         }
 
-        if ((d_state & (1 << e_HANGUP)) != 0) {
+        if ((d_state & (1 << EventType::e_HANGUP)) != 0) {
             if (numFlags > 0) {
                 stateDescription.append(1, ' ');
             }

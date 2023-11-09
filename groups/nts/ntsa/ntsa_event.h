@@ -107,30 +107,6 @@ bsl::ostream& operator<<(bsl::ostream& stream, EventType::Value rhs);
 /// @ingroup module_ntsa_system
 class Event
 {
-    /// Provide an enumeration the states of a socket.
-    enum State {
-        /// The socket is readable.
-        e_READABLE = 1,
-
-        /// The socket is writable.
-        e_WRITABLE = 2,
-
-        /// The socket has an exceptional condition.
-        e_EXCEPTIONAL = 3,
-
-        /// The socket has an error.
-        e_ERROR = 4,
-
-        /// The remote socket has shut down writing from its side of the 
-        /// connection.
-        e_SHUTDOWN = 5,
-
-        /// Both the source socket and the remote socket have shut down writing
-        /// from their sides of the connection and all data has been received;
-        /// no more data may be sent or received.
-        e_HANGUP = 6
-    };
-
     ntsa::Handle                     d_handle;
     bsl::uint32_t                    d_state;
     bdlb::NullableValue<bsl::size_t> d_bytesReadable;
@@ -679,31 +655,31 @@ void Event::setHandle(ntsa::Handle value)
 NTSCFG_INLINE
 void Event::setReadable()
 {
-    d_state |= (1U << e_READABLE);
+    d_state |= (1U << EventType::e_READABLE);
 }
 
 NTSCFG_INLINE
 void Event::setWritable()
 {
-    d_state |= (1U << e_WRITABLE);
+    d_state |= (1U << EventType::e_WRITABLE);
 }
 
 NTSCFG_INLINE
 void Event::setExceptional()
 {
-    d_state |= (1U << e_EXCEPTIONAL);
+    d_state |= (1U << EventType::e_EXCEPTIONAL);
 }
 
 NTSCFG_INLINE
 void Event::setShutdown()
 {
-    d_state |= (1U << e_SHUTDOWN);
+    d_state |= (1U << EventType::e_SHUTDOWN);
 }
 
 NTSCFG_INLINE
 void Event::setHangup()
 {
-    d_state |= (1U << e_HANGUP);
+    d_state |= (1U << EventType::e_HANGUP);
 }
 
 NTSCFG_INLINE
@@ -721,7 +697,7 @@ void Event::setBytesWritable(bsl::size_t value)
 NTSCFG_INLINE
 void Event::setError(const ntsa::Error& error)
 {
-    d_state |= (1 << e_ERROR);
+    d_state |= (1 << EventType::e_ERROR);
     d_error = error;
 }
 
@@ -758,37 +734,37 @@ const ntsa::Error& Event::error() const
 NTSCFG_INLINE
 bool Event::isReadable() const
 {
-    return ((d_state & (1U << e_READABLE)) != 0);
+    return ((d_state & (1U << EventType::e_READABLE)) != 0);
 }
 
 NTSCFG_INLINE
 bool Event::isWritable() const
 {
-    return ((d_state & (1U << e_WRITABLE)) != 0);
+    return ((d_state & (1U << EventType::e_WRITABLE)) != 0);
 }
 
 NTSCFG_INLINE
 bool Event::isExceptional() const
 {
-    return ((d_state & (1U << e_EXCEPTIONAL)) != 0);
+    return ((d_state & (1U << EventType::e_EXCEPTIONAL)) != 0);
 }
 
 NTSCFG_INLINE
 bool Event::isError() const
 {
-    return ((d_state & (1U << e_ERROR)) != 0);
+    return ((d_state & (1U << EventType::e_ERROR)) != 0);
 }
 
 NTSCFG_INLINE
 bool Event::isShutdown() const
 {
-    return ((d_state & (1U << e_SHUTDOWN)) != 0);
+    return ((d_state & (1U << EventType::e_SHUTDOWN)) != 0);
 }
 
 NTSCFG_INLINE
 bool Event::isHangup() const
 {
-    return ((d_state & (1U << e_HANGUP)) != 0);
+    return ((d_state & (1U << EventType::e_HANGUP)) != 0);
 }
 
 NTSCFG_INLINE
