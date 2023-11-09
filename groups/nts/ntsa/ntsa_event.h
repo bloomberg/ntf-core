@@ -33,6 +33,68 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntsa {
 
+/// Provide an enumeration the event types for a socket.
+///
+/// @par Thread Safety
+/// This struct is thread safe.
+///
+/// @ingroup module_ntsa_system
+struct EventType {
+  public:
+    /// Provide an enumeration the event types for a socket.
+    enum Value {
+        /// The socket is readable.
+        e_READABLE = 1,
+
+        /// The socket is writable.
+        e_WRITABLE = 2,
+
+        /// The socket has an exceptional condition.
+        e_EXCEPTIONAL = 3,
+
+        /// The socket has an error.
+        e_ERROR = 4,
+
+        /// The remote socket has shut down writing from its side of the 
+        /// connection.
+        e_SHUTDOWN = 5,
+
+        /// Both the source socket and the remote socket have shut down writing
+        /// from their sides of the connection and all data has been received;
+        /// no more data may be sent or received.
+        e_HANGUP = 6
+    };
+
+    /// Return the string representation exactly matching the enumerator
+    /// name corresponding to the specified enumeration 'value'.
+    static const char* toString(Value value);
+
+    /// Load into the specified 'result' the enumerator matching the
+    /// specified 'string'.  Return 0 on success, and a non-zero value with
+    /// no effect on 'result' otherwise (i.e., 'string' does not match any
+    /// enumerator).
+    static int fromString(Value* result, const bslstl::StringRef& string);
+
+    /// Load into the specified 'result' the enumerator matching the
+    /// specified 'number'.  Return 0 on success, and a non-zero value with
+    /// no effect on 'result' otherwise (i.e., 'number' does not match any
+    /// enumerator).
+    static int fromInt(Value* result, int number);
+
+    /// Write to the specified 'stream' the string representation of the
+    /// specified enumeration 'value'.  Return a reference to the modifiable
+    /// 'stream'.
+    static bsl::ostream& print(bsl::ostream& stream, Value value);
+};
+
+// FREE OPERATORS
+
+/// Format the specified 'rhs' to the specified output 'stream' and return a
+/// reference to the modifiable 'stream'.
+///
+/// @related ntsa::EventType
+bsl::ostream& operator<<(bsl::ostream& stream, EventType::Value rhs);
+
 /// Provide a description of a socket event.
 ///
 /// @details

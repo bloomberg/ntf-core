@@ -18,10 +18,93 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntsa_event_cpp, "$Id$ $CSID$")
 
+#include <bdlb_string.h>
+#include <bsls_assert.h>
+#include <bsl_ostream.h>
 #include <bslim_printer.h>
 
 namespace BloombergLP {
 namespace ntsa {
+
+
+int EventType::fromInt(EventType::Value* result, int number)
+{
+    switch (number) {
+    case EventType::e_READABLE:
+    case EventType::e_WRITABLE:
+    case EventType::e_EXCEPTIONAL:
+    case EventType::e_ERROR:
+    case EventType::e_SHUTDOWN:
+    case EventType::e_HANGUP:
+        *result = static_cast<EventType::Value>(number);
+        return 0;
+    default:
+        return -1;
+    }
+}
+
+int EventType::fromString(EventType::Value*     result,
+                             const bslstl::StringRef& string)
+{
+    if (bdlb::String::areEqualCaseless(string, "READABLE")) {
+        *result = e_READABLE;
+        return 0;
+    }
+    if (bdlb::String::areEqualCaseless(string, "WRITABLE")) {
+        *result = e_WRITABLE;
+        return 0;
+    }
+    if (bdlb::String::areEqualCaseless(string, "EXCEPTIONAL")) {
+        *result = e_EXCEPTIONAL;
+        return 0;
+    }
+    if (bdlb::String::areEqualCaseless(string, "ERROR")) {
+        *result = e_ERROR;
+        return 0;
+    }
+    if (bdlb::String::areEqualCaseless(string, "SHUTDOWN")) {
+        *result = e_SHUTDOWN;
+        return 0;
+    }
+    if (bdlb::String::areEqualCaseless(string, "HANGUP")) {
+        *result = e_HANGUP;
+        return 0;
+    }
+
+    return -1;
+}
+
+const char* EventType::toString(EventType::Value value)
+{
+    switch (value) {
+    case e_READABLE:
+        return "READABLE";
+    case e_WRITABLE:
+        return "WRITABLE";
+    case e_EXCEPTIONAL:
+        return "EXCEPTIONAL";
+    case e_ERROR:
+        return "ERROR";
+    case e_SHUTDOWN:
+        return "SHUTDOWN";
+    case e_HANGUP:
+        return "HANGUP";
+    }
+
+    BSLS_ASSERT(!"invalid enumerator");
+    return 0;
+}
+
+bsl::ostream& EventType::print(bsl::ostream&   stream,
+                              EventType::Value value)
+{
+    return stream << toString(value);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, EventType::Value rhs)
+{
+    return EventType::print(stream, rhs);
+}
 
 ntsa::Error Event::merge(const ntsa::Event& event)
 {
