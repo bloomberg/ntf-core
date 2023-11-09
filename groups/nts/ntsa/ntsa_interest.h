@@ -33,19 +33,72 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntsa {
 
+/// Provide an enumeration the interest types for a socket.
+///
+/// @par Thread Safety
+/// This struct is thread safe.
+///
+/// @ingroup module_ntsa_system
+struct InterestType {
+  public:
+    /// Provide an enumeration the interest types for a socket.
+    enum Value {
+        /// Interest in the readability of a socket. Generally speaking, a
+        /// socket is readable when its receive buffer contains at least as
+        /// much data as the receive low watermark, or, for listening sockets,
+        /// when the accept backlog is not empty. A socket may also become
+        /// "readable" to indicate a read operation should be performed to
+        /// learn about the state of the sockets readability.
+        e_READABLE = 1,
+
+        /// Interest in the writability of a socket. Generally speaking, a
+        /// socket is writable when its send buffer has at least as much
+        /// available capacity as the send low watermark, and, for
+        /// connection-oriented sockets, when the socket is connected. A socket
+        /// may also become "writable" to indicate a write operation should be
+        /// performed to learn about the state of a sockets writability, or 
+        /// connected-ness.
+        e_WRITABLE = 2
+    };
+
+    /// Return the string representation exactly matching the enumerator
+    /// name corresponding to the specified enumeration 'value'.
+    static const char* toString(Value value);
+
+    /// Load into the specified 'result' the enumerator matching the
+    /// specified 'string'.  Return 0 on success, and a non-zero value with
+    /// no effect on 'result' otherwise (i.e., 'string' does not match any
+    /// enumerator).
+    static int fromString(Value* result, const bslstl::StringRef& string);
+
+    /// Load into the specified 'result' the enumerator matching the
+    /// specified 'number'.  Return 0 on success, and a non-zero value with
+    /// no effect on 'result' otherwise (i.e., 'number' does not match any
+    /// enumerator).
+    static int fromInt(Value* result, int number);
+
+    /// Write to the specified 'stream' the string representation of the
+    /// specified enumeration 'value'.  Return a reference to the modifiable
+    /// 'stream'.
+    static bsl::ostream& print(bsl::ostream& stream, Value value);
+};
+
+// FREE OPERATORS
+
+/// Format the specified 'rhs' to the specified output 'stream' and return a
+/// reference to the modifiable 'stream'.
+///
+/// @related ntsa::InterestType
+bsl::ostream& operator<<(bsl::ostream& stream, InterestType::Value rhs);
+
 /// Describe an entry in the interest set of a 'ntsi::Reactor'.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntso
+/// @ingroup module_ntsa_system
 class Interest
 {
-    enum Flag {
-        e_READABLE = 1,
-        e_WRITABLE = 2
-    };
-
     ntsa::Handle  d_handle;
     bsl::uint32_t d_state;
 
@@ -572,25 +625,25 @@ void Interest::setHandle(ntsa::Handle value)
 NTSCFG_INLINE
 void Interest::showReadable()
 {
-    d_state |= (1U << e_READABLE);
+    d_state |= (1U << InterestType::e_READABLE);
 }
 
 NTSCFG_INLINE
 void Interest::showWritable()
 {
-    d_state |= (1U << e_WRITABLE);
+    d_state |= (1U << InterestType::e_WRITABLE);
 }
 
 NTSCFG_INLINE
 void Interest::hideReadable()
 {
-    d_state &= ~(1U << e_READABLE);
+    d_state &= ~(1U << InterestType::e_READABLE);
 }
 
 NTSCFG_INLINE
 void Interest::hideWritable()
 {
-    d_state &= ~(1U << e_WRITABLE);
+    d_state &= ~(1U << InterestType::e_WRITABLE);
 }
 
 NTSCFG_INLINE
@@ -608,13 +661,13 @@ bsl::uint32_t Interest::state() const
 NTSCFG_INLINE
 bool Interest::wantReadable() const
 {
-    return ((d_state & (1U << e_READABLE)) != 0);
+    return ((d_state & (1U << InterestType::e_READABLE)) != 0);
 }
 
 NTSCFG_INLINE
 bool Interest::wantWritable() const
 {
-    return ((d_state & (1U << e_WRITABLE)) != 0);
+    return ((d_state & (1U << InterestType::e_WRITABLE)) != 0);
 }
 
 NTSCFG_INLINE

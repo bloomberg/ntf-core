@@ -18,10 +18,64 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntsa_interest_cpp, "$Id$ $CSID$")
 
+#include <bdlb_string.h>
+#include <bsls_assert.h>
+#include <bsl_ostream.h>
 #include <bslim_printer.h>
 
 namespace BloombergLP {
 namespace ntsa {
+
+int InterestType::fromInt(InterestType::Value* result, int number)
+{
+    switch (number) {
+    case InterestType::e_READABLE:
+    case InterestType::e_WRITABLE:
+        *result = static_cast<InterestType::Value>(number);
+        return 0;
+    default:
+        return -1;
+    }
+}
+
+int InterestType::fromString(InterestType::Value*     result,
+                             const bslstl::StringRef& string)
+{
+    if (bdlb::String::areEqualCaseless(string, "READABLE")) {
+        *result = e_READABLE;
+        return 0;
+    }
+    if (bdlb::String::areEqualCaseless(string, "WRITABLE")) {
+        *result = e_WRITABLE;
+        return 0;
+    }
+
+    return -1;
+}
+
+const char* InterestType::toString(InterestType::Value value)
+{
+    switch (value) {
+    case e_READABLE:
+        return "READABLE";
+    case e_WRITABLE:
+        return "WRITABLE";
+    }
+
+    BSLS_ASSERT(!"invalid enumerator");
+    return 0;
+}
+
+bsl::ostream& InterestType::print(bsl::ostream&   stream,
+                              InterestType::Value value)
+{
+    return stream << toString(value);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, InterestType::Value rhs)
+{
+    return InterestType::print(stream, rhs);
+}
 
 bool Interest::equals(const Interest& other) const
 {
@@ -59,7 +113,7 @@ bsl::ostream& Interest::print(bsl::ostream& stream,
         bsl::string stateDescription;
         bsl::size_t numFlags = 0;
 
-        if ((d_state & (1 << e_READABLE)) != 0) {
+        if ((d_state & (1U << InterestType::e_READABLE)) != 0) {
             if (numFlags > 0) {
                 stateDescription.append(1, ' ');
             }
@@ -68,7 +122,7 @@ bsl::ostream& Interest::print(bsl::ostream& stream,
             ++numFlags;
         }
 
-        if ((d_state & (1 << e_WRITABLE)) != 0) {
+        if ((d_state & (1U << InterestType::e_WRITABLE)) != 0) {
             if (numFlags > 0) {
                 stateDescription.append(1, ' ');
             }

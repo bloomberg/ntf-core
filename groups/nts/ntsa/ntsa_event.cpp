@@ -26,7 +26,6 @@ BSLS_IDENT_RCSID(ntsa_event_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsa {
 
-
 int EventType::fromInt(EventType::Value* result, int number)
 {
     switch (number) {
