@@ -299,6 +299,18 @@ class InterestSet
     /// 'socket', otherwise return false.
     bool wantWritable(ntsa::Handle socket) const;
 
+    /// Return true if there is either interest in readability or writability
+    /// of the specified 'socket', otherwise return false.
+    bool wantAny(ntsa::Handle socket) const;
+
+    /// Return true if there is both interest in readability and writability
+    /// of the specified 'socket', otherwise return false.
+    bool wantBoth(ntsa::Handle socket) const;
+
+    /// Return true if there is neither interest in readability nor
+    /// writability of the specified 'socket', otherwise return false.
+    bool wantNone(ntsa::Handle socket) const;
+
     /// Return the number of sockets attached to the interest set.
     bsl::size_t numSockets() const;
 
@@ -905,8 +917,6 @@ InterestSet::Iterator InterestSet::end() BSLS_KEYWORD_NOEXCEPT
 NTSCFG_INLINE
 bool InterestSet::find(ntsa::Interest* result, ntsa::Handle socket) const
 {
-    result->reset();
-
     const bsl::size_t index = static_cast<bsl::size_t>(socket);
 
     if (NTSCFG_LIKELY(index < d_vector.size())) {
@@ -918,13 +928,13 @@ bool InterestSet::find(ntsa::Interest* result, ntsa::Handle socket) const
             }
             return true;
         }
-        else {
-            return false;
-        }
     }
-    else {
-        return false;
+
+    if (result) {
+        result->reset();
     }
+
+    return false;
 }
 
 NTSCFG_INLINE
@@ -953,6 +963,39 @@ bool InterestSet::wantWritable(ntsa::Handle socket) const
     }
 
     return false;
+}
+
+NTSCFG_INLINE
+bool InterestSet::wantAny(ntsa::Handle socket) const
+{
+    ntsa::Interest interest;
+    if (this->find(&interest, socket)) {
+        return interest.wantAny();
+    }
+
+    return false;
+}
+
+NTSCFG_INLINE
+bool InterestSet::wantBoth(ntsa::Handle socket) const
+{
+    ntsa::Interest interest;
+    if (this->find(&interest, socket)) {
+        return interest.wantBoth();
+    }
+
+    return false;
+}
+
+NTSCFG_INLINE
+bool InterestSet::wantNone(ntsa::Handle socket) const
+{
+    ntsa::Interest interest;
+    if (this->find(&interest, socket)) {
+        return interest.wantNone();
+    }
+
+    return true;
 }
 
 NTSCFG_INLINE
