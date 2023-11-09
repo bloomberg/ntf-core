@@ -745,7 +745,6 @@ ntsa::Error ReceiveControl::decode(ntsa::ReceiveContext*       context,
                         ts.hardwareTs.tv_sec,
                         static_cast<int>(ts.hardwareTs.tv_nsec)));
                 }
-                break;
             }
             else if (hdr->cmsg_type == TimestampUtil::e_SCM_TIMESTAMPNS) {
                 TimestampUtil::Timespec ts;
@@ -765,7 +764,6 @@ ntsa::Error ReceiveControl::decode(ntsa::ReceiveContext*       context,
                         bsls::TimeInterval(ts.tv_sec,
                                            static_cast<int>(ts.tv_nsec)));
                 }
-                break;
             }
 #endif
         }
