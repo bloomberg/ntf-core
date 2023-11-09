@@ -26,7 +26,11 @@ BSLS_IDENT("$Id: $")
 #include <ntsscm_version.h>
 #include <bsl_memory.h>
 
+#if NTS_BUILD_WITH_SELECT
 #define NTSO_SELECT_ENABLED 1
+#else
+#define NTSO_SELECT_ENABLED 0
+#endif
 
 #if NTSO_SELECT_ENABLED
 namespace BloombergLP {

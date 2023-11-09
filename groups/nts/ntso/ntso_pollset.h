@@ -25,7 +25,7 @@ BSLS_IDENT("$Id: $")
 #include <ntsscm_version.h>
 #include <bsl_memory.h>
 
-#if defined(BSLS_PLATFORM_OS_AIX)
+#if NTS_BUILD_WITH_POLLSET && defined(BSLS_PLATFORM_OS_AIX)
 #define NTSO_POLLSET_ENABLED 1
 #else
 #define NTSO_POLLSET_ENABLED 0

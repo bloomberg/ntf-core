@@ -26,7 +26,8 @@ BSLS_IDENT("$Id: $")
 #include <ntsscm_version.h>
 #include <bsl_memory.h>
 
-#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
+#if NTS_BUILD_WITH_KQUEUE && \
+    (defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD))
 #define NTSO_KQUEUE_ENABLED 1
 #else
 #define NTSO_KQUEUE_ENABLED 0

@@ -25,7 +25,7 @@ BSLS_IDENT("$Id: $")
 #include <ntsscm_version.h>
 #include <bsl_memory.h>
 
-#if defined(BSLS_PLATFORM_OS_SOLARIS)
+#if NTS_BUILD_WITH_EVENTPORT && defined(BSLS_PLATFORM_OS_SOLARIS)
 #define NTSO_EVENTPORT_ENABLED 1
 #else
 #define NTSO_EVENTPORT_ENABLED 0
