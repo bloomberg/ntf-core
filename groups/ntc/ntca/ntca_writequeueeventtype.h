@@ -55,12 +55,12 @@ struct WriteQueueEventType {
         /// processed.
         e_DISCARDED = 4,
 
-        /// Send rate limit has been reached and send rate limit timer has been
-        /// set
+        /// The send rate limit has been reached and the send rate limit timer
+        /// has been set.
         e_RATE_LIMIT_APPLIED = 5,
 
-        /// Send rate limit timer has fired and send rate limit has been
-        /// relaxed
+        /// The send rate limit timer has fired and the send rate limit has
+        /// been relaxed.
         e_RATE_LIMIT_RELAXED = 6
     };
 

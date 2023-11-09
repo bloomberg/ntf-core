@@ -90,13 +90,13 @@ class StreamSocketSession
         const ntca::ReadQueueEvent&                event);
 
     /// Process the condition that the read queue rate limit has been reached
-    /// and copying data into the read queue will be restricted
+    /// and copying data from the receive buffer will be restricted.
     virtual void processReadQueueRateLimitApplied(
         const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
         const ntca::ReadQueueEvent&                event);
 
     /// Process the condition that the read queue rate limit timer has fired
-    /// and copying data into the read queue will be enabled
+    /// and copying data from the receive buffer will be enabled.
     virtual void processReadQueueRateLimitRelaxed(
         const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
         const ntca::ReadQueueEvent&                event);
@@ -141,13 +141,13 @@ class StreamSocketSession
         const ntca::WriteQueueEvent&               event);
 
     /// Process the condition that the write queue rate limit has been reached
-    /// and copying data into the socket buffer will be restricted
+    /// and copying data into the send buffer will be restricted.
     virtual void processWriteQueueRateLimitApplied(
         const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
         const ntca::WriteQueueEvent&               event);
 
     /// Process the condition that the write queue rate limit timer has fired
-    /// and copying data into the socket buffer will be enabled
+    /// and copying data into the send buffer will be enabled.
     virtual void processWriteQueueRateLimitRelaxed(
         const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
         const ntca::WriteQueueEvent&               event);

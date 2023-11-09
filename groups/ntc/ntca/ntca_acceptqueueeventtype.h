@@ -57,12 +57,12 @@ struct AcceptQueueEventType {
         // processed.
         e_DISCARDED = 4,
 
-        /// Accept rate limit has been reached and accept rate limit timer
-        /// has been set
+        /// The accept rate limit has been reached and the accept rate limit
+        /// timer has been set.
         e_RATE_LIMIT_APPLIED = 5,
 
-        /// Accept rate limit timer has fired and accept rate limit has been
-        /// relaxed
+        /// The accept rate limit timer has fired and the accept rate limit has
+        /// been relaxed.
         e_RATE_LIMIT_RELAXED = 6
     };
 

@@ -55,12 +55,12 @@ struct ReadQueueEventType {
         /// processed.
         e_DISCARDED = 4,
 
-        /// Receive rate limit has been reached and receive rate limit timer
-        /// has been set
+        /// The receive rate limit has been reached and the receive rate limit
+        /// timer has been set.
         e_RATE_LIMIT_APPLIED = 5,
 
-        /// Receive rate limit timer has fired and receive rate limit has been
-        /// relaxed
+        /// The receive rate limit timer has fired and the receive rate limit
+        /// has been relaxed.
         e_RATE_LIMIT_RELAXED = 6
     };
 
