@@ -251,6 +251,8 @@ struct sockaddr_un_win32 {
 #define NTSU_SOCKETUTIL_MAX_HANDLES_PER_OUTGOING_CONTROLMSG 1
 #define NTSU_SOCKETUTIL_MAX_HANDLES_PER_INCOMING_CONTROLMSG 1
 
+BSLMF_ASSERT(sizeof(BloombergLP::ntsa::Handle) == sizeof(int));
+
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
 
 #define NTSU_SOCKETUTIL_MAX_BUFFERS_PER_SEND                                  \
@@ -552,7 +554,8 @@ class SendControl
         // The payload size required to send any meta-data (viz. open file 
         // descriptors) to the peer of a socket.
         k_SEND_CONTROL_PAYLOAD_SIZE = static_cast<int>(
-            NTSU_SOCKETUTIL_MAX_HANDLES_PER_OUTGOING_CONTROLMSG * sizeof(int)),
+            NTSU_SOCKETUTIL_MAX_HANDLES_PER_OUTGOING_CONTROLMSG * 
+            sizeof(ntsa::Handle)),
 
         // The control buffer capacity required to send any meta-data (viz.
         // open file descriptors) to the peer of a socket.
@@ -592,7 +595,8 @@ class ReceiveControl
         // file descriptors, timestamps, etc.) buffered by the operating system
         // for a socket.
         k_RECEIVE_CONTROL_PAYLOAD_SIZE = static_cast<int>(
-            NTSU_SOCKETUTIL_MAX_HANDLES_PER_INCOMING_CONTROLMSG * sizeof(int))
+            NTSU_SOCKETUTIL_MAX_HANDLES_PER_INCOMING_CONTROLMSG * 
+            sizeof(ntsa::Handle))
 #if defined(BSLS_PLATFORM_OS_LINUX)
             + static_cast<int>(sizeof(TimestampUtil::ScmTimestamping))
 #endif
@@ -644,24 +648,24 @@ SendControl::~SendControl()
 
 ntsa::Error SendControl::encode(msghdr* msg, const ntsa::SendOptions& options)
 {
-    bsl::memset(d_arena.buffer(), 0, k_SEND_CONTROL_BUFFER_SIZE);
-
     if (options.foreignHandle().isNull()) {
         return ntsa::Error();
     }
 
+    bsl::memset(d_arena.buffer(), 0, k_SEND_CONTROL_BUFFER_SIZE);
+
     msg->msg_control    = d_arena.buffer();
     msg->msg_controllen = static_cast<socklen_t>(k_SEND_CONTROL_BUFFER_SIZE);
     
-    int foreignHandle = options.foreignHandle().value();
+    ntsa::Handle foreignHandle = options.foreignHandle().value();
 
     struct cmsghdr *ctl = CMSG_FIRSTHDR(msg);
 
     ctl->cmsg_level = SOL_SOCKET;
     ctl->cmsg_type  = SCM_RIGHTS;
-    ctl->cmsg_len   = CMSG_LEN(sizeof(int));
+    ctl->cmsg_len   = CMSG_LEN(sizeof foreignHandle);
 
-    bsl::memcpy(CMSG_DATA(ctl), &foreignHandle, sizeof(int));
+    bsl::memcpy(CMSG_DATA(ctl), &foreignHandle, sizeof foreignHandle);
     
     return ntsa::Error();
 }
@@ -694,37 +698,42 @@ ntsa::Error ReceiveControl::decode(ntsa::ReceiveContext*       context,
     {
         if (hdr->cmsg_level == SOL_SOCKET) {
             if (hdr->cmsg_type == SCM_RIGHTS) {
-                int foreignHandle = -1;
+                ntsa::Handle fd = ntsa::k_INVALID_HANDLE;
 
-                if (hdr->cmsg_len != CMSG_LEN(sizeof(int))) {
+                if (NTSCFG_UNLIKELY(hdr->cmsg_len != CMSG_LEN(sizeof fd))) {
                     BSLS_LOG_WARN("Ignoring received control block meta-data: "
                                   "Unexpected control message payload size: "
                                   "expected %d bytes, found %d bytes", 
-                                  (int)(CMSG_LEN(sizeof(int))), 
+                                  (int)(CMSG_LEN(sizeof fd)), 
                                   (int)(hdr->cmsg_len));
                     continue;
                 }
 
-                bsl::memcpy(&foreignHandle, CMSG_DATA(hdr), sizeof(int));
+                bsl::memcpy(&fd, CMSG_DATA(hdr), sizeof fd);
 
                 if (options.wantForeignHandles()) {
-                    context->setForeignHandle(foreignHandle);
+                    context->setForeignHandle(fd);
                 }
                 else {
-                    ::close(foreignHandle);
+                    BSLS_LOG_WARN("Ignoring received control block meta-data: "
+                                  "Unexpected foreign file descriptor");
+                    ::close(fd);
                 }
             }
 #if defined(BSLS_PLATFORM_OS_LINUX)
             else if (hdr->cmsg_type == TimestampUtil::e_SCM_TIMESTAMPING) {
                 TimestampUtil::ScmTimestamping ts;
 
-                if (NTSCFG_UNLIKELY(sizeof(ts) !=
-                                    (hdr->cmsg_len - sizeof(cmsghdr))))
-                {
+                if (NTSCFG_UNLIKELY(hdr->cmsg_len != CMSG_LEN(sizeof ts))) {
+                    BSLS_LOG_WARN("Ignoring received control block meta-data: "
+                                  "Unexpected control message payload size: "
+                                  "expected %d bytes, found %d bytes", 
+                                  (int)(CMSG_LEN(sizeof ts)), 
+                                  (int)(hdr->cmsg_len));
                     continue;
                 }
 
-                bsl::memcpy(&ts, CMSG_DATA(hdr), sizeof(ts));
+                bsl::memcpy(&ts, CMSG_DATA(hdr), sizeof ts);
 
                 if (ts.softwareTs.tv_sec || ts.softwareTs.tv_nsec) {
                     context->setSoftwareTimestamp(bsls::TimeInterval(
@@ -741,9 +750,12 @@ ntsa::Error ReceiveControl::decode(ntsa::ReceiveContext*       context,
             else if (hdr->cmsg_type == TimestampUtil::e_SCM_TIMESTAMPNS) {
                 TimestampUtil::Timespec ts;
 
-                if (NTSCFG_UNLIKELY(sizeof(ts) !=
-                                    (hdr->cmsg_len - sizeof(cmsghdr))))
-                {
+                if (NTSCFG_UNLIKELY(hdr->cmsg_len != CMSG_LEN(sizeof ts))) {
+                    BSLS_LOG_WARN("Ignoring received control block meta-data: "
+                                  "Unexpected control message payload size: "
+                                  "expected %d bytes, found %d bytes", 
+                                  (int)(CMSG_LEN(sizeof ts)), 
+                                  (int)(hdr->cmsg_len));
                     continue;
                 }
 

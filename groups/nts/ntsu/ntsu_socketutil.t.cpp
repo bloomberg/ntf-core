@@ -910,21 +910,6 @@ void testStreamSocketTransmissionWithControlMsgDropped(
                 // passed using socket control messages that is not "picked up"
                 // immediately when it is available is not subsequently
                 // retrievable with a subsequent call to 'recvmsg'.
-#if 0
-                NTSCFG_TEST_TRUE(!context.foreignHandle().isNull());
-
-                ntsa::Endpoint foreignSourceEndpoint;
-                error = ntsu::SocketUtil::sourceEndpoint(
-                    &foreignSourceEndpoint,
-                    context.foreignHandle().value());
-                NTSCFG_TEST_ASSERT(!error);
-
-                NTSCFG_TEST_EQ(foreignSourceEndpoint, domesticSourceEndpoint);
-
-                error = ntsu::SocketUtil::close(
-                    context.foreignHandle().value());
-                NTSCFG_TEST_ASSERT(!error);
-#endif
 
                 error = ntsu::SocketUtil::close(domesticSocket);
                 NTSCFG_TEST_ASSERT(!error);
@@ -1592,20 +1577,6 @@ void testDatagramSocketTransmissionWithControlMsgDropped(
                 // passed using socket control messages that is not "picked up"
                 // immediately when it is available is not subsequently
                 // retrievable with a subsequent call to 'recvmsg'.
-#if 0
-                NTSCFG_TEST_TRUE(!context.foreignHandle().isNull());
-
-                ntsa::Endpoint foreignSourceEndpoint;
-                error = ntsu::SocketUtil::sourceEndpoint(
-                    &foreignSourceEndpoint,
-                    context.foreignHandle().value());
-                NTSCFG_TEST_ASSERT(!error);
-
-                NTSCFG_TEST_EQ(foreignSourceEndpoint, domesticSourceEndpoint);
-
-                error = ntsu::SocketUtil::close(context.foreignHandle().value());
-                NTSCFG_TEST_ASSERT(!error);
-#endif
 
                 error = ntsu::SocketUtil::close(domesticSocket);
                 NTSCFG_TEST_ASSERT(!error);
