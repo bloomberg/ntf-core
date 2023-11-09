@@ -364,6 +364,10 @@ class EventSet
     /// otherwise.  
     bool find(ntsa::Event* result, ntsa::Handle socket) const;
 
+    /// Return true if the event set contains the specified 'socket', otherwise
+    /// return false.
+    bool contains(ntsa::Handle socket) const;
+
     /// Return the flag indicating the socket is readable.
     bool isReadable(ntsa::Handle socket) const;
 

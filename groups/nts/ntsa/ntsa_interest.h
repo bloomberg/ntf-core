@@ -979,6 +979,7 @@ bool InterestSet::find(ntsa::Interest* result, ntsa::Handle socket) const
             if (result != 0) {
                 *result = interest;
             }
+            
             return true;
         }
     }

@@ -401,13 +401,23 @@ EventSet::Iterator EventSet::end() BSLS_KEYWORD_NOEXCEPT
 bool EventSet::find(ntsa::Event* result, ntsa::Handle socket) const
 {
     Map::const_iterator it = d_map.find(socket);
-    if (it == d_map.end()) {
-        result->reset();
-        return false;
+    if (it != d_map.end()) {
+        if (result) {
+            *result = it->second;
+        }
+        return true;
     }
 
-    *result = it->second;
-    return true;
+    if (result) {
+        result->reset();
+    }
+    
+    return false;
+}
+
+bool EventSet::contains(ntsa::Handle socket) const
+{
+    return this->find(0, socket);
 }
 
 bool EventSet::isReadable(ntsa::Handle socket) const
