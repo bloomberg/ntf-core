@@ -244,10 +244,6 @@ ntsa::Error Poll::attachSocket(ntsa::Handle socket)
 {
     ntsa::Error error;
 
-    if (socket < 0) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
     error = d_interestSet.attach(socket);
     if (error) {
         return error;
@@ -264,10 +260,6 @@ ntsa::Error Poll::detachSocket(ntsa::Handle socket)
 {
     ntsa::Error error;
 
-    if (socket < 0) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
     error = d_interestSet.detach(socket);
     if (error) {
         return error;
@@ -283,10 +275,6 @@ ntsa::Error Poll::detachSocket(ntsa::Handle socket)
 ntsa::Error Poll::showReadable(ntsa::Handle socket)
 {
     ntsa::Error error;
-
-    if (socket < 0) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
 
     if (d_config.autoAttach().value()) {
         if (!d_interestSet.contains(socket)) {
@@ -313,10 +301,6 @@ ntsa::Error Poll::showWritable(ntsa::Handle socket)
 {
     ntsa::Error error;
 
-    if (socket < 0) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
     if (d_config.autoAttach().value()) {
         if (!d_interestSet.contains(socket)) {
             error = this->attachSocket(socket);
@@ -341,10 +325,6 @@ ntsa::Error Poll::showWritable(ntsa::Handle socket)
 ntsa::Error Poll::hideReadable(ntsa::Handle socket)
 {
     ntsa::Error error;
-
-    if (socket < 0) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
 
     ntsa::Interest interest;
     error = d_interestSet.hideReadable(&interest, socket);
@@ -371,10 +351,6 @@ ntsa::Error Poll::hideReadable(ntsa::Handle socket)
 ntsa::Error Poll::hideWritable(ntsa::Handle socket)
 {
     ntsa::Error error;
-
-    if (socket < 0) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
 
     ntsa::Interest interest;
     error = d_interestSet.hideWritable(&interest, socket);
