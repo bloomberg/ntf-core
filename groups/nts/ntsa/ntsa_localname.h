@@ -46,15 +46,14 @@ class LocalName
     /// include leading null, in case of real namespace it does not include the
     /// null terminator
 
-    static const bsl::size_t k_MAX_PATH_LENGTH;
+#if defined(BSLS_PLATFORM_OS_AIX)
+    enum { k_MAX_PATH_LENGTH = 1022 };
+#else
+    enum { k_MAX_PATH_LENGTH = 107 };
+#endif
 
   private:
-#if defined(BSLS_PLATFORM_OS_AIX)
-    enum { k_CAPACITY = 1022 };
-#else
-    enum { k_CAPACITY = 108 };
-#endif
-    char         d_path[k_CAPACITY];
+    char         d_path[k_MAX_PATH_LENGTH];
     bsl::uint8_t d_size;
     bool         d_abstract;
 

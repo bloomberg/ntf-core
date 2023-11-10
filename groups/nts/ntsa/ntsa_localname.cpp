@@ -45,15 +45,12 @@ BSLS_IDENT_RCSID(ntsa_localname_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsa {
 
-const bsl::size_t LocalName::k_MAX_PATH_LENGTH =
-    sizeof(sockaddr_un::sun_path) - 1;
-
 LocalName::LocalName()
 : d_size(0)
 , d_abstract(false)
 {
-    bsl::memset(d_path, 0, k_CAPACITY);
-    BSLMF_ASSERT(k_MAX_PATH_LENGTH <= k_CAPACITY);
+    bsl::memset(d_path, 0, k_MAX_PATH_LENGTH);
+    BSLMF_ASSERT(k_MAX_PATH_LENGTH == (sizeof(sockaddr_un::sun_path) - 1));
 }
 
 LocalName::LocalName(const LocalName& other)
@@ -76,7 +73,7 @@ LocalName& LocalName::operator=(const LocalName& other)
 
 void LocalName::reset()
 {
-    bsl::memset(d_path, 0, k_CAPACITY);
+    bsl::memset(d_path, 0, k_MAX_PATH_LENGTH);
     d_size     = 0;
     d_abstract = false;
 }
@@ -84,6 +81,9 @@ void LocalName::reset()
 ntsa::Error LocalName::setAbstract()
 {
 #if defined(BSLS_PLATFORM_OS_LINUX)
+    if (d_size == k_MAX_PATH_LENGTH) {
+        return ntsa::Error(ntsa::Error::Code::e_LIMIT);
+    }
     d_abstract = true;
     return ntsa::Error();
 #else
@@ -108,7 +108,9 @@ ntsa::Error LocalName::setValue(const bslstl::StringRef& value)
 {
     const bsl::size_t size = value.size();
 
-    if (size > ntsa::LocalName::k_MAX_PATH_LENGTH) {
+    if (size > (ntsa::LocalName::k_MAX_PATH_LENGTH -
+                static_cast<unsigned>(d_abstract)))
+    {
         return ntsa::Error(ntsa::Error::e_LIMIT);
     }
 
