@@ -51,7 +51,11 @@ class LocalName
     /// enormously large size of sockaddr_un::sun_path == 1022 bytes, but
     /// it is considered unnecessary to store such large path inside the class.
 
+#if defined(BSLS_PLATFORM_OS_DARWIN)
+    enum { k_MAX_PATH_LENGTH = 103 };
+#else
     enum { k_MAX_PATH_LENGTH = 107 };
+#endif
 
   private:
     char         d_path[k_MAX_PATH_LENGTH];
