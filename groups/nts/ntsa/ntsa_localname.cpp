@@ -50,7 +50,11 @@ LocalName::LocalName()
 , d_abstract(false)
 {
     bsl::memset(d_path, 0, k_MAX_PATH_LENGTH);
+#if defined(BSLS_PLATFORM_OS_AIX)
+    BSLMF_ASSERT(k_MAX_PATH_LENGTH <= (sizeof(sockaddr_un::sun_path) - 1));
+#else
     BSLMF_ASSERT(k_MAX_PATH_LENGTH == (sizeof(sockaddr_un::sun_path) - 1));
+#endif
 }
 
 LocalName::LocalName(const LocalName& other)

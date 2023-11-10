@@ -43,14 +43,15 @@ class LocalName
 {
   public:
     /// The maximum path length, in case of abstract namespace it does not
-    /// include leading null, in case of real namespace it does not include the
-    /// null terminator
+    /// include leading null, in case of all namespaces it does not include
+    /// the null terminator
 
-#if defined(BSLS_PLATFORM_OS_AIX)
-    enum { k_MAX_PATH_LENGTH = 1022 };
-#else
+    /// On Linux, Windows and SunOS this value is assigned in a way to ensure
+    /// that capacity of sockaddr_un::sun_path is fully utilized. AIX has
+    /// enormously large size of sockaddr_un::sun_path == 1022 bytes, but
+    /// it is considered unnecessary to store such large path inside the class.
+
     enum { k_MAX_PATH_LENGTH = 107 };
-#endif
 
   private:
     char         d_path[k_MAX_PATH_LENGTH];
@@ -78,6 +79,10 @@ class LocalName
     /// Set the local name to be abstract. A socket bound to an abstract
     /// name does not have a representation in the file system. Return the
     /// error. Note that abstract local names are only supported on Linux.
+    /// Name in the abstract namespace requires a leading null character.
+    /// It is not stored inside the class instance, but if some name is
+    /// already stored then it is ensure that there is free space to place
+    /// a leading nul character
     ntsa::Error setAbstract();
 
     /// Set the local name to be persistent. A socket bound to a persistent
@@ -88,8 +93,9 @@ class LocalName
     ntsa::Error setUnnamed();
 
     /// Set the path of the local name to the specified 'value'. If length of
-    /// the 'value' is greater than k_MAX_PATH_LENGTH then operation is not
-    /// performed and error is returned.
+    /// the 'value' is greater than k_MAX_PATH_LENGTH , in case of abstract
+    /// name, (k_MAX_PATH_LEN - 1) then operation is not performed and error
+    /// is returned.
     ntsa::Error setValue(const bslstl::StringRef& value);
 
     /// Return the value of the local name.
