@@ -13,13 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntso_epoll.h>
+#include <ntso_kqueue.h>
 
 #include <ntso_test.h>
 
 using namespace BloombergLP;
 
-#if NTSO_EPOLL_ENABLED
+#if NTSO_KQUEUE_ENABLED
+
+namespace test {
+
+}  // close namespace test
 
 NTSCFG_TEST_CASE(1)
 {
@@ -28,10 +32,10 @@ NTSCFG_TEST_CASE(1)
     ntscfg::TestAllocator ta;
     {
         ntsa::ReactorConfig reactorConfig(&ta);
-        reactorConfig.setDriverName("epoll");
+        reactorConfig.setDriverName("kqueue");
 
         bsl::shared_ptr<ntsi::Reactor> reactor =
-            ntso::EpollUtil::createReactor(reactorConfig, &ta);
+            ntso::KqueueUtil::createReactor(reactorConfig, &ta);
 
         ntso::Test::ReactorVector reactorVector(&ta);
         reactorVector.push_back(reactor);
@@ -49,10 +53,10 @@ NTSCFG_TEST_CASE(2)
     ntscfg::TestAllocator ta;
     {
         ntsa::ReactorConfig reactorConfig(&ta);
-        reactorConfig.setDriverName("epoll");
+        reactorConfig.setDriverName("kqueue");
 
         bsl::shared_ptr<ntsi::Reactor> reactor =
-            ntso::EpollUtil::createReactor(reactorConfig, &ta);
+            ntso::KqueueUtil::createReactor(reactorConfig, &ta);
 
         ntso::Test::ReactorVector reactorVector(&ta);
         reactorVector.push_back(reactor);
@@ -70,10 +74,10 @@ NTSCFG_TEST_CASE(3)
     ntscfg::TestAllocator ta;
     {
         ntsa::ReactorConfig reactorConfig(&ta);
-        reactorConfig.setDriverName("epoll");
+        reactorConfig.setDriverName("kqueue");
 
         bsl::shared_ptr<ntsi::Reactor> reactor =
-            ntso::EpollUtil::createReactor(reactorConfig, &ta);
+            ntso::KqueueUtil::createReactor(reactorConfig, &ta);
 
         ntso::Test::ReactorVector reactorVector(&ta);
         reactorVector.push_back(reactor);

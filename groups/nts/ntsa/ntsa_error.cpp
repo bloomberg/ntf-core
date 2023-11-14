@@ -98,6 +98,10 @@ const char* describeErrorCode(ntsa::Error::Code code)
         return "NOT_AUTHORIZED";
     case ntsa::Error::e_NOT_IMPLEMENTED:
         return "NOT_IMPLEMENTED";
+    case ntsa::Error::e_NOT_OPEN:
+        return "NOT_OPEN";
+    case ntsa::Error::e_NOT_SOCKET:
+        return "NOT_SOCKET";
     }
 
     return "???";
@@ -365,7 +369,7 @@ ntsa::Error::Code Error::translate(ntsa::Error::Number number)
     case EALREADY:
         return ntsa::Error::e_INVALID;
     case EBADF:
-        return ntsa::Error::e_INVALID;
+        return ntsa::Error::e_NOT_OPEN;
     case EBADMSG:
         return ntsa::Error::e_INVALID;
     case ECANCELED:
@@ -457,7 +461,7 @@ ntsa::Error::Code Error::translate(ntsa::Error::Number number)
         return ntsa::Error::e_INVALID;
 #endif
     case ENOTSOCK:
-        return ntsa::Error::e_INVALID;
+        return ntsa::Error::e_NOT_SOCKET;
     case ENOTSUP:
         return ntsa::Error::e_NOT_IMPLEMENTED;
     case ENOTTY:
@@ -540,6 +544,10 @@ ntsa::Error::Number Error::translate(ntsa::Error::Code code)
         return EPERM;
     case e_NOT_IMPLEMENTED:
         return EPROTO;
+    case e_NOT_OPEN:
+        return EBADF;
+    case e_NOT_SOCKET:
+        return ENOTSOCK;
     default:
         return EINVAL;
     };
@@ -603,7 +611,7 @@ ntsa::Error::Code Error::translate(ntsa::Error::Number number)
     case ERROR_NOT_ENOUGH_MEMORY:
         return ntsa::Error::e_LIMIT;
     case ERROR_INVALID_HANDLE:
-        return ntsa::Error::e_INVALID;
+        return ntsa::Error::e_NOT_OPEN;
     case ERROR_INVALID_PARAMETER:
         return ntsa::Error::e_INVALID;
     case ERROR_IO_INCOMPLETE:
@@ -658,6 +666,10 @@ ntsa::Error::Code Error::translate(ntsa::Error::Number number)
         return ntsa::Error::e_CONNECTION_RESET;
     case WSAENOBUFS:
         return ntsa::Error::e_LIMIT;
+    case WSAEBADF:
+        return ntsa::Error::e_NOT_OPEN;
+    case WSAENOTSOCK:
+        return ntsa::Error::e_NOT_SOCKET;
     case WSAENOTCONN:
         return ntsa::Error::e_CONNECTION_DEAD;
     case WSAESHUTDOWN:
@@ -730,6 +742,10 @@ ntsa::Error::Number Error::translate(ntsa::Error::Code code)
         return ERROR_ACCESS_DENIED;
     case e_NOT_IMPLEMENTED:
         return WSAEOPNOTSUPP;
+    case e_NOT_OPEN:
+        return WSAEBADF;
+    case e_NOT_SOCKET:
+        return WSAENOTSOCK;
     default:
         return WSAEOPNOTSUPP;
     };

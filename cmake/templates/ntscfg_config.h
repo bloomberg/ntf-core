@@ -60,6 +60,34 @@ namespace ntscfg {
 // Build with support for the local (a.k.a. Unix) transport protocol.
 #define NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL @NTF_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL@
 
+// Build with support for being able to configure 'select' as the driver for
+// a reactor. This driver is available on all platforms.
+#define NTS_BUILD_WITH_SELECT @NTF_BUILD_WITH_SELECT@
+
+// Build with support for being able to configure 'poll' as the driver for
+// a reactor. This driver is available on all platforms.
+#define NTS_BUILD_WITH_POLL @NTF_BUILD_WITH_POLL@
+
+// Build with support for being able to configure 'epoll' as the driver for
+// a reactor. This driver is available on Linux.
+#define NTS_BUILD_WITH_EPOLL @NTF_BUILD_WITH_EPOLL@
+
+// Build with support for being able to configure the '/dev/poll' device as
+// the driver for a reactor. This driver is avalable on Solaris.
+#define NTS_BUILD_WITH_DEVPOLL @NTF_BUILD_WITH_DEVPOLL@
+
+// Build with support for being able to configure the event port API as the
+// driver for a reactor. This driver is available on Solaris.
+#define NTS_BUILD_WITH_EVENTPORT @NTF_BUILD_WITH_EVENTPORT@
+
+// Build with support for being able to configure 'pollset' as the driver for
+// a reactor. This driver is available on AIX.
+#define NTS_BUILD_WITH_POLLSET @NTF_BUILD_WITH_POLLSET@
+
+// Build with support for being able to configure 'kqueue' as the driver for
+// a reactor. This driver is available on Darwin and FreeBSD.
+#define NTS_BUILD_WITH_KQUEUE @NTF_BUILD_WITH_KQUEUE@
+
 // Build with logging.
 #define NTS_BUILD_WITH_LOGGING @NTF_BUILD_WITH_LOGGING@
 

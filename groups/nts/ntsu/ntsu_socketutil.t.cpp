@@ -6597,6 +6597,41 @@ NTSCFG_TEST_CASE(18)
     }
 }
 
+NTSCFG_TEST_CASE(19)
+{
+    // Concern: ntsu::SocketUtil::isSocket correctly indicates true if a 
+    // file descriptor is an alias for a socket, and false, after the file
+    // descriptor is closed.
+
+    ntsa::Error error;
+
+    {
+        bool result = ntsu::SocketUtil::isSocket(ntsa::k_INVALID_HANDLE);
+        NTSCFG_TEST_FALSE(result);
+    }
+
+    {
+        bool result = ntsu::SocketUtil::isSocket(12345);
+        NTSCFG_TEST_FALSE(result);
+    }
+
+    {
+        ntsa::Handle socket = ntsa::k_INVALID_HANDLE;
+        error = ntsu::SocketUtil::create(&socket, 
+                                         ntsa::Transport::e_TCP_IPV4_STREAM);
+        NTSCFG_TEST_OK(error);
+
+        bool result1 = ntsu::SocketUtil::isSocket(socket);
+        NTSCFG_TEST_TRUE(result1);
+
+        error = ntsu::SocketUtil::close(socket);
+        NTSCFG_TEST_OK(error);
+
+        bool result2 = ntsu::SocketUtil::isSocket(socket);
+        NTSCFG_TEST_FALSE(result2);
+    }
+}
+
 NTSCFG_TEST_DRIVER
 {
     NTSCFG_TEST_REGISTER(1);
@@ -6617,5 +6652,6 @@ NTSCFG_TEST_DRIVER
     NTSCFG_TEST_REGISTER(16);
     NTSCFG_TEST_REGISTER(17);
     NTSCFG_TEST_REGISTER(18);
+    NTSCFG_TEST_REGISTER(19);
 }
 NTSCFG_TEST_DRIVER_END;

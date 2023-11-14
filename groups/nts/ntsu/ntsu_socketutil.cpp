@@ -7822,6 +7822,23 @@ bsl::size_t SocketUtil::maxBacklog()
 
 bool SocketUtil::isSocket(ntsa::Handle socket)
 {
+    DWORD     optionValue;
+    socklen_t optionSize = sizeof(optionValue);
+
+    int rc = getsockopt(socket,
+                        SOL_SOCKET,
+                        SO_TYPE,
+                        reinterpret_cast<char*>(&optionValue),
+                        &optionSize);
+
+    if (rc != 0) {
+        return false;
+    }
+
+    if (optionValue != SOCK_STREAM && optionValue != SOCK_DGRAM) {
+        return false;
+    }
+
     return true;
 }
 

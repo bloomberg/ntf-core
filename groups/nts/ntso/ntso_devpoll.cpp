@@ -13,12 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntso_epoll.h>
+#include <ntso_devpoll.h>
 
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntso_epoll_cpp, "$Id$ $CSID$")
+BSLS_IDENT_RCSID(ntso_devpoll_cpp, "$Id$ $CSID$")
 
-#if NTSO_EPOLL_ENABLED
+#if NTSO_DEVPOLL_ENABLED
 
 #include <ntsi_reactor.h>
 #include <ntsu_socketoptionutil.h>
@@ -38,126 +38,131 @@ BSLS_IDENT_RCSID(ntso_epoll_cpp, "$Id$ $CSID$")
 #include <bsls_platform.h>
 
 #include <errno.h>
-#include <sys/epoll.h>
-#include <sys/eventfd.h>
-#include <sys/socket.h>
-#include <sys/timerfd.h>
-#include <time.h>
+#include <fcntl.h>
+#include <poll.h>
+#include <signal.h>
+#include <sys/devpoll.h>
 #include <unistd.h>
 
-#define NTSO_EPOLL_LOG_DEVICE_CREATE(fd)                                      \
+#define NTSO_DEVPOLL_LOG_DEVICE_CREATE(fd)                                    \
     BSLS_LOG_TRACE("Event poll descriptor %d created", fd)
 
-#define NTSO_EPOLL_LOG_DEVICE_CREATE_FAILURE(error)                           \
+#define NTSO_DEVPOLL_LOG_DEVICE_CREATE_FAILURE(error)                         \
     BSLS_LOG_ERROR("Failed to create event poll descriptor: %s",              \
                    (error).text().c_str())
 
-#define NTSO_EPOLL_LOG_DEVICE_CLOSE(fd)                                       \
+#define NTSO_DEVPOLL_LOG_DEVICE_CLOSE(fd)                                     \
     BSLS_LOG_TRACE("Event poll descriptor %d closed", fd)
 
-#define NTSO_EPOLL_LOG_DEVICE_CLOSE_FAILURE(error)                            \
+#define NTSO_DEVPOLL_LOG_DEVICE_CLOSE_FAILURE(error)                          \
     BSLS_LOG_ERROR("Failed to close event poll descriptor: %s",               \
                    (error).text().c_str())
 
-#define NTSO_EPOLL_LOG_WAIT_INDEFINITE()                                      \
+#define NTSO_DEVPOLL_LOG_WAIT_INDEFINITE()                                    \
     BSLS_LOG_TRACE("Polling for socket events indefinitely")
 
-#define NTSO_EPOLL_LOG_WAIT_TIMED(timeout)                                    \
+#define NTSO_DEVPOLL_LOG_WAIT_TIMED(timeout)                                  \
     BSLS_LOG_TRACE(                                                           \
         "Polling for sockets events or until %d milliseconds have elapsed",   \
         (int)(timeout))
 
-#define NTSO_EPOLL_LOG_WAIT_FAILURE(error)                                    \
+#define NTSO_DEVPOLL_LOG_WAIT_FAILURE(error)                                  \
     BSLS_LOG_ERROR("Failed to poll for socket events: %s",                    \
                    error.text().c_str())
 
-#define NTSO_EPOLL_LOG_WAIT_TIMEOUT()                                         \
+#define NTSO_DEVPOLL_LOG_WAIT_TIMEOUT()                                       \
     BSLS_LOG_TRACE("Timed out polling for socket events")
 
-#define NTSO_EPOLL_LOG_WAIT_INTERRUPTED()                                     \
+#define NTSO_DEVPOLL_LOG_WAIT_INTERRUPTED()                                   \
     BSLS_LOG_TRACE("Interrupted polling for socket events")
 
-#define NTSO_EPOLL_LOG_WAIT_RESULT(numEvents)                                 \
+#define NTSO_DEVPOLL_LOG_WAIT_RESULT(numEvents)                               \
     BSLS_LOG_TRACE("Polled %d socket events", numEvents)
 
-#define NTSO_EPOLL_LOG_EVENTS(handle, event)                                  \
-    BSLS_LOG_TRACE(                                                           \
-        "Descriptor %d polled [%s%s%s%s%s%s%s%s ]",                           \
-        event.data.fd,                                                        \
-        ((((event).events & EPOLLIN) != 0) ? " EPOLLIN" : ""),                \
-        ((((event).events & EPOLLOUT) != 0) ? " EPOLLOUT" : ""),              \
-        ((((event).events & EPOLLERR) != 0) ? " EPOLLERR" : ""),              \
-        ((((event).events & EPOLLHUP) != 0) ? " EPOLLHUP" : ""),              \
-        ((((event).events & EPOLLRDHUP) != 0) ? " EPOLLRDHUP" : ""),          \
-        ((((event).events & EPOLLPRI) != 0) ? " EPOLLPRI" : ""),              \
-        ((((event).events & EPOLLET) != 0) ? " EPOLLET" : ""),                \
-        ((((event).events & EPOLLONESHOT) != 0) ? " EPOLLONESHOT" : ""))
+#define NTSO_DEVPOLL_LOG_EVENTS(handle, event)                                \
+    BSLS_LOG_TRACE("Descriptor %d polled [%s%s%s%s%s ]",                      \
+                   handle,                                                    \
+                   ((((event).revents & POLLIN) != 0) ? " POLLIN" : ""),      \
+                   ((((event).revents & POLLOUT) != 0) ? " POLLOUT" : ""),    \
+                   ((((event).revents & POLLERR) != 0) ? " POLLERR" : ""),    \
+                   ((((event).revents & POLLHUP) != 0) ? " POLLHUP" : ""),    \
+                   ((((event).revents & POLLNVAL) != 0) ? " POLLNVAL" : ""))
 
-#define NTSO_EPOLL_LOG_ADD(handle)                                            \
+#define NTSO_DEVPOLL_LOG_ADD(handle)                                          \
     BSLS_LOG_TRACE("Descriptor %d added", handle)
 
-#define NTSO_EPOLL_LOG_ADD_FAILURE(handle, error)                             \
+#define NTSO_DEVPOLL_LOG_ADD_FAILURE(handle, error)                           \
     BSLS_LOG_ERROR("Failed to add descriptor %d: %s",                         \
                    handle,                                                    \
                    (error).text().c_str())
 
-#define NTSO_EPOLL_LOG_UPDATE(handle, interest)                               \
+#define NTSO_DEVPOLL_LOG_UPDATE(handle, interest)                             \
     BSLS_LOG_TRACE("Descriptor %d updated [%s%s ]",                           \
                    (handle),                                                  \
-                   (((interest).wantReadable()) ? " EPOLLIN" : ""),           \
-                   (((interest).wantWritable()) ? " EPOLLOUT" : ""))
+                   (((interest).wantReadable()) ? " POLLIN" : ""),            \
+                   (((interest).wantWritable()) ? " POLLOUT" : ""))
 
-#define NTSO_EPOLL_LOG_UPDATE_FAILURE(handle, error)                          \
+#define NTSO_DEVPOLL_LOG_UPDATE_FAILURE(handle, error)                        \
     BSLS_LOG_ERROR("Failed to update descriptor %d: %s",                      \
                    (handle),                                                  \
                    (error).text().c_str())
 
-#define NTSO_EPOLL_LOG_REMOVE(handle)                                         \
+#define NTSO_DEVPOLL_LOG_REMOVE(handle)                                       \
     BSLS_LOG_TRACE("Descriptor %d removed", handle)
 
-#define NTSO_EPOLL_LOG_REMOVE_FAILURE(handle, error)                          \
+#define NTSO_DEVPOLL_LOG_REMOVE_FAILURE(handle, error)                        \
     BSLS_LOG_ERROR("Failed to remove descriptor %d: %s",                      \
                    (handle),                                                  \
                    (error).text().c_str())
+
+#if defined(BSLS_PLATFORM_CMP_SUN)
+#pragma error_messages(off, SEC_NULL_PTR_DEREF)
+#endif
 
 namespace BloombergLP {
 namespace ntso {
 
 /// @brief @internal
 /// Provide an implementation of the 'ntsi::Reactor' interface to poll for
-/// socket events using the 'epoll' API on Linux.
+/// socket events using the '/dev/poll' API on Solaris.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
 /// @ingroup module_ntso
-class Epoll : public ntsi::Reactor
+class Devpoll : public ntsi::Reactor
 {
-    typedef bsl::vector<struct ::epoll_event> EventList;
+    /// This typedef defines a vector of poll structures.
+    typedef bsl::vector<struct ::pollfd> DescriptorVector;
 
     int                 d_device;
     ntsa::InterestSet   d_interestSet;
-    EventList           d_outputList;
+    DescriptorVector    d_outputList;
     ntsa::ReactorConfig d_config;
     bslma::Allocator*   d_allocator_p;
 
   private:
-    Epoll(const Epoll&) BSLS_KEYWORD_DELETED;
-    Epoll& operator=(const Epoll&) BSLS_KEYWORD_DELETED;
+    Devpoll(const Devpoll&) BSLS_KEYWORD_DELETED;
+    Devpoll& operator=(const Devpoll&) BSLS_KEYWORD_DELETED;
 
   private:
+    /// Update the specified 'socket' to have the specified 'interset' in the
+    /// device. Return the error.
+    ntsa::Error update(ntsa::Handle          socket,
+                       const ntsa::Interest& interest);
+
     /// Return the events that correspond to the specified 'interest'.
-    static bsl::uint32_t specify(const ntsa::Interest& interest);
+    static short specify(const ntsa::Interest& interest);
 
   public:
     /// Create a new reactor having the specified 'configuration'. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
-    explicit Epoll(const ntsa::ReactorConfig& configuration,
-                   bslma::Allocator*          basicAllocator = 0);
+    explicit Devpoll(const ntsa::ReactorConfig& configuration,
+                     bslma::Allocator*          basicAllocator = 0);
 
     /// Destroy this object.
-    ~Epoll() BSLS_KEYWORD_OVERRIDE;
+    ~Devpoll() BSLS_KEYWORD_OVERRIDE;
 
     /// Add the specified 'socket' to the reactor. Return the error.
     ntsa::Error attachSocket(ntsa::Handle socket) BSLS_KEYWORD_OVERRIDE;
@@ -191,23 +196,48 @@ class Epoll : public ntsi::Reactor
         BSLS_KEYWORD_OVERRIDE;
 };
 
-bsl::uint32_t Epoll::specify(const ntsa::Interest& interest)
+ntsa::Error Devpoll::update(ntsa::Handle          socket,
+                            const ntsa::Interest& interest)
 {
-    bsl::uint32_t result = 0;
+    int rc;
+
+    struct ::pollfd pfd[2];
+
+    pfd[0].fd      = socket;
+    pfd[0].events  = POLLREMOVE;
+    pfd[0].revents = 0;
+
+    pfd[1].fd      = socket;
+    pfd[1].events  = Devpoll::specify(interest);
+    pfd[1].revents = 0;
+
+    rc = ::write(d_device, pfd, 2 * sizeof(struct ::pollfd));
+    if (rc != 2 * sizeof(struct ::pollfd)) {
+        ntsa::Error error(errno);
+        NTSO_DEVPOLL_LOG_UPDATE_FAILURE(socket, error);
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+short Devpoll::specify(const ntsa::Interest& interest)
+{
+    short result = 0;
 
     if (interest.wantReadable()) {
-        result |= EPOLLIN;
+        result |= POLLIN;
     }
 
     if (interest.wantWritable()) {
-        result |= EPOLLOUT;
+        result |= POLLOUT;
     }
 
     return result;
 }
 
-Epoll::Epoll(const ntsa::ReactorConfig& configuration,
-             bslma::Allocator*          basicAllocator)
+Devpoll::Devpoll(const ntsa::ReactorConfig& configuration,
+                 bslma::Allocator*          basicAllocator)
 : d_device(ntsa::k_INVALID_HANDLE)
 , d_interestSet(basicAllocator)
 , d_outputList(basicAllocator)
@@ -222,17 +252,17 @@ Epoll::Epoll(const ntsa::ReactorConfig& configuration,
         d_config.setAutoDetach(false);
     }
 
-    d_device = ::epoll_create1(EPOLL_CLOEXEC);
+    d_device = ::open("/dev/poll", O_RDWR);
     if (d_device < 0) {
         ntsa::Error error(errno);
-        NTSO_EPOLL_LOG_DEVICE_CREATE_FAILURE(error);
+        NTSO_DEVPOLL_LOG_DEVICE_CREATE_FAILURE(error);
         NTSCFG_ABORT();
     }
 
-    NTSO_EPOLL_LOG_DEVICE_CREATE(d_device);
+    NTSO_DEVPOLL_LOG_DEVICE_CREATE(d_device);
 }
 
-Epoll::~Epoll()
+Devpoll::~Devpoll()
 {
     int rc;
 
@@ -240,16 +270,16 @@ Epoll::~Epoll()
         rc = ::close(d_device);
         if (rc != 0) {
             ntsa::Error error(errno);
-            NTSO_EPOLL_LOG_DEVICE_CLOSE_FAILURE(error);
+            NTSO_DEVPOLL_LOG_DEVICE_CLOSE_FAILURE(error);
             NTSCFG_ABORT();
         }
 
-        NTSO_EPOLL_LOG_DEVICE_CLOSE(d_device);
+        NTSO_DEVPOLL_LOG_DEVICE_CLOSE(d_device);
         d_device = ntsa::k_INVALID_HANDLE;
     }
 }
 
-ntsa::Error Epoll::attachSocket(ntsa::Handle socket)
+ntsa::Error Devpoll::attachSocket(ntsa::Handle socket)
 {
     ntsa::Error error;
     int rc;
@@ -260,29 +290,30 @@ ntsa::Error Epoll::attachSocket(ntsa::Handle socket)
     }
 
     {
-        ::epoll_event e;
+        struct ::pollfd pfd;
 
-        e.data.fd = socket;
-        e.events  = 0;
+        pfd.fd      = socket;
+        pfd.events  = 0;
+        pfd.revents = 0;
 
-        rc = ::epoll_ctl(d_device, EPOLL_CTL_ADD, socket, &e);
-        if (rc != 0) {
+        rc = ::write(d_device, &pfd, sizeof(struct ::pollfd));
+        if (rc != sizeof(struct ::pollfd)) {
             int lastError = errno;
-            if (lastError != EEXIST) {
-                error = ntsa::Error(lastError);
-                NTSO_EPOLL_LOG_ADD_FAILURE(socket, error);
+            if (errno != EEXIST) {
+                ntsa::Error error(errno);
+                NTSO_DEVPOLL_LOG_ADD_FAILURE(socket, error);
                 d_interestSet.detach(socket);
                 return error;
             }
         }
     }
 
-    NTSO_EPOLL_LOG_ADD(socket);
+    NTSO_DEVPOLL_LOG_ADD(socket);
 
     return ntsa::Error();
 }
 
-ntsa::Error Epoll::detachSocket(ntsa::Handle socket)
+ntsa::Error Devpoll::detachSocket(ntsa::Handle socket)
 {
     ntsa::Error error;
     int rc;
@@ -293,28 +324,29 @@ ntsa::Error Epoll::detachSocket(ntsa::Handle socket)
     }
 
     {
-        ::epoll_event e;
+        struct ::pollfd pfd;
 
-        e.data.fd = socket;
-        e.events  = 0;
+        pfd.fd      = socket;
+        pfd.events  = POLLREMOVE;
+        pfd.revents = 0;
 
-        rc = ::epoll_ctl(d_device, EPOLL_CTL_DEL, socket, &e);
-        if (rc != 0) {
+        rc = ::write(d_device, &pfd, sizeof(struct ::pollfd));
+        if (rc != sizeof(struct ::pollfd)) {
             int lastError = errno;
             if (lastError != ENOENT) {
-                error = ntsa::Error(lastError);
-                NTSO_EPOLL_LOG_REMOVE_FAILURE(socket, error);
+                ntsa::Error error(errno);
+                NTSO_DEVPOLL_LOG_REMOVE_FAILURE(socket, error);
                 return error;
             }
         }
     }
 
-    NTSO_EPOLL_LOG_REMOVE(socket);
+    NTSO_DEVPOLL_LOG_REMOVE(socket);
 
     return ntsa::Error();
 }
 
-ntsa::Error Epoll::showReadable(ntsa::Handle socket)
+ntsa::Error Devpoll::showReadable(ntsa::Handle socket)
 {
     ntsa::Error error;
     int rc;
@@ -334,27 +366,17 @@ ntsa::Error Epoll::showReadable(ntsa::Handle socket)
         return error;
     }
 
-    {
-        ::epoll_event e;
-
-        e.data.fd = socket;
-        e.events  = Epoll::specify(interest);
-
-        rc = ::epoll_ctl(d_device, EPOLL_CTL_MOD, socket, &e);
-        if (rc != 0) {
-            error = ntsa::Error(errno);
-            NTSO_EPOLL_LOG_UPDATE_FAILURE(socket, error);
-            d_interestSet.hideReadable(socket);
-            return error;
-        }
+    error = this->update(socket, interest);
+    if (error) {
+        return error;
     }
 
-    NTSO_EPOLL_LOG_UPDATE(socket, interest);
+    NTSO_DEVPOLL_LOG_UPDATE(socket, interest);
 
     return ntsa::Error();
 }
 
-ntsa::Error Epoll::showWritable(ntsa::Handle socket)
+ntsa::Error Devpoll::showWritable(ntsa::Handle socket)
 {
     ntsa::Error error;
     int rc;
@@ -374,27 +396,17 @@ ntsa::Error Epoll::showWritable(ntsa::Handle socket)
         return error;
     }
 
-    {
-        ::epoll_event e;
-
-        e.data.fd = socket;
-        e.events  = Epoll::specify(interest);
-
-        rc = ::epoll_ctl(d_device, EPOLL_CTL_MOD, socket, &e);
-        if (rc != 0) {
-            error = ntsa::Error(errno);
-            NTSO_EPOLL_LOG_UPDATE_FAILURE(socket, error);
-            d_interestSet.hideWritable(socket);
-            return error;
-        }
+    error = this->update(socket, interest);
+    if (error) {
+        return error;
     }
 
-    NTSO_EPOLL_LOG_UPDATE(socket, interest);
+    NTSO_DEVPOLL_LOG_UPDATE(socket, interest);
 
     return ntsa::Error();
 }
 
-ntsa::Error Epoll::hideReadable(ntsa::Handle socket)
+ntsa::Error Devpoll::hideReadable(ntsa::Handle socket)
 {
     ntsa::Error error;
     int rc;
@@ -405,22 +417,12 @@ ntsa::Error Epoll::hideReadable(ntsa::Handle socket)
         return error;
     }
 
-    {
-        ::epoll_event e;
-
-        e.data.fd = socket;
-        e.events  = Epoll::specify(interest);
-
-        rc = ::epoll_ctl(d_device, EPOLL_CTL_MOD, socket, &e);
-        if (rc != 0) {
-            error = ntsa::Error(errno);
-            NTSO_EPOLL_LOG_UPDATE_FAILURE(socket, error);
-            d_interestSet.showReadable(socket);
-            return error;
-        }
+    error = this->update(socket, interest);
+    if (error) {
+        return error;
     }
 
-    NTSO_EPOLL_LOG_UPDATE(socket, interest);
+    NTSO_DEVPOLL_LOG_UPDATE(socket, interest);
 
     if (d_config.autoDetach().value()) {
         if (interest.wantNone()) {
@@ -434,7 +436,7 @@ ntsa::Error Epoll::hideReadable(ntsa::Handle socket)
     return ntsa::Error();
 }
 
-ntsa::Error Epoll::hideWritable(ntsa::Handle socket)
+ntsa::Error Devpoll::hideWritable(ntsa::Handle socket)
 {
     ntsa::Error error;
     int rc;
@@ -445,22 +447,12 @@ ntsa::Error Epoll::hideWritable(ntsa::Handle socket)
         return error;
     }
 
-    {
-        ::epoll_event e;
-
-        e.data.fd = socket;
-        e.events  = Epoll::specify(interest);
-
-        rc = ::epoll_ctl(d_device, EPOLL_CTL_MOD, socket, &e);
-        if (rc != 0) {
-            error = ntsa::Error(errno);
-            NTSO_EPOLL_LOG_UPDATE_FAILURE(e.data.fd, error);
-            d_interestSet.showWritable(socket);
-            return error;
-        }
+    error = this->update(socket, interest);
+    if (error) {
+        return error;
     }
 
-    NTSO_EPOLL_LOG_UPDATE(socket, interest);
+    NTSO_DEVPOLL_LOG_UPDATE(socket, interest);
 
     if (d_config.autoDetach().value()) {
         if (interest.wantNone()) {
@@ -474,7 +466,7 @@ ntsa::Error Epoll::hideWritable(ntsa::Handle socket)
     return ntsa::Error();
 }
 
-ntsa::Error Epoll::wait(
+ntsa::Error Devpoll::wait(
     ntsa::EventSet*                                result,
     const bdlb::NullableValue<bsls::TimeInterval>& timeout)
 {
@@ -492,15 +484,15 @@ ntsa::Error Epoll::wait(
             timeoutInMilliseconds =
                 static_cast<int>(delta.totalMilliseconds());
 
-            NTSO_EPOLL_LOG_WAIT_TIMED(delta.totalMilliseconds());
+            NTSO_DEVPOLL_LOG_WAIT_TIMED(delta.totalMilliseconds());
         }
         else {
             timeoutInMilliseconds = 0;
-            NTSO_EPOLL_LOG_WAIT_TIMED(0);
+            NTSO_DEVPOLL_LOG_WAIT_TIMED(0);
         }
     }
     else {
-        NTSO_EPOLL_LOG_WAIT_INDEFINITE();
+        NTSO_DEVPOLL_LOG_WAIT_INDEFINITE();
     }
 
     const bsl::size_t outputListSizeRequired = d_interestSet.numSockets();
@@ -509,38 +501,60 @@ ntsa::Error Epoll::wait(
         d_outputList.resize(outputListSizeRequired);
     }
 
-    rc = ::epoll_wait(d_device,
-                      &d_outputList[0],
-                      static_cast<int>(d_outputList.size()),
-                      timeoutInMilliseconds);
+    struct ::dvpoll dvp;
+
+    dvp.dp_fds     = &d_outputList[0];
+    dvp.dp_nfds    = static_cast<int>(d_outputList.size());
+    dvp.dp_timeout = timeoutInMilliseconds;
+
+    rc = ::ioctl(d_device, DP_POLL, &dvp);
 
     if (NTSCFG_LIKELY(rc > 0)) {
-        NTSO_EPOLL_LOG_WAIT_RESULT(rc);
+        NTSO_DEVPOLL_LOG_WAIT_RESULT(rc);
 
-        const int numEvents = rc;
-        result->reserve(result->size() + static_cast<bsl::size_t>(numEvents));
+        int numResults          = rc;
+        int numResultsRemaining = numResults;
 
-        for (int eventIndex = 0; eventIndex < numEvents; ++eventIndex) {
-            ::epoll_event e = d_outputList[eventIndex];
+        result->reserve(result->size() + numResults);
 
-            NTSO_EPOLL_LOG_EVENTS(e.data.fd, e);
+        DescriptorVector::const_iterator it = d_outputList.begin();
+        DescriptorVector::const_iterator et = d_outputList.end();
+
+        for (; it != et; ++it) {
+            if (numResultsRemaining == 0) {
+                break;
+            }
+
+            struct ::pollfd e = *it;
+
+            if (e.revents == 0) {
+                continue;
+            }
+
+            BSLS_ASSERT(numResultsRemaining > 0);
+            --numResultsRemaining;
+
+            NTSO_DEVPOLL_LOG_EVENTS(e.fd, e);
 
             ntsa::Event event;
-            event.setHandle(e.data.fd);
+            event.setHandle(e.fd);
 
-            if ((e.events & EPOLLIN) != 0) {
+            if ((e.revents & POLLIN) != 0) {
                 event.setReadable();
             }
 
-            if ((e.events & EPOLLOUT) != 0) {
+            if ((e.revents & POLLOUT) != 0) {
                 event.setWritable();
             }
 
-            if ((e.events & EPOLLERR) != 0) {
+            if ((e.revents & POLLHUP) != 0) {
+                event.setHangup();
+            }
+
+            if ((e.revents & POLLERR) != 0) {
                 ntsa::Error lastError;
-                error =
-                    ntsu::SocketOptionUtil::getLastError(&lastError,
-                                                         e.data.fd);
+                ntsa::Error error =
+                    ntsu::SocketOptionUtil::getLastError(&lastError, e.fd);
                 if (!error && lastError) {
                     event.setError(lastError);
                 }
@@ -550,44 +564,97 @@ ntsa::Error Epoll::wait(
                 }
             }
 
-            if ((e.events & EPOLLRDHUP) != 0) {
-                event.setShutdown();
-            }
+            if ((e.revents & POLLNVAL) != 0) {
+                ntsa::Error lastError;
+                ntsa::Error error =
+                    ntsu::SocketOptionUtil::getLastError(&lastError, e.fd);
 
-            if ((e.events & EPOLLHUP) != 0) {
-                event.setHangup();
+                if (error) {
+                    event.setError(error);
+                }
+                else if (lastError) {
+                    event.setError(lastError);
+                }
+                else {
+                    event.setError(ntsa::Error(EBADF));
+                }
+
+                this->detachSocket(e.fd);
             }
 
             result->merge(event);
         }
     }
     else if (rc == 0) {
-        NTSO_EPOLL_LOG_WAIT_TIMEOUT();
+        NTSO_DEVPOLL_LOG_WAIT_TIMEOUT();
         return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
     }
     else {
         int lastError = errno;
-        if (lastError == EINTR) {
-            NTSO_EPOLL_LOG_WAIT_INTERRUPTED();
+
+        if (lastError == ETIME) {
+            NTSO_DEVPOLL_LOG_WAIT_TIMEOUT();
+            return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+        }
+        else if (lastError == EINTR) {
+            NTSO_DEVPOLL_LOG_WAIT_INTERRUPTED();
             return ntsa::Error();
         }
         else {
-            ntsa::Error error(lastError);
-            NTSO_EPOLL_LOG_WAIT_FAILURE(error);
-            return error;
+            ntsa::Error error = ntsa::Error::last();
+            NTSO_DEVPOLL_LOG_WAIT_FAILURE(error);
+
+            if (error == ntsa::Error(ntsa::Error::e_NOT_OPEN) ||
+                error == ntsa::Error(ntsa::Error::e_NOT_SOCKET))
+            {
+                typedef bsl::vector<ntsa::Handle> HandleVector;
+                HandleVector garbage;
+
+                {
+                    ntsa::InterestSet::const_iterator it =
+                        d_interestSet.begin();
+                    ntsa::InterestSet::const_iterator et =
+                        d_interestSet.end();
+
+                    for (; it != et; ++it) {
+                        const ntsa::Interest interest = *it;
+                        const ntsa::Handle   socket   = interest.handle();
+
+                        if (!ntsu::SocketUtil::isSocket(socket)) {
+                            result->setError(socket, error);
+                            garbage.push_back(socket);
+                        }
+                    }
+                }
+
+                {
+                    HandleVector::const_iterator it = garbage.begin();
+                    HandleVector::const_iterator et = garbage.end();
+
+                    for (; it != et; ++it) {
+                        const ntsa::Handle socket = *it;
+                        this->detachSocket(socket);
+                    }
+                }
+
+                return ntsa::Error();
+            }
+            else {
+                return error;
+            }
         }
     }
 
     return ntsa::Error();
 }
 
-bsl::shared_ptr<ntsi::Reactor> EpollUtil::createReactor(
+bsl::shared_ptr<ntsi::Reactor> DevpollUtil::createReactor(
     const ntsa::ReactorConfig& configuration,
     bslma::Allocator*          basicAllocator)
 {
     bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
 
-    bsl::shared_ptr<ntso::Epoll> reactor;
+    bsl::shared_ptr<ntso::Devpoll> reactor;
     reactor.createInplace(allocator, configuration, allocator);
 
     return reactor;
