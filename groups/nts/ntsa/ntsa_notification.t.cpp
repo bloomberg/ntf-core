@@ -28,11 +28,13 @@ NTSCFG_TEST_CASE(1)
     Notification n;
     NTSCFG_TEST_TRUE(n.isUndefined());
     NTSCFG_TEST_FALSE(n.isTimestamp());
+    NTSCFG_TEST_FALSE(n.isZeroCopy());
     NTSCFG_TEST_EQ(n.type(), NotificationType::e_UNDEFINED);
 
     Timestamp& ts = n.makeTimestamp();
     NTSCFG_TEST_TRUE(n.isTimestamp());
     NTSCFG_TEST_FALSE(n.isUndefined());
+    NTSCFG_TEST_FALSE(n.isZeroCopy());
     NTSCFG_TEST_EQ(n.type(), NotificationType::e_TIMESTAMP);
 
     ts.setId(id);
@@ -90,6 +92,9 @@ NTSCFG_TEST_CASE(4)
     n1.makeTimestamp();
 
     NTSCFG_TEST_NE(n1, n2);
+
+    n2.makeZeroCopy();
+    NTSCFG_TEST_NE(n1, n2);
 }
 
 NTSCFG_TEST_CASE(5)
@@ -112,6 +117,43 @@ NTSCFG_TEST_CASE(5)
     NTSCFG_TEST_EQ(n2.timestamp(), t);
 }
 
+NTSCFG_TEST_CASE(6)
+{
+    Notification n;
+    NTSCFG_TEST_TRUE(n.isUndefined());
+    NTSCFG_TEST_FALSE(n.isZeroCopy());
+    NTSCFG_TEST_EQ(n.type(), NotificationType::e_UNDEFINED);
+
+    ZeroCopy& zc = n.makeZeroCopy();
+    NTSCFG_TEST_TRUE(n.isZeroCopy());
+    NTSCFG_TEST_FALSE(n.isUndefined());
+    NTSCFG_TEST_FALSE(n.isTimestamp());
+    NTSCFG_TEST_EQ(n.type(), NotificationType::e_ZERO_COPY);
+
+    zc.setFrom(1);
+    zc.setTo(22);
+    zc.setCode(1);
+    NTSCFG_TEST_EQ(n.zeroCopy(), zc);
+}
+
+NTSCFG_TEST_CASE(7)
+{
+    ZeroCopy zc;
+    zc.setFrom(1);
+    zc.setTo(22);
+    zc.setCode(1);
+
+    Notification n;
+    n.makeZeroCopy(zc);
+
+    NTSCFG_TEST_TRUE(n.isZeroCopy());
+
+    n.reset();
+    NTSCFG_TEST_TRUE(n.isUndefined());
+    NTSCFG_TEST_FALSE(n.isZeroCopy());
+    NTSCFG_TEST_EQ(n.type(), NotificationType::e_UNDEFINED);
+}
+
 NTSCFG_TEST_DRIVER
 {
     NTSCFG_TEST_REGISTER(1);
@@ -119,5 +161,7 @@ NTSCFG_TEST_DRIVER
     NTSCFG_TEST_REGISTER(3);
     NTSCFG_TEST_REGISTER(4);
     NTSCFG_TEST_REGISTER(5);
+    NTSCFG_TEST_REGISTER(6);
+    NTSCFG_TEST_REGISTER(7);
 }
 NTSCFG_TEST_DRIVER_END;

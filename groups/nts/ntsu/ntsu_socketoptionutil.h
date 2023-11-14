@@ -71,15 +71,6 @@ struct SocketOptionUtil {
     /// according to the specified 'reuseAddress' flag. Return the error.
     static ntsa::Error setReuseAddress(ntsa::Handle socket, bool reuseAddress);
 
-    /// Set the option for the specified 'socket' that enables or disables
-    /// application of both software and hardware timestamps for incoming
-    /// data according to the specified 'timestampIncomingData' flag. Note
-    /// that if an error is returned then timestamps will never be
-    /// generated. If there is no error returned then in some cases OS can
-    /// also refuse to generate timestamps.
-    static ntsa::Error setTimestampIncomingData(ntsa::Handle socket,
-                                                bool timestampIncomingData);
-
     /// Set the option for the specified 'oscket' that controls how the
     /// operating system will linger its underlying resources after it has
     /// been closed to the specified 'linger' flag for the specified
@@ -130,12 +121,26 @@ struct SocketOptionUtil {
                                               bool         inlineFlag);
 
     /// Set the option for the specified 'socket' that enables or disables
+    /// application of both software and hardware timestamps for incoming
+    /// data according to the specified 'timestampIncomingData' flag. Note
+    /// that if an error is returned then timestamps will never be
+    /// generated. If there is no error returned then in some cases OS can
+    /// also refuse to generate timestamps.
+    static ntsa::Error setTimestampIncomingData(ntsa::Handle socket,
+                                                bool timestampIncomingData);
+
+    /// Set the option for the specified 'socket' that enables or disables
     /// application of timestamps for outgoing data according to the specified
     /// 'timestampOutgoingData' flag. Note that if an error is returned then
     /// timestamps will never be generated. If there is no error returned then
     /// in some cases OS can also refuse to generate timestamps.
     static ntsa::Error setTimestampOutgoingData(ntsa::Handle socket,
                                                 bool timestampOutgoingData);
+
+    /// Set the option for the specified 'socket' that allows Linux
+    /// MSG_ZEROCOPY mechanism usage according to the specified 'zeroCopy'
+    /// flag. Return the error.
+    static ntsa::Error setZeroCopy(ntsa::Handle socket, bool zeroCopy);
 
     /// Load into the specified 'option' the socket option of the specified
     /// 'type' for the specified 'socket'. Return the error.
@@ -218,6 +223,12 @@ struct SocketOptionUtil {
     /// timestamps for incoming data.  Return the error.
     static ntsa::Error getTimestampIncomingData(bool*        timestampFlag,
                                                 ntsa::Handle socket);
+
+    /// Load into the specified 'zeroCopyFlag' the option for the specified
+    /// 'socket' that indicates if Linux MSG_ZEROCOPY mechanism can be used.
+    ///  Return the error.
+    static ntsa::Error getZeroCopy(bool*        zeroCopyFlag,
+                                   ntsa::Handle socket);
 
     /// Load into the specified 'size' the option for the specified 'socket'
     /// that indicates the amount of space left in the send buffer. Return

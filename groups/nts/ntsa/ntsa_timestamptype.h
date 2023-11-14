@@ -25,7 +25,7 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntsa {
 
-/// Provide an enumeration of the timestamp types.
+/// Provide an enumeration of the outgoing timestamp types.
 ///
 /// @par Thread Safety
 /// This struct is thread safe.
@@ -33,11 +33,27 @@ namespace ntsa {
 /// @ingroup module_ntsa_identity
 struct TimestampType {
   public:
-    /// Provide an enumeration of the endpoint types.
+    /// Provide an enumeration of the timestamp types.
     enum Value {
-        e_UNDEFINED    = 0,
+        /// The timestamp type is undefined.
+        e_UNDEFINED = 0,
+
+        /// The timestamp measured at the time when the data enters the 
+        /// packet scheduler. The delta between such a timestamp and the time
+        /// immediately before the data is enqueued to the send buffer is the
+        /// time spent processing the data required by transport protocol.
         e_SCHEDULED    = 1,
-        e_SENT         = 2,
+
+        /// The timestamp measured at the time when the data leaves the
+        /// operating system and is enqueue in the network device for 
+        /// transmission. The delta between such a timestamp and the scheduled
+        /// timestamp is the time spending processing the data independant of
+        /// the transport protocol.
+        e_SENT = 2,
+
+        /// The timestamp measured at the time when the ackowledgement of the
+        /// outgoing data has been received from the peer, for positive 
+        /// acknowledgement transport protocols such as TCP.
         e_ACKNOWLEDGED = 3
     };
 

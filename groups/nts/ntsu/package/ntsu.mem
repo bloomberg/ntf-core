@@ -1,5 +1,6 @@
 ntsu_adapterutil
 ntsu_bufferutil
+ntsu_msgzerocopyutil
 ntsu_resolverutil
 ntsu_socketutil
 ntsu_socketoptionutil

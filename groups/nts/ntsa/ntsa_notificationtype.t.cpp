@@ -30,6 +30,10 @@ NTSCFG_TEST_CASE(1)
         bsl::strcmp(NotificationType::toString(NotificationType::e_TIMESTAMP),
                     "TIMESTAMP"),
         0);
+    NTSCFG_TEST_EQ(bsl::strcmp(NotificationType::toString(
+                                   NotificationType::e_ZERO_COPY),
+                               "ZERO_COPY"),
+                   0);
 }
 
 NTSCFG_TEST_CASE(2)
@@ -45,14 +49,18 @@ NTSCFG_TEST_CASE(2)
     NTSCFG_TEST_EQ(NotificationType::fromInt(&v, 1), 0);
     NTSCFG_TEST_EQ(v, NotificationType::e_TIMESTAMP);
 
-    NTSCFG_TEST_EQ(NotificationType::fromInt(&v, 2), -1);
-    NTSCFG_TEST_EQ(v, NotificationType::e_TIMESTAMP);
+    NTSCFG_TEST_EQ(NotificationType::fromInt(&v, 2), 0);
+    NTSCFG_TEST_EQ(v, NotificationType::e_ZERO_COPY);
+
+    NTSCFG_TEST_EQ(NotificationType::fromInt(&v, 3), -1);
+    NTSCFG_TEST_EQ(v, NotificationType::e_ZERO_COPY);
 }
 
 NTSCFG_TEST_CASE(3)
 {
     const bsl::string undefined = "undefined";
     const bsl::string timestamp = "timestamp";
+    const bsl::string zerocopy  = "zero_copy";
     const bsl::string random    = "random_string";
 
     NotificationType::Value v = NotificationType::e_TIMESTAMP;
@@ -65,6 +73,9 @@ NTSCFG_TEST_CASE(3)
 
     NTSCFG_TEST_EQ(NotificationType::fromString(&v, timestamp), 0);
     NTSCFG_TEST_EQ(v, NotificationType::e_TIMESTAMP);
+
+    NTSCFG_TEST_EQ(NotificationType::fromString(&v, zerocopy), 0);
+    NTSCFG_TEST_EQ(v, NotificationType::e_ZERO_COPY);
 }
 
 NTSCFG_TEST_CASE(4)
@@ -72,9 +83,10 @@ NTSCFG_TEST_CASE(4)
     bsl::stringstream ss;
 
     ss << NotificationType::e_TIMESTAMP << ", "
-       << NotificationType::e_UNDEFINED;
+       << NotificationType::e_UNDEFINED << ", "
+       << NotificationType::e_ZERO_COPY;
 
-    NTSCFG_TEST_EQ(ss.str(), "TIMESTAMP, UNDEFINED");
+    NTSCFG_TEST_EQ(ss.str(), "TIMESTAMP, UNDEFINED, ZERO_COPY");
 }
 
 NTSCFG_TEST_DRIVER

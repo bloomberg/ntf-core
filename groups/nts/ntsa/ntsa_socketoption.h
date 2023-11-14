@@ -35,9 +35,88 @@ namespace ntsa {
 /// Provide a union of socket options.
 ///
 /// @details
-/// Provide a value-semantic type that represents a discriminated
-/// union of socket options.
-//
+/// Provide a value-semantic type that represents a discriminated union of 
+/// socket options.
+///
+/// @par Attributes
+/// This class is composed of the following attributes.
+///
+/// @li @b reuseAddress:
+/// The flag that indicates the operating system should allow the user to
+/// rebind a socket to reuse local addresses.
+///
+/// @li @b keepAlive:
+/// That flag that indicates the operating system implementation should
+/// periodically emit transport-level "keep-alive" packets.
+///
+/// @li @b cork:
+/// The flag that indicates that successive writes should be coalesced into the
+/// largest packets that can be formed. When set to true, this option indicates
+/// the user favors better network efficiency at the expense of worse latency.
+/// When set to false, this option indicates the user favors better latency at
+/// the expense of worse network efficiency.
+///
+/// @li @b delayTransmission:
+/// The flag that indicates that successive writes should be coalesced into
+/// larger packets that would otherwise form. When set to true, this option
+/// indicates the user favors better network efficiency at the expense of worse
+/// latency. When set to false, this option indicates the user favors better
+/// latency at the expense of worse network efficiency.
+///
+/// @li @b delayAcknowledgement:
+/// The flag that indicates acknowledgement of successively-received packets
+/// should be coalesced. When set to true, this option indicates the user
+/// favors better network efficiency at the expense of worse latency. When set
+/// to false, this option indicates the user favors better latency at the
+/// expense of worse network efficiency.
+///
+/// @li @b sendBufferSize:
+/// The maximum size of each socket send buffer. On some platforms, this
+/// options may serve simply as a hint.
+///
+/// @li @b sendBufferLowWatermark:
+/// The amount of available capacity that must exist in the socket send buffer
+/// for the operating system to indicate the socket is writable.
+///
+/// @li @b receiveBufferSize:
+/// The maximum size of each socket receive buffer. On some platforms, this
+/// options may serve simply as a hint.
+///
+/// @li @b receiveBufferLowWatermark:
+/// The amount of available data that must exist in the socket receive buffer
+/// for the operating system to indicate the socket is readable.
+///
+/// @li @b debug:
+/// This flag indicates that each socket should be put into debug mode in the
+/// operating system. The support and meaning of this option is
+/// platform-specific.
+///
+/// @li @b linger:
+/// The options that control whether the operating system should gracefully
+/// attempt to transmit any data remaining in the socket send buffer before
+/// closing the connection.
+///
+/// @li @b broadcast:
+/// The flag that indicates the socket supports sending to a broadcast address.
+///
+/// @li @b bypassRouting:
+/// The flag that indicates that normal routing rules are not used, the route
+/// is based upon the destination address only.
+///
+/// @li @b inlineOutOfBandData:
+/// The flag that indicates out-of-band data should be placed into the normal
+/// data input queue.
+///
+/// @li @b timestampIncomingData:
+/// The flag that indicates timestamps should be generated for outgoing data.
+///
+/// @li @b timestampOutgoingData:
+/// The flag that indicates timestamps should be generated for incoming data.
+///
+/// @li @b zeroCopy:
+/// The flag that indicates each send operation can request copy avoidance when
+/// enqueing data to the socket send buffer.
+///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
@@ -61,6 +140,7 @@ class SocketOption
         bsls::ObjectBuffer<bool>         d_inlineOutOfBandData;
         bsls::ObjectBuffer<bool>         d_timestampIncomingData;
         bsls::ObjectBuffer<bool>         d_timestampOutgoingData;
+        bsls::ObjectBuffer<bool>         d_zeroCopy;
     };
 
     ntsa::SocketOptionType::Value d_type;
@@ -76,97 +156,88 @@ class SocketOption
     /// Destroy this object.
     ~SocketOption();
 
-    /// Assign the value of the specified 'other' object to this object.
-    /// Return a reference to this modifiable object.
+    /// Assign the value of the specified 'other' object to this object. Return
+    /// a reference to this modifiable object.
     SocketOption& operator=(const SocketOption& other);
 
-    /// Reset the value of this object to its value upon default
-    /// construction.
+    /// Reset the value of this object to its value upon default construction.
     void reset();
 
     /// Select the "reuseAddress" representation. Return a reference to the
     /// modifiable representation.
     bool& makeReuseAddress();
 
-    /// Select the "reuseAddress" representation initially having the
-    /// specified 'value'. Return a reference to the modifiable
-    /// representation.
+    /// Select the "reuseAddress" representation initially having the specified
+    /// 'value'. Return a reference to the modifiable representation.
     bool& makeReuseAddress(bool value);
 
     /// Select the "keepAlive" representation. Return a reference to the
     /// modifiable representation.
     bool& makeKeepAlive();
 
-    /// Select the "keepAlive" representation initially having the
-    /// specified 'value'. Return a reference to the modifiable
-    /// representation.
+    /// Select the "keepAlive" representation initially having the specified
+    /// 'value'. Return a reference to the modifiable representation.
     bool& makeKeepAlive(bool value);
 
-    /// Select the "cork" representation. Return a reference to the
-    /// modifiable representation.
+    /// Select the "cork" representation. Return a reference to the modifiable
+    /// representation.
     bool& makeCork();
 
-    /// Select the "cork" representation initially having the
-    /// specified 'value'. Return a reference to the modifiable
-    /// representation.
+    /// Select the "cork" representation initially having the specified
+    /// 'value'. Return a reference to the modifiable representation.
     bool& makeCork(bool value);
 
-    /// Select the "delayTransmission" representation. Return a reference
-    /// to the modifiable representation.
+    /// Select the "delayTransmission" representation. Return a reference to
+    /// the modifiable representation.
     bool& makeDelayTransmission();
 
     /// Select the "delayTransmission" representation initially having the
-    /// specified 'value'. Return a reference to the modifiable
-    /// representation.
+    /// specified 'value'. Return a reference to the modifiable representation.
     bool& makeDelayTransmission(bool value);
 
-    /// Select the "delayAcknowledgement" representation. Return a reference
-    /// to the modifiable representation.
+    /// Select the "delayAcknowledgement" representation. Return a reference to
+    /// the modifiable representation.
     bool& makeDelayAcknowledgement();
 
-    /// Select the "delayAcknowledgement" representation initially having
-    /// the specified 'value'. Return a reference to the modifiable
-    /// representation.
+    /// Select the "delayAcknowledgement" representation initially having the
+    /// specified 'value'. Return a reference to the modifiable representation.
     bool& makeDelayAcknowledgement(bool value);
 
-    /// Select the "sendBufferSize" representation. Return a reference
-    /// to the modifiable representation.
+    /// Select the "sendBufferSize" representation. Return a reference to the
+    /// modifiable representation.
     bsl::size_t& makeSendBufferSize();
 
-    /// Select the "sendBufferSize" representation initially having
-    /// the specified 'value'. Return a reference to the modifiable
-    /// representation.
+    /// Select the "sendBufferSize" representation initially having the
+    /// specified 'value'. Return a reference to the modifiable representation.
     bsl::size_t& makeSendBufferSize(bsl::size_t value);
 
-    /// Select the "sendBufferLowWatermark" representation. Return a
-    /// reference to the modifiable representation.
+    /// Select the "sendBufferLowWatermark" representation. Return a reference
+    /// to the modifiable representation.
     bsl::size_t& makeSendBufferLowWatermark();
 
-    /// Select the "sendBufferLowWatermark" representation initially having
-    /// the specified 'value'. Return a reference to the modifiable
-    /// representation.
+    /// Select the "sendBufferLowWatermark" representation initially having the
+    /// specified 'value'. Return a reference to the modifiable representation.
     bsl::size_t& makeSendBufferLowWatermark(bsl::size_t value);
 
-    /// Select the "receiveBufferSize" representation. Return a reference
-    /// to the modifiable representation.
+    /// Select the "receiveBufferSize" representation. Return a reference to
+    /// the modifiable representation.
     bsl::size_t& makeReceiveBufferSize();
 
-    /// Select the "receiveBufferSize" representation initially having
-    /// the specified 'value'. Return a reference to the modifiable
-    /// representation.
+    /// Select the "receiveBufferSize" representation initially having the
+    /// specified 'value'. Return a reference to the modifiable representation.
     bsl::size_t& makeReceiveBufferSize(bsl::size_t value);
 
     /// Select the "receiveBufferLowWatermark" representation. Return a
     /// reference to the modifiable representation.
     bsl::size_t& makeReceiveBufferLowWatermark();
 
-    /// Select the "receiveBufferLowWatermark" representation initially
-    /// having the specified 'value'. Return a reference to the modifiable
+    /// Select the "receiveBufferLowWatermark" representation initially having
+    /// the specified 'value'. Return a reference to the modifiable
     /// representation.
     bsl::size_t& makeReceiveBufferLowWatermark(bsl::size_t value);
 
-    /// Select the "debug" representation. Return a reference to the
-    /// modifiable representation.
+    /// Select the "debug" representation. Return a reference to the modifiable
+    /// representation.
     bool& makeDebug();
 
     /// Select the "debug" representation initially having the specified
@@ -194,47 +265,51 @@ class SocketOption
     bool& makeBypassRouting();
 
     /// Select the "bypassRouting" representation initially having the
-    /// specified 'value'. Return a reference to the modifiable
-    /// representation.
+    /// specified 'value'. Return a reference to the modifiable representation.
     bool& makeBypassRouting(bool value);
 
-    /// Select the "inlineOutOfBandData" representation. Return a reference
-    /// to the modifiable representation.
+    /// Select the "inlineOutOfBandData" representation. Return a reference to
+    /// the modifiable representation.
     bool& makeInlineOutOfBandData();
 
     /// Select the "inlineOutOfBandData" representation initially having the
-    /// specified 'value'. Return a reference to the modifiable
-    /// representation.
+    /// specified 'value'. Return a reference to the modifiable representation.
     bool& makeInlineOutOfBandData(bool value);
 
-    /// Select the "timestampIncomingData" representation. Return a
-    /// reference to the modifiable representation.
+    /// Select the "timestampIncomingData" representation. Return a reference
+    /// to the modifiable representation.
     bool& makeTimestampIncomingData();
 
-    /// Select the "timestampIncomingData" representation initially having
-    /// the specified 'value'. Return a reference to the modifiable
-    /// representation
+    /// Select the "timestampIncomingData" representation initially having the
+    /// specified 'value'. Return a reference to the modifiable representation.
     bool& makeTimestampIncomingData(bool value);
 
     /// Select the "timestampOutgoingData" representation. Return a reference
     /// to the modifiable representation.
     bool& makeTimestampOutgoingData();
 
-    // Select the "timestampOutgoingData" representation initially having the
-    // specified 'value'. Return a reference to the modifiable
-    // representation.
+    /// Select the "timestampOutgoingData" representation initially having the
+    /// specified 'value'. Return a reference to the modifiable representation.
     bool& makeTimestampOutgoingData(bool value);
 
-    /// Return a reference to the modifiable "reuseAddress" representation.
-    /// The behavior is undefined unless 'isReuseAddress()' is true.
+    /// Select the "zeroCopy" representation. Return a reference to the
+    /// modifiable representation.
+    bool& makeZeroCopy();
+
+    /// Select the "zeroCopy" representation initially having the specified
+    /// 'value'. Return a reference to the modifiable representation.
+    bool& makeZeroCopy(bool value);
+
+    /// Return a reference to the modifiable "reuseAddress" representation. The
+    /// behavior is undefined unless 'isReuseAddress()' is true.
     bool& reuseAddress();
 
-    /// Return a reference to the modifiable "keepAlive" representation.
-    /// The behavior is undefined unless 'isKeepAlive()' is true.
+    /// Return a reference to the modifiable "keepAlive" representation. The
+    /// behavior is undefined unless 'isKeepAlive()' is true.
     bool& keepAlive();
 
-    /// Return a reference to the modifiable "cork" representation.
-    /// The behavior is undefined unless 'isCork()' is true.
+    /// Return a reference to the modifiable "cork" representation. The
+    /// behavior is undefined unless 'isCork()' is true.
     bool& cork();
 
     /// Return a reference to the modifiable "delayTransmission"
@@ -247,9 +322,8 @@ class SocketOption
     /// 'isDelayAcknowledgement()' is true.
     bool& delayAcknowledgement();
 
-    /// Return a reference to the modifiable "sendBufferSize"
-    /// representation. The behavior is undefined unless
-    /// 'isSendBufferSize()' is true.
+    /// Return a reference to the modifiable "sendBufferSize" representation.
+    /// The behavior is undefined unless 'isSendBufferSize()' is true.
     bsl::size_t& sendBufferSize();
 
     /// Return a reference to the modifiable "sendBufferLowWatermark"
@@ -267,16 +341,16 @@ class SocketOption
     /// 'isReceiveBufferLowWatermark()' is true.
     bsl::size_t& receiveBufferLowWatermark();
 
-    /// Return a reference to the modifiable "debug" representation.
-    /// The behavior is undefined unless 'isDebug()' is true.
+    /// Return a reference to the modifiable "debug" representation. The
+    /// behavior is undefined unless 'isDebug()' is true.
     bool& debug();
 
-    /// Return a reference to the modifiable "linger" representation.
-    /// The behavior is undefined unless 'isLinger()' is true.
+    /// Return a reference to the modifiable "linger" representation. The
+    /// behavior is undefined unless 'isLinger()' is true.
     ntsa::Linger& linger();
 
-    /// Return a reference to the modifiable "broadcast" representation.
-    /// The behavior is undefined unless 'isBroadcast()' is true.
+    /// Return a reference to the modifiable "broadcast" representation. The
+    /// behavior is undefined unless 'isBroadcast()' is true.
     bool& broadcast();
 
     /// Return a reference to the modifiable "bypassRouting" representation.
@@ -298,12 +372,16 @@ class SocketOption
     /// 'isTimestampOutOutgoingData()' is true.
     bool& timestampOutgoingData();
 
-    /// Return the non-modifiable "reuseAddress" representation. The
-    /// behavior is undefined unless 'isReuseAddress()' is true.
+    /// Return a reference to the modifiable "zeroCopy" representation. The
+    /// behavior is undefined unless 'isZeroCopy()' is true.
+    bool& zeroCopy();
+
+    /// Return the non-modifiable "reuseAddress" representation. The behavior
+    /// is undefined unless 'isReuseAddress()' is true.
     bool reuseAddress() const;
 
-    /// Return the non-modifiable "keepAlive" representation. The behavior
-    /// is undefined unless 'isKeepAlive()' is true.
+    /// Return the non-modifiable "keepAlive" representation. The behavior is
+    /// undefined unless 'isKeepAlive()' is true.
     bool keepAlive() const;
 
     /// Return the non-modifiable "cork" representation. The behavior is
@@ -318,62 +396,64 @@ class SocketOption
     /// behavior is undefined unless 'isDelayAcknowledgement()' is true.
     bool delayAcknowledgement() const;
 
-    /// Return the non-modifiable "sendBufferSize" representation. The
-    /// behavior is undefined unless 'isSendBufferSize()' is true.
+    /// Return the non-modifiable "sendBufferSize" representation. The behavior
+    /// is undefined unless 'isSendBufferSize()' is true.
     bsl::size_t sendBufferSize() const;
 
-    /// Return the non-modifiable "sendBufferLowWatermark" representation.
-    /// The behavior is undefined unless 'isSendBufferLowWatermark()' is
-    /// true.
+    /// Return the non-modifiable "sendBufferLowWatermark" representation. The
+    /// behavior is undefined unless 'isSendBufferLowWatermark()' is true.
     bsl::size_t sendBufferLowWatermark() const;
 
     /// Return the non-modifiable "receiveBufferSize" representation. The
     /// behavior is undefined unless 'isReceiveBufferSize()' is true.
     bsl::size_t receiveBufferSize() const;
 
-    /// Return the non-modifiable "receiveBufferLowWatermark"
-    /// representation. The behavior is undefined unless
-    /// 'isReceiveBufferLowWatermark()' is true.
+    /// Return the non-modifiable "receiveBufferLowWatermark" representation.
+    /// The behavior is undefined unless 'isReceiveBufferLowWatermark()' is
+    /// true.
     bsl::size_t receiveBufferLowWatermark() const;
 
     /// Return the non-modifiable "debug" representation. The behavior is
     /// undefined unless 'isDebug()' is true.
     bool debug() const;
 
-    /// Return a reference to the non-modifiable "linger" representation.
-    /// The behavior is undefined unless 'isLinger()' is true.
+    /// Return a reference to the non-modifiable "linger" representation. The
+    /// behavior is undefined unless 'isLinger()' is true.
     const ntsa::Linger& linger() const;
 
-    /// Return the non-modifiable "broadcast" representation. The behavior
-    /// is undefined unless 'isBroadcast()' is true.
+    /// Return the non-modifiable "broadcast" representation. The behavior is
+    /// undefined unless 'isBroadcast()' is true.
     bool broadcast() const;
 
-    /// Return the non-modifiable "bypassRouting" representation. The
-    /// behavior is undefined unless 'isBypassRouting()' is true.
+    /// Return the non-modifiable "bypassRouting" representation. The behavior
+    /// is undefined unless 'isBypassRouting()' is true.
     bool bypassRouting() const;
 
     /// Return the non-modifiable "inlineOutOfBandData" representation. The
     /// behavior is undefined unless 'isInlineOutOfBandData()' is true.
     bool inlineOutOfBandData() const;
 
-    /// Return the non-modifiable "timestampIncomingData" representation.
-    /// The behavior is undefined unless 'isTimestampIncomingData()' is
-    /// true.
+    /// Return the non-modifiable "timestampIncomingData" representation. The
+    /// behavior is undefined unless 'isTimestampIncomingData()' is true.
     bool timestampIncomingData() const;
 
     /// Return the non-modifiable "timestampOutgoingData" representation. The
     /// behavior is undefined unless 'isTimestampOutgoingData()' is true.
     bool timestampOutgoingData() const;
 
+    /// Return the non-modifiable "zeroCopy" representation. The behavior is
+    /// undefined unless 'isZeroCopy()' is true.
+    bool zeroCopy() const;
+
     /// Return the type of the option representation.
     enum ntsa::SocketOptionType::Value type() const;
 
-    /// Return true if the option representation is undefined, otherwise
-    /// return false.
+    /// Return true if the option representation is undefined, otherwise return
+    /// false.
     bool isUndefined() const;
 
-    /// Return true if the "reuseAddress" representation is currently
-    /// selected, otherwise return false.
+    /// Return true if the "reuseAddress" representation is currently selected,
+    /// otherwise return false.
     bool isReuseAddress() const;
 
     /// Return true if the "keepAlive" representation is currently selected,
@@ -396,8 +476,8 @@ class SocketOption
     /// selected, otherwise return false.
     bool isSendBufferSize() const;
 
-    /// Return true if the "sendBufferLowWatermark" representation is
-    /// currently selected, otherwise return false.
+    /// Return true if the "sendBufferLowWatermark" representation is currently
+    /// selected, otherwise return false.
     bool isSendBufferLowWatermark() const;
 
     /// Return true if the "receiveBufferSize" representation is currently
@@ -428,45 +508,48 @@ class SocketOption
     /// selected, otherwise return false.
     bool isInlineOutOfBandData() const;
 
-    /// Return true if the "timestampIncomingData" representation is
-    /// currently selected, otherwise return false.
+    /// Return true if the "timestampIncomingData" representation is currently
+    /// selected, otherwise return false.
     bool isTimestampIncomingData() const;
 
-    /// Return true if the "timestampOutgoingData" representation is
-    /// currently selected, otherwise return false.
+    /// Return true if the "timestampOutgoingData" representation is currently
+    /// selected, otherwise return false.
     bool isTimestampOutgoingData() const;
 
-    /// Return true if this object has the same value as the specified
-    /// 'other' object, otherwise return false.
+    /// Return true if the "zeroCopy" representation is currently selected,
+    /// otherwise return false.
+    bool isZeroCopy() const;
+
+    /// Return true if this object has the same value as the specified 'other'
+    /// object, otherwise return false.
     bool equals(const SocketOption& other) const;
 
-    /// Return true if the value of this object is less than the value of
-    /// the specified 'other' object, otherwise return false.
+    /// Return true if the value of this object is less than the value of the
+    /// specified 'other' object, otherwise return false.
     bool less(const SocketOption& other) const;
 
-    /// Format this object to the specified output 'stream' at the
-    /// optionally specified indentation 'level' and return a reference to
-    /// the modifiable 'stream'.  If 'level' is specified, optionally
-    /// specify 'spacesPerLevel', the number of spaces per indentation level
-    /// for this and all of its nested objects.  Each line is indented by
-    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
-    /// negative, suppress indentation of the first line.  If
-    /// 'spacesPerLevel' is negative, suppress line breaks and format the
-    /// entire output on one line.  If 'stream' is initially invalid, this
-    /// operation has no effect.  Note that a trailing newline is provided
-    /// in multiline mode only.
+    /// Format this object to the specified output 'stream' at the optionally
+    /// specified indentation 'level' and return a reference to the modifiable
+    /// 'stream'.  If 'level' is specified, optionally specify
+    /// 'spacesPerLevel', the number of spaces per indentation level for this
+    /// and all of its nested objects.  Each line is indented by the absolute
+    /// value of 'level * spacesPerLevel'.  If 'level' is negative, suppress
+    /// indentation of the first line.  If 'spacesPerLevel' is negative,
+    /// suppress line breaks and format the entire output on one line.  If
+    /// 'stream' is initially invalid, this operation has no effect.  Note that
+    /// a trailing newline is provided in multiline mode only.
     bsl::ostream& print(bsl::ostream& stream,
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
+    /// Defines the traits of this type. These traits can be used to select, at
+    /// compile-time, the most efficient algorithm to manipulate objects of
+    /// this type.
     NTSCFG_DECLARE_NESTED_BITWISE_MOVABLE_TRAITS(SocketOption);
 };
 
-/// Write the specified 'object' to the specified 'stream'. Return a
-/// modifiable reference to the 'stream'.
+/// Write the specified 'object' to the specified 'stream'. Return a modifiable
+/// reference to the 'stream'.
 ///
 /// @related ntsa::SocketOption
 bsl::ostream& operator<<(bsl::ostream& stream, const SocketOption& object);
@@ -483,8 +566,8 @@ bool operator==(const SocketOption& lhs, const SocketOption& rhs);
 /// @related ntsa::SocketOption
 bool operator!=(const SocketOption& lhs, const SocketOption& rhs);
 
-/// Contribute the values of the salient attributes of the specified 'value'
-/// to the specified hash 'algorithm'.
+/// Contribute the values of the salient attributes of the specified 'value' to
+/// the specified hash 'algorithm'.
 ///
 /// @related ntsa::SocketOption
 template <typename HASH_ALGORITHM>
@@ -621,6 +704,13 @@ bool& SocketOption::timestampOutgoingData()
 }
 
 NTSCFG_INLINE
+bool& SocketOption::zeroCopy()
+{
+    BSLS_ASSERT(d_type == ntsa::SocketOptionType::e_ZERO_COPY);
+    return d_zeroCopy.object();
+}
+
+NTSCFG_INLINE
 bool SocketOption::reuseAddress() const
 {
     BSLS_ASSERT(d_type == ntsa::SocketOptionType::e_REUSE_ADDRESS);
@@ -734,6 +824,13 @@ bool SocketOption::timestampOutgoingData() const
 }
 
 NTSCFG_INLINE
+bool SocketOption::zeroCopy() const
+{
+    BSLS_ASSERT(d_type == ntsa::SocketOptionType::e_ZERO_COPY);
+    return d_zeroCopy.object();
+}
+
+NTSCFG_INLINE
 ntsa::SocketOptionType::Value SocketOption::type() const
 {
     return d_type;
@@ -842,6 +939,12 @@ bool SocketOption::isTimestampOutgoingData() const
 }
 
 NTSCFG_INLINE
+bool SocketOption::isZeroCopy() const
+{
+    return (d_type == ntsa::SocketOptionType::e_ZERO_COPY);
+}
+
+NTSCFG_INLINE
 bsl::ostream& operator<<(bsl::ostream& stream, const SocketOption& object)
 {
     return object.print(stream, 0, -1);
@@ -917,6 +1020,9 @@ void hashAppend(HASH_ALGORITHM& algorithm, const SocketOption& value)
     }
     else if (value.isTimestampOutgoingData()) {
         hashAppend(algorithm, value.timestampOutgoingData());
+    }
+    else if (value.isZeroCopy()) {
+        hashAppend(algorithm, value.zeroCopy());
     }
 }
 

@@ -76,6 +76,14 @@ ntsa::Error ListenerSocket::accept(bsl::shared_ptr<ntsi::StreamSocket>* result,
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
+ntsa::Error ListenerSocket::receiveNotifications(
+    ntsa::NotificationQueue* notifications)
+{
+    NTSCFG_WARNING_UNUSED(notifications);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 ntsa::Error ListenerSocket::shutdown(ntsa::ShutdownType::Value direction)
 {
     NTSCFG_WARNING_UNUSED(direction);

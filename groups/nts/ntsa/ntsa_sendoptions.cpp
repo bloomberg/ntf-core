@@ -28,7 +28,8 @@ bool SendOptions::equals(const SendOptions& other) const
     return (d_endpoint == other.d_endpoint && 
             d_foreignHandle == other.d_foreignHandle &&
             d_maxBytes == other.d_maxBytes &&
-            d_maxBuffers == other.d_maxBuffers);
+            d_maxBuffers == other.d_maxBuffers &&
+            d_zeroCopy == other.d_zeroCopy);
 }
 
 bool SendOptions::less(const SendOptions& other) const
@@ -57,7 +58,14 @@ bool SendOptions::less(const SendOptions& other) const
         return false;
     }
 
-    return d_maxBuffers < other.d_maxBuffers;
+    if (d_maxBuffers < other.d_maxBuffers) {
+        return true;
+    }
+
+    if (other.d_maxBuffers < d_maxBuffers) {
+        return false;
+    }
+    return d_zeroCopy < other.d_zeroCopy;
 }
 
 bsl::ostream& SendOptions::print(bsl::ostream& stream,
@@ -70,6 +78,7 @@ bsl::ostream& SendOptions::print(bsl::ostream& stream,
     printer.printAttribute("foreignHandle", d_foreignHandle);
     printer.printAttribute("maxBytes", d_maxBytes);
     printer.printAttribute("maxBuffers", d_maxBuffers);
+    printer.printAttribute("zeroCopy", d_zeroCopy);
     printer.end();
     return stream;
 }

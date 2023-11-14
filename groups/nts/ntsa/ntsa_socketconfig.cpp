@@ -73,6 +73,9 @@ void SocketConfig::setOption(const ntsa::SocketOption& option)
     else if (option.isTimestampOutgoingData()) {
         d_timestampOutgoingData = option.timestampOutgoingData();
     }
+    else if (option.isZeroCopy()) {
+        d_zeroCopy = option.zeroCopy();
+    }
 }
 
 void SocketConfig::getOption(ntsa::SocketOption*           option,
@@ -162,6 +165,11 @@ void SocketConfig::getOption(ntsa::SocketOption*           option,
             option->makeTimestampOutgoingData(d_timestampOutgoingData.value());
         }
     }
+    else if (type == ntsa::SocketOptionType::e_ZERO_COPY) {
+        if (!d_zeroCopy.isNull()) {
+            option->makeZeroCopy(d_zeroCopy.value());
+        }
+    }
 }
 
 bool SocketConfig::equals(const SocketConfig& other) const
@@ -179,7 +187,8 @@ bool SocketConfig::equals(const SocketConfig& other) const
            d_bypassRouting == other.d_bypassRouting &&
            d_inlineOutOfBandData == other.d_inlineOutOfBandData &&
            d_timestampIncomingData == other.d_timestampIncomingData &&
-           d_timestampOutgoingData == other.d_timestampOutgoingData;
+           d_timestampOutgoingData == other.d_timestampOutgoingData &&
+           d_zeroCopy == other.d_zeroCopy;
 }
 
 bool SocketConfig::less(const SocketConfig& other) const
@@ -304,7 +313,15 @@ bool SocketConfig::less(const SocketConfig& other) const
         return false;
     }
 
-    return d_timestampOutgoingData < other.d_timestampOutgoingData;
+    if (d_timestampOutgoingData < other.d_timestampOutgoingData) {
+        return true;
+    }
+
+    if (other.d_timestampOutgoingData < d_timestampOutgoingData) {
+        return false;
+    }
+
+    return d_zeroCopy < other.d_zeroCopy;
 }
 
 bsl::ostream& SocketConfig::print(bsl::ostream& stream,
@@ -313,24 +330,83 @@ bsl::ostream& SocketConfig::print(bsl::ostream& stream,
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute("reuseAddress", d_reuseAddress);
-    printer.printAttribute("d_keepAlive", d_keepAlive);
-    printer.printAttribute("d_cork", d_cork);
-    printer.printAttribute("d_delayTransmission", d_delayTransmission);
-    printer.printAttribute("d_delayAcknowledgement", d_delayAcknowledgement);
-    printer.printAttribute("d_sendBufferSize", d_sendBufferSize);
-    printer.printAttribute("d_sendBufferLowWatermark",
-                           d_sendBufferLowWatermark);
-    printer.printAttribute("d_receiveBufferSize", d_receiveBufferSize);
-    printer.printAttribute("d_receiveBufferLowWatermark",
-                           d_receiveBufferLowWatermark);
-    printer.printAttribute("d_debug", d_debug);
-    printer.printAttribute("d_linger", d_linger);
-    printer.printAttribute("d_broadcast", d_broadcast);
-    printer.printAttribute("d_bypassRouting", d_bypassRouting);
-    printer.printAttribute("d_inlineOutOfBandData", d_inlineOutOfBandData);
-    printer.printAttribute("d_timestampIncomingData", d_timestampIncomingData);
-    printer.printAttribute("d_timestampOutgoingData", d_timestampOutgoingData);
+
+    if (!d_reuseAddress.isNull()) {
+        printer.printAttribute("reuseAddress", d_reuseAddress.value());
+    }
+
+    if (!d_keepAlive.isNull()) {
+        printer.printAttribute("keepAlive", d_keepAlive.value());
+    }
+
+    if (!d_cork.isNull()) {
+        printer.printAttribute("cork", d_cork.value());
+    }
+
+    if (!d_delayTransmission.isNull()) {
+        printer.printAttribute("delayTransmission", 
+                               d_delayTransmission.value());
+    }
+
+    if (!d_delayAcknowledgement.isNull()) {
+        printer.printAttribute("delayAcknowledgement", 
+                               d_delayAcknowledgement.value());
+    }
+
+    if (!d_sendBufferSize.isNull()) {
+        printer.printAttribute("sendBufferSize", d_sendBufferSize.value());
+    }
+
+    if (!d_sendBufferLowWatermark.isNull()) {
+        printer.printAttribute("sendBufferLowWatermark",
+                               d_sendBufferLowWatermark.value());
+    }
+
+    if (!d_receiveBufferSize.isNull()) {
+        printer.printAttribute("receiveBufferSize", 
+                               d_receiveBufferSize.value());
+    }
+
+    if (!d_receiveBufferLowWatermark.isNull()) {
+        printer.printAttribute("receiveBufferLowWatermark",
+                               d_receiveBufferLowWatermark.value());
+    }
+
+    if (!d_debug.isNull()) {
+        printer.printAttribute("debug", d_debug.value());
+    }
+
+    if (!d_linger.isNull()) {
+        printer.printAttribute("linger", d_linger.value());
+    }
+
+    if (!d_broadcast.isNull()) {
+        printer.printAttribute("broadcast", d_broadcast.value());
+    }
+
+    if (!d_bypassRouting.isNull()) {
+        printer.printAttribute("bypassRouting", d_bypassRouting.value());
+    }
+
+    if (!d_inlineOutOfBandData.isNull()) {
+        printer.printAttribute("inlineOutOfBandData", 
+                               d_inlineOutOfBandData.value());
+    }
+
+    if (!d_timestampIncomingData.isNull()) {
+        printer.printAttribute("timestampIncomingData", 
+                               d_timestampIncomingData.value());
+    }
+
+    if (!d_timestampOutgoingData.isNull()) {
+        printer.printAttribute("timestampOutgoingData", 
+                               d_timestampOutgoingData.value());
+    }
+
+    if (!d_zeroCopy.isNull()) {
+        printer.printAttribute("zeroCopy", d_zeroCopy.value());
+    }
+
     printer.end();
     return stream;
 }

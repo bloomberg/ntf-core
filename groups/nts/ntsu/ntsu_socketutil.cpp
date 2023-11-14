@@ -27,6 +27,7 @@ BSLS_IDENT_RCSID(ntsu_socketutil_cpp, "$Id$ $CSID$")
 #include <ntscfg_limits.h>
 #include <ntsu_adapterutil.h>
 #include <ntsu_bufferutil.h>
+#include <ntsu_zerocopyutil.h>
 #include <ntsu_socketoptionutil.h>
 #include <ntsu_timestamputil.h>
 
@@ -548,23 +549,23 @@ void IncomingDataStats::update(const struct iovec* buffersReceivable,
 
 // Provide a buffer suitable for attaching to a call to 'sendmsg' to send
 // control data to the peer of a socket.
-class SendControl 
+class SendControl
 {
     enum {
-        // The payload size required to send any meta-data (viz. open file 
+        // The payload size required to send any meta-data (viz. open file
         // descriptors) to the peer of a socket.
         k_SEND_CONTROL_PAYLOAD_SIZE = static_cast<int>(
-            NTSU_SOCKETUTIL_MAX_HANDLES_PER_OUTGOING_CONTROLMSG * 
+            NTSU_SOCKETUTIL_MAX_HANDLES_PER_OUTGOING_CONTROLMSG *
             sizeof(ntsa::Handle)),
 
         // The control buffer capacity required to send any meta-data (viz.
         // open file descriptors) to the peer of a socket.
-        k_SEND_CONTROL_BUFFER_SIZE = 
+        k_SEND_CONTROL_BUFFER_SIZE =
             static_cast<int>(CMSG_SPACE(k_SEND_CONTROL_PAYLOAD_SIZE))
     };
 
     // Define a type alias for a maximimally-aligned buffer of suitable size to
-    // send any meta-data (viz. open file descriptors) to the peer of the 
+    // send any meta-data (viz. open file descriptors) to the peer of the
     // socket.
     typedef bsls::AlignedBuffer<k_SEND_CONTROL_BUFFER_SIZE> Arena;
 
@@ -577,26 +578,27 @@ class SendControl
   public:
     // Create a new send control buffer.
     SendControl();
-        
+
     // Destroy this object.
     ~SendControl();
-        
-    // Encode the specified 'options' into the control buffer. Return the 
+
+    // Encode the specified 'options' into the control buffer. Return the
     // error.
     ntsa::Error encode(msghdr* msg, const ntsa::SendOptions& options);
 };
 
 // Provide a buffer suitable for attaching to a call to 'recvmsg' to receive
 // control data from the peer of a socket.
-class ReceiveControl 
+class ReceiveControl
 {
     enum {
-        // The payload size required to receive any meta-data  (e.g. open 
+        // The payload size required to receive any meta-data  (e.g. open
         // file descriptors, timestamps, etc.) buffered by the operating system
         // for a socket.
-        k_RECEIVE_CONTROL_PAYLOAD_SIZE = static_cast<int>(
-            NTSU_SOCKETUTIL_MAX_HANDLES_PER_INCOMING_CONTROLMSG * 
-            sizeof(ntsa::Handle))
+        k_RECEIVE_CONTROL_PAYLOAD_SIZE =
+            static_cast<int>(
+                NTSU_SOCKETUTIL_MAX_HANDLES_PER_INCOMING_CONTROLMSG *
+                sizeof(ntsa::Handle))
 #if defined(BSLS_PLATFORM_OS_LINUX)
             + static_cast<int>(sizeof(TimestampUtil::ScmTimestamping))
 #endif
@@ -604,7 +606,8 @@ class ReceiveControl
         // The control buffer capacity required to receive any meta-data (e.g.
         // open file descriptors, timestamps, etc.) buffered by the operating
         // system for a socket.
-        , k_RECEIVE_CONTROL_BUFFER_SIZE = 
+        ,
+        k_RECEIVE_CONTROL_BUFFER_SIZE =
             static_cast<int>(CMSG_SPACE(k_RECEIVE_CONTROL_PAYLOAD_SIZE))
     };
 
@@ -622,16 +625,16 @@ class ReceiveControl
   public:
     // Create a new receive control buffer.
     ReceiveControl();
-        
+
     // Destroy this object.
     ~ReceiveControl();
 
     // Zero the control buffer.
     void initialize(msghdr* msg);
-        
-    // Decode the control buffer of specified 'msg' and decode its contents 
+
+    // Decode the control buffer of specified 'msg' and decode its contents
     // into the specified 'context' according to the specified 'options'.
-    ntsa::Error decode(ntsa::ReceiveContext*       context, 
+    ntsa::Error decode(ntsa::ReceiveContext*       context,
                        const msghdr&               msg,
                        const ntsa::ReceiveOptions& options);
 };
@@ -656,17 +659,17 @@ ntsa::Error SendControl::encode(msghdr* msg, const ntsa::SendOptions& options)
 
     msg->msg_control    = d_arena.buffer();
     msg->msg_controllen = static_cast<socklen_t>(k_SEND_CONTROL_BUFFER_SIZE);
-    
+
     ntsa::Handle foreignHandle = options.foreignHandle().value();
 
-    struct cmsghdr *ctl = CMSG_FIRSTHDR(msg);
+    struct cmsghdr* ctl = CMSG_FIRSTHDR(msg);
 
     ctl->cmsg_level = SOL_SOCKET;
     ctl->cmsg_type  = SCM_RIGHTS;
     ctl->cmsg_len   = CMSG_LEN(sizeof foreignHandle);
 
     bsl::memcpy(CMSG_DATA(ctl), &foreignHandle, sizeof foreignHandle);
-    
+
     return ntsa::Error();
 }
 
@@ -674,7 +677,7 @@ NTSCFG_INLINE
 ReceiveControl::ReceiveControl()
 {
 }
-    
+
 NTSCFG_INLINE
 ReceiveControl::~ReceiveControl()
 {
@@ -684,12 +687,12 @@ void ReceiveControl::initialize(msghdr* msg)
 {
     bsl::memset(d_arena.buffer(), 0, k_RECEIVE_CONTROL_BUFFER_SIZE);
 
-    msg->msg_control    = d_arena.buffer();
-    msg->msg_controllen = 
+    msg->msg_control = d_arena.buffer();
+    msg->msg_controllen =
         static_cast<socklen_t>(k_RECEIVE_CONTROL_BUFFER_SIZE);
 }
 
-ntsa::Error ReceiveControl::decode(ntsa::ReceiveContext*       context, 
+ntsa::Error ReceiveControl::decode(ntsa::ReceiveContext*       context,
                                    const msghdr&               msg,
                                    const ntsa::ReceiveOptions& options)
 {
@@ -703,8 +706,8 @@ ntsa::Error ReceiveControl::decode(ntsa::ReceiveContext*       context,
                 if (NTSCFG_UNLIKELY(hdr->cmsg_len != CMSG_LEN(sizeof fd))) {
                     BSLS_LOG_WARN("Ignoring received control block meta-data: "
                                   "Unexpected control message payload size: "
-                                  "expected %d bytes, found %d bytes", 
-                                  (int)(CMSG_LEN(sizeof fd)), 
+                                  "expected %d bytes, found %d bytes",
+                                  (int)(CMSG_LEN(sizeof fd)),
                                   (int)(hdr->cmsg_len));
                     continue;
                 }
@@ -727,8 +730,8 @@ ntsa::Error ReceiveControl::decode(ntsa::ReceiveContext*       context,
                 if (NTSCFG_UNLIKELY(hdr->cmsg_len != CMSG_LEN(sizeof ts))) {
                     BSLS_LOG_WARN("Ignoring received control block meta-data: "
                                   "Unexpected control message payload size: "
-                                  "expected %d bytes, found %d bytes", 
-                                  (int)(CMSG_LEN(sizeof ts)), 
+                                  "expected %d bytes, found %d bytes",
+                                  (int)(CMSG_LEN(sizeof ts)),
                                   (int)(hdr->cmsg_len));
                     continue;
                 }
@@ -752,8 +755,8 @@ ntsa::Error ReceiveControl::decode(ntsa::ReceiveContext*       context,
                 if (NTSCFG_UNLIKELY(hdr->cmsg_len != CMSG_LEN(sizeof ts))) {
                     BSLS_LOG_WARN("Ignoring received control block meta-data: "
                                   "Unexpected control message payload size: "
-                                  "expected %d bytes, found %d bytes", 
-                                  (int)(CMSG_LEN(sizeof ts)), 
+                                  "expected %d bytes, found %d bytes",
+                                  (int)(CMSG_LEN(sizeof ts)),
                                   (int)(hdr->cmsg_len));
                     continue;
                 }
@@ -1386,8 +1389,15 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
 
     context->setBytesSendable(size);
 
-    ssize_t sendmsgResult =
-        ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
+    int sendFlags = NTSU_SOCKETUTIL_SENDMSG_FLAGS;
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (options.zeroCopy()) {
+        sendFlags |= ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY;
+    }
+#endif
+
+    ssize_t sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
 
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
@@ -1453,8 +1463,15 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
 
     context->setBytesSendable(size);
 
-    ssize_t sendmsgResult =
-        ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
+    int sendFlags = NTSU_SOCKETUTIL_SENDMSG_FLAGS;
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (options.zeroCopy()) {
+        sendFlags |= ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY;
+    }
+#endif
+
+    ssize_t sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
 
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
@@ -1517,8 +1534,15 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
 
     context->setBytesSendable(numBytesTotal);
 
-    ssize_t sendmsgResult =
-        ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
+    int sendFlags = NTSU_SOCKETUTIL_SENDMSG_FLAGS;
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (options.zeroCopy()) {
+        sendFlags |= ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY;
+    }
+#endif
+
+    ssize_t sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
 
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
@@ -1580,8 +1604,15 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*            context,
 
     context->setBytesSendable(numBytesTotal);
 
-    ssize_t sendmsgResult =
-        ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
+    int sendFlags = NTSU_SOCKETUTIL_SENDMSG_FLAGS;
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (options.zeroCopy()) {
+        sendFlags |= ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY;
+    }
+#endif
+
+    ssize_t sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
 
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
@@ -1643,8 +1674,15 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*               context,
 
     context->setBytesSendable(numBytesTotal);
 
-    ssize_t sendmsgResult =
-        ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
+    int sendFlags = NTSU_SOCKETUTIL_SENDMSG_FLAGS;
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (options.zeroCopy()) {
+        sendFlags |= ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY;
+    }
+#endif
+
+    ssize_t sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
 
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
@@ -1710,8 +1748,15 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*         context,
 
     context->setBytesSendable(size);
 
-    ssize_t sendmsgResult =
-        ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
+    int sendFlags = NTSU_SOCKETUTIL_SENDMSG_FLAGS;
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (options.zeroCopy()) {
+        sendFlags |= ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY;
+    }
+#endif
+
+    ssize_t sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
 
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
@@ -1774,8 +1819,15 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*         context,
 
     context->setBytesSendable(numBytesTotal);
 
-    ssize_t sendmsgResult =
-        ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
+    int sendFlags = NTSU_SOCKETUTIL_SENDMSG_FLAGS;
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (options.zeroCopy()) {
+        sendFlags |= ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY;
+    }
+#endif
+
+    ssize_t sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
 
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
@@ -1837,8 +1889,15 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*              context,
 
     context->setBytesSendable(numBytesTotal);
 
-    ssize_t sendmsgResult =
-        ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
+    int sendFlags = NTSU_SOCKETUTIL_SENDMSG_FLAGS;
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (options.zeroCopy()) {
+        sendFlags |= ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY;
+    }
+#endif
+
+    ssize_t sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
 
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
@@ -1899,9 +1958,15 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*                 context,
     msg.msg_iovlen = NTSU_SOCKETUTIL_MSG_IOV_LEN(numBuffersTotal);
 
     context->setBytesSendable(numBytesTotal);
+    int sendFlags = NTSU_SOCKETUTIL_SENDMSG_FLAGS;
 
-    ssize_t sendmsgResult =
-        ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (options.zeroCopy()) {
+        sendFlags |= ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY;
+    }
+#endif
+
+    ssize_t sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
 
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
@@ -1928,7 +1993,7 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
 
     const bool specifyEndpoint = !options.endpoint().isNull();
     const bool specifyMetaData = !options.foreignHandle().isNull();
-    
+
     msghdr msg;
     bsl::memset(&msg, 0, sizeof msg);
 
@@ -1966,9 +2031,15 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
     msg.msg_iovlen = 1;
 
     context->setBytesSendable(size);
+    int sendFlags = NTSU_SOCKETUTIL_SENDMSG_FLAGS;
 
-    ssize_t sendmsgResult =
-        ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (options.zeroCopy()) {
+        sendFlags |= ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY;
+    }
+#endif
+
+    ssize_t sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
 
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
@@ -2068,8 +2139,15 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
         context->setBytesSendable(numBytesTotal);
     }
 
-    ssize_t sendmsgResult =
-        ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
+    int sendFlags = NTSU_SOCKETUTIL_SENDMSG_FLAGS;
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (options.zeroCopy()) {
+        sendFlags |= ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY;
+    }
+#endif
+
+    ssize_t sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
 
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
@@ -2702,7 +2780,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*        context,
 
     if (wantEndpoint) {
         SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
-        
+
         msg.msg_name    = &socketAddress;
         msg.msg_namelen = socketAddressSize;
     }
@@ -2853,7 +2931,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     if (wantEndpoint) {
         SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
-        
+
         msg.msg_name    = &socketAddress;
         msg.msg_namelen = socketAddressSize;
     }
@@ -3224,19 +3302,25 @@ ntsa::Error SocketUtil::receiveNotifications(
             }
         }
 
+        // The socket error queue must be drained even if there is no space to
+        // store the notification.
+
         if (notifications == 0) {
             continue;
         }
 
-        /*
-        It is assumed that timestamp information comes in pairs: meta data + timestamp message.
-        Meta data is sock_extend_err structure (cmsg_level == SOL_IP && cmsg_type == IP_RECVERR)
-        and timestamp information is (cmsg_level == SOL_SOCKET && hdr->cmsg_type == SO_TIMESTAMPING).
+        // Assume the timestamp information comes in pairs: meta data +
+        // timestamp message.
+        // Meta data is sock_extend_err structure: for IPv4:
+        // (cmsg_level == SOL_IP && cmsg_type == IP_RECVERR) and for IPv6:
+        // (cmsg_level == SOL_IPV6 && cmsg_type == IPV6_RECVERR)
+        // and timestamp information is (cmsg_level == SOL_SOCKET &&
+        // hdr->cmsg_type == SO_TIMESTAMPING).
+        //
+        // The messages may be received in any order, e.g.
+        // IP_RECVERR -> SO_TIMESTAMPING or SO_TIMESTAMPING -> IP_RECVERR.
 
-        Code below should be ready to handle messages in any order, e.g. IP_RECVERR -> SO_TIMESTAMPING
-        or SO_TIMESTAMPING -> IP_RECVERR
-        */
-        bool tsMetaDataReceied = false;
+        bool tsMetaDataReceived = false;
         bool timestampReceived = false;
 
         ntsa::Timestamp    ts;
@@ -3245,32 +3329,45 @@ ntsa::Error SocketUtil::receiveNotifications(
         for (cmsghdr* hdr = CMSG_FIRSTHDR(&msg); hdr != 0;
              hdr          = CMSG_NXTHDR(&msg, hdr))
         {
-            if (hdr->cmsg_level == SOL_IP && hdr->cmsg_type == IP_RECVERR) {
+            if ((hdr->cmsg_level == SOL_IP && hdr->cmsg_type == IP_RECVERR) ||
+                (hdr->cmsg_level == SOL_IPV6 &&
+                 hdr->cmsg_type == IPV6_RECVERR))
+            {
                 sock_extended_err ser;
                 std::memcpy(&ser, CMSG_DATA(hdr), sizeof(ser));
-                ts.setId(ser.ee_data);
-                switch (ser.ee_info) {
-                case (TimestampUtil::e_SCM_TSTAMP_SCHED): {
-                    ts.setType(ntsa::TimestampType::e_SCHEDULED);
-                } break;
-                case (TimestampUtil::e_SCM_TSTAMP_SND): {
-                    ts.setType(ntsa::TimestampType::e_SENT);
-                } break;
-                case (TimestampUtil::e_SCM_TSTAMP_ACK): {
-                    ts.setType(ntsa::TimestampType::e_ACKNOWLEDGED);
-                } break;
-                default: {
-                    //error, drop timestamp
-                }
-                }
-                tsMetaDataReceied = true;
-                if (timestampReceived) {
-                    notification.reset();
-                    notification.makeTimestamp(ts);
 
+                if (ser.ee_origin == SO_EE_ORIGIN_TIMESTAMPING) {
+                    ts.setId(ser.ee_data);
+                    switch (ser.ee_info) {
+                    case (TimestampUtil::e_SCM_TSTAMP_SCHED): {
+                        ts.setType(ntsa::TimestampType::e_SCHEDULED);
+                    } break;
+                    case (TimestampUtil::e_SCM_TSTAMP_SND): {
+                        ts.setType(ntsa::TimestampType::e_SENT);
+                    } break;
+                    case (TimestampUtil::e_SCM_TSTAMP_ACK): {
+                        ts.setType(ntsa::TimestampType::e_ACKNOWLEDGED);
+                    } break;
+                    default: {
+                        //error, drop timestamp
+                    }
+                    }
+                    tsMetaDataReceived = true;
+                    if (timestampReceived) {
+                        notification.reset();
+                        notification.makeTimestamp(ts);
+
+                        notifications->addNotification(notification);
+                        tsMetaDataReceived = false;
+                        timestampReceived = false;
+                    }
+                }
+                else if (ser.ee_origin ==
+                         ntsu::ZeroCopyUtil::e_SO_EE_ORIGIN_ZEROCOPY)
+                {
+                    ntsa::ZeroCopy zc(ser.ee_info, ser.ee_data, ser.ee_code);
+                    notification.makeZeroCopy(zc);
                     notifications->addNotification(notification);
-                    tsMetaDataReceied = false;
-                    timestampReceived = false;
                 }
             }
             else if (hdr->cmsg_level == SOL_SOCKET &&
@@ -3286,23 +3383,24 @@ ntsa::Error SocketUtil::receiveNotifications(
                 ts.setTime(ti);
 
                 timestampReceived = true;
-                if (tsMetaDataReceied) {
+                if (tsMetaDataReceived) {
                     notification.reset();
                     notification.makeTimestamp(ts);
 
                     notifications->addNotification(notification);
 
-                    tsMetaDataReceied = false;
+                    tsMetaDataReceived = false;
                     timestampReceived = false;
                 }
             }
             else {
                 BSLS_LOG_WARN(
-                    "unexpected ctrl data received: cmsg_level=%d, "
-                    "cmsg_type=%d, tsMetaDataReceied=%d, timestampReceived=%d",
+                    "Unexpected control message received: cmsg_level = %d, "
+                    "cmsg_type = %d, tsMetaDataReceied = %d, "
+                    "timestampReceived = %d",
                     hdr->cmsg_level,
                     hdr->cmsg_type,
-                    tsMetaDataReceied,
+                    tsMetaDataReceived,
                     timestampReceived);
             }
         }
