@@ -38,7 +38,7 @@ using namespace BloombergLP;
 
 NTSCFG_TEST_CASE(1)
 {
-    // Concern: test want/show/hide Timestamp & Endpoint
+    // Concern: Test want/show/hide endpoint, timestamp, and foreign handles.
 
     ntscfg::TestAllocator ta;
     {
@@ -108,10 +108,57 @@ NTSCFG_TEST_CASE(3)
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
+NTSCFG_TEST_CASE(4)
+{
+    // Concern: wantMetaData
+
+    ntscfg::TestAllocator ta;
+    {
+        ntsa::ReceiveOptions options;
+
+        NTSCFG_TEST_FALSE(options.wantTimestamp());
+        NTSCFG_TEST_FALSE(options.wantForeignHandles());
+        NTSCFG_TEST_FALSE(options.wantMetaData());
+
+        options.showTimestamp();
+
+        NTSCFG_TEST_TRUE(options.wantTimestamp());
+        NTSCFG_TEST_FALSE(options.wantForeignHandles());
+        NTSCFG_TEST_TRUE(options.wantMetaData());
+
+        options.reset();
+
+        NTSCFG_TEST_FALSE(options.wantTimestamp());
+        NTSCFG_TEST_FALSE(options.wantForeignHandles());
+        NTSCFG_TEST_FALSE(options.wantMetaData());
+
+        options.showForeignHandles();
+
+        NTSCFG_TEST_FALSE(options.wantTimestamp());
+        NTSCFG_TEST_TRUE(options.wantForeignHandles());
+        NTSCFG_TEST_TRUE(options.wantMetaData());
+
+        options.reset();
+
+        NTSCFG_TEST_FALSE(options.wantTimestamp());
+        NTSCFG_TEST_FALSE(options.wantForeignHandles());
+        NTSCFG_TEST_FALSE(options.wantMetaData());
+
+        options.showTimestamp();
+        options.showForeignHandles();
+
+        NTSCFG_TEST_TRUE(options.wantTimestamp());
+        NTSCFG_TEST_TRUE(options.wantForeignHandles());
+        NTSCFG_TEST_TRUE(options.wantMetaData());
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
 NTSCFG_TEST_DRIVER
 {
     NTSCFG_TEST_REGISTER(1);
     NTSCFG_TEST_REGISTER(2);
     NTSCFG_TEST_REGISTER(3);
+    NTSCFG_TEST_REGISTER(4);
 }
 NTSCFG_TEST_DRIVER_END;

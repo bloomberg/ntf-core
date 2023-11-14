@@ -248,6 +248,11 @@ struct sockaddr_un_win32 {
 #define NTSU_SOCKETUTIL_MAX_MESSAGES_PER_RECEIVE 0
 #endif
 
+#define NTSU_SOCKETUTIL_MAX_HANDLES_PER_OUTGOING_CONTROLMSG 1
+#define NTSU_SOCKETUTIL_MAX_HANDLES_PER_INCOMING_CONTROLMSG 1
+
+BSLMF_ASSERT(sizeof(BloombergLP::ntsa::Handle) == sizeof(int));
+
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
 
 #define NTSU_SOCKETUTIL_MAX_BUFFERS_PER_SEND                                  \
@@ -539,78 +544,234 @@ void IncomingDataStats::update(const struct iovec* buffersReceivable,
 
 #endif
 
+#if defined(BSLS_PLATFORM_OS_UNIX)
+
+// Provide a buffer suitable for attaching to a call to 'sendmsg' to send
+// control data to the peer of a socket.
+class SendControl 
+{
+    enum {
+        // The payload size required to send any meta-data (viz. open file 
+        // descriptors) to the peer of a socket.
+        k_SEND_CONTROL_PAYLOAD_SIZE = static_cast<int>(
+            NTSU_SOCKETUTIL_MAX_HANDLES_PER_OUTGOING_CONTROLMSG * 
+            sizeof(ntsa::Handle)),
+
+        // The control buffer capacity required to send any meta-data (viz.
+        // open file descriptors) to the peer of a socket.
+        k_SEND_CONTROL_BUFFER_SIZE = 
+            static_cast<int>(CMSG_SPACE(k_SEND_CONTROL_PAYLOAD_SIZE))
+    };
+
+    // Define a type alias for a maximimally-aligned buffer of suitable size to
+    // send any meta-data (viz. open file descriptors) to the peer of the 
+    // socket.
+    typedef bsls::AlignedBuffer<k_SEND_CONTROL_BUFFER_SIZE> Arena;
+
+    Arena d_arena;
+
+  private:
+    SendControl(const SendControl&) BSLS_KEYWORD_DELETED;
+    SendControl& operator=(const SendControl) BSLS_KEYWORD_DELETED;
+
+  public:
+    // Create a new send control buffer.
+    SendControl();
+        
+    // Destroy this object.
+    ~SendControl();
+        
+    // Encode the specified 'options' into the control buffer. Return the 
+    // error.
+    ntsa::Error encode(msghdr* msg, const ntsa::SendOptions& options);
+};
+
+// Provide a buffer suitable for attaching to a call to 'recvmsg' to receive
+// control data from the peer of a socket.
+class ReceiveControl 
+{
+    enum {
+        // The payload size required to receive any meta-data  (e.g. open 
+        // file descriptors, timestamps, etc.) buffered by the operating system
+        // for a socket.
+        k_RECEIVE_CONTROL_PAYLOAD_SIZE = static_cast<int>(
+            NTSU_SOCKETUTIL_MAX_HANDLES_PER_INCOMING_CONTROLMSG * 
+            sizeof(ntsa::Handle))
 #if defined(BSLS_PLATFORM_OS_LINUX)
-namespace {
+            + static_cast<int>(sizeof(TimestampUtil::ScmTimestamping))
+#endif
 
-/// Size of a control message buffer depends on this constant
-const size_t k_CTRL_PAYLOAD_SIZE = sizeof(TimestampUtil::ScmTimestamping);
+        // The control buffer capacity required to receive any meta-data (e.g.
+        // open file descriptors, timestamps, etc.) buffered by the operating
+        // system for a socket.
+        , k_RECEIVE_CONTROL_BUFFER_SIZE = 
+            static_cast<int>(CMSG_SPACE(k_RECEIVE_CONTROL_PAYLOAD_SIZE))
+    };
 
-/// Control message buffer must be properly aligned in orderto fetch data from
-/// a socket errorqueue
-typedef bsls::AlignedBuffer<static_cast<int>(CMSG_SPACE(k_CTRL_PAYLOAD_SIZE)),
-                            bsls::AlignmentFromType<cmsghdr>::VALUE>
-    CtrlMsgBuf;
+    // Define a type alias for a maximimally-aligned buffer of suitable size to
+    // receive any meta-data (e.g. foreign handles, timestamps, etc.) buffered
+    // by the operating system for a socket.
+    typedef bsls::AlignedBuffer<k_RECEIVE_CONTROL_BUFFER_SIZE> Arena;
 
-/// Extract timestamps from control block of specified 'msg'.  Timestamps
-/// are extracted from the first control message of suitable time and saved
-/// into specified 'ctx'.  TimestampingData type contains an array of three
-/// elements, each one represents a timestamp.  Only the first and the last
-/// elements are processed as the middle one is filled only when
-/// SOF_TIMESTAMPING_SYS_HARDWARE flag is set, but this flag is marked
-/// deprecated and ignored
-/// https://docs.kernel.org/networking/timestamping.html
-void extractTimestampsFromCtrlBlock(ntsa::ReceiveContext* ctx,
-                                    const msghdr&         msg)
+    Arena d_arena;
+
+  private:
+    ReceiveControl(const ReceiveControl&) BSLS_KEYWORD_DELETED;
+    ReceiveControl& operator=(const ReceiveControl) BSLS_KEYWORD_DELETED;
+
+  public:
+    // Create a new receive control buffer.
+    ReceiveControl();
+        
+    // Destroy this object.
+    ~ReceiveControl();
+
+    // Zero the control buffer.
+    void initialize(msghdr* msg);
+        
+    // Decode the control buffer of specified 'msg' and decode its contents 
+    // into the specified 'context' according to the specified 'options'.
+    ntsa::Error decode(ntsa::ReceiveContext*       context, 
+                       const msghdr&               msg,
+                       const ntsa::ReceiveOptions& options);
+};
+
+NTSCFG_INLINE
+SendControl::SendControl()
+{
+}
+
+NTSCFG_INLINE
+SendControl::~SendControl()
+{
+}
+
+ntsa::Error SendControl::encode(msghdr* msg, const ntsa::SendOptions& options)
+{
+    if (options.foreignHandle().isNull()) {
+        return ntsa::Error();
+    }
+
+    bsl::memset(d_arena.buffer(), 0, k_SEND_CONTROL_BUFFER_SIZE);
+
+    msg->msg_control    = d_arena.buffer();
+    msg->msg_controllen = static_cast<socklen_t>(k_SEND_CONTROL_BUFFER_SIZE);
+    
+    ntsa::Handle foreignHandle = options.foreignHandle().value();
+
+    struct cmsghdr *ctl = CMSG_FIRSTHDR(msg);
+
+    ctl->cmsg_level = SOL_SOCKET;
+    ctl->cmsg_type  = SCM_RIGHTS;
+    ctl->cmsg_len   = CMSG_LEN(sizeof foreignHandle);
+
+    bsl::memcpy(CMSG_DATA(ctl), &foreignHandle, sizeof foreignHandle);
+    
+    return ntsa::Error();
+}
+
+NTSCFG_INLINE
+ReceiveControl::ReceiveControl()
+{
+}
+    
+NTSCFG_INLINE
+ReceiveControl::~ReceiveControl()
+{
+}
+
+void ReceiveControl::initialize(msghdr* msg)
+{
+    bsl::memset(d_arena.buffer(), 0, k_RECEIVE_CONTROL_BUFFER_SIZE);
+
+    msg->msg_control    = d_arena.buffer();
+    msg->msg_controllen = 
+        static_cast<socklen_t>(k_RECEIVE_CONTROL_BUFFER_SIZE);
+}
+
+ntsa::Error ReceiveControl::decode(ntsa::ReceiveContext*       context, 
+                                   const msghdr&               msg,
+                                   const ntsa::ReceiveOptions& options)
 {
     for (cmsghdr* hdr = CMSG_FIRSTHDR(&msg); hdr != 0;
          hdr          = CMSG_NXTHDR(const_cast<msghdr*>(&msg), hdr))
     {
         if (hdr->cmsg_level == SOL_SOCKET) {
-            if (hdr->cmsg_type == TimestampUtil::e_SCM_TIMESTAMPING) {
-                TimestampUtil::ScmTimestamping ts;
+            if (hdr->cmsg_type == SCM_RIGHTS) {
+                ntsa::Handle fd = ntsa::k_INVALID_HANDLE;
 
-                if (NTSCFG_UNLIKELY(sizeof(ts) !=
-                                    (hdr->cmsg_len - sizeof(cmsghdr))))
-                {
+                if (NTSCFG_UNLIKELY(hdr->cmsg_len != CMSG_LEN(sizeof fd))) {
+                    BSLS_LOG_WARN("Ignoring received control block meta-data: "
+                                  "Unexpected control message payload size: "
+                                  "expected %d bytes, found %d bytes", 
+                                  (int)(CMSG_LEN(sizeof fd)), 
+                                  (int)(hdr->cmsg_len));
                     continue;
                 }
 
-                memcpy(&ts, CMSG_DATA(hdr), sizeof(ts));
+                bsl::memcpy(&fd, CMSG_DATA(hdr), sizeof fd);
+
+                if (options.wantForeignHandles()) {
+                    context->setForeignHandle(fd);
+                }
+                else {
+                    BSLS_LOG_WARN("Ignoring received control block meta-data: "
+                                  "Unexpected foreign file descriptor");
+                    ::close(fd);
+                }
+            }
+#if defined(BSLS_PLATFORM_OS_LINUX)
+            else if (hdr->cmsg_type == TimestampUtil::e_SCM_TIMESTAMPING) {
+                TimestampUtil::ScmTimestamping ts;
+
+                if (NTSCFG_UNLIKELY(hdr->cmsg_len != CMSG_LEN(sizeof ts))) {
+                    BSLS_LOG_WARN("Ignoring received control block meta-data: "
+                                  "Unexpected control message payload size: "
+                                  "expected %d bytes, found %d bytes", 
+                                  (int)(CMSG_LEN(sizeof ts)), 
+                                  (int)(hdr->cmsg_len));
+                    continue;
+                }
+
+                bsl::memcpy(&ts, CMSG_DATA(hdr), sizeof ts);
 
                 if (ts.softwareTs.tv_sec || ts.softwareTs.tv_nsec) {
-                    ctx->setSoftwareTimestamp(bsls::TimeInterval(
+                    context->setSoftwareTimestamp(bsls::TimeInterval(
                         ts.softwareTs.tv_sec,
                         static_cast<int>(ts.softwareTs.tv_nsec)));
                 }
                 if (ts.hardwareTs.tv_sec || ts.hardwareTs.tv_nsec) {
-                    ctx->setHardwareTimestamp(bsls::TimeInterval(
+                    context->setHardwareTimestamp(bsls::TimeInterval(
                         ts.hardwareTs.tv_sec,
                         static_cast<int>(ts.hardwareTs.tv_nsec)));
                 }
-                break;
             }
             else if (hdr->cmsg_type == TimestampUtil::e_SCM_TIMESTAMPNS) {
                 TimestampUtil::Timespec ts;
 
-                if (NTSCFG_UNLIKELY(sizeof(ts) !=
-                                    (hdr->cmsg_len - sizeof(cmsghdr))))
-                {
+                if (NTSCFG_UNLIKELY(hdr->cmsg_len != CMSG_LEN(sizeof ts))) {
+                    BSLS_LOG_WARN("Ignoring received control block meta-data: "
+                                  "Unexpected control message payload size: "
+                                  "expected %d bytes, found %d bytes", 
+                                  (int)(CMSG_LEN(sizeof ts)), 
+                                  (int)(hdr->cmsg_len));
                     continue;
                 }
 
-                memcpy(&ts, CMSG_DATA(hdr), sizeof(ts));
+                bsl::memcpy(&ts, CMSG_DATA(hdr), sizeof(ts));
                 if (ts.tv_sec || ts.tv_nsec) {
-                    ctx->setSoftwareTimestamp(
+                    context->setSoftwareTimestamp(
                         bsls::TimeInterval(ts.tv_sec,
                                            static_cast<int>(ts.tv_nsec)));
                 }
-                break;
             }
+#endif
         }
     }
+
+    return ntsa::Error();
 }
 
-}  // close unnamed namespace
 #endif
 
 /// Provide utilities for converting between 'ntsa::Endpoint'
@@ -1183,22 +1344,34 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
                              const ntsa::SendOptions& options,
                              ntsa::Handle             socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
+    ntsa::Error error;
 
     context->reset();
 
-    context->setBytesSendable(size);
-
     const bool specifyEndpoint = !options.endpoint().isNull();
+    const bool specifyMetaData = !options.foreignHandle().isNull();
+
+    msghdr msg;
+    bsl::memset(&msg, 0, sizeof msg);
 
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        ntsa::Error error =
-            SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       options.endpoint().value());
+        error = SocketStorageUtil::convert(&socketAddress,
+                                           &socketAddressSize,
+                                           options.endpoint().value());
+        if (error) {
+            return error;
+        }
+
+        msg.msg_name    = &socketAddress;
+        msg.msg_namelen = socketAddressSize;
+    }
+
+    SendControl control;
+    if (specifyMetaData) {
+        error = control.encode(&msg, options);
         if (error) {
             return error;
         }
@@ -1208,16 +1381,10 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
     iovec.iov_base = const_cast<void*>(data);
     iovec.iov_len  = size;
 
-    msghdr msg;
-    bsl::memset(&msg, 0, sizeof msg);
-
-    if (specifyEndpoint) {
-        msg.msg_name    = &socketAddress;
-        msg.msg_namelen = socketAddressSize;
-    }
-
     msg.msg_iov    = &iovec;
     msg.msg_iovlen = 1;
+
+    context->setBytesSendable(size);
 
     ssize_t sendmsgResult =
         ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
@@ -1241,45 +1408,50 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
                              const ntsa::SendOptions& options,
                              ntsa::Handle             socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
+    ntsa::Error error;
 
     context->reset();
 
-    bsl::size_t size = buffer.size();
-
-    context->setBytesSendable(size);
-
     const bool specifyEndpoint = !options.endpoint().isNull();
+    const bool specifyMetaData = !options.foreignHandle().isNull();
+
+    msghdr msg;
+    bsl::memset(&msg, 0, sizeof msg);
 
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        ntsa::Error error =
-            SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       options.endpoint().value());
+        error = SocketStorageUtil::convert(&socketAddress,
+                                           &socketAddressSize,
+                                           options.endpoint().value());
+        if (error) {
+            return error;
+        }
+
+        msg.msg_name    = &socketAddress;
+        msg.msg_namelen = socketAddressSize;
+    }
+
+    SendControl control;
+    if (specifyMetaData) {
+        error = control.encode(&msg, options);
         if (error) {
             return error;
         }
     }
 
-    const void* data = buffer.data();
+    const void*       data = buffer.data();
+    const bsl::size_t size = buffer.size();
 
     struct iovec iovec;
     iovec.iov_base = const_cast<void*>(data);
     iovec.iov_len  = size;
 
-    msghdr msg;
-    bsl::memset(&msg, 0, sizeof msg);
-
-    if (specifyEndpoint) {
-        msg.msg_name    = &socketAddress;
-        msg.msg_namelen = socketAddressSize;
-    }
-
     msg.msg_iov    = &iovec;
     msg.msg_iovlen = 1;
+
+    context->setBytesSendable(size);
 
     ssize_t sendmsgResult =
         ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
@@ -1304,40 +1476,46 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
                              const ntsa::SendOptions& options,
                              ntsa::Handle             socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
+    ntsa::Error error;
 
     context->reset();
 
-    bsl::size_t numBytesTotal =
-        ntsa::ConstBuffer::totalSize(bufferArray, bufferCount);
-
-    context->setBytesSendable(numBytesTotal);
-
     const bool specifyEndpoint = !options.endpoint().isNull();
+    const bool specifyMetaData = !options.foreignHandle().isNull();
+
+    msghdr msg;
+    bsl::memset(&msg, 0, sizeof msg);
 
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        ntsa::Error error =
-            SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       options.endpoint().value());
+        error = SocketStorageUtil::convert(&socketAddress,
+                                           &socketAddressSize,
+                                           options.endpoint().value());
+        if (error) {
+            return error;
+        }
+
+        msg.msg_name    = &socketAddress;
+        msg.msg_namelen = socketAddressSize;
+    }
+
+    SendControl control;
+    if (specifyMetaData) {
+        error = control.encode(&msg, options);
         if (error) {
             return error;
         }
     }
 
-    msghdr msg;
-    bsl::memset(&msg, 0, sizeof msg);
-
-    if (specifyEndpoint) {
-        msg.msg_name    = &socketAddress;
-        msg.msg_namelen = socketAddressSize;
-    }
+    const bsl::size_t numBytesTotal =
+        ntsa::ConstBuffer::totalSize(bufferArray, bufferCount);
 
     msg.msg_iov    = NTSU_SOCKETUTIL_MSG_IOV_BUF(bufferArray);
     msg.msg_iovlen = NTSU_SOCKETUTIL_MSG_IOV_LEN(bufferCount);
+
+    context->setBytesSendable(numBytesTotal);
 
     ssize_t sendmsgResult =
         ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
@@ -1361,40 +1539,46 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*            context,
                              const ntsa::SendOptions&      options,
                              ntsa::Handle                  socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
+    ntsa::Error error;
 
     context->reset();
 
-    bsl::size_t numBuffersTotal = bufferArray.numBuffers();
-    bsl::size_t numBytesTotal   = bufferArray.numBytes();
-
-    context->setBytesSendable(numBytesTotal);
-
     const bool specifyEndpoint = !options.endpoint().isNull();
+    const bool specifyMetaData = !options.foreignHandle().isNull();
+
+    msghdr msg;
+    bsl::memset(&msg, 0, sizeof msg);
 
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        ntsa::Error error =
-            SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       options.endpoint().value());
+        error = SocketStorageUtil::convert(&socketAddress,
+                                           &socketAddressSize,
+                                           options.endpoint().value());
+        if (error) {
+            return error;
+        }
+
+        msg.msg_name    = &socketAddress;
+        msg.msg_namelen = socketAddressSize;
+    }
+
+    SendControl control;
+    if (specifyMetaData) {
+        error = control.encode(&msg, options);
         if (error) {
             return error;
         }
     }
 
-    msghdr msg;
-    bsl::memset(&msg, 0, sizeof msg);
-
-    if (specifyEndpoint) {
-        msg.msg_name    = &socketAddress;
-        msg.msg_namelen = socketAddressSize;
-    }
+    const bsl::size_t numBuffersTotal = bufferArray.numBuffers();
+    const bsl::size_t numBytesTotal   = bufferArray.numBytes();
 
     msg.msg_iov    = NTSU_SOCKETUTIL_MSG_IOV_BUF(bufferArray.base());
     msg.msg_iovlen = NTSU_SOCKETUTIL_MSG_IOV_LEN(numBuffersTotal);
+
+    context->setBytesSendable(numBytesTotal);
 
     ssize_t sendmsgResult =
         ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
@@ -1418,40 +1602,46 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*               context,
                              const ntsa::SendOptions&         options,
                              ntsa::Handle                     socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
+    ntsa::Error error;
 
     context->reset();
 
-    bsl::size_t numBuffersTotal = bufferArray.numBuffers();
-    bsl::size_t numBytesTotal   = bufferArray.numBytes();
-
-    context->setBytesSendable(numBytesTotal);
-
     const bool specifyEndpoint = !options.endpoint().isNull();
+    const bool specifyMetaData = !options.foreignHandle().isNull();
+
+    msghdr msg;
+    bsl::memset(&msg, 0, sizeof msg);
 
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        ntsa::Error error =
-            SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       options.endpoint().value());
+        error = SocketStorageUtil::convert(&socketAddress,
+                                           &socketAddressSize,
+                                           options.endpoint().value());
+        if (error) {
+            return error;
+        }
+
+        msg.msg_name    = &socketAddress;
+        msg.msg_namelen = socketAddressSize;
+    }
+
+    SendControl control;
+    if (specifyMetaData) {
+        error = control.encode(&msg, options);
         if (error) {
             return error;
         }
     }
 
-    msghdr msg;
-    bsl::memset(&msg, 0, sizeof msg);
-
-    if (specifyEndpoint) {
-        msg.msg_name    = &socketAddress;
-        msg.msg_namelen = socketAddressSize;
-    }
+    const bsl::size_t numBuffersTotal = bufferArray.numBuffers();
+    const bsl::size_t numBytesTotal   = bufferArray.numBytes();
 
     msg.msg_iov    = NTSU_SOCKETUTIL_MSG_IOV_BUF(bufferArray.base());
     msg.msg_iovlen = NTSU_SOCKETUTIL_MSG_IOV_LEN(numBuffersTotal);
+
+    context->setBytesSendable(numBytesTotal);
 
     ssize_t sendmsgResult =
         ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
@@ -1475,45 +1665,50 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*         context,
                              const ntsa::SendOptions&   options,
                              ntsa::Handle               socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
+    ntsa::Error error;
 
     context->reset();
 
-    bsl::size_t size = buffer.size();
-
-    context->setBytesSendable(size);
-
     const bool specifyEndpoint = !options.endpoint().isNull();
+    const bool specifyMetaData = !options.foreignHandle().isNull();
+
+    msghdr msg;
+    bsl::memset(&msg, 0, sizeof msg);
 
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        ntsa::Error error =
-            SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       options.endpoint().value());
+        error = SocketStorageUtil::convert(&socketAddress,
+                                           &socketAddressSize,
+                                           options.endpoint().value());
+        if (error) {
+            return error;
+        }
+
+        msg.msg_name    = &socketAddress;
+        msg.msg_namelen = socketAddressSize;
+    }
+
+    SendControl control;
+    if (specifyMetaData) {
+        error = control.encode(&msg, options);
         if (error) {
             return error;
         }
     }
 
-    void* data = buffer.data();
+    void*             data = buffer.data();
+    const bsl::size_t size = buffer.size();
 
     struct iovec iovec;
     iovec.iov_base = data;
     iovec.iov_len  = size;
 
-    msghdr msg;
-    bsl::memset(&msg, 0, sizeof msg);
-
-    if (specifyEndpoint) {
-        msg.msg_name    = &socketAddress;
-        msg.msg_namelen = socketAddressSize;
-    }
-
     msg.msg_iov    = &iovec;
     msg.msg_iovlen = 1;
+
+    context->setBytesSendable(size);
 
     ssize_t sendmsgResult =
         ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
@@ -1538,40 +1733,46 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*         context,
                              const ntsa::SendOptions&   options,
                              ntsa::Handle               socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
+    ntsa::Error error;
 
     context->reset();
 
-    bsl::size_t numBytesTotal =
-        ntsa::MutableBuffer::totalSize(bufferArray, bufferCount);
-
-    context->setBytesSendable(numBytesTotal);
-
     const bool specifyEndpoint = !options.endpoint().isNull();
+    const bool specifyMetaData = !options.foreignHandle().isNull();
+
+    msghdr msg;
+    bsl::memset(&msg, 0, sizeof msg);
 
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        ntsa::Error error =
-            SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       options.endpoint().value());
+        error = SocketStorageUtil::convert(&socketAddress,
+                                           &socketAddressSize,
+                                           options.endpoint().value());
+        if (error) {
+            return error;
+        }
+
+        msg.msg_name    = &socketAddress;
+        msg.msg_namelen = socketAddressSize;
+    }
+
+    SendControl control;
+    if (specifyMetaData) {
+        error = control.encode(&msg, options);
         if (error) {
             return error;
         }
     }
 
-    msghdr msg;
-    bsl::memset(&msg, 0, sizeof msg);
-
-    if (specifyEndpoint) {
-        msg.msg_name    = &socketAddress;
-        msg.msg_namelen = socketAddressSize;
-    }
+    const bsl::size_t numBytesTotal =
+        ntsa::MutableBuffer::totalSize(bufferArray, bufferCount);
 
     msg.msg_iov    = NTSU_SOCKETUTIL_MSG_IOV_BUF(bufferArray);
     msg.msg_iovlen = NTSU_SOCKETUTIL_MSG_IOV_LEN(bufferCount);
+
+    context->setBytesSendable(numBytesTotal);
 
     ssize_t sendmsgResult =
         ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
@@ -1595,40 +1796,46 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*              context,
                              const ntsa::SendOptions&        options,
                              ntsa::Handle                    socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
+    ntsa::Error error;
 
     context->reset();
 
-    bsl::size_t numBuffersTotal = bufferArray.numBuffers();
-    bsl::size_t numBytesTotal   = bufferArray.numBytes();
-
-    context->setBytesSendable(numBytesTotal);
-
     const bool specifyEndpoint = !options.endpoint().isNull();
+    const bool specifyMetaData = !options.foreignHandle().isNull();
+
+    msghdr msg;
+    bsl::memset(&msg, 0, sizeof msg);
 
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        ntsa::Error error =
-            SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       options.endpoint().value());
+        error = SocketStorageUtil::convert(&socketAddress,
+                                           &socketAddressSize,
+                                           options.endpoint().value());
+        if (error) {
+            return error;
+        }
+
+        msg.msg_name    = &socketAddress;
+        msg.msg_namelen = socketAddressSize;
+    }
+
+    SendControl control;
+    if (specifyMetaData) {
+        error = control.encode(&msg, options);
         if (error) {
             return error;
         }
     }
 
-    msghdr msg;
-    bsl::memset(&msg, 0, sizeof msg);
-
-    if (specifyEndpoint) {
-        msg.msg_name    = &socketAddress;
-        msg.msg_namelen = socketAddressSize;
-    }
+    const bsl::size_t numBuffersTotal = bufferArray.numBuffers();
+    const bsl::size_t numBytesTotal   = bufferArray.numBytes();
 
     msg.msg_iov    = NTSU_SOCKETUTIL_MSG_IOV_BUF(bufferArray.base());
     msg.msg_iovlen = NTSU_SOCKETUTIL_MSG_IOV_LEN(numBuffersTotal);
+
+    context->setBytesSendable(numBytesTotal);
 
     ssize_t sendmsgResult =
         ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
@@ -1652,40 +1859,46 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*                 context,
                              const ntsa::SendOptions&           options,
                              ntsa::Handle                       socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
+    ntsa::Error error;
 
     context->reset();
 
-    bsl::size_t numBuffersTotal = bufferArray.numBuffers();
-    bsl::size_t numBytesTotal   = bufferArray.numBytes();
-
-    context->setBytesSendable(numBytesTotal);
-
     const bool specifyEndpoint = !options.endpoint().isNull();
+    const bool specifyMetaData = !options.foreignHandle().isNull();
+
+    msghdr msg;
+    bsl::memset(&msg, 0, sizeof msg);
 
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        ntsa::Error error =
-            SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       options.endpoint().value());
+        error = SocketStorageUtil::convert(&socketAddress,
+                                           &socketAddressSize,
+                                           options.endpoint().value());
+        if (error) {
+            return error;
+        }
+
+        msg.msg_name    = &socketAddress;
+        msg.msg_namelen = socketAddressSize;
+    }
+
+    SendControl control;
+    if (specifyMetaData) {
+        error = control.encode(&msg, options);
         if (error) {
             return error;
         }
     }
 
-    msghdr msg;
-    bsl::memset(&msg, 0, sizeof msg);
-
-    if (specifyEndpoint) {
-        msg.msg_name    = &socketAddress;
-        msg.msg_namelen = socketAddressSize;
-    }
+    const bsl::size_t numBuffersTotal = bufferArray.numBuffers();
+    const bsl::size_t numBytesTotal   = bufferArray.numBytes();
 
     msg.msg_iov    = NTSU_SOCKETUTIL_MSG_IOV_BUF(bufferArray.base());
     msg.msg_iovlen = NTSU_SOCKETUTIL_MSG_IOV_LEN(numBuffersTotal);
+
+    context->setBytesSendable(numBytesTotal);
 
     ssize_t sendmsgResult =
         ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
@@ -1709,45 +1922,50 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
                              const ntsa::SendOptions& options,
                              ntsa::Handle             socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
+    ntsa::Error error;
 
     context->reset();
 
-    bsl::size_t size = string.size();
-
-    context->setBytesSendable(size);
-
     const bool specifyEndpoint = !options.endpoint().isNull();
+    const bool specifyMetaData = !options.foreignHandle().isNull();
+    
+    msghdr msg;
+    bsl::memset(&msg, 0, sizeof msg);
 
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        ntsa::Error error =
-            SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       options.endpoint().value());
+        error = SocketStorageUtil::convert(&socketAddress,
+                                           &socketAddressSize,
+                                           options.endpoint().value());
+        if (error) {
+            return error;
+        }
+
+        msg.msg_name    = &socketAddress;
+        msg.msg_namelen = socketAddressSize;
+    }
+
+    SendControl control;
+    if (specifyMetaData) {
+        error = control.encode(&msg, options);
         if (error) {
             return error;
         }
     }
 
-    const void* data = string.data();
+    const void*       data = string.data();
+    const bsl::size_t size = string.size();
 
     struct iovec iovec;
     iovec.iov_base = const_cast<void*>(data);
     iovec.iov_len  = size;
 
-    msghdr msg;
-    bsl::memset(&msg, 0, sizeof msg);
-
-    if (specifyEndpoint) {
-        msg.msg_name    = &socketAddress;
-        msg.msg_namelen = socketAddressSize;
-    }
-
     msg.msg_iov    = &iovec;
     msg.msg_iovlen = 1;
+
+    context->setBytesSendable(size);
 
     ssize_t sendmsgResult =
         ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
@@ -1771,64 +1989,53 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
                              const ntsa::SendOptions& options,
                              ntsa::Handle             socket)
 {
-    if (blob.numDataBuffers() == 1) {
-        context->reset();
+    ntsa::Error error;
 
-        bsl::size_t size = blob.lastDataBufferLength();
+    context->reset();
 
-        context->setBytesSendable(size);
+    const bool specifyEndpoint = !options.endpoint().isNull();
+    const bool specifyMetaData = !options.foreignHandle().isNull();
 
-        const bool specifyEndpoint = !options.endpoint().isNull();
+    msghdr msg;
+    bsl::memset(&msg, 0, sizeof msg);
 
-        sockaddr_storage socketAddress;
-        socklen_t        socketAddressSize;
+    sockaddr_storage socketAddress;
+    socklen_t        socketAddressSize;
 
-        if (specifyEndpoint) {
-            ntsa::Error error =
-                SocketStorageUtil::convert(&socketAddress,
+    if (specifyEndpoint) {
+        error = SocketStorageUtil::convert(&socketAddress,
                                            &socketAddressSize,
                                            options.endpoint().value());
-            if (error) {
-                return error;
-            }
+        if (error) {
+            return error;
         }
 
-        void* data = blob.buffer(0).data();
+        msg.msg_name    = &socketAddress;
+        msg.msg_namelen = socketAddressSize;
+    }
+
+    SendControl control;
+    if (specifyMetaData) {
+        error = control.encode(&msg, options);
+        if (error) {
+            return error;
+        }
+    }
+
+    if (blob.numDataBuffers() == 1) {
+        void*             data = blob.buffer(0).data();
+        const bsl::size_t size = blob.lastDataBufferLength();
 
         struct iovec iovec;
         iovec.iov_base = data;
         iovec.iov_len  = size;
 
-        msghdr msg;
-        bsl::memset(&msg, 0, sizeof msg);
-
-        if (specifyEndpoint) {
-            msg.msg_name    = &socketAddress;
-            msg.msg_namelen = socketAddressSize;
-        }
-
         msg.msg_iov    = &iovec;
         msg.msg_iovlen = 1;
 
-        ssize_t sendmsgResult =
-            ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
-
-        NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
-                                             msg.msg_iovlen,
-                                             sendmsgResult,
-                                             errno);
-
-        if (sendmsgResult < 0) {
-            return ntsa::Error(errno);
-        }
-
-        context->setBytesSent(sendmsgResult);
-
-        return ntsa::Error();
+        context->setBytesSendable(size);
     }
     else {
-        context->reset();
-
         bsl::size_t numBytesMax = options.maxBytes();
         if (numBytesMax == 0) {
             numBytesMax = SocketUtil::maxBytesPerSend(socket);
@@ -1840,21 +2047,6 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
         }
         else if (numBuffersMax > NTSU_SOCKETUTIL_MAX_BUFFERS_PER_SEND) {
             numBuffersMax = NTSU_SOCKETUTIL_MAX_BUFFERS_PER_SEND;
-        }
-
-        const bool specifyEndpoint = !options.endpoint().isNull();
-
-        sockaddr_storage socketAddress;
-        socklen_t        socketAddressSize;
-
-        if (specifyEndpoint) {
-            ntsa::Error error =
-                SocketStorageUtil::convert(&socketAddress,
-                                           &socketAddressSize,
-                                           options.endpoint().value());
-            if (error) {
-                return error;
-            }
         }
 
         struct iovec iovecArray[NTSU_SOCKETUTIL_MAX_BUFFERS_PER_SEND];
@@ -1870,35 +2062,27 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
             blob,
             numBytesMax);
 
-        context->setBytesSendable(numBytesTotal);
-
-        msghdr msg;
-        bsl::memset(&msg, 0, sizeof msg);
-
-        if (specifyEndpoint) {
-            msg.msg_name    = &socketAddress;
-            msg.msg_namelen = socketAddressSize;
-        }
-
         msg.msg_iov    = iovecArray;
         msg.msg_iovlen = NTSU_SOCKETUTIL_MSG_IOV_LEN(numBuffersTotal);
 
-        ssize_t sendmsgResult =
-            ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
-
-        NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
-                                             msg.msg_iovlen,
-                                             sendmsgResult,
-                                             errno);
-
-        if (sendmsgResult < 0) {
-            return ntsa::Error(errno);
-        }
-
-        context->setBytesSent(sendmsgResult);
-
-        return ntsa::Error();
+        context->setBytesSendable(numBytesTotal);
     }
+
+    ssize_t sendmsgResult =
+        ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
+
+    NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
+                                         msg.msg_iovlen,
+                                         sendmsgResult,
+                                         errno);
+
+    if (sendmsgResult < 0) {
+        return ntsa::Error(errno);
+    }
+
+    context->setBytesSent(sendmsgResult);
+
+    return ntsa::Error();
 }
 
 ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
@@ -1906,45 +2090,50 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
                              const ntsa::SendOptions& options,
                              ntsa::Handle             socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
+    ntsa::Error error;
 
     context->reset();
 
-    bsl::size_t size = NTSCFG_WARNING_PROMOTE(bsl::size_t, blobBuffer.size());
-
-    context->setBytesSendable(size);
-
     const bool specifyEndpoint = !options.endpoint().isNull();
+    const bool specifyMetaData = !options.foreignHandle().isNull();
 
-    sockaddr_storage socketAddress;
-    socklen_t        socketAddressSize;
+    msghdr msg;
+    bsl::memset(&msg, 0, sizeof msg);
 
-    if (specifyEndpoint) {
-        ntsa::Error error =
-            SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       options.endpoint().value());
-        if (error) {
-            return error;
-        }
-    }
-
-    void* data = blobBuffer.data();
+    void*       data = blobBuffer.data();
+    bsl::size_t size = NTSCFG_WARNING_PROMOTE(bsl::size_t, blobBuffer.size());
 
     struct iovec iovec;
     iovec.iov_base = data;
     iovec.iov_len  = size;
 
-    msghdr msg;
-    bsl::memset(&msg, 0, sizeof msg);
+    msg.msg_iov    = &iovec;
+    msg.msg_iovlen = 1;
+
+    context->setBytesSendable(size);
+
+    sockaddr_storage socketAddress;
+    socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
+        error = SocketStorageUtil::convert(&socketAddress,
+                                           &socketAddressSize,
+                                           options.endpoint().value());
+        if (error) {
+            return error;
+        }
+
         msg.msg_name    = &socketAddress;
         msg.msg_namelen = socketAddressSize;
     }
 
-    msg.msg_iov    = &iovec;
-    msg.msg_iovlen = 1;
+    SendControl control;
+    if (specifyMetaData) {
+        error = control.encode(&msg, options);
+        if (error) {
+            return error;
+        }
+    }
 
     ssize_t sendmsgResult =
         ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
@@ -1970,19 +2159,20 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
 {
 #if defined(BSLS_PLATFORM_OS_LINUX) || defined(BSLS_PLATFORM_OS_SOLARIS)
 
-    NTSCFG_WARNING_UNUSED(options);
-
     context->reset();
-
-    bsl::size_t size = NTSCFG_WARNING_NARROW(bsl::size_t, file.size());
-
-    context->setBytesSendable(size);
 
     if (!options.endpoint().isNull()) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    off_t offset = static_cast<off_t>(file.position());
+    if (!options.foreignHandle().isNull()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    bsl::size_t size   = NTSCFG_WARNING_NARROW(bsl::size_t, file.size());
+    off_t       offset = static_cast<off_t>(file.position());
+
+    context->setBytesSendable(size);
 
     ssize_t sendfileResult =
         ::sendfile(socket, file.descriptor(), &offset, size);
@@ -2207,48 +2397,41 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
-
     context->reset();
 
-    if (capacity == 0) {
-        return ntsa::Error::invalid();
-    }
-
-    context->setBytesReceivable(capacity);
-
     const bool wantEndpoint = options.wantEndpoint();
+    const bool wantMetaData = options.wantMetaData();
+
+    msghdr msg;
+    bsl::memset(&msg, 0, sizeof msg);
 
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
 
     if (wantEndpoint) {
         SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+
+        msg.msg_name    = &socketAddress;
+        msg.msg_namelen = socketAddressSize;
+    }
+
+    ReceiveControl control;
+    if (wantMetaData) {
+        control.initialize(&msg);
+    }
+
+    if (capacity == 0) {
+        return ntsa::Error::invalid();
     }
 
     struct iovec iovec;
     iovec.iov_base = data;
     iovec.iov_len  = capacity;
 
-    msghdr msg;
-    bsl::memset(&msg, 0, sizeof msg);
-
-    if (wantEndpoint) {
-        msg.msg_name    = &socketAddress;
-        msg.msg_namelen = socketAddressSize;
-    }
-
     msg.msg_iov    = &iovec;
     msg.msg_iovlen = 1;
 
-#if defined(BSLS_PLATFORM_OS_LINUX)
-    const bool wantTimestamp = options.wantTimestamp();
-    CtrlMsgBuf ctrlBuf;
-    if (wantTimestamp) {
-        msg.msg_control    = ctrlBuf.buffer();
-        msg.msg_controllen = CMSG_LEN(k_CTRL_PAYLOAD_SIZE);
-    }
-#endif
+    context->setBytesReceivable(capacity);
 
     ssize_t recvmsgResult =
         ::recvmsg(socket, &msg, NTSU_SOCKETUTIL_RECVMSG_FLAGS);
@@ -2271,11 +2454,10 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
         context->setEndpoint(endpoint);
     }
-#if defined(BSLS_PLATFORM_OS_LINUX)
-    if (wantTimestamp) {
-        extractTimestampsFromCtrlBlock(context, msg);
+
+    if (wantMetaData) {
+        control.decode(context, msg, options);
     }
-#endif
 
     context->setBytesReceived(recvmsgResult);
 
@@ -2287,51 +2469,44 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
-
     context->reset();
 
-    bsl::size_t capacity = buffer->size();
-    if (capacity == 0) {
-        return ntsa::Error::invalid();
-    }
-
-    context->setBytesReceivable(capacity);
-
     const bool wantEndpoint = options.wantEndpoint();
+    const bool wantMetaData = options.wantMetaData();
+
+    msghdr msg;
+    bsl::memset(&msg, 0, sizeof msg);
 
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
 
     if (wantEndpoint) {
         SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+
+        msg.msg_name    = &socketAddress;
+        msg.msg_namelen = socketAddressSize;
     }
 
-    void* data = buffer->data();
+    ReceiveControl control;
+    if (wantMetaData) {
+        control.initialize(&msg);
+    }
+
+    void*             data     = buffer->data();
+    const bsl::size_t capacity = buffer->size();
+
+    if (capacity == 0) {
+        return ntsa::Error::invalid();
+    }
 
     struct iovec iovec;
     iovec.iov_base = data;
     iovec.iov_len  = capacity;
 
-    msghdr msg;
-    bsl::memset(&msg, 0, sizeof msg);
-
-    if (wantEndpoint) {
-        msg.msg_name    = &socketAddress;
-        msg.msg_namelen = socketAddressSize;
-    }
-
     msg.msg_iov    = &iovec;
     msg.msg_iovlen = 1;
 
-#if defined(BSLS_PLATFORM_OS_LINUX)
-    const bool wantTimestamp = options.wantTimestamp();
-    CtrlMsgBuf ctrlBuf;
-    if (wantTimestamp) {
-        msg.msg_control    = ctrlBuf.buffer();
-        msg.msg_controllen = CMSG_LEN(k_CTRL_PAYLOAD_SIZE);
-    }
-#endif
+    context->setBytesReceivable(capacity);
 
     ssize_t recvmsgResult =
         ::recvmsg(socket, &msg, NTSU_SOCKETUTIL_RECVMSG_FLAGS);
@@ -2354,11 +2529,10 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
         context->setEndpoint(endpoint);
     }
-#if defined(BSLS_PLATFORM_OS_LINUX)
-    if (wantTimestamp) {
-        extractTimestampsFromCtrlBlock(context, msg);
+
+    if (wantMetaData) {
+        control.decode(context, msg, options);
     }
-#endif
 
     context->setBytesReceived(recvmsgResult);
 
@@ -2371,9 +2545,28 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
-
     context->reset();
+
+    const bool wantEndpoint = options.wantEndpoint();
+    const bool wantMetaData = options.wantMetaData();
+
+    msghdr msg;
+    bsl::memset(&msg, 0, sizeof msg);
+
+    sockaddr_storage socketAddress;
+    socklen_t        socketAddressSize;
+
+    if (wantEndpoint) {
+        SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+
+        msg.msg_name    = &socketAddress;
+        msg.msg_namelen = socketAddressSize;
+    }
+
+    ReceiveControl control;
+    if (wantMetaData) {
+        control.initialize(&msg);
+    }
 
     bsl::size_t capacity =
         ntsa::MutableBuffer::totalSize(bufferArray, bufferCount);
@@ -2381,36 +2574,10 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         return ntsa::Error::invalid();
     }
 
-    context->setBytesReceivable(capacity);
-
-    const bool wantEndpoint = options.wantEndpoint();
-
-    sockaddr_storage socketAddress;
-    socklen_t        socketAddressSize;
-
-    if (wantEndpoint) {
-        SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
-    }
-
-    msghdr msg;
-    bsl::memset(&msg, 0, sizeof msg);
-
-    if (wantEndpoint) {
-        msg.msg_name    = &socketAddress;
-        msg.msg_namelen = socketAddressSize;
-    }
-
     msg.msg_iov    = NTSU_SOCKETUTIL_MSG_IOV_BUF(bufferArray);
     msg.msg_iovlen = NTSU_SOCKETUTIL_MSG_IOV_LEN(bufferCount);
 
-#if defined(BSLS_PLATFORM_OS_LINUX)
-    const bool wantTimestamp = options.wantTimestamp();
-    CtrlMsgBuf ctrlBuf;
-    if (wantTimestamp) {
-        msg.msg_control    = ctrlBuf.buffer();
-        msg.msg_controllen = CMSG_LEN(k_CTRL_PAYLOAD_SIZE);
-    }
-#endif
+    context->setBytesReceivable(capacity);
 
     ssize_t recvmsgResult =
         ::recvmsg(socket, &msg, NTSU_SOCKETUTIL_RECVMSG_FLAGS);
@@ -2434,11 +2601,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         context->setEndpoint(endpoint);
     }
 
-#if defined(BSLS_PLATFORM_OS_LINUX)
-    if (wantTimestamp) {
-        extractTimestampsFromCtrlBlock(context, msg);
+    if (wantMetaData) {
+        control.decode(context, msg, options);
     }
-#endif
 
     context->setBytesReceived(recvmsgResult);
 
@@ -2450,9 +2615,28 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
-
     context->reset();
+
+    const bool wantEndpoint = options.wantEndpoint();
+    const bool wantMetaData = options.wantMetaData();
+
+    msghdr msg;
+    bsl::memset(&msg, 0, sizeof msg);
+
+    sockaddr_storage socketAddress;
+    socklen_t        socketAddressSize;
+
+    if (wantEndpoint) {
+        SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+
+        msg.msg_name    = &socketAddress;
+        msg.msg_namelen = socketAddressSize;
+    }
+
+    ReceiveControl control;
+    if (wantMetaData) {
+        control.initialize(&msg);
+    }
 
     bsl::size_t numBuffersTotal = bufferArray->numBuffers();
     if (numBuffersTotal == 0) {
@@ -2464,36 +2648,10 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         return ntsa::Error::invalid();
     }
 
-    context->setBytesReceivable(numBytesTotal);
-
-    const bool wantEndpoint = options.wantEndpoint();
-
-    sockaddr_storage socketAddress;
-    socklen_t        socketAddressSize;
-
-    if (wantEndpoint) {
-        SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
-    }
-
-    msghdr msg;
-    bsl::memset(&msg, 0, sizeof msg);
-
-    if (wantEndpoint) {
-        msg.msg_name    = &socketAddress;
-        msg.msg_namelen = socketAddressSize;
-    }
-
     msg.msg_iov    = NTSU_SOCKETUTIL_MSG_IOV_BUF(bufferArray->base());
     msg.msg_iovlen = NTSU_SOCKETUTIL_MSG_IOV_LEN(numBuffersTotal);
 
-#if defined(BSLS_PLATFORM_OS_LINUX)
-    const bool wantTimestamp = options.wantTimestamp();
-    CtrlMsgBuf ctrlBuf;
-    if (wantTimestamp) {
-        msg.msg_control    = ctrlBuf.buffer();
-        msg.msg_controllen = CMSG_LEN(k_CTRL_PAYLOAD_SIZE);
-    }
-#endif
+    context->setBytesReceivable(numBytesTotal);
 
     ssize_t recvmsgResult =
         ::recvmsg(socket, &msg, NTSU_SOCKETUTIL_RECVMSG_FLAGS);
@@ -2517,11 +2675,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         context->setEndpoint(endpoint);
     }
 
-#if defined(BSLS_PLATFORM_OS_LINUX)
-    if (wantTimestamp) {
-        extractTimestampsFromCtrlBlock(context, msg);
+    if (wantMetaData) {
+        control.decode(context, msg, options);
     }
-#endif
 
     context->setBytesReceived(recvmsgResult);
 
@@ -2533,9 +2689,28 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*        context,
                                 const ntsa::ReceiveOptions&  options,
                                 ntsa::Handle                 socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
-
     context->reset();
+
+    const bool wantEndpoint = options.wantEndpoint();
+    const bool wantMetaData = options.wantMetaData();
+
+    msghdr msg;
+    bsl::memset(&msg, 0, sizeof msg);
+
+    sockaddr_storage socketAddress;
+    socklen_t        socketAddressSize;
+
+    if (wantEndpoint) {
+        SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+        
+        msg.msg_name    = &socketAddress;
+        msg.msg_namelen = socketAddressSize;
+    }
+
+    ReceiveControl control;
+    if (wantMetaData) {
+        control.initialize(&msg);
+    }
 
     bsl::size_t numBuffersTotal = bufferArray->numBuffers();
     if (numBuffersTotal == 0) {
@@ -2547,36 +2722,10 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*        context,
         return ntsa::Error::invalid();
     }
 
-    context->setBytesReceivable(numBytesTotal);
-
-    const bool wantEndpoint = options.wantEndpoint();
-
-    sockaddr_storage socketAddress;
-    socklen_t        socketAddressSize;
-
-    if (wantEndpoint) {
-        SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
-    }
-
-    msghdr msg;
-    bsl::memset(&msg, 0, sizeof msg);
-
-    if (wantEndpoint) {
-        msg.msg_name    = &socketAddress;
-        msg.msg_namelen = socketAddressSize;
-    }
-
     msg.msg_iov    = NTSU_SOCKETUTIL_MSG_IOV_BUF(bufferArray->base());
     msg.msg_iovlen = NTSU_SOCKETUTIL_MSG_IOV_LEN(numBuffersTotal);
 
-#if defined(BSLS_PLATFORM_OS_LINUX)
-    const bool wantTimestamp = options.wantTimestamp();
-    CtrlMsgBuf ctrlBuf;
-    if (wantTimestamp) {
-        msg.msg_control    = ctrlBuf.buffer();
-        msg.msg_controllen = CMSG_LEN(k_CTRL_PAYLOAD_SIZE);
-    }
-#endif
+    context->setBytesReceivable(numBytesTotal);
 
     ssize_t recvmsgResult =
         ::recvmsg(socket, &msg, NTSU_SOCKETUTIL_RECVMSG_FLAGS);
@@ -2600,11 +2749,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*        context,
         context->setEndpoint(endpoint);
     }
 
-#if defined(BSLS_PLATFORM_OS_LINUX)
-    if (wantTimestamp) {
-        extractTimestampsFromCtrlBlock(context, msg);
+    if (wantMetaData) {
+        control.decode(context, msg, options);
     }
-#endif
 
     context->setBytesReceived(recvmsgResult);
 
@@ -2616,52 +2763,45 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
-
     context->reset();
 
-    bsl::size_t size     = string->size();
-    bsl::size_t capacity = string->capacity() - size;
-    if (capacity == 0) {
-        return ntsa::Error::invalid();
-    }
-
-    context->setBytesReceivable(capacity);
-
     const bool wantEndpoint = options.wantEndpoint();
+    const bool wantMetaData = options.wantMetaData();
+
+    msghdr msg;
+    bsl::memset(&msg, 0, sizeof msg);
 
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
 
     if (wantEndpoint) {
         SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+
+        msg.msg_name    = &socketAddress;
+        msg.msg_namelen = socketAddressSize;
     }
 
-    void* data = string->data() + size;
+    ReceiveControl control;
+    if (wantMetaData) {
+        control.initialize(&msg);
+    }
+
+    bsl::size_t size     = string->size();
+    bsl::size_t capacity = string->capacity() - size;
+    void*       data     = string->data() + size;
+
+    if (capacity == 0) {
+        return ntsa::Error::invalid();
+    }
 
     struct iovec iovec;
     iovec.iov_base = data;
     iovec.iov_len  = capacity;
 
-    msghdr msg;
-    bsl::memset(&msg, 0, sizeof msg);
-
-    if (wantEndpoint) {
-        msg.msg_name    = &socketAddress;
-        msg.msg_namelen = socketAddressSize;
-    }
-
     msg.msg_iov    = &iovec;
     msg.msg_iovlen = 1;
 
-#if defined(BSLS_PLATFORM_OS_LINUX)
-    const bool wantTimestamp = options.wantTimestamp();
-    CtrlMsgBuf ctrlBuf;
-    if (wantTimestamp) {
-        msg.msg_control    = ctrlBuf.buffer();
-        msg.msg_controllen = CMSG_LEN(k_CTRL_PAYLOAD_SIZE);
-    }
-#endif
+    context->setBytesReceivable(capacity);
 
     ssize_t recvmsgResult =
         ::recvmsg(socket, &msg, NTSU_SOCKETUTIL_RECVMSG_FLAGS);
@@ -2685,11 +2825,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         context->setEndpoint(endpoint);
     }
 
-#if defined(BSLS_PLATFORM_OS_LINUX)
-    if (wantTimestamp) {
-        extractTimestampsFromCtrlBlock(context, msg);
+    if (wantMetaData) {
+        control.decode(context, msg, options);
     }
-#endif
 
     context->setBytesReceived(recvmsgResult);
     string->resize(size + recvmsgResult);
@@ -2703,6 +2841,27 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 ntsa::Handle                socket)
 {
     context->reset();
+
+    const bool wantEndpoint = options.wantEndpoint();
+    const bool wantMetaData = options.wantMetaData();
+
+    msghdr msg;
+    bsl::memset(&msg, 0, sizeof msg);
+
+    sockaddr_storage socketAddress;
+    socklen_t        socketAddressSize;
+
+    if (wantEndpoint) {
+        SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+        
+        msg.msg_name    = &socketAddress;
+        msg.msg_namelen = socketAddressSize;
+    }
+
+    ReceiveControl control;
+    if (wantMetaData) {
+        control.initialize(&msg);
+    }
 
     bsl::size_t numBytesMax = options.maxBytes();
     if (numBytesMax == 0) {
@@ -2736,36 +2895,10 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         blob,
         numBytesMax);
 
-    context->setBytesReceivable(numBytesTotal);
-
-    const bool wantEndpoint = options.wantEndpoint();
-
-    sockaddr_storage socketAddress;
-    socklen_t        socketAddressSize;
-
-    if (wantEndpoint) {
-        SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
-    }
-
-    msghdr msg;
-    bsl::memset(&msg, 0, sizeof msg);
-
-    if (wantEndpoint) {
-        msg.msg_name    = &socketAddress;
-        msg.msg_namelen = socketAddressSize;
-    }
-
     msg.msg_iov    = iovecArray;
     msg.msg_iovlen = NTSU_SOCKETUTIL_MSG_IOV_LEN(numBuffersTotal);
 
-#if defined(BSLS_PLATFORM_OS_LINUX)
-    const bool wantTimestamp = options.wantTimestamp();
-    CtrlMsgBuf ctrlBuf;
-    if (wantTimestamp) {
-        msg.msg_control    = ctrlBuf.buffer();
-        msg.msg_controllen = CMSG_LEN(k_CTRL_PAYLOAD_SIZE);
-    }
-#endif
+    context->setBytesReceivable(numBytesTotal);
 
     ssize_t recvmsgResult =
         ::recvmsg(socket, &msg, NTSU_SOCKETUTIL_RECVMSG_FLAGS);
@@ -2789,11 +2922,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         context->setEndpoint(endpoint);
     }
 
-#if defined(BSLS_PLATFORM_OS_LINUX)
-    if (wantTimestamp) {
-        extractTimestampsFromCtrlBlock(context, msg);
+    if (wantMetaData) {
+        control.decode(context, msg, options);
     }
-#endif
 
     context->setBytesReceived(recvmsgResult);
     blob->setLength(NTSCFG_WARNING_NARROW(int, size + recvmsgResult));
@@ -2806,51 +2937,43 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
-
     context->reset();
 
-    bsl::size_t capacity = blobBuffer->size();
-    if (capacity == 0) {
-        return ntsa::Error::invalid();
-    }
-
-    context->setBytesReceivable(capacity);
-
     const bool wantEndpoint = options.wantEndpoint();
+    const bool wantMetaData = options.wantMetaData();
+
+    msghdr msg;
+    bsl::memset(&msg, 0, sizeof msg);
 
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
 
     if (wantEndpoint) {
         SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+
+        msg.msg_name    = &socketAddress;
+        msg.msg_namelen = socketAddressSize;
     }
 
-    void* data = blobBuffer->data();
+    ReceiveControl control;
+    if (wantMetaData) {
+        control.initialize(&msg);
+    }
+
+    void*       data     = blobBuffer->data();
+    bsl::size_t capacity = blobBuffer->size();
+    if (capacity == 0) {
+        return ntsa::Error::invalid();
+    }
 
     struct iovec iovec;
     iovec.iov_base = data;
     iovec.iov_len  = capacity;
 
-    msghdr msg;
-    bsl::memset(&msg, 0, sizeof msg);
-
-    if (wantEndpoint) {
-        msg.msg_name    = &socketAddress;
-        msg.msg_namelen = socketAddressSize;
-    }
-
     msg.msg_iov    = &iovec;
     msg.msg_iovlen = 1;
 
-#if defined(BSLS_PLATFORM_OS_LINUX)
-    const bool wantTimestamp = options.wantTimestamp();
-    CtrlMsgBuf ctrlBuf;
-    if (wantTimestamp) {
-        msg.msg_control    = ctrlBuf.buffer();
-        msg.msg_controllen = CMSG_LEN(k_CTRL_PAYLOAD_SIZE);
-    }
-#endif
+    context->setBytesReceivable(capacity);
 
     ssize_t recvmsgResult =
         ::recvmsg(socket, &msg, NTSU_SOCKETUTIL_RECVMSG_FLAGS);
@@ -2874,11 +2997,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         context->setEndpoint(endpoint);
     }
 
-#if defined(BSLS_PLATFORM_OS_LINUX)
-    if (wantTimestamp) {
-        extractTimestampsFromCtrlBlock(context, msg);
+    if (wantMetaData) {
+        control.decode(context, msg, options);
     }
-#endif
 
     context->setBytesReceived(recvmsgResult);
 

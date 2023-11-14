@@ -51,7 +51,12 @@ namespace ntsa {
 /// timestamp availability depends on the platform and socket options set.  If
 /// this flag is not set or if OS does not provide software and/or hardware
 /// timestamps then the resulting timestamp fields of the receive context will
-/// be null.  The default value is false.
+/// be null. The default value is false.
+///
+/// @li @b wantForeignHandles:
+/// The flag to indicate that any socket handles sent by the peer should also 
+/// be received and included in the resulting receive context. The default 
+/// value is false.
 ///
 /// @li @b maxBytes:
 /// The hint for the maximum number of bytes to copy from the socket receive
@@ -89,13 +94,18 @@ namespace ntsa {
 /// @ingroup module_ntsa_operation
 class ReceiveOptions
 {
-    class OptId
-    {
-      public:
-        enum Value {
-            e_OMIT_ENDPOINT = 0,
-            e_INCLUDE_TIMESTAMP  //both hardware and software
-        };
+    /// The indexes of bits in the options data member that correspond to 
+    /// flags set by the user.
+    enum Flag {
+        /// Do not receive the remote endpoint of the peer.
+        k_OMIT_ENDPOINT = 0,
+
+        /// Receive timestamp meta-data provided by the operating system, if
+        /// any.
+        k_INCLUDE_TIMESTAMP = 1,
+
+        /// Receive socket handles sent by the peer, if any.
+        k_INCLUDE_FOREIGN_HANDLES = 2
     };
 
     bsl::size_t   d_maxBytes;
@@ -139,6 +149,15 @@ class ReceiveOptions
     /// receive context.
     void hideTimestamp();
 
+    /// Set the flag which indicates that any socket handles sent by the peer
+    /// should also be received and included in the resulting receive context.
+    void showForeignHandles();
+
+    /// Set the flag which indicates that any socket handles sent by the peer
+    /// socket handles should also be received and included in the resulting 
+    /// receive context.
+    void hideForeignHandles();
+
     /// Set the maximum number of bytes to copy to the specified 'value'.
     void setMaxBytes(bsl::size_t value);
 
@@ -152,6 +171,14 @@ class ReceiveOptions
     /// Return true if both software and hardware timestamps should be
     /// included in the resulting receive context, otherwise return false.
     bool wantTimestamp() const;
+
+    /// Return true if any socket handles sent by the peer should be included
+    /// in the resulting receive context, otherwise return false. 
+    bool wantForeignHandles() const;
+
+    // Return true if either timestamps or foreign handles should be included
+    // in the resulting receive context, otherwise return false.
+    bool wantMetaData() const;
 
     /// Return the maximum number of bytes to copy.
     bsl::size_t maxBytes() const;
@@ -261,27 +288,41 @@ NTSCFG_INLINE
 void ReceiveOptions::showEndpoint()
 {
     d_options =
-        bdlb::BitUtil::withBitCleared(d_options, OptId::e_OMIT_ENDPOINT);
+        bdlb::BitUtil::withBitCleared(d_options, k_OMIT_ENDPOINT);
 }
 
 NTSCFG_INLINE
 void ReceiveOptions::hideEndpoint()
 {
-    d_options = bdlb::BitUtil::withBitSet(d_options, OptId::e_OMIT_ENDPOINT);
+    d_options = bdlb::BitUtil::withBitSet(d_options, k_OMIT_ENDPOINT);
 }
 
 NTSCFG_INLINE
 void ReceiveOptions::showTimestamp()
 {
     d_options =
-        bdlb::BitUtil::withBitSet(d_options, OptId::e_INCLUDE_TIMESTAMP);
+        bdlb::BitUtil::withBitSet(d_options, k_INCLUDE_TIMESTAMP);
 }
 
 NTSCFG_INLINE
 void ReceiveOptions::hideTimestamp()
 {
     d_options =
-        bdlb::BitUtil::withBitCleared(d_options, OptId::e_INCLUDE_TIMESTAMP);
+        bdlb::BitUtil::withBitCleared(d_options, k_INCLUDE_TIMESTAMP);
+}
+
+NTSCFG_INLINE
+void ReceiveOptions::showForeignHandles()
+{
+    d_options =
+        bdlb::BitUtil::withBitSet(d_options, k_INCLUDE_FOREIGN_HANDLES);
+}
+
+NTSCFG_INLINE
+void ReceiveOptions::hideForeignHandles()
+{
+    d_options =
+        bdlb::BitUtil::withBitCleared(d_options, k_INCLUDE_FOREIGN_HANDLES);
 }
 
 NTSCFG_INLINE
@@ -299,13 +340,25 @@ void ReceiveOptions::setMaxBuffers(bsl::size_t value)
 NTSCFG_INLINE
 bool ReceiveOptions::wantEndpoint() const
 {
-    return !bdlb::BitUtil::isBitSet(d_options, OptId::e_OMIT_ENDPOINT);
+    return !bdlb::BitUtil::isBitSet(d_options, k_OMIT_ENDPOINT);
 }
 
 NTSCFG_INLINE
 bool ReceiveOptions::wantTimestamp() const
 {
-    return bdlb::BitUtil::isBitSet(d_options, OptId::e_INCLUDE_TIMESTAMP);
+    return bdlb::BitUtil::isBitSet(d_options, k_INCLUDE_TIMESTAMP);
+}
+
+NTSCFG_INLINE
+bool ReceiveOptions::wantForeignHandles() const
+{
+    return bdlb::BitUtil::isBitSet(d_options, k_INCLUDE_FOREIGN_HANDLES);
+}
+
+NTSCFG_INLINE
+bool ReceiveOptions::wantMetaData() const
+{
+    return (d_options & ((1 << k_INCLUDE_TIMESTAMP) | (1 << k_INCLUDE_FOREIGN_HANDLES))) != 0;
 }
 
 NTSCFG_INLINE
@@ -351,6 +404,7 @@ void hashAppend(HASH_ALGORITHM& algorithm, const ReceiveOptions& value)
 
     hashAppend(algorithm, value.wantEndpoint());
     hashAppend(algorithm, value.wantTimestamp());
+    hashAppend(algorithm, value.wantForeignHandles());
     hashAppend(algorithm, value.maxBytes());
     hashAppend(algorithm, value.maxBuffers());
 }

@@ -20,6 +20,7 @@
 BSLS_IDENT("$Id: $")
 
 #include <ntsa_endpoint.h>
+#include <ntsa_handle.h>
 #include <ntscfg_platform.h>
 #include <ntsscm_version.h>
 #include <bdlb_nullablevalue.h>
@@ -42,6 +43,12 @@ namespace ntsa {
 /// The remote endpoint to which the data should be send. If this value is
 /// null, the data is sent to the remote endpoint to which the socket is
 /// connected. The default value is null.
+///
+/// @li @b foreignHandle:
+/// The handle to the open socket to send to the peer. If successfully received
+/// the handle is effectively duplicated in the receiving process, but note
+/// that the sender is still responsible for closing the socket handle even if
+/// it has been sent successfully.
 ///
 /// @li @b maxBytes:
 /// The hint for the maximum number of bytes to copy to the socket send buffer.
@@ -79,6 +86,7 @@ namespace ntsa {
 class SendOptions
 {
     bdlb::NullableValue<ntsa::Endpoint> d_endpoint;
+    bdlb::NullableValue<ntsa::Handle>   d_foreignHandle;
     bsl::size_t                         d_maxBytes;
     bsl::size_t                         d_maxBuffers;
 
@@ -105,6 +113,10 @@ class SendOptions
     /// specified 'value'.
     void setEndpoint(const ntsa::Endpoint& value);
 
+    // Set the handle to the open socket to send to the peer to the specified
+    // 'value'.
+    void setForeignHandle(ntsa::Handle value);
+
     /// Set the maximum number of bytes to copy to the specified 'value'.
     void setMaxBytes(bsl::size_t value);
 
@@ -113,6 +125,9 @@ class SendOptions
 
     /// Return the remote endpoint to which the data should be sent.
     const bdlb::NullableValue<ntsa::Endpoint>& endpoint() const;
+
+    /// Return the handle to the open socket to send to the peer.
+    const bdlb::NullableValue<ntsa::Handle>& foreignHandle() const;
 
     /// Return the maximum number of bytes to copy.
     bsl::size_t maxBytes() const;
@@ -183,6 +198,7 @@ void hashAppend(HASH_ALGORITHM& algorithm, const SendOptions& value);
 NTSCFG_INLINE
 SendOptions::SendOptions()
 : d_endpoint()
+, d_foreignHandle()
 , d_maxBytes(0)
 , d_maxBuffers(0)
 {
@@ -191,6 +207,7 @@ SendOptions::SendOptions()
 NTSCFG_INLINE
 SendOptions::SendOptions(const SendOptions& original)
 : d_endpoint(original.d_endpoint)
+, d_foreignHandle(original.d_foreignHandle)
 , d_maxBytes(original.d_maxBytes)
 , d_maxBuffers(original.d_maxBuffers)
 {
@@ -205,6 +222,7 @@ NTSCFG_INLINE
 SendOptions& SendOptions::operator=(const SendOptions& other)
 {
     d_endpoint   = other.d_endpoint;
+    d_foreignHandle = other.d_foreignHandle;
     d_maxBytes   = other.d_maxBytes;
     d_maxBuffers = other.d_maxBuffers;
     return *this;
@@ -214,6 +232,7 @@ NTSCFG_INLINE
 void SendOptions::reset()
 {
     d_endpoint.reset();
+    d_foreignHandle.reset();
     d_maxBytes   = 0;
     d_maxBuffers = 0;
 }
@@ -222,6 +241,12 @@ NTSCFG_INLINE
 void SendOptions::setEndpoint(const ntsa::Endpoint& value)
 {
     d_endpoint = value;
+}
+
+NTSCFG_INLINE
+void SendOptions::setForeignHandle(ntsa::Handle value)
+{
+    d_foreignHandle = value;
 }
 
 NTSCFG_INLINE
@@ -240,6 +265,12 @@ NTSCFG_INLINE
 const bdlb::NullableValue<ntsa::Endpoint>& SendOptions::endpoint() const
 {
     return d_endpoint;
+}
+
+NTSCFG_INLINE
+const bdlb::NullableValue<ntsa::Handle>& SendOptions::foreignHandle() const
+{
+    return d_foreignHandle;
 }
 
 NTSCFG_INLINE
@@ -284,6 +315,7 @@ void hashAppend(HASH_ALGORITHM& algorithm, const SendOptions& value)
     using bslh::hashAppend;
 
     hashAppend(algorithm, value.endpoint());
+    hashAppend(algorithm, value.foreignHandle());
     hashAppend(algorithm, value.maxBytes());
     hashAppend(algorithm, value.maxBuffers());
 }

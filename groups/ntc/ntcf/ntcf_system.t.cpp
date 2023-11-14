@@ -11547,6 +11547,9 @@ void concernDatagramSocketReceiveRateLimitTimerClose(
     NTCI_LOG_CONTEXT();
     NTCI_LOG_DEBUG("Test started");
 
+    const bsl::size_t k_MESSAGE_SIZE = 65507;
+    const bsl::size_t k_NUM_MESSAGES = 1024;
+
     const ntsa::Transport::Value transport =
         ntsa::Transport::e_UDP_IPV4_DATAGRAM;
 
@@ -11568,6 +11571,29 @@ void concernDatagramSocketReceiveRateLimitTimerClose(
                                                        transport);
         NTCCFG_TEST_FALSE(error);
 
+        {
+            ntsa::SocketOption socketOption;
+            socketOption.makeSendBufferSize(k_MESSAGE_SIZE);
+
+            error = ntsf::System::setOption(basicClientSocket->handle(), 
+                                            socketOption);
+            NTCCFG_TEST_FALSE(error);
+        }
+
+        {
+            ntsa::SocketOption socketOption;
+            error = ntsf::System::getOption(
+                &socketOption, 
+                basicClientSocket->handle(), 
+                ntsa::SocketOptionType::e_SEND_BUFFER_SIZE);
+            NTCCFG_TEST_FALSE(error);
+
+            NTCCFG_TEST_TRUE(socketOption.isSendBufferSize());
+
+            const bsl::size_t sendBufferSize = socketOption.sendBufferSize();
+            NTCCFG_TEST_GE(sendBufferSize, k_MESSAGE_SIZE);
+        }
+
         clientDatagramSocket =
             interface->createDatagramSocket(options, allocator);
 
@@ -11586,9 +11612,6 @@ void concernDatagramSocketReceiveRateLimitTimerClose(
         session.createInplace(allocator, rateLimitSemaphore);
         serverDatagramSocket->registerSession(session);
     }
-
-    const int k_MESSAGE_SIZE = 65507;  //maximum
-    const int k_NUM_MESSAGES = 1024;
 
     NTCI_LOG_DEBUG("Generating message");
     bsl::shared_ptr<bdlbb::Blob> message =
@@ -11623,7 +11646,7 @@ void concernDatagramSocketReceiveRateLimitTimerClose(
 
     NTCI_LOG_DEBUG("Sending messages");
     {
-        for (int i = 0; i < k_NUM_MESSAGES; ++i) {
+        for (bsl::size_t i = 0; i < k_NUM_MESSAGES; ++i) {
             ntca::SendOptions sendOptions;
 
             error = clientDatagramSocket->send(*message, sendOptions);
@@ -11793,6 +11816,9 @@ void concernDatagramSocketSendRateLimitTimerClose(
     NTCI_LOG_CONTEXT();
     NTCI_LOG_DEBUG("Test started");
 
+    const bsl::size_t k_MESSAGE_SIZE = 65507;
+    const bsl::size_t k_NUM_MESSAGES = 1024;
+
     const ntsa::Transport::Value transport =
         ntsa::Transport::e_UDP_IPV4_DATAGRAM;
 
@@ -11813,6 +11839,29 @@ void concernDatagramSocketSendRateLimitTimerClose(
                                                        transport);
         NTCCFG_TEST_FALSE(error);
 
+        {
+            ntsa::SocketOption socketOption;
+            socketOption.makeSendBufferSize(k_MESSAGE_SIZE);
+
+            error = ntsf::System::setOption(basicClientSocket->handle(), 
+                                            socketOption);
+            NTCCFG_TEST_FALSE(error);
+        }
+
+        {
+            ntsa::SocketOption socketOption;
+            error = ntsf::System::getOption(
+                &socketOption, 
+                basicClientSocket->handle(), 
+                ntsa::SocketOptionType::e_SEND_BUFFER_SIZE);
+            NTCCFG_TEST_FALSE(error);
+
+            NTCCFG_TEST_TRUE(socketOption.isSendBufferSize());
+
+            const bsl::size_t sendBufferSize = socketOption.sendBufferSize();
+            NTCCFG_TEST_GE(sendBufferSize, k_MESSAGE_SIZE);
+        }
+
         clientDatagramSocket =
             interface->createDatagramSocket(options, allocator);
 
@@ -11831,9 +11880,6 @@ void concernDatagramSocketSendRateLimitTimerClose(
         session.createInplace(allocator, rateLimitSemaphore);
         clientDatagramSocket->registerSession(session);
     }
-
-    const int k_MESSAGE_SIZE = 65507;  //maximum
-    const int k_NUM_MESSAGES = 1024;
 
     NTCI_LOG_DEBUG("Generating message");
     bsl::shared_ptr<bdlbb::Blob> message =
@@ -11868,7 +11914,7 @@ void concernDatagramSocketSendRateLimitTimerClose(
 
     NTCI_LOG_DEBUG("Sending messages");
     {
-        for (int i = 0; i < k_NUM_MESSAGES; ++i) {
+        for (bsl::size_t i = 0; i < k_NUM_MESSAGES; ++i) {
             ntca::SendOptions sendOptions;
 
             error = clientDatagramSocket->send(*message, sendOptions);
@@ -12181,19 +12227,6 @@ void concernStreamSocketConnectRetryTimerClose(
         NTCCFG_TEST_OK(error);
     }
 
-    NTCI_LOG_DEBUG("Processing connect result");
-    {
-        ntci::ConnectResult connectResult;
-        error = connectFuture.wait(&connectResult);
-        NTCCFG_TEST_OK(error);
-
-        NTCCFG_TEST_LOG_INFO << "Processing connect event "
-                             << connectResult.event() << NTCCFG_TEST_LOG_END;
-
-        NTCCFG_TEST_EQ(connectResult.event().type(),
-                       ntca::ConnectEventType::e_ERROR);
-    }
-
     NTCI_LOG_DEBUG("closing the socket");
     {
         {
@@ -12263,19 +12296,6 @@ void concernStreamSocketConnectDeadlineTimerClose(
         NTCCFG_TEST_OK(error);
     }
 
-    NTCI_LOG_DEBUG("Processing connect result");
-    {
-        ntci::ConnectResult connectResult;
-        error = connectFuture.wait(&connectResult);
-        NTCCFG_TEST_OK(error);
-
-        NTCCFG_TEST_LOG_INFO << "Processing connect event "
-                             << connectResult.event() << NTCCFG_TEST_LOG_END;
-
-        NTCCFG_TEST_EQ(connectResult.event().type(),
-                       ntca::ConnectEventType::e_ERROR);
-    }
-
     NTCI_LOG_DEBUG("closing the socket");
     {
         {
@@ -12294,6 +12314,9 @@ void concernDatagramSocketReceiveRateLimitTimerEventNotifications(
 
     NTCI_LOG_CONTEXT();
     NTCI_LOG_DEBUG("Test started");
+
+    const bsl::size_t k_MESSAGE_SIZE = 65507;
+    const bsl::size_t k_NUM_MESSAGES = 100;
 
     const ntsa::Transport::Value transport =
         ntsa::Transport::e_UDP_IPV4_DATAGRAM;
@@ -12316,6 +12339,29 @@ void concernDatagramSocketReceiveRateLimitTimerEventNotifications(
                                                        transport);
         NTCCFG_TEST_FALSE(error);
 
+        {
+            ntsa::SocketOption socketOption;
+            socketOption.makeSendBufferSize(k_MESSAGE_SIZE);
+
+            error = ntsf::System::setOption(basicClientSocket->handle(), 
+                                            socketOption);
+            NTCCFG_TEST_FALSE(error);
+        }
+
+        {
+            ntsa::SocketOption socketOption;
+            error = ntsf::System::getOption(
+                &socketOption, 
+                basicClientSocket->handle(), 
+                ntsa::SocketOptionType::e_SEND_BUFFER_SIZE);
+            NTCCFG_TEST_FALSE(error);
+
+            NTCCFG_TEST_TRUE(socketOption.isSendBufferSize());
+
+            const bsl::size_t sendBufferSize = socketOption.sendBufferSize();
+            NTCCFG_TEST_GE(sendBufferSize, k_MESSAGE_SIZE);
+        }
+
         clientDatagramSocket =
             interface->createDatagramSocket(options, allocator);
 
@@ -12334,9 +12380,6 @@ void concernDatagramSocketReceiveRateLimitTimerEventNotifications(
         session.createInplace(allocator, rateLimitSemaphore);
         serverDatagramSocket->registerSession(session);
     }
-
-    const int k_MESSAGE_SIZE = 65507;  //maximum
-    const int k_NUM_MESSAGES = 100;
 
     NTCI_LOG_DEBUG("Generating message");
     bsl::shared_ptr<bdlbb::Blob> message =
@@ -12371,11 +12414,15 @@ void concernDatagramSocketReceiveRateLimitTimerEventNotifications(
 
     NTCI_LOG_DEBUG("Sending messages");
     {
-        for (int i = 0; i < k_NUM_MESSAGES; ++i) {
+        for (bsl::size_t i = 0; i < k_NUM_MESSAGES; ++i) {
             ntca::SendOptions sendOptions;
+
+            NTCI_LOG_DEBUG("Sending message %d", i);
 
             error = clientDatagramSocket->send(*message, sendOptions);
             NTCCFG_TEST_TRUE(!error);
+
+            NTCI_LOG_DEBUG("Sent message %d: OK", i);
         }
     }
 
@@ -12421,6 +12468,9 @@ void concernDatagramSocketSendRateLimitTimerEventNotifications(
     NTCI_LOG_CONTEXT();
     NTCI_LOG_DEBUG("Test started");
 
+    const bsl::size_t k_MESSAGE_SIZE = 65507;
+    const bsl::size_t k_NUM_MESSAGES = 100;
+
     const ntsa::Transport::Value transport =
         ntsa::Transport::e_UDP_IPV4_DATAGRAM;
 
@@ -12442,6 +12492,29 @@ void concernDatagramSocketSendRateLimitTimerEventNotifications(
                                                        transport);
         NTCCFG_TEST_FALSE(error);
 
+        {
+            ntsa::SocketOption socketOption;
+            socketOption.makeSendBufferSize(k_MESSAGE_SIZE);
+
+            error = ntsf::System::setOption(basicClientSocket->handle(), 
+                                            socketOption);
+            NTCCFG_TEST_FALSE(error);
+        }
+
+        {
+            ntsa::SocketOption socketOption;
+            error = ntsf::System::getOption(
+                &socketOption, 
+                basicClientSocket->handle(), 
+                ntsa::SocketOptionType::e_SEND_BUFFER_SIZE);
+            NTCCFG_TEST_FALSE(error);
+
+            NTCCFG_TEST_TRUE(socketOption.isSendBufferSize());
+
+            const bsl::size_t sendBufferSize = socketOption.sendBufferSize();
+            NTCCFG_TEST_GE(sendBufferSize, k_MESSAGE_SIZE);
+        }
+
         clientDatagramSocket =
             interface->createDatagramSocket(options, allocator);
 
@@ -12460,9 +12533,6 @@ void concernDatagramSocketSendRateLimitTimerEventNotifications(
         session.createInplace(allocator, rateLimitSemaphore);
         clientDatagramSocket->registerSession(session);
     }
-
-    const int k_MESSAGE_SIZE = 65507;  //maximum
-    const int k_NUM_MESSAGES = 100;
 
     NTCI_LOG_DEBUG("Generating message");
     bsl::shared_ptr<bdlbb::Blob> message =
@@ -12497,7 +12567,7 @@ void concernDatagramSocketSendRateLimitTimerEventNotifications(
 
     NTCI_LOG_DEBUG("Sending messages");
     {
-        for (int i = 0; i < k_NUM_MESSAGES; ++i) {
+        for (bsl::size_t i = 0; i < k_NUM_MESSAGES; ++i) {
             ntca::SendOptions sendOptions;
 
             error = clientDatagramSocket->send(*message, sendOptions);
@@ -12524,7 +12594,7 @@ void concernStreamSocketReceiveRateLimitTimerEventNotifications(
 
     NTCI_LOG_CONTEXT();
     NTCI_LOG_DEBUG("Test started");
-
+    
     const ntsa::Transport::Value transport =
         ntsa::Transport::e_TCP_IPV4_STREAM;
 

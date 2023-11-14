@@ -25,7 +25,9 @@ namespace ntsa {
 
 bool SendOptions::equals(const SendOptions& other) const
 {
-    return (d_endpoint == other.d_endpoint && d_maxBytes == other.d_maxBytes &&
+    return (d_endpoint == other.d_endpoint && 
+            d_foreignHandle == other.d_foreignHandle &&
+            d_maxBytes == other.d_maxBytes &&
             d_maxBuffers == other.d_maxBuffers);
 }
 
@@ -36,6 +38,14 @@ bool SendOptions::less(const SendOptions& other) const
     }
 
     if (other.d_endpoint < d_endpoint) {
+        return false;
+    }
+
+    if (d_foreignHandle < other.d_foreignHandle) {
+        return true;
+    }
+
+    if (other.d_foreignHandle < d_foreignHandle) {
         return false;
     }
 
@@ -57,6 +67,7 @@ bsl::ostream& SendOptions::print(bsl::ostream& stream,
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
     printer.printAttribute("endpoint", d_endpoint);
+    printer.printAttribute("foreignHandle", d_foreignHandle);
     printer.printAttribute("maxBytes", d_maxBytes);
     printer.printAttribute("maxBuffers", d_maxBuffers);
     printer.end();
