@@ -20,6 +20,8 @@ BSLS_IDENT_RCSID(ntsa_localname_cpp, "$Id$ $CSID$")
 
 #include <bdlb_guid.h>
 #include <bdlb_guidutil.h>
+#include <bdls_filesystemutil.h>
+#include <bdls_pathutil.h>
 
 #include <bslim_printer.h>
 #include <bslmf_assert.h>
@@ -29,10 +31,15 @@ BSLS_IDENT_RCSID(ntsa_localname_cpp, "$Id$ $CSID$")
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
 #include <errno.h>
+#include <sys/un.h>
 #endif
 
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
 #include <windows.h>
+#include <ws2def.h>
+#endif
+#if defined(BSLS_PLATFORM_OS_WINDOWS)
+#include <afunix.h>
 #endif
 
 namespace BloombergLP {
@@ -40,11 +47,14 @@ namespace ntsa {
 
 LocalName::LocalName()
 : d_size(0)
-, d_abstract(0)
-, d_unused(0)
+, d_abstract(false)
 {
-    BSLMF_ASSERT(sizeof(LocalName) == sizeof d_path + 1 + 1 + 1);
-    BSLMF_ASSERT(sizeof(LocalName) == 96);
+    bsl::memset(d_path, 0, k_MAX_PATH_LENGTH);
+#if defined(BSLS_PLATFORM_OS_AIX)
+    BSLMF_ASSERT(k_MAX_PATH_LENGTH <= (sizeof(sockaddr_un::sun_path) - 1));
+#else
+    BSLMF_ASSERT(k_MAX_PATH_LENGTH == (sizeof(sockaddr_un::sun_path) - 1));
+#endif
 }
 
 LocalName::LocalName(const LocalName& other)
@@ -67,25 +77,28 @@ LocalName& LocalName::operator=(const LocalName& other)
 
 void LocalName::reset()
 {
+    bsl::memset(d_path, 0, k_MAX_PATH_LENGTH);
     d_size     = 0;
-    d_abstract = 0;
-    d_unused   = 0;
+    d_abstract = false;
 }
 
 ntsa::Error LocalName::setAbstract()
 {
 #if defined(BSLS_PLATFORM_OS_LINUX)
-    d_abstract = 1;
+    if (d_size == k_MAX_PATH_LENGTH) {
+        return ntsa::Error(ntsa::Error::Code::e_LIMIT);
+    }
+    d_abstract = true;
     return ntsa::Error();
 #else
-    d_abstract = 0;
+    d_abstract = false;
     return ntsa::Error(ENOTSUP);
 #endif
 }
 
 ntsa::Error LocalName::setPersistent()
 {
-    d_abstract = 0;
+    d_abstract = false;
     return ntsa::Error();
 }
 
@@ -97,16 +110,17 @@ ntsa::Error LocalName::setUnnamed()
 
 ntsa::Error LocalName::setValue(const bslstl::StringRef& value)
 {
-    bsl::size_t size = value.size();
+    const bsl::size_t size = value.size();
 
-    if (size > ntsa::LocalName::k_MAX_PATH_LENGTH) {
-        size = ntsa::LocalName::k_MAX_PATH_LENGTH;
+    if (size > (ntsa::LocalName::k_MAX_PATH_LENGTH -
+                static_cast<unsigned>(d_abstract)))
+    {
+        return ntsa::Error(ntsa::Error::e_LIMIT);
     }
 
     bsl::memcpy(d_path, value.data(), size);
 
-    d_path[size] = 0;
-    d_size       = static_cast<bsl::uint8_t>(size);
+    d_size = static_cast<bsl::uint8_t>(size);
 
     return ntsa::Error();
 }
@@ -118,59 +132,17 @@ bslstl::StringRef LocalName::value() const
 
 bool LocalName::isAbstract() const
 {
-    return static_cast<bool>(d_abstract);
+    return d_abstract;
 }
 
 bool LocalName::isPersistent() const
 {
-    return !static_cast<bool>(d_abstract);
+    return !d_abstract;
 }
 
 bool LocalName::isAbsolute() const
 {
-#if defined(BSLS_PLATFORM_OS_UNIX)
-
-    if (d_size > 0) {
-        return d_path[0] == '/';
-    }
-    else {
-        return false;
-    }
-
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-
-    // clang-format off
-    if (d_size > 0) {
-        if (d_path[0] == '/' || d_path[0] == '\\') {
-            return true;
-        }
-        else {
-            if (d_size > 3) {
-                if (((d_path[0] >= 'A' && d_path[0] <= 'Z') ||
-                     (d_path[0] >= 'a' && d_path[0] <= 'z')) 
-                     &&
-                     (d_path[1] == ':')
-                     &&
-                     (d_path[2] == '/' || d_path[2] == '\\')) {
-                    return true;
-                }
-                else {
-                    return false;
-                }
-            }
-            else {
-                return false;
-            }
-        }
-    }
-    else {
-        return false;
-    }
-    // clang-format on
-
-#else
-#error Not implemented
-#endif
+    return bdls::PathUtil::isAbsolute(d_path);
 }
 
 bool LocalName::isRelative() const
@@ -185,7 +157,15 @@ bool LocalName::isUnnamed() const
 
 bool LocalName::equals(const LocalName& other) const
 {
+    if (this == &other) {
+        return true;
+    }
+
     if (d_size != other.d_size) {
+        return false;
+    }
+
+    if (d_abstract != other.d_abstract) {
         return false;
     }
 
@@ -241,6 +221,9 @@ bsl::ostream& LocalName::print(bsl::ostream& stream,
     if (isUnnamed()) {
         stream << "(unnamed)";
     }
+    else if (isAbstract()) {
+        stream << "(abstract): " << bslstl::StringRef(d_path, d_size);
+    }
     else {
         stream << bslstl::StringRef(d_path, d_size);
     }
@@ -252,68 +235,44 @@ bsl::ostream& LocalName::print(bsl::ostream& stream,
 
 ntsa::LocalName LocalName::generateUnique()
 {
-#if defined(BSLS_PLATFORM_OS_UNIX)
+    ntsa::LocalName name;
+    ntsa::Error     error = generateUnique(&name);
+    if (error) {
+        abort();  //TODO;
+    }
+    return name;
+}
 
-    ntsa::LocalName localName;
+ntsa::Error LocalName::generateUnique(ntsa::LocalName* name)
+{
+    bsl::string path;
+    int         rc = bdls::FilesystemUtil::getSystemTemporaryDirectory(&path);
+    if (rc != 0) {
+#if defined(BSLS_PLATFORM_OS_UNIX)
+        path = "/tmp";
+#else
+        return ntsa::Error(ntsa::Error::e_INVALID);
+#endif
+    }
+
+    bdlb::Guid        guid = bdlb::GuidUtil::generate();
+    bsl::stringstream ss;
+    ss << "ntf-" << guid;
+
+    rc = bdls::PathUtil::appendIfValid(&path, ss.str());
+    if (rc != 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    name->reset();
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
-    localName.setAbstract();
+    name->setAbstract();
 #endif
 
-    {
-        bdlb::Guid guid = bdlb::GuidUtil::generate();
+    ntsa::Error error = name->setValue(path);
 
-        const char* tmp = bsl::getenv("TMPDIR");
-        if (tmp == 0) {
-            tmp = "/tmp";
-        }
-
-        bsl::stringstream ss;
-        ss << tmp << "/ntf-" << guid;
-
-        localName.setValue(ss.str());
-    }
-
-    return localName;
-
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-
-    ntsa::LocalName localName;
-
-    {
-        bdlb::Guid guid = bdlb::GuidUtil::generate();
-
-        bsl::stringstream ss;
-
-        const char* tmp = std::getenv("TMPDIR");
-        if (tmp != 0) {
-            ss << tmp << "/ntf-" << guid;
-        }
-        else {
-            char  buffer[MAX_PATH + 1];
-            DWORD rc = GetTempPathA(static_cast<DWORD>(sizeof buffer), buffer);
-            if (rc <= 0 || rc >= static_cast<DWORD>(sizeof buffer)) {
-                ss << "C:\\Windows\\Temp\\ntf-" << guid;
-            }
-            else {
-                ss << buffer;
-
-                if (buffer[rc - 1] != '/' && buffer[rc - 1] != '\\') {
-                    ss << '\\';
-                }
-
-                ss << "ntf-" << guid;
-            }
-        }
-
-        localName.setValue(ss.str());
-    }
-
-    return localName;
-
-#else
-#error Not implemented
-#endif
+    return error;
 }
 
 }  // close package namespace

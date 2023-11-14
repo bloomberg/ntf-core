@@ -42,16 +42,25 @@ namespace ntsa {
 class LocalName
 {
   public:
-    enum {
-        /// The maximum path length, not including the null terminator.
-        k_MAX_PATH_LENGTH = 92
-    };
+    /// The maximum path length, in case of abstract namespace it does not
+    /// include leading null, in case of all namespaces it does not include
+    /// the null terminator
+
+    /// On Linux, Windows and SunOS this value is assigned in a way to ensure
+    /// that capacity of sockaddr_un::sun_path is fully utilized. AIX has
+    /// enormously large size of sockaddr_un::sun_path == 1022 bytes, but
+    /// it is considered unnecessary to store such large path inside the class.
+
+#if defined(BSLS_PLATFORM_OS_DARWIN)
+    enum { k_MAX_PATH_LENGTH = 103 };
+#else
+    enum { k_MAX_PATH_LENGTH = 107 };
+#endif
 
   private:
-    char         d_path[k_MAX_PATH_LENGTH + 1];
+    char         d_path[k_MAX_PATH_LENGTH];
     bsl::uint8_t d_size;
-    bsl::uint8_t d_abstract;
-    bsl::uint8_t d_unused;
+    bool         d_abstract;
 
   public:
     /// Create a new, abstract local name.
@@ -74,6 +83,10 @@ class LocalName
     /// Set the local name to be abstract. A socket bound to an abstract
     /// name does not have a representation in the file system. Return the
     /// error. Note that abstract local names are only supported on Linux.
+    /// Name in the abstract namespace requires a leading null character.
+    /// It is not stored inside the class instance, but if some name is
+    /// already stored then it is ensure that there is free space to place
+    /// a leading nul character
     ntsa::Error setAbstract();
 
     /// Set the local name to be persistent. A socket bound to a persistent
@@ -83,9 +96,10 @@ class LocalName
     /// Set the local name to be unnamed. Return the error.
     ntsa::Error setUnnamed();
 
-    /// Set the path of the local name to the specified 'value'. Any
-    /// portion of 'value' after MAX_PATH_LENGTH is truncated. Return the
-    /// error.
+    /// Set the path of the local name to the specified 'value'. If length of
+    /// the 'value' is greater than k_MAX_PATH_LENGTH , in case of abstract
+    /// name, (k_MAX_PATH_LEN - 1) then operation is not performed and error
+    /// is returned.
     ntsa::Error setValue(const bslstl::StringRef& value);
 
     /// Return the value of the local name.
@@ -139,6 +153,13 @@ class LocalName
     /// Generate a unique local name. The name will be abstract if the
     /// platform supports abstract names (Linux only).
     static ntsa::LocalName generateUnique();
+
+    /// Generate a unique local name and write it to the specified 'name'. The
+    /// name will be abstract if the platform supports abstract names (Linux
+    /// only). In case it is impossible to generate a unique name return the
+    /// error (e.g. it can happen on Windows that absolute path to the file in
+    /// TMP directory is longer than sockaddr_un can store)
+    static ntsa::Error generateUnique(ntsa::LocalName* name);
 
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects

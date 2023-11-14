@@ -38,10 +38,10 @@
 #if defined(BSLS_PLATFORM_OS_LINUX)
 #include <linux/version.h>
 
-#include <sys/ioctl.h>
-#include <net/if.h>
 #include <linux/ethtool.h>
 #include <linux/sockios.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
 #endif
 
 using namespace BloombergLP;
@@ -84,7 +84,7 @@ class Storage
 bsl::uint32_t timestampingSupport(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     struct ::ethtool_ts_info info;
     bsl::memset(&info, 0, sizeof info);
@@ -100,7 +100,7 @@ bsl::uint32_t timestampingSupport(ntsa::Handle socket)
     rc = ::ioctl(socket, SIOCETHTOOL, &ifr);
     if (rc != 0) {
         error = ntsa::Error(errno);
-        BSLS_LOG_DEBUG("I/O control SIOCETHTOOL failed: %s", 
+        BSLS_LOG_DEBUG("I/O control SIOCETHTOOL failed: %s",
                        error.text().c_str());
         return 0;
     }
@@ -213,10 +213,13 @@ void executeStreamSocketTest(const StreamSocketTestCallback& test,
             NTSCFG_TEST_ASSERT(!error);
         }
         else if (transport == ntsa::Transport::e_LOCAL_STREAM) {
-            error = ntsu::SocketUtil::bind(
-                ntsa::Endpoint(ntsa::LocalName::generateUnique()),
-                false,
-                listener);
+            ntsa::LocalName localName;
+            error = ntsa::LocalName::generateUnique(&localName);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::bind(ntsa::Endpoint(localName),
+                                           false,
+                                           listener);
             NTSCFG_TEST_ASSERT(!error);
         }
         else {
@@ -366,10 +369,13 @@ void executeDatagramSocketTest(const DatagramSocketTestCallback& test,
             NTSCFG_TEST_ASSERT(!error);
         }
         else if (transport == ntsa::Transport::e_LOCAL_DATAGRAM) {
-            error = ntsu::SocketUtil::bind(
-                ntsa::Endpoint(ntsa::LocalName::generateUnique()),
-                false,
-                server);
+            ntsa::LocalName localName;
+            error = ntsa::LocalName::generateUnique(&localName);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::bind(ntsa::Endpoint(localName),
+                                           false,
+                                           server);
             NTSCFG_TEST_ASSERT(!error);
         }
         else {
@@ -402,10 +408,13 @@ void executeDatagramSocketTest(const DatagramSocketTestCallback& test,
             NTSCFG_TEST_ASSERT(!error);
         }
         else if (transport == ntsa::Transport::e_LOCAL_DATAGRAM) {
-            error = ntsu::SocketUtil::bind(
-                ntsa::Endpoint(ntsa::LocalName::generateUnique()),
-                false,
-                client);
+            ntsa::LocalName localName;
+            error = ntsa::LocalName::generateUnique(&localName);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::bind(ntsa::Endpoint(localName),
+                                           false,
+                                           client);
             NTSCFG_TEST_ASSERT(!error);
         }
         else {
@@ -1288,10 +1297,13 @@ NTSCFG_TEST_CASE(1)
             NTSCFG_TEST_ASSERT(!error);
         }
         else if (transport == ntsa::Transport::e_LOCAL_STREAM) {
-            error = ntsu::SocketUtil::bind(
-                ntsa::Endpoint(ntsa::LocalName::generateUnique()),
-                false,
-                listener);
+            ntsa::LocalName localName;
+            error = ntsa::LocalName::generateUnique(&localName);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::bind(ntsa::Endpoint(localName),
+                                           false,
+                                           listener);
             NTSCFG_TEST_ASSERT(!error);
         }
         else {
@@ -1539,10 +1551,13 @@ NTSCFG_TEST_CASE(2)
             NTSCFG_TEST_ASSERT(!error);
         }
         else if (transport == ntsa::Transport::e_LOCAL_DATAGRAM) {
-            error = ntsu::SocketUtil::bind(
-                ntsa::Endpoint(ntsa::LocalName::generateUnique()),
-                false,
-                server);
+            ntsa::LocalName localName;
+            error = ntsa::LocalName::generateUnique(&localName);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::bind(ntsa::Endpoint(localName),
+                                           false,
+                                           server);
             NTSCFG_TEST_ASSERT(!error);
         }
         else {
@@ -1575,10 +1590,13 @@ NTSCFG_TEST_CASE(2)
             NTSCFG_TEST_ASSERT(!error);
         }
         else if (transport == ntsa::Transport::e_LOCAL_DATAGRAM) {
-            error = ntsu::SocketUtil::bind(
-                ntsa::Endpoint(ntsa::LocalName::generateUnique()),
-                false,
-                client);
+            ntsa::LocalName localName;
+            error = ntsa::LocalName::generateUnique(&localName);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::bind(ntsa::Endpoint(localName),
+                                           false,
+                                           client);
             NTSCFG_TEST_ASSERT(!error);
         }
         else {
@@ -1866,10 +1884,13 @@ NTSCFG_TEST_CASE(12)
                     NTSCFG_TEST_ASSERT(!error);
                 }
                 else if (transport == ntsa::Transport::e_LOCAL_STREAM) {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::LocalName::generateUnique()),
-                        false,
-                        listener);
+                    ntsa::LocalName localName;
+                    error = ntsa::LocalName::generateUnique(&localName);
+                    NTSCFG_TEST_ASSERT(!error);
+
+                    error = ntsu::SocketUtil::bind(ntsa::Endpoint(localName),
+                                                   false,
+                                                   listener);
                     NTSCFG_TEST_ASSERT(!error);
                 }
                 else {
@@ -3926,8 +3947,12 @@ NTSCFG_TEST_CASE(14)
                 NTSCFG_TEST_ASSERT(!error);
 
                 {
+                    ntsa::LocalName localName;
+                    error = ntsa::LocalName::generateUnique(&localName);
+                    NTSCFG_TEST_ASSERT(!error);
+
                     ntsa::Endpoint explicitSourceEndpoint =
-                        ntsa::Endpoint(ntsa::LocalName::generateUnique());
+                        ntsa::Endpoint(localName);
 
                     error = ntsu::SocketUtil::bind(explicitSourceEndpoint,
                                                    k_REUSE_ADDRESS,
@@ -3964,8 +3989,12 @@ NTSCFG_TEST_CASE(14)
                 ntsa::Endpoint serverEndpoint;
 
                 {
+                    ntsa::LocalName localName;
+                    error = ntsa::LocalName::generateUnique(&localName);
+                    NTSCFG_TEST_ASSERT(!error);
+
                     ntsa::Endpoint explicitServerEndpoint =
-                        ntsa::Endpoint(ntsa::LocalName::generateUnique());
+                        ntsa::Endpoint(localName);
 
                     error = ntsu::SocketUtil::bind(explicitServerEndpoint,
                                                    k_REUSE_ADDRESS,
@@ -4063,8 +4092,12 @@ NTSCFG_TEST_CASE(14)
                 ntsa::Endpoint serverEndpoint;
 
                 {
+                    ntsa::LocalName localName;
+                    error = ntsa::LocalName::generateUnique(&localName);
+                    NTSCFG_TEST_ASSERT(!error);
+
                     ntsa::Endpoint explicitServerEndpoint =
-                        ntsa::Endpoint(ntsa::LocalName::generateUnique());
+                        ntsa::Endpoint(localName);
 
                     error = ntsu::SocketUtil::bind(explicitServerEndpoint,
                                                    k_REUSE_ADDRESS,
@@ -5254,8 +5287,12 @@ NTSCFG_TEST_CASE(15)
                 NTSCFG_TEST_ASSERT(!error);
 
                 {
+                    ntsa::LocalName localName;
+                    error = ntsa::LocalName::generateUnique(&localName);
+                    NTSCFG_TEST_ASSERT(!error);
+
                     ntsa::Endpoint explicitSourceEndpoint =
-                        ntsa::Endpoint(ntsa::LocalName::generateUnique());
+                        ntsa::Endpoint(localName);
 
                     error = ntsu::SocketUtil::bind(explicitSourceEndpoint,
                                                    k_REUSE_ADDRESS,
@@ -5292,8 +5329,12 @@ NTSCFG_TEST_CASE(15)
                 ntsa::Endpoint serverEndpoint;
 
                 {
+                    ntsa::LocalName localName;
+                    error = ntsa::LocalName::generateUnique(&localName);
+                    NTSCFG_TEST_ASSERT(!error);
+
                     ntsa::Endpoint explicitServerEndpoint =
-                        ntsa::Endpoint(ntsa::LocalName::generateUnique());
+                        ntsa::Endpoint(localName);
 
                     error = ntsu::SocketUtil::bind(explicitServerEndpoint,
                                                    k_REUSE_ADDRESS,
@@ -5700,7 +5741,7 @@ NTSCFG_TEST_CASE(17)
                         NTSCFG_TEST_TRUE(context.hardwareTimestamp().isNull());
                     }
                     else {
-                        BSLS_LOG_DEBUG("Detected RX timestamp"); 
+                        BSLS_LOG_DEBUG("Detected RX timestamp");
                         NTSCFG_TEST_TRUE(
                             context.softwareTimestamp().has_value());
                         NTSCFG_TEST_LE(sysTimeBeforeSending,
@@ -5841,7 +5882,7 @@ NTSCFG_TEST_CASE(17)
                             notifications.notifications().at(i).timestamp());
                     }
 
-                    BSLS_LOG_DEBUG("Detected TX timestamp"); 
+                    BSLS_LOG_DEBUG("Detected TX timestamp");
 
                     NTSCFG_TEST_EQ(timestamps.size(), 3);
                     bsl::set<ntsa::Timestamp,
@@ -6287,7 +6328,7 @@ NTSCFG_TEST_CASE(18)
                         NTSCFG_TEST_TRUE(context.softwareTimestamp().isNull());
                     }
                     else {
-                        BSLS_LOG_DEBUG("Detected RX timestamp"); 
+                        BSLS_LOG_DEBUG("Detected RX timestamp");
                         NTSCFG_TEST_FALSE(
                             context.softwareTimestamp().isNull());
                         NTSCFG_TEST_LE(sysTimeBeforeSending,
@@ -6442,7 +6483,7 @@ NTSCFG_TEST_CASE(18)
                         timestamps.insert(
                             notifications.notifications().at(i).timestamp());
 
-                        BSLS_LOG_DEBUG("Detected TX timestamp"); 
+                        BSLS_LOG_DEBUG("Detected TX timestamp");
                     }
                     NTSCFG_TEST_EQ(timestamps.size(), numTimestamps);
                     bsl::set<ntsa::Timestamp,

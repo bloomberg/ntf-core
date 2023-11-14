@@ -400,7 +400,7 @@ void generateTransmitTimestampScheduled(
     bsl::uint32_t                                   idIncrement)
 {
     *tsKey                       += idIncrement;
-    const bsl::uint32_t packetId = *tsKey - 1;
+    const bsl::uint32_t packetId  = *tsKey - 1;
     packet->setId(packetId);
     ntsa::Notification n;
     ntsa::Timestamp&   t = n.makeTimestamp();
@@ -1198,7 +1198,7 @@ void PacketQueue::retry(const PacketVector& packetVector)
          it != packetVector.end();
          ++it)
     {
-        const bsl::shared_ptr<ntcd::Packet>& packet = *it;
+        const bsl::shared_ptr<ntcd::Packet>& packet  = *it;
         totalPacketCost                             += packet->cost();
     }
 
@@ -1438,7 +1438,10 @@ ntsa::Endpoint Binding::makeAny(ntsa::Transport::Value transport)
     else if (transport == ntsa::Transport::e_LOCAL_DATAGRAM ||
              transport == ntsa::Transport::e_LOCAL_STREAM)
     {
-        result = ntsa::Endpoint(ntsa::LocalName::generateUnique());
+        ntsa::LocalName   localName;
+        const ntsa::Error error = ntsa::LocalName::generateUnique(&localName);
+        BSLS_ASSERT_OPT(!error);
+        result = ntsa::Endpoint(localName);
     }
 
     return result;
@@ -2290,7 +2293,12 @@ ntsa::Error Session::bindAny(ntsa::Transport::Value transport,
             ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv6Address::loopback(), 0));
     }
     else if (transportDomain == ntsa::TransportDomain::e_LOCAL) {
-        endpoint = ntsa::Endpoint(ntsa::LocalName::generateUnique());
+        ntsa::LocalName   localName;
+        const ntsa::Error error = ntsa::LocalName::generateUnique(&localName);
+        if (error) {
+            return error;
+        }
+        endpoint = ntsa::Endpoint(localName);
     }
     else {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -2473,8 +2481,13 @@ ntsa::Error Session::connect(const ntsa::Endpoint& endpoint)
                 ntsa::IpEndpoint(ntsa::Ipv6Address::loopback(), 0));
         }
         else if (transportDomain == ntsa::TransportDomain::e_LOCAL) {
-            sourceEndpointRequested =
-                ntsa::Endpoint(ntsa::LocalName::generateUnique());
+            ntsa::LocalName   localName;
+            const ntsa::Error error =
+                ntsa::LocalName::generateUnique(&localName);
+            if (error) {
+                return error;
+            }
+            sourceEndpointRequested = ntsa::Endpoint(localName);
         }
         else {
             return ntsa::Error(ntsa::Error::e_INVALID);
@@ -2663,8 +2676,13 @@ ntsa::Error Session::send(ntsa::SendContext*       context,
                     ntsa::IpEndpoint(ntsa::Ipv6Address::loopback(), 0));
             }
             else if (transportDomain == ntsa::TransportDomain::e_LOCAL) {
-                sourceEndpointRequested =
-                    ntsa::Endpoint(ntsa::LocalName::generateUnique());
+                ntsa::LocalName   localName;
+                const ntsa::Error error =
+                    ntsa::LocalName::generateUnique(&localName);
+                if (error) {
+                    return error;
+                }
+                sourceEndpointRequested = ntsa::Endpoint(localName);
             }
             else {
                 return ntsa::Error(ntsa::Error::e_INVALID);
@@ -2891,8 +2909,13 @@ ntsa::Error Session::send(ntsa::SendContext*       context,
                     ntsa::IpEndpoint(ntsa::Ipv6Address::loopback(), 0));
             }
             else if (transportDomain == ntsa::TransportDomain::e_LOCAL) {
-                sourceEndpointRequested =
-                    ntsa::Endpoint(ntsa::LocalName::generateUnique());
+                ntsa::LocalName   localName;
+                const ntsa::Error error =
+                    ntsa::LocalName::generateUnique(&localName);
+                if (error) {
+                    return error;
+                }
+                sourceEndpointRequested = ntsa::Endpoint(localName);
             }
             else {
                 return ntsa::Error(ntsa::Error::e_INVALID);
@@ -5104,7 +5127,7 @@ void Monitor::interruptAll()
     bsl::uint64_t waiters   = d_waiters.load();
 
     if (interrupt < waiters) {
-        bsl::uint64_t difference = waiters - interrupt;
+        bsl::uint64_t difference  = waiters - interrupt;
         d_interrupt              += difference;
         d_condition.broadcast();
     }
@@ -5120,7 +5143,7 @@ void Monitor::stop()
     bsl::uint64_t waiters   = d_waiters.load();
 
     if (interrupt < waiters) {
-        bsl::uint64_t difference = waiters - interrupt;
+        bsl::uint64_t difference  = waiters - interrupt;
         d_interrupt              += difference;
         d_condition.broadcast();
     }

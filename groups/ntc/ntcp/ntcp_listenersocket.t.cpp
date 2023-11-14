@@ -244,9 +244,14 @@ ntsa::Endpoint EndpointUtil::any(ntsa::Transport::Value transport)
         endpoint.makeIp(ntsa::IpEndpoint(ntsa::Ipv6Address::loopback(), 0));
         break;
     case ntsa::Transport::e_LOCAL_STREAM:
-    case ntsa::Transport::e_LOCAL_DATAGRAM:
-        endpoint.makeLocal(ntsa::LocalName::generateUnique());
+    case ntsa::Transport::e_LOCAL_DATAGRAM: {
+        ntsa::LocalName   localName;
+        const ntsa::Error error = ntsa::LocalName::generateUnique(&localName);
+        BSLS_ASSERT_OPT(!error);
+
+        endpoint.makeLocal(localName);
         break;
+    }
     default:
         NTCCFG_UNREACHABLE();
     }

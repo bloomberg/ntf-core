@@ -42,13 +42,16 @@ int main()
     // address, then begin listening for connections.
 
     bsl::shared_ptr<ntsi::ListenerSocket> listener =
-                                          ntsf::System::createListenerSocket();
+        ntsf::System::createListenerSocket();
 
     error = listener->open(ntsa::Transport::e_LOCAL_STREAM);
     BSLS_ASSERT_OPT(!error);
 
-    error = listener->bind(ntsa::Endpoint(ntsa::LocalName::generateUnique()),
-                           false);
+    ntsa::LocalName localName;
+    error = ntsa::LocalName::generateUnique(&localName);
+    BSLS_ASSERT_OPT(!error);
+
+    error = listener->bind(ntsa::Endpoint(localName), false);
     BSLS_ASSERT_OPT(!error);
 
     error = listener->listen(1);
@@ -62,7 +65,7 @@ int main()
     // the listener socket's local endpoint.
 
     bsl::shared_ptr<ntsi::StreamSocket> client =
-                                            ntsf::System::createStreamSocket();
+        ntsf::System::createStreamSocket();
 
     error = client->open(ntsa::Transport::e_LOCAL_STREAM);
     BSLS_ASSERT_OPT(!error);

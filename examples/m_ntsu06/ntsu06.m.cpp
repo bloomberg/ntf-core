@@ -39,14 +39,19 @@ int main()
     // loopback address.
 
     bsl::shared_ptr<ntsi::DatagramSocket> server =
-                                          ntsf::System::createDatagramSocket();
+        ntsf::System::createDatagramSocket();
 
     error = server->open(ntsa::Transport::e_LOCAL_DATAGRAM);
     BSLS_ASSERT_OPT(!error);
 
-    error = server->bind(ntsa::Endpoint(ntsa::LocalName::generateUnique()),
-                         false);
-    BSLS_ASSERT_OPT(!error);
+    {
+        ntsa::LocalName localName;
+        error = ntsa::LocalName::generateUnique(&localName);
+        BSLS_ASSERT_OPT(!error);
+
+        error = server->bind(ntsa::Endpoint(localName), false);
+        BSLS_ASSERT_OPT(!error);
+    }
 
     ntsa::Endpoint serverEndpoint;
     error = server->sourceEndpoint(&serverEndpoint);
@@ -56,14 +61,19 @@ int main()
     // loopback address.
 
     bsl::shared_ptr<ntsi::DatagramSocket> client =
-                                          ntsf::System::createDatagramSocket();
+        ntsf::System::createDatagramSocket();
 
     error = client->open(ntsa::Transport::e_LOCAL_DATAGRAM);
     BSLS_ASSERT_OPT(!error);
 
-    error = client->bind(ntsa::Endpoint(ntsa::LocalName::generateUnique()),
-                         false);
-    BSLS_ASSERT_OPT(!error);
+    {
+        ntsa::LocalName localName;
+        error = ntsa::LocalName::generateUnique(&localName);
+        BSLS_ASSERT_OPT(!error);
+
+        error = client->bind(ntsa::Endpoint(localName), false);
+        BSLS_ASSERT_OPT(!error);
+    }
 
     ntsa::Endpoint clientEndpoint;
     error = client->sourceEndpoint(&clientEndpoint);

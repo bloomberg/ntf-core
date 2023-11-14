@@ -83,7 +83,11 @@ ntsa::Error Test::createStreamSocketPair(
             ntsa::IpEndpoint(ntsa::Ipv6Address::loopback(), 0)));
     }
     else if (transport == ntsa::Transport::e_LOCAL_STREAM) {
-        ntsa::LocalName localName = ntsa::LocalName::generateUnique();
+        ntsa::LocalName   localName;
+        const ntsa::Error error = ntsa::LocalName::generateUnique(&localName);
+        if (error) {
+            return error;
+        }
         listenerSocketOptions.setSourceEndpoint(ntsa::Endpoint(localName));
     }
     else {

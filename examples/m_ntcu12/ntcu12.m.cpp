@@ -85,10 +85,6 @@ namespace example {
 // fixed length message header.
 //
 
-                            
-                            
-                            
-
 // This struct describes the header of a message in the example wire
 // protocol.
 struct MessageHeader {
@@ -103,10 +99,6 @@ struct MessageHeader {
 // header followed by the variable length payload string.
 //
 
-                              
-                              
-                              
-
 // This struct describes a message in the example wire protocol. A
 // message consists of a fixed length header followed by a variable-length
 // string.
@@ -120,42 +112,32 @@ struct Message {
 // application protocol.
 //
 
-                             
-                             
-                             
-
 // Provide functions for encoding the message header and
 // payload of the example wire protocol.
 struct MessageUtil {
-    
-
     // Encode the specified 'header' to the specified 'result'.
-    static void encodeHeader(bdlbb::Blob                   *result,
-                             const example::MessageHeader&  header);
+    static void encodeHeader(bdlbb::Blob*                  result,
+                             const example::MessageHeader& header);
 
     // Encode the specified 'payload' to the specified 'result'.
-    static void encodePayload(bdlbb::Blob *result, const bsl::string& payload);
+    static void encodePayload(bdlbb::Blob* result, const bsl::string& payload);
 
     // Decode the specified specified 'result' from the specified 'blob'.
-    static void decodeHeader(example::MessageHeader *result,
+    static void decodeHeader(example::MessageHeader* result,
                              const bdlbb::Blob&      blob);
 
     // Decode the specified specified 'result' from the specified 'blob'.
-    static void decodePayload(bsl::string        *result,
-                              const bdlbb::Blob&  blob,
-                              int                 length);
+    static void decodePayload(bsl::string*       result,
+                              const bdlbb::Blob& blob,
+                              int                length);
 };
 
 //
 // Now, let's implement the encoding and decoding functions in our utility.
 //
 
-                             
-                             
-                             
-
-void MessageUtil::encodeHeader(bdlbb::Blob                   *result,
-                               const example::MessageHeader&  header)
+void MessageUtil::encodeHeader(bdlbb::Blob*                  result,
+                               const example::MessageHeader& header)
 {
     bdlbb::OutBlobStreamBuf osb(result);
     {
@@ -167,15 +149,15 @@ void MessageUtil::encodeHeader(bdlbb::Blob                   *result,
     osb.pubsync();
 }
 
-void MessageUtil::encodePayload(bdlbb::Blob        *result,
-                                const bsl::string&  payload)
+void MessageUtil::encodePayload(bdlbb::Blob*       result,
+                                const bsl::string& payload)
 {
     bdlbb::OutBlobStreamBuf osb(result);
     osb.sputn(payload.c_str(), payload.size());
     osb.pubsync();
 }
 
-void MessageUtil::decodeHeader(example::MessageHeader *result,
+void MessageUtil::decodeHeader(example::MessageHeader* result,
                                const bdlbb::Blob&      blob)
 {
     bdlbb::InBlobStreamBuf isb(&blob);
@@ -186,9 +168,9 @@ void MessageUtil::decodeHeader(example::MessageHeader *result,
     }
 }
 
-void MessageUtil::decodePayload(bsl::string        *result,
-                                const bdlbb::Blob&  blob,
-                                int                 length)
+void MessageUtil::decodePayload(bsl::string*       result,
+                                const bdlbb::Blob& blob,
+                                int                length)
 {
     bdlbb::InBlobStreamBuf isb(&blob);
     result->resize(length);
@@ -203,42 +185,30 @@ void MessageUtil::decodePayload(bsl::string        *result,
 // from a connection, which will become relevant later.
 //
 
-                            
-                            
-                            
-
 // Provide a mechanism to parse messages in the wire protocol
 // used in this example from a stream of bytes.
-class MessageParser {
-    
+class MessageParser
+{
     enum State { e_STATE_WANT_HEADER, e_STATE_WANT_PAYLOAD };
 
-    
     State            d_state;
     example::Message d_message;
 
   private:
-    
     MessageParser(const MessageParser&) BSLS_KEYWORD_DELETED;
     MessageParser& operator=(const MessageParser&) BSLS_KEYWORD_DELETED;
 
   public:
-    
-
     // This typedef defines a callback function invoked when a message is
     // parsed.
     typedef bsl::function<void(const example::Message& message)>
         MessageCallback;
-
-    
 
     // Create a new message parser.
     MessageParser();
 
     // Destroy this object.
     ~MessageParser();
-
-    
 
     // Receive zero or more messages from the read queue of the specified
     // 'streamSocket'. If the read queue of the 'streamSocket' does not
@@ -258,11 +228,6 @@ class MessageParser {
 // callers how much more data is needed to transition to the next state.
 //
 
-                            
-                            
-                            
-
-
 MessageParser::MessageParser()
 : d_state(e_STATE_WANT_HEADER)
 , d_message()
@@ -273,10 +238,9 @@ MessageParser::~MessageParser()
 {
 }
 
-
 ntsa::Error MessageParser::parse(
-                       const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-                       const MessageCallback&                     callback)
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const MessageCallback&                     callback)
 {
     ntsa::Error error;
 
@@ -292,7 +256,7 @@ ntsa::Error MessageParser::parse(
             if (error) {
                 if (error == ntsa::Error::e_WOULD_BLOCK) {
                     streamSocket->setReadQueueLowWatermark(
-                                             example::MessageHeader::e_LENGTH);
+                        example::MessageHeader::e_LENGTH);
                     return ntsa::Error();
                 }
                 else {
@@ -306,7 +270,7 @@ ntsa::Error MessageParser::parse(
                 d_state = e_STATE_WANT_PAYLOAD;
 
                 streamSocket->setReadQueueLowWatermark(
-                                           d_message.d_header.d_payloadLength);
+                    d_message.d_header.d_payloadLength);
             }
             else {
                 callback(d_message);
@@ -314,7 +278,7 @@ ntsa::Error MessageParser::parse(
                 d_state = e_STATE_WANT_HEADER;
 
                 streamSocket->setReadQueueLowWatermark(
-                                             example::MessageHeader::e_LENGTH);
+                    example::MessageHeader::e_LENGTH);
             }
         }
 
@@ -331,7 +295,7 @@ ntsa::Error MessageParser::parse(
             if (error) {
                 if (error == ntsa::Error::e_WOULD_BLOCK) {
                     streamSocket->setReadQueueLowWatermark(
-                                           d_message.d_header.d_payloadLength);
+                        d_message.d_header.d_payloadLength);
                     return ntsa::Error();
                 }
                 else {
@@ -340,9 +304,9 @@ ntsa::Error MessageParser::parse(
             }
 
             example::MessageUtil::decodePayload(
-                                           &d_message.d_payload,
-                                           data,
-                                           d_message.d_header.d_payloadLength);
+                &d_message.d_payload,
+                data,
+                d_message.d_header.d_payloadLength);
 
             callback(d_message);
 
@@ -353,7 +317,7 @@ ntsa::Error MessageParser::parse(
             d_state = e_STATE_WANT_HEADER;
 
             streamSocket->setReadQueueLowWatermark(
-                                             example::MessageHeader::e_LENGTH);
+                example::MessageHeader::e_LENGTH);
         }
     }
 }
@@ -373,18 +337,13 @@ ntsa::Error MessageParser::parse(
 // protocol over a stream socket.
 //
 
-                             
-                             
-                             
-
 // This class implements the 'ntci::StreamSocketSession' protocol to
 // provide client communication of the example wire protocol over an
 // asynchronous stream socket. This class is thread safe.
 class ClientSocket : public ntci::StreamSocketSession,
-                     public ntccfg::Shared<ClientSocket> {
+                     public ntccfg::Shared<ClientSocket>
+{
   public:
-    
-
     // Defines a type alias for a generic function callback.
     typedef bsl::function<void()> Callback;
 
@@ -394,69 +353,55 @@ class ClientSocket : public ntci::StreamSocketSession,
         ResponseCallback;
 
   private:
-    
-
     // Define a type alias for an associative data
     // structure mapping a transaction ID to the callback function
     // to be invoked when the response for that transaction ID is received.
     typedef bdlcc::ObjectCatalog<ResponseCallback> PendingCatalog;
 
-    
-    bslmt::Mutex                         d_mutex;
-    bsl::shared_ptr<ntci::StreamSocket>  d_streamSocket_sp;
-    PendingCatalog                       d_pendingRequests;
-    example::MessageParser               d_parser;
-    example::ClientSocket::Callback      d_upgradeCallback;
-    example::ClientSocket::Callback      d_downgradeCallback;
-    bslma::Allocator                    *d_allocator_p;
+    bslmt::Mutex                        d_mutex;
+    bsl::shared_ptr<ntci::StreamSocket> d_streamSocket_sp;
+    PendingCatalog                      d_pendingRequests;
+    example::MessageParser              d_parser;
+    example::ClientSocket::Callback     d_upgradeCallback;
+    example::ClientSocket::Callback     d_downgradeCallback;
+    bslma::Allocator*                   d_allocator_p;
 
   private:
-    
     ClientSocket(const ClientSocket&) BSLS_KEYWORD_DELETED;
     ClientSocket& operator=(const ClientSocket&) BSLS_KEYWORD_DELETED;
 
   private:
-    
-
     // Process the condition that the size of the read queue is greater
     // than or equal to the read queue low watermark.
     void processReadQueueLowWatermark(
-       const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-       const ntca::ReadQueueEvent&                event) BSLS_KEYWORD_OVERRIDE;
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::ReadQueueEvent& event) BSLS_KEYWORD_OVERRIDE;
 
     // Process the condition that the peer has indicated that it will
     // not send any more encrypted data.
     void processDowngradeComplete(
-       const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-       const ntca::DowngradeEvent&                event) BSLS_KEYWORD_OVERRIDE;
-
-    
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::DowngradeEvent& event) BSLS_KEYWORD_OVERRIDE;
 
     // Process the upgrade of the specified 'upgradable' that is the
     // specified 'streamSocket' according to the specified 'upgradeEvent'.
     void processUpgrade(const bsl::shared_ptr<ntci::Upgradable>& upgradable,
                         const ntca::UpgradeEvent&                upgradeEvent);
 
-    
-
     // Process the specified 'response' received from the server.
     void processResponse(const example::Message& response);
 
   public:
-    
-
     // Create a new application client socket over the specified
     // 'streamSocket'. Optionally specify a 'basicAllocator' used to
     // supply memory. If 'basicAllocator' is 0, the currently installed
     // default allocator is used.
     explicit ClientSocket(
-               const bsl::shared_ptr<ntci::StreamSocket>&  streamSocket,
-               bslma::Allocator                           *basicAllocator = 0);
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        bslma::Allocator*                          basicAllocator = 0);
 
     // Destroy this object.
     ~ClientSocket();
-
-    
 
     // Assume the TLS client role and begin upgrading the socket from
     // being unencrypted to being encrypted with TLS. Invoke the specified
@@ -464,17 +409,17 @@ class ClientSocket : public ntci::StreamSocketSession,
     // and invoke the specified 'downgradeCallback' when the socket has
     // completed downgrading from TLS back to clear text.
     void upgrade(
-             const bsl::shared_ptr<ntci::EncryptionClient>& encryptionClient,
-             const example::ClientSocket::Callback&         upgradeCallback,
-             const example::ClientSocket::Callback&         downgradeCallback);
+        const bsl::shared_ptr<ntci::EncryptionClient>& encryptionClient,
+        const example::ClientSocket::Callback&         upgradeCallback,
+        const example::ClientSocket::Callback&         downgradeCallback);
 
     // Send a message requesting the transformation of the specified
     // 'requestPayload' according to the wire protocol. On success, invoke
     // the specified 'responseCallback' when the response to the request is
     // received. Return the error.
     ntsa::Error send(
-              const bsl::string&                             requestPayload,
-              const example::ClientSocket::ResponseCallback& responseCallback);
+        const bsl::string&                             requestPayload,
+        const example::ClientSocket::ResponseCallback& responseCallback);
 
     // Start or stop receiving data according to the specified 'enabled'
     // flag. When receiving data is enabled, the
@@ -493,8 +438,6 @@ class ClientSocket : public ntci::StreamSocketSession,
 
     // Shutdown and close the socket.
     void shutdown();
-
-    
 
     // Return the certificate of the peer of the socket.
     bsl::shared_ptr<ntci::EncryptionCertificate> remoteCertificate() const;
@@ -522,14 +465,9 @@ class ClientSocket : public ntci::StreamSocketSession,
 //  the graceful shutdown sequence of the connection.
 //
 
-                             
-                             
-                             
-
-
 void ClientSocket::processReadQueueLowWatermark(
-                       const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-                       const ntca::ReadQueueEvent&                event)
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::ReadQueueEvent&                event)
 {
     NTCCFG_WARNING_UNUSED(streamSocket);
     NTCCFG_WARNING_UNUSED(event);
@@ -540,8 +478,8 @@ void ClientSocket::processReadQueueLowWatermark(
 }
 
 void ClientSocket::processDowngradeComplete(
-                       const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-                       const ntca::DowngradeEvent&                event)
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::DowngradeEvent&                event)
 {
     NTCCFG_WARNING_UNUSED(streamSocket);
     NTCCFG_WARNING_UNUSED(event);
@@ -560,10 +498,9 @@ void ClientSocket::processDowngradeComplete(
     }
 }
 
-
 void ClientSocket::processUpgrade(
-                         const bsl::shared_ptr<ntci::Upgradable>& upgradable,
-                         const ntca::UpgradeEvent&                upgradeEvent)
+    const bsl::shared_ptr<ntci::Upgradable>& upgradable,
+    const ntca::UpgradeEvent&                upgradeEvent)
 {
     NTCCFG_WARNING_UNUSED(upgradable);
 
@@ -581,22 +518,21 @@ void ClientSocket::processUpgrade(
     }
 }
 
-
 void ClientSocket::processResponse(const example::Message& response)
 {
     example::ClientSocket::ResponseCallback responseCallback;
     if (0 != d_pendingRequests.remove(response.d_header.d_transactionId,
-                                      &responseCallback)) {
+                                      &responseCallback))
+    {
         return;
     }
 
     responseCallback(response.d_payload);
 }
 
-
 ClientSocket::ClientSocket(
-                    const bsl::shared_ptr<ntci::StreamSocket>&  streamSocket,
-                    bslma::Allocator                           *basicAllocator)
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    bslma::Allocator*                          basicAllocator)
 : d_mutex()
 , d_streamSocket_sp(streamSocket)
 , d_pendingRequests(basicAllocator)
@@ -611,11 +547,10 @@ ClientSocket::~ClientSocket()
 {
 }
 
-
 void ClientSocket::upgrade(
-              const bsl::shared_ptr<ntci::EncryptionClient>& encryptionClient,
-              const example::ClientSocket::Callback&         upgradeCallback,
-              const example::ClientSocket::Callback&         downgradeCallback)
+    const bsl::shared_ptr<ntci::EncryptionClient>& encryptionClient,
+    const example::ClientSocket::Callback&         upgradeCallback,
+    const example::ClientSocket::Callback&         downgradeCallback)
 {
     {
         bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
@@ -624,16 +559,16 @@ void ClientSocket::upgrade(
     }
 
     d_streamSocket_sp->upgrade(
-               encryptionClient,
-               ntca::UpgradeOptions(),
-               d_streamSocket_sp->createUpgradeCallback(
-                   bdlf::MemFnUtil::memFn(&ClientSocket::processUpgrade, this),
-                   d_allocator_p));
+        encryptionClient,
+        ntca::UpgradeOptions(),
+        d_streamSocket_sp->createUpgradeCallback(
+            bdlf::MemFnUtil::memFn(&ClientSocket::processUpgrade, this),
+            d_allocator_p));
 }
 
 ntsa::Error ClientSocket::send(
-               const bsl::string&                             requestPayload,
-               const example::ClientSocket::ResponseCallback& responseCallback)
+    const bsl::string&                             requestPayload,
+    const example::ClientSocket::ResponseCallback& responseCallback)
 {
     int transactionId = d_pendingRequests.add(responseCallback);
 
@@ -644,7 +579,7 @@ ntsa::Error ClientSocket::send(
     request.d_payload                = requestPayload;
 
     bdlbb::Blob requestBlob(
-                         d_streamSocket_sp->outgoingBlobBufferFactory().get());
+        d_streamSocket_sp->outgoingBlobBufferFactory().get());
 
     example::MessageUtil::encodeHeader(&requestBlob, request.d_header);
     example::MessageUtil::encodePayload(&requestBlob, request.d_payload);
@@ -659,8 +594,8 @@ void ClientSocket::receive(bool enabled)
     }
     else {
         d_streamSocket_sp->applyFlowControl(
-                                           ntca::FlowControlType::e_RECEIVE,
-                                           ntca::FlowControlMode::e_IMMEDIATE);
+            ntca::FlowControlType::e_RECEIVE,
+            ntca::FlowControlMode::e_IMMEDIATE);
     }
 }
 
@@ -677,9 +612,8 @@ void ClientSocket::shutdown()
     d_streamSocket_sp->close();
 }
 
-
-bsl::shared_ptr<ntci::EncryptionCertificate>
-ClientSocket::remoteCertificate() const
+bsl::shared_ptr<ntci::EncryptionCertificate> ClientSocket::remoteCertificate()
+    const
 {
     return d_streamSocket_sp->remoteCertificate();
 }
@@ -693,77 +627,60 @@ ClientSocket::remoteCertificate() const
 // client socket pertain to the server socket.
 //
 
-                             
-                             
-                             
-
 // This class implements the 'ntci::StreamSocketSession' protocol to
 // provide client communication of the example wire protocol over an
 // asynchronous stream socket. This class is thread safe.
 class ServerSocket : public ntci::StreamSocketSession,
-                     public ntccfg::Shared<ServerSocket> {
+                     public ntccfg::Shared<ServerSocket>
+{
   public:
-    
-
     // Defines a type alias for a generic function callback.
     typedef bsl::function<void()> Callback;
 
   private:
-    
-    bslmt::Mutex                         d_mutex;
-    bsl::shared_ptr<ntci::StreamSocket>  d_streamSocket_sp;
-    example::MessageParser               d_parser;
-    example::ServerSocket::Callback      d_upgradeCallback;
-    example::ServerSocket::Callback      d_downgradeCallback;
-    bslma::Allocator                    *d_allocator_p;
+    bslmt::Mutex                        d_mutex;
+    bsl::shared_ptr<ntci::StreamSocket> d_streamSocket_sp;
+    example::MessageParser              d_parser;
+    example::ServerSocket::Callback     d_upgradeCallback;
+    example::ServerSocket::Callback     d_downgradeCallback;
+    bslma::Allocator*                   d_allocator_p;
 
   private:
-    
     ServerSocket(const ServerSocket&) BSLS_KEYWORD_DELETED;
     ServerSocket& operator=(const ServerSocket&) BSLS_KEYWORD_DELETED;
 
   private:
-    
-
     // Process the condition that the size of the read queue is greater
     // than or equal to the read queue low watermark.
     void processReadQueueLowWatermark(
-       const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-       const ntca::ReadQueueEvent&                event) BSLS_KEYWORD_OVERRIDE;
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::ReadQueueEvent& event) BSLS_KEYWORD_OVERRIDE;
 
     // Process the condition that the peer has indicated that it will
     // not send any more encrypted data.
     void processDowngradeComplete(
-       const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-       const ntca::DowngradeEvent&                event) BSLS_KEYWORD_OVERRIDE;
-
-    
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::DowngradeEvent& event) BSLS_KEYWORD_OVERRIDE;
 
     // Process the upgrade of the specified 'upgradable' that is the
     // specified 'streamSocket' according to the specified 'upgradeEvent'.
     void processUpgrade(const bsl::shared_ptr<ntci::Upgradable>& upgradable,
                         const ntca::UpgradeEvent&                upgradeEvent);
 
-    
-
     // Process the specified 'request' received from the client.
     void processRequest(const example::Message& request);
 
   public:
-    
-
     // Create a new application server socket over the specified
     // 'streamSocket'. Optionally specify a 'basicAllocator' used to
     // supply memory. If 'basicAllocator' is 0, the currently installed
     // default allocator is used.
     explicit ServerSocket(
-               const bsl::shared_ptr<ntci::StreamSocket>&  streamSocket,
-               bslma::Allocator                           *basicAllocator = 0);
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        bslma::Allocator*                          basicAllocator = 0);
 
     // Destroy this object.
     ~ServerSocket() BSLS_KEYWORD_OVERRIDE;
-
-    
 
     // Assume the TLS server role and begin upgrading the socket from
     // being unencrypted to being encrypted with TLS. Invoke the specified
@@ -771,9 +688,9 @@ class ServerSocket : public ntci::StreamSocketSession,
     // and invoke the specified 'downgradeCallback' when the socket has
     // completed downgrading from TLS back to clear text.
     void upgrade(
-             const bsl::shared_ptr<ntci::EncryptionServer>& encryptionServer,
-             const example::ServerSocket::Callback&         upgradeCallback,
-             const example::ServerSocket::Callback&         downgradeCallback);
+        const bsl::shared_ptr<ntci::EncryptionServer>& encryptionServer,
+        const example::ServerSocket::Callback&         upgradeCallback,
+        const example::ServerSocket::Callback&         downgradeCallback);
 
     // Start or stop receiving data according to the specified 'enabled'
     // flag. When receiving data is enabled, the
@@ -793,8 +710,6 @@ class ServerSocket : public ntci::StreamSocketSession,
     // Shutdown and close the socket.
     void shutdown();
 
-    
-
     // Return the certificate of the peer of the socket.
     bsl::shared_ptr<ntci::EncryptionCertificate> remoteCertificate() const;
 };
@@ -803,26 +718,21 @@ class ServerSocket : public ntci::StreamSocketSession,
 // Next, let's define the implementation of the server socket.
 //
 
-                             
-                             
-                             
-
-
 void ServerSocket::processReadQueueLowWatermark(
-                       const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-                       const ntca::ReadQueueEvent&                event)
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::ReadQueueEvent&                event)
 {
     NTCCFG_WARNING_UNUSED(streamSocket);
     NTCCFG_WARNING_UNUSED(event);
 
     ntsa::Error error = d_parser.parse(
-         d_streamSocket_sp,
-         bdlf::MemFnUtil::memFn(&example::ServerSocket::processRequest, this));
+        d_streamSocket_sp,
+        bdlf::MemFnUtil::memFn(&example::ServerSocket::processRequest, this));
 }
 
 void ServerSocket::processDowngradeComplete(
-                       const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-                       const ntca::DowngradeEvent&                event)
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::DowngradeEvent&                event)
 {
     NTCCFG_WARNING_UNUSED(streamSocket);
     NTCCFG_WARNING_UNUSED(event);
@@ -841,10 +751,9 @@ void ServerSocket::processDowngradeComplete(
     }
 }
 
-
 void ServerSocket::processUpgrade(
-                         const bsl::shared_ptr<ntci::Upgradable>& upgradable,
-                         const ntca::UpgradeEvent&                upgradeEvent)
+    const bsl::shared_ptr<ntci::Upgradable>& upgradable,
+    const ntca::UpgradeEvent&                upgradeEvent)
 {
     NTCCFG_WARNING_UNUSED(upgradable);
 
@@ -862,7 +771,6 @@ void ServerSocket::processUpgrade(
     }
 }
 
-
 void ServerSocket::processRequest(const example::Message& request)
 {
     example::Message response;
@@ -874,7 +782,7 @@ void ServerSocket::processRequest(const example::Message& request)
     bdlb::String::toUpper(&response.d_payload);
 
     bdlbb::Blob responseBlob(
-                         d_streamSocket_sp->outgoingBlobBufferFactory().get());
+        d_streamSocket_sp->outgoingBlobBufferFactory().get());
 
     example::MessageUtil::encodeHeader(&responseBlob, response.d_header);
     example::MessageUtil::encodePayload(&responseBlob, response.d_payload);
@@ -882,10 +790,9 @@ void ServerSocket::processRequest(const example::Message& request)
     d_streamSocket_sp->send(responseBlob, ntca::SendOptions());
 }
 
-
 ServerSocket::ServerSocket(
-                    const bsl::shared_ptr<ntci::StreamSocket>&  streamSocket,
-                    bslma::Allocator                           *basicAllocator)
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    bslma::Allocator*                          basicAllocator)
 : d_mutex()
 , d_streamSocket_sp(streamSocket)
 , d_parser()
@@ -899,11 +806,10 @@ ServerSocket::~ServerSocket()
 {
 }
 
-
 void ServerSocket::upgrade(
-              const bsl::shared_ptr<ntci::EncryptionServer>& encryptionServer,
-              const example::ServerSocket::Callback&         upgradeCallback,
-              const example::ServerSocket::Callback&         downgradeCallback)
+    const bsl::shared_ptr<ntci::EncryptionServer>& encryptionServer,
+    const example::ServerSocket::Callback&         upgradeCallback,
+    const example::ServerSocket::Callback&         downgradeCallback)
 {
     {
         bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
@@ -912,11 +818,11 @@ void ServerSocket::upgrade(
     }
 
     d_streamSocket_sp->upgrade(
-               encryptionServer,
-               ntca::UpgradeOptions(),
-               d_streamSocket_sp->createUpgradeCallback(
-                   bdlf::MemFnUtil::memFn(&ServerSocket::processUpgrade, this),
-                   d_allocator_p));
+        encryptionServer,
+        ntca::UpgradeOptions(),
+        d_streamSocket_sp->createUpgradeCallback(
+            bdlf::MemFnUtil::memFn(&ServerSocket::processUpgrade, this),
+            d_allocator_p));
 }
 
 void ServerSocket::receive(bool enabled)
@@ -926,8 +832,8 @@ void ServerSocket::receive(bool enabled)
     }
     else {
         d_streamSocket_sp->applyFlowControl(
-                                           ntca::FlowControlType::e_RECEIVE,
-                                           ntca::FlowControlMode::e_IMMEDIATE);
+            ntca::FlowControlType::e_RECEIVE,
+            ntca::FlowControlMode::e_IMMEDIATE);
     }
 }
 
@@ -943,9 +849,8 @@ void ServerSocket::shutdown()
     d_streamSocket_sp->close();
 }
 
-
-bsl::shared_ptr<ntci::EncryptionCertificate>
-ServerSocket::remoteCertificate() const
+bsl::shared_ptr<ntci::EncryptionCertificate> ServerSocket::remoteCertificate()
+    const
 {
     return d_streamSocket_sp->remoteCertificate();
 }
@@ -956,56 +861,43 @@ ServerSocket::remoteCertificate() const
 // once they have been connected.
 //
 
-                            
-                            
-                            
-
 // This class implements the 'ntci::ListenerSocketSession' protocol to
 // accept stream sockets from the backlog of a listening socket. This class
 // is thread safe.
 class ListenerSocket : public ntci::ListenerSocketSession,
-                       public ntccfg::Shared<ListenerSocket> {
+                       public ntccfg::Shared<ListenerSocket>
+{
   public:
-    
-
     // Defines a type alias for a generic function callback.
     typedef bsl::function<void()> Callback;
 
   private:
-    
-    bslmt::Mutex                           d_mutex;
-    bsl::shared_ptr<ntci::ListenerSocket>  d_listenerSocket_sp;
-    bslma::Allocator                      *d_allocator_p;
+    bslmt::Mutex                          d_mutex;
+    bsl::shared_ptr<ntci::ListenerSocket> d_listenerSocket_sp;
+    bslma::Allocator*                     d_allocator_p;
 
   private:
-    
     ListenerSocket(const ListenerSocket&) BSLS_KEYWORD_DELETED;
     ListenerSocket& operator=(const ListenerSocket&) BSLS_KEYWORD_DELETED;
 
   private:
-    
-
     // Process the condition that the size of the accept queue is greater
     // than or equal to the accept queue low watermark.
     void processAcceptQueueLowWatermark(
-     const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
-     const ntca::AcceptQueueEvent&                event) BSLS_KEYWORD_OVERRIDE;
+        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+        const ntca::AcceptQueueEvent& event) BSLS_KEYWORD_OVERRIDE;
 
   public:
-    
-
     // Create a new application listener socket over the specified
     // 'listenerSocket'. Optionally specify a 'basicAllocator' used to
     // supply memory. If 'basicAllocator' is 0, the currently installed
     // default allocator is used.
     explicit ListenerSocket(
-             const bsl::shared_ptr<ntci::ListenerSocket>&  listenerSocket,
-             bslma::Allocator                             *basicAllocator = 0);
+        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+        bslma::Allocator*                            basicAllocator = 0);
 
     // Destroy this object.
     ~ListenerSocket() BSLS_KEYWORD_OVERRIDE;
-
-    
 
     // Start or stop accepting connections according to the specified
     // 'enabled' flag. When accepting connections is enabled, the
@@ -1024,14 +916,9 @@ class ListenerSocket : public ntci::ListenerSocketSession,
 // Next, let's define the implementation of the listener socket.
 //
 
-                            
-                            
-                            
-
-
 void ListenerSocket::processAcceptQueueLowWatermark(
-                   const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
-                   const ntca::AcceptQueueEvent&                event)
+    const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+    const ntca::AcceptQueueEvent&                event)
 {
     NTCCFG_WARNING_UNUSED(listenerSocket);
     NTCCFG_WARNING_UNUSED(event);
@@ -1052,10 +939,9 @@ void ListenerSocket::processAcceptQueueLowWatermark(
     }
 }
 
-
 ListenerSocket::ListenerSocket(
-                  const bsl::shared_ptr<ntci::ListenerSocket>&  listenerSocket,
-                  bslma::Allocator                             *basicAllocator)
+    const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+    bslma::Allocator*                            basicAllocator)
 : d_mutex()
 , d_listenerSocket_sp(listenerSocket)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
@@ -1066,17 +952,16 @@ ListenerSocket::~ListenerSocket()
 {
 }
 
-
 void ListenerSocket::accept(bool enabled)
 {
     if (enabled) {
         d_listenerSocket_sp->relaxFlowControl(
-                                             ntca::FlowControlType::e_RECEIVE);
+            ntca::FlowControlType::e_RECEIVE);
     }
     else {
         d_listenerSocket_sp->applyFlowControl(
-                                           ntca::FlowControlType::e_RECEIVE,
-                                           ntca::FlowControlMode::e_IMMEDIATE);
+            ntca::FlowControlType::e_RECEIVE,
+            ntca::FlowControlMode::e_IMMEDIATE);
     }
 }
 
@@ -1098,26 +983,18 @@ void ListenerSocket::shutdown()
 // are all completely closed.  Let's start by declaring the client.
 //
 
-                                
-                                
-                                
-
 // This class implements the 'ntci::StreamSocketManager' protocol to
 // provide client communication of the example wire protocol. This class is
 // thread safe.
-class Client : public ntci::StreamSocketManager,
-               public ntccfg::Shared<Client> {
+class Client : public ntci::StreamSocketManager, public ntccfg::Shared<Client>
+{
   public:
-    
-
     // Defines a type alias for a deferred function.
-    typedef bsl::function<
-        void(const bsl::shared_ptr<example::ClientSocket>& clientSocket)>
+    typedef bsl::function<void(
+        const bsl::shared_ptr<example::ClientSocket>& clientSocket)>
         ClientSocketCallback;
 
   private:
-    
-
     // This typedef defines a map of stream sockets pending the completion
     // of their connection to the callbacks to notify the user of the
     // completion of the connection.
@@ -1131,49 +1008,41 @@ class Client : public ntci::StreamSocketManager,
                                bsl::shared_ptr<example::ClientSocket> >
         StreamSocketMap;
 
-    
-    bslmt::Mutex                      d_mutex;
-    bsl::shared_ptr<ntci::Interface>  d_interface_sp;
-    PendingConnectionMap              d_pendingConnections;
-    StreamSocketMap                   d_streamSockets;
-    bslmt::Condition                  d_linger;
-    bslma::Allocator                 *d_allocator_p;
+    bslmt::Mutex                     d_mutex;
+    bsl::shared_ptr<ntci::Interface> d_interface_sp;
+    PendingConnectionMap             d_pendingConnections;
+    StreamSocketMap                  d_streamSockets;
+    bslmt::Condition                 d_linger;
+    bslma::Allocator*                d_allocator_p;
 
   private:
-    
     Client(const Client&) BSLS_KEYWORD_DELETED;
     Client& operator=(const Client&) BSLS_KEYWORD_DELETED;
 
   private:
-    
     void processStreamSocketEstablished(
-                       const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
         BSLS_KEYWORD_OVERRIDE;
-        // Process the establishment of the specified 'streamSocket'.
+    // Process the establishment of the specified 'streamSocket'.
 
     // Process the closure of the specified 'streamSocket'.
     void processStreamSocketClosed(const bsl::shared_ptr<ntci::StreamSocket>&
                                        streamSocket) BSLS_KEYWORD_OVERRIDE;
 
-    
-
     // Process the specified 'connectEvent' for the specified 'connector'
     // that is the specified 'streamSocket'.
     void processConnect(
-                      const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-                      const bsl::shared_ptr<ntci::Connector>&    connector,
-                      const ntca::ConnectEvent&                  connectEvent);
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const bsl::shared_ptr<ntci::Connector>&    connector,
+        const ntca::ConnectEvent&                  connectEvent);
 
   public:
-    
-
     // Create a new client that creates stream sockets using the specified
     // 'interface'. Optionally specify a 'basicAllocator' used to supply
     // memory. If 'basicAllocator' is 0, the currently installed default
     // allocator is used.
-    explicit Client(
-                  const bsl::shared_ptr<ntci::Interface>&  interface,
-                  bslma::Allocator                        *basicAllocator = 0);
+    explicit Client(const bsl::shared_ptr<ntci::Interface>& interface,
+                    bslma::Allocator* basicAllocator = 0);
 
     // Destroy this object.
     ~Client() BSLS_KEYWORD_OVERRIDE;
@@ -1195,13 +1064,8 @@ class Client : public ntci::StreamSocketManager,
 // Next, let's define the implementation of the client.
 //
 
-                                
-                                
-                                
-
-
 void Client::processStreamSocketEstablished(
-                       const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
 {
     bsl::shared_ptr<example::ClientSocket> clientSocket;
     example::Client::ClientSocketCallback  callback;
@@ -1210,7 +1074,7 @@ void Client::processStreamSocketEstablished(
         bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
 
         PendingConnectionMap::iterator it =
-                                       d_pendingConnections.find(streamSocket);
+            d_pendingConnections.find(streamSocket);
         BSLS_ASSERT_OPT(it != d_pendingConnections.end());
 
         callback = it->second;
@@ -1227,7 +1091,7 @@ void Client::processStreamSocketEstablished(
 }
 
 void Client::processStreamSocketClosed(
-                       const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
 {
     bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
 
@@ -1239,9 +1103,9 @@ void Client::processStreamSocketClosed(
 }
 
 void Client::processConnect(
-                       const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-                       const bsl::shared_ptr<ntci::Connector>&    connector,
-                       const ntca::ConnectEvent&                  connectEvent)
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const bsl::shared_ptr<ntci::Connector>&    connector,
+    const ntca::ConnectEvent&                  connectEvent)
 {
     NTCCFG_WARNING_UNUSED(streamSocket);
     NTCCFG_WARNING_UNUSED(connector);
@@ -1252,9 +1116,8 @@ void Client::processConnect(
     }
 }
 
-
-Client::Client(const bsl::shared_ptr<ntci::Interface>&  interface,
-               bslma::Allocator                        *basicAllocator)
+Client::Client(const bsl::shared_ptr<ntci::Interface>& interface,
+               bslma::Allocator*                       basicAllocator)
 : d_mutex()
 , d_interface_sp(interface)
 , d_pendingConnections(basicAllocator)
@@ -1268,9 +1131,8 @@ Client::~Client()
 {
 }
 
-void Client::connect(
-                   const ntsa::Endpoint&                        remoteEndpoint,
-                   const example::Client::ClientSocketCallback& callback)
+void Client::connect(const ntsa::Endpoint& remoteEndpoint,
+                     const example::Client::ClientSocketCallback& callback)
 {
     ntsa::Error error;
 
@@ -1287,12 +1149,12 @@ void Client::connect(
     }
 
     ntci::ConnectCallback connectCallback =
-                               streamSocket->createConnectCallback(NTCCFG_BIND(
-                                   &Client::processConnect,
-                                   this,
-                                   streamSocket,
-                                   NTCCFG_BIND_PLACEHOLDER_1,
-                                   NTCCFG_BIND_PLACEHOLDER_2));
+        streamSocket->createConnectCallback(
+            NTCCFG_BIND(&Client::processConnect,
+                        this,
+                        streamSocket,
+                        NTCCFG_BIND_PLACEHOLDER_1,
+                        NTCCFG_BIND_PLACEHOLDER_2));
 
     streamSocket->connect(remoteEndpoint,
                           ntca::ConnectOptions(),
@@ -1309,7 +1171,8 @@ void Client::shutdown()
 
     for (StreamSocketMap::iterator it = streamSockets.begin();
          it != streamSockets.end();
-         ++it) {
+         ++it)
+    {
         it->first->close();
     }
 }
@@ -1330,25 +1193,18 @@ void Client::linger()
 // client role.
 //
 
-                                
-                                
-                                
-
 // This class implements the 'ntci::ListenerSocketManager' and
 // protocol to 'ntci::ListenerSocketSession' protocols to provide server
 // communication of the example wire protocol. This class is thread safe.
 class Server : public ntci::ListenerSocketManager,
                public ntci::ListenerSocketSession,
-               public ntccfg::Shared<Server> {
+               public ntccfg::Shared<Server>
+{
   public:
-    
-
     // Defines a type alias for a deferred function.
-    typedef bsl::function<
-        void(const bsl::shared_ptr<example::ServerSocket>& serverSocket)>
+    typedef bsl::function<void(
+        const bsl::shared_ptr<example::ServerSocket>& serverSocket)>
         ServerSocketCallback;
-
-    
 
     // This typedef defines a map of listener sockets listening for
     // connections to the callbacks to notify the user of the
@@ -1369,58 +1225,49 @@ class Server : public ntci::ListenerSocketManager,
                                bsl::shared_ptr<example::ServerSocket> >
         StreamSocketMap;
 
-    
-    mutable bslmt::Mutex              d_mutex;
-    bsl::shared_ptr<ntci::Interface>  d_interface_sp;
-    PendingConnectionMap              d_pendingConnections;
-    ListenerSocketMap                 d_listenerSockets;
-    StreamSocketMap                   d_streamSockets;
-    bslmt::Condition                  d_linger;
-    bslma::Allocator                 *d_allocator_p;
+    mutable bslmt::Mutex             d_mutex;
+    bsl::shared_ptr<ntci::Interface> d_interface_sp;
+    PendingConnectionMap             d_pendingConnections;
+    ListenerSocketMap                d_listenerSockets;
+    StreamSocketMap                  d_streamSockets;
+    bslmt::Condition                 d_linger;
+    bslma::Allocator*                d_allocator_p;
 
   private:
-    
     Server(const Server&) BSLS_KEYWORD_DELETED;
     Server& operator=(const Server&) BSLS_KEYWORD_DELETED;
 
   private:
-    
     void processListenerSocketEstablished(
-                   const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket)
+        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket)
         BSLS_KEYWORD_OVERRIDE;
-        // Process the establishment of the specified 'listenerSocket'.
+    // Process the establishment of the specified 'listenerSocket'.
 
     void processListenerSocketClosed(
-                   const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket)
+        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket)
         BSLS_KEYWORD_OVERRIDE;
-        // Process the closure of the specified 'listenerSocket'.
+    // Process the closure of the specified 'listenerSocket'.
 
-    
     void processStreamSocketEstablished(
-                       const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
         BSLS_KEYWORD_OVERRIDE;
-        // Process the establishment of the specified 'streamSocket'. Return
-        // the application protocol of the 'streamSocket'.
+    // Process the establishment of the specified 'streamSocket'. Return
+    // the application protocol of the 'streamSocket'.
 
     // Process the closure of the specified 'streamSocket'.
     void processStreamSocketClosed(const bsl::shared_ptr<ntci::StreamSocket>&
                                        streamSocket) BSLS_KEYWORD_OVERRIDE;
 
   public:
-    
-
     // Create a new server that creates listener and stream sockets using
     // the specified 'interface'. Optionally specify a 'basicAllocator'
     // used to supply memory. If 'basicAllocator' is 0, the currently
     // installed default allocator is used.
-    explicit Server(
-                  const bsl::shared_ptr<ntci::Interface>&  interface,
-                  bslma::Allocator                        *basicAllocator = 0);
+    explicit Server(const bsl::shared_ptr<ntci::Interface>& interface,
+                    bslma::Allocator* basicAllocator = 0);
 
     // Destroy this object.
     ~Server() BSLS_KEYWORD_OVERRIDE;
-
-    
 
     // Begin listening for connections to the specified 'sourceEndpoint'
     // and invoke the specified 'callback' when the listener has
@@ -1440,13 +1287,8 @@ class Server : public ntci::ListenerSocketManager,
 // Now, let's define the implementation of the server.
 //
 
-                                
-                                
-                                
-
-
 void Server::processListenerSocketEstablished(
-                   const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket)
+    const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket)
 {
     bsl::shared_ptr<example::ListenerSocket> listenerSocketSession;
     {
@@ -1465,7 +1307,7 @@ void Server::processListenerSocketEstablished(
 }
 
 void Server::processListenerSocketClosed(
-                   const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket)
+    const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket)
 {
     bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
 
@@ -1480,14 +1322,14 @@ void Server::processListenerSocketClosed(
     }
 
     if (d_pendingConnections.empty() && d_listenerSockets.empty() &&
-        d_streamSockets.empty()) {
+        d_streamSockets.empty())
+    {
         d_linger.signal();
     }
 }
 
-
 void Server::processStreamSocketEstablished(
-                       const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
 {
     bsl::shared_ptr<example::ServerSocket> serverSocket;
     serverSocket.createInplace(d_allocator_p, streamSocket, d_allocator_p);
@@ -1506,7 +1348,7 @@ void Server::processStreamSocketEstablished(
 }
 
 void Server::processStreamSocketClosed(
-                       const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
 {
     bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
 
@@ -1514,14 +1356,14 @@ void Server::processStreamSocketClosed(
     BSLS_ASSERT_OPT(n == 1);
 
     if (d_pendingConnections.empty() && d_listenerSockets.empty() &&
-        d_streamSockets.empty()) {
+        d_streamSockets.empty())
+    {
         d_linger.signal();
     }
 }
 
-
-Server::Server(const bsl::shared_ptr<ntci::Interface>&  interface,
-               bslma::Allocator                        *basicAllocator)
+Server::Server(const bsl::shared_ptr<ntci::Interface>& interface,
+               bslma::Allocator*                       basicAllocator)
 : d_mutex()
 , d_interface_sp(interface)
 , d_pendingConnections(basicAllocator)
@@ -1536,7 +1378,6 @@ Server::~Server()
 {
 }
 
-
 ntsa::Endpoint Server::listen(const ntsa::Endpoint&       sourceEndpoint,
                               const ServerSocketCallback& callback)
 {
@@ -1546,8 +1387,8 @@ ntsa::Endpoint Server::listen(const ntsa::Endpoint&       sourceEndpoint,
     listenerSocketOptions.setSourceEndpoint(sourceEndpoint);
 
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
-                    d_interface_sp->createListenerSocket(listenerSocketOptions,
-                                                         d_allocator_p);
+        d_interface_sp->createListenerSocket(listenerSocketOptions,
+                                             d_allocator_p);
 
     listenerSocket->registerManager(this->getSelf(this));
     listenerSocket->registerSession(this->getSelf(this));
@@ -1578,13 +1419,15 @@ void Server::shutdown()
 
     for (ListenerSocketMap::iterator it = listenerSockets.begin();
          it != listenerSockets.end();
-         ++it) {
+         ++it)
+    {
         it->first->close();
     }
 
     for (StreamSocketMap::iterator it = streamSockets.begin();
          it != streamSockets.end();
-         ++it) {
+         ++it)
+    {
         it->first->close();
     }
 }
@@ -1593,7 +1436,8 @@ void Server::linger()
 {
     bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
     while (!d_pendingConnections.empty() || !d_listenerSockets.empty() ||
-           !d_streamSockets.empty()) {
+           !d_streamSockets.empty())
+    {
         d_linger.wait(&d_mutex);
     }
 }
@@ -1607,10 +1451,10 @@ void Server::linger()
 //
 
 void processServerSocketEstablished(
-                   const bsl::shared_ptr<example::Server>&        server,
-                   const bsl::shared_ptr<example::ServerSocket>&  serverSocket,
-                   bslmt::Semaphore                              *semaphore,
-                   bsl::shared_ptr<example::ServerSocket>        *result)
+    const bsl::shared_ptr<example::Server>&       server,
+    const bsl::shared_ptr<example::ServerSocket>& serverSocket,
+    bslmt::Semaphore*                             semaphore,
+    bsl::shared_ptr<example::ServerSocket>*       result)
 {
     NTCCFG_WARNING_UNUSED(server);
 
@@ -1619,9 +1463,9 @@ void processServerSocketEstablished(
 }
 
 void processServerSocketEvent(
-                   const bsl::shared_ptr<example::Server>&        server,
-                   const bsl::shared_ptr<example::ServerSocket>&  serverSocket,
-                   bslmt::Semaphore                              *semaphore)
+    const bsl::shared_ptr<example::Server>&       server,
+    const bsl::shared_ptr<example::ServerSocket>& serverSocket,
+    bslmt::Semaphore*                             semaphore)
 {
     NTCCFG_WARNING_UNUSED(server);
     NTCCFG_WARNING_UNUSED(serverSocket);
@@ -1630,10 +1474,10 @@ void processServerSocketEvent(
 }
 
 void processClientSocketEstablished(
-                   const bsl::shared_ptr<example::Client>&        client,
-                   const bsl::shared_ptr<example::ClientSocket>&  clientSocket,
-                   bslmt::Semaphore                              *semaphore,
-                   bsl::shared_ptr<example::ClientSocket>        *result)
+    const bsl::shared_ptr<example::Client>&       client,
+    const bsl::shared_ptr<example::ClientSocket>& clientSocket,
+    bslmt::Semaphore*                             semaphore,
+    bsl::shared_ptr<example::ClientSocket>*       result)
 {
     NTCCFG_WARNING_UNUSED(client);
 
@@ -1642,9 +1486,9 @@ void processClientSocketEstablished(
 }
 
 void processClientSocketEvent(
-                   const bsl::shared_ptr<example::Client>&        client,
-                   const bsl::shared_ptr<example::ClientSocket>&  clientSocket,
-                   bslmt::Semaphore                              *semaphore)
+    const bsl::shared_ptr<example::Client>&       client,
+    const bsl::shared_ptr<example::ClientSocket>& clientSocket,
+    bslmt::Semaphore*                             semaphore)
 {
     NTCCFG_WARNING_UNUSED(client);
     NTCCFG_WARNING_UNUSED(clientSocket);
@@ -1652,9 +1496,9 @@ void processClientSocketEvent(
     semaphore->post();
 }
 
-void processClientResponseReceived(bsl::string        *result,
-                                   bslmt::Latch       *resultLatch,
-                                   const bsl::string&  response)
+void processClientResponseReceived(bsl::string*       result,
+                                   bslmt::Latch*      resultLatch,
+                                   const bsl::string& response)
 {
     // Store the response received and indicate a response was received.
 
@@ -1683,7 +1527,7 @@ void execute()
 {
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
-    bslma::Allocator *allocator = bslma::Default::defaultAllocator();
+    bslma::Allocator* allocator = bslma::Default::defaultAllocator();
 
     // Create an asynchronous socket interface running two I/O threads.
 
@@ -1693,7 +1537,7 @@ void execute()
     interfaceConfig.setMaxThreads(2);
 
     bsl::shared_ptr<ntci::Interface> interface =
-                     ntcf::System::createInterface(interfaceConfig, allocator);
+        ntcf::System::createInterface(interfaceConfig, allocator);
 
     interface->start();
 
@@ -1707,16 +1551,19 @@ void execute()
     bsl::shared_ptr<example::ServerSocket> serverSocket;
     bslmt::Semaphore                       serverEstablished;
 
-    ntsa::Endpoint listenerEndpoint =
-                             ntsa::Endpoint(ntsa::LocalName::generateUnique());
+    ntsa::LocalName localName;
+    const ntsa::Error error = ntsa::LocalName::generateUnique(&localName);
+    BSLS_ASSERT_OPT(!error);
 
-    listenerEndpoint = server->listen(
-                          listenerEndpoint,
-                          NTCCFG_BIND(&example::processServerSocketEstablished,
-                                      server,
-                                      NTCCFG_BIND_PLACEHOLDER_1,
-                                      &serverEstablished,
-                                      &serverSocket));
+    ntsa::Endpoint listenerEndpoint = ntsa::Endpoint(localName);
+
+    listenerEndpoint =
+        server->listen(listenerEndpoint,
+                       NTCCFG_BIND(&example::processServerSocketEstablished,
+                                   server,
+                                   NTCCFG_BIND_PLACEHOLDER_1,
+                                   &serverEstablished,
+                                   &serverSocket));
 
     // Create a client of the application wire protocol and begin connecting
     // to the server.
@@ -1824,7 +1671,7 @@ void execute()
 #if defined(BSLS_PLATFORM_OS_UNIX)
 #if NTCU12_BUILD_WITH_TLS
 
-    bslma::Allocator *allocator = bslma::Default::defaultAllocator();
+    bslma::Allocator* allocator = bslma::Default::defaultAllocator();
 
     ntsa::Error error;
 
@@ -1836,7 +1683,7 @@ void execute()
     interfaceConfig.setMaxThreads(2);
 
     bsl::shared_ptr<ntci::Interface> interface =
-                     ntcf::System::createInterface(interfaceConfig, allocator);
+        ntcf::System::createInterface(interfaceConfig, allocator);
 
     interface->start();
 
@@ -1897,7 +1744,7 @@ void execute()
     encryptionServerOptions.setMinMethod(ntca::EncryptionMethod::e_TLS_V1_X);
     encryptionServerOptions.setMaxMethod(ntca::EncryptionMethod::e_TLS_V1_X);
     encryptionServerOptions.setAuthentication(
-                                       ntca::EncryptionAuthentication::e_NONE);
+        ntca::EncryptionAuthentication::e_NONE);
 
     {
         bsl::vector<char> identityData;
@@ -1925,7 +1772,7 @@ void execute()
     encryptionClientOptions.setMinMethod(ntca::EncryptionMethod::e_TLS_V1_2);
     encryptionClientOptions.setMaxMethod(ntca::EncryptionMethod::e_TLS_V1_2);
     encryptionClientOptions.setAuthentication(
-                                     ntca::EncryptionAuthentication::e_VERIFY);
+        ntca::EncryptionAuthentication::e_VERIFY);
 
     {
         bsl::vector<char> authorityData;
@@ -1949,15 +1796,15 @@ void execute()
     bslmt::Semaphore                       serverEstablished;
 
     ntsa::Endpoint listenerEndpoint =
-                             ntsa::Endpoint(ntsa::LocalName::generateUnique());
+        ntsa::Endpoint(ntsa::LocalName::generateUnique());
 
-    listenerEndpoint = server->listen(
-                          listenerEndpoint,
-                          NTCCFG_BIND(&example::processServerSocketEstablished,
-                                      server,
-                                      NTCCFG_BIND_PLACEHOLDER_1,
-                                      &serverEstablished,
-                                      &serverSocket));
+    listenerEndpoint =
+        server->listen(listenerEndpoint,
+                       NTCCFG_BIND(&example::processServerSocketEstablished,
+                                   server,
+                                   NTCCFG_BIND_PLACEHOLDER_1,
+                                   &serverEstablished,
+                                   &serverSocket));
 
     // Create a client of the application wire protocol and begin connecting
     // to the server.
@@ -2052,7 +1899,7 @@ void execute()
 
     {
         bsl::shared_ptr<ntci::EncryptionCertificate> peerCertificate =
-                                             clientSocket->remoteCertificate();
+            clientSocket->remoteCertificate();
 
         bsl::stringstream ss;
         peerCertificate->print(ss);
@@ -2211,7 +2058,7 @@ void help()
     bsl::cout << "usage: <program>> [-v <level>]" << bsl::endl;
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     ntcf::System::initialize();
     ntcf::System::ignore(ntscfg::Signal::e_PIPE);
@@ -2221,13 +2068,15 @@ int main(int argc, char **argv)
         int i = 1;
         while (i < argc) {
             if ((0 == std::strcmp(argv[i], "-?")) ||
-                (0 == std::strcmp(argv[i], "--help"))) {
+                (0 == std::strcmp(argv[i], "--help")))
+            {
                 help();
                 return 0;
             }
 
             if (0 == std::strcmp(argv[i], "-v") ||
-                0 == std::strcmp(argv[i], "--verbosity")) {
+                0 == std::strcmp(argv[i], "--verbosity"))
+            {
                 ++i;
                 if (i >= argc) {
                     help();
@@ -2244,21 +2093,21 @@ int main(int argc, char **argv)
     }
 
     switch (verbosity) {
-      case 0:
+    case 0:
         break;
-      case 1:
+    case 1:
         bsls::Log::setSeverityThreshold(bsls::LogSeverity::e_ERROR);
         break;
-      case 2:
+    case 2:
         bsls::Log::setSeverityThreshold(bsls::LogSeverity::e_WARN);
         break;
-      case 3:
+    case 3:
         bsls::Log::setSeverityThreshold(bsls::LogSeverity::e_INFO);
         break;
-      case 4:
+    case 4:
         bsls::Log::setSeverityThreshold(bsls::LogSeverity::e_DEBUG);
         break;
-      default:
+    default:
         bsls::Log::setSeverityThreshold(bsls::LogSeverity::e_TRACE);
         break;
     }

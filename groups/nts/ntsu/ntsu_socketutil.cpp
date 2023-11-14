@@ -821,12 +821,12 @@ ntsa::Error SocketStorageUtil::convert(sockaddr_storage*     socketAddress,
         if (!endpoint.local().isUnnamed()) {
             bsl::size_t offset = 0;
             if (endpoint.local().isAbstract()) {
-                socketAddressLocal->sun_path[offset] = 0;
+                socketAddressLocal->sun_path[offset]  = 0;
                 *socketAddressSize                   += 1;
                 ++offset;
             }
 
-            BSLS_ASSERT_OPT(ntsa::LocalName::k_MAX_PATH_LENGTH <
+            BSLS_ASSERT_OPT(ntsa::LocalName::k_MAX_PATH_LENGTH <=
                             sizeof(sockaddr_un) -
                                 offsetof(struct sockaddr_un, sun_path) -
                                 offset);
@@ -844,7 +844,7 @@ ntsa::Error SocketStorageUtil::convert(sockaddr_storage*     socketAddress,
                 // null-terminated, and the null-terminator is included in the
                 // length.
                 offset                               += value.size();
-                socketAddressLocal->sun_path[offset] = 0;
+                socketAddressLocal->sun_path[offset]  = 0;
                 *socketAddressSize                   += 1;
             }
         }
@@ -1046,7 +1046,12 @@ ntsa::Error SocketUtil::bindAny(ntsa::Transport::Value type,
     }
 #if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
     else if (type == ntsa::Transport::e_LOCAL_STREAM) {
-        endpoint.makeLocal(ntsa::LocalName::generateUnique());
+        ntsa::LocalName   localName;
+        const ntsa::Error error = ntsa::LocalName::generateUnique(&localName);
+        if (error) {
+            return error;
+        }
+        endpoint.makeLocal(localName);
     }
 #endif
     else if (type == ntsa::Transport::e_UDP_IPV4_DATAGRAM) {
@@ -1061,7 +1066,12 @@ ntsa::Error SocketUtil::bindAny(ntsa::Transport::Value type,
     }
 #if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
     else if (type == ntsa::Transport::e_LOCAL_DATAGRAM) {
-        endpoint.makeLocal(ntsa::LocalName::generateUnique());
+        ntsa::LocalName   localName;
+        const ntsa::Error error = ntsa::LocalName::generateUnique(&localName);
+        if (error) {
+            return error;
+        }
+        endpoint.makeLocal(localName);
     }
 #endif
     else {
@@ -4921,7 +4931,7 @@ ntsa::Error SocketUtil::bind(const ntsa::Endpoint& endpoint,
     ntsa::Error error;
 
 #if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
-    const bool  isLocal = endpoint.isLocal();
+    const bool isLocal = endpoint.isLocal();
 #else
     const bool isLocal = false;
 #endif
@@ -5001,7 +5011,12 @@ ntsa::Error SocketUtil::bindAny(ntsa::Transport::Value type,
     }
 #if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
     else if (type == ntsa::Transport::e_LOCAL_STREAM) {
-        endpoint.makeLocal(ntsa::LocalName::generateUnique());
+        ntsa::LocalName   localName;
+        const ntsa::Error error = ntsa::LocalName::generateUnique(&localName);
+        if (error) {
+            return error;
+        }
+        endpoint.makeLocal(localName);
     }
 #endif
     else if (type == ntsa::Transport::e_UDP_IPV4_DATAGRAM) {
@@ -5016,7 +5031,12 @@ ntsa::Error SocketUtil::bindAny(ntsa::Transport::Value type,
     }
 #if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
     else if (type == ntsa::Transport::e_LOCAL_DATAGRAM) {
-        endpoint.makeLocal(ntsa::LocalName::generateUnique());
+        ntsa::LocalName   localName;
+        const ntsa::Error error = ntsa::LocalName::generateUnique(&localName);
+        if (error) {
+            return error;
+        }
+        endpoint.makeLocal(localName);
     }
 #endif
     else {
@@ -7600,12 +7620,19 @@ ntsa::Error SocketUtil::pair(ntsa::Handle*          client,
 
         ntsu::SocketUtil::Guard listenerGuard(listener);
 
-        error = ntsu::SocketUtil::bind(
-            ntsa::Endpoint(ntsa::LocalName::generateUnique()),
-            false,
-            listener);
-        if (error) {
-            return error;
+        {
+            ntsa::LocalName localName;
+            error = ntsa::LocalName::generateUnique(&localName);
+            if (error) {
+                return error;
+            }
+
+            error = ntsu::SocketUtil::bind(ntsa::Endpoint(localName),
+                                           false,
+                                           listener);
+            if (error) {
+                return error;
+            }
         }
 
         error = ntsu::SocketUtil::listen(1, listener);
@@ -7626,12 +7653,19 @@ ntsa::Error SocketUtil::pair(ntsa::Handle*          client,
 
         ntsu::SocketUtil::Guard clientGuard(*client);
 
-        error = ntsu::SocketUtil::bind(
-            ntsa::Endpoint(ntsa::LocalName::generateUnique()),
-            false,
-            *client);
-        if (error) {
-            return error;
+        {
+            ntsa::LocalName localName;
+            error = ntsa::LocalName::generateUnique(&localName);
+            if (error) {
+                return error;
+            }
+
+            error = ntsu::SocketUtil::bind(ntsa::Endpoint(localName),
+                                           false,
+                                           *client);
+            if (error) {
+                return error;
+            }
         }
 
         error = ntsu::SocketUtil::connect(listenerEndpoint, *client);
