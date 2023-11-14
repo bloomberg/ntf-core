@@ -67,6 +67,22 @@ void StreamSocketSession::processReadQueueDiscarded(
     NTCCFG_WARNING_UNUSED(event);
 }
 
+void StreamSocketSession::processReadQueueRateLimitApplied(
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::ReadQueueEvent&                event)
+{
+    NTCCFG_WARNING_UNUSED(streamSocket);
+    NTCCFG_WARNING_UNUSED(event);
+}
+
+void StreamSocketSession::processReadQueueRateLimitRelaxed(
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::ReadQueueEvent&                event)
+{
+    NTCCFG_WARNING_UNUSED(streamSocket);
+    NTCCFG_WARNING_UNUSED(event);
+}
+
 void StreamSocketSession::processWriteQueueFlowControlRelaxed(
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
     const ntca::WriteQueueEvent&               event)
@@ -100,6 +116,22 @@ void StreamSocketSession::processWriteQueueHighWatermark(
 }
 
 void StreamSocketSession::processWriteQueueDiscarded(
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::WriteQueueEvent&               event)
+{
+    NTCCFG_WARNING_UNUSED(streamSocket);
+    NTCCFG_WARNING_UNUSED(event);
+}
+
+void StreamSocketSession::processWriteQueueRateLimitApplied(
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::WriteQueueEvent&               event)
+{
+    NTCCFG_WARNING_UNUSED(streamSocket);
+    NTCCFG_WARNING_UNUSED(event);
+}
+
+void StreamSocketSession::processWriteQueueRateLimitRelaxed(
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
     const ntca::WriteQueueEvent&               event)
 {

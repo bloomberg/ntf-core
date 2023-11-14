@@ -584,6 +584,22 @@ void StreamSocket::processSendRateTimer(
                                       ntca::FlowControlType::e_SEND,
                                       false,
                                       true);
+
+        if (d_session_sp) {
+            ntca::WriteQueueEvent event;
+            event.setType(ntca::WriteQueueEventType::e_RATE_LIMIT_RELAXED);
+            event.setContext(d_sendQueue.context());
+
+            ntcs::Dispatch::announceWriteQueueRateLimitRelaxed(
+                d_session_sp,
+                self,
+                event,
+                d_sessionStrand_sp,
+                ntci::Strand::unknown(),
+                self,
+                false,
+                &d_mutex);
+        }
     }
 }
 
@@ -661,6 +677,22 @@ void StreamSocket::processReceiveRateTimer(
                                       ntca::FlowControlType::e_RECEIVE,
                                       false,
                                       true);
+
+        if (d_session_sp) {
+            ntca::ReadQueueEvent event;
+            event.setType(ntca::ReadQueueEventType::e_RATE_LIMIT_RELAXED);
+            event.setContext(d_receiveQueue.context());
+
+            ntcs::Dispatch::announceReadQueueRateLimitRelaxed(
+                d_session_sp,
+                self,
+                event,
+                d_sessionStrand_sp,
+                ntci::Strand::unknown(),
+                self,
+                false,
+                &d_mutex);
+        }
     }
 }
 
@@ -2423,7 +2455,7 @@ ntsa::Error StreamSocket::privateThrottleSendBuffer(
 
                 ntci::TimerCallback timerCallback = this->createTimerCallback(
                     bdlf::MemFnUtil::memFn(&StreamSocket::processSendRateTimer,
-                                           this),
+                                           self),
                     d_allocator_p);
 
                 d_sendRateTimer_sp = this->createTimer(timerOptions,
@@ -2434,6 +2466,22 @@ ntsa::Error StreamSocket::privateThrottleSendBuffer(
             bsls::TimeInterval nextSendAttemptTime = now + timeToSubmit;
 
             d_sendRateTimer_sp->schedule(nextSendAttemptTime);
+
+            if (d_session_sp) {
+                ntca::WriteQueueEvent event;
+                event.setType(ntca::WriteQueueEventType::e_RATE_LIMIT_APPLIED);
+                event.setContext(d_sendQueue.context());
+
+                ntcs::Dispatch::announceWriteQueueRateLimitApplied(
+                    d_session_sp,
+                    self,
+                    event,
+                    d_sessionStrand_sp,
+                    ntci::Strand::unknown(),
+                    self,
+                    true,
+                    &d_mutex);
+            }
 
             return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
         }
@@ -2476,7 +2524,7 @@ ntsa::Error StreamSocket::privateThrottleReceiveBuffer(
                 ntci::TimerCallback timerCallback = this->createTimerCallback(
                     bdlf::MemFnUtil::memFn(
                         &StreamSocket::processReceiveRateTimer,
-                        this),
+                        self),
                     d_allocator_p);
 
                 d_receiveRateTimer_sp = this->createTimer(timerOptions,
@@ -2487,6 +2535,22 @@ ntsa::Error StreamSocket::privateThrottleReceiveBuffer(
             bsls::TimeInterval nextReceiveAttemptTime = now + timeToSubmit;
 
             d_receiveRateTimer_sp->schedule(nextReceiveAttemptTime);
+
+            if (d_session_sp) {
+                ntca::ReadQueueEvent event;
+                event.setType(ntca::ReadQueueEventType::e_RATE_LIMIT_APPLIED);
+                event.setContext(d_receiveQueue.context());
+
+                ntcs::Dispatch::announceReadQueueRateLimitApplied(
+                    d_session_sp,
+                    self,
+                    event,
+                    d_sessionStrand_sp,
+                    ntci::Strand::unknown(),
+                    self,
+                    true,
+                    &d_mutex);
+            }
 
             return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
         }
@@ -4804,7 +4868,7 @@ ntsa::Error StreamSocket::upgrade(
         timerOptions.setOneShot(true);
 
         ntci::TimerCallback timerCallback = this->createTimerCallback(
-            bdlf::MemFnUtil::memFn(&StreamSocket::processUpgradeTimer, this),
+            bdlf::MemFnUtil::memFn(&StreamSocket::processUpgradeTimer, self),
             d_allocator_p);
 
         d_upgradeTimer_sp =

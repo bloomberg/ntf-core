@@ -284,6 +284,80 @@ void Dispatch::announceReadQueueDiscarded(
     }
 }
 
+void Dispatch::announceReadQueueRateLimitApplied(
+    const bsl::shared_ptr<ntci::DatagramSocketSession>& session,
+    const bsl::shared_ptr<ntci::DatagramSocket>&        socket,
+    const ntca::ReadQueueEvent&                         event,
+    const bsl::shared_ptr<ntci::Strand>&                destination,
+    const bsl::shared_ptr<ntci::Strand>&                source,
+    const bsl::shared_ptr<ntci::Executor>&              executor,
+    bool                                                defer,
+    bslmt::Mutex*                                       mutex)
+{
+    if (!session) {
+        return;
+    }
+
+    if (NTCCFG_LIKELY(!defer &&
+                      ntci::Strand::passthrough(destination, source)))
+    {
+        bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
+        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        sessionGuard->processReadQueueRateLimitApplied(socket, event);
+    }
+    else if (destination) {
+        destination->execute(NTCCFG_BIND(
+            &ntci::DatagramSocketSession::processReadQueueRateLimitApplied,
+            session,
+            socket,
+            event));
+    }
+    else {
+        executor->execute(NTCCFG_BIND(
+            &ntci::DatagramSocketSession::processReadQueueRateLimitApplied,
+            session,
+            socket,
+            event));
+    }
+}
+
+void Dispatch::announceReadQueueRateLimitRelaxed(
+    const bsl::shared_ptr<ntci::DatagramSocketSession>& session,
+    const bsl::shared_ptr<ntci::DatagramSocket>&        socket,
+    const ntca::ReadQueueEvent&                         event,
+    const bsl::shared_ptr<ntci::Strand>&                destination,
+    const bsl::shared_ptr<ntci::Strand>&                source,
+    const bsl::shared_ptr<ntci::Executor>&              executor,
+    bool                                                defer,
+    bslmt::Mutex*                                       mutex)
+{
+    if (!session) {
+        return;
+    }
+
+    if (NTCCFG_LIKELY(!defer &&
+                      ntci::Strand::passthrough(destination, source)))
+    {
+        bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
+        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        sessionGuard->processReadQueueRateLimitRelaxed(socket, event);
+    }
+    else if (destination) {
+        destination->execute(NTCCFG_BIND(
+            &ntci::DatagramSocketSession::processReadQueueRateLimitRelaxed,
+            session,
+            socket,
+            event));
+    }
+    else {
+        executor->execute(NTCCFG_BIND(
+            &ntci::DatagramSocketSession::processReadQueueRateLimitRelaxed,
+            session,
+            socket,
+            event));
+    }
+}
+
 void Dispatch::announceWriteQueueFlowControlRelaxed(
     const bsl::shared_ptr<ntci::DatagramSocketSession>& session,
     const bsl::shared_ptr<ntci::DatagramSocket>&        socket,
@@ -463,6 +537,80 @@ void Dispatch::announceWriteQueueDiscarded(
     else {
         executor->execute(NTCCFG_BIND(
             &ntci::DatagramSocketSession::processWriteQueueDiscarded,
+            session,
+            socket,
+            event));
+    }
+}
+
+void Dispatch::announceWriteQueueRateLimitApplied(
+    const bsl::shared_ptr<ntci::DatagramSocketSession>& session,
+    const bsl::shared_ptr<ntci::DatagramSocket>&        socket,
+    const ntca::WriteQueueEvent&                        event,
+    const bsl::shared_ptr<ntci::Strand>&                destination,
+    const bsl::shared_ptr<ntci::Strand>&                source,
+    const bsl::shared_ptr<ntci::Executor>&              executor,
+    bool                                                defer,
+    bslmt::Mutex*                                       mutex)
+{
+    if (!session) {
+        return;
+    }
+
+    if (NTCCFG_LIKELY(!defer &&
+                      ntci::Strand::passthrough(destination, source)))
+    {
+        bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
+        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        sessionGuard->processWriteQueueRateLimitApplied(socket, event);
+    }
+    else if (destination) {
+        destination->execute(NTCCFG_BIND(
+            &ntci::DatagramSocketSession::processWriteQueueRateLimitApplied,
+            session,
+            socket,
+            event));
+    }
+    else {
+        executor->execute(NTCCFG_BIND(
+            &ntci::DatagramSocketSession::processWriteQueueRateLimitApplied,
+            session,
+            socket,
+            event));
+    }
+}
+
+void Dispatch::announceWriteQueueRateLimitRelaxed(
+    const bsl::shared_ptr<ntci::DatagramSocketSession>& session,
+    const bsl::shared_ptr<ntci::DatagramSocket>&        socket,
+    const ntca::WriteQueueEvent&                        event,
+    const bsl::shared_ptr<ntci::Strand>&                destination,
+    const bsl::shared_ptr<ntci::Strand>&                source,
+    const bsl::shared_ptr<ntci::Executor>&              executor,
+    bool                                                defer,
+    bslmt::Mutex*                                       mutex)
+{
+    if (!session) {
+        return;
+    }
+
+    if (NTCCFG_LIKELY(!defer &&
+                      ntci::Strand::passthrough(destination, source)))
+    {
+        bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
+        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        sessionGuard->processWriteQueueRateLimitRelaxed(socket, event);
+    }
+    else if (destination) {
+        destination->execute(NTCCFG_BIND(
+            &ntci::DatagramSocketSession::processWriteQueueRateLimitRelaxed,
+            session,
+            socket,
+            event));
+    }
+    else {
+        executor->execute(NTCCFG_BIND(
+            &ntci::DatagramSocketSession::processWriteQueueRateLimitRelaxed,
             session,
             socket,
             event));
@@ -909,6 +1057,80 @@ void Dispatch::announceAcceptQueueDiscarded(
     }
 }
 
+void Dispatch::announceAcceptQueueRateLimitApplied(
+    const bsl::shared_ptr<ntci::ListenerSocketSession>& session,
+    const bsl::shared_ptr<ntci::ListenerSocket>&        socket,
+    const ntca::AcceptQueueEvent&                       event,
+    const bsl::shared_ptr<ntci::Strand>&                destination,
+    const bsl::shared_ptr<ntci::Strand>&                source,
+    const bsl::shared_ptr<ntci::Executor>&              executor,
+    bool                                                defer,
+    bslmt::Mutex*                                       mutex)
+{
+    if (!session) {
+        return;
+    }
+
+    if (NTCCFG_LIKELY(!defer &&
+                      ntci::Strand::passthrough(destination, source)))
+    {
+        bsl::shared_ptr<ntci::ListenerSocketSession> sessionGuard = session;
+        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        sessionGuard->processAcceptQueueRateLimitApplied(socket, event);
+    }
+    else if (destination) {
+        destination->execute(NTCCFG_BIND(
+            &ntci::ListenerSocketSession::processAcceptQueueRateLimitApplied,
+            session,
+            socket,
+            event));
+    }
+    else {
+        executor->execute(NTCCFG_BIND(
+            &ntci::ListenerSocketSession::processAcceptQueueRateLimitApplied,
+            session,
+            socket,
+            event));
+    }
+}
+
+void Dispatch::announceAcceptQueueRateLimitRelaxed(
+    const bsl::shared_ptr<ntci::ListenerSocketSession>& session,
+    const bsl::shared_ptr<ntci::ListenerSocket>&        socket,
+    const ntca::AcceptQueueEvent&                       event,
+    const bsl::shared_ptr<ntci::Strand>&                destination,
+    const bsl::shared_ptr<ntci::Strand>&                source,
+    const bsl::shared_ptr<ntci::Executor>&              executor,
+    bool                                                defer,
+    bslmt::Mutex*                                       mutex)
+{
+    if (!session) {
+        return;
+    }
+
+    if (NTCCFG_LIKELY(!defer &&
+                      ntci::Strand::passthrough(destination, source)))
+    {
+        bsl::shared_ptr<ntci::ListenerSocketSession> sessionGuard = session;
+        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        sessionGuard->processAcceptQueueRateLimitRelaxed(socket, event);
+    }
+    else if (destination) {
+        destination->execute(NTCCFG_BIND(
+            &ntci::ListenerSocketSession::processAcceptQueueRateLimitRelaxed,
+            session,
+            socket,
+            event));
+    }
+    else {
+        executor->execute(NTCCFG_BIND(
+            &ntci::ListenerSocketSession::processAcceptQueueRateLimitRelaxed,
+            session,
+            socket,
+            event));
+    }
+}
+
 void Dispatch::announceShutdownInitiated(
     const bsl::shared_ptr<ntci::ListenerSocketSession>& session,
     const bsl::shared_ptr<ntci::ListenerSocket>&        socket,
@@ -1349,6 +1571,80 @@ void Dispatch::announceReadQueueDiscarded(
     }
 }
 
+void Dispatch::announceReadQueueRateLimitApplied(
+    const bsl::shared_ptr<ntci::StreamSocketSession>& session,
+    const bsl::shared_ptr<ntci::StreamSocket>&        socket,
+    const ntca::ReadQueueEvent&                       event,
+    const bsl::shared_ptr<ntci::Strand>&              destination,
+    const bsl::shared_ptr<ntci::Strand>&              source,
+    const bsl::shared_ptr<ntci::Executor>&            executor,
+    bool                                              defer,
+    bslmt::Mutex*                                     mutex)
+{
+    if (!session) {
+        return;
+    }
+
+    if (NTCCFG_LIKELY(!defer &&
+                      ntci::Strand::passthrough(destination, source)))
+    {
+        bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
+        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        sessionGuard->processReadQueueRateLimitApplied(socket, event);
+    }
+    else if (destination) {
+        destination->execute(NTCCFG_BIND(
+            &ntci::StreamSocketSession::processReadQueueRateLimitApplied,
+            session,
+            socket,
+            event));
+    }
+    else {
+        executor->execute(NTCCFG_BIND(
+            &ntci::StreamSocketSession::processReadQueueRateLimitApplied,
+            session,
+            socket,
+            event));
+    }
+}
+
+void Dispatch::announceReadQueueRateLimitRelaxed(
+    const bsl::shared_ptr<ntci::StreamSocketSession>& session,
+    const bsl::shared_ptr<ntci::StreamSocket>&        socket,
+    const ntca::ReadQueueEvent&                       event,
+    const bsl::shared_ptr<ntci::Strand>&              destination,
+    const bsl::shared_ptr<ntci::Strand>&              source,
+    const bsl::shared_ptr<ntci::Executor>&            executor,
+    bool                                              defer,
+    bslmt::Mutex*                                     mutex)
+{
+    if (!session) {
+        return;
+    }
+
+    if (NTCCFG_LIKELY(!defer &&
+                      ntci::Strand::passthrough(destination, source)))
+    {
+        bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
+        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        sessionGuard->processReadQueueRateLimitRelaxed(socket, event);
+    }
+    else if (destination) {
+        destination->execute(NTCCFG_BIND(
+            &ntci::StreamSocketSession::processReadQueueRateLimitRelaxed,
+            session,
+            socket,
+            event));
+    }
+    else {
+        executor->execute(NTCCFG_BIND(
+            &ntci::StreamSocketSession::processReadQueueRateLimitRelaxed,
+            session,
+            socket,
+            event));
+    }
+}
+
 void Dispatch::announceWriteQueueFlowControlRelaxed(
     const bsl::shared_ptr<ntci::StreamSocketSession>& session,
     const bsl::shared_ptr<ntci::StreamSocket>&        socket,
@@ -1531,6 +1827,80 @@ void Dispatch::announceWriteQueueDiscarded(
                         session,
                         socket,
                         event));
+    }
+}
+
+void Dispatch::announceWriteQueueRateLimitApplied(
+    const bsl::shared_ptr<ntci::StreamSocketSession>& session,
+    const bsl::shared_ptr<ntci::StreamSocket>&        socket,
+    const ntca::WriteQueueEvent&                      event,
+    const bsl::shared_ptr<ntci::Strand>&              destination,
+    const bsl::shared_ptr<ntci::Strand>&              source,
+    const bsl::shared_ptr<ntci::Executor>&            executor,
+    bool                                              defer,
+    bslmt::Mutex*                                     mutex)
+{
+    if (!session) {
+        return;
+    }
+
+    if (NTCCFG_LIKELY(!defer &&
+                      ntci::Strand::passthrough(destination, source)))
+    {
+        bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
+        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        sessionGuard->processWriteQueueRateLimitApplied(socket, event);
+    }
+    else if (destination) {
+        destination->execute(NTCCFG_BIND(
+            &ntci::StreamSocketSession::processWriteQueueRateLimitApplied,
+            session,
+            socket,
+            event));
+    }
+    else {
+        executor->execute(NTCCFG_BIND(
+            &ntci::StreamSocketSession::processWriteQueueRateLimitApplied,
+            session,
+            socket,
+            event));
+    }
+}
+
+void Dispatch::announceWriteQueueRateLimitRelaxed(
+    const bsl::shared_ptr<ntci::StreamSocketSession>& session,
+    const bsl::shared_ptr<ntci::StreamSocket>&        socket,
+    const ntca::WriteQueueEvent&                      event,
+    const bsl::shared_ptr<ntci::Strand>&              destination,
+    const bsl::shared_ptr<ntci::Strand>&              source,
+    const bsl::shared_ptr<ntci::Executor>&            executor,
+    bool                                              defer,
+    bslmt::Mutex*                                     mutex)
+{
+    if (!session) {
+        return;
+    }
+
+    if (NTCCFG_LIKELY(!defer &&
+                      ntci::Strand::passthrough(destination, source)))
+    {
+        bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
+        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        sessionGuard->processWriteQueueRateLimitRelaxed(socket, event);
+    }
+    else if (destination) {
+        destination->execute(NTCCFG_BIND(
+            &ntci::StreamSocketSession::processWriteQueueRateLimitRelaxed,
+            session,
+            socket,
+            event));
+    }
+    else {
+        executor->execute(NTCCFG_BIND(
+            &ntci::StreamSocketSession::processWriteQueueRateLimitRelaxed,
+            session,
+            socket,
+            event));
     }
 }
 

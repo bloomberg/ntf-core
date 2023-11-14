@@ -53,7 +53,15 @@ struct ReadQueueEventType {
 
         /// The contents of the read queue have been discarded without being
         /// processed.
-        e_DISCARDED = 4
+        e_DISCARDED = 4,
+
+        /// The receive rate limit has been reached and the receive rate limit
+        /// timer has been set.
+        e_RATE_LIMIT_APPLIED = 5,
+
+        /// The receive rate limit timer has fired and the receive rate limit
+        /// has been relaxed.
+        e_RATE_LIMIT_RELAXED = 6
     };
 
     /// Return the string representation exactly matching the enumerator

@@ -110,7 +110,7 @@ using namespace BloombergLP;
 // "KQUEUE"      Implementation using kqueue/kevent
 // "IOCP"        Implementation using I/O completion ports
 // "IOCP"        Implementation using I/O rings
-// #define NTCF_SYSTEM_TEST_DRIVER_TYPE "IORING"
+// #define NTCF_SYSTEM_TEST_DRIVER_TYPE "IOCP"
 
 // Uncomment to test a specific address family, instead of all address
 // families.
@@ -5055,10 +5055,17 @@ void CloseUtil::processConnect(
 
 /// Provide callbacks for datagram socket tests.
 struct DatagramSocketUtil {
+    static void processReceiveFailed(
+        const bsl::shared_ptr<ntci::Receiver>& receiver,
+        const bsl::shared_ptr<bdlbb::Blob>&    data,
+        const ntca::ReceiveEvent&              event,
+        bslmt::Semaphore*                      semaphore);
+
     static void processReceiveTimeout(
         const bsl::shared_ptr<ntci::Receiver>& receiver,
         const bsl::shared_ptr<bdlbb::Blob>&    data,
         const ntca::ReceiveEvent&              event,
+        ntsa::Error::Code                      error,
         bslmt::Semaphore*                      semaphore);
 
     static void processReceiveCancelled(
@@ -5072,7 +5079,7 @@ struct DatagramSocketUtil {
         const ntca::ReceiveToken                     token);
 };
 
-void DatagramSocketUtil::processReceiveTimeout(
+void DatagramSocketUtil::processReceiveFailed(
     const bsl::shared_ptr<ntci::Receiver>& receiver,
     const bsl::shared_ptr<bdlbb::Blob>&    data,
     const ntca::ReceiveEvent&              event,
@@ -5084,7 +5091,25 @@ void DatagramSocketUtil::processReceiveTimeout(
                    event.context().error().text().c_str());
 
     NTCCFG_TEST_EQ(event.type(), ntca::ReceiveEventType::e_ERROR);
-    NTCCFG_TEST_EQ(event.context().error(), ntsa::Error::e_WOULD_BLOCK);
+    NTCCFG_TEST_EQ(event.context().error(), ntsa::Error::e_EOF);
+
+    semaphore->post();
+}
+
+void DatagramSocketUtil::processReceiveTimeout(
+    const bsl::shared_ptr<ntci::Receiver>& receiver,
+    const bsl::shared_ptr<bdlbb::Blob>&    data,
+    const ntca::ReceiveEvent&              event,
+    ntsa::Error::Code                      error,
+    bslmt::Semaphore*                      semaphore)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_DEBUG("Processing receive from event type %s: %s",
+                   ntca::ReceiveEventType::toString(event.type()),
+                   event.context().error().text().c_str());
+
+    NTCCFG_TEST_EQ(event.type(), ntca::ReceiveEventType::e_ERROR);
+    NTCCFG_TEST_EQ(event.context().error(), error);
 
     semaphore->post();
 }
@@ -5128,6 +5153,7 @@ struct ListenerSocketUtil {
         const bsl::shared_ptr<ntci::Acceptor>&       acceptor,
         const bsl::shared_ptr<ntci::StreamSocket>&   streamSocket,
         const ntca::AcceptEvent&                     event,
+        const ntsa::Error::Code                      error,
         bslmt::Semaphore*                            semaphore);
 
     static void cancelAccept(
@@ -5158,6 +5184,7 @@ void ListenerSocketUtil::processAcceptCancelled(
     const bsl::shared_ptr<ntci::Acceptor>&       acceptor,
     const bsl::shared_ptr<ntci::StreamSocket>&   streamSocket,
     const ntca::AcceptEvent&                     event,
+    const ntsa::Error::Code                      error,
     bslmt::Semaphore*                            semaphore)
 {
     NTCI_LOG_CONTEXT();
@@ -5166,7 +5193,7 @@ void ListenerSocketUtil::processAcceptCancelled(
                    event.context().error().text().c_str());
 
     NTCCFG_TEST_EQ(event.type(), ntca::AcceptEventType::e_ERROR);
-    NTCCFG_TEST_EQ(event.context().error(), ntsa::Error::e_CANCELLED);
+    NTCCFG_TEST_EQ(event.context().error(), error);
 
     semaphore->post();
 }
@@ -5186,6 +5213,7 @@ struct StreamSocketUtil {
         const bsl::shared_ptr<ntci::Receiver>&     receiver,
         const bsl::shared_ptr<bdlbb::Blob>&        data,
         const ntca::ReceiveEvent&                  event,
+        ntsa::Error::Code                          error,
         bslmt::Semaphore*                          semaphore);
 
     static void processReceiveCancelled(
@@ -5193,6 +5221,13 @@ struct StreamSocketUtil {
         const bsl::shared_ptr<ntci::Receiver>&     receiver,
         const bsl::shared_ptr<bdlbb::Blob>&        data,
         const ntca::ReceiveEvent&                  event,
+        bslmt::Semaphore*                          semaphore);
+
+    static void processSendAborted(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const bsl::shared_ptr<ntci::Sender>&       sender,
+        const ntca::SendEvent&                     event,
+        const bsl::string&                         name,
         bslmt::Semaphore*                          semaphore);
 
     static void processSendSuccessOrTimeout(
@@ -5243,6 +5278,7 @@ void StreamSocketUtil::processReceiveTimeout(
     const bsl::shared_ptr<ntci::Receiver>&     receiver,
     const bsl::shared_ptr<bdlbb::Blob>&        data,
     const ntca::ReceiveEvent&                  event,
+    ntsa::Error::Code                          error,
     bslmt::Semaphore*                          semaphore)
 {
     NTCI_LOG_CONTEXT();
@@ -5251,7 +5287,7 @@ void StreamSocketUtil::processReceiveTimeout(
                    event.context().error().text().c_str());
 
     NTCCFG_TEST_EQ(event.type(), ntca::ReceiveEventType::e_ERROR);
-    NTCCFG_TEST_EQ(event.context().error(), ntsa::Error::e_WOULD_BLOCK);
+    NTCCFG_TEST_EQ(event.context().error(), error);
 
     semaphore->post();
 }
@@ -5270,6 +5306,28 @@ void StreamSocketUtil::processReceiveCancelled(
 
     NTCCFG_TEST_EQ(event.type(), ntca::ReceiveEventType::e_ERROR);
     NTCCFG_TEST_EQ(event.context().error(), ntsa::Error::e_CANCELLED);
+
+    semaphore->post();
+}
+
+void StreamSocketUtil::processSendAborted(
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const bsl::shared_ptr<ntci::Sender>&       sender,
+    const ntca::SendEvent&                     event,
+    const bsl::string&                         name,
+    bslmt::Semaphore*                          semaphore)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_DEBUG("Processing send event type %s: %s",
+                   ntca::SendEventType::toString(event.type()),
+                   event.context().error().text().c_str());
+
+    NTCI_LOG_INFO("Message %s send was aborted", name.c_str());
+    NTCCFG_TEST_EQ(event.type(), ntca::SendEventType::e_ERROR);
+    NTCCFG_TEST_TRUE(
+        (event.context().error() ==
+         ntsa::Error::e_CONNECTION_DEAD) ||                      // Reactors
+        (event.context().error() == ntsa::Error::e_CANCELLED));  // Proactors
 
     semaphore->post();
 }
@@ -9729,6 +9787,7 @@ void concernDatagramSocketReceiveDeadline(
                         NTCCFG_BIND_PLACEHOLDER_1,
                         NTCCFG_BIND_PLACEHOLDER_2,
                         NTCCFG_BIND_PLACEHOLDER_3,
+                        ntsa::Error::e_WOULD_BLOCK,
                         &semaphore),
             allocator);
 
@@ -9741,6 +9800,69 @@ void concernDatagramSocketReceiveDeadline(
         ntci::DatagramSocketCloseGuard datagramSocketCloseGuard(
             datagramSocket);
     }
+
+    NTCI_LOG_DEBUG("Datagram socket receive deadline test complete");
+}
+
+void concernDatagramSocketReceiveDeadlineClose(
+    const bsl::shared_ptr<ntci::Interface>& interface,
+    bslma::Allocator*                       allocator)
+{
+    // Concern: validate that receive deadline timer is automatically closed
+    // when the socket is closed and then destroyed
+
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_DEBUG("Datagram socket receive deadline test starting");
+
+    const int k_RECEIVE_TIMEOUT_IN_HOURS = 1;
+
+    const ntsa::Transport::Value transport =
+        ntsa::Transport::e_UDP_IPV4_DATAGRAM;
+
+    ntsa::Error      error;
+    bslmt::Semaphore semaphore;
+
+    ntca::DatagramSocketOptions options;
+    options.setTransport(transport);
+    options.setSourceEndpoint(test::EndpointUtil::any(transport));
+
+    bsl::shared_ptr<ntci::Resolver> resolver;
+
+    bsl::shared_ptr<ntci::DatagramSocket> datagramSocket =
+        interface->createDatagramSocket(options, allocator);
+
+    error = datagramSocket->open();
+    NTCCFG_TEST_FALSE(error);
+
+    bsls::TimeInterval receiveTimeout;
+    receiveTimeout.setTotalHours(k_RECEIVE_TIMEOUT_IN_HOURS);
+
+    bsls::TimeInterval receiveDeadline =
+        datagramSocket->currentTime() + receiveTimeout;
+
+    ntca::ReceiveOptions receiveOptions;
+    receiveOptions.setDeadline(receiveDeadline);
+
+    ntci::ReceiveCallback receiveCallback =
+        datagramSocket->createReceiveCallback(
+            NTCCFG_BIND(&test::DatagramSocketUtil::processReceiveTimeout,
+                        NTCCFG_BIND_PLACEHOLDER_1,
+                        NTCCFG_BIND_PLACEHOLDER_2,
+                        NTCCFG_BIND_PLACEHOLDER_3,
+                        ntsa::Error::e_EOF,
+                        &semaphore),
+            allocator);
+
+    error = datagramSocket->receive(receiveOptions, receiveCallback);
+    NTCCFG_TEST_OK(error);
+
+    {
+        ntci::DatagramSocketCloseGuard datagramSocketCloseGuard(
+            datagramSocket);
+    }
+
+    semaphore.wait();
 
     NTCI_LOG_DEBUG("Datagram socket receive deadline test complete");
 }
@@ -9940,6 +10062,7 @@ void concernListenerSocketAcceptCancellation(
                     NTCCFG_BIND_PLACEHOLDER_1,
                     NTCCFG_BIND_PLACEHOLDER_2,
                     NTCCFG_BIND_PLACEHOLDER_3,
+                    ntsa::Error::e_CANCELLED,
                     &semaphore),
         allocator);
 
@@ -10329,6 +10452,7 @@ void concernStreamSocketReceiveDeadline(
                         NTCCFG_BIND_PLACEHOLDER_1,
                         NTCCFG_BIND_PLACEHOLDER_2,
                         NTCCFG_BIND_PLACEHOLDER_3,
+                        ntsa::Error::e_WOULD_BLOCK,
                         &semaphore),
             allocator);
 
@@ -10448,6 +10572,86 @@ void concernStreamSocketReceiveCancellation(
     }
 
     NTCI_LOG_DEBUG("Stream socket receive cancellation test complete");
+}
+
+void concernStreamSocketReceiveDeadlineClose(
+    const bsl::shared_ptr<ntci::Interface>& interface,
+    bslma::Allocator*                       allocator)
+{
+    // Concern: validate that receive deadline timer is automatically closed
+    // when the socket is closed and then destroyed
+
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_DEBUG("Stream socket receive deadline test starting");
+
+    const int k_RECEIVE_TIMEOUT_IN_HOURS = 1;
+
+    const ntsa::Transport::Value transport =
+        ntsa::Transport::e_TCP_IPV4_STREAM;
+
+    ntsa::Error      error;
+    bslmt::Semaphore semaphore;
+
+    bsl::shared_ptr<ntci::StreamSocket> clientStreamSocket;
+    bsl::shared_ptr<ntci::StreamSocket> serverStreamSocket;
+    {
+        ntca::StreamSocketOptions options;
+        options.setTransport(transport);
+
+        bsl::shared_ptr<ntsi::StreamSocket> basicClientSocket;
+        bsl::shared_ptr<ntsi::StreamSocket> basicServerSocket;
+
+        error = ntsf::System::createStreamSocketPair(&basicClientSocket,
+                                                     &basicServerSocket,
+                                                     transport);
+        NTCCFG_TEST_FALSE(error);
+
+        clientStreamSocket = interface->createStreamSocket(options, allocator);
+
+        error = clientStreamSocket->open(transport, basicClientSocket);
+        NTCCFG_TEST_FALSE(error);
+
+        serverStreamSocket = interface->createStreamSocket(options, allocator);
+
+        error = serverStreamSocket->open(transport, basicServerSocket);
+        NTCCFG_TEST_FALSE(error);
+    }
+
+    bsls::TimeInterval receiveTimeout;
+    receiveTimeout.setTotalHours(k_RECEIVE_TIMEOUT_IN_HOURS);
+
+    bsls::TimeInterval receiveDeadline =
+        serverStreamSocket->currentTime() + receiveTimeout;
+
+    ntca::ReceiveOptions receiveOptions;
+    receiveOptions.setDeadline(receiveDeadline);
+
+    ntci::ReceiveCallback receiveCallback =
+        serverStreamSocket->createReceiveCallback(
+            NTCCFG_BIND(&test::StreamSocketUtil::processReceiveTimeout,
+                        serverStreamSocket,
+                        NTCCFG_BIND_PLACEHOLDER_1,
+                        NTCCFG_BIND_PLACEHOLDER_2,
+                        NTCCFG_BIND_PLACEHOLDER_3,
+                        ntsa::Error::e_EOF,
+                        &semaphore),
+            allocator);
+
+    error = serverStreamSocket->receive(receiveOptions, receiveCallback);
+    NTCCFG_TEST_OK(error);
+
+    {
+        ntci::StreamSocketCloseGuard clientStreamSocketCloseGuard(
+            clientStreamSocket);
+
+        ntci::StreamSocketCloseGuard serverStreamSocketCloseGuard(
+            serverStreamSocket);
+    }
+
+    semaphore.wait();
+
+    NTCI_LOG_DEBUG("Stream socket receive deadline test complete");
 }
 
 void concernStreamSocketSendDeadline(
@@ -10840,6 +11044,1834 @@ void concernStreamSocketSendCancellation(
     }
 
     NTCI_LOG_DEBUG("Stream socket send cancellation test complete");
+}
+
+void concernStreamSocketSendDeadlineClose(
+    const bsl::shared_ptr<ntci::Interface>& interface,
+    bslma::Allocator*                       allocator)
+{
+    // Concern: validate that send deadline timer is automatically closed
+    // when the socket is closed and then destroyed
+
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_DEBUG("Stream socket send deadline test starting");
+
+    const int k_SEND_TIMEOUT_IN_HOURS = 1;
+    const int k_MESSAGE_A_SIZE        = 1024 * 1024 * 16;
+    const int k_MESSAGE_B_SIZE        = 1024;
+
+    const ntsa::Transport::Value transport =
+        ntsa::Transport::e_TCP_IPV4_STREAM;
+
+    ntsa::Error      error;
+    bslmt::Semaphore sendSemaphore;
+    bslmt::Semaphore receiveSemaphore;
+
+    bsl::shared_ptr<ntci::StreamSocket> clientStreamSocket;
+    bsl::shared_ptr<ntci::StreamSocket> serverStreamSocket;
+    {
+        ntca::StreamSocketOptions options;
+        options.setTransport(transport);
+        options.setWriteQueueHighWatermark(k_MESSAGE_A_SIZE +
+                                           k_MESSAGE_B_SIZE);
+        options.setReadQueueHighWatermark(k_MESSAGE_B_SIZE * 2);
+        options.setReadQueueLowWatermark(k_MESSAGE_B_SIZE);
+
+        options.setSendBufferSize(1024 * 32);
+        options.setReceiveBufferSize(1024 * 32);
+
+        bsl::shared_ptr<ntsi::StreamSocket> basicClientSocket;
+        bsl::shared_ptr<ntsi::StreamSocket> basicServerSocket;
+
+        error = ntsf::System::createStreamSocketPair(&basicClientSocket,
+                                                     &basicServerSocket,
+                                                     transport);
+        NTCCFG_TEST_FALSE(error);
+
+        clientStreamSocket = interface->createStreamSocket(options, allocator);
+
+        error = clientStreamSocket->open(transport, basicClientSocket);
+        NTCCFG_TEST_FALSE(error);
+
+        serverStreamSocket = interface->createStreamSocket(options, allocator);
+
+        error = serverStreamSocket->open(transport, basicServerSocket);
+        NTCCFG_TEST_FALSE(error);
+    }
+
+    NTCI_LOG_DEBUG("Generating message A");
+
+    bsl::shared_ptr<bdlbb::Blob> dataA =
+        clientStreamSocket->createOutgoingBlob();
+    ntcd::DataUtil::generateData(dataA.get(), k_MESSAGE_A_SIZE, 0, 0);
+
+    NTCI_LOG_DEBUG("Generating message A: OK");
+
+    NTCI_LOG_DEBUG("Generating message B");
+
+    bsl::shared_ptr<bdlbb::Blob> dataB =
+        clientStreamSocket->createOutgoingBlob();
+    ntcd::DataUtil::generateData(dataB.get(), k_MESSAGE_B_SIZE, 0, 1);
+
+    NTCI_LOG_DEBUG("Generating message B: OK");
+
+    NTCI_LOG_DEBUG("Sending message A");
+    {
+        ntca::SendOptions sendOptions;
+
+        error = clientStreamSocket->send(*dataA, sendOptions);
+        NTCCFG_TEST_TRUE(!error);
+    }
+
+    NTCI_LOG_DEBUG("Sending message B");
+    {
+        bsls::TimeInterval sendTimeout;
+        sendTimeout.setTotalHours(k_SEND_TIMEOUT_IN_HOURS);
+
+        bsls::TimeInterval sendDeadline =
+            clientStreamSocket->currentTime() + sendTimeout;
+
+        ntca::SendOptions sendOptions;
+        sendOptions.setDeadline(sendDeadline);
+
+        ntci::SendCallback sendCallback =
+            clientStreamSocket->createSendCallback(
+                NTCCFG_BIND(&test::StreamSocketUtil::processSendAborted,
+                            clientStreamSocket,
+                            NTCCFG_BIND_PLACEHOLDER_1,
+                            NTCCFG_BIND_PLACEHOLDER_2,
+                            bsl::string("B"),
+                            &sendSemaphore),
+                allocator);
+
+        error = clientStreamSocket->send(*dataB, sendOptions, sendCallback);
+        NTCCFG_TEST_TRUE(!error);
+    }
+
+    {
+        ntci::StreamSocketCloseGuard clientStreamSocketCloseGuard(
+            clientStreamSocket);
+
+        ntci::StreamSocketCloseGuard serverStreamSocketCloseGuard(
+            serverStreamSocket);
+    }
+
+    sendSemaphore.wait();
+
+    NTCI_LOG_DEBUG("Stream socket send deadline test complete");
+}
+
+void concernListenerSocketAcceptClose(
+    const bsl::shared_ptr<ntci::Interface>& interface,
+    bslma::Allocator*                       allocator)
+{
+    // Concern: validate that accept deadline timer is automatically closed
+    // when the socket is closed and then destroyed
+
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_DEBUG("Listener socket accept cancellation test starting");
+
+    const int k_ACCEPT_TIMEOUT_IN_HOURS = 1;
+
+    const ntsa::Transport::Value transport =
+        ntsa::Transport::e_TCP_IPV4_STREAM;
+
+    ntsa::Error      error;
+    bslmt::Semaphore semaphore;
+
+    ntca::ListenerSocketOptions options;
+    options.setTransport(transport);
+    options.setSourceEndpoint(test::EndpointUtil::any(transport));
+
+    bsl::shared_ptr<ntci::Resolver> resolver;
+
+    bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
+        interface->createListenerSocket(options, allocator);
+
+    error = listenerSocket->open();
+    NTCCFG_TEST_FALSE(error);
+
+    error = listenerSocket->listen();
+    NTCCFG_TEST_FALSE(error);
+
+    bsls::TimeInterval acceptTimeout;
+    acceptTimeout.setTotalHours(k_ACCEPT_TIMEOUT_IN_HOURS);
+
+    const bsls::TimeInterval acceptDeadline =
+        listenerSocket->currentTime() + acceptTimeout;
+
+    ntca::AcceptOptions acceptOptions;
+    acceptOptions.setDeadline(acceptDeadline);
+
+    ntci::AcceptCallback acceptCallback = listenerSocket->createAcceptCallback(
+        NTCCFG_BIND(&test::ListenerSocketUtil::processAcceptCancelled,
+                    listenerSocket,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2,
+                    NTCCFG_BIND_PLACEHOLDER_3,
+                    ntsa::Error::e_EOF,
+                    &semaphore),
+        allocator);
+
+    error = listenerSocket->accept(acceptOptions, acceptCallback);
+    NTCCFG_TEST_OK(error);
+
+    {
+        ntci::ListenerSocketCloseGuard listenerSocketCloseGuard(
+            listenerSocket);
+    }
+
+    semaphore.wait();
+
+    NTCI_LOG_DEBUG("Listener socket accept cancellation test complete");
+}
+
+namespace rateLimit {
+class DatagramSocketSession : public ntci::DatagramSocketSession
+{
+  private:
+    DatagramSocketSession(const DatagramSocketSession&) BSLS_KEYWORD_DELETED;
+    DatagramSocketSession& operator=(const DatagramSocketSession&)
+        BSLS_KEYWORD_DELETED;
+
+    bslmt::Semaphore& d_semaphore;
+    bsls::AtomicInt   d_readQueueRateLimitApplied;
+    bsls::AtomicInt   d_readQueueRateLimitRelaxed;
+    bsls::AtomicInt   d_writeQueueRateLimitApplied;
+    bsls::AtomicInt   d_writeQueueRateLimitRelaxed;
+
+  public:
+    explicit DatagramSocketSession(bslmt::Semaphore& semaphore);
+
+    ~DatagramSocketSession() BSLS_KEYWORD_OVERRIDE;
+
+    void processReadQueueRateLimitApplied(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::ReadQueueEvent& event) BSLS_KEYWORD_OVERRIDE;
+
+    void processReadQueueRateLimitRelaxed(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::ReadQueueEvent& event) BSLS_KEYWORD_OVERRIDE;
+
+    void processWriteQueueRateLimitApplied(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::WriteQueueEvent& event) BSLS_KEYWORD_OVERRIDE;
+
+    void processWriteQueueRateLimitRelaxed(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::WriteQueueEvent& event) BSLS_KEYWORD_OVERRIDE;
+
+    BSLS_ANNOTATION_NODISCARD int readQueueRateLimitApplied() const;
+    BSLS_ANNOTATION_NODISCARD int readQueueRateLimitRelaxed() const;
+
+    BSLS_ANNOTATION_NODISCARD int writeQueueRateLimitApplied() const;
+    BSLS_ANNOTATION_NODISCARD int writeQueueRateLimitRelaxed() const;
+};
+
+DatagramSocketSession::DatagramSocketSession(bslmt::Semaphore& semaphore)
+: d_semaphore(semaphore)
+, d_readQueueRateLimitApplied(0)
+, d_readQueueRateLimitRelaxed(0)
+, d_writeQueueRateLimitApplied(0)
+, d_writeQueueRateLimitRelaxed(0)
+{
+}
+
+DatagramSocketSession::~DatagramSocketSession()
+{
+}
+
+void DatagramSocketSession::processReadQueueRateLimitApplied(
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+    const ntca::ReadQueueEvent&                  event)
+{
+    NTCI_LOG_CONTEXT();
+    NTCCFG_TEST_EQ(event.type(),
+                   ntca::ReadQueueEventType::e_RATE_LIMIT_APPLIED);
+    d_readQueueRateLimitApplied.addAcqRel(1);
+    d_semaphore.post();
+}
+
+void DatagramSocketSession::processReadQueueRateLimitRelaxed(
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+    const ntca::ReadQueueEvent&                  event)
+{
+    NTCI_LOG_CONTEXT();
+    NTCCFG_TEST_EQ(event.type(),
+                   ntca::ReadQueueEventType::e_RATE_LIMIT_RELAXED);
+    d_readQueueRateLimitRelaxed.addAcqRel(1);
+    d_semaphore.post();
+}
+
+void DatagramSocketSession::processWriteQueueRateLimitApplied(
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+    const ntca::WriteQueueEvent&                 event)
+{
+    NTCI_LOG_CONTEXT();
+    NTCCFG_TEST_EQ(event.type(),
+                   ntca::WriteQueueEventType::e_RATE_LIMIT_APPLIED);
+    d_writeQueueRateLimitApplied.addAcqRel(1);
+    d_semaphore.post();
+}
+
+void DatagramSocketSession::processWriteQueueRateLimitRelaxed(
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+    const ntca::WriteQueueEvent&                 event)
+{
+    NTCI_LOG_CONTEXT();
+    NTCCFG_TEST_EQ(event.type(),
+                   ntca::WriteQueueEventType::e_RATE_LIMIT_RELAXED);
+    d_writeQueueRateLimitRelaxed.addAcqRel(1);
+    d_semaphore.post();
+}
+
+int DatagramSocketSession::readQueueRateLimitApplied() const
+{
+    return d_readQueueRateLimitApplied.loadAcquire();
+}
+
+int DatagramSocketSession::readQueueRateLimitRelaxed() const
+{
+    return d_readQueueRateLimitRelaxed.loadAcquire();
+}
+
+int DatagramSocketSession::writeQueueRateLimitApplied() const
+{
+    return d_writeQueueRateLimitApplied.loadAcquire();
+}
+
+int DatagramSocketSession::writeQueueRateLimitRelaxed() const
+{
+    return d_writeQueueRateLimitRelaxed.loadAcquire();
+}
+
+class StreamSocketSession : public ntci::StreamSocketSession
+{
+  private:
+    StreamSocketSession(const StreamSocketSession&) BSLS_KEYWORD_DELETED;
+    StreamSocketSession& operator=(const StreamSocketSession&)
+        BSLS_KEYWORD_DELETED;
+
+    bslmt::Semaphore& d_semaphore;
+    bsls::AtomicInt   d_readQueueRateLimitApplied;
+    bsls::AtomicInt   d_readQueueRateLimitRelaxed;
+    bsls::AtomicInt   d_writeQueueRateLimitApplied;
+    bsls::AtomicInt   d_writeQueueRateLimitRelaxed;
+
+  public:
+    explicit StreamSocketSession(bslmt::Semaphore& semaphore);
+
+    ~StreamSocketSession() BSLS_KEYWORD_OVERRIDE;
+
+    void processReadQueueRateLimitApplied(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::ReadQueueEvent& event) BSLS_KEYWORD_OVERRIDE;
+
+    void processReadQueueRateLimitRelaxed(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::ReadQueueEvent& event) BSLS_KEYWORD_OVERRIDE;
+
+    void processWriteQueueRateLimitApplied(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::WriteQueueEvent& event) BSLS_KEYWORD_OVERRIDE;
+
+    void processWriteQueueRateLimitRelaxed(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::WriteQueueEvent& event) BSLS_KEYWORD_OVERRIDE;
+
+    BSLS_ANNOTATION_NODISCARD int readQueueRateLimitApplied() const;
+    BSLS_ANNOTATION_NODISCARD int readQueueRateLimitRelaxed() const;
+    BSLS_ANNOTATION_NODISCARD int writeQueueRateLimitApplied() const;
+    BSLS_ANNOTATION_NODISCARD int writeQueueRateLimitRelaxed() const;
+};
+
+StreamSocketSession::StreamSocketSession(bslmt::Semaphore& semaphore)
+: d_semaphore(semaphore)
+, d_readQueueRateLimitApplied(0)
+, d_readQueueRateLimitRelaxed(0)
+, d_writeQueueRateLimitApplied(0)
+, d_writeQueueRateLimitRelaxed(0)
+{
+}
+
+StreamSocketSession::~StreamSocketSession()
+{
+}
+
+void StreamSocketSession::processReadQueueRateLimitApplied(
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::ReadQueueEvent&                event)
+{
+    NTCI_LOG_CONTEXT();
+    NTCCFG_TEST_EQ(event.type(),
+                   ntca::ReadQueueEventType::e_RATE_LIMIT_APPLIED);
+    d_readQueueRateLimitApplied.addAcqRel(1);
+
+    d_semaphore.post();
+}
+
+void StreamSocketSession::processWriteQueueRateLimitApplied(
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::WriteQueueEvent&               event)
+{
+    NTCI_LOG_CONTEXT();
+    NTCCFG_TEST_EQ(event.type(),
+                   ntca::WriteQueueEventType::e_RATE_LIMIT_APPLIED);
+    d_writeQueueRateLimitApplied.addAcqRel(1);
+    d_semaphore.post();
+}
+
+void StreamSocketSession::processReadQueueRateLimitRelaxed(
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::ReadQueueEvent&                event)
+{
+    NTCI_LOG_CONTEXT();
+    NTCCFG_TEST_EQ(event.type(),
+                   ntca::ReadQueueEventType::e_RATE_LIMIT_RELAXED);
+    d_readQueueRateLimitRelaxed.addAcqRel(1);
+
+    d_semaphore.post();
+}
+
+void StreamSocketSession::processWriteQueueRateLimitRelaxed(
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::WriteQueueEvent&               event)
+{
+    NTCI_LOG_CONTEXT();
+    NTCCFG_TEST_EQ(event.type(),
+                   ntca::WriteQueueEventType::e_RATE_LIMIT_RELAXED);
+    d_writeQueueRateLimitRelaxed.addAcqRel(1);
+    d_semaphore.post();
+}
+
+int StreamSocketSession::readQueueRateLimitApplied() const
+{
+    return d_readQueueRateLimitApplied.loadAcquire();
+}
+
+int StreamSocketSession::writeQueueRateLimitApplied() const
+{
+    return d_writeQueueRateLimitApplied.loadAcquire();
+}
+
+int StreamSocketSession::readQueueRateLimitRelaxed() const
+{
+    return d_readQueueRateLimitRelaxed.loadAcquire();
+}
+
+int StreamSocketSession::writeQueueRateLimitRelaxed() const
+{
+    return d_writeQueueRateLimitRelaxed.loadAcquire();
+}
+
+class ListenerSocketSession : public ntci::ListenerSocketSession
+{
+  private:
+    ListenerSocketSession(const ListenerSocketSession&) BSLS_KEYWORD_DELETED;
+    ListenerSocketSession& operator=(const ListenerSocketSession&)
+        BSLS_KEYWORD_DELETED;
+
+    bslmt::Semaphore& d_semaphore;
+    bsls::AtomicInt   d_rateLimitApplied;
+    bsls::AtomicInt   d_rateLimitRelaxed;
+
+  public:
+    explicit ListenerSocketSession(bslmt::Semaphore& semaphore);
+
+    ~ListenerSocketSession() BSLS_KEYWORD_OVERRIDE;
+
+    void processAcceptQueueRateLimitApplied(
+        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+        const ntca::AcceptQueueEvent& event) BSLS_KEYWORD_OVERRIDE;
+
+    void processAcceptQueueRateLimitRelaxed(
+        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+        const ntca::AcceptQueueEvent& event) BSLS_KEYWORD_OVERRIDE;
+
+    BSLS_ANNOTATION_NODISCARD int rateLimitApplied() const;
+    BSLS_ANNOTATION_NODISCARD int rateLimitRelaxed() const;
+};
+
+ListenerSocketSession::ListenerSocketSession(bslmt::Semaphore& semaphore)
+: d_semaphore(semaphore)
+{
+}
+
+ListenerSocketSession::~ListenerSocketSession()
+{
+}
+
+void ListenerSocketSession::processAcceptQueueRateLimitApplied(
+    const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+    const ntca::AcceptQueueEvent&                event)
+{
+    NTCI_LOG_CONTEXT();
+    NTCCFG_TEST_EQ(event.type(),
+                   ntca::AcceptQueueEventType::e_RATE_LIMIT_APPLIED);
+    d_rateLimitApplied.addAcqRel(1);
+    d_semaphore.post();
+}
+
+void ListenerSocketSession::processAcceptQueueRateLimitRelaxed(
+    const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+    const ntca::AcceptQueueEvent&                event)
+{
+    NTCI_LOG_CONTEXT();
+    NTCCFG_TEST_EQ(event.type(),
+                   ntca::AcceptQueueEventType::e_RATE_LIMIT_RELAXED);
+    d_rateLimitRelaxed.addAcqRel(1);
+    d_semaphore.post();
+}
+
+int ListenerSocketSession::rateLimitApplied() const
+{
+    return d_rateLimitApplied.loadAcquire();
+}
+
+int ListenerSocketSession::rateLimitRelaxed() const
+{
+    return d_rateLimitApplied.loadAcquire();
+}
+
+}  // rateLimit
+
+void concernDatagramSocketReceiveRateLimitTimerClose(
+    const bsl::shared_ptr<ntci::Interface>& interface,
+    bslma::Allocator*                       allocator)
+{
+    // Concern: validate that receive rate limit timer is automatically closed
+    // when the socket is closed and then destroyed
+
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_DEBUG("Test started");
+
+    const ntsa::Transport::Value transport =
+        ntsa::Transport::e_UDP_IPV4_DATAGRAM;
+
+    ntsa::Error      error;
+    bslmt::Semaphore receiveSemaphore;
+    bslmt::Semaphore rateLimitSemaphore;
+
+    bsl::shared_ptr<ntci::DatagramSocket> clientDatagramSocket;
+    bsl::shared_ptr<ntci::DatagramSocket> serverDatagramSocket;
+    {
+        ntca::DatagramSocketOptions options;
+        options.setTransport(transport);
+
+        bsl::shared_ptr<ntsi::DatagramSocket> basicClientSocket;
+        bsl::shared_ptr<ntsi::DatagramSocket> basicServerSocket;
+
+        error = ntsf::System::createDatagramSocketPair(&basicClientSocket,
+                                                       &basicServerSocket,
+                                                       transport);
+        NTCCFG_TEST_FALSE(error);
+
+        clientDatagramSocket =
+            interface->createDatagramSocket(options, allocator);
+
+        error = clientDatagramSocket->open(transport, basicClientSocket);
+        NTCCFG_TEST_FALSE(error);
+
+        serverDatagramSocket =
+            interface->createDatagramSocket(options, allocator);
+
+        error = serverDatagramSocket->open(transport, basicServerSocket);
+        NTCCFG_TEST_FALSE(error);
+    }
+
+    bsl::shared_ptr<rateLimit::DatagramSocketSession> session;
+    {
+        session.createInplace(allocator, rateLimitSemaphore);
+        serverDatagramSocket->registerSession(session);
+    }
+
+    const int k_MESSAGE_SIZE = 65507;  //maximum
+    const int k_NUM_MESSAGES = 1024;
+
+    NTCI_LOG_DEBUG("Generating message");
+    bsl::shared_ptr<bdlbb::Blob> message =
+        clientDatagramSocket->createOutgoingBlob();
+    ntcd::DataUtil::generateData(message.get(), k_MESSAGE_SIZE, 0, 0);
+
+    NTCI_LOG_DEBUG("Generating message: OK");
+
+    {
+        bsl::shared_ptr<ntcs::RateLimiter> limiter;
+
+        //configure sustained rate limit in a way that it will be reached
+        // immediately. e.g. 2 bytes per second
+        const bsl::uint64_t sustainedRateLimit = 2;
+        bsls::TimeInterval  sustainedRateWindow;
+        sustainedRateWindow.setTotalHours(1);
+
+        // do not care about peak limit
+        const bsl::uint64_t peakRateLimit =
+            bsl::numeric_limits<bsl::uint32_t>::max();
+        bsls::TimeInterval peakRateWindow;
+        peakRateWindow.setTotalSeconds(1);
+
+        limiter.createInplace(allocator,
+                              sustainedRateLimit,
+                              sustainedRateWindow,
+                              peakRateLimit,
+                              peakRateWindow,
+                              serverDatagramSocket->currentTime());
+        serverDatagramSocket->setReadRateLimiter(limiter);
+    }
+
+    NTCI_LOG_DEBUG("Sending messages");
+    {
+        for (int i = 0; i < k_NUM_MESSAGES; ++i) {
+            ntca::SendOptions sendOptions;
+
+            error = clientDatagramSocket->send(*message, sendOptions);
+            NTCCFG_TEST_TRUE(!error);
+        }
+    }
+
+    NTCI_LOG_DEBUG("Receiving messages");
+    {
+        ntca::ReceiveOptions receiveOptions;
+        receiveOptions.setSize(k_MESSAGE_SIZE * k_NUM_MESSAGES);
+
+        ntci::ReceiveCallback receiveCallback =
+            serverDatagramSocket->createReceiveCallback(
+                NTCCFG_BIND(&test::DatagramSocketUtil::processReceiveFailed,
+                            NTCCFG_BIND_PLACEHOLDER_1,
+                            NTCCFG_BIND_PLACEHOLDER_2,
+                            NTCCFG_BIND_PLACEHOLDER_3,
+                            &receiveSemaphore),
+                allocator);
+
+        error = serverDatagramSocket->receive(receiveOptions, receiveCallback);
+        NTCCFG_TEST_OK(error);
+    }
+
+    rateLimitSemaphore.wait();
+
+    {
+        ntci::DatagramSocketCloseGuard closeGuardClient(clientDatagramSocket);
+        ntci::DatagramSocketCloseGuard closeGuardServer(serverDatagramSocket);
+    }
+
+    receiveSemaphore.wait();
+
+    NTCCFG_TEST_GE(session->readQueueRateLimitApplied(), 1);
+}
+
+void concernStreamSocketReceiveRateLimitTimerClose(
+    const bsl::shared_ptr<ntci::Interface>& interface,
+    bslma::Allocator*                       allocator)
+{
+    // Concern: validate that receive rate limit timer is automatically closed
+    // when the socket is closed and then destroyed
+
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_DEBUG("Test started");
+
+    const ntsa::Transport::Value transport =
+        ntsa::Transport::e_TCP_IPV4_STREAM;
+
+    ntsa::Error      error;
+    bslmt::Semaphore receiveSemaphore;
+    bslmt::Semaphore rateLimitSemaphore;
+
+    bsl::shared_ptr<ntci::StreamSocket> clientStreamSocket;
+    bsl::shared_ptr<ntci::StreamSocket> serverStreamSocket;
+    {
+        ntca::StreamSocketOptions options;
+        options.setTransport(transport);
+
+        bsl::shared_ptr<ntsi::StreamSocket> basicClientSocket;
+        bsl::shared_ptr<ntsi::StreamSocket> basicServerSocket;
+
+        error = ntsf::System::createStreamSocketPair(&basicClientSocket,
+                                                     &basicServerSocket,
+                                                     transport);
+        NTCCFG_TEST_FALSE(error);
+
+        clientStreamSocket = interface->createStreamSocket(options, allocator);
+
+        error = clientStreamSocket->open(transport, basicClientSocket);
+        NTCCFG_TEST_FALSE(error);
+
+        serverStreamSocket = interface->createStreamSocket(options, allocator);
+
+        error = serverStreamSocket->open(transport, basicServerSocket);
+        NTCCFG_TEST_FALSE(error);
+    }
+
+    bsl::shared_ptr<rateLimit::StreamSocketSession> session;
+    {
+        session.createInplace(allocator, rateLimitSemaphore);
+        serverStreamSocket->registerSession(session);
+    }
+
+    const int k_MESSAGE_SIZE = 65000;
+    const int k_NUM_MESSAGES = 1024;
+
+    NTCI_LOG_DEBUG("Generating message");
+    bsl::shared_ptr<bdlbb::Blob> message =
+        clientStreamSocket->createOutgoingBlob();
+    ntcd::DataUtil::generateData(message.get(), k_MESSAGE_SIZE, 0, 0);
+
+    NTCI_LOG_DEBUG("Generating message: OK");
+
+    {
+        bsl::shared_ptr<ntcs::RateLimiter> limiter;
+
+        //configure sustained rate limit in a way that it will be reached
+        // immediately. e.g. 2 bytes per hour
+        const bsl::uint64_t sustainedRateLimit = 2;
+        bsls::TimeInterval  sustainedRateWindow;
+        sustainedRateWindow.setTotalHours(1);
+
+        // do not care about peak limit
+        const bsl::uint64_t peakRateLimit =
+            bsl::numeric_limits<bsl::uint32_t>::max();
+        bsls::TimeInterval peakRateWindow;
+        peakRateWindow.setTotalSeconds(1);
+
+        limiter.createInplace(allocator,
+                              sustainedRateLimit,
+                              sustainedRateWindow,
+                              peakRateLimit,
+                              peakRateWindow,
+                              serverStreamSocket->currentTime());
+        serverStreamSocket->setReadRateLimiter(limiter);
+    }
+
+    NTCI_LOG_DEBUG("Sending messages");
+    {
+        for (int i = 0; i < k_NUM_MESSAGES; ++i) {
+            ntca::SendOptions sendOptions;
+
+            error = clientStreamSocket->send(*message, sendOptions);
+            NTCCFG_TEST_TRUE(!error);
+        }
+    }
+
+    NTCI_LOG_DEBUG("Receiving messages");
+    {
+        ntca::ReceiveOptions receiveOptions;
+        receiveOptions.setSize(k_MESSAGE_SIZE * k_NUM_MESSAGES);
+
+        ntci::ReceiveCallback receiveCallback =
+            serverStreamSocket->createReceiveCallback(
+                NTCCFG_BIND(&test::DatagramSocketUtil::processReceiveFailed,
+                            NTCCFG_BIND_PLACEHOLDER_1,
+                            NTCCFG_BIND_PLACEHOLDER_2,
+                            NTCCFG_BIND_PLACEHOLDER_3,
+                            &receiveSemaphore),
+                allocator);
+
+        error = serverStreamSocket->receive(receiveOptions, receiveCallback);
+        NTCCFG_TEST_OK(error);
+    }
+
+    rateLimitSemaphore.wait();
+
+    {
+        ntci::StreamSocketCloseGuard closeGuardClient(clientStreamSocket);
+        ntci::StreamSocketCloseGuard closeGuardServer(serverStreamSocket);
+    }
+
+    receiveSemaphore.wait();
+
+    NTCCFG_TEST_GE(session->readQueueRateLimitApplied(), 1);
+}
+
+void concernDatagramSocketSendRateLimitTimerClose(
+    const bsl::shared_ptr<ntci::Interface>& interface,
+    bslma::Allocator*                       allocator)
+{
+    // Concern: validate that send rate limit timer is automatically closed
+    // when the socket is closed and then destroyed
+
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_DEBUG("Test started");
+
+    const ntsa::Transport::Value transport =
+        ntsa::Transport::e_UDP_IPV4_DATAGRAM;
+
+    ntsa::Error      error;
+    bslmt::Semaphore rateLimitSemaphore;
+
+    bsl::shared_ptr<ntci::DatagramSocket> clientDatagramSocket;
+    bsl::shared_ptr<ntci::DatagramSocket> serverDatagramSocket;
+    {
+        ntca::DatagramSocketOptions options;
+        options.setTransport(transport);
+
+        bsl::shared_ptr<ntsi::DatagramSocket> basicClientSocket;
+        bsl::shared_ptr<ntsi::DatagramSocket> basicServerSocket;
+
+        error = ntsf::System::createDatagramSocketPair(&basicClientSocket,
+                                                       &basicServerSocket,
+                                                       transport);
+        NTCCFG_TEST_FALSE(error);
+
+        clientDatagramSocket =
+            interface->createDatagramSocket(options, allocator);
+
+        error = clientDatagramSocket->open(transport, basicClientSocket);
+        NTCCFG_TEST_FALSE(error);
+
+        serverDatagramSocket =
+            interface->createDatagramSocket(options, allocator);
+
+        error = serverDatagramSocket->open(transport, basicServerSocket);
+        NTCCFG_TEST_FALSE(error);
+    }
+
+    bsl::shared_ptr<rateLimit::DatagramSocketSession> session;
+    {
+        session.createInplace(allocator, rateLimitSemaphore);
+        clientDatagramSocket->registerSession(session);
+    }
+
+    const int k_MESSAGE_SIZE = 65507;  //maximum
+    const int k_NUM_MESSAGES = 1024;
+
+    NTCI_LOG_DEBUG("Generating message");
+    bsl::shared_ptr<bdlbb::Blob> message =
+        clientDatagramSocket->createOutgoingBlob();
+    ntcd::DataUtil::generateData(message.get(), k_MESSAGE_SIZE, 0, 0);
+
+    NTCI_LOG_DEBUG("Generating message: OK");
+
+    {
+        bsl::shared_ptr<ntcs::RateLimiter> limiter;
+
+        //configure sustained rate limit in a way that it will be reached
+        // immediately. e.g. 2 bytes per hour
+        const bsl::uint64_t sustainedRateLimit = 2;
+        bsls::TimeInterval  sustainedRateWindow;
+        sustainedRateWindow.setTotalHours(1);
+
+        // do not care about peak limit
+        const bsl::uint64_t peakRateLimit =
+            bsl::numeric_limits<bsl::uint32_t>::max();
+        bsls::TimeInterval peakRateWindow;
+        peakRateWindow.setTotalSeconds(1);
+
+        limiter.createInplace(allocator,
+                              sustainedRateLimit,
+                              sustainedRateWindow,
+                              peakRateLimit,
+                              peakRateWindow,
+                              serverDatagramSocket->currentTime());
+        clientDatagramSocket->setWriteRateLimiter(limiter);
+    }
+
+    NTCI_LOG_DEBUG("Sending messages");
+    {
+        for (int i = 0; i < k_NUM_MESSAGES; ++i) {
+            ntca::SendOptions sendOptions;
+
+            error = clientDatagramSocket->send(*message, sendOptions);
+            NTCCFG_TEST_TRUE(!error);
+        }
+    }
+    NTCI_LOG_DEBUG("Sending done");
+
+    rateLimitSemaphore.wait();
+
+    NTCCFG_TEST_GE(session->writeQueueRateLimitApplied(), 1);
+
+    {
+        ntci::DatagramSocketCloseGuard closeGuardClient(clientDatagramSocket);
+        ntci::DatagramSocketCloseGuard closeGuardServer(serverDatagramSocket);
+    }
+}
+
+void concernStreamSocketSendRateLimitTimerClose(
+    const bsl::shared_ptr<ntci::Interface>& interface,
+    bslma::Allocator*                       allocator)
+{
+    // Concern: validate that send rate limit timer is automatically closed
+    // when the socket is closed and then destroyed
+
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_DEBUG("Test started");
+
+    const ntsa::Transport::Value transport =
+        ntsa::Transport::e_TCP_IPV4_STREAM;
+
+    ntsa::Error      error;
+    bslmt::Semaphore receiveSemaphore;
+    bslmt::Semaphore rateLimitSemaphore;
+
+    bsl::shared_ptr<ntci::StreamSocket> clientStreamSocket;
+    bsl::shared_ptr<ntci::StreamSocket> serverStreamSocket;
+    {
+        ntca::StreamSocketOptions options;
+        options.setTransport(transport);
+
+        bsl::shared_ptr<ntsi::StreamSocket> basicClientSocket;
+        bsl::shared_ptr<ntsi::StreamSocket> basicServerSocket;
+
+        error = ntsf::System::createStreamSocketPair(&basicClientSocket,
+                                                     &basicServerSocket,
+                                                     transport);
+        NTCCFG_TEST_FALSE(error);
+
+        clientStreamSocket = interface->createStreamSocket(options, allocator);
+
+        error = clientStreamSocket->open(transport, basicClientSocket);
+        NTCCFG_TEST_FALSE(error);
+
+        serverStreamSocket = interface->createStreamSocket(options, allocator);
+
+        error = serverStreamSocket->open(transport, basicServerSocket);
+        NTCCFG_TEST_FALSE(error);
+    }
+
+    bsl::shared_ptr<rateLimit::StreamSocketSession> session;
+    {
+        session.createInplace(allocator, rateLimitSemaphore);
+        clientStreamSocket->registerSession(session);
+    }
+
+    const int k_MESSAGE_SIZE = 65000;
+    const int k_NUM_MESSAGES = 1024;
+
+    NTCI_LOG_DEBUG("Generating message");
+    bsl::shared_ptr<bdlbb::Blob> message =
+        clientStreamSocket->createOutgoingBlob();
+    ntcd::DataUtil::generateData(message.get(), k_MESSAGE_SIZE, 0, 0);
+
+    NTCI_LOG_DEBUG("Generating message: OK");
+
+    {
+        bsl::shared_ptr<ntcs::RateLimiter> limiter;
+
+        //configure sustained rate limit in a way that it will be reached
+        // immediately. e.g. 2 bytes per hour
+        const bsl::uint64_t sustainedRateLimit = 2;
+        bsls::TimeInterval  sustainedRateWindow;
+        sustainedRateWindow.setTotalHours(1);
+
+        // do not care about peak limit
+        const bsl::uint64_t peakRateLimit =
+            bsl::numeric_limits<bsl::uint32_t>::max();
+        bsls::TimeInterval peakRateWindow;
+        peakRateWindow.setTotalSeconds(1);
+
+        limiter.createInplace(allocator,
+                              sustainedRateLimit,
+                              sustainedRateWindow,
+                              peakRateLimit,
+                              peakRateWindow,
+                              serverStreamSocket->currentTime());
+        clientStreamSocket->setWriteRateLimiter(limiter);
+    }
+
+    NTCI_LOG_DEBUG("Sending messages");
+    {
+        for (int i = 0; i < k_NUM_MESSAGES; ++i) {
+            ntca::SendOptions sendOptions;
+
+            error = clientStreamSocket->send(*message, sendOptions);
+            NTCCFG_TEST_TRUE(!error);
+        }
+    }
+
+    rateLimitSemaphore.wait();
+
+    {
+        ntci::StreamSocketCloseGuard closeGuardClient(clientStreamSocket);
+        ntci::StreamSocketCloseGuard closeGuardServer(serverStreamSocket);
+    }
+
+    NTCCFG_TEST_GE(session->writeQueueRateLimitApplied(), 1);
+}
+
+void concernListenerSocketAcceptRateLimitTimerClose(
+    const bsl::shared_ptr<ntci::Interface>& interface,
+    bslma::Allocator*                       allocator)
+{
+    // Concern: validate that accept rate limit timer is automatically closed
+    // when the socket is closed and then destroyed
+
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_DEBUG("Test started");
+
+    const ntsa::Transport::Value transport =
+        ntsa::Transport::e_TCP_IPV4_STREAM;
+
+    ntsa::Error      error;
+    bslmt::Semaphore acceptLimitSemaphore;
+
+    bsl::shared_ptr<ntci::ListenerSocket> listenerSocket;
+    {
+        ntca::ListenerSocketOptions options;
+        options.setTransport(transport);
+        options.setSourceEndpoint(test::EndpointUtil::any(transport));
+
+        listenerSocket = interface->createListenerSocket(options, allocator);
+    }
+
+    bsl::shared_ptr<rateLimit::ListenerSocketSession> session;
+    {
+        session.createInplace(allocator, acceptLimitSemaphore);
+        listenerSocket->registerSession(session);
+    }
+
+    {
+        bsl::shared_ptr<ntcs::RateLimiter> limiter;
+
+        // configure sustained rate limit in a way that it will be reached
+        // immediately. e.g. 1 acceptance per second
+        const bsl::uint64_t sustainedRateLimit = 1;
+        bsls::TimeInterval  sustainedRateWindow;
+        sustainedRateWindow.setTotalHours(1);
+
+        // do not care about peak limit
+        const bsl::uint64_t peakRateLimit = 1;
+        bsls::TimeInterval  peakRateWindow;
+        peakRateWindow.setTotalSeconds(1);
+
+        limiter.createInplace(allocator,
+                              sustainedRateLimit,
+                              sustainedRateWindow,
+                              peakRateLimit,
+                              peakRateWindow,
+                              listenerSocket->currentTime());
+        listenerSocket->setAcceptRateLimiter(limiter);
+    }
+
+    error = listenerSocket->open();
+    NTCCFG_TEST_FALSE(error);
+
+    error = listenerSocket->listen();
+    NTCCFG_TEST_FALSE(error);
+
+    NTCI_LOG_DEBUG("Listener socket starts listening");
+
+    const int numSockets = 10;
+
+    bsl::vector<bsl::shared_ptr<ntci::StreamSocket> > clientSockets(allocator);
+    bsl::vector<bsl::shared_ptr<ntci::ConnectFuture> > connectFutures(
+        allocator);
+    bsl::vector<bsl::shared_ptr<ntci::AcceptFuture> > acceptFutures(allocator);
+
+    NTCI_LOG_DEBUG("Creating client sockets");
+
+    for (int i = 0; i < numSockets; ++i) {
+        ntca::StreamSocketOptions options;
+        options.setTransport(transport);
+
+        bsl::shared_ptr<ntci::StreamSocket> clientStreamSocket =
+            interface->createStreamSocket(options, allocator);
+
+        error = clientStreamSocket->open();
+        NTCCFG_TEST_OK(error);
+        clientSockets.push_back(clientStreamSocket);
+    }
+
+    NTCI_LOG_DEBUG("Preparing futures");
+    for (int i = 0; i < numSockets; ++i) {
+        bsl::shared_ptr<ntci::ConnectFuture> connectFuture;
+        connectFuture.createInplace(allocator);
+        connectFutures.push_back(connectFuture);
+
+        bsl::shared_ptr<ntci::AcceptFuture> acceptFuture;
+        acceptFuture.createInplace(allocator);
+        acceptFutures.push_back(acceptFuture);
+    }
+
+    NTCI_LOG_DEBUG("Accepting connections");
+    for (int i = 0; i < numSockets; ++i) {
+        error =
+            listenerSocket->accept(ntca::AcceptOptions(), *(acceptFutures[i]));
+        NTCCFG_TEST_OK(error);
+    }
+
+    NTCI_LOG_DEBUG("Initiating connections");
+    for (int i = 0; i < numSockets; ++i) {
+        error = clientSockets[i]->connect(listenerSocket->sourceEndpoint(),
+                                          ntca::ConnectOptions(),
+                                          *(connectFutures[i]));
+        NTCCFG_TEST_OK(error);
+    }
+
+    acceptLimitSemaphore.wait();
+    acceptLimitSemaphore.wait();
+
+    NTCCFG_TEST_GE(session->rateLimitApplied(), 1);
+    NTCCFG_TEST_GE(session->rateLimitRelaxed(), 1);
+
+    {
+        {
+            ntci::ListenerSocketCloseGuard listenerSocketCloseGuard(
+                listenerSocket);
+        }
+        listenerSocket.reset();
+    }
+
+    NTCI_LOG_DEBUG("Cleaning accepted connections");
+    for (size_t i = 0; i < acceptFutures.size(); ++i) {
+        const bsls::TimeInterval zero;
+        ntci::AcceptResult       acceptResult;
+        error = acceptFutures[i]->wait(&acceptResult, zero);
+        if (!error) {
+            ntci::StreamSocketCloseGuard closeGuard(
+                acceptResult.streamSocket());
+        }
+    }
+
+    for (size_t i = 0; i < clientSockets.size(); ++i) {
+        ntci::StreamSocketCloseGuard closeGuard(clientSockets[i]);
+    }
+}
+
+void concernStreamSocketConnectRetryTimerClose(
+    const bsl::shared_ptr<ntci::Interface>& interface,
+    bslma::Allocator*                       allocator)
+{
+    // Concern: validate that connect retry timer is automatically closed
+    // when the socket is closed and then destroyed
+
+    const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 2;
+    const double      k_RETRY_INTERVAL_HOURS    = 1;
+
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error                  error;
+    const ntsa::Transport::Value transport =
+        ntsa::Transport::e_TCP_IPV4_STREAM;
+
+    NTCI_LOG_DEBUG("Creating stream socket");
+    bsl::shared_ptr<ntci::StreamSocket> streamSocket;
+    {
+        ntca::StreamSocketOptions streamSocketOptions;
+        streamSocketOptions.setTransport(transport);
+
+        streamSocket =
+            interface->createStreamSocket(streamSocketOptions, allocator);
+    }
+
+    NTCI_LOG_DEBUG("Creating and binding listener socket");
+    bsl::shared_ptr<ntci::ListenerSocket> listenerSocket;
+    {
+        ntca::ListenerSocketOptions options;
+        options.setTransport(transport);
+        options.setSourceEndpoint(test::EndpointUtil::any(transport));
+
+        listenerSocket = interface->createListenerSocket(options, allocator);
+        listenerSocket->open();
+    }
+    ntci::ListenerSocketCloseGuard listenerCloseGuard(listenerSocket);
+
+    NTCI_LOG_DEBUG("Trying to connect");
+    ntci::ConnectFuture connectFuture(allocator);
+    {
+        bsls::TimeInterval retryInterval;
+        retryInterval.setTotalHours(k_RETRY_INTERVAL_HOURS);
+        ntca::ConnectOptions connectOptions;
+        connectOptions.setRetryCount(k_MAX_CONNECTION_ATTEMPTS - 1);
+        connectOptions.setRetryInterval(retryInterval);
+
+        const ntsa::Endpoint endpoint = listenerSocket->sourceEndpoint();
+
+        error = streamSocket->connect(endpoint, connectOptions, connectFuture);
+        NTCCFG_TEST_OK(error);
+    }
+
+    NTCI_LOG_DEBUG("Processing connect result");
+    {
+        ntci::ConnectResult connectResult;
+        error = connectFuture.wait(&connectResult);
+        NTCCFG_TEST_OK(error);
+
+        NTCCFG_TEST_LOG_INFO << "Processing connect event "
+                             << connectResult.event() << NTCCFG_TEST_LOG_END;
+
+        NTCCFG_TEST_EQ(connectResult.event().type(),
+                       ntca::ConnectEventType::e_ERROR);
+    }
+
+    NTCI_LOG_DEBUG("closing the socket");
+    {
+        {
+            ntci::StreamSocketCloseGuard closeGuard(streamSocket);
+        }
+        streamSocket.reset();
+    }
+}
+
+void concernStreamSocketConnectDeadlineTimerClose(
+    const bsl::shared_ptr<ntci::Interface>& interface,
+    bslma::Allocator*                       allocator)
+{
+    // Concern: validate that connect deadline timer is automatically closed
+    // when the socket is closed and then destroyed
+
+    const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 60;
+    const int         k_DEADLINE_INTERVAL_HOURS = 1;
+    const int         k_RETRY_INTERVAL_MINUTES  = 1;
+
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error                  error;
+    const ntsa::Transport::Value transport =
+        ntsa::Transport::e_TCP_IPV4_STREAM;
+
+    NTCI_LOG_DEBUG("Creating stream socket");
+    bsl::shared_ptr<ntci::StreamSocket> streamSocket;
+    {
+        ntca::StreamSocketOptions streamSocketOptions;
+        streamSocketOptions.setTransport(transport);
+
+        streamSocket =
+            interface->createStreamSocket(streamSocketOptions, allocator);
+    }
+
+    NTCI_LOG_DEBUG("Creating and binding listener socket");
+    bsl::shared_ptr<ntci::ListenerSocket> listenerSocket;
+    {
+        ntca::ListenerSocketOptions options;
+        options.setTransport(transport);
+        options.setSourceEndpoint(test::EndpointUtil::any(transport));
+
+        listenerSocket = interface->createListenerSocket(options, allocator);
+        listenerSocket->open();
+    }
+    ntci::ListenerSocketCloseGuard listenerCloseGuard(listenerSocket);
+
+    NTCI_LOG_DEBUG("Trying to connect");
+    ntci::ConnectFuture connectFuture(allocator);
+    {
+        bsls::TimeInterval deadlineInterval;
+        deadlineInterval.setTotalHours(k_DEADLINE_INTERVAL_HOURS);
+
+        bsls::TimeInterval retryInterval;
+        retryInterval.setTotalMinutes(k_RETRY_INTERVAL_MINUTES);
+
+        ntca::ConnectOptions connectOptions;
+        connectOptions.setRetryCount(k_MAX_CONNECTION_ATTEMPTS);
+        connectOptions.setRetryInterval(retryInterval);
+        connectOptions.setDeadline(streamSocket->currentTime() +
+                                   deadlineInterval);
+
+        const ntsa::Endpoint endpoint = listenerSocket->sourceEndpoint();
+
+        error = streamSocket->connect(endpoint, connectOptions, connectFuture);
+        NTCCFG_TEST_OK(error);
+    }
+
+    NTCI_LOG_DEBUG("Processing connect result");
+    {
+        ntci::ConnectResult connectResult;
+        error = connectFuture.wait(&connectResult);
+        NTCCFG_TEST_OK(error);
+
+        NTCCFG_TEST_LOG_INFO << "Processing connect event "
+                             << connectResult.event() << NTCCFG_TEST_LOG_END;
+
+        NTCCFG_TEST_EQ(connectResult.event().type(),
+                       ntca::ConnectEventType::e_ERROR);
+    }
+
+    NTCI_LOG_DEBUG("closing the socket");
+    {
+        {
+            ntci::StreamSocketCloseGuard closeGuard(streamSocket);
+        }
+        streamSocket.reset();
+    }
+}
+
+void concernDatagramSocketReceiveRateLimitTimerEventNotifications(
+    const bsl::shared_ptr<ntci::Interface>& interface,
+    bslma::Allocator*                       allocator)
+{
+    // Concern: validate that e_RATE_LIMIT_APPLIED and e_RATE_LIMIT_RELAXED
+    // events are fired
+
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_DEBUG("Test started");
+
+    const ntsa::Transport::Value transport =
+        ntsa::Transport::e_UDP_IPV4_DATAGRAM;
+
+    ntsa::Error      error;
+    bslmt::Semaphore receiveSemaphore;
+    bslmt::Semaphore rateLimitSemaphore;
+
+    bsl::shared_ptr<ntci::DatagramSocket> clientDatagramSocket;
+    bsl::shared_ptr<ntci::DatagramSocket> serverDatagramSocket;
+    {
+        ntca::DatagramSocketOptions options;
+        options.setTransport(transport);
+
+        bsl::shared_ptr<ntsi::DatagramSocket> basicClientSocket;
+        bsl::shared_ptr<ntsi::DatagramSocket> basicServerSocket;
+
+        error = ntsf::System::createDatagramSocketPair(&basicClientSocket,
+                                                       &basicServerSocket,
+                                                       transport);
+        NTCCFG_TEST_FALSE(error);
+
+        clientDatagramSocket =
+            interface->createDatagramSocket(options, allocator);
+
+        error = clientDatagramSocket->open(transport, basicClientSocket);
+        NTCCFG_TEST_FALSE(error);
+
+        serverDatagramSocket =
+            interface->createDatagramSocket(options, allocator);
+
+        error = serverDatagramSocket->open(transport, basicServerSocket);
+        NTCCFG_TEST_FALSE(error);
+    }
+
+    bsl::shared_ptr<rateLimit::DatagramSocketSession> session;
+    {
+        session.createInplace(allocator, rateLimitSemaphore);
+        serverDatagramSocket->registerSession(session);
+    }
+
+    const int k_MESSAGE_SIZE = 65507;  //maximum
+    const int k_NUM_MESSAGES = 100;
+
+    NTCI_LOG_DEBUG("Generating message");
+    bsl::shared_ptr<bdlbb::Blob> message =
+        clientDatagramSocket->createOutgoingBlob();
+    ntcd::DataUtil::generateData(message.get(), k_MESSAGE_SIZE, 0, 0);
+
+    NTCI_LOG_DEBUG("Generating message: OK");
+
+    {
+        bsl::shared_ptr<ntcs::RateLimiter> limiter;
+
+        // configure sustained rate limit in a way that it will be reached
+        // immediately
+
+        const bsl::uint64_t      sustainedRateLimit = k_MESSAGE_SIZE;
+        const bsls::TimeInterval sustainedRateWindow(0.01);
+
+        // do not care about peak limit
+        const bsl::uint64_t peakRateLimit =
+            bsl::numeric_limits<bsl::uint32_t>::max();
+        bsls::TimeInterval peakRateWindow;
+        peakRateWindow.setTotalSeconds(10);
+
+        limiter.createInplace(allocator,
+                              sustainedRateLimit,
+                              sustainedRateWindow,
+                              peakRateLimit,
+                              peakRateWindow,
+                              serverDatagramSocket->currentTime());
+        serverDatagramSocket->setReadRateLimiter(limiter);
+    }
+
+    NTCI_LOG_DEBUG("Sending messages");
+    {
+        for (int i = 0; i < k_NUM_MESSAGES; ++i) {
+            ntca::SendOptions sendOptions;
+
+            error = clientDatagramSocket->send(*message, sendOptions);
+            NTCCFG_TEST_TRUE(!error);
+        }
+    }
+
+    NTCI_LOG_DEBUG("Receiving messages");
+    {
+        ntca::ReceiveOptions receiveOptions;
+        receiveOptions.setSize(k_MESSAGE_SIZE * k_NUM_MESSAGES);
+
+        ntci::ReceiveCallback receiveCallback =
+            serverDatagramSocket->createReceiveCallback(
+                NTCCFG_BIND(&test::DatagramSocketUtil::processReceiveFailed,
+                            NTCCFG_BIND_PLACEHOLDER_1,
+                            NTCCFG_BIND_PLACEHOLDER_2,
+                            NTCCFG_BIND_PLACEHOLDER_3,
+                            &receiveSemaphore),
+                allocator);
+
+        error = serverDatagramSocket->receive(receiveOptions, receiveCallback);
+        NTCCFG_TEST_OK(error);
+    }
+
+    rateLimitSemaphore.wait();
+    rateLimitSemaphore.wait();
+
+    NTCCFG_TEST_GE(session->readQueueRateLimitApplied(), 1);
+    NTCCFG_TEST_GE(session->readQueueRateLimitRelaxed(), 1);
+
+    {
+        ntci::DatagramSocketCloseGuard closeGuardClient(clientDatagramSocket);
+        ntci::DatagramSocketCloseGuard closeGuardServer(serverDatagramSocket);
+    }
+
+    receiveSemaphore.wait();
+}
+
+void concernDatagramSocketSendRateLimitTimerEventNotifications(
+    const bsl::shared_ptr<ntci::Interface>& interface,
+    bslma::Allocator*                       allocator)
+{
+    // Concern: validate that e_RATE_LIMIT_APPLIED and e_RATE_LIMIT_RELAXED
+    // events are fired
+
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_DEBUG("Test started");
+
+    const ntsa::Transport::Value transport =
+        ntsa::Transport::e_UDP_IPV4_DATAGRAM;
+
+    ntsa::Error      error;
+    bslmt::Semaphore receiveSemaphore;
+    bslmt::Semaphore rateLimitSemaphore;
+
+    bsl::shared_ptr<ntci::DatagramSocket> clientDatagramSocket;
+    bsl::shared_ptr<ntci::DatagramSocket> serverDatagramSocket;
+    {
+        ntca::DatagramSocketOptions options;
+        options.setTransport(transport);
+
+        bsl::shared_ptr<ntsi::DatagramSocket> basicClientSocket;
+        bsl::shared_ptr<ntsi::DatagramSocket> basicServerSocket;
+
+        error = ntsf::System::createDatagramSocketPair(&basicClientSocket,
+                                                       &basicServerSocket,
+                                                       transport);
+        NTCCFG_TEST_FALSE(error);
+
+        clientDatagramSocket =
+            interface->createDatagramSocket(options, allocator);
+
+        error = clientDatagramSocket->open(transport, basicClientSocket);
+        NTCCFG_TEST_FALSE(error);
+
+        serverDatagramSocket =
+            interface->createDatagramSocket(options, allocator);
+
+        error = serverDatagramSocket->open(transport, basicServerSocket);
+        NTCCFG_TEST_FALSE(error);
+    }
+
+    bsl::shared_ptr<rateLimit::DatagramSocketSession> session;
+    {
+        session.createInplace(allocator, rateLimitSemaphore);
+        clientDatagramSocket->registerSession(session);
+    }
+
+    const int k_MESSAGE_SIZE = 65507;  //maximum
+    const int k_NUM_MESSAGES = 100;
+
+    NTCI_LOG_DEBUG("Generating message");
+    bsl::shared_ptr<bdlbb::Blob> message =
+        clientDatagramSocket->createOutgoingBlob();
+    ntcd::DataUtil::generateData(message.get(), k_MESSAGE_SIZE, 0, 0);
+
+    NTCI_LOG_DEBUG("Generating message: OK");
+
+    {
+        bsl::shared_ptr<ntcs::RateLimiter> limiter;
+
+        // configure sustained rate limit in a way that it will be reached
+        // immediately
+
+        const bsl::uint64_t      sustainedRateLimit = k_MESSAGE_SIZE / 2;
+        const bsls::TimeInterval sustainedRateWindow(1.0);
+
+        // do not care about peak limit
+        const bsl::uint64_t peakRateLimit =
+            bsl::numeric_limits<bsl::uint32_t>::max();
+        bsls::TimeInterval peakRateWindow;
+        peakRateWindow.setTotalSeconds(10);
+
+        limiter.createInplace(allocator,
+                              sustainedRateLimit,
+                              sustainedRateWindow,
+                              peakRateLimit,
+                              peakRateWindow,
+                              serverDatagramSocket->currentTime());
+        clientDatagramSocket->setWriteRateLimiter(limiter);
+    }
+
+    NTCI_LOG_DEBUG("Sending messages");
+    {
+        for (int i = 0; i < k_NUM_MESSAGES; ++i) {
+            ntca::SendOptions sendOptions;
+
+            error = clientDatagramSocket->send(*message, sendOptions);
+            NTCCFG_TEST_TRUE(!error);
+        }
+    }
+
+    rateLimitSemaphore.wait();
+    rateLimitSemaphore.wait();
+
+    NTCCFG_TEST_GE(session->writeQueueRateLimitApplied(), 1);
+    NTCCFG_TEST_GE(session->writeQueueRateLimitRelaxed(), 1);
+
+    ntci::DatagramSocketCloseGuard closeGuardClient(clientDatagramSocket);
+    ntci::DatagramSocketCloseGuard closeGuardServer(serverDatagramSocket);
+}
+
+void concernStreamSocketReceiveRateLimitTimerEventNotifications(
+    const bsl::shared_ptr<ntci::Interface>& interface,
+    bslma::Allocator*                       allocator)
+{
+    // Concern: validate that e_RATE_LIMIT_APPLIED and e_RATE_LIMIT_RELAXED
+    // events are fired
+
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_DEBUG("Test started");
+
+    const ntsa::Transport::Value transport =
+        ntsa::Transport::e_TCP_IPV4_STREAM;
+
+    ntsa::Error      error;
+    bslmt::Semaphore receiveSemaphore;
+    bslmt::Semaphore rateLimitSemaphore;
+
+    bsl::shared_ptr<ntci::StreamSocket> clientStreamSocket;
+    bsl::shared_ptr<ntci::StreamSocket> serverStreamSocket;
+    {
+        ntca::StreamSocketOptions options;
+        options.setTransport(transport);
+
+        bsl::shared_ptr<ntsi::StreamSocket> basicClientSocket;
+        bsl::shared_ptr<ntsi::StreamSocket> basicServerSocket;
+
+        error = ntsf::System::createStreamSocketPair(&basicClientSocket,
+                                                     &basicServerSocket,
+                                                     transport);
+        NTCCFG_TEST_FALSE(error);
+
+        clientStreamSocket = interface->createStreamSocket(options, allocator);
+
+        error = clientStreamSocket->open(transport, basicClientSocket);
+        NTCCFG_TEST_FALSE(error);
+
+        serverStreamSocket = interface->createStreamSocket(options, allocator);
+
+        error = serverStreamSocket->open(transport, basicServerSocket);
+        NTCCFG_TEST_FALSE(error);
+    }
+
+    bsl::shared_ptr<rateLimit::StreamSocketSession> session;
+    {
+        session.createInplace(allocator, rateLimitSemaphore);
+        serverStreamSocket->registerSession(session);
+    }
+
+    const int k_MESSAGE_SIZE = 65000;
+    const int k_NUM_MESSAGES = 10;
+
+    NTCI_LOG_DEBUG("Generating message");
+    bsl::shared_ptr<bdlbb::Blob> message =
+        clientStreamSocket->createOutgoingBlob();
+    ntcd::DataUtil::generateData(message.get(), k_MESSAGE_SIZE, 0, 0);
+
+    NTCI_LOG_DEBUG("Generating message: OK");
+
+    {
+        bsl::shared_ptr<ntcs::RateLimiter> limiter;
+
+        //configure sustained rate limit in a way that it will be reached
+        // immediately
+        const bsl::uint64_t      sustainedRateLimit = k_MESSAGE_SIZE;
+        const bsls::TimeInterval sustainedRateWindow(0.01);
+
+        // do not care about peak limit
+        const bsl::uint64_t peakRateLimit =
+            bsl::numeric_limits<bsl::uint32_t>::max();
+        bsls::TimeInterval peakRateWindow;
+        peakRateWindow.setTotalSeconds(1);
+
+        limiter.createInplace(allocator,
+                              sustainedRateLimit,
+                              sustainedRateWindow,
+                              peakRateLimit,
+                              peakRateWindow,
+                              serverStreamSocket->currentTime());
+        serverStreamSocket->setReadRateLimiter(limiter);
+    }
+
+    NTCI_LOG_DEBUG("Sending messages");
+    {
+        for (int i = 0; i < k_NUM_MESSAGES; ++i) {
+            ntca::SendOptions sendOptions;
+
+            error = clientStreamSocket->send(*message, sendOptions);
+            NTCCFG_TEST_TRUE(!error);
+        }
+    }
+
+    NTCI_LOG_DEBUG("Receiving messages");
+    {
+        ntca::ReceiveOptions receiveOptions;
+        receiveOptions.setSize(k_MESSAGE_SIZE * k_NUM_MESSAGES);
+
+        ntci::ReceiveCallback receiveCallback =
+            serverStreamSocket->createReceiveCallback(
+                NTCCFG_BIND(&test::DatagramSocketUtil::processReceiveFailed,
+                            NTCCFG_BIND_PLACEHOLDER_1,
+                            NTCCFG_BIND_PLACEHOLDER_2,
+                            NTCCFG_BIND_PLACEHOLDER_3,
+                            &receiveSemaphore),
+                allocator);
+
+        error = serverStreamSocket->receive(receiveOptions, receiveCallback);
+        NTCCFG_TEST_OK(error);
+    }
+
+    rateLimitSemaphore.wait();
+    rateLimitSemaphore.wait();
+
+    NTCCFG_TEST_GE(session->readQueueRateLimitApplied(), 1);
+    NTCCFG_TEST_GE(session->readQueueRateLimitRelaxed(), 1);
+
+    {
+        ntci::StreamSocketCloseGuard closeGuardClient(clientStreamSocket);
+        ntci::StreamSocketCloseGuard closeGuardServer(serverStreamSocket);
+    }
+
+    receiveSemaphore.wait();
+}
+
+void concernStreamSocketSendRateLimitTimerEventNotifications(
+    const bsl::shared_ptr<ntci::Interface>& interface,
+    bslma::Allocator*                       allocator)
+{
+    // Concern: validate that e_RATE_LIMIT_APPLIED and e_RATE_LIMIT_RELAXED
+    // events are fired
+
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_DEBUG("Test started");
+
+    const ntsa::Transport::Value transport =
+        ntsa::Transport::e_TCP_IPV4_STREAM;
+
+    ntsa::Error      error;
+    bslmt::Semaphore rateLimitSemaphore;
+
+    bsl::shared_ptr<ntci::StreamSocket> clientStreamSocket;
+    bsl::shared_ptr<ntci::StreamSocket> serverStreamSocket;
+    {
+        ntca::StreamSocketOptions options;
+        options.setTransport(transport);
+
+        bsl::shared_ptr<ntsi::StreamSocket> basicClientSocket;
+        bsl::shared_ptr<ntsi::StreamSocket> basicServerSocket;
+
+        error = ntsf::System::createStreamSocketPair(&basicClientSocket,
+                                                     &basicServerSocket,
+                                                     transport);
+        NTCCFG_TEST_FALSE(error);
+
+        clientStreamSocket = interface->createStreamSocket(options, allocator);
+
+        error = clientStreamSocket->open(transport, basicClientSocket);
+        NTCCFG_TEST_FALSE(error);
+
+        serverStreamSocket = interface->createStreamSocket(options, allocator);
+
+        error = serverStreamSocket->open(transport, basicServerSocket);
+        NTCCFG_TEST_FALSE(error);
+    }
+
+    bsl::shared_ptr<rateLimit::StreamSocketSession> session;
+    {
+        session.createInplace(allocator, rateLimitSemaphore);
+        clientStreamSocket->registerSession(session);
+    }
+
+    const int k_MESSAGE_SIZE = 65000;
+    const int k_NUM_MESSAGES = 10;
+
+    NTCI_LOG_DEBUG("Generating message");
+    bsl::shared_ptr<bdlbb::Blob> message =
+        clientStreamSocket->createOutgoingBlob();
+    ntcd::DataUtil::generateData(message.get(), k_MESSAGE_SIZE, 0, 0);
+
+    NTCI_LOG_DEBUG("Generating message: OK");
+
+    {
+        bsl::shared_ptr<ntcs::RateLimiter> limiter;
+
+        //configure sustained rate limit in a way that it will be reached
+        // immediately
+        const bsl::uint64_t      sustainedRateLimit = k_MESSAGE_SIZE / 2;
+        const bsls::TimeInterval sustainedRateWindow(1.0);
+
+        // do not care about peak limit
+        const bsl::uint64_t peakRateLimit =
+            bsl::numeric_limits<bsl::uint32_t>::max();
+        bsls::TimeInterval peakRateWindow;
+        peakRateWindow.setTotalSeconds(1);
+
+        limiter.createInplace(allocator,
+                              sustainedRateLimit,
+                              sustainedRateWindow,
+                              peakRateLimit,
+                              peakRateWindow,
+                              serverStreamSocket->currentTime());
+        clientStreamSocket->setWriteRateLimiter(limiter);
+    }
+
+    NTCI_LOG_DEBUG("Sending messages");
+    {
+        for (int i = 0; i < k_NUM_MESSAGES; ++i) {
+            ntca::SendOptions sendOptions;
+
+            error = clientStreamSocket->send(*message, sendOptions);
+            NTCCFG_TEST_TRUE(!error);
+        }
+    }
+
+    rateLimitSemaphore.wait();
+    rateLimitSemaphore.wait();
+
+    NTCCFG_TEST_GE(session->writeQueueRateLimitApplied(), 1);
+    NTCCFG_TEST_GE(session->writeQueueRateLimitRelaxed(), 1);
+
+    {
+        ntci::StreamSocketCloseGuard closeGuardClient(clientStreamSocket);
+        ntci::StreamSocketCloseGuard closeGuardServer(serverStreamSocket);
+    }
+}
+
+void concernListenerSocketAcceptRateLimitTimerEventNotifications(
+    const bsl::shared_ptr<ntci::Interface>& interface,
+    bslma::Allocator*                       allocator)
+{
+    // Concern: validate that e_RATE_LIMIT_APPLIED and e_RATE_LIMIT_RELAXED
+    // events are fired
+
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_DEBUG("Test started");
+
+    const ntsa::Transport::Value transport =
+        ntsa::Transport::e_TCP_IPV4_STREAM;
+
+    ntsa::Error      error;
+    bslmt::Semaphore acceptLimitSemaphore;
+
+    bsl::shared_ptr<ntci::ListenerSocket> listenerSocket;
+    {
+        ntca::ListenerSocketOptions options;
+        options.setTransport(transport);
+        options.setSourceEndpoint(test::EndpointUtil::any(transport));
+
+        listenerSocket = interface->createListenerSocket(options, allocator);
+    }
+
+    bsl::shared_ptr<rateLimit::ListenerSocketSession> session;
+    {
+        session.createInplace(allocator, acceptLimitSemaphore);
+        listenerSocket->registerSession(session);
+    }
+
+    {
+        bsl::shared_ptr<ntcs::RateLimiter> limiter;
+
+        //configure sustained rate limit in a way that it will be reached
+        // immediately. e.g. 1 acceptance per second
+        const bsl::uint64_t sustainedRateLimit = 1;
+        bsls::TimeInterval  sustainedRateWindow;
+        sustainedRateWindow.setTotalHours(1);
+
+        // do not care about peak limit
+        const bsl::uint64_t peakRateLimit = 1;
+        bsls::TimeInterval  peakRateWindow;
+        peakRateWindow.setTotalSeconds(1);
+
+        limiter.createInplace(allocator,
+                              sustainedRateLimit,
+                              sustainedRateWindow,
+                              peakRateLimit,
+                              peakRateWindow,
+                              listenerSocket->currentTime());
+        listenerSocket->setAcceptRateLimiter(limiter);
+    }
+
+    error = listenerSocket->open();
+    NTCCFG_TEST_FALSE(error);
+
+    error = listenerSocket->listen();
+    NTCCFG_TEST_FALSE(error);
+
+    NTCI_LOG_DEBUG("Listener socket starts listening");
+
+    const int numSockets = 10;
+
+    bsl::vector<bsl::shared_ptr<ntci::StreamSocket> > clientSockets(allocator);
+    bsl::vector<bsl::shared_ptr<ntci::ConnectFuture> > connectFutures(
+        allocator);
+    bsl::vector<bsl::shared_ptr<ntci::AcceptFuture> > acceptFutures(allocator);
+
+    NTCI_LOG_DEBUG("Creating client sockets");
+
+    for (int i = 0; i < numSockets; ++i) {
+        ntca::StreamSocketOptions options;
+        options.setTransport(transport);
+
+        bsl::shared_ptr<ntci::StreamSocket> clientStreamSocket =
+            interface->createStreamSocket(options, allocator);
+
+        error = clientStreamSocket->open();
+        NTCCFG_TEST_OK(error);
+        clientSockets.push_back(clientStreamSocket);
+    }
+
+    NTCI_LOG_DEBUG("Preparing futures");
+    for (int i = 0; i < numSockets; ++i) {
+        bsl::shared_ptr<ntci::ConnectFuture> connectFuture;
+        connectFuture.createInplace(allocator);
+        connectFutures.push_back(connectFuture);
+
+        bsl::shared_ptr<ntci::AcceptFuture> acceptFuture;
+        acceptFuture.createInplace(allocator);
+        acceptFutures.push_back(acceptFuture);
+    }
+
+    NTCI_LOG_DEBUG("Accepting connections");
+    for (int i = 0; i < numSockets; ++i) {
+        error =
+            listenerSocket->accept(ntca::AcceptOptions(), *(acceptFutures[i]));
+        NTCCFG_TEST_OK(error);
+    }
+
+    NTCI_LOG_DEBUG("Initiating connections");
+    for (int i = 0; i < numSockets; ++i) {
+        error = clientSockets[i]->connect(listenerSocket->sourceEndpoint(),
+                                          ntca::ConnectOptions(),
+                                          *(connectFutures[i]));
+        NTCCFG_TEST_OK(error);
+    }
+
+    acceptLimitSemaphore.wait();
+    {
+        {
+            ntci::ListenerSocketCloseGuard listenerSocketCloseGuard(
+                listenerSocket);
+        }
+        listenerSocket.reset();
+    }
+
+    NTCI_LOG_DEBUG("Cleaning accepted connections");
+    for (size_t i = 0; i < acceptFutures.size(); ++i) {
+        const bsls::TimeInterval zero;
+        ntci::AcceptResult       acceptResult;
+        error = acceptFutures[i]->wait(&acceptResult, zero);
+        if (!error) {
+            ntci::StreamSocketCloseGuard closeGuard(
+                acceptResult.streamSocket());
+        }
+    }
+
+    for (size_t i = 0; i < clientSockets.size(); ++i) {
+        ntci::StreamSocketCloseGuard closeGuard(clientSockets[i]);
+    }
 }
 
 }  // close namespace 'test'
@@ -11938,6 +13970,166 @@ NTCCFG_TEST_CASE(65)
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
+NTCCFG_TEST_CASE(66)
+{
+    ntccfg::TestAllocator ta;
+    {
+        test::concern(&test::concernDatagramSocketReceiveDeadlineClose, &ta);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(67)
+{
+    ntccfg::TestAllocator ta;
+    {
+        test::concern(&test::concernStreamSocketReceiveDeadlineClose, &ta);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(68)
+{
+    ntccfg::TestAllocator ta;
+    {
+        test::concern(&test::concernStreamSocketSendDeadlineClose, &ta);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(69)
+{
+    ntccfg::TestAllocator ta;
+    {
+        test::concern(&test::concernListenerSocketAcceptClose, &ta);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(70)
+{
+    ntccfg::TestAllocator ta;
+    {
+        test::concern(
+            &test::
+                concernDatagramSocketReceiveRateLimitTimerEventNotifications,
+            &ta);
+        NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    }
+}
+
+NTCCFG_TEST_CASE(71)
+{
+    ntccfg::TestAllocator ta;
+    {
+        test::concern(
+            &test::concernStreamSocketReceiveRateLimitTimerEventNotifications,
+            &ta);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(72)
+{
+    ntccfg::TestAllocator ta;
+    {
+        test::concern(
+            &test::concernDatagramSocketSendRateLimitTimerEventNotifications,
+            &ta);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(73)
+{
+    ntccfg::TestAllocator ta;
+    {
+        test::concern(
+            &test::concernStreamSocketSendRateLimitTimerEventNotifications,
+            &ta);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(74)
+{
+    ntccfg::TestAllocator ta;
+    {
+        test::concern(
+            &test::concernListenerSocketAcceptRateLimitTimerEventNotifications,
+            &ta);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(75)
+{
+    ntccfg::TestAllocator ta;
+    {
+        test::concern(&test::concernStreamSocketConnectRetryTimerClose, &ta);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(76)
+{
+    ntccfg::TestAllocator ta;
+    {
+        test::concern(&test::concernStreamSocketConnectDeadlineTimerClose,
+                      &ta);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(77)
+{
+    ntccfg::TestAllocator ta;
+    {
+        test::concern(&test::concernDatagramSocketReceiveRateLimitTimerClose,
+                      &ta);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(78)
+{
+    ntccfg::TestAllocator ta;
+    {
+        test::concern(&test::concernDatagramSocketSendRateLimitTimerClose,
+                      &ta);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(79)
+{
+    ntccfg::TestAllocator ta;
+    {
+        test::concern(&test::concernStreamSocketReceiveRateLimitTimerClose,
+                      &ta);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(80)
+{
+    ntccfg::TestAllocator ta;
+    {
+        test::concern(&test::concernStreamSocketSendRateLimitTimerClose, &ta);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(81)
+{
+    ntccfg::TestAllocator ta;
+    {
+        test::concern(&test::concernListenerSocketAcceptRateLimitTimerClose,
+                      &ta);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
 NTCCFG_TEST_DRIVER
 {
     NTCCFG_TEST_REGISTER(1);
@@ -12005,5 +14197,21 @@ NTCCFG_TEST_DRIVER
     NTCCFG_TEST_REGISTER(63);
     NTCCFG_TEST_REGISTER(64);
     NTCCFG_TEST_REGISTER(65);
+    NTCCFG_TEST_REGISTER(66);
+    NTCCFG_TEST_REGISTER(67);
+    NTCCFG_TEST_REGISTER(68);
+    NTCCFG_TEST_REGISTER(69);
+    NTCCFG_TEST_REGISTER(70);
+    NTCCFG_TEST_REGISTER(71);
+    NTCCFG_TEST_REGISTER(72);
+    NTCCFG_TEST_REGISTER(73);
+    NTCCFG_TEST_REGISTER(74);
+    NTCCFG_TEST_REGISTER(75);
+    NTCCFG_TEST_REGISTER(76);
+    NTCCFG_TEST_REGISTER(77);
+    NTCCFG_TEST_REGISTER(78);
+    NTCCFG_TEST_REGISTER(79);
+    NTCCFG_TEST_REGISTER(80);
+    NTCCFG_TEST_REGISTER(81);
 }
 NTCCFG_TEST_DRIVER_END;

@@ -82,6 +82,18 @@ class ListenerSocketSession
         const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
         const ntca::AcceptQueueEvent&                event);
 
+    /// Process the condition that the accept queue rate limit has been reached
+    /// and the connections in the backlog will not be automatically accepted.
+    virtual void processAcceptQueueRateLimitApplied(
+        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+        const ntca::AcceptQueueEvent&                event);
+
+    /// Process the condition that the accept queue rate limit timer has fired
+    /// and the connections in the backlog will be automatically accepted.
+    virtual void processAcceptQueueRateLimitRelaxed(
+        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+        const ntca::AcceptQueueEvent&                event);
+
     /// Process the initiation of the shutdown sequence from the specified
     /// 'origin'.
     virtual void processShutdownInitiated(

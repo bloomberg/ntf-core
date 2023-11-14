@@ -220,6 +220,52 @@ struct Dispatch {
         bool                                                defer,
         bslmt::Mutex*                                       mutex);
 
+    /// Announce to the specified 'session' the condition that read queue
+    /// rate limit has been reached. If the specified 'defer' flag is
+    /// false and the requirements of the specified 'destination' strand
+    /// permits the announcement to be executed immediately by the specified
+    /// 'source' strand, unlock the specified 'mutex', execute the
+    /// announcement, then relock the 'mutex'. Otherwise, enqueue the
+    /// announcement to be executed on the 'destination' strand, if not
+    /// null, or by the specified 'executor' otherwise. The behavior is
+    /// undefined if 'mutex' is null or not locked. The behavior is *not*
+    /// undefined if either the 'destination' strand is null or the 'source'
+    /// strand is null; a null 'destination' strand indicates the
+    /// announcement may be invoked on any strand by any thread; a null
+    /// 'source' strand indicates the source strand is unknown.
+    static void announceReadQueueRateLimitApplied(
+        const bsl::shared_ptr<ntci::DatagramSocketSession>& session,
+        const bsl::shared_ptr<ntci::DatagramSocket>&        socket,
+        const ntca::ReadQueueEvent&                         event,
+        const bsl::shared_ptr<ntci::Strand>&                destination,
+        const bsl::shared_ptr<ntci::Strand>&                source,
+        const bsl::shared_ptr<ntci::Executor>&              executor,
+        bool                                                defer,
+        bslmt::Mutex*                                       mutex);
+
+    /// Announce to the specified 'session' the condition that read queue
+    /// rate limit timer has fired. If the specified 'defer' flag is
+    /// false and the requirements of the specified 'destination' strand
+    /// permits the announcement to be executed immediately by the specified
+    /// 'source' strand, unlock the specified 'mutex', execute the
+    /// announcement, then relock the 'mutex'. Otherwise, enqueue the
+    /// announcement to be executed on the 'destination' strand, if not
+    /// null, or by the specified 'executor' otherwise. The behavior is
+    /// undefined if 'mutex' is null or not locked. The behavior is *not*
+    /// undefined if either the 'destination' strand is null or the 'source'
+    /// strand is null; a null 'destination' strand indicates the
+    /// announcement may be invoked on any strand by any thread; a null
+    /// 'source' strand indicates the source strand is unknown.
+    static void announceReadQueueRateLimitRelaxed(
+        const bsl::shared_ptr<ntci::DatagramSocketSession>& session,
+        const bsl::shared_ptr<ntci::DatagramSocket>&        socket,
+        const ntca::ReadQueueEvent&                         event,
+        const bsl::shared_ptr<ntci::Strand>&                destination,
+        const bsl::shared_ptr<ntci::Strand>&                source,
+        const bsl::shared_ptr<ntci::Executor>&              executor,
+        bool                                                defer,
+        bslmt::Mutex*                                       mutex);
+
     /// Announce to the specified 'session' the condition that write queue
     /// flow control has been relaxed. If the specified 'defer' flag is
     /// false and the requirements of the specified 'destination' strand
@@ -330,6 +376,52 @@ struct Dispatch {
     /// any thread; a null 'source' strand indicates the source strand is
     /// unknown.
     static void announceWriteQueueDiscarded(
+        const bsl::shared_ptr<ntci::DatagramSocketSession>& session,
+        const bsl::shared_ptr<ntci::DatagramSocket>&        socket,
+        const ntca::WriteQueueEvent&                        event,
+        const bsl::shared_ptr<ntci::Strand>&                destination,
+        const bsl::shared_ptr<ntci::Strand>&                source,
+        const bsl::shared_ptr<ntci::Executor>&              executor,
+        bool                                                defer,
+        bslmt::Mutex*                                       mutex);
+
+    /// Announce to the specified 'session' the condition that write queue
+    /// rate limit has been reached. If the specified 'defer' flag is
+    /// false and the requirements of the specified 'destination' strand
+    /// permits the announcement to be executed immediately by the specified
+    /// 'source' strand, unlock the specified 'mutex', execute the
+    /// announcement, then relock the 'mutex'. Otherwise, enqueue the
+    /// announcement to be executed on the 'destination' strand, if not
+    /// null, or by the specified 'executor' otherwise. The behavior is
+    /// undefined if 'mutex' is null or not locked. The behavior is *not*
+    /// undefined if either the 'destination' strand is null or the 'source'
+    /// strand is null; a null 'destination' strand indicates the
+    /// announcement may be invoked on any strand by any thread; a null
+    /// 'source' strand indicates the source strand is unknown.
+    static void announceWriteQueueRateLimitApplied(
+        const bsl::shared_ptr<ntci::DatagramSocketSession>& session,
+        const bsl::shared_ptr<ntci::DatagramSocket>&        socket,
+        const ntca::WriteQueueEvent&                        event,
+        const bsl::shared_ptr<ntci::Strand>&                destination,
+        const bsl::shared_ptr<ntci::Strand>&                source,
+        const bsl::shared_ptr<ntci::Executor>&              executor,
+        bool                                                defer,
+        bslmt::Mutex*                                       mutex);
+
+    /// Announce to the specified 'session' the condition that write queue
+    /// rate limit timer has fired. If the specified 'defer' flag is
+    /// false and the requirements of the specified 'destination' strand
+    /// permits the announcement to be executed immediately by the specified
+    /// 'source' strand, unlock the specified 'mutex', execute the
+    /// announcement, then relock the 'mutex'. Otherwise, enqueue the
+    /// announcement to be executed on the 'destination' strand, if not
+    /// null, or by the specified 'executor' otherwise. The behavior is
+    /// undefined if 'mutex' is null or not locked. The behavior is *not*
+    /// undefined if either the 'destination' strand is null or the 'source'
+    /// strand is null; a null 'destination' strand indicates the
+    /// announcement may be invoked on any strand by any thread; a null
+    /// 'source' strand indicates the source strand is unknown.
+    static void announceWriteQueueRateLimitRelaxed(
         const bsl::shared_ptr<ntci::DatagramSocketSession>& session,
         const bsl::shared_ptr<ntci::DatagramSocket>&        socket,
         const ntca::WriteQueueEvent&                        event,
@@ -620,6 +712,52 @@ struct Dispatch {
         bool                                                defer,
         bslmt::Mutex*                                       mutex);
 
+    /// Announce to the specified 'session' the condition that acccept queue
+    /// rate limit has been reached. If the specified 'defer' flag is
+    /// false and the requirements of the specified 'destination' strand
+    /// permits the announcement to be executed immediately by the specified
+    /// 'source' strand, unlock the specified 'mutex', execute the
+    /// announcement, then relock the 'mutex'. Otherwise, enqueue the
+    /// announcement to be executed on the 'destination' strand, if not
+    /// null, or by the specified 'executor' otherwise. The behavior is
+    /// undefined if 'mutex' is null or not locked. The behavior is *not*
+    /// undefined if either the 'destination' strand is null or the 'source'
+    /// strand is null; a null 'destination' strand indicates the
+    /// announcement may be invoked on any strand by any thread; a null
+    /// 'source' strand indicates the source strand is unknown.
+    static void announceAcceptQueueRateLimitApplied(
+        const bsl::shared_ptr<ntci::ListenerSocketSession>& session,
+        const bsl::shared_ptr<ntci::ListenerSocket>&        socket,
+        const ntca::AcceptQueueEvent&                       event,
+        const bsl::shared_ptr<ntci::Strand>&                destination,
+        const bsl::shared_ptr<ntci::Strand>&                source,
+        const bsl::shared_ptr<ntci::Executor>&              executor,
+        bool                                                defer,
+        bslmt::Mutex*                                       mutex);
+
+    /// Announce to the specified 'session' the condition that accept queue
+    /// rate limit timer has fired. If the specified 'defer' flag is
+    /// false and the requirements of the specified 'destination' strand
+    /// permits the announcement to be executed immediately by the specified
+    /// 'source' strand, unlock the specified 'mutex', execute the
+    /// announcement, then relock the 'mutex'. Otherwise, enqueue the
+    /// announcement to be executed on the 'destination' strand, if not
+    /// null, or by the specified 'executor' otherwise. The behavior is
+    /// undefined if 'mutex' is null or not locked. The behavior is *not*
+    /// undefined if either the 'destination' strand is null or the 'source'
+    /// strand is null; a null 'destination' strand indicates the
+    /// announcement may be invoked on any strand by any thread; a null
+    /// 'source' strand indicates the source strand is unknown.
+    static void announceAcceptQueueRateLimitRelaxed(
+        const bsl::shared_ptr<ntci::ListenerSocketSession>& session,
+        const bsl::shared_ptr<ntci::ListenerSocket>&        socket,
+        const ntca::AcceptQueueEvent&                       event,
+        const bsl::shared_ptr<ntci::Strand>&                destination,
+        const bsl::shared_ptr<ntci::Strand>&                source,
+        const bsl::shared_ptr<ntci::Executor>&              executor,
+        bool                                                defer,
+        bslmt::Mutex*                                       mutex);
+
     /// Announce to the specified 'session' the initiation of the shutdown
     /// sequence of the specified 'socket' from the specified 'origin'. If
     /// the specified 'defer' flag is false and the requirements of the
@@ -901,6 +1039,52 @@ struct Dispatch {
         bool                                              defer,
         bslmt::Mutex*                                     mutex);
 
+    /// Announce to the specified 'session' the condition that read queue
+    /// rate limit has been reached. If the specified 'defer' flag is
+    /// false and the requirements of the specified 'destination' strand
+    /// permits the announcement to be executed immediately by the specified
+    /// 'source' strand, unlock the specified 'mutex', execute the
+    /// announcement, then relock the 'mutex'. Otherwise, enqueue the
+    /// announcement to be executed on the 'destination' strand, if not
+    /// null, or by the specified 'executor' otherwise. The behavior is
+    /// undefined if 'mutex' is null or not locked. The behavior is *not*
+    /// undefined if either the 'destination' strand is null or the 'source'
+    /// strand is null; a null 'destination' strand indicates the
+    /// announcement may be invoked on any strand by any thread; a null
+    /// 'source' strand indicates the source strand is unknown.
+    static void announceReadQueueRateLimitApplied(
+        const bsl::shared_ptr<ntci::StreamSocketSession>& session,
+        const bsl::shared_ptr<ntci::StreamSocket>&        socket,
+        const ntca::ReadQueueEvent&                       event,
+        const bsl::shared_ptr<ntci::Strand>&              destination,
+        const bsl::shared_ptr<ntci::Strand>&              source,
+        const bsl::shared_ptr<ntci::Executor>&            executor,
+        bool                                              defer,
+        bslmt::Mutex*                                     mutex);
+
+    /// Announce to the specified 'session' the condition that read queue
+    /// rate limit timer has fired. If the specified 'defer' flag is
+    /// false and the requirements of the specified 'destination' strand
+    /// permits the announcement to be executed immediately by the specified
+    /// 'source' strand, unlock the specified 'mutex', execute the
+    /// announcement, then relock the 'mutex'. Otherwise, enqueue the
+    /// announcement to be executed on the 'destination' strand, if not
+    /// null, or by the specified 'executor' otherwise. The behavior is
+    /// undefined if 'mutex' is null or not locked. The behavior is *not*
+    /// undefined if either the 'destination' strand is null or the 'source'
+    /// strand is null; a null 'destination' strand indicates the
+    /// announcement may be invoked on any strand by any thread; a null
+    /// 'source' strand indicates the source strand is unknown.
+    static void announceReadQueueRateLimitRelaxed(
+        const bsl::shared_ptr<ntci::StreamSocketSession>& session,
+        const bsl::shared_ptr<ntci::StreamSocket>&        socket,
+        const ntca::ReadQueueEvent&                       event,
+        const bsl::shared_ptr<ntci::Strand>&              destination,
+        const bsl::shared_ptr<ntci::Strand>&              source,
+        const bsl::shared_ptr<ntci::Executor>&            executor,
+        bool                                              defer,
+        bslmt::Mutex*                                     mutex);
+
     /// Announce to the specified 'session' the condition that write queue
     /// flow control has been relaxed. If the specified 'defer' flag is
     /// false and the requirements of the specified 'destination' strand
@@ -1011,6 +1195,52 @@ struct Dispatch {
     /// any thread; a null 'source' strand indicates the source strand is
     /// unknown.
     static void announceWriteQueueDiscarded(
+        const bsl::shared_ptr<ntci::StreamSocketSession>& session,
+        const bsl::shared_ptr<ntci::StreamSocket>&        socket,
+        const ntca::WriteQueueEvent&                      event,
+        const bsl::shared_ptr<ntci::Strand>&              destination,
+        const bsl::shared_ptr<ntci::Strand>&              source,
+        const bsl::shared_ptr<ntci::Executor>&            executor,
+        bool                                              defer,
+        bslmt::Mutex*                                     mutex);
+
+    /// Announce to the specified 'session' the condition that write queue
+    /// rate limit has been reached. If the specified 'defer' flag is
+    /// false and the requirements of the specified 'destination' strand
+    /// permits the announcement to be executed immediately by the specified
+    /// 'source' strand, unlock the specified 'mutex', execute the
+    /// announcement, then relock the 'mutex'. Otherwise, enqueue the
+    /// announcement to be executed on the 'destination' strand, if not
+    /// null, or by the specified 'executor' otherwise. The behavior is
+    /// undefined if 'mutex' is null or not locked. The behavior is *not*
+    /// undefined if either the 'destination' strand is null or the 'source'
+    /// strand is null; a null 'destination' strand indicates the
+    /// announcement may be invoked on any strand by any thread; a null
+    /// 'source' strand indicates the source strand is unknown.
+    static void announceWriteQueueRateLimitApplied(
+        const bsl::shared_ptr<ntci::StreamSocketSession>& session,
+        const bsl::shared_ptr<ntci::StreamSocket>&        socket,
+        const ntca::WriteQueueEvent&                      event,
+        const bsl::shared_ptr<ntci::Strand>&              destination,
+        const bsl::shared_ptr<ntci::Strand>&              source,
+        const bsl::shared_ptr<ntci::Executor>&            executor,
+        bool                                              defer,
+        bslmt::Mutex*                                     mutex);
+
+    /// Announce to the specified 'session' the condition that write queue
+    /// rate limit timer has fired. If the specified 'defer' flag is
+    /// false and the requirements of the specified 'destination' strand
+    /// permits the announcement to be executed immediately by the specified
+    /// 'source' strand, unlock the specified 'mutex', execute the
+    /// announcement, then relock the 'mutex'. Otherwise, enqueue the
+    /// announcement to be executed on the 'destination' strand, if not
+    /// null, or by the specified 'executor' otherwise. The behavior is
+    /// undefined if 'mutex' is null or not locked. The behavior is *not*
+    /// undefined if either the 'destination' strand is null or the 'source'
+    /// strand is null; a null 'destination' strand indicates the
+    /// announcement may be invoked on any strand by any thread; a null
+    /// 'source' strand indicates the source strand is unknown.
+    static void announceWriteQueueRateLimitRelaxed(
         const bsl::shared_ptr<ntci::StreamSocketSession>& session,
         const bsl::shared_ptr<ntci::StreamSocket>&        socket,
         const ntca::WriteQueueEvent&                      event,
