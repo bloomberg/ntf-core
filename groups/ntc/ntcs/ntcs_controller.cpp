@@ -138,6 +138,13 @@ ntsa::Error initTcpPair(ntsa::Handle* clientHandle, ntsa::Handle* serverHandle)
         return error;
     }
 
+    error = ntsu::SocketOptionUtil::setKeepAlive(client, true);
+    if (error) {
+        NTCI_LOG_FATAL("Failed to set TCP_KEEPALIVE: %s",
+                       error.text().c_str());
+        return error;
+    }
+
     error = ntsu::SocketOptionUtil::setBlocking(client, true);
     if (error) {
         NTCI_LOG_FATAL("Failed to set controller client socket "
