@@ -38,6 +38,8 @@ BSLS_IDENT_RCSID(ntcs_controller_cpp, "$Id$ $CSID$")
 // the implementation most suitable for the platform.
 // #define NTCS_CONTROLLER_IMP NTCS_CONTROLLER_TCP_SOCKET
 
+// If you want to use UNIX_DOMAIN_SOCKET implementation not only on Windows
+// then do not forget to update ntcs_controller.t test case.
 #ifndef NTCS_CONTROLLER_IMP
 #if defined(BSLS_PLATFORM_OS_LINUX)
 #define NTCS_CONTROLLER_IMP NTCS_CONTROLLER_IMP_EVENTFD
@@ -106,17 +108,19 @@ namespace ntcs {
 
 namespace {
 
-#if NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_TCP_SOCKET ||                  \
-    defined(BSLS_PLATFORM_OS_WINDOWS) &&                                      \
-        NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_UNIX_DOMAIN_SOCKET
+#if (NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_TCP_SOCKET) ||                \
+    (NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_UNIX_DOMAIN_SOCKET)
 ntsa::Error initTcpPair(ntsa::Handle* clientHandle, ntsa::Handle* serverHandle)
 {
     NTCI_LOG_CONTEXT();
 
     ntsa::Error error;
 
-    error = ntsu::SocketUtil::pair(clientHandle,
-                                   serverHandle,
+    ntsa::Handle client = ntsa::k_INVALID_HANDLE;
+    ntsa::Handle server = ntsa::k_INVALID_HANDLE;
+
+    error = ntsu::SocketUtil::pair(&client,
+                                   &server,
                                    ntsa::Transport::e_TCP_IPV4_STREAM);
 
     if (error) {
@@ -125,13 +129,16 @@ ntsa::Error initTcpPair(ntsa::Handle* clientHandle, ntsa::Handle* serverHandle)
         return error;
     }
 
-    error = ntsu::SocketOptionUtil::setNoDelay(*clientHandle, true);
+    ntsu::SocketUtil::Guard clientGuard(client);
+    ntsu::SocketUtil::Guard serverGuard(server);
+
+    error = ntsu::SocketOptionUtil::setNoDelay(client, true);
     if (error) {
         NTCI_LOG_FATAL("Failed to set TCP_NODELAY: %s", error.text().c_str());
         return error;
     }
 
-    error = ntsu::SocketOptionUtil::setBlocking(*clientHandle, true);
+    error = ntsu::SocketOptionUtil::setBlocking(client, true);
     if (error) {
         NTCI_LOG_FATAL("Failed to set controller client socket "
                        "to blocking mode: %s",
@@ -139,13 +146,18 @@ ntsa::Error initTcpPair(ntsa::Handle* clientHandle, ntsa::Handle* serverHandle)
         return error;
     }
 
-    error = ntsu::SocketOptionUtil::setBlocking(*serverHandle, false);
+    error = ntsu::SocketOptionUtil::setBlocking(server, false);
     if (error) {
         NTCI_LOG_FATAL("Failed to set controller server socket "
                        "to non-blocking mode: %s",
                        error.text().c_str());
         return error;
     }
+
+    *clientHandle = client;
+    *serverHandle = server;
+    clientGuard.release();
+    serverGuard.release();
 
     NTCI_LOG_TRACE("Created controller with "
                    "client descriptor %d and server descriptor %d",
@@ -162,31 +174,42 @@ ntsa::Error initUdsPair(ntsa::Handle* clientHandle, ntsa::Handle* serverHandle)
 
     ntsa::Error error;
 
-    error = ntsu::SocketUtil::pair(clientHandle,
-                                   serverHandle,
+    ntsa::Handle client = ntsa::k_INVALID_HANDLE;
+    ntsa::Handle server = ntsa::k_INVALID_HANDLE;
+
+    error = ntsu::SocketUtil::pair(&client,
+                                   &server,
                                    ntsa::Transport::e_LOCAL_STREAM);
 
     if (error) {
-        NTCI_LOG_FATAL("Failed to create controller socket pair: %s",
-                       error.text().c_str());
+        NTCI_LOG_WARN("Failed to create controller socket pair: %s",
+                      error.text().c_str());
         return error;
     }
 
-    error = ntsu::SocketOptionUtil::setBlocking(*clientHandle, true);
+    ntsu::SocketUtil::Guard clientGuard(client);
+    ntsu::SocketUtil::Guard serverGuard(server);
+
+    error = ntsu::SocketOptionUtil::setBlocking(client, true);
     if (error) {
-        NTCI_LOG_FATAL("Failed to set controller client socket "
-                       "to blocking mode: %s",
-                       error.text().c_str());
+        NTCI_LOG_WARN("Failed to set controller client socket "
+                      "to blocking mode: %s",
+                      error.text().c_str());
         return error;
     }
 
-    error = ntsu::SocketOptionUtil::setBlocking(*serverHandle, false);
+    error = ntsu::SocketOptionUtil::setBlocking(server, false);
     if (error) {
-        NTCI_LOG_FATAL("Failed to set controller server socket "
-                       "to non-blocking mode: %s",
-                       error.text().c_str());
-        NTCCFG_ABORT();
+        NTCI_LOG_WARN("Failed to set controller server socket "
+                      "to non-blocking mode: %s",
+                      error.text().c_str());
+        return error;
     }
+
+    *clientHandle = client;
+    *serverHandle = server;
+    clientGuard.release();
+    serverGuard.release();
 
     NTCI_LOG_TRACE("Created controller with "
                    "client descriptor %d and server descriptor %d",
@@ -326,14 +349,10 @@ Controller::Controller()
 
     ntsa::Error error = initUdsPair(&d_clientHandle, &d_serverHandle);
     if (error) {
-#if defined(BSLS_PLATFORM_OS_WINDOWS)
         error = initTcpPair(&d_clientHandle, &d_serverHandle);
         if (error) {
             NTCCFG_ABORT();
         }
-#else
-        NTCCFG_ABORT();
-#endif
     }
 
 #elif NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_ANONYMOUS_PIPE
