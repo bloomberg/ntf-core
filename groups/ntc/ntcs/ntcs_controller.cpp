@@ -254,8 +254,8 @@ ntsa::Error initPipePair(ntsa::Handle* clientHandle,
 
     NTCI_LOG_TRACE("Created controller with "
                    "client descriptor %d and server descriptor %d",
-                   d_clientHandle,
-                   d_serverHandle);
+                   *clientHandle,
+                   *serverHandle);
 
     return ntsa::Error();
 }
