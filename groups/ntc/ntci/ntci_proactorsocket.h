@@ -98,7 +98,8 @@ class ProactorSocket : public ntci::ProactorSocketBase, public ntsi::Descriptor
     /// Process the specified 'error' that has occurred on the socket.
     virtual void processSocketError(const ntsa::Error& error);
 
-    /// Process the completion of socket detachment
+    /// Process the completion of the detachment of this socket from its 
+    /// proactor.
     virtual void processSocketDetached();
 
     /// Close the stream socket.

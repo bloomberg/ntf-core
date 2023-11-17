@@ -1509,7 +1509,7 @@ bool DatagramSocket::privateCloseFlowControl(
             BSLS_ASSERT(d_detachState.get() !=
                         ntcs::DetachState::e_DETACH_INITIATED);
             proactorRef->cancel(self);
-            const ntsa::Error error = proactorRef->detachSocketAsync(self);
+            const ntsa::Error error = proactorRef->detachSocket(self);
             if (NTCCFG_UNLIKELY(error)) {
                 return false;
             }

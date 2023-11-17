@@ -919,7 +919,7 @@ void StreamSocket::privateFailConnect(
                 if (proactorRef) {
                     proactorRef->cancel(self);
                     const ntsa::Error error =
-                        proactorRef->detachSocketAsync(self);
+                        proactorRef->detachSocket(self);
                     if (NTCCFG_LIKELY(!error)) {
                         d_detachState.set(
                             ntcs::DetachState::e_DETACH_INITIATED);
@@ -952,7 +952,7 @@ void StreamSocket::privateFailConnect(
                 if (proactorRef) {
                     proactorRef->cancel(self);
                     const ntsa::Error error =
-                        proactorRef->detachSocketAsync(self);
+                        proactorRef->detachSocket(self);
                     if (NTCCFG_LIKELY(!error)) {
                         d_detachState.set(
                             ntcs::DetachState::e_DETACH_INITIATED);
@@ -2404,7 +2404,7 @@ bool StreamSocket::privateCloseFlowControl(
             BSLS_ASSERT(d_detachState.get() !=
                         ntcs::DetachState::e_DETACH_INITIATED);
             proactorRef->cancel(self);
-            const ntsa::Error error = proactorRef->detachSocketAsync(self);
+            const ntsa::Error error = proactorRef->detachSocket(self);
             if (NTCCFG_UNLIKELY(error)) {
                 return false;
             }
