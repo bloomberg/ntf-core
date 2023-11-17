@@ -1708,7 +1708,7 @@ NTCCFG_TEST_CASE(1)
 
         // Detach the server from the proactor.
 
-        error = proactor->detachSocketAsync(server);
+        error = proactor->detachSocket(server);
         NTCCFG_TEST_OK(error);
 
         // Wait for the server to become detached from the proactor.
@@ -1719,7 +1719,7 @@ NTCCFG_TEST_CASE(1)
 
         // Detach the client from the proactor.
 
-        error = proactor->detachSocketAsync(client);
+        error = proactor->detachSocket(client);
         NTCCFG_TEST_OK(error);
 
         // Wait for the client to become detached from the proactor.
@@ -1730,7 +1730,7 @@ NTCCFG_TEST_CASE(1)
 
         // Detach the listener from the proactor.
 
-        proactor->detachSocketAsync(listener);
+        proactor->detachSocket(listener);
         NTCCFG_TEST_OK(error);
 
         // Wait for the listener to become detached from the proactor.

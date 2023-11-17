@@ -74,14 +74,6 @@ BSLS_IDENT_RCSID(ntcd_proactor_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntcd {
 
-namespace {
-
-// The flag that defines whether all waiters are interrupted when the polling
-// device gains or loses interest in socket events.
-const bool k_INTERRUPT_ALL = false;
-
-}  // close unnamed namespace
-
 /// This struct describes the context of a waiter.
 struct Proactor::Result {
   public:
@@ -1477,44 +1469,6 @@ ntsa::Error Proactor::cancel(
 }
 
 ntsa::Error Proactor::detachSocket(
-    const bsl::shared_ptr<ntci::ProactorSocket>& socket)
-{
-    ntsa::Error error;
-
-    ntsa::Handle handle = socket->handle();
-
-    {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_workMapMutex);
-
-        WorkMap::iterator it = d_workMap.find(handle);
-        if (it == d_workMap.end()) {
-            return ntsa::Error(ntsa::Error::e_INVALID);
-        }
-
-        d_workMap.erase(it);
-    }
-
-    socket->setProactorContext(bsl::shared_ptr<void>());
-
-    bsl::shared_ptr<ntcs::RegistryEntry> entry =
-        d_registry_sp->remove(socket->handle());
-
-    if (NTCCFG_LIKELY(entry)) {
-        error = d_monitor_sp->remove(entry->handle());
-        if (error) {
-            return error;
-        }
-        if (k_INTERRUPT_ALL) {
-            this->interruptAll();
-        }
-        return ntsa::Error();
-    }
-    else {
-        return ntsa::Error();
-    }
-}
-
-ntsa::Error Proactor::detachSocketAsync(
     const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 {
     ntsa::Error error;

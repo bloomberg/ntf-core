@@ -1660,17 +1660,17 @@ NTCCFG_TEST_CASE(1)
 
         // Detach the server from the proactor.
 
-        error = proactor->detachSocketAsync(server);
+        error = proactor->detachSocket(server);
         NTCCFG_TEST_OK(error);
 
         // Detach the client from the proactor.
 
-        error = proactor->detachSocketAsync(client);
+        error = proactor->detachSocket(client);
         NTCCFG_TEST_OK(error);
 
         // Detach the listener from the proactor.
 
-        proactor->detachSocketAsync(listener);
+        proactor->detachSocket(listener);
         NTCCFG_TEST_OK(error);
 
         while (!server->pollForDetachment() || !client->pollForDetachment() ||

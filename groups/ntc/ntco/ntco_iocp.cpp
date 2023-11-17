@@ -422,10 +422,6 @@ class Iocp : public ntci::Proactor,
                                  socket) BSLS_KEYWORD_OVERRIDE;
     // Detach the specified 'socket' from the proactor. Return the error.
 
-    ntsa::Error detachSocketAsync(const bsl::shared_ptr<ntci::ProactorSocket>&
-                                      socket) BSLS_KEYWORD_OVERRIDE;
-    // Detach the specified 'socket' from the proactor. Return the error.
-
     ntsa::Error closeAll() BSLS_KEYWORD_OVERRIDE;
     // Close all monitored sockets and timers.
 
@@ -2431,12 +2427,6 @@ ntsa::Error Iocp::cancel(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 }
 
 ntsa::Error Iocp::detachSocket(
-    const bsl::shared_ptr<ntci::ProactorSocket>& socket)
-{
-    return detachSocketAsync(socket);
-}
-
-ntsa::Error Iocp::detachSocketAsync(
     const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 {
     ntsa::Error error;
