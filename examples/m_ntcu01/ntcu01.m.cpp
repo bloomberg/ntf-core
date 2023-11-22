@@ -147,6 +147,40 @@ void execute()
     ntsa::Endpoint listenerEndpoint;
     error = listener->sourceEndpoint(&listenerEndpoint);
     BSLS_ASSERT_OPT(!error);
+    bsl::cout << listenerEndpoint << bsl::endl;
+
+    int port = listenerEndpoint.ip().port();
+    bsl::cout << port << bsl::endl;
+
+    ntsa::IpAddressOptions options;
+
+    // Limit addresses to V4 only
+    options.setIpAddressType(ntsa::IpAddressType::e_V4);
+    // Return first address
+    options.setIpAddressSelector(0);
+
+    // Avoid dynamic memory allocation
+    bdlma::LocalSequentialAllocator<sizeof(ntsa::IpAddress)> lsa;
+    bsl::vector<ntsa::IpAddress>                             ipAddresses(&lsa);
+
+    bsl::shared_ptr<ntsi::Resolver> resolver = ntsf::System::createResolver();
+    error = resolver->getIpAddress(&ipAddresses,
+                                   "localhost",
+                                   options);
+
+    BSLS_ASSERT_OPT(!error);
+    ntsa::Ipv4Address address = ipAddresses.front().v4();
+    bsl::cout << address << bsl::endl;
+
+    bsl::string domain;
+    error = resolver->getDomainName(&domain, ntsa::IpAddress(address));
+    bsl::cout << domain << bsl::endl;
+
+    BSLS_ASSERT_OPT(!error);
+
+
+    listenerEndpoint = ntsa::Endpoint(address.text() + ":" + bsl::to_string(port));
+    bsl::cout << listenerEndpoint << bsl::endl;
 
     error = client->connect(listenerEndpoint);
     BSLS_ASSERT_OPT(error == ntsa::Error::e_OK ||
@@ -313,6 +347,8 @@ void execute()
 
         BSLS_ASSERT_OPT(context.bytesReceived() == 1);
         BSLS_ASSERT_OPT(storage == 'S');
+
+        bsl::cout << context.bytesReceived() << bsl::endl;
     }
 
     // Lose interest in the readability of the client socket.
@@ -494,6 +530,8 @@ void execute()
     // Deregister the waiter.
 
     reactor->deregisterWaiter(waiter);
+
+    bsl::cout << "End" << bsl::endl;
 }
 
 }  // close namespace usage1
