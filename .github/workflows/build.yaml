@@ -16,7 +16,8 @@ jobs:
   build-check:
     name: "Check whether NTF builds correctly."
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v3
       - name: Docker Cluster Workflow
-        run: docker build --tag ntf-core --platform linux/amd64 docker
+        run: docker build --tag ntf-core --platform linux/amd64 .
