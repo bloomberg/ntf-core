@@ -329,6 +329,7 @@ bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*  result,
 
 SendQueue::SendQueue(bslma::Allocator* basicAllocator)
 : d_entryList(basicAllocator)
+, d_zeroCopyWaitList(basicAllocator)
 , d_data_sp()
 , d_size(0)
 , d_watermarkLow(NTCCFG_DEFAULT_STREAM_SOCKET_WRITE_QUEUE_LOW_WATERMARK)
@@ -336,6 +337,7 @@ SendQueue::SendQueue(bslma::Allocator* basicAllocator)
 , d_watermarkHigh(NTCCFG_DEFAULT_STREAM_SOCKET_WRITE_QUEUE_HIGH_WATERMARK)
 , d_watermarkHighWanted(true)
 , d_nextEntryId(1)
+, d_zeroCopyId(0)
 , d_callbackEntryPool(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
