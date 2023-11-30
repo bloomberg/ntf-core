@@ -33,6 +33,7 @@ BSLS_IDENT("$Id: $")
 #include <ntci_timer.h>
 #include <ntcq_receive.h>
 #include <ntcq_send.h>
+#include <ntcq_zerocopy.h>
 #include <ntcs_detachstate.h>
 #include <ntcs_flowcontrolcontext.h>
 #include <ntcs_flowcontrolstate.h>
@@ -95,6 +96,7 @@ class DatagramSocket : public ntci::DatagramSocket,
     ntcs::FlowControlState                       d_flowControlState;
     ntcs::ShutdownState                          d_shutdownState;
     ntcq::SendQueue                              d_sendQueue;
+    ntcq::ZeroCopyWaitList                       d_zeroCopyList;
     bsl::shared_ptr<ntci::RateLimiter>           d_sendRateLimiter_sp;
     bsl::shared_ptr<ntci::Timer>                 d_sendRateTimer_sp;
     bool                                         d_sendGreedily;
@@ -107,6 +109,7 @@ class DatagramSocket : public ntci::DatagramSocket,
     const bool                                   d_oneShot;
     bool                                         d_timestampOutgoingData;
     ntca::DatagramSocketOptions                  d_options;
+    bool                                         d_useZeroCopy; //TODO: temporary here
     ntcu::TimestampCorrelator                    d_timestampCorrelator;
     bsl::uint32_t                                d_dgramTsIdCounter;
     ntcs::DetachState                            d_detachState;

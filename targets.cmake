@@ -692,6 +692,7 @@ if (${NTF_BUILD_WITH_NTC})
     ntf_component(NAME ntcq_connect)
     ntf_component(NAME ntcq_receive)
     ntf_component(NAME ntcq_send)
+    ntf_component(NAME ntcq_zerocopy)
 
     ntf_package_end(NAME ntcq)
 

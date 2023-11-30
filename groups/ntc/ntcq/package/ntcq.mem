@@ -3,3 +3,4 @@ ntcq_bind
 ntcq_connect
 ntcq_receive
 ntcq_send
+ntcq_zerocopy

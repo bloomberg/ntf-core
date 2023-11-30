@@ -89,6 +89,8 @@ class SendCallbackQueueEntry
     /// Clear the timer, if any.
     void clearTimer();
 
+    const ntci::SendCallback& callback() const;
+
     /// Return the criteria to invoke the callback.
     const ntca::SendOptions& options() const;
 
@@ -385,7 +387,6 @@ class SendQueue
     bsl::size_t                      d_watermarkHigh;
     bool                             d_watermarkHighWanted;
     bsl::uint64_t                    d_nextEntryId;
-    bsl::uint32_t                    d_zeroCopyId;
     ntcq::SendCallbackQueueEntryPool d_callbackEntryPool;
     bslma::Allocator*                d_allocator_p;
 
@@ -536,6 +537,11 @@ void SendCallbackQueueEntry::clearTimer()
     if (d_timer_sp) {
         d_timer_sp.reset();
     }
+}
+NTCCFG_INLINE
+const ntci::SendCallback& SendCallbackQueueEntry::callback() const
+{
+    return d_callback;
 }
 
 NTCCFG_INLINE

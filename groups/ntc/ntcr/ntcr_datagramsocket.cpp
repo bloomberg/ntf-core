@@ -762,7 +762,7 @@ ntsa::Error DatagramSocket::privateSocketWritableIteration(
             entry.closeTimer();
         }
 
-        if (callbackEntry) {
+        if (callbackEntry && !d_useZeroCopy) {
             ntca::SendContext sendContext;
 
             ntca::SendEvent sendEvent;
@@ -798,6 +798,14 @@ ntsa::Error DatagramSocket::privateSocketWritableIteration(
                     false,
                     &d_mutex);
             }
+        }
+
+        if (d_useZeroCopy) {
+            callbackEntry->clearTimer();
+
+            ntcq::ZeroCopyEntry zeroCopyEntry;
+            zeroCopyEntry.setCallback(callbackEntry->callback());
+            d_zeroCopyList.addEntry(zeroCopyEntry);
         }
     }
     else {
@@ -1685,6 +1693,9 @@ ntsa::Error DatagramSocket::privateEnqueueSendBuffer(
         ntsa::SendOptions options;
 
         options.setEndpoint(endpoint.value());
+        if (d_useZeroCopy) {
+            options.setZeroCopy(true);
+        }
 
         const bsls::TimeInterval ts = d_timestampOutgoingData
                                           ? this->currentTime()
@@ -1727,11 +1738,15 @@ ntsa::Error DatagramSocket::privateEnqueueSendBuffer(
             return ntsa::Error::invalid();
         }
 
-        ntsa::SendContext        context;
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+        if (d_useZeroCopy) {
+            options.setZeroCopy(true);
+        }
         const bsls::TimeInterval ts = d_timestampOutgoingData
                                           ? this->currentTime()
                                           : bsls::TimeInterval();
-        error = d_socket_sp->send(&context, data, ntsa::SendOptions());
+        error = d_socket_sp->send(&context, data, options);
         if (NTCCFG_UNLIKELY(error)) {
             if (NTCCFG_LIKELY(error == ntsa::Error::e_WOULD_BLOCK)) {
                 NTCR_DATAGRAMSOCKET_LOG_SEND_BUFFER_OVERFLOW();
@@ -1793,6 +1808,9 @@ ntsa::Error DatagramSocket::privateEnqueueSendBuffer(
         ntsa::SendOptions options;
 
         options.setEndpoint(endpoint.value());
+        if (d_useZeroCopy) {
+            options.setZeroCopy(true);
+        }
 
         const bsls::TimeInterval ts = d_timestampOutgoingData
                                           ? this->currentTime()
@@ -1839,7 +1857,11 @@ ntsa::Error DatagramSocket::privateEnqueueSendBuffer(
                                           ? this->currentTime()
                                           : bsls::TimeInterval();
         ntsa::SendContext        context;
-        error = d_socket_sp->send(&context, data, ntsa::SendOptions());
+        ntsa::SendOptions        options;
+        if (d_useZeroCopy) {
+            options.setZeroCopy(true);
+        }
+        error = d_socket_sp->send(&context, data, options);
 
         if (NTCCFG_UNLIKELY(error)) {
             if (NTCCFG_LIKELY(error == ntsa::Error::e_WOULD_BLOCK)) {
@@ -2462,6 +2484,7 @@ DatagramSocket::DatagramSocket(
 , d_flowControlState()
 , d_shutdownState()
 , d_sendQueue(basicAllocator)
+, d_zeroCopyList(this->getSelf(this), this->getSelf(this), basicAllocator)
 , d_sendRateLimiter_sp()
 , d_sendRateTimer_sp()
 , d_sendGreedily(NTCCFG_DEFAULT_DATAGRAM_SOCKET_WRITE_GREEDILY)
@@ -2474,6 +2497,7 @@ DatagramSocket::DatagramSocket(
 , d_oneShot(reactor->oneShot())
 , d_timestampOutgoingData(false)
 , d_options(options)
+, d_useZeroCopy(false)
 , d_timestampCorrelator(ntsa::TransportMode::e_DATAGRAM,
                         bslma::Default::allocator(basicAllocator))
 , d_dgramTsIdCounter(0)
@@ -2522,6 +2546,7 @@ DatagramSocket::DatagramSocket(
 
     if (reactor->maxThreads() > 1) {
         d_reactorStrand_sp = reactor->createStrand(d_allocator_p);
+        d_zeroCopyList.setStrand(d_reactorStrand_sp);
     }
 
     if (!d_managerStrand_sp) {
@@ -2890,6 +2915,13 @@ ntsa::Error DatagramSocket::send(const bdlbb::Blob&       data,
             }
         }
         else {
+            // MSG_ZEROCOPY_DEV
+            if (d_useZeroCopy) {
+                ntcq::ZeroCopyEntry zeroCopyEntry;
+                //no callback, no sendContext....
+                d_zeroCopyList.addEntry(zeroCopyEntry);
+            }
+
             return ntsa::Error();
         }
     }
@@ -3006,6 +3038,12 @@ ntsa::Error DatagramSocket::send(const ntsa::Data&        data,
             }
         }
         else {
+            // MSG_ZEROCOPY_DEV
+            if (d_useZeroCopy) {
+                ntcq::ZeroCopyEntry zeroCopyEntry;
+                //no callback, no sendContext....
+                d_zeroCopyList.addEntry(zeroCopyEntry);
+            }
             return ntsa::Error();
         }
     }
@@ -3138,21 +3176,30 @@ ntsa::Error DatagramSocket::send(const bdlbb::Blob&        data,
             }
         }
         else {
-            ntca::SendContext sendContext;
+            if (!d_useZeroCopy) {
+                ntca::SendContext sendContext;
 
-            ntca::SendEvent sendEvent;
-            sendEvent.setType(ntca::SendEventType::e_COMPLETE);
-            sendEvent.setContext(sendContext);
+                ntca::SendEvent sendEvent;
+                sendEvent.setType(ntca::SendEventType::e_COMPLETE);
+                sendEvent.setContext(sendContext);
 
-            const bool defer = !options.recurse();
+                const bool defer = !options.recurse();
 
-            ntcq::SendCallbackQueueEntry::dispatch(callbackEntry,
-                                                   self,
-                                                   sendEvent,
-                                                   ntci::Strand::unknown(),
-                                                   self,
-                                                   defer,
-                                                   &d_mutex);
+                ntcq::SendCallbackQueueEntry::dispatch(callbackEntry,
+                                                       self,
+                                                       sendEvent,
+                                                       ntci::Strand::unknown(),
+                                                       self,
+                                                       defer,
+                                                       &d_mutex);
+
+                // MSG_ZEROCOPY_DE
+            }
+            else {
+                ntcq::ZeroCopyEntry zeroCopyEntry;
+                zeroCopyEntry.setCallback(callback);
+                d_zeroCopyList.addEntry(zeroCopyEntry);
+            }
 
             return ntsa::Error();
         }
@@ -3285,21 +3332,29 @@ ntsa::Error DatagramSocket::send(const ntsa::Data&         data,
             }
         }
         else {
-            ntca::SendContext sendContext;
+            if (d_useZeroCopy) {
+                ntca::SendContext sendContext;
 
-            ntca::SendEvent sendEvent;
-            sendEvent.setType(ntca::SendEventType::e_COMPLETE);
-            sendEvent.setContext(sendContext);
+                ntca::SendEvent sendEvent;
+                sendEvent.setType(ntca::SendEventType::e_COMPLETE);
+                sendEvent.setContext(sendContext);
 
-            const bool defer = !options.recurse();
+                const bool defer = !options.recurse();
 
-            ntcq::SendCallbackQueueEntry::dispatch(callbackEntry,
-                                                   self,
-                                                   sendEvent,
-                                                   ntci::Strand::unknown(),
-                                                   self,
-                                                   defer,
-                                                   &d_mutex);
+                ntcq::SendCallbackQueueEntry::dispatch(callbackEntry,
+                                                       self,
+                                                       sendEvent,
+                                                       ntci::Strand::unknown(),
+                                                       self,
+                                                       defer,
+                                                       &d_mutex);
+            }
+            // MSG_ZEROCOPY_DEV
+            else {
+                ntcq::ZeroCopyEntry zeroCopyEntry;
+                zeroCopyEntry.setCallback(callback);
+                d_zeroCopyList.addEntry(zeroCopyEntry);
+            }
 
             return ntsa::Error();
         }

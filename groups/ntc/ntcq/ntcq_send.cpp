@@ -337,7 +337,6 @@ SendQueue::SendQueue(bslma::Allocator* basicAllocator)
 , d_watermarkHigh(NTCCFG_DEFAULT_STREAM_SOCKET_WRITE_QUEUE_HIGH_WATERMARK)
 , d_watermarkHighWanted(true)
 , d_nextEntryId(1)
-, d_zeroCopyId(0)
 , d_callbackEntryPool(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
