@@ -23,6 +23,17 @@ BSLS_IDENT_RCSID(ntccfg_platform_cpp, "$Id$ $CSID$")
 #include <bsl_cstdlib.h>
 #include <bsl_cstring.h>
 
+#if defined(BSLS_PLATFORM_OS_UNIX)
+#include <errno.h>
+#include <unistd.h>
+extern char **environ;
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+#include <direct.h>
+#include <windows.h>
+#else
+#error Not implemented
+#endif
+
 // Set to 1 to automatically initialize the library during C++ static
 // initialization.
 #define NTCCFG_PLATFORM_AUTO_INITIALIZE 0
@@ -74,6 +85,112 @@ int Platform::ignore(ntscfg::Signal::Value signal)
     ntsa::Error error = ntsf::System::ignore(signal);
     return error.number();
 }
+
+#if defined(BSLS_PLATFORM_OS_UNIX)
+
+int Platform::setEnvironmentVariable(const bsl::string& name,
+                                     const bsl::string& value)
+{
+    return ::setenv(name.c_str(), value.c_str(), 1);
+}
+
+int Platform::getEnvironmentVariable(bsl::string*       result,
+                                     const bsl::string& name)
+{
+    const char *value = ::getenv(name.c_str());
+    if (value == 0) {
+        return ENOENT;
+    }
+
+    result->assign(value);
+    return 0;
+}
+
+int Platform::setWorkingDirectory(const bsl::string& value)
+{
+    return ::chdir(value.c_str());
+}
+
+int Platform::getWorkingDirectory(bsl::string* result)
+{
+    char temp[PATH_MAX];
+    if (temp != ::getcwd(temp, sizeof temp)) {
+        return errno;
+    }
+
+    result->assign(temp);
+    return 0;
+}
+
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+
+int Platform::setEnvironmentVariable(const bsl::string& name,
+                                     const bsl::string& value)
+{
+    DWORD rc = SetEnvironmentVariable(name.c_str(), value.c_str());
+    if (rc == FALSE) {
+        return static_cast<int>(GetLastError());
+    }
+
+    return 0;
+}
+
+int Platform::getEnvironmentVariable(bsl::string*       result,
+                                     const bsl::string& name)
+{
+    DWORD rc;
+
+    rc = GetEnvironmentVariable(name.c_str(), 0, 0);
+    if (rc == 0) {
+        return static_cast<int>(GetLastError());
+    }
+
+    if (rc <= 0) {
+        return ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    result->resize(static_cast<bsl::size_t>(rc - 1));
+
+    if (rc > 1) {
+        rc = GetEnvironmentVariable(name.c_str(),
+                                    result->data(),
+                                    static_cast<DWORD>(result->size() + 1));
+        if (rc == 0) {
+            return static_cast<int>(GetLastError());
+        }
+
+        if (rc < 0) {
+            return ERROR_NOT_ENOUGH_MEMORY;
+        }
+    }
+
+    return 0;
+}
+
+int Platform::setWorkingDirectory(const bsl::string& value)
+{
+    int rc = _chdir(value.c_str());
+    if (rc != 0) {
+        return static_cast<int>(GetLastError());
+    }
+
+    return 0;
+}
+
+int Platform::getWorkingDirectory(bsl::string* result)
+{
+    char temp[MAX_PATH];
+    if (temp != _getcwd(temp, sizeof temp)) {
+        return static_cast<int>(GetLastError());
+    }
+
+    result->assign(temp);
+    return 0;
+}
+
+#else
+#error Not implemented
+#endif
 
 int Platform::exit()
 {

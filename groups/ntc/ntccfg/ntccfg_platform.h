@@ -251,9 +251,31 @@ struct Platform {
     /// error otherwise.
     static int initialize();
 
-    /// Ignore the specified 'signal'.
+    /// Ignore the specified 'signal'. Return 0 on success or a non-zero value
+    /// representing the system error otherwise.
     static int ignore(ntscfg::Signal::Value signal);
 
+    /// Define an environment variable having the specified 'name' with the
+    /// specified 'value'. Return 0 on success or a non-zero value representing
+    /// the system error otherwise.
+    static int setEnvironmentVariable(const bsl::string& name,
+                                      const bsl::string& value);
+        
+    /// Load into the specified 'result' the resolution of the environment
+    /// variable having the specified 'name'. Return 0 on success or a non-zero
+    /// value representing the system error otherwise.
+    static int getEnvironmentVariable(bsl::string*       result,
+                                      const bsl::string& name);
+        
+    /// Set the current working directory to the specified 'value'. Return 0 on
+    /// success or a non-zero value representing the system error otherwise.
+    static int setWorkingDirectory(const bsl::string& value);
+        
+    /// Load into the specified 'result' the current working directory.
+    /// Return 0 on success or a non-zero value representing the system
+    /// error otherwise.
+    static int getWorkingDirectory(bsl::string* result);
+        
     /// Release the resources necessary for this library's implementation.
     /// Return 0 on success or a non-zero value representing the system
     /// error otherwise.
