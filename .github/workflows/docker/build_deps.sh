@@ -37,6 +37,9 @@ build_bde() {
     bbs_build build -j8
     bbs_build --install=/opt/bb --prefix=/ install
     popd
+
+    # cleanup
+    rm -rf src/bde
 }
 
 build() {

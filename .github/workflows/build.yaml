@@ -22,7 +22,7 @@ jobs:
 
       - name: Get cache name
         id: get-hash
-        run: echo "ntf_deps_hash=`cat docker/build_deps.sh docker/build_test_ntf.sh docker/Dockerfile | shasum`" >> $GITHUB_OUTPUT
+        run: echo "ntf_deps_hash=`cat .github/workflows/docker/build_deps.sh .github/workflows/docker/build_test_ntf.sh .github/workflows/docker/Dockerfile | shasum`" >> $GITHUB_OUTPUT
 
       - name: Get cached dependencies docker image
         id: cache-restore
@@ -33,7 +33,7 @@ jobs:
 
       - name: Build dependencies docker image
         if: steps.cache-restore.outputs.cache-hit != 'true'
-        run: docker build --tag ntf-deps --platform linux/amd64 docker
+        run: docker build --tag ntf-deps --platform linux/amd64 .github/workflows/docker
 
       - name: Load dependencies docker image from cache
         if: steps.cache-restore.outputs.cache-hit == 'true'
@@ -53,4 +53,4 @@ jobs:
 
       - name: Run dependencies docker container
         id: ntf-deps-run
-        run: docker run -v $(pwd):/workspace/ntf-core --name ntf-deps ntf-deps /bin/bash -c "/workspace/ntf-core/docker/build_test_ntf.sh"
+        run: docker run -v $(pwd):/workspace/ntf-core --name ntf-deps ntf-deps /bin/bash -c "/workspace/ntf-core/.github/workflows/docker/build_test_ntf.sh"
