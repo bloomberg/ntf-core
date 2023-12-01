@@ -74,8 +74,7 @@ class Controller : public ntci::ReactorSocket
     const bsl::shared_ptr<ntci::Strand>& strand() const BSLS_KEYWORD_OVERRIDE;
 
   public:
-    /// Create a new controller. Optionally specify a 'basicAllocator' used
-    /// to supply memory.
+    /// Create a new controller.
     explicit Controller();
 
     /// Destroy this object.

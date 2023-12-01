@@ -374,7 +374,8 @@ ntsa::Error System::createStreamSocketPair(
 bsl::shared_ptr<ntsi::Reactor> System::createReactor(
     bslma::Allocator* basicAllocator)
 {
-    return System::createReactor(ntsa::ReactorConfig(), basicAllocator);
+    ntsa::ReactorConfig reactorConfig;
+    return System::createReactor(reactorConfig, basicAllocator);
 }
 
 bsl::shared_ptr<ntsi::Reactor> System::createReactor(
