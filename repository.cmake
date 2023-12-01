@@ -1538,7 +1538,7 @@ function (ntf_executable)
             COMMAND ${test_usage_executable}
         )
 
-        set_tests_properties(${executable_test_build_target} PROPERTIES TIMEOUT 600)
+        set_tests_properties(${executable_test_build_target} PROPERTIES TIMEOUT 60)
 
         ntf_ide_vs_code_tasks_add_target(${executable_test_build_target})
         ntf_ide_vs_code_launch_add_target(${executable_test_build_target})
@@ -2951,7 +2951,7 @@ function (ntf_component)
             COMMAND ${component_test_build_target}
         )
 
-        set_tests_properties(${component_test_build_target} PROPERTIES TIMEOUT 600)
+        set_tests_properties(${component_test_build_target} PROPERTIES TIMEOUT 60)
 
         add_custom_target(
             test_${component}

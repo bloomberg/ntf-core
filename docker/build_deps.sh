@@ -39,19 +39,8 @@ build_bde() {
     popd
 }
 
-build_ntf() {
-    pushd ntf-core
-    sed -i s/CMakeLists.txt//g ./configure
-    ./configure --prefix /opt/bb
-    make -j8
-    make test
-    make install
-    popd
-}
-
 build() {
     build_bde
-    build_ntf
 }
 
 fetch_deps

@@ -14,10 +14,43 @@ concurrency:
 
 jobs:
   build-check:
-    name: "Check whether NTF builds correctly."
+    name: "Check whether NTF builds and passes unit tests"
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v3
-      - name: Docker Cluster Workflow
-        run: docker build --tag ntf-core --platform linux/amd64 .
+
+      - name: Get cache name
+        id: get-hash
+        run: echo "ntf_deps_hash=`cat docker/build_deps.sh docker/build_test_ntf.sh docker/Dockerfile | shasum`" >> $GITHUB_OUTPUT
+
+      - name: Get cached dependencies docker image
+        id: cache-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: ntf_deps_image.tar.gz
+          key: ${{ steps.get-hash.outputs.ntf_deps_hash }}
+
+      - name: Build dependencies docker image
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        run: docker build --tag ntf-deps --platform linux/amd64 docker
+
+      - name: Load dependencies docker image from cache
+        if: steps.cache-restore.outputs.cache-hit == 'true'
+        run: docker load < ntf_deps_image.tar.gz
+
+      - name: Save built dependencies docker image
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        run: docker save ntf-deps:latest | gzip > ntf_deps_image.tar.gz
+
+      - name: Cache built dependencies docker image
+        id: cache-save
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v3
+        with:
+          path: ntf_deps_image.tar.gz
+          key: ${{ steps.get-hash.outputs.ntf_deps_hash }}
+
+      - name: Run dependencies docker container
+        id: ntf-deps-run
+        run: docker run -v $(pwd):/workspace/ntf-core --name ntf-deps ntf-deps /bin/bash -c "/workspace/ntf-core/docker/build_test_ntf.sh"
