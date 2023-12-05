@@ -9719,6 +9719,8 @@ void concernDatagramSocketStressReactive(bslma::Allocator* allocator)
     parameters.d_messageSize       = 1024;
     parameters.d_useAsyncCallbacks = false;
 
+    parameters.d_receiveBufferSize = 500*1000;
+
     test::concern(NTCCFG_BIND(&test::concernDatagramSocket,
                               NTCCFG_BIND_PLACEHOLDER_1,
                               parameters,
@@ -9741,6 +9743,9 @@ void concernDatagramSocketStressProactive(bslma::Allocator* allocator)
     parameters.d_numMessages       = 32;
     parameters.d_messageSize       = 1024;
     parameters.d_useAsyncCallbacks = true;
+
+    parameters.d_receiveBufferSize = 500*1000;
+
 
     test::concern(NTCCFG_BIND(&test::concernDatagramSocket,
                               NTCCFG_BIND_PLACEHOLDER_1,

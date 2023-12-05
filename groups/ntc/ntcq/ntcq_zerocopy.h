@@ -23,6 +23,7 @@ BSLS_IDENT("$Id: $")
 #include <bsls_keyword.h>
 
 #include <ntci_sendcallback.h>
+#include <ntsa_data.h>
 #include <ntsa_zerocopy.h>
 
 namespace BloombergLP {
@@ -30,9 +31,10 @@ namespace ntcq {
 
 class ZeroCopyEntry
 {
-    ntci::SendCallback d_callback;
-    ntca::SendContext  d_sendContext;
-    bsl::uint32_t      d_id;
+    ntci::SendCallback          d_callback;
+    ntca::SendContext           d_sendContext;
+    bsl::shared_ptr<ntsa::Data> d_data_sp;
+    bsl::uint32_t               d_id;
 
   public:
     ZeroCopyEntry();
@@ -42,12 +44,15 @@ class ZeroCopyEntry
 
     void setCallback(const ntci::SendCallback& callback);
     void setId(const bsl::uint32_t id);
-    void dispatch(const bsl::shared_ptr<ntci::Sender>&   sender,
+    void setData(const bsl::shared_ptr<ntsa::Data>& data);
+    void dispatch(const ntca::SendEventType::Value       eventType,
+                  const bsl::shared_ptr<ntci::Sender>&   sender,
                   const bsl::shared_ptr<ntci::Strand>&   strand,
                   const bsl::shared_ptr<ntci::Executor>& executor,
                   bool                                   defer,
                   bslmt::Mutex*                          mutex);
 
+    ntca::SendContext&        context();
     const ntci::SendCallback& callback() const;
     bsl::uint32_t             id() const;
 };
@@ -56,20 +61,16 @@ class ZeroCopyWaitList
 {
     typedef bsl::list<ZeroCopyEntry> EntryList;
 
-    EntryList                             d_entryList;
-    const bsl::shared_ptr<ntci::Sender>   d_sender;
-    const bsl::shared_ptr<ntci::Executor> d_executor;
-    bsl::shared_ptr<ntci::Strand>         d_strand;
-    bsl::uint32_t d_nextId;
+    EntryList                     d_entryList;
+    bsl::shared_ptr<ntci::Strand> d_strand;
+    bsl::uint32_t                 d_nextId;
 
   private:
     ZeroCopyWaitList(const ZeroCopyWaitList&) BSLS_KEYWORD_DELETED;
     ZeroCopyWaitList& operator=(const ZeroCopyWaitList&) BSLS_KEYWORD_DELETED;
 
   public:
-    explicit ZeroCopyWaitList(const bsl::shared_ptr<ntci::Sender>&   sender,
-                              const bsl::shared_ptr<ntci::Executor>& executor,
-                              bslma::Allocator* basicAllocator = 0);
+    explicit ZeroCopyWaitList(bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~ZeroCopyWaitList();
@@ -78,7 +79,12 @@ class ZeroCopyWaitList
 
     void addEntry(ZeroCopyEntry& entry);
 
-    void zeroCopyAcknowledge(const ntsa::ZeroCopy& zc);
+    void zeroCopyAcknowledge(const ntsa::ZeroCopy&                  zc,
+                             const bsl::shared_ptr<ntci::Sender>&   sender,
+                             const bsl::shared_ptr<ntci::Executor>& executor);
+
+    void cancelWait(const bsl::shared_ptr<ntci::Sender>&   sender,
+                    const bsl::shared_ptr<ntci::Executor>& executor);
 
     //    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(ZeroCopyWaitList);
 };

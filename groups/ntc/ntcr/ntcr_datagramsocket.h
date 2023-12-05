@@ -312,6 +312,8 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// if necessary. The behavior is undefined unless 'd_mutex' is locked.
     void privateRearmAfterReceive(const bsl::shared_ptr<DatagramSocket>& self);
 
+    void privateRearmAfterNotification(const bsl::shared_ptr<DatagramSocket>& self);
+
     /// Open the datagram socket. Return the error.
     ntsa::Error privateOpen(const bsl::shared_ptr<DatagramSocket>& self);
 

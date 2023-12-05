@@ -18,6 +18,8 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntcr_datagramsocket_cpp, "$Id$ $CSID$")
 
+#define ENABLE_ZEROCOPY true
+
 #include <ntccfg_limits.h>
 #include <ntci_log.h>
 #include <ntci_monitorable.h>
@@ -357,6 +359,8 @@ void DatagramSocket::processNotifications(
 {
     NTCCFG_OBJECT_GUARD(&d_object);
 
+    bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
+
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
@@ -364,25 +368,27 @@ void DatagramSocket::processNotifications(
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
 
-    if (NTCCFG_UNLIKELY(d_detachState.get() ==
-                        ntcs::DetachState::e_DETACH_INITIATED))
-    {
-        return;
-    }
-
     const bsl::vector<ntsa::Notification>& nots =
         notifications.notifications();
 
     for (size_t i = 0; i < nots.size(); ++i) {
-        switch (nots[i].type()) {
+        const ntsa::Notification& notification = nots[i];
+        switch (notification.type()) {
+        case (ntsa::NotificationType::e_ZERO_COPY): {
+            d_zeroCopyList.zeroCopyAcknowledge(notification.zeroCopy(),
+                                               self,
+                                               self);
+        } break;
         case (ntsa::NotificationType::e_TIMESTAMP): {
             if (d_timestampOutgoingData) {
-                processTimestampNotification(nots[i].timestamp());
+                processTimestampNotification(notification.timestamp());
             }
         } break;
         default:;
         }
     }
+
+    this->privateRearmAfterNotification(self);
 }
 
 void DatagramSocket::processTimestampNotification(
@@ -750,6 +756,7 @@ ntsa::Error DatagramSocket::privateSocketWritableIteration(
 
         bsl::shared_ptr<ntcq::SendCallbackQueueEntry> callbackEntry =
             entry.callbackEntry();
+        const bsl::shared_ptr<ntsa::Data> data = entry.data();
 
         d_sendQueue.popEntry();
 
@@ -801,10 +808,12 @@ ntsa::Error DatagramSocket::privateSocketWritableIteration(
         }
 
         if (d_useZeroCopy) {
-            callbackEntry->clearTimer();
-
             ntcq::ZeroCopyEntry zeroCopyEntry;
-            zeroCopyEntry.setCallback(callbackEntry->callback());
+            if (callbackEntry) {
+                callbackEntry->clearTimer();
+                zeroCopyEntry.setCallback(callbackEntry->callback());
+            }
+            zeroCopyEntry.setData(data);
             d_zeroCopyList.addEntry(zeroCopyEntry);
         }
     }
@@ -813,7 +822,7 @@ ntsa::Error DatagramSocket::privateSocketWritableIteration(
         this->privateShutdownSend(self, false);
     }
 
-    if (!d_sendQueue.hasEntry()) {
+    if (!d_sendQueue.hasEntry() /* && !d_useZeroCopy*/) {
         this->privateApplyFlowControl(self,
                                       ntca::FlowControlType::e_SEND,
                                       ntca::FlowControlMode::e_IMMEDIATE,
@@ -1061,6 +1070,10 @@ void DatagramSocket::privateShutdownSequencePart2(
             d_socket_sp->shutdown(ntsa::ShutdownType::e_RECEIVE);
         }
     }
+
+    // the socket is detached, so we do not expect to get any notifications
+    // from the socket error queue
+    d_zeroCopyList.cancelWait(self, self);
 
     // Third handle internal data structures and announce events.
 
@@ -2074,6 +2087,7 @@ void DatagramSocket::privateRearmAfterSend(
                     if (reactorRef) {
                         reactorRef->showWritable(self,
                                                  ntca::ReactorEventOptions());
+                        return;
                     }
                 }
             }
@@ -2095,6 +2109,18 @@ void DatagramSocket::privateRearmAfterReceive(
                     }
                 }
             }
+        }
+    }
+}
+
+void DatagramSocket::privateRearmAfterNotification(
+    const bsl::shared_ptr<DatagramSocket>& self)
+{
+    if (d_oneShot) {
+        ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
+        if (reactorRef) {
+            ntsa::Error error = reactorRef->showNotifications(self);
+            BSLS_ASSERT(!error);
         }
     }
 }
@@ -2224,6 +2250,18 @@ ntsa::Error DatagramSocket::privateOpen(
     if (error) {
         return error;
     }
+
+    if (d_useZeroCopy) {
+        ntsa::SocketOption option;
+        option.makeZeroCopy(true);
+        error = datagramSocket->setOption(option);
+        if (error) {
+            return error;
+        }
+    }
+
+    //    d_zeroCopyList.setSender(self);
+    //    d_zeroCopyList.setExecutor(self);
 
     error = datagramSocket->setBlocking(false);
     if (error) {
@@ -2484,7 +2522,7 @@ DatagramSocket::DatagramSocket(
 , d_flowControlState()
 , d_shutdownState()
 , d_sendQueue(basicAllocator)
-, d_zeroCopyList(this->getSelf(this), this->getSelf(this), basicAllocator)
+, d_zeroCopyList(basicAllocator)
 , d_sendRateLimiter_sp()
 , d_sendRateTimer_sp()
 , d_sendGreedily(NTCCFG_DEFAULT_DATAGRAM_SOCKET_WRITE_GREEDILY)
@@ -2497,7 +2535,7 @@ DatagramSocket::DatagramSocket(
 , d_oneShot(reactor->oneShot())
 , d_timestampOutgoingData(false)
 , d_options(options)
-, d_useZeroCopy(false)
+, d_useZeroCopy(ENABLE_ZEROCOPY && reactor->supportsNotifications())
 , d_timestampCorrelator(ntsa::TransportMode::e_DATAGRAM,
                         bslma::Default::allocator(basicAllocator))
 , d_dgramTsIdCounter(0)
@@ -2919,6 +2957,13 @@ ntsa::Error DatagramSocket::send(const bdlbb::Blob&       data,
             if (d_useZeroCopy) {
                 ntcq::ZeroCopyEntry zeroCopyEntry;
                 //no callback, no sendContext....
+
+                bsl::shared_ptr<ntsa::Data> dataContainer =
+                    d_dataPool_sp->createOutgoingData();
+
+                dataContainer->makeBlob(data);
+                zeroCopyEntry.setData(dataContainer);
+
                 d_zeroCopyList.addEntry(zeroCopyEntry);
             }
 
@@ -3042,6 +3087,14 @@ ntsa::Error DatagramSocket::send(const ntsa::Data&        data,
             if (d_useZeroCopy) {
                 ntcq::ZeroCopyEntry zeroCopyEntry;
                 //no callback, no sendContext....
+
+                bsl::shared_ptr<ntsa::Data> dataContainer =
+                    d_dataPool_sp->createOutgoingData();
+
+                *dataContainer = data;
+
+                zeroCopyEntry.setData(dataContainer);
+
                 d_zeroCopyList.addEntry(zeroCopyEntry);
             }
             return ntsa::Error();
@@ -3198,6 +3251,13 @@ ntsa::Error DatagramSocket::send(const bdlbb::Blob&        data,
             else {
                 ntcq::ZeroCopyEntry zeroCopyEntry;
                 zeroCopyEntry.setCallback(callback);
+
+                bsl::shared_ptr<ntsa::Data> dataContainer =
+                    d_dataPool_sp->createOutgoingData();
+
+                dataContainer->makeBlob(data);
+                zeroCopyEntry.setData(dataContainer);
+
                 d_zeroCopyList.addEntry(zeroCopyEntry);
             }
 
@@ -3353,6 +3413,13 @@ ntsa::Error DatagramSocket::send(const ntsa::Data&         data,
             else {
                 ntcq::ZeroCopyEntry zeroCopyEntry;
                 zeroCopyEntry.setCallback(callback);
+
+                bsl::shared_ptr<ntsa::Data> dataContainer =
+                    d_dataPool_sp->createOutgoingData();
+
+                *dataContainer = data;
+                zeroCopyEntry.setData(dataContainer);
+
                 d_zeroCopyList.addEntry(zeroCopyEntry);
             }
 

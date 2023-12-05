@@ -201,7 +201,7 @@ class Select : public ntci::Reactor,
     bsls::AtomicUint64                       d_generation;
     fd_set                                   d_readable;
     fd_set                                   d_writable;
-    fd_set                                   d_erroring;
+    fd_set                                   d_exceptional;
     ntsa::Handle                             d_maxHandle;
     Mutex                                    d_detachMutex;
     DetachList                               d_detachList;
@@ -663,7 +663,7 @@ struct Select::Result {
     bsl::shared_ptr<ntci::ReactorMetrics> d_metrics_sp;
     fd_set                                d_readable;
     fd_set                                d_writable;
-    fd_set                                d_erroring;
+    fd_set                                d_exceptional;
 
   private:
     Result(const Result&) BSLS_KEYWORD_DELETED;
@@ -767,12 +767,7 @@ ntsa::Error Select::add(ntsa::Handle handle, ntcs::Interest interest)
         FD_CLR(handle, &d_writable);
     }
 
-    if (interest.wantReadableOrWritable()) {
-        FD_SET(handle, &d_erroring);
-    }
-    else {
-        FD_CLR(handle, &d_erroring);
-    }
+    FD_SET(handle, &d_exceptional);
 
     if (handle > d_maxHandle) {
         d_maxHandle = handle;
@@ -812,12 +807,7 @@ ntsa::Error Select::update(ntsa::Handle   handle,
         FD_CLR(handle, &d_writable);
     }
 
-    if (interest.wantReadableOrWritable()) {
-        FD_SET(handle, &d_erroring);
-    }
-    else {
-        FD_CLR(handle, &d_erroring);
-    }
+    FD_SET(handle, &d_exceptional);
 
     if (handle > d_maxHandle) {
         d_maxHandle = handle;
@@ -841,7 +831,7 @@ ntsa::Error Select::remove(ntsa::Handle handle)
 
     FD_CLR(handle, &d_readable);
     FD_CLR(handle, &d_writable);
-    FD_CLR(handle, &d_erroring);
+    FD_CLR(handle, &d_exceptional);
 
     if (handle >= d_maxHandle) {
         while (d_maxHandle != 0) {
@@ -876,7 +866,7 @@ ntsa::Error Select::removeDetached(
 
         FD_CLR(handle, &d_readable);
         FD_CLR(handle, &d_writable);
-        FD_CLR(handle, &d_erroring);
+        FD_CLR(handle, &d_exceptional);
 
         if (handle >= d_maxHandle) {
             while (d_maxHandle != 0) {
@@ -1004,7 +994,7 @@ Select::Select(const ntca::ReactorConfig&         configuration,
 , d_generation(1)
 , d_readable()
 , d_writable()
-, d_erroring()
+, d_exceptional()
 , d_maxHandle(0)
 , d_detachMutex()
 , d_detachList(basicAllocator)
@@ -1158,7 +1148,7 @@ Select::Select(const ntca::ReactorConfig&         configuration,
 
     FD_ZERO(&d_readable);
     FD_ZERO(&d_writable);
-    FD_ZERO(&d_erroring);
+    FD_ZERO(&d_exceptional);
 
     if (d_config.maxThreads().value() > 1) {
         d_generationSemaphore.post();
@@ -1189,7 +1179,7 @@ ntci::Waiter Select::registerWaiter(const ntca::WaiterOptions& waiterOptions)
 
     FD_ZERO(&result->d_readable);
     FD_ZERO(&result->d_writable);
-    FD_ZERO(&result->d_erroring);
+    FD_ZERO(&result->d_exceptional);
 
     result->d_options = waiterOptions;
 
@@ -1916,7 +1906,7 @@ void Select::run(ntci::Waiter waiter)
 
             Select::copyFdSet(&result->d_readable, d_readable);
             Select::copyFdSet(&result->d_writable, d_writable);
-            Select::copyFdSet(&result->d_erroring, d_erroring);
+            Select::copyFdSet(&result->d_exceptional, d_exceptional);
 
             maxDescriptor = d_maxHandle + 1;
         }
@@ -1965,7 +1955,7 @@ void Select::run(ntci::Waiter waiter)
         rc = ::select(static_cast<int>(maxDescriptor),
                       &result->d_readable,
                       &result->d_writable,
-                      &result->d_erroring,
+                      &result->d_exceptional,
                       timeout >= 0 ? &timeval : 0);
 
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
@@ -1989,7 +1979,7 @@ void Select::run(ntci::Waiter waiter)
         rc = ::select(static_cast<int>(maxDescriptor),
                       &result->d_readable,
                       &result->d_writable,
-                      &result->d_erroring,
+                      &result->d_exceptional,
                       timeout >= 0 ? &timeval : 0);
 
 #else
@@ -2013,7 +2003,7 @@ void Select::run(ntci::Waiter waiter)
                 ntsa::Handle descriptorHandle = static_cast<ntsa::Handle>(i);
 
                 if (descriptorHandle == d_controllerDescriptorHandle) {
-                    if (FD_ISSET(descriptorHandle, &result->d_erroring)) {
+                    if (FD_ISSET(descriptorHandle, &result->d_exceptional)) {
                         BSLS_ASSERT(numResultsRemaining > 0);
                         --numResultsRemaining;
                     }
@@ -2029,12 +2019,12 @@ void Select::run(ntci::Waiter waiter)
                     }
                 }
                 else {
-                    if (FD_ISSET(descriptorHandle, &result->d_erroring)) {
-                        if (FD_ISSET(descriptorHandle, &d_erroring)) {
-                            FD_CLR(descriptorHandle, &d_erroring);
+                    if (FD_ISSET(descriptorHandle, &result->d_exceptional)) {
+                        if (FD_ISSET(descriptorHandle, &d_exceptional)) {
+                            FD_CLR(descriptorHandle, &d_exceptional);
                         }
                         else {
-                            FD_CLR(descriptorHandle, &result->d_erroring);
+                            FD_CLR(descriptorHandle, &result->d_exceptional);
 
                             BSLS_ASSERT(numResults > 0);
                             --numResults;
@@ -2082,7 +2072,7 @@ void Select::run(ntci::Waiter waiter)
         //Process control channel here
         if (rc > 0) {
             const bool isError =
-                FD_ISSET(d_controllerDescriptorHandle, &result->d_erroring);
+                FD_ISSET(d_controllerDescriptorHandle, &result->d_exceptional);
             if (NTCCFG_UNLIKELY(isError)) {
                 this->reinitializeControl();
             }
@@ -2138,7 +2128,7 @@ void Select::run(ntci::Waiter waiter)
                 bool isWritable = false;
                 bool isError    = false;
 
-                if (FD_ISSET(descriptorHandle, &result->d_erroring)) {
+                if (FD_ISSET(descriptorHandle, &result->d_exceptional)) {
                     isError = true;
 
                     BSLS_ASSERT(numResultsRemaining > 0);
@@ -2357,7 +2347,7 @@ void Select::poll(ntci::Waiter waiter)
 
         Select::copyFdSet(&result->d_readable, d_readable);
         Select::copyFdSet(&result->d_writable, d_writable);
-        Select::copyFdSet(&result->d_erroring, d_erroring);
+        Select::copyFdSet(&result->d_exceptional, d_exceptional);
 
         maxDescriptor = d_maxHandle + 1;
     }
@@ -2407,7 +2397,7 @@ void Select::poll(ntci::Waiter waiter)
     rc = ::select(static_cast<int>(maxDescriptor),
                   &result->d_readable,
                   &result->d_writable,
-                  &result->d_erroring,
+                  &result->d_exceptional,
                   timeout >= 0 ? &timeval : 0);
 
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
@@ -2431,7 +2421,7 @@ void Select::poll(ntci::Waiter waiter)
     rc = ::select(static_cast<int>(maxDescriptor),
                   &result->d_readable,
                   &result->d_writable,
-                  &result->d_erroring,
+                  &result->d_exceptional,
                   timeout >= 0 ? &timeval : 0);
 
 #else
@@ -2452,7 +2442,7 @@ void Select::poll(ntci::Waiter waiter)
             ntsa::Handle descriptorHandle = static_cast<ntsa::Handle>(i);
 
             if (descriptorHandle == d_controllerDescriptorHandle) {
-                if (FD_ISSET(descriptorHandle, &result->d_erroring)) {
+                if (FD_ISSET(descriptorHandle, &result->d_exceptional)) {
                     BSLS_ASSERT(numResultsRemaining > 0);
                     --numResultsRemaining;
                 }
@@ -2468,12 +2458,12 @@ void Select::poll(ntci::Waiter waiter)
                 }
             }
             else {
-                if (FD_ISSET(descriptorHandle, &result->d_erroring)) {
-                    if (FD_ISSET(descriptorHandle, &d_erroring)) {
-                        FD_CLR(descriptorHandle, &d_erroring);
+                if (FD_ISSET(descriptorHandle, &result->d_exceptional)) {
+                    if (FD_ISSET(descriptorHandle, &d_exceptional)) {
+                        FD_CLR(descriptorHandle, &d_exceptional);
                     }
                     else {
-                        FD_CLR(descriptorHandle, &result->d_erroring);
+                        FD_CLR(descriptorHandle, &result->d_exceptional);
 
                         BSLS_ASSERT(numResults > 0);
                         --numResults;
@@ -2521,7 +2511,7 @@ void Select::poll(ntci::Waiter waiter)
     //Process control channel here
     if (rc > 0) {
         const bool isError =
-            FD_ISSET(d_controllerDescriptorHandle, &result->d_erroring);
+            FD_ISSET(d_controllerDescriptorHandle, &result->d_exceptional);
         if (NTCCFG_UNLIKELY(isError)) {
             this->reinitializeControl();
         }
@@ -2573,7 +2563,7 @@ void Select::poll(ntci::Waiter waiter)
             bool isWritable = false;
             bool isError    = false;
 
-            if (FD_ISSET(descriptorHandle, &result->d_erroring)) {
+            if (FD_ISSET(descriptorHandle, &result->d_exceptional)) {
                 isError = true;
 
                 BSLS_ASSERT(numResultsRemaining > 0);
