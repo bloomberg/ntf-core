@@ -87,10 +87,7 @@ namespace ntsa {
 /// application must ensure the data-to-send is neither overwritten nor
 /// invalidated (i.e. freed) until the completion of the send operation is
 /// indicated in a subsequent notification (which also indicates whether the
-/// data was referenced in-place or copied.) Also note that this option is only
-/// supported on platforms where 'ntscfg::Platform::supportsZeroCopy()' returns
-/// true. Send operations requesting zero-copy semantics on platforms that do
-/// not support zero-copy will result in an error.
+/// data was referenced in-place or copied.)
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
