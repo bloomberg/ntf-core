@@ -769,7 +769,9 @@ ntsa::Error DatagramSocket::privateSocketWritableIteration(
             entry.closeTimer();
         }
 
-        if (callbackEntry && !d_useZeroCopy) {
+        const bool zeroCopyIsUsed = (data->size() >= d_zeroCopyThreshold);
+
+        if (callbackEntry && !zeroCopyIsUsed) {
             ntca::SendContext sendContext;
 
             ntca::SendEvent sendEvent;
@@ -807,7 +809,7 @@ ntsa::Error DatagramSocket::privateSocketWritableIteration(
             }
         }
 
-        if (d_useZeroCopy) {
+        if (zeroCopyIsUsed) {
             ntcq::ZeroCopyEntry zeroCopyEntry;
             if (callbackEntry) {
                 callbackEntry->clearTimer();
@@ -822,7 +824,7 @@ ntsa::Error DatagramSocket::privateSocketWritableIteration(
         this->privateShutdownSend(self, false);
     }
 
-    if (!d_sendQueue.hasEntry() /* && !d_useZeroCopy*/) {
+    if (!d_sendQueue.hasEntry()) {
         this->privateApplyFlowControl(self,
                                       ntca::FlowControlType::e_SEND,
                                       ntca::FlowControlMode::e_IMMEDIATE,
@@ -1706,7 +1708,9 @@ ntsa::Error DatagramSocket::privateEnqueueSendBuffer(
         ntsa::SendOptions options;
 
         options.setEndpoint(endpoint.value());
-        if (d_useZeroCopy) {
+
+        if (static_cast<bsl::size_t>(data.totalSize()) >= d_zeroCopyThreshold)
+        {
             options.setZeroCopy(true);
         }
 
@@ -1753,7 +1757,8 @@ ntsa::Error DatagramSocket::privateEnqueueSendBuffer(
 
         ntsa::SendContext context;
         ntsa::SendOptions options;
-        if (d_useZeroCopy) {
+        if (static_cast<bsl::size_t>(data.totalSize()) >= d_zeroCopyThreshold)
+        {
             options.setZeroCopy(true);
         }
         const bsls::TimeInterval ts = d_timestampOutgoingData
@@ -1821,7 +1826,7 @@ ntsa::Error DatagramSocket::privateEnqueueSendBuffer(
         ntsa::SendOptions options;
 
         options.setEndpoint(endpoint.value());
-        if (d_useZeroCopy) {
+        if (data.size() >= d_zeroCopyThreshold) {
             options.setZeroCopy(true);
         }
 
@@ -1871,7 +1876,7 @@ ntsa::Error DatagramSocket::privateEnqueueSendBuffer(
                                           : bsls::TimeInterval();
         ntsa::SendContext        context;
         ntsa::SendOptions        options;
-        if (d_useZeroCopy) {
+        if (data.size() >= d_zeroCopyThreshold) {
             options.setZeroCopy(true);
         }
         error = d_socket_sp->send(&context, data, options);
@@ -2251,17 +2256,30 @@ ntsa::Error DatagramSocket::privateOpen(
         return error;
     }
 
-    if (d_useZeroCopy) {
-        ntsa::SocketOption option;
-        option.makeZeroCopy(true);
-        error = datagramSocket->setOption(option);
-        if (error) {
-            return error;
+    {
+        ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
+
+        if (d_options.zeroCopyThreshold().has_value() && reactorRef &&
+            reactorRef->supportsNotifications())
+        {
+            ntsa::SocketOption option;
+            option.makeZeroCopy(true);
+            error = datagramSocket->setOption(option);
+            if (error) {
+                NTCI_LOG_WARN("ZeroCopy was requested but the OS refused to "
+                              "enable it, continue in normal mode");
+                d_options.zeroCopyThreshold() =
+                    bdlb::NullableValue<bsl::size_t>();
+                d_zeroCopyThreshold = bsl::numeric_limits<bsl::size_t>::max();
+            }
+            else {
+                d_zeroCopyThreshold = d_options.zeroCopyThreshold().value();
+            }
+        }
+        else {
+            d_zeroCopyThreshold = bsl::numeric_limits<bsl::size_t>::max();
         }
     }
-
-    //    d_zeroCopyList.setSender(self);
-    //    d_zeroCopyList.setExecutor(self);
 
     error = datagramSocket->setBlocking(false);
     if (error) {
@@ -2535,7 +2553,7 @@ DatagramSocket::DatagramSocket(
 , d_oneShot(reactor->oneShot())
 , d_timestampOutgoingData(false)
 , d_options(options)
-, d_useZeroCopy(ENABLE_ZEROCOPY && reactor->supportsNotifications())
+, d_zeroCopyThreshold(bsl::numeric_limits<bsl::size_t>::max())
 , d_timestampCorrelator(ntsa::TransportMode::e_DATAGRAM,
                         bslma::Default::allocator(basicAllocator))
 , d_dgramTsIdCounter(0)
@@ -2544,6 +2562,9 @@ DatagramSocket::DatagramSocket(
 , d_deferredCalls(bslma::Default::allocator(basicAllocator))
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
+    if (ENABLE_ZEROCOPY) {
+        d_options.setZeroCopyThreshold(0);
+    }
     if (reactor->maxThreads() > 1) {
         if (!reactor->oneShot()) {
             BSLS_ASSERT(!"Dynamic load balancing requires one-shot mode");
@@ -2954,7 +2975,9 @@ ntsa::Error DatagramSocket::send(const bdlbb::Blob&       data,
         }
         else {
             // MSG_ZEROCOPY_DEV
-            if (d_useZeroCopy) {
+            if (static_cast<bsl::size_t>(data.totalSize()) >=
+                d_zeroCopyThreshold)
+            {
                 ntcq::ZeroCopyEntry zeroCopyEntry;
                 //no callback, no sendContext....
 
@@ -3084,7 +3107,7 @@ ntsa::Error DatagramSocket::send(const ntsa::Data&        data,
         }
         else {
             // MSG_ZEROCOPY_DEV
-            if (d_useZeroCopy) {
+            if (data.size() >= d_zeroCopyThreshold) {
                 ntcq::ZeroCopyEntry zeroCopyEntry;
                 //no callback, no sendContext....
 
@@ -3229,7 +3252,9 @@ ntsa::Error DatagramSocket::send(const bdlbb::Blob&        data,
             }
         }
         else {
-            if (!d_useZeroCopy) {
+            if (static_cast<bsl::size_t>(data.totalSize()) <
+                d_zeroCopyThreshold)
+            {
                 ntca::SendContext sendContext;
 
                 ntca::SendEvent sendEvent;
@@ -3392,7 +3417,7 @@ ntsa::Error DatagramSocket::send(const ntsa::Data&         data,
             }
         }
         else {
-            if (d_useZeroCopy) {
+            if (data.size() >= d_zeroCopyThreshold) {
                 ntca::SendContext sendContext;
 
                 ntca::SendEvent sendEvent;

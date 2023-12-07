@@ -109,7 +109,7 @@ class DatagramSocket : public ntci::DatagramSocket,
     const bool                                   d_oneShot;
     bool                                         d_timestampOutgoingData;
     ntca::DatagramSocketOptions                  d_options;
-    bool                                         d_useZeroCopy; //TODO: temporary here
+    bsl::size_t                                  d_zeroCopyThreshold;
     ntcu::TimestampCorrelator                    d_timestampCorrelator;
     bsl::uint32_t                                d_dgramTsIdCounter;
     ntcs::DetachState                            d_detachState;
