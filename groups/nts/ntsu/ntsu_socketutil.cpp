@@ -2213,8 +2213,16 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
         }
     }
 
+    int sendFlags = NTSU_SOCKETUTIL_SENDMSG_FLAGS;
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (options.zeroCopy()) {
+        sendFlags |= ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY;
+    }
+#endif
+
     ssize_t sendmsgResult =
-        ::sendmsg(socket, &msg, NTSU_SOCKETUTIL_SENDMSG_FLAGS);
+        ::sendmsg(socket, &msg, sendFlags);
 
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
