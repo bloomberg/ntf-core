@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   build-check:
-    name: "Check whether NTF builds and passes unit tests"
+    name: "Test/Linux"
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
