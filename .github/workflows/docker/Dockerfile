@@ -24,10 +24,8 @@ RUN mkdir -p /deps_build/CMake \
 
 WORKDIR /workspace
 
-ADD . /workspace/ntf-core/
-RUN chmod +x /workspace/ntf-core/bin/build_deps.sh && \
-    /workspace/ntf-core/bin/build_deps.sh
+ADD build_deps.sh /workspace/build_deps.sh
 
-RUN find .
+RUN /workspace/build_deps.sh
 
 CMD [ "/bin/bash" ]

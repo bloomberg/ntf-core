@@ -37,21 +37,13 @@ build_bde() {
     bbs_build build -j8
     bbs_build --install=/opt/bb --prefix=/ install
     popd
-}
 
-build_ntf() {
-    pushd ntf-core
-    sed -i s/CMakeLists.txt//g ./configure
-    ./configure --prefix /opt/bb
-    make -j8
-    make test
-    make install
-    popd
+    # cleanup
+    rm -rf src/bde
 }
 
 build() {
     build_bde
-    build_ntf
 }
 
 fetch_deps
