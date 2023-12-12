@@ -1774,6 +1774,10 @@ NTCCFG_TEST_CASE(18)
     // Concern: Test 'getPort' from system.
     // Plan:
 
+    if (!ntscfg::Platform::hasPortDatabase()) {
+        return;
+    }
+
     NTCI_LOG_CONTEXT();
 
     ntsa::Error error;
@@ -1849,6 +1853,10 @@ NTCCFG_TEST_CASE(19)
 
     // Concern: Test 'getServiceName' from system.
     // Plan:
+
+    if (!ntscfg::Platform::hasPortDatabase()) {
+        return;
+    }
 
     NTCI_LOG_CONTEXT();
 
@@ -1926,6 +1934,14 @@ NTCCFG_TEST_CASE(20)
 
     // Concern: Test 'getEndpoint' from system.
     // Plan:
+
+    if (!ntscfg::Platform::hasHostDatabase()) {
+        return;
+    }
+
+    if (!ntscfg::Platform::hasPortDatabase()) {
+        return;
+    }
 
     NTCI_LOG_CONTEXT();
 
