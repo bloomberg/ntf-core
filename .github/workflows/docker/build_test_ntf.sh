@@ -57,7 +57,8 @@ build_ntf() {
 
     # make test_ntcf_system
     # ctest --test-dir /workspace/ntf-core/build --test-timeout 600 -R ntcf_system -V
-    /workspace/ntf-core/build/bin/ntcf_system.t 0 1 1
+    #/workspace/ntf-core/build/bin/ntcf_system.t 0 1 1 1
+    for test_number in {1..10}; do echo "------- TEST CASE ${test_number}"; ./build/bin/ntcf_system.t ${test_number} 1 1 1; done
     rc=${?}
     if [ ${rc} -ne 0 ]; then
         cat /workspace/ntf-core/build/Testing/Temporary/LastTest.log
