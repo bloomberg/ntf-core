@@ -17,6 +17,9 @@ build_ntf() {
         exit ${rc}
     fi
 
+    echo "CPU: $(getconf _NPROCESSORS_ONLN)"
+    echo "RAM: $(free -h)"
+    
     echo "Environment"
     env
 

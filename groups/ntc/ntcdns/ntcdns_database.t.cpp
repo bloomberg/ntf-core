@@ -2125,6 +2125,10 @@ NTCCFG_TEST_CASE(3)
     // Concern: Host database configurations from "/etc/hosts".
     // Plan:
 
+    if (!ntscfg::Platform::hasHostDatabase()) {
+        return;
+    }
+
     NTCI_LOG_CONTEXT();
 
     ntsa::Error error;
@@ -2157,6 +2161,10 @@ NTCCFG_TEST_CASE(4)
 {
     // Concern: Port database configurations from "/etc/services".
     // Plan:
+
+    if (!ntscfg::Platform::hasPortDatabase()) {
+        return;
+    }
 
     NTCI_LOG_CONTEXT();
 
