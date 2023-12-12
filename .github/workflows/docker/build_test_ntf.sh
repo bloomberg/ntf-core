@@ -7,9 +7,9 @@
 #     eval "$(bbs_build_env -u opt_64_cpp17)"
 # }
 
-build_ntf() {    
+build_ntf() {
     local rc=0
-    
+
     cd /workspace/ntf-core
     rc=${?}
     if [ ${rc} -ne 0 ]; then
@@ -21,7 +21,7 @@ build_ntf() {
 
     echo "Cores: ${concurrency}"
     free -h
-    
+
     echo "Environment"
     env
 
@@ -33,7 +33,7 @@ build_ntf() {
 
     echo "File: /etc/resolv.conf"
     cat /etc/resolv.conf
-    
+
     ./configure --prefix /opt/bb --jobs ${concurrency} --standalone --from-continuous-integration
     rc=${?}
     if [ ${rc} -ne 0 ]; then
@@ -56,8 +56,8 @@ build_ntf() {
     fi
 
     # make test_ntcf_system
-
-    ctest --test-dir /workspace/ntf-core/build --test-timeout 600 -R ntcf_system -V
+    # ctest --test-dir /workspace/ntf-core/build --test-timeout 600 -R ntcf_system -V
+    /workspace/ntf-core/build/bin/ntcf_system.t 0 1 1
     rc=${?}
     if [ ${rc} -ne 0 ]; then
         cat /workspace/ntf-core/build/Testing/Temporary/LastTest.log
