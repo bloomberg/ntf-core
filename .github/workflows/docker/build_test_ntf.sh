@@ -17,9 +17,21 @@ build_ntf() {
         exit ${rc}
     fi
 
+    echo "Environment"
+    env
+
+    echo "File: /etc/hosts"
+    cat /etc/hosts
+
+    echo "File: /etc/services"
+    cat /etc/services
+
+    echo "File: /etc/resolv.conf"
+    cat /etc/resolv.conf
+
     # sed -i s/CMakeLists.txt//g ./configure
     
-    ./configure --prefix /opt/bb
+    ./configure --prefix /opt/bb --standalone
     rc=${?}
     echo "configure: rc = ${rc}"
     if [ ${rc} -ne 0 ]; then
