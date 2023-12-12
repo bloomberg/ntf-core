@@ -53,6 +53,7 @@ StreamSocketOptions::StreamSocketOptions()
 , d_metrics()
 , d_timestampOutgoingData()
 , d_timestampIncomingData()
+, d_zeroCopyThreshold()
 , d_loadBalancingOptions()
 {
 }
@@ -87,6 +88,7 @@ StreamSocketOptions::StreamSocketOptions(const StreamSocketOptions& other)
 , d_metrics(other.d_metrics)
 , d_timestampOutgoingData(other.d_timestampOutgoingData)
 , d_timestampIncomingData(other.d_timestampIncomingData)
+, d_zeroCopyThreshold(other.d_zeroCopyThreshold)
 , d_loadBalancingOptions(other.d_loadBalancingOptions)
 {
 }
@@ -130,6 +132,7 @@ StreamSocketOptions& StreamSocketOptions::operator=(
         d_metrics                   = other.d_metrics;
         d_timestampOutgoingData     = other.d_timestampOutgoingData;
         d_timestampIncomingData     = other.d_timestampIncomingData;
+        d_zeroCopyThreshold         = other.d_zeroCopyThreshold;
         d_loadBalancingOptions      = other.d_loadBalancingOptions;
     }
 
@@ -282,6 +285,11 @@ void StreamSocketOptions::setTimestampOutgoingData(bool value)
 void StreamSocketOptions::setTimestampIncomingData(bool value)
 {
     d_timestampIncomingData = value;
+}
+
+void StreamSocketOptions::setZeroCopyThreshold(size_t value)
+{
+    d_zeroCopyThreshold = value;
 }
 
 void StreamSocketOptions::setLoadBalancingOptions(
@@ -459,6 +467,12 @@ const bdlb::NullableValue<bool>& StreamSocketOptions::timestampIncomingData()
     return d_timestampIncomingData;
 }
 
+const bdlb::NullableValue<bsl::size_t>& StreamSocketOptions::
+    zeroCopyThreshold() const
+{
+    return d_zeroCopyThreshold;
+}
+
 bool StreamSocketOptions::abortiveClose() const
 {
     return (!d_lingerFlag.isNull() && d_lingerFlag.value() == true &&
@@ -501,6 +515,7 @@ bsl::ostream& StreamSocketOptions::print(bsl::ostream& stream,
     printer.printAttribute("metrics", d_metrics);
     printer.printAttribute("timestampOutgoingData", d_timestampOutgoingData);
     printer.printAttribute("timestampIncomingData", d_timestampIncomingData);
+    printer.printAttribute("zeroCopyThreshold", d_zeroCopyThreshold);
     printer.printAttribute("loadBalancingOptions", d_loadBalancingOptions);
     printer.end();
     return stream;
@@ -536,6 +551,7 @@ bool operator==(const StreamSocketOptions& lhs, const StreamSocketOptions& rhs)
            lhs.metrics() == rhs.metrics() &&
            lhs.timestampOutgoingData() == rhs.timestampOutgoingData() &&
            lhs.timestampIncomingData() == rhs.timestampIncomingData() &&
+           lhs.zeroCopyThreshold() == rhs.zeroCopyThreshold() &&
            lhs.loadBalancingOptions() == rhs.loadBalancingOptions();
 }
 

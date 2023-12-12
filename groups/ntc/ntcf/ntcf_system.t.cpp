@@ -1686,6 +1686,8 @@ void StreamSocketSession::processWriteQueueLowWatermark(
             }
 
             --d_numMessagesLeftToSend;
+
+//            bslmt::ThreadUtil::microSleep(500*1000, 0);
         }
         else {
             error = d_streamSocket_sp->send(data, ntca::SendOptions());

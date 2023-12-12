@@ -35,6 +35,7 @@ BSLS_IDENT("$Id: $")
 #include <ntcq_connect.h>
 #include <ntcq_receive.h>
 #include <ntcq_send.h>
+#include <ntcq_zerocopy.h>
 #include <ntcs_detachstate.h>
 #include <ntcs_flowcontrolcontext.h>
 #include <ntcs_flowcontrolstate.h>
@@ -109,6 +110,8 @@ class StreamSocket : public ntci::StreamSocket,
     ntcs::ShutdownState                        d_shutdownState;
     ntsa::SendOptions                          d_sendOptions;
     ntcq::SendQueue                            d_sendQueue;
+    ntcq::ZeroCopyWaitList                     d_zeroCopyList;
+    bsl::size_t                                d_zeroCopyThreshold;
     bsl::shared_ptr<ntci::RateLimiter>         d_sendRateLimiter_sp;
     bsl::shared_ptr<ntci::Timer>               d_sendRateTimer_sp;
     bool                                       d_sendGreedily;
@@ -400,6 +403,8 @@ class StreamSocket : public ntci::StreamSocket,
     /// Rearm the interest in the readability of the socket in the reactor,
     /// if necessary.
     void privateRearmAfterReceive(const bsl::shared_ptr<StreamSocket>& self);
+
+    void privateRearmAfterNotification(const bsl::shared_ptr<StreamSocket>& self);
 
     /// Send the specified raw or already encrypted 'data' according to the
     /// specified 'options'. Return the error. The behavior is undefined

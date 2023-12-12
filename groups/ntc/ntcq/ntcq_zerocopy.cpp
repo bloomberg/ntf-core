@@ -18,11 +18,27 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntcq_zerocopy_cpp, "$Id$ $CSID$")
 
+#include <ntci_log.h>
+
 namespace BloombergLP {
 namespace ntcq {
 
-ZeroCopyEntry::ZeroCopyEntry()
-: d_id(0)
+ZeroCopyEntry::ZeroCopyEntry(bslma::Allocator* allocator)
+: d_callbacks(allocator)
+, d_sendContext()
+, d_data_sp()
+, d_id(0)
+, d_allocator_p(allocator)
+{
+}
+
+ZeroCopyEntry::ZeroCopyEntry(const ZeroCopyEntry& other,
+                             bslma::Allocator*    allocator)
+: d_callbacks(other.d_callbacks)
+, d_sendContext(other.d_sendContext)
+, d_data_sp(other.d_data_sp)
+, d_id(other.d_id)
+, d_allocator_p(allocator)
 {
 }
 
@@ -32,7 +48,7 @@ ZeroCopyEntry::~ZeroCopyEntry()
 
 void ZeroCopyEntry::setCallback(const ntci::SendCallback& callback)
 {
-    d_callback = callback;
+    d_callbacks.push_back(callback);
 }
 void ZeroCopyEntry::setId(const bsl::uint32_t id)
 {
@@ -49,10 +65,11 @@ ntca::SendContext& ZeroCopyEntry::context()
     return d_sendContext;
 }
 
-const ntci::SendCallback& ZeroCopyEntry::callback() const
+bslma::Allocator* ZeroCopyEntry::allocator() const
 {
-    return d_callback;
+    return d_allocator_p;
 }
+
 
 bsl::uint32_t ZeroCopyEntry::id() const
 {
@@ -66,16 +83,22 @@ void ZeroCopyEntry::dispatch(const ntca::SendEventType::Value       eventType,
                              bool                                   defer,
                              bslmt::Mutex*                          mutex)
 {
-    ntci::SendCallback callback = d_callback;
-    d_callback.reset();
+    Callbacks::const_iterator       it   = d_callbacks.cbegin();
+    const Callbacks::const_iterator cend = d_callbacks.cend();
+    while (it != cend) {
+        const ntci::SendCallback& callback = *it;
 
-    if (callback) {
-        ntca::SendEvent sendEvent;
-        sendEvent.setType(eventType);
-        sendEvent.setContext(d_sendContext);
+        if (callback) {
+            ntca::SendEvent sendEvent;
+            sendEvent.setType(eventType);
+            sendEvent.setContext(d_sendContext);
 
-        callback.dispatch(sender, sendEvent, strand, executor, defer, mutex);
+            callback
+                .dispatch(sender, sendEvent, strand, executor, defer, mutex);
+        }
+        ++it;
     }
+    d_callbacks.clear();
 }
 
 ZeroCopyWaitList::ZeroCopyWaitList(bslma::Allocator* basicAllocator)
@@ -97,7 +120,10 @@ void ZeroCopyWaitList::setStrand(const bsl::shared_ptr<ntci::Strand>& strand)
 
 void ZeroCopyWaitList::addEntry(ZeroCopyEntry& entry)
 {
+    BSLS_ASSERT(!cancelled);
+
     entry.setId(d_nextId++);
+
     d_entryList.push_back(entry);
 }
 
@@ -116,7 +142,7 @@ void ZeroCopyWaitList::zeroCopyAcknowledge(
                    : (bsl::numeric_limits<bsl::uint32_t>::max() - from + to)) +
         1;
 
-    BSLS_ASSERT(acknowledged > 0);
+    BSLS_ASSERT_OPT(acknowledged > 0);
 
     bsl::uint32_t                   matched = 0;
     const EntryList::const_iterator end     = d_entryList.cend();
@@ -151,7 +177,7 @@ void ZeroCopyWaitList::zeroCopyAcknowledge(
             ++it;
         }
     }
-    BSLS_ASSERT(matched == acknowledged);
+    BSLS_ASSERT_OPT(matched == acknowledged);
 }
 
 void ZeroCopyWaitList::cancelWait(
@@ -172,6 +198,7 @@ void ZeroCopyWaitList::cancelWait(
         ++it;
     }
     d_entryList.clear();
+    cancelled = true;
 }
 
 }  // close package namespace

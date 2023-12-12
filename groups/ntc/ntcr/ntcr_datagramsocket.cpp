@@ -18,7 +18,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntcr_datagramsocket_cpp, "$Id$ $CSID$")
 
-#define ENABLE_ZEROCOPY true
+#define ENABLE_ZEROCOPY false
 
 #include <ntccfg_limits.h>
 #include <ntci_log.h>
@@ -2124,8 +2124,7 @@ void DatagramSocket::privateRearmAfterNotification(
     if (d_oneShot) {
         ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
         if (reactorRef) {
-            ntsa::Error error = reactorRef->showNotifications(self);
-            BSLS_ASSERT(!error);
+            reactorRef->showNotifications(self);
         }
     }
 }
@@ -2541,6 +2540,7 @@ DatagramSocket::DatagramSocket(
 , d_shutdownState()
 , d_sendQueue(basicAllocator)
 , d_zeroCopyList(basicAllocator)
+, d_zeroCopyThreshold(bsl::numeric_limits<bsl::size_t>::max())
 , d_sendRateLimiter_sp()
 , d_sendRateTimer_sp()
 , d_sendGreedily(NTCCFG_DEFAULT_DATAGRAM_SOCKET_WRITE_GREEDILY)
@@ -2553,7 +2553,6 @@ DatagramSocket::DatagramSocket(
 , d_oneShot(reactor->oneShot())
 , d_timestampOutgoingData(false)
 , d_options(options)
-, d_zeroCopyThreshold(bsl::numeric_limits<bsl::size_t>::max())
 , d_timestampCorrelator(ntsa::TransportMode::e_DATAGRAM,
                         bslma::Default::allocator(basicAllocator))
 , d_dgramTsIdCounter(0)

@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <bslma_allocator.h>
 #include <bsls_keyword.h>
+#include <bsl_vector.h>
 
 #include <ntci_sendcallback.h>
 #include <ntsa_data.h>
@@ -31,13 +32,17 @@ namespace ntcq {
 
 class ZeroCopyEntry
 {
-    ntci::SendCallback          d_callback;
+    typedef bsl::vector<ntci::SendCallback> Callbacks;
+
+    Callbacks                   d_callbacks;
     ntca::SendContext           d_sendContext;
     bsl::shared_ptr<ntsa::Data> d_data_sp;
     bsl::uint32_t               d_id;
+    bslma::Allocator*           d_allocator_p;
 
   public:
-    ZeroCopyEntry();
+    ZeroCopyEntry(bslma::Allocator* allocator = 0);
+    ZeroCopyEntry(const ZeroCopyEntry& other, bslma::Allocator* allocator);
 
     /// Destroy this object.
     ~ZeroCopyEntry();
@@ -53,8 +58,11 @@ class ZeroCopyEntry
                   bslmt::Mutex*                          mutex);
 
     ntca::SendContext&        context();
-    const ntci::SendCallback& callback() const;
     bsl::uint32_t             id() const;
+    /// Return the allocator used to supply memory.
+    bslma::Allocator* allocator() const;
+
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(ZeroCopyEntry);
 };
 
 class ZeroCopyWaitList
@@ -64,6 +72,8 @@ class ZeroCopyWaitList
     EntryList                     d_entryList;
     bsl::shared_ptr<ntci::Strand> d_strand;
     bsl::uint32_t                 d_nextId;
+
+    bool cancelled = false;
 
   private:
     ZeroCopyWaitList(const ZeroCopyWaitList&) BSLS_KEYWORD_DELETED;

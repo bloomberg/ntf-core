@@ -97,6 +97,7 @@ class DatagramSocket : public ntci::DatagramSocket,
     ntcs::ShutdownState                          d_shutdownState;
     ntcq::SendQueue                              d_sendQueue;
     ntcq::ZeroCopyWaitList                       d_zeroCopyList;
+    bsl::size_t                                  d_zeroCopyThreshold;
     bsl::shared_ptr<ntci::RateLimiter>           d_sendRateLimiter_sp;
     bsl::shared_ptr<ntci::Timer>                 d_sendRateTimer_sp;
     bool                                         d_sendGreedily;
@@ -109,7 +110,6 @@ class DatagramSocket : public ntci::DatagramSocket,
     const bool                                   d_oneShot;
     bool                                         d_timestampOutgoingData;
     ntca::DatagramSocketOptions                  d_options;
-    bsl::size_t                                  d_zeroCopyThreshold;
     ntcu::TimestampCorrelator                    d_timestampCorrelator;
     bsl::uint32_t                                d_dgramTsIdCounter;
     ntcs::DetachState                            d_detachState;
