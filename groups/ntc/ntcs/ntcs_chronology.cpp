@@ -302,7 +302,7 @@ ntsa::Error Chronology::Timer::schedule(const bsls::TimeInterval& deadline,
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
 
-        d_period = period;
+        d_period = effectivePeriod;
         d_state  = e_STATE_SCHEDULED;
     }
 
@@ -321,17 +321,13 @@ ntsa::Error Chronology::Timer::schedule(const bsls::TimeInterval& deadline,
             if (deadlineInMicroseconds == 0) {
                 d_deadlineMapHandle = d_chronology_p->d_deadlineMap.addL(
                     deadlineInMicroseconds,
-                    DeadlineMapEntry(d_node_p,
-                                     effectivePeriod,
-                                     d_options.oneShot()),
+                    DeadlineMapEntry(d_node_p),
                     &newFrontFlag);
             }
             else {
                 d_deadlineMapHandle = d_chronology_p->d_deadlineMap.addR(
                     deadlineInMicroseconds,
-                    DeadlineMapEntry(d_node_p,
-                                     effectivePeriod,
-                                     d_options.oneShot()),
+                    DeadlineMapEntry(d_node_p),
                     &newFrontFlag);
             }
 
@@ -1089,7 +1085,7 @@ void Chronology::announce()
                     timerDeadlineInMicroseconds);
 
                 const bool isRecurring =
-                    entry.d_period != bsls::TimeInterval();
+                    timer->d_period != bsls::TimeInterval();
 
                 NTCS_CHRONOLOGY_LOG_POP(nowInMicroseconds,
                                         timer,
@@ -1098,21 +1094,21 @@ void Chronology::announce()
 #if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
                 timersDue.emplace_back(entry.d_node_p,
                                        timerDeadline,
-                                       entry.d_period,
-                                       entry.d_oneShot,
+                                       timer->d_period,
+                                       timer->d_options.oneShot(),
                                        isRecurring);
 #else
                 timersDue.push_back(DueEntry(entry.d_node_p,
                                              timerDeadline,
-                                             entry.d_period,
-                                             entry.d_oneShot,
+                                             timer->d_period,
+                                             timer->d_options.oneShot(),
                                              isRecurring));
 #endif
 
                 if (NTCCFG_UNLIKELY(isRecurring)) {
                     Microseconds nextDeadlineInMicroseconds =
                         timerDeadlineInMicroseconds +
-                        entry.d_period.totalMicroseconds();
+                        timer->d_period.totalMicroseconds();
 
                     if (nextDeadlineInMicroseconds < nowInMicroseconds) {
                         nextDeadlineInMicroseconds = nowInMicroseconds;
