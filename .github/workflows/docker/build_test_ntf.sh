@@ -55,7 +55,9 @@ build_ntf() {
         exit ${rc}
     fi
 
-    make test_ntcf_system
+    # make test_ntcf_system
+
+    ctest --test-dir /workspace/ntf-core/build --test-timeout 600 -R ntcf_system -V
     rc=${?}
     if [ ${rc} -ne 0 ]; then
         cat /workspace/ntf-core/build/Testing/Temporary/LastTest.log
