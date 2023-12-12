@@ -67,6 +67,10 @@ NTCCFG_TEST_CASE(2)
 {
     // Concern: Host database configurations.
 
+    if (!ntscfg::Platform::hasHostDatabase()) {
+        return;
+    }
+
     NTCI_LOG_CONTEXT();
 
     ntsa::Error error;
@@ -87,6 +91,10 @@ NTCCFG_TEST_CASE(2)
 NTCCFG_TEST_CASE(3)
 {
     // Concern: Port database configurations.
+
+    if (!ntscfg::Platform::hasPortDatabase()) {
+        return;
+    }
 
     NTCI_LOG_CONTEXT();
 
