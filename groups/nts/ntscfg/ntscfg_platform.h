@@ -219,6 +219,14 @@ struct Platform {
     /// Return true if the version of the operating system running the current
     /// process supports timestamping incoming and outgoing data, otherwise return false.
     static bool supportsTimestamps();
+
+    /// Return true if the local host database (i.e. "/etc/hosts" or the 
+    /// platform equivalent) exists, otherwise return false.  
+    static bool hasHostDatabase();
+
+    /// Return true if the local host database (i.e. "/etc/hosts" or the 
+    /// platform equivalent) exists, otherwise return false.
+    static bool hasPortDatabase();
 };
 
 /// @internal @brief
