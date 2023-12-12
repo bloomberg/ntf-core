@@ -674,7 +674,7 @@ NTSCFG_TEST_CASE(17)
                                                       ipAddressOptions);
 
         if (error) {
-            NTSCFG_TEST_LOG_ERROR << "Error: " << error << NTSCFG_TEST_LOG_END;
+            NTSCFG_TEST_LOG_DEBUG << "Error: " << error << NTSCFG_TEST_LOG_END;
         }
         else {
             for (bsl::vector<ntsa::IpAddress>::const_iterator it =
@@ -776,7 +776,7 @@ NTSCFG_TEST_CASE(20)
                                                       ipAddressOptions);
 
         if (error) {
-            NTSCFG_TEST_LOG_ERROR << "Error: " << error << NTSCFG_TEST_LOG_END;
+            NTSCFG_TEST_LOG_DEBUG << "Error: " << error << NTSCFG_TEST_LOG_END;
         }
         else {
             for (bsl::vector<ntsa::IpAddress>::const_iterator it =
@@ -810,7 +810,7 @@ NTSCFG_TEST_CASE(21)
                                                       ipAddressOptions);
 
         if (error) {
-            NTSCFG_TEST_LOG_ERROR << "Error: " << error << NTSCFG_TEST_LOG_END;
+            NTSCFG_TEST_LOG_DEBUG << "Error: " << error << NTSCFG_TEST_LOG_END;
         }
         else {
             for (bsl::vector<ntsa::IpAddress>::const_iterator it =

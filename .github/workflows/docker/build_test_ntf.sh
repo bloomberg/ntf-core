@@ -17,8 +17,10 @@ build_ntf() {
         exit ${rc}
     fi
 
-    echo "CPU: $(getconf _NPROCESSORS_ONLN)"
-    echo "RAM: $(free -h)"
+    local concurrency=$(getconf _NPROCESSORS_ONLN)
+
+    echo "Cores: ${concurrency}"
+    free -h
     
     echo "Environment"
     env
@@ -34,7 +36,7 @@ build_ntf() {
 
     # sed -i s/CMakeLists.txt//g ./configure
     
-    ./configure --prefix /opt/bb --standalone
+    ./configure --prefix /opt/bb --jobs ${concurrency} --standalone
     rc=${?}
     echo "configure: rc = ${rc}"
     if [ ${rc} -ne 0 ]; then
