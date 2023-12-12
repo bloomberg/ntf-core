@@ -12948,6 +12948,8 @@ void concernListenerSocketAcceptRateLimitTimerEventNotifications(
 
 NTCCFG_TEST_CASE(1)
 {
+    bsls::Log::setSeverityThreshold(bsls::LogSeverity::e_INFO);
+
     ntccfg::TestAllocator ta;
     {
         test::concernExample1(&ta);

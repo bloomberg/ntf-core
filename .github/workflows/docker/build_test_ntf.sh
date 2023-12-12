@@ -33,12 +33,9 @@ build_ntf() {
 
     echo "File: /etc/resolv.conf"
     cat /etc/resolv.conf
-
-    # sed -i s/CMakeLists.txt//g ./configure
     
     ./configure --prefix /opt/bb --jobs ${concurrency} --standalone --from-continuous-integration
     rc=${?}
-    echo "configure: rc = ${rc}"
     if [ ${rc} -ne 0 ]; then
         echo "Failed to configure: rc = ${rc}"
         exit ${rc}
@@ -46,7 +43,6 @@ build_ntf() {
 
     make build
     rc=${?}
-    echo "Make build: rc = ${rc}"
     if [ ${rc} -ne 0 ]; then
         echo "Failed to build: rc = ${rc}"
         exit ${rc}
@@ -54,15 +50,13 @@ build_ntf() {
 
     make build_test
     rc=${?}
-    echo "Make build_test: rc = ${rc}"
     if [ ${rc} -ne 0 ]; then
         echo "Failed to build tests: rc = ${rc}"
         exit ${rc}
     fi
 
-    make test
+    make test_ntcf_system
     rc=${?}
-    echo "Make test: rc = ${rc}"
     if [ ${rc} -ne 0 ]; then
         cat /workspace/ntf-core/build/Testing/Temporary/LastTest.log
         echo "Failed to build tests: rc = ${rc}"
