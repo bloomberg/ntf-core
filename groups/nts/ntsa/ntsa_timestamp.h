@@ -19,30 +19,29 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntscfg_platform.h>
 #include <ntsscm_version.h>
-
+#include <ntsa_timestamptype.h>
 #include <bslh_hash.h>
 #include <bsls_timeinterval.h>
-
-#include <ntsa_timestamptype.h>
 
 namespace BloombergLP {
 namespace ntsa {
 
-/// Provide a type holding a transmit timestamp.
-///
-/// @details
-/// Provide a value-semantic type that holds a timestamp.
+/// Describe a notification of a timestamp of outgoing data.
 ///
 /// @par Attributes
-/// This class is composed of the following attributes..
+/// This class is composed of the following attributes.
 ///
 /// @li @b type:
-/// Type of the timestamp. It describes source of the timestamp. Default value
-/// is e_UNDEFINED.
+/// The type of the timestamp, indicating where the timestamp was measured in
+/// the transmission and acknowledgement process.
+///
+/// @li @b id:
+/// The data identifier.
 ///
 /// @li @b time:
-/// The timestamp value. Default value is 0.
+/// The timestamp, in absolute time since the Unix epoch.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -56,54 +55,54 @@ class Timestamp
     /// Create new timestamp having the default value.
     Timestamp();
 
-    /// Create new timestamp having the same value as the specified
-    /// 'original' object.
+    /// Create new timestamp having the same value as the specified 'original'
+    /// object.
     Timestamp(const Timestamp& original);
 
     /// Destroy this object.
     ~Timestamp();
 
-    /// Assign the value of the specified 'other' object to this object.
-    /// Return a reference to this modifiable object.
+    /// Assign the value of the specified 'other' object to this object. Return
+    /// a reference to this modifiable object.
     Timestamp& operator=(const Timestamp& other);
 
-    /// Set timestamp type to the specifued 'value'.
+    /// Set the timestamp type to the specified 'value'.
     void setType(ntsa::TimestampType::Value value);
 
-    /// Set id of the timestamp to the specified 'value'.
+    /// Set the identifier of the data for which the timestamp applies to the
+    /// specified 'value'.
     void setId(bsl::uint32_t value);
 
-    /// Set timestamp time to the specified 'value'.
+    /// Set the timestamp time to the specified 'value'.
     void setTime(const bsls::TimeInterval& value);
 
-    /// Return type of the timestamp.
+    /// Return the type of the timestamp.
     ntsa::TimestampType::Value type() const;
 
-    /// Get id of the timestamp.
+    /// Return the identifier of the data to which the timestamp applies.
     bsl::uint32_t id() const;
 
-    /// Return time of the timestamp.
+    /// Return time of the timestamp, in absolute time since the Unix epoch.
     const bsls::TimeInterval& time() const;
 
-    /// Return true if this object has the same value as the specified
-    /// 'other' object, otherwise return false.
+    /// Return true if this object has the same value as the specified 'other'
+    /// object, otherwise return false.
     bool equals(const Timestamp& other) const;
 
-    /// Return true if the value of this object is less than the value of
-    /// the specified 'other' object, otherwise return false.
+    /// Return true if the value of this object is less than the value of the
+    /// specified 'other' object, otherwise return false.
     bool less(const Timestamp& other) const;
 
-    /// Format this object to the specified output 'stream' at the
-    /// optionally specified indentation 'level' and return a reference to
-    /// the modifiable 'stream'.  If 'level' is specified, optionally
-    /// specify 'spacesPerLevel', the number of spaces per indentation level
-    /// for this and all of its nested objects.  Each line is indented by
-    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
-    /// negative, suppress indentation of the first line.  If
-    /// 'spacesPerLevel' is negative, suppress line breaks and format the
-    /// entire output on one line.  If 'stream' is initially invalid, this
-    /// operation has no effect.  Note that a trailing newline is provided
-    /// in multiline mode only.
+    /// Format this object to the specified output 'stream' at the optionally
+    /// specified indentation 'level' and return a reference to the modifiable
+    /// 'stream'.  If 'level' is specified, optionally specify
+    /// 'spacesPerLevel', the number of spaces per indentation level for this
+    /// and all of its nested objects.  Each line is indented by the absolute
+    /// value of 'level * spacesPerLevel'.  If 'level' is negative, suppress
+    /// indentation of the first line.  If 'spacesPerLevel' is negative,
+    /// suppress line breaks and format the entire output on one line.  If
+    /// 'stream' is initially invalid, this operation has no effect.  Note that
+    /// a trailing newline is provided in multiline mode only.
     bsl::ostream& print(bsl::ostream& stream,
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;

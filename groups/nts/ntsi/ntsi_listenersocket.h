@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntsa_endpoint.h>
 #include <ntsa_error.h>
+#include <ntsa_notificationqueue.h>
 #include <ntsa_shutdowntype.h>
 #include <ntsa_socketoption.h>
 #include <ntsa_transport.h>
@@ -146,6 +147,12 @@ class ListenerSocket : public ntsi::Descriptor
     /// the currently installed default allocator is used.
     virtual ntsa::Error accept(bsl::shared_ptr<ntsi::StreamSocket>* result,
                                bslma::Allocator* basicAllocator = 0);
+
+    /// Read data from the socket error queue. Then if the specified
+    /// 'notifications' is not null parse fetched data to extract control
+    /// messages into the specified 'notifications'. Return the error.
+    virtual ntsa::Error receiveNotifications(
+        ntsa::NotificationQueue* notifications);
 
     /// Shutdown the stream socket in the specified 'direction'. Return the
     /// error.

@@ -122,6 +122,12 @@ ntsa::Error DatagramSocket::receive(ntsa::ReceiveContext*       context,
     return ntsu::SocketUtil::receive(context, data, options, d_handle);
 }
 
+ntsa::Error DatagramSocket::receiveNotifications(
+    ntsa::NotificationQueue* notifications)
+{
+    return ntsu::SocketUtil::receiveNotifications(notifications, d_handle);
+}
+
 ntsa::Error DatagramSocket::shutdown(ntsa::ShutdownType::Value direction)
 {
     return ntsu::SocketUtil::shutdown(direction, d_handle);

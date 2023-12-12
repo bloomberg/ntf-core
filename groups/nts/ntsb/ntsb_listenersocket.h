@@ -113,6 +113,12 @@ class ListenerSocket : public ntsi::ListenerSocket
                        bslma::Allocator*                    basicAllocator = 0)
         BSLS_KEYWORD_OVERRIDE;
 
+    /// Read data from the socket error queue. Then if the specified
+    /// 'notifications' is not null parse fetched data to extract control
+    /// messages into the specified 'notifications'. Return the error.
+    ntsa::Error receiveNotifications(ntsa::NotificationQueue* notifications)
+        BSLS_KEYWORD_OVERRIDE;
+
     /// Shutdown the stream socket in the specified 'direction'. Return the
     /// error.
     ntsa::Error shutdown(ntsa::ShutdownType::Value direction)

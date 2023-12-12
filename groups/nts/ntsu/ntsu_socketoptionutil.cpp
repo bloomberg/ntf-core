@@ -20,6 +20,7 @@ BSLS_IDENT_RCSID(ntsu_socketoptionutil_cpp, "$Id$ $CSID$")
 
 #include <ntscfg_platform.h>
 #include <ntsu_adapterutil.h>
+#include <ntsu_zerocopyutil.h>
 #include <ntsu_timestamputil.h>
 
 #include <bsls_assert.h>
@@ -154,6 +155,9 @@ ntsa::Error SocketOptionUtil::setOption(ntsa::Handle              socket,
         return SocketOptionUtil::setTimestampOutgoingData(
             socket,
             option.timestampOutgoingData());
+    }
+    else if (option.isZeroCopy()) {
+        return SocketOptionUtil::setZeroCopy(socket, option.zeroCopy());
     }
     else {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -293,6 +297,15 @@ ntsa::Error SocketOptionUtil::getOption(ntsa::SocketOption*           option,
             return error;
         }
         option->makeTimestampIncomingData(value);
+        return ntsa::Error();
+    }
+    else if (type == ntsa::SocketOptionType::e_ZERO_COPY) {
+        bool value = false;
+        error      = SocketOptionUtil::getZeroCopy(&value, socket);
+        if (error) {
+            return error;
+        }
+        option->makeZeroCopy(value);
         return ntsa::Error();
     }
     else {
@@ -688,6 +701,31 @@ ntsa::Error SocketOptionUtil::setInlineOutOfBandData(ntsa::Handle socket,
     return ntsa::Error();
 }
 
+ntsa::Error SocketOptionUtil::setZeroCopy(ntsa::Handle socket, bool zeroCopy)
+{
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
+    int optionValue = static_cast<bool>(zeroCopy);
+
+    int rc = setsockopt(socket,
+                        SOL_SOCKET,
+                        ntsu::ZeroCopyUtil::e_SO_ZEROCOPY,
+                        &optionValue,
+                        sizeof(optionValue));
+
+    if (rc != 0) {
+        return ntsa::Error(errno);
+    }
+
+    return ntsa::Error();
+#else
+    NTSCFG_WARNING_UNUSED(socket);
+    NTSCFG_WARNING_UNUSED(zeroCopy);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+#endif
+}
+
 ntsa::Error SocketOptionUtil::getKeepAlive(bool*        keepAlive,
                                            ntsa::Handle socket)
 {
@@ -782,7 +820,7 @@ ntsa::Error SocketOptionUtil::getLinger(bool*               linger,
                                         bsls::TimeInterval* duration,
                                         ntsa::Handle        socket)
 {
-    *linger = false;
+    *linger   = false;
     *duration = bsls::TimeInterval();
 
     struct linger optionValue = {0, 0};
@@ -1046,6 +1084,41 @@ ntsa::Error SocketOptionUtil::getTimestampIncomingData(bool* timestampFlag,
     return ntsa::Error();
 #else
 
+    NTSCFG_WARNING_UNUSED(socket);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+
+#endif
+}
+
+ntsa::Error SocketOptionUtil::getZeroCopy(bool*        zeroCopyFlag,
+                                          ntsa::Handle socket)
+{
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    int       optionValue = 0;
+    socklen_t len         = static_cast<socklen_t>(sizeof(optionValue));
+
+    int rc = getsockopt(socket,
+                        SOL_SOCKET,
+                        ntsu::ZeroCopyUtil::e_SO_ZEROCOPY,
+                        &optionValue,
+                        &len);
+
+    if (rc != 0) {
+        return ntsa::Error(errno);
+    }
+
+    if (optionValue != 0) {
+        *zeroCopyFlag = true;
+    }
+    else {
+        *zeroCopyFlag = false;
+    }
+
+    return ntsa::Error();
+
+#else
+
+    NTSCFG_WARNING_UNUSED(zeroCopyFlag);
     NTSCFG_WARNING_UNUSED(socket);
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 
@@ -1725,7 +1798,6 @@ ntsa::Error SocketOptionUtil::setReuseAddress(ntsa::Handle socket,
     return ntsa::Error();
 }
 
-
 ntsa::Error SocketOptionUtil::setTimestampOutgoingData(ntsa::Handle socket,
                                                        bool timestampFlag)
 {
@@ -1987,7 +2059,7 @@ ntsa::Error SocketOptionUtil::getLinger(bool*               linger,
                                         bsls::TimeInterval* duration,
                                         ntsa::Handle        socket)
 {
-    *linger = false;
+    *linger   = false;
     *duration = bsls::TimeInterval();
 
     struct linger optionValue = {};

@@ -94,6 +94,14 @@ ntsa::Error DatagramSocket::receive(ntsa::ReceiveContext*       context,
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
+ntsa::Error DatagramSocket::receiveNotifications(
+    ntsa::NotificationQueue* notifications)
+{
+    NTSCFG_WARNING_UNUSED(notifications);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 ntsa::Error DatagramSocket::shutdown(ntsa::ShutdownType::Value direction)
 {
     NTSCFG_WARNING_UNUSED(direction);

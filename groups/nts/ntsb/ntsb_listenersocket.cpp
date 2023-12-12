@@ -147,6 +147,12 @@ ntsa::Error ListenerSocket::accept(bsl::shared_ptr<ntsi::StreamSocket>* result,
     return ntsa::Error();
 }
 
+ntsa::Error ListenerSocket::receiveNotifications(
+    ntsa::NotificationQueue* notifications)
+{
+    return ntsu::SocketUtil::receiveNotifications(notifications, d_handle);
+}
+
 ntsa::Error ListenerSocket::shutdown(ntsa::ShutdownType::Value direction)
 {
     return ntsu::SocketUtil::shutdown(direction, d_handle);

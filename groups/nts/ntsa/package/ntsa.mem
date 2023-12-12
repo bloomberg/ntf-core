@@ -53,3 +53,4 @@ ntsa_transport
 ntsa_timestamp
 ntsa_timestamptype
 ntsa_uri
+ntsa_zerocopy

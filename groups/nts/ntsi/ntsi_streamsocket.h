@@ -22,6 +22,7 @@ BSLS_IDENT("$Id: $")
 #include <ntsa_buffer.h>
 #include <ntsa_endpoint.h>
 #include <ntsa_error.h>
+#include <ntsa_notificationqueue.h>
 #include <ntsa_shutdowntype.h>
 #include <ntsa_socketoption.h>
 #include <ntsa_transport.h>
@@ -296,6 +297,12 @@ class StreamSocket : public ntsi::Channel
                         void*                       data,
                         bsl::size_t                 capacity,
                         const ntsa::ReceiveOptions& options);
+
+    /// Read data from the socket error queue. Then if the specified
+    /// 'notifications' is not null parse fetched data to extract control
+    /// messages into the specified 'notifications'. Return the error.
+    virtual ntsa::Error receiveNotifications(
+        ntsa::NotificationQueue* notifications);
 
     /// Shutdown the stream socket in the specified 'direction'. Return the
     /// error.

@@ -158,6 +158,7 @@ if (${NTF_BUILD_WITH_NTS})
     ntf_component(NAME ntsa_timestamp)
     ntf_component(NAME ntsa_timestamptype)
     ntf_component(NAME ntsa_uri)
+    ntf_component(NAME ntsa_zerocopy)
 
     ntf_package_end(NAME ntsa)
 
@@ -213,10 +214,12 @@ if (${NTF_BUILD_WITH_NTS})
 
     ntf_component(NAME ntsu_adapterutil)
     ntf_component(NAME ntsu_bufferutil)
+    ntf_component(NAME ntsu_zerocopyutil)
     ntf_component(NAME ntsu_resolverutil)
     ntf_component(NAME ntsu_socketutil)
     ntf_component(NAME ntsu_socketoptionutil)
     ntf_component(NAME ntsu_timestamputil)
+
 
     ntf_package_end(NAME ntsu)
 

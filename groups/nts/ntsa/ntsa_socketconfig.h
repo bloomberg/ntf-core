@@ -44,18 +44,26 @@ namespace ntsa {
 /// That flag that indicates the operating system implementation should
 /// periodically emit transport-level "keep-alive" packets.
 ///
-/// @li @b  cork:
-/// TODO.
+/// @li @b cork:
+/// The flag that indicates that successive writes should be coalesced into the
+/// largest packets that can be formed. When set to true, this option indicates
+/// the user favors better network efficiency at the expense of worse latency.
+/// When set to false, this option indicates the user favors better latency at
+/// the expense of worse network efficiency.
 ///
 /// @li @b delayTransmission:
-/// The flag that indicates that subsequent writes should be coalesced into the
+/// The flag that indicates that successive writes should be coalesced into
 /// larger packets that would otherwise form. When set to true, this option
-/// indicates the user favors smaller latency at the expense of less network
-/// efficiency. When set to false, this option indicates the user favors
-/// greater network efficiency at the expense of greater latency.
+/// indicates the user favors better network efficiency at the expense of worse
+/// latency. When set to false, this option indicates the user favors better
+/// latency at the expense of worse network efficiency.
 ///
 /// @li @b delayAcknowledgement:
-/// TODO.
+/// The flag that indicates acknowledgement of successively-received packets
+/// should be coalesced. When set to true, this option indicates the user
+/// favors better network efficiency at the expense of worse latency. When set
+/// to false, this option indicates the user favors better latency at the
+/// expense of worse network efficiency.
 ///
 /// @li @b sendBufferSize:
 /// The maximum size of each socket send buffer. On some platforms, this
@@ -94,6 +102,16 @@ namespace ntsa {
 /// The flag that indicates out-of-band data should be placed into the normal
 /// data input queue.
 ///
+/// @li @b timestampIncomingData:
+/// The flag that indicates timestamps should be generated for outgoing data.
+///
+/// @li @b timestampOutgoingData:
+/// The flag that indicates timestamps should be generated for incoming data.
+///
+/// @li @b zeroCopy:
+/// The flag that indicates each send operation can request copy avoidance when
+/// enqueing data to the socket send buffer.
+///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
@@ -116,6 +134,7 @@ class SocketConfig
     bdlb::NullableValue<bool>         d_inlineOutOfBandData;
     bdlb::NullableValue<bool>         d_timestampIncomingData;
     bdlb::NullableValue<bool>         d_timestampOutgoingData;
+    bdlb::NullableValue<bool>         d_zeroCopy;
 
   public:
     /// Create new send options having the default value.
@@ -197,11 +216,18 @@ class SocketConfig
     /// the normal data input queue to the specified 'value'.
     void setInlineOutOfBandData(bool value);
 
-    /// Return the flag that indicates incoming data should be timestamped.
+    /// Set the flag that indicates incoming data should be timestamped to the
+    /// specified 'value'.
     void setTimestampIncomingData(bool value);
 
-    /// Set the flag that indicates outgoing data should be timestamped.
+    /// Set the flag that indicates outgoing data should be timestamped to the
+    /// specified 'value'.
     void setTimestampOutgoingData(bool value);
+
+    /// Set the flag that indicates each send operation can request copy
+    /// avoidance when enqueing data to the socket send buffer to the specified
+    /// 'value'.
+    void setZeroCopy(bool value);
 
     /// Load into the specified 'option' the option for the specified
     /// 'type'. Note that if the option for the 'type' is not set, the
@@ -266,6 +292,10 @@ class SocketConfig
 
     /// Return the flag that indicates outgoing data should be timestamped.
     const bdlb::NullableValue<bool>& timestampOutgoingData() const;
+
+    /// Return the flag that indicates each send operation can request copy
+    /// avoidance when enqueing data to the socket send buffer.
+    const bdlb::NullableValue<bool>& zeroCopy() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -345,6 +375,7 @@ SocketConfig::SocketConfig()
 , d_inlineOutOfBandData()
 , d_timestampIncomingData()
 , d_timestampOutgoingData()
+, d_zeroCopy()
 {
 }
 
@@ -366,6 +397,7 @@ SocketConfig::SocketConfig(const SocketConfig& original)
 , d_inlineOutOfBandData(original.d_inlineOutOfBandData)
 , d_timestampIncomingData(original.d_timestampIncomingData)
 , d_timestampOutgoingData(original.d_timestampOutgoingData)
+, d_zeroCopy(original.d_zeroCopy)
 {
 }
 
@@ -393,6 +425,7 @@ SocketConfig& SocketConfig::operator=(const SocketConfig& other)
     d_inlineOutOfBandData       = other.d_inlineOutOfBandData;
     d_timestampIncomingData     = other.d_timestampIncomingData;
     d_timestampOutgoingData     = other.d_timestampOutgoingData;
+    d_zeroCopy                  = other.d_zeroCopy;
 
     return *this;
 }
@@ -416,6 +449,7 @@ void SocketConfig::reset()
     d_inlineOutOfBandData.reset();
     d_timestampIncomingData.reset();
     d_timestampOutgoingData.reset();
+    d_zeroCopy.reset();
 }
 
 NTSCFG_INLINE
@@ -512,6 +546,12 @@ NTSCFG_INLINE
 void SocketConfig::setTimestampOutgoingData(bool value)
 {
     d_timestampOutgoingData = value;
+}
+
+NTSCFG_INLINE
+void SocketConfig::setZeroCopy(bool value)
+{
+    d_zeroCopy = value;
 }
 
 NTSCFG_INLINE
@@ -613,6 +653,12 @@ const bdlb::NullableValue<bool>& SocketConfig::timestampOutgoingData() const
 }
 
 NTSCFG_INLINE
+const bdlb::NullableValue<bool>& SocketConfig::zeroCopy() const
+{
+    return d_zeroCopy;
+}
+
+NTSCFG_INLINE
 bsl::ostream& operator<<(bsl::ostream& stream, const SocketConfig& object)
 {
     return object.print(stream, 0, -1);
@@ -657,6 +703,7 @@ void hashAppend(HASH_ALGORITHM& algorithm, const SocketConfig& value)
     hashAppend(algorithm, value.inlineOutOfBandData());
     hashAppend(algorithm, value.timestampIncomingData());
     hashAppend(algorithm, value.timestampOutgoingData());
+    hashAppend(algorithm, value.zeroCopy());
 }
 
 }  // close package namespace

@@ -1762,6 +1762,144 @@ NTSCFG_TEST_CASE(8)
     }
 }
 
+NTSCFG_TEST_CASE(9)
+{
+    // test SO_ZEROCOPY
+    const ntsa::Transport::Value SOCKET_TYPES[] = {
+        ntsa::Transport::e_TCP_IPV4_STREAM,
+        ntsa::Transport::e_TCP_IPV6_STREAM,
+#if !defined(BSLS_PLATFORM_OS_WINDOWS)
+        ntsa::Transport::e_LOCAL_STREAM,
+#endif
+        ntsa::Transport::e_UDP_IPV4_DATAGRAM,
+        ntsa::Transport::e_UDP_IPV6_DATAGRAM,
+#if !defined(BSLS_PLATFORM_OS_WINDOWS)
+        ntsa::Transport::e_LOCAL_DATAGRAM,
+#endif
+    };
+
+    for (bsl::size_t socketTypeIndex = 0;
+         socketTypeIndex < sizeof(SOCKET_TYPES) / sizeof(SOCKET_TYPES[0]);
+         ++socketTypeIndex)
+    {
+        ntsa::Transport::Value transport = SOCKET_TYPES[socketTypeIndex];
+
+        if (transport == ntsa::Transport::e_TCP_IPV4_STREAM ||
+            transport == ntsa::Transport::e_UDP_IPV4_DATAGRAM)
+        {
+            if (!ntsu::AdapterUtil::supportsIpv4()) {
+                continue;
+            }
+        }
+
+        if (transport == ntsa::Transport::e_TCP_IPV6_STREAM ||
+            transport == ntsa::Transport::e_UDP_IPV6_DATAGRAM)
+        {
+            if (!ntsu::AdapterUtil::supportsIpv6()) {
+                continue;
+            }
+        }
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
+        bool setSupported = false;
+        bool getSupported = false;
+
+        {
+            int major, minor, patch, build;
+            NTSCFG_TEST_ASSERT(ntsscm::Version::systemVersion(&major,
+                                                              &minor,
+                                                              &patch,
+                                                              &build) == 0);
+
+            // Linux kernels versions < 4.14.0 do not support MSG_ZEROCOPY at
+            // all
+            // Linux kernels versions < 5.0.0 do not support MSG_ZEROCOPY for
+            // DGRAM sockets
+            if (KERNEL_VERSION(major, minor, patch) < KERNEL_VERSION(4, 14, 0))
+            {
+                setSupported = false;
+                getSupported = false;
+            }
+            else if (KERNEL_VERSION(major, minor, patch) <
+                     KERNEL_VERSION(5, 0, 0))
+            {
+                if (transport == ntsa::Transport::e_TCP_IPV4_STREAM ||
+                    transport == ntsa::Transport::e_TCP_IPV4_STREAM)
+                {
+                    setSupported = true;
+                }
+                getSupported = true;
+            }
+            else {
+                setSupported =
+                    (transport != ntsa::Transport::e_LOCAL_STREAM) &&
+                    (transport != ntsa::Transport::e_LOCAL_DATAGRAM);
+                getSupported = true;
+            }
+        }
+
+#else
+        const bool setSupported = false;
+        const bool getSupported = false;
+#endif
+
+        NTSCFG_TEST_LOG_WARN << "Testing " << transport << NTSCFG_TEST_LOG_END;
+
+        ntsa::Error error;
+
+        // Create the socket.
+
+        ntsa::Handle socket;
+        error = ntsu::SocketUtil::create(&socket, transport);
+        NTSCFG_TEST_OK(error);
+
+        if (setSupported && getSupported) {
+            bool zeroCopy = true;
+            error =
+                ntsu::SocketOptionUtil::getZeroCopy(&zeroCopy, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_FALSE(zeroCopy);
+
+            error = ntsu::SocketOptionUtil::setZeroCopy(socket, true);
+            NTSCFG_TEST_OK(error);
+
+            zeroCopy = false;
+            error =
+                ntsu::SocketOptionUtil::getZeroCopy(&zeroCopy, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_TRUE(zeroCopy);
+
+            error = ntsu::SocketOptionUtil::setZeroCopy(socket, false);
+            NTSCFG_TEST_OK(error);
+
+            zeroCopy = true;
+            error =
+                ntsu::SocketOptionUtil::getZeroCopy(&zeroCopy, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_FALSE(zeroCopy);
+        }
+        else if (setSupported == false && getSupported == true) {
+            bool zeroCopy = true;
+            error =
+                ntsu::SocketOptionUtil::getZeroCopy(&zeroCopy, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_FALSE(zeroCopy);
+
+            error = ntsu::SocketOptionUtil::setZeroCopy(socket, false);
+            NTSCFG_TEST_TRUE(error);
+        }
+        else if (setSupported == false && getSupported == false) {
+            bool zeroCopy = true;
+            error =
+                ntsu::SocketOptionUtil::getZeroCopy(&zeroCopy, socket);
+            NTSCFG_TEST_ERROR(error,
+                              ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
+            NTSCFG_TEST_TRUE(zeroCopy);
+        }
+    }
+}
+
 NTSCFG_TEST_DRIVER
 {
     NTSCFG_TEST_REGISTER(1);
@@ -1772,5 +1910,6 @@ NTSCFG_TEST_DRIVER
     NTSCFG_TEST_REGISTER(6);
     NTSCFG_TEST_REGISTER(7);
     NTSCFG_TEST_REGISTER(8);
+    NTSCFG_TEST_REGISTER(9);
 }
 NTSCFG_TEST_DRIVER_END;

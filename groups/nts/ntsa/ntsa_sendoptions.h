@@ -79,6 +79,16 @@ namespace ntsa {
 /// zero, or, for stream sockets only, to NTSCFG_DEFAULT_MAX_INPLACE_BUFFERS.
 /// Note that this value is currently only honored when sending blobs.
 ///
+/// @li @b zeroCopy:
+/// The flag to request the data-to-send be referenced in-place rather than
+/// copied to the send buffer to the specified 'value'. Note that this flag is
+/// advisory; the operating system may neither support nor decide to allow
+/// zero-copy semantics. Regardless, if zero-copy semantics are requested the
+/// application must ensure the data-to-send is neither overwritten nor
+/// invalidated (i.e. freed) until the completion of the send operation is
+/// indicated in a subsequent notification (which also indicates whether the
+/// data was referenced in-place or copied.)
+///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
@@ -89,6 +99,7 @@ class SendOptions
     bdlb::NullableValue<ntsa::Handle>   d_foreignHandle;
     bsl::size_t                         d_maxBytes;
     bsl::size_t                         d_maxBuffers;
+    bool                                d_zeroCopy;
 
   public:
     /// Create new send options having the default value.
@@ -117,11 +128,14 @@ class SendOptions
     // 'value'.
     void setForeignHandle(ntsa::Handle value);
 
-    /// Set the maximum number of bytes to copy to the specified 'value'.
+    /// Set the maximum number of bytes to send to the specified 'value'.
     void setMaxBytes(bsl::size_t value);
 
-    /// Set the maximum number of buffers to copy to the specified 'value'.
+    /// Set the maximum number of buffers to send to the specified 'value'.
     void setMaxBuffers(bsl::size_t value);
+
+    /// Set the flag to request zero-copy semantics to the specified 'value'.
+    void setZeroCopy(bool value);
 
     /// Return the remote endpoint to which the data should be sent.
     const bdlb::NullableValue<ntsa::Endpoint>& endpoint() const;
@@ -129,11 +143,14 @@ class SendOptions
     /// Return the handle to the open socket to send to the peer.
     const bdlb::NullableValue<ntsa::Handle>& foreignHandle() const;
 
-    /// Return the maximum number of bytes to copy.
+    /// Return the maximum number of bytes to send.
     bsl::size_t maxBytes() const;
 
-    /// Return the maximum number of buffers to copy.
+    /// Return the maximum number of buffers to send.
     bsl::size_t maxBuffers() const;
+
+    /// Return the flag that indicates zero-copy semantics are requested.
+    bool zeroCopy() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -201,6 +218,7 @@ SendOptions::SendOptions()
 , d_foreignHandle()
 , d_maxBytes(0)
 , d_maxBuffers(0)
+, d_zeroCopy(false)
 {
 }
 
@@ -210,6 +228,7 @@ SendOptions::SendOptions(const SendOptions& original)
 , d_foreignHandle(original.d_foreignHandle)
 , d_maxBytes(original.d_maxBytes)
 , d_maxBuffers(original.d_maxBuffers)
+, d_zeroCopy(original.d_zeroCopy)
 {
 }
 
@@ -225,6 +244,7 @@ SendOptions& SendOptions::operator=(const SendOptions& other)
     d_foreignHandle = other.d_foreignHandle;
     d_maxBytes   = other.d_maxBytes;
     d_maxBuffers = other.d_maxBuffers;
+    d_zeroCopy   = other.d_zeroCopy;
     return *this;
 }
 
@@ -235,6 +255,7 @@ void SendOptions::reset()
     d_foreignHandle.reset();
     d_maxBytes   = 0;
     d_maxBuffers = 0;
+    d_zeroCopy   = false;
 }
 
 NTSCFG_INLINE
@@ -262,6 +283,12 @@ void SendOptions::setMaxBuffers(bsl::size_t value)
 }
 
 NTSCFG_INLINE
+void SendOptions::setZeroCopy(bool value)
+{
+    d_zeroCopy = value;
+}
+
+NTSCFG_INLINE
 const bdlb::NullableValue<ntsa::Endpoint>& SendOptions::endpoint() const
 {
     return d_endpoint;
@@ -283,6 +310,12 @@ NTSCFG_INLINE
 bsl::size_t SendOptions::maxBuffers() const
 {
     return d_maxBuffers;
+}
+
+NTSCFG_INLINE
+bool SendOptions::zeroCopy() const
+{
+    return d_zeroCopy;
 }
 
 NTSCFG_INLINE
@@ -318,6 +351,7 @@ void hashAppend(HASH_ALGORITHM& algorithm, const SendOptions& value)
     hashAppend(algorithm, value.foreignHandle());
     hashAppend(algorithm, value.maxBytes());
     hashAppend(algorithm, value.maxBuffers());
+    hashAppend(algorithm, value.zeroCopy());
 }
 
 }  // close package namespace

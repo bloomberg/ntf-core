@@ -217,7 +217,8 @@ struct Platform {
     static int exit();
 
     /// Return true if the version of the operating system running the current
-    /// process supports timestamping incoming and outgoing data, otherwise return false.
+    /// process supports timestamping incoming and outgoing data, otherwise
+    /// return false.
     static bool supportsTimestamps();
 };
 
