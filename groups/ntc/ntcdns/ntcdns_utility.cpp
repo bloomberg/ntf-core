@@ -1317,7 +1317,16 @@ ntsa::Error Utility::loadClientConfig(ntcdns::ClientConfig* result)
 {
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
-    return loadClientConfigFromPath(result, "/etc/resolv.conf");
+    const bsl::string path = "/etc/resolv.conf";
+
+    if (bdls::FilesystemUtil::exists(path)) {
+        return loadClientConfigFromPath(result, path);
+    }
+    else {
+        result->reset();
+        sanitizeClientConfig(result);
+        return ntsa::Error();
+    }
 
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
 
@@ -1404,13 +1413,27 @@ ntsa::Error Utility::loadHostDatabaseConfig(ntcdns::HostDatabaseConfig* result)
 {
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
-    return loadHostDatabaseConfigFromPath(result, "/etc/hosts");
+    const bsl::string path = "/etc/hosts";
+
+    if (bdls::FilesystemUtil::exists(path)) {
+        return loadHostDatabaseConfigFromPath(result, path);
+    }
+    else {
+        result->reset();
+        return ntsa::Error();
+    }
 
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
 
-    return loadHostDatabaseConfigFromPath(
-        result,
-        "C:\\Windows\\System32\\drivers\\etc\\hosts");
+    const bsl::string path = "C:\\Windows\\System32\\drivers\\etc\\hosts";
+
+    if (bdls::FilesystemUtil::exists(path)) {
+        return loadHostDatabaseConfigFromPath(result, path);
+    }
+    else {
+        result->reset();
+        return ntsa::Error();
+    }
 
 #else
 #error Not implemented
@@ -1487,13 +1510,27 @@ ntsa::Error Utility::loadPortDatabaseConfig(ntcdns::PortDatabaseConfig* result)
 {
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
-    return loadPortDatabaseConfigFromPath(result, "/etc/services");
+    const bsl::string path = "/etc/services";
+
+    if (bdls::FilesystemUtil::exists(path)) {
+        return loadPortDatabaseConfigFromPath(result, path);
+    }
+    else {
+        result->reset();
+        return ntsa::Error();
+    }
 
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
 
-    return loadPortDatabaseConfigFromPath(
-        result,
-        "C:\\Windows\\System32\\drivers\\etc\\services");
+    const bsl::string path = "C:\\Windows\\System32\\drivers\\etc\\services";
+
+    if (bdls::FilesystemUtil::exists(path)) {
+        return loadPortDatabaseConfigFromPath(result, path);
+    }
+    else {
+        result->reset();
+        return ntsa::Error();
+    }
 
 #else
 #error Not implemented

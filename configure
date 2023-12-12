@@ -732,7 +732,6 @@ while true ; do
 
         --from-continuous-integration)
             NTF_CONFIGURE_FROM_CONTINUOUS_INTEGRATION=1
-            NTF_CONFIGURE_VERBOSE=1
             shift ;;
         --from-packaging)
             NTF_CONFIGURE_FROM_PACKAGING=1 ; shift ;;
