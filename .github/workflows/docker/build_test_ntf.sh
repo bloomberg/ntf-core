@@ -36,7 +36,7 @@ build_ntf() {
 
     # sed -i s/CMakeLists.txt//g ./configure
     
-    ./configure --prefix /opt/bb --jobs ${concurrency} --standalone
+    ./configure --prefix /opt/bb --jobs ${concurrency} --standalone --from-continuous-integration
     rc=${?}
     echo "configure: rc = ${rc}"
     if [ ${rc} -ne 0 ]; then
