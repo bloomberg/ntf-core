@@ -2932,6 +2932,80 @@ NTCCFG_TEST_CASE(32)
 
 NTCCFG_TEST_CASE(33)
 {
+    test::TestSuite s;
+    {
+        NTCI_LOG_CONTEXT();
+
+        ntca::TimerOptions timerOptions =
+            s.createOptionsAllDisabled(test::k_TIMER_ID_1);
+
+        timerOptions.setOneShot(false);
+        timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
+
+        bsl::shared_ptr<ntci::Timer> timer =
+            s.chronology->createTimer(timerOptions, s.timerCallback, &s.ta);
+
+        NTCI_LOG_DEBUG("Schedule timer");
+        {
+            const ntsa::Error error =
+                timer->schedule(s.chronology->currentTime() + s.oneHour);
+            NTCCFG_TEST_OK(error);
+            s.driver->validateInterruptAllCalled();
+
+            s.validateRegisteredAndScheduled(1, 1);
+        }
+
+        NTCI_LOG_DEBUG("Advance and check it is not fired");
+        {
+            s.clock.advance(s.oneSecond);
+            s.chronology->announce();
+            s.callbacks->validateNoEventReceived();
+        }
+
+        NTCI_LOG_DEBUG("Reschedule timer");
+        {
+            const ntsa::Error error =
+                timer->schedule(s.chronology->currentTime() + s.oneSecond,
+                                s.oneMinute);
+
+            NTCCFG_TEST_OK(error);
+            s.driver->validateInterruptAllCalled();
+            s.validateRegisteredAndScheduled(1, 1);
+        }
+
+        NTCI_LOG_DEBUG("Advance and check it is fired");
+        {
+            s.clock.advance(s.oneSecond);
+            s.chronology->announce();
+            s.callbacks->validateEventReceived(
+                test::k_TIMER_ID_1,
+                ntca::TimerEventType::e_DEADLINE);
+        }
+        NTCI_LOG_DEBUG("Validate it fires periodically");
+        {
+            const int periodsToValidate = 10;
+            for (int i = 0; i < periodsToValidate; ++i) {
+                s.clock.advance(s.oneMinute);
+                s.chronology->announce();
+                s.callbacks->validateEventReceived(
+                    test::k_TIMER_ID_1,
+                    ntca::TimerEventType::e_DEADLINE);
+            }
+        }
+
+        NTCI_LOG_DEBUG("Stop the timer");
+        {
+            NTCCFG_TEST_EQ(timer->cancel(),
+                           ntsa::Error(ntsa::Error::e_CANCELLED));
+            NTCCFG_TEST_OK(timer->close());
+        }
+
+        NTCI_LOG_DEBUG("Done");
+    }
+}
+
+NTCCFG_TEST_CASE(34)
+{
     // Concern: basic multithreaded test
     // Plan:  launch several consumer threads
     // launch several producer threads
@@ -2950,9 +3024,9 @@ NTCCFG_TEST_CASE(33)
         const int numProducers = (numThreads + 1) / 2;
         const int iterations   = numThreads * 100 * 1000;
 #else
-        const int numConsumers      = 8;
-        const int numProducers      = 8;
-        const int iterations        = 1000000;
+        const int numConsumers = 8;
+        const int numProducers = 8;
+        const int iterations   = 1000000;
 #endif
 
         ts.d_numOneShotTimersToConsume = iterations;
@@ -2965,7 +3039,7 @@ NTCCFG_TEST_CASE(33)
     }
 }
 
-NTCCFG_TEST_CASE(34)
+NTCCFG_TEST_CASE(35)
 {
     // Concern: multithreaded test with a mix of one-shot and periodic timers
     // Plan: launch consumer threads
@@ -3047,7 +3121,7 @@ NTCCFG_TEST_CASE(34)
     }
 }
 
-NTCCFG_TEST_CASE(35)
+NTCCFG_TEST_CASE(36)
 {
     // Concern: test strand() functionality
     // Plan: create several producers and consumers
@@ -3067,9 +3141,9 @@ NTCCFG_TEST_CASE(35)
         const int numProducers = (numThreads + 1) / 2;
         const int iterations   = 1000 * 1000;
 #else
-        const int numConsumers      = 8;
-        const int numProducers      = 8;
-        const int iterations        = 1000000;
+        const int numConsumers = 8;
+        const int numProducers = 8;
+        const int iterations   = 1000000;
 #endif
 
         ts.d_numOneShotTimersToConsume = iterations;
@@ -3119,10 +3193,11 @@ NTCCFG_TEST_DRIVER
     NTCCFG_TEST_REGISTER(30);
     NTCCFG_TEST_REGISTER(31);
     NTCCFG_TEST_REGISTER(32);
+    NTCCFG_TEST_REGISTER(33);
 
     //multithreaded tests below
-    NTCCFG_TEST_REGISTER(33);
     NTCCFG_TEST_REGISTER(34);
     NTCCFG_TEST_REGISTER(35);
+    NTCCFG_TEST_REGISTER(36);
 }
 NTCCFG_TEST_DRIVER_END;
