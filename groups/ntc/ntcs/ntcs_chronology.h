@@ -78,23 +78,15 @@ class Chronology
     struct DeadlineMapEntry {
         DeadlineMapEntry()
         : d_node_p(0)
-        , d_period()
-        , d_oneShot(false)
         {
         }
 
-        DeadlineMapEntry(TimerNode*                node,
-                         const bsls::TimeInterval& period,
-                         bool                      oneShot)
+        explicit DeadlineMapEntry(TimerNode* node)
         : d_node_p(node)
-        , d_period(period)
-        , d_oneShot(oneShot)
         {
         }
 
-        TimerNode*         d_node_p;
-        bsls::TimeInterval d_period;
-        const bool         d_oneShot;
+        TimerNode* d_node_p;
 
         NTCCFG_DECLARE_NESTED_BITWISE_MOVABLE_TRAITS(DeadlineMapEntry);
     };
