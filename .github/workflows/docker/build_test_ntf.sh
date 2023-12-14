@@ -17,7 +17,7 @@ build_ntf() {
         exit ${rc}
     fi
 
-    local concurrency=$(getconf _NPROCESSORS_ONLN)
+    local jobs=$(getconf _NPROCESSORS_ONLN)
 
     echo "Cores: ${concurrency}"
     free -h
@@ -34,7 +34,16 @@ build_ntf() {
     echo "File: /etc/resolv.conf"
     cat /etc/resolv.conf
 
-    ./configure --prefix /opt/bb --jobs ${concurrency} --standalone --from-continuous-integration
+    unset DISTRIBUTION_REFROOT
+    unset PREFIX
+
+    ./configure --prefix /opt/bb \
+                --output /workspace/ntf-core/build
+                --jobs ${jobs} \
+                --standalone \
+                --without-warnings \
+                --without-warnings-as-errors \
+                --from-continuous-integration
     rc=${?}
     if [ ${rc} -ne 0 ]; then
         echo "Failed to configure: rc = ${rc}"
@@ -55,14 +64,11 @@ build_ntf() {
         exit ${rc}
     fi
 
-    # make test_ntcf_system
-    # ctest --test-dir /workspace/ntf-core/build --test-timeout 600 -R ntcf_system -V
-    #/workspace/ntf-core/build/bin/ntcf_system.t 0 1 1 1
-    for test_number in {1..81}; do echo "------- TEST CASE ${test_number}"; ./build/bin/ntcf_system.t ${test_number}; done
+    make test
     rc=${?}
     if [ ${rc} -ne 0 ]; then
-        cat /workspace/ntf-core/build/Testing/Temporary/LastTest.log
-        echo "Failed to build tests: rc = ${rc}"
+        # cat /workspace/ntf-core/build/Testing/Temporary/LastTest.log
+        echo "Failed to run tests successfully: rc = ${rc}"
         exit ${rc}
     fi
 
