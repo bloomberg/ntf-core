@@ -38,7 +38,7 @@ build_ntf() {
     unset PREFIX
 
     ./configure --prefix /opt/bb \
-                --output /workspace/ntf-core/build
+                --output /workspace/ntf-core/build \
                 --jobs ${jobs} \
                 --standalone \
                 --without-warnings \
