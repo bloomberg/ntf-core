@@ -127,7 +127,7 @@ void ZeroCopyWaitList::addEntry(ZeroCopyEntry& entry)
     d_entryList.push_back(entry);
 }
 
-void ZeroCopyWaitList::zeroCopyAcknowledge(
+bool ZeroCopyWaitList::zeroCopyAcknowledge(
     const ntsa::ZeroCopy&                  zc,
     const bsl::shared_ptr<ntci::Sender>&   sender,
     const bsl::shared_ptr<ntci::Executor>& executor)
@@ -178,6 +178,7 @@ void ZeroCopyWaitList::zeroCopyAcknowledge(
         }
     }
     BSLS_ASSERT_OPT(matched == acknowledged);
+    return acknowledged > 0;
 }
 
 void ZeroCopyWaitList::cancelWait(

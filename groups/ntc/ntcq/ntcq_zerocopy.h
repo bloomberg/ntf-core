@@ -89,7 +89,7 @@ class ZeroCopyWaitList
 
     void addEntry(ZeroCopyEntry& entry);
 
-    void zeroCopyAcknowledge(const ntsa::ZeroCopy&                  zc,
+    bool zeroCopyAcknowledge(const ntsa::ZeroCopy&                  zc,
                              const bsl::shared_ptr<ntci::Sender>&   sender,
                              const bsl::shared_ptr<ntci::Executor>& executor);
 

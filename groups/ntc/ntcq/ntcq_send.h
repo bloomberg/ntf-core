@@ -185,7 +185,6 @@ class SendQueueEntry
     bdlb::NullableValue<bsls::TimeInterval> d_deadline;
     bsl::shared_ptr<ntci::Timer>            d_timer_sp;
     bsl::shared_ptr<SendCallbackQueueEntry> d_callbackEntry_sp;
-    bsl::uint32_t                           d_zeroCopyId;
     bool                                    d_inProgress;
 
   private:
@@ -307,9 +306,6 @@ class SendQueueEntry
     void setCallbackEntry(
         const bsl::shared_ptr<SendCallbackQueueEntry>& callbackEntry);
 
-    // Set entry's zeroCopyId to the secified 'value'.
-    void setZeroCopyId(bsl::uint32_t value);
-
     /// Set the flag to indicate that the entry is now in-progress, i.e. its
     /// data has been at least partially copied to the send buffer.
     void setInProgress();
@@ -352,10 +348,6 @@ class SendQueueEntry
     /// Return the callback entry.
     const bsl::shared_ptr<SendCallbackQueueEntry>& callbackEntry() const;
 
-    /// Return the identifier used to correlate the entry with MSG_ZEROCOPY
-    /// notification from the socket error queue.
-    bsl::uint32_t zeroCopyId() const;
-
     /// Return the flag that indicates whether the entry is now in-progress,
     /// i.e. its data has been at least partially copied to the send buffer.
     bool inProgress() const;
@@ -379,7 +371,6 @@ class SendQueue
     typedef bsl::list<SendQueueEntry> EntryList;
 
     EntryList                        d_entryList;
-    EntryList                        d_zeroCopyWaitList;
     bsl::shared_ptr<bdlbb::Blob>     d_data_sp;
     bsl::size_t                      d_size;
     bsl::size_t                      d_watermarkLow;
@@ -580,7 +571,6 @@ SendQueueEntry::SendQueueEntry()
 , d_deadline()
 , d_timer_sp()
 , d_callbackEntry_sp()
-, d_zeroCopyId(0)
 , d_inProgress(false)
 {
 }
@@ -666,12 +656,6 @@ void SendQueueEntry::setCallbackEntry(
 }
 
 NTCCFG_INLINE
-void SendQueueEntry::setZeroCopyId(bsl::uint32_t value)
-{
-    d_zeroCopyId = value;
-}
-
-NTCCFG_INLINE
 void SendQueueEntry::setInProgress()
 {
     d_inProgress = true;
@@ -752,12 +736,6 @@ const bsl::shared_ptr<SendCallbackQueueEntry>& SendQueueEntry::callbackEntry()
     const
 {
     return d_callbackEntry_sp;
-}
-
-NTCCFG_INLINE
-bsl::uint32_t SendQueueEntry::zeroCopyId() const
-{
-    return d_zeroCopyId;
 }
 
 NTCCFG_INLINE
