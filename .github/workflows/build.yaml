@@ -14,36 +14,36 @@ concurrency:
 
 jobs:
   build-check:
-    name: "Check whether NTF builds and passes unit tests"
+    name: "Linux"
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v3
 
-      - name: Get cache name
+      - name: Cache-Identify
         id: get-hash
         run: echo "ntf_deps_hash=`cat .github/workflows/docker/build_deps.sh .github/workflows/docker/build_test_ntf.sh .github/workflows/docker/Dockerfile | shasum`" >> $GITHUB_OUTPUT
 
-      - name: Get cached dependencies docker image
+      - name: Cache-Lookup
         id: cache-restore
         uses: actions/cache/restore@v3
         with:
           path: ntf_deps_image.tar.gz
           key: ${{ steps.get-hash.outputs.ntf_deps_hash }}
 
-      - name: Build dependencies docker image
+      - name: Cache-Build
         if: steps.cache-restore.outputs.cache-hit != 'true'
         run: docker build --tag ntf-deps --platform linux/amd64 .github/workflows/docker
 
-      - name: Load dependencies docker image from cache
+      - name: Cache-Restore
         if: steps.cache-restore.outputs.cache-hit == 'true'
         run: docker load < ntf_deps_image.tar.gz
 
-      - name: Save built dependencies docker image
+      - name: Cache-Save
         if: steps.cache-restore.outputs.cache-hit != 'true'
         run: docker save ntf-deps:latest | gzip > ntf_deps_image.tar.gz
 
-      - name: Cache built dependencies docker image
+      - name: Cache-Commit
         id: cache-save
         if: steps.cache-restore.outputs.cache-hit != 'true'
         uses: actions/cache/save@v3
@@ -51,6 +51,6 @@ jobs:
           path: ntf_deps_image.tar.gz
           key: ${{ steps.get-hash.outputs.ntf_deps_hash }}
 
-      - name: Run dependencies docker container
+      - name: Build
         id: ntf-deps-run
         run: docker run -v $(pwd):/workspace/ntf-core --name ntf-deps ntf-deps /bin/bash -c "/workspace/ntf-core/.github/workflows/docker/build_test_ntf.sh"

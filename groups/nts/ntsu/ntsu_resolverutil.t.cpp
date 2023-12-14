@@ -16,6 +16,8 @@
 #include <ntscfg_test.h>
 #include <ntsu_resolverutil.h>
 
+#include <bdls_filesystemutil.h>
+
 #include <bsl_algorithm.h>
 #include <bsl_set.h>
 #include <bsl_string.h>
@@ -422,6 +424,10 @@ NTSCFG_TEST_CASE(11)
     // Concern: Test resolution of service names to port numbers for use by
     // an unspecified transport.
 
+    if (!ntscfg::Platform::hasPortDatabase()) {
+        return;
+    }
+
     ntscfg::TestAllocator ta;
     {
         ntsa::Error error;
@@ -470,6 +476,10 @@ NTSCFG_TEST_CASE(12)
     // Concern: Test resolution of service names to port numbers for use by
     // a specific TCP-based transport.
 
+    if (!ntscfg::Platform::hasPortDatabase()) {
+        return;
+    }
+
     ntscfg::TestAllocator ta;
     {
         ntsa::Error error;
@@ -511,6 +521,10 @@ NTSCFG_TEST_CASE(13)
     // Concern: Test resolution of service names to port numbers for use by
     // a specific UDP-based transport.
 
+    if (!ntscfg::Platform::hasPortDatabase()) {
+        return;
+    }
+
     ntscfg::TestAllocator ta;
     {
         ntsa::Error error;
@@ -550,6 +564,10 @@ NTSCFG_TEST_CASE(14)
 {
     // Concern: Test resolution of port numbers to service names.
     // Plan:
+
+    if (!ntscfg::Platform::hasPortDatabase()) {
+        return;
+    }
 
     ntscfg::TestAllocator ta;
     {
@@ -656,7 +674,7 @@ NTSCFG_TEST_CASE(17)
                                                       ipAddressOptions);
 
         if (error) {
-            NTSCFG_TEST_LOG_ERROR << "Error: " << error << NTSCFG_TEST_LOG_END;
+            NTSCFG_TEST_LOG_DEBUG << "Error: " << error << NTSCFG_TEST_LOG_END;
         }
         else {
             for (bsl::vector<ntsa::IpAddress>::const_iterator it =
@@ -758,7 +776,7 @@ NTSCFG_TEST_CASE(20)
                                                       ipAddressOptions);
 
         if (error) {
-            NTSCFG_TEST_LOG_ERROR << "Error: " << error << NTSCFG_TEST_LOG_END;
+            NTSCFG_TEST_LOG_DEBUG << "Error: " << error << NTSCFG_TEST_LOG_END;
         }
         else {
             for (bsl::vector<ntsa::IpAddress>::const_iterator it =
@@ -792,7 +810,7 @@ NTSCFG_TEST_CASE(21)
                                                       ipAddressOptions);
 
         if (error) {
-            NTSCFG_TEST_LOG_ERROR << "Error: " << error << NTSCFG_TEST_LOG_END;
+            NTSCFG_TEST_LOG_DEBUG << "Error: " << error << NTSCFG_TEST_LOG_END;
         }
         else {
             for (bsl::vector<ntsa::IpAddress>::const_iterator it =

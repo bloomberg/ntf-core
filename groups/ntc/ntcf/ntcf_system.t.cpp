@@ -6454,6 +6454,10 @@ void concernResolverGetPort(bslma::Allocator* allocator)
     // Concern: Test 'Resolver::getPort'
     // Plan:
 
+    if (!ntscfg::Platform::hasPortDatabase()) {
+        return;
+    }
+
     NTCI_LOG_CONTEXT();
 
     const bsl::size_t k_NUM_ITERATIONS = 2;
@@ -6511,6 +6515,10 @@ void concernResolverGetServiceName(bslma::Allocator* allocator)
 {
     // Concern: Test 'Resolver::getServiceName'
     // Plan:
+
+    if (!ntscfg::Platform::hasPortDatabase()) {
+        return;
+    }
 
     NTCI_LOG_CONTEXT();
 
@@ -11575,7 +11583,7 @@ void concernDatagramSocketReceiveRateLimitTimerClose(
             ntsa::SocketOption socketOption;
             socketOption.makeSendBufferSize(k_MESSAGE_SIZE);
 
-            error = ntsf::System::setOption(basicClientSocket->handle(), 
+            error = ntsf::System::setOption(basicClientSocket->handle(),
                                             socketOption);
             NTCCFG_TEST_FALSE(error);
         }
@@ -11583,8 +11591,8 @@ void concernDatagramSocketReceiveRateLimitTimerClose(
         {
             ntsa::SocketOption socketOption;
             error = ntsf::System::getOption(
-                &socketOption, 
-                basicClientSocket->handle(), 
+                &socketOption,
+                basicClientSocket->handle(),
                 ntsa::SocketOptionType::e_SEND_BUFFER_SIZE);
             NTCCFG_TEST_FALSE(error);
 
@@ -11843,7 +11851,7 @@ void concernDatagramSocketSendRateLimitTimerClose(
             ntsa::SocketOption socketOption;
             socketOption.makeSendBufferSize(k_MESSAGE_SIZE);
 
-            error = ntsf::System::setOption(basicClientSocket->handle(), 
+            error = ntsf::System::setOption(basicClientSocket->handle(),
                                             socketOption);
             NTCCFG_TEST_FALSE(error);
         }
@@ -11851,8 +11859,8 @@ void concernDatagramSocketSendRateLimitTimerClose(
         {
             ntsa::SocketOption socketOption;
             error = ntsf::System::getOption(
-                &socketOption, 
-                basicClientSocket->handle(), 
+                &socketOption,
+                basicClientSocket->handle(),
                 ntsa::SocketOptionType::e_SEND_BUFFER_SIZE);
             NTCCFG_TEST_FALSE(error);
 
@@ -12343,7 +12351,7 @@ void concernDatagramSocketReceiveRateLimitTimerEventNotifications(
             ntsa::SocketOption socketOption;
             socketOption.makeSendBufferSize(k_MESSAGE_SIZE);
 
-            error = ntsf::System::setOption(basicClientSocket->handle(), 
+            error = ntsf::System::setOption(basicClientSocket->handle(),
                                             socketOption);
             NTCCFG_TEST_FALSE(error);
         }
@@ -12351,8 +12359,8 @@ void concernDatagramSocketReceiveRateLimitTimerEventNotifications(
         {
             ntsa::SocketOption socketOption;
             error = ntsf::System::getOption(
-                &socketOption, 
-                basicClientSocket->handle(), 
+                &socketOption,
+                basicClientSocket->handle(),
                 ntsa::SocketOptionType::e_SEND_BUFFER_SIZE);
             NTCCFG_TEST_FALSE(error);
 
@@ -12496,7 +12504,7 @@ void concernDatagramSocketSendRateLimitTimerEventNotifications(
             ntsa::SocketOption socketOption;
             socketOption.makeSendBufferSize(k_MESSAGE_SIZE);
 
-            error = ntsf::System::setOption(basicClientSocket->handle(), 
+            error = ntsf::System::setOption(basicClientSocket->handle(),
                                             socketOption);
             NTCCFG_TEST_FALSE(error);
         }
@@ -12504,8 +12512,8 @@ void concernDatagramSocketSendRateLimitTimerEventNotifications(
         {
             ntsa::SocketOption socketOption;
             error = ntsf::System::getOption(
-                &socketOption, 
-                basicClientSocket->handle(), 
+                &socketOption,
+                basicClientSocket->handle(),
                 ntsa::SocketOptionType::e_SEND_BUFFER_SIZE);
             NTCCFG_TEST_FALSE(error);
 
@@ -12594,7 +12602,7 @@ void concernStreamSocketReceiveRateLimitTimerEventNotifications(
 
     NTCI_LOG_CONTEXT();
     NTCI_LOG_DEBUG("Test started");
-    
+
     const ntsa::Transport::Value transport =
         ntsa::Transport::e_TCP_IPV4_STREAM;
 
@@ -12948,6 +12956,8 @@ void concernListenerSocketAcceptRateLimitTimerEventNotifications(
 
 NTCCFG_TEST_CASE(1)
 {
+    bsls::Log::setSeverityThreshold(bsls::LogSeverity::e_INFO);
+
     ntccfg::TestAllocator ta;
     {
         test::concernExample1(&ta);

@@ -55,7 +55,7 @@ NTCCFG_TEST_CASE(1)
     {
         ntcdns::ClientConfig clientConfig(&ta);
         error = ntcdns::Utility::loadClientConfig(&clientConfig);
-        NTCCFG_TEST_ASSERT(!error);
+        NTCCFG_TEST_OK(error);
 
         NTCI_LOG_STREAM_TRACE << "Client configuration = " << clientConfig
                               << NTCI_LOG_STREAM_END;
@@ -67,6 +67,10 @@ NTCCFG_TEST_CASE(2)
 {
     // Concern: Host database configurations.
 
+    if (!ntscfg::Platform::hasHostDatabase()) {
+        return;
+    }
+
     NTCI_LOG_CONTEXT();
 
     ntsa::Error error;
@@ -76,7 +80,7 @@ NTCCFG_TEST_CASE(2)
     {
         ntcdns::HostDatabaseConfig hostDatabaseConfig(&ta);
         error = ntcdns::Utility::loadHostDatabaseConfig(&hostDatabaseConfig);
-        NTCCFG_TEST_ASSERT(!error);
+        NTCCFG_TEST_OK(error);
 
         NTCI_LOG_STREAM_TRACE << "Host database = " << hostDatabaseConfig
                               << NTCI_LOG_STREAM_END;
@@ -88,6 +92,10 @@ NTCCFG_TEST_CASE(3)
 {
     // Concern: Port database configurations.
 
+    if (!ntscfg::Platform::hasPortDatabase()) {
+        return;
+    }
+
     NTCI_LOG_CONTEXT();
 
     ntsa::Error error;
@@ -97,7 +105,7 @@ NTCCFG_TEST_CASE(3)
     {
         ntcdns::PortDatabaseConfig portDatabaseConfig(&ta);
         error = ntcdns::Utility::loadPortDatabaseConfig(&portDatabaseConfig);
-        NTCCFG_TEST_ASSERT(!error);
+        NTCCFG_TEST_OK(error);
 
         NTCI_LOG_STREAM_TRACE << "Port database = " << portDatabaseConfig
                               << NTCI_LOG_STREAM_END;
@@ -118,7 +126,7 @@ NTCCFG_TEST_CASE(4)
     {
         ntcdns::ResolverConfig resolverConfig(&ta);
         error = ntcdns::Utility::loadResolverConfig(&resolverConfig);
-        NTCCFG_TEST_ASSERT(!error);
+        NTCCFG_TEST_OK(error);
 
         NTCI_LOG_STREAM_TRACE << "Resolver configuration = " << resolverConfig
                               << NTCI_LOG_STREAM_END;

@@ -18,6 +18,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntscfg_platform_cpp, "$Id$ $CSID$")
 
+#include <bdls_filesystemutil.h>
 #include <bslmt_once.h>
 #include <bsls_log.h>
 #include <bsls_platform.h>
@@ -186,6 +187,36 @@ bool Platform::supportsTimestamps()
 #endif
     return s_supportsTimestamps;
 }
+
+#if defined(BSLS_PLATFORM_OS_UNIX)
+
+bool Platform::hasHostDatabase()
+{
+    return bdls::FilesystemUtil::exists("/etc/hosts");
+}
+
+bool Platform::hasPortDatabase()
+{
+    return bdls::FilesystemUtil::exists("/etc/services");
+}
+
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+
+bool Platform::hasHostDatabase()
+{
+    return bdls::FilesystemUtil::exists(
+        "C:\\Windows\\System32\\drivers\\etc\\hosts");
+}
+
+bool Platform::hasPortDatabase()
+{
+    return bdls::FilesystemUtil::exists(
+        "C:\\Windows\\System32\\drivers\\etc\\services");
+}
+
+#else
+#error Not implemented
+#endif
 
 }  // close package namespace
 }  // close enterprise namespace

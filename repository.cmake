@@ -4696,7 +4696,7 @@ function (ntf_repository)
     ntf_repository_doxygen_output_path_set(VALUE ${doxygenOutputDirectory})
 
     set(cmake_ctest_arguments ${CMAKE_CTEST_ARGUMENTS})
-    list(APPEND cmake_ctest_arguments --output-junit Testing/Temporary/Test.xml)
+    list(APPEND cmake_ctest_arguments --stop-on-failure --output-on-failure --output-junit Testing/Temporary/Test.xml)
     set(CMAKE_CTEST_ARGUMENTS ${cmake_ctest_arguments} PARENT_SCOPE)
 
     set(CPACK_OUTPUT_FILE_PREFIX ${packageOutputDirectory} PARENT_SCOPE)
