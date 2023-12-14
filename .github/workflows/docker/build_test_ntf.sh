@@ -67,7 +67,7 @@ build_ntf() {
     make test
     rc=${?}
     if [ ${rc} -ne 0 ]; then
-        # cat /workspace/ntf-core/build/Testing/Temporary/LastTest.log
+        cat /workspace/ntf-core/build/Testing/Temporary/LastTest.log
         echo "Failed to run tests successfully: rc = ${rc}"
         exit ${rc}
     fi
