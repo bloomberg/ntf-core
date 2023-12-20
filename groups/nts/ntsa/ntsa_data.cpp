@@ -1754,6 +1754,8 @@ typedef bsl::size_t (*DataUtilImplAppend)(bdlbb::Blob*      destination,
 
 typedef void (*DataUtilImplPop)(ntsa::Data* data, bsl::size_t numBytes);
 
+typedef void (*DataUtilImplErase)(ntsa::Data* data, bsl::size_t numBytes);
+
 /// Provide algorithms for data containers. This struct is
 /// thread safe.
 struct DataUtilImpl {
@@ -1869,6 +1871,58 @@ struct DataUtilImpl {
     /// Pop the specified 'numBytes' from the specified 'data' assuming
     /// 'data' is represented as a file.
     static void popFile(ntsa::Data* data, bsl::size_t numBytes);
+
+    // *** Erase ***
+
+    /// Pop the specified 'numBytes' from the specified 'data' assuming
+    /// 'data' is undefined.
+    static void eraseUndefined(ntsa::Data* data, bsl::size_t numBytes);
+
+    /// Pop the specified 'numBytes' from the specified 'data' assuming
+    /// 'data' is represented as a blob buffer.
+    static void eraseBlobBuffer(ntsa::Data* data, bsl::size_t numBytes);
+
+    /// Pop the specified 'numBytes' from the specified 'data' assuming
+    /// 'data' is represented as a const buffer.
+    static void eraseConstBuffer(ntsa::Data* data, bsl::size_t numBytes);
+
+    /// Pop the specified 'numBytes' from the specified 'data' assuming
+    /// 'data' is represented as a const buffer array.
+    static void eraseConstBufferArray(ntsa::Data* data, bsl::size_t numBytes);
+
+    /// Pop the specified 'numBytes' from the specified 'data' assuming
+    /// 'data' is represented as a const buffer pointer array.
+    static void eraseConstBufferPtrArray(ntsa::Data* data, bsl::size_t numBytes);
+
+    /// Pop the specified 'numBytes' from the specified 'data' assuming
+    /// 'data' is represented as a mutable buffer.
+    static void eraseMutableBuffer(ntsa::Data* data, bsl::size_t numBytes);
+
+    /// Pop the specified 'numBytes' from the specified 'data' assuming
+    /// 'data' is represented as a mutable buffer array.
+    static void eraseMutableBufferArray(ntsa::Data* data, bsl::size_t numBytes);
+
+    /// Pop the specified 'numBytes' from the specified 'data' assuming
+    /// 'data' is represented as a mutable buffer pointer array.
+    static void eraseMutableBufferPtrArray(ntsa::Data* data,
+                                         bsl::size_t numBytes);
+
+    /// Pop the specified 'numBytes' from the specified 'data' assuming
+    /// 'data' is represented as a blob.
+    static void eraseBlob(ntsa::Data* data, bsl::size_t numBytes);
+
+    /// Pop the specified 'numBytes' from the specified 'data' assuming
+    /// 'data' is represented as a shared blob.
+    static void eraseSharedBlob(ntsa::Data* data, bsl::size_t numBytes);
+
+    /// Pop the specified 'numBytes' from the specified 'data' assuming
+    /// 'data' is represented as a string.
+    static void eraseString(ntsa::Data* data, bsl::size_t numBytes);
+
+    /// Pop the specified 'numBytes' from the specified 'data' assuming
+    /// 'data' is represented as a file.
+    static void eraseFile(ntsa::Data* data, bsl::size_t numBytes);
+
 
     /// *** Copy ***
 
@@ -2293,6 +2347,121 @@ void DataUtilImpl::popFile(ntsa::Data* data, bsl::size_t numBytes)
     file->setBytesRemaining(file->bytesRemaining() - numBytesToPop);
 }
 
+// *** Erase ***
+
+void DataUtilImpl::eraseUndefined(ntsa::Data* data, bsl::size_t numBytes)
+{
+    NTSCFG_WARNING_UNUSED(data);
+    NTSCFG_WARNING_UNUSED(numBytes);
+}
+
+void DataUtilImpl::eraseBlobBuffer(ntsa::Data* data, bsl::size_t numBytes)
+{
+    bdlbb::BlobBuffer* blobBuffer = &data->blobBuffer();
+
+    BSLS_ASSERT(static_cast<bsl::size_t>(blobBuffer->size()) >= numBytes);
+
+    blobBuffer->setSize(blobBuffer->size() - numBytes);
+}
+
+void DataUtilImpl::eraseConstBuffer(ntsa::Data* data, bsl::size_t numBytes)
+{
+    ntsa::ConstBuffer* constBuffer = &data->constBuffer();
+    constBuffer->erase(numBytes);
+}
+
+void DataUtilImpl::eraseConstBufferArray(ntsa::Data* data, bsl::size_t numBytes)
+{
+    ntsa::ConstBufferArray* constBufferArray = &data->constBufferArray();
+    constBufferArray->erase(numBytes);
+}
+
+void DataUtilImpl::eraseConstBufferPtrArray(ntsa::Data* data,
+                                          bsl::size_t numBytes)
+{
+    ntsa::ConstBufferPtrArray* constBufferPtrArray =
+        &data->constBufferPtrArray();
+
+    constBufferPtrArray->erase(numBytes);
+}
+
+void DataUtilImpl::eraseMutableBuffer(ntsa::Data* data, bsl::size_t numBytes)
+{
+    ntsa::MutableBuffer* mutableBuffer = &data->mutableBuffer();
+
+    mutableBuffer->erase(numBytes);
+}
+
+void DataUtilImpl::eraseMutableBufferArray(ntsa::Data* data,
+                                         bsl::size_t numBytes)
+{
+    ntsa::MutableBufferArray* mutableBufferArray = &data->mutableBufferArray();
+
+    mutableBufferArray->erase(numBytes);
+}
+
+void DataUtilImpl::eraseMutableBufferPtrArray(ntsa::Data* data,
+                                            bsl::size_t numBytes)
+{
+    ntsa::MutableBufferPtrArray* mutableBufferPtrArray =
+        &data->mutableBufferPtrArray();
+
+    mutableBufferPtrArray->erase(numBytes);
+}
+
+void DataUtilImpl::eraseBlob(ntsa::Data* data, bsl::size_t numBytes)
+{
+    bdlbb::Blob* blob = &data->blob();
+
+    if (numBytes > NTSCFG_WARNING_PROMOTE(bsl::size_t, blob->length())) {
+        numBytes = blob->length();
+    }
+
+    bdlbb::BlobUtil::erase(blob, blob->length() - numBytes, NTSCFG_WARNING_NARROW(int, numBytes));
+}
+
+void DataUtilImpl::eraseSharedBlob(ntsa::Data* data, bsl::size_t numBytes)
+{
+    bsl::shared_ptr<bdlbb::Blob>* sharedBlob = &data->sharedBlob();
+
+    if (numBytes >
+        NTSCFG_WARNING_PROMOTE(bsl::size_t, (*sharedBlob)->length()))
+    {
+        numBytes = (*sharedBlob)->length();
+    }
+
+    bdlbb::BlobUtil::erase(sharedBlob->get(),
+                           (*sharedBlob)->length() - numBytes,
+                           NTSCFG_WARNING_NARROW(int, numBytes));
+}
+
+void DataUtilImpl::eraseString(ntsa::Data* data, bsl::size_t numBytes)
+{
+    bsl::string* string = &data->string();
+
+    if (numBytes > string->size()) {
+        numBytes = string->size();
+    }
+
+    string->erase(string->size() - numBytes, numBytes);
+}
+
+void DataUtilImpl::eraseFile(ntsa::Data* data, bsl::size_t numBytes)
+{
+    ntsa::File* file = &data->file();
+
+    bdls::FilesystemUtil::Offset numBytesToErase =
+        static_cast<bdls::FilesystemUtil::Offset>(numBytes);
+
+    if (numBytesToErase > file->bytesRemaining()) {
+        numBytesToErase = file->bytesRemaining();
+    }
+
+    file->setBytesRemaining(file->bytesRemaining() - numBytesToErase);
+}
+
+
+
 ntsa::Error DataUtilImpl::copyBlob(bsl::streambuf*    destination,
                                    const bdlbb::Blob& source)
 {
@@ -2565,6 +2734,20 @@ DataUtilImplPop s_pop[12] = {
     (DataUtilImplPop)&DataUtilImpl::popString,
     (DataUtilImplPop)&DataUtilImpl::popFile};
 
+DataUtilImplErase s_erase[12] = {
+    (DataUtilImplErase)&DataUtilImpl::eraseUndefined,
+    (DataUtilImplErase)&DataUtilImpl::eraseBlobBuffer,
+    (DataUtilImplErase)&DataUtilImpl::eraseConstBuffer,
+    (DataUtilImplErase)&DataUtilImpl::eraseConstBufferArray,
+    (DataUtilImplErase)&DataUtilImpl::eraseConstBufferPtrArray,
+    (DataUtilImplErase)&DataUtilImpl::eraseMutableBuffer,
+    (DataUtilImplErase)&DataUtilImpl::eraseMutableBufferArray,
+    (DataUtilImplErase)&DataUtilImpl::eraseMutableBufferPtrArray,
+    (DataUtilImplErase)&DataUtilImpl::eraseBlob,
+    (DataUtilImplErase)&DataUtilImpl::eraseSharedBlob,
+    (DataUtilImplErase)&DataUtilImpl::eraseString,
+    (DataUtilImplErase)&DataUtilImpl::eraseFile};
+
 }  // close unnamed namespace
 
 bsl::size_t DataUtil::append(bdlbb::Blob*      destination,
@@ -2576,6 +2759,11 @@ bsl::size_t DataUtil::append(bdlbb::Blob*      destination,
 void DataUtil::pop(ntsa::Data* data, bsl::size_t numBytes)
 {
     s_pop[data->type()](data, numBytes);
+}
+
+void DataUtil::erase(ntsa::Data* data, bsl::size_t numBytes)
+{
+    s_erase[data->type()](data, numBytes);
 }
 
 ntsa::Error DataUtil::copy(bsl::streambuf*   destination,

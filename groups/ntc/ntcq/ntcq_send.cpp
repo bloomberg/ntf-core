@@ -180,7 +180,7 @@ bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*  result,
         const char* data = blobBuffer.data();
 
         if (NTCCFG_LIKELY(maxBytes > 0)) {
-            if (NTCCFG_UNLIKELY(result->numBytes() >= maxBytes)) {
+            if (NTCCFG_UNLIKELY((result->numBytes() + size) > maxBytes)) {
                 return false;
             }
         }
@@ -215,7 +215,7 @@ bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*  result,
     const bsl::size_t maxBytes = options.maxBytes();
 
     if (maxBytes > 0) {
-        if (result->numBytes() >= maxBytes) {
+        if ((result->numBytes() + constBuffer.length()) > maxBytes) {
             return false;
         }
     }
@@ -269,7 +269,7 @@ bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*    result,
     const bsl::size_t maxBytes = options.maxBytes();
 
     if (maxBytes > 0) {
-        if (result->numBytes() >= maxBytes) {
+        if ((result->numBytes() + mutableBuffer.length()) > maxBytes) {
             return false;
         }
     }
