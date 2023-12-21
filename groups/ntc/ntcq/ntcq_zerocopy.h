@@ -85,6 +85,8 @@ class ZeroCopyWaitList
     /// Destroy this object.
     ~ZeroCopyWaitList();
 
+    BSLS_ANNOTATION_NODISCARD bool empty() const { return d_entryList.empty(); }
+
     void setStrand(const bsl::shared_ptr<ntci::Strand>& strand);
 
     void addEntry(ZeroCopyEntry& entry);

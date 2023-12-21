@@ -6769,7 +6769,9 @@ void concernDataExchange(const bsl::shared_ptr<ntci::Interface>& interface,
 
     const bsl::size_t WRITE_QUEUE_HIGH_WATERMARK = 1024 * 512;
 
+//    const bsl::size_t NUM_LISTENERS                = 2;
     const bsl::size_t NUM_LISTENERS                = 2;
+//    const bsl::size_t NUM_CONNECTIONS_PER_LISTENER = 5;
     const bsl::size_t NUM_CONNECTIONS_PER_LISTENER = 5;
     const bsl::size_t MESSAGE_SIZE                 = 1024 * 32;
     const bsl::size_t NUM_MESSAGES                 = 100;

@@ -33,6 +33,7 @@ BSLS_IDENT_RCSID(ntscfg_platform_cpp, "$Id$ $CSID$")
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
 #include <linux/version.h>
+#include <sys/resource.h>
 #endif
 
 #endif
@@ -92,6 +93,21 @@ bool s_supportsTimestamps = false;
 
 int Platform::initialize()
 {
+    {
+        rlimit rl  = {};
+        int    res = getrlimit(RLIMIT_MEMLOCK, &rl);
+        BSLS_LOG_ERROR("getrlimit: res %d, rlim_cur %ld, rlim_max %ld",
+                       res,
+                       rl.rlim_cur,
+                       rl.rlim_max);
+//        rl.rlim_cur = 1024 * 64;
+//        rl.rlim_max = 1024 * 64;
+//        res = setrlimit(RLIMIT_MEMLOCK, &rl);
+//        BSLS_LOG_ERROR("setrlimit: res %d, rlim_cur %ld, rlim_max %ld",
+//                       res,
+//                       rl.rlim_cur,
+//                       rl.rlim_max);
+    }
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
 #if NTSCFG_PLATFORM_AUTO_IGNORE_SIGPIPE
