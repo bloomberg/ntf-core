@@ -63,6 +63,7 @@ ListenerSocketOptions::ListenerSocketOptions()
 , d_metrics()
 , d_timestampOutgoingData()
 , d_timestampIncomingData()
+, d_zeroCopyThreshold()
 , d_loadBalancingOptions()
 {
 }
@@ -102,6 +103,7 @@ ListenerSocketOptions::ListenerSocketOptions(
 , d_metrics(other.d_metrics)
 , d_timestampOutgoingData(other.d_timestampOutgoingData)
 , d_timestampIncomingData(other.d_timestampIncomingData)
+, d_zeroCopyThreshold(other.d_zeroCopyThreshold)
 , d_loadBalancingOptions(other.d_loadBalancingOptions)
 {
 }
@@ -149,6 +151,7 @@ ListenerSocketOptions& ListenerSocketOptions::operator=(
         d_metrics                   = other.d_metrics;
         d_timestampOutgoingData     = other.d_timestampOutgoingData;
         d_timestampIncomingData     = other.d_timestampIncomingData;
+        d_zeroCopyThreshold         = other.d_zeroCopyThreshold;
         d_loadBalancingOptions      = other.d_loadBalancingOptions;
     }
 
@@ -321,6 +324,11 @@ void ListenerSocketOptions::setTimestampOutgoingData(bool value)
 void ListenerSocketOptions::setTimestampIncomingData(bool value)
 {
     d_timestampIncomingData = value;
+}
+
+void ListenerSocketOptions::setZeroCopyThreshold(bsl::size_t value)
+{
+    d_zeroCopyThreshold = value;
 }
 
 void ListenerSocketOptions::setLoadBalancingOptions(
@@ -521,6 +529,12 @@ const bdlb::NullableValue<bool>& ListenerSocketOptions::timestampIncomingData()
     return d_timestampIncomingData;
 }
 
+const bdlb::NullableValue<bsl::size_t>& ListenerSocketOptions::
+    zeroCopyThreshold() const
+{
+    return d_zeroCopyThreshold;
+}
+
 bsl::ostream& ListenerSocketOptions::print(bsl::ostream& stream,
                                            int           level,
                                            int           spacesPerLevel) const
@@ -563,6 +577,7 @@ bsl::ostream& ListenerSocketOptions::print(bsl::ostream& stream,
     printer.printAttribute("metrics", d_metrics);
     printer.printAttribute("timestampOutgoingData", d_timestampOutgoingData);
     printer.printAttribute("timestampIncomingData", d_timestampIncomingData);
+    printer.printAttribute("zeroCopyThreshold", d_zeroCopyThreshold);
     printer.printAttribute("loadBalancingOptions", d_loadBalancingOptions);
     printer.end();
     return stream;
@@ -603,6 +618,7 @@ bool operator==(const ListenerSocketOptions& lhs,
            lhs.metrics() == rhs.metrics() &&
            lhs.timestampOutgoingData() == rhs.timestampOutgoingData() &&
            lhs.timestampIncomingData() == rhs.timestampIncomingData() &&
+           lhs.zeroCopyThreshold() == rhs.zeroCopyThreshold() &&
            lhs.loadBalancingOptions() == rhs.loadBalancingOptions();
 }
 

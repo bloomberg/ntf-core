@@ -18,7 +18,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntcr_datagramsocket_cpp, "$Id$ $CSID$")
 
-#define ENABLE_ZEROCOPY false
+#define FORCE_ZEROCOPY false
 
 #include <ntccfg_limits.h>
 #include <ntci_log.h>
@@ -2561,7 +2561,7 @@ DatagramSocket::DatagramSocket(
 , d_deferredCalls(bslma::Default::allocator(basicAllocator))
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    if (ENABLE_ZEROCOPY) {
+    if (FORCE_ZEROCOPY) {
         d_options.setZeroCopyThreshold(0);
     }
     if (reactor->maxThreads() > 1) {

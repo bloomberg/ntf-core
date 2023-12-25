@@ -18,7 +18,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntcr_streamsocket_cpp, "$Id$ $CSID$")
 
-#define ENABLE_ZEROCOPY true
+#define FORCE_ZEROCOPY false
 #define ZERO_COPY_ALLOW_FAILED_SENDS true
 
 #include <ntccfg_limits.h>
@@ -5069,7 +5069,7 @@ StreamSocket::StreamSocket(
 , d_deferredCalls(bslma::Default::allocator(basicAllocator))
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    if (ENABLE_ZEROCOPY) {
+    if (FORCE_ZEROCOPY) {
         d_options.setZeroCopyThreshold(0);
     }
     if (reactor->maxThreads() > 1) {

@@ -316,6 +316,11 @@ void Compat::convert(ntca::StreamSocketOptions*         result,
             options.timestampIncomingData().value());
     }
 
+    //TODO: modify functions below accordingly
+    if (!options.zeroCopyThreshold().isNull()) {
+        result->setZeroCopyThreshold(options.zeroCopyThreshold().value());
+    }
+
     result->setLoadBalancingOptions(options.loadBalancingOptions());
 }
 
@@ -442,9 +447,14 @@ void Compat::convert(ntca::ListenerSocketOptions*     result,
             options.timestampIncomingData().value());
     }
 
+    if (!options.zeroCopyThreshold().isNull()) {
+        result->setZeroCopyThreshold(options.zeroCopyThreshold().value());
+    }
+
     result->setLoadBalancingOptions(options.loadBalancingOptions());
 }
 
+//TODO: timestamping? ZeroCopy?
 void Compat::convert(ntca::DatagramSocketOptions*       result,
                      const ntca::DatagramSocketOptions& options,
                      const ntca::InterfaceConfig&       config)
