@@ -155,6 +155,13 @@ BSLS_IDENT_RCSID(ntcp_datagramsocket_cpp, "$Id$ $CSID$")
     NTCI_LOG_TRACE("Datagram socket "                                         \
                    "is shutting down transmission")
 
+// Some versions of GCC erroneously warn ntcs::ObserverRef::d_shared may be
+// uninitialized.
+#if defined(BSLS_PLATFORM_CMP_GNU)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+
 namespace BloombergLP {
 namespace ntcp {
 
