@@ -18,7 +18,8 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntcr_streamsocket_cpp, "$Id$ $CSID$")
 
-#define FORCE_ZEROCOPY false
+
+#define FORCE_ZEROCOPY true
 #define ZERO_COPY_ALLOW_FAILED_SENDS true
 
 #include <ntccfg_limits.h>
@@ -1381,16 +1382,13 @@ ntsa::Error StreamSocket::privateSocketWritableIterationBatchZeroCopy(
 
         if (error) {
             if (error == ntsa::Error::e_LIMIT) {
-                if(!d_zeroCopyList.empty()) {
-                    this->privateApplyFlowControl(
-                        self,
-                        ntca::FlowControlType::e_SEND,
-                        ntca::FlowControlMode::e_IMMEDIATE,
-                        true,
-                        false);
-                    d_limitDueToZeroCopy = true;
-                }
-
+                this->privateApplyFlowControl(
+                    self,
+                    ntca::FlowControlType::e_SEND,
+                    ntca::FlowControlMode::e_IMMEDIATE,
+                    true,
+                    false);
+                d_limitDueToZeroCopy = true;
                 return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
             }
             else {
@@ -1666,18 +1664,6 @@ ntsa::Error StreamSocket::privateSocketWritableIterationFrontZeroCopy(
         }
     }
 
-    const bool nothingSentDueToLockLimit =
-        ((leftData.size() == entry.data()->size()) &&
-         (error == ntsa::Error::e_LIMIT));
-
-    //ensure that at least something was sent
-    BSLS_ASSERT_OPT(ZERO_COPY_ALLOW_FAILED_SENDS ||
-                    !nothingSentDueToLockLimit);
-
-    if(d_limitDueToZeroCopy && d_zeroCopyList.empty()) {
-        d_limitDueToZeroCopy = false;
-    }
-
     //at least something was sent
     if (leftData.size() < entry.data()->size()) {
         const bool hasDeadline = !entry.deadline().isNull();
@@ -1701,7 +1687,7 @@ ntsa::Error StreamSocket::privateSocketWritableIterationFrontZeroCopy(
 
     NTCS_METRICS_UPDATE_WRITE_QUEUE_SIZE(d_sendQueue.size());
 
-    if (d_limitDueToZeroCopy/* && !nothingSentDueToLockLimit*/) {
+    if (d_limitDueToZeroCopy) {
         this->privateApplyFlowControl(self,
                                       ntca::FlowControlType::e_SEND,
                                       ntca::FlowControlMode::e_IMMEDIATE,
@@ -3672,22 +3658,7 @@ ntsa::Error StreamSocket::privateSendRawZeroCopy(
 
         NTCS_METRICS_UPDATE_WRITE_QUEUE_SIZE(d_sendQueue.size());
 
-//        BSLS_ASSERT(leftData.length() != data.length());
-
-        const bool nothingSentDueToLockLimit =
-            ((leftData.length() == data.length()) &&
-             (error == ntsa::Error::e_LIMIT));
-
-        //ensure that at least something was sent
-        BSLS_ASSERT_OPT(ZERO_COPY_ALLOW_FAILED_SENDS ||
-                        !nothingSentDueToLockLimit);
-
-        if((leftData.length() == data.length()) & d_limitDueToZeroCopy) {
-            d_limitDueToZeroCopy = false;
-            //nothing was sent, so there is no limit
-        }
-
-        if (becameNonEmpty && !d_limitDueToZeroCopy/*(leftData.length() == data.length())*/) {
+        if (becameNonEmpty && !d_limitDueToZeroCopy) {
             this->privateRelaxFlowControl(self,
                                           ntca::FlowControlType::e_SEND,
                                           true,
@@ -3910,22 +3881,7 @@ ntsa::Error StreamSocket::privateSendRawZeroCopy(
 
         NTCS_METRICS_UPDATE_WRITE_QUEUE_SIZE(d_sendQueue.size());
 
-//        BSLS_ASSERT(leftData.size() != data.size());
-
-        const bool nothingSentDueToLockLimit =
-            ((leftData.size() == data.size()) &&
-             (error == ntsa::Error::e_LIMIT));
-
-        //ensure that at least something was sent
-        BSLS_ASSERT_OPT(ZERO_COPY_ALLOW_FAILED_SENDS ||
-                        !nothingSentDueToLockLimit);
-
-        if((leftData.size() == data.size()) & d_limitDueToZeroCopy) {
-            d_limitDueToZeroCopy = false;
-            //nothing was sent, so there is no limit
-        }
-
-        if (becameNonEmpty && !d_limitDueToZeroCopy/* && (leftData.size() == data.size())*/) {
+        if (becameNonEmpty && !d_limitDueToZeroCopy) {
             this->privateRelaxFlowControl(self,
                                           ntca::FlowControlType::e_SEND,
                                           true,
