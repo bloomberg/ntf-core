@@ -63,8 +63,8 @@ class MutableBuffer
     BufferType d_data;
     LengthType d_size;
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
-    LengthType d_size;
-    BufferType d_data;
+    LengthType            d_size;
+    BufferType            d_data;
 #else
 #error Not implemented
 #endif
@@ -105,8 +105,6 @@ class MutableBuffer
     /// Increment the address of the data of the buffer by the specified 'n'
     /// number of bytes and decrement its size by the equivalent amount.
     void advance(bsl::size_t n) BSLS_KEYWORD_NOEXCEPT;
-
-    void erase(bsl::size_t n) BSLS_KEYWORD_NOEXCEPT;
 
     /// Return the pointer to the beginning of the memory range.
     void* data() const BSLS_KEYWORD_NOEXCEPT;
@@ -178,8 +176,8 @@ class ConstBuffer
     BufferType d_data;
     LengthType d_size;
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
-    LengthType d_size;
-    BufferType d_data;
+    LengthType            d_size;
+    BufferType            d_data;
 #else
 #error Not implemented
 #endif
@@ -229,8 +227,6 @@ class ConstBuffer
     /// Increment the address of the data of the buffer by the specified 'n'
     /// number of bytes and decrement its size by the equivalent amount.
     void advance(bsl::size_t n) BSLS_KEYWORD_NOEXCEPT;
-
-    void erase(bsl::size_t n) BSLS_KEYWORD_NOEXCEPT;
 
     /// Return the pointer to the beginning of the memory range.
     const void* data() const BSLS_KEYWORD_NOEXCEPT;
@@ -348,8 +344,6 @@ class ConstBufferArray
     /// front of the array.
     void pop(bsl::size_t numBytes);
 
-    void erase(bsl::size_t numBytes);
-
     /// Return a reference to the modifiable buffer at the specified
     /// 'index'.
     ntsa::ConstBuffer& buffer(bsl::size_t index);
@@ -431,8 +425,6 @@ class ConstBufferPtrArray
     /// Pop the specified 'numBytes' of referenced data by buffers from the
     /// front of the array.
     void pop(bsl::size_t numBytes);
-
-    void erase(bsl::size_t numBytes);
 
     /// Return a reference to the modifiable buffer at the specified
     /// 'index'.
@@ -542,8 +534,6 @@ class MutableBufferArray
     /// front of the array.
     void pop(bsl::size_t numBytes);
 
-    void erase(bsl::size_t numBytes);
-
     /// Return a reference to the modifiable buffer at the specified
     /// 'index'.
     ntsa::MutableBuffer& buffer(bsl::size_t index);
@@ -626,8 +616,6 @@ class MutableBufferPtrArray
     /// Pop the specified 'numBytes' of referenced data by buffers from the
     /// front of the array.
     void pop(bsl::size_t numBytes);
-
-    void erase(bsl::size_t numBytes);
 
     /// Return a reference to the modifiable buffer at the specified
     /// 'index'.
@@ -1038,15 +1026,8 @@ void MutableBuffer::advance(bsl::size_t n) BSLS_KEYWORD_NOEXCEPT
 {
     bsl::size_t offset = n < d_size ? n : d_size;
 
-    d_data  = static_cast<char*>(d_data) + offset;
+    d_data = static_cast<char*>(d_data) + offset;
     d_size -= NTSCFG_WARNING_NARROW(LengthType, offset);
-}
-
-NTSCFG_INLINE
-void MutableBuffer::erase(bsl::size_t n) BSLS_KEYWORD_NOEXCEPT
-{
-    BSLS_ASSERT(d_size >= n);
-    d_size -= n;
 }
 
 NTSCFG_INLINE
@@ -1220,15 +1201,8 @@ void ConstBuffer::advance(bsl::size_t n) BSLS_KEYWORD_NOEXCEPT
 {
     bsl::size_t offset = n < d_size ? n : d_size;
 
-    d_data  = static_cast<const char*>(d_data) + offset;
+    d_data = static_cast<const char*>(d_data) + offset;
     d_size -= NTSCFG_WARNING_NARROW(LengthType, offset);
-}
-
-NTSCFG_INLINE
-void ConstBuffer::erase(bsl::size_t n) BSLS_KEYWORD_NOEXCEPT
-{
-    BSLS_ASSERT(n >= d_size);
-    d_size -= n;
 }
 
 NTSCFG_INLINE
@@ -1389,31 +1363,6 @@ void ConstBufferArray::pop(bsl::size_t numBytes)
 }
 
 NTSCFG_INLINE
-void ConstBufferArray::erase(bsl::size_t numBytes)
-{
-    BSLS_ASSERT(this->numBytes() >= numBytes);
-
-    bsl::vector<ntsa::ConstBuffer>::iterator it = d_bufferArray.begin();
-    const bsl::vector<ntsa::ConstBuffer>::const_iterator end =
-        d_bufferArray.cend();
-
-    bsl::size_t targetSize = this->numBytes() - numBytes;
-    bsl::size_t totalBytes = 0;
-
-    while (it != end && totalBytes < targetSize) {
-        totalBytes += it->length();
-        ++it;
-    }
-
-    //now it points to the buffer after the last we want to save
-    d_bufferArray.erase(it, end);
-
-    if (targetSize > 0) {
-        d_bufferArray.rbegin()->erase(totalBytes - targetSize);
-    }
-}
-
-NTSCFG_INLINE
 ntsa::ConstBuffer& ConstBufferArray::buffer(bsl::size_t index)
 {
     return d_bufferArray[index];
@@ -1544,31 +1493,6 @@ void ConstBufferPtrArray::pop(bsl::size_t numBytes)
             break;
         }
     }
-}
-
-NTSCFG_INLINE
-void ConstBufferPtrArray::erase(bsl::size_t numBytes)
-{
-    BSLS_ASSERT(d_numBytes >= numBytes);
-    const bsl::size_t targetSize = d_numBytes - numBytes;
-
-    if (d_numBuffers == 0 || targetSize == d_numBytes) {
-        return;
-    }
-
-    ntsa::ConstBuffer* ptr = d_bufferArray;
-
-    bsl::size_t newNumBuffs = 0;
-    bsl::size_t totalBytes  = 0;
-
-    while (totalBytes < targetSize) {
-        totalBytes += ptr->length();
-        ++newNumBuffs;
-        ++ptr;
-    }
-    ptr->erase(totalBytes - targetSize);
-    d_numBuffers = newNumBuffs;
-    d_numBytes = targetSize;
 }
 
 NTSCFG_INLINE
@@ -1711,31 +1635,6 @@ void MutableBufferArray::pop(bsl::size_t numBytes)
 }
 
 NTSCFG_INLINE
-void MutableBufferArray::erase(bsl::size_t numBytes)
-{
-    BSLS_ASSERT(this->numBytes() >= numBytes);
-
-    bsl::vector<ntsa::MutableBuffer>::iterator it = d_bufferArray.begin();
-    const bsl::vector<ntsa::MutableBuffer>::const_iterator end =
-        d_bufferArray.cend();
-
-    bsl::size_t targetSize = this->numBytes() - numBytes;
-    bsl::size_t totalBytes = 0;
-
-    while (it != end && totalBytes < targetSize) {
-        totalBytes += it->length();
-        ++it;
-    }
-
-    //now it points to the buffer after the last we want to save
-    d_bufferArray.erase(it, end);
-
-    if (targetSize > 0) {
-        d_bufferArray.rbegin()->erase(totalBytes - targetSize);
-    }
-}
-
-NTSCFG_INLINE
 ntsa::MutableBuffer& MutableBufferArray::buffer(bsl::size_t index)
 {
     return d_bufferArray[index];
@@ -1867,31 +1766,6 @@ void MutableBufferPtrArray::pop(bsl::size_t numBytes)
             break;
         }
     }
-}
-
-NTSCFG_INLINE
-void MutableBufferPtrArray::erase(bsl::size_t numBytes)
-{
-    BSLS_ASSERT(d_numBytes >= numBytes);
-    const bsl::size_t targetSize = d_numBytes - numBytes;
-
-    if (d_numBuffers == 0 || targetSize == d_numBytes) {
-        return;
-    }
-
-    ntsa::MutableBuffer* ptr = d_bufferArray;
-
-    bsl::size_t newNumBuffs = 0;
-    bsl::size_t totalBytes  = 0;
-
-    while (totalBytes < targetSize) {
-        totalBytes += ptr->length();
-        ++newNumBuffs;
-        ++ptr;
-    }
-    ptr->erase(totalBytes - targetSize);
-    d_numBuffers = newNumBuffs;
-    d_numBytes = targetSize;
 }
 
 NTSCFG_INLINE

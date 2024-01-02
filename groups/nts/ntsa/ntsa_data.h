@@ -562,9 +562,6 @@ struct DataUtil {
     /// Pop the specified 'numBytes' from the specified 'destination'.
     static void pop(ntsa::Data* data, bsl::size_t numBytes);
 
-    /// Pop the specified 'numBytes' from the specified 'destination'.
-    static void erase(ntsa::Data* data, bsl::size_t numBytes);
-
     /// Copy of the specified 'source' into the specified destination. Return
     /// the error. Note that this function may be considerably expensive, as it
     /// performs a deep copy of all data referenced by 'source', including

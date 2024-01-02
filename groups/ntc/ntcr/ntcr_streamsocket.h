@@ -112,7 +112,6 @@ class StreamSocket : public ntci::StreamSocket,
     ntcq::SendQueue                            d_sendQueue;
     ntcq::ZeroCopyWaitList                     d_zeroCopyList;
     bsl::size_t                                d_zeroCopyThreshold;
-    bsl::size_t                                d_zeroCopyMaxPayload;
     bool                                       d_limitDueToZeroCopy;
     bsl::shared_ptr<ntci::RateLimiter>         d_sendRateLimiter_sp;
     bsl::shared_ptr<ntci::Timer>               d_sendRateTimer_sp;
@@ -239,15 +238,10 @@ class StreamSocket : public ntci::StreamSocket,
     ntsa::Error privateSocketWritableIterationBatch(
         const bsl::shared_ptr<StreamSocket>& self);
 
-    ntsa::Error privateSocketWritableIterationBatchZeroCopy(
-        const bsl::shared_ptr<StreamSocket>& self);
-
     /// Process the writability of the socket by performing one write
     /// iteration from the entry at the front of the write queue.
     ntsa::Error privateSocketWritableIterationFront(
         const bsl::shared_ptr<StreamSocket>& self);
-
-    ntsa::Error privateSocketWritableIterationFrontZeroCopy(const bsl::shared_ptr<StreamSocket>& self);
 
     /// Indicate a connection failure has occurred. If the specified 'defer'
     /// flag is true, ensure the announcement is deferred. If the specified
@@ -420,11 +414,6 @@ class StreamSocket : public ntci::StreamSocket,
                                const bdlbb::Blob&                   data,
                                const ntca::SendOptions&             options);
 
-    ntsa::Error privateSendRawZeroCopy(const bsl::shared_ptr<StreamSocket>& self,
-                               const bdlbb::Blob&                   data,
-                               const ntca::SendOptions&             options,
-                                       const ntci::SendCallback&            callback);
-
     /// Send the specified raw or already encrypted 'data' according to the
     /// specified 'options'. Return the error. The behavior is undefined
     /// unless 'd_sendMutex' is locked.
@@ -446,11 +435,6 @@ class StreamSocket : public ntci::StreamSocket,
     /// send buffer, invoke the specified 'callback' on the callback's
     /// strand, if any. Return the error.
     ntsa::Error privateSendRaw(const bsl::shared_ptr<StreamSocket>& self,
-                               const ntsa::Data&                    data,
-                               const ntca::SendOptions&             options,
-                               const ntci::SendCallback&            callback);
-
-    ntsa::Error privateSendRawZeroCopy(const bsl::shared_ptr<StreamSocket>& self,
                                const ntsa::Data&                    data,
                                const ntca::SendOptions&             options,
                                const ntci::SendCallback&            callback);
