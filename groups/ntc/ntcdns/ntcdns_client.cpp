@@ -812,13 +812,22 @@ void ClientGetDomainNameOperation::processResponse(
                 timeToLive.makeValue(answer.ttl());
             }
             else {
-                bsl::size_t timeToLiveValue = timeToLive.value();
+                const bsl::size_t timeToLiveValue = timeToLive.value();
                 if (timeToLiveValue != answer.ttl()) {
                     NTCDNS_CLIENT_OPERATION_LOG_TTL_MISMATCH(answer.ttl(),
                                                              timeToLiveValue);
+// Some versions of GCC erroneously warn when 'timeToLive.value()' is
+// called even when protected by a check of '!timeToLive.isNull()'.
+#if defined(BSLS_PLATFORM_CMP_GNU)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
                     if (answer.ttl() < timeToLiveValue) {
                         timeToLive = answer.ttl();
                     }
+#if defined(BSLS_PLATFORM_CMP_GNU)
+#pragma GCC diagnostic pop
+#endif
                 }
             }
 
