@@ -112,7 +112,7 @@ class StreamSocket : public ntci::StreamSocket,
     ntcq::SendQueue                            d_sendQueue;
     ntcq::ZeroCopyWaitList                     d_zeroCopyList;
     bsl::size_t                                d_zeroCopyThreshold;
-    bool                                       d_limitDueToZeroCopy;
+//    bool                                       d_limitDueToZeroCopy;
     bsl::shared_ptr<ntci::RateLimiter>         d_sendRateLimiter_sp;
     bsl::shared_ptr<ntci::Timer>               d_sendRateTimer_sp;
     bool                                       d_sendGreedily;

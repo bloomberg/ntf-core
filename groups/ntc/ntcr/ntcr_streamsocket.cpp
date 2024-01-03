@@ -18,9 +18,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntcr_streamsocket_cpp, "$Id$ $CSID$")
 
-
-#define FORCE_ZEROCOPY true
-#define ZERO_COPY_ALLOW_FAILED_SENDS true
+#define FORCE_ZEROCOPY false
 
 #include <ntccfg_limits.h>
 #include <ntci_encryption.h>
@@ -168,6 +166,9 @@ BSLS_IDENT_RCSID(ntcr_streamsocket_cpp, "$Id$ $CSID$")
 #define NTCR_STREAMSOCKET_LOG_SEND_BUFFER_PAGE_LIMIT()                        \
     NTCI_LOG_ERROR("Stream socket "                                           \
                    "has saturated the number of pinned pages")
+
+#define NTCR_STREAMSOCKET_LOG_ZERO_COPY_DISABLED()                            \
+    NTCI_LOG_ERROR("Zero copy is disabled due to ENOBUFS")
 
 #define NTCR_STREAMSOCKET_LOG_SEND_RESULT(context)                            \
     NTCI_LOG_TRACE("Stream socket "                                           \
@@ -395,7 +396,7 @@ void StreamSocket::processSocketWritable(const ntca::ReactorEvent& event)
     if (error && error != ntsa::Error::e_WOULD_BLOCK) {
         this->privateFail(self, error);
     }
-    else if (!d_limitDueToZeroCopy) {
+    else {
         this->privateRearmAfterSend(self);
     }
 }
@@ -448,7 +449,7 @@ void StreamSocket::processNotifications(
     const bsl::vector<ntsa::Notification>& nots =
         notifications.notifications();
 
-    int zcAcknowledged = 0;
+    //int zcAcknowledged = 0;
 
     for (size_t i = 0; i < nots.size(); ++i) {
         const ntsa::Notification& notification = nots[i];
@@ -458,7 +459,7 @@ void StreamSocket::processNotifications(
 
         switch (notification.type()) {
         case (ntsa::NotificationType::e_ZERO_COPY): {
-            zcAcknowledged +=
+            //zcAcknowledged +=
                 d_zeroCopyList.zeroCopyAcknowledge(notification.zeroCopy(),
                                                    self,
                                                    self);
@@ -474,13 +475,12 @@ void StreamSocket::processNotifications(
 
     //TODO: rearm interest in writability if required and zcAcknowledged > 0
 
-    if (d_limitDueToZeroCopy && (zcAcknowledged > 0)) {
-        d_limitDueToZeroCopy = false;
-        this->privateRelaxFlowControl(self,
-                                      ntca::FlowControlType::e_SEND,
-                                      false,
-                                      false);
-    }
+//    if (zcAcknowledged > 0) {
+//        this->privateRelaxFlowControl(self,
+//                                      ntca::FlowControlType::e_SEND,
+//                                      false,
+//                                      false);
+//    }
 
     this->privateRearmAfterNotification(self);
 }
@@ -1183,26 +1183,34 @@ ntsa::Error StreamSocket::privateSocketWritableIterationBatch(
 {
     NTCI_LOG_CONTEXT();
 
-    BSLS_ASSERT_OPT(!d_limitDueToZeroCopy);
-
     ntsa::Error error;
 
     ntsa::SendContext context;
 
-    const bool zeroCopyIsUsed = (d_sendData_sp->size() >= d_zeroCopyThreshold);
+    bool zeroCopyIsUsed = (d_sendData_sp->size() >= d_zeroCopyThreshold);
 
     error = this->privateEnqueueSendBuffer(self, &context, *d_sendData_sp);
     if (NTCCFG_UNLIKELY(error)) {
-        if (zeroCopyIsUsed && (error == ntsa::Error(ntsa::Error::e_LIMIT))) {
-            this->privateApplyFlowControl(self,
-                                          ntca::FlowControlType::e_SEND,
-                                          ntca::FlowControlMode::e_IMMEDIATE,
-                                          true,
-                                          false);
-            d_limitDueToZeroCopy = true;
-            return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+        if (zeroCopyIsUsed) {
+            if (error == ntsa::Error::e_LIMIT) {
+                d_zeroCopyThreshold =
+                    bsl::numeric_limits<bsl::size_t>::max();
+                zeroCopyIsUsed = false;
+                context.reset();
+                NTCR_STREAMSOCKET_LOG_ZERO_COPY_DISABLED();
+
+                error = this->privateEnqueueSendBuffer(self,
+                                                       &context,
+                                                       *d_sendData_sp);
+                if (NTCCFG_UNLIKELY(error)) {
+                    return error;
+                }
+            }
+            return error;
         }
-        return error;
+        else {
+            return error;
+        }
     }
 
     bsl::size_t numBytesRemaining = context.bytesSent();
@@ -1356,23 +1364,30 @@ ntsa::Error StreamSocket::privateSocketWritableIterationFront(
 
         ntsa::SendContext context;
 
-        const bool zeroCopyIsUsed =
-            (entry.data()->size() >= d_zeroCopyThreshold);
+        bool zeroCopyIsUsed = (entry.data()->size() >= d_zeroCopyThreshold);
 
         error = this->privateEnqueueSendBuffer(self, &context, *entry.data());
         if (NTCCFG_UNLIKELY(error)) {
-            if (zeroCopyIsUsed && (error == ntsa::Error(ntsa::Error::e_LIMIT)))
-            {
-                this->privateApplyFlowControl(
-                    self,
-                    ntca::FlowControlType::e_SEND,
-                    ntca::FlowControlMode::e_IMMEDIATE,
-                    true,
-                    false);
-                d_limitDueToZeroCopy = true;
-                return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+            if (zeroCopyIsUsed) {
+                if (error == ntsa::Error::e_LIMIT) {
+                    d_zeroCopyThreshold =
+                        bsl::numeric_limits<bsl::size_t>::max();
+                    zeroCopyIsUsed = false;
+                    context.reset();
+                    NTCR_STREAMSOCKET_LOG_ZERO_COPY_DISABLED();
+
+                    error = this->privateEnqueueSendBuffer(self,
+                                                           &context,
+                                                           *entry.data());
+                    if (NTCCFG_UNLIKELY(error)) {
+                        return error;
+                    }
+                }
+                return error;
             }
-            return error;
+            else {
+                return error;
+            }
         }
 
         bsl::shared_ptr<ntcq::SendCallbackQueueEntry> callbackEntry;
@@ -2692,8 +2707,6 @@ ntsa::Error StreamSocket::privateEnqueueSendBuffer(
 {
     NTCI_LOG_CONTEXT();
 
-    BSLS_ASSERT_OPT(!d_limitDueToZeroCopy);
-
     ntsa::Error error;
 
     if (!d_socket_sp) {
@@ -2792,8 +2805,6 @@ ntsa::Error StreamSocket::privateEnqueueSendBuffer(
     const ntsa::Data&                    data)
 {
     NTCI_LOG_CONTEXT();
-
-    BSLS_ASSERT_OPT(!d_limitDueToZeroCopy);
 
     ntsa::Error error;
 
@@ -3193,20 +3204,30 @@ ntsa::Error StreamSocket::privateSendRaw(
 
     ntsa::SendContext context;
 
-    const bool zeroCopyIsUsed =
+    bool zeroCopyIsUsed =
         (static_cast<bsl::size_t>(data.length()) >= d_zeroCopyThreshold);
-    //    bool limitDueToZeroCopy = false;
 
     if (NTCCFG_LIKELY(!d_sendQueue.hasEntry())) {
         error = this->privateEnqueueSendBuffer(self, &context, data);
         if (NTCCFG_UNLIKELY(error)) {
-            d_limitDueToZeroCopy =
-                (zeroCopyIsUsed &&
-                 (error == ntsa::Error(ntsa::Error::e_LIMIT)));
+            if (zeroCopyIsUsed) {
+                if (error == ntsa::Error::e_LIMIT) {
+                    d_zeroCopyThreshold =
+                        bsl::numeric_limits<bsl::size_t>::max();
+                    zeroCopyIsUsed = false;
+                    context.reset();
+                    NTCR_STREAMSOCKET_LOG_ZERO_COPY_DISABLED();
 
-            if (NTCCFG_UNLIKELY(error != ntsa::Error::e_WOULD_BLOCK) &&
-                !d_limitDueToZeroCopy)
-            {
+                    error =
+                        this->privateEnqueueSendBuffer(self, &context, data);
+                    if (NTCCFG_UNLIKELY(error) &&
+                        (NTCCFG_UNLIKELY(error != ntsa::Error::e_WOULD_BLOCK)))
+                    {
+                        return error;
+                    }
+                }
+            }
+            else if (NTCCFG_UNLIKELY(error != ntsa::Error::e_WOULD_BLOCK)) {
                 return error;
             }
         }
@@ -3292,7 +3313,7 @@ ntsa::Error StreamSocket::privateSendRaw(
 
     NTCS_METRICS_UPDATE_WRITE_QUEUE_SIZE(d_sendQueue.size());
 
-    if (becameNonEmpty && !d_limitDueToZeroCopy) {
+    if (becameNonEmpty) {
         this->privateRelaxFlowControl(self,
                                       ntca::FlowControlType::e_SEND,
                                       true,
@@ -3313,18 +3334,29 @@ ntsa::Error StreamSocket::privateSendRaw(
 
     ntsa::SendContext context;
 
-    const bool zeroCopyIsUsed = (data.size() >= d_zeroCopyThreshold);
-    //    bool       limitDueToZeroCopy = false;
+    bool zeroCopyIsUsed = (data.size() >= d_zeroCopyThreshold);
 
     if (NTCCFG_LIKELY(!d_sendQueue.hasEntry())) {
         error = this->privateEnqueueSendBuffer(self, &context, data);
         if (NTCCFG_UNLIKELY(error)) {
-            d_limitDueToZeroCopy =
-                (zeroCopyIsUsed &&
-                 (error == ntsa::Error(ntsa::Error::e_LIMIT)));
-            if (NTCCFG_UNLIKELY(error != ntsa::Error::e_WOULD_BLOCK) &&
-                !d_limitDueToZeroCopy)
-            {
+            if (zeroCopyIsUsed) {
+                if (error == ntsa::Error::e_LIMIT) {
+                    d_zeroCopyThreshold =
+                        bsl::numeric_limits<bsl::size_t>::max();
+                    zeroCopyIsUsed = false;
+                    context.reset();
+                    NTCR_STREAMSOCKET_LOG_ZERO_COPY_DISABLED();
+
+                    error =
+                        this->privateEnqueueSendBuffer(self, &context, data);
+                    if (NTCCFG_UNLIKELY(error) &&
+                        (NTCCFG_UNLIKELY(error != ntsa::Error::e_WOULD_BLOCK)))
+                    {
+                        return error;
+                    }
+                }
+            }
+            else if (NTCCFG_UNLIKELY(error != ntsa::Error::e_WOULD_BLOCK)) {
                 return error;
             }
         }
@@ -3405,7 +3437,7 @@ ntsa::Error StreamSocket::privateSendRaw(
 
     NTCS_METRICS_UPDATE_WRITE_QUEUE_SIZE(d_sendQueue.size());
 
-    if (becameNonEmpty && !d_limitDueToZeroCopy) {
+    if (becameNonEmpty) {
         this->privateRelaxFlowControl(self,
                                       ntca::FlowControlType::e_SEND,
                                       true,
@@ -3427,20 +3459,30 @@ ntsa::Error StreamSocket::privateSendRaw(
 
     ntsa::SendContext context;
 
-    const bool zeroCopyIsUsed =
+    bool zeroCopyIsUsed =
         (static_cast<bsl::size_t>(data.length()) >= d_zeroCopyThreshold);
-    //    bool limitDueToZeroCopy = false;
 
     if (NTCCFG_LIKELY(!d_sendQueue.hasEntry())) {
         error = this->privateEnqueueSendBuffer(self, &context, data);
         if (NTCCFG_UNLIKELY(error)) {
-            d_limitDueToZeroCopy =
-                (zeroCopyIsUsed &&
-                 (error == ntsa::Error(ntsa::Error::e_LIMIT)));
+            if (zeroCopyIsUsed) {
+                if (error == ntsa::Error::e_LIMIT) {
+                    d_zeroCopyThreshold =
+                        bsl::numeric_limits<bsl::size_t>::max();
+                    zeroCopyIsUsed = false;
+                    context.reset();
+                    NTCR_STREAMSOCKET_LOG_ZERO_COPY_DISABLED();
 
-            if (NTCCFG_UNLIKELY(error != ntsa::Error::e_WOULD_BLOCK) &&
-                !d_limitDueToZeroCopy)
-            {
+                    error =
+                        this->privateEnqueueSendBuffer(self, &context, data);
+                    if (NTCCFG_UNLIKELY(error) &&
+                        (NTCCFG_UNLIKELY(error != ntsa::Error::e_WOULD_BLOCK)))
+                    {
+                        return error;
+                    }
+                }
+            }
+            else if (NTCCFG_UNLIKELY(error != ntsa::Error::e_WOULD_BLOCK)) {
                 return error;
             }
         }
@@ -3547,7 +3589,7 @@ ntsa::Error StreamSocket::privateSendRaw(
 
     NTCS_METRICS_UPDATE_WRITE_QUEUE_SIZE(d_sendQueue.size());
 
-    if (becameNonEmpty && !d_limitDueToZeroCopy) {
+    if (becameNonEmpty) {
         this->privateRelaxFlowControl(self,
                                       ntca::FlowControlType::e_SEND,
                                       true,
@@ -3569,18 +3611,29 @@ ntsa::Error StreamSocket::privateSendRaw(
 
     ntsa::SendContext context;
 
-    const bool zeroCopyIsUsed     = (data.size() >= d_zeroCopyThreshold);
-//    bool       limitDueToZeroCopy = false;
+    bool zeroCopyIsUsed = (data.size() >= d_zeroCopyThreshold);
 
     if (NTCCFG_LIKELY(!d_sendQueue.hasEntry())) {
         error = this->privateEnqueueSendBuffer(self, &context, data);
         if (NTCCFG_UNLIKELY(error)) {
-            d_limitDueToZeroCopy =
-                (zeroCopyIsUsed &&
-                 (error == ntsa::Error(ntsa::Error::e_LIMIT)));
-            if (NTCCFG_UNLIKELY(error != ntsa::Error::e_WOULD_BLOCK) &&
-                !d_limitDueToZeroCopy)
-            {
+            if (zeroCopyIsUsed) {
+                if (error == ntsa::Error::e_LIMIT) {
+                    d_zeroCopyThreshold =
+                        bsl::numeric_limits<bsl::size_t>::max();
+                    zeroCopyIsUsed = false;
+                    context.reset();
+                    NTCR_STREAMSOCKET_LOG_ZERO_COPY_DISABLED();
+
+                    error =
+                        this->privateEnqueueSendBuffer(self, &context, data);
+                    if (NTCCFG_UNLIKELY(error) &&
+                        (NTCCFG_UNLIKELY(error != ntsa::Error::e_WOULD_BLOCK)))
+                    {
+                        return error;
+                    }
+                }
+            }
+            else if (NTCCFG_UNLIKELY(error != ntsa::Error::e_WOULD_BLOCK)) {
                 return error;
             }
         }
@@ -3685,7 +3738,7 @@ ntsa::Error StreamSocket::privateSendRaw(
 
     NTCS_METRICS_UPDATE_WRITE_QUEUE_SIZE(d_sendQueue.size());
 
-    if (becameNonEmpty && !d_limitDueToZeroCopy) {
+    if (becameNonEmpty) {
         this->privateRelaxFlowControl(self,
                                       ntca::FlowControlType::e_SEND,
                                       true,
@@ -4552,7 +4605,7 @@ StreamSocket::StreamSocket(
 , d_sendQueue(basicAllocator)
 , d_zeroCopyList(basicAllocator)
 , d_zeroCopyThreshold(bsl::numeric_limits<bsl::size_t>::max())
-, d_limitDueToZeroCopy(false)
+//, d_limitDueToZeroCopy(false)
 , d_sendRateLimiter_sp()
 , d_sendRateTimer_sp()
 , d_sendGreedily(NTCCFG_DEFAULT_STREAM_SOCKET_WRITE_GREEDILY)
