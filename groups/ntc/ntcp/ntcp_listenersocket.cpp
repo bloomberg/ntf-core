@@ -131,6 +131,13 @@ BSLS_IDENT_RCSID(ntcp_listenersocket_cpp, "$Id$ $CSID$")
     NTCI_LOG_TRACE("Listener socket "                                         \
                    "is shutting down acceptance")
 
+// Some versions of GCC erroneously warn ntcs::ObserverRef::d_shared may be
+// uninitialized.
+#if defined(BSLS_PLATFORM_CMP_GNU)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+
 namespace BloombergLP {
 namespace ntcp {
 

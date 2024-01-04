@@ -176,6 +176,14 @@
             << NTCI_LOG_STREAM_END;                                           \
     } while (false)
 
+
+// Some versions of GCC erroneously warn when 'timeToLive.value()' is
+// called even when protected by a check of '!timeToLive.isNull()'.
+#if defined(BSLS_PLATFORM_CMP_GNU)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+
 namespace BloombergLP {
 namespace ntcdns {
 
@@ -372,13 +380,6 @@ void ClientGetIpAddressOperation::processResponse(
     bsl::size_t               serverIndex,
     const bsls::TimeInterval& now)
 {
-    // Some versions of GCC erroneously warn when 'timeToLive.value()' is
-    // called even when protected by a check of '!timeToLive.isNull()'.
-#if defined(BSLS_PLATFORM_CMP_GNU)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#endif
-
     NTCI_LOG_CONTEXT();
 
     ntsa::Error error;
@@ -545,10 +546,6 @@ void ClientGetIpAddressOperation::processResponse(
 
     d_resolver_sp.reset();
     d_serverList.clear();
-
-#if defined(BSLS_PLATFORM_CMP_GNU)
-#pragma GCC diagnostic pop
-#endif
 }
 
 void ClientGetIpAddressOperation::processError(const ntsa::Error& error)

@@ -87,6 +87,13 @@ BSLS_IDENT_RCSID(ntcs_strand_cpp, "$Id$ $CSID$")
 // Define the strand implementation algorithm.
 #define NTCS_STRAND_IMP NTCS_STRAND_IMP_GREEDY
 
+// Some versions of GCC erroneously warn ntcs::ObserverRef::d_shared may be
+// uninitialized.
+#if defined(BSLS_PLATFORM_CMP_GNU)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+
 // IMPLEMENTATION NOTES: Testing indicates that, with 10 threads driving the
 // reactor utilized by a strand, fair algorithm achieves 250,000 functors per
 // second, evenly distributed across all threads, while the greedy algorithm
