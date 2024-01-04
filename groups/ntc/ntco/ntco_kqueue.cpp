@@ -95,7 +95,7 @@ BSLS_IDENT_RCSID(ntco_kqueue_cpp, "$Id$ $CSID$")
     NTCI_LOG_TRACE("Polled %d socket events", numEvents)
 
 #define NTCO_KQUEUE_LOG_EVENT_POLL(kevent)                                    \
-    BSLS_LOG_TRACE("Kqueue reactor to descriptor %d polled event "            \
+    NTCI_LOG_TRACE("Kqueue reactor to descriptor %d polled event "            \
                    "filter%s%s%s%s%s%s%s flags%s%s%s%s%s%s%s%s%s",            \
                    kevent.ident,                                              \
                    (((kevent.filter == EVFILT_READ)) ? " READ" : ""),         \
@@ -122,7 +122,7 @@ BSLS_IDENT_RCSID(ntco_kqueue_cpp, "$Id$ $CSID$")
                    error.text().c_str())
 
 #define NTCO_KQUEUE_LOG_EVENT_APPLY(kevent)                                   \
-    BSLS_LOG_TRACE("Kqueue reactor to descriptor %d applying event "          \
+    NTCI_LOG_TRACE("Kqueue reactor to descriptor %d applying event "          \
                    "filter%s%s%s%s%s%s%s flags%s%s%s%s%s%s%s%s%s",            \
                    kevent.ident,                                              \
                    (((kevent.filter == EVFILT_READ)) ? " READ" : ""),         \
@@ -143,7 +143,7 @@ BSLS_IDENT_RCSID(ntco_kqueue_cpp, "$Id$ $CSID$")
                    (((kevent.flags & EV_ERROR) != 0) ? " ERROR" : ""))
 
 #define NTCO_KQUEUE_LOG_EVENT_APPLY_FAILURE(error)                            \
-    BSLS_LOG_ERROR("Kqueue reactor failed to apply event filter: %s",         \
+    NTCI_LOG_ERROR("Kqueue reactor failed to apply event filter: %s",         \
                    error.text().c_str())
 
 #define NTCO_KQUEUE_LOG_ADD(handle)                                           \
