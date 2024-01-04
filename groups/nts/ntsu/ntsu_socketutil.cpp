@@ -27,9 +27,9 @@ BSLS_IDENT_RCSID(ntsu_socketutil_cpp, "$Id$ $CSID$")
 #include <ntscfg_limits.h>
 #include <ntsu_adapterutil.h>
 #include <ntsu_bufferutil.h>
-#include <ntsu_zerocopyutil.h>
 #include <ntsu_socketoptionutil.h>
 #include <ntsu_timestamputil.h>
+#include <ntsu_zerocopyutil.h>
 
 #include <bdlb_chartype.h>
 #include <bdlb_guid.h>
@@ -2093,15 +2093,16 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
         }
     }
 
+    struct iovec iovecArray[NTSU_SOCKETUTIL_MAX_BUFFERS_PER_SEND];
+
     if (blob.numDataBuffers() == 1) {
         void*             data = blob.buffer(0).data();
         const bsl::size_t size = blob.lastDataBufferLength();
 
-        struct iovec iovec;
-        iovec.iov_base = data;
-        iovec.iov_len  = size;
+        iovecArray[0].iov_base = data;
+        iovecArray[0].iov_len  = size;
 
-        msg.msg_iov    = &iovec;
+        msg.msg_iov    = iovecArray;
         msg.msg_iovlen = 1;
 
         context->setBytesSendable(size);
@@ -2119,8 +2120,6 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
         else if (numBuffersMax > NTSU_SOCKETUTIL_MAX_BUFFERS_PER_SEND) {
             numBuffersMax = NTSU_SOCKETUTIL_MAX_BUFFERS_PER_SEND;
         }
-
-        struct iovec iovecArray[NTSU_SOCKETUTIL_MAX_BUFFERS_PER_SEND];
 
         bsl::size_t numBuffersTotal;
         bsl::size_t numBytesTotal;
@@ -2221,8 +2220,7 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
     }
 #endif
 
-    ssize_t sendmsgResult =
-        ::sendmsg(socket, &msg, sendFlags);
+    ssize_t sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
 
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
@@ -3329,7 +3327,7 @@ ntsa::Error SocketUtil::receiveNotifications(
         // IP_RECVERR -> SO_TIMESTAMPING or SO_TIMESTAMPING -> IP_RECVERR.
 
         bool tsMetaDataReceived = false;
-        bool timestampReceived = false;
+        bool timestampReceived  = false;
 
         ntsa::Timestamp    ts;
         ntsa::Notification notification;
@@ -3367,7 +3365,7 @@ ntsa::Error SocketUtil::receiveNotifications(
 
                         notifications->addNotification(notification);
                         tsMetaDataReceived = false;
-                        timestampReceived = false;
+                        timestampReceived  = false;
                     }
                 }
                 else if (ser.ee_origin ==
@@ -3398,7 +3396,7 @@ ntsa::Error SocketUtil::receiveNotifications(
                     notifications->addNotification(notification);
 
                     tsMetaDataReceived = false;
-                    timestampReceived = false;
+                    timestampReceived  = false;
                 }
             }
             else {
