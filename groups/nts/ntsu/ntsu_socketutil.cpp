@@ -27,9 +27,9 @@ BSLS_IDENT_RCSID(ntsu_socketutil_cpp, "$Id$ $CSID$")
 #include <ntscfg_limits.h>
 #include <ntsu_adapterutil.h>
 #include <ntsu_bufferutil.h>
-#include <ntsu_zerocopyutil.h>
 #include <ntsu_socketoptionutil.h>
 #include <ntsu_timestamputil.h>
+#include <ntsu_zerocopyutil.h>
 
 #include <bdlb_chartype.h>
 #include <bdlb_guid.h>
@@ -3489,10 +3489,19 @@ ntsa::Error SocketUtil::receiveNotifications(
         msg.msg_control    = buf.buffer();
         msg.msg_controllen = k_BUF_SIZE;
 
-        ssize_t recvMsgResult = ::recvmsg(socket, &msg, MSG_ERRQUEUE);
+        const ssize_t recvMsgResult =
+            ::recvmsg(socket, &msg, MSG_ERRQUEUE | MSG_DONTWAIT);
+
+        if (recvMsgResult == 0) {
+            return ntsa::Error();
+        }
 
         if (recvMsgResult < 0) {
-            if (errno == EAGAIN) {
+#if EWOULDBLOCK != EAGAIN
+            if (errno == EWOULDBLOCK || errno == EAGAIN) {
+#else
+            if (errno == EWOULDBLOCK) {
+#endif
                 return ntsa::Error();
             }
             else {
@@ -3519,7 +3528,7 @@ ntsa::Error SocketUtil::receiveNotifications(
         // IP_RECVERR -> SO_TIMESTAMPING or SO_TIMESTAMPING -> IP_RECVERR.
 
         bool tsMetaDataReceived = false;
-        bool timestampReceived = false;
+        bool timestampReceived  = false;
 
         ntsa::Timestamp    ts;
         ntsa::Notification notification;
@@ -3557,7 +3566,7 @@ ntsa::Error SocketUtil::receiveNotifications(
 
                         notifications->addNotification(notification);
                         tsMetaDataReceived = false;
-                        timestampReceived = false;
+                        timestampReceived  = false;
                     }
                 }
                 else if (ser.ee_origin ==
@@ -3601,7 +3610,7 @@ ntsa::Error SocketUtil::receiveNotifications(
                     notifications->addNotification(notification);
 
                     tsMetaDataReceived = false;
-                    timestampReceived = false;
+                    timestampReceived  = false;
                 }
             }
             else {
