@@ -3492,16 +3492,14 @@ ntsa::Error SocketUtil::receiveNotifications(
         const ssize_t recvMsgResult =
             ::recvmsg(socket, &msg, MSG_ERRQUEUE | MSG_DONTWAIT);
 
-        if (recvMsgResult == 0) {
+        // Check that if ::recvmsg returned 0 that there is really some data
+        // inside the control message
+        if (0 == recvMsgResult && 0 == CMSG_FIRSTHDR(&msg)) {
             return ntsa::Error();
         }
 
         if (recvMsgResult < 0) {
-#if EWOULDBLOCK != EAGAIN
-            if (errno == EWOULDBLOCK || errno == EAGAIN) {
-#else
-            if (errno == EWOULDBLOCK) {
-#endif
+            if (errno == EAGAIN) {
                 return ntsa::Error();
             }
             else {
