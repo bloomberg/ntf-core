@@ -27,8 +27,53 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntsa {
 
-/// Describe a notification for the completion of one or more send operations
-/// with zero-copy semantics.
+/// Provide an enumeration of the status of a zero-copy operation.
+///
+/// @par Thread Safety
+/// This struct is thread safe.
+///
+/// @ingroup module_ntsa_system
+struct ZeroCopyType {
+  public:
+    /// Provide an enumeration of the status of a zero-copy operation.
+    enum Value {
+        /// The copy was avoided.
+        e_AVOIDED = 0,
+
+        /// The copy was deferred from the time of the system call until
+        /// nearer to the time of transmission but a deep copy was still 
+        /// performed.
+        e_DEFERRED = 1
+    };
+
+    /// Return the string representation exactly matching the enumerator name
+    /// corresponding to the specified enumeration 'value'.
+    static const char* toString(Value value);
+
+    /// Load into the specified 'result' the enumerator matching the specified
+    /// 'string'.  Return 0 on success, and a non-zero value with no effect on
+    /// 'result' otherwise (i.e., 'string' does not match any enumerator).
+    static int fromString(Value* result, const bslstl::StringRef& string);
+
+    /// Load into the specified 'result' the enumerator matching the specified
+    /// 'number'.  Return 0 on success, and a non-zero value with no effect on
+    /// 'result' otherwise (i.e., 'number' does not match any enumerator).
+    static int fromInt(Value* result, int number);
+
+    /// Write to the specified 'stream' the string representation of the
+    /// specified enumeration 'value'.  Return a reference to the modifiable
+    /// 'stream'.
+    static bsl::ostream& print(bsl::ostream& stream, Value value);
+};
+
+/// Format the specified 'rhs' to the specified output 'stream' and return a
+/// reference to the modifiable 'stream'.
+///
+/// @related ntsa::ZeroCopyType
+bsl::ostream& operator<<(bsl::ostream& stream, ZeroCopyType::Value rhs);
+
+/// Describe a notification for the completion of a closed range of send
+/// operations with zero-copy semantics.
 ///
 /// @par Attributes
 /// This class is composed of the following attributes:
@@ -36,27 +81,33 @@ namespace ntsa {
 /// @li @b from:
 /// The identifier of the first zero-copy send that completed, inclusive.
 ///
-/// @li @b to:
+/// @li @b thru:
 /// The identifier of the last zero-copy send that completed, inclusive.
 ///
-/// @li @b code:
-/// The code indicating whether the copy was avoided or was performed.
+/// @li @b type:
+/// The status of the zero-copy operation. This enumerated indicates whether
+/// a copy was avoided or was deferred from the time of the system call until
+/// later, more nearer to the time of transmission.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
+///
+/// @ingroup module_ntsa_system
 class ZeroCopy
 {
-    bsl::uint32_t d_from;
-    bsl::uint32_t d_to;
-    bsl::uint8_t  d_code;
+    bsl::uint32_t             d_from;
+    bsl::uint32_t             d_thru;
+    ntsa::ZeroCopyType::Value d_type;
 
   public:
-    /// Create a new instance having the default value.
+    /// Create a new zero-copy interval having the default value.
     ZeroCopy();
 
-    /// Create a new instance using the specified 'from', the specified 'to'
-    /// and the specified 'code' as initial values.
-    ZeroCopy(bsl::uint32_t from, bsl::uint32_t to, bsl::uint8_t code);
+    /// Create a new '[from, thru]' zero-copy interval completed according to
+    /// the specified 'type'. 
+    ZeroCopy(bsl::uint32_t             from, 
+             bsl::uint32_t             thru, 
+             ntsa::ZeroCopyType::Value type);
 
     /// Create new object having the same value as the specified 'original'
     /// object.
@@ -75,11 +126,11 @@ class ZeroCopy
 
     /// Set the identifier of the last zero-copy send that completed, 
     /// inclusive, to the specified 'value'. 
-    void setTo(bsl::uint32_t value);
+    void setThru(bsl::uint32_t value);
 
-    /// Set the code indicating whether the copy was avoided or was performed
+    /// Set the type indicating whether the copy was avoided or was performed
     /// to the specified 'value'.
-    void setCode(bsl::uint8_t value);
+    void setType(ntsa::ZeroCopyType::Value value);
 
     /// Return the identifier of the first zero-copy send that completed, 
     /// inclusive.
@@ -87,11 +138,11 @@ class ZeroCopy
 
     /// Return the identifier of the last zero-copy send that completed, 
     /// inclusive.
-    BSLS_ANNOTATION_NODISCARD bsl::uint32_t to() const;
+    BSLS_ANNOTATION_NODISCARD bsl::uint32_t thru() const;
 
-    /// Return the code indicating whether the copy was avoided or was 
+    /// Return the type indicating whether the copy was avoided or was 
     /// performed.
-    BSLS_ANNOTATION_NODISCARD bsl::uint8_t code() const;
+    BSLS_ANNOTATION_NODISCARD ntsa::ZeroCopyType::Value type() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -121,8 +172,8 @@ class ZeroCopy
     NTSCFG_DECLARE_NESTED_BITWISE_MOVABLE_TRAITS(ZeroCopy);
 };
 
-/// Write the specified 'object' to the specified 'stream'. Return
-/// a modifiable reference to the 'stream'.
+/// Write the specified 'object' to the specified 'stream'. Return a modifiable
+/// reference to the 'stream'.
 ///
 /// @related ntsa::ZeroCopy
 bsl::ostream& operator<<(bsl::ostream& stream, const ZeroCopy& object);
@@ -139,14 +190,14 @@ bool operator==(const ZeroCopy& lhs, const ZeroCopy& rhs);
 /// @related ntsa::ZeroCopy
 bool operator!=(const ZeroCopy& lhs, const ZeroCopy& rhs);
 
-/// Return true if the value of the specified 'lhs' is less than the value
-/// of the specified 'rhs', otherwise return false.
+/// Return true if the value of the specified 'lhs' is less than the value of
+/// the specified 'rhs', otherwise return false.
 ///
 /// @related ntsa::ZeroCopy
 bool operator<(const ZeroCopy& lhs, const ZeroCopy& rhs);
 
-/// Contribute the values of the salient attributes of the specified 'value'
-/// to the specified hash 'algorithm'.
+/// Contribute the values of the salient attributes of the specified 'value' to
+/// the specified hash 'algorithm'.
 ///
 /// @related ntsa::ZeroCopy
 template <typename HASH_ALGORITHM>
@@ -155,24 +206,26 @@ void hashAppend(HASH_ALGORITHM& algorithm, const ZeroCopy& value);
 NTSCFG_INLINE
 ZeroCopy::ZeroCopy()
 : d_from(0)
-, d_to(0)
-, d_code(0)
+, d_thru(0)
+, d_type(ntsa::ZeroCopyType::e_AVOIDED)
 {
 }
 
 NTSCFG_INLINE
-ZeroCopy::ZeroCopy(bsl::uint32_t from, bsl::uint32_t to, bsl::uint8_t code)
+ZeroCopy::ZeroCopy(bsl::uint32_t             from, 
+                   bsl::uint32_t             thru, 
+                   ntsa::ZeroCopyType::Value type)
 : d_from(from)
-, d_to(to)
-, d_code(code)
+, d_thru(thru)
+, d_type(type)
 {
 }
 
 NTSCFG_INLINE
 ZeroCopy::ZeroCopy(const ZeroCopy& original)
 : d_from(original.d_from)
-, d_to(original.d_to)
-, d_code(original.d_code)
+, d_thru(original.d_thru)
+, d_type(original.d_type)
 {
 }
 
@@ -185,8 +238,8 @@ NTSCFG_INLINE
 ZeroCopy& ZeroCopy::operator=(const ZeroCopy& other)
 {
     d_from = other.d_from;
-    d_to   = other.d_to;
-    d_code = other.d_code;
+    d_thru = other.d_thru;
+    d_type = other.d_type;
     return *this;
 }
 
@@ -197,15 +250,15 @@ void ZeroCopy::setFrom(bsl::uint32_t value)
 }
 
 NTSCFG_INLINE
-void ZeroCopy::setTo(bsl::uint32_t value)
+void ZeroCopy::setThru(bsl::uint32_t value)
 {
-    d_to = value;
+    d_thru = value;
 }
 
 NTSCFG_INLINE
-void ZeroCopy::setCode(bsl::uint8_t value)
+void ZeroCopy::setType(ntsa::ZeroCopyType::Value value)
 {
-    d_code = value;
+    d_type = value;
 }
 
 NTSCFG_INLINE
@@ -215,15 +268,15 @@ bsl::uint32_t ZeroCopy::from() const
 }
 
 NTSCFG_INLINE
-bsl::uint32_t ZeroCopy::to() const
+bsl::uint32_t ZeroCopy::thru() const
 {
-    return d_to;
+    return d_thru;
 }
 
 NTSCFG_INLINE
-bsl::uint8_t ZeroCopy::code() const
+ntsa::ZeroCopyType::Value ZeroCopy::type() const
 {
-    return d_code;
+    return d_type;
 }
 
 NTSCFG_INLINE
@@ -256,8 +309,8 @@ void hashAppend(HASH_ALGORITHM& algorithm, const ZeroCopy& value)
     using bslh::hashAppend;
 
     hashAppend(algorithm, value.from());
-    hashAppend(algorithm, value.to());
-    hashAppend(algorithm, value.code());
+    hashAppend(algorithm, value.thru());
+    hashAppend(algorithm, value.type());
 }
 
 }  // close package namespace

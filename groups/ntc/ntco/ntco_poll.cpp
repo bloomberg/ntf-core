@@ -758,9 +758,7 @@ void Poll::flush()
 
         {
             LockGuard detachGuard(&d_detachMutex);
-            if (!d_chronology.hasAnyScheduledOrDeferred() &&
-                d_detachList.empty())
-            {
+            if (!d_chronology.hasAnyDeferred() && d_detachList.empty()) {
                 break;
             }
         }
@@ -850,18 +848,16 @@ void Poll::link(const bsl::shared_ptr<ntcs::RegistryEntry>& entry,
     ntsa::Handle   handle   = entry->handle();
     ntcs::Interest interest = entry->interest();
 
-    if (interest.wantReadableOrWritable()) {
-        struct ::pollfd pfd;
-        Poll::specify(&pfd, handle, interest);
-        result->d_descriptorList.push_back(pfd);
+    struct ::pollfd pfd;
+    Poll::specify(&pfd, handle, interest);
+    result->d_descriptorList.push_back(pfd);
 
-        if (!result->d_controllerHandleFound) {
-            if (handle == d_controllerDescriptorHandle) {
-                result->d_controllerHandleFound = true;
-            }
-            else {
-                result->d_controllerHandleIdx++;
-            }
+    if (!result->d_controllerHandleFound) {
+        if (handle == d_controllerDescriptorHandle) {
+            result->d_controllerHandleFound = true;
+        }
+        else {
+            result->d_controllerHandleIdx++;
         }
     }
 }

@@ -740,8 +740,10 @@ Epoll::Result::~Result()
 
 void Epoll::flush()
 {
-    while (d_chronology.hasAnyScheduledOrDeferred()) {
-        d_chronology.announce();
+    if (d_chronology.hasAnyScheduledOrDeferred()) {
+        do {
+            d_chronology.announce();
+        } while (d_chronology.hasAnyDeferred());
     }
 }
 

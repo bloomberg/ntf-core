@@ -595,7 +595,7 @@ void ListenerSocket::privateShutdownSequence(
     bool asyncDetachmentStarted = false;
     if (context.shutdownCompleted()) {
         ntci::SocketDetachedCallback detachCallback(
-            NTCCFG_BIND(&ListenerSocket::privateShutdownSequencePart2,
+            NTCCFG_BIND(&ListenerSocket::privateShutdownSequenceComplete,
                         this,
                         self,
                         context,
@@ -626,11 +626,11 @@ void ListenerSocket::privateShutdownSequence(
     }
 
     if (!asyncDetachmentStarted) {
-        privateShutdownSequencePart2(self, context, defer, false);
+        privateShutdownSequenceComplete(self, context, defer, false);
     }
 }
 
-void ListenerSocket::privateShutdownSequencePart2(
+void ListenerSocket::privateShutdownSequenceComplete(
     const bsl::shared_ptr<ListenerSocket>& self,
     const ntcs::ShutdownContext&           context,
     bool                                   defer,
@@ -649,7 +649,7 @@ void ListenerSocket::privateShutdownSequencePart2(
                     ntcs::DetachState::e_DETACH_INITIATED);
     }
 
-    // Second handle socket shutdown.
+    // Second, handle socket shutdown.
 
     if (context.shutdownSend()) {
         if (d_socket_sp) {
@@ -663,7 +663,7 @@ void ListenerSocket::privateShutdownSequencePart2(
         }
     }
 
-    // Third handle internal data structures and announce events.
+    // Third, handle internal data structures and announce events.
 
     if (context.shutdownInitiated()) {
         if (d_session_sp) {

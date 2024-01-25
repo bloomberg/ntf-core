@@ -276,13 +276,6 @@ class Sender : public ntci::SendCallbackFactory
     /// Return the error.
     virtual ntsa::Error cancel(const ntca::SendToken& token) = 0;
 
-    /// Request the implementation to start timestamping outgoing data if the
-    /// specified 'enable' flag is true. Otherwise, request the implementation
-    /// to stop timestamping outgoing data. Return true if operation was
-    /// successful (though it does not guarantee that transmit timestamps would
-    /// be generated). Otherwise return false.
-    virtual ntsa::Error timestampOutgoingData(bool enable);
-
     /// Return the strand that guarantees sequential, non-current execution
     /// of arbitrary functors on the unspecified threads processing events
     /// for this object.

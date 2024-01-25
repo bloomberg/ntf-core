@@ -363,8 +363,8 @@ void DatagramSocket::processSendDeadlineTimer(
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
-        bsl::shared_ptr<ntcq::SendCallbackQueueEntry> callbackEntry;
-        bool becameEmpty = d_sendQueue.removeEntryId(&callbackEntry, entryId);
+        ntci::SendCallback callback;
+        bool becameEmpty = d_sendQueue.removeEntryId(&callback, entryId);
         if (becameEmpty) {
             this->privateApplyFlowControl(self,
                                           ntca::FlowControlType::e_SEND,
@@ -373,7 +373,7 @@ void DatagramSocket::processSendDeadlineTimer(
                                           false);
         }
 
-        if (callbackEntry) {
+        if (callback) {
             ntca::SendContext sendContext;
             sendContext.setError(ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
 
@@ -381,8 +381,7 @@ void DatagramSocket::processSendDeadlineTimer(
             sendEvent.setType(ntca::SendEventType::e_ERROR);
             sendEvent.setContext(sendContext);
 
-            ntcq::SendCallbackQueueEntry::dispatch(callbackEntry,
-                                                   self,
+            callback.dispatch(self,
                                                    sendEvent,
                                                    d_proactorStrand_sp,
                                                    self,
@@ -756,8 +755,7 @@ void DatagramSocket::privateCompleteSend(
 
     NTCS_METRICS_UPDATE_WRITE_QUEUE_DELAY(entry.delay());
 
-    bsl::shared_ptr<ntcq::SendCallbackQueueEntry> callbackEntry =
-        entry.callbackEntry();
+    ntci::SendCallback callback = entry.callback();
 
     d_sendQueue.popEntry();
 
@@ -765,15 +763,14 @@ void DatagramSocket::privateCompleteSend(
 
     NTCS_METRICS_UPDATE_WRITE_QUEUE_SIZE(d_sendQueue.size());
 
-    if (callbackEntry) {
+    if (callback) {
         ntca::SendContext sendContext;
 
         ntca::SendEvent sendEvent;
         sendEvent.setType(ntca::SendEventType::e_COMPLETE);
         sendEvent.setContext(sendContext);
 
-        ntcq::SendCallbackQueueEntry::dispatch(callbackEntry,
-                                               self,
+        callback.dispatch(self,
                                                sendEvent,
                                                d_proactorStrand_sp,
                                                self,
@@ -819,12 +816,11 @@ void DatagramSocket::privateFailSend(
         return;
     }
 
-    bsl::shared_ptr<ntcq::SendCallbackQueueEntry> callbackEntry =
-        d_sendQueue.frontEntry().callbackEntry();
+    ntci::SendCallback callback = d_sendQueue.frontEntry().callback();
 
     d_sendQueue.popEntry();
 
-    if (callbackEntry) {
+    if (callback) {
         ntca::SendContext sendContext;
         sendContext.setError(error);
 
@@ -832,8 +828,7 @@ void DatagramSocket::privateFailSend(
         sendEvent.setType(ntca::SendEventType::e_ERROR);
         sendEvent.setContext(sendContext);
 
-        ntcq::SendCallbackQueueEntry::dispatch(callbackEntry,
-                                               self,
+        callback.dispatch(self,
                                                sendEvent,
                                                d_proactorStrand_sp,
                                                self,
@@ -1096,8 +1091,7 @@ void DatagramSocket::privateShutdownSequencePart2(
 
         NTCP_DATAGRAMSOCKET_LOG_SHUTDOWN_SEND();
 
-        bsl::vector<bsl::shared_ptr<ntcq::SendCallbackQueueEntry> >
-            callbackEntryVector;
+        bsl::vector<ntci::SendCallback> callbackVector;
 
         bool announceWriteQueueDiscarded = false;
         {
@@ -1107,10 +1101,10 @@ void DatagramSocket::privateShutdownSequencePart2(
             }
 
             announceWriteQueueDiscarded =
-                d_sendQueue.removeAll(&callbackEntryVector);
+                d_sendQueue.removeAll(&callbackVector);
         }
 
-        for (bsl::size_t i = 0; i < callbackEntryVector.size(); ++i) {
+        for (bsl::size_t i = 0; i < callbackVector.size(); ++i) {
             ntca::SendContext sendContext;
             sendContext.setError(ntsa::Error(ntsa::Error::e_CANCELLED));
 
@@ -1118,8 +1112,7 @@ void DatagramSocket::privateShutdownSequencePart2(
             sendEvent.setType(ntca::SendEventType::e_ERROR);
             sendEvent.setContext(sendContext);
 
-            ntcq::SendCallbackQueueEntry::dispatch(callbackEntryVector[i],
-                                                   self,
+            callbackVector[i].dispatch(self,
                                                    sendEvent,
                                                    d_proactorStrand_sp,
                                                    self,
@@ -1127,7 +1120,7 @@ void DatagramSocket::privateShutdownSequencePart2(
                                                    &d_mutex);
         }
 
-        callbackEntryVector.clear();
+        callbackVector.clear();
 
         if (announceWriteQueueDiscarded) {
             if (d_session_sp) {
@@ -2698,10 +2691,6 @@ ntsa::Error DatagramSocket::send(const bdlbb::Blob&        data,
 
     ntsa::Error error;
 
-    bsl::shared_ptr<ntcq::SendCallbackQueueEntry> callbackEntry =
-        d_sendQueue.createCallbackEntry();
-    callbackEntry->assign(callback, options);
-
     bsl::shared_ptr<ntsa::Data> dataContainer =
         d_dataPool_sp->createOutgoingData();
 
@@ -2714,7 +2703,10 @@ ntsa::Error DatagramSocket::send(const bdlbb::Blob&        data,
     entry.setData(dataContainer);
     entry.setLength(data.length());
     entry.setTimestamp(bsls::TimeUtil::getTimer());
-    entry.setCallbackEntry(callbackEntry);
+
+    if (callback) {
+        entry.setCallback(callback);
+    }
 
     if (NTCCFG_UNLIKELY(!options.deadline().isNull())) {
         ntca::TimerOptions timerOptions;
@@ -2817,10 +2809,6 @@ ntsa::Error DatagramSocket::send(const ntsa::Data&         data,
 
     ntsa::Error error;
 
-    bsl::shared_ptr<ntcq::SendCallbackQueueEntry> callbackEntry =
-        d_sendQueue.createCallbackEntry();
-    callbackEntry->assign(callback, options);
-
     bsl::shared_ptr<ntsa::Data> dataContainer =
         d_dataPool_sp->createOutgoingData();
 
@@ -2833,7 +2821,10 @@ ntsa::Error DatagramSocket::send(const ntsa::Data&         data,
     entry.setData(dataContainer);
     entry.setLength(dataContainer->size());
     entry.setTimestamp(bsls::TimeUtil::getTimer());
-    entry.setCallbackEntry(callbackEntry);
+
+    if (callback) {
+        entry.setCallback(callback);
+    }
 
     if (NTCCFG_UNLIKELY(!options.deadline().isNull())) {
         ntca::TimerOptions timerOptions;
@@ -3654,8 +3645,8 @@ ntsa::Error DatagramSocket::cancel(const ntca::SendToken& token)
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
-    bsl::shared_ptr<ntcq::SendCallbackQueueEntry> callbackEntry;
-    bool becameEmpty = d_sendQueue.removeEntryToken(&callbackEntry, token);
+    ntci::SendCallback callback;
+    bool becameEmpty = d_sendQueue.removeEntryToken(&callback, token);
 
     if (becameEmpty) {
         this->privateApplyFlowControl(self,
@@ -3665,7 +3656,7 @@ ntsa::Error DatagramSocket::cancel(const ntca::SendToken& token)
                                       false);
     }
 
-    if (callbackEntry) {
+    if (callback) {
         ntca::SendContext sendContext;
         sendContext.setError(ntsa::Error(ntsa::Error::e_CANCELLED));
 
@@ -3673,8 +3664,7 @@ ntsa::Error DatagramSocket::cancel(const ntca::SendToken& token)
         sendEvent.setType(ntca::SendEventType::e_ERROR);
         sendEvent.setContext(sendContext);
 
-        ntcq::SendCallbackQueueEntry::dispatch(callbackEntry,
-                                               self,
+        callback.dispatch(self,
                                                sendEvent,
                                                d_proactorStrand_sp,
                                                self,

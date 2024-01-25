@@ -33,6 +33,7 @@ BSLS_IDENT("$Id: $")
 #include <ntci_timer.h>
 #include <ntcq_receive.h>
 #include <ntcq_send.h>
+#include <ntcq_zerocopy.h>
 #include <ntcs_detachstate.h>
 #include <ntcs_flowcontrolcontext.h>
 #include <ntcs_flowcontrolstate.h>
@@ -94,24 +95,32 @@ class DatagramSocket : public ntci::DatagramSocket,
     bsl::shared_ptr<ntcs::Metrics>               d_metrics_sp;
     ntcs::FlowControlState                       d_flowControlState;
     ntcs::ShutdownState                          d_shutdownState;
+    ntcq::ZeroCopyQueue                          d_zeroCopyQueue;
+    bsl::size_t                                  d_zeroCopyThreshold;
     ntcq::SendQueue                              d_sendQueue;
     bsl::shared_ptr<ntci::RateLimiter>           d_sendRateLimiter_sp;
     bsl::shared_ptr<ntci::Timer>                 d_sendRateTimer_sp;
     bool                                         d_sendGreedily;
+    ntci::SendCallback                           d_sendComplete;
+    ntcq::SendCounter                            d_sendCounter;
+    ntsa::ReceiveOptions                         d_receiveOptions;
     ntcq::ReceiveQueue                           d_receiveQueue;
     bsl::shared_ptr<ntci::RateLimiter>           d_receiveRateLimiter_sp;
     bsl::shared_ptr<ntci::Timer>                 d_receiveRateTimer_sp;
     bool                                         d_receiveGreedily;
     bsl::shared_ptr<bdlbb::Blob>                 d_receiveBlob_sp;
+    bool                                         d_timestampOutgoingData;
+    bool                                         d_timestampIncomingData;
+    ntcu::TimestampCorrelator                    d_timestampCorrelator;
+    bsl::uint32_t                                d_timestampCounter;
     bsl::size_t                                  d_maxDatagramSize;
     const bool                                   d_oneShot;
-    bool                                         d_timestampOutgoingData;
-    ntca::DatagramSocketOptions                  d_options;
-    ntcu::TimestampCorrelator                    d_timestampCorrelator;
-    bsl::uint32_t                                d_dgramTsIdCounter;
     ntcs::DetachState                            d_detachState;
     ntci::CloseCallback                          d_closeCallback;
     ntci::Executor::FunctorSequence              d_deferredCalls;
+    bsl::size_t                                  d_totalBytesSent;
+    bsl::size_t                                  d_totalBytesReceived;
+    ntca::DatagramSocketOptions                  d_options;
     bslma::Allocator*                            d_allocator_p;
 
   private:
@@ -220,7 +229,7 @@ class DatagramSocket : public ntci::DatagramSocket,
 
     /// Execute the second part of shutdown sequence when the socket is
     /// detached. See also "privateShutdownSequence".
-    void privateShutdownSequencePart2(
+    void privateShutdownSequenceComplete(
         const bsl::shared_ptr<DatagramSocket>& self,
         const ntcs::ShutdownContext&           context,
         bool                                   defer,
@@ -276,6 +285,7 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// undefined unless 'd_mutex' is locked.
     ntsa::Error privateEnqueueSendBuffer(
         const bsl::shared_ptr<DatagramSocket>&     self,
+        ntsa::SendContext*                         context,
         const bdlb::NullableValue<ntsa::Endpoint>& endpoint,
         const bdlbb::Blob&                         data);
 
@@ -284,6 +294,7 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// undefined unless 'd_mutex' is locked.
     ntsa::Error privateEnqueueSendBuffer(
         const bsl::shared_ptr<DatagramSocket>&     self,
+        ntsa::SendContext*                         context,
         const bdlb::NullableValue<ntsa::Endpoint>& endpoint,
         const ntsa::Data&                          data);
 
@@ -308,6 +319,8 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// Rearm the interest in the readability of the socket in the reactor,
     /// if necessary. The behavior is undefined unless 'd_mutex' is locked.
     void privateRearmAfterReceive(const bsl::shared_ptr<DatagramSocket>& self);
+
+    void privateRearmAfterNotification(const bsl::shared_ptr<DatagramSocket>& self);
 
     /// Open the datagram socket. Return the error.
     ntsa::Error privateOpen(const bsl::shared_ptr<DatagramSocket>& self);
@@ -359,21 +372,28 @@ class DatagramSocket : public ntci::DatagramSocket,
         const ntca::ConnectOptions&            connectOptions,
         const ntci::ConnectCallback&           connectCallback);
 
-    /// Start timestamping outgoing data. Prepare buffers and request the OS to
-    /// enable transmit timestamps. Return no error in case of success,
-    /// return error otherwise.
-    ntsa::Error startTimestampOutgoingData();
+    /// Enable or disable timestamping of outgoing data according to the 
+    /// specified 'enable' flag. Return the error.
+    ntsa::Error privateTimestampOutgoingData(
+        const bsl::shared_ptr<DatagramSocket>& self,
+        bool                                   enable);
 
-    /// Stop timestamping outgoing data. Return no error in case of success,
-    /// return error otherwise.
-    ntsa::Error stopTimestampOutgoingData();
+    /// Enable or disable timestamping of incoming data according to the 
+    /// specified 'enable' flag. Return the error.
+    ntsa::Error privateTimestampIncomingData(
+        const bsl::shared_ptr<DatagramSocket>& self,
+        bool                                   enable);
 
-    /// Request the OS to enable transmit timestamps if the specified 'enable'
-    /// is true. Return true in case of success. Return false otherwise.
-    ntsa::Error privateTimestampOutgoingData(bool enable);
+    /// Process the detection of the specified outgoing data 'timestamp'.
+    void privateTimestampUpdate(
+            const bsl::shared_ptr<DatagramSocket>& self,
+            const ntsa::Timestamp&                 timestamp);
 
-    /// Process notification containing the specified 'timestamp'.
-    void processTimestampNotification(const ntsa::Timestamp& timestamp);
+    // Process the completion of one or more zero-copy tranmsissions described
+    // by the specified 'zeroCopy' notification.
+    void privateZeroCopyUpdate(
+            const bsl::shared_ptr<DatagramSocket>& self,
+            const ntsa::ZeroCopy&                  zeroCopy);
 
   public:
     /// Create a new, initially uninitilialized datagram socket. Optionally
@@ -848,6 +868,10 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// Return the error.
     ntsa::Error deregisterSession() BSLS_KEYWORD_OVERRIDE;
 
+    /// Set the minimum number of bytes that must be available to send in order
+    /// to attempt a zero-copy send to the specified 'value'. Return the error.
+    ntsa::Error setZeroCopyThreshold(bsl::size_t value) BSLS_KEYWORD_OVERRIDE;
+
     /// Set the write rate limiter to the specified 'rateLimiter'. Return
     /// the error.
     ntsa::Error setWriteRateLimiter(const bsl::shared_ptr<ntci::RateLimiter>&
@@ -918,6 +942,18 @@ class DatagramSocket : public ntci::DatagramSocket,
                                     const ntsa::IpAddress& group)
         BSLS_KEYWORD_OVERRIDE;
 
+    /// Request the implementation to start timestamping outgoing data if the
+    /// specified 'enable' flag is true. Otherwise, request the implementation
+    /// to stop timestamping outgoing data. Return true if operation was
+    /// successful (though it does not guarantee that transmit timestamps would
+    /// be generated). Otherwise return false.
+    ntsa::Error timestampOutgoingData(bool enable) BSLS_KEYWORD_OVERRIDE;
+
+    /// Request the implementation to start timestamping incoming data if the
+    /// specified 'enable' flag is true. Otherwise, request the implementation
+    /// to stop timestamping outgoing data. Return the error.
+    ntsa::Error timestampIncomingData(bool enable) BSLS_KEYWORD_OVERRIDE;
+
     /// Enable copying from the socket buffers in the specified 'direction'.
     ntsa::Error relaxFlowControl(ntca::FlowControlType::Value direction)
         BSLS_KEYWORD_OVERRIDE;
@@ -965,13 +1001,6 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// invoked on this object's strand unless an explicit strand is
     /// specified at the time the callback is created.
     void close(const ntci::CloseCallback& callback) BSLS_KEYWORD_OVERRIDE;
-
-    /// Request the implementation to start timestamping outgoing data if the
-    /// specified 'enable' flag is true. Otherwise, request the implementation
-    /// to stop timestamping outgoing data. Return true if operation was
-    /// successful (though it does not guarantee that transmit timestamps would
-    /// be generated). Otherwise return false.
-    ntsa::Error timestampOutgoingData(bool enable) BSLS_KEYWORD_OVERRIDE;
 
     /// Defer the execution of the specified 'functor'.
     void execute(const Functor& functor) BSLS_KEYWORD_OVERRIDE;

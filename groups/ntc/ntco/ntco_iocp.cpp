@@ -746,8 +746,10 @@ void Iocp::flush()
         NTCP_IOCP_LOG_EVENT_ABANDONED(event);
     }
 
-    while (d_chronology.hasAnyScheduledOrDeferred()) {
-        d_chronology.announce();
+    if (d_chronology.hasAnyScheduledOrDeferred()) {
+        do {
+            d_chronology.announce();
+        } while (d_chronology.hasAnyDeferred());
     }
 }
 

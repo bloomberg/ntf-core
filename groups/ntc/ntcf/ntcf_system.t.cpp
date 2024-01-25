@@ -1686,6 +1686,8 @@ void StreamSocketSession::processWriteQueueLowWatermark(
             }
 
             --d_numMessagesLeftToSend;
+
+            //            bslmt::ThreadUtil::microSleep(500*1000, 0);
         }
         else {
             error = d_streamSocket_sp->send(data, ntca::SendOptions());
@@ -5556,59 +5558,79 @@ void concern(const ConcernCallback& concernCallback,
 
 #endif
 
-    const bool DYNAMIC_LOAD_BALANCING[] = {false, true};
+    const bool FORCE_ZERO_COPY[] = {false, true};
 
-    NTCCFG_FOREACH(bsl::size_t, dynamicLoadBalancingIndex, 0, 2)
+    NTCCFG_FOREACH(bsl::size_t, forceZeroCopyIndex, 0, 2)
     {
-        const bool dynamicLoadBalancing =
-            DYNAMIC_LOAD_BALANCING[dynamicLoadBalancingIndex];
+        const bool forceZeroCopy = FORCE_ZERO_COPY[forceZeroCopyIndex];
+
+#if !defined(BSLS_PLATFORM_OS_LINUX)
+        if (forceZeroCopy == true) {
+            continue;
+        }
+#endif
+
+        const bool DYNAMIC_LOAD_BALANCING[] = {false, true};
+
+        NTCCFG_FOREACH(bsl::size_t, dynamicLoadBalancingIndex, 0, 2)
+        {
+            const bool dynamicLoadBalancing =
+                DYNAMIC_LOAD_BALANCING[dynamicLoadBalancingIndex];
 
 #if defined(NTCF_SYSTEM_TEST_DYNAMIC_LOAD_BALANCING)
-        if (dynamicLoadBalancing != NTCF_SYSTEM_TEST_DYNAMIC_LOAD_BALANCING) {
-            continue;
-        }
-#endif
-
-#if NTC_BUILD_WITH_DYNAMIC_LOAD_BALANCING == 0
-        if (dynamicLoadBalancing) {
-            continue;
-        }
-#endif
-
-        bsl::vector<bsl::string> driverTypes;
-        ntcf::System::loadDriverSupport(&driverTypes, dynamicLoadBalancing);
-
-        NTCCFG_FOREACH(bsl::size_t, driverTypeIndex, 0, driverTypes.size())
-        {
-            bsl::string driverType = driverTypes[driverTypeIndex];
-
-#if defined(NTCF_SYSTEM_TEST_DRIVER_TYPE)
-            if (driverType != NTCF_SYSTEM_TEST_DRIVER_TYPE) {
+            if (dynamicLoadBalancing !=
+                NTCF_SYSTEM_TEST_DYNAMIC_LOAD_BALANCING)
+            {
                 continue;
             }
 #endif
 
-            BSLS_LOG_WARN("Testing driver %s (%s)",
-                          driverType.c_str(),
-                          (dynamicLoadBalancing ? "dynamic" : "static"));
+#if NTC_BUILD_WITH_DYNAMIC_LOAD_BALANCING == 0
+            if (dynamicLoadBalancing) {
+                continue;
+            }
+#endif
 
-            ntca::InterfaceConfig interfaceConfig;
-            interfaceConfig.setDriverName(driverType);
-            interfaceConfig.setThreadName("network");
-            interfaceConfig.setMinThreads(MIN_THREADS);
-            interfaceConfig.setMaxThreads(MAX_THREADS);
-            interfaceConfig.setThreadLoadFactor(LOAD_FACTOR);
-            interfaceConfig.setDynamicLoadBalancing(dynamicLoadBalancing);
+            bsl::vector<bsl::string> driverTypes;
+            ntcf::System::loadDriverSupport(&driverTypes,
+                                            dynamicLoadBalancing);
 
-            bsl::shared_ptr<ntci::Interface> interface =
-                ntcf::System::createInterface(interfaceConfig, allocator);
+            NTCCFG_FOREACH(bsl::size_t, driverTypeIndex, 0, driverTypes.size())
+            {
+                bsl::string driverType = driverTypes[driverTypeIndex];
 
-            interface->start();
+#if defined(NTCF_SYSTEM_TEST_DRIVER_TYPE)
+                if (driverType != NTCF_SYSTEM_TEST_DRIVER_TYPE) {
+                    continue;
+                }
+#endif
 
-            concernCallback(interface, allocator);
+                BSLS_LOG_WARN("Testing driver %s (%s), zero-copy: %s",
+                              driverType.c_str(),
+                              (dynamicLoadBalancing ? "dynamic" : "static"),
+                              (forceZeroCopy ? "enabled" : "disabled"));
 
-            interface->shutdown();
-            interface->linger();
+                ntca::InterfaceConfig interfaceConfig;
+                interfaceConfig.setDriverName(driverType);
+                interfaceConfig.setThreadName("network");
+                interfaceConfig.setMinThreads(MIN_THREADS);
+                interfaceConfig.setMaxThreads(MAX_THREADS);
+                interfaceConfig.setThreadLoadFactor(LOAD_FACTOR);
+                interfaceConfig.setDynamicLoadBalancing(dynamicLoadBalancing);
+                if (forceZeroCopy) {
+                    interfaceConfig.setZeroCopyThreshold(0);
+                }
+
+                bsl::shared_ptr<ntci::Interface> interface =
+                    ntcf::System::createInterface(interfaceConfig, allocator);
+
+                interface->start();
+
+                concernCallback(interface, allocator);
+
+                interface->shutdown();
+                interface->linger();
+            }
         }
     }
 }
@@ -6783,11 +6805,10 @@ void concernDataExchange(const bsl::shared_ptr<ntci::Interface>& interface,
 
 #endif
 
-    const bool ENCRYPTION[] = {
-        false
+    const bool ENCRYPTION[] = {false
 #if NTCF_SYSTEM_TEST_BUILD_WITH_TLS
-        ,
-        true
+                               ,
+                               true
 #endif
     };
 
@@ -9719,6 +9740,8 @@ void concernDatagramSocketStressReactive(bslma::Allocator* allocator)
     parameters.d_messageSize       = 1024;
     parameters.d_useAsyncCallbacks = false;
 
+    parameters.d_receiveBufferSize = 500 * 1000;
+
     test::concern(NTCCFG_BIND(&test::concernDatagramSocket,
                               NTCCFG_BIND_PLACEHOLDER_1,
                               parameters,
@@ -9741,6 +9764,8 @@ void concernDatagramSocketStressProactive(bslma::Allocator* allocator)
     parameters.d_numMessages       = 32;
     parameters.d_messageSize       = 1024;
     parameters.d_useAsyncCallbacks = true;
+
+    parameters.d_receiveBufferSize = 500 * 1000;
 
     test::concern(NTCCFG_BIND(&test::concernDatagramSocket,
                               NTCCFG_BIND_PLACEHOLDER_1,

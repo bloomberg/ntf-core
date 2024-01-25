@@ -18,15 +18,69 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntsa_zerocopy_cpp, "$Id$ $CSID$")
 
+#include <bdlb_string.h>
 #include <bslim_printer.h>
 
 namespace BloombergLP {
 namespace ntsa {
 
+int ZeroCopyType::fromInt(ZeroCopyType::Value* result, int number)
+{
+    switch (number) {
+    case ZeroCopyType::e_AVOIDED:
+    case ZeroCopyType::e_DEFERRED:
+        *result = static_cast<ZeroCopyType::Value>(number);
+        return 0;
+    default:
+        return -1;
+    }
+}
+
+int ZeroCopyType::fromString(ZeroCopyType::Value*     result,
+                             const bslstl::StringRef& string)
+{
+    if (bdlb::String::areEqualCaseless(string, "AVOIDED")) {
+        *result = e_AVOIDED;
+        return 0;
+    }
+    if (bdlb::String::areEqualCaseless(string, "DEFERRED")) {
+        *result = e_DEFERRED;
+        return 0;
+    }
+
+    return -1;
+}
+
+const char* ZeroCopyType::toString(ZeroCopyType::Value value)
+{
+    switch (value) {
+    case e_AVOIDED: {
+        return "AVOIDED";
+    } break;
+    case e_DEFERRED: {
+        return "DEFERRED";
+    } break;
+    }
+
+    BSLS_ASSERT(!"invalid enumerator");
+    return 0;
+}
+
+bsl::ostream& ZeroCopyType::print(bsl::ostream&       stream,
+                                  ZeroCopyType::Value value)
+{
+    return stream << toString(value);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, ZeroCopyType::Value rhs)
+{
+    return ZeroCopyType::print(stream, rhs);
+}
+
 bool ZeroCopy::equals(const ZeroCopy& other) const
 {
-    return (d_from == other.d_from && d_to == other.d_to &&
-            d_code == other.d_code);
+    return (d_from == other.d_from && d_thru == other.d_thru &&
+            d_type == other.d_type);
 }
 
 bool ZeroCopy::less(const ZeroCopy& other) const
@@ -39,15 +93,15 @@ bool ZeroCopy::less(const ZeroCopy& other) const
         return false;
     }
 
-    if (d_to < other.d_to) {
+    if (d_thru < other.d_thru) {
         return true;
     }
 
-    if (other.d_to < d_to) {
+    if (other.d_thru < d_thru) {
         return false;
     }
 
-    return d_code < other.d_code;
+    return d_type < other.d_type;
 }
 
 bsl::ostream& ZeroCopy::print(bsl::ostream& stream,
@@ -57,8 +111,8 @@ bsl::ostream& ZeroCopy::print(bsl::ostream& stream,
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
     printer.printAttribute("from", d_from);
-    printer.printAttribute("to", d_to);
-    printer.printAttribute("code", d_code);
+    printer.printAttribute("thru", d_thru);
+    printer.printAttribute("type", d_type);
     printer.end();
     return stream;
 }

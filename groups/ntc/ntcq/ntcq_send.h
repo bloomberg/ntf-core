@@ -47,122 +47,51 @@ namespace BloombergLP {
 namespace ntcq {
 
 /// @internal @brief
-/// Describe an entry in a send callback queue.
-///
-/// @par Thread Safety
-/// This class is thread safe.
+/// Describe the 64-bit unsigned integer incremented each time
+/// 'ntci::Sender::send(...)' is called.
 ///
 /// @ingroup module_ntcq
-class SendCallbackQueueEntry
+typedef bsl::uint64_t SendCounter;
+
+/// @internal @brief
+/// Describe the state of a send operation.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntcq
+class SendState
 {
-    ntccfg::Object               d_object;
-    ntcs::CallbackState          d_state;
-    ntci::SendCallback           d_callback;
-    ntca::SendOptions            d_options;
-    bsl::shared_ptr<ntci::Timer> d_timer_sp;
+    ntcq::SendCounter d_counter;
 
-  private:
-    SendCallbackQueueEntry(const SendCallbackQueueEntry&) BSLS_KEYWORD_DELETED;
-    SendCallbackQueueEntry& operator=(const SendCallbackQueueEntry&)
-        BSLS_KEYWORD_DELETED;
+public:
+    /// Create new send state.
+    SendState();
 
-  public:
-    /// Create a new send callback queue entry. Optionally specify a
-    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0,
-    /// the currently installed default allocator is used.
-    explicit SendCallbackQueueEntry(bslma::Allocator* basicAllocator = 0);
+    /// Create new send state having the same value as the specified 'other'
+    /// object.
+    SendState(const SendState& original);
 
     /// Destroy this object.
-    ~SendCallbackQueueEntry();
+    ~SendState();
 
-    /// Clear the state of this entry.
-    void clear();
+    /// Assign the value of the specified 'other' object to this object. Return
+    /// a reference to this modifiable object.
+    SendState& operator=(const SendState& other);
 
-    /// Assign the specified 'callback' to be invoked on the specified
-    /// 'strand'.
-    void assign(const ntci::SendCallback& callback,
-                const ntca::SendOptions&  options);
+    /// Reset the value of this object to its value upon default construction.
+    void reset();
 
-    /// Set the timer to the specified 'timer'.
-    void setTimer(const bsl::shared_ptr<ntci::Timer>& timer);
+    /// Set the send counter to the specified 'value'.
+    void setCounter(ntcq::SendCounter value);
 
-    /// Clear the timer, if any.
-    void clearTimer();
-
-    /// Return the criteria to invoke the callback.
-    const ntca::SendOptions& options() const;
-
-    /// Invoke the callback of the specified 'entry' for the specified
-    /// 'sender' and 'event'. If the specified 'defer' flag is false
-    /// and the requirements of the strand of the specified 'entry' permits
-    /// the callback to be invoked immediately by the 'strand', unlock the
-    /// specified 'mutex', invoke the callback, then relock the 'mutex'.
-    /// Otherwise, enqueue the invocation of the callback to be executed on
-    /// the strand of the 'entry', if defined, or by the specified
-    /// 'executor' otherwise.
-    static void dispatch(
-        const bsl::shared_ptr<ntcq::SendCallbackQueueEntry>& entry,
-        const bsl::shared_ptr<ntci::Sender>&                 sender,
-        const ntca::SendEvent&                               event,
-        const bsl::shared_ptr<ntci::Strand>&                 strand,
-        const bsl::shared_ptr<ntci::Executor>&               executor,
-        bool                                                 defer,
-        bslmt::Mutex*                                        mutex);
+    /// Return the send counter.
+    ntcq::SendCounter counter() const;
 
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(SendCallbackQueueEntry);
-};
-
-/// @internal @brief
-/// Provide a pool of shared pointers to send callback queue entries.
-///
-/// @par Thread Safety
-/// This class is thread safe.
-///
-/// @ingroup module_ntcq
-class SendCallbackQueueEntryPool
-{
-    typedef bdlcc::SharedObjectPool<
-        ntcq::SendCallbackQueueEntry,
-        bdlcc::ObjectPoolFunctors::DefaultCreator,
-        bdlcc::ObjectPoolFunctors::Clear<ntcq::SendCallbackQueueEntry> >
-        Pool;
-
-    Pool d_pool;
-
-  private:
-    SendCallbackQueueEntryPool(const SendCallbackQueueEntryPool&)
-        BSLS_KEYWORD_DELETED;
-    SendCallbackQueueEntryPool& operator=(const SendCallbackQueueEntryPool&)
-        BSLS_KEYWORD_DELETED;
-
-  private:
-    /// Construct a new send callback queue entry at the specified
-    /// 'address' using the specified 'allocator' to supply memory.
-    static void construct(void* address, bslma::Allocator* allocator);
-
-  public:
-    /// Create a new object. Optionally specify a 'basicAllocator' used to
-    /// supply memory. If 'basicAllocator' is 0, the currently installed
-    /// default allocator is used.
-    explicit SendCallbackQueueEntryPool(bslma::Allocator* basicAllocator = 0);
-
-    /// Destroy this object.
-    ~SendCallbackQueueEntryPool();
-
-    /// Return a shared pointer to an send callback queue entry in the
-    /// pool having a default value. The resulting send callback queue
-    /// entry is automatically returned to this pool when its reference
-    /// count reaches zero.
-    bsl::shared_ptr<ntcq::SendCallbackQueueEntry> create();
-
-    /// Return the total number of objects in the pool.
-    bsl::size_t numObjects() const;
-
-    /// Return the number of un-allocated objects available in the pool.
-    bsl::size_t numObjectsAvailable() const;
+    NTCCFG_DECLARE_NESTED_BITWISE_MOVABLE_TRAITS(SendState);
 };
 
 /// @internal @brief
@@ -182,8 +111,9 @@ class SendQueueEntry
     bsl::int64_t                            d_timestamp;
     bdlb::NullableValue<bsls::TimeInterval> d_deadline;
     bsl::shared_ptr<ntci::Timer>            d_timer_sp;
-    bsl::shared_ptr<SendCallbackQueueEntry> d_callbackEntry_sp;
+    ntci::SendCallback                      d_callback;
     bool                                    d_inProgress;
+    bool                                    d_zeroCopy;
 
   private:
     /// If this entry is batchable, append a reference to this data of this
@@ -259,8 +189,20 @@ class SendQueueEntry
                    const ntsa::SendOptions& options) const;
 
   public:
-    /// Create a new send queue entry.
-    SendQueueEntry();
+    /// Create a new send queue entry. Optionally specify a 'basicAllocator'
+    /// used to supply memory. If 'basicAllocator' is 0, the currently
+    /// installed default allocator is used.
+    explicit SendQueueEntry(bslma::Allocator *basicAllocator = 0);
+
+    /// Create a new send queue entry having the same value as the specified
+    /// 'other' object. Optionally specify a 'basicAllocator' used to supply
+    /// memory. If 'basicAllocator' is 0, the currently installed default
+    /// allocator is used.
+    SendQueueEntry(const SendQueueEntry& original,
+                   bslma::Allocator* basicAllocator = 0);
+
+    /// Destroy this object.
+    ~SendQueueEntry();
 
     /// Set the identifier used to internally time-out the queue entry to
     /// the specified 'id'.
@@ -300,13 +242,21 @@ class SendQueueEntry
     /// Set the timer to the specified 'timer'.
     void setTimer(const bsl::shared_ptr<ntci::Timer>& timer);
 
-    /// Set the callback entry to the specified 'callbackEntry'.
-    void setCallbackEntry(
-        const bsl::shared_ptr<SendCallbackQueueEntry>& callbackEntry);
+    /// Set the callback to the specified 'callback'.
+    void setCallback(const ntci::SendCallback& callback);
+
+    /// Set the callback to the empty callback.
+    void setCallback(bsl::nullptr_t);
 
     /// Set the flag to indicate that the entry is now in-progress, i.e. its
-    /// data has been at least partially copied to the send buffer.
-    void setInProgress();
+    /// data has been at least partially copied to the send buffer, to the
+    /// specified 'inProgress' flag.
+    void setInProgress(bool inProgress);
+
+    /// Set the flag to indicate that at least some of a data of the entry
+    /// has been successfully sent with zero-copy semantics to the specified
+    /// 'zeroCopy' flag.
+    void setZeroCopy(bool zeroCopy);
 
     /// Close the timer, if any.
     void closeTimer();
@@ -344,15 +294,24 @@ class SendQueueEntry
     bsls::TimeInterval delay() const;
 
     /// Return the callback entry.
-    const bsl::shared_ptr<SendCallbackQueueEntry>& callbackEntry() const;
+    const ntci::SendCallback& callback() const;
 
     /// Return the flag that indicates whether the entry is now in-progress,
     /// i.e. its data has been at least partially copied to the send buffer.
     bool inProgress() const;
 
+    /// Return the flag to indicate that at least some of a data of the entry
+    /// has been successfully sent with zero-copy semantics.
+    bool zeroCopy() const;
+
     /// Return the flag that indicates the data representation of this entry
     /// is batchable with other similar representations.
     bool isBatchable() const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(SendQueueEntry);
 };
 
 /// @internal @brief
@@ -376,7 +335,6 @@ class SendQueue
     bsl::size_t                      d_watermarkHigh;
     bool                             d_watermarkHighWanted;
     bsl::uint64_t                    d_nextEntryId;
-    ntcq::SendCallbackQueueEntryPool d_callbackEntryPool;
     bslma::Allocator*                d_allocator_p;
 
   private:
@@ -391,9 +349,6 @@ class SendQueue
 
     /// Destroy this object.
     ~SendQueue();
-
-    /// Return a shared pointer to a new send callback queue entry.
-    bsl::shared_ptr<ntcq::SendCallbackQueueEntry> createCallbackEntry();
 
     /// Return the next entry identifier.
     bsl::uint64_t generateEntryId();
@@ -416,14 +371,14 @@ class SendQueue
     /// queue.
     void popSize(bsl::size_t numBytes);
 
-    /// Remove the entry having the specified 'id' and load its callback
-    /// entry into the specified 'result', if an entry with such an 'id' and
-    /// defined callback and defined deadline exists and has not already
-    /// had any portion of its data copied to the socket send buffer. Return
-    /// true if queue becomes empty as a result of this operation, otherwise
-    /// return false.
-    bool removeEntryId(bsl::shared_ptr<ntcq::SendCallbackQueueEntry>* result,
-                       bsl::uint64_t                                  id);
+    /// Remove the entry having the specified 'id' and load its callback into
+    /// the specified 'result', if an entry with such an 'id' and defined
+    /// callback and defined deadline exists and has not already had any
+    /// portion of its data copied to the socket send buffer. Return true if
+    /// queue becomes empty as a result of this operation, otherwise return
+    /// false.
+    bool removeEntryId(ntci::SendCallback* result,
+                       bsl::uint64_t       id);
 
     /// Remove the entry having the specified 'token' and load its callback
     /// entry into the specified 'result', if an entry with such a 'token'
@@ -431,14 +386,13 @@ class SendQueue
     /// its data copied to the socket send buffer. Return true if queue
     /// becomes empty as a result of this operation, otherwise return false.
     bool removeEntryToken(
-        bsl::shared_ptr<ntcq::SendCallbackQueueEntry>* result,
-        const ntca::SendToken&                         token);
+        ntci::SendCallback*    result,
+        const ntca::SendToken& token);
 
     /// Load into the specified 'result' any pending callback entries and
     /// clear the queue. Return true if the queue was non-empty, and false
     /// otherwise.
-    bool removeAll(
-        bsl::vector<bsl::shared_ptr<ntcq::SendCallbackQueueEntry> >* result);
+    bool removeAll(bsl::vector<ntci::SendCallback>* result);
 
     /// Set the data stored in the queue to the specified 'data'.
     void setData(const bsl::shared_ptr<bdlbb::Blob>& data);
@@ -506,55 +460,49 @@ class SendQueue
 };
 
 NTCCFG_INLINE
-void SendCallbackQueueEntry::assign(const ntci::SendCallback& callback,
-                                    const ntca::SendOptions&  options)
+SendState::SendState()
+: d_counter(0)
 {
-    d_callback = callback;
-    d_options  = options;
 }
 
 NTCCFG_INLINE
-void SendCallbackQueueEntry::setTimer(
-    const bsl::shared_ptr<ntci::Timer>& timer)
+SendState::SendState(const SendState& original)
+: d_counter(original.d_counter)
 {
-    d_timer_sp = timer;
 }
 
 NTCCFG_INLINE
-void SendCallbackQueueEntry::clearTimer()
+SendState::~SendState()
 {
-    if (d_timer_sp) {
-        d_timer_sp.reset();
-    }
 }
 
 NTCCFG_INLINE
-const ntca::SendOptions& SendCallbackQueueEntry::options() const
+SendState& SendState::operator=(const SendState& other)
 {
-    return d_options;
+    d_counter = other.d_counter;
+    return *this;
 }
 
 NTCCFG_INLINE
-bsl::shared_ptr<ntcq::SendCallbackQueueEntry> SendCallbackQueueEntryPool::
-    create()
+void SendState::reset()
 {
-    return d_pool.getObject();
+    d_counter = 0;
 }
 
 NTCCFG_INLINE
-bsl::size_t SendCallbackQueueEntryPool::numObjects() const
+void SendState::setCounter(ntcq::SendCounter value)
 {
-    return d_pool.numObjects();
+    d_counter = value;
 }
 
 NTCCFG_INLINE
-bsl::size_t SendCallbackQueueEntryPool::numObjectsAvailable() const
+ntcq::SendCounter SendState::counter() const
 {
-    return d_pool.numAvailableObjects();
+    return d_counter;
 }
 
 NTCCFG_INLINE
-SendQueueEntry::SendQueueEntry()
+SendQueueEntry::SendQueueEntry(bslma::Allocator* basicAllocator)
 : d_id(0)
 , d_token()
 , d_endpoint()
@@ -563,8 +511,31 @@ SendQueueEntry::SendQueueEntry()
 , d_timestamp(0)
 , d_deadline()
 , d_timer_sp()
-, d_callbackEntry_sp()
+, d_callback(basicAllocator)
 , d_inProgress(false)
+, d_zeroCopy(false)
+{
+}
+
+NTCCFG_INLINE
+SendQueueEntry::SendQueueEntry(const SendQueueEntry& original,
+                               bslma::Allocator* basicAllocator)
+: d_id(original.d_id)
+, d_token(original.d_token)
+, d_endpoint(original.d_endpoint)
+, d_data_sp(original.d_data_sp)
+, d_length(original.d_length)
+, d_timestamp(original.d_timestamp)
+, d_deadline(original.d_deadline)
+, d_timer_sp(original.d_timer_sp)
+, d_callback(original.d_callback, basicAllocator)
+, d_inProgress(original.d_inProgress)
+, d_zeroCopy(original.d_zeroCopy)
+{
+}
+
+NTCCFG_INLINE
+SendQueueEntry::~SendQueueEntry()
 {
 }
 
@@ -635,23 +606,31 @@ NTCCFG_INLINE
 void SendQueueEntry::setTimer(const bsl::shared_ptr<ntci::Timer>& timer)
 {
     d_timer_sp = timer;
-
-    if (d_callbackEntry_sp) {
-        d_callbackEntry_sp->setTimer(timer);
-    }
 }
 
 NTCCFG_INLINE
-void SendQueueEntry::setCallbackEntry(
-    const bsl::shared_ptr<SendCallbackQueueEntry>& callbackEntry)
+void SendQueueEntry::setCallback(
+    const ntci::SendCallback& callback)
 {
-    d_callbackEntry_sp = callbackEntry;
+    d_callback = callback;
 }
 
 NTCCFG_INLINE
-void SendQueueEntry::setInProgress()
+void SendQueueEntry::setCallback(bsl::nullptr_t)
 {
-    d_inProgress = true;
+    d_callback.reset();
+}
+
+NTCCFG_INLINE
+void SendQueueEntry::setInProgress(bool inProgress)
+{
+    d_inProgress = inProgress;
+}
+
+NTCCFG_INLINE
+void SendQueueEntry::setZeroCopy(bool zeroCopy)
+{
+    d_zeroCopy = zeroCopy;
 }
 
 NTCCFG_INLINE
@@ -660,10 +639,6 @@ void SendQueueEntry::closeTimer()
     if (d_timer_sp) {
         d_timer_sp->close();
         d_timer_sp.reset();
-    }
-
-    if (d_callbackEntry_sp) {
-        d_callbackEntry_sp->clearTimer();
     }
 }
 
@@ -725,16 +700,21 @@ bsls::TimeInterval SendQueueEntry::delay() const
 }
 
 NTCCFG_INLINE
-const bsl::shared_ptr<SendCallbackQueueEntry>& SendQueueEntry::callbackEntry()
-    const
+const ntci::SendCallback& SendQueueEntry::callback() const
 {
-    return d_callbackEntry_sp;
+    return d_callback;
 }
 
 NTCCFG_INLINE
 bool SendQueueEntry::inProgress() const
 {
     return d_inProgress;
+}
+
+NTCCFG_INLINE
+bool SendQueueEntry::zeroCopy() const
+{
+    return d_zeroCopy;
 }
 
 NTCCFG_INLINE
@@ -749,12 +729,6 @@ bool SendQueueEntry::isBatchable() const
     }
 
     return true;
-}
-
-NTCCFG_INLINE
-bsl::shared_ptr<ntcq::SendCallbackQueueEntry> SendQueue::createCallbackEntry()
-{
-    return d_callbackEntryPool.create();
 }
 
 NTCCFG_INLINE
@@ -790,6 +764,8 @@ bool SendQueue::popEntry()
     {
         SendQueueEntry& entry = d_entryList.front();
 
+        entry.closeTimer();
+
         if (entry.data()) {
             BSLS_ASSERT(entry.length() > 0);
             BSLS_ASSERT(entry.length() == entry.data()->size());
@@ -809,11 +785,13 @@ void SendQueue::popSize(bsl::size_t numBytes)
 
     SendQueueEntry& entry = d_entryList.front();
 
+    entry.closeTimer();
+
     BSLS_ASSERT(entry.data());
     BSLS_ASSERT(entry.data()->size() == entry.length());
 
     ntsa::DataUtil::pop(entry.data().get(), numBytes);
-    entry.setInProgress();
+    entry.setInProgress(true);
 
     BSLS_ASSERT(entry.length() >= numBytes);
     entry.setLength(entry.length() - numBytes);
@@ -826,15 +804,15 @@ void SendQueue::popSize(bsl::size_t numBytes)
 
 NTCCFG_INLINE
 bool SendQueue::removeEntryId(
-    bsl::shared_ptr<ntcq::SendCallbackQueueEntry>* result,
-    bsl::uint64_t                                  id)
+    ntci::SendCallback* result,
+    bsl::uint64_t       id)
 {
     result->reset();
 
     for (EntryList::iterator it = d_entryList.begin(); it != d_entryList.end();
          ++it)
     {
-        const ntcq::SendQueueEntry& entry = *it;
+        ntcq::SendQueueEntry& entry = *it;
 
         if (entry.id() == id) {
             if (!entry.deadline().isNull()) {
@@ -846,8 +824,10 @@ bool SendQueue::removeEntryId(
                         d_size -= entry.length();
                     }
 
-                    if (entry.callbackEntry()) {
-                        *result = entry.callbackEntry();
+                    entry.closeTimer();
+
+                    if (entry.callback()) {
+                        *result = entry.callback();
                     }
 
                     d_entryList.erase(it);
@@ -862,15 +842,15 @@ bool SendQueue::removeEntryId(
 
 NTCCFG_INLINE
 bool SendQueue::removeEntryToken(
-    bsl::shared_ptr<ntcq::SendCallbackQueueEntry>* result,
-    const ntca::SendToken&                         token)
+    ntci::SendCallback*    result,
+    const ntca::SendToken& token)
 {
     result->reset();
 
     for (EntryList::iterator it = d_entryList.begin(); it != d_entryList.end();
          ++it)
     {
-        const ntcq::SendQueueEntry& entry = *it;
+        ntcq::SendQueueEntry& entry = *it;
 
         if (!entry.token().isNull()) {
             if (entry.token().value() == token) {
@@ -882,8 +862,10 @@ bool SendQueue::removeEntryToken(
                         d_size -= entry.length();
                     }
 
-                    if (entry.callbackEntry()) {
-                        *result = entry.callbackEntry();
+                    entry.closeTimer();
+
+                    if (entry.callback()) {
+                        *result = entry.callback();
                     }
 
                     d_entryList.erase(it);
@@ -898,16 +880,19 @@ bool SendQueue::removeEntryToken(
 
 NTCCFG_INLINE
 bool SendQueue::removeAll(
-    bsl::vector<bsl::shared_ptr<ntcq::SendCallbackQueueEntry> >* result)
+    bsl::vector<ntci::SendCallback>* result)
 {
     bool nonEmpty = !d_entryList.empty();
 
     for (EntryList::iterator it = d_entryList.begin(); it != d_entryList.end();
          ++it)
     {
-        const ntcq::SendQueueEntry& entry = *it;
-        if (entry.callbackEntry()) {
-            result->push_back(entry.callbackEntry());
+        ntcq::SendQueueEntry& entry = *it;
+
+        entry.closeTimer();
+
+        if (entry.callback()) {
+            result->push_back(entry.callback());
         }
     }
 

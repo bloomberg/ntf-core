@@ -81,13 +81,13 @@ namespace ntsa {
 ///
 /// @li @b zeroCopy:
 /// The flag to request the data-to-send be referenced in-place rather than
-/// copied to the send buffer to the specified 'value'. Note that this flag is
-/// advisory; the operating system may neither support nor decide to allow
-/// zero-copy semantics. Regardless, if zero-copy semantics are requested the
-/// application must ensure the data-to-send is neither overwritten nor
-/// invalidated (i.e. freed) until the completion of the send operation is
-/// indicated in a subsequent notification (which also indicates whether the
-/// data was referenced in-place or copied.)
+/// copied to the send buffer. Note that this flag is advisory; the operating
+/// system may neither support nor decide to allow zero-copy semantics.
+/// Regardless, if zero-copy semantics are requested the application must
+/// ensure the data-to-send is neither overwritten nor invalidated (i.e. freed)
+/// until the completion of the send operation is indicated in a subsequent
+/// notification (which also indicates whether the data was referenced in-place
+/// or copied.)
 ///
 /// @par Thread Safety
 /// This class is not thread safe.

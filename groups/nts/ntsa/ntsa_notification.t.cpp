@@ -131,8 +131,8 @@ NTSCFG_TEST_CASE(6)
     NTSCFG_TEST_EQ(n.type(), NotificationType::e_ZERO_COPY);
 
     zc.setFrom(1);
-    zc.setTo(22);
-    zc.setCode(1);
+    zc.setThru(22);
+    zc.setType(ntsa::ZeroCopyType::e_DEFERRED);
     NTSCFG_TEST_EQ(n.zeroCopy(), zc);
 }
 
@@ -140,8 +140,8 @@ NTSCFG_TEST_CASE(7)
 {
     ZeroCopy zc;
     zc.setFrom(1);
-    zc.setTo(22);
-    zc.setCode(1);
+    zc.setThru(22);
+    zc.setType(ntsa::ZeroCopyType::e_DEFERRED);
 
     Notification n;
     n.makeZeroCopy(zc);

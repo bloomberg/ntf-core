@@ -183,6 +183,10 @@ namespace ntca {
 /// @li @b timestampIncomingData:
 /// The flag that indicates incoming data should be timestamped.
 ///
+/// @li @b zeroCopyThreshold:
+/// The minimum number of bytes that must be available to send in order to
+/// attempt a zero-copy send.
+///
 /// @li @b loadBalancingOptions:
 /// The configurable parameters used select a reactor or proactor that drives
 /// the I/O for the socket.
@@ -224,6 +228,7 @@ class DatagramSocketOptions
     bdlb::NullableValue<bool>            d_metrics;
     bdlb::NullableValue<bool>            d_timestampOutgoingData;
     bdlb::NullableValue<bool>            d_timestampIncomingData;
+    bdlb::NullableValue<bsl::size_t>     d_zeroCopyThreshold;
     ntca::LoadBalancingOptions           d_loadBalancingOptions;
 
   public:
@@ -341,11 +346,17 @@ class DatagramSocketOptions
     /// the specified 'value'.
     void setMetrics(bool value);
 
-    /// Set the flag that indicates outgoing data should be timestamped.
+    /// Set the flag that indicates outgoing data should be timestamped to the
+    /// specified 'value'.
     void setTimestampOutgoingData(bool value);
 
-    /// Return the flag that indicates incoming data should be timestamped.
+    /// Set the flag that indicates incoming data should be timestamped to the
+    /// specified 'value'.
     void setTimestampIncomingData(bool value);
+
+    /// Set the minimum number of bytes that must be available to send in order
+    /// to attempt a zero-copy send to the specified 'value'.
+    void setZeroCopyThreshold(bsl::size_t value);
 
     /// Set the load balancing options to the specified 'value'.
     void setLoadBalancingOptions(const ntca::LoadBalancingOptions& value);
@@ -450,6 +461,10 @@ class DatagramSocketOptions
 
     /// Return the flag that indicates incoming data should be timestamped.
     const bdlb::NullableValue<bool>& timestampIncomingData() const;
+
+    /// Return the minimum number of bytes that must be available to send in
+    /// order to attempt a zero-copy send.
+    const bdlb::NullableValue<bsl::size_t>& zeroCopyThreshold() const;
 
     /// Return the load balancing options.
     const ntca::LoadBalancingOptions& loadBalancingOptions() const;

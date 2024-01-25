@@ -705,7 +705,7 @@ ntsa::Error SocketOptionUtil::setZeroCopy(ntsa::Handle socket, bool zeroCopy)
 {
 #if defined(BSLS_PLATFORM_OS_LINUX)
 
-    int optionValue = static_cast<bool>(zeroCopy);
+    int optionValue = static_cast<int>(zeroCopy);
 
     int rc = setsockopt(socket,
                         SOL_SOCKET,

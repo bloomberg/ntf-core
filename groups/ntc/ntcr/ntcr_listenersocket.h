@@ -190,7 +190,7 @@ class ListenerSocket : public ntci::ListenerSocket,
 
     /// Execute the second part of shutdown sequence when the socket is
     /// detached. See also "privateShutdownSequence".
-    void privateShutdownSequencePart2(
+    void privateShutdownSequenceComplete(
         const bsl::shared_ptr<ListenerSocket>& self,
         const ntcs::ShutdownContext&           context,
         bool                                   defer,
