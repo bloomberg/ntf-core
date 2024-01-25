@@ -689,7 +689,9 @@ void EventPort::specify(int*           events,
 void EventPort::flush()
 {
     if (d_chronology.hasAnyScheduledOrDeferred()) {
-        d_chronology.announce();
+        do {
+            d_chronology.announce();
+        } while (d_chronology.hasAnyDeferred());
     }
 }
 

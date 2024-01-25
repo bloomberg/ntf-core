@@ -501,12 +501,6 @@ const bdlb::NullableValue<bsl::size_t>& DatagramSocketOptions::
     return d_zeroCopyThreshold;
 }
 
-bdlb::NullableValue<bsl::size_t>& DatagramSocketOptions::
-    zeroCopyThreshold()
-{
-    return d_zeroCopyThreshold;
-}
-
 bsl::ostream& DatagramSocketOptions::print(bsl::ostream& stream,
                                            int           level,
                                            int           spacesPerLevel) const

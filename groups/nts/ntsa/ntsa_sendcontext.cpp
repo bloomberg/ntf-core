@@ -30,7 +30,8 @@ bool SendContext::equals(const SendContext& other) const
            d_buffersSendable == other.d_buffersSendable &&
            d_buffersSent == other.d_buffersSent &&
            d_messagesSendable == other.d_messagesSendable &&
-           d_messagesSent == other.d_messagesSent;
+           d_messagesSent == other.d_messagesSent && 
+           d_zeroCopy == other.d_zeroCopy;
 }
 
 bool SendContext::less(const SendContext& other) const
@@ -75,7 +76,15 @@ bool SendContext::less(const SendContext& other) const
         return false;
     }
 
-    return d_messagesSent < other.d_messagesSent;
+    if (d_messagesSent < other.d_messagesSent) {
+        return true;
+    }
+
+    if (other.d_messagesSent < d_messagesSent) {
+        return false;
+    }
+
+    return d_zeroCopy < other.d_zeroCopy;
 }
 
 bsl::ostream& SendContext::print(bsl::ostream& stream,
@@ -90,6 +99,7 @@ bsl::ostream& SendContext::print(bsl::ostream& stream,
     printer.printAttribute("buffersSent", d_buffersSent);
     printer.printAttribute("messagesSendable", d_messagesSendable);
     printer.printAttribute("messagesSent", d_messagesSent);
+    printer.printAttribute("zeroCopy", d_zeroCopy);
     printer.end();
     return stream;
 }

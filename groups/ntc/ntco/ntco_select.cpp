@@ -733,9 +733,7 @@ void Select::flush()
 
         {
             LockGuard detachGuard(&d_detachMutex);
-            if (!d_chronology.hasAnyScheduledOrDeferred() &&
-                d_detachList.empty())
-            {
+            if (!d_chronology.hasAnyDeferred() && d_detachList.empty()) {
                 break;
             }
         }

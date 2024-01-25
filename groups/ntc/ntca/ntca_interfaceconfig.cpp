@@ -19,6 +19,7 @@
 BSLS_IDENT_RCSID(ntca_interfaceconfig_cpp, "$Id$ $CSID$")
 
 #include <ntccfg_limits.h>
+#include <bslim_printer.h>
 
 namespace BloombergLP {
 namespace ntca {
@@ -53,6 +54,9 @@ InterfaceConfig::InterfaceConfig(bslma::Allocator* basicAllocator)
 , d_receiveBufferLowWatermark()
 , d_sendTimeout()
 , d_receiveTimeout()
+, d_timestampOutgoingData()
+, d_timestampIncomingData()
+, d_zeroCopyThreshold()
 , d_keepAlive()
 , d_noDelay()
 , d_debugFlag()
@@ -107,6 +111,9 @@ InterfaceConfig::InterfaceConfig(const InterfaceConfig& other,
 , d_receiveBufferLowWatermark(other.d_receiveBufferLowWatermark)
 , d_sendTimeout(other.d_sendTimeout)
 , d_receiveTimeout(other.d_receiveTimeout)
+, d_timestampOutgoingData(other.d_timestampOutgoingData)
+, d_timestampIncomingData(other.d_timestampIncomingData)
+, d_zeroCopyThreshold(other.d_zeroCopyThreshold)
 , d_keepAlive(other.d_keepAlive)
 , d_noDelay(other.d_noDelay)
 , d_debugFlag(other.d_debugFlag)
@@ -168,6 +175,9 @@ InterfaceConfig& InterfaceConfig::operator=(const InterfaceConfig& other)
         d_receiveBufferLowWatermark = other.d_receiveBufferLowWatermark;
         d_sendTimeout               = other.d_sendTimeout;
         d_receiveTimeout            = other.d_receiveTimeout;
+        d_timestampOutgoingData     = other.d_timestampOutgoingData;
+        d_timestampIncomingData     = other.d_timestampIncomingData;
+        d_zeroCopyThreshold         = other.d_zeroCopyThreshold;
         d_keepAlive                 = other.d_keepAlive;
         d_noDelay                   = other.d_noDelay;
         d_debugFlag                 = other.d_debugFlag;
@@ -336,6 +346,21 @@ void InterfaceConfig::setSendTimeout(bsl::size_t value)
 void InterfaceConfig::setReceiveTimeout(bsl::size_t value)
 {
     d_receiveTimeout = value;
+}
+
+void InterfaceConfig::setTimestampOutgoingData(bool value)
+{
+    d_timestampOutgoingData = value;
+}
+
+void InterfaceConfig::setTimestampIncomingData(bool value)
+{
+    d_timestampIncomingData = value;
+}
+
+void InterfaceConfig::setZeroCopyThreshold(size_t value)
+{
+    d_zeroCopyThreshold = value;
 }
 
 void InterfaceConfig::setKeepAlive(bool value)
@@ -597,6 +622,24 @@ const bdlb::NullableValue<bsl::size_t>& InterfaceConfig::receiveTimeout() const
     return d_receiveTimeout;
 }
 
+const bdlb::NullableValue<bool>& InterfaceConfig::timestampOutgoingData()
+    const
+{
+    return d_timestampOutgoingData;
+}
+
+const bdlb::NullableValue<bool>& InterfaceConfig::timestampIncomingData()
+    const
+{
+    return d_timestampIncomingData;
+}
+
+const bdlb::NullableValue<bsl::size_t>& 
+InterfaceConfig::zeroCopyThreshold() const
+{
+    return d_zeroCopyThreshold;
+}
+
 const bdlb::NullableValue<bool>& InterfaceConfig::keepAlive() const
 {
     return d_keepAlive;
@@ -702,6 +745,238 @@ const bdlb::NullableValue<ntca::ResolverConfig>& InterfaceConfig::
     resolverConfig() const
 {
     return d_resolverConfig;
+}
+
+bsl::ostream& InterfaceConfig::print(bsl::ostream& stream,
+                                     int           level,
+                                     int           spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+
+    if (!d_driverName.empty()) {
+        printer.printAttribute("driverName", d_driverName);
+    }
+
+    if (!d_metricName.empty()) {
+        printer.printAttribute("metricName", d_metricName);
+    }
+
+    if (!d_threadName.empty()) {
+        printer.printAttribute("threadName", d_threadName);
+    }
+
+    printer.printAttribute("minThreads", d_minThreads);
+    printer.printAttribute("maxThreads", d_maxThreads);
+    printer.printAttribute("threadStackSize", d_threadStackSize);
+    printer.printAttribute("threadLoadFactor", d_threadLoadFactor);
+
+    if (!d_maxEventsPerWait.isNull()) {
+        printer.printAttribute("maxEventsPerWait", d_maxEventsPerWait);
+    }
+
+    if (!d_maxTimersPerWait.isNull()) {
+        printer.printAttribute("maxTimersPerWait", d_maxTimersPerWait);
+    }
+
+    if (!d_maxCyclesPerWait.isNull()) {
+        printer.printAttribute("maxCyclesPerWait", d_maxCyclesPerWait);
+    }
+
+    if (!d_maxConnections.isNull()) {
+        printer.printAttribute("maxConnections", d_maxConnections);
+    }
+
+    if (!d_backlog.isNull()) {
+        printer.printAttribute("backlog", d_backlog);
+    }
+
+    if (!d_acceptQueueLowWatermark.isNull()) {
+        printer.printAttribute(
+            "acceptQueueLowWatermark", d_acceptQueueLowWatermark);
+    }
+
+    if (!d_acceptQueueHighWatermark.isNull()) {
+        printer.printAttribute(
+            "acceptQueueHighWatermark", d_acceptQueueHighWatermark);
+    }
+
+    if (!d_readQueueLowWatermark.isNull()) {
+        printer.printAttribute(
+            "readQueueLowWatermark", d_readQueueLowWatermark);
+    }
+
+    if (!d_readQueueHighWatermark.isNull()) {
+        printer.printAttribute(
+            "readQueueHighWatermark", d_readQueueHighWatermark);
+    }
+
+    if (!d_writeQueueLowWatermark.isNull()) {
+        printer.printAttribute(
+            "writeQueueLowWatermark", d_writeQueueLowWatermark);
+    }
+
+    if (!d_writeQueueHighWatermark.isNull()) {
+        printer.printAttribute(
+            "writeQueueHighWatermark", d_writeQueueHighWatermark);
+    }
+
+    if (!d_minIncomingStreamTransferSize.isNull()) {
+        printer.printAttribute(
+            "minIncomingStreamTransferSize", 
+            d_minIncomingStreamTransferSize);
+    }
+
+    if (!d_maxIncomingStreamTransferSize.isNull()) {
+        printer.printAttribute(
+            "maxIncomingStreamTransferSize", 
+            d_maxIncomingStreamTransferSize);
+    }
+
+    if (!d_acceptGreedily.isNull()) {
+        printer.printAttribute("acceptGreedily", d_acceptGreedily);
+    }
+
+    if (!d_sendGreedily.isNull()) {
+        printer.printAttribute("sendGreedily", d_sendGreedily);
+    }
+
+    if (!d_receiveGreedily.isNull()) {
+        printer.printAttribute("receiveGreedily", d_receiveGreedily);
+    }
+
+    if (!d_sendBufferSize.isNull()) {
+        printer.printAttribute("sendBufferSize", d_sendBufferSize);
+    }
+
+    if (!d_receiveBufferSize.isNull()) {
+        printer.printAttribute("receiveBufferSize", d_receiveBufferSize);
+    }
+
+    if (!d_sendBufferLowWatermark.isNull()) {
+        printer.printAttribute(
+            "sendBufferLowWatermark", d_sendBufferLowWatermark);
+    }
+
+    if (!d_receiveBufferLowWatermark.isNull()) {
+        printer.printAttribute(
+            "receiveBufferLowWatermark", d_receiveBufferLowWatermark);
+    }
+
+    if (!d_sendTimeout.isNull()) {
+        printer.printAttribute("sendTimeout", d_sendTimeout);
+    }
+
+    if (!d_receiveTimeout.isNull()) {
+        printer.printAttribute("receiveTimeout", d_receiveTimeout);
+    }
+
+    if (!d_timestampOutgoingData.isNull()) {
+        printer.printAttribute(
+            "timestampOutgoingData", d_timestampOutgoingData);
+    }
+
+    if (!d_timestampIncomingData.isNull()) {
+        printer.printAttribute(
+            "timestampIncomingData", d_timestampIncomingData);
+    }
+
+    if (!d_zeroCopyThreshold.isNull()) {
+        printer.printAttribute(
+            "zeroCopyThreshold", d_zeroCopyThreshold);
+    }
+
+    if (!d_keepAlive.isNull()) {
+        printer.printAttribute("keepAlive", d_keepAlive);
+    }
+
+    if (!d_noDelay.isNull()) {
+        printer.printAttribute("noDelay", d_noDelay);
+    }
+
+    if (!d_debugFlag.isNull()) {
+        printer.printAttribute("debugFlag", d_debugFlag);
+    }
+
+    if (!d_allowBroadcasting.isNull()) {
+        printer.printAttribute("allowBroadcasting", d_allowBroadcasting);
+    }
+
+    if (!d_bypassNormalRouting.isNull()) {
+        printer.printAttribute("bypassNormalRouting", d_bypassNormalRouting);
+    }
+
+    if (!d_leaveOutOfBandDataInline.isNull()) {
+        printer.printAttribute(
+            "leaveOutOfBandDataInline", d_leaveOutOfBandDataInline);
+    }
+
+    if (!d_lingerFlag.isNull()) {
+        printer.printAttribute("lingerFlag", d_lingerFlag);
+    }
+
+    if (!d_lingerTimeout.isNull()) {
+        printer.printAttribute("lingerTimeout", d_lingerTimeout);
+    }
+
+    if (!d_keepHalfOpen.isNull()) {
+        printer.printAttribute("keepHalfOpen", d_keepHalfOpen);
+    }
+
+    if (!d_maxDatagramSize.isNull()) {
+        printer.printAttribute("maxDatagramSize", d_maxDatagramSize);
+    }
+
+    if (!d_multicastLoopback.isNull()) {
+        printer.printAttribute("multicastLoopback", d_multicastLoopback);
+    }
+
+    if (!d_multicastTimeToLive.isNull()) {
+        printer.printAttribute("multicastTimeToLive", d_multicastTimeToLive);
+    }
+
+    if (!d_multicastInterface.isNull()) {
+        printer.printAttribute("multicastInterface", d_multicastInterface);
+    }
+
+    if (!d_dynamicLoadBalancing.isNull()) {
+        printer.printAttribute("dynamicLoadBalancing", d_dynamicLoadBalancing);
+    }
+
+    if (!d_driverMetrics.isNull()) {
+        printer.printAttribute("driverMetrics", d_driverMetrics);
+    }
+
+    if (!d_driverMetricsPerWaiter.isNull()) {
+        printer.printAttribute(
+            "driverMetricsPerWaiter", d_driverMetricsPerWaiter);
+    }
+
+    if (!d_socketMetrics.isNull()) {
+        printer.printAttribute("socketMetrics", d_socketMetrics);
+    }
+
+    if (!d_socketMetricsPerHandle.isNull()) {
+        printer.printAttribute(
+            "socketMetricsPerHandle", d_socketMetricsPerHandle);
+    }
+
+    if (!d_resolverEnabled.isNull()) {
+        printer.printAttribute("resolverEnabled", d_resolverEnabled);
+    }
+
+    if (!d_resolverConfig.isNull()) {
+        printer.printAttribute("resolverConfig", d_resolverConfig);
+    }
+
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&          stream,
+                         const InterfaceConfig& object)
+{
+    return object.print(stream, 0, -1);
 }
 
 }  // close package namespace

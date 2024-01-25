@@ -1778,6 +1778,8 @@ NTSCFG_TEST_CASE(9)
 #endif
     };
 
+    bool zeroCopyEnabledByDefault = false;
+
     for (bsl::size_t socketTypeIndex = 0;
          socketTypeIndex < sizeof(SOCKET_TYPES) / sizeof(SOCKET_TYPES[0]);
          ++socketTypeIndex)
@@ -1855,11 +1857,11 @@ NTSCFG_TEST_CASE(9)
         NTSCFG_TEST_OK(error);
 
         if (setSupported && getSupported) {
-            bool zeroCopy = true;
+            bool zeroCopy = !zeroCopyEnabledByDefault;
             error =
                 ntsu::SocketOptionUtil::getZeroCopy(&zeroCopy, socket);
             NTSCFG_TEST_OK(error);
-            NTSCFG_TEST_FALSE(zeroCopy);
+            NTSCFG_TEST_EQ(zeroCopy, zeroCopyEnabledByDefault);
 
             error = ntsu::SocketOptionUtil::setZeroCopy(socket, true);
             NTSCFG_TEST_OK(error);

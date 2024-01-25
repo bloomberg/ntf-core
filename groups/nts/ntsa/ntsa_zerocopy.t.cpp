@@ -25,31 +25,31 @@ NTSCFG_TEST_CASE(1)
     {
         ZeroCopy zc;
         NTSCFG_TEST_EQ(zc.from(), 0);
-        NTSCFG_TEST_EQ(zc.to(), 0);
-        NTSCFG_TEST_EQ(zc.code(), 0);
+        NTSCFG_TEST_EQ(zc.thru(), 0);
+        NTSCFG_TEST_EQ(zc.type(), ntsa::ZeroCopyType::e_AVOIDED);
     }
     {
-        const bsl::uint32_t from = 5;
-        const bsl::uint32_t to   = 15;
-        const bsl::uint8_t  code = 1;
+        const bsl::uint32_t             from = 5;
+        const bsl::uint32_t             thru = 15;
+        const ntsa::ZeroCopyType::Value type = ntsa::ZeroCopyType::e_DEFERRED;
 
-        ZeroCopy zc(from, to, code);
+        ZeroCopy zc(from, thru, type);
         NTSCFG_TEST_EQ(zc.from(), from);
-        NTSCFG_TEST_EQ(zc.to(), to);
-        NTSCFG_TEST_EQ(zc.code(), code);
+        NTSCFG_TEST_EQ(zc.thru(), thru);
+        NTSCFG_TEST_EQ(zc.type(), type);
     }
     {
-        const bsl::uint32_t from = 10;
-        const bsl::uint32_t to   = 22;
-        const bsl::uint8_t  code = 1;
+        const bsl::uint32_t             from = 10;
+        const bsl::uint32_t             thru = 22;
+        const ntsa::ZeroCopyType::Value type = ntsa::ZeroCopyType::e_DEFERRED;
         
         ZeroCopy zc;
         zc.setFrom(from);
-        zc.setTo(to);
-        zc.setCode(code);
+        zc.setThru(thru);
+        zc.setType(type);
         NTSCFG_TEST_EQ(zc.from(), from);
-        NTSCFG_TEST_EQ(zc.to(), to);
-        NTSCFG_TEST_EQ(zc.code(), code);
+        NTSCFG_TEST_EQ(zc.thru(), thru);
+        NTSCFG_TEST_EQ(zc.type(), type);
 
         ZeroCopy copy(zc);
         NTSCFG_TEST_EQ(copy, zc);

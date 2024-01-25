@@ -36,7 +36,7 @@ namespace ntsa {
 /// @par Attributes
 /// This class is composed of the following attributes.
 ///
-/// @li @b  bytesSendable:
+/// @li @b bytesSendable:
 /// The number of bytes attempted to copy to the socket send buffer.
 ///
 /// @li @b bytesSent:
@@ -57,6 +57,13 @@ namespace ntsa {
 /// The actual number of messages copied to the socket send buffer. This value
 /// is only relevant when copying to the send buffer of a datagram socket.
 ///
+/// @li @b zeroCopy:
+/// The flag that indicates the data was referenced in-place rather than copied
+/// to the send buffer. If this flag is true, the application must ensure the
+/// data-to-send is neither overwritten nor invalidated (i.e. freed) until the
+/// completion of the send operation is indicated in a subsequent notification
+/// (which also indicates whether the data was referenced in-place or copied.)
+///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
@@ -69,6 +76,7 @@ class SendContext
     bsl::size_t d_buffersSent;
     bsl::size_t d_messagesSendable;
     bsl::size_t d_messagesSent;
+    bool        d_zeroCopy;
 
   public:
     /// Create new send options having the default value.
@@ -110,6 +118,10 @@ class SendContext
     /// Set the number of messages actually sent to the specified 'value'.
     void setMessagesSent(bsl::size_t value);
 
+    /// Set the flag that indicates the data was referenced in-place rather
+    /// than copied to the send buffer to the specified 'value'.
+    void setZeroCopy(bool value);
+
     /// Return the number of bytes attempted to be sent.
     bsl::size_t bytesSendable() const;
 
@@ -127,6 +139,10 @@ class SendContext
 
     /// Return the number of messages actually sent.
     bsl::size_t messagesSent() const;
+
+    /// Return the flag that indicates the data was referenced in-place rather
+    /// than copied to the send buffer.
+    bool zeroCopy() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -196,6 +212,7 @@ SendContext::SendContext()
 , d_buffersSent(0)
 , d_messagesSendable(0)
 , d_messagesSent(0)
+, d_zeroCopy(false)
 {
 }
 
@@ -207,6 +224,7 @@ SendContext::SendContext(const SendContext& original)
 , d_buffersSent(original.d_buffersSent)
 , d_messagesSendable(original.d_messagesSendable)
 , d_messagesSent(original.d_messagesSent)
+, d_zeroCopy(original.d_zeroCopy)
 {
 }
 
@@ -224,6 +242,7 @@ SendContext& SendContext::operator=(const SendContext& other)
     d_buffersSent      = other.d_buffersSent;
     d_messagesSendable = other.d_messagesSendable;
     d_messagesSent     = other.d_messagesSent;
+    d_zeroCopy         = other.d_zeroCopy;
 
     return *this;
 }
@@ -237,6 +256,7 @@ void SendContext::reset()
     d_buffersSent      = 0;
     d_messagesSendable = 0;
     d_messagesSent     = 0;
+    d_zeroCopy         = false;
 }
 
 NTSCFG_INLINE
@@ -276,6 +296,12 @@ void SendContext::setMessagesSent(bsl::size_t value)
 }
 
 NTSCFG_INLINE
+void SendContext::setZeroCopy(bool value)
+{
+    d_zeroCopy = value;
+}
+
+NTSCFG_INLINE
 bsl::size_t SendContext::bytesSendable() const
 {
     return d_bytesSendable;
@@ -309,6 +335,12 @@ NTSCFG_INLINE
 bsl::size_t SendContext::messagesSent() const
 {
     return d_messagesSent;
+}
+
+NTSCFG_INLINE
+bool SendContext::zeroCopy() const
+{
+    return d_zeroCopy;
 }
 
 NTSCFG_INLINE
@@ -346,6 +378,7 @@ void hashAppend(HASH_ALGORITHM& algorithm, const SendContext& value)
     hashAppend(algorithm, value.buffersSent());
     hashAppend(algorithm, value.messagesSendable());
     hashAppend(algorithm, value.messagesSent());
+    hashAppend(algorithm, value.zeroCopy());
 }
 
 }  // close package namespace

@@ -32,78 +32,6 @@ BSLS_IDENT_RCSID(ntcq_send_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntcq {
 
-SendCallbackQueueEntry::SendCallbackQueueEntry(
-    bslma::Allocator* basicAllocator)
-: d_object("ntcq::SendCallbackQueueEntry")
-, d_state()
-, d_callback(basicAllocator)
-, d_options()
-, d_timer_sp()
-{
-}
-
-SendCallbackQueueEntry::~SendCallbackQueueEntry()
-{
-    BSLS_ASSERT(!d_callback);
-    BSLS_ASSERT(!d_timer_sp);
-}
-
-void SendCallbackQueueEntry::clear()
-{
-    d_state.reset();
-    d_callback.reset();
-    d_options.reset();
-    if (d_timer_sp) {
-        d_timer_sp->close();
-        d_timer_sp.reset();
-    }
-}
-
-void SendCallbackQueueEntry::dispatch(
-    const bsl::shared_ptr<ntcq::SendCallbackQueueEntry>& entry,
-    const bsl::shared_ptr<ntci::Sender>&                 sender,
-    const ntca::SendEvent&                               event,
-    const bsl::shared_ptr<ntci::Strand>&                 strand,
-    const bsl::shared_ptr<ntci::Executor>&               executor,
-    bool                                                 defer,
-    bslmt::Mutex*                                        mutex)
-{
-    if (NTCCFG_LIKELY(entry->d_state.finish())) {
-        if (entry->d_timer_sp) {
-            entry->d_timer_sp->close();
-            entry->d_timer_sp.reset();
-        }
-
-        ntci::SendCallback callback = entry->d_callback;
-        entry->d_callback.reset();
-
-        if (callback) {
-            callback.dispatch(sender, event, strand, executor, defer, mutex);
-        }
-    }
-}
-
-void SendCallbackQueueEntryPool::construct(void*             address,
-                                           bslma::Allocator* allocator)
-{
-    new (address) ntcq::SendCallbackQueueEntry(allocator);
-}
-
-SendCallbackQueueEntryPool::SendCallbackQueueEntryPool(
-    bslma::Allocator* basicAllocator)
-: d_pool(NTCCFG_BIND(&SendCallbackQueueEntryPool::construct,
-                     NTCCFG_BIND_PLACEHOLDER_1,
-                     NTCCFG_BIND_PLACEHOLDER_2),
-         1,
-         basicAllocator)
-{
-}
-
-SendCallbackQueueEntryPool::~SendCallbackQueueEntryPool()
-{
-    BSLS_ASSERT(d_pool.numObjects() == d_pool.numAvailableObjects());
-}
-
 bool SendQueueEntry::batchNext(ntsa::ConstBufferArray*  result,
                                const ntsa::SendOptions& options) const
 {
@@ -336,7 +264,6 @@ SendQueue::SendQueue(bslma::Allocator* basicAllocator)
 , d_watermarkHigh(NTCCFG_DEFAULT_STREAM_SOCKET_WRITE_QUEUE_HIGH_WATERMARK)
 , d_watermarkHighWanted(true)
 , d_nextEntryId(1)
-, d_callbackEntryPool(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     ntcs::WatermarkUtil::sanitizeOutgoingQueueWatermarks(&d_watermarkLow,

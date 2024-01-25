@@ -158,12 +158,18 @@ namespace ntccfg {
 /// @ingroup module_ntccfg
 #define NTCCFG_DEFAULT_DATAGRAM_SOCKET_KEEP_HALF_OPEN false
 
-// The maximum size of a datagram socket message, unless specified by the user.
-// In the absense of other information, assume the UDP protocol. The default
-// value is 65507, which is 64K - the size of the UDP header.
+/// The maximum size of a datagram socket message, unless specified by the user.
+/// In the absense of other information, assume the UDP protocol. The default
+/// value is 65507, which is 64K - the size of the UDP header.
 ///
 /// @ingroup module_ntccfg
 #define NTCCFG_DEFAULT_DATAGRAM_SOCKET_MAX_MESSAGE_SIZE 65507
+
+/// The default recommended threshold of data at which to begin to attempt
+/// zero-copy transmission.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_DEFAULT_ZERO_COPY_THRESHOLD 10240
 
 #if NTC_BUILD_WITH_DYNAMIC_LOAD_BALANCING
 /// The default maximum number of threads supported by this library. The

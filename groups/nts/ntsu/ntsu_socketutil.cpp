@@ -1098,13 +1098,13 @@ ntsa::Error SocketUtil::create(ntsa::Handle*          result,
 #endif
 
     if (domain == AF_INET6) {
-        int value = 1;
-        rc        = ::setsockopt(*result,
+        int optionValue = 1;
+        rc = ::setsockopt(*result,
                           IPPROTO_IPV6,
                           IPV6_V6ONLY,
-                          &value,
-                          sizeof value);
-        if (rc == -1) {
+                          &optionValue,
+                          sizeof optionValue);
+        if (rc != 0) {
             return ntsa::Error(errno);
         }
     }
@@ -1399,6 +1399,16 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
 
     ssize_t sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
 
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (NTSCFG_UNLIKELY(sendmsgResult < 0 &&
+                        errno == ENOBUFS &&
+                        options.zeroCopy()))
+    {
+        sendFlags &= ~ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY;
+        sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
+    }
+#endif
+
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
                                          sendmsgResult,
@@ -1407,6 +1417,12 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
     if (sendmsgResult < 0) {
         return ntsa::Error(errno);
     }
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if ((sendFlags & ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY) != 0) {
+        context->setZeroCopy(true);
+    }
+#endif
 
     context->setBytesSent(sendmsgResult);
 
@@ -1473,6 +1489,16 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
 
     ssize_t sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
 
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (NTSCFG_UNLIKELY(sendmsgResult < 0 &&
+                        errno == ENOBUFS &&
+                        options.zeroCopy()))
+    {
+        sendFlags &= ~ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY;
+        sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
+    }
+#endif
+
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
                                          sendmsgResult,
@@ -1481,6 +1507,12 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
     if (sendmsgResult < 0) {
         return ntsa::Error(errno);
     }
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if ((sendFlags & ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY) != 0) {
+        context->setZeroCopy(true);
+    }
+#endif
 
     context->setBytesSent(sendmsgResult);
 
@@ -1544,6 +1576,16 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
 
     ssize_t sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
 
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (NTSCFG_UNLIKELY(sendmsgResult < 0 &&
+                        errno == ENOBUFS &&
+                        options.zeroCopy()))
+    {
+        sendFlags &= ~ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY;
+        sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
+    }
+#endif
+
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
                                          sendmsgResult,
@@ -1552,6 +1594,12 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
     if (sendmsgResult < 0) {
         return ntsa::Error(errno);
     }
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if ((sendFlags & ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY) != 0) {
+        context->setZeroCopy(true);
+    }
+#endif
 
     context->setBytesSent(sendmsgResult);
 
@@ -1614,6 +1662,16 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*            context,
 
     ssize_t sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
 
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (NTSCFG_UNLIKELY(sendmsgResult < 0 &&
+                        errno == ENOBUFS &&
+                        options.zeroCopy()))
+    {
+        sendFlags &= ~ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY;
+        sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
+    }
+#endif
+
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
                                          sendmsgResult,
@@ -1622,6 +1680,12 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*            context,
     if (sendmsgResult < 0) {
         return ntsa::Error(errno);
     }
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if ((sendFlags & ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY) != 0) {
+        context->setZeroCopy(true);
+    }
+#endif
 
     context->setBytesSent(sendmsgResult);
 
@@ -1684,6 +1748,16 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*               context,
 
     ssize_t sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
 
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (NTSCFG_UNLIKELY(sendmsgResult < 0 &&
+                        errno == ENOBUFS &&
+                        options.zeroCopy()))
+    {
+        sendFlags &= ~ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY;
+        sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
+    }
+#endif
+
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
                                          sendmsgResult,
@@ -1692,6 +1766,12 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*               context,
     if (sendmsgResult < 0) {
         return ntsa::Error(errno);
     }
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if ((sendFlags & ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY) != 0) {
+        context->setZeroCopy(true);
+    }
+#endif
 
     context->setBytesSent(sendmsgResult);
 
@@ -1758,6 +1838,16 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*         context,
 
     ssize_t sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
 
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (NTSCFG_UNLIKELY(sendmsgResult < 0 &&
+                        errno == ENOBUFS &&
+                        options.zeroCopy()))
+    {
+        sendFlags &= ~ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY;
+        sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
+    }
+#endif
+
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
                                          sendmsgResult,
@@ -1766,6 +1856,12 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*         context,
     if (sendmsgResult < 0) {
         return ntsa::Error(errno);
     }
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if ((sendFlags & ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY) != 0) {
+        context->setZeroCopy(true);
+    }
+#endif
 
     context->setBytesSent(sendmsgResult);
 
@@ -1829,6 +1925,16 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*         context,
 
     ssize_t sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
 
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (NTSCFG_UNLIKELY(sendmsgResult < 0 &&
+                        errno == ENOBUFS &&
+                        options.zeroCopy()))
+    {
+        sendFlags &= ~ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY;
+        sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
+    }
+#endif
+
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
                                          sendmsgResult,
@@ -1837,6 +1943,12 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*         context,
     if (sendmsgResult < 0) {
         return ntsa::Error(errno);
     }
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if ((sendFlags & ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY) != 0) {
+        context->setZeroCopy(true);
+    }
+#endif
 
     context->setBytesSent(sendmsgResult);
 
@@ -1899,6 +2011,16 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*              context,
 
     ssize_t sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
 
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (NTSCFG_UNLIKELY(sendmsgResult < 0 &&
+                        errno == ENOBUFS &&
+                        options.zeroCopy()))
+    {
+        sendFlags &= ~ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY;
+        sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
+    }
+#endif
+
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
                                          sendmsgResult,
@@ -1907,6 +2029,12 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*              context,
     if (sendmsgResult < 0) {
         return ntsa::Error(errno);
     }
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if ((sendFlags & ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY) != 0) {
+        context->setZeroCopy(true);
+    }
+#endif
 
     context->setBytesSent(sendmsgResult);
 
@@ -1968,6 +2096,16 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*                 context,
 
     ssize_t sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
 
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (NTSCFG_UNLIKELY(sendmsgResult < 0 &&
+                        errno == ENOBUFS &&
+                        options.zeroCopy()))
+    {
+        sendFlags &= ~ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY;
+        sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
+    }
+#endif
+
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
                                          sendmsgResult,
@@ -1976,6 +2114,12 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*                 context,
     if (sendmsgResult < 0) {
         return ntsa::Error(errno);
     }
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if ((sendFlags & ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY) != 0) {
+        context->setZeroCopy(true);
+    }
+#endif
 
     context->setBytesSent(sendmsgResult);
 
@@ -2041,6 +2185,16 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
 
     ssize_t sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
 
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (NTSCFG_UNLIKELY(sendmsgResult < 0 &&
+                        errno == ENOBUFS &&
+                        options.zeroCopy()))
+    {
+        sendFlags &= ~ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY;
+        sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
+    }
+#endif
+
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
                                          sendmsgResult,
@@ -2049,6 +2203,12 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
     if (sendmsgResult < 0) {
         return ntsa::Error(errno);
     }
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if ((sendFlags & ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY) != 0) {
+        context->setZeroCopy(true);
+    }
+#endif
 
     context->setBytesSent(sendmsgResult);
 
@@ -2148,6 +2308,16 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
 
     ssize_t sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
 
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (NTSCFG_UNLIKELY(sendmsgResult < 0 &&
+                        errno == ENOBUFS &&
+                        options.zeroCopy()))
+    {
+        sendFlags &= ~ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY;
+        sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
+    }
+#endif
+
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
                                          sendmsgResult,
@@ -2156,6 +2326,12 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
     if (sendmsgResult < 0) {
         return ntsa::Error(errno);
     }
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if ((sendFlags & ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY) != 0) {
+        context->setZeroCopy(true);
+    }
+#endif
 
     context->setBytesSent(sendmsgResult);
 
@@ -2220,8 +2396,17 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
     }
 #endif
 
-    ssize_t sendmsgResult =
-        ::sendmsg(socket, &msg, sendFlags);
+    ssize_t sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (NTSCFG_UNLIKELY(sendmsgResult < 0 &&
+                        errno == ENOBUFS &&
+                        options.zeroCopy()))
+    {
+        sendFlags &= ~ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY;
+        sendmsgResult = ::sendmsg(socket, &msg, sendFlags);
+    }
+#endif
 
     NTSU_SOCKETUTIL_DEBUG_SENDMSG_UPDATE(msg.msg_iov,
                                          msg.msg_iovlen,
@@ -2231,6 +2416,12 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
     if (sendmsgResult < 0) {
         return ntsa::Error(errno);
     }
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if ((sendFlags & ntsu::ZeroCopyUtil::e_MSG_ZEROCOPY) != 0) {
+        context->setZeroCopy(true);
+    }
+#endif
 
     context->setBytesSent(sendmsgResult);
 
@@ -3372,8 +3563,21 @@ ntsa::Error SocketUtil::receiveNotifications(
                 else if (ser.ee_origin ==
                          ntsu::ZeroCopyUtil::e_SO_EE_ORIGIN_ZEROCOPY)
                 {
-                    ntsa::ZeroCopy zc(ser.ee_info, ser.ee_data, ser.ee_code);
-                    notification.makeZeroCopy(zc);
+                    ntsa::ZeroCopy zeroCopy;
+
+                    zeroCopy.setFrom(ser.ee_info);
+                    zeroCopy.setThru(ser.ee_data);
+
+                    if (ser.ee_code ==
+                        ntsu::ZeroCopyUtil::e_SO_EE_CODE_ZEROCOPY_COPIED)
+                    {
+                        zeroCopy.setType(ntsa::ZeroCopyType::e_DEFERRED);
+                    }
+                    else {
+                        zeroCopy.setType(ntsa::ZeroCopyType::e_AVOIDED);
+                    }
+
+                    notification.makeZeroCopy(zeroCopy);
                     notifications->addNotification(notification);
                 }
             }

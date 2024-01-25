@@ -108,16 +108,15 @@ class StreamSocket : public ntci::StreamSocket,
     ntcs::OpenState                            d_openState;
     ntcs::FlowControlState                     d_flowControlState;
     ntcs::ShutdownState                        d_shutdownState;
+    ntcq::ZeroCopyQueue                        d_zeroCopyQueue;
+    bsl::size_t                                d_zeroCopyThreshold;
     ntsa::SendOptions                          d_sendOptions;
     ntcq::SendQueue                            d_sendQueue;
-    ntcq::ZeroCopyWaitList                     d_zeroCopyList;
-    bsl::size_t                                d_zeroCopyThreshold;
-//    bool                                       d_limitDueToZeroCopy;
     bsl::shared_ptr<ntci::RateLimiter>         d_sendRateLimiter_sp;
     bsl::shared_ptr<ntci::Timer>               d_sendRateTimer_sp;
     bool                                       d_sendGreedily;
-    bsl::uint64_t                              d_sendCount;
-    bsl::size_t                                d_totalBytesSent;
+    ntci::SendCallback                         d_sendComplete;
+    ntcq::SendCounter                          d_sendCounter;
     bsl::shared_ptr<ntsa::Data>                d_sendData_sp;
     ntsa::ReceiveOptions                       d_receiveOptions;
     ntcq::ReceiveQueue                         d_receiveQueue;
@@ -125,7 +124,6 @@ class StreamSocket : public ntci::StreamSocket,
     bsl::shared_ptr<ntci::RateLimiter>         d_receiveRateLimiter_sp;
     bsl::shared_ptr<ntci::Timer>               d_receiveRateTimer_sp;
     bool                                       d_receiveGreedily;
-    bsl::uint64_t                              d_receiveCount;
     bsl::shared_ptr<bdlbb::Blob>               d_receiveBlob_sp;
     ntsa::Endpoint                             d_connectEndpoint;
     bsl::string                                d_connectName;
@@ -140,15 +138,18 @@ class StreamSocket : public ntci::StreamSocket,
     ntci::UpgradeCallback                      d_upgradeCallback;
     bsl::shared_ptr<ntci::Timer>               d_upgradeTimer_sp;
     bool                                       d_upgradeInProgress;
-    const bool                                 d_oneShot;
     bool                                       d_timestampOutgoingData;
-    ntca::StreamSocketOptions                  d_options;
+    bool                                       d_timestampIncomingData;
     ntcu::TimestampCorrelator                  d_timestampCorrelator;
-    bsl::uint32_t                              d_totalBytesSentTimestamped;
+    bsl::uint32_t                              d_timestampCounter;
+    const bool                                 d_oneShot;
     bool                                       d_retryConnect;
     ntcs::DetachState                          d_detachState;
     ntci::CloseCallback                        d_closeCallback;
     ntci::Executor::FunctorSequence            d_deferredCalls;
+    bsl::size_t                                d_totalBytesSent;
+    bsl::size_t                                d_totalBytesReceived;
+    ntca::StreamSocketOptions                  d_options;
     bslma::Allocator*                          d_allocator_p;
 
   private:
@@ -277,11 +278,6 @@ class StreamSocket : public ntci::StreamSocket,
     void privateFail(const bsl::shared_ptr<StreamSocket>& self,
                      const ntsa::Error&                   error);
 
-    /// Indicate a failure has occurred and detach the socket from its
-    /// monitor.
-    void privateFail(const bsl::shared_ptr<StreamSocket>& self,
-                     const ntca::ErrorEvent&              event);
-
     /// Shutdown the stream socket in the specified 'direction' according
     /// to the specified 'mode' of shutdown. Return the error.
     ntsa::Error privateShutdown(const bsl::shared_ptr<StreamSocket>& self,
@@ -319,7 +315,7 @@ class StreamSocket : public ntci::StreamSocket,
 
     /// Execute the second part of shutdown sequence when the socket is
     /// detached. See also "privateShutdownSequence"
-    void privateShutdownSequencePart2(
+    void privateShutdownSequenceComplete(
         const bsl::shared_ptr<StreamSocket>& self,
         const ntcs::ShutdownContext&         context,
         bool                                 defer,
@@ -405,21 +401,9 @@ class StreamSocket : public ntci::StreamSocket,
     /// if necessary.
     void privateRearmAfterReceive(const bsl::shared_ptr<StreamSocket>& self);
 
-    void privateRearmAfterNotification(const bsl::shared_ptr<StreamSocket>& self);
-
-    /// Send the specified raw or already encrypted 'data' according to the
-    /// specified 'options'. Return the error. The behavior is undefined
-    /// unless 'd_sendMutex' is locked.
-    ntsa::Error privateSendRaw(const bsl::shared_ptr<StreamSocket>& self,
-                               const bdlbb::Blob&                   data,
-                               const ntca::SendOptions&             options);
-
-    /// Send the specified raw or already encrypted 'data' according to the
-    /// specified 'options'. Return the error. The behavior is undefined
-    /// unless 'd_sendMutex' is locked.
-    ntsa::Error privateSendRaw(const bsl::shared_ptr<StreamSocket>& self,
-                               const ntsa::Data&                    data,
-                               const ntca::SendOptions&             options);
+    /// Rearm the interest in notifications from the socket in the reactor.
+    void privateRearmAfterNotification(
+        const bsl::shared_ptr<StreamSocket>& self);
 
     /// Send the specified raw or already encrypted 'data' according to the
     /// specified 'options'. When the 'data' is entirely copied to the
@@ -427,6 +411,7 @@ class StreamSocket : public ntci::StreamSocket,
     /// strand, if any.  Return the error.
     ntsa::Error privateSendRaw(const bsl::shared_ptr<StreamSocket>& self,
                                const bdlbb::Blob&                   data,
+                               const ntcq::SendState&               state,
                                const ntca::SendOptions&             options,
                                const ntci::SendCallback&            callback);
 
@@ -436,6 +421,29 @@ class StreamSocket : public ntci::StreamSocket,
     /// strand, if any. Return the error.
     ntsa::Error privateSendRaw(const bsl::shared_ptr<StreamSocket>& self,
                                const ntsa::Data&                    data,
+                               const ntcq::SendState&               state,
+                               const ntca::SendOptions&             options,
+                               const ntci::SendCallback&            callback);
+
+    /// Send the specified encrypted 'data' according to the specified
+    /// 'options'. When the 'data' is entirely copied to the send buffer,
+    /// invoke the specified 'callback' on the callback's strand, if any.
+    /// Return the error.
+    ntsa::Error privateSendEncrypted(
+                               const bsl::shared_ptr<StreamSocket>& self,
+                               const bdlbb::Blob&                   data,
+                               const ntcq::SendState&               state,
+                               const ntca::SendOptions&             options,
+                               const ntci::SendCallback&            callback);
+
+    /// Send the specified encrypted 'data' according to the specified
+    /// 'options'. When the 'data' is entirely copied to the send buffer,
+    /// invoke the specified 'callback' on the callback's strand, if any.
+    /// Return the error.
+    ntsa::Error privateSendEncrypted(
+                               const bsl::shared_ptr<StreamSocket>& self,
+                               const ntsa::Data&                    data,
+                               const ntcq::SendState&               state,
                                const ntca::SendOptions&             options,
                                const ntci::SendCallback&            callback);
 
@@ -521,21 +529,28 @@ class StreamSocket : public ntci::StreamSocket,
     ntsa::Error privateRetryConnectToEndpoint(
         const bsl::shared_ptr<StreamSocket>& self);
 
-    /// Request the OS to enable transmis timestamps if the specified 'enable'
-    /// is true. Return true in case of success. Return false otherwise.
-    ntsa::Error privateTimestampOutgoingData(bool enable);
+    /// Enable or disable timestamping of outgoing data according to the
+    /// specified 'enable' flag. Return the error.
+    ntsa::Error privateTimestampOutgoingData(
+        const bsl::shared_ptr<StreamSocket>& self,
+        bool                                 enable);
 
-    /// Start timestamping outgoing data. Prepare buffers and request the OS to
-    /// enable transmit timestamps. Return no error in case of success,
-    /// return error otherwise.
-    ntsa::Error startTimestampOutgoingData();
+    /// Enable or disable timestamping of incoming data according to the
+    /// specified 'enable' flag. Return the error.
+    ntsa::Error privateTimestampIncomingData(
+        const bsl::shared_ptr<StreamSocket>& self,
+        bool                                 enable);
 
-    /// Stop timestamping outgoing data. Return no error in case of success,
-    /// return error otherwise.
-    ntsa::Error stopTimestampOutgoingData();
+    /// Process the detection of the specified outgoing data 'timestamp'.
+    void privateTimestampUpdate(
+            const bsl::shared_ptr<StreamSocket>& self,
+            const ntsa::Timestamp&               timestamp);
 
-    /// Process notification containing the specified 'timestamp'.
-    void processTimestampNotification(const ntsa::Timestamp& timestamp);
+    // Process the completion of one or more zero-copy tranmsissions described
+    // by the specified 'zeroCopy' notification.
+    void privateZeroCopyUpdate(
+            const bsl::shared_ptr<StreamSocket>& self,
+            const ntsa::ZeroCopy&                zeroCopy);
 
   public:
     /// Create a new, initially uninitilialized stream socket. Optionally
@@ -1110,6 +1125,10 @@ class StreamSocket : public ntci::StreamSocket,
     /// Return the error.
     ntsa::Error deregisterSession() BSLS_KEYWORD_OVERRIDE;
 
+    /// Set the minimum number of bytes that must be available to send in order
+    /// to attempt a zero-copy send to the specified 'value'. Return the error.
+    ntsa::Error setZeroCopyThreshold(bsl::size_t value) BSLS_KEYWORD_OVERRIDE;
+
     /// Set the write rate limiter to the specified 'rateLimiter'. Return
     /// the error.
     ntsa::Error setWriteRateLimiter(const bsl::shared_ptr<ntci::RateLimiter>&
@@ -1151,6 +1170,16 @@ class StreamSocket : public ntci::StreamSocket,
     ntsa::Error setReadQueueWatermarks(bsl::size_t lowWatermark,
                                        bsl::size_t highWatermark)
         BSLS_KEYWORD_OVERRIDE;
+
+    /// Request the implementation to start timestamping outgoing data if the
+    /// specified 'enable' flag is true. Otherwise, request the implementation
+    /// to stop timestamping outgoing data. Return the error.
+    ntsa::Error timestampOutgoingData(bool enable) BSLS_KEYWORD_OVERRIDE;
+
+    /// Request the implementation to start timestamping incoming data if the
+    /// specified 'enable' flag is true. Otherwise, request the implementation
+    /// to stop timestamping outgoing data. Return the error.
+    ntsa::Error timestampIncomingData(bool enable) BSLS_KEYWORD_OVERRIDE;
 
     /// Enable copying from the socket buffers in the specified 'direction'.
     ntsa::Error relaxFlowControl(ntca::FlowControlType::Value direction)
@@ -1275,13 +1304,6 @@ class StreamSocket : public ntci::StreamSocket,
     /// buffer allocated from the outgoing blob buffer factory.
     void createOutgoingBlobBuffer(bdlbb::BlobBuffer* blobBuffer)
         BSLS_KEYWORD_OVERRIDE;
-
-    /// Request the implementation to start timestamping outgoing data if the
-    /// specified 'enable' flag is true. Otherwise, request the implementation
-    /// to stop timestamping outgoing data. Return true if operation was
-    /// successful (though it does not guarantee that transmit timestamps would
-    /// be generated). Otherwise return false.
-    ntsa::Error timestampOutgoingData(bool enable) BSLS_KEYWORD_OVERRIDE;
 
     /// Return the descriptor handle.
     ntsa::Handle handle() const BSLS_KEYWORD_OVERRIDE;

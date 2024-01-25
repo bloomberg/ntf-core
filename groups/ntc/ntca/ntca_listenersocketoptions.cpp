@@ -511,12 +511,6 @@ const bdlb::NullableValue<bool>& ListenerSocketOptions::metrics() const
     return d_metrics;
 }
 
-const ntca::LoadBalancingOptions& ListenerSocketOptions::loadBalancingOptions()
-    const
-{
-    return d_loadBalancingOptions;
-}
-
 const bdlb::NullableValue<bool>& ListenerSocketOptions::timestampOutgoingData()
     const
 {
@@ -533,6 +527,12 @@ const bdlb::NullableValue<bsl::size_t>& ListenerSocketOptions::
     zeroCopyThreshold() const
 {
     return d_zeroCopyThreshold;
+}
+
+const ntca::LoadBalancingOptions& ListenerSocketOptions::loadBalancingOptions()
+    const
+{
+    return d_loadBalancingOptions;
 }
 
 bsl::ostream& ListenerSocketOptions::print(bsl::ostream& stream,

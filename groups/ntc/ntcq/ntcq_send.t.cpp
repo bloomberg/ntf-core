@@ -197,281 +197,6 @@ void EventUtil::processComplete(bsls::AtomicUint* numInvoked,
 
 NTCCFG_TEST_CASE(1)
 {
-    // Concern: The pool of shared objects correctly creates a shared pointer
-    // to an entry, which is released back to the pool when its reference
-    // count reaches zero. The pool grows by one each time a new object must
-    // be created but no objects are available.
-
-    ntccfg::TestAllocator ta;
-    {
-        typedef ntcq::SendCallbackQueueEntry     Entry;
-        typedef ntcq::SendCallbackQueueEntryPool Pool;
-
-        // Create a pool an ensure it is initially empty.
-
-        Pool pool(&ta);
-
-        NTCCFG_TEST_EQ(pool.numObjects(), 0);
-        NTCCFG_TEST_EQ(pool.numObjectsAvailable(), 0);
-
-        // Allocate a shared object from the pool, ensure the pool is now
-        // managing one object, with zero objects free, then reset the
-        // shared pointer to the object, and ensure the shared object is
-        // released back to the pool.
-
-        {
-            bsl::shared_ptr<Entry> entry = pool.create();
-
-            NTCCFG_TEST_EQ(pool.numObjects(), 1);
-            NTCCFG_TEST_EQ(pool.numObjectsAvailable(), 0);
-
-            entry.reset();
-
-            NTCCFG_TEST_EQ(pool.numObjects(), 1);
-            NTCCFG_TEST_EQ(pool.numObjectsAvailable(), 1);
-        }
-
-        // Allocate another shared object from the pool and ensure the
-        // returned object is from the pool, the reset the shared pointer to
-        // return the object back to the pool.
-
-        {
-            bsl::shared_ptr<Entry> entry = pool.create();
-
-            NTCCFG_TEST_EQ(pool.numObjects(), 1);
-            NTCCFG_TEST_EQ(pool.numObjectsAvailable(), 0);
-
-            entry.reset();
-
-            NTCCFG_TEST_EQ(pool.numObjects(), 1);
-            NTCCFG_TEST_EQ(pool.numObjectsAvailable(), 1);
-        }
-
-        // Allocate two shared objects from the pool, and ensure the pool
-        // grows by one.
-
-        {
-            bsl::shared_ptr<Entry> entry1 = pool.create();
-
-            NTCCFG_TEST_EQ(pool.numObjects(), 1);
-            NTCCFG_TEST_EQ(pool.numObjectsAvailable(), 0);
-
-            bsl::shared_ptr<Entry> entry2 = pool.create();
-
-            NTCCFG_TEST_EQ(pool.numObjects(), 2);
-            NTCCFG_TEST_EQ(pool.numObjectsAvailable(), 0);
-
-            entry1.reset();
-
-            NTCCFG_TEST_EQ(pool.numObjects(), 2);
-            NTCCFG_TEST_EQ(pool.numObjectsAvailable(), 1);
-
-            entry2.reset();
-
-            NTCCFG_TEST_EQ(pool.numObjects(), 2);
-            NTCCFG_TEST_EQ(pool.numObjectsAvailable(), 2);
-        }
-
-        // Allocate three shared objects from the pool, and ensure the pool
-        // grows by one.
-
-        {
-            bsl::shared_ptr<Entry> entry1 = pool.create();
-
-            NTCCFG_TEST_EQ(pool.numObjects(), 2);
-            NTCCFG_TEST_EQ(pool.numObjectsAvailable(), 1);
-
-            bsl::shared_ptr<Entry> entry2 = pool.create();
-
-            NTCCFG_TEST_EQ(pool.numObjects(), 2);
-            NTCCFG_TEST_EQ(pool.numObjectsAvailable(), 0);
-
-            bsl::shared_ptr<Entry> entry3 = pool.create();
-
-            NTCCFG_TEST_EQ(pool.numObjects(), 3);
-            NTCCFG_TEST_EQ(pool.numObjectsAvailable(), 0);
-
-            entry1.reset();
-
-            NTCCFG_TEST_EQ(pool.numObjects(), 3);
-            NTCCFG_TEST_EQ(pool.numObjectsAvailable(), 1);
-
-            entry2.reset();
-
-            NTCCFG_TEST_EQ(pool.numObjects(), 3);
-            NTCCFG_TEST_EQ(pool.numObjectsAvailable(), 2);
-
-            entry3.reset();
-
-            NTCCFG_TEST_EQ(pool.numObjects(), 3);
-            NTCCFG_TEST_EQ(pool.numObjectsAvailable(), 3);
-        }
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(2)
-{
-    // Concern: The callback entry invokes the callback with the correct
-    // parameters, the correct number of times, when completed, canceled, and
-    // aborted, from within a context that allows the callback entry to be
-    // immediately executed.
-
-    ntccfg::TestAllocator ta;
-    {
-        typedef ntcq::SendCallbackQueueEntry Entry;
-
-        bsl::shared_ptr<ntci::Sender> sender;
-
-        bsl::shared_ptr<test::Strand> queue;
-        queue.createInplace(&ta, &ta);
-
-        bsl::shared_ptr<ntci::Strand>   strand   = queue;
-        bsl::shared_ptr<ntci::Executor> executor = strand;
-
-        ntca::SendEvent event;
-        event.setType(ntca::SendEventType::e_COMPLETE);
-
-        bslmt::Mutex                   mutex;
-        bslmt::LockGuard<bslmt::Mutex> lock(&mutex);
-
-        // Test announcement immediately.
-
-        {
-            bsl::shared_ptr<Entry> entry;
-            entry.createInplace(&ta, &ta);
-
-            bsls::AtomicUint numInvoked(0);
-
-            ntci::SendCallback sendCallback(
-                NTCCFG_BIND(&test::EventUtil::processComplete,
-                            &numInvoked,
-                            NTCCFG_BIND_PLACEHOLDER_1,
-                            NTCCFG_BIND_PLACEHOLDER_2));
-
-            ntca::SendOptions sendOptions;
-
-            entry->assign(sendCallback, sendOptions);
-
-            NTCCFG_TEST_EQ(numInvoked, 0);
-
-            Entry::dispatch(entry,
-                            sender,
-                            event,
-                            ntci::Strand::unspecified(),
-                            executor,
-                            false,
-                            &mutex);
-
-            NTCCFG_TEST_EQ(numInvoked, 1);
-
-            Entry::dispatch(entry,
-                            sender,
-                            event,
-                            ntci::Strand::unspecified(),
-                            executor,
-                            false,
-                            &mutex);
-
-            NTCCFG_TEST_EQ(numInvoked, 1);
-        }
-
-        // Test announcement through a strand.
-
-        {
-            bsl::shared_ptr<Entry> entry;
-            entry.createInplace(&ta, &ta);
-
-            bsls::AtomicUint numInvoked(0);
-
-            ntci::SendCallback sendCallback(
-                NTCCFG_BIND(&test::EventUtil::processComplete,
-                            &numInvoked,
-                            NTCCFG_BIND_PLACEHOLDER_1,
-                            NTCCFG_BIND_PLACEHOLDER_2),
-                strand);
-
-            ntca::SendOptions sendOptions;
-
-            entry->assign(sendCallback, sendOptions);
-
-            NTCCFG_TEST_EQ(numInvoked, 0);
-
-            Entry::dispatch(entry,
-                            sender,
-                            event,
-                            ntci::Strand::unspecified(),
-                            executor,
-                            false,
-                            &mutex);
-
-            NTCCFG_TEST_EQ(numInvoked, 0);
-            queue->drain();
-            NTCCFG_TEST_EQ(numInvoked, 1);
-
-            Entry::dispatch(entry,
-                            sender,
-                            event,
-                            ntci::Strand::unspecified(),
-                            executor,
-                            false,
-                            &mutex);
-
-            NTCCFG_TEST_EQ(numInvoked, 1);
-            queue->drain();
-            NTCCFG_TEST_EQ(numInvoked, 1);
-        }
-
-        // Test announcement forcing it to be deferred through an executor.
-
-        {
-            bsl::shared_ptr<Entry> entry;
-            entry.createInplace(&ta, &ta);
-
-            bsls::AtomicUint numInvoked(0);
-
-            ntci::SendCallback sendCallback(
-                NTCCFG_BIND(&test::EventUtil::processComplete,
-                            &numInvoked,
-                            NTCCFG_BIND_PLACEHOLDER_1,
-                            NTCCFG_BIND_PLACEHOLDER_2));
-
-            ntca::SendOptions sendOptions;
-
-            entry->assign(sendCallback, sendOptions);
-
-            NTCCFG_TEST_EQ(numInvoked, 0);
-
-            Entry::dispatch(entry,
-                            sender,
-                            event,
-                            ntci::Strand::unspecified(),
-                            executor,
-                            true,
-                            &mutex);
-
-            NTCCFG_TEST_EQ(numInvoked, 0);
-            queue->drain();
-            NTCCFG_TEST_EQ(numInvoked, 1);
-
-            Entry::dispatch(entry,
-                            sender,
-                            event,
-                            ntci::Strand::unspecified(),
-                            executor,
-                            true,
-                            &mutex);
-
-            NTCCFG_TEST_EQ(numInvoked, 1);
-            queue->drain();
-            NTCCFG_TEST_EQ(numInvoked, 1);
-        }
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(3)
-{
     // Concern: Announcement of the low watermark is not authorized until the
     // queue is filled up to the high watermark then drained down the low
     // watermark. Announcement of the high watermark is authorized once the
@@ -577,7 +302,7 @@ NTCCFG_TEST_CASE(3)
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTCCFG_TEST_CASE(4)
+NTCCFG_TEST_CASE(2)
 {
     // Concern: Batching next suitable entries: empty
 
@@ -598,7 +323,7 @@ NTCCFG_TEST_CASE(4)
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTCCFG_TEST_CASE(5)
+NTCCFG_TEST_CASE(3)
 {
     // Concern: Batching next suitable entries: blob
 
@@ -644,7 +369,7 @@ NTCCFG_TEST_CASE(5)
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTCCFG_TEST_CASE(6)
+NTCCFG_TEST_CASE(4)
 {
     // Concern: Batching next suitable entries: blob -> blob
 
@@ -722,7 +447,7 @@ NTCCFG_TEST_CASE(6)
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTCCFG_TEST_CASE(7)
+NTCCFG_TEST_CASE(5)
 {
     // Concern: Batching next suitable entries: blob -> blob -> file -> blob
 
@@ -832,7 +557,7 @@ NTCCFG_TEST_CASE(7)
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTCCFG_TEST_CASE(8)
+NTCCFG_TEST_CASE(6)
 {
     // Concern: Batching next suitable entries: limit maximum buffers to the
     // maximum number sendable per system call (to avoid EMSGBUF).
@@ -917,7 +642,5 @@ NTCCFG_TEST_DRIVER
     NTCCFG_TEST_REGISTER(4);
     NTCCFG_TEST_REGISTER(5);
     NTCCFG_TEST_REGISTER(6);
-    NTCCFG_TEST_REGISTER(7);
-    NTCCFG_TEST_REGISTER(8);
 }
 NTCCFG_TEST_DRIVER_END;

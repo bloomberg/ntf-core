@@ -196,6 +196,16 @@ namespace ntca {
 /// deemed to have failed. This option is not widely supported and should be
 /// avoided.
 ///
+/// @li @b timestampOutgoingData:
+/// The flag that indicates outgoing data should be timestamped.
+///
+/// @li @b timestampIncomingData:
+/// The flag that indicates incoming data should be timestamped.
+///
+/// @li @b zeroCopyThreshold:
+/// The minimum number of bytes that must be available to send in order to
+/// attempt a zero-copy send.
+///
 /// @li @b keepAlive:
 /// That flag that indicates the operating system implementation should
 /// periodically emit transport-level "keep-alive" packets.
@@ -327,6 +337,11 @@ class InterfaceConfig
     bdlb::NullableValue<bsl::size_t> d_receiveBufferLowWatermark;
     bdlb::NullableValue<bsl::size_t> d_sendTimeout;
     bdlb::NullableValue<bsl::size_t> d_receiveTimeout;
+
+    bdlb::NullableValue<bool>           d_timestampOutgoingData;
+    bdlb::NullableValue<bool>           d_timestampIncomingData;
+    bdlb::NullableValue<bsl::size_t>    d_zeroCopyThreshold;
+
     bdlb::NullableValue<bool>        d_keepAlive;
     bdlb::NullableValue<bool>        d_noDelay;
     bdlb::NullableValue<bool>        d_debugFlag;
@@ -472,6 +487,18 @@ class InterfaceConfig
 
     /// Set the receive timeout to the specified 'value'.
     void setReceiveTimeout(bsl::size_t value);
+
+    /// Set the flag that indicates outgoing data should be timestamped to the
+    /// specified 'value'.
+    void setTimestampOutgoingData(bool value);
+
+    /// Set the flag that indicates incoming data should be timestamped to the
+    /// specified 'value'.
+    void setTimestampIncomingData(bool value);
+
+    /// Set the minimum number of bytes that must be available to send in order
+    /// to attempt a zero-copy send to the specified 'value'.
+    void setZeroCopyThreshold(size_t value);
 
     /// Set the flag enable protocol-level keep-alive messages to the
     /// specified 'value'.
@@ -654,6 +681,16 @@ class InterfaceConfig
     /// Return the receive timeout.
     const bdlb::NullableValue<bsl::size_t>& receiveTimeout() const;
 
+    /// Return the flag that indicates outgoing data should be timestamped.
+    const bdlb::NullableValue<bool>& timestampOutgoingData() const;
+
+    /// Return the flag that indicates incoming data should be timestamped.
+    const bdlb::NullableValue<bool>& timestampIncomingData() const;
+
+    /// Return the minimum number of bytes that must be available to send in
+    /// order to attempt a zero-copy send.
+    const bdlb::NullableValue<bsl::size_t>& zeroCopyThreshold() const;
+
     /// Return the flag enable protocol-level keep-alive messages.
     const bdlb::NullableValue<bool>& keepAlive() const;
 
@@ -728,7 +765,29 @@ class InterfaceConfig
     /// null, indicating that when an asynchronous resolver is enabled it is
     /// configured with the default configuration.
     const bdlb::NullableValue<ntca::ResolverConfig>& resolverConfig() const;
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
 };
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::InterfaceConfig
+bsl::ostream& operator<<(bsl::ostream&          stream,
+                         const InterfaceConfig& object);
 
 }  // close package namespace
 }  // close enterprise namespace

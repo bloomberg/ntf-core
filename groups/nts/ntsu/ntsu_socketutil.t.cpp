@@ -152,7 +152,6 @@ void extractZeroCopyNotifications(bsl::list<ntsa::ZeroCopy>* zerocopy,
 
     NTSCFG_TEST_LOG_DEBUG << notifications << NTSCFG_TEST_LOG_END;
 
-    // save zerocopy notifications for later validation
     for (bsl::vector<ntsa::Notification>::const_iterator it =
              notifications.notifications().cbegin();
          it != notifications.notifications().cend();
@@ -176,7 +175,6 @@ void extractTimestampNotifications(bsl::list<ntsa::Timestamp>* ts,
 
     NTSCFG_TEST_LOG_DEBUG << notifications << NTSCFG_TEST_LOG_END;
 
-    // save zerocopy notifications for later validation
     for (bsl::vector<ntsa::Notification>::const_iterator it =
              notifications.notifications().cbegin();
          it != notifications.notifications().cend();
@@ -200,7 +198,6 @@ void extractNotifications(bsl::list<ntsa::Notification>* nt,
 
     NTSCFG_TEST_LOG_DEBUG << notifications << NTSCFG_TEST_LOG_END;
 
-    // save zerocopy notifications for later validation
     for (bsl::vector<ntsa::Notification>::const_iterator it =
              notifications.notifications().cbegin();
          it != notifications.notifications().cend();
@@ -1984,12 +1981,12 @@ void testStreamSocketMsgZeroCopy(ntsa::Transport::Value transport,
 
         while (!feedback.empty()) {
             const ntsa::ZeroCopy& zc = feedback.front();
-            NTSCFG_TEST_EQ(zc.code(), 1);  // we know that OS copied data
-            if (zc.from() == zc.to()) {
+            NTSCFG_TEST_EQ(zc.type(), ntsa::ZeroCopyType::e_DEFERRED);  // we know that OS copied data
+            if (zc.from() == zc.thru()) {
                 NTSCFG_TEST_EQ(sendIDs.erase(zc.from()), 1);
             }
             else {
-                for (bsl::uint32_t i = zc.from(); i != (zc.to() + 1); ++i) {
+                for (bsl::uint32_t i = zc.from(); i != (zc.thru() + 1); ++i) {
                     NTSCFG_TEST_EQ(sendIDs.erase(i), 1);
                 }
             }
@@ -2149,7 +2146,7 @@ void testStreamSocketTxTimestamps(ntsa::Transport::Value transport,
     for (int i = 0; i < numMessagesToSend; ++i) {
         ntsa::SendContext context;
         ntsa::SendOptions options;
-        options.setZeroCopy(true);
+        options.setZeroCopy(false);
 
         const bsls::TimeInterval sysTimeBeforeSending =
             bdlt::CurrentTime::now();
@@ -2338,12 +2335,12 @@ void testDatagramSocketTxTimestampsAndZeroCopy(
             }
             else if (nt.isZeroCopy()) {
                 const ntsa::ZeroCopy& zc = nt.zeroCopy();
-                NTSCFG_TEST_EQ(zc.code(), 1);
-                if (zc.from() == zc.to()) {
+                NTSCFG_TEST_EQ(zc.type(), ntsa::ZeroCopyType::e_DEFERRED);
+                if (zc.from() == zc.thru()) {
                     NTSCFG_TEST_EQ(zeroCopyToValidate.erase(zc.from()), 1);
                 }
                 else {
-                    for (bsl::uint32_t i = zc.from(); i != (zc.to() + 1); ++i)
+                    for (bsl::uint32_t i = zc.from(); i != (zc.thru() + 1); ++i)
                     {
                         NTSCFG_TEST_EQ(zeroCopyToValidate.erase(i), 1);
                     }
@@ -2477,12 +2474,12 @@ void testStreamSocketTxTimestampsAndZeroCopy(ntsa::Transport::Value transport,
             }
             else if (nt.isZeroCopy()) {
                 const ntsa::ZeroCopy& zc = nt.zeroCopy();
-                NTSCFG_TEST_EQ(zc.code(), 1);
-                if (zc.from() == zc.to()) {
+                NTSCFG_TEST_EQ(zc.type(), ntsa::ZeroCopyType::e_DEFERRED);
+                if (zc.from() == zc.thru()) {
                     NTSCFG_TEST_EQ(zeroCopyToValidate.erase(zc.from()), 1);
                 }
                 else {
-                    for (bsl::uint32_t i = zc.from(); i != (zc.to() + 1); ++i)
+                    for (bsl::uint32_t i = zc.from(); i != (zc.thru() + 1); ++i)
                     {
                         NTSCFG_TEST_EQ(zeroCopyToValidate.erase(i), 1);
                     }
@@ -7834,11 +7831,11 @@ NTSCFG_TEST_CASE(27)
 
                 while (!feedback.empty()) {
                     const ntsa::ZeroCopy& zc = feedback.front();
-                    if (zc.from() == zc.to()) {
+                    if (zc.from() == zc.thru()) {
                         NTSCFG_TEST_EQ(sendIDs.erase(zc.from()), 1);
                     }
                     else {
-                        for (bsl::uint32_t i = zc.from(); i != (zc.to() + 1);
+                        for (bsl::uint32_t i = zc.from(); i != (zc.thru() + 1);
                              ++i)
                         {
                             NTSCFG_TEST_EQ(sendIDs.erase(i), 1);
