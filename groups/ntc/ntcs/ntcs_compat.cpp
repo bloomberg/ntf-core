@@ -1368,37 +1368,9 @@ ntsa::Error Compat::configure(
         }
     }
 
-    if (!options.timestampOutgoingData().isNull()) {
-        ntsa::SocketOption option;
-        option.makeTimestampOutgoingData(
-            options.timestampOutgoingData().value());
-
-        error = socket->setOption(option);
-        if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
-                           "timestamp outcoming data: %s",
-                           error.text().c_str());
-            if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
-                return error;
-            }
-        }
-    }
-
-    if (!options.timestampIncomingData().isNull()) {
-        ntsa::SocketOption option;
-        option.makeTimestampIncomingData(
-            options.timestampIncomingData().value());
-
-        error = socket->setOption(option);
-        if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
-                           "timestamp incoming data: %s",
-                           error.text().c_str());
-            if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
-                return error;
-            }
-        }
-    }
+    // Incoming and outgoing timestamping options are set in the individual
+    // ntci::StreamSocket and ntci::DatagramSocket implementations, in order
+    // for them to detect when timestamping is unavailable.
 
 #if defined(BSLS_PLATFORM_OS_LINUX) && NTCS_COMPAT_CONFIGURE_ZERO_COPY
 
@@ -1924,37 +1896,9 @@ ntsa::Error Compat::configure(
         }
     }
 
-    if (!options.timestampOutgoingData().isNull()) {
-        ntsa::SocketOption option;
-        option.makeTimestampOutgoingData(
-            options.timestampOutgoingData().value());
-
-        error = socket->setOption(option);
-        if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
-                           "timestamp outcoming data: %s",
-                           error.text().c_str());
-            if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
-                return error;
-            }
-        }
-    }
-
-    if (!options.timestampIncomingData().isNull()) {
-        ntsa::SocketOption option;
-        option.makeTimestampIncomingData(
-            options.timestampIncomingData().value());
-
-        error = socket->setOption(option);
-        if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
-                           "timestamp incoming data: %s",
-                           error.text().c_str());
-            if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
-                return error;
-            }
-        }
-    }
+    // Incoming and outgoing timestamping options are set in the individual
+    // ntci::StreamSocket and ntci::DatagramSocket implementations, in order
+    // for them to detect when timestamping is unavailable.
 
 #if defined(BSLS_PLATFORM_OS_LINUX) && NTCS_COMPAT_CONFIGURE_ZERO_COPY
 

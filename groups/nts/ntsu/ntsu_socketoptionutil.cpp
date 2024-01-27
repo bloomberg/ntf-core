@@ -435,7 +435,7 @@ ntsa::Error SocketOptionUtil::setTimestampOutgoingData(ntsa::Handle socket,
 #if defined(BSLS_PLATFORM_OS_LINUX)
 
     if (!ntscfg::Platform::supportsTimestamps()) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
+        return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
     }
 
     {  // Unix domain sockets do not support TX timestamping
@@ -549,8 +549,11 @@ ntsa::Error SocketOptionUtil::setTimestampIncomingData(
     }
 
     return ntsa::Error();
+
 #else
+
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+
 #endif
 }
 

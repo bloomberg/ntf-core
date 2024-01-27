@@ -2341,12 +2341,44 @@ ntsa::Error DatagramSocket::privateOpen(
         return error;
     }
 
-    if (d_options.zeroCopyThreshold().has_value()) {
-        d_zeroCopyThreshold = d_options.zeroCopyThreshold().value();
+    if (d_options.timestampOutgoingData().has_value()) {
+        d_timestampOutgoingData = d_options.timestampOutgoingData().value();
     }
 
-    if (d_zeroCopyThreshold != k_ZERO_COPY_NEVER) {
-        
+    if (d_timestampOutgoingData) {
+        ntsa::SocketOption option;
+        option.makeTimestampOutgoingData(true);
+
+        error = datagramSocket->setOption(option);
+        if (error) {
+            BSLS_LOG_DEBUG("Failed to set socket option: "
+                           "timestamp outcoming data: %s",
+                           error.text().c_str());
+
+            d_timestampOutgoingData = false;
+        }
+    }
+
+    if (d_options.timestampIncomingData().has_value()) {
+        d_timestampIncomingData = d_options.timestampIncomingData().value();
+    }
+
+    if (d_timestampIncomingData) {
+        ntsa::SocketOption option;
+        option.makeTimestampIncomingData(true);
+
+        error = datagramSocket->setOption(option);
+        if (error) {
+            BSLS_LOG_DEBUG("Failed to set socket option: "
+                           "timestamp incoming data: %s",
+                           error.text().c_str());
+                           
+            d_timestampIncomingData = false;
+        }
+    }
+
+    if (d_options.zeroCopyThreshold().has_value()) {
+        d_zeroCopyThreshold = d_options.zeroCopyThreshold().value();
     }
 
     if (d_zeroCopyThreshold != k_ZERO_COPY_NEVER) {
