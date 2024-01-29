@@ -1384,7 +1384,7 @@ ntsa::Error Compat::configure(
         option.makeZeroCopy(true);
 
         error = socket->setOption(option);
-        if (error && error.number() != EBUSY) {
+        if (error && error != ntsa::Error::e_NOT_IMPLEMENTED) {
             BSLS_LOG_DEBUG("Failed to set socket option: zero-copy: %s",
                            error.text().c_str());
         }
@@ -1646,7 +1646,7 @@ ntsa::Error Compat::configure(
         option.makeZeroCopy(true);
 
         error = socket->setOption(option);
-        if (error && error.number() != EBUSY) {
+        if (error && error != ntsa::Error::e_NOT_IMPLEMENTED) {
             BSLS_LOG_DEBUG("Failed to set socket option: zero-copy: %s",
                            error.text().c_str());
         }
@@ -1912,7 +1912,7 @@ ntsa::Error Compat::configure(
         option.makeZeroCopy(true);
 
         error = socket->setOption(option);
-        if (error && error.number() != EBUSY) {
+        if (error && error != ntsa::Error::e_NOT_IMPLEMENTED) {
             BSLS_LOG_DEBUG("Failed to set socket option: zero-copy: %s",
                            error.text().c_str());
         }

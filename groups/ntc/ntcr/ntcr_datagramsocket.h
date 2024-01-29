@@ -389,6 +389,12 @@ class DatagramSocket : public ntci::DatagramSocket,
             const bsl::shared_ptr<DatagramSocket>& self,
             const ntsa::Timestamp&                 timestamp);
 
+    // Engage zero-copy transmissions for data whose size is greater than or
+    // equal to the specified 'threshold', in bytes. Return the error.
+    ntsa::Error privateZeroCopyEngage(
+            const bsl::shared_ptr<DatagramSocket>& self,
+            bsl::size_t                          threshold);
+
     // Process the completion of one or more zero-copy tranmsissions described
     // by the specified 'zeroCopy' notification.
     void privateZeroCopyUpdate(

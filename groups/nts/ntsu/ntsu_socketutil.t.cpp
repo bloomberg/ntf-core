@@ -2006,7 +2006,7 @@ void testDatagramSocketTxTimestamps(ntsa::Transport::Value transport,
         return;
     }
 
-    if (!ntscfg::Platform::supportsTimestamps()) {
+    if (!ntsu::SocketOptionUtil::supportsTimestamping(client)) {
         return;
     }
 
@@ -2112,7 +2112,7 @@ void testStreamSocketTxTimestamps(ntsa::Transport::Value transport,
         return;
     }
 
-    if (!ntscfg::Platform::supportsTimestamps()) {
+    if (!ntsu::SocketOptionUtil::supportsTimestamping(client)) {
         return;
     }
 
@@ -2226,7 +2226,11 @@ void testDatagramSocketTxTimestampsAndZeroCopy(
         return;
     }
 
-    if (!ntscfg::Platform::supportsTimestamps()) {
+    if (!ntsu::SocketOptionUtil::supportsTimestamping(client)) {
+        return;
+    }
+
+    if (!ntsu::SocketOptionUtil::supportsZeroCopy(client)) {
         return;
     }
 
@@ -2363,7 +2367,11 @@ void testStreamSocketTxTimestampsAndZeroCopy(ntsa::Transport::Value transport,
         return;
     }
 
-    if (!ntscfg::Platform::supportsTimestamps()) {
+    if (!ntsu::SocketOptionUtil::supportsTimestamping(client)) {
+        return;
+    }
+
+    if (!ntsu::SocketOptionUtil::supportsZeroCopy(client)) {
         return;
     }
 
@@ -6927,16 +6935,15 @@ NTSCFG_TEST_CASE(17)
 
         // Validate RX timestamping functionality.
 
+        if (ntsu::SocketOptionUtil::supportsTimestamping(client))
         {
             error =
                 ntsu::SocketOptionUtil::setTimestampIncomingData(client, true);
-#if defined(BSLS_PLATFORM_OS_LINUX)
             NTSCFG_TEST_OK(error);
-            // sleep for 100 ms to let the kernel apply changes
+
+            // Sleep for 100 milliseconds to let the kernel apply changes.
+
             bslmt::ThreadUtil::microSleep(100000, 0);
-#else
-            NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
-#endif
 
             // Enqueue outgoing data to transmit by the client socket.
 
@@ -7322,16 +7329,15 @@ NTSCFG_TEST_CASE(18)
 
         // Test RX timestamping functionality.
 
+        if (ntsu::SocketOptionUtil::supportsTimestamping(server))
         {
             error =
                 ntsu::SocketOptionUtil::setTimestampIncomingData(server, true);
-#if defined(BSLS_PLATFORM_OS_LINUX)
             NTSCFG_TEST_OK(error);
-            // sleep for 100 ms to let the kernel apply changes
+
+            // Sleep for 100 milliseconds to let the kernel apply changes.
+
             bslmt::ThreadUtil::microSleep(100000, 0);
-#else
-            NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
-#endif
 
             // Enqueue outgoing data to transmit by the client socket.
 
@@ -7566,21 +7572,11 @@ NTSCFG_TEST_CASE(25)
     // Concern: validate that an incoming software timestamp and a file handle
     // can be simultaneously retrieved from one control message
 
-    if (!ntscfg::Platform::supportsTimestamps()) {
-        NTSCFG_TEST_LOG_DEBUG
-            << "Platform does not support timestamps, ignore the TC"
-            << NTSCFG_TEST_LOG_END;
-        return;
-    }
     const ntsa::Transport::Value transport = ntsa::Transport::e_LOCAL_DATAGRAM;
+
     if (!ntsu::AdapterUtil::supportsTransport(transport)) {
-        NTSCFG_TEST_LOG_DEBUG << transport
-                              << " is not supported, ignore the TC"
-                              << NTSCFG_TEST_LOG_END;
         return;
     }
-
-    NTSCFG_TEST_LOG_DEBUG << "Starting the test" << NTSCFG_TEST_LOG_END;
 
     ntsa::Error error;
 
@@ -7588,13 +7584,18 @@ NTSCFG_TEST_CASE(25)
 
     ntsa::Handle client;
     ntsa::Handle server;
-    {
-        error = ntsu::SocketUtil::pair(&client, &server, transport);
-        NTSCFG_TEST_ASSERT(!error);
 
-        error = ntsu::SocketOptionUtil::setTimestampIncomingData(server, true);
-        NTSCFG_TEST_OK(error);
+    error = ntsu::SocketUtil::pair(&client, &server, transport);
+    NTSCFG_TEST_ASSERT(!error);
+
+    if (!ntsu::SocketOptionUtil::supportsTimestamping(server)) {
+        ntsu::SocketUtil::close(client);
+        ntsu::SocketUtil::close(server);
+        return;
     }
+
+    error = ntsu::SocketOptionUtil::setTimestampIncomingData(server, true);
+    NTSCFG_TEST_OK(error);
 
     // create file handle to be transferred
     ntsa::Handle   domesticSocket;

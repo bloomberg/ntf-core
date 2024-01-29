@@ -19,7 +19,6 @@
 BSLS_IDENT_RCSID(ntscfg_platform_cpp, "$Id$ $CSID$")
 
 #include <bdls_filesystemutil.h>
-#include <bslmt_once.h>
 #include <bsls_log.h>
 #include <bsls_platform.h>
 #include <bsl_cstdlib.h>
@@ -85,8 +84,6 @@ Initializer::~Initializer()
 }
 
 #endif
-
-bool s_supportsTimestamps = false;
 
 }  // close unnamed namespace
 
@@ -165,27 +162,38 @@ int Platform::exit()
 #endif
 }
 
-bool Platform::supportsTimestamps()
+bool Platform::supportsNotifications()
 {
 #if defined(BSLS_PLATFORM_OS_LINUX)
-    BSLMT_ONCE_DO
-    {
-        int major = 0;
-        int minor = 0;
-        int patch = 0;
-        int build = 0;
-        int rc =
-            ntsscm::Version::systemVersion(&major, &minor, &patch, &build);
-        if (rc == 0) {
-            if (KERNEL_VERSION(major, minor, patch) >=
-                KERNEL_VERSION(4, 18, 0))
-            {
-                s_supportsTimestamps = true;
-            }
+
+    // The full support for MSG_ERRQUEUE for both TCP and UDP has only been
+    // verified on versions greater than or equal to Linux 4.18.0.
+
+    int rc;
+
+    bool result = false;
+
+    int major = 0;
+    int minor = 0;
+    int patch = 0;
+    int build = 0;
+    
+    rc = ntsscm::Version::systemVersion(&major, &minor, &patch, &build);
+    if (rc == 0) {
+        if (KERNEL_VERSION(major, minor, patch) >=
+            KERNEL_VERSION(4, 18, 0))
+        {
+            result = true;
         }
     }
+
+    return result;
+
+#else
+
+    return false;
+
 #endif
-    return s_supportsTimestamps;
 }
 
 #if defined(BSLS_PLATFORM_OS_UNIX)

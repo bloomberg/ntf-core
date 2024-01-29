@@ -1401,7 +1401,9 @@ NTSCFG_TEST_CASE(4)
 
 NTSCFG_TEST_CASE(5)
 {
-    // Concern: test switching RX timestamping on and off
+    // Concern: Timestamping support and platform assumptions.
+
+    ntsa::Error error;
 
     const ntsa::Transport::Value SOCKET_TYPES[] = {
         ntsa::Transport::e_TCP_IPV4_STREAM,
@@ -1440,87 +1442,279 @@ NTSCFG_TEST_CASE(5)
 
         NTSCFG_TEST_LOG_WARN << "Testing " << transport << NTSCFG_TEST_LOG_END;
 
-        ntsa::Error error;
+        ntsa::Handle socket = ntsa::k_INVALID_HANDLE;
+        ntsa::Handle server = ntsa::k_INVALID_HANDLE;
+        ntsa::Handle listener = ntsa::k_INVALID_HANDLE;
 
-        // Create the socket.
-
-        ntsa::Handle socket;
         error = ntsu::SocketUtil::create(&socket, transport);
         NTSCFG_TEST_OK(error);
 
-        error = ntsu::SocketOptionUtil::setTimestampIncomingData(socket, true);
-#if defined(BSLS_PLATFORM_OS_LINUX)
-        NTSCFG_TEST_OK(error);
+        const bool isSupported = 
+            ntsu::SocketOptionUtil::supportsTimestamping(socket);
 
-        int       optVal = 0;
-        socklen_t optLen = sizeof(optVal);
+        if (isSupported) {
+            bool timestampIncomingData = true;
+            bool timestampOutgoingData = true;
 
-        if (transport == ntsa::Transport::e_LOCAL_DATAGRAM ||
-            transport == ntsa::Transport::e_LOCAL_STREAM)
-        {
-            const int rc = getsockopt(socket,
-                                      SOL_SOCKET,
-                                      ntsu::TimestampUtil::e_SO_TIMESTAMPNS,
-                                      &optVal,
-                                      &optLen);
-            NTSCFG_TEST_EQ(rc, 0);
-            NTSCFG_TEST_NE(optVal, 0);
+            error = ntsu::SocketOptionUtil::getTimestampIncomingData(
+                &timestampIncomingData, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_FALSE(timestampIncomingData);
+
+            error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
+                &timestampOutgoingData, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_FALSE(timestampOutgoingData);
+
+            if (transport == ntsa::Transport::e_TCP_IPV4_STREAM ||
+                transport == ntsa::Transport::e_TCP_IPV6_STREAM)
+            {
+                error = ntsu::SocketOptionUtil::setTimestampOutgoingData(
+                    socket, true);
+                NTSCFG_TEST_TRUE(error);
+
+                error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
+                    &timestampOutgoingData, socket);
+                NTSCFG_TEST_OK(error);
+                NTSCFG_TEST_FALSE(timestampOutgoingData);
+
+                error = ntsu::SocketUtil::create(&listener, transport);
+                NTSCFG_TEST_OK(error);
+
+                if (transport == ntsa::Transport::e_TCP_IPV4_STREAM) {
+                    error = ntsu::SocketUtil::bind(
+                        ntsa::Endpoint(
+                            ntsa::IpEndpoint(
+                                ntsa::Ipv4Address::loopback(), 0)), 
+                        true, 
+                        listener);
+                    NTSCFG_TEST_OK(error);
+                }
+                else {
+                    error = ntsu::SocketUtil::bind(
+                        ntsa::Endpoint(
+                            ntsa::IpEndpoint(
+                                ntsa::Ipv6Address::loopback(), 0)), 
+                        true, 
+                        listener);
+                    NTSCFG_TEST_OK(error);
+                }
+
+                error = ntsu::SocketUtil::listen(1, listener);
+                NTSCFG_TEST_OK(error);
+
+                ntsa::Endpoint endpoint;
+                error = ntsu::SocketUtil::sourceEndpoint(&endpoint, listener);
+                NTSCFG_TEST_OK(error);
+
+                error = ntsu::SocketUtil::connect(endpoint, socket);
+                NTSCFG_TEST_OK(error);
+
+                error = ntsu::SocketUtil::accept(&server, listener);
+                NTSCFG_TEST_OK(error);
+            }
+
+            // RX 0, TX 0 -> RX 1, TX 0
+
+            error = ntsu::SocketOptionUtil::setTimestampIncomingData(
+                socket, true);
+            NTSCFG_TEST_OK(error);
+
+            error = ntsu::SocketOptionUtil::getTimestampIncomingData(
+                &timestampIncomingData, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_TRUE(timestampIncomingData);
+
+            error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
+                &timestampOutgoingData, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_FALSE(timestampOutgoingData);
+
+            // RX 1, TX 0 -> RX 0, TX 0
+
+            error = ntsu::SocketOptionUtil::setTimestampIncomingData(
+                socket, false);
+            NTSCFG_TEST_OK(error);
+
+            error = ntsu::SocketOptionUtil::getTimestampIncomingData(
+                &timestampIncomingData, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_FALSE(timestampIncomingData);
+
+            error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
+                &timestampOutgoingData, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_FALSE(timestampOutgoingData);
+
+            // RX 0, TX 0 -> RX 0, TX 1
+
+            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(
+                socket, true);
+            NTSCFG_TEST_OK(error);
+
+            error = ntsu::SocketOptionUtil::getTimestampIncomingData(
+                &timestampIncomingData, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_FALSE(timestampIncomingData);
+
+            error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
+                &timestampOutgoingData, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_TRUE(timestampOutgoingData);
+
+            // RX 0, TX 1 -> RX 0, TX 0
+
+            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(
+                socket, false);
+            NTSCFG_TEST_OK(error);
+
+            error = ntsu::SocketOptionUtil::getTimestampIncomingData(
+                &timestampIncomingData, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_FALSE(timestampIncomingData);
+
+            error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
+                &timestampOutgoingData, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_FALSE(timestampOutgoingData);
+
+            // RX 0, TX 0 -> RX 1, TX 1
+
+            error = ntsu::SocketOptionUtil::setTimestampIncomingData(
+                socket, true);
+            NTSCFG_TEST_OK(error);
+
+            error = ntsu::SocketOptionUtil::getTimestampIncomingData(
+                &timestampIncomingData, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_TRUE(timestampIncomingData);
+
+            error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
+                &timestampOutgoingData, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_FALSE(timestampOutgoingData);
+
+            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(
+                socket, true);
+            NTSCFG_TEST_OK(error);
+
+            error = ntsu::SocketOptionUtil::getTimestampIncomingData(
+                &timestampIncomingData, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_TRUE(timestampIncomingData);
+
+            error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
+                &timestampOutgoingData, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_TRUE(timestampOutgoingData);
+
+            // RX 1, TX 1 -> RX 0, TX 1
+
+            error = ntsu::SocketOptionUtil::setTimestampIncomingData(
+                socket, false);
+            NTSCFG_TEST_OK(error);
+
+            error = ntsu::SocketOptionUtil::getTimestampIncomingData(
+                &timestampIncomingData, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_FALSE(timestampIncomingData);
+
+            error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
+                &timestampOutgoingData, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_TRUE(timestampOutgoingData);
+
+            // RX 0, TX 1 -> RX 1, TX 1
+
+            error = ntsu::SocketOptionUtil::setTimestampIncomingData(
+                socket, true);
+            NTSCFG_TEST_OK(error);
+
+            error = ntsu::SocketOptionUtil::getTimestampIncomingData(
+                &timestampIncomingData, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_TRUE(timestampIncomingData);
+
+            error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
+                &timestampOutgoingData, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_TRUE(timestampOutgoingData);
+
+            // RX 1, TX 1 -> RX 1, TX 0
+
+            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(
+                socket, false);
+            NTSCFG_TEST_OK(error);
+
+            error = ntsu::SocketOptionUtil::getTimestampIncomingData(
+                &timestampIncomingData, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_TRUE(timestampIncomingData);
+
+            error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
+                &timestampOutgoingData, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_FALSE(timestampOutgoingData);
         }
         else {
-            const int expected =
-                ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_HARDWARE |
-                ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_SOFTWARE |
-                ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RAW_HARDWARE |
-                ntsu::TimestampUtil::e_SOF_TIMESTAMPING_SOFTWARE;
-            const int rc = getsockopt(socket,
-                                      SOL_SOCKET,
-                                      ntsu::TimestampUtil::e_SO_TIMESTAMPING,
-                                      &optVal,
-                                      &optLen);
-            NTSCFG_TEST_EQ(rc, 0);
-            NTSCFG_TEST_EQ(optVal, expected);
+            bool timestampIncomingData = true;
+            bool timestampOutgoingData = true;
+
+            error = ntsu::SocketOptionUtil::getTimestampIncomingData(
+                &timestampIncomingData, socket);
+            NTSCFG_TEST_ERROR(
+                error, ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
+            NTSCFG_TEST_FALSE(timestampIncomingData);
+
+            error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
+                &timestampOutgoingData, socket);
+            NTSCFG_TEST_ERROR(
+                error, ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
+            NTSCFG_TEST_FALSE(timestampOutgoingData);
+
+            error = ntsu::SocketOptionUtil::setTimestampIncomingData(
+                socket, false);
+            NTSCFG_TEST_ERROR(
+                error, ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
+
+            error = ntsu::SocketOptionUtil::setTimestampIncomingData(
+                socket, true);
+            NTSCFG_TEST_ERROR(
+                error, ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
+
+            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(
+                socket, false);
+            NTSCFG_TEST_ERROR(
+                error, ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
+
+            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(
+                socket, true);
+            NTSCFG_TEST_ERROR(
+                error, ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
         }
 
-        // now switch off timestamping
-        error =
-            ntsu::SocketOptionUtil::setTimestampIncomingData(socket, false);
-        NTSCFG_TEST_OK(error);
-
-        optVal = 0;
-        optLen = sizeof(optVal);
-
-        if (transport == ntsa::Transport::e_LOCAL_DATAGRAM ||
-            transport == ntsa::Transport::e_LOCAL_STREAM)
-        {
-            const int rc = getsockopt(socket,
-                                      SOL_SOCKET,
-                                      ntsu::TimestampUtil::e_SO_TIMESTAMPNS,
-                                      &optVal,
-                                      &optLen);
-            NTSCFG_TEST_EQ(rc, 0);
-            NTSCFG_TEST_EQ(optVal, 0);
+        if (socket != ntsa::k_INVALID_HANDLE) {
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_OK(error);
         }
-        else {
-            const int rc = getsockopt(socket,
-                                      SOL_SOCKET,
-                                      ntsu::TimestampUtil::e_SO_TIMESTAMPING,
-                                      &optVal,
-                                      &optLen);
-            NTSCFG_TEST_EQ(rc, 0);
-            NTSCFG_TEST_EQ(optVal, 0);
-        }
-#else
-        NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
-#endif
 
-        error = ntsu::SocketUtil::close(socket);
-        NTSCFG_TEST_OK(error);
+        if (server != ntsa::k_INVALID_HANDLE) {
+            error = ntsu::SocketUtil::close(server);
+            NTSCFG_TEST_OK(error);
+        }
+
+        if (listener != ntsa::k_INVALID_HANDLE) {
+            error = ntsu::SocketUtil::close(listener);
+            NTSCFG_TEST_OK(error);
+        }
     }
 }
 
 NTSCFG_TEST_CASE(6)
 {
-    // Concern: test set and get timestampIncomingData
+    // Concern: Zero-copy support and platform assumptions.
+
+    ntsa::Error error;
 
     const ntsa::Transport::Value SOCKET_TYPES[] = {
         ntsa::Transport::e_TCP_IPV4_STREAM,
@@ -1557,147 +1751,62 @@ NTSCFG_TEST_CASE(6)
             }
         }
 
-        NTSCFG_TEST_LOG_WARN << "Testing " << transport << NTSCFG_TEST_LOG_END;
+        ntsa::Handle socket = ntsa::k_INVALID_HANDLE;
 
-        ntsa::Handle socket;
-        {
-            ntsa::Error error = ntsu::SocketUtil::create(&socket, transport);
-            NTSCFG_TEST_OK(error);
-        }
-
-#if defined(BSLS_PLATFORM_OS_LINUX)
-        ntsa::Error error =
-            ntsu::SocketOptionUtil::setTimestampIncomingData(socket, true);
-        NTSCFG_TEST_OK(error);
-
-        bool enabled = false;
-        error =
-            ntsu::SocketOptionUtil::getTimestampIncomingData(&enabled, socket);
-        NTSCFG_TEST_OK(error);
-        NTSCFG_TEST_TRUE(enabled);
-
-        error =
-            ntsu::SocketOptionUtil::setTimestampIncomingData(socket, false);
-        NTSCFG_TEST_OK(error);
-
-        error =
-            ntsu::SocketOptionUtil::getTimestampIncomingData(&enabled, socket);
-        NTSCFG_TEST_OK(error);
-        NTSCFG_TEST_FALSE(enabled);
-#else
-        ntsa::Error error =
-            ntsu::SocketOptionUtil::setTimestampIncomingData(socket, true);
-        NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
-
-        bool enabled = false;
-        error =
-            ntsu::SocketOptionUtil::getTimestampIncomingData(&enabled, socket);
-        NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
-#endif
-    }
-}
-
-NTSCFG_TEST_CASE(7)
-{
-    // Concern: test switching TX timestamping on and off for dgram sockets
-    // and not connected stream sockets
-
-    const ntsa::Transport::Value SOCKET_TYPES[] = {
-        ntsa::Transport::e_TCP_IPV4_STREAM,
-        ntsa::Transport::e_TCP_IPV6_STREAM,
-#if !defined(BSLS_PLATFORM_OS_WINDOWS)
-        ntsa::Transport::e_LOCAL_STREAM,
-#endif
-        ntsa::Transport::e_UDP_IPV4_DATAGRAM,
-        ntsa::Transport::e_UDP_IPV6_DATAGRAM,
-#if !defined(BSLS_PLATFORM_OS_WINDOWS)
-        ntsa::Transport::e_LOCAL_DATAGRAM,
-#endif
-    };
-
-    for (bsl::size_t socketTypeIndex = 0;
-         socketTypeIndex < sizeof(SOCKET_TYPES) / sizeof(SOCKET_TYPES[0]);
-         ++socketTypeIndex)
-    {
-        ntsa::Transport::Value transport = SOCKET_TYPES[socketTypeIndex];
-
-        if (transport == ntsa::Transport::e_TCP_IPV4_STREAM ||
-            transport == ntsa::Transport::e_UDP_IPV4_DATAGRAM)
-        {
-            if (!ntsu::AdapterUtil::supportsIpv4()) {
-                continue;
-            }
-        }
-
-        if (transport == ntsa::Transport::e_TCP_IPV6_STREAM ||
-            transport == ntsa::Transport::e_UDP_IPV6_DATAGRAM)
-        {
-            if (!ntsu::AdapterUtil::supportsIpv6()) {
-                continue;
-            }
-        }
-
-        NTSCFG_TEST_LOG_WARN << "Testing " << transport << NTSCFG_TEST_LOG_END;
-
-        ntsa::Error error;
-
-        // Create the socket.
-
-        ntsa::Handle socket;
         error = ntsu::SocketUtil::create(&socket, transport);
         NTSCFG_TEST_OK(error);
 
-        error = ntsu::SocketOptionUtil::setTimestampOutgoingData(socket, true);
-#if defined(BSLS_PLATFORM_OS_LINUX)
-        if (!ntscfg::Platform::supportsTimestamps()) {
-            NTSCFG_TEST_ERROR(error, ntsa::Error::e_INVALID);
-        }
-        else if (transport == ntsa::Transport::e_LOCAL_DATAGRAM ||
-                 transport == ntsa::Transport::e_LOCAL_STREAM ||
-                 // all stream sockets do not support tx timestamping unless
-                 // they are in connected state
-                 transport == ntsa::Transport::e_TCP_IPV4_STREAM ||
-                 transport == ntsa::Transport::e_TCP_IPV6_STREAM)
+        const bool isSupported = 
+            ntsu::SocketOptionUtil::supportsZeroCopy(socket);
 
-        {
-            NTSCFG_TEST_ERROR(error, ntsa::Error::e_INVALID);
+        if (isSupported) {
+            bool zeroCopy = true;
+
+            error = ntsu::SocketOptionUtil::getZeroCopy(&zeroCopy, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_FALSE(zeroCopy);
+
+            error = ntsu::SocketOptionUtil::setZeroCopy(socket, false);
+            NTSCFG_TEST_OK(error);
+
+            error = ntsu::SocketOptionUtil::getZeroCopy(&zeroCopy, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_FALSE(zeroCopy);
+
+            error = ntsu::SocketOptionUtil::setZeroCopy(socket, true);
+            NTSCFG_TEST_OK(error);
+            
+            error = ntsu::SocketOptionUtil::getZeroCopy(&zeroCopy, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_TRUE(zeroCopy);
+
+            error = ntsu::SocketOptionUtil::setZeroCopy(socket, false);
+            NTSCFG_TEST_OK(error);
+
+            error = ntsu::SocketOptionUtil::getZeroCopy(&zeroCopy, socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_FALSE(zeroCopy);
         }
         else {
-            NTSCFG_TEST_OK(error);
+            bool zeroCopy = true;
 
-            int       optVal = 0;
-            socklen_t optLen = sizeof(optVal);
+            error = ntsu::SocketOptionUtil::getZeroCopy(&zeroCopy, socket);
+            NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
+            NTSCFG_TEST_FALSE(zeroCopy);
 
-            const int expected =
-                ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_SOFTWARE |
-                ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_SCHED |
-                ntsu::TimestampUtil::e_SOF_TIMESTAMPING_SOFTWARE |
-                ntsu::TimestampUtil::e_SOF_TIMESTAMPING_OPT_ID |
-                ntsu::TimestampUtil::e_SOF_TIMESTAMPING_OPT_TSONLY;
-            const int rc = getsockopt(socket,
-                                      SOL_SOCKET,
-                                      ntsu::TimestampUtil::e_SO_TIMESTAMPING,
-                                      &optVal,
-                                      &optLen);
-            NTSCFG_TEST_EQ(rc, 0);
-            NTSCFG_TEST_EQ(optVal, expected);
+            error = ntsu::SocketOptionUtil::setZeroCopy(socket, false);
+            NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
 
-            // now switch off timestamping
-            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(socket,
-                                                                     false);
-            NTSCFG_TEST_OK(error);
+            error = ntsu::SocketOptionUtil::setZeroCopy(socket, true);
+            NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
         }
-
-#else
-        NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
-#endif
 
         error = ntsu::SocketUtil::close(socket);
         NTSCFG_TEST_OK(error);
     }
 }
 
-NTSCFG_TEST_CASE(8)
+NTSCFG_TEST_CASE(7)
 {
     // Concern: test isLocal
 
@@ -1762,146 +1871,6 @@ NTSCFG_TEST_CASE(8)
     }
 }
 
-NTSCFG_TEST_CASE(9)
-{
-    // test SO_ZEROCOPY
-    const ntsa::Transport::Value SOCKET_TYPES[] = {
-        ntsa::Transport::e_TCP_IPV4_STREAM,
-        ntsa::Transport::e_TCP_IPV6_STREAM,
-#if !defined(BSLS_PLATFORM_OS_WINDOWS)
-        ntsa::Transport::e_LOCAL_STREAM,
-#endif
-        ntsa::Transport::e_UDP_IPV4_DATAGRAM,
-        ntsa::Transport::e_UDP_IPV6_DATAGRAM,
-#if !defined(BSLS_PLATFORM_OS_WINDOWS)
-        ntsa::Transport::e_LOCAL_DATAGRAM,
-#endif
-    };
-
-    bool zeroCopyEnabledByDefault = false;
-
-    for (bsl::size_t socketTypeIndex = 0;
-         socketTypeIndex < sizeof(SOCKET_TYPES) / sizeof(SOCKET_TYPES[0]);
-         ++socketTypeIndex)
-    {
-        ntsa::Transport::Value transport = SOCKET_TYPES[socketTypeIndex];
-
-        if (transport == ntsa::Transport::e_TCP_IPV4_STREAM ||
-            transport == ntsa::Transport::e_UDP_IPV4_DATAGRAM)
-        {
-            if (!ntsu::AdapterUtil::supportsIpv4()) {
-                continue;
-            }
-        }
-
-        if (transport == ntsa::Transport::e_TCP_IPV6_STREAM ||
-            transport == ntsa::Transport::e_UDP_IPV6_DATAGRAM)
-        {
-            if (!ntsu::AdapterUtil::supportsIpv6()) {
-                continue;
-            }
-        }
-
-#if defined(BSLS_PLATFORM_OS_LINUX)
-
-        bool setSupported = false;
-        bool getSupported = false;
-
-        {
-            int major, minor, patch, build;
-            NTSCFG_TEST_ASSERT(ntsscm::Version::systemVersion(&major,
-                                                              &minor,
-                                                              &patch,
-                                                              &build) == 0);
-
-            // Linux kernels versions < 4.14.0 do not support MSG_ZEROCOPY at
-            // all
-            // Linux kernels versions < 5.0.0 do not support MSG_ZEROCOPY for
-            // DGRAM sockets
-            if (KERNEL_VERSION(major, minor, patch) < KERNEL_VERSION(4, 14, 0))
-            {
-                setSupported = false;
-                getSupported = false;
-            }
-            else if (KERNEL_VERSION(major, minor, patch) <
-                     KERNEL_VERSION(5, 0, 0))
-            {
-                if (transport == ntsa::Transport::e_TCP_IPV4_STREAM ||
-                    transport == ntsa::Transport::e_TCP_IPV4_STREAM)
-                {
-                    setSupported = true;
-                }
-                getSupported = true;
-            }
-            else {
-                setSupported =
-                    (transport != ntsa::Transport::e_LOCAL_STREAM) &&
-                    (transport != ntsa::Transport::e_LOCAL_DATAGRAM);
-                getSupported = true;
-            }
-        }
-
-#else
-        const bool setSupported = false;
-        const bool getSupported = false;
-#endif
-
-        NTSCFG_TEST_LOG_WARN << "Testing " << transport << NTSCFG_TEST_LOG_END;
-
-        ntsa::Error error;
-
-        // Create the socket.
-
-        ntsa::Handle socket;
-        error = ntsu::SocketUtil::create(&socket, transport);
-        NTSCFG_TEST_OK(error);
-
-        if (setSupported && getSupported) {
-            bool zeroCopy = !zeroCopyEnabledByDefault;
-            error =
-                ntsu::SocketOptionUtil::getZeroCopy(&zeroCopy, socket);
-            NTSCFG_TEST_OK(error);
-            NTSCFG_TEST_EQ(zeroCopy, zeroCopyEnabledByDefault);
-
-            error = ntsu::SocketOptionUtil::setZeroCopy(socket, true);
-            NTSCFG_TEST_OK(error);
-
-            zeroCopy = false;
-            error =
-                ntsu::SocketOptionUtil::getZeroCopy(&zeroCopy, socket);
-            NTSCFG_TEST_OK(error);
-            NTSCFG_TEST_TRUE(zeroCopy);
-
-            error = ntsu::SocketOptionUtil::setZeroCopy(socket, false);
-            NTSCFG_TEST_OK(error);
-
-            zeroCopy = true;
-            error =
-                ntsu::SocketOptionUtil::getZeroCopy(&zeroCopy, socket);
-            NTSCFG_TEST_OK(error);
-            NTSCFG_TEST_FALSE(zeroCopy);
-        }
-        else if (setSupported == false && getSupported == true) {
-            bool zeroCopy = true;
-            error =
-                ntsu::SocketOptionUtil::getZeroCopy(&zeroCopy, socket);
-            NTSCFG_TEST_OK(error);
-            NTSCFG_TEST_FALSE(zeroCopy);
-
-            error = ntsu::SocketOptionUtil::setZeroCopy(socket, false);
-            NTSCFG_TEST_TRUE(error);
-        }
-        else if (setSupported == false && getSupported == false) {
-            bool zeroCopy = true;
-            error =
-                ntsu::SocketOptionUtil::getZeroCopy(&zeroCopy, socket);
-            NTSCFG_TEST_ERROR(error,
-                              ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
-            NTSCFG_TEST_TRUE(zeroCopy);
-        }
-    }
-}
-
 NTSCFG_TEST_DRIVER
 {
     NTSCFG_TEST_REGISTER(1);
@@ -1911,7 +1880,5 @@ NTSCFG_TEST_DRIVER
     NTSCFG_TEST_REGISTER(5);
     NTSCFG_TEST_REGISTER(6);
     NTSCFG_TEST_REGISTER(7);
-    NTSCFG_TEST_REGISTER(8);
-    NTSCFG_TEST_REGISTER(9);
 }
 NTSCFG_TEST_DRIVER_END;

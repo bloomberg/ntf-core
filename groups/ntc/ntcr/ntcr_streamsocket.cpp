@@ -1111,11 +1111,19 @@ ntsa::Error StreamSocket::privateSocketWritableConnection(
 
     d_openState.set(ntcs::OpenState::e_CONNECTED);
 
-    if (d_options.timestampOutgoingData().value_or(false)) {
-        ntsa::Error error = this->privateTimestampOutgoingData(self, true);
-        if (error) {
-            NTCR_STREAMSOCKET_LOG_TIMESTAMP_PROCESSING_ERROR();
-        }
+    if (d_options.timestampOutgoingData().has_value()) {
+        this->privateTimestampOutgoingData(
+            self, d_options.timestampOutgoingData().value());
+    }
+
+    if (d_options.timestampIncomingData().has_value()) {
+        this->privateTimestampIncomingData(
+            self, d_options.timestampIncomingData().value());
+    }
+
+    if (d_options.zeroCopyThreshold().has_value()) {
+        this->privateZeroCopyEngage(
+            self, d_options.zeroCopyThreshold().value());
     }
 
     ntci::ConnectCallback connectCallback = d_connectCallback;
@@ -3652,68 +3660,6 @@ ntsa::Error StreamSocket::privateOpen(
         return error;
     }
 
-    if (d_options.timestampOutgoingData().has_value()) {
-        d_timestampOutgoingData = d_options.timestampOutgoingData().value();
-    }
-
-    if (d_timestampOutgoingData) {
-        ntsa::SocketOption option;
-        option.makeTimestampOutgoingData(true);
-
-        error = streamSocket->setOption(option);
-        if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
-                           "timestamp outcoming data: %s",
-                           error.text().c_str());
-
-            d_timestampOutgoingData = false;
-        }
-    }
-
-    if (d_options.timestampIncomingData().has_value()) {
-        d_timestampIncomingData = d_options.timestampIncomingData().value();
-    }
-
-    if (d_timestampIncomingData) {
-        ntsa::SocketOption option;
-        option.makeTimestampIncomingData(true);
-
-        error = streamSocket->setOption(option);
-        if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
-                           "timestamp incoming data: %s",
-                           error.text().c_str());
-                           
-            d_timestampIncomingData = false;
-        }
-    }
-
-    if (d_options.zeroCopyThreshold().has_value()) {
-        d_zeroCopyThreshold = d_options.zeroCopyThreshold().value();
-    }
-
-    if (d_zeroCopyThreshold != k_ZERO_COPY_NEVER) {
-        ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
-        if (!reactorRef || !reactorRef->supportsNotifications()) {
-            NTCR_STREAMSOCKET_LOG_ZERO_COPY_DISABLED();
-            d_zeroCopyThreshold = k_ZERO_COPY_NEVER;
-        }
-        else {
-            ntsa::SocketOption socketOption;
-            error = streamSocket->getOption(
-                &socketOption,
-                ntsa::SocketOptionType::e_ZERO_COPY);
-            if (error) {
-                NTCR_STREAMSOCKET_LOG_ZERO_COPY_DISABLED();
-                d_zeroCopyThreshold = k_ZERO_COPY_NEVER;
-            }
-            else if (!socketOption.isZeroCopy() || !socketOption.zeroCopy()) {
-                NTCR_STREAMSOCKET_LOG_ZERO_COPY_DISABLED();
-                d_zeroCopyThreshold = k_ZERO_COPY_NEVER;
-            }
-        }
-    }
-
     error = streamSocket->setBlocking(false);
     if (error) {
         return error;
@@ -3816,11 +3762,19 @@ ntsa::Error StreamSocket::privateOpen(
 
         d_openState.set(ntcs::OpenState::e_CONNECTED);
 
-        if (d_options.timestampOutgoingData().value_or(false)) {
-            ntsa::Error error = this->privateTimestampOutgoingData(self, true);
-            if (error) {
-                NTCR_STREAMSOCKET_LOG_TIMESTAMP_PROCESSING_ERROR();
-            }
+        if (d_options.timestampOutgoingData().has_value()) {
+            this->privateTimestampOutgoingData(
+                self, d_options.timestampOutgoingData().value());
+        }
+
+        if (d_options.timestampIncomingData().has_value()) {
+            this->privateTimestampIncomingData(
+                self, d_options.timestampIncomingData().value());
+        }
+
+        if (d_options.zeroCopyThreshold().has_value()) {
+            this->privateZeroCopyEngage(
+                self, d_options.zeroCopyThreshold().value());
         }
 
         ntcs::Dispatch::announceEstablished(d_manager_sp,
@@ -4282,57 +4236,85 @@ ntsa::Error StreamSocket::privateTimestampOutgoingData(
 
     NTCI_LOG_CONTEXT();
 
-    ntsa::Error error;
+    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
-    if (d_timestampOutgoingData == enable) {
-        return ntsa::Error();
-    }
+    ntsa::Error error;
 
     if (!d_socket_sp) {
         d_options.setTimestampOutgoingData(enable);
         return ntsa::Error();
     }
 
-    if (enable) {
-        ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
-        if (!reactorRef || !reactorRef->supportsNotifications()) {
-            return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
-        }
-
-        if (d_sendCounter != 0) {
-            NTCI_LOG_DEBUG("Outgoing timestamping may not be enabled after "
-                           "data has been sent");
-            return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
-        }
-
-        ntsa::SocketOption option;
-        option.makeTimestampOutgoingData(true);
-
-        error = d_socket_sp->setOption(option);
-        if (error) {
-            NTCI_LOG_DEBUG("Failed to set socket option: "
-                           "timestamp outgoing data: %s",
-                           error.text().c_str());
-            return error;
-        }
-
-        d_timestampOutgoingData = true;
-        d_timestampCounter      = 0;
+    ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
+    if (!reactorRef || !reactorRef->supportsNotifications()) {
+        return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
     }
-    else {
+
+    if (d_sendCounter != 0) {
+        NTCI_LOG_TRACE("Outgoing timestamping may not be enabled after "
+                       "data has been sent");
+        return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    }
+
+    d_options.setTimestampOutgoingData(enable);
+
+    bool enabled = false;
+
+    {
         ntsa::SocketOption option;
-        option.makeTimestampOutgoingData(true);
+        option.makeTimestampOutgoingData(enable);
 
         error = d_socket_sp->setOption(option);
         if (error) {
-            NTCI_LOG_DEBUG("Failed to set socket option: "
-                           "timestamp outgoing data: %s",
-                           error.text().c_str());
+            if (error != ntsa::Error::e_NOT_IMPLEMENTED) {
+                NTCI_LOG_TRACE("Failed to set socket option: "
+                               "timestamp outgoing data: %s",
+                               error.text().c_str());
+            }
+            return error;
+        }
+    }
+
+    {
+        ntsa::SocketOption option;
+        error = d_socket_sp->getOption(
+            &option,
+            ntsa::SocketOptionType::e_TX_TIMESTAMPING);
+        if (error) {
+            if (error != ntsa::Error::e_NOT_IMPLEMENTED) {
+                NTCI_LOG_TRACE("Failed to get socket option: "
+                               "timestamp outgoing data: %s",
+                               error.text().c_str());
+            }
             return error;
         }
 
-        d_timestampOutgoingData = false;
-        d_timestampCorrelator.reset();
+        if (option.isTimestampOutgoingData() &&
+            option.timestampOutgoingData() == enable)
+        {
+            enabled = enable;
+        }
+    }
+
+    if (enabled != d_timestampOutgoingData) {
+        if (enabled) {
+            NTCI_LOG_TRACE("Outgoing timestamping is enabled");
+
+            d_timestampOutgoingData = true;
+            d_timestampCounter      = 0;
+        }
+        else {
+            NTCI_LOG_TRACE("Outgoing timestamping is disabled");
+
+            d_timestampOutgoingData = false;
+            d_timestampCorrelator.reset();
+        }
+    }
+
+    if (enabled != enable) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
     return ntsa::Error();
@@ -4346,35 +4328,73 @@ ntsa::Error StreamSocket::privateTimestampIncomingData(
 
     NTCI_LOG_CONTEXT();
 
-    ntsa::Error error;
+    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
-    if (d_timestampIncomingData == enable) {
-        return ntsa::Error();
-    }
+    ntsa::Error error;
 
     if (!d_socket_sp) {
         d_options.setTimestampIncomingData(enable);
         return ntsa::Error();
     }
 
-    ntsa::SocketOption option;
-    option.makeTimestampIncomingData(enable);
-    error = d_socket_sp->setOption(option);
-    if (error) {
-        NTCI_LOG_DEBUG("Failed to set socket option: "
-                       "timestamp incoming data: %s",
-                       error.text().c_str());
-        return error;
-    }
-
     d_options.setTimestampIncomingData(enable);
-    d_timestampIncomingData = enable;
 
-    if (enable) {
-        d_receiveOptions.showTimestamp();
+    bool enabled = false;
+
+    {
+        ntsa::SocketOption option;
+        option.makeTimestampIncomingData(enable);
+        error = d_socket_sp->setOption(option);
+        if (error) {
+            if (error != ntsa::Error::e_NOT_IMPLEMENTED) {
+                NTCI_LOG_DEBUG("Failed to set socket option: "
+                               "timestamp incoming data: %s",
+                               error.text().c_str());
+            }
+            return error;
+        }
     }
-    else {
-        d_receiveOptions.hideTimestamp();
+
+    {
+        ntsa::SocketOption option;
+        error = d_socket_sp->getOption(
+            &option,
+            ntsa::SocketOptionType::e_RX_TIMESTAMPING);
+        if (error) {
+            if (error != ntsa::Error::e_NOT_IMPLEMENTED) {
+                NTCI_LOG_TRACE("Failed to get socket option: "
+                               "timestamp incoming data: %s",
+                               error.text().c_str());
+            }
+            return error;
+        }
+
+        if (option.isTimestampIncomingData() &&
+            option.timestampIncomingData() == enable)
+        {
+            enabled = enable;
+        }
+    }
+
+    if (enabled != d_timestampIncomingData) {
+        if (enabled) {
+            NTCI_LOG_TRACE("Incoming timestamping is enabled");
+
+            d_timestampIncomingData = true;
+            d_receiveOptions.showTimestamp();
+        }
+        else {
+            NTCI_LOG_TRACE("Incoming timestamping is disabled");
+
+            d_timestampIncomingData = false;
+            d_receiveOptions.hideTimestamp();
+        }
+    }
+
+    if (enabled != enable) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
     return ntsa::Error();
@@ -4416,6 +4436,59 @@ void StreamSocket::privateTimestampUpdate(
     else {
         NTCR_STREAMSOCKET_LOG_FAILED_TO_CORRELATE_TIMESTAMP(timestamp);
     }
+}
+
+ntsa::Error StreamSocket::privateZeroCopyEngage(
+        const bsl::shared_ptr<StreamSocket>& self,
+        bsl::size_t                          threshold)
+{
+    NTCCFG_WARNING_UNUSED(self);
+
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+
+    ntsa::Error error;
+
+    if (!d_socket_sp) {
+        d_options.setZeroCopyThreshold(threshold);
+        return ntsa::Error();
+    }
+
+    ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
+    if (!reactorRef || !reactorRef->supportsNotifications()) {
+        return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    }
+
+    ntsa::SocketOption socketOption;
+    error = d_socket_sp->getOption(&socketOption,
+                                   ntsa::SocketOptionType::e_ZERO_COPY);
+    if (error) {
+        if (error != ntsa::Error::e_NOT_IMPLEMENTED) {
+            NTCI_LOG_TRACE("Failed to get socket option: zero-copy: %s",
+                           error.text().c_str());
+        }
+        return error;
+    }
+    else if (!socketOption.isZeroCopy() || !socketOption.zeroCopy()) {
+        NTCI_LOG_TRACE("Zero copy is not allowed");
+        return ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED);
+    }
+    else {
+        if (threshold != k_ZERO_COPY_NEVER) {
+            NTCI_LOG_TRACE("Zero copy is enabled");
+        }
+        else {
+            NTCI_LOG_TRACE("Zero copy is disabled");
+        }
+    }
+
+    d_options.setZeroCopyThreshold(threshold);
+    d_zeroCopyThreshold = threshold;
+
+    return ntsa::Error();
 }
 
 void StreamSocket::privateZeroCopyUpdate(
@@ -4622,16 +4695,6 @@ StreamSocket::StreamSocket(
     }
     else {
         d_metrics_sp = metrics;
-    }
-
-    d_timestampIncomingData =
-        d_options.timestampIncomingData().value_or(false);
-
-    if (d_timestampIncomingData) {
-        d_receiveOptions.showTimestamp();
-    }
-    else {
-        d_receiveOptions.hideTimestamp();
     }
 }
 
@@ -5802,36 +5865,10 @@ ntsa::Error StreamSocket::deregisterSession()
 
 ntsa::Error StreamSocket::setZeroCopyThreshold(bsl::size_t value)
 {
-    ntsa::Error error;
-
+    bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
-    if (!d_socket_sp) {
-        d_options.setZeroCopyThreshold(value);
-        return ntsa::Error();
-    }
-
-    if (value != k_ZERO_COPY_NEVER) {
-        ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
-        if (!reactorRef) {
-            return ntsa::Error(ntsa::Error::e_INVALID);
-        }
-
-        if (!reactorRef->supportsNotifications()) {
-            return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
-        }
-
-        ntsa::SocketOption socketOption;
-        error = d_socket_sp->getOption(&socketOption,
-                                       ntsa::SocketOptionType::e_ZERO_COPY);
-        if (error) {
-            return error;
-        }
-    }
-
-    d_zeroCopyThreshold = value;
-
-    return ntsa::Error();
+    return this->privateZeroCopyEngage(self, value);
 }
 
 ntsa::Error StreamSocket::setWriteRateLimiter(
