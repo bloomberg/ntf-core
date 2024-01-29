@@ -37,6 +37,7 @@ BSLS_IDENT_RCSID(ntcr_streamsocket_cpp, "$Id$ $CSID$")
 #include <ntsf_system.h>
 #include <ntsi_streamsocket.h>
 #include <ntsu_socketoptionutil.h>
+#include <ntsu_timestamputil.h>
 #include <bdlbb_blob.h>
 #include <bdlbb_blobutil.h>
 #include <bdlf_bind.h>
@@ -237,55 +238,31 @@ BSLS_IDENT_RCSID(ntcr_streamsocket_cpp, "$Id$ $CSID$")
     NTCI_LOG_TRACE("Stream socket "                                           \
                    "is shutting down transmission")
 
-#define NTCR_STREAMSOCKET_TRACE_TIMESTAMPS 0
-
-#if NTCR_STREAMSOCKET_TRACE_TIMESTAMPS
-
 #define NTCR_STREAMSOCKET_LOG_TIMESTAMP_PROCESSING_ERROR()                    \
-    NTCI_LOG_ERROR("Stream socket: timestamp processing error")
+    NTCI_LOG_WARN("Stream socket timestamp processing error")
 
 #define NTCR_STREAMSOCKET_LOG_FAILED_TO_CORRELATE_TIMESTAMP(timestamp)        \
     NTCI_LOG_WARN(                                                            \
-        "Stream socket: failed to correlate timestamp: id %u, type %s",       \
+        "Stream socket failed to correlate timestamp ID %u type %s",          \
         timestamp.id(),                                                       \
         ntsa::TimestampType::toString(timestamp.type()));
 
 #define NTCR_STREAMSOCKET_LOG_TX_DELAY(delay, type)                           \
-    {                                                                         \
-        bsl::stringstream ss;                                                 \
-        delay.print(ss);                                                      \
-        NTCI_LOG_TRACE("Stream socket "                                       \
-                       "transmit delay from send() till %s is %s",            \
-                       ntsa::TimestampType::toString(type),                   \
-                       ss.str().c_str());                                     \
-    }
+    NTCI_LOG_TRACE("Stream socket "                                           \
+                   "transmit delay from system call to %s is %s",             \
+                   ntsa::TimestampType::toString(type),                       \
+                   ntsu::TimestampUtil::describeDelay(delay).c_str())
 
 #define NTCR_STREAMSOCKET_LOG_RX_DELAY_IN_HARDWARE(delay)                     \
-    {                                                                         \
-        bsl::stringstream ss;                                                 \
-        delay.print(ss);                                                      \
-        NTCI_LOG_TRACE("Stream socket "                                       \
-                       "receive delay in hardware is %s",                     \
-                       ss.str().c_str());                                     \
-    }
+    NTCI_LOG_TRACE("Stream socket "                                           \
+                   "receive delay in hardware is %s",                         \
+                   ntsu::TimestampUtil::describeDelay(delay).c_str())
 
 #define NTCR_STREAMSOCKET_LOG_RX_DELAY(delay, type)                           \
-    {                                                                         \
-        bsl::stringstream ss;                                                 \
-        delay.print(ss);                                                      \
-        NTCI_LOG_TRACE("Stream socket "                                       \
-                       "receive delay measured by %s is %s",                  \
-                       type,                                                  \
-                       ss.str().c_str());                                     \
-    }
-
-#else
-#define NTCR_STREAMSOCKET_LOG_TIMESTAMP_PROCESSING_ERROR()
-#define NTCR_STREAMSOCKET_LOG_FAILED_TO_CORRELATE_TIMESTAMP(timestamp)
-#define NTCR_STREAMSOCKET_LOG_TX_DELAY(delay, type)
-#define NTCR_STREAMSOCKET_LOG_RX_DELAY_IN_HARDWARE(delay)
-#define NTCR_STREAMSOCKET_LOG_RX_DELAY(delay, type)
-#endif
+    NTCI_LOG_TRACE("Stream socket "                                           \
+                   "receive delay measured by %s is %s",                      \
+                   type,                                                      \
+                   ntsu::TimestampUtil::describeDelay(delay).c_str())
 
 // Some versions of GCC erroneously warn ntcs::ObserverRef::d_shared may be
 // uninitialized.
@@ -4406,15 +4383,13 @@ void StreamSocket::privateTimestampUpdate(
 {
     NTCCFG_WARNING_UNUSED(self);
 
-#if NTCR_STREAMSOCKET_TRACE_TIMESTAMPS
     NTCI_LOG_CONTEXT();
-#endif
 
     const bdlb::NullableValue<bsls::TimeInterval> delay =
         d_timestampCorrelator.timestampReceived(timestamp);
 
     if (delay.has_value()) {
-        NTCR_STREAMSOCKET_LOG_TX_DELAY(delay, timestamp.type());
+        NTCR_STREAMSOCKET_LOG_TX_DELAY(delay.value(), timestamp.type());
 
         switch (timestamp.type()) {
         case (ntsa::TimestampType::e_SCHEDULED): {

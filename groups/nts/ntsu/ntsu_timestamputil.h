@@ -129,6 +129,10 @@ struct TimestampUtil {
     /// Return the specified 'options' with all bits representing unsupported
     /// options removed. 
     static int removeUnsupported(int options);
+
+    /// Return a formatted, human readable description of the specified 
+    /// 'duration'. 
+    static bsl::string describeDelay(const bsls::TimeInterval& duration);
 };
 
 }  // close package namespace

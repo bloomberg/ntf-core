@@ -19,6 +19,8 @@
 #include <bslmf_assert.h>
 #include <bsls_platform.h>
 #include <bsl_cstdint.h>
+#include <bsl_sstream.h>
+#include <bsl_iomanip.h>
 
 // clang-format off
 #if defined(BSLS_PLATFORM_OS_LINUX)
@@ -236,6 +238,33 @@ int TimestampUtil::removeUnsupported(int options)
     return options;
 
 #endif
+}
+
+bsl::string TimestampUtil::describeDelay(const bsls::TimeInterval& duration)
+{
+    bsl::stringstream ss;
+
+    if (duration.seconds() == 0) {
+        if (duration.nanoseconds() < 1000) {
+            ss << duration.nanoseconds() << "ns";
+        }
+        else if (duration.nanoseconds() < 1000 * 1000) {
+            ss << duration.nanoseconds() / 1000 << "us";
+        }
+        else if (duration.nanoseconds() < 1000 * 1000 * 1000) {
+            ss << duration.nanoseconds() / 1000 / 1000 << "ms";
+        }
+        else {
+            ss << bsl::fixed << bsl::setprecision(2) 
+               << duration.totalSecondsAsDouble() << "s";
+        }
+    }
+    else {
+        ss << bsl::fixed << bsl::setprecision(2) 
+           << duration.totalSecondsAsDouble() << "s";
+    }
+
+    return ss.str();
 }
 
 }  // close package namespace

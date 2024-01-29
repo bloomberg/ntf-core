@@ -33,6 +33,7 @@ BSLS_IDENT_RCSID(ntcr_datagramsocket_cpp, "$Id$ $CSID$")
 #include <ntsa_receiveoptions.h>
 #include <ntsa_sendcontext.h>
 #include <ntsa_sendoptions.h>
+#include <ntsu_timestamputil.h>
 #include <ntsf_system.h>
 #include <bdlbb_blobutil.h>
 #include <bdlf_bind.h>
@@ -181,56 +182,31 @@ BSLS_IDENT_RCSID(ntcr_datagramsocket_cpp, "$Id$ $CSID$")
     NTCI_LOG_TRACE("Datagram socket "                                         \
                    "is shutting down transmission")
 
-#define NTCR_DATAGRAMSOCKET_TRACE_TIMESTAMPS 0
-
-#if NTCR_DATAGRAMSOCKET_TRACE_TIMESTAMPS
-
 #define NTCR_DATAGRAMSOCKET_LOG_TIMESTAMP_PROCESSING_ERROR()                  \
-    NTCI_LOG_ERROR("Datagram socket: timestamp processing error")
+    NTCI_LOG_WARN("Datagram socket timestamp processing error")
 
 #define NTCR_DATAGRAMSOCKET_LOG_FAILED_TO_CORRELATE_TIMESTAMP(timestamp)      \
     NTCI_LOG_WARN(                                                            \
-        "Datagram socket: failed to correlate timestamp: id %u, type %s",     \
+        "Datagram socket failed to correlate timestamp ID %u type %s",        \
         timestamp.id(),                                                       \
         ntsa::TimestampType::toString(timestamp.type()));
 
 #define NTCR_DATAGRAMSOCKET_LOG_TX_DELAY(delay, type)                         \
-    {                                                                         \
-        bsl::stringstream ss;                                                 \
-        delay.print(ss);                                                      \
-        NTCI_LOG_TRACE("Datagram socket "                                     \
-                       "transmit delay from send() till %s is %s",            \
-                       ntsa::TimestampType::toString(type),                   \
-                       ss.str().c_str());                                     \
-    }
+    NTCI_LOG_TRACE("Datagram socket "                                         \
+                   "transmit delay from system call to %s is %s",             \
+                   ntsa::TimestampType::toString(type),                       \
+                   ntsu::TimestampUtil::describeDelay(delay).c_str())
 
 #define NTCR_DATAGRAMSOCKET_LOG_RX_DELAY_IN_HARDWARE(delay)                   \
-    {                                                                         \
-        bsl::stringstream ss;                                                 \
-        delay.print(ss);                                                      \
-        NTCI_LOG_TRACE("Datagram socket "                                     \
-                       "receive delay in hardware is %s",                     \
-                       type,                                                  \
-                       ss.str().c_str());                                     \
-    }
+    NTCI_LOG_TRACE("Datagram socket "                                         \
+                   "receive delay in hardware is %s",                         \
+                   ntsu::TimestampUtil::describeDelay(delay).c_str())
 
 #define NTCR_DATAGRAMSOCKET_LOG_RX_DELAY(delay, type)                         \
-    {                                                                         \
-        bsl::stringstream ss;                                                 \
-        delay.print(ss);                                                      \
-        NTCI_LOG_TRACE("Datagram socket "                                     \
-                       "receive delay measured by %s is %s",                  \
-                       type,                                                  \
-                       ss.str().c_str());                                     \
-    }
-
-#else
-#define NTCR_DATAGRAMSOCKET_LOG_TIMESTAMP_PROCESSING_ERROR()
-#define NTCR_DATAGRAMSOCKET_LOG_FAILED_TO_CORRELATE_TIMESTAMP(timestamp)
-#define NTCR_DATAGRAMSOCKET_LOG_TX_DELAY(delay, type)
-#define NTCR_DATAGRAMSOCKET_LOG_RX_DELAY_IN_HARDWARE(delay)
-#define NTCR_DATAGRAMSOCKET_LOG_RX_DELAY(delay, type)
-#endif
+    NTCI_LOG_TRACE("Datagram socket "                                         \
+                   "receive delay measured by %s is %s",                      \
+                   type,                                                      \
+                   ntsu::TimestampUtil::describeDelay(delay).c_str())
 
 // Some versions of GCC erroneously warn ntcs::ObserverRef::d_shared may be
 // uninitialized.
@@ -604,15 +580,13 @@ void DatagramSocket::privateTimestampUpdate(
 {
     NTCCFG_WARNING_UNUSED(self);
 
-#if NTCR_DATAGRAMSOCKET_TRACE_TIMESTAMPS
     NTCI_LOG_CONTEXT();
-#endif
 
     bdlb::NullableValue<bsls::TimeInterval> delay =
         d_timestampCorrelator.timestampReceived(timestamp);
 
     if (delay.has_value()) {
-        NTCR_DATAGRAMSOCKET_LOG_TX_DELAY(delay, timestamp.type());
+        NTCR_DATAGRAMSOCKET_LOG_TX_DELAY(delay.value(), timestamp.type());
 
         switch (timestamp.type()) {
         case (ntsa::TimestampType::e_SCHEDULED): {

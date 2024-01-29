@@ -13,12 +13,90 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntsu_timestamputil.h>
+
 #include <ntscfg_test.h>
 
 using namespace BloombergLP;
 
 NTSCFG_TEST_CASE(1)
 {
+    
+    bsl::string result;
+
+    {
+        bsls::TimeInterval delay;
+        delay.setTotalNanoseconds(0);
+        result = ntsu::TimestampUtil::describeDelay(delay);
+        BSLS_LOG_DEBUG("  0ns: %s", result.c_str());
+    }
+
+    {
+        bsls::TimeInterval delay;
+        delay.setTotalNanoseconds(4);
+        result = ntsu::TimestampUtil::describeDelay(delay);
+        BSLS_LOG_DEBUG("  4ns: %s", result.c_str());
+    }
+
+    {
+        bsls::TimeInterval delay;
+        delay.setTotalNanoseconds(999);
+        result = ntsu::TimestampUtil::describeDelay(delay);
+        BSLS_LOG_DEBUG("999ns: %s", result.c_str());
+    }
+
+    {
+        bsls::TimeInterval delay;
+        delay.setTotalMicroseconds(1);
+        result = ntsu::TimestampUtil::describeDelay(delay);
+        BSLS_LOG_DEBUG("  1us: %s", result.c_str());
+    }
+
+    {
+        bsls::TimeInterval delay;
+        delay.setTotalMicroseconds(4);
+        result = ntsu::TimestampUtil::describeDelay(delay);
+        BSLS_LOG_DEBUG("  4us: %s", result.c_str());
+    }
+
+    {
+        bsls::TimeInterval delay;
+        delay.setTotalMicroseconds(999);
+        result = ntsu::TimestampUtil::describeDelay(delay);
+        BSLS_LOG_DEBUG("999us: %s", result.c_str());
+    }
+
+    {
+        bsls::TimeInterval delay;
+        delay.setTotalMilliseconds(1);
+        result = ntsu::TimestampUtil::describeDelay(delay);
+        BSLS_LOG_DEBUG("  1ms: %s", result.c_str());
+    }
+
+    {
+        bsls::TimeInterval delay;
+        delay.setTotalMilliseconds(1);
+        result = ntsu::TimestampUtil::describeDelay(delay);
+        BSLS_LOG_DEBUG("  4ms: %s", result.c_str());
+    }
+
+    {
+        bsls::TimeInterval delay;
+        delay.setTotalMilliseconds(999);
+        result = ntsu::TimestampUtil::describeDelay(delay);
+        BSLS_LOG_DEBUG("999ms: %s", result.c_str());
+    }
+
+    {
+        bsls::TimeInterval delay;
+        delay.setTotalMilliseconds(1500);
+        result = ntsu::TimestampUtil::describeDelay(delay);
+        BSLS_LOG_DEBUG(" 1.5s: %s", result.c_str());
+    }
+
+
+
+
 }
 
 NTSCFG_TEST_DRIVER
