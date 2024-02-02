@@ -63,28 +63,27 @@ struct TimestampOtionSupport {
 
 // clang-format off
 static TimestampOtionSupport s_timestampOptionSupport[] = {
-    { ntsu::TimestampUtil::e_SCM_TSTAMP_SND,                0,  0, 0 },
-    { ntsu::TimestampUtil::e_SCM_TSTAMP_SCHED,              0,  0, 0 },
-    { ntsu::TimestampUtil::e_SCM_TSTAMP_ACK,                0,  0, 0 },
+    { ntsu::TimestampUtil::e_SCM_TSTAMP_SND,                4, 18, 0 },
+    { ntsu::TimestampUtil::e_SCM_TSTAMP_SCHED,              4, 18, 0 },
+    { ntsu::TimestampUtil::e_SCM_TSTAMP_ACK,                4, 18, 0 },
 
-    { ntsu::TimestampUtil::e_SO_TIMESTAMPNS,                0,  0, 0 },
-    { ntsu::TimestampUtil::e_SO_TIMESTAMPING,               0,  0, 0 },
-    { ntsu::TimestampUtil::e_SCM_TIMESTAMPNS,               0,  0, 0 },
-    { ntsu::TimestampUtil::e_SCM_TIMESTAMPING,              0,  0, 0 },
+    { ntsu::TimestampUtil::e_SO_TIMESTAMPNS,                4, 18, 0 },
+    { ntsu::TimestampUtil::e_SO_TIMESTAMPING,               4, 18, 0 },
+    { ntsu::TimestampUtil::e_SCM_TIMESTAMPNS,               4, 18, 0 },
+    { ntsu::TimestampUtil::e_SCM_TIMESTAMPING,              4, 18, 0 },
 
-    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_HARDWARE,  0,  0, 0 },
-    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_SOFTWARE,  0,  0, 0 },
-    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_SCHED,     3, 17, 0 },
-    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_ACK,       3, 17, 0 },
-    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_HARDWARE,  0,  0, 0 },
-    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_SOFTWARE,  0,  0, 0 },
+    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_HARDWARE,  4, 18, 0 },
+    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_SOFTWARE,  4, 18, 0 },
+    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_SCHED,     4, 18, 0 },
+    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_ACK,       4, 18, 0 },
+    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_HARDWARE,  4, 18, 0 },
+    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_SOFTWARE,  4, 18, 0 },
 
-    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_SOFTWARE,     0,  0, 0 },
-    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_SYS_HARDWARE, 0,  0, 0 },
-    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RAW_HARDWARE, 0,  0, 0 },
+    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_SOFTWARE,     4, 18, 0 },
+    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RAW_HARDWARE, 4, 18, 0 },
 
-    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_OPT_ID,       0,  0, 0 },
-    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_OPT_TSONLY,   3, 17, 0 }
+    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_OPT_ID,       4, 18, 0 },
+    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_OPT_TSONLY,   4, 18, 0 }
 };
 // clang-format on
 

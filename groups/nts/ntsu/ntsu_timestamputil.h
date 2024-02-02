@@ -89,11 +89,9 @@ struct TimestampUtil {
 
         // Timestamp reporting.
         e_SOF_TIMESTAMPING_SOFTWARE    = (1 << 4),
-        e_SOF_TIMESTAMPING_SYS_HARDWARE = (1 << 5),
         e_SOF_TIMESTAMPING_RAW_HARDWARE = (1 << 6),
 
         e_SOF_TIMESTAMPING_REPORTING = e_SOF_TIMESTAMPING_SOFTWARE |
-                                       e_SOF_TIMESTAMPING_SYS_HARDWARE |
                                        e_SOF_TIMESTAMPING_RAW_HARDWARE,
 
         // Timestamp options.
