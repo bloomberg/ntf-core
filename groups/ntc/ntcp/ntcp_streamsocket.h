@@ -280,7 +280,7 @@ class StreamSocket : public ntci::StreamSocket,
     void privateCompleteSend(const bsl::shared_ptr<StreamSocket>& self,
                              bsl::size_t numBytesSent);
 
-    /// Process the failure of the tranmisssion of the message at the head
+    /// Process the failure of the transmission of the message at the head
     /// of the write queue. Announce the failure of the head of the write
     /// queue if a callback is associated with the head of the write queue
     /// then pop the head of the write queue. The behavior is undefined

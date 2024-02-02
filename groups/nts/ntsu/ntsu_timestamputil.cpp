@@ -20,6 +20,7 @@
 #include <bsls_platform.h>
 #include <bsl_cstdint.h>
 #include <bsl_sstream.h>
+#include <bsl_iostream.h>
 #include <bsl_iomanip.h>
 
 // clang-format off

@@ -395,7 +395,7 @@ class DatagramSocket : public ntci::DatagramSocket,
             const bsl::shared_ptr<DatagramSocket>& self,
             bsl::size_t                          threshold);
 
-    // Process the completion of one or more zero-copy tranmsissions described
+    // Process the completion of one or more zero-copy transmissions described
     // by the specified 'zeroCopy' notification.
     void privateZeroCopyUpdate(
             const bsl::shared_ptr<DatagramSocket>& self,
