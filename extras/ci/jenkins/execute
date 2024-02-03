@@ -1,0 +1,224 @@
+#!/usr/bin/env bash
+
+set -o pipefail
+
+NTF_CONFIGURE_ROOT=$(dirname ${0})
+if [[ -n ${NTF_CONFIGURE_ROOT##/*} ]]; then
+    NTF_CONFIGURE_ROOT=${PWD}/${NTF_CONFIGURE_ROOT#.}
+fi
+NTF_CONFIGURE_ROOT=${NTF_CONFIGURE_ROOT%/}
+
+cd ${NTF_CONFIGURE_ROOT}/../../..
+
+NTF_CONFIGURE_REPOSITORY=$(pwd)
+
+NTF_CONFIGURE_UNAME=$(uname)
+if [[ "${NTF_CONFIGURE_UNAME}" == "MINGW32_NT-6.2" ]]; then
+    NTF_CONFIGURE_UNAME="Windows"
+fi
+
+if [[ -z "${NTF_CONFIGURE_UFID}" ]]; then
+    NTF_CONFIGURE_UFID="opt_dbg_exc_mt_64"
+fi
+
+if [[ -z "${NTF_CONFIGURE_REFROOT}" ]]; then
+    if [[ -z "${DISTRIBUTION_REFROOT}" ]]; then
+        NTF_CONFIGURE_REFROOT=""
+    else
+        NTF_CONFIGURE_REFROOT="${DISTRIBUTION_REFROOT}"
+    fi
+fi
+
+if [[ -z "${NTF_CONFIGURE_PREFIX}" ]]; then
+    if [[ -z "${PREFIX}" ]]; then
+        NTF_CONFIGURE_PREFIX="/opt/bb"
+    else
+        NTF_CONFIGURE_PREFIX="${PREFIX}"
+    fi
+fi
+
+if [[ -z "${NTF_CONFIGURE_OUTPUT}" ]]; then
+    NTF_CONFIGURE_OUTPUT="${NTF_CONFIGURE_REPOSITORY}/build"
+fi
+
+if [[ -z "${NTF_CONFIGURE_DISTRIBUTION}" ]]; then
+    NTF_CONFIGURE_DISTRIBUTION="unstable"
+fi
+
+NTF_CONFIGURE_VERBOSE=0
+
+usage()
+{
+    echo "usage: execute [--refroot <path>] [--prefix <path>] [--output <path>] [--distribution <name>] [--debug|release] [--ufid <code>] [--with-<feature> <name>] [--without-<feature> <name>]"
+    echo "where: "
+    echo "    --refroot             <path>       Path to the refroot containing build dependencies [${NTF_CONFIGURE_REFROOT}]"
+    echo "    --prefix              <path>       Path to the refroot where build artifacts will be installed [${NTF_CONFIGURE_PREFIX}]"
+    echo "    --output              <path>       Path to the directory where build artifacts will be staged [${NTF_CONFIGURE_OUTPUT}]"
+    echo "    --distribution        <name>       Name of the distribution [${NTF_CONFIGURE_DISTRIBUTION}]"
+    echo "    --ufid                <code>       The unified flag identifiers for the build system [${NTF_CONFIGURE_UFID}]"
+
+    echo "    --debug                            Build the default debug UFID"
+    echo "    --release                          Build the default release UFID"
+
+    echo "    --verbose                          Enable verbose build"
+    exit 1
+}
+
+while true ; do
+    case "$1" in
+        --help)
+            usage
+            ;;
+        --refroot)
+            NTF_CONFIGURE_REFROOT=$2
+            shift 2
+            ;;
+        --prefix)
+            NTF_CONFIGURE_PREFIX=$2
+            shift 2
+            ;;
+        --output)
+            NTF_CONFIGURE_OUTPUT=$2
+            shift 2
+            ;;
+        --distribution)
+            NTF_CONFIGURE_DISTRIBUTION=$2
+            shift 2
+            ;;
+        --ufid)
+            NTF_CONFIGURE_UFID=$2
+            shift 2
+            ;;
+        --debug)
+            NTF_CONFIGURE_UFID="dbg_exc_mt_64"
+            shift
+            ;;
+        --release)
+            NTF_CONFIGURE_UFID="opt_dbg_exc_mt_64"
+            shift
+            ;;
+        --verbose)
+            NTF_CONFIGURE_VERBOSE=1
+            shift
+            ;;
+        --*)
+            echo "Invalid option: ${1}"
+            usage
+            ;;
+          *)
+            NTF_CONFIGURE_TARGET_LIST=$@
+            break
+            ;;
+    esac
+done
+
+echo "NTF_CONFIGURE_ROOT:       ${NTF_CONFIGURE_ROOT}"
+echo "NTF_CONFIGURE_REPOSITORY: ${NTF_CONFIGURE_REPOSITORY}"
+echo "NTF_CONFIGURE_REFROOT:    ${NTF_CONFIGURE_REFROOT}"
+echo "NTF_CONFIGURE_PREFIX:     ${NTF_CONFIGURE_PREFIX}"
+echo "NTF_CONFIGURE_UFID:       ${NTF_CONFIGURE_UFID}"
+
+ntf_path=${NTF_CONFIGURE_REFROOT}/opt/bb/libexec/bde-tools/bin:${PATH}
+
+ntf_install_ufid=${NTF_CONFIGURE_UFID}
+ntf_install_ufid_canonical=""
+ntf_profile=""
+
+if [[ "${ntf_install_ufid}" == "opt_dbg_exc_mt_64" ]]; then
+    ntf_install_ufid_canonical="opt_dbg_64"
+    ntf_profile="BBToolchain64"
+elif [[ "${ntf_install_ufid}" == "dbg_exc_mt_64" ]]; then
+    ntf_install_ufid_canonical="dbg_64"
+    ntf_profile="BBToolchain64"
+elif [[ "${ntf_install_ufid}" == "opt_dbg_exc_mt" ]]; then
+    ntf_install_ufid_canonical="opt_dbg_32"
+    ntf_profile="BBToolchain32"
+elif [[ "${ntf_install_ufid}" == "dbg_exc_mt" ]]; then
+    ntf_install_ufid_canonical="dbg_32"
+    ntf_profile="BBToolchain32"
+else
+    echo "${ntf_install_ufid} is not a recognized UFID"
+    exit 1
+fi
+
+ntf_build_dir=${NTF_CONFIGURE_REPOSITORY}/build/${NTF_CONFIGURE_UNAME}/${ntf_install_ufid}
+ntf_install_dir=${ntf_build_dir}
+
+ntf_log_path=${ntf_build_dir}/${NTF_CONFIGURE_UNAME}-${ntf_install_ufid}.log
+
+echo "ntf_path=${ntf_path}"
+echo "ntf_build_dir=${ntf_build_dir}"
+echo "ntf_install_dir=${ntf_install_dir}"
+echo "ntf_install_ufid=${ntf_install_ufid}"
+echo "ntf_install_ufid_canonical=${ntf_install_ufid_canonical}"
+echo "ntf_log_path=${ntf_log_path}"
+
+rm -rf ${ntf_build_dir}
+
+DISTRIBUTION_REFROOT=${NTF_CONFIGURE_REFROOT} \
+PATH=${ntf_path} \
+bbs_build_env list
+
+DISTRIBUTION_REFROOT=${NTF_CONFIGURE_REFROOT} \
+PATH=${ntf_path} \
+bbs_build_env --ufid ${ntf_install_ufid_canonical} \
+              --profile ${ntf_profile} \
+              --build-dir ${ntf_build_dir} \
+              --install-dir ${ntf_install_dir}
+
+eval $(DISTRIBUTION_REFROOT=${NTF_CONFIGURE_REFROOT} PATH=${ntf_path} bbs_build_env --ufid ${ntf_install_ufid_canonical} --profile ${ntf_profile} --build-dir ${ntf_build_dir} --install-dir ${ntf_install_dir})
+
+echo "After running bbs_build_env:"
+echo "PATH=${PATH}"
+echo "DISTRIBUTION_REFROOT=${DISTRIBUTION_REFROOT}"
+echo "BBS_ENV_MARKER=${BBS_ENV_MARKER}"
+echo "BDE_CMAKE_UPLID=${BDE_CMAKE_UPLID}"
+echo "BDE_CMAKE_UFID=${BDE_CMAKE_UFID}"
+echo "BDE_CMAKE_BUILD_DIR=${BDE_CMAKE_BUILD_DIR}"
+echo "BDE_CMAKE_TOOLCHAIN=${BDE_CMAKE_TOOLCHAIN}"
+echo "BDE_CMAKE_INSTALL_DIR=${BDE_CMAKE_INSTALL_DIR}"
+
+mkdir -p ${ntf_build_dir}
+touch ${ntf_log_path}
+
+DISTRIBUTION_REFROOT=${NTF_CONFIGURE_REFROOT} \
+PATH=${ntf_path} \
+bbs_build configure 2>&1 | tee -a ${ntf_log_path}
+if [ ${?} -ne 0 ]; then
+    echo "Failed to configure"
+    exit 1
+fi
+
+DISTRIBUTION_REFROOT=${NTF_CONFIGURE_REFROOT} \
+PATH=${ntf_path} \
+bbs_build build -j 8 2>&1 | tee -a ${ntf_log_path}
+if [ ${?} -ne 0 ]; then
+    echo "Failed to build components"
+    exit 1
+fi
+
+DISTRIBUTION_REFROOT=${NTF_CONFIGURE_REFROOT} \
+PATH=${ntf_path} \
+bbs_build build -j 8 --target all.t 2>&1 | tee -a ${ntf_log_path}
+if [ ${?} -ne 0 ]; then
+    echo "Failed to build test drivers"
+    exit 1
+fi
+
+DISTRIBUTION_REFROOT=${NTF_CONFIGURE_REFROOT} \
+PATH=${ntf_path} \
+bbs_build build -j 1 --tests run 2>&1 | tee -a ${ntf_log_path}
+if [ ${?} -ne 0 ]; then
+    echo "Failed to execute test drivers"
+    exit 1
+fi
+
+DISTRIBUTION_REFROOT=${NTF_CONFIGURE_REFROOT} \
+PATH=${ntf_path} \
+bbs_build install 2>&1 | tee -a ${ntf_log_path}
+if [ ${?} -ne 0 ]; then
+    echo "Failed to install"
+    return 1
+fi
+
+echo "OK"

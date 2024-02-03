@@ -1,0 +1,209 @@
+#!/usr/bin/env bash
+
+MAKE_RELEASE_EXE=$(basename $0)
+MAKE_RELEASE_DIR=$(dirname $0)
+[[ -n ${MAKE_RELEASE_DIR##/*} ]] && MAKE_RELEASE_DIR=$PWD/${MAKE_RELEASE_DIR#.}
+
+cd ${MAKE_RELEASE_DIR}/..
+MAKE_RELEASE_REPOSITORY=$(pwd)
+
+MAKE_RELEASE_MODE_MAJOR=1
+MAKE_RELEASE_MODE_MINOR=2
+MAKE_RELEASE_MODE_PATCH=3
+
+MAKE_RELEASE_MODE=${MAKE_RELEASE_MODE_PATCH}
+
+usage()
+{
+    echo "usage: ${MAKE_RELEASE_EXE} [--major] [--minor] [--patch]"
+    echo "where: "
+    echo "    --major    Perform a major version release"
+    echo "    --minor    Perform a minor version release"
+    echo "    --patch    Perform a patch version release"
+    exit 1
+}
+
+while true ; do
+    case "$1" in
+        --help)
+            usage ;;
+        --major)
+            MAKE_RELEASE_MODE=${MAKE_RELEASE_MODE_MAJOR}
+            shift ;;
+        --minor)
+            MAKE_RELEASE_MODE=${MAKE_RELEASE_MODE_MINOR}
+            shift ;;
+        --patch)
+            MAKE_RELEASE_MODE=${MAKE_RELEASE_MODE_PATCH}
+            shift ;;
+        --*)
+            usage ;;
+        *)
+            break ;;
+    esac
+done
+
+MAKE_RELEASE_UNAME=$(uname)
+if [[ ${MAKE_RELEASE_UNAME} != "Linux" ]]; then
+    echo "Must be run on a Linux machine"
+    exit 0
+fi
+
+NTSSCM_VERSIONTAG_H=$(cat ${MAKE_RELEASE_REPOSITORY}/groups/nts/ntsscm/ntsscm_versiontag.h)
+
+NTSSCM_VERSIONTAG_H_REGEX_MAJOR='#define NTS_VERSION_MAJOR ([0-9]+)'
+NTSSCM_VERSIONTAG_H_REGEX_MINOR='#define NTS_VERSION_MINOR ([0-9]+)'
+NTSSCM_VERSIONTAG_H_REGEX_PATCH='#define NTS_VERSION_PATCH ([0-9]+)'
+
+[[ "${NTSSCM_VERSIONTAG_H}" =~ ${NTSSCM_VERSIONTAG_H_REGEX_MAJOR} ]]
+if [ ${?} -ne 0 ]; then
+    echo "Failed to find major version"
+    exit 1
+fi
+
+NTSSCM_VERSION_MAJOR=${BASH_REMATCH[1]}
+
+[[ "${NTSSCM_VERSIONTAG_H}" =~ ${NTSSCM_VERSIONTAG_H_REGEX_MINOR} ]]
+if [ ${?} -ne 0 ]; then
+    echo "Failed to find minor version"
+    exit 1
+fi
+
+NTSSCM_VERSION_MINOR=${BASH_REMATCH[1]}
+
+[[ "${NTSSCM_VERSIONTAG_H}" =~ ${NTSSCM_VERSIONTAG_H_REGEX_PATCH} ]]
+if [ ${?} -ne 0 ]; then
+    echo "Failed to find patch version"
+    exit 1
+fi
+
+NTSSCM_VERSION_PATCH=${BASH_REMATCH[1]}
+
+echo "Current ${NTSSCM_VERSION_MAJOR}.${NTSSCM_VERSION_MINOR}.${NTSSCM_VERSION_PATCH}"
+
+NTSSCM_VERSION_MAJOR_ORIGINAL=${NTSSCM_VERSION_MAJOR}
+NTSSCM_VERSION_MINOR_ORIGINAL=${NTSSCM_VERSION_MINOR}
+NTSSCM_VERSION_PATCH_ORIGINAL=${NTSSCM_VERSION_PATCH}
+
+if [ ${MAKE_RELEASE_MODE} -eq ${MAKE_RELEASE_MODE_MAJOR} ]; then
+    NTSSCM_VERSION_MAJOR=$((NTSSCM_VERSION_MAJOR+1))
+    NTSSCM_VERSION_MINOR=0
+    NTSSCM_VERSION_PATCH=0
+elif [ ${MAKE_RELEASE_MODE} -eq ${MAKE_RELEASE_MODE_MINOR} ]; then
+    NTSSCM_VERSION_MINOR=$((NTSSCM_VERSION_MINOR+1))
+    NTSSCM_VERSION_PATCH=0
+elif [ ${MAKE_RELEASE_MODE} -eq ${MAKE_RELEASE_MODE_PATCH} ]; then
+    NTSSCM_VERSION_PATCH=$((NTSSCM_VERSION_PATCH+1))
+else
+    echo "Unexpected release mode"
+    exit 1
+fi
+
+echo "Release ${NTSSCM_VERSION_MAJOR}.${NTSSCM_VERSION_MINOR}.${NTSSCM_VERSION_PATCH}"
+
+MAKE_RELEASE_BRANCH=$(git branch --show-current)
+if [ ${?} -ne 0 ]; then
+    echo "Failed to get the current branch"
+    exit 1
+fi
+
+if [[ -z "${MAKE_RELEASE_BRANCH}" ]]; then
+    echo "Failed to get the current branch"
+    exit 1
+fi
+
+MAKE_RELEASE_REMOTE=$(git remote -v | grep "ntf/ntf-classic (push)" | cut -f 1)
+if [[ -z "${MAKE_RELEASE_REMOTE}" ]]; then
+    echo "Failed to get the remote name for ntf/ntf-classic"
+    exit 1
+fi
+
+# MAKE_RELEASE_BRANCH_REQUIRED="releases/${NTSSCM_VERSION_MAJOR}.${NTSSCM_VERSION_MINOR}.x"
+# if [[ "${MAKE_RELEASE_BRANCH}" != "${MAKE_RELEASE_BRANCH_REQUIRED}" ]]; then
+#     echo "Current branch must be ${MAKE_RELEASE_BRANCH_REQUIRED}"
+#     exit 1
+# fi
+
+sed -i "s/#define NTS_VERSION_MAJOR ${NTSSCM_VERSION_MAJOR_ORIGINAL}/#define NTS_VERSION_MAJOR ${NTSSCM_VERSION_MAJOR}/g" ${MAKE_RELEASE_REPOSITORY}/groups/nts/ntsscm/ntsscm_versiontag.h
+sed -i "s/#define NTS_VERSION_MINOR ${NTSSCM_VERSION_MINOR_ORIGINAL}/#define NTS_VERSION_MINOR ${NTSSCM_VERSION_MINOR}/g" ${MAKE_RELEASE_REPOSITORY}/groups/nts/ntsscm/ntsscm_versiontag.h
+sed -i "s/#define NTS_VERSION_PATCH ${NTSSCM_VERSION_PATCH_ORIGINAL}/#define NTS_VERSION_PATCH ${NTSSCM_VERSION_PATCH}/g" ${MAKE_RELEASE_REPOSITORY}/groups/nts/ntsscm/ntsscm_versiontag.h
+
+dpkg-debchange --version=${NTSSCM_VERSION_MAJOR}.${NTSSCM_VERSION_MINOR}.${NTSSCM_VERSION_PATCH} --from-branch=refs/heads/${MAKE_RELEASE_BRANCH}
+if [ ${?} -ne 0 ]; then
+    echo "Failed to update debian/changelog"
+    exit 1
+fi
+
+git add ${MAKE_RELEASE_REPOSITORY}/debian/changelog
+if [ ${?} -ne 0 ]; then
+    echo "Failed to add debian/changelog to the index"
+    exit 1
+fi
+
+git add ${MAKE_RELEASE_REPOSITORY}/groups/nts/ntsscm/ntsscm_versiontag.h
+if [ ${?} -ne 0 ]; then
+    echo "Failed to add ${MAKE_RELEASE_REPOSITORY}/groups/nts/ntsscm/ntsscm_versiontag.h to the index"
+    exit 1
+fi
+
+git commit -m "Release ${NTSSCM_VERSION_MAJOR}.${NTSSCM_VERSION_MINOR}.${NTSSCM_VERSION_PATCH}"
+if [ ${?} -ne 0 ]; then
+    echo "Failed to commit changes to the index"
+    exit 1
+fi
+
+git push ${MAKE_RELEASE_REMOTE} ${MAKE_RELEASE_BRANCH}
+if [ ${?} -ne 0 ]; then
+    echo "Failed to push changes to the index"
+    exit 1
+fi
+
+git tag ${NTSSCM_VERSION_MAJOR}.${NTSSCM_VERSION_MINOR}.${NTSSCM_VERSION_PATCH}
+if [ ${?} -ne 0 ]; then
+    echo "Failed to create tag"
+    exit 1
+fi
+
+git push ${MAKE_RELEASE_REMOTE} ${NTSSCM_VERSION_MAJOR}.${NTSSCM_VERSION_MINOR}.${NTSSCM_VERSION_PATCH}
+if [ ${?} -ne 0 ]; then
+    echo "Failed to push tags"
+    exit 1
+fi
+
+git tag -d latest
+if [ ${?} -ne 0 ]; then
+    echo "Failed to delete tag 'latest' locally"
+    exit 1
+fi
+
+git push origin :refs/tags/latest
+if [ ${?} -ne 0 ]; then
+    echo "Failed to delete tag 'latest' remotely"
+    exit 1
+fi
+
+git tag latest
+if [ ${?} -ne 0 ]; then
+    echo "Failed to create tag 'latest'"
+    exit 1
+fi
+
+git push origin latest
+if [ ${?} -ne 0 ]; then
+    echo "Failed to push tag 'latest'"
+    exit 1
+fi
+
+
+dpkg-publish
+if [ ${?} -ne 0 ]; then
+    echo "Failed to publish"
+    exit 1
+fi
+
+dpkg-promote --distribution=infrastructure-unstable --source-package=ntf-core --source-version=${NTSSCM_VERSION_MAJOR}.${NTSSCM_VERSION_MINOR}.${NTSSCM_VERSION_PATCH}
+if [ ${?} -ne 0 ]; then
+    echo "Failed to promote"
+    exit 1
+fi
+

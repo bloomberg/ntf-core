@@ -1,0 +1,35 @@
+Source: ntf-core
+Section: unknown
+Priority: extra
+Maintainer: Matt Millett <mmillett2@bloomberg.net>
+Build-Depends:
+ bde-internal-tools,
+ bdedox [amd64],
+ dpkg,
+ libbal-dev-extra,
+ libbal-dev,
+ libbdl-dev-extra,
+ libbdl-dev,
+ libbsl-dev-extra,
+ libbsl-dev
+Standards-Version: 3.8.4
+
+Package: libnts-dev
+Depends: libbal-dev, libbdl-dev, libbsl-dev
+Architecture: any
+Description: Blocking and non-blocking sockets for network programming
+
+Package: libnts-dev-extra
+Depends: libnts-dev, libbal-dev-extra, libbdl-dev-extra, libbsl-dev-extra
+Architecture: any
+Description: Blocking and non-blocking sockets for network programming (extra build variants)
+
+Package: libntc-dev
+Depends: libnts-dev, libbal-dev, libbdl-dev, libbsl-dev
+Architecture: any
+Description: Asynchronous sockets, timers, event loops, and thread pools for network programming
+
+Package: libntc-dev-extra
+Depends: libntc-dev, libnts-dev-extra, libbal-dev-extra, libbdl-dev-extra, libbsl-dev-extra
+Architecture: any
+Description: Asynchronous sockets, timers, event loops, and thread pools for network programming (extra build variants)

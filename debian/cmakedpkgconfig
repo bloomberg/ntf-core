@@ -1,0 +1,191 @@
+{
+"platforms": {
+    "amd64": [
+    {
+        "ufids": [ "opt_exc_mt"],
+        "targets": [ "all" ],
+        "install": {
+            "libntc-dev": [ "ntc", "ntc-symlinks",
+                            "ntc-headers", "ntc-meta",
+                            "ntc-release-symlink", "ntc-pkgconfig" ],
+            "libnts-dev": [ "nts", "nts-symlinks",
+                            "nts-headers", "nts-meta",
+                            "nts-release-symlink", "nts-pkgconfig" ]
+        }
+    },
+    {
+        "ufids": [ "opt_exc_mt_64_pic" ],
+        "targets": [ "all" ],
+        "install": {
+            "libntc-dev": [ "ntc", "ntc-symlinks",
+                            "ntc-release-symlink", "ntc-pkgconfig",
+                            "ntc-pic-symlink-hack" ],
+            "libnts-dev": [ "nts", "nts-symlinks",
+                            "nts-release-symlink", "nts-pkgconfig",
+                            "nts-pic-symlink-hack" ]
+        }
+    },
+    {
+        "ufids": [ "opt_dbg_exc_mt", "dbg_exc_mt" ],
+        "targets": [ "all" ],
+        "install": {
+            "libntc-dev": [ "ntc", "ntc-symlinks" ],
+            "libnts-dev": [ "nts", "nts-symlinks" ]
+        }
+    },
+    {
+        "ufids": [ "opt_dbg_exc_mt_64_pic", "dbg_exc_mt_64_pic" ],
+        "targets": [ "all" ],
+        "install": {
+            "libntc-dev": [ "ntc", "ntc-symlinks",
+                            "ntc-pic-symlink-hack" ],
+            "libnts-dev": [ "nts", "nts-symlinks",
+                            "nts-pic-symlink-hack" ]
+        }
+    },
+    {
+        "ufids": [ "opt_exc_mt_pic", "opt_dbg_exc_mt_pic", "dbg_exc_mt_safe" ],
+        "targets": [ "all" ],
+        "install": {
+            "libntc-dev-extra": [ "ntc", "ntc-symlinks" ],
+            "libnts-dev-extra": [ "nts", "nts-symlinks" ]
+        }
+    },
+    {
+        "ufids": [ "dbg_exc_mt_64_safe_pic" ],
+        "targets": [ "all" ],
+        "install": {
+            "libntc-dev-extra": [ "ntc", "ntc-symlinks",
+                                  "ntc-pic-symlink-hack" ],
+            "libnts-dev-extra": [ "nts", "nts-symlinks",
+                                  "nts-pic-symlink-hack" ]
+        }
+    }
+    ],
+    "aix6_powerpc": [
+    {
+        "ufids": [ "opt_exc_mt"],
+        "targets": [ "all" ],
+        "install": {
+            "libntc-dev": [ "ntc", "ntc-symlinks",
+                            "ntc-headers", "ntc-meta",
+                            "ntc-release-symlink", "ntc-pkgconfig" ],
+            "libnts-dev": [ "nts", "nts-symlinks",
+                            "nts-headers", "nts-meta",
+                            "nts-release-symlink", "nts-pkgconfig" ]
+        }
+    },
+    {
+        "ufids": [ "opt_exc_mt_64_pic" ],
+        "targets": [ "all" ],
+        "install": {
+            "libntc-dev": [ "ntc", "ntc-symlinks",
+                            "ntc-release-symlink", "ntc-pkgconfig",
+                            "ntc-pic-symlink-hack" ],
+            "libnts-dev": [ "nts", "nts-symlinks",
+                            "nts-release-symlink", "nts-pkgconfig",
+                            "nts-pic-symlink-hack" ]
+        }
+    },
+    {
+        "ufids": [ "opt_dbg_exc_mt", "dbg_exc_mt" ],
+        "targets": [ "all" ],
+        "install": {
+            "libntc-dev": [ "ntc", "ntc-symlinks" ],
+            "libnts-dev": [ "nts", "nts-symlinks" ]
+        }
+    },
+    {
+        "ufids": [ "opt_dbg_exc_mt_64_pic", "dbg_exc_mt_64_pic" ],
+        "targets": [ "all" ],
+        "install": {
+            "libntc-dev": [ "ntc", "ntc-symlinks",
+                            "ntc-pic-symlink-hack" ],
+            "libnts-dev": [ "nts", "nts-symlinks",
+                            "nts-pic-symlink-hack" ]
+        }
+    },
+    {
+        "ufids": [ "opt_exc_mt_pic", "opt_dbg_exc_mt_pic", "dbg_exc_mt_safe" ],
+        "targets": [ "all" ],
+        "install": {
+            "libntc-dev-extra": [ "ntc", "ntc-symlinks" ],
+            "libnts-dev-extra": [ "nts", "nts-symlinks" ]
+        }
+    },
+    {
+        "ufids": [ "dbg_exc_mt_64_safe_pic" ],
+        "targets": [ "all" ],
+        "install": {
+            "libntc-dev-extra": [ "ntc", "ntc-symlinks",
+                                  "ntc-pic-symlink-hack" ],
+            "libnts-dev-extra": [ "nts", "nts-symlinks",
+                                  "nts-pic-symlink-hack" ]
+        }
+    }
+    ],
+    "solaris10_sparc": [
+    {
+        "ufids": [ "opt_exc_mt"],
+        "targets": [ "all" ],
+        "install": {
+            "libntc-dev": [ "ntc", "ntc-symlinks",
+                            "ntc-headers", "ntc-meta",
+                            "ntc-release-symlink", "ntc-pkgconfig" ],
+            "libnts-dev": [ "nts", "nts-symlinks",
+                            "nts-headers", "nts-meta",
+                            "nts-release-symlink", "nts-pkgconfig" ]
+        }
+    },
+    {
+        "ufids": [ "opt_exc_mt_64_pic" ],
+        "targets": [ "all" ],
+        "install": {
+            "libntc-dev": [ "ntc", "ntc-symlinks",
+                            "ntc-release-symlink", "ntc-pkgconfig",
+                            "ntc-pic-symlink-hack" ],
+            "libnts-dev": [ "nts", "nts-symlinks",
+                            "nts-release-symlink", "nts-pkgconfig",
+                            "nts-pic-symlink-hack" ]
+        }
+    },
+    {
+        "ufids": [ "opt_dbg_exc_mt", "dbg_exc_mt" ],
+        "targets": [ "all" ],
+        "install": {
+            "libntc-dev": [ "ntc", "ntc-symlinks" ],
+            "libnts-dev": [ "nts", "nts-symlinks" ]
+        }
+    },
+    {
+        "ufids": [ "opt_dbg_exc_mt_64_pic", "dbg_exc_mt_64_pic" ],
+        "targets": [ "all" ],
+        "install": {
+            "libntc-dev": [ "ntc", "ntc-symlinks",
+                            "ntc-pic-symlink-hack" ],
+            "libnts-dev": [ "nts", "nts-symlinks",
+                            "nts-pic-symlink-hack" ]
+        }
+    },
+    {
+        "ufids": [ "opt_exc_mt_pic", "opt_dbg_exc_mt_pic", "dbg_exc_mt_safe" ],
+        "targets": [ "all" ],
+        "install": {
+            "libntc-dev-extra": [ "ntc", "ntc-symlinks" ],
+            "libnts-dev-extra": [ "nts", "nts-symlinks" ]
+        }
+    },
+    {
+        "ufids": [ "dbg_exc_mt_64_safe_pic" ],
+        "targets": [ "all" ],
+        "install": {
+            "libntc-dev-extra": [ "ntc", "ntc-symlinks",
+                                  "ntc-pic-symlink-hack" ],
+            "libnts-dev-extra": [ "nts", "nts-symlinks",
+                                  "nts-pic-symlink-hack" ]
+        }
+    }
+    ]
+    }
+}
+

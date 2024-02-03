@@ -1,0 +1,20 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+export NTF_CONFIGURE_WITH_MOCKS=0
+export NTF_CONFIGURE_WITH_APPLICATIONS=0
+export NTF_CONFIGURE_WITH_USAGE_EXAMPLES=0
+
+export NTF_CONFIGURE_FROM_PACKAGING=1
+
+DEBHELPER_PATH=$(DISTRIBUTION_REFROOT)/opt/bb/libexec/bde-internal-tools/share/build
+include $(DEBHELPER_PATH)/bbs-debhelper.mk
+
+debian/bde-build-stamp: debian/lintian-overrides-stamp
+debian/lintian-overrides-stamp:
+	for uor in ntc nts; do \
+		mkdir -p debian/lib$${uor}-dev-extra$(PREFIX)/share/lintian/overrides; \
+		cp debian/lib$${uor}-dev-extra.lintian-overrides \
+			debian/lib$${uor}-dev-extra$(PREFIX)/share/lintian/overrides/lib$${uor}-dev-extra; \
+	done
+	touch $@
