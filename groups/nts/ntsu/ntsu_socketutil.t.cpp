@@ -2501,16 +2501,126 @@ void testStreamSocketTxTimestampsAndZeroCopy(ntsa::Transport::Value transport,
     }
 }
 
-/// Comparator with is used to help sorting Timestamps according to their time
-/// value.
-struct TimestampTimeComparator {
-    /// Return true if the specified 'a' occurred earlier than the specified
-    /// 'b'. Otherwise return false.
-    bool operator()(const ntsa::Timestamp& a, const ntsa::Timestamp& b)
+void testStreamSocketReceiveNotifications(ntsa::Transport::Value transport,
+                                          ntsa::Handle           server,
+                                          ntsa::Handle           client,
+                                          bslma::Allocator*      allocator)
+{
+    NTSCFG_TEST_LOG_DEBUG << "Testing " << transport << NTSCFG_TEST_LOG_END;
+
+    ntsa::Error error;
+
+    error = ntsu::SocketOptionUtil::setBlocking(client, true);
+    NTSCFG_TEST_OK(error);
+    error = ntsu::SocketOptionUtil::setBlocking(server, true);
+    NTSCFG_TEST_OK(error);
+
     {
-        return a.time() < b.time();
+        ntsa::NotificationQueue notifications;
+        ntsu::SocketUtil::receiveNotifications(&notifications, client);
+        ntsu::SocketUtil::receiveNotifications(&notifications, server);
     }
-};
+
+    const int msgSize = 200;
+    bsl::vector<char> message(msgSize, allocator);
+    for (int i = 0; i < msgSize; ++i) {
+        message[i] = bsl::rand() % 100;
+    }
+    const ntsa::Data sendData(
+        ntsa::ConstBuffer(message.data(), message.size()));
+    int totalSend = 0;
+    {
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        error = ntsu::SocketUtil::send(&context, sendData, options, client);
+        NTSCFG_TEST_OK(error);
+        totalSend = context.bytesSent();
+    }
+
+    bsl::vector<char> rBuffer(msgSize, allocator);
+
+    while(totalSend != 0)
+    {
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        ntsa::Data data(ntsa::MutableBuffer(rBuffer.data(), rBuffer.size()));
+
+        error = ntsu::SocketUtil::receive(&context, &data, options, server);
+        if (!error) {
+            totalSend -= context.bytesReceived();
+        }
+    }
+    {
+        ntsa::NotificationQueue notifications;
+        ntsu::SocketUtil::receiveNotifications(&notifications, client);
+        ntsu::SocketUtil::receiveNotifications(&notifications, server);
+    }
+}
+
+void testDatagramSocketReceiveNotifications(ntsa::Transport::Value transport,
+                                            ntsa::Handle           server,
+                                            const ntsa::Endpoint&  serverEndpoint,
+                                            ntsa::Handle           client,
+                                            const ntsa::Endpoint&  clientEndpoint,
+                                            bslma::Allocator*      allocator)
+{
+    NTSCFG_TEST_LOG_DEBUG << "Testing " << transport << NTSCFG_TEST_LOG_END;
+
+    ntsa::Error error;
+
+    error = ntsu::SocketOptionUtil::setBlocking(client, true);
+    NTSCFG_TEST_OK(error);
+    error = ntsu::SocketOptionUtil::setBlocking(server, true);
+    NTSCFG_TEST_OK(error);
+
+    {
+        ntsa::NotificationQueue notifications;
+        ntsu::SocketUtil::receiveNotifications(&notifications, client);
+        ntsu::SocketUtil::receiveNotifications(&notifications, server);
+    }
+
+    const int msgSize = 200;
+    bsl::vector<char> message(msgSize, allocator);
+    for (int i = 0; i < msgSize; ++i) {
+        message[i] = bsl::rand() % 100;
+    }
+    const ntsa::Data sendData(
+        ntsa::ConstBuffer(message.data(), message.size()));
+    int totalSend = 0;
+    {
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+        options.setEndpoint(serverEndpoint);
+
+        error = ntsu::SocketUtil::send(&context, sendData, options, client);
+        NTSCFG_TEST_OK(error);
+        totalSend = context.bytesSent();
+    }
+
+    bsl::vector<char> rBuffer(msgSize, allocator);
+
+    while(totalSend != 0)
+    {
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        ntsa::Data data(ntsa::MutableBuffer(rBuffer.data(), rBuffer.size()));
+
+        error = ntsu::SocketUtil::receive(&context, &data, options, server);
+        if (!error) {
+            totalSend -= context.bytesReceived();
+        }
+    }
+    {
+        ntsa::NotificationQueue notifications;
+        ntsu::SocketUtil::receiveNotifications(&notifications, client);
+        ntsu::SocketUtil::receiveNotifications(&notifications, server);
+    }
+}
 
 }  // close namespace 'test'
 
@@ -7984,6 +8094,39 @@ NTSCFG_TEST_CASE(32)
 #endif
 }
 
+
+NTSCFG_TEST_CASE(33)
+{
+    // Concern: test that for stream sockets configured in a blocking mode
+    // attempt to read data from the socket error queue does not lead to a
+    // blocking ::recvmsg call. Also check that even if socket has some data
+    // in its receive buffer and call to ::recvmsg can return 0,
+    // receiveNotifications does not hang in an endless loop.
+
+    ntscfg::TestAllocator ta;
+    {
+        test::executeStreamSocketTest(
+            &test::testStreamSocketReceiveNotifications);
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTSCFG_TEST_CASE(34)
+{
+    // Concern: test that for datagram sockets configured in a blocking mode
+    // attempt to read data from the socket error queue does not lead to a
+    // blocking ::recvmsg call. Also check that even if socket has some data
+    // in its receive buffer and call to ::recvmsg can return 0,
+    // receiveNotifications does not hang in an endless loop.
+
+    ntscfg::TestAllocator ta;
+    {
+        test::executeDatagramSocketTest(
+            &test::testDatagramSocketReceiveNotifications);
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
 NTSCFG_TEST_DRIVER
 {
     NTSCFG_TEST_REGISTER(1);
@@ -8018,5 +8161,7 @@ NTSCFG_TEST_DRIVER
     NTSCFG_TEST_REGISTER(30);
     NTSCFG_TEST_REGISTER(31);
     NTSCFG_TEST_REGISTER(32);
+    NTSCFG_TEST_REGISTER(33);
+    NTSCFG_TEST_REGISTER(34);
 }
 NTSCFG_TEST_DRIVER_END;
