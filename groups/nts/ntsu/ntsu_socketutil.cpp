@@ -554,14 +554,14 @@ class SendControl
     enum {
         // The payload size required to send any meta-data (viz. open file
         // descriptors) to the peer of a socket.
-        k_SEND_CONTROL_PAYLOAD_SIZE = static_cast<int>(
+        k_SEND_CONTROL_PAYLOAD_SIZE =
             NTSU_SOCKETUTIL_MAX_HANDLES_PER_OUTGOING_CONTROLMSG *
-            sizeof(ntsa::Handle)),
+            sizeof(ntsa::Handle),
 
         // The control buffer capacity required to send any meta-data (viz.
         // open file descriptors) to the peer of a socket.
         k_SEND_CONTROL_BUFFER_SIZE =
-            static_cast<int>(CMSG_SPACE(k_SEND_CONTROL_PAYLOAD_SIZE))
+            CMSG_SPACE(k_SEND_CONTROL_PAYLOAD_SIZE)
     };
 
     // Define a type alias for a maximimally-aligned buffer of suitable size to
@@ -596,11 +596,10 @@ class ReceiveControl
         // file descriptors, timestamps, etc.) buffered by the operating system
         // for a socket.
         k_RECEIVE_CONTROL_PAYLOAD_SIZE =
-            static_cast<int>(
-                NTSU_SOCKETUTIL_MAX_HANDLES_PER_INCOMING_CONTROLMSG *
-                sizeof(ntsa::Handle))
+            (NTSU_SOCKETUTIL_MAX_HANDLES_PER_INCOMING_CONTROLMSG *
+             sizeof(ntsa::Handle))
 #if defined(BSLS_PLATFORM_OS_LINUX)
-            + static_cast<int>(sizeof(TimestampUtil::ScmTimestamping))
+            + sizeof(TimestampUtil::ScmTimestamping)
 #endif
 
         // The control buffer capacity required to receive any meta-data (e.g.
@@ -608,7 +607,7 @@ class ReceiveControl
         // system for a socket.
         ,
         k_RECEIVE_CONTROL_BUFFER_SIZE =
-            static_cast<int>(CMSG_SPACE(k_RECEIVE_CONTROL_PAYLOAD_SIZE))
+            CMSG_SPACE(k_RECEIVE_CONTROL_PAYLOAD_SIZE)
     };
 
     // Define a type alias for a maximimally-aligned buffer of suitable size to

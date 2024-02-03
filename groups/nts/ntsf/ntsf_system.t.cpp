@@ -191,7 +191,7 @@ NTSCFG_TEST_CASE(1)
         // this test case is simply verifying that this combination of
         // parameters is not portable.
 
-        NTSCFG_TEST_ERROR(error, ntsa::Error(ntsa::Error::e_ADDRESS_IN_USE));
+        NTSCFG_TEST_ERROR(error, ntsa::Error::e_ADDRESS_IN_USE);
 
 #endif
 
