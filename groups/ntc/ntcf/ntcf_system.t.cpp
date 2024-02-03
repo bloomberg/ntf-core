@@ -11262,21 +11262,22 @@ void concernListenerSocketAcceptClose(
 }
 
 namespace rateLimit {
+
 class DatagramSocketSession : public ntci::DatagramSocketSession
 {
-  private:
-    DatagramSocketSession(const DatagramSocketSession&) BSLS_KEYWORD_DELETED;
-    DatagramSocketSession& operator=(const DatagramSocketSession&)
-        BSLS_KEYWORD_DELETED;
-
-    bslmt::Semaphore& d_semaphore;
+    bslmt::Semaphore *d_semaphore_p;
     bsls::AtomicInt   d_readQueueRateLimitApplied;
     bsls::AtomicInt   d_readQueueRateLimitRelaxed;
     bsls::AtomicInt   d_writeQueueRateLimitApplied;
     bsls::AtomicInt   d_writeQueueRateLimitRelaxed;
 
+  private:
+    DatagramSocketSession(const DatagramSocketSession&) BSLS_KEYWORD_DELETED;
+    DatagramSocketSession& operator=(const DatagramSocketSession&)
+        BSLS_KEYWORD_DELETED;
+
   public:
-    explicit DatagramSocketSession(bslmt::Semaphore& semaphore);
+    explicit DatagramSocketSession(bslmt::Semaphore *semaphore);
 
     ~DatagramSocketSession() BSLS_KEYWORD_OVERRIDE;
 
@@ -11303,8 +11304,8 @@ class DatagramSocketSession : public ntci::DatagramSocketSession
     BSLS_ANNOTATION_NODISCARD int writeQueueRateLimitRelaxed() const;
 };
 
-DatagramSocketSession::DatagramSocketSession(bslmt::Semaphore& semaphore)
-: d_semaphore(semaphore)
+DatagramSocketSession::DatagramSocketSession(bslmt::Semaphore *semaphore)
+: d_semaphore_p(semaphore)
 , d_readQueueRateLimitApplied(0)
 , d_readQueueRateLimitRelaxed(0)
 , d_writeQueueRateLimitApplied(0)
@@ -11324,7 +11325,7 @@ void DatagramSocketSession::processReadQueueRateLimitApplied(
     NTCCFG_TEST_EQ(event.type(),
                    ntca::ReadQueueEventType::e_RATE_LIMIT_APPLIED);
     d_readQueueRateLimitApplied.addAcqRel(1);
-    d_semaphore.post();
+    d_semaphore_p->post();
 }
 
 void DatagramSocketSession::processReadQueueRateLimitRelaxed(
@@ -11335,7 +11336,7 @@ void DatagramSocketSession::processReadQueueRateLimitRelaxed(
     NTCCFG_TEST_EQ(event.type(),
                    ntca::ReadQueueEventType::e_RATE_LIMIT_RELAXED);
     d_readQueueRateLimitRelaxed.addAcqRel(1);
-    d_semaphore.post();
+    d_semaphore_p->post();
 }
 
 void DatagramSocketSession::processWriteQueueRateLimitApplied(
@@ -11346,7 +11347,7 @@ void DatagramSocketSession::processWriteQueueRateLimitApplied(
     NTCCFG_TEST_EQ(event.type(),
                    ntca::WriteQueueEventType::e_RATE_LIMIT_APPLIED);
     d_writeQueueRateLimitApplied.addAcqRel(1);
-    d_semaphore.post();
+    d_semaphore_p->post();
 }
 
 void DatagramSocketSession::processWriteQueueRateLimitRelaxed(
@@ -11357,7 +11358,7 @@ void DatagramSocketSession::processWriteQueueRateLimitRelaxed(
     NTCCFG_TEST_EQ(event.type(),
                    ntca::WriteQueueEventType::e_RATE_LIMIT_RELAXED);
     d_writeQueueRateLimitRelaxed.addAcqRel(1);
-    d_semaphore.post();
+    d_semaphore_p->post();
 }
 
 int DatagramSocketSession::readQueueRateLimitApplied() const
@@ -11382,19 +11383,19 @@ int DatagramSocketSession::writeQueueRateLimitRelaxed() const
 
 class StreamSocketSession : public ntci::StreamSocketSession
 {
-  private:
-    StreamSocketSession(const StreamSocketSession&) BSLS_KEYWORD_DELETED;
-    StreamSocketSession& operator=(const StreamSocketSession&)
-        BSLS_KEYWORD_DELETED;
-
-    bslmt::Semaphore& d_semaphore;
+    bslmt::Semaphore *d_semaphore_p;
     bsls::AtomicInt   d_readQueueRateLimitApplied;
     bsls::AtomicInt   d_readQueueRateLimitRelaxed;
     bsls::AtomicInt   d_writeQueueRateLimitApplied;
     bsls::AtomicInt   d_writeQueueRateLimitRelaxed;
 
+  private:
+    StreamSocketSession(const StreamSocketSession&) BSLS_KEYWORD_DELETED;
+    StreamSocketSession& operator=(const StreamSocketSession&)
+        BSLS_KEYWORD_DELETED;
+
   public:
-    explicit StreamSocketSession(bslmt::Semaphore& semaphore);
+    explicit StreamSocketSession(bslmt::Semaphore *semaphore);
 
     ~StreamSocketSession() BSLS_KEYWORD_OVERRIDE;
 
@@ -11420,8 +11421,8 @@ class StreamSocketSession : public ntci::StreamSocketSession
     BSLS_ANNOTATION_NODISCARD int writeQueueRateLimitRelaxed() const;
 };
 
-StreamSocketSession::StreamSocketSession(bslmt::Semaphore& semaphore)
-: d_semaphore(semaphore)
+StreamSocketSession::StreamSocketSession(bslmt::Semaphore *semaphore)
+: d_semaphore_p(semaphore)
 , d_readQueueRateLimitApplied(0)
 , d_readQueueRateLimitRelaxed(0)
 , d_writeQueueRateLimitApplied(0)
@@ -11441,8 +11442,7 @@ void StreamSocketSession::processReadQueueRateLimitApplied(
     NTCCFG_TEST_EQ(event.type(),
                    ntca::ReadQueueEventType::e_RATE_LIMIT_APPLIED);
     d_readQueueRateLimitApplied.addAcqRel(1);
-
-    d_semaphore.post();
+    d_semaphore_p->post();
 }
 
 void StreamSocketSession::processWriteQueueRateLimitApplied(
@@ -11453,7 +11453,7 @@ void StreamSocketSession::processWriteQueueRateLimitApplied(
     NTCCFG_TEST_EQ(event.type(),
                    ntca::WriteQueueEventType::e_RATE_LIMIT_APPLIED);
     d_writeQueueRateLimitApplied.addAcqRel(1);
-    d_semaphore.post();
+    d_semaphore_p->post();
 }
 
 void StreamSocketSession::processReadQueueRateLimitRelaxed(
@@ -11464,8 +11464,7 @@ void StreamSocketSession::processReadQueueRateLimitRelaxed(
     NTCCFG_TEST_EQ(event.type(),
                    ntca::ReadQueueEventType::e_RATE_LIMIT_RELAXED);
     d_readQueueRateLimitRelaxed.addAcqRel(1);
-
-    d_semaphore.post();
+    d_semaphore_p->post();
 }
 
 void StreamSocketSession::processWriteQueueRateLimitRelaxed(
@@ -11476,7 +11475,7 @@ void StreamSocketSession::processWriteQueueRateLimitRelaxed(
     NTCCFG_TEST_EQ(event.type(),
                    ntca::WriteQueueEventType::e_RATE_LIMIT_RELAXED);
     d_writeQueueRateLimitRelaxed.addAcqRel(1);
-    d_semaphore.post();
+    d_semaphore_p->post();
 }
 
 int StreamSocketSession::readQueueRateLimitApplied() const
@@ -11501,17 +11500,17 @@ int StreamSocketSession::writeQueueRateLimitRelaxed() const
 
 class ListenerSocketSession : public ntci::ListenerSocketSession
 {
+    bslmt::Semaphore *d_semaphore_p;
+    bsls::AtomicInt   d_rateLimitApplied;
+    bsls::AtomicInt   d_rateLimitRelaxed;
+
   private:
     ListenerSocketSession(const ListenerSocketSession&) BSLS_KEYWORD_DELETED;
     ListenerSocketSession& operator=(const ListenerSocketSession&)
         BSLS_KEYWORD_DELETED;
 
-    bslmt::Semaphore& d_semaphore;
-    bsls::AtomicInt   d_rateLimitApplied;
-    bsls::AtomicInt   d_rateLimitRelaxed;
-
   public:
-    explicit ListenerSocketSession(bslmt::Semaphore& semaphore);
+    explicit ListenerSocketSession(bslmt::Semaphore *semaphore);
 
     ~ListenerSocketSession() BSLS_KEYWORD_OVERRIDE;
 
@@ -11527,8 +11526,8 @@ class ListenerSocketSession : public ntci::ListenerSocketSession
     BSLS_ANNOTATION_NODISCARD int rateLimitRelaxed() const;
 };
 
-ListenerSocketSession::ListenerSocketSession(bslmt::Semaphore& semaphore)
-: d_semaphore(semaphore)
+ListenerSocketSession::ListenerSocketSession(bslmt::Semaphore *semaphore)
+: d_semaphore_p(semaphore)
 {
 }
 
@@ -11544,7 +11543,7 @@ void ListenerSocketSession::processAcceptQueueRateLimitApplied(
     NTCCFG_TEST_EQ(event.type(),
                    ntca::AcceptQueueEventType::e_RATE_LIMIT_APPLIED);
     d_rateLimitApplied.addAcqRel(1);
-    d_semaphore.post();
+    d_semaphore_p->post();
 }
 
 void ListenerSocketSession::processAcceptQueueRateLimitRelaxed(
@@ -11555,7 +11554,7 @@ void ListenerSocketSession::processAcceptQueueRateLimitRelaxed(
     NTCCFG_TEST_EQ(event.type(),
                    ntca::AcceptQueueEventType::e_RATE_LIMIT_RELAXED);
     d_rateLimitRelaxed.addAcqRel(1);
-    d_semaphore.post();
+    d_semaphore_p->post();
 }
 
 int ListenerSocketSession::rateLimitApplied() const
@@ -11641,10 +11640,8 @@ void concernDatagramSocketReceiveRateLimitTimerClose(
     }
 
     bsl::shared_ptr<rateLimit::DatagramSocketSession> session;
-    {
-        session.createInplace(allocator, rateLimitSemaphore);
-        serverDatagramSocket->registerSession(session);
-    }
+    session.createInplace(allocator, &rateLimitSemaphore);
+    serverDatagramSocket->registerSession(session);
 
     NTCI_LOG_DEBUG("Generating message");
     bsl::shared_ptr<bdlbb::Blob> message =
@@ -11760,10 +11757,8 @@ void concernStreamSocketReceiveRateLimitTimerClose(
     }
 
     bsl::shared_ptr<rateLimit::StreamSocketSession> session;
-    {
-        session.createInplace(allocator, rateLimitSemaphore);
-        serverStreamSocket->registerSession(session);
-    }
+    session.createInplace(allocator, &rateLimitSemaphore);
+    serverStreamSocket->registerSession(session);
 
     const int k_MESSAGE_SIZE = 65000;
     const int k_NUM_MESSAGES = 1024;
@@ -11909,10 +11904,8 @@ void concernDatagramSocketSendRateLimitTimerClose(
     }
 
     bsl::shared_ptr<rateLimit::DatagramSocketSession> session;
-    {
-        session.createInplace(allocator, rateLimitSemaphore);
-        clientDatagramSocket->registerSession(session);
-    }
+    session.createInplace(allocator, &rateLimitSemaphore);
+    clientDatagramSocket->registerSession(session);
 
     NTCI_LOG_DEBUG("Generating message");
     bsl::shared_ptr<bdlbb::Blob> message =
@@ -12009,10 +12002,8 @@ void concernStreamSocketSendRateLimitTimerClose(
     }
 
     bsl::shared_ptr<rateLimit::StreamSocketSession> session;
-    {
-        session.createInplace(allocator, rateLimitSemaphore);
-        clientStreamSocket->registerSession(session);
-    }
+    session.createInplace(allocator, &rateLimitSemaphore);
+    clientStreamSocket->registerSession(session);
 
     const int k_MESSAGE_SIZE = 65000;
     const int k_NUM_MESSAGES = 1024;
@@ -12094,10 +12085,8 @@ void concernListenerSocketAcceptRateLimitTimerClose(
     }
 
     bsl::shared_ptr<rateLimit::ListenerSocketSession> session;
-    {
-        session.createInplace(allocator, acceptLimitSemaphore);
-        listenerSocket->registerSession(session);
-    }
+    session.createInplace(allocator, &acceptLimitSemaphore);
+    listenerSocket->registerSession(session);
 
     {
         bsl::shared_ptr<ntcs::RateLimiter> limiter;
@@ -12409,10 +12398,8 @@ void concernDatagramSocketReceiveRateLimitTimerEventNotifications(
     }
 
     bsl::shared_ptr<rateLimit::DatagramSocketSession> session;
-    {
-        session.createInplace(allocator, rateLimitSemaphore);
-        serverDatagramSocket->registerSession(session);
-    }
+    session.createInplace(allocator, &rateLimitSemaphore);
+    serverDatagramSocket->registerSession(session);
 
     NTCI_LOG_DEBUG("Generating message");
     bsl::shared_ptr<bdlbb::Blob> message =
@@ -12562,10 +12549,8 @@ void concernDatagramSocketSendRateLimitTimerEventNotifications(
     }
 
     bsl::shared_ptr<rateLimit::DatagramSocketSession> session;
-    {
-        session.createInplace(allocator, rateLimitSemaphore);
-        clientDatagramSocket->registerSession(session);
-    }
+    session.createInplace(allocator, &rateLimitSemaphore);
+    clientDatagramSocket->registerSession(session);
 
     NTCI_LOG_DEBUG("Generating message");
     bsl::shared_ptr<bdlbb::Blob> message =
@@ -12661,10 +12646,8 @@ void concernStreamSocketReceiveRateLimitTimerEventNotifications(
     }
 
     bsl::shared_ptr<rateLimit::StreamSocketSession> session;
-    {
-        session.createInplace(allocator, rateLimitSemaphore);
-        serverStreamSocket->registerSession(session);
-    }
+    session.createInplace(allocator, &rateLimitSemaphore);
+    serverStreamSocket->registerSession(session);
 
     const int k_MESSAGE_SIZE = 65000;
     const int k_NUM_MESSAGES = 10;
@@ -12783,10 +12766,8 @@ void concernStreamSocketSendRateLimitTimerEventNotifications(
     }
 
     bsl::shared_ptr<rateLimit::StreamSocketSession> session;
-    {
-        session.createInplace(allocator, rateLimitSemaphore);
-        clientStreamSocket->registerSession(session);
-    }
+    session.createInplace(allocator, &rateLimitSemaphore);
+    clientStreamSocket->registerSession(session);
 
     const int k_MESSAGE_SIZE = 65000;
     const int k_NUM_MESSAGES = 10;
@@ -12869,10 +12850,8 @@ void concernListenerSocketAcceptRateLimitTimerEventNotifications(
     }
 
     bsl::shared_ptr<rateLimit::ListenerSocketSession> session;
-    {
-        session.createInplace(allocator, acceptLimitSemaphore);
-        listenerSocket->registerSession(session);
-    }
+    session.createInplace(allocator, &acceptLimitSemaphore);
+    listenerSocket->registerSession(session);
 
     {
         bsl::shared_ptr<ntcs::RateLimiter> limiter;
