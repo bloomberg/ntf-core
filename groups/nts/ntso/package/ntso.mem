@@ -1,2 +1,8 @@
+ntso_devpoll
 ntso_epoll
+ntso_eventport
 ntso_kqueue
+ntso_poll
+ntso_pollset
+ntso_select
+ntso_test
