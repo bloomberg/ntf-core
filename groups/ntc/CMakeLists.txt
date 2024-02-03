@@ -38,7 +38,7 @@ target_include_directories(
 )
 
 target_include_directories(
-    ntccfg
+    ntccfg-iface
     PUBLIC
     $<INSTALL_INTERFACE:include>
     $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
