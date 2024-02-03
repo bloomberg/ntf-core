@@ -546,7 +546,13 @@ class StreamSocket : public ntci::StreamSocket,
             const bsl::shared_ptr<StreamSocket>& self,
             const ntsa::Timestamp&               timestamp);
 
-    // Process the completion of one or more zero-copy tranmsissions described
+    // Engage zero-copy transmissions for data whose size is greater than or
+    // equal to the specified 'threshold', in bytes. Return the error.
+    ntsa::Error privateZeroCopyEngage(
+            const bsl::shared_ptr<StreamSocket>& self,
+            bsl::size_t                          threshold);
+
+    // Process the completion of one or more zero-copy transmissions described
     // by the specified 'zeroCopy' notification.
     void privateZeroCopyUpdate(
             const bsl::shared_ptr<StreamSocket>& self,

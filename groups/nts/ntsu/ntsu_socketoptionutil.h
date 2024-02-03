@@ -121,21 +121,21 @@ struct SocketOptionUtil {
                                               bool         inlineFlag);
 
     /// Set the option for the specified 'socket' that enables or disables
-    /// application of both software and hardware timestamps for incoming
-    /// data according to the specified 'timestampIncomingData' flag. Note
-    /// that if an error is returned then timestamps will never be
-    /// generated. If there is no error returned then in some cases OS can
-    /// also refuse to generate timestamps.
+    /// application of both software and hardware timestamps for incoming data
+    /// according to the specified 'timestampFlag' flag. Note that if an error
+    /// is returned then timestamps will never be generated. If there is no
+    /// error returned then in some cases OS can also refuse to generate
+    /// timestamps.
     static ntsa::Error setTimestampIncomingData(ntsa::Handle socket,
-                                                bool timestampIncomingData);
+                                                bool         timestampFlag);
 
     /// Set the option for the specified 'socket' that enables or disables
     /// application of timestamps for outgoing data according to the specified
-    /// 'timestampOutgoingData' flag. Note that if an error is returned then
-    /// timestamps will never be generated. If there is no error returned then
-    /// in some cases OS can also refuse to generate timestamps.
+    /// 'timestampFlag' flag. Note that if an error is returned then timestamps
+    /// will never be generated. If there is no error returned then in some
+    /// cases OS can also refuse to generate timestamps.
     static ntsa::Error setTimestampOutgoingData(ntsa::Handle socket,
-                                                bool timestampOutgoingData);
+                                                bool         timestampFlag);
 
     /// Set the option for the specified 'socket' that allows Linux
     /// MSG_ZEROCOPY mechanism usage according to the specified 'zeroCopy'
@@ -219,9 +219,15 @@ struct SocketOptionUtil {
                                               ntsa::Handle socket);
 
     /// Load into the specified 'timestampFlag' the option for the specified
-    /// 'socket' that indicates application of both software and hardware
-    /// timestamps for incoming data.  Return the error.
+    /// 'socket' that indicates application of any type of timestamps for
+    /// incoming data.  Return the error.
     static ntsa::Error getTimestampIncomingData(bool*        timestampFlag,
+                                                ntsa::Handle socket);
+
+    /// Load into the specified 'timestampFlag' the option for the specified
+    /// 'socket' that indicates application of any type of timestamps for
+    /// outgoing data.  Return the error.
+    static ntsa::Error getTimestampOutgoingData(bool*        timestampFlag,
                                                 ntsa::Handle socket);
 
     /// Load into the specified 'zeroCopyFlag' the option for the specified
@@ -286,6 +292,19 @@ struct SocketOptionUtil {
     /// Load into the specified 'result' the flag that indicates if the
     /// socket type is a local (aka Unix) socket. Return the error.
     static ntsa::Error isLocal(bool* result, ntsa::Handle socket);
+
+    /// Return true if the specified 'socket' supports notifications, otherwise
+    /// return false. 
+    static bool supportsNotifications(ntsa::Handle socket);
+
+    /// Return true if the specified 'socket' supports timestamping, otherwise
+    /// return false. 
+    static bool supportsTimestamping(ntsa::Handle socket);
+
+    /// Return true if the specified 'socket' supports zero-copy, otherwise
+    /// return false. 
+    static bool supportsZeroCopy(ntsa::Handle socket);
+
 };
 
 }  // end namespace ntsu

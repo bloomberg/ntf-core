@@ -20,6 +20,7 @@ BSLS_IDENT_RCSID(ntsscm_version_cpp, "$Id$ $CSID$")
 
 #include <bdlb_numericparseutil.h>
 #include <bslscm_patchversion.h>
+#include <bslmt_once.h>
 #include <bsls_platform.h>
 #include <bsl_cstring.h>
 #include <bsl_string_view.h>
@@ -38,25 +39,32 @@ BSLS_IDENT_RCSID(ntsscm_version_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsscm {
 
-#define STRINGIFY2(a) #a
-#define STRINGIFY(a) STRINGIFY2(a)
+namespace {
 
-#define NTSSCM_VERSION_STRING                                                 \
-    "BLP_LIB_BDE_NTS_" STRINGIFY(NTS_VERSION_MAJOR) "." STRINGIFY(            \
-        NTS_VERSION_MINOR) "." STRINGIFY(NTS_VERSION_PATCH)
+static int s_systemVersionError = 0;
+static int s_systemVersionMajor = 0;
+static int s_systemVersionMinor = 0;
+static int s_systemVersionPatch = 0;
+static int s_systemBuild = 0;
 
-const char* Version::s_ident = "$Id: " NTSSCM_VERSION_STRING " $";
-const char* Version::s_what  = "@(#)" NTSSCM_VERSION_STRING;
-
-const char* Version::NTSSCM_S_VERSION    = NTSSCM_VERSION_STRING;
-const char* Version::s_dependencies      = "";
-const char* Version::s_buildInfo         = "";
-const char* Version::s_timestamp         = "";
-const char* Version::s_sourceControlInfo = "";
+/// @internal @brief
+/// Provide utilities for detecting the operating system version. 
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntsscm
+struct VersionUtil 
+{
+    /// Load into the specified 'major', 'minor', 'patch', and 'build' the
+    /// version information of the operating system running the current
+    /// process.  Return 0 on success and a non-zero value otherwise.
+    static int systemVersion(int* major, int* minor, int* patch, int* build);
+};
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
-int Version::systemVersion(int* major, int* minor, int* patch, int* build)
+int VersionUtil::systemVersion(int* major, int* minor, int* patch, int* build)
 {
     int rc;
 
@@ -206,13 +214,15 @@ int Version::systemVersion(int* major, int* minor, int* patch, int* build)
     return 0;
 
 #else
+
     return -1;
+
 #endif
 }
 
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
 
-int Version::systemVersion(int* major, int* minor, int* patch, int* build)
+int VersionUtil::systemVersion(int* major, int* minor, int* patch, int* build)
 {
     *major = 0;
     *minor = 0;
@@ -241,6 +251,43 @@ int Version::systemVersion(int* major, int* minor, int* patch, int* build)
 #else
 #error Not implemented
 #endif
+
+} // close unnnamed namespace
+
+#define STRINGIFY2(a) #a
+#define STRINGIFY(a) STRINGIFY2(a)
+
+#define NTSSCM_VERSION_STRING                                                 \
+    "BLP_LIB_BDE_NTS_" STRINGIFY(NTS_VERSION_MAJOR) "." STRINGIFY(            \
+        NTS_VERSION_MINOR) "." STRINGIFY(NTS_VERSION_PATCH)
+
+const char* Version::s_ident = "$Id: " NTSSCM_VERSION_STRING " $";
+const char* Version::s_what  = "@(#)" NTSSCM_VERSION_STRING;
+
+const char* Version::NTSSCM_S_VERSION    = NTSSCM_VERSION_STRING;
+const char* Version::s_dependencies      = "";
+const char* Version::s_buildInfo         = "";
+const char* Version::s_timestamp         = "";
+const char* Version::s_sourceControlInfo = "";
+
+int Version::systemVersion(int* major, int* minor, int* patch, int* build)
+{
+    BSLMT_ONCE_DO
+    {
+        s_systemVersionError = VersionUtil::systemVersion(
+            &s_systemVersionMajor, 
+            &s_systemVersionMinor, 
+            &s_systemVersionPatch, 
+            &s_systemBuild);
+    }
+
+    *major = s_systemVersionMajor;
+    *minor = s_systemVersionMinor;
+    *patch = s_systemVersionPatch;
+    *build = s_systemBuild;
+
+    return s_systemVersionError;
+}
 
 }  // close namespace ntsscm
 }  // close namespace BloombergLP

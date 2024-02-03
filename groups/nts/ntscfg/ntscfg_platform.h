@@ -217,9 +217,9 @@ struct Platform {
     static int exit();
 
     /// Return true if the version of the operating system running the current
-    /// process supports timestamping incoming and outgoing data, otherwise
-    /// return false.
-    static bool supportsTimestamps();
+    /// process supports asynchronous socket notifications via some mechanism
+    /// such as the Linux error queue.
+    static bool supportsNotifications();
 
     /// Return true if the local host database (i.e. "/etc/hosts" or the 
     /// platform equivalent) exists, otherwise return false.  
