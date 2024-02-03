@@ -1663,34 +1663,34 @@ NTSCFG_TEST_CASE(5)
             error = ntsu::SocketOptionUtil::getTimestampIncomingData(
                 &timestampIncomingData, socket);
             NTSCFG_TEST_ERROR(
-                error, ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
+                error, ntsa::Error::e_NOT_IMPLEMENTED);
             NTSCFG_TEST_FALSE(timestampIncomingData);
 
             error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
                 &timestampOutgoingData, socket);
             NTSCFG_TEST_ERROR(
-                error, ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
+                error, ntsa::Error::e_NOT_IMPLEMENTED);
             NTSCFG_TEST_FALSE(timestampOutgoingData);
 
             error = ntsu::SocketOptionUtil::setTimestampIncomingData(
                 socket, false);
             NTSCFG_TEST_ERROR(
-                error, ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
+                error, ntsa::Error::e_NOT_IMPLEMENTED);
 
             error = ntsu::SocketOptionUtil::setTimestampIncomingData(
                 socket, true);
             NTSCFG_TEST_ERROR(
-                error, ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
+                error, ntsa::Error::e_NOT_IMPLEMENTED);
 
             error = ntsu::SocketOptionUtil::setTimestampOutgoingData(
                 socket, false);
             NTSCFG_TEST_ERROR(
-                error, ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
+                error, ntsa::Error::e_NOT_IMPLEMENTED);
 
             error = ntsu::SocketOptionUtil::setTimestampOutgoingData(
                 socket, true);
             NTSCFG_TEST_ERROR(
-                error, ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
+                error, ntsa::Error::e_NOT_IMPLEMENTED);
         }
 
         if (socket != ntsa::k_INVALID_HANDLE) {
