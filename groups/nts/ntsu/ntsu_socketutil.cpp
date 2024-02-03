@@ -13,9 +13,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Include sendmmsg/recvmmsg
+// Include sendmmsg/recvmmsg on Linux.
+
 #if defined(__linux__)
 #define _GNU_SOURCE 1
+#endif
+
+// Solaris 11.3 and earlier require that _XOPEN_SOURCE be defined to 500 or
+// later for its sys/socket.h to declare a POSIX-compliant 'msghdr'. Solaris
+// 11.4 always declares a POSIX-compliant 'msghdr' unless __USE_SUNOS_SOCKETS__
+// is defined. Ensure the POSIX-compliant 'msghdr' structure is declared
+// regardless of the operating system version and build options.
+
+#if defined(sun) || defined(__sun) || defined(__SVR4) || defined(__svr4__)
+#if defined(__USE_SUNOS_SOCKETS__)
+#error __USE_SUNOS_SOCKETS__ is not supported
+#endif
+#if !defined(_XOPEN_SOURCE)
+#define _XOPEN_SOURCE 500
+#define __EXTENSIONS__
+#include <time.h>
+#endif
+#include <stdio.h>
+#include <wchar.h>
+#include <stdlib.h>
+#include <sys/socket.h>
 #endif
 
 #include <ntsu_socketutil.h>
