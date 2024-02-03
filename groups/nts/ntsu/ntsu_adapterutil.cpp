@@ -199,6 +199,9 @@ void AdapterUtil::discoverAdapterList(bsl::vector<ntsa::Adapter>* result)
 #if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD) ||  \
     defined(BSLS_PLATFORM_OS_LINUX) || defined(BSLS_PLATFORM_OS_SOLARIS)
 
+    // Note: Not all devices that are operational must be marked as RUNNING,
+    // e.g. TUN/TAP devices. Do not exclude device that are not RUNNING.
+
     result->clear();
 
     struct ifaddrs* interfaceAddressList = 0;
@@ -236,10 +239,6 @@ void AdapterUtil::discoverAdapterList(bsl::vector<ntsa::Adapter>* result)
         bsl::string adapterName = interfaceAddress->ifa_name;
 
         if ((interfaceAddress->ifa_flags & IFF_UP) == 0) {
-            continue;
-        }
-
-        if ((interfaceAddress->ifa_flags & IFF_RUNNING) == 0) {
             continue;
         }
 
