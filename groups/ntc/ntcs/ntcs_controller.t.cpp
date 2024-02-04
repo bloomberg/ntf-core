@@ -46,7 +46,7 @@ const char* k_TEMP_DIR = "TMP";
 #endif
 
 void pollAndTest(const bsl::shared_ptr<ntsi::Reactor>& reactor,
-                 const ntcs::Controller&               controller,
+                 ntcs::Controller*                     controller,
                  bool                                  readableExpected)
 {
     ntsa::Error error;
@@ -58,15 +58,30 @@ void pollAndTest(const bsl::shared_ptr<ntsi::Reactor>& reactor,
 
     ntsa::EventSet eventSet;
     error = reactor->wait(&eventSet, deadline);
-    
+
     if (!readableExpected) {
+#if defined(BSLS_PLATFORM_OS_SOLARIS)
+        if (!error) {
+            while (eventSet.isReadable(controller->handle())) {
+                BSLS_LOG_INFO("Spurious wakeup detected");
+                eventSet.clear();
+                error = reactor->wait(&eventSet, deadline);
+                if (error) {
+                    break;
+                }
+            }
+        }
+
         NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
+#else
+        NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
+#endif
     }
     else {
         NTCCFG_TEST_OK(error);
     }
 
-    const bool readableFound = eventSet.isReadable(controller.handle());
+    const bool readableFound = eventSet.isReadable(controller->handle());
     NTCCFG_TEST_EQ(readableFound, readableExpected);
 }
 
@@ -82,8 +97,20 @@ NTCCFG_TEST_CASE(1)
 
         ntcs::Controller controller;
 
-        bsl::shared_ptr<ntsi::Reactor> reactor = 
+#if defined(BSLS_PLATFORM_OS_SOLARIS)
+
+        ntsa::ReactorConfig reactorConfig;
+        reactorConfig.setDriverName("eventport");
+
+        bsl::shared_ptr<ntsi::Reactor> reactor =
+            ntsf::System::createReactor(reactorConfig, &ta);
+
+#else
+
+        bsl::shared_ptr<ntsi::Reactor> reactor =
             ntsf::System::createReactor(&ta);
+
+#endif
 
         error = reactor->attachSocket(controller.handle());
         NTCCFG_TEST_OK(error);
@@ -91,24 +118,27 @@ NTCCFG_TEST_CASE(1)
         error = reactor->showReadable(controller.handle());
         NTCCFG_TEST_OK(error);
 
-        pollAndTest(reactor, controller, false);
+        pollAndTest(reactor, &controller, false);
 
         error = controller.acknowledge();
         NTCCFG_TEST_OK(error);
-        pollAndTest(reactor, controller, false);
+        pollAndTest(reactor, &controller, false);
 
         controller.interrupt(2);
-        pollAndTest(reactor, controller, true);
-        NTCCFG_TEST_OK(controller.acknowledge());
+        pollAndTest(reactor, &controller, true);
+        error = controller.acknowledge();
+        NTCCFG_TEST_OK(error);
 
-        pollAndTest(reactor, controller, true);
-        NTCCFG_TEST_OK(controller.acknowledge());
-        pollAndTest(reactor, controller, false);
+        pollAndTest(reactor, &controller, true);
+        error = controller.acknowledge();
+        NTCCFG_TEST_OK(error);
+        pollAndTest(reactor, &controller, false);
 
         controller.interrupt(1);
-        pollAndTest(reactor, controller, true);
-        NTCCFG_TEST_OK(controller.acknowledge());
-        pollAndTest(reactor, controller, false);
+        pollAndTest(reactor, &controller, true);
+        error = controller.acknowledge();
+        NTCCFG_TEST_OK(error);
+        pollAndTest(reactor, &controller, false);
 
         error = reactor->detachSocket(controller.handle());
         NTCCFG_TEST_OK(error);
@@ -132,7 +162,7 @@ NTCCFG_TEST_CASE(2)
         {
             ntcs::Controller controller;
 
-            error = ntsu::SocketOptionUtil::isLocal(&isLocalDefault, 
+            error = ntsu::SocketOptionUtil::isLocal(&isLocalDefault,
                                                     controller.handle());
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
             NTCCFG_TEST_OK(error);
@@ -147,7 +177,7 @@ NTCCFG_TEST_CASE(2)
             // Save the old environment variable value.
 
             bsl::string tempDirOld;
-            rc = ntccfg::Platform::getEnvironmentVariable(&tempDirOld, 
+            rc = ntccfg::Platform::getEnvironmentVariable(&tempDirOld,
                                                           k_TEMP_DIR);
             NTCCFG_TEST_EQ(rc, 0);
             NTCCFG_TEST_FALSE(tempDirOld.empty());
@@ -160,15 +190,15 @@ NTCCFG_TEST_CASE(2)
 
             {
                 bsl::string tempDirNew;
-                for (bsl::size_t i = 0; 
-                                 i < ntsa::LocalName::k_MAX_PATH_LENGTH; 
-                               ++i) 
+                for (bsl::size_t i = 0;
+                                 i < ntsa::LocalName::k_MAX_PATH_LENGTH;
+                               ++i)
                 {
                     const char c = 'a' + (bsl::rand() % ('z' - 'a'));
                     tempDirNew.append(1, c);
                 }
 
-                rc = ntccfg::Platform::setEnvironmentVariable(k_TEMP_DIR, 
+                rc = ntccfg::Platform::setEnvironmentVariable(k_TEMP_DIR,
                                                               tempDirNew);
                 NTCCFG_TEST_EQ(rc, 0);
             }
@@ -176,16 +206,16 @@ NTCCFG_TEST_CASE(2)
             ntcs::Controller controller;
 
             bool isLocal = true;
-            error = ntsu::SocketOptionUtil::isLocal(&isLocal, 
+            error = ntsu::SocketOptionUtil::isLocal(&isLocal,
                                                     controller.handle());
             NTCCFG_TEST_OK(error);
             NTCCFG_TEST_FALSE(isLocal);
 
             // Attach the socket to a reactor and ensure that it becomes
-            // readable after it has been interrupted, and is not readable 
+            // readable after it has been interrupted, and is not readable
             // after the interruption has been acknowledged.
 
-            bsl::shared_ptr<ntsi::Reactor> reactor = 
+            bsl::shared_ptr<ntsi::Reactor> reactor =
                 ntsf::System::createReactor(&ta);
 
             error = reactor->attachSocket(controller.handle());
@@ -195,14 +225,14 @@ NTCCFG_TEST_CASE(2)
             NTCCFG_TEST_OK(error);
 
             controller.interrupt(1);
-            pollAndTest(reactor, controller, true);
+            pollAndTest(reactor, &controller, true);
             NTCCFG_TEST_OK(controller.acknowledge());
-            pollAndTest(reactor, controller, false);
+            pollAndTest(reactor, &controller, false);
 
             error = reactor->detachSocket(controller.handle());
             NTCCFG_TEST_OK(error);
 
-            rc = ntccfg::Platform::setEnvironmentVariable(k_TEMP_DIR, 
+            rc = ntccfg::Platform::setEnvironmentVariable(k_TEMP_DIR,
                                                           tempDirOld);
             NTCCFG_TEST_EQ(rc, 0);
         }
