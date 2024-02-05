@@ -721,8 +721,8 @@ function (ntf_target_options_common_prolog target)
         # problem of different translation units compiled with different
         # settings of /MD and /MDd.
 
-        ntf_target_build_option(
-            TARGET ${target} LINK VALUE /FORCE)
+        # ntf_target_build_option(
+        #    TARGET ${target} LINK VALUE /FORCE)
     endif()
 
 endfunction()

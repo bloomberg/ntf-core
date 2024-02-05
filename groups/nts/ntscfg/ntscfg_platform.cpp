@@ -18,6 +18,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntscfg_platform_cpp, "$Id$ $CSID$")
 
+#include <bslmt_once.h>
 #include <bdls_filesystemutil.h>
 #include <bsls_log.h>
 #include <bsls_platform.h>
