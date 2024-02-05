@@ -2068,6 +2068,14 @@ ntsa::Error SocketOptionUtil::setTimestampOutgoingData(
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
+ntsa::Error SocketOptionUtil::setZeroCopy(ntsa::Handle socket, bool zeroCopy)
+{
+    NTSCFG_WARNING_UNUSED(socket);
+    NTSCFG_WARNING_UNUSED(zeroCopy);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 ntsa::Error SocketOptionUtil::setLinger(ntsa::Handle              socket,
                                         bool                      linger,
                                         const bsls::TimeInterval& duration)
@@ -2546,6 +2554,17 @@ ntsa::Error SocketOptionUtil::getTimestampOutgoingData(bool* timestampFlag,
     NTSCFG_WARNING_UNUSED(socket);
 
     *timestampFlag = false;
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error SocketOptionUtil::getZeroCopy(bool*        zeroCopyFlag,
+                                          ntsa::Handle socket)
+{
+    NTSCFG_WARNING_UNUSED(zeroCopyFlag);
+    NTSCFG_WARNING_UNUSED(socket);
+
+    *zeroCopyFlag = false;
 
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }

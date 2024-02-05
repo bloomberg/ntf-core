@@ -7604,12 +7604,14 @@ NTSCFG_TEST_CASE(19)
     // Concern: Datagram socket transmission with control data: single buffer.
     // Plan:
 
+#if defined(BSLS_PLATFORM_UNIX)
     ntscfg::TestAllocator ta;
     {
         test::executeDatagramSocketTest(
             &test::testDatagramSocketTransmissionSingleBufferWithControlMsg);
     }
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+#endif
 }
 
 NTSCFG_TEST_CASE(20)
@@ -7617,12 +7619,14 @@ NTSCFG_TEST_CASE(20)
     // Concern: Datagram socket transmission with control data: blob.
     // Plan:
 
+#if defined(BSLS_PLATFORM_UNIX)
     ntscfg::TestAllocator ta;
     {
         test::executeDatagramSocketTest(
             &test::testDatagramSocketTransmissionBlobWithControlMsg);
     }
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+#endif
 }
 
 NTSCFG_TEST_CASE(21)
@@ -7630,12 +7634,14 @@ NTSCFG_TEST_CASE(21)
     // Concern: Datagram socket transmission with control data: dropped.
     // Plan:
 
+#if defined(BSLS_PLATFORM_UNIX)
     ntscfg::TestAllocator ta;
     {
         test::executeDatagramSocketTest(
             &test::testDatagramSocketTransmissionWithControlMsgDropped);
     }
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+#endif
 }
 
 NTSCFG_TEST_CASE(22)
@@ -7643,12 +7649,14 @@ NTSCFG_TEST_CASE(22)
     // Concern: Stream socket transmission with control data: single buffer.
     // Plan:
 
+#if defined(BSLS_PLATFORM_UNIX)
     ntscfg::TestAllocator ta;
     {
         test::executeStreamSocketTest(
             &test::testStreamSocketTransmissionSingleBufferWithControlMsg);
     }
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+#endif
 }
 
 NTSCFG_TEST_CASE(23)
@@ -7656,12 +7664,14 @@ NTSCFG_TEST_CASE(23)
     // Concern: Stream socket transmission with control data: blob.
     // Plan:
 
+#if defined(BSLS_PLATFORM_UNIX)
     ntscfg::TestAllocator ta;
     {
         test::executeStreamSocketTest(
             &test::testStreamSocketTransmissionBlobWithControlMsg);
     }
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+#endif
 }
 
 NTSCFG_TEST_CASE(24)
@@ -7669,12 +7679,14 @@ NTSCFG_TEST_CASE(24)
     // Concern: Stream socket transmission with control data: dropped
     // Plan:
 
+#if defined(BSLS_PLATFORM_UNIX)
     ntscfg::TestAllocator ta;
     {
         test::executeStreamSocketTest(
             &test::testStreamSocketTransmissionWithControlMsgDropped);
     }
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+#endif
 }
 
 NTSCFG_TEST_CASE(25)
