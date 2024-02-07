@@ -38,8 +38,6 @@ BSLS_IDENT_RCSID(ntcs_controller_cpp, "$Id$ $CSID$")
 // the implementation most suitable for the platform.
 // #define NTCS_CONTROLLER_IMP NTCS_CONTROLLER_TCP_SOCKET
 
-// If you want to use UNIX_DOMAIN_SOCKET implementation not only on Windows
-// then do not forget to update ntcs_controller.t test case.
 #ifndef NTCS_CONTROLLER_IMP
 #if defined(BSLS_PLATFORM_OS_LINUX)
 #define NTCS_CONTROLLER_IMP NTCS_CONTROLLER_IMP_EVENTFD
@@ -163,14 +161,16 @@ ntsa::Error initTcpPair(ntsa::Handle* clientHandle, ntsa::Handle* serverHandle)
 
     *clientHandle = client;
     *serverHandle = server;
+
     clientGuard.release();
     serverGuard.release();
 
-    NTCI_LOG_TRACE("Created controller with "
+    NTCI_LOG_TRACE("Controller created from TCP socket pair with "
                    "client descriptor %d and server descriptor %d",
                    *clientHandle,
                    *serverHandle);
-    return error;
+
+    return ntsa::Error();
 }
 #endif
 
@@ -215,14 +215,16 @@ ntsa::Error initUdsPair(ntsa::Handle* clientHandle, ntsa::Handle* serverHandle)
 
     *clientHandle = client;
     *serverHandle = server;
+
     clientGuard.release();
     serverGuard.release();
 
-    NTCI_LOG_TRACE("Created controller with "
+    NTCI_LOG_TRACE("Controller created from Unix domain socket pair with "
                    "client descriptor %d and server descriptor %d",
                    *clientHandle,
                    *serverHandle);
-    return error;
+
+    return ntsa::Error();
 }
 #endif
 
@@ -252,7 +254,7 @@ ntsa::Error initPipePair(ntsa::Handle* clientHandle,
     *serverHandle = pipes[0];
     *clientHandle = pipes[1];
 
-    NTCI_LOG_TRACE("Created controller with "
+    NTCI_LOG_TRACE("Controller created from anonymous pipe pair with "
                    "client descriptor %d and server descriptor %d",
                    *clientHandle,
                    *serverHandle);
@@ -276,15 +278,14 @@ ntsa::Error initEventFdPair(ntsa::Handle* clientHandle,
 
     *clientHandle = *serverHandle;
 
-    NTCI_LOG_TRACE("Created controller with "
-                   "client descriptor %d and server descriptor %d",
-                   *clientHandle,
+    NTCI_LOG_TRACE("Controller created from event semaphore descriptor %d",
                    *serverHandle);
+
     return ntsa::Error();
 }
 #endif
 
-}
+} // close unnamed namespace
 
 void Controller::processSocketReadable(const ntca::ReactorEvent& event)
 {
@@ -307,32 +308,6 @@ void Controller::processNotifications(
     NTCCFG_WARNING_UNUSED(notifications);
 }
 
-void Controller::close()
-{
-#if NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_TCP_SOCKET ||                  \
-    NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_UNIX_DOMAIN_SOCKET
-
-    ntsu::SocketUtil::shutdown(ntsa::ShutdownType::e_BOTH, d_clientHandle);
-    ntsu::SocketUtil::shutdown(ntsa::ShutdownType::e_BOTH, d_serverHandle);
-
-    ntsu::SocketUtil::close(d_clientHandle);
-    ntsu::SocketUtil::close(d_serverHandle);
-
-#elif NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_ANONYMOUS_PIPE
-
-    ::close(d_clientHandle);
-    ::close(d_serverHandle);
-
-#elif NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_EVENTFD
-
-    BSLS_ASSERT(d_clientHandle == d_serverHandle);
-    ::close(d_serverHandle);
-
-#else
-#error Not implemented
-#endif
-}
-
 const bsl::shared_ptr<ntci::Strand>& Controller::strand() const
 {
     return d_strand_sp;
@@ -343,46 +318,90 @@ Controller::Controller()
 , d_clientHandle(ntsa::k_INVALID_HANDLE)
 , d_serverHandle(ntsa::k_INVALID_HANDLE)
 , d_pending(0)
+, d_type(e_NONE)
 , d_strand_sp()
 {
-#if NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_TCP_SOCKET
+    ntsa::Error error;
 
-    const ntsa::Error error = initTcpPair(&d_clientHandle, &d_serverHandle);
+    error = this->open();
     if (error) {
         NTCCFG_ABORT();
+    }
+}
+
+ntsa::Error Controller::open()
+{
+    ntsa::Error error;
+
+    if (d_serverHandle != ntsa::k_INVALID_HANDLE) {
+        return ntsa::Error();
+    }
+
+#if NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_TCP_SOCKET
+
+    error = initTcpPair(&d_clientHandle, &d_serverHandle);
+    if (error) {
+        return error;
+    }
+    else {
+        d_type = e_TCP;
     }
 
 #elif NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_UNIX_DOMAIN_SOCKET
 
-    ntsa::Error error = initUdsPair(&d_clientHandle, &d_serverHandle);
+    error = initUdsPair(&d_clientHandle, &d_serverHandle);
     if (error) {
         error = initTcpPair(&d_clientHandle, &d_serverHandle);
         if (error) {
-            NTCCFG_ABORT();
+            return error;
         }
+        else {
+            d_type = e_TCP;
+        }
+    }
+    else {
+        d_type = e_UDS;
     }
 
 #elif NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_ANONYMOUS_PIPE
-    const ntsa::Error error = initPipePair(&d_clientHandle, &d_serverHandle);
+    error = initPipePair(&d_clientHandle, &d_serverHandle);
     if (error) {
-        NTCCFG_ABORT();
+        return error;
+    }
+    else {
+        d_type = e_PIPE;
     }
 
 #elif NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_EVENTFD
 
-    const ntsa::Error error =
-        initEventFdPair(&d_clientHandle, &d_serverHandle);
+    error = initEventFdPair(&d_clientHandle, &d_serverHandle);
     if (error) {
-        NTCCFG_ABORT();
+        return error;
+    }
+    else {
+        d_type = e_EVENT;
     }
 
 #else
 #error Not implemented
 #endif
+
+    return ntsa::Error();
 }
 
 Controller::~Controller()
 {
+    this->close();
+}
+
+void Controller::close()
+{
+    NTCI_LOG_CONTEXT();
+
+    if (d_serverHandle == ntsa::k_INVALID_HANDLE) {
+        return;
+    }
+
 #if NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_TCP_SOCKET ||                  \
     NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_UNIX_DOMAIN_SOCKET
 
@@ -405,6 +424,13 @@ Controller::~Controller()
 #else
 #error Not implemented
 #endif
+
+    d_clientHandle = ntsa::k_INVALID_HANDLE;
+    d_serverHandle = ntsa::k_INVALID_HANDLE;
+
+    d_type = e_NONE;
+
+    NTCI_LOG_TRACE("Controller destroyed");
 }
 
 ntsa::Error Controller::interrupt(unsigned int numWakeups)

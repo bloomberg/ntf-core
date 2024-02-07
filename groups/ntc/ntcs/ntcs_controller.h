@@ -40,10 +40,30 @@ namespace ntcs {
 /// @ingroup module_ntcs
 class Controller : public ntci::ReactorSocket
 {
+    /// Enumerates the types of implementation.
+    enum Type {
+        /// The controller is closed.
+        e_NONE,
+
+        /// The controller is implemented by a TCP socket pair.
+        e_TCP,
+
+        /// The controller is implemented by a Unix domain socket pair.
+        e_UDS,
+
+        /// The controller is implemented by an anonymous pipe.
+        e_PIPE,
+
+        /// The controller is implemented by an eventfd operating in semaphore
+        /// mode.
+        e_EVENT
+    };
+
     ntccfg::Mutex                 d_mutex;
     ntsa::Handle                  d_clientHandle;
     ntsa::Handle                  d_serverHandle;
     bsl::size_t                   d_pending;
+    Type                          d_type;
     bsl::shared_ptr<ntci::Strand> d_strand_sp;
 
   private:
@@ -67,18 +87,21 @@ class Controller : public ntci::ReactorSocket
     void processNotifications(const ntsa::NotificationQueue& notifications)
         BSLS_KEYWORD_OVERRIDE;
 
-    /// Close the socket.
-    void close() BSLS_KEYWORD_OVERRIDE;
-
     /// Return the strand on which this object's functions should be called.
     const bsl::shared_ptr<ntci::Strand>& strand() const BSLS_KEYWORD_OVERRIDE;
 
   public:
-    /// Create a new controller.
-    explicit Controller();
+    /// Create a new controller and automatically open it.
+    Controller();
 
     /// Destroy this object.
     ~Controller();
+
+    // Open the controller. Return the error.
+    ntsa::Error open();
+
+    /// Close the controller.
+    void close() BSLS_KEYWORD_OVERRIDE;
 
     /// Ensure the specified 'numWakeups' number of signals are
     /// acknowledgable. Return the error. Note that the controller's handle
