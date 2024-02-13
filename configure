@@ -898,7 +898,7 @@ fi
 if [[ "${NTF_CONFIGURE_UNAME}" == "Linux" ]] || \
    [[ "${NTF_CONFIGURE_UNAME}" == "Darwin" ]] || \
    [[ "${NTF_CONFIGURE_UNAME}" == "Windows" ]]; then
-    NTF_CONFIGURE_UFID_CANONICAL="${NTF_CONFIGURE_UFID_CANONICAL}_cpp17"
+    NTF_CONFIGURE_UFID_CANONICAL="${NTF_CONFIGURE_UFID_CANONICAL}_cpp20"
 fi
 
 if [[ "${NTF_CONFIGURE_REFROOT}" == "" ]] || [[ "${NTF_CONFIGURE_REFROOT}" == "/" ]]; then
