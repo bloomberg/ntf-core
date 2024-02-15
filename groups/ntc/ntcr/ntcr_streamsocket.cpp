@@ -2037,13 +2037,20 @@ void StreamSocket::privateShutdownSequenceComplete(
 
         if (d_upgradeInProgress) {
             ntca::UpgradeContext upgradeContext;
-            upgradeContext.setError(ntsa::Error(ntsa::Error::e_CANCELLED));
+
+            if (context.shutdownOrigin() == ntsa::ShutdownOrigin::e_SOURCE) {
+                upgradeContext.setError(ntsa::Error(ntsa::Error::e_CANCELLED));
+            }
+            else {
+                upgradeContext.setError(
+                    ntsa::Error(ntsa::Error::e_CONNECTION_DEAD));
+            }
 
             d_upgradeInProgress = false;
             d_encryption_sp.reset();
 
             ntci::UpgradeCallback upgradeCallback = d_upgradeCallback;
-            d_connectCallback.reset();
+            d_upgradeCallback.reset();
 
             ntca::UpgradeEvent upgradeEvent;
             upgradeEvent.setType(ntca::UpgradeEventType::e_ERROR);
