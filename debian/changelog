@@ -1,80 +1,54 @@
-ntf-core (2.2.5) unstable; urgency=low
+ntf-core (2.3.0) unstable; urgency=low
 
-  * f8ad1e3 RDSIBRM-5143: Handle recvmsg(MSG_ERRQUEUE) potentially blocking or returning 0 (#36)
-
- -- Matt Millett <mmillett2@bloomberg.net>  Fri, 19 Jan 2024 22:32:06 -0500
-
-ntf-core (2.2.4) unstable; urgency=low
-
-  * 034335e Install BDE meta-data using the xyz-bdemeta_direct component rather than the xyz-meta_direct component
-  * 33db8a5 Release 2.2.3 to DPKG
-  * 2caa5d1 Release 2.2.2 to DPKG
-  * a5d456f Release 2.2.1 to DPKG
-  * f5e1903 Default UFID is opt_dbg_64_pic instead of opt_dbg_64
-  * 299d6a4 Release 2.2.0 to DPKG
-  * 7b6c31b Default BBS-based DPKG install builds dbg, opt, and opt_dbg, *-extra packages contain safe, pic, etc.
-  * 65ba63b Default BBS-based DPKG install builds dbg, opt, and opt_dbg, *-extra packages contain safe, pic, etc.
-  * c6eb491 Upgrade debian meta-data to support BBS build
-  * f4f747c Release 2.1.0 to DPKG
-  * 01c8ca2 Release 2.0.0 to DPKG
+  * 128e639 Release 2.3.0
+  * c6095e9 Release 2.2.5
+  * 3a62855 Standardize bbsdpkgconfig
+  * fd40ef5 Ensure upgrade callbacks are correctly reset when shutting down sending while a TLS upgrade is in-progress
+  * 6a01a3b Update build system to 2.0.1
+  * ba2d242 Support explicit open and close of an ntcs::Controller
+  * e069109 Implement ntsu::SocketOptionUtil::setZeroCopy on Windows
+  * c94325d Fix ntcs_controller test driver to be able to handle spurious POLLIN events from event ports on Solaris
+  * d8ba307 Maintainence for AIX and Solaris
+  * 4d4759c Maintainence for AIX and Solaris
+  * 9ddbf80 Update ntso.mem with missing components
+  * 32c5b55 Add internal meta-data
+  * cbd81d4 Do not exclude network devices that do not have IFF_RUNNING set enumerating network devices
+  * 07c817e Ensure that reading from error queue does not hang if the socket is in a blocking mode or recvmsg returns 0
+  * 5a04483 Consolidate run-time checks determine support for timestamping and zero-copy
+  * eaef18d Support zero-copy transmission on Linux through reactor-based ntci::DatagramSockets and ntci::StreamSockets
+  * 835d7e2 Make path to toolchain.cmake configurable
+  * a5997c6 Hoist scope of struct ::iovec array to be consistent with the scope of struct ::msghdr
+  * 8526fef Selectively disable -Wmaybe-uninitialized
+  * 1431943 Log operation of ntco_kqueue using ntci_log instead of bsls_log
+  * 19af8ae Correct the name of the ntsu_zerocopyutil test driver
+  * f4ea959 GitHub Actions: stop on first failure and cat ctest log
+  * f73e830 Correctly reschedule an initially non-recurring timer when a new definite period is specified
+  * 87a2533 Support zero-copy transmissions in NTS
+  * a512761 GitHub Actions: cache dependencies and reorganize file locations
+  * 013191a Fix incorrect polling for events in ntcs_controller tests and port the test driver to all platforms
+  * 2f5a5a0 Add initial support for GitHub Actions
+  * 5156042 Merge backwards-incompatible ntci::Proactor::detachSocketAsync with detachSocket
+  * 9d40528 Fix trivial compiler error initializing control channel implemented with anonymous pipes
+  * fff52db Implement the control channel on Windows with a Unix domain socket pair, but fall back to TCP if necessary
+  * b834498 Support sending and receiving file descriptors over Unix domain sockets
+  * 25c786c Provide a simple, single-threaded abstraction of select, poll, epoll, kqueue, /dev/poll, event ports, and pollset
+  * 43d8cc0 Create all timer callbacks bound to a strong reference to 'this' with the standard strand semantics and announce rate limit events
+  * a878579 Overload ntsa::LocalName::generateUnique to return an error and check for failure where called
+  * 71bcc3a Implement asynchronous socket detachment for reactors and proactors
   * 3baad2e Release 2.2.4
   * 2c0db84 Enhance the build configuration scripts to optionally generate CLion configuration files
   * 05b08bb Allow toolchain.cmake to properly detect compiler paths already save in the CMake variable cache
   * 87f45c5 Do not read LOCATION property from targets during verbose CMake configuration
-
- -- Oleg Subbotin <osubbotin@bloomberg.net>  Tue, 17 Oct 2023 11:26:17 -0400
-
-ntf-core (2.2.3) unstable; urgency=low
-
-  * 1408d18 Release 2.2.2 to DPKG
-  * 3a8a4ca Release 2.2.1 to DPKG
-  * 9cfd4a3 Default UFID is opt_dbg_64_pic instead of opt_dbg_64
-  * d2aab28 Release 2.2.0 to DPKG
-  * 7185f51 Default BBS-based DPKG install builds dbg, opt, and opt_dbg, *-extra packages contain safe, pic, etc.
-  * 684845f Default BBS-based DPKG install builds dbg, opt, and opt_dbg, *-extra packages contain safe, pic, etc.
-  * ef90e97 Upgrade debian meta-data to support BBS build
-  * e2f1b55 Release 2.1.0 to DPKG
-  * a571e36 Release 2.0.0 to DPKG
   * ffe209a Release 2.2.3
   * 34974ef Install headers generated at configuration time under nts-headers and ntc-headers, respectively
-
- -- Matt Millett <mmillett2@bloomberg.net>  Fri, 8 Sep 2023 13:51:20 -0400
-
-ntf-core (2.2.2) unstable; urgency=low
-
-  * e295660 Release 2.2.1 to DPKG
-  * e056727 Default UFID is opt_dbg_64_pic instead of opt_dbg_64
-  * 6744707 Release 2.2.0 to DPKG
-  * 5c4020c Default BBS-based DPKG install builds dbg, opt, and opt_dbg, *-extra packages contain safe, pic, etc.
-  * a4ed4a4 Default BBS-based DPKG install builds dbg, opt, and opt_dbg, *-extra packages contain safe, pic, etc.
-  * 46af076 Upgrade debian meta-data to support BBS build
-  * 2bed600 Release 2.1.0 to DPKG
-  * a170b6d Release 2.0.0 to DPKG
   * 6252205 Release 2.2.2
   * fd0275c Install ntscfg_config.h and ntscfg_config.h as part of the nts and ntc components, respectively
-
- -- Matt Millett <mmillett2@bloomberg.net>  Thu, 7 Sep 2023 19:59:40 -0400
-
-ntf-core (2.2.1) unstable; urgency=low
-
-  * d4369ff Default UFID is opt_dbg_64_pic instead of opt_dbg_64
-  * 5d659e6 Release 2.2.0 to DPKG
-  * f76ec18 Default BBS-based DPKG install builds dbg, opt, and opt_dbg, *-extra packages contain safe, pic, etc.
-  * 703da44 Default BBS-based DPKG install builds dbg, opt, and opt_dbg, *-extra packages contain safe, pic, etc.
-  * 2c489ef Upgrade debian meta-data to support BBS build
-  * ea54887 Release 2.1.0 to DPKG
-  * f833ae0 Release 2.0.0 to DPKG
   * b453a46 Release 2.2.1
 
- -- Matt Millett <mmillett2@bloomberg.net>  Thu, 7 Sep 2023 14:57:22 -0400
+ -- Matt Millett <mmillett2@bloomberg.net>  Fri, 16 Feb 2024 12:05:06 -0500
 
-ntf-core (2.2.0) unstable; urgency=low
+ntf-core (2.2.0) git; urgency=low
 
-  * 67278f6 Default BBS-based DPKG install builds dbg, opt, and opt_dbg, *-extra packages contain safe, pic, etc.
-  * d7c6416 Default BBS-based DPKG install builds dbg, opt, and opt_dbg, *-extra packages contain safe, pic, etc.
-  * 2506bfb Upgrade debian meta-data to support BBS build
-  * a72c058 Release 2.1.0 to DPKG
-  * a6ec8c3 Release 2.0.0 to DPKG
   * 4bd7b8c Release 2.2.0
   * a49817f Release 2.2.0
   * af25d8a Fix timestamping tests for network devices that don't support timestamps
@@ -96,11 +70,10 @@ ntf-core (2.2.0) unstable; urgency=low
   * 46efa9f Use bsl::numeric_limits instead of constants from cstdint
   * 8ea0cf3 Test resolvers using dns.google.com instead of microsoft.com
 
- -- Matt Millett <mmillett2@bloomberg.net>  Thu, 7 Sep 2023 13:06:28 -0400
+ -- Matt Millett <mmillett@mailbox.org>  Wed, 6 Sep 2023 21:34:36 -0400
 
-ntf-core (2.1.0) unstable; urgency=low
+ntf-core (2.1.0) git; urgency=low
 
-  * c1bb4a4 Release 2.0.0 to DPKG
   * a511d00 Release 2.1.0
   * 6d4ad8b Maintenance for Windows: fix ntsu::SocketUtil::isLocal, ntcd::Machine packet timestamp handling, and allow for WSAENETUNREACH connecting to 240.0.0.1 in ntcf_system test driver
   * eed8a81 Implement ntsu::SocketOptionUtil::isLocal on Darwin without using SO_DOMAIN
@@ -113,275 +86,30 @@ ntf-core (2.1.0) unstable; urgency=low
   * ab6f596 Respect the CC and CXX environment variables when configuring the toolchain
   * 35dd90c Explicitly specify the source directory when running CMake from the configuration script
 
- -- Matt Millett <mmillett2@bloomberg.net>  Thu, 27 Apr 2023 15:12:37 -0400
+ -- Matt Millett <mmillett@mailbox.org>  Fri, 9 Jun 2023 10:47:43 -0400
 
-ntf-core (2.0.0) unstable; urgency=low
+ntf-core (2.0.0) git; urgency=low
 
-  * Initial open source release
+  * efe90a2 Release 2.0.0
+  * d24cf19 Explicitly allow more than IOV_MAX buffers to be batched in ntcq_send test driver to match test setup
+  * 56e102b Fix overload ambiguity creating an ntci::SendCallback with a shared_ptr to a ntci::Strand-deriving class
+  * e3327dc Remove unused variables in ntcq_send
+  * 9e9291b Emphasize the user's requirement to explicitly close each timer and socket
+  * 73a46fa Modernize the ntcf_system usage examples
+  * 485e2af Remove references to defunct s_ntstst/s_ntctst and a_ntsdbg/a_ntcdbg
+  * e3ed71d Remove the broken link to the FAQ from README.md
+  * 612eb32 Fix service name parsing error assertions
+  * 94a3ae4 Copy buffers from a range of write queue entries to the send buffer in a single system call
+  * 9c40260 Add NTSU_SOCKETUTIL_DEBUG_RECVMSG
+  * 58e0586 Remove artificial limit on the number of buffers to supply to sendmsg
+  * 7feb58c Apply the desire to gain/lose interest in readability/writability before announcing that it is done
+  * 04a19ba Fix a typo causing a timestamping test in the ntsu_socketutil test driver to fail
+  * 6c933e2 Parse port numbers using bdlb::NumericParseUtil::parseUint
+  * 59eff7f Return false from ntsa::IpAddress::parse() for empty string arguments
+  * c9dee84 Do not set _FORTIFY_SOURCE level in the build system, but include the CFLAGS and CXXFLAGS environment variables
+  * c84cbbf Remove obsolete *.txt documentation files from the repo
+  * a86c53b Reject string literals containing port numbers out-of-range when resolving service names
+  * 3949df7 Support Windows/arm64 (#2)
+  * 6ed01d8 Initial open source release
 
- -- Matthew Millett <mmillett2@bloomberg.net>  Thu, 27 Apr 2023 15:30:00 -0400
-
-ntf-core (1.2.0) unstable; urgency=low
-
-  * eb4e096 Support Unix domain sockets unconditionally in Windows I/O completion port driver
-  * 89500d7 Support ntsa::LocalName as a selection of ntsa::Endpoint unconditionally
-  * 32b5a19 Support Unix domain sockets in the implementation, if requested, but do not test them unless supported by the OS and included in the build configuration
-  * 161afcb Add functions to detect support for various address families and transport protocols to ntsf::System
-  * a9088f8 Always declare the ntsa::LocalName structure and the local domain ntsa::Transport::Value, regardless of platform
-  * f72fe6b Add NTS system and handle guard
-  * 45e388d Specify timeout to ntsu::SocketUtil::waitUntilReadable/Writable as an absolute time
-  * 5a99869 Prepare for alternate build systems
-  * cb94a36 Verify that local datagram sockets created by POSIX 'socketpair' are sometimes assigned an unnamed name and 'recvfrom' reports and undefined sender address
-  * 55751fa Support AF_UNIX on Windows in NTS
-  * 907d0e9 Configure support for address families and transport protocols at build-time
-  * b2b4ec8 Merge branch 'master' of bbgithub:ntf/ntf-core
-  * 72fc57f Support MSVC 2022
-
- -- Matthew Millett <mmillett2@bloomberg.net>  Fri, 14 Oct 2022 13:15:24 -0400
-
-ntf-core (1.1.4) unstable; urgency=low
-
-  * 9bcbb44 Enable logging for all UFIDs that do not include 'opt' when configuring the build through the configuration script
-  * 3a63b1c Reduce intensity of ntcs_chronology multithreaded stress tests
-  * 1104d5c Fix compiler errors in C++03 on Solaris and AIX
-  * b477c67 Apply correct uses allocator traits to numerous operation event structures
-  * 93dc975 Expand test cases for resolving IP addresses using the asynchronous resolver of an ntci::Interface
-  * 953e089 RDSIBRM-4231 EBUS Expand the coverage of the ntcs_chronology test driverFix for void Chronology::load(TimerVector *result) const [missed ref acquiring]
-  * bb4d593 Expand test cases for resolving IP addresses using the asynchronous resolver of an ntci::Interface
-  * b735e5a Add usage example for ntci_reactor
-  * 41a0ba0 Merge branch 'master' of bbgithub:ntf/ntf-core
-  * 82dd96c Add usage example for ntci_reactor
-
- -- Matt Millett <mmillett2@bloomberg.net>  Fri, 30 Sep 2022 09:01:23 -0400
-
-ntf-core (1.1.3) unstable; urgency=low
-
-  * 7ec232e Fix typo in README.md displaying build status
-  * 2c813f8 Ignore result of expression used to eliminate warnings for unused variables
-  * 1b1839e Remove obsolete, defunct, bsl-internal-bdemeta dependency (#9)
-
- -- Matt Millett <mmillett2@bloomberg.net>  Sun, 25 Sep 2022 09:02:16 -0400
-
-ntf-core (1.1.2) unstable; urgency=low
-
-  * 2ae75a6 Automatically apply tag 'latest' to most-recent release
-  * 327ff20 Disambiguate the parsing of '<host>:<port>' by ntsa::Uri so that <host> is determined to be part of the authority and not the scheme
-  * e1acc55 Do not use timerfd's to timeout epoll_wait on Linux while the expense of timerfd_settime is investigated
-  * 16a637c Remove dead code from ntcs_chronology test driver and add tentative plan for new test cases
-  * 3370907 Find flame graph scripts through the FLAMEGRAPH_ROOT environment variable
-  * deda66c Merge branch 'master' of bbgithub:ntf/ntf-core
-  * c3ef195 Document ntci_datagramsocket
-  * 3ee03d9 Ensure ntcs::Registry entry vector is resized correctly to store large jumps in known file descriptor numbers
-  * 385f414 Reduce number of threads used in socket tests using the simulator
-  * a491c74 Ignore spurious -Wmaybe-uninitialized when building ntcdns_client.cpp using GCC for 32-bit architectures
-  * 495c5f3 Compare epoll event fd against timerfd file descriptor to determine if an event if for the timer
-  * 0a9478d Implement the reactor socket entry registry as an array indexed by file descriptor
-  * 9621d21 Correct documentation to indicate that asynchronous operation supplied a basic bsl::function will invoke that function on the objects strand, if any
-  * 9d0c038 Expand documentation of registerManager and registerResolver to better explain the effect of these operations
-  * 6bbdc8c Use more constants and fewer magic numbers/literals in README.md quick start example
-  * bc337f9 Expand the documentation of ntci::StreamSocket::open to better describe the details of this operation
-  * 09cee20 Fix typos and various grammatical mistakes
-  * 736e8f6 Document cancellation failure modes
-  * 09ec79c Document the ntci::Callback design and role, document timeouts and cancellation, and document callback authorization
-  * fb1c388 Document the required C++ language standard version
-  * 1490f00 Expand the documentation for ntcf::System::initialize/exit and provide a ntcf::SystemGuard to automatically call those functions
-
- -- Matt Millett <mmillett2@bloomberg.net>  Thu, 8 Sep 2022 17:00:14 -0400
-
-ntf-core (1.1.1) unstable; urgency=low
-
-  * b2deee5 If ntcs::Chronology::closeAll, account for ntcs::Chronology::TimerRep::~TimerRep being called (because all references have now been released) but blocking on the chronology mutex, which has been acquired by closeAll()
-  * 5aababf Merge pull request #8 from mmillett/RDSIBRM-4151
-  * c5ebf1b Step through the simulation after filling send buffer and write queue to desired levels in test case 19
-  * c037992 Announce write queue high watermark event when the user supplies a per-send write queue high watermark override that is less than the current write queue size
-  * 0825ae3 Merge branch 'master' of bbgithub:ntf/ntf-core
-  * 523ea59 Add datagram, listener, and stream socket session event queues
-  * 5731269 Rever ntci_log back to using system vsprintf
-  * 6de2f46 Remove connect and upgrade event types from ntca::DatagramSocketEvent, these events are never passively announced
-  * 9909d6d Merge branch 'master' of bbgithub:ntf/ntf-core
-  * a10f486 Patch NTS and NTC to build on FreeBSD/arm64
-
- -- Matthew Millett <mmillett2@bloomberg.net>  Wed, 29 Jun 2022 14:21:25 -0400
-
-ntf-core (1.1.0) unstable; urgency=low
-
-  * fa51ad8 Deploy build artifacts identically as bsl-internal: all builds are PIC, extra UFIDs are supplied by a specified *-dev-extra binary package
-  * 9c13d13 Stress the test that ensures all sockets are closed when accepting but not using a socket
-  * 51c6526 bde-format
-  * cb8c4e2 Add test case to ensure that an accepted socket that is not otherwise used is closed if an ntci::Interface is instructed to close all sockets it manages
-  * a2f9499 Remove extraneous struct keywords from type declarations
-  * ad846a3 Merge branch 'master' of bbgithub:ntf/ntf-core
-  * 7675ca9 Add Unix domain sockets to ntcu09
-  * 299ae11 Add FAQ (#7)
-
- -- Matt Millett <mmillett2@bloomberg.net>  Fri, 17 Jun 2022 11:58:01 -0400
-
-ntf-core (1.0.5) unstable; urgency=low
-
-  * 10a2613 Destroy ntcs::Chronology::TimerRep under ntcs::Chronology::d_mutex to avoid racing with ntcs::Chronology::closeAll()
-  * 4d4c50a Read process break from pstatus_t on AIX and Solaris
-  * 62a3662 Collect and initial sample upon construction of ntcs::ProcessMetrics to prime the ntcm::MetricTotal objects for correct deltas
-  * a845643 Provide an allocator suitable for allocating memory for objects created during static initialization
-  * 9a127b7 Provide a utility to map anonymous pages into the processes virtual address space
-  * 7081642 Post a dispatch of a cancellation and close event announcement simultenously to avoid a dynamically-load balanced configuration processing the individual dispatches out-of-order
-  * aa05977 Fix stack-use-after-scope error referencing the array of socket addresses while sending multiple messages
-  * 85c24a7 Respect NTF_CONFIGURE_WITH_DPKG set in the environment
-  * 43a9b81 Initialize expected fragment index in ntcr_streamsocket low watermark test case
-  * e555d83 Merge branch 'master' of bbgithub:ntf/ntf-core
-  * f9faec8 Re-declare virtual functions of each derived pure interface by ntci::Interface
-  * 7c7a925 Cosmetic improvements to ntcs_async documentation
-  * d468c72 Eliminate warnings on GCC
-  * f3d7e0f bde-format
-  * d6eb929 Add test for iterative calls to ntci::StreamSocketSession::processReadQueueLowWatermark adjusting the read queue low watermark each time
-  * af009d1 Optionally use custom formatting functions when recording a log entry
-  * 0f7ad55 Add bit macros
-  * 932759f Use ntcm::MonitorableRegistry directly in ntcm_collector and ntcm_periodiccollector test drivers
-  * 1dffd5b bde-format
-  * 776bdd4 Remove cycle between ntcm::Collector and ntcm::MonitorableUtil
-  * 26fe412 Fix improper boolean evaluation of dynamic load configuration setting when logging ntci::Interface startup
-  * 31094a6 Standardize release commit message
-  * f91a2e0 Center image of architecture mermaid diagram
-  * 532fa8e Link to architecture mermaid diagram
-  * 26e36fb Add architecture mermaid diagram
-  * 14dc4db Add architecture mermaid diagram
-  * 5f98983 Add architecture mermaid code
-
- -- Matthew Millett <mmillett2@bloomberg.net>  Fri, 3 Jun 2022 14:41:22 -0400
-
-ntf-core (1.0.4) unstable; urgency=low
-
-  * c591b8d Remove out of date supporting documentation and levelize ntcp and ntcr as siblings
-  * b1ac687 Remove links to defunct additional documentation in the docs/ directory
-  * a0fdee7 Remove outdated documentation from docs directory: design.md, features.md, issues.log.md, testing.md, and usage.md
-  * eb1fdcd Replace boilerplate component documentation with minimally complete documentation
-  * df4db31 Eliminate warnings when building with optimizations but without metrics
-  * d8b53bf Fix socket removal from reactor when instantaneously timing out a connection to a domain name (#6)
-  * ac29256 Avoid scheduling a send or receive rate timer if the stream socket has been shut down after releasing the lock to announce the flow control event
-  * 3444176 Document ntci_streamsocket
-  * de24eaa Overload all functions that take ntci::Callback to also take bsl::function
-  * 70e3926 Document ntci_streamsocket
-  * f86dea3 Use the new/delete allocator instead of the global allocator in ntcf::System::initialize and correctly clean up in ntcf::System::exit upon process exit (#5)
-  * 0a08d50 Document ntci_streamsocket
-  * 52d2ee4 Add isComplete() and isError() convenience functions to ntca event types
-  * 0982623 Add ntci_timerfuture and ntci_timer usage examples
-  * f6b01f4 Merge branch 'master' of bbgithub:ntf/ntf-core
-  * 06fdba3 Move socket debug libraries and integration tests into a separate repository
-  * 72ee3b1 Generate a make target to run static analysis
-
- -- Matt Millett <mmillett2@bloomberg.net>  Wed, 18 May 2022 13:47:53 -0400
-
-ntf-core (1.0.3) unstable; urgency=low
-
-  * 9d549ff Merge branch 'master' of bbgithub:ntf/ntf-core
-  * 251c93d Assign thread index to each interface thread
-
- -- Matthew Millett <mattrm456@gmail.com>  Fri, 29 Apr 2022 16:21:17 -0400
-
-ntf-core (1.0.2) unstable; urgency=low
-
-  * 1f0f5fb Register metrics for each interface when configured
-
- -- Matthew Millett <mattrm456@gmail.com>  Fri, 29 Apr 2022 15:41:37 -0400
-
-ntf-core (1.0.1) unstable; urgency=low
-
-  * b3f965f Register metrics for each waiter when configured
-
- -- Matthew Millett <mattrm456@gmail.com>  Fri, 29 Apr 2022 14:32:45 -0400
-
-ntf-core (1.0.0) unstable; urgency=low
-
-  * 7346637 Test thread name assignment in ntcs_threadutil
-  * fde0d8f bde-format
-  * 8602240 Create threads avoiding the dispatching stack frames in bslmt
-  * 4a13d5d Refactor ntcr, ntcrs, ntcrt, ntcp, ntcps, and ntcpt into ntco, ntcr, and ntcp (#3)
-  * e8a4b01 Store ntsi::ListenerSocket as the base socket implementation of ntcps::ListenerSocket
-  * 20a84a1 Fix compiler error on Solaris Studio and xlC constructing a shared pointer without an explicit template type
-  * 58d891e bde-format
-  * 2d0cce2 Implement ntcd::Proactor in terms of ntcd::Monitor
-  * b0052e9 Implement ntcd::Reactor in terms of ntcd::Monitor
-  * b056074 Implement ntcd::DatagramSocket, ntcd::ListenerSocket, and ntcd::StreamSocket in terms of ntcd::Session
-  * b5d29b8 bde-format
-  * 1b5eb79 Implement polling mechanism for ntcd::Session
-  * dac4f0c Mock reactor framework
-  * 3eb3b82 Mock reactor framework
-  * 010fcda Mock reactor framework
-  * 08a898c Mock reactor framework
-  * 2247fb9 Mock reactor framework
-  * 262c4a7 Fix compiler errors on Linux
-  * a2cd1da Merge branch 'master' of bbgithub:ntf/ntf-core
-  * d1fcad9 Fix compiler error in ntcps::StreamSocket when re-detecting socket send buffer size
-  * 9944b20 Merge branch 'master' of bbgithub:ntf/ntf-core
-  * c195ce7 bde-format
-  * 6c9c9c5 Use ntsi::StreamSocket to get send buffer size in ntcps::StreamSocket
-  * 7d82c3f Implement ntcps::DatagramSocket, ntcps::ListenerSocket, and ntcps::StreamSocket in terms of ntsi::DatagramSocket, ntsi::ListenerSocket and ntsi::StreamSocket
-  * 852deee Disable ntcrs_datagramsocket test case 3 during continuous integration while its sporadic failure is investigated
-  * 559fddd Disable ntcrs_datagramsocket test case 4 during continuous integration while its sporadic failure is investigated
-  * 32ba628 bde-format
-  * 9190663 Disable ntcrs_streamsocket test case 11 during continuous integration while its sporadic failure is investigated
-  * 339804c Eliminate warnings on Solaris
-  * 9d40df9 Remove dependency on ntsu::SocketOptionUtil from ntcrs::StreamSocket
-  * dd77ca4 Remove dependency on ntsu::SocketOptionUtil from ntcrs::StreamSocket
-  * 81cfa9d Implement ntcrs::StreamSocket in terms of ntsi::StreamSocket
-  * 6860b81 Implement ntcrs::DatagramSocket and ntcrs::ListenerSocket in terms of ntsi::DatagramSocket and ntsi::ListenerSocket
-
- -- Matt Millett <mmillett2@bloomberg.net>  Fri, 29 Apr 2022 11:10:51 -0400
-
-ntf-core (0.21.0) unstable; urgency=low
-
-  * 46a3330 Merge branch 'master' of bbgithub:ntf/ntf-core
-  * b452b66 Combine ntci::DatagramSocket::sendTo/receiveFrom into send/receive
-  * f7575af Implement ntcd::Reactor for ntcrs and ntcps test drivers
-  * b6adf30 Implement ntcd::Reactor for ntcrs and ntcps test drivers
-  * 431745e Prepare to support --with-stack-trace-leak-report
-  * ee32d17 Case insensitive string comparison of driver names when looking up plugins
-  * c91b116 Use more precise assertions in reactor and proactor destructors to assert all timers are closed
-
- -- Matt Millett <mmillett2@bloomberg.net>  Thu, 24 Mar 2022 08:55:58 -0400
-
-ntf-core (0.20.0) unstable; urgency=low
-
-  * 1e50d6a Fix integer to pointer cast on 32-bit architectures and avoid overloading ambiguity when creating callbacks with authorizations
-  * 9b9bb82 Add NTCCFG_BIND_WEAK to produce conditional invokers of member functions on weak pointers to objects
-  * 0b9b43a bde-format
-  * c46c8ad Foreign reactor and proactor driver support
-  * ae6f743 Foreign reactor and proactor driver support
-  * 1873659 Add ntca_timeroptions test driver
-  * ed22340 Add metrics collection fields to ntca::DriverConfig, ntca::ReactorConfig, ntca::ProactorConfig, and ntca::ThreadConfig
-  * f007449 Promote interfaces for ntcr::Metrics and ntcp::Metrics to ntci
-  * d6306ed Add ntci::User
-  * 1537c9d Add reactor and proactor factory registration
-
- -- Matt Millett <mmillett2@bloomberg.net>  Fri, 4 Mar 2022 10:33:17 -0500
-
-ntf-core (0.19.5) unstable; urgency=low
-
-  * 71edb1f Include bsl_fstream.h as needed when NTC_BUILD_WITH_OPENSSL is defined
-  * 82f7275 fixed references to bsl::fstream when NTC_BUILD_WITH_OPENSSL
-  * f78e97b Automatically relax receive flow control when upgrading stream sockets to TLS
-  * cb5fd5a Deregistration of TLS plugins
-  * f57cc55 TLS plugins
-
- -- Matt Millett <mmillett2@bloomberg.net>  Tue, 22 Feb 2022 15:57:53 -0500
-
-ntf-core (0.19.4) unstable; urgency=low
-
-  * 750c3a2 Promote ntsu::DataUtil to ntsa::DataUtil
-  * 32bb94d Avoid a deadlock in ntcs::Chronology::clear when clearing a pending timer with no other references
-
- -- Matt Millett <mmillett2@bloomberg.net>  Thu, 17 Feb 2022 16:22:33 -0500
-
-ntf-core (0.19.3) unstable; urgency=low
-
-  * dfa0dcd Include count in metrics summary collection as expected by the metric metadata declaration
-  * f81ba7b Correct bbgithub links in README.md
-  * dc7236e Update README
-  * 9d22568 Remove unused packages from .clang-format
-
- -- Matt Millett <mmillett2@bloomberg.net>  Tue, 15 Feb 2022 10:42:32 -0500
-
-ntf-core (0.19.2) unstable; urgency=low
-
-  * Source package creation
-
- -- Matt Millett <mmillett2@bloomberg.net>  Thu, 27 Jan 2022 16:13:53 -0500
+ -- Matt Millett <mmillett@mailbox.org>  Wed, 26 Apr 2023 13:33:56 -0400
