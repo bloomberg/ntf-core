@@ -313,6 +313,7 @@ class Event
     /// to its value upon default construction.
     void reset();
 
+#if defined(BSLS_PLATFORM_OS_UNIX)
     /// Return the structure of the parameterized 'TYPE' stored in the message
     /// arena. The resulting address is guaranteed to be 8-byte aligned.
     template <typename TYPE>
@@ -324,6 +325,7 @@ class Event
     /// address is guaranteed to be 8-byte aligned.
     template <typename TYPE>
     TYPE* buffers(bsl::size_t* maxBuffers);
+#endif
 
     /// Return the structure of the parameterized 'TYPE' stored in the address
     /// arena. The resulting address is guaranteed to be 8-byte aligned.
@@ -372,11 +374,11 @@ bsl::ostream& operator<<(bsl::ostream& stream, const ntcs::Event& object);
 /// This class provides a mechanism to efficiently create, pool, and re-use
 /// structures that describe and provide memory for proactively initiated
 /// operations. Each event is associated with either a function, or a socket
-/// operation. If the event is associated with a socket operation, this 
-/// class prevents the initiation of new operations unless the socket is 
-/// neither detaching nor detached. Each event associated with a socket 
+/// operation. If the event is associated with a socket operation, this
+/// class prevents the initiation of new operations unless the socket is
+/// neither detaching nor detached. Each event associated with a socket
 /// operation will automatically cause the announcement of the completion of
-/// the socket's asynchronous detachment operation if detachment for that 
+/// the socket's asynchronous detachment operation if detachment for that
 /// socket has been initiated and the event is the last outstanding event for
 /// that socket.
 ///
@@ -459,6 +461,7 @@ class EventPool : public bdlma::Factory<ntcs::Event>
     void deleteObject(ntcs::Event* object) BSLS_KEYWORD_OVERRIDE;
 };
 
+#if defined(BSLS_PLATFORM_OS_UNIX)
 template <typename TYPE>
 NTCCFG_INLINE
 TYPE* Event::message()
@@ -480,6 +483,7 @@ TYPE* Event::buffers(bsl::size_t* maxBuffers)
     *maxBuffers = sizeof(d_buffers) / sizeof(TYPE);
     return reinterpret_cast<TYPE*>(d_buffers);
 }
+#endif
 
 template <typename TYPE>
 NTCCFG_INLINE
@@ -513,7 +517,7 @@ bslma::ManagedPtr<ntcs::Event> EventPool::getManagedObject(
     const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 {
     if (NTCCFG_LIKELY(socket)) {
-        bsl::shared_ptr<ntcs::ProactorDetachContext> context = 
+        bsl::shared_ptr<ntcs::ProactorDetachContext> context =
             bslstl::SharedPtrUtil::staticCast<ntcs::ProactorDetachContext>(
                 socket->getProactorContext());
 
