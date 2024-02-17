@@ -1,5 +1,13 @@
-ntf-core (2.3.0) unstable; urgency=low
+ntf-core (2.3.1) unstable; urgency=low
 
+  * 008d7e2 Release 2.3.1
+  * 01b3431 Do not define template member functions for fields of ntcs::Event not defined on Windows
+
+ -- Matt Millett <mmillett2@bloomberg.net>  Fri, 16 Feb 2024 21:28:44 -0500
+
+ntf-core (2.3.0) git; urgency=low
+
+  * 441405c Release 2.3.0 to DPKG
   * 128e639 Release 2.3.0
   * c6095e9 Release 2.2.5
   * 3a62855 Standardize bbsdpkgconfig
@@ -45,7 +53,7 @@ ntf-core (2.3.0) unstable; urgency=low
   * fd0275c Install ntscfg_config.h and ntscfg_config.h as part of the nts and ntc components, respectively
   * b453a46 Release 2.2.1
 
- -- Matt Millett <mmillett2@bloomberg.net>  Fri, 16 Feb 2024 12:05:06 -0500
+ -- Matt Millett <mmillett2@bloomberg.net>  Fri, 16 Feb 2024 12:15:03 -0500
 
 ntf-core (2.2.0) git; urgency=low
 
