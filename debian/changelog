@@ -1,9 +1,17 @@
-ntf-core (2.3.1) unstable; urgency=low
+ntf-core (2.3.2) unstable; urgency=low
 
+  * c5580af Release 2.3.2
+  * d87f42a Remove support for the old BDE build system
+
+ -- Matt Millett <mmillett2@bloomberg.net>  Fri, 23 Feb 2024 16:02:58 -0500
+
+ntf-core (2.3.1) git; urgency=low
+
+  * 5a4f38a Release 2.3.1 to DPKG
   * 008d7e2 Release 2.3.1
   * 01b3431 Do not define template member functions for fields of ntcs::Event not defined on Windows
 
- -- Matt Millett <mmillett2@bloomberg.net>  Fri, 16 Feb 2024 21:28:44 -0500
+ -- Matt Millett <mmillett2@bloomberg.net>  Fri, 16 Feb 2024 21:30:49 -0500
 
 ntf-core (2.3.0) git; urgency=low
 
