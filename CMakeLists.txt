@@ -18,7 +18,7 @@ cmake_minimum_required(VERSION 3.22.0)
 project(
     ntf-core
     VERSION
-        2.3.1
+        2.3.2
     DESCRIPTION
         "NTF Core"
     HOMEPAGE_URL
@@ -28,13 +28,6 @@ project(
 )
 
 include(CTest)
-
-include(bde_workspace OPTIONAL RESULT_VARIABLE bde_workspace_path)
-if (NOT "${bde_workspace_path}" STREQUAL "NOTFOUND")
-    message(STATUS "Processing BDE workspace")
-    bde_process_workspace(${CMAKE_CURRENT_LIST_DIR})
-    return()
-endif()
 
 if (BBS_BUILD_SYSTEM)
     find_package(BdeBuildSystem)
