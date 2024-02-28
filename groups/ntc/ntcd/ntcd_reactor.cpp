@@ -1241,6 +1241,8 @@ void Reactor::poll(ntci::Waiter waiter)
     ntsa::Error error;
 
     Reactor::Result* result = static_cast<Reactor::Result*>(waiter);
+    NTCCFG_WARNING_UNUSED(result);
+
     BSLS_ASSERT(result->d_options.threadHandle() == bslmt::ThreadUtil::self());
 
     NTCS_METRICS_GET();

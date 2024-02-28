@@ -2151,18 +2151,24 @@ ntsa::Error DatagramSocket::privateDequeueReceiveBuffer(
             if (softwareTs.has_value() && hardwareTs.has_value()) {
                 const bsls::TimeInterval pureHwDelay =
                     softwareTs.value() - hardwareTs.value();
+                NTCCFG_WARNING_UNUSED(pureHwDelay);
+
                 NTCS_METRICS_UPDATE_RX_DELAY_IN_HARDWARE(pureHwDelay);
                 NTCR_DATAGRAMSOCKET_LOG_RX_DELAY_IN_HARDWARE(pureHwDelay);
             }
             if (hardwareTs.has_value()) {
                 const bsls::TimeInterval delay =
                     this->currentTime() - hardwareTs.value();
+                NTCCFG_WARNING_UNUSED(delay);
+
                 NTCS_METRICS_UPDATE_RX_DELAY(delay);
                 NTCR_DATAGRAMSOCKET_LOG_RX_DELAY(delay, "hardware");
             }
             else if (softwareTs.has_value()) {
                 const bsls::TimeInterval delay =
                     this->currentTime() - softwareTs.value();
+                NTCCFG_WARNING_UNUSED(delay);
+
                 NTCS_METRICS_UPDATE_RX_DELAY(delay);
                 NTCR_DATAGRAMSOCKET_LOG_RX_DELAY(delay, "software");
             }
@@ -2209,18 +2215,24 @@ ntsa::Error DatagramSocket::privateDequeueReceiveBuffer(
             if (softwareTs.has_value() && hardwareTs.has_value()) {
                 const bsls::TimeInterval pureHwDelay =
                     softwareTs.value() - hardwareTs.value();
+                NTCCFG_WARNING_UNUSED(pureHwDelay);
+
                 NTCS_METRICS_UPDATE_RX_DELAY_IN_HARDWARE(pureHwDelay);
                 NTCR_DATAGRAMSOCKET_LOG_RX_DELAY_IN_HARDWARE(pureHwDelay);
             }
             if (hardwareTs.has_value()) {
                 const bsls::TimeInterval delay =
                     this->currentTime() - hardwareTs.value();
+                NTCCFG_WARNING_UNUSED(delay);
+
                 NTCS_METRICS_UPDATE_RX_DELAY(delay);
                 NTCR_DATAGRAMSOCKET_LOG_RX_DELAY(delay, "hardware");
             }
             else if (softwareTs.has_value()) {
                 const bsls::TimeInterval delay =
                     this->currentTime() - softwareTs.value();
+                NTCCFG_WARNING_UNUSED(delay);
+
                 NTCS_METRICS_UPDATE_RX_DELAY(delay);
                 NTCR_DATAGRAMSOCKET_LOG_RX_DELAY(delay, "software");
             }
