@@ -1,7 +1,10 @@
 ntsi_channel
 ntsi_datagramsocket
+ntsi_datagramsocketfactory
 ntsi_descriptor
 ntsi_listenersocket
+ntsi_listenersocketfactory
 ntsi_reactor
 ntsi_resolver
 ntsi_streamsocket
+ntsi_streamsocketfactory
