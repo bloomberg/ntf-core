@@ -143,6 +143,35 @@ NTSCFG_TEST_CASE(2)
             NTSCFG_TEST_EQ(e, f);
         }
     }
+
+    {
+        const bsl::string       e = "[::1%1]:12345";
+        const ntsa::Ipv6ScopeId s = 1;
+
+        ntsa::Ipv6Endpoint ipv6Endpoint(e);
+        ntsa::Endpoint endpoint(ipv6Endpoint);
+
+        ntsa::Ipv6Address loopbackAddress = ntsa::Ipv6Address::loopback();
+        loopbackAddress.setScopeId(s);
+
+        NTSCFG_TEST_TRUE(endpoint.isIp());
+        NTSCFG_TEST_TRUE(endpoint.ip().host().isV6());
+        NTSCFG_TEST_EQ(endpoint.ip().host().v6(), loopbackAddress);
+        NTSCFG_TEST_EQ(endpoint.ip().host().v6().scopeId(), s);
+        NTSCFG_TEST_EQ(endpoint.ip().port(), 12345);
+
+        {
+            bsl::stringstream ss;
+            ss << endpoint;
+
+            bsl::string f = ss.str();
+
+            NTSCFG_TEST_LOG_DEBUG << "E: " << e << NTSCFG_TEST_LOG_END;
+            NTSCFG_TEST_LOG_DEBUG << "F: " << f << NTSCFG_TEST_LOG_END;
+
+            NTSCFG_TEST_EQ(e, f);
+        }
+    }
 }
 
 NTSCFG_TEST_CASE(3)
