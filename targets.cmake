@@ -173,11 +173,14 @@ if (${NTF_BUILD_WITH_NTS})
 
     ntf_component(NAME ntsi_channel)
     ntf_component(NAME ntsi_datagramsocket)
+    ntf_component(NAME ntsi_datagramsocketfactory)
     ntf_component(NAME ntsi_descriptor)
     ntf_component(NAME ntsi_listenersocket)
+    ntf_component(NAME ntsi_listenersocketfactory)
     ntf_component(NAME ntsi_reactor)
     ntf_component(NAME ntsi_resolver)
     ntf_component(NAME ntsi_streamsocket)
+    ntf_component(NAME ntsi_streamsocketfactory)
 
     ntf_package_end(NAME ntsi)
 
@@ -929,4 +932,3 @@ if (VERBOSE)
 endif()
 
 ntf_repository_end()
-
