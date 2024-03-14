@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntsa_endpointtype.h>
 #include <ntsa_ipendpoint.h>
+#include <ntsa_ipv4endpoint.h>
 #include <ntsa_localname.h>
 #include <ntsa_transport.h>
 #include <ntscfg_platform.h>
@@ -100,6 +101,10 @@ class Endpoint
     /// Create a new endpoint having an "ip" representation having the
     /// specified 'value'.
     explicit Endpoint(const ntsa::IpEndpoint& value);
+
+    /// Create a new endpoint having an "ip" representation having the
+    /// specified 'value'.
+    explicit Endpoint(const ntsa::Ipv4Endpoint& value);
 
     /// Create a new endpoint having a "local" representation having the
     /// specified 'value'.
@@ -286,6 +291,14 @@ Endpoint::Endpoint(const ntsa::IpEndpoint& value)
 : d_type(ntsa::EndpointType::e_IP)
 {
     new (d_ip.buffer()) ntsa::IpEndpoint(value);
+}
+
+NTSCFG_INLINE
+Endpoint::Endpoint(const ntsa::Ipv4Endpoint& value)
+: d_type(ntsa::EndpointType::e_IP)
+{
+    new (d_ip.buffer()) ntsa::IpEndpoint(value.host(),
+                                         value.port());
 }
 
 NTSCFG_INLINE

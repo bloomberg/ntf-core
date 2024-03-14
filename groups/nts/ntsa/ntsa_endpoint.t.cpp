@@ -41,23 +41,48 @@ NTSCFG_TEST_CASE(1)
 
     const bsl::string e = "127.0.0.1:12345";
 
-    ntsa::Endpoint endpoint(e);
+    {
+        ntsa::Endpoint endpoint(e);
 
-    NTSCFG_TEST_TRUE(endpoint.isIp());
-    NTSCFG_TEST_TRUE(endpoint.ip().host().isV4());
-    NTSCFG_TEST_EQ(endpoint.ip().host().v4(), ntsa::Ipv4Address::loopback());
-    NTSCFG_TEST_EQ(endpoint.ip().port(), 12345);
+        NTSCFG_TEST_TRUE(endpoint.isIp());
+        NTSCFG_TEST_TRUE(endpoint.ip().host().isV4());
+        NTSCFG_TEST_EQ(endpoint.ip().host().v4(), ntsa::Ipv4Address::loopback());
+        NTSCFG_TEST_EQ(endpoint.ip().port(), 12345);
+
+        {
+            bsl::stringstream ss;
+            ss << endpoint;
+
+            bsl::string f = ss.str();
+
+            NTSCFG_TEST_LOG_DEBUG << "E: " << e << NTSCFG_TEST_LOG_END;
+            NTSCFG_TEST_LOG_DEBUG << "F: " << f << NTSCFG_TEST_LOG_END;
+
+            NTSCFG_TEST_EQ(e, f);
+        }
+    }
 
     {
-        bsl::stringstream ss;
-        ss << endpoint;
+        ntsa::Ipv4Endpoint ipv4Endpoint(e);
+        ntsa::Endpoint endpoint(ipv4Endpoint);
 
-        bsl::string f = ss.str();
+        NTSCFG_TEST_TRUE(endpoint.isIp());
+        NTSCFG_TEST_TRUE(endpoint.ip().host().isV4());
+        NTSCFG_TEST_EQ(endpoint.ip().host().v4(),
+                       ntsa::Ipv4Address::loopback());
+        NTSCFG_TEST_EQ(endpoint.ip().port(), 12345);
 
-        NTSCFG_TEST_LOG_DEBUG << "E: " << e << NTSCFG_TEST_LOG_END;
-        NTSCFG_TEST_LOG_DEBUG << "F: " << f << NTSCFG_TEST_LOG_END;
+        {
+            bsl::stringstream ss;
+            ss << endpoint;
 
-        NTSCFG_TEST_EQ(e, f);
+            bsl::string f = ss.str();
+
+            NTSCFG_TEST_LOG_DEBUG << "E: " << e << NTSCFG_TEST_LOG_END;
+            NTSCFG_TEST_LOG_DEBUG << "F: " << f << NTSCFG_TEST_LOG_END;
+
+            NTSCFG_TEST_EQ(e, f);
+        }
     }
 }
 
