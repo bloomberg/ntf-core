@@ -115,6 +115,13 @@ ntsa::Error ListenerSocket::setBlocking(bool blocking)
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
+ntsa::Error ListenerSocket::isBlocking(bool* blocking) const
+{
+    NTSCFG_WARNING_UNUSED(blocking);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 ntsa::Error ListenerSocket::setOption(const ntsa::SocketOption& option)
 {
     NTSCFG_WARNING_UNUSED(option);
