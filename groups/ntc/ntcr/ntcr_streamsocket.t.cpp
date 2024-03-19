@@ -284,7 +284,7 @@ ntsa::Endpoint EndpointUtil::any(ntsa::Transport::Value transport)
         break;
     case ntsa::Transport::e_LOCAL_STREAM:
     case ntsa::Transport::e_LOCAL_DATAGRAM: {
-        ntsa::LocalName localName;
+        ntsa::LocalName   localName;
         const ntsa::Error error = ntsa::LocalName::generateUnique(&localName);
         BSLS_ASSERT_OPT(!error);
 
@@ -1369,6 +1369,914 @@ void variation(const test::Parameters& parameters)
                                          parameters,
                                          NTCCFG_BIND_PLACEHOLDER_3));
 }
+
+namespace mock {
+
+#define UNEXPECTED_CALL(unused) NTCCFG_TEST_TRUE(false && "unexpected call")
+
+class ResolverMock : public ntci::Resolver
+{
+  public:
+    void execute(const Functor& functor) override
+    {
+        UNEXPECTED_CALL();
+    }
+    void moveAndExecute(FunctorSequence* functorSequence,
+                        const Functor&   functor) override
+    {
+        UNEXPECTED_CALL();
+    }
+    const bsl::shared_ptr<ntci::Strand>& strand() const override
+    {
+        UNEXPECTED_CALL();
+        return dummyStrand;
+    }
+    ntsa::Error start() override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    void shutdown() override
+    {
+        UNEXPECTED_CALL();
+    }
+    void linger() override
+    {
+        UNEXPECTED_CALL();
+    }
+    ntsa::Error setIpAddress(
+        const bslstl::StringRef&            domainName,
+        const bsl::vector<ntsa::IpAddress>& ipAddressList) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error addIpAddress(
+        const bslstl::StringRef&            domainName,
+        const bsl::vector<ntsa::IpAddress>& ipAddressList) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error addIpAddress(const bslstl::StringRef& domainName,
+                             const ntsa::IpAddress&   ipAddress) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error setPort(const bslstl::StringRef&       serviceName,
+                        const bsl::vector<ntsa::Port>& portList,
+                        ntsa::Transport::Value         transport) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error addPort(const bslstl::StringRef&       serviceName,
+                        const bsl::vector<ntsa::Port>& portList,
+                        ntsa::Transport::Value         transport) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error addPort(const bslstl::StringRef& serviceName,
+                        ntsa::Port               port,
+                        ntsa::Transport::Value   transport) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error setLocalIpAddress(
+        const bsl::vector<ntsa::IpAddress>& ipAddressList) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error setHostname(const bsl::string& name) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error setHostnameFullyQualified(const bsl::string& name) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error getIpAddress(
+        const bslstl::StringRef&          domainName,
+        const ntca::GetIpAddressOptions&  options,
+        const ntci::GetIpAddressCallback& callback) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error getDomainName(
+        const ntsa::IpAddress&             ipAddress,
+        const ntca::GetDomainNameOptions&  options,
+        const ntci::GetDomainNameCallback& callback) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error getPort(const bslstl::StringRef&     serviceName,
+                        const ntca::GetPortOptions&  options,
+                        const ntci::GetPortCallback& callback) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error getServiceName(
+        ntsa::Port                          port,
+        const ntca::GetServiceNameOptions&  options,
+        const ntci::GetServiceNameCallback& callback) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error getEndpoint(const bslstl::StringRef&         text,
+                            const ntca::GetEndpointOptions&  options,
+                            const ntci::GetEndpointCallback& callback) override
+    {
+        if (d_getEndpoint_error.isNull()) {
+            UNEXPECTED_CALL();
+        }
+        if (d_getEndpoint_text.has_value()) {
+            NTCCFG_TEST_EQ(text, d_getEndpoint_text.value());
+            d_getEndpoint_text.reset();
+        }
+        if (d_getEndpoint_options.has_value()) {
+            NTCCFG_TEST_EQ(options, d_getEndpoint_options.value());
+            d_getEndpoint_options.reset();
+        }
+        NTCCFG_TEST_FALSE(d_getEndpoint_callback.has_value());
+        d_getEndpoint_callback = callback;
+
+        const auto res = d_getEndpoint_error.value();
+        d_getEndpoint_error.reset();
+        return res;
+    }
+    ntsa::Error getLocalIpAddress(
+        bsl::vector<ntsa::IpAddress>* result,
+        const ntsa::IpAddressOptions& options) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error getHostname(bsl::string* result) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error getHostnameFullyQualified(bsl::string* result) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    bsl::shared_ptr<ntci::Strand> createStrand(
+        bslma::Allocator* basicAllocator) override
+    {
+        UNEXPECTED_CALL();
+        return bsl::shared_ptr<ntci::Strand>();
+    }
+    bsl::shared_ptr<ntci::Timer> createTimer(
+        const ntca::TimerOptions&                  options,
+        const bsl::shared_ptr<ntci::TimerSession>& session,
+        bslma::Allocator*                          basicAllocator) override
+    {
+        UNEXPECTED_CALL();
+        return bsl::shared_ptr<ntci::Timer>();
+    }
+    bsl::shared_ptr<ntci::Timer> createTimer(
+        const ntca::TimerOptions&  options,
+        const ntci::TimerCallback& callback,
+        bslma::Allocator*          basicAllocator) override
+    {
+        UNEXPECTED_CALL();
+        return bsl::shared_ptr<ntci::Timer>();
+    }
+    bsls::TimeInterval currentTime() const override
+    {
+        UNEXPECTED_CALL();
+        return bsls::TimeInterval();
+    }
+
+    // auxilary functions
+    void set_getEndpoint_WillOnceReturn(
+        const bdlb::NullableValue<bslstl::StringRef>&        text,
+        const bdlb::NullableValue<ntca::GetEndpointOptions>& options,
+        ntsa::Error                                          error)
+    {
+        d_getEndpoint_text    = text;
+        d_getEndpoint_options = options;
+        d_getEndpoint_error   = error;
+    }
+
+  private:
+    bsl::shared_ptr<ntci::Strand> dummyStrand;
+
+    bdlb::NullableValue<bslstl::StringRef>         d_getEndpoint_text;
+    bdlb::NullableValue<ntca::GetEndpointOptions>  d_getEndpoint_options;
+    bdlb::NullableValue<ntci::GetEndpointCallback> d_getEndpoint_callback;
+    bdlb::NullableValue<ntsa::Error>               d_getEndpoint_error;
+};
+
+class BufferFactoryMock : public bdlbb::BlobBufferFactory
+{
+  public:
+    void allocate(bdlbb::BlobBuffer* buffer) override
+    {
+        UNEXPECTED_CALL();
+    }
+};
+
+class StreamSocketMock : public ntsi::StreamSocket
+{
+  public:
+    ntsa::Handle handle() const override
+    {
+        UNEXPECTED_CALL();
+        return 0;
+    }
+    ntsa::Error open(ntsa::Transport::Value transport) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error acquire(ntsa::Handle handle) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Handle release() override
+    {
+        UNEXPECTED_CALL();
+        return 0;
+    }
+};
+
+class DataPoolMock : public ntci::DataPool
+{
+  public:
+    bsl::shared_ptr<ntsa::Data> createIncomingData() override
+    {
+        UNEXPECTED_CALL();
+        return bsl::shared_ptr<ntsa::Data>();
+    }
+    bsl::shared_ptr<ntsa::Data> createOutgoingData() override
+    {
+        if (d_outgoingData.isNull()) {
+            UNEXPECTED_CALL();
+        }
+        return d_outgoingData.value();
+    }
+    bsl::shared_ptr<bdlbb::Blob> createIncomingBlob() override
+    {
+        if (d_incomingBlobBuffer.isNull()) {
+            UNEXPECTED_CALL();
+        }
+        return d_incomingBlobBuffer.value();
+    }
+    bsl::shared_ptr<bdlbb::Blob> createOutgoingBlob() override
+    {
+        if (d_outgoingBlobBuffer.isNull()) {
+            UNEXPECTED_CALL();
+        }
+        return d_outgoingBlobBuffer.value();
+    }
+    void createIncomingBlobBuffer(bdlbb::BlobBuffer* blobBuffer) override
+    {
+        UNEXPECTED_CALL();
+    }
+    void createOutgoingBlobBuffer(bdlbb::BlobBuffer* blobBuffer) override
+    {
+        UNEXPECTED_CALL();
+    }
+    const bsl::shared_ptr<bdlbb::BlobBufferFactory>& incomingBlobBufferFactory()
+        const override
+    {
+        UNEXPECTED_CALL();
+        return dummyBlobBufferFactory;
+    }
+    const bsl::shared_ptr<bdlbb::BlobBufferFactory>& outgoingBlobBufferFactory()
+        const override
+    {
+        UNEXPECTED_CALL();
+        return dummyBlobBufferFactory;
+    }
+
+    // auxilary functions
+
+    void set_createIncomingBlobBuffer_WillAlwaysReturn(
+        const bsl::shared_ptr<bdlbb::Blob>& blob)
+    {
+        d_incomingBlobBuffer = blob;
+    }
+
+    void set_createOutgoingBlobBuffer_WillAlwaysReturn(
+        const bsl::shared_ptr<bdlbb::Blob>& blob)
+    {
+        d_outgoingBlobBuffer = blob;
+    }
+
+    void set_createOutgoingData_WillAlwaysReturn(
+        bsl::shared_ptr<ntsa::Data> data)
+    {
+        d_outgoingData = data;
+    }
+
+  private:
+    bsl::shared_ptr<bdlbb::BlobBufferFactory>          dummyBlobBufferFactory;
+    bdlb::NullableValue<bsl::shared_ptr<bdlbb::Blob> > d_incomingBlobBuffer;
+    bdlb::NullableValue<bsl::shared_ptr<bdlbb::Blob> > d_outgoingBlobBuffer;
+    bdlb::NullableValue<bsl::shared_ptr<ntsa::Data> >  d_outgoingData;
+};
+
+class ReactorMock : public ntci::Reactor
+{
+  public:
+    bsl::shared_ptr<ntci::DatagramSocket> createDatagramSocket(
+        const ntca::DatagramSocketOptions& options,
+        bslma::Allocator*                  basicAllocator) override
+    {
+        UNEXPECTED_CALL();
+        return bsl::shared_ptr<ntci::DatagramSocket>();
+    }
+    bsl::shared_ptr<ntsa::Data> createIncomingData() override
+    {
+        UNEXPECTED_CALL();
+        return bsl::shared_ptr<ntsa::Data>();
+    }
+    bsl::shared_ptr<ntsa::Data> createOutgoingData() override
+    {
+        UNEXPECTED_CALL();
+        return bsl::shared_ptr<ntsa::Data>();
+    }
+    bsl::shared_ptr<bdlbb::Blob> createIncomingBlob() override
+    {
+        UNEXPECTED_CALL();
+        return bsl::shared_ptr<bdlbb::Blob>();
+    }
+    bsl::shared_ptr<bdlbb::Blob> createOutgoingBlob() override
+    {
+        UNEXPECTED_CALL();
+        return bsl::shared_ptr<bdlbb::Blob>();
+    }
+    void createIncomingBlobBuffer(bdlbb::BlobBuffer* blobBuffer) override
+    {
+        UNEXPECTED_CALL();
+    }
+    void createOutgoingBlobBuffer(bdlbb::BlobBuffer* blobBuffer) override
+    {
+        UNEXPECTED_CALL();
+    }
+    const bsl::shared_ptr<bdlbb::BlobBufferFactory>& incomingBlobBufferFactory()
+        const override
+    {
+        if (d_incomingBlobBufferFactory.isNull()) {
+            UNEXPECTED_CALL();
+        }
+        return d_incomingBlobBufferFactory.value();
+    }
+    const bsl::shared_ptr<bdlbb::BlobBufferFactory>& outgoingBlobBufferFactory()
+        const override
+    {
+        if (d_outgoingBlobBufferFactory.isNull()) {
+            UNEXPECTED_CALL();
+        }
+        return d_outgoingBlobBufferFactory.value();
+    }
+    ntci::Waiter registerWaiter(
+        const ntca::WaiterOptions& waiterOptions) override
+    {
+        UNEXPECTED_CALL();
+        return nullptr;
+    }
+    void deregisterWaiter(ntci::Waiter waiter) override
+    {
+        UNEXPECTED_CALL();
+    }
+    void run(ntci::Waiter waiter) override
+    {
+        UNEXPECTED_CALL();
+    }
+    void poll(ntci::Waiter waiter) override
+    {
+        UNEXPECTED_CALL();
+    }
+    void interruptOne() override
+    {
+        UNEXPECTED_CALL();
+    }
+    void interruptAll() override
+    {
+        UNEXPECTED_CALL();
+    }
+    void stop() override
+    {
+        UNEXPECTED_CALL();
+    }
+    void restart() override
+    {
+        UNEXPECTED_CALL();
+    }
+    void execute(const Functor& functor) override
+    {
+        if (!d_executeExpected) {
+            UNEXPECTED_CALL();
+        }
+        d_executeExpected = false;
+        NTCCFG_TEST_FALSE(d_execute_functor.has_value());
+        d_execute_functor = functor;
+    }
+    void moveAndExecute(FunctorSequence* functorSequence,
+                        const Functor&   functor) override
+    {
+        UNEXPECTED_CALL();
+    }
+    bsl::shared_ptr<ntci::ListenerSocket> createListenerSocket(
+        const ntca::ListenerSocketOptions& options,
+        bslma::Allocator*                  basicAllocator) override
+    {
+        UNEXPECTED_CALL();
+        return bsl::shared_ptr<ntci::ListenerSocket>();
+    }
+    ntsa::Error attachSocket(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error attachSocket(ntsa::Handle handle) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error showReadable(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+        const ntca::ReactorEventOptions&            options) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error showReadable(
+        ntsa::Handle                      handle,
+        const ntca::ReactorEventOptions&  options,
+        const ntci::ReactorEventCallback& callback) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error showWritable(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+        const ntca::ReactorEventOptions&            options) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error showWritable(
+        ntsa::Handle                      handle,
+        const ntca::ReactorEventOptions&  options,
+        const ntci::ReactorEventCallback& callback) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error showError(const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+                          const ntca::ReactorEventOptions& options) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error showError(ntsa::Handle                      handle,
+                          const ntca::ReactorEventOptions&  options,
+                          const ntci::ReactorEventCallback& callback) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error hideReadable(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error hideReadable(ntsa::Handle handle) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error hideWritable(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error hideWritable(ntsa::Handle handle) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error hideError(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error hideError(ntsa::Handle handle) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error detachSocket(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error detachSocket(ntsa::Handle handle) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error closeAll() override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    void incrementLoad(const ntca::LoadBalancingOptions& options) override
+    {
+        UNEXPECTED_CALL();
+    }
+    void decrementLoad(const ntca::LoadBalancingOptions& options) override
+    {
+        UNEXPECTED_CALL();
+    }
+    void drainFunctions() override
+    {
+        UNEXPECTED_CALL();
+    }
+    void clearFunctions() override
+    {
+        UNEXPECTED_CALL();
+    }
+    void clearTimers() override
+    {
+        UNEXPECTED_CALL();
+    }
+    void clearSockets() override
+    {
+        UNEXPECTED_CALL();
+    }
+    void clear() override
+    {
+        UNEXPECTED_CALL();
+    }
+    size_t numSockets() const override
+    {
+        UNEXPECTED_CALL();
+        return 0;
+    }
+    size_t maxSockets() const override
+    {
+        UNEXPECTED_CALL();
+        return 0;
+    }
+    size_t numTimers() const override
+    {
+        UNEXPECTED_CALL();
+        return 0;
+    }
+    size_t maxTimers() const override
+    {
+        UNEXPECTED_CALL();
+        return 0;
+    }
+    bool autoAttach() const override
+    {
+        UNEXPECTED_CALL();
+        return false;
+    }
+    bool autoDetach() const override
+    {
+        UNEXPECTED_CALL();
+        return false;
+    }
+    bool oneShot() const override
+    {
+        if (d_oneShot.isNull()) {
+            UNEXPECTED_CALL();
+        }
+        return d_oneShot.value();
+    }
+    ntca::ReactorEventTrigger::Value trigger() const override
+    {
+        UNEXPECTED_CALL();
+        return ntca::ReactorEventTrigger::e_LEVEL;
+    }
+    size_t load() const override
+    {
+        UNEXPECTED_CALL();
+        return 0;
+    }
+    bslmt::ThreadUtil::Handle threadHandle() const override
+    {
+        UNEXPECTED_CALL();
+        return BloombergLP::bslmt::ThreadUtil::Handle();
+    }
+    size_t threadIndex() const override
+    {
+        UNEXPECTED_CALL();
+        return 0;
+    }
+    bool empty() const override
+    {
+        UNEXPECTED_CALL();
+        return false;
+    }
+    const bsl::shared_ptr<ntci::DataPool>& dataPool() const override
+    {
+        if (d_dataPool.isNull()) {
+            UNEXPECTED_CALL();
+        }
+        return d_dataPool.value();
+    }
+    bool supportsOneShot(bool oneShot) const override
+    {
+        UNEXPECTED_CALL();
+        return false;
+    }
+    bool supportsTrigger(
+        ntca::ReactorEventTrigger::Value trigger) const override
+    {
+        UNEXPECTED_CALL();
+        return false;
+    }
+    bsl::shared_ptr<ntci::Reactor> acquireReactor(
+        const ntca::LoadBalancingOptions& options) override
+    {
+        UNEXPECTED_CALL();
+        return bsl::shared_ptr<ntci::Reactor>();
+    }
+    void releaseReactor(const bsl::shared_ptr<ntci::Reactor>& reactor,
+                        const ntca::LoadBalancingOptions&     options) override
+    {
+        UNEXPECTED_CALL();
+    }
+    bool acquireHandleReservation() override
+    {
+        UNEXPECTED_CALL();
+        return false;
+    }
+    void releaseHandleReservation() override
+    {
+        UNEXPECTED_CALL();
+    }
+    size_t numReactors() const override
+    {
+        UNEXPECTED_CALL();
+        return 0;
+    }
+    size_t numThreads() const override
+    {
+        UNEXPECTED_CALL();
+        return 0;
+    }
+    size_t minThreads() const override
+    {
+        UNEXPECTED_CALL();
+        return 0;
+    }
+    size_t maxThreads() const override
+    {
+        if (d_maxThreads.isNull()) {
+            UNEXPECTED_CALL();
+        }
+        return d_maxThreads.value();
+    }
+    bsl::shared_ptr<ntci::Strand> createStrand(
+        bslma::Allocator* basicAllocator) override
+    {
+        UNEXPECTED_CALL();
+        return bsl::shared_ptr<ntci::Strand>();
+    }
+    bsl::shared_ptr<ntci::StreamSocket> createStreamSocket(
+        const ntca::StreamSocketOptions& options,
+        bslma::Allocator*                basicAllocator) override
+    {
+        UNEXPECTED_CALL();
+        return bsl::shared_ptr<ntci::StreamSocket>();
+    }
+    bsl::shared_ptr<ntci::Timer> createTimer(
+        const ntca::TimerOptions&                  options,
+        const bsl::shared_ptr<ntci::TimerSession>& session,
+        bslma::Allocator*                          basicAllocator) override
+    {
+        if (d_timer.isNull()) {
+            UNEXPECTED_CALL();
+        }
+        const auto timer = d_timer.value();
+        d_timer->clear();
+        return timer;
+    }
+    bsl::shared_ptr<ntci::Timer> createTimer(
+        const ntca::TimerOptions&  options,
+        const ntci::TimerCallback& callback,
+        bslma::Allocator*          basicAllocator) override
+    {
+        if (d_timer.isNull()) {
+            UNEXPECTED_CALL();
+        }
+
+        NTCCFG_TEST_TRUE(d_timerCallback.isNull());
+        d_timerCallback = callback;
+
+        const auto timer = d_timer.value();
+        d_timer.reset();
+        return timer;
+    }
+    const bsl::shared_ptr<ntci::Strand>& strand() const override
+    {
+        UNEXPECTED_CALL();
+        return dummyStrand;
+    }
+    bsls::TimeInterval currentTime() const override
+    {
+        UNEXPECTED_CALL();
+        return bsls::TimeInterval();
+    }
+
+    // auxilary methods
+    void set_dataPool_WillAlwaysReturn(
+        const bsl::shared_ptr<ntci::DataPool>& dataPool)
+    {
+        d_dataPool = dataPool;
+    }
+
+    void set_outgoingBlobBufferFactory_WillAlwaysReturn(
+        bsl::shared_ptr<bdlbb::BlobBufferFactory> bufferFactory)
+    {
+        d_outgoingBlobBufferFactory = bufferFactory;
+    }
+
+    void set_incomingBlobBufferFactory_WillAlwaysReturn(
+        bsl::shared_ptr<bdlbb::BlobBufferFactory> bufferFactory)
+    {
+        d_incomingBlobBufferFactory = bufferFactory;
+    }
+
+    void set_oneShot_WillAlwaysReturn(bool flag)
+    {
+        d_oneShot = flag;
+    }
+
+    void set_maxThreads_WillAlwaysReturn(size_t val)
+    {
+        d_maxThreads = val;
+    }
+
+    void set_createTimer_WillOnceReturn(
+        const bsl::shared_ptr<ntci::Timer>& timer)
+    {
+        d_timer = timer;
+    }
+
+    void set_execute_expectedOnce()
+    {
+        d_executeExpected = true;
+    }
+
+    ntci::TimerCallback extract_timerCallback()
+    {
+        NTCCFG_TEST_TRUE(d_timerCallback.has_value());
+        const auto res = d_timerCallback.value();
+        d_timerCallback.reset();
+        return res;
+    }
+
+    ntci::Reactor::Functor extract_execute_functor()
+    {
+        ntci::Reactor::Functor res = d_execute_functor.value();
+        d_execute_functor.reset();
+        return res;
+    }
+
+  private:
+    bdlb::NullableValue<bsl::shared_ptr<bdlbb::BlobBufferFactory> >
+        d_incomingBlobBufferFactory;
+    bdlb::NullableValue<bsl::shared_ptr<bdlbb::BlobBufferFactory> >
+                                  d_outgoingBlobBufferFactory;
+    bsl::shared_ptr<ntci::Strand> dummyStrand;
+    bdlb::NullableValue<bsl::shared_ptr<ntci::DataPool> > d_dataPool;
+    bdlb::NullableValue<bool>                             d_oneShot;
+    bdlb::NullableValue<size_t>                           d_maxThreads;
+    bdlb::NullableValue<bsl::shared_ptr<ntci::Timer> >    d_timer;
+    bdlb::NullableValue<ntci::TimerCallback>              d_timerCallback;
+    bool                                                  d_executeExpected;
+    bdlb::NullableValue<ntci::Reactor::Functor>           d_execute_functor;
+};
+
+class TimerMock : public ntci::Timer
+{
+  public:
+    ntsa::Error schedule(const bsls::TimeInterval& deadline,
+                         const bsls::TimeInterval& period) override
+    {
+        if (d_scheduleReturn_error.isNull()) {
+            UNEXPECTED_CALL();
+        }
+        if (d_scheduleArg_deadline.has_value()) {
+            NTCCFG_TEST_EQ(deadline, d_scheduleArg_deadline.value());
+            d_scheduleArg_deadline.reset();
+        }
+        if (d_scheduleArg_period.has_value()) {
+            NTCCFG_TEST_EQ(period, d_scheduleArg_period.value());
+            d_scheduleArg_period.reset();
+        }
+        const auto error = d_scheduleReturn_error.value();
+        d_scheduleReturn_error.reset();
+
+        return error;
+    }
+    ntsa::Error cancel() override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error close() override
+    {
+        if (d_close_error.isNull()) {
+            UNEXPECTED_CALL();
+        }
+        const auto res = d_close_error.value();
+        d_close_error.reset();
+        return res;
+    }
+    void arrive(const bsl::shared_ptr<ntci::Timer>& self,
+                const bsls::TimeInterval&           now,
+                const bsls::TimeInterval&           deadline) override
+    {
+        UNEXPECTED_CALL();
+    }
+    void* handle() const override
+    {
+        UNEXPECTED_CALL();
+        return nullptr;
+    }
+    int id() const override
+    {
+        UNEXPECTED_CALL();
+        return 0;
+    }
+    bool oneShot() const override
+    {
+        UNEXPECTED_CALL();
+        return false;
+    }
+    bslmt::ThreadUtil::Handle threadHandle() const override
+    {
+        UNEXPECTED_CALL();
+        return BloombergLP::bslmt::ThreadUtil::Handle();
+    }
+    size_t threadIndex() const override
+    {
+        UNEXPECTED_CALL();
+        return 0;
+    }
+    const bsl::shared_ptr<ntci::Strand>& strand() const override
+    {
+        UNEXPECTED_CALL();
+        return dummyStrand;
+    }
+    bsls::TimeInterval currentTime() const override
+    {
+        UNEXPECTED_CALL();
+        return bsls::TimeInterval();
+    }
+
+    void set_schedule_willOnceReturn(
+        const bdlb::NullableValue<bsls::TimeInterval>& deadline,
+        const bdlb::NullableValue<bsls::TimeInterval>& period,
+        ntsa::Error                                    error)
+    {
+        d_scheduleArg_deadline = deadline;
+        d_scheduleArg_period   = period;
+        d_scheduleReturn_error = error;
+    }
+
+    void set_close_WillOnceReturn(const ntsa::Error& error)
+    {
+        d_close_error = error;
+    }
+
+  private:
+    bsl::shared_ptr<ntci::Strand> dummyStrand;
+
+    bdlb::NullableValue<bsls::TimeInterval> d_scheduleArg_deadline;
+    bdlb::NullableValue<bsls::TimeInterval> d_scheduleArg_period;
+    bdlb::NullableValue<ntsa::Error>        d_scheduleReturn_error;
+    bdlb::NullableValue<ntsa::Error>        d_close_error;
+};
+
+}  // close namespace mock
 
 }  // close namespace test
 
@@ -3347,6 +4255,114 @@ NTCCFG_TEST_CASE(21)
 #endif
 }
 
+NTCCFG_TEST_CASE(22)
+{
+    NTCI_LOG_CONTEXT();
+
+    ntccfg::TestAllocator ta;
+    {
+        NTCI_LOG_DEBUG("Fixture setup, socket creation...");
+
+        bdlb::NullableValue<ntca::ConnectEvent> connectResult;
+
+        bsl::shared_ptr<ntci::ReactorPool> nullPool;
+        bsl::shared_ptr<ntcs::Metrics>     nullMetrics;
+        bsl::shared_ptr<bdlbb::Blob>       nullBlob;
+        bsl::shared_ptr<ntci::Strand>      nullStrand;
+
+        bsl::shared_ptr<ntsa::Data> dummyData;
+        dummyData.createInplace(&ta);
+
+        bsl::shared_ptr<test::mock::ResolverMock> resolverMock;
+        resolverMock.createInplace(&ta);
+
+        bsl::shared_ptr<test::mock::ReactorMock> reactorMock;
+        reactorMock.createInplace(&ta);
+
+        bsl::shared_ptr<test::mock::StreamSocketMock> socketMock;
+        socketMock.createInplace(&ta);
+
+        bsl::shared_ptr<test::mock::DataPoolMock> dataPoolMock;
+        dataPoolMock.createInplace(&ta);
+        reactorMock->set_dataPool_WillAlwaysReturn(dataPoolMock);
+
+        bsl::shared_ptr<test::mock::BufferFactoryMock> bufferFactoryMock;
+        bufferFactoryMock.createInplace(&ta);
+        reactorMock->set_outgoingBlobBufferFactory_WillAlwaysReturn(
+            bufferFactoryMock);
+        reactorMock->set_incomingBlobBufferFactory_WillAlwaysReturn(
+            bufferFactoryMock);
+
+        reactorMock->set_oneShot_WillAlwaysReturn(false);
+        reactorMock->set_maxThreads_WillAlwaysReturn(1);
+
+        dataPoolMock->set_createIncomingBlobBuffer_WillAlwaysReturn(nullBlob);
+        dataPoolMock->set_createOutgoingBlobBuffer_WillAlwaysReturn(nullBlob);
+        dataPoolMock->set_createOutgoingData_WillAlwaysReturn(dummyData);
+
+        const ntca::StreamSocketOptions options;
+
+        ntcr::StreamSocket socket(options,
+                                  resolverMock,
+                                  reactorMock,
+                                  nullPool,
+                                  nullMetrics,
+                                  &ta);
+
+        NTCI_LOG_DEBUG("Connection initiation...");
+
+        bsl::shared_ptr<test::mock::TimerMock> connectRetryTimerMock;
+        connectRetryTimerMock.createInplace(&ta);
+        reactorMock->set_createTimer_WillOnceReturn(connectRetryTimerMock);
+
+        connectRetryTimerMock->set_schedule_willOnceReturn(
+            bdlb::NullOptType::makeInitialValue(),
+            bdlb::NullOptType::makeInitialValue(),
+            ntsa::Error());
+
+        const ntci::ConnectFunction connectCallback =
+            [&connectResult](const bsl::shared_ptr<ntci::Connector>& connector,
+                             const ntca::ConnectEvent&               event) {
+                NTCCFG_TEST_FALSE(connectResult.has_value());
+                connectResult = event;
+            };
+
+        const ntca::ConnectOptions connectOptions;
+
+        const bsl::string epName = "unreachable.bbg.com";
+
+        socket.connect(epName, connectOptions, connectCallback);
+
+        NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
+
+        resolverMock->set_getEndpoint_WillOnceReturn(
+            epName,
+            bdlb::NullOptType::makeInitialValue(),
+            ntsa::Error());
+
+        const auto       timerCallback = reactorMock->extract_timerCallback();
+        ntca::TimerEvent timerEvent;
+        timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
+        timerCallback(connectRetryTimerMock, timerEvent, nullStrand);
+
+        NTCI_LOG_DEBUG("Shutdown socket while it is waiting for remote "
+                       "endpoint resolution");
+
+        connectRetryTimerMock->set_close_WillOnceReturn(ntsa::Error());
+        reactorMock->set_execute_expectedOnce();
+
+        socket.shutdown(ntsa::ShutdownType::e_BOTH,
+                        ntsa::ShutdownMode::e_GRACEFUL);
+
+        const auto callback = reactorMock->extract_execute_functor();
+        callback();
+        NTCCFG_TEST_TRUE(connectResult.has_value());
+        NTCCFG_TEST_EQ(connectResult.value().type(),
+                       ntca::ConnectEventType::e_ERROR);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
 NTCCFG_TEST_DRIVER
 {
     NTCCFG_TEST_REGISTER(1);
@@ -3376,5 +4392,7 @@ NTCCFG_TEST_DRIVER
 
     NTCCFG_TEST_REGISTER(20);
     NTCCFG_TEST_REGISTER(21);
+
+    NTCCFG_TEST_REGISTER(22);
 }
 NTCCFG_TEST_DRIVER_END;
