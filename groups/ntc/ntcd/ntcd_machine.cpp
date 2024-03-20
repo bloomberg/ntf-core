@@ -4021,7 +4021,7 @@ bsl::size_t Monitor::process(bsl::vector<ntca::ReactorEvent>* result)
 
 // MRM
 #if 0
-                if (entry->d_oneShot) {
+                if (entry->d_oneShot_result) {
                     entry->d_wantReadable = false;
                 }
 #endif
@@ -4052,7 +4052,7 @@ bsl::size_t Monitor::process(bsl::vector<ntca::ReactorEvent>* result)
 
 // MRM
 #if 0
-                if (entry->d_oneShot) {
+                if (entry->d_oneShot_result) {
                     entry->d_wantWritable = false;
                 }
 #endif
