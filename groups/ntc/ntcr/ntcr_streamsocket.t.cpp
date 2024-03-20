@@ -1802,8 +1802,16 @@ class ReactorMock : public ntci::Reactor
     ntsa::Error attachSocket(
         const bsl::shared_ptr<ntci::ReactorSocket>& socket) override
     {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
+        if (d_attachSocket_result.isNull()) {
+            UNEXPECTED_CALL();
+        }
+        if (d_attachSocket_socket.has_value()) {
+            NTCCFG_TEST_EQ(socket, d_attachSocket_socket.value());
+            d_attachSocket_socket.reset();
+        }
+        const auto res = d_attachSocket_result.value();
+        d_attachSocket_result.reset();
+        return res;
     }
     ntsa::Error attachSocket(ntsa::Handle handle) override
     {
@@ -1829,8 +1837,18 @@ class ReactorMock : public ntci::Reactor
         const bsl::shared_ptr<ntci::ReactorSocket>& socket,
         const ntca::ReactorEventOptions&            options) override
     {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
+        if (d_showWritable_result.isNull()) {
+            UNEXPECTED_CALL();
+        }
+
+        if (d_showWritable_socket.has_value()) {
+            NTCCFG_TEST_EQ(socket, d_showWritable_socket.value());
+            d_showWritable_socket.reset();
+        }
+
+        const auto res = d_showWritable_result.value();
+        d_showWritable_result.reset();
+        return res;
     }
     ntsa::Error showWritable(
         ntsa::Handle                      handle,
@@ -1893,6 +1911,41 @@ class ReactorMock : public ntci::Reactor
         return ntsa::Error();
     }
     ntsa::Error detachSocket(ntsa::Handle handle) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error detachSocket(
+        const bsl::shared_ptr<ntci::ReactorSocket>& socket,
+        const ntci::SocketDetachedCallback&         callback) override
+    {
+        if (d_detachSocket_result.isNull()) {
+            UNEXPECTED_CALL();
+        }
+
+        if (d_detachSocket_arg2.has_value()) {
+            NTCCFG_TEST_EQ(callback, d_detachSocket_arg2.value());
+            d_detachSocket_arg2.reset();
+        }
+        else {
+            d_detachSocket_arg2 = callback;
+        }
+
+        if (d_detachSocket_arg1.has_value()) {
+            NTCCFG_TEST_EQ(socket, d_detachSocket_arg1.value());
+            d_detachSocket_arg1.reset();
+        }
+        else {
+            d_detachSocket_arg1 = socket;  //TODO: how to clean it then?
+        }
+
+        const auto result = d_detachSocket_result.value();
+        d_detachSocket_result.reset();
+        return result;
+    }
+    ntsa::Error detachSocket(
+        ntsa::Handle                        handle,
+        const ntci::SocketDetachedCallback& callback) override
     {
         UNEXPECTED_CALL();
         return ntsa::Error();
@@ -2023,12 +2076,16 @@ class ReactorMock : public ntci::Reactor
     }
     bool acquireHandleReservation() override
     {
-        UNEXPECTED_CALL();
-        return false;
+        if (d_aquireHandleReservation.isNull()) {
+            UNEXPECTED_CALL();
+        }
+        return d_aquireHandleReservation.value();
     }
     void releaseHandleReservation() override
     {
-        UNEXPECTED_CALL();
+        if (!d_releaseHandleReservation) {
+            UNEXPECTED_CALL();
+        }
     }
     size_t numReactors() const override
     {
@@ -2144,6 +2201,51 @@ class ReactorMock : public ntci::Reactor
         d_executeExpected = true;
     }
 
+    void set_aquireHandleReservation_WillAlwaysReturn(bool flag)
+    {
+        d_aquireHandleReservation = flag;
+    }
+
+    void set_releaseHandleReservation_WillAlwaysReturn()
+    {
+        d_releaseHandleReservation = true;
+    }
+
+    void set_attachSocket_WillOnceReturn(
+        const bdlb::NullableValue<bsl::shared_ptr<ntci::ReactorSocket> >&
+                           socket,
+        const ntsa::Error& result)
+    {
+        NTCCFG_TEST_TRUE(d_attachSocket_result.isNull());
+        NTCCFG_TEST_TRUE(d_attachSocket_socket.isNull());
+
+        d_attachSocket_result = result;
+        d_attachSocket_socket = socket;
+    }
+
+    void set_showWritable_WillOnceReturn(
+        const bdlb::NullableValue<bsl::shared_ptr<ntci::ReactorSocket> >&
+                           socket,
+        const ntsa::Error& error)
+    {
+        NTCCFG_TEST_TRUE(d_showWritable_result.isNull());
+        NTCCFG_TEST_TRUE(d_showWritable_socket.isNull());
+
+        d_showWritable_result = error;
+        d_showWritable_socket = socket;
+    }
+
+    void set_detachSocket_WillOnceReturn(
+        const bdlb::NullableValue<bsl::shared_ptr<ntci::ReactorSocket> >&
+                                                                 socket,
+        const bdlb::NullableValue<ntci::SocketDetachedCallback>& callback,
+        const ntsa::Error&                                       result)
+    {
+        d_detachSocket_result = result;
+        d_detachSocket_arg1   = socket;
+        d_detachSocket_arg2   = callback;
+    }
+
     ntci::TimerCallback extract_timerCallback()
     {
         NTCCFG_TEST_TRUE(d_timerCallback.has_value());
@@ -2156,6 +2258,14 @@ class ReactorMock : public ntci::Reactor
     {
         ntci::Reactor::Functor res = d_execute_functor.value();
         d_execute_functor.reset();
+        return res;
+    }
+
+    ntci::SocketDetachedCallback extract_detachCallback()
+    {
+        NTCCFG_TEST_TRUE(d_detachSocket_arg2.has_value());
+        const auto res = d_detachSocket_arg2.value();
+        d_detachSocket_arg2.reset();
         return res;
     }
 
@@ -2172,6 +2282,21 @@ class ReactorMock : public ntci::Reactor
     bdlb::NullableValue<ntci::TimerCallback>              d_timerCallback;
     bool                                                  d_executeExpected;
     bdlb::NullableValue<ntci::Reactor::Functor>           d_execute_functor;
+    bdlb::NullableValue<bool> d_aquireHandleReservation;
+    bool                      d_releaseHandleReservation;
+
+    bdlb::NullableValue<bsl::shared_ptr<ntci::ReactorSocket> >
+                                     d_attachSocket_socket;
+    bdlb::NullableValue<ntsa::Error> d_attachSocket_result;
+
+    bdlb::NullableValue<bsl::shared_ptr<ntci::ReactorSocket> >
+                                     d_showWritable_socket;
+    bdlb::NullableValue<ntsa::Error> d_showWritable_result;
+
+    bdlb::NullableValue<ntsa::Error> d_detachSocket_result;
+    bdlb::NullableValue<bsl::shared_ptr<ntci::ReactorSocket> >
+                                                      d_detachSocket_arg1;
+    bdlb::NullableValue<ntci::SocketDetachedCallback> d_detachSocket_arg2;
 };
 
 class TimerMock : public ntci::Timer
@@ -4363,6 +4488,127 @@ NTCCFG_TEST_CASE(22)
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
+NTCCFG_TEST_CASE(23)
+{
+    NTCI_LOG_CONTEXT();
+
+    ntccfg::TestAllocator ta;
+    {
+        NTCI_LOG_DEBUG("Fixture setup, socket creation...");
+
+        bdlb::NullableValue<ntca::ConnectEvent> connectResult;
+
+        bsl::shared_ptr<ntci::ReactorPool> nullPool;
+        bsl::shared_ptr<ntcs::Metrics>     nullMetrics;
+        bsl::shared_ptr<bdlbb::Blob>       nullBlob;
+        bsl::shared_ptr<ntci::Strand>      nullStrand;
+
+        bsl::shared_ptr<ntsa::Data> dummyData;
+        dummyData.createInplace(&ta);
+
+        bsl::shared_ptr<test::mock::ResolverMock> resolverMock;
+        resolverMock.createInplace(&ta);
+
+        bsl::shared_ptr<test::mock::ReactorMock> reactorMock;
+        reactorMock.createInplace(&ta);
+
+        bsl::shared_ptr<test::mock::StreamSocketMock> socketMock;
+        socketMock.createInplace(&ta);
+
+        bsl::shared_ptr<test::mock::DataPoolMock> dataPoolMock;
+        dataPoolMock.createInplace(&ta);
+        reactorMock->set_dataPool_WillAlwaysReturn(dataPoolMock);
+
+        bsl::shared_ptr<test::mock::BufferFactoryMock> bufferFactoryMock;
+        bufferFactoryMock.createInplace(&ta);
+        reactorMock->set_outgoingBlobBufferFactory_WillAlwaysReturn(
+            bufferFactoryMock);
+        reactorMock->set_incomingBlobBufferFactory_WillAlwaysReturn(
+            bufferFactoryMock);
+
+        reactorMock->set_oneShot_WillAlwaysReturn(false);
+        reactorMock->set_maxThreads_WillAlwaysReturn(1);
+
+        dataPoolMock->set_createIncomingBlobBuffer_WillAlwaysReturn(nullBlob);
+        dataPoolMock->set_createOutgoingBlobBuffer_WillAlwaysReturn(nullBlob);
+        dataPoolMock->set_createOutgoingData_WillAlwaysReturn(dummyData);
+
+        const ntca::StreamSocketOptions options;
+
+        bsl::shared_ptr<ntcr::StreamSocket> socket;
+        socket.createInplace(&ta,
+                             options,
+                             resolverMock,
+                             reactorMock,
+                             nullPool,
+                             nullMetrics,
+                             &ta);
+
+        NTCI_LOG_DEBUG("Connection initiation...");
+
+        bsl::shared_ptr<test::mock::TimerMock> connectRetryTimerMock;
+        connectRetryTimerMock.createInplace(&ta);
+        reactorMock->set_createTimer_WillOnceReturn(connectRetryTimerMock);
+
+        connectRetryTimerMock->set_schedule_willOnceReturn(
+            bdlb::NullOptType::makeInitialValue(),
+            bdlb::NullOptType::makeInitialValue(),
+            ntsa::Error());
+
+        const ntci::ConnectFunction connectCallback =
+            [&connectResult](const bsl::shared_ptr<ntci::Connector>& connector,
+                             const ntca::ConnectEvent&               event) {
+                NTCCFG_TEST_FALSE(connectResult.has_value());
+                connectResult = event;
+            };
+
+        const ntca::ConnectOptions connectOptions;
+
+        const ntsa::Endpoint ep{"127.0.0.1:1234"};
+
+        socket->connect(ep, connectOptions, connectCallback);
+
+        NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
+
+        reactorMock->set_aquireHandleReservation_WillAlwaysReturn(true);
+        reactorMock->set_releaseHandleReservation_WillAlwaysReturn();
+        reactorMock->set_attachSocket_WillOnceReturn(socket, ntsa::Error());
+        reactorMock->set_showWritable_WillOnceReturn(socket, ntsa::Error());
+
+        const auto       timerCallback = reactorMock->extract_timerCallback();
+        ntca::TimerEvent timerEvent;
+        timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
+        timerCallback(connectRetryTimerMock, timerEvent, nullStrand);
+
+        NTCI_LOG_DEBUG(
+            "Shutdown socket while it is waiting for connection result");
+
+        connectRetryTimerMock->set_close_WillOnceReturn(ntsa::Error());
+
+        reactorMock->set_detachSocket_WillOnceReturn(
+            socket,
+            bdlb::NullOptType::makeInitialValue(),
+            ntsa::Error());
+
+        socket->shutdown(ntsa::ShutdownType::e_BOTH,
+                         ntsa::ShutdownMode::e_GRACEFUL);
+
+        const auto detachCallback = reactorMock->extract_detachCallback();
+        NTCCFG_TEST_TRUE(detachCallback);
+
+        reactorMock->set_execute_expectedOnce();
+        detachCallback(nullStrand);
+
+        const auto callback = reactorMock->extract_execute_functor();
+        callback();
+
+        NTCCFG_TEST_TRUE(connectResult.has_value());
+        NTCCFG_TEST_EQ(connectResult.value().type(),
+                       ntca::ConnectEventType::e_ERROR);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
 NTCCFG_TEST_DRIVER
 {
     NTCCFG_TEST_REGISTER(1);
@@ -4394,5 +4640,6 @@ NTCCFG_TEST_DRIVER
     NTCCFG_TEST_REGISTER(21);
 
     NTCCFG_TEST_REGISTER(22);
+    NTCCFG_TEST_REGISTER(23);
 }
 NTCCFG_TEST_DRIVER_END;
