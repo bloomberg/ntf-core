@@ -2130,28 +2130,18 @@ class ReactorMock : public ntci::Reactor
         const bsl::shared_ptr<ntci::TimerSession>& session,
         bslma::Allocator*                          basicAllocator) override
     {
-        if (d_timer_result.isNull()) {
-            UNEXPECTED_CALL();
-        }
-        const auto timer = d_timer_result.value();
-        d_timer_result->clear();
-        return timer;
+        UNEXPECTED_CALL();
+
+        return bsl::shared_ptr<ntci::Timer>();
     }
     bsl::shared_ptr<ntci::Timer> createTimer(
         const ntca::TimerOptions&  options,
         const ntci::TimerCallback& callback,
         bslma::Allocator*          basicAllocator) override
     {
-        if (d_timer_result.isNull()) {
-            UNEXPECTED_CALL();
-        }
-
-        NTCCFG_TEST_TRUE(d_timerCallback.isNull());
-        d_timerCallback = callback;
-
-        const auto timer = d_timer_result.value();
-        d_timer_result.reset();
-        return timer;
+        return d_invocation_createTimer.invoke(options,
+                                               callback,
+                                               basicAllocator);
     }
     const bsl::shared_ptr<ntci::Strand>& strand() const override
     {
@@ -2164,6 +2154,156 @@ class ReactorMock : public ntci::Reactor
         return bsls::TimeInterval();
     }
 
+  public:
+    // Helper data structures
+
+    struct Invocation_createTimer {
+      private:
+        struct InvocationData {
+            int                                                d_expectedCalls;
+            bdlb::NullableValue<ntca::TimerOptions>            d_arg1;
+            bdlb::NullableValue<ntci::TimerCallback>           d_arg2;
+            bdlb::NullableValue<bslma::Allocator*>             d_arg3;
+            bdlb::NullableValue<bsl::shared_ptr<ntci::Timer> > d_result;
+            ntca::TimerOptions*                                d_arg1_out;
+            ntci::TimerCallback*                               d_arg2_out;
+            bslma::Allocator**                                 d_arg3_out;
+
+            InvocationData()
+            : d_expectedCalls(0)
+            , d_arg1()
+            , d_arg2()
+            , d_arg3()
+            , d_result()
+            , d_arg1_out(0)
+            , d_arg2_out(0)
+            , d_arg3_out(0)
+            {
+            }
+        };
+
+      public:
+        Invocation_createTimer& expect(
+            const bdlb::NullableValue<ntca::TimerOptions>&  arg1,
+            const bdlb::NullableValue<ntci::TimerCallback>& arg2,
+            const bdlb::NullableValue<bslma::Allocator*>&   arg3)
+        {
+            d_invocations.emplace_back();
+            InvocationData& invocation = d_invocations.back();
+            invocation.d_arg1          = arg1;
+            invocation.d_arg2          = arg2;
+            invocation.d_arg3          = arg3;
+            return *this;
+        }
+        Invocation_createTimer& willOnce()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = 1;
+            return *this;
+        }
+        Invocation_createTimer& willAlways()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = -1;
+            return *this;
+        }
+        //        Invocation_createTimer& times(int val){} //TODO: multiple calls
+
+        Invocation_createTimer& willReturn(
+            const bsl::shared_ptr<ntci::Timer>& result)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            invocation.d_result        = result;
+            return *this;
+        }
+
+        Invocation_createTimer& saveArg1(ntca::TimerOptions& arg)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_arg1_out, 0);
+            invocation.d_arg1_out = &arg;
+            return *this;
+        }
+        Invocation_createTimer& saveArg2(ntci::TimerCallback& arg)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_arg2_out, 0);
+            invocation.d_arg2_out = &arg;
+            return *this;
+        }
+        Invocation_createTimer& saveArg3(bslma::Allocator*& arg)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_arg3_out, 0);
+            invocation.d_arg3_out = &arg;
+            return *this;
+        }
+
+        bsl::shared_ptr<ntci::Timer> invoke(const ntca::TimerOptions&  arg1,
+                                            const ntci::TimerCallback& arg2,
+                                            bslma::Allocator*          arg3)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.front();
+
+            if (invocation.d_expectedCalls != -1) {
+                NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
+            }
+
+            if (invocation.d_arg1.has_value()) {
+                NTCCFG_TEST_EQ(arg1, invocation.d_arg1.value());
+            }
+
+            if (invocation.d_arg2.has_value()) {
+                NTCCFG_TEST_EQ(arg2, invocation.d_arg2.value());
+            }
+
+            if (invocation.d_arg3.has_value()) {
+                NTCCFG_TEST_EQ(arg3, invocation.d_arg3.value());
+            }
+
+            if (invocation.d_arg1_out) {
+                *invocation.d_arg1_out = arg1;
+            }
+
+            if (invocation.d_arg2_out) {
+                *invocation.d_arg2_out = arg2;
+            }
+
+            if (invocation.d_arg3_out) {
+                *invocation.d_arg3_out = arg3;
+            }
+
+            NTCCFG_TEST_TRUE(invocation.d_result.has_value());
+            const auto result = invocation.d_result.value();
+
+            if (invocation.d_expectedCalls != -1) {
+                --invocation.d_expectedCalls;
+                if (invocation.d_expectedCalls == 0) {
+                    d_invocations.pop_front();
+                }
+            }
+
+            return result;
+        }
+
+      private:
+        bsl::list<InvocationData> d_invocations;
+    };
+
+  public:
     // auxiliary methods
     void expect_dataPool_WillAlwaysReturn(
         const bsl::shared_ptr<ntci::DataPool>& dataPool)
@@ -2193,10 +2333,18 @@ class ReactorMock : public ntci::Reactor
         d_maxThreads_result = val;
     }
 
-    void expect_createTimer_WillOnceReturn(
-        const bsl::shared_ptr<ntci::Timer>& timer)
+    //    void expect_createTimer_WillOnceReturn(
+    //        const bsl::shared_ptr<ntci::Timer>& timer)
+    //    {
+    //        d_timer_result = timer;
+    //    }
+
+    Invocation_createTimer& expect_createTimer(
+        const bdlb::NullableValue<ntca::TimerOptions>&  arg1,
+        const bdlb::NullableValue<ntci::TimerCallback>& arg2,
+        const bdlb::NullableValue<bslma::Allocator*>&   arg3)
     {
-        d_timer_result = timer;
+        return d_invocation_createTimer.expect(arg1, arg2, arg3);
     }
 
     void expect_execute_WillOnceReturn()
@@ -2249,13 +2397,13 @@ class ReactorMock : public ntci::Reactor
         d_detachSocket_arg2   = callback;
     }
 
-    ntci::TimerCallback extract_timerCallback()
-    {
-        NTCCFG_TEST_TRUE(d_timerCallback.has_value());
-        const auto res = d_timerCallback.value();
-        d_timerCallback.reset();
-        return res;
-    }
+    //    ntci::TimerCallback extract_timerCallback()
+    //    {
+    //        NTCCFG_TEST_TRUE(d_timerCallback.has_value());
+    //        const auto res = d_timerCallback.value();
+    //        d_timerCallback.reset();
+    //        return res;
+    //    }
 
     ntci::Reactor::Functor extract_execute_functor()
     {
@@ -2281,10 +2429,10 @@ class ReactorMock : public ntci::Reactor
     bdlb::NullableValue<bsl::shared_ptr<ntci::DataPool> > d_dataPool_result;
     bdlb::NullableValue<bool>                             d_oneShot_result;
     bdlb::NullableValue<size_t>                           d_maxThreads_result;
-    bdlb::NullableValue<bsl::shared_ptr<ntci::Timer> >    d_timer_result;
-    bdlb::NullableValue<ntci::TimerCallback>              d_timerCallback;
-    bool                                                  d_execute_expected;
-    bdlb::NullableValue<ntci::Reactor::Functor>           d_execute_functor;
+    //    bdlb::NullableValue<bsl::shared_ptr<ntci::Timer> >    d_timer_result;
+    //    bdlb::NullableValue<ntci::TimerCallback>              d_timerCallback;
+    bool                                        d_execute_expected;
+    bdlb::NullableValue<ntci::Reactor::Functor> d_execute_functor;
     bdlb::NullableValue<bool> d_acquireHandleReservation_result;
     bool                      d_releaseHandleReservation;
 
@@ -2300,6 +2448,8 @@ class ReactorMock : public ntci::Reactor
     bdlb::NullableValue<bsl::shared_ptr<ntci::ReactorSocket> >
                                                       d_detachSocket_arg1;
     bdlb::NullableValue<ntci::SocketDetachedCallback> d_detachSocket_arg2;
+
+    Invocation_createTimer d_invocation_createTimer;
 };
 
 class TimerMock : public ntci::Timer
@@ -2308,21 +2458,7 @@ class TimerMock : public ntci::Timer
     ntsa::Error schedule(const bsls::TimeInterval& deadline,
                          const bsls::TimeInterval& period) override
     {
-        if (d_schedule_result.isNull()) {
-            UNEXPECTED_CALL();
-        }
-        if (d_scheduleArg_arg1.has_value()) {
-            NTCCFG_TEST_EQ(deadline, d_scheduleArg_arg1.value());
-            d_scheduleArg_arg1.reset();
-        }
-        if (d_scheduleArg_arg2.has_value()) {
-            NTCCFG_TEST_EQ(period, d_scheduleArg_arg2.value());
-            d_scheduleArg_arg2.reset();
-        }
-        const auto error = d_schedule_result.value();
-        d_schedule_result.reset();
-
-        return error;
+        return d_schedule_invocation.invoke(deadline, period);
     }
     ntsa::Error cancel() override
     {
@@ -2380,14 +2516,135 @@ class TimerMock : public ntci::Timer
         return bsls::TimeInterval();
     }
 
-    void expect_schedule_willOnceReturn(
-        const bdlb::NullableValue<bsls::TimeInterval>& deadline,
-        const bdlb::NullableValue<bsls::TimeInterval>& period,
-        const ntsa::Error&                             error)
+    struct Invocation_schedule {
+        //        const bsls::TimeInterval& deadline,
+        //                         const bsls::TimeInterval& period
+      private:
+        struct InvocationData {
+            int                                     d_expectedCalls;
+            bdlb::NullableValue<bsls::TimeInterval> d_arg1;
+            bdlb::NullableValue<bsls::TimeInterval> d_arg2;
+            bdlb::NullableValue<ntsa::Error>        d_result;
+            bsls::TimeInterval*                     d_arg1_out;
+            bsls::TimeInterval*                     d_arg2_out;
+
+            InvocationData()
+            : d_expectedCalls(0)
+            , d_arg1()
+            , d_arg2()
+            , d_result()
+            , d_arg1_out(0)
+            , d_arg2_out(0)
+            {
+            }
+        };
+
+      public:
+        Invocation_schedule& expect(
+            const bdlb::NullableValue<bsls::TimeInterval>& arg1,
+            const bdlb::NullableValue<bsls::TimeInterval>& arg2)
+        {
+            d_invocations.emplace_back();
+            InvocationData& invocation = d_invocations.back();
+            invocation.d_arg1          = arg1;
+            invocation.d_arg2          = arg2;
+            return *this;
+        }
+        Invocation_schedule& willOnce()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = 1;
+            return *this;
+        }
+        Invocation_schedule& willAlways()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = -1;
+            return *this;
+        }
+        //        Invocation_createTimer& times(int val){} //TODO: multiple calls
+
+        Invocation_schedule& willReturn(const ntsa::Error result)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            invocation.d_result        = result;
+            return *this;
+        }
+
+        Invocation_schedule& saveArg1(bsls::TimeInterval& arg)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_arg1_out, 0);
+            invocation.d_arg1_out = &arg;
+            return *this;
+        }
+        Invocation_schedule& saveArg2(bsls::TimeInterval& arg)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_arg2_out, 0);
+            invocation.d_arg2_out = &arg;
+            return *this;
+        }
+
+        ntsa::Error invoke(const bsls::TimeInterval& arg1,
+                           const bsls::TimeInterval& arg2)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.front();
+
+            if (invocation.d_expectedCalls != -1) {
+                NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
+            }
+
+            if (invocation.d_arg1.has_value()) {
+                NTCCFG_TEST_EQ(arg1, invocation.d_arg1.value());
+            }
+
+            if (invocation.d_arg2.has_value()) {
+                NTCCFG_TEST_EQ(arg2, invocation.d_arg2.value());
+            }
+
+            if (invocation.d_arg1_out) {
+                *invocation.d_arg1_out = arg1;
+            }
+
+            if (invocation.d_arg2_out) {
+                *invocation.d_arg2_out = arg2;
+            }
+
+            NTCCFG_TEST_TRUE(invocation.d_result.has_value());
+            const auto result = invocation.d_result.value();
+
+            if (invocation.d_expectedCalls != -1) {
+                --invocation.d_expectedCalls;
+                if (invocation.d_expectedCalls == 0) {
+                    d_invocations.pop_front();
+                }
+            }
+
+            return result;
+        }
+
+      private:
+        bsl::list<InvocationData> d_invocations;
+    };
+
+    Invocation_schedule& expect_schedule(
+        const bdlb::NullableValue<bsls::TimeInterval>& arg1,
+        const bdlb::NullableValue<bsls::TimeInterval>& arg2)
     {
-        d_scheduleArg_arg1 = deadline;
-        d_scheduleArg_arg2 = period;
-        d_schedule_result  = error;
+        return d_schedule_invocation.expect(arg1, arg2);
     }
 
     void expect_close_WillOnceReturn(const ntsa::Error& error)
@@ -2398,10 +2655,9 @@ class TimerMock : public ntci::Timer
   private:
     bsl::shared_ptr<ntci::Strand> dummyStrand;
 
-    bdlb::NullableValue<bsls::TimeInterval> d_scheduleArg_arg1;
-    bdlb::NullableValue<bsls::TimeInterval> d_scheduleArg_arg2;
-    bdlb::NullableValue<ntsa::Error>        d_schedule_result;
-    bdlb::NullableValue<ntsa::Error>        d_close_result;
+    bdlb::NullableValue<ntsa::Error> d_close_result;
+
+    Invocation_schedule d_schedule_invocation;
 };
 
 }  // close namespace mock
@@ -4391,6 +4647,8 @@ NTCCFG_TEST_CASE(22)
     {
         NTCI_LOG_DEBUG("Fixture setup, socket creation...");
 
+        const auto doNotCare = bdlb::NullOptType::makeInitialValue();
+
         bdlb::NullableValue<ntca::ConnectEvent> connectResult;
 
         bsl::shared_ptr<ntci::ReactorPool> nullPool;
@@ -4443,12 +4701,16 @@ NTCCFG_TEST_CASE(22)
 
         bsl::shared_ptr<test::mock::TimerMock> connectRetryTimerMock;
         connectRetryTimerMock.createInplace(&ta);
-        reactorMock->expect_createTimer_WillOnceReturn(connectRetryTimerMock);
 
-        connectRetryTimerMock->expect_schedule_willOnceReturn(
-            bdlb::NullOptType::makeInitialValue(),
-            bdlb::NullOptType::makeInitialValue(),
-            ntsa::Error());
+        ntci::TimerCallback retryTimerCallback;
+        reactorMock->expect_createTimer(doNotCare, doNotCare, doNotCare)
+            .willOnce()
+            .willReturn(connectRetryTimerMock)
+            .saveArg2(retryTimerCallback);
+
+        connectRetryTimerMock->expect_schedule(doNotCare, doNotCare)
+            .willOnce()
+            .willReturn(ntsa::Error());
 
         const ntci::ConnectFunction connectCallback =
             [&connectResult](const bsl::shared_ptr<ntci::Connector>& connector,
@@ -4470,10 +4732,9 @@ NTCCFG_TEST_CASE(22)
             bdlb::NullOptType::makeInitialValue(),
             ntsa::Error());
 
-        const auto       timerCallback = reactorMock->extract_timerCallback();
         ntca::TimerEvent timerEvent;
         timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
-        timerCallback(connectRetryTimerMock, timerEvent, nullStrand);
+        retryTimerCallback(connectRetryTimerMock, timerEvent, nullStrand);
 
         NTCI_LOG_DEBUG("Shutdown socket while it is waiting for remote "
                        "endpoint resolution");
@@ -4500,6 +4761,8 @@ NTCCFG_TEST_CASE(23)
     ntccfg::TestAllocator ta;
     {
         NTCI_LOG_DEBUG("Fixture setup, socket creation...");
+
+        const auto doNotCare = bdlb::NullOptType::makeInitialValue();
 
         bdlb::NullableValue<ntca::ConnectEvent> connectResult;
 
@@ -4555,12 +4818,16 @@ NTCCFG_TEST_CASE(23)
 
         bsl::shared_ptr<test::mock::TimerMock> connectRetryTimerMock;
         connectRetryTimerMock.createInplace(&ta);
-        reactorMock->expect_createTimer_WillOnceReturn(connectRetryTimerMock);
 
-        connectRetryTimerMock->expect_schedule_willOnceReturn(
-            bdlb::NullOptType::makeInitialValue(),
-            bdlb::NullOptType::makeInitialValue(),
-            ntsa::Error());
+        ntci::TimerCallback retryTimerCallback;
+        reactorMock->expect_createTimer(doNotCare, doNotCare, doNotCare)
+            .willOnce()
+            .willReturn(connectRetryTimerMock)
+            .saveArg2(retryTimerCallback);
+
+        connectRetryTimerMock->expect_schedule(doNotCare, doNotCare)
+            .willOnce()
+            .willReturn(ntsa::Error());
 
         const ntci::ConnectFunction connectCallback =
             [&connectResult](const bsl::shared_ptr<ntci::Connector>& connector,
@@ -4582,10 +4849,9 @@ NTCCFG_TEST_CASE(23)
         reactorMock->expect_attachSocket_WillOnceReturn(socket, ntsa::Error());
         reactorMock->expect_showWritable_WillOnceReturn(socket, ntsa::Error());
 
-        const auto       timerCallback = reactorMock->extract_timerCallback();
         ntca::TimerEvent timerEvent;
         timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
-        timerCallback(connectRetryTimerMock, timerEvent, nullStrand);
+        retryTimerCallback(connectRetryTimerMock, timerEvent, nullStrand);
 
         NTCI_LOG_DEBUG(
             "Shutdown socket while it is waiting for connection result");
@@ -4596,6 +4862,158 @@ NTCCFG_TEST_CASE(23)
             socket,
             bdlb::NullOptType::makeInitialValue(),
             ntsa::Error());
+
+        socket->shutdown(ntsa::ShutdownType::e_BOTH,
+                         ntsa::ShutdownMode::e_GRACEFUL);
+
+        const auto detachCallback = reactorMock->extract_detachCallback();
+        NTCCFG_TEST_TRUE(detachCallback);
+
+        reactorMock->expect_execute_WillOnceReturn();
+        detachCallback(nullStrand);
+
+        const auto callback = reactorMock->extract_execute_functor();
+        callback();
+
+        NTCCFG_TEST_TRUE(connectResult.has_value());
+        NTCCFG_TEST_EQ(connectResult.value().type(),
+                       ntca::ConnectEventType::e_ERROR);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(24)
+{
+    NTCI_LOG_CONTEXT();
+
+    ntccfg::TestAllocator ta;
+    {
+        NTCI_LOG_DEBUG("Fixture setup, socket creation...");
+
+        const auto doNotCare = bdlb::NullOptType::makeInitialValue();
+
+        bdlb::NullableValue<ntca::ConnectEvent> connectResult;
+
+        bsl::shared_ptr<ntci::ReactorPool> nullPool;
+        bsl::shared_ptr<ntcs::Metrics>     nullMetrics;
+        bsl::shared_ptr<bdlbb::Blob>       nullBlob;
+        bsl::shared_ptr<ntci::Strand>      nullStrand;
+
+        bsl::shared_ptr<ntsa::Data> dummyData;
+        dummyData.createInplace(&ta);
+
+        bsl::shared_ptr<test::mock::ResolverMock> resolverMock;
+        resolverMock.createInplace(&ta);
+
+        bsl::shared_ptr<test::mock::ReactorMock> reactorMock;
+        reactorMock.createInplace(&ta);
+
+        bsl::shared_ptr<test::mock::StreamSocketMock> socketMock;
+        socketMock.createInplace(&ta);
+
+        bsl::shared_ptr<test::mock::DataPoolMock> dataPoolMock;
+        dataPoolMock.createInplace(&ta);
+        reactorMock->expect_dataPool_WillAlwaysReturn(dataPoolMock);
+
+        bsl::shared_ptr<test::mock::BufferFactoryMock> bufferFactoryMock;
+        bufferFactoryMock.createInplace(&ta);
+        reactorMock->expect_outgoingBlobBufferFactory_WillAlwaysReturn(
+            bufferFactoryMock);
+        reactorMock->expect_incomingBlobBufferFactory_WillAlwaysReturn(
+            bufferFactoryMock);
+
+        reactorMock->expect_oneShot_WillAlwaysReturn(false);
+        reactorMock->expect_maxThreads_WillAlwaysReturn(1);
+
+        dataPoolMock->expect_createIncomingBlobBuffer_WillAlwaysReturn(
+            nullBlob);
+        dataPoolMock->expect_createOutgoingBlobBuffer_WillAlwaysReturn(
+            nullBlob);
+        dataPoolMock->expect_createOutgoingData_WillAlwaysReturn(dummyData);
+
+        const ntca::StreamSocketOptions options;
+
+        bsl::shared_ptr<ntcr::StreamSocket> socket;
+        socket.createInplace(&ta,
+                             options,
+                             resolverMock,
+                             reactorMock,
+                             nullPool,
+                             nullMetrics,
+                             &ta);
+
+        NTCI_LOG_DEBUG("Connection initiation...");
+
+        bsl::shared_ptr<test::mock::TimerMock> connectDeadlineTimerMock;
+        bsls::TimeInterval                     deadlineTime;
+        ntci::TimerCallback                    deadlineTimerCallback;
+        {
+            deadlineTime.setTotalHours(1);
+
+            connectDeadlineTimerMock.createInplace(&ta);
+            reactorMock->expect_createTimer(doNotCare, doNotCare, doNotCare)
+                .willOnce()
+                .willReturn(connectDeadlineTimerMock)
+                .saveArg2(deadlineTimerCallback);
+
+            connectDeadlineTimerMock
+                ->expect_schedule(deadlineTime, bsls::TimeInterval())
+                .willOnce()
+                .willReturn(ntsa::Error());
+        }
+
+        bsl::shared_ptr<test::mock::TimerMock> connectRetryTimerMock;
+        ntci::TimerCallback                    retryTimerCallback;
+        {
+            connectRetryTimerMock.createInplace(&ta);
+
+            reactorMock->expect_createTimer(doNotCare, doNotCare, doNotCare)
+                .willOnce()
+                .willReturn(connectRetryTimerMock)
+                .saveArg2(retryTimerCallback);
+
+            connectRetryTimerMock->expect_schedule(doNotCare, doNotCare)
+                .willOnce()
+                .willReturn(ntsa::Error());
+        }
+
+        const ntci::ConnectFunction connectCallback =
+            [&connectResult](const bsl::shared_ptr<ntci::Connector>& connector,
+                             const ntca::ConnectEvent&               event) {
+                NTCCFG_TEST_FALSE(connectResult.has_value());
+                connectResult = event;
+            };
+
+        ntca::ConnectOptions connectOptions;
+        connectOptions.setDeadline(deadlineTime);
+
+        const ntsa::Endpoint ep{"127.0.0.1:1234"};
+
+        socket->connect(ep, connectOptions, connectCallback);
+
+        NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
+
+        reactorMock->expect_acquireHandleReservation_WillAlwaysReturn(true);
+        reactorMock->expect_releaseHandleReservation_WillAlwaysReturn();
+        reactorMock->expect_attachSocket_WillOnceReturn(socket, ntsa::Error());
+        reactorMock->expect_showWritable_WillOnceReturn(socket, ntsa::Error());
+
+        ntca::TimerEvent timerEvent;
+        timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
+        retryTimerCallback(connectRetryTimerMock, timerEvent, nullStrand);
+
+        NTCI_LOG_DEBUG(
+            "Shutdown socket while it is waiting for connection result");
+
+        {
+            connectRetryTimerMock->expect_close_WillOnceReturn(ntsa::Error());
+            connectDeadlineTimerMock->expect_close_WillOnceReturn(
+                ntsa::Error());
+
+            reactorMock->expect_detachSocket_WillOnceReturn(socket,
+                                                            doNotCare,
+                                                            ntsa::Error());
+        }
 
         socket->shutdown(ntsa::ShutdownType::e_BOTH,
                          ntsa::ShutdownMode::e_GRACEFUL);
@@ -4648,5 +5066,6 @@ NTCCFG_TEST_DRIVER
 
     NTCCFG_TEST_REGISTER(22);
     NTCCFG_TEST_REGISTER(23);
+    NTCCFG_TEST_REGISTER(24);
 }
 NTCCFG_TEST_DRIVER_END;
