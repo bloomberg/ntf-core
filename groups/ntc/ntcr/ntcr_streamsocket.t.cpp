@@ -1593,8 +1593,7 @@ class StreamSocketMock : public ntsi::StreamSocket
   public:
     ntsa::Handle handle() const override
     {
-        UNEXPECTED_CALL();
-        return 0;
+        return d_invocation_handle.invoke();
     }
     ntsa::Error open(ntsa::Transport::Value transport) override
     {
@@ -1611,6 +1610,1007 @@ class StreamSocketMock : public ntsi::StreamSocket
         UNEXPECTED_CALL();
         return 0;
     }
+    ntsa::Error bind(const ntsa::Endpoint& endpoint,
+                     bool                  reuseAddress) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error bindAny(ntsa::Transport::Value transport,
+                        bool                   reuseAddress) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error connect(const ntsa::Endpoint& endpoint) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error send(ntsa::SendContext*       context,
+                     const bdlbb::Blob&       data,
+                     const ntsa::SendOptions& options) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error send(ntsa::SendContext*       context,
+                     const ntsa::Data&        data,
+                     const ntsa::SendOptions& options) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error receive(ntsa::ReceiveContext*       context,
+                        bdlbb::Blob*                data,
+                        const ntsa::ReceiveOptions& options) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error receive(ntsa::ReceiveContext*       context,
+                        ntsa::Data*                 data,
+                        const ntsa::ReceiveOptions& options) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error receiveNotifications(
+        ntsa::NotificationQueue* notifications) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error shutdown(ntsa::ShutdownType::Value direction) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error unlink() override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    ntsa::Error close() override
+    {
+        return d_invocation_close.invoke();
+    }
+    ntsa::Error sourceEndpoint(ntsa::Endpoint* result) const override
+    {
+        return d_invocation_sourceEndpoint.invoke(result);
+    }
+    ntsa::Error remoteEndpoint(ntsa::Endpoint* result) const override
+    {
+        return d_invocation_remoteEndpoint.invoke(result);
+    }
+    ntsa::Error setBlocking(bool blocking) override
+    {
+        return d_invocation_setBlocking.invoke(blocking);
+    }
+    ntsa::Error setOption(const ntsa::SocketOption& option) override
+    {
+        return d_invocation_setOption.invoke(option);
+    }
+    ntsa::Error getOption(ntsa::SocketOption*           option,
+                          ntsa::SocketOptionType::Value type) override
+    {
+        return d_invocation_getOption.invoke(option, type);
+    }
+    ntsa::Error getLastError(ntsa::Error* result) override
+    {
+        UNEXPECTED_CALL();
+        return ntsa::Error();
+    }
+    size_t maxBuffersPerSend() const override
+    {
+        return d_invocation_maxBuffersPerSend.invoke();
+    }
+    size_t maxBuffersPerReceive() const override
+    {
+        return d_invocation_maxBuffersPerReceive.invoke();
+    }
+
+    struct Invocation_handle {
+      private:
+        struct InvocationData {
+            int                               d_expectedCalls;
+            bdlb::NullableValue<ntsa::Handle> d_result;
+
+            InvocationData()
+            : d_expectedCalls(0)
+            , d_result()
+            {
+            }
+        };
+
+      public:
+        Invocation_handle& expect()
+        {
+            d_invocations.emplace_back();
+            InvocationData& invocation = d_invocations.back();
+            return *this;
+        }
+        Invocation_handle& willOnce()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = 1;
+            return *this;
+        }
+        Invocation_handle& willAlways()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = -1;
+            return *this;
+        }
+        //        Invocation_createTimer& times(int val){} //TODO: multiple calls
+
+        Invocation_handle& willReturn(ntsa::Handle result)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            invocation.d_result        = result;
+            return *this;
+        }
+
+        ntsa::Handle invoke()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.front();
+
+            if (invocation.d_expectedCalls != -1) {
+                NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
+            }
+
+            NTCCFG_TEST_TRUE(invocation.d_result.has_value());
+            const auto result = invocation.d_result.value();
+
+            if (invocation.d_expectedCalls != -1) {
+                --invocation.d_expectedCalls;
+                if (invocation.d_expectedCalls == 0) {
+                    d_invocations.pop_front();
+                }
+            }
+
+            return result;
+        }
+
+      private:
+        bsl::list<InvocationData> d_invocations;
+    };
+
+    Invocation_handle& expect_handle()
+    {
+        return d_invocation_handle.expect();
+    }
+
+    struct Invocation_close {
+      private:
+        struct InvocationData {
+            int                               d_expectedCalls;
+            bdlb::NullableValue<ntsa::Error> d_result;
+
+            InvocationData()
+            : d_expectedCalls(0)
+            , d_result()
+            {
+            }
+        };
+
+      public:
+        Invocation_close& expect()
+        {
+            d_invocations.emplace_back();
+            InvocationData& invocation = d_invocations.back();
+            return *this;
+        }
+        Invocation_close& willOnce()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = 1;
+            return *this;
+        }
+        Invocation_close& willAlways()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = -1;
+            return *this;
+        }
+        //        Invocation_createTimer& times(int val){} //TODO: multiple calls
+
+        Invocation_close& willReturn(ntsa::Error result)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            invocation.d_result        = result;
+            return *this;
+        }
+
+        ntsa::Error invoke()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.front();
+
+            if (invocation.d_expectedCalls != -1) {
+                NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
+            }
+
+            NTCCFG_TEST_TRUE(invocation.d_result.has_value());
+            const auto result = invocation.d_result.value();
+
+            if (invocation.d_expectedCalls != -1) {
+                --invocation.d_expectedCalls;
+                if (invocation.d_expectedCalls == 0) {
+                    d_invocations.pop_front();
+                }
+            }
+
+            return result;
+        }
+
+      private:
+        bsl::list<InvocationData> d_invocations;
+    };
+
+    Invocation_close& expect_close()
+    {
+        return d_invocation_close.expect();
+    }
+
+    struct Invocation_maxBuffersPerSend {
+      private:
+        struct InvocationData {
+            int                              d_expectedCalls;
+            bdlb::NullableValue<bsl::size_t> d_result;
+
+            InvocationData()
+            : d_expectedCalls(0)
+            , d_result()
+            {
+            }
+        };
+
+      public:
+        Invocation_maxBuffersPerSend& expect()
+        {
+            d_invocations.emplace_back();
+            InvocationData& invocation = d_invocations.back();
+            return *this;
+        }
+        Invocation_maxBuffersPerSend& willOnce()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = 1;
+            return *this;
+        }
+        Invocation_maxBuffersPerSend& willAlways()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = -1;
+            return *this;
+        }
+        //        Invocation_createTimer& times(int val){} //TODO: multiple calls
+
+        Invocation_maxBuffersPerSend& willReturn(bsl::size_t result)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            invocation.d_result        = result;
+            return *this;
+        }
+
+        bsl::size_t invoke()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.front();
+
+            if (invocation.d_expectedCalls != -1) {
+                NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
+            }
+
+            NTCCFG_TEST_TRUE(invocation.d_result.has_value());
+            const auto result = invocation.d_result.value();
+
+            if (invocation.d_expectedCalls != -1) {
+                --invocation.d_expectedCalls;
+                if (invocation.d_expectedCalls == 0) {
+                    d_invocations.pop_front();
+                }
+            }
+
+            return result;
+        }
+
+      private:
+        bsl::list<InvocationData> d_invocations;
+    };
+
+    Invocation_maxBuffersPerSend& expect_maxBuffersPerSend()
+    {
+        return d_invocation_maxBuffersPerSend.expect();
+    }
+
+    struct Invocation_maxBuffersPerReceive {
+      private:
+        struct InvocationData {
+            int                              d_expectedCalls;
+            bdlb::NullableValue<bsl::size_t> d_result;
+
+            InvocationData()
+            : d_expectedCalls(0)
+            , d_result()
+            {
+            }
+        };
+
+      public:
+        Invocation_maxBuffersPerReceive& expect()
+        {
+            d_invocations.emplace_back();
+            InvocationData& invocation = d_invocations.back();
+            return *this;
+        }
+        Invocation_maxBuffersPerReceive& willOnce()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = 1;
+            return *this;
+        }
+        Invocation_maxBuffersPerReceive& willAlways()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = -1;
+            return *this;
+        }
+        //        Invocation_createTimer& times(int val){} //TODO: multiple calls
+
+        Invocation_maxBuffersPerReceive& willReturn(bsl::size_t result)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            invocation.d_result        = result;
+            return *this;
+        }
+
+        bsl::size_t invoke()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.front();
+
+            if (invocation.d_expectedCalls != -1) {
+                NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
+            }
+
+            NTCCFG_TEST_TRUE(invocation.d_result.has_value());
+            const auto result = invocation.d_result.value();
+
+            if (invocation.d_expectedCalls != -1) {
+                --invocation.d_expectedCalls;
+                if (invocation.d_expectedCalls == 0) {
+                    d_invocations.pop_front();
+                }
+            }
+
+            return result;
+        }
+
+      private:
+        bsl::list<InvocationData> d_invocations;
+    };
+
+    Invocation_maxBuffersPerReceive& expect_maxBuffersPerReceive()
+    {
+        return d_invocation_maxBuffersPerReceive.expect();
+    }
+
+    struct Invocation_setBlocking {
+      private:
+        struct InvocationData {
+            int                              d_expectedCalls;
+            bdlb::NullableValue<bool>        d_arg1;
+            bdlb::NullableValue<ntsa::Error> d_result;
+            bool*                            d_arg1_out;
+
+            InvocationData()
+            : d_expectedCalls(0)
+            , d_arg1()
+            , d_result()
+            , d_arg1_out(0)
+            {
+            }
+        };
+
+      public:
+        Invocation_setBlocking& expect(const bdlb::NullableValue<bool>& arg1)
+        {
+            d_invocations.emplace_back();
+            InvocationData& invocation = d_invocations.back();
+
+            invocation.d_arg1 = arg1;
+
+            return *this;
+        }
+        Invocation_setBlocking& willOnce()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = 1;
+            return *this;
+        }
+        Invocation_setBlocking& willAlways()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = -1;
+            return *this;
+        }
+        //        Invocation_createTimer& times(int val){} //TODO: multiple calls
+
+        Invocation_setBlocking& willReturn(ntsa::Error result)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            invocation.d_result        = result;
+            return *this;
+        }
+
+        Invocation_setBlocking& saveArg1(bool& arg1)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            invocation.d_arg1_out      = &arg1;
+            return *this;
+        }
+
+        ntsa::Error invoke(bool arg1)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.front();
+
+            if (invocation.d_expectedCalls != -1) {
+                NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
+            }
+
+            if (invocation.d_arg1.has_value()) {
+                NTCCFG_TEST_EQ(arg1, invocation.d_arg1.value());
+            }
+
+            if (invocation.d_arg1_out) {
+                *invocation.d_arg1_out = arg1;
+            }
+
+            NTCCFG_TEST_TRUE(invocation.d_result.has_value());
+            const auto result = invocation.d_result.value();
+
+            if (invocation.d_expectedCalls != -1) {
+                --invocation.d_expectedCalls;
+                if (invocation.d_expectedCalls == 0) {
+                    d_invocations.pop_front();
+                }
+            }
+
+            return result;
+        }
+
+      private:
+        bsl::list<InvocationData> d_invocations;
+    };
+
+    Invocation_setBlocking& expect_setBlocking(
+        const bdlb::NullableValue<bool>& arg1)
+    {
+        return d_invocation_setBlocking.expect(arg1);
+    }
+
+    struct Invocation_setOption {
+      private:
+        struct InvocationData {
+            int                                     d_expectedCalls;
+            bdlb::NullableValue<ntsa::SocketOption> d_arg1;
+            bdlb::NullableValue<ntsa::Error>        d_result;
+            ntsa::SocketOption*                     d_arg1_out;
+
+            InvocationData()
+            : d_expectedCalls(0)
+            , d_arg1()
+            , d_result()
+            , d_arg1_out(0)
+            {
+            }
+        };
+
+      public:
+        Invocation_setOption& expect(
+            const bdlb::NullableValue<ntsa::SocketOption>& arg1)
+        {
+            d_invocations.emplace_back();
+            InvocationData& invocation = d_invocations.back();
+
+            invocation.d_arg1 = arg1;
+
+            return *this;
+        }
+        Invocation_setOption& willOnce()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = 1;
+            return *this;
+        }
+        Invocation_setOption& willAlways()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = -1;
+            return *this;
+        }
+        //        Invocation_createTimer& times(int val){} //TODO: multiple calls
+
+        Invocation_setOption& willReturn(ntsa::Error result)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            invocation.d_result        = result;
+            return *this;
+        }
+
+        Invocation_setOption& saveArg1(ntsa::SocketOption& arg1)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            invocation.d_arg1_out      = &arg1;
+            return *this;
+        }
+
+        ntsa::Error invoke(const ntsa::SocketOption& arg1)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.front();
+
+            if (invocation.d_expectedCalls != -1) {
+                NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
+            }
+
+            if (invocation.d_arg1.has_value()) {
+                NTCCFG_TEST_EQ(arg1, invocation.d_arg1.value());
+            }
+
+            if (invocation.d_arg1_out) {
+                *invocation.d_arg1_out = arg1;
+            }
+
+            NTCCFG_TEST_TRUE(invocation.d_result.has_value());
+            const auto result = invocation.d_result.value();
+
+            if (invocation.d_expectedCalls != -1) {
+                --invocation.d_expectedCalls;
+                if (invocation.d_expectedCalls == 0) {
+                    d_invocations.pop_front();
+                }
+            }
+
+            return result;
+        }
+
+      private:
+        bsl::list<InvocationData> d_invocations;
+    };
+
+    Invocation_setOption& expect_setOption(
+        const bdlb::NullableValue<ntsa::SocketOption>& arg1)
+    {
+        return d_invocation_setOption.expect(arg1);
+    }
+
+    struct Invocation_sourceEndpoint {
+      private:
+        struct InvocationData {
+            int                                  d_expectedCalls;
+            bdlb::NullableValue<ntsa::Endpoint*> d_arg1;
+            bdlb::NullableValue<ntsa::Error>     d_result;
+            ntsa::Endpoint**                     d_arg1_out;
+
+            InvocationData()
+            : d_expectedCalls(0)
+            , d_arg1()
+            , d_result()
+            , d_arg1_out(0)
+            {
+            }
+        };
+
+      public:
+        Invocation_sourceEndpoint& expect(
+            const bdlb::NullableValue<ntsa::Endpoint*>& arg1)
+        {
+            d_invocations.emplace_back();
+            InvocationData& invocation = d_invocations.back();
+
+            invocation.d_arg1 = arg1;
+
+            return *this;
+        }
+        Invocation_sourceEndpoint& willOnce()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = 1;
+            return *this;
+        }
+        Invocation_sourceEndpoint& willAlways()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = -1;
+            return *this;
+        }
+        //        Invocation_createTimer& times(int val){} //TODO: multiple calls
+
+        Invocation_sourceEndpoint& willReturn(ntsa::Error result)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            invocation.d_result        = result;
+            return *this;
+        }
+
+        Invocation_sourceEndpoint& saveArg1(ntsa::Endpoint*& arg1)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            invocation.d_arg1_out      = &arg1;
+            return *this;
+        }
+
+        ntsa::Error invoke(ntsa::Endpoint* arg1)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.front();
+
+            if (invocation.d_expectedCalls != -1) {
+                NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
+            }
+
+            if (invocation.d_arg1.has_value()) {
+                NTCCFG_TEST_EQ(arg1, invocation.d_arg1.value());
+            }
+
+            if (invocation.d_arg1_out) {
+                *invocation.d_arg1_out = arg1;
+            }
+
+            NTCCFG_TEST_TRUE(invocation.d_result.has_value());
+            const auto result = invocation.d_result.value();
+
+            if (invocation.d_expectedCalls != -1) {
+                --invocation.d_expectedCalls;
+                if (invocation.d_expectedCalls == 0) {
+                    d_invocations.pop_front();
+                }
+            }
+
+            return result;
+        }
+
+      private:
+        bsl::list<InvocationData> d_invocations;
+    };
+
+    Invocation_sourceEndpoint& expect_sourceEndpoint(
+        const bdlb::NullableValue<ntsa::Endpoint*>& arg1)
+    {
+        return d_invocation_sourceEndpoint.expect(arg1);
+    }
+
+    struct Invocation_remoteEndpoint {
+      private:
+        struct InvocationData {
+            int                                  d_expectedCalls;
+            bdlb::NullableValue<ntsa::Endpoint*> d_arg1;
+            bdlb::NullableValue<ntsa::Error>     d_result;
+            ntsa::Endpoint**                     d_arg1_out;
+
+            InvocationData()
+            : d_expectedCalls(0)
+            , d_arg1()
+            , d_result()
+            , d_arg1_out(0)
+            {
+            }
+        };
+
+      public:
+        Invocation_remoteEndpoint& expect(
+            const bdlb::NullableValue<ntsa::Endpoint*>& arg1)
+        {
+            d_invocations.emplace_back();
+            InvocationData& invocation = d_invocations.back();
+
+            invocation.d_arg1 = arg1;
+
+            return *this;
+        }
+        Invocation_remoteEndpoint& willOnce()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = 1;
+            return *this;
+        }
+        Invocation_remoteEndpoint& willAlways()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = -1;
+            return *this;
+        }
+        //        Invocation_createTimer& times(int val){} //TODO: multiple calls
+
+        Invocation_remoteEndpoint& willReturn(ntsa::Error result)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            invocation.d_result        = result;
+            return *this;
+        }
+
+        Invocation_remoteEndpoint& saveArg1(ntsa::Endpoint*& arg1)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            invocation.d_arg1_out      = &arg1;
+            return *this;
+        }
+
+        ntsa::Error invoke(ntsa::Endpoint* arg1)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.front();
+
+            if (invocation.d_expectedCalls != -1) {
+                NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
+            }
+
+            if (invocation.d_arg1.has_value()) {
+                NTCCFG_TEST_EQ(arg1, invocation.d_arg1.value());
+            }
+
+            if (invocation.d_arg1_out) {
+                *invocation.d_arg1_out = arg1;
+            }
+
+            NTCCFG_TEST_TRUE(invocation.d_result.has_value());
+            const auto result = invocation.d_result.value();
+
+            if (invocation.d_expectedCalls != -1) {
+                --invocation.d_expectedCalls;
+                if (invocation.d_expectedCalls == 0) {
+                    d_invocations.pop_front();
+                }
+            }
+
+            return result;
+        }
+
+      private:
+        bsl::list<InvocationData> d_invocations;
+    };
+
+    Invocation_remoteEndpoint& expect_remoteEndpoint(
+        const bdlb::NullableValue<ntsa::Endpoint*>& arg1)
+    {
+        return d_invocation_remoteEndpoint.expect(arg1);
+    }
+
+    struct Invocation_getOption {
+      private:
+        struct InvocationData {
+            int                                                d_expectedCalls;
+            bdlb::NullableValue<ntsa::SocketOption*>           d_arg1;
+            bdlb::NullableValue<ntsa::SocketOptionType::Value> d_arg2;
+            bdlb::NullableValue<ntsa::Error>                   d_result;
+            ntsa::SocketOption**                               d_arg1_out;
+            ntsa::SocketOptionType::Value*                     d_arg2_out;
+            bdlb::NullableValue<ntsa::SocketOption>            d_arg1_set;
+
+            InvocationData()
+            : d_expectedCalls(0)
+            , d_arg1()
+            , d_arg2()
+            , d_result()
+            , d_arg1_out(0)
+            , d_arg2_out(0)
+            , d_arg1_set()
+            {
+            }
+        };
+
+      public:
+        Invocation_getOption& expect(
+            const bdlb::NullableValue<ntsa::SocketOption*>&           arg1,
+            const bdlb::NullableValue<ntsa::SocketOptionType::Value>& arg2)
+        {
+            d_invocations.emplace_back();
+            InvocationData& invocation = d_invocations.back();
+
+            invocation.d_arg1 = arg1;
+            invocation.d_arg2 = arg2;
+
+            return *this;
+        }
+        Invocation_getOption& willOnce()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = 1;
+            return *this;
+        }
+        Invocation_getOption& willAlways()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = -1;
+            return *this;
+        }
+        //        Invocation_createTimer& times(int val){} //TODO: multiple calls
+
+        Invocation_getOption& willReturn(ntsa::Error result)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            invocation.d_result        = result;
+            return *this;
+        }
+
+        Invocation_getOption& saveArg1(ntsa::SocketOption*& arg1)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            invocation.d_arg1_out      = &arg1;
+            return *this;
+        }
+
+        Invocation_getOption& setArg1(const ntsa::SocketOption& arg1)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            invocation.d_arg1_set      = arg1;
+            return *this;
+        }
+
+        Invocation_getOption& saveArg2(ntsa::SocketOptionType::Value& arg2)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            invocation.d_arg2_out      = &arg2;
+            return *this;
+        }
+
+        ntsa::Error invoke(ntsa::SocketOption*           arg1,
+                           ntsa::SocketOptionType::Value arg2)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.front();
+
+            if (invocation.d_expectedCalls != -1) {
+                NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
+            }
+
+            if (invocation.d_arg1.has_value()) {
+                NTCCFG_TEST_EQ(arg1, invocation.d_arg1.value());
+            }
+
+            if (invocation.d_arg2.has_value()) {
+                NTCCFG_TEST_EQ(arg2, invocation.d_arg2.value());
+            }
+
+            if (invocation.d_arg1_out) {
+                *invocation.d_arg1_out = arg1;
+            }
+
+            if (invocation.d_arg2_out) {
+                *invocation.d_arg2_out = arg2;
+            }
+
+            if (invocation.d_arg1_set.has_value()) {
+                *arg1 = invocation.d_arg1_set.value();
+            }
+
+            NTCCFG_TEST_TRUE(invocation.d_result.has_value());
+            const auto result = invocation.d_result.value();
+
+            if (invocation.d_expectedCalls != -1) {
+                --invocation.d_expectedCalls;
+                if (invocation.d_expectedCalls == 0) {
+                    d_invocations.pop_front();
+                }
+            }
+
+            return result;
+        }
+
+      private:
+        bsl::list<InvocationData> d_invocations;
+    };
+
+    Invocation_getOption& expect_getOption(
+        const bdlb::NullableValue<ntsa::SocketOption*>&           arg1,
+        const bdlb::NullableValue<ntsa::SocketOptionType::Value>& arg2)
+    {
+        return d_invocation_getOption.expect(arg1, arg2);
+    }
+
+  private:
+    mutable Invocation_handle               d_invocation_handle;
+    mutable Invocation_close                d_invocation_close;
+    mutable Invocation_maxBuffersPerSend    d_invocation_maxBuffersPerSend;
+    mutable Invocation_maxBuffersPerReceive d_invocation_maxBuffersPerReceive;
+    mutable Invocation_setBlocking          d_invocation_setBlocking;
+    mutable Invocation_setOption            d_invocation_setOption;
+    mutable Invocation_getOption            d_invocation_getOption;
+    mutable Invocation_sourceEndpoint       d_invocation_sourceEndpoint;
+    mutable Invocation_remoteEndpoint       d_invocation_remoteEndpoint;
 };
 
 class DataPoolMock : public ntci::DataPool
@@ -4647,7 +5647,8 @@ NTCCFG_TEST_CASE(22)
     {
         NTCI_LOG_DEBUG("Fixture setup, socket creation...");
 
-        const auto doNotCare = bdlb::NullOptType::makeInitialValue();
+        const auto         doNotCare = bdlb::NullOptType::makeInitialValue();
+        const ntsa::Handle handle    = 22;
 
         bdlb::NullableValue<ntca::ConnectEvent> connectResult;
 
@@ -4690,12 +5691,53 @@ NTCCFG_TEST_CASE(22)
 
         const ntca::StreamSocketOptions options;
 
-        ntcr::StreamSocket socket(options,
-                                  resolverMock,
-                                  reactorMock,
-                                  nullPool,
-                                  nullMetrics,
-                                  &ta);
+        bsl::shared_ptr<ntcr::StreamSocket> socket;
+        socket.createInplace(&ta,
+                             options,
+                             resolverMock,
+                             reactorMock,
+                             nullPool,
+                             nullMetrics,
+                             &ta);
+
+        socketMock->expect_handle().willAlways().willReturn(handle);
+        socketMock->expect_setBlocking(false).willOnce().willReturn(
+            ntsa::Error());
+        socketMock->expect_setBlocking(false).willOnce().willReturn(
+            ntsa::Error());  //TODO: for some reason it is called twice
+        socketMock->expect_setOption(doNotCare).willAlways().willReturn(
+            ntsa::Error());
+        socketMock->expect_sourceEndpoint(doNotCare).willOnce().willReturn(
+            ntsa::Error::invalid());
+        socketMock->expect_remoteEndpoint(doNotCare).willOnce().willReturn(
+            ntsa::Error::invalid());
+
+        ntsa::SocketOption sendBufferSizeOption;
+        sendBufferSizeOption.makeSendBufferSize(100500);
+        ntsa::SocketOption rcvBufferSizeOption;
+        rcvBufferSizeOption.makeReceiveBufferSize(100500);
+
+        socketMock
+            ->expect_getOption(doNotCare,
+                               ntsa::SocketOptionType::e_SEND_BUFFER_SIZE)
+            .willOnce()
+            .willReturn(ntsa::Error())
+            .setArg1(sendBufferSizeOption);
+
+        socketMock
+            ->expect_getOption(doNotCare,
+                               ntsa::SocketOptionType::e_RECEIVE_BUFFER_SIZE)
+            .willOnce()
+            .willReturn(ntsa::Error())
+            .setArg1(rcvBufferSizeOption);
+
+        socketMock->expect_maxBuffersPerSend().willOnce().willReturn(22);
+        socketMock->expect_maxBuffersPerReceive().willOnce().willReturn(22);
+
+        reactorMock->expect_acquireHandleReservation_WillAlwaysReturn(true);
+        reactorMock->expect_releaseHandleReservation_WillAlwaysReturn();
+
+        socket->open(ntsa::Transport::e_TCP_IPV4_STREAM, socketMock);
 
         NTCI_LOG_DEBUG("Connection initiation...");
 
@@ -4723,7 +5765,7 @@ NTCCFG_TEST_CASE(22)
 
         const bsl::string epName = "unreachable.bbg.com";
 
-        socket.connect(epName, connectOptions, connectCallback);
+        socket->connect(epName, connectOptions, connectCallback);
 
         NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
 
@@ -4742,7 +5784,15 @@ NTCCFG_TEST_CASE(22)
         connectRetryTimerMock->expect_close_WillOnceReturn(ntsa::Error());
         reactorMock->expect_execute_WillOnceReturn();
 
-        socket.shutdown(ntsa::ShutdownType::e_BOTH,
+        reactorMock->expect_detachSocket_WillOnceReturn(
+            socket,
+            bdlb::NullOptType::makeInitialValue(),
+            ntsa::Error::invalid());
+        //TODO: is that ok to detach socket that has not been attached?
+
+        socketMock->expect_close().willOnce().willReturn(ntsa::Error());
+
+        socket->shutdown(ntsa::ShutdownType::e_BOTH,
                         ntsa::ShutdownMode::e_GRACEFUL);
 
         const auto callback = reactorMock->extract_execute_functor();
