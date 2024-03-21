@@ -1624,8 +1624,7 @@ class StreamSocketMock : public ntsi::StreamSocket
     }
     ntsa::Error connect(const ntsa::Endpoint& endpoint) override
     {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
+        return d_invocation_connect.invoke(endpoint);
     }
     ntsa::Error send(ntsa::SendContext*       context,
                      const bdlbb::Blob&       data,
@@ -2252,12 +2251,14 @@ class StreamSocketMock : public ntsi::StreamSocket
             bdlb::NullableValue<ntsa::Endpoint*> d_arg1;
             bdlb::NullableValue<ntsa::Error>     d_result;
             ntsa::Endpoint**                     d_arg1_out;
+            bdlb::NullableValue<ntsa::Endpoint>  d_arg1_set;
 
             InvocationData()
             : d_expectedCalls(0)
             , d_arg1()
             , d_result()
             , d_arg1_out(0)
+            , d_arg1_set()
             {
             }
         };
@@ -2311,6 +2312,14 @@ class StreamSocketMock : public ntsi::StreamSocket
             return *this;
         }
 
+        Invocation_sourceEndpoint& setArg1(const ntsa::Endpoint& arg1)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            invocation.d_arg1_set      = arg1;
+            return *this;
+        }
+
         ntsa::Error invoke(ntsa::Endpoint* arg1)
         {
             NTCCFG_TEST_FALSE(d_invocations.empty());
@@ -2326,6 +2335,10 @@ class StreamSocketMock : public ntsi::StreamSocket
 
             if (invocation.d_arg1_out) {
                 *invocation.d_arg1_out = arg1;
+            }
+
+            if (invocation.d_arg1_set.has_value()) {
+                *arg1 = invocation.d_arg1_set.value();
             }
 
             NTCCFG_TEST_TRUE(invocation.d_result.has_value());
@@ -2601,6 +2614,112 @@ class StreamSocketMock : public ntsi::StreamSocket
         return d_invocation_getOption.expect(arg1, arg2);
     }
 
+    struct Invocation_connect {
+      private:
+        struct InvocationData {
+            int                                 d_expectedCalls;
+            bdlb::NullableValue<ntsa::Endpoint> d_arg1;
+            bdlb::NullableValue<ntsa::Error>    d_result;
+            ntsa::Endpoint*                     d_arg1_out;
+
+            InvocationData()
+            : d_expectedCalls(0)
+            , d_arg1()
+            , d_result()
+            , d_arg1_out(0)
+            {
+            }
+        };
+
+      public:
+        Invocation_connect& expect(
+            const bdlb::NullableValue<ntsa::Endpoint>& arg1)
+        {
+            d_invocations.emplace_back();
+            InvocationData& invocation = d_invocations.back();
+
+            invocation.d_arg1 = arg1;
+
+            return *this;
+        }
+        Invocation_connect& willOnce()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = 1;
+            return *this;
+        }
+        Invocation_connect& willAlways()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = -1;
+            return *this;
+        }
+        //        Invocation_createTimer& times(int val){} //TODO: multiple calls
+
+        Invocation_connect& willReturn(ntsa::Error result)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            invocation.d_result        = result;
+            return *this;
+        }
+
+        Invocation_connect& saveArg1(ntsa::Endpoint& arg1)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            invocation.d_arg1_out      = &arg1;
+            return *this;
+        }
+
+        ntsa::Error invoke(const ntsa::Endpoint& arg1)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.front();
+
+            if (invocation.d_expectedCalls != -1) {
+                NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
+            }
+
+            if (invocation.d_arg1.has_value()) {
+                NTCCFG_TEST_EQ(arg1, invocation.d_arg1.value());
+            }
+
+            if (invocation.d_arg1_out) {
+                *invocation.d_arg1_out = arg1;
+            }
+
+            NTCCFG_TEST_TRUE(invocation.d_result.has_value());
+            const auto result = invocation.d_result.value();
+
+            if (invocation.d_expectedCalls != -1) {
+                --invocation.d_expectedCalls;
+                if (invocation.d_expectedCalls == 0) {
+                    d_invocations.pop_front();
+                }
+            }
+
+            return result;
+        }
+
+      private:
+        bsl::list<InvocationData> d_invocations;
+    };
+
+    Invocation_connect& expect_connect(
+        const bdlb::NullableValue<ntsa::Endpoint>& arg1)
+    {
+        return d_invocation_connect.expect(arg1);
+    }
+
   private:
     mutable Invocation_handle               d_invocation_handle;
     mutable Invocation_close                d_invocation_close;
@@ -2611,6 +2730,7 @@ class StreamSocketMock : public ntsi::StreamSocket
     mutable Invocation_getOption            d_invocation_getOption;
     mutable Invocation_sourceEndpoint       d_invocation_sourceEndpoint;
     mutable Invocation_remoteEndpoint       d_invocation_remoteEndpoint;
+    mutable Invocation_connect              d_invocation_connect;
 };
 
 class DataPoolMock : public ntci::DataPool
@@ -5770,6 +5890,8 @@ NTCCFG_TEST_CASE(22)
                              nullMetrics,
                              &ta);
 
+        NTCI_LOG_DEBUG("Inject mocked ntsi::StreamSocket");
+
         socketMock->expect_handle().willAlways().willReturn(handle);
         socketMock->expect_setBlocking(false).willOnce().willReturn(
             ntsa::Error());
@@ -5883,7 +6005,8 @@ NTCCFG_TEST_CASE(23)
     {
         NTCI_LOG_DEBUG("Fixture setup, socket creation...");
 
-        const auto doNotCare = bdlb::NullOptType::makeInitialValue();
+        const auto         doNotCare = bdlb::NullOptType::makeInitialValue();
+        const ntsa::Handle handle    = 22;
 
         bdlb::NullableValue<ntca::ConnectEvent> connectResult;
 
@@ -5935,6 +6058,47 @@ NTCCFG_TEST_CASE(23)
                              nullMetrics,
                              &ta);
 
+        NTCI_LOG_DEBUG("Inject mocked ntsi::StreamSocket");
+
+        socketMock->expect_handle().willAlways().willReturn(handle);
+        socketMock->expect_setBlocking(false).willOnce().willReturn(
+            ntsa::Error());
+        socketMock->expect_setBlocking(false).willOnce().willReturn(
+            ntsa::Error());  //TODO: for some reason it is called twice
+        socketMock->expect_setOption(doNotCare).willAlways().willReturn(
+            ntsa::Error());
+        socketMock->expect_sourceEndpoint(doNotCare).willOnce().willReturn(
+            ntsa::Error::invalid());
+        socketMock->expect_remoteEndpoint(doNotCare).willOnce().willReturn(
+            ntsa::Error::invalid());
+
+        ntsa::SocketOption sendBufferSizeOption;
+        sendBufferSizeOption.makeSendBufferSize(100500);
+        ntsa::SocketOption rcvBufferSizeOption;
+        rcvBufferSizeOption.makeReceiveBufferSize(100500);
+
+        socketMock
+            ->expect_getOption(doNotCare,
+                               ntsa::SocketOptionType::e_SEND_BUFFER_SIZE)
+            .willOnce()
+            .willReturn(ntsa::Error())
+            .setArg1(sendBufferSizeOption);
+
+        socketMock
+            ->expect_getOption(doNotCare,
+                               ntsa::SocketOptionType::e_RECEIVE_BUFFER_SIZE)
+            .willOnce()
+            .willReturn(ntsa::Error())
+            .setArg1(rcvBufferSizeOption);
+
+        socketMock->expect_maxBuffersPerSend().willOnce().willReturn(22);
+        socketMock->expect_maxBuffersPerReceive().willOnce().willReturn(22);
+
+        reactorMock->expect_acquireHandleReservation_WillAlwaysReturn(true);
+        reactorMock->expect_releaseHandleReservation_WillAlwaysReturn();
+
+        socket->open(ntsa::Transport::e_TCP_IPV4_STREAM, socketMock);
+
         NTCI_LOG_DEBUG("Connection initiation...");
 
         bsl::shared_ptr<test::mock::TimerMock> connectRetryTimerMock;
@@ -5959,16 +6123,23 @@ NTCCFG_TEST_CASE(23)
 
         const ntca::ConnectOptions connectOptions;
 
-        const ntsa::Endpoint ep{"127.0.0.1:1234"};
+        const ntsa::Endpoint targetEp{"127.0.0.1:1234"};
+        const ntsa::Endpoint sourceEp{"127.0.0.1:22"};
 
-        socket->connect(ep, connectOptions, connectCallback);
+        socket->connect(targetEp, connectOptions, connectCallback);
 
         NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
 
-        reactorMock->expect_acquireHandleReservation_WillAlwaysReturn(true);
-        reactorMock->expect_releaseHandleReservation_WillAlwaysReturn();
         reactorMock->expect_attachSocket_WillOnceReturn(socket, ntsa::Error());
         reactorMock->expect_showWritable_WillOnceReturn(socket, ntsa::Error());
+
+        socketMock->expect_connect(targetEp).willOnce().willReturn(
+            ntsa::Error());
+
+        socketMock->expect_sourceEndpoint(doNotCare)
+            .willOnce()
+            .willReturn(ntsa::Error())
+            .setArg1(sourceEp);
 
         ntca::TimerEvent timerEvent;
         timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
@@ -5984,6 +6155,8 @@ NTCCFG_TEST_CASE(23)
             socket,
             bdlb::NullOptType::makeInitialValue(),
             ntsa::Error());
+
+        socketMock->expect_close().willOnce().willReturn(ntsa::Error());
 
         socket->shutdown(ntsa::ShutdownType::e_BOTH,
                          ntsa::ShutdownMode::e_GRACEFUL);
