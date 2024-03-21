@@ -1794,7 +1794,7 @@ class StreamSocketMock : public ntsi::StreamSocket
     struct Invocation_close {
       private:
         struct InvocationData {
-            int                               d_expectedCalls;
+            int                              d_expectedCalls;
             bdlb::NullableValue<ntsa::Error> d_result;
 
             InvocationData()
@@ -3467,12 +3467,7 @@ class TimerMock : public ntci::Timer
     }
     ntsa::Error close() override
     {
-        if (d_close_result.isNull()) {
-            UNEXPECTED_CALL();
-        }
-        const auto res = d_close_result.value();
-        d_close_result.reset();
-        return res;
+        return d_close_invocation.invoke();
     }
     void arrive(const bsl::shared_ptr<ntci::Timer>& self,
                 const bsls::TimeInterval&           now,
@@ -3647,17 +3642,92 @@ class TimerMock : public ntci::Timer
         return d_schedule_invocation.expect(arg1, arg2);
     }
 
-    void expect_close_WillOnceReturn(const ntsa::Error& error)
+    struct Invocation_close {
+      private:
+        struct InvocationData {
+            int                              d_expectedCalls;
+            bdlb::NullableValue<ntsa::Error> d_result;
+
+            InvocationData()
+            : d_expectedCalls(0)
+            , d_result()
+            {
+            }
+        };
+
+      public:
+        Invocation_close& expect()
+        {
+            d_invocations.emplace_back();
+            InvocationData& invocation = d_invocations.back();
+            return *this;
+        }
+        Invocation_close& willOnce()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = 1;
+            return *this;
+        }
+        Invocation_close& willAlways()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+
+            InvocationData& invocation = d_invocations.back();
+            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+
+            invocation.d_expectedCalls = -1;
+            return *this;
+        }
+        //        Invocation_createTimer& times(int val){} //TODO: multiple calls
+
+        Invocation_close& willReturn(ntsa::Error result)
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.back();
+            invocation.d_result        = result;
+            return *this;
+        }
+
+        ntsa::Error invoke()
+        {
+            NTCCFG_TEST_FALSE(d_invocations.empty());
+            InvocationData& invocation = d_invocations.front();
+
+            if (invocation.d_expectedCalls != -1) {
+                NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
+            }
+
+            NTCCFG_TEST_TRUE(invocation.d_result.has_value());
+            const auto result = invocation.d_result.value();
+
+            if (invocation.d_expectedCalls != -1) {
+                --invocation.d_expectedCalls;
+                if (invocation.d_expectedCalls == 0) {
+                    d_invocations.pop_front();
+                }
+            }
+
+            return result;
+        }
+
+      private:
+        bsl::list<InvocationData> d_invocations;
+    };
+
+    Invocation_close& expect_close()
     {
-        d_close_result = error;
+        return d_close_invocation.expect();
     }
 
   private:
     bsl::shared_ptr<ntci::Strand> dummyStrand;
 
-    bdlb::NullableValue<ntsa::Error> d_close_result;
-
     Invocation_schedule d_schedule_invocation;
+    Invocation_close    d_close_invocation;
 };
 
 }  // close namespace mock
@@ -5781,7 +5851,8 @@ NTCCFG_TEST_CASE(22)
         NTCI_LOG_DEBUG("Shutdown socket while it is waiting for remote "
                        "endpoint resolution");
 
-        connectRetryTimerMock->expect_close_WillOnceReturn(ntsa::Error());
+        connectRetryTimerMock->expect_close().willOnce().willReturn(
+            ntsa::Error());
         reactorMock->expect_execute_WillOnceReturn();
 
         reactorMock->expect_detachSocket_WillOnceReturn(
@@ -5793,7 +5864,7 @@ NTCCFG_TEST_CASE(22)
         socketMock->expect_close().willOnce().willReturn(ntsa::Error());
 
         socket->shutdown(ntsa::ShutdownType::e_BOTH,
-                        ntsa::ShutdownMode::e_GRACEFUL);
+                         ntsa::ShutdownMode::e_GRACEFUL);
 
         const auto callback = reactorMock->extract_execute_functor();
         callback();
@@ -5906,7 +5977,8 @@ NTCCFG_TEST_CASE(23)
         NTCI_LOG_DEBUG(
             "Shutdown socket while it is waiting for connection result");
 
-        connectRetryTimerMock->expect_close_WillOnceReturn(ntsa::Error());
+        connectRetryTimerMock->expect_close().willOnce().willReturn(
+            ntsa::Error());
 
         reactorMock->expect_detachSocket_WillOnceReturn(
             socket,
@@ -6056,8 +6128,9 @@ NTCCFG_TEST_CASE(24)
             "Shutdown socket while it is waiting for connection result");
 
         {
-            connectRetryTimerMock->expect_close_WillOnceReturn(ntsa::Error());
-            connectDeadlineTimerMock->expect_close_WillOnceReturn(
+            connectRetryTimerMock->expect_close().willOnce().willReturn(
+                ntsa::Error());
+            connectDeadlineTimerMock->expect_close().willOnce().willReturn(
                 ntsa::Error());
 
             reactorMock->expect_detachSocket_WillOnceReturn(socket,
