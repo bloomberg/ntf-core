@@ -1,9 +1,20 @@
-ntf-core (2.3.2) unstable; urgency=low
+ntf-core (2.3.3) unstable; urgency=low
 
+  * bb7740a Release 2.3.3
+  * 2208636 Add explicit constructors for ntsa::Endpoint taking a ntsa::Ipv4Endpoint and ntsa::Ipv6Endpoint
+  * 9ce2bd2 Add ntsi::{Datagram,Listener,Stream}SocketFactory
+  * 1ec2138 Defer StreamSocket shutdown execution if the socket is waiting for detachment to be finished
+  * 7d7ae93 Eliminate warnings when metrics are explicitly disabled
+
+ -- Matt Millett <mmillett2@bloomberg.net>  Fri, 22 Mar 2024 16:56:15 -0400
+
+ntf-core (2.3.2) git; urgency=low
+
+  * 16034f0 Release 2.3.2 to DPKG
   * c5580af Release 2.3.2
   * d87f42a Remove support for the old BDE build system
 
- -- Matt Millett <mmillett2@bloomberg.net>  Fri, 23 Feb 2024 16:02:58 -0500
+ -- Matt Millett <mmillett2@bloomberg.net>  Fri, 23 Feb 2024 16:05:21 -0500
 
 ntf-core (2.3.1) git; urgency=low
 
