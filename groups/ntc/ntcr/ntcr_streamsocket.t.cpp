@@ -1591,10 +1591,8 @@ class BufferFactoryMock : public bdlbb::BlobBufferFactory
 class StreamSocketMock : public ntsi::StreamSocket
 {
   public:
-    ntsa::Handle handle() const override
-    {
-        return d_invocation_handle.invoke();
-    }
+    NTF_MOCK_METHOD_CONST(ntsa::Handle, handle)
+
     ntsa::Error open(ntsa::Transport::Value transport) override
     {
         UNEXPECTED_CALL();
@@ -1605,11 +1603,10 @@ class StreamSocketMock : public ntsi::StreamSocket
         UNEXPECTED_CALL();
         return ntsa::Error();
     }
-    ntsa::Handle release() override
-    {
-        UNEXPECTED_CALL();
-        return 0;
-    }
+
+    NTF_MOCK_METHOD(ntsa::Handle, release)
+  public:
+
     ntsa::Error bind(const ntsa::Endpoint& endpoint,
                      bool                  reuseAddress) override
     {
@@ -1665,15 +1662,11 @@ class StreamSocketMock : public ntsi::StreamSocket
         UNEXPECTED_CALL();
         return ntsa::Error();
     }
-    ntsa::Error unlink() override
-    {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
-    }
-    ntsa::Error close() override
-    {
-        return d_invocation_close.invoke();
-    }
+
+    NTF_MOCK_METHOD(ntsa::Error, unlink)
+    NTF_MOCK_METHOD(ntsa::Error, close)
+  public:
+
     ntsa::Error sourceEndpoint(ntsa::Endpoint* result) const override
     {
         return d_invocation_sourceEndpoint.invoke(result);
@@ -1700,338 +1693,11 @@ class StreamSocketMock : public ntsi::StreamSocket
         UNEXPECTED_CALL();
         return ntsa::Error();
     }
-    size_t maxBuffersPerSend() const override
-    {
-        return d_invocation_maxBuffersPerSend.invoke();
-    }
-    size_t maxBuffersPerReceive() const override
-    {
-        return d_invocation_maxBuffersPerReceive.invoke();
-    }
 
-    struct Invocation_handle {
-      private:
-        struct InvocationData {
-            int                               d_expectedCalls;
-            bdlb::NullableValue<ntsa::Handle> d_result;
+    NTF_MOCK_METHOD_0_CONST(bsl::size_t, maxBuffersPerSend)
+    NTF_MOCK_METHOD_0_CONST(bsl::size_t, maxBuffersPerReceive)
 
-            InvocationData()
-            : d_expectedCalls(0)
-            , d_result()
-            {
-            }
-        };
-
-      public:
-        Invocation_handle& expect()
-        {
-            d_invocations.emplace_back();
-            InvocationData& invocation = d_invocations.back();
-            return *this;
-        }
-        Invocation_handle& willOnce()
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-
-            InvocationData& invocation = d_invocations.back();
-            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
-
-            invocation.d_expectedCalls = 1;
-            return *this;
-        }
-        Invocation_handle& willAlways()
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-
-            InvocationData& invocation = d_invocations.back();
-            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
-
-            invocation.d_expectedCalls = -1;
-            return *this;
-        }
-        //        Invocation_createTimer& times(int val){} //TODO: multiple calls
-
-        Invocation_handle& willReturn(ntsa::Handle result)
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-            InvocationData& invocation = d_invocations.back();
-            invocation.d_result        = result;
-            return *this;
-        }
-
-        ntsa::Handle invoke()
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-            InvocationData& invocation = d_invocations.front();
-
-            if (invocation.d_expectedCalls != -1) {
-                NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
-            }
-
-            NTCCFG_TEST_TRUE(invocation.d_result.has_value());
-            const auto result = invocation.d_result.value();
-
-            if (invocation.d_expectedCalls != -1) {
-                --invocation.d_expectedCalls;
-                if (invocation.d_expectedCalls == 0) {
-                    d_invocations.pop_front();
-                }
-            }
-
-            return result;
-        }
-
-      private:
-        bsl::list<InvocationData> d_invocations;
-    };
-
-    Invocation_handle& expect_handle()
-    {
-        return d_invocation_handle.expect();
-    }
-
-    struct Invocation_close {
-      private:
-        struct InvocationData {
-            int                              d_expectedCalls;
-            bdlb::NullableValue<ntsa::Error> d_result;
-
-            InvocationData()
-            : d_expectedCalls(0)
-            , d_result()
-            {
-            }
-        };
-
-      public:
-        Invocation_close& expect()
-        {
-            d_invocations.emplace_back();
-            InvocationData& invocation = d_invocations.back();
-            return *this;
-        }
-        Invocation_close& willOnce()
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-
-            InvocationData& invocation = d_invocations.back();
-            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
-
-            invocation.d_expectedCalls = 1;
-            return *this;
-        }
-        Invocation_close& willAlways()
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-
-            InvocationData& invocation = d_invocations.back();
-            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
-
-            invocation.d_expectedCalls = -1;
-            return *this;
-        }
-        //        Invocation_createTimer& times(int val){} //TODO: multiple calls
-
-        Invocation_close& willReturn(ntsa::Error result)
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-            InvocationData& invocation = d_invocations.back();
-            invocation.d_result        = result;
-            return *this;
-        }
-
-        ntsa::Error invoke()
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-            InvocationData& invocation = d_invocations.front();
-
-            if (invocation.d_expectedCalls != -1) {
-                NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
-            }
-
-            NTCCFG_TEST_TRUE(invocation.d_result.has_value());
-            const auto result = invocation.d_result.value();
-
-            if (invocation.d_expectedCalls != -1) {
-                --invocation.d_expectedCalls;
-                if (invocation.d_expectedCalls == 0) {
-                    d_invocations.pop_front();
-                }
-            }
-
-            return result;
-        }
-
-      private:
-        bsl::list<InvocationData> d_invocations;
-    };
-
-    Invocation_close& expect_close()
-    {
-        return d_invocation_close.expect();
-    }
-
-    struct Invocation_maxBuffersPerSend {
-      private:
-        struct InvocationData {
-            int                              d_expectedCalls;
-            bdlb::NullableValue<bsl::size_t> d_result;
-
-            InvocationData()
-            : d_expectedCalls(0)
-            , d_result()
-            {
-            }
-        };
-
-      public:
-        Invocation_maxBuffersPerSend& expect()
-        {
-            d_invocations.emplace_back();
-            InvocationData& invocation = d_invocations.back();
-            return *this;
-        }
-        Invocation_maxBuffersPerSend& willOnce()
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-
-            InvocationData& invocation = d_invocations.back();
-            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
-
-            invocation.d_expectedCalls = 1;
-            return *this;
-        }
-        Invocation_maxBuffersPerSend& willAlways()
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-
-            InvocationData& invocation = d_invocations.back();
-            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
-
-            invocation.d_expectedCalls = -1;
-            return *this;
-        }
-        //        Invocation_createTimer& times(int val){} //TODO: multiple calls
-
-        Invocation_maxBuffersPerSend& willReturn(bsl::size_t result)
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-            InvocationData& invocation = d_invocations.back();
-            invocation.d_result        = result;
-            return *this;
-        }
-
-        bsl::size_t invoke()
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-            InvocationData& invocation = d_invocations.front();
-
-            if (invocation.d_expectedCalls != -1) {
-                NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
-            }
-
-            NTCCFG_TEST_TRUE(invocation.d_result.has_value());
-            const auto result = invocation.d_result.value();
-
-            if (invocation.d_expectedCalls != -1) {
-                --invocation.d_expectedCalls;
-                if (invocation.d_expectedCalls == 0) {
-                    d_invocations.pop_front();
-                }
-            }
-
-            return result;
-        }
-
-      private:
-        bsl::list<InvocationData> d_invocations;
-    };
-
-    Invocation_maxBuffersPerSend& expect_maxBuffersPerSend()
-    {
-        return d_invocation_maxBuffersPerSend.expect();
-    }
-
-    struct Invocation_maxBuffersPerReceive {
-      private:
-        struct InvocationData {
-            int                              d_expectedCalls;
-            bdlb::NullableValue<bsl::size_t> d_result;
-
-            InvocationData()
-            : d_expectedCalls(0)
-            , d_result()
-            {
-            }
-        };
-
-      public:
-        Invocation_maxBuffersPerReceive& expect()
-        {
-            d_invocations.emplace_back();
-            InvocationData& invocation = d_invocations.back();
-            return *this;
-        }
-        Invocation_maxBuffersPerReceive& willOnce()
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-
-            InvocationData& invocation = d_invocations.back();
-            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
-
-            invocation.d_expectedCalls = 1;
-            return *this;
-        }
-        Invocation_maxBuffersPerReceive& willAlways()
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-
-            InvocationData& invocation = d_invocations.back();
-            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
-
-            invocation.d_expectedCalls = -1;
-            return *this;
-        }
-        //        Invocation_createTimer& times(int val){} //TODO: multiple calls
-
-        Invocation_maxBuffersPerReceive& willReturn(bsl::size_t result)
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-            InvocationData& invocation = d_invocations.back();
-            invocation.d_result        = result;
-            return *this;
-        }
-
-        bsl::size_t invoke()
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-            InvocationData& invocation = d_invocations.front();
-
-            if (invocation.d_expectedCalls != -1) {
-                NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
-            }
-
-            NTCCFG_TEST_TRUE(invocation.d_result.has_value());
-            const auto result = invocation.d_result.value();
-
-            if (invocation.d_expectedCalls != -1) {
-                --invocation.d_expectedCalls;
-                if (invocation.d_expectedCalls == 0) {
-                    d_invocations.pop_front();
-                }
-            }
-
-            return result;
-        }
-
-      private:
-        bsl::list<InvocationData> d_invocations;
-    };
-
-    Invocation_maxBuffersPerReceive& expect_maxBuffersPerReceive()
-    {
-        return d_invocation_maxBuffersPerReceive.expect();
-    }
+  public:
 
     struct Invocation_setBlocking {
       private:
@@ -2721,10 +2387,6 @@ class StreamSocketMock : public ntsi::StreamSocket
     }
 
   private:
-    mutable Invocation_handle               d_invocation_handle;
-    mutable Invocation_close                d_invocation_close;
-    mutable Invocation_maxBuffersPerSend    d_invocation_maxBuffersPerSend;
-    mutable Invocation_maxBuffersPerReceive d_invocation_maxBuffersPerReceive;
     mutable Invocation_setBlocking          d_invocation_setBlocking;
     mutable Invocation_setOption            d_invocation_setOption;
     mutable Invocation_getOption            d_invocation_getOption;

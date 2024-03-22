@@ -822,3 +822,116 @@ class TestAllocator : public bslma::Allocator
 #else
 #error Not implemented
 #endif
+
+//#define NTF_MOCK_METHOD_INVOKE_COMMON_IMP(unused)                             \
+
+
+#define NTF_MOCK_METHOD_COMMON_IMP(RESULT, METHOD_NAME)                       \
+  public:                                                                     \
+    Invocation_##METHOD_NAME& expect()                                        \
+    {                                                                         \
+        d_invocations.emplace_back();                                         \
+        InvocationData& invocation = d_invocations.back();                    \
+        return *this;                                                         \
+    }                                                                         \
+    Invocation_##METHOD_NAME& willOnce()                                      \
+    {                                                                         \
+        NTCCFG_TEST_FALSE(d_invocations.empty());                             \
+                                                                              \
+        InvocationData& invocation = d_invocations.back();                    \
+        NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);                        \
+                                                                              \
+        invocation.d_expectedCalls = 1;                                       \
+        return *this;                                                         \
+    }                                                                         \
+    Invocation_##METHOD_NAME& willAlways()                                    \
+    {                                                                         \
+        NTCCFG_TEST_FALSE(d_invocations.empty());                             \
+                                                                              \
+        InvocationData& invocation = d_invocations.back();                    \
+        NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);                        \
+                                                                              \
+        invocation.d_expectedCalls = -1;                                      \
+        return *this;                                                         \
+    }                                                                         \
+                                                                              \
+    Invocation_##METHOD_NAME& willReturn(const RESULT& result)                \
+    {                                                                         \
+        NTCCFG_TEST_FALSE(d_invocations.empty());                             \
+        InvocationData& invocation = d_invocations.back();                    \
+        invocation.d_result        = result;                                  \
+        return *this;                                                         \
+    }                                                                         \
+                                                                              \
+  private:                                                                    \
+    bsl::list<InvocationData> d_invocations;
+
+#define NTF_MOCK_METHOD_0_IMP(RESULT, METHOD_NAME)                            \
+  public:                                                                     \
+    class Invocation_##METHOD_NAME                                            \
+    {                                                                         \
+      private:                                                                \
+        struct InvocationData {                                               \
+            int                         d_expectedCalls;                      \
+            bdlb::NullableValue<RESULT> d_result;                             \
+                                                                              \
+            InvocationData()                                                  \
+            : d_expectedCalls(0)                                              \
+            , d_result()                                                      \
+            {                                                                 \
+            }                                                                 \
+        };                                                                    \
+                                                                              \
+        NTF_MOCK_METHOD_COMMON_IMP(RESULT, METHOD_NAME)                       \
+                                                                              \
+      public:                                                                 \
+        RESULT invoke()                                                       \
+        {                                                                     \
+            NTCCFG_TEST_FALSE(d_invocations.empty());                         \
+            InvocationData& invocation = d_invocations.front();               \
+                                                                              \
+            if (invocation.d_expectedCalls != -1) {                           \
+                NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);                \
+            }                                                                 \
+                                                                              \
+            NTCCFG_TEST_TRUE(invocation.d_result.has_value());                \
+            const auto result = invocation.d_result.value();                  \
+            if (invocation.d_expectedCalls != -1) {                           \
+                --invocation.d_expectedCalls;                                 \
+                if (invocation.d_expectedCalls == 0) {                        \
+                    d_invocations.pop_front();                                \
+                }                                                             \
+            }                                                                 \
+            return result;                                                    \
+        }                                                                     \
+    };                                                                        \
+                                                                              \
+    Invocation_##METHOD_NAME& expect_##METHOD_NAME()                          \
+    {                                                                         \
+        return d_invocation_##METHOD_NAME.expect();                           \
+    }                                                                         \
+                                                                              \
+  private:                                                                    \
+    mutable Invocation_##METHOD_NAME d_invocation_##METHOD_NAME;
+
+#define NTF_MOCK_METHOD_0(RESULT, METHOD_NAME)                                \
+  public:                                                                     \
+    RESULT METHOD_NAME() override                                             \
+    {                                                                         \
+        return d_invocation_##METHOD_NAME.invoke();                           \
+    }                                                                         \
+    NTF_MOCK_METHOD_0_IMP(RESULT, METHOD_NAME)
+
+#define NTF_MOCK_METHOD_0_CONST(RESULT, METHOD_NAME)                          \
+  public:                                                                     \
+    RESULT METHOD_NAME() const override                                       \
+    {                                                                         \
+        return d_invocation_##METHOD_NAME.invoke();                           \
+    }                                                                         \
+    NTF_MOCK_METHOD_0_IMP(RESULT, METHOD_NAME)
+
+#define NTF_MOCK_METHOD(RESULT, METHOD_NAME)                                  \
+    NTF_MOCK_METHOD_0(RESULT, METHOD_NAME)
+
+#define NTF_MOCK_METHOD_CONST(RESULT, METHOD_NAME)                            \
+    NTF_MOCK_METHOD_0_CONST(RESULT, METHOD_NAME)
