@@ -7071,6 +7071,53 @@ void concernClose(bslma::Allocator* allocator)
     interface->linger();
 }
 
+void concernConnectAndShutdown(
+    const bsl::shared_ptr<ntci::Interface>& interface,
+    bslma::Allocator*                       allocator)
+{
+    // Concern: test that shutdown works without assertions firing when it is
+    // called during socket detachment process. As it is impossible to ensure
+    // that socket is being detached at the moment timeout value in this test
+    // case was selected empirically. There is an assumption that port number
+    // for the remote enpoint is never listend by any service (port 51
+    // historically is used for Interface Message Processor logical address
+    // management).
+    // This test should not be unstable on other systems and it should work
+    // even if connection is not refused or shutdown is called not during
+    // socket detachment process
+
+    const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
+    const int         k_TIMEOUT_MICROSEC        = 100;
+    const char*       address                   = "127.0.0.1:51";
+
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error error;
+
+    ntca::StreamSocketOptions streamSocketOptions;
+    streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+
+    bsl::shared_ptr<ntci::StreamSocket> streamSocket =
+        interface->createStreamSocket(streamSocketOptions, allocator);
+
+    const ntci::StreamSocketCloseGuard closeGuard(streamSocket);
+
+    ntca::ConnectOptions connectOptions;
+    connectOptions.setRetryCount(k_MAX_CONNECTION_ATTEMPTS - 1);
+
+    const ntsa::Endpoint endpoint(address);
+
+    const ntci::ConnectCallback emptyCb;
+
+    error = streamSocket->connect(endpoint, connectOptions, emptyCb);
+    NTCCFG_TEST_OK(error);
+    bslmt::ThreadUtil::microSleep(k_TIMEOUT_MICROSEC, 0);
+
+    error = streamSocket->shutdown(ntsa::ShutdownType::e_BOTH,
+                                   ntsa::ShutdownMode::e_GRACEFUL);
+    NTCCFG_TEST_OK(error);
+}
+
 void concernConnectEndpoint1(const bsl::shared_ptr<ntci::Interface>& interface,
                              bslma::Allocator*                       allocator)
 {
@@ -11265,7 +11312,7 @@ namespace rateLimit {
 
 class DatagramSocketSession : public ntci::DatagramSocketSession
 {
-    bslmt::Semaphore *d_semaphore_p;
+    bslmt::Semaphore* d_semaphore_p;
     bsls::AtomicInt   d_readQueueRateLimitApplied;
     bsls::AtomicInt   d_readQueueRateLimitRelaxed;
     bsls::AtomicInt   d_writeQueueRateLimitApplied;
@@ -11277,7 +11324,7 @@ class DatagramSocketSession : public ntci::DatagramSocketSession
         BSLS_KEYWORD_DELETED;
 
   public:
-    explicit DatagramSocketSession(bslmt::Semaphore *semaphore);
+    explicit DatagramSocketSession(bslmt::Semaphore* semaphore);
 
     ~DatagramSocketSession() BSLS_KEYWORD_OVERRIDE;
 
@@ -11304,7 +11351,7 @@ class DatagramSocketSession : public ntci::DatagramSocketSession
     BSLS_ANNOTATION_NODISCARD int writeQueueRateLimitRelaxed() const;
 };
 
-DatagramSocketSession::DatagramSocketSession(bslmt::Semaphore *semaphore)
+DatagramSocketSession::DatagramSocketSession(bslmt::Semaphore* semaphore)
 : d_semaphore_p(semaphore)
 , d_readQueueRateLimitApplied(0)
 , d_readQueueRateLimitRelaxed(0)
@@ -11383,7 +11430,7 @@ int DatagramSocketSession::writeQueueRateLimitRelaxed() const
 
 class StreamSocketSession : public ntci::StreamSocketSession
 {
-    bslmt::Semaphore *d_semaphore_p;
+    bslmt::Semaphore* d_semaphore_p;
     bsls::AtomicInt   d_readQueueRateLimitApplied;
     bsls::AtomicInt   d_readQueueRateLimitRelaxed;
     bsls::AtomicInt   d_writeQueueRateLimitApplied;
@@ -11395,7 +11442,7 @@ class StreamSocketSession : public ntci::StreamSocketSession
         BSLS_KEYWORD_DELETED;
 
   public:
-    explicit StreamSocketSession(bslmt::Semaphore *semaphore);
+    explicit StreamSocketSession(bslmt::Semaphore* semaphore);
 
     ~StreamSocketSession() BSLS_KEYWORD_OVERRIDE;
 
@@ -11421,7 +11468,7 @@ class StreamSocketSession : public ntci::StreamSocketSession
     BSLS_ANNOTATION_NODISCARD int writeQueueRateLimitRelaxed() const;
 };
 
-StreamSocketSession::StreamSocketSession(bslmt::Semaphore *semaphore)
+StreamSocketSession::StreamSocketSession(bslmt::Semaphore* semaphore)
 : d_semaphore_p(semaphore)
 , d_readQueueRateLimitApplied(0)
 , d_readQueueRateLimitRelaxed(0)
@@ -11500,7 +11547,7 @@ int StreamSocketSession::writeQueueRateLimitRelaxed() const
 
 class ListenerSocketSession : public ntci::ListenerSocketSession
 {
-    bslmt::Semaphore *d_semaphore_p;
+    bslmt::Semaphore* d_semaphore_p;
     bsls::AtomicInt   d_rateLimitApplied;
     bsls::AtomicInt   d_rateLimitRelaxed;
 
@@ -11510,7 +11557,7 @@ class ListenerSocketSession : public ntci::ListenerSocketSession
         BSLS_KEYWORD_DELETED;
 
   public:
-    explicit ListenerSocketSession(bslmt::Semaphore *semaphore);
+    explicit ListenerSocketSession(bslmt::Semaphore* semaphore);
 
     ~ListenerSocketSession() BSLS_KEYWORD_OVERRIDE;
 
@@ -11526,7 +11573,7 @@ class ListenerSocketSession : public ntci::ListenerSocketSession
     BSLS_ANNOTATION_NODISCARD int rateLimitRelaxed() const;
 };
 
-ListenerSocketSession::ListenerSocketSession(bslmt::Semaphore *semaphore)
+ListenerSocketSession::ListenerSocketSession(bslmt::Semaphore* semaphore)
 : d_semaphore_p(semaphore)
 {
 }
@@ -13081,6 +13128,11 @@ NTCCFG_TEST_CASE(11)
 
 NTCCFG_TEST_CASE(12)
 {
+    ntccfg::TestAllocator ta;
+    {
+        test::concern(&test::concernConnectAndShutdown, &ta);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
 NTCCFG_TEST_CASE(13)

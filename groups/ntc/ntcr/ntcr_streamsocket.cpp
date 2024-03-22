@@ -6501,6 +6501,14 @@ ntsa::Error StreamSocket::shutdown(ntsa::ShutdownType::Value direction,
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
+    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
+        d_deferredCalls.push_back(NTCCFG_BIND(&StreamSocket::shutdown,
+                                              self,
+                                              direction,
+                                              mode));
+        return ntsa::Error();;
+    }
+
     if (d_connectInProgress) {
         if (direction == ntsa::ShutdownType::e_SEND ||
             direction == ntsa::ShutdownType::e_BOTH)
