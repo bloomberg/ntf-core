@@ -190,6 +190,10 @@ class DatagramSocket : public ntsi::DatagramSocket
     /// according to the specified 'blocking' flag. Return the error.
     ntsa::Error setBlocking(bool blocking) BSLS_KEYWORD_OVERRIDE;
 
+    /// Request the kernel if the socket is in a blocking mode and load the
+    /// result in the specified 'blocking' Return the error.
+    ntsa::Error isBlocking(bool* blocking) const BSLS_KEYWORD_OVERRIDE;
+
     /// Set the specified 'option' for this socket. Return the error.
     ntsa::Error setOption(const ntsa::SocketOption& option)
         BSLS_KEYWORD_OVERRIDE;

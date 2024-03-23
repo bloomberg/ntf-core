@@ -52,6 +52,10 @@ struct SocketOptionUtil {
     /// according to the specified 'blocking' flag. Return the error.
     static ntsa::Error setBlocking(ntsa::Handle socket, bool blocking);
 
+    /// If the specified 'socket' is in a blocking mode then load true in the
+    /// specified 'blocking', otherwise load false. Return the error.
+    static ntsa::Error isBlocking(ntsa::Handle handle, bool* blocking);
+
     /// Set the option for the specified 'socket' that controls automatic
     /// periodic transmission of TCP keep-alive packets according to the
     /// specified 'keepAlive' flag. Return the error.

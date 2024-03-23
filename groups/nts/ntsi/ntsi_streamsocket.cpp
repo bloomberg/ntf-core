@@ -140,6 +140,13 @@ ntsa::Error StreamSocket::setBlocking(bool blocking)
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
+ntsa::Error StreamSocket::isBlocking(bool* blocking) const
+{
+    NTSCFG_WARNING_UNUSED(blocking);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 ntsa::Error StreamSocket::setOption(const ntsa::SocketOption& option)
 {
     NTSCFG_WARNING_UNUSED(option);

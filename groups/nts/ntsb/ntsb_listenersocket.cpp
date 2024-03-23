@@ -188,6 +188,11 @@ ntsa::Error ListenerSocket::setBlocking(bool blocking)
     return ntsu::SocketOptionUtil::setBlocking(d_handle, blocking);
 }
 
+ntsa::Error ListenerSocket::isBlocking(bool* blocking) const
+{
+    return ntsu::SocketOptionUtil::isBlocking(d_handle, blocking);
+}
+
 ntsa::Error ListenerSocket::setOption(const ntsa::SocketOption& option)
 {
     return ntsu::SocketOptionUtil::setOption(d_handle, option);

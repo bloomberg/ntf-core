@@ -1871,6 +1871,102 @@ NTSCFG_TEST_CASE(7)
     }
 }
 
+NTSCFG_TEST_CASE(8)
+{
+    // Concern: test isLocal
+
+    ntsa::Error error;
+
+    const ntsa::Transport::Value SOCKET_TYPES[] = {
+        ntsa::Transport::e_TCP_IPV4_STREAM,
+        ntsa::Transport::e_TCP_IPV6_STREAM,
+#if !defined(BSLS_PLATFORM_OS_WINDOWS)
+        ntsa::Transport::e_LOCAL_STREAM,
+#endif
+        ntsa::Transport::e_UDP_IPV4_DATAGRAM,
+        ntsa::Transport::e_UDP_IPV6_DATAGRAM,
+#if !defined(BSLS_PLATFORM_OS_WINDOWS)
+        ntsa::Transport::e_LOCAL_DATAGRAM,
+#endif
+    };
+
+    for (bsl::size_t socketTypeIndex = 0;
+         socketTypeIndex < sizeof(SOCKET_TYPES) / sizeof(SOCKET_TYPES[0]);
+         ++socketTypeIndex)
+    {
+        ntsa::Transport::Value transport = SOCKET_TYPES[socketTypeIndex];
+
+        if (transport == ntsa::Transport::e_TCP_IPV4_STREAM ||
+            transport == ntsa::Transport::e_UDP_IPV4_DATAGRAM)
+        {
+            if (!ntsu::AdapterUtil::supportsIpv4()) {
+                continue;
+            }
+        }
+
+        if (transport == ntsa::Transport::e_TCP_IPV6_STREAM ||
+            transport == ntsa::Transport::e_UDP_IPV6_DATAGRAM)
+        {
+            if (!ntsu::AdapterUtil::supportsIpv6()) {
+                continue;
+            }
+        }
+
+        NTSCFG_TEST_LOG_WARN << "Testing " << transport << NTSCFG_TEST_LOG_END;
+
+        ntsa::Handle socket;
+        {
+            const ntsa::Error error = ntsu::SocketUtil::create(&socket, transport);
+            NTSCFG_TEST_OK(error);
+        }
+
+        {
+            const ntsa::Error error = ntsu::SocketOptionUtil::setBlocking(socket, false);
+            NTSCFG_TEST_OK(error);
+        }
+        {
+            bool blocking = true;
+            const ntsa::Error error = ntsu::SocketOptionUtil::isBlocking(socket, &blocking);
+#if !defined(BSLS_PLATFORM_OS_WINDOWS)
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_FALSE(blocking);
+#else
+            NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
+#endif
+        }
+        {
+            const ntsa::Error error = ntsu::SocketOptionUtil::setBlocking(socket, true);
+            NTSCFG_TEST_OK(error);
+        }
+        {
+            bool blocking = false;
+            const ntsa::Error error = ntsu::SocketOptionUtil::isBlocking(socket, &blocking);
+#if !defined(BSLS_PLATFORM_OS_WINDOWS)
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_TRUE(blocking);
+#else
+            NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
+#endif
+        }
+        {
+            const ntsa::Error error = ntsu::SocketOptionUtil::setBlocking(socket, false);
+            NTSCFG_TEST_OK(error);
+        }
+        {
+            bool blocking = true;
+            const ntsa::Error error = ntsu::SocketOptionUtil::isBlocking(socket, &blocking);
+#if !defined(BSLS_PLATFORM_OS_WINDOWS)
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_FALSE(blocking);
+#else
+            NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
+#endif
+        }
+    }
+
+
+}
+
 NTSCFG_TEST_DRIVER
 {
     NTSCFG_TEST_REGISTER(1);
@@ -1880,5 +1976,6 @@ NTSCFG_TEST_DRIVER
     NTSCFG_TEST_REGISTER(5);
     NTSCFG_TEST_REGISTER(6);
     NTSCFG_TEST_REGISTER(7);
+    NTSCFG_TEST_REGISTER(8);
 }
 NTSCFG_TEST_DRIVER_END;
