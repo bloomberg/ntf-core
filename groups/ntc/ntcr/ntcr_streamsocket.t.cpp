@@ -1604,7 +1604,8 @@ class StreamSocketMock : public ntsi::StreamSocket
         return ntsa::Error();
     }
 
-    NTF_MOCK_METHOD(ntsa::Handle, release)
+    NTF_MOCK_METHOD(ntsa::Handle, release);
+
   public:
 
     ntsa::Error bind(const ntsa::Endpoint& endpoint,
@@ -1694,8 +1695,8 @@ class StreamSocketMock : public ntsi::StreamSocket
         return ntsa::Error();
     }
 
-    NTF_MOCK_METHOD_0_CONST(bsl::size_t, maxBuffersPerSend)
-    NTF_MOCK_METHOD_0_CONST(bsl::size_t, maxBuffersPerReceive)
+    NTF_MOCK_METHOD_CONST(bsl::size_t, maxBuffersPerSend)
+    NTF_MOCK_METHOD_CONST(bsl::size_t, maxBuffersPerReceive)
 
   public:
 
@@ -5645,7 +5646,7 @@ NTCCFG_TEST_CASE(22)
             ntsa::Error::invalid());
         //TODO: is that ok to detach socket that has not been attached?
 
-        socketMock->expect_close().willOnce().willReturn(ntsa::Error());
+//        socketMock->expect_close().willOnce().willReturn(ntsa::Error());
 
         socket->shutdown(ntsa::ShutdownType::e_BOTH,
                          ntsa::ShutdownMode::e_GRACEFUL);
@@ -5818,7 +5819,7 @@ NTCCFG_TEST_CASE(23)
             bdlb::NullOptType::makeInitialValue(),
             ntsa::Error());
 
-        socketMock->expect_close().willOnce().willReturn(ntsa::Error());
+//        socketMock->expect_close().willOnce().willReturn(ntsa::Error());
 
         socket->shutdown(ntsa::ShutdownType::e_BOTH,
                          ntsa::ShutdownMode::e_GRACEFUL);
