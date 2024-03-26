@@ -839,13 +839,6 @@ class TestAllocator : public bslma::Allocator
     }
 
 #define NTF_MOCK_METHOD_COMMON_IMP(RESULT, METHOD_NAME)                       \
-  public:                                                                     \
-    Invocation_##METHOD_NAME& expect()                                        \
-    {                                                                         \
-        d_invocations.emplace_back();                                         \
-        InvocationData& invocation = d_invocations.back();                    \
-        return *this;                                                         \
-    }                                                                         \
     Invocation_##METHOD_NAME& willOnce()                                      \
     {                                                                         \
         NTCCFG_TEST_FALSE(d_invocations.empty());                             \
@@ -894,6 +887,14 @@ class TestAllocator : public bslma::Allocator
             }                                                                 \
         };                                                                    \
                                                                               \
+      public:                                                                 \
+        Invocation_##METHOD_NAME& expect()                                    \
+        {                                                                     \
+            d_invocations.emplace_back();                                     \
+            InvocationData& invocation = d_invocations.back();                \
+            return *this;                                                     \
+        }                                                                     \
+                                                                              \
         NTF_MOCK_METHOD_COMMON_IMP(RESULT, METHOD_NAME)                       \
                                                                               \
       public:                                                                 \
@@ -928,8 +929,6 @@ class TestAllocator : public bslma::Allocator
     }                                                                         \
     NTF_MOCK_METHOD_0_IMP(RESULT, METHOD_NAME)
 
-
-
 #define NTF_MOCK_METHOD_1_IMP(RESULT, METHOD_NAME, ARG1)                      \
   public:                                                                     \
     class Invocation_##METHOD_NAME                                            \
@@ -943,10 +942,21 @@ class TestAllocator : public bslma::Allocator
             InvocationData()                                                  \
             : d_expectedCalls(0)                                              \
             , d_result()                                                      \
-            , d_arg1                                                          \
+            , d_arg1()                                                        \
+            , d_arg1_out(0)                                                   \
             {                                                                 \
             }                                                                 \
         };                                                                    \
+                                                                              \
+      public:                                                                 \
+        Invocation_##METHOD_NAME& expect(                                     \
+            const bdlb::NullableValue<ARG1>& arg1)                            \
+        {                                                                     \
+            d_invocations.emplace_back();                                     \
+            InvocationData& invocation = d_invocations.back();                \
+            invocation.d_arg1          = arg1;                                \
+            return *this;                                                     \
+        }                                                                     \
                                                                               \
         NTF_MOCK_METHOD_COMMON_IMP(RESULT, METHOD_NAME)                       \
                                                                               \
@@ -972,9 +982,10 @@ class TestAllocator : public bslma::Allocator
         }                                                                     \
     };                                                                        \
                                                                               \
-    Invocation_##METHOD_NAME& expect_##METHOD_NAME()                          \
+    Invocation_##METHOD_NAME& expect_##METHOD_NAME(                           \
+        const bdlb::NullableValue<ARG1>& arg1)                                \
     {                                                                         \
-        return d_invocation_##METHOD_NAME.expect();                           \
+        return d_invocation_##METHOD_NAME.expect(arg1);                       \
     }                                                                         \
                                                                               \
   private:                                                                    \
@@ -997,14 +1008,17 @@ class TestAllocator : public bslma::Allocator
     }                                                                         \
     NTF_MOCK_METHOD_1_IMP(RESULT, METHOD_NAME, ARG1
 
-#define NTF_EXPAND( X ) X
-#define NTF_CAT( A, B ) A ## B
-#define NTF_SELECT( NAME, NUM ) NTF_CAT( NAME ## _, NUM )
+#define NTF_EXPAND(X) X
+#define NTF_CAT(A, B) A##B
+#define NTF_SELECT(NAME, NUM) NTF_CAT(NAME##_, NUM)
 
-#define NTF_GET_COUNT( _1, _2, _3, _4, _5, _6, COUNT, ... ) COUNT
-#define NTF_VA_SIZE( ... ) NTF_EXPAND( NTF_GET_COUNT( __VA_ARGS__, 4, 3, 2, 1, 0, -1 ) )
+#define NTF_GET_COUNT(_1, _2, _3, _4, _5, _6, COUNT, ...) COUNT
+#define NTF_VA_SIZE(...)                                                      \
+    NTF_EXPAND(NTF_GET_COUNT(__VA_ARGS__, 4, 3, 2, 1, 0, -1))
 
-#define NTF_VA_SELECT( NAME, ... ) NTF_SELECT( NAME, NTF_VA_SIZE(__VA_ARGS__) )(__VA_ARGS__)
+#define NTF_VA_SELECT(NAME, ...)                                              \
+    NTF_SELECT(NAME, NTF_VA_SIZE(__VA_ARGS__))(__VA_ARGS__)
 
-#define NTF_MOCK_METHOD( ... ) NTF_VA_SELECT( NTF_MOCK_METHOD, __VA_ARGS__ )
-#define NTF_MOCK_METHOD_CONST( ... ) NTF_VA_SELECT( NTF_MOCK_METHOD_CONST, __VA_ARGS__ )
+#define NTF_MOCK_METHOD(...) NTF_VA_SELECT(NTF_MOCK_METHOD, __VA_ARGS__)
+#define NTF_MOCK_METHOD_CONST(...)                                            \
+    NTF_VA_SELECT(NTF_MOCK_METHOD_CONST, __VA_ARGS__)
