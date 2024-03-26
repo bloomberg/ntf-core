@@ -18,11 +18,123 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntci_encryptioncertificate_cpp, "$Id$ $CSID$")
 
+#include <bdlbb_blob.h>
+#include <bdlbb_blobstreambuf.h>
+#include <bdlsb_fixedmeminstreambuf.h>
+#include <bdlsb_memoutstreambuf.h>
+#include <bsl_fstream.h>
+#include <bsl_sstream.h>
+
 namespace BloombergLP {
 namespace ntci {
 
 EncryptionCertificate::~EncryptionCertificate()
 {
+}
+
+ntsa::Error EncryptionCertificate::encode(bsl::streambuf* destination) const
+{
+    ntca::EncryptionCertificateStorageOptions options;
+    return this->encode(destination, options);
+}
+
+ntsa::Error EncryptionCertificate::encode(
+    bsl::streambuf*                                  destination,
+    const ntca::EncryptionCertificateStorageOptions& options) const
+{
+    NTCCFG_WARNING_UNUSED(destination);
+    NTCCFG_WARNING_UNUSED(options);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error EncryptionCertificate::encode(bdlbb::Blob* destination) const
+{
+    ntca::EncryptionCertificateStorageOptions options;
+    return this->encode(destination, options);
+}
+
+ntsa::Error EncryptionCertificate::encode(
+    bdlbb::Blob*                                     destination,
+    const ntca::EncryptionCertificateStorageOptions& options) const
+{
+    ntsa::Error error;
+
+    bdlbb::OutBlobStreamBuf osb(destination);
+
+    error = this->encode(&osb, options);
+    if (error) {
+        return error;
+    }
+
+    osb.pubsync();
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionCertificate::encode(bsl::string* destination) const
+{
+    ntca::EncryptionCertificateStorageOptions options;
+    return this->encode(destination, options);
+}
+
+ntsa::Error EncryptionCertificate::encode(
+    bsl::string*                                     destination,
+    const ntca::EncryptionCertificateStorageOptions& options) const
+{
+    ntsa::Error error;
+
+    bsl::ostringstream oss;
+
+    error = this->encode(oss.rdbuf(), options);
+    if (error) {
+        return error;
+    }
+
+    oss.flush();
+    *destination = oss.str();
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionCertificate::encode(bsl::vector<char>* destination) const
+{
+    ntca::EncryptionCertificateStorageOptions options;
+    return this->encode(destination, options);
+}
+
+ntsa::Error EncryptionCertificate::encode(
+    bsl::vector<char>*                               destination,
+    const ntca::EncryptionCertificateStorageOptions& options) const
+{
+    ntsa::Error error;
+
+    bdlsb::MemOutStreamBuf osb;
+
+    error = this->encode(&osb, options);
+    if (error) {
+        return error;
+    }
+
+    osb.pubsync();
+
+    destination->clear();
+    destination->insert(destination->begin(),
+                        osb.data(),
+                        osb.data() + osb.length());
+
+    return ntsa::Error();
+}
+
+void EncryptionCertificate::print(bsl::ostream& stream) const
+{
+    ntca::EncryptionCertificateStorageOptions options;
+    options.setType(ntca::EncryptionCertificateStorageType::e_PEM);
+    this->encode(stream.rdbuf(), options);
+}
+
+void* EncryptionCertificate::handle() const
+{
+    return 0;
 }
 
 }  // close package namespace

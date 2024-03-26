@@ -28,11 +28,9 @@ EncryptionClientOptions::EncryptionClientOptions(
 : d_minMethod(ntca::EncryptionMethod::e_TLS_V1_X)
 , d_maxMethod(ntca::EncryptionMethod::e_TLS_V1_X)
 , d_authentication(ntca::EncryptionAuthentication::e_NONE)
-, d_identityData(basicAllocator)
-, d_identityFile(basicAllocator)
-, d_privateKeyData(basicAllocator)
-, d_privateKeyFile(basicAllocator)
-, d_authorityDataList(basicAllocator)
+, d_identity(basicAllocator)
+, d_privateKey(basicAllocator)
+, d_authorityList(basicAllocator)
 , d_authorityDirectory(basicAllocator)
 , d_cipherSpec(basicAllocator)
 {
@@ -44,11 +42,9 @@ EncryptionClientOptions::EncryptionClientOptions(
 : d_minMethod(other.d_minMethod)
 , d_maxMethod(other.d_maxMethod)
 , d_authentication(other.d_authentication)
-, d_identityData(other.d_identityData, basicAllocator)
-, d_identityFile(other.d_identityFile, basicAllocator)
-, d_privateKeyData(other.d_privateKeyData, basicAllocator)
-, d_privateKeyFile(other.d_privateKeyFile, basicAllocator)
-, d_authorityDataList(other.d_authorityDataList, basicAllocator)
+, d_identity(other.d_identity, basicAllocator)
+, d_privateKey(other.d_privateKey, basicAllocator)
+, d_authorityList(other.d_authorityList, basicAllocator)
 , d_authorityDirectory(other.d_authorityDirectory, basicAllocator)
 , d_cipherSpec(other.d_cipherSpec, basicAllocator)
 {
@@ -65,16 +61,26 @@ EncryptionClientOptions& EncryptionClientOptions::operator=(
         d_minMethod          = other.d_minMethod;
         d_maxMethod          = other.d_maxMethod;
         d_authentication     = other.d_authentication;
-        d_identityData       = other.d_identityData;
-        d_identityFile       = other.d_identityFile;
-        d_privateKeyData     = other.d_privateKeyData;
-        d_privateKeyFile     = other.d_privateKeyFile;
-        d_authorityDataList  = other.d_authorityDataList;
+        d_identity           = other.d_identity;
+        d_privateKey         = other.d_privateKey;
+        d_authorityList      = other.d_authorityList;
         d_authorityDirectory = other.d_authorityDirectory;
         d_cipherSpec         = other.d_cipherSpec;
     }
 
     return *this;
+}
+
+void EncryptionClientOptions::reset()
+{
+    d_minMethod = ntca::EncryptionMethod::e_TLS_V1_X;
+    d_maxMethod = ntca::EncryptionMethod::e_TLS_V1_X;
+    d_authentication = ntca::EncryptionAuthentication::e_NONE;
+    d_identity.reset();
+    d_privateKey.reset();
+    d_authorityList.clear();
+    d_authorityDirectory.reset();
+    d_cipherSpec.reset();
 }
 
 void EncryptionClientOptions::setMinMethod(
@@ -96,43 +102,169 @@ void EncryptionClientOptions::setAuthentication(
 }
 
 void EncryptionClientOptions::setIdentityData(
-    const bsl::vector<char>& identityData)
+        const bsl::vector<char>& identityData)
 {
-    d_identityData = identityData;
+    d_identity.reset();
+    d_identity.makeValue();
+
+    ntca::EncryptionCertificateStorageDescriptor identityDescriptor;
+    identityDescriptor.makeData(identityData);
+
+    d_identity.value().setDescriptor(identityDescriptor);
+}
+
+void EncryptionClientOptions::setIdentityData(
+        const bsl::vector<char>&                         identityData,
+        const ntca::EncryptionCertificateStorageOptions& identityOptions)
+{
+    d_identity.reset();
+    d_identity.makeValue();
+
+    ntca::EncryptionCertificateStorageDescriptor identityDescriptor;
+    identityDescriptor.makeData(identityData);
+
+    d_identity.value().setDescriptor(identityDescriptor);
+    d_identity.value().setOptions(identityOptions);
 }
 
 void EncryptionClientOptions::setIdentityFile(
-    const bslstl::StringRef& identityFile)
+        const bsl::string& identityFile)
 {
-    d_identityFile = identityFile;
+    d_identity.reset();
+    d_identity.makeValue();
+
+    ntca::EncryptionCertificateStorageDescriptor identityDescriptor;
+    identityDescriptor.makePath(identityFile);
+
+    d_identity.value().setDescriptor(identityDescriptor);
+}
+
+void EncryptionClientOptions::setIdentityFile(
+        const bsl::string&                         identityFile,
+        const ntca::EncryptionCertificateStorageOptions& identityOptions)
+{
+    d_identity.reset();
+    d_identity.makeValue();
+
+    ntca::EncryptionCertificateStorageDescriptor identityDescriptor;
+    identityDescriptor.makePath(identityFile);
+
+    d_identity.value().setDescriptor(identityDescriptor);
+    d_identity.value().setOptions(identityOptions);
 }
 
 void EncryptionClientOptions::setPrivateKeyData(
-    const bsl::vector<char>& privateKeyData)
+        const bsl::vector<char>& privateKeyData)
 {
-    d_privateKeyData = privateKeyData;
+    d_privateKey.reset();
+    d_privateKey.makeValue();
+
+    ntca::EncryptionKeyStorageDescriptor privateKeyDescriptor;
+    privateKeyDescriptor.makeData(privateKeyData);
+
+    d_privateKey.value().setDescriptor(privateKeyDescriptor);
+}
+
+void EncryptionClientOptions::setPrivateKeyData(
+        const bsl::vector<char>&                 privateKeyData, 
+        const ntca::EncryptionKeyStorageOptions& privateKeyOptions)
+{
+    d_privateKey.reset();
+    d_privateKey.makeValue();
+
+    ntca::EncryptionKeyStorageDescriptor privateKeyDescriptor;
+    privateKeyDescriptor.makeData(privateKeyData);
+
+    d_privateKey.value().setDescriptor(privateKeyDescriptor);
+    d_privateKey.value().setOptions(privateKeyOptions);
 }
 
 void EncryptionClientOptions::setPrivateKeyFile(
-    const bslstl::StringRef& privateKeyFile)
+        const bsl::string& privateKeyFile)
 {
-    d_privateKeyFile = privateKeyFile;
+    d_privateKey.reset();
+    d_privateKey.makeValue();
+
+    ntca::EncryptionKeyStorageDescriptor privateKeyDescriptor;
+    privateKeyDescriptor.makePath(privateKeyFile);
+
+    d_privateKey.value().setDescriptor(privateKeyDescriptor);
+}
+
+void EncryptionClientOptions::setPrivateKeyFile(
+        const bsl::string&                       privateKeyFile,
+        const ntca::EncryptionKeyStorageOptions& privateKeyOptions)
+{
+    d_privateKey.reset();
+    d_privateKey.makeValue();
+
+    ntca::EncryptionKeyStorageDescriptor privateKeyDescriptor;
+    privateKeyDescriptor.makePath(privateKeyFile);
+
+    d_privateKey.value().setDescriptor(privateKeyDescriptor);
+    d_privateKey.value().setOptions(privateKeyOptions);
 }
 
 void EncryptionClientOptions::addAuthorityData(
-    const bsl::vector<char>& authorityData)
+        const bsl::vector<char>& authorityData)
 {
-    d_authorityDataList.push_back(authorityData);
+    ntca::EncryptionCertificateStorageDescriptor authorityDescriptor;
+    authorityDescriptor.makeData(authorityData);
+
+    ntca::EncryptionCertificateStorageData authority;
+    authority.setDescriptor(authorityDescriptor);
+
+    d_authorityList.push_back(authority);
+}
+
+void EncryptionClientOptions::addAuthorityData(
+        const bsl::vector<char>&                         authorityData,
+        const ntca::EncryptionCertificateStorageOptions& authorityOptions)
+{
+    ntca::EncryptionCertificateStorageDescriptor authorityDescriptor;
+    authorityDescriptor.makeData(authorityData);
+
+    ntca::EncryptionCertificateStorageData authority;
+    authority.setDescriptor(authorityDescriptor);
+    authority.setOptions(authorityOptions);
+
+    d_authorityList.push_back(authority);
+}
+
+void EncryptionClientOptions::addAuthorityFile(
+        const bsl::string& authorityFile)
+{
+    ntca::EncryptionCertificateStorageDescriptor authorityDescriptor;
+    authorityDescriptor.makePath(authorityFile);
+
+    ntca::EncryptionCertificateStorageData authority;
+    authority.setDescriptor(authorityDescriptor);
+
+    d_authorityList.push_back(authority);
+}
+
+void EncryptionClientOptions::addAuthorityFile(
+        const bsl::string&                               authorityFile,
+        const ntca::EncryptionCertificateStorageOptions& authorityOptions)
+{
+    ntca::EncryptionCertificateStorageDescriptor authorityDescriptor;
+    authorityDescriptor.makePath(authorityFile);
+
+    ntca::EncryptionCertificateStorageData authority;
+    authority.setDescriptor(authorityDescriptor);
+    authority.setOptions(authorityOptions);
+
+    d_authorityList.push_back(authority);
 }
 
 void EncryptionClientOptions::setAuthorityDirectory(
-    const bslstl::StringRef& authorityDirectory)
+    const bsl::string& authorityDirectory)
 {
     d_authorityDirectory = authorityDirectory;
 }
 
 void EncryptionClientOptions::setCipherSpec(
-    const bslstl::StringRef& cipherSpec)
+    const bsl::string& cipherSpec)
 {
     d_cipherSpec = cipherSpec;
 }
@@ -153,34 +285,22 @@ ntca::EncryptionAuthentication::Value EncryptionClientOptions::authentication()
     return d_authentication;
 }
 
-const bdlb::NullableValue<bsl::vector<char> >& EncryptionClientOptions::
-    identityData() const
+const bdlb::NullableValue<ntca::EncryptionCertificateStorageData>& 
+EncryptionClientOptions::identity() const
 {
-    return d_identityData;
+    return d_identity;
 }
 
-const bdlb::NullableValue<bsl::string>& EncryptionClientOptions::identityFile()
-    const
+const bdlb::NullableValue<ntca::EncryptionKeyStorageData>& 
+EncryptionClientOptions::privateKey() const
 {
-    return d_identityFile;
+    return d_privateKey;
 }
 
-const bdlb::NullableValue<bsl::vector<char> >& EncryptionClientOptions::
-    privateKeyData() const
+const bsl::vector<ntca::EncryptionCertificateStorageData>& 
+EncryptionClientOptions::authorityList() const
 {
-    return d_privateKeyData;
-}
-
-const bdlb::NullableValue<bsl::string>& EncryptionClientOptions::
-    privateKeyFile() const
-{
-    return d_privateKeyFile;
-}
-
-const EncryptionClientOptions::CertificateDataList& EncryptionClientOptions::
-    authorityDataList() const
-{
-    return d_authorityDataList;
+    return d_authorityList;
 }
 
 const bdlb::NullableValue<bsl::string>& EncryptionClientOptions::
@@ -205,17 +325,16 @@ bsl::ostream& EncryptionClientOptions::print(bsl::ostream& stream,
     printer.printAttribute("maxMethod", d_maxMethod);
     printer.printAttribute("authentication", d_authentication);
 
-    if (!d_identityFile.isNull()) {
-        printer.printAttribute("identityFile", d_identityFile.value());
+    if (!d_identity.isNull()) {
+        printer.printAttribute("identity", d_identity.value());
     }
 
-    if (!d_privateKeyFile.isNull()) {
-        printer.printAttribute("privateKeyFile", d_privateKeyFile.value());
+    if (!d_privateKey.isNull()) {
+        printer.printAttribute("privateKey", d_privateKey.value());
     }
 
-    if (!d_authorityDataList.empty()) {
-        printer.printAttribute("authorityDataList",
-                               d_authorityDataList.size());
+    if (!d_authorityList.empty()) {
+        printer.printAttribute("authorityList", d_authorityList);
     }
 
     if (!d_authorityDirectory.isNull()) {
@@ -237,11 +356,9 @@ bool operator==(const EncryptionClientOptions& lhs,
     return lhs.minMethod() == rhs.minMethod() &&
            lhs.maxMethod() == rhs.maxMethod() &&
            lhs.authentication() == rhs.authentication() &&
-           lhs.identityData() == rhs.identityData() &&
-           lhs.identityFile() == rhs.identityFile() &&
-           lhs.privateKeyData() == rhs.privateKeyData() &&
-           lhs.privateKeyFile() == rhs.privateKeyFile() &&
-           lhs.authorityDataList() == rhs.authorityDataList() &&
+           lhs.identity() == rhs.identity() &&
+           lhs.privateKey() == rhs.privateKey() &&
+           lhs.authorityList() == rhs.authorityList() &&
            lhs.authorityDirectory() == rhs.authorityDirectory() &&
            lhs.cipherSpec() == rhs.cipherSpec();
 }

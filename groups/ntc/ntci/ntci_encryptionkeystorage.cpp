@@ -22,6 +22,8 @@ BSLS_IDENT_RCSID(ntci_encryptionkeystorage_cpp, "$Id$ $CSID$")
 #include <bdlbb_blobstreambuf.h>
 #include <bdlsb_fixedmeminstreambuf.h>
 #include <bdlsb_memoutstreambuf.h>
+#include <bsl_fstream.h>
+#include <bsl_sstream.h>
 
 namespace BloombergLP {
 namespace ntci {
@@ -45,12 +47,12 @@ ntsa::Error EncryptionKeyStorage::loadKey(
     const ntca::EncryptionKeyStorageOptions& options,
     bslma::Allocator*                        basicAllocator)
 {
-    NTCCFG_WARNING_UNUSED(result);
-    NTCCFG_WARNING_UNUSED(path);
-    NTCCFG_WARNING_UNUSED(options);
-    NTCCFG_WARNING_UNUSED(basicAllocator);
+    bsl::fstream fs(path.c_str(), bsl::ios_base::in);
+    if (!fs) {
+        return ntsa::Error::last();
+    }
 
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    return this->decodeKey(result, fs.rdbuf(), options, basicAllocator);
 }
 
 ntsa::Error EncryptionKeyStorage::saveKey(
@@ -66,11 +68,12 @@ ntsa::Error EncryptionKeyStorage::saveKey(
     const bsl::string&                          path,
     const ntca::EncryptionKeyStorageOptions&    options)
 {
-    NTCCFG_WARNING_UNUSED(privateKey);
-    NTCCFG_WARNING_UNUSED(path);
-    NTCCFG_WARNING_UNUSED(options);
+    bsl::fstream fs(path.c_str(), bsl::ios_base::out);
+    if (!fs) {
+        return ntsa::Error::last();
+    }
 
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    return this->encodeKey(fs.rdbuf(), privateKey, options);
 }
 
 ntsa::Error EncryptionKeyStorage::encodeKey(

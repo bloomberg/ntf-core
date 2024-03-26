@@ -18,11 +18,116 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntci_encryptionkey_cpp, "$Id$ $CSID$")
 
+#include <bdlbb_blob.h>
+#include <bdlbb_blobstreambuf.h>
+#include <bdlsb_fixedmeminstreambuf.h>
+#include <bdlsb_memoutstreambuf.h>
+#include <bsl_fstream.h>
+#include <bsl_sstream.h>
+
 namespace BloombergLP {
 namespace ntci {
 
 EncryptionKey::~EncryptionKey()
 {
+}
+
+ntsa::Error EncryptionKey::encode(bsl::streambuf* destination) const
+{
+    ntca::EncryptionKeyStorageOptions options;
+    return this->encode(destination, options);
+}
+
+ntsa::Error EncryptionKey::encode(
+    bsl::streambuf*                          destination,
+    const ntca::EncryptionKeyStorageOptions& options) const
+{
+    NTCCFG_WARNING_UNUSED(destination);
+    NTCCFG_WARNING_UNUSED(options);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error EncryptionKey::encode(bdlbb::Blob* destination) const
+{
+    ntca::EncryptionKeyStorageOptions options;
+    return this->encode(destination, options);
+}
+
+ntsa::Error EncryptionKey::encode(
+    bdlbb::Blob*                             destination,
+    const ntca::EncryptionKeyStorageOptions& options) const
+{
+    ntsa::Error error;
+
+    bdlbb::OutBlobStreamBuf osb(destination);
+
+    error = this->encode(&osb, options);
+    if (error) {
+        return error;
+    }
+
+    osb.pubsync();
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionKey::encode(bsl::string* destination) const
+{
+    ntca::EncryptionKeyStorageOptions options;
+    return this->encode(destination, options);
+}
+
+ntsa::Error EncryptionKey::encode(
+    bsl::string*                             destination,
+    const ntca::EncryptionKeyStorageOptions& options) const
+{
+    ntsa::Error error;
+
+    bsl::ostringstream oss;
+
+    error = this->encode(oss.rdbuf(), options);
+    if (error) {
+        return error;
+    }
+
+    oss.flush();
+    *destination = oss.str();
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionKey::encode(bsl::vector<char>* destination) const
+{
+    ntca::EncryptionKeyStorageOptions options;
+    return this->encode(destination, options);
+}
+
+ntsa::Error EncryptionKey::encode(
+    bsl::vector<char>*                       destination,
+    const ntca::EncryptionKeyStorageOptions& options) const
+{
+    ntsa::Error error;
+
+    bdlsb::MemOutStreamBuf osb;
+
+    error = this->encode(&osb, options);
+    if (error) {
+        return error;
+    }
+
+    osb.pubsync();
+
+    destination->clear();
+    destination->insert(destination->begin(),
+                        osb.data(),
+                        osb.data() + osb.length());
+
+    return ntsa::Error();
+}
+
+void* EncryptionKey::handle() const
+{
+    return 0;
 }
 
 }  // close package namespace

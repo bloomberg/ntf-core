@@ -19,6 +19,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntca_encryptionkeystorageoptions.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 #include <ntsa_error.h>
@@ -43,19 +44,43 @@ class EncryptionKey
     virtual ~EncryptionKey();
 
     /// Encode the key in PEM format to the specified 'destination'.
-    virtual ntsa::Error encode(bsl::streambuf* destination) const = 0;
+    virtual ntsa::Error encode(bsl::streambuf* destination) const;
+
+    /// Encode the key according to the specified 'options' to the specified
+    /// 'destination'.
+    virtual ntsa::Error encode(
+        bsl::streambuf*                          destination,
+        const ntca::EncryptionKeyStorageOptions& options) const;
 
     /// Encode the key in PEM format to the specified 'destination'.
-    virtual ntsa::Error encode(bdlbb::Blob* destination) const = 0;
+    virtual ntsa::Error encode(bdlbb::Blob* destination) const;
+
+    /// Encode the key according to the specified 'options' to the specified
+    /// 'destination'.
+    virtual ntsa::Error encode(
+        bdlbb::Blob*                             destination,
+        const ntca::EncryptionKeyStorageOptions& options) const;
 
     /// Encode the key in PEM format to the specified 'destination'.
-    virtual ntsa::Error encode(bsl::string* destination) const = 0;
+    virtual ntsa::Error encode(bsl::string* destination) const;
+
+    /// Encode the key according to the specified 'options' to the specified
+    /// 'destination'.
+    virtual ntsa::Error encode(
+        bsl::string*                             destination,
+        const ntca::EncryptionKeyStorageOptions& options) const;
 
     /// Encode the key in PEM format to the specified 'destination'.
-    virtual ntsa::Error encode(bsl::vector<char>* destination) const = 0;
+    virtual ntsa::Error encode(bsl::vector<char>* destination) const;
+
+    /// Encode the key according to the specified 'options' to the specified
+    /// 'destination'.
+    virtual ntsa::Error encode(
+        bsl::vector<char>*                       destination,
+        const ntca::EncryptionKeyStorageOptions& options) const;
 
     /// Return a handle to the private implementation.
-    virtual void* handle() const = 0;
+    virtual void* handle() const;
 };
 
 }  // end namespace ntci

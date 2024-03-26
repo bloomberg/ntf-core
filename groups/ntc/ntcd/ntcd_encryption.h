@@ -63,7 +63,8 @@ class EncryptionKey : public ntci::EncryptionKey
     ~EncryptionKey() BSLS_KEYWORD_OVERRIDE;
 
     /// Encode the key in PEM format to the specified 'destination'.
-    ntsa::Error encode(bsl::streambuf* destination) const
+    ntsa::Error encode(
+        bsl::streambuf* destination) const
         BSLS_KEYWORD_OVERRIDE;
 
     /// Encode the key in PEM format to the specified 'destination'.

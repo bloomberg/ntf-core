@@ -22,6 +22,8 @@ BSLS_IDENT_RCSID(ntci_encryptioncertificatestorage_cpp, "$Id$ $CSID$")
 #include <bdlbb_blobstreambuf.h>
 #include <bdlsb_fixedmeminstreambuf.h>
 #include <bdlsb_memoutstreambuf.h>
+#include <bsl_fstream.h>
+#include <bsl_sstream.h>
 
 namespace BloombergLP {
 namespace ntci {
@@ -45,12 +47,15 @@ ntsa::Error EncryptionCertificateStorage::loadCertificate(
     const ntca::EncryptionCertificateStorageOptions& options,
     bslma::Allocator*                                basicAllocator)
 {
-    NTCCFG_WARNING_UNUSED(result);
-    NTCCFG_WARNING_UNUSED(path);
-    NTCCFG_WARNING_UNUSED(options);
-    NTCCFG_WARNING_UNUSED(basicAllocator);
+    bsl::fstream fs(path.c_str(), bsl::ios_base::in);
+    if (!fs) {
+        return ntsa::Error::last();
+    }
 
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    return this->decodeCertificate(result,
+                                   fs.rdbuf(),
+                                   options,
+                                   basicAllocator);
 }
 
 ntsa::Error EncryptionCertificateStorage::saveCertificate(
@@ -66,11 +71,12 @@ ntsa::Error EncryptionCertificateStorage::saveCertificate(
     const bsl::string&                                  path,
     const ntca::EncryptionCertificateStorageOptions&    options)
 {
-    NTCCFG_WARNING_UNUSED(certificate);
-    NTCCFG_WARNING_UNUSED(path);
-    NTCCFG_WARNING_UNUSED(options);
+    bsl::fstream fs(path.c_str(), bsl::ios_base::out);
+    if (!fs) {
+        return ntsa::Error::last();
+    }
 
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    return this->encodeCertificate(fs.rdbuf(), certificate, options);
 }
 
 ntsa::Error EncryptionCertificateStorage::encodeCertificate(

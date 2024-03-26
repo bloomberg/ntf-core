@@ -19,6 +19,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntca_encryptioncertificatestorageoptions.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 #include <ntsa_distinguishedname.h>
@@ -49,29 +50,53 @@ class EncryptionCertificate
     virtual ~EncryptionCertificate();
 
     /// Return the subject of the certificate.
-    virtual const ntsa::DistinguishedName& subject() const = 0;
+    virtual const ntsa::DistinguishedName& subject() const;
 
     /// Return the issuer of the certificate.
-    virtual const ntsa::DistinguishedName& issuer() const = 0;
+    virtual const ntsa::DistinguishedName& issuer() const;
 
     /// Encode the certificate in PEM format to the specified 'destination'.
-    virtual ntsa::Error encode(bsl::streambuf* destination) const = 0;
+    virtual ntsa::Error encode(bsl::streambuf* destination) const;
+
+    /// Encode the certificate according to the specified 'options' to the
+    /// specified 'destination'.
+    virtual ntsa::Error encode(
+        bsl::streambuf*                                  destination,
+        const ntca::EncryptionCertificateStorageOptions& options) const;
 
     /// Encode the certificate in PEM format to the specified 'destination'.
-    virtual ntsa::Error encode(bdlbb::Blob* destination) const = 0;
+    virtual ntsa::Error encode(bdlbb::Blob* destination) const;
+
+    /// Encode the certificate according to the specified 'options' to the
+    /// specified 'destination'.
+    virtual ntsa::Error encode(
+        bdlbb::Blob*                                     destination,
+        const ntca::EncryptionCertificateStorageOptions& options) const;
 
     /// Encode the certificate in PEM format to the specified 'destination'.
-    virtual ntsa::Error encode(bsl::string* destination) const = 0;
+    virtual ntsa::Error encode(bsl::string* destination) const;
+
+    /// Encode the certificate according to the specified 'options' to the
+    /// specified 'destination'.
+    virtual ntsa::Error encode(
+        bsl::string*                                     destination,
+        const ntca::EncryptionCertificateStorageOptions& options) const;
 
     /// Encode the certificate in PEM format to the specified 'destination'.
-    virtual ntsa::Error encode(bsl::vector<char>* destination) const = 0;
+    virtual ntsa::Error encode(bsl::vector<char>* destination) const;
+
+    /// Encode the certificate according to the specified 'options' to the
+    /// specified 'destination'.
+    virtual ntsa::Error encode(
+        bsl::vector<char>*                               destination,
+        const ntca::EncryptionCertificateStorageOptions& options) const;
 
     /// Print the certificate to the specified stream in an unspecified but
     /// human-readable form.
-    virtual void print(bsl::ostream& stream) const = 0;
+    virtual void print(bsl::ostream& stream) const;
 
     /// Return a handle to the private implementation.
-    virtual void* handle() const = 0;
+    virtual void* handle() const;
 };
 
 }  // end namespace ntci

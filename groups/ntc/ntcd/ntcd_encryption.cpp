@@ -1865,6 +1865,10 @@ ntsa::Error EncryptionClient::createEncryption(
     bsl::shared_ptr<ntci::Encryption>* result,
     bslma::Allocator*                  basicAllocator)
 {
+    // MRM
+    NTCCFG_WARNING_UNUSED(result);
+    NTCCFG_WARNING_UNUSED(basicAllocator);
+#if 0
     ntsa::Error error;
 
     bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
@@ -1902,6 +1906,7 @@ ntsa::Error EncryptionClient::createEncryption(
                              allocator);
 
     *result = encryption;
+#endif
     return ntsa::Error();
 }
 
@@ -1953,6 +1958,10 @@ ntsa::Error EncryptionServer::createEncryption(
     bsl::shared_ptr<ntci::Encryption>* result,
     bslma::Allocator*                  basicAllocator)
 {
+    // MRM
+    NTCCFG_WARNING_UNUSED(result);
+    NTCCFG_WARNING_UNUSED(basicAllocator);
+#if 0
     ntsa::Error error;
 
     bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
@@ -1990,6 +1999,8 @@ ntsa::Error EncryptionServer::createEncryption(
                              allocator);
 
     *result = encryption;
+#endif
+
     return ntsa::Error();
 }
 

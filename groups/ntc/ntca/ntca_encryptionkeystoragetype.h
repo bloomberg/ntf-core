@@ -25,7 +25,7 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntca {
 
-/// Enumerate the encryption key types.
+/// Enumerate the encryption key storage types.
 ///
 /// @par Thread Safety
 /// This struct is thread safe.
@@ -33,7 +33,7 @@ namespace ntca {
 /// @ingroup module_ntci_encryption
 struct EncryptionKeyStorageType {
   public:
-    /// Enumerate the encryption key types.
+    /// Enumerate the encryption key storage types.
     enum Value {
         /// The key is stored in the Privacy Enhanced Mail (PEM) format.
         e_PEM = 0,
