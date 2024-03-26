@@ -15,46 +15,47 @@
 
 #include <ntcq_zerocopy.h>
 
-#include <ntcq_send.h>
-#include <ntci_sender.h>
-#include <ntci_sendcallback.h>
-#include <ntcs_datapool.h>
 #include <ntccfg_test.h>
+#include <ntci_sendcallback.h>
+#include <ntci_sender.h>
+#include <ntcq_send.h>
+#include <ntcs_datapool.h>
 #include <bslma_allocator.h>
 
 using namespace BloombergLP;
 
 namespace test {
 
-/// Provide a mechanism to track the transfer state of data that is 
+/// Provide a mechanism to track the transfer state of data that is
 /// zero-copied.
-class Transfer {
-    ntcq::SendCounter                d_group;
-    bsl::size_t                      d_numOperations;
-    bool                             d_complete;
-    bsl::shared_ptr<ntci::Sender>    d_sender_sp;
-    bsl::shared_ptr<ntsa::Data>      d_data_sp;
-    bsl::shared_ptr<ntci::DataPool>  d_dataPool_sp;
-    bslma::Allocator                *d_allocator_p;
+class Transfer
+{
+    ntcq::SendCounter               d_group;
+    bsl::size_t                     d_numOperations;
+    bool                            d_complete;
+    bsl::shared_ptr<ntci::Sender>   d_sender_sp;
+    bsl::shared_ptr<ntsa::Data>     d_data_sp;
+    bsl::shared_ptr<ntci::DataPool> d_dataPool_sp;
+    bslma::Allocator*               d_allocator_p;
 
-private:
+  private:
     Transfer(const Transfer&) BSLS_KEYWORD_DELETED;
     Transfer& operator=(const Transfer&) BSLS_KEYWORD_DELETED;
 
-private:
+  private:
     /// Process the completion of a zero-copy transmission by the specified
     /// 'sender' according to the specified 'event'.
     void processComplete(const bsl::shared_ptr<ntci::Sender>& sender,
                          const ntca::SendEvent&               event);
 
-public:
+  public:
     /// Create a new transfer for the specified 'group' requiring the specified
     /// 'numOperations' to transfer all the data provided by the specified
     /// 'dataPool'. Optionally specify a 'basicAllocator' used to supply
     /// memory. If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
     Transfer(const bsl::shared_ptr<ntci::Sender>&   sender,
-             ntcq::SendCounter                      group, 
+             ntcq::SendCounter                      group,
              bsl::size_t                            numOperations,
              const bsl::shared_ptr<ntci::DataPool>& dataPool,
              bslma::Allocator*                      basicAllocator = 0);
@@ -63,19 +64,19 @@ public:
     ~Transfer();
 
     /// Submit all operations for this transfer to the specified
-    /// 'zeroCopyQueue'. 
+    /// 'zeroCopyQueue'.
     void submit(ntcq::ZeroCopyQueue* zeroCopyQueue);
 
     /// Return the identifier of the transfer.
     ntcq::SendCounter group() const;
 
     /// Return true if all required operations for this transfer have been
-    /// completed, otherwise return false. 
+    /// completed, otherwise return false.
     bool complete() const;
 
     /// Return true if not all required operations for this transfer have been
     /// completed, otherwise return false. Note that this function returns
-    /// the negation of 'complete()'. 
+    /// the negation of 'complete()'.
     bool pending() const;
 
     /// Return a new transfer for the specified 'group' requiring the specified
@@ -85,7 +86,7 @@ public:
     /// allocator is used.
     static bsl::shared_ptr<Transfer> create(
         const bsl::shared_ptr<ntci::Sender>&   sender,
-        ntcq::SendCounter                      group, 
+        ntcq::SendCounter                      group,
         bsl::size_t                            numOperations,
         const bsl::shared_ptr<ntci::DataPool>& dataPool,
         bslma::Allocator*                      basicAllocator = 0);
@@ -98,7 +99,7 @@ void Transfer::processComplete(const bsl::shared_ptr<ntci::Sender>& sender,
 {
     NTCI_LOG_CONTEXT();
 
-    NTCI_LOG_STREAM_DEBUG << "Zero-copy group " << d_group << " complete" 
+    NTCI_LOG_STREAM_DEBUG << "Zero-copy group " << d_group << " complete"
                           << NTCI_LOG_STREAM_END;
 
     NTCCFG_TEST_EQ(sender, d_sender_sp);
@@ -110,7 +111,7 @@ void Transfer::processComplete(const bsl::shared_ptr<ntci::Sender>& sender,
 }
 
 Transfer::Transfer(const bsl::shared_ptr<ntci::Sender>&   sender,
-                   ntcq::SendCounter                      group, 
+                   ntcq::SendCounter                      group,
                    bsl::size_t                            numOperations,
                    const bsl::shared_ptr<ntci::DataPool>& dataPool,
                    bslma::Allocator*                      basicAllocator)
@@ -132,17 +133,16 @@ void Transfer::submit(ntcq::ZeroCopyQueue* zeroCopyQueue)
 {
     NTCI_LOG_CONTEXT();
 
-    NTCI_LOG_STREAM_DEBUG << "Zero-copy group " << d_group << " starting" 
+    NTCI_LOG_STREAM_DEBUG << "Zero-copy group " << d_group << " starting"
                           << NTCI_LOG_STREAM_END;
 
     NTCCFG_TEST_GT(d_numOperations, 0);
     NTCCFG_TEST_FALSE(d_complete);
 
-    ntci::SendCallback callback(
-        NTCCFG_BIND(&Transfer::processComplete, 
-                    this, 
-                    NTCCFG_BIND_PLACEHOLDER_1, 
-                    NTCCFG_BIND_PLACEHOLDER_2));
+    ntci::SendCallback callback(NTCCFG_BIND(&Transfer::processComplete,
+                                            this,
+                                            NTCCFG_BIND_PLACEHOLDER_1,
+                                            NTCCFG_BIND_PLACEHOLDER_2));
 
     for (bsl::size_t i = 0; i < d_numOperations; ++i) {
         if (i == 0) {
@@ -173,7 +173,7 @@ bool Transfer::pending() const
 
 bsl::shared_ptr<Transfer> Transfer::create(
     const bsl::shared_ptr<ntci::Sender>&   sender,
-    ntcq::SendCounter                      group, 
+    ntcq::SendCounter                      group,
     bsl::size_t                            numOperations,
     const bsl::shared_ptr<ntci::DataPool>& dataPool,
     bslma::Allocator*                      basicAllocator)
@@ -181,29 +181,32 @@ bsl::shared_ptr<Transfer> Transfer::create(
     bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
 
     bsl::shared_ptr<Transfer> transfer;
-    transfer.createInplace(
-        allocator, sender, group, numOperations, dataPool, allocator);
+    transfer.createInplace(allocator,
+                           sender,
+                           group,
+                           numOperations,
+                           dataPool,
+                           allocator);
 
     return transfer;
 }
 
 /// Provide utilities for testing a zero-copy queue.
-struct ZeroCopyUtil
-{
-    /// Submit all operations required by the specified 'transfer' to the 
+struct ZeroCopyUtil {
+    /// Submit all operations required by the specified 'transfer' to the
     /// 'zeroCopyQueue'.
     static void submit(ntcq::ZeroCopyQueue*                   zeroCopyQueue,
                        const bsl::shared_ptr<test::Transfer>& transfer);
 
-    /// Update the specified 'zeroCopyQueue' that previously-submitted 
-    /// '[from, thru]' operations are complete. 
+    /// Update the specified 'zeroCopyQueue' that previously-submitted
+    /// '[from, thru]' operations are complete.
     static void update(ntcq::ZeroCopyQueue* zeroCopyQueue,
                        bsl::uint32_t        from,
                        bsl::uint32_t        thru);
 
     /// Dequeue the next available completed operation, if any, and invoke its
     /// callback, if any. Assert that an operation is complete according to the
-    /// specified 'exists' flag. 
+    /// specified 'exists' flag.
     static void invoke(ntcq::ZeroCopyQueue*                 zeroCopyQueue,
                        const bsl::shared_ptr<ntci::Sender>& sender,
                        bool                                 exists);
@@ -228,7 +231,7 @@ void ZeroCopyUtil::invoke(ntcq::ZeroCopyQueue*                 zeroCopyQueue,
                           bool                                 expected)
 {
     ntci::SendCallback callback;
-    bool found = zeroCopyQueue->pop(&callback);
+    bool               found = zeroCopyQueue->pop(&callback);
     NTCCFG_TEST_EQ(found, expected);
 
     if (found) {
@@ -241,7 +244,7 @@ void ZeroCopyUtil::invoke(ntcq::ZeroCopyQueue*                 zeroCopyQueue,
     }
 }
 
-} // close namespace test
+}  // close namespace test
 
 NTCCFG_TEST_CASE(1)
 {
@@ -250,7 +253,7 @@ NTCCFG_TEST_CASE(1)
 
     // Case 1: (invalid: we can't complete that which we haven't started)
     //
-    // WQ:        ----- 
+    // WQ:        -----
     // ZC:  -----
     //
     // Case 2: (invalid: we can't complete that which we haven't started)
@@ -260,32 +263,32 @@ NTCCFG_TEST_CASE(1)
     //
     // Case 3:
     //
-    // WQ:  XX--- 
-    // ZC:  XX 
+    // WQ:  XX---
+    // ZC:  XX
     //
     // Case 4:
     //
-    // WQ:  ----- 
-    // ZC:  ----- 
+    // WQ:  -----
+    // ZC:  -----
     //
     // Case 5:
     //
-    // WQ:  ---XX 
-    // ZC:     XX 
+    // WQ:  ---XX
+    // ZC:     XX
     //
     // Case 6: (invalid: we can't complete that which we haven't started)
     //
-    // WQ:  --XXX 
-    // ZC:    XXX-- 
+    // WQ:  --XXX
+    // ZC:    XXX--
     //
     // Case 7: (invalid: we can't complete that which we haven't started)
     //
-    // WQ:  ----- 
+    // WQ:  -----
     // ZC:        ------
 
     // Case 8: split
     //
-    // WQ:  ---------- 
+    // WQ:  ----------
     // ZC:    ------
 
     NTCI_LOG_CONTEXT();
@@ -340,20 +343,16 @@ NTCCFG_TEST_CASE(1)
             ntcq::ZeroCopyRange lhs(data.d_lhsMin, data.d_lhsMax);
             ntcq::ZeroCopyRange rhs(data.d_rhsMin, data.d_rhsMax);
 
-            ntcq::ZeroCopyRange expectedIntersection(
-                data.d_intersectionMin, 
-                data.d_intersectionMax);
+            ntcq::ZeroCopyRange expectedIntersection(data.d_intersectionMin,
+                                                     data.d_intersectionMax);
 
-            ntcq::ZeroCopyRange intersection = 
+            ntcq::ZeroCopyRange intersection =
                 ntcq::ZeroCopyRange::intersect(lhs, rhs);
 
-            NTCI_LOG_STREAM_DEBUG 
-                << "Testing line " << data.d_line
-                << "\nL: " << lhs
-                << "\nR: " << rhs
-                << "\nE: " << expectedIntersection
-                << "\nF: " << intersection
-                << NTCI_LOG_STREAM_END;
+            NTCI_LOG_STREAM_DEBUG
+                << "Testing line " << data.d_line << "\nL: " << lhs
+                << "\nR: " << rhs << "\nE: " << expectedIntersection
+                << "\nF: " << intersection << NTCI_LOG_STREAM_END;
 
             if (expectedIntersection.empty()) {
                 NTCCFG_TEST_TRUE(intersection.empty());
@@ -376,7 +375,7 @@ NTCCFG_TEST_CASE(2)
 
     ntccfg::TestAllocator ta;
     {
-        // LHS:     ----- 
+        // LHS:     -----
         // RHS: --------------
 
         {
@@ -460,10 +459,10 @@ NTCCFG_TEST_CASE(3)
 
     ntccfg::TestAllocator ta;
     {
-        const bsl::uint32_t k_U32_UINT32_MAX = 
+        const bsl::uint32_t k_U32_UINT32_MAX =
             bsl::numeric_limits<bsl::uint32_t>::max();
 
-        const bsl::uint64_t k_U64_UINT32_MAX = 
+        const bsl::uint64_t k_U64_UINT32_MAX =
             bsl::numeric_limits<bsl::uint32_t>::max();
 
         // Test basic operation.
@@ -481,9 +480,8 @@ NTCCFG_TEST_CASE(3)
             counter = generator.next();
             NTCCFG_TEST_EQ(counter, 2);
 
-            ntcq::ZeroCopyRange range = 
-                generator.update(
-                    ntsa::ZeroCopy(0, 3, ntsa::ZeroCopyType::e_AVOIDED));
+            ntcq::ZeroCopyRange range = generator.update(
+                ntsa::ZeroCopy(0, 3, ntsa::ZeroCopyType::e_AVOIDED));
 
             NTCCFG_TEST_EQ(range.minCounter(), 0);
             NTCCFG_TEST_EQ(range.maxCounter(), 4);
@@ -514,8 +512,8 @@ NTCCFG_TEST_CASE(3)
 
             {
                 ntcq::ZeroCopyRange range = generator.update(
-                    ntsa::ZeroCopy(k_U32_UINT32_MAX - 2, 
-                                   k_U32_UINT32_MAX - 2, 
+                    ntsa::ZeroCopy(k_U32_UINT32_MAX - 2,
+                                   k_U32_UINT32_MAX - 2,
                                    ntsa::ZeroCopyType::e_AVOIDED));
 
                 NTCCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX - 2);
@@ -524,8 +522,8 @@ NTCCFG_TEST_CASE(3)
 
             {
                 ntcq::ZeroCopyRange range = generator.update(
-                    ntsa::ZeroCopy(k_U32_UINT32_MAX - 1, 
-                                   k_U32_UINT32_MAX - 1, 
+                    ntsa::ZeroCopy(k_U32_UINT32_MAX - 1,
+                                   k_U32_UINT32_MAX - 1,
                                    ntsa::ZeroCopyType::e_AVOIDED));
 
                 NTCCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX - 1);
@@ -534,8 +532,8 @@ NTCCFG_TEST_CASE(3)
 
             {
                 ntcq::ZeroCopyRange range = generator.update(
-                    ntsa::ZeroCopy(k_U32_UINT32_MAX + 0, 
-                                   k_U32_UINT32_MAX + 0, 
+                    ntsa::ZeroCopy(k_U32_UINT32_MAX + 0,
+                                   k_U32_UINT32_MAX + 0,
                                    ntsa::ZeroCopyType::e_AVOIDED));
 
                 NTCCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX + 0);
@@ -544,9 +542,7 @@ NTCCFG_TEST_CASE(3)
 
             {
                 ntcq::ZeroCopyRange range = generator.update(
-                    ntsa::ZeroCopy(0, 
-                                   0, 
-                                   ntsa::ZeroCopyType::e_AVOIDED));
+                    ntsa::ZeroCopy(0, 0, ntsa::ZeroCopyType::e_AVOIDED));
 
                 NTCCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX + 1);
                 NTCCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX + 1 + 1);
@@ -554,9 +550,7 @@ NTCCFG_TEST_CASE(3)
 
             {
                 ntcq::ZeroCopyRange range = generator.update(
-                    ntsa::ZeroCopy(1, 
-                                   1, 
-                                   ntsa::ZeroCopyType::e_AVOIDED));
+                    ntsa::ZeroCopy(1, 1, ntsa::ZeroCopyType::e_AVOIDED));
 
                 NTCCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX + 2);
                 NTCCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX + 2 + 1);
@@ -589,8 +583,8 @@ NTCCFG_TEST_CASE(3)
 
             {
                 ntcq::ZeroCopyRange range = generator.update(
-                    ntsa::ZeroCopy(k_U32_UINT32_MAX - 1, 
-                                   k_U32_UINT32_MAX, 
+                    ntsa::ZeroCopy(k_U32_UINT32_MAX - 1,
+                                   k_U32_UINT32_MAX,
                                    ntsa::ZeroCopyType::e_AVOIDED));
 
                 NTCCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX - 1);
@@ -599,9 +593,7 @@ NTCCFG_TEST_CASE(3)
 
             {
                 ntcq::ZeroCopyRange range = generator.update(
-                    ntsa::ZeroCopy(0, 
-                                   1, 
-                                   ntsa::ZeroCopyType::e_AVOIDED));
+                    ntsa::ZeroCopy(0, 1, ntsa::ZeroCopyType::e_AVOIDED));
 
                 NTCCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX + 1);
                 NTCCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX + 3);
@@ -634,8 +626,8 @@ NTCCFG_TEST_CASE(3)
 
             {
                 ntcq::ZeroCopyRange range = generator.update(
-                    ntsa::ZeroCopy(k_U32_UINT32_MAX, 
-                                   0, 
+                    ntsa::ZeroCopy(k_U32_UINT32_MAX,
+                                   0,
                                    ntsa::ZeroCopyType::e_AVOIDED));
 
                 NTCCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX);
@@ -644,9 +636,7 @@ NTCCFG_TEST_CASE(3)
 
             {
                 ntcq::ZeroCopyRange range = generator.update(
-                    ntsa::ZeroCopy(1, 
-                                   2, 
-                                   ntsa::ZeroCopyType::e_AVOIDED));
+                    ntsa::ZeroCopy(1, 2, ntsa::ZeroCopyType::e_AVOIDED));
 
                 NTCCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX + 2);
                 NTCCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX + 4);
@@ -679,8 +669,8 @@ NTCCFG_TEST_CASE(3)
 
             {
                 ntcq::ZeroCopyRange range = generator.update(
-                    ntsa::ZeroCopy(k_U32_UINT32_MAX - 1, 
-                                   0, 
+                    ntsa::ZeroCopy(k_U32_UINT32_MAX - 1,
+                                   0,
                                    ntsa::ZeroCopyType::e_AVOIDED));
 
                 NTCCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX - 1);
@@ -689,9 +679,7 @@ NTCCFG_TEST_CASE(3)
 
             {
                 ntcq::ZeroCopyRange range = generator.update(
-                    ntsa::ZeroCopy(1, 
-                                   2, 
-                                   ntsa::ZeroCopyType::e_AVOIDED));
+                    ntsa::ZeroCopy(1, 2, ntsa::ZeroCopyType::e_AVOIDED));
 
                 NTCCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX + 2);
                 NTCCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX + 4);
@@ -749,7 +737,7 @@ NTCCFG_TEST_CASE(5)
 
         test::TransferHandle t0 = test::Transfer::create(s, 0, 1, dp, &ta);
         test::TransferHandle t1 = test::Transfer::create(s, 1, 1, dp, &ta);
-        
+
         test::ZeroCopyUtil::submit(&zq, t0);
         test::ZeroCopyUtil::submit(&zq, t1);
 
@@ -790,7 +778,7 @@ NTCCFG_TEST_CASE(6)
         test::TransferHandle t0 = test::Transfer::create(s, 0, 1, dp, &ta);
         test::TransferHandle t1 = test::Transfer::create(s, 1, 1, dp, &ta);
         test::TransferHandle t2 = test::Transfer::create(s, 2, 1, dp, &ta);
-        
+
         test::ZeroCopyUtil::submit(&zq, t0);
         test::ZeroCopyUtil::submit(&zq, t1);
         test::ZeroCopyUtil::submit(&zq, t2);
@@ -841,7 +829,7 @@ NTCCFG_TEST_CASE(7)
         test::TransferHandle t0 = test::Transfer::create(s, 0, 1, dp, &ta);
         test::TransferHandle t1 = test::Transfer::create(s, 1, 1, dp, &ta);
         test::TransferHandle t2 = test::Transfer::create(s, 2, 1, dp, &ta);
-        
+
         test::ZeroCopyUtil::submit(&zq, t0);
         test::ZeroCopyUtil::submit(&zq, t1);
         test::ZeroCopyUtil::submit(&zq, t2);
@@ -859,9 +847,9 @@ NTCCFG_TEST_CASE(7)
         NTCCFG_TEST_TRUE(t0->complete());
         NTCCFG_TEST_TRUE(t1->pending());
         NTCCFG_TEST_TRUE(t2->pending());
-        
+
         test::ZeroCopyUtil::invoke(&zq, s, true);
-        
+
         NTCCFG_TEST_TRUE(t0->complete());
         NTCCFG_TEST_TRUE(t1->complete());
         NTCCFG_TEST_TRUE(t2->pending());
@@ -923,7 +911,7 @@ NTCCFG_TEST_CASE(9)
 
         test::TransferHandle t0 = test::Transfer::create(s, 0, 2, dp, &ta);
         test::TransferHandle t1 = test::Transfer::create(s, 1, 2, dp, &ta);
-        
+
         test::ZeroCopyUtil::submit(&zq, t0);
         test::ZeroCopyUtil::submit(&zq, t1);
 
@@ -964,7 +952,7 @@ NTCCFG_TEST_CASE(10)
         test::TransferHandle t0 = test::Transfer::create(s, 0, 2, dp, &ta);
         test::TransferHandle t1 = test::Transfer::create(s, 1, 2, dp, &ta);
         test::TransferHandle t2 = test::Transfer::create(s, 2, 2, dp, &ta);
-        
+
         test::ZeroCopyUtil::submit(&zq, t0);
         test::ZeroCopyUtil::submit(&zq, t1);
         test::ZeroCopyUtil::submit(&zq, t2);
@@ -1015,7 +1003,7 @@ NTCCFG_TEST_CASE(11)
         test::TransferHandle t0 = test::Transfer::create(s, 0, 2, dp, &ta);
         test::TransferHandle t1 = test::Transfer::create(s, 1, 2, dp, &ta);
         test::TransferHandle t2 = test::Transfer::create(s, 2, 2, dp, &ta);
-        
+
         test::ZeroCopyUtil::submit(&zq, t0);
         test::ZeroCopyUtil::submit(&zq, t1);
         test::ZeroCopyUtil::submit(&zq, t2);
@@ -1037,9 +1025,9 @@ NTCCFG_TEST_CASE(11)
         test::ZeroCopyUtil::invoke(&zq, s, false);
 
         test::ZeroCopyUtil::update(&zq, 3, 4);
-        
+
         test::ZeroCopyUtil::invoke(&zq, s, true);
-        
+
         NTCCFG_TEST_TRUE(t0->complete());
         NTCCFG_TEST_TRUE(t1->complete());
         NTCCFG_TEST_TRUE(t2->pending());
@@ -1056,7 +1044,6 @@ NTCCFG_TEST_CASE(11)
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
-
 
 NTCCFG_TEST_CASE(12)
 {
@@ -1078,7 +1065,7 @@ NTCCFG_TEST_CASE(12)
         test::TransferHandle t0 = test::Transfer::create(s, 0, 2, dp, &ta);
         test::TransferHandle t1 = test::Transfer::create(s, 1, 2, dp, &ta);
         test::TransferHandle t2 = test::Transfer::create(s, 2, 2, dp, &ta);
-        
+
         test::ZeroCopyUtil::submit(&zq, t0);
         test::ZeroCopyUtil::submit(&zq, t1);
         test::ZeroCopyUtil::submit(&zq, t2);
@@ -1100,9 +1087,9 @@ NTCCFG_TEST_CASE(12)
         test::ZeroCopyUtil::invoke(&zq, s, false);
 
         test::ZeroCopyUtil::update(&zq, 1, 2);
-        
+
         test::ZeroCopyUtil::invoke(&zq, s, true);
-        
+
         NTCCFG_TEST_TRUE(t0->pending());
         NTCCFG_TEST_TRUE(t1->complete());
         NTCCFG_TEST_TRUE(t2->complete());
@@ -1140,7 +1127,7 @@ NTCCFG_TEST_CASE(13)
         test::TransferHandle x = test::Transfer::create(s, 0, 7, dp, &ta);
         test::TransferHandle y = test::Transfer::create(s, 1, 7, dp, &ta);
         test::TransferHandle z = test::Transfer::create(s, 2, 7, dp, &ta);
-        
+
         test::ZeroCopyUtil::submit(&zq, x);
         test::ZeroCopyUtil::submit(&zq, y);
         test::ZeroCopyUtil::submit(&zq, z);

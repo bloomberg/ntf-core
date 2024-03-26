@@ -382,11 +382,11 @@ void DatagramSocket::processSendDeadlineTimer(
             sendEvent.setContext(sendContext);
 
             callback.dispatch(self,
-                                                   sendEvent,
-                                                   d_proactorStrand_sp,
-                                                   self,
-                                                   false,
-                                                   &d_mutex);
+                              sendEvent,
+                              d_proactorStrand_sp,
+                              self,
+                              false,
+                              &d_mutex);
         }
     }
 }
@@ -771,11 +771,11 @@ void DatagramSocket::privateCompleteSend(
         sendEvent.setContext(sendContext);
 
         callback.dispatch(self,
-                                               sendEvent,
-                                               d_proactorStrand_sp,
-                                               self,
-                                               false,
-                                               &d_mutex);
+                          sendEvent,
+                          d_proactorStrand_sp,
+                          self,
+                          false,
+                          &d_mutex);
     }
 
     if (d_sendQueue.authorizeLowWatermarkEvent()) {
@@ -829,11 +829,11 @@ void DatagramSocket::privateFailSend(
         sendEvent.setContext(sendContext);
 
         callback.dispatch(self,
-                                               sendEvent,
-                                               d_proactorStrand_sp,
-                                               self,
-                                               false,
-                                               &d_mutex);
+                          sendEvent,
+                          d_proactorStrand_sp,
+                          self,
+                          false,
+                          &d_mutex);
     }
 }
 
@@ -1113,11 +1113,11 @@ void DatagramSocket::privateShutdownSequencePart2(
             sendEvent.setContext(sendContext);
 
             callbackVector[i].dispatch(self,
-                                                   sendEvent,
-                                                   d_proactorStrand_sp,
-                                                   self,
-                                                   defer,
-                                                   &d_mutex);
+                                       sendEvent,
+                                       d_proactorStrand_sp,
+                                       self,
+                                       defer,
+                                       &d_mutex);
         }
 
         callbackVector.clear();
@@ -3665,11 +3665,11 @@ ntsa::Error DatagramSocket::cancel(const ntca::SendToken& token)
         sendEvent.setContext(sendContext);
 
         callback.dispatch(self,
-                                               sendEvent,
-                                               d_proactorStrand_sp,
-                                               self,
-                                               true,
-                                               &d_mutex);
+                          sendEvent,
+                          d_proactorStrand_sp,
+                          self,
+                          true,
+                          &d_mutex);
 
         return ntsa::Error();
     }

@@ -26,7 +26,8 @@ BSLS_IDENT_RCSID(ntca_encryptioncertificatestorageoptions_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntca {
 
-EncryptionCertificateStorageOptions::EncryptionCertificateStorageOptions(bslma::Allocator* basicAllocator)
+EncryptionCertificateStorageOptions::EncryptionCertificateStorageOptions(
+    bslma::Allocator* basicAllocator)
 : d_type()
 , d_label(basicAllocator)
 , d_passphrase(basicAllocator)
@@ -35,8 +36,8 @@ EncryptionCertificateStorageOptions::EncryptionCertificateStorageOptions(bslma::
 }
 
 EncryptionCertificateStorageOptions::EncryptionCertificateStorageOptions(
-                                    const EncryptionCertificateStorageOptions& original,
-                                    bslma::Allocator*           basicAllocator)
+    const EncryptionCertificateStorageOptions& original,
+    bslma::Allocator*                          basicAllocator)
 : d_type(original.d_type)
 , d_label(original.d_label, basicAllocator)
 , d_passphrase(original.d_passphrase, basicAllocator)
@@ -48,8 +49,8 @@ EncryptionCertificateStorageOptions::~EncryptionCertificateStorageOptions()
 {
 }
 
-EncryptionCertificateStorageOptions& EncryptionCertificateStorageOptions::operator=(
-                                             const EncryptionCertificateStorageOptions& other)
+EncryptionCertificateStorageOptions& EncryptionCertificateStorageOptions::
+operator=(const EncryptionCertificateStorageOptions& other)
 {
     if (this != &other) {
         d_type       = other.d_type;
@@ -69,7 +70,8 @@ void EncryptionCertificateStorageOptions::reset()
     d_flags.reset();
 }
 
-void EncryptionCertificateStorageOptions::setType(ntca::EncryptionCertificateStorageType::Value value)
+void EncryptionCertificateStorageOptions::setType(
+    ntca::EncryptionCertificateStorageType::Value value)
 {
     d_type = value;
 }
@@ -79,7 +81,8 @@ void EncryptionCertificateStorageOptions::setLabel(const bsl::string& value)
     d_label = value;
 }
 
-void EncryptionCertificateStorageOptions::setPassphrase(const bsl::string& value)
+void EncryptionCertificateStorageOptions::setPassphrase(
+    const bsl::string& value)
 {
     d_passphrase = value;
 }
@@ -90,26 +93,27 @@ EncryptionCertificateStorageOptions::type() const
     return d_type;
 }
 
-const bdlb::NullableValue<bsl::string>& EncryptionCertificateStorageOptions::label() const
+const bdlb::NullableValue<bsl::string>& EncryptionCertificateStorageOptions::
+    label() const
 {
     return d_label;
 }
 
-const bdlb::NullableValue<bsl::string>&
-EncryptionCertificateStorageOptions::passphrase() const
+const bdlb::NullableValue<bsl::string>& EncryptionCertificateStorageOptions::
+    passphrase() const
 {
     return d_passphrase;
 }
 
-bool EncryptionCertificateStorageOptions::equals(const EncryptionCertificateStorageOptions& other) const
+bool EncryptionCertificateStorageOptions::equals(
+    const EncryptionCertificateStorageOptions& other) const
 {
-    return d_type       == other.d_type &&
-           d_label      == other.d_label &&
-           d_passphrase == other.d_passphrase &&
-           d_flags       == other.d_flags;
+    return d_type == other.d_type && d_label == other.d_label &&
+           d_passphrase == other.d_passphrase && d_flags == other.d_flags;
 }
 
-bool EncryptionCertificateStorageOptions::less(const EncryptionCertificateStorageOptions& other) const
+bool EncryptionCertificateStorageOptions::less(
+    const EncryptionCertificateStorageOptions& other) const
 {
     if (d_type < other.d_type) {
         return true;
@@ -138,9 +142,10 @@ bool EncryptionCertificateStorageOptions::less(const EncryptionCertificateStorag
     return d_flags < other.d_flags;
 }
 
-bsl::ostream& EncryptionCertificateStorageOptions::print(bsl::ostream& stream,
-                                          int           level,
-                                          int           spacesPerLevel) const
+bsl::ostream& EncryptionCertificateStorageOptions::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -161,7 +166,7 @@ bsl::ostream& EncryptionCertificateStorageOptions::print(bsl::ostream& stream,
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&               stream,
+bsl::ostream& operator<<(bsl::ostream&                              stream,
                          const EncryptionCertificateStorageOptions& object)
 {
     return object.print(stream, 0, -1);

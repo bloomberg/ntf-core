@@ -320,7 +320,8 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// if necessary. The behavior is undefined unless 'd_mutex' is locked.
     void privateRearmAfterReceive(const bsl::shared_ptr<DatagramSocket>& self);
 
-    void privateRearmAfterNotification(const bsl::shared_ptr<DatagramSocket>& self);
+    void privateRearmAfterNotification(
+        const bsl::shared_ptr<DatagramSocket>& self);
 
     /// Open the datagram socket. Return the error.
     ntsa::Error privateOpen(const bsl::shared_ptr<DatagramSocket>& self);
@@ -372,34 +373,32 @@ class DatagramSocket : public ntci::DatagramSocket,
         const ntca::ConnectOptions&            connectOptions,
         const ntci::ConnectCallback&           connectCallback);
 
-    /// Enable or disable timestamping of outgoing data according to the 
+    /// Enable or disable timestamping of outgoing data according to the
     /// specified 'enable' flag. Return the error.
     ntsa::Error privateTimestampOutgoingData(
         const bsl::shared_ptr<DatagramSocket>& self,
         bool                                   enable);
 
-    /// Enable or disable timestamping of incoming data according to the 
+    /// Enable or disable timestamping of incoming data according to the
     /// specified 'enable' flag. Return the error.
     ntsa::Error privateTimestampIncomingData(
         const bsl::shared_ptr<DatagramSocket>& self,
         bool                                   enable);
 
     /// Process the detection of the specified outgoing data 'timestamp'.
-    void privateTimestampUpdate(
-            const bsl::shared_ptr<DatagramSocket>& self,
-            const ntsa::Timestamp&                 timestamp);
+    void privateTimestampUpdate(const bsl::shared_ptr<DatagramSocket>& self,
+                                const ntsa::Timestamp& timestamp);
 
     // Engage zero-copy transmissions for data whose size is greater than or
     // equal to the specified 'threshold', in bytes. Return the error.
     ntsa::Error privateZeroCopyEngage(
-            const bsl::shared_ptr<DatagramSocket>& self,
-            bsl::size_t                          threshold);
+        const bsl::shared_ptr<DatagramSocket>& self,
+        bsl::size_t                            threshold);
 
     // Process the completion of one or more zero-copy transmissions described
     // by the specified 'zeroCopy' notification.
-    void privateZeroCopyUpdate(
-            const bsl::shared_ptr<DatagramSocket>& self,
-            const ntsa::ZeroCopy&                  zeroCopy);
+    void privateZeroCopyUpdate(const bsl::shared_ptr<DatagramSocket>& self,
+                               const ntsa::ZeroCopy& zeroCopy);
 
   public:
     /// Create a new, initially uninitilialized datagram socket. Optionally

@@ -277,11 +277,11 @@ NTSCFG_TEST_CASE(5)
                               << NTSCFG_TEST_LOG_END;
 
         typedef bsl::vector<ntsa::Event> EventVector;
-        EventVector eventVector(&ta);
+        EventVector                      eventVector(&ta);
 
-        for (ntsa::EventSet::const_iterator it  = eventSet.cbegin(); 
-                                            it != eventSet.cend(); 
-                                          ++it)
+        for (ntsa::EventSet::const_iterator it = eventSet.cbegin();
+             it != eventSet.cend();
+             ++it)
         {
             const ntsa::Event& event = *it;
 

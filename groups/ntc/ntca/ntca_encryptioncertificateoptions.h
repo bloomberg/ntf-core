@@ -69,15 +69,14 @@ class EncryptionCertificateOptions
     /// If 'basicAllocator' is 0, the currently installed default allocator
     /// is used.
     explicit EncryptionCertificateOptions(
-                                         bslma::Allocator* basicAllocator = 0);
+        bslma::Allocator* basicAllocator = 0);
 
     /// Create a new certificate generation configuration having the same value
     /// as the specified 'original' object. Optionally specify a
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
     /// currently installed default allocator is used.
-    EncryptionCertificateOptions(
-        const EncryptionCertificateOptions& original,
-        bslma::Allocator*                   basicAllocator = 0);
+    EncryptionCertificateOptions(const EncryptionCertificateOptions& original,
+                                 bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionCertificateOptions();
@@ -106,7 +105,7 @@ class EncryptionCertificateOptions
     /// authority according to the specified 'value'.
     void setAuthority(bool value);
 
-    /// Set the domain names for which the certificate is valid to the 
+    /// Set the domain names for which the certificate is valid to the
     /// specified 'value'.
     void setHostList(const bsl::vector<bsl::string>& value);
 
@@ -128,7 +127,7 @@ class EncryptionCertificateOptions
     /// authority.
     bool authority() const;
 
-    /// Return the domain names for which the certificate is valid. 
+    /// Return the domain names for which the certificate is valid.
     const bsl::vector<bsl::string>& hosts() const;
 
     /// Return true if this object has the same value as the specified
@@ -196,12 +195,11 @@ bool operator<(const EncryptionCertificateOptions& lhs,
 ///
 /// @related ntca::EncryptionCertificateOptions
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                     algorithm, 
+void hashAppend(HASH_ALGORITHM&                     algorithm,
                 const EncryptionCertificateOptions& value);
 
-
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                     algorithm, 
+void hashAppend(HASH_ALGORITHM&                     algorithm,
                 const EncryptionCertificateOptions& value)
 {
     using bslh::hashAppend;

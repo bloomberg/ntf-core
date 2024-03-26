@@ -25,7 +25,8 @@ BSLS_IDENT_RCSID(ntca_encryptionkeystoragetype_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntca {
 
-int EncryptionKeyStorageType::fromInt(EncryptionKeyStorageType::Value* result, int number)
+int EncryptionKeyStorageType::fromInt(EncryptionKeyStorageType::Value* result,
+                                      int                              number)
 {
     switch (number) {
     case EncryptionKeyStorageType::e_PEM:
@@ -39,8 +40,9 @@ int EncryptionKeyStorageType::fromInt(EncryptionKeyStorageType::Value* result, i
     }
 }
 
-int EncryptionKeyStorageType::fromString(EncryptionKeyStorageType::Value*  result,
-                                const bslstl::StringRef& string)
+int EncryptionKeyStorageType::fromString(
+    EncryptionKeyStorageType::Value* result,
+    const bslstl::StringRef&         string)
 {
     if (bdlb::String::areEqualCaseless(string, "PEM")) {
         *result = e_PEM;
@@ -65,7 +67,8 @@ int EncryptionKeyStorageType::fromString(EncryptionKeyStorageType::Value*  resul
     return -1;
 }
 
-const char* EncryptionKeyStorageType::toString(EncryptionKeyStorageType::Value value)
+const char* EncryptionKeyStorageType::toString(
+    EncryptionKeyStorageType::Value value)
 {
     switch (value) {
     case e_PEM: {
@@ -86,13 +89,15 @@ const char* EncryptionKeyStorageType::toString(EncryptionKeyStorageType::Value v
     return 0;
 }
 
-bsl::ostream& EncryptionKeyStorageType::print(bsl::ostream&          stream,
-                                     EncryptionKeyStorageType::Value value)
+bsl::ostream& EncryptionKeyStorageType::print(
+    bsl::ostream&                   stream,
+    EncryptionKeyStorageType::Value value)
 {
     return stream << toString(value);
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, EncryptionKeyStorageType::Value rhs)
+bsl::ostream& operator<<(bsl::ostream&                   stream,
+                         EncryptionKeyStorageType::Value rhs)
 {
     return EncryptionKeyStorageType::print(stream, rhs);
 }

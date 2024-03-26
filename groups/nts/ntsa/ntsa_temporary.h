@@ -133,14 +133,14 @@ class TemporaryFile
     // to supply memory. If 'basicAllocator' is 0, the currently installed
     // default allocator is used.
     explicit TemporaryFile(bslma::Allocator* basicAllocator = 0);
-    
+
     // Create a new file in the specified 'tempDirectory' that is removed
     // when this object is destroyed. Optionally specify a 'basicAllocator'
     // used to supply memory. If 'basicAllocator' is 0, the currently
     // installed default allocator is used.
     TemporaryFile(ntsa::TemporaryDirectory* tempDirectory,
                   bslma::Allocator*         basicAllocator = 0);
-    
+
     // Create a new file in the specified 'tempDirectory' having the
     // specified 'filename' that is removed when this object is destroyed.
     // Optionally specify a 'basicAllocator' used to supply memory. If
@@ -149,13 +149,13 @@ class TemporaryFile
     TemporaryFile(ntsa::TemporaryDirectory* tempDirectory,
                   const bsl::string&        filename,
                   bslma::Allocator*         basicAllocator = 0);
-    
+
     // Destroy this object.
     ~TemporaryFile();
 
     // Do not remove the file upon the destruction of this object.
     void keep();
-    
+
     // Write the specified 'content' to the file.
     ntsa::Error write(const bsl::string& content);
 

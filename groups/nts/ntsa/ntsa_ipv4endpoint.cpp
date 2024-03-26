@@ -181,7 +181,7 @@ bsl::size_t Ipv4Endpoint::format(char*       buffer,
     t += n;
     c -= n;
 
-    *t = ':';
+    *t  = ':';
     t  += 1;
     c  -= 1;
 

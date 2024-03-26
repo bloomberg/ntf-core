@@ -53,9 +53,9 @@ namespace ntca {
 class EncryptionKeyStorageOptions
 {
     bdlb::NullableValue<ntca::EncryptionKeyStorageType::Value> d_type;
-    bdlb::NullableValue<bsl::string>                    d_label;
-    bdlb::NullableValue<bsl::string>                    d_passphrase;
-    bdlb::NullableValue<bsl::size_t>                    d_flags;
+    bdlb::NullableValue<bsl::string>                           d_label;
+    bdlb::NullableValue<bsl::string>                           d_passphrase;
+    bdlb::NullableValue<bsl::size_t>                           d_flags;
 
   public:
     /// Create a new key generation configuration having the default
@@ -69,14 +69,15 @@ class EncryptionKeyStorageOptions
     /// used to supply memory. If 'basicAllocator' is 0, the currently
     /// installed default allocator is used.
     EncryptionKeyStorageOptions(const EncryptionKeyStorageOptions& original,
-                         bslma::Allocator*           basicAllocator = 0);
+                                bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionKeyStorageOptions();
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
-    EncryptionKeyStorageOptions& operator=(const EncryptionKeyStorageOptions& other);
+    EncryptionKeyStorageOptions& operator=(
+        const EncryptionKeyStorageOptions& other);
 
     /// Reset the value of this object to its value upon default
     /// construction.
@@ -92,7 +93,8 @@ class EncryptionKeyStorageOptions
     void setPassphrase(const bsl::string& value);
 
     /// Return the key type.
-    const bdlb::NullableValue<ntca::EncryptionKeyStorageType::Value>& type() const;
+    const bdlb::NullableValue<ntca::EncryptionKeyStorageType::Value>& type()
+        const;
 
     /// Return the label.
     const bdlb::NullableValue<bsl::string>& label() const;
@@ -133,7 +135,7 @@ class EncryptionKeyStorageOptions
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionKeyStorageOptions
-bsl::ostream& operator<<(bsl::ostream&               stream,
+bsl::ostream& operator<<(bsl::ostream&                      stream,
                          const EncryptionKeyStorageOptions& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
@@ -165,11 +167,12 @@ bool operator<(const EncryptionKeyStorageOptions& lhs,
 ///
 /// @related ntca::EncryptionKeyStorageOptions
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionKeyStorageOptions& value);
-
+void hashAppend(HASH_ALGORITHM&                    algorithm,
+                const EncryptionKeyStorageOptions& value);
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionKeyStorageOptions& value)
+void hashAppend(HASH_ALGORITHM&                    algorithm,
+                const EncryptionKeyStorageOptions& value)
 {
     using bslh::hashAppend;
 

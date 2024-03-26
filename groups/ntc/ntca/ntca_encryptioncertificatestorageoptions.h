@@ -53,30 +53,33 @@ namespace ntca {
 class EncryptionCertificateStorageOptions
 {
     bdlb::NullableValue<ntca::EncryptionCertificateStorageType::Value> d_type;
-    bdlb::NullableValue<bsl::string>                    d_label;
-    bdlb::NullableValue<bsl::string>                    d_passphrase;
-    bdlb::NullableValue<bsl::size_t>                    d_flags;
+    bdlb::NullableValue<bsl::string>                                   d_label;
+    bdlb::NullableValue<bsl::string> d_passphrase;
+    bdlb::NullableValue<bsl::size_t> d_flags;
 
   public:
     /// Create a new key generation configuration having the default
     /// value. Optionally specify a 'basicAllocator' used to supply memory.
     /// If 'basicAllocator' is 0, the currently installed default allocator
     /// is used.
-    explicit EncryptionCertificateStorageOptions(bslma::Allocator* basicAllocator = 0);
+    explicit EncryptionCertificateStorageOptions(
+        bslma::Allocator* basicAllocator = 0);
 
     /// Create a new key generation configuration having the same value as
     /// the specified 'original' object. Optionally specify a 'basicAllocator'
     /// used to supply memory. If 'basicAllocator' is 0, the currently
     /// installed default allocator is used.
-    EncryptionCertificateStorageOptions(const EncryptionCertificateStorageOptions& original,
-                         bslma::Allocator*           basicAllocator = 0);
+    EncryptionCertificateStorageOptions(
+        const EncryptionCertificateStorageOptions& original,
+        bslma::Allocator*                          basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionCertificateStorageOptions();
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
-    EncryptionCertificateStorageOptions& operator=(const EncryptionCertificateStorageOptions& other);
+    EncryptionCertificateStorageOptions& operator=(
+        const EncryptionCertificateStorageOptions& other);
 
     /// Reset the value of this object to its value upon default
     /// construction.
@@ -92,7 +95,8 @@ class EncryptionCertificateStorageOptions
     void setPassphrase(const bsl::string& value);
 
     /// Return the key type.
-    const bdlb::NullableValue<ntca::EncryptionCertificateStorageType::Value>& type() const;
+    const bdlb::NullableValue<ntca::EncryptionCertificateStorageType::Value>&
+    type() const;
 
     /// Return the label.
     const bdlb::NullableValue<bsl::string>& label() const;
@@ -126,14 +130,15 @@ class EncryptionCertificateStorageOptions
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateStorageOptions);
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
+        EncryptionCertificateStorageOptions);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionCertificateStorageOptions
-bsl::ostream& operator<<(bsl::ostream&               stream,
+bsl::ostream& operator<<(bsl::ostream&                              stream,
                          const EncryptionCertificateStorageOptions& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
@@ -165,11 +170,12 @@ bool operator<(const EncryptionCertificateStorageOptions& lhs,
 ///
 /// @related ntca::EncryptionCertificateStorageOptions
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionCertificateStorageOptions& value);
-
+void hashAppend(HASH_ALGORITHM&                            algorithm,
+                const EncryptionCertificateStorageOptions& value);
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionCertificateStorageOptions& value)
+void hashAppend(HASH_ALGORITHM&                            algorithm,
+                const EncryptionCertificateStorageOptions& value)
 {
     using bslh::hashAppend;
 

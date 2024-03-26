@@ -34,8 +34,8 @@ EncryptionKeyOptions::EncryptionKeyOptions(bslma::Allocator* basicAllocator)
 }
 
 EncryptionKeyOptions::EncryptionKeyOptions(
-                                    const EncryptionKeyOptions& original,
-                                    bslma::Allocator*           basicAllocator)
+    const EncryptionKeyOptions& original,
+    bslma::Allocator*           basicAllocator)
 : d_type(original.d_type)
 , d_bits(original.d_bits)
 {
@@ -47,11 +47,11 @@ EncryptionKeyOptions::~EncryptionKeyOptions()
 }
 
 EncryptionKeyOptions& EncryptionKeyOptions::operator=(
-                                             const EncryptionKeyOptions& other)
+    const EncryptionKeyOptions& other)
 {
     if (this != &other) {
-        d_type       = other.d_type;
-        d_bits       = other.d_bits;
+        d_type = other.d_type;
+        d_bits = other.d_bits;
     }
 
     return *this;
@@ -73,8 +73,8 @@ void EncryptionKeyOptions::setBits(bsl::size_t value)
     d_bits = value;
 }
 
-const bdlb::NullableValue<ntca::EncryptionKeyType::Value>&
-EncryptionKeyOptions::type() const
+const bdlb::NullableValue<ntca::EncryptionKeyType::Value>& EncryptionKeyOptions::
+    type() const
 {
     return d_type;
 }
@@ -86,8 +86,7 @@ const bdlb::NullableValue<bsl::size_t>& EncryptionKeyOptions::bits() const
 
 bool EncryptionKeyOptions::equals(const EncryptionKeyOptions& other) const
 {
-    return d_type       == other.d_type &&
-           d_bits       == other.d_bits;
+    return d_type == other.d_type && d_bits == other.d_bits;
 }
 
 bool EncryptionKeyOptions::less(const EncryptionKeyOptions& other) const

@@ -19,14 +19,14 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <ntscfg_platform.h>
-#include <ntscfg_config.h>
 #include <ntsa_reactorconfig.h>
+#include <ntscfg_config.h>
+#include <ntscfg_platform.h>
 #include <ntsi_reactor.h>
 #include <ntsscm_version.h>
 #include <bsl_memory.h>
 
-#if NTS_BUILD_WITH_KQUEUE && \
+#if NTS_BUILD_WITH_KQUEUE &&                                                  \
     (defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD))
 #define NTSO_KQUEUE_ENABLED 1
 #else

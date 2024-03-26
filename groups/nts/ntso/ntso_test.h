@@ -30,10 +30,10 @@ BSLS_IDENT("$Id: $")
 #include <bslma_allocator.h>
 #include <bslma_default.h>
 #include <bsls_assert.h>
-#include <bsls_timeinterval.h>
 #include <bsls_log.h>
-#include <bsl_sstream.h>
+#include <bsls_timeinterval.h>
 #include <bsl_memory.h>
+#include <bsl_sstream.h>
 #include <bsl_vector.h>
 
 namespace BloombergLP {
@@ -46,19 +46,18 @@ namespace ntso {
 // This struct is thread safe.
 ///
 /// @ingroup module_ntso
-struct Test
-{
+struct Test {
     /// Define a type alias for a vector of reactors.
-    typedef bsl::vector< bsl::shared_ptr<ntsi::Reactor> > ReactorVector;
+    typedef bsl::vector<bsl::shared_ptr<ntsi::Reactor> > ReactorVector;
 
     /// Test the usage example.
-    static void usage(
-        const ReactorVector& reactors, bslma::Allocator* allocator);
+    static void usage(const ReactorVector& reactors,
+                      bslma::Allocator*    allocator);
 
     /// Test the behavior of the reactor when a socket is closed while it is
     /// being polled.
-    static void pollingAfterFullShutdown(
-        const ReactorVector& reactors, bslma::Allocator* allocator);
+    static void pollingAfterFullShutdown(const ReactorVector& reactors,
+                                         bslma::Allocator*    allocator);
 
     /// Test the behavior of the reactor when a socket is closed while it is
     /// being polled.
@@ -79,8 +78,8 @@ struct Test
     ///         from the kqueue interest set maintained internally in the
     ///         kernel. The polling function thus does not return, unless it
     ///         is given a timeout in which case it times out.
-    static void pollingAfterClose(
-        const ReactorVector& reactors, bslma::Allocator* allocator);
+    static void pollingAfterClose(const ReactorVector& reactors,
+                                  bslma::Allocator*    allocator);
 
     /// Load into the specified 'client' and 'server' a connected pair of
     /// stream sockets of the specified 'type'. Optionally specify a

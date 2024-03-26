@@ -19,13 +19,13 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntci_datapool.h>
+#include <ntci_sendcallback.h>
+#include <ntcq_send.h>
 #include <ntsa_data.h>
 #include <ntsa_error.h>
 #include <ntsa_transport.h>
 #include <ntsa_zerocopy.h>
-#include <ntci_datapool.h>
-#include <ntci_sendcallback.h>
-#include <ntcq_send.h>
 #include <bdlbb_blob.h>
 #include <bslma_allocator.h>
 #include <bsls_keyword.h>
@@ -61,7 +61,7 @@ class ZeroCopyRange
     ntcq::ZeroCopyCounter d_minCounter;
     ntcq::ZeroCopyCounter d_maxCounter;
 
-public:
+  public:
     /// Create a new zero-copy range.
     ZeroCopyRange();
 
@@ -298,13 +298,13 @@ class ZeroCopyCounterGenerator
     ntcq::ZeroCopyCounter d_bias;
     ntcq::ZeroCopyCounter d_generation;
 
-private:
-    ZeroCopyCounterGenerator(
-        const ZeroCopyCounterGenerator&) BSLS_KEYWORD_DELETED;
-    ZeroCopyCounterGenerator& operator=(
-        const ZeroCopyCounterGenerator&) BSLS_KEYWORD_DELETED;
+  private:
+    ZeroCopyCounterGenerator(const ZeroCopyCounterGenerator&)
+        BSLS_KEYWORD_DELETED;
+    ZeroCopyCounterGenerator& operator=(const ZeroCopyCounterGenerator&)
+        BSLS_KEYWORD_DELETED;
 
-public:
+  public:
     /// Create a new zero copy counter generator from the default epoch of
     /// zero.
     ZeroCopyCounterGenerator();
@@ -314,8 +314,7 @@ public:
 
     /// Configure the generator to return the specified 'next' counter in the
     /// specified 32-bit wraparound 'generation'.
-    void configure(ntcq::ZeroCopyCounter next,
-                   bsl::size_t           generation);
+    void configure(ntcq::ZeroCopyCounter next, bsl::size_t generation);
 
     // Return the next zero-copy counter.
     ntcq::ZeroCopyCounter next();
@@ -352,9 +351,8 @@ class ZeroCopyQueue
     /// specified 'dataPool'. Optionally specify a 'basicAllocator' used to
     /// supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
-    explicit ZeroCopyQueue(
-        const bsl::shared_ptr<ntci::DataPool>& dataPool,
-        bslma::Allocator*                      basicAllocator = 0);
+    explicit ZeroCopyQueue(const bsl::shared_ptr<ntci::DataPool>& dataPool,
+                           bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~ZeroCopyQueue();
@@ -642,13 +640,13 @@ NTCCFG_INLINE
 ZeroCopyEntry& ZeroCopyEntry::operator=(const ZeroCopyEntry& other)
 {
     if (this != &other) {
-        d_group      = other.d_group;
-        d_range      = other.d_range;
-        d_rangeSet   = other.d_rangeSet;
-        d_framed     = other.d_framed;
-        d_data_sp    = other.d_data_sp;
-        d_error      = other.d_error;
-        d_callback   = other.d_callback;
+        d_group    = other.d_group;
+        d_range    = other.d_range;
+        d_rangeSet = other.d_rangeSet;
+        d_framed   = other.d_framed;
+        d_data_sp  = other.d_data_sp;
+        d_error    = other.d_error;
+        d_callback = other.d_callback;
     }
 
     return *this;
@@ -815,9 +813,8 @@ ntcq::ZeroCopyRange ZeroCopyCounterGenerator::update(
     ntcq::ZeroCopyRange zeroCopyRange;
 
     if (zeroCopyFrom > zeroCopyThru) {
-        const ntcq::ZeroCopyCounter size =
-            static_cast<ntcq::ZeroCopyCounter>(
-                (k_UINT32_MAX - zeroCopyFrom) + zeroCopyThru + 2);
+        const ntcq::ZeroCopyCounter size = static_cast<ntcq::ZeroCopyCounter>(
+            (k_UINT32_MAX - zeroCopyFrom) + zeroCopyThru + 2);
 
         zeroCopyRange.setMinCounter(offset + zeroCopyFrom);
         zeroCopyRange.setMaxCounter(zeroCopyRange.minCounter() + size);

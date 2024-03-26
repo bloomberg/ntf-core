@@ -1092,7 +1092,7 @@ void MutableBuffer::advance(bsl::size_t n) BSLS_KEYWORD_NOEXCEPT
 {
     bsl::size_t offset = n < d_size ? n : d_size;
 
-    d_data = static_cast<char*>(d_data) + offset;
+    d_data  = static_cast<char*>(d_data) + offset;
     d_size -= NTSCFG_WARNING_NARROW(LengthType, offset);
 }
 
@@ -1267,7 +1267,7 @@ void ConstBuffer::advance(bsl::size_t n) BSLS_KEYWORD_NOEXCEPT
 {
     bsl::size_t offset = n < d_size ? n : d_size;
 
-    d_data = static_cast<const char*>(d_data) + offset;
+    d_data  = static_cast<const char*>(d_data) + offset;
     d_size -= NTSCFG_WARNING_NARROW(LengthType, offset);
 }
 

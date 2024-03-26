@@ -338,9 +338,9 @@ class InterfaceConfig
     bdlb::NullableValue<bsl::size_t> d_sendTimeout;
     bdlb::NullableValue<bsl::size_t> d_receiveTimeout;
 
-    bdlb::NullableValue<bool>           d_timestampOutgoingData;
-    bdlb::NullableValue<bool>           d_timestampIncomingData;
-    bdlb::NullableValue<bsl::size_t>    d_zeroCopyThreshold;
+    bdlb::NullableValue<bool>        d_timestampOutgoingData;
+    bdlb::NullableValue<bool>        d_timestampIncomingData;
+    bdlb::NullableValue<bsl::size_t> d_zeroCopyThreshold;
 
     bdlb::NullableValue<bool>        d_keepAlive;
     bdlb::NullableValue<bool>        d_noDelay;
@@ -786,8 +786,7 @@ class InterfaceConfig
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntca::InterfaceConfig
-bsl::ostream& operator<<(bsl::ostream&          stream,
-                         const InterfaceConfig& object);
+bsl::ostream& operator<<(bsl::ostream& stream, const InterfaceConfig& object);
 
 }  // close package namespace
 }  // close enterprise namespace

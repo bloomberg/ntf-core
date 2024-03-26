@@ -429,23 +429,21 @@ class StreamSocket : public ntci::StreamSocket,
     /// 'options'. When the 'data' is entirely copied to the send buffer,
     /// invoke the specified 'callback' on the callback's strand, if any.
     /// Return the error.
-    ntsa::Error privateSendEncrypted(
-                               const bsl::shared_ptr<StreamSocket>& self,
-                               const bdlbb::Blob&                   data,
-                               const ntcq::SendState&               state,
-                               const ntca::SendOptions&             options,
-                               const ntci::SendCallback&            callback);
+    ntsa::Error privateSendEncrypted(const bsl::shared_ptr<StreamSocket>& self,
+                                     const bdlbb::Blob&                   data,
+                                     const ntcq::SendState&    state,
+                                     const ntca::SendOptions&  options,
+                                     const ntci::SendCallback& callback);
 
     /// Send the specified encrypted 'data' according to the specified
     /// 'options'. When the 'data' is entirely copied to the send buffer,
     /// invoke the specified 'callback' on the callback's strand, if any.
     /// Return the error.
-    ntsa::Error privateSendEncrypted(
-                               const bsl::shared_ptr<StreamSocket>& self,
-                               const ntsa::Data&                    data,
-                               const ntcq::SendState&               state,
-                               const ntca::SendOptions&             options,
-                               const ntci::SendCallback&            callback);
+    ntsa::Error privateSendEncrypted(const bsl::shared_ptr<StreamSocket>& self,
+                                     const ntsa::Data&                    data,
+                                     const ntcq::SendState&    state,
+                                     const ntca::SendOptions&  options,
+                                     const ntci::SendCallback& callback);
 
     /// Open the stream socket. Return the error.
     ntsa::Error privateOpen(const bsl::shared_ptr<StreamSocket>& self);
@@ -542,21 +540,19 @@ class StreamSocket : public ntci::StreamSocket,
         bool                                 enable);
 
     /// Process the detection of the specified outgoing data 'timestamp'.
-    void privateTimestampUpdate(
-            const bsl::shared_ptr<StreamSocket>& self,
-            const ntsa::Timestamp&               timestamp);
+    void privateTimestampUpdate(const bsl::shared_ptr<StreamSocket>& self,
+                                const ntsa::Timestamp& timestamp);
 
     // Engage zero-copy transmissions for data whose size is greater than or
     // equal to the specified 'threshold', in bytes. Return the error.
     ntsa::Error privateZeroCopyEngage(
-            const bsl::shared_ptr<StreamSocket>& self,
-            bsl::size_t                          threshold);
+        const bsl::shared_ptr<StreamSocket>& self,
+        bsl::size_t                          threshold);
 
     // Process the completion of one or more zero-copy transmissions described
     // by the specified 'zeroCopy' notification.
-    void privateZeroCopyUpdate(
-            const bsl::shared_ptr<StreamSocket>& self,
-            const ntsa::ZeroCopy&                zeroCopy);
+    void privateZeroCopyUpdate(const bsl::shared_ptr<StreamSocket>& self,
+                               const ntsa::ZeroCopy&                zeroCopy);
 
   public:
     /// Create a new, initially uninitilialized stream socket. Optionally

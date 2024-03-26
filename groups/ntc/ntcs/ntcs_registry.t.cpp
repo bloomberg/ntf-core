@@ -212,8 +212,8 @@ void noop()
 {
 }
 
-void testCase6Helper(bslmt::Latch&        latch,
-                     ntcs::RegistryEntry& entry,
+void testCase6Helper(bslmt::Latch&                              latch,
+                     ntcs::RegistryEntry&                       entry,
                      const bsl::shared_ptr<Test::ExecutorMock>& executor)
 {
     latch.arriveAndWait();
@@ -452,7 +452,7 @@ NTCCFG_TEST_CASE(6)
 
             bsl::shared_ptr<Test::ExecutorMock> executor =
                 bsl::make_shared<Test::ExecutorMock>();
-            executor->setExecuteExpected(); //only once
+            executor->setExecuteExpected();  //only once
 
             bslmt::ThreadUtil::Handle t1 = bslmt::ThreadUtil::invalidHandle();
             bslmt::ThreadUtil::create(

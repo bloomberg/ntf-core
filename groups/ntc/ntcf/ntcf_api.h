@@ -54,9 +54,9 @@ BSLS_IDENT("$Id: $")
 #include <ntca_encryptioncertificatestoragetype.h>
 #include <ntca_encryptionclientoptions.h>
 #include <ntca_encryptionkeyoptions.h>
-#include <ntca_encryptionkeytype.h>
 #include <ntca_encryptionkeystorageoptions.h>
 #include <ntca_encryptionkeystoragetype.h>
+#include <ntca_encryptionkeytype.h>
 #include <ntca_encryptionmethod.h>
 #include <ntca_encryptionrole.h>
 #include <ntca_encryptionserveroptions.h>

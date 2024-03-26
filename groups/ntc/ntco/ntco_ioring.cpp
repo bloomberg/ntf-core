@@ -1478,10 +1478,10 @@ class IoRingContext : public ntcs::ProactorDetachContext
     // Define a type alias for a mutex lock guard.
     typedef ntci::LockGuard LockGuard;
 
-    ntsa::Handle                d_handle;
-    Mutex                       d_pendingEventSetMutex;
-    EventSet                    d_pendingEventSet;
-    bslma::Allocator*           d_allocator_p;
+    ntsa::Handle      d_handle;
+    Mutex             d_pendingEventSetMutex;
+    EventSet          d_pendingEventSet;
+    bslma::Allocator* d_allocator_p;
 
   private:
     IoRingContext(const IoRingContext&) BSLS_KEYWORD_DELETED;
@@ -5939,8 +5939,8 @@ ntsa::Error IoRing::detachSocket(
     socket->setProactorContext(bsl::shared_ptr<void>());
 
     this->execute(NTCCFG_BIND(&ntcs::Dispatch::announceDetached,
-                                socket,
-                                socket->strand()));
+                              socket,
+                              socket->strand()));
 
     return ntsa::Error();
 }

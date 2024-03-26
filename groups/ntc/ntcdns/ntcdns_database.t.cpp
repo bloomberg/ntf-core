@@ -766,10 +766,9 @@ void dump(const ntcdns::PortDatabase& portDatabase)
 
         bsl::cout << bsl::setw(10) << bsl::right << i;
         bsl::cout << bsl::setw(10) << bsl::right << portEntry.port();
-        bsl::cout << bsl::setw(7)  << bsl::right << portEntry.protocol();
+        bsl::cout << bsl::setw(7) << bsl::right << portEntry.protocol();
         bsl::cout << "    " << bsl::left << portEntry.service();
         bsl::cout << bsl::endl;
-
     }
 }
 
@@ -2147,11 +2146,10 @@ NTCCFG_TEST_CASE(3)
         stopwatch.stop();
 
         if (NTCCFG_TEST_VERBOSITY > 0) {
-            bsl::cout
-                << "Loaded host database in "
-                << bsls::TimeInterval(
-                                   stopwatch.elapsedTime()).totalMilliseconds()
-                << " milliseconds" << bsl::endl;
+            bsl::cout << "Loaded host database in "
+                      << bsls::TimeInterval(stopwatch.elapsedTime())
+                             .totalMilliseconds()
+                      << " milliseconds" << bsl::endl;
         }
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
@@ -2186,11 +2184,10 @@ NTCCFG_TEST_CASE(4)
         if (NTCCFG_TEST_VERBOSITY > 0) {
             test::dump(portDatabase);
 
-            bsl::cout
-                << "Loaded port database in "
-                << bsls::TimeInterval(
-                                   stopwatch.elapsedTime()).totalMilliseconds()
-                << " milliseconds" << bsl::endl;
+            bsl::cout << "Loaded port database in "
+                      << bsls::TimeInterval(stopwatch.elapsedTime())
+                             .totalMilliseconds()
+                      << " milliseconds" << bsl::endl;
         }
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);

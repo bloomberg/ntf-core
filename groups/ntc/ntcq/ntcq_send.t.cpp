@@ -424,8 +424,8 @@ NTCCFG_TEST_CASE(4)
         ntsa::SendOptions sendOptions;
         sendOptions.setMaxBuffers(k_MAX_BUFFERS);
 
-        bool result = sendQueue.batchNext(&batch.constBufferArray(),
-                                          sendOptions);
+        bool result =
+            sendQueue.batchNext(&batch.constBufferArray(), sendOptions);
         NTCCFG_TEST_TRUE(result);
 
         NTCCFG_TEST_EQ(batch.constBufferArray().numBuffers(),
@@ -534,8 +534,8 @@ NTCCFG_TEST_CASE(5)
         ntsa::SendOptions sendOptions;
         sendOptions.setMaxBuffers(k_MAX_BUFFERS);
 
-        bool result = sendQueue.batchNext(&batch.constBufferArray(),
-                                          sendOptions);
+        bool result =
+            sendQueue.batchNext(&batch.constBufferArray(), sendOptions);
         NTCCFG_TEST_TRUE(result);
 
         NTCCFG_TEST_EQ(batch.constBufferArray().numBuffers(),
@@ -613,16 +613,15 @@ NTCCFG_TEST_CASE(6)
         sendOptions.setMaxBuffers(
             static_cast<bsl::size_t>(blob1.numDataBuffers()));
 
-        bool result = sendQueue.batchNext(&batch.constBufferArray(),
-                                          sendOptions);
+        bool result =
+            sendQueue.batchNext(&batch.constBufferArray(), sendOptions);
         NTCCFG_TEST_TRUE(result);
 
         NTCCFG_TEST_EQ(batch.constBufferArray().numBuffers(),
                        static_cast<bsl::size_t>(blob1.numDataBuffers()));
 
-        NTCCFG_TEST_EQ(
-            batch.constBufferArray().numBytes(),
-            static_cast<bsl::size_t>(blob1.length()));
+        NTCCFG_TEST_EQ(batch.constBufferArray().numBytes(),
+                       static_cast<bsl::size_t>(blob1.length()));
 
         ntsa::Data batchExpected(&blobBufferFactory, &ta);
         batchExpected.makeBlob();

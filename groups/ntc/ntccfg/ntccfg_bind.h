@@ -24,11 +24,7 @@ BSLS_IDENT("$Id: $")
 #include <ntcscm_version.h>
 #include <bsls_platform.h>
 
-// #if defined(BSLS_PLATFORM_OS_LINUX)
-// #define NTCCFG_BIND_STD 1
-// #else
-// #define NTCCFG_BIND_STD 0
-// #endif
+#define NTCCFG_BIND_STD 0
 
 #if NTCCFG_BIND_STD
 

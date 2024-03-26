@@ -20,8 +20,8 @@ BSLS_IDENT_RCSID(ntci_encryptionkeystorage_cpp, "$Id$ $CSID$")
 
 #include <bdlbb_blob.h>
 #include <bdlbb_blobstreambuf.h>
-#include <bdlsb_memoutstreambuf.h>
 #include <bdlsb_fixedmeminstreambuf.h>
+#include <bdlsb_memoutstreambuf.h>
 
 namespace BloombergLP {
 namespace ntci {

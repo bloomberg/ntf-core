@@ -30,7 +30,7 @@ bool SendContext::equals(const SendContext& other) const
            d_buffersSendable == other.d_buffersSendable &&
            d_buffersSent == other.d_buffersSent &&
            d_messagesSendable == other.d_messagesSendable &&
-           d_messagesSent == other.d_messagesSent && 
+           d_messagesSent == other.d_messagesSent &&
            d_zeroCopy == other.d_zeroCopy;
 }
 

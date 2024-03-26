@@ -42,7 +42,7 @@ ntsa::Error Reactor::showNotifications(
 }
 
 ntsa::Error Reactor::hideNotifications(
-        const bsl::shared_ptr<ntci::ReactorSocket>& socket)
+    const bsl::shared_ptr<ntci::ReactorSocket>& socket)
 {
     NTCCFG_WARNING_UNUSED(socket);
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);

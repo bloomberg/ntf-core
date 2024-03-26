@@ -474,7 +474,7 @@ LinearLevelGenerator::~LinearLevelGenerator()
 
 int LinearLevelGenerator::randomLevel()
 {
-    int val = d_next;
+    int val  = d_next;
     d_next  += 1;
     return val;
 }

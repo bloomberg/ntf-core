@@ -26,8 +26,8 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntsu {
 
-/// @internal @brief 
-/// Redefine types and constants used for Linux network timestamping in a 
+/// @internal @brief
+/// Redefine types and constants used for Linux network timestamping in a
 /// portable way, independant of any operating system headers and content of
 /// those headers that may or may not be present on the build machine.
 ///
@@ -60,9 +60,9 @@ namespace ntsu {
 /// @ingroup module_ntsu
 struct TimestampUtil {
     enum {
-        e_SCM_TSTAMP_SND = 0,
+        e_SCM_TSTAMP_SND   = 0,
         e_SCM_TSTAMP_SCHED = 1,
-        e_SCM_TSTAMP_ACK = 2,
+        e_SCM_TSTAMP_ACK   = 2,
 
         e_SO_TIMESTAMPNS   = 35,
         e_SO_TIMESTAMPING  = 37,
@@ -72,34 +72,31 @@ struct TimestampUtil {
         // Timestamp generation.
         e_SOF_TIMESTAMPING_TX_HARDWARE = (1 << 0),
         e_SOF_TIMESTAMPING_TX_SOFTWARE = (1 << 1),
-        e_SOF_TIMESTAMPING_TX_SCHED = (1 << 8),
-        e_SOF_TIMESTAMPING_TX_ACK = (1 << 9),
+        e_SOF_TIMESTAMPING_TX_SCHED    = (1 << 8),
+        e_SOF_TIMESTAMPING_TX_ACK      = (1 << 9),
         e_SOF_TIMESTAMPING_RX_HARDWARE = (1 << 2),
         e_SOF_TIMESTAMPING_RX_SOFTWARE = (1 << 3),
 
-        e_SOF_TIMESTAMPING_TX_GENERATION = 
-            e_SOF_TIMESTAMPING_TX_HARDWARE |
-            e_SOF_TIMESTAMPING_TX_SOFTWARE |
-            e_SOF_TIMESTAMPING_TX_SCHED |
-            e_SOF_TIMESTAMPING_TX_ACK,
+        e_SOF_TIMESTAMPING_TX_GENERATION =
+            e_SOF_TIMESTAMPING_TX_HARDWARE | e_SOF_TIMESTAMPING_TX_SOFTWARE |
+            e_SOF_TIMESTAMPING_TX_SCHED | e_SOF_TIMESTAMPING_TX_ACK,
 
-        e_SOF_TIMESTAMPING_RX_GENERATION = 
-            e_SOF_TIMESTAMPING_RX_HARDWARE |
-            e_SOF_TIMESTAMPING_RX_SOFTWARE,
+        e_SOF_TIMESTAMPING_RX_GENERATION =
+            e_SOF_TIMESTAMPING_RX_HARDWARE | e_SOF_TIMESTAMPING_RX_SOFTWARE,
 
         // Timestamp reporting.
-        e_SOF_TIMESTAMPING_SOFTWARE    = (1 << 4),
+        e_SOF_TIMESTAMPING_SOFTWARE     = (1 << 4),
         e_SOF_TIMESTAMPING_RAW_HARDWARE = (1 << 6),
 
-        e_SOF_TIMESTAMPING_REPORTING = e_SOF_TIMESTAMPING_SOFTWARE |
-                                       e_SOF_TIMESTAMPING_RAW_HARDWARE,
+        e_SOF_TIMESTAMPING_REPORTING =
+            e_SOF_TIMESTAMPING_SOFTWARE | e_SOF_TIMESTAMPING_RAW_HARDWARE,
 
         // Timestamp options.
-        e_SOF_TIMESTAMPING_OPT_ID       = (1 << 7),
-        e_SOF_TIMESTAMPING_OPT_TSONLY   = (1 << 11),
+        e_SOF_TIMESTAMPING_OPT_ID     = (1 << 7),
+        e_SOF_TIMESTAMPING_OPT_TSONLY = (1 << 11),
 
-        e_SOF_TIMESTAMPING_OPTIONS = e_SOF_TIMESTAMPING_OPT_ID |
-                                     e_SOF_TIMESTAMPING_OPT_TSONLY
+        e_SOF_TIMESTAMPING_OPTIONS =
+            e_SOF_TIMESTAMPING_OPT_ID | e_SOF_TIMESTAMPING_OPT_TSONLY
     };
 
     // Copy of Linux 'struct timespec'.
@@ -109,7 +106,7 @@ struct TimestampUtil {
     };
 
     // Copy of linux 'struct scm_timestamping'.
-    struct ScmTimestamping {  
+    struct ScmTimestamping {
         Timespec softwareTs;
         Timespec deprecated;
         Timespec hardwareTs;
@@ -118,18 +115,17 @@ struct TimestampUtil {
     /// Return true if the specified operation system 'versionMajor',
     /// 'versionMinor', and 'versionPatch' supports the specified 'option'
     /// flag, otherwise return false.
-    static bool supportsOption(int option, 
-                               int versionMajor, 
-                               int versionMinor, 
+    static bool supportsOption(int option,
+                               int versionMajor,
+                               int versionMinor,
                                int versionPatch);
 
-
     /// Return the specified 'options' with all bits representing unsupported
-    /// options removed. 
+    /// options removed.
     static int removeUnsupported(int options);
 
-    /// Return a formatted, human readable description of the specified 
-    /// 'duration'. 
+    /// Return a formatted, human readable description of the specified
+    /// 'duration'.
     static bsl::string describeDelay(const bsls::TimeInterval& duration);
 };
 

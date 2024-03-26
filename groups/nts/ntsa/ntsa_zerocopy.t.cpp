@@ -42,7 +42,7 @@ NTSCFG_TEST_CASE(1)
         const bsl::uint32_t             from = 10;
         const bsl::uint32_t             thru = 22;
         const ntsa::ZeroCopyType::Value type = ntsa::ZeroCopyType::e_DEFERRED;
-        
+
         ZeroCopy zc;
         zc.setFrom(from);
         zc.setThru(thru);

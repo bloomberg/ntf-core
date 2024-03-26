@@ -57,8 +57,8 @@ int SkipList_RandomLevelGenerator::randomLevel()
             d_randomBits |= (1 << 14);  // Set the sentinel bit.
         }
 
-        b            = d_randomBits & 3;
-        level        += !b;
+        b              = d_randomBits & 3;
+        level         += !b;
         d_randomBits >>= 2;
 
     } while (!b);

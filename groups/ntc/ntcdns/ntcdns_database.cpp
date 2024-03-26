@@ -40,8 +40,7 @@ namespace ntcdns {
 namespace {
 
 /// Provide a functor to sort port entries by port.
-struct PortEntrySorter
-{
+struct PortEntrySorter {
     bool operator()(const ntcdns::PortEntry& lhs,
                     const ntcdns::PortEntry& rhs) const
     {
@@ -1432,12 +1431,13 @@ void PortDatabase::dump(bsl::vector<ntcdns::PortEntry>* result) const
 
     if (!d_tcpServiceNameByPort.empty()) {
         for (ServiceNameByPort::const_iterator it =
-            d_tcpServiceNameByPort.begin();
-            it != d_tcpServiceNameByPort.end(); ++it)
+                 d_tcpServiceNameByPort.begin();
+             it != d_tcpServiceNameByPort.end();
+             ++it)
         {
             ntcdns::PortEntry portEntry;
-            portEntry.service() = it->second;
-            portEntry.port() = it->first;
+            portEntry.service()  = it->second;
+            portEntry.port()     = it->first;
             portEntry.protocol() = "tcp";
 
             result->push_back(portEntry);
@@ -1446,12 +1446,13 @@ void PortDatabase::dump(bsl::vector<ntcdns::PortEntry>* result) const
 
     if (!d_udpServiceNameByPort.empty()) {
         for (ServiceNameByPort::const_iterator it =
-            d_udpServiceNameByPort.begin();
-            it != d_udpServiceNameByPort.end(); ++it)
+                 d_udpServiceNameByPort.begin();
+             it != d_udpServiceNameByPort.end();
+             ++it)
         {
             ntcdns::PortEntry portEntry;
-            portEntry.service() = it->second;
-            portEntry.port() = it->first;
+            portEntry.service()  = it->second;
+            portEntry.port()     = it->first;
             portEntry.protocol() = "udp";
 
             result->push_back(portEntry);

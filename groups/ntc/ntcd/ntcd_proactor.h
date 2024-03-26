@@ -94,18 +94,18 @@ class Proactor : public ntci::Proactor,
     bsl::shared_ptr<ntci::ListenerSocketFactory> d_listenerSocketFactory_sp;
     bsl::shared_ptr<ntci::StreamSocketFactory>   d_streamSocketFactory_sp;
     bsl::shared_ptr<ntcs::RegistryEntryCatalog::EntryFunctor>
-                                                 d_detachFunctor_sp;
-    bsl::shared_ptr<ntcs::RegistryEntryCatalog>  d_registry_sp;
-    mutable bslmt::Mutex                         d_waiterSetMutex;
-    WaiterSet                                    d_waiterSet;
-    mutable bslmt::Mutex                         d_workMapMutex;
-    WorkMap                                      d_workMap;
-    bslmt::ThreadUtil::Handle                    d_threadHandle;
-    bsl::size_t                                  d_threadIndex;
-    bsls::AtomicUint64                           d_load;
-    bsls::AtomicBool                             d_run;
-    ntca::ProactorConfig                         d_config;
-    bslma::Allocator*                            d_allocator_p;
+                                                d_detachFunctor_sp;
+    bsl::shared_ptr<ntcs::RegistryEntryCatalog> d_registry_sp;
+    mutable bslmt::Mutex                        d_waiterSetMutex;
+    WaiterSet                                   d_waiterSet;
+    mutable bslmt::Mutex                        d_workMapMutex;
+    WorkMap                                     d_workMap;
+    bslmt::ThreadUtil::Handle                   d_threadHandle;
+    bsl::size_t                                 d_threadIndex;
+    bsls::AtomicUint64                          d_load;
+    bsls::AtomicBool                            d_run;
+    ntca::ProactorConfig                        d_config;
+    bslma::Allocator*                           d_allocator_p;
 
   private:
     Proactor(const Proactor&) BSLS_KEYWORD_DELETED;

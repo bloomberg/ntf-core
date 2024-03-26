@@ -550,11 +550,11 @@ void StreamSocket::processSendDeadlineTimer(
             sendEvent.setContext(sendContext);
 
             callback.dispatch(self,
-                                                   sendEvent,
-                                                   d_proactorStrand_sp,
-                                                   self,
-                                                   false,
-                                                   &d_mutex);
+                              sendEvent,
+                              d_proactorStrand_sp,
+                              self,
+                              false,
+                              &d_mutex);
         }
     }
 }
@@ -924,8 +924,7 @@ void StreamSocket::privateFailConnect(
                 ntcs::ObserverRef<ntci::Proactor> proactorRef(&d_proactor);
                 if (proactorRef) {
                     proactorRef->cancel(self);
-                    const ntsa::Error error =
-                        proactorRef->detachSocket(self);
+                    const ntsa::Error error = proactorRef->detachSocket(self);
                     if (NTCCFG_LIKELY(!error)) {
                         d_detachState.set(
                             ntcs::DetachState::e_DETACH_INITIATED);
@@ -957,8 +956,7 @@ void StreamSocket::privateFailConnect(
                 ntcs::ObserverRef<ntci::Proactor> proactorRef(&d_proactor);
                 if (proactorRef) {
                     proactorRef->cancel(self);
-                    const ntsa::Error error =
-                        proactorRef->detachSocket(self);
+                    const ntsa::Error error = proactorRef->detachSocket(self);
                     if (NTCCFG_LIKELY(!error)) {
                         d_detachState.set(
                             ntcs::DetachState::e_DETACH_INITIATED);
@@ -1590,11 +1588,11 @@ void StreamSocket::privateCompleteSend(
         sendEvent.setContext(sendContext);
 
         callback.dispatch(self,
-                                               sendEvent,
-                                               d_proactorStrand_sp,
-                                               self,
-                                               false,
-                                               &d_mutex);
+                          sendEvent,
+                          d_proactorStrand_sp,
+                          self,
+                          false,
+                          &d_mutex);
     }
 
     if (d_sendQueue.authorizeLowWatermarkEvent()) {
@@ -1647,11 +1645,11 @@ void StreamSocket::privateFailSend(const bsl::shared_ptr<StreamSocket>& self,
         sendEvent.setContext(sendContext);
 
         callback.dispatch(self,
-                                               sendEvent,
-                                               d_proactorStrand_sp,
-                                               self,
-                                               false,
-                                               &d_mutex);
+                          sendEvent,
+                          d_proactorStrand_sp,
+                          self,
+                          false,
+                          &d_mutex);
     }
 }
 
@@ -2007,11 +2005,11 @@ void StreamSocket::privateShutdownSequencePart2(
             sendEvent.setContext(sendContext);
 
             callbackVector[i].dispatch(self,
-                                                   sendEvent,
-                                                   d_proactorStrand_sp,
-                                                   self,
-                                                   defer,
-                                                   &d_mutex);
+                                       sendEvent,
+                                       d_proactorStrand_sp,
+                                       self,
+                                       defer,
+                                       &d_mutex);
         }
 
         callbackVector.clear();
@@ -4468,11 +4466,11 @@ ntsa::Error StreamSocket::send(const bdlbb::Blob&        data,
             const bool defer = !options.recurse();
 
             callback.dispatch(self,
-                                                   sendEvent,
-                                                   ntci::Strand::unknown(),
-                                                   self,
-                                                   defer,
-                                                   &d_mutex);
+                              sendEvent,
+                              ntci::Strand::unknown(),
+                              self,
+                              defer,
+                              &d_mutex);
         }
 
         return ntsa::Error();
@@ -4575,11 +4573,11 @@ ntsa::Error StreamSocket::send(const ntsa::Data&         data,
             const bool defer = !options.recurse();
 
             callback.dispatch(self,
-                                                   sendEvent,
-                                                   ntci::Strand::unknown(),
-                                                   self,
-                                                   defer,
-                                                   &d_mutex);
+                              sendEvent,
+                              ntci::Strand::unknown(),
+                              self,
+                              defer,
+                              &d_mutex);
         }
 
         return ntsa::Error();
@@ -5480,11 +5478,11 @@ ntsa::Error StreamSocket::cancel(const ntca::SendToken& token)
         sendEvent.setContext(sendContext);
 
         callback.dispatch(self,
-                                               sendEvent,
-                                               d_proactorStrand_sp,
-                                               self,
-                                               true,
-                                               &d_mutex);
+                          sendEvent,
+                          d_proactorStrand_sp,
+                          self,
+                          true,
+                          &d_mutex);
 
         return ntsa::Error();
     }
@@ -5633,11 +5631,10 @@ ntsa::Error StreamSocket::shutdown(ntsa::ShutdownType::Value direction,
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
     if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
-        d_deferredCalls.push_back(NTCCFG_BIND(&StreamSocket::shutdown,
-                                              self,
-                                              direction,
-                                              mode));
-        return ntsa::Error();;
+        d_deferredCalls.push_back(
+            NTCCFG_BIND(&StreamSocket::shutdown, self, direction, mode));
+        return ntsa::Error();
+        ;
     }
 
     if (d_connectInProgress) {

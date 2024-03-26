@@ -164,7 +164,7 @@ bsl::size_t IpEndpoint::format(char*       buffer,
         t += n;
         c -= n;
 
-        *t = ':';
+        *t  = ':';
         t  += 1;
         c  -= 1;
 
@@ -178,7 +178,7 @@ bsl::size_t IpEndpoint::format(char*       buffer,
             return capacity - c;
         }
 
-        *t = '[';
+        *t  = '[';
         t  += 1;
         c  -= 1;
 
@@ -192,7 +192,7 @@ bsl::size_t IpEndpoint::format(char*       buffer,
             return capacity - c;
         }
 
-        *t = ']';
+        *t  = ']';
         t  += 1;
         c  -= 1;
 
@@ -200,7 +200,7 @@ bsl::size_t IpEndpoint::format(char*       buffer,
             return capacity - c;
         }
 
-        *t = ':';
+        *t  = ':';
         t  += 1;
         c  -= 1;
 

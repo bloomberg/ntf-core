@@ -328,7 +328,7 @@ NTSCFG_TEST_CASE(5)
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
     int rc = _putenv(tmp.c_str());
 #else
-    int rc = putenv(const_cast<char*>(tmp.c_str()));
+    int         rc      = putenv(const_cast<char*>(tmp.c_str()));
 #endif
     NTSCFG_TEST_EQ(rc, 0);
 

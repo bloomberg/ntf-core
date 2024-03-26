@@ -41,8 +41,8 @@ int EncryptionKeyType::fromInt(EncryptionKeyType::Value* result, int number)
     }
 }
 
-int EncryptionKeyType::fromString(EncryptionKeyType::Value*  result,
-                                const bslstl::StringRef& string)
+int EncryptionKeyType::fromString(EncryptionKeyType::Value* result,
+                                  const bslstl::StringRef&  string)
 {
     if (bdlb::String::areEqualCaseless(string, "RSA")) {
         *result = e_RSA;
@@ -104,8 +104,8 @@ const char* EncryptionKeyType::toString(EncryptionKeyType::Value value)
     return 0;
 }
 
-bsl::ostream& EncryptionKeyType::print(bsl::ostream&          stream,
-                                     EncryptionKeyType::Value value)
+bsl::ostream& EncryptionKeyType::print(bsl::ostream&            stream,
+                                       EncryptionKeyType::Value value)
 {
     return stream << toString(value);
 }

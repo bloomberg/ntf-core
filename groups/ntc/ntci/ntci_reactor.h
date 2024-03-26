@@ -539,8 +539,9 @@ class Reactor : public ntci::Driver, public ntci::ReactorPool
 
     /// Stop monitoring the specified socket 'handle'. Invoke the specified
     /// 'callback' when the socket is detached. Return the error.
-    virtual ntsa::Error detachSocket(ntsa::Handle handle,
-                                     const ntci::SocketDetachedCallback& callback);
+    virtual ntsa::Error detachSocket(
+        ntsa::Handle                        handle,
+        const ntci::SocketDetachedCallback& callback);
 
     /// Close all monitored sockets and timers.
     virtual ntsa::Error closeAll() = 0;

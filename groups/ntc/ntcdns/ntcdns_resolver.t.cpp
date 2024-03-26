@@ -1989,16 +1989,16 @@ NTCCFG_TEST_CASE(20)
 
         // Get the endpoint assigned to "dns.google.com:http".
 
-        error = resolver->getEndpoint(
-            "dns.google.com:http", options, callback);
+        error =
+            resolver->getEndpoint("dns.google.com:http", options, callback);
         NTCCFG_TEST_FALSE(error);
 
         semaphore.wait();
 
         // Get the endpoint assigned to "dns.google.com:http".
 
-        error = resolver->getEndpoint(
-            "dns.google.com:http", options, callback);
+        error =
+            resolver->getEndpoint("dns.google.com:http", options, callback);
         NTCCFG_TEST_FALSE(error);
 
         semaphore.wait();

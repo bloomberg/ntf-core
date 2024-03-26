@@ -26,7 +26,8 @@ BSLS_IDENT_RCSID(ntca_encryptionkeystorageoptions_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntca {
 
-EncryptionKeyStorageOptions::EncryptionKeyStorageOptions(bslma::Allocator* basicAllocator)
+EncryptionKeyStorageOptions::EncryptionKeyStorageOptions(
+    bslma::Allocator* basicAllocator)
 : d_type()
 , d_label(basicAllocator)
 , d_passphrase(basicAllocator)
@@ -35,8 +36,8 @@ EncryptionKeyStorageOptions::EncryptionKeyStorageOptions(bslma::Allocator* basic
 }
 
 EncryptionKeyStorageOptions::EncryptionKeyStorageOptions(
-                                    const EncryptionKeyStorageOptions& original,
-                                    bslma::Allocator*           basicAllocator)
+    const EncryptionKeyStorageOptions& original,
+    bslma::Allocator*                  basicAllocator)
 : d_type(original.d_type)
 , d_label(original.d_label, basicAllocator)
 , d_passphrase(original.d_passphrase, basicAllocator)
@@ -49,7 +50,7 @@ EncryptionKeyStorageOptions::~EncryptionKeyStorageOptions()
 }
 
 EncryptionKeyStorageOptions& EncryptionKeyStorageOptions::operator=(
-                                             const EncryptionKeyStorageOptions& other)
+    const EncryptionKeyStorageOptions& other)
 {
     if (this != &other) {
         d_type       = other.d_type;
@@ -69,7 +70,8 @@ void EncryptionKeyStorageOptions::reset()
     d_flags.reset();
 }
 
-void EncryptionKeyStorageOptions::setType(ntca::EncryptionKeyStorageType::Value value)
+void EncryptionKeyStorageOptions::setType(
+    ntca::EncryptionKeyStorageType::Value value)
 {
     d_type = value;
 }
@@ -90,26 +92,27 @@ EncryptionKeyStorageOptions::type() const
     return d_type;
 }
 
-const bdlb::NullableValue<bsl::string>& EncryptionKeyStorageOptions::label() const
+const bdlb::NullableValue<bsl::string>& EncryptionKeyStorageOptions::label()
+    const
 {
     return d_label;
 }
 
-const bdlb::NullableValue<bsl::string>&
-EncryptionKeyStorageOptions::passphrase() const
+const bdlb::NullableValue<bsl::string>& EncryptionKeyStorageOptions::
+    passphrase() const
 {
     return d_passphrase;
 }
 
-bool EncryptionKeyStorageOptions::equals(const EncryptionKeyStorageOptions& other) const
+bool EncryptionKeyStorageOptions::equals(
+    const EncryptionKeyStorageOptions& other) const
 {
-    return d_type       == other.d_type &&
-           d_label      == other.d_label &&
-           d_passphrase == other.d_passphrase &&
-           d_flags       == other.d_flags;
+    return d_type == other.d_type && d_label == other.d_label &&
+           d_passphrase == other.d_passphrase && d_flags == other.d_flags;
 }
 
-bool EncryptionKeyStorageOptions::less(const EncryptionKeyStorageOptions& other) const
+bool EncryptionKeyStorageOptions::less(
+    const EncryptionKeyStorageOptions& other) const
 {
     if (d_type < other.d_type) {
         return true;
@@ -139,8 +142,8 @@ bool EncryptionKeyStorageOptions::less(const EncryptionKeyStorageOptions& other)
 }
 
 bsl::ostream& EncryptionKeyStorageOptions::print(bsl::ostream& stream,
-                                          int           level,
-                                          int           spacesPerLevel) const
+                                                 int           level,
+                                                 int spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -161,7 +164,7 @@ bsl::ostream& EncryptionKeyStorageOptions::print(bsl::ostream& stream,
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&               stream,
+bsl::ostream& operator<<(bsl::ostream&                      stream,
                          const EncryptionKeyStorageOptions& object)
 {
     return object.print(stream, 0, -1);

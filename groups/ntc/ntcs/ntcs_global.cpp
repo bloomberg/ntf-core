@@ -19,8 +19,8 @@
 BSLS_IDENT_RCSID(ntcs_global_cpp, "$Id$ $CSID$")
 
 #include <ntci_mutex.h>
-#include <bslmt_once.h>
 #include <bslma_newdeleteallocator.h>
+#include <bslmt_once.h>
 #include <bsls_assert.h>
 #include <bsl_cstdlib.h>
 
@@ -29,7 +29,7 @@ namespace ntcs {
 
 namespace {
 
-typedef ntci::Mutex Mutex;
+typedef ntci::Mutex     Mutex;
 typedef ntci::LockGuard LockGuard;
 
 bslma::Allocator*         s_allocator_p;
@@ -56,7 +56,7 @@ ntci::Resolver*           s_resolver_p;
 bslma::SharedPtrRep*      s_resolverRep_p;
 Global::ResolverProvider  s_resolverProvider;
 
-void registerExecutor(ntci::Executor*      executor, 
+void registerExecutor(ntci::Executor*      executor,
                       bslma::SharedPtrRep* executorRep)
 {
     BSLS_ASSERT_OPT(s_executor_p == 0);
@@ -69,8 +69,7 @@ void registerExecutor(ntci::Executor*      executor,
     BSLS_ASSERT_OPT(s_executorRep_p);
 }
 
-void registerStrand(ntci::Strand*        strand, 
-                    bslma::SharedPtrRep* strandRep)
+void registerStrand(ntci::Strand* strand, bslma::SharedPtrRep* strandRep)
 {
     BSLS_ASSERT_OPT(s_strand_p == 0);
     BSLS_ASSERT_OPT(s_strandRep_p == 0);
@@ -87,8 +86,7 @@ void registerStrand(ntci::Strand*        strand,
     }
 }
 
-void registerDriver(ntci::Driver*        driver, 
-                    bslma::SharedPtrRep* driverRep)
+void registerDriver(ntci::Driver* driver, bslma::SharedPtrRep* driverRep)
 {
     BSLS_ASSERT_OPT(s_driver_p == 0);
     BSLS_ASSERT_OPT(s_driverRep_p == 0);
@@ -100,8 +98,7 @@ void registerDriver(ntci::Driver*        driver,
     BSLS_ASSERT_OPT(s_driverRep_p);
 }
 
-void registerReactor(ntci::Reactor*       reactor, 
-                     bslma::SharedPtrRep* reactorRep)
+void registerReactor(ntci::Reactor* reactor, bslma::SharedPtrRep* reactorRep)
 {
     BSLS_ASSERT_OPT(s_reactor_p == 0);
     BSLS_ASSERT_OPT(s_reactorRep_p == 0);
@@ -118,7 +115,7 @@ void registerReactor(ntci::Reactor*       reactor,
     }
 }
 
-void registerProactor(ntci::Proactor*      proactor, 
+void registerProactor(ntci::Proactor*      proactor,
                       bslma::SharedPtrRep* proactorRep)
 {
     BSLS_ASSERT_OPT(s_proactor_p == 0);
@@ -136,7 +133,7 @@ void registerProactor(ntci::Proactor*      proactor,
     }
 }
 
-void registerInterface(ntci::Interface*     interface, 
+void registerInterface(ntci::Interface*     interface,
                        bslma::SharedPtrRep* interfaceRep)
 {
     BSLS_ASSERT_OPT(s_interface_p == 0);
@@ -154,7 +151,7 @@ void registerInterface(ntci::Interface*     interface,
     }
 }
 
-void registerResolver(ntci::Resolver*      resolver, 
+void registerResolver(ntci::Resolver*      resolver,
                       bslma::SharedPtrRep* resolverRep)
 {
     BSLS_ASSERT_OPT(s_resolver_p == 0);
@@ -283,7 +280,7 @@ void deregisterResolver()
     s_resolverRep_p = 0;
 }
 
-} // close unnamed namespace
+}  // close unnamed namespace
 
 void Global::initialize()
 {
@@ -296,7 +293,7 @@ void Global::initialize()
     BSLMT_ONCE_DO
     {
         s_allocator_p = &bslma::NewDeleteAllocator::singleton();
-        s_mutex_p = new (*s_allocator_p) Mutex();
+        s_mutex_p     = new (*s_allocator_p) Mutex();
 
         bsl::atexit(&Global::exit);
     }
@@ -497,7 +494,7 @@ void Global::getDefault(bsl::shared_ptr<ntci::Executor>* result)
         if (s_executorProvider) {
             s_executorProvider(&executor, s_allocator_p);
         }
-        
+
         bsl::pair<ntci::Executor*, bslma::SharedPtrRep*> pair =
             executor.release();
 
@@ -511,8 +508,7 @@ void Global::getDefault(bsl::shared_ptr<ntci::Executor>* result)
 
     s_executorRep_p->acquireRef();
 
-    *result = bsl::shared_ptr<ntci::Executor>(s_executor_p,
-                                              s_executorRep_p);
+    *result = bsl::shared_ptr<ntci::Executor>(s_executor_p, s_executorRep_p);
     BSLS_ASSERT_OPT(*result);
 }
 
@@ -544,7 +540,7 @@ void Global::getDefault(bsl::shared_ptr<ntci::Strand>* result)
             if (s_interfaceProvider) {
                 s_interfaceProvider(&interface, s_allocator_p);
             }
-            
+
             bsl::pair<ntci::Interface*, bslma::SharedPtrRep*> pair =
                 interface.release();
 
@@ -552,9 +548,8 @@ void Global::getDefault(bsl::shared_ptr<ntci::Strand>* result)
 
             registerInterface(pair.first, pair.second);
         }
-        
-        bsl::pair<ntci::Strand*, bslma::SharedPtrRep*> pair =
-            strand.release();
+
+        bsl::pair<ntci::Strand*, bslma::SharedPtrRep*> pair = strand.release();
 
         BSLS_ASSERT_OPT(!strand);
 
@@ -566,8 +561,7 @@ void Global::getDefault(bsl::shared_ptr<ntci::Strand>* result)
 
     s_strandRep_p->acquireRef();
 
-    *result = bsl::shared_ptr<ntci::Strand>(s_strand_p,
-                                              s_strandRep_p);
+    *result = bsl::shared_ptr<ntci::Strand>(s_strand_p, s_strandRep_p);
     BSLS_ASSERT_OPT(*result);
 }
 
@@ -584,9 +578,8 @@ void Global::getDefault(bsl::shared_ptr<ntci::Driver>* result)
         if (s_driverProvider) {
             s_driverProvider(&driver, s_allocator_p);
         }
-        
-        bsl::pair<ntci::Driver*, bslma::SharedPtrRep*> pair =
-            driver.release();
+
+        bsl::pair<ntci::Driver*, bslma::SharedPtrRep*> pair = driver.release();
 
         BSLS_ASSERT_OPT(!driver);
 
@@ -598,8 +591,7 @@ void Global::getDefault(bsl::shared_ptr<ntci::Driver>* result)
 
     s_driverRep_p->acquireRef();
 
-    *result = bsl::shared_ptr<ntci::Driver>(s_driver_p,
-                                              s_driverRep_p);
+    *result = bsl::shared_ptr<ntci::Driver>(s_driver_p, s_driverRep_p);
     BSLS_ASSERT_OPT(*result);
 }
 
@@ -616,7 +608,7 @@ void Global::getDefault(bsl::shared_ptr<ntci::Reactor>* result)
         if (s_reactorProvider) {
             s_reactorProvider(&reactor, s_allocator_p);
         }
-        
+
         bsl::pair<ntci::Reactor*, bslma::SharedPtrRep*> pair =
             reactor.release();
 
@@ -630,8 +622,7 @@ void Global::getDefault(bsl::shared_ptr<ntci::Reactor>* result)
 
     s_reactorRep_p->acquireRef();
 
-    *result = bsl::shared_ptr<ntci::Reactor>(s_reactor_p,
-                                              s_reactorRep_p);
+    *result = bsl::shared_ptr<ntci::Reactor>(s_reactor_p, s_reactorRep_p);
     BSLS_ASSERT_OPT(*result);
 }
 
@@ -648,7 +639,7 @@ void Global::getDefault(bsl::shared_ptr<ntci::Proactor>* result)
         if (s_proactorProvider) {
             s_proactorProvider(&proactor, s_allocator_p);
         }
-        
+
         bsl::pair<ntci::Proactor*, bslma::SharedPtrRep*> pair =
             proactor.release();
 
@@ -662,8 +653,7 @@ void Global::getDefault(bsl::shared_ptr<ntci::Proactor>* result)
 
     s_proactorRep_p->acquireRef();
 
-    *result = bsl::shared_ptr<ntci::Proactor>(s_proactor_p,
-                                              s_proactorRep_p);
+    *result = bsl::shared_ptr<ntci::Proactor>(s_proactor_p, s_proactorRep_p);
     BSLS_ASSERT_OPT(*result);
 }
 
@@ -680,7 +670,7 @@ void Global::getDefault(bsl::shared_ptr<ntci::Interface>* result)
         if (s_interfaceProvider) {
             s_interfaceProvider(&interface, s_allocator_p);
         }
-        
+
         bsl::pair<ntci::Interface*, bslma::SharedPtrRep*> pair =
             interface.release();
 
@@ -694,8 +684,8 @@ void Global::getDefault(bsl::shared_ptr<ntci::Interface>* result)
 
     s_interfaceRep_p->acquireRef();
 
-    *result = bsl::shared_ptr<ntci::Interface>(s_interface_p,
-                                               s_interfaceRep_p);
+    *result =
+        bsl::shared_ptr<ntci::Interface>(s_interface_p, s_interfaceRep_p);
     BSLS_ASSERT_OPT(*result);
 }
 
@@ -712,7 +702,7 @@ void Global::getDefault(bsl::shared_ptr<ntci::Resolver>* result)
         if (s_resolverProvider) {
             s_resolverProvider(&resolver, s_allocator_p);
         }
-        
+
         bsl::pair<ntci::Resolver*, bslma::SharedPtrRep*> pair =
             resolver.release();
 
@@ -726,8 +716,7 @@ void Global::getDefault(bsl::shared_ptr<ntci::Resolver>* result)
 
     s_resolverRep_p->acquireRef();
 
-    *result = bsl::shared_ptr<ntci::Resolver>(s_resolver_p,
-                                              s_resolverRep_p);
+    *result = bsl::shared_ptr<ntci::Resolver>(s_resolver_p, s_resolverRep_p);
     BSLS_ASSERT_OPT(*result);
 }
 

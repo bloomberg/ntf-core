@@ -22,7 +22,7 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntsu {
 
-/// @internal @brief 
+/// @internal @brief
 /// Redefine types and constants used for Linux zero-copy in a portable way,
 /// independant of any operating system headers and content of those headers
 /// that may or may not be present on the build machine.
@@ -40,7 +40,7 @@ namespace ntsu {
 ///
 /// @li To reduce the complexity in the implementation detected proper support,
 /// zero-copy is limited to only Linux kernel versions greater than or equal
-/// to 5.0.0. Technically zero-copy is supported for TCP sockets for Linux 
+/// to 5.0.0. Technically zero-copy is supported for TCP sockets for Linux
 /// kernel versions greater than or equal to 4.14.0.
 ///
 /// @ingroup module_ntsu

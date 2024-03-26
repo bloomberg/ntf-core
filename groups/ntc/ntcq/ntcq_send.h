@@ -64,7 +64,7 @@ class SendState
 {
     ntcq::SendCounter d_counter;
 
-public:
+  public:
     /// Create new send state.
     SendState();
 
@@ -192,14 +192,14 @@ class SendQueueEntry
     /// Create a new send queue entry. Optionally specify a 'basicAllocator'
     /// used to supply memory. If 'basicAllocator' is 0, the currently
     /// installed default allocator is used.
-    explicit SendQueueEntry(bslma::Allocator *basicAllocator = 0);
+    explicit SendQueueEntry(bslma::Allocator* basicAllocator = 0);
 
     /// Create a new send queue entry having the same value as the specified
     /// 'other' object. Optionally specify a 'basicAllocator' used to supply
     /// memory. If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
     SendQueueEntry(const SendQueueEntry& original,
-                   bslma::Allocator* basicAllocator = 0);
+                   bslma::Allocator*     basicAllocator = 0);
 
     /// Destroy this object.
     ~SendQueueEntry();
@@ -327,15 +327,15 @@ class SendQueue
     /// the write queue.
     typedef bsl::list<SendQueueEntry> EntryList;
 
-    EntryList                        d_entryList;
-    bsl::shared_ptr<bdlbb::Blob>     d_data_sp;
-    bsl::size_t                      d_size;
-    bsl::size_t                      d_watermarkLow;
-    bool                             d_watermarkLowWanted;
-    bsl::size_t                      d_watermarkHigh;
-    bool                             d_watermarkHighWanted;
-    bsl::uint64_t                    d_nextEntryId;
-    bslma::Allocator*                d_allocator_p;
+    EntryList                    d_entryList;
+    bsl::shared_ptr<bdlbb::Blob> d_data_sp;
+    bsl::size_t                  d_size;
+    bsl::size_t                  d_watermarkLow;
+    bool                         d_watermarkLowWanted;
+    bsl::size_t                  d_watermarkHigh;
+    bool                         d_watermarkHighWanted;
+    bsl::uint64_t                d_nextEntryId;
+    bslma::Allocator*            d_allocator_p;
 
   private:
     SendQueue(const SendQueue&) BSLS_KEYWORD_DELETED;
@@ -377,17 +377,15 @@ class SendQueue
     /// portion of its data copied to the socket send buffer. Return true if
     /// queue becomes empty as a result of this operation, otherwise return
     /// false.
-    bool removeEntryId(ntci::SendCallback* result,
-                       bsl::uint64_t       id);
+    bool removeEntryId(ntci::SendCallback* result, bsl::uint64_t id);
 
     /// Remove the entry having the specified 'token' and load its callback
     /// entry into the specified 'result', if an entry with such a 'token'
     /// and defined callback exists and has not already had any portion of
     /// its data copied to the socket send buffer. Return true if queue
     /// becomes empty as a result of this operation, otherwise return false.
-    bool removeEntryToken(
-        ntci::SendCallback*    result,
-        const ntca::SendToken& token);
+    bool removeEntryToken(ntci::SendCallback*    result,
+                          const ntca::SendToken& token);
 
     /// Load into the specified 'result' any pending callback entries and
     /// clear the queue. Return true if the queue was non-empty, and false
@@ -519,7 +517,7 @@ SendQueueEntry::SendQueueEntry(bslma::Allocator* basicAllocator)
 
 NTCCFG_INLINE
 SendQueueEntry::SendQueueEntry(const SendQueueEntry& original,
-                               bslma::Allocator* basicAllocator)
+                               bslma::Allocator*     basicAllocator)
 : d_id(original.d_id)
 , d_token(original.d_token)
 , d_endpoint(original.d_endpoint)
@@ -609,8 +607,7 @@ void SendQueueEntry::setTimer(const bsl::shared_ptr<ntci::Timer>& timer)
 }
 
 NTCCFG_INLINE
-void SendQueueEntry::setCallback(
-    const ntci::SendCallback& callback)
+void SendQueueEntry::setCallback(const ntci::SendCallback& callback)
 {
     d_callback = callback;
 }
@@ -803,9 +800,7 @@ void SendQueue::popSize(bsl::size_t numBytes)
 }
 
 NTCCFG_INLINE
-bool SendQueue::removeEntryId(
-    ntci::SendCallback* result,
-    bsl::uint64_t       id)
+bool SendQueue::removeEntryId(ntci::SendCallback* result, bsl::uint64_t id)
 {
     result->reset();
 
@@ -841,9 +836,8 @@ bool SendQueue::removeEntryId(
 }
 
 NTCCFG_INLINE
-bool SendQueue::removeEntryToken(
-    ntci::SendCallback*    result,
-    const ntca::SendToken& token)
+bool SendQueue::removeEntryToken(ntci::SendCallback*    result,
+                                 const ntca::SendToken& token)
 {
     result->reset();
 
@@ -879,8 +873,7 @@ bool SendQueue::removeEntryToken(
 }
 
 NTCCFG_INLINE
-bool SendQueue::removeAll(
-    bsl::vector<ntci::SendCallback>* result)
+bool SendQueue::removeAll(bsl::vector<ntci::SendCallback>* result)
 {
     bool nonEmpty = !d_entryList.empty();
 

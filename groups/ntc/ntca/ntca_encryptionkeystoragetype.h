@@ -38,7 +38,7 @@ struct EncryptionKeyStorageType {
         /// The key is stored in the Privacy Enhanced Mail (PEM) format.
         e_PEM = 0,
 
-        /// The key is stored according to the Distinguished Encoding Rules 
+        /// The key is stored according to the Distinguished Encoding Rules
         /// (DER).
         e_DER = 1,
 
@@ -75,7 +75,8 @@ struct EncryptionKeyStorageType {
 /// reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionKeyStorageType
-bsl::ostream& operator<<(bsl::ostream& stream, EncryptionKeyStorageType::Value rhs);
+bsl::ostream& operator<<(bsl::ostream&                   stream,
+                         EncryptionKeyStorageType::Value rhs);
 
 }  // end namespace ntca
 }  // end namespace BloombergLP

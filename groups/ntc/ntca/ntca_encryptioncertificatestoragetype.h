@@ -35,7 +35,7 @@ struct EncryptionCertificateStorageType {
   public:
     /// Enumerate the encryption key types.
     enum Value {
-        /// The certificate is stored in the Privacy Enhanced Mail (PEM) 
+        /// The certificate is stored in the Privacy Enhanced Mail (PEM)
         /// format.
         e_PEM = 0,
 
@@ -73,7 +73,8 @@ struct EncryptionCertificateStorageType {
 /// reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionCertificateStorageType
-bsl::ostream& operator<<(bsl::ostream& stream, EncryptionCertificateStorageType::Value rhs);
+bsl::ostream& operator<<(bsl::ostream&                           stream,
+                         EncryptionCertificateStorageType::Value rhs);
 
 }  // end namespace ntca
 }  // end namespace BloombergLP

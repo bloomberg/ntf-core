@@ -66,11 +66,11 @@ EncryptionCertificateOptions& EncryptionCertificateOptions::operator=(
     const EncryptionCertificateOptions& other)
 {
     if (this != &other) {
-        d_serialNumber = other.d_serialNumber;
-        d_startTime = other.d_startTime;
+        d_serialNumber   = other.d_serialNumber;
+        d_startTime      = other.d_startTime;
         d_expirationTime = other.d_expirationTime;
-        d_authority = other.d_authority;
-        d_hosts = other.d_hosts;
+        d_authority      = other.d_authority;
+        d_hosts          = other.d_hosts;
     }
 
     return *this;
@@ -90,8 +90,7 @@ void EncryptionCertificateOptions::setSerialNumber(int value)
     d_serialNumber = value;
 }
 
-void EncryptionCertificateOptions::setStartTime(
-    const bdlt::DatetimeTz& value)
+void EncryptionCertificateOptions::setStartTime(const bdlt::DatetimeTz& value)
 {
     d_startTime = value;
 }
@@ -113,8 +112,7 @@ void EncryptionCertificateOptions::setHostList(
     d_hosts = value;
 }
 
-void EncryptionCertificateOptions::addHost(
-    const bsl::string& value)
+void EncryptionCertificateOptions::addHost(const bsl::string& value)
 {
     d_hosts.push_back(value);
 }
@@ -147,11 +145,11 @@ const bsl::vector<bsl::string>& EncryptionCertificateOptions::hosts() const
 bool EncryptionCertificateOptions::equals(
     const EncryptionCertificateOptions& other) const
 {
-    return d_serialNumber   == other.d_serialNumber &&
-           d_startTime      == other.d_startTime &&
+    return d_serialNumber == other.d_serialNumber &&
+           d_startTime == other.d_startTime &&
            d_expirationTime == other.d_expirationTime &&
-           d_authority      == other.d_authority &&
-           d_hosts          == other.d_hosts;;
+           d_authority == other.d_authority && d_hosts == other.d_hosts;
+    ;
 }
 
 bool EncryptionCertificateOptions::less(
@@ -173,14 +171,12 @@ bool EncryptionCertificateOptions::less(
         return false;
     }
 
-    if (d_expirationTime.gmtDatetime() < 
-        other.d_expirationTime.gmtDatetime()) 
+    if (d_expirationTime.gmtDatetime() < other.d_expirationTime.gmtDatetime())
     {
         return true;
     }
 
-    if (other.d_expirationTime.gmtDatetime() < 
-        d_expirationTime.gmtDatetime()) 
+    if (other.d_expirationTime.gmtDatetime() < d_expirationTime.gmtDatetime())
     {
         return false;
     }

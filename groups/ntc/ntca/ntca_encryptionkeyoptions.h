@@ -159,7 +159,6 @@ bool operator<(const EncryptionKeyOptions& lhs,
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionKeyOptions& value);
 
-
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionKeyOptions& value)
 {

@@ -1377,7 +1377,7 @@ ntsa::Error Compat::configure(
     // In order for the kernel to respect the MSG_ZEROCOPY flag in ::sendmsg
     // the SO_ZEROCOPY option must first be set. This option may only be
     // set when the socket is in the default state, on certain Linux kernel
-    // versions. 
+    // versions.
 
     {
         ntsa::SocketOption option;
@@ -1639,7 +1639,7 @@ ntsa::Error Compat::configure(
     // In order for the kernel to respect the MSG_ZEROCOPY flag in ::sendmsg
     // the SO_ZEROCOPY option must first be set. This option may only be
     // set when the socket is in the default state, on certain Linux kernel
-    // versions. 
+    // versions.
 
     {
         ntsa::SocketOption option;
@@ -1905,7 +1905,7 @@ ntsa::Error Compat::configure(
     // In order for the kernel to respect the MSG_ZEROCOPY flag in ::sendmsg
     // the SO_ZEROCOPY option must first be set. This option may only be
     // set when the socket is in the default state, on certain Linux kernel
-    // versions. 
+    // versions.
 
     {
         ntsa::SocketOption option;

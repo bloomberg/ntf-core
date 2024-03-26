@@ -31,8 +31,8 @@ BSLS_IDENT_RCSID(ntci_log_cpp, "$Id$ $CSID$")
 #include <bsl_cstdio.h>
 #include <bsl_cstdlib.h>
 #include <bsl_cstring.h>
-#include <bsl_sstream.h>
 #include <bsl_limits.h>
+#include <bsl_sstream.h>
 
 #define NTCI_LOG_UNSET_CONTEXT 1
 
@@ -3422,7 +3422,7 @@ ntsa::Error FormatBufferUtil::append(FormatBuffer* buffer,
         buffer->size += size;
     }
 
-    buffer->data[buffer->size] = 0;
+    buffer->data[buffer->size]  = 0;
     context->size              += size;
 
     return ntsa::Error();

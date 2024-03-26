@@ -25,7 +25,9 @@ BSLS_IDENT_RCSID(ntca_encryptioncertificatestoragetype_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntca {
 
-int EncryptionCertificateStorageType::fromInt(EncryptionCertificateStorageType::Value* result, int number)
+int EncryptionCertificateStorageType::fromInt(
+    EncryptionCertificateStorageType::Value* result,
+    int                                      number)
 {
     switch (number) {
     case EncryptionCertificateStorageType::e_PEM:
@@ -38,8 +40,9 @@ int EncryptionCertificateStorageType::fromInt(EncryptionCertificateStorageType::
     }
 }
 
-int EncryptionCertificateStorageType::fromString(EncryptionCertificateStorageType::Value*  result,
-                                const bslstl::StringRef& string)
+int EncryptionCertificateStorageType::fromString(
+    EncryptionCertificateStorageType::Value* result,
+    const bslstl::StringRef&                 string)
 {
     if (bdlb::String::areEqualCaseless(string, "PEM")) {
         *result = e_PEM;
@@ -59,7 +62,8 @@ int EncryptionCertificateStorageType::fromString(EncryptionCertificateStorageTyp
     return -1;
 }
 
-const char* EncryptionCertificateStorageType::toString(EncryptionCertificateStorageType::Value value)
+const char* EncryptionCertificateStorageType::toString(
+    EncryptionCertificateStorageType::Value value)
 {
     switch (value) {
     case e_PEM: {
@@ -77,13 +81,15 @@ const char* EncryptionCertificateStorageType::toString(EncryptionCertificateStor
     return 0;
 }
 
-bsl::ostream& EncryptionCertificateStorageType::print(bsl::ostream&          stream,
-                                     EncryptionCertificateStorageType::Value value)
+bsl::ostream& EncryptionCertificateStorageType::print(
+    bsl::ostream&                           stream,
+    EncryptionCertificateStorageType::Value value)
 {
     return stream << toString(value);
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, EncryptionCertificateStorageType::Value rhs)
+bsl::ostream& operator<<(bsl::ostream&                           stream,
+                         EncryptionCertificateStorageType::Value rhs)
 {
     return EncryptionCertificateStorageType::print(stream, rhs);
 }
