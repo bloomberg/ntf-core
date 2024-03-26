@@ -13,13 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INCLUDED_NTCA_ENCRYPTIONKEYOPTIONS
-#define INCLUDED_NTCA_ENCRYPTIONKEYOPTIONS
+#ifndef INCLUDED_NTCA_ENCRYPTIONKEYSTORAGEOPTIONS
+#define INCLUDED_NTCA_ENCRYPTIONKEYSTORAGEOPTIONS
 
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <ntca_encryptionkeytype.h>
+#include <ntca_encryptionkeystoragetype.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 #include <bdlb_nullablevalue.h>
@@ -38,67 +38,75 @@ namespace ntca {
 /// This class is composed of the following attributes.
 ///
 /// @li @b type:
-/// The type of the key. If not defined, a suitable key type of strength
-/// suggested by current cryptographic standards is chosen.
+/// The type of storage format.
 ///
-/// @li @b bits:
-/// The number of bits in the key. Note that this field is only relevant for
-/// RSA key and should be greater than or equal to 2048; some implementations
-/// may refuse to generate RSA keys using fewer bits.
+/// @li @b label:
+/// The label attached to the key.
+///
+/// @li @b passphrase:
+/// The passphrase required to use this key.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
 /// @ingroup module_ntci_encryption
-class EncryptionKeyOptions
+class EncryptionKeyStorageOptions
 {
-    bdlb::NullableValue<ntca::EncryptionKeyType::Value> d_type;
-    bdlb::NullableValue<bsl::size_t>                    d_bits;
+    bdlb::NullableValue<ntca::EncryptionKeyStorageType::Value> d_type;
+    bdlb::NullableValue<bsl::string>                    d_label;
+    bdlb::NullableValue<bsl::string>                    d_passphrase;
+    bdlb::NullableValue<bsl::size_t>                    d_flags;
 
   public:
     /// Create a new key generation configuration having the default
     /// value. Optionally specify a 'basicAllocator' used to supply memory.
     /// If 'basicAllocator' is 0, the currently installed default allocator
     /// is used.
-    explicit EncryptionKeyOptions(bslma::Allocator* basicAllocator = 0);
+    explicit EncryptionKeyStorageOptions(bslma::Allocator* basicAllocator = 0);
 
     /// Create a new key generation configuration having the same value as
     /// the specified 'original' object. Optionally specify a 'basicAllocator'
     /// used to supply memory. If 'basicAllocator' is 0, the currently
     /// installed default allocator is used.
-    EncryptionKeyOptions(const EncryptionKeyOptions& original,
+    EncryptionKeyStorageOptions(const EncryptionKeyStorageOptions& original,
                          bslma::Allocator*           basicAllocator = 0);
 
     /// Destroy this object.
-    ~EncryptionKeyOptions();
+    ~EncryptionKeyStorageOptions();
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
-    EncryptionKeyOptions& operator=(const EncryptionKeyOptions& other);
+    EncryptionKeyStorageOptions& operator=(const EncryptionKeyStorageOptions& other);
 
     /// Reset the value of this object to its value upon default
     /// construction.
     void reset();
 
     /// Set the key type to the specified 'value'.
-    void setType(ntca::EncryptionKeyType::Value value);
+    void setType(ntca::EncryptionKeyStorageType::Value value);
 
-    /// Set the number of bits in the key to the specified 'value'.
-    void setBits(bsl::size_t value);
+    /// Set the label to the specified 'value'.
+    void setLabel(const bsl::string& value);
+
+    /// Set the passphrase to the specified 'value'.
+    void setPassphrase(const bsl::string& value);
 
     /// Return the key type.
-    const bdlb::NullableValue<ntca::EncryptionKeyType::Value>& type() const;
+    const bdlb::NullableValue<ntca::EncryptionKeyStorageType::Value>& type() const;
 
-    /// Return the number of bits in the key.
-    const bdlb::NullableValue<bsl::size_t>& bits() const;
+    /// Return the label.
+    const bdlb::NullableValue<bsl::string>& label() const;
+
+    /// Return the passphrase.
+    const bdlb::NullableValue<bsl::string>& passphrase() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
-    bool equals(const EncryptionKeyOptions& other) const;
+    bool equals(const EncryptionKeyStorageOptions& other) const;
 
     /// Return true if the value of this object is less than the value of
     /// the specified 'other' object, otherwise return false.
-    bool less(const EncryptionKeyOptions& other) const;
+    bool less(const EncryptionKeyStorageOptions& other) const;
 
     /// Format this object to the specified output 'stream' at the
     /// optionally specified indentation 'level' and return a reference to
@@ -118,55 +126,56 @@ class EncryptionKeyOptions
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionKeyOptions);
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionKeyStorageOptions);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
-/// @related ntca::EncryptionKeyOptions
+/// @related ntca::EncryptionKeyStorageOptions
 bsl::ostream& operator<<(bsl::ostream&               stream,
-                         const EncryptionKeyOptions& object);
+                         const EncryptionKeyStorageOptions& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
-/// @related ntca::EncryptionKeyOptions
-bool operator==(const EncryptionKeyOptions& lhs,
-                const EncryptionKeyOptions& rhs);
+/// @related ntca::EncryptionKeyStorageOptions
+bool operator==(const EncryptionKeyStorageOptions& lhs,
+                const EncryptionKeyStorageOptions& rhs);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
 /// have the same value, and 'false' otherwise.  Two attribute objects do
 /// not have the same value if one or more respective attributes differ in
 /// values.
 ///
-/// @related ntca::EncryptionKeyOptions
-bool operator!=(const EncryptionKeyOptions& lhs,
-                const EncryptionKeyOptions& rhs);
+/// @related ntca::EncryptionKeyStorageOptions
+bool operator!=(const EncryptionKeyStorageOptions& lhs,
+                const EncryptionKeyStorageOptions& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::EncryptionKeyOptions
-bool operator<(const EncryptionKeyOptions& lhs,
-               const EncryptionKeyOptions& rhs);
+/// @related ntca::EncryptionKeyStorageOptions
+bool operator<(const EncryptionKeyStorageOptions& lhs,
+               const EncryptionKeyStorageOptions& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
-/// @related ntca::EncryptionKeyOptions
+/// @related ntca::EncryptionKeyStorageOptions
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionKeyOptions& value);
+void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionKeyStorageOptions& value);
 
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionKeyOptions& value)
+void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionKeyStorageOptions& value)
 {
     using bslh::hashAppend;
 
     hashAppend(algorithm, value.type());
-    hashAppend(algorithm, value.bits());
+    hashAppend(algorithm, value.label());
+    hashAppend(algorithm, value.passphrase());
 }
 
 }  // close package namespace

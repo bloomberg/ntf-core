@@ -32,11 +32,13 @@ ntci_driverfactory
 ntci_encryption
 ntci_encryptioncertificate
 ntci_encryptioncertificategenerator
+ntci_encryptioncertificatestorage
 ntci_encryptionclient
 ntci_encryptionclientfactory
 ntci_encryptiondriver
 ntci_encryptionkey
 ntci_encryptionkeygenerator
+ntci_encryptionkeystorage
 ntci_encryptionserver
 ntci_encryptionserverfactory
 ntci_executor

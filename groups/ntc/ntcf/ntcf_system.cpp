@@ -148,14 +148,13 @@ void createDefaultExecutor(bsl::shared_ptr<ntci::Executor>* result,
 {
     ntsa::Error error;
 
-    allocator = allocator 
-              ? allocator 
-              : &bslma::NewDeleteAllocator::singleton();
+    allocator =
+        allocator ? allocator : &bslma::NewDeleteAllocator::singleton();
 
     ntca::ThreadConfig threadConfig;
     threadConfig.setThreadName("default");
 
-    bsl::shared_ptr<ntci::Thread> thread = 
+    bsl::shared_ptr<ntci::Thread> thread =
         ntcf::System::createThread(threadConfig, allocator);
 
     error = thread->start();
@@ -167,32 +166,30 @@ void createDefaultExecutor(bsl::shared_ptr<ntci::Executor>* result,
 void createDefaultDriver(bsl::shared_ptr<ntci::Driver>* result,
                          bslma::Allocator*              allocator)
 {
-    allocator = allocator 
-              ? allocator 
-              : &bslma::NewDeleteAllocator::singleton();
+    allocator =
+        allocator ? allocator : &bslma::NewDeleteAllocator::singleton();
 
     ntca::DriverConfig driverConfig;
     driverConfig.setMinThreads(1);
     driverConfig.setMaxThreads(1);
 
-    bsl::shared_ptr<ntci::Driver> driver = 
+    bsl::shared_ptr<ntci::Driver> driver =
         ntcf::System::createDriver(driverConfig, allocator);
 
     *result = driver;
 }
 
 void createDefaultReactor(bsl::shared_ptr<ntci::Reactor>* result,
-                         bslma::Allocator*               allocator)
+                          bslma::Allocator*               allocator)
 {
-    allocator = allocator 
-              ? allocator 
-              : &bslma::NewDeleteAllocator::singleton();
+    allocator =
+        allocator ? allocator : &bslma::NewDeleteAllocator::singleton();
 
     ntca::ReactorConfig reactorConfig;
     reactorConfig.setMinThreads(1);
     reactorConfig.setMaxThreads(1);
 
-    bsl::shared_ptr<ntci::Reactor> reactor = 
+    bsl::shared_ptr<ntci::Reactor> reactor =
         ntcf::System::createReactor(reactorConfig, allocator);
 
     *result = reactor;
@@ -201,15 +198,14 @@ void createDefaultReactor(bsl::shared_ptr<ntci::Reactor>* result,
 void createDefaultProactor(bsl::shared_ptr<ntci::Proactor>* result,
                            bslma::Allocator*                allocator)
 {
-    allocator = allocator 
-              ? allocator 
-              : &bslma::NewDeleteAllocator::singleton();
+    allocator =
+        allocator ? allocator : &bslma::NewDeleteAllocator::singleton();
 
     ntca::ProactorConfig proactorConfig;
     proactorConfig.setMinThreads(1);
     proactorConfig.setMaxThreads(1);
 
-    bsl::shared_ptr<ntci::Proactor> proactor = 
+    bsl::shared_ptr<ntci::Proactor> proactor =
         ntcf::System::createProactor(proactorConfig, allocator);
 
     *result = proactor;
@@ -220,16 +216,15 @@ void createDefaultInterface(bsl::shared_ptr<ntci::Interface>* result,
 {
     ntsa::Error error;
 
-    allocator = allocator 
-              ? allocator 
-              : &bslma::NewDeleteAllocator::singleton();
+    allocator =
+        allocator ? allocator : &bslma::NewDeleteAllocator::singleton();
 
     ntca::InterfaceConfig interfaceConfig;
     interfaceConfig.setThreadName("default");
     interfaceConfig.setMinThreads(1);
     interfaceConfig.setMaxThreads(64);
 
-    bsl::shared_ptr<ntci::Interface> interface = 
+    bsl::shared_ptr<ntci::Interface> interface =
         ntcf::System::createInterface(interfaceConfig, allocator);
 
     error = interface->start();
@@ -242,14 +237,13 @@ void createDefaultResolver(bsl::shared_ptr<ntci::Resolver>* result,
                            bslma::Allocator*                allocator)
 {
     ntsa::Error error;
-    
-    allocator = allocator 
-              ? allocator 
-              : &bslma::NewDeleteAllocator::singleton();
+
+    allocator =
+        allocator ? allocator : &bslma::NewDeleteAllocator::singleton();
 
     ntca::ResolverConfig resolverConfig;
-    
-    bsl::shared_ptr<ntci::Resolver> resolver = 
+
+    bsl::shared_ptr<ntci::Resolver> resolver =
         ntcf::System::createResolver(resolverConfig, allocator);
 
     error = resolver->start();
@@ -1500,7 +1494,7 @@ ntsa::Error System::generateCertificate(
 
 ntsa::Error System::loadCertificate(
     bsl::shared_ptr<ntci::EncryptionCertificate>* result,
-    const bsl::string&                            filePath,
+    const bsl::string&                            path,
     bslma::Allocator*                             basicAllocator)
 {
     ntsa::Error error;
@@ -1514,7 +1508,67 @@ ntsa::Error System::loadCertificate(
         return error;
     }
 
-    return encryptionDriver->loadCertificate(result, filePath, basicAllocator);
+    return encryptionDriver->loadCertificate(result, path, basicAllocator);
+}
+
+ntsa::Error System::loadCertificate(
+    bsl::shared_ptr<ntci::EncryptionCertificate>*    result,
+    const bsl::string&                               path,
+    const ntca::EncryptionCertificateStorageOptions& options,
+    bslma::Allocator*                                basicAllocator)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->loadCertificate(result,
+                                             path,
+                                             options,
+                                             basicAllocator);
+}
+
+ntsa::Error System::saveCertificate(
+    const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
+    const bsl::string&                                  path)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->saveCertificate(certificate, path);
+}
+
+ntsa::Error System::saveCertificate(
+    const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
+    const bsl::string&                                  path,
+    const ntca::EncryptionCertificateStorageOptions&    options)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->saveCertificate(certificate, path, options);
 }
 
 ntsa::Error System::encodeCertificate(
@@ -1536,6 +1590,27 @@ ntsa::Error System::encodeCertificate(
 }
 
 ntsa::Error System::encodeCertificate(
+    bsl::streambuf*                                     destination,
+    const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
+    const ntca::EncryptionCertificateStorageOptions&    options)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->encodeCertificate(destination,
+                                               certificate,
+                                               options);
+}
+
+ntsa::Error System::encodeCertificate(
     bdlbb::Blob*                                        destination,
     const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate)
 {
@@ -1551,6 +1626,27 @@ ntsa::Error System::encodeCertificate(
     }
 
     return encryptionDriver->encodeCertificate(destination, certificate);
+}
+
+ntsa::Error System::encodeCertificate(
+    bdlbb::Blob*                                        destination,
+    const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
+    const ntca::EncryptionCertificateStorageOptions&    options)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->encodeCertificate(destination,
+                                               certificate,
+                                               options);
 }
 
 ntsa::Error System::encodeCertificate(
@@ -1572,6 +1668,27 @@ ntsa::Error System::encodeCertificate(
 }
 
 ntsa::Error System::encodeCertificate(
+    bsl::string*                                        destination,
+    const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
+    const ntca::EncryptionCertificateStorageOptions&    options)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->encodeCertificate(destination,
+                                               certificate,
+                                               options);
+}
+
+ntsa::Error System::encodeCertificate(
     bsl::vector<char>*                                  destination,
     const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate)
 {
@@ -1587,6 +1704,27 @@ ntsa::Error System::encodeCertificate(
     }
 
     return encryptionDriver->encodeCertificate(destination, certificate);
+}
+
+ntsa::Error System::encodeCertificate(
+    bsl::vector<char>*                                  destination,
+    const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
+    const ntca::EncryptionCertificateStorageOptions&    options)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->encodeCertificate(destination,
+                                               certificate,
+                                               options);
 }
 
 ntsa::Error System::decodeCertificate(
@@ -1609,6 +1747,29 @@ ntsa::Error System::decodeCertificate(
 }
 
 ntsa::Error System::decodeCertificate(
+    bsl::shared_ptr<ntci::EncryptionCertificate>*    result,
+    bsl::streambuf*                                  source,
+    const ntca::EncryptionCertificateStorageOptions& options,
+    bslma::Allocator*                                basicAllocator)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->decodeCertificate(result,
+                                               source,
+                                               options,
+                                               basicAllocator);
+}
+
+ntsa::Error System::decodeCertificate(
     bsl::shared_ptr<ntci::EncryptionCertificate>* result,
     const bdlbb::Blob&                            source,
     bslma::Allocator*                             basicAllocator)
@@ -1625,6 +1786,29 @@ ntsa::Error System::decodeCertificate(
     }
 
     return encryptionDriver->decodeCertificate(result, source, basicAllocator);
+}
+
+ntsa::Error System::decodeCertificate(
+    bsl::shared_ptr<ntci::EncryptionCertificate>*    result,
+    const bdlbb::Blob&                               source,
+    const ntca::EncryptionCertificateStorageOptions& options,
+    bslma::Allocator*                                basicAllocator)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->decodeCertificate(result,
+                                               source,
+                                               options,
+                                               basicAllocator);
 }
 
 ntsa::Error System::decodeCertificate(
@@ -1647,6 +1831,29 @@ ntsa::Error System::decodeCertificate(
 }
 
 ntsa::Error System::decodeCertificate(
+    bsl::shared_ptr<ntci::EncryptionCertificate>*    result,
+    const bsl::string&                               source,
+    const ntca::EncryptionCertificateStorageOptions& options,
+    bslma::Allocator*                                basicAllocator)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->decodeCertificate(result,
+                                               source,
+                                               options,
+                                               basicAllocator);
+}
+
+ntsa::Error System::decodeCertificate(
     bsl::shared_ptr<ntci::EncryptionCertificate>* result,
     const bsl::vector<char>&                      source,
     bslma::Allocator*                             basicAllocator)
@@ -1663,6 +1870,29 @@ ntsa::Error System::decodeCertificate(
     }
 
     return encryptionDriver->decodeCertificate(result, source, basicAllocator);
+}
+
+ntsa::Error System::decodeCertificate(
+    bsl::shared_ptr<ntci::EncryptionCertificate>*    result,
+    const bsl::vector<char>&                         source,
+    const ntca::EncryptionCertificateStorageOptions& options,
+    bslma::Allocator*                                basicAllocator)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->decodeCertificate(result,
+                                               source,
+                                               options,
+                                               basicAllocator);
 }
 
 ntsa::Error System::generateKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
@@ -1684,7 +1914,7 @@ ntsa::Error System::generateKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
 }
 
 ntsa::Error System::loadKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
-                            const bsl::string&                    filePath,
+                            const bsl::string&                    path,
                             bslma::Allocator* basicAllocator)
 {
     ntsa::Error error;
@@ -1698,7 +1928,63 @@ ntsa::Error System::loadKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
         return error;
     }
 
-    return encryptionDriver->loadKey(result, filePath, basicAllocator);
+    return encryptionDriver->loadKey(result, path, basicAllocator);
+}
+
+ntsa::Error System::loadKey(bsl::shared_ptr<ntci::EncryptionKey>*    result,
+                            const bsl::string&                       path,
+                            const ntca::EncryptionKeyStorageOptions& options,
+                            bslma::Allocator* basicAllocator)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->loadKey(result, path, options, basicAllocator);
+}
+
+ntsa::Error System::saveKey(
+    const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
+    const bsl::string&                          path)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->saveKey(privateKey, path);
+}
+
+ntsa::Error System::saveKey(
+    const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
+    const bsl::string&                          path,
+    const ntca::EncryptionKeyStorageOptions&    options)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->saveKey(privateKey, path, options);
 }
 
 ntsa::Error System::encodeKey(
@@ -1720,6 +2006,25 @@ ntsa::Error System::encodeKey(
 }
 
 ntsa::Error System::encodeKey(
+    bsl::streambuf*                             destination,
+    const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
+    const ntca::EncryptionKeyStorageOptions&    options)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->encodeKey(destination, privateKey, options);
+}
+
+ntsa::Error System::encodeKey(
     bdlbb::Blob*                                destination,
     const bsl::shared_ptr<ntci::EncryptionKey>& privateKey)
 {
@@ -1735,6 +2040,25 @@ ntsa::Error System::encodeKey(
     }
 
     return encryptionDriver->encodeKey(destination, privateKey);
+}
+
+ntsa::Error System::encodeKey(
+    bdlbb::Blob*                                destination,
+    const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
+    const ntca::EncryptionKeyStorageOptions&    options)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->encodeKey(destination, privateKey, options);
 }
 
 ntsa::Error System::encodeKey(
@@ -1756,6 +2080,25 @@ ntsa::Error System::encodeKey(
 }
 
 ntsa::Error System::encodeKey(
+    bsl::string*                                destination,
+    const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
+    const ntca::EncryptionKeyStorageOptions&    options)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->encodeKey(destination, privateKey, options);
+}
+
+ntsa::Error System::encodeKey(
     bsl::vector<char>*                          destination,
     const bsl::shared_ptr<ntci::EncryptionKey>& privateKey)
 {
@@ -1771,6 +2114,25 @@ ntsa::Error System::encodeKey(
     }
 
     return encryptionDriver->encodeKey(destination, privateKey);
+}
+
+ntsa::Error System::encodeKey(
+    bsl::vector<char>*                          destination,
+    const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
+    const ntca::EncryptionKeyStorageOptions&    options)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->encodeKey(destination, privateKey, options);
 }
 
 ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
@@ -1791,6 +2153,28 @@ ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
     return encryptionDriver->decodeKey(result, source, basicAllocator);
 }
 
+ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>*    result,
+                              bsl::streambuf*                          source,
+                              const ntca::EncryptionKeyStorageOptions& options,
+                              bslma::Allocator* basicAllocator)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->decodeKey(result,
+                                       source,
+                                       options,
+                                       basicAllocator);
+}
+
 ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
                               const bdlbb::Blob&                    source,
                               bslma::Allocator* basicAllocator)
@@ -1807,6 +2191,28 @@ ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
     }
 
     return encryptionDriver->decodeKey(result, source, basicAllocator);
+}
+
+ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>*    result,
+                              const bdlbb::Blob&                       source,
+                              const ntca::EncryptionKeyStorageOptions& options,
+                              bslma::Allocator* basicAllocator)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->decodeKey(result,
+                                       source,
+                                       options,
+                                       basicAllocator);
 }
 
 ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
@@ -1827,6 +2233,28 @@ ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
     return encryptionDriver->decodeKey(result, source, basicAllocator);
 }
 
+ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>*    result,
+                              const bsl::string&                       source,
+                              const ntca::EncryptionKeyStorageOptions& options,
+                              bslma::Allocator* basicAllocator)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->decodeKey(result,
+                                       source,
+                                       options,
+                                       basicAllocator);
+}
+
 ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
                               const bsl::vector<char>&              source,
                               bslma::Allocator* basicAllocator)
@@ -1843,6 +2271,28 @@ ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
     }
 
     return encryptionDriver->decodeKey(result, source, basicAllocator);
+}
+
+ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>*    result,
+                              const bsl::vector<char>&                 source,
+                              const ntca::EncryptionKeyStorageOptions& options,
+                              bslma::Allocator* basicAllocator)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->decodeKey(result,
+                                       source,
+                                       options,
+                                       basicAllocator);
 }
 
 void System::enableMonitorableRegistry(

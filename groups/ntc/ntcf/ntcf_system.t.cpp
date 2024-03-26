@@ -6805,10 +6805,11 @@ void concernDataExchange(const bsl::shared_ptr<ntci::Interface>& interface,
 
 #endif
 
-    const bool ENCRYPTION[] = {false
+    const bool ENCRYPTION[] = {
+        false
 #if NTCF_SYSTEM_TEST_BUILD_WITH_TLS
-                               ,
-                               true
+        ,
+        true
 #endif
     };
 
