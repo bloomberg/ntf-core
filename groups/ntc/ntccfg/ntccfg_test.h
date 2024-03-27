@@ -981,7 +981,7 @@ class Invocation1 : public InvocationBase<InvocationDataArg1<RESULT, ARG1>,
     {
         this->d_invocations.emplace_back();
         InvocationDataImpl& invocation = this->d_invocations.back();
-        //        TODO: save arg1
+        invocation.d_arg1              = arg1;
         return *this;
     }
 
@@ -992,7 +992,12 @@ class Invocation1 : public InvocationBase<InvocationDataArg1<RESULT, ARG1>,
         if (invocation.d_expectedCalls != -1) {
             NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
         }
-        //TODO: match arg1
+        if (invocation.d_arg1.has_value()) {
+            NTCCFG_TEST_EQ(arg1, invocation.d_arg1.value());
+        }
+        if (invocation.d_arg1_out) {
+            *invocation.d_arg1_out = arg1;
+        }
         NTCCFG_TEST_TRUE(invocation.d_result.has_value());
         const auto result = invocation.d_result.value();
         if (invocation.d_expectedCalls != -1) {
