@@ -1582,10 +1582,12 @@ class ResolverMock : public ntci::Resolver
 class BufferFactoryMock : public bdlbb::BlobBufferFactory
 {
   public:
-    void allocate(bdlbb::BlobBuffer* buffer) override
-    {
-        UNEXPECTED_CALL();
-    }
+        void allocate(bdlbb::BlobBuffer* buffer) override
+        {
+            UNEXPECTED_CALL();
+        }
+
+//    NTF_MOCK_METHOD(void, allocate, bdlbb::BlobBuffer*)
 };
 
 class StreamSocketMock : public ntsi::StreamSocket
@@ -1597,7 +1599,6 @@ class StreamSocketMock : public ntsi::StreamSocket
     NTF_MOCK_METHOD(ntsa::Handle, release);
 
   public:
-
     ntsa::Error bind(const ntsa::Endpoint& endpoint,
                      bool                  reuseAddress) override
     {
@@ -1657,7 +1658,6 @@ class StreamSocketMock : public ntsi::StreamSocket
     NTF_MOCK_METHOD(ntsa::Error, unlink)
     NTF_MOCK_METHOD(ntsa::Error, close)
   public:
-
     ntsa::Error sourceEndpoint(ntsa::Endpoint* result) const override
     {
         return d_invocation_sourceEndpoint.invoke(result);
@@ -1689,7 +1689,6 @@ class StreamSocketMock : public ntsi::StreamSocket
     NTF_MOCK_METHOD_CONST(bsl::size_t, maxBuffersPerReceive)
 
   public:
-
     struct Invocation_setBlocking {
       private:
         struct InvocationData {
@@ -2378,12 +2377,12 @@ class StreamSocketMock : public ntsi::StreamSocket
     }
 
   private:
-    mutable Invocation_setBlocking          d_invocation_setBlocking;
-    mutable Invocation_setOption            d_invocation_setOption;
-    mutable Invocation_getOption            d_invocation_getOption;
-    mutable Invocation_sourceEndpoint       d_invocation_sourceEndpoint;
-    mutable Invocation_remoteEndpoint       d_invocation_remoteEndpoint;
-    mutable Invocation_connect              d_invocation_connect;
+    mutable Invocation_setBlocking    d_invocation_setBlocking;
+    mutable Invocation_setOption      d_invocation_setOption;
+    mutable Invocation_getOption      d_invocation_getOption;
+    mutable Invocation_sourceEndpoint d_invocation_sourceEndpoint;
+    mutable Invocation_remoteEndpoint d_invocation_remoteEndpoint;
+    mutable Invocation_connect        d_invocation_connect;
 };
 
 class DataPoolMock : public ntci::DataPool
@@ -5490,8 +5489,8 @@ NTCCFG_TEST_CASE(22)
     {
         NTCI_LOG_DEBUG("Fixture setup, socket creation...");
 
-        const auto         doNotCare = bdlb::NullOptType::makeInitialValue();
-        const ntsa::Handle handle    = 22;
+        const bsl::nullopt_t doNotCare = bsl::nullopt;
+        const ntsa::Handle   handle    = 22;
 
         bdlb::NullableValue<ntca::ConnectEvent> connectResult;
 
@@ -5614,10 +5613,9 @@ NTCCFG_TEST_CASE(22)
 
         NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
 
-        resolverMock->expect_getEndpoint_WillOnceReturn(
-            epName,
-            bdlb::NullOptType::makeInitialValue(),
-            ntsa::Error());
+        resolverMock->expect_getEndpoint_WillOnceReturn(epName,
+                                                        doNotCare,
+                                                        ntsa::Error());
 
         ntca::TimerEvent timerEvent;
         timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
@@ -5632,7 +5630,7 @@ NTCCFG_TEST_CASE(22)
 
         reactorMock->expect_detachSocket_WillOnceReturn(
             socket,
-            bdlb::NullOptType::makeInitialValue(),
+            doNotCare,
             ntsa::Error::invalid());
         //TODO: is that ok to detach socket that has not been attached?
 
@@ -5658,8 +5656,8 @@ NTCCFG_TEST_CASE(23)
     {
         NTCI_LOG_DEBUG("Fixture setup, socket creation...");
 
-        const auto         doNotCare = bdlb::NullOptType::makeInitialValue();
-        const ntsa::Handle handle    = 22;
+        const bsl::nullopt_t doNotCare = bsl::nullopt;
+        const ntsa::Handle   handle    = 22;
 
         bdlb::NullableValue<ntca::ConnectEvent> connectResult;
 
@@ -5804,10 +5802,9 @@ NTCCFG_TEST_CASE(23)
         connectRetryTimerMock->expect_close().willOnce().willReturn(
             ntsa::Error());
 
-        reactorMock->expect_detachSocket_WillOnceReturn(
-            socket,
-            bdlb::NullOptType::makeInitialValue(),
-            ntsa::Error());
+        reactorMock->expect_detachSocket_WillOnceReturn(socket,
+                                                        doNotCare,
+                                                        ntsa::Error());
 
         socketMock->expect_close().willOnce().willReturn(ntsa::Error());
 
@@ -5838,7 +5835,7 @@ NTCCFG_TEST_CASE(24)
     {
         NTCI_LOG_DEBUG("Fixture setup, socket creation...");
 
-        const auto doNotCare = bdlb::NullOptType::makeInitialValue();
+        const bsl::nullopt_t doNotCare = bsl::nullopt;
 
         bdlb::NullableValue<ntca::ConnectEvent> connectResult;
 
