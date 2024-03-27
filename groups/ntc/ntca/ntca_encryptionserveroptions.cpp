@@ -73,8 +73,8 @@ EncryptionServerOptions& EncryptionServerOptions::operator=(
 
 void EncryptionServerOptions::reset()
 {
-    d_minMethod = ntca::EncryptionMethod::e_TLS_V1_X;
-    d_maxMethod = ntca::EncryptionMethod::e_TLS_V1_X;
+    d_minMethod      = ntca::EncryptionMethod::e_TLS_V1_X;
+    d_maxMethod      = ntca::EncryptionMethod::e_TLS_V1_X;
     d_authentication = ntca::EncryptionAuthentication::e_NONE;
     d_identity.reset();
     d_privateKey.reset();
@@ -102,7 +102,7 @@ void EncryptionServerOptions::setAuthentication(
 }
 
 void EncryptionServerOptions::setIdentityData(
-        const bsl::vector<char>& identityData)
+    const bsl::vector<char>& identityData)
 {
     d_identity.reset();
     d_identity.makeValue();
@@ -114,8 +114,8 @@ void EncryptionServerOptions::setIdentityData(
 }
 
 void EncryptionServerOptions::setIdentityData(
-        const bsl::vector<char>&                         identityData,
-        const ntca::EncryptionCertificateStorageOptions& identityOptions)
+    const bsl::vector<char>&                         identityData,
+    const ntca::EncryptionCertificateStorageOptions& identityOptions)
 {
     d_identity.reset();
     d_identity.makeValue();
@@ -127,8 +127,7 @@ void EncryptionServerOptions::setIdentityData(
     d_identity.value().setOptions(identityOptions);
 }
 
-void EncryptionServerOptions::setIdentityFile(
-        const bsl::string& identityFile)
+void EncryptionServerOptions::setIdentityFile(const bsl::string& identityFile)
 {
     d_identity.reset();
     d_identity.makeValue();
@@ -140,8 +139,8 @@ void EncryptionServerOptions::setIdentityFile(
 }
 
 void EncryptionServerOptions::setIdentityFile(
-        const bsl::string&                         identityFile,
-        const ntca::EncryptionCertificateStorageOptions& identityOptions)
+    const bsl::string&                               identityFile,
+    const ntca::EncryptionCertificateStorageOptions& identityOptions)
 {
     d_identity.reset();
     d_identity.makeValue();
@@ -154,7 +153,7 @@ void EncryptionServerOptions::setIdentityFile(
 }
 
 void EncryptionServerOptions::setPrivateKeyData(
-        const bsl::vector<char>& privateKeyData)
+    const bsl::vector<char>& privateKeyData)
 {
     d_privateKey.reset();
     d_privateKey.makeValue();
@@ -166,8 +165,8 @@ void EncryptionServerOptions::setPrivateKeyData(
 }
 
 void EncryptionServerOptions::setPrivateKeyData(
-        const bsl::vector<char>&                 privateKeyData, 
-        const ntca::EncryptionKeyStorageOptions& privateKeyOptions)
+    const bsl::vector<char>&                 privateKeyData,
+    const ntca::EncryptionKeyStorageOptions& privateKeyOptions)
 {
     d_privateKey.reset();
     d_privateKey.makeValue();
@@ -180,7 +179,7 @@ void EncryptionServerOptions::setPrivateKeyData(
 }
 
 void EncryptionServerOptions::setPrivateKeyFile(
-        const bsl::string& privateKeyFile)
+    const bsl::string& privateKeyFile)
 {
     d_privateKey.reset();
     d_privateKey.makeValue();
@@ -192,8 +191,8 @@ void EncryptionServerOptions::setPrivateKeyFile(
 }
 
 void EncryptionServerOptions::setPrivateKeyFile(
-        const bsl::string&                       privateKeyFile,
-        const ntca::EncryptionKeyStorageOptions& privateKeyOptions)
+    const bsl::string&                       privateKeyFile,
+    const ntca::EncryptionKeyStorageOptions& privateKeyOptions)
 {
     d_privateKey.reset();
     d_privateKey.makeValue();
@@ -206,7 +205,7 @@ void EncryptionServerOptions::setPrivateKeyFile(
 }
 
 void EncryptionServerOptions::addAuthorityData(
-        const bsl::vector<char>& authorityData)
+    const bsl::vector<char>& authorityData)
 {
     ntca::EncryptionCertificateStorageDescriptor authorityDescriptor;
     authorityDescriptor.makeData(authorityData);
@@ -218,8 +217,8 @@ void EncryptionServerOptions::addAuthorityData(
 }
 
 void EncryptionServerOptions::addAuthorityData(
-        const bsl::vector<char>&                         authorityData,
-        const ntca::EncryptionCertificateStorageOptions& authorityOptions)
+    const bsl::vector<char>&                         authorityData,
+    const ntca::EncryptionCertificateStorageOptions& authorityOptions)
 {
     ntca::EncryptionCertificateStorageDescriptor authorityDescriptor;
     authorityDescriptor.makeData(authorityData);
@@ -232,7 +231,7 @@ void EncryptionServerOptions::addAuthorityData(
 }
 
 void EncryptionServerOptions::addAuthorityFile(
-        const bsl::string& authorityFile)
+    const bsl::string& authorityFile)
 {
     ntca::EncryptionCertificateStorageDescriptor authorityDescriptor;
     authorityDescriptor.makePath(authorityFile);
@@ -244,8 +243,8 @@ void EncryptionServerOptions::addAuthorityFile(
 }
 
 void EncryptionServerOptions::addAuthorityFile(
-        const bsl::string&                               authorityFile,
-        const ntca::EncryptionCertificateStorageOptions& authorityOptions)
+    const bsl::string&                               authorityFile,
+    const ntca::EncryptionCertificateStorageOptions& authorityOptions)
 {
     ntca::EncryptionCertificateStorageDescriptor authorityDescriptor;
     authorityDescriptor.makePath(authorityFile);
@@ -263,8 +262,7 @@ void EncryptionServerOptions::setAuthorityDirectory(
     d_authorityDirectory = authorityDirectory;
 }
 
-void EncryptionServerOptions::setCipherSpec(
-    const bsl::string& cipherSpec)
+void EncryptionServerOptions::setCipherSpec(const bsl::string& cipherSpec)
 {
     d_cipherSpec = cipherSpec;
 }
@@ -285,19 +283,19 @@ ntca::EncryptionAuthentication::Value EncryptionServerOptions::authentication()
     return d_authentication;
 }
 
-const bdlb::NullableValue<ntca::EncryptionCertificateStorageData>& 
+const bdlb::NullableValue<ntca::EncryptionCertificateStorageData>&
 EncryptionServerOptions::identity() const
 {
     return d_identity;
 }
 
-const bdlb::NullableValue<ntca::EncryptionKeyStorageData>& 
+const bdlb::NullableValue<ntca::EncryptionKeyStorageData>&
 EncryptionServerOptions::privateKey() const
 {
     return d_privateKey;
 }
 
-const bsl::vector<ntca::EncryptionCertificateStorageData>& 
+const bsl::vector<ntca::EncryptionCertificateStorageData>&
 EncryptionServerOptions::authorityList() const
 {
     return d_authorityList;

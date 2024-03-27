@@ -30,6 +30,7 @@ BSLS_IDENT("$Id: $")
 #include <bsls_platform.h>
 #include <bsl_cstddef.h>
 #include <bsl_iterator.h>
+#include <bsl_streambuf.h>
 
 namespace BloombergLP {
 namespace ntsa {
@@ -990,6 +991,233 @@ class MutableBufferSequence<MUTABLE_BUFFER>::Iterator
     /// Return true if this iterator does not alias the same non-modifiable
     /// buffer as the specified 'other' iterator, otherwise return false.
     bool operator!=(const Iterator& other) const BSLS_KEYWORD_NOEXCEPT;
+};
+
+/// Provide a memory stream buffer using memory optionally supplied by the
+/// client and supplemented by an allocator.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntsa_data
+class MemoryBuffer : public bsl::streambuf
+{
+    /// Enumerate the access policy of this stream buffer.
+    enum Access { 
+        /// The buffer is readable but not writable.
+        e_READONLY, 
+
+        /// The buffer is both readable and writable.
+        e_WRITABLE 
+    };
+
+    /// Enumerate the ownership semantics of the underlying memory.
+    enum Ownership { 
+        /// The underlying memory has been allocated during the internal
+        /// operation of the object and must be freed.
+        e_INTERNAL, 
+
+        /// The underlying memory has been externally injected into the object
+        /// and must not be freed.
+        e_EXTERNAL 
+    };
+
+    /// Define constants that influence the behavior of the implementation.
+    enum Constants { 
+        /// The minimum number of bytes to allocate when the buffer needs to
+        /// grow.
+        e_MIN_CAPACITY = 256 
+    };
+
+    Access            d_access;
+    Ownership         d_ownership;
+    bslma::Allocator* d_allocator_p;
+
+  private:
+    MemoryBuffer(const MemoryBuffer&) BSLS_KEYWORD_DELETED;
+    MemoryBuffer& operator=(const MemoryBuffer&) BSLS_KEYWORD_DELETED;
+
+    /// Return the beginning of the readable byte sequence.
+    const char* getReaderBegin() const;
+
+    /// Return the current position in the readable byte sequence, i.e. the
+    /// next byte that will be read.
+    const char* getReaderCurrent() const;
+
+    /// Return the end of the readable byte sequence.
+    const char* getReaderEnd() const;
+
+    /// Return the distance between the current position in the readable
+    /// byte sequence and the beginning of the readable byte sequence, i.e.,
+    /// the number of bytes already read.
+    bsl::size_t getReaderOffset() const;
+
+    /// Return the distance between the end of the readable byte sequence and
+    /// the current position in the readable byte sequence, i.e., the number
+    /// of bytes that may be still be read.
+    bsl::size_t getReaderAvailable() const;
+
+    /// Return the beginning of the writable byte sequence.
+    char* getWriterBegin() const;
+
+    /// Return the current position in the writable byte sequence, i.e. the
+    /// next byte that will be written.
+    char* getWriterCurrent() const;
+
+    /// Return the end of the writable byte sequence.
+    char* getWriterEnd() const;
+
+    /// Return the distance between the current position in the writable byte
+    /// sequence and the beginning of the writable byte sequence, i.e. the
+    /// number of bytes already written.
+    bsl::size_t getWriterOffset() const;
+
+    /// Return the distance between the end of the writable byte sequence and
+    /// the current position in the writable byte sequence, i.e., the number
+    /// of bytes that may still be written.
+    bsl::size_t getWriterAvailable() const;
+
+    /// Return the currently allocated memory, or null if no such memory is
+    /// allocated.
+    void* getMemory() const;
+
+    /// Return the number of bytes written to the currently allocated memory.
+    bsl::size_t getMemorySize() const;
+
+    /// Return the number of bytes writable to the currently allocated memory.
+    bsl::size_t getMemoryCapacity() const;
+
+    /// Increment the current position in the readable byte sequence by the
+    /// specified 'size'.
+    void incrementReaderPosition(bsl::size_t size);
+
+    /// Increment the current position in the writable byte sequence by the
+    /// specified 'size'.
+    void incrementWriterPosition(bsl::size_t size);
+
+    /// Initialize the readable and writable byte sequences to empty.
+    void initialize();
+
+    /// Initialize the readable byte sequence to the specified 'data' having
+    /// the specified 'size' and initialize the writable byte sequence to
+    /// empty. Note that the readable position is set to 'data'.
+    void initialize(const void* data, bsl::size_t size);
+
+    /// Initialize the readable byte sequence to the specified 'data' having
+    /// the specified 'size', and initialize the writable byte sequence to
+    /// the specified 'data' having the specified 'capacity'. Note both the
+    /// readable and writable positions are set to 'data'.
+    void initialize(void* data, bsl::size_t size, bsl::size_t capacity);
+
+    /// Allocate sufficient memory to write the number of specified 'overflow'
+    /// bytes, and re-home both the readable and writable byte sequences.
+    void expand(bsl::size_t overflow);
+
+    /// Store at most the specified 'size' number of bytes from specified
+    /// 'source' starting at current position in the writable byte sequence and
+    /// advance the current position in the writable byte sequence by the
+    /// number of bytes written. Return the number of bytes written.
+    bsl::size_t store(const char* source, bsl::size_t size);
+
+    /// Load at most the specified 'size' number of bytes starting at the
+    /// current position in the readable byte sequence into the specified
+    /// 'destination', and advance the current position in the readable byte
+    /// sequence by the number of bytes read. Return the number of bytes read.
+    bsl::size_t fetch(char* destination, bsl::size_t size);
+
+  protected:
+    /// Insert the optionally specified 'meta' element into the (potentially)
+    /// full stream buffer. On success, return 'traits_type::not_eof(meta)'.
+    /// Otherwise, return 'traits_type::eof()' or throw an exception. The
+    /// default implementation returns 'traits_type::eof()'.
+    int_type overflow(int_type meta) BSLS_KEYWORD_OVERRIDE;
+
+    /// Return the number of characters that can be extracted from the input
+    /// stream such that the program will not be subject to an indefinite
+    /// wait.
+    bsl::streamsize showmanyc() BSLS_KEYWORD_OVERRIDE;
+
+    /// Read the specified 'size' number of characters into the specified
+    /// 'destination'.  Return the number of characters successfully read.
+    /// The behavior is undefined unless '0 <= length'.
+    bsl::streamsize xsgetn(char_type*      destination,
+                           bsl::streamsize size) BSLS_KEYWORD_OVERRIDE;
+
+    /// Write the specified 'size' characters from the specified
+    /// 'source' to the stream buffer.  Return the number of characters
+    /// successfully written.  The behavior is undefined unless '(source &&
+    /// 0 < numChars) || 0 == numChars'.
+    bsl::streamsize xsputn(const char_type* source,
+                           bsl::streamsize  size) BSLS_KEYWORD_OVERRIDE;
+
+    /// Alter the get and/or put positions specified by the 'mode' flags by the
+    /// specified 'offset' according to the specified 'way'. Return the new
+    /// stream position (or one of the stream positions) on success or an
+    /// invalid stream position otherwise.
+    pos_type seekoff(off_type                offset,
+                     bsl::ios_base::seekdir  way,
+                     bsl::ios_base::openmode mode) BSLS_KEYWORD_OVERRIDE;
+
+    /// Set the absolute get and/or put positions specified by the 'mode' flags
+    /// to the specified 'position'. Return the new stream position (or one of
+    /// the stream positions) on success or an invalid stream position
+    /// otherwise.
+    pos_type seekpos(pos_type                position,
+                     bsl::ios_base::openmode mode) BSLS_KEYWORD_OVERRIDE;
+
+    /// Synchronize the stream buffer with the underlying device. Return 0 on
+    /// success or -1 otherwise.
+    int sync() BSLS_KEYWORD_OVERRIDE;
+
+  public:
+    /// Create a new, read/writable memory stream buffer that is initially
+    /// empty. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
+    explicit MemoryBuffer(bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new, read-only memory buffer of the specified 'data' having
+    /// the specified 'size'. Optionally specify a 'basicAllocator' used to
+    /// supply memory. If 'basicAllocator' is 0, the currently installed
+    /// default allocator is used.
+    MemoryBuffer(const void*       data,
+                 bsl::size_t       size,
+                 bslma::Allocator* basicAllocator = 0);
+
+    /// Construct a new memory stream buffer initially backed by the specified
+    /// 'data' of the specified 'capacity' where the first 'size' bytes
+    /// represent valid, existing data. That is, 'size' indicates the initial
+    /// size of the get area, 'data + size' marks the initial put position, and
+    /// 'capacity' marks the maximum size of both the get and the put areas.
+    /// The initial get position is always indicated by 'data' (i.e. the start
+    /// of the get area.) Optionally specify a 'basicAllocator' used to supply
+    /// memory. If 'basicAllocator' is 0, the currently installed default
+    /// allocator is used.
+    MemoryBuffer(void*             data,
+                 bsl::size_t       size,
+                 bsl::size_t       capacity,
+                 bslma::Allocator* allocator = 0);
+
+    /// Destroy this object.
+    ~MemoryBuffer();
+
+    /// Free all memory allocated by the stream buffer.
+    void reset();
+
+    /// Reserve at least the specified 'capacity' number of writable bytes.
+    void reserve(bsl::size_t capacity);
+
+    /// Return the address of the underlying memory.
+    char* data();
+
+    /// Return the address of the underlying memory.
+    const char* data() const;
+
+    /// Return the number of readable bytes.
+    bsl::size_t size() const;
+
+    /// Return the number of writable bytes.
+    bsl::size_t capacity() const;
 };
 
 NTSCFG_INLINE

@@ -50,10 +50,10 @@ class EncryptionCertificate
     virtual ~EncryptionCertificate();
 
     /// Return the subject of the certificate.
-    virtual const ntsa::DistinguishedName& subject() const;
+    virtual const ntsa::DistinguishedName& subject() const = 0;
 
     /// Return the issuer of the certificate.
-    virtual const ntsa::DistinguishedName& issuer() const;
+    virtual const ntsa::DistinguishedName& issuer() const = 0;
 
     /// Encode the certificate in PEM format to the specified 'destination'.
     virtual ntsa::Error encode(bsl::streambuf* destination) const;

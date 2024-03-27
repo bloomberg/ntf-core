@@ -68,7 +68,7 @@ namespace ntca {
 /// The certificate including the client's identity, public key, issuer, etc.
 ///
 /// @li @b privateKey:
-/// The private key of the client. 
+/// The private key of the client.
 ///
 /// @li @b authorityList:
 /// The list of trusted certificate authorities.
@@ -85,21 +85,20 @@ class EncryptionClientOptions
 {
   public:
     /// Define a type alias for a vector of certificate data.
-    typedef bsl::vector<ntca::EncryptionCertificateStorageData> 
-      CertificateStorageDataVector;
+    typedef bsl::vector<ntca::EncryptionCertificateStorageData>
+        CertificateStorageDataVector;
 
     /// Define a type alias for a vector of key data.
-    typedef bsl::vector<ntca::EncryptionKeyStorageData> 
-      KeyStorageDataVector;
+    typedef bsl::vector<ntca::EncryptionKeyStorageData> KeyStorageDataVector;
 
   private:
     /// Define a type alias for optional certificate data.
-    typedef bdlb::NullableValue<ntca::EncryptionCertificateStorageData> 
-      NullableCertificateStorageData;
+    typedef bdlb::NullableValue<ntca::EncryptionCertificateStorageData>
+        NullableCertificateStorageData;
 
     /// Define a type alias for optional key data.
-    typedef bdlb::NullableValue<ntca::EncryptionKeyStorageData> 
-      NullableKeyStorageData;
+    typedef bdlb::NullableValue<ntca::EncryptionKeyStorageData>
+        NullableKeyStorageData;
 
   private:
     ntca::EncryptionMethod::Value         d_minMethod;
@@ -154,8 +153,8 @@ class EncryptionClientOptions
     /// Set the client's certificate to the specified 'identityData'. Interpret
     /// the 'identityData' according to the specified 'identityOptions'.
     void setIdentityData(
-            const bsl::vector<char>&                         identityData,
-            const ntca::EncryptionCertificateStorageOptions& identityOptions);
+        const bsl::vector<char>&                         identityData,
+        const ntca::EncryptionCertificateStorageOptions& identityOptions);
 
     /// Set the client's certificate to the specified 'identityFile'. The
     /// format of the 'identityFile' is deduced from the file extension, but is
@@ -165,8 +164,8 @@ class EncryptionClientOptions
     /// Set the client's certificate to the specified 'identityFile'. Interpret
     /// the 'identityFile' according to the specified 'identityOptions'.
     void setIdentityFile(
-            const bsl::string&                         identityFile,
-            const ntca::EncryptionCertificateStorageOptions& identityOptions);
+        const bsl::string&                               identityFile,
+        const ntca::EncryptionCertificateStorageOptions& identityOptions);
 
     /// Set the client's private key to the specified 'privateKeyData'. The
     /// 'privateKeyData' is assumed to be in the PEM format and not
@@ -177,8 +176,8 @@ class EncryptionClientOptions
     /// Interpret the 'privateKeyData' according to the specified
     /// 'privateKeyOptions'.
     void setPrivateKeyData(
-            const bsl::vector<char>&                 privateKeyData, 
-            const ntca::EncryptionKeyStorageOptions& privateKeyOptions);
+        const bsl::vector<char>&                 privateKeyData,
+        const ntca::EncryptionKeyStorageOptions& privateKeyOptions);
 
     /// Set the client's private key to the specified 'privateKeyFile'. The
     /// format of the 'privateKeyFile' is deduced from the file extension, but
@@ -189,8 +188,8 @@ class EncryptionClientOptions
     /// Interpret the 'privateKeyData' according to the specified
     /// 'privateKeyOptions'.
     void setPrivateKeyFile(
-            const bsl::string&                 privateKeyFile,
-            const ntca::EncryptionKeyStorageOptions& privateKeyOptions);
+        const bsl::string&                       privateKeyFile,
+        const ntca::EncryptionKeyStorageOptions& privateKeyOptions);
 
     /// Add the specified certificate 'authorityData'. The 'authorityData' is
     /// assumed to be in the PEM format and not symmetrically-encrypted.
@@ -199,8 +198,8 @@ class EncryptionClientOptions
     /// Add the specified certificate 'authorityData'. Interpret
     /// the 'identityData' according to the specified 'identityOptions'.
     void addAuthorityData(
-            const bsl::vector<char>&                         authorityData,
-            const ntca::EncryptionCertificateStorageOptions& authorityOptions);
+        const bsl::vector<char>&                         authorityData,
+        const ntca::EncryptionCertificateStorageOptions& authorityOptions);
 
     /// Add the specified certificate 'authorityFile'. The format of the
     /// 'authorityFile' is deduced from the file extension, but is assumed to
@@ -210,8 +209,8 @@ class EncryptionClientOptions
     /// Add the specified certificate 'authorityFile'. Interpret the
     /// 'identityFile' according to the specified 'identityOptions'.
     void addAuthorityFile(
-            const bsl::string&                         authorityFile,
-            const ntca::EncryptionCertificateStorageOptions& authorityOptions);
+        const bsl::string&                               authorityFile,
+        const ntca::EncryptionCertificateStorageOptions& authorityOptions);
 
     /// Set the directory from which to load trusted certificate authorities
     /// to the specified 'authorityDirectory'.
@@ -230,15 +229,16 @@ class EncryptionClientOptions
     ntca::EncryptionAuthentication::Value authentication() const;
 
     /// Return the client's certificate.
-    const bdlb::NullableValue<ntca::EncryptionCertificateStorageData>& 
-    identity() const;
+    const bdlb::NullableValue<ntca::EncryptionCertificateStorageData>& identity()
+        const;
 
-    /// Return the client's private key. 
-    const bdlb::NullableValue<ntca::EncryptionKeyStorageData>& 
-    privateKey() const;
-    
+    /// Return the client's private key.
+    const bdlb::NullableValue<ntca::EncryptionKeyStorageData>& privateKey()
+        const;
+
     /// Return the client's trusted certificate authorities.
-    const bsl::vector<ntca::EncryptionCertificateStorageData>& authorityList() const;
+    const bsl::vector<ntca::EncryptionCertificateStorageData>& authorityList()
+        const;
 
     /// Return the directory path to the directory containing the
     /// certificates of additional trusted authorities.

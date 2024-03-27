@@ -56,25 +56,28 @@ class EncryptionKey : public ntci::EncryptionKey
     EncryptionKey& operator=(const EncryptionKey&) BSLS_KEYWORD_DELETED;
 
   public:
+    /// Create a new encryption key with a default value.
+    EncryptionKey();
+
     /// Create a new encryption key having the specified 'value'.
     explicit EncryptionKey(bsl::uint32_t value);
 
     /// Destroy this object.
     ~EncryptionKey() BSLS_KEYWORD_OVERRIDE;
 
-    /// Encode the key in PEM format to the specified 'destination'.
-    ntsa::Error encode(
-        bsl::streambuf* destination) const
-        BSLS_KEYWORD_OVERRIDE;
+    /// Generate a new key according to the specified 'options'. Return the
+    /// error.
+    ntsa::Error generate(const ntca::EncryptionKeyOptions& options);
 
-    /// Encode the key in PEM format to the specified 'destination'.
-    ntsa::Error encode(bdlbb::Blob* destination) const BSLS_KEYWORD_OVERRIDE;
+    /// Decode the key from the specified 'source' according to the specified
+    /// 'options'.
+    ntsa::Error decode(bsl::streambuf*                          source,
+                       const ntca::EncryptionKeyStorageOptions& options);
 
-    /// Encode the key in PEM format to the specified 'destination'.
-    ntsa::Error encode(bsl::string* destination) const BSLS_KEYWORD_OVERRIDE;
-
-    /// Encode the key in PEM format to the specified 'destination'.
-    ntsa::Error encode(bsl::vector<char>* destination) const
+    /// Encode the key to the specified 'destination' according to the
+    /// specified 'options'.
+    ntsa::Error encode(bsl::streambuf*                          destination,
+                       const ntca::EncryptionKeyStorageOptions& options) const
         BSLS_KEYWORD_OVERRIDE;
 
     /// Return a handle to the private implementation.
@@ -82,62 +85,7 @@ class EncryptionKey : public ntci::EncryptionKey
 
     /// Return the value of the key.
     bsl::uint32_t value() const;
-
-    /// Load into the specified 'result' a key generated according to the
-    /// specified 'options'. Optionally specify a 'basicAllocator' used to
-    /// supply memory. If 'basicAllocator' is 0, the currently installed
-    /// default allocator is used. Return the error.
-    static bsl::shared_ptr<ntcd::EncryptionKey> generate(
-        const ntca::EncryptionKeyOptions& options,
-        bslma::Allocator*                 basicAllocator = 0);
-
-    /// Load into the specified 'result' a private key decoded from the
-    /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
-    /// the error. Optionally specify a 'basicAllocator' used to supply
-    /// memory.  If 'basicAllocator' is 0, the currently installed default
-    /// allocator is used.
-    static ntsa::Error decode(bsl::shared_ptr<ntcd::EncryptionKey>* result,
-                              bsl::streambuf*                       source,
-                              bslma::Allocator* basicAllocator = 0);
-
-    /// Load into the specified 'result' a private key decoded from the
-    /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
-    /// the error. Optionally specify a 'basicAllocator' used to supply
-    /// memory.  If 'basicAllocator' is 0, the currently installed default
-    /// allocator is used.
-    static ntsa::Error decode(bsl::shared_ptr<ntcd::EncryptionKey>* result,
-                              const bdlbb::Blob&                    source,
-                              bslma::Allocator* basicAllocator = 0);
-
-    /// Load into the specified 'result' a private key decoded from the
-    /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
-    /// the error. Optionally specify a 'basicAllocator' used to supply
-    /// memory.  If 'basicAllocator' is 0, the currently installed default
-    /// allocator is used.
-    static ntsa::Error decode(bsl::shared_ptr<ntcd::EncryptionKey>* result,
-                              const bsl::string&                    source,
-                              bslma::Allocator* basicAllocator = 0);
-
-    /// Load into the specified 'result' a private key decoded from the
-    /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
-    /// the error. Optionally specify a 'basicAllocator' used to supply
-    /// memory.  If 'basicAllocator' is 0, the currently installed default
-    /// allocator is used.
-    static ntsa::Error decode(bsl::shared_ptr<ntcd::EncryptionKey>* result,
-                              const bsl::vector<char>&              source,
-                              bslma::Allocator* basicAllocator = 0);
-
-    /// Load into the specified 'result' a private key stored at the
-    /// specified 'filePath' in the Privacy Enhanced Mail (PEM) format.
-    /// Optionally specify a 'basicAllocator' used to supply memory. If
-    /// 'basicAllocator' is 0, the currently installed default allocator is
-    /// used.  Return the error.
-    static ntsa::Error load(bsl::shared_ptr<ntcd::EncryptionKey>* result,
-                            const bsl::string&                    filePath,
-                            bslma::Allocator* basicAllocator = 0);
 };
-
-// FREE OPERATORS
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
@@ -167,6 +115,12 @@ class EncryptionCertificate : public ntci::EncryptionCertificate
         BSLS_KEYWORD_DELETED;
 
   public:
+    /// Create a new encryption certificate having a default value. Optionally
+    /// specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
+    explicit EncryptionCertificate(bslma::Allocator* basicAllocator = 0);
+
     /// Create a new encryption certificate having the specified 'subject'
     /// having the specified 'subjectKey' issued by itsef. Optionally
     /// specify a 'basicAllocator' used to supply memory. If
@@ -192,29 +146,50 @@ class EncryptionCertificate : public ntci::EncryptionCertificate
     /// Destroy this object.
     ~EncryptionCertificate() BSLS_KEYWORD_OVERRIDE;
 
+    /// Generate a new certificate according to the specified 'options' for the
+    /// specified 'subjectIdentity' and 'subjectPrivateKey' signed by itself.
+    /// Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used. Return the error.
+    ntsa::Error generate(
+        const ntsa::DistinguishedName&              subjectIdentity,
+        const bsl::shared_ptr<ntcd::EncryptionKey>& subjectPrivateKey,
+        const ntca::EncryptionCertificateOptions&   options);
+
+    /// Generate a new certificate according to the specified 'options' for the
+    /// specified 'subjectIdentity' and 'subjectPrivateKey' signed by the
+    /// certificate authority identified by the specified 'issuerCertificate'
+    /// that uses the specified 'issuerPrivateKey'. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used. Return the error.
+    ntsa::Error generate(
+        const ntsa::DistinguishedName&                      subjectIdentity,
+        const bsl::shared_ptr<ntcd::EncryptionKey>&         subjectPrivateKey,
+        const bsl::shared_ptr<ntcd::EncryptionCertificate>& issuerCertificate,
+        const bsl::shared_ptr<ntcd::EncryptionKey>&         issuerPrivateKey,
+        const ntca::EncryptionCertificateOptions&           options);
+
+    /// Decode the certificate from the specified 'source' according to the
+    /// specified 'options'. Return the error.
+    ntsa::Error decode(
+        bsl::streambuf*                                  source,
+        const ntca::EncryptionCertificateStorageOptions& options);
+
+    /// Encode the certificate to the specified 'destination' according to the
+    /// specified 'options'. Return the error.
+    ntsa::Error encode(bsl::streambuf* destination,
+                       const ntca::EncryptionCertificateStorageOptions&
+                           options) const BSLS_KEYWORD_OVERRIDE;
+
+    /// Print the certificate to the specified stream in an unspecified but
+    /// human-readable form.
+    void print(bsl::ostream& stream) const BSLS_KEYWORD_OVERRIDE;
+
     /// Return the subject of the certificate.
     const ntsa::DistinguishedName& subject() const BSLS_KEYWORD_OVERRIDE;
 
     /// Return the issuer of the certificate.
     const ntsa::DistinguishedName& issuer() const BSLS_KEYWORD_OVERRIDE;
-
-    /// Encode the certificate in PEM format to the specified 'destination'.
-    ntsa::Error encode(bsl::streambuf* destination) const
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Encode the certificate in PEM format to the specified 'destination'.
-    ntsa::Error encode(bdlbb::Blob* destination) const BSLS_KEYWORD_OVERRIDE;
-
-    /// Encode the certificate in PEM format to the specified 'destination'.
-    ntsa::Error encode(bsl::string* destination) const BSLS_KEYWORD_OVERRIDE;
-
-    /// Encode the certificate in PEM format to the specified 'destination'.
-    ntsa::Error encode(bsl::vector<char>* destination) const
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Print the certificate to the specified stream in an unspecified but
-    /// human-readable form.
-    void print(bsl::ostream& stream) const BSLS_KEYWORD_OVERRIDE;
 
     /// Return a handle to the private implementation.
     void* handle() const BSLS_KEYWORD_OVERRIDE;
@@ -225,88 +200,10 @@ class EncryptionCertificate : public ntci::EncryptionCertificate
     /// Return the issuer key.
     const bsl::shared_ptr<ntcd::EncryptionKey>& issuerKey() const;
 
-    /// Return a certificate generated according to the specified 'options'
-    /// for the specified 'subjectIdentity' and 'subjectPrivateKey' signed
-    /// by itself. Optionally specify a 'basicAllocator' used to supply
-    /// memory. If 'basicAllocator' is 0, the currently installed default
-    /// allocator is used. Return the error.
-    static bsl::shared_ptr<ntcd::EncryptionCertificate> generate(
-        const ntsa::DistinguishedName&              subjectIdentity,
-        const bsl::shared_ptr<ntcd::EncryptionKey>& subjectPrivateKey,
-        const ntca::EncryptionCertificateOptions&   options,
-        bslma::Allocator*                           basicAllocator = 0);
-
-    /// Return a certificate generated according to the specified 'options'
-    /// for the specified 'subjectIdentity' and 'subjectPrivateKey' signed
-    /// by the certificate authority identified by the specified
-    /// 'issuerCertificate' that uses the specified 'issuerPrivateKey'.
-    /// Optionally specify a 'basicAllocator' used to supply memory. If
-    /// 'basicAllocator' is 0, the currently installed default allocator is
-    /// used. Return the error.
-    static bsl::shared_ptr<ntcd::EncryptionCertificate> generate(
-        const ntsa::DistinguishedName&                      subjectIdentity,
-        const bsl::shared_ptr<ntcd::EncryptionKey>&         subjectPrivateKey,
-        const bsl::shared_ptr<ntcd::EncryptionCertificate>& issuerCertificate,
-        const bsl::shared_ptr<ntcd::EncryptionKey>&         issuerPrivateKey,
-        const ntca::EncryptionCertificateOptions&           options,
-        bslma::Allocator* basicAllocator = 0);
-
-    /// Load into the specified 'result' a certificate decoded from the
-    /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
-    /// the error. Optionally specify a 'basicAllocator' used to supply
-    /// memory.  If 'basicAllocator' is 0, the currently installed default
-    /// allocator is used.
-    static ntsa::Error decode(
-        bsl::shared_ptr<ntcd::EncryptionCertificate>* result,
-        bsl::streambuf*                               source,
-        bslma::Allocator*                             basicAllocator = 0);
-
-    /// Load into the specified 'result' a certificate decoded from the
-    /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
-    /// the error. Optionally specify a 'basicAllocator' used to supply
-    /// memory.  If 'basicAllocator' is 0, the currently installed default
-    /// allocator is used.
-    static ntsa::Error decode(
-        bsl::shared_ptr<ntcd::EncryptionCertificate>* result,
-        const bdlbb::Blob&                            source,
-        bslma::Allocator*                             basicAllocator = 0);
-
-    /// Load into the specified 'result' a certificate decoded from the
-    /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
-    /// the error. Optionally specify a 'basicAllocator' used to supply
-    /// memory.  If 'basicAllocator' is 0, the currently installed default
-    /// allocator is used.
-    static ntsa::Error decode(
-        bsl::shared_ptr<ntcd::EncryptionCertificate>* result,
-        const bsl::string&                            source,
-        bslma::Allocator*                             basicAllocator = 0);
-
-    /// Load into the specified 'result' a certificate decoded from the
-    /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
-    /// the error. Optionally specify a 'basicAllocator' used to supply
-    /// memory.  If 'basicAllocator' is 0, the currently installed default
-    /// allocator is used.
-    static ntsa::Error decode(
-        bsl::shared_ptr<ntcd::EncryptionCertificate>* result,
-        const bsl::vector<char>&                      source,
-        bslma::Allocator*                             basicAllocator = 0);
-
-    /// Load into the specified 'result' a certificate stored at the
-    /// specified 'filePath' in the Privacy Enhanced Mail (PEM) format.
-    /// Optionally specify a 'basicAllocator' used to supply memory. If
-    /// 'basicAllocator' is 0, the currently installed default allocator is
-    /// used.  Return the error.
-    static ntsa::Error load(
-        bsl::shared_ptr<ntcd::EncryptionCertificate>* result,
-        const bsl::string&                            filePath,
-        bslma::Allocator*                             basicAllocator = 0);
-
     /// Return a distinguished name having the specified 'commonName'.
     static ntsa::DistinguishedName distinguishedName(
         const bsl::string& commonName);
 };
-
-// FREE OPERATORS
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
@@ -885,77 +782,22 @@ class EncryptionDriver : public ntci::EncryptionDriver
                             bslma::Allocator* basicAllocator = 0)
         BSLS_KEYWORD_OVERRIDE;
 
-    /// Load into the specified 'result' a private key stored at the
-    /// specified 'filePath' in the Privacy Enhanced Mail (PEM) format.
-    /// Optionally specify a 'basicAllocator' used to supply memory. If
-    /// 'basicAllocator' is 0, the currently installed default allocator is
-    /// used.  Return the error.
-    ntsa::Error loadKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
-                        const bsl::string&                    filePath,
-                        bslma::Allocator* basicAllocator = 0)
-        BSLS_KEYWORD_OVERRIDE;
-
     /// Encode the specified 'privateKey' to the specified 'destination'
-    /// in the Privacy Enhanced Mail (PEM) format. Return the error.
-    ntsa::Error encodeKey(bsl::streambuf* destination,
-                          const bsl::shared_ptr<ntci::EncryptionKey>&
-                              privateKey) BSLS_KEYWORD_OVERRIDE;
-
-    /// Encode the specified 'privateKey' to the specified 'destination'
-    /// in the Privacy Enhanced Mail (PEM) format. Return the error.
-    ntsa::Error encodeKey(bdlbb::Blob* destination,
-                          const bsl::shared_ptr<ntci::EncryptionKey>&
-                              privateKey) BSLS_KEYWORD_OVERRIDE;
-
-    /// Encode the specified 'privateKey' to the specified 'destination'
-    /// in the Privacy Enhanced Mail (PEM) format. Return the error.
-    ntsa::Error encodeKey(bsl::string* destination,
-                          const bsl::shared_ptr<ntci::EncryptionKey>&
-                              privateKey) BSLS_KEYWORD_OVERRIDE;
-
-    /// Encode the specified 'privateKey' to the specified 'destination'
-    /// in the Privacy Enhanced Mail (PEM) format. Return the error.
-    ntsa::Error encodeKey(bsl::vector<char>* destination,
-                          const bsl::shared_ptr<ntci::EncryptionKey>&
-                              privateKey) BSLS_KEYWORD_OVERRIDE;
-
-    /// Load into the specified 'result' a private key decoded from the
-    /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
-    /// the error. Optionally specify a 'basicAllocator' used to supply
-    /// memory.  If 'basicAllocator' is 0, the currently installed default
-    /// allocator is used.
-    ntsa::Error decodeKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
-                          bsl::streambuf*                       source,
-                          bslma::Allocator* basicAllocator = 0)
+    /// according to the specified 'options'. Return the error.
+    ntsa::Error encodeKey(
+        bsl::streambuf*                             destination,
+        const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
+        const ntca::EncryptionKeyStorageOptions&    options)
         BSLS_KEYWORD_OVERRIDE;
 
     /// Load into the specified 'result' a private key decoded from the
-    /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
+    /// specified 'source' according to the specified 'options'. Return
     /// the error. Optionally specify a 'basicAllocator' used to supply
     /// memory.  If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
-    ntsa::Error decodeKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
-                          const bdlbb::Blob&                    source,
-                          bslma::Allocator* basicAllocator = 0)
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Load into the specified 'result' a private key decoded from the
-    /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
-    /// the error. Optionally specify a 'basicAllocator' used to supply
-    /// memory.  If 'basicAllocator' is 0, the currently installed default
-    /// allocator is used.
-    ntsa::Error decodeKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
-                          const bsl::string&                    source,
-                          bslma::Allocator* basicAllocator = 0)
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Load into the specified 'result' a private key decoded from the
-    /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
-    /// the error. Optionally specify a 'basicAllocator' used to supply
-    /// memory.  If 'basicAllocator' is 0, the currently installed default
-    /// allocator is used.
-    ntsa::Error decodeKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
-                          const bsl::vector<char>&              source,
+    ntsa::Error decodeKey(bsl::shared_ptr<ntci::EncryptionKey>*    result,
+                          bsl::streambuf*                          source,
+                          const ntca::EncryptionKeyStorageOptions& options,
                           bslma::Allocator* basicAllocator = 0)
         BSLS_KEYWORD_OVERRIDE;
 
@@ -987,82 +829,23 @@ class EncryptionDriver : public ntci::EncryptionDriver
         const ntca::EncryptionCertificateOptions&           options,
         bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
 
-    /// Load into the specified 'result' a certificate stored at the
-    /// specified 'filePath' in the Privacy Enhanced Mail (PEM) format.
-    /// Optionally specify a 'basicAllocator' used to supply memory. If
-    /// 'basicAllocator' is 0, the currently installed default allocator is
-    /// used.  Return the error.
-    ntsa::Error loadCertificate(
-        bsl::shared_ptr<ntci::EncryptionCertificate>* result,
-        const bsl::string&                            filePath,
-        bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
-
     /// Encode the specified 'certificate' to the specified 'destination'
-    /// in the Privacy Enhanced Mail (PEM) format. Return the error.
+    /// according to the specified 'options'. Return the error.
     ntsa::Error encodeCertificate(
         bsl::streambuf*                                     destination,
-        const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate)
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Encode the specified 'certificate' to the specified 'destination'
-    /// in the Privacy Enhanced Mail (PEM) format. Return the error.
-    ntsa::Error encodeCertificate(
-        bdlbb::Blob*                                        destination,
-        const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate)
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Encode the specified 'certificate' to the specified 'destination'
-    /// in the Privacy Enhanced Mail (PEM) format. Return the error.
-    ntsa::Error encodeCertificate(
-        bsl::string*                                        destination,
-        const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate)
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Encode the specified 'certificate' to the specified 'destination'
-    /// in the Privacy Enhanced Mail (PEM) format. Return the error.
-    ntsa::Error encodeCertificate(
-        bsl::vector<char>*                                  destination,
-        const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate)
+        const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
+        const ntca::EncryptionCertificateStorageOptions&    options)
         BSLS_KEYWORD_OVERRIDE;
 
     /// Load into the specified 'result' a certificate decoded from the
-    /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
+    /// specified 'source' according to the specified 'options'. Return
     /// the error. Optionally specify a 'basicAllocator' used to supply
     /// memory.  If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
     ntsa::Error decodeCertificate(
-        bsl::shared_ptr<ntci::EncryptionCertificate>* result,
-        bsl::streambuf*                               source,
-        bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
-
-    /// Load into the specified 'result' a certificate decoded from the
-    /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
-    /// the error. Optionally specify a 'basicAllocator' used to supply
-    /// memory.  If 'basicAllocator' is 0, the currently installed default
-    /// allocator is used.
-    ntsa::Error decodeCertificate(
-        bsl::shared_ptr<ntci::EncryptionCertificate>* result,
-        const bdlbb::Blob&                            source,
-        bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
-
-    /// Load into the specified 'result' a certificate decoded from the
-    /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
-    /// the error. Optionally specify a 'basicAllocator' used to supply
-    /// memory.  If 'basicAllocator' is 0, the currently installed default
-    /// allocator is used.
-    ntsa::Error decodeCertificate(
-        bsl::shared_ptr<ntci::EncryptionCertificate>* result,
-        const bsl::string&                            source,
-        bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
-
-    /// Load into the specified 'result' a certificate decoded from the
-    /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
-    /// the error. Optionally specify a 'basicAllocator' used to supply
-    /// memory.  If 'basicAllocator' is 0, the currently installed default
-    /// allocator is used.
-    ntsa::Error decodeCertificate(
-        bsl::shared_ptr<ntci::EncryptionCertificate>* result,
-        const bsl::vector<char>&                      source,
+        bsl::shared_ptr<ntci::EncryptionCertificate>*    result,
+        bsl::streambuf*                                  source,
+        const ntca::EncryptionCertificateStorageOptions& options,
         bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
 
     /// Load into the specified 'result' a new encryption client with the
