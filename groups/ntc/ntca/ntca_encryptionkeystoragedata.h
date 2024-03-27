@@ -45,9 +45,6 @@ namespace ntca {
 /// @li @b options:
 /// The options used to interpret the key from its storage.
 ///
-/// @li @b passphrase:
-/// The passphrase required to use this key.
-///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///

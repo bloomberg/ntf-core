@@ -32,6 +32,74 @@ EncryptionKey::~EncryptionKey()
 {
 }
 
+ntsa::Error EncryptionKey::decode(bsl::streambuf* source)
+{
+    ntca::EncryptionKeyStorageOptions options;
+    return this->decode(source, options);
+}
+
+ntsa::Error EncryptionKey::decode(
+    bsl::streambuf*                          source,
+    const ntca::EncryptionKeyStorageOptions& options)
+{
+    NTCCFG_WARNING_UNUSED(source);
+    NTCCFG_WARNING_UNUSED(options);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error EncryptionKey::decode(const bdlbb::Blob& source)
+{
+    ntca::EncryptionKeyStorageOptions options;
+    return this->decode(source, options);
+}
+
+ntsa::Error EncryptionKey::decode(
+    const bdlbb::Blob&                       source,
+    const ntca::EncryptionKeyStorageOptions& options)
+{
+    bdlbb::InBlobStreamBuf isb(&source);
+    return this->decode(&isb, options);
+}
+
+ntsa::Error EncryptionKey::decode(const bsl::string& source)
+{
+    ntca::EncryptionKeyStorageOptions options;
+    return this->decode(source, options);
+}
+
+ntsa::Error EncryptionKey::decode(
+    const bsl::string&                       source,
+    const ntca::EncryptionKeyStorageOptions& options)
+{
+    if (!source.empty()) {
+        bdlsb::FixedMemInStreamBuf isb(source.data(), source.size());
+        return this->decode(&isb, options);
+    }
+    else {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+}
+
+ntsa::Error EncryptionKey::decode(const bsl::vector<char>& source)
+{
+    ntca::EncryptionKeyStorageOptions options;
+    return this->decode(source, options);
+}
+
+ntsa::Error EncryptionKey::decode(
+    const bsl::vector<char>&                 source,
+    const ntca::EncryptionKeyStorageOptions& options)
+{
+    if (!source.empty()) {
+        bdlsb::FixedMemInStreamBuf isb(&source.front(), source.size());
+        return this->decode(&isb, options);
+    }
+    else {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+}
+
 ntsa::Error EncryptionKey::encode(bsl::streambuf* destination) const
 {
     ntca::EncryptionKeyStorageOptions options;

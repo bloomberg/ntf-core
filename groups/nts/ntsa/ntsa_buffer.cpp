@@ -885,8 +885,8 @@ MemoryBuffer::pos_type MemoryBuffer::seekoff(off_type                offset,
         }
     }
 
-    return (pos_type)
-        (((bsl::ios_base::in & mode) != 0) ? getOffset : putOffset);
+    return (pos_type)(((bsl::ios_base::in & mode) != 0) ? getOffset
+                                                        : putOffset);
 }
 
 MemoryBuffer::pos_type MemoryBuffer::seekpos(pos_type                position,

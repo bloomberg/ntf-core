@@ -1003,30 +1003,30 @@ class MutableBufferSequence<MUTABLE_BUFFER>::Iterator
 class MemoryBuffer : public bsl::streambuf
 {
     /// Enumerate the access policy of this stream buffer.
-    enum Access { 
+    enum Access {
         /// The buffer is readable but not writable.
-        e_READONLY, 
+        e_READONLY,
 
         /// The buffer is both readable and writable.
-        e_WRITABLE 
+        e_WRITABLE
     };
 
     /// Enumerate the ownership semantics of the underlying memory.
-    enum Ownership { 
+    enum Ownership {
         /// The underlying memory has been allocated during the internal
         /// operation of the object and must be freed.
-        e_INTERNAL, 
+        e_INTERNAL,
 
         /// The underlying memory has been externally injected into the object
         /// and must not be freed.
-        e_EXTERNAL 
+        e_EXTERNAL
     };
 
     /// Define constants that influence the behavior of the implementation.
-    enum Constants { 
+    enum Constants {
         /// The minimum number of bytes to allocate when the buffer needs to
         /// grow.
-        e_MIN_CAPACITY = 256 
+        e_MIN_CAPACITY = 256
     };
 
     Access            d_access;

@@ -49,11 +49,41 @@ class EncryptionCertificate
     /// Destroy this object.
     virtual ~EncryptionCertificate();
 
-    /// Return the subject of the certificate.
-    virtual const ntsa::DistinguishedName& subject() const = 0;
+    /// Decode the certificate in PEM format from the specified 'source'.
+    virtual ntsa::Error decode(bsl::streambuf* source);
 
-    /// Return the issuer of the certificate.
-    virtual const ntsa::DistinguishedName& issuer() const = 0;
+    /// Decode the certificate according to the specified 'options' from the
+    /// specified 'source'.
+    virtual ntsa::Error decode(
+        bsl::streambuf*                                  source,
+        const ntca::EncryptionCertificateStorageOptions& options);
+
+    /// Decode the certificate in PEM format from the specified 'source'.
+    virtual ntsa::Error decode(const bdlbb::Blob& source);
+
+    /// Decode the certificate according to the specified 'options' from the
+    /// specified 'source'.
+    virtual ntsa::Error decode(
+        const bdlbb::Blob&                               source,
+        const ntca::EncryptionCertificateStorageOptions& options);
+
+    /// Decode the certificate in PEM format from the specified 'source'.
+    virtual ntsa::Error decode(const bsl::string& source);
+
+    /// Decode the certificate according to the specified 'options' from the
+    /// specified 'source'.
+    virtual ntsa::Error decode(
+        const bsl::string&                               source,
+        const ntca::EncryptionCertificateStorageOptions& options);
+
+    /// Decode the certificate in PEM format from the specified 'source'.
+    virtual ntsa::Error decode(const bsl::vector<char>& source);
+
+    /// Decode the certificate according to the specified 'options' from the
+    /// specified 'source'.
+    virtual ntsa::Error decode(
+        const bsl::vector<char>&                         source,
+        const ntca::EncryptionCertificateStorageOptions& options);
 
     /// Encode the certificate in PEM format to the specified 'destination'.
     virtual ntsa::Error encode(bsl::streambuf* destination) const;
@@ -90,6 +120,12 @@ class EncryptionCertificate
     virtual ntsa::Error encode(
         bsl::vector<char>*                               destination,
         const ntca::EncryptionCertificateStorageOptions& options) const;
+
+    /// Return the subject of the certificate.
+    virtual const ntsa::DistinguishedName& subject() const = 0;
+
+    /// Return the issuer of the certificate.
+    virtual const ntsa::DistinguishedName& issuer() const = 0;
 
     /// Print the certificate to the specified stream in an unspecified but
     /// human-readable form.

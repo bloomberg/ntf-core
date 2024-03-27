@@ -43,6 +43,42 @@ class EncryptionKey
     /// Destroy this object.
     virtual ~EncryptionKey();
 
+    /// Decode the key in PEM format from the specified 'source'.
+    virtual ntsa::Error decode(bsl::streambuf* source);
+
+    /// Decode the key according to the specified 'options' from the specified
+    /// 'source'.
+    virtual ntsa::Error decode(
+        bsl::streambuf*                          source,
+        const ntca::EncryptionKeyStorageOptions& options);
+
+    /// Decode the key in PEM format from the specified 'source'.
+    virtual ntsa::Error decode(const bdlbb::Blob& source);
+
+    /// Decode the key according to the specified 'options' from the specified
+    /// 'source'.
+    virtual ntsa::Error decode(
+        const bdlbb::Blob&                       source,
+        const ntca::EncryptionKeyStorageOptions& options);
+
+    /// Decode the key in PEM format from the specified 'source'.
+    virtual ntsa::Error decode(const bsl::string& source);
+
+    /// Decode the key according to the specified 'options' from the specified
+    /// 'source'.
+    virtual ntsa::Error decode(
+        const bsl::string&                       source,
+        const ntca::EncryptionKeyStorageOptions& options);
+
+    /// Decode the key in PEM format from the specified 'source'.
+    virtual ntsa::Error decode(const bsl::vector<char>& source);
+
+    /// Decode the key according to the specified 'options' from the specified
+    /// 'source'.
+    virtual ntsa::Error decode(
+        const bsl::vector<char>&                 source,
+        const ntca::EncryptionKeyStorageOptions& options);
+
     /// Encode the key in PEM format to the specified 'destination'.
     virtual ntsa::Error encode(bsl::streambuf* destination) const;
 

@@ -72,7 +72,8 @@ class EncryptionKey : public ntci::EncryptionKey
     /// Decode the key from the specified 'source' according to the specified
     /// 'options'.
     ntsa::Error decode(bsl::streambuf*                          source,
-                       const ntca::EncryptionKeyStorageOptions& options);
+                       const ntca::EncryptionKeyStorageOptions& options)
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Encode the key to the specified 'destination' according to the
     /// specified 'options'.
@@ -171,9 +172,9 @@ class EncryptionCertificate : public ntci::EncryptionCertificate
 
     /// Decode the certificate from the specified 'source' according to the
     /// specified 'options'. Return the error.
-    ntsa::Error decode(
-        bsl::streambuf*                                  source,
-        const ntca::EncryptionCertificateStorageOptions& options);
+    ntsa::Error decode(bsl::streambuf* source,
+                       const ntca::EncryptionCertificateStorageOptions&
+                           options) BSLS_KEYWORD_OVERRIDE;
 
     /// Encode the certificate to the specified 'destination' according to the
     /// specified 'options'. Return the error.

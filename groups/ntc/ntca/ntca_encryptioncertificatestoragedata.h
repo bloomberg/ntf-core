@@ -45,9 +45,6 @@ namespace ntca {
 /// @li @b options:
 /// The options used to interpret the certificate from its storage.
 ///
-/// @li @b passphrase:
-/// The passphrase required to use this certificate.
-///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
