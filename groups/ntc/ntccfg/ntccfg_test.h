@@ -861,7 +861,7 @@ struct InvocationArg1 {
 template <typename R>
 struct InvocationDataArg0 : public InvocationResult<R> {
     int d_expectedCalls;
-    InvocationDataArg0()
+        InvocationDataArg0()
     : d_expectedCalls(0)
     {
     }
@@ -871,7 +871,7 @@ template <typename R, typename ARG1>
 struct InvocationDataArg1 : public InvocationResult<R>,
                             public InvocationArg1<ARG1> {
     int d_expectedCalls;
-    InvocationDataArg1()
+        InvocationDataArg1()
     : d_expectedCalls(0)
     {
     }
@@ -898,16 +898,57 @@ class InvocationBaseWillReturn<INVOCATION_DATA, SELF, void>
     virtual INVOCATION_DATA& getInvocationDataBack() = 0;
 };
 
-template <typename INVOCATION_DATA, typename SELF, typename RESULT>
-class InvocationBase
-: public InvocationBaseWillReturn<INVOCATION_DATA, SELF, RESULT>
+template <typename INVOCATION_DATA, typename RESULT>
+class InvocationBaseInvoke
+{
+  public:
+    RESULT finalizeInvocation()
+    {
+        INVOCATION_DATA& invocation = this->getInvocationDataFront();
+        NTCCFG_TEST_TRUE(invocation.d_result.has_value());
+        const auto result = invocation.d_result.value();
+        if (invocation.d_expectedCalls != -1) {
+            --invocation.d_expectedCalls;
+            if (invocation.d_expectedCalls == 0) {
+                this->removeInvocationDataFront();
+            }
+        }
+        return result;
+    }
+  private:
+    virtual INVOCATION_DATA& getInvocationDataFront()    = 0;
+    virtual void             removeInvocationDataFront() = 0;
+};
+
+template <typename INVOCATION_DATA>
+class InvocationBaseInvoke<INVOCATION_DATA, void>
+{
+  public:
+    void finalizeInvocation()
+    {
+        INVOCATION_DATA& invocation = this->getInvocationDataFront();
+        if (invocation.d_expectedCalls != -1) {
+            --invocation.d_expectedCalls;
+            if (invocation.d_expectedCalls == 0) {
+                this->removeInvocationDataFront();
+            }
+        }
+    }
+
+  private:
+    virtual INVOCATION_DATA& getInvocationDataFront()    = 0;
+    virtual void             removeInvocationDataFront() = 0;
+};
+
+
+
+template <typename SELF, typename INVOCATION_DATA>
+class InvocationBaseOnceAlways
 {
   public:
     SELF& willOnce()
     {
-        NTCCFG_TEST_FALSE(d_invocations.empty());
-
-        INVOCATION_DATA& invocation = d_invocations.back();
+        INVOCATION_DATA& invocation = this->getInvocationDataBack();
         NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
 
         invocation.d_expectedCalls = 1;
@@ -915,22 +956,42 @@ class InvocationBase
     }
     SELF& willAlways()
     {
-        NTCCFG_TEST_FALSE(d_invocations.empty());
-
-        INVOCATION_DATA& invocation = d_invocations.back();
+        INVOCATION_DATA& invocation = this->getInvocationDataBack();
         NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
 
         invocation.d_expectedCalls = -1;
         return *(static_cast<SELF*>(this));
     }
 
+  private:
+    virtual INVOCATION_DATA& getInvocationDataBack() = 0;
+};
+
+template <typename INVOCATION_DATA, typename SELF, typename RESULT>
+class InvocationBase
+: public InvocationBaseWillReturn<INVOCATION_DATA, SELF, RESULT>,
+  public InvocationBaseOnceAlways<SELF, INVOCATION_DATA>,
+  public InvocationBaseInvoke<INVOCATION_DATA, RESULT>
+{
+  protected:
     INVOCATION_DATA& getInvocationDataBack() override
     {
         NTCCFG_TEST_FALSE(this->d_invocations.empty());
         return d_invocations.back();
     }
 
-  public:
+    INVOCATION_DATA& getInvocationDataFront() override
+    {
+        NTCCFG_TEST_FALSE(this->d_invocations.empty());
+        return d_invocations.front();
+    }
+
+    void removeInvocationDataFront() override
+    {
+        NTCCFG_TEST_FALSE(this->d_invocations.empty());
+        d_invocations.pop_front();
+    }
+
     bsl::list<INVOCATION_DATA> d_invocations;
 };
 
@@ -942,10 +1003,9 @@ class Invocation0 : public InvocationBase<InvocationDataArg0<RESULT>,
     typedef InvocationDataArg0<RESULT> InvocationDataImpl;
 
   public:
-    Invocation0<RESULT>& expect()
+    Invocation0& expect()
     {
         this->d_invocations.emplace_back();
-        InvocationDataImpl& invocation = this->d_invocations.back();
         return *this;
     }
 
@@ -956,15 +1016,8 @@ class Invocation0 : public InvocationBase<InvocationDataArg0<RESULT>,
         if (invocation.d_expectedCalls != -1) {
             NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
         }
-        NTCCFG_TEST_TRUE(invocation.d_result.has_value());
-        const auto result = invocation.d_result.value();
-        if (invocation.d_expectedCalls != -1) {
-            --invocation.d_expectedCalls;
-            if (invocation.d_expectedCalls == 0) {
-                this->d_invocations.pop_front();
-            }
-        }
-        return result;
+
+        return this->finalizeInvocation();
     }
 };
 
@@ -976,7 +1029,7 @@ class Invocation1 : public InvocationBase<InvocationDataArg1<RESULT, ARG1>,
     typedef InvocationDataArg1<RESULT, ARG1> InvocationDataImpl;
 
   public:
-    Invocation1<RESULT, ARG1>& expect(
+    Invocation1& expect(
         const BloombergLP::bdlb::NullableValue<ARG1>& arg1)
     {
         this->d_invocations.emplace_back();
@@ -998,15 +1051,7 @@ class Invocation1 : public InvocationBase<InvocationDataArg1<RESULT, ARG1>,
         if (invocation.d_arg1_out) {
             *invocation.d_arg1_out = arg1;
         }
-        NTCCFG_TEST_TRUE(invocation.d_result.has_value());
-        const auto result = invocation.d_result.value();
-        if (invocation.d_expectedCalls != -1) {
-            --invocation.d_expectedCalls;
-            if (invocation.d_expectedCalls == 0) {
-                this->d_invocations.pop_front();
-            }
-        }
-        return result;
+        return this->finalizeInvocation();
     }
 };
 

@@ -1583,11 +1583,22 @@ class BufferFactoryMock : public bdlbb::BlobBufferFactory
 {
   public:
         void allocate(bdlbb::BlobBuffer* buffer) override
-        {
-            UNEXPECTED_CALL();
-        }
+    {
+        UNEXPECTED_CALL();
+    }
 
-//    NTF_MOCK_METHOD(void, allocate, bdlbb::BlobBuffer*)
+    // NTF_MOCK_METHOD(void, allocate, bdlbb::BlobBuffer*)
+};
+
+struct MyClass
+{
+    virtual void doSmth(int) = 0;
+};
+
+class MyClassMock : public MyClass
+{
+public:
+    NTF_MOCK_METHOD_1(void, doSmth, int);
 };
 
 class StreamSocketMock : public ntsi::StreamSocket
