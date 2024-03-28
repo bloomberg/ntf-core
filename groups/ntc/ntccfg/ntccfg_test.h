@@ -824,6 +824,7 @@ class TestAllocator : public bslma::Allocator
 #endif
 
 #include <bdlb_nullablevalue.h>
+#include <bslmf_removecvref.h>
 #include <bsl_list.h>
 
 namespace framework {
@@ -848,8 +849,9 @@ struct InvocationResult<void> {
 
 template <typename ARG1>
 struct InvocationArg1 {
-    BloombergLP::bdlb::NullableValue<ARG1> d_arg1;
-    ARG1*                                  d_arg1_out;
+    typedef typename bsl::remove_cvref<ARG1>::type ARG1_type;
+    BloombergLP::bdlb::NullableValue<ARG1_type> d_arg1;
+    ARG1_type*                                  d_arg1_out;
 
     InvocationArg1()
     : d_arg1()
@@ -915,6 +917,7 @@ class InvocationBaseInvoke
         }
         return result;
     }
+
   private:
     virtual INVOCATION_DATA& getInvocationDataFront()    = 0;
     virtual void             removeInvocationDataFront() = 0;
@@ -939,8 +942,6 @@ class InvocationBaseInvoke<INVOCATION_DATA, void>
     virtual INVOCATION_DATA& getInvocationDataFront()    = 0;
     virtual void             removeInvocationDataFront() = 0;
 };
-
-
 
 template <typename SELF, typename INVOCATION_DATA>
 class InvocationBaseOnceAlways
@@ -1029,8 +1030,9 @@ class Invocation1 : public InvocationBase<InvocationDataArg1<RESULT, ARG1>,
     typedef InvocationDataArg1<RESULT, ARG1> InvocationDataImpl;
 
   public:
-    Invocation1& expect(
-        const BloombergLP::bdlb::NullableValue<ARG1>& arg1)
+    typedef typename bsl::remove_cvref<ARG1>::type ARG1_type;
+
+    Invocation1& expect(const BloombergLP::bdlb::NullableValue<ARG1_type>& arg1)
     {
         this->d_invocations.emplace_back();
         InvocationDataImpl& invocation = this->d_invocations.back();
@@ -1038,7 +1040,7 @@ class Invocation1 : public InvocationBase<InvocationDataArg1<RESULT, ARG1>,
         return *this;
     }
 
-    RESULT invoke(const ARG1& arg1)
+    RESULT invoke(const ARG1_type& arg1)
     {
         NTCCFG_TEST_FALSE(this->d_invocations.empty());
         InvocationDataImpl& invocation = this->d_invocations.front();
@@ -1083,7 +1085,7 @@ class Invocation1 : public InvocationBase<InvocationDataArg1<RESULT, ARG1>,
 #define NTF_MOCK_METHOD_1_IMP(RESULT, METHOD_NAME, ARG1)                      \
   public:                                                                     \
     framework::internal::Invocation1<RESULT, ARG1>& expect_##METHOD_NAME(     \
-        const bdlb::NullableValue<ARG1>& arg1)                                \
+        const bdlb::NullableValue<bsl::remove_cvref<ARG1>::type>& arg1)       \
     {                                                                         \
         return d_invocation_##METHOD_NAME.expect(arg1);                       \
     }                                                                         \

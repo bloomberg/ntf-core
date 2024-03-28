@@ -1582,24 +1582,19 @@ class ResolverMock : public ntci::Resolver
 class BufferFactoryMock : public bdlbb::BlobBufferFactory
 {
   public:
-        void allocate(bdlbb::BlobBuffer* buffer) override
-    {
-        UNEXPECTED_CALL();
-    }
-
-    // NTF_MOCK_METHOD(void, allocate, bdlbb::BlobBuffer*)
+    NTF_MOCK_METHOD(void, allocate, bdlbb::BlobBuffer*)
 };
 
-struct MyClass
-{
-    virtual void doSmth(int) = 0;
-};
-
-class MyClassMock : public MyClass
-{
-public:
-    NTF_MOCK_METHOD_1(void, doSmth, int);
-};
+// struct MyClass
+// {
+//     virtual void doSmth(const int&) = 0;
+// };
+//
+// class MyClassMock : public MyClass
+// {
+// public:
+//     NTF_MOCK_METHOD_1(void, doSmth, const int&);
+// };
 
 class StreamSocketMock : public ntsi::StreamSocket
 {
@@ -1622,10 +1617,9 @@ class StreamSocketMock : public ntsi::StreamSocket
         UNEXPECTED_CALL();
         return ntsa::Error();
     }
-    ntsa::Error connect(const ntsa::Endpoint& endpoint) override
-    {
-        return d_invocation_connect.invoke(endpoint);
-    }
+
+    NTF_MOCK_METHOD(ntsa::Error, connect, const ntsa::Endpoint&)
+
     ntsa::Error send(ntsa::SendContext*       context,
                      const bdlbb::Blob&       data,
                      const ntsa::SendOptions& options) override
@@ -1654,20 +1648,12 @@ class StreamSocketMock : public ntsi::StreamSocket
         UNEXPECTED_CALL();
         return ntsa::Error();
     }
-    ntsa::Error receiveNotifications(
-        ntsa::NotificationQueue* notifications) override
-    {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
-    }
-    ntsa::Error shutdown(ntsa::ShutdownType::Value direction) override
-    {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
-    }
 
+    NTF_MOCK_METHOD(ntsa::Error, receiveNotifications, ntsa::NotificationQueue*)
+    NTF_MOCK_METHOD(ntsa::Error, shutdown, ntsa::ShutdownType::Value)
     NTF_MOCK_METHOD(ntsa::Error, unlink)
     NTF_MOCK_METHOD(ntsa::Error, close)
+
   public:
     ntsa::Error sourceEndpoint(ntsa::Endpoint* result) const override
     {
@@ -1690,12 +1676,8 @@ class StreamSocketMock : public ntsi::StreamSocket
     {
         return d_invocation_getOption.invoke(option, type);
     }
-    ntsa::Error getLastError(ntsa::Error* result) override
-    {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
-    }
 
+    NTF_MOCK_METHOD(ntsa::Error, getLastError, ntsa::Error*)
     NTF_MOCK_METHOD_CONST(bsl::size_t, maxBuffersPerSend)
     NTF_MOCK_METHOD_CONST(bsl::size_t, maxBuffersPerReceive)
 
@@ -2281,119 +2263,12 @@ class StreamSocketMock : public ntsi::StreamSocket
         return d_invocation_getOption.expect(arg1, arg2);
     }
 
-    struct Invocation_connect {
-      private:
-        struct InvocationData {
-            int                                 d_expectedCalls;
-            bdlb::NullableValue<ntsa::Endpoint> d_arg1;
-            bdlb::NullableValue<ntsa::Error>    d_result;
-            ntsa::Endpoint*                     d_arg1_out;
-
-            InvocationData()
-            : d_expectedCalls(0)
-            , d_arg1()
-            , d_result()
-            , d_arg1_out(0)
-            {
-            }
-        };
-
-      public:
-        Invocation_connect& expect(
-            const bdlb::NullableValue<ntsa::Endpoint>& arg1)
-        {
-            d_invocations.emplace_back();
-            InvocationData& invocation = d_invocations.back();
-
-            invocation.d_arg1 = arg1;
-
-            return *this;
-        }
-        Invocation_connect& willOnce()
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-
-            InvocationData& invocation = d_invocations.back();
-            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
-
-            invocation.d_expectedCalls = 1;
-            return *this;
-        }
-        Invocation_connect& willAlways()
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-
-            InvocationData& invocation = d_invocations.back();
-            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
-
-            invocation.d_expectedCalls = -1;
-            return *this;
-        }
-        //        Invocation_createTimer& times(int val){} //TODO: multiple calls
-
-        Invocation_connect& willReturn(ntsa::Error result)
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-            InvocationData& invocation = d_invocations.back();
-            invocation.d_result        = result;
-            return *this;
-        }
-
-        Invocation_connect& saveArg1(ntsa::Endpoint& arg1)
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-            InvocationData& invocation = d_invocations.back();
-            invocation.d_arg1_out      = &arg1;
-            return *this;
-        }
-
-        ntsa::Error invoke(const ntsa::Endpoint& arg1)
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-            InvocationData& invocation = d_invocations.front();
-
-            if (invocation.d_expectedCalls != -1) {
-                NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
-            }
-
-            if (invocation.d_arg1.has_value()) {
-                NTCCFG_TEST_EQ(arg1, invocation.d_arg1.value());
-            }
-
-            if (invocation.d_arg1_out) {
-                *invocation.d_arg1_out = arg1;
-            }
-
-            NTCCFG_TEST_TRUE(invocation.d_result.has_value());
-            const auto result = invocation.d_result.value();
-
-            if (invocation.d_expectedCalls != -1) {
-                --invocation.d_expectedCalls;
-                if (invocation.d_expectedCalls == 0) {
-                    d_invocations.pop_front();
-                }
-            }
-
-            return result;
-        }
-
-      private:
-        bsl::list<InvocationData> d_invocations;
-    };
-
-    Invocation_connect& expect_connect(
-        const bdlb::NullableValue<ntsa::Endpoint>& arg1)
-    {
-        return d_invocation_connect.expect(arg1);
-    }
-
   private:
     mutable Invocation_setBlocking    d_invocation_setBlocking;
     mutable Invocation_setOption      d_invocation_setOption;
     mutable Invocation_getOption      d_invocation_getOption;
     mutable Invocation_sourceEndpoint d_invocation_sourceEndpoint;
     mutable Invocation_remoteEndpoint d_invocation_remoteEndpoint;
-    mutable Invocation_connect        d_invocation_connect;
 };
 
 class DataPoolMock : public ntci::DataPool
@@ -2404,6 +2279,7 @@ class DataPoolMock : public ntci::DataPool
         UNEXPECTED_CALL();
         return bsl::shared_ptr<ntsa::Data>();
     }
+
     bsl::shared_ptr<ntsa::Data> createOutgoingData() override
     {
         if (d_createOutgoingData_result.isNull()) {
@@ -3243,15 +3119,11 @@ class TimerMock : public ntci::Timer
     {
         return d_schedule_invocation.invoke(deadline, period);
     }
-    ntsa::Error cancel() override
-    {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
-    }
-    ntsa::Error close() override
-    {
-        return d_close_invocation.invoke();
-    }
+
+    NTF_MOCK_METHOD(ntsa::Error, cancel)
+    NTF_MOCK_METHOD(ntsa::Error, close)
+public:
+
     void arrive(const bsl::shared_ptr<ntci::Timer>& self,
                 const bsls::TimeInterval&           now,
                 const bsls::TimeInterval&           deadline) override
@@ -3263,36 +3135,19 @@ class TimerMock : public ntci::Timer
         UNEXPECTED_CALL();
         return nullptr;
     }
-    int id() const override
-    {
-        UNEXPECTED_CALL();
-        return 0;
-    }
-    bool oneShot() const override
-    {
-        UNEXPECTED_CALL();
-        return false;
-    }
-    bslmt::ThreadUtil::Handle threadHandle() const override
-    {
-        UNEXPECTED_CALL();
-        return BloombergLP::bslmt::ThreadUtil::Handle();
-    }
-    size_t threadIndex() const override
-    {
-        UNEXPECTED_CALL();
-        return 0;
-    }
+    NTF_MOCK_METHOD_CONST(int, id)
+    NTF_MOCK_METHOD_CONST(bool, oneShot)
+    NTF_MOCK_METHOD_CONST(bslmt::ThreadUtil::Handle, threadHandle)
+    NTF_MOCK_METHOD_CONST(size_t, threadIndex)
+
+public:
     const bsl::shared_ptr<ntci::Strand>& strand() const override
     {
         UNEXPECTED_CALL();
         return dummyStrand;
     }
-    bsls::TimeInterval currentTime() const override
-    {
-        UNEXPECTED_CALL();
-        return bsls::TimeInterval();
-    }
+    NTF_MOCK_METHOD_CONST(bsls::TimeInterval, currentTime)
+public:
 
     struct Invocation_schedule {
         //        const bsls::TimeInterval& deadline,
@@ -3425,92 +3280,10 @@ class TimerMock : public ntci::Timer
         return d_schedule_invocation.expect(arg1, arg2);
     }
 
-    struct Invocation_close {
-      private:
-        struct InvocationData {
-            int                              d_expectedCalls;
-            bdlb::NullableValue<ntsa::Error> d_result;
-
-            InvocationData()
-            : d_expectedCalls(0)
-            , d_result()
-            {
-            }
-        };
-
-      public:
-        Invocation_close& expect()
-        {
-            d_invocations.emplace_back();
-            InvocationData& invocation = d_invocations.back();
-            return *this;
-        }
-        Invocation_close& willOnce()
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-
-            InvocationData& invocation = d_invocations.back();
-            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
-
-            invocation.d_expectedCalls = 1;
-            return *this;
-        }
-        Invocation_close& willAlways()
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-
-            InvocationData& invocation = d_invocations.back();
-            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
-
-            invocation.d_expectedCalls = -1;
-            return *this;
-        }
-        //        Invocation_createTimer& times(int val){} //TODO: multiple calls
-
-        Invocation_close& willReturn(ntsa::Error result)
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-            InvocationData& invocation = d_invocations.back();
-            invocation.d_result        = result;
-            return *this;
-        }
-
-        ntsa::Error invoke()
-        {
-            NTCCFG_TEST_FALSE(d_invocations.empty());
-            InvocationData& invocation = d_invocations.front();
-
-            if (invocation.d_expectedCalls != -1) {
-                NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
-            }
-
-            NTCCFG_TEST_TRUE(invocation.d_result.has_value());
-            const auto result = invocation.d_result.value();
-
-            if (invocation.d_expectedCalls != -1) {
-                --invocation.d_expectedCalls;
-                if (invocation.d_expectedCalls == 0) {
-                    d_invocations.pop_front();
-                }
-            }
-
-            return result;
-        }
-
-      private:
-        bsl::list<InvocationData> d_invocations;
-    };
-
-    Invocation_close& expect_close()
-    {
-        return d_close_invocation.expect();
-    }
-
   private:
     bsl::shared_ptr<ntci::Strand> dummyStrand;
 
     Invocation_schedule d_schedule_invocation;
-    Invocation_close    d_close_invocation;
 };
 
 }  // close namespace mock
