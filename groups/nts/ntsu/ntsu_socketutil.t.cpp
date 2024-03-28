@@ -7028,18 +7028,16 @@ NTSCFG_TEST_CASE(17)
         // Dequeue incoming data received by the client socket.
 
         {
-            char                 buffer;
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
+            char        buffer;
+            bsl::size_t numBytesReceived;
 
-            ntsa::Data data(ntsa::MutableBuffer(&buffer, 1));
-
-            error =
-                ntsu::SocketUtil::receive(&context, &data, options, client);
+            error = ntsu::SocketUtil::receive(&numBytesReceived,
+                                              &buffer,
+                                              1,
+                                              client);
             NTSCFG_TEST_ASSERT(!error);
 
-            NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
-            NTSCFG_TEST_ASSERT(context.bytesReceived() == 1);
+            NTSCFG_TEST_ASSERT(numBytesReceived == 1);
             NTSCFG_TEST_ASSERT(buffer == 'S');
         }
 

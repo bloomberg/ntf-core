@@ -540,6 +540,15 @@ struct SocketUtil {
                                       ntsa::Handle              socket);
 
     /// Dequeue from the receive buffer of the specified 'socket' into the
+    /// specified 'data' having the specified 'capacity'. Load into the
+    /// specified 'numBytesReceived' the result of the operation. Return the
+    /// error.
+    static ntsa::Error receive(bsl::size_t* numBytesReceived,
+                               void*        data,
+                               bsl::size_t  capacity,
+                               ntsa::Handle socket);
+
+    /// Dequeue from the receive buffer of the specified 'socket' into the
     /// specified 'data' having the specified 'capacity' according to the
     /// specified 'options'. Load into the specified 'context' the result of
     /// the operation. Return the error.

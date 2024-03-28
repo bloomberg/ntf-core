@@ -171,16 +171,6 @@ struct sockaddr_un_win32 {
 #endif
 #endif
 
-// Define and set to 1 to always call 'sendmsg' instead of 'send' or 'writev'.
-// Uncomment or set to 0 to use 'send' for single contiguous buffers and
-// 'writev' for multiple non-contiguous buffers.
-#define NTSU_SOCKETUTIL_SENDMSG_ALWAYS 1
-
-// Define and set to 1 to always call 'recvmsg' instead of 'recv' or 'readv'.
-// Uncomment or set to 0 to use 'recv' for single contiguous buffers and
-// 'readv' for multiple non-contiguous buffers.
-#define NTSU_SOCKETUTIL_RECVMSG_ALWAYS 1
-
 #if defined(BSLS_PLATFORM_OS_LINUX)
 // Define the default flags to 'sendmsg'.
 #define NTSU_SOCKETUTIL_SENDMSG_FLAGS MSG_NOSIGNAL
@@ -188,6 +178,9 @@ struct sockaddr_un_win32 {
 // Define the default flags to 'sendmsg'.
 #define NTSU_SOCKETUTIL_SENDMSG_FLAGS 0
 #endif
+
+// Define the default flags to 'recv'.
+#define NTSU_SOCKETUTIL_RECV_FLAGS 0
 
 // Define the default flags to 'recvmsg'.
 #define NTSU_SOCKETUTIL_RECVMSG_FLAGS 0
@@ -2686,6 +2679,31 @@ ntsa::Error SocketUtil::sendToMultiple(bsl::size_t* numBytesSendable,
 #else
 #error Not implemented
 #endif
+}
+
+ntsa::Error SocketUtil::receive(bsl::size_t* numBytesReceived,
+                                void*        data,
+                                bsl::size_t  capacity,
+                                ntsa::Handle socket)
+{
+    if (NTSCFG_UNLIKELY(capacity == 0)) {
+        return ntsa::Error::invalid();
+    }
+
+    struct iovec iovec;
+    iovec.iov_base = data;
+    iovec.iov_len  = capacity;
+
+    ssize_t recvResult =
+        ::recv(socket, data, capacity, NTSU_SOCKETUTIL_RECV_FLAGS);
+
+    if (recvResult < 0) {
+        return ntsa::Error(errno);
+    }
+
+    *numBytesReceived = static_cast<bsl::size_t>(recvResult);
+
+    return ntsa::Error();
 }
 
 ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
@@ -6836,14 +6854,28 @@ ntsa::Error SocketUtil::sendToMultiple(bsl::size_t* numBytesSendable,
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
+ntsa::Error SocketUtil::receive(bsl::size_t* numBytesReceived,
+                                void*        data,
+                                bsl::size_t  capacity,
+                                ntsa::Handle socket)
+{
+    ntsa::Error error;
+    ntsa::ReceiveContext context;
+
+    ntsa::ReceiveOptions options;
+    options.hideEndpoint();
+
+    error = SocketUtil::receive(&context, data, capacity, options, socket);
+    *numBytesReceived = context.bytesReceived();
+    return error;
+}
+
 ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 void*                       data,
                                 bsl::size_t                 capacity,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
-
     context->reset();
 
     if (capacity == 0) {
@@ -6926,8 +6958,6 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
-
     context->reset();
 
     bsl::size_t capacity = buffer->size();
@@ -7009,8 +7039,6 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
-
     context->reset();
 
     bsl::size_t capacity =
@@ -7092,8 +7120,6 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
-
     context->reset();
 
     bsl::size_t numBuffersTotal = bufferArray->numBuffers();
@@ -7180,8 +7206,6 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*        context,
                                 const ntsa::ReceiveOptions&  options,
                                 ntsa::Handle                 socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
-
     context->reset();
 
     bsl::size_t numBuffersTotal = bufferArray->numBuffers();
@@ -7268,8 +7292,6 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
-
     context->reset();
 
     bsl::size_t size     = string->size();
@@ -7356,8 +7378,6 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
-
     context->reset();
 
     bsl::size_t numBytesMax = options.maxBytes();
@@ -7468,8 +7488,6 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
-    NTSCFG_WARNING_UNUSED(options);
-
     context->reset();
 
     bsl::size_t capacity = blobBuffer->size();
