@@ -25,6 +25,8 @@ BSLS_IDENT("$Id: $")
 #include <ntci_encryptionclientfactory.h>
 #include <ntci_encryptionkeygenerator.h>
 #include <ntci_encryptionkeystorage.h>
+#include <ntci_encryptionresource.h>
+#include <ntci_encryptionresourcefactory.h>
 #include <ntci_encryptionserverfactory.h>
 #include <ntcscm_version.h>
 
@@ -47,7 +49,8 @@ class EncryptionDriver : public ntci::EncryptionKeyGenerator,
                          public ntci::EncryptionCertificateGenerator,
                          public ntci::EncryptionCertificateStorage,
                          public ntci::EncryptionClientFactory,
-                         public ntci::EncryptionServerFactory
+                         public ntci::EncryptionServerFactory,
+                         public ntci::EncryptionResourceFactory
 {
   public:
     /// Destroy this object.

@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INCLUDED_NTCA_ENCRYPTIONKEYSTORAGETYPE
-#define INCLUDED_NTCA_ENCRYPTIONKEYSTORAGETYPE
+#ifndef INCLUDED_NTCA_ENCRYPTIONRESOURCETYPE
+#define INCLUDED_NTCA_ENCRYPTIONRESOURCETYPE
 
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
@@ -25,50 +25,60 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntca {
 
-/// Enumerate the encryption key storage types.
+/// Enumerate the encryption resource storage types.
 ///
 /// @par Thread Safety
 /// This struct is thread safe.
 ///
 /// @ingroup module_ntci_encryption
-struct EncryptionKeyStorageType {
+struct EncryptionResourceType {
   public:
-    /// Enumerate the encryption key storage types.
+    /// Enumerate the encryption resource storage types.
     enum Value {
-        /// The key is stored as the ASN.1 encoding of the private key
+        /// The resource is stored as a single ASN.1 encoding of a private key
         /// structure (e.g., DSA, RSA, or Elliptic Curve, depending on the type
-        /// of key). Files of this type of encoding usually have a suffix of
-        /// ".der".
-        e_PRIVATE,
+        /// of key), or a certificate structure (X.509). Files of this type of
+        /// encoding usually have a suffix of ".der". Note that this type can
+        /// only store a single resource.
+        e_ASN1,
 
-        /// The key is stored as the ASN.1 encoding of the private key
-        /// structure (e.g., DSA, RSA, or Elliptic Curve, depending on the type
-        /// of key), then base-64-encoded and wrapped in the Privacy Enhanced
-        /// Mail (PEM) format. Files of this type of encoding usually have the
-        /// suffix ".pem".
-        e_PRIVATE_PEM,
+        /// The resource is stored as one or more ASN.1 encodings of a private
+        /// key structure (e.g., DSA, RSA, or Elliptic Curve, depending on the
+        /// type of key), or certificate structure (X.509), then
+        /// base-64-encoded and wrapped in the Privacy Enhanced Mail (PEM)
+        /// format. Files of this type of encoding usually have the suffix
+        /// ".pem". Note that this type can store multiple resources. If
+        /// multiple resources are stored, the resources must be stored in the
+        /// following order: first the private key, then the user certificate,
+        /// then any trusted certificates.
+        e_ASN1_PEM,
 
-        /// The key is stored as the ASN.1 encoding of the private key
+        /// The resource is stored as the ASN.1 encoding of a private key
         /// structure (e.g., DSA, RSA, or Elliptic Curve, depending on the type
         /// of key), stored within the ASN.1 encoding of a PKCS8 private key
         /// container structure. Files of this type of encoding usually have
-        /// the suffix ".pkcs8" or ".p8".
-        e_PRIVATE_PKCS8,
+        /// the suffix ".pkcs8" or ".p8". Note that this type can only store
+        /// a single private key.
+        e_PKCS8,
 
         /// The key is stored as the ASN.1 encoding of the private key
         /// structure (e.g., DSA, RSA, or Elliptic Curve, depending on the type
         /// of key), stored within the ASN.1 encoding of a PKCS8 private key
         /// container structure, then base-64-encoded and wrapped in the
         /// Privacy Enhanced Mail (PEM) format. Files of this type of encoding
-        /// usually have the suffix ".pem".
-        e_PRIVATE_PKCS8_PEM,
+        /// usually have the suffix ".pem". Note that this type can only store
+        /// a single private key.
+        e_PKCS8_PEM,
 
         /// The key is stored as the ASN.1 encoding of the private key
         /// structure (e.g., DSA, RSA, or Elliptic Curve, depending on the type
         /// of key), stored within the ASN.1 encoding of a PKCS12 (PFX)
         /// multi-purpose container structure. Files of this type of encoding
-        /// usually have the suffix ".pkcs12", ".p12", or ".pfx".
-        e_PRIVATE_PKCS12
+        /// usually have the suffix ".pkcs12", ".p12", or ".pfx". Note that
+        /// this type can store multiple resources. If multiple resources are
+        /// stored, only a single key and user certificate may be stored, but
+        /// any number of trusted certificates are allowed.
+        e_PKCS12
     };
 
     /// Return the string representation exactly matching the enumerator
@@ -96,9 +106,9 @@ struct EncryptionKeyStorageType {
 /// Format the specified 'rhs' to the specified output 'stream' and return a
 /// reference to the modifiable 'stream'.
 ///
-/// @related ntca::EncryptionKeyStorageType
-bsl::ostream& operator<<(bsl::ostream&                   stream,
-                         EncryptionKeyStorageType::Value rhs);
+/// @related ntca::EncryptionResourceType
+bsl::ostream& operator<<(bsl::ostream&                 stream,
+                         EncryptionResourceType::Value rhs);
 
 }  // end namespace ntca
 }  // end namespace BloombergLP

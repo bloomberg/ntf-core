@@ -36,22 +36,25 @@ struct EncryptionKeyType {
     /// Enumerate the encryption key types.
     enum Value {
         /// The key uses the RSA algorithm.
-        e_RSA = 0,
+        e_DSA = 0,
+
+        /// The key uses the RSA algorithm.
+        e_RSA = 1,
 
         /// The key uses the NIST P-256 version 1 elliptic curve.
-        e_NIST_P256 = 1,
+        e_NIST_P256 = 2,
 
         /// The key uses the NIST P-384 elliptic curve.
-        e_NIST_P384 = 2,
+        e_NIST_P384 = 3,
 
         /// The key uses the NIST P-521 elliptic curve.
-        e_NIST_P521 = 3,
+        e_NIST_P521 = 4,
 
         /// The key uses the "ed25519" elliptic curve.
-        e_ED25519 = 4,
+        e_ED25519 = 5,
 
         /// The key uses the "ed448" elliptic curve.
-        e_ED448 = 5
+        e_ED448 = 6
     };
 
     /// Return the string representation exactly matching the enumerator

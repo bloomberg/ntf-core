@@ -28,7 +28,6 @@ namespace ntca {
 
 EncryptionKeyOptions::EncryptionKeyOptions(bslma::Allocator* basicAllocator)
 : d_type()
-, d_bits()
 {
     NTCCFG_WARNING_UNUSED(basicAllocator);
 }
@@ -37,7 +36,6 @@ EncryptionKeyOptions::EncryptionKeyOptions(
     const EncryptionKeyOptions& original,
     bslma::Allocator*           basicAllocator)
 : d_type(original.d_type)
-, d_bits(original.d_bits)
 {
     NTCCFG_WARNING_UNUSED(basicAllocator);
 }
@@ -51,7 +49,6 @@ EncryptionKeyOptions& EncryptionKeyOptions::operator=(
 {
     if (this != &other) {
         d_type = other.d_type;
-        d_bits = other.d_bits;
     }
 
     return *this;
@@ -60,17 +57,11 @@ EncryptionKeyOptions& EncryptionKeyOptions::operator=(
 void EncryptionKeyOptions::reset()
 {
     d_type.reset();
-    d_bits.reset();
 }
 
 void EncryptionKeyOptions::setType(ntca::EncryptionKeyType::Value value)
 {
     d_type = value;
-}
-
-void EncryptionKeyOptions::setBits(bsl::size_t value)
-{
-    d_bits = value;
 }
 
 const bdlb::NullableValue<ntca::EncryptionKeyType::Value>& EncryptionKeyOptions::
@@ -79,27 +70,14 @@ const bdlb::NullableValue<ntca::EncryptionKeyType::Value>& EncryptionKeyOptions:
     return d_type;
 }
 
-const bdlb::NullableValue<bsl::size_t>& EncryptionKeyOptions::bits() const
-{
-    return d_bits;
-}
-
 bool EncryptionKeyOptions::equals(const EncryptionKeyOptions& other) const
 {
-    return d_type == other.d_type && d_bits == other.d_bits;
+    return d_type == other.d_type;
 }
 
 bool EncryptionKeyOptions::less(const EncryptionKeyOptions& other) const
 {
-    if (d_type < other.d_type) {
-        return true;
-    }
-
-    if (other.d_type < d_type) {
-        return false;
-    }
-
-    return d_bits < other.d_bits;
+    return d_type < other.d_type;
 }
 
 bsl::ostream& EncryptionKeyOptions::print(bsl::ostream& stream,
@@ -111,10 +89,6 @@ bsl::ostream& EncryptionKeyOptions::print(bsl::ostream& stream,
 
     if (!d_type.isNull()) {
         printer.printAttribute("type", d_type);
-    }
-
-    if (!d_bits.isNull()) {
-        printer.printAttribute("bits", d_bits);
     }
 
     printer.end();

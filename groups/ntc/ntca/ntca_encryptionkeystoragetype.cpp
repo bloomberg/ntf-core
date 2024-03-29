@@ -29,10 +29,11 @@ int EncryptionKeyStorageType::fromInt(EncryptionKeyStorageType::Value* result,
                                       int                              number)
 {
     switch (number) {
-    case EncryptionKeyStorageType::e_PEM:
-    case EncryptionKeyStorageType::e_DER:
-    case EncryptionKeyStorageType::e_PKCS12:
-    case EncryptionKeyStorageType::e_PKCS8:
+    case EncryptionKeyStorageType::e_PRIVATE:
+    case EncryptionKeyStorageType::e_PRIVATE_PEM:
+    case EncryptionKeyStorageType::e_PRIVATE_PKCS8:
+    case EncryptionKeyStorageType::e_PRIVATE_PKCS8_PEM:
+    case EncryptionKeyStorageType::e_PRIVATE_PKCS12:
         *result = static_cast<EncryptionKeyStorageType::Value>(number);
         return 0;
     default:
@@ -44,23 +45,28 @@ int EncryptionKeyStorageType::fromString(
     EncryptionKeyStorageType::Value* result,
     const bslstl::StringRef&         string)
 {
-    if (bdlb::String::areEqualCaseless(string, "PEM")) {
-        *result = e_PEM;
+    if (bdlb::String::areEqualCaseless(string, "PRIVATE")) {
+        *result = e_PRIVATE;
         return 0;
     }
 
-    if (bdlb::String::areEqualCaseless(string, "DER")) {
-        *result = e_DER;
+    if (bdlb::String::areEqualCaseless(string, "PRIVATE_PEM")) {
+        *result = e_PRIVATE_PEM;
         return 0;
     }
 
-    if (bdlb::String::areEqualCaseless(string, "PKCS12")) {
-        *result = e_PKCS12;
+    if (bdlb::String::areEqualCaseless(string, "PRIVATE_PKCS8")) {
+        *result = e_PRIVATE_PKCS8;
         return 0;
     }
 
-    if (bdlb::String::areEqualCaseless(string, "PKCS8")) {
-        *result = e_PKCS8;
+    if (bdlb::String::areEqualCaseless(string, "PRIVATE_PKCS8_PEM")) {
+        *result = e_PRIVATE_PKCS8_PEM;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "PRIVATE_PKCS12")) {
+        *result = e_PRIVATE_PKCS12;
         return 0;
     }
 
@@ -71,17 +77,20 @@ const char* EncryptionKeyStorageType::toString(
     EncryptionKeyStorageType::Value value)
 {
     switch (value) {
-    case e_PEM: {
-        return "PEM";
+    case e_PRIVATE: {
+        return "PRIVATE";
     } break;
-    case e_DER: {
-        return "DER";
+    case e_PRIVATE_PEM: {
+        return "PRIVATE_PEM";
     } break;
-    case e_PKCS12: {
-        return "PKCS12";
+    case e_PRIVATE_PKCS8: {
+        return "PRIVATE_PKCS8";
     } break;
-    case e_PKCS8: {
-        return "PKCS8";
+    case e_PRIVATE_PKCS8_PEM: {
+        return "PRIVATE_PKCS8_PEM";
+    } break;
+    case e_PRIVATE_PKCS12: {
+        return "PRIVATE_PKCS12";
     } break;
     }
 

@@ -40,6 +40,8 @@ BSLS_IDENT("$Id: $")
 #include <ntci_encryptionkey.h>
 #include <ntci_encryptionkeygenerator.h>
 #include <ntci_encryptionkeystorage.h>
+#include <ntci_encryptionresource.h>
+#include <ntci_encryptionresourcefactory.h>
 #include <ntci_encryptionserver.h>
 #include <ntci_encryptionserverfactory.h>
 #include <ntci_executor.h>
@@ -94,6 +96,7 @@ class Interface : public ntci::DatagramSocketFactory,
                   public ntci::RateLimiterFactory,
                   public ntci::EncryptionClientFactory,
                   public ntci::EncryptionServerFactory,
+                  public ntci::EncryptionResourceFactory,
                   public ntci::EncryptionCertificateGenerator,
                   public ntci::EncryptionCertificateStorage,
                   public ntci::EncryptionKeyGenerator,

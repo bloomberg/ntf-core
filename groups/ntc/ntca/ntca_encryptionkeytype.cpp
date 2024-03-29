@@ -28,6 +28,7 @@ namespace ntca {
 int EncryptionKeyType::fromInt(EncryptionKeyType::Value* result, int number)
 {
     switch (number) {
+    case EncryptionKeyType::e_DSA:
     case EncryptionKeyType::e_RSA:
     case EncryptionKeyType::e_NIST_P256:
     case EncryptionKeyType::e_NIST_P384:
@@ -44,6 +45,11 @@ int EncryptionKeyType::fromInt(EncryptionKeyType::Value* result, int number)
 int EncryptionKeyType::fromString(EncryptionKeyType::Value* result,
                                   const bslstl::StringRef&  string)
 {
+    if (bdlb::String::areEqualCaseless(string, "DSA")) {
+        *result = e_DSA;
+        return 0;
+    }
+
     if (bdlb::String::areEqualCaseless(string, "RSA")) {
         *result = e_RSA;
         return 0;
@@ -80,6 +86,9 @@ int EncryptionKeyType::fromString(EncryptionKeyType::Value* result,
 const char* EncryptionKeyType::toString(EncryptionKeyType::Value value)
 {
     switch (value) {
+    case e_DSA: {
+        return "DSA";
+    } break;
     case e_RSA: {
         return "RSA";
     } break;

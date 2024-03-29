@@ -13,13 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INCLUDED_NTCA_ENCRYPTIONCERTIFICATESTORAGEOPTIONS
-#define INCLUDED_NTCA_ENCRYPTIONCERTIFICATESTORAGEOPTIONS
+#ifndef INCLUDED_NTCA_ENCRYPTIONRESOURCEOPTIONS
+#define INCLUDED_NTCA_ENCRYPTIONRESOURCEOPTIONS
 
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <ntca_encryptioncertificatestoragetype.h>
+#include <ntca_encryptionresourcetype.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 #include <bdlb_nullablevalue.h>
@@ -32,61 +32,59 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntca {
 
-/// Describe the parameters to an encryption certificate storage operation.
+/// Describe the parameters to an encryption resource storage operation.
 ///
 /// @par Attributes
 /// This class is composed of the following attributes.
 ///
 /// @li @b type:
-/// The type of storage format.
+/// The type of resource storage format.
 ///
 /// @li @b label:
-/// The label, or friendly name, attached to the certificate.
+/// The label, or friendly name, attached to the resource.
 ///
 /// @li @b passphrase:
-/// The passphrase required to use the storage.
+/// The passphrase required to use the resource storage.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
 /// @ingroup module_ntci_encryption
-class EncryptionCertificateStorageOptions
+class EncryptionResourceOptions
 {
-    bdlb::NullableValue<ntca::EncryptionCertificateStorageType::Value> d_type;
-    bdlb::NullableValue<bsl::string>                                   d_label;
-    bdlb::NullableValue<bsl::string> d_passphrase;
-    bdlb::NullableValue<bsl::size_t> d_flags;
+    bdlb::NullableValue<ntca::EncryptionResourceType::Value> d_type;
+    bdlb::NullableValue<bsl::string>                         d_label;
+    bdlb::NullableValue<bsl::string>                         d_passphrase;
+    bdlb::NullableValue<bsl::size_t>                         d_flags;
 
   public:
-    /// Create a new certificate storage options having the default value.
+    /// Create new encryption resource options having the default value.
     /// Optionally specify a 'basicAllocator' used to supply memory. If
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
-    explicit EncryptionCertificateStorageOptions(
-        bslma::Allocator* basicAllocator = 0);
+    explicit EncryptionResourceOptions(bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate storage options having the same value as the
+    /// Create new resource resource options having the same value as the
     /// specified 'original' object. Optionally specify a 'basicAllocator' used
     /// to supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
-    EncryptionCertificateStorageOptions(
-        const EncryptionCertificateStorageOptions& original,
-        bslma::Allocator*                          basicAllocator = 0);
+    EncryptionResourceOptions(const EncryptionResourceOptions& original,
+                              bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
-    ~EncryptionCertificateStorageOptions();
+    ~EncryptionResourceOptions();
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
-    EncryptionCertificateStorageOptions& operator=(
-        const EncryptionCertificateStorageOptions& other);
+    EncryptionResourceOptions& operator=(
+        const EncryptionResourceOptions& other);
 
     /// Reset the value of this object to its value upon default
     /// construction.
     void reset();
 
-    /// Set the certificate storage type to the specified 'value'.
-    void setType(ntca::EncryptionCertificateStorageType::Value value);
+    /// Set the resource type to the specified 'value'.
+    void setType(ntca::EncryptionResourceType::Value value);
 
     /// Set the label, or friendly name, to the specified 'value'.
     void setLabel(const bsl::string& value);
@@ -94,9 +92,9 @@ class EncryptionCertificateStorageOptions
     /// Set the passphrase to the specified 'value'.
     void setPassphrase(const bsl::string& value);
 
-    /// Return the certificate storage type.
-    const bdlb::NullableValue<ntca::EncryptionCertificateStorageType::Value>&
-    type() const;
+    /// Return the resource type.
+    const bdlb::NullableValue<ntca::EncryptionResourceType::Value>& type()
+        const;
 
     /// Return the label, or friendly name.
     const bdlb::NullableValue<bsl::string>& label() const;
@@ -106,11 +104,11 @@ class EncryptionCertificateStorageOptions
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
-    bool equals(const EncryptionCertificateStorageOptions& other) const;
+    bool equals(const EncryptionResourceOptions& other) const;
 
     /// Return true if the value of this object is less than the value of
     /// the specified 'other' object, otherwise return false.
-    bool less(const EncryptionCertificateStorageOptions& other) const;
+    bool less(const EncryptionResourceOptions& other) const;
 
     /// Format this object to the specified output 'stream' at the
     /// optionally specified indentation 'level' and return a reference to
@@ -130,52 +128,51 @@ class EncryptionCertificateStorageOptions
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionCertificateStorageOptions);
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionResourceOptions);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
-/// @related ntca::EncryptionCertificateStorageOptions
-bsl::ostream& operator<<(bsl::ostream&                              stream,
-                         const EncryptionCertificateStorageOptions& object);
+/// @related ntca::EncryptionResourceOptions
+bsl::ostream& operator<<(bsl::ostream&                    stream,
+                         const EncryptionResourceOptions& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
-/// @related ntca::EncryptionCertificateStorageOptions
-bool operator==(const EncryptionCertificateStorageOptions& lhs,
-                const EncryptionCertificateStorageOptions& rhs);
+/// @related ntca::EncryptionResourceOptions
+bool operator==(const EncryptionResourceOptions& lhs,
+                const EncryptionResourceOptions& rhs);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
 /// have the same value, and 'false' otherwise.  Two attribute objects do
 /// not have the same value if one or more respective attributes differ in
 /// values.
 ///
-/// @related ntca::EncryptionCertificateStorageOptions
-bool operator!=(const EncryptionCertificateStorageOptions& lhs,
-                const EncryptionCertificateStorageOptions& rhs);
+/// @related ntca::EncryptionResourceOptions
+bool operator!=(const EncryptionResourceOptions& lhs,
+                const EncryptionResourceOptions& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::EncryptionCertificateStorageOptions
-bool operator<(const EncryptionCertificateStorageOptions& lhs,
-               const EncryptionCertificateStorageOptions& rhs);
+/// @related ntca::EncryptionResourceOptions
+bool operator<(const EncryptionResourceOptions& lhs,
+               const EncryptionResourceOptions& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
-/// @related ntca::EncryptionCertificateStorageOptions
+/// @related ntca::EncryptionResourceOptions
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                            algorithm,
-                const EncryptionCertificateStorageOptions& value);
+void hashAppend(HASH_ALGORITHM&                  algorithm,
+                const EncryptionResourceOptions& value);
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                            algorithm,
-                const EncryptionCertificateStorageOptions& value)
+void hashAppend(HASH_ALGORITHM&                  algorithm,
+                const EncryptionResourceOptions& value)
 {
     using bslh::hashAppend;
 

@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INCLUDED_NTCA_ENCRYPTIONKEYOPTIONS
-#define INCLUDED_NTCA_ENCRYPTIONKEYOPTIONS
+#ifndef INCLUDED_NTCA_ENCRYPTIONKEY
+#define INCLUDED_NTCA_ENCRYPTIONKEY
 
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
@@ -34,6 +34,53 @@ namespace ntca {
 
 /// Describe the parameters to an encryption key generation operation.
 ///
+/// The ASN.1 definition of an RSA private key is defined in RFC 2313:
+///
+/// RSAPrivateKey ::= SEQUENCE {
+///     version Version,
+///     modulus INTEGER,
+///     publicExponent INTEGER,
+///     privateExponent INTEGER,
+///     prime1 INTEGER,
+///     prime2 INTEGER,
+///     exponent1 INTEGER,
+///     exponent2 INTEGER,
+///     coefficient INTEGER
+/// }
+///
+/// ECPrivateKey ::= SEQUENCE {
+///     version        INTEGER { ecPrivkeyVer1(1) } (ecPrivkeyVer1),
+///     privateKey     OCTET STRING,
+///     parameters [0] ECParameters {{ NamedCurve }} OPTIONAL,
+///     publicKey  [1] BIT STRING OPTIONAL
+/// }
+///
+/// The ASN.1 definition of a PKCS8 encrypted or un-encrypted private key is
+/// defined in RFC 5208:
+///
+/// PrivateKeyInfo ::= SEQUENCE {
+///     version Version,
+///     privateKeyAlgorithm PrivateKeyAlgorithmIdentifier,
+///     privateKey PrivateKey,
+///     attributes [0] IMPLICIT Attributes OPTIONAL
+/// }
+///
+///  Version ::= INTEGER
+///  PrivateKeyAlgorithmIdentifier ::= AlgorithmIdentifier // From PKCS1 ?
+///  PrivateKey ::= OCTET STRING // choice of RSAPrivateKey or ECPrivateKey
+///
+///  EncryptedPrivateKeyInfo ::= SEQUENCE {
+///     encryptionAlgorithm EncryptionAlgorithmIdentifier,
+///     encryptedData EncryptedData
+///  }
+///
+///  EncryptionAlgorithmIdentifier ::= AlgorithmIdentifier // From PKCS5 ?
+///  EncryptedData ::= OCTET STRING // Encrypted PrivateKeyInfo
+///
+/// Questions:
+/// Symmetric encryption can be applied to either, or both, PEM and PKCS8?
+/// How is the symmetric encryption method self-described by PEM?
+///
 /// @par Attributes
 /// This class is composed of the following attributes.
 ///
@@ -41,35 +88,40 @@ namespace ntca {
 /// The type of the key. If not defined, a suitable key type of strength
 /// suggested by current cryptographic standards is chosen.
 ///
+/// @li @b bits:
+/// The number of bits in the key. Note that this field is only relevant for
+/// RSA key and should be greater than or equal to 2048; some implementations
+/// may refuse to generate RSA keys using fewer bits.
+///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
 /// @ingroup module_ntci_encryption
-class EncryptionKeyOptions
+class EncryptionKey
 {
-    bdlb::NullableValue<ntca::EncryptionKeyType::Value> d_type;
-    bdlb::NullableValue<bsl::size_t>                    d_bits;
+    ntca::EncryptionKeyType::Value d_type;
+    bsl::uint32_t                  d_flags;
 
   public:
     /// Create a new key generation configuration having the default
     /// value. Optionally specify a 'basicAllocator' used to supply memory.
     /// If 'basicAllocator' is 0, the currently installed default allocator
     /// is used.
-    explicit EncryptionKeyOptions(bslma::Allocator* basicAllocator = 0);
+    explicit EncryptionKey(bslma::Allocator* basicAllocator = 0);
 
     /// Create a new key generation configuration having the same value as
     /// the specified 'original' object. Optionally specify a 'basicAllocator'
     /// used to supply memory. If 'basicAllocator' is 0, the currently
     /// installed default allocator is used.
-    EncryptionKeyOptions(const EncryptionKeyOptions& original,
-                         bslma::Allocator*           basicAllocator = 0);
+    EncryptionKey(const EncryptionKey& original,
+                  bslma::Allocator*    basicAllocator = 0);
 
     /// Destroy this object.
-    ~EncryptionKeyOptions();
+    ~EncryptionKey();
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
-    EncryptionKeyOptions& operator=(const EncryptionKeyOptions& other);
+    EncryptionKey& operator=(const EncryptionKey& other);
 
     /// Reset the value of this object to its value upon default
     /// construction.
@@ -79,15 +131,15 @@ class EncryptionKeyOptions
     void setType(ntca::EncryptionKeyType::Value value);
 
     /// Return the key type.
-    const bdlb::NullableValue<ntca::EncryptionKeyType::Value>& type() const;
+    ntca::EncryptionKeyType::Value type() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
-    bool equals(const EncryptionKeyOptions& other) const;
+    bool equals(const EncryptionKey& other) const;
 
     /// Return true if the value of this object is less than the value of
     /// the specified 'other' object, otherwise return false.
-    bool less(const EncryptionKeyOptions& other) const;
+    bool less(const EncryptionKey& other) const;
 
     /// Format this object to the specified output 'stream' at the
     /// optionally specified indentation 'level' and return a reference to
@@ -107,49 +159,45 @@ class EncryptionKeyOptions
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionKeyOptions);
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionKey);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
-/// @related ntca::EncryptionKeyOptions
-bsl::ostream& operator<<(bsl::ostream&               stream,
-                         const EncryptionKeyOptions& object);
+/// @related ntca::EncryptionKey
+bsl::ostream& operator<<(bsl::ostream& stream, const EncryptionKey& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
-/// @related ntca::EncryptionKeyOptions
-bool operator==(const EncryptionKeyOptions& lhs,
-                const EncryptionKeyOptions& rhs);
+/// @related ntca::EncryptionKey
+bool operator==(const EncryptionKey& lhs, const EncryptionKey& rhs);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
 /// have the same value, and 'false' otherwise.  Two attribute objects do
 /// not have the same value if one or more respective attributes differ in
 /// values.
 ///
-/// @related ntca::EncryptionKeyOptions
-bool operator!=(const EncryptionKeyOptions& lhs,
-                const EncryptionKeyOptions& rhs);
+/// @related ntca::EncryptionKey
+bool operator!=(const EncryptionKey& lhs, const EncryptionKey& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::EncryptionKeyOptions
-bool operator<(const EncryptionKeyOptions& lhs,
-               const EncryptionKeyOptions& rhs);
+/// @related ntca::EncryptionKey
+bool operator<(const EncryptionKey& lhs, const EncryptionKey& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
-/// @related ntca::EncryptionKeyOptions
+/// @related ntca::EncryptionKey
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionKeyOptions& value);
+void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionKey& value);
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionKeyOptions& value)
+void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionKey& value)
 {
     using bslh::hashAppend;
 

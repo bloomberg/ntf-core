@@ -30,9 +30,9 @@ int EncryptionCertificateStorageType::fromInt(
     int                                      number)
 {
     switch (number) {
-    case EncryptionCertificateStorageType::e_PEM:
-    case EncryptionCertificateStorageType::e_DER:
-    case EncryptionCertificateStorageType::e_PKCS12:
+    case EncryptionCertificateStorageType::e_X509:
+    case EncryptionCertificateStorageType::e_X509_PEM:
+    case EncryptionCertificateStorageType::e_X509_PKCS12:
         *result = static_cast<EncryptionCertificateStorageType::Value>(number);
         return 0;
     default:
@@ -44,18 +44,18 @@ int EncryptionCertificateStorageType::fromString(
     EncryptionCertificateStorageType::Value* result,
     const bslstl::StringRef&                 string)
 {
-    if (bdlb::String::areEqualCaseless(string, "PEM")) {
-        *result = e_PEM;
+    if (bdlb::String::areEqualCaseless(string, "X509")) {
+        *result = e_X509;
         return 0;
     }
 
-    if (bdlb::String::areEqualCaseless(string, "DER")) {
-        *result = e_DER;
+    if (bdlb::String::areEqualCaseless(string, "X509_PEM")) {
+        *result = e_X509_PEM;
         return 0;
     }
 
-    if (bdlb::String::areEqualCaseless(string, "PKCS12")) {
-        *result = e_PKCS12;
+    if (bdlb::String::areEqualCaseless(string, "X509_PKCS12")) {
+        *result = e_X509_PKCS12;
         return 0;
     }
 
@@ -66,14 +66,14 @@ const char* EncryptionCertificateStorageType::toString(
     EncryptionCertificateStorageType::Value value)
 {
     switch (value) {
-    case e_PEM: {
-        return "PEM";
+    case e_X509: {
+        return "X509";
     } break;
-    case e_DER: {
-        return "DER";
+    case e_X509_PEM: {
+        return "X509_PEM";
     } break;
-    case e_PKCS12: {
-        return "PKCS12";
+    case e_X509_PKCS12: {
+        return "X509_PKCS12";
     } break;
     }
 

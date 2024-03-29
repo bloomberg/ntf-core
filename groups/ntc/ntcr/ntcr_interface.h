@@ -271,6 +271,14 @@ class Interface : public ntci::Interface,
         const bsl::shared_ptr<ntci::DataPool>&   dataPool,
         bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
 
+    /// Load into the specified 'result' a new encryption resource. Optionally
+    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
+    /// is 0, the currently installed default allocator is used. Return the
+    /// error.
+    ntsa::Error createEncryptionResource(
+        bsl::shared_ptr<ntci::EncryptionResource>* result,
+        bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
+
     /// Load into the specified 'result' a certificate generated according
     /// to the specified 'options' for the specified 'subjectIdentity' and
     /// 'subjectPrivateKey' signed by itself. Optionally specify a

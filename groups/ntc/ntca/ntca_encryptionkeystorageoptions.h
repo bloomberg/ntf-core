@@ -32,7 +32,7 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntca {
 
-/// Describe the parameters to an encryption key generation operation.
+/// Describe the parameters to an encryption key storage operation.
 ///
 /// @par Attributes
 /// This class is composed of the following attributes.
@@ -41,10 +41,10 @@ namespace ntca {
 /// The type of storage format.
 ///
 /// @li @b label:
-/// The label attached to the key.
+/// The label, or friendly name, attached to the key.
 ///
 /// @li @b passphrase:
-/// The passphrase required to use this key.
+/// The passphrase required to use this storage.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -58,16 +58,15 @@ class EncryptionKeyStorageOptions
     bdlb::NullableValue<bsl::size_t>                           d_flags;
 
   public:
-    /// Create a new key generation configuration having the default
-    /// value. Optionally specify a 'basicAllocator' used to supply memory.
-    /// If 'basicAllocator' is 0, the currently installed default allocator
-    /// is used.
+    /// Create a new key storage options having the default value. Optionally
+    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
+    /// is 0, the currently installed default allocator is used.
     explicit EncryptionKeyStorageOptions(bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new key generation configuration having the same value as
-    /// the specified 'original' object. Optionally specify a 'basicAllocator'
-    /// used to supply memory. If 'basicAllocator' is 0, the currently
-    /// installed default allocator is used.
+    /// Create a new key storage options having the same value as the specified
+    /// 'original' object. Optionally specify a 'basicAllocator' used to supply
+    /// memory. If 'basicAllocator' is 0, the currently installed default
+    /// allocator is used.
     EncryptionKeyStorageOptions(const EncryptionKeyStorageOptions& original,
                                 bslma::Allocator* basicAllocator = 0);
 
@@ -83,20 +82,20 @@ class EncryptionKeyStorageOptions
     /// construction.
     void reset();
 
-    /// Set the key type to the specified 'value'.
+    /// Set the key storage type to the specified 'value'.
     void setType(ntca::EncryptionKeyStorageType::Value value);
 
-    /// Set the label to the specified 'value'.
+    /// Set the label, or friendly name, to the specified 'value'.
     void setLabel(const bsl::string& value);
 
     /// Set the passphrase to the specified 'value'.
     void setPassphrase(const bsl::string& value);
 
-    /// Return the key type.
+    /// Return the key storage type.
     const bdlb::NullableValue<ntca::EncryptionKeyStorageType::Value>& type()
         const;
 
-    /// Return the label.
+    /// Return the label, or friendly name.
     const bdlb::NullableValue<bsl::string>& label() const;
 
     /// Return the passphrase.

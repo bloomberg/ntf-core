@@ -196,7 +196,7 @@ ntsa::Error EncryptionCertificate::encode(
 void EncryptionCertificate::print(bsl::ostream& stream) const
 {
     ntca::EncryptionCertificateStorageOptions options;
-    options.setType(ntca::EncryptionCertificateStorageType::e_PEM);
+    options.setType(ntca::EncryptionCertificateStorageType::e_X509_PEM);
     this->encode(stream.rdbuf(), options);
 }
 

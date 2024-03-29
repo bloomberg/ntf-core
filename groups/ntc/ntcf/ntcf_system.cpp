@@ -1392,6 +1392,24 @@ ntsa::Error System::createEncryptionServer(
                                                     basicAllocator);
 }
 
+ntsa::Error System::createEncryptionResource(
+    bsl::shared_ptr<ntci::EncryptionResource>* result,
+    bslma::Allocator*                          basicAllocator)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->createEncryptionResource(result, basicAllocator);
+}
+
 ntsa::Error System::createEncryptionServer(
     bsl::shared_ptr<ntci::EncryptionServer>*         result,
     const ntca::EncryptionServerOptions&             options,

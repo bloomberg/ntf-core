@@ -39,6 +39,8 @@ ntci_encryptiondriver
 ntci_encryptionkey
 ntci_encryptionkeygenerator
 ntci_encryptionkeystorage
+ntci_encryptionresource
+ntci_encryptionresourcefactory
 ntci_encryptionserver
 ntci_encryptionserverfactory
 ntci_executor

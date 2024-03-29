@@ -1040,6 +1040,21 @@ ntsa::Error Interface::createEncryptionServer(
                                                     basicAllocator);
 }
 
+ntsa::Error Interface::createEncryptionResource(
+    bsl::shared_ptr<ntci::EncryptionResource>* result,
+    bslma::Allocator*                          basicAllocator)
+{
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->createEncryptionResource(result, basicAllocator);
+}
+
 ntsa::Error Interface::generateCertificate(
     bsl::shared_ptr<ntci::EncryptionCertificate>* result,
     const ntsa::DistinguishedName&                subjectIdentity,

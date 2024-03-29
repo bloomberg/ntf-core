@@ -35,16 +35,22 @@ struct EncryptionCertificateStorageType {
   public:
     /// Enumerate the encryption certificate storage types.
     enum Value {
-        /// The certificate is stored in the Privacy Enhanced Mail (PEM)
-        /// format.
-        e_PEM = 0,
+        /// The certificate is stored as the ASN.1 encoding of an X.509
+        /// certificate structure. Files of this type of encoding usually have
+        /// a suffix of ".der".
+        e_X509,
 
-        /// The certificate is stored according to the Distinguished Encoding
-        /// Rules (DER).
-        e_DER = 1,
+        /// The certificate is stored as the ASN.1 encoding of an X.509
+        /// certificate structure, then base-64-encoded and wrapped in the
+        /// Privacy Enhanced Mail (PEM) format. Files of this type of encoding
+        /// usually have the suffix ".pem".
+        e_X509_PEM,
 
-        /// The certificate is stored in the PKCS12 format.
-        e_PKCS12 = 2
+        /// The certificate is stored as the ASN.1 encoding of an X.509
+        /// certificate structure, stored within the ASN.1 encoding of a PKCS12
+        /// (PFX) multi-purpose container structure. Files of this type of
+        /// encoding usually have the suffix ".pkcs12", ".p12", or ".pfx".
+        e_X509_PKCS12
     };
 
     /// Return the string representation exactly matching the enumerator
