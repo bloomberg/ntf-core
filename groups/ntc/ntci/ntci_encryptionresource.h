@@ -61,70 +61,78 @@ class EncryptionResource
     virtual ntsa::Error addCertificateAuthority(
         const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate);
 
-    /// Decode the key in PEM format from the specified 'source'.
+    /// Decode the resource in PEM format from the specified 'source'. Return
+    /// the error.
     virtual ntsa::Error decode(bsl::streambuf* source);
 
-    /// Decode the key according to the specified 'options' from the specified
-    /// 'source'.
+    /// Decode the resource according to the specified 'options' from the
+    /// specified 'source'. Return the error.
     virtual ntsa::Error decode(bsl::streambuf*                        source,
                                const ntca::EncryptionResourceOptions& options);
 
-    /// Decode the key in PEM format from the specified 'source'.
+    /// Decode the resource in PEM format from the specified 'source'. Return
+    /// the error.
     virtual ntsa::Error decode(const bdlbb::Blob& source);
 
-    /// Decode the key according to the specified 'options' from the specified
-    /// 'source'.
+    /// Decode the resource according to the specified 'options' from the
+    /// specified 'source'. Return the error.
     virtual ntsa::Error decode(const bdlbb::Blob&                     source,
                                const ntca::EncryptionResourceOptions& options);
 
-    /// Decode the key in PEM format from the specified 'source'.
+    /// Decode the resource in PEM format from the specified 'source'. Return
+    /// the error.
     virtual ntsa::Error decode(const bsl::string& source);
 
-    /// Decode the key according to the specified 'options' from the specified
-    /// 'source'.
+    /// Decode the resource according to the specified 'options' from the
+    /// specified 'source'. Return the error.
     virtual ntsa::Error decode(const bsl::string&                     source,
                                const ntca::EncryptionResourceOptions& options);
 
-    /// Decode the key in PEM format from the specified 'source'.
+    /// Decode the resource in PEM format from the specified 'source'. Return
+    /// the error.
     virtual ntsa::Error decode(const bsl::vector<char>& source);
 
-    /// Decode the key according to the specified 'options' from the specified
-    /// 'source'.
+    /// Decode the resource according to the specified 'options' from the
+    /// specified 'source'. Return the error.
     virtual ntsa::Error decode(const bsl::vector<char>&               source,
                                const ntca::EncryptionResourceOptions& options);
 
-    /// Encode the key in PEM format to the specified 'destination'.
+    /// Encode the resource in PEM format to the specified 'destination'.
+    /// Return the error.
     virtual ntsa::Error encode(bsl::streambuf* destination) const;
 
-    /// Encode the key according to the specified 'options' to the specified
-    /// 'destination'.
+    /// Encode the resource according to the specified 'options' to the
+    /// specified 'destination'. Return the error.
     virtual ntsa::Error encode(
         bsl::streambuf*                        destination,
         const ntca::EncryptionResourceOptions& options) const;
 
-    /// Encode the key in PEM format to the specified 'destination'.
+    /// Encode the resource in PEM format to the specified 'destination'.
+    /// Return the error.
     virtual ntsa::Error encode(bdlbb::Blob* destination) const;
 
-    /// Encode the key according to the specified 'options' to the specified
-    /// 'destination'.
+    /// Encode the resource according to the specified 'options' to the
+    /// specified 'destination'. Return the error.
     virtual ntsa::Error encode(
         bdlbb::Blob*                           destination,
         const ntca::EncryptionResourceOptions& options) const;
 
-    /// Encode the key in PEM format to the specified 'destination'.
+    /// Encode the resource in PEM format to the specified 'destination'.
+    /// Return the error.
     virtual ntsa::Error encode(bsl::string* destination) const;
 
-    /// Encode the key according to the specified 'options' to the specified
-    /// 'destination'.
+    /// Encode the resource according to the specified 'options' to the
+    /// specified 'destination'. Return the error.
     virtual ntsa::Error encode(
         bsl::string*                           destination,
         const ntca::EncryptionResourceOptions& options) const;
 
-    /// Encode the key in PEM format to the specified 'destination'.
+    /// Encode the resource in PEM format to the specified 'destination'.
+    /// Return the error.
     virtual ntsa::Error encode(bsl::vector<char>* destination) const;
 
-    /// Encode the key according to the specified 'options' to the specified
-    /// 'destination'.
+    /// Encode the resource according to the specified 'options' to the
+    /// specified 'destination'. Return the error.
     virtual ntsa::Error encode(
         bsl::vector<char>*                     destination,
         const ntca::EncryptionResourceOptions& options) const;

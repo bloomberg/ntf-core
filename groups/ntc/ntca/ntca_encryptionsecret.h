@@ -13,17 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INCLUDED_NTCA_ENCRYPTIONKEYSTORAGEOPTIONS
-#define INCLUDED_NTCA_ENCRYPTIONKEYSTORAGEOPTIONS
+#ifndef INCLUDED_NTCA_ENCRYPTIONSECRET
+#define INCLUDED_NTCA_ENCRYPTIONSECRET
 
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <ntca_encryptionkeystoragetype.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
-#include <bdlb_nullablevalue.h>
+#include <ntsa_error.h>
 #include <bslh_hash.h>
+#include <bsl_functional.h>
 #include <bsl_iosfwd.h>
 #include <bsl_memory.h>
 #include <bsl_string.h>
@@ -32,82 +32,77 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntca {
 
-/// Describe the parameters to an encryption key storage operation.
+/// Describe a secret used in symmetric encryption.
 ///
 /// @par Attributes
 /// This class is composed of the following attributes.
 ///
-/// @li @b type:
-/// The type of storage format.
-///
-/// @li @b label:
-/// The label, or friendly name, attached to the key.
-///
-/// @li @b passphrase:
-/// The passphrase required to use this storage.
+/// @li @b data:
+/// The bytes defining the secret.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
 /// @ingroup module_ntci_encryption
-class EncryptionKeyStorageOptions
+class EncryptionSecret
 {
-    bdlb::NullableValue<ntca::EncryptionKeyStorageType::Value> d_type;
-    bdlb::NullableValue<bsl::string>                           d_label;
-    bdlb::NullableValue<bsl::string>                           d_passphrase;
-    bdlb::NullableValue<bsl::size_t>                           d_flags;
+    bsl::vector<bsl::uint8_t> d_data;
 
   public:
-    /// Create a new key storage options having the default value. Optionally
+    /// Create a new encryption secret having the default value. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
-    explicit EncryptionKeyStorageOptions(bslma::Allocator* basicAllocator = 0);
+    explicit EncryptionSecret(bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new key storage options having the same value as the specified
+    /// Create a new resource secret having the same value as the specified
     /// 'original' object. Optionally specify a 'basicAllocator' used to supply
     /// memory. If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
-    EncryptionKeyStorageOptions(const EncryptionKeyStorageOptions& original,
-                                bslma::Allocator* basicAllocator = 0);
+    EncryptionSecret(const EncryptionSecret& original,
+                     bslma::Allocator*       basicAllocator = 0);
 
     /// Destroy this object.
-    ~EncryptionKeyStorageOptions();
+    ~EncryptionSecret();
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
-    EncryptionKeyStorageOptions& operator=(
-        const EncryptionKeyStorageOptions& other);
+    EncryptionSecret& operator=(const EncryptionSecret& other);
 
     /// Reset the value of this object to its value upon default
     /// construction.
     void reset();
 
-    /// Set the key storage type to the specified 'value'.
-    void setType(ntca::EncryptionKeyStorageType::Value value);
+    /// Append the specified 'value'.
+    void append(bsl::int8_t value);
 
-    /// Set the label, or friendly name, to the specified 'value'.
-    void setLabel(const bsl::string& value);
+    /// Append the specified 'value'.
+    void append(bsl::uint8_t value);
 
-    /// Set the passphrase to the specified 'value'.
-    void setPassphrase(const bsl::string& value);
+    /// Append the specified 'data' having the specified 'size'.
+    void append(const void* data, bsl::size_t size);
 
-    /// Return the key storage type.
-    const bdlb::NullableValue<ntca::EncryptionKeyStorageType::Value>& type()
-        const;
+    /// Copy the secret to the specified 'destination' having the specified
+    /// 'capacity'. Return the number of bytes copied. Note that the secret
+    /// will be truncated if 'capacity' is less than the size of the secret.
+    bsl::size_t copy(void* destination, bsl::size_t capacity) const;
 
-    /// Return the label, or friendly name.
-    const bdlb::NullableValue<bsl::string>& label() const;
+    /// Return the data.
+    const void* data() const;
 
-    /// Return the passphrase.
-    const bdlb::NullableValue<bsl::string>& passphrase() const;
+    /// Return the number of bytes in the secret.
+    bsl::size_t size() const;
+
+    /// Return true if there are not bytes defined in the secret, otherwise
+    /// return false.
+    bool empty() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
-    bool equals(const EncryptionKeyStorageOptions& other) const;
+    bool equals(const EncryptionSecret& other) const;
 
     /// Return true if the value of this object is less than the value of
     /// the specified 'other' object, otherwise return false.
-    bool less(const EncryptionKeyStorageOptions& other) const;
+    bool less(const EncryptionSecret& other) const;
 
     /// Format this object to the specified output 'stream' at the
     /// optionally specified indentation 'level' and return a reference to
@@ -127,57 +122,52 @@ class EncryptionKeyStorageOptions
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionKeyStorageOptions);
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionSecret);
 };
+
+/// Define a type alias for a function invoked to load into the specified
+/// 'result' a secret.
+typedef bsl::function<ntsa::Error(ntca::EncryptionSecret* result)>
+    EncryptionSecretCallback;
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
-/// @related ntca::EncryptionKeyStorageOptions
-bsl::ostream& operator<<(bsl::ostream&                      stream,
-                         const EncryptionKeyStorageOptions& object);
+/// @related ntca::EncryptionSecret
+bsl::ostream& operator<<(bsl::ostream& stream, const EncryptionSecret& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
-/// @related ntca::EncryptionKeyStorageOptions
-bool operator==(const EncryptionKeyStorageOptions& lhs,
-                const EncryptionKeyStorageOptions& rhs);
+/// @related ntca::EncryptionSecret
+bool operator==(const EncryptionSecret& lhs, const EncryptionSecret& rhs);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
 /// have the same value, and 'false' otherwise.  Two attribute objects do
 /// not have the same value if one or more respective attributes differ in
 /// values.
 ///
-/// @related ntca::EncryptionKeyStorageOptions
-bool operator!=(const EncryptionKeyStorageOptions& lhs,
-                const EncryptionKeyStorageOptions& rhs);
+/// @related ntca::EncryptionSecret
+bool operator!=(const EncryptionSecret& lhs, const EncryptionSecret& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::EncryptionKeyStorageOptions
-bool operator<(const EncryptionKeyStorageOptions& lhs,
-               const EncryptionKeyStorageOptions& rhs);
+/// @related ntca::EncryptionSecret
+bool operator<(const EncryptionSecret& lhs, const EncryptionSecret& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
-/// @related ntca::EncryptionKeyStorageOptions
+/// @related ntca::EncryptionSecret
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                    algorithm,
-                const EncryptionKeyStorageOptions& value);
+void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionSecret& value);
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                    algorithm,
-                const EncryptionKeyStorageOptions& value)
+void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionSecret& value)
 {
-    using bslh::hashAppend;
-
-    hashAppend(algorithm, value.type());
-    hashAppend(algorithm, value.label());
-    hashAppend(algorithm, value.passphrase());
+    algorithm(value.data(), value.size());
 }
 
 }  // close package namespace

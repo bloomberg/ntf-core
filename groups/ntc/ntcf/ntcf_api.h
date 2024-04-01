@@ -50,14 +50,13 @@ BSLS_IDENT("$Id: $")
 #include <ntca_drivermechanism.h>
 #include <ntca_encryptionauthentication.h>
 #include <ntca_encryptioncertificateoptions.h>
-#include <ntca_encryptioncertificatestorageoptions.h>
 #include <ntca_encryptioncertificatestoragetype.h>
 #include <ntca_encryptionclientoptions.h>
 #include <ntca_encryptionkeyoptions.h>
-#include <ntca_encryptionkeystorageoptions.h>
 #include <ntca_encryptionkeystoragetype.h>
 #include <ntca_encryptionkeytype.h>
 #include <ntca_encryptionmethod.h>
+#include <ntca_encryptionresourceoptions.h>
 #include <ntca_encryptionrole.h>
 #include <ntca_encryptionserveroptions.h>
 #include <ntca_errorcontext.h>

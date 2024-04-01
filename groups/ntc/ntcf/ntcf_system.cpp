@@ -1530,10 +1530,10 @@ ntsa::Error System::loadCertificate(
 }
 
 ntsa::Error System::loadCertificate(
-    bsl::shared_ptr<ntci::EncryptionCertificate>*    result,
-    const bsl::string&                               path,
-    const ntca::EncryptionCertificateStorageOptions& options,
-    bslma::Allocator*                                basicAllocator)
+    bsl::shared_ptr<ntci::EncryptionCertificate>* result,
+    const bsl::string&                            path,
+    const ntca::EncryptionResourceOptions&        options,
+    bslma::Allocator*                             basicAllocator)
 {
     ntsa::Error error;
 
@@ -1573,7 +1573,7 @@ ntsa::Error System::saveCertificate(
 ntsa::Error System::saveCertificate(
     const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
     const bsl::string&                                  path,
-    const ntca::EncryptionCertificateStorageOptions&    options)
+    const ntca::EncryptionResourceOptions&              options)
 {
     ntsa::Error error;
 
@@ -1610,7 +1610,7 @@ ntsa::Error System::encodeCertificate(
 ntsa::Error System::encodeCertificate(
     bsl::streambuf*                                     destination,
     const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
-    const ntca::EncryptionCertificateStorageOptions&    options)
+    const ntca::EncryptionResourceOptions&              options)
 {
     ntsa::Error error;
 
@@ -1649,7 +1649,7 @@ ntsa::Error System::encodeCertificate(
 ntsa::Error System::encodeCertificate(
     bdlbb::Blob*                                        destination,
     const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
-    const ntca::EncryptionCertificateStorageOptions&    options)
+    const ntca::EncryptionResourceOptions&              options)
 {
     ntsa::Error error;
 
@@ -1688,7 +1688,7 @@ ntsa::Error System::encodeCertificate(
 ntsa::Error System::encodeCertificate(
     bsl::string*                                        destination,
     const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
-    const ntca::EncryptionCertificateStorageOptions&    options)
+    const ntca::EncryptionResourceOptions&              options)
 {
     ntsa::Error error;
 
@@ -1727,7 +1727,7 @@ ntsa::Error System::encodeCertificate(
 ntsa::Error System::encodeCertificate(
     bsl::vector<char>*                                  destination,
     const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
-    const ntca::EncryptionCertificateStorageOptions&    options)
+    const ntca::EncryptionResourceOptions&              options)
 {
     ntsa::Error error;
 
@@ -1765,10 +1765,10 @@ ntsa::Error System::decodeCertificate(
 }
 
 ntsa::Error System::decodeCertificate(
-    bsl::shared_ptr<ntci::EncryptionCertificate>*    result,
-    bsl::streambuf*                                  source,
-    const ntca::EncryptionCertificateStorageOptions& options,
-    bslma::Allocator*                                basicAllocator)
+    bsl::shared_ptr<ntci::EncryptionCertificate>* result,
+    bsl::streambuf*                               source,
+    const ntca::EncryptionResourceOptions&        options,
+    bslma::Allocator*                             basicAllocator)
 {
     ntsa::Error error;
 
@@ -1807,10 +1807,10 @@ ntsa::Error System::decodeCertificate(
 }
 
 ntsa::Error System::decodeCertificate(
-    bsl::shared_ptr<ntci::EncryptionCertificate>*    result,
-    const bdlbb::Blob&                               source,
-    const ntca::EncryptionCertificateStorageOptions& options,
-    bslma::Allocator*                                basicAllocator)
+    bsl::shared_ptr<ntci::EncryptionCertificate>* result,
+    const bdlbb::Blob&                            source,
+    const ntca::EncryptionResourceOptions&        options,
+    bslma::Allocator*                             basicAllocator)
 {
     ntsa::Error error;
 
@@ -1849,10 +1849,10 @@ ntsa::Error System::decodeCertificate(
 }
 
 ntsa::Error System::decodeCertificate(
-    bsl::shared_ptr<ntci::EncryptionCertificate>*    result,
-    const bsl::string&                               source,
-    const ntca::EncryptionCertificateStorageOptions& options,
-    bslma::Allocator*                                basicAllocator)
+    bsl::shared_ptr<ntci::EncryptionCertificate>* result,
+    const bsl::string&                            source,
+    const ntca::EncryptionResourceOptions&        options,
+    bslma::Allocator*                             basicAllocator)
 {
     ntsa::Error error;
 
@@ -1891,10 +1891,10 @@ ntsa::Error System::decodeCertificate(
 }
 
 ntsa::Error System::decodeCertificate(
-    bsl::shared_ptr<ntci::EncryptionCertificate>*    result,
-    const bsl::vector<char>&                         source,
-    const ntca::EncryptionCertificateStorageOptions& options,
-    bslma::Allocator*                                basicAllocator)
+    bsl::shared_ptr<ntci::EncryptionCertificate>* result,
+    const bsl::vector<char>&                      source,
+    const ntca::EncryptionResourceOptions&        options,
+    bslma::Allocator*                             basicAllocator)
 {
     ntsa::Error error;
 
@@ -1949,9 +1949,9 @@ ntsa::Error System::loadKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
     return encryptionDriver->loadKey(result, path, basicAllocator);
 }
 
-ntsa::Error System::loadKey(bsl::shared_ptr<ntci::EncryptionKey>*    result,
-                            const bsl::string&                       path,
-                            const ntca::EncryptionKeyStorageOptions& options,
+ntsa::Error System::loadKey(bsl::shared_ptr<ntci::EncryptionKey>*  result,
+                            const bsl::string&                     path,
+                            const ntca::EncryptionResourceOptions& options,
                             bslma::Allocator* basicAllocator)
 {
     ntsa::Error error;
@@ -1989,7 +1989,7 @@ ntsa::Error System::saveKey(
 ntsa::Error System::saveKey(
     const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
     const bsl::string&                          path,
-    const ntca::EncryptionKeyStorageOptions&    options)
+    const ntca::EncryptionResourceOptions&      options)
 {
     ntsa::Error error;
 
@@ -2026,7 +2026,7 @@ ntsa::Error System::encodeKey(
 ntsa::Error System::encodeKey(
     bsl::streambuf*                             destination,
     const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
-    const ntca::EncryptionKeyStorageOptions&    options)
+    const ntca::EncryptionResourceOptions&      options)
 {
     ntsa::Error error;
 
@@ -2063,7 +2063,7 @@ ntsa::Error System::encodeKey(
 ntsa::Error System::encodeKey(
     bdlbb::Blob*                                destination,
     const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
-    const ntca::EncryptionKeyStorageOptions&    options)
+    const ntca::EncryptionResourceOptions&      options)
 {
     ntsa::Error error;
 
@@ -2100,7 +2100,7 @@ ntsa::Error System::encodeKey(
 ntsa::Error System::encodeKey(
     bsl::string*                                destination,
     const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
-    const ntca::EncryptionKeyStorageOptions&    options)
+    const ntca::EncryptionResourceOptions&      options)
 {
     ntsa::Error error;
 
@@ -2137,7 +2137,7 @@ ntsa::Error System::encodeKey(
 ntsa::Error System::encodeKey(
     bsl::vector<char>*                          destination,
     const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
-    const ntca::EncryptionKeyStorageOptions&    options)
+    const ntca::EncryptionResourceOptions&      options)
 {
     ntsa::Error error;
 
@@ -2171,9 +2171,9 @@ ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
     return encryptionDriver->decodeKey(result, source, basicAllocator);
 }
 
-ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>*    result,
-                              bsl::streambuf*                          source,
-                              const ntca::EncryptionKeyStorageOptions& options,
+ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>*  result,
+                              bsl::streambuf*                        source,
+                              const ntca::EncryptionResourceOptions& options,
                               bslma::Allocator* basicAllocator)
 {
     ntsa::Error error;
@@ -2211,9 +2211,9 @@ ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
     return encryptionDriver->decodeKey(result, source, basicAllocator);
 }
 
-ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>*    result,
-                              const bdlbb::Blob&                       source,
-                              const ntca::EncryptionKeyStorageOptions& options,
+ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>*  result,
+                              const bdlbb::Blob&                     source,
+                              const ntca::EncryptionResourceOptions& options,
                               bslma::Allocator* basicAllocator)
 {
     ntsa::Error error;
@@ -2251,9 +2251,9 @@ ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
     return encryptionDriver->decodeKey(result, source, basicAllocator);
 }
 
-ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>*    result,
-                              const bsl::string&                       source,
-                              const ntca::EncryptionKeyStorageOptions& options,
+ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>*  result,
+                              const bsl::string&                     source,
+                              const ntca::EncryptionResourceOptions& options,
                               bslma::Allocator* basicAllocator)
 {
     ntsa::Error error;
@@ -2291,9 +2291,9 @@ ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
     return encryptionDriver->decodeKey(result, source, basicAllocator);
 }
 
-ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>*    result,
-                              const bsl::vector<char>&                 source,
-                              const ntca::EncryptionKeyStorageOptions& options,
+ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>*  result,
+                              const bsl::vector<char>&               source,
+                              const ntca::EncryptionResourceOptions& options,
                               bslma::Allocator* basicAllocator)
 {
     ntsa::Error error;

@@ -30,7 +30,9 @@ EncryptionResourceOptions::EncryptionResourceOptions(
     bslma::Allocator* basicAllocator)
 : d_type()
 , d_label(basicAllocator)
-, d_passphrase(basicAllocator)
+, d_secret(basicAllocator)
+, d_secretCallback(basicAllocator)
+, d_encrypted()
 , d_flags()
 {
 }
@@ -40,7 +42,9 @@ EncryptionResourceOptions::EncryptionResourceOptions(
     bslma::Allocator*                basicAllocator)
 : d_type(original.d_type)
 , d_label(original.d_label, basicAllocator)
-, d_passphrase(original.d_passphrase, basicAllocator)
+, d_secret(original.d_secret, basicAllocator)
+, d_secretCallback(original.d_secretCallback, basicAllocator)
+, d_encrypted(original.d_encrypted)
 , d_flags(original.d_flags)
 {
 }
@@ -53,10 +57,12 @@ EncryptionResourceOptions& EncryptionResourceOptions::operator=(
     const EncryptionResourceOptions& other)
 {
     if (this != &other) {
-        d_type       = other.d_type;
-        d_label      = other.d_label;
-        d_passphrase = other.d_passphrase;
-        d_flags      = other.d_flags;
+        d_type           = other.d_type;
+        d_label          = other.d_label;
+        d_secret         = other.d_secret;
+        d_secretCallback = other.d_secretCallback;
+        d_encrypted      = other.d_encrypted;
+        d_flags          = other.d_flags;
     }
 
     return *this;
@@ -66,7 +72,9 @@ void EncryptionResourceOptions::reset()
 {
     d_type.reset();
     d_label.reset();
-    d_passphrase.reset();
+    d_secret.reset();
+    d_secretCallback.reset();
+    d_encrypted.reset();
     d_flags.reset();
 }
 
@@ -81,9 +89,20 @@ void EncryptionResourceOptions::setLabel(const bsl::string& value)
     d_label = value;
 }
 
-void EncryptionResourceOptions::setPassphrase(const bsl::string& value)
+void EncryptionResourceOptions::setSecret(const ntca::EncryptionSecret& value)
 {
-    d_passphrase = value;
+    d_secret = value;
+}
+
+void EncryptionResourceOptions::setSecretCallback(
+    const ntca::EncryptionSecretCallback& value)
+{
+    d_secretCallback = value;
+}
+
+void EncryptionResourceOptions::setEncrypted(bool value)
+{
+    d_encrypted = value;
 }
 
 const bdlb::NullableValue<ntca::EncryptionResourceType::Value>&
@@ -98,17 +117,29 @@ const bdlb::NullableValue<bsl::string>& EncryptionResourceOptions::label()
     return d_label;
 }
 
-const bdlb::NullableValue<bsl::string>& EncryptionResourceOptions::passphrase()
-    const
+const bdlb::NullableValue<ntca::EncryptionSecret>& EncryptionResourceOptions::
+    secret() const
 {
-    return d_passphrase;
+    return d_secret;
+}
+
+const bdlb::NullableValue<ntca::EncryptionSecretCallback>&
+EncryptionResourceOptions::secretCallback() const
+{
+    return d_secretCallback;
+}
+
+const bdlb::NullableValue<bool>& EncryptionResourceOptions::encrypted() const
+{
+    return d_encrypted;
 }
 
 bool EncryptionResourceOptions::equals(
     const EncryptionResourceOptions& other) const
 {
     return d_type == other.d_type && d_label == other.d_label &&
-           d_passphrase == other.d_passphrase && d_flags == other.d_flags;
+           d_secret == other.d_secret && d_encrypted == other.d_encrypted &&
+           d_flags == other.d_flags;
 }
 
 bool EncryptionResourceOptions::less(
@@ -130,11 +161,19 @@ bool EncryptionResourceOptions::less(
         return false;
     }
 
-    if (d_passphrase < other.d_passphrase) {
+    if (d_secret < other.d_secret) {
         return true;
     }
 
-    if (other.d_passphrase < d_passphrase) {
+    if (other.d_secret < d_secret) {
+        return false;
+    }
+
+    if (d_encrypted < other.d_encrypted) {
+        return true;
+    }
+
+    if (other.d_encrypted < d_encrypted) {
         return false;
     }
 
@@ -156,8 +195,12 @@ bsl::ostream& EncryptionResourceOptions::print(bsl::ostream& stream,
         printer.printAttribute("label", d_label);
     }
 
-    if (!d_passphrase.isNull()) {
-        printer.printAttribute("passphrase", d_passphrase);
+    if (!d_secret.isNull()) {
+        printer.printAttribute("secret", d_secret);
+    }
+
+    if (!d_encrypted.isNull()) {
+        printer.printAttribute("encrypted", d_encrypted);
     }
 
     printer.end();

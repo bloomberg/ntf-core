@@ -723,8 +723,8 @@ NTCCFG_TEST_CASE(1)
         ntsa::Error        error;
         ntsa::MemoryBuffer buffer(&ta);
 
-        ntca::EncryptionKeyOptions        keyOptions;
-        ntca::EncryptionKeyStorageOptions keyStorageOptions;
+        ntca::EncryptionKeyOptions      keyOptions;
+        ntca::EncryptionResourceOptions keyStorageOptions;
 
         bsl::shared_ptr<ntcd::EncryptionKey> key1;
         key1.createInplace(&ta);
@@ -764,11 +764,11 @@ NTCCFG_TEST_CASE(2)
 
         ntsa::MemoryBuffer buffer(&ta);
 
-        ntca::EncryptionKeyOptions        keyOptions;
-        ntca::EncryptionKeyStorageOptions keyStorageOptions;
+        ntca::EncryptionKeyOptions      keyOptions;
+        ntca::EncryptionResourceOptions keyStorageOptions;
 
-        ntca::EncryptionCertificateOptions        certificateOptions;
-        ntca::EncryptionCertificateStorageOptions certificateStorageOptions;
+        ntca::EncryptionCertificateOptions certificateOptions;
+        ntca::EncryptionResourceOptions    certificateStorageOptions;
 
         bsl::shared_ptr<ntcd::EncryptionKey> key1;
         key1.createInplace(&ta);

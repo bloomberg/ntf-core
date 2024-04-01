@@ -71,14 +71,14 @@ class EncryptionKey : public ntci::EncryptionKey
 
     /// Decode the key from the specified 'source' according to the specified
     /// 'options'.
-    ntsa::Error decode(bsl::streambuf*                          source,
-                       const ntca::EncryptionKeyStorageOptions& options)
+    ntsa::Error decode(bsl::streambuf*                        source,
+                       const ntca::EncryptionResourceOptions& options)
         BSLS_KEYWORD_OVERRIDE;
 
     /// Encode the key to the specified 'destination' according to the
     /// specified 'options'.
-    ntsa::Error encode(bsl::streambuf*                          destination,
-                       const ntca::EncryptionKeyStorageOptions& options) const
+    ntsa::Error encode(bsl::streambuf*                        destination,
+                       const ntca::EncryptionResourceOptions& options) const
         BSLS_KEYWORD_OVERRIDE;
 
     /// Return a handle to the private implementation.
@@ -172,15 +172,15 @@ class EncryptionCertificate : public ntci::EncryptionCertificate
 
     /// Decode the certificate from the specified 'source' according to the
     /// specified 'options'. Return the error.
-    ntsa::Error decode(bsl::streambuf* source,
-                       const ntca::EncryptionCertificateStorageOptions&
-                           options) BSLS_KEYWORD_OVERRIDE;
+    ntsa::Error decode(bsl::streambuf*                        source,
+                       const ntca::EncryptionResourceOptions& options)
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Encode the certificate to the specified 'destination' according to the
     /// specified 'options'. Return the error.
-    ntsa::Error encode(bsl::streambuf* destination,
-                       const ntca::EncryptionCertificateStorageOptions&
-                           options) const BSLS_KEYWORD_OVERRIDE;
+    ntsa::Error encode(bsl::streambuf*                        destination,
+                       const ntca::EncryptionResourceOptions& options) const
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Print the certificate to the specified stream in an unspecified but
     /// human-readable form.
@@ -788,17 +788,16 @@ class EncryptionDriver : public ntci::EncryptionDriver
     ntsa::Error encodeKey(
         bsl::streambuf*                             destination,
         const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
-        const ntca::EncryptionKeyStorageOptions&    options)
-        BSLS_KEYWORD_OVERRIDE;
+        const ntca::EncryptionResourceOptions& options) BSLS_KEYWORD_OVERRIDE;
 
     /// Load into the specified 'result' a private key decoded from the
     /// specified 'source' according to the specified 'options'. Return
     /// the error. Optionally specify a 'basicAllocator' used to supply
     /// memory.  If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
-    ntsa::Error decodeKey(bsl::shared_ptr<ntci::EncryptionKey>*    result,
-                          bsl::streambuf*                          source,
-                          const ntca::EncryptionKeyStorageOptions& options,
+    ntsa::Error decodeKey(bsl::shared_ptr<ntci::EncryptionKey>*  result,
+                          bsl::streambuf*                        source,
+                          const ntca::EncryptionResourceOptions& options,
                           bslma::Allocator* basicAllocator = 0)
         BSLS_KEYWORD_OVERRIDE;
 
@@ -835,8 +834,7 @@ class EncryptionDriver : public ntci::EncryptionDriver
     ntsa::Error encodeCertificate(
         bsl::streambuf*                                     destination,
         const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
-        const ntca::EncryptionCertificateStorageOptions&    options)
-        BSLS_KEYWORD_OVERRIDE;
+        const ntca::EncryptionResourceOptions& options) BSLS_KEYWORD_OVERRIDE;
 
     /// Load into the specified 'result' a certificate decoded from the
     /// specified 'source' according to the specified 'options'. Return
@@ -844,9 +842,9 @@ class EncryptionDriver : public ntci::EncryptionDriver
     /// memory.  If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
     ntsa::Error decodeCertificate(
-        bsl::shared_ptr<ntci::EncryptionCertificate>*    result,
-        bsl::streambuf*                                  source,
-        const ntca::EncryptionCertificateStorageOptions& options,
+        bsl::shared_ptr<ntci::EncryptionCertificate>* result,
+        bsl::streambuf*                               source,
+        const ntca::EncryptionResourceOptions&        options,
         bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
 
     /// Load into the specified 'result' a new encryption client with the

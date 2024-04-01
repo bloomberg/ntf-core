@@ -34,13 +34,13 @@ EncryptionKey::~EncryptionKey()
 
 ntsa::Error EncryptionKey::decode(bsl::streambuf* source)
 {
-    ntca::EncryptionKeyStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->decode(source, options);
 }
 
 ntsa::Error EncryptionKey::decode(
-    bsl::streambuf*                          source,
-    const ntca::EncryptionKeyStorageOptions& options)
+    bsl::streambuf*                        source,
+    const ntca::EncryptionResourceOptions& options)
 {
     NTCCFG_WARNING_UNUSED(source);
     NTCCFG_WARNING_UNUSED(options);
@@ -50,13 +50,13 @@ ntsa::Error EncryptionKey::decode(
 
 ntsa::Error EncryptionKey::decode(const bdlbb::Blob& source)
 {
-    ntca::EncryptionKeyStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->decode(source, options);
 }
 
 ntsa::Error EncryptionKey::decode(
-    const bdlbb::Blob&                       source,
-    const ntca::EncryptionKeyStorageOptions& options)
+    const bdlbb::Blob&                     source,
+    const ntca::EncryptionResourceOptions& options)
 {
     bdlbb::InBlobStreamBuf isb(&source);
     return this->decode(&isb, options);
@@ -64,13 +64,13 @@ ntsa::Error EncryptionKey::decode(
 
 ntsa::Error EncryptionKey::decode(const bsl::string& source)
 {
-    ntca::EncryptionKeyStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->decode(source, options);
 }
 
 ntsa::Error EncryptionKey::decode(
-    const bsl::string&                       source,
-    const ntca::EncryptionKeyStorageOptions& options)
+    const bsl::string&                     source,
+    const ntca::EncryptionResourceOptions& options)
 {
     if (!source.empty()) {
         bdlsb::FixedMemInStreamBuf isb(source.data(), source.size());
@@ -83,13 +83,13 @@ ntsa::Error EncryptionKey::decode(
 
 ntsa::Error EncryptionKey::decode(const bsl::vector<char>& source)
 {
-    ntca::EncryptionKeyStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->decode(source, options);
 }
 
 ntsa::Error EncryptionKey::decode(
-    const bsl::vector<char>&                 source,
-    const ntca::EncryptionKeyStorageOptions& options)
+    const bsl::vector<char>&               source,
+    const ntca::EncryptionResourceOptions& options)
 {
     if (!source.empty()) {
         bdlsb::FixedMemInStreamBuf isb(&source.front(), source.size());
@@ -102,13 +102,13 @@ ntsa::Error EncryptionKey::decode(
 
 ntsa::Error EncryptionKey::encode(bsl::streambuf* destination) const
 {
-    ntca::EncryptionKeyStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->encode(destination, options);
 }
 
 ntsa::Error EncryptionKey::encode(
-    bsl::streambuf*                          destination,
-    const ntca::EncryptionKeyStorageOptions& options) const
+    bsl::streambuf*                        destination,
+    const ntca::EncryptionResourceOptions& options) const
 {
     NTCCFG_WARNING_UNUSED(destination);
     NTCCFG_WARNING_UNUSED(options);
@@ -118,13 +118,13 @@ ntsa::Error EncryptionKey::encode(
 
 ntsa::Error EncryptionKey::encode(bdlbb::Blob* destination) const
 {
-    ntca::EncryptionKeyStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->encode(destination, options);
 }
 
 ntsa::Error EncryptionKey::encode(
-    bdlbb::Blob*                             destination,
-    const ntca::EncryptionKeyStorageOptions& options) const
+    bdlbb::Blob*                           destination,
+    const ntca::EncryptionResourceOptions& options) const
 {
     ntsa::Error error;
 
@@ -141,13 +141,13 @@ ntsa::Error EncryptionKey::encode(
 
 ntsa::Error EncryptionKey::encode(bsl::string* destination) const
 {
-    ntca::EncryptionKeyStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->encode(destination, options);
 }
 
 ntsa::Error EncryptionKey::encode(
-    bsl::string*                             destination,
-    const ntca::EncryptionKeyStorageOptions& options) const
+    bsl::string*                           destination,
+    const ntca::EncryptionResourceOptions& options) const
 {
     ntsa::Error error;
 
@@ -166,13 +166,13 @@ ntsa::Error EncryptionKey::encode(
 
 ntsa::Error EncryptionKey::encode(bsl::vector<char>* destination) const
 {
-    ntca::EncryptionKeyStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->encode(destination, options);
 }
 
 ntsa::Error EncryptionKey::encode(
-    bsl::vector<char>*                       destination,
-    const ntca::EncryptionKeyStorageOptions& options) const
+    bsl::vector<char>*                     destination,
+    const ntca::EncryptionResourceOptions& options) const
 {
     ntsa::Error error;
 

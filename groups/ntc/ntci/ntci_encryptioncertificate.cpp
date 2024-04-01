@@ -34,13 +34,13 @@ EncryptionCertificate::~EncryptionCertificate()
 
 ntsa::Error EncryptionCertificate::decode(bsl::streambuf* source)
 {
-    ntca::EncryptionCertificateStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->decode(source, options);
 }
 
 ntsa::Error EncryptionCertificate::decode(
-    bsl::streambuf*                                  source,
-    const ntca::EncryptionCertificateStorageOptions& options)
+    bsl::streambuf*                        source,
+    const ntca::EncryptionResourceOptions& options)
 {
     NTCCFG_WARNING_UNUSED(source);
     NTCCFG_WARNING_UNUSED(options);
@@ -50,13 +50,13 @@ ntsa::Error EncryptionCertificate::decode(
 
 ntsa::Error EncryptionCertificate::decode(const bdlbb::Blob& source)
 {
-    ntca::EncryptionCertificateStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->decode(source, options);
 }
 
 ntsa::Error EncryptionCertificate::decode(
-    const bdlbb::Blob&                               source,
-    const ntca::EncryptionCertificateStorageOptions& options)
+    const bdlbb::Blob&                     source,
+    const ntca::EncryptionResourceOptions& options)
 {
     bdlbb::InBlobStreamBuf isb(&source);
     return this->decode(&isb, options);
@@ -64,13 +64,13 @@ ntsa::Error EncryptionCertificate::decode(
 
 ntsa::Error EncryptionCertificate::decode(const bsl::string& source)
 {
-    ntca::EncryptionCertificateStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->decode(source, options);
 }
 
 ntsa::Error EncryptionCertificate::decode(
-    const bsl::string&                               source,
-    const ntca::EncryptionCertificateStorageOptions& options)
+    const bsl::string&                     source,
+    const ntca::EncryptionResourceOptions& options)
 {
     if (!source.empty()) {
         bdlsb::FixedMemInStreamBuf isb(source.data(), source.size());
@@ -83,13 +83,13 @@ ntsa::Error EncryptionCertificate::decode(
 
 ntsa::Error EncryptionCertificate::decode(const bsl::vector<char>& source)
 {
-    ntca::EncryptionCertificateStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->decode(source, options);
 }
 
 ntsa::Error EncryptionCertificate::decode(
-    const bsl::vector<char>&                         source,
-    const ntca::EncryptionCertificateStorageOptions& options)
+    const bsl::vector<char>&               source,
+    const ntca::EncryptionResourceOptions& options)
 {
     if (!source.empty()) {
         bdlsb::FixedMemInStreamBuf isb(&source.front(), source.size());
@@ -102,13 +102,13 @@ ntsa::Error EncryptionCertificate::decode(
 
 ntsa::Error EncryptionCertificate::encode(bsl::streambuf* destination) const
 {
-    ntca::EncryptionCertificateStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->encode(destination, options);
 }
 
 ntsa::Error EncryptionCertificate::encode(
-    bsl::streambuf*                                  destination,
-    const ntca::EncryptionCertificateStorageOptions& options) const
+    bsl::streambuf*                        destination,
+    const ntca::EncryptionResourceOptions& options) const
 {
     NTCCFG_WARNING_UNUSED(destination);
     NTCCFG_WARNING_UNUSED(options);
@@ -118,13 +118,13 @@ ntsa::Error EncryptionCertificate::encode(
 
 ntsa::Error EncryptionCertificate::encode(bdlbb::Blob* destination) const
 {
-    ntca::EncryptionCertificateStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->encode(destination, options);
 }
 
 ntsa::Error EncryptionCertificate::encode(
-    bdlbb::Blob*                                     destination,
-    const ntca::EncryptionCertificateStorageOptions& options) const
+    bdlbb::Blob*                           destination,
+    const ntca::EncryptionResourceOptions& options) const
 {
     ntsa::Error error;
 
@@ -141,13 +141,13 @@ ntsa::Error EncryptionCertificate::encode(
 
 ntsa::Error EncryptionCertificate::encode(bsl::string* destination) const
 {
-    ntca::EncryptionCertificateStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->encode(destination, options);
 }
 
 ntsa::Error EncryptionCertificate::encode(
-    bsl::string*                                     destination,
-    const ntca::EncryptionCertificateStorageOptions& options) const
+    bsl::string*                           destination,
+    const ntca::EncryptionResourceOptions& options) const
 {
     ntsa::Error error;
 
@@ -166,13 +166,13 @@ ntsa::Error EncryptionCertificate::encode(
 
 ntsa::Error EncryptionCertificate::encode(bsl::vector<char>* destination) const
 {
-    ntca::EncryptionCertificateStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->encode(destination, options);
 }
 
 ntsa::Error EncryptionCertificate::encode(
-    bsl::vector<char>*                               destination,
-    const ntca::EncryptionCertificateStorageOptions& options) const
+    bsl::vector<char>*                     destination,
+    const ntca::EncryptionResourceOptions& options) const
 {
     ntsa::Error error;
 
@@ -195,8 +195,8 @@ ntsa::Error EncryptionCertificate::encode(
 
 void EncryptionCertificate::print(bsl::ostream& stream) const
 {
-    ntca::EncryptionCertificateStorageOptions options;
-    options.setType(ntca::EncryptionCertificateStorageType::e_X509_PEM);
+    ntca::EncryptionResourceOptions options;
+    options.setType(ntca::EncryptionResourceType::e_ASN1_PEM);
     this->encode(stream.rdbuf(), options);
 }
 

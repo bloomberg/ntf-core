@@ -53,6 +53,21 @@ struct EncryptionResourceType {
         /// then any trusted certificates.
         e_ASN1_PEM,
 
+        /// The resource is stored as the ASN.1 encoding of a certificate
+        /// structure (X.509), stored within the ASN.1 encoding of a PKCS7
+        /// certificate container structure. Files of this type of encoding
+        /// usually have the suffix ".pkcs8" or ".p7". Note that this type can
+        /// multiple certificates but cannot store private keys.
+        e_PKCS7,
+
+        /// The key is stored as the ASN.1 encoding of the certificate
+        /// structure (X.509), stored within the ASN.1 encoding of a PKCS7
+        /// certificate container structure, then base-64-encoded and wrapped
+        /// in the Privacy Enhanced Mail (PEM) format. Files of this type of
+        /// encoding usually have the suffix ".pem". Note that this type can
+        /// multiple certificates but cannot store private keys.
+        e_PKCS7_PEM,
+
         /// The resource is stored as the ASN.1 encoding of a private key
         /// structure (e.g., DSA, RSA, or Elliptic Curve, depending on the type
         /// of key), stored within the ASN.1 encoding of a PKCS8 private key

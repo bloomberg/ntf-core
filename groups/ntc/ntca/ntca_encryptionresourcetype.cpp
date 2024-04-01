@@ -31,6 +31,8 @@ int EncryptionResourceType::fromInt(EncryptionResourceType::Value* result,
     switch (number) {
     case EncryptionResourceType::e_ASN1:
     case EncryptionResourceType::e_ASN1_PEM:
+    case EncryptionResourceType::e_PKCS7:
+    case EncryptionResourceType::e_PKCS7_PEM:
     case EncryptionResourceType::e_PKCS8:
     case EncryptionResourceType::e_PKCS8_PEM:
     case EncryptionResourceType::e_PKCS12:
@@ -51,6 +53,16 @@ int EncryptionResourceType::fromString(EncryptionResourceType::Value* result,
 
     if (bdlb::String::areEqualCaseless(string, "ASN1_PEM")) {
         *result = e_ASN1_PEM;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "PKCS7")) {
+        *result = e_PKCS7;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "PKCS7_PEM")) {
+        *result = e_PKCS7_PEM;
         return 0;
     }
 
@@ -81,6 +93,12 @@ const char* EncryptionResourceType::toString(
     } break;
     case e_ASN1_PEM: {
         return "ASN1_PEM";
+    } break;
+    case e_PKCS7: {
+        return "PKCS7";
+    } break;
+    case e_PKCS7_PEM: {
+        return "PKCS7_PEM";
     } break;
     case e_PKCS8: {
         return "PKCS8";

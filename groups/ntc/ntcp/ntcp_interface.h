@@ -312,9 +312,9 @@ class Interface : public ntci::Interface,
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.  Return the error.
     ntsa::Error loadCertificate(
-        bsl::shared_ptr<ntci::EncryptionCertificate>*    result,
-        const bsl::string&                               path,
-        const ntca::EncryptionCertificateStorageOptions& options,
+        bsl::shared_ptr<ntci::EncryptionCertificate>* result,
+        const bsl::string&                            path,
+        const ntca::EncryptionResourceOptions&        options,
         bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
 
     /// Save the specified 'certificate' to the specified 'path' according to
@@ -322,16 +322,14 @@ class Interface : public ntci::Interface,
     ntsa::Error saveCertificate(
         const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
         const bsl::string&                                  path,
-        const ntca::EncryptionCertificateStorageOptions&    options)
-        BSLS_KEYWORD_OVERRIDE;
+        const ntca::EncryptionResourceOptions& options) BSLS_KEYWORD_OVERRIDE;
 
     /// Encode the specified 'certificate' to the specified 'destination'
     /// according to the specified 'options'. Return the error.
     ntsa::Error encodeCertificate(
         bsl::streambuf*                                     destination,
         const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
-        const ntca::EncryptionCertificateStorageOptions&    options)
-        BSLS_KEYWORD_OVERRIDE;
+        const ntca::EncryptionResourceOptions& options) BSLS_KEYWORD_OVERRIDE;
 
     /// Load into the specified 'result' a certificate decoded from the
     /// specified 'source' according to the specified 'options'. Return
@@ -339,9 +337,9 @@ class Interface : public ntci::Interface,
     /// memory.  If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
     ntsa::Error decodeCertificate(
-        bsl::shared_ptr<ntci::EncryptionCertificate>*    result,
-        bsl::streambuf*                                  source,
-        const ntca::EncryptionCertificateStorageOptions& options,
+        bsl::shared_ptr<ntci::EncryptionCertificate>* result,
+        bsl::streambuf*                               source,
+        const ntca::EncryptionResourceOptions&        options,
         bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
 
     /// Load into the specified 'result' an RSA key generated according to
@@ -357,9 +355,9 @@ class Interface : public ntci::Interface,
     /// 'path' according to the specified 'options'. Optionally specify a
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
     /// currently installed default allocator is used.  Return the error.
-    ntsa::Error loadKey(bsl::shared_ptr<ntci::EncryptionKey>*    result,
-                        const bsl::string&                       path,
-                        const ntca::EncryptionKeyStorageOptions& options,
+    ntsa::Error loadKey(bsl::shared_ptr<ntci::EncryptionKey>*  result,
+                        const bsl::string&                     path,
+                        const ntca::EncryptionResourceOptions& options,
                         bslma::Allocator* basicAllocator = 0)
         BSLS_KEYWORD_OVERRIDE;
 
@@ -367,7 +365,7 @@ class Interface : public ntci::Interface,
     /// the specified 'options'. Return the error.
     ntsa::Error saveKey(const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
                         const bsl::string&                          path,
-                        const ntca::EncryptionKeyStorageOptions&    options)
+                        const ntca::EncryptionResourceOptions&      options)
         BSLS_KEYWORD_OVERRIDE;
 
     /// Encode the specified 'privateKey' to the specified 'destination'
@@ -375,17 +373,16 @@ class Interface : public ntci::Interface,
     ntsa::Error encodeKey(
         bsl::streambuf*                             destination,
         const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
-        const ntca::EncryptionKeyStorageOptions&    options)
-        BSLS_KEYWORD_OVERRIDE;
+        const ntca::EncryptionResourceOptions& options) BSLS_KEYWORD_OVERRIDE;
 
     /// Load into the specified 'result' a private key decoded from the
     /// specified 'source' according to the specified 'options'. Return
     /// the error. Optionally specify a 'basicAllocator' used to supply
     /// memory.  If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
-    ntsa::Error decodeKey(bsl::shared_ptr<ntci::EncryptionKey>*    result,
-                          bsl::streambuf*                          source,
-                          const ntca::EncryptionKeyStorageOptions& options,
+    ntsa::Error decodeKey(bsl::shared_ptr<ntci::EncryptionKey>*  result,
+                          bsl::streambuf*                        source,
+                          const ntca::EncryptionResourceOptions& options,
                           bslma::Allocator* basicAllocator = 0)
         BSLS_KEYWORD_OVERRIDE;
 

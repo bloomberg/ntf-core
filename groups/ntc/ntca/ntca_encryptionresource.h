@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INCLUDED_NTCA_ENCRYPTIONRESOURCEDATA
-#define INCLUDED_NTCA_ENCRYPTIONRESOURCEDATA
+#ifndef INCLUDED_NTCA_ENCRYPTIONRESOURCE
+#define INCLUDED_NTCA_ENCRYPTIONRESOURCE
 
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
@@ -53,7 +53,7 @@ namespace ntca {
 /// This class is not thread safe.
 ///
 /// @ingroup module_ntci_encryption
-class EncryptionResourceData
+class EncryptionResource
 {
     ntca::EncryptionResourceDescriptor                   d_descriptor;
     bdlb::NullableValue<ntca::EncryptionResourceOptions> d_options;
@@ -63,21 +63,21 @@ class EncryptionResourceData
     /// Optionally specify a 'basicAllocator' used to supply memory. If
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
-    explicit EncryptionResourceData(bslma::Allocator* basicAllocator = 0);
+    explicit EncryptionResource(bslma::Allocator* basicAllocator = 0);
 
     /// Create new encryption resource data having the same value as the
     /// specified 'original' object. Optionally specify a 'basicAllocator' used
     /// to supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
-    EncryptionResourceData(const EncryptionResourceData& original,
-                           bslma::Allocator*             basicAllocator = 0);
+    EncryptionResource(const EncryptionResource& original,
+                       bslma::Allocator*         basicAllocator = 0);
 
     /// Destroy this object.
-    ~EncryptionResourceData();
+    ~EncryptionResource();
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
-    EncryptionResourceData& operator=(const EncryptionResourceData& other);
+    EncryptionResource& operator=(const EncryptionResource& other);
 
     /// Reset the value of this object to its value upon default
     /// construction.
@@ -98,11 +98,11 @@ class EncryptionResourceData
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
-    bool equals(const EncryptionResourceData& other) const;
+    bool equals(const EncryptionResource& other) const;
 
     /// Return true if the value of this object is less than the value of
     /// the specified 'other' object, otherwise return false.
-    bool less(const EncryptionResourceData& other) const;
+    bool less(const EncryptionResource& other) const;
 
     /// Format this object to the specified output 'stream' at the
     /// optionally specified indentation 'level' and return a reference to
@@ -122,50 +122,49 @@ class EncryptionResourceData
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionResourceData);
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionResource);
 };
+
+/// Define a type alias for a vector of encryption resource data.
+typedef bsl::vector<ntca::EncryptionResource> EncryptionResourceVector;
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
-/// @related ntca::EncryptionResourceData
-bsl::ostream& operator<<(bsl::ostream&                 stream,
-                         const EncryptionResourceData& object);
+/// @related ntca::EncryptionResource
+bsl::ostream& operator<<(bsl::ostream&             stream,
+                         const EncryptionResource& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
-/// @related ntca::EncryptionResourceData
-bool operator==(const EncryptionResourceData& lhs,
-                const EncryptionResourceData& rhs);
+/// @related ntca::EncryptionResource
+bool operator==(const EncryptionResource& lhs, const EncryptionResource& rhs);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
 /// have the same value, and 'false' otherwise.  Two attribute objects do
 /// not have the same value if one or more respective attributes differ in
 /// values.
 ///
-/// @related ntca::EncryptionResourceData
-bool operator!=(const EncryptionResourceData& lhs,
-                const EncryptionResourceData& rhs);
+/// @related ntca::EncryptionResource
+bool operator!=(const EncryptionResource& lhs, const EncryptionResource& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::EncryptionResourceData
-bool operator<(const EncryptionResourceData& lhs,
-               const EncryptionResourceData& rhs);
+/// @related ntca::EncryptionResource
+bool operator<(const EncryptionResource& lhs, const EncryptionResource& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
-/// @related ntca::EncryptionResourceData
+/// @related ntca::EncryptionResource
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&               algorithm,
-                const EncryptionResourceData& value);
+void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionResource& value);
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionResourceData& value)
+void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionResource& value)
 {
     using bslh::hashAppend;
 

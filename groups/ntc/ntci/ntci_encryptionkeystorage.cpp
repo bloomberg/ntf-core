@@ -37,15 +37,15 @@ ntsa::Error EncryptionKeyStorage::loadKey(
     const bsl::string&                    path,
     bslma::Allocator*                     basicAllocator)
 {
-    ntca::EncryptionKeyStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->loadKey(result, path, options, basicAllocator);
 }
 
 ntsa::Error EncryptionKeyStorage::loadKey(
-    bsl::shared_ptr<ntci::EncryptionKey>*    result,
-    const bsl::string&                       path,
-    const ntca::EncryptionKeyStorageOptions& options,
-    bslma::Allocator*                        basicAllocator)
+    bsl::shared_ptr<ntci::EncryptionKey>*  result,
+    const bsl::string&                     path,
+    const ntca::EncryptionResourceOptions& options,
+    bslma::Allocator*                      basicAllocator)
 {
     bsl::fstream fs(path.c_str(), bsl::ios_base::in);
     if (!fs) {
@@ -59,14 +59,14 @@ ntsa::Error EncryptionKeyStorage::saveKey(
     const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
     const bsl::string&                          path)
 {
-    ntca::EncryptionKeyStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->saveKey(privateKey, path, options);
 }
 
 ntsa::Error EncryptionKeyStorage::saveKey(
     const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
     const bsl::string&                          path,
-    const ntca::EncryptionKeyStorageOptions&    options)
+    const ntca::EncryptionResourceOptions&      options)
 {
     bsl::fstream fs(path.c_str(), bsl::ios_base::out);
     if (!fs) {
@@ -80,14 +80,14 @@ ntsa::Error EncryptionKeyStorage::encodeKey(
     bsl::streambuf*                             destination,
     const bsl::shared_ptr<ntci::EncryptionKey>& privateKey)
 {
-    ntca::EncryptionKeyStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->encodeKey(destination, privateKey, options);
 }
 
 ntsa::Error EncryptionKeyStorage::encodeKey(
     bsl::streambuf*                             destination,
     const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
-    const ntca::EncryptionKeyStorageOptions&    options)
+    const ntca::EncryptionResourceOptions&      options)
 {
     NTCCFG_WARNING_UNUSED(destination);
     NTCCFG_WARNING_UNUSED(privateKey);
@@ -100,14 +100,14 @@ ntsa::Error EncryptionKeyStorage::encodeKey(
     bdlbb::Blob*                                destination,
     const bsl::shared_ptr<ntci::EncryptionKey>& privateKey)
 {
-    ntca::EncryptionKeyStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->encodeKey(destination, privateKey, options);
 }
 
 ntsa::Error EncryptionKeyStorage::encodeKey(
     bdlbb::Blob*                                destination,
     const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
-    const ntca::EncryptionKeyStorageOptions&    options)
+    const ntca::EncryptionResourceOptions&      options)
 {
     ntsa::Error error;
 
@@ -126,14 +126,14 @@ ntsa::Error EncryptionKeyStorage::encodeKey(
     bsl::string*                                destination,
     const bsl::shared_ptr<ntci::EncryptionKey>& privateKey)
 {
-    ntca::EncryptionKeyStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->encodeKey(destination, privateKey, options);
 }
 
 ntsa::Error EncryptionKeyStorage::encodeKey(
     bsl::string*                                destination,
     const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
-    const ntca::EncryptionKeyStorageOptions&    options)
+    const ntca::EncryptionResourceOptions&      options)
 {
     ntsa::Error error;
 
@@ -154,14 +154,14 @@ ntsa::Error EncryptionKeyStorage::encodeKey(
     bsl::vector<char>*                          destination,
     const bsl::shared_ptr<ntci::EncryptionKey>& privateKey)
 {
-    ntca::EncryptionKeyStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->encodeKey(destination, privateKey, options);
 }
 
 ntsa::Error EncryptionKeyStorage::encodeKey(
     bsl::vector<char>*                          destination,
     const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
-    const ntca::EncryptionKeyStorageOptions&    options)
+    const ntca::EncryptionResourceOptions&      options)
 {
     ntsa::Error error;
 
@@ -187,15 +187,15 @@ ntsa::Error EncryptionKeyStorage::decodeKey(
     bsl::streambuf*                       source,
     bslma::Allocator*                     basicAllocator)
 {
-    ntca::EncryptionKeyStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->decodeKey(result, source, options, basicAllocator);
 }
 
 ntsa::Error EncryptionKeyStorage::decodeKey(
-    bsl::shared_ptr<ntci::EncryptionKey>*    result,
-    bsl::streambuf*                          source,
-    const ntca::EncryptionKeyStorageOptions& options,
-    bslma::Allocator*                        basicAllocator)
+    bsl::shared_ptr<ntci::EncryptionKey>*  result,
+    bsl::streambuf*                        source,
+    const ntca::EncryptionResourceOptions& options,
+    bslma::Allocator*                      basicAllocator)
 {
     NTCCFG_WARNING_UNUSED(result);
     NTCCFG_WARNING_UNUSED(source);
@@ -210,15 +210,15 @@ ntsa::Error EncryptionKeyStorage::decodeKey(
     const bdlbb::Blob&                    source,
     bslma::Allocator*                     basicAllocator)
 {
-    ntca::EncryptionKeyStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->decodeKey(result, source, options, basicAllocator);
 }
 
 ntsa::Error EncryptionKeyStorage::decodeKey(
-    bsl::shared_ptr<ntci::EncryptionKey>*    result,
-    const bdlbb::Blob&                       source,
-    const ntca::EncryptionKeyStorageOptions& options,
-    bslma::Allocator*                        basicAllocator)
+    bsl::shared_ptr<ntci::EncryptionKey>*  result,
+    const bdlbb::Blob&                     source,
+    const ntca::EncryptionResourceOptions& options,
+    bslma::Allocator*                      basicAllocator)
 {
     bdlbb::InBlobStreamBuf isb(&source);
     return this->decodeKey(result, &isb, options, basicAllocator);
@@ -229,15 +229,15 @@ ntsa::Error EncryptionKeyStorage::decodeKey(
     const bsl::string&                    source,
     bslma::Allocator*                     basicAllocator)
 {
-    ntca::EncryptionKeyStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->decodeKey(result, source, options, basicAllocator);
 }
 
 ntsa::Error EncryptionKeyStorage::decodeKey(
-    bsl::shared_ptr<ntci::EncryptionKey>*    result,
-    const bsl::string&                       source,
-    const ntca::EncryptionKeyStorageOptions& options,
-    bslma::Allocator*                        basicAllocator)
+    bsl::shared_ptr<ntci::EncryptionKey>*  result,
+    const bsl::string&                     source,
+    const ntca::EncryptionResourceOptions& options,
+    bslma::Allocator*                      basicAllocator)
 {
     bdlsb::FixedMemInStreamBuf isb(source.data(), source.size());
     return this->decodeKey(result, &isb, options, basicAllocator);
@@ -248,15 +248,15 @@ ntsa::Error EncryptionKeyStorage::decodeKey(
     const bsl::vector<char>&              source,
     bslma::Allocator*                     basicAllocator)
 {
-    ntca::EncryptionKeyStorageOptions options;
+    ntca::EncryptionResourceOptions options;
     return this->decodeKey(result, source, options, basicAllocator);
 }
 
 ntsa::Error EncryptionKeyStorage::decodeKey(
-    bsl::shared_ptr<ntci::EncryptionKey>*    result,
-    const bsl::vector<char>&                 source,
-    const ntca::EncryptionKeyStorageOptions& options,
-    bslma::Allocator*                        basicAllocator)
+    bsl::shared_ptr<ntci::EncryptionKey>*  result,
+    const bsl::vector<char>&               source,
+    const ntca::EncryptionResourceOptions& options,
+    bslma::Allocator*                      basicAllocator)
 {
     bdlsb::FixedMemInStreamBuf isb(&source.front(), source.size());
     return this->decodeKey(result, &isb, options, basicAllocator);

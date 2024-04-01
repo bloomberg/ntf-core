@@ -19,7 +19,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <ntca_encryptionkeystorageoptions.h>
+#include <ntca_encryptionresourceoptions.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 #include <ntsa_error.h>
@@ -48,36 +48,32 @@ class EncryptionKey
 
     /// Decode the key according to the specified 'options' from the specified
     /// 'source'.
-    virtual ntsa::Error decode(
-        bsl::streambuf*                          source,
-        const ntca::EncryptionKeyStorageOptions& options);
+    virtual ntsa::Error decode(bsl::streambuf*                        source,
+                               const ntca::EncryptionResourceOptions& options);
 
     /// Decode the key in PEM format from the specified 'source'.
     virtual ntsa::Error decode(const bdlbb::Blob& source);
 
     /// Decode the key according to the specified 'options' from the specified
     /// 'source'.
-    virtual ntsa::Error decode(
-        const bdlbb::Blob&                       source,
-        const ntca::EncryptionKeyStorageOptions& options);
+    virtual ntsa::Error decode(const bdlbb::Blob&                     source,
+                               const ntca::EncryptionResourceOptions& options);
 
     /// Decode the key in PEM format from the specified 'source'.
     virtual ntsa::Error decode(const bsl::string& source);
 
     /// Decode the key according to the specified 'options' from the specified
     /// 'source'.
-    virtual ntsa::Error decode(
-        const bsl::string&                       source,
-        const ntca::EncryptionKeyStorageOptions& options);
+    virtual ntsa::Error decode(const bsl::string&                     source,
+                               const ntca::EncryptionResourceOptions& options);
 
     /// Decode the key in PEM format from the specified 'source'.
     virtual ntsa::Error decode(const bsl::vector<char>& source);
 
     /// Decode the key according to the specified 'options' from the specified
     /// 'source'.
-    virtual ntsa::Error decode(
-        const bsl::vector<char>&                 source,
-        const ntca::EncryptionKeyStorageOptions& options);
+    virtual ntsa::Error decode(const bsl::vector<char>&               source,
+                               const ntca::EncryptionResourceOptions& options);
 
     /// Encode the key in PEM format to the specified 'destination'.
     virtual ntsa::Error encode(bsl::streambuf* destination) const;
@@ -85,8 +81,8 @@ class EncryptionKey
     /// Encode the key according to the specified 'options' to the specified
     /// 'destination'.
     virtual ntsa::Error encode(
-        bsl::streambuf*                          destination,
-        const ntca::EncryptionKeyStorageOptions& options) const;
+        bsl::streambuf*                        destination,
+        const ntca::EncryptionResourceOptions& options) const;
 
     /// Encode the key in PEM format to the specified 'destination'.
     virtual ntsa::Error encode(bdlbb::Blob* destination) const;
@@ -94,8 +90,8 @@ class EncryptionKey
     /// Encode the key according to the specified 'options' to the specified
     /// 'destination'.
     virtual ntsa::Error encode(
-        bdlbb::Blob*                             destination,
-        const ntca::EncryptionKeyStorageOptions& options) const;
+        bdlbb::Blob*                           destination,
+        const ntca::EncryptionResourceOptions& options) const;
 
     /// Encode the key in PEM format to the specified 'destination'.
     virtual ntsa::Error encode(bsl::string* destination) const;
@@ -103,8 +99,8 @@ class EncryptionKey
     /// Encode the key according to the specified 'options' to the specified
     /// 'destination'.
     virtual ntsa::Error encode(
-        bsl::string*                             destination,
-        const ntca::EncryptionKeyStorageOptions& options) const;
+        bsl::string*                           destination,
+        const ntca::EncryptionResourceOptions& options) const;
 
     /// Encode the key in PEM format to the specified 'destination'.
     virtual ntsa::Error encode(bsl::vector<char>* destination) const;
@@ -112,8 +108,8 @@ class EncryptionKey
     /// Encode the key according to the specified 'options' to the specified
     /// 'destination'.
     virtual ntsa::Error encode(
-        bsl::vector<char>*                       destination,
-        const ntca::EncryptionKeyStorageOptions& options) const;
+        bsl::vector<char>*                     destination,
+        const ntca::EncryptionResourceOptions& options) const;
 
     /// Return a handle to the private implementation.
     virtual void* handle() const;

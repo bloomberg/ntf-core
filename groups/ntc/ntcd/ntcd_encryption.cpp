@@ -166,8 +166,8 @@ ntsa::Error EncryptionKey::generate(const ntca::EncryptionKeyOptions& options)
 }
 
 ntsa::Error EncryptionKey::decode(
-    bsl::streambuf*                          source,
-    const ntca::EncryptionKeyStorageOptions& options)
+    bsl::streambuf*                        source,
+    const ntca::EncryptionResourceOptions& options)
 {
     NTCCFG_WARNING_UNUSED(options);
 
@@ -186,8 +186,8 @@ ntsa::Error EncryptionKey::decode(
 }
 
 ntsa::Error EncryptionKey::encode(
-    bsl::streambuf*                          destination,
-    const ntca::EncryptionKeyStorageOptions& options) const
+    bsl::streambuf*                        destination,
+    const ntca::EncryptionResourceOptions& options) const
 {
     NTCCFG_WARNING_UNUSED(options);
 
@@ -302,13 +302,13 @@ ntsa::Error EncryptionCertificate::generate(
 }
 
 ntsa::Error EncryptionCertificate::decode(
-    bsl::streambuf*                                  source,
-    const ntca::EncryptionCertificateStorageOptions& options)
+    bsl::streambuf*                        source,
+    const ntca::EncryptionResourceOptions& options)
 {
     NTCCFG_WARNING_UNUSED(options);
 
-    ntsa::Error                       error;
-    ntca::EncryptionKeyStorageOptions keyStorageOptions;
+    ntsa::Error                     error;
+    ntca::EncryptionResourceOptions keyStorageOptions;
 
     error = decodeDistinguishedName(&d_subject, source);
     if (error) {
@@ -336,15 +336,15 @@ ntsa::Error EncryptionCertificate::decode(
 }
 
 ntsa::Error EncryptionCertificate::encode(
-    bsl::streambuf*                                  destination,
-    const ntca::EncryptionCertificateStorageOptions& options) const
+    bsl::streambuf*                        destination,
+    const ntca::EncryptionResourceOptions& options) const
 {
     NTCCFG_WARNING_UNUSED(options);
 
     int rc;
 
-    ntsa::Error                       error;
-    ntca::EncryptionKeyStorageOptions keyStorageOptions;
+    ntsa::Error                     error;
+    ntca::EncryptionResourceOptions keyStorageOptions;
 
     error = encodeDistinguishedName(destination, d_subject);
     if (error) {
@@ -696,7 +696,7 @@ ntsa::Error EncryptionHandshake::decode(bsl::streambuf* source)
         }
     }
 
-    ntca::EncryptionCertificateStorageOptions certificateStorageOptions;
+    ntca::EncryptionResourceOptions certificateStorageOptions;
 
     d_certificate_sp.createInplace(d_allocator_p, d_allocator_p);
     error = d_certificate_sp->decode(source, certificateStorageOptions);
@@ -727,7 +727,7 @@ ntsa::Error EncryptionHandshake::encode(bsl::streambuf* destination) const
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    ntca::EncryptionCertificateStorageOptions certificateStorageOptions;
+    ntca::EncryptionResourceOptions certificateStorageOptions;
 
     error = d_certificate_sp->encode(destination, certificateStorageOptions);
     if (error) {
@@ -1838,16 +1838,16 @@ ntsa::Error EncryptionDriver::generateKey(
 ntsa::Error EncryptionDriver::encodeKey(
     bsl::streambuf*                             destination,
     const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
-    const ntca::EncryptionKeyStorageOptions&    options)
+    const ntca::EncryptionResourceOptions&      options)
 {
     return privateKey->encode(destination, options);
 }
 
 ntsa::Error EncryptionDriver::decodeKey(
-    bsl::shared_ptr<ntci::EncryptionKey>*    result,
-    bsl::streambuf*                          source,
-    const ntca::EncryptionKeyStorageOptions& options,
-    bslma::Allocator*                        basicAllocator)
+    bsl::shared_ptr<ntci::EncryptionKey>*  result,
+    bsl::streambuf*                        source,
+    const ntca::EncryptionResourceOptions& options,
+    bslma::Allocator*                      basicAllocator)
 {
     ntsa::Error error;
 
@@ -1953,16 +1953,16 @@ ntsa::Error EncryptionDriver::generateCertificate(
 ntsa::Error EncryptionDriver::encodeCertificate(
     bsl::streambuf*                                     destination,
     const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
-    const ntca::EncryptionCertificateStorageOptions&    options)
+    const ntca::EncryptionResourceOptions&              options)
 {
     return certificate->encode(destination, options);
 }
 
 ntsa::Error EncryptionDriver::decodeCertificate(
-    bsl::shared_ptr<ntci::EncryptionCertificate>*    result,
-    bsl::streambuf*                                  source,
-    const ntca::EncryptionCertificateStorageOptions& options,
-    bslma::Allocator*                                basicAllocator)
+    bsl::shared_ptr<ntci::EncryptionCertificate>* result,
+    bsl::streambuf*                               source,
+    const ntca::EncryptionResourceOptions&        options,
+    bslma::Allocator*                             basicAllocator)
 {
     ntsa::Error error;
 

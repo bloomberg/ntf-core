@@ -1112,10 +1112,10 @@ ntsa::Error Interface::generateCertificate(
 }
 
 ntsa::Error Interface::loadCertificate(
-    bsl::shared_ptr<ntci::EncryptionCertificate>*    result,
-    const bsl::string&                               path,
-    const ntca::EncryptionCertificateStorageOptions& options,
-    bslma::Allocator*                                basicAllocator)
+    bsl::shared_ptr<ntci::EncryptionCertificate>* result,
+    const bsl::string&                            path,
+    const ntca::EncryptionResourceOptions&        options,
+    bslma::Allocator*                             basicAllocator)
 {
     ntsa::Error error;
 
@@ -1134,7 +1134,7 @@ ntsa::Error Interface::loadCertificate(
 ntsa::Error Interface::saveCertificate(
     const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
     const bsl::string&                                  path,
-    const ntca::EncryptionCertificateStorageOptions&    options)
+    const ntca::EncryptionResourceOptions&              options)
 {
     ntsa::Error error;
 
@@ -1150,7 +1150,7 @@ ntsa::Error Interface::saveCertificate(
 ntsa::Error Interface::encodeCertificate(
     bsl::streambuf*                                     destination,
     const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
-    const ntca::EncryptionCertificateStorageOptions&    options)
+    const ntca::EncryptionResourceOptions&              options)
 {
     ntsa::Error error;
 
@@ -1166,10 +1166,10 @@ ntsa::Error Interface::encodeCertificate(
 }
 
 ntsa::Error Interface::decodeCertificate(
-    bsl::shared_ptr<ntci::EncryptionCertificate>*    result,
-    bsl::streambuf*                                  source,
-    const ntca::EncryptionCertificateStorageOptions& options,
-    bslma::Allocator*                                basicAllocator)
+    bsl::shared_ptr<ntci::EncryptionCertificate>* result,
+    bsl::streambuf*                               source,
+    const ntca::EncryptionResourceOptions&        options,
+    bslma::Allocator*                             basicAllocator)
 {
     ntsa::Error error;
 
@@ -1205,11 +1205,10 @@ ntsa::Error Interface::generateKey(
     return encryptionDriver->generateKey(result, options, basicAllocator);
 }
 
-ntsa::Error Interface::loadKey(
-    bsl::shared_ptr<ntci::EncryptionKey>*    result,
-    const bsl::string&                       path,
-    const ntca::EncryptionKeyStorageOptions& options,
-    bslma::Allocator*                        basicAllocator)
+ntsa::Error Interface::loadKey(bsl::shared_ptr<ntci::EncryptionKey>*  result,
+                               const bsl::string&                     path,
+                               const ntca::EncryptionResourceOptions& options,
+                               bslma::Allocator* basicAllocator)
 {
     ntsa::Error error;
 
@@ -1225,7 +1224,7 @@ ntsa::Error Interface::loadKey(
 ntsa::Error Interface::saveKey(
     const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
     const bsl::string&                          path,
-    const ntca::EncryptionKeyStorageOptions&    options)
+    const ntca::EncryptionResourceOptions&      options)
 {
     ntsa::Error error;
 
@@ -1241,7 +1240,7 @@ ntsa::Error Interface::saveKey(
 ntsa::Error Interface::encodeKey(
     bsl::streambuf*                             destination,
     const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
-    const ntca::EncryptionKeyStorageOptions&    options)
+    const ntca::EncryptionResourceOptions&      options)
 {
     ntsa::Error error;
 
@@ -1255,10 +1254,10 @@ ntsa::Error Interface::encodeKey(
 }
 
 ntsa::Error Interface::decodeKey(
-    bsl::shared_ptr<ntci::EncryptionKey>*    result,
-    bsl::streambuf*                          source,
-    const ntca::EncryptionKeyStorageOptions& options,
-    bslma::Allocator*                        basicAllocator)
+    bsl::shared_ptr<ntci::EncryptionKey>*  result,
+    bsl::streambuf*                        source,
+    const ntca::EncryptionResourceOptions& options,
+    bslma::Allocator*                      basicAllocator)
 {
     ntsa::Error error;
 

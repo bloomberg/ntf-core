@@ -19,7 +19,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <ntca_encryptionkeystorageoptions.h>
+#include <ntca_encryptionresourceoptions.h>
 #include <ntccfg_platform.h>
 #include <ntci_encryptionkey.h>
 #include <ntcscm_version.h>
@@ -57,11 +57,10 @@ class EncryptionKeyStorage
     /// 'path' according to the specified 'options'. Optionally specify a
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
     /// currently installed default allocator is used.  Return the error.
-    virtual ntsa::Error loadKey(
-        bsl::shared_ptr<ntci::EncryptionKey>*    result,
-        const bsl::string&                       path,
-        const ntca::EncryptionKeyStorageOptions& options,
-        bslma::Allocator*                        basicAllocator = 0);
+    virtual ntsa::Error loadKey(bsl::shared_ptr<ntci::EncryptionKey>*  result,
+                                const bsl::string&                     path,
+                                const ntca::EncryptionResourceOptions& options,
+                                bslma::Allocator* basicAllocator = 0);
 
     /// Save the specified 'privateKey' to the specified 'path' in the Privacy
     /// Enhanced Mail (PEM) format. Return the error.
@@ -74,7 +73,7 @@ class EncryptionKeyStorage
     virtual ntsa::Error saveKey(
         const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
         const bsl::string&                          path,
-        const ntca::EncryptionKeyStorageOptions&    options);
+        const ntca::EncryptionResourceOptions&      options);
 
     /// Encode the specified 'privateKey' to the specified 'destination' in the
     /// Privacy Enhanced Mail (PEM) format. Return the error.
@@ -87,7 +86,7 @@ class EncryptionKeyStorage
     virtual ntsa::Error encodeKey(
         bsl::streambuf*                             destination,
         const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
-        const ntca::EncryptionKeyStorageOptions&    options);
+        const ntca::EncryptionResourceOptions&      options);
 
     /// Encode the specified 'privateKey' to the specified 'destination' in the
     /// Privacy Enhanced Mail (PEM) format. Return the error.
@@ -100,7 +99,7 @@ class EncryptionKeyStorage
     virtual ntsa::Error encodeKey(
         bdlbb::Blob*                                destination,
         const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
-        const ntca::EncryptionKeyStorageOptions&    options);
+        const ntca::EncryptionResourceOptions&      options);
 
     /// Encode the specified 'privateKey' to the specified 'destination' in the
     /// Privacy Enhanced Mail (PEM) format. Return the error.
@@ -113,7 +112,7 @@ class EncryptionKeyStorage
     virtual ntsa::Error encodeKey(
         bsl::string*                                destination,
         const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
-        const ntca::EncryptionKeyStorageOptions&    options);
+        const ntca::EncryptionResourceOptions&      options);
 
     /// Encode the specified 'privateKey' to the specified 'destination' in the
     /// Privacy Enhanced Mail (PEM) format. Return the error.
@@ -126,7 +125,7 @@ class EncryptionKeyStorage
     virtual ntsa::Error encodeKey(
         bsl::vector<char>*                          destination,
         const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
-        const ntca::EncryptionKeyStorageOptions&    options);
+        const ntca::EncryptionResourceOptions&      options);
 
     /// Load into the specified 'result' a private key decoded from the
     /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
@@ -143,10 +142,10 @@ class EncryptionKeyStorage
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
     virtual ntsa::Error decodeKey(
-        bsl::shared_ptr<ntci::EncryptionKey>*    result,
-        bsl::streambuf*                          source,
-        const ntca::EncryptionKeyStorageOptions& options,
-        bslma::Allocator*                        basicAllocator = 0);
+        bsl::shared_ptr<ntci::EncryptionKey>*  result,
+        bsl::streambuf*                        source,
+        const ntca::EncryptionResourceOptions& options,
+        bslma::Allocator*                      basicAllocator = 0);
 
     /// Load into the specified 'result' a private key decoded from the
     /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
@@ -163,10 +162,10 @@ class EncryptionKeyStorage
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
     virtual ntsa::Error decodeKey(
-        bsl::shared_ptr<ntci::EncryptionKey>*    result,
-        const bdlbb::Blob&                       source,
-        const ntca::EncryptionKeyStorageOptions& options,
-        bslma::Allocator*                        basicAllocator = 0);
+        bsl::shared_ptr<ntci::EncryptionKey>*  result,
+        const bdlbb::Blob&                     source,
+        const ntca::EncryptionResourceOptions& options,
+        bslma::Allocator*                      basicAllocator = 0);
 
     /// Load into the specified 'result' a private key decoded from the
     /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
@@ -183,10 +182,10 @@ class EncryptionKeyStorage
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
     virtual ntsa::Error decodeKey(
-        bsl::shared_ptr<ntci::EncryptionKey>*    result,
-        const bsl::string&                       source,
-        const ntca::EncryptionKeyStorageOptions& options,
-        bslma::Allocator*                        basicAllocator = 0);
+        bsl::shared_ptr<ntci::EncryptionKey>*  result,
+        const bsl::string&                     source,
+        const ntca::EncryptionResourceOptions& options,
+        bslma::Allocator*                      basicAllocator = 0);
 
     /// Load into the specified 'result' a private key decoded from the
     /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
@@ -203,10 +202,10 @@ class EncryptionKeyStorage
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
     virtual ntsa::Error decodeKey(
-        bsl::shared_ptr<ntci::EncryptionKey>*    result,
-        const bsl::vector<char>&                 source,
-        const ntca::EncryptionKeyStorageOptions& options,
-        bslma::Allocator*                        basicAllocator = 0);
+        bsl::shared_ptr<ntci::EncryptionKey>*  result,
+        const bsl::vector<char>&               source,
+        const ntca::EncryptionResourceOptions& options,
+        bslma::Allocator*                      basicAllocator = 0);
 };
 
 }  // end namespace ntci

@@ -20,10 +20,12 @@
 BSLS_IDENT("$Id: $")
 
 #include <ntca_encryptionresourcetype.h>
+#include <ntca_encryptionsecret.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 #include <bdlb_nullablevalue.h>
 #include <bslh_hash.h>
+#include <bsl_functional.h>
 #include <bsl_iosfwd.h>
 #include <bsl_memory.h>
 #include <bsl_string.h>
@@ -38,13 +40,26 @@ namespace ntca {
 /// This class is composed of the following attributes.
 ///
 /// @li @b type:
-/// The type of resource storage format.
+/// The type of resource storage format. If undefined, when the resource is
+/// encoded it is encoded as one or more ASN.1 encodings of a private key
+/// structure (e.g., DSA, RSA, or Elliptic Curve, depending on the type of
+/// key), or certificate structure (X.509), then base-64-encoded and wrapped in
+/// the Privacy Enhanced Mail (PEM) format; when the resource is decoded the
+/// format of the resource is auto-detected.
 ///
 /// @li @b label:
 /// The label, or friendly name, attached to the resource.
 ///
-/// @li @b passphrase:
-/// The passphrase required to use the resource storage.
+/// @li @b secret:
+/// The shared secret required to use the resource storage.
+///
+/// @li @b secretCallback
+/// The function to invoke to resolve the shared secret required to use the
+/// resource storage.
+///
+/// @li @b encrypted:
+/// The resource is, or should be, symmetrically encrypted using the the shared
+/// secret explicitly defined or resolved through the secret callback.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -54,7 +69,9 @@ class EncryptionResourceOptions
 {
     bdlb::NullableValue<ntca::EncryptionResourceType::Value> d_type;
     bdlb::NullableValue<bsl::string>                         d_label;
-    bdlb::NullableValue<bsl::string>                         d_passphrase;
+    bdlb::NullableValue<ntca::EncryptionSecret>              d_secret;
+    bdlb::NullableValue<ntca::EncryptionSecretCallback>      d_secretCallback;
+    bdlb::NullableValue<bool>                                d_encrypted;
     bdlb::NullableValue<bsl::size_t>                         d_flags;
 
   public:
@@ -89,8 +106,15 @@ class EncryptionResourceOptions
     /// Set the label, or friendly name, to the specified 'value'.
     void setLabel(const bsl::string& value);
 
-    /// Set the passphrase to the specified 'value'.
-    void setPassphrase(const bsl::string& value);
+    /// Set the secret to the specified 'value'.
+    void setSecret(const ntca::EncryptionSecret& value);
+
+    /// Set the secret callback to the specified 'value'.
+    void setSecretCallback(const ntca::EncryptionSecretCallback& value);
+
+    /// Set the flag that indicates the resource is, or should be,
+    /// symmetrically-encrypted to the specified 'value'.
+    void setEncrypted(bool value);
 
     /// Return the resource type.
     const bdlb::NullableValue<ntca::EncryptionResourceType::Value>& type()
@@ -99,8 +123,16 @@ class EncryptionResourceOptions
     /// Return the label, or friendly name.
     const bdlb::NullableValue<bsl::string>& label() const;
 
-    /// Return the passphrase.
-    const bdlb::NullableValue<bsl::string>& passphrase() const;
+    /// Return the secret.
+    const bdlb::NullableValue<ntca::EncryptionSecret>& secret() const;
+
+    /// Return the secret callback.
+    const bdlb::NullableValue<ntca::EncryptionSecretCallback>& secretCallback()
+        const;
+
+    /// Return the flag that indicates the resource is, or should be,
+    /// symmetrically-encrypted.
+    const bdlb::NullableValue<bool>& encrypted() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -178,7 +210,8 @@ void hashAppend(HASH_ALGORITHM&                  algorithm,
 
     hashAppend(algorithm, value.type());
     hashAppend(algorithm, value.label());
-    hashAppend(algorithm, value.passphrase());
+    hashAppend(algorithm, value.secret());
+    hashAppend(algorithm, value.encrypted());
 }
 
 }  // close package namespace

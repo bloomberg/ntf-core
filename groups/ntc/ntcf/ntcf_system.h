@@ -655,10 +655,10 @@ struct System {
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
     /// currently installed default allocator is used.  Return the error.
     static ntsa::Error loadCertificate(
-        bsl::shared_ptr<ntci::EncryptionCertificate>*    result,
-        const bsl::string&                               path,
-        const ntca::EncryptionCertificateStorageOptions& options,
-        bslma::Allocator*                                basicAllocator = 0);
+        bsl::shared_ptr<ntci::EncryptionCertificate>* result,
+        const bsl::string&                            path,
+        const ntca::EncryptionResourceOptions&        options,
+        bslma::Allocator*                             basicAllocator = 0);
 
     /// Save the specified 'certificate' to the specified 'path' in the Privacy
     /// Enhanced Mail (PEM) format. Return the error.
@@ -671,7 +671,7 @@ struct System {
     static ntsa::Error saveCertificate(
         const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
         const bsl::string&                                  path,
-        const ntca::EncryptionCertificateStorageOptions&    options);
+        const ntca::EncryptionResourceOptions&              options);
 
     /// Encode the specified 'certificate' to the specified 'destination'
     /// in the Privacy Enhanced Mail (PEM) format. Return the error.
@@ -684,7 +684,7 @@ struct System {
     static ntsa::Error encodeCertificate(
         bsl::streambuf*                                     destination,
         const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
-        const ntca::EncryptionCertificateStorageOptions&    options);
+        const ntca::EncryptionResourceOptions&              options);
 
     /// Encode the specified 'certificate' to the specified 'destination'
     /// in the Privacy Enhanced Mail (PEM) format. Return the error.
@@ -697,7 +697,7 @@ struct System {
     static ntsa::Error encodeCertificate(
         bdlbb::Blob*                                        destination,
         const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
-        const ntca::EncryptionCertificateStorageOptions&    options);
+        const ntca::EncryptionResourceOptions&              options);
 
     /// Encode the specified 'certificate' to the specified 'destination'
     /// in the Privacy Enhanced Mail (PEM) format. Return the error.
@@ -710,7 +710,7 @@ struct System {
     static ntsa::Error encodeCertificate(
         bsl::string*                                        destination,
         const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
-        const ntca::EncryptionCertificateStorageOptions&    options);
+        const ntca::EncryptionResourceOptions&              options);
 
     /// Encode the specified 'certificate' to the specified 'destination'
     /// in the Privacy Enhanced Mail (PEM) format. Return the error.
@@ -723,7 +723,7 @@ struct System {
     static ntsa::Error encodeCertificate(
         bsl::vector<char>*                                  destination,
         const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
-        const ntca::EncryptionCertificateStorageOptions&    options);
+        const ntca::EncryptionResourceOptions&              options);
 
     /// Load into the specified 'result' a certificate decoded from the
     /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
@@ -741,10 +741,10 @@ struct System {
     /// memory.  If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
     static ntsa::Error decodeCertificate(
-        bsl::shared_ptr<ntci::EncryptionCertificate>*    result,
-        bsl::streambuf*                                  source,
-        const ntca::EncryptionCertificateStorageOptions& options,
-        bslma::Allocator*                                basicAllocator = 0);
+        bsl::shared_ptr<ntci::EncryptionCertificate>* result,
+        bsl::streambuf*                               source,
+        const ntca::EncryptionResourceOptions&        options,
+        bslma::Allocator*                             basicAllocator = 0);
 
     /// Load into the specified 'result' a certificate decoded from the
     /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
@@ -762,10 +762,10 @@ struct System {
     /// memory.  If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
     static ntsa::Error decodeCertificate(
-        bsl::shared_ptr<ntci::EncryptionCertificate>*    result,
-        const bdlbb::Blob&                               source,
-        const ntca::EncryptionCertificateStorageOptions& options,
-        bslma::Allocator*                                basicAllocator = 0);
+        bsl::shared_ptr<ntci::EncryptionCertificate>* result,
+        const bdlbb::Blob&                            source,
+        const ntca::EncryptionResourceOptions&        options,
+        bslma::Allocator*                             basicAllocator = 0);
 
     /// Load into the specified 'result' a certificate decoded from the
     /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
@@ -783,10 +783,10 @@ struct System {
     /// memory.  If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
     static ntsa::Error decodeCertificate(
-        bsl::shared_ptr<ntci::EncryptionCertificate>*    result,
-        const bsl::string&                               source,
-        const ntca::EncryptionCertificateStorageOptions& options,
-        bslma::Allocator*                                basicAllocator = 0);
+        bsl::shared_ptr<ntci::EncryptionCertificate>* result,
+        const bsl::string&                            source,
+        const ntca::EncryptionResourceOptions&        options,
+        bslma::Allocator*                             basicAllocator = 0);
 
     /// Load into the specified 'result' a certificate decoded from the
     /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
@@ -804,10 +804,10 @@ struct System {
     /// memory.  If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
     static ntsa::Error decodeCertificate(
-        bsl::shared_ptr<ntci::EncryptionCertificate>*    result,
-        const bsl::vector<char>&                         source,
-        const ntca::EncryptionCertificateStorageOptions& options,
-        bslma::Allocator*                                basicAllocator = 0);
+        bsl::shared_ptr<ntci::EncryptionCertificate>* result,
+        const bsl::vector<char>&                      source,
+        const ntca::EncryptionResourceOptions&        options,
+        bslma::Allocator*                             basicAllocator = 0);
 
     /// Load into the specified 'result' an RSA key generated according to
     /// the specified 'options'. Optionally specify a 'basicAllocator' used
@@ -830,11 +830,10 @@ struct System {
     /// 'path' according to the specified 'options'. Optionally specify a
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
     /// currently installed default allocator is used.  Return the error.
-    static ntsa::Error loadKey(
-        bsl::shared_ptr<ntci::EncryptionKey>*    result,
-        const bsl::string&                       path,
-        const ntca::EncryptionKeyStorageOptions& options,
-        bslma::Allocator*                        basicAllocator = 0);
+    static ntsa::Error loadKey(bsl::shared_ptr<ntci::EncryptionKey>*  result,
+                               const bsl::string&                     path,
+                               const ntca::EncryptionResourceOptions& options,
+                               bslma::Allocator* basicAllocator = 0);
 
     /// Save the specified 'privateKey' to the specified 'path' in the Privacy
     /// Enhanced Mail (PEM) format. Return the error.
@@ -847,7 +846,7 @@ struct System {
     static ntsa::Error saveKey(
         const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
         const bsl::string&                          path,
-        const ntca::EncryptionKeyStorageOptions&    options);
+        const ntca::EncryptionResourceOptions&      options);
 
     /// Encode the specified 'privateKey' to the specified 'destination' in the
     /// Privacy Enhanced Mail (PEM) format. Return the error.
@@ -860,7 +859,7 @@ struct System {
     static ntsa::Error encodeKey(
         bsl::streambuf*                             destination,
         const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
-        const ntca::EncryptionKeyStorageOptions&    options);
+        const ntca::EncryptionResourceOptions&      options);
 
     /// Encode the specified 'privateKey' to the specified 'destination' in the
     /// Privacy Enhanced Mail (PEM) format. Return the error.
@@ -873,7 +872,7 @@ struct System {
     static ntsa::Error encodeKey(
         bdlbb::Blob*                                destination,
         const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
-        const ntca::EncryptionKeyStorageOptions&    options);
+        const ntca::EncryptionResourceOptions&      options);
 
     /// Encode the specified 'privateKey' to the specified 'destination' in the
     /// Privacy Enhanced Mail (PEM) format. Return the error.
@@ -886,7 +885,7 @@ struct System {
     static ntsa::Error encodeKey(
         bsl::string*                                destination,
         const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
-        const ntca::EncryptionKeyStorageOptions&    options);
+        const ntca::EncryptionResourceOptions&      options);
 
     /// Encode the specified 'privateKey' to the specified 'destination' in the
     /// Privacy Enhanced Mail (PEM) format. Return the error.
@@ -899,7 +898,7 @@ struct System {
     static ntsa::Error encodeKey(
         bsl::vector<char>*                          destination,
         const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
-        const ntca::EncryptionKeyStorageOptions&    options);
+        const ntca::EncryptionResourceOptions&      options);
 
     /// Load into the specified 'result' a private key decoded from the
     /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
@@ -916,10 +915,10 @@ struct System {
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
     static ntsa::Error decodeKey(
-        bsl::shared_ptr<ntci::EncryptionKey>*    result,
-        bsl::streambuf*                          source,
-        const ntca::EncryptionKeyStorageOptions& options,
-        bslma::Allocator*                        basicAllocator = 0);
+        bsl::shared_ptr<ntci::EncryptionKey>*  result,
+        bsl::streambuf*                        source,
+        const ntca::EncryptionResourceOptions& options,
+        bslma::Allocator*                      basicAllocator = 0);
 
     /// Load into the specified 'result' a private key decoded from the
     /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
@@ -936,10 +935,10 @@ struct System {
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
     static ntsa::Error decodeKey(
-        bsl::shared_ptr<ntci::EncryptionKey>*    result,
-        const bdlbb::Blob&                       source,
-        const ntca::EncryptionKeyStorageOptions& options,
-        bslma::Allocator*                        basicAllocator = 0);
+        bsl::shared_ptr<ntci::EncryptionKey>*  result,
+        const bdlbb::Blob&                     source,
+        const ntca::EncryptionResourceOptions& options,
+        bslma::Allocator*                      basicAllocator = 0);
 
     /// Load into the specified 'result' a private key decoded from the
     /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
@@ -956,10 +955,10 @@ struct System {
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
     static ntsa::Error decodeKey(
-        bsl::shared_ptr<ntci::EncryptionKey>*    result,
-        const bsl::string&                       source,
-        const ntca::EncryptionKeyStorageOptions& options,
-        bslma::Allocator*                        basicAllocator = 0);
+        bsl::shared_ptr<ntci::EncryptionKey>*  result,
+        const bsl::string&                     source,
+        const ntca::EncryptionResourceOptions& options,
+        bslma::Allocator*                      basicAllocator = 0);
 
     /// Load into the specified 'result' a private key decoded from the
     /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
@@ -976,10 +975,10 @@ struct System {
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
     static ntsa::Error decodeKey(
-        bsl::shared_ptr<ntci::EncryptionKey>*    result,
-        const bsl::vector<char>&                 source,
-        const ntca::EncryptionKeyStorageOptions& options,
-        bslma::Allocator*                        basicAllocator = 0);
+        bsl::shared_ptr<ntci::EncryptionKey>*  result,
+        const bsl::vector<char>&               source,
+        const ntca::EncryptionResourceOptions& options,
+        bslma::Allocator*                      basicAllocator = 0);
 
     /// Set the default monitorable object registry to an object with the
     /// specified 'configuration' and enable the registration of monitorable

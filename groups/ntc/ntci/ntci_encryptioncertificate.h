@@ -19,7 +19,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <ntca_encryptioncertificatestorageoptions.h>
+#include <ntca_encryptionresourceoptions.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 #include <ntsa_distinguishedname.h>
@@ -54,36 +54,32 @@ class EncryptionCertificate
 
     /// Decode the certificate according to the specified 'options' from the
     /// specified 'source'.
-    virtual ntsa::Error decode(
-        bsl::streambuf*                                  source,
-        const ntca::EncryptionCertificateStorageOptions& options);
+    virtual ntsa::Error decode(bsl::streambuf*                        source,
+                               const ntca::EncryptionResourceOptions& options);
 
     /// Decode the certificate in PEM format from the specified 'source'.
     virtual ntsa::Error decode(const bdlbb::Blob& source);
 
     /// Decode the certificate according to the specified 'options' from the
     /// specified 'source'.
-    virtual ntsa::Error decode(
-        const bdlbb::Blob&                               source,
-        const ntca::EncryptionCertificateStorageOptions& options);
+    virtual ntsa::Error decode(const bdlbb::Blob&                     source,
+                               const ntca::EncryptionResourceOptions& options);
 
     /// Decode the certificate in PEM format from the specified 'source'.
     virtual ntsa::Error decode(const bsl::string& source);
 
     /// Decode the certificate according to the specified 'options' from the
     /// specified 'source'.
-    virtual ntsa::Error decode(
-        const bsl::string&                               source,
-        const ntca::EncryptionCertificateStorageOptions& options);
+    virtual ntsa::Error decode(const bsl::string&                     source,
+                               const ntca::EncryptionResourceOptions& options);
 
     /// Decode the certificate in PEM format from the specified 'source'.
     virtual ntsa::Error decode(const bsl::vector<char>& source);
 
     /// Decode the certificate according to the specified 'options' from the
     /// specified 'source'.
-    virtual ntsa::Error decode(
-        const bsl::vector<char>&                         source,
-        const ntca::EncryptionCertificateStorageOptions& options);
+    virtual ntsa::Error decode(const bsl::vector<char>&               source,
+                               const ntca::EncryptionResourceOptions& options);
 
     /// Encode the certificate in PEM format to the specified 'destination'.
     virtual ntsa::Error encode(bsl::streambuf* destination) const;
@@ -91,8 +87,8 @@ class EncryptionCertificate
     /// Encode the certificate according to the specified 'options' to the
     /// specified 'destination'.
     virtual ntsa::Error encode(
-        bsl::streambuf*                                  destination,
-        const ntca::EncryptionCertificateStorageOptions& options) const;
+        bsl::streambuf*                        destination,
+        const ntca::EncryptionResourceOptions& options) const;
 
     /// Encode the certificate in PEM format to the specified 'destination'.
     virtual ntsa::Error encode(bdlbb::Blob* destination) const;
@@ -100,8 +96,8 @@ class EncryptionCertificate
     /// Encode the certificate according to the specified 'options' to the
     /// specified 'destination'.
     virtual ntsa::Error encode(
-        bdlbb::Blob*                                     destination,
-        const ntca::EncryptionCertificateStorageOptions& options) const;
+        bdlbb::Blob*                           destination,
+        const ntca::EncryptionResourceOptions& options) const;
 
     /// Encode the certificate in PEM format to the specified 'destination'.
     virtual ntsa::Error encode(bsl::string* destination) const;
@@ -109,8 +105,8 @@ class EncryptionCertificate
     /// Encode the certificate according to the specified 'options' to the
     /// specified 'destination'.
     virtual ntsa::Error encode(
-        bsl::string*                                     destination,
-        const ntca::EncryptionCertificateStorageOptions& options) const;
+        bsl::string*                           destination,
+        const ntca::EncryptionResourceOptions& options) const;
 
     /// Encode the certificate in PEM format to the specified 'destination'.
     virtual ntsa::Error encode(bsl::vector<char>* destination) const;
@@ -118,8 +114,8 @@ class EncryptionCertificate
     /// Encode the certificate according to the specified 'options' to the
     /// specified 'destination'.
     virtual ntsa::Error encode(
-        bsl::vector<char>*                               destination,
-        const ntca::EncryptionCertificateStorageOptions& options) const;
+        bsl::vector<char>*                     destination,
+        const ntca::EncryptionResourceOptions& options) const;
 
     /// Return the subject of the certificate.
     virtual const ntsa::DistinguishedName& subject() const = 0;
