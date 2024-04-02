@@ -473,6 +473,15 @@ class DatagramSocket : public ntsi::Channel
     /// socket send buffer according to the specified 'options'. Load into
     /// the specified 'context' the result of the operation. Return the
     /// error.
+    virtual ntsa::Error send(ntsa::SendContext*       context,
+                             const ntsa::ConstBuffer *data,
+                             bsl::size_t              size,
+                             const ntsa::SendOptions& options);
+
+    /// Enqueue the specified 'data' having the specified 'size' to the
+    /// socket send buffer according to the specified 'options'. Load into
+    /// the specified 'context' the result of the operation. Return the
+    /// error.
     ntsa::Error send(ntsa::SendContext*       context,
                      const void*              data,
                      bsl::size_t              size,

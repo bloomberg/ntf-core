@@ -108,6 +108,14 @@ ntsa::Error StreamSocket::send(ntsa::SendContext*       context,
     return ntsu::SocketUtil::send(context, data, options, d_handle);
 }
 
+ntsa::Error StreamSocket::send(ntsa::SendContext*       context,
+                               const ntsa::ConstBuffer *data,
+                               bsl::size_t              size,
+                               const ntsa::SendOptions& options)
+{
+    return ntsu::SocketUtil::send(context, data, size, options, d_handle);
+}
+
 ntsa::Error StreamSocket::receive(ntsa::ReceiveContext*       context,
                                   bdlbb::Blob*                data,
                                   const ntsa::ReceiveOptions& options)
