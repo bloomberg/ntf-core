@@ -1677,6 +1677,7 @@ void wegweg()
         MyMock m;
         NTF_EXPECT_1(m, f3, NTF_EQ(2)).SAVE_ARG_1(TO(&to));
         // NTF_EXPECT_1(m, f3, NTF_EQ(2)).SAVE_ARG_1(TO(to)); //SHALL FAIL
+        NTF_EXPECT_1(m, f3, NTF_EQ(2)).SET_ARG_1(FROM(5)); //TODO: SHALL FAIL
     }
 
     {  // void 1 arg int*
@@ -1689,6 +1690,11 @@ void wegweg()
         NTF_EXPECT_1(m, f4, NTF_EQ_DEREF(k)).SAVE_ARG_1(TO(&to));
         NTF_EXPECT_1(m, f4, NTF_EQ_DEREF(k)).SAVE_ARG_1(TO_DEREF(to));
         // NTF_EXPECT_1(m, f4, NTF_EQ_DEREF(k)).SAVE_ARG_1(TO(to)); //SHALL FAIL
+
+        // NTF_EXPECT_1(m, f4, NTF_EQ(&k)).SET_ARG_1(FROM(5)); //SHALL FAIL
+        NTF_EXPECT_1(m, f4, NTF_EQ(&k)).SET_ARG_1(FROM_DEREF(5));
+
+        NTF_EXPECT_1(m, f4, NTF_EQ(&k)).SET_ARG_1(FROM(to)); // TODO: SHALL FAIL as  it is useless
     }
 
     {  // void 1 arg int const *
@@ -1701,6 +1707,13 @@ void wegweg()
         int const* to_const = 0;
         NTF_EXPECT_1(m, f5, NTF_EQ_DEREF(k)).SAVE_ARG_1(TO(&to_const));
         NTF_EXPECT_1(m, f5, NTF_EQ_DEREF(k)).SAVE_ARG_1(TO_DEREF(to));
+
+
+        // NTF_EXPECT_1(m, f5, NTF_EQ(&k)).SET_ARG_1(FROM(5));// SHALL FAIL
+        // NTF_EXPECT_1(m, f5, NTF_EQ(&k)).SET_ARG_1(FROM_DEREF(5)); //SHALL_FAIL
+
+        const int *tmp;
+        NTF_EXPECT_1(m, f5, NTF_EQ(&k)).SET_ARG_1(FROM(tmp)); //TODO: SHALL also fail as it is useless
     }
 
     {  // void 1 arg int &
@@ -1712,6 +1725,9 @@ void wegweg()
 
         NTF_EXPECT_1(m, f6, NTF_EQ(k)).SAVE_ARG_1(TO(to));
         // NTF_EXPECT_1(m, f6, NTF_EQ(k)).SAVE_ARG_1(TO_DEREF(to)); // SHALL FAIL
+
+        NTF_EXPECT_1(m, f6, NTF_EQ(k)).SET_ARG_1(FROM(5));
+        // NTF_EXPECT_1(m, f6, NTF_EQ(k)).SET_ARG_1(FROM_DEREF(to)); // SHALL FAIL
     }
 
     {  // void 1 arg int const &
@@ -1722,6 +1738,12 @@ void wegweg()
         // NTF_EXPECT_1(m, f7, NTF_EQ_DEREF(k)); //SHALL FAIL
         NTF_EXPECT_1(m, f7, NTF_EQ(k)).SAVE_ARG_1(TO(to));
         // NTF_EXPECT_1(m, f7, NTF_EQ(k)).SAVE_ARG_1(TO_DEREF(&to)); // SHALL FAIL
+
+
+        NTF_EXPECT_1(m, f7, NTF_EQ(k)).SET_ARG_1(FROM(5)); // TODO: SHALL FAIL
+
+        int &k_r = k;
+        NTF_EXPECT_1(m, f7, NTF_EQ(k)).SET_ARG_1(FROM(k_r)); // TODO: SHALL FAIL
     }
 }
 

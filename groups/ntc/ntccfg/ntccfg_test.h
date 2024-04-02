@@ -1305,19 +1305,69 @@ struct ProcessInterface {
     }
 };
 
+template <class OUT, class IN>
+struct DerefSetter {
+    static void set(OUT out, const IN& in)
+    {
+        *out = in;
+    }
+};
+
+template <class OUT, class IN>
+struct DefaultSetter {
+    static void set(OUT out, const IN& in)
+    {
+        out = in;
+    }
+};
+
+template <class IN, template <class, class> class SET_POLICY>
+struct Setter {
+    template <class ARG>
+    void process(ARG arg)
+    {
+        SET_POLICY<ARG, IN>::set(arg, d_in);
+    }
+
+    explicit Setter(const IN& in)
+    : d_in(in)
+    {
+    }
+
+    const IN& d_in;
+};
+
+template <template <class, class> class SET_POLICY, class IN>
+Setter<IN, SET_POLICY> createSetter(const IN& val)
+{
+    Setter<IN, SET_POLICY> setter(val);
+    return setter;
+}
+
+template <class ARG, class SETTER>
+struct SetterHolder : ProcessInterface<ARG> {
+    explicit SetterHolder(const SETTER& setter)
+    : d_setter(setter)
+    {
+    }
+
+    void process(const ARG& arg) override
+    {
+        d_setter.process(arg);
+    }
+
+    SETTER d_setter;
+};
+
 template <class FROM, class TO>
 struct DerefPolicy {
     static void extract(const FROM& from, TO* to)
     {
         *to = *from;
     }
-    // static void extract(const FROM* from, TO* to)
-    // {
-    //     *to = *from;
-    // }
 };
 
-template <class TO, class FROM>
+template <class FROM, class TO>
 struct NoDerefPolicy {
     static void extract(const FROM& from, TO* to)
     {
@@ -1332,11 +1382,6 @@ struct Extractor {
     {
         EXTRACT_POLICY<ARG, TO>::extract(arg, d_to);
     }
-    // template <class ARG>
-    // void process(const ARG* arg)
-    // {
-    //     EXTRACT_POLICY<ARG, TO>::extract(arg, d_to);
-    // }
 
     explicit Extractor(TO* to)
     : d_to(to)
@@ -1483,6 +1528,10 @@ struct InvocationData {
     bsl::shared_ptr<ProcessInterface<ARG1> > arg1Extractor;
     bsl::shared_ptr<ProcessInterface<ARG2> > arg2Extractor;
     bsl::shared_ptr<ProcessInterface<ARG3> > arg3Extractor;
+
+    bsl::shared_ptr<ProcessInterface<ARG1> > arg1Setter;
+    bsl::shared_ptr<ProcessInterface<ARG2> > arg2Setter;
+    bsl::shared_ptr<ProcessInterface<ARG3> > arg3Setter;
 };
 
 template <class RESULT>
@@ -1568,6 +1617,19 @@ struct Invocation1
         return *this;
     }
 
+    template <class ARG_SETTER>
+    Invocation1& setArg1(const ARG_SETTER& setter)
+    {
+        InvocationDataT& data = getInvocationDataBack();
+
+        bsl::shared_ptr<SetterHolder<ARG1, ARG_SETTER> > setterInterface(
+            new SetterHolder<ARG1, ARG_SETTER>(setter));
+
+        data.arg1Setter = setterInterface;
+
+        return *this;
+    }
+
     InvocationDataT& getInvocationDataBack()
     {
         NTCCFG_TEST_FALSE(d_invocations.empty());
@@ -1645,16 +1707,9 @@ struct Invocation2 {
 #define NTF_MOCK_METHOD_CONST_NEW(...)                                        \
     NTF_VA_SELECT(NTF_MOCK_METHOD_CONST_NEW, __VA_ARGS__)
 
-template <class T>
-struct TypeToType {
-    typedef T type;
-};
-
 #define NTF_EQ(ARG) NewMock::createEqMatcher<NewMock::DirectComparator>(ARG)
 #define NTF_EQ_DEREF(ARG)                                                     \
     NewMock::createEqMatcher<NewMock::DerefComparator>(ARG)
-
-#define NTF_TO(ARG) NewMock
 
 #define NTF_EXPECT_0(MOCK_OBJECT, METHOD) MOCK_OBJECT.expect_##METHOD()
 #define NTF_EXPECT_1(MOCK_OBJECT, METHOD, ...)                                \
@@ -1667,3 +1722,9 @@ struct TypeToType {
 #define TO_DEREF(ARG) NewMock::createExtractor<NewMock::DerefPolicy>(ARG)
 
 #define SAVE_ARG_1(...) saveArg1(__VA_ARGS__)
+
+#define FROM(ARG) NewMock::createSetter<NewMock::DefaultSetter>(ARG)
+
+#define FROM_DEREF(ARG) NewMock::createSetter<NewMock::DerefSetter>(ARG)
+
+#define SET_ARG_1(...) setArg1(__VA_ARGS__)
