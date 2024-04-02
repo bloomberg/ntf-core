@@ -1373,7 +1373,7 @@ void variation(const test::Parameters& parameters)
 namespace mock {
 
 #define UNEXPECTED_CALL(unused) NTCCFG_TEST_TRUE(false && "unexpected call")
-
+#if 0
 class ResolverMock : public ntci::Resolver
 {
   public:
@@ -1584,18 +1584,150 @@ class BufferFactoryMock : public bdlbb::BlobBufferFactory
   public:
     NTF_MOCK_METHOD(void, allocate, bdlbb::BlobBuffer*)
 };
+#endif
 
-// struct MyClass
-// {
-//     virtual void doSmth(const int&) = 0;
-// };
-//
-// class MyClassMock : public MyClass
-// {
-// public:
-//     NTF_MOCK_METHOD_1(void, doSmth, const int&);
-// };
+struct MyClass {
+    virtual void doSmth(int){};
+    virtual void doSmth2(int*){};
+    virtual void doSmth3(int&){};
+    virtual void doSmth4(const int){};
+    virtual void doSmth5(const int*){};
+    virtual void doSmth6(const int&){};
+};
 
+class MyClassMock : public MyClass
+{
+  public:
+    NTF_MOCK_METHOD(void, doSmth, int);
+    NTF_MOCK_METHOD(void, doSmth2, int*);
+    NTF_MOCK_METHOD(void, doSmth3, int&);
+    NTF_MOCK_METHOD(void, doSmth4, const int);
+    NTF_MOCK_METHOD(void, doSmth5, const int*);
+    NTF_MOCK_METHOD(void, doSmth6, const int&);
+};
+
+void func()
+{
+    int  k   = 5;
+    int* k_p = &k;
+
+    int  tmp1   = 0;
+    int* tmp1_p = &tmp1;
+
+    int& k_r = k;
+
+    const int* k_cp = &k;
+
+    MyClassMock m;
+
+    {
+        m.expect_doSmth(5).willOnce().saveArg1(&tmp1);
+    }
+
+    {
+        m.expect_doSmth2(k_p).willOnce().setArg1To(6).saveArg1(&tmp1_p);
+    }
+
+    {
+        m.expect_doSmth3(k_r).willOnce().setArg1To(6).saveArg1(tmp1_p);
+    }
+
+    {
+        m.expect_doSmth4(55).willOnce().saveArg1(&tmp1);
+    }
+
+    {
+        // m.expect_doSmth5(k_p).willOnce().saveArg1(&k_cp);
+        // m.expect_doSmth5(k_cp).willOnce();
+    }
+}
+
+namespace {
+
+struct My {
+    virtual void f()            = 0;
+    virtual int  f2()           = 0;
+    virtual void f3(int)        = 0;
+    virtual void f4(int*)       = 0;
+    virtual void f5(const int*) = 0;
+    virtual void f6(int&)       = 0;
+    virtual void f7(int const&) = 0;
+};
+
+struct MyMock : public My {
+    NTF_MOCK_METHOD_NEW_0(void, f)
+    NTF_MOCK_METHOD_NEW_0(int, f2)
+    NTF_MOCK_METHOD_NEW_1(void, f3, int)
+    NTF_MOCK_METHOD_NEW_1(void, f4, int*)
+    NTF_MOCK_METHOD_NEW_1(void, f5, const int*)
+    NTF_MOCK_METHOD_NEW_1(void, f6, int&)
+    NTF_MOCK_METHOD_NEW_1(void, f7, const int&)
+};
+
+void wegweg()
+{
+    {  // void 0 args
+        MyMock m;
+        NTF_EXPECT_0(m, f).ONCE();
+        NTF_EXPECT_0(m, f2).ONCE().RETURN(5);
+    }
+    {
+        // void 1 arg int
+        int    to;
+        MyMock m;
+        NTF_EXPECT_1(m, f3, NTF_EQ(2)).SAVE_ARG_1(TO(&to));
+        // NTF_EXPECT_1(m, f3, NTF_EQ(2)).SAVE_ARG_1(TO(to)); //SHALL FAIL
+    }
+
+    {  // void 1 arg int*
+        int    k  = 0;
+        int*   to = 0;
+        MyMock m;
+        NTF_EXPECT_1(m, f4, NTF_EQ(&k));
+        NTF_EXPECT_1(m, f4, NTF_EQ_DEREF(k));
+
+        NTF_EXPECT_1(m, f4, NTF_EQ_DEREF(k)).SAVE_ARG_1(TO(&to));
+        NTF_EXPECT_1(m, f4, NTF_EQ_DEREF(k)).SAVE_ARG_1(TO_DEREF(to));
+        // NTF_EXPECT_1(m, f4, NTF_EQ_DEREF(k)).SAVE_ARG_1(TO(to)); //SHALL FAIL
+    }
+
+    {  // void 1 arg int const *
+        int    k  = 0;
+        int*   to = 0;
+        MyMock m;
+        NTF_EXPECT_1(m, f5, NTF_EQ(&k));
+        NTF_EXPECT_1(m, f5, NTF_EQ_DEREF(k));
+        // NTF_EXPECT_1(m, f5, NTF_EQ_DEREF(k)).SAVE_ARG_1(TO(&to)); // SHALL FAIL
+        int const* to_const = 0;
+        NTF_EXPECT_1(m, f5, NTF_EQ_DEREF(k)).SAVE_ARG_1(TO(&to_const));
+        NTF_EXPECT_1(m, f5, NTF_EQ_DEREF(k)).SAVE_ARG_1(TO_DEREF(to));
+    }
+
+    {  // void 1 arg int &
+        int    k  = 0;
+        int*   to = 0;
+        MyMock m;
+        NTF_EXPECT_1(m, f6, NTF_EQ(k));
+        // NTF_EXPECT_1(m, f6, NTF_EQ_DEREF(k)); //SHALL FAIL
+
+        NTF_EXPECT_1(m, f6, NTF_EQ(k)).SAVE_ARG_1(TO(to));
+        // NTF_EXPECT_1(m, f6, NTF_EQ(k)).SAVE_ARG_1(TO_DEREF(to)); // SHALL FAIL
+    }
+
+    {  // void 1 arg int const &
+        int    k = 0;
+        int*   to = 0;
+        MyMock m;
+        NTF_EXPECT_1(m, f7, NTF_EQ(k));
+        // NTF_EXPECT_1(m, f7, NTF_EQ_DEREF(k)); //SHALL FAIL
+        NTF_EXPECT_1(m, f7, NTF_EQ(k)).SAVE_ARG_1(TO(to));
+        // NTF_EXPECT_1(m, f7, NTF_EQ(k)).SAVE_ARG_1(TO_DEREF(&to)); // SHALL FAIL
+    }
+}
+
+}
+
+#if 0
 class StreamSocketMock : public ntsi::StreamSocket
 {
   public:
@@ -1655,10 +1787,12 @@ class StreamSocketMock : public ntsi::StreamSocket
     NTF_MOCK_METHOD(ntsa::Error, close)
 
   public:
-    ntsa::Error sourceEndpoint(ntsa::Endpoint* result) const override
-    {
-        return d_invocation_sourceEndpoint.invoke(result);
-    }
+    // ntsa::Error sourceEndpoint(ntsa::Endpoint* result) const override
+    // {
+    //     return d_invocation_sourceEndpoint.invoke(result);
+    // }
+    NTF_MOCK_METHOD_CONST(ntsa::Error, sourceEndpoint, ntsa::Endpoint*)
+
     ntsa::Error remoteEndpoint(ntsa::Endpoint* result) const override
     {
         return d_invocation_remoteEndpoint.invoke(result);
@@ -1893,7 +2027,7 @@ class StreamSocketMock : public ntsi::StreamSocket
         return d_invocation_setOption.expect(arg1);
     }
 
-    struct Invocation_sourceEndpoint {
+    /*struct Invocation_sourceEndpoint {
       private:
         struct InvocationData {
             int                                  d_expectedCalls;
@@ -2005,13 +2139,13 @@ class StreamSocketMock : public ntsi::StreamSocket
 
       private:
         bsl::list<InvocationData> d_invocations;
-    };
+    };*/
 
-    Invocation_sourceEndpoint& expect_sourceEndpoint(
-        const bdlb::NullableValue<ntsa::Endpoint*>& arg1)
-    {
-        return d_invocation_sourceEndpoint.expect(arg1);
-    }
+    // Invocation_sourceEndpoint& expect_sourceEndpoint(
+    //     const bdlb::NullableValue<ntsa::Endpoint*>& arg1)
+    // {
+    //     return d_invocation_sourceEndpoint.expect(arg1);
+    // }
 
     struct Invocation_remoteEndpoint {
       private:
@@ -2267,7 +2401,7 @@ class StreamSocketMock : public ntsi::StreamSocket
     mutable Invocation_setBlocking    d_invocation_setBlocking;
     mutable Invocation_setOption      d_invocation_setOption;
     mutable Invocation_getOption      d_invocation_getOption;
-    mutable Invocation_sourceEndpoint d_invocation_sourceEndpoint;
+    // mutable Invocation_sourceEndpoint d_invocation_sourceEndpoint;
     mutable Invocation_remoteEndpoint d_invocation_remoteEndpoint;
 };
 
@@ -3285,7 +3419,7 @@ public:
 
     Invocation_schedule d_schedule_invocation;
 };
-
+#endif
 }  // close namespace mock
 
 }  // close namespace test
@@ -5264,7 +5398,7 @@ NTCCFG_TEST_CASE(21)
     test::variation(parameters);
 #endif
 }
-
+#if 0
 NTCCFG_TEST_CASE(22)
 {
     NTCI_LOG_CONTEXT();
@@ -5571,10 +5705,11 @@ NTCCFG_TEST_CASE(23)
         socketMock->expect_connect(targetEp).willOnce().willReturn(
             ntsa::Error());
 
-        socketMock->expect_sourceEndpoint(doNotCare)
+        BSLS_ASSERT_OPT(false);
+        /*socketMock->expect_sourceEndpoint(doNotCare)
             .willOnce()
             .willReturn(ntsa::Error())
-            .setArg1(sourceEp);
+            .setArg1To(sourceEp);*/
 
         ntca::TimerEvent timerEvent;
         timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
@@ -5763,7 +5898,7 @@ NTCCFG_TEST_CASE(24)
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
-
+#endif
 NTCCFG_TEST_DRIVER
 {
     NTCCFG_TEST_REGISTER(1);
@@ -5794,8 +5929,8 @@ NTCCFG_TEST_DRIVER
     NTCCFG_TEST_REGISTER(20);
     NTCCFG_TEST_REGISTER(21);
 
-    NTCCFG_TEST_REGISTER(22);
-    NTCCFG_TEST_REGISTER(23);
-    NTCCFG_TEST_REGISTER(24);
+    // NTCCFG_TEST_REGISTER(22);
+    // NTCCFG_TEST_REGISTER(23);
+    // NTCCFG_TEST_REGISTER(24);
 }
 NTCCFG_TEST_DRIVER_END;
