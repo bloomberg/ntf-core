@@ -1474,7 +1474,8 @@ struct InvocationResult {
            d_expResult;  //TODO: wont work with ref
     RESULT get()
     {
-        return d_expResult;
+        NTCCFG_TEST_TRUE(d_expResult.has_value());
+        return d_expResult.value();
     }
 };
 
@@ -1518,6 +1519,8 @@ struct InvocationBaseWillOnce {
 
 template <class RESULT, class ARG1, class ARG2, class ARG3>
 struct InvocationData {
+    enum { k_INFINITE_CALLS = -1 };
+
     int                      d_expectedCalls;
     InvocationResult<RESULT> d_result;
 
@@ -1546,7 +1549,19 @@ struct Invocation0
 
     RESULT invoke()
     {
-        //TODO:
+        NTCCFG_TEST_FALSE(d_invocations.empty());
+        InvocationDataT& invocation = d_invocations.front();
+        if (invocation.d_expectedCalls != InvocationDataT::k_INFINITE_CALLS) {
+            NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
+        }
+        InvocationResult<RESULT> result = invocation.d_result;  //copy by value
+        if (invocation.d_expectedCalls != InvocationDataT::k_INFINITE_CALLS) {
+            --invocation.d_expectedCalls;
+            if (invocation.d_expectedCalls == 0) {
+                d_invocations.pop_front();
+            }
+        }
+        return result.get();
     }
 
     Invocation0& expect()
@@ -1582,9 +1597,32 @@ struct Invocation1
     typedef InvocationData<RESULT, ARG1, NO_ARG, NO_ARG> InvocationDataT;
     typedef ARG1                                         ARG1_TYPE;
 
-    RESULT invoke(ARG1 arg1)
+    RESULT invoke(ARG1 arg)
     {
-        //TODO:
+        NTCCFG_TEST_FALSE(d_invocations.empty());
+        InvocationDataT& invocation = d_invocations.front();
+        if (invocation.d_expectedCalls != InvocationDataT::k_INFINITE_CALLS) {
+            NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
+        }
+
+        if (invocation.arg1Matcher) {
+            invocation.arg1Matcher->process(arg);
+        }
+        if (invocation.arg1Extractor) {
+            invocation.arg1Extractor->process();
+        }
+        if (invocation.arg1Setter) {
+            invocation.arg1Setter->process();
+        }
+
+        InvocationResult<RESULT> result = invocation.d_result;  //copy by value
+        if (invocation.d_expectedCalls != InvocationDataT::k_INFINITE_CALLS) {
+            --invocation.d_expectedCalls;
+            if (invocation.d_expectedCalls == 0) {
+                d_invocations.pop_front();
+            }
+        }
+        return result.get();
     }
 
     template <class ARG1_MATCHER>
