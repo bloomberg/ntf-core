@@ -1715,7 +1715,7 @@ struct Invocation2 {
     }                                                                         \
     NTF_MOCK_METHOD_0_IMP_NEW(RESULT, METHOD_NAME)
 
-#define NTF_MOCK_METHOD_CONST_NEW_1(RESULT, METHOD_NAME)                      \
+#define NTF_MOCK_METHOD_CONST_NEW_0(RESULT, METHOD_NAME)                      \
   public:                                                                     \
     RESULT METHOD_NAME() const override                                       \
     {                                                                         \
