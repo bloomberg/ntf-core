@@ -2044,40 +2044,18 @@ public:
         }
         return d_outgoingBlobBufferFactory_result.value();
     }
-    ntci::Waiter registerWaiter(
-        const ntca::WaiterOptions& waiterOptions) override
-    {
-        UNEXPECTED_CALL();
-        return nullptr;
-    }
-    void deregisterWaiter(ntci::Waiter waiter) override
-    {
-        UNEXPECTED_CALL();
-    }
-    void run(ntci::Waiter waiter) override
-    {
-        UNEXPECTED_CALL();
-    }
-    void poll(ntci::Waiter waiter) override
-    {
-        UNEXPECTED_CALL();
-    }
-    void interruptOne() override
-    {
-        UNEXPECTED_CALL();
-    }
-    void interruptAll() override
-    {
-        UNEXPECTED_CALL();
-    }
-    void stop() override
-    {
-        UNEXPECTED_CALL();
-    }
-    void restart() override
-    {
-        UNEXPECTED_CALL();
-    }
+
+    NTF_MOCK_METHOD_NEW(ntci::Waiter, registerWaiter, const ntca::WaiterOptions&)
+    NTF_MOCK_METHOD_NEW(void, deregisterWaiter, ntci::Waiter)
+    NTF_MOCK_METHOD_NEW(void, run, ntci::Waiter)
+    NTF_MOCK_METHOD_NEW(void, poll, ntci::Waiter)
+    NTF_MOCK_METHOD_NEW(void, interruptOne)
+    NTF_MOCK_METHOD_NEW(void, interruptAll)
+    NTF_MOCK_METHOD_NEW(void, stop)
+    NTF_MOCK_METHOD_NEW(void, restart)
+
+public:
+
     void execute(const Functor& functor) override
     {
         if (!d_execute_expected) {
@@ -2113,11 +2091,8 @@ public:
         d_attachSocket_result.reset();
         return res;
     }
-    ntsa::Error attachSocket(ntsa::Handle handle) override
-    {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
-    }
+    NTF_MOCK_METHOD_NEW(ntsa::Error, attachSocket, ntsa::Handle)
+public:
     ntsa::Error showReadable(
         const bsl::shared_ptr<ntci::ReactorSocket>& socket,
         const ntca::ReactorEventOptions&            options) override
@@ -2171,12 +2146,9 @@ public:
         UNEXPECTED_CALL();
         return ntsa::Error();
     }
-    ntsa::Error hideReadable(
-        const bsl::shared_ptr<ntci::ReactorSocket>& socket) override
-    {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
-    }
+    NTF_MOCK_METHOD_NEW(ntsa::Error, hideReadable, const bsl::shared_ptr<ntci::ReactorSocket>&)
+
+public:
     ntsa::Error hideReadable(ntsa::Handle handle) override
     {
         UNEXPECTED_CALL();
