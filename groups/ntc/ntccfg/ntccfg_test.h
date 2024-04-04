@@ -1441,7 +1441,12 @@ struct EqMatcher {
         COMP<ARG, EXP>::compare(arg, exp);
     }
 
-    EqMatcher(const EXP& exp_)
+    static bool ignore()
+    {
+        return false;
+    }
+
+    explicit EqMatcher(const EXP& exp_)
     : exp(exp_)
     {
     }
@@ -1598,6 +1603,19 @@ struct Invocation0
 };
 
 struct IgnoreArg {
+    static bool ignore()
+    {
+        return true;
+    }
+    template <class T>
+    void process(T)
+    {
+    }
+};
+
+template <class T>
+struct TypeToType {
+    typedef T Type;
 };
 
 template <class RESULT, class ARG1>
@@ -1612,6 +1630,7 @@ struct Invocation1
 {
     typedef InvocationData<RESULT, ARG1, NO_ARG, NO_ARG> InvocationDataT;
     typedef ARG1                                         ARG1_TYPE;
+    TypeToType<ARG1> k_overload_key;  //TODO: make static
 
     RESULT invoke(ARG1 arg)
     {
@@ -1641,21 +1660,25 @@ struct Invocation1
         return result.get();
     }
 
-    Invocation1& expect(const IgnoreArg&)
-    {
-        d_invocations.emplace_back();
-        return *this;
-    }
+    // Invocation1& expect(const IgnoreArg&)
+    // {
+    //     d_invocations.emplace_back();
+    //     return *this;
+    // }
 
     template <class ARG1_MATCHER>
     Invocation1& expect(const ARG1_MATCHER& arg1Matcher)
     {
         d_invocations.emplace_back();
-        InvocationDataT& data = d_invocations.back();
-        bsl::shared_ptr<MatcherHolder<ARG1, ARG1_MATCHER> > matcherInterface(
-            new MatcherHolder<ARG1, ARG1_MATCHER>(arg1Matcher));
 
-        data.arg1Matcher = matcherInterface;
+        if (!arg1Matcher.ignore()) {
+            InvocationDataT& data = d_invocations.back();
+            bsl::shared_ptr<MatcherHolder<ARG1, ARG1_MATCHER> >
+                matcherInterface(
+                    new MatcherHolder<ARG1, ARG1_MATCHER>(arg1Matcher));
+
+            data.arg1Matcher = matcherInterface;
+        }
         return *this;
     }
 
@@ -1696,8 +1719,121 @@ struct Invocation1
 };
 
 template <class RESULT, class ARG1, class ARG2>
-struct Invocation2 {
-    bsl::list<InvocationData<RESULT, ARG1, ARG2, NO_ARG> > d_invocations;
+struct Invocation2
+
+: public InvocationBaseWillReturn<InvocationData<RESULT, ARG1, ARG2, NO_ARG>,
+                                  Invocation2<RESULT, ARG1, ARG2>,
+                                  RESULT>,
+  public InvocationBaseTimes<InvocationData<RESULT, ARG1, ARG2, NO_ARG>,
+                             Invocation2<RESULT, ARG1, ARG2> >
+
+{
+    typedef InvocationData<RESULT, ARG1, ARG2, NO_ARG> InvocationDataT;
+    typedef ARG1                                       ARG1_TYPE;
+    typedef ARG2                                       ARG2_TYPE;
+
+    RESULT invoke(ARG1 arg1, ARG2 arg2)
+    {
+        NTCCFG_TEST_FALSE(d_invocations.empty());
+        InvocationDataT& invocation = d_invocations.front();
+        if (invocation.d_expectedCalls != InvocationDataT::k_INFINITE_CALLS) {
+            NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
+        }
+
+        if (invocation.arg1Matcher) {
+            invocation.arg1Matcher->process(arg1);
+        }
+        if (invocation.arg1Extractor) {
+            invocation.arg1Extractor->process(arg1);
+        }
+        if (invocation.arg1Setter) {
+            invocation.arg1Setter->process(arg1);
+        }
+
+        if (invocation.arg2Matcher) {
+            invocation.arg2Matcher->process(arg2);
+        }
+        if (invocation.arg2Extractor) {
+            invocation.arg2Extractor->process(arg2);
+        }
+        if (invocation.arg2Setter) {
+            invocation.arg2Setter->process(arg2);
+        }
+
+        InvocationResult<RESULT> result = invocation.d_result;  //copy by value
+        if (invocation.d_expectedCalls != InvocationDataT::k_INFINITE_CALLS) {
+            --invocation.d_expectedCalls;
+            if (invocation.d_expectedCalls == 0) {
+                d_invocations.pop_front();
+            }
+        }
+        return result.get();
+    }
+
+    // Invocation2& expect(const IgnoreArg&, const IgnoreArg&)
+    // {
+    //     d_invocations.emplace_back();
+    //     return *this;
+    // }
+
+    template <class ARG1_MATCHER, class ARG2_MATCHER>
+    Invocation2& expect(const ARG1_MATCHER& arg1Matcher,
+                        const ARG2_MATCHER& arg2Matcher)
+    {
+        d_invocations.emplace_back();
+        InvocationDataT& data = d_invocations.back();
+        if (!arg1Matcher.ignore()) {
+            bsl::shared_ptr<MatcherHolder<ARG1, ARG1_MATCHER> >
+                matcherInterface1(
+                    new MatcherHolder<ARG1, ARG1_MATCHER>(arg1Matcher));
+
+            data.arg1Matcher = matcherInterface1;
+        }
+
+        if (!arg2Matcher.ignore()) {
+            bsl::shared_ptr<MatcherHolder<ARG2, ARG2_MATCHER> >
+                matcherInterface2(
+                    new MatcherHolder<ARG2, ARG2_MATCHER>(arg2Matcher));
+
+            data.arg2Matcher = matcherInterface2;
+        }
+        return *this;
+    }
+
+    template <class ARG_EXTRACTOR>
+    Invocation2& saveArg1(const ARG_EXTRACTOR& extractor)
+    {
+        InvocationDataT& data = getInvocationDataBack();
+
+        bsl::shared_ptr<ExtractorHolder<ARG1, ARG_EXTRACTOR> >
+            extractorInterface(
+                new ExtractorHolder<ARG1, ARG_EXTRACTOR>(extractor));
+
+        data.arg1Extractor = extractorInterface;
+
+        return *this;
+    }
+
+    template <class ARG_SETTER>
+    Invocation2& setArg1(const ARG_SETTER& setter)
+    {
+        InvocationDataT& data = getInvocationDataBack();
+
+        bsl::shared_ptr<SetterHolder<ARG1, ARG_SETTER> > setterInterface(
+            new SetterHolder<ARG1, ARG_SETTER>(setter));
+
+        data.arg1Setter = setterInterface;
+
+        return *this;
+    }
+
+    InvocationDataT& getInvocationDataBack()
+    {
+        NTCCFG_TEST_FALSE(d_invocations.empty());
+        return d_invocations.back();
+    }
+
+    bsl::list<InvocationDataT> d_invocations;
 };
 
 }
@@ -1716,13 +1852,30 @@ struct Invocation2 {
   public:                                                                     \
     template <class MATCHER>                                                  \
     NewMock::Invocation1<RESULT, ARG1>& expect_##METHOD_NAME(                 \
-        const MATCHER& arg1)                                                  \
+        const MATCHER& arg1,                                                  \
+        NewMock::TypeToType<ARG1> = NewMock::TypeToType<ARG1>())              \
     {                                                                         \
-        return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__).expect(arg1);    \
+        return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__).expect(arg1);   \
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable NewMock::Invocation1<RESULT, ARG1> NTF_CAT2(                       \
+    mutable NewMock::Invocation1<RESULT, ARG1> NTF_CAT2(                      \
+        d_invocation_##METHOD_NAME,                                           \
+        __LINE__);
+
+#define NTF_MOCK_METHOD_2_IMP_NEW(RESULT, METHOD_NAME, ARG1, ARG2)            \
+  public:                                                                     \
+    template <class MATCHER1, class MATCHER2>                                 \
+    NewMock::Invocation2<RESULT, ARG1, ARG2>& expect_##METHOD_NAME(           \
+        const MATCHER1& arg1,                                                 \
+        const MATCHER2& arg2)                                                 \
+    {                                                                         \
+        return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
+            .expect(arg1, arg2);                                              \
+    }                                                                         \
+                                                                              \
+  private:                                                                    \
+    mutable NewMock::Invocation2<RESULT, ARG1, ARG2> NTF_CAT2(                \
         d_invocation_##METHOD_NAME,                                           \
         __LINE__);
 
@@ -1746,7 +1899,7 @@ struct Invocation2 {
   public:                                                                     \
     RESULT METHOD_NAME(ARG1 arg1) override                                    \
     {                                                                         \
-        return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__).invoke(arg1);    \
+        return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__).invoke(arg1);   \
     }                                                                         \
     NTF_MOCK_METHOD_1_IMP_NEW(RESULT, METHOD_NAME, ARG1)
 
@@ -1754,9 +1907,27 @@ struct Invocation2 {
   public:                                                                     \
     RESULT METHOD_NAME(ARG1 arg1) const override                              \
     {                                                                         \
-        return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__).invoke(arg1);    \
+        return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__).invoke(arg1);   \
     }                                                                         \
     NTF_MOCK_METHOD_1_IMP_NEW(RESULT, METHOD_NAME, ARG1)
+
+#define NTF_MOCK_METHOD_NEW_2(RESULT, METHOD_NAME, ARG1, ARG2)                \
+  public:                                                                     \
+    RESULT METHOD_NAME(ARG1 arg1, ARG2 arg2) override                         \
+    {                                                                         \
+        return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
+            .invoke(arg1, arg2);                                              \
+    }                                                                         \
+    NTF_MOCK_METHOD_2_IMP_NEW(RESULT, METHOD_NAME, ARG1, ARG2)
+
+#define NTF_MOCK_METHOD_CONST_NEW_2(RESULT, METHOD_NAME, ARG1, ARG2)          \
+  public:                                                                     \
+    RESULT METHOD_NAME(ARG2 arg2, ARG2 arg2) const override                   \
+    {                                                                         \
+        return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
+            .invoke(arg1, arg2);                                              \
+    }                                                                         \
+    NTF_MOCK_METHOD_2_IMP_NEW(RESULT, METHOD_NAME, ARG1, AR2)
 
 #define NTF_MOCK_METHOD_NEW(...)                                              \
     NTF_VA_SELECT(NTF_MOCK_METHOD_NEW, __VA_ARGS__)
@@ -1765,11 +1936,20 @@ struct Invocation2 {
     NTF_VA_SELECT(NTF_MOCK_METHOD_CONST_NEW, __VA_ARGS__)
 
 #define NTF_EQ(ARG) NewMock::createEqMatcher<NewMock::DirectComparator>(ARG)
+#define NTF_EQ_SPEC(ARG, SPEC)                                                \
+    NewMock::createEqMatcher<NewMock::DirectComparator>(ARG),                 \
+        NewMock::TypeToType<SPEC>()
+
 #define NTF_EQ_DEREF(ARG)                                                     \
     NewMock::createEqMatcher<NewMock::DerefComparator>(ARG)
+#define NTF_EQ_DEREF_SPEC(ARG, SPEC)                                          \
+    NewMock::createEqMatcher<NewMock::DerefComparator>(ARG),                  \
+        NewMock::TypeToType<SPEC>()
 
 #define NTF_EXPECT_0(MOCK_OBJECT, METHOD) (MOCK_OBJECT).expect_##METHOD()
 #define NTF_EXPECT_1(MOCK_OBJECT, METHOD, ...)                                \
+    (MOCK_OBJECT).expect_##METHOD(__VA_ARGS__)
+#define NTF_EXPECT_2(MOCK_OBJECT, METHOD, ...)                                \
     (MOCK_OBJECT).expect_##METHOD(__VA_ARGS__)
 
 #define ONCE() willOnce()
