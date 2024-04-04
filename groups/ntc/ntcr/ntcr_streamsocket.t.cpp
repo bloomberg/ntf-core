@@ -2026,8 +2026,7 @@ class ReactorMock : public ntci::Reactor
     NTF_MOCK_METHOD_NEW(void, createIncomingBlobBuffer, bdlbb::BlobBuffer*)
     NTF_MOCK_METHOD_NEW(void, createOutgoingBlobBuffer, bdlbb::BlobBuffer*)
 
-public:
-
+  public:
     const bsl::shared_ptr<bdlbb::BlobBufferFactory>& incomingBlobBufferFactory()
         const override
     {
@@ -2045,7 +2044,9 @@ public:
         return d_outgoingBlobBufferFactory_result.value();
     }
 
-    NTF_MOCK_METHOD_NEW(ntci::Waiter, registerWaiter, const ntca::WaiterOptions&)
+    NTF_MOCK_METHOD_NEW(ntci::Waiter,
+                        registerWaiter,
+                        const ntca::WaiterOptions&)
     NTF_MOCK_METHOD_NEW(void, deregisterWaiter, ntci::Waiter)
     NTF_MOCK_METHOD_NEW(void, run, ntci::Waiter)
     NTF_MOCK_METHOD_NEW(void, poll, ntci::Waiter)
@@ -2054,8 +2055,7 @@ public:
     NTF_MOCK_METHOD_NEW(void, stop)
     NTF_MOCK_METHOD_NEW(void, restart)
 
-public:
-
+  public:
     void execute(const Functor& functor) override
     {
         if (!d_execute_expected) {
@@ -2092,7 +2092,7 @@ public:
         return res;
     }
     NTF_MOCK_METHOD_NEW(ntsa::Error, attachSocket, ntsa::Handle)
-public:
+  public:
     ntsa::Error showReadable(
         const bsl::shared_ptr<ntci::ReactorSocket>& socket,
         const ntca::ReactorEventOptions&            options) override
@@ -2146,47 +2146,24 @@ public:
         UNEXPECTED_CALL();
         return ntsa::Error();
     }
-    NTF_MOCK_METHOD_NEW(ntsa::Error, hideReadable, const bsl::shared_ptr<ntci::ReactorSocket>&)
+    NTF_MOCK_METHOD_NEW(ntsa::Error,
+                        hideReadable,
+                        const bsl::shared_ptr<ntci::ReactorSocket>&)
+    NTF_MOCK_METHOD_NEW(ntsa::Error, hideReadable, ntsa::Handle)
+    NTF_MOCK_METHOD_NEW(ntsa::Error,
+                        hideWritable,
+                        const bsl::shared_ptr<ntci::ReactorSocket>&)
+    NTF_MOCK_METHOD_NEW(ntsa::Error, hideWritable, ntsa::Handle)
+    NTF_MOCK_METHOD_NEW(ntsa::Error,
+                        hideError,
+                        const bsl::shared_ptr<ntci::ReactorSocket>&)
+    NTF_MOCK_METHOD_NEW(ntsa::Error, hideError, ntsa::Handle)
+    NTF_MOCK_METHOD_NEW(ntsa::Error,
+                        detachSocket,
+                        const bsl::shared_ptr<ntci::ReactorSocket>&)
+    NTF_MOCK_METHOD_NEW(ntsa::Error, detachSocket, ntsa::Handle)
 
-public:
-    ntsa::Error hideReadable(ntsa::Handle handle) override
-    {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
-    }
-    ntsa::Error hideWritable(
-        const bsl::shared_ptr<ntci::ReactorSocket>& socket) override
-    {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
-    }
-    ntsa::Error hideWritable(ntsa::Handle handle) override
-    {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
-    }
-    ntsa::Error hideError(
-        const bsl::shared_ptr<ntci::ReactorSocket>& socket) override
-    {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
-    }
-    ntsa::Error hideError(ntsa::Handle handle) override
-    {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
-    }
-    ntsa::Error detachSocket(
-        const bsl::shared_ptr<ntci::ReactorSocket>& socket) override
-    {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
-    }
-    ntsa::Error detachSocket(ntsa::Handle handle) override
-    {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
-    }
+  public:
     ntsa::Error detachSocket(
         const bsl::shared_ptr<ntci::ReactorSocket>& socket,
         const ntci::SocketDetachedCallback&         callback) override
@@ -2222,101 +2199,29 @@ public:
         UNEXPECTED_CALL();
         return ntsa::Error();
     }
-    ntsa::Error closeAll() override
-    {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
-    }
-    void incrementLoad(const ntca::LoadBalancingOptions& options) override
-    {
-        UNEXPECTED_CALL();
-    }
-    void decrementLoad(const ntca::LoadBalancingOptions& options) override
-    {
-        UNEXPECTED_CALL();
-    }
-    void drainFunctions() override
-    {
-        UNEXPECTED_CALL();
-    }
-    void clearFunctions() override
-    {
-        UNEXPECTED_CALL();
-    }
-    void clearTimers() override
-    {
-        UNEXPECTED_CALL();
-    }
-    void clearSockets() override
-    {
-        UNEXPECTED_CALL();
-    }
-    void clear() override
-    {
-        UNEXPECTED_CALL();
-    }
-    size_t numSockets() const override
-    {
-        UNEXPECTED_CALL();
-        return 0;
-    }
-    size_t maxSockets() const override
-    {
-        UNEXPECTED_CALL();
-        return 0;
-    }
-    size_t numTimers() const override
-    {
-        UNEXPECTED_CALL();
-        return 0;
-    }
-    size_t maxTimers() const override
-    {
-        UNEXPECTED_CALL();
-        return 0;
-    }
-    bool autoAttach() const override
-    {
-        UNEXPECTED_CALL();
-        return false;
-    }
-    bool autoDetach() const override
-    {
-        UNEXPECTED_CALL();
-        return false;
-    }
-    bool oneShot() const override
-    {
-        if (d_oneShot_result.isNull()) {
-            UNEXPECTED_CALL();
-        }
-        return d_oneShot_result.value();
-    }
-    ntca::ReactorEventTrigger::Value trigger() const override
-    {
-        UNEXPECTED_CALL();
-        return ntca::ReactorEventTrigger::e_LEVEL;
-    }
-    size_t load() const override
-    {
-        UNEXPECTED_CALL();
-        return 0;
-    }
-    bslmt::ThreadUtil::Handle threadHandle() const override
-    {
-        UNEXPECTED_CALL();
-        return BloombergLP::bslmt::ThreadUtil::Handle();
-    }
-    size_t threadIndex() const override
-    {
-        UNEXPECTED_CALL();
-        return 0;
-    }
-    bool empty() const override
-    {
-        UNEXPECTED_CALL();
-        return false;
-    }
+    NTF_MOCK_METHOD_NEW(ntsa::Error, closeAll)
+    NTF_MOCK_METHOD_NEW(void, incrementLoad, const ntca::LoadBalancingOptions&)
+    NTF_MOCK_METHOD_NEW(void, decrementLoad, const ntca::LoadBalancingOptions&)
+
+    NTF_MOCK_METHOD_NEW(void, drainFunctions)
+    NTF_MOCK_METHOD_NEW(void, clearFunctions)
+    NTF_MOCK_METHOD_NEW(void, clearTimers)
+    NTF_MOCK_METHOD_NEW(void, clearSockets)
+    NTF_MOCK_METHOD_NEW(void, clear)
+    NTF_MOCK_METHOD_CONST_NEW(size_t, numSockets)
+    NTF_MOCK_METHOD_CONST_NEW(size_t, maxSockets)
+    NTF_MOCK_METHOD_CONST_NEW(size_t, numTimers)
+    NTF_MOCK_METHOD_CONST_NEW(size_t, maxTimers)
+    NTF_MOCK_METHOD_CONST_NEW(bool, autoAttach)
+    NTF_MOCK_METHOD_CONST_NEW(bool, autoDetach)
+    NTF_MOCK_METHOD_CONST_NEW(bool, oneShot)
+    NTF_MOCK_METHOD_CONST_NEW(ntca::ReactorEventTrigger::Value, trigger)
+    NTF_MOCK_METHOD_CONST_NEW(size_t, load)
+    NTF_MOCK_METHOD_CONST_NEW(bslmt::ThreadUtil::Handle, threadHandle)
+    NTF_MOCK_METHOD_CONST_NEW(size_t, threadIndex)
+    NTF_MOCK_METHOD_CONST_NEW(bool, empty)
+
+  public:
     const bsl::shared_ptr<ntci::DataPool>& dataPool() const override
     {
         if (d_dataPool_result.isNull()) {
@@ -2324,69 +2229,33 @@ public:
         }
         return d_dataPool_result.value();
     }
-    bool supportsOneShot(bool oneShot) const override
-    {
-        UNEXPECTED_CALL();
-        return false;
-    }
-    bool supportsTrigger(
-        ntca::ReactorEventTrigger::Value trigger) const override
-    {
-        UNEXPECTED_CALL();
-        return false;
-    }
-    bsl::shared_ptr<ntci::Reactor> acquireReactor(
-        const ntca::LoadBalancingOptions& options) override
-    {
-        UNEXPECTED_CALL();
-        return bsl::shared_ptr<ntci::Reactor>();
-    }
+
+    NTF_MOCK_METHOD_CONST_NEW(bool, supportsOneShot, bool)
+    NTF_MOCK_METHOD_CONST_NEW(bool,
+                              supportsTrigger,
+                              ntca::ReactorEventTrigger::Value)
+
+    NTF_MOCK_METHOD_NEW(bsl::shared_ptr<ntci::Reactor>,
+                        acquireReactor,
+                        const ntca::LoadBalancingOptions&)
+  public:
     void releaseReactor(const bsl::shared_ptr<ntci::Reactor>& reactor,
                         const ntca::LoadBalancingOptions&     options) override
     {
         UNEXPECTED_CALL();
     }
-    bool acquireHandleReservation() override
-    {
-        if (d_acquireHandleReservation_result.isNull()) {
-            UNEXPECTED_CALL();
-        }
-        return d_acquireHandleReservation_result.value();
-    }
-    void releaseHandleReservation() override
-    {
-        if (!d_releaseHandleReservation) {
-            UNEXPECTED_CALL();
-        }
-    }
-    size_t numReactors() const override
-    {
-        UNEXPECTED_CALL();
-        return 0;
-    }
-    size_t numThreads() const override
-    {
-        UNEXPECTED_CALL();
-        return 0;
-    }
-    size_t minThreads() const override
-    {
-        UNEXPECTED_CALL();
-        return 0;
-    }
-    size_t maxThreads() const override
-    {
-        if (d_maxThreads_result.isNull()) {
-            UNEXPECTED_CALL();
-        }
-        return d_maxThreads_result.value();
-    }
-    bsl::shared_ptr<ntci::Strand> createStrand(
-        bslma::Allocator* basicAllocator) override
-    {
-        UNEXPECTED_CALL();
-        return bsl::shared_ptr<ntci::Strand>();
-    }
+    NTF_MOCK_METHOD_NEW(bool, acquireHandleReservation)
+    NTF_MOCK_METHOD_NEW(void, releaseHandleReservation)
+
+    NTF_MOCK_METHOD_CONST_NEW(size_t, numReactors)
+    NTF_MOCK_METHOD_CONST_NEW(size_t, numThreads)
+    NTF_MOCK_METHOD_CONST_NEW(size_t, minThreads)
+    NTF_MOCK_METHOD_CONST_NEW(size_t, maxThreads)
+
+    NTF_MOCK_METHOD_NEW(bsl::shared_ptr<ntci::Strand>,
+                        createStrand,
+                        bslma::Allocator*)
+  public:
     bsl::shared_ptr<ntci::StreamSocket> createStreamSocket(
         const ntca::StreamSocketOptions& options,
         bslma::Allocator*                basicAllocator) override
@@ -2417,11 +2286,7 @@ public:
         UNEXPECTED_CALL();
         return dummyStrand;
     }
-    bsls::TimeInterval currentTime() const override
-    {
-        UNEXPECTED_CALL();
-        return bsls::TimeInterval();
-    }
+    NTF_MOCK_METHOD_CONST_NEW(bsls::TimeInterval, currentTime)
 
   public:
     // Helper data structures
@@ -2592,22 +2457,6 @@ public:
         d_incomingBlobBufferFactory_result = bufferFactory;
     }
 
-    void expect_oneShot_WillAlwaysReturn(bool flag)
-    {
-        d_oneShot_result = flag;
-    }
-
-    void expect_maxThreads_WillAlwaysReturn(size_t val)
-    {
-        d_maxThreads_result = val;
-    }
-
-    //    void expect_createTimer_WillOnceReturn(
-    //        const bsl::shared_ptr<ntci::Timer>& timer)
-    //    {
-    //        d_timer_result = timer;
-    //    }
-
     Invocation_createTimer& expect_createTimer(
         const bdlb::NullableValue<ntca::TimerOptions>&  arg1,
         const bdlb::NullableValue<ntci::TimerCallback>& arg2,
@@ -2619,16 +2468,6 @@ public:
     void expect_execute_WillOnceReturn()
     {
         d_execute_expected = true;
-    }
-
-    void expect_acquireHandleReservation_WillAlwaysReturn(bool flag)
-    {
-        d_acquireHandleReservation_result = flag;
-    }
-
-    void expect_releaseHandleReservation_WillAlwaysReturn()
-    {
-        d_releaseHandleReservation = true;
     }
 
     void expect_attachSocket_WillOnceReturn(
@@ -2696,14 +2535,8 @@ public:
                                   d_outgoingBlobBufferFactory_result;
     bsl::shared_ptr<ntci::Strand> dummyStrand;
     bdlb::NullableValue<bsl::shared_ptr<ntci::DataPool> > d_dataPool_result;
-    bdlb::NullableValue<bool>                             d_oneShot_result;
-    bdlb::NullableValue<size_t>                           d_maxThreads_result;
-    //    bdlb::NullableValue<bsl::shared_ptr<ntci::Timer> >    d_timer_result;
-    //    bdlb::NullableValue<ntci::TimerCallback>              d_timerCallback;
-    bool                                        d_execute_expected;
-    bdlb::NullableValue<ntci::Reactor::Functor> d_execute_functor;
-    bdlb::NullableValue<bool> d_acquireHandleReservation_result;
-    bool                      d_releaseHandleReservation;
+    bool                                                  d_execute_expected;
+    bdlb::NullableValue<ntci::Reactor::Functor>           d_execute_functor;
 
     bdlb::NullableValue<bsl::shared_ptr<ntci::ReactorSocket> >
                                      d_attachSocket_arg1;
@@ -4914,8 +4747,8 @@ NTCCFG_TEST_CASE(22)
         reactorMock->expect_incomingBlobBufferFactory_WillAlwaysReturn(
             bufferFactoryMock);
 
-        reactorMock->expect_oneShot_WillAlwaysReturn(false);
-        reactorMock->expect_maxThreads_WillAlwaysReturn(1);
+        NTF_EXPECT_0(*reactorMock, oneShot).ALWAYS().RETURN(false);
+        NTF_EXPECT_0(*reactorMock, maxThreads).ALWAYS().RETURN(1);
 
         NTF_EXPECT_0(*dataPoolMock, createIncomingBlob)
             .ALWAYS()
@@ -4980,8 +4813,10 @@ NTCCFG_TEST_CASE(22)
         socketMock->expect_maxBuffersPerSend().willOnce().willReturn(22);
         socketMock->expect_maxBuffersPerReceive().willOnce().willReturn(22);
 
-        reactorMock->expect_acquireHandleReservation_WillAlwaysReturn(true);
-        reactorMock->expect_releaseHandleReservation_WillAlwaysReturn();
+        NTF_EXPECT_0(*reactorMock, acquireHandleReservation)
+            .ALWAYS()
+            .RETURN(true);
+        NTF_EXPECT_0(*reactorMock, releaseHandleReservation).ALWAYS();
 
         socket->open(ntsa::Transport::e_TCP_IPV4_STREAM, socketMock);
 
@@ -5091,8 +4926,8 @@ NTCCFG_TEST_CASE(23)
         reactorMock->expect_incomingBlobBufferFactory_WillAlwaysReturn(
             bufferFactoryMock);
 
-        reactorMock->expect_oneShot_WillAlwaysReturn(false);
-        reactorMock->expect_maxThreads_WillAlwaysReturn(1);
+        NTF_EXPECT_0(*reactorMock, oneShot).ALWAYS().RETURN(false);
+        NTF_EXPECT_0(*reactorMock, maxThreads).ALWAYS().RETURN(1);
 
         NTF_EXPECT_0(*dataPoolMock, createIncomingBlob)
             .ALWAYS()
@@ -5157,8 +4992,10 @@ NTCCFG_TEST_CASE(23)
         socketMock->expect_maxBuffersPerSend().willOnce().willReturn(22);
         socketMock->expect_maxBuffersPerReceive().willOnce().willReturn(22);
 
-        reactorMock->expect_acquireHandleReservation_WillAlwaysReturn(true);
-        reactorMock->expect_releaseHandleReservation_WillAlwaysReturn();
+        NTF_EXPECT_0(*reactorMock, acquireHandleReservation)
+            .ALWAYS()
+            .RETURN(true);
+        NTF_EXPECT_0(*reactorMock, releaseHandleReservation).ALWAYS();
 
         socket->open(ntsa::Transport::e_TCP_IPV4_STREAM, socketMock);
 
@@ -5280,8 +5117,8 @@ NTCCFG_TEST_CASE(24)
         reactorMock->expect_incomingBlobBufferFactory_WillAlwaysReturn(
             bufferFactoryMock);
 
-        reactorMock->expect_oneShot_WillAlwaysReturn(false);
-        reactorMock->expect_maxThreads_WillAlwaysReturn(1);
+        NTF_EXPECT_0(*reactorMock, oneShot).ALWAYS().RETURN(false);
+        NTF_EXPECT_0(*reactorMock, maxThreads).ALWAYS().RETURN(1);
 
         NTF_EXPECT_0(*dataPoolMock, createIncomingBlob)
             .ALWAYS()
@@ -5355,8 +5192,10 @@ NTCCFG_TEST_CASE(24)
 
         NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
 
-        reactorMock->expect_acquireHandleReservation_WillAlwaysReturn(true);
-        reactorMock->expect_releaseHandleReservation_WillAlwaysReturn();
+        NTF_EXPECT_0(*reactorMock, acquireHandleReservation)
+            .ALWAYS()
+            .RETURN(true);
+        NTF_EXPECT_0(*reactorMock, releaseHandleReservation).ALWAYS();
         reactorMock->expect_attachSocket_WillOnceReturn(socket, ntsa::Error());
         reactorMock->expect_showWritable_WillOnceReturn(socket, ntsa::Error());
 

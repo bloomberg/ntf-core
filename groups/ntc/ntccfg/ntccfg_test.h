@@ -1224,8 +1224,12 @@ class Invocation1
 }
 }
 
+#define NTF_CAT2_(A, B) A##B
+#define NTF_CAT2(A, B) NTF_CAT2_(A, B)
+
 #define NTF_EXPAND(X) X
 #define NTF_CAT(A, B) A##B
+// #define NTF_CAT(A, B) NTF_CAT_(A, B)
 #define NTF_SELECT(NAME, NUM) NTF_CAT(NAME##_, NUM)
 
 #define NTF_GET_COUNT(_1, _2, _3, _4, _5, _6, COUNT, ...) COUNT
@@ -1593,7 +1597,8 @@ struct Invocation0
     bsl::list<InvocationData<RESULT, NO_ARG, NO_ARG, NO_ARG> > d_invocations;
 };
 
-struct IgnoreArg{};
+struct IgnoreArg {
+};
 
 template <class RESULT, class ARG1>
 struct Invocation1
@@ -1713,11 +1718,13 @@ struct Invocation2 {
     NewMock::Invocation1<RESULT, ARG1>& expect_##METHOD_NAME(                 \
         const MATCHER& arg1)                                                  \
     {                                                                         \
-        return d_invocation_##METHOD_NAME.expect(arg1);                       \
+        return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__).expect(arg1);    \
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable NewMock::Invocation1<RESULT, ARG1> d_invocation_##METHOD_NAME;
+    mutable NewMock::Invocation1<RESULT, ARG1> NTF_CAT2(                       \
+        d_invocation_##METHOD_NAME,                                           \
+        __LINE__);
 
 #define NTF_MOCK_METHOD_NEW_0(RESULT, METHOD_NAME)                            \
   public:                                                                     \
@@ -1739,7 +1746,7 @@ struct Invocation2 {
   public:                                                                     \
     RESULT METHOD_NAME(ARG1 arg1) override                                    \
     {                                                                         \
-        return d_invocation_##METHOD_NAME.invoke(arg1);                       \
+        return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__).invoke(arg1);    \
     }                                                                         \
     NTF_MOCK_METHOD_1_IMP_NEW(RESULT, METHOD_NAME, ARG1)
 
@@ -1747,7 +1754,7 @@ struct Invocation2 {
   public:                                                                     \
     RESULT METHOD_NAME(ARG1 arg1) const override                              \
     {                                                                         \
-        return d_invocation_##METHOD_NAME.invoke(arg1);                       \
+        return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__).invoke(arg1);    \
     }                                                                         \
     NTF_MOCK_METHOD_1_IMP_NEW(RESULT, METHOD_NAME, ARG1)
 
