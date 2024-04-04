@@ -1446,8 +1446,7 @@ struct EqMatcher {
 };
 
 template <template <class, class> class COMPARATOR, class EXP>
-BloombergLP::bdlb::NullableValue<EqMatcher<EXP, COMPARATOR> > createEqMatcher(
-    const EXP& val)
+EqMatcher<EXP, COMPARATOR> createEqMatcher(const EXP& val)
 {
     EqMatcher<EXP, COMPARATOR> matcher(val);
     return matcher;
@@ -1506,13 +1505,28 @@ struct InvocationBaseWillReturn<INVOCATION_DATA, SELF, void> {
 };
 
 template <class INVOCATION_DATA, class SELF>
-struct InvocationBaseWillOnce {
+struct InvocationBaseTimes {
     virtual INVOCATION_DATA& getInvocationDataBack() = 0;
 
     SELF& willOnce()
     {
         INVOCATION_DATA& invocation = getInvocationDataBack();
         invocation.d_expectedCalls  = 1;
+        return *(static_cast<SELF*>(this));
+    }
+
+    SELF& willAlways()
+    {
+        INVOCATION_DATA& invocation = getInvocationDataBack();
+        invocation.d_expectedCalls  = INVOCATION_DATA::k_INFINITE_CALLS;
+        return *(static_cast<SELF*>(this));
+    }
+
+    SELF& willTimes(int times)
+    {
+        NTCCFG_TEST_GT(times, 0);
+        INVOCATION_DATA& invocation = getInvocationDataBack();
+        invocation.d_expectedCalls  = times;
         return *(static_cast<SELF*>(this));
     }
 };
@@ -1543,8 +1557,8 @@ struct Invocation0
       InvocationData<RESULT, NO_ARG, NO_ARG, NO_ARG>,
       Invocation0<RESULT>,
       RESULT>,
-  public InvocationBaseWillOnce<InvocationData<RESULT, NO_ARG, NO_ARG, NO_ARG>,
-                                Invocation0<RESULT> > {
+  public InvocationBaseTimes<InvocationData<RESULT, NO_ARG, NO_ARG, NO_ARG>,
+                             Invocation0<RESULT> > {
     typedef InvocationData<RESULT, NO_ARG, NO_ARG, NO_ARG> InvocationDataT;
 
     RESULT invoke()
@@ -1579,10 +1593,7 @@ struct Invocation0
     bsl::list<InvocationData<RESULT, NO_ARG, NO_ARG, NO_ARG> > d_invocations;
 };
 
-inline void test_f111(int x, int y)
-{
-    printf("%d", x);
-}
+struct IgnoreArg{};
 
 template <class RESULT, class ARG1>
 struct Invocation1
@@ -1590,8 +1601,8 @@ struct Invocation1
 : public InvocationBaseWillReturn<InvocationData<RESULT, ARG1, NO_ARG, NO_ARG>,
                                   Invocation1<RESULT, ARG1>,
                                   RESULT>,
-  public InvocationBaseWillOnce<InvocationData<RESULT, ARG1, NO_ARG, NO_ARG>,
-                                Invocation1<RESULT, ARG1> >
+  public InvocationBaseTimes<InvocationData<RESULT, ARG1, NO_ARG, NO_ARG>,
+                             Invocation1<RESULT, ARG1> >
 
 {
     typedef InvocationData<RESULT, ARG1, NO_ARG, NO_ARG> InvocationDataT;
@@ -1609,10 +1620,10 @@ struct Invocation1
             invocation.arg1Matcher->process(arg);
         }
         if (invocation.arg1Extractor) {
-            invocation.arg1Extractor->process();
+            invocation.arg1Extractor->process(arg);
         }
         if (invocation.arg1Setter) {
-            invocation.arg1Setter->process();
+            invocation.arg1Setter->process(arg);
         }
 
         InvocationResult<RESULT> result = invocation.d_result;  //copy by value
@@ -1625,19 +1636,21 @@ struct Invocation1
         return result.get();
     }
 
+    Invocation1& expect(const IgnoreArg&)
+    {
+        d_invocations.emplace_back();
+        return *this;
+    }
+
     template <class ARG1_MATCHER>
-    Invocation1& expect(
-        const ::BloombergLP::bdlb::NullableValue<ARG1_MATCHER>& arg1Matcher)
+    Invocation1& expect(const ARG1_MATCHER& arg1Matcher)
     {
         d_invocations.emplace_back();
         InvocationDataT& data = d_invocations.back();
-        if (arg1Matcher.has_value()) {
-            bsl::shared_ptr<MatcherHolder<ARG1, ARG1_MATCHER> >
-                matcherInterface(new MatcherHolder<ARG1, ARG1_MATCHER>(
-                    arg1Matcher.value()));
+        bsl::shared_ptr<MatcherHolder<ARG1, ARG1_MATCHER> > matcherInterface(
+            new MatcherHolder<ARG1, ARG1_MATCHER>(arg1Matcher));
 
-            data.arg1Matcher = matcherInterface;
-        }
+        data.arg1Matcher = matcherInterface;
         return *this;
     }
 
@@ -1698,10 +1711,9 @@ struct Invocation2 {
   public:                                                                     \
     template <class MATCHER>                                                  \
     NewMock::Invocation1<RESULT, ARG1>& expect_##METHOD_NAME(                 \
-        const BloombergLP::bdlb::NullableValue<MATCHER>& arg1)                \
+        const MATCHER& arg1)                                                  \
     {                                                                         \
         return d_invocation_##METHOD_NAME.expect(arg1);                       \
-        /* return NewMock::Invocation1<RESULT, ARG1>(); */                    \
     }                                                                         \
                                                                               \
   private:                                                                    \
@@ -1727,7 +1739,7 @@ struct Invocation2 {
   public:                                                                     \
     RESULT METHOD_NAME(ARG1 arg1) override                                    \
     {                                                                         \
-        return /*d_invocation_##METHOD_NAME.invoke(arg1) TODO: */ RESULT();   \
+        return d_invocation_##METHOD_NAME.invoke(arg1);                       \
     }                                                                         \
     NTF_MOCK_METHOD_1_IMP_NEW(RESULT, METHOD_NAME, ARG1)
 
@@ -1749,12 +1761,14 @@ struct Invocation2 {
 #define NTF_EQ_DEREF(ARG)                                                     \
     NewMock::createEqMatcher<NewMock::DerefComparator>(ARG)
 
-#define NTF_EXPECT_0(MOCK_OBJECT, METHOD) MOCK_OBJECT.expect_##METHOD()
+#define NTF_EXPECT_0(MOCK_OBJECT, METHOD) (MOCK_OBJECT).expect_##METHOD()
 #define NTF_EXPECT_1(MOCK_OBJECT, METHOD, ...)                                \
-    MOCK_OBJECT.expect_##METHOD(__VA_ARGS__)
+    (MOCK_OBJECT).expect_##METHOD(__VA_ARGS__)
 
 #define ONCE() willOnce()
-#define RETURN(VAL) willReturn(VAL)
+#define ALWAYS() willAlways()
+#define TIMES(x) willTimes(x)
+#define RETURN(VAL) willReturn((VAL))
 
 #define TO(ARG) NewMock::createExtractor<NewMock::NoDerefPolicy>(ARG)
 #define TO_DEREF(ARG) NewMock::createExtractor<NewMock::DerefPolicy>(ARG)
@@ -1766,3 +1780,5 @@ struct Invocation2 {
 #define FROM_DEREF(ARG) NewMock::createSetter<NewMock::DerefSetter>(ARG)
 
 #define SET_ARG_1(...) setArg1(__VA_ARGS__)
+
+#define IGNORE_ARG NewMock::IgnoreArg()
