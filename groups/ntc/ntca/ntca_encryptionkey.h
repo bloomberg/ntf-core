@@ -50,7 +50,7 @@ namespace ntca {
 ///     otherPrimeInfos   OtherPrimeInfos OPTIONAL
 /// }
 /// OtherPrimeInfos ::= SEQUENCE SIZE(1..MAX) OF OtherPrimeInfo
-/// 
+///
 /// OtherPrimeInfo ::= SEQUENCE {
 ///     prime             INTEGER,  -- ri
 ///     exponent          INTEGER,  -- di
@@ -69,7 +69,7 @@ namespace ntca {
 /// @ingroup module_ntci_encryption
 class EncryptionKeyRsa
 {
-public:
+  public:
     typedef bsl::int64_t Number;
 
     struct Prime {
@@ -79,7 +79,9 @@ public:
 
         friend bool operator==(const Prime& lhs, const Prime& rhs)
         {
-            return lhs.d_prime == rhs.d_prime && lhs.d_exponent == rhs.d_exponent && lhs.d_coefficient == rhs.d_coefficient;
+            return lhs.d_prime == rhs.d_prime &&
+                   lhs.d_exponent == rhs.d_exponent &&
+                   lhs.d_coefficient == rhs.d_coefficient;
         }
 
         friend bool operator<(const Prime& lhs, const Prime& rhs)
@@ -87,7 +89,7 @@ public:
             if (lhs.d_prime < rhs.d_prime) {
                 return true;
             }
-            
+
             if (rhs.d_prime < lhs.d_prime) {
                 return false;
             }
@@ -95,7 +97,7 @@ public:
             if (lhs.d_exponent < rhs.d_exponent) {
                 return true;
             }
-            
+
             if (rhs.d_exponent < lhs.d_exponent) {
                 return false;
             }
@@ -106,7 +108,7 @@ public:
 
     typedef bsl::vector<Prime> PrimeVector;
 
-private:
+  private:
     Number      d_version;
     Number      d_modulus;
     Number      d_publicExponent;
@@ -129,7 +131,7 @@ private:
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
     EncryptionKeyRsa(const EncryptionKeyRsa& original,
-                  bslma::Allocator*    basicAllocator = 0);
+                     bslma::Allocator*       basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionKeyRsa();
@@ -142,63 +144,63 @@ private:
     /// construction.
     void reset();
 
-    /// Set the version to the specified 'value'. 
+    /// Set the version to the specified 'value'.
     void setVersion(Number value);
 
-    /// Set the modulus to the specified 'value'. 
+    /// Set the modulus to the specified 'value'.
     void setModulus(Number value);
 
-    /// Set the public exponent to the specified 'value'. 
+    /// Set the public exponent to the specified 'value'.
     void setPublicExponent(Number value);
 
-    /// Set the private exponent to the specified 'value'. 
+    /// Set the private exponent to the specified 'value'.
     void setPrivateExponent(Number value);
 
-    /// Set the first prime to the specified 'value'. 
+    /// Set the first prime to the specified 'value'.
     void setPrime1(Number value);
 
-    /// Set the second prime to the specified 'value'. 
+    /// Set the second prime to the specified 'value'.
     void setPrime2(Number value);
 
-    /// Set the first exponent to the specified 'value'. 
+    /// Set the first exponent to the specified 'value'.
     void setExponent1(Number value);
 
-    /// Set the second exponent to the specified 'value'. 
+    /// Set the second exponent to the specified 'value'.
     void setExponent2(Number value);
 
-    /// Set the coefficient to the specified 'value'. 
+    /// Set the coefficient to the specified 'value'.
     void setCoefficient(Number value);
 
-    /// Add the specified 'value' to the other prime information. 
+    /// Add the specified 'value' to the other prime information.
     void addExtraPrimeInfo(const Prime& value);
 
     /// Return the version.
     Number version() const;
-    
+
     /// Return the modulus.
     Number modulus() const;
-    
+
     /// Return the public exponent.
     Number publicExponent() const;
-    
+
     /// Return the private exponent.
     Number privateExponent() const;
-    
+
     /// Return the frist prime.
     Number prime1() const;
-    
+
     /// Return the second prime.
     Number prime2() const;
-    
+
     /// Return the first exponent.
     Number exponent1() const;
-    
+
     /// Return the second exponent.
     Number exponent2() const;
-    
+
     /// Return the coefficient.
     Number coefficient() const;
-    
+
     /// Return the other prime information.
     const PrimeVector& extraPrimeInfo() const;
 
@@ -265,26 +267,6 @@ bool operator<(const EncryptionKeyRsa& lhs, const EncryptionKeyRsa& rhs);
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionKeyRsa& value);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /// Describe an elliptic curve private key.
 ///
 /// @details
@@ -295,11 +277,29 @@ void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionKeyRsa& value);
 ///     publicKey  [1] BIT STRING OPTIONAL
 /// }
 ///
+/// ECParameters ::= CHOICE {
+///     namedCurve         OBJECT IDENTIFIER
+///     -- implicitCurve   NULL
+///     -- specifiedCurve  SpecifiedECDomain
+/// }
+///
 /// @par Attributes
 /// This class is composed of the following attributes.
 ///
 /// @li @b version:
 /// The version of the key.
+///
+/// @li @b name:
+/// The ASN.1 object identifier of the curve.
+///
+/// @li @b value:
+/// The bytes of the private key data.
+///
+/// @li @b publicData:
+/// The bytes of the public key data.
+///
+/// @li @b publicDataBits:
+/// The number of bites defined in the public key data.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -307,11 +307,12 @@ void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionKeyRsa& value);
 /// @ingroup module_ntci_encryption
 class EncryptionKeyEllipticCurve
 {
-public:
+  public:
     typedef bsl::int64_t Number;
 
-private:
+  private:
     Number                    d_version;
+    bsl::vector<bsl::uint8_t> d_name;
     bsl::vector<bsl::uint8_t> d_privateKey;
     bsl::vector<bsl::uint8_t> d_publicKey;
 
@@ -326,20 +327,21 @@ private:
     /// memory. If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
     EncryptionKeyEllipticCurve(const EncryptionKeyEllipticCurve& original,
-                  bslma::Allocator*    basicAllocator = 0);
+                               bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionKeyEllipticCurve();
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
-    EncryptionKeyEllipticCurve& operator=(const EncryptionKeyEllipticCurve& other);
+    EncryptionKeyEllipticCurve& operator=(
+        const EncryptionKeyEllipticCurve& other);
 
     /// Reset the value of this object to its value upon default
     /// construction.
     void reset();
 
-    /// Set the version to the specified 'value'. 
+    /// Set the version to the specified 'value'.
     void setVersion(Number value);
 
     /// Return the version.
@@ -378,14 +380,16 @@ private:
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionKeyEllipticCurve
-bsl::ostream& operator<<(bsl::ostream& stream, const EncryptionKeyEllipticCurve& object);
+bsl::ostream& operator<<(bsl::ostream&                     stream,
+                         const EncryptionKeyEllipticCurve& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
 /// @related ntca::EncryptionKeyEllipticCurve
-bool operator==(const EncryptionKeyEllipticCurve& lhs, const EncryptionKeyEllipticCurve& rhs);
+bool operator==(const EncryptionKeyEllipticCurve& lhs,
+                const EncryptionKeyEllipticCurve& rhs);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
 /// have the same value, and 'false' otherwise.  Two attribute objects do
@@ -393,44 +397,23 @@ bool operator==(const EncryptionKeyEllipticCurve& lhs, const EncryptionKeyEllipt
 /// values.
 ///
 /// @related ntca::EncryptionKeyEllipticCurve
-bool operator!=(const EncryptionKeyEllipticCurve& lhs, const EncryptionKeyEllipticCurve& rhs);
+bool operator!=(const EncryptionKeyEllipticCurve& lhs,
+                const EncryptionKeyEllipticCurve& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
 /// @related ntca::EncryptionKeyEllipticCurve
-bool operator<(const EncryptionKeyEllipticCurve& lhs, const EncryptionKeyEllipticCurve& rhs);
+bool operator<(const EncryptionKeyEllipticCurve& lhs,
+               const EncryptionKeyEllipticCurve& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
 /// @related ntca::EncryptionKeyEllipticCurve
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionKeyEllipticCurve& value);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+void hashAppend(HASH_ALGORITHM&                   algorithm,
+                const EncryptionKeyEllipticCurve& value);
 
 /// Describe the parameters to an encryption key generation operation.
 ///
@@ -503,7 +486,7 @@ class EncryptionKey
     enum Type { e_UNDEFINED, e_RSA, e_ELLIPTIC_CURVE };
 
     union {
-        bsls::ObjectBuffer<ntca::EncryptionKeyRsa> d_rsa;
+        bsls::ObjectBuffer<ntca::EncryptionKeyRsa>           d_rsa;
         bsls::ObjectBuffer<ntca::EncryptionKeyEllipticCurve> d_ellipticCurve;
     };
 
@@ -533,7 +516,7 @@ class EncryptionKey
     /// Reset the value of this object to its value upon default
     /// construction.
     void reset();
-    
+
     /// Select the "rsa" representation. Return a reference to the modifiable
     /// representation.
     ntca::EncryptionKeyRsa& makeRsa();
@@ -549,8 +532,7 @@ class EncryptionKey
     /// Select the "ellipticCurve" representation initially having the
     /// specified 'value'. Return a reference to the modifiable representation.
     ntca::EncryptionKeyEllipticCurve& makeEllipticCurve(
-      const ntca::EncryptionKeyEllipticCurve& value);
-
+        const ntca::EncryptionKeyEllipticCurve& value);
 
     /// Return a reference to the modifiable "rsa" representation. The
     /// behavior is undefined unless 'isRsa()' is true.
@@ -642,9 +624,6 @@ bool operator<(const EncryptionKey& lhs, const EncryptionKey& rhs);
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionKey& value);
 
-
-
-
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionKeyRsa& value)
 {
@@ -663,7 +642,8 @@ void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionKeyRsa& value)
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionKeyEllipticCurve& value)
+void hashAppend(HASH_ALGORITHM&                   algorithm,
+                const EncryptionKeyEllipticCurve& value)
 {
     using bslh::hashAppend;
 

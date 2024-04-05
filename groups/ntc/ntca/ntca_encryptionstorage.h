@@ -19,8 +19,8 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <ntca_encryptionkey.h>
 #include <ntca_encryptioncertificate.h>
+#include <ntca_encryptionkey.h>
 #include <ntca_encryptionresource.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
@@ -64,7 +64,7 @@ class EncryptionStoragePkcs7
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
     /// currently installed default allocator is used.
     EncryptionStoragePkcs7(const EncryptionStoragePkcs7& original,
-                  bslma::Allocator*    basicAllocator = 0);
+                           bslma::Allocator*             basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionStoragePkcs7();
@@ -116,14 +116,16 @@ class EncryptionStoragePkcs7
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionStoragePkcs7
-bsl::ostream& operator<<(bsl::ostream& stream, const EncryptionStoragePkcs7& object);
+bsl::ostream& operator<<(bsl::ostream&                 stream,
+                         const EncryptionStoragePkcs7& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
 /// @related ntca::EncryptionStoragePkcs7
-bool operator==(const EncryptionStoragePkcs7& lhs, const EncryptionStoragePkcs7& rhs);
+bool operator==(const EncryptionStoragePkcs7& lhs,
+                const EncryptionStoragePkcs7& rhs);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
 /// have the same value, and 'false' otherwise.  Two attribute objects do
@@ -131,35 +133,23 @@ bool operator==(const EncryptionStoragePkcs7& lhs, const EncryptionStoragePkcs7&
 /// values.
 ///
 /// @related ntca::EncryptionStoragePkcs7
-bool operator!=(const EncryptionStoragePkcs7& lhs, const EncryptionStoragePkcs7& rhs);
+bool operator!=(const EncryptionStoragePkcs7& lhs,
+                const EncryptionStoragePkcs7& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
 /// @related ntca::EncryptionStoragePkcs7
-bool operator<(const EncryptionStoragePkcs7& lhs, const EncryptionStoragePkcs7& rhs);
+bool operator<(const EncryptionStoragePkcs7& lhs,
+               const EncryptionStoragePkcs7& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
 /// @related ntca::EncryptionStoragePkcs7
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionStoragePkcs7& value);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+void hashAppend(HASH_ALGORITHM&               algorithm,
+                const EncryptionStoragePkcs7& value);
 
 /// Describe encryption storage in the PKCS8 format.
 ///
@@ -199,7 +189,7 @@ void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionStoragePkcs7& value);
 class EncryptionStoragePkcs8
 {
     ntca::EncryptionKey d_key;
-    bsl::uint32_t               d_flags;
+    bsl::uint32_t       d_flags;
 
   public:
     /// Create a new encryption storage the PKCS8 format having the default
@@ -213,7 +203,7 @@ class EncryptionStoragePkcs8
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
     /// currently installed default allocator is used.
     EncryptionStoragePkcs8(const EncryptionStoragePkcs8& original,
-                  bslma::Allocator*    basicAllocator = 0);
+                           bslma::Allocator*             basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionStoragePkcs8();
@@ -265,14 +255,16 @@ class EncryptionStoragePkcs8
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionStoragePkcs8
-bsl::ostream& operator<<(bsl::ostream& stream, const EncryptionStoragePkcs8& object);
+bsl::ostream& operator<<(bsl::ostream&                 stream,
+                         const EncryptionStoragePkcs8& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
 /// @related ntca::EncryptionStoragePkcs8
-bool operator==(const EncryptionStoragePkcs8& lhs, const EncryptionStoragePkcs8& rhs);
+bool operator==(const EncryptionStoragePkcs8& lhs,
+                const EncryptionStoragePkcs8& rhs);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
 /// have the same value, and 'false' otherwise.  Two attribute objects do
@@ -280,46 +272,23 @@ bool operator==(const EncryptionStoragePkcs8& lhs, const EncryptionStoragePkcs8&
 /// values.
 ///
 /// @related ntca::EncryptionStoragePkcs8
-bool operator!=(const EncryptionStoragePkcs8& lhs, const EncryptionStoragePkcs8& rhs);
+bool operator!=(const EncryptionStoragePkcs8& lhs,
+                const EncryptionStoragePkcs8& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
 /// @related ntca::EncryptionStoragePkcs8
-bool operator<(const EncryptionStoragePkcs8& lhs, const EncryptionStoragePkcs8& rhs);
+bool operator<(const EncryptionStoragePkcs8& lhs,
+               const EncryptionStoragePkcs8& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
 /// @related ntca::EncryptionStoragePkcs8
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionStoragePkcs8& value);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+void hashAppend(HASH_ALGORITHM&               algorithm,
+                const EncryptionStoragePkcs8& value);
 
 /// Describe encryption storage in the PKCS12 format.
 ///
@@ -341,10 +310,10 @@ void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionStoragePkcs8& value);
 /// @ingroup module_ntci_encryption
 class EncryptionStoragePkcs12
 {
-    bdlb::NullableValue<ntca::EncryptionKey> d_key;
+    bdlb::NullableValue<ntca::EncryptionKey>         d_key;
     bdlb::NullableValue<ntca::EncryptionCertificate> d_certificate;
     ntca::EncryptionCertificateVector d_certificateAuthorityList;
-    bsl::uint32_t                  d_flags;
+    bsl::uint32_t                     d_flags;
 
   public:
     /// Create a new encryption storage the PKCS12 format having the default
@@ -358,7 +327,7 @@ class EncryptionStoragePkcs12
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
     /// currently installed default allocator is used.
     EncryptionStoragePkcs12(const EncryptionStoragePkcs12& original,
-                  bslma::Allocator*    basicAllocator = 0);
+                            bslma::Allocator*              basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionStoragePkcs12();
@@ -377,15 +346,16 @@ class EncryptionStoragePkcs12
     /// Set the certificate to the specified 'value'.
     void setCertificate(const ntca::EncryptionCertificate& value);
 
-    /// Add the specified 'value' to the list of trusted certificate 
-    /// authorities. 
+    /// Add the specified 'value' to the list of trusted certificate
+    /// authorities.
     void addCertificateAuthority(const ntca::EncryptionCertificate& value);
 
     /// Return the key.
     const bdlb::NullableValue<ntca::EncryptionKey>& key() const;
 
     /// Return the certificate.
-    const bdlb::NullableValue<ntca::EncryptionCertificate>& certificate() const;
+    const bdlb::NullableValue<ntca::EncryptionCertificate>& certificate()
+        const;
 
     /// Return the list of trusted certificate authorities.
     const ntca::EncryptionCertificateVector& certificateAuthorityList() const;
@@ -423,14 +393,16 @@ class EncryptionStoragePkcs12
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionStoragePkcs12
-bsl::ostream& operator<<(bsl::ostream& stream, const EncryptionStoragePkcs12& object);
+bsl::ostream& operator<<(bsl::ostream&                  stream,
+                         const EncryptionStoragePkcs12& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
 /// @related ntca::EncryptionStoragePkcs12
-bool operator==(const EncryptionStoragePkcs12& lhs, const EncryptionStoragePkcs12& rhs);
+bool operator==(const EncryptionStoragePkcs12& lhs,
+                const EncryptionStoragePkcs12& rhs);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
 /// have the same value, and 'false' otherwise.  Two attribute objects do
@@ -438,37 +410,23 @@ bool operator==(const EncryptionStoragePkcs12& lhs, const EncryptionStoragePkcs1
 /// values.
 ///
 /// @related ntca::EncryptionStoragePkcs12
-bool operator!=(const EncryptionStoragePkcs12& lhs, const EncryptionStoragePkcs12& rhs);
+bool operator!=(const EncryptionStoragePkcs12& lhs,
+                const EncryptionStoragePkcs12& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
 /// @related ntca::EncryptionStoragePkcs12
-bool operator<(const EncryptionStoragePkcs12& lhs, const EncryptionStoragePkcs12& rhs);
+bool operator<(const EncryptionStoragePkcs12& lhs,
+               const EncryptionStoragePkcs12& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
 /// @related ntca::EncryptionStoragePkcs12
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionStoragePkcs12& value);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+void hashAppend(HASH_ALGORITHM&                algorithm,
+                const EncryptionStoragePkcs12& value);
 
 /// Describe encryption storage in the Privacy Encoded Mail (PEM) format.
 ///
@@ -580,7 +538,7 @@ class EncryptionStoragePem
     /// Return a reference to the modifiable "pkcs8" representation. The
     /// behavior is undefined unless 'isPkcs8()' is true.
     ntca::EncryptionStoragePkcs8& pkcs8();
-    
+
     /// Return a reference to the non-modifiable "key" representation. The
     /// behavior is undefined unless 'isKey()' is true.
     const ntca::EncryptionKey& key() const;
@@ -649,14 +607,16 @@ class EncryptionStoragePem
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionStoragePem
-bsl::ostream& operator<<(bsl::ostream& stream, const EncryptionStoragePem& object);
+bsl::ostream& operator<<(bsl::ostream&               stream,
+                         const EncryptionStoragePem& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
 /// @related ntca::EncryptionStoragePem
-bool operator==(const EncryptionStoragePem& lhs, const EncryptionStoragePem& rhs);
+bool operator==(const EncryptionStoragePem& lhs,
+                const EncryptionStoragePem& rhs);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
 /// have the same value, and 'false' otherwise.  Two attribute objects do
@@ -664,13 +624,15 @@ bool operator==(const EncryptionStoragePem& lhs, const EncryptionStoragePem& rhs
 /// values.
 ///
 /// @related ntca::EncryptionStoragePem
-bool operator!=(const EncryptionStoragePem& lhs, const EncryptionStoragePem& rhs);
+bool operator!=(const EncryptionStoragePem& lhs,
+                const EncryptionStoragePem& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
 /// @related ntca::EncryptionStoragePem
-bool operator<(const EncryptionStoragePem& lhs, const EncryptionStoragePem& rhs);
+bool operator<(const EncryptionStoragePem& lhs,
+               const EncryptionStoragePem& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
@@ -678,24 +640,6 @@ bool operator<(const EncryptionStoragePem& lhs, const EncryptionStoragePem& rhs)
 /// @related ntca::EncryptionStoragePem
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionStoragePem& value);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /// Describe encryption storage.
 ///
@@ -726,7 +670,15 @@ void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionStoragePem& value);
 /// @ingroup module_ntci_encryption
 class EncryptionStorage
 {
-    enum Type { e_UNDEFINED, e_KEY, e_CERTIFICATE, e_PKCS7, e_PKCS8, e_PKCS12, e_PEM };
+    enum Type {
+        e_UNDEFINED,
+        e_KEY,
+        e_CERTIFICATE,
+        e_PKCS7,
+        e_PKCS8,
+        e_PKCS12,
+        e_PEM
+    };
 
     union {
         bsls::ObjectBuffer<ntca::EncryptionKey>           d_key;
@@ -751,7 +703,7 @@ class EncryptionStorage
     /// to supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
     EncryptionStorage(const EncryptionStorage& original,
-                         bslma::Allocator*           basicAllocator = 0);
+                      bslma::Allocator*        basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionStorage();
@@ -799,7 +751,6 @@ class EncryptionStorage
     ntca::EncryptionStoragePkcs8& makePkcs8(
         const ntca::EncryptionStoragePkcs8& value);
 
-
     /// Select the "pkcs12" representation. Return a reference to the
     /// modifiable representation.
     ntca::EncryptionStoragePkcs12& makePkcs12();
@@ -841,7 +792,7 @@ class EncryptionStorage
     /// Return a reference to the modifiable "pem" representation. The
     /// behavior is undefined unless 'isPem()' is true.
     ntca::EncryptionStoragePem& pem();
-    
+
     /// Return a reference to the non-modifiable "key" representation. The
     /// behavior is undefined unless 'isKey()' is true.
     const ntca::EncryptionKey& key() const;
@@ -926,7 +877,8 @@ class EncryptionStorage
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionStorage
-bsl::ostream& operator<<(bsl::ostream& stream, const EncryptionStorage& object);
+bsl::ostream& operator<<(bsl::ostream&            stream,
+                         const EncryptionStorage& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
@@ -956,19 +908,6 @@ bool operator<(const EncryptionStorage& lhs, const EncryptionStorage& rhs);
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionStorage& value);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionStoragePkcs7& value)
 {
@@ -986,7 +925,8 @@ void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionStoragePkcs8& value)
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionStoragePkcs12& value)
+void hashAppend(HASH_ALGORITHM&                algorithm,
+                const EncryptionStoragePkcs12& value)
 {
     using bslh::hashAppend;
 
@@ -994,8 +934,6 @@ void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionStoragePkcs12& value)
     hashAppend(algorithm, value.certificate());
     hashAppend(algorithm, value.certificateAuthorityList());
 }
-
-
 
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionStoragePem& value)
@@ -1040,31 +978,6 @@ void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionStorage& value)
         hashAppend(algorithm, value.pem());
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 }  // close package namespace
 }  // close enterprise namespace

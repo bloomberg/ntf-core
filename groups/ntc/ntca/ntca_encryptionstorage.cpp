@@ -26,14 +26,16 @@ BSLS_IDENT_RCSID(ntca_encryptionstorage_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntca {
 
-EncryptionStoragePkcs7::EncryptionStoragePkcs7(bslma::Allocator* basicAllocator)
+EncryptionStoragePkcs7::EncryptionStoragePkcs7(
+    bslma::Allocator* basicAllocator)
 : d_certificate(basicAllocator)
 , d_flags(0)
 {
 }
 
-EncryptionStoragePkcs7::EncryptionStoragePkcs7(const EncryptionStoragePkcs7& original,
-                bslma::Allocator*    basicAllocator)
+EncryptionStoragePkcs7::EncryptionStoragePkcs7(
+    const EncryptionStoragePkcs7& original,
+    bslma::Allocator*             basicAllocator)
 : d_certificate(original.d_certificate, basicAllocator)
 , d_flags(original.d_flags)
 {
@@ -43,11 +45,12 @@ EncryptionStoragePkcs7::~EncryptionStoragePkcs7()
 {
 }
 
-EncryptionStoragePkcs7& EncryptionStoragePkcs7::operator=(const EncryptionStoragePkcs7& other)
+EncryptionStoragePkcs7& EncryptionStoragePkcs7::operator=(
+    const EncryptionStoragePkcs7& other)
 {
     if (this != &other) {
         d_certificate = other.d_certificate;
-        d_flags = other.d_flags;
+        d_flags       = other.d_flags;
     }
 
     return *this;
@@ -59,7 +62,8 @@ void EncryptionStoragePkcs7::reset()
     d_flags = 0;
 }
 
-void EncryptionStoragePkcs7::setCertificate(const ntca::EncryptionCertificate& value)
+void EncryptionStoragePkcs7::setCertificate(
+    const ntca::EncryptionCertificate& value)
 {
     d_certificate = value;
 }
@@ -68,7 +72,6 @@ const ntca::EncryptionCertificate& EncryptionStoragePkcs7::certificate() const
 {
     return d_certificate;
 }
-
 
 bool EncryptionStoragePkcs7::equals(const EncryptionStoragePkcs7& other) const
 {
@@ -89,8 +92,8 @@ bool EncryptionStoragePkcs7::less(const EncryptionStoragePkcs7& other) const
 }
 
 bsl::ostream& EncryptionStoragePkcs7::print(bsl::ostream& stream,
-                    int           level,
-                    int           spacesPerLevel) const
+                                            int           level,
+                                            int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -101,55 +104,40 @@ bsl::ostream& EncryptionStoragePkcs7::print(bsl::ostream& stream,
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, const EncryptionStoragePkcs7& object)
+bsl::ostream& operator<<(bsl::ostream&                 stream,
+                         const EncryptionStoragePkcs7& object)
 {
     return object.print(stream, 0, -1);
 }
 
-bool operator==(const EncryptionStoragePkcs7& lhs, const EncryptionStoragePkcs7& rhs)
+bool operator==(const EncryptionStoragePkcs7& lhs,
+                const EncryptionStoragePkcs7& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const EncryptionStoragePkcs7& lhs, const EncryptionStoragePkcs7& rhs)
+bool operator!=(const EncryptionStoragePkcs7& lhs,
+                const EncryptionStoragePkcs7& rhs)
 {
     return !operator==(lhs, rhs);
 }
 
-bool operator<(const EncryptionStoragePkcs7& lhs, const EncryptionStoragePkcs7& rhs)
+bool operator<(const EncryptionStoragePkcs7& lhs,
+               const EncryptionStoragePkcs7& rhs)
 {
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-EncryptionStoragePkcs8::EncryptionStoragePkcs8(bslma::Allocator* basicAllocator)
+EncryptionStoragePkcs8::EncryptionStoragePkcs8(
+    bslma::Allocator* basicAllocator)
 : d_key(basicAllocator)
 , d_flags(0)
 {
 }
 
-EncryptionStoragePkcs8::EncryptionStoragePkcs8(const EncryptionStoragePkcs8& original,
-                bslma::Allocator*    basicAllocator)
+EncryptionStoragePkcs8::EncryptionStoragePkcs8(
+    const EncryptionStoragePkcs8& original,
+    bslma::Allocator*             basicAllocator)
 : d_key(original.d_key, basicAllocator)
 , d_flags(original.d_flags)
 {
@@ -159,10 +147,11 @@ EncryptionStoragePkcs8::~EncryptionStoragePkcs8()
 {
 }
 
-EncryptionStoragePkcs8& EncryptionStoragePkcs8::operator=(const EncryptionStoragePkcs8& other)
+EncryptionStoragePkcs8& EncryptionStoragePkcs8::operator=(
+    const EncryptionStoragePkcs8& other)
 {
     if (this != &other) {
-        d_key = other.d_key;
+        d_key   = other.d_key;
         d_flags = other.d_flags;
     }
 
@@ -185,7 +174,6 @@ const ntca::EncryptionKey& EncryptionStoragePkcs8::key() const
     return d_key;
 }
 
-
 bool EncryptionStoragePkcs8::equals(const EncryptionStoragePkcs8& other) const
 {
     return d_key == other.d_key && d_flags == other.d_flags;
@@ -205,8 +193,8 @@ bool EncryptionStoragePkcs8::less(const EncryptionStoragePkcs8& other) const
 }
 
 bsl::ostream& EncryptionStoragePkcs8::print(bsl::ostream& stream,
-                    int           level,
-                    int           spacesPerLevel) const
+                                            int           level,
+                                            int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -217,41 +205,32 @@ bsl::ostream& EncryptionStoragePkcs8::print(bsl::ostream& stream,
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, const EncryptionStoragePkcs8& object)
+bsl::ostream& operator<<(bsl::ostream&                 stream,
+                         const EncryptionStoragePkcs8& object)
 {
     return object.print(stream, 0, -1);
 }
 
-bool operator==(const EncryptionStoragePkcs8& lhs, const EncryptionStoragePkcs8& rhs)
+bool operator==(const EncryptionStoragePkcs8& lhs,
+                const EncryptionStoragePkcs8& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const EncryptionStoragePkcs8& lhs, const EncryptionStoragePkcs8& rhs)
+bool operator!=(const EncryptionStoragePkcs8& lhs,
+                const EncryptionStoragePkcs8& rhs)
 {
     return !operator==(lhs, rhs);
 }
 
-bool operator<(const EncryptionStoragePkcs8& lhs, const EncryptionStoragePkcs8& rhs)
+bool operator<(const EncryptionStoragePkcs8& lhs,
+               const EncryptionStoragePkcs8& rhs)
 {
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-EncryptionStoragePkcs12::EncryptionStoragePkcs12(bslma::Allocator* basicAllocator)
+EncryptionStoragePkcs12::EncryptionStoragePkcs12(
+    bslma::Allocator* basicAllocator)
 : d_key(basicAllocator)
 , d_certificate(basicAllocator)
 , d_certificateAuthorityList(basicAllocator)
@@ -259,8 +238,9 @@ EncryptionStoragePkcs12::EncryptionStoragePkcs12(bslma::Allocator* basicAllocato
 {
 }
 
-EncryptionStoragePkcs12::EncryptionStoragePkcs12(const EncryptionStoragePkcs12& original,
-                bslma::Allocator*    basicAllocator)
+EncryptionStoragePkcs12::EncryptionStoragePkcs12(
+    const EncryptionStoragePkcs12& original,
+    bslma::Allocator*              basicAllocator)
 : d_key(original.d_key, basicAllocator)
 , d_certificate(original.d_certificate, basicAllocator)
 , d_certificateAuthorityList(d_certificateAuthorityList, basicAllocator)
@@ -272,13 +252,14 @@ EncryptionStoragePkcs12::~EncryptionStoragePkcs12()
 {
 }
 
-EncryptionStoragePkcs12& EncryptionStoragePkcs12::operator=(const EncryptionStoragePkcs12& other)
+EncryptionStoragePkcs12& EncryptionStoragePkcs12::operator=(
+    const EncryptionStoragePkcs12& other)
 {
     if (this != &other) {
-        d_key = other.d_key;
-        d_certificate = other.d_certificate;
+        d_key                      = other.d_key;
+        d_certificate              = other.d_certificate;
         d_certificateAuthorityList = other.d_certificateAuthorityList;
-        d_flags = other.d_flags;
+        d_flags                    = other.d_flags;
     }
 
     return *this;
@@ -297,39 +278,43 @@ void EncryptionStoragePkcs12::setKey(const ntca::EncryptionKey& value)
     d_key = value;
 }
 
-void EncryptionStoragePkcs12::setCertificate(const ntca::EncryptionCertificate& value)
+void EncryptionStoragePkcs12::setCertificate(
+    const ntca::EncryptionCertificate& value)
 {
     d_certificate = value;
 }
 
-void EncryptionStoragePkcs12::addCertificateAuthority(const ntca::EncryptionCertificate& value)
+void EncryptionStoragePkcs12::addCertificateAuthority(
+    const ntca::EncryptionCertificate& value)
 {
     d_certificateAuthorityList.push_back(value);
 }
 
-const bdlb::NullableValue<ntca::EncryptionKey>& EncryptionStoragePkcs12::key() const
+const bdlb::NullableValue<ntca::EncryptionKey>& EncryptionStoragePkcs12::key()
+    const
 {
     return d_key;
 }
 
-const bdlb::NullableValue<ntca::EncryptionCertificate>& EncryptionStoragePkcs12::certificate() const
+const bdlb::NullableValue<ntca::EncryptionCertificate>& EncryptionStoragePkcs12::
+    certificate() const
 {
     return d_certificate;
 }
 
-const ntca::EncryptionCertificateVector& EncryptionStoragePkcs12::certificateAuthorityList() const
+const ntca::EncryptionCertificateVector& EncryptionStoragePkcs12::
+    certificateAuthorityList() const
 {
     return d_certificateAuthorityList;
 }
 
-
-bool EncryptionStoragePkcs12::equals(const EncryptionStoragePkcs12& other) const
+bool EncryptionStoragePkcs12::equals(
+    const EncryptionStoragePkcs12& other) const
 {
-    return d_key == other.d_key && 
-        d_certificate == other.d_certificate &&
-        d_certificateAuthorityList == other.d_certificateAuthorityList &&
-        d_flags == other.d_flags;
-    }
+    return d_key == other.d_key && d_certificate == other.d_certificate &&
+           d_certificateAuthorityList == other.d_certificateAuthorityList &&
+           d_flags == other.d_flags;
+}
 
 bool EncryptionStoragePkcs12::less(const EncryptionStoragePkcs12& other) const
 {
@@ -341,7 +326,6 @@ bool EncryptionStoragePkcs12::less(const EncryptionStoragePkcs12& other) const
         return false;
     }
 
-
     if (d_certificate < other.d_certificate) {
         return true;
     }
@@ -349,7 +333,6 @@ bool EncryptionStoragePkcs12::less(const EncryptionStoragePkcs12& other) const
     if (other.d_certificate < d_certificate) {
         return false;
     }
-
 
     if (d_certificateAuthorityList < other.d_certificateAuthorityList) {
         return true;
@@ -359,13 +342,12 @@ bool EncryptionStoragePkcs12::less(const EncryptionStoragePkcs12& other) const
         return false;
     }
 
-
     return d_flags < other.d_flags;
 }
 
 bsl::ostream& EncryptionStoragePkcs12::print(bsl::ostream& stream,
-                    int           level,
-                    int           spacesPerLevel) const
+                                             int           level,
+                                             int spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -379,42 +361,37 @@ bsl::ostream& EncryptionStoragePkcs12::print(bsl::ostream& stream,
     }
 
     if (!d_certificateAuthorityList.empty()) {
-        printer.printAttribute("certificateAuthorityList", d_certificateAuthorityList);
+        printer.printAttribute("certificateAuthorityList",
+                               d_certificateAuthorityList);
     }
 
     printer.end();
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, const EncryptionStoragePkcs12& object)
+bsl::ostream& operator<<(bsl::ostream&                  stream,
+                         const EncryptionStoragePkcs12& object)
 {
     return object.print(stream, 0, -1);
 }
 
-bool operator==(const EncryptionStoragePkcs12& lhs, const EncryptionStoragePkcs12& rhs)
+bool operator==(const EncryptionStoragePkcs12& lhs,
+                const EncryptionStoragePkcs12& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const EncryptionStoragePkcs12& lhs, const EncryptionStoragePkcs12& rhs)
+bool operator!=(const EncryptionStoragePkcs12& lhs,
+                const EncryptionStoragePkcs12& rhs)
 {
     return !operator==(lhs, rhs);
 }
 
-bool operator<(const EncryptionStoragePkcs12& lhs, const EncryptionStoragePkcs12& rhs)
+bool operator<(const EncryptionStoragePkcs12& lhs,
+               const EncryptionStoragePkcs12& rhs)
 {
     return lhs.less(rhs);
 }
-
-
-
-
-
-
-
-
-
-
 
 EncryptionStoragePem::EncryptionStoragePem(bslma::Allocator* basicAllocator)
 : d_type(e_UNDEFINED)
@@ -422,8 +399,9 @@ EncryptionStoragePem::EncryptionStoragePem(bslma::Allocator* basicAllocator)
 {
 }
 
-EncryptionStoragePem::EncryptionStoragePem(const EncryptionStoragePem& original,
-                        bslma::Allocator*           basicAllocator)
+EncryptionStoragePem::EncryptionStoragePem(
+    const EncryptionStoragePem& original,
+    bslma::Allocator*           basicAllocator)
 : d_type(original.d_type)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -433,15 +411,18 @@ EncryptionStoragePem::EncryptionStoragePem(const EncryptionStoragePem& original,
     }
     else if (d_type == e_CERTIFICATE) {
         new (d_certificate.buffer())
-            ntca::EncryptionCertificate(original.d_certificate.object(), d_allocator_p);
+            ntca::EncryptionCertificate(original.d_certificate.object(),
+                                        d_allocator_p);
     }
     else if (d_type == e_PKCS7) {
         new (d_pkcs7.buffer())
-            ntca::EncryptionStoragePkcs7(original.d_pkcs7.object(), d_allocator_p);
+            ntca::EncryptionStoragePkcs7(original.d_pkcs7.object(),
+                                         d_allocator_p);
     }
     else if (d_type == e_PKCS8) {
         new (d_pkcs8.buffer())
-            ntca::EncryptionStoragePkcs8(original.d_pkcs8.object(), d_allocator_p);
+            ntca::EncryptionStoragePkcs8(original.d_pkcs8.object(),
+                                         d_allocator_p);
     }
     else {
         BSLS_ASSERT(d_type == e_UNDEFINED);
@@ -453,7 +434,8 @@ EncryptionStoragePem::~EncryptionStoragePem()
     this->reset();
 }
 
-EncryptionStoragePem& EncryptionStoragePem::operator=(const EncryptionStoragePem& other)
+EncryptionStoragePem& EncryptionStoragePem::operator=(
+    const EncryptionStoragePem& other)
 {
     if (this != &other) {
         if (other.d_type == e_KEY) {
@@ -516,7 +498,8 @@ ntca::EncryptionKey& EncryptionStoragePem::makeKey()
     return d_key.object();
 }
 
-ntca::EncryptionKey& EncryptionStoragePem::makeKey(const ntca::EncryptionKey& value)
+ntca::EncryptionKey& EncryptionStoragePem::makeKey(
+    const ntca::EncryptionKey& value)
 {
     if (d_type == e_KEY) {
         d_key.object() = value;
@@ -537,7 +520,8 @@ ntca::EncryptionCertificate& EncryptionStoragePem::makeCertificate()
     }
     else {
         this->reset();
-        new (d_certificate.buffer()) ntca::EncryptionCertificate(d_allocator_p);
+        new (d_certificate.buffer())
+            ntca::EncryptionCertificate(d_allocator_p);
         d_type = e_CERTIFICATE;
     }
 
@@ -552,7 +536,8 @@ ntca::EncryptionCertificate& EncryptionStoragePem::makeCertificate(
     }
     else {
         this->reset();
-        new (d_certificate.buffer()) ntca::EncryptionCertificate(value, d_allocator_p);
+        new (d_certificate.buffer())
+            ntca::EncryptionCertificate(value, d_allocator_p);
         d_type = e_CERTIFICATE;
     }
 
@@ -581,7 +566,8 @@ ntca::EncryptionStoragePkcs7& EncryptionStoragePem::makePkcs7(
     }
     else {
         this->reset();
-        new (d_pkcs7.buffer()) ntca::EncryptionStoragePkcs7(value, d_allocator_p);
+        new (d_pkcs7.buffer())
+            ntca::EncryptionStoragePkcs7(value, d_allocator_p);
         d_type = e_PKCS7;
     }
 
@@ -610,7 +596,8 @@ ntca::EncryptionStoragePkcs8& EncryptionStoragePem::makePkcs8(
     }
     else {
         this->reset();
-        new (d_pkcs8.buffer()) ntca::EncryptionStoragePkcs8(value, d_allocator_p);
+        new (d_pkcs8.buffer())
+            ntca::EncryptionStoragePkcs8(value, d_allocator_p);
         d_type = e_PKCS8;
     }
 
@@ -755,67 +742,29 @@ bsl::ostream& EncryptionStoragePem::print(bsl::ostream& stream,
     return stream;
 }
 
-
-bsl::ostream& operator<<(bsl::ostream& stream, const EncryptionStoragePem& object)
+bsl::ostream& operator<<(bsl::ostream&               stream,
+                         const EncryptionStoragePem& object)
 {
     return object.print(stream, 0, -1);
 }
 
-bool operator==(const EncryptionStoragePem& lhs, const EncryptionStoragePem& rhs)
+bool operator==(const EncryptionStoragePem& lhs,
+                const EncryptionStoragePem& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const EncryptionStoragePem& lhs, const EncryptionStoragePem& rhs)
+bool operator!=(const EncryptionStoragePem& lhs,
+                const EncryptionStoragePem& rhs)
 {
     return !operator==(lhs, rhs);
 }
 
-bool operator<(const EncryptionStoragePem& lhs, const EncryptionStoragePem& rhs)
+bool operator<(const EncryptionStoragePem& lhs,
+               const EncryptionStoragePem& rhs)
 {
     return lhs.less(rhs);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 EncryptionStorage::EncryptionStorage(bslma::Allocator* basicAllocator)
 : d_type(e_UNDEFINED)
@@ -824,7 +773,7 @@ EncryptionStorage::EncryptionStorage(bslma::Allocator* basicAllocator)
 }
 
 EncryptionStorage::EncryptionStorage(const EncryptionStorage& original,
-                        bslma::Allocator*           basicAllocator)
+                                     bslma::Allocator*        basicAllocator)
 : d_type(original.d_type)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -834,19 +783,23 @@ EncryptionStorage::EncryptionStorage(const EncryptionStorage& original,
     }
     else if (d_type == e_CERTIFICATE) {
         new (d_certificate.buffer())
-            ntca::EncryptionCertificate(original.d_certificate.object(), d_allocator_p);
+            ntca::EncryptionCertificate(original.d_certificate.object(),
+                                        d_allocator_p);
     }
     else if (d_type == e_PKCS7) {
         new (d_pkcs7.buffer())
-            ntca::EncryptionStoragePkcs7(original.d_pkcs7.object(), d_allocator_p);
+            ntca::EncryptionStoragePkcs7(original.d_pkcs7.object(),
+                                         d_allocator_p);
     }
     else if (d_type == e_PKCS8) {
         new (d_pkcs8.buffer())
-            ntca::EncryptionStoragePkcs8(original.d_pkcs8.object(), d_allocator_p);
+            ntca::EncryptionStoragePkcs8(original.d_pkcs8.object(),
+                                         d_allocator_p);
     }
     else if (d_type == e_PKCS12) {
         new (d_pkcs12.buffer())
-            ntca::EncryptionStoragePkcs12(original.d_pkcs12.object(), d_allocator_p);
+            ntca::EncryptionStoragePkcs12(original.d_pkcs12.object(),
+                                          d_allocator_p);
     }
     else if (d_type == e_PEM) {
         new (d_pem.buffer())
@@ -939,7 +892,8 @@ ntca::EncryptionKey& EncryptionStorage::makeKey()
     return d_key.object();
 }
 
-ntca::EncryptionKey& EncryptionStorage::makeKey(const ntca::EncryptionKey& value)
+ntca::EncryptionKey& EncryptionStorage::makeKey(
+    const ntca::EncryptionKey& value)
 {
     if (d_type == e_KEY) {
         d_key.object() = value;
@@ -960,7 +914,8 @@ ntca::EncryptionCertificate& EncryptionStorage::makeCertificate()
     }
     else {
         this->reset();
-        new (d_certificate.buffer()) ntca::EncryptionCertificate(d_allocator_p);
+        new (d_certificate.buffer())
+            ntca::EncryptionCertificate(d_allocator_p);
         d_type = e_CERTIFICATE;
     }
 
@@ -975,7 +930,8 @@ ntca::EncryptionCertificate& EncryptionStorage::makeCertificate(
     }
     else {
         this->reset();
-        new (d_certificate.buffer()) ntca::EncryptionCertificate(value, d_allocator_p);
+        new (d_certificate.buffer())
+            ntca::EncryptionCertificate(value, d_allocator_p);
         d_type = e_CERTIFICATE;
     }
 
@@ -1004,7 +960,8 @@ ntca::EncryptionStoragePkcs7& EncryptionStorage::makePkcs7(
     }
     else {
         this->reset();
-        new (d_pkcs7.buffer()) ntca::EncryptionStoragePkcs7(value, d_allocator_p);
+        new (d_pkcs7.buffer())
+            ntca::EncryptionStoragePkcs7(value, d_allocator_p);
         d_type = e_PKCS7;
     }
 
@@ -1033,17 +990,13 @@ ntca::EncryptionStoragePkcs8& EncryptionStorage::makePkcs8(
     }
     else {
         this->reset();
-        new (d_pkcs8.buffer()) ntca::EncryptionStoragePkcs8(value, d_allocator_p);
+        new (d_pkcs8.buffer())
+            ntca::EncryptionStoragePkcs8(value, d_allocator_p);
         d_type = e_PKCS8;
     }
 
     return d_pkcs8.object();
 }
-
-
-
-
-
 
 ntca::EncryptionStoragePkcs12& EncryptionStorage::makePkcs12()
 {
@@ -1067,15 +1020,13 @@ ntca::EncryptionStoragePkcs12& EncryptionStorage::makePkcs12(
     }
     else {
         this->reset();
-        new (d_pkcs12.buffer()) ntca::EncryptionStoragePkcs12(value, d_allocator_p);
+        new (d_pkcs12.buffer())
+            ntca::EncryptionStoragePkcs12(value, d_allocator_p);
         d_type = e_PKCS12;
     }
 
     return d_pkcs12.object();
 }
-
-
-
 
 ntca::EncryptionStoragePem& EncryptionStorage::makePem()
 {
@@ -1105,9 +1056,6 @@ ntca::EncryptionStoragePem& EncryptionStorage::makePem(
 
     return d_pem.object();
 }
-
-
-
 
 ntca::EncryptionKey& EncryptionStorage::key()
 {
@@ -1273,8 +1221,8 @@ bool EncryptionStorage::less(const EncryptionStorage& other) const
 }
 
 bsl::ostream& EncryptionStorage::print(bsl::ostream& stream,
-                                          int           level,
-                                          int           spacesPerLevel) const
+                                       int           level,
+                                       int           spacesPerLevel) const
 {
     if (d_type == e_KEY) {
         return d_key.object().print(stream, level, spacesPerLevel);
@@ -1299,7 +1247,6 @@ bsl::ostream& EncryptionStorage::print(bsl::ostream& stream,
     return stream;
 }
 
-
 bsl::ostream& operator<<(bsl::ostream& stream, const EncryptionStorage& object)
 {
     return object.print(stream, 0, -1);
@@ -1319,17 +1266,6 @@ bool operator<(const EncryptionStorage& lhs, const EncryptionStorage& rhs)
 {
     return lhs.less(rhs);
 }
-
-
-
-
-
-
-
-
-
-
-
 
 }  // close package namespace
 }  // close enterprise namespace
