@@ -3989,7 +3989,7 @@ NTCCFG_TEST_CASE(22)
 
         NTCI_LOG_DEBUG("Inject mocked ntsi::StreamSocket");
 
-        socketMock->expect_handle().willAlways().willReturn(handle);
+        NTF_EXPECT_0(*socketMock, handle).ALWAYS().RETURN(handle);
 
         NTF_EXPECT_1(*socketMock, setBlocking, NTF_EQ(false))
             .TIMES(2)
@@ -4088,8 +4088,9 @@ NTCCFG_TEST_CASE(22)
         NTCI_LOG_DEBUG("Shutdown socket while it is waiting for remote "
                        "endpoint resolution");
 
-        connectRetryTimerMock->expect_close().willOnce().willReturn(
-            ntsa::Error());
+        NTF_EXPECT_0(*connectRetryTimerMock, close)
+            .ONCE()
+            .RETURN(ntsa::Error());
 
         ntci::Reactor::Functor callback;
         NTF_EXPECT_1(*reactorMock, execute, IGNORE_ARG)
@@ -4105,7 +4106,7 @@ NTCCFG_TEST_CASE(22)
             .RETURN(ntsa::Error::invalid());
         //TODO: is that ok to detach socket that has not been attached?
 
-        socketMock->expect_close().willOnce().willReturn(ntsa::Error());
+        NTF_EXPECT_0(*socketMock, close).ONCE().RETURN(ntsa::Error());
 
         socket->shutdown(ntsa::ShutdownType::e_BOTH,
                          ntsa::ShutdownMode::e_GRACEFUL);
@@ -4185,7 +4186,7 @@ NTCCFG_TEST_CASE(23)
 
         NTCI_LOG_DEBUG("Inject mocked ntsi::StreamSocket");
 
-        socketMock->expect_handle().willAlways().willReturn(handle);
+        NTF_EXPECT_0(*socketMock, handle).ALWAYS().RETURN(handle);
 
         NTF_EXPECT_1(*socketMock, setBlocking, NTF_EQ(false))
             .TIMES(2)
@@ -4224,8 +4225,8 @@ NTCCFG_TEST_CASE(23)
             .RETURN(ntsa::Error())
             .SET_ARG_1(FROM_DEREF(rcvBufferSizeOption));
 
-        socketMock->expect_maxBuffersPerSend().willOnce().willReturn(22);
-        socketMock->expect_maxBuffersPerReceive().willOnce().willReturn(22);
+        NTF_EXPECT_0(*socketMock, maxBuffersPerSend).ONCE().RETURN(22);
+        NTF_EXPECT_0(*socketMock, maxBuffersPerReceive).ONCE().RETURN(22);
 
         NTF_EXPECT_0(*reactorMock, acquireHandleReservation)
             .ALWAYS()
@@ -4297,8 +4298,7 @@ NTCCFG_TEST_CASE(23)
         NTCI_LOG_DEBUG(
             "Shutdown socket while it is waiting for connection result");
 
-        connectRetryTimerMock->expect_close().willOnce().willReturn(
-            ntsa::Error());
+        NTF_EXPECT_0(*connectRetryTimerMock, close).ONCE().RETURN(ntsa::Error());
 
         ntci::SocketDetachedCallback detachCallback;
 
@@ -4311,7 +4311,7 @@ NTCCFG_TEST_CASE(23)
             .SAVE_ARG_2(TO(&detachCallback))
             .RETURN(ntsa::Error());
 
-        socketMock->expect_close().willOnce().willReturn(ntsa::Error());
+        NTF_EXPECT_0(*socketMock, close).ONCE().RETURN(ntsa::Error());
 
         socket->shutdown(ntsa::ShutdownType::e_BOTH,
                          ntsa::ShutdownMode::e_GRACEFUL);
