@@ -1983,7 +1983,7 @@ struct Invocation3
 {
     typedef InvocationData<RESULT, ARG1, ARG2, ARG3> InvocationDataT;
 
-    RESULT invoke(ARG1 arg1, ARG2 arg2)
+    RESULT invoke(ARG1 arg1, ARG2 arg2, ARG3 arg3)
     {
         NTCCFG_TEST_FALSE(d_invocations.empty());
         InvocationDataT& invocation = d_invocations.front();
@@ -1991,7 +1991,7 @@ struct Invocation3
             NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
         }
 
-        invocation.processArgs(arg1, arg2);
+        invocation.processArgs(arg1, arg2, arg3);
 
         InvocationResult<RESULT> result = invocation.d_result;  //copy by value
         if (invocation.d_expectedCalls != InvocationDataT::k_INFINITE_CALLS) {
@@ -2112,7 +2112,7 @@ struct Invocation3
             .expect(arg1, arg2, arg3);                                        \
     }                                                                         \
                                                                               \
-    template <class MATCHER1, class MATCHER2, class MATCHER 3>                \
+    template <class MATCHER1, class MATCHER2, class MATCHER3>                 \
     NewMock::Invocation3<RESULT, ARG1, ARG2, ARG3>& expect_##METHOD_NAME(     \
         const MATCHER1& arg1,                                                 \
         NewMock::TypeToType<ARG1>,                                            \

@@ -1403,28 +1403,23 @@ class ResolverMock : public ntci::Resolver
                         const bslstl::StringRef&,
                         const ntsa::IpAddress&)
 
-  public:
-    ntsa::Error setPort(const bslstl::StringRef&       serviceName,
-                        const bsl::vector<ntsa::Port>& portList,
-                        ntsa::Transport::Value         transport) override
-    {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
-    }
-    ntsa::Error addPort(const bslstl::StringRef&       serviceName,
-                        const bsl::vector<ntsa::Port>& portList,
-                        ntsa::Transport::Value         transport) override
-    {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
-    }
-    ntsa::Error addPort(const bslstl::StringRef& serviceName,
-                        ntsa::Port               port,
-                        ntsa::Transport::Value   transport) override
-    {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
-    }
+    NTF_MOCK_METHOD_NEW(ntsa::Error,
+                        setPort,
+                        const bslstl::StringRef&,
+                        const bsl::vector<ntsa::Port>&,
+                        ntsa::Transport::Value)
+
+    NTF_MOCK_METHOD_NEW(ntsa::Error,
+                        addPort,
+                        const bslstl::StringRef&,
+                        const bsl::vector<ntsa::Port>&,
+                        ntsa::Transport::Value)
+
+    NTF_MOCK_METHOD_NEW(ntsa::Error,
+                        addPort,
+                        const bslstl::StringRef&,
+                        ntsa::Port,
+                        ntsa::Transport::Value)
 
     NTF_MOCK_METHOD_NEW(ntsa::Error,
                         setLocalIpAddress,
@@ -1434,60 +1429,36 @@ class ResolverMock : public ntci::Resolver
                         setHostnameFullyQualified,
                         const bsl::string&)
 
-  public:
-    ntsa::Error getIpAddress(
-        const bslstl::StringRef&          domainName,
-        const ntca::GetIpAddressOptions&  options,
-        const ntci::GetIpAddressCallback& callback) override
-    {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
-    }
-    ntsa::Error getDomainName(
-        const ntsa::IpAddress&             ipAddress,
-        const ntca::GetDomainNameOptions&  options,
-        const ntci::GetDomainNameCallback& callback) override
-    {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
-    }
-    ntsa::Error getPort(const bslstl::StringRef&     serviceName,
-                        const ntca::GetPortOptions&  options,
-                        const ntci::GetPortCallback& callback) override
-    {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
-    }
-    ntsa::Error getServiceName(
-        ntsa::Port                          port,
-        const ntca::GetServiceNameOptions&  options,
-        const ntci::GetServiceNameCallback& callback) override
-    {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
-    }
-    ntsa::Error getEndpoint(const bslstl::StringRef&         text,
-                            const ntca::GetEndpointOptions&  options,
-                            const ntci::GetEndpointCallback& callback) override
-    {
-        if (d_getEndpoint_result.isNull()) {
-            UNEXPECTED_CALL();
-        }
-        if (d_getEndpoint_arg1.has_value()) {
-            NTCCFG_TEST_EQ(text, d_getEndpoint_arg1.value());
-            d_getEndpoint_arg1.reset();
-        }
-        if (d_getEndpoint_arg2.has_value()) {
-            NTCCFG_TEST_EQ(options, d_getEndpoint_arg2.value());
-            d_getEndpoint_arg2.reset();
-        }
-        NTCCFG_TEST_FALSE(d_getEndpoint_callback.has_value());
-        d_getEndpoint_callback = callback;
+    NTF_MOCK_METHOD_NEW(ntsa::Error,
+                        getIpAddress,
+                        const bslstl::StringRef&,
+                        const ntca::GetIpAddressOptions&,
+                        const ntci::GetIpAddressCallback&)
 
-        const auto res = d_getEndpoint_result.value();
-        d_getEndpoint_result.reset();
-        return res;
-    }
+    NTF_MOCK_METHOD_NEW(ntsa::Error,
+                        getDomainName,
+                        const ntsa::IpAddress&,
+                        const ntca::GetDomainNameOptions&,
+                        const ntci::GetDomainNameCallback&)
+
+    NTF_MOCK_METHOD_NEW(ntsa::Error,
+                        getPort,
+                        const bslstl::StringRef&,
+                        const ntca::GetPortOptions&,
+                        const ntci::GetPortCallback&)
+
+    NTF_MOCK_METHOD_NEW(ntsa::Error,
+                        getServiceName,
+                        ntsa::Port,
+                        const ntca::GetServiceNameOptions&,
+                        const ntci::GetServiceNameCallback&)
+
+    NTF_MOCK_METHOD_NEW(ntsa::Error,
+                        getEndpoint,
+                        const bslstl::StringRef&,
+                        const ntca::GetEndpointOptions&,
+                        const ntci::GetEndpointCallback&)
+
     NTF_MOCK_METHOD_NEW(ntsa::Error,
                         getLocalIpAddress,
                         bsl::vector<ntsa::IpAddress>*,
@@ -1497,43 +1468,22 @@ class ResolverMock : public ntci::Resolver
     NTF_MOCK_METHOD_NEW(bsl::shared_ptr<ntci::Strand>,
                         createStrand,
                         bslma::Allocator*)
-  public:
-    bsl::shared_ptr<ntci::Timer> createTimer(
-        const ntca::TimerOptions&                  options,
-        const bsl::shared_ptr<ntci::TimerSession>& session,
-        bslma::Allocator*                          basicAllocator) override
-    {
-        UNEXPECTED_CALL();
-        return bsl::shared_ptr<ntci::Timer>();
-    }
-    bsl::shared_ptr<ntci::Timer> createTimer(
-        const ntca::TimerOptions&  options,
-        const ntci::TimerCallback& callback,
-        bslma::Allocator*          basicAllocator) override
-    {
-        UNEXPECTED_CALL();
-        return bsl::shared_ptr<ntci::Timer>();
-    }
+
+    NTF_MOCK_METHOD_NEW(bsl::shared_ptr<ntci::Timer>,
+                        createTimer,
+                        const ntca::TimerOptions&,
+                        const bsl::shared_ptr<ntci::TimerSession>&,
+                        bslma::Allocator*)
+
+    NTF_MOCK_METHOD_NEW(bsl::shared_ptr<ntci::Timer>,
+                        createTimer,
+                        const ntca::TimerOptions&,
+                        const ntci::TimerCallback&,
+                        bslma::Allocator*)
     NTF_MOCK_METHOD_CONST_NEW(bsls::TimeInterval, currentTime)
-  public:
-    // auxiliary functions
-    void expect_getEndpoint_WillOnceReturn(
-        const bdlb::NullableValue<bslstl::StringRef>&        text,
-        const bdlb::NullableValue<ntca::GetEndpointOptions>& options,
-        ntsa::Error                                          error)
-    {
-        d_getEndpoint_arg1   = text;
-        d_getEndpoint_arg2   = options;
-        d_getEndpoint_result = error;
-    }
 
   private:
     bsl::shared_ptr<ntci::Strand> dummyStrand;
-
-    bdlb::NullableValue<bslstl::StringRef>         d_getEndpoint_arg1;
-    bdlb::NullableValue<ntca::GetEndpointOptions>  d_getEndpoint_arg2;
-    bdlb::NullableValue<ntci::GetEndpointCallback> d_getEndpoint_callback;
-    bdlb::NullableValue<ntsa::Error>               d_getEndpoint_result;
 };
 
 class BufferFactoryMock : public bdlbb::BlobBufferFactory
@@ -4352,9 +4302,13 @@ NTCCFG_TEST_CASE(22)
 
         NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
 
-        resolverMock->expect_getEndpoint_WillOnceReturn(epName,
-                                                        doNotCare,
-                                                        ntsa::Error());
+        NTF_EXPECT_3(*resolverMock,
+                     getEndpoint,
+                     NTF_EQ(epName),
+                     IGNORE_ARG,
+                     IGNORE_ARG)
+            .ONCE()
+            .RETURN(ntsa::Error());
 
         ntca::TimerEvent timerEvent;
         timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
