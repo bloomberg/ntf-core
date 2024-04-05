@@ -157,6 +157,11 @@ class EncryptionCertificate
     NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificate);
 };
 
+/// Define a type alias for a vector of encryption certificates.
+///
+/// @ingroup module_ntci_encryption
+typedef bsl::vector<ntca::EncryptionCertificate> EncryptionCertificateVector;
+
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///

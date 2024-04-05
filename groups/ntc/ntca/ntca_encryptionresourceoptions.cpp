@@ -199,6 +199,10 @@ bsl::ostream& EncryptionResourceOptions::print(bsl::ostream& stream,
         printer.printAttribute("secret", d_secret);
     }
 
+    if (!d_secretCallback.isNull()) {
+        printer.printAttribute("secretCallback", "<private>");
+    }
+
     if (!d_encrypted.isNull()) {
         printer.printAttribute("encrypted", d_encrypted);
     }

@@ -193,6 +193,11 @@ ntsa::Error EncryptionKey::encode(
     return ntsa::Error();
 }
 
+void EncryptionKey::print(bsl::ostream& stream) const
+{
+    stream << "<private>";
+}
+
 void* EncryptionKey::handle() const
 {
     return 0;

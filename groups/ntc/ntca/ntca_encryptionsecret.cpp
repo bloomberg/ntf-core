@@ -135,7 +135,7 @@ bsl::ostream& EncryptionSecret::print(bsl::ostream& stream,
     printer.start();
 
     if (!d_data.empty()) {
-        printer.printAttribute("data", "<secret>");
+        printer.printAttribute("data", "<private>");
     }
 
     printer.end();

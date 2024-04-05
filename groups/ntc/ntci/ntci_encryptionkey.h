@@ -111,6 +111,10 @@ class EncryptionKey
         bsl::vector<char>*                     destination,
         const ntca::EncryptionResourceOptions& options) const;
 
+    /// Print the public key parameters to the specified stream in an
+    /// unspecified but human-readable form.
+    virtual void print(bsl::ostream& stream) const;
+
     /// Return a handle to the private implementation.
     virtual void* handle() const;
 };
