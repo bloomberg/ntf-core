@@ -824,412 +824,14 @@ class TestAllocator : public bslma::Allocator
 #endif
 
 #include <bdlb_nullablevalue.h>
-#include <bslmf_removecvref.h>
-#include <bslmf_removepointer.h>
 #include <bsl_list.h>
 
-namespace framework {
-namespace internal {
-
-template <typename R>
-struct InvocationResult {
-    BloombergLP::bdlb::NullableValue<R> d_result;
-
-    InvocationResult()
-    : d_result()
-    {
-    }
-};
-
-template <>
-struct InvocationResult<void> {
-    InvocationResult()
-    {
-    }
-};
-
-template <typename ARG1>
-struct InvocationArg1 {
-    typedef typename bsl::remove_cvref<ARG1>::type
-        ARG1_type;  //TODO: do I need it?
-
-    BloombergLP::bdlb::NullableValue<ARG1_type> d_arg1_exp;
-    ARG1_type*                                  d_arg1_out;
-
-    InvocationArg1()
-    : d_arg1_exp()
-    , d_arg1_out(0)
-    {
-    }
-};
-
-template <typename ARG1>
-struct InvocationArg1<ARG1*> {
-    // typedef typename bsl::remove_cvref<ARG1>::type        ARG1_type;
-    // typedef typename bsl::remove_pointer<ARG1_type>::type ARG1_pure_type;
-    //
-    // BloombergLP::bdlb::NullableValue<ARG1_type*>     d_arg1_exp;
-    // BloombergLP::bdlb::NullableValue<ARG1_pure_type> d_arg1_in;
-    // ARG1_type**                                      d_arg1_out;
-
-    typedef typename bsl::remove_pointer<ARG1>::type ARG1_pure_type;
-
-    BloombergLP::bdlb::NullableValue<ARG1*>          d_arg1_exp;
-    BloombergLP::bdlb::NullableValue<ARG1_pure_type> d_arg1_in;
-    ARG1**                                           d_arg1_out;
-
-    InvocationArg1()
-    : d_arg1_exp()
-    , d_arg1_in()
-    , d_arg1_out(0)
-    {
-    }
-};
-
-template <typename ARG1>
-struct InvocationArg1<ARG1&> {
-    typedef typename bsl::remove_cvref<ARG1>::type        ARG1_type;
-    typedef typename bsl::remove_pointer<ARG1_type>::type ARG1_pure_type;
-
-    BloombergLP::bdlb::NullableValue<ARG1_type>      d_arg1_exp;
-    BloombergLP::bdlb::NullableValue<ARG1_pure_type> d_arg1_in;
-    ARG1_type*                                       d_arg1_out;
-
-    InvocationArg1()
-    : d_arg1_exp()
-    , d_arg1_in()
-    , d_arg1_out(0)
-    {
-    }
-};
-
-/*
-template <typename ARG1>
-struct InvocationArg1<ARG1 const &> {
-    typedef typename bsl::remove_cvref<ARG1>::type        ARG1_type;
-    typedef typename bsl::remove_pointer<ARG1_type>::type ARG1_pure_type;
-
-    BloombergLP::bdlb::NullableValue<ARG1_type>      d_arg1_exp;
-    ARG1_type*                                       d_arg1_out;
-
-    InvocationArg1()
-    : d_arg1_exp()
-    , d_arg1_out(0)
-    {
-    }
-};
-
-template <typename ARG1>
-struct InvocationArg1<ARG1 const *> {
-    typedef typename bsl::remove_cvref<ARG1>::type        ARG1_type;
-    typedef typename bsl::remove_pointer<ARG1_type>::type ARG1_pure_type;
-
-    BloombergLP::bdlb::NullableValue<ARG1_type>      d_arg1_exp;
-    ARG1_type*                                       d_arg1_out;
-
-    InvocationArg1()
-    : d_arg1_exp()
-    , d_arg1_out(0)
-    {
-    }
-};*/
-
-template <typename R>
-struct InvocationDataArg0 : public InvocationResult<R> {
-    int d_expectedCalls;
-        InvocationDataArg0()
-    : d_expectedCalls(0)
-    {
-    }
-};
-
-template <typename R, typename ARG1>
-struct InvocationDataArg1 : public InvocationResult<R>,
-                            public InvocationArg1<ARG1> {
-    int d_expectedCalls;
-        InvocationDataArg1()
-    : d_expectedCalls(0)
-    {
-    }
-};
-
-template <typename INVOCATION_DATA, typename SELF, typename RESULT>
-class InvocationBaseWillReturn
-{
-  public:
-    virtual INVOCATION_DATA& getInvocationDataBack() = 0;
-
-    SELF& willReturn(const RESULT& result)
-    {
-        INVOCATION_DATA& invocation = getInvocationDataBack();
-        invocation.d_result         = result;
-        return *(static_cast<SELF*>(this));
-    }
-};
-
-template <typename INVOCATION_DATA, typename SELF>
-class InvocationBaseWillReturn<INVOCATION_DATA, SELF, void>
-{
-  public:
-    virtual INVOCATION_DATA& getInvocationDataBack() = 0;
-};
-
-template <typename INVOCATION_DATA, typename RESULT>
-class InvocationBaseInvoke
-{
-  public:
-    RESULT finalizeInvocation()
-    {
-        INVOCATION_DATA& invocation = this->getInvocationDataFront();
-        NTCCFG_TEST_TRUE(invocation.d_result.has_value());
-        const auto result = invocation.d_result.value();
-        if (invocation.d_expectedCalls != -1) {
-            --invocation.d_expectedCalls;
-            if (invocation.d_expectedCalls == 0) {
-                this->removeInvocationDataFront();
-            }
-        }
-        return result;
-    }
-
-  private:
-    virtual INVOCATION_DATA& getInvocationDataFront()    = 0;
-    virtual void             removeInvocationDataFront() = 0;
-};
-
-template <typename INVOCATION_DATA>
-class InvocationBaseInvoke<INVOCATION_DATA, void>
-{
-  public:
-    void finalizeInvocation()
-    {
-        INVOCATION_DATA& invocation = this->getInvocationDataFront();
-        if (invocation.d_expectedCalls != -1) {
-            --invocation.d_expectedCalls;
-            if (invocation.d_expectedCalls == 0) {
-                this->removeInvocationDataFront();
-            }
-        }
-    }
-
-  private:
-    virtual INVOCATION_DATA& getInvocationDataFront()    = 0;
-    virtual void             removeInvocationDataFront() = 0;
-};
-
-template <typename SELF, typename INVOCATION_DATA>
-class InvocationBaseOnceAlways
-{
-  public:
-    SELF& willOnce()
-    {
-        INVOCATION_DATA& invocation = this->getInvocationDataBack();
-        NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
-
-        invocation.d_expectedCalls = 1;
-        return *(static_cast<SELF*>(this));
-    }
-    SELF& willAlways()
-    {
-        INVOCATION_DATA& invocation = this->getInvocationDataBack();
-        NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
-
-        invocation.d_expectedCalls = -1;
-        return *(static_cast<SELF*>(this));
-    }
-
-  private:
-    virtual INVOCATION_DATA& getInvocationDataBack() = 0;
-};
-
-struct NoArgProcessor {
-};
-
-template <typename INVOCATION_DATA,
-          typename SELF,
-          typename RESULT,
-          typename INVOCATION_ARG_PROCESSOR = NoArgProcessor>
-class InvocationBase
-: public InvocationBaseWillReturn<INVOCATION_DATA, SELF, RESULT>,
-  public InvocationBaseOnceAlways<SELF, INVOCATION_DATA>,
-  public InvocationBaseInvoke<INVOCATION_DATA, RESULT>,
-  public INVOCATION_ARG_PROCESSOR
-{
-  protected:
-    INVOCATION_DATA& getInvocationDataBack() override
-    {
-        NTCCFG_TEST_FALSE(this->d_invocations.empty());
-        return d_invocations.back();
-    }
-
-    INVOCATION_DATA& getInvocationDataFront() override
-    {
-        NTCCFG_TEST_FALSE(this->d_invocations.empty());
-        return d_invocations.front();
-    }
-
-    void removeInvocationDataFront() override
-    {
-        NTCCFG_TEST_FALSE(this->d_invocations.empty());
-        d_invocations.pop_front();
-    }
-
-    bsl::list<INVOCATION_DATA> d_invocations;
-};
-
-template <typename SELF, typename INVOCATION_DATA, typename ARG1>
-class InvocationArg1Processor
-{
-  public:
-    typedef typename bsl::remove_cvref<ARG1>::type        ARG1_type;
-    typedef typename bsl::remove_pointer<ARG1_type>::type ARG1_pure_type;
-
-    SELF& saveArg1(ARG1_type* arg1_out)
-    {
-        INVOCATION_DATA& invocation = this->getInvocationDataBack();
-        invocation.d_arg1_out       = arg1_out;
-        return *(static_cast<SELF*>(this));
-    }
-
-    virtual INVOCATION_DATA& getInvocationDataBack() = 0;
-};
-
-template <typename SELF, typename INVOCATION_DATA, typename ARG1>
-class InvocationArg1Processor<SELF, INVOCATION_DATA, ARG1*>
-{
-    typedef typename bsl::remove_cvref<ARG1>::type        ARG1_type;
-    typedef typename bsl::remove_pointer<ARG1_type>::type ARG1_pure_type;
-
-  public:
-    SELF& setArg1To(const ARG1_pure_type& arg1_in)
-    {
-        INVOCATION_DATA& invocation = this->getInvocationDataBack();
-        invocation.d_arg1_in        = arg1_in;
-        return *(static_cast<SELF*>(this));
-    }
-    SELF& saveArg1(ARG1_type** arg1_out)
-    {
-        INVOCATION_DATA& invocation = this->getInvocationDataBack();
-        invocation.d_arg1_out       = arg1_out;
-        return *(static_cast<SELF*>(this));
-    }
-
-  protected:
-    virtual INVOCATION_DATA& getInvocationDataBack() = 0;
-};
-
-template <typename SELF, typename INVOCATION_DATA, typename ARG1>
-class InvocationArg1Processor<SELF, INVOCATION_DATA, ARG1&>
-{
-    typedef typename bsl::remove_cvref<ARG1>::type        ARG1_type;
-    typedef typename bsl::remove_pointer<ARG1_type>::type ARG1_pure_type;
-
-  public:
-    SELF& setArg1To(const ARG1_pure_type& arg1_in)
-    {
-        INVOCATION_DATA& invocation = this->getInvocationDataBack();
-        invocation.d_arg1_in        = arg1_in;
-        return *(static_cast<SELF*>(this));
-    }
-    SELF& saveArg1(ARG1_type* arg1_out)
-    {
-        INVOCATION_DATA& invocation = this->getInvocationDataBack();
-        invocation.d_arg1_out       = arg1_out;
-        return *(static_cast<SELF*>(this));
-    }
-
-  protected:
-    virtual INVOCATION_DATA& getInvocationDataBack() = 0;
-};
-
-template <typename RESULT>
-class Invocation0 : public InvocationBase<InvocationDataArg0<RESULT>,
-                                          Invocation0<RESULT>,
-                                          RESULT>
-{
-    typedef InvocationDataArg0<RESULT> InvocationDataImpl;
-
-  public:
-    Invocation0& expect()
-    {
-        this->d_invocations.emplace_back();
-        return *this;
-    }
-
-    RESULT invoke()
-    {
-        NTCCFG_TEST_FALSE(this->d_invocations.empty());
-        InvocationDataImpl& invocation = this->d_invocations.front();
-        if (invocation.d_expectedCalls != -1) {
-            NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
-        }
-
-        return this->finalizeInvocation();
-    }
-};
-
-template <typename RESULT, typename ARG1>
-class Invocation1
-: public InvocationBase<
-      InvocationDataArg1<RESULT, ARG1>,
-      Invocation1<RESULT, ARG1>,
-      RESULT,
-      InvocationArg1Processor<Invocation1<RESULT, ARG1>,
-                              InvocationDataArg1<RESULT, ARG1>,
-                              ARG1> >
-{
-    typedef InvocationDataArg1<RESULT, ARG1> InvocationDataImpl;
-
-  public:
-    typedef typename bsl::remove_cvref<ARG1>::type        ARG1_type;
-    typedef typename bsl::remove_pointer<ARG1_type>::type ARG1_pure_type;
-
-    Invocation1& expect(
-        const BloombergLP::bdlb::NullableValue<ARG1_type>& arg1)
-    {
-        this->d_invocations.emplace_back();
-        InvocationDataImpl& invocation = this->d_invocations.back();
-        invocation.d_arg1_exp          = arg1;
-        return *this;
-    }
-
-    // Invocation1& setArg1To(const ARG1_pure_type& arg1In)
-    // {
-    //     NTCCFG_TEST_FALSE(this->d_invocations.empty());
-    //     InvocationDataImpl& invocation = this->d_invocations.back();
-    //     invocation.d_arg1_in           = arg1In;
-    //     return *this;
-    // }
-
-    RESULT invoke(ARG1 arg1)
-    {
-        NTCCFG_TEST_FALSE(this->d_invocations.empty());
-        InvocationDataImpl& invocation = this->d_invocations.front();
-        if (invocation.d_expectedCalls != -1) {
-            NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
-        }
-        if (invocation.d_arg1_exp.has_value()) {
-            NTCCFG_TEST_EQ(arg1, invocation.d_arg1_exp.value());
-        }
-        // if (invocation.d_arg1_out) {
-        //     *invocation.d_arg1_out = arg1;
-        // }
-        // if (invocation.d_arg1_in.has_value()) {
-        //     arg1 = invocation.d_arg1_in.value();
-        // }
-        return this->finalizeInvocation();
-    }
-};
-
-}
-}
 
 #define NTF_CAT2_(A, B) A##B
 #define NTF_CAT2(A, B) NTF_CAT2_(A, B)
 
 #define NTF_EXPAND(X) X
 #define NTF_CAT(A, B) A##B
-// #define NTF_CAT(A, B) NTF_CAT_(A, B)
 #define NTF_SELECT(NAME, NUM) NTF_CAT(NAME##_, NUM)
 
 #define NTF_GET_COUNT(_1, _2, _3, _4, _5, _6, COUNT, ...) COUNT
@@ -1239,65 +841,6 @@ class Invocation1
 #define NTF_VA_SELECT(NAME, ...)                                              \
     NTF_SELECT(NAME, NTF_VA_SIZE(__VA_ARGS__))(__VA_ARGS__)
 
-#define NTF_MOCK_METHOD_0_IMP(RESULT, METHOD_NAME)                            \
-  public:                                                                     \
-    framework::internal::Invocation0<RESULT>& expect_##METHOD_NAME()          \
-    {                                                                         \
-        return d_invocation_##METHOD_NAME.expect();                           \
-    }                                                                         \
-                                                                              \
-  private:                                                                    \
-    mutable framework::internal::Invocation0<RESULT>                          \
-        d_invocation_##METHOD_NAME;
-
-#define NTF_MOCK_METHOD_1_IMP(RESULT, METHOD_NAME, ARG1)                      \
-  public:                                                                     \
-    framework::internal::Invocation1<RESULT, ARG1>& expect_##METHOD_NAME(     \
-        const bdlb::NullableValue<bsl::remove_cvref<ARG1>::type>& arg1)       \
-    {                                                                         \
-        return d_invocation_##METHOD_NAME.expect(arg1);                       \
-    }                                                                         \
-                                                                              \
-  private:                                                                    \
-    mutable framework::internal::Invocation1<RESULT, ARG1>                    \
-        d_invocation_##METHOD_NAME;
-
-#define NTF_MOCK_METHOD_0(RESULT, METHOD_NAME)                                \
-  public:                                                                     \
-    RESULT METHOD_NAME() override                                             \
-    {                                                                         \
-        return d_invocation_##METHOD_NAME.invoke();                           \
-    }                                                                         \
-    NTF_MOCK_METHOD_0_IMP(RESULT, METHOD_NAME)
-
-#define NTF_MOCK_METHOD_CONST_0(RESULT, METHOD_NAME)                          \
-  public:                                                                     \
-    RESULT METHOD_NAME() const override                                       \
-    {                                                                         \
-        return d_invocation_##METHOD_NAME.invoke();                           \
-    }                                                                         \
-    NTF_MOCK_METHOD_0_IMP(RESULT, METHOD_NAME)
-
-#define NTF_MOCK_METHOD_1(RESULT, METHOD_NAME, ARG1)                          \
-  public:                                                                     \
-    RESULT METHOD_NAME(ARG1 arg1) override                                    \
-    {                                                                         \
-        return d_invocation_##METHOD_NAME.invoke(arg1);                       \
-    }                                                                         \
-    NTF_MOCK_METHOD_1_IMP(RESULT, METHOD_NAME, ARG1)
-
-#define NTF_MOCK_METHOD_CONST_1(RESULT, METHOD_NAME, ARG1)                    \
-  public:                                                                     \
-    RESULT METHOD_NAME(ARG1 arg1) const override                              \
-    {                                                                         \
-        return d_invocation_##METHOD_NAME.invoke(arg1);                       \
-    }                                                                         \
-    NTF_MOCK_METHOD_1_IMP(RESULT, METHOD_NAME, ARG1)
-
-#define NTF_MOCK_METHOD(...) NTF_VA_SELECT(NTF_MOCK_METHOD, __VA_ARGS__)
-
-#define NTF_MOCK_METHOD_CONST(...)                                            \
-    NTF_VA_SELECT(NTF_MOCK_METHOD_CONST, __VA_ARGS__)
 
 namespace NewMock {
 
@@ -1452,6 +995,17 @@ struct EqMatcher {
     }
 
     EXP exp;
+};
+
+struct IgnoreArg {
+    static bool ignore()
+    {
+        return true;
+    }
+    template <class T>
+    void process(T)
+    {
+    }
 };
 
 template <template <class, class> class COMPARATOR, class EXP>
@@ -1819,16 +1373,36 @@ struct Invocation0
     bsl::list<InvocationDataT> d_invocations;
 };
 
-struct IgnoreArg {
-    static bool ignore()
-    {
-        return true;
-    }
-    template <class T>
-    void process(T)
-    {
-    }
-};
+template <class T>
+bool operator==(const T&, const IgnoreArg&)
+{
+    NTCCFG_TEST_ASSERT(false);
+    return false;
+}
+template <class T>
+bool operator!=(const T&, const IgnoreArg&)
+{
+    NTCCFG_TEST_ASSERT(false);
+    return false;
+}
+template <class T>
+bool operator==(const IgnoreArg&, const T&)
+{
+    NTCCFG_TEST_ASSERT(false);
+    return false;
+}
+template <class T>
+bool operator!=(const IgnoreArg&, const T&)
+{
+    NTCCFG_TEST_ASSERT(false);
+    return false;
+}
+
+inline bsl::ostream& operator<<(bsl::ostream& stream, const IgnoreArg&)
+{
+    NTCCFG_TEST_ASSERT(false);
+    return stream;
+}
 
 template <class T>
 struct TypeToType {
@@ -2173,7 +1747,7 @@ struct Invocation3
 
 #define NTF_MOCK_METHOD_CONST_NEW_2(RESULT, METHOD_NAME, ARG1, ARG2)          \
   public:                                                                     \
-    RESULT METHOD_NAME(ARG2 arg2, ARG2 arg2) const override                   \
+    RESULT METHOD_NAME(ARG1 arg1, ARG2 arg2) const override                   \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .invoke(arg1, arg2);                                              \
@@ -2191,12 +1765,12 @@ struct Invocation3
 
 #define NTF_MOCK_METHOD_CONST_NEW_3(RESULT, METHOD_NAME, ARG1, ARG2, ARG3)    \
   public:                                                                     \
-    RESULT METHOD_NAME(ARG2 arg2, ARG2 arg2, ARG3 arg3) const override        \
+    RESULT METHOD_NAME(ARG1 arg1, ARG2 arg2, ARG3 arg3) const override        \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .invoke(arg1, arg2, arg3);                                        \
     }                                                                         \
-    NTF_MOCK_METHOD_2_IMP_NEW(RESULT, METHOD_NAME, ARG1, ARG2)
+    NTF_MOCK_METHOD_3_IMP_NEW(RESULT, METHOD_NAME, ARG1, ARG2, ARG3)
 
 #define NTF_MOCK_METHOD_NEW(...)                                              \
     NTF_VA_SELECT(NTF_MOCK_METHOD_NEW, __VA_ARGS__)
@@ -2208,6 +1782,8 @@ struct Invocation3
 #define NTF_EQ_SPEC(ARG, SPEC)                                                \
     NewMock::createEqMatcher<NewMock::DirectComparator>(ARG),                 \
         NewMock::TypeToType<SPEC>()
+#define IGNORE_ARG NewMock::IgnoreArg()
+#define IGNORE_ARG_S(SPEC) NewMock::IgnoreArg(), NewMock::TypeToType<SPEC>()
 
 #define NTF_EQ_DEREF(ARG)                                                     \
     NewMock::createEqMatcher<NewMock::DerefComparator>(ARG)
@@ -2246,5 +1822,3 @@ struct Invocation3
 #define SET_ARG_2(...) setArg2(__VA_ARGS__)
 #define SET_ARG_3(...) setArg3(__VA_ARGS__)
 #define SET_ARG_4(...) setArg4(__VA_ARGS__)
-
-#define IGNORE_ARG NewMock::IgnoreArg()
