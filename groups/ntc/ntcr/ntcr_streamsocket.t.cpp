@@ -1877,24 +1877,6 @@ class ReactorMock : public ntci::Reactor
                         const ntci::TimerCallback&,
                         bslma::Allocator*)
   public:
-    // bsl::shared_ptr<ntci::Timer> createTimer(
-    //     const ntca::TimerOptions&                  options,
-    //     const bsl::shared_ptr<ntci::TimerSession>& session,
-    //     bslma::Allocator*                          basicAllocator) override
-    // {
-    //     UNEXPECTED_CALL();
-    //
-    //     return bsl::shared_ptr<ntci::Timer>();
-    // }
-    // bsl::shared_ptr<ntci::Timer> createTimer(
-    //     const ntca::TimerOptions&  options,
-    //     const ntci::TimerCallback& callback,
-    //     bslma::Allocator*          basicAllocator) override
-    // {
-    //     return d_invocation_createTimer.invoke(options,
-    //                                            callback,
-    //                                            basicAllocator);
-    // }
     const bsl::shared_ptr<ntci::Strand>& strand() const override
     {
         UNEXPECTED_CALL();
@@ -1902,7 +1884,6 @@ class ReactorMock : public ntci::Reactor
     }
     NTF_MOCK_METHOD_CONST_NEW(bsls::TimeInterval, currentTime)
 
-  public:
   public:
     // auxiliary methods
     void expect_dataPool_WillAlwaysReturn(
@@ -1940,13 +1921,11 @@ class TimerMock : public ntci::Timer
                         const bsls::TimeInterval&)
     NTF_MOCK_METHOD_NEW(ntsa::Error, cancel)
     NTF_MOCK_METHOD_NEW(ntsa::Error, close)
-  public:
-    void arrive(const bsl::shared_ptr<ntci::Timer>& self,
-                const bsls::TimeInterval&           now,
-                const bsls::TimeInterval&           deadline) override
-    {
-        UNEXPECTED_CALL();
-    }
+    NTF_MOCK_METHOD_NEW(void,
+                        arrive,
+                        const bsl::shared_ptr<ntci::Timer>&,
+                        const bsls::TimeInterval&,
+                        const bsls::TimeInterval&)
     NTF_MOCK_METHOD_CONST_NEW(void*, handle)
     NTF_MOCK_METHOD_CONST_NEW(int, id)
     NTF_MOCK_METHOD_CONST_NEW(bool, oneShot)
@@ -3952,7 +3931,7 @@ NTCCFG_TEST_CASE(22)
     {
         NTCI_LOG_DEBUG("Fixture setup, socket creation...");
 
-        const ntsa::Handle   handle    = 22;
+        const ntsa::Handle handle = 22;
 
         bdlb::NullableValue<ntca::ConnectEvent> connectResult;
 
@@ -4068,9 +4047,9 @@ NTCCFG_TEST_CASE(22)
 
         NTF_EXPECT_3(*reactorMock,
                      createTimer,
-                     IGNORE_ARG_S( const ntca::TimerOptions&),
-                     IGNORE_ARG_S( const ntci::TimerCallback&),
-                     IGNORE_ARG_S( bslma::Allocator*))
+                     IGNORE_ARG_S(const ntca::TimerOptions&),
+                     IGNORE_ARG_S(const ntci::TimerCallback&),
+                     IGNORE_ARG_S(bslma::Allocator*))
             .ONCE()
             .SAVE_ARG_2(TO(&retryTimerCallback))
             .RETURN(connectRetryTimerMock);
@@ -4430,9 +4409,9 @@ NTCCFG_TEST_CASE(24)
 
             NTF_EXPECT_3(*reactorMock,
                          createTimer,
-                         IGNORE_ARG_S( const ntca::TimerOptions&),
-                         IGNORE_ARG_S( const ntci::TimerCallback&),
-                         IGNORE_ARG_S( bslma::Allocator*))
+                         IGNORE_ARG_S(const ntca::TimerOptions&),
+                         IGNORE_ARG_S(const ntci::TimerCallback&),
+                         IGNORE_ARG_S(bslma::Allocator*))
                 .ONCE()
                 .SAVE_ARG_2(TO(&deadlineTimerCallback))
                 .RETURN(connectDeadlineTimerMock);
@@ -4452,9 +4431,9 @@ NTCCFG_TEST_CASE(24)
 
             NTF_EXPECT_3(*reactorMock,
                          createTimer,
-                         IGNORE_ARG_S( const ntca::TimerOptions&),
-                         IGNORE_ARG_S( const ntci::TimerCallback&),
-                         IGNORE_ARG_S( bslma::Allocator*))
+                         IGNORE_ARG_S(const ntca::TimerOptions&),
+                         IGNORE_ARG_S(const ntci::TimerCallback&),
+                         IGNORE_ARG_S(bslma::Allocator*))
                 .ONCE()
                 .SAVE_ARG_2(TO(&retryTimerCallback))
                 .RETURN(connectRetryTimerMock);
