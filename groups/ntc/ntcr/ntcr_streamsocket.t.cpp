@@ -1912,42 +1912,15 @@ class ReactorMock : public ntci::Reactor
                         const bsl::shared_ptr<ntci::ReactorSocket>&)
     NTF_MOCK_METHOD_NEW(ntsa::Error, detachSocket, ntsa::Handle)
 
-  public:
-    ntsa::Error detachSocket(
-        const bsl::shared_ptr<ntci::ReactorSocket>& socket,
-        const ntci::SocketDetachedCallback&         callback) override
-    {
-        if (d_detachSocket_result.isNull()) {
-            UNEXPECTED_CALL();
-        }
+    NTF_MOCK_METHOD_NEW(ntsa::Error,
+                        detachSocket,
+                        const bsl::shared_ptr<ntci::ReactorSocket>&,
+                        const ntci::SocketDetachedCallback&)
+    NTF_MOCK_METHOD_NEW(ntsa::Error,
+                        detachSocket,
+                        ntsa::Handle,
+                        const ntci::SocketDetachedCallback&)
 
-        if (d_detachSocket_arg2.has_value()) {
-            NTCCFG_TEST_EQ(callback, d_detachSocket_arg2.value());
-            d_detachSocket_arg2.reset();
-        }
-        else {
-            d_detachSocket_arg2 = callback;
-        }
-
-        if (d_detachSocket_arg1.has_value()) {
-            NTCCFG_TEST_EQ(socket, d_detachSocket_arg1.value());
-            d_detachSocket_arg1.reset();
-        }
-        else {
-            d_detachSocket_arg1 = socket;  //TODO: how to clean it then?
-        }
-
-        const auto result = d_detachSocket_result.value();
-        d_detachSocket_result.reset();
-        return result;
-    }
-    ntsa::Error detachSocket(
-        ntsa::Handle                        handle,
-        const ntci::SocketDetachedCallback& callback) override
-    {
-        UNEXPECTED_CALL();
-        return ntsa::Error();
-    }
     NTF_MOCK_METHOD_NEW(ntsa::Error, closeAll)
     NTF_MOCK_METHOD_NEW(void, incrementLoad, const ntca::LoadBalancingOptions&)
     NTF_MOCK_METHOD_NEW(void, decrementLoad, const ntca::LoadBalancingOptions&)
@@ -2210,25 +2183,6 @@ class ReactorMock : public ntci::Reactor
         return d_invocation_createTimer.expect(arg1, arg2, arg3);
     }
 
-    void expect_detachSocket_WillOnceReturn(
-        const bdlb::NullableValue<bsl::shared_ptr<ntci::ReactorSocket> >&
-                                                                 socket,
-        const bdlb::NullableValue<ntci::SocketDetachedCallback>& callback,
-        const ntsa::Error&                                       result)
-    {
-        d_detachSocket_result = result;
-        d_detachSocket_arg1   = socket;
-        d_detachSocket_arg2   = callback;
-    }
-
-    ntci::SocketDetachedCallback extract_detachCallback()
-    {
-        NTCCFG_TEST_TRUE(d_detachSocket_arg2.has_value());
-        const auto res = d_detachSocket_arg2.value();
-        d_detachSocket_arg2.reset();
-        return res;
-    }
-
   private:
     bdlb::NullableValue<bsl::shared_ptr<bdlbb::BlobBufferFactory> >
         d_incomingBlobBufferFactory_result;
@@ -2236,11 +2190,6 @@ class ReactorMock : public ntci::Reactor
                                   d_outgoingBlobBufferFactory_result;
     bsl::shared_ptr<ntci::Strand> dummyStrand;
     bdlb::NullableValue<bsl::shared_ptr<ntci::DataPool> > d_dataPool_result;
-
-    bdlb::NullableValue<ntsa::Error> d_detachSocket_result;
-    bdlb::NullableValue<bsl::shared_ptr<ntci::ReactorSocket> >
-                                                      d_detachSocket_arg1;
-    bdlb::NullableValue<ntci::SocketDetachedCallback> d_detachSocket_arg2;
 
     Invocation_createTimer d_invocation_createTimer;
 };
@@ -2260,11 +2209,7 @@ class TimerMock : public ntci::Timer
     {
         UNEXPECTED_CALL();
     }
-    void* handle() const override
-    {
-        UNEXPECTED_CALL();
-        return nullptr;
-    }
+    NTF_MOCK_METHOD_CONST_NEW(void*, handle)
     NTF_MOCK_METHOD_CONST_NEW(int, id)
     NTF_MOCK_METHOD_CONST_NEW(bool, oneShot)
     NTF_MOCK_METHOD_CONST_NEW(bslmt::ThreadUtil::Handle, threadHandle)
@@ -4426,10 +4371,13 @@ NTCCFG_TEST_CASE(22)
             .ONCE()
             .SAVE_ARG_1(TO(&callback));
 
-        reactorMock->expect_detachSocket_WillOnceReturn(
-            socket,
-            doNotCare,
-            ntsa::Error::invalid());
+        NTF_EXPECT_2(
+            *reactorMock,
+            detachSocket,
+            NTF_EQ_SPEC(socket, const bsl::shared_ptr<ntci::ReactorSocket>&),
+            IGNORE_ARG)
+            .ONCE()
+            .RETURN(ntsa::Error::invalid());
         //TODO: is that ok to detach socket that has not been attached?
 
         socketMock->expect_close().willOnce().willReturn(ntsa::Error());
@@ -4622,16 +4570,22 @@ NTCCFG_TEST_CASE(23)
         connectRetryTimerMock->expect_close().willOnce().willReturn(
             ntsa::Error());
 
-        reactorMock->expect_detachSocket_WillOnceReturn(socket,
-                                                        doNotCare,
-                                                        ntsa::Error());
+        ntci::SocketDetachedCallback detachCallback;
+
+        NTF_EXPECT_2(
+            *reactorMock,
+            detachSocket,
+            NTF_EQ_SPEC(socket, const bsl::shared_ptr<ntci::ReactorSocket>&),
+            IGNORE_ARG)
+            .ONCE()
+            .SAVE_ARG_2(TO(&detachCallback))
+            .RETURN(ntsa::Error());
 
         socketMock->expect_close().willOnce().willReturn(ntsa::Error());
 
         socket->shutdown(ntsa::ShutdownType::e_BOTH,
                          ntsa::ShutdownMode::e_GRACEFUL);
 
-        const auto detachCallback = reactorMock->extract_detachCallback();
         NTCCFG_TEST_TRUE(detachCallback);
 
         ntci::Reactor::Functor callback;
@@ -4792,21 +4746,27 @@ NTCCFG_TEST_CASE(24)
         NTCI_LOG_DEBUG(
             "Shutdown socket while it is waiting for connection result");
 
+        ntci::SocketDetachedCallback detachCallback;
         {
             connectRetryTimerMock->expect_close().willOnce().willReturn(
                 ntsa::Error());
             connectDeadlineTimerMock->expect_close().willOnce().willReturn(
                 ntsa::Error());
 
-            reactorMock->expect_detachSocket_WillOnceReturn(socket,
-                                                            doNotCare,
-                                                            ntsa::Error());
+            NTF_EXPECT_2(
+                *reactorMock,
+                detachSocket,
+                NTF_EQ_SPEC(socket,
+                            const bsl::shared_ptr<ntci::ReactorSocket>&),
+                IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_2(TO(&detachCallback))
+                .RETURN(ntsa::Error());
         }
 
         socket->shutdown(ntsa::ShutdownType::e_BOTH,
                          ntsa::ShutdownMode::e_GRACEFUL);
 
-        const auto detachCallback = reactorMock->extract_detachCallback();
         NTCCFG_TEST_TRUE(detachCallback);
 
         ntci::Reactor::Functor callback;

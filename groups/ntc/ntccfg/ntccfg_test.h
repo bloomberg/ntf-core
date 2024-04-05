@@ -1540,24 +1540,120 @@ struct InvocationBaseTimes {
     }
 };
 
-template <class RESULT, class ARG1, class ARG2, class ARG3>
-struct InvocationData {
+template <class RESULT>
+struct InvocationDataBase {
     enum { k_INFINITE_CALLS = -1 };
 
     int                      d_expectedCalls;
     InvocationResult<RESULT> d_result;
+};
 
+template <class RESULT,
+          class ARG1 = NO_ARG,
+          class ARG2 = NO_ARG,
+          class ARG3 = NO_ARG,
+          class ARG4 = NO_ARG,
+          class ARG5 = NO_ARG>
+struct InvocationData {
+  private:
+    InvocationData();
+};
+
+template <class RESULT>
+struct InvocationData<RESULT> : public InvocationDataBase<RESULT> {
+};
+
+template <class RESULT, class ARG1>
+struct InvocationData<RESULT, ARG1> : public InvocationData<RESULT> {
     bsl::shared_ptr<ProcessInterface<ARG1> > arg1Matcher;
-    bsl::shared_ptr<ProcessInterface<ARG2> > arg2Matcher;
-    bsl::shared_ptr<ProcessInterface<ARG3> > arg3Matcher;
-
     bsl::shared_ptr<ProcessInterface<ARG1> > arg1Extractor;
-    bsl::shared_ptr<ProcessInterface<ARG2> > arg2Extractor;
-    bsl::shared_ptr<ProcessInterface<ARG3> > arg3Extractor;
-
     bsl::shared_ptr<ProcessInterface<ARG1> > arg1Setter;
+
+    void processArgs(ARG1 arg1)
+    {
+        if (arg1Matcher) {
+            arg1Matcher->process(arg1);
+        }
+        if (arg1Extractor) {
+            arg1Extractor->process(arg1);
+        }
+        if (arg1Setter) {
+            arg1Setter->process(arg1);
+        }
+    }
+};
+
+template <class RESULT, class ARG1, class ARG2>
+struct InvocationData<RESULT, ARG1, ARG2>
+: public InvocationData<RESULT, ARG1> {
+    typedef InvocationData<RESULT, ARG1> BASE;
+
+    bsl::shared_ptr<ProcessInterface<ARG2> > arg2Matcher;
+    bsl::shared_ptr<ProcessInterface<ARG2> > arg2Extractor;
     bsl::shared_ptr<ProcessInterface<ARG2> > arg2Setter;
-    bsl::shared_ptr<ProcessInterface<ARG3> > arg3Setter;
+
+    void processArgs(ARG1 arg1, ARG2 arg2)
+    {
+        BASE::processArgs(arg1);
+
+        if (arg2Matcher) {
+            arg2Matcher->process(arg2);
+        }
+        if (arg2Extractor) {
+            arg2Extractor->process(arg2);
+        }
+        if (arg2Setter) {
+            arg2Setter->process(arg2);
+        }
+    }
+};
+
+template <class RESULT, class ARG1, class ARG2, class ARG3>
+struct InvocationData<RESULT, ARG1, ARG2, ARG3>
+: public InvocationData<RESULT, ARG1, ARG2> {
+    typedef InvocationData<RESULT, ARG1, ARG2> BASE;
+    bsl::shared_ptr<ProcessInterface<ARG3> >   arg3Matcher;
+    bsl::shared_ptr<ProcessInterface<ARG3> >   arg3Extractor;
+    bsl::shared_ptr<ProcessInterface<ARG3> >   arg3Setter;
+
+    void processArgs(ARG1 arg1, ARG2 arg2, ARG3 arg3)
+    {
+        BASE::processArgs(arg1, arg2);
+
+        if (arg3Matcher) {
+            arg3Matcher->process(arg3);
+        }
+        if (arg3Extractor) {
+            arg3Extractor->process(arg3);
+        }
+        if (arg3Setter) {
+            arg3Setter->process(arg3);
+        }
+    }
+};
+
+template <class RESULT, class ARG1, class ARG2, class ARG3, class ARG4>
+struct InvocationData<RESULT, ARG1, ARG2, ARG3, ARG4>
+: public InvocationData<RESULT, ARG1, ARG2, ARG3> {
+    typedef InvocationData<RESULT, ARG1, ARG2, ARG3> BASE;
+    bsl::shared_ptr<ProcessInterface<ARG4> >         arg4Matcher;
+    bsl::shared_ptr<ProcessInterface<ARG4> >         arg4Extractor;
+    bsl::shared_ptr<ProcessInterface<ARG4> >         arg4Setter;
+
+    void processArgs(ARG1 arg1, ARG2 arg2, ARG3 arg3, ARG4 arg4)
+    {
+        BASE::processArgs(arg1, arg2, arg3);
+
+        if (arg4Matcher) {
+            arg4Matcher->process(arg4);
+        }
+        if (arg4Extractor) {
+            arg4Extractor->process(arg4);
+        }
+        if (arg4Setter) {
+            arg4Setter->process(arg4);
+        }
+    }
 };
 
 template <class RESULT>
@@ -1621,16 +1717,16 @@ struct TypeToType {
 template <class RESULT, class ARG1>
 struct Invocation1
 
-: public InvocationBaseWillReturn<InvocationData<RESULT, ARG1, NO_ARG, NO_ARG>,
+: public InvocationBaseWillReturn<InvocationData<RESULT, ARG1>,
                                   Invocation1<RESULT, ARG1>,
                                   RESULT>,
-  public InvocationBaseTimes<InvocationData<RESULT, ARG1, NO_ARG, NO_ARG>,
+  public InvocationBaseTimes<InvocationData<RESULT, ARG1>,
                              Invocation1<RESULT, ARG1> >
 
 {
-    typedef InvocationData<RESULT, ARG1, NO_ARG, NO_ARG> InvocationDataT;
-    typedef ARG1                                         ARG1_TYPE;
-    TypeToType<ARG1> k_overload_key;  //TODO: make static
+    typedef InvocationData<RESULT, ARG1> InvocationDataT;
+    typedef ARG1                         ARG1_TYPE;
+    TypeToType<ARG1>                     k_overload_key;  //TODO: make static
 
     RESULT invoke(ARG1 arg)
     {
@@ -1640,15 +1736,7 @@ struct Invocation1
             NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
         }
 
-        if (invocation.arg1Matcher) {
-            invocation.arg1Matcher->process(arg);
-        }
-        if (invocation.arg1Extractor) {
-            invocation.arg1Extractor->process(arg);
-        }
-        if (invocation.arg1Setter) {
-            invocation.arg1Setter->process(arg);
-        }
+        invocation.processArgs(arg);
 
         InvocationResult<RESULT> result = invocation.d_result;  //copy by value
         if (invocation.d_expectedCalls != InvocationDataT::k_INFINITE_CALLS) {
@@ -1659,12 +1747,6 @@ struct Invocation1
         }
         return result.get();
     }
-
-    // Invocation1& expect(const IgnoreArg&)
-    // {
-    //     d_invocations.emplace_back();
-    //     return *this;
-    // }
 
     template <class ARG1_MATCHER>
     Invocation1& expect(const ARG1_MATCHER& arg1Matcher)
@@ -1721,16 +1803,14 @@ struct Invocation1
 template <class RESULT, class ARG1, class ARG2>
 struct Invocation2
 
-: public InvocationBaseWillReturn<InvocationData<RESULT, ARG1, ARG2, NO_ARG>,
+: public InvocationBaseWillReturn<InvocationData<RESULT, ARG1, ARG2>,
                                   Invocation2<RESULT, ARG1, ARG2>,
                                   RESULT>,
-  public InvocationBaseTimes<InvocationData<RESULT, ARG1, ARG2, NO_ARG>,
+  public InvocationBaseTimes<InvocationData<RESULT, ARG1, ARG2>,
                              Invocation2<RESULT, ARG1, ARG2> >
 
 {
-    typedef InvocationData<RESULT, ARG1, ARG2, NO_ARG> InvocationDataT;
-    typedef ARG1                                       ARG1_TYPE;
-    typedef ARG2                                       ARG2_TYPE;
+    typedef InvocationData<RESULT, ARG1, ARG2> InvocationDataT;
 
     RESULT invoke(ARG1 arg1, ARG2 arg2)
     {
@@ -1740,25 +1820,7 @@ struct Invocation2
             NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
         }
 
-        if (invocation.arg1Matcher) {
-            invocation.arg1Matcher->process(arg1);
-        }
-        if (invocation.arg1Extractor) {
-            invocation.arg1Extractor->process(arg1);
-        }
-        if (invocation.arg1Setter) {
-            invocation.arg1Setter->process(arg1);
-        }
-
-        if (invocation.arg2Matcher) {
-            invocation.arg2Matcher->process(arg2);
-        }
-        if (invocation.arg2Extractor) {
-            invocation.arg2Extractor->process(arg2);
-        }
-        if (invocation.arg2Setter) {
-            invocation.arg2Setter->process(arg2);
-        }
+        invocation.processArgs(arg1, arg2);
 
         InvocationResult<RESULT> result = invocation.d_result;  //copy by value
         if (invocation.d_expectedCalls != InvocationDataT::k_INFINITE_CALLS) {
@@ -1769,12 +1831,6 @@ struct Invocation2
         }
         return result.get();
     }
-
-    // Invocation2& expect(const IgnoreArg&, const IgnoreArg&)
-    // {
-    //     d_invocations.emplace_back();
-    //     return *this;
-    // }
 
     template <class ARG1_MATCHER, class ARG2_MATCHER>
     Invocation2& expect(const ARG1_MATCHER& arg1Matcher,
@@ -1810,6 +1866,20 @@ struct Invocation2
                 new ExtractorHolder<ARG1, ARG_EXTRACTOR>(extractor));
 
         data.arg1Extractor = extractorInterface;
+
+        return *this;
+    }
+
+    template <class ARG_EXTRACTOR>
+    Invocation2& saveArg2(const ARG_EXTRACTOR& extractor)
+    {
+        InvocationDataT& data = getInvocationDataBack();
+
+        bsl::shared_ptr<ExtractorHolder<ARG2, ARG_EXTRACTOR> >
+            extractorInterface(
+                new ExtractorHolder<ARG2, ARG_EXTRACTOR>(extractor));
+
+        data.arg2Extractor = extractorInterface;
 
         return *this;
     }
@@ -1869,6 +1939,17 @@ struct Invocation2
     NewMock::Invocation2<RESULT, ARG1, ARG2>& expect_##METHOD_NAME(           \
         const MATCHER1& arg1,                                                 \
         const MATCHER2& arg2)                                                 \
+    {                                                                         \
+        return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
+            .expect(arg1, arg2);                                              \
+    }                                                                         \
+                                                                              \
+    template <class MATCHER1, class MATCHER2>                                 \
+    NewMock::Invocation2<RESULT, ARG1, ARG2>& expect_##METHOD_NAME(           \
+        const MATCHER1& arg1,                                                 \
+        NewMock::TypeToType<ARG1>,                                            \
+        const MATCHER2& arg2,                                                 \
+        NewMock::TypeToType<ARG2> = NewMock::TypeToType<ARG2>())              \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .expect(arg1, arg2);                                              \
@@ -1961,6 +2042,7 @@ struct Invocation2
 #define TO_DEREF(ARG) NewMock::createExtractor<NewMock::DerefPolicy>(ARG)
 
 #define SAVE_ARG_1(...) saveArg1(__VA_ARGS__)
+#define SAVE_ARG_2(...) saveArg2(__VA_ARGS__)
 
 #define FROM(ARG) NewMock::createSetter<NewMock::DefaultSetter>(ARG)
 
