@@ -1108,11 +1108,7 @@ template <class RESULT,
           class ARG3 = NO_ARG,
           class ARG4 = NO_ARG,
           class ARG5 = NO_ARG>
-struct InvocationData {
-  private:
-     InvocationData();
-    ~InvocationData();
-};
+struct InvocationData;
 
 template <class RESULT>
 struct InvocationData<RESULT> : public InvocationDataBase<RESULT> {
@@ -1372,37 +1368,6 @@ struct Invocation0
 
     bsl::list<InvocationDataT> d_invocations;
 };
-
-template <class T>
-bool operator==(const T&, const IgnoreArg&)
-{
-    NTCCFG_TEST_ASSERT(false);
-    return false;
-}
-template <class T>
-bool operator!=(const T&, const IgnoreArg&)
-{
-    NTCCFG_TEST_ASSERT(false);
-    return false;
-}
-template <class T>
-bool operator==(const IgnoreArg&, const T&)
-{
-    NTCCFG_TEST_ASSERT(false);
-    return false;
-}
-template <class T>
-bool operator!=(const IgnoreArg&, const T&)
-{
-    NTCCFG_TEST_ASSERT(false);
-    return false;
-}
-
-inline bsl::ostream& operator<<(bsl::ostream& stream, const IgnoreArg&)
-{
-    NTCCFG_TEST_ASSERT(false);
-    return stream;
-}
 
 template <class T>
 struct TypeToType {
