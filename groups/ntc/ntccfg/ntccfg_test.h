@@ -826,7 +826,6 @@ class TestAllocator : public bslma::Allocator
 #include <bdlb_nullablevalue.h>
 #include <bsl_list.h>
 
-
 #define NTF_CAT2_(A, B) A##B
 #define NTF_CAT2(A, B) NTF_CAT2_(A, B)
 
@@ -841,8 +840,7 @@ class TestAllocator : public bslma::Allocator
 #define NTF_VA_SELECT(NAME, ...)                                              \
     NTF_SELECT(NAME, NTF_VA_SIZE(__VA_ARGS__))(__VA_ARGS__)
 
-
-namespace NewMock {
+namespace ntf_mock {
 
 template <class ARG>
 struct ProcessInterface {
@@ -1587,35 +1585,35 @@ struct Invocation3
 
 }
 
-#define NTF_MOCK_METHOD_0_IMP_NEW(RESULT, METHOD_NAME)                        \
+#define NTF_MOCK_METHOD_0_IMP(RESULT, METHOD_NAME)                            \
   public:                                                                     \
-    NewMock::Invocation0<RESULT>& expect_##METHOD_NAME()                      \
+    ntf_mock::Invocation0<RESULT>& expect_##METHOD_NAME()                         \
     {                                                                         \
         return d_invocation_##METHOD_NAME.expect();                           \
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable NewMock::Invocation0<RESULT> d_invocation_##METHOD_NAME;
+    mutable ntf_mock::Invocation0<RESULT> d_invocation_##METHOD_NAME;
 
-#define NTF_MOCK_METHOD_1_IMP_NEW(RESULT, METHOD_NAME, ARG1)                  \
+#define NTF_MOCK_METHOD_1_IMP(RESULT, METHOD_NAME, ARG1)                      \
   public:                                                                     \
     template <class MATCHER>                                                  \
-    NewMock::Invocation1<RESULT, ARG1>& expect_##METHOD_NAME(                 \
+    ntf_mock::Invocation1<RESULT, ARG1>& expect_##METHOD_NAME(                    \
         const MATCHER& arg1,                                                  \
-        NewMock::TypeToType<ARG1> = NewMock::TypeToType<ARG1>())              \
+        ntf_mock::TypeToType<ARG1> = ntf_mock::TypeToType<ARG1>())                    \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__).expect(arg1);   \
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable NewMock::Invocation1<RESULT, ARG1> NTF_CAT2(                      \
+    mutable ntf_mock::Invocation1<RESULT, ARG1> NTF_CAT2(                         \
         d_invocation_##METHOD_NAME,                                           \
         __LINE__);
 
-#define NTF_MOCK_METHOD_2_IMP_NEW(RESULT, METHOD_NAME, ARG1, ARG2)            \
+#define NTF_MOCK_METHOD_2_IMP(RESULT, METHOD_NAME, ARG1, ARG2)                \
   public:                                                                     \
     template <class MATCHER1, class MATCHER2>                                 \
-    NewMock::Invocation2<RESULT, ARG1, ARG2>& expect_##METHOD_NAME(           \
+    ntf_mock::Invocation2<RESULT, ARG1, ARG2>& expect_##METHOD_NAME(              \
         const MATCHER1& arg1,                                                 \
         const MATCHER2& arg2)                                                 \
     {                                                                         \
@@ -1624,25 +1622,25 @@ struct Invocation3
     }                                                                         \
                                                                               \
     template <class MATCHER1, class MATCHER2>                                 \
-    NewMock::Invocation2<RESULT, ARG1, ARG2>& expect_##METHOD_NAME(           \
+    ntf_mock::Invocation2<RESULT, ARG1, ARG2>& expect_##METHOD_NAME(              \
         const MATCHER1& arg1,                                                 \
-        NewMock::TypeToType<ARG1>,                                            \
+        ntf_mock::TypeToType<ARG1>,                                               \
         const MATCHER2& arg2,                                                 \
-        NewMock::TypeToType<ARG2> = NewMock::TypeToType<ARG2>())              \
+        ntf_mock::TypeToType<ARG2> = ntf_mock::TypeToType<ARG2>())                    \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .expect(arg1, arg2);                                              \
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable NewMock::Invocation2<RESULT, ARG1, ARG2> NTF_CAT2(                \
+    mutable ntf_mock::Invocation2<RESULT, ARG1, ARG2> NTF_CAT2(                   \
         d_invocation_##METHOD_NAME,                                           \
         __LINE__);
 
-#define NTF_MOCK_METHOD_3_IMP_NEW(RESULT, METHOD_NAME, ARG1, ARG2, ARG3)      \
+#define NTF_MOCK_METHOD_3_IMP(RESULT, METHOD_NAME, ARG1, ARG2, ARG3)          \
   public:                                                                     \
     template <class MATCHER1, class MATCHER2, class MATCHER3>                 \
-    NewMock::Invocation3<RESULT, ARG1, ARG2, ARG3>& expect_##METHOD_NAME(     \
+    ntf_mock::Invocation3<RESULT, ARG1, ARG2, ARG3>& expect_##METHOD_NAME(        \
         const MATCHER1& arg1,                                                 \
         const MATCHER2& arg2,                                                 \
         const MATCHER3& arg3)                                                 \
@@ -1652,109 +1650,106 @@ struct Invocation3
     }                                                                         \
                                                                               \
     template <class MATCHER1, class MATCHER2, class MATCHER3>                 \
-    NewMock::Invocation3<RESULT, ARG1, ARG2, ARG3>& expect_##METHOD_NAME(     \
+    ntf_mock::Invocation3<RESULT, ARG1, ARG2, ARG3>& expect_##METHOD_NAME(        \
         const MATCHER1& arg1,                                                 \
-        NewMock::TypeToType<ARG1>,                                            \
+        ntf_mock::TypeToType<ARG1>,                                               \
         const MATCHER2& arg2,                                                 \
-        NewMock::TypeToType<ARG2>,                                            \
+        ntf_mock::TypeToType<ARG2>,                                               \
         const MATCHER3& arg3,                                                 \
-        NewMock::TypeToType<ARG3>)                                            \
+        ntf_mock::TypeToType<ARG3>)                                               \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .expect(arg1, arg2, arg3);                                        \
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable NewMock::Invocation3<RESULT, ARG1, ARG2, ARG3> NTF_CAT2(          \
+    mutable ntf_mock::Invocation3<RESULT, ARG1, ARG2, ARG3> NTF_CAT2(             \
         d_invocation_##METHOD_NAME,                                           \
         __LINE__);
 
-#define NTF_MOCK_METHOD_NEW_0(RESULT, METHOD_NAME)                            \
+#define NTF_MOCK_METHOD_0(RESULT, METHOD_NAME)                                \
   public:                                                                     \
     RESULT METHOD_NAME() override                                             \
     {                                                                         \
         return d_invocation_##METHOD_NAME.invoke();                           \
     }                                                                         \
-    NTF_MOCK_METHOD_0_IMP_NEW(RESULT, METHOD_NAME)
+    NTF_MOCK_METHOD_0_IMP(RESULT, METHOD_NAME)
 
-#define NTF_MOCK_METHOD_CONST_NEW_0(RESULT, METHOD_NAME)                      \
+#define NTF_MOCK_METHOD_CONST_0(RESULT, METHOD_NAME)                          \
   public:                                                                     \
     RESULT METHOD_NAME() const override                                       \
     {                                                                         \
         return d_invocation_##METHOD_NAME.invoke();                           \
     }                                                                         \
-    NTF_MOCK_METHOD_0_IMP_NEW(RESULT, METHOD_NAME)
+    NTF_MOCK_METHOD_0_IMP(RESULT, METHOD_NAME)
 
-#define NTF_MOCK_METHOD_NEW_1(RESULT, METHOD_NAME, ARG1)                      \
+#define NTF_MOCK_METHOD_1(RESULT, METHOD_NAME, ARG1)                          \
   public:                                                                     \
     RESULT METHOD_NAME(ARG1 arg1) override                                    \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__).invoke(arg1);   \
     }                                                                         \
-    NTF_MOCK_METHOD_1_IMP_NEW(RESULT, METHOD_NAME, ARG1)
+    NTF_MOCK_METHOD_1_IMP(RESULT, METHOD_NAME, ARG1)
 
-#define NTF_MOCK_METHOD_CONST_NEW_1(RESULT, METHOD_NAME, ARG1)                \
+#define NTF_MOCK_METHOD_CONST_1(RESULT, METHOD_NAME, ARG1)                    \
   public:                                                                     \
     RESULT METHOD_NAME(ARG1 arg1) const override                              \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__).invoke(arg1);   \
     }                                                                         \
-    NTF_MOCK_METHOD_1_IMP_NEW(RESULT, METHOD_NAME, ARG1)
+    NTF_MOCK_METHOD_1_IMP(RESULT, METHOD_NAME, ARG1)
 
-#define NTF_MOCK_METHOD_NEW_2(RESULT, METHOD_NAME, ARG1, ARG2)                \
+#define NTF_MOCK_METHOD_2(RESULT, METHOD_NAME, ARG1, ARG2)                    \
   public:                                                                     \
     RESULT METHOD_NAME(ARG1 arg1, ARG2 arg2) override                         \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .invoke(arg1, arg2);                                              \
     }                                                                         \
-    NTF_MOCK_METHOD_2_IMP_NEW(RESULT, METHOD_NAME, ARG1, ARG2)
+    NTF_MOCK_METHOD_2_IMP(RESULT, METHOD_NAME, ARG1, ARG2)
 
-#define NTF_MOCK_METHOD_CONST_NEW_2(RESULT, METHOD_NAME, ARG1, ARG2)          \
+#define NTF_MOCK_METHOD_CONST_2(RESULT, METHOD_NAME, ARG1, ARG2)              \
   public:                                                                     \
     RESULT METHOD_NAME(ARG1 arg1, ARG2 arg2) const override                   \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .invoke(arg1, arg2);                                              \
     }                                                                         \
-    NTF_MOCK_METHOD_2_IMP_NEW(RESULT, METHOD_NAME, ARG1, ARG2)
+    NTF_MOCK_METHOD_2_IMP(RESULT, METHOD_NAME, ARG1, ARG2)
 
-#define NTF_MOCK_METHOD_NEW_3(RESULT, METHOD_NAME, ARG1, ARG2, ARG3)          \
+#define NTF_MOCK_METHOD_3(RESULT, METHOD_NAME, ARG1, ARG2, ARG3)              \
   public:                                                                     \
     RESULT METHOD_NAME(ARG1 arg1, ARG2 arg2, ARG3 arg3) override              \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .invoke(arg1, arg2, arg3);                                        \
     }                                                                         \
-    NTF_MOCK_METHOD_3_IMP_NEW(RESULT, METHOD_NAME, ARG1, ARG2, ARG3)
+    NTF_MOCK_METHOD_3_IMP(RESULT, METHOD_NAME, ARG1, ARG2, ARG3)
 
-#define NTF_MOCK_METHOD_CONST_NEW_3(RESULT, METHOD_NAME, ARG1, ARG2, ARG3)    \
+#define NTF_MOCK_METHOD_CONST_3(RESULT, METHOD_NAME, ARG1, ARG2, ARG3)        \
   public:                                                                     \
     RESULT METHOD_NAME(ARG1 arg1, ARG2 arg2, ARG3 arg3) const override        \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .invoke(arg1, arg2, arg3);                                        \
     }                                                                         \
-    NTF_MOCK_METHOD_3_IMP_NEW(RESULT, METHOD_NAME, ARG1, ARG2, ARG3)
+    NTF_MOCK_METHOD_3_IMP(RESULT, METHOD_NAME, ARG1, ARG2, ARG3)
 
-#define NTF_MOCK_METHOD_NEW(...)                                              \
-    NTF_VA_SELECT(NTF_MOCK_METHOD_NEW, __VA_ARGS__)
+#define NTF_MOCK_METHOD(...) NTF_VA_SELECT(NTF_MOCK_METHOD, __VA_ARGS__)
 
-#define NTF_MOCK_METHOD_CONST_NEW(...)                                        \
-    NTF_VA_SELECT(NTF_MOCK_METHOD_CONST_NEW, __VA_ARGS__)
+#define NTF_MOCK_METHOD_CONST(...)                                            \
+    NTF_VA_SELECT(NTF_MOCK_METHOD_CONST, __VA_ARGS__)
 
-#define NTF_EQ(ARG) NewMock::createEqMatcher<NewMock::DirectComparator>(ARG)
+#define NTF_EQ(ARG) ntf_mock::createEqMatcher<ntf_mock::DirectComparator>(ARG)
 #define NTF_EQ_SPEC(ARG, SPEC)                                                \
-    NewMock::createEqMatcher<NewMock::DirectComparator>(ARG),                 \
-        NewMock::TypeToType<SPEC>()
-#define IGNORE_ARG NewMock::IgnoreArg()
-#define IGNORE_ARG_S(SPEC) NewMock::IgnoreArg(), NewMock::TypeToType<SPEC>()
+    ntf_mock::createEqMatcher<ntf_mock::DirectComparator>(ARG),                       \
+        ntf_mock::TypeToType<SPEC>()
+#define IGNORE_ARG ntf_mock::IgnoreArg()
+#define IGNORE_ARG_S(SPEC) ntf_mock::IgnoreArg(), ntf_mock::TypeToType<SPEC>()
 
-#define NTF_EQ_DEREF(ARG)                                                     \
-    NewMock::createEqMatcher<NewMock::DerefComparator>(ARG)
+#define NTF_EQ_DEREF(ARG) ntf_mock::createEqMatcher<ntf_mock::DerefComparator>(ARG)
 #define NTF_EQ_DEREF_SPEC(ARG, SPEC)                                          \
-    NewMock::createEqMatcher<NewMock::DerefComparator>(ARG),                  \
-        NewMock::TypeToType<SPEC>()
+    ntf_mock::createEqMatcher<ntf_mock::DerefComparator>(ARG), ntf_mock::TypeToType<SPEC>()
 
 #define NTF_EXPECT_0(MOCK_OBJECT, METHOD) (MOCK_OBJECT).expect_##METHOD()
 #define NTF_EXPECT_1(MOCK_OBJECT, METHOD, ...)                                \
@@ -1771,17 +1766,17 @@ struct Invocation3
 #define TIMES(x) willTimes(x)
 #define RETURN(VAL) willReturn((VAL))
 
-#define TO(ARG) NewMock::createExtractor<NewMock::NoDerefPolicy>(ARG)
-#define TO_DEREF(ARG) NewMock::createExtractor<NewMock::DerefPolicy>(ARG)
+#define TO(ARG) ntf_mock::createExtractor<ntf_mock::NoDerefPolicy>(ARG)
+#define TO_DEREF(ARG) ntf_mock::createExtractor<ntf_mock::DerefPolicy>(ARG)
 
 #define SAVE_ARG_1(...) saveArg1(__VA_ARGS__)
 #define SAVE_ARG_2(...) saveArg2(__VA_ARGS__)
 #define SAVE_ARG_3(...) saveArg1(__VA_ARGS__)
 #define SAVE_ARG_4(...) saveArg2(__VA_ARGS__)
 
-#define FROM(ARG) NewMock::createSetter<NewMock::DefaultSetter>(ARG)
+#define FROM(ARG) ntf_mock::createSetter<ntf_mock::DefaultSetter>(ARG)
 
-#define FROM_DEREF(ARG) NewMock::createSetter<NewMock::DerefSetter>(ARG)
+#define FROM_DEREF(ARG) ntf_mock::createSetter<ntf_mock::DerefSetter>(ARG)
 
 #define SET_ARG_1(...) setArg1(__VA_ARGS__)
 #define SET_ARG_2(...) setArg2(__VA_ARGS__)
