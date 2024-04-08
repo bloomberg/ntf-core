@@ -845,7 +845,7 @@ namespace ntf_mock {
 template <class ARG>
 struct ProcessInterface {
     virtual void process(const ARG& arg) = 0;
-    virtual ~    ProcessInterface()
+    virtual ~ProcessInterface()
     {
     }
 };
@@ -1052,6 +1052,7 @@ struct InvocationResult<RESULT&> {
     RESULT* d_expResult;
     RESULT& get()
     {
+        printf("InvocationResult<RESULT&>::get d_expResult=%p\n", (void*)d_expResult);
         NTCCFG_TEST_TRUE(d_expResult != 0);
         return *d_expResult;
     }
@@ -1066,6 +1067,7 @@ struct InvocationResult<RESULT const&> {
     RESULT const* d_expResult;
     const RESULT& get()
     {
+        printf("InvocationResult<RESULT const&>::get d_expResult=%p\n", (void*)d_expResult);
         NTCCFG_TEST_TRUE(d_expResult != 0);
         return *d_expResult;
     }
@@ -1087,6 +1089,7 @@ struct InvocationBaseWillReturn {
 
     SELF& willReturn(const RESULT& result)
     {
+        printf("InvocationBaseWillReturn<INVOCATION_DATA, SELF, RESULT>::willReturn &result=%p\n", (void*)(&result));
         INVOCATION_DATA& invocation     = getInvocationDataBack();
         invocation.d_result.d_expResult = result;
         return *(static_cast<SELF*>(this));
@@ -1102,10 +1105,11 @@ template <class INVOCATION_DATA, class SELF, class RESULT>
 struct InvocationBaseWillReturn<INVOCATION_DATA, SELF, RESULT&> {
     virtual INVOCATION_DATA& getInvocationDataBack() = 0;
 
-    SELF& willReturn(RESULT& result)
+    SELF& willReturn(RESULT* result)
     {
+        printf("InvocationBaseWillReturn<INVOCATION_DATA, SELF, RESULT&>::willReturn &result=%p\n", (void*)(&result));
         INVOCATION_DATA& invocation     = getInvocationDataBack();
-        invocation.d_result.d_expResult = &result;
+        invocation.d_result.d_expResult = result;
         return *(static_cast<SELF*>(this));
     }
 
@@ -1119,10 +1123,12 @@ template <class INVOCATION_DATA, class SELF, class RESULT>
 struct InvocationBaseWillReturn<INVOCATION_DATA, SELF, RESULT const&> {
     virtual INVOCATION_DATA& getInvocationDataBack() = 0;
 
-    SELF& willReturn(RESULT const& result)
+    SELF& willReturn(RESULT const* result)
     {
+        printf("InvocationBaseWillReturn<INVOCATION_DATA, SELF, RESULT const&>::willReturn &result=%p\n", std::addressof(result));
+
         INVOCATION_DATA& invocation     = getInvocationDataBack();
-        invocation.d_result.d_expResult = &result;
+        invocation.d_result.d_expResult = result;
         return *(static_cast<SELF*>(this));
     }
 
@@ -1143,14 +1149,16 @@ struct InvocationBaseTimes {
     SELF& willOnce()
     {
         INVOCATION_DATA& invocation = getInvocationDataBack();
-        invocation.d_expectedCalls  = 1;
+        NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+        invocation.d_expectedCalls = 1;
         return *(static_cast<SELF*>(this));
     }
 
     SELF& willAlways()
     {
         INVOCATION_DATA& invocation = getInvocationDataBack();
-        invocation.d_expectedCalls  = INVOCATION_DATA::k_INFINITE_CALLS;
+        NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+        invocation.d_expectedCalls = INVOCATION_DATA::k_INFINITE_CALLS;
         return *(static_cast<SELF*>(this));
     }
 
@@ -1158,7 +1166,8 @@ struct InvocationBaseTimes {
     {
         NTCCFG_TEST_GT(times, 0);
         INVOCATION_DATA& invocation = getInvocationDataBack();
-        invocation.d_expectedCalls  = times;
+        NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+        invocation.d_expectedCalls = times;
         return *(static_cast<SELF*>(this));
     }
 };
@@ -1169,6 +1178,17 @@ struct InvocationDataBase {
 
     int                      d_expectedCalls;
     InvocationResult<RESULT> d_result;
+
+    InvocationDataBase()
+    : d_expectedCalls(0)
+    , d_result()
+    {
+    }
+    InvocationDataBase(const InvocationDataBase& other)
+    : d_expectedCalls(other.d_expectedCalls)
+    , d_result(other.d_result)
+    {
+    }
 };
 
 template <class RESULT,
@@ -1181,6 +1201,8 @@ struct InvocationData;
 
 template <class RESULT>
 struct InvocationData<RESULT> : public InvocationDataBase<RESULT> {
+    InvocationData() = default;
+    InvocationData(const InvocationData& other) = default;
 };
 
 template <class RESULT, class ARG1>
@@ -1285,7 +1307,7 @@ template <class INVOCATION_DATA,
           class ARG5 = NO_ARG>
 struct InvocationBaseSaveSetArg {
   private:
-     InvocationBaseSaveSetArg();
+    InvocationBaseSaveSetArg();
     ~InvocationBaseSaveSetArg();
 };
 
@@ -1425,7 +1447,9 @@ struct Invocation0
 
     Invocation0& expect()
     {
-        d_invocations.emplace_back();
+        InvocationDataT invocation;
+        //        d_invocations.emplace_back();
+        d_invocations.push_back(invocation);
         return *this;
     }
 
@@ -1837,7 +1861,7 @@ struct Invocation3
 #define ONCE() willOnce()
 #define ALWAYS() willAlways()
 #define TIMES(x) willTimes(x)
-#define RETURN(VAL) willReturn((VAL))
+#define RETURN(VAL) willReturn(VAL)
 
 #define TO(ARG) ntf_mock::createExtractor<ntf_mock::NoDerefPolicy>(ARG)
 #define TO_DEREF(ARG) ntf_mock::createExtractor<ntf_mock::DerefPolicy>(ARG)

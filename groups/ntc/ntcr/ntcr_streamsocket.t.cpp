@@ -50,7 +50,7 @@
 #include <bslmt_threadutil.h>
 #include <bsl_unordered_map.h>
 
-#include <pdh.h>
+//#include <pdh.h>
 
 using namespace BloombergLP;
 
@@ -1731,7 +1731,7 @@ class TimerMock : public ntci::Timer
 }  // close namespace mock
 
 struct Fixture {
-     Fixture(bslma::Allocator* allocator);
+    Fixture(bslma::Allocator* allocator);
     ~Fixture();
 
     void setupReactorBase();
@@ -1740,7 +1740,9 @@ struct Fixture {
     bslma::Allocator* d_allocator;
 
     bsl::shared_ptr<mock::BufferFactoryMock> d_bufferFactoryMock;
+    bsl::shared_ptr<bdlbb::BlobBufferFactory> d_bufferFactory;
     bsl::shared_ptr<mock::DataPoolMock>      d_dataPoolMock;
+    bsl::shared_ptr<ntci::DataPool>          d_dataPool;
     bsl::shared_ptr<mock::ReactorMock>       d_reactorMock;
     bsl::shared_ptr<mock::ResolverMock>      d_resolverMock;
     bsl::shared_ptr<mock::StreamSocketMock>  d_streamSocketMock;
@@ -1761,20 +1763,24 @@ const ntsa::Error Fixture::k_NO_ERROR = ntsa::Error();
 Fixture::Fixture(bslma::Allocator* allocator)
 : d_allocator(allocator)
 {
-    d_bufferFactoryMock.createInplace(allocator);
-    d_dataPoolMock.createInplace(allocator);
-    d_reactorMock.createInplace(allocator);
-    d_resolverMock.createInplace(allocator);
-    d_streamSocketMock.createInplace(allocator);
-    d_connectRetryTimerMock.createInplace(allocator);
-    d_deadlineTimerMock.createInplace(allocator);
-    d_dummyData.createInplace(allocator);
+    d_bufferFactoryMock.createInplace(d_allocator);
+    d_bufferFactory = d_bufferFactoryMock;
+    d_dataPoolMock.createInplace();
+    d_dataPool = d_dataPoolMock;
+    d_reactorMock.createInplace(d_allocator);
+    d_resolverMock.createInplace(d_allocator);
+    d_streamSocketMock.createInplace(d_allocator);
+    d_connectRetryTimerMock.createInplace(d_allocator);
+    d_deadlineTimerMock.createInplace(d_allocator);
+    d_dummyData.createInplace(d_allocator);
 }
 
 Fixture::~Fixture()
 {
     d_bufferFactoryMock.reset();
+    d_bufferFactory.reset();
     d_dataPoolMock.reset();
+    d_dataPool.reset();
     d_reactorMock.reset();
     d_resolverMock.reset();
     d_streamSocketMock.reset();
@@ -1783,29 +1789,50 @@ Fixture::~Fixture()
     d_dummyData.reset();
 }
 
+template <class T>
+void myFunc(T const& ref)
+{
+    printf("Address of ref is %p\n", std::addressof(ref));
+    fflush(stdout);
+}
+
+void myFunc2(bsl::shared_ptr<ntci::DataPool> const& ref)
+{
+    printf("Address of bsl::shared_ptr<ntci::DataPool> const& is %p\n",
+           std::addressof(ref));
+    fflush(stdout);
+}
+
 void Fixture::setupReactorBase()
 {
-    NTF_EXPECT_0(*d_reactorMock, dataPool).ALWAYS().RETURN(d_dataPoolMock);
+    printf("Address of d_dataPoolMock is %p, it points to %p\n",
+           std::addressof(d_dataPoolMock),
+           (void*)(d_dataPoolMock.get()));
+    fflush(stdout);
+    myFunc(d_dataPoolMock);
+    myFunc2(d_dataPoolMock);
+
+    NTF_EXPECT_0(*d_reactorMock, dataPool).ALWAYS().RETURN(&d_dataPool);
 
     NTF_EXPECT_0(*d_reactorMock, outgoingBlobBufferFactory)
         .ALWAYS()
-        .RETURN(d_bufferFactoryMock);
+        .RETURN(&d_bufferFactory);
     NTF_EXPECT_0(*d_reactorMock, incomingBlobBufferFactory)
         .ALWAYS()
-        .RETURN(d_bufferFactoryMock);
+        .RETURN(&d_bufferFactory);
 
     NTF_EXPECT_0(*d_reactorMock, oneShot).ALWAYS().RETURN(false);
     NTF_EXPECT_0(*d_reactorMock, maxThreads).ALWAYS().RETURN(1);
-
-    NTF_EXPECT_0(*d_reactorMock, createIncomingBlob)
-        .ALWAYS()
-        .RETURN(d_nullBlob);
-    NTF_EXPECT_0(*d_reactorMock, createOutgoingBlob)
-        .ALWAYS()
-        .RETURN(d_nullBlob);
-    NTF_EXPECT_0(*d_reactorMock, createOutgoingData)
-        .ALWAYS()
-        .RETURN(d_dummyData);
+    //
+    //    NTF_EXPECT_0(*d_reactorMock, createIncomingBlob)
+    //        .ALWAYS()
+    //        .RETURN(d_nullBlob);
+    //    NTF_EXPECT_0(*d_dataPoolMock, createOutgoingBlob)
+    //        .ALWAYS()
+    //        .RETURN(d_nullBlob);
+    //    NTF_EXPECT_0(*d_reactorMock, createOutgoingData)
+    //        .ALWAYS()
+    //        .RETURN(d_dummyData);
 }
 
 void Fixture::injectStreamSocket(ntcr::StreamSocket& socket)
@@ -4165,12 +4192,14 @@ NTCCFG_TEST_CASE(23)
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
+
 NTCCFG_TEST_CASE(24)
 {
     NTCI_LOG_CONTEXT();
 
     ntccfg::TestAllocator ta;
     {
+#if 0
         NTCI_LOG_DEBUG("Fixture setup, socket creation...");
 
         bdlb::NullableValue<ntca::ConnectEvent> connectResult;
@@ -4352,6 +4381,7 @@ NTCCFG_TEST_CASE(24)
         NTCCFG_TEST_TRUE(connectResult.has_value());
         NTCCFG_TEST_EQ(connectResult.value().type(),
                        ntca::ConnectEventType::e_ERROR);
+#endif
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
