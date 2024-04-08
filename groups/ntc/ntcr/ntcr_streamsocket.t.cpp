@@ -1374,20 +1374,12 @@ void variation(const test::Parameters& parameters)
 
 namespace mock {
 
-#define UNEXPECTED_CALL(unused) NTCCFG_TEST_TRUE(false && "unexpected call")
-#if 1
-
 class ResolverMock : public ntci::Resolver
 {
   public:
     NTF_MOCK_METHOD(void, execute, const Functor&)
     NTF_MOCK_METHOD(void, moveAndExecute, FunctorSequence*, const Functor&)
-  public:
-    const bsl::shared_ptr<ntci::Strand>& strand() const override
-    {
-        UNEXPECTED_CALL();
-        return dummyStrand;
-    }
+    NTF_MOCK_METHOD_CONST(bsl::shared_ptr<ntci::Strand>&, strand)
     NTF_MOCK_METHOD(ntsa::Error, start)
     NTF_MOCK_METHOD(void, shutdown)
     NTF_MOCK_METHOD(void, linger)
@@ -1480,139 +1472,13 @@ class ResolverMock : public ntci::Resolver
                     const ntci::TimerCallback&,
                     bslma::Allocator*)
     NTF_MOCK_METHOD_CONST(bsls::TimeInterval, currentTime)
-
-  private:
-    bsl::shared_ptr<ntci::Strand> dummyStrand;
 };
 
 class BufferFactoryMock : public bdlbb::BlobBufferFactory
 {
     NTF_MOCK_METHOD(void, allocate, bdlbb::BlobBuffer*)
 };
-#endif
 
-struct MyClass {
-    virtual void doSmth(int){};
-    virtual void doSmth2(int*){};
-    virtual void doSmth3(int&){};
-    virtual void doSmth4(const int){};
-    virtual void doSmth5(const int*){};
-    virtual void doSmth6(const int&){};
-};
-
-namespace {
-
-struct My {
-    virtual void f()            = 0;
-    virtual int  f2()           = 0;
-    virtual void f3(int)        = 0;
-    virtual void f4(int*)       = 0;
-    virtual void f5(const int*) = 0;
-    virtual void f6(int&)       = 0;
-    virtual void f7(int const&) = 0;
-};
-
-struct MyMock : public My {
-    NTF_MOCK_METHOD_0(void, f)
-    NTF_MOCK_METHOD_0(int, f2)
-    NTF_MOCK_METHOD_1(void, f3, int)
-    NTF_MOCK_METHOD_1(void, f4, int*)
-    NTF_MOCK_METHOD_1(void, f5, const int*)
-    NTF_MOCK_METHOD_1(void, f6, int&)
-    NTF_MOCK_METHOD_1(void, f7, const int&)
-};
-
-void wegweg()
-{
-    // const bsl::nullopt_t doNotCare = bsl::nullopt;
-
-    {  // void 0 args
-        MyMock m;
-        NTF_EXPECT_0(m, f).ONCE();
-        NTF_EXPECT_0(m, f2).ONCE().RETURN(5);
-    }
-    {
-        // void 1 arg int
-        int    to;
-        MyMock m;
-        NTF_EXPECT_1(m, f3, NTF_EQ(2)).SAVE_ARG_1(TO(&to));
-        // NTF_EXPECT_1(m, f3, NTF_EQ(2)).SAVE_ARG_1(TO(to)); //SHALL FAIL
-        NTF_EXPECT_1(m, f3, NTF_EQ(2)).SET_ARG_1(FROM(5));  //TODO: SHALL FAIL
-
-        NTF_EXPECT_1(m, f3, IGNORE_ARG);
-    }
-
-    {  // void 1 arg int*
-        int    k  = 0;
-        int*   to = 0;
-        MyMock m;
-        NTF_EXPECT_1(m, f4, NTF_EQ(&k));
-        NTF_EXPECT_1(m, f4, NTF_EQ_DEREF(k));
-
-        NTF_EXPECT_1(m, f4, NTF_EQ_DEREF(k)).SAVE_ARG_1(TO(&to));
-        NTF_EXPECT_1(m, f4, NTF_EQ_DEREF(k)).SAVE_ARG_1(TO_DEREF(to));
-        // NTF_EXPECT_1(m, f4, NTF_EQ_DEREF(k)).SAVE_ARG_1(TO(to)); //SHALL FAIL
-
-        // NTF_EXPECT_1(m, f4, NTF_EQ(&k)).SET_ARG_1(FROM(5)); //SHALL FAIL
-        NTF_EXPECT_1(m, f4, NTF_EQ(&k)).SET_ARG_1(FROM_DEREF(5));
-
-        NTF_EXPECT_1(m, f4, NTF_EQ(&k))
-            .SET_ARG_1(FROM(to));  // TODO: SHALL FAIL as  it is useless
-    }
-
-    {  // void 1 arg int const *
-        int    k  = 0;
-        int*   to = 0;
-        MyMock m;
-        NTF_EXPECT_1(m, f5, NTF_EQ(&k));
-        NTF_EXPECT_1(m, f5, NTF_EQ_DEREF(k));
-        // NTF_EXPECT_1(m, f5, NTF_EQ_DEREF(k)).SAVE_ARG_1(TO(&to)); // SHALL FAIL
-        int const* to_const = 0;
-        NTF_EXPECT_1(m, f5, NTF_EQ_DEREF(k)).SAVE_ARG_1(TO(&to_const));
-        NTF_EXPECT_1(m, f5, NTF_EQ_DEREF(k)).SAVE_ARG_1(TO_DEREF(to));
-
-        // NTF_EXPECT_1(m, f5, NTF_EQ(&k)).SET_ARG_1(FROM(5));// SHALL FAIL
-        // NTF_EXPECT_1(m, f5, NTF_EQ(&k)).SET_ARG_1(FROM_DEREF(5)); //SHALL_FAIL
-
-        const int* tmp;
-        NTF_EXPECT_1(m, f5, NTF_EQ(&k))
-            .SET_ARG_1(FROM(tmp));  //TODO: SHALL also fail as it is useless
-    }
-
-    {  // void 1 arg int &
-        int    k  = 0;
-        int*   to = 0;
-        MyMock m;
-        NTF_EXPECT_1(m, f6, NTF_EQ(k));
-        // NTF_EXPECT_1(m, f6, NTF_EQ_DEREF(k)); //SHALL FAIL
-
-        NTF_EXPECT_1(m, f6, NTF_EQ(k)).SAVE_ARG_1(TO(to));
-        // NTF_EXPECT_1(m, f6, NTF_EQ(k)).SAVE_ARG_1(TO_DEREF(to)); // SHALL FAIL
-
-        NTF_EXPECT_1(m, f6, NTF_EQ(k)).SET_ARG_1(FROM(5));
-        // NTF_EXPECT_1(m, f6, NTF_EQ(k)).SET_ARG_1(FROM_DEREF(to)); // SHALL FAIL
-    }
-
-    {  // void 1 arg int const &
-        int    k  = 0;
-        int*   to = 0;
-        MyMock m;
-        NTF_EXPECT_1(m, f7, NTF_EQ(k));
-        // NTF_EXPECT_1(m, f7, NTF_EQ_DEREF(k)); //SHALL FAIL
-        NTF_EXPECT_1(m, f7, NTF_EQ(k)).SAVE_ARG_1(TO(to));
-        // NTF_EXPECT_1(m, f7, NTF_EQ(k)).SAVE_ARG_1(TO_DEREF(&to)); // SHALL FAIL
-
-        NTF_EXPECT_1(m, f7, NTF_EQ(k)).SET_ARG_1(FROM(5));  // TODO: SHALL FAIL
-
-        int& k_r = k;
-        NTF_EXPECT_1(m, f7, NTF_EQ(k))
-            .SET_ARG_1(FROM(k_r));  // TODO: SHALL FAIL
-    }
-}
-
-}
-
-#if 1
 class StreamSocketMock : public ntsi::StreamSocket
 {
   public:
@@ -1676,28 +1542,14 @@ class DataPoolMock : public ntci::DataPool
     NTF_MOCK_METHOD(bsl::shared_ptr<bdlbb::Blob>, createOutgoingBlob);
     NTF_MOCK_METHOD(void, createIncomingBlobBuffer, bdlbb::BlobBuffer*)
     NTF_MOCK_METHOD(void, createOutgoingBlobBuffer, bdlbb::BlobBuffer*)
-
-  public:
-    const bsl::shared_ptr<bdlbb::BlobBufferFactory>& incomingBlobBufferFactory()
-        const override
-    {
-        UNEXPECTED_CALL();
-        return dummyBlobBufferFactory;
-    }
-    const bsl::shared_ptr<bdlbb::BlobBufferFactory>& outgoingBlobBufferFactory()
-        const override
-    {
-        UNEXPECTED_CALL();
-        return dummyBlobBufferFactory;
-    }
-
-  private:
-    bsl::shared_ptr<bdlbb::BlobBufferFactory> dummyBlobBufferFactory;
+    NTF_MOCK_METHOD_CONST(const bsl::shared_ptr<bdlbb::BlobBufferFactory>&,
+                          incomingBlobBufferFactory)
+    NTF_MOCK_METHOD_CONST(const bsl::shared_ptr<bdlbb::BlobBufferFactory>&,
+                          outgoingBlobBufferFactory)
 };
 
 class ReactorMock : public ntci::Reactor
 {
-  public:
     NTF_MOCK_METHOD(bsl::shared_ptr<ntci::DatagramSocket>,
                     createDatagramSocket,
                     const ntca::DatagramSocketOptions&,
@@ -1709,23 +1561,10 @@ class ReactorMock : public ntci::Reactor
     NTF_MOCK_METHOD(void, createIncomingBlobBuffer, bdlbb::BlobBuffer*)
     NTF_MOCK_METHOD(void, createOutgoingBlobBuffer, bdlbb::BlobBuffer*)
 
-  public:
-    const bsl::shared_ptr<bdlbb::BlobBufferFactory>& incomingBlobBufferFactory()
-        const override
-    {
-        if (d_incomingBlobBufferFactory_result.isNull()) {
-            UNEXPECTED_CALL();
-        }
-        return d_incomingBlobBufferFactory_result.value();
-    }
-    const bsl::shared_ptr<bdlbb::BlobBufferFactory>& outgoingBlobBufferFactory()
-        const override
-    {
-        if (d_outgoingBlobBufferFactory_result.isNull()) {
-            UNEXPECTED_CALL();
-        }
-        return d_outgoingBlobBufferFactory_result.value();
-    }
+    NTF_MOCK_METHOD_CONST(const bsl::shared_ptr<bdlbb::BlobBufferFactory>&,
+                          incomingBlobBufferFactory)
+    NTF_MOCK_METHOD_CONST(const bsl::shared_ptr<bdlbb::BlobBufferFactory>&,
+                          outgoingBlobBufferFactory)
 
     NTF_MOCK_METHOD(ntci::Waiter, registerWaiter, const ntca::WaiterOptions&)
     NTF_MOCK_METHOD(void, deregisterWaiter, ntci::Waiter)
@@ -1823,15 +1662,7 @@ class ReactorMock : public ntci::Reactor
     NTF_MOCK_METHOD_CONST(bslmt::ThreadUtil::Handle, threadHandle)
     NTF_MOCK_METHOD_CONST(size_t, threadIndex)
     NTF_MOCK_METHOD_CONST(bool, empty)
-
-  public:
-    const bsl::shared_ptr<ntci::DataPool>& dataPool() const override
-    {
-        if (d_dataPool_result.isNull()) {
-            UNEXPECTED_CALL();
-        }
-        return d_dataPool_result.value();
-    }
+    NTF_MOCK_METHOD_CONST(const bsl::shared_ptr<ntci::DataPool>&, dataPool)
 
     NTF_MOCK_METHOD_CONST(bool, supportsOneShot, bool)
     NTF_MOCK_METHOD_CONST(bool,
@@ -1872,41 +1703,8 @@ class ReactorMock : public ntci::Reactor
                     const ntca::TimerOptions&,
                     const ntci::TimerCallback&,
                     bslma::Allocator*)
-  public:
-    const bsl::shared_ptr<ntci::Strand>& strand() const override
-    {
-        UNEXPECTED_CALL();
-        return dummyStrand;
-    }
+    NTF_MOCK_METHOD_CONST(const bsl::shared_ptr<ntci::Strand>&, strand)
     NTF_MOCK_METHOD_CONST(bsls::TimeInterval, currentTime)
-
-  public:
-    // auxiliary methods
-    void expect_dataPool_WillAlwaysReturn(
-        const bsl::shared_ptr<ntci::DataPool>& dataPool)
-    {
-        d_dataPool_result = dataPool;
-    }
-
-    void expect_outgoingBlobBufferFactory_WillAlwaysReturn(
-        const bsl::shared_ptr<bdlbb::BlobBufferFactory>& bufferFactory)
-    {
-        d_outgoingBlobBufferFactory_result = bufferFactory;
-    }
-
-    void expect_incomingBlobBufferFactory_WillAlwaysReturn(
-        const bsl::shared_ptr<bdlbb::BlobBufferFactory>& bufferFactory)
-    {
-        d_incomingBlobBufferFactory_result = bufferFactory;
-    }
-
-  private:
-    bdlb::NullableValue<bsl::shared_ptr<bdlbb::BlobBufferFactory> >
-        d_incomingBlobBufferFactory_result;
-    bdlb::NullableValue<bsl::shared_ptr<bdlbb::BlobBufferFactory> >
-                                  d_outgoingBlobBufferFactory_result;
-    bsl::shared_ptr<ntci::Strand> dummyStrand;
-    bdlb::NullableValue<bsl::shared_ptr<ntci::DataPool> > d_dataPool_result;
 };
 
 class TimerMock : public ntci::Timer
@@ -1927,20 +1725,151 @@ class TimerMock : public ntci::Timer
     NTF_MOCK_METHOD_CONST(bool, oneShot)
     NTF_MOCK_METHOD_CONST(bslmt::ThreadUtil::Handle, threadHandle)
     NTF_MOCK_METHOD_CONST(size_t, threadIndex)
-
-  public:
-    const bsl::shared_ptr<ntci::Strand>& strand() const override
-    {
-        UNEXPECTED_CALL();
-        return dummyStrand;
-    }
+    NTF_MOCK_METHOD_CONST(const bsl::shared_ptr<ntci::Strand>&, strand)
     NTF_MOCK_METHOD_CONST(bsls::TimeInterval, currentTime)
-
-  private:
-    bsl::shared_ptr<ntci::Strand> dummyStrand;
 };
-#endif
 }  // close namespace mock
+
+struct Fixture {
+     Fixture(bslma::Allocator* allocator);
+    ~Fixture();
+
+    void setupReactorBase();
+    void injectStreamSocket(ntcr::StreamSocket& socket);
+
+    bslma::Allocator* d_allocator;
+
+    bsl::shared_ptr<mock::BufferFactoryMock> d_bufferFactoryMock;
+    bsl::shared_ptr<mock::DataPoolMock>      d_dataPoolMock;
+    bsl::shared_ptr<mock::ReactorMock>       d_reactorMock;
+    bsl::shared_ptr<mock::ResolverMock>      d_resolverMock;
+    bsl::shared_ptr<mock::StreamSocketMock>  d_streamSocketMock;
+    bsl::shared_ptr<mock::TimerMock>         d_connectRetryTimerMock;
+    bsl::shared_ptr<mock::TimerMock>         d_deadlineTimerMock;
+
+    const bsl::shared_ptr<bdlbb::Blob>       d_nullBlob;
+    const bsl::shared_ptr<ntci::Strand>      d_nullStrand;
+    const bsl::shared_ptr<ntci::ReactorPool> d_nullPool;
+    const bsl::shared_ptr<ntcs::Metrics>     d_nullMetrics;
+    static const ntsa::Error                 k_NO_ERROR;
+
+    bsl::shared_ptr<ntsa::Data> d_dummyData;
+};
+
+const ntsa::Error Fixture::k_NO_ERROR = ntsa::Error();
+
+Fixture::Fixture(bslma::Allocator* allocator)
+: d_allocator(allocator)
+{
+    d_bufferFactoryMock.createInplace(allocator);
+    d_dataPoolMock.createInplace(allocator);
+    d_reactorMock.createInplace(allocator);
+    d_resolverMock.createInplace(allocator);
+    d_streamSocketMock.createInplace(allocator);
+    d_connectRetryTimerMock.createInplace(allocator);
+    d_deadlineTimerMock.createInplace(allocator);
+    d_dummyData.createInplace(allocator);
+}
+
+Fixture::~Fixture()
+{
+    d_bufferFactoryMock.reset();
+    d_dataPoolMock.reset();
+    d_reactorMock.reset();
+    d_resolverMock.reset();
+    d_streamSocketMock.reset();
+    d_connectRetryTimerMock.reset();
+    d_deadlineTimerMock.reset();
+    d_dummyData.reset();
+}
+
+void Fixture::setupReactorBase()
+{
+    NTF_EXPECT_0(*d_reactorMock, dataPool).ALWAYS().RETURN(d_dataPoolMock);
+
+    NTF_EXPECT_0(*d_reactorMock, outgoingBlobBufferFactory)
+        .ALWAYS()
+        .RETURN(d_bufferFactoryMock);
+    NTF_EXPECT_0(*d_reactorMock, incomingBlobBufferFactory)
+        .ALWAYS()
+        .RETURN(d_bufferFactoryMock);
+
+    NTF_EXPECT_0(*d_reactorMock, oneShot).ALWAYS().RETURN(false);
+    NTF_EXPECT_0(*d_reactorMock, maxThreads).ALWAYS().RETURN(1);
+
+    NTF_EXPECT_0(*d_reactorMock, createIncomingBlob)
+        .ALWAYS()
+        .RETURN(d_nullBlob);
+    NTF_EXPECT_0(*d_reactorMock, createOutgoingBlob)
+        .ALWAYS()
+        .RETURN(d_nullBlob);
+    NTF_EXPECT_0(*d_reactorMock, createOutgoingData)
+        .ALWAYS()
+        .RETURN(d_dummyData);
+}
+
+void Fixture::injectStreamSocket(ntcr::StreamSocket& socket)
+{
+    const ntsa::Handle handle               = 22;
+    const size_t       defaultBufferSize    = 100500;
+    const size_t       maxBuffersPerSend    = 22;
+    const size_t       maxBuffersPerReceive = 22;
+
+    NTF_EXPECT_0(*d_streamSocketMock, handle).ALWAYS().RETURN(handle);
+
+    NTF_EXPECT_1(*d_streamSocketMock,
+                 setBlocking,
+                 NTF_EQ(false))
+        .TIMES(2)
+        .RETURN(ntsa::Error());  //TODO: for some reason it is called twice
+
+    NTF_EXPECT_1(*d_streamSocketMock, setOption, IGNORE_ARG)
+        .ALWAYS()
+        .RETURN(test::Fixture::k_NO_ERROR);
+
+    NTF_EXPECT_1(*d_streamSocketMock, sourceEndpoint, IGNORE_ARG)
+        .ONCE()
+        .RETURN(ntsa::Error::invalid());
+
+    NTF_EXPECT_1(*d_streamSocketMock, remoteEndpoint, IGNORE_ARG)
+        .ONCE()
+        .RETURN(ntsa::Error::invalid());
+
+    ntsa::SocketOption sendBufferSizeOption;
+    sendBufferSizeOption.makeSendBufferSize(defaultBufferSize);
+    ntsa::SocketOption rcvBufferSizeOption;
+    rcvBufferSizeOption.makeReceiveBufferSize(defaultBufferSize);
+
+    NTF_EXPECT_2(*d_streamSocketMock,
+                 getOption,
+                 IGNORE_ARG,
+                 NTF_EQ(ntsa::SocketOptionType::e_SEND_BUFFER_SIZE))
+        .ONCE()
+        .RETURN(test::Fixture::k_NO_ERROR)
+        .SET_ARG_1(FROM_DEREF(sendBufferSizeOption));
+
+    NTF_EXPECT_2(*d_streamSocketMock,
+                 getOption,
+                 IGNORE_ARG,
+                 NTF_EQ(ntsa::SocketOptionType::e_RECEIVE_BUFFER_SIZE))
+        .ONCE()
+        .RETURN(test::Fixture::k_NO_ERROR)
+        .SET_ARG_1(FROM_DEREF(rcvBufferSizeOption));
+
+    NTF_EXPECT_0(*d_streamSocketMock, maxBuffersPerSend)
+        .ONCE()
+        .RETURN(maxBuffersPerSend);
+    NTF_EXPECT_0(*d_streamSocketMock, maxBuffersPerReceive)
+        .ONCE()
+        .RETURN(maxBuffersPerReceive);
+
+    NTF_EXPECT_0(*d_reactorMock, acquireHandleReservation)
+        .ALWAYS()
+        .RETURN(true);
+    NTF_EXPECT_0(*d_reactorMock, releaseHandleReservation).ALWAYS();
+
+    socket.open(ntsa::Transport::e_TCP_IPV4_STREAM, d_streamSocketMock);
+}
 
 }  // close namespace test
 
@@ -3918,7 +3847,7 @@ NTCCFG_TEST_CASE(21)
     test::variation(parameters);
 #endif
 }
-#if 1
+
 NTCCFG_TEST_CASE(22)
 {
     NTCI_LOG_CONTEXT();
@@ -3927,190 +3856,111 @@ NTCCFG_TEST_CASE(22)
     {
         NTCI_LOG_DEBUG("Fixture setup, socket creation...");
 
-        const ntsa::Handle handle = 22;
+        test::Fixture test(&ta);
+        test.setupReactorBase();
 
         bdlb::NullableValue<ntca::ConnectEvent> connectResult;
-
-        bsl::shared_ptr<ntci::ReactorPool> nullPool;
-        bsl::shared_ptr<ntcs::Metrics>     nullMetrics;
-        bsl::shared_ptr<bdlbb::Blob>       nullBlob;
-        bsl::shared_ptr<ntci::Strand>      nullStrand;
-
-        bsl::shared_ptr<ntsa::Data> dummyData;
-        dummyData.createInplace(&ta);
-
-        bsl::shared_ptr<test::mock::ResolverMock> resolverMock;
-        resolverMock.createInplace(&ta);
-
-        bsl::shared_ptr<test::mock::ReactorMock> reactorMock;
-        reactorMock.createInplace(&ta);
-
-        bsl::shared_ptr<test::mock::StreamSocketMock> socketMock;
-        socketMock.createInplace(&ta);
-
-        bsl::shared_ptr<test::mock::DataPoolMock> dataPoolMock;
-        dataPoolMock.createInplace(&ta);
-        reactorMock->expect_dataPool_WillAlwaysReturn(dataPoolMock);
-
-        bsl::shared_ptr<test::mock::BufferFactoryMock> bufferFactoryMock;
-        bufferFactoryMock.createInplace(&ta);
-        reactorMock->expect_outgoingBlobBufferFactory_WillAlwaysReturn(
-            bufferFactoryMock);
-        reactorMock->expect_incomingBlobBufferFactory_WillAlwaysReturn(
-            bufferFactoryMock);
-
-        NTF_EXPECT_0(*reactorMock, oneShot).ALWAYS().RETURN(false);
-        NTF_EXPECT_0(*reactorMock, maxThreads).ALWAYS().RETURN(1);
-
-        NTF_EXPECT_0(*dataPoolMock, createIncomingBlob)
-            .ALWAYS()
-            .RETURN(nullBlob);
-        NTF_EXPECT_0(*dataPoolMock, createOutgoingBlob)
-            .ALWAYS()
-            .RETURN(nullBlob);
-        NTF_EXPECT_0(*dataPoolMock, createOutgoingData)
-            .ALWAYS()
-            .RETURN(dummyData);
 
         const ntca::StreamSocketOptions options;
 
         bsl::shared_ptr<ntcr::StreamSocket> socket;
         socket.createInplace(&ta,
                              options,
-                             resolverMock,
-                             reactorMock,
-                             nullPool,
-                             nullMetrics,
+                             test.d_resolverMock,
+                             test.d_reactorMock,
+                             test.d_nullPool,
+                             test.d_nullMetrics,
                              &ta);
 
         NTCI_LOG_DEBUG("Inject mocked ntsi::StreamSocket");
+        {
+            test.injectStreamSocket(*socket);
+        }
 
-        NTF_EXPECT_0(*socketMock, handle).ALWAYS().RETURN(handle);
-
-        NTF_EXPECT_1(*socketMock, setBlocking, NTF_EQ(false))
-            .TIMES(2)
-            .RETURN(ntsa::Error());  //TODO: for some reason it is called twice
-
-        NTF_EXPECT_1(*socketMock, setOption, IGNORE_ARG)
-            .ALWAYS()
-            .RETURN(ntsa::Error());
-
-        NTF_EXPECT_1(*socketMock, sourceEndpoint, IGNORE_ARG)
-            .ONCE()
-            .RETURN(ntsa::Error::invalid());
-
-        NTF_EXPECT_1(*socketMock, remoteEndpoint, IGNORE_ARG)
-            .ONCE()
-            .RETURN(ntsa::Error::invalid());
-
-        ntsa::SocketOption sendBufferSizeOption;
-        sendBufferSizeOption.makeSendBufferSize(100500);
-        ntsa::SocketOption rcvBufferSizeOption;
-        rcvBufferSizeOption.makeReceiveBufferSize(100500);
-
-        NTF_EXPECT_2(*socketMock,
-                     getOption,
-                     IGNORE_ARG,
-                     NTF_EQ(ntsa::SocketOptionType::e_SEND_BUFFER_SIZE))
-            .ONCE()
-            .RETURN(ntsa::Error())
-            .SET_ARG_1(FROM_DEREF(sendBufferSizeOption));
-
-        NTF_EXPECT_2(*socketMock,
-                     getOption,
-                     IGNORE_ARG,
-                     NTF_EQ(ntsa::SocketOptionType::e_RECEIVE_BUFFER_SIZE))
-            .ONCE()
-            .RETURN(ntsa::Error())
-            .SET_ARG_1(FROM_DEREF(rcvBufferSizeOption));
-
-        NTF_EXPECT_0(*socketMock, maxBuffersPerSend).ONCE().RETURN(22);
-        NTF_EXPECT_0(*socketMock, maxBuffersPerReceive).ONCE().RETURN(22);
-
-        NTF_EXPECT_0(*reactorMock, acquireHandleReservation)
-            .ALWAYS()
-            .RETURN(true);
-        NTF_EXPECT_0(*reactorMock, releaseHandleReservation).ALWAYS();
-
-        socket->open(ntsa::Transport::e_TCP_IPV4_STREAM, socketMock);
-
-        NTCI_LOG_DEBUG("Connection initiation...");
-
-        bsl::shared_ptr<test::mock::TimerMock> connectRetryTimerMock;
-        connectRetryTimerMock.createInplace(&ta);
-
+        const bsl::string   epName = "unreachable.bbg.com";
         ntci::TimerCallback retryTimerCallback;
 
-        NTF_EXPECT_3(*reactorMock,
-                     createTimer,
-                     IGNORE_ARG_S(const ntca::TimerOptions&),
-                     IGNORE_ARG_S(const ntci::TimerCallback&),
-                     IGNORE_ARG_S(bslma::Allocator*))
-            .ONCE()
-            .SAVE_ARG_2(TO(&retryTimerCallback))
-            .RETURN(connectRetryTimerMock);
+        NTCI_LOG_DEBUG("Connection initiation...");
+        {
+            NTF_EXPECT_3(*test.d_reactorMock,
+                         createTimer,
+                         IGNORE_ARG_S(const ntca::TimerOptions&),
+                         IGNORE_ARG_S(const ntci::TimerCallback&),
+                         IGNORE_ARG_S(bslma::Allocator*))
+                .ONCE()
+                .SAVE_ARG_2(TO(&retryTimerCallback))
+                .RETURN(test.d_connectRetryTimerMock);
 
-        NTF_EXPECT_2(*connectRetryTimerMock, schedule, IGNORE_ARG, IGNORE_ARG)
-            .ONCE()
-            .RETURN(ntsa::Error());
+            NTF_EXPECT_2(*test.d_connectRetryTimerMock,
+                         schedule,
+                         IGNORE_ARG,
+                         IGNORE_ARG)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
 
-        const ntci::ConnectFunction connectCallback =
-            [&connectResult](const bsl::shared_ptr<ntci::Connector>& connector,
-                             const ntca::ConnectEvent&               event) {
-                NTCCFG_TEST_FALSE(connectResult.has_value());
-                connectResult = event;
-            };
+            const ntci::ConnectFunction connectCallback =
+                [&connectResult](
+                    const bsl::shared_ptr<ntci::Connector>& connector,
+                    const ntca::ConnectEvent&               event) {
+                    NTCCFG_TEST_FALSE(connectResult.has_value());
+                    connectResult = event;
+                };
 
-        const ntca::ConnectOptions connectOptions;
+            const ntca::ConnectOptions connectOptions;
 
-        const bsl::string epName = "unreachable.bbg.com";
-
-        socket->connect(epName, connectOptions, connectCallback);
+            socket->connect(epName, connectOptions, connectCallback);
+        }
 
         NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
+        {
+            NTF_EXPECT_3(*test.d_resolverMock,
+                         getEndpoint,
+                         NTF_EQ(epName),
+                         IGNORE_ARG,
+                         IGNORE_ARG)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
 
-        NTF_EXPECT_3(*resolverMock,
-                     getEndpoint,
-                     NTF_EQ(epName),
-                     IGNORE_ARG,
-                     IGNORE_ARG)
-            .ONCE()
-            .RETURN(ntsa::Error());
-
-        ntca::TimerEvent timerEvent;
-        timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
-        retryTimerCallback(connectRetryTimerMock, timerEvent, nullStrand);
+            ntca::TimerEvent timerEvent;
+            timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
+            retryTimerCallback(test.d_connectRetryTimerMock,
+                               timerEvent,
+                               test.d_nullStrand);
+        }
 
         NTCI_LOG_DEBUG("Shutdown socket while it is waiting for remote "
                        "endpoint resolution");
+        {
+            NTF_EXPECT_0(*test.d_connectRetryTimerMock, close)
+                .ONCE()
+                .RETURN(ntsa::Error());
 
-        NTF_EXPECT_0(*connectRetryTimerMock, close)
-            .ONCE()
-            .RETURN(ntsa::Error());
+            ntci::Reactor::Functor callback;
+            NTF_EXPECT_1(*test.d_reactorMock, execute, IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_1(TO(&callback));
 
-        ntci::Reactor::Functor callback;
-        NTF_EXPECT_1(*reactorMock, execute, IGNORE_ARG)
-            .ONCE()
-            .SAVE_ARG_1(TO(&callback));
+            NTF_EXPECT_2(
+                *test.d_reactorMock,
+                detachSocket,
+                NTF_EQ_SPEC(socket,
+                            const bsl::shared_ptr<ntci::ReactorSocket>&),
+                IGNORE_ARG)
+                .ONCE()
+                .RETURN(ntsa::Error::invalid());
 
-        NTF_EXPECT_2(
-            *reactorMock,
-            detachSocket,
-            NTF_EQ_SPEC(socket, const bsl::shared_ptr<ntci::ReactorSocket>&),
-            IGNORE_ARG)
-            .ONCE()
-            .RETURN(ntsa::Error::invalid());
-        //TODO: is that ok to detach socket that has not been attached?
+            NTF_EXPECT_0(*test.d_streamSocketMock, close)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
 
-        NTF_EXPECT_0(*socketMock, close).ONCE().RETURN(ntsa::Error());
+            socket->shutdown(ntsa::ShutdownType::e_BOTH,
+                             ntsa::ShutdownMode::e_GRACEFUL);
 
-        socket->shutdown(ntsa::ShutdownType::e_BOTH,
-                         ntsa::ShutdownMode::e_GRACEFUL);
-
-        callback();
-        NTCCFG_TEST_TRUE(connectResult.has_value());
-        NTCCFG_TEST_EQ(connectResult.value().type(),
-                       ntca::ConnectEventType::e_ERROR);
+            callback();
+            NTCCFG_TEST_TRUE(connectResult.has_value());
+            NTCCFG_TEST_EQ(connectResult.value().type(),
+                           ntca::ConnectEventType::e_ERROR);
+        }
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
@@ -4123,210 +3973,194 @@ NTCCFG_TEST_CASE(23)
     {
         NTCI_LOG_DEBUG("Fixture setup, socket creation...");
 
-        const bsl::nullopt_t doNotCare = bsl::nullopt;
-        const ntsa::Handle   handle    = 22;
+        test::Fixture test(&ta);
+        test.setupReactorBase();
 
         bdlb::NullableValue<ntca::ConnectEvent> connectResult;
-
-        bsl::shared_ptr<ntci::ReactorPool> nullPool;
-        bsl::shared_ptr<ntcs::Metrics>     nullMetrics;
-        bsl::shared_ptr<bdlbb::Blob>       nullBlob;
-        bsl::shared_ptr<ntci::Strand>      nullStrand;
-
-        bsl::shared_ptr<ntsa::Data> dummyData;
-        dummyData.createInplace(&ta);
-
-        bsl::shared_ptr<test::mock::ResolverMock> resolverMock;
-        resolverMock.createInplace(&ta);
-
-        bsl::shared_ptr<test::mock::ReactorMock> reactorMock;
-        reactorMock.createInplace(&ta);
-
-        bsl::shared_ptr<test::mock::StreamSocketMock> socketMock;
-        socketMock.createInplace(&ta);
-
-        bsl::shared_ptr<test::mock::DataPoolMock> dataPoolMock;
-        dataPoolMock.createInplace(&ta);
-        reactorMock->expect_dataPool_WillAlwaysReturn(dataPoolMock);
-
-        bsl::shared_ptr<test::mock::BufferFactoryMock> bufferFactoryMock;
-        bufferFactoryMock.createInplace(&ta);
-        reactorMock->expect_outgoingBlobBufferFactory_WillAlwaysReturn(
-            bufferFactoryMock);
-        reactorMock->expect_incomingBlobBufferFactory_WillAlwaysReturn(
-            bufferFactoryMock);
-
-        NTF_EXPECT_0(*reactorMock, oneShot).ALWAYS().RETURN(false);
-        NTF_EXPECT_0(*reactorMock, maxThreads).ALWAYS().RETURN(1);
-
-        NTF_EXPECT_0(*dataPoolMock, createIncomingBlob)
-            .ALWAYS()
-            .RETURN(nullBlob);
-        NTF_EXPECT_0(*dataPoolMock, createOutgoingBlob)
-            .ALWAYS()
-            .RETURN(nullBlob);
-        NTF_EXPECT_0(*dataPoolMock, createOutgoingData)
-            .ALWAYS()
-            .RETURN(dummyData);
 
         const ntca::StreamSocketOptions options;
 
         bsl::shared_ptr<ntcr::StreamSocket> socket;
         socket.createInplace(&ta,
                              options,
-                             resolverMock,
-                             reactorMock,
-                             nullPool,
-                             nullMetrics,
+                             test.d_resolverMock,
+                             test.d_reactorMock,
+                             test.d_nullPool,
+                             test.d_nullMetrics,
                              &ta);
 
         NTCI_LOG_DEBUG("Inject mocked ntsi::StreamSocket");
+        {
+            const ntsa::Handle handle               = 22;
+            const size_t       defaultBufferSize    = 100500;
+            const size_t       maxBuffersPerSend    = 22;
+            const size_t       maxBuffersPerReceive = 22;
 
-        NTF_EXPECT_0(*socketMock, handle).ALWAYS().RETURN(handle);
+            NTF_EXPECT_0(*test.d_streamSocketMock, handle)
+                .ALWAYS()
+                .RETURN(handle);
 
-        NTF_EXPECT_1(*socketMock, setBlocking, NTF_EQ(false))
-            .TIMES(2)
-            .RETURN(ntsa::Error());  //TODO: for some reason it is called twice
+            NTF_EXPECT_1(*test.d_streamSocketMock, setBlocking, NTF_EQ(false))
+                .TIMES(2)
+                .RETURN(test::Fixture::k_NO_ERROR);
 
-        NTF_EXPECT_1(*socketMock, setOption, IGNORE_ARG)
-            .ALWAYS()
-            .RETURN(ntsa::Error());
+            NTF_EXPECT_1(*test.d_streamSocketMock, setOption, IGNORE_ARG)
+                .ALWAYS()
+                .RETURN(test::Fixture::k_NO_ERROR);
 
-        NTF_EXPECT_1(*socketMock, sourceEndpoint, IGNORE_ARG)
-            .ONCE()
-            .RETURN(ntsa::Error::invalid());
+            NTF_EXPECT_1(*test.d_streamSocketMock, sourceEndpoint, IGNORE_ARG)
+                .ONCE()
+                .RETURN(ntsa::Error::invalid());
 
-        NTF_EXPECT_1(*socketMock, remoteEndpoint, IGNORE_ARG)
-            .ONCE()
-            .RETURN(ntsa::Error::invalid());
+            NTF_EXPECT_1(*test.d_streamSocketMock, remoteEndpoint, IGNORE_ARG)
+                .ONCE()
+                .RETURN(ntsa::Error::invalid());
 
-        ntsa::SocketOption sendBufferSizeOption;
-        sendBufferSizeOption.makeSendBufferSize(100500);
-        ntsa::SocketOption rcvBufferSizeOption;
-        rcvBufferSizeOption.makeReceiveBufferSize(100500);
+            ntsa::SocketOption sendBufferSizeOption;
+            sendBufferSizeOption.makeSendBufferSize(defaultBufferSize);
+            ntsa::SocketOption rcvBufferSizeOption;
+            rcvBufferSizeOption.makeReceiveBufferSize(defaultBufferSize);
 
-        NTF_EXPECT_2(*socketMock,
-                     getOption,
-                     IGNORE_ARG,
-                     NTF_EQ(ntsa::SocketOptionType::e_SEND_BUFFER_SIZE))
-            .ONCE()
-            .RETURN(ntsa::Error())
-            .SET_ARG_1(FROM_DEREF(sendBufferSizeOption));
+            NTF_EXPECT_2(*test.d_streamSocketMock,
+                         getOption,
+                         IGNORE_ARG,
+                         NTF_EQ(ntsa::SocketOptionType::e_SEND_BUFFER_SIZE))
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR)
+                .SET_ARG_1(FROM_DEREF(sendBufferSizeOption));
 
-        NTF_EXPECT_2(*socketMock,
-                     getOption,
-                     IGNORE_ARG,
-                     NTF_EQ(ntsa::SocketOptionType::e_RECEIVE_BUFFER_SIZE))
-            .ONCE()
-            .RETURN(ntsa::Error())
-            .SET_ARG_1(FROM_DEREF(rcvBufferSizeOption));
+            NTF_EXPECT_2(*test.d_streamSocketMock,
+                         getOption,
+                         IGNORE_ARG,
+                         NTF_EQ(ntsa::SocketOptionType::e_RECEIVE_BUFFER_SIZE))
+                .ONCE()
+                .RETURN(ntsa::Error())
+                .SET_ARG_1(FROM_DEREF(rcvBufferSizeOption));
 
-        NTF_EXPECT_0(*socketMock, maxBuffersPerSend).ONCE().RETURN(22);
-        NTF_EXPECT_0(*socketMock, maxBuffersPerReceive).ONCE().RETURN(22);
+            NTF_EXPECT_0(*test.d_streamSocketMock, maxBuffersPerSend)
+                .ONCE()
+                .RETURN(maxBuffersPerSend);
+            NTF_EXPECT_0(*test.d_streamSocketMock, maxBuffersPerReceive)
+                .ONCE()
+                .RETURN(maxBuffersPerReceive);
 
-        NTF_EXPECT_0(*reactorMock, acquireHandleReservation)
-            .ALWAYS()
-            .RETURN(true);
-        NTF_EXPECT_0(*reactorMock, releaseHandleReservation).ALWAYS();
+            NTF_EXPECT_0(*test.d_reactorMock, acquireHandleReservation)
+                .ALWAYS()
+                .RETURN(true);
+            NTF_EXPECT_0(*test.d_reactorMock, releaseHandleReservation)
+                .ALWAYS();
 
-        socket->open(ntsa::Transport::e_TCP_IPV4_STREAM, socketMock);
+            socket->open(ntsa::Transport::e_TCP_IPV4_STREAM,
+                         test.d_streamSocketMock);
+        }
 
-        NTCI_LOG_DEBUG("Connection initiation...");
-
-        bsl::shared_ptr<test::mock::TimerMock> connectRetryTimerMock;
-        connectRetryTimerMock.createInplace(&ta);
-
-        ntci::TimerCallback retryTimerCallback;
-
-        NTF_EXPECT_3(*reactorMock,
-                     createTimer,
-                     IGNORE_ARG_S(const ntca::TimerOptions&),
-                     IGNORE_ARG_S(const ntci::TimerCallback&),
-                     IGNORE_ARG_S(bslma::Allocator*))
-            .ONCE()
-            .SAVE_ARG_2(TO(&retryTimerCallback))
-            .RETURN(connectRetryTimerMock);
-
-        NTF_EXPECT_2(*connectRetryTimerMock, schedule, IGNORE_ARG, IGNORE_ARG)
-            .ONCE()
-            .RETURN(ntsa::Error());
-
-        const ntci::ConnectFunction connectCallback =
-            [&connectResult](const bsl::shared_ptr<ntci::Connector>& connector,
-                             const ntca::ConnectEvent&               event) {
-                NTCCFG_TEST_FALSE(connectResult.has_value());
-                connectResult = event;
-            };
-
-        const ntca::ConnectOptions connectOptions;
-
+        ntci::TimerCallback  retryTimerCallback;
         const ntsa::Endpoint targetEp{"127.0.0.1:1234"};
-        const ntsa::Endpoint sourceEp{"127.0.0.1:22"};
+        NTCI_LOG_DEBUG("Connection initiation...");
+        {
+            NTF_EXPECT_3(*test.d_reactorMock,
+                         createTimer,
+                         IGNORE_ARG_S(const ntca::TimerOptions&),
+                         IGNORE_ARG_S(const ntci::TimerCallback&),
+                         IGNORE_ARG_S(bslma::Allocator*))
+                .ONCE()
+                .SAVE_ARG_2(TO(&retryTimerCallback))
+                .RETURN(test.d_connectRetryTimerMock);
 
-        socket->connect(targetEp, connectOptions, connectCallback);
+            NTF_EXPECT_2(*test.d_connectRetryTimerMock,
+                         schedule,
+                         IGNORE_ARG,
+                         IGNORE_ARG)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            const ntci::ConnectFunction connectCallback =
+                [&connectResult](
+                    const bsl::shared_ptr<ntci::Connector>& connector,
+                    const ntca::ConnectEvent&               event) {
+                    NTCCFG_TEST_FALSE(connectResult.has_value());
+                    connectResult = event;
+                };
+
+            const ntca::ConnectOptions connectOptions;
+
+            socket->connect(targetEp, connectOptions, connectCallback);
+        }
 
         NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
+        {
+            const ntsa::Endpoint sourceEp{"127.0.0.1:22"};
+            NTF_EXPECT_1(
+                *test.d_reactorMock,
+                attachSocket,
+                NTF_EQ_SPEC(socket,
+                            const bsl::shared_ptr<ntci::ReactorSocket>&))
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
 
-        NTF_EXPECT_1(
-            *reactorMock,
-            attachSocket,
-            NTF_EQ_SPEC(socket, const bsl::shared_ptr<ntci::ReactorSocket>&))
-            .ONCE()
-            .RETURN(ntsa::Error());
+            NTF_EXPECT_2(*test.d_reactorMock,
+                         showWritable,
+                         NTF_EQ(socket),
+                         IGNORE_ARG)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
 
-        NTF_EXPECT_2(*reactorMock, showWritable, NTF_EQ(socket), IGNORE_ARG)
-            .ONCE()
-            .RETURN(ntsa::Error());
+            NTF_EXPECT_1(*test.d_streamSocketMock, connect, NTF_EQ(targetEp))
+                .ONCE()
+                .RETURN(ntsa::Error());
 
-        NTF_EXPECT_1(*socketMock, connect, NTF_EQ(targetEp))
-            .ONCE()
-            .RETURN(ntsa::Error());
+            NTF_EXPECT_1(*test.d_streamSocketMock, sourceEndpoint, IGNORE_ARG)
+                .ONCE()
+                .RETURN(ntsa::Error())
+                .SET_ARG_1(FROM_DEREF(sourceEp));
 
-        NTF_EXPECT_1(*socketMock, sourceEndpoint, IGNORE_ARG)
-            .ONCE()
-            .RETURN(ntsa::Error())
-            .SET_ARG_1(FROM_DEREF(sourceEp));
-
-        ntca::TimerEvent timerEvent;
-        timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
-        retryTimerCallback(connectRetryTimerMock, timerEvent, nullStrand);
+            ntca::TimerEvent timerEvent;
+            timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
+            retryTimerCallback(test.d_connectRetryTimerMock,
+                               timerEvent,
+                               test.d_nullStrand);
+        }
 
         NTCI_LOG_DEBUG(
             "Shutdown socket while it is waiting for connection result");
+        {
+            NTF_EXPECT_0(*test.d_connectRetryTimerMock, close)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
 
-        NTF_EXPECT_0(*connectRetryTimerMock, close)
-            .ONCE()
-            .RETURN(ntsa::Error());
+            ntci::SocketDetachedCallback detachCallback;
 
-        ntci::SocketDetachedCallback detachCallback;
+            NTF_EXPECT_2(
+                *test.d_reactorMock,
+                detachSocket,
+                NTF_EQ_SPEC(socket,
+                            const bsl::shared_ptr<ntci::ReactorSocket>&),
+                IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_2(TO(&detachCallback))
+                .RETURN(test::Fixture::k_NO_ERROR);
 
-        NTF_EXPECT_2(
-            *reactorMock,
-            detachSocket,
-            NTF_EQ_SPEC(socket, const bsl::shared_ptr<ntci::ReactorSocket>&),
-            IGNORE_ARG)
-            .ONCE()
-            .SAVE_ARG_2(TO(&detachCallback))
-            .RETURN(ntsa::Error());
+            NTF_EXPECT_0(*test.d_streamSocketMock, close)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
 
-        NTF_EXPECT_0(*socketMock, close).ONCE().RETURN(ntsa::Error());
+            socket->shutdown(ntsa::ShutdownType::e_BOTH,
+                             ntsa::ShutdownMode::e_GRACEFUL);
 
-        socket->shutdown(ntsa::ShutdownType::e_BOTH,
-                         ntsa::ShutdownMode::e_GRACEFUL);
+            NTCCFG_TEST_TRUE(detachCallback);
 
-        NTCCFG_TEST_TRUE(detachCallback);
+            ntci::Reactor::Functor callback;
+            NTF_EXPECT_1(*test.d_reactorMock, execute, IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_1(TO(&callback));
+            detachCallback(test.d_nullStrand);
 
-        ntci::Reactor::Functor callback;
-        NTF_EXPECT_1(*reactorMock, execute, IGNORE_ARG)
-            .ONCE()
-            .SAVE_ARG_1(TO(&callback));
-        detachCallback(nullStrand);
+            callback();
 
-        callback();
-
-        NTCCFG_TEST_TRUE(connectResult.has_value());
-        NTCCFG_TEST_EQ(connectResult.value().type(),
-                       ntca::ConnectEventType::e_ERROR);
+            NTCCFG_TEST_TRUE(connectResult.has_value());
+            NTCCFG_TEST_EQ(connectResult.value().type(),
+                           ntca::ConnectEventType::e_ERROR);
+        }
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
@@ -4339,8 +4173,6 @@ NTCCFG_TEST_CASE(24)
     {
         NTCI_LOG_DEBUG("Fixture setup, socket creation...");
 
-        const bsl::nullopt_t doNotCare = bsl::nullopt;
-
         bdlb::NullableValue<ntca::ConnectEvent> connectResult;
 
         bsl::shared_ptr<ntci::ReactorPool> nullPool;
@@ -4362,14 +4194,16 @@ NTCCFG_TEST_CASE(24)
 
         bsl::shared_ptr<test::mock::DataPoolMock> dataPoolMock;
         dataPoolMock.createInplace(&ta);
-        reactorMock->expect_dataPool_WillAlwaysReturn(dataPoolMock);
+        NTF_EXPECT_0(*reactorMock, dataPool).ALWAYS().RETURN(dataPoolMock);
 
         bsl::shared_ptr<test::mock::BufferFactoryMock> bufferFactoryMock;
         bufferFactoryMock.createInplace(&ta);
-        reactorMock->expect_outgoingBlobBufferFactory_WillAlwaysReturn(
-            bufferFactoryMock);
-        reactorMock->expect_incomingBlobBufferFactory_WillAlwaysReturn(
-            bufferFactoryMock);
+        NTF_EXPECT_0(*reactorMock, outgoingBlobBufferFactory)
+            .ALWAYS()
+            .RETURN(bufferFactoryMock);
+        NTF_EXPECT_0(*reactorMock, incomingBlobBufferFactory)
+            .ALWAYS()
+            .RETURN(bufferFactoryMock);
 
         NTF_EXPECT_0(*reactorMock, oneShot).ALWAYS().RETURN(false);
         NTF_EXPECT_0(*reactorMock, maxThreads).ALWAYS().RETURN(1);
@@ -4521,7 +4355,7 @@ NTCCFG_TEST_CASE(24)
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
-#endif
+
 NTCCFG_TEST_DRIVER
 {
     NTCCFG_TEST_REGISTER(1);
