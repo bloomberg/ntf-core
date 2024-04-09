@@ -1404,13 +1404,19 @@ struct InvocationBaseSaveSetArg<INVOCATION_DATA, SELF, ARG1, ARG2, ARG3>
 
 template <class INVOCATION_DATA>
 struct InvocationDataStorage {
-    INVOCATION_DATA& getInvocationDataBack()
-    {
-        NTCCFG_TEST_FALSE(d_invocations.empty());
-        return d_invocations.back();
-    }
-
     bsl::list<INVOCATION_DATA> d_invocations;
+
+    ~InvocationDataStorage()
+    {
+        for (typename bsl::list<INVOCATION_DATA>::const_iterator it =
+                 d_invocations.cbegin();
+             it != d_invocations.cend();
+             ++it)
+        {
+            NTCCFG_TEST_EQ(it->d_expectedCalls,
+                           INVOCATION_DATA::k_INFINITE_CALLS);
+        }
+    }
 };
 
 template <class RESULT>
@@ -1423,8 +1429,8 @@ struct Invocation0
 
     RESULT invoke()
     {
-        NTCCFG_TEST_FALSE(d_invocations.empty());
-        InvocationDataT& invocation = d_invocations.front();
+        NTCCFG_TEST_FALSE(d_storage.d_invocations.empty());
+        InvocationDataT& invocation = d_storage.d_invocations.front();
         if (invocation.d_expectedCalls != InvocationDataT::k_INFINITE_CALLS) {
             NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
         }
@@ -1432,7 +1438,7 @@ struct Invocation0
         if (invocation.d_expectedCalls != InvocationDataT::k_INFINITE_CALLS) {
             --invocation.d_expectedCalls;
             if (invocation.d_expectedCalls == 0) {
-                d_invocations.pop_front();
+                d_storage.d_invocations.pop_front();
             }
         }
         return result.get();
@@ -1440,21 +1446,21 @@ struct Invocation0
 
     Invocation0& expect()
     {
-        if (!d_invocations.empty()) {
-            NTCCFG_TEST_NE(d_invocations.back().d_expectedCalls,
+        if (!d_storage.d_invocations.empty()) {
+            NTCCFG_TEST_NE(d_storage.d_invocations.back().d_expectedCalls,
                            InvocationDataT::k_INFINITE_CALLS);
         }
-        d_invocations.emplace_back();
+        d_storage.d_invocations.emplace_back();
         return *this;
     }
 
     InvocationDataT& getInvocationDataBack()
     {
-        NTCCFG_TEST_FALSE(d_invocations.empty());
-        return d_invocations.back();
+        NTCCFG_TEST_FALSE(d_storage.d_invocations.empty());
+        return d_storage.d_invocations.back();
     }
 
-    bsl::list<InvocationDataT> d_invocations;
+    InvocationDataStorage<InvocationDataT> d_storage;
 };
 
 template <class T>
@@ -1481,8 +1487,8 @@ struct Invocation1
 
     RESULT invoke(ARG1 arg)
     {
-        NTCCFG_TEST_FALSE(d_invocations.empty());
-        InvocationDataT& invocation = d_invocations.front();
+        NTCCFG_TEST_FALSE(d_storage.d_invocations.empty());
+        InvocationDataT& invocation = d_storage.d_invocations.front();
         if (invocation.d_expectedCalls != InvocationDataT::k_INFINITE_CALLS) {
             NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
         }
@@ -1493,7 +1499,7 @@ struct Invocation1
         if (invocation.d_expectedCalls != InvocationDataT::k_INFINITE_CALLS) {
             --invocation.d_expectedCalls;
             if (invocation.d_expectedCalls == 0) {
-                d_invocations.pop_front();
+                d_storage.d_invocations.pop_front();
             }
         }
         return result.get();
@@ -1502,14 +1508,14 @@ struct Invocation1
     template <class ARG1_MATCHER>
     Invocation1& expect(const ARG1_MATCHER& arg1Matcher)
     {
-        if (!d_invocations.empty()) {
-            NTCCFG_TEST_NE(d_invocations.back().d_expectedCalls,
+        if (!d_storage.d_invocations.empty()) {
+            NTCCFG_TEST_NE(d_storage.d_invocations.back().d_expectedCalls,
                            InvocationDataT::k_INFINITE_CALLS);
         }
-        d_invocations.emplace_back();
+        d_storage.d_invocations.emplace_back();
 
         if (!arg1Matcher.ignore()) {
-            InvocationDataT& data = d_invocations.back();
+            InvocationDataT& data = d_storage.d_invocations.back();
             bsl::shared_ptr<MatcherHolder<ARG1, ARG1_MATCHER> >
                 matcherInterface(
                     new MatcherHolder<ARG1, ARG1_MATCHER>(arg1Matcher));
@@ -1521,11 +1527,11 @@ struct Invocation1
 
     InvocationDataT& getInvocationDataBack()
     {
-        NTCCFG_TEST_FALSE(d_invocations.empty());
-        return d_invocations.back();
+        NTCCFG_TEST_FALSE(d_storage.d_invocations.empty());
+        return d_storage.d_invocations.back();
     }
 
-    bsl::list<InvocationData<RESULT, ARG1, NO_ARG, NO_ARG> > d_invocations;
+    InvocationDataStorage<InvocationDataT> d_storage;
 };
 
 template <class RESULT, class ARG1, class ARG2>
@@ -1546,8 +1552,8 @@ struct Invocation2
 
     RESULT invoke(ARG1 arg1, ARG2 arg2)
     {
-        NTCCFG_TEST_FALSE(d_invocations.empty());
-        InvocationDataT& invocation = d_invocations.front();
+        NTCCFG_TEST_FALSE(d_storage.d_invocations.empty());
+        InvocationDataT& invocation = d_storage.d_invocations.front();
         if (invocation.d_expectedCalls != InvocationDataT::k_INFINITE_CALLS) {
             NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
         }
@@ -1558,7 +1564,7 @@ struct Invocation2
         if (invocation.d_expectedCalls != InvocationDataT::k_INFINITE_CALLS) {
             --invocation.d_expectedCalls;
             if (invocation.d_expectedCalls == 0) {
-                d_invocations.pop_front();
+                d_storage.d_invocations.pop_front();
             }
         }
         return result.get();
@@ -1568,12 +1574,12 @@ struct Invocation2
     Invocation2& expect(const ARG1_MATCHER& arg1Matcher,
                         const ARG2_MATCHER& arg2Matcher)
     {
-        if (!d_invocations.empty()) {
-            NTCCFG_TEST_NE(d_invocations.back().d_expectedCalls,
+        if (!d_storage.d_invocations.empty()) {
+            NTCCFG_TEST_NE(d_storage.d_invocations.back().d_expectedCalls,
                            InvocationDataT::k_INFINITE_CALLS);
         }
-        d_invocations.emplace_back();
-        InvocationDataT& data = d_invocations.back();
+        d_storage.d_invocations.emplace_back();
+        InvocationDataT& data = d_storage.d_invocations.back();
         if (!arg1Matcher.ignore()) {
             bsl::shared_ptr<MatcherHolder<ARG1, ARG1_MATCHER> >
                 matcherInterface1(
@@ -1594,11 +1600,11 @@ struct Invocation2
 
     InvocationDataT& getInvocationDataBack()
     {
-        NTCCFG_TEST_FALSE(d_invocations.empty());
-        return d_invocations.back();
+        NTCCFG_TEST_FALSE(d_storage.d_invocations.empty());
+        return d_storage.d_invocations.back();
     }
 
-    bsl::list<InvocationDataT> d_invocations;
+    InvocationDataStorage<InvocationDataT> d_storage;
 };
 
 template <class RESULT, class ARG1, class ARG2, class ARG3>
@@ -1620,8 +1626,8 @@ struct Invocation3
 
     RESULT invoke(ARG1 arg1, ARG2 arg2, ARG3 arg3)
     {
-        NTCCFG_TEST_FALSE(d_invocations.empty());
-        InvocationDataT& invocation = d_invocations.front();
+        NTCCFG_TEST_FALSE(d_storage.d_invocations.empty());
+        InvocationDataT& invocation = d_storage.d_invocations.front();
         if (invocation.d_expectedCalls != InvocationDataT::k_INFINITE_CALLS) {
             NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
         }
@@ -1632,7 +1638,7 @@ struct Invocation3
         if (invocation.d_expectedCalls != InvocationDataT::k_INFINITE_CALLS) {
             --invocation.d_expectedCalls;
             if (invocation.d_expectedCalls == 0) {
-                d_invocations.pop_front();
+                d_storage.d_invocations.pop_front();
             }
         }
         return result.get();
@@ -1643,12 +1649,12 @@ struct Invocation3
                         const ARG2_MATCHER& arg2Matcher,
                         const ARG3_MATCHER& arg3Matcher)
     {
-        if (!d_invocations.empty()) {
-            NTCCFG_TEST_NE(d_invocations.back().d_expectedCalls,
+        if (!d_storage.d_invocations.empty()) {
+            NTCCFG_TEST_NE(d_storage.d_invocations.back().d_expectedCalls,
                            InvocationDataT::k_INFINITE_CALLS);
         }
-        d_invocations.emplace_back();
-        InvocationDataT& data = d_invocations.back();
+        d_storage.d_invocations.emplace_back();
+        InvocationDataT& data = d_storage.d_invocations.back();
         if (!arg1Matcher.ignore()) {
             bsl::shared_ptr<MatcherHolder<ARG1, ARG1_MATCHER> >
                 matcherInterface1(
@@ -1678,11 +1684,11 @@ struct Invocation3
 
     InvocationDataT& getInvocationDataBack()
     {
-        NTCCFG_TEST_FALSE(d_invocations.empty());
-        return d_invocations.back();
+        NTCCFG_TEST_FALSE(d_storage.d_invocations.empty());
+        return d_storage.d_invocations.back();
     }
 
-    bsl::list<InvocationDataT> d_invocations;
+    InvocationDataStorage<InvocationDataT> d_storage;
 };
 
 }
