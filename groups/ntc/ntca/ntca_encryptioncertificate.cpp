@@ -31,6 +31,146 @@ BSLS_IDENT_RCSID(ntca_encryptioncertificate_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntca {
 
+
+
+
+EncryptionCertificateTemplate::EncryptionCertificateTemplate(bslma::Allocator* basicAllocator)
+: d_value(0)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+
+}
+
+EncryptionCertificateTemplate::EncryptionCertificateTemplate(
+    const EncryptionCertificateTemplate& original,
+    bslma::Allocator*            basicAllocator)
+: d_value(original.d_value)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateTemplate::~EncryptionCertificateTemplate()
+{
+}
+
+EncryptionCertificateTemplate& EncryptionCertificateTemplate::operator=(
+    const EncryptionCertificateTemplate& other)
+{
+    if (this != &other) {
+        d_value = other.d_value;
+    }
+
+    return *this;
+}
+
+void EncryptionCertificateTemplate::reset()
+{
+    d_value = 0;
+}
+
+void EncryptionCertificateTemplate::setValue(bsl::size_t value)
+{
+    d_value = value;
+}
+
+bsl::size_t EncryptionCertificateTemplate::value() const
+{
+    return d_value;
+}
+
+bool EncryptionCertificateTemplate::equals(const EncryptionCertificateTemplate& other) const
+{
+    return d_value == other.d_value;
+}
+
+bool EncryptionCertificateTemplate::less(const EncryptionCertificateTemplate& other) const
+{
+    #if 0
+    if (d_value < other.d_value) {
+        return true;
+    }
+
+    if (other.d_value < d_value) {
+        return false;
+    }
+    #endif
+
+    return d_value < other.d_value;
+}
+
+bsl::ostream& EncryptionCertificateTemplate::print(bsl::ostream& stream,
+                                           int           level,
+                                           int           spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute("value", d_value);
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                stream,
+                         const EncryptionCertificateTemplate& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionCertificateTemplate& lhs,
+                const EncryptionCertificateTemplate& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionCertificateTemplate& lhs,
+                const EncryptionCertificateTemplate& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionCertificateTemplate& lhs,
+               const EncryptionCertificateTemplate& rhs)
+{
+    return lhs.less(rhs);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 EncryptionCertificate::EncryptionCertificate(bslma::Allocator* basicAllocator)
 : d_serialNumber(0)
 , d_startTime()
