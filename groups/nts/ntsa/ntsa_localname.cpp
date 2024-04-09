@@ -51,9 +51,9 @@ LocalName::LocalName()
 {
     bsl::memset(d_path, 0, k_MAX_PATH_LENGTH);
 #if defined(BSLS_PLATFORM_OS_AIX)
-    BSLMF_ASSERT(k_MAX_PATH_LENGTH <= (sizeof(sockaddr_un::sun_path) - 1));
+    BSLMF_ASSERT(k_MAX_PATH_LENGTH <= (sizeof(sockaddr_un().sun_path) - 1));
 #else
-    BSLMF_ASSERT(k_MAX_PATH_LENGTH == (sizeof(sockaddr_un::sun_path) - 1));
+    BSLMF_ASSERT(k_MAX_PATH_LENGTH == (sizeof(sockaddr_un().sun_path) - 1));
 #endif
 }
 
@@ -86,7 +86,7 @@ ntsa::Error LocalName::setAbstract()
 {
 #if defined(BSLS_PLATFORM_OS_LINUX)
     if (d_size == k_MAX_PATH_LENGTH) {
-        return ntsa::Error(ntsa::Error::Code::e_LIMIT);
+        return ntsa::Error(ntsa::Error::e_LIMIT);
     }
     d_abstract = true;
     return ntsa::Error();
