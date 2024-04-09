@@ -845,7 +845,7 @@ namespace ntf_mock {
 template <class ARG>
 struct ProcessInterface {
     virtual void process(const ARG& arg) = 0;
-    virtual ~ProcessInterface()
+    virtual ~    ProcessInterface()
     {
     }
 };
@@ -1034,9 +1034,8 @@ struct InvocationResult {
     : d_expResult()
     {
     }
-    BloombergLP::bdlb::NullableValue<RESULT>
-           d_expResult;  //TODO: wont work with ref
-    RESULT get()
+    BloombergLP::bdlb::NullableValue<RESULT> d_expResult;
+    RESULT                                   get()
     {
         NTCCFG_TEST_TRUE(d_expResult.has_value());
         return d_expResult.value();
@@ -1052,7 +1051,6 @@ struct InvocationResult<RESULT&> {
     RESULT* d_expResult;
     RESULT& get()
     {
-        printf("InvocationResult<RESULT&>::get d_expResult=%p\n", (void*)d_expResult);
         NTCCFG_TEST_TRUE(d_expResult != 0);
         return *d_expResult;
     }
@@ -1067,7 +1065,6 @@ struct InvocationResult<RESULT const&> {
     RESULT const* d_expResult;
     const RESULT& get()
     {
-        printf("InvocationResult<RESULT const&>::get d_expResult=%p\n", (void*)d_expResult);
         NTCCFG_TEST_TRUE(d_expResult != 0);
         return *d_expResult;
     }
@@ -1089,7 +1086,6 @@ struct InvocationBaseWillReturn {
 
     SELF& willReturn(const RESULT& result)
     {
-        printf("InvocationBaseWillReturn<INVOCATION_DATA, SELF, RESULT>::willReturn &result=%p\n", (void*)(&result));
         INVOCATION_DATA& invocation     = getInvocationDataBack();
         invocation.d_result.d_expResult = result;
         return *(static_cast<SELF*>(this));
@@ -1105,9 +1101,8 @@ template <class INVOCATION_DATA, class SELF, class RESULT>
 struct InvocationBaseWillReturn<INVOCATION_DATA, SELF, RESULT&> {
     virtual INVOCATION_DATA& getInvocationDataBack() = 0;
 
-    SELF& willReturn(RESULT* result)
+    SELF& willReturnRef(RESULT* result)
     {
-        printf("InvocationBaseWillReturn<INVOCATION_DATA, SELF, RESULT&>::willReturn &result=%p\n", (void*)(&result));
         INVOCATION_DATA& invocation     = getInvocationDataBack();
         invocation.d_result.d_expResult = result;
         return *(static_cast<SELF*>(this));
@@ -1123,10 +1118,8 @@ template <class INVOCATION_DATA, class SELF, class RESULT>
 struct InvocationBaseWillReturn<INVOCATION_DATA, SELF, RESULT const&> {
     virtual INVOCATION_DATA& getInvocationDataBack() = 0;
 
-    SELF& willReturn(RESULT const* result)
+    SELF& willReturnRef(RESULT const* result)
     {
-        printf("InvocationBaseWillReturn<INVOCATION_DATA, SELF, RESULT const&>::willReturn &result=%p\n", std::addressof(result));
-
         INVOCATION_DATA& invocation     = getInvocationDataBack();
         invocation.d_result.d_expResult = result;
         return *(static_cast<SELF*>(this));
@@ -1201,7 +1194,7 @@ struct InvocationData;
 
 template <class RESULT>
 struct InvocationData<RESULT> : public InvocationDataBase<RESULT> {
-    InvocationData() = default;
+    InvocationData()                            = default;
     InvocationData(const InvocationData& other) = default;
 };
 
@@ -1307,7 +1300,7 @@ template <class INVOCATION_DATA,
           class ARG5 = NO_ARG>
 struct InvocationBaseSaveSetArg {
   private:
-    InvocationBaseSaveSetArg();
+     InvocationBaseSaveSetArg();
     ~InvocationBaseSaveSetArg();
 };
 
@@ -1447,9 +1440,11 @@ struct Invocation0
 
     Invocation0& expect()
     {
-        InvocationDataT invocation;
-        //        d_invocations.emplace_back();
-        d_invocations.push_back(invocation);
+        if (!d_invocations.empty()) {
+            NTCCFG_TEST_NE(d_invocations.back().d_expectedCalls,
+                           InvocationDataT::k_INFINITE_CALLS);
+        }
+        d_invocations.emplace_back();
         return *this;
     }
 
@@ -1507,6 +1502,10 @@ struct Invocation1
     template <class ARG1_MATCHER>
     Invocation1& expect(const ARG1_MATCHER& arg1Matcher)
     {
+        if (!d_invocations.empty()) {
+            NTCCFG_TEST_NE(d_invocations.back().d_expectedCalls,
+                           InvocationDataT::k_INFINITE_CALLS);
+        }
         d_invocations.emplace_back();
 
         if (!arg1Matcher.ignore()) {
@@ -1569,6 +1568,10 @@ struct Invocation2
     Invocation2& expect(const ARG1_MATCHER& arg1Matcher,
                         const ARG2_MATCHER& arg2Matcher)
     {
+        if (!d_invocations.empty()) {
+            NTCCFG_TEST_NE(d_invocations.back().d_expectedCalls,
+                           InvocationDataT::k_INFINITE_CALLS);
+        }
         d_invocations.emplace_back();
         InvocationDataT& data = d_invocations.back();
         if (!arg1Matcher.ignore()) {
@@ -1640,6 +1643,10 @@ struct Invocation3
                         const ARG2_MATCHER& arg2Matcher,
                         const ARG3_MATCHER& arg3Matcher)
     {
+        if (!d_invocations.empty()) {
+            NTCCFG_TEST_NE(d_invocations.back().d_expectedCalls,
+                           InvocationDataT::k_INFINITE_CALLS);
+        }
         d_invocations.emplace_back();
         InvocationDataT& data = d_invocations.back();
         if (!arg1Matcher.ignore()) {
@@ -1862,6 +1869,7 @@ struct Invocation3
 #define ALWAYS() willAlways()
 #define TIMES(x) willTimes(x)
 #define RETURN(VAL) willReturn(VAL)
+#define RETURNREF(VAL) willReturnRef(&VAL)
 
 #define TO(ARG) ntf_mock::createExtractor<ntf_mock::NoDerefPolicy>(ARG)
 #define TO_DEREF(ARG) ntf_mock::createExtractor<ntf_mock::DerefPolicy>(ARG)
