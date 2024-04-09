@@ -1402,7 +1402,7 @@ struct InvocationBaseSaveSetArg<INVOCATION_DATA, SELF, ARG1, ARG2, ARG3>
     }
 };
 
-template <class INVOCATION_DATA>
+template <class INVOCATION_DATA, class METHOD_INFO>
 struct InvocationDataStorage {
     bsl::list<INVOCATION_DATA> d_invocations;
 
@@ -1413,18 +1413,25 @@ struct InvocationDataStorage {
              it != d_invocations.cend();
              ++it)
         {
-            NTCCFG_TEST_EQ(it->d_expectedCalls,
-                           INVOCATION_DATA::k_INFINITE_CALLS);
+            if (it->d_expectedCalls != INVOCATION_DATA::k_INFINITE_CALLS) {
+                BSLS_LOG_FATAL(
+                    "Invocation \"%s\" did not fire but was expected "
+                    "to fire %d times",
+                    METHOD_INFO().name,
+                    it->d_expectedCalls);
+                bsl::abort();
+            }
         }
     }
 };
 
-template <class RESULT>
+template <class METHOD_INFO, class RESULT>
 struct Invocation0
 : public InvocationBaseWillReturn<InvocationData<RESULT>,
-                                  Invocation0<RESULT>,
+                                  Invocation0<METHOD_INFO, RESULT>,
                                   RESULT>,
-  public InvocationBaseTimes<InvocationData<RESULT>, Invocation0<RESULT> > {
+  public InvocationBaseTimes<InvocationData<RESULT>,
+                             Invocation0<METHOD_INFO, RESULT> > {
     typedef InvocationData<RESULT> InvocationDataT;
 
     RESULT invoke()
@@ -1460,7 +1467,7 @@ struct Invocation0
         return d_storage.d_invocations.back();
     }
 
-    InvocationDataStorage<InvocationDataT> d_storage;
+    InvocationDataStorage<InvocationDataT, METHOD_INFO> d_storage;
 };
 
 template <class T>
@@ -1468,16 +1475,16 @@ struct TypeToType {
     typedef T Type;
 };
 
-template <class RESULT, class ARG1>
+template <class METHOD_INFO, class RESULT, class ARG1>
 struct Invocation1
 
 : public InvocationBaseWillReturn<InvocationData<RESULT, ARG1>,
-                                  Invocation1<RESULT, ARG1>,
+                                  Invocation1<METHOD_INFO, RESULT, ARG1>,
                                   RESULT>,
   public InvocationBaseTimes<InvocationData<RESULT, ARG1>,
-                             Invocation1<RESULT, ARG1> >,
+                             Invocation1<METHOD_INFO, RESULT, ARG1> >,
   public InvocationBaseSaveSetArg<InvocationData<RESULT, ARG1>,
-                                  Invocation1<RESULT, ARG1>,
+                                  Invocation1<METHOD_INFO, RESULT, ARG1>,
                                   ARG1>
 
 {
@@ -1531,19 +1538,19 @@ struct Invocation1
         return d_storage.d_invocations.back();
     }
 
-    InvocationDataStorage<InvocationDataT> d_storage;
+    InvocationDataStorage<InvocationDataT, METHOD_INFO> d_storage;
 };
 
-template <class RESULT, class ARG1, class ARG2>
+template <class METHOD_INFO, class RESULT, class ARG1, class ARG2>
 struct Invocation2
 
 : public InvocationBaseWillReturn<InvocationData<RESULT, ARG1, ARG2>,
-                                  Invocation2<RESULT, ARG1, ARG2>,
+                                  Invocation2<METHOD_INFO, RESULT, ARG1, ARG2>,
                                   RESULT>,
   public InvocationBaseTimes<InvocationData<RESULT, ARG1, ARG2>,
-                             Invocation2<RESULT, ARG1, ARG2> >,
+                             Invocation2<METHOD_INFO, RESULT, ARG1, ARG2> >,
   public InvocationBaseSaveSetArg<InvocationData<RESULT, ARG1, ARG2>,
-                                  Invocation2<RESULT, ARG1, ARG2>,
+                                  Invocation2<METHOD_INFO, RESULT, ARG1, ARG2>,
                                   ARG1,
                                   ARG2>
 
@@ -1604,22 +1611,25 @@ struct Invocation2
         return d_storage.d_invocations.back();
     }
 
-    InvocationDataStorage<InvocationDataT> d_storage;
+    InvocationDataStorage<InvocationDataT, METHOD_INFO> d_storage;
 };
 
-template <class RESULT, class ARG1, class ARG2, class ARG3>
+template <class METHOD_INFO, class RESULT, class ARG1, class ARG2, class ARG3>
 struct Invocation3
 
-: public InvocationBaseWillReturn<InvocationData<RESULT, ARG1, ARG2, ARG3>,
-                                  Invocation3<RESULT, ARG1, ARG2, ARG3>,
-                                  RESULT>,
-  public InvocationBaseTimes<InvocationData<RESULT, ARG1, ARG2, ARG3>,
-                             Invocation3<RESULT, ARG1, ARG2, ARG3> >,
-  public InvocationBaseSaveSetArg<InvocationData<RESULT, ARG1, ARG2, ARG3>,
-                                  Invocation3<RESULT, ARG1, ARG2, ARG3>,
-                                  ARG1,
-                                  ARG2,
-                                  ARG3>
+: public InvocationBaseWillReturn<
+      InvocationData<RESULT, ARG1, ARG2, ARG3>,
+      Invocation3<METHOD_INFO, RESULT, ARG1, ARG2, ARG3>,
+      RESULT>,
+  public InvocationBaseTimes<
+      InvocationData<RESULT, ARG1, ARG2, ARG3>,
+      Invocation3<METHOD_INFO, RESULT, ARG1, ARG2, ARG3> >,
+  public InvocationBaseSaveSetArg<
+      InvocationData<RESULT, ARG1, ARG2, ARG3>,
+      Invocation3<METHOD_INFO, RESULT, ARG1, ARG2, ARG3>,
+      ARG1,
+      ARG2,
+      ARG3>
 
 {
     typedef InvocationData<RESULT, ARG1, ARG2, ARG3> InvocationDataT;
@@ -1688,92 +1698,119 @@ struct Invocation3
         return d_storage.d_invocations.back();
     }
 
-    InvocationDataStorage<InvocationDataT> d_storage;
+    InvocationDataStorage<InvocationDataT, METHOD_INFO> d_storage;
 };
 
 }
 
+#define NTF_METHOD_INFO(METHOD_NAME)                                          \
+    struct NTF_CAT2(MethodInfo, __LINE__) {                                   \
+        const char* name;                                                     \
+        NTF_CAT2(MethodInfo, __LINE__)                                        \
+        ()                                                                    \
+        : name(#METHOD_NAME)                                                  \
+        {                                                                     \
+        }                                                                     \
+    };
+
 #define NTF_MOCK_METHOD_0_IMP(RESULT, METHOD_NAME)                            \
+    NTF_METHOD_INFO(METHOD_NAME)                                              \
+                                                                              \
   public:                                                                     \
-    ntf_mock::Invocation0<RESULT>& expect_##METHOD_NAME()                     \
+    ntf_mock::Invocation0<NTF_CAT2(MethodInfo, __LINE__), RESULT>&            \
+        expect_##METHOD_NAME()                                                \
     {                                                                         \
         return d_invocation_##METHOD_NAME.expect();                           \
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable ntf_mock::Invocation0<RESULT> d_invocation_##METHOD_NAME;
+    mutable ntf_mock::Invocation0<NTF_CAT2(MethodInfo, __LINE__), RESULT>     \
+        d_invocation_##METHOD_NAME;
 
 #define NTF_MOCK_METHOD_1_IMP(RESULT, METHOD_NAME, ARG1)                      \
+    NTF_METHOD_INFO(METHOD_NAME)                                              \
   public:                                                                     \
     template <class MATCHER>                                                  \
-    ntf_mock::Invocation1<RESULT, ARG1>& expect_##METHOD_NAME(                \
-        const MATCHER& arg1,                                                  \
-        ntf_mock::TypeToType<ARG1> = ntf_mock::TypeToType<ARG1>())            \
+    ntf_mock::Invocation1<NTF_CAT2(MethodInfo, __LINE__), RESULT, ARG1>&      \
+        expect_##METHOD_NAME(const MATCHER& arg1,                             \
+                             ntf_mock::TypeToType<ARG1> =                     \
+                                 ntf_mock::TypeToType<ARG1>())                \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__).expect(arg1);   \
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable ntf_mock::Invocation1<RESULT, ARG1> NTF_CAT2(                     \
-        d_invocation_##METHOD_NAME,                                           \
-        __LINE__);
+    mutable ntf_mock::                                                        \
+        Invocation1<NTF_CAT2(MethodInfo, __LINE__), RESULT, ARG1>             \
+            NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__);
 
 #define NTF_MOCK_METHOD_2_IMP(RESULT, METHOD_NAME, ARG1, ARG2)                \
+    NTF_METHOD_INFO(METHOD_NAME)                                              \
   public:                                                                     \
     template <class MATCHER1, class MATCHER2>                                 \
-    ntf_mock::Invocation2<RESULT, ARG1, ARG2>& expect_##METHOD_NAME(          \
-        const MATCHER1& arg1,                                                 \
-        const MATCHER2& arg2)                                                 \
+    ntf_mock::                                                                \
+        Invocation2<NTF_CAT2(MethodInfo, __LINE__), RESULT, ARG1, ARG2>&      \
+            expect_##METHOD_NAME(const MATCHER1& arg1, const MATCHER2& arg2)  \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .expect(arg1, arg2);                                              \
     }                                                                         \
                                                                               \
     template <class MATCHER1, class MATCHER2>                                 \
-    ntf_mock::Invocation2<RESULT, ARG1, ARG2>& expect_##METHOD_NAME(          \
-        const MATCHER1& arg1,                                                 \
-        ntf_mock::TypeToType<ARG1>,                                           \
-        const MATCHER2& arg2,                                                 \
-        ntf_mock::TypeToType<ARG2> = ntf_mock::TypeToType<ARG2>())            \
+    ntf_mock::                                                                \
+        Invocation2<NTF_CAT2(MethodInfo, __LINE__), RESULT, ARG1, ARG2>&      \
+            expect_##METHOD_NAME(const MATCHER1& arg1,                        \
+                                 ntf_mock::TypeToType<ARG1>,                  \
+                                 const MATCHER2& arg2,                        \
+                                 ntf_mock::TypeToType<ARG2> =                 \
+                                     ntf_mock::TypeToType<ARG2>())            \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .expect(arg1, arg2);                                              \
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable ntf_mock::Invocation2<RESULT, ARG1, ARG2> NTF_CAT2(               \
-        d_invocation_##METHOD_NAME,                                           \
-        __LINE__);
+    mutable ntf_mock::                                                        \
+        Invocation2<NTF_CAT2(MethodInfo, __LINE__), RESULT, ARG1, ARG2>       \
+            NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__);
 
 #define NTF_MOCK_METHOD_3_IMP(RESULT, METHOD_NAME, ARG1, ARG2, ARG3)          \
+    NTF_METHOD_INFO(METHOD_NAME)                                              \
   public:                                                                     \
     template <class MATCHER1, class MATCHER2, class MATCHER3>                 \
-    ntf_mock::Invocation3<RESULT, ARG1, ARG2, ARG3>& expect_##METHOD_NAME(    \
-        const MATCHER1& arg1,                                                 \
-        const MATCHER2& arg2,                                                 \
-        const MATCHER3& arg3)                                                 \
+    ntf_mock::Invocation3<NTF_CAT2(MethodInfo, __LINE__),                     \
+                          RESULT,                                             \
+                          ARG1,                                               \
+                          ARG2,                                               \
+                          ARG3>& expect_##METHOD_NAME(const MATCHER1& arg1,   \
+                                                      const MATCHER2& arg2,   \
+                                                      const MATCHER3& arg3)   \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .expect(arg1, arg2, arg3);                                        \
     }                                                                         \
                                                                               \
     template <class MATCHER1, class MATCHER2, class MATCHER3>                 \
-    ntf_mock::Invocation3<RESULT, ARG1, ARG2, ARG3>& expect_##METHOD_NAME(    \
-        const MATCHER1& arg1,                                                 \
-        ntf_mock::TypeToType<ARG1>,                                           \
-        const MATCHER2& arg2,                                                 \
-        ntf_mock::TypeToType<ARG2>,                                           \
-        const MATCHER3& arg3,                                                 \
-        ntf_mock::TypeToType<ARG3>)                                           \
+    ntf_mock::Invocation3<NTF_CAT2(MethodInfo, __LINE__),                     \
+                          RESULT,                                             \
+                          ARG1,                                               \
+                          ARG2,                                               \
+                          ARG3>&                                              \
+        expect_##METHOD_NAME(const MATCHER1& arg1,                            \
+                             ntf_mock::TypeToType<ARG1>,                      \
+                             const MATCHER2& arg2,                            \
+                             ntf_mock::TypeToType<ARG2>,                      \
+                             const MATCHER3& arg3,                            \
+                             ntf_mock::TypeToType<ARG3>)                      \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .expect(arg1, arg2, arg3);                                        \
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable ntf_mock::Invocation3<RESULT, ARG1, ARG2, ARG3> NTF_CAT2(         \
-        d_invocation_##METHOD_NAME,                                           \
-        __LINE__);
+    mutable ntf_mock::                                                        \
+        Invocation3<NTF_CAT2(MethodInfo, __LINE__), RESULT, ARG1, ARG2, ARG3> \
+            NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__);
 
 #define NTF_MOCK_METHOD_0(RESULT, METHOD_NAME)                                \
   public:                                                                     \
