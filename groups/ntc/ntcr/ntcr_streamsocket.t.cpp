@@ -1723,6 +1723,9 @@ struct Fixture {
     void setupReactorBase();
     void injectStreamSocket(ntcr::StreamSocket& socket);
 
+    void connectCallback(const bsl::shared_ptr<ntci::Connector>& connector,
+                         const ntca::ConnectEvent&               event);
+
     bslma::Allocator* d_allocator;
 
     bsl::shared_ptr<mock::BufferFactoryMock>  d_bufferFactoryMock;
@@ -1742,6 +1745,9 @@ struct Fixture {
     static const ntsa::Error                 k_NO_ERROR;
 
     bsl::shared_ptr<ntsa::Data> d_dummyData;
+
+    bdlb::NullableValue<ntca::ConnectEvent> d_connectResult;
+    ntci::ConnectFunction                   d_connectCallback;
 };
 
 const ntsa::Error Fixture::k_NO_ERROR = ntsa::Error();
@@ -1759,6 +1765,10 @@ Fixture::Fixture(bslma::Allocator* allocator)
     d_connectRetryTimerMock.createInplace(d_allocator);
     d_connectDeadlineTimerMock.createInplace(d_allocator);
     d_dummyData.createInplace(d_allocator);
+    d_connectCallback = NTCCFG_BIND(&Fixture::connectCallback,
+                                    this,
+                                    NTCCFG_BIND_PLACEHOLDER_1,
+                                    NTCCFG_BIND_PLACEHOLDER_2);
 }
 
 Fixture::~Fixture()
@@ -1861,6 +1871,13 @@ void Fixture::injectStreamSocket(ntcr::StreamSocket& socket)
     NTF_EXPECT_0(*d_reactorMock, releaseHandleReservation).ALWAYS();
 
     socket.open(ntsa::Transport::e_TCP_IPV4_STREAM, d_streamSocketMock);
+}
+
+void Fixture::connectCallback(const bsl::shared_ptr<ntci::Connector>&,
+                              const ntca::ConnectEvent& event)
+{
+    NTCCFG_TEST_FALSE(d_connectResult.has_value());
+    d_connectResult = event;
 }
 
 }  // close namespace test
@@ -3855,8 +3872,6 @@ NTCCFG_TEST_CASE(22)
         test::Fixture test(&ta);
         test.setupReactorBase();
 
-        bdlb::NullableValue<ntca::ConnectEvent> connectResult;
-
         const ntca::StreamSocketOptions options;
 
         bsl::shared_ptr<ntcr::StreamSocket> socket;
@@ -3894,17 +3909,9 @@ NTCCFG_TEST_CASE(22)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR);
 
-            const ntci::ConnectFunction connectCallback =
-                [&connectResult](
-                    const bsl::shared_ptr<ntci::Connector>& connector,
-                    const ntca::ConnectEvent&               event) {
-                    NTCCFG_TEST_FALSE(connectResult.has_value());
-                    connectResult = event;
-                };
-
             const ntca::ConnectOptions connectOptions;
 
-            socket->connect(epName, connectOptions, connectCallback);
+            socket->connect(epName, connectOptions, test.d_connectCallback);
         }
 
         NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
@@ -3953,8 +3960,8 @@ NTCCFG_TEST_CASE(22)
                              ntsa::ShutdownMode::e_GRACEFUL);
 
             callback();
-            NTCCFG_TEST_TRUE(connectResult.has_value());
-            NTCCFG_TEST_EQ(connectResult.value().type(),
+            NTCCFG_TEST_TRUE(test.d_connectResult.has_value());
+            NTCCFG_TEST_EQ(test.d_connectResult.value().type(),
                            ntca::ConnectEventType::e_ERROR);
         }
     }
@@ -3978,8 +3985,6 @@ NTCCFG_TEST_CASE(23)
 
         test::Fixture test(&ta);
         test.setupReactorBase();
-
-        bdlb::NullableValue<ntca::ConnectEvent> connectResult;
 
         const ntca::StreamSocketOptions options;
 
@@ -4017,17 +4022,9 @@ NTCCFG_TEST_CASE(23)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR);
 
-            const ntci::ConnectFunction connectCallback =
-                [&connectResult](
-                    const bsl::shared_ptr<ntci::Connector>& connector,
-                    const ntca::ConnectEvent&               event) {
-                    NTCCFG_TEST_FALSE(connectResult.has_value());
-                    connectResult = event;
-                };
-
             const ntca::ConnectOptions connectOptions;
 
-            socket->connect(targetEp, connectOptions, connectCallback);
+            socket->connect(targetEp, connectOptions, test.d_connectCallback);
         }
 
         NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
@@ -4100,8 +4097,8 @@ NTCCFG_TEST_CASE(23)
 
             callback();
 
-            NTCCFG_TEST_TRUE(connectResult.has_value());
-            NTCCFG_TEST_EQ(connectResult.value().type(),
+            NTCCFG_TEST_TRUE(test.d_connectResult.has_value());
+            NTCCFG_TEST_EQ(test.d_connectResult.value().type(),
                            ntca::ConnectEventType::e_ERROR);
         }
     }
@@ -4122,8 +4119,6 @@ NTCCFG_TEST_CASE(24)
     ntccfg::TestAllocator ta;
     {
         NTCI_LOG_DEBUG("Fixture setup, socket creation...");
-
-        bdlb::NullableValue<ntca::ConnectEvent> connectResult;
 
         test::Fixture test(&ta);
         test.setupReactorBase();
@@ -4186,18 +4181,10 @@ NTCCFG_TEST_CASE(24)
                     .RETURN(ntsa::Error());
             }
 
-            const ntci::ConnectFunction connectCallback =
-                [&connectResult](
-                    const bsl::shared_ptr<ntci::Connector>& connector,
-                    const ntca::ConnectEvent&               event) {
-                    NTCCFG_TEST_FALSE(connectResult.has_value());
-                    connectResult = event;
-                };
-
             ntca::ConnectOptions connectOptions;
             connectOptions.setDeadline(deadlineTime);
 
-            socket->connect(targetEp, connectOptions, connectCallback);
+            socket->connect(targetEp, connectOptions, test.d_connectCallback);
         }
 
         NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
@@ -4275,8 +4262,8 @@ NTCCFG_TEST_CASE(24)
 
             callback();
 
-            NTCCFG_TEST_TRUE(connectResult.has_value());
-            NTCCFG_TEST_EQ(connectResult.value().type(),
+            NTCCFG_TEST_TRUE(test.d_connectResult.has_value());
+            NTCCFG_TEST_EQ(test.d_connectResult.value().type(),
                            ntca::ConnectEventType::e_ERROR);
         }
     }
@@ -4298,8 +4285,6 @@ NTCCFG_TEST_CASE(25)
     ntccfg::TestAllocator ta;
     {
         NTCI_LOG_DEBUG("Fixture setup, socket creation...");
-
-        bdlb::NullableValue<ntca::ConnectEvent> connectResult;
 
         test::Fixture test(&ta);
         test.setupReactorBase();
@@ -4363,19 +4348,11 @@ NTCCFG_TEST_CASE(25)
                     .RETURN(ntsa::Error());
             }
 
-            const ntci::ConnectFunction connectCallback =
-                [&connectResult](
-                    const bsl::shared_ptr<ntci::Connector>& connector,
-                    const ntca::ConnectEvent&               event) {
-                    NTCCFG_TEST_FALSE(connectResult.has_value());
-                    connectResult = event;
-                };
-
             ntca::ConnectOptions connectOptions;
             connectOptions.setDeadline(deadlineTime);
             connectOptions.setRetryCount(k_CONNECT_RETRY_COUNT);
 
-            socket->connect(targetEp, connectOptions, connectCallback);
+            socket->connect(targetEp, connectOptions, test.d_connectCallback);
         }
 
         NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
@@ -4444,10 +4421,10 @@ NTCCFG_TEST_CASE(25)
             NTCI_LOG_DEBUG("Ensure that connection callback was called and "
                            "connection error was indicated");
             {
-                NTCCFG_TEST_TRUE(connectResult.has_value());
-                NTCCFG_TEST_EQ(connectResult.value().type(),
+                NTCCFG_TEST_TRUE(test.d_connectResult.has_value());
+                NTCCFG_TEST_EQ(test.d_connectResult.value().type(),
                                ntca::ConnectEventType::e_ERROR);
-                connectResult.reset();
+                test.d_connectResult.reset();
             }
         }
         NTCI_LOG_DEBUG(
@@ -4469,8 +4446,8 @@ NTCCFG_TEST_CASE(25)
                              ntsa::ShutdownMode::e_GRACEFUL);
 
             callback();
-            NTCCFG_TEST_TRUE(connectResult.has_value());
-            NTCCFG_TEST_EQ(connectResult.value().type(),
+            NTCCFG_TEST_TRUE(test.d_connectResult.has_value());
+            NTCCFG_TEST_EQ(test.d_connectResult.value().type(),
                            ntca::ConnectEventType::e_ERROR);
         }
     }
@@ -4495,8 +4472,6 @@ NTCCFG_TEST_CASE(26)
     ntccfg::TestAllocator ta;
     {
         NTCI_LOG_DEBUG("Fixture setup, socket creation...");
-
-        bdlb::NullableValue<ntca::ConnectEvent> connectResult;
 
         test::Fixture test(&ta);
         test.setupReactorBase();
@@ -4560,19 +4535,11 @@ NTCCFG_TEST_CASE(26)
                     .RETURN(ntsa::Error());
             }
 
-            const ntci::ConnectFunction connectCallback =
-                [&connectResult](
-                    const bsl::shared_ptr<ntci::Connector>& connector,
-                    const ntca::ConnectEvent&               event) {
-                    NTCCFG_TEST_FALSE(connectResult.has_value());
-                    connectResult = event;
-                };
-
             ntca::ConnectOptions connectOptions;
             connectOptions.setDeadline(deadlineTime);
             connectOptions.setRetryCount(k_CONNECT_RETRY_COUNT);
 
-            socket->connect(targetEp, connectOptions, connectCallback);
+            socket->connect(targetEp, connectOptions, test.d_connectCallback);
         }
 
         NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
@@ -4658,10 +4625,10 @@ NTCCFG_TEST_CASE(26)
 
             detachCallback(test.d_nullStrand);
 
-            NTCCFG_TEST_TRUE(connectResult.has_value());
-            NTCCFG_TEST_EQ(connectResult.value().type(),
+            NTCCFG_TEST_TRUE(test.d_connectResult.has_value());
+            NTCCFG_TEST_EQ(test.d_connectResult.value().type(),
                            ntca::ConnectEventType::e_ERROR);
-            connectResult.reset();
+            test.d_connectResult.reset();
         }
         NTCI_LOG_DEBUG("Execute postponed functions");
         {
@@ -4682,8 +4649,8 @@ NTCCFG_TEST_CASE(26)
             functorSequence.front()();
 
             connectCallback();
-            NTCCFG_TEST_TRUE(connectResult.has_value());
-            NTCCFG_TEST_EQ(connectResult.value().type(),
+            NTCCFG_TEST_TRUE(test.d_connectResult.has_value());
+            NTCCFG_TEST_EQ(test.d_connectResult.value().type(),
                            ntca::ConnectEventType::e_ERROR);
         }
     }
@@ -4707,8 +4674,6 @@ NTCCFG_TEST_CASE(27)
     ntccfg::TestAllocator ta;
     {
         NTCI_LOG_DEBUG("Fixture setup, socket creation...");
-
-        bdlb::NullableValue<ntca::ConnectEvent> connectResult;
 
         test::Fixture test(&ta);
         test.setupReactorBase();
@@ -4771,18 +4736,10 @@ NTCCFG_TEST_CASE(27)
                     .RETURN(ntsa::Error());
             }
 
-            const ntci::ConnectFunction connectCallback =
-                [&connectResult](
-                    const bsl::shared_ptr<ntci::Connector>& connector,
-                    const ntca::ConnectEvent&               event) {
-                    NTCCFG_TEST_FALSE(connectResult.has_value());
-                    connectResult = event;
-                };
-
             ntca::ConnectOptions connectOptions;
             connectOptions.setDeadline(deadlineTime);
 
-            socket->connect(targetEp, connectOptions, connectCallback);
+            socket->connect(targetEp, connectOptions, test.d_connectCallback);
         }
 
         NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
@@ -4876,10 +4833,10 @@ NTCCFG_TEST_CASE(27)
 
             detachCallback(test.d_nullStrand);
 
-            NTCCFG_TEST_TRUE(connectResult.has_value());
-            NTCCFG_TEST_EQ(connectResult.value().type(),
+            NTCCFG_TEST_TRUE(test.d_connectResult.has_value());
+            NTCCFG_TEST_EQ(test.d_connectResult.value().type(),
                            ntca::ConnectEventType::e_ERROR);
-            connectResult.reset();
+            test.d_connectResult.reset();
         }
         NTCI_LOG_DEBUG("Execute postponed functions");
         {
