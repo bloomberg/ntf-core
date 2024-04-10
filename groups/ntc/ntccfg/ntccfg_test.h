@@ -1850,7 +1850,7 @@ struct Invocation3
 
 #define NTF_MOCK_METHOD_0(RESULT, METHOD_NAME)                                \
   public:                                                                     \
-    RESULT METHOD_NAME() override                                             \
+    RESULT METHOD_NAME() BSLS_KEYWORD_OVERRIDE                                \
     {                                                                         \
         return d_invocation_##METHOD_NAME.invoke();                           \
     }                                                                         \
@@ -1858,7 +1858,7 @@ struct Invocation3
 
 #define NTF_MOCK_METHOD_CONST_0(RESULT, METHOD_NAME)                          \
   public:                                                                     \
-    RESULT METHOD_NAME() const override                                       \
+    RESULT METHOD_NAME() const BSLS_KEYWORD_OVERRIDE                          \
     {                                                                         \
         return d_invocation_##METHOD_NAME.invoke();                           \
     }                                                                         \
@@ -1866,7 +1866,7 @@ struct Invocation3
 
 #define NTF_MOCK_METHOD_1(RESULT, METHOD_NAME, ARG1)                          \
   public:                                                                     \
-    RESULT METHOD_NAME(ARG1 arg1) override                                    \
+    RESULT METHOD_NAME(ARG1 arg1) BSLS_KEYWORD_OVERRIDE                       \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__).invoke(arg1);   \
     }                                                                         \
@@ -1874,7 +1874,7 @@ struct Invocation3
 
 #define NTF_MOCK_METHOD_CONST_1(RESULT, METHOD_NAME, ARG1)                    \
   public:                                                                     \
-    RESULT METHOD_NAME(ARG1 arg1) const override                              \
+    RESULT METHOD_NAME(ARG1 arg1) const BSLS_KEYWORD_OVERRIDE                 \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__).invoke(arg1);   \
     }                                                                         \
@@ -1882,7 +1882,7 @@ struct Invocation3
 
 #define NTF_MOCK_METHOD_2(RESULT, METHOD_NAME, ARG1, ARG2)                    \
   public:                                                                     \
-    RESULT METHOD_NAME(ARG1 arg1, ARG2 arg2) override                         \
+    RESULT METHOD_NAME(ARG1 arg1, ARG2 arg2) BSLS_KEYWORD_OVERRIDE            \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .invoke(arg1, arg2);                                              \
@@ -1891,7 +1891,7 @@ struct Invocation3
 
 #define NTF_MOCK_METHOD_CONST_2(RESULT, METHOD_NAME, ARG1, ARG2)              \
   public:                                                                     \
-    RESULT METHOD_NAME(ARG1 arg1, ARG2 arg2) const override                   \
+    RESULT METHOD_NAME(ARG1 arg1, ARG2 arg2) const BSLS_KEYWORD_OVERRIDE      \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .invoke(arg1, arg2);                                              \
@@ -1900,7 +1900,7 @@ struct Invocation3
 
 #define NTF_MOCK_METHOD_3(RESULT, METHOD_NAME, ARG1, ARG2, ARG3)              \
   public:                                                                     \
-    RESULT METHOD_NAME(ARG1 arg1, ARG2 arg2, ARG3 arg3) override              \
+    RESULT METHOD_NAME(ARG1 arg1, ARG2 arg2, ARG3 arg3) BSLS_KEYWORD_OVERRIDE \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .invoke(arg1, arg2, arg3);                                        \
@@ -1909,7 +1909,8 @@ struct Invocation3
 
 #define NTF_MOCK_METHOD_CONST_3(RESULT, METHOD_NAME, ARG1, ARG2, ARG3)        \
   public:                                                                     \
-    RESULT METHOD_NAME(ARG1 arg1, ARG2 arg2, ARG3 arg3) const override        \
+    RESULT METHOD_NAME(ARG1 arg1, ARG2 arg2, ARG3 arg3)                       \
+        const BSLS_KEYWORD_OVERRIDE                                           \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .invoke(arg1, arg2, arg3);                                        \
