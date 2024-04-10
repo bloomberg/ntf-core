@@ -1415,8 +1415,9 @@ struct InvocationDataStorage {
         {
             if (it->d_expectedCalls != INVOCATION_DATA::k_INFINITE_CALLS) {
                 BSLS_LOG_FATAL(
-                    "Invocation \"%s\" did not fire but was expected "
+                    "%s: invocation \"%s\" did not fire but was expected "
                     "to fire %d times",
+                    METHOD_INFO().mockName,
                     METHOD_INFO().name,
                     it->d_expectedCalls);
                 bsl::abort();
@@ -1704,7 +1705,8 @@ struct Invocation3
 }
 
 #define NTF_METHOD_INFO(METHOD_NAME)                                          \
-    struct NTF_CAT2(MethodInfo, __LINE__) {                                   \
+    struct NTF_CAT2(MethodInfo, __LINE__)                                     \
+    : public MockInfo {                                                       \
         const char* name;                                                     \
         NTF_CAT2(MethodInfo, __LINE__)                                        \
         ()                                                                    \
@@ -1811,6 +1813,20 @@ struct Invocation3
     mutable ntf_mock::                                                        \
         Invocation3<NTF_CAT2(MethodInfo, __LINE__), RESULT, ARG1, ARG2, ARG3> \
             NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__);
+
+#define NTF_MOCK_CLASS(MOCK_NAME, CLASS_TO_MOCK)                              \
+    class MOCK_NAME : public CLASS_TO_MOCK                                    \
+    {                                                                         \
+      public:                                                                 \
+        struct MockInfo {                                                     \
+            const char* mockName;                                             \
+                        MockInfo()                                            \
+            : mockName(#MOCK_NAME)                                            \
+            {                                                                 \
+            }                                                                 \
+        };
+
+#define NTF_MOCK_CLASS_END }
 
 #define NTF_MOCK_METHOD_0(RESULT, METHOD_NAME)                                \
   public:                                                                     \
