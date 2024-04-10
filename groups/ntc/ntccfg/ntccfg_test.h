@@ -1437,7 +1437,12 @@ struct Invocation0
 
     RESULT invoke()
     {
-        NTCCFG_TEST_FALSE(d_storage.d_invocations.empty());
+        if (d_storage.d_invocations.empty()) {
+            BSLS_LOG_FATAL("%s: unexpected call to \"%s\"",
+                           METHOD_INFO().mockName,
+                           METHOD_INFO().name);
+            bsl::abort();
+        }
         InvocationDataT& invocation = d_storage.d_invocations.front();
         if (invocation.d_expectedCalls != InvocationDataT::k_INFINITE_CALLS) {
             NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
@@ -1495,7 +1500,12 @@ struct Invocation1
 
     RESULT invoke(ARG1 arg)
     {
-        NTCCFG_TEST_FALSE(d_storage.d_invocations.empty());
+        if (d_storage.d_invocations.empty()) {
+            BSLS_LOG_FATAL("%s: unexpected call to \"%s\"",
+                           METHOD_INFO().mockName,
+                           METHOD_INFO().name);
+            bsl::abort();
+        }
         InvocationDataT& invocation = d_storage.d_invocations.front();
         if (invocation.d_expectedCalls != InvocationDataT::k_INFINITE_CALLS) {
             NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
@@ -1560,7 +1570,12 @@ struct Invocation2
 
     RESULT invoke(ARG1 arg1, ARG2 arg2)
     {
-        NTCCFG_TEST_FALSE(d_storage.d_invocations.empty());
+        if (d_storage.d_invocations.empty()) {
+            BSLS_LOG_FATAL("%s: unexpected call to \"%s\"",
+                           METHOD_INFO().mockName,
+                           METHOD_INFO().name);
+            bsl::abort();
+        }
         InvocationDataT& invocation = d_storage.d_invocations.front();
         if (invocation.d_expectedCalls != InvocationDataT::k_INFINITE_CALLS) {
             NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
@@ -1637,7 +1652,12 @@ struct Invocation3
 
     RESULT invoke(ARG1 arg1, ARG2 arg2, ARG3 arg3)
     {
-        NTCCFG_TEST_FALSE(d_storage.d_invocations.empty());
+        if (d_storage.d_invocations.empty()) {
+            BSLS_LOG_FATAL("%s: unexpected call to \"%s\"",
+                           METHOD_INFO().mockName,
+                           METHOD_INFO().name);
+            bsl::abort();
+        }
         InvocationDataT& invocation = d_storage.d_invocations.front();
         if (invocation.d_expectedCalls != InvocationDataT::k_INFINITE_CALLS) {
             NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
