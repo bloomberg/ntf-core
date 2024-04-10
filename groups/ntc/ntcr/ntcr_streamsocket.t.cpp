@@ -3842,6 +3842,10 @@ NTCCFG_TEST_CASE(21)
 
 NTCCFG_TEST_CASE(22)
 {
+    // Concern: shutdown socket while it is waiting for remote EP resolution
+    // 1) Create ntcr::StreamSocket
+    // 2) Initiate connection to remote name
+    // 3) Shutdown socket while waiting for remote EP resolution
     NTCI_LOG_CONTEXT();
 
     ntccfg::TestAllocator ta;
@@ -3959,6 +3963,13 @@ NTCCFG_TEST_CASE(22)
 
 NTCCFG_TEST_CASE(23)
 {
+    // Concern: shutdown socket while it is waiting for connection attempt
+    // result, no connection deadline timer
+    // 1) Create ntcr::StreamSocket
+    // 2) Initiate connection to some IP, no connection retries planned,
+    // no deadline time is set
+    // 3) Expect ntsi::StreamSocket::connect() to be called, then ->
+    // 4) Trigger socket shutdown
     NTCI_LOG_CONTEXT();
 
     ntccfg::TestAllocator ta;
@@ -4099,6 +4110,13 @@ NTCCFG_TEST_CASE(23)
 
 NTCCFG_TEST_CASE(24)
 {
+    // Concern: shutdown socket while it is waiting for connection attempt
+    // result, connection deadline timer is set
+    // 1) Create ntcr::StreamSocket
+    // 2) Initiate connection to some IP, no connection retries planned,
+    // deadline time is set
+    // 3) Expect ntsi::StreamSocket::connect() to be called, then ->
+    // 4) Trigger socket shutdown
     NTCI_LOG_CONTEXT();
 
     ntccfg::TestAllocator ta;
@@ -4267,6 +4285,14 @@ NTCCFG_TEST_CASE(24)
 
 NTCCFG_TEST_CASE(25)
 {
+    // Concern: shutdown socket while it is waiting for connection re-attempt
+    // 1) Create ntcr::StreamSocket
+    // 2) Initiate connection to some IP, some connection retries are planned
+    // 3) Expect ntsi::StreamSocket::connect() to be called, then ->
+    // 4) Indicate response from the reactor by calling processSocketWritable
+    // method, and then remoteEndpoint method should indicate an error
+    // 5) Shutdown socket
+
     NTCI_LOG_CONTEXT();
 
     ntccfg::TestAllocator ta;
@@ -4453,6 +4479,17 @@ NTCCFG_TEST_CASE(25)
 
 NTCCFG_TEST_CASE(26)
 {
+    // Concern: shutdown socket while it is being detached and conection
+    // retries are possible
+    // 1) Create ntcr::StreamSocket
+    // 2) Initiate connection to some IP, some connection retries are planned
+    // 3) Expect ntsi::StreamSocket::connect() to be called, then ->
+    // 4) Indicate response from the reactor by calling processSocketWritable
+    // method, and then remoteEndpoint method should indicate an error
+    // 5) Expect that reactor should detach socket ->
+    // 6) Shutdown socket (current implementation postpones the procedure)
+    // 7) Indicate that socket is detached
+
     NTCI_LOG_CONTEXT();
 
     ntccfg::TestAllocator ta;
@@ -4655,6 +4692,16 @@ NTCCFG_TEST_CASE(26)
 
 NTCCFG_TEST_CASE(27)
 {
+    // Concern: shutdown socket while it is being detached, no connection
+    // retries are possible
+    // 1) Create ntcr::StreamSocket
+    // 2) Initiate connection to some IP
+    // 3) Expect ntsi::StreamSocket::connect() to be called, then ->
+    // 4) Indicate response from the reactor by calling processSocketWritable
+    // method, and then remoteEndpoint method should indicate an error
+    // 5) Expect that reactor should detach socket ->
+    // 6) Shutdown socket (current implementation postpones the procedure)
+    // 7) Indicate that socket is detached
     NTCI_LOG_CONTEXT();
 
     ntccfg::TestAllocator ta;
