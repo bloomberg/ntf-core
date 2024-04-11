@@ -896,7 +896,7 @@ struct SetterHolder : ProcessInterface<ARG> {
     {
     }
 
-    void process(const ARG& arg) override
+    void process(const ARG& arg) BSLS_KEYWORD_OVERRIDE
     {
         d_setter.process(arg);
     }
@@ -950,7 +950,7 @@ struct ExtractorHolder : ProcessInterface<ARG> {
     {
     }
 
-    void process(const ARG& arg) override
+    void process(const ARG& arg) BSLS_KEYWORD_OVERRIDE
     {
         d_extractor.process(arg);
     }
@@ -1020,7 +1020,7 @@ struct MatcherHolder : ProcessInterface<ARG> {
     {
     }
 
-    void process(const ARG& arg) override
+    void process(const ARG& arg) BSLS_KEYWORD_OVERRIDE
     {
         d_matcher.process(arg);
     }
@@ -1194,8 +1194,6 @@ struct InvocationData;
 
 template <class RESULT>
 struct InvocationData<RESULT> : public InvocationDataBase<RESULT> {
-    InvocationData()                            = default;
-    InvocationData(const InvocationData& other) = default;
 };
 
 template <class RESULT, class ARG1>

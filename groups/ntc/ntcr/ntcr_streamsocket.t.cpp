@@ -1528,9 +1528,9 @@ NTF_MOCK_CLASS_END;
 
 NTF_MOCK_CLASS(DataPoolMock, ntci::DataPool)
 NTF_MOCK_METHOD(bsl::shared_ptr<ntsa::Data>, createIncomingData)
-NTF_MOCK_METHOD(bsl::shared_ptr<ntsa::Data>, createOutgoingData);
-NTF_MOCK_METHOD(bsl::shared_ptr<bdlbb::Blob>, createIncomingBlob);
-NTF_MOCK_METHOD(bsl::shared_ptr<bdlbb::Blob>, createOutgoingBlob);
+NTF_MOCK_METHOD(bsl::shared_ptr<ntsa::Data>, createOutgoingData)
+NTF_MOCK_METHOD(bsl::shared_ptr<bdlbb::Blob>, createIncomingBlob)
+NTF_MOCK_METHOD(bsl::shared_ptr<bdlbb::Blob>, createOutgoingBlob)
 NTF_MOCK_METHOD(void, createIncomingBlobBuffer, bdlbb::BlobBuffer*)
 NTF_MOCK_METHOD(void, createOutgoingBlobBuffer, bdlbb::BlobBuffer*)
 NTF_MOCK_METHOD_CONST(const bsl::shared_ptr<bdlbb::BlobBufferFactory>&,
