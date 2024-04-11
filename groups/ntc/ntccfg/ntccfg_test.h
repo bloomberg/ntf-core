@@ -1308,109 +1308,39 @@ template <class RESULT>
 struct InvocationData<RESULT, NO_ARG> : public InvocationDataBase<RESULT> {
 };
 
-
-template <class INVOCATION_DATA,
-          class SELF,
-          class ARG1 = NO_ARG,
-          class ARG2 = NO_ARG,
-          class ARG3 = NO_ARG,
-          class ARG4 = NO_ARG,
-          class ARG5 = NO_ARG>
-struct InvocationBaseSaveSetArg;
-
-template <class INVOCATION_DATA, class SELF, class ARG1>
-struct InvocationBaseSaveSetArg<INVOCATION_DATA, SELF, ARG1> {
+template <class INVOCATION_DATA, class SELF, class ARG_LIST>
+struct InvocationBaseSaveSetArg {
     virtual INVOCATION_DATA& getInvocationDataBack() = 0;
 
-    template <class ARG_EXTRACTOR>
-    SELF& saveArg1(const ARG_EXTRACTOR& extractor)
+    template <int ARG_INDEX, class ARG_EXTRACTOR>
+    SELF& saveArg(const ARG_EXTRACTOR& extractor)
     {
+        typedef typename BloombergLP::bslmf::TypeListTypeAt<ARG_INDEX,
+                                                            ARG_LIST>::Type
+                         ArgType;
         INVOCATION_DATA& data = this->getInvocationDataBack();
 
-        bsl::shared_ptr<ExtractorHolder<ARG1, ARG_EXTRACTOR> >
+        bsl::shared_ptr<ExtractorHolder<ArgType, ARG_EXTRACTOR> >
             extractorInterface(
-                new ExtractorHolder<ARG1, ARG_EXTRACTOR>(extractor));
+                new ExtractorHolder<ArgType, ARG_EXTRACTOR>(extractor));
 
-        getInvocationArgs<0>(data).d_extractor = extractorInterface;
-
-        return *(static_cast<SELF*>(this));
-    }
-
-    template <class ARG_SETTER>
-    SELF& setArg1(const ARG_SETTER& setter)
-    {
-        INVOCATION_DATA& data = this->getInvocationDataBack();
-
-        bsl::shared_ptr<SetterHolder<ARG1, ARG_SETTER> > setterInterface(
-            new SetterHolder<ARG1, ARG_SETTER>(setter));
-
-        getInvocationArgs<0>(data).d_setter = setterInterface;
-
-        return *(static_cast<SELF*>(this));
-    }
-};
-
-template <class INVOCATION_DATA, class SELF, class ARG1, class ARG2>
-struct InvocationBaseSaveSetArg<INVOCATION_DATA, SELF, ARG1, ARG2>
-: public InvocationBaseSaveSetArg<INVOCATION_DATA, SELF, ARG1> {
-    template <class ARG_EXTRACTOR>
-    SELF& saveArg2(const ARG_EXTRACTOR& extractor)
-    {
-        INVOCATION_DATA& data = this->getInvocationDataBack();
-
-        bsl::shared_ptr<ExtractorHolder<ARG2, ARG_EXTRACTOR> >
-            extractorInterface(
-                new ExtractorHolder<ARG2, ARG_EXTRACTOR>(extractor));
-
-        getInvocationArgs<1>(data).d_extractor = extractorInterface;
+        getInvocationArgs<ARG_INDEX>(data).d_extractor = extractorInterface;
 
         return *(static_cast<SELF*>(this));
     }
 
-    template <class ARG_SETTER>
-    SELF& setArg2(const ARG_SETTER& setter)
+    template <int ARG_INDEX, class ARG_SETTER>
+    SELF& setArg(const ARG_SETTER& setter)
     {
+        typedef typename BloombergLP::bslmf::TypeListTypeAt<ARG_INDEX,
+                                                            ARG_LIST>::Type
+                         ArgType;
         INVOCATION_DATA& data = this->getInvocationDataBack();
 
-        bsl::shared_ptr<SetterHolder<ARG2, ARG_SETTER> > setterInterface(
-            new SetterHolder<ARG2, ARG_SETTER>(setter));
+        bsl::shared_ptr<SetterHolder<ArgType, ARG_SETTER> > setterInterface(
+            new SetterHolder<ArgType, ARG_SETTER>(setter));
 
-        data.arg2Setter = setterInterface;
-
-        return *(static_cast<SELF*>(this));
-    }
-};
-
-template <class INVOCATION_DATA,
-          class SELF,
-          class ARG1,
-          class ARG2,
-          class ARG3>
-struct InvocationBaseSaveSetArg<INVOCATION_DATA, SELF, ARG1, ARG2, ARG3>
-: public InvocationBaseSaveSetArg<INVOCATION_DATA, SELF, ARG1, ARG2> {
-    template <class ARG_EXTRACTOR>
-    SELF& saveArg3(const ARG_EXTRACTOR& extractor)
-    {
-        INVOCATION_DATA& data = this->getInvocationDataBack();
-
-        bsl::shared_ptr<ExtractorHolder<ARG3, ARG_EXTRACTOR> >
-            extractorInterface(
-                new ExtractorHolder<ARG3, ARG_EXTRACTOR>(extractor));
-
-        data.arg3Extractor = extractorInterface;
-
-        return *(static_cast<SELF*>(this));
-    }
-
-    template <class ARG_SETTER>
-    SELF& setArg3(const ARG_SETTER& setter)
-    {
-        INVOCATION_DATA& data = this->getInvocationDataBack();
-
-        bsl::shared_ptr<SetterHolder<ARG3, ARG_SETTER> > setterInterface(
-            new SetterHolder<ARG3, ARG_SETTER>(setter));
-
-        data.arg3Setter = setterInterface;
+        getInvocationArgs<ARG_INDEX>(data).d_setter = setterInterface;
 
         return *(static_cast<SELF*>(this));
     }
@@ -1503,10 +1433,9 @@ struct Invocation1
                                   RESULT>,
   public InvocationBaseTimes<InvocationData<RESULT, ARG_LIST>,
                              Invocation1<METHOD_INFO, RESULT, ARG_LIST> >,
-  public InvocationBaseSaveSetArg<
-      InvocationData<RESULT, ARG_LIST>,
-      Invocation1<METHOD_INFO, RESULT, ARG_LIST>,
-      typename BloombergLP::bslmf::TypeListTypeAt<0, ARG_LIST>::Type>
+  public InvocationBaseSaveSetArg<InvocationData<RESULT, ARG_LIST>,
+                                  Invocation1<METHOD_INFO, RESULT, ARG_LIST>,
+                                  ARG_LIST>
 
 {
     typedef InvocationData<RESULT, ARG_LIST> InvocationDataT;
@@ -1575,11 +1504,9 @@ struct Invocation2
                                   RESULT>,
   public InvocationBaseTimes<InvocationData<RESULT, ARG_LIST>,
                              Invocation2<METHOD_INFO, RESULT, ARG_LIST> >,
-  public InvocationBaseSaveSetArg<
-      InvocationData<RESULT, ARG_LIST>,
-      Invocation2<METHOD_INFO, RESULT, ARG_LIST>,
-      typename BloombergLP::bslmf::TypeListTypeAt<0, ARG_LIST>::Type,
-      typename BloombergLP::bslmf::TypeListTypeAt<1, ARG_LIST>::Type>
+  public InvocationBaseSaveSetArg<InvocationData<RESULT, ARG_LIST>,
+                                  Invocation2<METHOD_INFO, RESULT, ARG_LIST>,
+                                  ARG_LIST>
 
 {
     typedef InvocationData<RESULT, ARG_LIST> InvocationDataT;
@@ -1658,12 +1585,9 @@ struct Invocation3
                                   RESULT>,
   public InvocationBaseTimes<InvocationData<RESULT, ARG_LIST>,
                              Invocation3<METHOD_INFO, RESULT, ARG_LIST> >,
-  public InvocationBaseSaveSetArg<
-      InvocationData<RESULT, ARG_LIST>,
-      Invocation3<METHOD_INFO, RESULT, ARG_LIST>,
-      typename BloombergLP::bslmf::TypeListTypeAt<0, ARG_LIST>::Type,
-      typename BloombergLP::bslmf::TypeListTypeAt<1, ARG_LIST>::Type,
-      typename BloombergLP::bslmf::TypeListTypeAt<2, ARG_LIST>::Type>
+  public InvocationBaseSaveSetArg<InvocationData<RESULT, ARG_LIST>,
+                                  Invocation3<METHOD_INFO, RESULT, ARG_LIST>,
+                                  ARG_LIST>
 
 {
     typedef InvocationData<RESULT, ARG_LIST> InvocationDataT;
@@ -1984,16 +1908,16 @@ struct Invocation3
 #define TO(ARG) ntf_mock::createExtractor<ntf_mock::NoDerefPolicy>(ARG)
 #define TO_DEREF(ARG) ntf_mock::createExtractor<ntf_mock::DerefPolicy>(ARG)
 
-#define SAVE_ARG_1(...) saveArg1(__VA_ARGS__)
-#define SAVE_ARG_2(...) saveArg2(__VA_ARGS__)
-#define SAVE_ARG_3(...) saveArg1(__VA_ARGS__)
-#define SAVE_ARG_4(...) saveArg2(__VA_ARGS__)
+#define SAVE_ARG_1(...) saveArg<0>(__VA_ARGS__)
+#define SAVE_ARG_2(...) saveArg<1>(__VA_ARGS__)
+#define SAVE_ARG_3(...) saveArg<2>(__VA_ARGS__)
+#define SAVE_ARG_4(...) saveArg<3>(__VA_ARGS__)
 
 #define FROM(ARG) ntf_mock::createSetter<ntf_mock::DefaultSetter>(ARG)
 
 #define FROM_DEREF(ARG) ntf_mock::createSetter<ntf_mock::DerefSetter>(ARG)
 
-#define SET_ARG_1(...) setArg1(__VA_ARGS__)
-#define SET_ARG_2(...) setArg2(__VA_ARGS__)
-#define SET_ARG_3(...) setArg3(__VA_ARGS__)
-#define SET_ARG_4(...) setArg4(__VA_ARGS__)
+#define SET_ARG_1(...) setArg<0>(__VA_ARGS__)
+#define SET_ARG_2(...) setArg<1>(__VA_ARGS__)
+#define SET_ARG_3(...) setArg<2>(__VA_ARGS__)
+#define SET_ARG_4(...) setArg<3>(__VA_ARGS__)
