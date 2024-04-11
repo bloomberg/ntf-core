@@ -1184,110 +1184,130 @@ struct InvocationDataBase {
     }
 };
 
-template <class RESULT,
-          class ARG1 = NO_ARG,
-          class ARG2 = NO_ARG,
-          class ARG3 = NO_ARG,
-          class ARG4 = NO_ARG,
-          class ARG5 = NO_ARG>
-struct InvocationData;
+template <class TL, class INT>
+struct InvocationArgsImpl;
+
+template <class TL>
+struct InvocationArgsImpl<TL, bsl::integral_constant<int, 0> > {
+    typedef typename BloombergLP::bslmf::TypeListTypeAt<0, TL>::Type ArgType;
+
+    bsl::shared_ptr<ProcessInterface<ArgType> > d_matcher;
+    bsl::shared_ptr<ProcessInterface<ArgType> > d_extractor;
+    bsl::shared_ptr<ProcessInterface<ArgType> > d_setter;
+
+    void processArg(ArgType arg)
+    {
+        if (d_matcher) {
+            d_matcher->process(arg);
+        }
+        if (d_extractor) {
+            d_extractor->process(arg);
+        }
+        if (d_setter) {
+            d_setter->process(arg);
+        }
+    }
+};
+
+template <class TL, int ARG_INDEX>
+struct InvocationArgsImpl<TL, bsl::integral_constant<int, ARG_INDEX> >
+: public InvocationArgsImpl<TL, bsl::integral_constant<int, ARG_INDEX - 1> > {
+    typedef typename BloombergLP::bslmf::TypeListTypeAt<ARG_INDEX, TL>::Type
+        ArgType;
+
+    bsl::shared_ptr<ProcessInterface<ArgType> > d_matcher;
+    bsl::shared_ptr<ProcessInterface<ArgType> > d_extractor;
+    bsl::shared_ptr<ProcessInterface<ArgType> > d_setter;
+
+    void processArg(ArgType arg)
+    {
+        if (d_matcher) {
+            d_matcher->process(arg);
+        }
+        if (d_extractor) {
+            d_extractor->process(arg);
+        }
+        if (d_setter) {
+            d_setter->process(arg);
+        }
+    }
+};
+
+template <class ARG_LIST>
+struct InvocationArgs
+: public InvocationArgsImpl<
+      ARG_LIST,
+      bsl::integral_constant<int, ARG_LIST::LENGTH - 1> > {
+};
+
+template <int AT, class TL>
+InvocationArgsImpl<TL, bsl::integral_constant<int, AT> >& getInvocationArgs(
+    InvocationArgs<TL>& args)
+{
+    return *(
+        static_cast<InvocationArgsImpl<TL, bsl::integral_constant<int, AT> >*>(
+            &args));
+}
+
+template <class INVOCATION_ARGS, class T0>
+void processArgs(INVOCATION_ARGS& args, T0 arg0)
+{
+    getInvocationArgs<0>(args).processArg(arg0);
+}
+
+template <class INVOCATION_ARGS, class T0, class T1>
+void processArgs(INVOCATION_ARGS& args, T0 arg0, T1 arg1)
+{
+    getInvocationArgs<0>(args).processArg(arg0);
+    getInvocationArgs<1>(args).processArg(arg1);
+}
+
+template <class INVOCATION_ARGS, class T0, class T1, class T2>
+void processArgs(INVOCATION_ARGS& args, T0 arg0, T1 arg1, T2 arg2)
+{
+    getInvocationArgs<0>(args).processArg(arg0);
+    getInvocationArgs<1>(args).processArg(arg1);
+    getInvocationArgs<2>(args).processArg(arg2);
+}
+
+template <class INVOCATION_ARGS, class T0, class T1, class T2, class T3>
+void processArgs(INVOCATION_ARGS& args, T0 arg0, T1 arg1, T2 arg2, T3 arg3)
+{
+    getInvocationArgs<0>(args).processArg(arg0);
+    getInvocationArgs<1>(args).processArg(arg1);
+    getInvocationArgs<2>(args).processArg(arg2);
+    getInvocationArgs<3>(args).processArg(arg3);
+}
+
+template <class INVOCATION_ARGS,
+          class T0,
+          class T1,
+          class T2,
+          class T3,
+          class T4>
+void processArgs(INVOCATION_ARGS& args,
+                 T0               arg0,
+                 T1               arg1,
+                 T2               arg2,
+                 T3               arg3,
+                 T4               arg4)
+{
+    getInvocationArgs<0>(args).processArg(arg0);
+    getInvocationArgs<1>(args).processArg(arg1);
+    getInvocationArgs<2>(args).processArg(arg2);
+    getInvocationArgs<3>(args).processArg(arg3);
+    getInvocationArgs<4>(args).processArg(arg4);
+}
+
+template <class RESULT, class ARG_LIST = NO_ARG>
+struct InvocationData : public InvocationDataBase<RESULT>,
+                        public InvocationArgs<ARG_LIST> {
+};
 
 template <class RESULT>
-struct InvocationData<RESULT> : public InvocationDataBase<RESULT> {
+struct InvocationData<RESULT, NO_ARG> : public InvocationDataBase<RESULT> {
 };
 
-template <class RESULT, class ARG1>
-struct InvocationData<RESULT, ARG1> : public InvocationData<RESULT> {
-    bsl::shared_ptr<ProcessInterface<ARG1> > arg1Matcher;
-    bsl::shared_ptr<ProcessInterface<ARG1> > arg1Extractor;
-    bsl::shared_ptr<ProcessInterface<ARG1> > arg1Setter;
-
-    void processArgs(ARG1 arg1)
-    {
-        if (arg1Matcher) {
-            arg1Matcher->process(arg1);
-        }
-        if (arg1Extractor) {
-            arg1Extractor->process(arg1);
-        }
-        if (arg1Setter) {
-            arg1Setter->process(arg1);
-        }
-    }
-};
-
-template <class RESULT, class ARG1, class ARG2>
-struct InvocationData<RESULT, ARG1, ARG2>
-: public InvocationData<RESULT, ARG1> {
-    typedef InvocationData<RESULT, ARG1> BASE;
-
-    bsl::shared_ptr<ProcessInterface<ARG2> > arg2Matcher;
-    bsl::shared_ptr<ProcessInterface<ARG2> > arg2Extractor;
-    bsl::shared_ptr<ProcessInterface<ARG2> > arg2Setter;
-
-    void processArgs(ARG1 arg1, ARG2 arg2)
-    {
-        BASE::processArgs(arg1);
-
-        if (arg2Matcher) {
-            arg2Matcher->process(arg2);
-        }
-        if (arg2Extractor) {
-            arg2Extractor->process(arg2);
-        }
-        if (arg2Setter) {
-            arg2Setter->process(arg2);
-        }
-    }
-};
-
-template <class RESULT, class ARG1, class ARG2, class ARG3>
-struct InvocationData<RESULT, ARG1, ARG2, ARG3>
-: public InvocationData<RESULT, ARG1, ARG2> {
-    typedef InvocationData<RESULT, ARG1, ARG2> BASE;
-    bsl::shared_ptr<ProcessInterface<ARG3> >   arg3Matcher;
-    bsl::shared_ptr<ProcessInterface<ARG3> >   arg3Extractor;
-    bsl::shared_ptr<ProcessInterface<ARG3> >   arg3Setter;
-
-    void processArgs(ARG1 arg1, ARG2 arg2, ARG3 arg3)
-    {
-        BASE::processArgs(arg1, arg2);
-
-        if (arg3Matcher) {
-            arg3Matcher->process(arg3);
-        }
-        if (arg3Extractor) {
-            arg3Extractor->process(arg3);
-        }
-        if (arg3Setter) {
-            arg3Setter->process(arg3);
-        }
-    }
-};
-
-template <class RESULT, class ARG1, class ARG2, class ARG3, class ARG4>
-struct InvocationData<RESULT, ARG1, ARG2, ARG3, ARG4>
-: public InvocationData<RESULT, ARG1, ARG2, ARG3> {
-    typedef InvocationData<RESULT, ARG1, ARG2, ARG3> BASE;
-    bsl::shared_ptr<ProcessInterface<ARG4> >         arg4Matcher;
-    bsl::shared_ptr<ProcessInterface<ARG4> >         arg4Extractor;
-    bsl::shared_ptr<ProcessInterface<ARG4> >         arg4Setter;
-
-    void processArgs(ARG1 arg1, ARG2 arg2, ARG3 arg3, ARG4 arg4)
-    {
-        BASE::processArgs(arg1, arg2, arg3);
-
-        if (arg4Matcher) {
-            arg4Matcher->process(arg4);
-        }
-        if (arg4Extractor) {
-            arg4Extractor->process(arg4);
-        }
-        if (arg4Setter) {
-            arg4Setter->process(arg4);
-        }
-    }
-};
 
 template <class INVOCATION_DATA,
           class SELF,
@@ -1296,11 +1316,7 @@ template <class INVOCATION_DATA,
           class ARG3 = NO_ARG,
           class ARG4 = NO_ARG,
           class ARG5 = NO_ARG>
-struct InvocationBaseSaveSetArg {
-  private:
-     InvocationBaseSaveSetArg();
-    ~InvocationBaseSaveSetArg();
-};
+struct InvocationBaseSaveSetArg;
 
 template <class INVOCATION_DATA, class SELF, class ARG1>
 struct InvocationBaseSaveSetArg<INVOCATION_DATA, SELF, ARG1> {
@@ -1315,7 +1331,7 @@ struct InvocationBaseSaveSetArg<INVOCATION_DATA, SELF, ARG1> {
             extractorInterface(
                 new ExtractorHolder<ARG1, ARG_EXTRACTOR>(extractor));
 
-        data.arg1Extractor = extractorInterface;
+        getInvocationArgs<0>(data).d_extractor = extractorInterface;
 
         return *(static_cast<SELF*>(this));
     }
@@ -1328,7 +1344,7 @@ struct InvocationBaseSaveSetArg<INVOCATION_DATA, SELF, ARG1> {
         bsl::shared_ptr<SetterHolder<ARG1, ARG_SETTER> > setterInterface(
             new SetterHolder<ARG1, ARG_SETTER>(setter));
 
-        data.arg1Setter = setterInterface;
+        getInvocationArgs<0>(data).d_setter = setterInterface;
 
         return *(static_cast<SELF*>(this));
     }
@@ -1346,7 +1362,7 @@ struct InvocationBaseSaveSetArg<INVOCATION_DATA, SELF, ARG1, ARG2>
             extractorInterface(
                 new ExtractorHolder<ARG2, ARG_EXTRACTOR>(extractor));
 
-        data.arg2Extractor = extractorInterface;
+        getInvocationArgs<1>(data).d_extractor = extractorInterface;
 
         return *(static_cast<SELF*>(this));
     }
@@ -1465,7 +1481,7 @@ struct Invocation0
         return *this;
     }
 
-    InvocationDataT& getInvocationDataBack()
+    InvocationDataT& getInvocationDataBack() BSLS_KEYWORD_OVERRIDE
     {
         NTCCFG_TEST_FALSE(d_storage.d_invocations.empty());
         return d_storage.d_invocations.back();
@@ -1479,22 +1495,23 @@ struct TypeToType {
     typedef T Type;
 };
 
-template <class METHOD_INFO, class RESULT, class ARG1>
+template <class METHOD_INFO, class RESULT, class ARG_LIST>
 struct Invocation1
 
-: public InvocationBaseWillReturn<InvocationData<RESULT, ARG1>,
-                                  Invocation1<METHOD_INFO, RESULT, ARG1>,
+: public InvocationBaseWillReturn<InvocationData<RESULT, ARG_LIST>,
+                                  Invocation1<METHOD_INFO, RESULT, ARG_LIST>,
                                   RESULT>,
-  public InvocationBaseTimes<InvocationData<RESULT, ARG1>,
-                             Invocation1<METHOD_INFO, RESULT, ARG1> >,
-  public InvocationBaseSaveSetArg<InvocationData<RESULT, ARG1>,
-                                  Invocation1<METHOD_INFO, RESULT, ARG1>,
-                                  ARG1>
+  public InvocationBaseTimes<InvocationData<RESULT, ARG_LIST>,
+                             Invocation1<METHOD_INFO, RESULT, ARG_LIST> >,
+  public InvocationBaseSaveSetArg<
+      InvocationData<RESULT, ARG_LIST>,
+      Invocation1<METHOD_INFO, RESULT, ARG_LIST>,
+      typename BloombergLP::bslmf::TypeListTypeAt<0, ARG_LIST>::Type>
 
 {
-    typedef InvocationData<RESULT, ARG1> InvocationDataT;
-    typedef ARG1                         ARG1_TYPE;
-    TypeToType<ARG1>                     k_overload_key;  //TODO: make static
+    typedef InvocationData<RESULT, ARG_LIST> InvocationDataT;
+    typedef
+        typename BloombergLP::bslmf::TypeListTypeAt<0, ARG_LIST>::Type ARG1;
 
     RESULT invoke(ARG1 arg)
     {
@@ -1509,7 +1526,7 @@ struct Invocation1
             NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
         }
 
-        invocation.processArgs(arg);
+        processArgs(invocation, arg);
 
         InvocationResult<RESULT> result = invocation.d_result;  //copy by value
         if (invocation.d_expectedCalls != InvocationDataT::k_INFINITE_CALLS) {
@@ -1536,12 +1553,12 @@ struct Invocation1
                 matcherInterface(
                     new MatcherHolder<ARG1, ARG1_MATCHER>(arg1Matcher));
 
-            data.arg1Matcher = matcherInterface;
+            getInvocationArgs<0>(data).d_matcher = matcherInterface;
         }
         return *this;
     }
 
-    InvocationDataT& getInvocationDataBack()
+    InvocationDataT& getInvocationDataBack() BSLS_KEYWORD_OVERRIDE
     {
         NTCCFG_TEST_FALSE(d_storage.d_invocations.empty());
         return d_storage.d_invocations.back();
@@ -1550,21 +1567,26 @@ struct Invocation1
     InvocationDataStorage<InvocationDataT, METHOD_INFO> d_storage;
 };
 
-template <class METHOD_INFO, class RESULT, class ARG1, class ARG2>
+template <class METHOD_INFO, class RESULT, class ARG_LIST>
 struct Invocation2
 
-: public InvocationBaseWillReturn<InvocationData<RESULT, ARG1, ARG2>,
-                                  Invocation2<METHOD_INFO, RESULT, ARG1, ARG2>,
+: public InvocationBaseWillReturn<InvocationData<RESULT, ARG_LIST>,
+                                  Invocation2<METHOD_INFO, RESULT, ARG_LIST>,
                                   RESULT>,
-  public InvocationBaseTimes<InvocationData<RESULT, ARG1, ARG2>,
-                             Invocation2<METHOD_INFO, RESULT, ARG1, ARG2> >,
-  public InvocationBaseSaveSetArg<InvocationData<RESULT, ARG1, ARG2>,
-                                  Invocation2<METHOD_INFO, RESULT, ARG1, ARG2>,
-                                  ARG1,
-                                  ARG2>
+  public InvocationBaseTimes<InvocationData<RESULT, ARG_LIST>,
+                             Invocation2<METHOD_INFO, RESULT, ARG_LIST> >,
+  public InvocationBaseSaveSetArg<
+      InvocationData<RESULT, ARG_LIST>,
+      Invocation2<METHOD_INFO, RESULT, ARG_LIST>,
+      typename BloombergLP::bslmf::TypeListTypeAt<0, ARG_LIST>::Type,
+      typename BloombergLP::bslmf::TypeListTypeAt<1, ARG_LIST>::Type>
 
 {
-    typedef InvocationData<RESULT, ARG1, ARG2> InvocationDataT;
+    typedef InvocationData<RESULT, ARG_LIST> InvocationDataT;
+    typedef
+        typename BloombergLP::bslmf::TypeListTypeAt<0, ARG_LIST>::Type ARG1;
+    typedef
+        typename BloombergLP::bslmf::TypeListTypeAt<1, ARG_LIST>::Type ARG2;
 
     RESULT invoke(ARG1 arg1, ARG2 arg2)
     {
@@ -1579,7 +1601,7 @@ struct Invocation2
             NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
         }
 
-        invocation.processArgs(arg1, arg2);
+        processArgs(invocation, arg1, arg2);
 
         InvocationResult<RESULT> result = invocation.d_result;  //copy by value
         if (invocation.d_expectedCalls != InvocationDataT::k_INFINITE_CALLS) {
@@ -1606,7 +1628,7 @@ struct Invocation2
                 matcherInterface1(
                     new MatcherHolder<ARG1, ARG1_MATCHER>(arg1Matcher));
 
-            data.arg1Matcher = matcherInterface1;
+            getInvocationArgs<0>(data).d_matcher = matcherInterface1;
         }
 
         if (!arg2Matcher.ignore()) {
@@ -1614,12 +1636,12 @@ struct Invocation2
                 matcherInterface2(
                     new MatcherHolder<ARG2, ARG2_MATCHER>(arg2Matcher));
 
-            data.arg2Matcher = matcherInterface2;
+            getInvocationArgs<1>(data).d_matcher = matcherInterface2;
         }
         return *this;
     }
 
-    InvocationDataT& getInvocationDataBack()
+    InvocationDataT& getInvocationDataBack() BSLS_KEYWORD_OVERRIDE
     {
         NTCCFG_TEST_FALSE(d_storage.d_invocations.empty());
         return d_storage.d_invocations.back();
@@ -1628,25 +1650,30 @@ struct Invocation2
     InvocationDataStorage<InvocationDataT, METHOD_INFO> d_storage;
 };
 
-template <class METHOD_INFO, class RESULT, class ARG1, class ARG2, class ARG3>
+template <class METHOD_INFO, class RESULT, class ARG_LIST>
 struct Invocation3
 
-: public InvocationBaseWillReturn<
-      InvocationData<RESULT, ARG1, ARG2, ARG3>,
-      Invocation3<METHOD_INFO, RESULT, ARG1, ARG2, ARG3>,
-      RESULT>,
-  public InvocationBaseTimes<
-      InvocationData<RESULT, ARG1, ARG2, ARG3>,
-      Invocation3<METHOD_INFO, RESULT, ARG1, ARG2, ARG3> >,
+: public InvocationBaseWillReturn<InvocationData<RESULT, ARG_LIST>,
+                                  Invocation3<METHOD_INFO, RESULT, ARG_LIST>,
+                                  RESULT>,
+  public InvocationBaseTimes<InvocationData<RESULT, ARG_LIST>,
+                             Invocation3<METHOD_INFO, RESULT, ARG_LIST> >,
   public InvocationBaseSaveSetArg<
-      InvocationData<RESULT, ARG1, ARG2, ARG3>,
-      Invocation3<METHOD_INFO, RESULT, ARG1, ARG2, ARG3>,
-      ARG1,
-      ARG2,
-      ARG3>
+      InvocationData<RESULT, ARG_LIST>,
+      Invocation3<METHOD_INFO, RESULT, ARG_LIST>,
+      typename BloombergLP::bslmf::TypeListTypeAt<0, ARG_LIST>::Type,
+      typename BloombergLP::bslmf::TypeListTypeAt<1, ARG_LIST>::Type,
+      typename BloombergLP::bslmf::TypeListTypeAt<2, ARG_LIST>::Type>
 
 {
-    typedef InvocationData<RESULT, ARG1, ARG2, ARG3> InvocationDataT;
+    typedef InvocationData<RESULT, ARG_LIST> InvocationDataT;
+
+    typedef
+        typename BloombergLP::bslmf::TypeListTypeAt<0, ARG_LIST>::Type ARG1;
+    typedef
+        typename BloombergLP::bslmf::TypeListTypeAt<1, ARG_LIST>::Type ARG2;
+    typedef
+        typename BloombergLP::bslmf::TypeListTypeAt<2, ARG_LIST>::Type ARG3;
 
     RESULT invoke(ARG1 arg1, ARG2 arg2, ARG3 arg3)
     {
@@ -1661,7 +1688,7 @@ struct Invocation3
             NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
         }
 
-        invocation.processArgs(arg1, arg2, arg3);
+        processArgs(invocation, arg1, arg2, arg3);
 
         InvocationResult<RESULT> result = invocation.d_result;  //copy by value
         if (invocation.d_expectedCalls != InvocationDataT::k_INFINITE_CALLS) {
@@ -1689,7 +1716,7 @@ struct Invocation3
                 matcherInterface1(
                     new MatcherHolder<ARG1, ARG1_MATCHER>(arg1Matcher));
 
-            data.arg1Matcher = matcherInterface1;
+            getInvocationArgs<0>(data).d_matcher = matcherInterface1;
         }
 
         if (!arg2Matcher.ignore()) {
@@ -1697,7 +1724,7 @@ struct Invocation3
                 matcherInterface2(
                     new MatcherHolder<ARG2, ARG2_MATCHER>(arg2Matcher));
 
-            data.arg2Matcher = matcherInterface2;
+            getInvocationArgs<1>(data).d_matcher = matcherInterface2;
         }
 
         if (!arg3Matcher.ignore()) {
@@ -1705,13 +1732,13 @@ struct Invocation3
                 matcherInterface3(
                     new MatcherHolder<ARG3, ARG3_MATCHER>(arg3Matcher));
 
-            data.arg3Matcher = matcherInterface3;
+            getInvocationArgs<2>(data).d_matcher = matcherInterface3;
         }
 
         return *this;
     }
 
-    InvocationDataT& getInvocationDataBack()
+    InvocationDataT& getInvocationDataBack() BSLS_KEYWORD_OVERRIDE
     {
         NTCCFG_TEST_FALSE(d_storage.d_invocations.empty());
         return d_storage.d_invocations.back();
@@ -1751,7 +1778,9 @@ struct Invocation3
     NTF_METHOD_INFO(METHOD_NAME)                                              \
   public:                                                                     \
     template <class MATCHER>                                                  \
-    ntf_mock::Invocation1<NTF_CAT2(MethodInfo, __LINE__), RESULT, ARG1>&      \
+    ntf_mock::Invocation1<NTF_CAT2(MethodInfo, __LINE__),                     \
+                          RESULT,                                             \
+                          BloombergLP::bslmf::TypeList<ARG1> >&               \
         expect_##METHOD_NAME(const MATCHER& arg1,                             \
                              ntf_mock::TypeToType<ARG1> =                     \
                                  ntf_mock::TypeToType<ARG1>())                \
@@ -1760,39 +1789,43 @@ struct Invocation3
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable ntf_mock::                                                        \
-        Invocation1<NTF_CAT2(MethodInfo, __LINE__), RESULT, ARG1>             \
-            NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__);
+    mutable ntf_mock::Invocation1<NTF_CAT2(MethodInfo, __LINE__),             \
+                                  RESULT,                                     \
+                                  BloombergLP::bslmf::TypeList<ARG1> >        \
+        NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__);
 
 #define NTF_MOCK_METHOD_2_IMP(RESULT, METHOD_NAME, ARG1, ARG2)                \
     NTF_METHOD_INFO(METHOD_NAME)                                              \
   public:                                                                     \
     template <class MATCHER1, class MATCHER2>                                 \
-    ntf_mock::                                                                \
-        Invocation2<NTF_CAT2(MethodInfo, __LINE__), RESULT, ARG1, ARG2>&      \
-            expect_##METHOD_NAME(const MATCHER1& arg1, const MATCHER2& arg2)  \
+    ntf_mock::Invocation2<NTF_CAT2(MethodInfo, __LINE__),                     \
+                          RESULT,                                             \
+                          BloombergLP::bslmf::TypeList<ARG1, ARG2> >&         \
+        expect_##METHOD_NAME(const MATCHER1& arg1, const MATCHER2& arg2)      \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .expect(arg1, arg2);                                              \
     }                                                                         \
                                                                               \
     template <class MATCHER1, class MATCHER2>                                 \
-    ntf_mock::                                                                \
-        Invocation2<NTF_CAT2(MethodInfo, __LINE__), RESULT, ARG1, ARG2>&      \
-            expect_##METHOD_NAME(const MATCHER1& arg1,                        \
-                                 ntf_mock::TypeToType<ARG1>,                  \
-                                 const MATCHER2& arg2,                        \
-                                 ntf_mock::TypeToType<ARG2> =                 \
-                                     ntf_mock::TypeToType<ARG2>())            \
+    ntf_mock::Invocation2<NTF_CAT2(MethodInfo, __LINE__),                     \
+                          RESULT,                                             \
+                          BloombergLP::bslmf::TypeList<ARG1, ARG2> >&         \
+        expect_##METHOD_NAME(const MATCHER1& arg1,                            \
+                             ntf_mock::TypeToType<ARG1>,                      \
+                             const MATCHER2& arg2,                            \
+                             ntf_mock::TypeToType<ARG2> =                     \
+                                 ntf_mock::TypeToType<ARG2>())                \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .expect(arg1, arg2);                                              \
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable ntf_mock::                                                        \
-        Invocation2<NTF_CAT2(MethodInfo, __LINE__), RESULT, ARG1, ARG2>       \
-            NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__);
+    mutable ntf_mock::Invocation2<NTF_CAT2(MethodInfo, __LINE__),             \
+                                  RESULT,                                     \
+                                  BloombergLP::bslmf::TypeList<ARG1, ARG2> >  \
+        NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__);
 
 #define NTF_MOCK_METHOD_3_IMP(RESULT, METHOD_NAME, ARG1, ARG2, ARG3)          \
     NTF_METHOD_INFO(METHOD_NAME)                                              \
@@ -1800,11 +1833,10 @@ struct Invocation3
     template <class MATCHER1, class MATCHER2, class MATCHER3>                 \
     ntf_mock::Invocation3<NTF_CAT2(MethodInfo, __LINE__),                     \
                           RESULT,                                             \
-                          ARG1,                                               \
-                          ARG2,                                               \
-                          ARG3>& expect_##METHOD_NAME(const MATCHER1& arg1,   \
-                                                      const MATCHER2& arg2,   \
-                                                      const MATCHER3& arg3)   \
+                          BloombergLP::bslmf::TypeList<ARG1, ARG2, ARG3> >&   \
+        expect_##METHOD_NAME(const MATCHER1& arg1,                            \
+                             const MATCHER2& arg2,                            \
+                             const MATCHER3& arg3)                            \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .expect(arg1, arg2, arg3);                                        \
@@ -1813,9 +1845,7 @@ struct Invocation3
     template <class MATCHER1, class MATCHER2, class MATCHER3>                 \
     ntf_mock::Invocation3<NTF_CAT2(MethodInfo, __LINE__),                     \
                           RESULT,                                             \
-                          ARG1,                                               \
-                          ARG2,                                               \
-                          ARG3>&                                              \
+                          BloombergLP::bslmf::TypeList<ARG1, ARG2, ARG3> >&   \
         expect_##METHOD_NAME(const MATCHER1& arg1,                            \
                              ntf_mock::TypeToType<ARG1>,                      \
                              const MATCHER2& arg2,                            \
@@ -1828,9 +1858,11 @@ struct Invocation3
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable ntf_mock::                                                        \
-        Invocation3<NTF_CAT2(MethodInfo, __LINE__), RESULT, ARG1, ARG2, ARG3> \
-            NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__);
+    mutable ntf_mock::Invocation3<                                            \
+        NTF_CAT2(MethodInfo, __LINE__),                                       \
+        RESULT,                                                               \
+        BloombergLP::bslmf::TypeList<ARG1, ARG2, ARG3> >                      \
+        NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__);
 
 #define NTF_MOCK_CLASS(MOCK_NAME, CLASS_TO_MOCK)                              \
     class MOCK_NAME : public CLASS_TO_MOCK                                    \
