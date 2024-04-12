@@ -52,10 +52,6 @@ struct SocketOptionUtil {
     /// according to the specified 'blocking' flag. Return the error.
     static ntsa::Error setBlocking(ntsa::Handle socket, bool blocking);
 
-    /// If the specified 'socket' is in a blocking mode then load true in the
-    /// specified 'blocking', otherwise load false. Return the error.
-    static ntsa::Error isBlocking(ntsa::Handle handle, bool* blocking);
-
     /// Set the option for the specified 'socket' that controls automatic
     /// periodic transmission of TCP keep-alive packets according to the
     /// specified 'keepAlive' flag. Return the error.
@@ -151,6 +147,12 @@ struct SocketOptionUtil {
     static ntsa::Error getOption(ntsa::SocketOption*           option,
                                  ntsa::SocketOptionType::Value type,
                                  ntsa::Handle                  socket);
+
+    /// Load into the specified 'blocking' flag the blocking mode of the
+    /// specified 'socket'. Return the error. Note that this function always
+    /// returns an error on Windows, as determination of the blocking mode is
+    /// not supported on that platform.
+    static ntsa::Error getBlocking(ntsa::Handle handle, bool* blocking);
 
     /// Load into the specified 'keepAlive' flag the option for the
     /// specified 'socket' that controls automatic periodic transmission
@@ -298,15 +300,15 @@ struct SocketOptionUtil {
     static ntsa::Error isLocal(bool* result, ntsa::Handle socket);
 
     /// Return true if the specified 'socket' supports notifications, otherwise
-    /// return false. 
+    /// return false.
     static bool supportsNotifications(ntsa::Handle socket);
 
     /// Return true if the specified 'socket' supports timestamping, otherwise
-    /// return false. 
+    /// return false.
     static bool supportsTimestamping(ntsa::Handle socket);
 
     /// Return true if the specified 'socket' supports zero-copy, otherwise
-    /// return false. 
+    /// return false.
     static bool supportsZeroCopy(ntsa::Handle socket);
 
 };

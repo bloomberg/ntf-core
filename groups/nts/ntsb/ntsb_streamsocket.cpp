@@ -176,14 +176,14 @@ ntsa::Error StreamSocket::setBlocking(bool blocking)
     return ntsu::SocketOptionUtil::setBlocking(d_handle, blocking);
 }
 
-ntsa::Error StreamSocket::isBlocking(bool* blocking) const
-{
-    return ntsu::SocketOptionUtil::isBlocking(d_handle, blocking);
-}
-
 ntsa::Error StreamSocket::setOption(const ntsa::SocketOption& option)
 {
     return ntsu::SocketOptionUtil::setOption(d_handle, option);
+}
+
+ntsa::Error StreamSocket::getBlocking(bool* blocking) const
+{
+    return ntsu::SocketOptionUtil::getBlocking(d_handle, blocking);
 }
 
 ntsa::Error StreamSocket::getOption(ntsa::SocketOption*           option,
