@@ -204,6 +204,11 @@ ntsa::Error DatagramSocket::setBlocking(bool blocking)
     return ntsu::SocketOptionUtil::setBlocking(d_handle, blocking);
 }
 
+ntsa::Error DatagramSocket::isBlocking(bool* blocking) const
+{
+    return ntsu::SocketOptionUtil::isBlocking(d_handle, blocking);
+}
+
 ntsa::Error DatagramSocket::setOption(const ntsa::SocketOption& option)
 {
     return ntsu::SocketOptionUtil::setOption(d_handle, option);
