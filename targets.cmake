@@ -713,6 +713,7 @@ if (${NTF_BUILD_WITH_NTC})
         PRIVATE
     )
 
+    ntf_component(NAME ntcd_blobbufferfactory)
     ntf_component(NAME ntcd_datagramsocket)
     ntf_component(NAME ntcd_datautil)
     ntf_component(NAME ntcd_encryption)

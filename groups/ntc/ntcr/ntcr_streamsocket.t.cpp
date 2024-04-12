@@ -17,6 +17,7 @@
 
 #include <ntccfg_bind.h>
 #include <ntccfg_test.h>
+#include <ntcd_blobbufferfactory.h>
 #include <ntcd_datautil.h>
 #include <ntcd_encryption.h>
 #include <ntcd_reactor.h>
@@ -1375,10 +1376,6 @@ void variation(const test::Parameters& parameters)
 
 namespace mock {
 
-NTF_MOCK_CLASS(BufferFactoryMock, bdlbb::BlobBufferFactory)
-NTF_MOCK_METHOD(void, allocate, bdlbb::BlobBuffer*)
-NTF_MOCK_CLASS_END;
-
 NTF_MOCK_CLASS(StreamSocketMock, ntsi::StreamSocket)
 
 NTF_MOCK_METHOD_CONST(ntsa::Handle, handle)
@@ -1632,7 +1629,7 @@ struct Fixture {
 
     bslma::Allocator* d_allocator;
 
-    bsl::shared_ptr<mock::BufferFactoryMock>  d_bufferFactoryMock;
+    bsl::shared_ptr<ntcd::BufferFactoryMock>  d_bufferFactoryMock;
     bsl::shared_ptr<bdlbb::BlobBufferFactory> d_bufferFactory;
     bsl::shared_ptr<mock::DataPoolMock>       d_dataPoolMock;
     bsl::shared_ptr<ntci::DataPool>           d_dataPool;
