@@ -1688,11 +1688,6 @@ struct Invocation<METHOD_INFO, RESULT, NoArgs>
     }
 };
 
-template <class T>
-struct TypeToType {
-    typedef T Type;
-};
-
 }
 
 #define NTF_METHOD_INFO(METHOD_NAME)                                          \
@@ -1730,8 +1725,8 @@ struct TypeToType {
                          RESULT,                                              \
                          BloombergLP::bslmf::TypeList<ARG1> >&                \
         expect_##METHOD_NAME(const MATCHER& arg1,                             \
-                             ntf_mock::TypeToType<ARG1> =                     \
-                                 ntf_mock::TypeToType<ARG1>())                \
+                             bsl::type_identity<ARG1> =                       \
+                                 bsl::type_identity<ARG1>())                  \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .get()                                                            \
@@ -1763,10 +1758,10 @@ struct TypeToType {
                          RESULT,                                              \
                          BloombergLP::bslmf::TypeList<ARG1, ARG2> >&          \
         expect_##METHOD_NAME(const MATCHER1& arg1,                            \
-                             ntf_mock::TypeToType<ARG1>,                      \
+                             bsl::type_identity<ARG1>,                        \
                              const MATCHER2& arg2,                            \
-                             ntf_mock::TypeToType<ARG2> =                     \
-                                 ntf_mock::TypeToType<ARG2>())                \
+                             bsl::type_identity<ARG2> =                       \
+                                 bsl::type_identity<ARG2>())                  \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .get()                                                            \
@@ -1800,11 +1795,11 @@ struct TypeToType {
                          RESULT,                                              \
                          BloombergLP::bslmf::TypeList<ARG1, ARG2, ARG3> >&    \
         expect_##METHOD_NAME(const MATCHER1& arg1,                            \
-                             ntf_mock::TypeToType<ARG1>,                      \
+                             bsl::type_identity<ARG1>,                        \
                              const MATCHER2& arg2,                            \
-                             ntf_mock::TypeToType<ARG2>,                      \
+                             bsl::type_identity<ARG2>,                        \
                              const MATCHER3& arg3,                            \
-                             ntf_mock::TypeToType<ARG3>)                      \
+                             bsl::type_identity<ARG3>)                        \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .get()                                                            \
@@ -1917,15 +1912,15 @@ struct TypeToType {
 #define NTF_EQ(ARG) ntf_mock::createEqMatcher<ntf_mock::DirectComparator>(ARG)
 #define NTF_EQ_SPEC(ARG, SPEC)                                                \
     ntf_mock::createEqMatcher<ntf_mock::DirectComparator>(ARG),               \
-        ntf_mock::TypeToType<SPEC>()
+        bsl::type_identity<SPEC>()
 #define IGNORE_ARG ntf_mock::IgnoreArg()
-#define IGNORE_ARG_S(SPEC) ntf_mock::IgnoreArg(), ntf_mock::TypeToType<SPEC>()
+#define IGNORE_ARG_S(SPEC) ntf_mock::IgnoreArg(), bsl::type_identity<SPEC>()
 
 #define NTF_EQ_DEREF(ARG)                                                     \
     ntf_mock::createEqMatcher<ntf_mock::DerefComparator>(ARG)
 #define NTF_EQ_DEREF_SPEC(ARG, SPEC)                                          \
     ntf_mock::createEqMatcher<ntf_mock::DerefComparator>(ARG),                \
-        ntf_mock::TypeToType<SPEC>()
+        bsl::type_identity<SPEC>()
 
 #define NTF_EXPECT_0(MOCK_OBJECT, METHOD) (MOCK_OBJECT).expect_##METHOD()
 #define NTF_EXPECT_1(MOCK_OBJECT, METHOD, ...)                                \
