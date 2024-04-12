@@ -5,5 +5,6 @@ ntcd_listenersocket
 ntcd_machine
 ntcd_proactor
 ntcd_reactor
+ntcd_resolver
 ntcd_streamsocket
 ntcd_simulation

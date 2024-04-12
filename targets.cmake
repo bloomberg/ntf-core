@@ -720,6 +720,7 @@ if (${NTF_BUILD_WITH_NTC})
     ntf_component(NAME ntcd_machine)
     ntf_component(NAME ntcd_proactor)
     ntf_component(NAME ntcd_reactor)
+    ntf_component(NAME ntcd_resolver)
     ntf_component(NAME ntcd_streamsocket)
     ntf_component(NAME ntcd_simulation)
 

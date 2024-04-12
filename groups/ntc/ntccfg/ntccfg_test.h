@@ -22,6 +22,7 @@ BSLS_IDENT("$Id: $")
 #include <ntccfg_config.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
+#include <bdlb_nullablevalue.h>
 #include <bdlt_currenttime.h>
 #include <bdlt_datetime.h>
 #include <bdlt_epochutil.h>
@@ -36,6 +37,7 @@ BSLS_IDENT("$Id: $")
 #include <bsl_cstdio.h>
 #include <bsl_cstdlib.h>
 #include <bsl_cstring.h>
+#include <bsl_list.h>
 #include <bsl_ostream.h>
 #include <bsl_sstream.h>
 #include <bsl_stdexcept.h>
@@ -697,135 +699,6 @@ class TestAllocator : public bslma::Allocator
         bsl::printf("Running test case %d\n", number);                        \
         runTestCase##number();                                                \
         return 0;
-
-#endif
-
-/// @internal @brief
-/// Log at the fatal severity level.
-///
-/// @ingroup module_ntccfg
-#define NTCCFG_TEST_LOG_FATAL                                                 \
-    if (BloombergLP::bsls::LogSeverity::e_FATAL <=                            \
-        BloombergLP::bsls::Log::severityThreshold())                          \
-    {                                                                         \
-        BloombergLP::bsls::LogSeverity::Enum ntclSeverity =                   \
-            BloombergLP::bsls::LogSeverity::e_FATAL;                          \
-        bsl::stringstream ntclStream;                                         \
-        ntclStream
-
-/// @internal @brief
-/// Log at the error severity level.
-///
-/// @ingroup module_ntccfg
-#define NTCCFG_TEST_LOG_ERROR                                                 \
-    if (BloombergLP::bsls::LogSeverity::e_ERROR <=                            \
-        BloombergLP::bsls::Log::severityThreshold())                          \
-    {                                                                         \
-        BloombergLP::bsls::LogSeverity::Enum ntclSeverity =                   \
-            BloombergLP::bsls::LogSeverity::e_ERROR;                          \
-        bsl::stringstream ntclStream;                                         \
-        ntclStream
-
-/// @internal @brief
-/// Log at the warn severity level.
-///
-/// @ingroup module_ntccfg
-#define NTCCFG_TEST_LOG_WARN                                                  \
-    if (BloombergLP::bsls::LogSeverity::e_WARN <=                             \
-        BloombergLP::bsls::Log::severityThreshold())                          \
-    {                                                                         \
-        BloombergLP::bsls::LogSeverity::Enum ntclSeverity =                   \
-            BloombergLP::bsls::LogSeverity::e_WARN;                           \
-        bsl::stringstream ntclStream;                                         \
-        ntclStream
-
-/// @internal @brief
-/// Log at the info severity level.
-///
-/// @ingroup module_ntccfg
-#define NTCCFG_TEST_LOG_INFO                                                  \
-    if (BloombergLP::bsls::LogSeverity::e_INFO <=                             \
-        BloombergLP::bsls::Log::severityThreshold())                          \
-    {                                                                         \
-        BloombergLP::bsls::LogSeverity::Enum ntclSeverity =                   \
-            BloombergLP::bsls::LogSeverity::e_INFO;                           \
-        bsl::stringstream ntclStream;                                         \
-        ntclStream
-
-/// @internal @brief
-/// Log at the debug severity level.
-///
-/// @ingroup module_ntccfg
-#define NTCCFG_TEST_LOG_DEBUG                                                 \
-    if (BloombergLP::bsls::LogSeverity::e_DEBUG <=                            \
-        BloombergLP::bsls::Log::severityThreshold())                          \
-    {                                                                         \
-        BloombergLP::bsls::LogSeverity::Enum ntclSeverity =                   \
-            BloombergLP::bsls::LogSeverity::e_DEBUG;                          \
-        bsl::stringstream ntclStream;                                         \
-        ntclStream
-
-/// @internal @brief
-/// Log at the trace severity level.
-///
-/// @ingroup module_ntccfg
-#define NTCCFG_TEST_LOG_TRACE                                                 \
-    if (BloombergLP::bsls::LogSeverity::e_TRACE <=                            \
-        BloombergLP::bsls::Log::severityThreshold())                          \
-    {                                                                         \
-        BloombergLP::bsls::LogSeverity::Enum ntclSeverity =                   \
-            BloombergLP::bsls::LogSeverity::e_TRACE;                          \
-        bsl::stringstream ntclStream;                                         \
-        ntclStream
-
-/// @internal @brief
-/// End logging.
-///
-/// @ingroup module_ntccfg
-#define NTCCFG_TEST_LOG_END                                                   \
-    bsl::flush;                                                               \
-    BloombergLP::bsls::Log::logFormattedMessage(ntclSeverity,                 \
-                                                __FILE__,                     \
-                                                __LINE__,                     \
-                                                "%s",                         \
-                                                ntclStream.str().c_str());    \
-    }
-
-#if defined(BSLS_PLATFORM_CMP_GNU)
-
-#pragma GCC diagnostic ignored "-Wpedantic"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wunused-variable"
-#pragma GCC diagnostic ignored "-Wconversion"
-#pragma GCC diagnostic ignored "-Wsign-compare"
-
-#elif defined(BSLS_PLATFORM_CMP_CLANG)
-
-#pragma clang diagnostic ignored "-Wunneeded-internal-declaration"
-#pragma clang diagnostic ignored "-Wunused-parameter"
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wshorten-64-to-32"
-#pragma clang diagnostic ignored "-Wconversion"
-#pragma clang diagnostic ignored "-Wsign-compare"
-
-#elif defined(BSLS_PLATFORM_CMP_SUN)
-
-// ...
-
-#elif defined(BSLS_PLATFORM_CMP_IBM)
-
-// ...
-
-#elif defined(BSLS_PLATFORM_CMP_MSVC)
-
-#pragma warning(push, 0)
-
-#else
-#error Not implemented
-#endif
-
-#include <bdlb_nullablevalue.h>
-#include <bsl_list.h>
 
 #define NTF_CAT2_(A, B) A##B
 #define NTF_CAT2(A, B) NTF_CAT2_(A, B)
@@ -1954,3 +1827,129 @@ struct Invocation<METHOD_INFO, RESULT, NoArgs>
 #define SET_ARG_2(...) setArg<1>(__VA_ARGS__)
 #define SET_ARG_3(...) setArg<2>(__VA_ARGS__)
 #define SET_ARG_4(...) setArg<3>(__VA_ARGS__)
+
+#endif
+
+/// @internal @brief
+/// Log at the fatal severity level.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_LOG_FATAL                                                 \
+    if (BloombergLP::bsls::LogSeverity::e_FATAL <=                            \
+        BloombergLP::bsls::Log::severityThreshold())                          \
+    {                                                                         \
+        BloombergLP::bsls::LogSeverity::Enum ntclSeverity =                   \
+            BloombergLP::bsls::LogSeverity::e_FATAL;                          \
+        bsl::stringstream ntclStream;                                         \
+        ntclStream
+
+/// @internal @brief
+/// Log at the error severity level.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_LOG_ERROR                                                 \
+    if (BloombergLP::bsls::LogSeverity::e_ERROR <=                            \
+        BloombergLP::bsls::Log::severityThreshold())                          \
+    {                                                                         \
+        BloombergLP::bsls::LogSeverity::Enum ntclSeverity =                   \
+            BloombergLP::bsls::LogSeverity::e_ERROR;                          \
+        bsl::stringstream ntclStream;                                         \
+        ntclStream
+
+/// @internal @brief
+/// Log at the warn severity level.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_LOG_WARN                                                  \
+    if (BloombergLP::bsls::LogSeverity::e_WARN <=                             \
+        BloombergLP::bsls::Log::severityThreshold())                          \
+    {                                                                         \
+        BloombergLP::bsls::LogSeverity::Enum ntclSeverity =                   \
+            BloombergLP::bsls::LogSeverity::e_WARN;                           \
+        bsl::stringstream ntclStream;                                         \
+        ntclStream
+
+/// @internal @brief
+/// Log at the info severity level.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_LOG_INFO                                                  \
+    if (BloombergLP::bsls::LogSeverity::e_INFO <=                             \
+        BloombergLP::bsls::Log::severityThreshold())                          \
+    {                                                                         \
+        BloombergLP::bsls::LogSeverity::Enum ntclSeverity =                   \
+            BloombergLP::bsls::LogSeverity::e_INFO;                           \
+        bsl::stringstream ntclStream;                                         \
+        ntclStream
+
+/// @internal @brief
+/// Log at the debug severity level.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_LOG_DEBUG                                                 \
+    if (BloombergLP::bsls::LogSeverity::e_DEBUG <=                            \
+        BloombergLP::bsls::Log::severityThreshold())                          \
+    {                                                                         \
+        BloombergLP::bsls::LogSeverity::Enum ntclSeverity =                   \
+            BloombergLP::bsls::LogSeverity::e_DEBUG;                          \
+        bsl::stringstream ntclStream;                                         \
+        ntclStream
+
+/// @internal @brief
+/// Log at the trace severity level.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_LOG_TRACE                                                 \
+    if (BloombergLP::bsls::LogSeverity::e_TRACE <=                            \
+        BloombergLP::bsls::Log::severityThreshold())                          \
+    {                                                                         \
+        BloombergLP::bsls::LogSeverity::Enum ntclSeverity =                   \
+            BloombergLP::bsls::LogSeverity::e_TRACE;                          \
+        bsl::stringstream ntclStream;                                         \
+        ntclStream
+
+/// @internal @brief
+/// End logging.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_LOG_END                                                   \
+    bsl::flush;                                                               \
+    BloombergLP::bsls::Log::logFormattedMessage(ntclSeverity,                 \
+                                                __FILE__,                     \
+                                                __LINE__,                     \
+                                                "%s",                         \
+                                                ntclStream.str().c_str());    \
+    }
+
+#if defined(BSLS_PLATFORM_CMP_GNU)
+
+#pragma GCC diagnostic ignored "-Wpedantic"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wsign-compare"
+
+#elif defined(BSLS_PLATFORM_CMP_CLANG)
+
+#pragma clang diagnostic ignored "-Wunneeded-internal-declaration"
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#pragma clang diagnostic ignored "-Wunused-variable"
+#pragma clang diagnostic ignored "-Wshorten-64-to-32"
+#pragma clang diagnostic ignored "-Wconversion"
+#pragma clang diagnostic ignored "-Wsign-compare"
+
+#elif defined(BSLS_PLATFORM_CMP_SUN)
+
+// ...
+
+#elif defined(BSLS_PLATFORM_CMP_IBM)
+
+// ...
+
+#elif defined(BSLS_PLATFORM_CMP_MSVC)
+
+#pragma warning(push, 0)
+
+#else
+#error Not implemented
+#endif
