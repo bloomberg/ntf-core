@@ -1,12 +1,24 @@
-ntf-core (2.3.3) unstable; urgency=low
+ntf-core (2.3.4) unstable; urgency=low
 
+  * cecbabb Release 2.3.4
+  * 33859c7 Rename ntsi::{Datagram,Stream,Listener}Socket::isBlocking to getBlocking
+  * a309110 Rename ntsi::{Datagram,Stream,Listener}Socket::isBlocking to getBlocking
+  * 4faad11 Add overload to `send(const ntsa::ConstBuffer*, bsl::size_t` for NTS sockets
+  * b9e5d3c Support detection of file descriptor blocking mode on Unixes
+  * fe4a079 Fix compilation errors specifically compiling for C++03
+
+ -- Matt Millett <mmillett2@bloomberg.net>  Fri, 12 Apr 2024 16:57:11 -0400
+
+ntf-core (2.3.3) git; urgency=low
+
+  * 60f95cb Release 2.3.3 to DPKG
   * bb7740a Release 2.3.3
   * 2208636 Add explicit constructors for ntsa::Endpoint taking a ntsa::Ipv4Endpoint and ntsa::Ipv6Endpoint
   * 9ce2bd2 Add ntsi::{Datagram,Listener,Stream}SocketFactory
   * 1ec2138 Defer StreamSocket shutdown execution if the socket is waiting for detachment to be finished
   * 7d7ae93 Eliminate warnings when metrics are explicitly disabled
 
- -- Matt Millett <mmillett2@bloomberg.net>  Fri, 22 Mar 2024 16:56:15 -0400
+ -- Matt Millett <mmillett2@bloomberg.net>  Fri, 22 Mar 2024 16:59:18 -0400
 
 ntf-core (2.3.2) git; urgency=low
 
