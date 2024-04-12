@@ -18,6 +18,7 @@
 #include <ntccfg_bind.h>
 #include <ntccfg_test.h>
 #include <ntcd_blobbufferfactory.h>
+#include <ntcd_datapool.h>
 #include <ntcd_datautil.h>
 #include <ntcd_encryption.h>
 #include <ntcd_reactor.h>
@@ -1376,70 +1377,6 @@ void variation(const test::Parameters& parameters)
 
 namespace mock {
 
-NTF_MOCK_CLASS(StreamSocketMock, ntsi::StreamSocket)
-
-NTF_MOCK_METHOD_CONST(ntsa::Handle, handle)
-NTF_MOCK_METHOD(ntsa::Error, open, ntsa::Transport::Value)
-NTF_MOCK_METHOD(ntsa::Error, acquire, ntsa::Handle)
-NTF_MOCK_METHOD(ntsa::Handle, release)
-
-NTF_MOCK_METHOD(ntsa::Error, bind, const ntsa::Endpoint&, bool)
-NTF_MOCK_METHOD(ntsa::Error, bindAny, ntsa::Transport::Value, bool)
-NTF_MOCK_METHOD(ntsa::Error, connect, const ntsa::Endpoint&)
-
-NTF_MOCK_METHOD(ntsa::Error,
-                send,
-                ntsa::SendContext*,
-                const bdlbb::Blob&,
-                const ntsa::SendOptions&)
-NTF_MOCK_METHOD(ntsa::Error,
-                send,
-                ntsa::SendContext*,
-                const ntsa::Data&,
-                const ntsa::SendOptions&)
-
-NTF_MOCK_METHOD(ntsa::Error,
-                receive,
-                ntsa::ReceiveContext*,
-                bdlbb::Blob*,
-                const ntsa::ReceiveOptions&)
-NTF_MOCK_METHOD(ntsa::Error,
-                receive,
-                ntsa::ReceiveContext*,
-                ntsa::Data*,
-                const ntsa::ReceiveOptions&)
-
-NTF_MOCK_METHOD(ntsa::Error, receiveNotifications, ntsa::NotificationQueue*)
-NTF_MOCK_METHOD(ntsa::Error, shutdown, ntsa::ShutdownType::Value)
-NTF_MOCK_METHOD(ntsa::Error, unlink)
-NTF_MOCK_METHOD(ntsa::Error, close)
-NTF_MOCK_METHOD_CONST(ntsa::Error, sourceEndpoint, ntsa::Endpoint*)
-NTF_MOCK_METHOD_CONST(ntsa::Error, remoteEndpoint, ntsa::Endpoint*)
-NTF_MOCK_METHOD(ntsa::Error, setBlocking, bool)
-NTF_MOCK_METHOD(ntsa::Error, setOption, const ntsa::SocketOption&)
-
-NTF_MOCK_METHOD(ntsa::Error,
-                getOption,
-                ntsa::SocketOption*,
-                ntsa::SocketOptionType::Value)
-NTF_MOCK_METHOD(ntsa::Error, getLastError, ntsa::Error*)
-NTF_MOCK_METHOD_CONST(bsl::size_t, maxBuffersPerSend)
-NTF_MOCK_METHOD_CONST(bsl::size_t, maxBuffersPerReceive)
-NTF_MOCK_CLASS_END;
-
-NTF_MOCK_CLASS(DataPoolMock, ntci::DataPool)
-NTF_MOCK_METHOD(bsl::shared_ptr<ntsa::Data>, createIncomingData)
-NTF_MOCK_METHOD(bsl::shared_ptr<ntsa::Data>, createOutgoingData)
-NTF_MOCK_METHOD(bsl::shared_ptr<bdlbb::Blob>, createIncomingBlob)
-NTF_MOCK_METHOD(bsl::shared_ptr<bdlbb::Blob>, createOutgoingBlob)
-NTF_MOCK_METHOD(void, createIncomingBlobBuffer, bdlbb::BlobBuffer*)
-NTF_MOCK_METHOD(void, createOutgoingBlobBuffer, bdlbb::BlobBuffer*)
-NTF_MOCK_METHOD_CONST(const bsl::shared_ptr<bdlbb::BlobBufferFactory>&,
-                      incomingBlobBufferFactory)
-NTF_MOCK_METHOD_CONST(const bsl::shared_ptr<bdlbb::BlobBufferFactory>&,
-                      outgoingBlobBufferFactory)
-NTF_MOCK_CLASS_END;
-
 NTF_MOCK_CLASS(ReactorMock, ntci::Reactor)
 
 NTF_MOCK_METHOD(bsl::shared_ptr<ntci::DatagramSocket>,
@@ -1631,11 +1568,11 @@ struct Fixture {
 
     bsl::shared_ptr<ntcd::BufferFactoryMock>  d_bufferFactoryMock;
     bsl::shared_ptr<bdlbb::BlobBufferFactory> d_bufferFactory;
-    bsl::shared_ptr<mock::DataPoolMock>       d_dataPoolMock;
+    bsl::shared_ptr<ntcd::DataPoolMock>       d_dataPoolMock;
     bsl::shared_ptr<ntci::DataPool>           d_dataPool;
     bsl::shared_ptr<mock::ReactorMock>        d_reactorMock;
     bsl::shared_ptr<ntcd::ResolverMock>       d_resolverMock;
-    bsl::shared_ptr<mock::StreamSocketMock>   d_streamSocketMock;
+    bsl::shared_ptr<ntcd::StreamSocketMock>   d_streamSocketMock;
     bsl::shared_ptr<mock::TimerMock>          d_connectRetryTimerMock;
     bsl::shared_ptr<mock::TimerMock>          d_connectDeadlineTimerMock;
 
