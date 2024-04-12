@@ -2348,7 +2348,7 @@ ntsa::Error DataUtilImpl::copyConstBuffer(bsl::streambuf*          destination,
         }
 
         std::streamsize numBytesToCopy;
-        if (numBytesRemaining <= numBytesToCopyMax) {
+        if (numBytesRemaining <= static_cast<bsl::size_t>(numBytesToCopyMax)) {
             numBytesToCopy = static_cast<std::streamsize>(numBytesRemaining);
         }
         else {
