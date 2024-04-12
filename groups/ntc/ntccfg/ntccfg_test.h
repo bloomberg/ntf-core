@@ -1078,8 +1078,7 @@ struct InvocationResult<void> {
     }
 };
 
-struct NO_ARG {
-};
+typedef BloombergLP::bslmf::Nil NoArgs;
 
 template <class INVOCATION_DATA, class SELF, class RESULT>
 struct InvocationBaseWillReturn {
@@ -1321,13 +1320,13 @@ struct ProcessArgs<4, ARG_LIST> {
     }
 };
 
-template <class RESULT, class ARG_LIST = NO_ARG>
+template <class RESULT, class ARG_LIST = NoArgs>
 struct InvocationData : public InvocationDataBase<RESULT>,
                         public InvocationArgs<ARG_LIST> {
 };
 
 template <class RESULT>
-struct InvocationData<RESULT, NO_ARG> : public InvocationDataBase<RESULT> {
+struct InvocationData<RESULT, NoArgs> : public InvocationDataBase<RESULT> {
 };
 
 template <class INVOCATION_DATA, class SELF, class ARG_LIST>
@@ -1391,8 +1390,6 @@ struct InvocationDataStorage {
         }
     }
 };
-
-namespace dev {
 
 template <class METHOD_INFO, class RESULT, class ARG_LIST>
 struct Invocation;
@@ -1641,16 +1638,22 @@ struct Invocation
     }
 };
 
-}
-
 template <class METHOD_INFO, class RESULT>
-struct Invocation0
+struct Invocation<METHOD_INFO, RESULT, NoArgs>
 : public InvocationBaseWillReturn<InvocationData<RESULT>,
-                                  Invocation0<METHOD_INFO, RESULT>,
+                                  Invocation<METHOD_INFO, RESULT, NoArgs>,
                                   RESULT>,
   public InvocationBaseTimes<InvocationData<RESULT>,
-                             Invocation0<METHOD_INFO, RESULT> > {
+                             Invocation<METHOD_INFO, RESULT, NoArgs> > {
     typedef InvocationData<RESULT> InvocationDataT;
+
+    InvocationDataT& getInvocationDataBack() BSLS_KEYWORD_OVERRIDE
+    {
+        NTCCFG_TEST_FALSE(d_storage.d_invocations.empty());
+        return d_storage.d_invocations.back();
+    }
+
+    InvocationDataStorage<InvocationDataT, METHOD_INFO> d_storage;
 
     RESULT invoke()
     {
@@ -1674,7 +1677,7 @@ struct Invocation0
         return result.get();
     }
 
-    Invocation0& expect()
+    Invocation& expect()
     {
         if (!d_storage.d_invocations.empty()) {
             NTCCFG_TEST_NE(d_storage.d_invocations.back().d_expectedCalls,
@@ -1683,14 +1686,6 @@ struct Invocation0
         d_storage.d_invocations.emplace_back();
         return *this;
     }
-
-    InvocationDataT& getInvocationDataBack() BSLS_KEYWORD_OVERRIDE
-    {
-        NTCCFG_TEST_FALSE(d_storage.d_invocations.empty());
-        return d_storage.d_invocations.back();
-    }
-
-    InvocationDataStorage<InvocationDataT, METHOD_INFO> d_storage;
 };
 
 template <class T>
@@ -1715,23 +1710,25 @@ struct TypeToType {
     NTF_METHOD_INFO(METHOD_NAME)                                              \
                                                                               \
   public:                                                                     \
-    ntf_mock::Invocation0<NTF_CAT2(MethodInfo, __LINE__), RESULT>&            \
-        expect_##METHOD_NAME()                                                \
+    ntf_mock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
+                         RESULT,                                              \
+                         ntf_mock::NoArgs>& expect_##METHOD_NAME()            \
     {                                                                         \
         return d_invocation_##METHOD_NAME.expect();                           \
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable ntf_mock::Invocation0<NTF_CAT2(MethodInfo, __LINE__), RESULT>     \
-        d_invocation_##METHOD_NAME;
+    mutable ntf_mock::                                                        \
+        Invocation<NTF_CAT2(MethodInfo, __LINE__), RESULT, ntf_mock::NoArgs>  \
+            d_invocation_##METHOD_NAME;
 
 #define NTF_MOCK_METHOD_1_IMP(RESULT, METHOD_NAME, ARG1)                      \
     NTF_METHOD_INFO(METHOD_NAME)                                              \
   public:                                                                     \
     template <class MATCHER>                                                  \
-    ntf_mock::dev::Invocation<NTF_CAT2(MethodInfo, __LINE__),                 \
-                              RESULT,                                         \
-                              BloombergLP::bslmf::TypeList<ARG1> >&           \
+    ntf_mock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
+                         RESULT,                                              \
+                         BloombergLP::bslmf::TypeList<ARG1> >&                \
         expect_##METHOD_NAME(const MATCHER& arg1,                             \
                              ntf_mock::TypeToType<ARG1> =                     \
                                  ntf_mock::TypeToType<ARG1>())                \
@@ -1742,18 +1739,18 @@ struct TypeToType {
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable ntf_mock::dev::Invocation<NTF_CAT2(MethodInfo, __LINE__),         \
-                                      RESULT,                                 \
-                                      BloombergLP::bslmf::TypeList<ARG1> >    \
+    mutable ntf_mock::Invocation<NTF_CAT2(MethodInfo, __LINE__),              \
+                                 RESULT,                                      \
+                                 BloombergLP::bslmf::TypeList<ARG1> >         \
         NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__);
 
 #define NTF_MOCK_METHOD_2_IMP(RESULT, METHOD_NAME, ARG1, ARG2)                \
     NTF_METHOD_INFO(METHOD_NAME)                                              \
   public:                                                                     \
     template <class MATCHER1, class MATCHER2>                                 \
-    ntf_mock::dev::Invocation<NTF_CAT2(MethodInfo, __LINE__),                 \
-                              RESULT,                                         \
-                              BloombergLP::bslmf::TypeList<ARG1, ARG2> >&     \
+    ntf_mock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
+                         RESULT,                                              \
+                         BloombergLP::bslmf::TypeList<ARG1, ARG2> >&          \
         expect_##METHOD_NAME(const MATCHER1& arg1, const MATCHER2& arg2)      \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
@@ -1762,9 +1759,9 @@ struct TypeToType {
     }                                                                         \
                                                                               \
     template <class MATCHER1, class MATCHER2>                                 \
-    ntf_mock::dev::Invocation<NTF_CAT2(MethodInfo, __LINE__),                 \
-                              RESULT,                                         \
-                              BloombergLP::bslmf::TypeList<ARG1, ARG2> >&     \
+    ntf_mock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
+                         RESULT,                                              \
+                         BloombergLP::bslmf::TypeList<ARG1, ARG2> >&          \
         expect_##METHOD_NAME(const MATCHER1& arg1,                            \
                              ntf_mock::TypeToType<ARG1>,                      \
                              const MATCHER2& arg2,                            \
@@ -1777,20 +1774,18 @@ struct TypeToType {
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable ntf_mock::dev::Invocation<                                        \
-        NTF_CAT2(MethodInfo, __LINE__),                                       \
-        RESULT,                                                               \
-        BloombergLP::bslmf::TypeList<ARG1, ARG2> >                            \
+    mutable ntf_mock::Invocation<NTF_CAT2(MethodInfo, __LINE__),              \
+                                 RESULT,                                      \
+                                 BloombergLP::bslmf::TypeList<ARG1, ARG2> >   \
         NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__);
 
 #define NTF_MOCK_METHOD_3_IMP(RESULT, METHOD_NAME, ARG1, ARG2, ARG3)          \
     NTF_METHOD_INFO(METHOD_NAME)                                              \
   public:                                                                     \
     template <class MATCHER1, class MATCHER2, class MATCHER3>                 \
-    ntf_mock::dev::Invocation<                                                \
-        NTF_CAT2(MethodInfo, __LINE__),                                       \
-        RESULT,                                                               \
-        BloombergLP::bslmf::TypeList<ARG1, ARG2, ARG3> >&                     \
+    ntf_mock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
+                         RESULT,                                              \
+                         BloombergLP::bslmf::TypeList<ARG1, ARG2, ARG3> >&    \
         expect_##METHOD_NAME(const MATCHER1& arg1,                            \
                              const MATCHER2& arg2,                            \
                              const MATCHER3& arg3)                            \
@@ -1801,10 +1796,9 @@ struct TypeToType {
     }                                                                         \
                                                                               \
     template <class MATCHER1, class MATCHER2, class MATCHER3>                 \
-    ntf_mock::dev::Invocation<                                                \
-        NTF_CAT2(MethodInfo, __LINE__),                                       \
-        RESULT,                                                               \
-        BloombergLP::bslmf::TypeList<ARG1, ARG2, ARG3> >&                     \
+    ntf_mock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
+                         RESULT,                                              \
+                         BloombergLP::bslmf::TypeList<ARG1, ARG2, ARG3> >&    \
         expect_##METHOD_NAME(const MATCHER1& arg1,                            \
                              ntf_mock::TypeToType<ARG1>,                      \
                              const MATCHER2& arg2,                            \
@@ -1818,7 +1812,7 @@ struct TypeToType {
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable ntf_mock::dev::Invocation<                                        \
+    mutable ntf_mock::Invocation<                                             \
         NTF_CAT2(MethodInfo, __LINE__),                                       \
         RESULT,                                                               \
         BloombergLP::bslmf::TypeList<ARG1, ARG2, ARG3> >                      \
