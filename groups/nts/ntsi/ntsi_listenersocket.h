@@ -179,6 +179,10 @@ class ListenerSocket : public ntsi::Descriptor
     /// Set the specified 'option' for this socket. Return the error.
     virtual ntsa::Error setOption(const ntsa::SocketOption& option);
 
+    /// Load into the specified 'blocking' flag the blocking mode of the
+    /// specified 'socket'. Return the error.
+    virtual ntsa::Error getBlocking(bool* blocking) const;
+
     /// Load into the specified 'option' the socket option of the specified
     /// 'type' set for this socket. Return the error.
     virtual ntsa::Error getOption(ntsa::SocketOption*           option,

@@ -148,6 +148,12 @@ struct SocketOptionUtil {
                                  ntsa::SocketOptionType::Value type,
                                  ntsa::Handle                  socket);
 
+    /// Load into the specified 'blocking' flag the blocking mode of the
+    /// specified 'socket'. Return the error. Note that this function always
+    /// returns an error on Windows, as determination of the blocking mode is
+    /// not supported on that platform.
+    static ntsa::Error getBlocking(ntsa::Handle handle, bool* blocking);
+
     /// Load into the specified 'keepAlive' flag the option for the
     /// specified 'socket' that controls automatic periodic transmission
     /// of TCP keep-alive packets. Return the error.
@@ -294,15 +300,15 @@ struct SocketOptionUtil {
     static ntsa::Error isLocal(bool* result, ntsa::Handle socket);
 
     /// Return true if the specified 'socket' supports notifications, otherwise
-    /// return false. 
+    /// return false.
     static bool supportsNotifications(ntsa::Handle socket);
 
     /// Return true if the specified 'socket' supports timestamping, otherwise
-    /// return false. 
+    /// return false.
     static bool supportsTimestamping(ntsa::Handle socket);
 
     /// Return true if the specified 'socket' supports zero-copy, otherwise
-    /// return false. 
+    /// return false.
     static bool supportsZeroCopy(ntsa::Handle socket);
 
 };

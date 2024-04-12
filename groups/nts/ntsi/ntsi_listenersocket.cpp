@@ -122,6 +122,12 @@ ntsa::Error ListenerSocket::setOption(const ntsa::SocketOption& option)
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
+ntsa::Error ListenerSocket::getBlocking(bool* blocking) const
+{
+    *blocking = false;
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 ntsa::Error ListenerSocket::getOption(ntsa::SocketOption*           option,
                                       ntsa::SocketOptionType::Value type)
 {

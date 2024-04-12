@@ -150,6 +150,10 @@ class ListenerSocket : public ntsi::ListenerSocket
     ntsa::Error setOption(const ntsa::SocketOption& option)
         BSLS_KEYWORD_OVERRIDE;
 
+    /// Load into the specified 'blocking' flag the blocking mode of the
+    /// specified 'socket'. Return the error.
+    ntsa::Error getBlocking(bool* blocking) const BSLS_KEYWORD_OVERRIDE;
+
     /// Load into the specified 'option' the socket option of the specified
     /// 'type' set for this socket. Return the error.
     ntsa::Error getOption(ntsa::SocketOption*           option,

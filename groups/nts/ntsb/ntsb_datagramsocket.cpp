@@ -108,6 +108,14 @@ ntsa::Error DatagramSocket::send(ntsa::SendContext*       context,
     return ntsu::SocketUtil::send(context, data, options, d_handle);
 }
 
+ntsa::Error DatagramSocket::send(ntsa::SendContext*       context,
+                                 const ntsa::ConstBuffer *data,
+                                 bsl::size_t              size,
+                                 const ntsa::SendOptions& options)
+{
+    return ntsu::SocketUtil::send(context, data, size, options, d_handle);
+}
+
 ntsa::Error DatagramSocket::receive(ntsa::ReceiveContext*       context,
                                     bdlbb::Blob*                data,
                                     const ntsa::ReceiveOptions& options)
@@ -207,6 +215,11 @@ ntsa::Error DatagramSocket::setBlocking(bool blocking)
 ntsa::Error DatagramSocket::setOption(const ntsa::SocketOption& option)
 {
     return ntsu::SocketOptionUtil::setOption(d_handle, option);
+}
+
+ntsa::Error DatagramSocket::getBlocking(bool* blocking) const
+{
+    return ntsu::SocketOptionUtil::getBlocking(d_handle, blocking);
 }
 
 ntsa::Error DatagramSocket::getOption(ntsa::SocketOption*           option,

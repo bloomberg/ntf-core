@@ -268,6 +268,15 @@ class StreamSocket : public ntsi::Channel
     /// socket send buffer according to the specified 'options'. Load into
     /// the specified 'context' the result of the operation. Return the
     /// error.
+    virtual ntsa::Error send(ntsa::SendContext*       context,
+                             const ntsa::ConstBuffer *data,
+                             bsl::size_t              size,
+                             const ntsa::SendOptions& options);
+
+    /// Enqueue the specified 'data' having the specified 'size' to the
+    /// socket send buffer according to the specified 'options'. Load into
+    /// the specified 'context' the result of the operation. Return the
+    /// error.
     ntsa::Error send(ntsa::SendContext*       context,
                      const void*              data,
                      bsl::size_t              size,
@@ -334,6 +343,10 @@ class StreamSocket : public ntsi::Channel
 
     /// Set the specified 'option' for this socket. Return the error.
     virtual ntsa::Error setOption(const ntsa::SocketOption& option);
+
+    /// Load into the specified 'blocking' flag the blocking mode of the
+    /// specified 'socket'. Return the error.
+    virtual ntsa::Error getBlocking(bool* blocking) const;
 
     /// Load into the specified 'option' the socket option of the specified
     /// 'type' set for this socket. Return the error.

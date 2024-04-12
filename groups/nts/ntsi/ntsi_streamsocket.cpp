@@ -72,6 +72,17 @@ ntsa::Error StreamSocket::send(ntsa::SendContext*       context,
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
+ntsa::Error StreamSocket::send(ntsa::SendContext*       context,
+                               const ntsa::ConstBuffer *data,
+                               bsl::size_t              size,
+                               const ntsa::SendOptions& options)
+{
+    ntsa::ConstBufferArray array;
+    array.append(data, size);
+
+    return this->send(context, ntsa::Data(array), options);
+}
+
 ntsa::Error StreamSocket::receive(ntsa::ReceiveContext*       context,
                                   bdlbb::Blob*                data,
                                   const ntsa::ReceiveOptions& options)
@@ -144,6 +155,12 @@ ntsa::Error StreamSocket::setOption(const ntsa::SocketOption& option)
 {
     NTSCFG_WARNING_UNUSED(option);
 
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error StreamSocket::getBlocking(bool* blocking) const
+{
+    *blocking = false;
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 

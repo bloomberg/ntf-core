@@ -19,9 +19,9 @@
 #include <bslmf_assert.h>
 #include <bsls_platform.h>
 #include <bsl_cstdint.h>
-#include <bsl_sstream.h>
-#include <bsl_iostream.h>
 #include <bsl_iomanip.h>
+#include <bsl_iostream.h>
+#include <bsl_sstream.h>
 
 // clang-format off
 #if defined(BSLS_PLATFORM_OS_LINUX)
@@ -35,16 +35,15 @@
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
 
-#define NTSU_TIMESTAMP_UTIL_LINUX_VERSION(major, minor, patch) \
-    static_cast<bsl::size_t>( \
-        KERNEL_VERSION( \
-            static_cast<bsl::size_t>(versionMajor), \
-            static_cast<bsl::size_t>(versionMinor), \
-            static_cast<bsl::size_t>(versionPatch)))
+#define NTSU_TIMESTAMP_UTIL_LINUX_VERSION(major, minor, patch)                \
+    static_cast<bsl::size_t>(                                                 \
+        KERNEL_VERSION(static_cast<bsl::size_t>(versionMajor),                \
+                       static_cast<bsl::size_t>(versionMinor),                \
+                       static_cast<bsl::size_t>(versionPatch)))
 
-#define NTSU_TIMESTAMP_UTIL_LINUX_VERSION_GE(version, major, minor, patch) \
-    (static_cast<bsl::size_t>(version)) >= \
-    (NTSU_TIMESTAMP_UTIL_LINUX_VERSION(major, minor, patch))
+#define NTSU_TIMESTAMP_UTIL_LINUX_VERSION_GE(version, major, minor, patch)    \
+    (static_cast<bsl::size_t>(version)) >=                                    \
+        (NTSU_TIMESTAMP_UTIL_LINUX_VERSION(major, minor, patch))
 
 #endif
 
@@ -90,7 +89,7 @@ static TimestampOtionSupport s_timestampOptionSupport[] = {
 
 #endif
 
-} // close unnamed namespace
+}  // close unnamed namespace
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
 
@@ -136,48 +135,46 @@ BSLMF_ASSERT(TimestampUtil::e_SOF_TIMESTAMPING_OPT_TSONLY ==
 #endif
 
 BSLMF_ASSERT(sizeof(TimestampUtil::Timespec) == sizeof(timespec));
-BSLMF_ASSERT(sizeof(TimestampUtil::Timespec::tv_sec) ==
-             sizeof(timespec::tv_sec));
-BSLMF_ASSERT(sizeof(TimestampUtil::Timespec::tv_nsec) ==
-             sizeof(timespec::tv_nsec));
+BSLMF_ASSERT(sizeof(TimestampUtil::Timespec().tv_sec) ==
+             sizeof(timespec().tv_sec));
+BSLMF_ASSERT(sizeof(TimestampUtil::Timespec().tv_nsec) ==
+             sizeof(timespec().tv_nsec));
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0)
 
 BSLMF_ASSERT(sizeof(TimestampUtil::ScmTimestamping) ==
              sizeof(scm_timestamping));
-BSLMF_ASSERT(sizeof(TimestampUtil::ScmTimestamping::softwareTs) ==
-             sizeof(scm_timestamping::ts[0]));
-BSLMF_ASSERT((sizeof(TimestampUtil::ScmTimestamping::hardwareTs) +
-              sizeof(TimestampUtil::ScmTimestamping::deprecated) +
-              sizeof(TimestampUtil::ScmTimestamping::hardwareTs)) ==
-             sizeof(scm_timestamping::ts[0]) * 3);
+BSLMF_ASSERT(sizeof(TimestampUtil::ScmTimestamping().softwareTs) ==
+             sizeof(scm_timestamping().ts[0]));
+BSLMF_ASSERT((sizeof(TimestampUtil::ScmTimestamping().hardwareTs) +
+              sizeof(TimestampUtil::ScmTimestamping().deprecated) +
+              sizeof(TimestampUtil::ScmTimestamping().hardwareTs)) ==
+             sizeof(scm_timestamping().ts[0]) * 3);
 
 #endif
 
 #endif
 
-bool TimestampUtil::supportsOption(int option, 
-                                   int versionMajor, 
-                                   int versionMinor, 
+bool TimestampUtil::supportsOption(int option,
+                                   int versionMajor,
+                                   int versionMinor,
                                    int versionPatch)
 {
 #if defined(BSLS_PLATFORM_OS_LINUX)
 
-    bsl::size_t version = 
-        NTSU_TIMESTAMP_UTIL_LINUX_VERSION(
-            versionMajor, 
-            versionMinor, 
-            versionPatch);
+    bsl::size_t version = NTSU_TIMESTAMP_UTIL_LINUX_VERSION(versionMajor,
+                                                            versionMinor,
+                                                            versionPatch);
 
-    const bsl::size_t count = 
+    const bsl::size_t count =
         sizeof(s_timestampOptionSupport) / sizeof(s_timestampOptionSupport[0]);
 
     for (bsl::size_t i = 0; i < count; ++i) {
         if ((option & s_timestampOptionSupport[i].option) != 0) {
             return NTSU_TIMESTAMP_UTIL_LINUX_VERSION_GE(
-                version, 
-                s_timestampOptionSupport[i].versionMajor, 
-                s_timestampOptionSupport[i].versionMinor, 
+                version,
+                s_timestampOptionSupport[i].versionMajor,
+                s_timestampOptionSupport[i].versionMinor,
                 s_timestampOptionSupport[i].versionPatch);
         }
     }
@@ -205,8 +202,10 @@ int TimestampUtil::removeUnsupported(int options)
     int versionPatch = 0;
     int build        = 0;
 
-    ntsscm::Version::systemVersion(
-        &versionMajor, &versionMinor, &versionPatch, &build);
+    ntsscm::Version::systemVersion(&versionMajor,
+                                   &versionMinor,
+                                   &versionPatch,
+                                   &build);
 
     NTSCFG_WARNING_UNUSED(build);
 
@@ -219,11 +218,11 @@ int TimestampUtil::removeUnsupported(int options)
         int flag = (1 << i);
 
         if ((options & flag) != 0) {
-            const bool supportsOption = ntsu::TimestampUtil::supportsOption(
-                flag,
-                versionMajor,
-                versionMinor,
-                versionPatch);
+            const bool supportsOption =
+                ntsu::TimestampUtil::supportsOption(flag,
+                                                    versionMajor,
+                                                    versionMinor,
+                                                    versionPatch);
 
             if (!supportsOption) {
                 result &= ~flag;
@@ -255,12 +254,12 @@ bsl::string TimestampUtil::describeDelay(const bsls::TimeInterval& duration)
             ss << duration.nanoseconds() / 1000 / 1000 << "ms";
         }
         else {
-            ss << bsl::fixed << bsl::setprecision(2) 
+            ss << bsl::fixed << bsl::setprecision(2)
                << duration.totalSecondsAsDouble() << "s";
         }
     }
     else {
-        ss << bsl::fixed << bsl::setprecision(2) 
+        ss << bsl::fixed << bsl::setprecision(2)
            << duration.totalSecondsAsDouble() << "s";
     }
 

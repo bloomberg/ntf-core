@@ -250,7 +250,7 @@ NTSCFG_TEST_CASE(4)
         ntsa::LocalName localName;
         NTSCFG_TEST_OK(localName.setAbstract());
         NTSCFG_TEST_ERROR(localName.setValue(ss.str()),
-                          ntsa::Error::Code::e_LIMIT);
+                          ntsa::Error::e_LIMIT);
     }
     {
         ntsa::LocalName localName;
@@ -262,7 +262,7 @@ NTSCFG_TEST_CASE(4)
         ntsa::LocalName localName;
         NTSCFG_TEST_OK(localName.setValue(ss.str()));
         NTSCFG_TEST_ERROR(localName.setAbstract(),
-                          ntsa::Error::Code::e_LIMIT);
+                          ntsa::Error::e_LIMIT);
     }
 #endif
 

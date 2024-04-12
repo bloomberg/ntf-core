@@ -101,6 +101,15 @@ class StreamSocket : public ntsi::StreamSocket
                      const ntsa::Data&        data,
                      const ntsa::SendOptions& options) BSLS_KEYWORD_OVERRIDE;
 
+    /// Enqueue the specified 'data' having the specified 'size' to the
+    /// socket send buffer according to the specified 'options'. Load into
+    /// the specified 'context' the result of the operation. Return the
+    /// error.
+    ntsa::Error send(ntsa::SendContext*       context,
+                     const ntsa::ConstBuffer *data,
+                     bsl::size_t              size,
+                     const ntsa::SendOptions& options) BSLS_KEYWORD_OVERRIDE;
+
     /// Dequeue from the socket receive buffer into the specified 'data'
     /// according to the specified 'options'. Load into the specified
     /// 'context' the result of the operation. Return the error.
@@ -159,6 +168,10 @@ class StreamSocket : public ntsi::StreamSocket
     /// Set the specified 'option' for this socket. Return the error.
     ntsa::Error setOption(const ntsa::SocketOption& option)
         BSLS_KEYWORD_OVERRIDE;
+
+    /// Load into the specified 'blocking' flag the blocking mode of the
+    /// specified 'socket'. Return the error.
+    ntsa::Error getBlocking(bool* blocking) const BSLS_KEYWORD_OVERRIDE;
 
     /// Load into the specified 'option' the socket option of the specified
     /// 'type' set for this socket. Return the error.

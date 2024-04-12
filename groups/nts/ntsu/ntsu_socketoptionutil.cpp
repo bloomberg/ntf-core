@@ -20,8 +20,8 @@ BSLS_IDENT_RCSID(ntsu_socketoptionutil_cpp, "$Id$ $CSID$")
 
 #include <ntscfg_platform.h>
 #include <ntsu_adapterutil.h>
-#include <ntsu_zerocopyutil.h>
 #include <ntsu_timestamputil.h>
+#include <ntsu_zerocopyutil.h>
 
 #include <bsls_assert.h>
 #include <bsls_log.h>
@@ -438,9 +438,8 @@ ntsa::Error SocketOptionUtil::setReuseAddress(ntsa::Handle socket,
     return ntsa::Error();
 }
 
-ntsa::Error SocketOptionUtil::setTimestampIncomingData(
-    ntsa::Handle socket,
-    bool         timestampFlag)
+ntsa::Error SocketOptionUtil::setTimestampIncomingData(ntsa::Handle socket,
+                                                       bool timestampFlag)
 {
 #if defined(BSLS_PLATFORM_OS_LINUX)
 
@@ -454,15 +453,15 @@ ntsa::Error SocketOptionUtil::setTimestampIncomingData(
     int       optionValue  = 0;
     socklen_t optionLength = static_cast<socklen_t>(sizeof(optionValue));
 
-    rc = getsockopt(socket, 
-                    SOL_SOCKET, 
-                    ntsu::TimestampUtil::e_SO_TIMESTAMPING, 
-                    &optionValue, 
+    rc = getsockopt(socket,
+                    SOL_SOCKET,
+                    ntsu::TimestampUtil::e_SO_TIMESTAMPING,
+                    &optionValue,
                     &optionLength);
     if (rc != 0) {
         return ntsa::Error(errno);
     }
-    
+
     if (optionLength != static_cast<socklen_t>(sizeof(optionValue))) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
@@ -474,8 +473,8 @@ ntsa::Error SocketOptionUtil::setTimestampIncomingData(
     }
     else {
         optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_GENERATION;
-        if ((optionValue & 
-             ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_GENERATION) == 0) 
+        if ((optionValue &
+             ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_GENERATION) == 0)
         {
             optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_REPORTING;
             optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_OPTIONS;
@@ -484,7 +483,7 @@ ntsa::Error SocketOptionUtil::setTimestampIncomingData(
 
 #if NTSU_SOCKETOPTIONUTIL_TIMESTAMPING_SAFE
 
-   optionValue = ntsu::TimestampUtil::removeUnsupported(optionValue);
+    optionValue = ntsu::TimestampUtil::removeUnsupported(optionValue);
 
 #endif
 
@@ -525,15 +524,15 @@ ntsa::Error SocketOptionUtil::setTimestampOutgoingData(ntsa::Handle socket,
     int       optionValue  = 0;
     socklen_t optionLength = static_cast<socklen_t>(sizeof(optionValue));
 
-    rc = getsockopt(socket, 
-                    SOL_SOCKET, 
-                    ntsu::TimestampUtil::e_SO_TIMESTAMPING, 
-                    &optionValue, 
+    rc = getsockopt(socket,
+                    SOL_SOCKET,
+                    ntsu::TimestampUtil::e_SO_TIMESTAMPING,
+                    &optionValue,
                     &optionLength);
     if (rc != 0) {
         return ntsa::Error(errno);
     }
-    
+
     if (optionLength != static_cast<socklen_t>(sizeof(optionValue))) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
@@ -545,8 +544,8 @@ ntsa::Error SocketOptionUtil::setTimestampOutgoingData(ntsa::Handle socket,
     }
     else {
         optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_GENERATION;
-        if ((optionValue & 
-             ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_GENERATION) == 0) 
+        if ((optionValue &
+             ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_GENERATION) == 0)
         {
             optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_REPORTING;
             optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_OPTIONS;
@@ -555,7 +554,7 @@ ntsa::Error SocketOptionUtil::setTimestampOutgoingData(ntsa::Handle socket,
 
 #if NTSU_SOCKETOPTIONUTIL_TIMESTAMPING_SAFE
 
-   optionValue = ntsu::TimestampUtil::removeUnsupported(optionValue);
+    optionValue = ntsu::TimestampUtil::removeUnsupported(optionValue);
 
 #endif
 
@@ -761,6 +760,20 @@ ntsa::Error SocketOptionUtil::setZeroCopy(ntsa::Handle socket, bool zeroCopy)
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 
 #endif
+}
+
+ntsa::Error SocketOptionUtil::getBlocking(ntsa::Handle socket, bool* blocking)
+{
+    *blocking = false;
+
+    const int flags = fcntl(socket, F_GETFL, 0);
+    if (flags < 0) {
+        return ntsa::Error(errno);
+    }
+
+    *blocking = ((flags & O_NONBLOCK) == 0);
+
+    return ntsa::Error();
 }
 
 ntsa::Error SocketOptionUtil::getKeepAlive(bool*        keepAlive,
@@ -1102,10 +1115,10 @@ ntsa::Error SocketOptionUtil::getTimestampIncomingData(bool* timestampFlag,
     int       optionValue  = 0;
     socklen_t optionLength = static_cast<socklen_t>(sizeof(optionValue));
 
-    rc = getsockopt(socket, 
-                    SOL_SOCKET, 
-                    ntsu::TimestampUtil::e_SO_TIMESTAMPING, 
-                    &optionValue, 
+    rc = getsockopt(socket,
+                    SOL_SOCKET,
+                    ntsu::TimestampUtil::e_SO_TIMESTAMPING,
+                    &optionValue,
                     &optionLength);
 
     if (rc != 0) {
@@ -1116,8 +1129,8 @@ ntsa::Error SocketOptionUtil::getTimestampIncomingData(bool* timestampFlag,
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    if ((optionValue & 
-         ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_GENERATION) != 0) 
+    if ((optionValue &
+         ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_GENERATION) != 0)
     {
         *timestampFlag = true;
     }
@@ -1149,10 +1162,10 @@ ntsa::Error SocketOptionUtil::getTimestampOutgoingData(bool* timestampFlag,
     int       optionValue  = 0;
     socklen_t optionLength = static_cast<socklen_t>(sizeof(optionValue));
 
-    rc = getsockopt(socket, 
-                    SOL_SOCKET, 
-                    ntsu::TimestampUtil::e_SO_TIMESTAMPING, 
-                    &optionValue, 
+    rc = getsockopt(socket,
+                    SOL_SOCKET,
+                    ntsu::TimestampUtil::e_SO_TIMESTAMPING,
+                    &optionValue,
                     &optionLength);
 
     if (rc != 0) {
@@ -1163,8 +1176,8 @@ ntsa::Error SocketOptionUtil::getTimestampOutgoingData(bool* timestampFlag,
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    if ((optionValue & 
-         ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_GENERATION) != 0) 
+    if ((optionValue &
+         ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_GENERATION) != 0)
     {
         *timestampFlag = true;
     }
@@ -1829,7 +1842,7 @@ bool SocketOptionUtil::supportsNotifications(ntsa::Handle socket)
     // Notifications are not supported on local sockets.
 
     bool isLocalFlag = false;
-    error = ntsu::SocketOptionUtil::isLocal(&isLocalFlag, socket);
+    error            = ntsu::SocketOptionUtil::isLocal(&isLocalFlag, socket);
     if (error) {
         return false;
     }
@@ -1845,7 +1858,7 @@ bool SocketOptionUtil::supportsNotifications(ntsa::Handle socket)
     int minor = 0;
     int patch = 0;
     int build = 0;
-    
+
     rc = ntsscm::Version::systemVersion(&major, &minor, &patch, &build);
     if (rc != 0) {
         return false;
@@ -1875,7 +1888,7 @@ bool SocketOptionUtil::supportsTimestamping(ntsa::Handle socket)
     // Notifications are not supported on local sockets.
 
     bool isLocalFlag = false;
-    error = ntsu::SocketOptionUtil::isLocal(&isLocalFlag, socket);
+    error            = ntsu::SocketOptionUtil::isLocal(&isLocalFlag, socket);
     if (error) {
         return false;
     }
@@ -1891,7 +1904,7 @@ bool SocketOptionUtil::supportsTimestamping(ntsa::Handle socket)
     int minor = 0;
     int patch = 0;
     int build = 0;
-    
+
     rc = ntsscm::Version::systemVersion(&major, &minor, &patch, &build);
     if (rc != 0) {
         return false;
@@ -1919,7 +1932,7 @@ bool SocketOptionUtil::supportsZeroCopy(ntsa::Handle socket)
     int         rc;
 
     bool isLocalFlag = false;
-    error = ntsu::SocketOptionUtil::isLocal(&isLocalFlag, socket);
+    error            = ntsu::SocketOptionUtil::isLocal(&isLocalFlag, socket);
     if (error) {
         return false;
     }
@@ -1932,7 +1945,7 @@ bool SocketOptionUtil::supportsZeroCopy(ntsa::Handle socket)
     int minor = 0;
     int patch = 0;
     int build = 0;
-    
+
     rc = ntsscm::Version::systemVersion(&major, &minor, &patch, &build);
     if (rc != 0) {
         return false;
@@ -2048,9 +2061,8 @@ ntsa::Error SocketOptionUtil::setReuseAddress(ntsa::Handle socket,
     return ntsa::Error();
 }
 
-ntsa::Error SocketOptionUtil::setTimestampIncomingData(
-    ntsa::Handle socket,
-    bool         timestampFlag)
+ntsa::Error SocketOptionUtil::setTimestampIncomingData(ntsa::Handle socket,
+                                                       bool timestampFlag)
 {
     NTSCFG_WARNING_UNUSED(socket);
     NTSCFG_WARNING_UNUSED(timestampFlag);
@@ -2058,9 +2070,8 @@ ntsa::Error SocketOptionUtil::setTimestampIncomingData(
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
-ntsa::Error SocketOptionUtil::setTimestampOutgoingData(
-    ntsa::Handle socket,
-    bool         timestampFlag)
+ntsa::Error SocketOptionUtil::setTimestampOutgoingData(ntsa::Handle socket,
+                                                       bool timestampFlag)
 {
     NTSCFG_WARNING_UNUSED(socket);
     NTSCFG_WARNING_UNUSED(timestampFlag);
@@ -2222,6 +2233,14 @@ ntsa::Error SocketOptionUtil::setInlineOutOfBandData(ntsa::Handle socket,
     }
 
     return ntsa::Error();
+}
+
+ntsa::Error SocketOptionUtil::getBlocking(ntsa::Handle socket, bool* blocking)
+{
+    NTSCFG_WARNING_UNUSED(socket);
+
+    *blocking = false;
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error SocketOptionUtil::getKeepAlive(bool*        keepAlive,
