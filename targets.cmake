@@ -724,6 +724,7 @@ if (${NTF_BUILD_WITH_NTC})
     ntf_component(NAME ntcd_resolver)
     ntf_component(NAME ntcd_streamsocket)
     ntf_component(NAME ntcd_simulation)
+    ntf_component(NAME ntcd_timer)
 
     ntf_package_end(NAME ntcd)
 

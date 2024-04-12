@@ -24,6 +24,7 @@
 #include <ntcd_reactor.h>
 #include <ntcd_resolver.h>
 #include <ntcd_simulation.h>
+#include <ntcd_timer.h>
 #include <ntci_log.h>
 #include <ntcm_monitorableutil.h>
 #include <ntcs_datapool.h>
@@ -52,8 +53,6 @@
 #include <bslmt_threadgroup.h>
 #include <bslmt_threadutil.h>
 #include <bsl_unordered_map.h>
-
-//#include <pdh.h>
 
 using namespace BloombergLP;
 
@@ -1375,185 +1374,6 @@ void variation(const test::Parameters& parameters)
                                          NTCCFG_BIND_PLACEHOLDER_3));
 }
 
-namespace mock {
-
-NTF_MOCK_CLASS(ReactorMock, ntci::Reactor)
-
-NTF_MOCK_METHOD(bsl::shared_ptr<ntci::DatagramSocket>,
-                createDatagramSocket,
-                const ntca::DatagramSocketOptions&,
-                bslma::Allocator*)
-NTF_MOCK_METHOD(bsl::shared_ptr<ntsa::Data>, createIncomingData)
-NTF_MOCK_METHOD(bsl::shared_ptr<ntsa::Data>, createOutgoingData)
-NTF_MOCK_METHOD(bsl::shared_ptr<bdlbb::Blob>, createIncomingBlob)
-NTF_MOCK_METHOD(bsl::shared_ptr<bdlbb::Blob>, createOutgoingBlob)
-NTF_MOCK_METHOD(void, createIncomingBlobBuffer, bdlbb::BlobBuffer*)
-NTF_MOCK_METHOD(void, createOutgoingBlobBuffer, bdlbb::BlobBuffer*)
-
-NTF_MOCK_METHOD_CONST(const bsl::shared_ptr<bdlbb::BlobBufferFactory>&,
-                      incomingBlobBufferFactory)
-NTF_MOCK_METHOD_CONST(const bsl::shared_ptr<bdlbb::BlobBufferFactory>&,
-                      outgoingBlobBufferFactory)
-
-NTF_MOCK_METHOD(ntci::Waiter, registerWaiter, const ntca::WaiterOptions&)
-NTF_MOCK_METHOD(void, deregisterWaiter, ntci::Waiter)
-NTF_MOCK_METHOD(void, run, ntci::Waiter)
-NTF_MOCK_METHOD(void, poll, ntci::Waiter)
-NTF_MOCK_METHOD(void, interruptOne)
-NTF_MOCK_METHOD(void, interruptAll)
-NTF_MOCK_METHOD(void, stop)
-NTF_MOCK_METHOD(void, restart)
-NTF_MOCK_METHOD(void, execute, const Functor&)
-NTF_MOCK_METHOD(void, moveAndExecute, FunctorSequence*, const Functor&)
-NTF_MOCK_METHOD(bsl::shared_ptr<ntci::ListenerSocket>,
-                createListenerSocket,
-                const ntca::ListenerSocketOptions&,
-                bslma::Allocator*)
-
-NTF_MOCK_METHOD(ntsa::Error,
-                attachSocket,
-                const bsl::shared_ptr<ntci::ReactorSocket>&)
-NTF_MOCK_METHOD(ntsa::Error, attachSocket, ntsa::Handle)
-NTF_MOCK_METHOD(ntsa::Error,
-                showReadable,
-                const bsl::shared_ptr<ntci::ReactorSocket>&,
-                const ntca::ReactorEventOptions&)
-NTF_MOCK_METHOD(ntsa::Error,
-                showReadable,
-                ntsa::Handle,
-                const ntca::ReactorEventOptions&,
-                const ntci::ReactorEventCallback&)
-
-NTF_MOCK_METHOD(ntsa::Error,
-                showWritable,
-                const bsl::shared_ptr<ntci::ReactorSocket>&,
-                const ntca::ReactorEventOptions&)
-NTF_MOCK_METHOD(ntsa::Error,
-                showWritable,
-                ntsa::Handle,
-                const ntca::ReactorEventOptions&,
-                const ntci::ReactorEventCallback&)
-
-NTF_MOCK_METHOD(ntsa::Error,
-                showError,
-                const bsl::shared_ptr<ntci::ReactorSocket>&,
-                const ntca::ReactorEventOptions&)
-NTF_MOCK_METHOD(ntsa::Error,
-                showError,
-                ntsa::Handle,
-                const ntca::ReactorEventOptions&,
-                const ntci::ReactorEventCallback&)
-
-NTF_MOCK_METHOD(ntsa::Error,
-                hideReadable,
-                const bsl::shared_ptr<ntci::ReactorSocket>&)
-NTF_MOCK_METHOD(ntsa::Error, hideReadable, ntsa::Handle)
-NTF_MOCK_METHOD(ntsa::Error,
-                hideWritable,
-                const bsl::shared_ptr<ntci::ReactorSocket>&)
-NTF_MOCK_METHOD(ntsa::Error, hideWritable, ntsa::Handle)
-NTF_MOCK_METHOD(ntsa::Error,
-                hideError,
-                const bsl::shared_ptr<ntci::ReactorSocket>&)
-NTF_MOCK_METHOD(ntsa::Error, hideError, ntsa::Handle)
-NTF_MOCK_METHOD(ntsa::Error,
-                detachSocket,
-                const bsl::shared_ptr<ntci::ReactorSocket>&)
-NTF_MOCK_METHOD(ntsa::Error, detachSocket, ntsa::Handle)
-
-NTF_MOCK_METHOD(ntsa::Error,
-                detachSocket,
-                const bsl::shared_ptr<ntci::ReactorSocket>&,
-                const ntci::SocketDetachedCallback&)
-NTF_MOCK_METHOD(ntsa::Error,
-                detachSocket,
-                ntsa::Handle,
-                const ntci::SocketDetachedCallback&)
-
-NTF_MOCK_METHOD(ntsa::Error, closeAll)
-NTF_MOCK_METHOD(void, incrementLoad, const ntca::LoadBalancingOptions&)
-NTF_MOCK_METHOD(void, decrementLoad, const ntca::LoadBalancingOptions&)
-
-NTF_MOCK_METHOD(void, drainFunctions)
-NTF_MOCK_METHOD(void, clearFunctions)
-NTF_MOCK_METHOD(void, clearTimers)
-NTF_MOCK_METHOD(void, clearSockets)
-NTF_MOCK_METHOD(void, clear)
-NTF_MOCK_METHOD_CONST(size_t, numSockets)
-NTF_MOCK_METHOD_CONST(size_t, maxSockets)
-NTF_MOCK_METHOD_CONST(size_t, numTimers)
-NTF_MOCK_METHOD_CONST(size_t, maxTimers)
-NTF_MOCK_METHOD_CONST(bool, autoAttach)
-NTF_MOCK_METHOD_CONST(bool, autoDetach)
-NTF_MOCK_METHOD_CONST(bool, oneShot)
-NTF_MOCK_METHOD_CONST(ntca::ReactorEventTrigger::Value, trigger)
-NTF_MOCK_METHOD_CONST(size_t, load)
-NTF_MOCK_METHOD_CONST(bslmt::ThreadUtil::Handle, threadHandle)
-NTF_MOCK_METHOD_CONST(size_t, threadIndex)
-NTF_MOCK_METHOD_CONST(bool, empty)
-NTF_MOCK_METHOD_CONST(const bsl::shared_ptr<ntci::DataPool>&, dataPool)
-
-NTF_MOCK_METHOD_CONST(bool, supportsOneShot, bool)
-NTF_MOCK_METHOD_CONST(bool, supportsTrigger, ntca::ReactorEventTrigger::Value)
-
-NTF_MOCK_METHOD(bsl::shared_ptr<ntci::Reactor>,
-                acquireReactor,
-                const ntca::LoadBalancingOptions&)
-NTF_MOCK_METHOD(void,
-                releaseReactor,
-                const bsl::shared_ptr<ntci::Reactor>&,
-                const ntca::LoadBalancingOptions&)
-NTF_MOCK_METHOD(bool, acquireHandleReservation)
-NTF_MOCK_METHOD(void, releaseHandleReservation)
-
-NTF_MOCK_METHOD_CONST(size_t, numReactors)
-NTF_MOCK_METHOD_CONST(size_t, numThreads)
-NTF_MOCK_METHOD_CONST(size_t, minThreads)
-NTF_MOCK_METHOD_CONST(size_t, maxThreads)
-
-NTF_MOCK_METHOD(bsl::shared_ptr<ntci::Strand>, createStrand, bslma::Allocator*)
-
-NTF_MOCK_METHOD(bsl::shared_ptr<ntci::StreamSocket>,
-                createStreamSocket,
-                const ntca::StreamSocketOptions&,
-                bslma::Allocator*)
-
-NTF_MOCK_METHOD(bsl::shared_ptr<ntci::Timer>,
-                createTimer,
-                const ntca::TimerOptions&,
-                const bsl::shared_ptr<ntci::TimerSession>&,
-                bslma::Allocator*)
-NTF_MOCK_METHOD(bsl::shared_ptr<ntci::Timer>,
-                createTimer,
-                const ntca::TimerOptions&,
-                const ntci::TimerCallback&,
-                bslma::Allocator*)
-NTF_MOCK_METHOD_CONST(const bsl::shared_ptr<ntci::Strand>&, strand)
-NTF_MOCK_METHOD_CONST(bsls::TimeInterval, currentTime)
-NTF_MOCK_CLASS_END;
-
-NTF_MOCK_CLASS(TimerMock, ntci::Timer)
-NTF_MOCK_METHOD(ntsa::Error,
-                schedule,
-                const bsls::TimeInterval&,
-                const bsls::TimeInterval&)
-NTF_MOCK_METHOD(ntsa::Error, cancel)
-NTF_MOCK_METHOD(ntsa::Error, close)
-NTF_MOCK_METHOD(void,
-                arrive,
-                const bsl::shared_ptr<ntci::Timer>&,
-                const bsls::TimeInterval&,
-                const bsls::TimeInterval&)
-NTF_MOCK_METHOD_CONST(void*, handle)
-NTF_MOCK_METHOD_CONST(int, id)
-NTF_MOCK_METHOD_CONST(bool, oneShot)
-NTF_MOCK_METHOD_CONST(bslmt::ThreadUtil::Handle, threadHandle)
-NTF_MOCK_METHOD_CONST(size_t, threadIndex)
-NTF_MOCK_METHOD_CONST(const bsl::shared_ptr<ntci::Strand>&, strand)
-NTF_MOCK_METHOD_CONST(bsls::TimeInterval, currentTime)
-NTF_MOCK_CLASS_END;
-}  // close namespace mock
-
 struct Fixture {
      Fixture(bslma::Allocator* allocator);
     ~Fixture();
@@ -1570,11 +1390,11 @@ struct Fixture {
     bsl::shared_ptr<bdlbb::BlobBufferFactory> d_bufferFactory;
     bsl::shared_ptr<ntcd::DataPoolMock>       d_dataPoolMock;
     bsl::shared_ptr<ntci::DataPool>           d_dataPool;
-    bsl::shared_ptr<mock::ReactorMock>        d_reactorMock;
+    bsl::shared_ptr<ntcd::ReactorMock>        d_reactorMock;
     bsl::shared_ptr<ntcd::ResolverMock>       d_resolverMock;
     bsl::shared_ptr<ntcd::StreamSocketMock>   d_streamSocketMock;
-    bsl::shared_ptr<mock::TimerMock>          d_connectRetryTimerMock;
-    bsl::shared_ptr<mock::TimerMock>          d_connectDeadlineTimerMock;
+    bsl::shared_ptr<ntcd::TimerMock>          d_connectRetryTimerMock;
+    bsl::shared_ptr<ntcd::TimerMock>          d_connectDeadlineTimerMock;
 
     const bsl::shared_ptr<bdlbb::Blob>       d_nullBlob;
     const bsl::shared_ptr<ntci::Strand>      d_nullStrand;

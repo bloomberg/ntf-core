@@ -9,3 +9,4 @@ ntcd_reactor
 ntcd_resolver
 ntcd_streamsocket
 ntcd_simulation
+ntcd_timer
