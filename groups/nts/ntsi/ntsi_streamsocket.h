@@ -341,12 +341,12 @@ class StreamSocket : public ntsi::Channel
     /// according to the specified 'blocking' flag. Return the error.
     virtual ntsa::Error setBlocking(bool blocking);
 
-    /// If the socket is in a blocking mode then load true in the specified
-    /// 'blocking', otherwise load false. Return the error.
-    virtual ntsa::Error isBlocking(bool* blocking) const;
-
     /// Set the specified 'option' for this socket. Return the error.
     virtual ntsa::Error setOption(const ntsa::SocketOption& option);
+
+    /// Load into the specified 'blocking' flag the blocking mode of the
+    /// specified 'socket'. Return the error.
+    virtual ntsa::Error getBlocking(bool* blocking) const;
 
     /// Load into the specified 'option' the socket option of the specified
     /// 'type' set for this socket. Return the error.

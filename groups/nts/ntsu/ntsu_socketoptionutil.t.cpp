@@ -1449,7 +1449,7 @@ NTSCFG_TEST_CASE(5)
         error = ntsu::SocketUtil::create(&socket, transport);
         NTSCFG_TEST_OK(error);
 
-        const bool isSupported = 
+        const bool isSupported =
             ntsu::SocketOptionUtil::supportsTimestamping(socket);
 
         if (isSupported) {
@@ -1485,8 +1485,8 @@ NTSCFG_TEST_CASE(5)
                     error = ntsu::SocketUtil::bind(
                         ntsa::Endpoint(
                             ntsa::IpEndpoint(
-                                ntsa::Ipv4Address::loopback(), 0)), 
-                        true, 
+                                ntsa::Ipv4Address::loopback(), 0)),
+                        true,
                         listener);
                     NTSCFG_TEST_OK(error);
                 }
@@ -1494,8 +1494,8 @@ NTSCFG_TEST_CASE(5)
                     error = ntsu::SocketUtil::bind(
                         ntsa::Endpoint(
                             ntsa::IpEndpoint(
-                                ntsa::Ipv6Address::loopback(), 0)), 
-                        true, 
+                                ntsa::Ipv6Address::loopback(), 0)),
+                        true,
                         listener);
                     NTSCFG_TEST_OK(error);
                 }
@@ -1756,7 +1756,7 @@ NTSCFG_TEST_CASE(6)
         error = ntsu::SocketUtil::create(&socket, transport);
         NTSCFG_TEST_OK(error);
 
-        const bool isSupported = 
+        const bool isSupported =
             ntsu::SocketOptionUtil::supportsZeroCopy(socket);
 
         if (isSupported) {
@@ -1775,7 +1775,7 @@ NTSCFG_TEST_CASE(6)
 
             error = ntsu::SocketOptionUtil::setZeroCopy(socket, true);
             NTSCFG_TEST_OK(error);
-            
+
             error = ntsu::SocketOptionUtil::getZeroCopy(&zeroCopy, socket);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_TRUE(zeroCopy);
@@ -1873,7 +1873,7 @@ NTSCFG_TEST_CASE(7)
 
 NTSCFG_TEST_CASE(8)
 {
-    // Concern: test isLocal
+    // Concern: test setBlocking/getBlocking
 
     ntsa::Error error;
 
@@ -1916,17 +1916,20 @@ NTSCFG_TEST_CASE(8)
 
         ntsa::Handle socket;
         {
-            const ntsa::Error error = ntsu::SocketUtil::create(&socket, transport);
+            const ntsa::Error error =
+                ntsu::SocketUtil::create(&socket, transport);
             NTSCFG_TEST_OK(error);
         }
 
         {
-            const ntsa::Error error = ntsu::SocketOptionUtil::setBlocking(socket, false);
+            const ntsa::Error error =
+                ntsu::SocketOptionUtil::setBlocking(socket, false);
             NTSCFG_TEST_OK(error);
         }
         {
             bool blocking = true;
-            const ntsa::Error error = ntsu::SocketOptionUtil::isBlocking(socket, &blocking);
+            const ntsa::Error error =
+                ntsu::SocketOptionUtil::getBlocking(socket, &blocking);
 #if !defined(BSLS_PLATFORM_OS_WINDOWS)
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_FALSE(blocking);
@@ -1935,12 +1938,14 @@ NTSCFG_TEST_CASE(8)
 #endif
         }
         {
-            const ntsa::Error error = ntsu::SocketOptionUtil::setBlocking(socket, true);
+            const ntsa::Error error =
+                ntsu::SocketOptionUtil::setBlocking(socket, true);
             NTSCFG_TEST_OK(error);
         }
         {
             bool blocking = false;
-            const ntsa::Error error = ntsu::SocketOptionUtil::isBlocking(socket, &blocking);
+            const ntsa::Error error =
+                ntsu::SocketOptionUtil::getBlocking(socket, &blocking);
 #if !defined(BSLS_PLATFORM_OS_WINDOWS)
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_TRUE(blocking);
@@ -1949,12 +1954,14 @@ NTSCFG_TEST_CASE(8)
 #endif
         }
         {
-            const ntsa::Error error = ntsu::SocketOptionUtil::setBlocking(socket, false);
+            const ntsa::Error error =
+                ntsu::SocketOptionUtil::setBlocking(socket, false);
             NTSCFG_TEST_OK(error);
         }
         {
             bool blocking = true;
-            const ntsa::Error error = ntsu::SocketOptionUtil::isBlocking(socket, &blocking);
+            const ntsa::Error error =
+                ntsu::SocketOptionUtil::getBlocking(socket, &blocking);
 #if !defined(BSLS_PLATFORM_OS_WINDOWS)
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_FALSE(blocking);
@@ -1963,8 +1970,6 @@ NTSCFG_TEST_CASE(8)
 #endif
         }
     }
-
-
 }
 
 NTSCFG_TEST_DRIVER

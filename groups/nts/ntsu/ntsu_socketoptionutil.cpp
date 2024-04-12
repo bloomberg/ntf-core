@@ -348,18 +348,6 @@ ntsa::Error SocketOptionUtil::setBlocking(ntsa::Handle socket, bool blocking)
     return ntsa::Error();
 }
 
-ntsa::Error SocketOptionUtil::isBlocking(ntsa::Handle socket, bool* blocking)
-{
-    const int flags = fcntl(socket, F_GETFL, 0);
-    if (flags < 0) {
-        return ntsa::Error(errno);
-    }
-
-    *blocking = ((flags & O_NONBLOCK) == 0);
-
-    return ntsa::Error();
-}
-
 ntsa::Error SocketOptionUtil::setKeepAlive(ntsa::Handle socket, bool keepAlive)
 {
     int optionValue = static_cast<int>(keepAlive);
@@ -772,6 +760,20 @@ ntsa::Error SocketOptionUtil::setZeroCopy(ntsa::Handle socket, bool zeroCopy)
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 
 #endif
+}
+
+ntsa::Error SocketOptionUtil::getBlocking(ntsa::Handle socket, bool* blocking)
+{
+    *blocking = false;
+
+    const int flags = fcntl(socket, F_GETFL, 0);
+    if (flags < 0) {
+        return ntsa::Error(errno);
+    }
+
+    *blocking = ((flags & O_NONBLOCK) == 0);
+
+    return ntsa::Error();
 }
 
 ntsa::Error SocketOptionUtil::getKeepAlive(bool*        keepAlive,
@@ -1990,13 +1992,6 @@ ntsa::Error SocketOptionUtil::setBlocking(ntsa::Handle socket, bool blocking)
     return ntsa::Error();
 }
 
-ntsa::Error SocketOptionUtil::isBlocking(ntsa::Handle socket, bool* blocking)
-{
-    NTSCFG_WARNING_UNUSED(socket);
-    NTSCFG_WARNING_UNUSED(blocking);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
-}
-
 ntsa::Error SocketOptionUtil::setKeepAlive(ntsa::Handle socket, bool keepAlive)
 {
     BOOL optionValue = static_cast<BOOL>(keepAlive);
@@ -2238,6 +2233,14 @@ ntsa::Error SocketOptionUtil::setInlineOutOfBandData(ntsa::Handle socket,
     }
 
     return ntsa::Error();
+}
+
+ntsa::Error SocketOptionUtil::getBlocking(ntsa::Handle socket, bool* blocking)
+{
+    NTSCFG_WARNING_UNUSED(socket);
+
+    *blocking = false;
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error SocketOptionUtil::getKeepAlive(bool*        keepAlive,
