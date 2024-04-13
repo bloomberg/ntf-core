@@ -70,6 +70,9 @@ struct AbstractIntegerSign {
         e_POSITIVE = 1
     };
 
+    /// Return the specified 'sign', but flipped. 
+    static Value flip(Value sign);
+
     /// Return the multiplier for the specified 'sign'.
     static int multiplier(Value sign);
 
@@ -148,10 +151,11 @@ bsl::ostream& operator<<(bsl::ostream& stream, AbstractIntegerBase::Value rhs);
 /// @ingroup module_ntci_encryption
 class AbstractIntegerRepresentation
 {
+public:
     /// Define a type alias for unsigned integer type that represents a block.
     /// Also called a place or a limb in other implementations. This type must
     /// be sufficient to store the desired radix.
-    typedef bsl::uint16_t Block;
+    typedef bsl::uint8_t Block;
 
     /// Define a type alias for a vector of blocks.
     typedef bsl::vector<Block> BlockVector;
@@ -159,36 +163,31 @@ class AbstractIntegerRepresentation
     /// Define a type alias for the allocator used by a vector of blocks.
     typedef bsl::allocator<Block> BlockVectorAllocator;
 
+    enum {
+        k_BITS_PER_BLOCK = sizeof(Block) * 8
+    };
+
+  private:
     AbstractIntegerBase::Value d_base;
     BlockVector                d_data;
     bslma::Allocator*          d_allocator_p;
 
   private:
-    /// Shift the specified 'count' number of blocks in the specified 'result'
-    /// left.
-    static void privateBlockShiftLeft(AbstractIntegerRepresentation* result,
-                                      bsl::size_t              count);
+    /// Count the number of leading bits that are zero in the specified
+    /// 'value'.
+    static bsl::size_t countLeadingZeroes(bsl::uint8_t value);
 
-    static void privateBlockShiftRight(AbstractIntegerRepresentation* result,
-                                       bsl::size_t              count);
+    /// Count the number of leading bits that are zero in the specified
+    /// 'value'.
+    static bsl::size_t countLeadingZeroes(bsl::uint16_t value);
 
-    /// Copy the specified 'count' number of most-significant blocks from the
-    /// specified 'value' to the specified 'result'. Note that the original
-    /// value of 'result' is destroyed.
-    static void privateBlockCopyPrefix(AbstractIntegerRepresentation*       result,
-                                       const AbstractIntegerRepresentation& value,
-                                       bsl::size_t                    count);
+    /// Count the number of leading bits that are zero in the specified
+    /// 'value'.
+    static bsl::size_t countLeadingZeroes(bsl::uint32_t value);
 
-    /// Copy the specified 'count' number of least-significant blocks from the
-    /// specified 'value' to the specified 'result'.
-    static void privateBlockCopySuffix(AbstractIntegerRepresentation*       result,
-                                       const AbstractIntegerRepresentation& value,
-                                       bsl::size_t                    count);
-
-    static void privateBlockCopyRange(AbstractIntegerRepresentation*       result,
-                                      const AbstractIntegerRepresentation& value,
-                                      bsl::size_t                    offset,
-                                      bsl::size_t                    count);
+    /// Count the number of leading bits that are zero in the specified
+    /// 'value'.
+    static bsl::size_t countLeadingZeroes(bsl::uint64_t value);
 
   public:
     /// Create a new abstract integer representation having the default value
@@ -247,16 +246,16 @@ class AbstractIntegerRepresentation
     /// Set the block at the specified 'index' to the specified 'value'.
     /// The behavior is undefined unless 'index' is valid at 'value' is a
     /// valid value in the current base of this object.
-    void set(bsl::size_t index, bsl::uint64_t value);
+    void set(bsl::size_t index, Block value);
 
     /// Push the specified 'value' as the new most-significant block.
-    void push(bsl::uint64_t value);
+    void push(Block value);
 
     /// Pop the most-significant block.
     void pop();
 
     /// Return the block at the specified 'index'.
-    bsl::uint64_t get(bsl::size_t index) const;
+    Block get(bsl::size_t index) const;
 
     /// Return the base.
     AbstractIntegerBase::Value base() const;
@@ -498,60 +497,60 @@ class AbstractIntegerQuantity
     friend class AbstractIntegerQuantityUtil;
 
   public:
-    /// Create a new encryption number having the default value. Optionally
+    /// Create a new abstract integer having the default value. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
     explicit AbstractIntegerQuantity(bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new encryption number having the specified 'value'. Optionally
+    /// Create a new abstract integer having the specified 'value'. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
     explicit AbstractIntegerQuantity(short             value,
                                      bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new encryption number having the specified 'value'. Optionally
+    /// Create a new abstract integer having the specified 'value'. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
     explicit AbstractIntegerQuantity(unsigned short    value,
                                      bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new encryption number having the specified 'value'. Optionally
+    /// Create a new abstract integer having the specified 'value'. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
     explicit AbstractIntegerQuantity(int               value,
                                      bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new encryption number having the specified 'value'. Optionally
+    /// Create a new abstract integer having the specified 'value'. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
     explicit AbstractIntegerQuantity(unsigned int      value,
                                      bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new encryption number having the specified 'value'. Optionally
+    /// Create a new abstract integer having the specified 'value'. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
     explicit AbstractIntegerQuantity(long              value,
                                      bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new encryption number having the specified 'value'. Optionally
+    /// Create a new abstract integer having the specified 'value'. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
     explicit AbstractIntegerQuantity(unsigned long     value,
                                      bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new encryption number having the specified 'value'. Optionally
+    /// Create a new abstract integer having the specified 'value'. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
     explicit AbstractIntegerQuantity(long long         value,
                                      bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new encryption number having the specified 'value'. Optionally
+    /// Create a new abstract integer having the specified 'value'. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
     explicit AbstractIntegerQuantity(unsigned long long value,
                                      bslma::Allocator*  basicAllocator = 0);
 
-    /// Create a new encryption number having the same value as the specified
+    /// Create a new abstract integer having the same value as the specified
     /// 'original' object. Optionally specify a 'basicAllocator' used to supply
     /// memory. If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
@@ -607,7 +606,7 @@ class AbstractIntegerQuantity
     /// Swap the value of the specified 'other' object with the value of this
     /// object.
     void swap(AbstractIntegerQuantity& other);
-    
+
     // Parse the specified 'text' containing a sequence of characters in
     // either base-2, base-8, base-10, or base-16, and load the result into
     // this object and load the sign into the specified 'sign'. Return
@@ -1180,152 +1179,65 @@ class AbstractIntegerQuantityUtil
 /// @ingroup module_ntci_encryption
 class AbstractInteger
 {
-    enum Sign { e_NEGATIVE = -1, e_ZERO = 0, e_POSITIVE = 1 };
+    /// Grant visibility to the internals of this class to its utility.
+    friend class AbstractIntegerQuantityUtil;
 
-    typedef bsl::uint16_t         Block;
-    typedef bsl::vector<Block>    BlockVector;
-    typedef bsl::allocator<Block> BlockVectorAllocator;
-
-    enum { k_BITS_PER_BLOCK = sizeof(Block) * 8, k_N = k_BITS_PER_BLOCK };
-
-    Sign              d_sign;
-    BlockVector       d_data;
-    bslma::Allocator* d_allocator_p;
-
-  private:
-    /// Load into the specified 'result' the specified 'other' block storage.
-    static void privateAssign(BlockVector* result, const BlockVector& other);
-
-    /// Load into the specified 'result' the specified 'value'.
-    static void privateAssign(BlockVector* result, bsl::size_t value);
-
-    /// Load into the specified 'result' the specified 'other' sign.
-    static void privateKeep(Sign* result, Sign other);
-
-    /// Load into the specified 'result' the specified 'other' sign, but
-    /// flipped.
-    static void privateFlip(Sign* result, Sign other);
-
-    /// Load into the specified 'result' the addition of the specified 'rhs' to
-    /// the specified 'lhs'.
-    static void privateIncrement(BlockVector* sum, const BlockVector& addend);
-
-    /// Load into the specified 'result' the subtraction of the specified 'rhs'
-    /// from the specified 'lhs'. The behavior is also undefined if 'rhs' is
-    /// greater than 'lhs'.
-    static void privateDecrement(BlockVector*       difference,
-                                 const BlockVector& minuend);
-
-    /// Load into the specified 'result' the addition of the specified 'rhs' to
-    /// the specified 'lhs'.
-    static void privateAdd(BlockVector*       sum,
-                           const BlockVector& addend1,
-                           const BlockVector& addend2);
-
-    /// Load into the specified 'result' the subtraction of the specified 'rhs'
-    /// from the specified 'lhs'. The behavior is also undefined if 'rhs' is
-    /// greater than 'lhs'.
-    static void privateSubtract(BlockVector*       difference,
-                                const BlockVector& minuend,
-                                const BlockVector& subtrahend);
-
-    /// Load into the specified 'result' the multiplication of the specified
-    /// 'rhs' by the specified 'lhs'.
-    static void privateMultiply(BlockVector*       product,
-                                const BlockVector& multiplicand,
-                                const BlockVector& multiplier);
-
-    static void privateDivide(BlockVector*       quotient,
-                              BlockVector*       remainder,
-                              const BlockVector& dividend,
-                              const BlockVector& divisor);
-
-    static void privateMultiplyByAddition(BlockVector*       product,
-                                          const BlockVector& multiplicand,
-                                          const BlockVector& multiplier);
-
-    static void privateMultiplyByAddition(BlockVector*       product,
-                                          const BlockVector& multiplicand,
-                                          bsl::size_t        multiplier);
-
-    static void privateDivideBySubtraction(BlockVector*       quotient,
-                                           BlockVector*       remainder,
-                                           const BlockVector& dividend,
-                                           const BlockVector& divisor);
-
-    static void privateDivideBySubtraction(BlockVector*       quotient,
-                                           BlockVector*       remainder,
-                                           const BlockVector& dividend,
-                                           bsl::size_t        divisor);
-
-    /// Compare the value of the specified 'lhs' with the value of the
-    /// specified 'rhs'. Return -1 if 'lhs' is less than 'rhs', 0 if 'lhs' is
-    /// equal to 'rhs', and 0 if 'lhs' is equal to 'rhs'.
-    static int privateCompare(const BlockVector& lhs, const BlockVector& rhs);
-
-    /// Trim "leading" zeroes from 'result' (but note that 'result' is stored
-    /// least-significant first.)
-    static void privateTrim(BlockVector* result);
-
-    // Return true if the specified 'value' is zero, otherwise return false.
-    static bool privateIsZero(const BlockVector& value);
-
-    // Return true if the specified 'value' is one, otherwise return false.
-    static bool privateIsOne(const BlockVector& value);
+    AbstractIntegerSign::Value d_sign;
+    AbstractIntegerQuantity    d_magnitude;
 
   public:
-    /// Create a new encryption number having the default value. Optionally
+    /// Create a new abstract integer having the default value. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
     explicit AbstractInteger(bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new encryption number having the specified 'value'. Optionally
+    /// Create a new abstract integer having the specified 'value'. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
     explicit AbstractInteger(short             value,
                              bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new encryption number having the specified 'value'. Optionally
+    /// Create a new abstract integer having the specified 'value'. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
     explicit AbstractInteger(unsigned short    value,
                              bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new encryption number having the specified 'value'. Optionally
+    /// Create a new abstract integer having the specified 'value'. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
     explicit AbstractInteger(int value, bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new encryption number having the specified 'value'. Optionally
+    /// Create a new abstract integer having the specified 'value'. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
     explicit AbstractInteger(unsigned int      value,
                              bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new encryption number having the specified 'value'. Optionally
+    /// Create a new abstract integer having the specified 'value'. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
     explicit AbstractInteger(long value, bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new encryption number having the specified 'value'. Optionally
+    /// Create a new abstract integer having the specified 'value'. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
     explicit AbstractInteger(unsigned long     value,
                              bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new encryption number having the specified 'value'. Optionally
+    /// Create a new abstract integer having the specified 'value'. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
     explicit AbstractInteger(long long         value,
                              bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new encryption number having the specified 'value'. Optionally
+    /// Create a new abstract integer having the specified 'value'. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
     explicit AbstractInteger(unsigned long long value,
                              bslma::Allocator*  basicAllocator = 0);
 
-    /// Create a new encryption number having the same value as the specified
+    /// Create a new abstract integer having the same value as the specified
     /// 'original' object. Optionally specify a 'basicAllocator' used to supply
     /// memory. If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
@@ -1338,6 +1250,38 @@ class AbstractInteger
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
     AbstractInteger& operator=(const AbstractInteger& other);
+
+    /// Assign the specified 'value' to this object. Return a reference to this
+    /// modifiable object.
+    AbstractInteger& operator=(short value);
+
+    /// Assign the specified 'value' to this object. Return a reference to this
+    /// modifiable object.
+    AbstractInteger& operator=(unsigned short value);
+
+    /// Assign the specified 'value' to this object. Return a reference to this
+    /// modifiable object.
+    AbstractInteger& operator=(int value);
+
+    /// Assign the specified 'value' to this object. Return a reference to this
+    /// modifiable object.
+    AbstractInteger& operator=(unsigned int value);
+
+    /// Assign the specified 'value' to this object. Return a reference to this
+    /// modifiable object.
+    AbstractInteger& operator=(long value);
+
+    /// Assign the specified 'value' to this object. Return a reference to this
+    /// modifiable object.
+    AbstractInteger& operator=(unsigned long value);
+
+    /// Assign the specified 'value' to this object. Return a reference to this
+    /// modifiable object.
+    AbstractInteger& operator=(long long value);
+
+    /// Assign the specified 'value' to this object. Return a reference to this
+    /// modifiable object.
+    AbstractInteger& operator=(unsigned long long value);
 
     AbstractInteger operator+(const AbstractInteger& other) const;
     AbstractInteger operator-(const AbstractInteger& other) const;
@@ -1365,9 +1309,10 @@ class AbstractInteger
     /// object.
     void swap(AbstractInteger& other);
 
-    /// Load into this object the number represented by the specified 'text'.
-    /// Return the error.
-    ntsa::Error parse(const bsl::string_view& text);
+    // Parse the specified 'text' containing a sequence of characters in either
+    // base-2, base-8, base-10, or base-16, and load the result into this
+    // object. Return true if 'text' is valid, or false otherwise.
+    bool parse(const bsl::string_view& text);
 
     /// Assign the specified 'value' to this object. Return a reference to this
     /// modifiable object.
@@ -1744,7 +1689,8 @@ class AbstractInteger
 
     /// Load into the specified 'result' a string representation of this number
     /// in the specified 'base'.
-    void generate(bsl::string* result, int base) const;
+    void generate(bsl::string*               result, 
+                  AbstractIntegerBase::Value base) const;
 
     /// Return true if the number is zero, otherwise return false.
     bool isZero() const;
@@ -1836,12 +1782,72 @@ bool operator>=(const AbstractInteger& lhs, const AbstractInteger& rhs);
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const AbstractInteger& value);
 
+
+
+
+
+
+/// Describe TODO.
+///
+/// @par Attributes
+/// This class is composed of the following attributes.
+///
+/// @li @b todo:
+/// TODO
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class AbstractIntegerUtil
+{
+  public:
+    /// Add the specified 'addend2' to the specified 'addend1' and load the
+    /// result into the specified 'sum'. Note that either 'addend1' or 
+    /// 'addend2' may alias 'sum'. The behavior is undefined if 'sum' is null.
+    static void add(AbstractInteger*       sum,
+                    const AbstractInteger& addend1,
+                    const AbstractInteger& addend2);
+
+    /// Subtract the specified 'subtrahend' from the specified 'minuend' and
+    /// load the result into the specified 'difference'. If 'subtrahend' is 
+    /// greater than 'minuend', clamp the 'difference' to zero. Note that
+    /// either 'minuend' or 'subtrahend' may alias 'difference'. The behavior
+    /// is undefined if 'difference' is null.
+    static void subtract(AbstractInteger*       difference,
+                         const AbstractInteger& minuend,
+                         const AbstractInteger& subtrahend);
+
+    // Multiply the specified 'multiplicand' by the specified 'multiplier' 
+    /// and load the result into the specified 'product'. Note that either
+    /// 'multiplicand' or 'multiplier' may alias 'product'. The behavior is 
+    /// undefined if 'product' is null.
+    static void multiply(AbstractInteger*       product,
+                         const AbstractInteger& multiplicand,
+                         const AbstractInteger& multiplier);
+
+    /// Divide the specified 'dividend' by the specified 'divisor' 
+    /// and load the result into the specified 'quotient' and the modulus into
+    /// the specified 'remainder'. Note that either 'dividend' or 'divisor'
+    /// may alias 'quotient' or 'remainder'. The behavior is undefined if
+    /// either 'quotient' or 'remainder' is null.
+    static void divide(AbstractInteger*       quotient,
+                       AbstractInteger*       remainder,
+                       const AbstractInteger& dividend,
+                       const AbstractInteger& divisor);
+};
+
+
+
+
+
+
 template <typename HASH_ALGORITHM>
 void AbstractInteger::hash(HASH_ALGORITHM& algorithm)
 {
     using bslh::hashAppend;
 
-    hashAppend(algorithm, d_data);
+    hashAppend(algorithm, d_magnitude);
     hashAppend(algorithm, d_sign);
 }
 

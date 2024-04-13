@@ -18,6 +18,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntca_encryptionnumber_cpp, "$Id$ $CSID$")
 
+#include <bdlb_bitutil.h>
 #include <bslim_printer.h>
 #include <bslma_allocator.h>
 #include <bslma_default.h>
@@ -32,7 +33,7 @@ namespace ntca {
 namespace {
 
 const ntca::AbstractIntegerBase::Value k_DEFAULT_BASE = 
-    AbstractIntegerBase::e_DECIMAL;
+    AbstractIntegerBase::e_NATIVE;
 
 struct AbstractIntegerBaseTraits {
     bsl::uint64_t d_radix;
@@ -42,7 +43,7 @@ struct AbstractIntegerBaseTraits {
 
 // clang-format off
 static const AbstractIntegerBaseTraits k_TRAITS[5] = {
-    { 65536, 0, 65535 },
+    { 1 << (sizeof(AbstractIntegerRepresentation::Block) * 8), 0, (1 << (sizeof(AbstractIntegerRepresentation::Block) * 8)) - 1 },
     {     2, 0,     1 },
     {     8, 0,     7 },
     {    10, 0,     9 },
@@ -52,6 +53,18 @@ static const AbstractIntegerBaseTraits k_TRAITS[5] = {
 
 }  // close unnamed namespace
 
+AbstractIntegerSign::Value AbstractIntegerSign::flip(Value sign)
+{
+    if (sign == e_POSITIVE) {
+        return e_NEGATIVE;
+    }
+    else if (sign == e_NEGATIVE) {
+        return e_POSITIVE;
+    }
+    else {
+        return e_ZERO;
+    }
+}
 
 int AbstractIntegerSign::multiplier(Value sign)
 {
@@ -133,62 +146,60 @@ bsl::ostream& operator<<(bsl::ostream& stream, AbstractIntegerBase::Value rhs)
     return AbstractIntegerBase::print(stream, rhs);
 }
 
-void AbstractIntegerRepresentation::privateBlockShiftLeft(
-    AbstractIntegerRepresentation* result,
-    bsl::size_t              count)
+bsl::size_t AbstractIntegerRepresentation::countLeadingZeroes(bsl::uint8_t value)
 {
-    NTCCFG_WARNING_UNUSED(result);
-    NTCCFG_WARNING_UNUSED(count);
+    const bsl::size_t bits = sizeof(bsl::uint8_t) << 3;
 
-    NTCCFG_NOT_IMPLEMENTED();
+	bsl::size_t count = 0;
+    bsl::size_t found = 0;
+
+	for (bsl::size_t i = bits - 1; i != bsl::size_t(-1); --i) {
+		count += !(found |= value & bsl::uint8_t(1) << i ? 1 : 0);
+	}
+
+	return count;
 }
 
-void AbstractIntegerRepresentation::privateBlockShiftRight(
-    AbstractIntegerRepresentation* result,
-    bsl::size_t              count)
+bsl::size_t AbstractIntegerRepresentation::countLeadingZeroes(bsl::uint16_t value)
 {
-    NTCCFG_WARNING_UNUSED(result);
-    NTCCFG_WARNING_UNUSED(count);
+    const bsl::size_t bits = sizeof(bsl::uint16_t) << 3;
 
-    NTCCFG_NOT_IMPLEMENTED();
+	bsl::size_t count = 0;
+    bsl::size_t found = 0;
+
+	for (bsl::size_t i = bits - 1; i != bsl::size_t(-1); --i) {
+		count += !(found |= value & bsl::uint16_t(1) << i ? 1 : 0);
+	}
+    
+	return count;
 }
 
-void AbstractIntegerRepresentation::privateBlockCopyPrefix(
-    AbstractIntegerRepresentation*       result,
-    const AbstractIntegerRepresentation& value,
-    bsl::size_t                    count)
+bsl::size_t AbstractIntegerRepresentation::countLeadingZeroes(bsl::uint32_t value)
 {
-    NTCCFG_WARNING_UNUSED(result);
-    NTCCFG_WARNING_UNUSED(value);
-    NTCCFG_WARNING_UNUSED(count);
+    const bsl::size_t bits = sizeof(bsl::uint32_t) << 3;
 
-    NTCCFG_NOT_IMPLEMENTED();
+	bsl::size_t count = 0;
+    bsl::size_t found = 0;
+
+	for (bsl::size_t i = bits - 1; i != bsl::size_t(-1); --i) {
+		count += !(found |= value & bsl::uint32_t(1) << i ? 1 : 0);
+	}
+    
+	return count;
 }
 
-void AbstractIntegerRepresentation::privateBlockCopySuffix(
-    AbstractIntegerRepresentation*       result,
-    const AbstractIntegerRepresentation& value,
-    bsl::size_t                    count)
+bsl::size_t AbstractIntegerRepresentation::countLeadingZeroes(bsl::uint64_t value)
 {
-    NTCCFG_WARNING_UNUSED(result);
-    NTCCFG_WARNING_UNUSED(value);
-    NTCCFG_WARNING_UNUSED(count);
+    const bsl::size_t bits = sizeof(bsl::uint64_t) << 3;
 
-    NTCCFG_NOT_IMPLEMENTED();
-}
+	bsl::size_t count = 0;
+    bsl::size_t found = 0;
 
-void AbstractIntegerRepresentation::privateBlockCopyRange(
-    AbstractIntegerRepresentation*       result,
-    const AbstractIntegerRepresentation& value,
-    bsl::size_t                    offset,
-    bsl::size_t                    count)
-{
-    NTCCFG_WARNING_UNUSED(result);
-    NTCCFG_WARNING_UNUSED(value);
-    NTCCFG_WARNING_UNUSED(offset);
-    NTCCFG_WARNING_UNUSED(count);
-
-    NTCCFG_NOT_IMPLEMENTED();
+	for (bsl::size_t i = bits - 1; i != bsl::size_t(-1); --i) {
+		count += !(found |= value & bsl::uint64_t(1) << i ? 1 : 0);
+	}
+    
+	return count;
 }
 
 AbstractIntegerRepresentation::AbstractIntegerRepresentation(
@@ -284,7 +295,7 @@ void AbstractIntegerRepresentation::normalize()
     }
 }
 
-void AbstractIntegerRepresentation::set(bsl::size_t index, bsl::uint64_t value)
+void AbstractIntegerRepresentation::set(bsl::size_t index, Block value)
 {
     BSLS_ASSERT_OPT(ntca::AbstractIntegerBase::validate(d_base, value));
 
@@ -296,7 +307,7 @@ void AbstractIntegerRepresentation::set(bsl::size_t index, bsl::uint64_t value)
     d_data[index] = value;
 }
 
-void AbstractIntegerRepresentation::push(bsl::uint64_t value)
+void AbstractIntegerRepresentation::push(Block value)
 {
     BSLS_ASSERT_OPT(ntca::AbstractIntegerBase::validate(d_base, value));
     d_data.push_back(value);
@@ -307,10 +318,10 @@ void AbstractIntegerRepresentation::pop()
     d_data.pop_back();
 }
 
-bsl::uint64_t AbstractIntegerRepresentation::get(bsl::size_t index) const
+AbstractIntegerRepresentation::Block AbstractIntegerRepresentation::get(bsl::size_t index) const
 {
     if (index < d_data.size()) {
-        return static_cast<bsl::uint64_t>(d_data[index]);
+        return static_cast<Block>(d_data[index]);
     }
     else {
         return 0;
@@ -670,16 +681,23 @@ void AbstractIntegerRepresentation::divide(
         return;
     }
 
-    if (dividend.isOne()) {
+    if (divisor.isZero()) {
+        remainder->assign(dividend);
         return;
     }
 
-    if (divisor.isZero()) {
-        *remainder = dividend;
+    if (dividend.isOne()) {
+        if (divisor.isOne()) {
+            quotient->assign(1);
+        }
+        else {
+            remainder->assign(dividend);
+        }
         return;
     }
 
     if (divisor.isOne()) {
+        quotient->assign(dividend);
         return;
     }
 
@@ -689,11 +707,128 @@ void AbstractIntegerRepresentation::divide(
         return;
     }
 
-    // const bsl::uint64_t radix = quotient->radix();
-    // const bsl::uint64_t b     = radix;
+    AbstractIntegerRepresentation& q = *quotient;
+    AbstractIntegerRepresentation& r = *remainder;
 
-    NTCCFG_NOT_IMPLEMENTED();
+    const AbstractIntegerRepresentation& u = dividend;
+    const AbstractIntegerRepresentation& v = divisor;
 
+    const bsl::size_t m = u.size();
+    const bsl::size_t n = v.size();
+
+    const bsl::uint64_t radix = quotient->radix();
+    const bsl::uint64_t b = radix;
+
+    if (divisor.size() == 1) {
+        bsl::uint64_t k = 0;
+
+        for (bsl::size_t j = m - 1; j < m; --j) {
+            q.set(j, (k * b + u.get(j)) / v.get(0));
+            k = (k * b + u.get(j)) - q.get(j) * v.get(0);
+        }
+
+        r.set(0, k);
+        q.normalize();
+        r.normalize();
+
+        return;
+    }
+
+    const bsl::size_t s = countLeadingZeroes(Block(v.get(n - 1)));
+
+    BSLS_ASSERT_OPT(s >= 0);
+    BSLS_ASSERT_OPT(s <= k_BITS_PER_BLOCK);
+
+    AbstractIntegerRepresentation vn;
+
+    for (bsl::size_t i = n - 1; i > 0; --i) {
+
+        // MRM: Using 64-bit integers causes the algorithm to break.
+        #if 0
+        Block vc = Block(v.get(i));
+        Block vp = Block(v.get(i - 1));
+
+        Block vni = (vc << s) | (vp >> (k_BITS_PER_BLOCK - s));
+        NTCCFG_WARNING_UNUSED(vni);
+
+        Block vni8 = (v.get(i) << s) | (v.get(i - 1) >> (k_BITS_PER_BLOCK - s));
+
+        bsl::uint64_t vni64 = (v.get(i) << s) | (v.get(i - 1) >> (k_BITS_PER_BLOCK - s));
+
+        BSLS_ASSERT_OPT(vni == vni8);
+        BSLS_ASSERT_OPT(vni == vni64);
+        #endif
+
+        vn.set(i, (v.get(i) << s) | (v.get(i - 1) >> (k_BITS_PER_BLOCK - s)));
+    }
+
+    vn.set(0, v.get(0) << s);
+
+    AbstractIntegerRepresentation un;
+
+    un.set(m, u.get(m - 1) >> (k_BITS_PER_BLOCK - s));
+    for (bsl::size_t i = m - 1; i > 0; --i) {
+        un.set(i, (u.get(i) << s) | (u.get(i - 1) >> (k_BITS_PER_BLOCK - s)));
+    }
+
+    un.set(0, u.get(0) << s);
+
+	for (bsl::size_t j = m - n; j != bsl::size_t(-1); --j) {
+		bsl::uint64_t qhat = 
+            (un.get(j + n) * b + un.get(j + n - 1)) / vn.get(n - 1);
+
+		bsl::uint64_t rhat = 
+            (un.get(j + n) * b + un.get(j + n - 1)) - qhat * vn.get(n - 1);
+
+        while (true) {
+            if (qhat >= b || qhat * vn.get(n - 2) > b * rhat + un.get(j + n - 2)) {
+                qhat = qhat - 1;
+                rhat = rhat + vn.get(n - 1);
+                if (rhat < b) {
+                    continue;
+                }
+            }
+            break;
+        }
+
+        typedef bsl::uint64_t U64;
+        typedef bsl::int64_t S64;
+
+		U64 k = 0;
+		S64 t = 0;
+
+		for (bsl::size_t i = 0; i < n; ++i) {
+			U64 p = qhat * vn.get(i);
+			t = un.get(i + j) - k - (p & ((1ULL << k_BITS_PER_BLOCK) - 1));
+			un.set(i + j, Block(t));
+			k = (p >> k_BITS_PER_BLOCK) - (t >> k_BITS_PER_BLOCK);
+		}
+
+		t = un.get(j + n) - k;
+		un.set(j + n, Block(t));
+
+		q.set(j, Block(qhat));
+
+		if (t < 0) {
+			q.set(j, q.get(j) - 1);
+			k = 0;
+			for (bsl::size_t i = 0; i < n; ++i) {
+				t = un.get(i+j) + vn.get(i) + k;
+				un.set(i + j, Block(t));
+				k = t >> k_BITS_PER_BLOCK;
+			}
+			un.set(j + n, Block(un.get(j + n) + k));
+		}        
+	}
+
+	for (bsl::size_t i = 0; i < n; ++i) {
+		r.set(i, (un.get(i) >> s) | (un.get(i + 1) << (k_BITS_PER_BLOCK - s)));
+	}
+
+	q.normalize();
+	r.normalize();
+
+    // MRM: Old attempt at the Knuth algorithm.
 #if 0
 
     BlockVector& q = quotient->d_data;
@@ -950,7 +1085,7 @@ void AbstractIntegerRepresentation::generate(
         {
             AbstractIntegerRepresentation dividend(value);
             AbstractIntegerRepresentation divisor;
-            divisor.assign(base);
+            divisor.assign(AbstractIntegerBase::radix(base));
 
             while (!dividend.isZero()) {
                 AbstractIntegerRepresentation quotient;
@@ -1896,516 +2031,69 @@ void AbstractIntegerQuantityUtil::divide(
     }
 }
 
-void AbstractInteger::privateAssign(BlockVector*       result,
-                                    const BlockVector& other)
-{
-    BSLS_ASSERT_OPT(&other != result);
-
-    *result = other;
-}
-
-void AbstractInteger::privateAssign(BlockVector* result, bsl::size_t value)
-{
-    BSLS_ASSERT_OPT(value <= bsl::numeric_limits<Block>::max());
-
-    result->clear();
-    result->resize(1);
-    result->front() = static_cast<Block>(value);
-}
-
-void AbstractInteger::privateKeep(Sign* result, Sign other)
-{
-    BSLS_ASSERT_OPT(&other != result);
-
-    *result = other;
-}
-
-void AbstractInteger::privateFlip(Sign* result, Sign other)
-{
-    BSLS_ASSERT_OPT(&other != result);
-
-    if (other == e_POSITIVE) {
-        *result = e_NEGATIVE;
-    }
-    else if (other == e_NEGATIVE) {
-        *result = e_POSITIVE;
-    }
-    else {
-        *result = e_ZERO;
-    }
-}
-
-void AbstractInteger::privateIncrement(BlockVector*       sum,
-                                       const BlockVector& addend)
-{
-    BlockVector value(addend.get_allocator());
-    AbstractInteger::privateAssign(&value, 1);
-    AbstractInteger::privateAdd(sum, addend, value);
-}
-
-void AbstractInteger::privateDecrement(BlockVector*       difference,
-                                       const BlockVector& minuend)
-{
-    BlockVector value(minuend.get_allocator());
-    AbstractInteger::privateAssign(&value, 1);
-    AbstractInteger::privateSubtract(difference, minuend, value);
-}
-
-void AbstractInteger::privateAdd(BlockVector*       sum,
-                                 const BlockVector& addend1,
-                                 const BlockVector& addend2)
-{
-    BSLS_ASSERT_OPT(sum);
-
-    BlockVector result(sum->get_allocator());
-
-    const BlockVector& lhs = addend1;
-    const BlockVector& rhs = addend2;
-
-    const bsl::size_t lhsSize = lhs.size();
-    const bsl::size_t rhsSize = rhs.size();
-
-    if (lhsSize == 0) {
-        result = rhs;
-    }
-    else if (rhsSize == 0) {
-        result = lhs;
-    }
-    else {
-        bsl::size_t maxSize = lhsSize;
-        if (maxSize < rhsSize) {
-            maxSize = rhsSize;
-        }
-
-        bool carryPrev = false;
-        bool carryNext = false;
-
-        for (bsl::size_t i = 0; i < maxSize; ++i) {
-            Block lhsValue = i < lhsSize ? lhs[i] : 0;
-            Block rhsValue = i < rhsSize ? rhs[i] : 0;
-
-            Block temp = lhsValue + rhsValue;
-
-            carryNext = (temp < lhsValue) || (temp < rhsValue);
-
-            if (carryPrev) {
-                ++temp;
-                if (temp == 0) {
-                    carryNext = true;
-                }
-            }
-
-            result.push_back(temp);
-            carryPrev = carryNext;
-        }
-
-        if (carryPrev) {
-            result.push_back(1);
-        }
-    }
-
-    AbstractInteger::privateTrim(&result);
-    sum->swap(result);
-}
-
-void AbstractInteger::privateSubtract(BlockVector*       difference,
-                                      const BlockVector& minuend,
-                                      const BlockVector& subtrahend)
-{
-    BSLS_ASSERT_OPT(difference);
-
-    BlockVector result(difference->get_allocator());
-
-    const BlockVector& lhs = minuend;
-    const BlockVector& rhs = subtrahend;
-
-    const bsl::size_t lhsSize = lhs.size();
-    const bsl::size_t rhsSize = rhs.size();
-
-    BSLS_ASSERT_OPT(lhsSize >= rhsSize);
-
-    if (rhsSize == 0) {
-        result = lhs;
-    }
-    else {
-        bsl::size_t maxSize = lhsSize;
-        if (maxSize < rhsSize) {
-            maxSize = rhsSize;
-        }
-
-        bool borrowPrev = false;
-        bool borrowNext = false;
-
-        for (bsl::size_t i = 0; i < maxSize; ++i) {
-            Block lhsValue = i < lhsSize ? lhs[i] : 0;
-            Block rhsValue = i < rhsSize ? rhs[i] : 0;
-
-            Block temp = lhsValue - rhsValue;
-
-            borrowNext = (temp > lhsValue);
-
-            if (borrowPrev) {
-                if (temp == 0) {
-                    borrowNext = true;
-                }
-                --temp;
-            }
-
-            result.push_back(temp);
-            borrowPrev = borrowNext;
-        }
-    }
-
-    AbstractInteger::privateTrim(&result);
-    difference->swap(result);
-}
-
-void AbstractInteger::privateMultiply(BlockVector*       product,
-                                      const BlockVector& multiplicand,
-                                      const BlockVector& multiplier)
-{
-    BSLS_ASSERT_OPT(product);
-
-    BlockVector result(product->get_allocator());
-
-    const bsl::size_t multiplicandSize = multiplicand.size();
-    const bsl::size_t multiplierSize   = multiplier.size();
-
-    if (multiplicandSize != 0 && multiplierSize != 0) {
-        const BlockVector& u = multiplicand;
-        const BlockVector& v = multiplier;
-        BlockVector&       w = result;
-
-        const bsl::size_t m = multiplicandSize;
-        const bsl::size_t n = multiplierSize;
-
-        const bsl::size_t b = bsl::numeric_limits<Block>::max();  // radix
-
-        // M1
-
-        w.resize(m + n);
-        bsl::size_t j = 0;
-
-        while (true) {
-            // M2
-
-            if (v[j] == 0) {
-                w[j + m] = 0;
-                // goto M6
-            }
-            else {
-                // M3
-
-                bsl::size_t i = 0;
-                bsl::size_t k = 0;
-
-                while (true) {
-                    // M4
-
-                    bsl::size_t t = u[i] * v[j] + w[i + j] + k;
-
-                    w[i + j] = t % b;
-                    k        = t / b;
-
-                    BSLS_ASSERT_OPT(k >= 0);
-                    BSLS_ASSERT_OPT(k < b);
-
-                    // M5
-
-                    ++i;
-                    if (i < m) {
-                        // goto M4
-                        continue;
-                    }
-                    else {
-                        w[j + m] = k;
-                        break;
-                    }
-                }
-            }
-
-            // M6
-
-            ++j;
-            if (j < n) {
-                // goto M2
-                continue;
-            }
-            else {
-                // done
-                break;
-            }
-        }
-    }
-
-    AbstractInteger::privateTrim(&result);
-    product->swap(result);
-}
-
-void AbstractInteger::privateDivide(BlockVector*       quotient,
-                                    BlockVector*       remainder,
-                                    const BlockVector& dividend,
-                                    const BlockVector& divisor)
-{
-    NTCCFG_WARNING_UNUSED(quotient);
-    NTCCFG_WARNING_UNUSED(remainder);
-    NTCCFG_WARNING_UNUSED(dividend);
-    NTCCFG_WARNING_UNUSED(divisor);
-
-    BSLS_ASSERT_OPT(!"Not implemented");
-}
-
-void AbstractInteger::privateMultiplyByAddition(
-    BlockVector*       product,
-    const BlockVector& multiplicand,
-    const BlockVector& multiplier)
-{
-    BSLS_ASSERT_OPT(product);
-
-    BlockVector result(product->get_allocator());
-
-    const bsl::size_t multiplicandSize = multiplicand.size();
-    const bsl::size_t multiplierSize   = multiplier.size();
-
-    if (multiplicandSize != 0 && multiplierSize != 0) {
-        BSLS_ASSERT(!"Not implemented");
-    }
-
-    AbstractInteger::privateTrim(&result);
-    product->swap(result);
-}
-
-void AbstractInteger::privateMultiplyByAddition(
-    BlockVector*       product,
-    const BlockVector& multiplicand,
-    bsl::size_t        multiplier)
-{
-    BSLS_ASSERT_OPT(product);
-
-    BlockVector result(product->get_allocator());
-
-    const bsl::size_t multiplicandSize = multiplicand.size();
-
-    if (multiplicandSize != 0 && multiplier != 0) {
-        for (bsl::size_t i = 0; i < multiplier; ++i) {
-            BlockVector temp(result.get_allocator());
-            AbstractInteger::privateAdd(&temp, result, multiplicand);
-            result.swap(temp);
-        }
-    }
-
-    AbstractInteger::privateTrim(&result);
-    product->swap(result);
-}
-
-void AbstractInteger::privateDivideBySubtraction(BlockVector*       quotient,
-                                                 BlockVector*       remainder,
-                                                 const BlockVector& dividend,
-                                                 const BlockVector& divisor)
-{
-    BSLS_ASSERT_OPT(quotient);
-    BSLS_ASSERT_OPT(remainder);
-
-    NTCCFG_WARNING_UNUSED(dividend);
-    NTCCFG_WARNING_UNUSED(divisor);
-
-    BSLS_ASSERT_OPT(!"Not implemented");
-}
-
-void AbstractInteger::privateDivideBySubtraction(BlockVector*       quotient,
-                                                 BlockVector*       remainder,
-                                                 const BlockVector& dividend,
-                                                 bsl::size_t        divisor)
-{
-    BSLS_ASSERT_OPT(quotient);
-    BSLS_ASSERT_OPT(remainder);
-
-    const BlockVectorAllocator& allocator = quotient->get_allocator();
-
-    BlockVector iterations(allocator);
-
-    BlockVector minuend(allocator);
-    AbstractInteger::privateAssign(&minuend, dividend);
-
-    BlockVector subtrahend(allocator);
-    AbstractInteger::privateAssign(&subtrahend, divisor);
-
-    BlockVector counter(allocator);
-    AbstractInteger::privateAssign(&counter, 1);
-
-    const bsl::size_t dividendSize = dividend.size();
-
-    if (dividendSize != 0 && divisor != 0) {
-        while (true) {
-            const int comparison =
-                AbstractInteger::privateCompare(minuend, subtrahend);
-
-            if (comparison < 0) {
-                break;
-            }
-
-            BlockVector difference(allocator);
-            AbstractInteger::privateSubtract(&difference, minuend, subtrahend);
-            difference.swap(minuend);
-
-            {
-                bsl::stringstream ss;
-                bslim::Printer    printer(&ss, 0, -1);
-                printer.start();
-                printer.printAttribute("dividend", minuend);
-                printer.end();
-
-                BSLS_LOG_INFO("%s", ss.str().c_str());
-            }
-
-            AbstractInteger::privateAdd(&iterations, iterations, counter);
-        }
-
-        // MRM
-        // bigint result = 0, temp = *this;
-        // while (temp >= that) {
-        //     temp -= that;
-        //     ++result;
-        // }
-        // return result;
-    }
-
-    AbstractInteger::privateTrim(&iterations);
-    quotient->swap(iterations);
-
-    AbstractInteger::privateTrim(&minuend);
-    remainder->swap(minuend);
-}
-
-int AbstractInteger::privateCompare(const BlockVector& lhs,
-                                    const BlockVector& rhs)
-{
-    int result = 0;
-
-    const bsl::size_t lhsSize = lhs.size();
-    const bsl::size_t rhsSize = rhs.size();
-
-    if (lhsSize < rhsSize) {
-        result = -1;
-    }
-    else if (rhsSize < lhsSize) {
-        result = +1;
-    }
-    else {
-        bsl::size_t i = lhsSize;
-        while (i > 0) {
-            --i;
-            if (lhs[i] < rhs[i]) {
-                result = -1;
-                break;
-            }
-            else if (rhs[i] < lhs[i]) {
-                result = +1;
-                break;
-            }
-            else {
-                continue;
-            }
-        }
-    }
-
-    return result;
-}
-
-void AbstractInteger::privateTrim(BlockVector* result)
-{
-    while (!result->empty()) {
-        if (result->back() == 0) {
-            result->pop_back();
-        }
-        else {
-            break;
-        }
-    }
-}
-
-bool AbstractInteger::privateIsZero(const BlockVector& value)
-{
-    return value.empty() || (value.size() == 1 && value.front() == 0);
-}
-
-bool AbstractInteger::privateIsOne(const BlockVector& value)
-{
-    return value.size() == 1 && value.front() == 1;
-}
-
 AbstractInteger::AbstractInteger(bslma::Allocator* basicAllocator)
-: d_sign(e_ZERO)
-, d_data(basicAllocator)
-, d_allocator_p(bslma::Default::allocator(basicAllocator))
+: d_sign(AbstractIntegerSign::e_ZERO)
+, d_magnitude(basicAllocator)
 {
 }
 
 AbstractInteger::AbstractInteger(short value, bslma::Allocator* basicAllocator)
-: d_sign(e_ZERO)
-, d_data(basicAllocator)
-, d_allocator_p(bslma::Default::allocator(basicAllocator))
+: d_sign(AbstractIntegerSign::e_ZERO)
+, d_magnitude(basicAllocator)
 {
     this->assign(value);
 }
 
 AbstractInteger::AbstractInteger(unsigned short    value,
                                  bslma::Allocator* basicAllocator)
-: d_sign(e_ZERO)
-, d_data(basicAllocator)
-, d_allocator_p(bslma::Default::allocator(basicAllocator))
+: d_sign(AbstractIntegerSign::e_ZERO)
+, d_magnitude(basicAllocator)
 {
     this->assign(value);
 }
 
 AbstractInteger::AbstractInteger(int value, bslma::Allocator* basicAllocator)
-: d_sign(e_ZERO)
-, d_data(basicAllocator)
-, d_allocator_p(bslma::Default::allocator(basicAllocator))
+: d_sign(AbstractIntegerSign::e_ZERO)
+, d_magnitude(basicAllocator)
 {
     this->assign(value);
 }
 
 AbstractInteger::AbstractInteger(unsigned int      value,
                                  bslma::Allocator* basicAllocator)
-: d_sign(e_ZERO)
-, d_data(basicAllocator)
-, d_allocator_p(bslma::Default::allocator(basicAllocator))
+: d_sign(AbstractIntegerSign::e_ZERO)
+, d_magnitude(basicAllocator)
 {
     this->assign(value);
 }
 
 AbstractInteger::AbstractInteger(long value, bslma::Allocator* basicAllocator)
-: d_sign(e_ZERO)
-, d_data(basicAllocator)
-, d_allocator_p(bslma::Default::allocator(basicAllocator))
+: d_sign(AbstractIntegerSign::e_ZERO)
+, d_magnitude(basicAllocator)
 {
     this->assign(value);
 }
 
 AbstractInteger::AbstractInteger(unsigned long     value,
                                  bslma::Allocator* basicAllocator)
-: d_sign(e_ZERO)
-, d_data(basicAllocator)
-, d_allocator_p(bslma::Default::allocator(basicAllocator))
+: d_sign(AbstractIntegerSign::e_ZERO)
+, d_magnitude(basicAllocator)
 {
     this->assign(value);
 }
 
 AbstractInteger::AbstractInteger(long long         value,
                                  bslma::Allocator* basicAllocator)
-: d_sign(e_ZERO)
-, d_data(basicAllocator)
-, d_allocator_p(bslma::Default::allocator(basicAllocator))
+: d_sign(AbstractIntegerSign::e_ZERO)
+, d_magnitude(basicAllocator)
 {
     this->assign(value);
 }
 
 AbstractInteger::AbstractInteger(unsigned long long value,
                                  bslma::Allocator*  basicAllocator)
-: d_sign(e_ZERO)
-, d_data(basicAllocator)
-, d_allocator_p(bslma::Default::allocator(basicAllocator))
+: d_sign(AbstractIntegerSign::e_ZERO)
+, d_magnitude(basicAllocator)
 {
     this->assign(value);
 }
@@ -2413,8 +2101,7 @@ AbstractInteger::AbstractInteger(unsigned long long value,
 AbstractInteger::AbstractInteger(const AbstractInteger& original,
                                  bslma::Allocator*      basicAllocator)
 : d_sign(original.d_sign)
-, d_data(original.d_data, basicAllocator)
-, d_allocator_p(bslma::Default::allocator(basicAllocator))
+, d_magnitude(original.d_magnitude, basicAllocator)
 {
 }
 
@@ -2424,280 +2111,121 @@ AbstractInteger::~AbstractInteger()
 
 AbstractInteger& AbstractInteger::operator=(const AbstractInteger& other)
 {
-    if (this != &other) {
-        d_sign = other.d_sign;
-        d_data = other.d_data;
-    }
+    this->assign(other);
+    return *this;
+}
 
+AbstractInteger& AbstractInteger::operator=(short value)
+{
+    this->assign(value);
+    return *this;
+}
+
+AbstractInteger& AbstractInteger::operator=(unsigned short value)
+{
+    this->assign(value);
+    return *this;
+}
+
+AbstractInteger& AbstractInteger::operator=(int value)
+{
+    this->assign(value);
+    return *this;
+}
+
+AbstractInteger& AbstractInteger::operator=(unsigned int value)
+{
+    this->assign(value);
+    return *this;
+}
+
+AbstractInteger& AbstractInteger::operator=(long value)
+{
+    this->assign(value);
+    return *this;
+}
+
+AbstractInteger& AbstractInteger::operator=(unsigned long value)
+{
+    this->assign(value);
+    return *this;
+}
+
+AbstractInteger& AbstractInteger::operator=(long long value)
+{
+    this->assign(value);
+    return *this;
+}
+
+AbstractInteger& AbstractInteger::operator=(unsigned long long value)
+{
+    this->assign(value);
     return *this;
 }
 
 void AbstractInteger::reset()
 {
-    d_sign = e_ZERO;
-    d_data.clear();
+    d_sign = AbstractIntegerSign::e_ZERO;
+    d_magnitude.reset();
 }
 
 void AbstractInteger::swap(AbstractInteger& other)
 {
     if (this != &other) {
         bsl::swap(d_sign, other.d_sign);
-        d_data.swap(other.d_data);
+        d_magnitude.swap(other.d_magnitude);
     }
 }
 
-ntsa::Error AbstractInteger::parse(const bsl::string_view& text)
+bool AbstractInteger::parse(const bsl::string_view& text)
 {
-    if (text.empty()) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
-    int  base     = 10;
-    bool negative = false;
-
-    bsl::string_view temp;
-    {
-        bsl::string_view::const_iterator it = text.begin();
-        bsl::string_view::const_iterator et = text.end();
-
-        if (it == et) {
-            return ntsa::Error(ntsa::Error::e_INVALID);
-        }
-
-        if (*it == '0') {
-            ++it;
-            if (it == et) {
-                this->reset();
-                return ntsa::Error();
-            }
-            else if (*it == 'x' || *it == 'X') {
-                base = 16;
-                ++it;
-            }
-            else {
-                return ntsa::Error(ntsa::Error::e_INVALID);
-            }
-        }
-
-        if (*it == '+') {
-            if (base != 10) {
-                return ntsa::Error(ntsa::Error::e_INVALID);
-            }
-
-            ++it;
-        }
-        else if (*it == '-') {
-            if (base != 10) {
-                return ntsa::Error(ntsa::Error::e_INVALID);
-            }
-
-            negative = true;
-            ++it;
-        }
-
-        if (it == et) {
-            return ntsa::Error(ntsa::Error::e_INVALID);
-        }
-
-        temp = bsl::string_view(it, et);
-    }
-
-    // Vector of digits in the base, least-significant first.
-    BlockVector digits;
-    {
-        bsl::string_view::const_reverse_iterator it = temp.rbegin();
-        bsl::string_view::const_reverse_iterator et = temp.rend();
-
-        for (; it != et; ++it) {
-            const char ch = *it;
-
-            if (base == 10) {
-                if (ch >= '0' && ch <= '9') {
-                    Block digit = ch - '0';
-                    digits.push_back(digit);
-                }
-                else {
-                    return ntsa::Error(ntsa::Error::e_INVALID);
-                }
-            }
-            else if (base == 16) {
-                if (ch >= '0' && ch <= '9') {
-                    Block digit = ch - '0';
-                    digits.push_back(digit);
-                }
-                else if (ch >= 'a' && ch <= 'f') {
-                    Block digit = ch - 'a';
-                    digits.push_back(digit);
-                }
-                else if (ch >= 'A' && ch <= 'F') {
-                    Block digit = ch - 'A';
-                    digits.push_back(digit);
-                }
-                else {
-                    return ntsa::Error(ntsa::Error::e_INVALID);
-                }
-            }
-            else {
-                return ntsa::Error(ntsa::Error::e_INVALID);
-            }
-        }
-
-        AbstractInteger::privateTrim(&digits);
-    }
-
-    BSLS_ASSERT_OPT(!digits.empty());
-
-    AbstractInteger result(this->allocator());
-    {
-        BlockVector::const_reverse_iterator it = digits.rbegin();
-        BlockVector::const_reverse_iterator et = digits.rend();
-
-        for (; it != et; ++it) {
-            Block value = *it;
-            // result.multiply(base);
-            {
-                AbstractInteger addend(result);
-                for (int b = 0; b < base - 1; ++b) {
-                    result.add(addend);
-                }
-            }
-
-            result.add(value);
-        }
-    }
-
-    if (result.d_data.size() == 1 && result.d_data.front() == 0) {
-        result.d_sign = e_ZERO;
-        result.d_data.clear();
-    }
-    else if (negative) {
-        result.d_sign = e_NEGATIVE;
-    }
-
-    this->swap(result);
-    return ntsa::Error();
+    return d_magnitude.parse(&d_sign, text);
 }
 
 AbstractInteger& AbstractInteger::assign(short value)
 {
-    if (value == 0) {
-        d_sign = e_ZERO;
-        d_data.clear();
-    }
-    else {
-        if (value > 0) {
-            d_sign = e_POSITIVE;
-        }
-        else if (value < 0) {
-            d_sign = e_NEGATIVE;
-        }
-        d_data.clear();
-        d_data.resize(1, static_cast<Block>(value));
-    }
-
-    return *this;
+    return this->assign(static_cast<long long>(value));
 }
 
 AbstractInteger& AbstractInteger::assign(unsigned short value)
 {
-    if (value == 0) {
-        d_sign = e_ZERO;
-        d_data.clear();
-    }
-    else {
-        d_sign = e_POSITIVE;
-        d_data.clear();
-        d_data.resize(1, static_cast<Block>(value));
-    }
-
-    return *this;
+    return this->assign(static_cast<unsigned long long>(value));
 }
 
 AbstractInteger& AbstractInteger::assign(int value)
 {
-    if (value == 0) {
-        d_sign = e_ZERO;
-        d_data.clear();
-    }
-    else {
-        if (value > 0) {
-            d_sign = e_POSITIVE;
-        }
-        else if (value < 0) {
-            d_sign = e_NEGATIVE;
-        }
-        d_data.clear();
-        d_data.resize(1, static_cast<Block>(value));
-    }
-
-    return *this;
+    return this->assign(static_cast<long long>(value));
 }
 
 AbstractInteger& AbstractInteger::assign(unsigned int value)
 {
-    if (value == 0) {
-        d_sign = e_ZERO;
-        d_data.clear();
-    }
-    else {
-        d_sign = e_POSITIVE;
-        d_data.clear();
-        d_data.resize(1, static_cast<Block>(value));
-    }
-
-    return *this;
+    return this->assign(static_cast<unsigned long long>(value));
 }
 
 AbstractInteger& AbstractInteger::assign(long value)
 {
-    if (value == 0) {
-        d_sign = e_ZERO;
-        d_data.clear();
-    }
-    else {
-        if (value > 0) {
-            d_sign = e_POSITIVE;
-        }
-        else if (value < 0) {
-            d_sign = e_NEGATIVE;
-        }
-        d_data.clear();
-        d_data.resize(1, static_cast<Block>(value));
-    }
-
-    return *this;
+    return this->assign(static_cast<long long>(value));
 }
 
 AbstractInteger& AbstractInteger::assign(unsigned long value)
 {
-    if (value == 0) {
-        d_sign = e_ZERO;
-        d_data.clear();
-    }
-    else {
-        d_sign = e_POSITIVE;
-        d_data.clear();
-        d_data.resize(1, static_cast<Block>(value));
-    }
-
-    return *this;
+    return this->assign(static_cast<unsigned long long>(value));
 }
 
 AbstractInteger& AbstractInteger::assign(long long value)
 {
     if (value == 0) {
-        d_sign = e_ZERO;
-        d_data.clear();
+        d_sign = AbstractIntegerSign::e_ZERO;
+        d_magnitude.reset();
     }
     else {
         if (value > 0) {
-            d_sign = e_POSITIVE;
+            d_sign = AbstractIntegerSign::e_POSITIVE;
         }
         else if (value < 0) {
-            d_sign = e_NEGATIVE;
+            d_sign = AbstractIntegerSign::e_NEGATIVE;
         }
-        d_data.clear();
-        d_data.resize(1, static_cast<Block>(value));
+        d_magnitude.assign(static_cast<unsigned long long>(value));
     }
 
     return *this;
@@ -2706,13 +2234,12 @@ AbstractInteger& AbstractInteger::assign(long long value)
 AbstractInteger& AbstractInteger::assign(unsigned long long value)
 {
     if (value == 0) {
-        d_sign = e_ZERO;
-        d_data.clear();
+        d_sign = AbstractIntegerSign::e_ZERO;
+        d_magnitude.reset();
     }
     else {
-        d_sign = e_POSITIVE;
-        d_data.clear();
-        d_data.resize(1, static_cast<Block>(value));
+        d_sign = AbstractIntegerSign::e_POSITIVE;
+        d_magnitude.assign(value);
     }
 
     return *this;
@@ -2722,7 +2249,7 @@ AbstractInteger& AbstractInteger::assign(const AbstractInteger& value)
 {
     if (this != &value) {
         d_sign = value.d_sign;
-        d_data = value.d_data;
+        d_magnitude = value.d_magnitude;
     }
 
     return *this;
@@ -2730,13 +2257,7 @@ AbstractInteger& AbstractInteger::assign(const AbstractInteger& value)
 
 AbstractInteger& AbstractInteger::negate()
 {
-    if (d_sign == e_POSITIVE) {
-        d_sign = e_NEGATIVE;
-    }
-    else if (d_sign == e_NEGATIVE) {
-        d_sign = e_POSITIVE;
-    }
-
+    d_sign = AbstractIntegerSign::flip(d_sign);
     return *this;
 }
 
@@ -2792,51 +2313,11 @@ AbstractInteger& AbstractInteger::add(unsigned long long value)
 
 AbstractInteger& AbstractInteger::add(const AbstractInteger& other)
 {
-    const AbstractInteger& lhs = *this;
-    const AbstractInteger& rhs = other;
+    NTCCFG_WARNING_UNUSED(other);
 
-    if (lhs.d_sign == e_ZERO) {
-        AbstractInteger result(d_allocator_p);
-        AbstractInteger::privateAssign(&result.d_data, rhs.d_data);
-        AbstractInteger::privateKeep(&result.d_sign, rhs.d_sign);
-        this->swap(result);
-        return *this;
-    }
-    else if (rhs.d_sign == e_ZERO) {
-        return *this;
-    }
-    else if (lhs.d_sign == rhs.d_sign) {
-        AbstractInteger result(d_allocator_p);
-        AbstractInteger::privateAdd(&result.d_data, lhs.d_data, rhs.d_data);
-        AbstractInteger::privateKeep(&result.d_sign, lhs.d_sign);
-        this->swap(result);
-        return *this;
-    }
-    else {
-        const int comparison = lhs.compare(rhs);
-        if (comparison == 0) {
-            this->reset();
-            return *this;
-        }
-        else if (comparison > 0) {
-            AbstractInteger result(d_allocator_p);
-            AbstractInteger::privateSubtract(&result.d_data,
-                                             lhs.d_data,
-                                             rhs.d_data);
-            AbstractInteger::privateKeep(&result.d_sign, lhs.d_sign);
-            this->swap(result);
-            return *this;
-        }
-        else {
-            AbstractInteger result(d_allocator_p);
-            AbstractInteger::privateSubtract(&result.d_data,
-                                             rhs.d_data,
-                                             lhs.d_data);
-            AbstractInteger::privateKeep(&result.d_sign, rhs.d_sign);
-            this->swap(result);
-            return *this;
-        }
-    }
+    NTCCFG_NOT_IMPLEMENTED();
+    
+    return *this;
 }
 
 AbstractInteger& AbstractInteger::subtract(short value)
@@ -2881,51 +2362,11 @@ AbstractInteger& AbstractInteger::subtract(unsigned long long value)
 
 AbstractInteger& AbstractInteger::subtract(const AbstractInteger& other)
 {
-    const AbstractInteger& lhs = *this;
-    const AbstractInteger& rhs = other;
+    NTCCFG_WARNING_UNUSED(other);
 
-    if (lhs.d_sign == e_ZERO) {
-        AbstractInteger result(d_allocator_p);
-        AbstractInteger::privateAssign(&result.d_data, rhs.d_data);
-        AbstractInteger::privateFlip(&result.d_sign, rhs.d_sign);
-        this->swap(result);
-        return *this;
-    }
-    else if (rhs.d_sign == e_ZERO) {
-        return *this;
-    }
-    else if (lhs.d_sign != rhs.d_sign) {
-        AbstractInteger result(d_allocator_p);
-        AbstractInteger::privateAdd(&result.d_data, lhs.d_data, rhs.d_data);
-        AbstractInteger::privateKeep(&result.d_sign, lhs.d_sign);
-        this->swap(result);
-        return *this;
-    }
-    else {
-        const int comparison = lhs.compare(rhs);
-        if (comparison == 0) {
-            this->reset();
-            return *this;
-        }
-        else if (comparison > 0) {
-            AbstractInteger result(d_allocator_p);
-            AbstractInteger::privateSubtract(&result.d_data,
-                                             lhs.d_data,
-                                             rhs.d_data);
-            AbstractInteger::privateKeep(&result.d_sign, lhs.d_sign);
-            this->swap(result);
-            return *this;
-        }
-        else {
-            AbstractInteger result(rhs, d_allocator_p);
-            AbstractInteger::privateSubtract(&result.d_data,
-                                             rhs.d_data,
-                                             lhs.d_data);
-            AbstractInteger::privateFlip(&result.d_sign, rhs.d_sign);
-            this->swap(result);
-            return *this;
-        }
-    }
+    NTCCFG_NOT_IMPLEMENTED();
+    
+    return *this;
 }
 
 AbstractInteger& AbstractInteger::multiply(short value)
@@ -2970,20 +2411,10 @@ AbstractInteger& AbstractInteger::multiply(unsigned long long value)
 
 AbstractInteger& AbstractInteger::multiply(const AbstractInteger& other)
 {
-    const AbstractInteger& lhs = *this;
-    const AbstractInteger& rhs = other;
+    NTCCFG_WARNING_UNUSED(other);
 
-    if (lhs.d_sign == e_ZERO || rhs.d_sign == e_ZERO) {
-        this->reset();
-        return *this;
-    }
-
-    AbstractInteger result(d_allocator_p);
-
-    AbstractInteger::privateMultiply(&result.d_data, lhs.d_data, rhs.d_data);
-    result.d_sign = lhs.d_sign == rhs.d_sign ? e_POSITIVE : e_NEGATIVE;
-
-    this->swap(result);
+    NTCCFG_NOT_IMPLEMENTED();
+    
     return *this;
 }
 
@@ -3029,76 +2460,18 @@ AbstractInteger& AbstractInteger::divide(unsigned long long value)
 
 AbstractInteger& AbstractInteger::divide(const AbstractInteger& other)
 {
-    ntca::AbstractInteger remainder(d_allocator_p);
+    ntca::AbstractInteger remainder;
     return this->divide(other, &remainder);
 }
 
 AbstractInteger& AbstractInteger::divide(const AbstractInteger& other,
                                          AbstractInteger*       remainder)
 {
-    const AbstractInteger& lhs = *this;
-    const AbstractInteger& rhs = other;
+    NTCCFG_WARNING_UNUSED(other);
+    NTCCFG_WARNING_UNUSED(remainder);
 
-    remainder->reset();
+    NTCCFG_NOT_IMPLEMENTED();
 
-    if (lhs.isZero()) {
-        this->reset();
-        remainder->reset();
-        return *this;
-    }
-
-    if (rhs.isZero()) {
-        this->reset();
-        remainder->assign(*this);
-        return *this;
-    }
-
-    AbstractInteger result(d_allocator_p);
-
-    if (d_sign == other.d_sign) {
-        AbstractInteger::privateDivide(&result.d_data,
-                                       &remainder->d_data,
-                                       lhs.d_data,
-                                       rhs.d_data);
-        result.d_sign = e_POSITIVE;
-    }
-    else {
-        AbstractInteger        quotient(d_allocator_p);
-        AbstractInteger        dividend(*this, d_allocator_p);
-        const AbstractInteger& divisor = other;
-
-        AbstractInteger::privateDecrement(&dividend.d_data, dividend.d_data);
-
-        AbstractInteger::privateDivide(&quotient.d_data,
-                                       &remainder->d_data,
-                                       dividend.d_data,
-                                       divisor.d_data);
-
-        AbstractInteger::privateIncrement(&quotient.d_data, quotient.d_data);
-
-        AbstractInteger::privateSubtract(&remainder->d_data,
-                                         divisor.d_data,
-                                         remainder->d_data);
-
-        AbstractInteger::privateDecrement(&remainder->d_data,
-                                          remainder->d_data);
-
-        remainder->d_sign = divisor.d_sign;
-
-        quotient.d_sign = e_NEGATIVE;
-
-        AbstractInteger::privateIncrement(&quotient.d_data, quotient.d_data);
-
-        if (AbstractInteger::privateIsZero(remainder->d_data)) {
-            remainder->d_sign = e_ZERO;
-        }
-
-        if (AbstractInteger::privateIsZero(quotient.d_data)) {
-            quotient.d_sign = e_ZERO;
-        }
-    }
-
-    this->swap(result);
     return *this;
 }
 
@@ -3191,7 +2564,7 @@ bool AbstractInteger::equals(unsigned long long value) const
 
 bool AbstractInteger::equals(const AbstractInteger& other) const
 {
-    return d_sign == other.d_sign && d_data == other.d_data;
+    return d_sign == other.d_sign && d_magnitude == other.d_magnitude;
 }
 
 int AbstractInteger::compare(short value) const
@@ -3236,20 +2609,16 @@ int AbstractInteger::compare(unsigned long long value) const
 
 int AbstractInteger::compare(const AbstractInteger& other) const
 {
-    const Sign lhsSign = d_sign;
-    const Sign rhsSign = other.d_sign;
-
     int result = 0;
 
-    if (lhsSign < rhsSign) {
+    if (d_sign < other.d_sign) {
         result = -1;
     }
-    else if (rhsSign < lhsSign) {
+    else if (other.d_sign < d_sign) {
         result = +1;
     }
     else {
-        result = AbstractInteger::privateCompare(d_data, other.d_data) *
-                 static_cast<int>(lhsSign);
+        result = d_magnitude.compare(other.d_magnitude);
     }
 
     return result;
@@ -3257,21 +2626,20 @@ int AbstractInteger::compare(const AbstractInteger& other) const
 
 ntsa::Error AbstractInteger::convert(short* result) const
 {
-    const bsl::size_t size = d_data.size();
-
-    if (size == 0) {
-        *result = 0;
-        return ntsa::Error();
+    ntsa::Error error;
+    
+    bsl::int64_t value = 0;
+    error = d_magnitude.convert(&value);
+    if (error) {
+        return error;
     }
 
-    if (size > 1) {
+    if (value > static_cast<bsl::int64_t>(bsl::numeric_limits<short>::max())) {
         return ntsa::Error(ntsa::Error::e_LIMIT);
     }
 
-    const Block value = d_data.front();
-
-    if (value > static_cast<Block>(bsl::numeric_limits<short>::max())) {
-        return ntsa::Error(ntsa::Error::e_LIMIT);
+    if (d_sign == AbstractIntegerSign::e_NEGATIVE) {
+        value = -value;
     }
 
     *result = static_cast<short>(value);
@@ -3280,24 +2648,21 @@ ntsa::Error AbstractInteger::convert(short* result) const
 
 ntsa::Error AbstractInteger::convert(unsigned short* result) const
 {
-    const bsl::size_t size = d_data.size();
+    ntsa::Error error;
 
-    if (size == 0) {
-        *result = 0;
-        return ntsa::Error();
-    }
-
-    if (size > 1) {
+    if (d_sign == AbstractIntegerSign::e_NEGATIVE) {
         return ntsa::Error(ntsa::Error::e_LIMIT);
     }
 
-    if (d_sign == e_NEGATIVE) {
-        return ntsa::Error(ntsa::Error::e_LIMIT);
+    bsl::uint64_t value = 0;
+    error = d_magnitude.convert(&value);
+    if (error) {
+        return error;
     }
 
-    const Block value = d_data.front();
-
-    if (value > static_cast<Block>(bsl::numeric_limits<short>::max())) {
+    if (value > static_cast<bsl::uint64_t>(
+        bsl::numeric_limits<unsigned short>::max())) 
+    {
         return ntsa::Error(ntsa::Error::e_LIMIT);
     }
 
@@ -3347,83 +2712,30 @@ ntsa::Error AbstractInteger::convert(unsigned long long* result) const
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
-void AbstractInteger::generate(bsl::string* result, int base) const
+void AbstractInteger::generate(bsl::string*               result, 
+                               AbstractIntegerBase::Value base) const
 {
-    ntsa::Error error;
-
-    result->clear();
-
-    const bsl::size_t size = d_data.size();
-
-    if (d_sign == e_ZERO || size == 0) {
-        result->push_back('0');
-        return;
-    }
-
-    // Vector of digits in the base, least-significant first.
-    BlockVector digits;
-    {
-        BlockVector dividend(d_allocator_p);
-        AbstractInteger::privateAssign(&dividend, d_data);
-
-        const bsl::size_t divisor = static_cast<bsl::size_t>(base);
-
-        while (!AbstractInteger::privateIsZero(dividend)) {
-            BlockVector quotient(d_allocator_p);
-            BlockVector remainder(d_allocator_p);
-
-            AbstractInteger::privateDivideBySubtraction(&quotient,
-                                                        &remainder,
-                                                        dividend,
-                                                        divisor);
-
-            BSLS_ASSERT_OPT(remainder.size() == 1);
-            Block digit = static_cast<Block>(remainder.front());
-
-            digits.push_back(digit);
-            dividend.swap(quotient);
-        }
-    }
-
-    BlockVector::const_iterator it = digits.begin();
-    BlockVector::const_iterator et = digits.end();
-
-    for (; it != et; ++it) {
-        Block value = *it;
-
-        if (value < 10) {
-            result->push_back(static_cast<char>('0' + value));
-        }
-        else {
-            result->push_back(static_cast<char>('a' + (value - 10)));
-        }
-    }
-
-    if (d_sign == e_NEGATIVE) {
-        result->push_back('-');
-    }
-
-    bsl::reverse(result->begin(), result->end());
+    d_magnitude.generate(result, d_sign, base);
 }
 
 bool AbstractInteger::isZero() const
 {
-    return d_sign == e_ZERO;
+    return d_magnitude.isZero();
 }
 
 bool AbstractInteger::isPositive() const
 {
-    return d_sign == e_POSITIVE;
+    return d_sign == AbstractIntegerSign::e_POSITIVE;
 }
 
 bool AbstractInteger::isNegative() const
 {
-    return d_sign == e_NEGATIVE;
+    return d_sign == AbstractIntegerSign::e_NEGATIVE;
 }
 
 bslma::Allocator* AbstractInteger::allocator() const
 {
-    return d_allocator_p;
+    return d_magnitude.allocator();
 }
 
 bsl::ostream& AbstractInteger::print(bsl::ostream& stream,
@@ -3434,18 +2746,18 @@ bsl::ostream& AbstractInteger::print(bsl::ostream& stream,
     NTCCFG_WARNING_UNUSED(spacesPerLevel);
 
     bsl::string result;
-    int         base = 10;
+    AbstractIntegerBase::Value base = AbstractIntegerBase::e_DECIMAL;
 
     const bsl::ostream::fmtflags flags = stream.flags();
 
     if ((flags & std::ios_base::hex) != 0) {
-        base = 16;
+        base = AbstractIntegerBase::e_HEXADECIMAL;
     }
     else if ((flags & std::ios_base::oct) != 0) {
-        base = 8;
+        base = AbstractIntegerBase::e_OCTAL;
     }
 
-    this->generate(&result, base);
+    d_magnitude.generate(&result, d_sign, base);
     stream << result;
     return stream;
 }
@@ -3574,6 +2886,238 @@ bool operator>(const AbstractInteger& lhs, const AbstractInteger& rhs)
 bool operator>=(const AbstractInteger& lhs, const AbstractInteger& rhs)
 {
     return lhs.compare(rhs) >= 0;
+}
+
+
+void AbstractIntegerUtil::add(AbstractInteger*       sum,
+                              const AbstractInteger& addend1,
+                              const AbstractInteger& addend2)
+{
+    NTCCFG_WARNING_UNUSED(sum);
+    NTCCFG_WARNING_UNUSED(addend1);
+    NTCCFG_WARNING_UNUSED(addend2);
+
+    NTCCFG_NOT_IMPLEMENTED();
+
+    // MRM
+#if 0
+    const AbstractInteger& lhs = *this;
+    const AbstractInteger& rhs = other;
+
+    if (lhs.d_sign == e_ZERO) {
+        AbstractInteger result(d_allocator_p);
+        AbstractInteger::privateAssign(&result.d_data, rhs.d_data);
+        AbstractInteger::privateKeep(&result.d_sign, rhs.d_sign);
+        this->swap(result);
+        return *this;
+    }
+    else if (rhs.d_sign == e_ZERO) {
+        return *this;
+    }
+    else if (lhs.d_sign == rhs.d_sign) {
+        AbstractInteger result(d_allocator_p);
+        AbstractInteger::privateAdd(&result.d_data, lhs.d_data, rhs.d_data);
+        AbstractInteger::privateKeep(&result.d_sign, lhs.d_sign);
+        this->swap(result);
+        return *this;
+    }
+    else {
+        const int comparison = lhs.compare(rhs);
+        if (comparison == 0) {
+            this->reset();
+            return *this;
+        }
+        else if (comparison > 0) {
+            AbstractInteger result(d_allocator_p);
+            AbstractInteger::privateSubtract(&result.d_data,
+                                             lhs.d_data,
+                                             rhs.d_data);
+            AbstractInteger::privateKeep(&result.d_sign, lhs.d_sign);
+            this->swap(result);
+            return *this;
+        }
+        else {
+            AbstractInteger result(d_allocator_p);
+            AbstractInteger::privateSubtract(&result.d_data,
+                                             rhs.d_data,
+                                             lhs.d_data);
+            AbstractInteger::privateKeep(&result.d_sign, rhs.d_sign);
+            this->swap(result);
+            return *this;
+        }
+    }
+#endif
+}
+
+void AbstractIntegerUtil::subtract(AbstractInteger*       difference,
+                                   const AbstractInteger& minuend,
+                                   const AbstractInteger& subtrahend)
+{
+    NTCCFG_WARNING_UNUSED(difference);
+    NTCCFG_WARNING_UNUSED(minuend);
+    NTCCFG_WARNING_UNUSED(subtrahend);
+
+    NTCCFG_NOT_IMPLEMENTED();
+
+    // MRM
+#if 0
+    const AbstractInteger& lhs = *this;
+    const AbstractInteger& rhs = other;
+
+    if (lhs.d_sign == e_ZERO) {
+        AbstractInteger result(d_allocator_p);
+        AbstractInteger::privateAssign(&result.d_data, rhs.d_data);
+        AbstractInteger::privateFlip(&result.d_sign, rhs.d_sign);
+        this->swap(result);
+        return *this;
+    }
+    else if (rhs.d_sign == e_ZERO) {
+        return *this;
+    }
+    else if (lhs.d_sign != rhs.d_sign) {
+        AbstractInteger result(d_allocator_p);
+        AbstractInteger::privateAdd(&result.d_data, lhs.d_data, rhs.d_data);
+        AbstractInteger::privateKeep(&result.d_sign, lhs.d_sign);
+        this->swap(result);
+        return *this;
+    }
+    else {
+        const int comparison = lhs.compare(rhs);
+        if (comparison == 0) {
+            this->reset();
+            return *this;
+        }
+        else if (comparison > 0) {
+            AbstractInteger result(d_allocator_p);
+            AbstractInteger::privateSubtract(&result.d_data,
+                                             lhs.d_data,
+                                             rhs.d_data);
+            AbstractInteger::privateKeep(&result.d_sign, lhs.d_sign);
+            this->swap(result);
+            return *this;
+        }
+        else {
+            AbstractInteger result(rhs, d_allocator_p);
+            AbstractInteger::privateSubtract(&result.d_data,
+                                             rhs.d_data,
+                                             lhs.d_data);
+            AbstractInteger::privateFlip(&result.d_sign, rhs.d_sign);
+            this->swap(result);
+            return *this;
+        }
+    }
+#endif
+}
+
+void AbstractIntegerUtil::multiply(AbstractInteger*       product,
+                                   const AbstractInteger& multiplicand,
+                                   const AbstractInteger& multiplier)
+{
+    NTCCFG_WARNING_UNUSED(product);
+    NTCCFG_WARNING_UNUSED(multiplicand);
+    NTCCFG_WARNING_UNUSED(multiplier);
+
+    NTCCFG_NOT_IMPLEMENTED();
+
+    // MRM
+#if 0
+    const AbstractInteger& lhs = *this;
+    const AbstractInteger& rhs = other;
+
+    if (lhs.d_sign == e_ZERO || rhs.d_sign == e_ZERO) {
+        this->reset();
+        return *this;
+    }
+
+    AbstractInteger result(d_allocator_p);
+
+    AbstractInteger::privateMultiply(&result.d_data, lhs.d_data, rhs.d_data);
+    result.d_sign = lhs.d_sign == rhs.d_sign ? e_POSITIVE : e_NEGATIVE;
+
+    this->swap(result);
+    return *this;
+#endif
+}
+
+void AbstractIntegerUtil::divide(AbstractInteger*       quotient,
+                                 AbstractInteger*       remainder,
+                                 const AbstractInteger& dividend,
+                                 const AbstractInteger& divisor)
+{
+    NTCCFG_WARNING_UNUSED(quotient);
+    NTCCFG_WARNING_UNUSED(remainder);
+    NTCCFG_WARNING_UNUSED(dividend);
+    NTCCFG_WARNING_UNUSED(divisor);
+
+    NTCCFG_NOT_IMPLEMENTED();
+
+    // MRM
+#if 0
+    const AbstractInteger& lhs = *this;
+    const AbstractInteger& rhs = other;
+
+    remainder->reset();
+
+    if (lhs.isZero()) {
+        this->reset();
+        remainder->reset();
+        return *this;
+    }
+
+    if (rhs.isZero()) {
+        this->reset();
+        remainder->assign(*this);
+        return *this;
+    }
+
+    AbstractInteger result(d_allocator_p);
+
+    if (d_sign == other.d_sign) {
+        AbstractInteger::privateDivide(&result.d_data,
+                                       &remainder->d_data,
+                                       lhs.d_data,
+                                       rhs.d_data);
+        result.d_sign = e_POSITIVE;
+    }
+    else {
+        AbstractInteger        quotient(d_allocator_p);
+        AbstractInteger        dividend(*this, d_allocator_p);
+        const AbstractInteger& divisor = other;
+
+        AbstractInteger::privateDecrement(&dividend.d_data, dividend.d_data);
+
+        AbstractInteger::privateDivide(&quotient.d_data,
+                                       &remainder->d_data,
+                                       dividend.d_data,
+                                       divisor.d_data);
+
+        AbstractInteger::privateIncrement(&quotient.d_data, quotient.d_data);
+
+        AbstractInteger::privateSubtract(&remainder->d_data,
+                                         divisor.d_data,
+                                         remainder->d_data);
+
+        AbstractInteger::privateDecrement(&remainder->d_data,
+                                          remainder->d_data);
+
+        remainder->d_sign = divisor.d_sign;
+
+        quotient.d_sign = e_NEGATIVE;
+
+        AbstractInteger::privateIncrement(&quotient.d_data, quotient.d_data);
+
+        if (AbstractInteger::privateIsZero(remainder->d_data)) {
+            remainder->d_sign = e_ZERO;
+        }
+
+        if (AbstractInteger::privateIsZero(quotient.d_data)) {
+            quotient.d_sign = e_ZERO;
+        }
+    }
+
+    this->swap(result);
+    return *this;
+#endif
 }
 
 }  // close package namespace
