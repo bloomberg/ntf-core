@@ -26,7 +26,7 @@
 
 using namespace BloombergLP;
 
-// #define NTCA_ENCRYPTION_NUMBER_CASE 250
+// #define NTCA_ENCRYPTION_NUMBER_CASE 1
 
 #define NTSA_ABSTRACT_INTEGER_LOG_INTEGRAL_OPERATION( \
     operation, data, expected, found) \
@@ -75,20 +75,60 @@ using namespace BloombergLP;
 
 namespace test {
 
-struct Data {
+struct UnsignedIntegerData {
     bsl::size_t   variationIndex;
     bsl::size_t   variationCount;
     bsl::uint64_t lhs;
     bsl::uint64_t rhs;
+
+    bool multiplicationWouldOverflow() const
+    {
+        if (rhs != 0 && lhs > UINT64_MAX / rhs) {
+            return true;
+        }
+
+        return false;
+    }
 };
 
-typedef bsl::vector<Data> DataVector;
+typedef bsl::vector<UnsignedIntegerData> UnsignedIntegerDataVector;
+
+struct SignedIntegerData {
+    bsl::size_t   variationIndex;
+    bsl::size_t   variationCount;
+    bsl::int64_t lhs;
+    bsl::int64_t rhs;
+
+    bool multiplicationWouldOverflow() const
+    {
+        if (lhs > 0 && rhs > 0 && lhs > INT64_MAX / rhs) {
+            return true;
+        }
+
+        if (lhs < 0 && rhs > 0 && lhs < INT64_MIN / rhs) {
+            return true;
+        }
+
+        if (lhs > 0 && rhs < 0 && rhs < INT64_MIN / lhs) {
+            return true;
+        }
+
+        if (lhs < 0 && rhs < 0 && lhs < INT64_MAX / rhs) {
+            return true;
+        }
+
+        return false;
+    }
+};
+
+typedef bsl::vector<SignedIntegerData> SignedIntegerDataVector;
 
 // Provide implementations of test cases.
 class Case
 {
   private:
-    static void loadData(DataVector* result);
+    static void loadUnsignedIntegerData(UnsignedIntegerDataVector* result);
+    static void loadSignedIntegerData(SignedIntegerDataVector* result);
 
     static void verifyNativeMath(bslma::Allocator* allocator);
     static void verifyBase(bslma::Allocator* allocator);
@@ -98,13 +138,19 @@ class Case
     // Verify the fundamental mechanisms used to build abstract integers.
     static void verifyPrerequisites(bslma::Allocator* allocator);
 
-    static void verifyQuantityAdd(bslma::Allocator* allocator);
-    static void verifyQuantitySub(bslma::Allocator* allocator);
-    static void verifyQuantityMul(bslma::Allocator* allocator);
-    static void verifyQuantityDiv(bslma::Allocator* allocator);
+    static void verifyUnsignedIntegerAdd(bslma::Allocator* allocator);
+    static void verifyUnsignedIntegerSubtract(bslma::Allocator* allocator);
+    static void verifyUnsignedIntegerMultiply(bslma::Allocator* allocator);
+    static void verifyUnsignedIntegerDivide(bslma::Allocator* allocator);
+
+
+    static void verifySignedIntegerAdd(bslma::Allocator* allocator);
+    static void verifySignedIntegerSubtract(bslma::Allocator* allocator);
+    static void verifySignedIntegerMultiply(bslma::Allocator* allocator);
+    static void verifySignedIntegerDivide(bslma::Allocator* allocator);
 };
 
-void Case::loadData(DataVector* result)
+void Case::loadUnsignedIntegerData(UnsignedIntegerDataVector* result)
 {
     result->clear();
 
@@ -119,7 +165,7 @@ void Case::loadData(DataVector* result)
     discontinuity.push_back(65535);
     discontinuity.push_back(4294967295);
 
-    const int N = 255;
+    const int N = 13;
 
     for (int i = 0; i < N; ++i) {
         adjustment.push_back(-i);
@@ -142,7 +188,7 @@ void Case::loadData(DataVector* result)
                         discontinuity[k] + adjustment[l];
 
                     if (lhsValue > 0 && rhsValue > 0) {
-                        Data data;
+                        UnsignedIntegerData data;
                         data.lhs = lhsValue;
                         data.rhs = rhsValue;
 
@@ -161,6 +207,64 @@ void Case::loadData(DataVector* result)
     }
 }
 
+void Case::loadSignedIntegerData(SignedIntegerDataVector* result)
+{
+    result->clear();
+
+    typedef bsl::vector<bsl::int64_t> DiscontinuityVector;
+    typedef bsl::vector<bsl::int64_t> AdjustmentVector;
+
+    DiscontinuityVector discontinuity;
+    AdjustmentVector adjustment;
+
+    discontinuity.push_back(0);
+    discontinuity.push_back(255);
+    discontinuity.push_back(-255);
+    discontinuity.push_back(65535);
+    discontinuity.push_back(-65535);
+    discontinuity.push_back(4294967295);
+    discontinuity.push_back(-4294967295);
+
+    const int N = 13;
+
+    for (int i = 0; i < N; ++i) {
+        adjustment.push_back(-i);
+    }
+
+    adjustment.push_back(0);
+
+    for (int i = 0; i < N; ++i) {
+        adjustment.push_back(+i);
+    }
+
+    for (bsl::size_t i = 0; i < discontinuity.size(); ++i) {
+        for (bsl::size_t j = 0; j < adjustment.size(); ++j) {
+            for (bsl::size_t k = 0; k < discontinuity.size(); ++k) {
+                for (bsl::size_t l = 0; l < adjustment.size(); ++l) {
+                    const bsl::int64_t lhsValue = 
+                        discontinuity[i] + adjustment[j];
+
+                    const bsl::int64_t rhsValue = 
+                        discontinuity[k] + adjustment[l];
+
+                    SignedIntegerData data;
+                    data.lhs = lhsValue;
+                    data.rhs = rhsValue;
+
+                    result->push_back(data);                   
+                }
+            }
+        }
+    }
+
+    for (bsl::size_t i = 0; i < result->size(); ++i) {
+        (*result)[i].variationIndex = i;
+        (*result)[i].variationCount = result->size();
+    }
+}
+
+
+
 void Case::verifyNativeMath(bslma::Allocator* allocator)
 {
     {
@@ -172,6 +276,17 @@ void Case::verifyNativeMath(bslma::Allocator* allocator)
 
         NTCCFG_TEST_EQ(q, 0);
         NTCCFG_TEST_EQ(r, a);
+    }
+
+    {
+        bsl::int64_t a = 0;
+        bsl::int64_t b = -1;
+
+        bsl::int64_t q = a / b;
+        bsl::int64_t r = a % b;
+
+        NTCCFG_TEST_EQ(q, 0);
+        NTCCFG_TEST_EQ(r, 0);
     }
 }
 
@@ -246,13 +361,13 @@ void Case::verifyPrerequisites(bslma::Allocator* allocator)
     verifyRepresentation(allocator);
 }
 
-void Case::verifyQuantityAdd(bslma::Allocator* allocator)
+void Case::verifyUnsignedIntegerAdd(bslma::Allocator* allocator)
 {
-    test::DataVector dataVector(allocator);
-    test::Case::loadData(&dataVector);
+    test::UnsignedIntegerDataVector dataVector(allocator);
+    test::Case::loadUnsignedIntegerData(&dataVector);
 
     for (bsl::size_t i = 0; i < dataVector.size(); ++i) {
-        test::Data data = dataVector[i];
+        test::UnsignedIntegerData data = dataVector[i];
 
 #if defined(NTCA_ENCRYPTION_NUMBER_CASE)
         if (data.variationIndex != NTCA_ENCRYPTION_NUMBER_CASE) {
@@ -280,13 +395,13 @@ void Case::verifyQuantityAdd(bslma::Allocator* allocator)
     }
 }
 
-void Case::verifyQuantitySub(bslma::Allocator* allocator)
+void Case::verifyUnsignedIntegerSubtract(bslma::Allocator* allocator)
 {
-    test::DataVector dataVector(allocator);
-    test::Case::loadData(&dataVector);
+    test::UnsignedIntegerDataVector dataVector(allocator);
+    test::Case::loadUnsignedIntegerData(&dataVector);
 
     for (bsl::size_t i = 0; i < dataVector.size(); ++i) {
-        test::Data data = dataVector[i];
+        test::UnsignedIntegerData data = dataVector[i];
 
 #if defined(NTCA_ENCRYPTION_NUMBER_CASE)
         if (data.variationIndex != NTCA_ENCRYPTION_NUMBER_CASE) {
@@ -320,13 +435,13 @@ void Case::verifyQuantitySub(bslma::Allocator* allocator)
     }
 }
 
-void Case::verifyQuantityMul(bslma::Allocator* allocator)
+void Case::verifyUnsignedIntegerMultiply(bslma::Allocator* allocator)
 {
-    test::DataVector dataVector(allocator);
-    test::Case::loadData(&dataVector);
+    test::UnsignedIntegerDataVector dataVector(allocator);
+    test::Case::loadUnsignedIntegerData(&dataVector);
 
     for (bsl::size_t i = 0; i < dataVector.size(); ++i) {
-        test::Data data = dataVector[i];
+        test::UnsignedIntegerData data = dataVector[i];
 
 #if defined(NTCA_ENCRYPTION_NUMBER_CASE)
         if (data.variationIndex != NTCA_ENCRYPTION_NUMBER_CASE) {
@@ -336,20 +451,7 @@ void Case::verifyQuantityMul(bslma::Allocator* allocator)
 
         // Skip variations whose products overflow 64-bit unsigned integers. 
 
-        // MRM
-        #if 0
-        bsl::uint64_t expectedValue = data.lhs * data.rhs;
-        if (data.lhs > 1 && data.rhs > 1) {
-            if (expectedValue < data.lhs || expectedValue < data.rhs) {
-                continue;
-            }
-        }
-        #endif
-
-        if (data.rhs != 0 && 
-            data.lhs > bsl::numeric_limits<bsl::uint64_t>::max() / 
-            data.rhs) 
-        {
+        if (data.multiplicationWouldOverflow()) {
             continue;
         }
         
@@ -373,13 +475,23 @@ void Case::verifyQuantityMul(bslma::Allocator* allocator)
     }
 }
 
-void Case::verifyQuantityDiv(bslma::Allocator* allocator)
+void Case::verifyUnsignedIntegerDivide(bslma::Allocator* allocator)
 {
-    test::DataVector dataVector(allocator);
-    test::Case::loadData(&dataVector);
+    test::UnsignedIntegerDataVector dataVector(allocator);
+    test::Case::loadUnsignedIntegerData(&dataVector);
 
     for (bsl::size_t i = 0; i < dataVector.size(); ++i) {
-        test::Data data = dataVector[i];
+        test::UnsignedIntegerData data = dataVector[i];
+
+#if defined(NTCA_ENCRYPTION_NUMBER_CASE)
+        if (data.variationIndex != NTCA_ENCRYPTION_NUMBER_CASE) {
+            continue;
+        }
+#endif
+
+        if (data.rhs == 0) {
+            continue;
+        }
 
         ntca::AbstractIntegerQuantity lhs(data.lhs, allocator);
         ntca::AbstractIntegerQuantity rhs(data.rhs, allocator);
@@ -407,6 +519,187 @@ void Case::verifyQuantityDiv(bslma::Allocator* allocator)
     }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void Case::verifySignedIntegerAdd(bslma::Allocator* allocator)
+{
+    test::SignedIntegerDataVector dataVector(allocator);
+    test::Case::loadSignedIntegerData(&dataVector);
+
+    for (bsl::size_t i = 0; i < dataVector.size(); ++i) {
+        test::SignedIntegerData data = dataVector[i];
+
+#if defined(NTCA_ENCRYPTION_NUMBER_CASE)
+        if (data.variationIndex != NTCA_ENCRYPTION_NUMBER_CASE) {
+            continue;
+        }
+#endif
+
+        ntca::AbstractInteger lhs(data.lhs, allocator);
+        ntca::AbstractInteger rhs(data.rhs, allocator);
+
+        ntca::AbstractInteger sum(allocator);
+
+        ntca::AbstractIntegerUtil::add(&sum, lhs, rhs);
+
+        bsl::string expected = bsl::to_string(data.lhs + data.rhs);
+
+        bsl::string found;
+        sum.generate(&found, 
+                     ntca::AbstractIntegerBase::e_DECIMAL);
+
+        NTSA_ABSTRACT_INTEGER_LOG_ADD(data, expected, found);
+
+        NTCCFG_TEST_EQ(found, expected);
+    }
+}
+
+void Case::verifySignedIntegerSubtract(bslma::Allocator* allocator)
+{
+    test::SignedIntegerDataVector dataVector(allocator);
+    test::Case::loadSignedIntegerData(&dataVector);
+
+    for (bsl::size_t i = 0; i < dataVector.size(); ++i) {
+        test::SignedIntegerData data = dataVector[i];
+
+#if defined(NTCA_ENCRYPTION_NUMBER_CASE)
+        if (data.variationIndex != NTCA_ENCRYPTION_NUMBER_CASE) {
+            continue;
+        }
+#endif
+
+        ntca::AbstractInteger lhs(data.lhs, allocator);
+        ntca::AbstractInteger rhs(data.rhs, allocator);
+
+        ntca::AbstractInteger difference(allocator);
+
+        ntca::AbstractIntegerUtil::subtract(&difference, lhs, rhs);
+
+        bsl::string expected = bsl::to_string(data.lhs - data.rhs);
+
+        bsl::string found;
+        difference.generate(&found, 
+                     ntca::AbstractIntegerBase::e_DECIMAL);
+
+        NTSA_ABSTRACT_INTEGER_LOG_SUBTRACT(data, expected, found);
+
+        NTCCFG_TEST_EQ(found, expected);
+    }
+}
+
+void Case::verifySignedIntegerMultiply(bslma::Allocator* allocator)
+{
+    test::SignedIntegerDataVector dataVector(allocator);
+    test::Case::loadSignedIntegerData(&dataVector);
+
+    for (bsl::size_t i = 0; i < dataVector.size(); ++i) {
+        test::SignedIntegerData data = dataVector[i];
+
+#if defined(NTCA_ENCRYPTION_NUMBER_CASE)
+        if (data.variationIndex != NTCA_ENCRYPTION_NUMBER_CASE) {
+            continue;
+        }
+#endif
+
+        // Skip variations whose products overflow 64-bit signed integers. 
+
+        if (data.multiplicationWouldOverflow()) {
+            continue;
+        }
+        
+        ntca::AbstractInteger lhs(data.lhs, allocator);
+        ntca::AbstractInteger rhs(data.rhs, allocator);
+
+        ntca::AbstractInteger product(allocator);
+
+        ntca::AbstractIntegerUtil::multiply(&product, lhs, rhs);
+
+        bsl::string expected = bsl::to_string(data.lhs * data.rhs);
+
+        bsl::string found;
+        product.generate(&found, 
+                     ntca::AbstractIntegerBase::e_DECIMAL);
+
+        NTSA_ABSTRACT_INTEGER_LOG_MULTIPLY(data, expected, found);
+
+        NTCCFG_TEST_EQ(found, expected);
+    }
+}
+
+void Case::verifySignedIntegerDivide(bslma::Allocator* allocator)
+{
+    test::SignedIntegerDataVector dataVector(allocator);
+    test::Case::loadSignedIntegerData(&dataVector);
+
+    for (bsl::size_t i = 0; i < dataVector.size(); ++i) {
+        test::SignedIntegerData data = dataVector[i];
+
+#if defined(NTCA_ENCRYPTION_NUMBER_CASE)
+        if (data.variationIndex != NTCA_ENCRYPTION_NUMBER_CASE) {
+            continue;
+        }
+#endif
+
+        if (data.rhs == 0) {
+            continue;
+        }
+
+        ntca::AbstractInteger lhs(data.lhs, allocator);
+        ntca::AbstractInteger rhs(data.rhs, allocator);
+
+        ntca::AbstractInteger q(allocator);
+        ntca::AbstractInteger r(allocator);
+
+        ntca::AbstractIntegerUtil::divide(&q, &r, lhs, rhs);
+
+        bsl::string eq = bsl::to_string(data.lhs / data.rhs);
+        bsl::string er = bsl::to_string(data.lhs % data.rhs);
+
+        bsl::string fq;
+        q.generate(&fq, ntca::AbstractIntegerBase::e_DECIMAL);
+
+        bsl::string fr;
+        r.generate(&fr, ntca::AbstractIntegerBase::e_DECIMAL);
+
+        NTSA_ABSTRACT_INTEGER_LOG_DIVIDE(data, eq, fq, er, fr);
+
+        NTCCFG_TEST_EQ(fq, eq);
+        NTCCFG_TEST_EQ(fr, er);
+    }
+}
+
 }  // close namespace test
 
 NTCCFG_TEST_CASE(1)
@@ -422,50 +715,52 @@ NTCCFG_TEST_CASE(1)
 
 NTCCFG_TEST_CASE(2)
 {
-    // Test abstract integer representation addition.
+    // Test abstract unsigned integer addition.
 
     ntccfg::TestAllocator ta;
     {
-        test::Case::verifyQuantityAdd(&ta);
+        test::Case::verifyUnsignedIntegerAdd(&ta);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
 NTCCFG_TEST_CASE(3)
 {
-    // Test abstract integer representation subtraction.
+    // Test abstract unsigned integer subtraction.
 
     ntccfg::TestAllocator ta;
     {
-        test::Case::verifyQuantitySub(&ta);
+        test::Case::verifyUnsignedIntegerSubtract(&ta);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
 NTCCFG_TEST_CASE(4)
 {
-    // Test abstract integer representation multiplication.
+    // Test abstract unsigned integer multiplication.
 
     ntccfg::TestAllocator ta;
     {
-        test::Case::verifyQuantityMul(&ta);
+        test::Case::verifyUnsignedIntegerMultiply(&ta);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
 NTCCFG_TEST_CASE(5)
 {
-    // Test abstract integer representation division.
+    // Test abstract unsigned integer division.
 
     ntccfg::TestAllocator ta;
     {
-        test::Case::verifyQuantityDiv(&ta);
+        test::Case::verifyUnsignedIntegerDivide(&ta);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
 NTCCFG_TEST_CASE(6)
 {
+    // Test abstract unsigned integer facilities.
+
     // Test default constructor
     // Test copy constructor
     // Test move constructor
@@ -487,18 +782,76 @@ NTCCFG_TEST_CASE(6)
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-// MRM
-#if 0
-
 NTCCFG_TEST_CASE(7)
 {
-    // Test abstract integer 'parse/generate'.
+    // Test abstract signed integer addition.
 
     ntccfg::TestAllocator ta;
     {
-        ntsa::Error error;
+        test::Case::verifySignedIntegerAdd(&ta);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
 
-        {
+NTCCFG_TEST_CASE(8)
+{
+    // Test abstract signed integer subtraction.
+
+    ntccfg::TestAllocator ta;
+    {
+        test::Case::verifySignedIntegerSubtract(&ta);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(9)
+{
+    // Test abstract signed integer multiplication.
+
+    ntccfg::TestAllocator ta;
+    {
+        test::Case::verifySignedIntegerMultiply(&ta);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(10)
+{
+    // Test abstract signed integer division.
+
+    ntccfg::TestAllocator ta;
+    {
+        test::Case::verifySignedIntegerDivide(&ta);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(11)
+{
+    // Test abstract signed integer facilities.
+    
+    // Test default constructor
+    // Test copy constructor
+    // Test move constructor
+    // Test assignment operator
+    // Test move-assignment operator
+    // Test move-assignment operator.
+    // Test 'reset'
+    // Test 'move'
+
+    // Test 'parse/generate'
+    // Test 'equals'
+    // Test 'less'
+    // Test 'hash'
+    // Test 'print'
+
+    ntccfg::TestAllocator ta;
+    {
+        // Test parse/generate.
+
+        // MRM
+        #if 0
+{
             ntca::AbstractInteger number(&ta);
             error = number.parse("");
             NTCCFG_TEST_TRUE(error);
@@ -564,203 +917,25 @@ NTCCFG_TEST_CASE(7)
 
             NTCCFG_TEST_EQ(output, input);
         }
+        #endif
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
-
-NTCCFG_TEST_CASE(10)
-{
-    // Test 'add'.
-
-    ntccfg::TestAllocator ta;
-    {
-        ntsa::Error error;
-
-        const struct Data {
-            const char* lhs;
-            const char* rhs;
-            const char* result;
-        } DATA[] = {
-#if 0
-            { "0", "0", "0" },
-            { "0", "1", "1" },
-            { "1", "0", "1" },
-            { "1", "1", "2" },
-            
-            { "10", "20", "30" },
-            { "12", "34", "46" },
-#endif
-
-#if 0
-            { "65535", "0", "65535" },
-            { "65535", "1", "65536" },
-#endif
-
-            {"65535", "2", "65537"},
-
- // { "4294901761", "65535", "4294967296" }
-        };
-
-        enum { NUM_DATA = sizeof(DATA) / sizeof(DATA[0]) };
-
-        for (bsl::size_t i = 0; i < NUM_DATA; ++i) {
-            NTCCFG_TEST_LOG_DEBUG << "Parse starting" << NTCCFG_TEST_LOG_END;
-
-            ntca::AbstractInteger lhs(&ta);
-            error = lhs.parse(DATA[i].lhs);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_LOG_DEBUG << "Parse complete" << NTCCFG_TEST_LOG_END;
-
-            ntca::AbstractInteger rhs(&ta);
-            error = rhs.parse(DATA[i].rhs);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_LOG_DEBUG << "Generate starting"
-                                  << NTCCFG_TEST_LOG_END;
-
-            bsl::string lhsString;
-            lhs.generate(&lhsString, 10);
-
-            bsl::string rhsString;
-            rhs.generate(&rhsString, 10);
-
-            NTCCFG_TEST_LOG_DEBUG << "Generate complete"
-                                  << NTCCFG_TEST_LOG_END;
-
-            NTCCFG_TEST_LOG_DEBUG << "Add starting" << NTCCFG_TEST_LOG_END;
-
-            ntca::AbstractInteger result = lhs + rhs;
-
-            NTCCFG_TEST_LOG_DEBUG << "Add complete" << NTCCFG_TEST_LOG_END;
-
-            bsl::string resultString;
-            result.generate(&resultString, 10);
-
-            NTCCFG_TEST_LOG_DEBUG << "Testing:"
-                                  << "\nLhsInput:  " << DATA[i].lhs
-                                  << "\nLhsValue:  " << lhsString
-                                  << "\nRhsInput:  " << DATA[i].rhs
-                                  << "\nRhsValue:  " << rhsString
-                                  << "\nE:         " << DATA[i].result
-                                  << "\nF:         " << resultString
-                                  << NTCCFG_TEST_LOG_END;
-        }
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(11)
-{
-    // Test 'subtract'.
-
-    ntccfg::TestAllocator ta;
-    {
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(12)
-{
-    // Test 'multiply'.
-
-    ntccfg::TestAllocator ta;
-    {
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(13)
-{
-    // Test 'divide'.
-
-    ntccfg::TestAllocator ta;
-    {
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(14)
-{
-    // Test TODO
-
-    ntccfg::TestAllocator ta;
-    {
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(15)
-{
-    // Test 'equals'.
-
-    ntccfg::TestAllocator ta;
-    {
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(16)
-{
-    // Test 'less'.
-
-    ntccfg::TestAllocator ta;
-    {
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(17)
-{
-    // Test 'hash'.
-
-    ntccfg::TestAllocator ta;
-    {
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(18)
-{
-    // Test 'print'.
-
-    ntccfg::TestAllocator ta;
-    {
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-#endif
 
 NTCCFG_TEST_DRIVER
 {
-    NTCCFG_TEST_REGISTER(1);  // Test prerequisites
+    NTCCFG_TEST_REGISTER(1);   // Test prerequisites
 
-    NTCCFG_TEST_REGISTER(2);  // Test abstract integer representation addition
-    NTCCFG_TEST_REGISTER(3);  // Test abstract integer representation subtraction
-    NTCCFG_TEST_REGISTER(4);  // Test abstract integer representation multiplication
-    NTCCFG_TEST_REGISTER(5);  // Test abstract integer representation division
+    NTCCFG_TEST_REGISTER(2);   // Test abstract unsigned integer addition
+    NTCCFG_TEST_REGISTER(3);   // Test abstract unsigned integer subtraction
+    NTCCFG_TEST_REGISTER(4);   // Test abstract unsigned integer multiplication
+    NTCCFG_TEST_REGISTER(5);   // Test abstract unsigned integer division
+    NTCCFG_TEST_REGISTER(6);   // Test abstract unsigned integer facilities
 
-    NTCCFG_TEST_REGISTER(6);  // Test abstract integer representation facilities
-    
-    // MRM
-    #if 0
-    NTCCFG_TEST_REGISTER(7);  // Test abstract integer parse/generate
-
-    NTCCFG_TEST_REGISTER(8);  // Test 'move'
-
-    NTCCFG_TEST_REGISTER(9);  // Test 'parse/generate'
-
-    NTCCFG_TEST_REGISTER(10);  // Test 'add'
-    NTCCFG_TEST_REGISTER(11);  // Test 'subtract'
-    NTCCFG_TEST_REGISTER(12);  // Test 'multiply'
-    NTCCFG_TEST_REGISTER(13);  // Test 'divide'
-
-    NTCCFG_TEST_REGISTER(14);  // Test TODO
-
-    NTCCFG_TEST_REGISTER(15);  // Test 'equals'
-    NTCCFG_TEST_REGISTER(16);  // Test 'less'
-    NTCCFG_TEST_REGISTER(17);  // Test 'hash'
-    NTCCFG_TEST_REGISTER(18);  // Test 'print'
-    #endif
+    NTCCFG_TEST_REGISTER(7);   // Test abstract signed integer addition
+    NTCCFG_TEST_REGISTER(8);   // Test abstract signed integer subtraction
+    NTCCFG_TEST_REGISTER(9);   // Test abstract signed integer multiplication
+    NTCCFG_TEST_REGISTER(10);  // Test abstract signed integer division
+    NTCCFG_TEST_REGISTER(11);  // Test abstract signed integer facilities
 }
 NTCCFG_TEST_DRIVER_END;

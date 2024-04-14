@@ -58,11 +58,8 @@ AbstractIntegerSign::Value AbstractIntegerSign::flip(Value sign)
     if (sign == e_POSITIVE) {
         return e_NEGATIVE;
     }
-    else if (sign == e_NEGATIVE) {
-        return e_POSITIVE;
-    }
     else {
-        return e_ZERO;
+        return e_POSITIVE;
     }
 }
 
@@ -76,9 +73,6 @@ const char* AbstractIntegerSign::toString(Value value)
     switch (value) {
     case e_NEGATIVE: {
         return "NEGATIVE";
-    } break;
-    case e_ZERO: {
-        return "ZERO";
     } break;
     case e_POSITIVE: {
         return "POSITIVE";
@@ -98,8 +92,6 @@ bsl::ostream& operator<<(bsl::ostream& stream, AbstractIntegerSign::Value rhs)
 {
     return AbstractIntegerSign::print(stream, rhs);
 }
-
-
 
 bsl::uint64_t AbstractIntegerBase::radix(AbstractIntegerBase::Value base)
 {
@@ -394,16 +386,16 @@ bool AbstractIntegerRepresentation::isOne() const
     return d_data.size() == 1 && d_data.front() == 1;
 }
 
-bool AbstractIntegerRepresentation::isAlias(
+bool AbstractIntegerRepresentation::isNotAliasOf(
     const AbstractIntegerRepresentation* other) const
 {
-    return this == other;
+    return this != other;
 }
 
-bool AbstractIntegerRepresentation::isAlias(
+bool AbstractIntegerRepresentation::isNotAliasOf(
     const AbstractIntegerRepresentation& other) const
 {
-    return this == &other;
+    return this != &other;
 }
 
 bslma::Allocator* AbstractIntegerRepresentation::allocator() const
@@ -435,11 +427,11 @@ void AbstractIntegerRepresentation::add(
     const AbstractIntegerRepresentation& addend1,
     const AbstractIntegerRepresentation& addend2)
 {
-    BSLS_ASSERT_OPT(!addend1.isAlias(sum));
-    BSLS_ASSERT_OPT(!addend2.isAlias(sum));
+    BSLS_ASSERT_OPT(sum->isNotAliasOf(addend1));
+    BSLS_ASSERT_OPT(sum->isNotAliasOf(addend2));
 
-    BSLS_ASSERT_OPT(addend1.base() == sum->base());
-    BSLS_ASSERT_OPT(addend2.base() == sum->base());
+    BSLS_ASSERT_OPT(sum->base() == addend1.base());
+    BSLS_ASSERT_OPT(sum->base() == addend2.base());
 
     sum->reset();
 
@@ -497,11 +489,11 @@ void AbstractIntegerRepresentation::subtract(
     const AbstractIntegerRepresentation& minuend,
     const AbstractIntegerRepresentation& subtrahend)
 {
-    BSLS_ASSERT_OPT(!minuend.isAlias(difference));
-    BSLS_ASSERT_OPT(!subtrahend.isAlias(difference));
+    BSLS_ASSERT_OPT(difference->isNotAliasOf(minuend));
+    BSLS_ASSERT_OPT(difference->isNotAliasOf(subtrahend));
 
-    BSLS_ASSERT_OPT(minuend.base() == difference->base());
-    BSLS_ASSERT_OPT(subtrahend.base() == difference->base());
+    BSLS_ASSERT_OPT(difference->base() == minuend.base());
+    BSLS_ASSERT_OPT(difference->base() == subtrahend.base());
 
     difference->reset();
 
@@ -560,11 +552,11 @@ void AbstractIntegerRepresentation::multiply(
     const AbstractIntegerRepresentation& multiplicand,
     const AbstractIntegerRepresentation& multiplier)
 {
-    BSLS_ASSERT_OPT(!multiplicand.isAlias(product));
-    BSLS_ASSERT_OPT(!multiplier.isAlias(product));
+    BSLS_ASSERT_OPT(product->isNotAliasOf(multiplicand));
+    BSLS_ASSERT_OPT(product->isNotAliasOf(multiplier));
 
-    BSLS_ASSERT_OPT(multiplicand.base() == product->base());
-    BSLS_ASSERT_OPT(multiplier.base() == product->base());
+    BSLS_ASSERT_OPT(product->base() == multiplicand.base());
+    BSLS_ASSERT_OPT(product->base() == multiplier.base());
 
     if (multiplicand.isZero()) {
         product->reset();
@@ -664,15 +656,15 @@ void AbstractIntegerRepresentation::divide(
     // non-negative integers") in section 4.3.1 of Volume 2 of "The Art of
     // Computer Programming", by Donald Knuth.
 
-    BSLS_ASSERT_OPT(!dividend.isAlias(quotient));
-    BSLS_ASSERT_OPT(!dividend.isAlias(remainder));
-    BSLS_ASSERT_OPT(!divisor.isAlias(quotient));
-    BSLS_ASSERT_OPT(!divisor.isAlias(remainder));
+    BSLS_ASSERT_OPT(quotient->isNotAliasOf(dividend));
+    BSLS_ASSERT_OPT(quotient->isNotAliasOf(divisor));
 
-    BSLS_ASSERT_OPT(remainder->base() == quotient->base());
+    BSLS_ASSERT_OPT(remainder->isNotAliasOf(dividend));
+    BSLS_ASSERT_OPT(remainder->isNotAliasOf(divisor));
 
-    BSLS_ASSERT_OPT(dividend.base() == quotient->base());
-    BSLS_ASSERT_OPT(divisor.base() == quotient->base());
+    BSLS_ASSERT_OPT(quotient->base() == remainder->base());
+    BSLS_ASSERT_OPT(quotient->base() == dividend.base());
+    BSLS_ASSERT_OPT(quotient->base() == divisor.base());
 
     quotient->reset();
     remainder->reset();
@@ -827,69 +819,19 @@ void AbstractIntegerRepresentation::divide(
 
 	q.normalize();
 	r.normalize();
-
-    // MRM: Old attempt at the Knuth algorithm.
-#if 0
-
-    BlockVector& q = quotient->d_data;
-    BlockVector& r = remainder->d_data;
-
-    // D1
-
-    AbstractIntegerQuantity u = dividend;
-    AbstractIntegerQuantity v = divisor;
-
-    const bsl::size_t m = u.size() - v.size();
-    const bsl::size_t n = v.size();
-
-    AbstractIntegerQuantity d((b - 1) / v.get(n - 1)); // MRM: floor?
-
-    AbstractIntegerQuantityUtil::multiply(&u, u, d);
-    AbstractIntegerQuantityUtil::multiply(&v, v, d);
-
-
-    // D2
-
-    bsl::size_t j = m;
-
-    // D3
-
-    while (true) {
-        Block x = (u[j + n] * b) + u[j + n - 1];
-        Block y = v[n - 1];
-
-        Block qc = x / y;
-        Block rc = x % y;
-
-        if ((qc == b) || (qc * v[n - 2] > b * rc + u[j + n - 2])) {
-            qc += 1;
-            rc += v[n - 1];
-
-            if (rc < b) {
-                continue; // goto D3
-            }
-        }
-
-        break;
-    }
-
-    // D4
-
-
-#endif
 }
 
 
 bool AbstractIntegerRepresentation::parse(
     AbstractIntegerRepresentation* result,
     AbstractIntegerSign::Value*    sign,
-    const bsl::string_view&  text)
+    const bsl::string_view&        text)
 {
     result->reset();
+    *sign = AbstractIntegerSign::e_POSITIVE;
 
     if (text.empty()) {
-        *sign = AbstractIntegerSign::e_ZERO;
-        return true;
+        return false;
     }
 
     *sign = AbstractIntegerSign::e_POSITIVE;
@@ -908,7 +850,6 @@ bool AbstractIntegerRepresentation::parse(
         if (*it == '0') {
             ++it;
             if (it == et) {
-                *sign = AbstractIntegerSign::e_ZERO;
                 return true;
             }
             else if (*it == 'x' || *it == 'X') {
@@ -1588,7 +1529,7 @@ AbstractIntegerQuantity& AbstractIntegerQuantity::divide(
 AbstractIntegerQuantity& AbstractIntegerQuantity::divide(
     const AbstractIntegerQuantity& other)
 {
-    ntca::AbstractIntegerQuantity remainder(d_rep.allocator());
+    ntca::AbstractIntegerQuantity remainder;
     return this->divide(other, &remainder);
 }
 
@@ -1790,42 +1731,42 @@ ntsa::Error AbstractIntegerQuantity::convert(unsigned short* result) const
 ntsa::Error AbstractIntegerQuantity::convert(int* result) const
 {
     NTCCFG_WARNING_UNUSED(result);
-    BSLS_ASSERT_OPT(!"Not implemented");
+    NTCCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error AbstractIntegerQuantity::convert(unsigned int* result) const
 {
     NTCCFG_WARNING_UNUSED(result);
-    BSLS_ASSERT_OPT(!"Not implemented");
+    NTCCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error AbstractIntegerQuantity::convert(long* result) const
 {
     NTCCFG_WARNING_UNUSED(result);
-    BSLS_ASSERT_OPT(!"Not implemented");
+    NTCCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error AbstractIntegerQuantity::convert(unsigned long* result) const
 {
     NTCCFG_WARNING_UNUSED(result);
-    BSLS_ASSERT_OPT(!"Not implemented");
+    NTCCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error AbstractIntegerQuantity::convert(long long* result) const
 {
     NTCCFG_WARNING_UNUSED(result);
-    BSLS_ASSERT_OPT(!"Not implemented");
+    NTCCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error AbstractIntegerQuantity::convert(unsigned long long* result) const
 {
     NTCCFG_WARNING_UNUSED(result);
-    BSLS_ASSERT_OPT(!"Not implemented");
+    NTCCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
@@ -1861,16 +1802,16 @@ bool AbstractIntegerQuantity::isOne() const
     return d_rep.isOne();
 }
 
-bool AbstractIntegerQuantity::isAlias(
+bool AbstractIntegerQuantity::isNotAliasOf(
     const AbstractIntegerQuantity* other) const
 {
-    return this == other;
+    return this != other;
 }
 
-bool AbstractIntegerQuantity::isAlias(
+bool AbstractIntegerQuantity::isNotAliasOf(
     const AbstractIntegerQuantity& other) const
 {
-    return this == &other;
+    return this != &other;
 }
 
 bslma::Allocator* AbstractIntegerQuantity::allocator() const
@@ -1948,7 +1889,7 @@ void AbstractIntegerQuantityUtil::add(AbstractIntegerQuantity*       sum,
                                       const AbstractIntegerQuantity& addend1,
                                       const AbstractIntegerQuantity& addend2)
 {
-    if (!addend1.isAlias(sum) && !addend2.isAlias(sum)) {
+    if (sum->isNotAliasOf(addend1) && sum->isNotAliasOf(addend2)) {
         AbstractIntegerRepresentation::add(&sum->d_rep, addend1.d_rep, addend2.d_rep);
     }
     else {
@@ -1963,7 +1904,7 @@ void AbstractIntegerQuantityUtil::subtract(
     const AbstractIntegerQuantity& minuend,
     const AbstractIntegerQuantity& subtrahend)
 {
-    if (!minuend.isAlias(difference) && !subtrahend.isAlias(difference)) {
+    if (difference->isNotAliasOf(minuend) && difference->isNotAliasOf(subtrahend)) {
         AbstractIntegerRepresentation::subtract(&difference->d_rep, minuend.d_rep, subtrahend.d_rep);
     }
     else {
@@ -1980,7 +1921,7 @@ void AbstractIntegerQuantityUtil::multiply(
     const AbstractIntegerQuantity& multiplicand,
     const AbstractIntegerQuantity& multiplier)
 {
-    if (!multiplicand.isAlias(product) && !multiplier.isAlias(product)) {
+    if (product->isNotAliasOf(multiplicand) && product->isNotAliasOf(multiplier)) {
         AbstractIntegerRepresentation::multiply(&product->d_rep,
                                               multiplicand.d_rep,
                                               multiplier.d_rep);
@@ -2011,8 +1952,8 @@ void AbstractIntegerQuantityUtil::divide(
         remainder = &defaultRemainder.makeValue();
     }
 
-    if (!dividend.isAlias(quotient) && !dividend.isAlias(remainder) &&
-        !divisor.isAlias(quotient) && !divisor.isAlias(remainder))
+    if (quotient->isNotAliasOf(dividend) && quotient->isNotAliasOf(divisor) &&
+        remainder->isNotAliasOf(dividend) && remainder->isNotAliasOf(divisor))
     {
         AbstractIntegerRepresentation::divide(&quotient->d_rep,
                                             &remainder->d_rep,
@@ -2031,14 +1972,21 @@ void AbstractIntegerQuantityUtil::divide(
     }
 }
 
+void AbstractInteger::normalize()
+{
+    if (d_magnitude.isZero()) {
+        d_sign = AbstractIntegerSign::e_POSITIVE;
+    }
+}
+
 AbstractInteger::AbstractInteger(bslma::Allocator* basicAllocator)
-: d_sign(AbstractIntegerSign::e_ZERO)
+: d_sign(AbstractIntegerSign::e_POSITIVE)
 , d_magnitude(basicAllocator)
 {
 }
 
 AbstractInteger::AbstractInteger(short value, bslma::Allocator* basicAllocator)
-: d_sign(AbstractIntegerSign::e_ZERO)
+: d_sign(AbstractIntegerSign::e_POSITIVE)
 , d_magnitude(basicAllocator)
 {
     this->assign(value);
@@ -2046,14 +1994,14 @@ AbstractInteger::AbstractInteger(short value, bslma::Allocator* basicAllocator)
 
 AbstractInteger::AbstractInteger(unsigned short    value,
                                  bslma::Allocator* basicAllocator)
-: d_sign(AbstractIntegerSign::e_ZERO)
+: d_sign(AbstractIntegerSign::e_POSITIVE)
 , d_magnitude(basicAllocator)
 {
     this->assign(value);
 }
 
 AbstractInteger::AbstractInteger(int value, bslma::Allocator* basicAllocator)
-: d_sign(AbstractIntegerSign::e_ZERO)
+: d_sign(AbstractIntegerSign::e_POSITIVE)
 , d_magnitude(basicAllocator)
 {
     this->assign(value);
@@ -2061,14 +2009,14 @@ AbstractInteger::AbstractInteger(int value, bslma::Allocator* basicAllocator)
 
 AbstractInteger::AbstractInteger(unsigned int      value,
                                  bslma::Allocator* basicAllocator)
-: d_sign(AbstractIntegerSign::e_ZERO)
+: d_sign(AbstractIntegerSign::e_POSITIVE)
 , d_magnitude(basicAllocator)
 {
     this->assign(value);
 }
 
 AbstractInteger::AbstractInteger(long value, bslma::Allocator* basicAllocator)
-: d_sign(AbstractIntegerSign::e_ZERO)
+: d_sign(AbstractIntegerSign::e_POSITIVE)
 , d_magnitude(basicAllocator)
 {
     this->assign(value);
@@ -2076,7 +2024,7 @@ AbstractInteger::AbstractInteger(long value, bslma::Allocator* basicAllocator)
 
 AbstractInteger::AbstractInteger(unsigned long     value,
                                  bslma::Allocator* basicAllocator)
-: d_sign(AbstractIntegerSign::e_ZERO)
+: d_sign(AbstractIntegerSign::e_POSITIVE)
 , d_magnitude(basicAllocator)
 {
     this->assign(value);
@@ -2084,7 +2032,7 @@ AbstractInteger::AbstractInteger(unsigned long     value,
 
 AbstractInteger::AbstractInteger(long long         value,
                                  bslma::Allocator* basicAllocator)
-: d_sign(AbstractIntegerSign::e_ZERO)
+: d_sign(AbstractIntegerSign::e_POSITIVE)
 , d_magnitude(basicAllocator)
 {
     this->assign(value);
@@ -2092,7 +2040,7 @@ AbstractInteger::AbstractInteger(long long         value,
 
 AbstractInteger::AbstractInteger(unsigned long long value,
                                  bslma::Allocator*  basicAllocator)
-: d_sign(AbstractIntegerSign::e_ZERO)
+: d_sign(AbstractIntegerSign::e_POSITIVE)
 , d_magnitude(basicAllocator)
 {
     this->assign(value);
@@ -2165,7 +2113,7 @@ AbstractInteger& AbstractInteger::operator=(unsigned long long value)
 
 void AbstractInteger::reset()
 {
-    d_sign = AbstractIntegerSign::e_ZERO;
+    d_sign = AbstractIntegerSign::e_POSITIVE;
     d_magnitude.reset();
 }
 
@@ -2215,17 +2163,20 @@ AbstractInteger& AbstractInteger::assign(unsigned long value)
 AbstractInteger& AbstractInteger::assign(long long value)
 {
     if (value == 0) {
-        d_sign = AbstractIntegerSign::e_ZERO;
+        d_sign = AbstractIntegerSign::e_POSITIVE;
         d_magnitude.reset();
     }
     else {
         if (value > 0) {
             d_sign = AbstractIntegerSign::e_POSITIVE;
+            d_magnitude.assign(static_cast<unsigned long long>(value));
         }
         else if (value < 0) {
             d_sign = AbstractIntegerSign::e_NEGATIVE;
+            unsigned long long temp = 
+                static_cast<unsigned long long>(-1 * value);
+            d_magnitude.assign(static_cast<unsigned long long>(temp));
         }
-        d_magnitude.assign(static_cast<unsigned long long>(value));
     }
 
     return *this;
@@ -2233,12 +2184,12 @@ AbstractInteger& AbstractInteger::assign(long long value)
 
 AbstractInteger& AbstractInteger::assign(unsigned long long value)
 {
+    d_sign = AbstractIntegerSign::e_POSITIVE;
+
     if (value == 0) {
-        d_sign = AbstractIntegerSign::e_ZERO;
         d_magnitude.reset();
     }
     else {
-        d_sign = AbstractIntegerSign::e_POSITIVE;
         d_magnitude.assign(value);
     }
 
@@ -2313,10 +2264,7 @@ AbstractInteger& AbstractInteger::add(unsigned long long value)
 
 AbstractInteger& AbstractInteger::add(const AbstractInteger& other)
 {
-    NTCCFG_WARNING_UNUSED(other);
-
-    NTCCFG_NOT_IMPLEMENTED();
-    
+    AbstractIntegerUtil::add(this, *this, other);
     return *this;
 }
 
@@ -2362,10 +2310,7 @@ AbstractInteger& AbstractInteger::subtract(unsigned long long value)
 
 AbstractInteger& AbstractInteger::subtract(const AbstractInteger& other)
 {
-    NTCCFG_WARNING_UNUSED(other);
-
-    NTCCFG_NOT_IMPLEMENTED();
-    
+    AbstractIntegerUtil::subtract(this, *this, other);
     return *this;
 }
 
@@ -2411,10 +2356,7 @@ AbstractInteger& AbstractInteger::multiply(unsigned long long value)
 
 AbstractInteger& AbstractInteger::multiply(const AbstractInteger& other)
 {
-    NTCCFG_WARNING_UNUSED(other);
-
-    NTCCFG_NOT_IMPLEMENTED();
-    
+    AbstractIntegerUtil::multiply(this, *this, other);
     return *this;
 }
 
@@ -2467,11 +2409,7 @@ AbstractInteger& AbstractInteger::divide(const AbstractInteger& other)
 AbstractInteger& AbstractInteger::divide(const AbstractInteger& other,
                                          AbstractInteger*       remainder)
 {
-    NTCCFG_WARNING_UNUSED(other);
-    NTCCFG_WARNING_UNUSED(remainder);
-
-    NTCCFG_NOT_IMPLEMENTED();
-
+    AbstractIntegerUtil::divide(this, remainder, *this, other);
     return *this;
 }
 
@@ -2517,8 +2455,8 @@ AbstractInteger& AbstractInteger::modulus(unsigned long long value)
 
 AbstractInteger& AbstractInteger::modulus(const AbstractInteger& other)
 {
-    NTCCFG_WARNING_UNUSED(other);
-    BSLS_ASSERT_OPT(!"Not implemented");
+    AbstractInteger quotient;
+    AbstractIntegerUtil::divide(&quotient, this, *this, other);
     return *this;
 }
 
@@ -2564,7 +2502,7 @@ bool AbstractInteger::equals(unsigned long long value) const
 
 bool AbstractInteger::equals(const AbstractInteger& other) const
 {
-    return d_sign == other.d_sign && d_magnitude == other.d_magnitude;
+    return d_sign == other.d_sign && d_magnitude.equals(other.d_magnitude);
 }
 
 int AbstractInteger::compare(short value) const
@@ -2673,42 +2611,42 @@ ntsa::Error AbstractInteger::convert(unsigned short* result) const
 ntsa::Error AbstractInteger::convert(int* result) const
 {
     NTCCFG_WARNING_UNUSED(result);
-    BSLS_ASSERT_OPT(!"Not implemented");
+    NTCCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error AbstractInteger::convert(unsigned int* result) const
 {
     NTCCFG_WARNING_UNUSED(result);
-    BSLS_ASSERT_OPT(!"Not implemented");
+    NTCCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error AbstractInteger::convert(long* result) const
 {
     NTCCFG_WARNING_UNUSED(result);
-    BSLS_ASSERT_OPT(!"Not implemented");
+    NTCCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error AbstractInteger::convert(unsigned long* result) const
 {
     NTCCFG_WARNING_UNUSED(result);
-    BSLS_ASSERT_OPT(!"Not implemented");
+    NTCCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error AbstractInteger::convert(long long* result) const
 {
     NTCCFG_WARNING_UNUSED(result);
-    BSLS_ASSERT_OPT(!"Not implemented");
+    NTCCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error AbstractInteger::convert(unsigned long long* result) const
 {
     NTCCFG_WARNING_UNUSED(result);
-    BSLS_ASSERT_OPT(!"Not implemented");
+    NTCCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
@@ -2731,6 +2669,17 @@ bool AbstractInteger::isPositive() const
 bool AbstractInteger::isNegative() const
 {
     return d_sign == AbstractIntegerSign::e_NEGATIVE;
+}
+
+bool AbstractInteger::isNotAliasOf(const AbstractInteger* other) const
+{
+    return this != other;
+}
+
+
+bool AbstractInteger::isNotAliasOf(const AbstractInteger& other) const
+{
+    return this != &other;
 }
 
 bslma::Allocator* AbstractInteger::allocator() const
@@ -2893,150 +2842,159 @@ void AbstractIntegerUtil::add(AbstractInteger*       sum,
                               const AbstractInteger& addend1,
                               const AbstractInteger& addend2)
 {
-    NTCCFG_WARNING_UNUSED(sum);
-    NTCCFG_WARNING_UNUSED(addend1);
-    NTCCFG_WARNING_UNUSED(addend2);
+    bdlb::NullableValue<AbstractInteger> tempSum(sum->allocator());
 
-    NTCCFG_NOT_IMPLEMENTED();
-
-    // MRM
-#if 0
-    const AbstractInteger& lhs = *this;
-    const AbstractInteger& rhs = other;
-
-    if (lhs.d_sign == e_ZERO) {
-        AbstractInteger result(d_allocator_p);
-        AbstractInteger::privateAssign(&result.d_data, rhs.d_data);
-        AbstractInteger::privateKeep(&result.d_sign, rhs.d_sign);
-        this->swap(result);
-        return *this;
-    }
-    else if (rhs.d_sign == e_ZERO) {
-        return *this;
-    }
-    else if (lhs.d_sign == rhs.d_sign) {
-        AbstractInteger result(d_allocator_p);
-        AbstractInteger::privateAdd(&result.d_data, lhs.d_data, rhs.d_data);
-        AbstractInteger::privateKeep(&result.d_sign, lhs.d_sign);
-        this->swap(result);
-        return *this;
+    AbstractInteger* w;
+    if (sum->isNotAliasOf(addend1) && sum->isNotAliasOf(addend2)) {
+        w = sum;
     }
     else {
-        const int comparison = lhs.compare(rhs);
+        w = &tempSum.makeValue();
+    }
+
+    const AbstractInteger* u = &addend1;
+    const AbstractInteger* v = &addend2;
+
+    if (u->isZero()) {
+        w->d_magnitude = v->d_magnitude;
+        w->d_sign      = v->d_sign;
+    }
+    else if (v->isZero()) {
+        w->d_magnitude = u->d_magnitude;
+        w->d_sign      = u->d_sign;
+    }
+    else if (u->d_sign == v->d_sign) {
+        AbstractIntegerQuantityUtil::add(&w->d_magnitude, 
+                                          u->d_magnitude, 
+                                          v->d_magnitude);
+        w->d_sign = u->d_sign;
+    }
+    else {
+        const int comparison = u->d_magnitude.compare(v->d_magnitude);
         if (comparison == 0) {
-            this->reset();
-            return *this;
+            w->reset();
         }
         else if (comparison > 0) {
-            AbstractInteger result(d_allocator_p);
-            AbstractInteger::privateSubtract(&result.d_data,
-                                             lhs.d_data,
-                                             rhs.d_data);
-            AbstractInteger::privateKeep(&result.d_sign, lhs.d_sign);
-            this->swap(result);
-            return *this;
+            AbstractIntegerQuantityUtil::subtract(&w->d_magnitude, 
+                                                   u->d_magnitude, 
+                                                   v->d_magnitude);
+            w->d_sign = u->d_sign;
         }
         else {
-            AbstractInteger result(d_allocator_p);
-            AbstractInteger::privateSubtract(&result.d_data,
-                                             rhs.d_data,
-                                             lhs.d_data);
-            AbstractInteger::privateKeep(&result.d_sign, rhs.d_sign);
-            this->swap(result);
-            return *this;
+            AbstractIntegerQuantityUtil::subtract(&w->d_magnitude, 
+                                                   v->d_magnitude, 
+                                                   u->d_magnitude);
+            w->d_sign = v->d_sign;
         }
     }
-#endif
+
+    if (w != sum) {
+        sum->swap(*w);
+    }
+
+    sum->normalize();
 }
 
 void AbstractIntegerUtil::subtract(AbstractInteger*       difference,
                                    const AbstractInteger& minuend,
                                    const AbstractInteger& subtrahend)
 {
-    NTCCFG_WARNING_UNUSED(difference);
-    NTCCFG_WARNING_UNUSED(minuend);
-    NTCCFG_WARNING_UNUSED(subtrahend);
+    bdlb::NullableValue<AbstractInteger> tempDifference(
+        difference->allocator());
 
-    NTCCFG_NOT_IMPLEMENTED();
-
-    // MRM
-#if 0
-    const AbstractInteger& lhs = *this;
-    const AbstractInteger& rhs = other;
-
-    if (lhs.d_sign == e_ZERO) {
-        AbstractInteger result(d_allocator_p);
-        AbstractInteger::privateAssign(&result.d_data, rhs.d_data);
-        AbstractInteger::privateFlip(&result.d_sign, rhs.d_sign);
-        this->swap(result);
-        return *this;
-    }
-    else if (rhs.d_sign == e_ZERO) {
-        return *this;
-    }
-    else if (lhs.d_sign != rhs.d_sign) {
-        AbstractInteger result(d_allocator_p);
-        AbstractInteger::privateAdd(&result.d_data, lhs.d_data, rhs.d_data);
-        AbstractInteger::privateKeep(&result.d_sign, lhs.d_sign);
-        this->swap(result);
-        return *this;
+    AbstractInteger* w;
+    if (difference->isNotAliasOf(minuend) && 
+        difference->isNotAliasOf(subtrahend)) 
+    {
+        w = difference;
     }
     else {
-        const int comparison = lhs.compare(rhs);
+        w = &tempDifference.makeValue();
+    }
+
+    const AbstractInteger* u = &minuend;
+    const AbstractInteger* v = &subtrahend;
+
+    if (u->isZero()) {
+        w->d_magnitude = v->d_magnitude;
+        w->d_sign      = AbstractIntegerSign::flip(v->d_sign);
+    }
+    else if (v->isZero()) {
+        w->d_magnitude = u->d_magnitude;
+        w->d_sign      = u->d_sign;
+    }
+    else if (u->d_sign != v->d_sign) {
+        AbstractIntegerQuantityUtil::add(&w->d_magnitude, 
+                                          u->d_magnitude, 
+                                          v->d_magnitude);
+        w->d_sign = u->d_sign;
+    }
+    else {
+        const int comparison = u->d_magnitude.compare(v->d_magnitude);
         if (comparison == 0) {
-            this->reset();
-            return *this;
+            w->reset();
         }
         else if (comparison > 0) {
-            AbstractInteger result(d_allocator_p);
-            AbstractInteger::privateSubtract(&result.d_data,
-                                             lhs.d_data,
-                                             rhs.d_data);
-            AbstractInteger::privateKeep(&result.d_sign, lhs.d_sign);
-            this->swap(result);
-            return *this;
+            AbstractIntegerQuantityUtil::subtract(&w->d_magnitude,
+                                                   u->d_magnitude,
+                                                   v->d_magnitude);
+            w->d_sign = u->d_sign;
         }
         else {
-            AbstractInteger result(rhs, d_allocator_p);
-            AbstractInteger::privateSubtract(&result.d_data,
-                                             rhs.d_data,
-                                             lhs.d_data);
-            AbstractInteger::privateFlip(&result.d_sign, rhs.d_sign);
-            this->swap(result);
-            return *this;
+            AbstractIntegerQuantityUtil::subtract(&w->d_magnitude,
+                                                   v->d_magnitude,
+                                                   u->d_magnitude);
+            w->d_sign = AbstractIntegerSign::flip(v->d_sign);
         }
     }
-#endif
+
+    if (w != difference) {
+        difference->swap(*w);
+    }
+
+    difference->normalize();
 }
 
 void AbstractIntegerUtil::multiply(AbstractInteger*       product,
                                    const AbstractInteger& multiplicand,
                                    const AbstractInteger& multiplier)
 {
-    NTCCFG_WARNING_UNUSED(product);
-    NTCCFG_WARNING_UNUSED(multiplicand);
-    NTCCFG_WARNING_UNUSED(multiplier);
+    bdlb::NullableValue<AbstractInteger> tempProduct(
+        product->allocator());
 
-    NTCCFG_NOT_IMPLEMENTED();
-
-    // MRM
-#if 0
-    const AbstractInteger& lhs = *this;
-    const AbstractInteger& rhs = other;
-
-    if (lhs.d_sign == e_ZERO || rhs.d_sign == e_ZERO) {
-        this->reset();
-        return *this;
+    AbstractInteger* w;
+    if (product->isNotAliasOf(multiplicand) && 
+        product->isNotAliasOf(multiplier)) 
+    {
+        w = product;
+    }
+    else {
+        w = &tempProduct.makeValue();
     }
 
-    AbstractInteger result(d_allocator_p);
+    const AbstractInteger* u = &multiplicand;
+    const AbstractInteger* v = &multiplier;
 
-    AbstractInteger::privateMultiply(&result.d_data, lhs.d_data, rhs.d_data);
-    result.d_sign = lhs.d_sign == rhs.d_sign ? e_POSITIVE : e_NEGATIVE;
+    if (u->isZero() || v->isZero()) {
+        w->reset();
+    }
+    else {
+        AbstractIntegerQuantityUtil::multiply(&w->d_magnitude, 
+                                               u->d_magnitude, 
+                                               v->d_magnitude);
+        if (u->d_sign == v->d_sign) {
+            w->d_sign = AbstractIntegerSign::e_POSITIVE;
+        }
+        else {
+            w->d_sign = AbstractIntegerSign::e_NEGATIVE;
+        }
+    }
 
-    this->swap(result);
-    return *this;
-#endif
+    if (w != product) {
+        product->swap(*w);
+    }
+
+    product->normalize();
 }
 
 void AbstractIntegerUtil::divide(AbstractInteger*       quotient,
@@ -3044,80 +3002,118 @@ void AbstractIntegerUtil::divide(AbstractInteger*       quotient,
                                  const AbstractInteger& dividend,
                                  const AbstractInteger& divisor)
 {
-    NTCCFG_WARNING_UNUSED(quotient);
-    NTCCFG_WARNING_UNUSED(remainder);
-    NTCCFG_WARNING_UNUSED(dividend);
-    NTCCFG_WARNING_UNUSED(divisor);
+    bdlb::NullableValue<AbstractInteger> tempQuotient(
+        quotient->allocator());
 
-    NTCCFG_NOT_IMPLEMENTED();
+    bdlb::NullableValue<AbstractInteger> tempRemainder(
+        remainder->allocator());
 
-    // MRM
-#if 0
-    const AbstractInteger& lhs = *this;
-    const AbstractInteger& rhs = other;
-
-    remainder->reset();
-
-    if (lhs.isZero()) {
-        this->reset();
-        remainder->reset();
-        return *this;
-    }
-
-    if (rhs.isZero()) {
-        this->reset();
-        remainder->assign(*this);
-        return *this;
-    }
-
-    AbstractInteger result(d_allocator_p);
-
-    if (d_sign == other.d_sign) {
-        AbstractInteger::privateDivide(&result.d_data,
-                                       &remainder->d_data,
-                                       lhs.d_data,
-                                       rhs.d_data);
-        result.d_sign = e_POSITIVE;
+    AbstractInteger* w;
+    if (quotient->isNotAliasOf(dividend) && 
+        quotient->isNotAliasOf(divisor) && 
+        quotient->isNotAliasOf(remainder)) 
+    {
+        w = quotient;
     }
     else {
-        AbstractInteger        quotient(d_allocator_p);
-        AbstractInteger        dividend(*this, d_allocator_p);
-        const AbstractInteger& divisor = other;
+        w = &tempQuotient.makeValue();
+    }
 
-        AbstractInteger::privateDecrement(&dividend.d_data, dividend.d_data);
+    AbstractInteger* x;
+    if (remainder->isNotAliasOf(dividend) && 
+        remainder->isNotAliasOf(divisor) && 
+        remainder->isNotAliasOf(quotient)) 
+    {
+        x = remainder;
+    }
+    else {
+        x = &tempRemainder.makeValue();
+    }
 
-        AbstractInteger::privateDivide(&quotient.d_data,
-                                       &remainder->d_data,
-                                       dividend.d_data,
-                                       divisor.d_data);
+    const AbstractInteger* u = &dividend;
+    const AbstractInteger* v = &divisor;
 
-        AbstractInteger::privateIncrement(&quotient.d_data, quotient.d_data);
+    if (u->isZero()) {
+        w->reset();
+        x->reset();
+    }
+    else if (v->isZero()) {
+        w->reset();
+        x->assign(*v);
+    }
+    else if (u->d_sign == v->d_sign) {
+        AbstractIntegerQuantityUtil::divide(&w->d_magnitude, 
+                                            &x->d_magnitude,
+                                             u->d_magnitude, 
+                                             v->d_magnitude);
 
-        AbstractInteger::privateSubtract(&remainder->d_data,
-                                         divisor.d_data,
-                                         remainder->d_data);
+        w->d_sign = AbstractIntegerSign::e_POSITIVE;
 
-        AbstractInteger::privateDecrement(&remainder->d_data,
-                                          remainder->d_data);
+        if (v->d_sign == AbstractIntegerSign::e_NEGATIVE ||
+            u->d_sign == AbstractIntegerSign::e_NEGATIVE)
+        {
+            x->d_sign = AbstractIntegerSign::e_NEGATIVE;
+        }
+        else {
+            x->d_sign = AbstractIntegerSign::e_POSITIVE;
+        }
+    }
+    else {
+        AbstractIntegerQuantity un(u->d_magnitude, u->allocator());
 
-        remainder->d_sign = divisor.d_sign;
+        #if 0
+        AbstractIntegerQuantity one;
+        one.assign(1);
 
-        quotient.d_sign = e_NEGATIVE;
+        AbstractIntegerQuantityUtil::subtract(
+            &un, un, one);
+        #endif
 
-        AbstractInteger::privateIncrement(&quotient.d_data, quotient.d_data);
+        AbstractIntegerQuantityUtil::divide(
+            &w->d_magnitude, &x->d_magnitude, un, v->d_magnitude);
 
-        if (AbstractInteger::privateIsZero(remainder->d_data)) {
-            remainder->d_sign = e_ZERO;
+        #if 0
+        AbstractIntegerQuantityUtil::add(
+            &w->d_magnitude, w->d_magnitude, one);        
+
+        if (x->d_magnitude.compare(v->d_magnitude) < 0) {
+            AbstractIntegerQuantityUtil::subtract(
+                &x->d_magnitude, v->d_magnitude, x->d_magnitude);
+        }
+        else {
+            AbstractIntegerQuantityUtil::subtract(
+                &x->d_magnitude, x->d_magnitude, v->d_magnitude);
         }
 
-        if (AbstractInteger::privateIsZero(quotient.d_data)) {
-            quotient.d_sign = e_ZERO;
+        AbstractIntegerQuantityUtil::subtract(
+            &x->d_magnitude, x->d_magnitude, one);
+
+        AbstractIntegerQuantityUtil::add(
+            &w->d_magnitude, w->d_magnitude, one);
+        #endif
+
+        w->d_sign = AbstractIntegerSign::e_NEGATIVE;
+
+        if (u->d_sign == AbstractIntegerSign::e_NEGATIVE 
+            /* || v->d_sign == AbstractIntegerSign::e_NEGATIVE */)
+        {
+            x->d_sign = AbstractIntegerSign::e_NEGATIVE;
+        }
+        else {
+            x->d_sign = AbstractIntegerSign::e_POSITIVE;
         }
     }
 
-    this->swap(result);
-    return *this;
-#endif
+    if (w != quotient) {
+        quotient->swap(*w);
+    }
+
+    if (x != remainder) {
+        remainder->swap(*x);
+    }
+
+    quotient->normalize();
+    remainder->normalize();
 }
 
 }  // close package namespace

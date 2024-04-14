@@ -63,8 +63,11 @@ struct AbstractIntegerSign {
         /// The sign is negative.
         e_NEGATIVE = -1, 
 
+// MRM
+#if 0
         /// The sign is positive but the value is zero.
         e_ZERO = 0, 
+#endif
 
         /// The sign is positive.
         e_POSITIVE = 1
@@ -282,13 +285,13 @@ public:
     /// Return true if the number is one, otherwise return false.
     bool isOne() const;
 
-    /// Return true if this object is an alias for the specified 'other'
+    /// Return true if this object is *not* an alias for the specified 'other'
     /// object, otherwise return false.
-    bool isAlias(const AbstractIntegerRepresentation* other) const;
+    bool isNotAliasOf(const AbstractIntegerRepresentation* other) const;
 
-    /// Return true if this object is an alias for the specified 'other'
+    /// Return true if this object is *not* an alias for the specified 'other'
     /// object, otherwise return false.
-    bool isAlias(const AbstractIntegerRepresentation& other) const;
+    bool isNotAliasOf(const AbstractIntegerRepresentation& other) const;    
 
     /// Return the allocator used to supply memory.
     bslma::Allocator* allocator() const;
@@ -1003,13 +1006,13 @@ class AbstractIntegerQuantity
     /// Return true if the number is one, otherwise return false.
     bool isOne() const;
 
-    /// Return true if this object is an alias for the specified 'other'
+    /// Return true if this object is *not* an alias for the specified 'other'
     /// object, otherwise return false.
-    bool isAlias(const AbstractIntegerQuantity* other) const;
+    bool isNotAliasOf(const AbstractIntegerQuantity* other) const;
 
-    /// Return true if this object is an alias for the specified 'other'
+    /// Return true if this object is *not* an alias for the specified 'other'
     /// object, otherwise return false.
-    bool isAlias(const AbstractIntegerQuantity& other) const;
+    bool isNotAliasOf(const AbstractIntegerQuantity& other) const;
 
     /// Return the allocator used to supply memory.
     bslma::Allocator* allocator() const;
@@ -1180,10 +1183,15 @@ class AbstractIntegerQuantityUtil
 class AbstractInteger
 {
     /// Grant visibility to the internals of this class to its utility.
-    friend class AbstractIntegerQuantityUtil;
+    friend class AbstractIntegerUtil;
 
     AbstractIntegerSign::Value d_sign;
     AbstractIntegerQuantity    d_magnitude;
+
+  private:
+    /// Normalize this object so that its sign is positive if its value is 
+    /// zero.
+    void normalize();
 
   public:
     /// Create a new abstract integer having the default value. Optionally
@@ -1700,6 +1708,14 @@ class AbstractInteger
 
     /// Return true if the number is negative, otherwise return false.
     bool isNegative() const;
+
+    /// Return true if this object is *not* an alias for the specified 'other'
+    /// object, otherwise return false.
+    bool isNotAliasOf(const AbstractInteger* other) const;
+
+    /// Return true if this object is *not* an alias for the specified 'other'
+    /// object, otherwise return false.
+    bool isNotAliasOf(const AbstractInteger& other) const;
 
     /// Return the allocator used to supply memory.
     bslma::Allocator* allocator() const;
