@@ -43,6 +43,9 @@ class Interface
     virtual void f2(int)  = 0;
     virtual void f3(int*) = 0;
     virtual void f4(int&) = 0;
+
+    virtual void f5(int, char)    = 0;
+    virtual void f5(int*, double) = 0;
 };
 
 NTF_MOCK_CLASS(MyMock, Interface)
@@ -53,6 +56,9 @@ NTF_MOCK_METHOD(int, f1)
 NTF_MOCK_METHOD(void, f2, int)
 NTF_MOCK_METHOD(void, f3, int*)
 NTF_MOCK_METHOD(void, f4, int&)
+
+NTF_MOCK_METHOD(void, f5, int, char)
+NTF_MOCK_METHOD(void, f5, int*, double)
 
 NTF_MOCK_CLASS_END;
 
@@ -133,8 +139,8 @@ NTCCFG_TEST_CASE(3)
         // the same can be done with references
         NTF_EXPECT_1(mock, f4, IGNORE_ARG).ONCE().SET_ARG_1(FROM(newValue));
 
-        int data = 12;
-        int &data_ref = data;
+        int  data     = 12;
+        int& data_ref = data;
         mock.f4(data_ref);
         NTCCFG_TEST_EQ(data, newValue);
     }
@@ -158,7 +164,7 @@ NTCCFG_TEST_CASE(4)
     }
     {
         //the same can be done with raw pointers
-        int *ptr = 0;
+        int* ptr = 0;
         NTF_EXPECT_1(mock, f3, IGNORE_ARG).ONCE().SAVE_ARG_1(TO(&ptr));
 
         int val = 6;
@@ -167,7 +173,9 @@ NTCCFG_TEST_CASE(4)
 
         //pointer argument can be dereferenced before saving
         int storage = 0;
-        NTF_EXPECT_1(mock, f3, IGNORE_ARG).ONCE().SAVE_ARG_1(TO_DEREF(&storage));
+        NTF_EXPECT_1(mock, f3, IGNORE_ARG)
+            .ONCE()
+            .SAVE_ARG_1(TO_DEREF(&storage));
 
         mock.f3(&val);
         NTCCFG_TEST_EQ(storage, val);
@@ -183,11 +191,37 @@ NTCCFG_TEST_CASE(4)
     }
 }
 
+NTCCFG_TEST_CASE(5)
+{
+    using namespace mock_test;
+
+    MyMock mock;
+
+    {
+        //for overloaded methods we need to specify type of an argument using
+        // `_SPEC` addition to NTF_EQ (or IGNORE_ARG_S) macro
+
+        char c = 'a';
+        NTF_EXPECT_2(mock, f5, IGNORE_ARG_S(int), NTF_EQ_SPEC(c, char))
+            .ONCE();
+
+        mock.f5(22, c);
+
+        int val = 14;
+        double d = 3.14;
+        NTF_EXPECT_2(mock, f5, NTF_EQ_DEREF_SPEC(val, int*), NTF_EQ_SPEC(d, double))
+            .ONCE();
+
+        mock.f5(&val, d);
+    }
+}
+
 NTCCFG_TEST_DRIVER
 {
     NTCCFG_TEST_REGISTER(1);
     NTCCFG_TEST_REGISTER(2);
     NTCCFG_TEST_REGISTER(3);
     NTCCFG_TEST_REGISTER(4);
+    NTCCFG_TEST_REGISTER(5);
 }
 NTCCFG_TEST_DRIVER_END;
