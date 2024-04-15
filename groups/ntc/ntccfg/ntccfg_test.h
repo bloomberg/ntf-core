@@ -719,7 +719,7 @@ namespace ntf_mock {
 template <class ARG>
 struct ProcessInterface {
     virtual void process(const ARG& arg) = 0;
-    virtual ~    ProcessInterface()
+    virtual ~ProcessInterface()
     {
     }
 };
@@ -727,7 +727,7 @@ struct ProcessInterface {
 template <class ARG>
 struct SetterInterface {
     virtual void process(ARG arg) = 0;
-    virtual ~    SetterInterface()
+    virtual ~SetterInterface()
     {
     }
 };
@@ -751,8 +751,7 @@ struct DefaultSetter {
 template <class IN, template <class, class> class SET_POLICY>
 struct Setter {
     template <class ARG>
-    struct SetterImpl
-    {
+    struct SetterImpl {
         static void process(ARG arg, const IN& in)
         {
             SET_POLICY<ARG, IN>::set(arg, in);
@@ -783,7 +782,7 @@ struct SetterHolder : SetterInterface<ARG> {
 
     void process(ARG arg) BSLS_KEYWORD_OVERRIDE
     {
-        SETTER::SetterImpl<ARG>::process(arg, d_setter.d_in);
+        SETTER::template SetterImpl<ARG>::process(arg, d_setter.d_in);
     }
 
     SETTER d_setter;
@@ -1073,7 +1072,7 @@ struct InvocationArgsImpl;
 
 template <class TL>
 struct InvocationArgsImpl<TL, bsl::integral_constant<int, 0> > {
-    typedef typename BloombergLP::bslmf::TypeListTypeAt<0, TL>::Type ArgType;
+    typedef typename BloombergLP::bslmf::TypeListTypeOf<1, TL>::Type ArgType;
 
     bsl::shared_ptr<ProcessInterface<ArgType> > d_matcher;
     bsl::shared_ptr<ProcessInterface<ArgType> > d_extractor;
@@ -1096,8 +1095,9 @@ struct InvocationArgsImpl<TL, bsl::integral_constant<int, 0> > {
 template <class TL, int ARG_INDEX>
 struct InvocationArgsImpl<TL, bsl::integral_constant<int, ARG_INDEX> >
 : public InvocationArgsImpl<TL, bsl::integral_constant<int, ARG_INDEX - 1> > {
-    typedef typename BloombergLP::bslmf::TypeListTypeAt<ARG_INDEX, TL>::Type
-        ArgType;
+    typedef
+        typename BloombergLP::bslmf::TypeListTypeOf<ARG_INDEX + 1, TL>::Type
+            ArgType;
 
     bsl::shared_ptr<ProcessInterface<ArgType> > d_matcher;
     bsl::shared_ptr<ProcessInterface<ArgType> > d_extractor;
@@ -1139,7 +1139,7 @@ struct ProcessArgs;
 template <class ARG_LIST>
 struct ProcessArgs<1, ARG_LIST> {
     typedef
-        typename BloombergLP::bslmf::TypeListTypeAt<0, ARG_LIST>::Type Arg0;
+        typename BloombergLP::bslmf::TypeListTypeOf<1, ARG_LIST>::Type Arg0;
     template <class INVOCATION_ARGS>
     static void process(INVOCATION_ARGS& args, Arg0 arg0)
     {
@@ -1150,9 +1150,9 @@ struct ProcessArgs<1, ARG_LIST> {
 template <class ARG_LIST>
 struct ProcessArgs<2, ARG_LIST> {
     typedef
-        typename BloombergLP::bslmf::TypeListTypeAt<0, ARG_LIST>::Type Arg0;
+        typename BloombergLP::bslmf::TypeListTypeOf<1, ARG_LIST>::Type Arg0;
     typedef
-        typename BloombergLP::bslmf::TypeListTypeAt<1, ARG_LIST>::Type Arg1;
+        typename BloombergLP::bslmf::TypeListTypeOf<2, ARG_LIST>::Type Arg1;
 
     template <class INVOCATION_ARGS>
     static void process(INVOCATION_ARGS& args, Arg0 arg0, Arg1 arg1)
@@ -1165,11 +1165,11 @@ struct ProcessArgs<2, ARG_LIST> {
 template <class ARG_LIST>
 struct ProcessArgs<3, ARG_LIST> {
     typedef
-        typename BloombergLP::bslmf::TypeListTypeAt<0, ARG_LIST>::Type Arg0;
+        typename BloombergLP::bslmf::TypeListTypeOf<1, ARG_LIST>::Type Arg0;
     typedef
-        typename BloombergLP::bslmf::TypeListTypeAt<1, ARG_LIST>::Type Arg1;
+        typename BloombergLP::bslmf::TypeListTypeOf<2, ARG_LIST>::Type Arg1;
     typedef
-        typename BloombergLP::bslmf::TypeListTypeAt<2, ARG_LIST>::Type Arg2;
+        typename BloombergLP::bslmf::TypeListTypeOf<3, ARG_LIST>::Type Arg2;
     template <class INVOCATION_ARGS>
     static void process(INVOCATION_ARGS& args, Arg0 arg0, Arg1 arg1, Arg2 arg2)
     {
@@ -1182,13 +1182,13 @@ struct ProcessArgs<3, ARG_LIST> {
 template <class ARG_LIST>
 struct ProcessArgs<4, ARG_LIST> {
     typedef
-        typename BloombergLP::bslmf::TypeListTypeAt<0, ARG_LIST>::Type Arg0;
+        typename BloombergLP::bslmf::TypeListTypeOf<1, ARG_LIST>::Type Arg0;
     typedef
-        typename BloombergLP::bslmf::TypeListTypeAt<1, ARG_LIST>::Type Arg1;
+        typename BloombergLP::bslmf::TypeListTypeOf<2, ARG_LIST>::Type Arg1;
     typedef
-        typename BloombergLP::bslmf::TypeListTypeAt<2, ARG_LIST>::Type Arg2;
+        typename BloombergLP::bslmf::TypeListTypeOf<3, ARG_LIST>::Type Arg2;
     typedef
-        typename BloombergLP::bslmf::TypeListTypeAt<3, ARG_LIST>::Type Arg3;
+        typename BloombergLP::bslmf::TypeListTypeOf<4, ARG_LIST>::Type Arg3;
 
     template <class INVOCATION_ARGS>
     static void process(INVOCATION_ARGS& args,
@@ -1220,7 +1220,7 @@ struct InvocationBaseSaveSetArg {
     template <int ARG_INDEX, class ARG_EXTRACTOR>
     SELF& saveArg(const ARG_EXTRACTOR& extractor)
     {
-        typedef typename BloombergLP::bslmf::TypeListTypeAt<ARG_INDEX,
+        typedef typename BloombergLP::bslmf::TypeListTypeOf<ARG_INDEX + 1,
                                                             ARG_LIST>::Type
                          ArgType;
         INVOCATION_DATA& data = this->getInvocationDataBack();
@@ -1237,7 +1237,7 @@ struct InvocationBaseSaveSetArg {
     template <int ARG_INDEX, class ARG_SETTER>
     SELF& setArg(const ARG_SETTER& setter)
     {
-        typedef typename BloombergLP::bslmf::TypeListTypeAt<ARG_INDEX,
+        typedef typename BloombergLP::bslmf::TypeListTypeOf<ARG_INDEX + 1,
                                                             ARG_LIST>::Type
                          ArgType;
         INVOCATION_DATA& data = this->getInvocationDataBack();
@@ -1294,9 +1294,15 @@ template <class METHOD_INFO, class RESULT, class ARG_LIST>
 struct InvocationImpl<1, METHOD_INFO, RESULT, ARG_LIST>
 : public InvocationImplBase<Invocation<METHOD_INFO, RESULT, ARG_LIST> > {
     typedef Invocation<METHOD_INFO, RESULT, ARG_LIST> InvocationType;
-    typedef InvocationType::InvocationDataT           InvocationDataT;
+    typedef InvocationImplBase<InvocationType>        BaseType;
+    typedef typename InvocationType::InvocationDataT  InvocationDataT;
     typedef
-        typename BloombergLP::bslmf::TypeListTypeAt<0, ARG_LIST>::Type ARG1;
+        typename BloombergLP::bslmf::TypeListTypeOf<1, ARG_LIST>::Type ARG1;
+
+    InvocationImpl(InvocationType& inv)
+    : BaseType(inv)
+    {
+    }
 
     RESULT invoke(ARG1 arg)
     {
@@ -1351,11 +1357,17 @@ template <class METHOD_INFO, class RESULT, class ARG_LIST>
 struct InvocationImpl<2, METHOD_INFO, RESULT, ARG_LIST>
 : public InvocationImplBase<Invocation<METHOD_INFO, RESULT, ARG_LIST> > {
     typedef Invocation<METHOD_INFO, RESULT, ARG_LIST> InvocationType;
-    typedef InvocationType::InvocationDataT           InvocationDataT;
+    typedef InvocationImplBase<InvocationType>        BaseType;
+    typedef typename InvocationType::InvocationDataT  InvocationDataT;
     typedef
-        typename BloombergLP::bslmf::TypeListTypeAt<0, ARG_LIST>::Type ARG1;
+        typename BloombergLP::bslmf::TypeListTypeOf<1, ARG_LIST>::Type ARG1;
     typedef
-        typename BloombergLP::bslmf::TypeListTypeAt<1, ARG_LIST>::Type ARG2;
+        typename BloombergLP::bslmf::TypeListTypeOf<2, ARG_LIST>::Type ARG2;
+
+    InvocationImpl(InvocationType& inv)
+    : BaseType(inv)
+    {
+    }
 
     RESULT invoke(ARG1 arg1, ARG2 arg2)
     {
@@ -1419,13 +1431,16 @@ template <class METHOD_INFO, class RESULT, class ARG_LIST>
 struct InvocationImpl<3, METHOD_INFO, RESULT, ARG_LIST>
 : public InvocationImplBase<Invocation<METHOD_INFO, RESULT, ARG_LIST> > {
     typedef Invocation<METHOD_INFO, RESULT, ARG_LIST> InvocationType;
-    typedef InvocationType::InvocationDataT           InvocationDataT;
+    typedef InvocationImplBase<InvocationType> BaseType;
+    typedef typename InvocationType::InvocationDataT  InvocationDataT;
     typedef
-        typename BloombergLP::bslmf::TypeListTypeAt<0, ARG_LIST>::Type ARG1;
+        typename BloombergLP::bslmf::TypeListTypeOf<1, ARG_LIST>::Type ARG1;
     typedef
-        typename BloombergLP::bslmf::TypeListTypeAt<1, ARG_LIST>::Type ARG2;
+        typename BloombergLP::bslmf::TypeListTypeOf<2, ARG_LIST>::Type ARG2;
     typedef
-        typename BloombergLP::bslmf::TypeListTypeAt<2, ARG_LIST>::Type ARG3;
+        typename BloombergLP::bslmf::TypeListTypeOf<3, ARG_LIST>::Type ARG3;
+
+    InvocationImpl(InvocationType& inv): BaseType(inv) {}
 
     RESULT invoke(ARG1 arg1, ARG2 arg2, ARG3 arg3)
     {
@@ -1703,7 +1718,7 @@ struct Invocation<METHOD_INFO, RESULT, NoArgs>
       public:                                                                 \
         struct MockInfo {                                                     \
             const char* mockName;                                             \
-                        MockInfo()                                            \
+            MockInfo()                                                        \
             : mockName(#MOCK_NAME)                                            \
             {                                                                 \
             }                                                                 \

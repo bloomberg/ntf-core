@@ -1375,7 +1375,7 @@ void variation(const test::Parameters& parameters)
 }
 
 struct Fixture {
-     Fixture(bslma::Allocator* allocator);
+    Fixture(bslma::Allocator* allocator);
     ~Fixture();
 
     void setupReactorBase();
@@ -3661,7 +3661,7 @@ NTCCFG_TEST_CASE(23)
         }
 
         ntci::TimerCallback  retryTimerCallback;
-        const ntsa::Endpoint targetEp{"127.0.0.1:1234"};
+        const ntsa::Endpoint targetEp("127.0.0.1:1234");
         NTCI_LOG_DEBUG("Connection initiation...");
         {
             NTF_EXPECT_3(*test.d_reactorMock,
@@ -3687,7 +3687,7 @@ NTCCFG_TEST_CASE(23)
 
         NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
         {
-            const ntsa::Endpoint sourceEp{"127.0.0.1:22"};
+            const ntsa::Endpoint sourceEp("127.0.0.1:22");
             NTF_EXPECT_1(
                 *test.d_reactorMock,
                 attachSocket,
@@ -3798,7 +3798,7 @@ NTCCFG_TEST_CASE(24)
         }
 
         ntci::TimerCallback  retryTimerCallback;
-        const ntsa::Endpoint targetEp{"127.0.0.1:1234"};
+        const ntsa::Endpoint targetEp("127.0.0.1:1234");
         NTCI_LOG_DEBUG("Connection initiation...");
         {
             bsls::TimeInterval deadlineTime;
@@ -3847,7 +3847,7 @@ NTCCFG_TEST_CASE(24)
 
         NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
         {
-            const ntsa::Endpoint sourceEp{"127.0.0.1:22"};
+            const ntsa::Endpoint sourceEp("127.0.0.1:22");
 
             NTF_EXPECT_1(
                 *test.d_reactorMock,
@@ -3964,7 +3964,7 @@ NTCCFG_TEST_CASE(25)
         }
 
         ntci::TimerCallback  retryTimerCallback;
-        const ntsa::Endpoint targetEp{"127.0.0.1:1234"};
+        const ntsa::Endpoint targetEp("127.0.0.1:1234");
         NTCI_LOG_DEBUG("Connection initiation...");
         {
             const bsl::size_t  k_CONNECT_RETRY_COUNT = 5;
@@ -4015,7 +4015,7 @@ NTCCFG_TEST_CASE(25)
 
         NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
         {
-            const ntsa::Endpoint sourceEp{"127.0.0.1:22"};
+            const ntsa::Endpoint sourceEp("127.0.0.1:22");
 
             NTF_EXPECT_1(
                 *test.d_reactorMock,
@@ -4151,7 +4151,7 @@ NTCCFG_TEST_CASE(26)
         }
 
         ntci::TimerCallback  retryTimerCallback;
-        const ntsa::Endpoint targetEp{"127.0.0.1:1234"};
+        const ntsa::Endpoint targetEp("127.0.0.1:1234");
         NTCI_LOG_DEBUG("Connection initiation...");
         {
             const bsl::size_t  k_CONNECT_RETRY_COUNT = 5;
@@ -4202,7 +4202,7 @@ NTCCFG_TEST_CASE(26)
 
         NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
         {
-            const ntsa::Endpoint sourceEp{"127.0.0.1:22"};
+            const ntsa::Endpoint sourceEp("127.0.0.1:22");
 
             NTF_EXPECT_1(
                 *test.d_reactorMock,
@@ -4353,7 +4353,7 @@ NTCCFG_TEST_CASE(27)
         }
 
         ntci::TimerCallback  retryTimerCallback;
-        const ntsa::Endpoint targetEp{"127.0.0.1:1234"};
+        const ntsa::Endpoint targetEp("127.0.0.1:1234");
         NTCI_LOG_DEBUG("Connection initiation...");
         {
             bsls::TimeInterval deadlineTime;
@@ -4402,7 +4402,7 @@ NTCCFG_TEST_CASE(27)
 
         NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
         {
-            const ntsa::Endpoint sourceEp{"127.0.0.1:22"};
+            const ntsa::Endpoint sourceEp("127.0.0.1:22");
 
             NTF_EXPECT_1(
                 *test.d_reactorMock,
