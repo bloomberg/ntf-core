@@ -101,7 +101,7 @@ BSLS_IDENT_RCSID(ntco_epoll_cpp, "$Id$ $CSID$")
 
 #define NTCO_EPOLL_LOG_WAIT_RESULT_OR_TIMEOUT(numEvents, results)             \
     do {                                                                      \
-        if (numEvents == 1 && results[0].data.fd == d_timer_result) {                \
+        if (numEvents == 1 && results[0].data.fd == d_timer) {                \
             NTCO_EPOLL_LOG_WAIT_TIMEOUT();                                    \
         }                                                                     \
         else {                                                                \
@@ -218,7 +218,7 @@ class Epoll : public ntci::Reactor,
 
     ntccfg::Object                           d_object;
     int                                      d_epoll;
-    int                                      d_timer_result;
+    int                                      d_timer;
     bsls::AtomicBool                         d_timerPending;
     ntcs::RegistryEntryCatalog::EntryFunctor d_detachFunctor;
     ntcs::RegistryEntryCatalog               d_registry;
@@ -973,7 +973,7 @@ ntsa::Error Epoll::setTimer(const bsls::TimeInterval& absoluteTimeout)
     its.it_interval.tv_sec  = 0;
     its.it_interval.tv_nsec = 0;
 
-    int rc = ::timerfd_settime(d_timer_result, TFD_TIMER_ABSTIME, &its, 0);
+    int rc = ::timerfd_settime(d_timer, TFD_TIMER_ABSTIME, &its, 0);
     if (rc != 0) {
         ntsa::Error error(errno);
         return error;
@@ -988,7 +988,7 @@ ntsa::Error Epoll::ackTimer(bsl::size_t* numTimers)
 {
     bsl::uint64_t numExpirations = 0;
     ssize_t       timerReadResult =
-        ::read(d_timer_result, &numExpirations, sizeof numExpirations);
+        ::read(d_timer, &numExpirations, sizeof numExpirations);
 
     if (NTCCFG_UNLIKELY(timerReadResult < 0)) {
 #if (EAGAIN == EWOULDBLOCK)
@@ -1070,7 +1070,7 @@ Epoll::Epoll(const ntca::ReactorConfig&         configuration,
              bslma::Allocator*                  basicAllocator)
 : d_object("ntco::Epoll")
 , d_epoll(-1)
-, d_timer_result(-1)
+, d_timer(-1)
 , d_timerPending(false)
 #if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
 , d_detachFunctor([this](const auto& entry) {
@@ -1235,18 +1235,18 @@ Epoll::Epoll(const ntca::ReactorConfig&         configuration,
 #if NTCO_EPOLL_USE_TIMERFD
 
     if (d_config.maxThreads().value() == 1) {
-        d_timer_result = timerfd_create(CLOCK_REALTIME, TFD_NONBLOCK | TFD_CLOEXEC);
-        if (d_timer_result < 0) {
+        d_timer = timerfd_create(CLOCK_REALTIME, TFD_NONBLOCK | TFD_CLOEXEC);
+        if (d_timer < 0) {
             NTCCFG_ABORT();
         }
 
         {
             ::epoll_event e;
 
-            e.data.fd = d_timer_result;
+            e.data.fd = d_timer;
             e.events  = EPOLLIN;
 
-            int rc = ::epoll_ctl(d_epoll, EPOLL_CTL_ADD, d_timer_result, &e);
+            int rc = ::epoll_ctl(d_epoll, EPOLL_CTL_ADD, d_timer, &e);
             if (rc != 0) {
                 NTCCFG_ABORT();
             }
@@ -1274,18 +1274,18 @@ Epoll::~Epoll()
         {
             ::epoll_event e;
 
-            e.data.fd = d_timer_result;
+            e.data.fd = d_timer;
             e.events  = 0;
 
-            int rc = ::epoll_ctl(d_epoll, EPOLL_CTL_DEL, d_timer_result, &e);
+            int rc = ::epoll_ctl(d_epoll, EPOLL_CTL_DEL, d_timer, &e);
             if (rc != 0) {
                 NTCCFG_ABORT();
             }
         }
 
-        if (d_timer_result >= 0) {
-            ::close(d_timer_result);
-            d_timer_result = -1;
+        if (d_timer >= 0) {
+            ::close(d_timer);
+            d_timer = -1;
         }
     }
 
@@ -2253,7 +2253,7 @@ void Epoll::run(ntci::Waiter waiter)
 
 #if NTCO_EPOLL_USE_TIMERFD
 
-                if (NTCCFG_UNLIKELY(e.data.fd == d_timer_result)) {
+                if (NTCCFG_UNLIKELY(e.data.fd == d_timer)) {
                     ntsa::Error error = this->ackTimer(&numTimers);
                     if (error) {
                         NTCO_EPOLL_LOG_TIMER_ACK_FAILURE(error);
@@ -2552,7 +2552,7 @@ void Epoll::poll(ntci::Waiter waiter)
 
 #if NTCO_EPOLL_USE_TIMERFD
 
-            if (NTCCFG_UNLIKELY(e.data.fd == d_timer_result)) {
+            if (NTCCFG_UNLIKELY(e.data.fd == d_timer)) {
                 ntsa::Error error = this->ackTimer(&numTimers);
                 if (error) {
                     NTCO_EPOLL_LOG_TIMER_ACK_FAILURE(error);

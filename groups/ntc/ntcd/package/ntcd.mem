@@ -1,5 +1,6 @@
 ntcd_blobbufferfactory
 ntcd_datagramsocket
+ntcd_datapool
 ntcd_datautil
 ntcd_encryption
 ntcd_listenersocket
