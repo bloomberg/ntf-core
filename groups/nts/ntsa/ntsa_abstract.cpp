@@ -56,6 +56,121 @@ static const AbstractIntegerBaseTraits k_TRAITS[5] = {
 
 }  // close unnamed namespace
 
+AbstractSyntaxNotation::AbstractSyntaxNotation(
+    bsl::streambuf*   buffer,
+    bslma::Allocator* basicAllocator)
+: d_buffer_p(buffer)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+    NTSCFG_WARNING_UNUSED(d_allocator_p);
+}
+
+AbstractSyntaxNotation::~AbstractSyntaxNotation()
+{
+}
+
+bsl::streambuf* AbstractSyntaxNotation::buffer() const
+{
+    return d_buffer_p;
+}
+
+AbstractObjectIdentifier::AbstractObjectIdentifier(
+    bslma::Allocator* basicAllocator)
+: d_data(basicAllocator)
+{
+}
+
+AbstractObjectIdentifier::~AbstractObjectIdentifier()
+{
+}
+
+void AbstractObjectIdentifier::set(bsl::size_t index, bsl::uint8_t value)
+{
+    if (index >= d_data.size()) {
+        d_data.resize(index + 1);
+    }
+
+    BSLS_ASSERT_OPT(index < d_data.size());
+    d_data[index] = value;
+}
+
+ntsa::Error AbstractObjectIdentifier::decode(AbstractSyntaxNotation* decoder)
+{
+    NTSCFG_WARNING_UNUSED(decoder);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error AbstractObjectIdentifier::encode(
+    AbstractSyntaxNotation* encoder) const
+{
+    NTSCFG_WARNING_UNUSED(encoder);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+bsl::uint8_t AbstractObjectIdentifier::get(bsl::size_t index) const
+{
+    if (index < d_data.size()) {
+        return d_data[index];
+    }
+    else {
+        return 0;
+    }
+}
+
+bsl::size_t AbstractObjectIdentifier::size() const
+{
+    return d_data.size();
+}
+
+bool AbstractObjectIdentifier::equals(
+    const AbstractObjectIdentifier& other) const
+{
+    return (d_data == other.d_data);
+}
+
+bool AbstractObjectIdentifier::less(
+    const AbstractObjectIdentifier& other) const
+{
+    return d_data < other.d_data;
+}
+
+bsl::ostream& AbstractObjectIdentifier::print(bsl::ostream& stream,
+                                              int           level,
+                                              int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute("data", d_data);
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                   stream,
+                         const AbstractObjectIdentifier& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const AbstractObjectIdentifier& lhs,
+                const AbstractObjectIdentifier& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const AbstractObjectIdentifier& lhs,
+                const AbstractObjectIdentifier& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const AbstractObjectIdentifier& lhs,
+               const AbstractObjectIdentifier& rhs)
+{
+    return lhs.less(rhs);
+}
+
 AbstractIntegerSign::Value AbstractIntegerSign::flip(Value sign)
 {
     if (sign == e_POSITIVE) {

@@ -26,27 +26,180 @@ BSLS_IDENT("$Id: $")
 #include <bdlt_datetimetz.h>
 #include <bsl_iosfwd.h>
 #include <bsl_memory.h>
+#include <bsl_ostream.h>
+#include <bsl_streambuf.h>
 #include <bsl_string.h>
 #include <bsl_vector.h>
 
 namespace BloombergLP {
 namespace ntsa {
 
+class AbstractSyntaxNotation;
+class AbstractObjectIdentifier;
 class AbstractIntegerRepresentation;
-
 class AbstractIntegerQuantity;
 class AbstractIntegerQuantityUtil;
-
 class AbstractInteger;
 class AbstractIntegerUtil;
 
-class AbstractString;
-class AbstractDateTime;
+/// Provide an Abstract Syntax Notation (ASN.1) encoder/decoder.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntsa_data
+class AbstractSyntaxNotation
+{
+    bsl::streambuf*   d_buffer_p;
+    bslma::Allocator* d_allocator_p;
 
-class AbstractObjectIdentifier;
-class AbstractObject;
+  private:
+    AbstractSyntaxNotation(const AbstractSyntaxNotation&) BSLS_KEYWORD_DELETED;
+    AbstractSyntaxNotation& operator=(const AbstractSyntaxNotation&)
+        BSLS_KEYWORD_DELETED;
 
-class AbstractSyntaxNotation;
+  public:
+    /// Create a new ASN.1 encoder/decoder to and from the specified 'buffer'.
+    /// Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
+    explicit AbstractSyntaxNotation(bsl::streambuf*   buffer,
+                                    bslma::Allocator* basicAllocator = 0);
+
+    /// Destroy this object.
+    ~AbstractSyntaxNotation();
+
+    /// Return the buffer.
+    bsl::streambuf* buffer() const;
+};
+
+/// Provide an Abstract Syntax Notation (ASN.1) object identifier.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntsa_data
+class AbstractObjectIdentifier
+{
+    bsl::vector<bsl::uint8_t> d_data;
+
+  private:
+    AbstractObjectIdentifier(const AbstractObjectIdentifier&)
+        BSLS_KEYWORD_DELETED;
+    AbstractObjectIdentifier& operator=(const AbstractObjectIdentifier&)
+        BSLS_KEYWORD_DELETED;
+
+  public:
+    /// Create a new ASN.1 object identifier. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    explicit AbstractObjectIdentifier(bslma::Allocator* basicAllocator = 0);
+
+    /// Destroy this object.
+    ~AbstractObjectIdentifier();
+
+    /// Set the byte at the specified 'index' to the specified 'value'.
+    void set(bsl::size_t index, bsl::uint8_t value);
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(AbstractSyntaxNotation* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(AbstractSyntaxNotation* encoder) const;
+
+    /// Return the byte at the specified 'index'.
+    bsl::uint8_t get(bsl::size_t index) const;
+
+    // Return the number of bytes of data.
+    bsl::size_t size() const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const AbstractObjectIdentifier& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const AbstractObjectIdentifier& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(AbstractObjectIdentifier);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntsa::AbstractObjectIdentifier
+bsl::ostream& operator<<(bsl::ostream&                   stream,
+                         const AbstractObjectIdentifier& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntsa::AbstractObjectIdentifier
+bool operator==(const AbstractObjectIdentifier& lhs,
+                const AbstractObjectIdentifier& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntsa::AbstractObjectIdentifier
+bool operator!=(const AbstractObjectIdentifier& lhs,
+                const AbstractObjectIdentifier& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntsa::AbstractObjectIdentifier
+bool operator<(const AbstractObjectIdentifier& lhs,
+               const AbstractObjectIdentifier& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntsa::AbstractObjectIdentifier
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                 algorithm,
+                const AbstractObjectIdentifier& value);
+
+template <typename HASH_ALGORITHM>
+void AbstractObjectIdentifier::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, d_data);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                 algorithm,
+                const AbstractObjectIdentifier& value)
+{
+    value.hash(algorithm);
+}
 
 /// Enumerate the signs of the representation of an abstract integer.
 ///
