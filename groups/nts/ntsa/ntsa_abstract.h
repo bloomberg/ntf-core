@@ -13,15 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INCLUDED_NTCA_ENCRYPTIONNUMBER
-#define INCLUDED_NTCA_ENCRYPTIONNUMBER
+#ifndef INCLUDED_NTSA_ABSTRACT
+#define INCLUDED_NTSA_ABSTRACT
 
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <ntccfg_platform.h>
-#include <ntcscm_version.h>
 #include <ntsa_error.h>
+#include <ntscfg_platform.h>
+#include <ntsscm_version.h>
 #include <bdlb_nullablevalue.h>
 #include <bdlt_datetimetz.h>
 #include <bsl_iosfwd.h>
@@ -30,7 +30,7 @@ BSLS_IDENT("$Id: $")
 #include <bsl_vector.h>
 
 namespace BloombergLP {
-namespace ntca {
+namespace ntsa {
 
 class AbstractIntegerRepresentation;
 
@@ -40,40 +40,31 @@ class AbstractIntegerQuantityUtil;
 class AbstractInteger;
 class AbstractIntegerUtil;
 
-#ifdef __SIZEOF_INT128__
+class AbstractString;
+class AbstractDateTime;
 
-typedef __int128 Int128;
-typedef unsigned __int128 Uint128;
+class AbstractObjectIdentifier;
+class AbstractObject;
 
-#else
-
-#error 128-bit integers are not supported
-
-#endif
+class AbstractSyntaxNotation;
 
 /// Enumerate the signs of the representation of an abstract integer.
 ///
 /// @par Thread Safety
 /// This class is thread safe.
 ///
-/// @ingroup module_ntci_encryption
+/// @ingroup module_ntsi_encryption
 struct AbstractIntegerSign {
     /// Enumerate the signs of the representation of an abstract integer.
     enum Value {
         /// The sign is negative.
-        e_NEGATIVE = -1, 
-
-// MRM
-#if 0
-        /// The sign is positive but the value is zero.
-        e_ZERO = 0, 
-#endif
+        e_NEGATIVE = -1,
 
         /// The sign is positive.
         e_POSITIVE = 1
     };
 
-    /// Return the specified 'sign', but flipped. 
+    /// Return the specified 'sign', but flipped.
     static Value flip(Value sign);
 
     /// Return the multiplier for the specified 'sign'.
@@ -92,7 +83,7 @@ struct AbstractIntegerSign {
 /// Format the specified 'rhs' to the specified output 'stream' and return a
 /// reference to the modifiable 'stream'.
 ///
-/// @related ntca::AbstractIntegerSign
+/// @related ntsa::AbstractIntegerSign
 bsl::ostream& operator<<(bsl::ostream& stream, AbstractIntegerSign::Value rhs);
 
 /// Enumerate the supported bases of the representation of an abstract integer.
@@ -100,7 +91,7 @@ bsl::ostream& operator<<(bsl::ostream& stream, AbstractIntegerSign::Value rhs);
 /// @par Thread Safety
 /// This class is thread safe.
 ///
-/// @ingroup module_ntci_encryption
+/// @ingroup module_ntsi_encryption
 struct AbstractIntegerBase {
     /// Enumerate the supported bases of the representation of an abstract
     /// integer.
@@ -143,7 +134,7 @@ struct AbstractIntegerBase {
 /// Format the specified 'rhs' to the specified output 'stream' and return a
 /// reference to the modifiable 'stream'.
 ///
-/// @related ntca::AbstractIntegerBase
+/// @related ntsa::AbstractIntegerBase
 bsl::ostream& operator<<(bsl::ostream& stream, AbstractIntegerBase::Value rhs);
 
 /// Provide storage for the representation of an abstract integer.
@@ -151,10 +142,10 @@ bsl::ostream& operator<<(bsl::ostream& stream, AbstractIntegerBase::Value rhs);
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci_encryption
+/// @ingroup module_ntsi_encryption
 class AbstractIntegerRepresentation
 {
-public:
+  public:
     /// Define a type alias for unsigned integer type that represents a block.
     /// Also called a place or a limb in other implementations. This type must
     /// be sufficient to store the desired radix.
@@ -166,9 +157,7 @@ public:
     /// Define a type alias for the allocator used by a vector of blocks.
     typedef bsl::allocator<Block> BlockVectorAllocator;
 
-    enum {
-        k_BITS_PER_BLOCK = sizeof(Block) * 8
-    };
+    enum { k_BITS_PER_BLOCK = sizeof(Block) * 8 };
 
   private:
     AbstractIntegerBase::Value d_base;
@@ -291,7 +280,7 @@ public:
 
     /// Return true if this object is *not* an alias for the specified 'other'
     /// object, otherwise return false.
-    bool isNotAliasOf(const AbstractIntegerRepresentation& other) const;    
+    bool isNotAliasOf(const AbstractIntegerRepresentation& other) const;
 
     /// Return the allocator used to supply memory.
     bslma::Allocator* allocator() const;
@@ -323,21 +312,21 @@ public:
                     const AbstractIntegerRepresentation& addend2);
 
     /// Subtract the specified 'subtrahend' from the specified 'minuend' and
-    /// load the result into the specified 'difference'. If 'subtrahend' is 
+    /// load the result into the specified 'difference'. If 'subtrahend' is
     /// greater than 'minuend', clamp the 'difference' to zero.
     static void subtract(AbstractIntegerRepresentation*       difference,
                          const AbstractIntegerRepresentation& minuend,
                          const AbstractIntegerRepresentation& subtrahend);
 
-    /// Multiply the specified 'multiplicand' by the specified 'multiplier' 
-    /// and load the result into the specified 'product'. 
+    /// Multiply the specified 'multiplicand' by the specified 'multiplier'
+    /// and load the result into the specified 'product'.
     static void multiply(AbstractIntegerRepresentation*       product,
                          const AbstractIntegerRepresentation& multiplicand,
                          const AbstractIntegerRepresentation& multiplier);
 
-    /// Divide the specified 'dividend' by the specified 'divisor' 
+    /// Divide the specified 'dividend' by the specified 'divisor'
     /// and load the result into the specified 'quotient' and the modulus into
-    /// the specified 'remainder'. 
+    /// the specified 'remainder'.
     static void divide(AbstractIntegerRepresentation*       quotient,
                        AbstractIntegerRepresentation*       remainder,
                        const AbstractIntegerRepresentation& dividend,
@@ -350,7 +339,7 @@ public:
     static bool parse(AbstractIntegerRepresentation* result,
                       AbstractIntegerSign::Value*    sign,
                       const bsl::string_view&        text);
-    
+
     /// Load into the specified 'result' the text representation of the
     /// specified 'value' having the specified 'sign' in the specified 'base'.
     static void generate(bsl::string*                         result,
@@ -361,13 +350,13 @@ public:
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(AbstractIntegerRepresentation);
+    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(AbstractIntegerRepresentation);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
-/// @related ntca::AbstractIntegerRepresentation
+/// @related ntsa::AbstractIntegerRepresentation
 bsl::ostream& operator<<(bsl::ostream&                        stream,
                          const AbstractIntegerRepresentation& object);
 
@@ -375,7 +364,7 @@ bsl::ostream& operator<<(bsl::ostream&                        stream,
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
-/// @related ntca::AbstractIntegerRepresentation
+/// @related ntsa::AbstractIntegerRepresentation
 bool operator==(const AbstractIntegerRepresentation& lhs,
                 const AbstractIntegerRepresentation& rhs);
 
@@ -384,42 +373,42 @@ bool operator==(const AbstractIntegerRepresentation& lhs,
 /// not have the same value if one or more respective attributes differ in
 /// values.
 ///
-/// @related ntca::AbstractIntegerRepresentation
+/// @related ntsa::AbstractIntegerRepresentation
 bool operator!=(const AbstractIntegerRepresentation& lhs,
                 const AbstractIntegerRepresentation& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::AbstractIntegerRepresentation
+/// @related ntsa::AbstractIntegerRepresentation
 bool operator<(const AbstractIntegerRepresentation& lhs,
                const AbstractIntegerRepresentation& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than or equal to
 /// the value of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::AbstractIntegerRepresentation
+/// @related ntsa::AbstractIntegerRepresentation
 bool operator<=(const AbstractIntegerRepresentation& lhs,
                 const AbstractIntegerRepresentation& rhs);
 
 /// Return true if the value of the specified 'lhs' is greater than the value
 /// of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::AbstractIntegerRepresentation
+/// @related ntsa::AbstractIntegerRepresentation
 bool operator>(const AbstractIntegerRepresentation& lhs,
                const AbstractIntegerRepresentation& rhs);
 
 /// Return true if the value of the specified 'lhs' is greater than or equal to
 /// the value of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::AbstractIntegerRepresentation
+/// @related ntsa::AbstractIntegerRepresentation
 bool operator>=(const AbstractIntegerRepresentation& lhs,
                 const AbstractIntegerRepresentation& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntsa::EncryptionCertificate
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM&                      algorithm,
                 const AbstractIntegerRepresentation& value);
@@ -461,40 +450,11 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci_encryption
+/// @ingroup module_ntsi_encryption
 class AbstractIntegerQuantity
 {
-  public:
-
-    #if 0
-    /// Define a type alias for unsigned integer type that represents a block.
-    /// Also called a place or a limb in other implementations. This type must
-    /// be sufficient to store the desired radix.
-    typedef bsl::uint16_t Block;
-
-    /// Define a type alias for a vector of blocks.
-    typedef bsl::vector<Block> BlockVector;
-
-    /// Define a type alias for the allocator used by a vector of blocks.
-    typedef bsl::allocator<Block> BlockVectorAllocator;
-
-    enum {
-        /// 2^n, where n is the number of bits in the block. The maximum chosen
-        /// value must never cause a single-place multiplication plus a carry
-        /// to overflow the block type.
-        k_RADIX = 65536,
-
-        /// The number of bytes per block.
-        k_BYTES_PER_BLOCK = sizeof(Block),
-
-        /// The number of bits per block.
-        k_BITS_PER_BLOCK = sizeof(Block) * 8,
-    };
-    #endif
-
-  private:
     /// The representation of the abstract integer.
-    ntca::AbstractIntegerRepresentation d_rep;
+    ntsa::AbstractIntegerRepresentation d_rep;
 
     /// Grant visibility to the internals of this class to its utility.
     friend class AbstractIntegerQuantityUtil;
@@ -987,7 +947,7 @@ class AbstractIntegerQuantity
 
     /// Load into the specified 'result' the text representation of this object
     /// having the specified 'sign' in the specified 'base'.
-    void generate(bsl::string*               result, 
+    void generate(bsl::string*               result,
                   AbstractIntegerSign::Value sign,
                   AbstractIntegerBase::Value base) const;
 
@@ -1040,13 +1000,13 @@ class AbstractIntegerQuantity
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(AbstractIntegerQuantity);
+    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(AbstractIntegerQuantity);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntsa::EncryptionCertificate
 bsl::ostream& operator<<(bsl::ostream&                  stream,
                          const AbstractIntegerQuantity& object);
 
@@ -1054,7 +1014,7 @@ bsl::ostream& operator<<(bsl::ostream&                  stream,
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntsa::EncryptionCertificate
 bool operator==(const AbstractIntegerQuantity& lhs,
                 const AbstractIntegerQuantity& rhs);
 
@@ -1063,42 +1023,42 @@ bool operator==(const AbstractIntegerQuantity& lhs,
 /// not have the same value if one or more respective attributes differ in
 /// values.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntsa::EncryptionCertificate
 bool operator!=(const AbstractIntegerQuantity& lhs,
                 const AbstractIntegerQuantity& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntsa::EncryptionCertificate
 bool operator<(const AbstractIntegerQuantity& lhs,
                const AbstractIntegerQuantity& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than or equal to
 /// the value of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntsa::EncryptionCertificate
 bool operator<=(const AbstractIntegerQuantity& lhs,
                 const AbstractIntegerQuantity& rhs);
 
 /// Return true if the value of the specified 'lhs' is greater than the value
 /// of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntsa::EncryptionCertificate
 bool operator>(const AbstractIntegerQuantity& lhs,
                const AbstractIntegerQuantity& rhs);
 
 /// Return true if the value of the specified 'lhs' is greater than or equal to
 /// the value of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntsa::EncryptionCertificate
 bool operator>=(const AbstractIntegerQuantity& lhs,
                 const AbstractIntegerQuantity& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntsa::EncryptionCertificate
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM&                algorithm,
                 const AbstractIntegerQuantity& value);
@@ -1129,19 +1089,19 @@ void hashAppend(HASH_ALGORITHM&                algorithm,
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci_encryption
+/// @ingroup module_ntsi_encryption
 class AbstractIntegerQuantityUtil
 {
   public:
     /// Add the specified 'addend2' to the specified 'addend1' and load the
-    /// result into the specified 'sum'. Note that either 'addend1' or 
+    /// result into the specified 'sum'. Note that either 'addend1' or
     /// 'addend2' may alias 'sum'. The behavior is undefined if 'sum' is null.
     static void add(AbstractIntegerQuantity*       sum,
                     const AbstractIntegerQuantity& addend1,
                     const AbstractIntegerQuantity& addend2);
 
     /// Subtract the specified 'subtrahend' from the specified 'minuend' and
-    /// load the result into the specified 'difference'. If 'subtrahend' is 
+    /// load the result into the specified 'difference'. If 'subtrahend' is
     /// greater than 'minuend', clamp the 'difference' to zero. Note that
     /// either 'minuend' or 'subtrahend' may alias 'difference'. The behavior
     /// is undefined if 'difference' is null.
@@ -1149,15 +1109,15 @@ class AbstractIntegerQuantityUtil
                          const AbstractIntegerQuantity& minuend,
                          const AbstractIntegerQuantity& subtrahend);
 
-    // Multiply the specified 'multiplicand' by the specified 'multiplier' 
+    // Multiply the specified 'multiplicand' by the specified 'multiplier'
     /// and load the result into the specified 'product'. Note that either
-    /// 'multiplicand' or 'multiplier' may alias 'product'. The behavior is 
+    /// 'multiplicand' or 'multiplier' may alias 'product'. The behavior is
     /// undefined if 'product' is null.
     static void multiply(AbstractIntegerQuantity*       product,
                          const AbstractIntegerQuantity& multiplicand,
                          const AbstractIntegerQuantity& multiplier);
 
-    /// Divide the specified 'dividend' by the specified 'divisor' 
+    /// Divide the specified 'dividend' by the specified 'divisor'
     /// and load the result into the specified 'quotient' and the modulus into
     /// the specified 'remainder'. Note that either 'dividend' or 'divisor'
     /// may alias 'quotient' or 'remainder'. The behavior is undefined if
@@ -1179,7 +1139,7 @@ class AbstractIntegerQuantityUtil
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci_encryption
+/// @ingroup module_ntsi_encryption
 class AbstractInteger
 {
     /// Grant visibility to the internals of this class to its utility.
@@ -1189,7 +1149,7 @@ class AbstractInteger
     AbstractIntegerQuantity    d_magnitude;
 
   private:
-    /// Normalize this object so that its sign is positive if its value is 
+    /// Normalize this object so that its sign is positive if its value is
     /// zero.
     void normalize();
 
@@ -1697,8 +1657,7 @@ class AbstractInteger
 
     /// Load into the specified 'result' a string representation of this number
     /// in the specified 'base'.
-    void generate(bsl::string*               result, 
-                  AbstractIntegerBase::Value base) const;
+    void generate(bsl::string* result, AbstractIntegerBase::Value base) const;
 
     /// Return true if the number is zero, otherwise return false.
     bool isZero() const;
@@ -1743,20 +1702,20 @@ class AbstractInteger
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(AbstractInteger);
+    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(AbstractInteger);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntsa::EncryptionCertificate
 bsl::ostream& operator<<(bsl::ostream& stream, const AbstractInteger& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntsa::EncryptionCertificate
 bool operator==(const AbstractInteger& lhs, const AbstractInteger& rhs);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
@@ -1764,44 +1723,39 @@ bool operator==(const AbstractInteger& lhs, const AbstractInteger& rhs);
 /// not have the same value if one or more respective attributes differ in
 /// values.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntsa::EncryptionCertificate
 bool operator!=(const AbstractInteger& lhs, const AbstractInteger& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntsa::EncryptionCertificate
 bool operator<(const AbstractInteger& lhs, const AbstractInteger& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than or equal to
 /// the value of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntsa::EncryptionCertificate
 bool operator<=(const AbstractInteger& lhs, const AbstractInteger& rhs);
 
 /// Return true if the value of the specified 'lhs' is greater than the value
 /// of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntsa::EncryptionCertificate
 bool operator>(const AbstractInteger& lhs, const AbstractInteger& rhs);
 
 /// Return true if the value of the specified 'lhs' is greater than or equal to
 /// the value of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntsa::EncryptionCertificate
 bool operator>=(const AbstractInteger& lhs, const AbstractInteger& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntsa::EncryptionCertificate
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const AbstractInteger& value);
-
-
-
-
-
 
 /// Describe TODO.
 ///
@@ -1814,19 +1768,19 @@ void hashAppend(HASH_ALGORITHM& algorithm, const AbstractInteger& value);
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci_encryption
+/// @ingroup module_ntsi_encryption
 class AbstractIntegerUtil
 {
   public:
     /// Add the specified 'addend2' to the specified 'addend1' and load the
-    /// result into the specified 'sum'. Note that either 'addend1' or 
+    /// result into the specified 'sum'. Note that either 'addend1' or
     /// 'addend2' may alias 'sum'. The behavior is undefined if 'sum' is null.
     static void add(AbstractInteger*       sum,
                     const AbstractInteger& addend1,
                     const AbstractInteger& addend2);
 
     /// Subtract the specified 'subtrahend' from the specified 'minuend' and
-    /// load the result into the specified 'difference'. If 'subtrahend' is 
+    /// load the result into the specified 'difference'. If 'subtrahend' is
     /// greater than 'minuend', clamp the 'difference' to zero. Note that
     /// either 'minuend' or 'subtrahend' may alias 'difference'. The behavior
     /// is undefined if 'difference' is null.
@@ -1834,15 +1788,15 @@ class AbstractIntegerUtil
                          const AbstractInteger& minuend,
                          const AbstractInteger& subtrahend);
 
-    // Multiply the specified 'multiplicand' by the specified 'multiplier' 
+    // Multiply the specified 'multiplicand' by the specified 'multiplier'
     /// and load the result into the specified 'product'. Note that either
-    /// 'multiplicand' or 'multiplier' may alias 'product'. The behavior is 
+    /// 'multiplicand' or 'multiplier' may alias 'product'. The behavior is
     /// undefined if 'product' is null.
     static void multiply(AbstractInteger*       product,
                          const AbstractInteger& multiplicand,
                          const AbstractInteger& multiplier);
 
-    /// Divide the specified 'dividend' by the specified 'divisor' 
+    /// Divide the specified 'dividend' by the specified 'divisor'
     /// and load the result into the specified 'quotient' and the modulus into
     /// the specified 'remainder'. Note that either 'dividend' or 'divisor'
     /// may alias 'quotient' or 'remainder'. The behavior is undefined if
@@ -1852,11 +1806,6 @@ class AbstractIntegerUtil
                        const AbstractInteger& dividend,
                        const AbstractInteger& divisor);
 };
-
-
-
-
-
 
 template <typename HASH_ALGORITHM>
 void AbstractInteger::hash(HASH_ALGORITHM& algorithm)

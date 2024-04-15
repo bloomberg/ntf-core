@@ -13,10 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntca_encryptionnumber.h>
+#include <ntsa_abstract.h>
 
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntca_encryptionnumber_cpp, "$Id$ $CSID$")
+BSLS_IDENT_RCSID(ntsa_abstract_cpp, "$Id$ $CSID$")
 
 #include <bdlb_bitutil.h>
 #include <bslim_printer.h>
@@ -28,11 +28,11 @@ BSLS_IDENT_RCSID(ntca_encryptionnumber_cpp, "$Id$ $CSID$")
 #include <bsl_cstring.h>
 
 namespace BloombergLP {
-namespace ntca {
+namespace ntsa {
 
 namespace {
 
-const ntca::AbstractIntegerBase::Value k_DEFAULT_BASE = 
+const ntsa::AbstractIntegerBase::Value k_DEFAULT_BASE =
     AbstractIntegerBase::e_NATIVE;
 
 struct AbstractIntegerBaseTraits {
@@ -138,60 +138,64 @@ bsl::ostream& operator<<(bsl::ostream& stream, AbstractIntegerBase::Value rhs)
     return AbstractIntegerBase::print(stream, rhs);
 }
 
-bsl::size_t AbstractIntegerRepresentation::countLeadingZeroes(bsl::uint8_t value)
+bsl::size_t AbstractIntegerRepresentation::countLeadingZeroes(
+    bsl::uint8_t value)
 {
     const bsl::size_t bits = sizeof(bsl::uint8_t) << 3;
 
-	bsl::size_t count = 0;
+    bsl::size_t count = 0;
     bsl::size_t found = 0;
 
-	for (bsl::size_t i = bits - 1; i != bsl::size_t(-1); --i) {
-		count += !(found |= value & bsl::uint8_t(1) << i ? 1 : 0);
-	}
+    for (bsl::size_t i = bits - 1; i != bsl::size_t(-1); --i) {
+        count += !(found |= value & bsl::uint8_t(1) << i ? 1 : 0);
+    }
 
-	return count;
+    return count;
 }
 
-bsl::size_t AbstractIntegerRepresentation::countLeadingZeroes(bsl::uint16_t value)
+bsl::size_t AbstractIntegerRepresentation::countLeadingZeroes(
+    bsl::uint16_t value)
 {
     const bsl::size_t bits = sizeof(bsl::uint16_t) << 3;
 
-	bsl::size_t count = 0;
+    bsl::size_t count = 0;
     bsl::size_t found = 0;
 
-	for (bsl::size_t i = bits - 1; i != bsl::size_t(-1); --i) {
-		count += !(found |= value & bsl::uint16_t(1) << i ? 1 : 0);
-	}
-    
-	return count;
+    for (bsl::size_t i = bits - 1; i != bsl::size_t(-1); --i) {
+        count += !(found |= value & bsl::uint16_t(1) << i ? 1 : 0);
+    }
+
+    return count;
 }
 
-bsl::size_t AbstractIntegerRepresentation::countLeadingZeroes(bsl::uint32_t value)
+bsl::size_t AbstractIntegerRepresentation::countLeadingZeroes(
+    bsl::uint32_t value)
 {
     const bsl::size_t bits = sizeof(bsl::uint32_t) << 3;
 
-	bsl::size_t count = 0;
+    bsl::size_t count = 0;
     bsl::size_t found = 0;
 
-	for (bsl::size_t i = bits - 1; i != bsl::size_t(-1); --i) {
-		count += !(found |= value & bsl::uint32_t(1) << i ? 1 : 0);
-	}
-    
-	return count;
+    for (bsl::size_t i = bits - 1; i != bsl::size_t(-1); --i) {
+        count += !(found |= value & bsl::uint32_t(1) << i ? 1 : 0);
+    }
+
+    return count;
 }
 
-bsl::size_t AbstractIntegerRepresentation::countLeadingZeroes(bsl::uint64_t value)
+bsl::size_t AbstractIntegerRepresentation::countLeadingZeroes(
+    bsl::uint64_t value)
 {
     const bsl::size_t bits = sizeof(bsl::uint64_t) << 3;
 
-	bsl::size_t count = 0;
+    bsl::size_t count = 0;
     bsl::size_t found = 0;
 
-	for (bsl::size_t i = bits - 1; i != bsl::size_t(-1); --i) {
-		count += !(found |= value & bsl::uint64_t(1) << i ? 1 : 0);
-	}
-    
-	return count;
+    for (bsl::size_t i = bits - 1; i != bsl::size_t(-1); --i) {
+        count += !(found |= value & bsl::uint64_t(1) << i ? 1 : 0);
+    }
+
+    return count;
 }
 
 AbstractIntegerRepresentation::AbstractIntegerRepresentation(
@@ -289,7 +293,7 @@ void AbstractIntegerRepresentation::normalize()
 
 void AbstractIntegerRepresentation::set(bsl::size_t index, Block value)
 {
-    BSLS_ASSERT_OPT(ntca::AbstractIntegerBase::validate(d_base, value));
+    BSLS_ASSERT_OPT(ntsa::AbstractIntegerBase::validate(d_base, value));
 
     if (index >= d_data.size()) {
         d_data.resize(index + 1);
@@ -301,7 +305,7 @@ void AbstractIntegerRepresentation::set(bsl::size_t index, Block value)
 
 void AbstractIntegerRepresentation::push(Block value)
 {
-    BSLS_ASSERT_OPT(ntca::AbstractIntegerBase::validate(d_base, value));
+    BSLS_ASSERT_OPT(ntsa::AbstractIntegerBase::validate(d_base, value));
     d_data.push_back(value);
 }
 
@@ -310,7 +314,8 @@ void AbstractIntegerRepresentation::pop()
     d_data.pop_back();
 }
 
-AbstractIntegerRepresentation::Block AbstractIntegerRepresentation::get(bsl::size_t index) const
+AbstractIntegerRepresentation::Block AbstractIntegerRepresentation::get(
+    bsl::size_t index) const
 {
     if (index < d_data.size()) {
         return static_cast<Block>(d_data[index]);
@@ -467,8 +472,8 @@ void AbstractIntegerRepresentation::add(
         }
 
         if (temp >= radix) {
-            temp -= radix;
-            carry = true;
+            temp  -= radix;
+            carry  = true;
         }
         else {
             carry = false;
@@ -533,8 +538,8 @@ void AbstractIntegerRepresentation::subtract(
         }
 
         if (temp >= radix) {
-            temp += radix;
-            borrow = true;
+            temp   += radix;
+            borrow  = true;
         }
         else {
             borrow = false;
@@ -545,7 +550,6 @@ void AbstractIntegerRepresentation::subtract(
 
     difference->normalize();
 }
-
 
 void AbstractIntegerRepresentation::multiply(
     AbstractIntegerRepresentation*       product,
@@ -579,7 +583,7 @@ void AbstractIntegerRepresentation::multiply(
     }
 
     const bsl::uint64_t radix = product->radix();
-    const bsl::uint64_t b = radix;
+    const bsl::uint64_t b     = radix;
 
     const AbstractIntegerRepresentation& u = multiplicand;
     const AbstractIntegerRepresentation& v = multiplier;
@@ -647,14 +651,18 @@ void AbstractIntegerRepresentation::multiply(
 }
 
 void AbstractIntegerRepresentation::divide(
-        AbstractIntegerRepresentation*       quotient,
-        AbstractIntegerRepresentation*       remainder,
-        const AbstractIntegerRepresentation& dividend,
-        const AbstractIntegerRepresentation& divisor)
+    AbstractIntegerRepresentation*       quotient,
+    AbstractIntegerRepresentation*       remainder,
+    const AbstractIntegerRepresentation& dividend,
+    const AbstractIntegerRepresentation& divisor)
 {
     // The following implementation is derived from algorithm D ("division of
     // non-negative integers") in section 4.3.1 of Volume 2 of "The Art of
-    // Computer Programming", by Donald Knuth.
+    // Computer Programming", by Donald Knuth, and "Hacker's Delight", by Henry
+    // S. Warren, Jr. Note that it is crucial for the correctness of this
+    // implementation that numbers are stored in base 2^k_BITS_PER_BLOCK and
+    // that the integer storage type for temporaries is the exact type as the
+    // block type.
 
     BSLS_ASSERT_OPT(quotient->isNotAliasOf(dividend));
     BSLS_ASSERT_OPT(quotient->isNotAliasOf(divisor));
@@ -709,7 +717,7 @@ void AbstractIntegerRepresentation::divide(
     const bsl::size_t n = v.size();
 
     const bsl::uint64_t radix = quotient->radix();
-    const bsl::uint64_t b = radix;
+    const bsl::uint64_t b     = radix;
 
     if (divisor.size() == 1) {
         bsl::uint64_t k = 0;
@@ -734,23 +742,6 @@ void AbstractIntegerRepresentation::divide(
     AbstractIntegerRepresentation vn;
 
     for (bsl::size_t i = n - 1; i > 0; --i) {
-
-        // MRM: Using 64-bit integers causes the algorithm to break.
-        #if 0
-        Block vc = Block(v.get(i));
-        Block vp = Block(v.get(i - 1));
-
-        Block vni = (vc << s) | (vp >> (k_BITS_PER_BLOCK - s));
-        NTCCFG_WARNING_UNUSED(vni);
-
-        Block vni8 = (v.get(i) << s) | (v.get(i - 1) >> (k_BITS_PER_BLOCK - s));
-
-        bsl::uint64_t vni64 = (v.get(i) << s) | (v.get(i - 1) >> (k_BITS_PER_BLOCK - s));
-
-        BSLS_ASSERT_OPT(vni == vni8);
-        BSLS_ASSERT_OPT(vni == vni64);
-        #endif
-
         vn.set(i, (v.get(i) << s) | (v.get(i - 1) >> (k_BITS_PER_BLOCK - s)));
     }
 
@@ -765,15 +756,17 @@ void AbstractIntegerRepresentation::divide(
 
     un.set(0, u.get(0) << s);
 
-	for (bsl::size_t j = m - n; j != bsl::size_t(-1); --j) {
-		bsl::uint64_t qhat = 
+    for (bsl::size_t j = m - n; j != bsl::size_t(-1); --j) {
+        bsl::uint64_t qhat =
             (un.get(j + n) * b + un.get(j + n - 1)) / vn.get(n - 1);
 
-		bsl::uint64_t rhat = 
+        bsl::uint64_t rhat =
             (un.get(j + n) * b + un.get(j + n - 1)) - qhat * vn.get(n - 1);
 
         while (true) {
-            if (qhat >= b || qhat * vn.get(n - 2) > b * rhat + un.get(j + n - 2)) {
+            if (qhat >= b ||
+                qhat * vn.get(n - 2) > b * rhat + un.get(j + n - 2))
+            {
                 qhat = qhat - 1;
                 rhat = rhat + vn.get(n - 1);
                 if (rhat < b) {
@@ -784,43 +777,42 @@ void AbstractIntegerRepresentation::divide(
         }
 
         typedef bsl::uint64_t U64;
-        typedef bsl::int64_t S64;
+        typedef bsl::int64_t  S64;
 
-		U64 k = 0;
-		S64 t = 0;
+        U64 k = 0;
+        S64 t = 0;
 
-		for (bsl::size_t i = 0; i < n; ++i) {
-			U64 p = qhat * vn.get(i);
-			t = un.get(i + j) - k - (p & ((1ULL << k_BITS_PER_BLOCK) - 1));
-			un.set(i + j, Block(t));
-			k = (p >> k_BITS_PER_BLOCK) - (t >> k_BITS_PER_BLOCK);
-		}
+        for (bsl::size_t i = 0; i < n; ++i) {
+            U64 p = qhat * vn.get(i);
+            t     = un.get(i + j) - k - (p & ((1ULL << k_BITS_PER_BLOCK) - 1));
+            un.set(i + j, Block(t));
+            k = (p >> k_BITS_PER_BLOCK) - (t >> k_BITS_PER_BLOCK);
+        }
 
-		t = un.get(j + n) - k;
-		un.set(j + n, Block(t));
+        t = un.get(j + n) - k;
+        un.set(j + n, Block(t));
 
-		q.set(j, Block(qhat));
+        q.set(j, Block(qhat));
 
-		if (t < 0) {
-			q.set(j, q.get(j) - 1);
-			k = 0;
-			for (bsl::size_t i = 0; i < n; ++i) {
-				t = un.get(i+j) + vn.get(i) + k;
-				un.set(i + j, Block(t));
-				k = t >> k_BITS_PER_BLOCK;
-			}
-			un.set(j + n, Block(un.get(j + n) + k));
-		}        
-	}
+        if (t < 0) {
+            q.set(j, q.get(j) - 1);
+            k = 0;
+            for (bsl::size_t i = 0; i < n; ++i) {
+                t = un.get(i + j) + vn.get(i) + k;
+                un.set(i + j, Block(t));
+                k = t >> k_BITS_PER_BLOCK;
+            }
+            un.set(j + n, Block(un.get(j + n) + k));
+        }
+    }
 
-	for (bsl::size_t i = 0; i < n; ++i) {
-		r.set(i, (un.get(i) >> s) | (un.get(i + 1) << (k_BITS_PER_BLOCK - s)));
-	}
+    for (bsl::size_t i = 0; i < n; ++i) {
+        r.set(i, (un.get(i) >> s) | (un.get(i + 1) << (k_BITS_PER_BLOCK - s)));
+    }
 
-	q.normalize();
-	r.normalize();
+    q.normalize();
+    r.normalize();
 }
-
 
 bool AbstractIntegerRepresentation::parse(
     AbstractIntegerRepresentation* result,
@@ -1066,7 +1058,6 @@ void AbstractIntegerRepresentation::generate(
     }
 }
 
-
 bsl::ostream& operator<<(bsl::ostream&                        stream,
                          const AbstractIntegerRepresentation& object)
 {
@@ -1265,8 +1256,8 @@ void AbstractIntegerQuantity::swap(AbstractIntegerQuantity& other)
     }
 }
 
-bool AbstractIntegerQuantity::parse(AbstractIntegerSign::Value*    sign,
-                                    const bsl::string_view& text)
+bool AbstractIntegerQuantity::parse(AbstractIntegerSign::Value* sign,
+                                    const bsl::string_view&     text)
 {
     return AbstractIntegerRepresentation::parse(&d_rep, sign, text);
 }
@@ -1529,7 +1520,7 @@ AbstractIntegerQuantity& AbstractIntegerQuantity::divide(
 AbstractIntegerQuantity& AbstractIntegerQuantity::divide(
     const AbstractIntegerQuantity& other)
 {
-    ntca::AbstractIntegerQuantity remainder;
+    ntsa::AbstractIntegerQuantity remainder;
     return this->divide(other, &remainder);
 }
 
@@ -1697,7 +1688,8 @@ ntsa::Error AbstractIntegerQuantity::convert(short* result) const
 
     const bsl::uint64_t value = d_rep.get(0);
 
-    if (value > static_cast<bsl::uint64_t>(bsl::numeric_limits<short>::max())) {
+    if (value > static_cast<bsl::uint64_t>(bsl::numeric_limits<short>::max()))
+    {
         return ntsa::Error(ntsa::Error::e_LIMIT);
     }
 
@@ -1720,7 +1712,8 @@ ntsa::Error AbstractIntegerQuantity::convert(unsigned short* result) const
 
     const bsl::uint64_t value = d_rep.get(0);
 
-    if (value > static_cast<bsl::uint64_t>(bsl::numeric_limits<short>::max())) {
+    if (value > static_cast<bsl::uint64_t>(bsl::numeric_limits<short>::max()))
+    {
         return ntsa::Error(ntsa::Error::e_LIMIT);
     }
 
@@ -1730,47 +1723,47 @@ ntsa::Error AbstractIntegerQuantity::convert(unsigned short* result) const
 
 ntsa::Error AbstractIntegerQuantity::convert(int* result) const
 {
-    NTCCFG_WARNING_UNUSED(result);
-    NTCCFG_NOT_IMPLEMENTED();
+    NTSCFG_WARNING_UNUSED(result);
+    NTSCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error AbstractIntegerQuantity::convert(unsigned int* result) const
 {
-    NTCCFG_WARNING_UNUSED(result);
-    NTCCFG_NOT_IMPLEMENTED();
+    NTSCFG_WARNING_UNUSED(result);
+    NTSCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error AbstractIntegerQuantity::convert(long* result) const
 {
-    NTCCFG_WARNING_UNUSED(result);
-    NTCCFG_NOT_IMPLEMENTED();
+    NTSCFG_WARNING_UNUSED(result);
+    NTSCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error AbstractIntegerQuantity::convert(unsigned long* result) const
 {
-    NTCCFG_WARNING_UNUSED(result);
-    NTCCFG_NOT_IMPLEMENTED();
+    NTSCFG_WARNING_UNUSED(result);
+    NTSCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error AbstractIntegerQuantity::convert(long long* result) const
 {
-    NTCCFG_WARNING_UNUSED(result);
-    NTCCFG_NOT_IMPLEMENTED();
+    NTSCFG_WARNING_UNUSED(result);
+    NTSCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error AbstractIntegerQuantity::convert(unsigned long long* result) const
 {
-    NTCCFG_WARNING_UNUSED(result);
-    NTCCFG_NOT_IMPLEMENTED();
+    NTSCFG_WARNING_UNUSED(result);
+    NTSCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
-void AbstractIntegerQuantity::generate(bsl::string* result,
+void AbstractIntegerQuantity::generate(bsl::string*               result,
                                        AbstractIntegerSign::Value sign,
                                        AbstractIntegerBase::Value base) const
 {
@@ -1823,10 +1816,10 @@ bsl::ostream& AbstractIntegerQuantity::print(bsl::ostream& stream,
                                              int           level,
                                              int spacesPerLevel) const
 {
-    NTCCFG_WARNING_UNUSED(level);
-    NTCCFG_WARNING_UNUSED(spacesPerLevel);
+    NTSCFG_WARNING_UNUSED(level);
+    NTSCFG_WARNING_UNUSED(spacesPerLevel);
 
-    bsl::string result;
+    bsl::string                result;
     AbstractIntegerBase::Value base = AbstractIntegerBase::e_DECIMAL;
 
     const bsl::ostream::fmtflags flags = stream.flags();
@@ -1890,11 +1883,15 @@ void AbstractIntegerQuantityUtil::add(AbstractIntegerQuantity*       sum,
                                       const AbstractIntegerQuantity& addend2)
 {
     if (sum->isNotAliasOf(addend1) && sum->isNotAliasOf(addend2)) {
-        AbstractIntegerRepresentation::add(&sum->d_rep, addend1.d_rep, addend2.d_rep);
+        AbstractIntegerRepresentation::add(&sum->d_rep,
+                                           addend1.d_rep,
+                                           addend2.d_rep);
     }
     else {
         AbstractIntegerQuantity tempSum(sum->allocator());
-        AbstractIntegerRepresentation::add(&tempSum.d_rep, addend1.d_rep, addend2.d_rep);
+        AbstractIntegerRepresentation::add(&tempSum.d_rep,
+                                           addend1.d_rep,
+                                           addend2.d_rep);
         sum->swap(tempSum);
     }
 }
@@ -1904,14 +1901,18 @@ void AbstractIntegerQuantityUtil::subtract(
     const AbstractIntegerQuantity& minuend,
     const AbstractIntegerQuantity& subtrahend)
 {
-    if (difference->isNotAliasOf(minuend) && difference->isNotAliasOf(subtrahend)) {
-        AbstractIntegerRepresentation::subtract(&difference->d_rep, minuend.d_rep, subtrahend.d_rep);
+    if (difference->isNotAliasOf(minuend) &&
+        difference->isNotAliasOf(subtrahend))
+    {
+        AbstractIntegerRepresentation::subtract(&difference->d_rep,
+                                                minuend.d_rep,
+                                                subtrahend.d_rep);
     }
     else {
         AbstractIntegerQuantity tempDifference(difference->allocator());
         AbstractIntegerRepresentation::subtract(&tempDifference.d_rep,
-                                              minuend.d_rep,
-                                              subtrahend.d_rep);
+                                                minuend.d_rep,
+                                                subtrahend.d_rep);
         difference->swap(tempDifference);
     }
 }
@@ -1921,16 +1922,18 @@ void AbstractIntegerQuantityUtil::multiply(
     const AbstractIntegerQuantity& multiplicand,
     const AbstractIntegerQuantity& multiplier)
 {
-    if (product->isNotAliasOf(multiplicand) && product->isNotAliasOf(multiplier)) {
+    if (product->isNotAliasOf(multiplicand) &&
+        product->isNotAliasOf(multiplier))
+    {
         AbstractIntegerRepresentation::multiply(&product->d_rep,
-                                              multiplicand.d_rep,
-                                              multiplier.d_rep);
+                                                multiplicand.d_rep,
+                                                multiplier.d_rep);
     }
     else {
         AbstractIntegerQuantity tempProduct(product->allocator());
         AbstractIntegerRepresentation::multiply(&tempProduct.d_rep,
-                                              multiplicand.d_rep,
-                                              multiplier.d_rep);
+                                                multiplicand.d_rep,
+                                                multiplier.d_rep);
         product->swap(tempProduct);
     }
 }
@@ -1956,17 +1959,17 @@ void AbstractIntegerQuantityUtil::divide(
         remainder->isNotAliasOf(dividend) && remainder->isNotAliasOf(divisor))
     {
         AbstractIntegerRepresentation::divide(&quotient->d_rep,
-                                            &remainder->d_rep,
-                                            dividend.d_rep,
-                                            divisor.d_rep);
+                                              &remainder->d_rep,
+                                              dividend.d_rep,
+                                              divisor.d_rep);
     }
     else {
         AbstractIntegerQuantity tempQuotient(quotient->allocator());
         AbstractIntegerQuantity tempRemainder(remainder->allocator());
         AbstractIntegerRepresentation::divide(&tempQuotient.d_rep,
-                                            &tempRemainder.d_rep,
-                                            dividend.d_rep,
-                                            divisor.d_rep);
+                                              &tempRemainder.d_rep,
+                                              dividend.d_rep,
+                                              divisor.d_rep);
         quotient->swap(tempQuotient);
         remainder->swap(tempRemainder);
     }
@@ -2173,7 +2176,7 @@ AbstractInteger& AbstractInteger::assign(long long value)
         }
         else if (value < 0) {
             d_sign = AbstractIntegerSign::e_NEGATIVE;
-            unsigned long long temp = 
+            unsigned long long temp =
                 static_cast<unsigned long long>(-1 * value);
             d_magnitude.assign(static_cast<unsigned long long>(temp));
         }
@@ -2199,7 +2202,7 @@ AbstractInteger& AbstractInteger::assign(unsigned long long value)
 AbstractInteger& AbstractInteger::assign(const AbstractInteger& value)
 {
     if (this != &value) {
-        d_sign = value.d_sign;
+        d_sign      = value.d_sign;
         d_magnitude = value.d_magnitude;
     }
 
@@ -2402,7 +2405,7 @@ AbstractInteger& AbstractInteger::divide(unsigned long long value)
 
 AbstractInteger& AbstractInteger::divide(const AbstractInteger& other)
 {
-    ntca::AbstractInteger remainder;
+    ntsa::AbstractInteger remainder;
     return this->divide(other, &remainder);
 }
 
@@ -2565,9 +2568,9 @@ int AbstractInteger::compare(const AbstractInteger& other) const
 ntsa::Error AbstractInteger::convert(short* result) const
 {
     ntsa::Error error;
-    
+
     bsl::int64_t value = 0;
-    error = d_magnitude.convert(&value);
+    error              = d_magnitude.convert(&value);
     if (error) {
         return error;
     }
@@ -2593,13 +2596,13 @@ ntsa::Error AbstractInteger::convert(unsigned short* result) const
     }
 
     bsl::uint64_t value = 0;
-    error = d_magnitude.convert(&value);
+    error               = d_magnitude.convert(&value);
     if (error) {
         return error;
     }
 
-    if (value > static_cast<bsl::uint64_t>(
-        bsl::numeric_limits<unsigned short>::max())) 
+    if (value >
+        static_cast<bsl::uint64_t>(bsl::numeric_limits<unsigned short>::max()))
     {
         return ntsa::Error(ntsa::Error::e_LIMIT);
     }
@@ -2610,47 +2613,47 @@ ntsa::Error AbstractInteger::convert(unsigned short* result) const
 
 ntsa::Error AbstractInteger::convert(int* result) const
 {
-    NTCCFG_WARNING_UNUSED(result);
-    NTCCFG_NOT_IMPLEMENTED();
+    NTSCFG_WARNING_UNUSED(result);
+    NTSCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error AbstractInteger::convert(unsigned int* result) const
 {
-    NTCCFG_WARNING_UNUSED(result);
-    NTCCFG_NOT_IMPLEMENTED();
+    NTSCFG_WARNING_UNUSED(result);
+    NTSCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error AbstractInteger::convert(long* result) const
 {
-    NTCCFG_WARNING_UNUSED(result);
-    NTCCFG_NOT_IMPLEMENTED();
+    NTSCFG_WARNING_UNUSED(result);
+    NTSCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error AbstractInteger::convert(unsigned long* result) const
 {
-    NTCCFG_WARNING_UNUSED(result);
-    NTCCFG_NOT_IMPLEMENTED();
+    NTSCFG_WARNING_UNUSED(result);
+    NTSCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error AbstractInteger::convert(long long* result) const
 {
-    NTCCFG_WARNING_UNUSED(result);
-    NTCCFG_NOT_IMPLEMENTED();
+    NTSCFG_WARNING_UNUSED(result);
+    NTSCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error AbstractInteger::convert(unsigned long long* result) const
 {
-    NTCCFG_WARNING_UNUSED(result);
-    NTCCFG_NOT_IMPLEMENTED();
+    NTSCFG_WARNING_UNUSED(result);
+    NTSCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
-void AbstractInteger::generate(bsl::string*               result, 
+void AbstractInteger::generate(bsl::string*               result,
                                AbstractIntegerBase::Value base) const
 {
     d_magnitude.generate(result, d_sign, base);
@@ -2676,7 +2679,6 @@ bool AbstractInteger::isNotAliasOf(const AbstractInteger* other) const
     return this != other;
 }
 
-
 bool AbstractInteger::isNotAliasOf(const AbstractInteger& other) const
 {
     return this != &other;
@@ -2691,10 +2693,10 @@ bsl::ostream& AbstractInteger::print(bsl::ostream& stream,
                                      int           level,
                                      int           spacesPerLevel) const
 {
-    NTCCFG_WARNING_UNUSED(level);
-    NTCCFG_WARNING_UNUSED(spacesPerLevel);
+    NTSCFG_WARNING_UNUSED(level);
+    NTSCFG_WARNING_UNUSED(spacesPerLevel);
 
-    bsl::string result;
+    bsl::string                result;
     AbstractIntegerBase::Value base = AbstractIntegerBase::e_DECIMAL;
 
     const bsl::ostream::fmtflags flags = stream.flags();
@@ -2837,7 +2839,6 @@ bool operator>=(const AbstractInteger& lhs, const AbstractInteger& rhs)
     return lhs.compare(rhs) >= 0;
 }
 
-
 void AbstractIntegerUtil::add(AbstractInteger*       sum,
                               const AbstractInteger& addend1,
                               const AbstractInteger& addend2)
@@ -2864,9 +2865,9 @@ void AbstractIntegerUtil::add(AbstractInteger*       sum,
         w->d_sign      = u->d_sign;
     }
     else if (u->d_sign == v->d_sign) {
-        AbstractIntegerQuantityUtil::add(&w->d_magnitude, 
-                                          u->d_magnitude, 
-                                          v->d_magnitude);
+        AbstractIntegerQuantityUtil::add(&w->d_magnitude,
+                                         u->d_magnitude,
+                                         v->d_magnitude);
         w->d_sign = u->d_sign;
     }
     else {
@@ -2875,15 +2876,15 @@ void AbstractIntegerUtil::add(AbstractInteger*       sum,
             w->reset();
         }
         else if (comparison > 0) {
-            AbstractIntegerQuantityUtil::subtract(&w->d_magnitude, 
-                                                   u->d_magnitude, 
-                                                   v->d_magnitude);
+            AbstractIntegerQuantityUtil::subtract(&w->d_magnitude,
+                                                  u->d_magnitude,
+                                                  v->d_magnitude);
             w->d_sign = u->d_sign;
         }
         else {
-            AbstractIntegerQuantityUtil::subtract(&w->d_magnitude, 
-                                                   v->d_magnitude, 
-                                                   u->d_magnitude);
+            AbstractIntegerQuantityUtil::subtract(&w->d_magnitude,
+                                                  v->d_magnitude,
+                                                  u->d_magnitude);
             w->d_sign = v->d_sign;
         }
     }
@@ -2903,8 +2904,8 @@ void AbstractIntegerUtil::subtract(AbstractInteger*       difference,
         difference->allocator());
 
     AbstractInteger* w;
-    if (difference->isNotAliasOf(minuend) && 
-        difference->isNotAliasOf(subtrahend)) 
+    if (difference->isNotAliasOf(minuend) &&
+        difference->isNotAliasOf(subtrahend))
     {
         w = difference;
     }
@@ -2924,9 +2925,9 @@ void AbstractIntegerUtil::subtract(AbstractInteger*       difference,
         w->d_sign      = u->d_sign;
     }
     else if (u->d_sign != v->d_sign) {
-        AbstractIntegerQuantityUtil::add(&w->d_magnitude, 
-                                          u->d_magnitude, 
-                                          v->d_magnitude);
+        AbstractIntegerQuantityUtil::add(&w->d_magnitude,
+                                         u->d_magnitude,
+                                         v->d_magnitude);
         w->d_sign = u->d_sign;
     }
     else {
@@ -2936,14 +2937,14 @@ void AbstractIntegerUtil::subtract(AbstractInteger*       difference,
         }
         else if (comparison > 0) {
             AbstractIntegerQuantityUtil::subtract(&w->d_magnitude,
-                                                   u->d_magnitude,
-                                                   v->d_magnitude);
+                                                  u->d_magnitude,
+                                                  v->d_magnitude);
             w->d_sign = u->d_sign;
         }
         else {
             AbstractIntegerQuantityUtil::subtract(&w->d_magnitude,
-                                                   v->d_magnitude,
-                                                   u->d_magnitude);
+                                                  v->d_magnitude,
+                                                  u->d_magnitude);
             w->d_sign = AbstractIntegerSign::flip(v->d_sign);
         }
     }
@@ -2959,12 +2960,11 @@ void AbstractIntegerUtil::multiply(AbstractInteger*       product,
                                    const AbstractInteger& multiplicand,
                                    const AbstractInteger& multiplier)
 {
-    bdlb::NullableValue<AbstractInteger> tempProduct(
-        product->allocator());
+    bdlb::NullableValue<AbstractInteger> tempProduct(product->allocator());
 
     AbstractInteger* w;
-    if (product->isNotAliasOf(multiplicand) && 
-        product->isNotAliasOf(multiplier)) 
+    if (product->isNotAliasOf(multiplicand) &&
+        product->isNotAliasOf(multiplier))
     {
         w = product;
     }
@@ -2979,9 +2979,9 @@ void AbstractIntegerUtil::multiply(AbstractInteger*       product,
         w->reset();
     }
     else {
-        AbstractIntegerQuantityUtil::multiply(&w->d_magnitude, 
-                                               u->d_magnitude, 
-                                               v->d_magnitude);
+        AbstractIntegerQuantityUtil::multiply(&w->d_magnitude,
+                                              u->d_magnitude,
+                                              v->d_magnitude);
         if (u->d_sign == v->d_sign) {
             w->d_sign = AbstractIntegerSign::e_POSITIVE;
         }
@@ -3002,16 +3002,13 @@ void AbstractIntegerUtil::divide(AbstractInteger*       quotient,
                                  const AbstractInteger& dividend,
                                  const AbstractInteger& divisor)
 {
-    bdlb::NullableValue<AbstractInteger> tempQuotient(
-        quotient->allocator());
+    bdlb::NullableValue<AbstractInteger> tempQuotient(quotient->allocator());
 
-    bdlb::NullableValue<AbstractInteger> tempRemainder(
-        remainder->allocator());
+    bdlb::NullableValue<AbstractInteger> tempRemainder(remainder->allocator());
 
     AbstractInteger* w;
-    if (quotient->isNotAliasOf(dividend) && 
-        quotient->isNotAliasOf(divisor) && 
-        quotient->isNotAliasOf(remainder)) 
+    if (quotient->isNotAliasOf(dividend) && quotient->isNotAliasOf(divisor) &&
+        quotient->isNotAliasOf(remainder))
     {
         w = quotient;
     }
@@ -3020,9 +3017,8 @@ void AbstractIntegerUtil::divide(AbstractInteger*       quotient,
     }
 
     AbstractInteger* x;
-    if (remainder->isNotAliasOf(dividend) && 
-        remainder->isNotAliasOf(divisor) && 
-        remainder->isNotAliasOf(quotient)) 
+    if (remainder->isNotAliasOf(dividend) &&
+        remainder->isNotAliasOf(divisor) && remainder->isNotAliasOf(quotient))
     {
         x = remainder;
     }
@@ -3042,10 +3038,10 @@ void AbstractIntegerUtil::divide(AbstractInteger*       quotient,
         x->assign(*v);
     }
     else if (u->d_sign == v->d_sign) {
-        AbstractIntegerQuantityUtil::divide(&w->d_magnitude, 
+        AbstractIntegerQuantityUtil::divide(&w->d_magnitude,
                                             &x->d_magnitude,
-                                             u->d_magnitude, 
-                                             v->d_magnitude);
+                                            u->d_magnitude,
+                                            v->d_magnitude);
 
         w->d_sign = AbstractIntegerSign::e_POSITIVE;
 
@@ -3061,42 +3057,14 @@ void AbstractIntegerUtil::divide(AbstractInteger*       quotient,
     else {
         AbstractIntegerQuantity un(u->d_magnitude, u->allocator());
 
-        #if 0
-        AbstractIntegerQuantity one;
-        one.assign(1);
-
-        AbstractIntegerQuantityUtil::subtract(
-            &un, un, one);
-        #endif
-
-        AbstractIntegerQuantityUtil::divide(
-            &w->d_magnitude, &x->d_magnitude, un, v->d_magnitude);
-
-        #if 0
-        AbstractIntegerQuantityUtil::add(
-            &w->d_magnitude, w->d_magnitude, one);        
-
-        if (x->d_magnitude.compare(v->d_magnitude) < 0) {
-            AbstractIntegerQuantityUtil::subtract(
-                &x->d_magnitude, v->d_magnitude, x->d_magnitude);
-        }
-        else {
-            AbstractIntegerQuantityUtil::subtract(
-                &x->d_magnitude, x->d_magnitude, v->d_magnitude);
-        }
-
-        AbstractIntegerQuantityUtil::subtract(
-            &x->d_magnitude, x->d_magnitude, one);
-
-        AbstractIntegerQuantityUtil::add(
-            &w->d_magnitude, w->d_magnitude, one);
-        #endif
+        AbstractIntegerQuantityUtil::divide(&w->d_magnitude,
+                                            &x->d_magnitude,
+                                            un,
+                                            v->d_magnitude);
 
         w->d_sign = AbstractIntegerSign::e_NEGATIVE;
 
-        if (u->d_sign == AbstractIntegerSign::e_NEGATIVE 
-            /* || v->d_sign == AbstractIntegerSign::e_NEGATIVE */)
-        {
+        if (u->d_sign == AbstractIntegerSign::e_NEGATIVE) {
             x->d_sign = AbstractIntegerSign::e_NEGATIVE;
         }
         else {

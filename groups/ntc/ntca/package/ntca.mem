@@ -26,7 +26,6 @@ ntca_driverconfig
 ntca_drivermechanism
 ntca_encryptionauthentication
 ntca_encryptionmethod
-ntca_encryptionnumber
 ntca_encryptionrole
 ntca_encryptioncertificate
 ntca_encryptioncertificateoptions
