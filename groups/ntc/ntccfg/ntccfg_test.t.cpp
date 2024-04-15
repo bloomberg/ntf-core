@@ -46,6 +46,8 @@ class Interface
 
     virtual void f5(int, char)    = 0;
     virtual void f5(int*, double) = 0;
+
+    virtual const bsl::shared_ptr<int>& f6(int*, double&, long) = 0;
 };
 
 NTF_MOCK_CLASS(MyMock, Interface)
@@ -59,6 +61,8 @@ NTF_MOCK_METHOD(void, f4, int&)
 
 NTF_MOCK_METHOD(void, f5, int, char)
 NTF_MOCK_METHOD(void, f5, int*, double)
+
+NTF_MOCK_METHOD(const bsl::shared_ptr<int>&, f6, int*, double&, long)
 
 NTF_MOCK_CLASS_END;
 
@@ -202,17 +206,55 @@ NTCCFG_TEST_CASE(5)
         // `_SPEC` addition to NTF_EQ (or IGNORE_ARG_S) macro
 
         char c = 'a';
-        NTF_EXPECT_2(mock, f5, IGNORE_ARG_S(int), NTF_EQ_SPEC(c, char))
-            .ONCE();
+        NTF_EXPECT_2(mock, f5, IGNORE_ARG_S(int), NTF_EQ_SPEC(c, char)).ONCE();
 
         mock.f5(22, c);
 
-        int val = 14;
-        double d = 3.14;
-        NTF_EXPECT_2(mock, f5, NTF_EQ_DEREF_SPEC(val, int*), NTF_EQ_SPEC(d, double))
+        int    val = 14;
+        double d   = 3.14;
+        NTF_EXPECT_2(mock,
+                     f5,
+                     NTF_EQ_DEREF_SPEC(val, int*),
+                     NTF_EQ_SPEC(d, double))
             .ONCE();
 
         mock.f5(&val, d);
+    }
+}
+
+NTCCFG_TEST_CASE(6)
+{
+    using namespace mock_test;
+
+    MyMock mock;
+    {
+        //see how references can be returned and multiple arguments
+        //expectations can be set
+
+        bsl::shared_ptr<int>        sptr(new int(14));
+        const bsl::shared_ptr<int>& sptrRef = sptr;
+
+        int    expectedInt    = 22;
+        double expectedDouble = 7.7;
+        long   expectedLong   = 100;
+        int*   ptr            = 0;
+        double newDouble      = 8.8;
+        NTF_EXPECT_3(mock,
+                     f6,
+                     NTF_EQ_DEREF(expectedInt),
+                     NTF_EQ(expectedDouble),
+                     NTF_EQ(expectedLong))
+            .ONCE()
+            .SAVE_ARG_1(TO(&ptr))
+            .SET_ARG_2(FROM(newDouble))
+            .RETURNREF(sptrRef);
+
+        const bsl::shared_ptr<int>& res =
+            mock.f6(&expectedInt, expectedDouble, expectedLong);
+        NTCCFG_TEST_EQ(ptr, &expectedInt);
+        NTCCFG_TEST_EQ(expectedDouble, newDouble);
+        NTCCFG_TEST_EQ(res, sptrRef);
+        NTCCFG_TEST_EQ(&res, &sptrRef);
     }
 }
 
@@ -223,5 +265,6 @@ NTCCFG_TEST_DRIVER
     NTCCFG_TEST_REGISTER(3);
     NTCCFG_TEST_REGISTER(4);
     NTCCFG_TEST_REGISTER(5);
+    NTCCFG_TEST_REGISTER(6);
 }
 NTCCFG_TEST_DRIVER_END;
