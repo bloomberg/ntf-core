@@ -31,19 +31,85 @@ using namespace BloombergLP;
 // [ 1]
 //-----------------------------------------------------------------------------
 
+namespace mock_test {
+
+class Interface
+{
+    virtual void f() = 0;
+    virtual int f1() = 0;
+
+    virtual void f2(int) = 0;
+    virtual void f3(int*) = 0;
+    virtual void f4(int&) = 0;
+
+};
+
+NTF_MOCK_CLASS(MyMock, Interface)
+
+NTF_MOCK_METHOD(void, f)
+NTF_MOCK_METHOD(int, f1)
+
+NTF_MOCK_METHOD(void, f2, int)
+NTF_MOCK_METHOD(void, f3, int*)
+NTF_MOCK_METHOD(void, f4, int&)
+
+NTF_MOCK_CLASS_END;
+
+}
+
 NTCCFG_TEST_CASE(1)
 {
-    // Concern:
-    // Plan:
+    using namespace mock_test;
 
-    ntccfg::TestAllocator ta;
+    MyMock mock;
+    NTF_EXPECT_0(mock, f).ONCE();
+    mock.f();
+
+    NTF_EXPECT_0(mock, f1).ONCE().RETURN(22);
+    NTF_EXPECT_0(mock, f1).ONCE().RETURN(33);
+
+    NTCCFG_TEST_EQ(mock.f1(), 22);
+    NTCCFG_TEST_EQ(mock.f1(), 33);
+}
+
+NTCCFG_TEST_CASE(2)
+{
+    using namespace mock_test;
+
+    MyMock mock;
+
     {
+        // it means we do not case what argument is used when f2 is called
+        NTF_EXPECT_1(mock, f2, IGNORE_ARG).ONCE();
+
+        const int val = 22;
+        mock.f2(val);
+
+        // here we expect that the argument used to call f2 equals `expected`
+        const int expected = 22;
+        NTF_EXPECT_1(mock, f2, NTF_EQ(expected)).ONCE();
+        mock.f2(val);
     }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    {
+        int value = 44;
+        int *ptr = &value;
+        int *expected_ptr = ptr;
+
+        // expect that argument used to call f3 equals `expected_ptr`
+        NTF_EXPECT_1(mock, f3, NTF_EQ(expected_ptr)).ONCE();
+        mock.f3(ptr);
+
+        //expect that when argument used to call f3 is dereferenced it equals
+        //`expected value`
+        int expected_value = value;
+        NTF_EXPECT_1(mock, f3, NTF_EQ_DEREF(expected_value)).ONCE();
+        mock.f3(ptr);
+    }
 }
 
 NTCCFG_TEST_DRIVER
 {
     NTCCFG_TEST_REGISTER(1);
+    NTCCFG_TEST_REGISTER(2);
 }
 NTCCFG_TEST_DRIVER_END;
