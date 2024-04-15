@@ -724,6 +724,14 @@ struct ProcessInterface {
     }
 };
 
+template <class ARG>
+struct SetterInterface {
+    virtual void process(ARG arg) = 0;
+    virtual ~    SetterInterface()
+    {
+    }
+};
+
 template <class OUT, class IN>
 struct DerefSetter {
     static void set(OUT out, const IN& in)
@@ -743,9 +751,14 @@ struct DefaultSetter {
 template <class IN, template <class, class> class SET_POLICY>
 struct Setter {
     template <class ARG>
-    void process(ARG arg)
+    void process(ARG& arg)
     {
-        SET_POLICY<ARG, IN>::set(arg, d_in);
+        SET_POLICY<ARG&, IN>::set(arg, d_in);
+    }
+    template <class ARG>
+    void process(ARG* arg)
+    {
+        SET_POLICY<ARG*, IN>::set(arg, d_in);
     }
 
     explicit Setter(const IN& in)
@@ -764,13 +777,13 @@ Setter<IN, SET_POLICY> createSetter(const IN& val)
 }
 
 template <class ARG, class SETTER>
-struct SetterHolder : ProcessInterface<ARG> {
+struct SetterHolder : SetterInterface<ARG> {
     explicit SetterHolder(const SETTER& setter)
     : d_setter(setter)
     {
     }
 
-    void process(const ARG& arg) BSLS_KEYWORD_OVERRIDE
+    void process(ARG arg) BSLS_KEYWORD_OVERRIDE
     {
         d_setter.process(arg);
     }
@@ -1066,7 +1079,7 @@ struct InvocationArgsImpl<TL, bsl::integral_constant<int, 0> > {
 
     bsl::shared_ptr<ProcessInterface<ArgType> > d_matcher;
     bsl::shared_ptr<ProcessInterface<ArgType> > d_extractor;
-    bsl::shared_ptr<ProcessInterface<ArgType> > d_setter;
+    bsl::shared_ptr<SetterInterface<ArgType> >  d_setter;
 
     void processArg(ArgType arg)
     {
@@ -1090,7 +1103,7 @@ struct InvocationArgsImpl<TL, bsl::integral_constant<int, ARG_INDEX> >
 
     bsl::shared_ptr<ProcessInterface<ArgType> > d_matcher;
     bsl::shared_ptr<ProcessInterface<ArgType> > d_extractor;
-    bsl::shared_ptr<ProcessInterface<ArgType> > d_setter;
+    bsl::shared_ptr<SetterInterface<ArgType> >  d_setter;
 
     void processArg(ArgType arg)
     {

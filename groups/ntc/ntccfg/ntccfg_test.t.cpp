@@ -16,6 +16,8 @@
 #include <ntccfg_test.h>
 #include <bslma_testallocator.h>
 
+#include <pdh.h>
+
 using namespace BloombergLP;
 
 //=============================================================================
@@ -35,13 +37,12 @@ namespace mock_test {
 
 class Interface
 {
-    virtual void f() = 0;
-    virtual int f1() = 0;
+    virtual void f()  = 0;
+    virtual int  f1() = 0;
 
-    virtual void f2(int) = 0;
+    virtual void f2(int)  = 0;
     virtual void f3(int*) = 0;
     virtual void f4(int&) = 0;
-
 };
 
 NTF_MOCK_CLASS(MyMock, Interface)
@@ -91,9 +92,9 @@ NTCCFG_TEST_CASE(2)
         mock.f2(val);
     }
     {
-        int value = 44;
-        int *ptr = &value;
-        int *expected_ptr = ptr;
+        int  value        = 44;
+        int* ptr          = &value;
+        int* expected_ptr = ptr;
 
         // expect that argument used to call f3 equals `expected_ptr`
         NTF_EXPECT_1(mock, f3, NTF_EQ(expected_ptr)).ONCE();
@@ -104,6 +105,38 @@ NTCCFG_TEST_CASE(2)
         int expected_value = value;
         NTF_EXPECT_1(mock, f3, NTF_EQ_DEREF(expected_value)).ONCE();
         mock.f3(ptr);
+
+        int& ref = value;
+        NTF_EXPECT_1(mock, f4, NTF_EQ(value)).ONCE();
+        mock.f4(ref);
+    }
+}
+
+NTCCFG_TEST_CASE(3)
+{
+    using namespace mock_test;
+
+    MyMock mock;
+
+    {
+        const int newValue = 55;
+        // when f3 is called, we do not case what arg value is, but we want to
+        // dereference it and set it value to `newValue`
+        NTF_EXPECT_1(mock, f3, IGNORE_ARG)
+            .ONCE()
+            .SET_ARG_1(FROM_DEREF(newValue));
+
+        int val = 0;
+        mock.f3(&val);
+        NTCCFG_TEST_EQ(val, newValue);
+
+        // the same can be done with references
+        NTF_EXPECT_1(mock, f4, IGNORE_ARG).ONCE().SET_ARG_1(FROM(newValue));
+
+        int data = 12;
+        int &data_ref = data;
+        mock.f4(data_ref);
+        NTCCFG_TEST_EQ(data, newValue);
     }
 }
 
@@ -111,5 +144,6 @@ NTCCFG_TEST_DRIVER
 {
     NTCCFG_TEST_REGISTER(1);
     NTCCFG_TEST_REGISTER(2);
+    NTCCFG_TEST_REGISTER(3);
 }
 NTCCFG_TEST_DRIVER_END;
