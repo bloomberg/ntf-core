@@ -751,15 +751,13 @@ struct DefaultSetter {
 template <class IN, template <class, class> class SET_POLICY>
 struct Setter {
     template <class ARG>
-    void process(ARG& arg)
+    struct SetterImpl
     {
-        SET_POLICY<ARG&, IN>::set(arg, d_in);
-    }
-    template <class ARG>
-    void process(ARG* arg)
-    {
-        SET_POLICY<ARG*, IN>::set(arg, d_in);
-    }
+        static void process(ARG arg, const IN& in)
+        {
+            SET_POLICY<ARG, IN>::set(arg, in);
+        }
+    };
 
     explicit Setter(const IN& in)
     : d_in(in)
@@ -785,7 +783,7 @@ struct SetterHolder : SetterInterface<ARG> {
 
     void process(ARG arg) BSLS_KEYWORD_OVERRIDE
     {
-        d_setter.process(arg);
+        SETTER::SetterImpl<ARG>::process(arg, d_setter.d_in);
     }
 
     SETTER d_setter;

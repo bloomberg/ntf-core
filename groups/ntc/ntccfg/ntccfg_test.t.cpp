@@ -140,10 +140,54 @@ NTCCFG_TEST_CASE(3)
     }
 }
 
+NTCCFG_TEST_CASE(4)
+{
+    using namespace mock_test;
+
+    MyMock mock;
+
+    {
+        // an argument can be saved to external variable to later used
+        int storage = 0;
+        NTF_EXPECT_1(mock, f2, IGNORE_ARG).ONCE().SAVE_ARG_1(TO(&storage));
+
+        int val = 22;
+        mock.f2(val);
+
+        NTCCFG_TEST_EQ(storage, val);
+    }
+    {
+        //the same can be done with raw pointers
+        int *ptr = 0;
+        NTF_EXPECT_1(mock, f3, IGNORE_ARG).ONCE().SAVE_ARG_1(TO(&ptr));
+
+        int val = 6;
+        mock.f3(&val);
+        NTCCFG_TEST_EQ(ptr, &val);
+
+        //pointer argument can be dereferenced before saving
+        int storage = 0;
+        NTF_EXPECT_1(mock, f3, IGNORE_ARG).ONCE().SAVE_ARG_1(TO_DEREF(&storage));
+
+        mock.f3(&val);
+        NTCCFG_TEST_EQ(storage, val);
+    }
+    {
+        //the same can be done with references
+        int storage = 0;
+        NTF_EXPECT_1(mock, f4, IGNORE_ARG).ONCE().SAVE_ARG_1(TO(&storage));
+
+        int val = 7;
+        mock.f4(val);
+        NTCCFG_TEST_EQ(storage, val);
+    }
+}
+
 NTCCFG_TEST_DRIVER
 {
     NTCCFG_TEST_REGISTER(1);
     NTCCFG_TEST_REGISTER(2);
     NTCCFG_TEST_REGISTER(3);
+    NTCCFG_TEST_REGISTER(4);
 }
 NTCCFG_TEST_DRIVER_END;
