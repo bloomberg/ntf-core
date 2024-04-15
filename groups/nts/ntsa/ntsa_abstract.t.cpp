@@ -285,7 +285,7 @@ void Case::verifyBase(bslma::Allocator* allocator)
             ntsa::AbstractIntegerBase::e_NATIVE);
 
         bsl::uint64_t expected =
-            1 << (sizeof(ntsa::AbstractIntegerRepresentation::Block) * 8);
+            1ULL << (sizeof(ntsa::AbstractIntegerRepresentation::Block) * 8);
 
         NTSCFG_TEST_EQ(radix, expected);
     }
@@ -803,37 +803,37 @@ NTSCFG_TEST_CASE(11)
 
         {
             ntsa::AbstractInteger number(&ta);
-            bool valid = number.parse("");
+            bool                  valid = number.parse("");
             NTSCFG_TEST_FALSE(valid);
         }
 
         {
             ntsa::AbstractInteger number(&ta);
-            bool valid = number.parse("+");
+            bool                  valid = number.parse("+");
             NTSCFG_TEST_FALSE(valid);
         }
 
         {
             ntsa::AbstractInteger number(&ta);
-            bool valid = number.parse("-");
+            bool                  valid = number.parse("-");
             NTSCFG_TEST_FALSE(valid);
         }
 
         {
             ntsa::AbstractInteger number(&ta);
-            bool valid = number.parse("0x");
+            bool                  valid = number.parse("0x");
             NTSCFG_TEST_FALSE(valid);
         }
 
         {
             ntsa::AbstractInteger number(&ta);
-            bool valid = number.parse("+0x");
+            bool                  valid = number.parse("+0x");
             NTSCFG_TEST_FALSE(valid);
         }
 
         {
             ntsa::AbstractInteger number(&ta);
-            bool valid = number.parse("-0x");
+            bool                  valid = number.parse("-0x");
             NTSCFG_TEST_FALSE(valid);
         }
 
@@ -841,7 +841,7 @@ NTSCFG_TEST_CASE(11)
             bsl::string input = "0";
 
             ntsa::AbstractInteger number(&ta);
-            bool valid = number.parse(input);
+            bool                  valid = number.parse(input);
             NTSCFG_TEST_TRUE(valid);
 
             bsl::string output;
@@ -854,7 +854,7 @@ NTSCFG_TEST_CASE(11)
             bsl::string input = "123";
 
             ntsa::AbstractInteger number(&ta);
-            bool valid = number.parse(input);
+            bool                  valid = number.parse(input);
             NTSCFG_TEST_TRUE(valid);
 
             bsl::string output;
@@ -867,7 +867,7 @@ NTSCFG_TEST_CASE(11)
             bsl::string input = "-123";
 
             ntsa::AbstractInteger number(&ta);
-            bool valid = number.parse(input);
+            bool                  valid = number.parse(input);
             NTSCFG_TEST_TRUE(valid);
 
             bsl::string output;

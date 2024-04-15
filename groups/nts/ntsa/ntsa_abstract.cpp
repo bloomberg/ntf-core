@@ -43,7 +43,10 @@ struct AbstractIntegerBaseTraits {
 
 // clang-format off
 static const AbstractIntegerBaseTraits k_TRAITS[5] = {
-    { 1 << (sizeof(AbstractIntegerRepresentation::Block) * 8), 0, (1 << (sizeof(AbstractIntegerRepresentation::Block) * 8)) - 1 },
+    {  1ULL << (sizeof(AbstractIntegerRepresentation::Block) * 8), 
+       0, 
+       (1ULL << (sizeof(AbstractIntegerRepresentation::Block) * 8)) - 1 
+    },
     {     2, 0,     1 },
     {     8, 0,     7 },
     {    10, 0,     9 },
@@ -606,13 +609,15 @@ void AbstractIntegerRepresentation::multiply(
         else {
             // M3
 
-            bsl::size_t i = 0;
-            bsl::size_t k = 0;
+            bsl::uint64_t i = 0;
+            bsl::uint64_t k = 0;
 
             while (true) {
                 // M4
 
-                bsl::size_t t = u.get(i) * v.get(j) + w->get(i + j) + k;
+                bsl::uint64_t t =
+                    bsl::uint64_t(u.get(i)) * bsl::uint64_t(v.get(j)) +
+                    w->get(i + j) + k;
 
                 w->set(i + j, t % b);
                 k = t / b;

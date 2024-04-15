@@ -53,7 +53,7 @@ class AbstractSyntaxNotation;
 /// @par Thread Safety
 /// This class is thread safe.
 ///
-/// @ingroup module_ntsi_encryption
+/// @ingroup module_ntsa_data
 struct AbstractIntegerSign {
     /// Enumerate the signs of the representation of an abstract integer.
     enum Value {
@@ -91,7 +91,7 @@ bsl::ostream& operator<<(bsl::ostream& stream, AbstractIntegerSign::Value rhs);
 /// @par Thread Safety
 /// This class is thread safe.
 ///
-/// @ingroup module_ntsi_encryption
+/// @ingroup module_ntsa_data
 struct AbstractIntegerBase {
     /// Enumerate the supported bases of the representation of an abstract
     /// integer.
@@ -137,19 +137,40 @@ struct AbstractIntegerBase {
 /// @related ntsa::AbstractIntegerBase
 bsl::ostream& operator<<(bsl::ostream& stream, AbstractIntegerBase::Value rhs);
 
-/// Provide storage for the representation of an abstract integer.
+/// Provide a representation for an abstract unsigned integer.
+///
+/// @details
+/// In a positional numeral system, a large integer of any size can be
+/// represented as a sequence of digits in a "place" (called blocks in this
+/// implementation), where each block fits inside a machine register. We can
+/// arbitrarily choose a base `B` (or radix) for our system, where each block
+/// stores `[0, B)`. We choose a machine register width so that no single-place
+/// multiplication plus a carry will ever overflow the register. So for 32-bit
+/// machines, we choose a 16-bit register, and for 64-bit machines, we choose a
+/// 32-bit register. Blocks are order least-significant to most-significant.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntsi_encryption
+/// @ingroup module_ntsa_data
 class AbstractIntegerRepresentation
 {
   public:
+#if defined(BSLS_PLATFORM_CPU_64_BIT)
+
     /// Define a type alias for unsigned integer type that represents a block.
     /// Also called a place or a limb in other implementations. This type must
     /// be sufficient to store the desired radix.
-    typedef bsl::uint8_t Block;
+    typedef bsl::uint32_t Block;
+
+#else
+
+    /// Define a type alias for unsigned integer type that represents a block.
+    /// Also called a place or a limb in other implementations. This type must
+    /// be sufficient to store the desired radix.
+    typedef bsl::uint16_t Block;
+
+#endif
 
     /// Define a type alias for a vector of blocks.
     typedef bsl::vector<Block> BlockVector;
@@ -182,25 +203,25 @@ class AbstractIntegerRepresentation
     static bsl::size_t countLeadingZeroes(bsl::uint64_t value);
 
   public:
-    /// Create a new abstract integer representation having the default value
-    /// in the default base. Optionally specify a 'basicAllocator' used to
-    /// supply memory. If 'basicAllocator' is 0, the currently installed
-    /// default allocator is used.
+    /// Create a new abstract unsigned integer representation having the
+    /// default value in the default base. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit AbstractIntegerRepresentation(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new abstract integer representation having the default value
-    /// in the specified 'base'. Optionally specify a 'basicAllocator' used to
-    /// supply memory. If 'basicAllocator' is 0, the currently installed
-    /// default allocator is used.
+    /// Create a new abstract unsigned integer representation having the
+    /// default value in the specified 'base'. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit AbstractIntegerRepresentation(
         AbstractIntegerBase::Value base,
         bslma::Allocator*          basicAllocator = 0);
 
-    /// Create a new abstract integer representation having the same value as
-    /// the specified 'original' object. Optionally specify a 'basicAllocator'
-    /// used to supply memory. If 'basicAllocator' is 0, the currently
-    /// installed default allocator is used.
+    /// Create a new abstract unsigned integer representation having the same
+    /// value as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     AbstractIntegerRepresentation(
         const AbstractIntegerRepresentation& original,
         bslma::Allocator*                    basicAllocator = 0);
@@ -408,7 +429,7 @@ bool operator>=(const AbstractIntegerRepresentation& lhs,
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
-/// @related ntsa::EncryptionCertificate
+/// @related ntsa::AbstractIntegerRepresentation
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM&                      algorithm,
                 const AbstractIntegerRepresentation& value);
@@ -430,27 +451,10 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
 
 /// Provide a non-negative integer of arbitrary size.
 ///
-/// @details
-/// From understanding the positional numeral system, a large integer of any
-/// size can be represented as a sequence of digits in a "place" (called blocks
-/// in this implementation), where each block fits inside a machine register.
-/// We can arbitrarily choose a base `B` (or radix) for our system, where each
-/// block stores `[0, B)`. We choose a machine register width so that no
-/// single-place multiplication plus a carry will ever overflow the register.
-/// So for 32-bit machines, we choose a 16-bit register, and for 64-bit
-/// machines, we choose a 32-bit register. Blocks are order least-significant
-/// to most-significant.
-///
-/// @par Attributes
-/// This class is composed of the following attributes.
-///
-/// @li @b todo:
-/// TODO
-///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntsi_encryption
+/// @ingroup module_ntsa_data
 class AbstractIntegerQuantity
 {
     /// The representation of the abstract integer.
@@ -460,63 +464,72 @@ class AbstractIntegerQuantity
     friend class AbstractIntegerQuantityUtil;
 
   public:
-    /// Create a new abstract integer having the default value. Optionally
-    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
-    /// is 0, the currently installed default allocator is used.
+    /// Create a new abstract unsigned integer having the default value.
+    /// Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     explicit AbstractIntegerQuantity(bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new abstract integer having the specified 'value'. Optionally
-    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
-    /// is 0, the currently installed default allocator is used.
+    /// Create a new abstract unsigned integer having the specified 'value'.
+    /// Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     explicit AbstractIntegerQuantity(short             value,
                                      bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new abstract integer having the specified 'value'. Optionally
-    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
-    /// is 0, the currently installed default allocator is used.
+    /// Create a new abstract unsigned integer having the specified 'value'.
+    /// Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     explicit AbstractIntegerQuantity(unsigned short    value,
                                      bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new abstract integer having the specified 'value'. Optionally
-    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
-    /// is 0, the currently installed default allocator is used.
+    /// Create a new abstract unsigned integer having the specified 'value'.
+    /// Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     explicit AbstractIntegerQuantity(int               value,
                                      bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new abstract integer having the specified 'value'. Optionally
-    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
-    /// is 0, the currently installed default allocator is used.
+    /// Create a new abstract unsigned integer having the specified 'value'.
+    /// Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     explicit AbstractIntegerQuantity(unsigned int      value,
                                      bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new abstract integer having the specified 'value'. Optionally
-    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
-    /// is 0, the currently installed default allocator is used.
+    /// Create a new abstract unsigned integer having the specified 'value'.
+    /// Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     explicit AbstractIntegerQuantity(long              value,
                                      bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new abstract integer having the specified 'value'. Optionally
-    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
-    /// is 0, the currently installed default allocator is used.
+    /// Create a new abstract unsigned integer having the specified 'value'.
+    /// Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     explicit AbstractIntegerQuantity(unsigned long     value,
                                      bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new abstract integer having the specified 'value'. Optionally
-    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
-    /// is 0, the currently installed default allocator is used.
+    /// Create a new abstract unsigned integer having the specified 'value'.
+    /// Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     explicit AbstractIntegerQuantity(long long         value,
                                      bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new abstract integer having the specified 'value'. Optionally
-    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
-    /// is 0, the currently installed default allocator is used.
+    /// Create a new abstract unsigned integer having the specified 'value'.
+    /// Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     explicit AbstractIntegerQuantity(unsigned long long value,
                                      bslma::Allocator*  basicAllocator = 0);
 
-    /// Create a new abstract integer having the same value as the specified
-    /// 'original' object. Optionally specify a 'basicAllocator' used to supply
-    /// memory. If 'basicAllocator' is 0, the currently installed default
-    /// allocator is used.
+    /// Create a new abstract unsigned integer having the specified 'value'.
+    /// Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     AbstractIntegerQuantity(const AbstractIntegerQuantity& original,
                             bslma::Allocator*              basicAllocator = 0);
 
@@ -1006,7 +1019,7 @@ class AbstractIntegerQuantity
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
-/// @related ntsa::EncryptionCertificate
+/// @related ntsa::AbstractIntegerQuantity
 bsl::ostream& operator<<(bsl::ostream&                  stream,
                          const AbstractIntegerQuantity& object);
 
@@ -1014,7 +1027,7 @@ bsl::ostream& operator<<(bsl::ostream&                  stream,
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
-/// @related ntsa::EncryptionCertificate
+/// @related ntsa::AbstractIntegerQuantity
 bool operator==(const AbstractIntegerQuantity& lhs,
                 const AbstractIntegerQuantity& rhs);
 
@@ -1023,42 +1036,42 @@ bool operator==(const AbstractIntegerQuantity& lhs,
 /// not have the same value if one or more respective attributes differ in
 /// values.
 ///
-/// @related ntsa::EncryptionCertificate
+/// @related ntsa::AbstractIntegerQuantity
 bool operator!=(const AbstractIntegerQuantity& lhs,
                 const AbstractIntegerQuantity& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
-/// @related ntsa::EncryptionCertificate
+/// @related ntsa::AbstractIntegerQuantity
 bool operator<(const AbstractIntegerQuantity& lhs,
                const AbstractIntegerQuantity& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than or equal to
 /// the value of the specified 'rhs', otherwise return false.
 ///
-/// @related ntsa::EncryptionCertificate
+/// @related ntsa::AbstractIntegerQuantity
 bool operator<=(const AbstractIntegerQuantity& lhs,
                 const AbstractIntegerQuantity& rhs);
 
 /// Return true if the value of the specified 'lhs' is greater than the value
 /// of the specified 'rhs', otherwise return false.
 ///
-/// @related ntsa::EncryptionCertificate
+/// @related ntsa::AbstractIntegerQuantity
 bool operator>(const AbstractIntegerQuantity& lhs,
                const AbstractIntegerQuantity& rhs);
 
 /// Return true if the value of the specified 'lhs' is greater than or equal to
 /// the value of the specified 'rhs', otherwise return false.
 ///
-/// @related ntsa::EncryptionCertificate
+/// @related ntsa::AbstractIntegerQuantity
 bool operator>=(const AbstractIntegerQuantity& lhs,
                 const AbstractIntegerQuantity& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
-/// @related ntsa::EncryptionCertificate
+/// @related ntsa::AbstractIntegerQuantity
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM&                algorithm,
                 const AbstractIntegerQuantity& value);
@@ -1078,18 +1091,12 @@ void hashAppend(HASH_ALGORITHM&                algorithm,
     value.hash(algorithm);
 }
 
-/// Describe TODO.
-///
-/// @par Attributes
-/// This class is composed of the following attributes.
-///
-/// @li @b todo:
-/// TODO
+/// Provide arithmetic for non-negative integers of arbitrary size.
 ///
 /// @par Thread Safety
-/// This class is not thread safe.
+/// This class is thread safe.
 ///
-/// @ingroup module_ntsi_encryption
+/// @ingroup module_ntsa_data
 class AbstractIntegerQuantityUtil
 {
   public:
@@ -1128,18 +1135,12 @@ class AbstractIntegerQuantityUtil
                        const AbstractIntegerQuantity& divisor);
 };
 
-/// Describe TODO.
-///
-/// @par Attributes
-/// This class is composed of the following attributes.
-///
-/// @li @b todo:
-/// TODO
+/// Provide a signed integer of arbitrary size.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntsi_encryption
+/// @ingroup module_ntsa_data
 class AbstractInteger
 {
     /// Grant visibility to the internals of this class to its utility.
@@ -1251,6 +1252,7 @@ class AbstractInteger
     /// modifiable object.
     AbstractInteger& operator=(unsigned long long value);
 
+    // TODO
     AbstractInteger operator+(const AbstractInteger& other) const;
     AbstractInteger operator-(const AbstractInteger& other) const;
     AbstractInteger operator*(const AbstractInteger& other) const;
@@ -1708,14 +1710,14 @@ class AbstractInteger
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
-/// @related ntsa::EncryptionCertificate
+/// @related ntsa::AbstractInteger
 bsl::ostream& operator<<(bsl::ostream& stream, const AbstractInteger& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
-/// @related ntsa::EncryptionCertificate
+/// @related ntsa::AbstractInteger
 bool operator==(const AbstractInteger& lhs, const AbstractInteger& rhs);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
@@ -1723,52 +1725,46 @@ bool operator==(const AbstractInteger& lhs, const AbstractInteger& rhs);
 /// not have the same value if one or more respective attributes differ in
 /// values.
 ///
-/// @related ntsa::EncryptionCertificate
+/// @related ntsa::AbstractInteger
 bool operator!=(const AbstractInteger& lhs, const AbstractInteger& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
-/// @related ntsa::EncryptionCertificate
+/// @related ntsa::AbstractInteger
 bool operator<(const AbstractInteger& lhs, const AbstractInteger& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than or equal to
 /// the value of the specified 'rhs', otherwise return false.
 ///
-/// @related ntsa::EncryptionCertificate
+/// @related ntsa::AbstractInteger
 bool operator<=(const AbstractInteger& lhs, const AbstractInteger& rhs);
 
 /// Return true if the value of the specified 'lhs' is greater than the value
 /// of the specified 'rhs', otherwise return false.
 ///
-/// @related ntsa::EncryptionCertificate
+/// @related ntsa::AbstractInteger
 bool operator>(const AbstractInteger& lhs, const AbstractInteger& rhs);
 
 /// Return true if the value of the specified 'lhs' is greater than or equal to
 /// the value of the specified 'rhs', otherwise return false.
 ///
-/// @related ntsa::EncryptionCertificate
+/// @related ntsa::AbstractInteger
 bool operator>=(const AbstractInteger& lhs, const AbstractInteger& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
-/// @related ntsa::EncryptionCertificate
+/// @related ntsa::AbstractInteger
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const AbstractInteger& value);
 
-/// Describe TODO.
-///
-/// @par Attributes
-/// This class is composed of the following attributes.
-///
-/// @li @b todo:
-/// TODO
+/// Provide arithmetic for signed integers of arbitrary size.
 ///
 /// @par Thread Safety
-/// This class is not thread safe.
+/// This class is thread safe.
 ///
-/// @ingroup module_ntsi_encryption
+/// @ingroup module_ntsa_data
 class AbstractIntegerUtil
 {
   public:
