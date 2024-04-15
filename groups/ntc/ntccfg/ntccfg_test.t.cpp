@@ -16,8 +16,6 @@
 #include <ntccfg_test.h>
 #include <bslma_testallocator.h>
 
-#include <pdh.h>
-
 using namespace BloombergLP;
 
 //=============================================================================
