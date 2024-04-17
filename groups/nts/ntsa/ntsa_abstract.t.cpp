@@ -16,7 +16,8 @@
 #include <ntsa_abstract.h>
 
 #include <ntscfg_test.h>
-
+#include <bdlsb_fixedmeminstreambuf.h>
+#include <bdlsb_memoutstreambuf.h>
 #include <bslma_allocator.h>
 #include <bslma_default.h>
 #include <bsls_assert.h>
@@ -879,6 +880,237 @@ NTSCFG_TEST_CASE(11)
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
+
+NTSCFG_TEST_CASE(12)
+{
+    // Test abstract syntax decoding: hardware integers.
+
+    ntscfg::TestAllocator ta;
+    {
+        ntsa::Error error;
+
+        // CONSTRUCTED { INTEGER(0) }
+        const bsl::uint8_t k_DATA_0[] = {
+            0x30, 0x03, 0x02, 0x01, 0x00
+        };
+
+        // CONSTRUCTED { INTEGER(11927552) }
+        const bsl::uint8_t k_DATA_1[] = {
+            0x30, 0x06, 0x02, 0x04, 0x00, 0xb6, 0x00, 0x00
+        };
+
+        // CONSTRUCTED { INTEGER(-11927552) }
+        const bsl::uint8_t k_DATA_2[] = {
+            0x30, 0x06, 0x02, 0x04, 0xff, 0x4a, 0x00, 0x00
+        };
+
+        // CONSTRUCTED { INTEGER(-1) }
+        const bsl::uint8_t k_DATA_3[] = {
+            0x30, 0x03, 0x02, 0x01, 0xff
+        };
+
+        struct EncodingData {
+            bsl::vector<bsl::uint8_t> encoding;
+            bsl::int64_t              value;
+        };
+
+        bsl::vector<EncodingData> dataVector;
+
+#if 0
+        {
+            EncodingData data;
+            data.encoding.assign(k_DATA_0, k_DATA_0 + sizeof k_DATA_0);
+            data.value = 0;
+            dataVector.push_back(data);
+        }
+
+        {
+            EncodingData data;
+            data.encoding.assign(k_DATA_1, k_DATA_1 + sizeof k_DATA_1);
+            data.value = 11927552;
+            dataVector.push_back(data);
+        }
+
+        {
+            EncodingData data;
+            data.encoding.assign(k_DATA_2, k_DATA_2 + sizeof k_DATA_2);
+            data.value = -11927552;
+            dataVector.push_back(data);
+        }
+#endif
+
+        {
+            EncodingData data;
+            data.encoding.assign(k_DATA_3, k_DATA_3 + sizeof k_DATA_3);
+            data.value = -1;
+            dataVector.push_back(data);
+        }
+
+        for (bsl::size_t i = 0; i < dataVector.size(); ++i)
+        {
+            const EncodingData& data = dataVector[i];
+
+            bdlsb::FixedMemInStreamBuf isb(
+                reinterpret_cast<const char*>(&data.encoding.front()), 
+                data.encoding.size());
+
+            ntsa::AbstractSyntaxDecoder decoder(&isb, &ta);
+
+            {
+                ntsa::AbstractSyntaxContext contextOuter;
+                error = decoder.decodeContext(&contextOuter);
+                NTSCFG_TEST_OK(error);
+
+                NTSCFG_TEST_LOG_DEBUG << "Context = " << contextOuter 
+                                    << NTSCFG_TEST_LOG_END;
+
+                NTSCFG_TEST_EQ(contextOuter.tagClass(), 
+                            ntsa::AbstractSyntaxTagClass::e_UNIVERSAL);
+
+                NTSCFG_TEST_EQ(contextOuter.tagType(), 
+                            ntsa::AbstractSyntaxTagType::e_CONSTRUCTED);
+
+                NTSCFG_TEST_EQ(contextOuter.length().has_value(), true);
+
+                {
+                    ntsa::AbstractSyntaxContext contextInner;
+                    error = decoder.decodeContext(&contextInner);
+                    NTSCFG_TEST_OK(error);
+
+                    NTSCFG_TEST_LOG_DEBUG << "Context = " << contextInner 
+                                        << NTSCFG_TEST_LOG_END;
+
+                    NTSCFG_TEST_EQ(contextInner.tagClass(), 
+                                ntsa::AbstractSyntaxTagClass::e_UNIVERSAL);
+
+                    NTSCFG_TEST_EQ(contextInner.tagType(), 
+                                ntsa::AbstractSyntaxTagType::e_PRIMITIVE);
+
+                    NTSCFG_TEST_EQ(contextInner.length().has_value(), true);
+
+                    bsl::int32_t value = 
+                        bsl::numeric_limits<bsl::int32_t>::max();
+                    error = decoder.decodePrimitiveValue(&value);
+                    NTSCFG_TEST_OK(error);
+
+                    NTSCFG_TEST_LOG_DEBUG << "Value = " << value 
+                                        << NTSCFG_TEST_LOG_END;
+
+                    NTSCFG_TEST_EQ(value, data.value);
+
+                    error = decoder.decodeContextComplete();
+                    NTSCFG_TEST_OK(error);
+                }
+
+                error = decoder.decodeContextComplete();
+                NTSCFG_TEST_OK(error);
+            }
+        }
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTSCFG_TEST_CASE(13)
+{
+    // Test abstract syntax decoding: abstract integers.
+
+    ntscfg::TestAllocator ta;
+    {
+        ntsa::Error error;
+
+        // CONSTRUCTED { INTEGER(-100) }
+
+        const bsl::uint8_t k_DATA_0[] = {
+            0x30, 0x04, 0x02, 0x02, 0xff, 0x9c
+        };
+
+        #if 0
+        const bsl::uint8_t k_DATA_0[] = {
+            0x30, 0x0B, 0x02, 0x09, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01
+        };
+        #endif
+
+        struct EncodingData {
+            bsl::vector<bsl::uint8_t> encoding;
+            bsl::string               value;
+        };
+
+        bsl::vector<EncodingData> dataVector;
+
+        {
+            EncodingData data;
+            data.encoding.assign(k_DATA_0, k_DATA_0 + sizeof k_DATA_0);
+            data.value = "9223372036854775809";
+            dataVector.push_back(data);
+        }
+
+        for (bsl::size_t i = 0; i < dataVector.size(); ++i)
+        {
+            const EncodingData& data = dataVector[i];
+
+            bdlsb::FixedMemInStreamBuf isb(
+                reinterpret_cast<const char*>(&data.encoding.front()), 
+                data.encoding.size());
+
+            ntsa::AbstractSyntaxDecoder decoder(&isb, &ta);
+
+            {
+                ntsa::AbstractSyntaxContext contextOuter;
+                error = decoder.decodeContext(&contextOuter);
+                NTSCFG_TEST_OK(error);
+
+                NTSCFG_TEST_LOG_DEBUG << "Context = " << contextOuter 
+                                      << NTSCFG_TEST_LOG_END;
+
+                NTSCFG_TEST_EQ(contextOuter.tagClass(), 
+                            ntsa::AbstractSyntaxTagClass::e_UNIVERSAL);
+
+                NTSCFG_TEST_EQ(contextOuter.tagType(), 
+                            ntsa::AbstractSyntaxTagType::e_CONSTRUCTED);
+
+                NTSCFG_TEST_EQ(contextOuter.length().has_value(), true);
+
+                {
+                    ntsa::AbstractSyntaxContext contextInner;
+                    error = decoder.decodeContext(&contextInner);
+                    NTSCFG_TEST_OK(error);
+
+                    NTSCFG_TEST_LOG_DEBUG << "Context = " << contextInner 
+                                          << NTSCFG_TEST_LOG_END;
+
+                    NTSCFG_TEST_EQ(contextInner.tagClass(), 
+                                ntsa::AbstractSyntaxTagClass::e_UNIVERSAL);
+
+                    NTSCFG_TEST_EQ(contextInner.tagType(), 
+                                ntsa::AbstractSyntaxTagType::e_PRIMITIVE);
+
+                    NTSCFG_TEST_EQ(contextInner.length().has_value(), true);
+
+                    ntsa::AbstractInteger value(&ta);
+                    error = decoder.decodePrimitiveValue(&value);
+                    NTSCFG_TEST_OK(error);
+
+                    bsl::string valueString;
+                    value.generate(&valueString, 
+                                   ntsa::AbstractIntegerBase::e_DECIMAL);
+
+                    NTSCFG_TEST_LOG_DEBUG << "Value = " << valueString
+                                          << NTSCFG_TEST_LOG_END;
+
+                    NTSCFG_TEST_EQ(valueString, data.value);
+
+                    error = decoder.decodeContextComplete();
+                    NTSCFG_TEST_OK(error);
+                }
+
+                error = decoder.decodeContextComplete();
+                NTSCFG_TEST_OK(error);
+            }
+        }
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
 NTSCFG_TEST_DRIVER
 {
     NTSCFG_TEST_REGISTER(1);  // Test prerequisites
@@ -894,5 +1126,8 @@ NTSCFG_TEST_DRIVER
     NTSCFG_TEST_REGISTER(9);   // Test abstract signed integer multiplication
     NTSCFG_TEST_REGISTER(10);  // Test abstract signed integer division
     NTSCFG_TEST_REGISTER(11);  // Test abstract signed integer facilities
+
+    NTSCFG_TEST_REGISTER(12);  // Test abstract signed integer decoding
+    NTSCFG_TEST_REGISTER(13);
 }
 NTSCFG_TEST_DRIVER_END;

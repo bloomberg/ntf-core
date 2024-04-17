@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
+#include <ntsa_abstract.h>
 #include <bdlt_datetimetz.h>
 #include <bsl_iosfwd.h>
 #include <bsl_memory.h>
@@ -267,8 +268,8 @@ class EncryptionCertificate
         e_UNDEFINED
     };
 
-    // int                       d_version;
-    int                       d_serialNumber;
+    ntsa::AbstractInteger     d_version;
+    ntsa::AbstractInteger     d_serialNumber;
     bdlt::DatetimeTz          d_startTime;
     bdlt::DatetimeTz          d_expirationTime;
     bool                      d_authority;
@@ -324,6 +325,12 @@ class EncryptionCertificate
     /// Add the specified 'value' to the list of domain names for which the
     /// certificate is valid.
     void addHost(const bsl::string& value);
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
 
     /// Return the serial number.
     int serialNumber() const;

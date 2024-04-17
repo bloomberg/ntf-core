@@ -22,6 +22,7 @@ BSLS_IDENT("$Id: $")
 #include <ntca_encryptionkeytype.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
+#include <ntsa_abstract.h>
 #include <bdlb_nullablevalue.h>
 #include <bslh_hash.h>
 #include <bsl_iosfwd.h>

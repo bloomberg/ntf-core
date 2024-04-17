@@ -254,9 +254,38 @@ void EncryptionCertificate::addHost(const bsl::string& value)
     d_hosts.push_back(value);
 }
 
+
+ntsa::Error EncryptionCertificate::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    NTCCFG_WARNING_UNUSED(decoder);
+
+    NTCCFG_NOT_IMPLEMENTED();
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error EncryptionCertificate::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    NTCCFG_WARNING_UNUSED(encoder);
+
+    NTCCFG_NOT_IMPLEMENTED();
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 int EncryptionCertificate::serialNumber() const
 {
-    return d_serialNumber;
+    ntsa::Error error;
+    
+    int result = 0;
+    error = d_serialNumber.convert(&result);
+    if (error) {
+        return 0;
+    }
+
+    return result;
 }
 
 const bdlt::DatetimeTz& EncryptionCertificate::startTime() const

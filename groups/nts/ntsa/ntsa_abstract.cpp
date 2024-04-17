@@ -32,6 +32,30 @@ namespace ntsa {
 
 namespace {
 
+const bsl::uint8_t k_TAG_MASK_CLASS  = 0xC0;
+const bsl::uint8_t k_TAG_MASK_TYPE   = 0x20;
+const bsl::uint8_t k_TAG_MASK_NUMBER = 0x1F;
+
+const bsl::size_t k_NUM_VALUE_BITS_IN_TAG_OCTET = 7;
+const bsl::size_t k_MAX_TAG_NUMBER_OCTETS       = (4 * 8)
+                                                / k_NUM_VALUE_BITS_IN_TAG_OCTET
+                                                + 1;
+
+const bsl::uint64_t k_DOUBLE_EXPONENT_MASK = 0x7FF0000000000000;
+const bsl::uint64_t k_DOUBLE_MANTISSA_MASK = 0x000FFFFFFFFFFFFF;
+const bsl::uint64_t k_DOUBLE_MANTISSA_IMPLICIT_ONE_MASK = 0x0010000000000000;
+const bsl::uint64_t k_DOUBLE_SIGN_MASK = 0x8000000000000000;
+
+const bsl::uint32_t k_DOUBLE_EXPONENT_SHIFT = 52;
+
+const bsl::uint32_t k_DOUBLE_NUM_EXPONENT_BITS = 11;
+const bsl::uint32_t k_DOUBLE_NUM_MANTISSA_BITS = 52;
+
+// MRM: const bsl::uint32_t k_DOUBLE_NUM_EXPONENT_BYTES = 2;
+// MRM: const bsl::uint32_t k_DOUBLE_NUM_MANTISSA_BYTES = 7;
+
+const bsl::uint32_t k_DOUBLE_BIAS = 1023;
+
 const ntsa::AbstractIntegerBase::Value k_DEFAULT_BASE =
     AbstractIntegerBase::e_NATIVE;
 
@@ -56,20 +80,2046 @@ static const AbstractIntegerBaseTraits k_TRAITS[5] = {
 
 }  // close unnamed namespace
 
-AbstractSyntaxNotation::AbstractSyntaxNotation(
+ntsa::Error AbstractSyntaxTagClass::fromValue(
+    Value*      result, 
+    bsl::size_t value)
+{
+    switch (value) {
+    case e_UNIVERSAL:
+    case e_APPLICATION:
+    case e_CONTEXT_SPECIFIC:
+    case e_PRIVATE:
+        *result = static_cast<Value>(value);
+        return ntsa::Error();
+    default:
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+}
+
+const char* AbstractSyntaxTagClass::toString(Value value)
+{
+    switch (value) {
+    case e_UNIVERSAL: {
+        return "UNIVERSAL";
+    } break;
+    case e_APPLICATION: {
+        return "APPLICATION";
+    }  break;
+    case e_CONTEXT_SPECIFIC: {
+        return "CONTEXT_SPECIFIC";
+    } break;
+    case e_PRIVATE: {
+        return "PRIVATE";
+    } break;
+    }
+
+    BSLS_ASSERT(!"invalid enumerator");
+    return 0;
+}
+
+bsl::ostream& AbstractSyntaxTagClass::print(bsl::ostream& stream, Value value)
+{
+    return stream << toString(value);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, AbstractSyntaxTagClass::Value rhs)
+{
+    return AbstractSyntaxTagClass::print(stream, rhs);
+}
+
+
+
+
+
+ntsa::Error AbstractSyntaxTagType::fromValue(
+    Value*      result, 
+    bsl::size_t value)
+{
+    switch (value) {
+    case e_PRIMITIVE:
+    case e_CONSTRUCTED:
+        *result = static_cast<Value>(value);
+        return ntsa::Error();
+    default:
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+}
+
+const char* AbstractSyntaxTagType::toString(Value value)
+{
+    switch (value) {
+    case e_PRIMITIVE: {
+        return "PRIMITIVE";
+    } break;
+    case e_CONSTRUCTED: {
+        return "CONSTRUCTED";
+    } break;
+    }
+
+    BSLS_ASSERT(!"invalid enumerator");
+    return 0;
+}
+
+bsl::ostream& AbstractSyntaxTagType::print(bsl::ostream& stream, Value value)
+{
+    return stream << toString(value);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, AbstractSyntaxTagType::Value rhs)
+{
+    return AbstractSyntaxTagType::print(stream, rhs);
+}
+
+
+
+
+
+
+ntsa::Error AbstractSyntaxTagNumber::validate(bsl::size_t value)
+{
+    if (value > 256) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    return ntsa::Error();
+}
+
+const char* AbstractSyntaxTagNumber::toString(Value value)
+{
+    switch (value) {
+    case e_END_OF_CONTENTS: {
+        return "END_OF_CONTENTS";
+    } break;
+    case e_BOOLEAN: {
+        return "BOOLEAN";
+    } break;
+    case e_INTEGER: {
+        return "INTEGER";
+    } break;
+    case e_BIT_STRING: {
+        return "BIT_STRING";
+    } break;
+    case e_OCTET_STRING: {
+        return "OCTET_STRING";
+    } break;
+    case e_NULL: {
+        return "NULL";
+    } break;
+    case e_OBJECT_IDENTIFIER: {
+        return "OBJECT_IDENTIFIER";
+    } break;
+    case e_OBJECT_DESCRIPTOR: {
+        return "OBJECT_DESCRIPTOR";
+    } break;
+    case e_EXTERNAL: {
+        return "EXTERNAL";
+    } break;
+    case e_REAL: {
+        return "REAL";
+    } break;
+    case e_ENUMERATED: {
+        return "ENUMERATED";
+    } break;
+    case e_EMBEDDED_PDV: {
+        return "EMBEDDED_PDV";
+    } break;
+    case e_UTF8_STRING: {
+        return "UTF8_STRING";
+    } break;
+    case e_RELATIVE_OID: {
+        return "RELATIVE_OID";
+    } break;
+    case e_SEQUENCE: {
+        return "SEQUENCE";
+    } break;
+    case e_SET: {
+        return "SET";
+    } break;
+    case e_NUMERIC_STRING: {
+        return "NUMERIC_STRING";
+    } break;
+    case e_PRINTABLE_STRING: {
+        return "PRINTABLE_STRING";
+    } break;
+    case e_T61_STRING: {
+        return "T61_STRING";
+    } break;
+    case e_VIDEOTEXT_STRING: {
+        return "VIDEOTEXT_STRING";
+    } break;
+    case e_IA5_STRING: {
+        return "IA5_STRING";
+    } break;
+    case e_UTC_TIME: {
+        return "UTC_TIME";
+    } break;
+    case e_GENERALIZED_TIME: {
+        return "GENERALIZED_TIME";
+    } break;
+    case e_GRAPHIC_STRING: {
+        return "GRAPHIC_STRING";
+    } break;
+    case e_VISIBLE_STRING: {
+        return "VISIBLE_STRING";
+    } break;
+    case e_GENERAL_STRING: {
+        return "GENERAL_STRING";
+    } break;
+    case e_UNIVERSAL_STRING: {
+        return "UNIVERSAL_STRING";
+    } break;
+    case e_CHARACTER_STRING: {
+        return "CHARACTER_STRING";
+    } break;
+    case e_BMP_STRING: {
+        return "BMP_STRING";
+    } break;
+    case e_LONG_FORM: {
+        return "LONG_FORM";
+    } break;
+    }
+
+    BSLS_ASSERT(!"invalid enumerator");
+    return 0;
+}
+
+bsl::ostream& AbstractSyntaxTagNumber::print(bsl::ostream& stream, Value value)
+{
+    return stream << toString(value);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, AbstractSyntaxTagNumber::Value rhs)
+{
+    return AbstractSyntaxTagNumber::print(stream, rhs);
+}
+
+
+
+
+const char* AbstractSyntaxFormat::toString(Value value)
+{
+    switch (value) {
+    case e_DISTINGUISHED: {
+        return "DISTINGUISHED";
+    } break;
+    case e_CANONICAL: {
+        return "CANONICAL";
+    } break;
+    }
+
+    BSLS_ASSERT(!"invalid enumerator");
+    return 0;
+}
+
+bsl::ostream& AbstractSyntaxFormat::print(bsl::ostream& stream, Value value)
+{
+    return stream << toString(value);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, AbstractSyntaxFormat::Value rhs)
+{
+    return AbstractSyntaxFormat::print(stream, rhs);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+AbstractSyntaxContext::AbstractSyntaxContext()
+: d_tagClass(AbstractSyntaxTagClass::e_UNIVERSAL)
+, d_tagType(AbstractSyntaxTagType::e_PRIMITIVE)
+, d_tagNumber(AbstractSyntaxTagNumber::e_NULL)
+, d_length()
+{
+}
+
+AbstractSyntaxContext::AbstractSyntaxContext(const AbstractSyntaxContext& original)
+: d_tagClass(original.d_tagClass)
+, d_tagType(original.d_tagType)
+, d_tagNumber(original.d_tagNumber)
+, d_length(original.d_length)
+{
+}
+
+AbstractSyntaxContext::~AbstractSyntaxContext()
+{
+}
+
+AbstractSyntaxContext& AbstractSyntaxContext::operator=(const AbstractSyntaxContext& other)
+{
+    if (this != &other) {
+        d_tagClass = other.d_tagClass;
+        d_tagType = other.d_tagType;
+        d_tagNumber = other.d_tagNumber;
+        d_length = other.d_length;
+    }
+
+    return *this;
+}
+
+void AbstractSyntaxContext::reset()
+{
+    d_tagClass = AbstractSyntaxTagClass::e_UNIVERSAL;
+    d_tagType = AbstractSyntaxTagType::e_PRIMITIVE;
+    d_tagNumber = AbstractSyntaxTagNumber::e_NULL;
+    d_length.reset();
+}
+
+void AbstractSyntaxContext::setTagClass(AbstractSyntaxTagClass::Value value)
+{
+    d_tagClass = value;
+}
+
+void AbstractSyntaxContext::setTagType(AbstractSyntaxTagType::Value value)
+{
+    d_tagType = value;
+}
+
+void AbstractSyntaxContext::setTagNumber(AbstractSyntaxTagNumber::Value value)
+{
+    d_tagNumber = value;
+}
+
+void AbstractSyntaxContext::setTagNumber(bsl::size_t value)
+{
+    d_tagNumber = value;
+}
+
+void AbstractSyntaxContext::setLength(bsl::size_t value)
+{
+    d_length = value;
+}
+
+AbstractSyntaxTagClass::Value AbstractSyntaxContext::tagClass() const
+{
+    return d_tagClass;
+}
+
+AbstractSyntaxTagType::Value AbstractSyntaxContext::tagType() const
+{
+    return d_tagType;
+}
+
+bsl::size_t AbstractSyntaxContext::tagNumber() const
+{
+    return d_tagNumber;
+}
+
+const bdlb::NullableValue<bsl::size_t>& AbstractSyntaxContext::length() const
+{
+    return d_length;
+}
+
+bool AbstractSyntaxContext::equals(const AbstractSyntaxContext& other) const
+{
+    return d_tagClass == other.d_tagClass &&
+    d_tagType == other.d_tagType &&
+    d_tagNumber == other.d_tagNumber &&
+    d_length == other.d_length;
+}
+
+bool AbstractSyntaxContext::less(const AbstractSyntaxContext& other) const
+{
+    if (d_tagClass < other.d_tagClass) {
+        return true;
+    }
+
+    if (other.d_tagClass < d_tagClass) {
+        return false;
+    }
+
+
+    if (d_tagType < other.d_tagType) {
+        return true;
+    }
+
+    if (other.d_tagType < d_tagType) {
+        return false;
+    }
+
+
+    if (d_tagNumber < other.d_tagNumber) {
+        return true;
+    }
+
+    if (other.d_tagNumber < d_tagNumber) {
+        return false;
+    }
+
+
+    return d_length < other.d_length;
+}
+
+bsl::ostream& AbstractSyntaxContext::print(bsl::ostream& stream,
+                    int           level,
+                    int           spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+
+    printer.printAttribute("class", d_tagClass);
+    printer.printAttribute("type", d_tagType);
+
+    if (d_tagNumber <= 30) {
+        printer.printAttribute("number", 
+            static_cast<AbstractSyntaxTagNumber::Value>(
+                static_cast<int>(d_tagNumber)));
+    }
+    else {
+        printer.printAttribute("number", d_tagNumber);
+    }
+
+    if (!d_length.isNull()) {
+        printer.printAttribute("length", d_length);
+    }
+
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, const AbstractSyntaxContext& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const AbstractSyntaxContext& lhs, const AbstractSyntaxContext& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const AbstractSyntaxContext& lhs, const AbstractSyntaxContext& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const AbstractSyntaxContext& lhs, const AbstractSyntaxContext& rhs)
+{
+    return lhs.less(rhs);
+}
+
+
+
+
+
+
+
+
+
+AbstractSyntaxEncoderOptions::AbstractSyntaxEncoderOptions(
+    bslma::Allocator* basicAllocator)
+: d_format()
+{
+    NTSCFG_WARNING_UNUSED(basicAllocator);
+}
+
+AbstractSyntaxEncoderOptions::AbstractSyntaxEncoderOptions(
+    const AbstractSyntaxEncoderOptions& original,
+            bslma::Allocator*  basicAllocator)
+: d_format(original.d_format)
+{
+    NTSCFG_WARNING_UNUSED(basicAllocator);
+}
+
+AbstractSyntaxEncoderOptions::~AbstractSyntaxEncoderOptions()
+{
+
+}
+
+AbstractSyntaxEncoderOptions& AbstractSyntaxEncoderOptions::operator=(const AbstractSyntaxEncoderOptions& other)
+{
+    if (this != &other) {
+        d_format = other.d_format;
+    }
+
+    return *this;
+}
+
+void AbstractSyntaxEncoderOptions::reset()
+{
+    d_format.reset();
+}
+
+void AbstractSyntaxEncoderOptions::setFormat(const ntsa::AbstractSyntaxFormat::Value& value)
+{
+    d_format = value;
+}
+
+const bdlb::NullableValue<ntsa::AbstractSyntaxFormat::Value>& AbstractSyntaxEncoderOptions::format() const
+{
+    return d_format;
+}
+
+bool AbstractSyntaxEncoderOptions::equals(const AbstractSyntaxEncoderOptions& other) const
+{
+    return d_format == other.d_format;
+}
+
+bool AbstractSyntaxEncoderOptions::less(const AbstractSyntaxEncoderOptions& other) const
+{
+    return d_format < other.d_format;
+}
+
+bsl::ostream& AbstractSyntaxEncoderOptions::print(bsl::ostream& stream,
+                    int           level,
+                    int           spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+
+    if (!d_format.isNull()) {
+        printer.printAttribute("format", d_format);
+    }
+
+    printer.end();
+    return stream;
+}
+
+
+bsl::ostream& operator<<(bsl::ostream& stream, const AbstractSyntaxEncoderOptions& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const AbstractSyntaxEncoderOptions& lhs, const AbstractSyntaxEncoderOptions& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const AbstractSyntaxEncoderOptions& lhs, const AbstractSyntaxEncoderOptions& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const AbstractSyntaxEncoderOptions& lhs, const AbstractSyntaxEncoderOptions& rhs)
+{
+    return lhs.less(rhs);
+}
+
+
+
+
+
+
+
+
+
+
+
+AbstractSyntaxEncoder::AbstractSyntaxEncoder(
     bsl::streambuf*   buffer,
     bslma::Allocator* basicAllocator)
 : d_buffer_p(buffer)
+, d_config(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     NTSCFG_WARNING_UNUSED(d_allocator_p);
 }
 
-AbstractSyntaxNotation::~AbstractSyntaxNotation()
+AbstractSyntaxEncoder::AbstractSyntaxEncoder(
+    const AbstractSyntaxEncoderOptions& configuration,
+    bsl::streambuf*   buffer,
+    bslma::Allocator* basicAllocator)
+: d_buffer_p(buffer)
+, d_config(configuration, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+    NTSCFG_WARNING_UNUSED(d_allocator_p);
+}
+
+AbstractSyntaxEncoder::~AbstractSyntaxEncoder()
 {
 }
 
-bsl::streambuf* AbstractSyntaxNotation::buffer() const
+const AbstractSyntaxEncoderOptions& AbstractSyntaxEncoder::configuration() const
+{
+    return d_config;
+}
+
+bsl::streambuf* AbstractSyntaxEncoder::buffer() const
+{
+    return d_buffer_p;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+AbstractSyntaxDecoderOptions::AbstractSyntaxDecoderOptions(
+    bslma::Allocator* basicAllocator)
+: d_format()
+{
+    NTSCFG_WARNING_UNUSED(basicAllocator);
+}
+
+AbstractSyntaxDecoderOptions::AbstractSyntaxDecoderOptions(
+    const AbstractSyntaxDecoderOptions& original,
+            bslma::Allocator*  basicAllocator)
+: d_format(original.d_format)
+{
+    NTSCFG_WARNING_UNUSED(basicAllocator);
+}
+
+AbstractSyntaxDecoderOptions::~AbstractSyntaxDecoderOptions()
+{
+
+}
+
+AbstractSyntaxDecoderOptions& AbstractSyntaxDecoderOptions::operator=(const AbstractSyntaxDecoderOptions& other)
+{
+    if (this != &other) {
+        d_format = other.d_format;
+    }
+
+    return *this;
+}
+
+void AbstractSyntaxDecoderOptions::reset()
+{
+    d_format.reset();
+}
+
+void AbstractSyntaxDecoderOptions::setFormat(const ntsa::AbstractSyntaxFormat::Value& value)
+{
+    d_format = value;
+}
+
+const bdlb::NullableValue<ntsa::AbstractSyntaxFormat::Value>& AbstractSyntaxDecoderOptions::format() const
+{
+    return d_format;
+}
+
+bool AbstractSyntaxDecoderOptions::equals(const AbstractSyntaxDecoderOptions& other) const
+{
+    return d_format == other.d_format;
+}
+
+bool AbstractSyntaxDecoderOptions::less(const AbstractSyntaxDecoderOptions& other) const
+{
+    return d_format < other.d_format;
+}
+
+bsl::ostream& AbstractSyntaxDecoderOptions::print(bsl::ostream& stream,
+                    int           level,
+                    int           spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+
+    if (!d_format.isNull()) {
+        printer.printAttribute("format", d_format);
+    }
+
+    printer.end();
+    return stream;
+}
+
+
+bsl::ostream& operator<<(bsl::ostream& stream, const AbstractSyntaxDecoderOptions& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const AbstractSyntaxDecoderOptions& lhs, const AbstractSyntaxDecoderOptions& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const AbstractSyntaxDecoderOptions& lhs, const AbstractSyntaxDecoderOptions& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const AbstractSyntaxDecoderOptions& lhs, const AbstractSyntaxDecoderOptions& rhs)
+{
+    return lhs.less(rhs);
+}
+
+
+
+
+
+ntsa::Error AbstractSyntaxDecoder::read(bsl::uint8_t* result)
+{
+    bsl::streambuf::int_type meta = d_buffer_p->sbumpc();
+    if (bsl::streambuf::traits_type::eq_int_type(
+            meta, 
+            bsl::streambuf::traits_type::eof()))
+    {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
+    *result = static_cast<bsl::uint8_t>(bsl::streambuf::traits_type::to_char_type(meta));
+    return ntsa::Error();
+}
+
+
+ntsa::Error AbstractSyntaxDecoder::read(bsl::uint8_t* result, bsl::size_t size)
+{
+    bsl::streamsize n = d_buffer_p->sgetn(reinterpret_cast<char*>(result),
+	                                      static_cast<bsl::streamsize>(size));
+    
+    if (static_cast<bsl::size_t>(n) != size) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodeTag(
+        ntsa::AbstractSyntaxTagClass::Value* tagClass,
+        ntsa::AbstractSyntaxTagType::Value*  tagType,
+        bsl::size_t*                         tagNumber)
+{
+    ntsa::Error error;
+
+    *tagClass  = ntsa::AbstractSyntaxTagClass::e_UNIVERSAL;
+    *tagType   = ntsa::AbstractSyntaxTagType::e_PRIMITIVE;
+    *tagNumber = 0;
+
+    bsl::uint8_t nextOctet = 0;
+    bsl::size_t  numRead = 0;
+
+    NTSCFG_WARNING_UNUSED(numRead);
+
+    error = this->read(&nextOctet);
+    if (error) {
+        return error;
+    }
+    
+    ++numRead;
+
+    bsl::size_t tagClassCandidate = nextOctet & k_TAG_MASK_CLASS;
+    error = AbstractSyntaxTagClass::fromValue(tagClass, tagClassCandidate);
+    if (error) {
+        return error;
+    }
+
+    bsl::size_t tagTypeCandidate = nextOctet & k_TAG_MASK_TYPE;
+    error = AbstractSyntaxTagType::fromValue(tagType, tagTypeCandidate);
+    if (error) {
+        return error;
+    }
+
+    bsl::size_t tagNumberCandidate = nextOctet & k_TAG_MASK_NUMBER;
+
+    if (tagNumberCandidate == k_TAG_MASK_NUMBER) {
+        tagNumberCandidate = 0;
+
+        bsl::size_t index = 0;
+        while (true) {
+            if (index == k_MAX_TAG_NUMBER_OCTETS) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+
+            error = this->read(&nextOctet);
+            if (error) {
+                return error;
+            }
+            
+            ++numRead;
+
+            tagNumberCandidate <<= k_NUM_VALUE_BITS_IN_TAG_OCTET;
+            tagNumberCandidate |= nextOctet & 0x7F;
+
+            if ((nextOctet & 0x80) == 0) {
+                break;
+            }
+
+            ++index;
+        }
+    }
+
+    error = AbstractSyntaxTagNumber::validate(tagNumberCandidate);
+    if (error) {
+        return error;
+    }
+
+    *tagNumber = tagNumberCandidate;
+
+    // MRM
+    #if 0
+    if (*tagClass  == AbstractSyntaxTagClass::e_UNIVERSAL &&
+        *tagType   == AbstractSyntaxTagType::e_PRIMITIVE  &&
+        *tagNumber == AbstractSyntaxTagNumber::e_END_OF_CONTENTS)
+    {
+        error = this->read(&nextOctet);
+        if (error) {
+            return error;
+        }
+        
+        ++numRead;
+
+        if (nextOctet != 0) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+    #endif
+
+    return ntsa::Error();
+}
+
+
+
+
+
+ntsa::Error AbstractSyntaxDecoder::decodeLength(
+    bdlb::NullableValue<bsl::size_t>* result)
+{
+    ntsa::Error error;
+
+    result->reset();
+
+    bsl::uint8_t nextOctet = 0;
+    bsl::size_t  numRead = 0;
+
+    NTSCFG_WARNING_UNUSED(numRead);
+
+    error = this->read(&nextOctet);
+    if (error) {
+        return error;
+    }
+    
+    ++numRead;
+
+    if (nextOctet != 0x80) {
+        bsl::size_t numOctets = nextOctet;
+
+        if ((numOctets & 0x80) == 0) {
+            result->makeValue(numOctets);
+        }
+        else {
+            numOctets &= 0x7F;
+            if (numOctets > 4) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+
+            bsl::size_t lengthCandidate = 0;
+
+            for (bsl::size_t i = 0; i < numOctets; ++i) {
+                 error = this->read(&nextOctet);
+                if (error) {
+                    return error;
+                }
+                
+                ++numRead;
+
+                lengthCandidate <<= 8;
+                lengthCandidate  |= nextOctet;
+            }
+
+            result->makeValue(lengthCandidate);
+        }
+    }
+
+    return ntsa::Error();
+}
+
+AbstractSyntaxDecoder::AbstractSyntaxDecoder(
+    bsl::streambuf*   buffer,
+    bslma::Allocator* basicAllocator)
+: d_buffer_p(buffer)
+, d_contextStack(basicAllocator)
+, d_contextDefault()
+, d_config(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+    NTSCFG_WARNING_UNUSED(d_allocator_p);
+}
+
+AbstractSyntaxDecoder::AbstractSyntaxDecoder(
+    const AbstractSyntaxDecoderOptions& configuration,
+    bsl::streambuf*   buffer,
+    bslma::Allocator* basicAllocator)
+: d_buffer_p(buffer)
+, d_contextStack(basicAllocator)
+, d_contextDefault()
+, d_config(configuration, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+    NTSCFG_WARNING_UNUSED(d_allocator_p);
+}
+
+AbstractSyntaxDecoder::~AbstractSyntaxDecoder()
+{
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodeContext()
+{
+    ntsa::Error error;
+
+    ntsa::AbstractSyntaxTagClass::Value tagClass =
+        ntsa::AbstractSyntaxTagClass::e_UNIVERSAL;
+
+    ntsa::AbstractSyntaxTagType::Value tagType = 
+        ntsa::AbstractSyntaxTagType::e_PRIMITIVE;
+
+    bsl::size_t tagNumber = 0;
+
+    error = this->decodeTag(&tagClass, &tagType, &tagNumber);
+    if (error) {
+        return error;
+    }
+
+    bdlb::NullableValue<bsl::size_t> length;
+    error = this->decodeLength(&length);
+    if (error) {
+        return error;
+    }
+
+    d_contextStack.resize(d_contextStack.size() + 1);
+    AbstractSyntaxContext* context = &d_contextStack.back();
+
+    context->setTagClass(tagClass);
+    context->setTagType(tagType);
+    context->setTagNumber(tagNumber);
+
+    if (!length.isNull()) {
+        context->setLength(length.value());
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodeContext(AbstractSyntaxContext* result)
+{
+    ntsa::Error error;
+
+    result->reset();
+
+    error = this->decodeContext();
+    if (error) {
+        return error;
+    }
+
+    *result = this->current();
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodeContext(
+    AbstractSyntaxTagClass::Value  tagClass,
+    AbstractSyntaxTagType::Value   tagType,
+    AbstractSyntaxTagNumber::Value tagNumber)
+{
+    ntsa::Error error;
+
+    error = this->decodeContext();
+    if (error) {
+        return error;
+    }
+
+    const AbstractSyntaxContext& context = this->current();
+
+    if (context.tagClass() != tagClass) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.tagType() != tagType) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.tagNumber() != tagNumber) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodeContext(
+    AbstractSyntaxTagClass::Value tagClass,
+    AbstractSyntaxTagType::Value  tagType,
+    bsl::size_t                   tagNumber)
+{
+    ntsa::Error error;
+
+    error = this->decodeContext();
+    if (error) {
+        return error;
+    }
+
+    const AbstractSyntaxContext& context = this->current();
+
+    if (context.tagClass() != tagClass) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.tagType() != tagType) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.tagNumber() != tagNumber) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodePrimitiveNull()
+{
+    ntsa::Error error;
+
+    if (d_contextStack.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    const AbstractSyntaxContext& context = this->current();
+
+    if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
+        if (context.tagNumber() != AbstractSyntaxTagNumber::e_NULL) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    if (context.tagType() != AbstractSyntaxTagType::e_PRIMITIVE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().isNull()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().value() != 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    return ntsa::Error();
+}
+
+
+ntsa::Error AbstractSyntaxDecoder::decodePrimitiveEnd()
+{
+    ntsa::Error error;
+
+    if (d_contextStack.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    const AbstractSyntaxContext& context = this->current();
+
+    if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
+        if (context.tagNumber() != AbstractSyntaxTagNumber::e_END_OF_CONTENTS) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    if (context.tagType() != AbstractSyntaxTagType::e_PRIMITIVE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().isNull()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().value() != 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    bsl::uint8_t nextOctet = 0;
+    error = this->read(&nextOctet);
+    if (error) {
+        return error;
+    }
+
+    if (nextOctet != 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    return ntsa::Error();
+}
+
+
+ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(bool* result)
+{
+    ntsa::Error error;
+
+    *result = false;
+
+    if (d_contextStack.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    const AbstractSyntaxContext& context = this->current();
+
+    if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
+        if (context.tagNumber() != AbstractSyntaxTagNumber::e_BOOLEAN) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    if (context.tagType() != AbstractSyntaxTagType::e_PRIMITIVE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().isNull()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().value() != 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    bsl::uint8_t nextOctet = 0;
+    error = this->read(&nextOctet);
+    if (error) {
+        return error;
+    }
+
+    if (nextOctet == 0) {
+        *result = false;
+    }
+    else if (nextOctet == 1) {
+        *result = true;
+    }
+    else {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(short* result)
+{
+    ntsa::Error error;
+
+    *result = 0;
+
+    if (d_contextStack.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    const AbstractSyntaxContext& context = this->current();
+
+    if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
+        if (context.tagNumber() != AbstractSyntaxTagNumber::e_INTEGER) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    if (context.tagType() != AbstractSyntaxTagType::e_PRIMITIVE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().isNull()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().value() == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    short        value        = 0;
+    bsl::uint8_t nextOctet    = 0;
+    bsl::size_t  numRemaining = context.length().value();
+
+    error = this->read(&nextOctet);
+    if (error) {
+        return error;
+    }
+
+    if ((nextOctet & 0x80) != 0) {
+        value = -1;
+    }
+
+    while (true)
+    {
+        value <<= 8;
+        value  |= nextOctet;
+
+        if (--numRemaining != 0) {
+            error = this->read(&nextOctet);
+            if (error) {
+                return error;
+            }
+        }
+        else {
+            break;
+        }
+    }
+
+    *result = value;
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(unsigned short* result)
+{
+    ntsa::Error error;
+
+    *result = 0;
+
+    if (d_contextStack.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    const AbstractSyntaxContext& context = this->current();
+
+    if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
+        if (context.tagNumber() != AbstractSyntaxTagNumber::e_INTEGER) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    if (context.tagType() != AbstractSyntaxTagType::e_PRIMITIVE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().isNull()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().value() == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    unsigned short value        = 0;
+    bsl::uint8_t   nextOctet    = 0;
+    bsl::size_t    numRemaining = context.length().value();
+
+    error = this->read(&nextOctet);
+    if (error) {
+        return error;
+    }
+
+    if ((nextOctet & 0x80) != 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    while (true) {
+        value <<= 8;
+        value  |= nextOctet;
+
+        if (--numRemaining != 0) {
+            error = this->read(&nextOctet);
+            if (error) {
+                return error;
+            }
+        }
+        else {
+            break;
+        }
+    }
+
+    *result = value;
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(int* result)
+{
+    ntsa::Error error;
+
+    *result = 0;
+
+    if (d_contextStack.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    const AbstractSyntaxContext& context = this->current();
+
+    if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
+        if (context.tagNumber() != AbstractSyntaxTagNumber::e_INTEGER) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    if (context.tagType() != AbstractSyntaxTagType::e_PRIMITIVE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().isNull()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().value() == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    int          value        = 0;
+    bsl::uint8_t nextOctet    = 0;
+    bsl::size_t  numRemaining = context.length().value();
+
+    error = this->read(&nextOctet);
+    if (error) {
+        return error;
+    }
+
+    if ((nextOctet & 0x80) != 0) {
+        value = -1;
+    }
+
+    while (true)
+    {
+        value <<= 8;
+        value  |= nextOctet;
+
+        if (--numRemaining != 0) {
+            error = this->read(&nextOctet);
+            if (error) {
+                return error;
+            }
+        }
+        else {
+            break;
+        }
+    }
+
+    *result = value;
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(unsigned int* result)
+{
+    ntsa::Error error;
+
+    *result = 0;
+
+    if (d_contextStack.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    const AbstractSyntaxContext& context = this->current();
+
+    if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
+        if (context.tagNumber() != AbstractSyntaxTagNumber::e_INTEGER) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    if (context.tagType() != AbstractSyntaxTagType::e_PRIMITIVE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().isNull()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().value() == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    unsigned int   value        = 0;
+    bsl::uint8_t   nextOctet    = 0;
+    bsl::size_t    numRemaining = context.length().value();
+
+    error = this->read(&nextOctet);
+    if (error) {
+        return error;
+    }
+
+    if ((nextOctet & 0x80) != 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    while (true) {
+        value <<= 8;
+        value  |= nextOctet;
+
+        if (--numRemaining != 0) {
+            error = this->read(&nextOctet);
+            if (error) {
+                return error;
+            }
+        }
+        else {
+            break;
+        }
+    }
+
+    *result = value;
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(long* result)
+{
+    ntsa::Error error;
+
+    *result = 0;
+
+    if (d_contextStack.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    const AbstractSyntaxContext& context = this->current();
+
+    if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
+        if (context.tagNumber() != AbstractSyntaxTagNumber::e_INTEGER) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    if (context.tagType() != AbstractSyntaxTagType::e_PRIMITIVE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().isNull()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().value() == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    long         value        = 0;
+    bsl::uint8_t nextOctet    = 0;
+    bsl::size_t  numRemaining = context.length().value();
+
+    error = this->read(&nextOctet);
+    if (error) {
+        return error;
+    }
+
+    if ((nextOctet & 0x80) != 0) {
+        value = -1;
+    }
+
+    while (true)
+    {
+        value <<= 8;
+        value  |= nextOctet;
+
+        if (--numRemaining != 0) {
+            error = this->read(&nextOctet);
+            if (error) {
+                return error;
+            }
+        }
+        else {
+            break;
+        }
+    }
+
+    *result = value;
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(unsigned long* result)
+{
+    ntsa::Error error;
+
+    *result = 0;
+
+    if (d_contextStack.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    const AbstractSyntaxContext& context = this->current();
+
+    if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
+        if (context.tagNumber() != AbstractSyntaxTagNumber::e_INTEGER) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    if (context.tagType() != AbstractSyntaxTagType::e_PRIMITIVE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().isNull()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().value() == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    unsigned long  value        = 0;
+    bsl::uint8_t   nextOctet    = 0;
+    bsl::size_t    numRemaining = context.length().value();
+
+    error = this->read(&nextOctet);
+    if (error) {
+        return error;
+    }
+
+    if ((nextOctet & 0x80) != 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    while (true) {
+        value <<= 8;
+        value  |= nextOctet;
+
+        if (--numRemaining != 0) {
+            error = this->read(&nextOctet);
+            if (error) {
+                return error;
+            }
+        }
+        else {
+            break;
+        }
+    }
+
+    *result = value;
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(long long* result)
+{
+    ntsa::Error error;
+
+    *result = 0;
+
+    if (d_contextStack.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    const AbstractSyntaxContext& context = this->current();
+
+    if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
+        if (context.tagNumber() != AbstractSyntaxTagNumber::e_INTEGER) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    if (context.tagType() != AbstractSyntaxTagType::e_PRIMITIVE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().isNull()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().value() == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    long long    value        = 0;
+    bsl::uint8_t nextOctet    = 0;
+    bsl::size_t  numRemaining = context.length().value();
+
+    error = this->read(&nextOctet);
+    if (error) {
+        return error;
+    }
+
+    if ((nextOctet & 0x80) != 0) {
+        value = -1;
+    }
+
+    while (true)
+    {
+        value <<= 8;
+        value  |= nextOctet;
+
+        if (--numRemaining != 0) {
+            error = this->read(&nextOctet);
+            if (error) {
+                return error;
+            }
+        }
+        else {
+            break;
+        }
+    }
+
+    *result = value;
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(unsigned long long* result)
+{
+    ntsa::Error error;
+
+    *result = 0;
+
+    if (d_contextStack.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    const AbstractSyntaxContext& context = this->current();
+
+    if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
+        if (context.tagNumber() != AbstractSyntaxTagNumber::e_INTEGER) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    if (context.tagType() != AbstractSyntaxTagType::e_PRIMITIVE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().isNull()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().value() == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    unsigned long long value        = 0;
+    bsl::uint8_t   nextOctet    = 0;
+    bsl::size_t    numRemaining = context.length().value();
+
+    error = this->read(&nextOctet);
+    if (error) {
+        return error;
+    }
+
+    if ((nextOctet & 0x80) != 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    while (true) {
+        value <<= 8;
+        value  |= nextOctet;
+
+        if (--numRemaining != 0) {
+            error = this->read(&nextOctet);
+            if (error) {
+                return error;
+            }
+        }
+        else {
+            break;
+        }
+    }
+
+    *result = value;
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(AbstractInteger* result)
+{
+    ntsa::Error error;
+
+    result->reset();
+
+    if (d_contextStack.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    const AbstractSyntaxContext& context = this->current();
+
+    if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
+        if (context.tagNumber() != AbstractSyntaxTagNumber::e_INTEGER) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    if (context.tagType() != AbstractSyntaxTagType::e_PRIMITIVE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().isNull()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().value() == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    bsl::vector<bsl::uint8_t> data;
+    data.resize(context.length().value());
+
+    error = this->read(&data.front(), data.size());
+    if (error) {
+        return error;
+    }
+
+    result->import(data);
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(float* result)
+{
+    ntsa::Error error;
+
+    *result = 0.0;
+
+    double temp = 0.0;
+    error = this->decodePrimitiveValue(&temp);
+    if (error) {
+        return error;
+    }
+
+    *result = static_cast<float>(temp);
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(double* result)
+{
+    ntsa::Error error;
+
+    *result = 0.0;
+
+    if (d_contextStack.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    const AbstractSyntaxContext& context = this->current();
+
+    if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
+        if (context.tagNumber() != AbstractSyntaxTagNumber::e_REAL) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    if (context.tagType() != AbstractSyntaxTagType::e_PRIMITIVE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().isNull()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().value() == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    bsl::uint8_t   nextOctet    = 0;
+
+    error = this->read(&nextOctet);
+    if (error) {
+        return error;
+    }
+
+    if (nextOctet == 0x40)
+    {
+        AbstractReal::compose(result, 0x7FF, 0, 0);
+        return ntsa::Error();
+    }
+
+    if (nextOctet == 0x41)
+    {
+        AbstractReal::compose(result, 0x7FF, 0, 1);
+        return ntsa::Error();
+    }
+
+    if (nextOctet == 0x42)
+    {
+        AbstractReal::compose(result, 0x7FF, 1, 0);
+        return ntsa::Error();
+    }
+
+    if ((nextOctet & 0x80) == 0)
+    {
+        // Decimal encoding is not supported.
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    bsl::int32_t S = (nextOctet & 0x40) != 0 ? 1 : 0;
+    bsl::uint8_t B = (nextOctet & 0x30) >> 4;
+
+    if (B == 3)
+    {
+        // Base value is not supported
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    B *= 8;
+
+    bsl::uint8_t F = (nextOctet & 0x0C) >> 2;
+
+    if (F > 3)
+    {
+        // Invalid scale factor
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    std::size_t exponentLength = (nextOctet & 0x03);
+
+    if (exponentLength < 3)
+    {
+        exponentLength = exponentLength + 1;
+    }
+    else
+    {
+        error = this->read(&nextOctet);
+        if (error) {
+            return error;
+        }
+
+        exponentLength = nextOctet;
+    }
+
+    if (exponentLength == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (exponentLength > 5) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+
+    bsl::int64_t exponent = 0;
+    {
+        bsl::size_t exponentLengthRemaining = exponentLength;
+
+        error = this->read(&nextOctet);
+        if (error) {
+            return error;
+        }
+
+        if ((nextOctet & 0x80) != 0) {
+            exponent = -1;
+        }
+
+        while (true)
+        {
+            exponent <<= 8;
+            exponent  |= nextOctet;
+
+            if (--exponentLengthRemaining != 0) {
+                error = this->read(&nextOctet);
+                if (error) {
+                    return error;
+                }
+            }
+            else {
+                break;
+            }
+        }
+    }
+
+    if (B != 0)
+    {
+        if (B == 8)
+        {
+            exponent *= 3;
+        }
+        else
+        {
+            exponent *= 4;
+        }
+    }
+
+    exponent -= F;
+
+    bsl::size_t mantissaLength = 
+        context.length().value() - exponentLength - 1;
+
+    if (mantissaLength == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (mantissaLength > 5) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    bsl::int64_t mantissa = 0;
+    {
+        bsl::size_t mantissaLengthRemaining = mantissaLength;
+
+        error = this->read(&nextOctet);
+        if (error) {
+            return error;
+        }
+
+        if ((nextOctet & 0x80) != 0) {
+            mantissa = -1;
+        }
+
+        while (true)
+        {
+            mantissa <<= 8;
+            mantissa  |= nextOctet;
+
+            if (--mantissaLengthRemaining != 0) {
+                error = this->read(&nextOctet);
+                if (error) {
+                    return error;
+                }
+            }
+            else {
+                break;
+            }
+        }
+    }
+
+    if (mantissa == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    bsl::size_t shift = 
+        bdlb::BitUtil::numLeadingUnsetBits(
+            static_cast<bsl::uint64_t>(mantissa));
+        // MRM: 63 - index_of_msb_set(static_cast<bsl::uint64_t>(mantissa));
+
+    shift    -= k_DOUBLE_NUM_EXPONENT_BITS + 1;
+    exponent += k_DOUBLE_BIAS + k_DOUBLE_NUM_MANTISSA_BITS - shift - 1;
+
+    if (exponent > 0)
+    {
+        mantissa <<= shift + 1;
+        mantissa  &= ~k_DOUBLE_MANTISSA_IMPLICIT_ONE_MASK;
+    }
+    else
+    {
+        mantissa <<= shift + exponent;
+        exponent   = 0;
+    }
+
+    AbstractReal::compose(result, exponent, mantissa, S);
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(bsl::string* result)
+{
+    ntsa::Error error;
+
+    result->clear();
+
+    if (d_contextStack.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    const AbstractSyntaxContext& context = this->current();
+
+    if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
+        if (context.tagNumber() != AbstractSyntaxTagNumber::e_UTF8_STRING &&
+            context.tagNumber() != AbstractSyntaxTagNumber::e_VISIBLE_STRING &&
+            context.tagNumber() != 
+            AbstractSyntaxTagNumber::e_PRINTABLE_STRING) 
+        {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    if (context.tagType() != AbstractSyntaxTagType::e_PRIMITIVE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().isNull()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().value() == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    result->resize(context.length().value());
+
+    error = this->read(reinterpret_cast<bsl::uint8_t*>(result->data()), 
+                 context.length().value());
+    if (error) {
+        result->clear();
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(AbstractString* result)
+{
+    ntsa::Error error;
+
+    result->reset();
+
+    if (d_contextStack.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    const AbstractSyntaxContext& context = this->current();
+
+    if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
+        if (context.tagNumber() != AbstractSyntaxTagNumber::e_UTF8_STRING &&
+            context.tagNumber() != AbstractSyntaxTagNumber::e_VISIBLE_STRING &&
+            context.tagNumber() != 
+            AbstractSyntaxTagNumber::e_PRINTABLE_STRING) 
+        {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    if (context.tagType() != AbstractSyntaxTagType::e_PRIMITIVE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().isNull()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.length().value() == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    result->resize(context.length().value());
+
+    error = this->read(reinterpret_cast<bsl::uint8_t*>(const_cast<bsl::uint8_t*>(result->data())), 
+                 context.length().value());
+    if (error) {
+        result->reset();
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(bdlt::Datetime* result)
+{
+    NTSCFG_WARNING_UNUSED(result);
+
+    NTSCFG_NOT_IMPLEMENTED();
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(bdlt::DatetimeTz* result)
+{
+    NTSCFG_WARNING_UNUSED(result);
+
+    NTSCFG_NOT_IMPLEMENTED();
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(AbstractObjectIdentifier* result)
+{
+    NTSCFG_WARNING_UNUSED(result);
+
+    NTSCFG_NOT_IMPLEMENTED();
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodeContextComplete()
+{
+    if (d_contextStack.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    return ntsa::Error();
+}
+
+const AbstractSyntaxContext& AbstractSyntaxDecoder::current() const
+{
+    if (!d_contextStack.empty()) {
+        return d_contextStack.back();
+    }
+    else {
+        return d_contextDefault;
+    }
+}
+
+const AbstractSyntaxDecoderOptions& AbstractSyntaxDecoder::configuration() const
+{
+    return d_config;
+}
+
+bsl::streambuf* AbstractSyntaxDecoder::buffer() const
 {
     return d_buffer_p;
 }
@@ -80,8 +2130,46 @@ AbstractObjectIdentifier::AbstractObjectIdentifier(
 {
 }
 
+AbstractObjectIdentifier::AbstractObjectIdentifier(
+    const AbstractObjectIdentifier& original,
+    bslma::Allocator* basicAllocator)
+: d_data(original.d_data, basicAllocator)
+{
+}
+
 AbstractObjectIdentifier::~AbstractObjectIdentifier()
 {
+}
+
+
+AbstractObjectIdentifier& AbstractObjectIdentifier::operator=(
+    const AbstractObjectIdentifier& other)
+{
+    if (this != &other) {
+        d_data = other.d_data;
+    }
+
+    return *this;
+}
+
+void AbstractObjectIdentifier::reset()
+{
+    d_data.clear();
+}
+
+void AbstractObjectIdentifier::resize(bsl::size_t size)
+{
+    d_data.resize(size);
+}
+
+void AbstractObjectIdentifier::append(bsl::uint8_t value)
+{
+    d_data.push_back(value);
+}
+
+void AbstractObjectIdentifier::append(const bsl::uint8_t* data, bsl::size_t size)
+{
+    d_data.insert(d_data.end(), data, data + size);
 }
 
 void AbstractObjectIdentifier::set(bsl::size_t index, bsl::uint8_t value)
@@ -94,7 +2182,7 @@ void AbstractObjectIdentifier::set(bsl::size_t index, bsl::uint8_t value)
     d_data[index] = value;
 }
 
-ntsa::Error AbstractObjectIdentifier::decode(AbstractSyntaxNotation* decoder)
+ntsa::Error AbstractObjectIdentifier::decode(AbstractSyntaxDecoder* decoder)
 {
     NTSCFG_WARNING_UNUSED(decoder);
 
@@ -102,7 +2190,7 @@ ntsa::Error AbstractObjectIdentifier::decode(AbstractSyntaxNotation* decoder)
 }
 
 ntsa::Error AbstractObjectIdentifier::encode(
-    AbstractSyntaxNotation* encoder) const
+    AbstractSyntaxEncoder* encoder) const
 {
     NTSCFG_WARNING_UNUSED(encoder);
 
@@ -113,6 +2201,16 @@ bsl::uint8_t AbstractObjectIdentifier::get(bsl::size_t index) const
 {
     if (index < d_data.size()) {
         return d_data[index];
+    }
+    else {
+        return 0;
+    }
+}
+
+const bsl::uint8_t* AbstractObjectIdentifier::data() const
+{
+    if (!d_data.empty()) {
+        return &d_data.front();
     }
     else {
         return 0;
@@ -170,6 +2268,209 @@ bool operator<(const AbstractObjectIdentifier& lhs,
 {
     return lhs.less(rhs);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AbstractString::AbstractString(
+    bslma::Allocator* basicAllocator)
+: d_type(AbstractSyntaxTagNumber::e_OCTET_STRING)
+, d_data(basicAllocator)
+{
+}
+
+AbstractString::AbstractString(
+    const AbstractString& original,
+    bslma::Allocator* basicAllocator)
+: d_type(original.d_type)
+, d_data(original.d_data, basicAllocator)
+{
+}
+
+AbstractString::~AbstractString()
+{
+}
+
+AbstractString& AbstractString::operator=(
+    const AbstractString& other)
+{
+    if (this != &other) {
+        d_type = other.d_type;
+        d_data = other.d_data;
+    }
+
+    return *this;
+}
+
+void AbstractString::reset()
+{
+    d_type = AbstractSyntaxTagNumber::e_OCTET_STRING;
+    d_data.clear();
+}
+
+void AbstractString::resize(bsl::size_t size)
+{
+    d_data.resize(size);
+}
+
+void AbstractString::append(bsl::uint8_t value)
+{
+    d_data.push_back(value);
+}
+
+void AbstractString::set(bsl::size_t index, bsl::uint8_t value)
+{
+    if (index >= d_data.size()) {
+        d_data.resize(index + 1);
+    }
+
+    BSLS_ASSERT_OPT(index < d_data.size());
+    d_data[index] = value;
+}
+
+void AbstractString::setType(AbstractSyntaxTagNumber::Value value)
+{
+    d_type = value;
+}
+
+ntsa::Error AbstractString::decode(AbstractSyntaxDecoder* decoder)
+{
+    NTSCFG_WARNING_UNUSED(decoder);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error AbstractString::encode(
+    AbstractSyntaxEncoder* encoder) const
+{
+    NTSCFG_WARNING_UNUSED(encoder);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+AbstractSyntaxTagNumber::Value AbstractString::type() const
+{
+    return d_type;
+}
+
+bsl::uint8_t AbstractString::get(bsl::size_t index) const
+{
+    if (index < d_data.size()) {
+        return d_data[index];
+    }
+    else {
+        return 0;
+    }
+}
+
+const bsl::uint8_t* AbstractString::data() const
+{
+    if (!d_data.empty()) {
+        return &d_data.front();
+    }
+    else {
+        return 0;
+    }
+}
+
+bsl::size_t AbstractString::size() const
+{
+    return d_data.size();
+}
+
+ntsa::Error AbstractString::convert(bsl::string* result) const
+{
+    result->clear();
+
+    // MRM
+    if (d_type != AbstractSyntaxTagNumber::e_PRINTABLE_STRING &&
+        d_type != AbstractSyntaxTagNumber::e_CHARACTER_STRING &&
+        d_type != AbstractSyntaxTagNumber::e_UTF8_STRING)
+    {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (!d_data.empty()) {
+        result->assign(reinterpret_cast<const char*>(&d_data.front()), d_data.size());
+    }
+
+    return ntsa::Error();
+}
+
+bool AbstractString::equals(
+    const AbstractString& other) const
+{
+    return (d_data == other.d_data);
+}
+
+bool AbstractString::less(
+    const AbstractString& other) const
+{
+    return d_data < other.d_data;
+}
+
+bsl::ostream& AbstractString::print(bsl::ostream& stream,
+                                              int           level,
+                                              int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute("data", d_data);
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                   stream,
+                         const AbstractString& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const AbstractString& lhs,
+                const AbstractString& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const AbstractString& lhs,
+                const AbstractString& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const AbstractString& lhs,
+               const AbstractString& rhs)
+{
+    return lhs.less(rhs);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 AbstractIntegerSign::Value AbstractIntegerSign::flip(Value sign)
 {
@@ -1382,6 +3683,49 @@ bool AbstractIntegerQuantity::parse(AbstractIntegerSign::Value* sign,
     return AbstractIntegerRepresentation::parse(&d_rep, sign, text);
 }
 
+void AbstractIntegerQuantity::import(const bsl::vector<bsl::uint8_t>& data)
+{
+    this->reset();
+
+    if (data.empty()) {
+        return;
+    }
+
+    const bsl::size_t bytesPerBlock = 
+        sizeof(AbstractIntegerRepresentation::Block);
+
+    bsl::size_t                          i = data.size() - 1;
+    bsl::size_t                          j = 0;
+    AbstractIntegerRepresentation::Block u = 0;
+
+    while (true) {
+        AbstractIntegerRepresentation::Block v = data[i];
+
+        u <<= 8;
+        u += v;
+
+        ++j;
+
+        if (j == bytesPerBlock) {
+            d_rep.push(u);
+            j = 0;
+            u = 0;
+        }
+
+        --i;
+
+        if (i == 0) {
+            break;
+        }
+    }
+
+    if (u != 0) {
+        d_rep.push(u);
+    }
+
+    d_rep.normalize();
+}
+
 AbstractIntegerQuantity& AbstractIntegerQuantity::assign(short value)
 {
     d_rep.assign(static_cast<bsl::uint64_t>(value));
@@ -2253,6 +4597,31 @@ bool AbstractInteger::parse(const bsl::string_view& text)
     return d_magnitude.parse(&d_sign, text);
 }
 
+void AbstractInteger::import(const bsl::vector<bsl::uint8_t>& data)
+{
+    this->reset();
+
+    if (data.empty()) {
+        return;
+    }
+
+    if ((data[0] & 0x80) == 0) {
+        d_magnitude.import(data);
+    }
+
+    // MRM
+    #if 0
+    AbstractIntegerQuantity u;
+    u.import(data);
+
+    AbstractIntegerSign::Value sign = AbstractIntegerSign::e_POSITIVE;
+
+    if ((data[0] & 0x80) != 0) {
+        data[0] &= ~0x80;
+    }
+    #endif
+}
+
 AbstractInteger& AbstractInteger::assign(short value)
 {
     return this->assign(static_cast<long long>(value));
@@ -2581,6 +4950,27 @@ AbstractInteger& AbstractInteger::modulus(const AbstractInteger& other)
     AbstractInteger quotient;
     AbstractIntegerUtil::divide(&quotient, this, *this, other);
     return *this;
+}
+
+
+ntsa::Error AbstractInteger::decode(
+    AbstractSyntaxDecoder* decoder)
+{
+    NTSCFG_WARNING_UNUSED(decoder);
+
+    NTSCFG_NOT_IMPLEMENTED();
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error AbstractInteger::encode(
+    AbstractSyntaxEncoder* encoder) const
+{
+    NTSCFG_WARNING_UNUSED(encoder);
+
+    NTSCFG_NOT_IMPLEMENTED();
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 bool AbstractInteger::equals(short value) const
@@ -3203,6 +5593,48 @@ void AbstractIntegerUtil::divide(AbstractInteger*       quotient,
     quotient->normalize();
     remainder->normalize();
 }
+
+void AbstractReal::compose(double*         value,
+                                   bsl::int64_t exponent,
+                                   bsl::int64_t mantissa,
+                                   bsl::int32_t sign)
+{
+    bsl::uint64_t number =
+              static_cast<bsl::uint64_t>(exponent) << k_DOUBLE_EXPONENT_SHIFT;
+
+    number |= mantissa & k_DOUBLE_MANTISSA_MASK;
+
+    if (sign != 0)
+    {
+        number |= k_DOUBLE_SIGN_MASK;
+    }
+
+    *value = *reinterpret_cast<double*>(&number);
+}
+
+void AbstractReal::decompose(bsl::int32_t* exponent,
+                                    bsl::int64_t* mantissa,
+                                    bsl::int32_t* sign,
+                                    double        value)
+{
+    bsl::uint64_t number = *reinterpret_cast<bsl::uint64_t*>(&value);
+
+    if ((number & k_DOUBLE_SIGN_MASK) != 0)
+    {
+        *sign = 1;
+    }
+    else
+    {
+        *sign = 0;
+    }
+
+    *exponent = static_cast<bsl::int32_t>((number & k_DOUBLE_EXPONENT_MASK)
+                >> k_DOUBLE_EXPONENT_SHIFT);
+
+    *mantissa = number & k_DOUBLE_MANTISSA_MASK;
+}
+
+
 
 }  // close package namespace
 }  // close enterprise namespace
