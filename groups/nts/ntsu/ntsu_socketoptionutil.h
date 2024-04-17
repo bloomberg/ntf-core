@@ -142,6 +142,8 @@ struct SocketOptionUtil {
     /// flag. Return the error.
     static ntsa::Error setZeroCopy(ntsa::Handle socket, bool zeroCopy);
 
+    static ntsa::Error setTcpCongestionControl(ntsa::Handle socket, const bsl::string& algorithm);
+
     /// Load into the specified 'option' the socket option of the specified
     /// 'type' for the specified 'socket'. Return the error.
     static ntsa::Error getOption(ntsa::SocketOption*           option,
@@ -241,6 +243,9 @@ struct SocketOptionUtil {
     ///  Return the error.
     static ntsa::Error getZeroCopy(bool*        zeroCopyFlag,
                                    ntsa::Handle socket);
+
+    static ntsa::Error getTcpCongestionControl(bsl::string* algorithm,
+                                               ntsa::Handle socket);
 
     /// Load into the specified 'size' the option for the specified 'socket'
     /// that indicates the amount of space left in the send buffer. Return

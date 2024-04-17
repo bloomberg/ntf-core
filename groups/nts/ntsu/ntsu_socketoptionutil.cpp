@@ -762,6 +762,31 @@ ntsa::Error SocketOptionUtil::setZeroCopy(ntsa::Handle socket, bool zeroCopy)
 #endif
 }
 
+ntsa::Error SocketOptionUtil::setTcpCongestionControl(
+    ntsa::Handle       socket,
+    const bsl::string& algorithm)
+{
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    const char*     optValue = algorithm.c_str();
+    const socklen_t optLen   = algorithm.length() + 1;
+
+    const int rc =
+        setsockopt(socket, IPPROTO_TCP, TCP_CONGESTION, optValue, optLen);
+
+    if (rc != 0) {
+        return ntsa::Error(errno);
+    }
+
+    return ntsa::Error();
+#else
+    NTSCFG_WARNING_UNUSED(socket);
+    NTSCFG_WARNING_UNUSED(algorithm);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+
+#endif
+}
+
 ntsa::Error SocketOptionUtil::getBlocking(ntsa::Handle socket, bool* blocking)
 {
     *blocking = false;
@@ -1235,6 +1260,44 @@ ntsa::Error SocketOptionUtil::getZeroCopy(bool*        zeroCopyFlag,
 #else
 
     NTSCFG_WARNING_UNUSED(zeroCopyFlag);
+    NTSCFG_WARNING_UNUSED(socket);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+
+#endif
+}
+
+ntsa::Error SocketOptionUtil::getTcpCongestionControl(bsl::string* algorithm,
+                                                      ntsa::Handle socket)
+{
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    enum { TCP_CA_NAME_MAX = 16 + 1 };  //TODO:
+
+    char optionValue[TCP_CA_NAME_MAX];
+    bsl::fill(optionValue, optionValue + TCP_CA_NAME_MAX, '\0');
+
+    socklen_t optionLength = static_cast<socklen_t>(sizeof(optionValue));
+
+    const int rc = getsockopt(socket,
+                              IPPROTO_TCP,
+                              TCP_CONGESTION,
+                              optionValue,
+                              &optionLength);
+
+    BSLS_ASSERT(
+        optionLength <
+        TCP_CA_NAME_MAX);  //ensure that there is always '\0' in the end
+
+    if (rc != 0) {
+        return ntsa::Error(errno);
+    }
+
+    *algorithm = optionValue;
+    return ntsa::Error();
+
+#else
+
+    NTSCFG_WARNING_UNUSED(algorithm);
     NTSCFG_WARNING_UNUSED(socket);
 
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
