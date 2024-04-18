@@ -1086,6 +1086,41 @@ NTSCFG_TEST_CASE(12)
                 error = decoder.decodeContextComplete();
                 NTSCFG_TEST_OK(error);
             }
+
+            bdlsb::MemOutStreamBuf osb(&ta);
+
+            ntsa::AbstractSyntaxEncoder encoder(&osb, &ta);
+
+            error = encoder.enterFrame(
+                ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
+                ntsa::AbstractSyntaxTagType::e_CONSTRUCTED,
+                ntsa::AbstractSyntaxTagNumber::e_SEQUENCE);
+            NTSCFG_TEST_OK(error);    
+
+            error = encoder.encodePrimitiveValue(data.d_value);
+            NTSCFG_TEST_OK(error); 
+
+            error = encoder.leaveFrame();
+            NTSCFG_TEST_OK(error);
+
+            NTSCFG_TEST_GT(osb.length(), 0);
+            NTSCFG_TEST_NE(osb.data(), 0);
+
+            bsl::vector<bsl::uint8_t> encoding(
+                reinterpret_cast<const bsl::uint8_t*>(osb.data()), 
+                reinterpret_cast<const bsl::uint8_t*>(osb.data()) + 
+                osb.length());
+
+            bool sameEncoding = encoding == data.d_encoding;
+            if (!sameEncoding) {
+                NTSA_ABSTRACT_TEST_LOG_ENCODING_MISMATCH(
+                    data.d_value,
+                    data.d_encoding,
+                    encoding);
+
+            }
+
+            NTSCFG_TEST_TRUE(sameEncoding);
         }
     }
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
@@ -1228,6 +1263,8 @@ NTSCFG_TEST_CASE(13)
 
             ntsa::AbstractSyntaxDecoder decoder(&isb, &ta);
 
+            ntsa::AbstractInteger value(&ta);
+
             {
                 ntsa::AbstractSyntaxDecoderFrame contextOuter;
                 error = decoder.decodeContext(&contextOuter);
@@ -1260,7 +1297,6 @@ NTSCFG_TEST_CASE(13)
 
                     NTSCFG_TEST_EQ(contextInner.length().has_value(), true);
 
-                    ntsa::AbstractInteger value(&ta);
                     error = decoder.decodePrimitiveValue(&value);
                     NTSCFG_TEST_OK(error);
 
@@ -1280,145 +1316,6 @@ NTSCFG_TEST_CASE(13)
                 error = decoder.decodeContextComplete();
                 NTSCFG_TEST_OK(error);
             }
-        }
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-
-
-
-NTSCFG_TEST_CASE(14)
-{
-    // Test abstract syntax encoding: hardware integers.
-
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::Error error;
-
-        struct EncodingData {
-            EncodingData(const bsl::uint8_t* data, 
-                         bsl::size_t         size, 
-                         bsl::int64_t        value)
-            : d_encoding(data, data + size)
-            , d_value(value)
-            {
-            }
-
-            bsl::vector<bsl::uint8_t> d_encoding;
-            bsl::int64_t              d_value;
-        };
-
-        bsl::vector<EncodingData> dataVector;
-
-        {
-            // CONSTRUCTED { INTEGER(0) }
-            const bsl::uint8_t k_DER[] = {
-                0x30, 0x03, 0x02, 0x01, 0x00
-            };
-
-            dataVector.push_back(EncodingData(k_DER, sizeof k_DER, 0));
-        }
-
-#if 0
-        {
-            // CONSTRUCTED { INTEGER(1) }
-            const bsl::uint8_t k_DER[] = {
-                0x30, 0x03, 0x02, 0x01, 0x01
-            };
-
-            dataVector.push_back(EncodingData(k_DER, sizeof k_DER, 1));
-        }
-
-        {
-            // CONSTRUCTED { INTEGER(-1) }
-            const bsl::uint8_t k_DER[] = {
-                0x30, 0x03, 0x02, 0x01, 0xff
-            };
-
-            dataVector.push_back(EncodingData(k_DER, sizeof k_DER, -1));
-        }
-
-        {
-            // CONSTRUCTED { INTEGER(2) }
-            const bsl::uint8_t k_DER[] = {
-                0x30, 0x03, 0x02, 0x01, 0x02
-            };
-
-            dataVector.push_back(EncodingData(k_DER, sizeof k_DER, 2));
-        }
-
-        {
-            // CONSTRUCTED { INTEGER(-2) }
-            const bsl::uint8_t k_DER[] = {
-                0x30, 0x03, 0x02, 0x01, 0xfe
-            };
-
-            dataVector.push_back(EncodingData(k_DER, sizeof k_DER, -2));
-        }
-
-        {
-            // CONSTRUCTED { INTEGER(3) }
-            const bsl::uint8_t k_DER[] = {
-                0x30, 0x03, 0x02, 0x01, 0x03
-            };
-
-            dataVector.push_back(EncodingData(k_DER, sizeof k_DER, 3));
-        }
-
-        {
-            // CONSTRUCTED { INTEGER(-3) }
-            const bsl::uint8_t k_DER[] = {
-                0x30, 0x03, 0x02, 0x01, 0xfd
-            };
-
-            dataVector.push_back(EncodingData(k_DER, sizeof k_DER, -3));
-        }
-
-        {
-            // CONSTRUCTED { INTEGER(11927552) }
-            const bsl::uint8_t k_DER[] = {
-                0x30, 0x06, 0x02, 0x04, 0x00, 0xb6, 0x00, 0x00
-            };
-
-            dataVector.push_back(EncodingData(k_DER, sizeof k_DER, 11927552));
-        }
-
-        {
-            // CONSTRUCTED { INTEGER(-11927552) }
-            const bsl::uint8_t k_DER[] = {
-                0x30, 0x06, 0x02, 0x04, 0xff, 0x4a, 0x00, 0x00
-            };
-
-            dataVector.push_back(EncodingData(k_DER, sizeof k_DER, -11927552));
-        }
-#endif
-
-
-#if 0
-        {
-            // CONSTRUCTED { INTEGER(9223372036854775807) }
-            const bsl::uint8_t k_DER[] = {
-                0x30, 0x0b, 0x02, 0x09, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc0
-            };
-
-            dataVector.push_back(EncodingData(k_DER, sizeof k_DER, LLONG_MAX));
-        }
-
-
-        {
-            // CONSTRUCTED { INTEGER(-9223372036854775808) }
-            const bsl::uint8_t k_DER[] = {
-                0x30, 0x0b, 0x02, 0x09, 0xff, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x40
-            };
-
-            dataVector.push_back(EncodingData(k_DER, sizeof k_DER, LLONG_MIN));
-        }
-#endif
-
-        for (bsl::size_t i = 0; i < dataVector.size(); ++i)
-        {
-            const EncodingData& data = dataVector[i];
 
             bdlsb::MemOutStreamBuf osb(&ta);
 
@@ -1430,7 +1327,7 @@ NTSCFG_TEST_CASE(14)
                 ntsa::AbstractSyntaxTagNumber::e_SEQUENCE);
             NTSCFG_TEST_OK(error);    
 
-            error = encoder.encodePrimitiveValue(data.d_value);
+            error = encoder.encodePrimitiveValue(value);
             NTSCFG_TEST_OK(error); 
 
             error = encoder.leaveFrame();
@@ -1447,71 +1344,13 @@ NTSCFG_TEST_CASE(14)
             bool sameEncoding = encoding == data.d_encoding;
             if (!sameEncoding) {
                 NTSA_ABSTRACT_TEST_LOG_ENCODING_MISMATCH(
-                    data.d_value,
+                    value,
                     data.d_encoding,
                     encoding);
 
             }
 
-            NTSCFG_TEST_TRUE(sameEncoding);            
-
-
-
-#if 0
-
-            reinterpret_cast<const char*>(&data.d_encoding.front()), 
-                data.d_encoding.size());
-
-            {
-                ntsa::AbstractSyntaxDecoderFrame contextOuter;
-                error = decoder.decodeContext(&contextOuter);
-                NTSCFG_TEST_OK(error);
-
-                NTSCFG_TEST_LOG_DEBUG << "Context = " << contextOuter 
-                                      << NTSCFG_TEST_LOG_END;
-
-                NTSCFG_TEST_EQ(contextOuter.tagClass(), 
-                            ntsa::AbstractSyntaxTagClass::e_UNIVERSAL);
-
-                NTSCFG_TEST_EQ(contextOuter.tagType(), 
-                            ntsa::AbstractSyntaxTagType::e_CONSTRUCTED);
-
-                NTSCFG_TEST_EQ(contextOuter.length().has_value(), true);
-
-                {
-                    ntsa::AbstractSyntaxDecoderFrame contextInner;
-                    error = decoder.decodeContext(&contextInner);
-                    NTSCFG_TEST_OK(error);
-
-                    NTSCFG_TEST_LOG_DEBUG << "Context = " << contextInner 
-                                          << NTSCFG_TEST_LOG_END;
-
-                    NTSCFG_TEST_EQ(contextInner.tagClass(), 
-                                ntsa::AbstractSyntaxTagClass::e_UNIVERSAL);
-
-                    NTSCFG_TEST_EQ(contextInner.tagType(), 
-                                ntsa::AbstractSyntaxTagType::e_PRIMITIVE);
-
-                    NTSCFG_TEST_EQ(contextInner.length().has_value(), true);
-
-                    bsl::int32_t value = 
-                        bsl::numeric_limits<bsl::int32_t>::max();
-                    error = decoder.decodePrimitiveValue(&value);
-                    NTSCFG_TEST_OK(error);
-
-                    NTSCFG_TEST_LOG_DEBUG << "Value = " << value 
-                                          << NTSCFG_TEST_LOG_END;
-
-                    NTSCFG_TEST_EQ(value, data.d_value);
-
-                    error = decoder.decodeContextComplete();
-                    NTSCFG_TEST_OK(error);
-                }
-
-                error = decoder.decodeContextComplete();
-                NTSCFG_TEST_OK(error);
-            }
-#endif
+            NTSCFG_TEST_TRUE(sameEncoding);
         }
     }
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
@@ -1533,10 +1372,7 @@ NTSCFG_TEST_DRIVER
     NTSCFG_TEST_REGISTER(10);  // Test abstract signed integer division
     NTSCFG_TEST_REGISTER(11);  // Test abstract signed integer facilities
 
-    NTSCFG_TEST_REGISTER(12);  // Test hardware signed integer decoding
-    NTSCFG_TEST_REGISTER(13);  // Test abstract signed integer decoding
-
-
-    NTSCFG_TEST_REGISTER(14);  // Test decoding
+    NTSCFG_TEST_REGISTER(12);  // Test hardware signed integer codec
+    NTSCFG_TEST_REGISTER(13);  // Test abstract signed integer codec
 }
 NTSCFG_TEST_DRIVER_END;

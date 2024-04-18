@@ -888,11 +888,52 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(long long value)
             static_cast<unsigned long long>(value));  
     }
 
-    NTSCFG_WARNING_UNUSED(value);
+    ntsa::Error error;
 
-    NTSCFG_NOT_IMPLEMENTED();
+    error = this->enterFrame(
+        AbstractSyntaxTagClass::e_UNIVERSAL, 
+        AbstractSyntaxTagType::e_PRIMITIVE, 
+        AbstractSyntaxTagNumber::e_INTEGER);
+    if (error) {
+        return error;
+    }
 
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    long long bigEndianValue = 
+        BSLS_BYTEORDER_HOST_TO_BE(value);
+
+    bsl::uint8_t* bigEndianByteArray = 
+        reinterpret_cast<bsl::uint8_t*>(&bigEndianValue);
+
+    bsl::size_t bigEndianByteArraySize = sizeof bigEndianValue;
+
+    bsl::size_t numSkipped = 0;
+
+    for (bsl::size_t i = 0; i < sizeof bigEndianValue - 1; ++i) {
+        if ((bigEndianByteArray[i] == 0xFF) && ((bigEndianByteArray[i + 1] & 0x80) != 0)) {
+            ++numSkipped;
+        }
+        else {
+            break;
+        }
+    }
+
+    bigEndianByteArray += numSkipped;
+    bigEndianByteArraySize -= numSkipped;
+
+    for (bsl::size_t i = 0; i < bigEndianByteArraySize; ++i) {
+        const bsl::uint8_t bigEndianByte = bigEndianByteArray[i];
+        error = d_current_p->writeContent(bigEndianByte);
+        if (error) {
+            return error;
+        }
+    }
+ 
+    error = this->leaveFrame();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(unsigned long long value)
@@ -920,13 +961,22 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(unsigned long long value
         const bsl::uint8_t* bigEndianByteArray = 
             reinterpret_cast<const bsl::uint8_t*>(&bigEndianValue);
 
-        for (bsl::size_t i = 0; i < sizeof bigEndianValue; ++i) {
-            const bsl::uint8_t bigEndianByte = bigEndianByteArray[i];
+        bsl::size_t bigEndianByteArraySize = sizeof bigEndianValue;
 
-            if (bigEndianByte == 0) {
-                continue;
+        while (*bigEndianByteArray == 0) {
+            ++bigEndianByteArray;
+            --bigEndianByteArraySize;
+        }
+
+        if ((*bigEndianByteArray & 0x80) != 0) {
+            error = d_current_p->writeContent(0x00);
+            if (error) {
+                return error;
             }
+        }
 
+        for (bsl::size_t i = 0; i < bigEndianByteArraySize; ++i) {
+            const bsl::uint8_t bigEndianByte = bigEndianByteArray[i];
             error = d_current_p->writeContent(bigEndianByte);
             if (error) {
                 return error;
