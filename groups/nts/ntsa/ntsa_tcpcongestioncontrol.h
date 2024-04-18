@@ -19,63 +19,152 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntsa_error.h>
+#include <ntscfg_platform.h>
+#include <ntsscm_version.h>
 #include <bsl_array.h>
 #include <bsl_ostream.h>
 #include <bsl_string.h>
-#include <ntscfg_platform.h>
-#include <ntsscm_version.h>
-#include <ntsa_error.h>
 
 namespace BloombergLP {
 namespace ntsa {
 
+/// Provide a value identifying tcp congestion control algorithm.
+///
+/// @details
+/// Provide a value-semantic type that identifies tcp congestion control
+/// algorithm.
+///
+/// @par Attributes
+/// This class is composed of the following attributes.
+///
+/// @li d_buffer:
+/// Buffer which contains name of the tcp congestion control algorithm.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntsa_system
+
 class TcpCongestionControl
 {
-    enum { TCP_CA_NAME_MAX = 16, BUFFER_SIZE = TCP_CA_NAME_MAX + 1 };
+  public:
+    enum { TCP_CA_NAME_MAX = 16 };
+
+  private:
+    enum { BUFFER_SIZE = TCP_CA_NAME_MAX + 1 };
 
     bsl::array<char, BUFFER_SIZE> d_buffer;
 
   public:
+    /// Create new TcpCongestionControl instance having the default value.
     TcpCongestionControl();
 
+    /// Create new TcpCongestionControl instance having the same value as the
+    /// `specified` original
     TcpCongestionControl(const TcpCongestionControl& original);
 
+    /// Destroy this object
     ~TcpCongestionControl();
 
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
     TcpCongestionControl& operator=(const TcpCongestionControl& other);
 
-    ntsa::Error setAlgorithmName(const char* name);
-    ntsa::Error setAlgorithmName(const bsl::string& name);
+    /// Set algorithm name to the specified `value`. The value is expected to
+    /// be a null-terminated string not longer than TCP_CA_NAME_MAX. Return the
+    /// error.
+    ntsa::Error setAlgorithmName(const char* value);
 
+    /// Set algorithm name to the specified `value`. Length of the `value` is
+    /// expected to be not longer than TCP_CA_NAME_MAX. Return the error.
+    ntsa::Error setAlgorithmName(const bsl::string& value);
+
+    /// Return null-terminated c-string containing name of the tcp congestion
+    /// control algorithm.
     const char* getAlgorithmName() const;
 
+    /// Return the instance representing "reno" TCP congestion control
+    /// algorithm.
     static TcpCongestionControl getReno();
+
+    /// Return the instance representing "cubic" TCP congestion control
+    /// algorithm.
     static TcpCongestionControl getCubic();
 
+    /// Reset the value of this object to its value upon default construction.
     void reset();
 
+    /// Return true if this object has the same value as the specified 'other'
+    /// object, otherwise return false.
     bool equals(const TcpCongestionControl& other) const;
 
+    /// Return true if the value of this object is less than the value of the
+    /// specified 'other' object, otherwise return false.
     bool less(const TcpCongestionControl& other) const;
 
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
     bsl::ostream& print(bsl::ostream& stream,
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
     NTSCFG_DECLARE_NESTED_BITWISE_MOVABLE_TRAITS(TcpCongestionControl);
 };
 
-bsl::ostream& operator<<(bsl::ostream& stream, const TcpCongestionControl& object);
+/// Write the specified 'object' to the specified 'stream'. Return a modifiable
+/// reference to the 'stream'.
+///
+/// @related ntsa::TcpCongestionControl
+bsl::ostream& operator<<(bsl::ostream&               stream,
+                         const TcpCongestionControl& object);
 
+/// Return true if the specified 'lhs' has the same value as the specified
+/// 'rhs', otherwise return false.
+///
+/// @related ntsa::TcpCongestionControl
+bool operator==(const TcpCongestionControl& lhs,
+                const TcpCongestionControl& rhs);
 
-bool operator==(const TcpCongestionControl& lhs, const TcpCongestionControl& rhs);
+/// Return true if the specified 'lhs' does not have the same value as the
+/// specified 'rhs', otherwise return false.
+///
+/// @related ntsa::TcpCongestionControl
+bool operator!=(const TcpCongestionControl& lhs,
+                const TcpCongestionControl& rhs);
 
-bool operator!=(const TcpCongestionControl& lhs, const TcpCongestionControl& rhs);
+/// Return true if the value of the specified 'lhs' is less than the value of
+/// the specified 'rhs', otherwise return false.
+///
+/// @related ntsa::TcpCongestionControl
+bool operator<(const TcpCongestionControl& lhs,
+               const TcpCongestionControl& rhs);
 
-bool operator<(const TcpCongestionControl& lhs, const TcpCongestionControl& rhs);
-
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntsa::TcpCongestionControl
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const TcpCongestionControl& value);
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TcpCongestionControl& value)
+{
+    using bslh::hashAppend;
+    hashAppend(algorithm, value.getAlgorithmName());
+}
 
 }  // close package namespace
 }  // close enterprise namespace

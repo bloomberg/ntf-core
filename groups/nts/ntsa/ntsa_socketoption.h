@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntsa_linger.h>
 #include <ntsa_socketoptiontype.h>
+#include <ntsa_tcpcongestioncontrol.h>
 #include <ntscfg_platform.h>
 #include <ntsscm_version.h>
 #include <bslh_hash.h>
@@ -28,7 +29,6 @@ BSLS_IDENT("$Id: $")
 #include <bsls_objectbuffer.h>
 #include <bsl_iosfwd.h>
 #include <bsl_string.h>
-#include <ntsa_tcpcongestioncontrol.h>
 
 namespace BloombergLP {
 namespace ntsa {
@@ -36,7 +36,7 @@ namespace ntsa {
 /// Provide a union of socket options.
 ///
 /// @details
-/// Provide a value-semantic type that represents a discriminated union of 
+/// Provide a value-semantic type that represents a discriminated union of
 /// socket options.
 ///
 /// @par Attributes
@@ -118,6 +118,9 @@ namespace ntsa {
 /// The flag that indicates each send operation can request copy avoidance when
 /// enqueing data to the socket send buffer.
 ///
+/// @li @b tcpCongestionControl:
+/// The option controls which TCP congestion control algorithm is used
+///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
@@ -142,7 +145,7 @@ class SocketOption
         bsls::ObjectBuffer<bool>         d_timestampIncomingData;
         bsls::ObjectBuffer<bool>         d_timestampOutgoingData;
         bsls::ObjectBuffer<bool>         d_zeroCopy;
-        bsls::ObjectBuffer<ntsa::TcpCongestionControl>  d_tcpCongestionControl;
+        bsls::ObjectBuffer<ntsa::TcpCongestionControl> d_tcpCongestionControl;
     };
 
     ntsa::SocketOptionType::Value d_type;
@@ -302,8 +305,14 @@ class SocketOption
     /// 'value'. Return a reference to the modifiable representation.
     bool& makeZeroCopy(bool value);
 
+    /// Select the "tcpCongestionControl" representation. Return a reference to
+    /// the modifiable representation.
     TcpCongestionControl& makeTcpCongestionControl();
-    TcpCongestionControl& makeTcpCongestionControl(const TcpCongestionControl& value);
+
+    /// Select the "tcpCongestionControl" representation initially having the
+    /// specified 'value'. Return a reference to the modifiable representation.
+    TcpCongestionControl& makeTcpCongestionControl(
+        const TcpCongestionControl& value);
 
     /// Return a reference to the modifiable "reuseAddress" representation. The
     /// behavior is undefined unless 'isReuseAddress()' is true.
@@ -381,6 +390,9 @@ class SocketOption
     /// behavior is undefined unless 'isZeroCopy()' is true.
     bool& zeroCopy();
 
+    /// Return a reference to the modifiable "tcpCongestionControl"
+    /// representation. The behavior is undefined unless
+    /// 'isTcpCongestionControl()' is true.
     TcpCongestionControl& tcpCongestionControl();
 
     /// Return the non-modifiable "reuseAddress" representation. The behavior
@@ -452,6 +464,9 @@ class SocketOption
     /// undefined unless 'isZeroCopy()' is true.
     bool zeroCopy() const;
 
+    /// Return a reference to the non-modifiable "tcpCongestionControl"
+    /// representation. The behavior is undefined unless
+    /// 'isTcpCongestionControl()' is true.
     const TcpCongestionControl& tcpCongestionControl() const;
 
     /// Return the type of the option representation.
@@ -529,6 +544,8 @@ class SocketOption
     /// otherwise return false.
     bool isZeroCopy() const;
 
+    /// Return true if the "tcpCongestionControl" representation is currently
+    /// selected, otherwise return false.
     bool isTcpCongestionControl() const;
 
     /// Return true if this object has the same value as the specified 'other'

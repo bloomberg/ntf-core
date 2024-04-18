@@ -135,12 +135,5 @@ bool operator<(const TcpCongestionControl& lhs, const TcpCongestionControl& rhs)
     return lhs.less(rhs);
 }
 
-template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const TcpCongestionControl& value)
-{
-    using bslh::hashAppend;
-    hashAppend(algorithm, value.getAlgorithmName());
-}
-
 }  // close package namespace
 }  // close enterprise namespace

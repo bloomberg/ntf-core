@@ -2001,8 +2001,8 @@ NTSCFG_TEST_CASE(9)
         ntsa::Transport::e_TCP_IPV4_STREAM,
         ntsa::Transport::e_TCP_IPV6_STREAM};
 
-//    const bsl::array<ntsa::Transport::Value, 1> SOCKET_TYPES = {
-//        ntsa::Transport::e_TCP_IPV6_STREAM};
+    //    const bsl::array<ntsa::Transport::Value, 1> SOCKET_TYPES = {
+    //        ntsa::Transport::e_TCP_IPV6_STREAM};
 
     for (size_t tIndex = 0; tIndex < SOCKET_TYPES.size(); ++tIndex) {
         const ntsa::Transport::Value transport = SOCKET_TYPES[tIndex];

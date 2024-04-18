@@ -145,8 +145,9 @@ struct SocketOptionUtil {
     /// Set the option for the specified 'socket' that sets
     /// TCP_CONGESTION_CONTROL algorithm to the specified `algorithm`.
     /// Return the error.
-    static ntsa::Error setTcpCongestionControl(ntsa::Handle       socket,
-                                               const ntsa::TcpCongestionControl& algorithm);
+    static ntsa::Error setTcpCongestionControl(
+        ntsa::Handle                      socket,
+        const ntsa::TcpCongestionControl& algorithm);
 
     /// Load into the specified 'option' the socket option of the specified
     /// 'type' for the specified 'socket'. Return the error.
@@ -248,9 +249,11 @@ struct SocketOptionUtil {
     static ntsa::Error getZeroCopy(bool* zeroCopyFlag, ntsa::Handle socket);
 
     /// Load into the specified 'algorithm' the option for the specified
-    /// 'socket' that indicates which TCP_CONGESTION_CONTROL algorithm is used
-    static ntsa::Error getTcpCongestionControl(ntsa::TcpCongestionControl* algorithm,
-                                               ntsa::Handle socket);
+    /// 'socket' that indicates which TCP_CONGESTION_CONTROL algorithm is used.
+    /// Return the error.
+    static ntsa::Error getTcpCongestionControl(
+        ntsa::TcpCongestionControl* algorithm,
+        ntsa::Handle                socket);
 
     /// Load into the specified 'size' the option for the specified 'socket'
     /// that indicates the amount of space left in the send buffer. Return

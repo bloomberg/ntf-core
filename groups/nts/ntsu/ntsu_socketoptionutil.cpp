@@ -163,7 +163,9 @@ ntsa::Error SocketOptionUtil::setOption(ntsa::Handle              socket,
         return SocketOptionUtil::setZeroCopy(socket, option.zeroCopy());
     }
     else if (option.isTcpCongestionControl()) {
-        return SocketOptionUtil::setTcpCongestionControl(socket, option.tcpCongestionControl());
+        return SocketOptionUtil::setTcpCongestionControl(
+            socket,
+            option.tcpCongestionControl());
     }
     else {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -325,7 +327,7 @@ ntsa::Error SocketOptionUtil::getOption(ntsa::SocketOption*           option,
     }
     else if (type == ntsa::SocketOptionType::e_TCP_CONGESTION_CONTROL) {
         ntsa::TcpCongestionControl value;
-        error      = SocketOptionUtil::getTcpCongestionControl(&value, socket);
+        error = SocketOptionUtil::getTcpCongestionControl(&value, socket);
         if (error) {
             return error;
         }
@@ -775,7 +777,7 @@ ntsa::Error SocketOptionUtil::setZeroCopy(ntsa::Handle socket, bool zeroCopy)
 }
 
 ntsa::Error SocketOptionUtil::setTcpCongestionControl(
-    ntsa::Handle       socket,
+    ntsa::Handle                      socket,
     const ntsa::TcpCongestionControl& algorithm)
 {
 #if defined(BSLS_PLATFORM_OS_LINUX)
@@ -1279,8 +1281,9 @@ ntsa::Error SocketOptionUtil::getZeroCopy(bool*        zeroCopyFlag,
 #endif
 }
 
-ntsa::Error SocketOptionUtil::getTcpCongestionControl(ntsa::TcpCongestionControl* algorithm,
-                                                      ntsa::Handle socket)
+ntsa::Error SocketOptionUtil::getTcpCongestionControl(
+    ntsa::TcpCongestionControl* algorithm,
+    ntsa::Handle                socket)
 {
 #if defined(BSLS_PLATFORM_OS_LINUX)
     // TCP_CA_NAME_MAX is defined in linux/net/tcp.h, which cannot be included
