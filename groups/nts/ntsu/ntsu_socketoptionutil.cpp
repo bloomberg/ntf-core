@@ -1286,11 +1286,11 @@ ntsa::Error SocketOptionUtil::getTcpCongestionControl(
     ntsa::Handle                socket)
 {
 #if defined(BSLS_PLATFORM_OS_LINUX)
-    // TCP_CA_NAME_MAX is defined in linux/net/tcp.h, which cannot be included
-    enum { TCP_CA_NAME_MAX = 16 };
 
-    char optionValue[TCP_CA_NAME_MAX + 1];
-    bsl::fill(optionValue, optionValue + TCP_CA_NAME_MAX + 1, '\0');
+    char optionValue[ntsa::TcpCongestionControl::TCP_CA_NAME_MAX + 1];
+    bsl::fill(optionValue,
+              optionValue + ntsa::TcpCongestionControl::TCP_CA_NAME_MAX + 1,
+              '\0');
 
     socklen_t optionLength = static_cast<socklen_t>(sizeof(optionValue));
 
@@ -1302,7 +1302,8 @@ ntsa::Error SocketOptionUtil::getTcpCongestionControl(
 
     BSLS_ASSERT(
         optionLength <=
-        TCP_CA_NAME_MAX);  //ensure that there is always '\0' in the end
+        ntsa::TcpCongestionControl::
+            TCP_CA_NAME_MAX);  //ensure that there is always '\0' in the end
 
     if (rc != 0) {
         return ntsa::Error(errno);

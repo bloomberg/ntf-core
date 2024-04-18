@@ -119,7 +119,7 @@ namespace ntsa {
 /// enqueing data to the socket send buffer.
 ///
 /// @li @b tcpCongestionControl:
-/// The option controls which TCP congestion control algorithm is used
+/// The option controls which TCP congestion control algorithm is used.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.

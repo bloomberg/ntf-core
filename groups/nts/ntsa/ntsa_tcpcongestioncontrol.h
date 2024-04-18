@@ -61,10 +61,10 @@ class TcpCongestionControl
     TcpCongestionControl();
 
     /// Create new TcpCongestionControl instance having the same value as the
-    /// `specified` original
+    /// `specified` original.
     TcpCongestionControl(const TcpCongestionControl& original);
 
-    /// Destroy this object
+    /// Destroy this object.
     ~TcpCongestionControl();
 
     /// Assign the value of the specified 'other' object to this object.
