@@ -332,177 +332,7 @@ bsl::ostream& operator<<(bsl::ostream& stream, AbstractSyntaxFormat::Value rhs)
 
 
 
-AbstractSyntaxContext::AbstractSyntaxContext()
-: d_tagClass(AbstractSyntaxTagClass::e_UNIVERSAL)
-, d_tagType(AbstractSyntaxTagType::e_PRIMITIVE)
-, d_tagNumber(AbstractSyntaxTagNumber::e_NULL)
-, d_length()
-{
-}
 
-AbstractSyntaxContext::AbstractSyntaxContext(const AbstractSyntaxContext& original)
-: d_tagClass(original.d_tagClass)
-, d_tagType(original.d_tagType)
-, d_tagNumber(original.d_tagNumber)
-, d_length(original.d_length)
-{
-}
-
-AbstractSyntaxContext::~AbstractSyntaxContext()
-{
-}
-
-AbstractSyntaxContext& AbstractSyntaxContext::operator=(const AbstractSyntaxContext& other)
-{
-    if (this != &other) {
-        d_tagClass = other.d_tagClass;
-        d_tagType = other.d_tagType;
-        d_tagNumber = other.d_tagNumber;
-        d_length = other.d_length;
-    }
-
-    return *this;
-}
-
-void AbstractSyntaxContext::reset()
-{
-    d_tagClass = AbstractSyntaxTagClass::e_UNIVERSAL;
-    d_tagType = AbstractSyntaxTagType::e_PRIMITIVE;
-    d_tagNumber = AbstractSyntaxTagNumber::e_NULL;
-    d_length.reset();
-}
-
-void AbstractSyntaxContext::setTagClass(AbstractSyntaxTagClass::Value value)
-{
-    d_tagClass = value;
-}
-
-void AbstractSyntaxContext::setTagType(AbstractSyntaxTagType::Value value)
-{
-    d_tagType = value;
-}
-
-void AbstractSyntaxContext::setTagNumber(AbstractSyntaxTagNumber::Value value)
-{
-    d_tagNumber = value;
-}
-
-void AbstractSyntaxContext::setTagNumber(bsl::size_t value)
-{
-    d_tagNumber = value;
-}
-
-void AbstractSyntaxContext::setLength(bsl::size_t value)
-{
-    d_length = value;
-}
-
-AbstractSyntaxTagClass::Value AbstractSyntaxContext::tagClass() const
-{
-    return d_tagClass;
-}
-
-AbstractSyntaxTagType::Value AbstractSyntaxContext::tagType() const
-{
-    return d_tagType;
-}
-
-bsl::size_t AbstractSyntaxContext::tagNumber() const
-{
-    return d_tagNumber;
-}
-
-const bdlb::NullableValue<bsl::size_t>& AbstractSyntaxContext::length() const
-{
-    return d_length;
-}
-
-bool AbstractSyntaxContext::equals(const AbstractSyntaxContext& other) const
-{
-    return d_tagClass == other.d_tagClass &&
-    d_tagType == other.d_tagType &&
-    d_tagNumber == other.d_tagNumber &&
-    d_length == other.d_length;
-}
-
-bool AbstractSyntaxContext::less(const AbstractSyntaxContext& other) const
-{
-    if (d_tagClass < other.d_tagClass) {
-        return true;
-    }
-
-    if (other.d_tagClass < d_tagClass) {
-        return false;
-    }
-
-
-    if (d_tagType < other.d_tagType) {
-        return true;
-    }
-
-    if (other.d_tagType < d_tagType) {
-        return false;
-    }
-
-
-    if (d_tagNumber < other.d_tagNumber) {
-        return true;
-    }
-
-    if (other.d_tagNumber < d_tagNumber) {
-        return false;
-    }
-
-
-    return d_length < other.d_length;
-}
-
-bsl::ostream& AbstractSyntaxContext::print(bsl::ostream& stream,
-                    int           level,
-                    int           spacesPerLevel) const
-{
-    bslim::Printer printer(&stream, level, spacesPerLevel);
-    printer.start();
-
-    printer.printAttribute("class", d_tagClass);
-    printer.printAttribute("type", d_tagType);
-
-    if (d_tagNumber <= 30) {
-        printer.printAttribute("number", 
-            static_cast<AbstractSyntaxTagNumber::Value>(
-                static_cast<int>(d_tagNumber)));
-    }
-    else {
-        printer.printAttribute("number", d_tagNumber);
-    }
-
-    if (!d_length.isNull()) {
-        printer.printAttribute("length", d_length);
-    }
-
-    printer.end();
-    return stream;
-}
-
-bsl::ostream& operator<<(bsl::ostream& stream, const AbstractSyntaxContext& object)
-{
-    return object.print(stream, 0, -1);
-}
-
-bool operator==(const AbstractSyntaxContext& lhs, const AbstractSyntaxContext& rhs)
-{
-    return lhs.equals(rhs);
-}
-
-bool operator!=(const AbstractSyntaxContext& lhs, const AbstractSyntaxContext& rhs)
-{
-    return !operator==(lhs, rhs);
-}
-
-bool operator<(const AbstractSyntaxContext& lhs, const AbstractSyntaxContext& rhs)
-{
-    return lhs.less(rhs);
-}
 
 
 
@@ -611,15 +441,286 @@ bool operator<(const AbstractSyntaxEncoderOptions& lhs, const AbstractSyntaxEnco
 
 
 
+AbstractSyntaxEncoderFrame::AbstractSyntaxEncoderFrame(
+    AbstractSyntaxEncoderFrame* parent,
+    bsl::streambuf*             buffer,
+    bslma::Allocator*           basicAllocator)
+: d_tagClass(AbstractSyntaxTagClass::e_UNIVERSAL)
+, d_tagType(AbstractSyntaxTagType::e_PRIMITIVE)
+, d_tagNumber(AbstractSyntaxTagNumber::e_NULL)
+, d_length(0)
+, d_buffer_p(buffer)
+, d_header(basicAllocator)
+, d_content(basicAllocator)
+, d_parent_p(parent)
+, d_children(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+AbstractSyntaxEncoderFrame::~AbstractSyntaxEncoderFrame()
+{
+    while (!d_children.empty()) {
+        this->destroyLast();
+    }
+}
+
+
+AbstractSyntaxEncoderFrame* AbstractSyntaxEncoderFrame::createNext(
+    AbstractSyntaxTagClass::Value  tagClass,
+    AbstractSyntaxTagType::Value   tagType,
+    AbstractSyntaxTagNumber::Value tagNumber)
+{
+    return this->createNext(
+        tagClass, tagType, static_cast<bsl::size_t>(tagNumber));
+}
+
+AbstractSyntaxEncoderFrame* AbstractSyntaxEncoderFrame::createNext(
+    AbstractSyntaxTagClass::Value tagClass,
+    AbstractSyntaxTagType::Value  tagType,
+    bsl::size_t                   tagNumber)
+{
+    AbstractSyntaxEncoderFrame* next = 
+        new(*d_allocator_p) AbstractSyntaxEncoderFrame(
+            this, d_buffer_p, d_allocator_p);
+
+    next->setTagClass(tagClass);
+    next->setTagType(tagType);
+    next->setTagNumber(tagNumber);
+
+    d_children.push_back(next);
+
+    return next;
+}
+
+void AbstractSyntaxEncoderFrame::destroyLast()
+{
+    if (!d_children.empty()) {
+        AbstractSyntaxEncoderFrame* child = d_children.back();
+        d_allocator_p->deleteObject(child);
+        d_children.pop_back();
+    }
+}
+
+void AbstractSyntaxEncoderFrame::setTagClass(AbstractSyntaxTagClass::Value value)
+{
+    d_tagClass = value;
+}
+
+void AbstractSyntaxEncoderFrame::setTagType(AbstractSyntaxTagType::Value value)
+{
+    d_tagType = value;
+}
+
+void AbstractSyntaxEncoderFrame::setTagNumber(AbstractSyntaxTagNumber::Value value)
+{
+    d_tagNumber = static_cast<bsl::size_t>(value);
+}
+
+
+void AbstractSyntaxEncoderFrame::setTagNumber(bsl::size_t value)
+{
+    d_tagNumber = value;
+}
+
+ntsa::Error AbstractSyntaxEncoderFrame::writeHeader(bsl::uint8_t data)
+{
+    return AbstractSyntaxEncoderUtil::write(&d_header, data);
+}
+
+ntsa::Error AbstractSyntaxEncoderFrame::writeHeader(const void* data, 
+                                                    bsl::size_t         size)
+{
+    return AbstractSyntaxEncoderUtil::write(&d_header, data, size);
+}
+
+
+ntsa::Error AbstractSyntaxEncoderFrame::writeContent(bsl::uint8_t data)
+{
+    return AbstractSyntaxEncoderUtil::write(&d_content, data);
+}
+
+ntsa::Error AbstractSyntaxEncoderFrame::writeContent(const void* data, 
+                                              bsl::size_t         size)
+{
+    return AbstractSyntaxEncoderUtil::write(&d_content, data, size);
+}
+
+ntsa::Error AbstractSyntaxEncoderFrame::synchronize(bsl::size_t* length)
+{
+    ntsa::Error error;
+
+    if (d_length > 0) {
+        *length += d_length;
+        return ntsa::Error();
+    }
+
+    bsl::size_t contentLength = 0;
+
+    if (!d_children.empty()) {
+        if (d_content.length() != 0) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        const bsl::size_t numChildren = d_children.size();
+
+        for (bsl::size_t i = 0; i < numChildren; ++i) {
+            AbstractSyntaxEncoderFrame* child = d_children[i];
+            error = child->synchronize(&contentLength);
+            if (error) {
+                return error;
+            }
+        }
+    }
+    else {
+        contentLength = d_content.length();
+    }
+
+    error = AbstractSyntaxEncoderUtil::encodeContentTag(
+        &d_header, d_tagClass, d_tagType, d_tagNumber);
+    if (error) {
+        return error;
+    }
+
+    error = AbstractSyntaxEncoderUtil::encodeContentLength(
+        &d_header, contentLength);
+    if (error) {
+        return error;
+    }
+
+    error = AbstractSyntaxEncoderUtil::synchronize(&d_header);
+    if (error) {
+        return error;
+    }
+
+    d_length = contentLength + d_header.length();
+
+    *length += d_length;
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoderFrame::flush(bsl::streambuf* buffer)
+{
+    ntsa::Error error;
+
+    if (d_header.length() == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    error = AbstractSyntaxEncoderUtil::write(
+        buffer, d_header.data(), d_header.length());
+    if (error) {
+        return error;
+    }
+
+    if (!d_children.empty()) {
+        const bsl::size_t numChildren = d_children.size();
+
+        for (bsl::size_t i = 0; i < numChildren; ++i) {
+            AbstractSyntaxEncoderFrame* child = d_children[i];
+            error = child->flush(buffer);
+            if (error) {
+                return error;
+            }
+        }
+    }
+    else {
+        if (d_content.length() == 0) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        error = AbstractSyntaxEncoderUtil::write(
+            buffer, d_content.data(), d_content.length());
+        if (error) {
+            return error;
+        }
+    }
+
+    error = AbstractSyntaxEncoderUtil::synchronize(buffer);
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+AbstractSyntaxTagClass::Value AbstractSyntaxEncoderFrame::tagClass() const
+{
+    return d_tagClass;
+}
+
+AbstractSyntaxTagType::Value AbstractSyntaxEncoderFrame::tagType() const
+{
+    return d_tagType;
+}
+
+bsl::size_t AbstractSyntaxEncoderFrame::tagNumber() const
+{
+    return d_tagNumber;
+}
+
+const bsl::uint8_t* AbstractSyntaxEncoderFrame::header() const
+{
+    if (d_header.length() != 0) {
+        return reinterpret_cast<const bsl::uint8_t*>(d_header.data());
+    }
+    else {
+        return 0;
+    }
+}
+
+bsl::size_t AbstractSyntaxEncoderFrame::headerLength() const
+{
+    return static_cast<bsl::size_t>(d_header.length());
+}
+
+const bsl::uint8_t* AbstractSyntaxEncoderFrame::content() const
+{
+    if (d_content.length() != 0) {
+        return reinterpret_cast<const bsl::uint8_t*>(d_content.data());
+    }
+    else {
+        return 0;
+    }
+
+}
+
+bsl::size_t AbstractSyntaxEncoderFrame::contentLength() const
+{
+    return static_cast<bsl::size_t>(d_content.length());
+}
+
+AbstractSyntaxEncoderFrame* AbstractSyntaxEncoderFrame::childIndex(bsl::size_t index) const
+{
+    if (index < d_children.size()) {
+        return d_children[index];
+    }
+    else {
+        return 0;
+    }
+}
+
+bsl::size_t AbstractSyntaxEncoderFrame::childCount() const
+{
+    return d_children.size();
+}
+
+AbstractSyntaxEncoderFrame* AbstractSyntaxEncoderFrame::parent() const
+{
+    return d_parent_p;
+}
+
 
 AbstractSyntaxEncoder::AbstractSyntaxEncoder(
     bsl::streambuf*   buffer,
     bslma::Allocator* basicAllocator)
 : d_buffer_p(buffer)
+, d_root_p(0)
+, d_current_p(0)
 , d_config(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    NTSCFG_WARNING_UNUSED(d_allocator_p);
 }
 
 AbstractSyntaxEncoder::AbstractSyntaxEncoder(
@@ -627,14 +728,345 @@ AbstractSyntaxEncoder::AbstractSyntaxEncoder(
     bsl::streambuf*   buffer,
     bslma::Allocator* basicAllocator)
 : d_buffer_p(buffer)
+, d_root_p(0)
+, d_current_p(0)
 , d_config(configuration, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    NTSCFG_WARNING_UNUSED(d_allocator_p);
 }
 
 AbstractSyntaxEncoder::~AbstractSyntaxEncoder()
 {
+    if (d_root_p) {
+        d_allocator_p->deleteObject(d_root_p);
+    }
+}
+
+ntsa::Error AbstractSyntaxEncoder::enterFrame(
+        AbstractSyntaxTagClass::Value  tagClass,
+        AbstractSyntaxTagType::Value   tagType,
+        AbstractSyntaxTagNumber::Value tagNumber)
+{
+    return this->enterFrame(
+        tagClass, tagType, static_cast<bsl::size_t>(tagNumber));
+}
+
+ntsa::Error AbstractSyntaxEncoder::enterFrame(
+    AbstractSyntaxTagClass::Value tagClass,
+    AbstractSyntaxTagType::Value  tagType,
+    bsl::size_t                   tagNumber)
+{
+    if (d_current_p != 0) {
+        AbstractSyntaxEncoderFrame* next = 
+            d_current_p->createNext(tagClass, tagType, tagNumber);
+
+        d_current_p = next;
+    }
+    else {
+        d_root_p = new(*d_allocator_p) AbstractSyntaxEncoderFrame(
+            0, d_buffer_p, d_allocator_p);
+
+        d_root_p->setTagClass(tagClass);
+        d_root_p->setTagType(tagType);
+        d_root_p->setTagNumber(tagNumber);
+
+        d_current_p = d_root_p;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoder::encodePrimitiveNull()
+{
+    ntsa::Error error;
+
+    error = this->enterFrame(
+        AbstractSyntaxTagClass::e_UNIVERSAL, 
+        AbstractSyntaxTagType::e_PRIMITIVE, 
+        AbstractSyntaxTagNumber::e_NULL);
+    if (error) {
+        return error;
+    }
+
+    error = this->leaveFrame();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoder::encodePrimitiveEnd()
+{
+    ntsa::Error error;
+
+    error = this->enterFrame(
+        AbstractSyntaxTagClass::e_UNIVERSAL, 
+        AbstractSyntaxTagType::e_PRIMITIVE, 
+        AbstractSyntaxTagNumber::e_END_OF_CONTENTS);
+
+    error = d_current_p->writeContent(0);
+    if (error) {
+        return error;
+    }
+
+    error = d_current_p->writeContent(0);
+    if (error) {
+        return error;
+    }
+
+    error = this->leaveFrame();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(bool value)
+{
+    ntsa::Error error;
+
+    error = this->enterFrame(
+            AbstractSyntaxTagClass::e_UNIVERSAL, 
+            AbstractSyntaxTagType::e_PRIMITIVE, 
+            AbstractSyntaxTagNumber::e_BOOLEAN);
+
+    if (value) {
+        error = d_current_p->writeContent(0x00);
+    }
+    else {
+        error = d_current_p->writeContent(0xFF);
+    }
+
+    if (error) {
+        return error;
+    }
+
+    error = this->leaveFrame();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(short value)
+{
+    return this->encodePrimitiveValue(static_cast<long long>(value));
+}
+
+ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(unsigned short value)
+{
+    return this->encodePrimitiveValue(static_cast<unsigned long long>(value));
+}
+
+ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(int value)
+{
+    return this->encodePrimitiveValue(static_cast<long long>(value));
+}
+
+ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(unsigned int value)
+{
+    return this->encodePrimitiveValue(static_cast<unsigned long long>(value));
+}
+
+ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(long value)
+{
+    return this->encodePrimitiveValue(static_cast<long long>(value));
+}
+
+ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(unsigned long value)
+{
+    return this->encodePrimitiveValue(static_cast<unsigned long long>(value));
+}
+
+ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(long long value)
+{
+    if (value >= 0) {
+        return this->encodePrimitiveValue(
+            static_cast<unsigned long long>(value));  
+    }
+
+    NTSCFG_WARNING_UNUSED(value);
+
+    NTSCFG_NOT_IMPLEMENTED();
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(unsigned long long value)
+{
+    ntsa::Error error;
+
+    error = this->enterFrame(
+        AbstractSyntaxTagClass::e_UNIVERSAL, 
+        AbstractSyntaxTagType::e_PRIMITIVE, 
+        AbstractSyntaxTagNumber::e_INTEGER);
+    if (error) {
+        return error;
+    }
+
+    if (value == 0) {
+        error = d_current_p->writeContent(0x00);
+        if (error) {
+            return error;
+        }
+    }
+    else {
+        const unsigned long long bigEndianValue = 
+            BSLS_BYTEORDER_HOST_TO_BE(value);
+
+        const bsl::uint8_t* bigEndianByteArray = 
+            reinterpret_cast<const bsl::uint8_t*>(&bigEndianValue);
+
+        for (bsl::size_t i = 0; i < sizeof bigEndianValue; ++i) {
+            const bsl::uint8_t bigEndianByte = bigEndianByteArray[i];
+
+            if (bigEndianByte == 0) {
+                continue;
+            }
+
+            error = d_current_p->writeContent(bigEndianByte);
+            if (error) {
+                return error;
+            }
+        }
+    }
+
+    error = this->leaveFrame();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(const AbstractInteger& value)
+{
+    NTSCFG_WARNING_UNUSED(value);
+
+    NTSCFG_NOT_IMPLEMENTED();
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(float value)
+{
+    return this->encodePrimitiveValue(static_cast<double>(value));
+}
+
+ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(double value)
+{
+    NTSCFG_WARNING_UNUSED(value);
+
+    NTSCFG_NOT_IMPLEMENTED();
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(const bsl::string& value)
+{
+    ntsa::Error error;
+
+    error = this->enterFrame(
+            AbstractSyntaxTagClass::e_UNIVERSAL, 
+            AbstractSyntaxTagType::e_PRIMITIVE, 
+            AbstractSyntaxTagNumber::e_UTF8_STRING);
+    if (error) {
+        return error;
+    }
+
+    error = d_current_p->writeContent(
+        value.data(), 
+        value.size());
+    if (error) {
+        return error;
+    }
+
+    error = this->leaveFrame();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(const AbstractString& value)
+{
+    ntsa::Error error;
+
+    error = this->enterFrame(
+            AbstractSyntaxTagClass::e_UNIVERSAL, 
+            AbstractSyntaxTagType::e_PRIMITIVE, 
+            AbstractSyntaxTagNumber::e_UTF8_STRING);
+
+    error = d_current_p->writeContent(value.data(), value.size());
+    if (error) {
+        return error;
+    }
+
+    error = this->leaveFrame();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(const bdlt::Datetime& value)
+{
+    NTSCFG_WARNING_UNUSED(value);
+
+    NTSCFG_NOT_IMPLEMENTED();
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(const bdlt::DatetimeTz& value)
+{
+    NTSCFG_WARNING_UNUSED(value);
+
+    NTSCFG_NOT_IMPLEMENTED();
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error AbstractSyntaxEncoder::leaveFrame()
+{
+    ntsa::Error error;
+    int         rc;
+
+    if (d_current_p == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    bsl::size_t length = 0;
+    NTSCFG_WARNING_UNUSED(length);
+
+    error = d_current_p->synchronize(&length);
+    if (error) {
+        return error;
+    }
+
+    d_current_p = d_current_p->parent();
+
+    if (d_current_p == 0) {
+        error = d_root_p->flush(d_buffer_p);
+        if (error) {
+            return error;
+        }
+
+        d_allocator_p->deleteObject(d_root_p);
+        d_root_p = 0;
+
+        rc = d_buffer_p->pubsync();
+        if (rc != 0) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    return ntsa::Error();
 }
 
 const AbstractSyntaxEncoderOptions& AbstractSyntaxEncoder::configuration() const
@@ -648,6 +1080,280 @@ bsl::streambuf* AbstractSyntaxEncoder::buffer() const
 }
 
 
+bsl::size_t AbstractSyntaxEncoderUtil::numSignificantBits(bsl::size_t value)
+{
+    if (value == 0)
+    {
+        return 1;
+    }
+
+    std::size_t i = 0;
+
+    while (value > 255)
+    {
+        value = value >> 8;
+        i += 8;
+    }
+
+    while (value != 0)
+    {
+        value = value >> 1;
+        ++i;
+    }
+
+    return i; 
+}
+
+
+ntsa::Error AbstractSyntaxEncoderUtil::write(
+    bsl::streambuf* destination, bsl::uint8_t data)
+{
+    bsl::streambuf::int_type meta = destination->sputc(static_cast<char>(data));
+    if (bsl::streambuf::traits_type::eq_int_type(
+            meta, 
+            bsl::streambuf::traits_type::eof()))
+    {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoderUtil::write(
+    bsl::streambuf*     destination, 
+    const void* data, 
+    bsl::size_t         size)
+{
+    bsl::streamsize n = destination->sputn(
+        static_cast<const char*>(data),
+	    static_cast<bsl::streamsize>(size));
+
+    if (static_cast<bsl::size_t>(n) != size) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
+    return ntsa::Error();
+}
+
+ 
+ntsa::Error AbstractSyntaxEncoderUtil::encodeContentTag(
+        bsl::streambuf*                destination,
+        AbstractSyntaxTagClass::Value  tagClass,
+        AbstractSyntaxTagType::Value   tagType,
+        AbstractSyntaxTagNumber::Value tagNumber)
+{
+    return AbstractSyntaxEncoderUtil::encodeContentTag(
+        destination,
+        tagClass,
+        tagType,
+        static_cast<bsl::size_t>(tagNumber));
+}
+
+ntsa::Error AbstractSyntaxEncoderUtil::encodeContentTag(
+        bsl::streambuf*               destination,
+        AbstractSyntaxTagClass::Value tagClass,
+        AbstractSyntaxTagType::Value  tagType,
+        bsl::size_t                   tagNumber)
+{
+    ntsa::Error error;
+
+    const std::size_t k_MAX_TAG_NUMBER_IN_ONE_OCTET = 30;
+    const std::size_t k_TAG_MASK_NUMBER = 0x1F;
+
+    bsl::uint8_t firstOctet = 0;
+
+    firstOctet |= static_cast<bsl::uint8_t>(tagClass);
+    firstOctet |= static_cast<bsl::uint8_t>(tagType);
+
+    if (tagNumber <= k_MAX_TAG_NUMBER_IN_ONE_OCTET)
+    {
+        firstOctet |= static_cast<bsl::uint8_t>(tagNumber);
+
+        error = AbstractSyntaxEncoderUtil::write(destination, firstOctet);
+        if (error) {
+            return error;
+        }
+    }
+    else
+    {
+        firstOctet |= static_cast<bsl::uint8_t>(k_TAG_MASK_NUMBER);
+
+        error = AbstractSyntaxEncoderUtil::write(destination, firstOctet);
+        if (error) {
+            return error;
+        }
+
+        error = AbstractSyntaxEncoderUtil::encodeBase128(destination, tagNumber);
+        if (error) {
+            return error;
+        }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoderUtil::encodeContentLength(
+    bsl::streambuf* destination,
+    bsl::size_t     length)
+{
+    ntsa::Error error;
+
+    const bsl::size_t k_MAX_LENGTH_IN_ONE_OCTET = 127;
+
+    if (length <= k_MAX_LENGTH_IN_ONE_OCTET)
+    {
+        error = AbstractSyntaxEncoderUtil::write(
+            destination,
+            static_cast<bsl::uint8_t>(length));
+        if (error) {
+            return error;
+        }
+    }
+    else
+    {
+        std::size_t numOctets = 
+            (AbstractSyntaxEncoderUtil::numSignificantBits(length) + 7) / 8;
+
+        bsl::uint8_t firstOctet = static_cast<bsl::uint8_t>(numOctets | 0x80);
+        
+        error = AbstractSyntaxEncoderUtil::write(destination, firstOctet);
+        if (error) {
+            return error;
+        }
+
+        error = AbstractSyntaxEncoderUtil::encodeBase256(
+            destination, length, numOctets);
+        if (error) {
+            return error;
+        }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoderUtil::encodeContentLengthIndefinite(
+    bsl::streambuf* destination)
+{
+    ntsa::Error error;
+
+    error = AbstractSyntaxEncoderUtil::write(destination, 0x80);
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoderUtil::encodeContentEnd(
+    bsl::streambuf* destination)
+{
+    ntsa::Error error;
+
+    error = AbstractSyntaxEncoderUtil::write(destination, 0x00);
+    if (error) {
+        return error;
+    }
+
+    error = AbstractSyntaxEncoderUtil::write(destination, 0x00);
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+
+ntsa::Error AbstractSyntaxEncoderUtil::encodeBase128(
+    bsl::streambuf* destination, bsl::size_t value)
+{
+    const std::size_t length = 
+        (AbstractSyntaxEncoderUtil::numSignificantBits(value) + 6) / 7;
+
+    return AbstractSyntaxEncoderUtil::encodeBase128(
+        destination, value, length);
+}
+
+ntsa::Error AbstractSyntaxEncoderUtil::encodeBase128(
+    bsl::streambuf* destination, bsl::size_t value, bsl::size_t length)
+{
+    ntsa::Error error;
+
+    std::size_t i = length;
+    std::size_t j = (i - 1) * 7;
+
+    std::size_t n = value;
+
+    while (i > 1)
+    {
+        const bsl::uint8_t octet = 
+            static_cast<bsl::uint8_t>(((n >> j) & 0x7F) | 0x80);
+
+        error = AbstractSyntaxEncoderUtil::write(destination, octet);
+        if (error) {
+            return error;
+        }
+
+        j = j - 7;
+        i = i - 1;
+    }
+
+    {
+        const bsl::uint8_t octet = static_cast<bsl::uint8_t>(n & 0x7F);
+
+        error = AbstractSyntaxEncoderUtil::write(destination, octet);
+        if (error) {
+            return error;
+        }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoderUtil::encodeBase256(
+        bsl::streambuf* destination, bsl::size_t value)
+{
+    const bsl::size_t length = 
+        (AbstractSyntaxEncoderUtil::numSignificantBits(value) + 7) / 8;
+
+    return AbstractSyntaxEncoderUtil::encodeBase256(
+        destination, value, length);
+}
+
+ntsa::Error AbstractSyntaxEncoderUtil::encodeBase256(
+        bsl::streambuf* destination, bsl::size_t value, bsl::size_t length)
+{
+    ntsa::Error error;
+
+    std::size_t i = length;
+    std::size_t j = (i - 1) * 8;
+
+    std::size_t n = value;
+
+    while (i > 0)
+    {
+        const bsl::uint8_t octet = static_cast<bsl::uint8_t>((n >> j) & 0xFF);
+        
+        error = AbstractSyntaxEncoderUtil::write(destination, octet);
+        if (error) {
+            return error;
+        }
+
+        j = j - 8;
+        i = i - 1;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoderUtil::synchronize(bsl::streambuf* destination)
+{
+    int rc = destination->pubsync();
+    if (rc != 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    return ntsa::Error();
+}
 
 
 
@@ -750,7 +1456,177 @@ bool operator<(const AbstractSyntaxDecoderOptions& lhs, const AbstractSyntaxDeco
 }
 
 
+AbstractSyntaxDecoderFrame::AbstractSyntaxDecoderFrame()
+: d_tagClass(AbstractSyntaxTagClass::e_UNIVERSAL)
+, d_tagType(AbstractSyntaxTagType::e_PRIMITIVE)
+, d_tagNumber(AbstractSyntaxTagNumber::e_NULL)
+, d_length()
+{
+}
 
+AbstractSyntaxDecoderFrame::AbstractSyntaxDecoderFrame(const AbstractSyntaxDecoderFrame& original)
+: d_tagClass(original.d_tagClass)
+, d_tagType(original.d_tagType)
+, d_tagNumber(original.d_tagNumber)
+, d_length(original.d_length)
+{
+}
+
+AbstractSyntaxDecoderFrame::~AbstractSyntaxDecoderFrame()
+{
+}
+
+AbstractSyntaxDecoderFrame& AbstractSyntaxDecoderFrame::operator=(const AbstractSyntaxDecoderFrame& other)
+{
+    if (this != &other) {
+        d_tagClass = other.d_tagClass;
+        d_tagType = other.d_tagType;
+        d_tagNumber = other.d_tagNumber;
+        d_length = other.d_length;
+    }
+
+    return *this;
+}
+
+void AbstractSyntaxDecoderFrame::reset()
+{
+    d_tagClass = AbstractSyntaxTagClass::e_UNIVERSAL;
+    d_tagType = AbstractSyntaxTagType::e_PRIMITIVE;
+    d_tagNumber = AbstractSyntaxTagNumber::e_NULL;
+    d_length.reset();
+}
+
+void AbstractSyntaxDecoderFrame::setTagClass(AbstractSyntaxTagClass::Value value)
+{
+    d_tagClass = value;
+}
+
+void AbstractSyntaxDecoderFrame::setTagType(AbstractSyntaxTagType::Value value)
+{
+    d_tagType = value;
+}
+
+void AbstractSyntaxDecoderFrame::setTagNumber(AbstractSyntaxTagNumber::Value value)
+{
+    d_tagNumber = value;
+}
+
+void AbstractSyntaxDecoderFrame::setTagNumber(bsl::size_t value)
+{
+    d_tagNumber = value;
+}
+
+void AbstractSyntaxDecoderFrame::setLength(bsl::size_t value)
+{
+    d_length = value;
+}
+
+AbstractSyntaxTagClass::Value AbstractSyntaxDecoderFrame::tagClass() const
+{
+    return d_tagClass;
+}
+
+AbstractSyntaxTagType::Value AbstractSyntaxDecoderFrame::tagType() const
+{
+    return d_tagType;
+}
+
+bsl::size_t AbstractSyntaxDecoderFrame::tagNumber() const
+{
+    return d_tagNumber;
+}
+
+const bdlb::NullableValue<bsl::size_t>& AbstractSyntaxDecoderFrame::length() const
+{
+    return d_length;
+}
+
+bool AbstractSyntaxDecoderFrame::equals(const AbstractSyntaxDecoderFrame& other) const
+{
+    return d_tagClass == other.d_tagClass &&
+    d_tagType == other.d_tagType &&
+    d_tagNumber == other.d_tagNumber &&
+    d_length == other.d_length;
+}
+
+bool AbstractSyntaxDecoderFrame::less(const AbstractSyntaxDecoderFrame& other) const
+{
+    if (d_tagClass < other.d_tagClass) {
+        return true;
+    }
+
+    if (other.d_tagClass < d_tagClass) {
+        return false;
+    }
+
+
+    if (d_tagType < other.d_tagType) {
+        return true;
+    }
+
+    if (other.d_tagType < d_tagType) {
+        return false;
+    }
+
+
+    if (d_tagNumber < other.d_tagNumber) {
+        return true;
+    }
+
+    if (other.d_tagNumber < d_tagNumber) {
+        return false;
+    }
+
+
+    return d_length < other.d_length;
+}
+
+bsl::ostream& AbstractSyntaxDecoderFrame::print(bsl::ostream& stream,
+                    int           level,
+                    int           spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+
+    printer.printAttribute("class", d_tagClass);
+    printer.printAttribute("type", d_tagType);
+
+    if (d_tagNumber <= 30) {
+        printer.printAttribute("number", 
+            static_cast<AbstractSyntaxTagNumber::Value>(
+                static_cast<int>(d_tagNumber)));
+    }
+    else {
+        printer.printAttribute("number", d_tagNumber);
+    }
+
+    if (!d_length.isNull()) {
+        printer.printAttribute("length", d_length);
+    }
+
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, const AbstractSyntaxDecoderFrame& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const AbstractSyntaxDecoderFrame& lhs, const AbstractSyntaxDecoderFrame& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const AbstractSyntaxDecoderFrame& lhs, const AbstractSyntaxDecoderFrame& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const AbstractSyntaxDecoderFrame& lhs, const AbstractSyntaxDecoderFrame& rhs)
+{
+    return lhs.less(rhs);
+}
 
 
 ntsa::Error AbstractSyntaxDecoder::read(bsl::uint8_t* result)
@@ -982,7 +1858,7 @@ ntsa::Error AbstractSyntaxDecoder::decodeContext()
     }
 
     d_contextStack.resize(d_contextStack.size() + 1);
-    AbstractSyntaxContext* context = &d_contextStack.back();
+    AbstractSyntaxDecoderFrame* context = &d_contextStack.back();
 
     context->setTagClass(tagClass);
     context->setTagType(tagType);
@@ -995,7 +1871,7 @@ ntsa::Error AbstractSyntaxDecoder::decodeContext()
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxDecoder::decodeContext(AbstractSyntaxContext* result)
+ntsa::Error AbstractSyntaxDecoder::decodeContext(AbstractSyntaxDecoderFrame* result)
 {
     ntsa::Error error;
 
@@ -1022,7 +1898,7 @@ ntsa::Error AbstractSyntaxDecoder::decodeContext(
         return error;
     }
 
-    const AbstractSyntaxContext& context = this->current();
+    const AbstractSyntaxDecoderFrame& context = this->current();
 
     if (context.tagClass() != tagClass) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -1051,7 +1927,7 @@ ntsa::Error AbstractSyntaxDecoder::decodeContext(
         return error;
     }
 
-    const AbstractSyntaxContext& context = this->current();
+    const AbstractSyntaxDecoderFrame& context = this->current();
 
     if (context.tagClass() != tagClass) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -1076,7 +1952,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveNull()
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    const AbstractSyntaxContext& context = this->current();
+    const AbstractSyntaxDecoderFrame& context = this->current();
 
     if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
         if (context.tagNumber() != AbstractSyntaxTagNumber::e_NULL) {
@@ -1108,7 +1984,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveEnd()
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    const AbstractSyntaxContext& context = this->current();
+    const AbstractSyntaxDecoderFrame& context = this->current();
 
     if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
         if (context.tagNumber() != AbstractSyntaxTagNumber::e_END_OF_CONTENTS) {
@@ -1152,7 +2028,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(bool* result)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    const AbstractSyntaxContext& context = this->current();
+    const AbstractSyntaxDecoderFrame& context = this->current();
 
     if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
         if (context.tagNumber() != AbstractSyntaxTagNumber::e_BOOLEAN) {
@@ -1201,7 +2077,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(short* result)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    const AbstractSyntaxContext& context = this->current();
+    const AbstractSyntaxDecoderFrame& context = this->current();
 
     if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
         if (context.tagNumber() != AbstractSyntaxTagNumber::e_INTEGER) {
@@ -1265,7 +2141,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(unsigned short* result)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    const AbstractSyntaxContext& context = this->current();
+    const AbstractSyntaxDecoderFrame& context = this->current();
 
     if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
         if (context.tagNumber() != AbstractSyntaxTagNumber::e_INTEGER) {
@@ -1328,7 +2204,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(int* result)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    const AbstractSyntaxContext& context = this->current();
+    const AbstractSyntaxDecoderFrame& context = this->current();
 
     if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
         if (context.tagNumber() != AbstractSyntaxTagNumber::e_INTEGER) {
@@ -1392,7 +2268,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(unsigned int* result)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    const AbstractSyntaxContext& context = this->current();
+    const AbstractSyntaxDecoderFrame& context = this->current();
 
     if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
         if (context.tagNumber() != AbstractSyntaxTagNumber::e_INTEGER) {
@@ -1455,7 +2331,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(long* result)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    const AbstractSyntaxContext& context = this->current();
+    const AbstractSyntaxDecoderFrame& context = this->current();
 
     if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
         if (context.tagNumber() != AbstractSyntaxTagNumber::e_INTEGER) {
@@ -1519,7 +2395,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(unsigned long* result)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    const AbstractSyntaxContext& context = this->current();
+    const AbstractSyntaxDecoderFrame& context = this->current();
 
     if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
         if (context.tagNumber() != AbstractSyntaxTagNumber::e_INTEGER) {
@@ -1582,7 +2458,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(long long* result)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    const AbstractSyntaxContext& context = this->current();
+    const AbstractSyntaxDecoderFrame& context = this->current();
 
     if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
         if (context.tagNumber() != AbstractSyntaxTagNumber::e_INTEGER) {
@@ -1646,7 +2522,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(unsigned long long* resu
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    const AbstractSyntaxContext& context = this->current();
+    const AbstractSyntaxDecoderFrame& context = this->current();
 
     if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
         if (context.tagNumber() != AbstractSyntaxTagNumber::e_INTEGER) {
@@ -1709,7 +2585,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(AbstractInteger* result)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    const AbstractSyntaxContext& context = this->current();
+    const AbstractSyntaxDecoderFrame& context = this->current();
 
     if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
         if (context.tagNumber() != AbstractSyntaxTagNumber::e_INTEGER) {
@@ -1768,7 +2644,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(double* result)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    const AbstractSyntaxContext& context = this->current();
+    const AbstractSyntaxDecoderFrame& context = this->current();
 
     if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
         if (context.tagNumber() != AbstractSyntaxTagNumber::e_REAL) {
@@ -1986,7 +2862,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(bsl::string* result)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    const AbstractSyntaxContext& context = this->current();
+    const AbstractSyntaxDecoderFrame& context = this->current();
 
     if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
         if (context.tagNumber() != AbstractSyntaxTagNumber::e_UTF8_STRING &&
@@ -2032,7 +2908,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(AbstractString* result)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    const AbstractSyntaxContext& context = this->current();
+    const AbstractSyntaxDecoderFrame& context = this->current();
 
     if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
         if (context.tagNumber() != AbstractSyntaxTagNumber::e_UTF8_STRING &&
@@ -2104,7 +2980,7 @@ ntsa::Error AbstractSyntaxDecoder::decodeContextComplete()
     return ntsa::Error();
 }
 
-const AbstractSyntaxContext& AbstractSyntaxDecoder::current() const
+const AbstractSyntaxDecoderFrame& AbstractSyntaxDecoder::current() const
 {
     if (!d_contextStack.empty()) {
         return d_contextStack.back();
@@ -2180,21 +3056,6 @@ void AbstractObjectIdentifier::set(bsl::size_t index, bsl::uint8_t value)
 
     BSLS_ASSERT_OPT(index < d_data.size());
     d_data[index] = value;
-}
-
-ntsa::Error AbstractObjectIdentifier::decode(AbstractSyntaxDecoder* decoder)
-{
-    NTSCFG_WARNING_UNUSED(decoder);
-
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
-}
-
-ntsa::Error AbstractObjectIdentifier::encode(
-    AbstractSyntaxEncoder* encoder) const
-{
-    NTSCFG_WARNING_UNUSED(encoder);
-
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 bsl::uint8_t AbstractObjectIdentifier::get(bsl::size_t index) const
@@ -2344,21 +3205,6 @@ void AbstractString::set(bsl::size_t index, bsl::uint8_t value)
 void AbstractString::setType(AbstractSyntaxTagNumber::Value value)
 {
     d_type = value;
-}
-
-ntsa::Error AbstractString::decode(AbstractSyntaxDecoder* decoder)
-{
-    NTSCFG_WARNING_UNUSED(decoder);
-
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
-}
-
-ntsa::Error AbstractString::encode(
-    AbstractSyntaxEncoder* encoder) const
-{
-    NTSCFG_WARNING_UNUSED(encoder);
-
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 AbstractSyntaxTagNumber::Value AbstractString::type() const
@@ -3694,33 +4540,35 @@ void AbstractIntegerQuantity::import(const bsl::vector<bsl::uint8_t>& data)
     const bsl::size_t bytesPerBlock = 
         sizeof(AbstractIntegerRepresentation::Block);
 
-    bsl::size_t                          i = data.size() - 1;
     bsl::size_t                          j = 0;
-    AbstractIntegerRepresentation::Block u = 0;
+    AbstractIntegerRepresentation::Block block = 0;
 
-    while (true) {
-        AbstractIntegerRepresentation::Block v = data[i];
+    const bsl::uint8_t* input    = &data.front();
+    const bsl::uint8_t* inputEnd = input + data.size();
 
-        u <<= 8;
-        u += v;
-
-        ++j;
-
-        if (j == bytesPerBlock) {
-            d_rep.push(u);
-            j = 0;
-            u = 0;
+    while (input < inputEnd) {
+        if (*input == 0) {
+            ++input;
         }
-
-        --i;
-
-        if (i == 0) {
+        else {
             break;
         }
     }
 
-    if (u != 0) {
-        d_rep.push(u);
+    const bsl::size_t inputSize = inputEnd - input;
+
+    for (bsl::size_t i = inputSize - 1; i < inputSize; --i) {
+        block |= AbstractIntegerRepresentation::Block(input[i]) << (8 * j);
+
+        if (++j == bytesPerBlock) {
+            d_rep.push(block);
+            j = 0;
+            block = 0;
+        }
+    }
+
+    if (block != 0) {
+        d_rep.push(block);
     }
 
     d_rep.normalize();
@@ -4607,19 +5455,32 @@ void AbstractInteger::import(const bsl::vector<bsl::uint8_t>& data)
 
     if ((data[0] & 0x80) == 0) {
         d_magnitude.import(data);
+        return;
     }
 
-    // MRM
-    #if 0
+    bsl::vector<bsl::uint8_t> ud = data;
+    bsl::vector<bsl::uint8_t> vd = data;
+
+    ud[0] &= ~0x80;
+
+    vd[0] &= ~0x7F;
+    for (bsl::size_t i = 1; i < vd.size(); ++i) {
+        vd[i] = 0;
+    }
+
     AbstractIntegerQuantity u;
-    u.import(data);
+    u.import(ud);
 
-    AbstractIntegerSign::Value sign = AbstractIntegerSign::e_POSITIVE;
+    AbstractIntegerQuantity v;
+    v.import(vd);
 
-    if ((data[0] & 0x80) != 0) {
-        data[0] &= ~0x80;
-    }
-    #endif
+    BSLS_ASSERT_OPT(v.compare(u) > 0);
+
+    AbstractIntegerQuantity w(d_magnitude.allocator());
+    AbstractIntegerQuantityUtil::subtract(&w, v, u);
+
+    d_magnitude.swap(w);
+    d_sign = AbstractIntegerSign::e_NEGATIVE;
 }
 
 AbstractInteger& AbstractInteger::assign(short value)
@@ -4950,27 +5811,6 @@ AbstractInteger& AbstractInteger::modulus(const AbstractInteger& other)
     AbstractInteger quotient;
     AbstractIntegerUtil::divide(&quotient, this, *this, other);
     return *this;
-}
-
-
-ntsa::Error AbstractInteger::decode(
-    AbstractSyntaxDecoder* decoder)
-{
-    NTSCFG_WARNING_UNUSED(decoder);
-
-    NTSCFG_NOT_IMPLEMENTED();
-
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
-}
-
-ntsa::Error AbstractInteger::encode(
-    AbstractSyntaxEncoder* encoder) const
-{
-    NTSCFG_WARNING_UNUSED(encoder);
-
-    NTSCFG_NOT_IMPLEMENTED();
-
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 bool AbstractInteger::equals(short value) const
