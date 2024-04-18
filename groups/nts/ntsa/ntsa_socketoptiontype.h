@@ -94,7 +94,10 @@ struct SocketOptionType {
 
         /// Allow each send operation to request copy avoidance when enqueing
         /// data to the socket send buffer.
-        e_ZERO_COPY = 17
+        e_ZERO_COPY = 17,
+
+        //TODO:
+        e_TCP_CONGESTION_CONTROL = 18
     };
 
     /// Return the string representation exactly matching the enumerator

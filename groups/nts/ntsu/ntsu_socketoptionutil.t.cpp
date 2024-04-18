@@ -2001,6 +2001,9 @@ NTSCFG_TEST_CASE(9)
         ntsa::Transport::e_TCP_IPV4_STREAM,
         ntsa::Transport::e_TCP_IPV6_STREAM};
 
+//    const bsl::array<ntsa::Transport::Value, 1> SOCKET_TYPES = {
+//        ntsa::Transport::e_TCP_IPV6_STREAM};
+
     for (size_t tIndex = 0; tIndex < SOCKET_TYPES.size(); ++tIndex) {
         const ntsa::Transport::Value transport = SOCKET_TYPES[tIndex];
 
@@ -2027,7 +2030,7 @@ NTSCFG_TEST_CASE(9)
         }
 
         {
-            bsl::string algorithm;
+            ntsa::TcpCongestionControl algorithm;
             error = ntsu::SocketOptionUtil::getTcpCongestionControl(&algorithm,
                                                                     socket);
             NTSCFG_TEST_OK(error);
@@ -2054,24 +2057,27 @@ NTSCFG_TEST_CASE(9)
 
             // it is guaranteed that algorithm names are in one line separated
             // by spaces, so `while` below is enough
-            bsl::string algorithm;
-            while (ssline >> algorithm) {
-                NTSCFG_TEST_LOG_INFO << "Working with " << algorithm
+            bsl::string algorithmName;
+            while (ssline >> algorithmName) {
+                NTSCFG_TEST_LOG_INFO << "Working with " << algorithmName
                                      << NTSCFG_TEST_LOG_END;
 
+                ntsa::TcpCongestionControl algorithmToSet;
                 {
+                    error = algorithmToSet.setAlgorithmName(algorithmName);
+                    NTSCFG_TEST_OK(error);
                     error = ntsu::SocketOptionUtil::setTcpCongestionControl(
                         socket,
-                        algorithm);
+                        algorithmToSet);
                     NTSCFG_TEST_OK(error);
                 }
                 {
-                    bsl::string algo;
+                    ntsa::TcpCongestionControl algorithmToGet;
                     error = ntsu::SocketOptionUtil::getTcpCongestionControl(
-                        &algo,
+                        &algorithmToGet,
                         socket);
                     NTSCFG_TEST_OK(error);
-                    NTSCFG_TEST_EQ(algo, algorithm);
+                    NTSCFG_TEST_EQ(algorithmToGet, algorithmToSet);
                 }
             }
         }
