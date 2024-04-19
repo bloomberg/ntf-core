@@ -1,5 +1,13 @@
-ntf-core (2.3.4) unstable; urgency=low
+ntf-core (2.3.5) unstable; urgency=low
 
+  * e114e3a Release 2.3.5
+  * f87558c Fix typo bind to `Kqueue::removeDetached` in `ntco::Kqueue` constructor for C++03 builds
+
+ -- Sergey Mitrofanov <smitrofanov@bloomberg.net>  Fri, 19 Apr 2024 09:51:41 -0400
+
+ntf-core (2.3.4) git; urgency=low
+
+  * 13f50d5 Release 2.3.4 to DPKG
   * cecbabb Release 2.3.4
   * 33859c7 Rename ntsi::{Datagram,Stream,Listener}Socket::isBlocking to getBlocking
   * a309110 Rename ntsi::{Datagram,Stream,Listener}Socket::isBlocking to getBlocking
@@ -7,7 +15,7 @@ ntf-core (2.3.4) unstable; urgency=low
   * b9e5d3c Support detection of file descriptor blocking mode on Unixes
   * fe4a079 Fix compilation errors specifically compiling for C++03
 
- -- Matt Millett <mmillett2@bloomberg.net>  Fri, 12 Apr 2024 16:57:11 -0400
+ -- Matt Millett <mmillett2@bloomberg.net>  Fri, 12 Apr 2024 17:48:53 -0400
 
 ntf-core (2.3.3) git; urgency=low
 
@@ -83,11 +91,6 @@ ntf-core (2.3.0) git; urgency=low
   * 6252205 Release 2.2.2
   * fd0275c Install ntscfg_config.h and ntscfg_config.h as part of the nts and ntc components, respectively
   * b453a46 Release 2.2.1
-
- -- Matt Millett <mmillett2@bloomberg.net>  Fri, 16 Feb 2024 12:15:03 -0500
-
-ntf-core (2.2.0) git; urgency=low
-
   * 4bd7b8c Release 2.2.0
   * a49817f Release 2.2.0
   * af25d8a Fix timestamping tests for network devices that don't support timestamps
@@ -108,11 +111,6 @@ ntf-core (2.2.0) git; urgency=low
   * 1ed320e Fix equality comparison of domain names
   * 46efa9f Use bsl::numeric_limits instead of constants from cstdint
   * 8ea0cf3 Test resolvers using dns.google.com instead of microsoft.com
-
- -- Matt Millett <mmillett@mailbox.org>  Wed, 6 Sep 2023 21:34:36 -0400
-
-ntf-core (2.1.0) git; urgency=low
-
   * a511d00 Release 2.1.0
   * 6d4ad8b Maintenance for Windows: fix ntsu::SocketUtil::isLocal, ntcd::Machine packet timestamp handling, and allow for WSAENETUNREACH connecting to 240.0.0.1 in ntcf_system test driver
   * eed8a81 Implement ntsu::SocketOptionUtil::isLocal on Darwin without using SO_DOMAIN
@@ -124,11 +122,6 @@ ntf-core (2.1.0) git; urgency=low
   * 737e7e4 Use a class E IPv4 address when testing connections to "non-existent" machines and additionally tolerate ENETUNREACH
   * ab6f596 Respect the CC and CXX environment variables when configuring the toolchain
   * 35dd90c Explicitly specify the source directory when running CMake from the configuration script
-
- -- Matt Millett <mmillett@mailbox.org>  Fri, 9 Jun 2023 10:47:43 -0400
-
-ntf-core (2.0.0) git; urgency=low
-
   * efe90a2 Release 2.0.0
   * d24cf19 Explicitly allow more than IOV_MAX buffers to be batched in ntcq_send test driver to match test setup
   * 56e102b Fix overload ambiguity creating an ntci::SendCallback with a shared_ptr to a ntci::Strand-deriving class
@@ -151,4 +144,4 @@ ntf-core (2.0.0) git; urgency=low
   * 3949df7 Support Windows/arm64 (#2)
   * 6ed01d8 Initial open source release
 
- -- Matt Millett <mmillett@mailbox.org>  Wed, 26 Apr 2023 13:33:56 -0400
+ -- Matt Millett <mmillett2@bloomberg.net>  Fri, 16 Feb 2024 12:15:03 -0500
