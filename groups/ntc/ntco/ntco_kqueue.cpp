@@ -1068,7 +1068,7 @@ Kqueue::Kqueue(const ntca::ReactorConfig&         configuration,
 })
 #else
 , d_detachFunctor(
-      NTCCFG_BIND(&Epoll::removeDetached, this, NTCCFG_BIND_PLACEHOLDER_1))
+      NTCCFG_BIND(&Kqueue::removeDetached, this, NTCCFG_BIND_PLACEHOLDER_1))
 #endif
 , d_registry(basicAllocator)
 , d_chronology(this, basicAllocator)
