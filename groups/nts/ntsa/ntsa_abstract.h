@@ -22,8 +22,8 @@ BSLS_IDENT("$Id: $")
 #include <ntsa_error.h>
 #include <ntscfg_platform.h>
 #include <ntsscm_version.h>
-#include <bdlsb_memoutstreambuf.h>
 #include <bdlb_nullablevalue.h>
+#include <bdlsb_memoutstreambuf.h>
 #include <bdlt_datetimetz.h>
 #include <bsl_iosfwd.h>
 #include <bsl_memory.h>
@@ -58,7 +58,7 @@ struct AbstractSyntaxTagClass {
         /// The type is only valid for one specific application.
         e_APPLICATION = 0x040,
 
-        /// The type is interpreted depending on its context, such as within a 
+        /// The type is interpreted depending on its context, such as within a
         /// sequence.
         e_CONTEXT_SPECIFIC = 0x80,
 
@@ -67,7 +67,7 @@ struct AbstractSyntaxTagClass {
     };
 
     /// Load into the specified 'result' the enumerator having the specified
-    /// 'value'. Return the error. 
+    /// 'value'. Return the error.
     static ntsa::Error fromValue(Value* result, bsl::size_t value);
 
     /// Return the string representation exactly matching the enumerator
@@ -84,12 +84,8 @@ struct AbstractSyntaxTagClass {
 /// reference to the modifiable 'stream'.
 ///
 /// @related ntsa::AbstractSyntaxTagClass
-bsl::ostream& operator<<(bsl::ostream& stream, AbstractSyntaxTagClass::Value rhs);
-
-
-
-
-
+bsl::ostream& operator<<(bsl::ostream&                 stream,
+                         AbstractSyntaxTagClass::Value rhs);
 
 /// Enumerate the Abstract Syntax Notation (ASN.1) tag types.
 ///
@@ -108,7 +104,7 @@ struct AbstractSyntaxTagType {
     };
 
     /// Load into the specified 'result' the enumerator having the specified
-    /// 'value'. Return the error. 
+    /// 'value'. Return the error.
     static ntsa::Error fromValue(Value* result, bsl::size_t value);
 
     /// Return the string representation exactly matching the enumerator
@@ -125,10 +121,8 @@ struct AbstractSyntaxTagType {
 /// reference to the modifiable 'stream'.
 ///
 /// @related ntsa::AbstractSyntaxTagType
-bsl::ostream& operator<<(bsl::ostream& stream, AbstractSyntaxTagType::Value rhs);
-
-
-
+bsl::ostream& operator<<(bsl::ostream&                stream,
+                         AbstractSyntaxTagType::Value rhs);
 
 /// Enumerate the Abstract Syntax Notation (ASN.1) universal tag numbers.
 ///
@@ -248,8 +242,8 @@ struct AbstractSyntaxTagNumber {
 /// reference to the modifiable 'stream'.
 ///
 /// @related ntsa::AbstractSyntaxTagNumber
-bsl::ostream& operator<<(bsl::ostream& stream, AbstractSyntaxTagNumber::Value rhs);
-
+bsl::ostream& operator<<(bsl::ostream&                  stream,
+                         AbstractSyntaxTagNumber::Value rhs);
 
 /// Enumerate the Abstract Syntax Notation (ASN.1) encoding formats.
 ///
@@ -260,8 +254,8 @@ bsl::ostream& operator<<(bsl::ostream& stream, AbstractSyntaxTagNumber::Value rh
 struct AbstractSyntaxFormat {
     /// Enumerate the Abstract Syntax Notation (ASN.1) encoding formats.
     enum Value {
-        /// The data is encoding according to the Distinguished Encoding Rules 
-        /// (DER). DER uses definitive length form, that, is, uses leading 
+        /// The data is encoding according to the Distinguished Encoding Rules
+        /// (DER). DER uses definitive length form, that, is, uses leading
         /// length information instead of end-of-contents octets.
         e_DISTINGUISHED = 0,
 
@@ -286,9 +280,10 @@ struct AbstractSyntaxFormat {
 /// reference to the modifiable 'stream'.
 ///
 /// @related ntsa::AbstractSyntaxFormat
-bsl::ostream& operator<<(bsl::ostream& stream, AbstractSyntaxFormat::Value rhs);
+bsl::ostream& operator<<(bsl::ostream&               stream,
+                         AbstractSyntaxFormat::Value rhs);
 
-/// Describe the configurable parameters for an Abstract Syntax Notation 
+/// Describe the configurable parameters for an Abstract Syntax Notation
 /// (ASN.1) encoder.
 ///
 /// @par Attributes
@@ -310,21 +305,23 @@ class AbstractSyntaxEncoderOptions
     /// specify a 'basicAllocator' used to supply memory. If
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
-    explicit AbstractSyntaxEncoderOptions(bslma::Allocator* basicAllocator = 0);
+    explicit AbstractSyntaxEncoderOptions(
+        bslma::Allocator* basicAllocator = 0);
 
     /// Create a new bind context having the same value as the specified
     /// 'original' object. Optionally specify a 'basicAllocator' used to
     /// supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
     AbstractSyntaxEncoderOptions(const AbstractSyntaxEncoderOptions& original,
-                bslma::Allocator*  basicAllocator = 0);
+                                 bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~AbstractSyntaxEncoderOptions();
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
-    AbstractSyntaxEncoderOptions& operator=(const AbstractSyntaxEncoderOptions& other);
+    AbstractSyntaxEncoderOptions& operator=(
+        const AbstractSyntaxEncoderOptions& other);
 
     /// Reset the value of this object to its value upon default construction.
     void reset();
@@ -333,7 +330,8 @@ class AbstractSyntaxEncoderOptions
     void setFormat(const ntsa::AbstractSyntaxFormat::Value& value);
 
     /// Return the format.
-    const bdlb::NullableValue<ntsa::AbstractSyntaxFormat::Value>& format() const;
+    const bdlb::NullableValue<ntsa::AbstractSyntaxFormat::Value>& format()
+        const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -368,42 +366,46 @@ class AbstractSyntaxEncoderOptions
 /// a modifiable reference to the 'stream'.
 ///
 /// @related ntsa::AbstractSyntaxEncoderOptions
-bsl::ostream& operator<<(bsl::ostream& stream, const AbstractSyntaxEncoderOptions& object);
+bsl::ostream& operator<<(bsl::ostream&                       stream,
+                         const AbstractSyntaxEncoderOptions& object);
 
 /// Return true if the specified 'lhs' has the same value as the specified
 /// 'rhs', otherwise return false.
 ///
 /// @related ntsa::AbstractSyntaxEncoderOptions
-bool operator==(const AbstractSyntaxEncoderOptions& lhs, const AbstractSyntaxEncoderOptions& rhs);
+bool operator==(const AbstractSyntaxEncoderOptions& lhs,
+                const AbstractSyntaxEncoderOptions& rhs);
 
 /// Return true if the specified 'lhs' does not have the same value as the
 /// specified 'rhs', otherwise return false.
 ///
 /// @related ntsa::AbstractSyntaxEncoderOptions
-bool operator!=(const AbstractSyntaxEncoderOptions& lhs, const AbstractSyntaxEncoderOptions& rhs);
+bool operator!=(const AbstractSyntaxEncoderOptions& lhs,
+                const AbstractSyntaxEncoderOptions& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
 /// @related ntsa::AbstractSyntaxEncoderOptions
-bool operator<(const AbstractSyntaxEncoderOptions& lhs, const AbstractSyntaxEncoderOptions& rhs);
+bool operator<(const AbstractSyntaxEncoderOptions& lhs,
+               const AbstractSyntaxEncoderOptions& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
 /// @related ntsa::AbstractSyntaxEncoderOptions
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const AbstractSyntaxEncoderOptions& value);
+void hashAppend(HASH_ALGORITHM&                     algorithm,
+                const AbstractSyntaxEncoderOptions& value);
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const AbstractSyntaxEncoderOptions& value)
+void hashAppend(HASH_ALGORITHM&                     algorithm,
+                const AbstractSyntaxEncoderOptions& value)
 {
     using bslh::hashAppend;
 
     hashAppend(algorithm, value.format());
 }
-
-
 
 /// Provide an Abstract Syntax Notation (ASN.1) encoder frame.
 ///
@@ -427,8 +429,8 @@ class AbstractSyntaxEncoderFrame
     bslma::Allocator*             d_allocator_p;
 
   private:
-    AbstractSyntaxEncoderFrame(
-        const AbstractSyntaxEncoderFrame&) BSLS_KEYWORD_DELETED;
+    AbstractSyntaxEncoderFrame(const AbstractSyntaxEncoderFrame&)
+        BSLS_KEYWORD_DELETED;
     AbstractSyntaxEncoderFrame& operator=(const AbstractSyntaxEncoderFrame&)
         BSLS_KEYWORD_DELETED;
 
@@ -436,10 +438,9 @@ class AbstractSyntaxEncoderFrame
     /// Create a new ASN.1 encoder frame. Optionally specify a 'basicAllocator'
     /// used to supply memory. If 'basicAllocator' is 0, the currently
     /// installed default allocator is used.
-    explicit AbstractSyntaxEncoderFrame(
-        AbstractSyntaxEncoderFrame* parent,
-        bsl::streambuf*             buffer,
-        bslma::Allocator*           basicAllocator = 0);          
+    explicit AbstractSyntaxEncoderFrame(AbstractSyntaxEncoderFrame* parent,
+                                        bsl::streambuf*             buffer,
+                                        bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~AbstractSyntaxEncoderFrame();
@@ -475,7 +476,6 @@ class AbstractSyntaxEncoderFrame
     /// Set the tag number to the specified 'value'.
     void setTagNumber(bsl::size_t value);
 
-
     /// Write the specified 'data' byte to the content of this frame.
     ntsa::Error writeHeader(bsl::uint8_t data);
 
@@ -491,7 +491,7 @@ class AbstractSyntaxEncoderFrame
     ntsa::Error writeContent(const void* data, bsl::size_t size);
 
     /// Synchronize the frame with its children, or its data if no children are
-    /// defined.. Append the 
+    /// defined.. Append the
     ntsa::Error synchronize(bsl::size_t* length);
 
     /// Write the frame data and the frame data of all children, in depth-first
@@ -507,14 +507,14 @@ class AbstractSyntaxEncoderFrame
     /// Return the tag number.
     bsl::size_t tagNumber() const;
 
-    /// Return the encoded tag and length, or null if there is no encoded 
+    /// Return the encoded tag and length, or null if there is no encoded
     /// tag and length.
     const bsl::uint8_t* header() const;
 
     /// Return the size, in bytes, of the encoded tag and length.
     bsl::size_t headerLength() const;
 
-    /// Return the encoded content data, or null if there is no encoded 
+    /// Return the encoded content data, or null if there is no encoded
     /// content data.
     const bsl::uint8_t* content() const;
 
@@ -522,17 +522,15 @@ class AbstractSyntaxEncoderFrame
     bsl::size_t contentLength() const;
 
     /// Return the child at the specified 'index', or null if no such child
-    /// at the 'index' exists. 
+    /// at the 'index' exists.
     AbstractSyntaxEncoderFrame* childIndex(bsl::size_t index) const;
 
     /// Return the number of children.
     bsl::size_t childCount() const;
 
-    /// Return the parent frame. 
+    /// Return the parent frame.
     AbstractSyntaxEncoderFrame* parent() const;
 };
-
-
 
 /// Provide an Abstract Syntax Notation (ASN.1) encoder.
 ///
@@ -558,30 +556,27 @@ class AbstractSyntaxEncoder
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
     explicit AbstractSyntaxEncoder(bsl::streambuf*   buffer,
-                                    bslma::Allocator* basicAllocator = 0);
+                                   bslma::Allocator* basicAllocator = 0);
 
     /// Create a new ASN.1 encoder to the specified 'buffer' having the
     /// specified 'configuration'. Optionally specify a 'basicAllocator' used
     /// to supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
     explicit AbstractSyntaxEncoder(
-      const AbstractSyntaxEncoderOptions& configuration,
-      bsl::streambuf*   buffer,
-      bslma::Allocator* basicAllocator = 0);            
+        const AbstractSyntaxEncoderOptions& configuration,
+        bsl::streambuf*                     buffer,
+        bslma::Allocator*                   basicAllocator = 0);
 
     /// Destroy this object.
     ~AbstractSyntaxEncoder();
 
+    ntsa::Error enterFrame(AbstractSyntaxTagClass::Value  tagClass,
+                           AbstractSyntaxTagType::Value   tagType,
+                           AbstractSyntaxTagNumber::Value tagNumber);
 
-    ntsa::Error enterFrame(
-        AbstractSyntaxTagClass::Value  tagClass,
-        AbstractSyntaxTagType::Value   tagType,
-        AbstractSyntaxTagNumber::Value tagNumber);
-
-    ntsa::Error enterFrame(
-        AbstractSyntaxTagClass::Value tagClass,
-        AbstractSyntaxTagType::Value  tagType,
-        bsl::size_t                   tagNumber);
+    ntsa::Error enterFrame(AbstractSyntaxTagClass::Value tagClass,
+                           AbstractSyntaxTagType::Value  tagType,
+                           bsl::size_t                   tagNumber);
 
     ntsa::Error encodePrimitiveNull();
 
@@ -621,14 +616,12 @@ class AbstractSyntaxEncoder
 
     ntsa::Error leaveFrame();
 
-
     /// Return the configuration.
     const AbstractSyntaxEncoderOptions& configuration() const;
 
     /// Return the buffer.
     bsl::streambuf* buffer() const;
 };
-
 
 /// Provide an Abstract Syntax Notation (ASN.1) encoder utilities.
 ///
@@ -638,36 +631,35 @@ class AbstractSyntaxEncoder
 /// @ingroup module_ntsa_data
 class AbstractSyntaxEncoderUtil
 {
-private:
+  private:
     /// Return the number of significant bits in the specified 'value'.
     static bsl::size_t numSignificantBits(bsl::size_t value);
 
-public:
+  public:
     /// Write the specified literal 'data' byte to the specified 'destination'.
     /// Return the error.
     static ntsa::Error write(bsl::streambuf* destination, bsl::uint8_t data);
 
-    /// Write the specified literal 'data' having the specified 'size' to the 
+    /// Write the specified literal 'data' having the specified 'size' to the
     /// specified 'destination'.
-    static ntsa::Error write(bsl::streambuf*     destination, 
-                             const void*         data, 
-                             bsl::size_t         size);
+    static ntsa::Error write(bsl::streambuf* destination,
+                             const void*     data,
+                             bsl::size_t     size);
 
-    /// Write the encoding of the specified 'tagClass', 'tagType', and 
-    /// 'tagNumber' to the specified 'destination'. Return the error. 
+    /// Write the encoding of the specified 'tagClass', 'tagType', and
+    /// 'tagNumber' to the specified 'destination'. Return the error.
     static ntsa::Error encodeContentTag(
         bsl::streambuf*                destination,
         AbstractSyntaxTagClass::Value  tagClass,
         AbstractSyntaxTagType::Value   tagType,
         AbstractSyntaxTagNumber::Value tagNumber);
 
-    /// Write the encoding of the specified 'tagClass', 'tagType', and 
+    /// Write the encoding of the specified 'tagClass', 'tagType', and
     /// 'tagNumber' to the specified 'destination'. Return the error.
-    static ntsa::Error encodeContentTag(
-        bsl::streambuf*               destination,
-        AbstractSyntaxTagClass::Value tagClass,
-        AbstractSyntaxTagType::Value  tagType,
-        bsl::size_t                   tagNumber);
+    static ntsa::Error encodeContentTag(bsl::streambuf* destination,
+                                        AbstractSyntaxTagClass::Value tagClass,
+                                        AbstractSyntaxTagType::Value  tagType,
+                                        bsl::size_t tagNumber);
 
     /// Write the encoding of the specified definite 'length' to the specified
     /// 'destination'. Return the error.
@@ -679,41 +671,40 @@ public:
     static ntsa::Error encodeContentLengthIndefinite(
         bsl::streambuf* destination);
 
-    /// Write the encoding of the end-of-content marker to the specified 
+    /// Write the encoding of the end-of-content marker to the specified
     /// 'destination'. Return the error.
     static ntsa::Error encodeContentEnd(bsl::streambuf* destination);
 
     /// Write the base-128 encoding of the specified 'value' to the specified
-    /// 'destination'. Return the error. 
-    static ntsa::Error encodeBase128(
-        bsl::streambuf* destination, bsl::size_t value);
+    /// 'destination'. Return the error.
+    static ntsa::Error encodeBase128(bsl::streambuf* destination,
+                                     bsl::size_t     value);
 
     /// Write the base-128 encoding of the specified 'value' requiring the
     /// specified known 'length' of the bytes to encode it to the specified
-    /// 'destination'. Return the error. 
-    static ntsa::Error encodeBase128(
-        bsl::streambuf* destination, bsl::size_t value, bsl::size_t length);
+    /// 'destination'. Return the error.
+    static ntsa::Error encodeBase128(bsl::streambuf* destination,
+                                     bsl::size_t     value,
+                                     bsl::size_t     length);
 
     /// Write the base-256 encoding of the specified 'value' to the specified
-    /// 'destination'. Return the error. 
-    static ntsa::Error encodeBase256(
-        bsl::streambuf* destination, bsl::size_t value);
+    /// 'destination'. Return the error.
+    static ntsa::Error encodeBase256(bsl::streambuf* destination,
+                                     bsl::size_t     value);
 
     /// Write the base-256 encoding of the specified 'value' requiring the
     /// specified known 'length' of the bytes to encode it to the specified
     /// 'destination'. Return the error.
-    static ntsa::Error encodeBase256(
-        bsl::streambuf* destination, bsl::size_t value, bsl::size_t length);
+    static ntsa::Error encodeBase256(bsl::streambuf* destination,
+                                     bsl::size_t     value,
+                                     bsl::size_t     length);
 
     /// Synchronize the specified 'destination' with its underlying device.
-    /// Return the error. 
+    /// Return the error.
     static ntsa::Error synchronize(bsl::streambuf* destination);
 };
 
-
-
-
-/// Describe the configurable parameters for an Abstract Syntax Notation 
+/// Describe the configurable parameters for an Abstract Syntax Notation
 /// (ASN.1) decoder.
 ///
 /// @par Attributes
@@ -735,21 +726,23 @@ class AbstractSyntaxDecoderOptions
     /// specify a 'basicAllocator' used to supply memory. If
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
-    explicit AbstractSyntaxDecoderOptions(bslma::Allocator* basicAllocator = 0);
+    explicit AbstractSyntaxDecoderOptions(
+        bslma::Allocator* basicAllocator = 0);
 
     /// Create a new bind context having the same value as the specified
     /// 'original' object. Optionally specify a 'basicAllocator' used to
     /// supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
     AbstractSyntaxDecoderOptions(const AbstractSyntaxDecoderOptions& original,
-                bslma::Allocator*  basicAllocator = 0);
+                                 bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~AbstractSyntaxDecoderOptions();
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
-    AbstractSyntaxDecoderOptions& operator=(const AbstractSyntaxDecoderOptions& other);
+    AbstractSyntaxDecoderOptions& operator=(
+        const AbstractSyntaxDecoderOptions& other);
 
     /// Reset the value of this object to its value upon default
     /// construction.
@@ -759,7 +752,8 @@ class AbstractSyntaxDecoderOptions
     void setFormat(const ntsa::AbstractSyntaxFormat::Value& value);
 
     /// Return the format.
-    const bdlb::NullableValue<ntsa::AbstractSyntaxFormat::Value>& format() const;
+    const bdlb::NullableValue<ntsa::AbstractSyntaxFormat::Value>& format()
+        const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -794,35 +788,41 @@ class AbstractSyntaxDecoderOptions
 /// a modifiable reference to the 'stream'.
 ///
 /// @related ntsa::AbstractSyntaxDecoderOptions
-bsl::ostream& operator<<(bsl::ostream& stream, const AbstractSyntaxDecoderOptions& object);
+bsl::ostream& operator<<(bsl::ostream&                       stream,
+                         const AbstractSyntaxDecoderOptions& object);
 
 /// Return true if the specified 'lhs' has the same value as the specified
 /// 'rhs', otherwise return false.
 ///
 /// @related ntsa::AbstractSyntaxDecoderOptions
-bool operator==(const AbstractSyntaxDecoderOptions& lhs, const AbstractSyntaxDecoderOptions& rhs);
+bool operator==(const AbstractSyntaxDecoderOptions& lhs,
+                const AbstractSyntaxDecoderOptions& rhs);
 
 /// Return true if the specified 'lhs' does not have the same value as the
 /// specified 'rhs', otherwise return false.
 ///
 /// @related ntsa::AbstractSyntaxDecoderOptions
-bool operator!=(const AbstractSyntaxDecoderOptions& lhs, const AbstractSyntaxDecoderOptions& rhs);
+bool operator!=(const AbstractSyntaxDecoderOptions& lhs,
+                const AbstractSyntaxDecoderOptions& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
 /// @related ntsa::AbstractSyntaxDecoderOptions
-bool operator<(const AbstractSyntaxDecoderOptions& lhs, const AbstractSyntaxDecoderOptions& rhs);
+bool operator<(const AbstractSyntaxDecoderOptions& lhs,
+               const AbstractSyntaxDecoderOptions& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
 /// @related ntsa::AbstractSyntaxDecoderOptions
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const AbstractSyntaxDecoderOptions& value);
+void hashAppend(HASH_ALGORITHM&                     algorithm,
+                const AbstractSyntaxDecoderOptions& value);
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const AbstractSyntaxDecoderOptions& value)
+void hashAppend(HASH_ALGORITHM&                     algorithm,
+                const AbstractSyntaxDecoderOptions& value)
 {
     using bslh::hashAppend;
 
@@ -861,7 +861,8 @@ class AbstractSyntaxDecoderFrame
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
-    AbstractSyntaxDecoderFrame& operator=(const AbstractSyntaxDecoderFrame& other);
+    AbstractSyntaxDecoderFrame& operator=(
+        const AbstractSyntaxDecoderFrame& other);
 
     /// Reset the value of this object to its value upon default construction.
     void reset();
@@ -927,36 +928,41 @@ class AbstractSyntaxDecoderFrame
 /// a modifiable reference to the 'stream'.
 ///
 /// @related ntsa::AbstractSyntaxDecoderFrame
-bsl::ostream& operator<<(bsl::ostream& stream, const AbstractSyntaxDecoderFrame& object);
+bsl::ostream& operator<<(bsl::ostream&                     stream,
+                         const AbstractSyntaxDecoderFrame& object);
 
 /// Return true if the specified 'lhs' has the same value as the specified
 /// 'rhs', otherwise return false.
 ///
 /// @related ntsa::AbstractSyntaxDecoderFrame
-bool operator==(const AbstractSyntaxDecoderFrame& lhs, const AbstractSyntaxDecoderFrame& rhs);
+bool operator==(const AbstractSyntaxDecoderFrame& lhs,
+                const AbstractSyntaxDecoderFrame& rhs);
 
 /// Return true if the specified 'lhs' does not have the same value as the
 /// specified 'rhs', otherwise return false.
 ///
 /// @related ntsa::AbstractSyntaxDecoderFrame
-bool operator!=(const AbstractSyntaxDecoderFrame& lhs, const AbstractSyntaxDecoderFrame& rhs);
+bool operator!=(const AbstractSyntaxDecoderFrame& lhs,
+                const AbstractSyntaxDecoderFrame& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
 /// @related ntsa::AbstractSyntaxDecoderFrame
-bool operator<(const AbstractSyntaxDecoderFrame& lhs, const AbstractSyntaxDecoderFrame& rhs);
+bool operator<(const AbstractSyntaxDecoderFrame& lhs,
+               const AbstractSyntaxDecoderFrame& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
 /// @related ntsa::AbstractSyntaxDecoderFrame
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const AbstractSyntaxDecoderFrame& value);
-
+void hashAppend(HASH_ALGORITHM&                   algorithm,
+                const AbstractSyntaxDecoderFrame& value);
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const AbstractSyntaxDecoderFrame& value)
+void hashAppend(HASH_ALGORITHM&                   algorithm,
+                const AbstractSyntaxDecoderFrame& value)
 {
     using bslh::hashAppend;
 
@@ -965,12 +971,6 @@ void hashAppend(HASH_ALGORITHM& algorithm, const AbstractSyntaxDecoderFrame& val
     hashAppend(algorithm, value.tagNumber());
     hashAppend(algorithm, value.length());
 }
-
-
-
-
-
-
 
 /// Provide an Abstract Syntax Notation (ASN.1) decoder.
 ///
@@ -984,7 +984,7 @@ class AbstractSyntaxDecoder
 
     bsl::streambuf*              d_buffer_p;
     ContextStack                 d_contextStack;
-    AbstractSyntaxDecoderFrame        d_contextDefault;
+    AbstractSyntaxDecoderFrame   d_contextDefault;
     AbstractSyntaxDecoderOptions d_config;
     bslma::Allocator*            d_allocator_p;
 
@@ -1010,7 +1010,7 @@ class AbstractSyntaxDecoder
                           bsl::size_t*                         tagNumber);
 
     /// Decode the length from the input buffer and load it into the specified
-    /// 'result'. Return the error. 
+    /// 'result'. Return the error.
     ntsa::Error decodeLength(bdlb::NullableValue<bsl::size_t>* result);
 
   public:
@@ -1018,16 +1018,16 @@ class AbstractSyntaxDecoder
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
     explicit AbstractSyntaxDecoder(bsl::streambuf*   buffer,
-                                    bslma::Allocator* basicAllocator = 0);
+                                   bslma::Allocator* basicAllocator = 0);
 
     /// Create a new ASN.1 decoder from the specified 'buffer' having the
     /// specified 'configuration'. Optionally specify a 'basicAllocator' used
     /// to supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
     explicit AbstractSyntaxDecoder(
-      const AbstractSyntaxDecoderOptions& configuration,
-      bsl::streambuf*   buffer,
-      bslma::Allocator* basicAllocator = 0);  
+        const AbstractSyntaxDecoderOptions& configuration,
+        bsl::streambuf*                     buffer,
+        bslma::Allocator*                   basicAllocator = 0);
 
     /// Destroy this object.
     ~AbstractSyntaxDecoder();
@@ -1035,34 +1035,32 @@ class AbstractSyntaxDecoder
     /// Decode a tag and its length. Note that the tag and its length becomes
     /// the new top of the context stack. Also note that the caller is
     /// responsible for calling 'leaveTag' to pop the context stack. Return the
-    /// error. 
+    /// error.
     ntsa::Error decodeContext();
 
-    /// Decode a tag and its length and load the result into the specified 
-    /// 'result'. Note that the tag and its length becomes the new top of the 
+    /// Decode a tag and its length and load the result into the specified
+    /// 'result'. Note that the tag and its length becomes the new top of the
     /// context stack. Also note that the caller is responsible for calling
-    /// 'leaveTag' to pop the context stack. Return the error. 
+    /// 'leaveTag' to pop the context stack. Return the error.
     ntsa::Error decodeContext(AbstractSyntaxDecoderFrame* result);
 
     /// Decode a tag and its length having the specified 'tagClass', 'tagType',
     /// and 'tagNumber'. Note that the tag and its length becomes the new top
     /// of the context stack. Also note that the caller is responsible for
     /// calling 'leaveTag' to pop the context stack. Return the error.
-    ntsa::Error decodeContext(
-        AbstractSyntaxTagClass::Value  tagClass,
-        AbstractSyntaxTagType::Value   tagType,
-        AbstractSyntaxTagNumber::Value tagNumber);
+    ntsa::Error decodeContext(AbstractSyntaxTagClass::Value  tagClass,
+                              AbstractSyntaxTagType::Value   tagType,
+                              AbstractSyntaxTagNumber::Value tagNumber);
 
     /// Decode a tag and its length having the specified 'tagClass', 'tagType',
     /// and 'tagNumber'. Note that the tag and its length becomes the new top
     /// of the context stack. Also note that the caller is responsible for
     /// calling 'leaveTag' to pop the context stack. Return the error.
-    ntsa::Error decodeContext(
-        AbstractSyntaxTagClass::Value tagClass,
-        AbstractSyntaxTagType::Value  tagType,
-        bsl::size_t                   tagNumber);
+    ntsa::Error decodeContext(AbstractSyntaxTagClass::Value tagClass,
+                              AbstractSyntaxTagType::Value  tagType,
+                              bsl::size_t                   tagNumber);
 
-    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number 
+    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// NULL according to the top of the context stack. Return the error.
     ntsa::Error decodePrimitiveNull();
 
@@ -1071,62 +1069,62 @@ class AbstractSyntaxDecoder
     /// error.
     ntsa::Error decodePrimitiveEnd();
 
-    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number 
+    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// BOOLEAN according to the top of the context stack and load the result
     /// into the specified 'result'. Return the error.
     ntsa::Error decodePrimitiveValue(bool* result);
 
-    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number 
+    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// INTEGER according to the top of the context stack and load the result
     /// into the specified 'result'. Return the error.
     ntsa::Error decodePrimitiveValue(short* result);
 
-    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number 
+    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// INTEGER according to the top of the context stack and load the result
     /// into the specified 'result'. Return the error.
     ntsa::Error decodePrimitiveValue(unsigned short* result);
 
-    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number 
+    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// INTEGER according to the top of the context stack and load the result
     /// into the specified 'result'. Return the error.
     ntsa::Error decodePrimitiveValue(int* result);
 
-    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number 
+    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// INTEGER according to the top of the context stack and load the result
     /// into the specified 'result'. Return the error.
     ntsa::Error decodePrimitiveValue(unsigned int* result);
 
-    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number 
+    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// INTEGER according to the top of the context stack and load the result
     /// into the specified 'result'. Return the error.
     ntsa::Error decodePrimitiveValue(long* result);
 
-    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number 
+    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// INTEGER according to the top of the context stack and load the result
     /// into the specified 'result'. Return the error.
     ntsa::Error decodePrimitiveValue(unsigned long* result);
 
-    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number 
+    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// INTEGER according to the top of the context stack and load the result
     /// into the specified 'result'. Return the error.
     ntsa::Error decodePrimitiveValue(long long* result);
 
-    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number 
+    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// INTEGER according to the top of the context stack and load the result
     /// into the specified 'result'. Return the error.
     ntsa::Error decodePrimitiveValue(unsigned long long* result);
 
-    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number 
+    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// INTEGER according to the top of the context stack and load the result
     /// into the specified 'result'. Return the error.
     ntsa::Error decodePrimitiveValue(AbstractInteger* result);
 
-    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number 
+    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// REAL according to the top of the context stack and load the result
     /// into the specified 'result'. Return the error.
     ntsa::Error decodePrimitiveValue(float* result);
 
-    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number 
+    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// REAL according to the top of the context stack and load the result
     /// into the specified 'result'. Return the error.
     ntsa::Error decodePrimitiveValue(double* result);
@@ -1159,11 +1157,11 @@ class AbstractSyntaxDecoder
     /// the result into the specified 'result'. Return the error.
     ntsa::Error decodePrimitiveValue(AbstractObjectIdentifier* result);
 
-    /// Pop the current tag-length-value context from the stack. Return the 
-    /// error. 
+    /// Pop the current tag-length-value context from the stack. Return the
+    /// error.
     ntsa::Error decodeContextComplete();
 
-    /// Return the current tag-length-value context at the top of the stack. 
+    /// Return the current tag-length-value context at the top of the stack.
     const AbstractSyntaxDecoderFrame& current() const;
 
     /// Return the configuration.
@@ -1172,7 +1170,6 @@ class AbstractSyntaxDecoder
     /// Return the buffer.
     bsl::streambuf* buffer() const;
 };
-
 
 /// Provide an Abstract Syntax Notation (ASN.1) object identifier.
 ///
@@ -1194,9 +1191,8 @@ class AbstractObjectIdentifier
     /// specified 'original' object. Optionally specify a 'basicAllocator' used
     /// to supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
-    explicit AbstractObjectIdentifier(
-        const AbstractObjectIdentifier& original,
-        bslma::Allocator* basicAllocator = 0);
+    explicit AbstractObjectIdentifier(const AbstractObjectIdentifier& original,
+                                      bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~AbstractObjectIdentifier();
@@ -1317,14 +1313,6 @@ void hashAppend(HASH_ALGORITHM&                 algorithm,
     value.hash(algorithm);
 }
 
-
-
-
-
-
-
-
-
 /// Provide an Abstract Syntax Notation (ASN.1) object identifier.
 ///
 /// @par Thread Safety
@@ -1346,9 +1334,8 @@ class AbstractString
     /// 'original' object. Optionally specify a 'basicAllocator' used to supply
     /// memory. If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
-    explicit AbstractString(
-        const AbstractString& original,
-        bslma::Allocator* basicAllocator = 0);
+    explicit AbstractString(const AbstractString& original,
+                            bslma::Allocator*     basicAllocator = 0);
 
     /// Destroy this object.
     ~AbstractString();
@@ -1369,17 +1356,17 @@ class AbstractString
     /// Set the data at the specified 'index' to the specified 'value'.
     void set(bsl::size_t index, bsl::uint8_t value);
 
-    /// Set the type to the specified 'value'. 
+    /// Set the type to the specified 'value'.
     void setType(AbstractSyntaxTagNumber::Value value);
 
-    /// Return the tag number that indicates the type of string. 
+    /// Return the tag number that indicates the type of string.
     AbstractSyntaxTagNumber::Value type() const;
 
     /// Return the data at the specified 'index'.
     bsl::uint8_t get(bsl::size_t index) const;
 
     /// Return the data. Note that the data is null if the size is zero, and
-    /// may contain embedded nulls but not necessarily null-terminated if the 
+    /// may contain embedded nulls but not necessarily null-terminated if the
     /// size is non-zero.
     const bsl::uint8_t* data() const;
 
@@ -1387,7 +1374,7 @@ class AbstractString
     bsl::size_t size() const;
 
     /// Load into the specified 'result' the printable, ASCII, or UTF-8 string
-    /// represented by this object. Return the error. 
+    /// represented by this object. Return the error.
     ntsa::Error convert(bsl::string* result) const;
 
     /// Return true if this object has the same value as the specified
@@ -1428,16 +1415,14 @@ class AbstractString
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntsa::AbstractString
-bsl::ostream& operator<<(bsl::ostream&                   stream,
-                         const AbstractString& object);
+bsl::ostream& operator<<(bsl::ostream& stream, const AbstractString& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
 /// @related ntsa::AbstractString
-bool operator==(const AbstractString& lhs,
-                const AbstractString& rhs);
+bool operator==(const AbstractString& lhs, const AbstractString& rhs);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
 /// have the same value, and 'false' otherwise.  Two attribute objects do
@@ -1445,23 +1430,20 @@ bool operator==(const AbstractString& lhs,
 /// values.
 ///
 /// @related ntsa::AbstractString
-bool operator!=(const AbstractString& lhs,
-                const AbstractString& rhs);
+bool operator!=(const AbstractString& lhs, const AbstractString& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
 /// @related ntsa::AbstractString
-bool operator<(const AbstractString& lhs,
-               const AbstractString& rhs);
+bool operator<(const AbstractString& lhs, const AbstractString& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
 /// @related ntsa::AbstractString
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                 algorithm,
-                const AbstractString& value);
+void hashAppend(HASH_ALGORITHM& algorithm, const AbstractString& value);
 
 template <typename HASH_ALGORITHM>
 void AbstractString::hash(HASH_ALGORITHM& algorithm)
@@ -1473,17 +1455,10 @@ void AbstractString::hash(HASH_ALGORITHM& algorithm)
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                 algorithm,
-                const AbstractString& value)
+void hashAppend(HASH_ALGORITHM& algorithm, const AbstractString& value)
 {
     value.hash(algorithm);
 }
-
-
-
-
-
-
 
 /// Enumerate the signs of the representation of an abstract integer.
 ///
@@ -2020,14 +1995,19 @@ class AbstractIntegerQuantity
     /// object.
     void swap(AbstractIntegerQuantity& other);
 
-    // Parse the specified 'text' containing a sequence of characters in
-    // either base-2, base-8, base-10, or base-16, and load the result into
-    // this object and load the sign into the specified 'sign'. Return
-    // true if 'text' is valid, or false otherwise.
+    /// Parse the specified 'text' containing a sequence of characters in
+    /// either base-2, base-8, base-10, or base-16, and load the result into
+    /// this object and load the sign into the specified 'sign'. Return
+    /// true if 'text' is valid, or false otherwise.
     bool parse(AbstractIntegerSign::Value* sign, const bsl::string_view& text);
 
-    // Import the specified 'data' encoded as an ASN.1 integer.
-    void import(const bsl::vector<bsl::uint8_t>& data);
+    /// Decode the specified 'data' encoded as an ASN.1 integer.
+    void decode(const bsl::vector<bsl::uint8_t>& data);
+
+    /// Encode this object as an ASN.1 integer having the specified 'sign' to
+    /// the specified 'result'.
+    void encode(AbstractIntegerSign::Value sign, 
+                bsl::vector<bsl::uint8_t>* result) const;
 
     /// Assign the specified 'value' to this object. Return a reference to this
     /// modifiable object.
@@ -2711,43 +2691,43 @@ class AbstractInteger
     /// remainder.
     AbstractInteger operator%(const AbstractInteger& other) const;
 
-    /// Negate this object. Return the result. 
+    /// Negate this object. Return the result.
     AbstractInteger operator-() const;
 
     /// Add the specified 'other' object to this object and assign the sum
-    /// to this object. Return a reference to this modifiable object. 
+    /// to this object. Return a reference to this modifiable object.
     AbstractInteger& operator+=(const AbstractInteger& other);
 
     /// Subtract the specified 'other' object from this object and assign the
     /// difference to this object. Return a reference to this modifiable
-    /// object. 
+    /// object.
     AbstractInteger& operator-=(const AbstractInteger& other);
 
     /// Multiply this object by the specified 'other' object and assign the
-    /// product to this object. Return a reference to this modifiable object. 
+    /// product to this object. Return a reference to this modifiable object.
     AbstractInteger& operator*=(const AbstractInteger& other);
 
     /// Divide this object by the specified 'other' object and assign the
-    /// quotient to this object. Return a reference to this modifiable object. 
+    /// quotient to this object. Return a reference to this modifiable object.
     AbstractInteger& operator/=(const AbstractInteger& other);
 
     /// Divide this object by the specified 'other' object and assign the
-    /// remainder to this object. Return a reference to this modifiable object. 
+    /// remainder to this object. Return a reference to this modifiable object.
     AbstractInteger& operator%=(const AbstractInteger& other);
 
     /// Add one to this object and assign the sum to this object. Return
-    /// a reference to this modifiable object. 
+    /// a reference to this modifiable object.
     AbstractInteger& operator++();
 
-    /// Add one to this object and return the sum. 
-    AbstractInteger  operator++(int);
+    /// Add one to this object and return the sum.
+    AbstractInteger operator++(int);
 
     /// Subtract one from this object and assign the difference to this object.
-    /// Return a reference to this modifiable object. 
+    /// Return a reference to this modifiable object.
     AbstractInteger& operator--();
 
-    /// Subtract one from this object and return the difference. 
-    AbstractInteger  operator--(int);
+    /// Subtract one from this object and return the difference.
+    AbstractInteger operator--(int);
 
     /// Reset the value of this object to its value upon default
     /// construction.
@@ -2762,8 +2742,11 @@ class AbstractInteger
     // object. Return true if 'text' is valid, or false otherwise.
     bool parse(const bsl::string_view& text);
 
-    // Import the specified 'data' encoded as an ASN.1 integer.
-    void import(const bsl::vector<bsl::uint8_t>& data);
+    // Decode the specified 'data' encoded as an ASN.1 integer.
+    void decode(const bsl::vector<bsl::uint8_t>& data);
+
+    // Encode this object as an ASN.1 integer to the specified 'result'.
+    void encode(bsl::vector<bsl::uint8_t>* result) const;
 
     /// Assign the specified 'value' to this object. Return a reference to this
     /// modifiable object.
@@ -3305,22 +3288,22 @@ void hashAppend(HASH_ALGORITHM& algorithm, const AbstractInteger& value)
 /// This class is thread safe.
 ///
 /// @ingroup module_ntsa_data
-class AbstractReal {
-
-public:
+class AbstractReal
+{
+  public:
     // Load into the specified 'value' the floating point value described by
     // the specified 'exponent', 'mantissa', and 'sign' component parts.
-    static void compose(double*         value,
-                               bsl::int64_t exponent,
-                               bsl::int64_t mantissa,
-                               bsl::int32_t sign);
+    static void compose(double*      value,
+                        bsl::int64_t exponent,
+                        bsl::int64_t mantissa,
+                        bsl::int32_t sign);
 
     /// Load into the specified 'exponent', 'mantissa', and 'sign' the
     /// specified floating point 'value' decomposed into its component parts.
     static void decompose(bsl::int32_t* exponent,
-                                 bsl::int64_t* mantissa,
-                                 bsl::int32_t* sign,
-                                 double        value);
+                          bsl::int64_t* mantissa,
+                          bsl::int32_t* sign,
+                          double        value);
 };
 
 }  // close package namespace

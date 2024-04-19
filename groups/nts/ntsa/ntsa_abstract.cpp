@@ -19,6 +19,8 @@
 BSLS_IDENT_RCSID(ntsa_abstract_cpp, "$Id$ $CSID$")
 
 #include <bdlb_bitutil.h>
+#include <bdlt_iso8601util.h>
+#include <bdlt_iso8601utilconfiguration.h>
 #include <bslim_printer.h>
 #include <bslma_allocator.h>
 #include <bslma_default.h>
@@ -37,14 +39,13 @@ const bsl::uint8_t k_TAG_MASK_TYPE   = 0x20;
 const bsl::uint8_t k_TAG_MASK_NUMBER = 0x1F;
 
 const bsl::size_t k_NUM_VALUE_BITS_IN_TAG_OCTET = 7;
-const bsl::size_t k_MAX_TAG_NUMBER_OCTETS       = (4 * 8)
-                                                / k_NUM_VALUE_BITS_IN_TAG_OCTET
-                                                + 1;
+const bsl::size_t k_MAX_TAG_NUMBER_OCTETS =
+    (4 * 8) / k_NUM_VALUE_BITS_IN_TAG_OCTET + 1;
 
-const bsl::uint64_t k_DOUBLE_EXPONENT_MASK = 0x7FF0000000000000;
-const bsl::uint64_t k_DOUBLE_MANTISSA_MASK = 0x000FFFFFFFFFFFFF;
+const bsl::uint64_t k_DOUBLE_EXPONENT_MASK              = 0x7FF0000000000000;
+const bsl::uint64_t k_DOUBLE_MANTISSA_MASK              = 0x000FFFFFFFFFFFFF;
 const bsl::uint64_t k_DOUBLE_MANTISSA_IMPLICIT_ONE_MASK = 0x0010000000000000;
-const bsl::uint64_t k_DOUBLE_SIGN_MASK = 0x8000000000000000;
+const bsl::uint64_t k_DOUBLE_SIGN_MASK                  = 0x8000000000000000;
 
 const bsl::uint32_t k_DOUBLE_EXPONENT_SHIFT = 52;
 
@@ -80,9 +81,7 @@ static const AbstractIntegerBaseTraits k_TRAITS[5] = {
 
 }  // close unnamed namespace
 
-ntsa::Error AbstractSyntaxTagClass::fromValue(
-    Value*      result, 
-    bsl::size_t value)
+ntsa::Error AbstractSyntaxTagClass::fromValue(Value* result, bsl::size_t value)
 {
     switch (value) {
     case e_UNIVERSAL:
@@ -104,7 +103,7 @@ const char* AbstractSyntaxTagClass::toString(Value value)
     } break;
     case e_APPLICATION: {
         return "APPLICATION";
-    }  break;
+    } break;
     case e_CONTEXT_SPECIFIC: {
         return "CONTEXT_SPECIFIC";
     } break;
@@ -122,18 +121,13 @@ bsl::ostream& AbstractSyntaxTagClass::print(bsl::ostream& stream, Value value)
     return stream << toString(value);
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, AbstractSyntaxTagClass::Value rhs)
+bsl::ostream& operator<<(bsl::ostream&                 stream,
+                         AbstractSyntaxTagClass::Value rhs)
 {
     return AbstractSyntaxTagClass::print(stream, rhs);
 }
 
-
-
-
-
-ntsa::Error AbstractSyntaxTagType::fromValue(
-    Value*      result, 
-    bsl::size_t value)
+ntsa::Error AbstractSyntaxTagType::fromValue(Value* result, bsl::size_t value)
 {
     switch (value) {
     case e_PRIMITIVE:
@@ -165,15 +159,11 @@ bsl::ostream& AbstractSyntaxTagType::print(bsl::ostream& stream, Value value)
     return stream << toString(value);
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, AbstractSyntaxTagType::Value rhs)
+bsl::ostream& operator<<(bsl::ostream&                stream,
+                         AbstractSyntaxTagType::Value rhs)
 {
     return AbstractSyntaxTagType::print(stream, rhs);
 }
-
-
-
-
-
 
 ntsa::Error AbstractSyntaxTagNumber::validate(bsl::size_t value)
 {
@@ -288,13 +278,11 @@ bsl::ostream& AbstractSyntaxTagNumber::print(bsl::ostream& stream, Value value)
     return stream << toString(value);
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, AbstractSyntaxTagNumber::Value rhs)
+bsl::ostream& operator<<(bsl::ostream&                  stream,
+                         AbstractSyntaxTagNumber::Value rhs)
 {
     return AbstractSyntaxTagNumber::print(stream, rhs);
 }
-
-
-
 
 const char* AbstractSyntaxFormat::toString(Value value)
 {
@@ -321,27 +309,6 @@ bsl::ostream& operator<<(bsl::ostream& stream, AbstractSyntaxFormat::Value rhs)
     return AbstractSyntaxFormat::print(stream, rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 AbstractSyntaxEncoderOptions::AbstractSyntaxEncoderOptions(
     bslma::Allocator* basicAllocator)
 : d_format()
@@ -351,7 +318,7 @@ AbstractSyntaxEncoderOptions::AbstractSyntaxEncoderOptions(
 
 AbstractSyntaxEncoderOptions::AbstractSyntaxEncoderOptions(
     const AbstractSyntaxEncoderOptions& original,
-            bslma::Allocator*  basicAllocator)
+    bslma::Allocator*                   basicAllocator)
 : d_format(original.d_format)
 {
     NTSCFG_WARNING_UNUSED(basicAllocator);
@@ -359,10 +326,10 @@ AbstractSyntaxEncoderOptions::AbstractSyntaxEncoderOptions(
 
 AbstractSyntaxEncoderOptions::~AbstractSyntaxEncoderOptions()
 {
-
 }
 
-AbstractSyntaxEncoderOptions& AbstractSyntaxEncoderOptions::operator=(const AbstractSyntaxEncoderOptions& other)
+AbstractSyntaxEncoderOptions& AbstractSyntaxEncoderOptions::operator=(
+    const AbstractSyntaxEncoderOptions& other)
 {
     if (this != &other) {
         d_format = other.d_format;
@@ -376,29 +343,33 @@ void AbstractSyntaxEncoderOptions::reset()
     d_format.reset();
 }
 
-void AbstractSyntaxEncoderOptions::setFormat(const ntsa::AbstractSyntaxFormat::Value& value)
+void AbstractSyntaxEncoderOptions::setFormat(
+    const ntsa::AbstractSyntaxFormat::Value& value)
 {
     d_format = value;
 }
 
-const bdlb::NullableValue<ntsa::AbstractSyntaxFormat::Value>& AbstractSyntaxEncoderOptions::format() const
+const bdlb::NullableValue<ntsa::AbstractSyntaxFormat::Value>&
+AbstractSyntaxEncoderOptions::format() const
 {
     return d_format;
 }
 
-bool AbstractSyntaxEncoderOptions::equals(const AbstractSyntaxEncoderOptions& other) const
+bool AbstractSyntaxEncoderOptions::equals(
+    const AbstractSyntaxEncoderOptions& other) const
 {
     return d_format == other.d_format;
 }
 
-bool AbstractSyntaxEncoderOptions::less(const AbstractSyntaxEncoderOptions& other) const
+bool AbstractSyntaxEncoderOptions::less(
+    const AbstractSyntaxEncoderOptions& other) const
 {
     return d_format < other.d_format;
 }
 
 bsl::ostream& AbstractSyntaxEncoderOptions::print(bsl::ostream& stream,
-                    int           level,
-                    int           spacesPerLevel) const
+                                                  int           level,
+                                                  int spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -411,35 +382,29 @@ bsl::ostream& AbstractSyntaxEncoderOptions::print(bsl::ostream& stream,
     return stream;
 }
 
-
-bsl::ostream& operator<<(bsl::ostream& stream, const AbstractSyntaxEncoderOptions& object)
+bsl::ostream& operator<<(bsl::ostream&                       stream,
+                         const AbstractSyntaxEncoderOptions& object)
 {
     return object.print(stream, 0, -1);
 }
 
-bool operator==(const AbstractSyntaxEncoderOptions& lhs, const AbstractSyntaxEncoderOptions& rhs)
+bool operator==(const AbstractSyntaxEncoderOptions& lhs,
+                const AbstractSyntaxEncoderOptions& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const AbstractSyntaxEncoderOptions& lhs, const AbstractSyntaxEncoderOptions& rhs)
+bool operator!=(const AbstractSyntaxEncoderOptions& lhs,
+                const AbstractSyntaxEncoderOptions& rhs)
 {
     return !operator==(lhs, rhs);
 }
 
-bool operator<(const AbstractSyntaxEncoderOptions& lhs, const AbstractSyntaxEncoderOptions& rhs)
+bool operator<(const AbstractSyntaxEncoderOptions& lhs,
+               const AbstractSyntaxEncoderOptions& rhs)
 {
     return lhs.less(rhs);
 }
-
-
-
-
-
-
-
-
-
 
 AbstractSyntaxEncoderFrame::AbstractSyntaxEncoderFrame(
     AbstractSyntaxEncoderFrame* parent,
@@ -465,14 +430,14 @@ AbstractSyntaxEncoderFrame::~AbstractSyntaxEncoderFrame()
     }
 }
 
-
 AbstractSyntaxEncoderFrame* AbstractSyntaxEncoderFrame::createNext(
     AbstractSyntaxTagClass::Value  tagClass,
     AbstractSyntaxTagType::Value   tagType,
     AbstractSyntaxTagNumber::Value tagNumber)
 {
-    return this->createNext(
-        tagClass, tagType, static_cast<bsl::size_t>(tagNumber));
+    return this->createNext(tagClass,
+                            tagType,
+                            static_cast<bsl::size_t>(tagNumber));
 }
 
 AbstractSyntaxEncoderFrame* AbstractSyntaxEncoderFrame::createNext(
@@ -480,9 +445,8 @@ AbstractSyntaxEncoderFrame* AbstractSyntaxEncoderFrame::createNext(
     AbstractSyntaxTagType::Value  tagType,
     bsl::size_t                   tagNumber)
 {
-    AbstractSyntaxEncoderFrame* next = 
-        new(*d_allocator_p) AbstractSyntaxEncoderFrame(
-            this, d_buffer_p, d_allocator_p);
+    AbstractSyntaxEncoderFrame* next = new (*d_allocator_p)
+        AbstractSyntaxEncoderFrame(this, d_buffer_p, d_allocator_p);
 
     next->setTagClass(tagClass);
     next->setTagType(tagType);
@@ -502,7 +466,8 @@ void AbstractSyntaxEncoderFrame::destroyLast()
     }
 }
 
-void AbstractSyntaxEncoderFrame::setTagClass(AbstractSyntaxTagClass::Value value)
+void AbstractSyntaxEncoderFrame::setTagClass(
+    AbstractSyntaxTagClass::Value value)
 {
     d_tagClass = value;
 }
@@ -512,11 +477,11 @@ void AbstractSyntaxEncoderFrame::setTagType(AbstractSyntaxTagType::Value value)
     d_tagType = value;
 }
 
-void AbstractSyntaxEncoderFrame::setTagNumber(AbstractSyntaxTagNumber::Value value)
+void AbstractSyntaxEncoderFrame::setTagNumber(
+    AbstractSyntaxTagNumber::Value value)
 {
     d_tagNumber = static_cast<bsl::size_t>(value);
 }
-
 
 void AbstractSyntaxEncoderFrame::setTagNumber(bsl::size_t value)
 {
@@ -528,20 +493,19 @@ ntsa::Error AbstractSyntaxEncoderFrame::writeHeader(bsl::uint8_t data)
     return AbstractSyntaxEncoderUtil::write(&d_header, data);
 }
 
-ntsa::Error AbstractSyntaxEncoderFrame::writeHeader(const void* data, 
-                                                    bsl::size_t         size)
+ntsa::Error AbstractSyntaxEncoderFrame::writeHeader(const void* data,
+                                                    bsl::size_t size)
 {
     return AbstractSyntaxEncoderUtil::write(&d_header, data, size);
 }
-
 
 ntsa::Error AbstractSyntaxEncoderFrame::writeContent(bsl::uint8_t data)
 {
     return AbstractSyntaxEncoderUtil::write(&d_content, data);
 }
 
-ntsa::Error AbstractSyntaxEncoderFrame::writeContent(const void* data, 
-                                              bsl::size_t         size)
+ntsa::Error AbstractSyntaxEncoderFrame::writeContent(const void* data,
+                                                     bsl::size_t size)
 {
     return AbstractSyntaxEncoderUtil::write(&d_content, data, size);
 }
@@ -576,14 +540,16 @@ ntsa::Error AbstractSyntaxEncoderFrame::synchronize(bsl::size_t* length)
         contentLength = d_content.length();
     }
 
-    error = AbstractSyntaxEncoderUtil::encodeContentTag(
-        &d_header, d_tagClass, d_tagType, d_tagNumber);
+    error = AbstractSyntaxEncoderUtil::encodeContentTag(&d_header,
+                                                        d_tagClass,
+                                                        d_tagType,
+                                                        d_tagNumber);
     if (error) {
         return error;
     }
 
-    error = AbstractSyntaxEncoderUtil::encodeContentLength(
-        &d_header, contentLength);
+    error = AbstractSyntaxEncoderUtil::encodeContentLength(&d_header,
+                                                           contentLength);
     if (error) {
         return error;
     }
@@ -608,8 +574,9 @@ ntsa::Error AbstractSyntaxEncoderFrame::flush(bsl::streambuf* buffer)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    error = AbstractSyntaxEncoderUtil::write(
-        buffer, d_header.data(), d_header.length());
+    error = AbstractSyntaxEncoderUtil::write(buffer,
+                                             d_header.data(),
+                                             d_header.length());
     if (error) {
         return error;
     }
@@ -619,7 +586,7 @@ ntsa::Error AbstractSyntaxEncoderFrame::flush(bsl::streambuf* buffer)
 
         for (bsl::size_t i = 0; i < numChildren; ++i) {
             AbstractSyntaxEncoderFrame* child = d_children[i];
-            error = child->flush(buffer);
+            error                             = child->flush(buffer);
             if (error) {
                 return error;
             }
@@ -630,8 +597,9 @@ ntsa::Error AbstractSyntaxEncoderFrame::flush(bsl::streambuf* buffer)
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
 
-        error = AbstractSyntaxEncoderUtil::write(
-            buffer, d_content.data(), d_content.length());
+        error = AbstractSyntaxEncoderUtil::write(buffer,
+                                                 d_content.data(),
+                                                 d_content.length());
         if (error) {
             return error;
         }
@@ -683,7 +651,6 @@ const bsl::uint8_t* AbstractSyntaxEncoderFrame::content() const
     else {
         return 0;
     }
-
 }
 
 bsl::size_t AbstractSyntaxEncoderFrame::contentLength() const
@@ -691,7 +658,8 @@ bsl::size_t AbstractSyntaxEncoderFrame::contentLength() const
     return static_cast<bsl::size_t>(d_content.length());
 }
 
-AbstractSyntaxEncoderFrame* AbstractSyntaxEncoderFrame::childIndex(bsl::size_t index) const
+AbstractSyntaxEncoderFrame* AbstractSyntaxEncoderFrame::childIndex(
+    bsl::size_t index) const
 {
     if (index < d_children.size()) {
         return d_children[index];
@@ -711,10 +679,8 @@ AbstractSyntaxEncoderFrame* AbstractSyntaxEncoderFrame::parent() const
     return d_parent_p;
 }
 
-
-AbstractSyntaxEncoder::AbstractSyntaxEncoder(
-    bsl::streambuf*   buffer,
-    bslma::Allocator* basicAllocator)
+AbstractSyntaxEncoder::AbstractSyntaxEncoder(bsl::streambuf*   buffer,
+                                             bslma::Allocator* basicAllocator)
 : d_buffer_p(buffer)
 , d_root_p(0)
 , d_current_p(0)
@@ -725,8 +691,8 @@ AbstractSyntaxEncoder::AbstractSyntaxEncoder(
 
 AbstractSyntaxEncoder::AbstractSyntaxEncoder(
     const AbstractSyntaxEncoderOptions& configuration,
-    bsl::streambuf*   buffer,
-    bslma::Allocator* basicAllocator)
+    bsl::streambuf*                     buffer,
+    bslma::Allocator*                   basicAllocator)
 : d_buffer_p(buffer)
 , d_root_p(0)
 , d_current_p(0)
@@ -743,12 +709,13 @@ AbstractSyntaxEncoder::~AbstractSyntaxEncoder()
 }
 
 ntsa::Error AbstractSyntaxEncoder::enterFrame(
-        AbstractSyntaxTagClass::Value  tagClass,
-        AbstractSyntaxTagType::Value   tagType,
-        AbstractSyntaxTagNumber::Value tagNumber)
+    AbstractSyntaxTagClass::Value  tagClass,
+    AbstractSyntaxTagType::Value   tagType,
+    AbstractSyntaxTagNumber::Value tagNumber)
 {
-    return this->enterFrame(
-        tagClass, tagType, static_cast<bsl::size_t>(tagNumber));
+    return this->enterFrame(tagClass,
+                            tagType,
+                            static_cast<bsl::size_t>(tagNumber));
 }
 
 ntsa::Error AbstractSyntaxEncoder::enterFrame(
@@ -757,14 +724,14 @@ ntsa::Error AbstractSyntaxEncoder::enterFrame(
     bsl::size_t                   tagNumber)
 {
     if (d_current_p != 0) {
-        AbstractSyntaxEncoderFrame* next = 
+        AbstractSyntaxEncoderFrame* next =
             d_current_p->createNext(tagClass, tagType, tagNumber);
 
         d_current_p = next;
     }
     else {
-        d_root_p = new(*d_allocator_p) AbstractSyntaxEncoderFrame(
-            0, d_buffer_p, d_allocator_p);
+        d_root_p = new (*d_allocator_p)
+            AbstractSyntaxEncoderFrame(0, d_buffer_p, d_allocator_p);
 
         d_root_p->setTagClass(tagClass);
         d_root_p->setTagType(tagType);
@@ -780,10 +747,9 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveNull()
 {
     ntsa::Error error;
 
-    error = this->enterFrame(
-        AbstractSyntaxTagClass::e_UNIVERSAL, 
-        AbstractSyntaxTagType::e_PRIMITIVE, 
-        AbstractSyntaxTagNumber::e_NULL);
+    error = this->enterFrame(AbstractSyntaxTagClass::e_UNIVERSAL,
+                             AbstractSyntaxTagType::e_PRIMITIVE,
+                             AbstractSyntaxTagNumber::e_NULL);
     if (error) {
         return error;
     }
@@ -800,10 +766,9 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveEnd()
 {
     ntsa::Error error;
 
-    error = this->enterFrame(
-        AbstractSyntaxTagClass::e_UNIVERSAL, 
-        AbstractSyntaxTagType::e_PRIMITIVE, 
-        AbstractSyntaxTagNumber::e_END_OF_CONTENTS);
+    error = this->enterFrame(AbstractSyntaxTagClass::e_UNIVERSAL,
+                             AbstractSyntaxTagType::e_PRIMITIVE,
+                             AbstractSyntaxTagNumber::e_END_OF_CONTENTS);
 
     error = d_current_p->writeContent(0);
     if (error) {
@@ -827,10 +792,9 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(bool value)
 {
     ntsa::Error error;
 
-    error = this->enterFrame(
-            AbstractSyntaxTagClass::e_UNIVERSAL, 
-            AbstractSyntaxTagType::e_PRIMITIVE, 
-            AbstractSyntaxTagNumber::e_BOOLEAN);
+    error = this->enterFrame(AbstractSyntaxTagClass::e_UNIVERSAL,
+                             AbstractSyntaxTagType::e_PRIMITIVE,
+                             AbstractSyntaxTagNumber::e_BOOLEAN);
 
     if (value) {
         error = d_current_p->writeContent(0x00);
@@ -885,23 +849,21 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(long long value)
 {
     if (value >= 0) {
         return this->encodePrimitiveValue(
-            static_cast<unsigned long long>(value));  
+            static_cast<unsigned long long>(value));
     }
 
     ntsa::Error error;
 
-    error = this->enterFrame(
-        AbstractSyntaxTagClass::e_UNIVERSAL, 
-        AbstractSyntaxTagType::e_PRIMITIVE, 
-        AbstractSyntaxTagNumber::e_INTEGER);
+    error = this->enterFrame(AbstractSyntaxTagClass::e_UNIVERSAL,
+                             AbstractSyntaxTagType::e_PRIMITIVE,
+                             AbstractSyntaxTagNumber::e_INTEGER);
     if (error) {
         return error;
     }
 
-    long long bigEndianValue = 
-        BSLS_BYTEORDER_HOST_TO_BE(value);
+    long long bigEndianValue = BSLS_BYTEORDER_HOST_TO_BE(value);
 
-    bsl::uint8_t* bigEndianByteArray = 
+    const bsl::uint8_t* bigEndianByteArray =
         reinterpret_cast<bsl::uint8_t*>(&bigEndianValue);
 
     bsl::size_t bigEndianByteArraySize = sizeof bigEndianValue;
@@ -909,7 +871,10 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(long long value)
     bsl::size_t numSkipped = 0;
 
     for (bsl::size_t i = 0; i < sizeof bigEndianValue - 1; ++i) {
-        if ((bigEndianByteArray[i] == 0xFF) && ((bigEndianByteArray[i + 1] & 0x80) != 0)) {
+        const bsl::uint8_t bigEndianByte = bigEndianByteArray[i];
+        const bsl::uint8_t bigEndianByteNext = bigEndianByteArray[i + 1];
+
+        if ((bigEndianByte == 0xFF) && ((bigEndianByteNext & 0x80) != 0)) {
             ++numSkipped;
         }
         else {
@@ -917,7 +882,7 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(long long value)
         }
     }
 
-    bigEndianByteArray += numSkipped;
+    bigEndianByteArray     += numSkipped;
     bigEndianByteArraySize -= numSkipped;
 
     for (bsl::size_t i = 0; i < bigEndianByteArraySize; ++i) {
@@ -927,7 +892,7 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(long long value)
             return error;
         }
     }
- 
+
     error = this->leaveFrame();
     if (error) {
         return error;
@@ -936,14 +901,14 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(long long value)
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(unsigned long long value)
+ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(
+    unsigned long long value)
 {
     ntsa::Error error;
 
-    error = this->enterFrame(
-        AbstractSyntaxTagClass::e_UNIVERSAL, 
-        AbstractSyntaxTagType::e_PRIMITIVE, 
-        AbstractSyntaxTagNumber::e_INTEGER);
+    error = this->enterFrame(AbstractSyntaxTagClass::e_UNIVERSAL,
+                             AbstractSyntaxTagType::e_PRIMITIVE,
+                             AbstractSyntaxTagNumber::e_INTEGER);
     if (error) {
         return error;
     }
@@ -955,23 +920,37 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(unsigned long long value
         }
     }
     else {
-        const unsigned long long bigEndianValue = 
+        const unsigned long long bigEndianValue =
             BSLS_BYTEORDER_HOST_TO_BE(value);
 
-        const bsl::uint8_t* bigEndianByteArray = 
+        const bsl::uint8_t* bigEndianByteArray =
             reinterpret_cast<const bsl::uint8_t*>(&bigEndianValue);
 
         bsl::size_t bigEndianByteArraySize = sizeof bigEndianValue;
 
-        while (*bigEndianByteArray == 0) {
-            ++bigEndianByteArray;
-            --bigEndianByteArraySize;
+        bsl::size_t numSkipped = 0;
+
+        for (bsl::size_t i = 0; i < sizeof bigEndianValue; ++i) {
+            const bsl::uint8_t bigEndianByte = bigEndianByteArray[i];
+
+            if (bigEndianByte == 0x00) {
+                ++numSkipped;
+            }
+            else {
+                break;
+            }
         }
 
-        if ((*bigEndianByteArray & 0x80) != 0) {
-            error = d_current_p->writeContent(0x00);
-            if (error) {
-                return error;
+        bigEndianByteArray     += numSkipped;
+        bigEndianByteArraySize -= numSkipped;
+
+        if (bigEndianByteArraySize > 0) {
+            const bsl::uint8_t bigEndianByte = bigEndianByteArray[0];
+            if ((bigEndianByte & 0x80) != 0) {
+                error = d_current_p->writeContent(0x00);
+                if (error) {
+                    return error;
+                }
             }
         }
 
@@ -992,13 +971,44 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(unsigned long long value
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(const AbstractInteger& value)
+ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(
+    const AbstractInteger& value)
 {
-    NTSCFG_WARNING_UNUSED(value);
+    ntsa::Error error;
 
-    NTSCFG_NOT_IMPLEMENTED();
+    error = this->enterFrame(AbstractSyntaxTagClass::e_UNIVERSAL,
+                             AbstractSyntaxTagType::e_PRIMITIVE,
+                             AbstractSyntaxTagNumber::e_INTEGER);
+    if (error) {
+        return error;
+    }
 
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    if (value.isZero()) {
+        error = d_current_p->writeContent(0x00);
+        if (error) {
+            return error;
+        }
+    }
+    else {
+        bsl::vector<bsl::uint8_t> data;
+        value.encode(&data);
+
+        if (data.empty()) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        error = d_current_p->writeContent(&data.front(), data.size());
+        if (error) {
+            return error;
+        }
+    }
+
+    error = this->leaveFrame();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(float value)
@@ -1015,41 +1025,17 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(double value)
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
-ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(const bsl::string& value)
+ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(
+    const bsl::string& value)
 {
     ntsa::Error error;
 
-    error = this->enterFrame(
-            AbstractSyntaxTagClass::e_UNIVERSAL, 
-            AbstractSyntaxTagType::e_PRIMITIVE, 
-            AbstractSyntaxTagNumber::e_UTF8_STRING);
+    error = this->enterFrame(AbstractSyntaxTagClass::e_UNIVERSAL,
+                             AbstractSyntaxTagType::e_PRIMITIVE,
+                             AbstractSyntaxTagNumber::e_UTF8_STRING);
     if (error) {
         return error;
     }
-
-    error = d_current_p->writeContent(
-        value.data(), 
-        value.size());
-    if (error) {
-        return error;
-    }
-
-    error = this->leaveFrame();
-    if (error) {
-        return error;
-    }
-
-    return ntsa::Error();
-}
-
-ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(const AbstractString& value)
-{
-    ntsa::Error error;
-
-    error = this->enterFrame(
-            AbstractSyntaxTagClass::e_UNIVERSAL, 
-            AbstractSyntaxTagType::e_PRIMITIVE, 
-            AbstractSyntaxTagNumber::e_UTF8_STRING);
 
     error = d_current_p->writeContent(value.data(), value.size());
     if (error) {
@@ -1064,22 +1050,96 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(const AbstractString& va
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(const bdlt::Datetime& value)
+ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(
+    const AbstractString& value)
 {
-    NTSCFG_WARNING_UNUSED(value);
+    ntsa::Error error;
 
-    NTSCFG_NOT_IMPLEMENTED();
+    error = this->enterFrame(AbstractSyntaxTagClass::e_UNIVERSAL,
+                             AbstractSyntaxTagType::e_PRIMITIVE,
+                             AbstractSyntaxTagNumber::e_UTF8_STRING);
 
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    error = d_current_p->writeContent(value.data(), value.size());
+    if (error) {
+        return error;
+    }
+
+    error = this->leaveFrame();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(const bdlt::DatetimeTz& value)
+ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(
+    const bdlt::Datetime& value)
 {
-    NTSCFG_WARNING_UNUSED(value);
+    ntsa::Error error;
 
-    NTSCFG_NOT_IMPLEMENTED();
+    error = this->enterFrame(AbstractSyntaxTagClass::e_UNIVERSAL,
+                             AbstractSyntaxTagType::e_PRIMITIVE,
+                             AbstractSyntaxTagNumber::e_GENERALIZED_TIME);
+    if (error) {
+        return error;
+    }
 
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    bdlt::Iso8601UtilConfiguration config;
+    config.setFractionalSecondPrecision(3);
+
+    char data[bdlt::Iso8601Util::k_MAX_STRLEN];
+    
+    int length = bdlt::Iso8601Util::generate(data, sizeof data, value, config);
+    if (length <= 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    error = d_current_p->writeContent(data, static_cast<bsl::size_t>(length));
+    if (error) {
+        return error;
+    }
+
+    error = this->leaveFrame();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(
+    const bdlt::DatetimeTz& value)
+{
+    ntsa::Error error;
+
+    error = this->enterFrame(AbstractSyntaxTagClass::e_UNIVERSAL,
+                             AbstractSyntaxTagType::e_PRIMITIVE,
+                             AbstractSyntaxTagNumber::e_GENERALIZED_TIME);
+    if (error) {
+        return error;
+    }
+
+    bdlt::Iso8601UtilConfiguration config;
+    config.setFractionalSecondPrecision(3);
+
+    char data[bdlt::Iso8601Util::k_MAX_STRLEN];
+    
+    int length = bdlt::Iso8601Util::generate(data, sizeof data, value, config);
+    if (length <= 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    error = d_current_p->writeContent(data, static_cast<bsl::size_t>(length));
+    if (error) {
+        return error;
+    }
+
+    error = this->leaveFrame();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 ntsa::Error AbstractSyntaxEncoder::leaveFrame()
@@ -1119,7 +1179,8 @@ ntsa::Error AbstractSyntaxEncoder::leaveFrame()
     return ntsa::Error();
 }
 
-const AbstractSyntaxEncoderOptions& AbstractSyntaxEncoder::configuration() const
+const AbstractSyntaxEncoderOptions& AbstractSyntaxEncoder::configuration()
+    const
 {
     return d_config;
 }
@@ -1129,38 +1190,34 @@ bsl::streambuf* AbstractSyntaxEncoder::buffer() const
     return d_buffer_p;
 }
 
-
 bsl::size_t AbstractSyntaxEncoderUtil::numSignificantBits(bsl::size_t value)
 {
-    if (value == 0)
-    {
+    if (value == 0) {
         return 1;
     }
 
     std::size_t i = 0;
 
-    while (value > 255)
-    {
-        value = value >> 8;
-        i += 8;
+    while (value > 255) {
+        value  = value >> 8;
+        i     += 8;
     }
 
-    while (value != 0)
-    {
+    while (value != 0) {
         value = value >> 1;
         ++i;
     }
 
-    return i; 
+    return i;
 }
 
-
-ntsa::Error AbstractSyntaxEncoderUtil::write(
-    bsl::streambuf* destination, bsl::uint8_t data)
+ntsa::Error AbstractSyntaxEncoderUtil::write(bsl::streambuf* destination,
+                                             bsl::uint8_t    data)
 {
-    bsl::streambuf::int_type meta = destination->sputc(static_cast<char>(data));
+    bsl::streambuf::int_type meta =
+        destination->sputc(static_cast<char>(data));
     if (bsl::streambuf::traits_type::eq_int_type(
-            meta, 
+            meta,
             bsl::streambuf::traits_type::eof()))
     {
         return ntsa::Error(ntsa::Error::e_EOF);
@@ -1169,14 +1226,12 @@ ntsa::Error AbstractSyntaxEncoderUtil::write(
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxEncoderUtil::write(
-    bsl::streambuf*     destination, 
-    const void* data, 
-    bsl::size_t         size)
+ntsa::Error AbstractSyntaxEncoderUtil::write(bsl::streambuf* destination,
+                                             const void*     data,
+                                             bsl::size_t     size)
 {
-    bsl::streamsize n = destination->sputn(
-        static_cast<const char*>(data),
-	    static_cast<bsl::streamsize>(size));
+    bsl::streamsize n = destination->sputn(static_cast<const char*>(data),
+                                           static_cast<bsl::streamsize>(size));
 
     if (static_cast<bsl::size_t>(n) != size) {
         return ntsa::Error(ntsa::Error::e_EOF);
@@ -1185,12 +1240,11 @@ ntsa::Error AbstractSyntaxEncoderUtil::write(
     return ntsa::Error();
 }
 
- 
 ntsa::Error AbstractSyntaxEncoderUtil::encodeContentTag(
-        bsl::streambuf*                destination,
-        AbstractSyntaxTagClass::Value  tagClass,
-        AbstractSyntaxTagType::Value   tagType,
-        AbstractSyntaxTagNumber::Value tagNumber)
+    bsl::streambuf*                destination,
+    AbstractSyntaxTagClass::Value  tagClass,
+    AbstractSyntaxTagType::Value   tagType,
+    AbstractSyntaxTagNumber::Value tagNumber)
 {
     return AbstractSyntaxEncoderUtil::encodeContentTag(
         destination,
@@ -1200,23 +1254,22 @@ ntsa::Error AbstractSyntaxEncoderUtil::encodeContentTag(
 }
 
 ntsa::Error AbstractSyntaxEncoderUtil::encodeContentTag(
-        bsl::streambuf*               destination,
-        AbstractSyntaxTagClass::Value tagClass,
-        AbstractSyntaxTagType::Value  tagType,
-        bsl::size_t                   tagNumber)
+    bsl::streambuf*               destination,
+    AbstractSyntaxTagClass::Value tagClass,
+    AbstractSyntaxTagType::Value  tagType,
+    bsl::size_t                   tagNumber)
 {
     ntsa::Error error;
 
     const std::size_t k_MAX_TAG_NUMBER_IN_ONE_OCTET = 30;
-    const std::size_t k_TAG_MASK_NUMBER = 0x1F;
+    const std::size_t k_TAG_MASK_NUMBER             = 0x1F;
 
     bsl::uint8_t firstOctet = 0;
 
     firstOctet |= static_cast<bsl::uint8_t>(tagClass);
     firstOctet |= static_cast<bsl::uint8_t>(tagType);
 
-    if (tagNumber <= k_MAX_TAG_NUMBER_IN_ONE_OCTET)
-    {
+    if (tagNumber <= k_MAX_TAG_NUMBER_IN_ONE_OCTET) {
         firstOctet |= static_cast<bsl::uint8_t>(tagNumber);
 
         error = AbstractSyntaxEncoderUtil::write(destination, firstOctet);
@@ -1224,8 +1277,7 @@ ntsa::Error AbstractSyntaxEncoderUtil::encodeContentTag(
             return error;
         }
     }
-    else
-    {
+    else {
         firstOctet |= static_cast<bsl::uint8_t>(k_TAG_MASK_NUMBER);
 
         error = AbstractSyntaxEncoderUtil::write(destination, firstOctet);
@@ -1233,7 +1285,8 @@ ntsa::Error AbstractSyntaxEncoderUtil::encodeContentTag(
             return error;
         }
 
-        error = AbstractSyntaxEncoderUtil::encodeBase128(destination, tagNumber);
+        error =
+            AbstractSyntaxEncoderUtil::encodeBase128(destination, tagNumber);
         if (error) {
             return error;
         }
@@ -1250,8 +1303,7 @@ ntsa::Error AbstractSyntaxEncoderUtil::encodeContentLength(
 
     const bsl::size_t k_MAX_LENGTH_IN_ONE_OCTET = 127;
 
-    if (length <= k_MAX_LENGTH_IN_ONE_OCTET)
-    {
+    if (length <= k_MAX_LENGTH_IN_ONE_OCTET) {
         error = AbstractSyntaxEncoderUtil::write(
             destination,
             static_cast<bsl::uint8_t>(length));
@@ -1259,20 +1311,20 @@ ntsa::Error AbstractSyntaxEncoderUtil::encodeContentLength(
             return error;
         }
     }
-    else
-    {
-        std::size_t numOctets = 
+    else {
+        std::size_t numOctets =
             (AbstractSyntaxEncoderUtil::numSignificantBits(length) + 7) / 8;
 
         bsl::uint8_t firstOctet = static_cast<bsl::uint8_t>(numOctets | 0x80);
-        
+
         error = AbstractSyntaxEncoderUtil::write(destination, firstOctet);
         if (error) {
             return error;
         }
 
-        error = AbstractSyntaxEncoderUtil::encodeBase256(
-            destination, length, numOctets);
+        error = AbstractSyntaxEncoderUtil::encodeBase256(destination,
+                                                         length,
+                                                         numOctets);
         if (error) {
             return error;
         }
@@ -1312,19 +1364,22 @@ ntsa::Error AbstractSyntaxEncoderUtil::encodeContentEnd(
     return ntsa::Error();
 }
 
-
 ntsa::Error AbstractSyntaxEncoderUtil::encodeBase128(
-    bsl::streambuf* destination, bsl::size_t value)
+    bsl::streambuf* destination,
+    bsl::size_t     value)
 {
-    const std::size_t length = 
+    const std::size_t length =
         (AbstractSyntaxEncoderUtil::numSignificantBits(value) + 6) / 7;
 
-    return AbstractSyntaxEncoderUtil::encodeBase128(
-        destination, value, length);
+    return AbstractSyntaxEncoderUtil::encodeBase128(destination,
+                                                    value,
+                                                    length);
 }
 
 ntsa::Error AbstractSyntaxEncoderUtil::encodeBase128(
-    bsl::streambuf* destination, bsl::size_t value, bsl::size_t length)
+    bsl::streambuf* destination,
+    bsl::size_t     value,
+    bsl::size_t     length)
 {
     ntsa::Error error;
 
@@ -1333,9 +1388,8 @@ ntsa::Error AbstractSyntaxEncoderUtil::encodeBase128(
 
     std::size_t n = value;
 
-    while (i > 1)
-    {
-        const bsl::uint8_t octet = 
+    while (i > 1) {
+        const bsl::uint8_t octet =
             static_cast<bsl::uint8_t>(((n >> j) & 0x7F) | 0x80);
 
         error = AbstractSyntaxEncoderUtil::write(destination, octet);
@@ -1360,17 +1414,21 @@ ntsa::Error AbstractSyntaxEncoderUtil::encodeBase128(
 }
 
 ntsa::Error AbstractSyntaxEncoderUtil::encodeBase256(
-        bsl::streambuf* destination, bsl::size_t value)
+    bsl::streambuf* destination,
+    bsl::size_t     value)
 {
-    const bsl::size_t length = 
+    const bsl::size_t length =
         (AbstractSyntaxEncoderUtil::numSignificantBits(value) + 7) / 8;
 
-    return AbstractSyntaxEncoderUtil::encodeBase256(
-        destination, value, length);
+    return AbstractSyntaxEncoderUtil::encodeBase256(destination,
+                                                    value,
+                                                    length);
 }
 
 ntsa::Error AbstractSyntaxEncoderUtil::encodeBase256(
-        bsl::streambuf* destination, bsl::size_t value, bsl::size_t length)
+    bsl::streambuf* destination,
+    bsl::size_t     value,
+    bsl::size_t     length)
 {
     ntsa::Error error;
 
@@ -1379,10 +1437,9 @@ ntsa::Error AbstractSyntaxEncoderUtil::encodeBase256(
 
     std::size_t n = value;
 
-    while (i > 0)
-    {
+    while (i > 0) {
         const bsl::uint8_t octet = static_cast<bsl::uint8_t>((n >> j) & 0xFF);
-        
+
         error = AbstractSyntaxEncoderUtil::write(destination, octet);
         if (error) {
             return error;
@@ -1405,16 +1462,6 @@ ntsa::Error AbstractSyntaxEncoderUtil::synchronize(bsl::streambuf* destination)
     return ntsa::Error();
 }
 
-
-
-
-
-
-
-
-
-
-
 AbstractSyntaxDecoderOptions::AbstractSyntaxDecoderOptions(
     bslma::Allocator* basicAllocator)
 : d_format()
@@ -1424,7 +1471,7 @@ AbstractSyntaxDecoderOptions::AbstractSyntaxDecoderOptions(
 
 AbstractSyntaxDecoderOptions::AbstractSyntaxDecoderOptions(
     const AbstractSyntaxDecoderOptions& original,
-            bslma::Allocator*  basicAllocator)
+    bslma::Allocator*                   basicAllocator)
 : d_format(original.d_format)
 {
     NTSCFG_WARNING_UNUSED(basicAllocator);
@@ -1432,10 +1479,10 @@ AbstractSyntaxDecoderOptions::AbstractSyntaxDecoderOptions(
 
 AbstractSyntaxDecoderOptions::~AbstractSyntaxDecoderOptions()
 {
-
 }
 
-AbstractSyntaxDecoderOptions& AbstractSyntaxDecoderOptions::operator=(const AbstractSyntaxDecoderOptions& other)
+AbstractSyntaxDecoderOptions& AbstractSyntaxDecoderOptions::operator=(
+    const AbstractSyntaxDecoderOptions& other)
 {
     if (this != &other) {
         d_format = other.d_format;
@@ -1449,29 +1496,33 @@ void AbstractSyntaxDecoderOptions::reset()
     d_format.reset();
 }
 
-void AbstractSyntaxDecoderOptions::setFormat(const ntsa::AbstractSyntaxFormat::Value& value)
+void AbstractSyntaxDecoderOptions::setFormat(
+    const ntsa::AbstractSyntaxFormat::Value& value)
 {
     d_format = value;
 }
 
-const bdlb::NullableValue<ntsa::AbstractSyntaxFormat::Value>& AbstractSyntaxDecoderOptions::format() const
+const bdlb::NullableValue<ntsa::AbstractSyntaxFormat::Value>&
+AbstractSyntaxDecoderOptions::format() const
 {
     return d_format;
 }
 
-bool AbstractSyntaxDecoderOptions::equals(const AbstractSyntaxDecoderOptions& other) const
+bool AbstractSyntaxDecoderOptions::equals(
+    const AbstractSyntaxDecoderOptions& other) const
 {
     return d_format == other.d_format;
 }
 
-bool AbstractSyntaxDecoderOptions::less(const AbstractSyntaxDecoderOptions& other) const
+bool AbstractSyntaxDecoderOptions::less(
+    const AbstractSyntaxDecoderOptions& other) const
 {
     return d_format < other.d_format;
 }
 
 bsl::ostream& AbstractSyntaxDecoderOptions::print(bsl::ostream& stream,
-                    int           level,
-                    int           spacesPerLevel) const
+                                                  int           level,
+                                                  int spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -1484,27 +1535,29 @@ bsl::ostream& AbstractSyntaxDecoderOptions::print(bsl::ostream& stream,
     return stream;
 }
 
-
-bsl::ostream& operator<<(bsl::ostream& stream, const AbstractSyntaxDecoderOptions& object)
+bsl::ostream& operator<<(bsl::ostream&                       stream,
+                         const AbstractSyntaxDecoderOptions& object)
 {
     return object.print(stream, 0, -1);
 }
 
-bool operator==(const AbstractSyntaxDecoderOptions& lhs, const AbstractSyntaxDecoderOptions& rhs)
+bool operator==(const AbstractSyntaxDecoderOptions& lhs,
+                const AbstractSyntaxDecoderOptions& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const AbstractSyntaxDecoderOptions& lhs, const AbstractSyntaxDecoderOptions& rhs)
+bool operator!=(const AbstractSyntaxDecoderOptions& lhs,
+                const AbstractSyntaxDecoderOptions& rhs)
 {
     return !operator==(lhs, rhs);
 }
 
-bool operator<(const AbstractSyntaxDecoderOptions& lhs, const AbstractSyntaxDecoderOptions& rhs)
+bool operator<(const AbstractSyntaxDecoderOptions& lhs,
+               const AbstractSyntaxDecoderOptions& rhs)
 {
     return lhs.less(rhs);
 }
-
 
 AbstractSyntaxDecoderFrame::AbstractSyntaxDecoderFrame()
 : d_tagClass(AbstractSyntaxTagClass::e_UNIVERSAL)
@@ -1514,7 +1567,8 @@ AbstractSyntaxDecoderFrame::AbstractSyntaxDecoderFrame()
 {
 }
 
-AbstractSyntaxDecoderFrame::AbstractSyntaxDecoderFrame(const AbstractSyntaxDecoderFrame& original)
+AbstractSyntaxDecoderFrame::AbstractSyntaxDecoderFrame(
+    const AbstractSyntaxDecoderFrame& original)
 : d_tagClass(original.d_tagClass)
 , d_tagType(original.d_tagType)
 , d_tagNumber(original.d_tagNumber)
@@ -1526,13 +1580,14 @@ AbstractSyntaxDecoderFrame::~AbstractSyntaxDecoderFrame()
 {
 }
 
-AbstractSyntaxDecoderFrame& AbstractSyntaxDecoderFrame::operator=(const AbstractSyntaxDecoderFrame& other)
+AbstractSyntaxDecoderFrame& AbstractSyntaxDecoderFrame::operator=(
+    const AbstractSyntaxDecoderFrame& other)
 {
     if (this != &other) {
-        d_tagClass = other.d_tagClass;
-        d_tagType = other.d_tagType;
+        d_tagClass  = other.d_tagClass;
+        d_tagType   = other.d_tagType;
         d_tagNumber = other.d_tagNumber;
-        d_length = other.d_length;
+        d_length    = other.d_length;
     }
 
     return *this;
@@ -1540,13 +1595,14 @@ AbstractSyntaxDecoderFrame& AbstractSyntaxDecoderFrame::operator=(const Abstract
 
 void AbstractSyntaxDecoderFrame::reset()
 {
-    d_tagClass = AbstractSyntaxTagClass::e_UNIVERSAL;
-    d_tagType = AbstractSyntaxTagType::e_PRIMITIVE;
+    d_tagClass  = AbstractSyntaxTagClass::e_UNIVERSAL;
+    d_tagType   = AbstractSyntaxTagType::e_PRIMITIVE;
     d_tagNumber = AbstractSyntaxTagNumber::e_NULL;
     d_length.reset();
 }
 
-void AbstractSyntaxDecoderFrame::setTagClass(AbstractSyntaxTagClass::Value value)
+void AbstractSyntaxDecoderFrame::setTagClass(
+    AbstractSyntaxTagClass::Value value)
 {
     d_tagClass = value;
 }
@@ -1556,7 +1612,8 @@ void AbstractSyntaxDecoderFrame::setTagType(AbstractSyntaxTagType::Value value)
     d_tagType = value;
 }
 
-void AbstractSyntaxDecoderFrame::setTagNumber(AbstractSyntaxTagNumber::Value value)
+void AbstractSyntaxDecoderFrame::setTagNumber(
+    AbstractSyntaxTagNumber::Value value)
 {
     d_tagNumber = value;
 }
@@ -1586,20 +1643,21 @@ bsl::size_t AbstractSyntaxDecoderFrame::tagNumber() const
     return d_tagNumber;
 }
 
-const bdlb::NullableValue<bsl::size_t>& AbstractSyntaxDecoderFrame::length() const
+const bdlb::NullableValue<bsl::size_t>& AbstractSyntaxDecoderFrame::length()
+    const
 {
     return d_length;
 }
 
-bool AbstractSyntaxDecoderFrame::equals(const AbstractSyntaxDecoderFrame& other) const
+bool AbstractSyntaxDecoderFrame::equals(
+    const AbstractSyntaxDecoderFrame& other) const
 {
-    return d_tagClass == other.d_tagClass &&
-    d_tagType == other.d_tagType &&
-    d_tagNumber == other.d_tagNumber &&
-    d_length == other.d_length;
+    return d_tagClass == other.d_tagClass && d_tagType == other.d_tagType &&
+           d_tagNumber == other.d_tagNumber && d_length == other.d_length;
 }
 
-bool AbstractSyntaxDecoderFrame::less(const AbstractSyntaxDecoderFrame& other) const
+bool AbstractSyntaxDecoderFrame::less(
+    const AbstractSyntaxDecoderFrame& other) const
 {
     if (d_tagClass < other.d_tagClass) {
         return true;
@@ -1609,7 +1667,6 @@ bool AbstractSyntaxDecoderFrame::less(const AbstractSyntaxDecoderFrame& other) c
         return false;
     }
 
-
     if (d_tagType < other.d_tagType) {
         return true;
     }
@@ -1617,7 +1674,6 @@ bool AbstractSyntaxDecoderFrame::less(const AbstractSyntaxDecoderFrame& other) c
     if (other.d_tagType < d_tagType) {
         return false;
     }
-
 
     if (d_tagNumber < other.d_tagNumber) {
         return true;
@@ -1627,13 +1683,12 @@ bool AbstractSyntaxDecoderFrame::less(const AbstractSyntaxDecoderFrame& other) c
         return false;
     }
 
-
     return d_length < other.d_length;
 }
 
 bsl::ostream& AbstractSyntaxDecoderFrame::print(bsl::ostream& stream,
-                    int           level,
-                    int           spacesPerLevel) const
+                                                int           level,
+                                                int spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -1642,9 +1697,9 @@ bsl::ostream& AbstractSyntaxDecoderFrame::print(bsl::ostream& stream,
     printer.printAttribute("type", d_tagType);
 
     if (d_tagNumber <= 30) {
-        printer.printAttribute("number", 
-            static_cast<AbstractSyntaxTagNumber::Value>(
-                static_cast<int>(d_tagNumber)));
+        printer.printAttribute("number",
+                               static_cast<AbstractSyntaxTagNumber::Value>(
+                                   static_cast<int>(d_tagNumber)));
     }
     else {
         printer.printAttribute("number", d_tagNumber);
@@ -1658,47 +1713,50 @@ bsl::ostream& AbstractSyntaxDecoderFrame::print(bsl::ostream& stream,
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, const AbstractSyntaxDecoderFrame& object)
+bsl::ostream& operator<<(bsl::ostream&                     stream,
+                         const AbstractSyntaxDecoderFrame& object)
 {
     return object.print(stream, 0, -1);
 }
 
-bool operator==(const AbstractSyntaxDecoderFrame& lhs, const AbstractSyntaxDecoderFrame& rhs)
+bool operator==(const AbstractSyntaxDecoderFrame& lhs,
+                const AbstractSyntaxDecoderFrame& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const AbstractSyntaxDecoderFrame& lhs, const AbstractSyntaxDecoderFrame& rhs)
+bool operator!=(const AbstractSyntaxDecoderFrame& lhs,
+                const AbstractSyntaxDecoderFrame& rhs)
 {
     return !operator==(lhs, rhs);
 }
 
-bool operator<(const AbstractSyntaxDecoderFrame& lhs, const AbstractSyntaxDecoderFrame& rhs)
+bool operator<(const AbstractSyntaxDecoderFrame& lhs,
+               const AbstractSyntaxDecoderFrame& rhs)
 {
     return lhs.less(rhs);
 }
-
 
 ntsa::Error AbstractSyntaxDecoder::read(bsl::uint8_t* result)
 {
     bsl::streambuf::int_type meta = d_buffer_p->sbumpc();
     if (bsl::streambuf::traits_type::eq_int_type(
-            meta, 
+            meta,
             bsl::streambuf::traits_type::eof()))
     {
         return ntsa::Error(ntsa::Error::e_EOF);
     }
 
-    *result = static_cast<bsl::uint8_t>(bsl::streambuf::traits_type::to_char_type(meta));
+    *result = static_cast<bsl::uint8_t>(
+        bsl::streambuf::traits_type::to_char_type(meta));
     return ntsa::Error();
 }
-
 
 ntsa::Error AbstractSyntaxDecoder::read(bsl::uint8_t* result, bsl::size_t size)
 {
     bsl::streamsize n = d_buffer_p->sgetn(reinterpret_cast<char*>(result),
-	                                      static_cast<bsl::streamsize>(size));
-    
+                                          static_cast<bsl::streamsize>(size));
+
     if (static_cast<bsl::size_t>(n) != size) {
         return ntsa::Error(ntsa::Error::e_EOF);
     }
@@ -1707,9 +1765,9 @@ ntsa::Error AbstractSyntaxDecoder::read(bsl::uint8_t* result, bsl::size_t size)
 }
 
 ntsa::Error AbstractSyntaxDecoder::decodeTag(
-        ntsa::AbstractSyntaxTagClass::Value* tagClass,
-        ntsa::AbstractSyntaxTagType::Value*  tagType,
-        bsl::size_t*                         tagNumber)
+    ntsa::AbstractSyntaxTagClass::Value* tagClass,
+    ntsa::AbstractSyntaxTagType::Value*  tagType,
+    bsl::size_t*                         tagNumber)
 {
     ntsa::Error error;
 
@@ -1718,7 +1776,7 @@ ntsa::Error AbstractSyntaxDecoder::decodeTag(
     *tagNumber = 0;
 
     bsl::uint8_t nextOctet = 0;
-    bsl::size_t  numRead = 0;
+    bsl::size_t  numRead   = 0;
 
     NTSCFG_WARNING_UNUSED(numRead);
 
@@ -1726,7 +1784,7 @@ ntsa::Error AbstractSyntaxDecoder::decodeTag(
     if (error) {
         return error;
     }
-    
+
     ++numRead;
 
     bsl::size_t tagClassCandidate = nextOctet & k_TAG_MASK_CLASS;
@@ -1756,11 +1814,11 @@ ntsa::Error AbstractSyntaxDecoder::decodeTag(
             if (error) {
                 return error;
             }
-            
+
             ++numRead;
 
             tagNumberCandidate <<= k_NUM_VALUE_BITS_IN_TAG_OCTET;
-            tagNumberCandidate |= nextOctet & 0x7F;
+            tagNumberCandidate  |= nextOctet & 0x7F;
 
             if ((nextOctet & 0x80) == 0) {
                 break;
@@ -1777,8 +1835,8 @@ ntsa::Error AbstractSyntaxDecoder::decodeTag(
 
     *tagNumber = tagNumberCandidate;
 
-    // MRM
-    #if 0
+// MRM
+#if 0
     if (*tagClass  == AbstractSyntaxTagClass::e_UNIVERSAL &&
         *tagType   == AbstractSyntaxTagType::e_PRIMITIVE  &&
         *tagNumber == AbstractSyntaxTagNumber::e_END_OF_CONTENTS)
@@ -1794,14 +1852,10 @@ ntsa::Error AbstractSyntaxDecoder::decodeTag(
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
     }
-    #endif
+#endif
 
     return ntsa::Error();
 }
-
-
-
-
 
 ntsa::Error AbstractSyntaxDecoder::decodeLength(
     bdlb::NullableValue<bsl::size_t>* result)
@@ -1811,7 +1865,7 @@ ntsa::Error AbstractSyntaxDecoder::decodeLength(
     result->reset();
 
     bsl::uint8_t nextOctet = 0;
-    bsl::size_t  numRead = 0;
+    bsl::size_t  numRead   = 0;
 
     NTSCFG_WARNING_UNUSED(numRead);
 
@@ -1819,7 +1873,7 @@ ntsa::Error AbstractSyntaxDecoder::decodeLength(
     if (error) {
         return error;
     }
-    
+
     ++numRead;
 
     if (nextOctet != 0x80) {
@@ -1837,11 +1891,11 @@ ntsa::Error AbstractSyntaxDecoder::decodeLength(
             bsl::size_t lengthCandidate = 0;
 
             for (bsl::size_t i = 0; i < numOctets; ++i) {
-                 error = this->read(&nextOctet);
+                error = this->read(&nextOctet);
                 if (error) {
                     return error;
                 }
-                
+
                 ++numRead;
 
                 lengthCandidate <<= 8;
@@ -1855,9 +1909,8 @@ ntsa::Error AbstractSyntaxDecoder::decodeLength(
     return ntsa::Error();
 }
 
-AbstractSyntaxDecoder::AbstractSyntaxDecoder(
-    bsl::streambuf*   buffer,
-    bslma::Allocator* basicAllocator)
+AbstractSyntaxDecoder::AbstractSyntaxDecoder(bsl::streambuf*   buffer,
+                                             bslma::Allocator* basicAllocator)
 : d_buffer_p(buffer)
 , d_contextStack(basicAllocator)
 , d_contextDefault()
@@ -1869,8 +1922,8 @@ AbstractSyntaxDecoder::AbstractSyntaxDecoder(
 
 AbstractSyntaxDecoder::AbstractSyntaxDecoder(
     const AbstractSyntaxDecoderOptions& configuration,
-    bsl::streambuf*   buffer,
-    bslma::Allocator* basicAllocator)
+    bsl::streambuf*                     buffer,
+    bslma::Allocator*                   basicAllocator)
 : d_buffer_p(buffer)
 , d_contextStack(basicAllocator)
 , d_contextDefault()
@@ -1891,7 +1944,7 @@ ntsa::Error AbstractSyntaxDecoder::decodeContext()
     ntsa::AbstractSyntaxTagClass::Value tagClass =
         ntsa::AbstractSyntaxTagClass::e_UNIVERSAL;
 
-    ntsa::AbstractSyntaxTagType::Value tagType = 
+    ntsa::AbstractSyntaxTagType::Value tagType =
         ntsa::AbstractSyntaxTagType::e_PRIMITIVE;
 
     bsl::size_t tagNumber = 0;
@@ -1921,7 +1974,8 @@ ntsa::Error AbstractSyntaxDecoder::decodeContext()
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxDecoder::decodeContext(AbstractSyntaxDecoderFrame* result)
+ntsa::Error AbstractSyntaxDecoder::decodeContext(
+    AbstractSyntaxDecoderFrame* result)
 {
     ntsa::Error error;
 
@@ -2025,7 +2079,6 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveNull()
     return ntsa::Error();
 }
 
-
 ntsa::Error AbstractSyntaxDecoder::decodePrimitiveEnd()
 {
     ntsa::Error error;
@@ -2037,7 +2090,8 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveEnd()
     const AbstractSyntaxDecoderFrame& context = this->current();
 
     if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
-        if (context.tagNumber() != AbstractSyntaxTagNumber::e_END_OF_CONTENTS) {
+        if (context.tagNumber() != AbstractSyntaxTagNumber::e_END_OF_CONTENTS)
+        {
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
     }
@@ -2055,7 +2109,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveEnd()
     }
 
     bsl::uint8_t nextOctet = 0;
-    error = this->read(&nextOctet);
+    error                  = this->read(&nextOctet);
     if (error) {
         return error;
     }
@@ -2066,7 +2120,6 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveEnd()
 
     return ntsa::Error();
 }
-
 
 ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(bool* result)
 {
@@ -2099,7 +2152,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(bool* result)
     }
 
     bsl::uint8_t nextOctet = 0;
-    error = this->read(&nextOctet);
+    error                  = this->read(&nextOctet);
     if (error) {
         return error;
     }
@@ -2160,8 +2213,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(short* result)
         value = -1;
     }
 
-    while (true)
-    {
+    while (true) {
         value <<= 8;
         value  |= nextOctet;
 
@@ -2287,8 +2339,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(int* result)
         value = -1;
     }
 
-    while (true)
-    {
+    while (true) {
         value <<= 8;
         value  |= nextOctet;
 
@@ -2338,9 +2389,9 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(unsigned int* result)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    unsigned int   value        = 0;
-    bsl::uint8_t   nextOctet    = 0;
-    bsl::size_t    numRemaining = context.length().value();
+    unsigned int value        = 0;
+    bsl::uint8_t nextOctet    = 0;
+    bsl::size_t  numRemaining = context.length().value();
 
     error = this->read(&nextOctet);
     if (error) {
@@ -2414,8 +2465,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(long* result)
         value = -1;
     }
 
-    while (true)
-    {
+    while (true) {
         value <<= 8;
         value  |= nextOctet;
 
@@ -2465,9 +2515,9 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(unsigned long* result)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    unsigned long  value        = 0;
-    bsl::uint8_t   nextOctet    = 0;
-    bsl::size_t    numRemaining = context.length().value();
+    unsigned long value        = 0;
+    bsl::uint8_t  nextOctet    = 0;
+    bsl::size_t   numRemaining = context.length().value();
 
     error = this->read(&nextOctet);
     if (error) {
@@ -2541,8 +2591,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(long long* result)
         value = -1;
     }
 
-    while (true)
-    {
+    while (true) {
         value <<= 8;
         value  |= nextOctet;
 
@@ -2562,7 +2611,8 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(long long* result)
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(unsigned long long* result)
+ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(
+    unsigned long long* result)
 {
     ntsa::Error error;
 
@@ -2593,8 +2643,8 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(unsigned long long* resu
     }
 
     unsigned long long value        = 0;
-    bsl::uint8_t   nextOctet    = 0;
-    bsl::size_t    numRemaining = context.length().value();
+    bsl::uint8_t       nextOctet    = 0;
+    bsl::size_t        numRemaining = context.length().value();
 
     error = this->read(&nextOctet);
     if (error) {
@@ -2625,7 +2675,8 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(unsigned long long* resu
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(AbstractInteger* result)
+ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(
+    AbstractInteger* result)
 {
     ntsa::Error error;
 
@@ -2663,7 +2714,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(AbstractInteger* result)
         return error;
     }
 
-    result->import(data);
+    result->decode(data);
 
     return ntsa::Error();
 }
@@ -2675,7 +2726,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(float* result)
     *result = 0.0;
 
     double temp = 0.0;
-    error = this->decodePrimitiveValue(&temp);
+    error       = this->decodePrimitiveValue(&temp);
     if (error) {
         return error;
     }
@@ -2714,33 +2765,29 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(double* result)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    bsl::uint8_t   nextOctet    = 0;
+    bsl::uint8_t nextOctet = 0;
 
     error = this->read(&nextOctet);
     if (error) {
         return error;
     }
 
-    if (nextOctet == 0x40)
-    {
+    if (nextOctet == 0x40) {
         AbstractReal::compose(result, 0x7FF, 0, 0);
         return ntsa::Error();
     }
 
-    if (nextOctet == 0x41)
-    {
+    if (nextOctet == 0x41) {
         AbstractReal::compose(result, 0x7FF, 0, 1);
         return ntsa::Error();
     }
 
-    if (nextOctet == 0x42)
-    {
+    if (nextOctet == 0x42) {
         AbstractReal::compose(result, 0x7FF, 1, 0);
         return ntsa::Error();
     }
 
-    if ((nextOctet & 0x80) == 0)
-    {
+    if ((nextOctet & 0x80) == 0) {
         // Decimal encoding is not supported.
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
@@ -2748,8 +2795,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(double* result)
     bsl::int32_t S = (nextOctet & 0x40) != 0 ? 1 : 0;
     bsl::uint8_t B = (nextOctet & 0x30) >> 4;
 
-    if (B == 3)
-    {
+    if (B == 3) {
         // Base value is not supported
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
@@ -2758,20 +2804,17 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(double* result)
 
     bsl::uint8_t F = (nextOctet & 0x0C) >> 2;
 
-    if (F > 3)
-    {
+    if (F > 3) {
         // Invalid scale factor
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
     std::size_t exponentLength = (nextOctet & 0x03);
 
-    if (exponentLength < 3)
-    {
+    if (exponentLength < 3) {
         exponentLength = exponentLength + 1;
     }
-    else
-    {
+    else {
         error = this->read(&nextOctet);
         if (error) {
             return error;
@@ -2788,7 +2831,6 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(double* result)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-
     bsl::int64_t exponent = 0;
     {
         bsl::size_t exponentLengthRemaining = exponentLength;
@@ -2802,8 +2844,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(double* result)
             exponent = -1;
         }
 
-        while (true)
-        {
+        while (true) {
             exponent <<= 8;
             exponent  |= nextOctet;
 
@@ -2819,22 +2860,18 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(double* result)
         }
     }
 
-    if (B != 0)
-    {
-        if (B == 8)
-        {
+    if (B != 0) {
+        if (B == 8) {
             exponent *= 3;
         }
-        else
-        {
+        else {
             exponent *= 4;
         }
     }
 
     exponent -= F;
 
-    bsl::size_t mantissaLength = 
-        context.length().value() - exponentLength - 1;
+    bsl::size_t mantissaLength = context.length().value() - exponentLength - 1;
 
     if (mantissaLength == 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -2857,8 +2894,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(double* result)
             mantissa = -1;
         }
 
-        while (true)
-        {
+        while (true) {
             mantissa <<= 8;
             mantissa  |= nextOctet;
 
@@ -2878,21 +2914,18 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(double* result)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    bsl::size_t shift = 
-        bdlb::BitUtil::numLeadingUnsetBits(
-            static_cast<bsl::uint64_t>(mantissa));
-        // MRM: 63 - index_of_msb_set(static_cast<bsl::uint64_t>(mantissa));
+    bsl::size_t shift = bdlb::BitUtil::numLeadingUnsetBits(
+        static_cast<bsl::uint64_t>(mantissa));
+    // MRM: 63 - index_of_msb_set(static_cast<bsl::uint64_t>(mantissa));
 
     shift    -= k_DOUBLE_NUM_EXPONENT_BITS + 1;
     exponent += k_DOUBLE_BIAS + k_DOUBLE_NUM_MANTISSA_BITS - shift - 1;
 
-    if (exponent > 0)
-    {
+    if (exponent > 0) {
         mantissa <<= shift + 1;
         mantissa  &= ~k_DOUBLE_MANTISSA_IMPLICIT_ONE_MASK;
     }
-    else
-    {
+    else {
         mantissa <<= shift + exponent;
         exponent   = 0;
     }
@@ -2917,8 +2950,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(bsl::string* result)
     if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
         if (context.tagNumber() != AbstractSyntaxTagNumber::e_UTF8_STRING &&
             context.tagNumber() != AbstractSyntaxTagNumber::e_VISIBLE_STRING &&
-            context.tagNumber() != 
-            AbstractSyntaxTagNumber::e_PRINTABLE_STRING) 
+            context.tagNumber() != AbstractSyntaxTagNumber::e_PRINTABLE_STRING)
         {
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
@@ -2938,8 +2970,8 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(bsl::string* result)
 
     result->resize(context.length().value());
 
-    error = this->read(reinterpret_cast<bsl::uint8_t*>(result->data()), 
-                 context.length().value());
+    error = this->read(reinterpret_cast<bsl::uint8_t*>(result->data()),
+                       context.length().value());
     if (error) {
         result->clear();
         return error;
@@ -2963,8 +2995,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(AbstractString* result)
     if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
         if (context.tagNumber() != AbstractSyntaxTagNumber::e_UTF8_STRING &&
             context.tagNumber() != AbstractSyntaxTagNumber::e_VISIBLE_STRING &&
-            context.tagNumber() != 
-            AbstractSyntaxTagNumber::e_PRINTABLE_STRING) 
+            context.tagNumber() != AbstractSyntaxTagNumber::e_PRINTABLE_STRING)
         {
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
@@ -2984,8 +3015,9 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(AbstractString* result)
 
     result->resize(context.length().value());
 
-    error = this->read(reinterpret_cast<bsl::uint8_t*>(const_cast<bsl::uint8_t*>(result->data())), 
-                 context.length().value());
+    error = this->read(reinterpret_cast<bsl::uint8_t*>(
+                           const_cast<bsl::uint8_t*>(result->data())),
+                       context.length().value());
     if (error) {
         result->reset();
         return error;
@@ -3003,7 +3035,8 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(bdlt::Datetime* result)
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
-ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(bdlt::DatetimeTz* result)
+ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(
+    bdlt::DatetimeTz* result)
 {
     NTSCFG_WARNING_UNUSED(result);
 
@@ -3012,7 +3045,8 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(bdlt::DatetimeTz* result
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
-ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(AbstractObjectIdentifier* result)
+ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(
+    AbstractObjectIdentifier* result)
 {
     NTSCFG_WARNING_UNUSED(result);
 
@@ -3040,7 +3074,8 @@ const AbstractSyntaxDecoderFrame& AbstractSyntaxDecoder::current() const
     }
 }
 
-const AbstractSyntaxDecoderOptions& AbstractSyntaxDecoder::configuration() const
+const AbstractSyntaxDecoderOptions& AbstractSyntaxDecoder::configuration()
+    const
 {
     return d_config;
 }
@@ -3058,7 +3093,7 @@ AbstractObjectIdentifier::AbstractObjectIdentifier(
 
 AbstractObjectIdentifier::AbstractObjectIdentifier(
     const AbstractObjectIdentifier& original,
-    bslma::Allocator* basicAllocator)
+    bslma::Allocator*               basicAllocator)
 : d_data(original.d_data, basicAllocator)
 {
 }
@@ -3066,7 +3101,6 @@ AbstractObjectIdentifier::AbstractObjectIdentifier(
 AbstractObjectIdentifier::~AbstractObjectIdentifier()
 {
 }
-
 
 AbstractObjectIdentifier& AbstractObjectIdentifier::operator=(
     const AbstractObjectIdentifier& other)
@@ -3093,7 +3127,8 @@ void AbstractObjectIdentifier::append(bsl::uint8_t value)
     d_data.push_back(value);
 }
 
-void AbstractObjectIdentifier::append(const bsl::uint8_t* data, bsl::size_t size)
+void AbstractObjectIdentifier::append(const bsl::uint8_t* data,
+                                      bsl::size_t         size)
 {
     d_data.insert(d_data.end(), data, data + size);
 }
@@ -3180,32 +3215,14 @@ bool operator<(const AbstractObjectIdentifier& lhs,
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-AbstractString::AbstractString(
-    bslma::Allocator* basicAllocator)
+AbstractString::AbstractString(bslma::Allocator* basicAllocator)
 : d_type(AbstractSyntaxTagNumber::e_OCTET_STRING)
 , d_data(basicAllocator)
 {
 }
 
-AbstractString::AbstractString(
-    const AbstractString& original,
-    bslma::Allocator* basicAllocator)
+AbstractString::AbstractString(const AbstractString& original,
+                               bslma::Allocator*     basicAllocator)
 : d_type(original.d_type)
 , d_data(original.d_data, basicAllocator)
 {
@@ -3215,8 +3232,7 @@ AbstractString::~AbstractString()
 {
 }
 
-AbstractString& AbstractString::operator=(
-    const AbstractString& other)
+AbstractString& AbstractString::operator=(const AbstractString& other)
 {
     if (this != &other) {
         d_type = other.d_type;
@@ -3300,27 +3316,26 @@ ntsa::Error AbstractString::convert(bsl::string* result) const
     }
 
     if (!d_data.empty()) {
-        result->assign(reinterpret_cast<const char*>(&d_data.front()), d_data.size());
+        result->assign(reinterpret_cast<const char*>(&d_data.front()),
+                       d_data.size());
     }
 
     return ntsa::Error();
 }
 
-bool AbstractString::equals(
-    const AbstractString& other) const
+bool AbstractString::equals(const AbstractString& other) const
 {
     return (d_data == other.d_data);
 }
 
-bool AbstractString::less(
-    const AbstractString& other) const
+bool AbstractString::less(const AbstractString& other) const
 {
     return d_data < other.d_data;
 }
 
 bsl::ostream& AbstractString::print(bsl::ostream& stream,
-                                              int           level,
-                                              int spacesPerLevel) const
+                                    int           level,
+                                    int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -3329,44 +3344,25 @@ bsl::ostream& AbstractString::print(bsl::ostream& stream,
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                   stream,
-                         const AbstractString& object)
+bsl::ostream& operator<<(bsl::ostream& stream, const AbstractString& object)
 {
     return object.print(stream, 0, -1);
 }
 
-bool operator==(const AbstractString& lhs,
-                const AbstractString& rhs)
+bool operator==(const AbstractString& lhs, const AbstractString& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const AbstractString& lhs,
-                const AbstractString& rhs)
+bool operator!=(const AbstractString& lhs, const AbstractString& rhs)
 {
     return !operator==(lhs, rhs);
 }
 
-bool operator<(const AbstractString& lhs,
-               const AbstractString& rhs)
+bool operator<(const AbstractString& lhs, const AbstractString& rhs)
 {
     return lhs.less(rhs);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 AbstractIntegerSign::Value AbstractIntegerSign::flip(Value sign)
 {
@@ -4579,7 +4575,7 @@ bool AbstractIntegerQuantity::parse(AbstractIntegerSign::Value* sign,
     return AbstractIntegerRepresentation::parse(&d_rep, sign, text);
 }
 
-void AbstractIntegerQuantity::import(const bsl::vector<bsl::uint8_t>& data)
+void AbstractIntegerQuantity::decode(const bsl::vector<bsl::uint8_t>& data)
 {
     this->reset();
 
@@ -4587,10 +4583,10 @@ void AbstractIntegerQuantity::import(const bsl::vector<bsl::uint8_t>& data)
         return;
     }
 
-    const bsl::size_t bytesPerBlock = 
+    const bsl::size_t bytesPerBlock =
         sizeof(AbstractIntegerRepresentation::Block);
 
-    bsl::size_t                          j = 0;
+    bsl::size_t                          j     = 0;
     AbstractIntegerRepresentation::Block block = 0;
 
     const bsl::uint8_t* input    = &data.front();
@@ -4612,7 +4608,7 @@ void AbstractIntegerQuantity::import(const bsl::vector<bsl::uint8_t>& data)
 
         if (++j == bytesPerBlock) {
             d_rep.push(block);
-            j = 0;
+            j     = 0;
             block = 0;
         }
     }
@@ -4622,6 +4618,119 @@ void AbstractIntegerQuantity::import(const bsl::vector<bsl::uint8_t>& data)
     }
 
     d_rep.normalize();
+}
+
+void AbstractIntegerQuantity::encode(AbstractIntegerSign::Value sign, 
+                                     bsl::vector<bsl::uint8_t>* result) const
+{
+    result->clear();
+
+    if (d_rep.isZero()) {
+        result->push_back(0);
+    }
+    else if (sign == AbstractIntegerSign::e_POSITIVE) {
+        if (d_rep.isOne()) {
+            result->push_back(0x01);
+        }
+        else {
+            bsl::size_t blockCount = d_rep.size();
+
+            for (bsl::size_t i = blockCount - 1; i < blockCount; --i) {
+                AbstractIntegerRepresentation::Block value = d_rep.get(i);
+
+                AbstractIntegerRepresentation::Block bigEndianValue = 
+                    BSLS_BYTEORDER_HOST_TO_BE(value);
+
+                const bsl::uint8_t* bigEndianByteArray =
+                    reinterpret_cast<const bsl::uint8_t*>(&bigEndianValue);
+
+                const bsl::uint8_t* bigEndianByteArrayEnd = 
+                    bigEndianByteArray + sizeof bigEndianValue;
+
+                bsl::size_t bigEndianByteArraySize = 
+                    bigEndianByteArrayEnd - bigEndianByteArray;
+
+                if (result->empty()) {
+                    bsl::size_t numSkipped = 0;
+                    for (bsl::size_t i = 0; i < sizeof bigEndianValue; ++i) {
+                        const bsl::uint8_t bigEndianByte = bigEndianByteArray[i];
+
+                        if (bigEndianByte == 0x00) {
+                            ++numSkipped;
+                        }
+                        else {
+                            break;
+                        }
+                    }
+
+                    bigEndianByteArray     += numSkipped;
+                    bigEndianByteArraySize -= numSkipped;
+
+                    if (bigEndianByteArraySize > 0) {
+                        const bsl::uint8_t bigEndianByte = bigEndianByteArray[0];
+                        if ((bigEndianByte & 0x80) != 0) {
+                            result->push_back(0x00);
+                        }
+                    }
+                }
+
+                for (bsl::size_t i = 0; i < bigEndianByteArraySize; ++i) {
+                    const bsl::uint8_t bigEndianByte = bigEndianByteArray[i];
+                    result->push_back(bigEndianByte);
+                }
+            }
+        }
+    }
+    else {
+        if (d_rep.isOne()) {
+            result->push_back(0xFF);
+        }
+        else {
+            bsl::size_t blockCount = d_rep.size();
+
+            for (bsl::size_t i = blockCount - 1; i < blockCount; --i) {
+                AbstractIntegerRepresentation::Block value = d_rep.get(i);
+
+                value = ~value;
+                value += 1;
+
+                AbstractIntegerRepresentation::Block bigEndianValue = 
+                    BSLS_BYTEORDER_HOST_TO_BE(value);
+
+                const bsl::uint8_t* bigEndianByteArray =
+                    reinterpret_cast<const bsl::uint8_t*>(&bigEndianValue);
+
+                const bsl::uint8_t* bigEndianByteArrayEnd = 
+                    bigEndianByteArray + sizeof bigEndianValue;
+
+                bsl::size_t bigEndianByteArraySize = 
+                    bigEndianByteArrayEnd - bigEndianByteArray;
+
+                if (result->empty()) {
+                    bsl::size_t numSkipped = 0;
+                    for (bsl::size_t i = 0; i < sizeof bigEndianValue - 1; ++i) {
+                        const bsl::uint8_t bigEndianByte = bigEndianByteArray[i];
+                        const bsl::uint8_t bigEndianByteNext = bigEndianByteArray[i + 1];
+
+                        if ((bigEndianByte == 0xFF) && ((bigEndianByteNext & 0x80) != 0)) {
+                            ++numSkipped;
+                        }
+                        else {
+                            break;
+                        }
+                    }
+
+                    bigEndianByteArray     += numSkipped;
+                    bigEndianByteArraySize -= numSkipped;
+                }
+
+                for (bsl::size_t i = 0; i < bigEndianByteArraySize; ++i) {
+                    const bsl::uint8_t bigEndianByte = bigEndianByteArray[i];
+                    result->push_back(bigEndianByte);
+                }
+            }
+        }
+    }
 }
 
 AbstractIntegerQuantity& AbstractIntegerQuantity::assign(short value)
@@ -5495,7 +5604,7 @@ bool AbstractInteger::parse(const bsl::string_view& text)
     return d_magnitude.parse(&d_sign, text);
 }
 
-void AbstractInteger::import(const bsl::vector<bsl::uint8_t>& data)
+void AbstractInteger::decode(const bsl::vector<bsl::uint8_t>& data)
 {
     this->reset();
 
@@ -5504,7 +5613,7 @@ void AbstractInteger::import(const bsl::vector<bsl::uint8_t>& data)
     }
 
     if ((data[0] & 0x80) == 0) {
-        d_magnitude.import(data);
+        d_magnitude.decode(data);
         return;
     }
 
@@ -5519,10 +5628,10 @@ void AbstractInteger::import(const bsl::vector<bsl::uint8_t>& data)
     }
 
     AbstractIntegerQuantity u;
-    u.import(ud);
+    u.decode(ud);
 
     AbstractIntegerQuantity v;
-    v.import(vd);
+    v.decode(vd);
 
     BSLS_ASSERT_OPT(v.compare(u) > 0);
 
@@ -5531,6 +5640,11 @@ void AbstractInteger::import(const bsl::vector<bsl::uint8_t>& data)
 
     d_magnitude.swap(w);
     d_sign = AbstractIntegerSign::e_NEGATIVE;
+}
+
+void AbstractInteger::encode(bsl::vector<bsl::uint8_t>* result) const
+{
+    d_magnitude.encode(d_sign, result);
 }
 
 AbstractInteger& AbstractInteger::assign(short value)
@@ -6484,18 +6598,17 @@ void AbstractIntegerUtil::divide(AbstractInteger*       quotient,
     remainder->normalize();
 }
 
-void AbstractReal::compose(double*         value,
-                                   bsl::int64_t exponent,
-                                   bsl::int64_t mantissa,
-                                   bsl::int32_t sign)
+void AbstractReal::compose(double*      value,
+                           bsl::int64_t exponent,
+                           bsl::int64_t mantissa,
+                           bsl::int32_t sign)
 {
     bsl::uint64_t number =
-              static_cast<bsl::uint64_t>(exponent) << k_DOUBLE_EXPONENT_SHIFT;
+        static_cast<bsl::uint64_t>(exponent) << k_DOUBLE_EXPONENT_SHIFT;
 
     number |= mantissa & k_DOUBLE_MANTISSA_MASK;
 
-    if (sign != 0)
-    {
+    if (sign != 0) {
         number |= k_DOUBLE_SIGN_MASK;
     }
 
@@ -6503,28 +6616,24 @@ void AbstractReal::compose(double*         value,
 }
 
 void AbstractReal::decompose(bsl::int32_t* exponent,
-                                    bsl::int64_t* mantissa,
-                                    bsl::int32_t* sign,
-                                    double        value)
+                             bsl::int64_t* mantissa,
+                             bsl::int32_t* sign,
+                             double        value)
 {
     bsl::uint64_t number = *reinterpret_cast<bsl::uint64_t*>(&value);
 
-    if ((number & k_DOUBLE_SIGN_MASK) != 0)
-    {
+    if ((number & k_DOUBLE_SIGN_MASK) != 0) {
         *sign = 1;
     }
-    else
-    {
+    else {
         *sign = 0;
     }
 
-    *exponent = static_cast<bsl::int32_t>((number & k_DOUBLE_EXPONENT_MASK)
-                >> k_DOUBLE_EXPONENT_SHIFT);
+    *exponent = static_cast<bsl::int32_t>((number & k_DOUBLE_EXPONENT_MASK) >>
+                                          k_DOUBLE_EXPONENT_SHIFT);
 
     *mantissa = number & k_DOUBLE_MANTISSA_MASK;
 }
-
-
 
 }  // close package namespace
 }  // close enterprise namespace
