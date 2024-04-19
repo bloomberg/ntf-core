@@ -781,8 +781,9 @@ ntsa::Error SocketOptionUtil::setTcpCongestionControl(
     const ntsa::TcpCongestionControl& algorithm)
 {
 #if defined(BSLS_PLATFORM_OS_LINUX)
-    const char*     optValue = algorithm.getAlgorithmName();
-    const socklen_t optLen   = 16;
+    bsl::span<const char> name = algorithm.getAlgorithm();
+    const char*     optValue = name.data();
+    const socklen_t optLen   = name.size();
 
     const int rc =
         setsockopt(socket, IPPROTO_TCP, TCP_CONGESTION, optValue, optLen);
@@ -1286,24 +1287,19 @@ ntsa::Error SocketOptionUtil::getTcpCongestionControl(
     ntsa::Handle                socket)
 {
 #if defined(BSLS_PLATFORM_OS_LINUX)
-
-    char optionValue[ntsa::TcpCongestionControl::TCP_CA_NAME_MAX + 1];
+    enum {e_BUFFER_SIZE = 64};
+    char optionValue[e_BUFFER_SIZE];
     bsl::fill(optionValue,
-              optionValue + ntsa::TcpCongestionControl::TCP_CA_NAME_MAX + 1,
+              optionValue + e_BUFFER_SIZE,
               '\0');
 
-    socklen_t optionLength = static_cast<socklen_t>(sizeof(optionValue));
+    socklen_t optionLength = static_cast<socklen_t>(sizeof(optionValue) - 1);
 
     const int rc = getsockopt(socket,
                               IPPROTO_TCP,
                               TCP_CONGESTION,
                               optionValue,
                               &optionLength);
-
-    BSLS_ASSERT(
-        optionLength <=
-        ntsa::TcpCongestionControl::
-            TCP_CA_NAME_MAX);  //ensure that there is always '\0' in the end
 
     if (rc != 0) {
         return ntsa::Error(errno);
