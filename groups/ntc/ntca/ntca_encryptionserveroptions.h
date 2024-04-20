@@ -125,6 +125,26 @@ class EncryptionServerOptions
     /// to the specified 'authorityDirectory'.
     void setAuthorityDirectory(const bsl::string& authorityDirectory);
 
+    /// Set the encoded identity data to the specified 'resourceData'. Note
+    /// that the effect of calling this function is identical to simply calling
+    /// 'addResourceData'.
+    void setIdentityData(const bsl::vector<char>& resourceData);
+
+    /// Set the path to the encoded identity data on disk to the specified
+    /// 'resourcePath'. Note that the effect of calling this function is
+    /// identical to simply calling 'addResourcePath'.
+    void setIdentityFile(const bsl::string& resourcePath);
+
+    /// Set the encoded private key data to the specified 'resourceData'. Note
+    /// that the effect of calling this function is identical to simply calling
+    /// 'addResourceData'.
+    void setPrivateKeyData(const bsl::vector<char>& resourceData);
+
+    /// Set the path to the encoded private key data on disk to the specified
+    /// 'resourcePath'. Note that the effect of calling this function is
+    /// identical to simply calling 'addResourcePath'.
+    void setPrivateKeyFile(const bsl::string& resourcePath);
+
     /// Add the specified encoded 'resource' to contribute an optional
     /// private key, optional certificate, and optional list of trusted
     /// certificate authorities.

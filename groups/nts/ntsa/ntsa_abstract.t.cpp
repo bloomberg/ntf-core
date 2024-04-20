@@ -79,7 +79,7 @@ using namespace BloombergLP;
             reinterpret_cast<const char*>(&(found).front()),                  \
             static_cast<int>((found).size()));                                \
                                                                               \
-        NTSCFG_TEST_LOG_DEBUG << "Mismatched encoding for " << data.d_value   \
+        NTSCFG_TEST_LOG_DEBUG << "Mismatched encoding for " << (value)        \
                               << "\nE: " << ess.str() << "\nF: " << fss.str() \
                               << NTSCFG_TEST_LOG_END;                         \
     } while (false)
@@ -1153,14 +1153,12 @@ NTSCFG_TEST_CASE(13)
             dataVector.push_back(EncodingData(k_DER, sizeof k_DER, "2"));
         }
 
-
         {
             // CONSTRUCTED { INTEGER(-2) }
             const bsl::uint8_t k_DER[] = {0x30, 0x03, 0x02, 0x01, 0xfe};
 
             dataVector.push_back(EncodingData(k_DER, sizeof k_DER, "-2"));
         }
-
 
         {
             // CONSTRUCTED { INTEGER(3) }
@@ -1315,6 +1313,98 @@ NTSCFG_TEST_CASE(13)
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
+NTSCFG_TEST_CASE(14)
+{
+    // Test abstract object identifier codec
+
+    ntscfg::TestAllocator ta;
+    {
+        ntsa::Error error;
+
+        const bsl::uint8_t k_ENCODING[] = {
+            0x06, 0x21, 0x2a, 0x03, 0x04, 0x81, 0x7e, 0x81, 0x7f,
+            0x82, 0x00, 0x83, 0xff, 0x7e, 0x83, 0xff, 0x7f, 0x84,
+            0x80, 0x00, 0x8f, 0xff, 0xff, 0xff, 0x7e, 0x8f, 0xff,
+            0xff, 0xff, 0x7f, 0x90, 0x80, 0x80, 0x80, 0x00};
+
+        bdlsb::FixedMemInStreamBuf isb(
+            reinterpret_cast<const char*>(k_ENCODING),
+            sizeof k_ENCODING);
+
+        ntsa::AbstractSyntaxDecoder decoder(&isb, &ta);
+
+        ntsa::AbstractObjectIdentifier value(&ta);
+
+        ntsa::AbstractSyntaxDecoderFrame decoderFrame;
+        error = decoder.decodeContext(&decoderFrame);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_LOG_DEBUG << "Context = " << decoderFrame
+                              << NTSCFG_TEST_LOG_END;
+
+        NTSCFG_TEST_EQ(decoderFrame.tagClass(),
+                       ntsa::AbstractSyntaxTagClass::e_UNIVERSAL);
+
+        NTSCFG_TEST_EQ(decoderFrame.tagType(),
+                       ntsa::AbstractSyntaxTagType::e_PRIMITIVE);
+
+        NTSCFG_TEST_EQ(decoderFrame.length().has_value(), true);
+
+        error = decoder.decodePrimitiveValue(&value);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_LOG_DEBUG << "Value = " << value << NTSCFG_TEST_LOG_END;
+
+        NTSCFG_TEST_EQ(value.size(), 13);
+
+        NTSCFG_TEST_EQ(value.get(0), 1);
+        NTSCFG_TEST_EQ(value.get(1), 2);
+        NTSCFG_TEST_EQ(value.get(2), 3);
+        NTSCFG_TEST_EQ(value.get(3), 4);
+        NTSCFG_TEST_EQ(value.get(4), 254);
+        NTSCFG_TEST_EQ(value.get(5), 255);
+        NTSCFG_TEST_EQ(value.get(6), 256);
+        NTSCFG_TEST_EQ(value.get(7), 65534);
+        NTSCFG_TEST_EQ(value.get(8), 65535);
+        NTSCFG_TEST_EQ(value.get(9), 65536);
+        NTSCFG_TEST_EQ(value.get(10), 4294967294);
+        NTSCFG_TEST_EQ(value.get(11), 4294967295);
+        NTSCFG_TEST_EQ(value.get(12), 4294967296);
+
+        error = decoder.decodeContextComplete();
+        NTSCFG_TEST_OK(error);
+
+        bdlsb::MemOutStreamBuf osb(&ta);
+
+        ntsa::AbstractSyntaxEncoder encoder(&osb, &ta);
+
+        error = encoder.encodePrimitiveValue(value);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_GT(osb.length(), 0);
+        NTSCFG_TEST_NE(osb.data(), 0);
+
+        bsl::vector<bsl::uint8_t> encoding(
+            reinterpret_cast<const bsl::uint8_t*>(osb.data()),
+            reinterpret_cast<const bsl::uint8_t*>(osb.data()) + osb.length());
+
+        bsl::vector<bsl::uint8_t> expectedEncoding(
+            reinterpret_cast<const bsl::uint8_t*>(k_ENCODING),
+            reinterpret_cast<const bsl::uint8_t*>(k_ENCODING) +
+                sizeof k_ENCODING);
+
+        bool sameEncoding = encoding == expectedEncoding;
+        if (!sameEncoding) {
+            NTSA_ABSTRACT_TEST_LOG_ENCODING_MISMATCH(value,
+                                                     expectedEncoding,
+                                                     encoding);
+        }
+
+        NTSCFG_TEST_TRUE(sameEncoding);
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
 NTSCFG_TEST_DRIVER
 {
     NTSCFG_TEST_REGISTER(1);  // Test prerequisites
@@ -1333,5 +1423,7 @@ NTSCFG_TEST_DRIVER
 
     NTSCFG_TEST_REGISTER(12);  // Test hardware signed integer codec
     NTSCFG_TEST_REGISTER(13);  // Test abstract signed integer codec
+
+    NTSCFG_TEST_REGISTER(14);  // Test abstract object identifier codec
 }
 NTSCFG_TEST_DRIVER_END;

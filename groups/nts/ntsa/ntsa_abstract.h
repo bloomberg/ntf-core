@@ -476,22 +476,28 @@ class AbstractSyntaxEncoderFrame
     /// Set the tag number to the specified 'value'.
     void setTagNumber(bsl::size_t value);
 
-    /// Write the specified 'data' byte to the content of this frame.
+    /// Write the specified 'data' byte to the content of this frame. Return
+    /// the error.
     ntsa::Error writeHeader(bsl::uint8_t data);
 
     /// Write the specified 'data' having the specified 'size' to the content
-    /// of this frame.
+    /// of this frame. Return the error.
     ntsa::Error writeHeader(const void* data, bsl::size_t size);
 
-    /// Write the specified 'data' byte to the content of this frame.
+    /// Write the specified 'data' byte to the content of this frame. Return
+    /// the error.
     ntsa::Error writeContent(bsl::uint8_t data);
 
     /// Write the specified 'data' having the specified 'size' to the content
-    /// of this frame.
+    /// of this frame. Return the error.
     ntsa::Error writeContent(const void* data, bsl::size_t size);
 
+    /// Write the base-128 encoding of the specified 'value' to the content
+    /// of this frame. Return the error.
+    ntsa::Error encodeContentBase128(bsl::uint64_t value);
+
     /// Synchronize the frame with its children, or its data if no children are
-    /// defined.. Append the
+    /// defined. Return the error.
     ntsa::Error synchronize(bsl::size_t* length);
 
     /// Write the frame data and the frame data of all children, in depth-first
@@ -570,50 +576,82 @@ class AbstractSyntaxEncoder
     /// Destroy this object.
     ~AbstractSyntaxEncoder();
 
+    /// Begin encoding a new construction having the specified 'tagClass',
+    /// 'tagType', and 'tagNumber'. Return the error.
     ntsa::Error enterFrame(AbstractSyntaxTagClass::Value  tagClass,
                            AbstractSyntaxTagType::Value   tagType,
                            AbstractSyntaxTagNumber::Value tagNumber);
 
+    /// Begin encoding a new construction having the specified 'tagClass',
+    /// 'tagType', and 'tagNumber'. Return the error.
     ntsa::Error enterFrame(AbstractSyntaxTagClass::Value tagClass,
                            AbstractSyntaxTagType::Value  tagType,
                            bsl::size_t                   tagNumber);
 
+    /// Encode a NULL primitive. Return the error.
     ntsa::Error encodePrimitiveNull();
 
-    ntsa::Error encodePrimitiveEnd();
-
+    /// Encode a BOOLEAN primitive having the specified 'value'. Return the
+    /// error.
     ntsa::Error encodePrimitiveValue(bool value);
 
+    /// Encode an INTEGER primitive having the specified 'value'. Return the
+    /// error.
     ntsa::Error encodePrimitiveValue(short value);
 
+    /// Encode an INTEGER primitive having the specified 'value'. Return the
+    /// error.
     ntsa::Error encodePrimitiveValue(unsigned short value);
 
+    /// Encode an INTEGER primitive having the specified 'value'. Return the
+    /// error.
     ntsa::Error encodePrimitiveValue(int value);
 
+    /// Encode an INTEGER primitive having the specified 'value'. Return the
+    /// error.
     ntsa::Error encodePrimitiveValue(unsigned int value);
 
+    /// Encode an INTEGER primitive having the specified 'value'. Return the
+    /// error.
     ntsa::Error encodePrimitiveValue(long value);
 
+    /// Encode an INTEGER primitive having the specified 'value'. Return the
+    /// error.
     ntsa::Error encodePrimitiveValue(unsigned long value);
 
+    /// Encode an INTEGER primitive having the specified 'value'. Return the
+    /// error.
     ntsa::Error encodePrimitiveValue(long long value);
 
+    /// Encode an INTEGER primitive having the specified 'value'. Return the
+    /// error.
     ntsa::Error encodePrimitiveValue(unsigned long long value);
 
+    /// Encode an INTEGER primitive having the specified 'value'. Return the
+    /// error.
     ntsa::Error encodePrimitiveValue(const AbstractInteger& value);
 
-    ntsa::Error encodePrimitiveValue(float value);
-
-    ntsa::Error encodePrimitiveValue(double value);
-
+    /// Encode a UTF8 STRING primitive having the specified 'value'. Return the
+    /// error.
     ntsa::Error encodePrimitiveValue(const bsl::string& value);
 
+    /// Encode a string primitive having the specified 'value'. Return the
+    /// error.
     ntsa::Error encodePrimitiveValue(const AbstractString& value);
 
+    /// Encode a UTC TIME or GENERALIZED TIME primitive having the specified
+    /// 'value'. Return the error.
     ntsa::Error encodePrimitiveValue(const bdlt::Datetime& value);
 
+    /// Encode a UTC TIME or GENERALIZED TIME primitive having the specified
+    /// 'value'. Return the error.
     ntsa::Error encodePrimitiveValue(const bdlt::DatetimeTz& value);
 
+    /// Encode an OBJECT IDENTIFIER primitive having the specified 'value'.
+    /// Return the error.
+    ntsa::Error encodePrimitiveValue(const AbstractObjectIdentifier& value);
+
+    // Complete encoding the current construction. Return the error.
     ntsa::Error leaveFrame();
 
     /// Return the configuration.
@@ -633,7 +671,7 @@ class AbstractSyntaxEncoderUtil
 {
   private:
     /// Return the number of significant bits in the specified 'value'.
-    static bsl::size_t numSignificantBits(bsl::size_t value);
+    static bsl::size_t numSignificantBits(bsl::uint64_t value);
 
   public:
     /// Write the specified literal 'data' byte to the specified 'destination'.
@@ -648,56 +686,35 @@ class AbstractSyntaxEncoderUtil
 
     /// Write the encoding of the specified 'tagClass', 'tagType', and
     /// 'tagNumber' to the specified 'destination'. Return the error.
-    static ntsa::Error encodeContentTag(
-        bsl::streambuf*                destination,
-        AbstractSyntaxTagClass::Value  tagClass,
-        AbstractSyntaxTagType::Value   tagType,
-        AbstractSyntaxTagNumber::Value tagNumber);
+    static ntsa::Error encodeTag(bsl::streambuf*                destination,
+                                 AbstractSyntaxTagClass::Value  tagClass,
+                                 AbstractSyntaxTagType::Value   tagType,
+                                 AbstractSyntaxTagNumber::Value tagNumber);
 
     /// Write the encoding of the specified 'tagClass', 'tagType', and
     /// 'tagNumber' to the specified 'destination'. Return the error.
-    static ntsa::Error encodeContentTag(bsl::streambuf* destination,
-                                        AbstractSyntaxTagClass::Value tagClass,
-                                        AbstractSyntaxTagType::Value  tagType,
-                                        bsl::size_t tagNumber);
+    static ntsa::Error encodeTag(bsl::streambuf*               destination,
+                                 AbstractSyntaxTagClass::Value tagClass,
+                                 AbstractSyntaxTagType::Value  tagType,
+                                 bsl::size_t                   tagNumber);
 
     /// Write the encoding of the specified definite 'length' to the specified
     /// 'destination'. Return the error.
-    static ntsa::Error encodeContentLength(bsl::streambuf* destination,
-                                           bsl::size_t     length);
+    static ntsa::Error encodeLength(bsl::streambuf* destination,
+                                    bsl::size_t     length);
 
     /// Write the encoding of the indefinite length marker to the specified
     /// 'destination'. Return the error.
-    static ntsa::Error encodeContentLengthIndefinite(
-        bsl::streambuf* destination);
+    static ntsa::Error encodeLengthIndefinite(bsl::streambuf* destination);
 
     /// Write the encoding of the end-of-content marker to the specified
     /// 'destination'. Return the error.
-    static ntsa::Error encodeContentEnd(bsl::streambuf* destination);
+    static ntsa::Error encodeTerminator(bsl::streambuf* destination);
 
     /// Write the base-128 encoding of the specified 'value' to the specified
     /// 'destination'. Return the error.
-    static ntsa::Error encodeBase128(bsl::streambuf* destination,
-                                     bsl::size_t     value);
-
-    /// Write the base-128 encoding of the specified 'value' requiring the
-    /// specified known 'length' of the bytes to encode it to the specified
-    /// 'destination'. Return the error.
-    static ntsa::Error encodeBase128(bsl::streambuf* destination,
-                                     bsl::size_t     value,
-                                     bsl::size_t     length);
-
-    /// Write the base-256 encoding of the specified 'value' to the specified
-    /// 'destination'. Return the error.
-    static ntsa::Error encodeBase256(bsl::streambuf* destination,
-                                     bsl::size_t     value);
-
-    /// Write the base-256 encoding of the specified 'value' requiring the
-    /// specified known 'length' of the bytes to encode it to the specified
-    /// 'destination'. Return the error.
-    static ntsa::Error encodeBase256(bsl::streambuf* destination,
-                                     bsl::size_t     value,
-                                     bsl::size_t     length);
+    static ntsa::Error encodeIntegerBase128(bsl::streambuf* destination,
+                                            bsl::uint64_t   value);
 
     /// Synchronize the specified 'destination' with its underlying device.
     /// Return the error.
@@ -993,26 +1010,6 @@ class AbstractSyntaxDecoder
     AbstractSyntaxDecoder& operator=(const AbstractSyntaxDecoder&)
         BSLS_KEYWORD_DELETED;
 
-  private:
-    /// Read a single byte from the input buffer and load the byte read into
-    /// the specified 'result'. Return the error.
-    ntsa::Error read(bsl::uint8_t* result);
-
-    /// Read the specified 'size' number of bytes from the input buffer and
-    /// load the bytes read into the specified 'result'. Return the error.
-    ntsa::Error read(bsl::uint8_t* result, bsl::size_t size);
-
-    /// Decode the tag from the input buffer and load the class into the
-    /// the specified 'tagClass', the type into the specified 'tagType', and
-    /// the number into the specified 'number'. Return the error.
-    ntsa::Error decodeTag(ntsa::AbstractSyntaxTagClass::Value* tagClass,
-                          ntsa::AbstractSyntaxTagType::Value*  tagType,
-                          bsl::size_t*                         tagNumber);
-
-    /// Decode the length from the input buffer and load it into the specified
-    /// 'result'. Return the error.
-    ntsa::Error decodeLength(bdlb::NullableValue<bsl::size_t>* result);
-
   public:
     /// Create a new ASN.1 decoder from the specified 'buffer'. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
@@ -1119,16 +1116,6 @@ class AbstractSyntaxDecoder
     /// into the specified 'result'. Return the error.
     ntsa::Error decodePrimitiveValue(AbstractInteger* result);
 
-    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
-    /// REAL according to the top of the context stack and load the result
-    /// into the specified 'result'. Return the error.
-    ntsa::Error decodePrimitiveValue(float* result);
-
-    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
-    /// REAL according to the top of the context stack and load the result
-    /// into the specified 'result'. Return the error.
-    ntsa::Error decodePrimitiveValue(double* result);
-
     /// Decode a value of tag class UNIVERSAL type PRIMITIVE whose tag number
     /// is either VISIBLE_STRING, PRINTABLE_STRING, or UTF8_STRING according to
     /// the top of the context stack and load the result into the specified
@@ -1171,6 +1158,44 @@ class AbstractSyntaxDecoder
     bsl::streambuf* buffer() const;
 };
 
+/// Provide an Abstract Syntax Notation (ASN.1) decoder utilities.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntsa_data
+class AbstractSyntaxDecoderUtil
+{
+  public:
+    /// Read a single byte from the input buffer and load the byte read into
+    /// the specified 'result'. Return the error.
+    static ntsa::Error read(bsl::uint8_t* result, bsl::streambuf* source);
+
+    /// Read the specified 'size' number of bytes from the input buffer and
+    /// load the bytes read into the specified 'result'. Return the error.
+    static ntsa::Error read(void*           result,
+                            bsl::size_t     size,
+                            bsl::streambuf* source);
+
+    /// Decode the tag from the input buffer and load the class into the
+    /// the specified 'tagClass', the type into the specified 'tagType', and
+    /// the number into the specified 'number'. Return the error.
+    static ntsa::Error decodeTag(ntsa::AbstractSyntaxTagClass::Value* tagClass,
+                                 ntsa::AbstractSyntaxTagType::Value*  tagType,
+                                 bsl::size_t*    tagNumber,
+                                 bsl::streambuf* source);
+
+    /// Decode the length from the input buffer and load it into the specified
+    /// 'result'. Return the error.
+    static ntsa::Error decodeLength(bdlb::NullableValue<bsl::size_t>* result,
+                                    bsl::streambuf*                   source);
+
+    // Load into the specified 'result' an integer encoded in base-128 from
+    // from the specified 'source'. Return the error.
+    static ntsa::Error decodeIntegerBase128(bsl::uint64_t*  result,
+                                            bsl::streambuf* source);
+};
+
 /// Provide an Abstract Syntax Notation (ASN.1) object identifier.
 ///
 /// @par Thread Safety
@@ -1179,7 +1204,7 @@ class AbstractSyntaxDecoder
 /// @ingroup module_ntsa_data
 class AbstractObjectIdentifier
 {
-    bsl::vector<bsl::uint8_t> d_data;
+    bsl::vector<bsl::uint64_t> d_data;
 
   public:
     /// Create a new ASN.1 object identifier. Optionally specify a
@@ -1208,21 +1233,21 @@ class AbstractObjectIdentifier
     void resize(bsl::size_t size);
 
     /// Append the specified 'value' to the end of the data.
-    void append(bsl::uint8_t value);
+    void append(bsl::uint64_t value);
 
     // Append the specified 'data' having the specified 'size'.
-    void append(const bsl::uint8_t* data, bsl::size_t size);
+    void append(const bsl::uint64_t* data, bsl::size_t size);
 
     /// Set the data at the specified 'index' to the specified 'value'.
-    void set(bsl::size_t index, bsl::uint8_t value);
+    void set(bsl::size_t index, bsl::uint64_t value);
 
     /// Return the data at the specified 'index'.
-    bsl::uint8_t get(bsl::size_t index) const;
+    bsl::uint64_t get(bsl::size_t index) const;
 
-    /// Return the data.
-    const bsl::uint8_t* data() const;
+    /// Return the array of integers in the identifier.
+    const bsl::uint64_t* data() const;
 
-    /// Return the number of bytes of data.
+    /// Return the number of integers in the identifier.
     bsl::size_t size() const;
 
     /// Return true if this object has the same value as the specified
@@ -2006,7 +2031,7 @@ class AbstractIntegerQuantity
 
     /// Encode this object as an ASN.1 integer having the specified 'sign' to
     /// the specified 'result'.
-    void encode(AbstractIntegerSign::Value sign, 
+    void encode(AbstractIntegerSign::Value sign,
                 bsl::vector<bsl::uint8_t>* result) const;
 
     /// Assign the specified 'value' to this object. Return a reference to this
@@ -3281,30 +3306,6 @@ void hashAppend(HASH_ALGORITHM& algorithm, const AbstractInteger& value)
 {
     value.hash(algorithm);
 }
-
-/// Provide arithmetic for signed floating point real numbers.
-///
-/// @par Thread Safety
-/// This class is thread safe.
-///
-/// @ingroup module_ntsa_data
-class AbstractReal
-{
-  public:
-    // Load into the specified 'value' the floating point value described by
-    // the specified 'exponent', 'mantissa', and 'sign' component parts.
-    static void compose(double*      value,
-                        bsl::int64_t exponent,
-                        bsl::int64_t mantissa,
-                        bsl::int32_t sign);
-
-    /// Load into the specified 'exponent', 'mantissa', and 'sign' the
-    /// specified floating point 'value' decomposed into its component parts.
-    static void decompose(bsl::int32_t* exponent,
-                          bsl::int64_t* mantissa,
-                          bsl::int32_t* sign,
-                          double        value);
-};
 
 }  // close package namespace
 }  // close enterprise namespace

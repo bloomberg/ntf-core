@@ -104,6 +104,28 @@ void EncryptionServerOptions::setAuthorityDirectory(
     d_authorityDirectory = authorityDirectory;
 }
 
+void EncryptionServerOptions::setIdentityData(
+        const bsl::vector<char>& resourceData)
+{
+    this->addResourceData(resourceData);
+}
+
+void EncryptionServerOptions::setIdentityFile(const bsl::string& resourcePath)
+{
+    this->addResourcePath(resourcePath);
+}
+
+void EncryptionServerOptions::setPrivateKeyData(
+        const bsl::vector<char>& resourceData)
+{
+    this->addResourceData(resourceData);
+}
+
+void EncryptionServerOptions::setPrivateKeyFile(const bsl::string& resourcePath)
+{
+    this->addResourcePath(resourcePath);
+}
+
 void EncryptionServerOptions::addResource(
     const ntca::EncryptionResource& resource)
 {
