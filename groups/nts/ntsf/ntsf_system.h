@@ -1509,7 +1509,7 @@ struct System {
     /// descriptions of all network adapters currently available on the
     /// system, which may be expensive; prefer to cache the results of this
     /// function when possible.
-//    static bool supportsIpv4();
+    static bool supportsIpv4();
 
     /// Return true if the current machine has any adapter assigned an
     /// IPv4 address that supports multicast, otherwise return false. Note
