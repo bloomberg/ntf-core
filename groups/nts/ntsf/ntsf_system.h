@@ -1509,7 +1509,7 @@ struct System {
     /// descriptions of all network adapters currently available on the
     /// system, which may be expensive; prefer to cache the results of this
     /// function when possible.
-    static bool supportsIpv4();
+//    static bool supportsIpv4();
 
     /// Return true if the current machine has any adapter assigned an
     /// IPv4 address that supports multicast, otherwise return false. Note
@@ -1562,6 +1562,11 @@ struct System {
     /// system, which may be expensive; prefer to cache the results of this
     /// function when possible.
     static bool supportsTransport(ntsa::Transport::Value transport);
+
+    /// Load into the specified `result` names of tcp congestion control
+    /// algorithms available for the process. Return the error.
+    static ntsa::Error getTcpCongestionControlAlgorithms(
+        bsl::vector<bsl::string>* result);
 
     /// Release the resources necessary for this library's implementation.
     static void exit();
