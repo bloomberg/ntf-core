@@ -1649,7 +1649,9 @@ void StreamSocket::privateFailConnectPart2(
         this->privateRetryConnect(self);
     }
 
-    this->moveAndExecute(&d_deferredCalls, ntci::Executor::Functor());
+    if (!d_deferredCalls.empty()) {
+        this->moveAndExecute(&d_deferredCalls, ntci::Executor::Functor());
+    }
     d_deferredCalls.clear();
 
     if (lock) {

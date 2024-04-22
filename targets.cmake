@@ -713,15 +713,19 @@ if (${NTF_BUILD_WITH_NTC})
         PRIVATE
     )
 
+    ntf_component(NAME ntcd_blobbufferfactory)
     ntf_component(NAME ntcd_datagramsocket)
+    ntf_component(NAME ntcd_datapool)
     ntf_component(NAME ntcd_datautil)
     ntf_component(NAME ntcd_encryption)
     ntf_component(NAME ntcd_listenersocket)
     ntf_component(NAME ntcd_machine)
     ntf_component(NAME ntcd_proactor)
     ntf_component(NAME ntcd_reactor)
+    ntf_component(NAME ntcd_resolver)
     ntf_component(NAME ntcd_streamsocket)
     ntf_component(NAME ntcd_simulation)
+    ntf_component(NAME ntcd_timer)
 
     ntf_package_end(NAME ntcd)
 

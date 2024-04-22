@@ -28,6 +28,8 @@ BSLS_IDENT("$Id: $")
 #include <bsl_string.h>
 #include <bsl_vector.h>
 
+#include <ntccfg_test.h>
+
 namespace BloombergLP {
 namespace ntcd {
 
@@ -50,7 +52,7 @@ class StreamSocket : public ntsi::StreamSocket
     bslma::Allocator*              d_allocator_p;
 
   private:
-    StreamSocket(const StreamSocket&) BSLS_KEYWORD_DELETED;
+                  StreamSocket(const StreamSocket&) BSLS_KEYWORD_DELETED;
     StreamSocket& operator=(const StreamSocket&) BSLS_KEYWORD_DELETED;
 
   public:
@@ -246,6 +248,57 @@ class StreamSocketFactory : public ntci::StreamSocketFactory
         const ntca::StreamSocketOptions& options,
         bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
 };
+
+NTF_MOCK_CLASS(StreamSocketMock, ntsi::StreamSocket)
+
+NTF_MOCK_METHOD_CONST(ntsa::Handle, handle)
+NTF_MOCK_METHOD(ntsa::Error, open, ntsa::Transport::Value)
+NTF_MOCK_METHOD(ntsa::Error, acquire, ntsa::Handle)
+NTF_MOCK_METHOD(ntsa::Handle, release)
+
+NTF_MOCK_METHOD(ntsa::Error, bind, const ntsa::Endpoint&, bool)
+NTF_MOCK_METHOD(ntsa::Error, bindAny, ntsa::Transport::Value, bool)
+NTF_MOCK_METHOD(ntsa::Error, connect, const ntsa::Endpoint&)
+
+NTF_MOCK_METHOD(ntsa::Error,
+                send,
+                ntsa::SendContext*,
+                const bdlbb::Blob&,
+                const ntsa::SendOptions&)
+NTF_MOCK_METHOD(ntsa::Error,
+                send,
+                ntsa::SendContext*,
+                const ntsa::Data&,
+                const ntsa::SendOptions&)
+
+NTF_MOCK_METHOD(ntsa::Error,
+                receive,
+                ntsa::ReceiveContext*,
+                bdlbb::Blob*,
+                const ntsa::ReceiveOptions&)
+NTF_MOCK_METHOD(ntsa::Error,
+                receive,
+                ntsa::ReceiveContext*,
+                ntsa::Data*,
+                const ntsa::ReceiveOptions&)
+
+NTF_MOCK_METHOD(ntsa::Error, receiveNotifications, ntsa::NotificationQueue*)
+NTF_MOCK_METHOD(ntsa::Error, shutdown, ntsa::ShutdownType::Value)
+NTF_MOCK_METHOD(ntsa::Error, unlink)
+NTF_MOCK_METHOD(ntsa::Error, close)
+NTF_MOCK_METHOD_CONST(ntsa::Error, sourceEndpoint, ntsa::Endpoint*)
+NTF_MOCK_METHOD_CONST(ntsa::Error, remoteEndpoint, ntsa::Endpoint*)
+NTF_MOCK_METHOD(ntsa::Error, setBlocking, bool)
+NTF_MOCK_METHOD(ntsa::Error, setOption, const ntsa::SocketOption&)
+
+NTF_MOCK_METHOD(ntsa::Error,
+                getOption,
+                ntsa::SocketOption*,
+                ntsa::SocketOptionType::Value)
+NTF_MOCK_METHOD(ntsa::Error, getLastError, ntsa::Error*)
+NTF_MOCK_METHOD_CONST(bsl::size_t, maxBuffersPerSend)
+NTF_MOCK_METHOD_CONST(bsl::size_t, maxBuffersPerReceive)
+NTF_MOCK_CLASS_END;
 
 }  // close package namespace
 }  // close enterprise namespace
