@@ -1029,7 +1029,7 @@ NTSCFG_TEST_CASE(12)
                 NTSCFG_TEST_EQ(contextOuter.tagType(),
                                ntsa::AbstractSyntaxTagType::e_CONSTRUCTED);
 
-                NTSCFG_TEST_EQ(contextOuter.length().has_value(), true);
+                NTSCFG_TEST_EQ(contextOuter.contentLength().has_value(), true);
 
                 {
                     ntsa::AbstractSyntaxDecoderFrame contextInner;
@@ -1045,7 +1045,7 @@ NTSCFG_TEST_CASE(12)
                     NTSCFG_TEST_EQ(contextInner.tagType(),
                                    ntsa::AbstractSyntaxTagType::e_PRIMITIVE);
 
-                    NTSCFG_TEST_EQ(contextInner.length().has_value(), true);
+                    NTSCFG_TEST_EQ(contextInner.contentLength().has_value(), true);
 
                     bsl::int32_t value =
                         bsl::numeric_limits<bsl::int32_t>::max();
@@ -1238,7 +1238,7 @@ NTSCFG_TEST_CASE(13)
                 NTSCFG_TEST_EQ(contextOuter.tagType(),
                                ntsa::AbstractSyntaxTagType::e_CONSTRUCTED);
 
-                NTSCFG_TEST_EQ(contextOuter.length().has_value(), true);
+                NTSCFG_TEST_EQ(contextOuter.contentLength().has_value(), true);
 
                 {
                     ntsa::AbstractSyntaxDecoderFrame contextInner;
@@ -1254,7 +1254,7 @@ NTSCFG_TEST_CASE(13)
                     NTSCFG_TEST_EQ(contextInner.tagType(),
                                    ntsa::AbstractSyntaxTagType::e_PRIMITIVE);
 
-                    NTSCFG_TEST_EQ(contextInner.length().has_value(), true);
+                    NTSCFG_TEST_EQ(contextInner.contentLength().has_value(), true);
 
                     error = decoder.decodePrimitiveValue(&value);
                     NTSCFG_TEST_OK(error);
@@ -1348,7 +1348,7 @@ NTSCFG_TEST_CASE(14)
         NTSCFG_TEST_EQ(decoderFrame.tagType(),
                        ntsa::AbstractSyntaxTagType::e_PRIMITIVE);
 
-        NTSCFG_TEST_EQ(decoderFrame.length().has_value(), true);
+        NTSCFG_TEST_EQ(decoderFrame.contentLength().has_value(), true);
 
         error = decoder.decodePrimitiveValue(&value);
         NTSCFG_TEST_OK(error);

@@ -46,7 +46,7 @@ namespace ntca {
 class EncryptionCertificateTemplate
 {
     bsl::size_t       d_value;
-    bslma::Allocator *d_allocator_p;
+    bslma::Allocator* d_allocator_p;
 
   public:
     /// Create a new certificate having the default
@@ -54,7 +54,7 @@ class EncryptionCertificateTemplate
     /// If 'basicAllocator' is 0, the currently installed default allocator
     /// is used.
     explicit EncryptionCertificateTemplate(
-                                  bslma::Allocator* basicAllocator = 0);
+        bslma::Allocator* basicAllocator = 0);
 
     /// Create a new certificate having the same value
     /// as the specified 'original' object. Optionally specify a
@@ -76,8 +76,14 @@ class EncryptionCertificateTemplate
     /// construction.
     void reset();
 
-    /// Set the value to the specified 'value'. 
+    /// Set the value to the specified 'value'.
     void setValue(bsl::size_t value);
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
 
     /// Return the value.
     bsl::size_t value() const;
@@ -115,7 +121,7 @@ class EncryptionCertificateTemplate
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionCertificate
-bsl::ostream& operator<<(bsl::ostream&                stream,
+bsl::ostream& operator<<(bsl::ostream&                        stream,
                          const EncryptionCertificateTemplate& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
@@ -147,12 +153,566 @@ bool operator<(const EncryptionCertificateTemplate& lhs,
 ///
 /// @related ntca::EncryptionCertificate
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, 
+void hashAppend(HASH_ALGORITHM&                      algorithm,
                 const EncryptionCertificateTemplate& value);
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm, 
+void hashAppend(HASH_ALGORITHM&                      algorithm,
                 const EncryptionCertificateTemplate& value)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, value.value());
+}
+
+
+
+
+
+
+
+
+
+/// Describe TODO.
+///
+/// @par Attributes
+/// This class is composed of the following attributes.
+///
+/// @li @b todo:
+/// TODO
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateVersion
+{
+    bsl::size_t       d_value;
+    bslma::Allocator* d_allocator_p;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificateVersion(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificateVersion(
+        const EncryptionCertificateVersion& original,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificateVersion();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificateVersion& operator=(
+        const EncryptionCertificateVersion& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Set the value to the specified 'value'.
+    void setValue(bsl::size_t value);
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return the value.
+    bsl::size_t value() const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificateVersion& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificateVersion& other) const;
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateVersion);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificate
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateVersion& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificate
+bool operator==(const EncryptionCertificateVersion& lhs,
+                const EncryptionCertificateVersion& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificate
+bool operator!=(const EncryptionCertificateVersion& lhs,
+                const EncryptionCertificateVersion& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificate
+bool operator<(const EncryptionCertificateVersion& lhs,
+               const EncryptionCertificateVersion& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificate
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateVersion& value);
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateVersion& value)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, value.value());
+}
+
+
+
+
+
+
+/// Describe TODO.
+///
+/// @par Attributes
+/// This class is composed of the following attributes.
+///
+/// @li @b todo:
+/// TODO
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateNameAttributeType
+{
+    bsl::size_t       d_value;
+    bslma::Allocator* d_allocator_p;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificateNameAttributeType(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificateNameAttributeType(
+        const EncryptionCertificateNameAttributeType& original,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificateNameAttributeType();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificateNameAttributeType& operator=(
+        const EncryptionCertificateNameAttributeType& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Set the value to the specified 'value'.
+    void setValue(bsl::size_t value);
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return the value.
+    bsl::size_t value() const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificateNameAttributeType& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificateNameAttributeType& other) const;
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateNameAttributeType);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificate
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateNameAttributeType& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificate
+bool operator==(const EncryptionCertificateNameAttributeType& lhs,
+                const EncryptionCertificateNameAttributeType& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificate
+bool operator!=(const EncryptionCertificateNameAttributeType& lhs,
+                const EncryptionCertificateNameAttributeType& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificate
+bool operator<(const EncryptionCertificateNameAttributeType& lhs,
+               const EncryptionCertificateNameAttributeType& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificate
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateNameAttributeType& value);
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateNameAttributeType& value)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, value.value());
+}
+
+
+
+
+
+/// Describe TODO.
+///
+/// @par Attributes
+/// This class is composed of the following attributes.
+///
+/// @li @b todo:
+/// TODO
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateNameAttribute
+{
+    bsl::size_t       d_value;
+    bslma::Allocator* d_allocator_p;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificateNameAttribute(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificateNameAttribute(
+        const EncryptionCertificateNameAttribute& original,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificateNameAttribute();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificateNameAttribute& operator=(
+        const EncryptionCertificateNameAttribute& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Set the value to the specified 'value'.
+    void setValue(bsl::size_t value);
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return the value.
+    bsl::size_t value() const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificateNameAttribute& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificateNameAttribute& other) const;
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateNameAttribute);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificate
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateNameAttribute& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificate
+bool operator==(const EncryptionCertificateNameAttribute& lhs,
+                const EncryptionCertificateNameAttribute& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificate
+bool operator!=(const EncryptionCertificateNameAttribute& lhs,
+                const EncryptionCertificateNameAttribute& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificate
+bool operator<(const EncryptionCertificateNameAttribute& lhs,
+               const EncryptionCertificateNameAttribute& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificate
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateNameAttribute& value);
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateNameAttribute& value)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, value.value());
+}
+
+
+/// Describe TODO.
+///
+/// @par Attributes
+/// This class is composed of the following attributes.
+///
+/// @li @b todo:
+/// TODO
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateName
+{
+    bsl::size_t       d_value;
+    bslma::Allocator* d_allocator_p;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificateName(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificateName(
+        const EncryptionCertificateName& original,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificateName();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificateName& operator=(
+        const EncryptionCertificateName& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Set the value to the specified 'value'.
+    void setValue(bsl::size_t value);
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return the value.
+    bsl::size_t value() const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificateName& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificateName& other) const;
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateName);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificate
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateName& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificate
+bool operator==(const EncryptionCertificateName& lhs,
+                const EncryptionCertificateName& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificate
+bool operator!=(const EncryptionCertificateName& lhs,
+                const EncryptionCertificateName& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificate
+bool operator<(const EncryptionCertificateName& lhs,
+               const EncryptionCertificateName& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificate
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateName& value);
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateName& value)
 {
     using bslh::hashAppend;
 
@@ -182,6 +742,1428 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
 
 
 
+
+
+
+
+
+/// Describe TODO.
+///
+/// @par Attributes
+/// This class is composed of the following attributes.
+///
+/// @li @b todo:
+/// TODO
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateValidity
+{
+    bdlt::DatetimeTz  d_from;
+    bdlt::DatetimeTz  d_thru;
+    bslma::Allocator* d_allocator_p;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificateValidity(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificateValidity(
+        const EncryptionCertificateValidity& original,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificateValidity();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificateValidity& operator=(
+        const EncryptionCertificateValidity& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Set the start time from which the certificate is valid to the
+    /// specified 'value'.
+    void setFrom(const bdlt::DatetimeTz& value);
+
+    /// Set the expiration time after which the certificate is no longer valid
+    /// to the specified 'value'.
+    void setThru(const bdlt::DatetimeTz& value);
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return the start time from which the certificate is valid.
+    const bdlt::DatetimeTz& from() const;
+
+    /// Return the expiration time after which the certificate is no longer
+    /// valid.
+    const bdlt::DatetimeTz& thru() const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificateValidity& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificateValidity& other) const;
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateValidity);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificate
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateValidity& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificate
+bool operator==(const EncryptionCertificateValidity& lhs,
+                const EncryptionCertificateValidity& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificate
+bool operator!=(const EncryptionCertificateValidity& lhs,
+                const EncryptionCertificateValidity& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificate
+bool operator<(const EncryptionCertificateValidity& lhs,
+               const EncryptionCertificateValidity& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificate
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateValidity& value);
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateValidity& value)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, value.from());
+    hashAppend(algorithm, value.thru());
+}
+
+
+
+
+
+
+
+
+/// Describe TODO.
+///
+/// @par Attributes
+/// This class is composed of the following attributes.
+///
+/// @li @b todo:
+/// TODO
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificatePublicKeyInfo
+{
+    bsl::size_t       d_value;
+    bslma::Allocator* d_allocator_p;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificatePublicKeyInfo(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificatePublicKeyInfo(
+        const EncryptionCertificatePublicKeyInfo& original,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificatePublicKeyInfo();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificatePublicKeyInfo& operator=(
+        const EncryptionCertificatePublicKeyInfo& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Set the value to the specified 'value'.
+    void setValue(bsl::size_t value);
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return the value.
+    bsl::size_t value() const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificatePublicKeyInfo& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificatePublicKeyInfo& other) const;
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificatePublicKeyInfo);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificate
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificatePublicKeyInfo& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificate
+bool operator==(const EncryptionCertificatePublicKeyInfo& lhs,
+                const EncryptionCertificatePublicKeyInfo& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificate
+bool operator!=(const EncryptionCertificatePublicKeyInfo& lhs,
+                const EncryptionCertificatePublicKeyInfo& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificate
+bool operator<(const EncryptionCertificatePublicKeyInfo& lhs,
+               const EncryptionCertificatePublicKeyInfo& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificate
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificatePublicKeyInfo& value);
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificatePublicKeyInfo& value)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, value.value());
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/// Describe TODO.
+///
+/// @par Attributes
+/// This class is composed of the following attributes.
+///
+/// @li @b todo:
+/// TODO
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateAlgorithm
+{
+    ntsa::AbstractObjectIdentifier d_identifier;
+    bslma::Allocator*              d_allocator_p;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificateAlgorithm(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificateAlgorithm(
+        const EncryptionCertificateAlgorithm& original,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificateAlgorithm();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificateAlgorithm& operator=(
+        const EncryptionCertificateAlgorithm& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Set the identifier to the specified 'value'.
+    void setIdentifier(const ntsa::AbstractObjectIdentifier& value);
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return the identifier.
+    const ntsa::AbstractObjectIdentifier& identifier() const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificateAlgorithm& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificateAlgorithm& other) const;
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateAlgorithm);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificate
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateAlgorithm& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificate
+bool operator==(const EncryptionCertificateAlgorithm& lhs,
+                const EncryptionCertificateAlgorithm& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificate
+bool operator!=(const EncryptionCertificateAlgorithm& lhs,
+                const EncryptionCertificateAlgorithm& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificate
+bool operator<(const EncryptionCertificateAlgorithm& lhs,
+               const EncryptionCertificateAlgorithm& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificate
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateAlgorithm& value);
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateAlgorithm& value)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, value.identifier());
+}
+
+
+
+
+
+
+
+
+
+
+/// Describe TODO.
+///
+/// @par Attributes
+/// This class is composed of the following attributes.
+///
+/// @li @b todo:
+/// TODO
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateSignature
+{
+    ntsa::AbstractBitSequence d_value;
+    bslma::Allocator*         d_allocator_p;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificateSignature(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificateSignature(
+        const EncryptionCertificateSignature& original,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificateSignature();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificateSignature& operator=(
+        const EncryptionCertificateSignature& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Set the value to the specified 'value'.
+    void setValue(const ntsa::AbstractBitSequence& value);
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return the value.
+    const ntsa::AbstractBitSequence& value() const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificateSignature& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificateSignature& other) const;
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateSignature);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificate
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateSignature& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificate
+bool operator==(const EncryptionCertificateSignature& lhs,
+                const EncryptionCertificateSignature& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificate
+bool operator!=(const EncryptionCertificateSignature& lhs,
+                const EncryptionCertificateSignature& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificate
+bool operator<(const EncryptionCertificateSignature& lhs,
+               const EncryptionCertificateSignature& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificate
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateSignature& value);
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateSignature& value)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, value.value());
+}
+
+
+
+
+
+
+
+/// Describe TODO.
+///
+/// @par Attributes
+/// This class is composed of the following attributes.
+///
+/// @li @b todo:
+/// TODO
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateExtensionType
+{
+    bsl::size_t       d_value;
+    bslma::Allocator* d_allocator_p;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificateExtensionType(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificateExtensionType(
+        const EncryptionCertificateExtensionType& original,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificateExtensionType();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificateExtensionType& operator=(
+        const EncryptionCertificateExtensionType& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Set the value to the specified 'value'.
+    void setValue(bsl::size_t value);
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return the value.
+    bsl::size_t value() const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificateExtensionType& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificateExtensionType& other) const;
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateExtensionType);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificate
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateExtensionType& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificate
+bool operator==(const EncryptionCertificateExtensionType& lhs,
+                const EncryptionCertificateExtensionType& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificate
+bool operator!=(const EncryptionCertificateExtensionType& lhs,
+                const EncryptionCertificateExtensionType& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificate
+bool operator<(const EncryptionCertificateExtensionType& lhs,
+               const EncryptionCertificateExtensionType& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificate
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateExtensionType& value);
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateExtensionType& value)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, value.value());
+}
+
+
+
+
+
+
+
+
+
+
+/// Describe TODO.
+///
+/// @par Attributes
+/// This class is composed of the following attributes.
+///
+/// @li @b todo:
+/// TODO
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateExtensionValue
+{
+    bsl::size_t       d_value;
+    bslma::Allocator* d_allocator_p;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificateExtensionValue(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificateExtensionValue(
+        const EncryptionCertificateExtensionValue& original,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificateExtensionValue();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificateExtensionValue& operator=(
+        const EncryptionCertificateExtensionValue& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Set the value to the specified 'value'.
+    void setValue(bsl::size_t value);
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return the value.
+    bsl::size_t value() const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificateExtensionValue& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificateExtensionValue& other) const;
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateExtensionValue);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificate
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateExtensionValue& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificate
+bool operator==(const EncryptionCertificateExtensionValue& lhs,
+                const EncryptionCertificateExtensionValue& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificate
+bool operator!=(const EncryptionCertificateExtensionValue& lhs,
+                const EncryptionCertificateExtensionValue& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificate
+bool operator<(const EncryptionCertificateExtensionValue& lhs,
+               const EncryptionCertificateExtensionValue& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificate
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateExtensionValue& value);
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateExtensionValue& value)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, value.value());
+}
+
+
+
+
+
+
+
+
+
+
+
+/// Describe TODO.
+///
+/// @par Attributes
+/// This class is composed of the following attributes.
+///
+/// @li @b todo:
+/// TODO
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateExtension
+{
+    bsl::size_t       d_value;
+    bslma::Allocator* d_allocator_p;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificateExtension(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificateExtension(
+        const EncryptionCertificateExtension& original,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificateExtension();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificateExtension& operator=(
+        const EncryptionCertificateExtension& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Set the value to the specified 'value'.
+    void setValue(bsl::size_t value);
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return the value.
+    bsl::size_t value() const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificateExtension& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificateExtension& other) const;
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateExtension);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificate
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateExtension& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificate
+bool operator==(const EncryptionCertificateExtension& lhs,
+                const EncryptionCertificateExtension& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificate
+bool operator!=(const EncryptionCertificateExtension& lhs,
+                const EncryptionCertificateExtension& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificate
+bool operator<(const EncryptionCertificateExtension& lhs,
+               const EncryptionCertificateExtension& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificate
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateExtension& value);
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateExtension& value)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, value.value());
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/// Describe TODO.
+///
+/// @par Attributes
+/// This class is composed of the following attributes.
+///
+/// @li @b todo:
+/// TODO
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateExtensionList
+{
+    bsl::size_t       d_value;
+    bslma::Allocator* d_allocator_p;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificateExtensionList(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificateExtensionList(
+        const EncryptionCertificateExtensionList& original,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificateExtensionList();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificateExtensionList& operator=(
+        const EncryptionCertificateExtensionList& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Set the value to the specified 'value'.
+    void setValue(bsl::size_t value);
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return the value.
+    bsl::size_t value() const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificateExtensionList& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificateExtensionList& other) const;
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateExtensionList);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificate
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateExtensionList& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificate
+bool operator==(const EncryptionCertificateExtensionList& lhs,
+                const EncryptionCertificateExtensionList& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificate
+bool operator!=(const EncryptionCertificateExtensionList& lhs,
+                const EncryptionCertificateExtensionList& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificate
+bool operator<(const EncryptionCertificateExtensionList& lhs,
+               const EncryptionCertificateExtensionList& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificate
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateExtensionList& value);
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateExtensionList& value)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, value.value());
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/// Describe a certificate of identity and authenticity as used in public key
+/// cryptography.
+///
+/// @par Attributes
+/// This class is composed of the following attributes.
+///
+/// @li @b serialNumber:
+/// The unique number assigned to the certificate.
+///
+/// @li @b startTime:
+/// The starting time from which the certificate is valid.
+///
+/// @li @b expirationTime:
+/// The time at which the certificate expires.
+///
+/// @li @b authority:
+/// The flag that indicates the certificate is a Certficate Authority (CA).
+///
+/// @li @b hosts:
+/// The list of domain names for which the certificate is valid (i.e., the
+/// subject alternative names.)
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateEntity
+{
+    typedef ntsa::AbstractBitSequence                UniqueIdentifier;
+    typedef ntca::EncryptionCertificateExtension     Extension;
+    typedef ntca::EncryptionCertificateExtensionList ExtensionList;
+
+    ntca::EncryptionCertificateVersion       d_version;
+    ntsa::AbstractInteger                    d_serialNumber;
+    ntca::EncryptionCertificateAlgorithm     d_signatureAlgorithm;
+    ntca::EncryptionCertificateName          d_issuer;
+    ntca::EncryptionCertificateValidity      d_validity;
+    ntca::EncryptionCertificateName          d_subject;
+    ntca::EncryptionCertificatePublicKeyInfo d_subjectPublicKeyInfo;
+    bdlb::NullableValue<UniqueIdentifier>    d_issuerUniqueId;
+    bdlb::NullableValue<UniqueIdentifier>    d_subjectUniqueId;
+    bdlb::NullableValue<ExtensionList>       d_extensionList;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificateEntity(bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificateEntity(const EncryptionCertificateEntity& original,
+                          bslma::Allocator*            basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificateEntity();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificateEntity& operator=(const EncryptionCertificateEntity& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    // MRM
+#if 0
+    /// Set the serial number to the specified 'value'.
+    void setSerialNumber(int value);
+
+    /// Set the start time from which the certificate is valid to the
+    /// specified 'value'.
+    void setStartTime(const bdlt::DatetimeTz& value);
+
+    /// Set the expiration time at which the certificate is no longer valid
+    /// to the specified 'value'.
+    void setExpirationTime(const bdlt::DatetimeTz& value);
+
+    /// Set the flag that indicates the certificate is a certificate
+    /// authority according to the specified 'value'.
+    void setAuthority(bool value);
+
+    /// Set the domain names for which the certificate is valid to the
+    /// specified 'value'.
+    void setHostList(const bsl::vector<bsl::string>& value);
+
+    /// Add the specified 'value' to the list of domain names for which the
+    /// certificate is valid.
+    void addHost(const bsl::string& value);
+#endif
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    // MRM
+#if 0
+    /// Return the serial number.
+    int serialNumber() const;
+
+    /// Return the start time from which the certificate is valid.
+    const bdlt::DatetimeTz& startTime() const;
+
+    /// Return the expiration time at which the certificate is no longer
+    /// valid.
+    const bdlt::DatetimeTz& expirationTime() const;
+
+    /// Return flag that indicates the certificate is a certificate
+    /// authority.
+    bool authority() const;
+
+    /// Return the domain names for which the certificate is valid.
+    const bsl::vector<bsl::string>& hosts() const;
+#endif
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificateEntity& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificateEntity& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateEntity);
+};
+
+/// Define a type alias for a vector of encryption certificates.
+///
+/// @ingroup module_ntci_encryption
+typedef bsl::vector<ntca::EncryptionCertificateEntity> EncryptionEntityVector;
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificateEntity
+bsl::ostream& operator<<(bsl::ostream&                stream,
+                         const EncryptionCertificateEntity& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificateEntity
+bool operator==(const EncryptionCertificateEntity& lhs,
+                const EncryptionCertificateEntity& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificateEntity
+bool operator!=(const EncryptionCertificateEntity& lhs,
+                const EncryptionCertificateEntity& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificateEntity
+bool operator<(const EncryptionCertificateEntity& lhs,
+               const EncryptionCertificateEntity& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificateEntity
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionCertificateEntity& value);
+
+
+template <typename HASH_ALGORITHM>
+void EncryptionCertificateEntity::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, d_version);
+    hashAppend(algorithm, d_serialNumber);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionCertificateEntity& value)
+{
+    value.hash(algorithm);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 /// Describe a certificate of identity and authenticity as used in public key
 /// cryptography.
 ///
@@ -191,7 +2173,7 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
 ///         tbsCertificate       TBSCertificate,
 ///         signatureAlgorithm   AlgorithmIdentifier,
 ///         signatureValue       BIT STRING  }
-/// 
+///
 ///    TBSCertificate  ::=  SEQUENCE  {
 ///         version         [0]  EXPLICIT Version DEFAULT v1,
 ///         serialNumber         CertificateSerialNumber,
@@ -207,27 +2189,27 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
 ///         extensions      [3]  EXPLICIT Extensions OPTIONAL
 ///                              -- If present, version MUST be v3
 ///         }
-/// 
+///
 ///    Version  ::=  INTEGER  {  v1(0), v2(1), v3(2)  }
-/// 
+///
 ///    CertificateSerialNumber  ::=  INTEGER
-/// 
+///
 ///    Validity ::= SEQUENCE {
 ///         notBefore      Time,
 ///         notAfter       Time }
-/// 
+///
 ///    Time ::= CHOICE {
 ///         utcTime        UTCTime,
 ///         generalTime    GeneralizedTime }
-/// 
+///
 ///    UniqueIdentifier  ::=  BIT STRING
-/// 
+///
 ///    SubjectPublicKeyInfo  ::=  SEQUENCE  {
 ///         algorithm            AlgorithmIdentifier,
 ///         subjectPublicKey     BIT STRING  }
-/// 
+///
 ///    Extensions  ::=  SEQUENCE SIZE (1..MAX) OF Extension
-/// 
+///
 ///    Extension  ::=  SEQUENCE  {
 ///         extnID      OBJECT IDENTIFIER,
 ///         critical    BOOLEAN DEFAULT FALSE,
@@ -237,7 +2219,6 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
 ///                     -- by extnID
 ///         }
 ///
-
 
 /// @par Attributes
 /// This class is composed of the following attributes.
@@ -264,19 +2245,9 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
 /// @ingroup module_ntci_encryption
 class EncryptionCertificate
 {
-    enum SignatureAlgorithm {
-        e_UNDEFINED
-    };
-
-    ntsa::AbstractInteger     d_version;
-    ntsa::AbstractInteger     d_serialNumber;
-    bdlt::DatetimeTz          d_startTime;
-    bdlt::DatetimeTz          d_expirationTime;
-    bool                      d_authority;
-    bsl::vector<bsl::string>  d_hosts;
-
-    // SignatureAlgorithm        d_signatureAlgorithm;
-    bsl::vector<bsl::uint8_t> d_signatureValue;
+    ntca::EncryptionCertificateEntity    d_entity;
+    ntca::EncryptionCertificateAlgorithm d_signatureAlgorithm;
+    ntca::EncryptionCertificateSignature d_signature;
 
   public:
     /// Create a new certificate having the default
@@ -303,6 +2274,8 @@ class EncryptionCertificate
     /// construction.
     void reset();
 
+    // MRM
+#if 0
     /// Set the serial number to the specified 'value'.
     void setSerialNumber(int value);
 
@@ -325,6 +2298,7 @@ class EncryptionCertificate
     /// Add the specified 'value' to the list of domain names for which the
     /// certificate is valid.
     void addHost(const bsl::string& value);
+#endif
 
     /// Decode this object using the specified 'decoder'. Return the error.
     ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
@@ -332,6 +2306,8 @@ class EncryptionCertificate
     /// Encode this object using the specified 'encoder'. Return the error.
     ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
 
+    // MRM
+#if 0
     /// Return the serial number.
     int serialNumber() const;
 
@@ -348,6 +2324,17 @@ class EncryptionCertificate
 
     /// Return the domain names for which the certificate is valid.
     const bsl::vector<bsl::string>& hosts() const;
+#endif
+
+
+    /// Return the certificate entity. 
+    const ntca::EncryptionCertificateEntity& entity() const;
+
+    /// Return the certificate signature algorithm.
+    const ntca::EncryptionCertificateAlgorithm& signatureAlgorithm() const;
+
+    /// Return the certificate signature value.
+    const ntca::EncryptionCertificateSignature& signature() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -426,11 +2413,9 @@ void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionCertificate& value)
 {
     using bslh::hashAppend;
 
-    hashAppend(algorithm, value.serialNumber());
-    hashAppend(algorithm, value.startTime());
-    hashAppend(algorithm, value.expirationTime());
-    hashAppend(algorithm, value.authority());
-    hashAppend(algorithm, value.hosts());
+    hashAppend(algorithm, value.entity());
+    hashAppend(algorithm, value.signatureAlgorithm());
+    hashAppend(algorithm, value.signature());
 }
 
 }  // close package namespace
