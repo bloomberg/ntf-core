@@ -6859,15 +6859,26 @@ ntsa::Error SocketUtil::receive(bsl::size_t* numBytesReceived,
                                 bsl::size_t  capacity,
                                 ntsa::Handle socket)
 {
-    ntsa::Error error;
-    ntsa::ReceiveContext context;
+    if (capacity == 0) {
+        return ntsa::Error::invalid();
+    }
 
-    ntsa::ReceiveOptions options;
-    options.hideEndpoint();
+    WSABUF wsaBuf;
+    wsaBuf.buf = static_cast<char*>(data);
+    wsaBuf.len = static_cast<ULONG>(capacity);
 
-    error = SocketUtil::receive(&context, data, capacity, options, socket);
-    *numBytesReceived = context.bytesReceived();
-    return error;
+    DWORD wsaNumBytesReceived = 0;
+    DWORD wsaFlags            = 0;
+
+    int wsaRecvResult =
+            WSARecv(socket, &wsaBuf, 1, &wsaNumBytesReceived, &wsaFlags, 0, 0);
+
+    if (wsaRecvResult != 0) {
+        return ntsa::Error(WSAGetLastError());
+    }
+
+    *numBytesReceived = wsaNumBytesReceived;
+    return ntsa::Error();
 }
 
 ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
