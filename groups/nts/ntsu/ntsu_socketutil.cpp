@@ -2690,10 +2690,6 @@ ntsa::Error SocketUtil::receive(bsl::size_t* numBytesReceived,
         return ntsa::Error::invalid();
     }
 
-    struct iovec iovec;
-    iovec.iov_base = data;
-    iovec.iov_len  = capacity;
-
     ssize_t recvResult =
         ::recv(socket, data, capacity, NTSU_SOCKETUTIL_RECV_FLAGS);
 
