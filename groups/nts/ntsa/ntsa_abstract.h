@@ -498,6 +498,60 @@ class AbstractSyntaxEncoderFrame
     /// of this frame. Return the error.
     ntsa::Error encodeContentBase128(bsl::uint64_t value);
 
+    /// Write the encoding of null. Return the error.
+    ntsa::Error encodeNull();
+
+    /// Write the encoding of the specified 'value'. Return the error.
+    ntsa::Error encodeValue(bool value);
+
+    /// Write the encoding of the specified 'value'. Return the error.
+    ntsa::Error encodeValue(short value);
+
+    /// Write the encoding of the specified 'value'. Return the error.
+    ntsa::Error encodeValue(unsigned short value);
+
+    /// Write the encoding of the specified 'value'. Return the error.
+    ntsa::Error encodeValue(int value);
+
+    /// Write the encoding of the specified 'value'. Return the error.
+    ntsa::Error encodeValue(unsigned int value);
+
+    /// Write the encoding of the specified 'value'. Return the error.
+    ntsa::Error encodeValue(long value);
+
+    /// Write the encoding of the specified 'value'. Return the error.
+    ntsa::Error encodeValue(unsigned long value);
+
+    /// Write the encoding of the specified 'value'. Return the error.
+    ntsa::Error encodeValue(long long value);
+
+    /// Write the encoding of the specified 'value'. Return the error.
+    ntsa::Error encodeValue(unsigned long long value);
+
+        /// Write the encoding of the specified 'value'. Return the error.
+    ntsa::Error encodeValue(const bsl::string& value);
+
+    /// Write the encoding of the specified 'value'. Return the error.
+    ntsa::Error encodeValue(const bdlt::Datetime& value);
+
+    /// Write the encoding of the specified 'value'. Return the error.
+    ntsa::Error encodeValue(const bdlt::DatetimeTz& value);
+
+    /// Write the encoding of the specified 'value'. Return the error.
+    ntsa::Error encodeValue(const ntsa::AbstractInteger& value);
+
+    /// Write the encoding of the specified 'value'. Return the error.
+    ntsa::Error encodeValue(const ntsa::AbstractString& value);
+
+    /// Write the encoding of the specified 'value'. Return the error.
+    ntsa::Error encodeValue(const ntsa::AbstractBitSequence& value);
+
+    /// Write the encoding of the specified 'value'. Return the error.
+    ntsa::Error encodeValue(const ntsa::AbstractByteSequence& value);
+
+    /// Write the encoding of the specified 'value'. Return the error.
+    ntsa::Error encodeValue(const ntsa::AbstractObjectIdentifier& value);
+
     /// Synchronize the frame with its children, or its data if no children are
     /// defined. Return the error.
     ntsa::Error synchronize(bsl::size_t* length);
@@ -580,89 +634,89 @@ class AbstractSyntaxEncoder
 
     /// Begin encoding a new construction having the specified 'tagClass',
     /// 'tagType', and 'tagNumber'. Return the error.
-    ntsa::Error enterFrame(AbstractSyntaxTagClass::Value  tagClass,
+    ntsa::Error encodeTag(AbstractSyntaxTagClass::Value  tagClass,
                            AbstractSyntaxTagType::Value   tagType,
                            AbstractSyntaxTagNumber::Value tagNumber);
 
     /// Begin encoding a new construction having the specified 'tagClass',
     /// 'tagType', and 'tagNumber'. Return the error.
-    ntsa::Error enterFrame(AbstractSyntaxTagClass::Value tagClass,
+    ntsa::Error encodeTag(AbstractSyntaxTagClass::Value tagClass,
                            AbstractSyntaxTagType::Value  tagType,
                            bsl::size_t                   tagNumber);
 
     /// Encode a NULL primitive. Return the error.
-    ntsa::Error encodePrimitiveNull();
+    ntsa::Error encodeNull();
 
     /// Encode a BOOLEAN primitive having the specified 'value'. Return the
     /// error.
-    ntsa::Error encodePrimitiveValue(bool value);
+    ntsa::Error encodeValue(bool value);
 
     /// Encode an INTEGER primitive having the specified 'value'. Return the
     /// error.
-    ntsa::Error encodePrimitiveValue(short value);
+    ntsa::Error encodeValue(short value);
 
     /// Encode an INTEGER primitive having the specified 'value'. Return the
     /// error.
-    ntsa::Error encodePrimitiveValue(unsigned short value);
+    ntsa::Error encodeValue(unsigned short value);
 
     /// Encode an INTEGER primitive having the specified 'value'. Return the
     /// error.
-    ntsa::Error encodePrimitiveValue(int value);
+    ntsa::Error encodeValue(int value);
 
     /// Encode an INTEGER primitive having the specified 'value'. Return the
     /// error.
-    ntsa::Error encodePrimitiveValue(unsigned int value);
+    ntsa::Error encodeValue(unsigned int value);
 
     /// Encode an INTEGER primitive having the specified 'value'. Return the
     /// error.
-    ntsa::Error encodePrimitiveValue(long value);
+    ntsa::Error encodeValue(long value);
 
     /// Encode an INTEGER primitive having the specified 'value'. Return the
     /// error.
-    ntsa::Error encodePrimitiveValue(unsigned long value);
+    ntsa::Error encodeValue(unsigned long value);
 
     /// Encode an INTEGER primitive having the specified 'value'. Return the
     /// error.
-    ntsa::Error encodePrimitiveValue(long long value);
+    ntsa::Error encodeValue(long long value);
 
     /// Encode an INTEGER primitive having the specified 'value'. Return the
     /// error.
-    ntsa::Error encodePrimitiveValue(unsigned long long value);
+    ntsa::Error encodeValue(unsigned long long value);
 
     /// Encode an INTEGER primitive having the specified 'value'. Return the
     /// error.
-    ntsa::Error encodePrimitiveValue(const AbstractInteger& value);
+    ntsa::Error encodeValue(const AbstractInteger& value);
 
     /// Encode a UTF8 STRING primitive having the specified 'value'. Return the
     /// error.
-    ntsa::Error encodePrimitiveValue(const bsl::string& value);
+    ntsa::Error encodeValue(const bsl::string& value);
 
     /// Encode a string primitive having the specified 'value'. Return the
     /// error.
-    ntsa::Error encodePrimitiveValue(const AbstractString& value);
+    ntsa::Error encodeValue(const AbstractString& value);
 
     /// Encode a bit string primitive having the specified 'value'. Return the
     /// error.
-    ntsa::Error encodePrimitiveValue(const AbstractBitSequence& value);
+    ntsa::Error encodeValue(const AbstractBitSequence& value);
 
     /// Encode an octet primitive having the specified 'value'. Return the
     /// error.
-    ntsa::Error encodePrimitiveValue(const AbstractByteSequence& value);
+    ntsa::Error encodeValue(const AbstractByteSequence& value);
 
     /// Encode a UTC TIME or GENERALIZED TIME primitive having the specified
     /// 'value'. Return the error.
-    ntsa::Error encodePrimitiveValue(const bdlt::Datetime& value);
+    ntsa::Error encodeValue(const bdlt::Datetime& value);
 
     /// Encode a UTC TIME or GENERALIZED TIME primitive having the specified
     /// 'value'. Return the error.
-    ntsa::Error encodePrimitiveValue(const bdlt::DatetimeTz& value);
+    ntsa::Error encodeValue(const bdlt::DatetimeTz& value);
 
     /// Encode an OBJECT IDENTIFIER primitive having the specified 'value'.
     /// Return the error.
-    ntsa::Error encodePrimitiveValue(const AbstractObjectIdentifier& value);
+    ntsa::Error encodeValue(const AbstractObjectIdentifier& value);
 
     // Complete encoding the current construction. Return the error.
-    ntsa::Error leaveFrame();
+    ntsa::Error encodeTagComplete();
 
     /// Return the configuration.
     const AbstractSyntaxEncoderOptions& configuration() const;
@@ -725,6 +779,16 @@ class AbstractSyntaxEncoderUtil
     /// 'destination'. Return the error.
     static ntsa::Error encodeIntegerBase128(bsl::streambuf* destination,
                                             bsl::uint64_t   value);
+
+    /// Write the encoding of the specified 'value' implied by the specified
+    /// 'tagClass', 'tagType', and 'tagNumber' to the specified 'destination'.
+    /// Return the error.
+    static ntsa::Error encodeDatetimeTz(
+        bsl::streambuf* destination,
+        ntsa::AbstractSyntaxTagClass::Value tagClass,
+        ntsa::AbstractSyntaxTagType::Value  tagType,
+        bsl::size_t                         tagNumber,
+        const bdlt::DatetimeTz&             value);
 
     /// Synchronize the specified 'destination' with its underlying device.
     /// Return the error.
@@ -1072,19 +1136,19 @@ class AbstractSyntaxDecoder
     /// the new top of the context stack. Also note that the caller is
     /// responsible for calling 'leaveTag' to pop the context stack. Return the
     /// error.
-    ntsa::Error decodeContext();
+    ntsa::Error decodeTag();
 
     /// Decode a tag and its length and load the result into the specified
     /// 'result'. Note that the tag and its length becomes the new top of the
     /// context stack. Also note that the caller is responsible for calling
     /// 'leaveTag' to pop the context stack. Return the error.
-    ntsa::Error decodeContext(AbstractSyntaxDecoderFrame* result);
+    ntsa::Error decodeTag(AbstractSyntaxDecoderFrame* result);
 
     /// Decode a tag and its length having the specified 'tagClass', 'tagType',
     /// and 'tagNumber'. Note that the tag and its length becomes the new top
     /// of the context stack. Also note that the caller is responsible for
     /// calling 'leaveTag' to pop the context stack. Return the error.
-    ntsa::Error decodeContext(AbstractSyntaxTagClass::Value  tagClass,
+    ntsa::Error decodeTag(AbstractSyntaxTagClass::Value  tagClass,
                               AbstractSyntaxTagType::Value   tagType,
                               AbstractSyntaxTagNumber::Value tagNumber);
 
@@ -1092,110 +1156,110 @@ class AbstractSyntaxDecoder
     /// and 'tagNumber'. Note that the tag and its length becomes the new top
     /// of the context stack. Also note that the caller is responsible for
     /// calling 'leaveTag' to pop the context stack. Return the error.
-    ntsa::Error decodeContext(AbstractSyntaxTagClass::Value tagClass,
+    ntsa::Error decodeTag(AbstractSyntaxTagClass::Value tagClass,
                               AbstractSyntaxTagType::Value  tagType,
                               bsl::size_t                   tagNumber);
 
     /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// NULL according to the top of the context stack. Return the error.
-    ntsa::Error decodePrimitiveNull();
+    ntsa::Error decodeNull();
 
     /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// END_OF_CONTENT according to the top of the context stack. Return the
     /// error.
-    ntsa::Error decodePrimitiveEnd();
+    ntsa::Error decodeEnd();
 
     /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// BOOLEAN according to the top of the context stack and load the result
     /// into the specified 'result'. Return the error.
-    ntsa::Error decodePrimitiveValue(bool* result);
+    ntsa::Error decodeValue(bool* result);
 
     /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// INTEGER according to the top of the context stack and load the result
     /// into the specified 'result'. Return the error.
-    ntsa::Error decodePrimitiveValue(short* result);
+    ntsa::Error decodeValue(short* result);
 
     /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// INTEGER according to the top of the context stack and load the result
     /// into the specified 'result'. Return the error.
-    ntsa::Error decodePrimitiveValue(unsigned short* result);
+    ntsa::Error decodeValue(unsigned short* result);
 
     /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// INTEGER according to the top of the context stack and load the result
     /// into the specified 'result'. Return the error.
-    ntsa::Error decodePrimitiveValue(int* result);
+    ntsa::Error decodeValue(int* result);
 
     /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// INTEGER according to the top of the context stack and load the result
     /// into the specified 'result'. Return the error.
-    ntsa::Error decodePrimitiveValue(unsigned int* result);
+    ntsa::Error decodeValue(unsigned int* result);
 
     /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// INTEGER according to the top of the context stack and load the result
     /// into the specified 'result'. Return the error.
-    ntsa::Error decodePrimitiveValue(long* result);
+    ntsa::Error decodeValue(long* result);
 
     /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// INTEGER according to the top of the context stack and load the result
     /// into the specified 'result'. Return the error.
-    ntsa::Error decodePrimitiveValue(unsigned long* result);
+    ntsa::Error decodeValue(unsigned long* result);
 
     /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// INTEGER according to the top of the context stack and load the result
     /// into the specified 'result'. Return the error.
-    ntsa::Error decodePrimitiveValue(long long* result);
+    ntsa::Error decodeValue(long long* result);
 
     /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// INTEGER according to the top of the context stack and load the result
     /// into the specified 'result'. Return the error.
-    ntsa::Error decodePrimitiveValue(unsigned long long* result);
-
-    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
-    /// INTEGER according to the top of the context stack and load the result
-    /// into the specified 'result'. Return the error.
-    ntsa::Error decodePrimitiveValue(AbstractInteger* result);
+    ntsa::Error decodeValue(unsigned long long* result);
 
     /// Decode a value of tag class UNIVERSAL type PRIMITIVE whose tag number
     /// is either VISIBLE_STRING, PRINTABLE_STRING, or UTF8_STRING according to
     /// the top of the context stack and load the result into the specified
     /// 'result'. Return the error.
-    ntsa::Error decodePrimitiveValue(bsl::string* result);
-
-    /// Decode a value of tag class UNIVERSAL type PRIMITIVE whose tag number
-    /// is any of the string types according to the top of the context stack
-    /// and load the result into the specified 'result'. Return the error.
-    ntsa::Error decodePrimitiveValue(AbstractString* result);
-
-    /// Decode a value of tag class UNIVERSAL type PRIMITIVE whose tag number
-    /// is any of the string types according to the top of the context stack
-    /// and load the result into the specified 'result'. Return the error.
-    ntsa::Error decodePrimitiveValue(AbstractBitSequence* result);
-
-    /// Decode a value of tag class UNIVERSAL type PRIMITIVE whose tag number
-    /// is any of the string types according to the top of the context stack
-    /// and load the result into the specified 'result'. Return the error.
-    ntsa::Error decodePrimitiveValue(AbstractByteSequence* result);
+    ntsa::Error decodeValue(bsl::string* result);
 
     /// Decode a value of tag class UNIVERSAL type PRIMITIVE whose tag number
     /// is either e_UTC_TIME or e_GENERALIZED_TIME according to the top
     /// of the context stack and load the result into the specified 'result'.
     /// Return the error.
-    ntsa::Error decodePrimitiveValue(bdlt::Datetime* result);
+    ntsa::Error decodeValue(bdlt::Datetime* result);
 
     /// Decode a value of tag class UNIVERSAL type PRIMITIVE whose tag number
     /// is either e_UTC_TIME or e_GENERALIZED_TIME according to the top
     /// of the context stack and load the result into the specified 'result'.
     /// Return the error.
-    ntsa::Error decodePrimitiveValue(bdlt::DatetimeTz* result);
+    ntsa::Error decodeValue(bdlt::DatetimeTz* result);   
+
+    /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
+    /// INTEGER according to the top of the context stack and load the result
+    /// into the specified 'result'. Return the error.
+    ntsa::Error decodeValue(AbstractInteger* result);
+
+    /// Decode a value of tag class UNIVERSAL type PRIMITIVE whose tag number
+    /// is any of the string types according to the top of the context stack
+    /// and load the result into the specified 'result'. Return the error.
+    ntsa::Error decodeValue(AbstractString* result);
+
+    /// Decode a value of tag class UNIVERSAL type PRIMITIVE whose tag number
+    /// is any of the string types according to the top of the context stack
+    /// and load the result into the specified 'result'. Return the error.
+    ntsa::Error decodeValue(AbstractBitSequence* result);
+
+    /// Decode a value of tag class UNIVERSAL type PRIMITIVE whose tag number
+    /// is any of the string types according to the top of the context stack
+    /// and load the result into the specified 'result'. Return the error.
+    ntsa::Error decodeValue(AbstractByteSequence* result);
 
     /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// OBJECT_IDENTIFIER according to the top of the context stack and load
     /// the result into the specified 'result'. Return the error.
-    ntsa::Error decodePrimitiveValue(AbstractObjectIdentifier* result);
+    ntsa::Error decodeValue(AbstractObjectIdentifier* result);
 
     /// Pop the current tag-length-value context from the stack. Return the
     /// error.
-    ntsa::Error decodeContextComplete();
+    ntsa::Error decodeTagComplete();
 
     /// Skip over any remaining un-decoded bytes of the current context. Return
     /// the error. 
@@ -1259,10 +1323,20 @@ class AbstractSyntaxDecoderUtil
     static ntsa::Error decodeLength(bdlb::NullableValue<bsl::size_t>* result,
                                     bsl::streambuf*                   source);
 
-    // Load into the specified 'result' an integer encoded in base-128 from
-    // from the specified 'source'. Return the error.
+    /// Load into the specified 'result' an integer encoded in base-128 from
+    /// from the specified 'source'. Return the error.
     static ntsa::Error decodeIntegerBase128(bsl::uint64_t*  result,
                                             bsl::streambuf* source);
+
+    /// Load into the specified 'result' the date/time parsed from the 
+    /// specified 'buffer' having the specified 'length'. Return the error.
+    static ntsa::Error decodeDatetimeTz(
+        bdlt::DatetimeTz*                   result, 
+        ntsa::AbstractSyntaxTagClass::Value tagClass,
+        ntsa::AbstractSyntaxTagType::Value  tagType,
+        bsl::size_t                         tagNumber,
+        const char*                         buffer, 
+        bsl::size_t                         length);
 };
 
 /// Provide an Abstract Syntax Notation (ASN.1) object identifier.

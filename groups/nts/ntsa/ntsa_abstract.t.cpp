@@ -145,6 +145,16 @@ class Case
     static void verifyBase(bslma::Allocator* allocator);
     static void verifyRepresentation(bslma::Allocator* allocator);
 
+    static void verifyDecoderUtilityTag(bslma::Allocator* allocator);
+    static void verifyDecoderUtilityLength(bslma::Allocator* allocator);
+    static void verifyDecoderUtilityInteger(bslma::Allocator* allocator);
+    static void verifyDecoderUtilityDatetime(bslma::Allocator* allocator);
+
+    static void verifyEncoderUtilityTag(bslma::Allocator* allocator);
+    static void verifyEncoderUtilityLength(bslma::Allocator* allocator);
+    static void verifyEncoderUtilityInteger(bslma::Allocator* allocator);
+    static void verifyEncoderUtilityDatetime(bslma::Allocator* allocator);
+
   public:
     // Verify the fundamental mechanisms used to build abstract integers.
     static void verifyPrerequisites(bslma::Allocator* allocator);
@@ -158,6 +168,9 @@ class Case
     static void verifySignedIntegerSubtract(bslma::Allocator* allocator);
     static void verifySignedIntegerMultiply(bslma::Allocator* allocator);
     static void verifySignedIntegerDivide(bslma::Allocator* allocator);
+
+    static void verifyDecoderUtility(bslma::Allocator* allocator);
+    static void verifyEncoderUtility(bslma::Allocator* allocator);
 };
 
 void Case::loadUnsignedIntegerData(UnsignedIntegerDataVector* result)
@@ -357,6 +370,348 @@ void Case::verifyRepresentation(bslma::Allocator* allocator)
         rep.assign(123);
         NTSCFG_TEST_LOG_DEBUG << "Rep = " << rep << NTSCFG_TEST_LOG_END;
     }
+}
+
+void Case::verifyDecoderUtilityTag(bslma::Allocator* allocator)
+{
+    NTSCFG_WARNING_UNUSED(allocator);
+}
+
+void Case::verifyDecoderUtilityLength(bslma::Allocator* allocator)
+{
+    NTSCFG_WARNING_UNUSED(allocator);
+}
+
+void Case::verifyDecoderUtilityInteger(bslma::Allocator* allocator)
+{
+    NTSCFG_WARNING_UNUSED(allocator);
+}
+
+void Case::verifyDecoderUtilityDatetime(bslma::Allocator* allocator)
+{
+    NTSCFG_WARNING_UNUSED(allocator);
+
+    ntsa::Error error;
+
+    // UTC TIME
+
+    // 2404152136Z
+    // 240415213642Z
+    // 2404152136-0430
+    // 2404152136+0430
+    // 240415213642-0430
+    // 240415213642+0430
+
+    {
+        const char k_DATA[] = "2404152136Z";
+
+        bdlt::DatetimeTz result;
+        error = ntsa::AbstractSyntaxDecoderUtil::decodeDatetimeTz(
+            &result,
+            ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
+            ntsa::AbstractSyntaxTagType::e_PRIMITIVE,
+            ntsa::AbstractSyntaxTagNumber::e_UTC_TIME,
+            k_DATA,
+            sizeof k_DATA - 1);
+
+        NTSCFG_TEST_OK(error);
+
+        bdlt::Datetime local  = result.localDatetime();
+        int            offset = result.offset();
+
+        NTSCFG_TEST_EQ(local.year(), 2024);
+        NTSCFG_TEST_EQ(local.month(), 4);
+        NTSCFG_TEST_EQ(local.day(), 15);
+
+        NTSCFG_TEST_EQ(local.hour(), 21);
+        NTSCFG_TEST_EQ(local.minute(), 36);
+        NTSCFG_TEST_EQ(local.second(), 0);
+
+        NTSCFG_TEST_EQ(offset, 0);
+    }
+
+    {
+        const char k_DATA[] = "240415213642Z";
+
+        bdlt::DatetimeTz result;
+        error = ntsa::AbstractSyntaxDecoderUtil::decodeDatetimeTz(
+            &result,
+            ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
+            ntsa::AbstractSyntaxTagType::e_PRIMITIVE,
+            ntsa::AbstractSyntaxTagNumber::e_UTC_TIME,
+            k_DATA,
+            sizeof k_DATA - 1);
+
+        NTSCFG_TEST_OK(error);
+
+        bdlt::Datetime local  = result.localDatetime();
+        int            offset = result.offset();
+
+        NTSCFG_TEST_EQ(local.year(), 2024);
+        NTSCFG_TEST_EQ(local.month(), 4);
+        NTSCFG_TEST_EQ(local.day(), 15);
+
+        NTSCFG_TEST_EQ(local.hour(), 21);
+        NTSCFG_TEST_EQ(local.minute(), 36);
+        NTSCFG_TEST_EQ(local.second(), 42);
+
+        NTSCFG_TEST_EQ(offset, 0);
+    }
+
+    {
+        const char k_DATA[] = "2404152136-0430";
+
+        bdlt::DatetimeTz result;
+        error = ntsa::AbstractSyntaxDecoderUtil::decodeDatetimeTz(
+            &result,
+            ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
+            ntsa::AbstractSyntaxTagType::e_PRIMITIVE,
+            ntsa::AbstractSyntaxTagNumber::e_UTC_TIME,
+            k_DATA,
+            sizeof k_DATA - 1);
+
+        NTSCFG_TEST_OK(error);
+
+        bdlt::Datetime local  = result.localDatetime();
+        int            offset = result.offset();
+
+        NTSCFG_TEST_EQ(local.year(), 2024);
+        NTSCFG_TEST_EQ(local.month(), 4);
+        NTSCFG_TEST_EQ(local.day(), 15);
+
+        NTSCFG_TEST_EQ(local.hour(), 21);
+        NTSCFG_TEST_EQ(local.minute(), 36);
+        NTSCFG_TEST_EQ(local.second(), 0);
+
+        NTSCFG_TEST_EQ(offset, -270);
+    }
+
+    {
+        const char k_DATA[] = "2404152136+0430";
+
+        bdlt::DatetimeTz result;
+        error = ntsa::AbstractSyntaxDecoderUtil::decodeDatetimeTz(
+            &result,
+            ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
+            ntsa::AbstractSyntaxTagType::e_PRIMITIVE,
+            ntsa::AbstractSyntaxTagNumber::e_UTC_TIME,
+            k_DATA,
+            sizeof k_DATA - 1);
+
+        NTSCFG_TEST_OK(error);
+
+        bdlt::Datetime local  = result.localDatetime();
+        int            offset = result.offset();
+
+        NTSCFG_TEST_EQ(local.year(), 2024);
+        NTSCFG_TEST_EQ(local.month(), 4);
+        NTSCFG_TEST_EQ(local.day(), 15);
+
+        NTSCFG_TEST_EQ(local.hour(), 21);
+        NTSCFG_TEST_EQ(local.minute(), 36);
+        NTSCFG_TEST_EQ(local.second(), 0);
+
+        NTSCFG_TEST_EQ(offset, 270);
+    }
+
+    {
+        const char k_DATA[] = "240415213642-0430";
+
+        bdlt::DatetimeTz result;
+        error = ntsa::AbstractSyntaxDecoderUtil::decodeDatetimeTz(
+            &result,
+            ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
+            ntsa::AbstractSyntaxTagType::e_PRIMITIVE,
+            ntsa::AbstractSyntaxTagNumber::e_UTC_TIME,
+            k_DATA,
+            sizeof k_DATA - 1);
+
+        NTSCFG_TEST_OK(error);
+
+        bdlt::Datetime local  = result.localDatetime();
+        int            offset = result.offset();
+
+        NTSCFG_TEST_EQ(local.year(), 2024);
+        NTSCFG_TEST_EQ(local.month(), 4);
+        NTSCFG_TEST_EQ(local.day(), 15);
+
+        NTSCFG_TEST_EQ(local.hour(), 21);
+        NTSCFG_TEST_EQ(local.minute(), 36);
+        NTSCFG_TEST_EQ(local.second(), 42);
+
+        NTSCFG_TEST_EQ(offset, -270);
+    }
+
+    {
+        const char k_DATA[] = "240415213642+0430";
+
+        bdlt::DatetimeTz result;
+        error = ntsa::AbstractSyntaxDecoderUtil::decodeDatetimeTz(
+            &result,
+            ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
+            ntsa::AbstractSyntaxTagType::e_PRIMITIVE,
+            ntsa::AbstractSyntaxTagNumber::e_UTC_TIME,
+            k_DATA,
+            sizeof k_DATA - 1);
+
+        NTSCFG_TEST_OK(error);
+
+        bdlt::Datetime local  = result.localDatetime();
+        int            offset = result.offset();
+
+        NTSCFG_TEST_EQ(local.year(), 2024);
+        NTSCFG_TEST_EQ(local.month(), 4);
+        NTSCFG_TEST_EQ(local.day(), 15);
+
+        NTSCFG_TEST_EQ(local.hour(), 21);
+        NTSCFG_TEST_EQ(local.minute(), 36);
+        NTSCFG_TEST_EQ(local.second(), 42);
+
+        NTSCFG_TEST_EQ(offset, 270);
+    }
+
+    // GENERALIZED TIME: 
+    //     1. YYYYMMDDHH[MM[SS[.fff]]]
+    //     2. YYYYMMDDHH[MM[SS[.fff]]]Z
+    //     3. YYYYMMDDHH[MM[SS[.fff]]]{+,-}hhmm
+
+    // 19960415203000.0-0600
+
+    {
+        const char k_DATA[] = "2024" "04" "15" "21" "36" "42" ".0" "-0430";
+
+        bdlt::DatetimeTz result;
+        error = ntsa::AbstractSyntaxDecoderUtil::decodeDatetimeTz(
+            &result,
+            ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
+            ntsa::AbstractSyntaxTagType::e_PRIMITIVE,
+            ntsa::AbstractSyntaxTagNumber::e_GENERALIZED_TIME,
+            k_DATA,
+            sizeof k_DATA - 1);
+
+        NTSCFG_TEST_OK(error);
+
+        bdlt::Datetime local  = result.localDatetime();
+        int            offset = result.offset();
+
+        NTSCFG_TEST_EQ(local.year(), 2024);
+        NTSCFG_TEST_EQ(local.month(), 4);
+        NTSCFG_TEST_EQ(local.day(), 15);
+
+        NTSCFG_TEST_EQ(local.hour(), 21);
+        NTSCFG_TEST_EQ(local.minute(), 36);
+        NTSCFG_TEST_EQ(local.second(), 42);
+        NTSCFG_TEST_EQ(local.millisecond(), 0);
+
+        NTSCFG_TEST_EQ(offset, -270);
+    }
+
+    {
+        const char k_DATA[] = "2024" "04" "15" "21" "36" "42" ".1" "-0430";
+
+        bdlt::DatetimeTz result;
+        error = ntsa::AbstractSyntaxDecoderUtil::decodeDatetimeTz(
+            &result,
+            ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
+            ntsa::AbstractSyntaxTagType::e_PRIMITIVE,
+            ntsa::AbstractSyntaxTagNumber::e_GENERALIZED_TIME,
+            k_DATA,
+            sizeof k_DATA - 1);
+
+        NTSCFG_TEST_OK(error);
+
+        bdlt::Datetime local  = result.localDatetime();
+        int            offset = result.offset();
+
+        NTSCFG_TEST_EQ(local.year(), 2024);
+        NTSCFG_TEST_EQ(local.month(), 4);
+        NTSCFG_TEST_EQ(local.day(), 15);
+
+        NTSCFG_TEST_EQ(local.hour(), 21);
+        NTSCFG_TEST_EQ(local.minute(), 36);
+        NTSCFG_TEST_EQ(local.second(), 42);
+        NTSCFG_TEST_EQ(local.millisecond(), 1);
+
+        NTSCFG_TEST_EQ(offset, -270);
+    }
+
+    {
+        const char k_DATA[] = "2024" "04" "15" "21" "36" "42" ".12" "-0430";
+
+        bdlt::DatetimeTz result;
+        error = ntsa::AbstractSyntaxDecoderUtil::decodeDatetimeTz(
+            &result,
+            ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
+            ntsa::AbstractSyntaxTagType::e_PRIMITIVE,
+            ntsa::AbstractSyntaxTagNumber::e_GENERALIZED_TIME,
+            k_DATA,
+            sizeof k_DATA - 1);
+
+        NTSCFG_TEST_OK(error);
+
+        bdlt::Datetime local  = result.localDatetime();
+        int            offset = result.offset();
+
+        NTSCFG_TEST_EQ(local.year(), 2024);
+        NTSCFG_TEST_EQ(local.month(), 4);
+        NTSCFG_TEST_EQ(local.day(), 15);
+
+        NTSCFG_TEST_EQ(local.hour(), 21);
+        NTSCFG_TEST_EQ(local.minute(), 36);
+        NTSCFG_TEST_EQ(local.second(), 42);
+        NTSCFG_TEST_EQ(local.millisecond(), 12);
+
+        NTSCFG_TEST_EQ(offset, -270);
+    }
+
+    {
+        const char k_DATA[] = "2024" "04" "15" "21" "36" "42" ".123" "-0430";
+
+        bdlt::DatetimeTz result;
+        error = ntsa::AbstractSyntaxDecoderUtil::decodeDatetimeTz(
+            &result,
+            ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
+            ntsa::AbstractSyntaxTagType::e_PRIMITIVE,
+            ntsa::AbstractSyntaxTagNumber::e_GENERALIZED_TIME,
+            k_DATA,
+            sizeof k_DATA - 1);
+
+        NTSCFG_TEST_OK(error);
+
+        bdlt::Datetime local  = result.localDatetime();
+        int            offset = result.offset();
+
+        NTSCFG_TEST_EQ(local.year(), 2024);
+        NTSCFG_TEST_EQ(local.month(), 4);
+        NTSCFG_TEST_EQ(local.day(), 15);
+
+        NTSCFG_TEST_EQ(local.hour(), 21);
+        NTSCFG_TEST_EQ(local.minute(), 36);
+        NTSCFG_TEST_EQ(local.second(), 42);
+        NTSCFG_TEST_EQ(local.millisecond(), 123);
+
+        NTSCFG_TEST_EQ(offset, -270);
+    }
+}
+
+void Case::verifyEncoderUtilityTag(bslma::Allocator* allocator)
+{
+    NTSCFG_WARNING_UNUSED(allocator);
+}
+
+void Case::verifyEncoderUtilityLength(bslma::Allocator* allocator)
+{
+    NTSCFG_WARNING_UNUSED(allocator);
+}
+
+void Case::verifyEncoderUtilityInteger(bslma::Allocator* allocator)
+{
+    NTSCFG_WARNING_UNUSED(allocator);
+}
+
+void Case::verifyEncoderUtilityDatetime(bslma::Allocator* allocator)
+{
+    NTSCFG_WARNING_UNUSED(allocator);
 }
 
 void Case::verifyPrerequisites(bslma::Allocator* allocator)
@@ -670,6 +1025,22 @@ void Case::verifySignedIntegerDivide(bslma::Allocator* allocator)
     }
 }
 
+void Case::verifyDecoderUtility(bslma::Allocator* allocator)
+{
+    Case::verifyDecoderUtilityTag(allocator);
+    Case::verifyDecoderUtilityLength(allocator);
+    Case::verifyDecoderUtilityInteger(allocator);
+    Case::verifyDecoderUtilityDatetime(allocator);
+}
+
+void Case::verifyEncoderUtility(bslma::Allocator* allocator)
+{
+    Case::verifyEncoderUtilityTag(allocator);
+    Case::verifyEncoderUtilityLength(allocator);
+    Case::verifyEncoderUtilityInteger(allocator);
+    Case::verifyEncoderUtilityDatetime(allocator);
+}
+
 }  // close namespace test
 
 NTSCFG_TEST_CASE(1)
@@ -897,7 +1268,30 @@ NTSCFG_TEST_CASE(11)
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
+
 NTSCFG_TEST_CASE(12)
+{
+    // Test decoder utilities
+
+    ntscfg::TestAllocator ta;
+    {
+        test::Case::verifyDecoderUtility(&ta);
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTSCFG_TEST_CASE(13)
+{
+    // Test encoder utilities
+
+    ntscfg::TestAllocator ta;
+    {
+        test::Case::verifyEncoderUtility(&ta);
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTSCFG_TEST_CASE(14)
 {
     // Test abstract syntax decoding: hardware integers.
 
@@ -1017,7 +1411,7 @@ NTSCFG_TEST_CASE(12)
 
             {
                 ntsa::AbstractSyntaxDecoderFrame contextOuter;
-                error = decoder.decodeContext(&contextOuter);
+                error = decoder.decodeTag(&contextOuter);
                 NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_LOG_DEBUG << "Context = " << contextOuter
@@ -1033,7 +1427,7 @@ NTSCFG_TEST_CASE(12)
 
                 {
                     ntsa::AbstractSyntaxDecoderFrame contextInner;
-                    error = decoder.decodeContext(&contextInner);
+                    error = decoder.decodeTag(&contextInner);
                     NTSCFG_TEST_OK(error);
 
                     NTSCFG_TEST_LOG_DEBUG << "Context = " << contextInner
@@ -1049,7 +1443,7 @@ NTSCFG_TEST_CASE(12)
 
                     bsl::int32_t value =
                         bsl::numeric_limits<bsl::int32_t>::max();
-                    error = decoder.decodePrimitiveValue(&value);
+                    error = decoder.decodeValue(&value);
                     NTSCFG_TEST_OK(error);
 
                     NTSCFG_TEST_LOG_DEBUG << "Value = " << value
@@ -1057,11 +1451,11 @@ NTSCFG_TEST_CASE(12)
 
                     NTSCFG_TEST_EQ(value, data.d_value);
 
-                    error = decoder.decodeContextComplete();
+                    error = decoder.decodeTagComplete();
                     NTSCFG_TEST_OK(error);
                 }
 
-                error = decoder.decodeContextComplete();
+                error = decoder.decodeTagComplete();
                 NTSCFG_TEST_OK(error);
             }
 
@@ -1070,15 +1464,23 @@ NTSCFG_TEST_CASE(12)
             ntsa::AbstractSyntaxEncoder encoder(&osb, &ta);
 
             error =
-                encoder.enterFrame(ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
+                encoder.encodeTag(ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
                                    ntsa::AbstractSyntaxTagType::e_CONSTRUCTED,
                                    ntsa::AbstractSyntaxTagNumber::e_SEQUENCE);
             NTSCFG_TEST_OK(error);
 
-            error = encoder.encodePrimitiveValue(data.d_value);
+            error = encoder.encodeTag(ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
+                             ntsa::AbstractSyntaxTagType::e_PRIMITIVE,
+                             ntsa::AbstractSyntaxTagNumber::e_INTEGER);
             NTSCFG_TEST_OK(error);
 
-            error = encoder.leaveFrame();
+            error = encoder.encodeValue(data.d_value);
+            NTSCFG_TEST_OK(error);
+
+            error = encoder.encodeTagComplete();
+            NTSCFG_TEST_OK(error);
+
+            error = encoder.encodeTagComplete();
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_GT(osb.length(), 0);
@@ -1102,7 +1504,7 @@ NTSCFG_TEST_CASE(12)
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTSCFG_TEST_CASE(13)
+NTSCFG_TEST_CASE(15)
 {
     // Test abstract syntax decoding: abstract integers.
 
@@ -1226,7 +1628,7 @@ NTSCFG_TEST_CASE(13)
 
             {
                 ntsa::AbstractSyntaxDecoderFrame contextOuter;
-                error = decoder.decodeContext(&contextOuter);
+                error = decoder.decodeTag(&contextOuter);
                 NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_LOG_DEBUG << "Context = " << contextOuter
@@ -1242,7 +1644,7 @@ NTSCFG_TEST_CASE(13)
 
                 {
                     ntsa::AbstractSyntaxDecoderFrame contextInner;
-                    error = decoder.decodeContext(&contextInner);
+                    error = decoder.decodeTag(&contextInner);
                     NTSCFG_TEST_OK(error);
 
                     NTSCFG_TEST_LOG_DEBUG << "Context = " << contextInner
@@ -1256,7 +1658,7 @@ NTSCFG_TEST_CASE(13)
 
                     NTSCFG_TEST_EQ(contextInner.contentLength().has_value(), true);
 
-                    error = decoder.decodePrimitiveValue(&value);
+                    error = decoder.decodeValue(&value);
                     NTSCFG_TEST_OK(error);
 
                     bsl::string valueString;
@@ -1268,11 +1670,11 @@ NTSCFG_TEST_CASE(13)
 
                     NTSCFG_TEST_EQ(valueString, data.d_value);
 
-                    error = decoder.decodeContextComplete();
+                    error = decoder.decodeTagComplete();
                     NTSCFG_TEST_OK(error);
                 }
 
-                error = decoder.decodeContextComplete();
+                error = decoder.decodeTagComplete();
                 NTSCFG_TEST_OK(error);
             }
 
@@ -1281,15 +1683,23 @@ NTSCFG_TEST_CASE(13)
             ntsa::AbstractSyntaxEncoder encoder(&osb, &ta);
 
             error =
-                encoder.enterFrame(ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
+                encoder.encodeTag(ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
                                    ntsa::AbstractSyntaxTagType::e_CONSTRUCTED,
                                    ntsa::AbstractSyntaxTagNumber::e_SEQUENCE);
             NTSCFG_TEST_OK(error);
 
-            error = encoder.encodePrimitiveValue(value);
+            error = encoder.encodeTag(ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
+                             ntsa::AbstractSyntaxTagType::e_PRIMITIVE,
+                             ntsa::AbstractSyntaxTagNumber::e_INTEGER);
             NTSCFG_TEST_OK(error);
 
-            error = encoder.leaveFrame();
+            error = encoder.encodeValue(value);
+            NTSCFG_TEST_OK(error);
+
+            error = encoder.encodeTagComplete();
+            NTSCFG_TEST_OK(error);
+
+            error = encoder.encodeTagComplete();
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_GT(osb.length(), 0);
@@ -1313,7 +1723,7 @@ NTSCFG_TEST_CASE(13)
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTSCFG_TEST_CASE(14)
+NTSCFG_TEST_CASE(16)
 {
     // Test abstract object identifier codec
 
@@ -1336,7 +1746,7 @@ NTSCFG_TEST_CASE(14)
         ntsa::AbstractObjectIdentifier value(&ta);
 
         ntsa::AbstractSyntaxDecoderFrame decoderFrame;
-        error = decoder.decodeContext(&decoderFrame);
+        error = decoder.decodeTag(&decoderFrame);
         NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_LOG_DEBUG << "Context = " << decoderFrame
@@ -1350,7 +1760,7 @@ NTSCFG_TEST_CASE(14)
 
         NTSCFG_TEST_EQ(decoderFrame.contentLength().has_value(), true);
 
-        error = decoder.decodePrimitiveValue(&value);
+        error = decoder.decodeValue(&value);
         NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_LOG_DEBUG << "Value = " << value << NTSCFG_TEST_LOG_END;
@@ -1371,14 +1781,22 @@ NTSCFG_TEST_CASE(14)
         NTSCFG_TEST_EQ(value.get(11), 4294967295);
         NTSCFG_TEST_EQ(value.get(12), 4294967296);
 
-        error = decoder.decodeContextComplete();
+        error = decoder.decodeTagComplete();
         NTSCFG_TEST_OK(error);
 
         bdlsb::MemOutStreamBuf osb(&ta);
 
         ntsa::AbstractSyntaxEncoder encoder(&osb, &ta);
 
-        error = encoder.encodePrimitiveValue(value);
+        error = encoder.encodeTag(ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
+                             ntsa::AbstractSyntaxTagType::e_PRIMITIVE,
+                             ntsa::AbstractSyntaxTagNumber::e_OBJECT_IDENTIFIER);
+        NTSCFG_TEST_OK(error);
+
+        error = encoder.encodeValue(value);
+        NTSCFG_TEST_OK(error);
+
+        error = encoder.encodeTagComplete();
         NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_GT(osb.length(), 0);
@@ -1421,9 +1839,12 @@ NTSCFG_TEST_DRIVER
     NTSCFG_TEST_REGISTER(10);  // Test abstract signed integer division
     NTSCFG_TEST_REGISTER(11);  // Test abstract signed integer facilities
 
-    NTSCFG_TEST_REGISTER(12);  // Test hardware signed integer codec
-    NTSCFG_TEST_REGISTER(13);  // Test abstract signed integer codec
+    NTSCFG_TEST_REGISTER(12);  // Test decoder utilities
+    NTSCFG_TEST_REGISTER(13);  // Test encoder utilities
 
-    NTSCFG_TEST_REGISTER(14);  // Test abstract object identifier codec
+    NTSCFG_TEST_REGISTER(14);  // Test hardware signed integer codec
+    NTSCFG_TEST_REGISTER(15);  // Test abstract signed integer codec
+
+    NTSCFG_TEST_REGISTER(16);  // Test abstract object identifier codec
 }
 NTSCFG_TEST_DRIVER_END;

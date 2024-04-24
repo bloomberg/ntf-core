@@ -19,6 +19,8 @@
 BSLS_IDENT_RCSID(ntsa_abstract_cpp, "$Id$ $CSID$")
 
 #include <bdlb_bitutil.h>
+#include <bdlb_chartype.h>
+#include <bdlb_numericparseutil.h>
 #include <bdlt_iso8601util.h>
 #include <bdlt_iso8601utilconfiguration.h>
 #include <bslim_printer.h>
@@ -27,7 +29,10 @@ BSLS_IDENT_RCSID(ntsa_abstract_cpp, "$Id$ $CSID$")
 #include <bsls_assert.h>
 #include <bsl_cmath.h>
 #include <bsl_cstdlib.h>
+#include <bsl_cstdio.h>
 #include <bsl_cstring.h>
+#include <bsl_iostream.h>
+#include <bsl_iomanip.h>
 
 namespace BloombergLP {
 namespace ntsa {
@@ -501,6 +506,285 @@ ntsa::Error AbstractSyntaxEncoderFrame::encodeContentBase128(
     return AbstractSyntaxEncoderUtil::encodeIntegerBase128(&d_content, value);
 }
 
+
+ntsa::Error AbstractSyntaxEncoderFrame::encodeNull()
+{
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoderFrame::encodeValue(bool value)
+{
+    ntsa::Error error;
+
+    if (value) {
+        error = this->writeContent(0x00);
+    }
+    else {
+        error = this->writeContent(0xFF);
+    }
+
+    if (error) {
+        return error;
+    }
+
+    return error;
+}
+
+ntsa::Error AbstractSyntaxEncoderFrame::encodeValue(short value)
+{
+    return this->encodeValue(static_cast<long long>(value));
+}
+
+ntsa::Error AbstractSyntaxEncoderFrame::encodeValue(unsigned short value)
+{
+    return this->encodeValue(static_cast<unsigned long long>(value));
+}
+
+ntsa::Error AbstractSyntaxEncoderFrame::encodeValue(int value)
+{
+    return this->encodeValue(static_cast<long long>(value));
+}
+
+ntsa::Error AbstractSyntaxEncoderFrame::encodeValue(unsigned int value)
+{
+    return this->encodeValue(static_cast<unsigned long long>(value));
+}
+
+ntsa::Error AbstractSyntaxEncoderFrame::encodeValue(long value)
+{
+    return this->encodeValue(static_cast<long long>(value));
+}
+
+ntsa::Error AbstractSyntaxEncoderFrame::encodeValue(unsigned long value)
+{
+    return this->encodeValue(static_cast<unsigned long long>(value));
+}
+
+ntsa::Error AbstractSyntaxEncoderFrame::encodeValue(long long value)
+{
+    ntsa::Error error;
+
+    long long bigEndianValue = BSLS_BYTEORDER_HOST_TO_BE(value);
+
+    const bsl::uint8_t* bigEndianByteArray =
+        reinterpret_cast<bsl::uint8_t*>(&bigEndianValue);
+
+    bsl::size_t bigEndianByteArraySize = sizeof bigEndianValue;
+
+    bsl::size_t numSkipped = 0;
+
+    for (bsl::size_t i = 0; i < sizeof bigEndianValue - 1; ++i) {
+        const bsl::uint8_t bigEndianByte     = bigEndianByteArray[i];
+        const bsl::uint8_t bigEndianByteNext = bigEndianByteArray[i + 1];
+
+        if ((bigEndianByte == 0xFF) && ((bigEndianByteNext & 0x80) != 0)) {
+            ++numSkipped;
+        }
+        else {
+            break;
+        }
+    }
+
+    bigEndianByteArray     += numSkipped;
+    bigEndianByteArraySize -= numSkipped;
+
+    for (bsl::size_t i = 0; i < bigEndianByteArraySize; ++i) {
+        const bsl::uint8_t bigEndianByte = bigEndianByteArray[i];
+        error = this->writeContent(bigEndianByte);
+        if (error) {
+            return error;
+        }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoderFrame::encodeValue(unsigned long long value)
+{
+    ntsa::Error error;
+
+    if (value == 0) {
+        error = this->writeContent(0x00);
+        if (error) {
+            return error;
+        }
+    }
+    else {
+        const unsigned long long bigEndianValue =
+            BSLS_BYTEORDER_HOST_TO_BE(value);
+
+        const bsl::uint8_t* bigEndianByteArray =
+            reinterpret_cast<const bsl::uint8_t*>(&bigEndianValue);
+
+        bsl::size_t bigEndianByteArraySize = sizeof bigEndianValue;
+
+        bsl::size_t numSkipped = 0;
+
+        for (bsl::size_t i = 0; i < sizeof bigEndianValue; ++i) {
+            const bsl::uint8_t bigEndianByte = bigEndianByteArray[i];
+
+            if (bigEndianByte == 0x00) {
+                ++numSkipped;
+            }
+            else {
+                break;
+            }
+        }
+
+        bigEndianByteArray     += numSkipped;
+        bigEndianByteArraySize -= numSkipped;
+
+        if (bigEndianByteArraySize > 0) {
+            const bsl::uint8_t bigEndianByte = bigEndianByteArray[0];
+            if ((bigEndianByte & 0x80) != 0) {
+                error = this->writeContent(0x00);
+                if (error) {
+                    return error;
+                }
+            }
+        }
+
+        for (bsl::size_t i = 0; i < bigEndianByteArraySize; ++i) {
+            const bsl::uint8_t bigEndianByte = bigEndianByteArray[i];
+            error = this->writeContent(bigEndianByte);
+            if (error) {
+                return error;
+            }
+        }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoderFrame::encodeValue(const bsl::string& value)
+{
+    ntsa::Error error;
+
+    error = this->writeContent(value.data(), value.size());
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoderFrame::encodeValue(const bdlt::Datetime& value)
+{
+    return this->encodeValue(bdlt::DatetimeTz(value, 0));
+}
+
+ntsa::Error AbstractSyntaxEncoderFrame::encodeValue(const bdlt::DatetimeTz& value)
+{
+    return AbstractSyntaxEncoderUtil::encodeDatetimeTz(
+        &d_content, 
+        d_tagClass, 
+        d_tagType,
+        d_tagNumber,
+        value);
+}
+
+ntsa::Error AbstractSyntaxEncoderFrame::encodeValue(const ntsa::AbstractInteger& value)
+{
+    ntsa::Error error;
+
+    if (value.isZero()) {
+        error = this->writeContent(0x00);
+        if (error) {
+            return error;
+        }
+    }
+    else {
+        bsl::vector<bsl::uint8_t> data;
+        value.encode(&data);
+
+        if (data.empty()) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        error = this->writeContent(&data.front(), data.size());
+        if (error) {
+            return error;
+        }
+    }
+    
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoderFrame::encodeValue(const ntsa::AbstractString& value)
+{
+    ntsa::Error error;
+
+    error = this->writeContent(value.data(), value.size());
+    if (error) {
+        return error;
+    }
+    
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoderFrame::encodeValue(const ntsa::AbstractBitSequence& value)
+{
+    ntsa::Error error;
+
+    error = this->writeContent(value.data(), value.size());
+    if (error) {
+        return error;
+    }
+    
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoderFrame::encodeValue(const ntsa::AbstractByteSequence& value)
+{
+    ntsa::Error error;
+
+    error = this->writeContent(value.data(), value.size());
+    if (error) {
+        return error;
+    }
+    
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoderFrame::encodeValue(const ntsa::AbstractObjectIdentifier& value)
+{
+    ntsa::Error error;
+
+    if (value.size() < 2) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    const bsl::uint64_t v0 = value.get(0);
+    const bsl::uint64_t v1 = value.get(1);
+
+    if (v0 > 3) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (v0 == 0 || v0 == 1) {
+        if (v1 > 39) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    const bsl::uint64_t vx = (v0 * 40) + v1;
+
+    error = this->writeContent(vx);
+    if (error) {
+        return error;
+    }
+
+    for (bsl::size_t i = 2; i < value.size(); ++i) {
+        error = this->encodeContentBase128(value.get(i));
+        if (error) {
+            return error;
+        }
+    }
+    
+    return ntsa::Error();
+}
+
+
 ntsa::Error AbstractSyntaxEncoderFrame::synchronize(bsl::size_t* length)
 {
     ntsa::Error error;
@@ -698,17 +982,17 @@ AbstractSyntaxEncoder::~AbstractSyntaxEncoder()
     }
 }
 
-ntsa::Error AbstractSyntaxEncoder::enterFrame(
+ntsa::Error AbstractSyntaxEncoder::encodeTag(
     AbstractSyntaxTagClass::Value  tagClass,
     AbstractSyntaxTagType::Value   tagType,
     AbstractSyntaxTagNumber::Value tagNumber)
 {
-    return this->enterFrame(tagClass,
+    return this->encodeTag(tagClass,
                             tagType,
                             static_cast<bsl::size_t>(tagNumber));
 }
 
-ntsa::Error AbstractSyntaxEncoder::enterFrame(
+ntsa::Error AbstractSyntaxEncoder::encodeTag(
     AbstractSyntaxTagClass::Value tagClass,
     AbstractSyntaxTagType::Value  tagType,
     bsl::size_t                   tagNumber)
@@ -733,18 +1017,15 @@ ntsa::Error AbstractSyntaxEncoder::enterFrame(
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxEncoder::encodePrimitiveNull()
+ntsa::Error AbstractSyntaxEncoder::encodeNull()
 {
     ntsa::Error error;
 
-    error = this->enterFrame(AbstractSyntaxTagClass::e_UNIVERSAL,
-                             AbstractSyntaxTagType::e_PRIMITIVE,
-                             AbstractSyntaxTagNumber::e_NULL);
-    if (error) {
-        return error;
+    if (d_current_p == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    error = this->leaveFrame();
+    error = d_current_p->encodeNull();
     if (error) {
         return error;
     }
@@ -752,26 +1033,15 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveNull()
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(bool value)
+ntsa::Error AbstractSyntaxEncoder::encodeValue(bool value)
 {
     ntsa::Error error;
 
-    error = this->enterFrame(AbstractSyntaxTagClass::e_UNIVERSAL,
-                             AbstractSyntaxTagType::e_PRIMITIVE,
-                             AbstractSyntaxTagNumber::e_BOOLEAN);
-
-    if (value) {
-        error = d_current_p->writeContent(0x00);
-    }
-    else {
-        error = d_current_p->writeContent(0xFF);
+    if (d_current_p == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    if (error) {
-        return error;
-    }
-
-    error = this->leaveFrame();
+    error = d_current_p->encodeValue(value);
     if (error) {
         return error;
     }
@@ -779,85 +1049,50 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(bool value)
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(short value)
+ntsa::Error AbstractSyntaxEncoder::encodeValue(short value)
 {
-    return this->encodePrimitiveValue(static_cast<long long>(value));
+    return this->encodeValue(static_cast<long long>(value));
 }
 
-ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(unsigned short value)
+ntsa::Error AbstractSyntaxEncoder::encodeValue(unsigned short value)
 {
-    return this->encodePrimitiveValue(static_cast<unsigned long long>(value));
+    return this->encodeValue(static_cast<unsigned long long>(value));
 }
 
-ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(int value)
+ntsa::Error AbstractSyntaxEncoder::encodeValue(int value)
 {
-    return this->encodePrimitiveValue(static_cast<long long>(value));
+    return this->encodeValue(static_cast<long long>(value));
 }
 
-ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(unsigned int value)
+ntsa::Error AbstractSyntaxEncoder::encodeValue(unsigned int value)
 {
-    return this->encodePrimitiveValue(static_cast<unsigned long long>(value));
+    return this->encodeValue(static_cast<unsigned long long>(value));
 }
 
-ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(long value)
+ntsa::Error AbstractSyntaxEncoder::encodeValue(long value)
 {
-    return this->encodePrimitiveValue(static_cast<long long>(value));
+    return this->encodeValue(static_cast<long long>(value));
 }
 
-ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(unsigned long value)
+ntsa::Error AbstractSyntaxEncoder::encodeValue(unsigned long value)
 {
-    return this->encodePrimitiveValue(static_cast<unsigned long long>(value));
+    return this->encodeValue(static_cast<unsigned long long>(value));
 }
 
-ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(long long value)
+ntsa::Error AbstractSyntaxEncoder::encodeValue(long long value)
 {
     if (value >= 0) {
-        return this->encodePrimitiveValue(
+        return this->encodeValue(
             static_cast<unsigned long long>(value));
     }
 
     ntsa::Error error;
 
-    error = this->enterFrame(AbstractSyntaxTagClass::e_UNIVERSAL,
-                             AbstractSyntaxTagType::e_PRIMITIVE,
-                             AbstractSyntaxTagNumber::e_INTEGER);
-    if (error) {
-        return error;
+    if (d_current_p == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    long long bigEndianValue = BSLS_BYTEORDER_HOST_TO_BE(value);
-
-    const bsl::uint8_t* bigEndianByteArray =
-        reinterpret_cast<bsl::uint8_t*>(&bigEndianValue);
-
-    bsl::size_t bigEndianByteArraySize = sizeof bigEndianValue;
-
-    bsl::size_t numSkipped = 0;
-
-    for (bsl::size_t i = 0; i < sizeof bigEndianValue - 1; ++i) {
-        const bsl::uint8_t bigEndianByte     = bigEndianByteArray[i];
-        const bsl::uint8_t bigEndianByteNext = bigEndianByteArray[i + 1];
-
-        if ((bigEndianByte == 0xFF) && ((bigEndianByteNext & 0x80) != 0)) {
-            ++numSkipped;
-        }
-        else {
-            break;
-        }
-    }
-
-    bigEndianByteArray     += numSkipped;
-    bigEndianByteArraySize -= numSkipped;
-
-    for (bsl::size_t i = 0; i < bigEndianByteArraySize; ++i) {
-        const bsl::uint8_t bigEndianByte = bigEndianByteArray[i];
-        error = d_current_p->writeContent(bigEndianByte);
-        if (error) {
-            return error;
-        }
-    }
-
-    error = this->leaveFrame();
+    error = d_current_p->encodeValue(value);
     if (error) {
         return error;
     }
@@ -865,69 +1100,16 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(long long value)
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(
+ntsa::Error AbstractSyntaxEncoder::encodeValue(
     unsigned long long value)
 {
     ntsa::Error error;
 
-    error = this->enterFrame(AbstractSyntaxTagClass::e_UNIVERSAL,
-                             AbstractSyntaxTagType::e_PRIMITIVE,
-                             AbstractSyntaxTagNumber::e_INTEGER);
-    if (error) {
-        return error;
+    if (d_current_p == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    if (value == 0) {
-        error = d_current_p->writeContent(0x00);
-        if (error) {
-            return error;
-        }
-    }
-    else {
-        const unsigned long long bigEndianValue =
-            BSLS_BYTEORDER_HOST_TO_BE(value);
-
-        const bsl::uint8_t* bigEndianByteArray =
-            reinterpret_cast<const bsl::uint8_t*>(&bigEndianValue);
-
-        bsl::size_t bigEndianByteArraySize = sizeof bigEndianValue;
-
-        bsl::size_t numSkipped = 0;
-
-        for (bsl::size_t i = 0; i < sizeof bigEndianValue; ++i) {
-            const bsl::uint8_t bigEndianByte = bigEndianByteArray[i];
-
-            if (bigEndianByte == 0x00) {
-                ++numSkipped;
-            }
-            else {
-                break;
-            }
-        }
-
-        bigEndianByteArray     += numSkipped;
-        bigEndianByteArraySize -= numSkipped;
-
-        if (bigEndianByteArraySize > 0) {
-            const bsl::uint8_t bigEndianByte = bigEndianByteArray[0];
-            if ((bigEndianByte & 0x80) != 0) {
-                error = d_current_p->writeContent(0x00);
-                if (error) {
-                    return error;
-                }
-            }
-        }
-
-        for (bsl::size_t i = 0; i < bigEndianByteArraySize; ++i) {
-            const bsl::uint8_t bigEndianByte = bigEndianByteArray[i];
-            error = d_current_p->writeContent(bigEndianByte);
-            if (error) {
-                return error;
-            }
-        }
-    }
-
-    error = this->leaveFrame();
+    error = d_current_p->encodeValue(value);
     if (error) {
         return error;
     }
@@ -935,39 +1117,16 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(
+ntsa::Error AbstractSyntaxEncoder::encodeValue(
     const AbstractInteger& value)
 {
     ntsa::Error error;
 
-    error = this->enterFrame(AbstractSyntaxTagClass::e_UNIVERSAL,
-                             AbstractSyntaxTagType::e_PRIMITIVE,
-                             AbstractSyntaxTagNumber::e_INTEGER);
-    if (error) {
-        return error;
+    if (d_current_p == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    if (value.isZero()) {
-        error = d_current_p->writeContent(0x00);
-        if (error) {
-            return error;
-        }
-    }
-    else {
-        bsl::vector<bsl::uint8_t> data;
-        value.encode(&data);
-
-        if (data.empty()) {
-            return ntsa::Error(ntsa::Error::e_INVALID);
-        }
-
-        error = d_current_p->writeContent(&data.front(), data.size());
-        if (error) {
-            return error;
-        }
-    }
-
-    error = this->leaveFrame();
+    error = d_current_p->encodeValue(value);
     if (error) {
         return error;
     }
@@ -975,24 +1134,16 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(
+ntsa::Error AbstractSyntaxEncoder::encodeValue(
     const bsl::string& value)
 {
     ntsa::Error error;
 
-    error = this->enterFrame(AbstractSyntaxTagClass::e_UNIVERSAL,
-                             AbstractSyntaxTagType::e_PRIMITIVE,
-                             AbstractSyntaxTagNumber::e_UTF8_STRING);
-    if (error) {
-        return error;
+    if (d_current_p == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    error = d_current_p->writeContent(value.data(), value.size());
-    if (error) {
-        return error;
-    }
-
-    error = this->leaveFrame();
+    error = d_current_p->encodeValue(value);
     if (error) {
         return error;
     }
@@ -1000,21 +1151,16 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(
+ntsa::Error AbstractSyntaxEncoder::encodeValue(
     const AbstractString& value)
 {
     ntsa::Error error;
 
-    error = this->enterFrame(AbstractSyntaxTagClass::e_UNIVERSAL,
-                             AbstractSyntaxTagType::e_PRIMITIVE,
-                             AbstractSyntaxTagNumber::e_UTF8_STRING);
-
-    error = d_current_p->writeContent(value.data(), value.size());
-    if (error) {
-        return error;
+    if (d_current_p == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    error = this->leaveFrame();
+    error = d_current_p->encodeValue(value);
     if (error) {
         return error;
     }
@@ -1022,21 +1168,16 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(
+ntsa::Error AbstractSyntaxEncoder::encodeValue(
     const AbstractBitSequence& value)
 {
     ntsa::Error error;
 
-    error = this->enterFrame(AbstractSyntaxTagClass::e_UNIVERSAL,
-                             AbstractSyntaxTagType::e_PRIMITIVE,
-                             AbstractSyntaxTagNumber::e_BIT_STRING);
-
-    error = d_current_p->writeContent(value.data(), value.size());
-    if (error) {
-        return error;
+    if (d_current_p == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    error = this->leaveFrame();
+    error = d_current_p->encodeValue(value);
     if (error) {
         return error;
     }
@@ -1044,21 +1185,16 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(
+ntsa::Error AbstractSyntaxEncoder::encodeValue(
     const AbstractByteSequence& value)
 {
     ntsa::Error error;
 
-    error = this->enterFrame(AbstractSyntaxTagClass::e_UNIVERSAL,
-                             AbstractSyntaxTagType::e_PRIMITIVE,
-                             AbstractSyntaxTagNumber::e_OCTET_STRING);
-
-    error = d_current_p->writeContent(value.data(), value.size());
-    if (error) {
-        return error;
+    if (d_current_p == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    error = this->leaveFrame();
+    error = d_current_p->encodeValue(value);
     if (error) {
         return error;
     }
@@ -1066,34 +1202,16 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(
+ntsa::Error AbstractSyntaxEncoder::encodeValue(
     const bdlt::Datetime& value)
 {
     ntsa::Error error;
 
-    error = this->enterFrame(AbstractSyntaxTagClass::e_UNIVERSAL,
-                             AbstractSyntaxTagType::e_PRIMITIVE,
-                             AbstractSyntaxTagNumber::e_GENERALIZED_TIME);
-    if (error) {
-        return error;
-    }
-
-    bdlt::Iso8601UtilConfiguration config;
-    config.setFractionalSecondPrecision(3);
-
-    char data[bdlt::Iso8601Util::k_MAX_STRLEN];
-
-    int length = bdlt::Iso8601Util::generate(data, sizeof data, value, config);
-    if (length <= 0) {
+    if (d_current_p == 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    error = d_current_p->writeContent(data, static_cast<bsl::size_t>(length));
-    if (error) {
-        return error;
-    }
-
-    error = this->leaveFrame();
+    error = d_current_p->encodeValue(value);
     if (error) {
         return error;
     }
@@ -1101,37 +1219,16 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(
+ntsa::Error AbstractSyntaxEncoder::encodeValue(
     const bdlt::DatetimeTz& value)
 {
     ntsa::Error error;
 
-    error = this->enterFrame(AbstractSyntaxTagClass::e_UNIVERSAL,
-                             AbstractSyntaxTagType::e_PRIMITIVE,
-                             AbstractSyntaxTagNumber::e_GENERALIZED_TIME);
-    if (error) {
-        return error;
-    }
-
-    bdlt::DatetimeTz effectiveValue(value.utcDatetime(), 0);
-
-    bdlt::Iso8601UtilConfiguration config;
-    config.setFractionalSecondPrecision(3);
-
-    char data[bdlt::Iso8601Util::k_MAX_STRLEN];
-
-    int length =
-        bdlt::Iso8601Util::generate(data, sizeof data, effectiveValue, config);
-    if (length <= 0) {
+    if (d_current_p == 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    error = d_current_p->writeContent(data, static_cast<bsl::size_t>(length));
-    if (error) {
-        return error;
-    }
-
-    error = this->leaveFrame();
+    error = d_current_p->encodeValue(value);
     if (error) {
         return error;
     }
@@ -1139,50 +1236,16 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(
+ntsa::Error AbstractSyntaxEncoder::encodeValue(
     const AbstractObjectIdentifier& value)
 {
     ntsa::Error error;
 
-    if (value.size() < 2) {
+    if (d_current_p == 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    error = this->enterFrame(AbstractSyntaxTagClass::e_UNIVERSAL,
-                             AbstractSyntaxTagType::e_PRIMITIVE,
-                             AbstractSyntaxTagNumber::e_OBJECT_IDENTIFIER);
-    if (error) {
-        return error;
-    }
-
-    const bsl::uint64_t v0 = value.get(0);
-    const bsl::uint64_t v1 = value.get(1);
-
-    if (v0 > 3) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
-    if (v0 == 0 || v0 == 1) {
-        if (v1 > 39) {
-            return ntsa::Error(ntsa::Error::e_INVALID);
-        }
-    }
-
-    const bsl::uint64_t vx = (v0 * 40) + v1;
-
-    error = d_current_p->writeContent(vx);
-    if (error) {
-        return error;
-    }
-
-    for (bsl::size_t i = 2; i < value.size(); ++i) {
-        error = d_current_p->encodeContentBase128(value.get(i));
-        if (error) {
-            return error;
-        }
-    }
-
-    error = this->leaveFrame();
+    error = d_current_p->encodeValue(value);
     if (error) {
         return error;
     }
@@ -1190,7 +1253,7 @@ ntsa::Error AbstractSyntaxEncoder::encodePrimitiveValue(
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxEncoder::leaveFrame()
+ntsa::Error AbstractSyntaxEncoder::encodeTagComplete()
 {
     ntsa::Error error;
     int         rc;
@@ -1457,6 +1520,125 @@ ntsa::Error AbstractSyntaxEncoderUtil::encodeIntegerBase128(
         if (error) {
             return error;
         }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoderUtil::encodeDatetimeTz(
+        bsl::streambuf*                     destination,
+        ntsa::AbstractSyntaxTagClass::Value tagClass,
+        ntsa::AbstractSyntaxTagType::Value  tagType,
+        bsl::size_t                         tagNumber,
+        const bdlt::DatetimeTz&             value)
+{
+    ntsa::Error error;
+
+    enum Format {
+        e_UNKNOWN,
+        e_UTC,
+        e_GENERALIZED,
+        e_ISO8601
+    };
+
+    Format format = e_UNKNOWN;
+
+    if (tagClass == AbstractSyntaxTagClass::e_UNIVERSAL) {
+        if (tagNumber == AbstractSyntaxTagNumber::e_UTC_TIME) {
+            format = e_UTC;
+        }
+        else if (tagNumber == AbstractSyntaxTagNumber::e_GENERALIZED_TIME) {
+            format = e_GENERALIZED;
+        }
+        else {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+    else if (tagClass == AbstractSyntaxTagClass::e_CONTEXT_SPECIFIC) {
+        format = e_ISO8601;
+    }
+
+    if (tagType != AbstractSyntaxTagType::e_PRIMITIVE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (format == e_UNKNOWN) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (!bdlt::DatetimeTz::isValid(value.localDatetime(), value.offset())) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (format == e_ISO8601) {
+        bsl::ostream os(destination);
+        bdlt::Iso8601Util::generate(os, value);
+        if (!os) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        return ntsa::Error();
+    }
+
+    bsl::ostream os(destination);
+
+    int year        = value.localDatetime().year();
+    int month       = value.localDatetime().month();
+    int day         = value.localDatetime().day();
+    int hour        = value.localDatetime().hour();
+    int minute      = value.localDatetime().minute();
+    int second      = value.localDatetime().second();
+    int millisecond = value.localDatetime().millisecond();
+    int offset      = value.offset();
+
+    if (format == e_UTC) {
+        if (year < 2000) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        os << bsl::setw(2) << bsl::setfill('0') << (year - 2000);
+    }
+    else {
+        os << bsl::setw(4) << bsl::setfill('0') << year;
+    }
+
+    os << bsl::setw(2) << bsl::setfill('0') << month;
+    os << bsl::setw(2) << bsl::setfill('0') << day;
+    os << bsl::setw(2) << bsl::setfill('0') << hour;
+
+    if (format == e_UTC || minute > 0 || second > 0 || millisecond > 0) {
+        os << bsl::setw(2) << bsl::setfill('0') << minute;
+        if (format == e_UTC || second > 0 || millisecond > 0) {
+            os << bsl::setw(2) << bsl::setfill('0') << second;
+            if (format == e_GENERALIZED && millisecond > 0) {
+                os << millisecond;
+            }
+        }
+    }
+
+    if (offset == 0) {
+        os << 'Z';
+    }
+    else {
+
+        if (offset > 0) {
+            os << '+';
+        }
+        else {
+            os << '-';
+        }
+
+        const int gmtOffsetHour   = value.offset() / 60;
+        const int gmtOffsetMinute = value.offset() % 60;
+
+        os << bsl::setw(2) << bsl::setfill('0') << gmtOffsetHour;
+        os << bsl::setw(2) << bsl::setfill('0') << gmtOffsetMinute;
+    }
+
+    os.flush();
+
+    if (!os) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
     return ntsa::Error();
@@ -1850,7 +2032,7 @@ AbstractSyntaxDecoder::~AbstractSyntaxDecoder()
 {
 }
 
-ntsa::Error AbstractSyntaxDecoder::decodeContext()
+ntsa::Error AbstractSyntaxDecoder::decodeTag()
 {
     ntsa::Error error;
 
@@ -1899,14 +2081,14 @@ ntsa::Error AbstractSyntaxDecoder::decodeContext()
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxDecoder::decodeContext(
+ntsa::Error AbstractSyntaxDecoder::decodeTag(
     AbstractSyntaxDecoderFrame* result)
 {
     ntsa::Error error;
 
     result->reset();
 
-    error = this->decodeContext();
+    error = this->decodeTag();
     if (error) {
         return error;
     }
@@ -1915,14 +2097,14 @@ ntsa::Error AbstractSyntaxDecoder::decodeContext(
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxDecoder::decodeContext(
+ntsa::Error AbstractSyntaxDecoder::decodeTag(
     AbstractSyntaxTagClass::Value  tagClass,
     AbstractSyntaxTagType::Value   tagType,
     AbstractSyntaxTagNumber::Value tagNumber)
 {
     ntsa::Error error;
 
-    error = this->decodeContext();
+    error = this->decodeTag();
     if (error) {
         return error;
     }
@@ -1944,14 +2126,14 @@ ntsa::Error AbstractSyntaxDecoder::decodeContext(
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxDecoder::decodeContext(
+ntsa::Error AbstractSyntaxDecoder::decodeTag(
     AbstractSyntaxTagClass::Value tagClass,
     AbstractSyntaxTagType::Value  tagType,
     bsl::size_t                   tagNumber)
 {
     ntsa::Error error;
 
-    error = this->decodeContext();
+    error = this->decodeTag();
     if (error) {
         return error;
     }
@@ -1973,7 +2155,7 @@ ntsa::Error AbstractSyntaxDecoder::decodeContext(
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxDecoder::decodePrimitiveNull()
+ntsa::Error AbstractSyntaxDecoder::decodeNull()
 {
     ntsa::Error error;
 
@@ -2004,7 +2186,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveNull()
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxDecoder::decodePrimitiveEnd()
+ntsa::Error AbstractSyntaxDecoder::decodeEnd()
 {
     ntsa::Error error;
 
@@ -2046,7 +2228,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveEnd()
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(bool* result)
+ntsa::Error AbstractSyntaxDecoder::decodeValue(bool* result)
 {
     ntsa::Error error;
 
@@ -2095,12 +2277,12 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(bool* result)
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(short* result)
+ntsa::Error AbstractSyntaxDecoder::decodeValue(short* result)
 {
     ntsa::Error error;
 
     long long temp;
-    error = this->decodePrimitiveValue(&temp);
+    error = this->decodeValue(&temp);
     if (error) {
         return error;
     }
@@ -2115,12 +2297,12 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(short* result)
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(unsigned short* result)
+ntsa::Error AbstractSyntaxDecoder::decodeValue(unsigned short* result)
 {
     ntsa::Error error;
 
     unsigned long long temp;
-    error = this->decodePrimitiveValue(&temp);
+    error = this->decodeValue(&temp);
     if (error) {
         return error;
     }
@@ -2135,12 +2317,12 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(unsigned short* result)
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(int* result)
+ntsa::Error AbstractSyntaxDecoder::decodeValue(int* result)
 {
     ntsa::Error error;
 
     long long temp;
-    error = this->decodePrimitiveValue(&temp);
+    error = this->decodeValue(&temp);
     if (error) {
         return error;
     }
@@ -2155,12 +2337,12 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(int* result)
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(unsigned int* result)
+ntsa::Error AbstractSyntaxDecoder::decodeValue(unsigned int* result)
 {
     ntsa::Error error;
 
     unsigned long long temp;
-    error = this->decodePrimitiveValue(&temp);
+    error = this->decodeValue(&temp);
     if (error) {
         return error;
     }
@@ -2175,12 +2357,12 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(unsigned int* result)
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(long* result)
+ntsa::Error AbstractSyntaxDecoder::decodeValue(long* result)
 {
     ntsa::Error error;
 
     long long temp;
-    error = this->decodePrimitiveValue(&temp);
+    error = this->decodeValue(&temp);
     if (error) {
         return error;
     }
@@ -2195,12 +2377,12 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(long* result)
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(unsigned long* result)
+ntsa::Error AbstractSyntaxDecoder::decodeValue(unsigned long* result)
 {
     ntsa::Error error;
 
     unsigned long long temp;
-    error = this->decodePrimitiveValue(&temp);
+    error = this->decodeValue(&temp);
     if (error) {
         return error;
     }
@@ -2215,7 +2397,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(unsigned long* result)
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(long long* result)
+ntsa::Error AbstractSyntaxDecoder::decodeValue(long long* result)
 {
     ntsa::Error error;
 
@@ -2278,7 +2460,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(long long* result)
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(
+ntsa::Error AbstractSyntaxDecoder::decodeValue(
     unsigned long long* result)
 {
     ntsa::Error error;
@@ -2342,53 +2524,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(
-    AbstractInteger* result)
-{
-    ntsa::Error error;
-
-    result->reset();
-
-    if (d_contextStack.empty()) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
-    const AbstractSyntaxDecoderFrame& context = this->current();
-
-    if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
-        if (context.tagNumber() != AbstractSyntaxTagNumber::e_INTEGER) {
-            return ntsa::Error(ntsa::Error::e_INVALID);
-        }
-    }
-
-    if (context.tagType() != AbstractSyntaxTagType::e_PRIMITIVE) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
-    if (context.contentLength().isNull()) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
-    if (context.contentLength().value() == 0) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
-    bsl::vector<bsl::uint8_t> data;
-    data.resize(context.contentLength().value());
-
-    error = AbstractSyntaxDecoderUtil::read(&data.front(),
-                                            data.size(),
-                                            d_buffer_p);
-    if (error) {
-        return error;
-    }
-
-    result->decode(data);
-
-    return ntsa::Error();
-}
-
-ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(bsl::string* result)
+ntsa::Error AbstractSyntaxDecoder::decodeValue(bsl::string* result)
 {
     ntsa::Error error;
 
@@ -2434,7 +2570,139 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(bsl::string* result)
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(AbstractString* result)
+ntsa::Error AbstractSyntaxDecoder::decodeValue(bdlt::Datetime* result)
+{
+    ntsa::Error error;
+
+    bdlt::DatetimeTz dateTimeTz;
+    error = this->decodeValue(&dateTimeTz);
+    if (error) {
+        return error;
+    }
+
+    *result = dateTimeTz.utcDatetime();
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodeValue(
+    bdlt::DatetimeTz* result)
+{
+    ntsa::Error error;
+
+    *result = bdlt::DatetimeTz();
+
+    if (d_contextStack.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    const AbstractSyntaxDecoderFrame& context = this->current();
+
+    if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
+        if (context.tagNumber() !=
+            AbstractSyntaxTagNumber::e_UTC_TIME &&
+            context.tagNumber() != 
+            AbstractSyntaxTagNumber::e_GENERALIZED_TIME)
+        {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+    else {
+        // Context-specific date/time is not supported.
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.tagType() != AbstractSyntaxTagType::e_PRIMITIVE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.contentLength().isNull()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.contentLength().value() == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.contentLength().value() > bdlt::Iso8601Util::k_MAX_STRLEN) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    bsl::size_t length = context.contentLength().value();
+
+    char buffer[bdlt::Iso8601Util::k_MAX_STRLEN + 1];
+    bsl::memset(buffer, 0, sizeof buffer);
+    
+    error = AbstractSyntaxDecoderUtil::read(buffer, length, d_buffer_p);
+    if (error) {
+        return error;
+    }
+
+    error = AbstractSyntaxDecoderUtil::decodeDatetimeTz(
+        result, 
+        context.tagClass(), context.tagType(), context.tagNumber(), 
+        buffer, length);
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+
+
+
+
+
+
+
+
+ntsa::Error AbstractSyntaxDecoder::decodeValue(
+    AbstractInteger* result)
+{
+    ntsa::Error error;
+
+    result->reset();
+
+    if (d_contextStack.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    const AbstractSyntaxDecoderFrame& context = this->current();
+
+    if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
+        if (context.tagNumber() != AbstractSyntaxTagNumber::e_INTEGER) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    if (context.tagType() != AbstractSyntaxTagType::e_PRIMITIVE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.contentLength().isNull()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.contentLength().value() == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    bsl::vector<bsl::uint8_t> data;
+    data.resize(context.contentLength().value());
+
+    error = AbstractSyntaxDecoderUtil::read(&data.front(),
+                                            data.size(),
+                                            d_buffer_p);
+    if (error) {
+        return error;
+    }
+
+    result->decode(data);
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodeValue(AbstractString* result)
 {
     ntsa::Error error;
 
@@ -2489,7 +2757,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(AbstractString* result)
 
 
 
-ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(AbstractBitSequence* result)
+ntsa::Error AbstractSyntaxDecoder::decodeValue(AbstractBitSequence* result)
 {
     ntsa::Error error;
 
@@ -2538,7 +2806,7 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(AbstractBitSequence* res
 
 
 
-ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(AbstractByteSequence* result)
+ntsa::Error AbstractSyntaxDecoder::decodeValue(AbstractByteSequence* result)
 {
     ntsa::Error error;
 
@@ -2587,26 +2855,9 @@ ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(AbstractByteSequence* re
 
 
 
-ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(bdlt::Datetime* result)
-{
-    NTSCFG_WARNING_UNUSED(result);
 
-    NTSCFG_NOT_IMPLEMENTED();
 
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
-}
-
-ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(
-    bdlt::DatetimeTz* result)
-{
-    NTSCFG_WARNING_UNUSED(result);
-
-    NTSCFG_NOT_IMPLEMENTED();
-
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
-}
-
-ntsa::Error AbstractSyntaxDecoder::decodePrimitiveValue(
+ntsa::Error AbstractSyntaxDecoder::decodeValue(
     AbstractObjectIdentifier* result)
 {
     ntsa::Error error;
@@ -2720,7 +2971,7 @@ ntsa::Error AbstractSyntaxDecoder::skip()
     return ntsa::Error();
 }
 
-ntsa::Error AbstractSyntaxDecoder::decodeContextComplete()
+ntsa::Error AbstractSyntaxDecoder::decodeTagComplete()
 {
     if (d_contextStack.empty()) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -2968,6 +3219,378 @@ ntsa::Error AbstractSyntaxDecoderUtil::decodeIntegerBase128(
         if ((nextOctet & 0x80) == 0) {
             break;
         }
+    }
+
+    return ntsa::Error();
+}
+
+
+ntsa::Error AbstractSyntaxDecoderUtil::decodeDatetimeTz(
+    bdlt::DatetimeTz*                   result, 
+    ntsa::AbstractSyntaxTagClass::Value tagClass,
+    ntsa::AbstractSyntaxTagType::Value  tagType,
+    bsl::size_t                         tagNumber,
+    const char*                         buffer, 
+    bsl::size_t                         length)
+{
+    ntsa::Error error;
+    int         rc;
+
+    enum Format {
+        e_UNKNOWN,
+        e_UTC,
+        e_GENERALIZED,
+        e_ISO8601
+    };
+
+    *result = bdlt::DatetimeTz();
+
+    Format format = e_UNKNOWN;
+
+    if (tagClass == AbstractSyntaxTagClass::e_UNIVERSAL) {
+        if (tagNumber == AbstractSyntaxTagNumber::e_UTC_TIME) {
+            format = e_UTC;
+        }
+        else if (tagNumber == AbstractSyntaxTagNumber::e_GENERALIZED_TIME) {
+            format = e_GENERALIZED;
+        }
+        else {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+    else if (tagClass == AbstractSyntaxTagClass::e_CONTEXT_SPECIFIC) {
+        format = e_ISO8601;
+    }
+
+    if (tagType != AbstractSyntaxTagType::e_PRIMITIVE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (format == e_UNKNOWN) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (length == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (format == e_ISO8601) {
+        rc = bdlt::Iso8601Util::parse(
+            result, bsl::string_view(buffer, buffer + length));
+        if (rc != 0) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        return ntsa::Error();
+    }
+    
+    const char* begin   = buffer;
+    const char* current = begin;
+    const char* end     = begin + length;
+
+    const int base = 10;
+
+    int year = 0;
+    int month = 0;
+    int day = 0;
+    int hour = 0;
+    int minute = 0;
+    int second = 0;
+    int milliseconds = 0;
+    int gmtOffset = 0;
+
+    {
+        bsls::Types::Uint64 yearHi = 0;
+        {
+            const char* mark = current + 2;
+
+            if (current >= end || mark > end) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+
+            bsl::string_view input(current, mark);
+            bsl::string_view remainder;
+
+            rc = bdlb::NumericParseUtil::parseUnsignedInteger(
+                &yearHi, &remainder, input, base, 99, 2);
+            if (rc != 0 || !remainder.empty()) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+
+            current = mark;
+        }
+
+        if (format == e_UTC) 
+        {
+            year = static_cast<int>(2000 + yearHi);
+        }
+        else if (format == e_GENERALIZED) 
+        {
+            bsls::Types::Uint64 yearLo = 0;
+            {
+                const char* mark = current + 2;
+
+                if (current >= end || mark > end) {
+                    return ntsa::Error(ntsa::Error::e_INVALID);
+                }
+
+                bsl::string_view input(current, mark);
+                bsl::string_view remainder;
+
+                rc = bdlb::NumericParseUtil::parseUnsignedInteger(
+                    &yearLo, &remainder, input, base, 99, 2);
+                if (rc != 0 || !remainder.empty()) {
+                    return ntsa::Error(ntsa::Error::e_INVALID);
+                }
+
+                current = mark;
+            }
+
+            year = static_cast<int>((100 * yearHi) + yearLo);
+        }
+        else {
+            // Context-specific date/time is not supported.
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    {
+        bsls::Types::Uint64 value = 0;
+        {
+            const char* mark = current + 2;
+
+            if (current >= end || mark > end) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+
+            bsl::string_view input(current, mark);
+            bsl::string_view remainder;
+
+            rc = bdlb::NumericParseUtil::parseUnsignedInteger(
+                &value, &remainder, input, base, 12, 2);
+            if (rc != 0 || !remainder.empty()) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+
+            current = mark;
+        }
+
+        month = static_cast<int>(value);
+    }
+
+    {
+        bsls::Types::Uint64 value = 0;
+        {
+            const char* mark = current + 2;
+
+            if (current >= end || mark > end) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+
+            bsl::string_view input(current, mark);
+            bsl::string_view remainder;
+
+            rc = bdlb::NumericParseUtil::parseUnsignedInteger(
+                &value, &remainder, input, base, 31, 2);
+            if (rc != 0 || !remainder.empty()) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+
+            current = mark;
+        }
+
+        day = static_cast<int>(value);
+    }
+
+    {
+        bsls::Types::Uint64 value = 0;
+        {
+            const char* mark = current + 2;
+
+            if (current >= end || mark > end) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+
+            bsl::string_view input(current, mark);
+            bsl::string_view remainder;
+
+            rc = bdlb::NumericParseUtil::parseUnsignedInteger(
+                &value, &remainder, input, base, 24, 2);
+            if (rc != 0 || !remainder.empty()) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+
+            current = mark;
+        }
+
+        hour = static_cast<int>(value);
+    }
+
+    if (current < end && bdlb::CharType::isDigit(*current)) {
+        bsls::Types::Uint64 value = 0;
+        {
+            const char* mark = current + 2;
+
+            if (current >= end || mark > end) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+
+            bsl::string_view input(current, mark);
+            bsl::string_view remainder;
+
+            rc = bdlb::NumericParseUtil::parseUnsignedInteger(
+                &value, &remainder, input, base, 59, 2);
+            if (rc != 0 || !remainder.empty()) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+
+            current = mark;
+        }
+
+        minute = static_cast<int>(value);
+    }
+
+    if (current < end && bdlb::CharType::isDigit(*current)) {
+        bsls::Types::Uint64 value = 0;
+        {
+            const char* mark = current + 2;
+
+            if (current >= end || mark > end) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+
+            bsl::string_view input(current, mark);
+            bsl::string_view remainder;
+
+            rc = bdlb::NumericParseUtil::parseUnsignedInteger(
+                &value, &remainder, input, base, 59, 2);
+            if (rc != 0 || !remainder.empty()) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+
+            current = mark;
+        }
+
+        second = static_cast<int>(value);
+    }
+
+    if (current < end && *current == '.') {
+        ++current;
+
+        bsls::Types::Uint64 value = 0;
+        {
+            const char* mark = current;
+            while (mark < end && bdlb::CharType::isDigit(*mark)) {
+                ++mark;
+            }
+
+            if (current == mark) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+
+            bsl::string_view input(current, mark);
+            bsl::string_view remainder;
+
+            rc = bdlb::NumericParseUtil::parseUnsignedInteger(
+                &value, &remainder, input, base, 999, 3);
+            if (rc != 0 || !remainder.empty()) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+
+            current = mark;
+        }
+
+        milliseconds = static_cast<int>(value);
+    }
+
+    if (current < end) {
+        if (*current == 'Z') {
+            ++current;
+        }
+        else {
+            int gmtSign = 0;
+            if (*current == '+') {
+                gmtSign = 1;
+                ++current;
+            }
+            else if (*current == '-') {
+                gmtSign = -1;
+                ++current;
+            }
+            else {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+            
+            int gmtOffsetHour = 0;
+            int gmtOffsetMinute = 0;
+
+            {
+                bsls::Types::Uint64 value = 0;
+                {
+                    const char* mark = current + 2;
+
+                    if (current >= end || mark > end) {
+                        return ntsa::Error(ntsa::Error::e_INVALID);
+                    }
+
+                    bsl::string_view input(current, mark);
+                    bsl::string_view remainder;
+
+                    rc = bdlb::NumericParseUtil::parseUnsignedInteger(
+                        &value, &remainder, input, base, 24, 2);
+                    if (rc != 0 || !remainder.empty()) {
+                        return ntsa::Error(ntsa::Error::e_INVALID);
+                    }
+
+                    current = mark;
+                }
+
+                gmtOffsetHour = static_cast<int>(value);
+            }
+
+            {
+                bsls::Types::Uint64 value = 0;
+                {
+                    const char* mark = current + 2;
+
+                    if (current >= end || mark > end) {
+                        return ntsa::Error(ntsa::Error::e_INVALID);
+                    }
+
+                    bsl::string_view input(current, mark);
+                    bsl::string_view remainder;
+
+                    rc = bdlb::NumericParseUtil::parseUnsignedInteger(
+                        &value, &remainder, input, base, 59, 2);
+                    if (rc != 0 || !remainder.empty()) {
+                        return ntsa::Error(ntsa::Error::e_INVALID);
+                    }
+
+                    current = mark;
+                }
+
+                gmtOffsetMinute = static_cast<int>(value);
+            }
+
+            gmtOffset = gmtSign * ((gmtOffsetHour * 60) + gmtOffsetMinute);
+        }
+    }
+
+    if (current != end) {
+        // Internal implementation error: unconsumed data
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    bdlt::Datetime localDatetime;
+    rc = localDatetime.setDatetimeIfValid(
+        year, month, day, hour, minute, second, milliseconds);
+    if (rc != 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    rc = result->setDatetimeTzIfValid(localDatetime, gmtOffset);
+    if (rc != 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
     return ntsa::Error();
