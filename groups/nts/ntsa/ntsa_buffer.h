@@ -126,6 +126,27 @@ class MutableBuffer
     static bsl::size_t totalSize(const ntsa::MutableBuffer* bufferArray,
                                  bsl::size_t                bufferCount);
 
+    /// Prepare to scatter data to receive into the specified 'data' blob by
+    /// referencing up to the specified 'iovecArraySize' elements in the
+    /// specified 'iovecArray' to corresponding buffers in 'data'. Stop when
+    /// the total size of all buffers referenced exceeds the specified
+    /// 'maxBytes'. Return the total size of all buffers referenced.
+    static void scatter(bsl::size_t*         numBuffersTotal,
+                        bsl::size_t*         numBytesTotal,
+                        ntsa::MutableBuffer* iovecArray,
+                        bsl::size_t          iovecArraySize,
+                        bdlbb::Blob*         data,
+                        bsl::size_t          maxBytes);
+
+    /// Append to the specified 'blob' a copy of the data referenced by the
+    /// specified 'bufferArray' having the specified 'bufferCount' number of
+    /// buffer starting at the specified logical 'offset', in bytes, in the
+    /// logical seqeuence of bytes referenced by the buffers in 'bufferArray'.
+    static void copy(bdlbb::Blob*               blob,
+                     const ntsa::MutableBuffer* bufferArray,
+                     bsl::size_t                bufferCount,
+                     bsl::size_t                offset);
+
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
@@ -248,6 +269,27 @@ class ConstBuffer
     static bsl::size_t totalSize(const ntsa::ConstBuffer* bufferArray,
                                  bsl::size_t              bufferCount);
 
+    /// Prepare to gather data to send from the specified 'data' blob by
+    /// referencing up to the specified 'iovecArraySize' elements in the
+    /// specified 'iovecArray' to corresponding buffers in 'data'. Stop when
+    /// the total size of all buffers referenced exceeds the specified
+    /// 'maxBytes'. Return the total size of all buffers referenced.
+    static void gather(bsl::size_t*       numBuffersTotal,
+                       bsl::size_t*       numBytesTotal,
+                       ntsa::ConstBuffer* iovecArray,
+                       bsl::size_t        iovecArraySize,
+                       const bdlbb::Blob& data,
+                       bsl::size_t        maxBytes);
+
+    /// Append to the specified 'blob' a copy of the data referenced by the
+    /// specified 'bufferArray' having the specified 'bufferCount' number of
+    /// buffer starting at the specified logical 'offset', in bytes, in the
+    /// logical seqeuence of bytes referenced by the buffers in 'bufferArray'.
+    static void copy(bdlbb::Blob*             blob,
+                     const ntsa::ConstBuffer* bufferArray,
+                     bsl::size_t              bufferCount,
+                     bsl::size_t              offset);
+
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
@@ -367,6 +409,18 @@ class ConstBufferArray
     /// Return the total number of bytes referenced by all buffers in the
     /// array.
     bsl::size_t numBytes() const;
+
+    /// Prepare to gather data to send from the specified 'data' blob by
+    /// referencing up to the specified 'iovecArraySize' elements in the
+    /// specified 'iovecArray' to corresponding buffers in 'data'. Stop when
+    /// the total size of all buffers referenced exceeds the specified
+    /// 'maxBytes'. Return the total size of all buffers referenced.
+    static void gather(bsl::size_t*            numBuffersTotal,
+                       bsl::size_t*            numBytesTotal,
+                       ntsa::ConstBufferArray* iovecArray,
+                       bsl::size_t             iovecArraySize,
+                       const bdlbb::Blob&      data,
+                       bsl::size_t             maxBytes);
 
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
@@ -557,6 +611,18 @@ class MutableBufferArray
     /// Return the total number of bytes referenced by all buffers in the
     /// array.
     bsl::size_t numBytes() const;
+
+    /// Prepare to scatter data to receive into the specified 'data' blob by
+    /// referencing up to the specified 'iovecArraySize' elements in the
+    /// specified 'iovecArray' to corresponding buffers in 'data'. Stop when
+    /// the total size of all buffers referenced exceeds the specified
+    /// 'maxBytes'. Return the total size of all buffers referenced.
+    static void scatter(bsl::size_t*              numBuffersTotal,
+                        bsl::size_t*              numBytesTotal,
+                        ntsa::MutableBufferArray* iovecArray,
+                        bsl::size_t               iovecArraySize,
+                        bdlbb::Blob*              data,
+                        bsl::size_t               maxBytes);
 
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects

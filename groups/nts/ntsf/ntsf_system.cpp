@@ -24,7 +24,6 @@ BSLS_IDENT_RCSID(ntsf_system_cpp, "$Id$ $CSID$")
 #include <ntsb_streamsocket.h>
 #include <ntscfg_limits.h>
 #include <ntsu_adapterutil.h>
-#include <ntsu_bufferutil.h>
 #include <ntsu_socketoptionutil.h>
 #include <ntsu_socketutil.h>
 #include <ntso_select.h>
@@ -1105,12 +1104,12 @@ ntsa::Error System::scatter(ntsa::MutableBufferArray*   bufferArray,
     bsl::size_t numBuffersTotal;
     bsl::size_t numBytesTotal;
 
-    ntsu::BufferUtil::scatter(&numBuffersTotal,
-                              &numBytesTotal,
-                              bufferArray,
-                              numBuffersMax,
-                              data,
-                              numBytesMax);
+    ntsa::MutableBufferArray::scatter(&numBuffersTotal,
+                                      &numBytesTotal,
+                                      bufferArray,
+                                      numBuffersMax,
+                                      data,
+                                      numBytesMax);
 
     BSLS_ASSERT_OPT(bufferArray->numBuffers() == numBuffersTotal);
 
@@ -1147,12 +1146,12 @@ ntsa::Error System::gather(ntsa::ConstBufferArray*  bufferArray,
     bsl::size_t numBuffersTotal;
     bsl::size_t numBytesTotal;
 
-    ntsu::BufferUtil::gather(&numBuffersTotal,
-                             &numBytesTotal,
-                             bufferArray,
-                             numBuffersMax,
-                             data,
-                             numBytesMax);
+    ntsa::ConstBufferArray::gather(&numBuffersTotal,
+                                   &numBytesTotal,
+                                   bufferArray,
+                                   numBuffersMax,
+                                   data,
+                                   numBytesMax);
 
     BSLS_ASSERT_OPT(bufferArray->numBuffers() == numBuffersTotal);
 
