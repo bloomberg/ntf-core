@@ -65,7 +65,6 @@ BSLS_IDENT_RCSID(ntco_ioring_cpp, "$Id$ $CSID$")
 #include <ntcs_strand.h>
 #include <ntcs_user.h>
 #include <ntsf_system.h>
-#include <ntsu_bufferutil.h>
 #include <ntsu_socketoptionutil.h>
 #include <ntsu_socketutil.h>
 
@@ -2434,7 +2433,7 @@ ntsa::Error IoRingSubmission::prepareSend(
         bsl::size_t numBuffersTotal;
         bsl::size_t numBytesTotal;
 
-        ntsu::BufferUtil::gather(
+        ntsa::ConstBuffer::gather(
             &numBuffersTotal,
             &numBytesTotal,
             reinterpret_cast<ntsa::ConstBuffer*>(iovecArray),
@@ -3125,7 +3124,7 @@ ntsa::Error IoRingSubmission::prepareReceive(
     bsl::size_t numBuffersTotal;
     bsl::size_t numBytesTotal;
 
-    ntsu::BufferUtil::scatter(
+    ntsa::MutableBuffer::scatter(
         &numBuffersTotal,
         &numBytesTotal,
         reinterpret_cast<ntsa::MutableBuffer*>(iovecArray),
@@ -5553,7 +5552,7 @@ ntsa::Error IoRing::accept(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
     ntsa::Handle handle = context->handle();
     BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
 
-    bslma::ManagedPtr<ntcs::Event> event = 
+    bslma::ManagedPtr<ntcs::Event> event =
         d_eventPool.getManagedObject(socket, context);
     if (NTCCFG_UNLIKELY(!event)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -5610,7 +5609,7 @@ ntsa::Error IoRing::connect(
     ntsa::Handle handle = context->handle();
     BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
 
-    bslma::ManagedPtr<ntcs::Event> event = 
+    bslma::ManagedPtr<ntcs::Event> event =
         d_eventPool.getManagedObject(socket, context);
     if (NTCCFG_UNLIKELY(!event)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -5667,7 +5666,7 @@ ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     ntsa::Handle handle = context->handle();
     BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
 
-    bslma::ManagedPtr<ntcs::Event> event = 
+    bslma::ManagedPtr<ntcs::Event> event =
         d_eventPool.getManagedObject(socket, context);
     if (NTCCFG_UNLIKELY(!event)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -5724,7 +5723,7 @@ ntsa::Error IoRing::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     ntsa::Handle handle = context->handle();
     BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
 
-    bslma::ManagedPtr<ntcs::Event> event = 
+    bslma::ManagedPtr<ntcs::Event> event =
         d_eventPool.getManagedObject(socket, context);
     if (NTCCFG_UNLIKELY(!event)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -5782,7 +5781,7 @@ ntsa::Error IoRing::receive(
     ntsa::Handle handle = context->handle();
     BSLS_ASSERT(handle != ntsa::k_INVALID_HANDLE);
 
-    bslma::ManagedPtr<ntcs::Event> event = 
+    bslma::ManagedPtr<ntcs::Event> event =
         d_eventPool.getManagedObject(socket, context);
     if (NTCCFG_UNLIKELY(!event)) {
         return ntsa::Error(ntsa::Error::e_INVALID);

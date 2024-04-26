@@ -48,7 +48,6 @@ BSLS_IDENT_RCSID(ntsu_socketutil_cpp, "$Id$ $CSID$")
 #include <ntsa_adapter.h>
 #include <ntscfg_limits.h>
 #include <ntsu_adapterutil.h>
-#include <ntsu_bufferutil.h>
 #include <ntsu_socketoptionutil.h>
 #include <ntsu_timestamputil.h>
 #include <ntsu_zerocopyutil.h>
@@ -2305,7 +2304,7 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
         bsl::size_t numBuffersTotal;
         bsl::size_t numBytesTotal;
 
-        ntsu::BufferUtil::gather(
+        ntsa::ConstBuffer::gather(
             &numBuffersTotal,
             &numBytesTotal,
             reinterpret_cast<ntsa::ConstBuffer*>(iovecArray),
@@ -3184,7 +3183,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
     bsl::size_t numBuffersTotal;
     bsl::size_t numBytesTotal;
 
-    ntsu::BufferUtil::scatter(
+    ntsa::MutableBuffer::scatter(
         &numBuffersTotal,
         &numBytesTotal,
         reinterpret_cast<ntsa::MutableBuffer*>(iovecArray),
@@ -6516,12 +6515,13 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
     bsl::size_t numBuffersTotal;
     bsl::size_t numBytesTotal;
 
-    ntsu::BufferUtil::gather(&numBuffersTotal,
-                             &numBytesTotal,
-                             reinterpret_cast<ntsa::ConstBuffer*>(wsaBufArray),
-                             numBuffersMax,
-                             blob,
-                             numBytesMax);
+    ntsa::ConstBuffer::gather(
+        &numBuffersTotal,
+        &numBytesTotal,
+        reinterpret_cast<ntsa::ConstBuffer*>(wsaBufArray),
+        numBuffersMax,
+        blob,
+        numBytesMax);
 
     context->setBytesSendable(numBytesTotal);
 
@@ -7384,7 +7384,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
     bsl::size_t numBuffersTotal;
     bsl::size_t numBytesTotal;
 
-    ntsu::BufferUtil::scatter(
+    ntsa::MutableBuffer::scatter(
         &numBuffersTotal,
         &numBytesTotal,
         reinterpret_cast<ntsa::MutableBuffer*>(wsaBufArray),
