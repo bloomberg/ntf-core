@@ -18,6 +18,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntca_encryptioncertificate_cpp, "$Id$ $CSID$")
 
+#include <bdlb_string.h>
 #include <bdlt_currenttime.h>
 #include <bdlt_datetime.h>
 #include <bdlt_epochutil.h>
@@ -48,6 +49,9 @@ const ntsa::AbstractSyntaxTagType::Value k_PRIMITIVE =
 const ntsa::AbstractSyntaxTagNumber::Value k_SEQUENCE = 
     ntsa::AbstractSyntaxTagNumber::e_SEQUENCE;
 
+const ntsa::AbstractSyntaxTagNumber::Value k_SET = 
+    ntsa::AbstractSyntaxTagNumber::e_SET;
+
 // MRM
 #if 0
 const ntsa::AbstractSyntaxTagNumber::Value k_BOOLEAN = 
@@ -56,6 +60,9 @@ const ntsa::AbstractSyntaxTagNumber::Value k_BOOLEAN =
 
 const ntsa::AbstractSyntaxTagNumber::Value k_INTEGER = 
     ntsa::AbstractSyntaxTagNumber::e_INTEGER;
+
+const ntsa::AbstractSyntaxTagNumber::Value k_UTF8_STRING =
+    ntsa::AbstractSyntaxTagNumber::e_UTF8_STRING;
 
 const ntsa::AbstractSyntaxTagNumber::Value k_OBJECT_IDENTIFIER = 
     ntsa::AbstractSyntaxTagNumber::e_OBJECT_IDENTIFIER;
@@ -244,27 +251,27 @@ ntsa::Error EncryptionCertificateVersion::decode(
 {
     ntsa::Error error;
 
-    error = decoder->decodeContext(k_CONTEXT_SPECIFIC, k_CONSTRUCTED, 0);
+    error = decoder->decodeTag(k_CONTEXT_SPECIFIC, k_CONSTRUCTED, 0);
     if (error) {
         return error;
     }
 
-    error = decoder->decodeContext(k_UNIVERSAL, k_PRIMITIVE, k_INTEGER);
+    error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_INTEGER);
     if (error) {
         return error;
     }
 
-    error = decoder->decodePrimitiveValue(&d_value);
+    error = decoder->decodeValue(&d_value);
     if (error) {
         return error;
     }
 
-    error = decoder->decodeContextComplete();
+    error = decoder->decodeTagComplete();
     if (error) {
         return error;
     }
 
-    error = decoder->decodeContextComplete();
+    error = decoder->decodeTagComplete();
     if (error) {
         return error;
     }
@@ -355,121 +362,281 @@ bool operator<(const EncryptionCertificateVersion& lhs,
 
 
 
-EncryptionCertificateNameAttributeType::EncryptionCertificateNameAttributeType(
-    bslma::Allocator* basicAllocator)
-: d_value(0)
-, d_allocator_p(bslma::Default::allocator(basicAllocator))
+const char* EncryptionCertificateNameAttributeType::toString(Value value)
 {
-}
-
-EncryptionCertificateNameAttributeType::EncryptionCertificateNameAttributeType(
-    const EncryptionCertificateNameAttributeType& original,
-    bslma::Allocator*                    basicAllocator)
-: d_value(original.d_value)
-, d_allocator_p(bslma::Default::allocator(basicAllocator))
-{
-}
-
-EncryptionCertificateNameAttributeType::~EncryptionCertificateNameAttributeType()
-{
-}
-
-EncryptionCertificateNameAttributeType& EncryptionCertificateNameAttributeType::operator=(
-    const EncryptionCertificateNameAttributeType& other)
-{
-    if (this != &other) {
-        d_value = other.d_value;
+    switch (value) {
+    case e_NAME_PREFIX:
+        return "TITLE";
+    case e_NAME_GIVEN:
+        return "GN";
+    case e_NAME_FAMILY:
+        return "SN";
+    case e_NAME_PSEUDO:
+        return "pseudonym";
+    case e_NAME_SUFFIX:
+        return "generationQualifier";
+    case e_NAME_COMMON:
+        return "CN";
+    case e_ADDRESS_STREET:
+        return "STREET";
+    case e_ADDRESS_LOCALITY:
+        return "L";
+    case e_ADDRESS_STATE:
+        return "ST";
+    case e_ADDRESS_COUNTRY:
+        return "C";
+    case e_ORGANIZATION:
+        return "O";
+    case e_ORGANIZATION_UNIT:
+        return "OU";
+    case e_DOMAIN_COMPONENT:
+        return "DC";
+    case e_USER_ID:
+        return "UID";
+    case e_EMAIL:
+        return "E";
     }
 
-    return *this;
+    BSLS_ASSERT(!"invalid enumerator");
+    return 0;
 }
 
-void EncryptionCertificateNameAttributeType::reset()
+void EncryptionCertificateNameAttributeType::toObjectIdentifier(
+    ntsa::AbstractObjectIdentifier* result, 
+    Value                           value)
 {
-    d_value = 0;
+    result->reset();
+
+    if (value == e_NAME_PREFIX) {
+        result->set(2, 5, 4, 12);
+    }
+    else if (value == e_NAME_GIVEN) {
+        result->set(2, 5, 4, 42);
+    }
+    else if (value == e_NAME_FAMILY) {
+        result->set(2, 5, 4, 4);
+    }
+    else if (value == e_NAME_PSEUDO) {
+        result->set(2, 5, 4, 65);
+    }
+    else if (value == e_NAME_SUFFIX) {
+        result->set(2, 5, 4, 44);
+    }
+    else if (value == e_NAME_COMMON) {
+        result->set(2, 5, 4, 3);
+    }
+    else if (value == e_ADDRESS_STREET) {
+        result->set(2, 5, 4, 9);
+    }
+    else if (value == e_ADDRESS_LOCALITY) {
+        result->set(2, 5, 4, 7);
+    }
+    else if (value == e_ADDRESS_STATE) {
+        result->set(2, 5, 4, 8);
+    }
+    else if (value == e_ADDRESS_COUNTRY) {
+        result->set(2, 5, 4, 6);
+    }
+    else if (value == e_ORGANIZATION) {
+        result->set(2, 5, 4, 10);
+    }
+    else if (value == e_ORGANIZATION_UNIT) {
+        result->set(2, 5, 4, 11);
+    }
+    else if (value == e_DOMAIN_COMPONENT) {
+        result->set(0, 9, 2342, 19200300, 100, 1, 25);
+    }
+    else if (value == e_USER_ID) {
+        result->set(0, 9, 2342, 19200300, 100, 1, 1);
+    }
+    else if (value == e_EMAIL) {
+        result->set(1, 2, 840, 113549, 1, 9, 1);
+    }
 }
 
-void EncryptionCertificateNameAttributeType::setValue(bsl::size_t value)
+int EncryptionCertificateNameAttributeType::fromString(EncryptionCertificateNameAttributeType::Value* result,
+                                   const bslstl::StringRef&   string)
 {
-    d_value = value;
-}
-
-
-ntsa::Error EncryptionCertificateNameAttributeType::decode(
-    ntsa::AbstractSyntaxDecoder* decoder)
-{
-    NTCCFG_WARNING_UNUSED(decoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
-}
-
-ntsa::Error EncryptionCertificateNameAttributeType::encode(
-    ntsa::AbstractSyntaxEncoder* encoder) const
-{
-    NTCCFG_WARNING_UNUSED(encoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
-}
-
-bsl::size_t EncryptionCertificateNameAttributeType::value() const
-{
-    return d_value;
-}
-
-bool EncryptionCertificateNameAttributeType::equals(
-    const EncryptionCertificateNameAttributeType& other) const
-{
-    return d_value == other.d_value;
-}
-
-bool EncryptionCertificateNameAttributeType::less(
-    const EncryptionCertificateNameAttributeType& other) const
-{
-#if 0
-    if (d_value < other.d_value) {
-        return true;
+    if (bdlb::String::areEqualCaseless(string, "TITLE")) {
+        *result = e_NAME_PREFIX;
+        return 0;
     }
 
-    if (other.d_value < d_value) {
-        return false;
+    if (bdlb::String::areEqualCaseless(string, "GN")) {
+        *result = e_NAME_GIVEN;
+        return 0;
     }
-#endif
 
-    return d_value < other.d_value;
+    if (bdlb::String::areEqualCaseless(string, "SN")) {
+        *result = e_NAME_FAMILY;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "pseudonym")) {
+        *result = e_NAME_PSEUDO;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "generationQualifier")) {
+        *result = e_NAME_SUFFIX;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "CN")) {
+        *result = e_NAME_COMMON;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "STREET")) {
+        *result = e_ADDRESS_STREET;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "L")) {
+        *result = e_ADDRESS_LOCALITY;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "ST")) {
+        *result = e_ADDRESS_STATE;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "C")) {
+        *result = e_ADDRESS_COUNTRY;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "O")) {
+        *result = e_ORGANIZATION;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "OU")) {
+        *result = e_ORGANIZATION_UNIT;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "DC")) {
+        *result = e_DOMAIN_COMPONENT;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "UID")) {
+        *result = e_USER_ID;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "E")) {
+        *result = e_EMAIL;
+        return 0;
+    }
+
+    return -1;
 }
 
-bsl::ostream& EncryptionCertificateNameAttributeType::print(bsl::ostream& stream,
-                                                   int           level,
-                                                   int spacesPerLevel) const
+int EncryptionCertificateNameAttributeType::fromObjectIdentifier(
+        Value*                                result, 
+        const ntsa::AbstractObjectIdentifier& identifier)
 {
-    bslim::Printer printer(&stream, level, spacesPerLevel);
-    printer.start();
-    printer.printAttribute("value", d_value);
-    printer.end();
-    return stream;
+    if (identifier.equals(2, 5, 4, 12)) {
+        *result = e_NAME_PREFIX;
+        return 0;
+    }
+
+    if (identifier.equals(2, 5, 4, 42)) {
+        *result = e_NAME_GIVEN;
+        return 0;
+    }
+
+    if (identifier.equals(2, 5, 4, 4)) {
+        *result = e_NAME_FAMILY;
+        return 0;
+    }
+
+    if (identifier.equals(2, 5, 4, 65)) {
+        *result = e_NAME_PSEUDO;
+        return 0;
+    }
+
+    if (identifier.equals(2, 5, 4, 44)) {
+        *result = e_NAME_SUFFIX;
+        return 0;
+    }
+
+    if (identifier.equals(2, 5, 4, 3)) {
+        *result = e_NAME_COMMON;
+        return 0;
+    }
+
+    if (identifier.equals(2, 5, 4, 9)) {
+        *result = e_ADDRESS_STREET;
+        return 0;
+    }
+
+    if (identifier.equals(2, 5, 4, 7)) {
+        *result = e_ADDRESS_LOCALITY;
+        return 0;
+    }
+
+    if (identifier.equals(2, 5, 4, 8)) {
+        *result = e_ADDRESS_STATE;
+        return 0;
+    }
+
+    if (identifier.equals(2, 5, 4, 6)) {
+        *result = e_ADDRESS_COUNTRY;
+        return 0;
+    }
+
+    if (identifier.equals(2, 5, 4, 10)) {
+        *result = e_ORGANIZATION;
+        return 0;
+    }
+
+    if (identifier.equals(2, 5, 4, 11)) {
+        *result = e_ORGANIZATION_UNIT;
+        return 0;
+    }
+
+    if (identifier.equals(0, 9, 2342, 19200300, 100, 1, 25)) {
+        *result = e_DOMAIN_COMPONENT;
+        return 0;
+    }
+
+    if (identifier.equals(0, 9, 2342, 19200300, 100, 1, 1)) {
+        *result = e_USER_ID;
+        return 0;
+    }
+
+    if (identifier.equals(1, 2, 840, 113549, 1, 9, 1)) {
+        *result = e_EMAIL;
+        return 0;
+    }
+
+    return -1;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                        stream,
-                         const EncryptionCertificateNameAttributeType& object)
+bsl::ostream& EncryptionCertificateNameAttributeType::print(bsl::ostream& stream, Value value)
 {
-    return object.print(stream, 0, -1);
+    return stream << toString(value);
 }
 
-bool operator==(const EncryptionCertificateNameAttributeType& lhs,
-                const EncryptionCertificateNameAttributeType& rhs)
+bsl::ostream& operator<<(bsl::ostream&                 stream,
+                         EncryptionCertificateNameAttributeType::Value rhs)
 {
-    return lhs.equals(rhs);
+    return EncryptionCertificateNameAttributeType::print(stream, rhs);
 }
 
-bool operator!=(const EncryptionCertificateNameAttributeType& lhs,
-                const EncryptionCertificateNameAttributeType& rhs)
-{
-    return !operator==(lhs, rhs);
-}
 
-bool operator<(const EncryptionCertificateNameAttributeType& lhs,
-               const EncryptionCertificateNameAttributeType& rhs)
-{
-    return lhs.less(rhs);
-}
+
+
+
+
+
+
+
+
 
 
 
@@ -485,7 +652,7 @@ bool operator<(const EncryptionCertificateNameAttributeType& lhs,
 
 EncryptionCertificateNameAttribute::EncryptionCertificateNameAttribute(
     bslma::Allocator* basicAllocator)
-: d_value(0)
+: d_identifier(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
@@ -493,7 +660,7 @@ EncryptionCertificateNameAttribute::EncryptionCertificateNameAttribute(
 EncryptionCertificateNameAttribute::EncryptionCertificateNameAttribute(
     const EncryptionCertificateNameAttribute& original,
     bslma::Allocator*                    basicAllocator)
-: d_value(original.d_value)
+: d_identifier(original.d_identifier, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
@@ -506,28 +673,64 @@ EncryptionCertificateNameAttribute& EncryptionCertificateNameAttribute::operator
     const EncryptionCertificateNameAttribute& other)
 {
     if (this != &other) {
-        d_value = other.d_value;
+        d_identifier = other.d_identifier;
     }
 
     return *this;
 }
 
-void EncryptionCertificateNameAttribute::reset()
+EncryptionCertificateNameAttribute& EncryptionCertificateNameAttribute::operator=(
+    const ntsa::AbstractObjectIdentifier& value)
 {
-    d_value = 0;
+    d_identifier = value;
+    return *this;
 }
 
-void EncryptionCertificateNameAttribute::setValue(bsl::size_t value)
+EncryptionCertificateNameAttribute& EncryptionCertificateNameAttribute::operator=(
+    EncryptionCertificateNameAttributeType::Value value)
 {
-    d_value = value;
+    EncryptionCertificateNameAttributeType::toObjectIdentifier(&d_identifier, value);
+    return *this;
+}
+
+void EncryptionCertificateNameAttribute::reset()
+{
+    d_identifier.reset();
+}
+
+void EncryptionCertificateNameAttribute::setIdentifier(const ntsa::AbstractObjectIdentifier& value)
+{
+    d_identifier = value;
+}
+
+
+void EncryptionCertificateNameAttribute::setIdentifer(EncryptionCertificateNameAttributeType::Value value)
+{
+    EncryptionCertificateNameAttributeType::toObjectIdentifier(&d_identifier, value);
 }
 
 
 ntsa::Error EncryptionCertificateNameAttribute::decode(
     ntsa::AbstractSyntaxDecoder* decoder)
 {
-    NTCCFG_WARNING_UNUSED(decoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    ntsa::Error error;
+
+    error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OBJECT_IDENTIFIER);
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeValue(&d_identifier);
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 ntsa::Error EncryptionCertificateNameAttribute::encode(
@@ -537,41 +740,47 @@ ntsa::Error EncryptionCertificateNameAttribute::encode(
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
-bsl::size_t EncryptionCertificateNameAttribute::value() const
+const ntsa::AbstractObjectIdentifier& EncryptionCertificateNameAttribute::identifier() const
 {
-    return d_value;
+    return d_identifier;
 }
 
 bool EncryptionCertificateNameAttribute::equals(
     const EncryptionCertificateNameAttribute& other) const
 {
-    return d_value == other.d_value;
+    return d_identifier == other.d_identifier;
+}
+
+bool EncryptionCertificateNameAttribute::equals(EncryptionCertificateNameAttributeType::Value value) const
+{
+    ntsa::AbstractObjectIdentifier identifier;
+    EncryptionCertificateNameAttributeType::toObjectIdentifier(
+        &identifier, value);
+
+    return d_identifier.equals(identifier);
+    
 }
 
 bool EncryptionCertificateNameAttribute::less(
     const EncryptionCertificateNameAttribute& other) const
 {
-#if 0
-    if (d_value < other.d_value) {
-        return true;
-    }
-
-    if (other.d_value < d_value) {
-        return false;
-    }
-#endif
-
-    return d_value < other.d_value;
+    return d_identifier < other.d_identifier;
 }
 
 bsl::ostream& EncryptionCertificateNameAttribute::print(bsl::ostream& stream,
                                                    int           level,
                                                    int spacesPerLevel) const
 {
-    bslim::Printer printer(&stream, level, spacesPerLevel);
-    printer.start();
-    printer.printAttribute("value", d_value);
-    printer.end();
+    ntca::EncryptionCertificateNameAttributeType::Value type;
+    int rc = ntca::EncryptionCertificateNameAttributeType::fromObjectIdentifier(
+        &type, d_identifier);
+    if (rc == 0) {
+        stream << ntca::EncryptionCertificateNameAttributeType::toString(type); 
+    }
+    else {
+        d_identifier.print(stream, level, spacesPerLevel);
+    }
+
     return stream;
 }
 
@@ -616,9 +825,214 @@ bool operator<(const EncryptionCertificateNameAttribute& lhs,
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+EncryptionCertificateNameComponent::EncryptionCertificateNameComponent(
+    bslma::Allocator* basicAllocator)
+: d_attribute(basicAllocator)
+, d_value(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateNameComponent::EncryptionCertificateNameComponent(
+    const EncryptionCertificateNameComponent& original,
+    bslma::Allocator*                    basicAllocator)
+: d_attribute(original.d_attribute, basicAllocator)
+, d_value(original.d_value, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateNameComponent::~EncryptionCertificateNameComponent()
+{
+}
+
+EncryptionCertificateNameComponent& EncryptionCertificateNameComponent::operator=(
+    const EncryptionCertificateNameComponent& other)
+{
+    if (this != &other) {
+        d_attribute = other.d_attribute;
+        d_value = other.d_value;
+    }
+
+    return *this;
+}
+
+void EncryptionCertificateNameComponent::reset()
+{
+    d_attribute.reset();
+    d_value.clear();
+}
+
+void EncryptionCertificateNameComponent::setAttribute(const EncryptionCertificateNameAttribute& value)
+{
+    d_attribute = value;
+}
+
+void EncryptionCertificateNameComponent::setAttribute(const ntsa::AbstractObjectIdentifier& value)
+{
+    d_attribute = value;
+}
+
+void EncryptionCertificateNameComponent::setAttribute(ntca::EncryptionCertificateNameAttributeType::Value value)
+{
+    d_attribute = value;
+}
+
+void EncryptionCertificateNameComponent::setValue(const bsl::string& value)
+{
+    d_value = value;
+}
+
+ntsa::Error EncryptionCertificateNameComponent::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    // AttributeTypeAndValue
+
+    ntsa::Error error;
+
+    error = decoder->decodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    if (error) {
+        return error;
+    }
+
+    {
+        error = d_attribute.decode(decoder);
+        if (error) {
+            return error;
+        }
+    }
+
+    {
+        error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_UTF8_STRING);
+        if (error) {
+            return error;
+        }
+
+        error = decoder->decodeValue(&d_value);
+        if (error) {
+            return error;
+        }
+
+        error = decoder->decodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionCertificateNameComponent::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    NTCCFG_WARNING_UNUSED(encoder);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+const EncryptionCertificateNameAttribute& 
+EncryptionCertificateNameComponent::attribute() const
+{
+    return d_attribute;
+}
+
+const bsl::string& EncryptionCertificateNameComponent::value() const
+{
+    return d_value;
+}
+
+bool EncryptionCertificateNameComponent::equals(
+    const EncryptionCertificateNameComponent& other) const
+{
+    return d_attribute == other.d_attribute && d_value == other.d_value;
+}
+
+bool EncryptionCertificateNameComponent::less(
+    const EncryptionCertificateNameComponent& other) const
+{
+    if (d_attribute < other.d_attribute) {
+        return true;
+    }
+
+    if (other.d_attribute < d_attribute) {
+        return false;
+    }
+
+    return d_value < other.d_value;
+}
+
+bsl::ostream& EncryptionCertificateNameComponent::print(bsl::ostream& stream,
+                                                   int           level,
+                                                   int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute("attribute", d_attribute);
+    printer.printAttribute("value", d_value);
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateNameComponent& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionCertificateNameComponent& lhs,
+                const EncryptionCertificateNameComponent& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionCertificateNameComponent& lhs,
+                const EncryptionCertificateNameComponent& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionCertificateNameComponent& lhs,
+               const EncryptionCertificateNameComponent& rhs)
+{
+    return lhs.less(rhs);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 EncryptionCertificateName::EncryptionCertificateName(
     bslma::Allocator* basicAllocator)
-: d_value(0)
+: d_attributeVector(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
@@ -626,7 +1040,7 @@ EncryptionCertificateName::EncryptionCertificateName(
 EncryptionCertificateName::EncryptionCertificateName(
     const EncryptionCertificateName& original,
     bslma::Allocator*                    basicAllocator)
-: d_value(original.d_value)
+: d_attributeVector(original.d_attributeVector, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
@@ -639,7 +1053,7 @@ EncryptionCertificateName& EncryptionCertificateName::operator=(
     const EncryptionCertificateName& other)
 {
     if (this != &other) {
-        d_value = other.d_value;
+        d_attributeVector = other.d_attributeVector;
     }
 
     return *this;
@@ -647,31 +1061,119 @@ EncryptionCertificateName& EncryptionCertificateName::operator=(
 
 void EncryptionCertificateName::reset()
 {
-    d_value = 0;
+    d_attributeVector.clear();
 }
 
-void EncryptionCertificateName::setValue(bsl::size_t value)
+void EncryptionCertificateName::setAttributeSequence(
+    const bsl::vector<EncryptionCertificateNameComponent>& value)
 {
-    d_value = value;
+    d_attributeVector = value;
 }
 
+void EncryptionCertificateName::append(
+    const EncryptionCertificateNameComponent& value)
+{
+    d_attributeVector.push_back(value);
+}
+
+void EncryptionCertificateName::append(
+    const EncryptionCertificateNameAttribute& attribute,
+    const bsl::string&                        value)
+{
+    EncryptionCertificateNameComponent component;
+    component.setAttribute(attribute);
+    component.setValue(value);
+
+    this->append(component);
+}
+
+void EncryptionCertificateName::append(
+    const ntsa::AbstractObjectIdentifier& attribute,
+    const bsl::string&                    value)
+{
+    EncryptionCertificateNameComponent component;
+    component.setAttribute(attribute);
+    component.setValue(value);
+
+    this->append(component);
+}
+
+void EncryptionCertificateName::append(
+    EncryptionCertificateNameAttributeType::Value attribute,
+    const bsl::string&                            value)
+{
+    EncryptionCertificateNameComponent component;
+    component.setAttribute(attribute);
+    component.setValue(value);
+
+    this->append(component);
+}
 
 ntsa::Error EncryptionCertificateName::decode(
     ntsa::AbstractSyntaxDecoder* decoder)
 {
+    // MRM
+    #if 0
+    subject Name SEQUENCE (5 elem)
+      RelativeDistinguishedName SET (1 elem)
+        AttributeTypeAndValue SEQUENCE (2 elem)
+          type AttributeType OBJECT IDENTIFIER 2.5.4.3 commonName (X.520 DN component)
+          value AttributeValue [?] UTF8String TEST.USER
+      RelativeDistinguishedName SET (1 elem)
+        AttributeTypeAndValue SEQUENCE (2 elem)
+          type AttributeType OBJECT IDENTIFIER 2.5.4.10 organizationName (X.520 DN component)
+          value AttributeValue [?] UTF8String Bloomberg LP
+      RelativeDistinguishedName SET (1 elem)
+        AttributeTypeAndValue SEQUENCE (2 elem)
+          type AttributeType OBJECT IDENTIFIER 2.5.4.11 organizationalUnitName (X.520 DN component)
+          value AttributeValue [?] UTF8String Engineering
+      RelativeDistinguishedName SET (1 elem)
+        AttributeTypeAndValue SEQUENCE (2 elem)
+          type AttributeType OBJECT IDENTIFIER 2.5.4.11 organizationalUnitName (X.520 DN component)
+          value AttributeValue [?] UTF8String Platform Services
+      RelativeDistinguishedName SET (1 elem)
+        AttributeTypeAndValue SEQUENCE (2 elem)
+          type AttributeType OBJECT IDENTIFIER 2.5.4.11 organizationalUnitName (X.520 DN component)
+          value AttributeValue [?] UTF8String Middleware Transport
+    #endif
+
     ntsa::Error error;
 
-    error = decoder->decodeContext(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    error = decoder->decodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
     if (error) {
         return error;
     }
 
-    error = decoder->skip();
-    if (error) {
-        return error;
+    if (decoder->current().contentLength().isNull()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    error = decoder->decodeContextComplete();
+    const bsl::size_t contentBegin = decoder->current().contentPosition();
+
+    const bsl::size_t contentEnd = 
+        contentBegin + decoder->current().contentLength().value();
+
+    while (decoder->position() < contentEnd) {
+        error = decoder->decodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SET);
+        if (error) {
+            return error;
+        }
+
+        EncryptionCertificateNameComponent attribute;
+        error = attribute.decode(decoder);
+        if (error) {
+            return error;
+        }
+
+        d_attributeVector.push_back(attribute);
+
+        error = decoder->decodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+
+    error = decoder->decodeTagComplete();
     if (error) {
         return error;
     }
@@ -686,31 +1188,21 @@ ntsa::Error EncryptionCertificateName::encode(
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
-bsl::size_t EncryptionCertificateName::value() const
+const bsl::vector<EncryptionCertificateNameComponent>& EncryptionCertificateName::attributeSequence() const
 {
-    return d_value;
+    return d_attributeVector;
 }
 
 bool EncryptionCertificateName::equals(
     const EncryptionCertificateName& other) const
 {
-    return d_value == other.d_value;
+    return d_attributeVector == other.d_attributeVector;
 }
 
 bool EncryptionCertificateName::less(
     const EncryptionCertificateName& other) const
 {
-#if 0
-    if (d_value < other.d_value) {
-        return true;
-    }
-
-    if (other.d_value < d_value) {
-        return false;
-    }
-#endif
-
-    return d_value < other.d_value;
+    return d_attributeVector < other.d_attributeVector;
 }
 
 bsl::ostream& EncryptionCertificateName::print(bsl::ostream& stream,
@@ -719,7 +1211,7 @@ bsl::ostream& EncryptionCertificateName::print(bsl::ostream& stream,
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute("value", d_value);
+    printer.printAttribute("attribute", d_attributeVector);
     printer.end();
     return stream;
 }
@@ -818,46 +1310,46 @@ ntsa::Error EncryptionCertificateValidity::decode(
 {
     ntsa::Error error;
 
-    error = decoder->decodeContext(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    error = decoder->decodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
     if (error) {
         return error;
     }
 
     {
-        error = decoder->decodeContext();
+        error = decoder->decodeTag();
         if (error) {
             return error;
         }
 
-        error = decoder->decodePrimitiveValue(&d_from);
+        error = decoder->decodeValue(&d_from);
         if (error) {
             return error;
         }
 
-        error = decoder->decodeContextComplete();
+        error = decoder->decodeTagComplete();
         if (error) {
             return error;
         }
     }
 
     {
-        error = decoder->decodeContext();
+        error = decoder->decodeTag();
         if (error) {
             return error;
         }
 
-        error = decoder->decodePrimitiveValue(&d_thru);
+        error = decoder->decodeValue(&d_thru);
         if (error) {
             return error;
         }
 
-        error = decoder->decodeContextComplete();
+        error = decoder->decodeTagComplete();
         if (error) {
             return error;
         }
     }
 
-    error = decoder->decodeContextComplete();
+    error = decoder->decodeTagComplete();
     if (error) {
         return error;
     }
@@ -1000,7 +1492,7 @@ ntsa::Error EncryptionCertificatePublicKeyInfo::decode(
 {
     ntsa::Error error;
 
-    error = decoder->decodeContext(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    error = decoder->decodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
     if (error) {
         return error;
     }
@@ -1010,7 +1502,7 @@ ntsa::Error EncryptionCertificatePublicKeyInfo::decode(
         return error;
     }
 
-    error = decoder->decodeContextComplete();
+    error = decoder->decodeTagComplete();
     if (error) {
         return error;
     }
@@ -1103,27 +1595,164 @@ bool operator<(const EncryptionCertificatePublicKeyInfo& lhs,
 
 
 
-EncryptionCertificateAlgorithm::EncryptionCertificateAlgorithm(
+
+
+
+
+const char* EncryptionCertificateSignatureAlgorithmType::toString(Value value)
+{
+    switch (value) {
+    case e_ECDSA_SHA1:
+        return "ECDSA-SHA1";
+    case e_ECDSA_SHA224:
+        return "ECDSA-SHA224";
+    case e_ECDSA_SHA256:
+        return "ECDSA-SHA256";
+    case e_ECDSA_SHA384:
+        return "ECDSA-SHA384";
+    case e_ECDSA_SHA512:
+        return "ECDSA-SHA512";
+    }
+
+    BSLS_ASSERT(!"invalid enumerator");
+    return 0;
+}
+
+void EncryptionCertificateSignatureAlgorithmType::toObjectIdentifier(
+    ntsa::AbstractObjectIdentifier* result, 
+    Value                           value)
+{
+    result->reset();
+
+    if (value == e_ECDSA_SHA1) {
+        result->set(1, 2, 840, 10045, 4, 1);
+    }
+    else if (value == e_ECDSA_SHA224) {
+        result->set(1, 2, 840, 10045, 4, 3, 1);
+    }
+    else if (value == e_ECDSA_SHA256) {
+        result->set(1, 2, 840, 10045, 4, 3, 2);
+    }
+    else if (value == e_ECDSA_SHA384) {
+        result->set(1, 2, 840, 10045, 4, 3, 3);
+    }
+    else if (value == e_ECDSA_SHA512) {
+        result->set(1, 2, 840, 10045, 4, 3, 4);
+    }
+}
+
+int EncryptionCertificateSignatureAlgorithmType::fromString(Value* result,
+                                   const bslstl::StringRef&   string)
+{
+    if (bdlb::String::areEqualCaseless(string, "ECDSA-SHA1")) {
+        *result = e_ECDSA_SHA1;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "ECDSA-SHA224")) {
+        *result = e_ECDSA_SHA224;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "ECDSA-SHA256")) {
+        *result = e_ECDSA_SHA256;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "ECDSA-SHA384")) {
+        *result = e_ECDSA_SHA384;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "ECDSA-SHA512")) {
+        *result = e_ECDSA_SHA512;
+        return 0;
+    }
+
+    return -1;
+}
+
+int EncryptionCertificateSignatureAlgorithmType::fromObjectIdentifier(
+        Value*                                result, 
+        const ntsa::AbstractObjectIdentifier& identifier)
+{
+    if (identifier.equals(1, 2, 840, 10045, 4, 1)) {
+        *result = e_ECDSA_SHA1;
+        return 0;
+    }
+
+    if (identifier.equals(1, 2, 840, 10045, 4, 3, 1)) {
+        *result = e_ECDSA_SHA224;
+        return 0;
+    }
+
+    if (identifier.equals(1, 2, 840, 10045, 4, 3, 2)) {
+        *result = e_ECDSA_SHA256;
+        return 0;
+    }
+
+    if (identifier.equals(1, 2, 840, 10045, 4, 3, 3)) {
+        *result = e_ECDSA_SHA384;
+        return 0;
+    }
+
+    if (identifier.equals(1, 2, 840, 10045, 4, 3, 4)) {
+        *result = e_ECDSA_SHA512;
+        return 0;
+    }
+
+    return -1;
+}
+
+bsl::ostream& EncryptionCertificateSignatureAlgorithmType::print(bsl::ostream& stream, Value value)
+{
+    return stream << toString(value);
+}
+
+bsl::ostream& operator<<(bsl::ostream&                 stream,
+                         EncryptionCertificateSignatureAlgorithmType::Value rhs)
+{
+    return EncryptionCertificateSignatureAlgorithmType::print(stream, rhs);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+EncryptionCertificateSignatureAlgorithm::EncryptionCertificateSignatureAlgorithm(
     bslma::Allocator* basicAllocator)
 : d_identifier(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificateAlgorithm::EncryptionCertificateAlgorithm(
-    const EncryptionCertificateAlgorithm& original,
+EncryptionCertificateSignatureAlgorithm::EncryptionCertificateSignatureAlgorithm(
+    const EncryptionCertificateSignatureAlgorithm& original,
     bslma::Allocator*                    basicAllocator)
 : d_identifier(original.d_identifier, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificateAlgorithm::~EncryptionCertificateAlgorithm()
+EncryptionCertificateSignatureAlgorithm::~EncryptionCertificateSignatureAlgorithm()
 {
 }
 
-EncryptionCertificateAlgorithm& EncryptionCertificateAlgorithm::operator=(
-    const EncryptionCertificateAlgorithm& other)
+EncryptionCertificateSignatureAlgorithm& EncryptionCertificateSignatureAlgorithm::operator=(
+    const EncryptionCertificateSignatureAlgorithm& other)
 {
     if (this != &other) {
         d_identifier = other.d_identifier;
@@ -1132,43 +1761,63 @@ EncryptionCertificateAlgorithm& EncryptionCertificateAlgorithm::operator=(
     return *this;
 }
 
-void EncryptionCertificateAlgorithm::reset()
+EncryptionCertificateSignatureAlgorithm& EncryptionCertificateSignatureAlgorithm::operator=(
+    const ntsa::AbstractObjectIdentifier& value)
+{
+    d_identifier = value;
+    return *this;
+}
+
+EncryptionCertificateSignatureAlgorithm& EncryptionCertificateSignatureAlgorithm::operator=(
+    EncryptionCertificateSignatureAlgorithmType::Value value)
+{
+    EncryptionCertificateSignatureAlgorithmType::toObjectIdentifier(&d_identifier, value);
+    return *this;
+}
+
+void EncryptionCertificateSignatureAlgorithm::reset()
 {
     d_identifier.reset();
 }
 
-void EncryptionCertificateAlgorithm::setIdentifier(const ntsa::AbstractObjectIdentifier& value)
+void EncryptionCertificateSignatureAlgorithm::setIdentifier(const ntsa::AbstractObjectIdentifier& value)
 {
     d_identifier = value;
 }
 
 
-ntsa::Error EncryptionCertificateAlgorithm::decode(
+void EncryptionCertificateSignatureAlgorithm::setIdentifer(EncryptionCertificateSignatureAlgorithmType::Value value)
+{
+    EncryptionCertificateSignatureAlgorithmType::toObjectIdentifier(&d_identifier, value);
+}
+
+
+ntsa::Error EncryptionCertificateSignatureAlgorithm::decode(
     ntsa::AbstractSyntaxDecoder* decoder)
 {
     ntsa::Error error;
 
-    error = decoder->decodeContext(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    error = decoder->decodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
     if (error) {
         return error;
     }
 
-    error = decoder->decodeContext(k_UNIVERSAL, k_PRIMITIVE, k_OBJECT_IDENTIFIER);
+    error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OBJECT_IDENTIFIER);
     if (error) {
         return error;
     }
 
-    error = decoder->decodePrimitiveValue(&d_identifier);
+    error = decoder->decodeValue(&d_identifier);
     if (error) {
         return error;
     }
 
-    error = decoder->decodeContextComplete();
+    error = decoder->decodeTagComplete();
     if (error) {
         return error;
     }
 
-    error = decoder->decodeContextComplete();
+    error = decoder->decodeTagComplete();
     if (error) {
         return error;
     }
@@ -1176,61 +1825,77 @@ ntsa::Error EncryptionCertificateAlgorithm::decode(
     return ntsa::Error();
 }
 
-ntsa::Error EncryptionCertificateAlgorithm::encode(
+ntsa::Error EncryptionCertificateSignatureAlgorithm::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
     NTCCFG_WARNING_UNUSED(encoder);
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
-const ntsa::AbstractObjectIdentifier& EncryptionCertificateAlgorithm::identifier() const
+const ntsa::AbstractObjectIdentifier& EncryptionCertificateSignatureAlgorithm::identifier() const
 {
     return d_identifier;
 }
 
-bool EncryptionCertificateAlgorithm::equals(
-    const EncryptionCertificateAlgorithm& other) const
+bool EncryptionCertificateSignatureAlgorithm::equals(
+    const EncryptionCertificateSignatureAlgorithm& other) const
 {
     return d_identifier == other.d_identifier;
 }
 
-bool EncryptionCertificateAlgorithm::less(
-    const EncryptionCertificateAlgorithm& other) const
+bool EncryptionCertificateSignatureAlgorithm::equals(EncryptionCertificateSignatureAlgorithmType::Value value) const
+{
+    ntsa::AbstractObjectIdentifier identifier;
+    EncryptionCertificateSignatureAlgorithmType::toObjectIdentifier(
+        &identifier, value);
+
+    return d_identifier.equals(identifier);
+    
+}
+
+bool EncryptionCertificateSignatureAlgorithm::less(
+    const EncryptionCertificateSignatureAlgorithm& other) const
 {
     return d_identifier < other.d_identifier;
 }
 
-bsl::ostream& EncryptionCertificateAlgorithm::print(bsl::ostream& stream,
+bsl::ostream& EncryptionCertificateSignatureAlgorithm::print(bsl::ostream& stream,
                                                    int           level,
                                                    int spacesPerLevel) const
 {
-    bslim::Printer printer(&stream, level, spacesPerLevel);
-    printer.start();
-    printer.printAttribute("identifier", d_identifier);
-    printer.end();
+    ntca::EncryptionCertificateSignatureAlgorithmType::Value type;
+    int rc = ntca::EncryptionCertificateSignatureAlgorithmType::fromObjectIdentifier(
+        &type, d_identifier);
+    if (rc == 0) {
+        stream << ntca::EncryptionCertificateSignatureAlgorithmType::toString(type); 
+    }
+    else {
+        d_identifier.print(stream, level, spacesPerLevel);
+    }
+
     return stream;
 }
 
 bsl::ostream& operator<<(bsl::ostream&                        stream,
-                         const EncryptionCertificateAlgorithm& object)
+                         const EncryptionCertificateSignatureAlgorithm& object)
 {
     return object.print(stream, 0, -1);
 }
 
-bool operator==(const EncryptionCertificateAlgorithm& lhs,
-                const EncryptionCertificateAlgorithm& rhs)
+bool operator==(const EncryptionCertificateSignatureAlgorithm& lhs,
+                const EncryptionCertificateSignatureAlgorithm& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const EncryptionCertificateAlgorithm& lhs,
-                const EncryptionCertificateAlgorithm& rhs)
+bool operator!=(const EncryptionCertificateSignatureAlgorithm& lhs,
+                const EncryptionCertificateSignatureAlgorithm& rhs)
 {
     return !operator==(lhs, rhs);
 }
 
-bool operator<(const EncryptionCertificateAlgorithm& lhs,
-               const EncryptionCertificateAlgorithm& rhs)
+bool operator<(const EncryptionCertificateSignatureAlgorithm& lhs,
+               const EncryptionCertificateSignatureAlgorithm& rhs)
 {
     return lhs.less(rhs);
 }
@@ -1292,19 +1957,19 @@ ntsa::Error EncryptionCertificateSignature::decode(
 {
     ntsa::Error error;
 
-    error = decoder->decodeContext(ntsa::AbstractSyntaxTagClass::e_UNIVERSAL, 
+    error = decoder->decodeTag(ntsa::AbstractSyntaxTagClass::e_UNIVERSAL, 
                                    ntsa::AbstractSyntaxTagType::e_PRIMITIVE, 
                                    ntsa::AbstractSyntaxTagNumber::e_BIT_STRING);
     if (error) {
         return error;
     }
 
-    error = decoder->decodePrimitiveValue(&d_value);
+    error = decoder->decodeValue(&d_value);
     if (error) {
         return error;
     }
 
-    error = decoder->decodeContextComplete();
+    error = decoder->decodeTagComplete();
     if (error) {
         return error;
     }
@@ -1826,7 +2491,7 @@ ntsa::Error EncryptionCertificateExtensionList::decode(
 {
     ntsa::Error error;
 
-    error = decoder->decodeContext(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    error = decoder->decodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
     if (error) {
         return error;
     }
@@ -1836,7 +2501,7 @@ ntsa::Error EncryptionCertificateExtensionList::decode(
         return error;
     }
 
-    error = decoder->decodeContextComplete();
+    error = decoder->decodeTagComplete();
     if (error) {
         return error;
     }
@@ -2035,7 +2700,7 @@ ntsa::Error EncryptionCertificateEntity::decode(ntsa::AbstractSyntaxDecoder* dec
 
     // Enter TBSCertificate
 
-    error = decoder->decodeContext(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    error = decoder->decodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
     if (error) {
         return error;
     }
@@ -2049,19 +2714,19 @@ ntsa::Error EncryptionCertificateEntity::decode(ntsa::AbstractSyntaxDecoder* dec
 
     // Enter TBSCertificate -> serialNumber
 
-    error = decoder->decodeContext(k_UNIVERSAL, k_PRIMITIVE, k_INTEGER);
+    error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_INTEGER);
     if (error) {
         return error;
     }
 
-    error = decoder->decodePrimitiveValue(&d_serialNumber);
+    error = decoder->decodeValue(&d_serialNumber);
     if (error) {
         return error;
     }
 
     // Leave TBSCertificate -> serialNumber
 
-    error = decoder->decodeContextComplete();
+    error = decoder->decodeTagComplete();
     if (error) {
         return error;
     }
@@ -2095,7 +2760,7 @@ ntsa::Error EncryptionCertificateEntity::decode(ntsa::AbstractSyntaxDecoder* dec
     while (decoder->position() < decoder->current().contentPosition() + 
                                  decoder->current().contentLength().value())
     {
-        error = decoder->decodeContext();
+        error = decoder->decodeTag();
         if (error) {
             return error;
         }
@@ -2104,7 +2769,7 @@ ntsa::Error EncryptionCertificateEntity::decode(ntsa::AbstractSyntaxDecoder* dec
             decoder->current().tagType()   == k_PRIMITIVE &&
             decoder->current().tagNumber() == 1)
         {
-            error = decoder->decodePrimitiveValue(
+            error = decoder->decodeValue(
                 &d_issuerUniqueId.makeValue());
             if (error) {
                 return error;
@@ -2114,7 +2779,7 @@ ntsa::Error EncryptionCertificateEntity::decode(ntsa::AbstractSyntaxDecoder* dec
                  decoder->current().tagType()   == k_PRIMITIVE &&
                  decoder->current().tagNumber() == 2)
         {
-            error = decoder->decodePrimitiveValue(
+            error = decoder->decodeValue(
                 &d_subjectUniqueId.makeValue());
             if (error) {
                 return error;
@@ -2134,7 +2799,7 @@ ntsa::Error EncryptionCertificateEntity::decode(ntsa::AbstractSyntaxDecoder* dec
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
 
-        error = decoder->decodeContextComplete();
+        error = decoder->decodeTagComplete();
         if (error) {
             return error;
         }
@@ -2147,7 +2812,7 @@ ntsa::Error EncryptionCertificateEntity::decode(ntsa::AbstractSyntaxDecoder* dec
 
     // Leave TBSCertificate
 
-    error = decoder->decodeContextComplete();
+    error = decoder->decodeTagComplete();
     if (error) {
         return error;
     }
@@ -2167,43 +2832,43 @@ ntsa::Error EncryptionCertificateEntity::decode(ntsa::AbstractSyntaxDecoder* dec
 
     // Enter Certificate.
 
-    error = decoder->decodeContext(universal, constructed, TN::e_SEQUENCE);
+    error = decoder->decodeTag(universal, constructed, TN::e_SEQUENCE);
     if (error) {
         return error;
     }
 
     // Enter Certificate -> TBSCertificate.
 
-    error = decoder->decodeContext(universal, constructed, TN::e_SEQUENCE);
+    error = decoder->decodeTag(universal, constructed, TN::e_SEQUENCE);
     if (error) {
         return error;
     }
 
     // Enter Certificate -> TBSCertificate -> Version.
 
-    error = decoder->decodeContext(contextSpecific, constructed, 0);
+    error = decoder->decodeTag(contextSpecific, constructed, 0);
     if (error) {
         return error;
     }
 
-    error = decoder->decodeContext(universal, primitive, TN::e_INTEGER);
+    error = decoder->decodeTag(universal, primitive, TN::e_INTEGER);
     if (error) {
         return error;
     }
 
-    error = decoder->decodePrimitiveValue(&d_version);
+    error = decoder->decodeValue(&d_version);
     if (error) {
         return error;
     }
 
-    error = decoder->decodeContextComplete();
+    error = decoder->decodeTagComplete();
     if (error) {
         return error;
     }
 
     // Leave Certificate -> TBSCertificate -> Version.
 
-    error = decoder->decodeContextComplete();
+    error = decoder->decodeTagComplete();
     if (error) {
         return error;
     }
@@ -2215,19 +2880,19 @@ ntsa::Error EncryptionCertificateEntity::decode(ntsa::AbstractSyntaxDecoder* dec
 
     // Enter Certificate -> TBSCertificate -> serialNumber.
 
-    error = decoder->decodeContext(universal, primitive, TN::e_INTEGER);
+    error = decoder->decodeTag(universal, primitive, TN::e_INTEGER);
     if (error) {
         return error;
     }
 
-    error = decoder->decodePrimitiveValue(&d_serialNumber);
+    error = decoder->decodeValue(&d_serialNumber);
     if (error) {
         return error;
     }
 
     // Leave Certificate -> TBSCertificate -> serialNumber.
 
-    error = decoder->decodeContextComplete();
+    error = decoder->decodeTagComplete();
     if (error) {
         return error;
     }
@@ -2237,33 +2902,33 @@ ntsa::Error EncryptionCertificateEntity::decode(ntsa::AbstractSyntaxDecoder* dec
 
     // Enter Certificate -> TBSCertificate -> signature.
 
-    error = decoder->decodeContext(universal, constructed, TN::e_SEQUENCE);
+    error = decoder->decodeTag(universal, constructed, TN::e_SEQUENCE);
     if (error) {
         return error;
     }
 
     // Enter Certificate -> TBSCertificate -> signature -> algorithm.
 
-    error = decoder->decodeContext(universal, primitive, TN::e_OBJECT_IDENTIFIER);
+    error = decoder->decodeTag(universal, primitive, TN::e_OBJECT_IDENTIFIER);
     if (error) {
         return error;
     }
 
-    error = decoder->decodePrimitiveValue(&d_signatureAlgorithm);
+    error = decoder->decodeValue(&d_signatureAlgorithm);
     if (error) {
         return error;
     }
 
     // Leave Certificate -> TBSCertificate -> signature -> algorithm.
 
-    error = decoder->decodeContextComplete();
+    error = decoder->decodeTagComplete();
     if (error) {
         return error;
     }
 
     // Leave Certificate -> TBSCertificate -> signature.
 
-    error = decoder->decodeContextComplete();
+    error = decoder->decodeTagComplete();
     if (error) {
         return error;
     }
@@ -2278,14 +2943,14 @@ ntsa::Error EncryptionCertificateEntity::decode(ntsa::AbstractSyntaxDecoder* dec
 
     // Leave Certificate -> TBSCertificate end.
 
-    error = decoder->decodeContextComplete();
+    error = decoder->decodeTagComplete();
     if (error) {
         return error;
     }
 
     // Leave Certificate end.
 
-    error = decoder->decodeContextComplete();
+    error = decoder->decodeTagComplete();
     if (error) {
         return error;
     }
@@ -2599,7 +3264,7 @@ ntsa::Error EncryptionCertificate::decode(ntsa::AbstractSyntaxDecoder* decoder)
 {
     ntsa::Error error;
 
-    error = decoder->decodeContext(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    error = decoder->decodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
     if (error) {
         return error;
     }
@@ -2619,7 +3284,7 @@ ntsa::Error EncryptionCertificate::decode(ntsa::AbstractSyntaxDecoder* decoder)
         return error;
     }
 
-    error = decoder->decodeContextComplete();
+    error = decoder->decodeTagComplete();
     if (error) {
         return error;
     }
@@ -2679,7 +3344,7 @@ const ntca::EncryptionCertificateEntity& EncryptionCertificate::entity() const
     return d_entity;
 }
 
-const ntca::EncryptionCertificateAlgorithm& EncryptionCertificate::signatureAlgorithm() const
+const ntca::EncryptionCertificateSignatureAlgorithm& EncryptionCertificate::signatureAlgorithm() const
 {
     return d_signatureAlgorithm;
 }

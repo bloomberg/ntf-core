@@ -152,7 +152,7 @@ void TestUtil::decodeCertificate(bsl::streambuf*   buffer,
 
     ntsa::AbstractSyntaxDecoder decoder(buffer, allocator);
 
-    error = decoder.decodeContext();
+    error = decoder.decodeTag();
     NTCCFG_TEST_OK(error);
 
     NTCCFG_TEST_LOG_DEBUG << test::Indentation(decoder.depth())
@@ -171,7 +171,7 @@ void TestUtil::decodeCertificate(bsl::streambuf*   buffer,
 
     TestUtil::decodeConstructed(&decoder, allocator);
 
-    error = decoder.decodeContextComplete();
+    error = decoder.decodeTagComplete();
     NTCCFG_TEST_OK(error);
 }
 
@@ -226,7 +226,7 @@ void TestUtil::decodeSequence(ntsa::AbstractSyntaxDecoder* decoder,
             break;
         }
 
-        error = decoder->decodeContext();
+        error = decoder->decodeTag();
         NTCCFG_TEST_OK(error);
 
         NTCCFG_TEST_LOG_DEBUG << test::Indentation(decoder->depth()) 
@@ -243,7 +243,7 @@ void TestUtil::decodeSequence(ntsa::AbstractSyntaxDecoder* decoder,
             test::TestUtil::decodePrimitive(decoder, allocator);
         }
 
-        error = decoder->decodeContextComplete();
+        error = decoder->decodeTagComplete();
         NTCCFG_TEST_OK(error);
 
     }

@@ -20,6 +20,7 @@ BSLS_IDENT_RCSID(ntsa_abstract_cpp, "$Id$ $CSID$")
 
 #include <bdlb_bitutil.h>
 #include <bdlb_chartype.h>
+#include <bdlb_string.h>
 #include <bdlb_numericparseutil.h>
 #include <bdlt_iso8601util.h>
 #include <bdlt_iso8601utilconfiguration.h>
@@ -3633,6 +3634,76 @@ void AbstractObjectIdentifier::resize(bsl::size_t size)
     d_data.resize(size);
 }
 
+void AbstractObjectIdentifier::set(bsl::uint64_t v0)
+{
+    d_data.clear();
+    d_data.resize(1);
+    d_data.push_back(v0);
+}
+
+void AbstractObjectIdentifier::set(bsl::uint64_t v0, bsl::uint64_t v1)
+{
+    d_data.clear();
+    d_data.resize(2);
+    d_data.push_back(v0);
+    d_data.push_back(v1);
+}
+
+void AbstractObjectIdentifier::set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2)
+{
+    d_data.clear();
+    d_data.resize(3);
+    d_data.push_back(v0);
+    d_data.push_back(v1);
+    d_data.push_back(v2);
+}
+
+void AbstractObjectIdentifier::set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, bsl::uint64_t v3)
+{
+    d_data.clear();
+    d_data.resize(4);
+    d_data.push_back(v0);
+    d_data.push_back(v1);
+    d_data.push_back(v2);
+    d_data.push_back(v3);
+}
+
+void AbstractObjectIdentifier::set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, bsl::uint64_t v3, bsl::uint64_t v4)
+{
+    d_data.clear();
+    d_data.resize(5);
+    d_data.push_back(v0);
+    d_data.push_back(v1);
+    d_data.push_back(v2);
+    d_data.push_back(v3);
+    d_data.push_back(v4);
+}
+
+void AbstractObjectIdentifier::set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5)
+{
+    d_data.clear();
+    d_data.resize(6);
+    d_data.push_back(v0);
+    d_data.push_back(v1);
+    d_data.push_back(v2);
+    d_data.push_back(v3);
+    d_data.push_back(v4);
+    d_data.push_back(v5);
+}
+
+void AbstractObjectIdentifier::set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5, bsl::uint64_t v6)
+{
+    d_data.clear();
+    d_data.resize(7);
+    d_data.push_back(v0);
+    d_data.push_back(v1);
+    d_data.push_back(v2);
+    d_data.push_back(v3);
+    d_data.push_back(v4);
+    d_data.push_back(v5);
+    d_data.push_back(v6);
+}
+
 void AbstractObjectIdentifier::append(bsl::uint64_t value)
 {
     d_data.push_back(value);
@@ -3677,6 +3748,76 @@ const bsl::uint64_t* AbstractObjectIdentifier::data() const
 bsl::size_t AbstractObjectIdentifier::size() const
 {
     return d_data.size();
+}
+
+bool AbstractObjectIdentifier::equals(bsl::uint64_t v0) const
+{
+    if (d_data.size() != 1) {
+        return false;
+    }
+
+    return d_data[0] == v0;
+}
+
+bool AbstractObjectIdentifier::equals(bsl::uint64_t v0, bsl::uint64_t v1) const
+{
+    if (d_data.size() != 2) {
+        return false;
+    }
+
+    return d_data[0] == v0 && d_data[1] == v1;
+}
+
+bool AbstractObjectIdentifier::equals(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2) const
+{
+    if (d_data.size() != 3) {
+        return false;
+    }
+
+    return d_data[0] == v0 && d_data[1] == v1 && d_data[2] == v2;
+}
+
+bool AbstractObjectIdentifier::equals(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
+        bsl::uint64_t v3) const
+{
+    if (d_data.size() != 4) {
+        return false;
+    }
+
+    return d_data[0] == v0 && d_data[1] == v1 && d_data[2] == v2 && d_data[3] == v3;
+}
+
+bool AbstractObjectIdentifier::equals(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
+        bsl::uint64_t v3, bsl::uint64_t v4) const
+{
+    if (d_data.size() != 5) {
+        return false;
+    }
+
+    return d_data[0] == v0 && d_data[1] == v1 && d_data[2] == v2 && d_data[3] == v3 && d_data[4] == v4;
+}
+
+bool AbstractObjectIdentifier::equals(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
+        bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5) const
+{
+    if (d_data.size() != 6) {
+        return false;
+    }
+
+    return d_data[0] == v0 && d_data[1] == v1 && d_data[2] == v2 && 
+        d_data[3] == v3 && d_data[4] == v4 && d_data[5] == v5;
+}
+
+bool AbstractObjectIdentifier::equals(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
+        bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5,
+        bsl::uint64_t v6) const
+{
+    if (d_data.size() != 7) {
+        return false;
+    }
+
+    return d_data[0] == v0 && d_data[1] == v1 && d_data[2] == v2 && 
+        d_data[3] == v3 && d_data[4] == v4 && d_data[5] == v5 && d_data[6] == v6;
 }
 
 bool AbstractObjectIdentifier::equals(
@@ -3725,6 +3866,30 @@ bool operator<(const AbstractObjectIdentifier& lhs,
 {
     return lhs.less(rhs);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 AbstractString::AbstractString(bslma::Allocator* basicAllocator)
 : d_type(AbstractSyntaxTagNumber::e_OCTET_STRING)

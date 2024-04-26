@@ -1372,13 +1372,41 @@ class AbstractObjectIdentifier
     /// Reset the value of this object to its value upon default construction.
     void reset();
 
-    // Resize the string to store exactly the specified 'size' number of bytes.
+    /// Resize the string to store exactly the specified 'size' number of
+    /// bytes.
     void resize(bsl::size_t size);
+
+    // Set the value to the specified 'v0'.
+    void set(bsl::uint64_t v0);
+
+    // Set the value to the specified 'v0', 'v1' sequence.
+    void set(bsl::uint64_t v0, bsl::uint64_t v1);
+
+    // Set the value to the specified 'v0', 'v1', 'v2' sequence.
+    void set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2);
+
+    // Set the value to the specified 'v0', 'v1', 'v2', 'v3' sequence.
+    void set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, bsl::uint64_t v3);
+
+    // Set the value to the specified 'v0', 'v1', 'v2', 'v3', 'v4' sequence.
+    void set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
+             bsl::uint64_t v3, bsl::uint64_t v4);
+
+    // Set the value to the specified 'v0', 'v1', 'v2', 'v3', 'v4', 'v5' 
+    // sequence.
+    void set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
+             bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5);
+
+    // Set the value to the specified 'v0', 'v1', 'v2', 'v3', 'v4', 'v5', 'v6' 
+    // sequence.
+    void set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
+             bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5,
+             bsl::uint64_t v6);
 
     /// Append the specified 'value' to the end of the data.
     void append(bsl::uint64_t value);
 
-    // Append the specified 'data' having the specified 'size'.
+    /// Append the specified 'data' having the specified 'size'.
     void append(const bsl::uint64_t* data, bsl::size_t size);
 
     /// Set the data at the specified 'index' to the specified 'value'.
@@ -1392,6 +1420,39 @@ class AbstractObjectIdentifier
 
     /// Return the number of integers in the identifier.
     bsl::size_t size() const;
+
+    /// Return true if the identifier matches the specified 'v0', otherwise
+    /// return false.
+    bool equals(bsl::uint64_t v0) const;
+
+    /// Return true if the identifier matches the specified 'v0', 'v1'
+    /// sequence, otherwise return false.
+    bool equals(bsl::uint64_t v0, bsl::uint64_t v1) const;
+
+    /// Return true if the identifier matches the specified 'v0', 'v1', 'v2'
+    /// sequence, otherwise return false.
+    bool equals(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2) const;
+
+    /// Return true if the identifier matches the specified 'v0', 'v1', 'v2',
+    /// 'v3' sequence, otherwise return false.
+    bool equals(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
+            bsl::uint64_t v3) const;
+
+    /// Return true if the identifier matches the specified 'v0', 'v1', 'v2',
+    /// 'v3', 'v4' sequence, otherwise return false.
+    bool equals(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
+            bsl::uint64_t v3, bsl::uint64_t v4) const;
+
+    /// Return true if the identifier matches the specified 'v0', 'v1', 'v2',
+    /// 'v3', 'v4', 'v5' sequence, otherwise return false.
+    bool equals(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
+            bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5) const;
+
+    /// Return true if the identifier matches the specified 'v0', 'v1', 'v2',
+    /// 'v3', 'v4', 'v5', 'v6' sequence, otherwise return false.
+    bool equals(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
+            bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5,
+            bsl::uint64_t v6) const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -1481,7 +1542,24 @@ void hashAppend(HASH_ALGORITHM&                 algorithm,
     value.hash(algorithm);
 }
 
-/// Provide an Abstract Syntax Notation (ASN.1) object identifier.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/// Provide an Abstract Syntax Notation (ASN.1) string.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
