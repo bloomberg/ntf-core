@@ -40,6 +40,7 @@ class AbstractIntegerQuantity;
 class AbstractIntegerQuantityUtil;
 class AbstractInteger;
 class AbstractIntegerUtil;
+class AbstractValue;
 class AbstractString;
 class AbstractBitSequence;
 class AbstractByteSequence;
@@ -552,6 +553,9 @@ class AbstractSyntaxEncoderFrame
     /// Write the encoding of the specified 'value'. Return the error.
     ntsa::Error encodeValue(const ntsa::AbstractObjectIdentifier& value);
 
+    /// Write the encoding of the specified 'value'. Return the error.
+    ntsa::Error encodeValue(const ntsa::AbstractValue& value);
+
     /// Synchronize the frame with its children, or its data if no children are
     /// defined. Return the error.
     ntsa::Error synchronize(bsl::size_t* length);
@@ -714,6 +718,9 @@ class AbstractSyntaxEncoder
     /// Encode an OBJECT IDENTIFIER primitive having the specified 'value'.
     /// Return the error.
     ntsa::Error encodeValue(const AbstractObjectIdentifier& value);
+
+    /// Encode the literal data of the specified 'value'. Return the error. 
+    ntsa::Error encodeValue(const AbstractValue& value);
 
     // Complete encoding the current construction. Return the error.
     ntsa::Error encodeTagComplete();
@@ -1257,6 +1264,10 @@ class AbstractSyntaxDecoder
     /// the result into the specified 'result'. Return the error.
     ntsa::Error decodeValue(AbstractObjectIdentifier* result);
 
+    /// Decode the literal contents according to the top of the context stack
+    /// and load the result into the specified 'result'. Return the error. 
+    ntsa::Error decodeValue(AbstractValue* result);
+
     /// Pop the current tag-length-value context from the stack. Return the
     /// error.
     ntsa::Error decodeTagComplete();
@@ -1541,6 +1552,194 @@ void hashAppend(HASH_ALGORITHM&                 algorithm,
 {
     value.hash(algorithm);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/// Provide an Abstract Syntax Notation (ASN.1) string.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntsa_data
+class AbstractValue
+{
+    AbstractSyntaxTagClass::Value d_tagClass;
+    AbstractSyntaxTagType::Value  d_tagType;
+    bsl::size_t                   d_tagNumber;
+    bsl::vector<bsl::uint8_t>     d_data;
+
+  public:
+    /// Create a new ASN.1 string. Optionally specify a 'basicAllocator' used
+    /// to supply memory. If 'basicAllocator' is 0, the currently installed
+    /// default allocator is used.
+    explicit AbstractValue(bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new ASN.1 string having the same value as the specified
+    /// 'original' object. Optionally specify a 'basicAllocator' used to supply
+    /// memory. If 'basicAllocator' is 0, the currently installed default
+    /// allocator is used.
+    explicit AbstractValue(const AbstractValue& original,
+                            bslma::Allocator*     basicAllocator = 0);
+
+    /// Destroy this object.
+    ~AbstractValue();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    AbstractValue& operator=(const AbstractValue& other);
+
+    /// Reset the value of this object to its value upon default construction.
+    void reset();
+
+    // Set the tag class to the specified 'value'.
+    void setTagClass(AbstractSyntaxTagClass::Value value);
+
+    /// Set the tag type to the specified 'value'.
+    void setTagType(AbstractSyntaxTagType::Value value);
+
+    /// Set the tag number to the specified 'value'.
+    void setTagNumber(AbstractSyntaxTagNumber::Value value);
+
+    /// Set the tag number to the specified 'value'.
+    void setTagNumber(bsl::size_t value);
+
+    /// Set the data to the specified 'value'.
+    void setData(const bsl::vector<bsl::uint8_t>& value);
+
+    /// Set the data at the specified 'index' to the specified 'value'.
+    void setData(bsl::size_t index, bsl::uint8_t value);
+
+    /// Return the tag class.
+    AbstractSyntaxTagClass::Value tagClass() const;
+
+    /// Return the tag type.
+    AbstractSyntaxTagType::Value tagType() const;
+
+    /// Return the tag number.
+    bsl::size_t tagNumber() const;
+
+    /// Return the data. Note that the data is null if the size is zero, and
+    /// may contain embedded nulls but not necessarily null-terminated if the
+    /// size is non-zero.
+    const bsl::uint8_t* data() const;
+
+    /// Return the number of bytes of data.
+    bsl::size_t size() const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const AbstractValue& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const AbstractValue& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(AbstractValue);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntsa::AbstractValue
+bsl::ostream& operator<<(bsl::ostream& stream, const AbstractValue& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntsa::AbstractValue
+bool operator==(const AbstractValue& lhs, const AbstractValue& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntsa::AbstractValue
+bool operator!=(const AbstractValue& lhs, const AbstractValue& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntsa::AbstractValue
+bool operator<(const AbstractValue& lhs, const AbstractValue& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntsa::AbstractValue
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const AbstractValue& value);
+
+template <typename HASH_ALGORITHM>
+void AbstractValue::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, d_tagClass);
+    hashAppend(algorithm, d_tagType);
+    hashAppend(algorithm, d_tagNumber);
+    hashAppend(algorithm, d_data);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const AbstractValue& value)
+{
+    value.hash(algorithm);
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
 

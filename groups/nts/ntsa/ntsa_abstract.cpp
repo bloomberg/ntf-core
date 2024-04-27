@@ -785,6 +785,16 @@ ntsa::Error AbstractSyntaxEncoderFrame::encodeValue(const ntsa::AbstractObjectId
     return ntsa::Error();
 }
 
+ntsa::Error AbstractSyntaxEncoderFrame::encodeValue(const ntsa::AbstractValue& value)
+{
+    if (value.size() > 0) {
+        return this->writeContent(value.data(), value.size());
+    }
+    else {
+        return ntsa::Error();
+    }
+}
+
 
 ntsa::Error AbstractSyntaxEncoderFrame::synchronize(bsl::size_t* length)
 {
@@ -1239,6 +1249,23 @@ ntsa::Error AbstractSyntaxEncoder::encodeValue(
 
 ntsa::Error AbstractSyntaxEncoder::encodeValue(
     const AbstractObjectIdentifier& value)
+{
+    ntsa::Error error;
+
+    if (d_current_p == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    error = d_current_p->encodeValue(value);
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxEncoder::encodeValue(
+    const AbstractValue& value)
 {
     ntsa::Error error;
 
@@ -2936,6 +2963,43 @@ ntsa::Error AbstractSyntaxDecoder::decodeValue(
     return ntsa::Error();
 }
 
+ntsa::Error AbstractSyntaxDecoder::decodeValue(
+    AbstractValue* result)
+{
+    ntsa::Error error;
+
+    result->reset();
+
+    if (d_contextStack.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    const AbstractSyntaxDecoderFrame& context = this->current();
+
+    result->setTagClass(context.tagClass());
+    result->setTagType(context.tagType());
+    result->setTagNumber(context.tagNumber());
+
+    if (context.contentLength().has_value() && 
+        context.contentLength().value() > 0)
+    {
+        bsl::vector<bsl::uint8_t> data;
+        data.resize(context.contentLength().value());
+
+        error = AbstractSyntaxDecoderUtil::read(
+            &data.front(), data.size(), d_buffer_p);
+        if (error) {
+            return error;
+        }
+
+        result->setData(data);
+    }
+
+    return ntsa::Error();
+}
+
+
+
 ntsa::Error AbstractSyntaxDecoder::skip()
 {
     ntsa::Error error;
@@ -3866,6 +3930,230 @@ bool operator<(const AbstractObjectIdentifier& lhs,
 {
     return lhs.less(rhs);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AbstractValue::AbstractValue(bslma::Allocator* basicAllocator)
+: d_tagClass(AbstractSyntaxTagClass::e_UNIVERSAL)
+, d_tagType(AbstractSyntaxTagType::e_PRIMITIVE)
+, d_tagNumber(AbstractSyntaxTagNumber::e_NULL)
+, d_data(basicAllocator)
+{
+}
+
+AbstractValue::AbstractValue(const AbstractValue& original,
+                               bslma::Allocator*     basicAllocator)
+: d_tagClass(original.d_tagClass)
+, d_tagType(original.d_tagType)
+, d_tagNumber(original.d_tagNumber)
+, d_data(original.d_data, basicAllocator)
+{
+}
+
+AbstractValue::~AbstractValue()
+{
+}
+
+AbstractValue& AbstractValue::operator=(const AbstractValue& other)
+{
+    if (this != &other) {
+        d_tagClass = other.d_tagClass;
+        d_tagType = other.d_tagType;
+        d_tagNumber = other.d_tagNumber;
+        d_data = other.d_data;
+    }
+
+    return *this;
+}
+
+void AbstractValue::reset()
+{
+    d_tagClass = AbstractSyntaxTagClass::e_UNIVERSAL;
+    d_tagType = AbstractSyntaxTagType::e_PRIMITIVE;
+    d_tagNumber = AbstractSyntaxTagNumber::e_NULL;
+    d_data.clear();
+}
+
+void AbstractValue::setTagClass(AbstractSyntaxTagClass::Value value)
+{
+    d_tagClass = value;
+}
+
+void AbstractValue::setTagType(AbstractSyntaxTagType::Value value)
+{
+    d_tagType = value;
+}
+
+void AbstractValue::setTagNumber(AbstractSyntaxTagNumber::Value value)
+{
+    d_tagNumber = static_cast<bsl::size_t>(value);
+}
+
+void AbstractValue::setTagNumber(bsl::size_t value)
+{
+    d_tagNumber = value;
+}
+
+void AbstractValue::setData(const bsl::vector<bsl::uint8_t>& value)
+{
+    d_data = value;
+}
+
+void AbstractValue::setData(bsl::size_t index, bsl::uint8_t value)
+{
+    if (index >= d_data.size()) {
+        d_data.resize(index + 1);
+    }
+
+    BSLS_ASSERT_OPT(index < d_data.size());
+    d_data[index] = value;
+}
+
+AbstractSyntaxTagClass::Value AbstractValue::tagClass() const
+{
+    return d_tagClass;
+}
+
+AbstractSyntaxTagType::Value AbstractValue::tagType() const
+{
+    return d_tagType;
+}
+
+bsl::size_t AbstractValue::tagNumber() const
+{
+    return d_tagNumber;
+}
+
+const bsl::uint8_t* AbstractValue::data() const
+{
+    if (!d_data.empty()) {
+        return &d_data.front();
+    }
+    else {
+        return 0;
+    }
+}
+
+bsl::size_t AbstractValue::size() const
+{
+    return d_data.size();
+}
+
+bool AbstractValue::equals(const AbstractValue& other) const
+{
+    return (d_tagClass == other.d_tagClass && d_tagType == other.d_tagType && d_tagNumber == other.d_tagNumber && d_data == other.d_data);
+}
+
+bool AbstractValue::less(const AbstractValue& other) const
+{
+    if (d_tagClass < other.d_tagClass) {
+        return true;
+    }
+
+    if (other.d_tagClass < d_tagClass) {
+        return false;
+    }
+
+    if (d_tagType < other.d_tagType) {
+        return true;
+    }
+
+    if (other.d_tagType < d_tagType) {
+        return false;
+    }
+
+    if (d_tagNumber < other.d_tagNumber) {
+        return true;
+    }
+
+    if (other.d_tagNumber < d_tagNumber) {
+        return false;
+    }
+
+    return d_data < other.d_data;
+}
+
+bsl::ostream& AbstractValue::print(bsl::ostream& stream,
+                                    int           level,
+                                    int           spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute("class", d_tagClass);
+    printer.printAttribute("type", d_tagType);
+
+    if (d_tagClass == AbstractSyntaxTagClass::e_UNIVERSAL && 
+        d_tagNumber <= 30) 
+    {
+        printer.printAttribute("number",
+                               static_cast<AbstractSyntaxTagNumber::Value>(
+                                   static_cast<int>(d_tagNumber)));
+    }
+    else {
+        printer.printAttribute("number", d_tagNumber);
+    }
+
+    if (!d_data.empty()) {
+        printer.printAttribute("length", d_data.size());
+        printer.printAttribute("data", d_data);
+    }
+
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, const AbstractValue& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const AbstractValue& lhs, const AbstractValue& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const AbstractValue& lhs, const AbstractValue& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const AbstractValue& lhs, const AbstractValue& rhs)
+{
+    return lhs.less(rhs);
+}
+
+
+
+
+
+
+
+
+
+
 
 
 

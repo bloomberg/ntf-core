@@ -31,6 +31,27 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntca {
 
+
+class EncryptionCertificateVersion;
+class EncryptionCertificateNameAttributeType;
+class EncryptionCertificateNameAttribute;
+class EncryptionCertificateNameComponent;
+class EncryptionCertificateName;
+class EncryptionCertificateValidity;
+class EncryptionCertificatePublicKeyInfo;
+class EncryptionCertificateSignatureAlgorithmType;
+class EncryptionCertificateSignatureAlgorithm;
+class EncryptionCertificateSignature;
+
+class EncryptionCertificateExtensionAttributeType;
+class EncryptionCertificateExtensionAttribute;
+class EncryptionCertificateExtensionValue;
+class EncryptionCertificateExtension;
+class EncryptionCertificateExtensionList;
+
+class EncryptionCertificateEntity;
+class EncryptionCertificate;
+
 /// Describe TODO.
 ///
 /// @par Attributes
@@ -315,7 +336,9 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
 /// This class is thread safe.
 ///
 /// @ingroup module_ntsa_data
-struct EncryptionCertificateNameAttributeType {
+class EncryptionCertificateNameAttributeType 
+{
+public:
     /// Enumerate Abstract Syntax Notation (ASN.1) well-known object 
     /// identifiers.
     enum Value {
@@ -1117,8 +1140,10 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
 /// @ingroup module_ntci_encryption
 class EncryptionCertificatePublicKeyInfo
 {
-    bsl::size_t       d_value;
-    bslma::Allocator* d_allocator_p;
+    ntsa::AbstractObjectIdentifier d_publicKeyFamily;
+    ntsa::AbstractObjectIdentifier d_publicKeyType;
+    ntsa::AbstractBitSequence      d_publicKeyValue;
+    bslma::Allocator*              d_allocator_p;
 
   public:
     /// Create a new certificate having the default
@@ -1148,17 +1173,11 @@ class EncryptionCertificatePublicKeyInfo
     /// construction.
     void reset();
 
-    /// Set the value to the specified 'value'.
-    void setValue(bsl::size_t value);
-
     /// Decode this object using the specified 'decoder'. Return the error.
     ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
 
     /// Encode this object using the specified 'encoder'. Return the error.
     ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
-
-    /// Return the value.
-    bsl::size_t value() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -1167,6 +1186,11 @@ class EncryptionCertificatePublicKeyInfo
     /// Return true if the value of this object is less than the value of
     /// the specified 'other' object, otherwise return false.
     bool less(const EncryptionCertificatePublicKeyInfo& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
 
     /// Format this object to the specified output 'stream' at the
     /// optionally specified indentation 'level' and return a reference to
@@ -1229,12 +1253,19 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
                 const EncryptionCertificatePublicKeyInfo& value);
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
-                const EncryptionCertificatePublicKeyInfo& value)
+void EncryptionCertificatePublicKeyInfo::hash(HASH_ALGORITHM& algorithm)
 {
     using bslh::hashAppend;
 
-    hashAppend(algorithm, value.value());
+    hashAppend(algorithm, d_publicKeyFamily);
+    hashAppend(algorithm, d_publicKeyType);
+    hashAppend(algorithm, d_publicKeyValue);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionCertificatePublicKeyInfo& value)
+{
+    value.hash(algorithm);
 }
 
 
@@ -1253,7 +1284,9 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
 /// This class is thread safe.
 ///
 /// @ingroup module_ntsa_data
-struct EncryptionCertificateSignatureAlgorithmType {
+class EncryptionCertificateSignatureAlgorithmType 
+{
+public:
     /// Enumerate the well-known encryption certificate signature algorithm 
     /// types.
     enum Value {
@@ -1635,6 +1668,99 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/// Enumerate Abstract Syntax Notation (ASN.1) well-known object identifiers.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntsa_data
+class EncryptionCertificateExtensionAttributeType {
+public:
+    /// Enumerate Abstract Syntax Notation (ASN.1) well-known object 
+    /// identifiers.
+    enum Value {
+        /// Basic constraints.
+        e_BASIC_CONSTRAINTS,
+
+        /// Authority key identifier.
+        e_AUTHORITY_KEY_IDENTIFIER,
+
+        /// Subject key identifier.
+        e_SUBJECT_KEY_IDENTIFIER,
+
+        /// Subject alternative name.
+        e_SUBJECT_ALTERNATIVE_NAME
+    };
+
+    /// Return the string representation exactly matching the enumerator
+    /// name corresponding to the specified enumeration 'value'.
+    static const char* toString(Value value);
+
+    /// Load into the specified 'result' the object identifier corresponding
+    /// to the specified 'value'.
+    static void toObjectIdentifier(ntsa::AbstractObjectIdentifier* result, 
+                                   Value                           value);
+
+    /// Load into the specified 'result' the enumerator matching the
+    /// specified 'string'. Return 0 on success, and a non-zero value with
+    /// no effect on 'result' otherwise (i.e., 'string' does not match any
+    /// enumerator).
+    static int fromString(Value* result, const bslstl::StringRef& string);
+
+    /// Load into the specified 'result' the enumerator matching the specified
+    /// object 'identifier'. Return 0 on success, and a non-zero value with
+    /// no effect on 'result' otherwise (i.e., 'identifier' does not match any
+    /// enumerator).
+    static int fromObjectIdentifier(
+        Value*                                result, 
+        const ntsa::AbstractObjectIdentifier& identifier);
+
+    /// Write to the specified 'stream' the string representation of the
+    /// specified enumeration 'value'.  Return a reference to the modifiable
+    /// 'stream'.
+    static bsl::ostream& print(bsl::ostream& stream, Value value);
+};
+
+/// Format the specified 'rhs' to the specified output 'stream' and return a
+/// reference to the modifiable 'stream'.
+///
+/// @related ntsa::AbstractSyntaxTagClass
+bsl::ostream& operator<<(bsl::ostream&             stream,
+                         EncryptionCertificateExtensionAttributeType::Value rhs);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /// Describe TODO.
 ///
 /// @par Attributes
@@ -1647,41 +1773,55 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
 /// This class is not thread safe.
 ///
 /// @ingroup module_ntci_encryption
-class EncryptionCertificateExtensionType
+class EncryptionCertificateExtensionAttribute
 {
-    bsl::size_t       d_value;
-    bslma::Allocator* d_allocator_p;
+    ntsa::AbstractObjectIdentifier d_identifier;
+    bslma::Allocator*              d_allocator_p;
 
   public:
     /// Create a new certificate having the default
     /// value. Optionally specify a 'basicAllocator' used to supply memory.
     /// If 'basicAllocator' is 0, the currently installed default allocator
     /// is used.
-    explicit EncryptionCertificateExtensionType(
+    explicit EncryptionCertificateExtensionAttribute(
         bslma::Allocator* basicAllocator = 0);
 
     /// Create a new certificate having the same value
     /// as the specified 'original' object. Optionally specify a
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
     /// currently installed default allocator is used.
-    EncryptionCertificateExtensionType(
-        const EncryptionCertificateExtensionType& original,
+    EncryptionCertificateExtensionAttribute(
+        const EncryptionCertificateExtensionAttribute& original,
         bslma::Allocator*                    basicAllocator = 0);
 
     /// Destroy this object.
-    ~EncryptionCertificateExtensionType();
+    ~EncryptionCertificateExtensionAttribute();
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
-    EncryptionCertificateExtensionType& operator=(
-        const EncryptionCertificateExtensionType& other);
+    EncryptionCertificateExtensionAttribute& operator=(
+        const EncryptionCertificateExtensionAttribute& other);
+
+    /// Assign the value of the specified 'value' to this object. Return a
+    /// reference to this modifiable object.
+    EncryptionCertificateExtensionAttribute& operator=(
+        const ntsa::AbstractObjectIdentifier& value);
+
+    /// Assign the value of the specified 'value' to this object. Return a
+    /// reference to this modifiable object.
+    EncryptionCertificateExtensionAttribute& operator=(
+        EncryptionCertificateExtensionAttributeType::Value value);
 
     /// Reset the value of this object to its value upon default
     /// construction.
     void reset();
 
-    /// Set the value to the specified 'value'.
-    void setValue(bsl::size_t value);
+    /// Set the identifier to the specified 'value'.
+    void setIdentifier(const ntsa::AbstractObjectIdentifier& value);
+
+    /// Set the identifier to the object identifier corresponding to the
+    /// specified 'value'. 
+    void setIdentifer(EncryptionCertificateExtensionAttributeType::Value value);
 
     /// Decode this object using the specified 'decoder'. Return the error.
     ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
@@ -1689,16 +1829,20 @@ class EncryptionCertificateExtensionType
     /// Encode this object using the specified 'encoder'. Return the error.
     ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
 
-    /// Return the value.
-    bsl::size_t value() const;
+    /// Return the identifier.
+    const ntsa::AbstractObjectIdentifier& identifier() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
-    bool equals(const EncryptionCertificateExtensionType& other) const;
+    bool equals(const EncryptionCertificateExtensionAttribute& other) const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'value', otherwise return false.
+    bool equals(EncryptionCertificateExtensionAttributeType::Value value) const;
 
     /// Return true if the value of this object is less than the value of
     /// the specified 'other' object, otherwise return false.
-    bool less(const EncryptionCertificateExtensionType& other) const;
+    bool less(const EncryptionCertificateExtensionAttribute& other) const;
 
     /// Format this object to the specified output 'stream' at the
     /// optionally specified indentation 'level' and return a reference to
@@ -1718,7 +1862,7 @@ class EncryptionCertificateExtensionType
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateExtensionType);
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateExtensionAttribute);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -1726,15 +1870,15 @@ class EncryptionCertificateExtensionType
 ///
 /// @related ntca::EncryptionCertificate
 bsl::ostream& operator<<(bsl::ostream&                        stream,
-                         const EncryptionCertificateExtensionType& object);
+                         const EncryptionCertificateExtensionAttribute& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
 /// @related ntca::EncryptionCertificate
-bool operator==(const EncryptionCertificateExtensionType& lhs,
-                const EncryptionCertificateExtensionType& rhs);
+bool operator==(const EncryptionCertificateExtensionAttribute& lhs,
+                const EncryptionCertificateExtensionAttribute& rhs);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
 /// have the same value, and 'false' otherwise.  Two attribute objects do
@@ -1742,15 +1886,15 @@ bool operator==(const EncryptionCertificateExtensionType& lhs,
 /// values.
 ///
 /// @related ntca::EncryptionCertificate
-bool operator!=(const EncryptionCertificateExtensionType& lhs,
-                const EncryptionCertificateExtensionType& rhs);
+bool operator!=(const EncryptionCertificateExtensionAttribute& lhs,
+                const EncryptionCertificateExtensionAttribute& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
 /// @related ntca::EncryptionCertificate
-bool operator<(const EncryptionCertificateExtensionType& lhs,
-               const EncryptionCertificateExtensionType& rhs);
+bool operator<(const EncryptionCertificateExtensionAttribute& lhs,
+               const EncryptionCertificateExtensionAttribute& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
@@ -1758,16 +1902,20 @@ bool operator<(const EncryptionCertificateExtensionType& lhs,
 /// @related ntca::EncryptionCertificate
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM&                      algorithm,
-                const EncryptionCertificateExtensionType& value);
+                const EncryptionCertificateExtensionAttribute& value);
 
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM&                      algorithm,
-                const EncryptionCertificateExtensionType& value)
+                const EncryptionCertificateExtensionAttribute& value)
 {
     using bslh::hashAppend;
 
-    hashAppend(algorithm, value.value());
+    hashAppend(algorithm, value.identifier());
 }
+
+
+
+
 
 
 
@@ -1936,8 +2084,9 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
 /// @ingroup module_ntci_encryption
 class EncryptionCertificateExtension
 {
-    bsl::size_t       d_value;
-    bslma::Allocator* d_allocator_p;
+    EncryptionCertificateExtensionAttribute d_attribute;
+    ntsa::AbstractByteSequence     d_value;
+    bslma::Allocator*              d_allocator_p;
 
   public:
     /// Create a new certificate having the default
@@ -1967,8 +2116,17 @@ class EncryptionCertificateExtension
     /// construction.
     void reset();
 
-    /// Set the value to the specified 'value'.
-    void setValue(bsl::size_t value);
+
+    /// Set the attribute to the specified 'value'.
+    void setAttribute(const EncryptionCertificateExtensionAttribute& value);
+
+    /// Set the attribute to the specified 'value'.
+    void setAttribute(const ntsa::AbstractObjectIdentifier& value);
+
+    /// Set the attribute to the object identifier corresponding to the
+    /// specified 'value'. 
+    void setAttribute(EncryptionCertificateExtensionAttributeType::Value value);    
+
 
     /// Decode this object using the specified 'decoder'. Return the error.
     ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
@@ -1976,8 +2134,8 @@ class EncryptionCertificateExtension
     /// Encode this object using the specified 'encoder'. Return the error.
     ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
 
-    /// Return the value.
-    bsl::size_t value() const;
+    /// Return the extension attribute.
+    const EncryptionCertificateExtensionAttribute& attribute() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -1986,6 +2144,11 @@ class EncryptionCertificateExtension
     /// Return true if the value of this object is less than the value of
     /// the specified 'other' object, otherwise return false.
     bool less(const EncryptionCertificateExtension& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
 
     /// Format this object to the specified output 'stream' at the
     /// optionally specified indentation 'level' and return a reference to
@@ -2048,12 +2211,18 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
                 const EncryptionCertificateExtension& value);
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
-                const EncryptionCertificateExtension& value)
+void EncryptionCertificateExtension::hash(HASH_ALGORITHM& algorithm)
 {
     using bslh::hashAppend;
 
-    hashAppend(algorithm, value.value());
+    hashAppend(algorithm, d_attribute);
+    hashAppend(algorithm, d_value);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionCertificateExtension& value)
+{
+    value.hash(algorithm);
 }
 
 
@@ -2090,7 +2259,9 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
 /// @ingroup module_ntci_encryption
 class EncryptionCertificateExtensionList
 {
-    bsl::size_t       d_value;
+    typedef bsl::vector<EncryptionCertificateExtension> ExtensionVector;
+
+    bsl::vector<EncryptionCertificateExtension> d_extensionVector;
     bslma::Allocator* d_allocator_p;
 
   public:
@@ -2140,6 +2311,11 @@ class EncryptionCertificateExtensionList
     /// Return true if the value of this object is less than the value of
     /// the specified 'other' object, otherwise return false.
     bool less(const EncryptionCertificateExtensionList& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
 
     /// Format this object to the specified output 'stream' at the
     /// optionally specified indentation 'level' and return a reference to
@@ -2202,12 +2378,17 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
                 const EncryptionCertificateExtensionList& value);
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
-                const EncryptionCertificateExtensionList& value)
+void EncryptionCertificateExtensionList::hash(HASH_ALGORITHM& algorithm)
 {
     using bslh::hashAppend;
 
-    hashAppend(algorithm, value.value());
+    hashAppend(algorithm, d_extensionVector);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionCertificateExtensionList& value)
+{
+    value.hash(algorithm);
 }
 
 
@@ -2264,16 +2445,16 @@ class EncryptionCertificateEntity
     typedef ntca::EncryptionCertificateExtension     Extension;
     typedef ntca::EncryptionCertificateExtensionList ExtensionList;
 
-    ntca::EncryptionCertificateVersion       d_version;
-    ntsa::AbstractInteger                    d_serialNumber;
-    ntca::EncryptionCertificateSignatureAlgorithm     d_signatureAlgorithm;
-    ntca::EncryptionCertificateName          d_issuer;
-    ntca::EncryptionCertificateValidity      d_validity;
-    ntca::EncryptionCertificateName          d_subject;
-    ntca::EncryptionCertificatePublicKeyInfo d_subjectPublicKeyInfo;
-    bdlb::NullableValue<UniqueIdentifier>    d_issuerUniqueId;
-    bdlb::NullableValue<UniqueIdentifier>    d_subjectUniqueId;
-    bdlb::NullableValue<ExtensionList>       d_extensionList;
+    ntca::EncryptionCertificateVersion            d_version;
+    ntsa::AbstractInteger                         d_serialNumber;
+    ntca::EncryptionCertificateSignatureAlgorithm d_signatureAlgorithm;
+    ntca::EncryptionCertificateName               d_issuer;
+    ntca::EncryptionCertificateValidity           d_validity;
+    ntca::EncryptionCertificateName               d_subject;
+    ntca::EncryptionCertificatePublicKeyInfo      d_subjectPublicKeyInfo;
+    bdlb::NullableValue<UniqueIdentifier>         d_issuerUniqueId;
+    bdlb::NullableValue<UniqueIdentifier>         d_subjectUniqueId;
+    bdlb::NullableValue<ExtensionList>            d_extensionList;
 
   public:
     /// Create a new certificate having the default
