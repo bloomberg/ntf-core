@@ -1156,16 +1156,49 @@ class AbstractSyntaxDecoder
     /// of the context stack. Also note that the caller is responsible for
     /// calling 'leaveTag' to pop the context stack. Return the error.
     ntsa::Error decodeTag(AbstractSyntaxTagClass::Value  tagClass,
-                              AbstractSyntaxTagType::Value   tagType,
-                              AbstractSyntaxTagNumber::Value tagNumber);
+                          AbstractSyntaxTagType::Value   tagType,
+                          AbstractSyntaxTagNumber::Value tagNumber);
+
+    /// Decode a tag and its length having the specified 'tagClass', 'tagType',
+    /// and either the specified 'tagNumber1' or 'tagNumber2'. Note that the
+    /// tag and its length becomes the new top of the context stack. Also note
+    /// that the caller is responsible for calling 'leaveTag' to pop the
+    /// context stack. Return the error.
+    ntsa::Error decodeTag(AbstractSyntaxTagClass::Value  tagClass,
+                          AbstractSyntaxTagType::Value   tagType,
+                          AbstractSyntaxTagNumber::Value tagNumber1,
+                          AbstractSyntaxTagNumber::Value tagNumber2);
+
+    /// Decode a tag and its length having the specified 'tagClass', 'tagType',
+    /// and either the specified 'tagNumber1', 'tagNumber2', or 'tagNumber3'.
+    /// Note that the tag and its length becomes the new top of the context
+    /// stack. Also note that the caller is responsible for calling 'leaveTag'
+    /// to pop the context stack. Return the error.
+    ntsa::Error decodeTag(AbstractSyntaxTagClass::Value  tagClass,
+                          AbstractSyntaxTagType::Value   tagType,
+                          AbstractSyntaxTagNumber::Value tagNumber1,
+                          AbstractSyntaxTagNumber::Value tagNumber2,
+                          AbstractSyntaxTagNumber::Value tagNumber3);
+
+    /// Decode a tag and its length having the specified 'tagClass', 'tagType',
+    /// and either the specified 'tagNumber1', 'tagNumber2', 'tagNumber3', or
+    /// 'tagNumber4'. Note that the tag and its length becomes the new top of
+    /// the context stack. Also note that the caller is responsible for calling
+    /// 'leaveTag' to pop the context stack. Return the error.
+    ntsa::Error decodeTag(AbstractSyntaxTagClass::Value  tagClass,
+                          AbstractSyntaxTagType::Value   tagType,
+                          AbstractSyntaxTagNumber::Value tagNumber1,
+                          AbstractSyntaxTagNumber::Value tagNumber2,
+                          AbstractSyntaxTagNumber::Value tagNumber3,
+                          AbstractSyntaxTagNumber::Value tagNumber4);
 
     /// Decode a tag and its length having the specified 'tagClass', 'tagType',
     /// and 'tagNumber'. Note that the tag and its length becomes the new top
     /// of the context stack. Also note that the caller is responsible for
     /// calling 'leaveTag' to pop the context stack. Return the error.
     ntsa::Error decodeTag(AbstractSyntaxTagClass::Value tagClass,
-                              AbstractSyntaxTagType::Value  tagType,
-                              bsl::size_t                   tagNumber);
+                          AbstractSyntaxTagType::Value  tagType,
+                          bsl::size_t                   tagNumber);
 
     /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// NULL according to the top of the context stack. Return the error.
@@ -1284,6 +1317,10 @@ class AbstractSyntaxDecoder
 
     /// Return the current structural depth. 
     bsl::size_t depth() const;
+
+    /// Return the number of un-decoded bytes in this frame, or zero if the
+    /// content length is indefinite.
+    bsl::size_t contentBytesRemaining() const;
 
     /// Return the current tag-length-value context at the top of the stack.
     const AbstractSyntaxDecoderFrame& current() const;

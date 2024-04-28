@@ -55,14 +55,17 @@ const ntsa::AbstractSyntaxTagNumber::Value k_SET =
 const ntsa::AbstractSyntaxTagNumber::Value k_NULL = 
     ntsa::AbstractSyntaxTagNumber::e_NULL;
 
-// MRM
-#if 0
 const ntsa::AbstractSyntaxTagNumber::Value k_BOOLEAN = 
     ntsa::AbstractSyntaxTagNumber::e_BOOLEAN;
-#endif
 
 const ntsa::AbstractSyntaxTagNumber::Value k_INTEGER = 
     ntsa::AbstractSyntaxTagNumber::e_INTEGER;
+
+const ntsa::AbstractSyntaxTagNumber::Value k_VISIBLE_STRING =
+    ntsa::AbstractSyntaxTagNumber::e_VISIBLE_STRING;
+
+const ntsa::AbstractSyntaxTagNumber::Value k_PRINTABLE_STRING =
+    ntsa::AbstractSyntaxTagNumber::e_PRINTABLE_STRING;
 
 const ntsa::AbstractSyntaxTagNumber::Value k_UTF8_STRING =
     ntsa::AbstractSyntaxTagNumber::e_UTF8_STRING;
@@ -924,7 +927,12 @@ ntsa::Error EncryptionCertificateNameComponent::decode(
     }
 
     {
-        error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_UTF8_STRING);
+        error = decoder->decodeTag(
+            k_UNIVERSAL, 
+            k_PRIMITIVE, 
+            k_VISIBLE_STRING,
+            k_PRINTABLE_STRING,
+            k_UTF8_STRING);
         if (error) {
             return error;
         }
@@ -1157,12 +1165,7 @@ ntsa::Error EncryptionCertificateName::decode(
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    const bsl::size_t contentBegin = decoder->current().contentPosition();
-
-    const bsl::size_t contentEnd = 
-        contentBegin + decoder->current().contentLength().value();
-
-    while (decoder->position() < contentEnd) {
+    while (decoder->contentBytesRemaining() > 0) {
         error = decoder->decodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SET);
         if (error) {
             return error;
@@ -1536,9 +1539,7 @@ ntsa::Error EncryptionCertificatePublicKeyInfo::decode(
             }
         }
 
-        if (decoder->position() < decoder->current().contentPosition() + 
-                                  decoder->current().contentLength().value())
-        {
+        if (decoder->contentBytesRemaining() > 0) {
             error = decoder->decodeTag();
             if (error) {
                 return error;
@@ -2575,6 +2576,7 @@ bool operator<(const EncryptionCertificateExtensionValue& lhs,
 EncryptionCertificateExtension::EncryptionCertificateExtension(
     bslma::Allocator* basicAllocator)
 : d_attribute(basicAllocator)
+, d_critical()
 , d_value(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -2584,6 +2586,7 @@ EncryptionCertificateExtension::EncryptionCertificateExtension(
     const EncryptionCertificateExtension& original,
     bslma::Allocator*                    basicAllocator)
 : d_attribute(original.d_attribute, basicAllocator)
+, d_critical(original.d_critical)
 , d_value(original.d_value, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -2598,6 +2601,7 @@ EncryptionCertificateExtension& EncryptionCertificateExtension::operator=(
 {
     if (this != &other) {
         d_attribute = other.d_attribute;
+        d_critical = other.d_critical;
         d_value = other.d_value;
     }
 
@@ -2607,6 +2611,7 @@ EncryptionCertificateExtension& EncryptionCertificateExtension::operator=(
 void EncryptionCertificateExtension::reset()
 {
     d_attribute.reset();
+    d_critical.reset();
     d_value.reset();
 }
 
@@ -2626,6 +2631,10 @@ void EncryptionCertificateExtension::setAttribute(ntca::EncryptionCertificateExt
     d_attribute = value;
 }
 
+void EncryptionCertificateExtension::setCritical(bool value)
+{
+    d_critical = value;
+}
 
 ntsa::Error EncryptionCertificateExtension::decode(
     ntsa::AbstractSyntaxDecoder* decoder)
@@ -2642,19 +2651,38 @@ ntsa::Error EncryptionCertificateExtension::decode(
         return error;
     }
 
-    error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OCTET_STRING);
-    if (error) {
-        return error;
-    }
+    while (decoder->contentBytesRemaining() > 0) {
+        error = decoder->decodeTag();
+        if (error) {
+            return error;
+        }
 
-    error = decoder->decodeValue(&d_value);
-    if (error) {
-        return error;
-    }
+        if (decoder->current().tagClass() == k_UNIVERSAL &&
+            decoder->current().tagType() == k_PRIMITIVE &&
+            decoder->current().tagNumber() == k_BOOLEAN)
+        {
+            error = decoder->decodeValue(&d_critical.makeValue());
+            if (error) {
+                return error;
+            }
+        }
+        else if (decoder->current().tagClass() == k_UNIVERSAL &&
+                 decoder->current().tagType() == k_PRIMITIVE &&
+                 decoder->current().tagNumber() == k_OCTET_STRING)
+        {
+            error = decoder->decodeValue(&d_value);
+            if (error) {
+                return error;
+            }
+        }
+        else {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
 
-    error = decoder->decodeTagComplete();
-    if (error) {
-        return error;
+        error = decoder->decodeTagComplete();
+        if (error) {
+            return error;
+        }
     }
 
     error = decoder->decodeTagComplete();
@@ -2797,9 +2825,7 @@ ntsa::Error EncryptionCertificateExtensionList::decode(
         return error;
     }
 
-    while (decoder->position() < decoder->current().contentPosition() + 
-                                 decoder->current().contentLength().value())
-    {
+    while (decoder->contentBytesRemaining() > 0) {
         EncryptionCertificateExtension extension;
         error = extension.decode(decoder);
         if (error) {
@@ -3050,9 +3076,7 @@ ntsa::Error EncryptionCertificateEntity::decode(ntsa::AbstractSyntaxDecoder* dec
     }
 
 
-    while (decoder->position() < decoder->current().contentPosition() + 
-                                 decoder->current().contentLength().value())
-    {
+    while (decoder->contentBytesRemaining() > 0) {
         error = decoder->decodeTag();
         if (error) {
             return error;

@@ -2085,8 +2085,9 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
 class EncryptionCertificateExtension
 {
     EncryptionCertificateExtensionAttribute d_attribute;
-    ntsa::AbstractByteSequence     d_value;
-    bslma::Allocator*              d_allocator_p;
+    bdlb::NullableValue<bool>               d_critical;
+    ntsa::AbstractByteSequence              d_value;
+    bslma::Allocator*                       d_allocator_p;
 
   public:
     /// Create a new certificate having the default
@@ -2127,6 +2128,8 @@ class EncryptionCertificateExtension
     /// specified 'value'. 
     void setAttribute(EncryptionCertificateExtensionAttributeType::Value value);    
 
+    /// Set the critical flag to the specified 'value'. 
+    void setCritical(bool value);
 
     /// Decode this object using the specified 'decoder'. Return the error.
     ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
@@ -2216,6 +2219,7 @@ void EncryptionCertificateExtension::hash(HASH_ALGORITHM& algorithm)
     using bslh::hashAppend;
 
     hashAppend(algorithm, d_attribute);
+    hashAppend(algorithm, d_critical);
     hashAppend(algorithm, d_value);
 }
 

@@ -2155,6 +2155,108 @@ ntsa::Error AbstractSyntaxDecoder::decodeTag(
 }
 
 ntsa::Error AbstractSyntaxDecoder::decodeTag(
+    AbstractSyntaxTagClass::Value  tagClass,
+    AbstractSyntaxTagType::Value   tagType,
+    AbstractSyntaxTagNumber::Value tagNumber1,
+    AbstractSyntaxTagNumber::Value tagNumber2)
+{
+    ntsa::Error error;
+
+    error = this->decodeTag();
+    if (error) {
+        return error;
+    }
+
+    const AbstractSyntaxDecoderFrame& context = this->current();
+
+    if (context.tagClass() != tagClass) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.tagType() != tagType) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.tagNumber() != tagNumber1 && 
+        context.tagNumber() != tagNumber2) 
+    {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodeTag(
+    AbstractSyntaxTagClass::Value  tagClass,
+    AbstractSyntaxTagType::Value   tagType,
+    AbstractSyntaxTagNumber::Value tagNumber1,
+    AbstractSyntaxTagNumber::Value tagNumber2,
+    AbstractSyntaxTagNumber::Value tagNumber3)
+{
+    ntsa::Error error;
+
+    error = this->decodeTag();
+    if (error) {
+        return error;
+    }
+
+    const AbstractSyntaxDecoderFrame& context = this->current();
+
+    if (context.tagClass() != tagClass) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.tagType() != tagType) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.tagNumber() != tagNumber1 && 
+        context.tagNumber() != tagNumber2 &&
+        context.tagNumber() != tagNumber3) 
+    {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodeTag(
+    AbstractSyntaxTagClass::Value  tagClass,
+    AbstractSyntaxTagType::Value   tagType,
+    AbstractSyntaxTagNumber::Value tagNumber1,
+    AbstractSyntaxTagNumber::Value tagNumber2,
+    AbstractSyntaxTagNumber::Value tagNumber3,
+    AbstractSyntaxTagNumber::Value tagNumber4)
+{
+    ntsa::Error error;
+
+    error = this->decodeTag();
+    if (error) {
+        return error;
+    }
+
+    const AbstractSyntaxDecoderFrame& context = this->current();
+
+    if (context.tagClass() != tagClass) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.tagType() != tagType) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (context.tagNumber() != tagNumber1 && 
+        context.tagNumber() != tagNumber2 &&
+        context.tagNumber() != tagNumber3 &&
+        context.tagNumber() != tagNumber4) 
+    {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::decodeTag(
     AbstractSyntaxTagClass::Value tagClass,
     AbstractSyntaxTagType::Value  tagType,
     bsl::size_t                   tagNumber)
@@ -2282,7 +2384,7 @@ ntsa::Error AbstractSyntaxDecoder::decodeValue(bool* result)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    if (context.contentLength().value() != 0) {
+    if (context.contentLength().value() == 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
@@ -2292,10 +2394,10 @@ ntsa::Error AbstractSyntaxDecoder::decodeValue(bool* result)
         return error;
     }
 
-    if (nextOctet == 0) {
+    if (nextOctet == 0x00) {
         *result = false;
     }
-    else if (nextOctet == 1) {
+    else if (nextOctet == 0x01 || nextOctet == 0xFF) {
         *result = true;
     }
     else {
@@ -3038,8 +3140,16 @@ ntsa::Error AbstractSyntaxDecoder::skip()
 
 ntsa::Error AbstractSyntaxDecoder::decodeTagComplete()
 {
+    ntsa::Error error;
+
     if (d_contextStack.empty()) {
         return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    // Skip all remaining undecoded content.
+    error = this->skip();
+    if (error) {
+        return error;
     }
 
     d_contextStack.pop_back();
@@ -3061,6 +3171,34 @@ bsl::uint64_t AbstractSyntaxDecoder::position() const
 bsl::size_t AbstractSyntaxDecoder::depth() const
 {
     return d_contextStack.size();
+}
+
+bsl::size_t AbstractSyntaxDecoder::contentBytesRemaining() const
+{
+    if (d_contextStack.empty()) {
+        return 0;
+    }
+
+    const AbstractSyntaxDecoderFrame& context = this->current();
+
+    if (context.contentLength().isNull()) {
+        return 0;
+    }
+
+    const bsl::uint64_t contentLength   = context.contentLength().value();
+    const bsl::uint64_t contentPosition = context.contentPosition();
+    const bsl::uint64_t contentEnd      = contentPosition + contentLength;
+
+    const bsl::uint64_t position = 
+        AbstractSyntaxDecoderUtil::position(d_buffer_p);
+
+    if (position > contentEnd) {
+        return 0;
+    }
+
+    const bsl::uint64_t result = contentEnd - position;
+
+    return result;
 }
 
 const AbstractSyntaxDecoderFrame& AbstractSyntaxDecoder::current() const
