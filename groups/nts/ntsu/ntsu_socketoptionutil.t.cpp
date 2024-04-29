@@ -1996,96 +1996,99 @@ NTSCFG_TEST_CASE(9)
 {
     // Concern: getTcpCongestionControl and setTcpCongestionControl
 
+    ntscfg::TestAllocator ta;
+    {
 #if defined(BSLS_PLATFORM_OS_LINUX)
-    const bsl::array<ntsa::Transport::Value, 2> SOCKET_TYPES = {
-        ntsa::Transport::e_TCP_IPV4_STREAM,
-        ntsa::Transport::e_TCP_IPV6_STREAM};
+        const bsl::array<ntsa::Transport::Value, 2> SOCKET_TYPES = {
+            ntsa::Transport::e_TCP_IPV4_STREAM,
+            ntsa::Transport::e_TCP_IPV6_STREAM};
 
-    //    const bsl::array<ntsa::Transport::Value, 1> SOCKET_TYPES = {
-    //        ntsa::Transport::e_TCP_IPV6_STREAM};
+        for (size_t tIndex = 0; tIndex < SOCKET_TYPES.size(); ++tIndex) {
+            const ntsa::Transport::Value transport = SOCKET_TYPES[tIndex];
 
-    for (size_t tIndex = 0; tIndex < SOCKET_TYPES.size(); ++tIndex) {
-        const ntsa::Transport::Value transport = SOCKET_TYPES[tIndex];
+            if (transport == ntsa::Transport::e_TCP_IPV4_STREAM &&
+                !ntsu::AdapterUtil::supportsIpv4())
+            {
+                continue;
+            }
 
-        if (transport == ntsa::Transport::e_TCP_IPV4_STREAM &&
-            !ntsu::AdapterUtil::supportsIpv4())
-        {
-            continue;
-        }
+            if (transport == ntsa::Transport::e_TCP_IPV6_STREAM &&
+                !ntsu::AdapterUtil::supportsIpv6())
+            {
+                continue;
+            }
 
-        if (transport == ntsa::Transport::e_TCP_IPV6_STREAM &&
-            !ntsu::AdapterUtil::supportsIpv6())
-        {
-            continue;
-        }
+            NTSCFG_TEST_LOG_INFO << "Testing " << transport
+                                 << NTSCFG_TEST_LOG_END;
 
-        NTSCFG_TEST_LOG_INFO << "Testing " << transport << NTSCFG_TEST_LOG_END;
+            ntsa::Error error;
 
-        ntsa::Error error;
+            ntsa::Handle socket;
+            {
+                error = ntsu::SocketUtil::create(&socket, transport);
+                NTSCFG_TEST_OK(error);
+            }
 
-        ntsa::Handle socket;
-        {
-            error = ntsu::SocketUtil::create(&socket, transport);
+            {
+                ntsa::TcpCongestionControl algorithm(&ta);
+                NTSCFG_TEST_OK(
+                    ntsu::SocketOptionUtil::getTcpCongestionControl(&algorithm,
+                                                                    socket));
+            }
+
+            {
+                // for ipv4 and ipv4 available algorithms are written inside the
+                // same file
+                const char* path =
+                    "/proc/sys/net/ipv4/tcp_allowed_congestion_control";
+
+                bsl::ifstream file(path);
+                if (!file.is_open()) {
+                    NTSCFG_TEST_LOG_WARN << "cannot open " << path
+                                         << NTSCFG_TEST_LOG_END;
+                    return;
+                }
+                bsl::string line;
+                bsl::getline(file, line);
+                if (line.empty()) {
+                    return;
+                }
+                bsl::stringstream ssline(line);
+
+                // it is guaranteed that algorithm names are in one line separated
+                // by spaces, so `while` below is enough
+                bsl::string algorithmName;
+                while (ssline >> algorithmName) {
+                    NTSCFG_TEST_LOG_INFO << "Working with " << algorithmName
+                                         << NTSCFG_TEST_LOG_END;
+
+                    ntsa::TcpCongestionControl algorithmToSet(&ta);
+                    {
+                        NTSCFG_TEST_OK(
+                            algorithmToSet.setAlgorithmName(algorithmName));
+
+                        NTSCFG_TEST_OK(
+                            ntsu::SocketOptionUtil::setTcpCongestionControl(
+                                socket,
+                                algorithmToSet));
+                    }
+                    {
+                        ntsa::TcpCongestionControl algorithmToGet(&ta);
+                        NTSCFG_TEST_OK(
+                            ntsu::SocketOptionUtil::getTcpCongestionControl(
+                                &algorithmToGet,
+                                socket));
+                        NTSCFG_TEST_EQ(algorithmToGet, algorithmToSet);
+                    }
+                }
+            }
+
+            error = ntsu::SocketUtil::close(socket);
             NTSCFG_TEST_OK(error);
         }
-
-        {
-            ntsa::TcpCongestionControl algorithm;
-            error = ntsu::SocketOptionUtil::getTcpCongestionControl(&algorithm,
-                                                                    socket);
-            NTSCFG_TEST_OK(error);
-        }
-
-        {
-            // for ipv4 and ipv4 available algorithms are written inside the
-            // same file
-            const char* path =
-                "/proc/sys/net/ipv4/tcp_allowed_congestion_control";
-
-            bsl::ifstream file(path);
-            if (!file.is_open()) {
-                NTSCFG_TEST_LOG_WARN << "cannot open " << path
-                                     << NTSCFG_TEST_LOG_END;
-                return;
-            }
-            bsl::string line;
-            bsl::getline(file, line);
-            if (line.empty()) {
-                return;
-            }
-            bsl::stringstream ssline(line);
-
-            // it is guaranteed that algorithm names are in one line separated
-            // by spaces, so `while` below is enough
-            bsl::string algorithmName;
-            while (ssline >> algorithmName) {
-                NTSCFG_TEST_LOG_INFO << "Working with " << algorithmName
-                                     << NTSCFG_TEST_LOG_END;
-
-                ntsa::TcpCongestionControl algorithmToSet;
-                {
-                    error = algorithmToSet.setAlgorithmName(algorithmName);
-                    NTSCFG_TEST_OK(error);
-                    error = ntsu::SocketOptionUtil::setTcpCongestionControl(
-                        socket,
-                        algorithmToSet);
-                    NTSCFG_TEST_OK(error);
-                }
-                {
-                    ntsa::TcpCongestionControl algorithmToGet;
-                    error = ntsu::SocketOptionUtil::getTcpCongestionControl(
-                        &algorithmToGet,
-                        socket);
-                    NTSCFG_TEST_OK(error);
-                    NTSCFG_TEST_EQ(algorithmToGet, algorithmToSet);
-                }
-            }
-        }
-
-        error = ntsu::SocketUtil::close(socket);
-        NTSCFG_TEST_OK(error);
-    }
 #endif
+    }
+    NTSCFG_TEST_EQ(ta.numBlocksInUse(), 0);
 }
 
 NTSCFG_TEST_DRIVER
