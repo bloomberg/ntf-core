@@ -149,14 +149,15 @@ class SocketOption
     };
 
     ntsa::SocketOptionType::Value d_type;
+    bslma::Allocator*             d_allocator_p;
 
   public:
     /// Create a new socketoption having an undefined type.
-    SocketOption();
+    SocketOption(bslma::Allocator* allocator = 0);
 
     /// Create a new address having the same value as the specified 'other'
     /// object.
-    SocketOption(const SocketOption& other);
+    SocketOption(const SocketOption& other, bslma::Allocator* allocator);
 
     /// Destroy this object.
     ~SocketOption();
@@ -573,7 +574,7 @@ class SocketOption
     /// Defines the traits of this type. These traits can be used to select, at
     /// compile-time, the most efficient algorithm to manipulate objects of
     /// this type.
-    NTSCFG_DECLARE_NESTED_BITWISE_MOVABLE_TRAITS(SocketOption);
+    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(SocketOption);
 };
 
 /// Write the specified 'object' to the specified 'stream'. Return a modifiable
@@ -602,14 +603,18 @@ template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const SocketOption& value);
 
 NTSCFG_INLINE
-SocketOption::SocketOption()
+SocketOption::SocketOption(bslma::Allocator* allocator)
 : d_type(ntsa::SocketOptionType::e_UNDEFINED)
+, d_allocator_p(allocator)
 {
 }
 
 NTSCFG_INLINE
 SocketOption::~SocketOption()
 {
+    if (isTcpCongestionControl()) {
+        d_tcpCongestionControl.object().~TcpCongestionControl();
+    }
 }
 
 NTSCFG_INLINE

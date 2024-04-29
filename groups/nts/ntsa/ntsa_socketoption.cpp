@@ -24,8 +24,10 @@ BSLS_IDENT_RCSID(ntsa_socketoption_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsa {
 
-SocketOption::SocketOption(const SocketOption& other)
+SocketOption::SocketOption(const SocketOption& other,
+                           bslma::Allocator*   allocator)
 : d_type(other.d_type)
+, d_allocator_p(allocator)
 {
     switch (d_type) {
     case ntsa::SocketOptionType::e_REUSE_ADDRESS:
@@ -90,7 +92,8 @@ SocketOption::SocketOption(const SocketOption& other)
         break;
     case ntsa::SocketOptionType::e_TCP_CONGESTION_CONTROL:
         new (d_tcpCongestionControl.buffer())
-            TcpCongestionControl(other.d_tcpCongestionControl.object());
+            TcpCongestionControl(other.d_tcpCongestionControl.object(),
+                                 d_allocator_p);
         break;
     default:
         BSLS_ASSERT(d_type == ntsa::SocketOptionType::e_UNDEFINED);
@@ -168,7 +171,8 @@ SocketOption& SocketOption::operator=(const SocketOption& other)
         break;
     case ntsa::SocketOptionType::e_TCP_CONGESTION_CONTROL:
         new (d_tcpCongestionControl.buffer())
-            TcpCongestionControl(other.d_tcpCongestionControl.object());
+            TcpCongestionControl(other.d_tcpCongestionControl.object(),
+                                 d_allocator_p);
         break;
     default:
         BSLS_ASSERT(d_type == ntsa::SocketOptionType::e_UNDEFINED);
@@ -662,7 +666,7 @@ ntsa::TcpCongestionControl& SocketOption::makeTcpCongestionControl()
     }
     else {
         this->reset();
-        new (d_tcpCongestionControl.buffer()) TcpCongestionControl();
+        new (d_tcpCongestionControl.buffer()) TcpCongestionControl(d_allocator_p);
         d_type = ntsa::SocketOptionType::e_TCP_CONGESTION_CONTROL;
     }
 
@@ -678,7 +682,7 @@ ntsa::TcpCongestionControl& SocketOption::makeTcpCongestionControl(
     else {
         this->reset();
         new (d_tcpCongestionControl.buffer())
-            ntsa::TcpCongestionControl(value);
+            ntsa::TcpCongestionControl(value, d_allocator_p);
         d_type = ntsa::SocketOptionType::e_TCP_CONGESTION_CONTROL;
     }
 

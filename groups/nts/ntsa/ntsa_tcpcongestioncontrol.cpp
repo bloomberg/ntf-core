@@ -23,16 +23,17 @@ BSLS_IDENT_RCSID(ntsa_tcpcongestioncontrol_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsa {
 
-TcpCongestionControl::TcpCongestionControl()
-: d_buffer()
-, d_size()
+TcpCongestionControl::TcpCongestionControl(bslma::Allocator* allocator)
+: d_buffer(allocator)
+, d_allocator_p(allocator)
 {
 }
 
 TcpCongestionControl::TcpCongestionControl(
-    const BloombergLP::ntsa::TcpCongestionControl& original)
-: d_buffer(original.d_buffer)
-, d_size(original.d_size)
+    const BloombergLP::ntsa::TcpCongestionControl& original,
+    bslma::Allocator*                              allocator)
+: d_buffer(original.d_buffer, allocator)
+, d_allocator_p(allocator)
 {
 }
 
@@ -44,8 +45,8 @@ TcpCongestionControl& TcpCongestionControl::operator=(
     const BloombergLP::ntsa::TcpCongestionControl& other)
 {
     if (this != &other) {
-        d_buffer = other.d_buffer;
-        d_size   = other.d_size;
+        d_buffer      = other.d_buffer;
+        d_allocator_p = other.d_allocator_p;
     }
     return *this;
 }
@@ -53,22 +54,13 @@ TcpCongestionControl& TcpCongestionControl::operator=(
 ntsa::Error TcpCongestionControl::setAlgorithmName(
     const bsl::string_view& name)
 {
-    if (name.length() >= BUFFER_SIZE) {
-        return ntsa::Error();
-    }
-
-    this->reset();
-    bsl::copy(name.cbegin(), name.cend(), d_buffer.data());
-    d_size = name.length() + 1;
-
+    d_buffer = name;
     return ntsa::Error();
 }
 
-bsl::span<const char> TcpCongestionControl::algorithm() const
+const bsl::string& TcpCongestionControl::algorithm() const
 {
-    bsl::span<const char> result{d_buffer.data(), d_size};
-
-    return result;
+    return d_buffer;
 }
 
 ntsa::Error TcpCongestionControl::getTcpCongestionControl(
@@ -84,7 +76,7 @@ ntsa::Error TcpCongestionControl::getTcpCongestionControl(
 
 void TcpCongestionControl::reset()
 {
-    d_buffer.fill('\0');
+    d_buffer.clear();
 }
 
 bool TcpCongestionControl::equals(const TcpCongestionControl& other) const

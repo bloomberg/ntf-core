@@ -781,9 +781,9 @@ ntsa::Error SocketOptionUtil::setTcpCongestionControl(
     const ntsa::TcpCongestionControl& algorithm)
 {
 #if defined(BSLS_PLATFORM_OS_LINUX)
-    bsl::span<const char> name = algorithm.algorithm();
-    const char*     optValue = name.data();
-    const socklen_t optLen   = name.size();
+    const bsl::string& name     = algorithm.algorithm();
+    const char*        optValue = name.c_str();
+    const socklen_t    optLen   = name.length();
 
     const int rc =
         setsockopt(socket, IPPROTO_TCP, TCP_CONGESTION, optValue, optLen);
@@ -1287,11 +1287,9 @@ ntsa::Error SocketOptionUtil::getTcpCongestionControl(
     ntsa::Handle                socket)
 {
 #if defined(BSLS_PLATFORM_OS_LINUX)
-    enum {e_BUFFER_SIZE = 64};
+    enum { e_BUFFER_SIZE = 64 };
     char optionValue[e_BUFFER_SIZE];
-    bsl::fill(optionValue,
-              optionValue + e_BUFFER_SIZE,
-              '\0');
+    bsl::fill(optionValue, optionValue + e_BUFFER_SIZE, '\0');
 
     socklen_t optionLength = static_cast<socklen_t>(sizeof(optionValue) - 1);
 

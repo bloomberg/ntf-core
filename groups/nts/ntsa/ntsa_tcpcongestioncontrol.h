@@ -51,22 +51,17 @@ namespace ntsa {
 
 class TcpCongestionControl
 {
-  public:
-    enum { TCP_CA_NAME_MAX = 16 };
-
-  private:
-    enum { BUFFER_SIZE = TCP_CA_NAME_MAX + 1 };
-
-    bsl::array<char, BUFFER_SIZE> d_buffer;
-    bsl::uint8_t                  d_size;  //including 0 terminator
+    bsl::string       d_buffer;
+    bslma::Allocator* d_allocator_p;
 
   public:
     /// Create new TcpCongestionControl instance having the default value.
-    TcpCongestionControl();
+    TcpCongestionControl(bslma::Allocator* allocator = 0);
 
     /// Create new TcpCongestionControl instance having the same value as the
     /// `specified` original.
-    TcpCongestionControl(const TcpCongestionControl& original);
+    TcpCongestionControl(const TcpCongestionControl& original,
+                         bslma::Allocator*           allocator);
 
     /// Destroy this object.
     ~TcpCongestionControl();
@@ -82,12 +77,12 @@ class TcpCongestionControl
     /// Return a span pointing to a null-terminated c-string containing name of
     /// the tcp congestion control algorithm and it's size including '\0'
     /// character
-    bsl::span<const char> algorithm() const;
+    const bsl::string& algorithm() const;
 
     /// Return the instance representing TCP congestion control
     /// algorithm set accordingly to the specified `value`
     static ntsa::Error getTcpCongestionControl(
-        TcpCongestionControl*           algorithm,
+        TcpCongestionControl*                algorithm,
         TcpCongestionControlAlgorithm::Value value);
 
     /// Reset the value of this object to its value upon default construction.
@@ -119,7 +114,7 @@ class TcpCongestionControl
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTSCFG_DECLARE_NESTED_BITWISE_MOVABLE_TRAITS(TcpCongestionControl);
+    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(TcpCongestionControl);
 };
 
 /// Write the specified 'object' to the specified 'stream'. Return a modifiable
