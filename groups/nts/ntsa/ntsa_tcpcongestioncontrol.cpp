@@ -18,7 +18,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntsa_tcpcongestioncontrol_cpp, "$Id$ $CSID$")
 
-#include <bsl_cstring.h>
+#include <bslim_printer.h>
 
 namespace BloombergLP {
 namespace ntsa {
@@ -63,15 +63,14 @@ const bsl::string& TcpCongestionControl::algorithm() const
     return d_buffer;
 }
 
-ntsa::Error TcpCongestionControl::getTcpCongestionControl(
-    TcpCongestionControl*                algorithm,
+ntsa::Error TcpCongestionControl::setAlgorithm(
     TcpCongestionControlAlgorithm::Value value)
 {
     const char* name = TcpCongestionControlAlgorithm::toString(value);
     if (name == 0) {
         return ntsa::Error::invalid();
     }
-    return algorithm->setAlgorithmName(name);
+    return this->setAlgorithmName(name);
 }
 
 void TcpCongestionControl::reset()
@@ -93,9 +92,11 @@ bsl::ostream& TcpCongestionControl::print(bsl::ostream& stream,
                                           int           level,
                                           int           spacesPerLevel) const
 {
-    NTSCFG_WARNING_UNUSED(level);
-    NTSCFG_WARNING_UNUSED(spacesPerLevel);
-    return stream;  //TODO:
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute("d_buffer", d_buffer);
+    printer.end();
+    return stream;
 }
 
 bsl::ostream& operator<<(bsl::ostream&               stream,

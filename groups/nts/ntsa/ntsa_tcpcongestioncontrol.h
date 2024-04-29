@@ -22,9 +22,7 @@ BSLS_IDENT("$Id: $")
 #include <ntsa_error.h>
 #include <ntscfg_platform.h>
 #include <ntsscm_version.h>
-#include <bsl_array.h>
 #include <bsl_ostream.h>
-#include <bsl_span.h>
 #include <bsl_string.h>
 
 #include <ntsa_tcpcongestioncontrolalgorithm.h>
@@ -56,10 +54,11 @@ class TcpCongestionControl
 
   public:
     /// Create new TcpCongestionControl instance having the default value.
+    /// Optionally specify a 'basicAllocator' used to supply memory.
     TcpCongestionControl(bslma::Allocator* allocator = 0);
 
     /// Create new TcpCongestionControl instance having the same value as the
-    /// `specified` original.
+    /// specified `original`. Use the specified `allocator` to supply memory.
     TcpCongestionControl(const TcpCongestionControl& original,
                          bslma::Allocator*           allocator);
 
@@ -70,20 +69,16 @@ class TcpCongestionControl
     /// Return a reference to this modifiable object.
     TcpCongestionControl& operator=(const TcpCongestionControl& other);
 
-    /// Set algorithm name to the specified `value`. Length of the `value` is
-    /// expected to be not longer than TCP_CA_NAME_MAX. Return the error.
+    /// Set algorithm name to the specified `value`. Return the error.
     ntsa::Error setAlgorithmName(const bsl::string_view& value);
 
-    /// Return a span pointing to a null-terminated c-string containing name of
-    /// the tcp congestion control algorithm and it's size including '\0'
-    /// character
+    /// Return a reference to a string containing name of the tcp congestion
+    /// control algorithm.
     const bsl::string& algorithm() const;
 
-    /// Return the instance representing TCP congestion control
-    /// algorithm set accordingly to the specified `value`
-    static ntsa::Error getTcpCongestionControl(
-        TcpCongestionControl*                algorithm,
-        TcpCongestionControlAlgorithm::Value value);
+    /// Set TCP congestion control algorithm set accordingly to the specified
+    /// `value`. Return the error.
+    ntsa::Error setAlgorithm(TcpCongestionControlAlgorithm::Value value);
 
     /// Reset the value of this object to its value upon default construction.
     void reset();

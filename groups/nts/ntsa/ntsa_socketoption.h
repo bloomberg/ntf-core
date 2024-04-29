@@ -152,11 +152,12 @@ class SocketOption
     bslma::Allocator*             d_allocator_p;
 
   public:
-    /// Create a new socketoption having an undefined type.
+    /// Create a new socketoption having an undefined type. Optionally specify
+    /// a 'basicAllocator' used to supply memory.
     SocketOption(bslma::Allocator* allocator = 0);
 
     /// Create a new address having the same value as the specified 'other'
-    /// object.
+    /// object. Use the specified `allocator` to supply memory.
     SocketOption(const SocketOption& other, bslma::Allocator* allocator);
 
     /// Destroy this object.
