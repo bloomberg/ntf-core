@@ -31,7 +31,8 @@ TcpCongestionControl::TcpCongestionControl()
 
 TcpCongestionControl::TcpCongestionControl(
     const BloombergLP::ntsa::TcpCongestionControl& original)
-: d_buffer(original.d_buffer), d_size(original.d_size)
+: d_buffer(original.d_buffer)
+, d_size(original.d_size)
 {
 }
 
@@ -44,28 +45,13 @@ TcpCongestionControl& TcpCongestionControl::operator=(
 {
     if (this != &other) {
         d_buffer = other.d_buffer;
-        d_size = other.d_size;
+        d_size   = other.d_size;
     }
     return *this;
 }
 
-ntsa::Error TcpCongestionControl::setAlgorithmName(const char* name)
-{
-    int zeroIdx = 0;
-    for (; zeroIdx < BUFFER_SIZE && name[zeroIdx] != '\0'; ++zeroIdx);
-    if (zeroIdx == BUFFER_SIZE) {
-        return ntsa::Error::invalid();
-    }
-
-    this->reset();
-    bsl::copy(name, name + zeroIdx, d_buffer.data());
-    d_size = zeroIdx + 1;
-
-
-    return ntsa::Error();
-}
-
-ntsa::Error TcpCongestionControl::setAlgorithmName(const bsl::string& name)
+ntsa::Error TcpCongestionControl::setAlgorithmName(
+    const bsl::string_view& name)
 {
     if (name.length() >= BUFFER_SIZE) {
         return ntsa::Error();
@@ -78,70 +64,19 @@ ntsa::Error TcpCongestionControl::setAlgorithmName(const bsl::string& name)
     return ntsa::Error();
 }
 
-bsl::span<const char> TcpCongestionControl::getAlgorithm() const
+bsl::span<const char> TcpCongestionControl::algorithm() const
 {
     bsl::span<const char> result{d_buffer.data(), d_size};
 
     return result;
 }
 
-ntsa::Error TcpCongestionControl::getTcpCongestionControl(TcpCongestionControl *algorithm,
-    TcpCongestionControl::Algorithm value) {
-
-    const char* name = 0;
-    switch(value) {
-    case e_RENO:
-        name = "reno";
-        break;
-    case e_CUBIC:
-        name = "cubic";
-        break;
-    case e_BBR:
-        name = "bbr";
-        break;
-    case e_BIC:
-        name = "bic";
-        break;
-    case e_DCTCP:
-        name = "dctcp";
-        break;
-    case e_DIAG:
-        name = "diag";
-        break;
-    case e_HIGHSPEED:
-        name = "highspeed";
-        break;
-    case e_HTCP:
-        name = "htcp";
-        break;
-    case e_HYBLA:
-        name = "hybla";
-        break;
-    case e_ILLINOIS:
-        name = "illinois";
-        break;
-    case e_LP:
-        name = "lp";
-        break;
-    case e_NV:
-        name = "nv";
-        break;
-    case e_SCALABLE:
-        name = "scalable";
-        break;
-    case e_VEGAS:
-        name = "vegas";
-        break;
-    case e_VENO:
-        name = "veno";
-        break;
-    case e_WESTWOOD:
-        name = "westwood";
-        break;
-    case e_YEAH:
-        name = "yeah";
-        break;
-    default:
+ntsa::Error TcpCongestionControl::getTcpCongestionControl(
+    TcpCongestionControl*                algorithm,
+    TcpCongestionControlAlgorithm::Value value)
+{
+    const char* name = TcpCongestionControlAlgorithm::toString(value);
+    if (name == 0) {
         return ntsa::Error::invalid();
     }
     return algorithm->setAlgorithmName(name);
@@ -171,22 +106,26 @@ bsl::ostream& TcpCongestionControl::print(bsl::ostream& stream,
     return stream;  //TODO:
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, const TcpCongestionControl& object)
+bsl::ostream& operator<<(bsl::ostream&               stream,
+                         const TcpCongestionControl& object)
 {
     return object.print(stream, 0, -1);
 }
 
-bool operator==(const TcpCongestionControl& lhs, const TcpCongestionControl& rhs)
+bool operator==(const TcpCongestionControl& lhs,
+                const TcpCongestionControl& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const TcpCongestionControl& lhs, const TcpCongestionControl& rhs)
+bool operator!=(const TcpCongestionControl& lhs,
+                const TcpCongestionControl& rhs)
 {
     return !operator==(lhs, rhs);
 }
 
-bool operator<(const TcpCongestionControl& lhs, const TcpCongestionControl& rhs)
+bool operator<(const TcpCongestionControl& lhs,
+               const TcpCongestionControl& rhs)
 {
     return lhs.less(rhs);
 }

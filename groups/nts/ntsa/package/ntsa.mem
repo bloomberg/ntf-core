@@ -49,6 +49,7 @@ ntsa_socketinfo
 ntsa_socketinfofilter
 ntsa_socketstate
 ntsa_tcpcongestioncontrol
+ntsa_tcpcongestioncontrolalgorithm
 ntsa_temporary
 ntsa_transport
 ntsa_timestamp

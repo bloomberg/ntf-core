@@ -24,8 +24,10 @@ BSLS_IDENT("$Id: $")
 #include <ntsscm_version.h>
 #include <bsl_array.h>
 #include <bsl_ostream.h>
-#include <bsl_string.h>
 #include <bsl_span.h>
+#include <bsl_string.h>
+
+#include <ntsa_tcpcongestioncontrolalgorithm.h>
 
 namespace BloombergLP {
 namespace ntsa {
@@ -52,31 +54,11 @@ class TcpCongestionControl
   public:
     enum { TCP_CA_NAME_MAX = 16 };
 
-    enum Algorithm {
-        e_RENO = 0,
-        e_CUBIC,
-        e_BBR,
-        e_BIC,
-        e_DCTCP,
-        e_DIAG,
-        e_HIGHSPEED,
-        e_HTCP,
-        e_HYBLA,
-        e_ILLINOIS,
-        e_LP,
-        e_NV,
-        e_SCALABLE,
-        e_VEGAS,
-        e_VENO,
-        e_WESTWOOD,
-        e_YEAH
-    };
-
   private:
     enum { BUFFER_SIZE = TCP_CA_NAME_MAX + 1 };
 
     bsl::array<char, BUFFER_SIZE> d_buffer;
-    bsl::uint8_t d_size; //including 0 terminator
+    bsl::uint8_t                  d_size;  //including 0 terminator
 
   public:
     /// Create new TcpCongestionControl instance having the default value.
@@ -93,25 +75,20 @@ class TcpCongestionControl
     /// Return a reference to this modifiable object.
     TcpCongestionControl& operator=(const TcpCongestionControl& other);
 
-    /// Set algorithm name to the specified `value`. The value is expected to
-    /// be a null-terminated string not longer than TCP_CA_NAME_MAX. Return the
-    /// error.
-    ntsa::Error setAlgorithmName(const char* value);
-
     /// Set algorithm name to the specified `value`. Length of the `value` is
     /// expected to be not longer than TCP_CA_NAME_MAX. Return the error.
-    ntsa::Error setAlgorithmName(const bsl::string& value);
+    ntsa::Error setAlgorithmName(const bsl::string_view& value);
 
     /// Return a span pointing to a null-terminated c-string containing name of
     /// the tcp congestion control algorithm and it's size including '\0'
     /// character
-    bsl::span<const char> getAlgorithm() const;
+    bsl::span<const char> algorithm() const;
 
-    /// Return the instance representing "reno" TCP congestion control
-    /// algorithm.
+    /// Return the instance representing TCP congestion control
+    /// algorithm set accordingly to the specified `value`
     static ntsa::Error getTcpCongestionControl(
         TcpCongestionControl*           algorithm,
-        TcpCongestionControl::Algorithm value);
+        TcpCongestionControlAlgorithm::Value value);
 
     /// Reset the value of this object to its value upon default construction.
     void reset();
@@ -184,7 +161,7 @@ template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const TcpCongestionControl& value)
 {
     using bslh::hashAppend;
-    hashAppend(algorithm, value.getAlgorithm());
+    hashAppend(algorithm, value.algorithm());
 }
 
 }  // close package namespace

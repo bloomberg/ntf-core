@@ -781,7 +781,7 @@ ntsa::Error SocketOptionUtil::setTcpCongestionControl(
     const ntsa::TcpCongestionControl& algorithm)
 {
 #if defined(BSLS_PLATFORM_OS_LINUX)
-    bsl::span<const char> name = algorithm.getAlgorithm();
+    bsl::span<const char> name = algorithm.algorithm();
     const char*     optValue = name.data();
     const socklen_t optLen   = name.size();
 
