@@ -22,7 +22,43 @@ using namespace ntsa;
 
 NTSCFG_TEST_CASE(1)
 {
+    ntscfg::TestAllocator ta;
+    {
+        TcpCongestionControl cc(&ta);
+        NTSCFG_TEST_EQ(cc.algorithm(), "");
 
+        {
+            const char* name = "some_long_name_here";
+            NTSCFG_TEST_OK(cc.setAlgorithmName(name));
+            NTSCFG_TEST_EQ(cc.algorithm(), name);
+        }
+        {
+            NTSCFG_TEST_OK(
+                cc.setAlgorithm(TcpCongestionControlAlgorithm::e_BBR));
+            NTSCFG_TEST_EQ(cc.algorithm(), "bbr");
+        }
+        {
+            cc.reset();
+            NTSCFG_TEST_EQ(cc.algorithm(), "");
+        }
+        {
+            TcpCongestionControl cc2(&ta);
+            NTSCFG_TEST_OK(
+                cc2.setAlgorithm(TcpCongestionControlAlgorithm::e_HYBLA));
+            NTSCFG_TEST_NE(cc2, cc);
+            NTSCFG_TEST_OK(
+                cc.setAlgorithm(TcpCongestionControlAlgorithm::e_HYBLA));
+            NTSCFG_TEST_EQ(cc2, cc);
+        }
+        {
+            TcpCongestionControl cc2(&ta);
+            NTSCFG_TEST_OK(
+                cc2.setAlgorithm(TcpCongestionControlAlgorithm::e_WESTWOOD));
+            cc = cc2;
+            NTSCFG_TEST_EQ(cc.algorithm(), "westwood");
+        }
+    }
+    NTSCFG_TEST_EQ(ta.numBlocksInUse(), 0);
 }
 
 NTSCFG_TEST_DRIVER

@@ -24,15 +24,15 @@ NTSCFG_TEST_CASE(1)
 {
     NTSCFG_TEST_EQ(bsl::strcmp(TcpCongestionControlAlgorithm::toString(
                                    TcpCongestionControlAlgorithm::e_RENO),
-                               "RENO"),
+                               "reno"),
                    0);
     NTSCFG_TEST_EQ(bsl::strcmp(TcpCongestionControlAlgorithm::toString(
                                    TcpCongestionControlAlgorithm::e_BBR),
-                               "BBR"),
+                               "bbr"),
                    0);
     NTSCFG_TEST_EQ(bsl::strcmp(TcpCongestionControlAlgorithm::toString(
                                    TcpCongestionControlAlgorithm::e_YEAH),
-                               "YEAH"),
+                               "yeah"),
                    0);
 }
 

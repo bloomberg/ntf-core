@@ -133,55 +133,55 @@ const char* TcpCongestionControlAlgorithm::toString(
 {
     switch (value) {
     case e_RENO: {
-        return "RENO";
+        return "reno";
     }
     case e_CUBIC: {
-        return "CUBIC";
+        return "cubic";
     }
     case e_BBR: {
-        return "BBR";
+        return "bbr";
     }
     case e_BIC: {
-        return "BIC";
+        return "bic";
     }
     case e_DCTCP: {
-        return "DCTCP";
+        return "dctcp";
     }
     case e_DIAG: {
-        return "DIAG";
+        return "diag";
     }
     case e_HIGHSPEED: {
-        return "HIGHSPEED";
+        return "highspeed";
     }
     case e_HTCP: {
-        return "HTCP";
+        return "htcp";
     }
     case e_HYBLA: {
-        return "HYBLA";
+        return "hybla";
     }
     case e_ILLINOIS: {
-        return "ILLINOIS";
+        return "illinois";
     }
     case e_LP: {
-        return "LP";
+        return "lp";
     }
     case e_NV: {
-        return "NV";
+        return "nv";
     }
     case e_SCALABLE: {
-        return "SCALABLE";
+        return "scalable";
     }
     case e_VEGAS: {
-        return "VEGAS";
+        return "vegas";
     }
     case e_VENO: {
-        return "VENO";
+        return "veno";
     }
     case e_WESTWOOD: {
-        return "WESTWOOD";
+        return "westwood";
     }
     case e_YEAH: {
-        return "YEAH";
+        return "yeah";
     }
     }
 
