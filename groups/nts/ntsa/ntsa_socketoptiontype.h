@@ -96,7 +96,7 @@ struct SocketOptionType {
         /// data to the socket send buffer.
         e_ZERO_COPY = 17,
 
-        // Set the TCP congestion control algorithm.
+        /// Set the TCP congestion control algorithm.
         e_TCP_CONGESTION_CONTROL = 18
     };
 
