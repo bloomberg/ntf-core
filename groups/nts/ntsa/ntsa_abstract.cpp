@@ -3839,14 +3839,14 @@ void AbstractObjectIdentifier::resize(bsl::size_t size)
 void AbstractObjectIdentifier::set(bsl::uint64_t v0)
 {
     d_data.clear();
-    d_data.resize(1);
+    d_data.reserve(1);
     d_data.push_back(v0);
 }
 
 void AbstractObjectIdentifier::set(bsl::uint64_t v0, bsl::uint64_t v1)
 {
     d_data.clear();
-    d_data.resize(2);
+    d_data.reserve(2);
     d_data.push_back(v0);
     d_data.push_back(v1);
 }
@@ -3854,7 +3854,7 @@ void AbstractObjectIdentifier::set(bsl::uint64_t v0, bsl::uint64_t v1)
 void AbstractObjectIdentifier::set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2)
 {
     d_data.clear();
-    d_data.resize(3);
+    d_data.reserve(3);
     d_data.push_back(v0);
     d_data.push_back(v1);
     d_data.push_back(v2);
@@ -3863,7 +3863,7 @@ void AbstractObjectIdentifier::set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint
 void AbstractObjectIdentifier::set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, bsl::uint64_t v3)
 {
     d_data.clear();
-    d_data.resize(4);
+    d_data.reserve(4);
     d_data.push_back(v0);
     d_data.push_back(v1);
     d_data.push_back(v2);
@@ -3873,7 +3873,7 @@ void AbstractObjectIdentifier::set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint
 void AbstractObjectIdentifier::set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, bsl::uint64_t v3, bsl::uint64_t v4)
 {
     d_data.clear();
-    d_data.resize(5);
+    d_data.reserve(5);
     d_data.push_back(v0);
     d_data.push_back(v1);
     d_data.push_back(v2);
@@ -3884,7 +3884,7 @@ void AbstractObjectIdentifier::set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint
 void AbstractObjectIdentifier::set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5)
 {
     d_data.clear();
-    d_data.resize(6);
+    d_data.reserve(6);
     d_data.push_back(v0);
     d_data.push_back(v1);
     d_data.push_back(v2);
@@ -3896,7 +3896,7 @@ void AbstractObjectIdentifier::set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint
 void AbstractObjectIdentifier::set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5, bsl::uint64_t v6)
 {
     d_data.clear();
-    d_data.resize(7);
+    d_data.reserve(7);
     d_data.push_back(v0);
     d_data.push_back(v1);
     d_data.push_back(v2);

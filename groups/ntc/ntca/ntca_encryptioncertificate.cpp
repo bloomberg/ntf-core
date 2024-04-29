@@ -28,6 +28,8 @@ BSLS_IDENT_RCSID(ntca_encryptioncertificate_cpp, "$Id$ $CSID$")
 #include <bslma_default.h>
 #include <bsls_assert.h>
 #include <bsls_atomic.h>
+#include <bsl_iostream.h>
+#include <bsl_iomanip.h>
 
 namespace BloombergLP {
 namespace ntca {
@@ -1259,6 +1261,966 @@ bool operator<(const EncryptionCertificateName& lhs,
 
 
 
+
+
+
+
+
+
+EncryptionCertificateNameAlternative::EncryptionCertificateNameAlternative(
+    bslma::Allocator* basicAllocator)
+: d_type(e_UNDEFINED)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateNameAlternative::EncryptionCertificateNameAlternative(
+    const EncryptionCertificateNameAlternative& original,
+    bslma::Allocator*                    basicAllocator)
+: d_type(original.d_type)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+    if (d_type == e_OTHER) {
+        new (d_other.buffer())
+            ntsa::AbstractValue(original.d_other.object(), d_allocator_p);
+    }
+    else if (d_type == e_EMAIL) {
+        new (d_email.buffer())
+            bsl::string(original.d_email.object(), d_allocator_p);
+    }
+    else if (d_type == e_DOMAIN) {
+        new (d_domain.buffer())
+            bsl::string(original.d_domain.object(), d_allocator_p);
+    }
+    else if (d_type == e_X400) {
+        new (d_x400.buffer())
+            ntsa::AbstractValue(original.d_x400.object(), d_allocator_p);
+    }
+    else if (d_type == e_DIRECTORY) {
+        new (d_directory.buffer())
+            EncryptionCertificateName(original.d_directory.object(), d_allocator_p);
+    }
+    else if (d_type == e_EDI) {
+        new (d_edi.buffer())
+            ntsa::AbstractValue(original.d_edi.object(), d_allocator_p);
+    }
+    else if (d_type == e_URI) {
+        new (d_uri.buffer())
+            ntsa::Uri(original.d_uri.object(), d_allocator_p);
+    }
+    else if (d_type == e_IP) {
+        new (d_ip.buffer())
+            ntsa::IpAddress(original.d_ip.object());
+    }
+    else if (d_type == e_IDENTIFIER) {
+        new (d_identifier.buffer())
+            ntsa::AbstractObjectIdentifier(original.d_identifier.object(), d_allocator_p);
+    }
+    else {
+        BSLS_ASSERT(d_type == e_UNDEFINED);
+    }
+}
+
+EncryptionCertificateNameAlternative::~EncryptionCertificateNameAlternative()
+{
+    this->reset();
+}
+
+EncryptionCertificateNameAlternative& EncryptionCertificateNameAlternative::operator=(
+    const EncryptionCertificateNameAlternative& other)
+{
+    if (this == &other) {
+        return *this;
+    }
+
+    if (other.d_type == e_OTHER) {
+        this->makeOther(other.d_other.object());
+    }
+    else if (other.d_type == e_EMAIL) {
+        this->makeEmail(other.d_email.object());
+    }
+    else if (other.d_type == e_DOMAIN) {
+        this->makeDomain(other.d_domain.object());
+    }
+    else if (other.d_type == e_X400) {
+        this->makeX400(other.d_x400.object());
+    }
+    else if (other.d_type == e_DIRECTORY) {
+        this->makeDirectory(other.d_directory.object());
+    }
+    else if (other.d_type == e_EDI) {
+        this->makeEdi(other.d_edi.object());
+    }
+    else if (other.d_type == e_URI) {
+        this->makeUri(other.d_uri.object());
+    }
+    else if (other.d_type == e_IP) {
+        this->makeIp(other.d_ip.object());
+    }
+    else if (other.d_type == e_IDENTIFIER) {
+        this->makeIdentifier(other.d_identifier.object());
+    }
+    else {
+        BSLS_ASSERT(other.d_type == e_UNDEFINED);
+        this->reset();
+    }
+
+    return *this;
+}
+
+void EncryptionCertificateNameAlternative::reset()
+{
+    if (d_type == e_OTHER) {
+        typedef ntsa::AbstractValue Type;
+        d_other.object().~Type();
+    }
+    else if (d_type == e_EMAIL) {
+        typedef bsl::string Type;
+        d_email.object().~Type();
+    }
+    else if (d_type == e_DOMAIN) {
+        typedef bsl::string Type;
+        d_domain.object().~Type();
+    }
+    else if (d_type == e_X400) {
+        typedef ntsa::AbstractValue Type;
+        d_x400.object().~Type();
+    }
+    else if (d_type == e_DIRECTORY) {
+        typedef EncryptionCertificateName Type;
+        d_directory.object().~Type();
+    }
+    else if (d_type == e_EDI) {
+        typedef ntsa::AbstractValue Type;
+        d_edi.object().~Type();
+    }
+    else if (d_type == e_URI) {
+        typedef ntsa::Uri Type;
+        d_uri.object().~Type();
+    }
+    else if (d_type == e_IP) {
+        typedef ntsa::IpAddress Type;
+        d_ip.object().~Type();
+    }
+    else if (d_type == e_IDENTIFIER) {
+        typedef ntsa::AbstractObjectIdentifier Type;
+        d_identifier.object().~Type();
+    }
+
+    d_type = e_UNDEFINED;
+}
+
+ntsa::AbstractValue& EncryptionCertificateNameAlternative::makeOther()
+{
+    if (d_type == e_OTHER) {
+        d_other.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_other.buffer()) ntsa::AbstractValue(d_allocator_p);
+        d_type = e_OTHER;
+    }
+
+    return d_other.object();
+}
+
+ntsa::AbstractValue& EncryptionCertificateNameAlternative::makeOther(const ntsa::AbstractValue& value)
+{
+    if (d_type == e_OTHER) {
+        d_other.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_other.buffer()) ntsa::AbstractValue(value, d_allocator_p);
+        d_type = e_OTHER;
+    }
+
+    return d_other.object();
+}
+
+bsl::string& EncryptionCertificateNameAlternative::makeEmail()
+{
+    if (d_type == e_EMAIL) {
+        d_email.object().clear();
+    }
+    else {
+        this->reset();
+        new (d_email.buffer()) bsl::string(d_allocator_p);
+        d_type = e_EMAIL;
+    }
+
+    return d_email.object();
+}
+
+bsl::string& EncryptionCertificateNameAlternative::makeEmail(const bsl::string& value)
+{
+    if (d_type == e_EMAIL) {
+        d_email.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_email.buffer()) bsl::string(value, d_allocator_p);
+        d_type = e_EMAIL;
+    }
+
+    return d_email.object();
+}
+
+bsl::string& EncryptionCertificateNameAlternative::makeDomain()
+{
+    if (d_type == e_DOMAIN) {
+        d_domain.object().clear();
+    }
+    else {
+        this->reset();
+        new (d_domain.buffer()) bsl::string(d_allocator_p);
+        d_type = e_DOMAIN;
+    }
+
+    return d_domain.object();
+}
+
+bsl::string& EncryptionCertificateNameAlternative::makeDomain(const bsl::string& value)
+{
+    if (d_type == e_DOMAIN) {
+        d_domain.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_domain.buffer()) bsl::string(value, d_allocator_p);
+        d_type = e_DOMAIN;
+    }
+
+    return d_domain.object();
+}
+
+ntsa::AbstractValue& EncryptionCertificateNameAlternative::makeX400()
+{
+    if (d_type == e_X400) {
+        d_x400.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_x400.buffer()) ntsa::AbstractValue(d_allocator_p);
+        d_type = e_X400;
+    }
+
+    return d_x400.object();
+}
+
+ntsa::AbstractValue& EncryptionCertificateNameAlternative::makeX400(const ntsa::AbstractValue& value)
+{
+    if (d_type == e_X400) {
+        d_x400.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_x400.buffer()) ntsa::AbstractValue(value, d_allocator_p);
+        d_type = e_X400;
+    }
+
+    return d_x400.object();
+}
+
+EncryptionCertificateName& EncryptionCertificateNameAlternative::makeDirectory()
+{
+    if (d_type == e_DIRECTORY) {
+        d_directory.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_directory.buffer()) EncryptionCertificateName(d_allocator_p);
+        d_type = e_DIRECTORY;
+    }
+
+    return d_directory.object();
+}
+
+EncryptionCertificateName& EncryptionCertificateNameAlternative::makeDirectory(
+    const EncryptionCertificateName& value)
+{
+    if (d_type == e_DIRECTORY) {
+        d_directory.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_directory.buffer()) EncryptionCertificateName(value, d_allocator_p);
+        d_type = e_DIRECTORY;
+    }
+
+    return d_directory.object();
+}
+
+ntsa::AbstractValue& EncryptionCertificateNameAlternative::makeEdi()
+{
+    if (d_type == e_EDI) {
+        d_edi.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_edi.buffer()) ntsa::AbstractValue(d_allocator_p);
+        d_type = e_EDI;
+    }
+
+    return d_edi.object();
+}
+
+ntsa::AbstractValue& EncryptionCertificateNameAlternative::makeEdi(const ntsa::AbstractValue& value)
+{
+    if (d_type == e_EDI) {
+        d_edi.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_edi.buffer()) ntsa::AbstractValue(value, d_allocator_p);
+        d_type = e_EDI;
+    }
+
+    return d_edi.object();
+}
+
+ntsa::Uri& EncryptionCertificateNameAlternative::makeUri()
+{
+    if (d_type == e_URI) {
+        d_uri.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_uri.buffer()) ntsa::Uri(d_allocator_p);
+        d_type = e_URI;
+    }
+
+    return d_uri.object();
+}
+
+ntsa::Uri& EncryptionCertificateNameAlternative::makeUri(const ntsa::Uri& value)
+{
+    if (d_type == e_URI) {
+        d_uri.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_uri.buffer()) ntsa::Uri(value, d_allocator_p);
+        d_type = e_URI;
+    }
+
+    return d_uri.object();
+}
+
+ntsa::IpAddress& EncryptionCertificateNameAlternative::makeIp()
+{
+    if (d_type == e_IP) {
+        d_ip.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_ip.buffer()) ntsa::IpAddress();
+        d_type = e_IP;
+    }
+
+    return d_ip.object();
+}
+
+ntsa::IpAddress& EncryptionCertificateNameAlternative::makeIp(const ntsa::IpAddress& value)
+{
+    if (d_type == e_IP) {
+        d_ip.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_ip.buffer()) ntsa::IpAddress(value);
+        d_type = e_IP;
+    }
+
+    return d_ip.object();
+}
+
+ntsa::AbstractObjectIdentifier& EncryptionCertificateNameAlternative::makeIdentifier()
+{
+    if (d_type == e_IDENTIFIER) {
+        d_identifier.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_identifier.buffer()) ntsa::AbstractObjectIdentifier(d_allocator_p);
+        d_type = e_IDENTIFIER;
+    }
+
+    return d_identifier.object();
+}
+
+ntsa::AbstractObjectIdentifier& EncryptionCertificateNameAlternative::makeIdentifier(const ntsa::AbstractObjectIdentifier& value)
+{
+    if (d_type == e_IDENTIFIER) {
+        d_identifier.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_identifier.buffer()) ntsa::AbstractObjectIdentifier(value, d_allocator_p);
+        d_type = e_IDENTIFIER;
+    }
+
+    return d_identifier.object();
+}
+
+ntsa::AbstractValue& EncryptionCertificateNameAlternative::other()
+{
+    BSLS_ASSERT(this->isOther());
+    return d_other.object();
+}
+
+bsl::string& EncryptionCertificateNameAlternative::email()
+{
+    BSLS_ASSERT(this->isEmail());
+    return d_email.object();
+}
+
+bsl::string& EncryptionCertificateNameAlternative::domain()
+{
+    BSLS_ASSERT(this->isDomain());
+    return d_domain.object();
+}
+
+ntsa::AbstractValue& EncryptionCertificateNameAlternative::x400()
+{
+    BSLS_ASSERT(this->isX400());
+    return d_x400.object();
+}
+
+EncryptionCertificateName& EncryptionCertificateNameAlternative::directory()
+{
+    BSLS_ASSERT(this->isDirectory());
+    return d_directory.object();
+}
+
+ntsa::AbstractValue& EncryptionCertificateNameAlternative::edi()
+{
+    BSLS_ASSERT(this->isEdi());
+    return d_edi.object();
+}
+
+ntsa::Uri& EncryptionCertificateNameAlternative::uri()
+{
+    BSLS_ASSERT(this->isUri());
+    return d_uri.object();
+}
+
+ntsa::IpAddress& EncryptionCertificateNameAlternative::ip()
+{
+    BSLS_ASSERT(this->isIp());
+    return d_ip.object();
+}
+
+ntsa::AbstractObjectIdentifier& EncryptionCertificateNameAlternative::identifier()
+{
+    BSLS_ASSERT(this->isIdentifier());
+    return d_identifier.object();
+}
+
+ntsa::Error EncryptionCertificateNameAlternative::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    error = decoder->decodeTag();
+    if (error) {
+        return error;
+    }
+
+    if (decoder->current().tagNumber() == e_OTHER) {
+        error = decoder->decodeValue(&this->makeOther());
+        if (error) {
+            return error;
+        }
+    }
+    else if (decoder->current().tagNumber() == e_EMAIL) {
+        error = decoder->decodeValue(&this->makeEmail());
+        if (error) {
+            return error;
+        }
+    }
+    else if (decoder->current().tagNumber() == e_DOMAIN) {
+        error = decoder->decodeValue(&this->makeDomain());
+        if (error) {
+            return error;
+        }
+    }
+    else if (decoder->current().tagNumber() == e_X400) {
+        error = decoder->decodeValue(&this->makeX400());
+        if (error) {
+            return error;
+        }
+    }
+    else if (decoder->current().tagNumber() == e_DIRECTORY) {
+        error = this->makeDirectory().decode(decoder);
+        if (error) {
+            return error;
+        }
+    }
+    else if (decoder->current().tagNumber() == e_EDI) {
+        error = decoder->decodeValue(&this->makeEdi());
+        if (error) {
+            return error;
+        }
+    }
+    else if (decoder->current().tagNumber() == e_URI) {
+        bsl::string text;
+        error = decoder->decodeValue(&text);
+        if (error) {
+            return error;
+        }
+
+        if (!this->makeUri().parse(text)) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+    else if (decoder->current().tagNumber() == e_IP) {
+        ntsa::AbstractByteSequence octets;
+        error = decoder->decodeValue(&octets);
+        if (error) {
+            return error;
+        }
+
+        if (octets.size() == 4) {
+            ntsa::Ipv4Address& ipv4Address = this->makeIp().makeV4();
+            ipv4Address.copyFrom(octets.data(), octets.size());
+        }
+        else if (octets.size() == 16) {
+            ntsa::Ipv6Address& ipv6Address = this->makeIp().makeV6();
+            ipv6Address.copyFrom(octets.data(), octets.size());
+        }
+        else {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+    else if (decoder->current().tagNumber() == e_IDENTIFIER) {
+        error = decoder->decodeValue(&this->makeIdentifier());
+        if (error) {
+            return error;
+        }
+    }
+    else {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionCertificateNameAlternative::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    NTCCFG_WARNING_UNUSED(encoder);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+const ntsa::AbstractValue& EncryptionCertificateNameAlternative::other() const
+{
+    BSLS_ASSERT(this->isOther());
+    return d_other.object();
+}
+
+const bsl::string& EncryptionCertificateNameAlternative::email() const
+{
+    BSLS_ASSERT(this->isEmail());
+    return d_email.object();
+}
+
+const bsl::string& EncryptionCertificateNameAlternative::domain() const
+{
+    BSLS_ASSERT(this->isDomain());
+    return d_domain.object();
+}
+
+const ntsa::AbstractValue& EncryptionCertificateNameAlternative::x400() const
+{
+    BSLS_ASSERT(this->isX400());
+    return d_x400.object();
+}
+
+const EncryptionCertificateName& EncryptionCertificateNameAlternative::directory() const
+{
+    BSLS_ASSERT(this->isDirectory());
+    return d_directory.object();
+}
+
+const ntsa::AbstractValue& EncryptionCertificateNameAlternative::edi() const
+{
+    BSLS_ASSERT(this->isEdi());
+    return d_edi.object();
+}
+
+const ntsa::Uri& EncryptionCertificateNameAlternative::uri() const
+{
+    BSLS_ASSERT(this->isUri());
+    return d_uri.object();
+}
+
+const ntsa::IpAddress& EncryptionCertificateNameAlternative::ip() const
+{
+    BSLS_ASSERT(this->isIp());
+    return d_ip.object();
+}
+
+const ntsa::AbstractObjectIdentifier& EncryptionCertificateNameAlternative::identifier() const
+{
+    BSLS_ASSERT(this->isIdentifier());
+    return d_identifier.object();
+}
+
+bool EncryptionCertificateNameAlternative::isUndefined() const
+{
+    return d_type == e_UNDEFINED;
+}
+
+bool EncryptionCertificateNameAlternative::isOther() const
+{
+    return d_type == e_OTHER;
+}
+
+bool EncryptionCertificateNameAlternative::isEmail() const
+{
+    return d_type == e_EMAIL;
+}
+
+bool EncryptionCertificateNameAlternative::isDomain() const
+{
+    return d_type == e_DOMAIN;
+}
+
+bool EncryptionCertificateNameAlternative::isX400() const
+{
+    return d_type == e_X400;
+}
+
+bool EncryptionCertificateNameAlternative::isDirectory() const
+{
+    return d_type == e_DIRECTORY;
+}
+
+bool EncryptionCertificateNameAlternative::isEdi() const
+{
+    return d_type == e_EDI;
+}
+
+bool EncryptionCertificateNameAlternative::isUri() const
+{
+    return d_type == e_URI;
+}
+
+bool EncryptionCertificateNameAlternative::isIp() const
+{
+    return d_type == e_IP;
+}
+
+bool EncryptionCertificateNameAlternative::isIdentifier() const
+{
+    return d_type == e_IDENTIFIER;
+}
+
+bool EncryptionCertificateNameAlternative::equals(
+    const EncryptionCertificateNameAlternative& other) const
+{
+    if (d_type != other.d_type) {
+        return false;
+    }
+
+    if (d_type == e_UNDEFINED) {
+        return true;
+    }
+    else if (d_type == e_OTHER) {
+        return d_other.object() == other.d_other.object();
+    }
+    else if (d_type == e_EMAIL) {
+        return d_email.object() == other.d_email.object();
+    }
+    else if (d_type == e_DOMAIN) {
+        return d_domain.object() == other.d_domain.object();
+    }
+    else if (d_type == e_X400) {
+        return d_x400.object() == other.d_x400.object();
+    }
+    else if (d_type == e_DIRECTORY) {
+        return d_directory.object() == other.d_directory.object();
+    }
+    else if (d_type == e_EDI) {
+        return d_edi.object() == other.d_edi.object();
+    }
+    else if (d_type == e_URI) {
+        return d_uri.object() == other.d_uri.object();
+    }
+    else if (d_type == e_IP) {
+        return d_ip.object() == other.d_ip.object();
+    }
+    else if (d_type == e_IDENTIFIER) {
+        return d_identifier.object() == other.d_identifier.object();
+    }
+
+    return false;
+}
+
+bool EncryptionCertificateNameAlternative::less(
+    const EncryptionCertificateNameAlternative& other) const
+{
+    if (d_type < other.d_type) {
+        return false;
+    }
+
+    if (other.d_type < d_type) {
+        return true;
+    }
+
+    if (d_type == e_UNDEFINED) {
+        return true;
+    }
+    else if (d_type == e_OTHER) {
+        return d_other.object() < other.d_other.object();
+    }
+    else if (d_type == e_EMAIL) {
+        return d_email.object() < other.d_email.object();
+    }
+    else if (d_type == e_DOMAIN) {
+        return d_domain.object() < other.d_domain.object();
+    }
+    else if (d_type == e_X400) {
+        return d_x400.object() < other.d_x400.object();
+    }
+    else if (d_type == e_DIRECTORY) {
+        return d_directory.object() < other.d_directory.object();
+    }
+    else if (d_type == e_EDI) {
+        return d_edi.object() < other.d_edi.object();
+    }
+    else if (d_type == e_URI) {
+        return d_uri.object() < other.d_uri.object();
+    }
+    else if (d_type == e_IP) {
+        return d_ip.object() < other.d_ip.object();
+    }
+    else if (d_type == e_IDENTIFIER) {
+        return d_identifier.object() < other.d_identifier.object();
+    }
+
+    return false;
+}
+
+bsl::ostream& EncryptionCertificateNameAlternative::print(bsl::ostream& stream,
+                                                   int           level,
+                                                   int spacesPerLevel) const
+{
+    NTCCFG_WARNING_UNUSED(level);
+    NTCCFG_WARNING_UNUSED(spacesPerLevel);
+
+    if (d_type == e_OTHER) {
+        stream << d_other.object();
+    }
+    else if (d_type == e_EMAIL) {
+        stream << d_email.object();
+    }
+    else if (d_type == e_DOMAIN) {
+        stream << d_domain.object();
+    }
+    else if (d_type == e_X400) {
+        stream << d_x400.object();
+    }
+    else if (d_type == e_DIRECTORY) {
+        stream << d_directory.object();
+    }
+    else if (d_type == e_EDI) {
+        stream << d_edi.object();
+    }
+    else if (d_type == e_URI) {
+        stream << d_uri.object();
+    }
+    else if (d_type == e_IP) {
+        stream << d_ip.object();
+    }
+    else if (d_type == e_IDENTIFIER) {
+        stream << d_identifier.object();
+    }
+    else {
+        stream << "UNDEFINED";
+    }
+
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateNameAlternative& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionCertificateNameAlternative& lhs,
+                const EncryptionCertificateNameAlternative& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionCertificateNameAlternative& lhs,
+                const EncryptionCertificateNameAlternative& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionCertificateNameAlternative& lhs,
+               const EncryptionCertificateNameAlternative& rhs)
+{
+    return lhs.less(rhs);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+EncryptionCertificateNameAlternativeList::EncryptionCertificateNameAlternativeList(
+    bslma::Allocator* basicAllocator)
+: d_container(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateNameAlternativeList::EncryptionCertificateNameAlternativeList(
+    const EncryptionCertificateNameAlternativeList& original,
+    bslma::Allocator*                    basicAllocator)
+: d_container(original.d_container, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateNameAlternativeList::~EncryptionCertificateNameAlternativeList()
+{
+}
+
+EncryptionCertificateNameAlternativeList& EncryptionCertificateNameAlternativeList::operator=(
+    const EncryptionCertificateNameAlternativeList& other)
+{
+    if (this != &other) {
+        d_container = other.d_container;
+    }
+
+    return *this;
+}
+
+void EncryptionCertificateNameAlternativeList::reset()
+{
+    d_container.clear();
+}
+
+ntsa::Error EncryptionCertificateNameAlternativeList::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    error = decoder->decodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    if (error) {
+        return error;
+    }
+
+    while (decoder->contentBytesRemaining() > 0) {
+        EncryptionCertificateNameAlternative element;
+        error = element.decode(decoder);
+        if (error) {
+            return error;
+        }
+
+        d_container.push_back(element);
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionCertificateNameAlternativeList::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    NTCCFG_WARNING_UNUSED(encoder);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+bool EncryptionCertificateNameAlternativeList::equals(
+    const EncryptionCertificateNameAlternativeList& other) const
+{
+    return d_container == other.d_container;
+}
+
+bool EncryptionCertificateNameAlternativeList::less(
+    const EncryptionCertificateNameAlternativeList& other) const
+{
+    return d_container < other.d_container;
+}
+
+bsl::ostream& EncryptionCertificateNameAlternativeList::print(bsl::ostream& stream,
+                                                   int           level,
+                                                   int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute("container", d_container);
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateNameAlternativeList& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionCertificateNameAlternativeList& lhs,
+                const EncryptionCertificateNameAlternativeList& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionCertificateNameAlternativeList& lhs,
+                const EncryptionCertificateNameAlternativeList& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionCertificateNameAlternativeList& lhs,
+               const EncryptionCertificateNameAlternativeList& rhs)
+{
+    return lhs.less(rhs);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 EncryptionCertificateValidity::EncryptionCertificateValidity(
     bslma::Allocator* basicAllocator)
 : d_from()
@@ -2155,12 +3117,16 @@ const char* EncryptionCertificateExtensionAttributeType::toString(Value value)
     switch (value) {
     case e_BASIC_CONSTRAINTS:
         return "BASIC_CONSTRAINTS";
-    case e_AUTHORITY_KEY_IDENTIFIER:
-        return "AUTHORITY_KEY_IDENTIFIER";
+    case e_KEY_USAGE:
+        return "KEY_USAGE";
+    case e_KEY_USAGE_EXTENDED:
+        return "KEY_USAGE_EXTENDED";
     case e_SUBJECT_KEY_IDENTIFIER:
         return "SUBJECT_KEY_IDENTIFIER";
     case e_SUBJECT_ALTERNATIVE_NAME:
         return "SUBJECT_ALTERNATIVE_NAME";
+     case e_AUTHORITY_KEY_IDENTIFIER:
+        return "AUTHORITY_KEY_IDENTIFIER";
     }
 
     BSLS_ASSERT(!"invalid enumerator");
@@ -2176,14 +3142,20 @@ void EncryptionCertificateExtensionAttributeType::toObjectIdentifier(
     if (value == e_BASIC_CONSTRAINTS) {
         result->set(2, 5, 29, 19);
     }
+    else if (value == e_KEY_USAGE) {
+        result->set(2, 5, 29, 15);
+    }
+    else if (value == e_KEY_USAGE_EXTENDED) {
+        result->set(2, 5, 29, 37);
+    }
     else if (value == e_SUBJECT_KEY_IDENTIFIER) {
         result->set(2, 5, 29, 14);
     }
-    else if (value == e_AUTHORITY_KEY_IDENTIFIER) {
-        result->set(2, 5, 29, 35);
-    }
     else if (value == e_SUBJECT_ALTERNATIVE_NAME) {
         result->set(2, 5, 29, 17);
+    }
+    else if (value == e_AUTHORITY_KEY_IDENTIFIER) {
+        result->set(2, 5, 29, 35);
     }
 }
 
@@ -2195,8 +3167,13 @@ int EncryptionCertificateExtensionAttributeType::fromString(EncryptionCertificat
         return 0;
     }
 
-    if (bdlb::String::areEqualCaseless(string, "AUTHORITY_KEY_IDENTIFIER")) {
-        *result = e_AUTHORITY_KEY_IDENTIFIER;
+    if (bdlb::String::areEqualCaseless(string, "KEY_USAGE")) {
+        *result = e_KEY_USAGE;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "KEY_USAGE_EXTENDED")) {
+        *result = e_KEY_USAGE_EXTENDED;
         return 0;
     }
 
@@ -2207,6 +3184,11 @@ int EncryptionCertificateExtensionAttributeType::fromString(EncryptionCertificat
 
     if (bdlb::String::areEqualCaseless(string, "SUBJECT_ALTERNATIVE_NAME")) {
         *result = e_SUBJECT_ALTERNATIVE_NAME;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "AUTHORITY_KEY_IDENTIFIER")) {
+        *result = e_AUTHORITY_KEY_IDENTIFIER;
         return 0;
     }
 
@@ -2222,18 +3204,28 @@ int EncryptionCertificateExtensionAttributeType::fromObjectIdentifier(
         return 0;
     }
 
+    if (identifier.equals(2, 5, 29, 15)) {
+        *result = e_KEY_USAGE;
+        return 0;
+    }
+
+    if (identifier.equals(2, 5, 29, 37)) {
+        *result = e_KEY_USAGE_EXTENDED;
+        return 0;
+    }
+
     if (identifier.equals(2, 5, 29, 14)) {
         *result = e_SUBJECT_KEY_IDENTIFIER;
         return 0;
     }
 
-    if (identifier.equals(2, 5, 29, 35)) {
-        *result = e_AUTHORITY_KEY_IDENTIFIER;
+    if (identifier.equals(2, 5, 29, 17)) {
+        *result = e_SUBJECT_ALTERNATIVE_NAME;
         return 0;
     }
 
-    if (identifier.equals(2, 5, 29, 17)) {
-        *result = e_SUBJECT_ALTERNATIVE_NAME;
+    if (identifier.equals(2, 5, 29, 35)) {
+        *result = e_AUTHORITY_KEY_IDENTIFIER;
         return 0;
     }
 
@@ -2385,6 +3377,8 @@ bool EncryptionCertificateExtensionAttribute::equals(EncryptionCertificateExtens
     EncryptionCertificateExtensionAttributeType::toObjectIdentifier(
         &identifier, value);
 
+    bsl::cout << "MRM: Comparing " << d_identifier << " with " << identifier << bsl::endl;
+
     return d_identifier.equals(identifier);
     
 }
@@ -2445,7 +3439,7 @@ bool operator<(const EncryptionCertificateExtensionAttribute& lhs,
 
 EncryptionCertificateExtensionValue::EncryptionCertificateExtensionValue(
     bslma::Allocator* basicAllocator)
-: d_value(0)
+: d_type(e_UNDEFINED)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
@@ -2453,20 +3447,51 @@ EncryptionCertificateExtensionValue::EncryptionCertificateExtensionValue(
 EncryptionCertificateExtensionValue::EncryptionCertificateExtensionValue(
     const EncryptionCertificateExtensionValue& original,
     bslma::Allocator*                    basicAllocator)
-: d_value(original.d_value)
+: d_type(original.d_type)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
+    if (d_type == e_BOOLEAN) {
+        new (d_boolean.buffer())
+            bool(original.d_boolean.object());
+    }
+    else if (d_type == e_NAME_ALTERNATIVE) {
+        new (d_nameAlternative.buffer())
+            EncryptionCertificateNameAlternativeList(
+                original.d_nameAlternative.object(), d_allocator_p);
+    }
+    else if (d_type == e_ANY) {
+        new (d_any.buffer())
+            ntsa::AbstractValue(original.d_any.object(), d_allocator_p);
+    }
+    else {
+        BSLS_ASSERT(d_type == e_UNDEFINED);
+    }
 }
 
 EncryptionCertificateExtensionValue::~EncryptionCertificateExtensionValue()
 {
+    this->reset();
 }
 
 EncryptionCertificateExtensionValue& EncryptionCertificateExtensionValue::operator=(
     const EncryptionCertificateExtensionValue& other)
 {
-    if (this != &other) {
-        d_value = other.d_value;
+    if (this == &other) {
+        return *this;
+    }
+
+    if (other.d_type == e_BOOLEAN) {
+        this->makeBoolean(other.d_boolean.object());
+    }
+    else if (other.d_type == e_NAME_ALTERNATIVE) {
+        this->makeNameAlternative(other.d_nameAlternative.object());
+    }
+    else if (other.d_type == e_ANY) {
+        this->makeAny(other.d_any.object());
+    }
+    else {
+        BSLS_ASSERT(other.d_type == e_UNDEFINED);
+        this->reset();
     }
 
     return *this;
@@ -2474,14 +3499,133 @@ EncryptionCertificateExtensionValue& EncryptionCertificateExtensionValue::operat
 
 void EncryptionCertificateExtensionValue::reset()
 {
-    d_value = 0;
+    if (d_type == e_BOOLEAN) {
+        typedef bool Type;
+        d_boolean.object().~Type();
+    }
+    else if (d_type == e_NAME_ALTERNATIVE) {
+        typedef EncryptionCertificateNameAlternativeList Type;
+        d_nameAlternative.object().~Type();
+    }
+    else if (d_type == e_ANY) {
+        typedef ntsa::AbstractValue Type;
+        d_any.object().~Type();
+    }
+
+    d_type = e_UNDEFINED;
 }
 
-void EncryptionCertificateExtensionValue::setValue(bsl::size_t value)
+
+bool& EncryptionCertificateExtensionValue::makeBoolean()
 {
-    d_value = value;
+    if (d_type == e_BOOLEAN) {
+        d_boolean.object() = false;
+    }
+    else {
+        this->reset();
+        new (d_boolean.buffer()) bool(false);
+        d_type = e_BOOLEAN;
+    }
+
+    return d_boolean.object();
 }
 
+bool& EncryptionCertificateExtensionValue::makeBoolean(bool value)
+{
+    if (d_type == e_BOOLEAN) {
+        d_boolean.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_boolean.buffer()) bool(value);
+        d_type = e_BOOLEAN;
+    }
+
+    return d_boolean.object();
+}
+
+EncryptionCertificateNameAlternativeList& 
+EncryptionCertificateExtensionValue::makeNameAlternative()
+{
+    if (d_type == e_NAME_ALTERNATIVE) {
+        d_nameAlternative.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_nameAlternative.buffer()) 
+            EncryptionCertificateNameAlternativeList(d_allocator_p);
+        d_type = e_NAME_ALTERNATIVE;
+    }
+
+    return d_nameAlternative.object();
+}
+
+
+EncryptionCertificateNameAlternativeList& 
+EncryptionCertificateExtensionValue::makeNameAlternative(
+    const EncryptionCertificateNameAlternativeList& value)
+{
+    if (d_type == e_NAME_ALTERNATIVE) {
+        d_nameAlternative.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_nameAlternative.buffer()) 
+            EncryptionCertificateNameAlternativeList(value, d_allocator_p);
+        d_type = e_NAME_ALTERNATIVE;
+    }
+
+    return d_nameAlternative.object();
+}
+
+
+ntsa::AbstractValue& EncryptionCertificateExtensionValue::makeAny()
+{
+    if (d_type == e_ANY) {
+        d_any.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_any.buffer()) ntsa::AbstractValue(d_allocator_p);
+        d_type = e_ANY;
+    }
+
+    return d_any.object();
+}
+
+ntsa::AbstractValue& EncryptionCertificateExtensionValue::makeAny(
+    const ntsa::AbstractValue& value)
+{
+    if (d_type == e_ANY) {
+        d_any.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_any.buffer()) ntsa::AbstractValue(value, d_allocator_p);
+        d_type = e_ANY;
+    }
+
+    return d_any.object();
+}
+
+bool& EncryptionCertificateExtensionValue::boolean()
+{
+    BSLS_ASSERT(this->isBoolean());
+    return d_boolean.object();
+}
+
+EncryptionCertificateNameAlternativeList& 
+EncryptionCertificateExtensionValue::nameAlternative()
+{
+    BSLS_ASSERT(this->isNameAlternative());
+    return d_nameAlternative.object();
+}
+
+ntsa::AbstractValue& EncryptionCertificateExtensionValue::any()
+{
+    BSLS_ASSERT(this->isAny());
+    return d_any.object();
+}
 
 ntsa::Error EncryptionCertificateExtensionValue::decode(
     ntsa::AbstractSyntaxDecoder* decoder)
@@ -2497,41 +3641,115 @@ ntsa::Error EncryptionCertificateExtensionValue::encode(
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
-bsl::size_t EncryptionCertificateExtensionValue::value() const
+bool EncryptionCertificateExtensionValue::boolean() const
 {
-    return d_value;
+    BSLS_ASSERT(this->isBoolean());
+    return d_boolean.object();
+}
+
+const EncryptionCertificateNameAlternativeList& 
+EncryptionCertificateExtensionValue::nameAlternative() const
+{
+    BSLS_ASSERT(this->isNameAlternative());
+    return d_nameAlternative.object();
+}
+
+const ntsa::AbstractValue& EncryptionCertificateExtensionValue::any() const
+{
+    BSLS_ASSERT(this->isAny());
+    return d_any.object();
+}
+
+bool EncryptionCertificateExtensionValue::isUndefined() const
+{
+    return d_type == e_UNDEFINED;
+}
+
+bool EncryptionCertificateExtensionValue::isBoolean() const
+{
+    return d_type == e_BOOLEAN;
+}
+
+bool EncryptionCertificateExtensionValue::isNameAlternative() const
+{
+    return d_type == e_NAME_ALTERNATIVE;
+}
+
+bool EncryptionCertificateExtensionValue::isAny() const
+{
+    return d_type == e_ANY;
 }
 
 bool EncryptionCertificateExtensionValue::equals(
     const EncryptionCertificateExtensionValue& other) const
 {
-    return d_value == other.d_value;
+    if (d_type != other.d_type) {
+        return false;
+    }
+
+    if (d_type == e_UNDEFINED) {
+        return true;
+    }
+    else if (d_type == e_BOOLEAN) {
+        return d_boolean.object() == other.d_boolean.object();
+    }
+    else if (d_type == e_NAME_ALTERNATIVE) {
+        return d_nameAlternative.object() == other.d_nameAlternative.object();
+    }
+    else if (d_type == e_ANY) {
+        return d_any.object() == other.d_any.object();
+    }
+
+    return false;
 }
 
 bool EncryptionCertificateExtensionValue::less(
     const EncryptionCertificateExtensionValue& other) const
 {
-#if 0
-    if (d_value < other.d_value) {
+    if (d_type < other.d_type) {
+        return false;
+    }
+
+    if (other.d_type < d_type) {
         return true;
     }
 
-    if (other.d_value < d_value) {
-        return false;
+    if (d_type == e_UNDEFINED) {
+        return true;
     }
-#endif
+    else if (d_type == e_BOOLEAN) {
+        return d_boolean.object() < other.d_boolean.object();
+    }
+    else if (d_type == e_NAME_ALTERNATIVE) {
+        return d_nameAlternative.object() < other.d_nameAlternative.object();
+    }
+    else if (d_type == e_ANY) {
+        return d_any.object() < other.d_any.object();
+    }
 
-    return d_value < other.d_value;
+    return false;
 }
 
 bsl::ostream& EncryptionCertificateExtensionValue::print(bsl::ostream& stream,
                                                    int           level,
                                                    int spacesPerLevel) const
 {
-    bslim::Printer printer(&stream, level, spacesPerLevel);
-    printer.start();
-    printer.printAttribute("value", d_value);
-    printer.end();
+    NTCCFG_WARNING_UNUSED(level);
+    NTCCFG_WARNING_UNUSED(spacesPerLevel);
+
+    if (d_type == e_BOOLEAN) {
+        stream << d_boolean.object();
+    }
+    else if (d_type == e_NAME_ALTERNATIVE) {
+        stream << d_nameAlternative.object();
+    }
+    else if (d_type == e_ANY) {
+        stream << d_any.object();
+    }
+    else {
+        stream << "UNDEFINED";
+    }
+
     return stream;
 }
 
@@ -2631,6 +3849,30 @@ void EncryptionCertificateExtension::setAttribute(ntca::EncryptionCertificateExt
     d_attribute = value;
 }
 
+
+
+
+void EncryptionCertificateExtension::setValue(bool value)
+{
+    d_value.makeBoolean(value);
+}
+
+void EncryptionCertificateExtension::setValue(const EncryptionCertificateNameAlternativeList& value)
+{
+    d_value.makeNameAlternative(value);
+}
+
+void EncryptionCertificateExtension::setValue(const ntsa::AbstractValue& value)
+{
+    d_value.makeAny(value);
+}
+
+void EncryptionCertificateExtension::setValue(const EncryptionCertificateExtensionValue& value)
+{
+    d_value = value;
+}
+
+
 void EncryptionCertificateExtension::setCritical(bool value)
 {
     d_critical = value;
@@ -2670,9 +3912,17 @@ ntsa::Error EncryptionCertificateExtension::decode(
                  decoder->current().tagType() == k_PRIMITIVE &&
                  decoder->current().tagNumber() == k_OCTET_STRING)
         {
-            error = decoder->decodeValue(&d_value);
-            if (error) {
-                return error;
+            if (d_attribute.equals(EncryptionCertificateExtensionAttributeType::e_SUBJECT_ALTERNATIVE_NAME)) {
+                error = d_value.makeNameAlternative().decode(decoder);
+                if (error) {
+                    return error;
+                }
+            }
+            else {
+                error = decoder->decodeValue(&d_value.makeAny());
+                if (error) {
+                    return error;
+                }
             }
         }
         else {
@@ -2704,6 +3954,18 @@ const EncryptionCertificateExtensionAttribute&
 EncryptionCertificateExtension::attribute() const
 {
     return d_attribute;
+}
+
+
+const EncryptionCertificateExtensionValue& 
+EncryptionCertificateExtension::value() const
+{
+    return d_value;
+}
+
+const bdlb::NullableValue<bool>& EncryptionCertificateExtension::critical() const
+{
+    return d_critical;
 }
 
 bool EncryptionCertificateExtension::equals(
@@ -2783,7 +4045,7 @@ bool operator<(const EncryptionCertificateExtension& lhs,
 
 EncryptionCertificateExtensionList::EncryptionCertificateExtensionList(
     bslma::Allocator* basicAllocator)
-: d_extensionVector(basicAllocator)
+: d_container(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
@@ -2791,7 +4053,7 @@ EncryptionCertificateExtensionList::EncryptionCertificateExtensionList(
 EncryptionCertificateExtensionList::EncryptionCertificateExtensionList(
     const EncryptionCertificateExtensionList& original,
     bslma::Allocator*                    basicAllocator)
-: d_extensionVector(original.d_extensionVector, basicAllocator)
+: d_container(original.d_container, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
@@ -2804,7 +4066,7 @@ EncryptionCertificateExtensionList& EncryptionCertificateExtensionList::operator
     const EncryptionCertificateExtensionList& other)
 {
     if (this != &other) {
-        d_extensionVector = other.d_extensionVector;
+        d_container = other.d_container;
     }
 
     return *this;
@@ -2812,7 +4074,7 @@ EncryptionCertificateExtensionList& EncryptionCertificateExtensionList::operator
 
 void EncryptionCertificateExtensionList::reset()
 {
-    d_extensionVector.clear();
+    d_container.clear();
 }
 
 ntsa::Error EncryptionCertificateExtensionList::decode(
@@ -2826,13 +4088,13 @@ ntsa::Error EncryptionCertificateExtensionList::decode(
     }
 
     while (decoder->contentBytesRemaining() > 0) {
-        EncryptionCertificateExtension extension;
-        error = extension.decode(decoder);
+        EncryptionCertificateExtension element;
+        error = element.decode(decoder);
         if (error) {
             return error;
         }
 
-        d_extensionVector.push_back(extension);
+        d_container.push_back(element);
     }
 
     error = decoder->decodeTagComplete();
@@ -2853,13 +4115,13 @@ ntsa::Error EncryptionCertificateExtensionList::encode(
 bool EncryptionCertificateExtensionList::equals(
     const EncryptionCertificateExtensionList& other) const
 {
-    return d_extensionVector == other.d_extensionVector;
+    return d_container == other.d_container;
 }
 
 bool EncryptionCertificateExtensionList::less(
     const EncryptionCertificateExtensionList& other) const
 {
-    return d_extensionVector < other.d_extensionVector;
+    return d_container < other.d_container;
 }
 
 bsl::ostream& EncryptionCertificateExtensionList::print(bsl::ostream& stream,
@@ -2868,7 +4130,7 @@ bsl::ostream& EncryptionCertificateExtensionList::print(bsl::ostream& stream,
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute("extension", d_extensionVector);
+    printer.printAttribute("container", d_container);
     printer.end();
     return stream;
 }
