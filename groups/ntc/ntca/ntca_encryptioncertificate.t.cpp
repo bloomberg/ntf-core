@@ -488,7 +488,7 @@ NTCCFG_TEST_CASE(2)
         error = certificate.decode(&decoder);
         NTCCFG_TEST_OK(error);
 
-        NTCCFG_TEST_LOG_DEBUG << "Certificate = " << certificate 
+        NTCCFG_TEST_LOG_DEBUG << "Certificate = " << certificate
                               << NTCCFG_TEST_LOG_END;
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
@@ -520,7 +520,7 @@ NTCCFG_TEST_CASE(3)
         error = certificate.decode(&decoder);
         NTCCFG_TEST_OK(error);
 
-        NTCCFG_TEST_LOG_DEBUG << "Certificate = " << certificate 
+        NTCCFG_TEST_LOG_DEBUG << "Certificate = " << certificate
                               << NTCCFG_TEST_LOG_END;
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);

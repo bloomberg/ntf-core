@@ -3157,6 +3157,43 @@ ntsa::Error AbstractSyntaxDecoder::decodeTagComplete()
     return ntsa::Error();
 }
 
+ntsa::Error AbstractSyntaxDecoder::rewindTag()
+{
+    ntsa::Error error;
+
+    if (d_contextStack.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    const bsl::uint64_t tagPosition = this->current().tagPosition();
+    
+    error = AbstractSyntaxDecoderUtil::seek(d_buffer_p, tagPosition);
+    if (error) {
+        return error;
+    }
+
+    d_contextStack.pop_back();
+
+    return ntsa::Error();
+}
+
+ntsa::Error AbstractSyntaxDecoder::rewindValue()
+{
+    ntsa::Error error;
+
+    if (d_contextStack.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    const bsl::uint64_t contentPosition = this->current().contentPosition();
+
+    error = AbstractSyntaxDecoderUtil::seek(d_buffer_p, contentPosition);
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
 
 ntsa::Error AbstractSyntaxDecoder::seek(bsl::uint64_t position)
 {

@@ -1305,7 +1305,15 @@ class AbstractSyntaxDecoder
     /// error.
     ntsa::Error decodeTagComplete();
 
-    /// Skip over any remaining un-decoded bytes of the current context. Return
+    /// Seek backwards to the start of the current tag (so it may be decoded
+    /// again), then pop the current frame. Return the error. 
+    ntsa::Error rewindTag();
+
+    /// Seek backwards to the start of the content of the current tag (so that
+    /// it may be decoded again), but keep the current frame. Return the error.
+    ntsa::Error rewindValue();
+
+    /// Skip over any remaining un-decoded content of the current tag. Return
     /// the error. 
     ntsa::Error skip();
 
