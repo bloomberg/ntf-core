@@ -111,11 +111,11 @@ class EncryptionKeyRsa
 
   private:
     Number      d_version;
-    Number      d_modulus;
-    Number      d_publicExponent;
-    Number      d_privateExponent;
-    Number      d_prime1;
-    Number      d_prime2;
+    Number      d_modulus;          // n
+    Number      d_publicExponent;   // rename to encryptionExponent
+    Number      d_privateExponent;  // rename to decryptionExponent  
+    Number      d_prime1;           // p?
+    Number      d_prime2;           // q?
     Number      d_exponent1;
     Number      d_exponent2;
     Number      d_coefficient;

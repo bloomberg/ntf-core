@@ -1301,6 +1301,10 @@ class AbstractSyntaxDecoder
     /// and load the result into the specified 'result'. Return the error. 
     ntsa::Error decodeValue(AbstractValue* result);
 
+    /// Load the next literal byte into the specified 'result'. Return the 
+    /// error.
+    ntsa::Error decodeByte(bsl::uint8_t* result);
+
     /// Pop the current tag-length-value context from the stack. Return the
     /// error.
     ntsa::Error decodeTagComplete();
@@ -1965,6 +1969,7 @@ class AbstractBitSequence
 {
     AbstractSyntaxTagNumber::Value d_type;
     bsl::vector<bsl::uint8_t>      d_data;
+    bsl::size_t                    d_numBitsOmitted;
 
   public:
     /// Create a new ASN.1 bit string. Optionally specify a 'basicAllocator'
@@ -1995,11 +2000,18 @@ class AbstractBitSequence
     /// Append the specified 'value' to the end of the data.
     void append(AbstractBit value);
 
+    /// Read the specified 'size' number of bytes from the specified 'source'
+    /// and store them as the value of this object. Return the error. 
+    ntsa::Error read(bsl::streambuf* source, bsl::size_t size);
+
     /// Set the data at the specified 'index' to the specified 'value'.
     void set(bsl::size_t index, AbstractBit value);
 
     /// Set the type to the specified 'value'.
     void setType(AbstractSyntaxTagNumber::Value value);
+
+    /// Set the number of leading bits omitted to the specified 'value'. 
+    void setNumBitsOmitted(bsl::size_t value);
 
     /// Return the tag number that indicates the type of string.
     AbstractSyntaxTagNumber::Value type() const;
@@ -2014,6 +2026,9 @@ class AbstractBitSequence
 
     /// Return the number of bytes of data.
     bsl::size_t size() const;
+
+    /// Return the number of bits omitted.
+    bsl::size_t numBitsOmitted() const;
 
     /// Load into the specified 'result' the printable, ASCII, or UTF-8 string
     /// represented by this object. Return the error.
@@ -2094,6 +2109,7 @@ void AbstractBitSequence::hash(HASH_ALGORITHM& algorithm)
 
     hashAppend(algorithm, d_type);
     hashAppend(algorithm, d_data);
+    hashAppend(algorithm, d_numBitsOmitted);
 }
 
 template <typename HASH_ALGORITHM>
@@ -2151,6 +2167,10 @@ class AbstractByteSequence
 
     /// Append the specified 'value' to the end of the data.
     void append(AbstractByte value);
+
+    /// Read the specified 'size' number of bytes from the specified 'source'
+    /// and store them as the value of this object. Return the error. 
+    ntsa::Error read(bsl::streambuf* source, bsl::size_t size);
 
     /// Set the data at the specified 'index' to the specified 'value'.
     void set(bsl::size_t index, AbstractByte value);

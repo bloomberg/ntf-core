@@ -727,6 +727,16 @@ ntsa::Error AbstractSyntaxEncoderFrame::encodeValue(const ntsa::AbstractBitSeque
 {
     ntsa::Error error;
 
+    const bsl::size_t numBitsOmitted = value.numBitsOmitted();
+    if (numBitsOmitted > 255) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    error = this->writeContent(static_cast<bsl::uint8_t>(numBitsOmitted));
+    if (error) {
+        return error;
+    }
+
     error = this->writeContent(value.data(), value.size());
     if (error) {
         return error;
@@ -2914,16 +2924,19 @@ ntsa::Error AbstractSyntaxDecoder::decodeValue(AbstractBitSequence* result)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    if (context.contentLength().value() == 0) {
+    if (context.contentLength().value() < 2) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    result->resize(context.contentLength().value());
+    bsl::uint8_t numBitsOmitted = 0;
+    error = AbstractSyntaxDecoderUtil::read(&numBitsOmitted, d_buffer_p);
+    if (error) {
+        return error;
+    }
 
-    error = AbstractSyntaxDecoderUtil::read(
-        const_cast<bsl::uint8_t*>(result->data()),
-        context.contentLength().value(),
-        d_buffer_p);
+    result->setNumBitsOmitted(numBitsOmitted);
+
+    error = result->read(d_buffer_p, context.contentLength().value() - 1);
     if (error) {
         result->reset();
         return error;
@@ -2967,12 +2980,7 @@ ntsa::Error AbstractSyntaxDecoder::decodeValue(AbstractByteSequence* result)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    result->resize(context.contentLength().value());
-
-    error = AbstractSyntaxDecoderUtil::read(
-        const_cast<bsl::uint8_t*>(result->data()),
-        context.contentLength().value(),
-        d_buffer_p);
+    error = result->read(d_buffer_p, context.contentLength().value());
     if (error) {
         result->reset();
         return error;
@@ -3100,6 +3108,10 @@ ntsa::Error AbstractSyntaxDecoder::decodeValue(
     return ntsa::Error();
 }
 
+ntsa::Error AbstractSyntaxDecoder::decodeByte(bsl::uint8_t* result)
+{
+    return AbstractSyntaxDecoderUtil::read(result, d_buffer_p);
+}
 
 
 ntsa::Error AbstractSyntaxDecoder::skip()
@@ -4527,6 +4539,7 @@ bool operator<(const AbstractString& lhs, const AbstractString& rhs)
 AbstractBitSequence::AbstractBitSequence(bslma::Allocator* basicAllocator)
 : d_type(AbstractSyntaxTagNumber::e_BIT_STRING)
 , d_data(basicAllocator)
+, d_numBitsOmitted(0)
 {
 }
 
@@ -4534,6 +4547,7 @@ AbstractBitSequence::AbstractBitSequence(const AbstractBitSequence& original,
                                bslma::Allocator*     basicAllocator)
 : d_type(original.d_type)
 , d_data(original.d_data, basicAllocator)
+, d_numBitsOmitted(original.d_numBitsOmitted)
 {
 }
 
@@ -4546,6 +4560,7 @@ AbstractBitSequence& AbstractBitSequence::operator=(const AbstractBitSequence& o
     if (this != &other) {
         d_type = other.d_type;
         d_data = other.d_data;
+        d_numBitsOmitted = other.d_numBitsOmitted;
     }
 
     return *this;
@@ -4555,6 +4570,7 @@ void AbstractBitSequence::reset()
 {
     d_type = AbstractSyntaxTagNumber::e_BIT_STRING;
     d_data.clear();
+    d_numBitsOmitted = 0;
 }
 
 void AbstractBitSequence::resize(bsl::size_t size)
@@ -4565,6 +4581,28 @@ void AbstractBitSequence::resize(bsl::size_t size)
 void AbstractBitSequence::append(AbstractBit value)
 {
     d_data.push_back(value);
+}
+
+ntsa::Error AbstractBitSequence::read(
+    bsl::streambuf* source, bsl::size_t size)
+{
+    ntsa::Error error;
+
+    d_data.clear();
+
+    if (size == 0) {
+        return ntsa::Error();
+    }
+
+    d_data.resize(size);
+
+    error = AbstractSyntaxDecoderUtil::read(&d_data[0], size, source);
+    if (error) {
+        d_data.clear();
+        return error;
+    }
+
+    return error; 
 }
 
 void AbstractBitSequence::set(bsl::size_t index, AbstractBit value)
@@ -4580,6 +4618,11 @@ void AbstractBitSequence::set(bsl::size_t index, AbstractBit value)
 void AbstractBitSequence::setType(AbstractSyntaxTagNumber::Value value)
 {
     d_type = value;
+}
+
+void AbstractBitSequence::setNumBitsOmitted(bsl::size_t value)
+{
+    d_numBitsOmitted = value;
 }
 
 AbstractSyntaxTagNumber::Value AbstractBitSequence::type() const
@@ -4610,6 +4653,11 @@ const bsl::uint8_t* AbstractBitSequence::data() const
 bsl::size_t AbstractBitSequence::size() const
 {
     return d_data.size();
+}
+
+bsl::size_t AbstractBitSequence::numBitsOmitted() const
+{
+    return d_numBitsOmitted;
 }
 
 ntsa::Error AbstractBitSequence::convert(bsl::string* result) const
@@ -4645,10 +4693,22 @@ bsl::ostream& AbstractBitSequence::print(bsl::ostream& stream,
                                     int           level,
                                     int           spacesPerLevel) const
 {
-    bslim::Printer printer(&stream, level, spacesPerLevel);
-    printer.start();
-    printer.printAttribute("data", d_data);
-    printer.end();
+    NTSCFG_WARNING_UNUSED(level);
+    NTSCFG_WARNING_UNUSED(spacesPerLevel);
+
+    const char k_HEX[] = "0123456789abcdef";
+
+    for (bsl::size_t i = 0; i < d_data.size(); ++i) {
+        if (i != 0) {
+            stream << ':';
+        }
+
+        bsl::uint8_t value = d_data[i];
+
+        stream << k_HEX[(value >> 4) & 0x0F];
+        stream << k_HEX[(value >> 0) & 0x0F];
+    }
+
     return stream;
 }
 
@@ -4738,6 +4798,29 @@ void AbstractByteSequence::append(AbstractByte value)
     d_data.push_back(value);
 }
 
+
+ntsa::Error AbstractByteSequence::read(
+    bsl::streambuf* source, bsl::size_t size)
+{
+    ntsa::Error error;
+
+    d_data.clear();
+
+    if (size == 0) {
+        return ntsa::Error();
+    }
+
+    d_data.resize(size);
+
+    error = AbstractSyntaxDecoderUtil::read(&d_data[0], size, source);
+    if (error) {
+        d_data.clear();
+        return error;
+    }
+
+    return error; 
+}
+
 void AbstractByteSequence::set(bsl::size_t index, AbstractByte value)
 {
     if (index >= d_data.size()) {
@@ -4816,10 +4899,22 @@ bsl::ostream& AbstractByteSequence::print(bsl::ostream& stream,
                                     int           level,
                                     int           spacesPerLevel) const
 {
-    bslim::Printer printer(&stream, level, spacesPerLevel);
-    printer.start();
-    printer.printAttribute("data", d_data);
-    printer.end();
+    NTSCFG_WARNING_UNUSED(level);
+    NTSCFG_WARNING_UNUSED(spacesPerLevel);
+
+    const char k_HEX[] = "0123456789abcdef";
+
+    for (bsl::size_t i = 0; i < d_data.size(); ++i) {
+        if (i != 0) {
+            stream << ':';
+        }
+
+        bsl::uint8_t value = d_data[i];
+
+        stream << k_HEX[(value >> 4) & 0x0F];
+        stream << k_HEX[(value >> 0) & 0x0F];
+    }
+
     return stream;
 }
 

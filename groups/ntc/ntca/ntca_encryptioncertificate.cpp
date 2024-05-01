@@ -2564,18 +2564,18 @@ bool operator<(const EncryptionCertificatePublicKeyAlgorithmIdentifier& lhs,
 
 EncryptionCertificatePublicKeyAlgorithmParametersRsa::EncryptionCertificatePublicKeyAlgorithmParametersRsa(
     bslma::Allocator* basicAllocator)
-: d_allocator_p(bslma::Default::allocator(basicAllocator))
+: d_value(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    NTCCFG_WARNING_UNUSED(d_allocator_p);
+
 }
 
 EncryptionCertificatePublicKeyAlgorithmParametersRsa::EncryptionCertificatePublicKeyAlgorithmParametersRsa(
     const EncryptionCertificatePublicKeyAlgorithmParametersRsa& original,
     bslma::Allocator*                    basicAllocator)
-: d_allocator_p(bslma::Default::allocator(basicAllocator))
+: d_value(original.d_value, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    NTCCFG_WARNING_UNUSED(original);
-    NTCCFG_WARNING_UNUSED(d_allocator_p);
 }
 
 EncryptionCertificatePublicKeyAlgorithmParametersRsa::~EncryptionCertificatePublicKeyAlgorithmParametersRsa()
@@ -2585,28 +2585,44 @@ EncryptionCertificatePublicKeyAlgorithmParametersRsa::~EncryptionCertificatePubl
 EncryptionCertificatePublicKeyAlgorithmParametersRsa& EncryptionCertificatePublicKeyAlgorithmParametersRsa::operator=(
     const EncryptionCertificatePublicKeyAlgorithmParametersRsa& other)
 {
-    NTCCFG_WARNING_UNUSED(other);
+    if (this != &other) {
+        d_value = other.d_value;
+    }
+
     return *this;
 }
 
 void EncryptionCertificatePublicKeyAlgorithmParametersRsa::reset()
 {
+    d_value.reset();
 }
 
 ntsa::Error EncryptionCertificatePublicKeyAlgorithmParametersRsa::decode(
     ntsa::AbstractSyntaxDecoder* decoder)
 {
-    // Decode null.
-    
-    NTCCFG_WARNING_UNUSED(decoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    ntsa::Error error;
+
+    error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_NULL);
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeValue(&d_value);
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 ntsa::Error EncryptionCertificatePublicKeyAlgorithmParametersRsa::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
-    // Encode null.
-
     NTCCFG_WARNING_UNUSED(encoder);
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
@@ -2614,24 +2630,29 @@ ntsa::Error EncryptionCertificatePublicKeyAlgorithmParametersRsa::encode(
 bool EncryptionCertificatePublicKeyAlgorithmParametersRsa::equals(
     const EncryptionCertificatePublicKeyAlgorithmParametersRsa& other) const
 {
-    NTCCFG_WARNING_UNUSED(other);
-    return true;
+    return d_value == other.d_value;
 }
 
 bool EncryptionCertificatePublicKeyAlgorithmParametersRsa::less(
     const EncryptionCertificatePublicKeyAlgorithmParametersRsa& other) const
 {
-    NTCCFG_WARNING_UNUSED(other);
-    return false;
+    return d_value < other.d_value;
 }
 
 bsl::ostream& EncryptionCertificatePublicKeyAlgorithmParametersRsa::print(bsl::ostream& stream,
                                                    int           level,
                                                    int spacesPerLevel) const
 {
-    bslim::Printer printer(&stream, level, spacesPerLevel);
-    printer.start();
-    printer.end();
+    if (d_value.tagClass() == k_UNIVERSAL &&
+        d_value.tagType() == k_PRIMITIVE &&
+        d_value.tagNumber() == k_NULL)
+    {
+        stream << "NULL";
+    }
+    else {
+        d_value.print(stream, level, spacesPerLevel);
+    }
+
     return stream;
 }
 
@@ -2676,8 +2697,12 @@ bool operator<(const EncryptionCertificatePublicKeyAlgorithmParametersRsa& lhs,
 const char* EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::toString(Value value)
 {
     switch (value) {
-    case e_SECP_256_R1:
-        return "SECP_256_R1";
+    case e_SEC_P256_R1:
+        return "SEC_P256_R1";
+    case e_SEC_P384_R1:
+        return "SEC_P384_R1";
+    case e_SEC_P521_R1:
+        return "SEC_P521_R1";
     }
 
     BSLS_ASSERT(!"invalid enumerator");
@@ -2690,8 +2715,14 @@ void EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierTyp
 {
     result->reset();
 
-    if (value == e_SECP_256_R1) {
+    if (value == e_SEC_P256_R1) {
         result->set(1, 2, 840, 10045, 3, 1, 7);
+    }
+    else if (value == e_SEC_P384_R1) {
+        result->set(1, 3, 132, 0, 34);
+    }
+    else if (value == e_SEC_P521_R1) {
+        result->set(1, 3, 132, 0, 35);
     }
 }
 
@@ -2699,8 +2730,18 @@ int EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType
     Value*                   result,
     const bslstl::StringRef& string)
 {
-    if (bdlb::String::areEqualCaseless(string, "SECP_256_R1")) {
-        *result = e_SECP_256_R1;
+    if (bdlb::String::areEqualCaseless(string, "SEC_P256_R1")) {
+        *result = e_SEC_P256_R1;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "SEC_P384_R1")) {
+        *result = e_SEC_P384_R1;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "SEC_P521_R1")) {
+        *result = e_SEC_P521_R1;
         return 0;
     }
 
@@ -2712,7 +2753,17 @@ int EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType
     const ntsa::AbstractObjectIdentifier& identifier)
 {
     if (identifier.equals(1, 2, 840, 10045, 3, 1, 7)) {
-        *result = e_SECP_256_R1;
+        *result = e_SEC_P256_R1;
+        return 0;
+    }
+
+    if (identifier.equals(1, 3, 132, 0, 34)) {
+        *result = e_SEC_P384_R1;
+        return 0;
+    }
+
+    if (identifier.equals(1, 3, 132, 0, 35)) {
+        *result = e_SEC_P521_R1;
         return 0;
     }
 
@@ -3676,10 +3727,16 @@ ntsa::Error EncryptionCertificatePublicKeyAlgorithm::decode(
     }
 
     if (decoder->contentBytesRemaining() > 0) {
-
         if (d_identifier.equals(
             EncryptionCertificatePublicKeyAlgorithmIdentifierType::e_RSA)) 
         {
+            error = d_parameters.makeRsa().decode(decoder);
+            if (error) {
+                return error;
+            }
+
+            // MRM
+            #if 0
             error = decoder->decodeTag();
             if (error) {
                 return error;
@@ -3702,6 +3759,7 @@ ntsa::Error EncryptionCertificatePublicKeyAlgorithm::decode(
             if (error) {
                 return error;
             }
+            #endif
         }
         else if (d_identifier.equals(
             EncryptionCertificatePublicKeyAlgorithmIdentifierType::e_ELLIPTIC_CURVE))
@@ -3829,7 +3887,11 @@ bsl::ostream& EncryptionCertificatePublicKeyAlgorithm::print(bsl::ostream& strea
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
     printer.printAttribute("identifier", d_identifier);
-    printer.printAttribute("parameters", d_parameters);
+    
+    if (!d_parameters.isUndefined()) {
+        printer.printAttribute("parameters", d_parameters);
+    }
+
     printer.end();
     return stream;
 }
@@ -3857,6 +3919,698 @@ bool operator<(const EncryptionCertificatePublicKeyAlgorithm& lhs,
 {
     return lhs.less(rhs);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+EncryptionCertificatePublicKeyValueRsa::EncryptionCertificatePublicKeyValueRsa(
+    bslma::Allocator* basicAllocator)
+: d_modulus(basicAllocator)
+, d_encryptionExponent(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+
+}
+
+EncryptionCertificatePublicKeyValueRsa::EncryptionCertificatePublicKeyValueRsa(
+    const EncryptionCertificatePublicKeyValueRsa& original,
+    bslma::Allocator*                    basicAllocator)
+: d_modulus(original.d_modulus, basicAllocator)
+, d_encryptionExponent(original.d_encryptionExponent, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificatePublicKeyValueRsa::~EncryptionCertificatePublicKeyValueRsa()
+{
+}
+
+EncryptionCertificatePublicKeyValueRsa& EncryptionCertificatePublicKeyValueRsa::operator=(
+    const EncryptionCertificatePublicKeyValueRsa& other)
+{
+    if (this != &other) {
+        d_modulus = other.d_modulus;
+        d_encryptionExponent = other.d_encryptionExponent;
+    }
+
+    return *this;
+}
+
+void EncryptionCertificatePublicKeyValueRsa::reset()
+{
+    d_modulus.reset();
+    d_encryptionExponent.reset();
+}
+
+ntsa::Error EncryptionCertificatePublicKeyValueRsa::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_BIT_STRING);
+    if (error) {
+        return error;
+    }
+
+    bsl::uint8_t numBitsOmitted = 0;
+    error = decoder->decodeByte(&numBitsOmitted);
+    if (error) {
+        return error;
+    }
+
+    if (numBitsOmitted != 0) {
+        return error;
+    }
+
+    {
+        error = decoder->decodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+        if (error) {
+            return error;
+        }
+
+        {
+            error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_INTEGER);
+            if (error) {
+                return error;
+            }
+
+            error = decoder->decodeValue(&d_modulus);
+            if (error) {
+                return error;
+            }
+
+            error = decoder->decodeTagComplete();
+            if (error) {
+                return error;
+            }
+        }
+
+        {
+            error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_INTEGER);
+            if (error) {
+                return error;
+            }
+
+            error = decoder->decodeValue(&d_encryptionExponent);
+            if (error) {
+                return error;
+            }
+
+            error = decoder->decodeTagComplete();
+            if (error) {
+                return error;
+            }
+        }
+
+        error = decoder->decodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionCertificatePublicKeyValueRsa::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    NTCCFG_WARNING_UNUSED(encoder);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+bool EncryptionCertificatePublicKeyValueRsa::equals(
+    const EncryptionCertificatePublicKeyValueRsa& other) const
+{
+    return d_modulus == other.d_modulus && d_encryptionExponent == other.d_encryptionExponent;
+}
+
+bool EncryptionCertificatePublicKeyValueRsa::less(
+    const EncryptionCertificatePublicKeyValueRsa& other) const
+{
+    if (d_modulus < other.d_modulus) {
+        return true;
+    }
+
+    if (other.d_modulus < d_modulus) {
+        return false;
+    }
+
+    return d_encryptionExponent < other.d_encryptionExponent;
+}
+
+bsl::ostream& EncryptionCertificatePublicKeyValueRsa::print(bsl::ostream& stream,
+                                                   int           level,
+                                                   int spacesPerLevel) const
+{
+    // d_value.print(stream, level, spacesPerLevel);
+
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute("modulus", d_modulus);
+    printer.printAttribute("encryptionExponent", d_encryptionExponent);
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificatePublicKeyValueRsa& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionCertificatePublicKeyValueRsa& lhs,
+                const EncryptionCertificatePublicKeyValueRsa& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionCertificatePublicKeyValueRsa& lhs,
+                const EncryptionCertificatePublicKeyValueRsa& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionCertificatePublicKeyValueRsa& lhs,
+               const EncryptionCertificatePublicKeyValueRsa& rhs)
+{
+    return lhs.less(rhs);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+EncryptionCertificatePublicKeyValueEllipticCurve::EncryptionCertificatePublicKeyValueEllipticCurve(
+    bslma::Allocator* basicAllocator)
+: d_value(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+
+}
+
+EncryptionCertificatePublicKeyValueEllipticCurve::EncryptionCertificatePublicKeyValueEllipticCurve(
+    const EncryptionCertificatePublicKeyValueEllipticCurve& original,
+    bslma::Allocator*                    basicAllocator)
+: d_value(original.d_value, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificatePublicKeyValueEllipticCurve::~EncryptionCertificatePublicKeyValueEllipticCurve()
+{
+}
+
+EncryptionCertificatePublicKeyValueEllipticCurve& EncryptionCertificatePublicKeyValueEllipticCurve::operator=(
+    const EncryptionCertificatePublicKeyValueEllipticCurve& other)
+{
+    if (this != &other) {
+        d_value = other.d_value;
+    }
+
+    return *this;
+}
+
+void EncryptionCertificatePublicKeyValueEllipticCurve::reset()
+{
+    d_value.reset();
+}
+
+ntsa::Error EncryptionCertificatePublicKeyValueEllipticCurve::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_BIT_STRING);
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeValue(&d_value);
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionCertificatePublicKeyValueEllipticCurve::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    NTCCFG_WARNING_UNUSED(encoder);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+bool EncryptionCertificatePublicKeyValueEllipticCurve::equals(
+    const EncryptionCertificatePublicKeyValueEllipticCurve& other) const
+{
+    return d_value == other.d_value;
+}
+
+bool EncryptionCertificatePublicKeyValueEllipticCurve::less(
+    const EncryptionCertificatePublicKeyValueEllipticCurve& other) const
+{
+    return d_value < other.d_value;
+}
+
+bsl::ostream& EncryptionCertificatePublicKeyValueEllipticCurve::print(bsl::ostream& stream,
+                                                   int           level,
+                                                   int spacesPerLevel) const
+{
+    d_value.print(stream, level, spacesPerLevel);
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificatePublicKeyValueEllipticCurve& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionCertificatePublicKeyValueEllipticCurve& lhs,
+                const EncryptionCertificatePublicKeyValueEllipticCurve& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionCertificatePublicKeyValueEllipticCurve& lhs,
+                const EncryptionCertificatePublicKeyValueEllipticCurve& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionCertificatePublicKeyValueEllipticCurve& lhs,
+               const EncryptionCertificatePublicKeyValueEllipticCurve& rhs)
+{
+    return lhs.less(rhs);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+EncryptionCertificatePublicKeyValue::EncryptionCertificatePublicKeyValue(
+    bslma::Allocator* basicAllocator)
+: d_type(e_UNDEFINED)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificatePublicKeyValue::EncryptionCertificatePublicKeyValue(
+    const EncryptionCertificatePublicKeyValue& original,
+    bslma::Allocator*                          basicAllocator)
+: d_type(original.d_type)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+    if (d_type == e_RSA) {
+        new (d_rsa.buffer())
+            EncryptionCertificatePublicKeyValueRsa(
+                original.d_rsa.object(),
+                d_allocator_p);
+    }
+    else if (d_type == e_ELLIPTIC_CURVE) {
+        new (d_ellipticCurve.buffer())
+            EncryptionCertificatePublicKeyValueEllipticCurve(
+                original.d_ellipticCurve.object(),
+                d_allocator_p);
+    }
+    else if (d_type == e_ANY) {
+        new (d_any.buffer())
+            ntsa::AbstractBitSequence(original.d_any.object(), d_allocator_p);
+    }
+    else {
+        BSLS_ASSERT(d_type == e_UNDEFINED);
+    }
+}
+
+EncryptionCertificatePublicKeyValue::~EncryptionCertificatePublicKeyValue()
+{
+    this->reset();
+}
+
+EncryptionCertificatePublicKeyValue& EncryptionCertificatePublicKeyValue::
+operator=(const EncryptionCertificatePublicKeyValue& other)
+{
+    if (this == &other) {
+        return *this;
+    }
+
+    if (other.d_type == e_RSA) {
+        this->makeRsa(other.d_rsa.object());
+    }
+    else if (other.d_type == e_ELLIPTIC_CURVE) {
+        this->makeEllipticCurve(other.d_ellipticCurve.object());
+    }
+    else if (other.d_type == e_ANY) {
+        this->makeAny(other.d_any.object());
+    }
+    else {
+        BSLS_ASSERT(other.d_type == e_UNDEFINED);
+        this->reset();
+    }
+
+    return *this;
+}
+
+void EncryptionCertificatePublicKeyValue::reset()
+{
+    if (d_type == e_RSA) {
+        typedef EncryptionCertificatePublicKeyValueRsa Type;
+        d_rsa.object().~Type();
+    }
+    else if (d_type == e_ELLIPTIC_CURVE) {
+        typedef EncryptionCertificatePublicKeyValueEllipticCurve Type;
+        d_ellipticCurve.object().~Type();
+    }
+    else if (d_type == e_ANY) {
+        typedef ntsa::AbstractBitSequence Type;
+        d_any.object().~Type();
+    }
+
+    d_type = e_UNDEFINED;
+}
+
+
+
+
+
+EncryptionCertificatePublicKeyValueRsa& EncryptionCertificatePublicKeyValue::
+    makeRsa()
+{
+    if (d_type == e_RSA) {
+        d_rsa.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_rsa.buffer())
+            EncryptionCertificatePublicKeyValueRsa(d_allocator_p);
+        d_type = e_RSA;
+    }
+
+    return d_rsa.object();
+}
+
+EncryptionCertificatePublicKeyValueRsa& EncryptionCertificatePublicKeyValue::
+    makeRsa(const EncryptionCertificatePublicKeyValueRsa& value)
+{
+    if (d_type == e_RSA) {
+        d_rsa.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_rsa.buffer())
+            EncryptionCertificatePublicKeyValueRsa(value, d_allocator_p);
+        d_type = e_RSA;
+    }
+
+    return d_rsa.object();
+}
+
+
+
+
+
+
+EncryptionCertificatePublicKeyValueEllipticCurve& EncryptionCertificatePublicKeyValue::
+    makeEllipticCurve()
+{
+    if (d_type == e_ELLIPTIC_CURVE) {
+        d_ellipticCurve.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_ellipticCurve.buffer())
+            EncryptionCertificatePublicKeyValueEllipticCurve(d_allocator_p);
+        d_type = e_ELLIPTIC_CURVE;
+    }
+
+    return d_ellipticCurve.object();
+}
+
+EncryptionCertificatePublicKeyValueEllipticCurve& EncryptionCertificatePublicKeyValue::
+    makeEllipticCurve(const EncryptionCertificatePublicKeyValueEllipticCurve& value)
+{
+    if (d_type == e_ELLIPTIC_CURVE) {
+        d_ellipticCurve.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_ellipticCurve.buffer())
+            EncryptionCertificatePublicKeyValueEllipticCurve(value, d_allocator_p);
+        d_type = e_ELLIPTIC_CURVE;
+    }
+
+    return d_ellipticCurve.object();
+}
+
+ntsa::AbstractBitSequence& EncryptionCertificatePublicKeyValue::makeAny()
+{
+    if (d_type == e_ANY) {
+        d_any.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_any.buffer()) ntsa::AbstractBitSequence(d_allocator_p);
+        d_type = e_ANY;
+    }
+
+    return d_any.object();
+}
+
+ntsa::AbstractBitSequence& EncryptionCertificatePublicKeyValue::makeAny(
+    const ntsa::AbstractBitSequence& value)
+{
+    if (d_type == e_ANY) {
+        d_any.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_any.buffer()) ntsa::AbstractBitSequence(value, d_allocator_p);
+        d_type = e_ANY;
+    }
+
+    return d_any.object();
+}
+
+EncryptionCertificatePublicKeyValueRsa& EncryptionCertificatePublicKeyValue::
+    rsa()
+{
+    BSLS_ASSERT(this->isRsa());
+    return d_rsa.object();
+}
+
+
+EncryptionCertificatePublicKeyValueEllipticCurve& EncryptionCertificatePublicKeyValue::
+    ellipticCurve()
+{
+    BSLS_ASSERT(this->isEllipticCurve());
+    return d_ellipticCurve.object();
+}
+
+ntsa::AbstractBitSequence& EncryptionCertificatePublicKeyValue::any()
+{
+    BSLS_ASSERT(this->isAny());
+    return d_any.object();
+}
+
+const EncryptionCertificatePublicKeyValueRsa&
+EncryptionCertificatePublicKeyValue::rsa() const
+{
+    BSLS_ASSERT(this->isRsa());
+    return d_rsa.object();
+}
+
+const EncryptionCertificatePublicKeyValueEllipticCurve&
+EncryptionCertificatePublicKeyValue::ellipticCurve() const
+{
+    BSLS_ASSERT(this->isEllipticCurve());
+    return d_ellipticCurve.object();
+}
+
+const ntsa::AbstractBitSequence& EncryptionCertificatePublicKeyValue::any() const
+{
+    BSLS_ASSERT(this->isAny());
+    return d_any.object();
+}
+
+bool EncryptionCertificatePublicKeyValue::isUndefined() const
+{
+    return d_type == e_UNDEFINED;
+}
+
+bool EncryptionCertificatePublicKeyValue::isRsa() const
+{
+    return d_type == e_RSA;
+}
+
+bool EncryptionCertificatePublicKeyValue::isEllipticCurve() const
+{
+    return d_type == e_ELLIPTIC_CURVE;
+}
+
+bool EncryptionCertificatePublicKeyValue::isAny() const
+{
+    return d_type == e_ANY;
+}
+
+bool EncryptionCertificatePublicKeyValue::equals(
+    const EncryptionCertificatePublicKeyValue& other) const
+{
+    if (d_type != other.d_type) {
+        return false;
+    }
+
+    if (d_type == e_UNDEFINED) {
+        return true;
+    }
+    else if (d_type == e_RSA) {
+        return d_rsa.object() == other.d_rsa.object();
+    }
+    else if (d_type == e_ELLIPTIC_CURVE) {
+        return d_ellipticCurve.object() == other.d_ellipticCurve.object();
+    }
+    else if (d_type == e_ANY) {
+        return d_any.object() == other.d_any.object();
+    }
+
+    return false;
+}
+
+bool EncryptionCertificatePublicKeyValue::less(
+    const EncryptionCertificatePublicKeyValue& other) const
+{
+    if (d_type < other.d_type) {
+        return false;
+    }
+
+    if (other.d_type < d_type) {
+        return true;
+    }
+
+    if (d_type == e_UNDEFINED) {
+        return true;
+    }
+    else if (d_type == e_RSA) {
+        return d_rsa.object() < other.d_rsa.object();
+    }
+    else if (d_type == e_ELLIPTIC_CURVE) {
+        return d_ellipticCurve.object() < other.d_ellipticCurve.object();
+    }
+    else if (d_type == e_ANY) {
+        return d_any.object() < other.d_any.object();
+    }
+
+    return false;
+}
+
+bsl::ostream& EncryptionCertificatePublicKeyValue::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
+{
+    NTCCFG_WARNING_UNUSED(level);
+    NTCCFG_WARNING_UNUSED(spacesPerLevel);
+
+    if (d_type == e_RSA) {
+        d_rsa.object().print(stream, level, spacesPerLevel);
+    }
+    else if (d_type == e_ELLIPTIC_CURVE) {
+        d_ellipticCurve.object().print(stream, level, spacesPerLevel);
+    }
+    else if (d_type == e_ANY) {
+        d_any.object().print(stream, level, spacesPerLevel);
+    }
+    else {
+        stream << "UNDEFINED";
+    }
+
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                              stream,
+                         const EncryptionCertificatePublicKeyValue& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionCertificatePublicKeyValue& lhs,
+                const EncryptionCertificatePublicKeyValue& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionCertificatePublicKeyValue& lhs,
+                const EncryptionCertificatePublicKeyValue& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionCertificatePublicKeyValue& lhs,
+               const EncryptionCertificatePublicKeyValue& rhs)
+{
+    return lhs.less(rhs);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3924,13 +4678,30 @@ ntsa::Error EncryptionCertificatePublicKeyInfo::decode(
         }
     }
 
+    if (d_algorithm.identifier().equals(
+        ntca::EncryptionCertificatePublicKeyAlgorithmIdentifierType::e_RSA)) 
+    {
+        error = d_value.makeRsa().decode(decoder);
+        if (error) {
+            return error;
+        }
+    }
+    else if (d_algorithm.identifier().equals(
+        ntca::EncryptionCertificatePublicKeyAlgorithmIdentifierType::e_ELLIPTIC_CURVE)) 
+    {
+        error = d_value.makeEllipticCurve().decode(decoder);
+        if (error) {
+            return error;
+        }
+    }
+    else
     {
         error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_BIT_STRING);
         if (error) {
             return error;
         }
 
-        error = decoder->decodeValue(&d_value);
+        error = decoder->decodeValue(&d_value.makeAny());
         if (error) {
             return error;
         }
@@ -4821,6 +5592,11 @@ EncryptionCertificateExtensionValue::EncryptionCertificateExtensionValue(
                 original.d_nameAlternative.object(),
                 d_allocator_p);
     }
+    else if (d_type == e_BYTE_SEQUENCE) {
+        new (d_byteSequence.buffer())
+            ntsa::AbstractByteSequence(
+                original.d_byteSequence.object(), d_allocator_p);
+    }
     else if (d_type == e_ANY) {
         new (d_any.buffer())
             ntsa::AbstractValue(original.d_any.object(), d_allocator_p);
@@ -4848,6 +5624,9 @@ operator=(const EncryptionCertificateExtensionValue& other)
     else if (other.d_type == e_NAME_ALTERNATIVE) {
         this->makeNameAlternative(other.d_nameAlternative.object());
     }
+    else if (other.d_type == e_BYTE_SEQUENCE) {
+        this->makeByteSequence(other.d_byteSequence.object());
+    }
     else if (other.d_type == e_ANY) {
         this->makeAny(other.d_any.object());
     }
@@ -4868,6 +5647,10 @@ void EncryptionCertificateExtensionValue::reset()
     else if (d_type == e_NAME_ALTERNATIVE) {
         typedef EncryptionCertificateNameAlternativeList Type;
         d_nameAlternative.object().~Type();
+    }
+    else if (d_type == e_BYTE_SEQUENCE) {
+        typedef ntsa::AbstractByteSequence Type;
+        d_byteSequence.object().~Type();
     }
     else if (d_type == e_ANY) {
         typedef ntsa::AbstractValue Type;
@@ -4937,6 +5720,48 @@ EncryptionCertificateNameAlternativeList& EncryptionCertificateExtensionValue::
     return d_nameAlternative.object();
 }
 
+
+
+
+ntsa::AbstractByteSequence& EncryptionCertificateExtensionValue::makeByteSequence()
+{
+    if (d_type == e_BYTE_SEQUENCE) {
+        d_byteSequence.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_byteSequence.buffer()) ntsa::AbstractByteSequence(d_allocator_p);
+        d_type = e_BYTE_SEQUENCE;
+    }
+
+    return d_byteSequence.object();
+}
+
+ntsa::AbstractByteSequence& EncryptionCertificateExtensionValue::makeByteSequence(
+    const ntsa::AbstractByteSequence& value)
+{
+    if (d_type == e_BYTE_SEQUENCE) {
+        d_byteSequence.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_byteSequence.buffer()) ntsa::AbstractByteSequence(value, d_allocator_p);
+        d_type = e_BYTE_SEQUENCE;
+    }
+
+    return d_byteSequence.object();
+}
+
+
+
+
+
+
+
+
+
+
+
 ntsa::AbstractValue& EncryptionCertificateExtensionValue::makeAny()
 {
     if (d_type == e_ANY) {
@@ -4979,6 +5804,12 @@ EncryptionCertificateNameAlternativeList& EncryptionCertificateExtensionValue::
     return d_nameAlternative.object();
 }
 
+ntsa::AbstractByteSequence& EncryptionCertificateExtensionValue::byteSequence()
+{
+    BSLS_ASSERT(this->isByteSequence());
+    return d_byteSequence.object();
+}
+
 ntsa::AbstractValue& EncryptionCertificateExtensionValue::any()
 {
     BSLS_ASSERT(this->isAny());
@@ -5012,6 +5843,12 @@ EncryptionCertificateExtensionValue::nameAlternative() const
     return d_nameAlternative.object();
 }
 
+const ntsa::AbstractByteSequence& EncryptionCertificateExtensionValue::byteSequence() const
+{
+    BSLS_ASSERT(this->isByteSequence());
+    return d_byteSequence.object();
+}
+
 const ntsa::AbstractValue& EncryptionCertificateExtensionValue::any() const
 {
     BSLS_ASSERT(this->isAny());
@@ -5031,6 +5868,11 @@ bool EncryptionCertificateExtensionValue::isBoolean() const
 bool EncryptionCertificateExtensionValue::isNameAlternative() const
 {
     return d_type == e_NAME_ALTERNATIVE;
+}
+
+bool EncryptionCertificateExtensionValue::isByteSequence() const
+{
+    return d_type == e_BYTE_SEQUENCE;
 }
 
 bool EncryptionCertificateExtensionValue::isAny() const
@@ -5053,6 +5895,9 @@ bool EncryptionCertificateExtensionValue::equals(
     }
     else if (d_type == e_NAME_ALTERNATIVE) {
         return d_nameAlternative.object() == other.d_nameAlternative.object();
+    }
+    else if (d_type == e_BYTE_SEQUENCE) {
+        return d_byteSequence.object() == other.d_byteSequence.object();
     }
     else if (d_type == e_ANY) {
         return d_any.object() == other.d_any.object();
@@ -5081,6 +5926,9 @@ bool EncryptionCertificateExtensionValue::less(
     else if (d_type == e_NAME_ALTERNATIVE) {
         return d_nameAlternative.object() < other.d_nameAlternative.object();
     }
+    else if (d_type == e_BYTE_SEQUENCE) {
+        return d_byteSequence.object() < other.d_byteSequence.object();
+    }
     else if (d_type == e_ANY) {
         return d_any.object() < other.d_any.object();
     }
@@ -5100,10 +5948,13 @@ bsl::ostream& EncryptionCertificateExtensionValue::print(
         stream << d_boolean.object();
     }
     else if (d_type == e_NAME_ALTERNATIVE) {
-        stream << d_nameAlternative.object();
+        d_nameAlternative.object().print(stream, level, spacesPerLevel);
+    }
+    else if (d_type == e_BYTE_SEQUENCE) {
+        d_byteSequence.object().print(stream, level, spacesPerLevel);
     }
     else if (d_type == e_ANY) {
-        stream << d_any.object();
+        d_any.object().print(stream, level, spacesPerLevel);
     }
     else {
         stream << "UNDEFINED";
@@ -5267,14 +6118,17 @@ ntsa::Error EncryptionCertificateExtension::decode(
                 }
             }
             else {
-                error = decoder->decodeValue(&d_value.makeAny());
+                error = decoder->decodeValue(&d_value.makeByteSequence());
                 if (error) {
                     return error;
                 }
             }
         }
         else {
-            return ntsa::Error(ntsa::Error::e_INVALID);
+            error = decoder->decodeValue(&d_value.makeAny());
+            if (error) {
+                return error;
+            }
         }
 
         error = decoder->decodeTagComplete();
