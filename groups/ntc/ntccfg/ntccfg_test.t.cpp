@@ -31,7 +31,6 @@ using namespace BloombergLP;
 // [ 1]
 //-----------------------------------------------------------------------------
 
-
 #if NTCCFG_TEST_MOCK_ENABLED
 
 namespace mock_test {
@@ -78,11 +77,11 @@ NTCCFG_TEST_CASE(1)
     using namespace mock_test;
 
     MyMock mock;
-    NTF_EXPECT_0(mock, f).ONCE();
+    NTF_EXPECT(mock, f).ONCE();
     mock.f();
 
-    NTF_EXPECT_0(mock, f1).ONCE().RETURN(22);
-    NTF_EXPECT_0(mock, f1).ONCE().RETURN(33);
+    NTF_EXPECT(mock, f1).ONCE().RETURN(22);
+    NTF_EXPECT(mock, f1).ONCE().RETURN(33);
 
     NTCCFG_TEST_EQ(mock.f1(), 22);
     NTCCFG_TEST_EQ(mock.f1(), 33);
@@ -100,14 +99,14 @@ NTCCFG_TEST_CASE(2)
 
     {
         // it means we do not case what argument is used when f2 is called
-        NTF_EXPECT_1(mock, f2, IGNORE_ARG).ONCE();
+        NTF_EXPECT(mock, f2, IGNORE_ARG).ONCE();
 
         const int val = 22;
         mock.f2(val);
 
         // here we expect that the argument used to call f2 equals `expected`
         const int expected = 22;
-        NTF_EXPECT_1(mock, f2, NTF_EQ(expected)).ONCE();
+        NTF_EXPECT(mock, f2, TestMock::EQ(expected)).ONCE();
         mock.f2(val);
     }
     {
@@ -116,17 +115,17 @@ NTCCFG_TEST_CASE(2)
         int* expected_ptr = ptr;
 
         // expect that argument used to call f3 equals `expected_ptr`
-        NTF_EXPECT_1(mock, f3, NTF_EQ(expected_ptr)).ONCE();
+        NTF_EXPECT(mock, f3, TestMock::EQ(expected_ptr)).ONCE();
         mock.f3(ptr);
 
         //expect that when argument used to call f3 is dereferenced it equals
         //`expected value`
         int expected_value = value;
-        NTF_EXPECT_1(mock, f3, NTF_EQ_DEREF(expected_value)).ONCE();
+        NTF_EXPECT(mock, f3, TestMock::EQ_DEREF(expected_value)).ONCE();
         mock.f3(ptr);
 
         int& ref = value;
-        NTF_EXPECT_1(mock, f4, NTF_EQ(value)).ONCE();
+        NTF_EXPECT(mock, f4, TestMock::EQ(value)).ONCE();
         mock.f4(ref);
     }
 
@@ -145,16 +144,18 @@ NTCCFG_TEST_CASE(3)
         const int newValue = 55;
         // when f3 is called, we do not case what arg value is, but we want to
         // dereference it and set it value to `newValue`
-        NTF_EXPECT_1(mock, f3, IGNORE_ARG)
+        NTF_EXPECT(mock, f3, IGNORE_ARG)
             .ONCE()
-            .SET_ARG_1(FROM_DEREF(newValue));
+            .SET_ARG_1(TestMock::FROM_DEREF(newValue));
 
         int val = 0;
         mock.f3(&val);
         NTCCFG_TEST_EQ(val, newValue);
 
         // the same can be done with references
-        NTF_EXPECT_1(mock, f4, IGNORE_ARG).ONCE().SET_ARG_1(FROM(newValue));
+        NTF_EXPECT(mock, f4, IGNORE_ARG)
+            .ONCE()
+            .SET_ARG_1(TestMock::FROM(newValue));
 
         int  data     = 12;
         int& data_ref = data;
@@ -176,7 +177,9 @@ NTCCFG_TEST_CASE(4)
     {
         // an argument can be saved to external variable to later used
         int storage = 0;
-        NTF_EXPECT_1(mock, f2, IGNORE_ARG).ONCE().SAVE_ARG_1(TO(&storage));
+        NTF_EXPECT(mock, f2, IGNORE_ARG)
+            .ONCE()
+            .SAVE_ARG_1(TestMock::TO(&storage));
 
         int val = 22;
         mock.f2(val);
@@ -186,7 +189,7 @@ NTCCFG_TEST_CASE(4)
     {
         //the same can be done with raw pointers
         int* ptr = 0;
-        NTF_EXPECT_1(mock, f3, IGNORE_ARG).ONCE().SAVE_ARG_1(TO(&ptr));
+        NTF_EXPECT(mock, f3, IGNORE_ARG).ONCE().SAVE_ARG_1(TestMock::TO(&ptr));
 
         int val = 6;
         mock.f3(&val);
@@ -194,9 +197,9 @@ NTCCFG_TEST_CASE(4)
 
         //pointer argument can be dereferenced before saving
         int storage = 0;
-        NTF_EXPECT_1(mock, f3, IGNORE_ARG)
+        NTF_EXPECT(mock, f3, IGNORE_ARG)
             .ONCE()
-            .SAVE_ARG_1(TO_DEREF(&storage));
+            .SAVE_ARG_1(TestMock::TO_DEREF(&storage));
 
         mock.f3(&val);
         NTCCFG_TEST_EQ(storage, val);
@@ -204,7 +207,9 @@ NTCCFG_TEST_CASE(4)
     {
         //the same can be done with references
         int storage = 0;
-        NTF_EXPECT_1(mock, f4, IGNORE_ARG).ONCE().SAVE_ARG_1(TO(&storage));
+        NTF_EXPECT(mock, f4, IGNORE_ARG)
+            .ONCE()
+            .SAVE_ARG_1(TestMock::TO(&storage));
 
         int val = 7;
         mock.f4(val);
@@ -227,16 +232,16 @@ NTCCFG_TEST_CASE(5)
         // `_SPEC` addition to NTF_EQ (or IGNORE_ARG_S) macro
 
         char c = 'a';
-        NTF_EXPECT_2(mock, f5, IGNORE_ARG_S(int), NTF_EQ_SPEC(c, char)).ONCE();
+        NTF_EXPECT(mock, f5, IGNORE_ARG_S(int), NTF_EQ_SPEC(c, char)).ONCE();
 
         mock.f5(22, c);
 
         int    val = 14;
         double d   = 3.14;
-        NTF_EXPECT_2(mock,
-                     f5,
-                     NTF_EQ_DEREF_SPEC(val, int*),
-                     NTF_EQ_SPEC(d, double))
+        NTF_EXPECT(mock,
+                   f5,
+                   NTF_EQ_DEREF_SPEC(val, int*),
+                   NTF_EQ_SPEC(d, double))
             .ONCE();
 
         mock.f5(&val, d);
@@ -264,14 +269,14 @@ NTCCFG_TEST_CASE(6)
         long   expectedLong   = 100;
         int*   ptr            = 0;
         double newDouble      = 8.8;
-        NTF_EXPECT_3(mock,
-                     f6,
-                     NTF_EQ_DEREF(expectedInt),
-                     NTF_EQ(expectedDouble),
-                     NTF_EQ(expectedLong))
+        NTF_EXPECT(mock,
+                   f6,
+                   TestMock::EQ_DEREF(expectedInt),
+                   TestMock::EQ(expectedDouble),
+                   TestMock::EQ(expectedLong))
             .ONCE()
-            .SAVE_ARG_1(TO(&ptr))
-            .SET_ARG_2(FROM(newDouble))
+            .SAVE_ARG_1(TestMock::TO(&ptr))
+            .SET_ARG_2(TestMock::FROM(newDouble))
             .RETURNREF(sptrRef);
 
         const bsl::shared_ptr<int>& res =
