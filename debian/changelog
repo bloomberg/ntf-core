@@ -1,9 +1,21 @@
-ntf-core (2.3.5) unstable; urgency=low
+ntf-core (2.3.6) unstable; urgency=low
 
+  * 9f50b57 Release 2.3.6
+  * 64cf5da Eliminate warnings from unused variables on platforms that do not support congestion control algorithm specification
+  * 174e5b4 Introduce slimmer wrapper around 'recv' for simple use-cases
+  * da1cedc Support the explicit configuration of a specific TCP congestion control algorithm
+  * ab4c796 Publicize buffer algorithms previously in ntsu_buffer to ntsa_buffer
+  * 33fd060 Implement a mocking testing framework and test the ntcr::StreamSocket shutdown sequence during connection phase using a white-box testing approach
+
+ -- Matt Millett <mmillett2@bloomberg.net>  Thu, 2 May 2024 11:29:43 -0400
+
+ntf-core (2.3.5) git; urgency=low
+
+  * bdd5057 Release 2.3.5 to DPKG
   * e114e3a Release 2.3.5
   * f87558c Fix typo bind to `Kqueue::removeDetached` in `ntco::Kqueue` constructor for C++03 builds
 
- -- Sergey Mitrofanov <smitrofanov@bloomberg.net>  Fri, 19 Apr 2024 09:51:41 -0400
+ -- Sergey Mitrofanov <smitrofanov@bloomberg.net>  Fri, 19 Apr 2024 09:56:06 -0400
 
 ntf-core (2.3.4) git; urgency=low
 
@@ -91,6 +103,11 @@ ntf-core (2.3.0) git; urgency=low
   * 6252205 Release 2.2.2
   * fd0275c Install ntscfg_config.h and ntscfg_config.h as part of the nts and ntc components, respectively
   * b453a46 Release 2.2.1
+
+ -- Matt Millett <mmillett2@bloomberg.net>  Fri, 16 Feb 2024 12:15:03 -0500
+
+ntf-core (2.2.0) git; urgency=low
+
   * 4bd7b8c Release 2.2.0
   * a49817f Release 2.2.0
   * af25d8a Fix timestamping tests for network devices that don't support timestamps
@@ -111,6 +128,11 @@ ntf-core (2.3.0) git; urgency=low
   * 1ed320e Fix equality comparison of domain names
   * 46efa9f Use bsl::numeric_limits instead of constants from cstdint
   * 8ea0cf3 Test resolvers using dns.google.com instead of microsoft.com
+
+ -- Matt Millett <mmillett@mailbox.org>  Wed, 6 Sep 2023 21:34:36 -0400
+
+ntf-core (2.1.0) git; urgency=low
+
   * a511d00 Release 2.1.0
   * 6d4ad8b Maintenance for Windows: fix ntsu::SocketUtil::isLocal, ntcd::Machine packet timestamp handling, and allow for WSAENETUNREACH connecting to 240.0.0.1 in ntcf_system test driver
   * eed8a81 Implement ntsu::SocketOptionUtil::isLocal on Darwin without using SO_DOMAIN
@@ -122,6 +144,11 @@ ntf-core (2.3.0) git; urgency=low
   * 737e7e4 Use a class E IPv4 address when testing connections to "non-existent" machines and additionally tolerate ENETUNREACH
   * ab6f596 Respect the CC and CXX environment variables when configuring the toolchain
   * 35dd90c Explicitly specify the source directory when running CMake from the configuration script
+
+ -- Matt Millett <mmillett@mailbox.org>  Fri, 9 Jun 2023 10:47:43 -0400
+
+ntf-core (2.0.0) git; urgency=low
+
   * efe90a2 Release 2.0.0
   * d24cf19 Explicitly allow more than IOV_MAX buffers to be batched in ntcq_send test driver to match test setup
   * 56e102b Fix overload ambiguity creating an ntci::SendCallback with a shared_ptr to a ntci::Strand-deriving class
@@ -144,4 +171,4 @@ ntf-core (2.3.0) git; urgency=low
   * 3949df7 Support Windows/arm64 (#2)
   * 6ed01d8 Initial open source release
 
- -- Matt Millett <mmillett2@bloomberg.net>  Fri, 16 Feb 2024 12:15:03 -0500
+ -- Matt Millett <mmillett@mailbox.org>  Wed, 26 Apr 2023 13:33:56 -0400
