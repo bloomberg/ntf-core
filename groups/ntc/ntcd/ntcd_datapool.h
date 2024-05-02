@@ -12,6 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #ifndef INCLUDED_NTCD_DATAPOOL
 #define INCLUDED_NTCD_DATAPOOL
 
@@ -23,6 +24,8 @@ BSLS_IDENT("$Id: $")
 
 namespace BloombergLP {
 namespace ntcd {
+
+#if NTCCFG_TEST_MOCK_ENABLED
 
 NTF_MOCK_CLASS(DataPoolMock, ntci::DataPool)
 NTF_MOCK_METHOD(bsl::shared_ptr<ntsa::Data>, createIncomingData)
@@ -36,6 +39,8 @@ NTF_MOCK_METHOD_CONST(const bsl::shared_ptr<bdlbb::BlobBufferFactory>&,
 NTF_MOCK_METHOD_CONST(const bsl::shared_ptr<bdlbb::BlobBufferFactory>&,
                       outgoingBlobBufferFactory)
 NTF_MOCK_CLASS_END;
+
+#endif
 
 }  // close package namespace
 }  // close enterprise namespace

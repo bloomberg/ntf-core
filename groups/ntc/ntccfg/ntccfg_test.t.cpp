@@ -31,6 +31,9 @@ using namespace BloombergLP;
 // [ 1]
 //-----------------------------------------------------------------------------
 
+
+#if NTCCFG_TEST_MOCK_ENABLED
+
 namespace mock_test {
 
 class Interface
@@ -66,8 +69,12 @@ NTF_MOCK_CLASS_END;
 
 }
 
+#endif
+
 NTCCFG_TEST_CASE(1)
 {
+#if NTCCFG_TEST_MOCK_ENABLED
+
     using namespace mock_test;
 
     MyMock mock;
@@ -79,10 +86,14 @@ NTCCFG_TEST_CASE(1)
 
     NTCCFG_TEST_EQ(mock.f1(), 22);
     NTCCFG_TEST_EQ(mock.f1(), 33);
+
+#endif
 }
 
 NTCCFG_TEST_CASE(2)
 {
+#if NTCCFG_TEST_MOCK_ENABLED
+
     using namespace mock_test;
 
     MyMock mock;
@@ -118,10 +129,14 @@ NTCCFG_TEST_CASE(2)
         NTF_EXPECT_1(mock, f4, NTF_EQ(value)).ONCE();
         mock.f4(ref);
     }
+
+#endif
 }
 
 NTCCFG_TEST_CASE(3)
 {
+#if NTCCFG_TEST_MOCK_ENABLED
+
     using namespace mock_test;
 
     MyMock mock;
@@ -146,10 +161,14 @@ NTCCFG_TEST_CASE(3)
         mock.f4(data_ref);
         NTCCFG_TEST_EQ(data, newValue);
     }
+
+#endif
 }
 
 NTCCFG_TEST_CASE(4)
 {
+#if NTCCFG_TEST_MOCK_ENABLED
+
     using namespace mock_test;
 
     MyMock mock;
@@ -191,10 +210,14 @@ NTCCFG_TEST_CASE(4)
         mock.f4(val);
         NTCCFG_TEST_EQ(storage, val);
     }
+
+#endif
 }
 
 NTCCFG_TEST_CASE(5)
 {
+#if NTCCFG_TEST_MOCK_ENABLED
+
     using namespace mock_test;
 
     MyMock mock;
@@ -218,10 +241,14 @@ NTCCFG_TEST_CASE(5)
 
         mock.f5(&val, d);
     }
+
+#endif
 }
 
 NTCCFG_TEST_CASE(6)
 {
+#if NTCCFG_TEST_MOCK_ENABLED
+
     using namespace mock_test;
 
     MyMock mock;
@@ -254,6 +281,8 @@ NTCCFG_TEST_CASE(6)
         NTCCFG_TEST_EQ(res, sptrRef);
         NTCCFG_TEST_EQ(&res, &sptrRef);
     }
+
+#endif
 }
 
 NTCCFG_TEST_DRIVER

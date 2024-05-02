@@ -622,6 +622,8 @@ class ReactorFactory : public ntci::ReactorFactory
         bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
 };
 
+#if NTCCFG_TEST_MOCK_ENABLED
+
 NTF_MOCK_CLASS(ReactorMock, ntci::Reactor)
 
 NTF_MOCK_METHOD(bsl::shared_ptr<ntci::DatagramSocket>,
@@ -777,6 +779,8 @@ NTF_MOCK_METHOD_CONST(const bsl::shared_ptr<ntci::Strand>&, strand)
 NTF_MOCK_METHOD_CONST(bsls::TimeInterval, currentTime)
 
 NTF_MOCK_CLASS_END;
+
+#endif
 
 }  // close package namespace
 }  // close enterprise namespace

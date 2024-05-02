@@ -700,6 +700,14 @@ class TestAllocator : public bslma::Allocator
         runTestCase##number();                                                \
         return 0;
 
+#if defined(BDE_BUILD_TARGET_CPP20)
+#define NTCCFG_TEST_MOCK_ENABLED 1
+#else
+#define NTCCFG_TEST_MOCK_ENABLED 0
+#endif
+
+#if NTCCFG_TEST_MOCK_ENABLED
+
 #define NTF_CAT2_(A, B) A##B
 #define NTF_CAT2(A, B) NTF_CAT2_(A, B)
 
@@ -1854,7 +1862,7 @@ struct Invocation<METHOD_INFO, RESULT, NoArgs>
 #define SET_ARG_3(...) setArg<2>(__VA_ARGS__)
 #define SET_ARG_4(...) setArg<3>(__VA_ARGS__)
 
-#endif
+#endif // NTFCFG_TEST_MOCK_ENABLED
 
 /// @internal @brief
 /// Log at the fatal severity level.
@@ -1979,3 +1987,6 @@ struct Invocation<METHOD_INFO, RESULT, NoArgs>
 #else
 #error Not implemented
 #endif
+
+#endif
+

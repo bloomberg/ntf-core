@@ -12,6 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #ifndef INCLUDED_NTCD_TIMER
 #define INCLUDED_NTCD_TIMER
 
@@ -23,6 +24,8 @@ BSLS_IDENT("$Id: $")
 
 namespace BloombergLP {
 namespace ntcd {
+
+#if NTCCFG_TEST_MOCK_ENABLED
 
 NTF_MOCK_CLASS(TimerMock, ntci::Timer)
 NTF_MOCK_METHOD(ntsa::Error,
@@ -44,6 +47,8 @@ NTF_MOCK_METHOD_CONST(size_t, threadIndex)
 NTF_MOCK_METHOD_CONST(const bsl::shared_ptr<ntci::Strand>&, strand)
 NTF_MOCK_METHOD_CONST(bsls::TimeInterval, currentTime)
 NTF_MOCK_CLASS_END;
+
+#endif
 
 }  // close package namespace
 }  // close enterprise namespace

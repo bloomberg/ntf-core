@@ -12,6 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #ifndef INCLUDED_NTCD_BLOBBUFFERFACTORY
 #define INCLUDED_NTCD_BLOBBUFFERFACTORY
 
@@ -24,9 +25,13 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntcd {
 
+#if NTCCFG_TEST_MOCK_ENABLED
+
 NTF_MOCK_CLASS(BufferFactoryMock, bdlbb::BlobBufferFactory)
 NTF_MOCK_METHOD(void, allocate, bdlbb::BlobBuffer*)
 NTF_MOCK_CLASS_END;
+
+#endif
 
 }  // close package namespace
 }  // close enterprise namespace
