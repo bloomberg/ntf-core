@@ -1017,7 +1017,7 @@ ntsa::Error StreamSocket::privateSocketWritableConnection(
     {
         bsl::size_t sendBufferSize;
 
-        ntsa::SocketOption option;
+        ntsa::SocketOption option(d_allocator_p);
         error =
             d_socket_sp->getOption(&option,
                                    ntsa::SocketOptionType::e_SEND_BUFFER_SIZE);
@@ -1036,7 +1036,7 @@ ntsa::Error StreamSocket::privateSocketWritableConnection(
     {
         bsl::size_t receiveBufferSize;
 
-        ntsa::SocketOption option;
+        ntsa::SocketOption option(d_allocator_p);
         error = d_socket_sp->getOption(
             &option,
             ntsa::SocketOptionType::e_RECEIVE_BUFFER_SIZE);
@@ -2683,7 +2683,7 @@ ntsa::Error StreamSocket::privateEnqueueSendBuffer(
         {
             bsl::size_t sendBufferSize;
 
-            ntsa::SocketOption option;
+            ntsa::SocketOption option(d_allocator_p);
             error = d_socket_sp->getOption(
                 &option,
                 ntsa::SocketOptionType::e_SEND_BUFFER_SIZE);
@@ -2783,7 +2783,7 @@ ntsa::Error StreamSocket::privateEnqueueSendBuffer(
         {
             bsl::size_t sendBufferSize;
 
-            ntsa::SocketOption option;
+            ntsa::SocketOption option(d_allocator_p);
             error = d_socket_sp->getOption(
                 &option,
                 ntsa::SocketOptionType::e_SEND_BUFFER_SIZE);
@@ -3680,7 +3680,7 @@ ntsa::Error StreamSocket::privateOpen(
     {
         bsl::size_t sendBufferSize;
 
-        ntsa::SocketOption option;
+        ntsa::SocketOption option(d_allocator_p);
         error = streamSocket->getOption(
             &option,
             ntsa::SocketOptionType::e_SEND_BUFFER_SIZE);
@@ -3699,7 +3699,7 @@ ntsa::Error StreamSocket::privateOpen(
     {
         bsl::size_t receiveBufferSize;
 
-        ntsa::SocketOption option;
+        ntsa::SocketOption option(d_allocator_p);
         error = streamSocket->getOption(
             &option,
             ntsa::SocketOptionType::e_RECEIVE_BUFFER_SIZE);
@@ -4255,7 +4255,7 @@ ntsa::Error StreamSocket::privateTimestampOutgoingData(
     bool enabled = false;
 
     {
-        ntsa::SocketOption option;
+        ntsa::SocketOption option(d_allocator_p);
         option.makeTimestampOutgoingData(enable);
 
         error = d_socket_sp->setOption(option);
@@ -4270,7 +4270,7 @@ ntsa::Error StreamSocket::privateTimestampOutgoingData(
     }
 
     {
-        ntsa::SocketOption option;
+        ntsa::SocketOption option(d_allocator_p);
         error = d_socket_sp->getOption(
             &option,
             ntsa::SocketOptionType::e_TX_TIMESTAMPING);
@@ -4336,7 +4336,7 @@ ntsa::Error StreamSocket::privateTimestampIncomingData(
     bool enabled = false;
 
     {
-        ntsa::SocketOption option;
+        ntsa::SocketOption option(d_allocator_p);
         option.makeTimestampIncomingData(enable);
         error = d_socket_sp->setOption(option);
         if (error) {
@@ -4350,7 +4350,7 @@ ntsa::Error StreamSocket::privateTimestampIncomingData(
     }
 
     {
-        ntsa::SocketOption option;
+        ntsa::SocketOption option(d_allocator_p);
         error = d_socket_sp->getOption(
             &option,
             ntsa::SocketOptionType::e_RX_TIMESTAMPING);
@@ -4452,7 +4452,7 @@ ntsa::Error StreamSocket::privateZeroCopyEngage(
         return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
     }
 
-    ntsa::SocketOption socketOption;
+    ntsa::SocketOption socketOption(d_allocator_p);
     error = d_socket_sp->getOption(&socketOption,
                                    ntsa::SocketOptionType::e_ZERO_COPY);
     if (error) {

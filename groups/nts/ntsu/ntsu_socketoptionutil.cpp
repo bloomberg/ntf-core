@@ -162,6 +162,11 @@ ntsa::Error SocketOptionUtil::setOption(ntsa::Handle              socket,
     else if (option.isZeroCopy()) {
         return SocketOptionUtil::setZeroCopy(socket, option.zeroCopy());
     }
+    else if (option.isTcpCongestionControl()) {
+        return SocketOptionUtil::setTcpCongestionControl(
+            socket,
+            option.tcpCongestionControl());
+    }
     else {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
@@ -318,6 +323,15 @@ ntsa::Error SocketOptionUtil::getOption(ntsa::SocketOption*           option,
             return error;
         }
         option->makeZeroCopy(value);
+        return ntsa::Error();
+    }
+    else if (type == ntsa::SocketOptionType::e_TCP_CONGESTION_CONTROL) {
+        ntsa::TcpCongestionControl value;
+        error = SocketOptionUtil::getTcpCongestionControl(&value, socket);
+        if (error) {
+            return error;
+        }
+        option->makeTcpCongestionControl(value);
         return ntsa::Error();
     }
     else {
@@ -756,6 +770,32 @@ ntsa::Error SocketOptionUtil::setZeroCopy(ntsa::Handle socket, bool zeroCopy)
 
     NTSCFG_WARNING_UNUSED(socket);
     NTSCFG_WARNING_UNUSED(zeroCopy);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+
+#endif
+}
+
+ntsa::Error SocketOptionUtil::setTcpCongestionControl(
+    ntsa::Handle                      socket,
+    const ntsa::TcpCongestionControl& algorithm)
+{
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    const bsl::string& name     = algorithm.algorithm();
+    const char*        optValue = name.c_str();
+    const socklen_t    optLen   = name.length();
+
+    const int rc =
+        setsockopt(socket, IPPROTO_TCP, TCP_CONGESTION, optValue, optLen);
+
+    if (rc != 0) {
+        return ntsa::Error(errno);
+    }
+
+    return ntsa::Error();
+#else
+    NTSCFG_WARNING_UNUSED(socket);
+    NTSCFG_WARNING_UNUSED(algorithm);
 
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 
@@ -1235,6 +1275,42 @@ ntsa::Error SocketOptionUtil::getZeroCopy(bool*        zeroCopyFlag,
 #else
 
     NTSCFG_WARNING_UNUSED(zeroCopyFlag);
+    NTSCFG_WARNING_UNUSED(socket);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+
+#endif
+}
+
+ntsa::Error SocketOptionUtil::getTcpCongestionControl(
+    ntsa::TcpCongestionControl* algorithm,
+    ntsa::Handle                socket)
+{
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    enum { e_BUFFER_SIZE = 64 };
+    char optionValue[e_BUFFER_SIZE];
+    bsl::fill(optionValue, optionValue + e_BUFFER_SIZE, '\0');
+
+    socklen_t optionLength = static_cast<socklen_t>(sizeof(optionValue) - 1);
+
+    const int rc = getsockopt(socket,
+                              IPPROTO_TCP,
+                              TCP_CONGESTION,
+                              optionValue,
+                              &optionLength);
+
+    if (rc != 0) {
+        return ntsa::Error(errno);
+    }
+
+    algorithm->reset();
+
+    ntsa::Error error = algorithm->setAlgorithmName(optionValue);
+    return error;
+
+#else
+
+    NTSCFG_WARNING_UNUSED(algorithm);
     NTSCFG_WARNING_UNUSED(socket);
 
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);

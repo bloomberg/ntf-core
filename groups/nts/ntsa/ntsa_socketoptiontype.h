@@ -51,7 +51,7 @@ struct SocketOptionType {
         e_CORK = 3,
 
         /// Enable or disable packet coalescing, otherwise known as Nagle's
-        /// algorith.
+        /// algorithm.
         e_DELAY_TRANSMISSION = 4,
 
         /// Enable or disable delayed acknowledgement.
@@ -80,7 +80,7 @@ struct SocketOptionType {
         /// Allow datagram sockets to send to a broadcast address.
         e_BROADCAST = 12,
 
-        /// Do not send packets throught a gateway.
+        /// Do not send packets through a gateway.
         e_BYPASS_ROUTING = 13,
 
         /// Place out-of-band data into the normal incoming data stream.
@@ -92,9 +92,12 @@ struct SocketOptionType {
         /// Generate timestamps for outgoing data.
         e_TX_TIMESTAMPING = 16,
 
-        /// Allow each send operation to request copy avoidance when enqueing
+        /// Allow each send operation to request copy avoidance when enqueuing
         /// data to the socket send buffer.
-        e_ZERO_COPY = 17
+        e_ZERO_COPY = 17,
+
+        /// Set the TCP congestion control algorithm.
+        e_TCP_CONGESTION_CONTROL = 18
     };
 
     /// Return the string representation exactly matching the enumerator

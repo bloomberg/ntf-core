@@ -738,7 +738,7 @@ void StreamSocket::privateCompleteConnect(
     {
         bsl::size_t sendBufferSize;
 
-        ntsa::SocketOption option;
+        ntsa::SocketOption option(d_allocator_p);
         error =
             d_socket_sp->getOption(&option,
                                    ntsa::SocketOptionType::e_SEND_BUFFER_SIZE);
@@ -757,7 +757,7 @@ void StreamSocket::privateCompleteConnect(
     {
         bsl::size_t receiveBufferSize;
 
-        ntsa::SocketOption option;
+        ntsa::SocketOption option(d_allocator_p);
         error = d_socket_sp->getOption(
             &option,
             ntsa::SocketOptionType::e_RECEIVE_BUFFER_SIZE);
@@ -1509,7 +1509,7 @@ void StreamSocket::privateInitiateSend(
                 {
                     bsl::size_t sendBufferSize;
 
-                    ntsa::SocketOption option;
+                    ntsa::SocketOption option(d_allocator_p);
                     error = d_socket_sp->getOption(
                         &option,
                         ntsa::SocketOptionType::e_SEND_BUFFER_SIZE);
@@ -2995,7 +2995,7 @@ ntsa::Error StreamSocket::privateOpen(
     {
         bsl::size_t sendBufferSize;
 
-        ntsa::SocketOption option;
+        ntsa::SocketOption option(d_allocator_p);
         error = streamSocket->getOption(
             &option,
             ntsa::SocketOptionType::e_SEND_BUFFER_SIZE);
@@ -3014,7 +3014,7 @@ ntsa::Error StreamSocket::privateOpen(
     {
         bsl::size_t receiveBufferSize;
 
-        ntsa::SocketOption option;
+        ntsa::SocketOption option(d_allocator_p);
         error = streamSocket->getOption(
             &option,
             ntsa::SocketOptionType::e_RECEIVE_BUFFER_SIZE);
