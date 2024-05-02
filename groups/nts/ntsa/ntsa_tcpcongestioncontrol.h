@@ -57,7 +57,7 @@ class TcpCongestionControl
     /// Optionally specify a 'basicAllocator' used to supply memory. If
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
-    TcpCongestionControl(bslma::Allocator* basicAllocator = 0);
+    explicit TcpCongestionControl(bslma::Allocator* basicAllocator = 0);
 
     /// Create new TcpCongestionControl instance having the same value as the
     /// specified `original`. Optionally specify a 'basicAllocator' used to

@@ -155,7 +155,7 @@ class SocketOption
     /// Create a new socketoption having an undefined type. Optionally specify
     /// a 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
     // currently installed default allocator is used.
-    SocketOption(bslma::Allocator* basicAllocator = 0);
+    explicit SocketOption(bslma::Allocator* basicAllocator = 0);
 
     /// Create a new address having the same value as the specified 'other'
     /// object. Optionally specify a 'basicAllocator' used to supply memory. If
