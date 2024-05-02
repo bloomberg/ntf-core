@@ -1565,8 +1565,13 @@ struct System {
 
     /// Load into the specified `result` names of tcp congestion control
     /// algorithms available for the process. Return the error.
-    static ntsa::Error getTcpCongestionControlAlgorithms(
+    static ntsa::Error loadTcpCongestionControlAlgorithmSupport(
         bsl::vector<bsl::string>* result);
+
+    /// Return true if the specified 'algorithmName' is supported on the
+    /// current platform, otherwise return false.
+    static bool testTcpCongestionControlAlgorithmSupport(
+        const bsl::string& algorithmName);
 
     /// Release the resources necessary for this library's implementation.
     static void exit();

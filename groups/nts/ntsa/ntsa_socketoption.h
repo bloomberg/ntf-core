@@ -608,7 +608,7 @@ template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const SocketOption& value);
 
 NTSCFG_INLINE
-SocketOption::SocketOption(bslma::Allocator* allocator)
+SocketOption::SocketOption(bslma::Allocator* basicAllocator)
 : d_type(ntsa::SocketOptionType::e_UNDEFINED)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {

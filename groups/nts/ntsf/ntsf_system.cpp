@@ -1349,7 +1349,7 @@ bool System::supportsTransport(ntsa::Transport::Value transport)
     return ntsu::AdapterUtil::supportsTransport(transport);
 }
 
-ntsa::Error System::getTcpCongestionControlAlgorithms(
+ntsa::Error System::loadTcpCongestionControlAlgorithmSupport(
     bsl::vector<bsl::string>* result)
 {
 #if defined(BSLS_PLATFORM_OS_LINUX)
@@ -1384,6 +1384,25 @@ ntsa::Error System::getTcpCongestionControlAlgorithms(
 #else
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 #endif
+}
+
+bool System::testTcpCongestionControlAlgorithmSupport(
+    const bsl::string& algorithmName)
+{
+    bsl::vector<bsl::string> supportedAlgorithms;
+    const ntsa::Error        error =
+        loadTcpCongestionControlAlgorithmSupport(&supportedAlgorithms);
+
+    if (error) {
+        return false;
+    }
+
+    const bsl::vector<bsl::string>::const_iterator it =
+        bsl::find(supportedAlgorithms.cbegin(),
+                  supportedAlgorithms.cend(),
+                  algorithmName);
+
+    return (it != supportedAlgorithms.cend());
 }
 
 void System::exit()
