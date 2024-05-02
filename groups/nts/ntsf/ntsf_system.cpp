@@ -1389,6 +1389,7 @@ ntsa::Error System::loadTcpCongestionControlAlgorithmSupport(
     }
     return ntsa::Error();
 #else
+    result->clear();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 #endif
 }
