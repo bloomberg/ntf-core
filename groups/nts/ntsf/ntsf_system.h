@@ -1072,6 +1072,15 @@ struct System {
                             ntsa::Handle             socket);
 
     /// Dequeue from the receive buffer of the specified 'socket' into the
+    /// specified 'data' having the specified 'capacity'. Load into the
+    /// specified 'numBytesReceived' the result of the operation. Return the
+    /// error.
+    static ntsa::Error receive(bsl::size_t* numBytesReceived,
+                               void*        data,
+                               bsl::size_t  capacity,
+                               ntsa::Handle socket);
+
+    /// Dequeue from the receive buffer of the specified 'socket' into the
     /// specified 'data' having the specified 'capacity' according to the
     /// specified 'options'. Load into the specified 'context' the result of
     /// the operation. Return the error.
@@ -1562,6 +1571,16 @@ struct System {
     /// system, which may be expensive; prefer to cache the results of this
     /// function when possible.
     static bool supportsTransport(ntsa::Transport::Value transport);
+
+    /// Load into the specified `result` names of tcp congestion control
+    /// algorithms available for the process. Return the error.
+    static ntsa::Error loadTcpCongestionControlAlgorithmSupport(
+        bsl::vector<bsl::string>* result);
+
+    /// Return true if the specified 'algorithmName' is supported on the
+    /// current platform, otherwise return false.
+    static bool testTcpCongestionControlAlgorithmSupport(
+        const bsl::string& algorithmName);
 
     /// Release the resources necessary for this library's implementation.
     static void exit();

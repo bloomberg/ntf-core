@@ -43,7 +43,6 @@ BSLS_IDENT_RCSID(ntco_iocp_cpp, "$Id$ $CSID$")
 #include <ntcs_strand.h>
 #include <ntcs_user.h>
 #include <ntsf_system.h>
-#include <ntsu_bufferutil.h>
 #include <ntsu_socketoptionutil.h>
 #include <ntsu_socketutil.h>
 
@@ -1367,14 +1366,14 @@ ntsa::Error Iocp::accept(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 {
     NTCI_LOG_CONTEXT();
 
-    bslma::ManagedPtr<ntcs::Event> event = 
+    bslma::ManagedPtr<ntcs::Event> event =
         d_eventPool.getManagedObject(socket);
     if (NTCCFG_UNLIKELY(!event)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
     event->d_type = ntcs::EventType::e_ACCEPT;
-    
+
     NTCP_IOCP_LOG_EVENT_STARTING(event);
 
     ntsa::Error error;
@@ -1510,7 +1509,7 @@ ntsa::Error Iocp::connect(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         return ntsa::Error::invalid();
     }
 
-    bslma::ManagedPtr<ntcs::Event> event = 
+    bslma::ManagedPtr<ntcs::Event> event =
         d_eventPool.getManagedObject(socket);
     if (NTCCFG_UNLIKELY(!event)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -1605,14 +1604,14 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 {
     NTCI_LOG_CONTEXT();
 
-    bslma::ManagedPtr<ntcs::Event> event = 
+    bslma::ManagedPtr<ntcs::Event> event =
         d_eventPool.getManagedObject(socket);
     if (NTCCFG_UNLIKELY(!event)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
     event->d_type = ntcs::EventType::e_SEND;
-    
+
     NTCP_IOCP_LOG_EVENT_STARTING(event);
 
     ntsa::Handle descriptorHandle = socket->handle();
@@ -1635,12 +1634,13 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     bsl::size_t numBuffersTotal;
     bsl::size_t numBytesTotal;
 
-    ntsu::BufferUtil::gather(&numBuffersTotal,
-                             &numBytesTotal,
-                             reinterpret_cast<ntsa::ConstBuffer*>(wsaBufArray),
-                             numBuffersMax,
-                             data,
-                             numBytesMax);
+    ntsa::ConstBuffer::gather(
+        &numBuffersTotal,
+        &numBytesTotal,
+        reinterpret_cast<ntsa::ConstBuffer*>(wsaBufArray),
+        numBuffersMax,
+        data,
+        numBytesMax);
 
     event->d_numBytesAttempted = numBytesTotal;
 
@@ -1727,14 +1727,14 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
     }
 
-    bslma::ManagedPtr<ntcs::Event> event = 
+    bslma::ManagedPtr<ntcs::Event> event =
         d_eventPool.getManagedObject(socket);
     if (NTCCFG_UNLIKELY(!event)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
     event->d_type = ntcs::EventType::e_SEND;
-    
+
     NTCP_IOCP_LOG_EVENT_STARTING(event);
 
     ntsa::Handle descriptorHandle  = socket->handle();
@@ -1775,7 +1775,7 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         bsl::size_t numBuffersTotal;
         bsl::size_t numBytesTotal;
 
-        ntsu::BufferUtil::gather(
+        ntsa::ConstBuffer::gather(
             &numBuffersTotal,
             &numBytesTotal,
             reinterpret_cast<ntsa::ConstBuffer*>(wsaBufArray),
@@ -1841,7 +1841,7 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         bsl::size_t numBuffersTotal;
         bsl::size_t numBytesTotal;
 
-        ntsu::BufferUtil::gather(
+        ntsa::ConstBuffer::gather(
             &numBuffersTotal,
             &numBytesTotal,
             reinterpret_cast<ntsa::ConstBuffer*>(wsaBufArray),
@@ -2297,7 +2297,7 @@ ntsa::Error Iocp::receive(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 
     const bool wantEndpoint = options.wantEndpoint();
 
-    bslma::ManagedPtr<ntcs::Event> event = 
+    bslma::ManagedPtr<ntcs::Event> event =
         d_eventPool.getManagedObject(socket);
     if (NTCCFG_UNLIKELY(!event)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -2333,7 +2333,7 @@ ntsa::Error Iocp::receive(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
     bsl::size_t numBuffersTotal;
     bsl::size_t numBytesTotal;
 
-    ntsu::BufferUtil::scatter(
+    ntsa::MutableBuffer::scatter(
         &numBuffersTotal,
         &numBytesTotal,
         reinterpret_cast<ntsa::MutableBuffer*>(wsaBufArray),

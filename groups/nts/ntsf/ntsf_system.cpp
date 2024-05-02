@@ -23,17 +23,16 @@ BSLS_IDENT_RCSID(ntsf_system_cpp, "$Id$ $CSID$")
 #include <ntsb_resolver.h>
 #include <ntsb_streamsocket.h>
 #include <ntscfg_limits.h>
+#include <ntso_devpoll.h>
+#include <ntso_epoll.h>
+#include <ntso_eventport.h>
+#include <ntso_kqueue.h>
+#include <ntso_poll.h>
+#include <ntso_pollset.h>
+#include <ntso_select.h>
 #include <ntsu_adapterutil.h>
-#include <ntsu_bufferutil.h>
 #include <ntsu_socketoptionutil.h>
 #include <ntsu_socketutil.h>
-#include <ntso_select.h>
-#include <ntso_poll.h>
-#include <ntso_epoll.h>
-#include <ntso_kqueue.h>
-#include <ntso_devpoll.h>
-#include <ntso_eventport.h>
-#include <ntso_pollset.h>
 
 #include <bdlb_string.h>
 
@@ -44,6 +43,7 @@ BSLS_IDENT_RCSID(ntsf_system_cpp, "$Id$ $CSID$")
 #include <bslmt_mutex.h>
 #include <bslmt_once.h>
 #include <bsls_assert.h>
+#include <bsl_fstream.h>
 
 namespace BloombergLP {
 namespace ntsf {
@@ -454,44 +454,58 @@ bsl::shared_ptr<ntsi::Reactor> System::createReactor(
     }
 #if NTSO_EPOLL_ENABLED
     else if (bdlb::String::areEqualCaseless(
-                effectiveConfig.driverName().value(), "epoll")) {
+                 effectiveConfig.driverName().value(),
+                 "epoll"))
+    {
         reactor = ntso::EpollUtil::createReactor(effectiveConfig, allocator);
     }
 #endif
 #if NTSO_KQUEUE_ENABLED
     else if (bdlb::String::areEqualCaseless(
-                effectiveConfig.driverName().value(), "kqueue")) {
+                 effectiveConfig.driverName().value(),
+                 "kqueue"))
+    {
         reactor = ntso::KqueueUtil::createReactor(effectiveConfig, allocator);
     }
 #endif
 #if NTSO_EVENTPORT_ENABLED
     else if (bdlb::String::areEqualCaseless(
-                effectiveConfig.driverName().value(), "eventport")) {
-        reactor = ntso::EventPortUtil::createReactor(effectiveConfig,
-                                                     allocator);
+                 effectiveConfig.driverName().value(),
+                 "eventport"))
+    {
+        reactor =
+            ntso::EventPortUtil::createReactor(effectiveConfig, allocator);
     }
 #endif
 #if NTSO_DEVPOLL_ENABLED
     else if (bdlb::String::areEqualCaseless(
-                effectiveConfig.driverName().value(), "devpoll")) {
+                 effectiveConfig.driverName().value(),
+                 "devpoll"))
+    {
         reactor = ntso::DevpollUtil::createReactor(effectiveConfig, allocator);
     }
 #endif
 #if NTSO_POLLSET_ENABLED
     else if (bdlb::String::areEqualCaseless(
-                effectiveConfig.driverName().value(), "pollset")) {
+                 effectiveConfig.driverName().value(),
+                 "pollset"))
+    {
         reactor = ntso::PollsetUtil::createReactor(effectiveConfig, allocator);
     }
 #endif
 #if NTSO_POLL_ENABLED
     else if (bdlb::String::areEqualCaseless(
-                effectiveConfig.driverName().value(), "poll")) {
+                 effectiveConfig.driverName().value(),
+                 "poll"))
+    {
         reactor = ntso::PollUtil::createReactor(effectiveConfig, allocator);
     }
 #endif
 #if NTSO_SELECT_ENABLED
     else if (bdlb::String::areEqualCaseless(
-                effectiveConfig.driverName().value(), "select")) {
+                 effectiveConfig.driverName().value(),
+                 "select"))
+    {
         reactor = ntso::SelectUtil::createReactor(effectiveConfig, allocator);
     }
 #endif
@@ -502,7 +516,6 @@ bsl::shared_ptr<ntsi::Reactor> System::createReactor(
     BSLS_ASSERT_OPT(reactor);
     return reactor;
 }
-
 
 bsl::shared_ptr<ntsi::Resolver> System::createResolver(
     bslma::Allocator* basicAllocator)
@@ -688,6 +701,14 @@ ntsa::Error System::send(ntsa::SendContext*       context,
                          ntsa::Handle             socket)
 {
     return ntsu::SocketUtil::send(context, data, options, socket);
+}
+
+ntsa::Error System::receive(bsl::size_t* numBytesReceived,
+                            void*        data,
+                            bsl::size_t  capacity,
+                            ntsa::Handle socket)
+{
+    return ntsu::SocketUtil::receive(numBytesReceived, data, capacity, socket);
 }
 
 ntsa::Error System::receive(ntsa::ReceiveContext*       context,
@@ -1105,12 +1126,12 @@ ntsa::Error System::scatter(ntsa::MutableBufferArray*   bufferArray,
     bsl::size_t numBuffersTotal;
     bsl::size_t numBytesTotal;
 
-    ntsu::BufferUtil::scatter(&numBuffersTotal,
-                              &numBytesTotal,
-                              bufferArray,
-                              numBuffersMax,
-                              data,
-                              numBytesMax);
+    ntsa::MutableBufferArray::scatter(&numBuffersTotal,
+                                      &numBytesTotal,
+                                      bufferArray,
+                                      numBuffersMax,
+                                      data,
+                                      numBytesMax);
 
     BSLS_ASSERT_OPT(bufferArray->numBuffers() == numBuffersTotal);
 
@@ -1147,12 +1168,12 @@ ntsa::Error System::gather(ntsa::ConstBufferArray*  bufferArray,
     bsl::size_t numBuffersTotal;
     bsl::size_t numBytesTotal;
 
-    ntsu::BufferUtil::gather(&numBuffersTotal,
-                             &numBytesTotal,
-                             bufferArray,
-                             numBuffersMax,
-                             data,
-                             numBytesMax);
+    ntsa::ConstBufferArray::gather(&numBuffersTotal,
+                                   &numBytesTotal,
+                                   bufferArray,
+                                   numBuffersMax,
+                                   data,
+                                   numBytesMax);
 
     BSLS_ASSERT_OPT(bufferArray->numBuffers() == numBuffersTotal);
 
@@ -1333,6 +1354,63 @@ bool System::supportsTransport(ntsa::Transport::Value transport)
     BSLS_ASSERT_OPT(!error);
 
     return ntsu::AdapterUtil::supportsTransport(transport);
+}
+
+ntsa::Error System::loadTcpCongestionControlAlgorithmSupport(
+    bsl::vector<bsl::string>* result)
+{
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    enum { e_ROOT_EUID = 0 };
+    const uid_t id = geteuid();
+
+    const char* path =
+        (e_ROOT_EUID == id)
+            ? "/proc/sys/net/ipv4/tcp_available_congestion_control"
+            : "/proc/sys/net/ipv4/tcp_allowed_congestion_control";
+
+    bsl::ifstream file(path);
+    if (!file.is_open()) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+    bsl::string line;
+    bsl::getline(file, line);
+    if (line.empty()) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+    bsl::stringstream ssline(line);
+    result->clear();
+
+    // it is guaranteed that algorithm names are in one line separated
+    // by spaces, so `while` below is enough
+    bsl::string algorithmName;
+    while (ssline >> algorithmName) {
+        result->push_back(
+            BloombergLP::bslmf::MovableRef<bsl::string>(algorithmName));
+    }
+    return ntsa::Error();
+#else
+    result->clear();
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+#endif
+}
+
+bool System::testTcpCongestionControlAlgorithmSupport(
+    const bsl::string& algorithmName)
+{
+    bsl::vector<bsl::string> supportedAlgorithms;
+    const ntsa::Error        error =
+        loadTcpCongestionControlAlgorithmSupport(&supportedAlgorithms);
+
+    if (error) {
+        return false;
+    }
+
+    const bsl::vector<bsl::string>::const_iterator it =
+        bsl::find(supportedAlgorithms.cbegin(),
+                  supportedAlgorithms.cend(),
+                  algorithmName);
+
+    return (it != supportedAlgorithms.cend());
 }
 
 void System::exit()

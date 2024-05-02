@@ -332,6 +332,7 @@ ProactorDetachState::Value ProactorDetachContext::state() const
     }
 
     NTCCFG_UNREACHABLE();
+    return ProactorDetachState::e_ATTACHED;
 }
 
 NTCCFG_INLINE

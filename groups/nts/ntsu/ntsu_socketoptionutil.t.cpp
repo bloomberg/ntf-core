@@ -20,6 +20,8 @@
 #include <ntsu_socketutil.h>
 #include <ntsu_timestamputil.h>
 #include <bslma_testallocator.h>
+#include <bsl_array.h>
+#include <bsl_fstream.h>
 #include <bsl_iostream.h>
 #include <bsl_vector.h>
 
@@ -1442,8 +1444,8 @@ NTSCFG_TEST_CASE(5)
 
         NTSCFG_TEST_LOG_WARN << "Testing " << transport << NTSCFG_TEST_LOG_END;
 
-        ntsa::Handle socket = ntsa::k_INVALID_HANDLE;
-        ntsa::Handle server = ntsa::k_INVALID_HANDLE;
+        ntsa::Handle socket   = ntsa::k_INVALID_HANDLE;
+        ntsa::Handle server   = ntsa::k_INVALID_HANDLE;
         ntsa::Handle listener = ntsa::k_INVALID_HANDLE;
 
         error = ntsu::SocketUtil::create(&socket, transport);
@@ -1457,24 +1459,28 @@ NTSCFG_TEST_CASE(5)
             bool timestampOutgoingData = true;
 
             error = ntsu::SocketOptionUtil::getTimestampIncomingData(
-                &timestampIncomingData, socket);
+                &timestampIncomingData,
+                socket);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_FALSE(timestampIncomingData);
 
             error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
-                &timestampOutgoingData, socket);
+                &timestampOutgoingData,
+                socket);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_FALSE(timestampOutgoingData);
 
             if (transport == ntsa::Transport::e_TCP_IPV4_STREAM ||
                 transport == ntsa::Transport::e_TCP_IPV6_STREAM)
             {
-                error = ntsu::SocketOptionUtil::setTimestampOutgoingData(
-                    socket, true);
+                error =
+                    ntsu::SocketOptionUtil::setTimestampOutgoingData(socket,
+                                                                     true);
                 NTSCFG_TEST_TRUE(error);
 
                 error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
-                    &timestampOutgoingData, socket);
+                    &timestampOutgoingData,
+                    socket);
                 NTSCFG_TEST_OK(error);
                 NTSCFG_TEST_FALSE(timestampOutgoingData);
 
@@ -1484,8 +1490,8 @@ NTSCFG_TEST_CASE(5)
                 if (transport == ntsa::Transport::e_TCP_IPV4_STREAM) {
                     error = ntsu::SocketUtil::bind(
                         ntsa::Endpoint(
-                            ntsa::IpEndpoint(
-                                ntsa::Ipv4Address::loopback(), 0)),
+                            ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(),
+                                             0)),
                         true,
                         listener);
                     NTSCFG_TEST_OK(error);
@@ -1493,8 +1499,8 @@ NTSCFG_TEST_CASE(5)
                 else {
                     error = ntsu::SocketUtil::bind(
                         ntsa::Endpoint(
-                            ntsa::IpEndpoint(
-                                ntsa::Ipv6Address::loopback(), 0)),
+                            ntsa::IpEndpoint(ntsa::Ipv6Address::loopback(),
+                                             0)),
                         true,
                         listener);
                     NTSCFG_TEST_OK(error);
@@ -1516,143 +1522,161 @@ NTSCFG_TEST_CASE(5)
 
             // RX 0, TX 0 -> RX 1, TX 0
 
-            error = ntsu::SocketOptionUtil::setTimestampIncomingData(
-                socket, true);
+            error =
+                ntsu::SocketOptionUtil::setTimestampIncomingData(socket, true);
             NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketOptionUtil::getTimestampIncomingData(
-                &timestampIncomingData, socket);
+                &timestampIncomingData,
+                socket);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_TRUE(timestampIncomingData);
 
             error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
-                &timestampOutgoingData, socket);
+                &timestampOutgoingData,
+                socket);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_FALSE(timestampOutgoingData);
 
             // RX 1, TX 0 -> RX 0, TX 0
 
-            error = ntsu::SocketOptionUtil::setTimestampIncomingData(
-                socket, false);
+            error = ntsu::SocketOptionUtil::setTimestampIncomingData(socket,
+                                                                     false);
             NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketOptionUtil::getTimestampIncomingData(
-                &timestampIncomingData, socket);
+                &timestampIncomingData,
+                socket);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_FALSE(timestampIncomingData);
 
             error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
-                &timestampOutgoingData, socket);
+                &timestampOutgoingData,
+                socket);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_FALSE(timestampOutgoingData);
 
             // RX 0, TX 0 -> RX 0, TX 1
 
-            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(
-                socket, true);
+            error =
+                ntsu::SocketOptionUtil::setTimestampOutgoingData(socket, true);
             NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketOptionUtil::getTimestampIncomingData(
-                &timestampIncomingData, socket);
+                &timestampIncomingData,
+                socket);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_FALSE(timestampIncomingData);
 
             error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
-                &timestampOutgoingData, socket);
+                &timestampOutgoingData,
+                socket);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_TRUE(timestampOutgoingData);
 
             // RX 0, TX 1 -> RX 0, TX 0
 
-            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(
-                socket, false);
+            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(socket,
+                                                                     false);
             NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketOptionUtil::getTimestampIncomingData(
-                &timestampIncomingData, socket);
+                &timestampIncomingData,
+                socket);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_FALSE(timestampIncomingData);
 
             error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
-                &timestampOutgoingData, socket);
+                &timestampOutgoingData,
+                socket);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_FALSE(timestampOutgoingData);
 
             // RX 0, TX 0 -> RX 1, TX 1
 
-            error = ntsu::SocketOptionUtil::setTimestampIncomingData(
-                socket, true);
+            error =
+                ntsu::SocketOptionUtil::setTimestampIncomingData(socket, true);
             NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketOptionUtil::getTimestampIncomingData(
-                &timestampIncomingData, socket);
+                &timestampIncomingData,
+                socket);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_TRUE(timestampIncomingData);
 
             error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
-                &timestampOutgoingData, socket);
+                &timestampOutgoingData,
+                socket);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_FALSE(timestampOutgoingData);
 
-            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(
-                socket, true);
+            error =
+                ntsu::SocketOptionUtil::setTimestampOutgoingData(socket, true);
             NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketOptionUtil::getTimestampIncomingData(
-                &timestampIncomingData, socket);
+                &timestampIncomingData,
+                socket);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_TRUE(timestampIncomingData);
 
             error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
-                &timestampOutgoingData, socket);
+                &timestampOutgoingData,
+                socket);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_TRUE(timestampOutgoingData);
 
             // RX 1, TX 1 -> RX 0, TX 1
 
-            error = ntsu::SocketOptionUtil::setTimestampIncomingData(
-                socket, false);
+            error = ntsu::SocketOptionUtil::setTimestampIncomingData(socket,
+                                                                     false);
             NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketOptionUtil::getTimestampIncomingData(
-                &timestampIncomingData, socket);
+                &timestampIncomingData,
+                socket);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_FALSE(timestampIncomingData);
 
             error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
-                &timestampOutgoingData, socket);
+                &timestampOutgoingData,
+                socket);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_TRUE(timestampOutgoingData);
 
             // RX 0, TX 1 -> RX 1, TX 1
 
-            error = ntsu::SocketOptionUtil::setTimestampIncomingData(
-                socket, true);
+            error =
+                ntsu::SocketOptionUtil::setTimestampIncomingData(socket, true);
             NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketOptionUtil::getTimestampIncomingData(
-                &timestampIncomingData, socket);
+                &timestampIncomingData,
+                socket);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_TRUE(timestampIncomingData);
 
             error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
-                &timestampOutgoingData, socket);
+                &timestampOutgoingData,
+                socket);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_TRUE(timestampOutgoingData);
 
             // RX 1, TX 1 -> RX 1, TX 0
 
-            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(
-                socket, false);
+            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(socket,
+                                                                     false);
             NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketOptionUtil::getTimestampIncomingData(
-                &timestampIncomingData, socket);
+                &timestampIncomingData,
+                socket);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_TRUE(timestampIncomingData);
 
             error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
-                &timestampOutgoingData, socket);
+                &timestampOutgoingData,
+                socket);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_FALSE(timestampOutgoingData);
         }
@@ -1661,36 +1685,32 @@ NTSCFG_TEST_CASE(5)
             bool timestampOutgoingData = true;
 
             error = ntsu::SocketOptionUtil::getTimestampIncomingData(
-                &timestampIncomingData, socket);
-            NTSCFG_TEST_ERROR(
-                error, ntsa::Error::e_NOT_IMPLEMENTED);
+                &timestampIncomingData,
+                socket);
+            NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
             NTSCFG_TEST_FALSE(timestampIncomingData);
 
             error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
-                &timestampOutgoingData, socket);
-            NTSCFG_TEST_ERROR(
-                error, ntsa::Error::e_NOT_IMPLEMENTED);
+                &timestampOutgoingData,
+                socket);
+            NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
             NTSCFG_TEST_FALSE(timestampOutgoingData);
 
-            error = ntsu::SocketOptionUtil::setTimestampIncomingData(
-                socket, false);
-            NTSCFG_TEST_ERROR(
-                error, ntsa::Error::e_NOT_IMPLEMENTED);
+            error = ntsu::SocketOptionUtil::setTimestampIncomingData(socket,
+                                                                     false);
+            NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
 
-            error = ntsu::SocketOptionUtil::setTimestampIncomingData(
-                socket, true);
-            NTSCFG_TEST_ERROR(
-                error, ntsa::Error::e_NOT_IMPLEMENTED);
+            error =
+                ntsu::SocketOptionUtil::setTimestampIncomingData(socket, true);
+            NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
 
-            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(
-                socket, false);
-            NTSCFG_TEST_ERROR(
-                error, ntsa::Error::e_NOT_IMPLEMENTED);
+            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(socket,
+                                                                     false);
+            NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
 
-            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(
-                socket, true);
-            NTSCFG_TEST_ERROR(
-                error, ntsa::Error::e_NOT_IMPLEMENTED);
+            error =
+                ntsu::SocketOptionUtil::setTimestampOutgoingData(socket, true);
+            NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
         }
 
         if (socket != ntsa::k_INVALID_HANDLE) {
@@ -1927,7 +1947,7 @@ NTSCFG_TEST_CASE(8)
             NTSCFG_TEST_OK(error);
         }
         {
-            bool blocking = true;
+            bool              blocking = true;
             const ntsa::Error error =
                 ntsu::SocketOptionUtil::getBlocking(socket, &blocking);
 #if !defined(BSLS_PLATFORM_OS_WINDOWS)
@@ -1943,7 +1963,7 @@ NTSCFG_TEST_CASE(8)
             NTSCFG_TEST_OK(error);
         }
         {
-            bool blocking = false;
+            bool              blocking = false;
             const ntsa::Error error =
                 ntsu::SocketOptionUtil::getBlocking(socket, &blocking);
 #if !defined(BSLS_PLATFORM_OS_WINDOWS)
@@ -1959,7 +1979,7 @@ NTSCFG_TEST_CASE(8)
             NTSCFG_TEST_OK(error);
         }
         {
-            bool blocking = true;
+            bool              blocking = true;
             const ntsa::Error error =
                 ntsu::SocketOptionUtil::getBlocking(socket, &blocking);
 #if !defined(BSLS_PLATFORM_OS_WINDOWS)
@@ -1972,6 +1992,105 @@ NTSCFG_TEST_CASE(8)
     }
 }
 
+NTSCFG_TEST_CASE(9)
+{
+    // Concern: getTcpCongestionControl and setTcpCongestionControl
+
+    ntscfg::TestAllocator ta;
+    {
+#if defined(BSLS_PLATFORM_OS_LINUX)
+        const bsl::array<ntsa::Transport::Value, 2> SOCKET_TYPES = {
+            ntsa::Transport::e_TCP_IPV4_STREAM,
+            ntsa::Transport::e_TCP_IPV6_STREAM};
+
+        for (size_t tIndex = 0; tIndex < SOCKET_TYPES.size(); ++tIndex) {
+            const ntsa::Transport::Value transport = SOCKET_TYPES[tIndex];
+
+            if (transport == ntsa::Transport::e_TCP_IPV4_STREAM &&
+                !ntsu::AdapterUtil::supportsIpv4())
+            {
+                continue;
+            }
+
+            if (transport == ntsa::Transport::e_TCP_IPV6_STREAM &&
+                !ntsu::AdapterUtil::supportsIpv6())
+            {
+                continue;
+            }
+
+            NTSCFG_TEST_LOG_INFO << "Testing " << transport
+                                 << NTSCFG_TEST_LOG_END;
+
+            ntsa::Error error;
+
+            ntsa::Handle socket;
+            {
+                error = ntsu::SocketUtil::create(&socket, transport);
+                NTSCFG_TEST_OK(error);
+            }
+
+            {
+                ntsa::TcpCongestionControl algorithm(&ta);
+                NTSCFG_TEST_OK(
+                    ntsu::SocketOptionUtil::getTcpCongestionControl(&algorithm,
+                                                                    socket));
+            }
+
+            {
+                // for ipv4 and ipv4 available algorithms are written inside the
+                // same file
+                const char* path =
+                    "/proc/sys/net/ipv4/tcp_allowed_congestion_control";
+
+                bsl::ifstream file(path);
+                if (!file.is_open()) {
+                    NTSCFG_TEST_LOG_WARN << "cannot open " << path
+                                         << NTSCFG_TEST_LOG_END;
+                    return;
+                }
+                bsl::string line;
+                bsl::getline(file, line);
+                if (line.empty()) {
+                    return;
+                }
+                bsl::stringstream ssline(line);
+
+                // it is guaranteed that algorithm names are in one line separated
+                // by spaces, so `while` below is enough
+                bsl::string algorithmName;
+                while (ssline >> algorithmName) {
+                    NTSCFG_TEST_LOG_INFO << "Working with " << algorithmName
+                                         << NTSCFG_TEST_LOG_END;
+
+                    ntsa::TcpCongestionControl algorithmToSet(&ta);
+                    {
+                        NTSCFG_TEST_OK(
+                            algorithmToSet.setAlgorithmName(algorithmName));
+
+                        NTSCFG_TEST_OK(
+                            ntsu::SocketOptionUtil::setTcpCongestionControl(
+                                socket,
+                                algorithmToSet));
+                    }
+                    {
+                        ntsa::TcpCongestionControl algorithmToGet(&ta);
+                        NTSCFG_TEST_OK(
+                            ntsu::SocketOptionUtil::getTcpCongestionControl(
+                                &algorithmToGet,
+                                socket));
+                        NTSCFG_TEST_EQ(algorithmToGet, algorithmToSet);
+                    }
+                }
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_OK(error);
+        }
+#endif
+    }
+    NTSCFG_TEST_EQ(ta.numBlocksInUse(), 0);
+}
+
 NTSCFG_TEST_DRIVER
 {
     NTSCFG_TEST_REGISTER(1);
@@ -1982,5 +2101,6 @@ NTSCFG_TEST_DRIVER
     NTSCFG_TEST_REGISTER(6);
     NTSCFG_TEST_REGISTER(7);
     NTSCFG_TEST_REGISTER(8);
+    NTSCFG_TEST_REGISTER(9);
 }
 NTSCFG_TEST_DRIVER_END;

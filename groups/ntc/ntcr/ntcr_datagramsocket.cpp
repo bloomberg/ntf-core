@@ -434,7 +434,7 @@ ntsa::Error DatagramSocket::privateTimestampOutgoingData(
     bool enabled = false;
 
     {
-        ntsa::SocketOption option;
+        ntsa::SocketOption option(d_allocator_p);
         option.makeTimestampOutgoingData(enable);
 
         error = d_socket_sp->setOption(option);
@@ -449,7 +449,7 @@ ntsa::Error DatagramSocket::privateTimestampOutgoingData(
     }
 
     {
-        ntsa::SocketOption option;
+        ntsa::SocketOption option(d_allocator_p);
         error = d_socket_sp->getOption(
             &option,
             ntsa::SocketOptionType::e_TX_TIMESTAMPING);
@@ -518,7 +518,7 @@ ntsa::Error DatagramSocket::privateTimestampIncomingData(
     bool enabled = false;
 
     {
-        ntsa::SocketOption option;
+        ntsa::SocketOption option(d_allocator_p);
         option.makeTimestampIncomingData(enable);
         error = d_socket_sp->setOption(option);
         if (error) {
@@ -532,7 +532,7 @@ ntsa::Error DatagramSocket::privateTimestampIncomingData(
     }
 
     {
-        ntsa::SocketOption option;
+        ntsa::SocketOption option(d_allocator_p);
         error = d_socket_sp->getOption(
             &option,
             ntsa::SocketOptionType::e_RX_TIMESTAMPING);

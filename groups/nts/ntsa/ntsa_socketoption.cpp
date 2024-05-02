@@ -24,8 +24,10 @@ BSLS_IDENT_RCSID(ntsa_socketoption_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsa {
 
-SocketOption::SocketOption(const SocketOption& other)
+SocketOption::SocketOption(const SocketOption& other,
+                           bslma::Allocator*   basicAllocator)
 : d_type(other.d_type)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     switch (d_type) {
     case ntsa::SocketOptionType::e_REUSE_ADDRESS:
@@ -86,8 +88,12 @@ SocketOption::SocketOption(const SocketOption& other)
             other.d_timestampIncomingData.object());
         break;
     case ntsa::SocketOptionType::e_ZERO_COPY:
-        new (d_zeroCopy.buffer()) bool(
-            other.d_zeroCopy.object());
+        new (d_zeroCopy.buffer()) bool(other.d_zeroCopy.object());
+        break;
+    case ntsa::SocketOptionType::e_TCP_CONGESTION_CONTROL:
+        new (d_tcpCongestionControl.buffer())
+            TcpCongestionControl(other.d_tcpCongestionControl.object(),
+                                 d_allocator_p);
         break;
     default:
         BSLS_ASSERT(d_type == ntsa::SocketOptionType::e_UNDEFINED);
@@ -161,8 +167,12 @@ SocketOption& SocketOption::operator=(const SocketOption& other)
             other.d_timestampOutgoingData.object());
         break;
     case ntsa::SocketOptionType::e_ZERO_COPY:
-        new (d_zeroCopy.buffer()) bool(
-            other.d_zeroCopy.object());
+        new (d_zeroCopy.buffer()) bool(other.d_zeroCopy.object());
+        break;
+    case ntsa::SocketOptionType::e_TCP_CONGESTION_CONTROL:
+        new (d_tcpCongestionControl.buffer())
+            TcpCongestionControl(other.d_tcpCongestionControl.object(),
+                                 d_allocator_p);
         break;
     default:
         BSLS_ASSERT(d_type == ntsa::SocketOptionType::e_UNDEFINED);
@@ -460,7 +470,7 @@ ntsa::Linger& SocketOption::makeLinger()
     }
     else {
         this->reset();
-        new (d_reuseAddress.buffer()) bool();
+        new (d_linger.buffer()) bool();
         d_type = ntsa::SocketOptionType::e_LINGER;
     }
 
@@ -649,6 +659,37 @@ bool& SocketOption::makeZeroCopy(bool value)
     return d_zeroCopy.object();
 }
 
+ntsa::TcpCongestionControl& SocketOption::makeTcpCongestionControl()
+{
+    if (d_type == ntsa::SocketOptionType::e_TCP_CONGESTION_CONTROL) {
+        d_tcpCongestionControl.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_tcpCongestionControl.buffer())
+            TcpCongestionControl(d_allocator_p);
+        d_type = ntsa::SocketOptionType::e_TCP_CONGESTION_CONTROL;
+    }
+
+    return d_tcpCongestionControl.object();
+}
+
+ntsa::TcpCongestionControl& SocketOption::makeTcpCongestionControl(
+    const ntsa::TcpCongestionControl& value)
+{
+    if (d_type == ntsa::SocketOptionType::e_TCP_CONGESTION_CONTROL) {
+        d_tcpCongestionControl.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_tcpCongestionControl.buffer())
+            ntsa::TcpCongestionControl(value, d_allocator_p);
+        d_type = ntsa::SocketOptionType::e_TCP_CONGESTION_CONTROL;
+    }
+
+    return d_tcpCongestionControl.object();
+}
+
 bool SocketOption::equals(const SocketOption& other) const
 {
     if (d_type != other.d_type) {
@@ -663,22 +704,21 @@ bool SocketOption::equals(const SocketOption& other) const
     case ntsa::SocketOptionType::e_CORK:
         return d_cork.object() == other.d_cork.object();
     case ntsa::SocketOptionType::e_DELAY_TRANSMISSION:
-        return d_delayTransmission.object() == 
+        return d_delayTransmission.object() ==
                other.d_delayTransmission.object();
     case ntsa::SocketOptionType::e_DELAY_ACKNOWLEDGEMENT:
-        return d_delayAcknowledgement.object() == 
+        return d_delayAcknowledgement.object() ==
                other.d_delayAcknowledgement.object();
     case ntsa::SocketOptionType::e_SEND_BUFFER_SIZE:
-        return d_sendBufferSize.object() == 
-               other.d_sendBufferSize.object();
+        return d_sendBufferSize.object() == other.d_sendBufferSize.object();
     case ntsa::SocketOptionType::e_SEND_BUFFER_LOW_WATERMARK:
-        return d_sendBufferLowWatermark.object() == 
+        return d_sendBufferLowWatermark.object() ==
                other.d_sendBufferLowWatermark.object();
     case ntsa::SocketOptionType::e_RECEIVE_BUFFER_SIZE:
-        return d_receiveBufferSize.object() == 
+        return d_receiveBufferSize.object() ==
                other.d_receiveBufferSize.object();
     case ntsa::SocketOptionType::e_RECEIVE_BUFFER_LOW_WATERMARK:
-        return d_receiveBufferLowWatermark.object() == 
+        return d_receiveBufferLowWatermark.object() ==
                other.d_receiveBufferLowWatermark.object();
     case ntsa::SocketOptionType::e_DEBUG:
         return d_debug.object() == other.d_debug.object();
@@ -689,17 +729,19 @@ bool SocketOption::equals(const SocketOption& other) const
     case ntsa::SocketOptionType::e_BYPASS_ROUTING:
         return d_bypassRouting.object() == other.d_bypassRouting.object();
     case ntsa::SocketOptionType::e_INLINE_OUT_OF_BAND_DATA:
-        return d_inlineOutOfBandData.object() == 
+        return d_inlineOutOfBandData.object() ==
                other.d_inlineOutOfBandData.object();
     case ntsa::SocketOptionType::e_RX_TIMESTAMPING:
-        return d_timestampIncomingData.object() == 
+        return d_timestampIncomingData.object() ==
                other.d_timestampIncomingData.object();
     case ntsa::SocketOptionType::e_TX_TIMESTAMPING:
-        return d_timestampOutgoingData.object() == 
+        return d_timestampOutgoingData.object() ==
                other.d_timestampOutgoingData.object();
     case ntsa::SocketOptionType::e_ZERO_COPY:
-        return d_zeroCopy.object() == 
-               other.d_zeroCopy.object();
+        return d_zeroCopy.object() == other.d_zeroCopy.object();
+    case ntsa::SocketOptionType::e_TCP_CONGESTION_CONTROL:
+        return d_tcpCongestionControl.object() ==
+               other.d_tcpCongestionControl.object();
     default:
         return true;
     }
@@ -719,22 +761,21 @@ bool SocketOption::less(const SocketOption& other) const
     case ntsa::SocketOptionType::e_CORK:
         return d_cork.object() < other.d_cork.object();
     case ntsa::SocketOptionType::e_DELAY_TRANSMISSION:
-        return d_delayTransmission.object() < 
+        return d_delayTransmission.object() <
                other.d_delayTransmission.object();
     case ntsa::SocketOptionType::e_DELAY_ACKNOWLEDGEMENT:
-        return d_delayAcknowledgement.object() < 
+        return d_delayAcknowledgement.object() <
                other.d_delayAcknowledgement.object();
     case ntsa::SocketOptionType::e_SEND_BUFFER_SIZE:
-        return d_sendBufferSize.object() < 
-               other.d_sendBufferSize.object();
+        return d_sendBufferSize.object() < other.d_sendBufferSize.object();
     case ntsa::SocketOptionType::e_SEND_BUFFER_LOW_WATERMARK:
-        return d_sendBufferLowWatermark.object() < 
+        return d_sendBufferLowWatermark.object() <
                other.d_sendBufferLowWatermark.object();
     case ntsa::SocketOptionType::e_RECEIVE_BUFFER_SIZE:
-        return d_receiveBufferSize.object() < 
+        return d_receiveBufferSize.object() <
                other.d_receiveBufferSize.object();
     case ntsa::SocketOptionType::e_RECEIVE_BUFFER_LOW_WATERMARK:
-        return d_receiveBufferLowWatermark.object() < 
+        return d_receiveBufferLowWatermark.object() <
                other.d_receiveBufferLowWatermark.object();
     case ntsa::SocketOptionType::e_DEBUG:
         return d_debug.object() < other.d_debug.object();
@@ -745,16 +786,19 @@ bool SocketOption::less(const SocketOption& other) const
     case ntsa::SocketOptionType::e_BYPASS_ROUTING:
         return d_bypassRouting.object() < other.d_bypassRouting.object();
     case ntsa::SocketOptionType::e_INLINE_OUT_OF_BAND_DATA:
-        return d_inlineOutOfBandData.object() < 
+        return d_inlineOutOfBandData.object() <
                other.d_inlineOutOfBandData.object();
     case ntsa::SocketOptionType::e_RX_TIMESTAMPING:
-        return d_timestampIncomingData.object() < 
+        return d_timestampIncomingData.object() <
                other.d_timestampIncomingData.object();
     case ntsa::SocketOptionType::e_TX_TIMESTAMPING:
-        return d_timestampOutgoingData.object() < 
+        return d_timestampOutgoingData.object() <
                other.d_timestampOutgoingData.object();
     case ntsa::SocketOptionType::e_ZERO_COPY:
         return d_zeroCopy.object() < other.d_zeroCopy.object();
+    case ntsa::SocketOptionType::e_TCP_CONGESTION_CONTROL:
+        return d_tcpCongestionControl.object() <
+               other.d_tcpCongestionControl.object();
     default:
         return true;
     }
@@ -815,6 +859,9 @@ bsl::ostream& SocketOption::print(bsl::ostream& stream,
         break;
     case ntsa::SocketOptionType::e_ZERO_COPY:
         stream << d_zeroCopy.object();
+        break;
+    case ntsa::SocketOptionType::e_TCP_CONGESTION_CONTROL:
+        stream << d_tcpCongestionControl.object();
         break;
     default:
         BSLS_ASSERT(d_type == ntsa::SocketOptionType::e_UNDEFINED);

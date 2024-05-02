@@ -44,6 +44,7 @@ int SocketOptionType::fromInt(SocketOptionType::Value* result, int number)
     case SocketOptionType::e_RX_TIMESTAMPING:
     case SocketOptionType::e_TX_TIMESTAMPING:
     case SocketOptionType::e_ZERO_COPY:
+    case SocketOptionType::e_TCP_CONGESTION_CONTROL:
         *result = static_cast<SocketOptionType::Value>(number);
         return 0;
     default:
@@ -127,6 +128,10 @@ int SocketOptionType::fromString(SocketOptionType::Value* result,
         *result = e_ZERO_COPY;
         return 0;
     }
+    if (bdlb::String::areEqualCaseless(string, "TCP_CONGESTION_CONTROL")) {
+        *result = e_TCP_CONGESTION_CONTROL;
+        return 0;
+    }
 
     return -1;
 }
@@ -187,6 +192,9 @@ const char* SocketOptionType::toString(SocketOptionType::Value value)
     } break;
     case e_ZERO_COPY: {
         return "ZERO_COPY";
+    } break;
+    case e_TCP_CONGESTION_CONTROL: {
+        return "TCP_CONGESTION_CONTROL";
     } break;
     }
 

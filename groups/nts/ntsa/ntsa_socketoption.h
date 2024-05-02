@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntsa_linger.h>
 #include <ntsa_socketoptiontype.h>
+#include <ntsa_tcpcongestioncontrol.h>
 #include <ntscfg_platform.h>
 #include <ntsscm_version.h>
 #include <bslh_hash.h>
@@ -35,7 +36,7 @@ namespace ntsa {
 /// Provide a union of socket options.
 ///
 /// @details
-/// Provide a value-semantic type that represents a discriminated union of 
+/// Provide a value-semantic type that represents a discriminated union of
 /// socket options.
 ///
 /// @par Attributes
@@ -117,6 +118,9 @@ namespace ntsa {
 /// The flag that indicates each send operation can request copy avoidance when
 /// enqueing data to the socket send buffer.
 ///
+/// @li @b tcpCongestionControl:
+/// The option controls which TCP congestion control algorithm is used.
+///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
@@ -141,17 +145,24 @@ class SocketOption
         bsls::ObjectBuffer<bool>         d_timestampIncomingData;
         bsls::ObjectBuffer<bool>         d_timestampOutgoingData;
         bsls::ObjectBuffer<bool>         d_zeroCopy;
+        bsls::ObjectBuffer<ntsa::TcpCongestionControl> d_tcpCongestionControl;
     };
 
     ntsa::SocketOptionType::Value d_type;
+    bslma::Allocator*             d_allocator_p;
 
   public:
-    /// Create a new socketoption having an undefined type.
-    SocketOption();
+    /// Create a new socketoption having an undefined type. Optionally specify
+    /// a 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    // currently installed default allocator is used.
+    explicit SocketOption(bslma::Allocator* basicAllocator = 0);
 
     /// Create a new address having the same value as the specified 'other'
-    /// object.
-    SocketOption(const SocketOption& other);
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
+    SocketOption(const SocketOption& other,
+                 bslma::Allocator*   basicAllocator = 0);
 
     /// Destroy this object.
     ~SocketOption();
@@ -300,6 +311,15 @@ class SocketOption
     /// 'value'. Return a reference to the modifiable representation.
     bool& makeZeroCopy(bool value);
 
+    /// Select the "tcpCongestionControl" representation. Return a reference to
+    /// the modifiable representation.
+    TcpCongestionControl& makeTcpCongestionControl();
+
+    /// Select the "tcpCongestionControl" representation initially having the
+    /// specified 'value'. Return a reference to the modifiable representation.
+    TcpCongestionControl& makeTcpCongestionControl(
+        const TcpCongestionControl& value);
+
     /// Return a reference to the modifiable "reuseAddress" representation. The
     /// behavior is undefined unless 'isReuseAddress()' is true.
     bool& reuseAddress();
@@ -376,6 +396,11 @@ class SocketOption
     /// behavior is undefined unless 'isZeroCopy()' is true.
     bool& zeroCopy();
 
+    /// Return a reference to the modifiable "tcpCongestionControl"
+    /// representation. The behavior is undefined unless
+    /// 'isTcpCongestionControl()' is true.
+    TcpCongestionControl& tcpCongestionControl();
+
     /// Return the non-modifiable "reuseAddress" representation. The behavior
     /// is undefined unless 'isReuseAddress()' is true.
     bool reuseAddress() const;
@@ -444,6 +469,11 @@ class SocketOption
     /// Return the non-modifiable "zeroCopy" representation. The behavior is
     /// undefined unless 'isZeroCopy()' is true.
     bool zeroCopy() const;
+
+    /// Return a reference to the non-modifiable "tcpCongestionControl"
+    /// representation. The behavior is undefined unless
+    /// 'isTcpCongestionControl()' is true.
+    const TcpCongestionControl& tcpCongestionControl() const;
 
     /// Return the type of the option representation.
     enum ntsa::SocketOptionType::Value type() const;
@@ -520,6 +550,10 @@ class SocketOption
     /// otherwise return false.
     bool isZeroCopy() const;
 
+    /// Return true if the "tcpCongestionControl" representation is currently
+    /// selected, otherwise return false.
+    bool isTcpCongestionControl() const;
+
     /// Return true if this object has the same value as the specified 'other'
     /// object, otherwise return false.
     bool equals(const SocketOption& other) const;
@@ -545,7 +579,7 @@ class SocketOption
     /// Defines the traits of this type. These traits can be used to select, at
     /// compile-time, the most efficient algorithm to manipulate objects of
     /// this type.
-    NTSCFG_DECLARE_NESTED_BITWISE_MOVABLE_TRAITS(SocketOption);
+    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(SocketOption);
 };
 
 /// Write the specified 'object' to the specified 'stream'. Return a modifiable
@@ -574,14 +608,18 @@ template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const SocketOption& value);
 
 NTSCFG_INLINE
-SocketOption::SocketOption()
+SocketOption::SocketOption(bslma::Allocator* basicAllocator)
 : d_type(ntsa::SocketOptionType::e_UNDEFINED)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
 NTSCFG_INLINE
 SocketOption::~SocketOption()
 {
+    if (isTcpCongestionControl()) {
+        d_tcpCongestionControl.object().~TcpCongestionControl();
+    }
 }
 
 NTSCFG_INLINE
@@ -711,6 +749,13 @@ bool& SocketOption::zeroCopy()
 }
 
 NTSCFG_INLINE
+TcpCongestionControl& SocketOption::tcpCongestionControl()
+{
+    BSLS_ASSERT(d_type == ntsa::SocketOptionType::e_TCP_CONGESTION_CONTROL);
+    return d_tcpCongestionControl.object();
+}
+
+NTSCFG_INLINE
 bool SocketOption::reuseAddress() const
 {
     BSLS_ASSERT(d_type == ntsa::SocketOptionType::e_REUSE_ADDRESS);
@@ -831,6 +876,13 @@ bool SocketOption::zeroCopy() const
 }
 
 NTSCFG_INLINE
+const TcpCongestionControl& SocketOption::tcpCongestionControl() const
+{
+    BSLS_ASSERT(d_type == ntsa::SocketOptionType::e_TCP_CONGESTION_CONTROL);
+    return d_tcpCongestionControl.object();
+}
+
+NTSCFG_INLINE
 ntsa::SocketOptionType::Value SocketOption::type() const
 {
     return d_type;
@@ -945,6 +997,12 @@ bool SocketOption::isZeroCopy() const
 }
 
 NTSCFG_INLINE
+bool SocketOption::isTcpCongestionControl() const
+{
+    return (d_type == ntsa::SocketOptionType::e_TCP_CONGESTION_CONTROL);
+}
+
+NTSCFG_INLINE
 bsl::ostream& operator<<(bsl::ostream& stream, const SocketOption& object)
 {
     return object.print(stream, 0, -1);
@@ -1023,6 +1081,9 @@ void hashAppend(HASH_ALGORITHM& algorithm, const SocketOption& value)
     }
     else if (value.isZeroCopy()) {
         hashAppend(algorithm, value.zeroCopy());
+    }
+    else if (value.isTcpCongestionControl()) {
+        hashAppend(algorithm, value.tcpCongestionControl());
     }
 }
 

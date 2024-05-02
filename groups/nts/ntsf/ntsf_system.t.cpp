@@ -635,6 +635,42 @@ NTSCFG_TEST_CASE(5)
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
+NTSCFG_TEST_CASE(6)
+{
+    // Concern: test that loadTcpCongestionControlAlgorithmSupport does not
+    // contradict with testTcpCongestionControlAlgorithmSupport
+
+    ntscfg::TestAllocator ta;
+    {
+        bsl::vector<bsl::string> supportedAlgorithms(&ta);
+
+        const ntsa::Error error =
+            ntsf::System::loadTcpCongestionControlAlgorithmSupport(
+                &supportedAlgorithms);
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+        NTSCFG_TEST_OK(error);
+
+        for (bsl::vector<bsl::string>::const_iterator it =
+                 supportedAlgorithms.cbegin();
+             it != supportedAlgorithms.cend();
+             ++it)
+        {
+            NTSCFG_TEST_TRUE(
+                ntsf::System::testTcpCongestionControlAlgorithmSupport(*it));
+        }
+#else
+        NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
+#endif
+
+        // test some random unsupported name:
+        NTSCFG_TEST_FALSE(
+            ntsf::System::testTcpCongestionControlAlgorithmSupport(
+                "random_name"));
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
 NTSCFG_TEST_DRIVER
 {
     NTSCFG_TEST_REGISTER(1);
@@ -642,5 +678,6 @@ NTSCFG_TEST_DRIVER
     NTSCFG_TEST_REGISTER(3);
     NTSCFG_TEST_REGISTER(4);
     NTSCFG_TEST_REGISTER(5);
+    NTSCFG_TEST_REGISTER(6);
 }
 NTSCFG_TEST_DRIVER_END;

@@ -142,6 +142,13 @@ struct SocketOptionUtil {
     /// flag. Return the error.
     static ntsa::Error setZeroCopy(ntsa::Handle socket, bool zeroCopy);
 
+    /// Set the option for the specified 'socket' that sets
+    /// TCP_CONGESTION_CONTROL algorithm to the specified `algorithm`.
+    /// Return the error.
+    static ntsa::Error setTcpCongestionControl(
+        ntsa::Handle                      socket,
+        const ntsa::TcpCongestionControl& algorithm);
+
     /// Load into the specified 'option' the socket option of the specified
     /// 'type' for the specified 'socket'. Return the error.
     static ntsa::Error getOption(ntsa::SocketOption*           option,
@@ -239,8 +246,14 @@ struct SocketOptionUtil {
     /// Load into the specified 'zeroCopyFlag' the option for the specified
     /// 'socket' that indicates if Linux MSG_ZEROCOPY mechanism can be used.
     ///  Return the error.
-    static ntsa::Error getZeroCopy(bool*        zeroCopyFlag,
-                                   ntsa::Handle socket);
+    static ntsa::Error getZeroCopy(bool* zeroCopyFlag, ntsa::Handle socket);
+
+    /// Load into the specified 'algorithm' the option for the specified
+    /// 'socket' that indicates which TCP_CONGESTION_CONTROL algorithm is used.
+    /// Return the error.
+    static ntsa::Error getTcpCongestionControl(
+        ntsa::TcpCongestionControl* algorithm,
+        ntsa::Handle                socket);
 
     /// Load into the specified 'size' the option for the specified 'socket'
     /// that indicates the amount of space left in the send buffer. Return
@@ -310,7 +323,6 @@ struct SocketOptionUtil {
     /// Return true if the specified 'socket' supports zero-copy, otherwise
     /// return false.
     static bool supportsZeroCopy(ntsa::Handle socket);
-
 };
 
 }  // end namespace ntsu

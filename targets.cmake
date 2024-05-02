@@ -153,6 +153,8 @@ if (${NTF_BUILD_WITH_NTS})
     ntf_component(NAME ntsa_socketinfo)
     ntf_component(NAME ntsa_socketinfofilter)
     ntf_component(NAME ntsa_socketstate)
+    ntf_component(NAME ntsa_tcpcongestioncontrol)
+    ntf_component(NAME ntsa_tcpcongestioncontrolalgorithm)
     ntf_component(NAME ntsa_temporary)
     ntf_component(NAME ntsa_transport)
     ntf_component(NAME ntsa_timestamp)
@@ -216,13 +218,11 @@ if (${NTF_BUILD_WITH_NTS})
     )
 
     ntf_component(NAME ntsu_adapterutil)
-    ntf_component(NAME ntsu_bufferutil)
     ntf_component(NAME ntsu_zerocopyutil)
     ntf_component(NAME ntsu_resolverutil)
     ntf_component(NAME ntsu_socketutil)
     ntf_component(NAME ntsu_socketoptionutil)
     ntf_component(NAME ntsu_timestamputil)
-
 
     ntf_package_end(NAME ntsu)
 
@@ -713,15 +713,19 @@ if (${NTF_BUILD_WITH_NTC})
         PRIVATE
     )
 
+    ntf_component(NAME ntcd_blobbufferfactory)
     ntf_component(NAME ntcd_datagramsocket)
+    ntf_component(NAME ntcd_datapool)
     ntf_component(NAME ntcd_datautil)
     ntf_component(NAME ntcd_encryption)
     ntf_component(NAME ntcd_listenersocket)
     ntf_component(NAME ntcd_machine)
     ntf_component(NAME ntcd_proactor)
     ntf_component(NAME ntcd_reactor)
+    ntf_component(NAME ntcd_resolver)
     ntf_component(NAME ntcd_streamsocket)
     ntf_component(NAME ntcd_simulation)
+    ntf_component(NAME ntcd_timer)
 
     ntf_package_end(NAME ntcd)
 

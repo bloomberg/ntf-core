@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntca_reactorconfig.h>
 #include <ntccfg_platform.h>
+#include <ntccfg_test.h>
 #include <ntcd_datagramsocket.h>
 #include <ntcd_listenersocket.h>
 #include <ntcd_streamsocket.h>
@@ -100,7 +101,7 @@ class Reactor : public ntci::Reactor,
     bslma::Allocator*                           d_allocator_p;
 
   private:
-    Reactor(const Reactor&) BSLS_KEYWORD_DELETED;
+             Reactor(const Reactor&) BSLS_KEYWORD_DELETED;
     Reactor& operator=(const Reactor&) BSLS_KEYWORD_DELETED;
 
   private:
@@ -598,7 +599,7 @@ class ReactorFactory : public ntci::ReactorFactory
     bslma::Allocator* d_allocator_p;
 
   private:
-    ReactorFactory(const ReactorFactory&) BSLS_KEYWORD_DELETED;
+                    ReactorFactory(const ReactorFactory&) BSLS_KEYWORD_DELETED;
     ReactorFactory& operator=(const ReactorFactory&) BSLS_KEYWORD_DELETED;
 
   public:
@@ -620,6 +621,162 @@ class ReactorFactory : public ntci::ReactorFactory
         const bsl::shared_ptr<ntci::User>& user,
         bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
 };
+
+NTF_MOCK_CLASS(ReactorMock, ntci::Reactor)
+
+NTF_MOCK_METHOD(bsl::shared_ptr<ntci::DatagramSocket>,
+                createDatagramSocket,
+                const ntca::DatagramSocketOptions&,
+                bslma::Allocator*)
+NTF_MOCK_METHOD(bsl::shared_ptr<ntsa::Data>, createIncomingData)
+NTF_MOCK_METHOD(bsl::shared_ptr<ntsa::Data>, createOutgoingData)
+NTF_MOCK_METHOD(bsl::shared_ptr<bdlbb::Blob>, createIncomingBlob)
+NTF_MOCK_METHOD(bsl::shared_ptr<bdlbb::Blob>, createOutgoingBlob)
+NTF_MOCK_METHOD(void, createIncomingBlobBuffer, bdlbb::BlobBuffer*)
+NTF_MOCK_METHOD(void, createOutgoingBlobBuffer, bdlbb::BlobBuffer*)
+
+NTF_MOCK_METHOD_CONST(const bsl::shared_ptr<bdlbb::BlobBufferFactory>&,
+                      incomingBlobBufferFactory)
+NTF_MOCK_METHOD_CONST(const bsl::shared_ptr<bdlbb::BlobBufferFactory>&,
+                      outgoingBlobBufferFactory)
+
+NTF_MOCK_METHOD(ntci::Waiter, registerWaiter, const ntca::WaiterOptions&)
+NTF_MOCK_METHOD(void, deregisterWaiter, ntci::Waiter)
+NTF_MOCK_METHOD(void, run, ntci::Waiter)
+NTF_MOCK_METHOD(void, poll, ntci::Waiter)
+NTF_MOCK_METHOD(void, interruptOne)
+NTF_MOCK_METHOD(void, interruptAll)
+NTF_MOCK_METHOD(void, stop)
+NTF_MOCK_METHOD(void, restart)
+NTF_MOCK_METHOD(void, execute, const Functor&)
+NTF_MOCK_METHOD(void, moveAndExecute, FunctorSequence*, const Functor&)
+NTF_MOCK_METHOD(bsl::shared_ptr<ntci::ListenerSocket>,
+                createListenerSocket,
+                const ntca::ListenerSocketOptions&,
+                bslma::Allocator*)
+
+NTF_MOCK_METHOD(ntsa::Error,
+                attachSocket,
+                const bsl::shared_ptr<ntci::ReactorSocket>&)
+NTF_MOCK_METHOD(ntsa::Error, attachSocket, ntsa::Handle)
+NTF_MOCK_METHOD(ntsa::Error,
+                showReadable,
+                const bsl::shared_ptr<ntci::ReactorSocket>&,
+                const ntca::ReactorEventOptions&)
+NTF_MOCK_METHOD(ntsa::Error,
+                showReadable,
+                ntsa::Handle,
+                const ntca::ReactorEventOptions&,
+                const ntci::ReactorEventCallback&)
+
+NTF_MOCK_METHOD(ntsa::Error,
+                showWritable,
+                const bsl::shared_ptr<ntci::ReactorSocket>&,
+                const ntca::ReactorEventOptions&)
+NTF_MOCK_METHOD(ntsa::Error,
+                showWritable,
+                ntsa::Handle,
+                const ntca::ReactorEventOptions&,
+                const ntci::ReactorEventCallback&)
+
+NTF_MOCK_METHOD(ntsa::Error,
+                showError,
+                const bsl::shared_ptr<ntci::ReactorSocket>&,
+                const ntca::ReactorEventOptions&)
+NTF_MOCK_METHOD(ntsa::Error,
+                showError,
+                ntsa::Handle,
+                const ntca::ReactorEventOptions&,
+                const ntci::ReactorEventCallback&)
+
+NTF_MOCK_METHOD(ntsa::Error,
+                hideReadable,
+                const bsl::shared_ptr<ntci::ReactorSocket>&)
+NTF_MOCK_METHOD(ntsa::Error, hideReadable, ntsa::Handle)
+NTF_MOCK_METHOD(ntsa::Error,
+                hideWritable,
+                const bsl::shared_ptr<ntci::ReactorSocket>&)
+NTF_MOCK_METHOD(ntsa::Error, hideWritable, ntsa::Handle)
+NTF_MOCK_METHOD(ntsa::Error,
+                hideError,
+                const bsl::shared_ptr<ntci::ReactorSocket>&)
+NTF_MOCK_METHOD(ntsa::Error, hideError, ntsa::Handle)
+NTF_MOCK_METHOD(ntsa::Error,
+                detachSocket,
+                const bsl::shared_ptr<ntci::ReactorSocket>&)
+NTF_MOCK_METHOD(ntsa::Error, detachSocket, ntsa::Handle)
+
+NTF_MOCK_METHOD(ntsa::Error,
+                detachSocket,
+                const bsl::shared_ptr<ntci::ReactorSocket>&,
+                const ntci::SocketDetachedCallback&)
+NTF_MOCK_METHOD(ntsa::Error,
+                detachSocket,
+                ntsa::Handle,
+                const ntci::SocketDetachedCallback&)
+
+NTF_MOCK_METHOD(ntsa::Error, closeAll)
+NTF_MOCK_METHOD(void, incrementLoad, const ntca::LoadBalancingOptions&)
+NTF_MOCK_METHOD(void, decrementLoad, const ntca::LoadBalancingOptions&)
+
+NTF_MOCK_METHOD(void, drainFunctions)
+NTF_MOCK_METHOD(void, clearFunctions)
+NTF_MOCK_METHOD(void, clearTimers)
+NTF_MOCK_METHOD(void, clearSockets)
+NTF_MOCK_METHOD(void, clear)
+NTF_MOCK_METHOD_CONST(size_t, numSockets)
+NTF_MOCK_METHOD_CONST(size_t, maxSockets)
+NTF_MOCK_METHOD_CONST(size_t, numTimers)
+NTF_MOCK_METHOD_CONST(size_t, maxTimers)
+NTF_MOCK_METHOD_CONST(bool, autoAttach)
+NTF_MOCK_METHOD_CONST(bool, autoDetach)
+NTF_MOCK_METHOD_CONST(bool, oneShot)
+NTF_MOCK_METHOD_CONST(ntca::ReactorEventTrigger::Value, trigger)
+NTF_MOCK_METHOD_CONST(size_t, load)
+NTF_MOCK_METHOD_CONST(bslmt::ThreadUtil::Handle, threadHandle)
+NTF_MOCK_METHOD_CONST(size_t, threadIndex)
+NTF_MOCK_METHOD_CONST(bool, empty)
+NTF_MOCK_METHOD_CONST(const bsl::shared_ptr<ntci::DataPool>&, dataPool)
+
+NTF_MOCK_METHOD_CONST(bool, supportsOneShot, bool)
+NTF_MOCK_METHOD_CONST(bool, supportsTrigger, ntca::ReactorEventTrigger::Value)
+
+NTF_MOCK_METHOD(bsl::shared_ptr<ntci::Reactor>,
+                acquireReactor,
+                const ntca::LoadBalancingOptions&)
+NTF_MOCK_METHOD(void,
+                releaseReactor,
+                const bsl::shared_ptr<ntci::Reactor>&,
+                const ntca::LoadBalancingOptions&)
+NTF_MOCK_METHOD(bool, acquireHandleReservation)
+NTF_MOCK_METHOD(void, releaseHandleReservation)
+
+NTF_MOCK_METHOD_CONST(size_t, numReactors)
+NTF_MOCK_METHOD_CONST(size_t, numThreads)
+NTF_MOCK_METHOD_CONST(size_t, minThreads)
+NTF_MOCK_METHOD_CONST(size_t, maxThreads)
+
+NTF_MOCK_METHOD(bsl::shared_ptr<ntci::Strand>, createStrand, bslma::Allocator*)
+
+NTF_MOCK_METHOD(bsl::shared_ptr<ntci::StreamSocket>,
+                createStreamSocket,
+                const ntca::StreamSocketOptions&,
+                bslma::Allocator*)
+
+NTF_MOCK_METHOD(bsl::shared_ptr<ntci::Timer>,
+                createTimer,
+                const ntca::TimerOptions&,
+                const bsl::shared_ptr<ntci::TimerSession>&,
+                bslma::Allocator*)
+NTF_MOCK_METHOD(bsl::shared_ptr<ntci::Timer>,
+                createTimer,
+                const ntca::TimerOptions&,
+                const ntci::TimerCallback&,
+                bslma::Allocator*)
+NTF_MOCK_METHOD_CONST(const bsl::shared_ptr<ntci::Strand>&, strand)
+NTF_MOCK_METHOD_CONST(bsls::TimeInterval, currentTime)
+
+NTF_MOCK_CLASS_END;
 
 }  // close package namespace
 }  // close enterprise namespace
