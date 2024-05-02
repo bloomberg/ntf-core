@@ -54,6 +54,8 @@
 #include <bslmt_threadutil.h>
 #include <bsl_unordered_map.h>
 
+#if NTCCFG_TEST_MOCK_ENABLED
+
 using namespace BloombergLP;
 
 // Uncomment to test a particular style of socket-to-thread load balancing,
@@ -4543,3 +4545,17 @@ NTCCFG_TEST_DRIVER
     NTCCFG_TEST_REGISTER(27);
 }
 NTCCFG_TEST_DRIVER_END;
+
+#else
+
+NTCCFG_TEST_CASE(1)
+{
+}
+
+NTCCFG_TEST_DRIVER
+{
+    NTCCFG_TEST_REGISTER(1);
+}
+NTCCFG_TEST_DRIVER_END;
+
+#endif

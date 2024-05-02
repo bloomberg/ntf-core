@@ -249,6 +249,8 @@ class StreamSocketFactory : public ntci::StreamSocketFactory
         bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
 };
 
+#if NTCCFG_TEST_MOCK_ENABLED
+
 NTF_MOCK_CLASS(StreamSocketMock, ntsi::StreamSocket)
 
 NTF_MOCK_METHOD_CONST(ntsa::Handle, handle)
@@ -299,6 +301,8 @@ NTF_MOCK_METHOD(ntsa::Error, getLastError, ntsa::Error*)
 NTF_MOCK_METHOD_CONST(bsl::size_t, maxBuffersPerSend)
 NTF_MOCK_METHOD_CONST(bsl::size_t, maxBuffersPerReceive)
 NTF_MOCK_CLASS_END;
+
+#endif
 
 }  // close package namespace
 }  // close enterprise namespace

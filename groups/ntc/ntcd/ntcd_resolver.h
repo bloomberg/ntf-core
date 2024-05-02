@@ -24,6 +24,8 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntcd {
 
+#if NTCCFG_TEST_MOCK_ENABLED
+
 NTF_MOCK_CLASS(ResolverMock, ntci::Resolver)
 
 NTF_MOCK_METHOD(void, execute, const Functor&)
@@ -123,6 +125,7 @@ NTF_MOCK_METHOD_CONST(bsls::TimeInterval, currentTime)
 
 NTF_MOCK_CLASS_END;
 
+#endif
 
 }  // close package namespace
 }  // close enterprise namespace
