@@ -1,5 +1,13 @@
-ntf-core (2.3.6) unstable; urgency=low
+ntf-core (2.3.7) unstable; urgency=low
 
+  * 4b84e95 Release 2.3.7 (#152)
+  * d2f23c8 Disable mocking test framework and dependant tests unless built with C++20
+
+ -- Matt Millett <mmillett2@bloomberg.net>  Thu, 2 May 2024 12:49:48 -0400
+
+ntf-core (2.3.6) git; urgency=low
+
+  * d4d0674 Release 2.3.6 to DPKG
   * 9f50b57 Release 2.3.6
   * 64cf5da Eliminate warnings from unused variables on platforms that do not support congestion control algorithm specification
   * 174e5b4 Introduce slimmer wrapper around 'recv' for simple use-cases
@@ -7,7 +15,7 @@ ntf-core (2.3.6) unstable; urgency=low
   * ab4c796 Publicize buffer algorithms previously in ntsu_buffer to ntsa_buffer
   * 33fd060 Implement a mocking testing framework and test the ntcr::StreamSocket shutdown sequence during connection phase using a white-box testing approach
 
- -- Matt Millett <mmillett2@bloomberg.net>  Thu, 2 May 2024 11:29:43 -0400
+ -- Matt Millett <mmillett2@bloomberg.net>  Thu, 2 May 2024 11:32:31 -0400
 
 ntf-core (2.3.5) git; urgency=low
 
