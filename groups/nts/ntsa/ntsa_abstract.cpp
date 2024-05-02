@@ -737,7 +737,7 @@ ntsa::Error AbstractSyntaxEncoderFrame::encodeValue(const ntsa::AbstractBitSeque
         return error;
     }
 
-    error = this->writeContent(value.data(), value.size());
+    error = this->writeContent(value.data(), value.numBytes());
     if (error) {
         return error;
     }
@@ -2678,6 +2678,7 @@ ntsa::Error AbstractSyntaxDecoder::decodeValue(bsl::string* result)
 
     if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
         if (context.tagNumber() != AbstractSyntaxTagNumber::e_UTF8_STRING &&
+            context.tagNumber() != AbstractSyntaxTagNumber::e_IA5_STRING &&
             context.tagNumber() != AbstractSyntaxTagNumber::e_VISIBLE_STRING &&
             context.tagNumber() != AbstractSyntaxTagNumber::e_PRINTABLE_STRING)
         {
@@ -2856,6 +2857,7 @@ ntsa::Error AbstractSyntaxDecoder::decodeValue(AbstractString* result)
 
     if (context.tagClass() == AbstractSyntaxTagClass::e_UNIVERSAL) {
         if (context.tagNumber() != AbstractSyntaxTagNumber::e_UTF8_STRING &&
+            context.tagNumber() != AbstractSyntaxTagNumber::e_IA5_STRING &&
             context.tagNumber() != AbstractSyntaxTagNumber::e_VISIBLE_STRING &&
             context.tagNumber() != AbstractSyntaxTagNumber::e_PRINTABLE_STRING)
         {
@@ -4460,6 +4462,7 @@ ntsa::Error AbstractString::convert(bsl::string* result) const
 
     if (d_type != AbstractSyntaxTagNumber::e_PRINTABLE_STRING &&
         d_type != AbstractSyntaxTagNumber::e_CHARACTER_STRING &&
+        d_type != AbstractSyntaxTagNumber::e_IA5_STRING &&
         d_type != AbstractSyntaxTagNumber::e_UTF8_STRING)
     {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -4533,8 +4536,17 @@ bool operator<(const AbstractString& lhs, const AbstractString& rhs)
 
 
 
-
-
+void AbstractBitSequence::normalize()
+{
+    while (!d_data.empty()) {
+        if (d_data.back() == 0) {
+            d_data.pop_back();
+        }
+        else {
+            break;
+        }
+    }
+}
 
 AbstractBitSequence::AbstractBitSequence(bslma::Allocator* basicAllocator)
 : d_type(AbstractSyntaxTagNumber::e_BIT_STRING)
@@ -4573,16 +4585,6 @@ void AbstractBitSequence::reset()
     d_numBitsOmitted = 0;
 }
 
-void AbstractBitSequence::resize(bsl::size_t size)
-{
-    d_data.resize(size);
-}
-
-void AbstractBitSequence::append(AbstractBit value)
-{
-    d_data.push_back(value);
-}
-
 ntsa::Error AbstractBitSequence::read(
     bsl::streambuf* source, bsl::size_t size)
 {
@@ -4605,14 +4607,33 @@ ntsa::Error AbstractBitSequence::read(
     return error; 
 }
 
-void AbstractBitSequence::set(bsl::size_t index, AbstractBit value)
+void AbstractBitSequence::setBit(bsl::size_t bitIndex, AbstractBit bitValue)
 {
-    if (index >= d_data.size()) {
-        d_data.resize(index + 1);
+    const bsl::size_t byteIndex = bitIndex / 8;
+
+    bsl::uint8_t byteMask = 1 << (7 - (bitIndex & 0x07));
+    bsl::uint8_t byteMaskInverse = ~byteMask;
+    
+    if (!bitValue) {
+        byteMask = 0;
     }
 
-    BSLS_ASSERT_OPT(index < d_data.size());
-    d_data[index] = value;
+    bsl::uint8_t currentByte = this->getByte(byteIndex);
+    bsl::uint8_t replaceByte = (currentByte & byteMaskInverse) | byteMask;
+
+    this->setByte(byteIndex, replaceByte);
+
+    this->normalize();
+}
+
+void AbstractBitSequence::setByte(bsl::size_t byteIndex, AbstractByte byteValue)
+{
+    if (byteIndex >= d_data.size()) {
+        d_data.resize(byteIndex + 1);
+    }
+
+    BSLS_ASSERT_OPT(byteIndex < d_data.size());
+    d_data[byteIndex] = byteValue;
 }
 
 void AbstractBitSequence::setType(AbstractSyntaxTagNumber::Value value)
@@ -4630,10 +4651,28 @@ AbstractSyntaxTagNumber::Value AbstractBitSequence::type() const
     return d_type;
 }
 
-AbstractBit AbstractBitSequence::get(bsl::size_t index) const
+AbstractBit AbstractBitSequence::getBit(bsl::size_t bitIndex) const
 {
-    if (index < d_data.size()) {
-        return d_data[index];
+    const bsl::size_t byteIndex = bitIndex / 8;
+
+    const bsl::uint8_t byteMask = 1 << (7 - (bitIndex & 0x07));
+
+    const bsl::uint8_t currentByte = this->getByte(byteIndex);
+
+    const bsl::uint8_t currentByteMasked = currentByte & byteMask;
+
+    if (currentByteMasked != 0) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+AbstractByte AbstractBitSequence::getByte(bsl::size_t byteIndex) const
+{
+    if (byteIndex < d_data.size()) {
+        return d_data[byteIndex];
     }
     else {
         return 0;
@@ -4650,9 +4689,24 @@ const bsl::uint8_t* AbstractBitSequence::data() const
     }
 }
 
-bsl::size_t AbstractBitSequence::size() const
+bsl::size_t AbstractBitSequence::numBytes() const
 {
     return d_data.size();
+}
+
+bsl::size_t AbstractBitSequence::numBits() const
+{
+    const bsl::size_t numBytes = d_data.size();
+
+    const bsl::size_t numBits = numBytes * 8;
+
+    bsl::size_t result = 0;
+
+    if (numBits >= d_numBitsOmitted) {
+        result = numBits - d_numBitsOmitted;
+    }
+
+    return result;
 }
 
 bsl::size_t AbstractBitSequence::numBitsOmitted() const
@@ -4666,6 +4720,7 @@ ntsa::Error AbstractBitSequence::convert(bsl::string* result) const
 
     if (d_type != AbstractSyntaxTagNumber::e_PRINTABLE_STRING &&
         d_type != AbstractSyntaxTagNumber::e_CHARACTER_STRING &&
+        d_type != AbstractSyntaxTagNumber::e_IA5_STRING &&
         d_type != AbstractSyntaxTagNumber::e_UTF8_STRING)
     {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -4696,17 +4751,47 @@ bsl::ostream& AbstractBitSequence::print(bsl::ostream& stream,
     NTSCFG_WARNING_UNUSED(level);
     NTSCFG_WARNING_UNUSED(spacesPerLevel);
 
-    const char k_HEX[] = "0123456789abcdef";
+    const bool hexFlag = (stream.flags() & std::ios_base::hex) != 0;
 
-    for (bsl::size_t i = 0; i < d_data.size(); ++i) {
-        if (i != 0) {
-            stream << ':';
+    if (hexFlag) {
+        const char k_HEX[] = "0123456789abcdef";
+
+        for (bsl::size_t i = 0; i < d_data.size(); ++i) {
+            if (i != 0) {
+                stream << ':';
+            }
+
+            bsl::uint8_t value = d_data[i];
+
+            stream << k_HEX[(value >> 4) & 0x0F];
+            stream << k_HEX[(value >> 0) & 0x0F];
+        }
+    }
+    else {
+        const bsl::size_t numBits = this->numBits();
+
+        if (numBits == 0) {
+            stream << '0';
+            return stream;
         }
 
-        bsl::uint8_t value = d_data[i];
+        bool hasLeadingOne = false;
 
-        stream << k_HEX[(value >> 4) & 0x0F];
-        stream << k_HEX[(value >> 0) & 0x0F];
+        for (bsl::size_t bitIndex = numBits - 1; bitIndex < numBits; --bitIndex)
+        {
+            const AbstractBit bit = this->getBit(bitIndex);
+            if (bit) {
+                stream << '1';
+                hasLeadingOne = true;
+            }
+            else if (hasLeadingOne) {
+                stream << '0';
+            }
+        }
+
+        if (!hasLeadingOne) {
+            stream << '0';
+        }
     }
 
     return stream;
@@ -4752,7 +4837,17 @@ bool operator<(const AbstractBitSequence& lhs, const AbstractBitSequence& rhs)
 
 
 
-
+void AbstractByteSequence::normalize()
+{
+    while (!d_data.empty()) {
+        if (d_data.back() == 0) {
+            d_data.pop_back();
+        }
+        else {
+            break;
+        }
+    }
+}
 
 
 AbstractByteSequence::AbstractByteSequence(bslma::Allocator* basicAllocator)
@@ -4872,6 +4967,7 @@ ntsa::Error AbstractByteSequence::convert(bsl::string* result) const
 
     if (d_type != AbstractSyntaxTagNumber::e_PRINTABLE_STRING &&
         d_type != AbstractSyntaxTagNumber::e_CHARACTER_STRING &&
+        d_type != AbstractSyntaxTagNumber::e_IA5_STRING && 
         d_type != AbstractSyntaxTagNumber::e_UTF8_STRING)
     {
         return ntsa::Error(ntsa::Error::e_INVALID);

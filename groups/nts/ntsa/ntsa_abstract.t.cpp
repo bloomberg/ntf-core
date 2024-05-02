@@ -1823,6 +1823,184 @@ NTSCFG_TEST_CASE(16)
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
+NTSCFG_TEST_CASE(17)
+{
+    // Test abstract bit string
+
+    ntscfg::TestAllocator ta;
+    {
+        ntsa::Error error;
+
+        {
+            ntsa::AbstractBitString v(&ta);
+
+            NTSCFG_TEST_ASSERT(v.numBytes() == 0);
+            NTSCFG_TEST_ASSERT(v.numBits() == 0);
+
+            NTSCFG_TEST_LOG_DEBUG << "V = " << v << NTSCFG_TEST_LOG_END;
+        }
+
+        {
+            ntsa::AbstractBitString v(&ta);
+
+            NTSCFG_TEST_ASSERT(v.numBytes() == 0);
+            NTSCFG_TEST_ASSERT(v.numBits() == 0);
+
+            v.setBit(0, 1);
+
+            NTSCFG_TEST_EQ(v.getBit(0), 1);
+            NTSCFG_TEST_EQ(v.getBit(1), 0);
+
+            NTSCFG_TEST_LOG_DEBUG << "V = " << v << NTSCFG_TEST_LOG_END;
+        }
+
+        {
+            ntsa::AbstractBitString v(&ta);
+
+            NTSCFG_TEST_ASSERT(v.numBytes() == 0);
+            NTSCFG_TEST_ASSERT(v.numBits() == 0);
+
+            v.setBit(1, 1);
+
+            NTSCFG_TEST_EQ(v.getBit(0), 0);
+            NTSCFG_TEST_EQ(v.getBit(1), 1);
+            NTSCFG_TEST_EQ(v.getBit(2), 0);
+
+            NTSCFG_TEST_LOG_DEBUG << "V = " << v << NTSCFG_TEST_LOG_END;
+        }
+
+        {
+            ntsa::AbstractBitString v(&ta);
+
+            NTSCFG_TEST_ASSERT(v.numBytes() == 0);
+            NTSCFG_TEST_ASSERT(v.numBits() == 0);
+
+            v.setBit(2, 1);
+
+            NTSCFG_TEST_EQ(v.getBit(0), 0);
+            NTSCFG_TEST_EQ(v.getBit(1), 0);
+            NTSCFG_TEST_EQ(v.getBit(2), 1);
+            NTSCFG_TEST_EQ(v.getBit(3), 0);
+
+            NTSCFG_TEST_LOG_DEBUG << "V = " << v << NTSCFG_TEST_LOG_END;
+        }
+
+
+
+        {
+            ntsa::AbstractBitString v(&ta);
+
+            NTSCFG_TEST_ASSERT(v.numBytes() == 0);
+            NTSCFG_TEST_ASSERT(v.numBits() == 0);
+
+            v.setBit(8, 1);
+
+            NTSCFG_TEST_EQ(v.getBit(0), 0);
+            NTSCFG_TEST_EQ(v.getBit(1), 0);
+            NTSCFG_TEST_EQ(v.getBit(2), 0);
+            NTSCFG_TEST_EQ(v.getBit(3), 0);
+            NTSCFG_TEST_EQ(v.getBit(4), 0);
+            NTSCFG_TEST_EQ(v.getBit(5), 0);
+            NTSCFG_TEST_EQ(v.getBit(6), 0);
+            NTSCFG_TEST_EQ(v.getBit(7), 0);
+
+            NTSCFG_TEST_EQ(v.getBit(8), 1);
+            NTSCFG_TEST_EQ(v.getBit(9), 0);
+
+            NTSCFG_TEST_LOG_DEBUG << "V = " << v << NTSCFG_TEST_LOG_END;
+        }
+
+        {
+            ntsa::AbstractBitString v(&ta);
+
+            NTSCFG_TEST_ASSERT(v.numBytes() == 0);
+            NTSCFG_TEST_ASSERT(v.numBits() == 0);
+
+            v.setBit(9, 1);
+
+            NTSCFG_TEST_EQ(v.getBit(0), 0);
+            NTSCFG_TEST_EQ(v.getBit(1), 0);
+            NTSCFG_TEST_EQ(v.getBit(2), 0);
+            NTSCFG_TEST_EQ(v.getBit(3), 0);
+            NTSCFG_TEST_EQ(v.getBit(4), 0);
+            NTSCFG_TEST_EQ(v.getBit(5), 0);
+            NTSCFG_TEST_EQ(v.getBit(6), 0);
+            NTSCFG_TEST_EQ(v.getBit(7), 0);
+
+            NTSCFG_TEST_EQ(v.getBit(8), 0);
+            NTSCFG_TEST_EQ(v.getBit(9), 1);
+            NTSCFG_TEST_EQ(v.getBit(10), 0);
+
+            NTSCFG_TEST_LOG_DEBUG << "V = " << v << NTSCFG_TEST_LOG_END;
+        }
+
+
+        {
+            ntsa::AbstractBitString v(&ta);
+
+            NTSCFG_TEST_ASSERT(v.numBytes() == 0);
+            NTSCFG_TEST_ASSERT(v.numBits() == 0);
+
+            v.setBit(10, 1);
+
+            NTSCFG_TEST_EQ(v.getBit(0), 0);
+            NTSCFG_TEST_EQ(v.getBit(1), 0);
+            NTSCFG_TEST_EQ(v.getBit(2), 0);
+            NTSCFG_TEST_EQ(v.getBit(3), 0);
+            NTSCFG_TEST_EQ(v.getBit(4), 0);
+            NTSCFG_TEST_EQ(v.getBit(5), 0);
+            NTSCFG_TEST_EQ(v.getBit(6), 0);
+            NTSCFG_TEST_EQ(v.getBit(7), 0);
+
+            NTSCFG_TEST_EQ(v.getBit(8), 0);
+            NTSCFG_TEST_EQ(v.getBit(9), 0);
+            NTSCFG_TEST_EQ(v.getBit(10), 1);
+            NTSCFG_TEST_EQ(v.getBit(11), 0);
+
+            NTSCFG_TEST_LOG_DEBUG << "V = " << v << NTSCFG_TEST_LOG_END;
+        }
+
+        {
+            ntsa::AbstractBitString v(&ta);
+
+            NTSCFG_TEST_ASSERT(v.numBytes() == 0);
+            NTSCFG_TEST_ASSERT(v.numBits() == 0);
+
+            v.setBit(0, 0);
+            v.setBit(1, 1);
+            v.setBit(2, 0);
+            v.setBit(3, 1);
+            v.setBit(4, 1);
+            v.setBit(5, 0);
+            v.setBit(6, 1);
+            v.setBit(7, 1);
+
+            v.setBit(8, 1);
+            v.setBit(9, 0);
+            v.setBit(10, 1);
+
+            NTSCFG_TEST_EQ(v.getBit(0), 0);
+            NTSCFG_TEST_EQ(v.getBit(1), 1);
+            NTSCFG_TEST_EQ(v.getBit(2), 0);
+            NTSCFG_TEST_EQ(v.getBit(3), 1);
+            NTSCFG_TEST_EQ(v.getBit(4), 1);
+            NTSCFG_TEST_EQ(v.getBit(5), 0);
+            NTSCFG_TEST_EQ(v.getBit(6), 1);
+            NTSCFG_TEST_EQ(v.getBit(7), 1);
+
+            NTSCFG_TEST_EQ(v.getBit(8), 1);
+            NTSCFG_TEST_EQ(v.getBit(9), 0);
+            NTSCFG_TEST_EQ(v.getBit(10), 1);
+            NTSCFG_TEST_EQ(v.getBit(11), 0);
+
+            NTSCFG_TEST_LOG_DEBUG << "V = " << v << NTSCFG_TEST_LOG_END;
+        }
+
+
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
 NTSCFG_TEST_DRIVER
 {
     NTSCFG_TEST_REGISTER(1);  // Test prerequisites
@@ -1846,5 +2024,7 @@ NTSCFG_TEST_DRIVER
     NTSCFG_TEST_REGISTER(15);  // Test abstract signed integer codec
 
     NTSCFG_TEST_REGISTER(16);  // Test abstract object identifier codec
+
+    NTSCFG_TEST_REGISTER(17);  // Test abstract bit string
 }
 NTSCFG_TEST_DRIVER_END;

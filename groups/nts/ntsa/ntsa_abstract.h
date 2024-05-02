@@ -1954,179 +1954,8 @@ void hashAppend(HASH_ALGORITHM& algorithm, const AbstractString& value)
     value.hash(algorithm);
 }
 
-
-
-/// Define a type alias for the representation of an abstract bit.
-typedef bool AbstractBit;
-
-/// Provide an Abstract Syntax Notation (ASN.1) bit string.
-///
-/// @par Thread Safety
-/// This class is not thread safe.
-///
-/// @ingroup module_ntsa_data
-class AbstractBitSequence
-{
-    AbstractSyntaxTagNumber::Value d_type;
-    bsl::vector<bsl::uint8_t>      d_data;
-    bsl::size_t                    d_numBitsOmitted;
-
-  public:
-    /// Create a new ASN.1 bit string. Optionally specify a 'basicAllocator'
-    /// used to supply memory. If 'basicAllocator' is 0, the currently
-    /// installed default allocator is used.
-    explicit AbstractBitSequence(bslma::Allocator* basicAllocator = 0);
-
-    /// Create a new ASN.1 bit string having the same value as the specified
-    /// 'original' object. Optionally specify a 'basicAllocator' used to supply
-    /// memory. If 'basicAllocator' is 0, the currently installed default
-    /// allocator is used.
-    explicit AbstractBitSequence(const AbstractBitSequence& original,
-                            bslma::Allocator*     basicAllocator = 0);
-
-    /// Destroy this object.
-    ~AbstractBitSequence();
-
-    /// Assign the value of the specified 'other' object to this object.
-    /// Return a reference to this modifiable object.
-    AbstractBitSequence& operator=(const AbstractBitSequence& other);
-
-    /// Reset the value of this object to its value upon default construction.
-    void reset();
-
-    // Resize the string to store exactly the specified 'size' number of bytes.
-    void resize(bsl::size_t size);
-
-    /// Append the specified 'value' to the end of the data.
-    void append(AbstractBit value);
-
-    /// Read the specified 'size' number of bytes from the specified 'source'
-    /// and store them as the value of this object. Return the error. 
-    ntsa::Error read(bsl::streambuf* source, bsl::size_t size);
-
-    /// Set the data at the specified 'index' to the specified 'value'.
-    void set(bsl::size_t index, AbstractBit value);
-
-    /// Set the type to the specified 'value'.
-    void setType(AbstractSyntaxTagNumber::Value value);
-
-    /// Set the number of leading bits omitted to the specified 'value'. 
-    void setNumBitsOmitted(bsl::size_t value);
-
-    /// Return the tag number that indicates the type of string.
-    AbstractSyntaxTagNumber::Value type() const;
-
-    /// Return the data at the specified 'index'.
-    AbstractBit get(bsl::size_t index) const;
-
-    /// Return the data. Note that the data is null if the size is zero, and
-    /// may contain embedded nulls but not necessarily null-terminated if the
-    /// size is non-zero.
-    const bsl::uint8_t* data() const;
-
-    /// Return the number of bytes of data.
-    bsl::size_t size() const;
-
-    /// Return the number of bits omitted.
-    bsl::size_t numBitsOmitted() const;
-
-    /// Load into the specified 'result' the printable, ASCII, or UTF-8 string
-    /// represented by this object. Return the error.
-    ntsa::Error convert(bsl::string* result) const;
-
-    /// Return true if this object has the same value as the specified
-    /// 'other' object, otherwise return false.
-    bool equals(const AbstractBitSequence& other) const;
-
-    /// Return true if the value of this object is less than the value of
-    /// the specified 'other' object, otherwise return false.
-    bool less(const AbstractBitSequence& other) const;
-
-    /// Contribute the values of the salient attributes of this object to the
-    /// specified hash 'algorithm'.
-    template <typename HASH_ALGORITHM>
-    void hash(HASH_ALGORITHM& algorithm);
-
-    /// Format this object to the specified output 'stream' at the
-    /// optionally specified indentation 'level' and return a reference to
-    /// the modifiable 'stream'.  If 'level' is specified, optionally
-    /// specify 'spacesPerLevel', the number of spaces per indentation level
-    /// for this and all of its nested objects.  Each line is indented by
-    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
-    /// negative, suppress indentation of the first line.  If
-    /// 'spacesPerLevel' is negative, suppress line breaks and format the
-    /// entire output on one line.  If 'stream' is initially invalid, this
-    /// operation has no effect.  Note that a trailing newline is provided
-    /// in multiline mode only.
-    bsl::ostream& print(bsl::ostream& stream,
-                        int           level          = 0,
-                        int           spacesPerLevel = 4) const;
-
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(AbstractBitSequence);
-};
-
-/// Format the specified 'object' to the specified output 'stream' and
-/// return a reference to the modifiable 'stream'.
-///
-/// @related ntsa::AbstractBitSequence
-bsl::ostream& operator<<(bsl::ostream& stream, const AbstractBitSequence& object);
-
-/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
-/// the same value, and 'false' otherwise.  Two attribute objects have the
-/// same value if each respective attribute has the same value.
-///
-/// @related ntsa::AbstractBitSequence
-bool operator==(const AbstractBitSequence& lhs, const AbstractBitSequence& rhs);
-
-/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
-/// have the same value, and 'false' otherwise.  Two attribute objects do
-/// not have the same value if one or more respective attributes differ in
-/// values.
-///
-/// @related ntsa::AbstractBitSequence
-bool operator!=(const AbstractBitSequence& lhs, const AbstractBitSequence& rhs);
-
-/// Return true if the value of the specified 'lhs' is less than the value
-/// of the specified 'rhs', otherwise return false.
-///
-/// @related ntsa::AbstractBitSequence
-bool operator<(const AbstractBitSequence& lhs, const AbstractBitSequence& rhs);
-
-/// Contribute the values of the salient attributes of the specified 'value'
-/// to the specified hash 'algorithm'.
-///
-/// @related ntsa::AbstractBitSequence
-template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const AbstractBitSequence& value);
-
-template <typename HASH_ALGORITHM>
-void AbstractBitSequence::hash(HASH_ALGORITHM& algorithm)
-{
-    using bslh::hashAppend;
-
-    hashAppend(algorithm, d_type);
-    hashAppend(algorithm, d_data);
-    hashAppend(algorithm, d_numBitsOmitted);
-}
-
-template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const AbstractBitSequence& value)
-{
-    value.hash(algorithm);
-}
-
-
-
 /// Define a type alias for the representation of an abstract byte (octet).
 typedef bsl::uint8_t AbstractByte;
-
-
-
-
-
 
 /// Provide an Abstract Syntax Notation (ASN.1) byte (octet) string.
 ///
@@ -2138,6 +1967,12 @@ class AbstractByteSequence
 {
     AbstractSyntaxTagNumber::Value d_type;
     bsl::vector<bsl::uint8_t>      d_data;
+
+  private:
+    /// Normalize the representation of this object so that the
+    /// most-significant block is not zero, unless the value of this
+    /// representation is zero.
+    void normalize();
 
   public:
     /// Create a new ASN.1 string. Optionally specify a 'basicAllocator' used
@@ -2279,16 +2114,186 @@ void hashAppend(HASH_ALGORITHM& algorithm, const AbstractByteSequence& value)
     value.hash(algorithm);
 }
 
-
-
-
-
-
 /// Define a type alias for the representation of an abstract octet.
 typedef AbstractByte AbstractOctet;
 
 /// Define a type alias for the representation of an abstract octet sequence.
-typedef AbstractByteSequence AbstractOctetSequence;
+typedef AbstractByteSequence AbstractOctetString;
+
+
+/// Define a type alias for the representation of an abstract bit.
+typedef bool AbstractBit;
+
+/// Provide an Abstract Syntax Notation (ASN.1) bit string.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntsa_data
+class AbstractBitSequence
+{
+    AbstractSyntaxTagNumber::Value d_type;
+    bsl::vector<bsl::uint8_t>      d_data;
+    bsl::size_t                    d_numBitsOmitted;
+
+  private:
+    /// Normalize the representation of this object so that the
+    /// most-significant block is not zero, unless the value of this
+    /// representation is zero.
+    void normalize();
+
+  public:
+    /// Create a new ASN.1 bit string. Optionally specify a 'basicAllocator'
+    /// used to supply memory. If 'basicAllocator' is 0, the currently
+    /// installed default allocator is used.
+    explicit AbstractBitSequence(bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new ASN.1 bit string having the same value as the specified
+    /// 'original' object. Optionally specify a 'basicAllocator' used to supply
+    /// memory. If 'basicAllocator' is 0, the currently installed default
+    /// allocator is used.
+    explicit AbstractBitSequence(const AbstractBitSequence& original,
+                            bslma::Allocator*     basicAllocator = 0);
+
+    /// Destroy this object.
+    ~AbstractBitSequence();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    AbstractBitSequence& operator=(const AbstractBitSequence& other);
+
+    /// Reset the value of this object to its value upon default construction.
+    void reset();
+
+    /// Read the specified 'size' number of bytes from the specified 'source'
+    /// and store them as the value of this object. Return the error. 
+    ntsa::Error read(bsl::streambuf* source, bsl::size_t size);
+
+    /// Set the bit at the specified 'bitIndex' to the specified 'bitValue'.
+    void setBit(bsl::size_t bitIndex, AbstractBit bitValue);
+
+    /// Set the byte at the specified 'byteIndex' to the specified 'byteValue'.
+    void setByte(bsl::size_t byteIndex, AbstractByte byteValue);
+
+    /// Set the type to the specified 'value'.
+    void setType(AbstractSyntaxTagNumber::Value value);
+
+    /// Set the number of leading bits omitted to the specified 'value'. 
+    void setNumBitsOmitted(bsl::size_t value);
+
+    /// Return the tag number that indicates the type of string.
+    AbstractSyntaxTagNumber::Value type() const;
+
+    /// Return the bit at the specified 'index'.
+    AbstractBit getBit(bsl::size_t index) const;
+
+    /// Return the byte at the specified 'index'. 
+    AbstractByte getByte(bsl::size_t index) const;
+
+    /// Return the data. Note that the data is null if the size is zero, and
+    /// may contain embedded nulls but not necessarily null-terminated if the
+    /// size is non-zero.
+    const bsl::uint8_t* data() const;
+
+    /// Return the number of bytes of data.
+    bsl::size_t numBytes() const;
+
+    /// Return the number of bits. 
+    bsl::size_t numBits() const;
+
+    /// Return the number of bits omitted.
+    bsl::size_t numBitsOmitted() const;
+
+    /// Load into the specified 'result' the printable, ASCII, or UTF-8 string
+    /// represented by this object. Return the error.
+    ntsa::Error convert(bsl::string* result) const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const AbstractBitSequence& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const AbstractBitSequence& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(AbstractBitSequence);
+};
+
+/// Define a type alias for the representation of an abstract octet sequence.
+typedef AbstractBitSequence AbstractBitString;
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntsa::AbstractBitSequence
+bsl::ostream& operator<<(bsl::ostream& stream, const AbstractBitSequence& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntsa::AbstractBitSequence
+bool operator==(const AbstractBitSequence& lhs, const AbstractBitSequence& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntsa::AbstractBitSequence
+bool operator!=(const AbstractBitSequence& lhs, const AbstractBitSequence& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntsa::AbstractBitSequence
+bool operator<(const AbstractBitSequence& lhs, const AbstractBitSequence& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntsa::AbstractBitSequence
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const AbstractBitSequence& value);
+
+template <typename HASH_ALGORITHM>
+void AbstractBitSequence::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, d_type);
+    hashAppend(algorithm, d_data);
+    hashAppend(algorithm, d_numBitsOmitted);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const AbstractBitSequence& value)
+{
+    value.hash(algorithm);
+}
 
 
 

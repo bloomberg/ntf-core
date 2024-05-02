@@ -85,7 +85,7 @@ const ntsa::AbstractSyntaxTagNumber::Value k_OBJECT_IDENTIFIER =
 
 EncryptionCertificateTemplate::EncryptionCertificateTemplate(
     bslma::Allocator* basicAllocator)
-: d_value(0)
+: d_value(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
@@ -93,7 +93,7 @@ EncryptionCertificateTemplate::EncryptionCertificateTemplate(
 EncryptionCertificateTemplate::EncryptionCertificateTemplate(
     const EncryptionCertificateTemplate& original,
     bslma::Allocator*                    basicAllocator)
-: d_value(original.d_value)
+: d_value(original.d_value, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
@@ -114,31 +114,54 @@ EncryptionCertificateTemplate& EncryptionCertificateTemplate::operator=(
 
 void EncryptionCertificateTemplate::reset()
 {
-    d_value = 0;
-}
-
-void EncryptionCertificateTemplate::setValue(bsl::size_t value)
-{
-    d_value = value;
+    d_value.reset();
 }
 
 ntsa::Error EncryptionCertificateTemplate::decode(
     ntsa::AbstractSyntaxDecoder* decoder)
 {
-    NTCCFG_WARNING_UNUSED(decoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    ntsa::Error error;
+
+    error = decoder->decodeTag();
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeValue(&d_value);
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 ntsa::Error EncryptionCertificateTemplate::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
-    NTCCFG_WARNING_UNUSED(encoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
-}
+    ntsa::Error error;
 
-bsl::size_t EncryptionCertificateTemplate::value() const
-{
-    return d_value;
+    error = encoder->encodeTag(
+        d_value.tagClass(), d_value.tagType(), d_value.tagNumber());
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeValue(d_value);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 bool EncryptionCertificateTemplate::equals(
@@ -1659,7 +1682,7 @@ ntsa::Error EncryptionCertificateNameAlternative::decode(
         }
     }
     else if (decoder->current().tagNumber() == e_IP) {
-        ntsa::AbstractByteSequence octets;
+        ntsa::AbstractOctetString octets;
         error = decoder->decodeValue(&octets);
         if (error) {
             return error;
@@ -2080,6 +2103,171 @@ bool operator<(const EncryptionCertificateNameAlternativeList& lhs,
 {
     return lhs.less(rhs);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+EncryptionCertificateNameConstraints::EncryptionCertificateNameConstraints(
+    bslma::Allocator* basicAllocator)
+: d_value(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateNameConstraints::EncryptionCertificateNameConstraints(
+    const EncryptionCertificateNameConstraints& original,
+    bslma::Allocator*                    basicAllocator)
+: d_value(original.d_value, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateNameConstraints::~EncryptionCertificateNameConstraints()
+{
+}
+
+EncryptionCertificateNameConstraints& EncryptionCertificateNameConstraints::operator=(
+    const EncryptionCertificateNameConstraints& other)
+{
+    if (this != &other) {
+        d_value = other.d_value;
+    }
+
+    return *this;
+}
+
+void EncryptionCertificateNameConstraints::reset()
+{
+    d_value.reset();
+}
+
+ntsa::Error EncryptionCertificateNameConstraints::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    error = decoder->decodeTag();
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeValue(&d_value);
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionCertificateNameConstraints::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    ntsa::Error error;
+
+    error = encoder->encodeTag(
+        d_value.tagClass(), d_value.tagType(), d_value.tagNumber());
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeValue(d_value);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+bool EncryptionCertificateNameConstraints::equals(
+    const EncryptionCertificateNameConstraints& other) const
+{
+    return d_value == other.d_value;
+}
+
+bool EncryptionCertificateNameConstraints::less(
+    const EncryptionCertificateNameConstraints& other) const
+{
+#if 0
+    if (d_value < other.d_value) {
+        return true;
+    }
+
+    if (other.d_value < d_value) {
+        return false;
+    }
+#endif
+
+    return d_value < other.d_value;
+}
+
+bsl::ostream& EncryptionCertificateNameConstraints::print(bsl::ostream& stream,
+                                                   int           level,
+                                                   int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute("value", d_value);
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateNameConstraints& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionCertificateNameConstraints& lhs,
+                const EncryptionCertificateNameConstraints& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionCertificateNameConstraints& lhs,
+                const EncryptionCertificateNameConstraints& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionCertificateNameConstraints& lhs,
+               const EncryptionCertificateNameConstraints& rhs)
+{
+    return lhs.less(rhs);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 EncryptionCertificateValidity::EncryptionCertificateValidity(
     bslma::Allocator* basicAllocator)
@@ -4282,7 +4470,7 @@ EncryptionCertificatePublicKeyValue::EncryptionCertificatePublicKeyValue(
     }
     else if (d_type == e_ANY) {
         new (d_any.buffer())
-            ntsa::AbstractBitSequence(original.d_any.object(), d_allocator_p);
+            ntsa::AbstractBitString(original.d_any.object(), d_allocator_p);
     }
     else {
         BSLS_ASSERT(d_type == e_UNDEFINED);
@@ -4329,7 +4517,7 @@ void EncryptionCertificatePublicKeyValue::reset()
         d_ellipticCurve.object().~Type();
     }
     else if (d_type == e_ANY) {
-        typedef ntsa::AbstractBitSequence Type;
+        typedef ntsa::AbstractBitString Type;
         d_any.object().~Type();
     }
 
@@ -4409,29 +4597,29 @@ EncryptionCertificatePublicKeyValueEllipticCurve& EncryptionCertificatePublicKey
     return d_ellipticCurve.object();
 }
 
-ntsa::AbstractBitSequence& EncryptionCertificatePublicKeyValue::makeAny()
+ntsa::AbstractBitString& EncryptionCertificatePublicKeyValue::makeAny()
 {
     if (d_type == e_ANY) {
         d_any.object().reset();
     }
     else {
         this->reset();
-        new (d_any.buffer()) ntsa::AbstractBitSequence(d_allocator_p);
+        new (d_any.buffer()) ntsa::AbstractBitString(d_allocator_p);
         d_type = e_ANY;
     }
 
     return d_any.object();
 }
 
-ntsa::AbstractBitSequence& EncryptionCertificatePublicKeyValue::makeAny(
-    const ntsa::AbstractBitSequence& value)
+ntsa::AbstractBitString& EncryptionCertificatePublicKeyValue::makeAny(
+    const ntsa::AbstractBitString& value)
 {
     if (d_type == e_ANY) {
         d_any.object() = value;
     }
     else {
         this->reset();
-        new (d_any.buffer()) ntsa::AbstractBitSequence(value, d_allocator_p);
+        new (d_any.buffer()) ntsa::AbstractBitString(value, d_allocator_p);
         d_type = e_ANY;
     }
 
@@ -4453,7 +4641,7 @@ EncryptionCertificatePublicKeyValueEllipticCurve& EncryptionCertificatePublicKey
     return d_ellipticCurve.object();
 }
 
-ntsa::AbstractBitSequence& EncryptionCertificatePublicKeyValue::any()
+ntsa::AbstractBitString& EncryptionCertificatePublicKeyValue::any()
 {
     BSLS_ASSERT(this->isAny());
     return d_any.object();
@@ -4473,7 +4661,7 @@ EncryptionCertificatePublicKeyValue::ellipticCurve() const
     return d_ellipticCurve.object();
 }
 
-const ntsa::AbstractBitSequence& EncryptionCertificatePublicKeyValue::any() const
+const ntsa::AbstractBitString& EncryptionCertificatePublicKeyValue::any() const
 {
     BSLS_ASSERT(this->isAny());
     return d_any.object();
@@ -4789,17 +4977,15 @@ const char* EncryptionCertificateSignatureAlgorithmType::toString(Value value)
 {
     switch (value) {
     case e_ECDSA_SHA1:
-        return "ECDSA-SHA1";
+        return "ECDSA_SHA1";
     case e_ECDSA_SHA224:
-        return "ECDSA-SHA224";
+        return "ECDSA_SHA224";
     case e_ECDSA_SHA256:
-        return "ECDSA-SHA256";
+        return "ECDSA_SHA256";
     case e_ECDSA_SHA384:
-        return "ECDSA-SHA384";
+        return "ECDSA_SHA384";
     case e_ECDSA_SHA512:
-        return "ECDSA-SHA512";
-    case e_RSA:
-        return "RSA";
+        return "ECDSA_SHA512";
     case e_SHA256_RSA:
         return "SHA256-RSA";
     case e_SHA384_RSA:
@@ -4833,9 +5019,6 @@ void EncryptionCertificateSignatureAlgorithmType::toObjectIdentifier(
     else if (value == e_ECDSA_SHA512) {
         result->set(1, 2, 840, 10045, 4, 3, 4);
     }
-    else if (value == e_RSA) {
-        result->set(1, 2, 840, 113549, 1, 1, 1);
-    }
     else if (value == e_SHA256_RSA) {
         result->set(1, 2, 840, 113549, 1, 1, 11);
     }
@@ -4851,33 +5034,28 @@ int EncryptionCertificateSignatureAlgorithmType::fromString(
     Value*                   result,
     const bslstl::StringRef& string)
 {
-    if (bdlb::String::areEqualCaseless(string, "ECDSA-SHA1")) {
+    if (bdlb::String::areEqualCaseless(string, "ECDSA_SHA1")) {
         *result = e_ECDSA_SHA1;
         return 0;
     }
 
-    if (bdlb::String::areEqualCaseless(string, "ECDSA-SHA224")) {
+    if (bdlb::String::areEqualCaseless(string, "ECDSA_SHA224")) {
         *result = e_ECDSA_SHA224;
         return 0;
     }
 
-    if (bdlb::String::areEqualCaseless(string, "ECDSA-SHA256")) {
+    if (bdlb::String::areEqualCaseless(string, "ECDSA_SHA256")) {
         *result = e_ECDSA_SHA256;
         return 0;
     }
 
-    if (bdlb::String::areEqualCaseless(string, "ECDSA-SHA384")) {
+    if (bdlb::String::areEqualCaseless(string, "ECDSA_SHA384")) {
         *result = e_ECDSA_SHA384;
         return 0;
     }
 
-    if (bdlb::String::areEqualCaseless(string, "ECDSA-SHA512")) {
+    if (bdlb::String::areEqualCaseless(string, "ECDSA_SHA512")) {
         *result = e_ECDSA_SHA512;
-        return 0;
-    }
-
-    if (bdlb::String::areEqualCaseless(string, "RSA")) {
-        *result = e_RSA;
         return 0;
     }
 
@@ -4925,11 +5103,6 @@ int EncryptionCertificateSignatureAlgorithmType::fromObjectIdentifier(
 
     if (identifier.equals(1, 2, 840, 10045, 4, 3, 4)) {
         *result = e_ECDSA_SHA512;
-        return 0;
-    }
-
-    if (identifier.equals(1, 2, 840, 113549, 1, 1, 1)) {
-        *result = e_RSA;
         return 0;
     }
 
@@ -5178,7 +5351,7 @@ void EncryptionCertificateSignature::reset()
 }
 
 void EncryptionCertificateSignature::setValue(
-    const ntsa::AbstractBitSequence& value)
+    const ntsa::AbstractBitString& value)
 {
     d_value = value;
 }
@@ -5215,7 +5388,7 @@ ntsa::Error EncryptionCertificateSignature::encode(
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
-const ntsa::AbstractBitSequence& EncryptionCertificateSignature::value() const
+const ntsa::AbstractBitString& EncryptionCertificateSignature::value() const
 {
     return d_value;
 }
@@ -5266,6 +5439,1670 @@ bool operator<(const EncryptionCertificateSignature& lhs,
 {
     return lhs.less(rhs);
 }
+
+EncryptionCertificatePolicyConstraints::EncryptionCertificatePolicyConstraints(
+    bslma::Allocator* basicAllocator)
+: d_value(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificatePolicyConstraints::EncryptionCertificatePolicyConstraints(
+    const EncryptionCertificatePolicyConstraints& original,
+    bslma::Allocator*                    basicAllocator)
+: d_value(original.d_value, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificatePolicyConstraints::~EncryptionCertificatePolicyConstraints()
+{
+}
+
+EncryptionCertificatePolicyConstraints& EncryptionCertificatePolicyConstraints::operator=(
+    const EncryptionCertificatePolicyConstraints& other)
+{
+    if (this != &other) {
+        d_value = other.d_value;
+    }
+
+    return *this;
+}
+
+void EncryptionCertificatePolicyConstraints::reset()
+{
+    d_value.reset();
+}
+
+ntsa::Error EncryptionCertificatePolicyConstraints::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    error = decoder->decodeTag();
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeValue(&d_value);
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionCertificatePolicyConstraints::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    ntsa::Error error;
+
+    error = encoder->encodeTag(
+        d_value.tagClass(), d_value.tagType(), d_value.tagNumber());
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeValue(d_value);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+bool EncryptionCertificatePolicyConstraints::equals(
+    const EncryptionCertificatePolicyConstraints& other) const
+{
+    return d_value == other.d_value;
+}
+
+bool EncryptionCertificatePolicyConstraints::less(
+    const EncryptionCertificatePolicyConstraints& other) const
+{
+#if 0
+    if (d_value < other.d_value) {
+        return true;
+    }
+
+    if (other.d_value < d_value) {
+        return false;
+    }
+#endif
+
+    return d_value < other.d_value;
+}
+
+bsl::ostream& EncryptionCertificatePolicyConstraints::print(bsl::ostream& stream,
+                                                   int           level,
+                                                   int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute("value", d_value);
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificatePolicyConstraints& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionCertificatePolicyConstraints& lhs,
+                const EncryptionCertificatePolicyConstraints& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionCertificatePolicyConstraints& lhs,
+                const EncryptionCertificatePolicyConstraints& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionCertificatePolicyConstraints& lhs,
+               const EncryptionCertificatePolicyConstraints& rhs)
+{
+    return lhs.less(rhs);
+}
+
+EncryptionCertificatePolicyMappings::EncryptionCertificatePolicyMappings(
+    bslma::Allocator* basicAllocator)
+: d_value(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificatePolicyMappings::EncryptionCertificatePolicyMappings(
+    const EncryptionCertificatePolicyMappings& original,
+    bslma::Allocator*                    basicAllocator)
+: d_value(original.d_value, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificatePolicyMappings::~EncryptionCertificatePolicyMappings()
+{
+}
+
+EncryptionCertificatePolicyMappings& EncryptionCertificatePolicyMappings::operator=(
+    const EncryptionCertificatePolicyMappings& other)
+{
+    if (this != &other) {
+        d_value = other.d_value;
+    }
+
+    return *this;
+}
+
+void EncryptionCertificatePolicyMappings::reset()
+{
+    d_value.reset();
+}
+
+ntsa::Error EncryptionCertificatePolicyMappings::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    error = decoder->decodeTag();
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeValue(&d_value);
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionCertificatePolicyMappings::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    ntsa::Error error;
+
+    error = encoder->encodeTag(
+        d_value.tagClass(), d_value.tagType(), d_value.tagNumber());
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeValue(d_value);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+bool EncryptionCertificatePolicyMappings::equals(
+    const EncryptionCertificatePolicyMappings& other) const
+{
+    return d_value == other.d_value;
+}
+
+bool EncryptionCertificatePolicyMappings::less(
+    const EncryptionCertificatePolicyMappings& other) const
+{
+#if 0
+    if (d_value < other.d_value) {
+        return true;
+    }
+
+    if (other.d_value < d_value) {
+        return false;
+    }
+#endif
+
+    return d_value < other.d_value;
+}
+
+bsl::ostream& EncryptionCertificatePolicyMappings::print(bsl::ostream& stream,
+                                                   int           level,
+                                                   int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute("value", d_value);
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificatePolicyMappings& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionCertificatePolicyMappings& lhs,
+                const EncryptionCertificatePolicyMappings& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionCertificatePolicyMappings& lhs,
+                const EncryptionCertificatePolicyMappings& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionCertificatePolicyMappings& lhs,
+               const EncryptionCertificatePolicyMappings& rhs)
+{
+    return lhs.less(rhs);
+}
+
+EncryptionCertificatePolicy::EncryptionCertificatePolicy(
+    bslma::Allocator* basicAllocator)
+: d_value(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificatePolicy::EncryptionCertificatePolicy(
+    const EncryptionCertificatePolicy& original,
+    bslma::Allocator*                    basicAllocator)
+: d_value(original.d_value, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificatePolicy::~EncryptionCertificatePolicy()
+{
+}
+
+EncryptionCertificatePolicy& EncryptionCertificatePolicy::operator=(
+    const EncryptionCertificatePolicy& other)
+{
+    if (this != &other) {
+        d_value = other.d_value;
+    }
+
+    return *this;
+}
+
+void EncryptionCertificatePolicy::reset()
+{
+    d_value.reset();
+}
+
+ntsa::Error EncryptionCertificatePolicy::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    error = decoder->decodeTag();
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeValue(&d_value);
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionCertificatePolicy::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    ntsa::Error error;
+
+    error = encoder->encodeTag(
+        d_value.tagClass(), d_value.tagType(), d_value.tagNumber());
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeValue(d_value);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+bool EncryptionCertificatePolicy::equals(
+    const EncryptionCertificatePolicy& other) const
+{
+    return d_value == other.d_value;
+}
+
+bool EncryptionCertificatePolicy::less(
+    const EncryptionCertificatePolicy& other) const
+{
+#if 0
+    if (d_value < other.d_value) {
+        return true;
+    }
+
+    if (other.d_value < d_value) {
+        return false;
+    }
+#endif
+
+    return d_value < other.d_value;
+}
+
+bsl::ostream& EncryptionCertificatePolicy::print(bsl::ostream& stream,
+                                                   int           level,
+                                                   int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute("value", d_value);
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificatePolicy& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionCertificatePolicy& lhs,
+                const EncryptionCertificatePolicy& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionCertificatePolicy& lhs,
+                const EncryptionCertificatePolicy& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionCertificatePolicy& lhs,
+               const EncryptionCertificatePolicy& rhs)
+{
+    return lhs.less(rhs);
+}
+
+EncryptionCertificateIssuerKeyIdentifier::EncryptionCertificateIssuerKeyIdentifier(
+    bslma::Allocator* basicAllocator)
+: d_value(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateIssuerKeyIdentifier::EncryptionCertificateIssuerKeyIdentifier(
+    const EncryptionCertificateIssuerKeyIdentifier& original,
+    bslma::Allocator*                    basicAllocator)
+: d_value(original.d_value, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateIssuerKeyIdentifier::~EncryptionCertificateIssuerKeyIdentifier()
+{
+}
+
+EncryptionCertificateIssuerKeyIdentifier& EncryptionCertificateIssuerKeyIdentifier::operator=(
+    const EncryptionCertificateIssuerKeyIdentifier& other)
+{
+    if (this != &other) {
+        d_value = other.d_value;
+    }
+
+    return *this;
+}
+
+void EncryptionCertificateIssuerKeyIdentifier::reset()
+{
+    d_value.reset();
+}
+
+ntsa::Error EncryptionCertificateIssuerKeyIdentifier::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    error = decoder->decodeTag();
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeValue(&d_value);
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionCertificateIssuerKeyIdentifier::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    ntsa::Error error;
+
+    error = encoder->encodeTag(
+        d_value.tagClass(), d_value.tagType(), d_value.tagNumber());
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeValue(d_value);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+bool EncryptionCertificateIssuerKeyIdentifier::equals(
+    const EncryptionCertificateIssuerKeyIdentifier& other) const
+{
+    return d_value == other.d_value;
+}
+
+bool EncryptionCertificateIssuerKeyIdentifier::less(
+    const EncryptionCertificateIssuerKeyIdentifier& other) const
+{
+#if 0
+    if (d_value < other.d_value) {
+        return true;
+    }
+
+    if (other.d_value < d_value) {
+        return false;
+    }
+#endif
+
+    return d_value < other.d_value;
+}
+
+bsl::ostream& EncryptionCertificateIssuerKeyIdentifier::print(bsl::ostream& stream,
+                                                   int           level,
+                                                   int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute("value", d_value);
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateIssuerKeyIdentifier& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionCertificateIssuerKeyIdentifier& lhs,
+                const EncryptionCertificateIssuerKeyIdentifier& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionCertificateIssuerKeyIdentifier& lhs,
+                const EncryptionCertificateIssuerKeyIdentifier& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionCertificateIssuerKeyIdentifier& lhs,
+               const EncryptionCertificateIssuerKeyIdentifier& rhs)
+{
+    return lhs.less(rhs);
+}
+
+EncryptionCertificateIssuerInformationAccess::EncryptionCertificateIssuerInformationAccess(
+    bslma::Allocator* basicAllocator)
+: d_value(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateIssuerInformationAccess::EncryptionCertificateIssuerInformationAccess(
+    const EncryptionCertificateIssuerInformationAccess& original,
+    bslma::Allocator*                    basicAllocator)
+: d_value(original.d_value, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateIssuerInformationAccess::~EncryptionCertificateIssuerInformationAccess()
+{
+}
+
+EncryptionCertificateIssuerInformationAccess& EncryptionCertificateIssuerInformationAccess::operator=(
+    const EncryptionCertificateIssuerInformationAccess& other)
+{
+    if (this != &other) {
+        d_value = other.d_value;
+    }
+
+    return *this;
+}
+
+void EncryptionCertificateIssuerInformationAccess::reset()
+{
+    d_value.reset();
+}
+
+ntsa::Error EncryptionCertificateIssuerInformationAccess::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    error = decoder->decodeTag();
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeValue(&d_value);
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionCertificateIssuerInformationAccess::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    ntsa::Error error;
+
+    error = encoder->encodeTag(
+        d_value.tagClass(), d_value.tagType(), d_value.tagNumber());
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeValue(d_value);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+bool EncryptionCertificateIssuerInformationAccess::equals(
+    const EncryptionCertificateIssuerInformationAccess& other) const
+{
+    return d_value == other.d_value;
+}
+
+bool EncryptionCertificateIssuerInformationAccess::less(
+    const EncryptionCertificateIssuerInformationAccess& other) const
+{
+#if 0
+    if (d_value < other.d_value) {
+        return true;
+    }
+
+    if (other.d_value < d_value) {
+        return false;
+    }
+#endif
+
+    return d_value < other.d_value;
+}
+
+bsl::ostream& EncryptionCertificateIssuerInformationAccess::print(bsl::ostream& stream,
+                                                   int           level,
+                                                   int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute("value", d_value);
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateIssuerInformationAccess& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionCertificateIssuerInformationAccess& lhs,
+                const EncryptionCertificateIssuerInformationAccess& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionCertificateIssuerInformationAccess& lhs,
+                const EncryptionCertificateIssuerInformationAccess& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionCertificateIssuerInformationAccess& lhs,
+               const EncryptionCertificateIssuerInformationAccess& rhs)
+{
+    return lhs.less(rhs);
+}
+
+EncryptionCertificateIssuer::EncryptionCertificateIssuer(
+    bslma::Allocator* basicAllocator)
+: d_name(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateIssuer::EncryptionCertificateIssuer(
+    const EncryptionCertificateIssuer& original,
+    bslma::Allocator*                    basicAllocator)
+: d_name(original.d_name, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateIssuer::~EncryptionCertificateIssuer()
+{
+}
+
+EncryptionCertificateIssuer& EncryptionCertificateIssuer::operator=(
+    const EncryptionCertificateIssuer& other)
+{
+    if (this != &other) {
+        d_name = other.d_name;
+    }
+
+    return *this;
+}
+
+void EncryptionCertificateIssuer::reset()
+{
+    d_name.reset();
+}
+
+ntsa::Error EncryptionCertificateIssuer::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    return d_name.decode(decoder);
+}
+
+ntsa::Error EncryptionCertificateIssuer::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    return d_name.encode(encoder);
+}
+
+bool EncryptionCertificateIssuer::equals(
+    const EncryptionCertificateIssuer& other) const
+{
+    return d_name == other.d_name;
+}
+
+bool EncryptionCertificateIssuer::less(
+    const EncryptionCertificateIssuer& other) const
+{
+    return d_name < other.d_name;
+}
+
+bsl::ostream& EncryptionCertificateIssuer::print(bsl::ostream& stream,
+                                                   int           level,
+                                                   int spacesPerLevel) const
+{
+    d_name.print(stream, level, spacesPerLevel);
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateIssuer& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionCertificateIssuer& lhs,
+                const EncryptionCertificateIssuer& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionCertificateIssuer& lhs,
+                const EncryptionCertificateIssuer& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionCertificateIssuer& lhs,
+               const EncryptionCertificateIssuer& rhs)
+{
+    return lhs.less(rhs);
+}
+
+EncryptionCertificateSubjectKeyUsageExtended::EncryptionCertificateSubjectKeyUsageExtended(
+    bslma::Allocator* basicAllocator)
+: d_value(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateSubjectKeyUsageExtended::EncryptionCertificateSubjectKeyUsageExtended(
+    const EncryptionCertificateSubjectKeyUsageExtended& original,
+    bslma::Allocator*                    basicAllocator)
+: d_value(original.d_value, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateSubjectKeyUsageExtended::~EncryptionCertificateSubjectKeyUsageExtended()
+{
+}
+
+EncryptionCertificateSubjectKeyUsageExtended& EncryptionCertificateSubjectKeyUsageExtended::operator=(
+    const EncryptionCertificateSubjectKeyUsageExtended& other)
+{
+    if (this != &other) {
+        d_value = other.d_value;
+    }
+
+    return *this;
+}
+
+void EncryptionCertificateSubjectKeyUsageExtended::reset()
+{
+    d_value.reset();
+}
+
+ntsa::Error EncryptionCertificateSubjectKeyUsageExtended::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    error = decoder->decodeTag();
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeValue(&d_value);
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionCertificateSubjectKeyUsageExtended::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    ntsa::Error error;
+
+    error = encoder->encodeTag(
+        d_value.tagClass(), d_value.tagType(), d_value.tagNumber());
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeValue(d_value);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+bool EncryptionCertificateSubjectKeyUsageExtended::equals(
+    const EncryptionCertificateSubjectKeyUsageExtended& other) const
+{
+    return d_value == other.d_value;
+}
+
+bool EncryptionCertificateSubjectKeyUsageExtended::less(
+    const EncryptionCertificateSubjectKeyUsageExtended& other) const
+{
+#if 0
+    if (d_value < other.d_value) {
+        return true;
+    }
+
+    if (other.d_value < d_value) {
+        return false;
+    }
+#endif
+
+    return d_value < other.d_value;
+}
+
+bsl::ostream& EncryptionCertificateSubjectKeyUsageExtended::print(bsl::ostream& stream,
+                                                   int           level,
+                                                   int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute("value", d_value);
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateSubjectKeyUsageExtended& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionCertificateSubjectKeyUsageExtended& lhs,
+                const EncryptionCertificateSubjectKeyUsageExtended& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionCertificateSubjectKeyUsageExtended& lhs,
+                const EncryptionCertificateSubjectKeyUsageExtended& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionCertificateSubjectKeyUsageExtended& lhs,
+               const EncryptionCertificateSubjectKeyUsageExtended& rhs)
+{
+    return lhs.less(rhs);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const char* EncryptionCertificateSubjectKeyUsageType::toString(Value value)
+{
+    switch (value) {
+    case e_DIGITAL_SIGNATURE:
+        return "DIGITAL_SIGNATURE";
+    case e_CONTENT_COMMITMENT:
+        return "CONTENT_COMMITMENT";
+    case e_KEY_ENCIPHER:
+        return "KEY_ENCIPHER";
+    case e_DATA_ENCIPHER:
+        return "DATA_ENCIPHER";
+    case e_KEY_AGREEMENT:
+        return "KEY_AGREEMENT";
+    case e_KEY_CERTFICATE_SIGNATURE:
+        return "KEY_CERTFICATE_SIGNATURE";
+    case e_CERTIFICATE_REVOCATION_LIST_SIGNATURE:
+        return "CERTIFICATE_REVOCATION_LIST_SIGNATURE";
+    case e_ENCIPHER_ONLY:
+        return "ENCIPHER_ONLY";
+    case e_DECIPHER_ONLY:
+        return "DECIPHER_ONLY";
+    }
+
+    BSLS_ASSERT(!"invalid enumerator");
+    return 0;
+}
+
+
+
+int EncryptionCertificateSubjectKeyUsageType::fromString(
+    EncryptionCertificateSubjectKeyUsageType::Value* result,
+    const bslstl::StringRef&                       string)
+{
+    if (bdlb::String::areEqualCaseless(string, "DIGITAL_SIGNATURE")) {
+        *result = e_DIGITAL_SIGNATURE;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "CONTENT_COMMITMENT")) {
+        *result = e_CONTENT_COMMITMENT;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "KEY_ENCIPHER")) {
+        *result = e_KEY_ENCIPHER;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "DATA_ENCIPHER")) {
+        *result = e_DATA_ENCIPHER;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "KEY_AGREEMENT")) {
+        *result = e_KEY_AGREEMENT;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "KEY_CERTFICATE_SIGNATURE")) {
+        *result = e_KEY_CERTFICATE_SIGNATURE;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "CERTIFICATE_REVOCATION_LIST_SIGNATURE")) {
+        *result = e_CERTIFICATE_REVOCATION_LIST_SIGNATURE;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "ENCIPHER_ONLY")) {
+        *result = e_ENCIPHER_ONLY;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "DECIPHER_ONLY")) {
+        *result = e_DECIPHER_ONLY;
+        return 0;
+    }
+
+    return -1;
+}
+
+bsl::ostream& EncryptionCertificateSubjectKeyUsageType::print(
+    bsl::ostream& stream,
+    Value         value)
+{
+    return stream << toString(value);
+}
+
+bsl::ostream& operator<<(bsl::ostream&                                 stream,
+                         EncryptionCertificateSubjectKeyUsageType::Value rhs)
+{
+    return EncryptionCertificateSubjectKeyUsageType::print(stream, rhs);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+EncryptionCertificateSubjectKeyUsage::EncryptionCertificateSubjectKeyUsage(
+    bslma::Allocator* basicAllocator)
+: d_value(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateSubjectKeyUsage::EncryptionCertificateSubjectKeyUsage(
+    const EncryptionCertificateSubjectKeyUsage& original,
+    bslma::Allocator*                    basicAllocator)
+: d_value(original.d_value, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateSubjectKeyUsage::~EncryptionCertificateSubjectKeyUsage()
+{
+}
+
+EncryptionCertificateSubjectKeyUsage& EncryptionCertificateSubjectKeyUsage::operator=(
+    const EncryptionCertificateSubjectKeyUsage& other)
+{
+    if (this != &other) {
+        d_value = other.d_value;
+    }
+
+    return *this;
+}
+
+void EncryptionCertificateSubjectKeyUsage::reset()
+{
+    d_value.reset();
+}
+
+ntsa::Error EncryptionCertificateSubjectKeyUsage::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_BIT_STRING);
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeValue(&d_value);
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionCertificateSubjectKeyUsage::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_BIT_STRING);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeValue(d_value);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+bool EncryptionCertificateSubjectKeyUsage::equals(
+    const EncryptionCertificateSubjectKeyUsage& other) const
+{
+    return d_value == other.d_value;
+}
+
+bool EncryptionCertificateSubjectKeyUsage::less(
+    const EncryptionCertificateSubjectKeyUsage& other) const
+{
+#if 0
+    if (d_value < other.d_value) {
+        return true;
+    }
+
+    if (other.d_value < d_value) {
+        return false;
+    }
+#endif
+
+    return d_value < other.d_value;
+}
+
+bsl::ostream& EncryptionCertificateSubjectKeyUsage::print(bsl::ostream& stream,
+                                                   int           level,
+                                                   int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+
+    for (bsl::size_t enumerator = 0; enumerator <= 8; ++enumerator) {
+        if (d_value.getBit(enumerator)) {
+            stream << ' ';
+            stream << static_cast<EncryptionCertificateSubjectKeyUsageType::Value>(enumerator);
+        }
+    }
+
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateSubjectKeyUsage& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionCertificateSubjectKeyUsage& lhs,
+                const EncryptionCertificateSubjectKeyUsage& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionCertificateSubjectKeyUsage& lhs,
+                const EncryptionCertificateSubjectKeyUsage& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionCertificateSubjectKeyUsage& lhs,
+               const EncryptionCertificateSubjectKeyUsage& rhs)
+{
+    return lhs.less(rhs);
+}
+
+EncryptionCertificateSubjectKeyIdentifier::EncryptionCertificateSubjectKeyIdentifier(
+    bslma::Allocator* basicAllocator)
+: d_value(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateSubjectKeyIdentifier::EncryptionCertificateSubjectKeyIdentifier(
+    const EncryptionCertificateSubjectKeyIdentifier& original,
+    bslma::Allocator*                    basicAllocator)
+: d_value(original.d_value, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateSubjectKeyIdentifier::~EncryptionCertificateSubjectKeyIdentifier()
+{
+}
+
+EncryptionCertificateSubjectKeyIdentifier& EncryptionCertificateSubjectKeyIdentifier::operator=(
+    const EncryptionCertificateSubjectKeyIdentifier& other)
+{
+    if (this != &other) {
+        d_value = other.d_value;
+    }
+
+    return *this;
+}
+
+void EncryptionCertificateSubjectKeyIdentifier::reset()
+{
+    d_value.reset();
+}
+
+ntsa::Error EncryptionCertificateSubjectKeyIdentifier::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    error = decoder->decodeTag();
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeValue(&d_value);
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionCertificateSubjectKeyIdentifier::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    ntsa::Error error;
+
+    error = encoder->encodeTag(
+        d_value.tagClass(), d_value.tagType(), d_value.tagNumber());
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeValue(d_value);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+bool EncryptionCertificateSubjectKeyIdentifier::equals(
+    const EncryptionCertificateSubjectKeyIdentifier& other) const
+{
+    return d_value == other.d_value;
+}
+
+bool EncryptionCertificateSubjectKeyIdentifier::less(
+    const EncryptionCertificateSubjectKeyIdentifier& other) const
+{
+#if 0
+    if (d_value < other.d_value) {
+        return true;
+    }
+
+    if (other.d_value < d_value) {
+        return false;
+    }
+#endif
+
+    return d_value < other.d_value;
+}
+
+bsl::ostream& EncryptionCertificateSubjectKeyIdentifier::print(bsl::ostream& stream,
+                                                   int           level,
+                                                   int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute("value", d_value);
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateSubjectKeyIdentifier& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionCertificateSubjectKeyIdentifier& lhs,
+                const EncryptionCertificateSubjectKeyIdentifier& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionCertificateSubjectKeyIdentifier& lhs,
+                const EncryptionCertificateSubjectKeyIdentifier& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionCertificateSubjectKeyIdentifier& lhs,
+               const EncryptionCertificateSubjectKeyIdentifier& rhs)
+{
+    return lhs.less(rhs);
+}
+
+EncryptionCertificateSubjectConstraints::EncryptionCertificateSubjectConstraints(
+    bslma::Allocator* basicAllocator)
+: d_authority()
+, d_pathLength()
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateSubjectConstraints::EncryptionCertificateSubjectConstraints(
+    const EncryptionCertificateSubjectConstraints& original,
+    bslma::Allocator*                    basicAllocator)
+: d_authority(original.d_authority)
+, d_pathLength(original.d_pathLength)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateSubjectConstraints::~EncryptionCertificateSubjectConstraints()
+{
+}
+
+EncryptionCertificateSubjectConstraints& EncryptionCertificateSubjectConstraints::operator=(
+    const EncryptionCertificateSubjectConstraints& other)
+{
+    if (this != &other) {
+        d_authority = other.d_authority;
+        d_pathLength = other.d_pathLength;
+    }
+
+    return *this;
+}
+
+void EncryptionCertificateSubjectConstraints::reset()
+{
+    d_authority.reset();
+    d_pathLength.reset();
+}
+
+ntsa::Error EncryptionCertificateSubjectConstraints::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    error = decoder->decodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    if (error) {
+        return error;
+    }
+
+    bool wantAuthority = true;
+    bool wantPathLength = true;
+
+    if (decoder->contentBytesRemaining() > 0) {
+        error = decoder->decodeTag();
+        if (error) {
+            return error;
+        }
+
+        if (decoder->current().tagClass()  == k_UNIVERSAL &&
+            decoder->current().tagType()   == k_PRIMITIVE &&
+            decoder->current().tagNumber() == k_BOOLEAN &&
+            wantAuthority)
+        {
+            error = decoder->decodeValue(&d_authority.makeValue());
+            if (error) {
+                return error;
+            }
+
+            wantAuthority = false;
+        }
+        else if (decoder->current().tagClass() == k_UNIVERSAL &&
+                 decoder->current().tagType() == k_PRIMITIVE &&
+                 decoder->current().tagNumber() == k_INTEGER &&
+                 wantPathLength)
+        {
+
+            error = decoder->decodeValue(&d_pathLength.makeValue());
+            if (error) {
+                return error;
+            }
+
+            wantPathLength = false;
+        }
+        else {
+            return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+        }
+
+        error = decoder->decodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionCertificateSubjectConstraints::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    if (error) {
+        return error;
+    }
+
+    bdlb::NullableValue<bool>        authority  = d_authority;
+    bdlb::NullableValue<bsl::size_t> pathLength = d_pathLength;
+
+    if (!pathLength.isNull() && authority.isNull()) {
+        authority.makeValue(false);
+    }
+
+    if (!authority.isNull()) {
+        error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_BOOLEAN);
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeValue(authority.value());
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+
+    if (!pathLength.isNull()) {
+        error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_INTEGER);
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeValue(pathLength.value());
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+bool EncryptionCertificateSubjectConstraints::equals(
+    const EncryptionCertificateSubjectConstraints& other) const
+{
+    return d_authority == other.d_authority && d_pathLength == other.d_pathLength;
+}
+
+bool EncryptionCertificateSubjectConstraints::less(
+    const EncryptionCertificateSubjectConstraints& other) const
+{
+    if (d_authority < other.d_authority) {
+        return true;
+    }
+
+    if (other.d_authority < d_authority) {
+        return false;
+    }
+
+    return d_pathLength < other.d_pathLength;
+}
+
+bsl::ostream& EncryptionCertificateSubjectConstraints::print(bsl::ostream& stream,
+                                                   int           level,
+                                                   int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    
+    if (!d_authority.isNull()) {
+        printer.printAttribute("authority", d_authority.value());
+    }
+
+    if (!d_pathLength.isNull()) {
+        printer.printAttribute("pathLength", d_pathLength.value());
+    }
+
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateSubjectConstraints& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionCertificateSubjectConstraints& lhs,
+                const EncryptionCertificateSubjectConstraints& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionCertificateSubjectConstraints& lhs,
+                const EncryptionCertificateSubjectConstraints& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionCertificateSubjectConstraints& lhs,
+               const EncryptionCertificateSubjectConstraints& rhs)
+{
+    return lhs.less(rhs);
+}
+
+EncryptionCertificateSubject::EncryptionCertificateSubject(
+    bslma::Allocator* basicAllocator)
+: d_name(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateSubject::EncryptionCertificateSubject(
+    const EncryptionCertificateSubject& original,
+    bslma::Allocator*                    basicAllocator)
+: d_name(original.d_name, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateSubject::~EncryptionCertificateSubject()
+{
+}
+
+EncryptionCertificateSubject& EncryptionCertificateSubject::operator=(
+    const EncryptionCertificateSubject& other)
+{
+    if (this != &other) {
+        d_name = other.d_name;
+    }
+
+    return *this;
+}
+
+void EncryptionCertificateSubject::reset()
+{
+    d_name.reset();
+}
+
+void EncryptionCertificateSubject::setName(
+    const ntca::EncryptionCertificateName& value)
+{
+    d_name = value;
+}
+
+ntsa::Error EncryptionCertificateSubject::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    return d_name.decode(decoder);
+}
+
+ntsa::Error EncryptionCertificateSubject::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    return d_name.encode(encoder);
+}
+
+const ntca::EncryptionCertificateName& EncryptionCertificateSubject::name() const
+{
+    return d_name;
+}
+
+bool EncryptionCertificateSubject::equals(
+    const EncryptionCertificateSubject& other) const
+{
+    return d_name == other.d_name;
+}
+
+bool EncryptionCertificateSubject::less(
+    const EncryptionCertificateSubject& other) const
+{
+    return d_name < other.d_name;
+}
+
+bsl::ostream& EncryptionCertificateSubject::print(bsl::ostream& stream,
+                                                   int           level,
+                                                   int spacesPerLevel) const
+{
+    d_name.print(stream, level, spacesPerLevel);
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateSubject& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionCertificateSubject& lhs,
+                const EncryptionCertificateSubject& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionCertificateSubject& lhs,
+                const EncryptionCertificateSubject& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionCertificateSubject& lhs,
+               const EncryptionCertificateSubject& rhs)
+{
+    return lhs.less(rhs);
+}
+
+
+// MRM: Insert
+
 
 const char* EncryptionCertificateExtensionAttributeType::toString(Value value)
 {
@@ -5586,15 +7423,87 @@ EncryptionCertificateExtensionValue::EncryptionCertificateExtensionValue(
     if (d_type == e_BOOLEAN) {
         new (d_boolean.buffer()) bool(original.d_boolean.object());
     }
+    else if (d_type == e_NAME) {
+        new (d_name.buffer())
+            EncryptionCertificateName(
+                original.d_name.object(),
+                d_allocator_p);
+    }
     else if (d_type == e_NAME_ALTERNATIVE) {
         new (d_nameAlternative.buffer())
             EncryptionCertificateNameAlternativeList(
                 original.d_nameAlternative.object(),
                 d_allocator_p);
     }
+    else if (d_type == e_SUBJECT) {
+        new (d_subject.buffer())
+            EncryptionCertificateSubject(
+                original.d_subject.object(),
+                d_allocator_p);
+    }
+    else if (d_type == e_SUBJECT_KEY_IDENTIFIER) {
+        new (d_subjectKeyIdentifier.buffer())
+            EncryptionCertificateSubjectKeyIdentifier(
+                original.d_subjectKeyIdentifier.object(),
+                d_allocator_p);
+    }
+    else if (d_type == e_SUBJECT_KEY_USAGE) {
+        new (d_subjectKeyUsage.buffer())
+            EncryptionCertificateSubjectKeyUsage(
+                original.d_subjectKeyUsage.object(),
+                d_allocator_p);
+    }
+    else if (d_type == e_SUBJECT_KEY_USAGE_EXTENDED) {
+        new (d_subjectKeyUsageExtended.buffer())
+            EncryptionCertificateSubjectKeyUsageExtended(
+                original.d_subjectKeyUsageExtended.object(),
+                d_allocator_p);
+    }
+    else if (d_type == e_SUBJECT_CONSTRAINTS) {
+        new (d_subjectConstraints.buffer())
+            EncryptionCertificateSubjectConstraints(
+                original.d_subjectConstraints.object(),
+                d_allocator_p);
+    }
+    else if (d_type == e_ISSUER) {
+        new (d_issuer.buffer())
+            EncryptionCertificateIssuer(
+                original.d_issuer.object(),
+                d_allocator_p);
+    }
+    else if (d_type == e_ISSUER_KEY_IDENTIFIER) {
+        new (d_issuerKeyIdentifier.buffer())
+            EncryptionCertificateIssuerKeyIdentifier(
+                original.d_issuerKeyIdentifier.object(),
+                d_allocator_p);
+    }
+    else if (d_type == e_ISSUER_INFORMATION_ACCESS) {
+        new (d_issuerInformationAccess.buffer())
+            EncryptionCertificateIssuerInformationAccess(
+                original.d_issuerInformationAccess.object(),
+                d_allocator_p);
+    }
+    else if (d_type == e_POLICY) {
+        new (d_policy.buffer())
+            EncryptionCertificatePolicy(
+                original.d_policy.object(),
+                d_allocator_p);
+    }
+    else if (d_type == e_POLICY_MAPPINGS) {
+        new (d_policyMappings.buffer())
+            EncryptionCertificatePolicyMappings(
+                original.d_policyMappings.object(),
+                d_allocator_p);
+    }
+    else if (d_type == e_POLICY_CONSTRAINTS) {
+        new (d_policyConstraints.buffer())
+            EncryptionCertificatePolicyConstraints(
+                original.d_policyConstraints.object(),
+                d_allocator_p);
+    }
     else if (d_type == e_BYTE_SEQUENCE) {
         new (d_byteSequence.buffer())
-            ntsa::AbstractByteSequence(
+            ntsa::AbstractOctetString(
                 original.d_byteSequence.object(), d_allocator_p);
     }
     else if (d_type == e_ANY) {
@@ -5621,8 +7530,44 @@ operator=(const EncryptionCertificateExtensionValue& other)
     if (other.d_type == e_BOOLEAN) {
         this->makeBoolean(other.d_boolean.object());
     }
+    else if (other.d_type == e_NAME) {
+        this->makeName(other.d_name.object());
+    }
     else if (other.d_type == e_NAME_ALTERNATIVE) {
         this->makeNameAlternative(other.d_nameAlternative.object());
+    }
+    else if (other.d_type == e_SUBJECT) {
+        this->makeSubject(other.d_subject.object());
+    }
+    else if (other.d_type == e_SUBJECT_KEY_IDENTIFIER) {
+        this->makeSubjectKeyIdentifier(other.d_subjectKeyIdentifier.object());
+    }
+    else if (other.d_type == e_SUBJECT_KEY_USAGE) {
+        this->makeSubjectKeyUsage(other.d_subjectKeyUsage.object());
+    }
+    else if (other.d_type == e_SUBJECT_KEY_USAGE_EXTENDED) {
+        this->makeSubjectKeyUsageExtended(other.d_subjectKeyUsageExtended.object());
+    }
+    else if (other.d_type == e_SUBJECT_CONSTRAINTS) {
+        this->makeSubjectConstraints(other.d_subjectConstraints.object());
+    }
+    else if (other.d_type == e_ISSUER) {
+        this->makeIssuer(other.d_issuer.object());
+    }
+    else if (other.d_type == e_ISSUER_KEY_IDENTIFIER) {
+        this->makeIssuerKeyIdentifier(other.d_issuerKeyIdentifier.object());
+    }
+    else if (other.d_type == e_ISSUER_INFORMATION_ACCESS) {
+        this->makeIssuerInformationAccess(other.d_issuerInformationAccess.object());
+    }
+    else if (other.d_type == e_POLICY) {
+        this->makePolicy(other.d_policy.object());
+    }
+    else if (other.d_type == e_POLICY_MAPPINGS) {
+        this->makePolicyMappings(other.d_policyMappings.object());
+    }
+    else if (other.d_type == e_POLICY_CONSTRAINTS) {
+        this->makePolicyConstraints(other.d_policyConstraints.object());
     }
     else if (other.d_type == e_BYTE_SEQUENCE) {
         this->makeByteSequence(other.d_byteSequence.object());
@@ -5644,12 +7589,60 @@ void EncryptionCertificateExtensionValue::reset()
         typedef bool Type;
         d_boolean.object().~Type();
     }
+    else if (d_type == e_NAME) {
+        typedef EncryptionCertificateName Type;
+        d_name.object().~Type();
+    }
     else if (d_type == e_NAME_ALTERNATIVE) {
         typedef EncryptionCertificateNameAlternativeList Type;
         d_nameAlternative.object().~Type();
     }
+    else if (d_type == e_SUBJECT) {
+        typedef EncryptionCertificateSubject Type;
+        d_subject.object().~Type();
+    }
+    else if (d_type == e_SUBJECT_KEY_IDENTIFIER) {
+        typedef EncryptionCertificateSubjectKeyIdentifier Type;
+        d_subjectKeyIdentifier.object().~Type();
+    }
+    else if (d_type == e_SUBJECT_KEY_USAGE) {
+        typedef EncryptionCertificateSubjectKeyUsage Type;
+        d_subjectKeyUsage.object().~Type();
+    }
+    else if (d_type == e_SUBJECT_KEY_USAGE_EXTENDED) {
+        typedef EncryptionCertificateSubjectKeyUsageExtended Type;
+        d_subjectKeyUsageExtended.object().~Type();
+    }
+    else if (d_type == e_SUBJECT_CONSTRAINTS) {
+        typedef EncryptionCertificateSubjectConstraints Type;
+        d_subjectConstraints.object().~Type();
+    }
+    else if (d_type == e_ISSUER) {
+        typedef EncryptionCertificateIssuer Type;
+        d_issuer.object().~Type();
+    }
+    else if (d_type == e_ISSUER_KEY_IDENTIFIER) {
+        typedef EncryptionCertificateIssuerKeyIdentifier Type;
+        d_issuerKeyIdentifier.object().~Type();
+    }
+    else if (d_type == e_ISSUER_INFORMATION_ACCESS) {
+        typedef EncryptionCertificateIssuerInformationAccess Type;
+        d_issuerInformationAccess.object().~Type();
+    }
+    else if (d_type == e_POLICY) {
+        typedef EncryptionCertificatePolicy Type;
+        d_policy.object().~Type();
+    }
+    else if (d_type == e_POLICY_MAPPINGS) {
+        typedef EncryptionCertificatePolicyMappings Type;
+        d_policyMappings.object().~Type();
+    }
+    else if (d_type == e_POLICY_CONSTRAINTS) {
+        typedef EncryptionCertificatePolicyConstraints Type;
+        d_policyConstraints.object().~Type();
+    }
     else if (d_type == e_BYTE_SEQUENCE) {
-        typedef ntsa::AbstractByteSequence Type;
+        typedef ntsa::AbstractOctetString Type;
         d_byteSequence.object().~Type();
     }
     else if (d_type == e_ANY) {
@@ -5688,6 +7681,38 @@ bool& EncryptionCertificateExtensionValue::makeBoolean(bool value)
     return d_boolean.object();
 }
 
+EncryptionCertificateName& EncryptionCertificateExtensionValue::
+    makeName()
+{
+    if (d_type == e_NAME) {
+        d_name.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_name.buffer())
+            EncryptionCertificateName(d_allocator_p);
+        d_type = e_NAME;
+    }
+
+    return d_name.object();
+}
+
+EncryptionCertificateName& EncryptionCertificateExtensionValue::
+    makeName(const EncryptionCertificateName& value)
+{
+    if (d_type == e_NAME) {
+        d_name.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_name.buffer())
+            EncryptionCertificateName(value, d_allocator_p);
+        d_type = e_NAME;
+    }
+
+    return d_name.object();
+}
+
 EncryptionCertificateNameAlternativeList& EncryptionCertificateExtensionValue::
     makeNameAlternative()
 {
@@ -5723,29 +7748,498 @@ EncryptionCertificateNameAlternativeList& EncryptionCertificateExtensionValue::
 
 
 
-ntsa::AbstractByteSequence& EncryptionCertificateExtensionValue::makeByteSequence()
+
+
+
+
+
+
+
+
+
+
+
+EncryptionCertificateSubject& EncryptionCertificateExtensionValue::
+    makeSubject()
+{
+    if (d_type == e_SUBJECT) {
+        d_subject.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_subject.buffer())
+            EncryptionCertificateSubject(d_allocator_p);
+        d_type = e_SUBJECT;
+    }
+
+    return d_subject.object();
+}
+
+EncryptionCertificateSubject& EncryptionCertificateExtensionValue::
+    makeSubject(const EncryptionCertificateSubject& value)
+{
+    if (d_type == e_SUBJECT) {
+        d_subject.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_subject.buffer())
+            EncryptionCertificateSubject(value, d_allocator_p);
+        d_type = e_SUBJECT;
+    }
+
+    return d_subject.object();
+}
+
+
+
+
+EncryptionCertificateSubjectKeyIdentifier& EncryptionCertificateExtensionValue::
+    makeSubjectKeyIdentifier()
+{
+    if (d_type == e_SUBJECT_KEY_IDENTIFIER) {
+        d_subjectKeyIdentifier.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_subjectKeyIdentifier.buffer())
+            EncryptionCertificateSubjectKeyIdentifier(d_allocator_p);
+        d_type = e_SUBJECT_KEY_IDENTIFIER;
+    }
+
+    return d_subjectKeyIdentifier.object();
+}
+
+EncryptionCertificateSubjectKeyIdentifier& EncryptionCertificateExtensionValue::
+    makeSubjectKeyIdentifier(const EncryptionCertificateSubjectKeyIdentifier& value)
+{
+    if (d_type == e_SUBJECT_KEY_IDENTIFIER) {
+        d_subjectKeyIdentifier.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_subjectKeyIdentifier.buffer())
+            EncryptionCertificateSubjectKeyIdentifier(value, d_allocator_p);
+        d_type = e_SUBJECT_KEY_IDENTIFIER;
+    }
+
+    return d_subjectKeyIdentifier.object();
+}
+
+
+
+EncryptionCertificateSubjectKeyUsage& EncryptionCertificateExtensionValue::
+    makeSubjectKeyUsage()
+{
+    if (d_type == e_SUBJECT_KEY_USAGE) {
+        d_subjectKeyUsage.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_subjectKeyUsage.buffer())
+            EncryptionCertificateSubjectKeyUsage(d_allocator_p);
+        d_type = e_SUBJECT_KEY_USAGE;
+    }
+
+    return d_subjectKeyUsage.object();
+}
+
+EncryptionCertificateSubjectKeyUsage& EncryptionCertificateExtensionValue::
+    makeSubjectKeyUsage(const EncryptionCertificateSubjectKeyUsage& value)
+{
+    if (d_type == e_SUBJECT_KEY_USAGE) {
+        d_subjectKeyUsage.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_subjectKeyUsage.buffer())
+            EncryptionCertificateSubjectKeyUsage(value, d_allocator_p);
+        d_type = e_SUBJECT_KEY_USAGE;
+    }
+
+    return d_subjectKeyUsage.object();
+}
+
+
+
+
+
+
+
+
+
+
+EncryptionCertificateSubjectKeyUsageExtended& EncryptionCertificateExtensionValue::
+    makeSubjectKeyUsageExtended()
+{
+    if (d_type == e_SUBJECT_KEY_USAGE_EXTENDED) {
+        d_subjectKeyUsageExtended.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_subjectKeyUsageExtended.buffer())
+            EncryptionCertificateSubjectKeyUsageExtended(d_allocator_p);
+        d_type = e_SUBJECT_KEY_USAGE_EXTENDED;
+    }
+
+    return d_subjectKeyUsageExtended.object();
+}
+
+EncryptionCertificateSubjectKeyUsageExtended& EncryptionCertificateExtensionValue::
+    makeSubjectKeyUsageExtended(const EncryptionCertificateSubjectKeyUsageExtended& value)
+{
+    if (d_type == e_SUBJECT_KEY_USAGE_EXTENDED) {
+        d_subjectKeyUsageExtended.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_subjectKeyUsageExtended.buffer())
+            EncryptionCertificateSubjectKeyUsageExtended(value, d_allocator_p);
+        d_type = e_SUBJECT_KEY_USAGE_EXTENDED;
+    }
+
+    return d_subjectKeyUsageExtended.object();
+}
+
+
+
+
+EncryptionCertificateSubjectConstraints& EncryptionCertificateExtensionValue::
+    makeSubjectConstraints()
+{
+    if (d_type == e_SUBJECT_CONSTRAINTS) {
+        d_subjectConstraints.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_subjectConstraints.buffer())
+            EncryptionCertificateSubjectConstraints(d_allocator_p);
+        d_type = e_SUBJECT_CONSTRAINTS;
+    }
+
+    return d_subjectConstraints.object();
+}
+
+EncryptionCertificateSubjectConstraints& EncryptionCertificateExtensionValue::
+    makeSubjectConstraints(const EncryptionCertificateSubjectConstraints& value)
+{
+    if (d_type == e_SUBJECT_CONSTRAINTS) {
+        d_subjectConstraints.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_subjectConstraints.buffer())
+            EncryptionCertificateSubjectConstraints(value, d_allocator_p);
+        d_type = e_SUBJECT_CONSTRAINTS;
+    }
+
+    return d_subjectConstraints.object();
+}
+
+
+
+
+
+
+
+
+
+EncryptionCertificateIssuer& EncryptionCertificateExtensionValue::
+    makeIssuer()
+{
+    if (d_type == e_ISSUER) {
+        d_issuer.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_issuer.buffer())
+            EncryptionCertificateIssuer(d_allocator_p);
+        d_type = e_ISSUER;
+    }
+
+    return d_issuer.object();
+}
+
+EncryptionCertificateIssuer& EncryptionCertificateExtensionValue::
+    makeIssuer(const EncryptionCertificateIssuer& value)
+{
+    if (d_type == e_ISSUER) {
+        d_issuer.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_issuer.buffer())
+            EncryptionCertificateIssuer(value, d_allocator_p);
+        d_type = e_ISSUER;
+    }
+
+    return d_issuer.object();
+}
+
+
+
+
+
+
+
+
+
+
+
+EncryptionCertificateIssuerKeyIdentifier& EncryptionCertificateExtensionValue::
+    makeIssuerKeyIdentifier()
+{
+    if (d_type == e_ISSUER_KEY_IDENTIFIER) {
+        d_issuerKeyIdentifier.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_issuerKeyIdentifier.buffer())
+            EncryptionCertificateIssuerKeyIdentifier(d_allocator_p);
+        d_type = e_ISSUER_KEY_IDENTIFIER;
+    }
+
+    return d_issuerKeyIdentifier.object();
+}
+
+EncryptionCertificateIssuerKeyIdentifier& EncryptionCertificateExtensionValue::
+    makeIssuerKeyIdentifier(const EncryptionCertificateIssuerKeyIdentifier& value)
+{
+    if (d_type == e_ISSUER_KEY_IDENTIFIER) {
+        d_issuerKeyIdentifier.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_issuerKeyIdentifier.buffer())
+            EncryptionCertificateIssuerKeyIdentifier(value, d_allocator_p);
+        d_type = e_ISSUER_KEY_IDENTIFIER;
+    }
+
+    return d_issuerKeyIdentifier.object();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+EncryptionCertificateIssuerInformationAccess& EncryptionCertificateExtensionValue::
+    makeIssuerInformationAccess()
+{
+    if (d_type == e_ISSUER_INFORMATION_ACCESS) {
+        d_issuerInformationAccess.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_issuerInformationAccess.buffer())
+            EncryptionCertificateIssuerInformationAccess(d_allocator_p);
+        d_type = e_ISSUER_INFORMATION_ACCESS;
+    }
+
+    return d_issuerInformationAccess.object();
+}
+
+EncryptionCertificateIssuerInformationAccess& EncryptionCertificateExtensionValue::
+    makeIssuerInformationAccess(const EncryptionCertificateIssuerInformationAccess& value)
+{
+    if (d_type == e_ISSUER_INFORMATION_ACCESS) {
+        d_issuerInformationAccess.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_issuerInformationAccess.buffer())
+            EncryptionCertificateIssuerInformationAccess(value, d_allocator_p);
+        d_type = e_ISSUER_INFORMATION_ACCESS;
+    }
+
+    return d_issuerInformationAccess.object();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+EncryptionCertificatePolicy& EncryptionCertificateExtensionValue::
+    makePolicy()
+{
+    if (d_type == e_POLICY) {
+        d_policy.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_policy.buffer())
+            EncryptionCertificatePolicy(d_allocator_p);
+        d_type = e_POLICY;
+    }
+
+    return d_policy.object();
+}
+
+EncryptionCertificatePolicy& EncryptionCertificateExtensionValue::
+    makePolicy(const EncryptionCertificatePolicy& value)
+{
+    if (d_type == e_POLICY) {
+        d_policy.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_policy.buffer())
+            EncryptionCertificatePolicy(value, d_allocator_p);
+        d_type = e_POLICY;
+    }
+
+    return d_policy.object();
+}
+
+
+
+
+EncryptionCertificatePolicyMappings& EncryptionCertificateExtensionValue::
+    makePolicyMappings()
+{
+    if (d_type == e_POLICY_MAPPINGS) {
+        d_policyMappings.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_policyMappings.buffer())
+            EncryptionCertificatePolicyMappings(d_allocator_p);
+        d_type = e_POLICY_MAPPINGS;
+    }
+
+    return d_policyMappings.object();
+}
+
+EncryptionCertificatePolicyMappings& EncryptionCertificateExtensionValue::
+    makePolicyMappings(const EncryptionCertificatePolicyMappings& value)
+{
+    if (d_type == e_POLICY_MAPPINGS) {
+        d_policyMappings.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_policyMappings.buffer())
+            EncryptionCertificatePolicyMappings(value, d_allocator_p);
+        d_type = e_POLICY_MAPPINGS;
+    }
+
+    return d_policyMappings.object();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+EncryptionCertificatePolicyConstraints& EncryptionCertificateExtensionValue::
+    makePolicyConstraints()
+{
+    if (d_type == e_POLICY_CONSTRAINTS) {
+        d_policyConstraints.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_policyConstraints.buffer())
+            EncryptionCertificatePolicyConstraints(d_allocator_p);
+        d_type = e_POLICY_CONSTRAINTS;
+    }
+
+    return d_policyConstraints.object();
+}
+
+EncryptionCertificatePolicyConstraints& EncryptionCertificateExtensionValue::
+    makePolicyConstraints(const EncryptionCertificatePolicyConstraints& value)
+{
+    if (d_type == e_POLICY_CONSTRAINTS) {
+        d_policyConstraints.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_policyConstraints.buffer())
+            EncryptionCertificatePolicyConstraints(value, d_allocator_p);
+        d_type = e_POLICY_CONSTRAINTS;
+    }
+
+    return d_policyConstraints.object();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ntsa::AbstractOctetString& EncryptionCertificateExtensionValue::makeByteSequence()
 {
     if (d_type == e_BYTE_SEQUENCE) {
         d_byteSequence.object().reset();
     }
     else {
         this->reset();
-        new (d_byteSequence.buffer()) ntsa::AbstractByteSequence(d_allocator_p);
+        new (d_byteSequence.buffer()) ntsa::AbstractOctetString(d_allocator_p);
         d_type = e_BYTE_SEQUENCE;
     }
 
     return d_byteSequence.object();
 }
 
-ntsa::AbstractByteSequence& EncryptionCertificateExtensionValue::makeByteSequence(
-    const ntsa::AbstractByteSequence& value)
+ntsa::AbstractOctetString& EncryptionCertificateExtensionValue::makeByteSequence(
+    const ntsa::AbstractOctetString& value)
 {
     if (d_type == e_BYTE_SEQUENCE) {
         d_byteSequence.object() = value;
     }
     else {
         this->reset();
-        new (d_byteSequence.buffer()) ntsa::AbstractByteSequence(value, d_allocator_p);
+        new (d_byteSequence.buffer()) ntsa::AbstractOctetString(value, d_allocator_p);
         d_type = e_BYTE_SEQUENCE;
     }
 
@@ -5797,6 +8291,12 @@ bool& EncryptionCertificateExtensionValue::boolean()
     return d_boolean.object();
 }
 
+EncryptionCertificateName& EncryptionCertificateExtensionValue::name()
+{
+    BSLS_ASSERT(this->isName());
+    return d_name.object();
+}
+
 EncryptionCertificateNameAlternativeList& EncryptionCertificateExtensionValue::
     nameAlternative()
 {
@@ -5804,7 +8304,79 @@ EncryptionCertificateNameAlternativeList& EncryptionCertificateExtensionValue::
     return d_nameAlternative.object();
 }
 
-ntsa::AbstractByteSequence& EncryptionCertificateExtensionValue::byteSequence()
+EncryptionCertificateSubject& EncryptionCertificateExtensionValue::subject()
+{
+    BSLS_ASSERT(this->isSubject());
+    return d_subject.object();
+}
+
+EncryptionCertificateSubjectKeyIdentifier& EncryptionCertificateExtensionValue::subjectKeyIdentifier()
+{
+    BSLS_ASSERT(this->isSubjectKeyIdentifier());
+    return d_subjectKeyIdentifier.object();
+}
+
+EncryptionCertificateSubjectKeyUsage& EncryptionCertificateExtensionValue::subjectKeyUsage()
+{
+    BSLS_ASSERT(this->isSubjectKeyUsage());
+    return d_subjectKeyUsage.object();
+}
+
+EncryptionCertificateSubjectKeyUsageExtended& EncryptionCertificateExtensionValue::subjectKeyUsageExtended()
+{
+    BSLS_ASSERT(this->isSubjectKeyUsageExtended());
+    return d_subjectKeyUsageExtended.object();
+}
+
+EncryptionCertificateSubjectConstraints& EncryptionCertificateExtensionValue::subjectConstraints()
+{
+    BSLS_ASSERT(this->isSubjectConstraints());
+    return d_subjectConstraints.object();
+}
+
+EncryptionCertificateIssuer& EncryptionCertificateExtensionValue::issuer()
+{
+    BSLS_ASSERT(this->isIssuer());
+    return d_issuer.object();
+}
+
+EncryptionCertificateIssuerKeyIdentifier& EncryptionCertificateExtensionValue::issuerKeyIdentifier()
+{
+    BSLS_ASSERT(this->isIssuerKeyIdentifier());
+    return d_issuerKeyIdentifier.object();
+}
+
+EncryptionCertificateIssuerInformationAccess& EncryptionCertificateExtensionValue::issuerInformationAccess()
+{
+    BSLS_ASSERT(this->isIssuerInformationAccess());
+    return d_issuerInformationAccess.object();
+}
+
+EncryptionCertificatePolicy& EncryptionCertificateExtensionValue::policy()
+{
+    BSLS_ASSERT(this->isPolicy());
+    return d_policy.object();
+}
+
+EncryptionCertificatePolicyMappings& EncryptionCertificateExtensionValue::policyMappings()
+{
+    BSLS_ASSERT(this->isPolicyMappings());
+    return d_policyMappings.object();
+}
+
+EncryptionCertificatePolicyConstraints& EncryptionCertificateExtensionValue::policyConstraints()
+{
+    BSLS_ASSERT(this->isPolicyConstraints());
+    return d_policyConstraints.object();
+}
+
+
+
+
+
+
+
+ntsa::AbstractOctetString& EncryptionCertificateExtensionValue::byteSequence()
 {
     BSLS_ASSERT(this->isByteSequence());
     return d_byteSequence.object();
@@ -5836,6 +8408,14 @@ bool EncryptionCertificateExtensionValue::boolean() const
     return d_boolean.object();
 }
 
+
+const EncryptionCertificateName&
+EncryptionCertificateExtensionValue::name() const
+{
+    BSLS_ASSERT(this->isName());
+    return d_name.object();
+}
+
 const EncryptionCertificateNameAlternativeList&
 EncryptionCertificateExtensionValue::nameAlternative() const
 {
@@ -5843,7 +8423,93 @@ EncryptionCertificateExtensionValue::nameAlternative() const
     return d_nameAlternative.object();
 }
 
-const ntsa::AbstractByteSequence& EncryptionCertificateExtensionValue::byteSequence() const
+
+
+
+
+
+
+
+
+
+
+const EncryptionCertificateSubject& EncryptionCertificateExtensionValue::subject() const 
+{
+    BSLS_ASSERT(this->isSubject());
+    return d_subject.object();
+}
+
+const EncryptionCertificateSubjectKeyIdentifier& EncryptionCertificateExtensionValue::subjectKeyIdentifier() const 
+{
+    BSLS_ASSERT(this->isSubjectKeyIdentifier());
+    return d_subjectKeyIdentifier.object();
+}
+
+const EncryptionCertificateSubjectKeyUsage& EncryptionCertificateExtensionValue::subjectKeyUsage() const 
+{
+    BSLS_ASSERT(this->isSubjectKeyUsage());
+    return d_subjectKeyUsage.object();
+}
+
+const EncryptionCertificateSubjectKeyUsageExtended& EncryptionCertificateExtensionValue::subjectKeyUsageExtended() const 
+{
+    BSLS_ASSERT(this->isSubjectKeyUsageExtended());
+    return d_subjectKeyUsageExtended.object();
+}
+
+const EncryptionCertificateSubjectConstraints& EncryptionCertificateExtensionValue::subjectConstraints() const 
+{
+    BSLS_ASSERT(this->isSubjectConstraints());
+    return d_subjectConstraints.object();
+}
+
+const EncryptionCertificateIssuer& EncryptionCertificateExtensionValue::issuer() const 
+{
+    BSLS_ASSERT(this->isIssuer());
+    return d_issuer.object();
+}
+
+const EncryptionCertificateIssuerKeyIdentifier& EncryptionCertificateExtensionValue::issuerKeyIdentifier() const 
+{
+    BSLS_ASSERT(this->isIssuerKeyIdentifier());
+    return d_issuerKeyIdentifier.object();
+}
+
+const EncryptionCertificateIssuerInformationAccess& EncryptionCertificateExtensionValue::issuerInformationAccess() const 
+{
+    BSLS_ASSERT(this->isIssuerInformationAccess());
+    return d_issuerInformationAccess.object();
+}
+
+const EncryptionCertificatePolicy& EncryptionCertificateExtensionValue::policy() const 
+{
+    BSLS_ASSERT(this->isPolicy());
+    return d_policy.object();
+}
+
+const EncryptionCertificatePolicyMappings& EncryptionCertificateExtensionValue::policyMappings() const 
+{
+    BSLS_ASSERT(this->isPolicyMappings());
+    return d_policyMappings.object();
+}
+
+const EncryptionCertificatePolicyConstraints& EncryptionCertificateExtensionValue::policyConstraints() const 
+{
+    BSLS_ASSERT(this->isPolicyConstraints());
+    return d_policyConstraints.object();
+}
+
+
+
+
+
+
+
+
+
+
+
+const ntsa::AbstractOctetString& EncryptionCertificateExtensionValue::byteSequence() const
 {
     BSLS_ASSERT(this->isByteSequence());
     return d_byteSequence.object();
@@ -5865,10 +8531,91 @@ bool EncryptionCertificateExtensionValue::isBoolean() const
     return d_type == e_BOOLEAN;
 }
 
+bool EncryptionCertificateExtensionValue::isName() const
+{
+    return d_type == e_NAME;
+}
+
 bool EncryptionCertificateExtensionValue::isNameAlternative() const
 {
     return d_type == e_NAME_ALTERNATIVE;
 }
+
+
+
+
+
+bool EncryptionCertificateExtensionValue::isSubject() const
+{
+    return d_type == e_SUBJECT;
+}
+
+bool EncryptionCertificateExtensionValue::isSubjectKeyIdentifier() const
+{
+    return d_type == e_SUBJECT_KEY_IDENTIFIER;
+}
+
+bool EncryptionCertificateExtensionValue::isSubjectKeyUsage() const
+{
+    return d_type == e_SUBJECT_KEY_USAGE;
+}
+
+bool EncryptionCertificateExtensionValue::isSubjectKeyUsageExtended() const
+{
+    return d_type == e_SUBJECT_KEY_USAGE_EXTENDED;
+}
+
+bool EncryptionCertificateExtensionValue::isSubjectConstraints() const
+{
+    return d_type == e_SUBJECT_CONSTRAINTS;
+}
+
+
+
+
+bool EncryptionCertificateExtensionValue::isIssuer() const
+{
+    return d_type == e_ISSUER;
+}
+
+bool EncryptionCertificateExtensionValue::isIssuerKeyIdentifier() const
+{
+    return d_type == e_ISSUER_KEY_IDENTIFIER;
+}
+
+bool EncryptionCertificateExtensionValue::isIssuerInformationAccess() const
+{
+    return d_type == e_ISSUER_INFORMATION_ACCESS;
+}
+
+
+
+
+bool EncryptionCertificateExtensionValue::isPolicy() const
+{
+    return d_type == e_POLICY;
+}
+
+bool EncryptionCertificateExtensionValue::isPolicyMappings() const
+{
+    return d_type == e_POLICY_MAPPINGS;
+}
+
+bool EncryptionCertificateExtensionValue::isPolicyConstraints() const
+{
+    return d_type == e_POLICY_CONSTRAINTS;
+}
+
+
+
+
+
+
+
+
+
+
+
 
 bool EncryptionCertificateExtensionValue::isByteSequence() const
 {
@@ -5893,8 +8640,44 @@ bool EncryptionCertificateExtensionValue::equals(
     else if (d_type == e_BOOLEAN) {
         return d_boolean.object() == other.d_boolean.object();
     }
+    else if (d_type == e_NAME) {
+        return d_name.object() == other.d_name.object();
+    }
     else if (d_type == e_NAME_ALTERNATIVE) {
         return d_nameAlternative.object() == other.d_nameAlternative.object();
+    }
+    else if (d_type == e_SUBJECT) {
+        return d_subject.object() == other.d_subject.object();
+    }
+    else if (d_type == e_SUBJECT_KEY_IDENTIFIER) {
+        return d_subjectKeyIdentifier.object() == other.d_subjectKeyIdentifier.object();
+    }
+    else if (d_type == e_SUBJECT_KEY_USAGE) {
+        return d_subjectKeyUsage.object() == other.d_subjectKeyUsage.object();
+    }
+    else if (d_type == e_SUBJECT_KEY_USAGE_EXTENDED) {
+        return d_subjectKeyUsageExtended.object() == other.d_subjectKeyUsageExtended.object();
+    }
+    else if (d_type == e_SUBJECT_CONSTRAINTS) {
+        return d_subjectConstraints.object() == other.d_subjectConstraints.object();
+    }
+    else if (d_type == e_ISSUER) {
+        return d_issuer.object() == other.d_issuer.object();
+    }
+    else if (d_type == e_ISSUER_KEY_IDENTIFIER) {
+        return d_issuerKeyIdentifier.object() == other.d_issuerKeyIdentifier.object();
+    }
+    else if (d_type == e_ISSUER_INFORMATION_ACCESS) {
+        return d_issuerInformationAccess.object() == other.d_issuerInformationAccess.object();
+    }
+    else if (d_type == e_POLICY) {
+        return d_policy.object() == other.d_policy.object();
+    }
+    else if (d_type == e_POLICY_MAPPINGS) {
+        return d_policyMappings.object() == other.d_policyMappings.object();
+    }
+    else if (d_type == e_POLICY_CONSTRAINTS) {
+        return d_policyConstraints.object() == other.d_policyConstraints.object();
     }
     else if (d_type == e_BYTE_SEQUENCE) {
         return d_byteSequence.object() == other.d_byteSequence.object();
@@ -5923,8 +8706,44 @@ bool EncryptionCertificateExtensionValue::less(
     else if (d_type == e_BOOLEAN) {
         return d_boolean.object() < other.d_boolean.object();
     }
+    else if (d_type == e_NAME) {
+        return d_name.object() < other.d_name.object();
+    }
     else if (d_type == e_NAME_ALTERNATIVE) {
         return d_nameAlternative.object() < other.d_nameAlternative.object();
+    }
+    else if (d_type == e_SUBJECT) {
+        return d_subject.object() < other.d_subject.object();
+    }
+    else if (d_type == e_SUBJECT_KEY_IDENTIFIER) {
+        return d_subjectKeyIdentifier.object() < other.d_subjectKeyIdentifier.object();
+    }
+    else if (d_type == e_SUBJECT_KEY_USAGE) {
+        return d_subjectKeyUsage.object() < other.d_subjectKeyUsage.object();
+    }
+    else if (d_type == e_SUBJECT_KEY_USAGE_EXTENDED) {
+        return d_subjectKeyUsageExtended.object() < other.d_subjectKeyUsageExtended.object();
+    }
+    else if (d_type == e_SUBJECT_CONSTRAINTS) {
+        return d_subjectConstraints.object() < other.d_subjectConstraints.object();
+    }
+    else if (d_type == e_ISSUER) {
+        return d_issuer.object() < other.d_issuer.object();
+    }
+    else if (d_type == e_ISSUER_KEY_IDENTIFIER) {
+        return d_issuerKeyIdentifier.object() < other.d_issuerKeyIdentifier.object();
+    }
+    else if (d_type == e_ISSUER_INFORMATION_ACCESS) {
+        return d_issuerInformationAccess.object() < other.d_issuerInformationAccess.object();
+    }
+    else if (d_type == e_POLICY) {
+        return d_policy.object() < other.d_policy.object();
+    }
+    else if (d_type == e_POLICY_MAPPINGS) {
+        return d_policyMappings.object() < other.d_policyMappings.object();
+    }
+    else if (d_type == e_POLICY_CONSTRAINTS) {
+        return d_policyConstraints.object() < other.d_policyConstraints.object();
     }
     else if (d_type == e_BYTE_SEQUENCE) {
         return d_byteSequence.object() < other.d_byteSequence.object();
@@ -5947,8 +8766,44 @@ bsl::ostream& EncryptionCertificateExtensionValue::print(
     if (d_type == e_BOOLEAN) {
         stream << d_boolean.object();
     }
+    else if (d_type == e_NAME) {
+        d_name.object().print(stream, level, spacesPerLevel);
+    }
     else if (d_type == e_NAME_ALTERNATIVE) {
         d_nameAlternative.object().print(stream, level, spacesPerLevel);
+    }
+    else if (d_type == e_SUBJECT) {
+        d_subject.object().print(stream, level, spacesPerLevel);
+    }
+    else if (d_type == e_SUBJECT_KEY_IDENTIFIER) {
+        d_subjectKeyIdentifier.object().print(stream, level, spacesPerLevel);
+    }
+    else if (d_type == e_SUBJECT_KEY_USAGE) {
+        d_subjectKeyUsage.object().print(stream, level, spacesPerLevel);
+    }
+    else if (d_type == e_SUBJECT_KEY_USAGE_EXTENDED) {
+        d_subjectKeyUsageExtended.object().print(stream, level, spacesPerLevel);
+    }
+    else if (d_type == e_SUBJECT_CONSTRAINTS) {
+        d_subjectConstraints.object().print(stream, level, spacesPerLevel);
+    }
+    else if (d_type == e_ISSUER) {
+        d_issuer.object().print(stream, level, spacesPerLevel);
+    }
+    else if (d_type == e_ISSUER_KEY_IDENTIFIER) {
+        d_issuerKeyIdentifier.object().print(stream, level, spacesPerLevel);
+    }
+    else if (d_type == e_ISSUER_INFORMATION_ACCESS) {
+        d_issuerInformationAccess.object().print(stream, level, spacesPerLevel);
+    }
+    else if (d_type == e_POLICY) {
+        d_policy.object().print(stream, level, spacesPerLevel);
+    }
+    else if (d_type == e_POLICY_MAPPINGS) {
+        d_policyMappings.object().print(stream, level, spacesPerLevel);
+    }
+    else if (d_type == e_POLICY_CONSTRAINTS) {
+        d_policyConstraints.object().print(stream, level, spacesPerLevel);
     }
     else if (d_type == e_BYTE_SEQUENCE) {
         d_byteSequence.object().print(stream, level, spacesPerLevel);
@@ -6110,6 +8965,24 @@ ntsa::Error EncryptionCertificateExtension::decode(
         {
             if (d_attribute.equals(
                     EncryptionCertificateExtensionAttributeType::
+                        e_BASIC_CONSTRAINTS))
+            {
+                error = d_value.makeSubjectConstraints().decode(decoder);
+                if (error) {
+                    return error;
+                }
+            }
+            else if (d_attribute.equals(
+                    EncryptionCertificateExtensionAttributeType::
+                        e_KEY_USAGE))
+            {
+                error = d_value.makeSubjectKeyUsage().decode(decoder);
+                if (error) {
+                    return error;
+                }
+            }
+            else if (d_attribute.equals(
+                    EncryptionCertificateExtensionAttributeType::
                         e_SUBJECT_ALTERNATIVE_NAME))
             {
                 error = d_value.makeNameAlternative().decode(decoder);
@@ -6198,6 +9071,11 @@ bsl::ostream& EncryptionCertificateExtension::print(bsl::ostream& stream,
     printer.start();
     printer.printAttribute("attribute", d_attribute);
     printer.printAttribute("value", d_value);
+
+    if (!d_critical.isNull()) {
+        printer.printAttribute("critical", d_critical.value());
+    }
+
     printer.end();
     return stream;
 }

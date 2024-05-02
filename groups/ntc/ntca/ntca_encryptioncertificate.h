@@ -40,6 +40,7 @@ class EncryptionCertificateNameComponent;
 class EncryptionCertificateName;
 class EncryptionCertificateNameAlternative;
 class EncryptionCertificateNameAlternativeList;
+class EncryptionCertificateNameConstraints;
 class EncryptionCertificateValidity;
 class EncryptionCertificatePublicKeyInfo;
 class EncryptionCertificateSignatureAlgorithmType;
@@ -61,8 +62,8 @@ class EncryptionCertificate;
 /// @ingroup module_ntci_encryption
 class EncryptionCertificateTemplate
 {
-    bsl::size_t       d_value;
-    bslma::Allocator* d_allocator_p;
+    ntsa::AbstractValue d_value;
+    bslma::Allocator*   d_allocator_p;
 
   public:
     /// Create a new certificate having the default
@@ -92,17 +93,11 @@ class EncryptionCertificateTemplate
     /// construction.
     void reset();
 
-    /// Set the value to the specified 'value'.
-    void setValue(bsl::size_t value);
-
     /// Decode this object using the specified 'decoder'. Return the error.
     ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
 
     /// Encode this object using the specified 'encoder'. Return the error.
     ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
-
-    /// Return the value.
-    bsl::size_t value() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -420,7 +415,7 @@ class EncryptionCertificateNameAttributeType
 /// Format the specified 'rhs' to the specified output 'stream' and return a
 /// reference to the modifiable 'stream'.
 ///
-/// @related ntsa::AbstractSyntaxTagClass
+/// @related ntca::EncryptionCertificateNameAttributeType
 bsl::ostream& operator<<(bsl::ostream&                                 stream,
                          EncryptionCertificateNameAttributeType::Value rhs);
 
@@ -1400,6 +1395,152 @@ void hashAppend(HASH_ALGORITHM&                                 algorithm,
 {
     value.hash(algorithm);
 }
+
+
+
+
+
+
+/// Describe MRM.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateNameConstraints
+{
+    ntsa::AbstractValue d_value;
+    bslma::Allocator*   d_allocator_p;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificateNameConstraints(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificateNameConstraints(
+        const EncryptionCertificateNameConstraints& original,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificateNameConstraints();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificateNameConstraints& operator=(
+        const EncryptionCertificateNameConstraints& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificateNameConstraints& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificateNameConstraints& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateNameConstraints);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificateNameConstraints
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateNameConstraints& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificateNameConstraints
+bool operator==(const EncryptionCertificateNameConstraints& lhs,
+                const EncryptionCertificateNameConstraints& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificateNameConstraints
+bool operator!=(const EncryptionCertificateNameConstraints& lhs,
+                const EncryptionCertificateNameConstraints& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificateNameConstraints
+bool operator<(const EncryptionCertificateNameConstraints& lhs,
+               const EncryptionCertificateNameConstraints& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificateNameConstraints
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateNameConstraints& value);
+
+template <typename HASH_ALGORITHM>
+void EncryptionCertificateNameConstraints::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, d_value);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateNameConstraints& value)
+{
+    value.hash(algorithm);
+}
+
+
+
+
+
+
+
+
 
 /// Describe a date/time interval in which a certificate is valid.
 ///
@@ -3028,7 +3169,7 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
 /// @ingroup module_ntci_encryption
 class EncryptionCertificatePublicKeyValueEllipticCurve
 {
-    ntsa::AbstractBitSequence d_value;
+    ntsa::AbstractBitString d_value;
     bslma::Allocator*         d_allocator_p;
 
   public:
@@ -3192,7 +3333,7 @@ class EncryptionCertificatePublicKeyValue
                                                 d_rsa;
         bsls::ObjectBuffer<EncryptionCertificatePublicKeyValueEllipticCurve>
                                                 d_ellipticCurve;
-        bsls::ObjectBuffer<ntsa::AbstractBitSequence> d_any;
+        bsls::ObjectBuffer<ntsa::AbstractBitString> d_any;
     };
 
     Type              d_type;
@@ -3246,11 +3387,11 @@ class EncryptionCertificatePublicKeyValue
 
     /// Select the "any" representation. Return a reference to the modifiable
     /// representation.
-    ntsa::AbstractBitSequence& makeAny();
+    ntsa::AbstractBitString& makeAny();
 
     /// Select the "any" representation initially having the specified
     /// 'value'. Return a reference to the modifiable representation.
-    ntsa::AbstractBitSequence& makeAny(const ntsa::AbstractBitSequence& value);
+    ntsa::AbstractBitString& makeAny(const ntsa::AbstractBitString& value);
 
     /// Return a reference to the modifiable "rsa" representation.
     /// The behavior is undefined unless 'isRsa()' is true.
@@ -3262,7 +3403,7 @@ class EncryptionCertificatePublicKeyValue
 
     /// Return a reference to the modifiable "any" representation. The
     /// behavior is undefined unless 'isAny()' is true.
-    ntsa::AbstractBitSequence& any();
+    ntsa::AbstractBitString& any();
 
     /// Return a reference to the non-modifiable "rsa" representation. The
     /// behavior is undefined unless 'isRsa()' is true.
@@ -3275,7 +3416,7 @@ class EncryptionCertificatePublicKeyValue
 
     /// Return a reference to the non-modifiable "any" representation. The
     /// behavior is undefined unless 'isAny()' is true.
-    const ntsa::AbstractBitSequence& any() const;
+    const ntsa::AbstractBitString& any() const;
 
     /// Return true if the representation is undefined, otherwise return false.
     bool isUndefined() const;
@@ -3588,10 +3729,6 @@ class EncryptionCertificateSignatureAlgorithmType
         /// algorithm is assigned the object identifier 1.2.840.10045.4.3.4.
         e_ECDSA_SHA512,
 
-        /// PKCS1 version 1.5 signature algorithm with Rivest, Shamir, and
-        /// Adleman (RSA) encryption.
-        e_RSA,
-
         /// PKCS1 version 1.5 signature algorithm with Secure Hash Algorithm 
         /// 256 (SHA-256) and Rivest, Shamir, and Adleman (RSA) encryption.
         e_SHA256_RSA,
@@ -3811,7 +3948,7 @@ void hashAppend(HASH_ALGORITHM&                                algorithm,
 /// @ingroup module_ntci_encryption
 class EncryptionCertificateSignature
 {
-    ntsa::AbstractBitSequence d_value;
+    ntsa::AbstractBitString d_value;
     bslma::Allocator*         d_allocator_p;
 
   public:
@@ -3842,7 +3979,7 @@ class EncryptionCertificateSignature
     void reset();
 
     /// Set the value to the specified 'value'.
-    void setValue(const ntsa::AbstractBitSequence& value);
+    void setValue(const ntsa::AbstractBitString& value);
 
     /// Decode this object using the specified 'decoder'. Return the error.
     ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
@@ -3851,7 +3988,7 @@ class EncryptionCertificateSignature
     ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
 
     /// Return the value.
-    const ntsa::AbstractBitSequence& value() const;
+    const ntsa::AbstractBitString& value() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -3941,6 +4078,1613 @@ void hashAppend(HASH_ALGORITHM&                       algorithm,
 {
     value.hash(algorithm);
 }
+
+/// Describe MRM.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificatePolicyConstraints
+{
+    ntsa::AbstractValue d_value;
+    bslma::Allocator*   d_allocator_p;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificatePolicyConstraints(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificatePolicyConstraints(
+        const EncryptionCertificatePolicyConstraints& original,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificatePolicyConstraints();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificatePolicyConstraints& operator=(
+        const EncryptionCertificatePolicyConstraints& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificatePolicyConstraints& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificatePolicyConstraints& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificatePolicyConstraints);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificatePolicyConstraints
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificatePolicyConstraints& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificatePolicyConstraints
+bool operator==(const EncryptionCertificatePolicyConstraints& lhs,
+                const EncryptionCertificatePolicyConstraints& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificatePolicyConstraints
+bool operator!=(const EncryptionCertificatePolicyConstraints& lhs,
+                const EncryptionCertificatePolicyConstraints& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificatePolicyConstraints
+bool operator<(const EncryptionCertificatePolicyConstraints& lhs,
+               const EncryptionCertificatePolicyConstraints& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificatePolicyConstraints
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificatePolicyConstraints& value);
+
+template <typename HASH_ALGORITHM>
+void EncryptionCertificatePolicyConstraints::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, d_value);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificatePolicyConstraints& value)
+{
+    value.hash(algorithm);
+}
+
+/// Describe MRM.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificatePolicyMappings
+{
+    ntsa::AbstractValue d_value;
+    bslma::Allocator*   d_allocator_p;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificatePolicyMappings(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificatePolicyMappings(
+        const EncryptionCertificatePolicyMappings& original,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificatePolicyMappings();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificatePolicyMappings& operator=(
+        const EncryptionCertificatePolicyMappings& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificatePolicyMappings& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificatePolicyMappings& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificatePolicyMappings);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificatePolicyMappings
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificatePolicyMappings& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificatePolicyMappings
+bool operator==(const EncryptionCertificatePolicyMappings& lhs,
+                const EncryptionCertificatePolicyMappings& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificatePolicyMappings
+bool operator!=(const EncryptionCertificatePolicyMappings& lhs,
+                const EncryptionCertificatePolicyMappings& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificatePolicyMappings
+bool operator<(const EncryptionCertificatePolicyMappings& lhs,
+               const EncryptionCertificatePolicyMappings& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificatePolicyMappings
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificatePolicyMappings& value);
+
+template <typename HASH_ALGORITHM>
+void EncryptionCertificatePolicyMappings::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, d_value);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificatePolicyMappings& value)
+{
+    value.hash(algorithm);
+}
+
+
+/// Describe MRM.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificatePolicy
+{
+    ntsa::AbstractValue d_value;
+    bslma::Allocator*   d_allocator_p;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificatePolicy(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificatePolicy(
+        const EncryptionCertificatePolicy& original,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificatePolicy();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificatePolicy& operator=(
+        const EncryptionCertificatePolicy& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificatePolicy& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificatePolicy& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificatePolicy);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificatePolicy
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificatePolicy& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificatePolicy
+bool operator==(const EncryptionCertificatePolicy& lhs,
+                const EncryptionCertificatePolicy& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificatePolicy
+bool operator!=(const EncryptionCertificatePolicy& lhs,
+                const EncryptionCertificatePolicy& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificatePolicy
+bool operator<(const EncryptionCertificatePolicy& lhs,
+               const EncryptionCertificatePolicy& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificatePolicy
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificatePolicy& value);
+
+template <typename HASH_ALGORITHM>
+void EncryptionCertificatePolicy::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, d_value);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificatePolicy& value)
+{
+    value.hash(algorithm);
+}
+
+/// Describe MRM.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateIssuerKeyIdentifier
+{
+    ntsa::AbstractValue d_value;
+    bslma::Allocator*   d_allocator_p;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificateIssuerKeyIdentifier(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificateIssuerKeyIdentifier(
+        const EncryptionCertificateIssuerKeyIdentifier& original,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificateIssuerKeyIdentifier();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificateIssuerKeyIdentifier& operator=(
+        const EncryptionCertificateIssuerKeyIdentifier& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificateIssuerKeyIdentifier& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificateIssuerKeyIdentifier& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateIssuerKeyIdentifier);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificateIssuerKeyIdentifier
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateIssuerKeyIdentifier& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificateIssuerKeyIdentifier
+bool operator==(const EncryptionCertificateIssuerKeyIdentifier& lhs,
+                const EncryptionCertificateIssuerKeyIdentifier& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificateIssuerKeyIdentifier
+bool operator!=(const EncryptionCertificateIssuerKeyIdentifier& lhs,
+                const EncryptionCertificateIssuerKeyIdentifier& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificateIssuerKeyIdentifier
+bool operator<(const EncryptionCertificateIssuerKeyIdentifier& lhs,
+               const EncryptionCertificateIssuerKeyIdentifier& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificateIssuerKeyIdentifier
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateIssuerKeyIdentifier& value);
+
+template <typename HASH_ALGORITHM>
+void EncryptionCertificateIssuerKeyIdentifier::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, d_value);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateIssuerKeyIdentifier& value)
+{
+    value.hash(algorithm);
+}
+
+/// Describe MRM.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateIssuerInformationAccess
+{
+    ntsa::AbstractValue d_value;
+    bslma::Allocator*   d_allocator_p;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificateIssuerInformationAccess(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificateIssuerInformationAccess(
+        const EncryptionCertificateIssuerInformationAccess& original,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificateIssuerInformationAccess();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificateIssuerInformationAccess& operator=(
+        const EncryptionCertificateIssuerInformationAccess& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificateIssuerInformationAccess& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificateIssuerInformationAccess& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateIssuerInformationAccess);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificateIssuerInformationAccess
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateIssuerInformationAccess& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificateIssuerInformationAccess
+bool operator==(const EncryptionCertificateIssuerInformationAccess& lhs,
+                const EncryptionCertificateIssuerInformationAccess& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificateIssuerInformationAccess
+bool operator!=(const EncryptionCertificateIssuerInformationAccess& lhs,
+                const EncryptionCertificateIssuerInformationAccess& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificateIssuerInformationAccess
+bool operator<(const EncryptionCertificateIssuerInformationAccess& lhs,
+               const EncryptionCertificateIssuerInformationAccess& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificateIssuerInformationAccess
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateIssuerInformationAccess& value);
+
+template <typename HASH_ALGORITHM>
+void EncryptionCertificateIssuerInformationAccess::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, d_value);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateIssuerInformationAccess& value)
+{
+    value.hash(algorithm);
+}
+
+/// Describe MRM.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateIssuer
+{
+    ntca::EncryptionCertificateName d_name;
+    bslma::Allocator*   d_allocator_p;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificateIssuer(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificateIssuer(
+        const EncryptionCertificateIssuer& original,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificateIssuer();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificateIssuer& operator=(
+        const EncryptionCertificateIssuer& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Set the name to the specified 'value'. 
+    void setName(const ntca::EncryptionCertificateName& value);
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return the name.
+    const ntca::EncryptionCertificateName& name() const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificateIssuer& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificateIssuer& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateIssuer);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificateIssuer
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateIssuer& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificateIssuer
+bool operator==(const EncryptionCertificateIssuer& lhs,
+                const EncryptionCertificateIssuer& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificateIssuer
+bool operator!=(const EncryptionCertificateIssuer& lhs,
+                const EncryptionCertificateIssuer& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificateIssuer
+bool operator<(const EncryptionCertificateIssuer& lhs,
+               const EncryptionCertificateIssuer& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificateIssuer
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateIssuer& value);
+
+template <typename HASH_ALGORITHM>
+void EncryptionCertificateIssuer::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, d_name);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateIssuer& value)
+{
+    value.hash(algorithm);
+}
+
+/// Describe MRM.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateSubjectKeyUsageExtended
+{
+    ntsa::AbstractValue d_value;
+    bslma::Allocator*   d_allocator_p;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificateSubjectKeyUsageExtended(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificateSubjectKeyUsageExtended(
+        const EncryptionCertificateSubjectKeyUsageExtended& original,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificateSubjectKeyUsageExtended();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificateSubjectKeyUsageExtended& operator=(
+        const EncryptionCertificateSubjectKeyUsageExtended& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificateSubjectKeyUsageExtended& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificateSubjectKeyUsageExtended& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateSubjectKeyUsageExtended);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificateSubjectKeyUsageExtended
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateSubjectKeyUsageExtended& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificateSubjectKeyUsageExtended
+bool operator==(const EncryptionCertificateSubjectKeyUsageExtended& lhs,
+                const EncryptionCertificateSubjectKeyUsageExtended& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificateSubjectKeyUsageExtended
+bool operator!=(const EncryptionCertificateSubjectKeyUsageExtended& lhs,
+                const EncryptionCertificateSubjectKeyUsageExtended& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificateSubjectKeyUsageExtended
+bool operator<(const EncryptionCertificateSubjectKeyUsageExtended& lhs,
+               const EncryptionCertificateSubjectKeyUsageExtended& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificateSubjectKeyUsageExtended
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateSubjectKeyUsageExtended& value);
+
+template <typename HASH_ALGORITHM>
+void EncryptionCertificateSubjectKeyUsageExtended::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, d_value);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateSubjectKeyUsageExtended& value)
+{
+    value.hash(algorithm);
+}
+
+
+
+
+
+
+
+/// Enumerate subject key usage types.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntsa_data
+class EncryptionCertificateSubjectKeyUsageType
+{
+  public:
+    /// Enumerate subject key usage types.
+    enum Value {
+        /// The subject's key can be used to verify digital signatures that
+        /// aren't explicitly signatures in certicates and certificate 
+        /// revocation lists.
+        e_DIGITAL_SIGNATURE = 0,
+
+        /// The subject's key can be used to verify digital signatures that
+        /// aren't explicitly signatures in certicates and certificate 
+        /// revocation lists to provide non-repudiation, i.e., to prevent a
+        /// signer from falsly denying their signature.
+        e_CONTENT_COMMITMENT = 1,
+
+        /// The subject's key can be used to encipher private keys during the
+        /// transporation of keys.
+        e_KEY_ENCIPHER = 2,
+
+        /// The subject's key can be used to encipher user data without the 
+        /// use of an intermediate symmetric cipher.
+        e_DATA_ENCIPHER = 3,
+
+        /// The subject's key can be used for key agreement.
+        e_KEY_AGREEMENT = 4,
+
+        /// The subject's key can be used to verify signatures on certificates.
+        e_KEY_CERTFICATE_SIGNATURE = 5,
+
+        /// The subject's key can be used to verify signatures on certificate
+        /// revocation lists.
+        e_CERTIFICATE_REVOCATION_LIST_SIGNATURE = 6,
+
+        /// The subject's key can only be used to encipher data during key
+        /// agreement. 
+        e_ENCIPHER_ONLY = 7,
+
+        /// The subject's key can only be used to decipher data during key
+        /// agreement. 
+        e_DECIPHER_ONLY = 8        
+    };
+
+    /// Return the string representation exactly matching the enumerator
+    /// name corresponding to the specified enumeration 'value'.
+    static const char* toString(Value value);
+
+    /// Load into the specified 'result' the enumerator matching the
+    /// specified 'string'. Return 0 on success, and a non-zero value with
+    /// no effect on 'result' otherwise (i.e., 'string' does not match any
+    /// enumerator).
+    static int fromString(Value* result, const bslstl::StringRef& string);
+
+    /// Write to the specified 'stream' the string representation of the
+    /// specified enumeration 'value'.  Return a reference to the modifiable
+    /// 'stream'.
+    static bsl::ostream& print(bsl::ostream& stream, Value value);
+};
+
+/// Format the specified 'rhs' to the specified output 'stream' and return a
+/// reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificateSubjectKeyUsageType
+bsl::ostream& operator<<(bsl::ostream&                                 stream,
+                         EncryptionCertificateSubjectKeyUsageType::Value rhs);
+
+
+/// Describe MRM.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateSubjectKeyUsage
+{
+    ntsa::AbstractBitString d_value;
+    bslma::Allocator*       d_allocator_p;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificateSubjectKeyUsage(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificateSubjectKeyUsage(
+        const EncryptionCertificateSubjectKeyUsage& original,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificateSubjectKeyUsage();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificateSubjectKeyUsage& operator=(
+        const EncryptionCertificateSubjectKeyUsage& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificateSubjectKeyUsage& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificateSubjectKeyUsage& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateSubjectKeyUsage);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificateSubjectKeyUsage
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateSubjectKeyUsage& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificateSubjectKeyUsage
+bool operator==(const EncryptionCertificateSubjectKeyUsage& lhs,
+                const EncryptionCertificateSubjectKeyUsage& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificateSubjectKeyUsage
+bool operator!=(const EncryptionCertificateSubjectKeyUsage& lhs,
+                const EncryptionCertificateSubjectKeyUsage& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificateSubjectKeyUsage
+bool operator<(const EncryptionCertificateSubjectKeyUsage& lhs,
+               const EncryptionCertificateSubjectKeyUsage& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificateSubjectKeyUsage
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateSubjectKeyUsage& value);
+
+template <typename HASH_ALGORITHM>
+void EncryptionCertificateSubjectKeyUsage::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, d_value);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateSubjectKeyUsage& value)
+{
+    value.hash(algorithm);
+}
+
+/// Describe MRM.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateSubjectKeyIdentifier
+{
+    ntsa::AbstractValue d_value;
+    bslma::Allocator*   d_allocator_p;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificateSubjectKeyIdentifier(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificateSubjectKeyIdentifier(
+        const EncryptionCertificateSubjectKeyIdentifier& original,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificateSubjectKeyIdentifier();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificateSubjectKeyIdentifier& operator=(
+        const EncryptionCertificateSubjectKeyIdentifier& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificateSubjectKeyIdentifier& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificateSubjectKeyIdentifier& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateSubjectKeyIdentifier);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificateSubjectKeyIdentifier
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateSubjectKeyIdentifier& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificateSubjectKeyIdentifier
+bool operator==(const EncryptionCertificateSubjectKeyIdentifier& lhs,
+                const EncryptionCertificateSubjectKeyIdentifier& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificateSubjectKeyIdentifier
+bool operator!=(const EncryptionCertificateSubjectKeyIdentifier& lhs,
+                const EncryptionCertificateSubjectKeyIdentifier& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificateSubjectKeyIdentifier
+bool operator<(const EncryptionCertificateSubjectKeyIdentifier& lhs,
+               const EncryptionCertificateSubjectKeyIdentifier& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificateSubjectKeyIdentifier
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateSubjectKeyIdentifier& value);
+
+template <typename HASH_ALGORITHM>
+void EncryptionCertificateSubjectKeyIdentifier::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, d_value);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateSubjectKeyIdentifier& value)
+{
+    value.hash(algorithm);
+}
+
+
+/// Describe MRM.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateSubjectConstraints
+{
+    bdlb::NullableValue<bool>        d_authority;
+    bdlb::NullableValue<bsl::size_t> d_pathLength;
+    bslma::Allocator*                d_allocator_p;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificateSubjectConstraints(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificateSubjectConstraints(
+        const EncryptionCertificateSubjectConstraints& original,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificateSubjectConstraints();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificateSubjectConstraints& operator=(
+        const EncryptionCertificateSubjectConstraints& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Set the flag indicating the subject may act as a certificate authority
+    /// to the specified 'value'.
+    void setAuthority(bool value);
+
+    /// Set the maximum number of certificates to follow through the chain
+    /// of trust when verifying a certificate signed by the subject to the
+    /// specified 'value'. 
+    void setPathLength(bsl::size_t value);
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return the flag indicating the subject may act as a certificate 
+    /// authority, or null to indicate the subject may not act as a certificate
+    /// authority.
+    const bdlb::NullableValue<bool>& authority() const;
+
+    /// Return the maximum number of certificates to follow through the chain
+    /// of trust when verifying a certificate signed by the subject, or null to
+    /// indicate the path length is unlimited.
+    const bdlb::NullableValue<bsl::size_t>& pathLength() const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificateSubjectConstraints& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificateSubjectConstraints& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateSubjectConstraints);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificateSubjectConstraints
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateSubjectConstraints& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificateSubjectConstraints
+bool operator==(const EncryptionCertificateSubjectConstraints& lhs,
+                const EncryptionCertificateSubjectConstraints& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificateSubjectConstraints
+bool operator!=(const EncryptionCertificateSubjectConstraints& lhs,
+                const EncryptionCertificateSubjectConstraints& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificateSubjectConstraints
+bool operator<(const EncryptionCertificateSubjectConstraints& lhs,
+               const EncryptionCertificateSubjectConstraints& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificateSubjectConstraints
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateSubjectConstraints& value);
+
+template <typename HASH_ALGORITHM>
+void EncryptionCertificateSubjectConstraints::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, d_authority);
+    hashAppend(algorithm, d_pathLength);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateSubjectConstraints& value)
+{
+    value.hash(algorithm);
+}
+
+
+/// Describe MRM.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateSubject
+{
+    ntca::EncryptionCertificateName d_name;
+    bslma::Allocator*               d_allocator_p;
+
+  public:
+    /// Create a new certificate having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionCertificateSubject(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new certificate having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionCertificateSubject(
+        const EncryptionCertificateSubject& original,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificateSubject();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificateSubject& operator=(
+        const EncryptionCertificateSubject& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Set the name to the specified 'value'. 
+    void setName(const ntca::EncryptionCertificateName& value);
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return the name.
+    const ntca::EncryptionCertificateName& name() const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificateSubject& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificateSubject& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateSubject);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificateSubject
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const EncryptionCertificateSubject& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificateSubject
+bool operator==(const EncryptionCertificateSubject& lhs,
+                const EncryptionCertificateSubject& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificateSubject
+bool operator!=(const EncryptionCertificateSubject& lhs,
+                const EncryptionCertificateSubject& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificateSubject
+bool operator<(const EncryptionCertificateSubject& lhs,
+               const EncryptionCertificateSubject& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificateSubject
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateSubject& value);
+
+template <typename HASH_ALGORITHM>
+void EncryptionCertificateSubject::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, d_name);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                      algorithm,
+                const EncryptionCertificateSubject& value)
+{
+    value.hash(algorithm);
+}
+
+
+
+
+// MRM: XXXX
+
+// NameConstraints
+
+// PolicyContraints
+// PolicyMappings
+// Policy (CertificatePolicies)
+
+// IssuerKeyIdentifier
+// IssuerInformationAccess
+// Issuer
+
+// SubjectKeyUsageExtended
+// SubjectKeyUsage
+// SubjectKeyIdentifier
+// SubjectConstraints (BasicConstraints)
+// Subject
+
+
+
+
+
+
+
+/// MRM: Insert
 
 /// Enumerate well-known encryption certificate extension object identifiers.
 ///
@@ -4182,17 +5926,50 @@ class EncryptionCertificateExtensionValue
     enum Type {
         e_UNDEFINED        = -1,
         e_BOOLEAN          = 0,
-        e_NAME_ALTERNATIVE = 1,
-        e_BYTE_SEQUENCE    = 2,
-        e_ANY              = 3
+
+        e_NAME = 1,
+        e_NAME_ALTERNATIVE = 2,
+
+        e_SUBJECT = 3,
+        e_SUBJECT_KEY_IDENTIFIER = 4,
+        e_SUBJECT_KEY_USAGE = 5,
+        e_SUBJECT_KEY_USAGE_EXTENDED = 6,
+        e_SUBJECT_CONSTRAINTS = 7,
+
+        e_ISSUER = 8,
+        e_ISSUER_KEY_IDENTIFIER = 9,
+        e_ISSUER_INFORMATION_ACCESS = 10,
+
+        e_POLICY = 11,
+        e_POLICY_MAPPINGS = 12,
+        e_POLICY_CONSTRAINTS = 13,
+
+        e_BYTE_SEQUENCE    = 14,
+        e_ANY              = 15
     };
 
     union {
         bsls::ObjectBuffer<bool> d_boolean;
+        bsls::ObjectBuffer<EncryptionCertificateName>
+                                                d_name;
         bsls::ObjectBuffer<EncryptionCertificateNameAlternativeList>
                                                 d_nameAlternative;
 
-        bsls::ObjectBuffer<ntsa::AbstractByteSequence> d_byteSequence;                                        
+        bsls::ObjectBuffer<EncryptionCertificateSubject> d_subject;
+        bsls::ObjectBuffer<EncryptionCertificateSubjectKeyIdentifier> d_subjectKeyIdentifier;
+        bsls::ObjectBuffer<EncryptionCertificateSubjectKeyUsage> d_subjectKeyUsage;
+        bsls::ObjectBuffer<EncryptionCertificateSubjectKeyUsageExtended> d_subjectKeyUsageExtended;
+        bsls::ObjectBuffer<EncryptionCertificateSubjectConstraints> d_subjectConstraints;
+
+        bsls::ObjectBuffer<EncryptionCertificateIssuer> d_issuer;
+        bsls::ObjectBuffer<EncryptionCertificateIssuerKeyIdentifier> d_issuerKeyIdentifier;
+        bsls::ObjectBuffer<EncryptionCertificateIssuerInformationAccess> d_issuerInformationAccess;
+        
+        bsls::ObjectBuffer<EncryptionCertificatePolicy> d_policy;
+        bsls::ObjectBuffer<EncryptionCertificatePolicyMappings> d_policyMappings;
+        bsls::ObjectBuffer<EncryptionCertificatePolicyConstraints> d_policyConstraints;
+
+        bsls::ObjectBuffer<ntsa::AbstractOctetString> d_byteSequence;                                        
         bsls::ObjectBuffer<ntsa::AbstractValue> d_any;
     };
 
@@ -4235,6 +6012,15 @@ class EncryptionCertificateExtensionValue
     /// 'value'. Return a reference to the modifiable representation.
     bool& makeBoolean(bool value);
 
+    /// Select the "name" representation. Return a reference to the modifiable
+    /// representation.
+    EncryptionCertificateName& makeName();
+
+    /// Select the "name" representation initially having the specified
+    /// 'value'. Return a reference to the modifiable representation.
+    EncryptionCertificateName& makeName(
+        const EncryptionCertificateName& value);
+
     /// Select the "nameAlternative" representation. Return a reference to the
     /// modifiable representation.
     EncryptionCertificateNameAlternativeList& makeNameAlternative();
@@ -4244,20 +6030,123 @@ class EncryptionCertificateExtensionValue
     EncryptionCertificateNameAlternativeList& makeNameAlternative(
         const EncryptionCertificateNameAlternativeList& value);
 
+    /// Select the "subject" representation. Return a reference to the
+    /// modifiable representation.
+    EncryptionCertificateSubject& makeSubject();
+
+    /// Select the "subject" representation initially having the specified
+    /// 'value'. Return a reference to the modifiable representation.
+    EncryptionCertificateSubject& makeSubject(
+        const EncryptionCertificateSubject& value);
+
+    /// Select the "subjectKeyIdentifier" representation. Return a reference to
+    /// the modifiable representation.
+    EncryptionCertificateSubjectKeyIdentifier& makeSubjectKeyIdentifier();
+
+    /// Select the "subjectKeyIdentifier" representation initially having the
+    /// specified 'value'. Return a reference to the modifiable representation.
+    EncryptionCertificateSubjectKeyIdentifier& makeSubjectKeyIdentifier(
+        const EncryptionCertificateSubjectKeyIdentifier& value);
+
+    /// Select the "subjectKeyUsage" representation. Return a reference to the
+    /// modifiable representation.
+    EncryptionCertificateSubjectKeyUsage& makeSubjectKeyUsage();
+
+    /// Select the "subjectKeyUsage" representation initially having the
+    /// specified 'value'. Return a reference to the modifiable representation.
+    EncryptionCertificateSubjectKeyUsage& makeSubjectKeyUsage(
+        const EncryptionCertificateSubjectKeyUsage& value);
+
+    /// Select the "subjectKeyUsageExtended" representation. Return a reference
+    /// to the modifiable representation.
+    EncryptionCertificateSubjectKeyUsageExtended& 
+        makeSubjectKeyUsageExtended();
+
+    /// Select the "subjectKeyUsageExtended" representation initially having
+    /// the specified 'value'. Return a reference to the modifiable
+    /// representation.
+    EncryptionCertificateSubjectKeyUsageExtended& makeSubjectKeyUsageExtended(
+        const EncryptionCertificateSubjectKeyUsageExtended& value);
+    
+    /// Select the "subjectConstraints" representation. Return a reference to
+    /// the modifiable representation.
+    EncryptionCertificateSubjectConstraints& makeSubjectConstraints();
+
+    /// Select the "subjectConstraints" representation initially having the
+    /// specified 'value'. Return a reference to the modifiable representation.
+    EncryptionCertificateSubjectConstraints& makeSubjectConstraints(
+        const EncryptionCertificateSubjectConstraints& value);
+
+    /// Select the "issuer" representation. Return a reference to the
+    /// modifiable representation.
+    EncryptionCertificateIssuer& makeIssuer();
+
+    /// Select the "issuer" representation initially having the specified
+    /// 'value'. Return a reference to the modifiable representation.
+    EncryptionCertificateIssuer& makeIssuer(
+        const EncryptionCertificateIssuer& value);
+
+    /// Select the "issuerKeyIdentifier" representation. Return a reference to
+    /// the modifiable representation.
+    EncryptionCertificateIssuerKeyIdentifier& makeIssuerKeyIdentifier();
+
+    /// Select the "issuerKeyIdentifier" representation initially having the
+    /// specified 'value'. Return a reference to the modifiable representation.
+    EncryptionCertificateIssuerKeyIdentifier& makeIssuerKeyIdentifier(
+        const EncryptionCertificateIssuerKeyIdentifier& value);
+
+    /// Select the "issuerInformationAccess" representation. Return a reference
+    /// to the modifiable representation.
+    EncryptionCertificateIssuerInformationAccess& makeIssuerInformationAccess();
+
+    /// Select the "issuerInformationAccess" representation initially having
+    /// the specified 'value'. Return a reference to the modifiable
+    /// representation.
+    EncryptionCertificateIssuerInformationAccess& makeIssuerInformationAccess(
+        const EncryptionCertificateIssuerInformationAccess& value);
+
+    /// Select the "policy" representation. Return a reference to the
+    /// modifiable representation.
+    EncryptionCertificatePolicy& makePolicy();
+
+    /// Select the "policy" representation initially having the specified
+    /// 'value'. Return a reference to the modifiable representation.
+    EncryptionCertificatePolicy& makePolicy(
+        const EncryptionCertificatePolicy& value);
+
+    /// Select the "policyMappings" representation. Return a reference to the
+    /// modifiable representation.
+    EncryptionCertificatePolicyMappings& makePolicyMappings();
+
+    /// Select the "policyMappings" representation initially having the
+    /// specified 'value'. Return a reference to the modifiable representation.
+    EncryptionCertificatePolicyMappings& makePolicyMappings(
+        const EncryptionCertificatePolicyMappings& value);
+
+    /// Select the "policyConstraints" representation. Return a reference to
+    /// the modifiable representation.
+    EncryptionCertificatePolicyConstraints& makePolicyConstraints();
+
+    /// Select the "policyConstraints" representation initially having the
+    /// specified 'value'. Return a reference to the modifiable representation.
+    EncryptionCertificatePolicyConstraints& makePolicyConstraints(
+        const EncryptionCertificatePolicyConstraints& value);
+
     /// Select the "byteSequence" representation. Return a reference to the
     /// modifiable representation.
-    ntsa::AbstractByteSequence& makeByteSequence();
+    ntsa::AbstractOctetString& makeByteSequence();
 
     /// Select the "byteSequence" representation initially having the specified
     /// 'value'. Return a reference to the modifiable representation.
-    ntsa::AbstractByteSequence& makeByteSequence(const ntsa::AbstractByteSequence& value);
+    ntsa::AbstractOctetString& makeByteSequence(
+        const ntsa::AbstractOctetString& value);
 
     /// Select the "any" representation. Return a reference to the modifiable
     /// representation.
     ntsa::AbstractValue& makeAny();
 
-    /// Select the "any" representation initially having the specified
-    /// 'value'. Return a reference to the modifiable representation.
+    /// Select the "any" representation initially having the specified 'value'.
+    /// Return a reference to the modifiable representation.
     ntsa::AbstractValue& makeAny(const ntsa::AbstractValue& value);
 
     /// Decode this object using the specified 'decoder'. Return the error.
@@ -4270,13 +6159,66 @@ class EncryptionCertificateExtensionValue
     /// behavior is undefined unless 'isBoolean()' is true.
     bool& boolean();
 
+    /// Return a reference to the modifiable "name" representation.
+    /// The behavior is undefined unless 'isName()' is true.
+    EncryptionCertificateName& name();
+
     /// Return a reference to the modifiable "nameAlternative" representation.
     /// The behavior is undefined unless 'isNameAlternative()' is true.
     EncryptionCertificateNameAlternativeList& nameAlternative();
 
+    /// Return a reference to the modifiable "subject" representation.
+    /// The behavior is undefined unless 'isSubject()' is true.
+    EncryptionCertificateSubject& subject();
+
+    /// Return a reference to the modifiable "subjectKeyIdentifier"
+    /// representation. The behavior is undefined unless 'isSubject()' is true.
+    EncryptionCertificateSubjectKeyIdentifier& subjectKeyIdentifier();
+
+    /// Return a reference to the modifiable "subjectKeyUsage" representation.
+    /// The behavior is undefined unless 'isSubjectKeyUsage()' is true.
+    EncryptionCertificateSubjectKeyUsage& subjectKeyUsage();
+
+    /// Return a reference to the modifiable "subjectKeyUsageExtended"
+    /// representation. The behavior is undefined unless
+    /// 'isSubjectKeyUsageExtended()' is true.
+    EncryptionCertificateSubjectKeyUsageExtended& subjectKeyUsageExtended();
+
+    /// Return a reference to the modifiable "subjectConstraints"
+    /// representation. The behavior is undefined unless
+    /// 'isSubjectConstraints()' is true.
+    EncryptionCertificateSubjectConstraints& subjectConstraints();
+
+    /// Return a reference to the modifiable "issuer" representation. The
+    /// behavior is undefined unless 'isIssuer()' is true.
+    EncryptionCertificateIssuer& issuer();
+
+    /// Return a reference to the modifiable "issuerKeyIdentifier"
+    /// representation. The behavior is undefined unless
+    /// 'isIssuerKeyIdentifier()' is true.
+    EncryptionCertificateIssuerKeyIdentifier& issuerKeyIdentifier();
+
+    /// Return a reference to the modifiable "issuerInformationAccess"
+    /// representation. The behavior is undefined unless
+    /// 'isIssuerInformationAccess()' is true.
+    EncryptionCertificateIssuerInformationAccess& issuerInformationAccess();
+
+    /// Return a reference to the modifiable "policy" representation. The
+    /// behavior is undefined unless 'isPolicy()' is true.
+    EncryptionCertificatePolicy& policy();
+
+    /// Return a reference to the modifiable "policyMappings" representation.
+    /// The behavior is undefined unless 'isPolicyMappings()' is true.
+    EncryptionCertificatePolicyMappings& policyMappings();
+
+    /// Return a reference to the modifiable "policyConstraints"
+    /// representation. The behavior is undefined unless
+    /// 'isPolicyConstraints()' is true.
+    EncryptionCertificatePolicyConstraints& policyConstraints();
+
     /// Return a reference to the modifiable "byteSequence" representation. The
     /// behavior is undefined unless 'isAny()' is true.
-    ntsa::AbstractByteSequence& byteSequence();
+    ntsa::AbstractOctetString& byteSequence();
 
     /// Return a reference to the modifiable "any" representation. The
     /// behavior is undefined unless 'isAny()' is true.
@@ -4286,14 +6228,69 @@ class EncryptionCertificateExtensionValue
     /// behavior is undefined unless 'isBoolean()' is true.
     bool boolean() const;
 
+    /// Return a reference to the non-modifiable "name" representation.
+    /// The behavior is undefined unless 'isName()' is true.
+    const EncryptionCertificateName& name() const;
+
     /// Return a reference to the non-modifiable "nameAlternative"
     /// representation. The behavior is undefined unless 'isNameAlternative()'
     /// is true.
     const EncryptionCertificateNameAlternativeList& nameAlternative() const;
 
+    /// Return a reference to the non-modifiable "subject" representation.
+    /// The behavior is undefined unless 'isSubject()' is true.
+    const EncryptionCertificateSubject& subject() const;
+
+    /// Return a reference to the non-modifiable "subjectKeyIdentifier"
+    /// representation. The behavior is undefined unless 'isSubject()' is true.
+    const EncryptionCertificateSubjectKeyIdentifier& subjectKeyIdentifier() const;
+
+    /// Return a reference to the non-modifiable "subjectKeyUsage"
+    /// representation. The behavior is undefined unless 'isSubjectKeyUsage()'
+    /// is true.
+    const EncryptionCertificateSubjectKeyUsage& subjectKeyUsage() const;
+
+    /// Return a reference to the non-modifiable "subjectKeyUsageExtended"
+    /// representation. The behavior is undefined unless
+    /// 'isSubjectKeyUsageExtended()' is true.
+    const EncryptionCertificateSubjectKeyUsageExtended& subjectKeyUsageExtended() const;
+
+    /// Return a reference to the non-modifiable "subjectConstraints"
+    /// representation. The behavior is undefined unless
+    /// 'isSubjectConstraints()' is true.
+    const EncryptionCertificateSubjectConstraints& subjectConstraints() const;
+
+    /// Return a reference to the non-modifiable "issuer" representation. The
+    /// behavior is undefined unless 'isIssuer()' is true.
+    const EncryptionCertificateIssuer& issuer() const;
+
+    /// Return a reference to the non-modifiable "issuerKeyIdentifier"
+    /// representation. The behavior is undefined unless
+    /// 'isIssuerKeyIdentifier()' is true.
+    const EncryptionCertificateIssuerKeyIdentifier& issuerKeyIdentifier() const;
+
+    /// Return a reference to the non-modifiable "issuerInformationAccess"
+    /// representation. The behavior is undefined unless
+    /// 'isIssuerInformationAccess()' is true.
+    const EncryptionCertificateIssuerInformationAccess& issuerInformationAccess() const;
+
+    /// Return a reference to the non-modifiable "policy" representation. The
+    /// behavior is undefined unless 'isPolicy()' is true.
+    const EncryptionCertificatePolicy& policy() const;
+
+    /// Return a reference to the non-modifiable "policyMappings"
+    /// representation. The behavior is undefined unless 'isPolicyMappings()'
+    /// is true.
+    const EncryptionCertificatePolicyMappings& policyMappings() const;
+
+    /// Return a reference to the non-modifiable "policyConstraints"
+    /// representation. The behavior is undefined unless
+    /// 'isPolicyConstraints()' is true.
+    const EncryptionCertificatePolicyConstraints& policyConstraints() const;
+
     /// Return a reference to the non-modifiable "byteSequence" representation.
     /// The behavior is undefined unless 'isByteSequence()' is true.
-    const ntsa::AbstractByteSequence& byteSequence() const;
+    const ntsa::AbstractOctetString& byteSequence() const;
 
     /// Return a reference to the non-modifiable "any" representation. The
     /// behavior is undefined unless 'isAny()' is true.
@@ -4306,9 +6303,57 @@ class EncryptionCertificateExtensionValue
     /// otherwise return false.
     bool isBoolean() const;
 
+    /// Return true if the "name" representation is currently selected,
+    /// otherwise return false.
+    bool isName() const;
+
     /// Return true if the "nameAlternative" representation is currently
     /// selected, otherwise return false.
     bool isNameAlternative() const;
+
+    /// Return true if the "subject" representation is currently selected,
+    /// otherwise return false.
+    bool isSubject() const;
+
+    /// Return true if the "subjectKeyIdentifier" representation is currently
+    /// selected, otherwise return false.
+    bool isSubjectKeyIdentifier() const;
+
+    /// Return true if the "subjectKeyUsage" representation is currently
+    /// selected, otherwise return false.
+    bool isSubjectKeyUsage() const;
+
+    /// Return true if the "subjectKeyUsageExtended" representation is
+    /// currently selected, otherwise return false.
+    bool isSubjectKeyUsageExtended() const;
+
+    /// Return true if the "subjectConstraints" representation is currently
+    /// selected, otherwise return false.
+    bool isSubjectConstraints() const;
+
+    /// Return true if the "issuer" representation is currently selected,
+    /// otherwise return false.
+    bool isIssuer() const;
+
+    /// Return true if the "issuerKeyIdentifier" representation is currently
+    /// selected, otherwise return false.
+    bool isIssuerKeyIdentifier() const;
+
+    /// Return true if the "issuerInformationAccess" representation is
+    /// currently selected, otherwise return false.
+    bool isIssuerInformationAccess() const;
+
+    /// Return true if the "policy" representation is currently selected,
+    /// otherwise return false.
+    bool isPolicy() const;
+
+    /// Return true if the "policyMappings" representation is currently
+    /// selected, otherwise return false.
+    bool isPolicyMappings() const;
+
+    /// Return true if the "policyConstraints" representation is currently
+    /// selected, otherwise return false.
+    bool isPolicyConstraints() const;
 
     /// Return true if the "byteSequence" representation is currently selected,
     /// otherwise return false.
@@ -4399,8 +6444,44 @@ void EncryptionCertificateExtensionValue::hash(HASH_ALGORITHM& algorithm)
     if (d_type == e_BOOLEAN) {
         hashAppend(algorithm, d_boolean.object());
     }
+    else if (d_type == e_NAME) {
+        hashAppend(algorithm, d_name.object());
+    }
     else if (d_type == e_NAME_ALTERNATIVE) {
         hashAppend(algorithm, d_nameAlternative.object());
+    }
+    else if (d_type == e_SUBJECT) {
+        hashAppend(algorithm, d_subject.object());
+    }
+    else if (d_type == e_SUBJECT_KEY_IDENTIFIER) {
+        hashAppend(algorithm, d_subjectKeyIdentifier.object());
+    }
+    else if (d_type == e_SUBJECT_KEY_USAGE) {
+        hashAppend(algorithm, d_subjectKeyUsage.object());
+    }
+    else if (d_type == e_SUBJECT_KEY_USAGE_EXTENDED) {
+        hashAppend(algorithm, d_subjectKeyUsageExtended.object());
+    }
+    else if (d_type == e_SUBJECT_CONSTRAINTS) {
+        hashAppend(algorithm, d_subjectConstraints.object());
+    }
+    else if (d_type == e_ISSUER) {
+        hashAppend(algorithm, d_issuer.object());
+    }
+    else if (d_type == e_ISSUER_KEY_IDENTIFIER) {
+        hashAppend(algorithm, d_issuerKeyIdentifier.object());
+    }
+    else if (d_type == e_ISSUER_INFORMATION_ACCESS) {
+        hashAppend(algorithm, d_issuerInformationAccess.object());
+    }
+    else if (d_type == e_POLICY) {
+        hashAppend(algorithm, d_policy.object());
+    }
+    else if (d_type == e_POLICY_MAPPINGS) {
+        hashAppend(algorithm, d_policyMappings.object());
+    }
+    else if (d_type == e_POLICY_CONSTRAINTS) {
+        hashAppend(algorithm, d_policyConstraints.object());
     }
     else if (d_type == e_BYTE_SEQUENCE) {
         hashAppend(algorithm, d_byteSequence.object());
@@ -4731,16 +6812,16 @@ void hashAppend(HASH_ALGORITHM&                           algorithm,
 /// @ingroup module_ntci_encryption
 class EncryptionCertificateEntity
 {
-    typedef ntsa::AbstractBitSequence                UniqueIdentifier;
+    typedef ntsa::AbstractBitString                UniqueIdentifier;
     typedef ntca::EncryptionCertificateExtension     Extension;
     typedef ntca::EncryptionCertificateExtensionList ExtensionList;
 
     ntca::EncryptionCertificateVersion            d_version;
     ntsa::AbstractInteger                         d_serialNumber;
     ntca::EncryptionCertificateSignatureAlgorithm d_signatureAlgorithm;
-    ntca::EncryptionCertificateName               d_issuer;
+    ntca::EncryptionCertificateIssuer             d_issuer;
     ntca::EncryptionCertificateValidity           d_validity;
-    ntca::EncryptionCertificateName               d_subject;
+    ntca::EncryptionCertificateSubject            d_subject;
     ntca::EncryptionCertificatePublicKeyInfo      d_subjectPublicKeyInfo;
     bdlb::NullableValue<UniqueIdentifier>         d_issuerUniqueId;
     bdlb::NullableValue<UniqueIdentifier>         d_subjectUniqueId;
