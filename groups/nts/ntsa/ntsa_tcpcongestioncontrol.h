@@ -54,13 +54,17 @@ class TcpCongestionControl
 
   public:
     /// Create new TcpCongestionControl instance having the default value.
-    /// Optionally specify a 'basicAllocator' used to supply memory.
-    TcpCongestionControl(bslma::Allocator* allocator = 0);
+    /// Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
+    TcpCongestionControl(bslma::Allocator* basicAllocator = 0);
 
     /// Create new TcpCongestionControl instance having the same value as the
-    /// specified `original`. Use the specified `allocator` to supply memory.
+    /// specified `original`. Optionally specify a 'basicAllocator' used to
+    /// supply memory. If 'basicAllocator' is 0, the currently installed
+    /// default allocator is used.
     TcpCongestionControl(const TcpCongestionControl& original,
-                         bslma::Allocator*           allocator);
+                         bslma::Allocator*           basicAllocator);
 
     /// Destroy this object.
     ~TcpCongestionControl();

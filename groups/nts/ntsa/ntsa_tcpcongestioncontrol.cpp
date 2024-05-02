@@ -23,17 +23,17 @@ BSLS_IDENT_RCSID(ntsa_tcpcongestioncontrol_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsa {
 
-TcpCongestionControl::TcpCongestionControl(bslma::Allocator* allocator)
-: d_buffer(allocator)
-, d_allocator_p(allocator)
+TcpCongestionControl::TcpCongestionControl(bslma::Allocator* basicAllocator)
+: d_buffer(bslma::Default::allocator(basicAllocator))
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
 TcpCongestionControl::TcpCongestionControl(
     const BloombergLP::ntsa::TcpCongestionControl& original,
-    bslma::Allocator*                              allocator)
-: d_buffer(original.d_buffer, allocator)
-, d_allocator_p(allocator)
+    bslma::Allocator*                              basicAllocator)
+: d_buffer(original.d_buffer, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 

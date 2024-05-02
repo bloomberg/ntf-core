@@ -25,9 +25,9 @@ namespace BloombergLP {
 namespace ntsa {
 
 SocketOption::SocketOption(const SocketOption& other,
-                           bslma::Allocator*   allocator)
+                           bslma::Allocator*   basicAllocator)
 : d_type(other.d_type)
-, d_allocator_p(allocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     switch (d_type) {
     case ntsa::SocketOptionType::e_REUSE_ADDRESS:
@@ -666,7 +666,8 @@ ntsa::TcpCongestionControl& SocketOption::makeTcpCongestionControl()
     }
     else {
         this->reset();
-        new (d_tcpCongestionControl.buffer()) TcpCongestionControl(d_allocator_p);
+        new (d_tcpCongestionControl.buffer())
+            TcpCongestionControl(d_allocator_p);
         d_type = ntsa::SocketOptionType::e_TCP_CONGESTION_CONTROL;
     }
 

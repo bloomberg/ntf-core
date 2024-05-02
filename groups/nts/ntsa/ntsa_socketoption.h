@@ -153,12 +153,16 @@ class SocketOption
 
   public:
     /// Create a new socketoption having an undefined type. Optionally specify
-    /// a 'basicAllocator' used to supply memory.
-    SocketOption(bslma::Allocator* allocator = 0);
+    /// a 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    // currently installed default allocator is used.
+    SocketOption(bslma::Allocator* basicAllocator = 0);
 
     /// Create a new address having the same value as the specified 'other'
-    /// object. Use the specified `allocator` to supply memory.
-    SocketOption(const SocketOption& other, bslma::Allocator* allocator);
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
+    SocketOption(const SocketOption& other,
+                 bslma::Allocator*   basicAllocator = 0);
 
     /// Destroy this object.
     ~SocketOption();
@@ -606,7 +610,7 @@ void hashAppend(HASH_ALGORITHM& algorithm, const SocketOption& value);
 NTSCFG_INLINE
 SocketOption::SocketOption(bslma::Allocator* allocator)
 : d_type(ntsa::SocketOptionType::e_UNDEFINED)
-, d_allocator_p(allocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
