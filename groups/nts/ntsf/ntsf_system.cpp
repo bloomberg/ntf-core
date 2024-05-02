@@ -703,6 +703,14 @@ ntsa::Error System::send(ntsa::SendContext*       context,
     return ntsu::SocketUtil::send(context, data, options, socket);
 }
 
+ntsa::Error System::receive(bsl::size_t* numBytesReceived,
+                            void*        data,
+                            bsl::size_t  capacity,
+                            ntsa::Handle socket)
+{
+    return ntsu::SocketUtil::receive(numBytesReceived, data, capacity, socket);
+}
+
 ntsa::Error System::receive(ntsa::ReceiveContext*       context,
                             void*                       data,
                             bsl::size_t                 capacity,
