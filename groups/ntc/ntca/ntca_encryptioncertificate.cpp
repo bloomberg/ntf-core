@@ -3550,12 +3550,12 @@ operator=(const EncryptionCertificatePublicKeyAlgorithmParameters& other)
 void EncryptionCertificatePublicKeyAlgorithmParameters::reset()
 {
     if (d_type == e_RSA) {
-        typedef EncryptionCertificatePublicKeyAlgorithmParametersRsa Type;
-        d_rsa.object().~Type();
+        
+        d_rsa.object().~RsaType();
     }
     else if (d_type == e_ELLIPTIC_CURVE) {
-        typedef EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve Type;
-        d_ellipticCurve.object().~Type();
+        
+        d_ellipticCurve.object().~EllipticCurveType();
     }
     else if (d_type == e_ANY) {
         typedef ntsa::AbstractValue Type;

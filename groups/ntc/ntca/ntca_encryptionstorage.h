@@ -451,16 +451,21 @@ void hashAppend(HASH_ALGORITHM&                algorithm,
 /// @ingroup module_ntci_encryption
 class EncryptionStoragePem
 {
-    enum Type { e_UNDEFINED, e_KEY, e_CERTIFICATE, e_PKCS7, e_PKCS8 };
+    enum Selection { e_UNDEFINED, e_KEY, e_CERTIFICATE, e_PKCS7, e_PKCS8 };
+
+    typedef ntca::EncryptionKey          KeyType;
+    typedef ntca::EncryptionCertificate  CertificateType;
+    typedef ntca::EncryptionStoragePkcs7 Pkcs7Type;
+    typedef ntca::EncryptionStoragePkcs8 Pkcs8Type;
 
     union {
-        bsls::ObjectBuffer<ntca::EncryptionKey>          d_key;
-        bsls::ObjectBuffer<ntca::EncryptionCertificate>  d_certificate;
-        bsls::ObjectBuffer<ntca::EncryptionStoragePkcs7> d_pkcs7;
-        bsls::ObjectBuffer<ntca::EncryptionStoragePkcs8> d_pkcs8;
+        bsls::ObjectBuffer<KeyType>         d_key;
+        bsls::ObjectBuffer<CertificateType> d_certificate;
+        bsls::ObjectBuffer<Pkcs7Type>       d_pkcs7;
+        bsls::ObjectBuffer<Pkcs8Type>       d_pkcs8;
     };
 
-    Type              d_type;
+    Selection         d_type;
     bslma::Allocator* d_allocator_p;
 
   public:
@@ -670,7 +675,7 @@ void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionStoragePem& value);
 /// @ingroup module_ntci_encryption
 class EncryptionStorage
 {
-    enum Type {
+    enum Selection {
         e_UNDEFINED,
         e_KEY,
         e_CERTIFICATE,
@@ -680,16 +685,23 @@ class EncryptionStorage
         e_PEM
     };
 
+    typedef ntca::EncryptionKey           KeyType;
+    typedef ntca::EncryptionCertificate   CertificateType;
+    typedef ntca::EncryptionStoragePkcs7  Pkcs7Type;
+    typedef ntca::EncryptionStoragePkcs8  Pkcs8Type;
+    typedef ntca::EncryptionStoragePkcs12 Pkcs12Type;
+    typedef ntca::EncryptionStoragePem    PemType;
+
     union {
-        bsls::ObjectBuffer<ntca::EncryptionKey>           d_key;
-        bsls::ObjectBuffer<ntca::EncryptionCertificate>   d_certificate;
-        bsls::ObjectBuffer<ntca::EncryptionStoragePkcs7>  d_pkcs7;
-        bsls::ObjectBuffer<ntca::EncryptionStoragePkcs8>  d_pkcs8;
-        bsls::ObjectBuffer<ntca::EncryptionStoragePkcs12> d_pkcs12;
-        bsls::ObjectBuffer<ntca::EncryptionStoragePem>    d_pem;
+        bsls::ObjectBuffer<KeyType>         d_key;
+        bsls::ObjectBuffer<CertificateType> d_certificate;
+        bsls::ObjectBuffer<Pkcs7Type>       d_pkcs7;
+        bsls::ObjectBuffer<Pkcs8Type>       d_pkcs8;
+        bsls::ObjectBuffer<Pkcs12Type>      d_pkcs12;
+        bsls::ObjectBuffer<PemType>         d_pem;
     };
 
-    Type              d_type;
+    Selection         d_type;
     bslma::Allocator* d_allocator_p;
 
   public:

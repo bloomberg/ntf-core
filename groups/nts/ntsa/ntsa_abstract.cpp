@@ -3997,7 +3997,9 @@ void AbstractObjectIdentifier::append(const bsl::uint64_t* data,
     d_data.insert(d_data.end(), data, data + size);
 }
 
-void AbstractObjectIdentifier::set(bsl::size_t index, bsl::uint64_t value)
+// MRM
+#if 0
+void AbstractObjectIdentifier::setByteAt(bsl::size_t index, bsl::uint64_t value)
 {
     if (index >= d_data.size()) {
         d_data.resize(index + 1);
@@ -4006,6 +4008,7 @@ void AbstractObjectIdentifier::set(bsl::size_t index, bsl::uint64_t value)
     BSLS_ASSERT_OPT(index < d_data.size());
     d_data[index] = value;
 }
+#endif
 
 bsl::uint64_t AbstractObjectIdentifier::get(bsl::size_t index) const
 {
@@ -5680,7 +5683,6 @@ void AbstractIntegerRepresentation::multiply(
                 w->set(i + j, t % b);
                 k = t / b;
 
-                BSLS_ASSERT_OPT(k >= 0);
                 BSLS_ASSERT_OPT(k < b);
 
                 // M5
@@ -5799,7 +5801,6 @@ void AbstractIntegerRepresentation::divide(
 
     const bsl::size_t s = countLeadingZeroes(Block(v.get(n - 1)));
 
-    BSLS_ASSERT_OPT(s >= 0);
     BSLS_ASSERT_OPT(s <= k_BITS_PER_BLOCK);
 
     AbstractIntegerRepresentation vn;

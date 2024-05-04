@@ -462,20 +462,16 @@ EncryptionStoragePem& EncryptionStoragePem::operator=(
 void EncryptionStoragePem::reset()
 {
     if (d_type == e_KEY) {
-        typedef ntca::EncryptionKey Type;
-        d_key.object().~Type();
+        d_key.object().~KeyType();
     }
     else if (d_type == e_CERTIFICATE) {
-        typedef ntca::EncryptionCertificate Type;
-        d_certificate.object().~Type();
+        d_certificate.object().~CertificateType();
     }
     else if (d_type == e_PKCS7) {
-        typedef ntca::EncryptionStoragePkcs7 Type;
-        d_pkcs7.object().~Type();
+        d_pkcs7.object().~Pkcs7Type();
     }
     else if (d_type == e_PKCS8) {
-        typedef ntca::EncryptionStoragePkcs8 Type;
-        d_pkcs8.object().~Type();
+        d_pkcs8.object().~Pkcs8Type();
     }
     else {
         BSLS_ASSERT(d_type == e_UNDEFINED);
@@ -848,28 +844,22 @@ EncryptionStorage& EncryptionStorage::operator=(const EncryptionStorage& other)
 void EncryptionStorage::reset()
 {
     if (d_type == e_KEY) {
-        typedef ntca::EncryptionKey Type;
-        d_key.object().~Type();
+        d_key.object().~KeyType();
     }
     else if (d_type == e_CERTIFICATE) {
-        typedef ntca::EncryptionCertificate Type;
-        d_certificate.object().~Type();
+        d_certificate.object().~CertificateType();
     }
     else if (d_type == e_PKCS7) {
-        typedef ntca::EncryptionStoragePkcs7 Type;
-        d_pkcs7.object().~Type();
+        d_pkcs7.object().~Pkcs7Type();
     }
     else if (d_type == e_PKCS8) {
-        typedef ntca::EncryptionStoragePkcs8 Type;
-        d_pkcs8.object().~Type();
+        d_pkcs8.object().~Pkcs8Type();
     }
     else if (d_type == e_PKCS12) {
-        typedef ntca::EncryptionStoragePkcs12 Type;
-        d_pkcs12.object().~Type();
+        d_pkcs12.object().~Pkcs12Type();
     }
     else if (d_type == e_PEM) {
-        typedef ntca::EncryptionStoragePem Type;
-        d_pem.object().~Type();
+        d_pem.object().~PemType();
     }
     else {
         BSLS_ASSERT(d_type == e_UNDEFINED);

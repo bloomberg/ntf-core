@@ -2377,23 +2377,7 @@ void hashAppend(HASH_ALGORITHM&                                algorithm,
 
 
 
-// TODO:
-// Copy EncryptionCertificatePublicKeyAlgorithmParameters
-//   as EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve
-//
-// which is a choice of 
-//   EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier
-//   ntsa::AbstractValue
-//
-// Then make EncryptionCertificatePublicKeyAlgorithmParameters a choice of
-//     EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve
-//     ntsa::AbstractValue
-//
-// Then make EncryptionCertificatePublicKeyAlgorithm
-//     EncryptionCertificatePublicKeyAlgorithmIdentifier
-//     EncryptionCertificatePublicKeyAlgorithmParameters
-//
-// The algorithm parameters should decode based upon the identifier.
+
 
 
 
@@ -2628,11 +2612,12 @@ class EncryptionCertificatePublicKeyAlgorithmParameters
         e_ANY = 2
     };
 
+    typedef EncryptionCertificatePublicKeyAlgorithmParametersRsa RsaType;
+    typedef EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve EllipticCurveType;
+
     union {
-        bsls::ObjectBuffer<EncryptionCertificatePublicKeyAlgorithmParametersRsa>
-                                                d_rsa;
-        bsls::ObjectBuffer<EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve>
-                                                d_ellipticCurve;
+        bsls::ObjectBuffer<RsaType>             d_rsa;
+        bsls::ObjectBuffer<EllipticCurveType>   d_ellipticCurve;
         bsls::ObjectBuffer<ntsa::AbstractValue> d_any;
     };
 
