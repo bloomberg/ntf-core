@@ -722,7 +722,7 @@ class TestAllocator : public bslma::Allocator
 #define NTF_VA_SELECT(NAME, ...)                                              \
     NTF_SELECT(NAME, NTF_VA_SIZE(__VA_ARGS__))(__VA_ARGS__)
 
-namespace ntf_mock {
+struct TestMock {
 
 template <class ARG>
 struct ProcessInterface {
@@ -775,7 +775,7 @@ struct Setter {
 };
 
 template <template <class, class> class SET_POLICY, class IN>
-Setter<IN, SET_POLICY> createSetter(const IN& val)
+static Setter<IN, SET_POLICY> createSetter(const IN& val)
 {
     Setter<IN, SET_POLICY> setter(val);
     return setter;
@@ -829,7 +829,7 @@ struct Extractor {
 };
 
 template <template <class, class> class EXTRACT_POLICY, class TO>
-Extractor<TO, EXTRACT_POLICY> createExtractor(TO* val)
+static Extractor<TO, EXTRACT_POLICY> createExtractor(TO* val)
 {
     Extractor<TO, EXTRACT_POLICY> extractor(val);
     return extractor;
@@ -899,7 +899,7 @@ struct IgnoreArg {
 };
 
 template <template <class, class> class COMPARATOR, class EXP>
-EqMatcher<EXP, COMPARATOR> createEqMatcher(const EXP& val)
+static EqMatcher<EXP, COMPARATOR> createEqMatcher(const EXP& val)
 {
     EqMatcher<EXP, COMPARATOR> matcher(val);
     return matcher;
@@ -1133,7 +1133,7 @@ struct InvocationArgs
 };
 
 template <int AT, class TL>
-InvocationArgsImpl<TL, bsl::integral_constant<int, AT> >& getInvocationArgs(
+static InvocationArgsImpl<TL, bsl::integral_constant<int, AT> >& getInvocationArgs(
     InvocationArgs<TL>& args)
 {
     return *(
@@ -1595,7 +1595,7 @@ struct Invocation<METHOD_INFO, RESULT, NoArgs>
     }
 };
 
-}
+};
 
 #define NTF_METHOD_INFO(METHOD_NAME)                                          \
     struct NTF_CAT2(MethodInfo, __LINE__)                                     \
@@ -1612,23 +1612,23 @@ struct Invocation<METHOD_INFO, RESULT, NoArgs>
     NTF_METHOD_INFO(METHOD_NAME)                                              \
                                                                               \
   public:                                                                     \
-    ntf_mock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
+    TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
                          RESULT,                                              \
-                         ntf_mock::NoArgs>& expect_##METHOD_NAME()            \
+                         TestMock::NoArgs>& expect_##METHOD_NAME()            \
     {                                                                         \
         return d_invocation_##METHOD_NAME.expect();                           \
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable ntf_mock::                                                        \
-        Invocation<NTF_CAT2(MethodInfo, __LINE__), RESULT, ntf_mock::NoArgs>  \
+    mutable TestMock::                                                        \
+        Invocation<NTF_CAT2(MethodInfo, __LINE__), RESULT, TestMock::NoArgs>  \
             d_invocation_##METHOD_NAME;
 
 #define NTF_MOCK_METHOD_1_IMP(RESULT, METHOD_NAME, ARG1)                      \
     NTF_METHOD_INFO(METHOD_NAME)                                              \
   public:                                                                     \
     template <class MATCHER>                                                  \
-    ntf_mock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
+    TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
                          RESULT,                                              \
                          BloombergLP::bslmf::TypeList<ARG1> >&                \
         expect_##METHOD_NAME(const MATCHER& arg1,                             \
@@ -1641,7 +1641,7 @@ struct Invocation<METHOD_INFO, RESULT, NoArgs>
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable ntf_mock::Invocation<NTF_CAT2(MethodInfo, __LINE__),              \
+    mutable TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),              \
                                  RESULT,                                      \
                                  BloombergLP::bslmf::TypeList<ARG1> >         \
         NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__);
@@ -1650,7 +1650,7 @@ struct Invocation<METHOD_INFO, RESULT, NoArgs>
     NTF_METHOD_INFO(METHOD_NAME)                                              \
   public:                                                                     \
     template <class MATCHER1, class MATCHER2>                                 \
-    ntf_mock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
+    TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
                          RESULT,                                              \
                          BloombergLP::bslmf::TypeList<ARG1, ARG2> >&          \
         expect_##METHOD_NAME(const MATCHER1& arg1, const MATCHER2& arg2)      \
@@ -1661,7 +1661,7 @@ struct Invocation<METHOD_INFO, RESULT, NoArgs>
     }                                                                         \
                                                                               \
     template <class MATCHER1, class MATCHER2>                                 \
-    ntf_mock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
+    TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
                          RESULT,                                              \
                          BloombergLP::bslmf::TypeList<ARG1, ARG2> >&          \
         expect_##METHOD_NAME(const MATCHER1& arg1,                            \
@@ -1676,7 +1676,7 @@ struct Invocation<METHOD_INFO, RESULT, NoArgs>
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable ntf_mock::Invocation<NTF_CAT2(MethodInfo, __LINE__),              \
+    mutable TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),              \
                                  RESULT,                                      \
                                  BloombergLP::bslmf::TypeList<ARG1, ARG2> >   \
         NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__);
@@ -1685,7 +1685,7 @@ struct Invocation<METHOD_INFO, RESULT, NoArgs>
     NTF_METHOD_INFO(METHOD_NAME)                                              \
   public:                                                                     \
     template <class MATCHER1, class MATCHER2, class MATCHER3>                 \
-    ntf_mock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
+    TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
                          RESULT,                                              \
                          BloombergLP::bslmf::TypeList<ARG1, ARG2, ARG3> >&    \
         expect_##METHOD_NAME(const MATCHER1& arg1,                            \
@@ -1698,7 +1698,7 @@ struct Invocation<METHOD_INFO, RESULT, NoArgs>
     }                                                                         \
                                                                               \
     template <class MATCHER1, class MATCHER2, class MATCHER3>                 \
-    ntf_mock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
+    TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
                          RESULT,                                              \
                          BloombergLP::bslmf::TypeList<ARG1, ARG2, ARG3> >&    \
         expect_##METHOD_NAME(const MATCHER1& arg1,                            \
@@ -1714,7 +1714,7 @@ struct Invocation<METHOD_INFO, RESULT, NoArgs>
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable ntf_mock::Invocation<                                             \
+    mutable TestMock::Invocation<                                             \
         NTF_CAT2(MethodInfo, __LINE__),                                       \
         RESULT,                                                               \
         BloombergLP::bslmf::TypeList<ARG1, ARG2, ARG3> >                      \
@@ -1816,17 +1816,17 @@ struct Invocation<METHOD_INFO, RESULT, NoArgs>
 #define NTF_MOCK_METHOD_CONST(...)                                            \
     NTF_VA_SELECT(NTF_MOCK_METHOD_CONST, __VA_ARGS__)
 
-#define NTF_EQ(ARG) ntf_mock::createEqMatcher<ntf_mock::DirectComparator>(ARG)
+#define NTF_EQ(ARG) TestMock::createEqMatcher<TestMock::DirectComparator>(ARG)
 #define NTF_EQ_SPEC(ARG, SPEC)                                                \
-    ntf_mock::createEqMatcher<ntf_mock::DirectComparator>(ARG),               \
+    TestMock::createEqMatcher<TestMock::DirectComparator>(ARG),               \
         bsl::type_identity<SPEC>()
-#define IGNORE_ARG ntf_mock::IgnoreArg()
-#define IGNORE_ARG_S(SPEC) ntf_mock::IgnoreArg(), bsl::type_identity<SPEC>()
+#define IGNORE_ARG TestMock::IgnoreArg()
+#define IGNORE_ARG_S(SPEC) TestMock::IgnoreArg(), bsl::type_identity<SPEC>()
 
 #define NTF_EQ_DEREF(ARG)                                                     \
-    ntf_mock::createEqMatcher<ntf_mock::DerefComparator>(ARG)
+    TestMock::createEqMatcher<TestMock::DerefComparator>(ARG)
 #define NTF_EQ_DEREF_SPEC(ARG, SPEC)                                          \
-    ntf_mock::createEqMatcher<ntf_mock::DerefComparator>(ARG),                \
+    TestMock::createEqMatcher<TestMock::DerefComparator>(ARG),                \
         bsl::type_identity<SPEC>()
 
 #define NTF_EXPECT_0(MOCK_OBJECT, METHOD) (MOCK_OBJECT).expect_##METHOD()
@@ -1845,17 +1845,17 @@ struct Invocation<METHOD_INFO, RESULT, NoArgs>
 #define RETURN(VAL) willReturn(VAL)
 #define RETURNREF(VAL) willReturnRef(&VAL)
 
-#define TO(ARG) ntf_mock::createExtractor<ntf_mock::NoDerefPolicy>(ARG)
-#define TO_DEREF(ARG) ntf_mock::createExtractor<ntf_mock::DerefPolicy>(ARG)
+#define TO(ARG) TestMock::createExtractor<TestMock::NoDerefPolicy>(ARG)
+#define TO_DEREF(ARG) TestMock::createExtractor<TestMock::DerefPolicy>(ARG)
 
 #define SAVE_ARG_1(...) saveArg<0>(__VA_ARGS__)
 #define SAVE_ARG_2(...) saveArg<1>(__VA_ARGS__)
 #define SAVE_ARG_3(...) saveArg<2>(__VA_ARGS__)
 #define SAVE_ARG_4(...) saveArg<3>(__VA_ARGS__)
 
-#define FROM(ARG) ntf_mock::createSetter<ntf_mock::DefaultSetter>(ARG)
+#define FROM(ARG) TestMock::createSetter<TestMock::DefaultSetter>(ARG)
 
-#define FROM_DEREF(ARG) ntf_mock::createSetter<ntf_mock::DerefSetter>(ARG)
+#define FROM_DEREF(ARG) TestMock::createSetter<TestMock::DerefSetter>(ARG)
 
 #define SET_ARG_1(...) setArg<0>(__VA_ARGS__)
 #define SET_ARG_2(...) setArg<1>(__VA_ARGS__)
