@@ -1,9 +1,17 @@
-ntf-core (2.3.7) unstable; urgency=low
+ntf-core (2.3.8) unstable; urgency=low
 
+  * 481289b Release 2.3.8
+  * a604360 Encapsulate mocking test structures and functions inside a struct instead of a nested namespace
+
+ -- Matt Millett <mmillett2@bloomberg.net>  Sat, 4 May 2024 10:28:40 -0400
+
+ntf-core (2.3.7) git; urgency=low
+
+  * 1f9ff72 Release 2.3.7 to DPKG
   * 4b84e95 Release 2.3.7 (#152)
   * d2f23c8 Disable mocking test framework and dependant tests unless built with C++20
 
- -- Matt Millett <mmillett2@bloomberg.net>  Thu, 2 May 2024 12:49:48 -0400
+ -- Matt Millett <mmillett2@bloomberg.net>  Thu, 2 May 2024 13:04:44 -0400
 
 ntf-core (2.3.6) git; urgency=low
 
