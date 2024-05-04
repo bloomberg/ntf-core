@@ -3957,6 +3957,35 @@ void AbstractObjectIdentifier::set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint
     d_data.push_back(v6);
 }
 
+void AbstractObjectIdentifier::set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5, bsl::uint64_t v6, bsl::uint64_t v7)
+{
+    d_data.clear();
+    d_data.reserve(8);
+    d_data.push_back(v0);
+    d_data.push_back(v1);
+    d_data.push_back(v2);
+    d_data.push_back(v3);
+    d_data.push_back(v4);
+    d_data.push_back(v5);
+    d_data.push_back(v6);
+    d_data.push_back(v7);
+}
+
+void AbstractObjectIdentifier::set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5, bsl::uint64_t v6, bsl::uint64_t v7, bsl::uint64_t v8)
+{
+    d_data.clear();
+    d_data.reserve(9);
+    d_data.push_back(v0);
+    d_data.push_back(v1);
+    d_data.push_back(v2);
+    d_data.push_back(v3);
+    d_data.push_back(v4);
+    d_data.push_back(v5);
+    d_data.push_back(v6);
+    d_data.push_back(v7);
+    d_data.push_back(v8);
+}
+
 void AbstractObjectIdentifier::append(bsl::uint64_t value)
 {
     d_data.push_back(value);
@@ -4073,6 +4102,30 @@ bool AbstractObjectIdentifier::equals(bsl::uint64_t v0, bsl::uint64_t v1, bsl::u
         d_data[3] == v3 && d_data[4] == v4 && d_data[5] == v5 && d_data[6] == v6;
 }
 
+bool AbstractObjectIdentifier::equals(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
+        bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5,
+        bsl::uint64_t v6, bsl::uint64_t v7) const
+{
+    if (d_data.size() != 8) {
+        return false;
+    }
+
+    return d_data[0] == v0 && d_data[1] == v1 && d_data[2] == v2 && 
+        d_data[3] == v3 && d_data[4] == v4 && d_data[5] == v5 && d_data[6] == v6 && d_data[7] == v7;
+}
+
+bool AbstractObjectIdentifier::equals(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
+        bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5,
+        bsl::uint64_t v6, bsl::uint64_t v7, bsl::uint64_t v8) const
+{
+    if (d_data.size() != 9) {
+        return false;
+    }
+
+    return d_data[0] == v0 && d_data[1] == v1 && d_data[2] == v2 && 
+        d_data[3] == v3 && d_data[4] == v4 && d_data[5] == v5 && d_data[6] == v6 && d_data[7] == v7 && d_data[8] == v8;
+}
+
 bool AbstractObjectIdentifier::equals(
     const AbstractObjectIdentifier& other) const
 {
@@ -4089,10 +4142,18 @@ bsl::ostream& AbstractObjectIdentifier::print(bsl::ostream& stream,
                                               int           level,
                                               int spacesPerLevel) const
 {
-    bslim::Printer printer(&stream, level, spacesPerLevel);
-    printer.start();
-    printer.printAttribute("data", d_data);
-    printer.end();
+    NTSCFG_WARNING_UNUSED(level);
+    NTSCFG_WARNING_UNUSED(spacesPerLevel);
+
+    const bsl::size_t size = d_data.size();
+
+    for (bsl::size_t i = 0; i < size; ++i) {
+        if (i != 0) {
+            stream << '.';
+        }
+        stream << d_data[i];
+    }
+
     return stream;
 }
 

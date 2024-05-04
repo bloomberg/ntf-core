@@ -1436,32 +1436,44 @@ class AbstractObjectIdentifier
     /// bytes.
     void resize(bsl::size_t size);
 
-    // Set the value to the specified 'v0'.
+    /// Set the value to the specified 'v0'.
     void set(bsl::uint64_t v0);
 
-    // Set the value to the specified 'v0', 'v1' sequence.
+    /// Set the value to the specified 'v0', 'v1' sequence.
     void set(bsl::uint64_t v0, bsl::uint64_t v1);
 
-    // Set the value to the specified 'v0', 'v1', 'v2' sequence.
+    /// Set the value to the specified 'v0', 'v1', 'v2' sequence.
     void set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2);
 
-    // Set the value to the specified 'v0', 'v1', 'v2', 'v3' sequence.
+    /// Set the value to the specified 'v0', 'v1', 'v2', 'v3' sequence.
     void set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, bsl::uint64_t v3);
 
-    // Set the value to the specified 'v0', 'v1', 'v2', 'v3', 'v4' sequence.
+    /// Set the value to the specified 'v0', 'v1', 'v2', 'v3', 'v4' sequence.
     void set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
              bsl::uint64_t v3, bsl::uint64_t v4);
 
-    // Set the value to the specified 'v0', 'v1', 'v2', 'v3', 'v4', 'v5' 
-    // sequence.
+    /// Set the value to the specified 'v0', 'v1', 'v2', 'v3', 'v4', 'v5' 
+    /// sequence.
     void set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
              bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5);
 
-    // Set the value to the specified 'v0', 'v1', 'v2', 'v3', 'v4', 'v5', 'v6' 
-    // sequence.
+    /// Set the value to the specified 'v0', 'v1', 'v2', 'v3', 'v4', 'v5', 'v6' 
+    /// sequence.
     void set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
              bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5,
              bsl::uint64_t v6);
+
+    /// Set the value to the specified 'v0', 'v1', 'v2', 'v3', 'v4', 'v5',
+    /// 'v6', 'v7' sequence.
+    void set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
+             bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5,
+             bsl::uint64_t v6, bsl::uint64_t v7);
+
+    /// Set the value to the specified 'v0', 'v1', 'v2', 'v3', 'v4', 'v5',
+    /// 'v6', 'v7', 'v8' sequence.
+    void set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
+             bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5,
+             bsl::uint64_t v6, bsl::uint64_t v7, bsl::uint64_t v8);
 
     /// Append the specified 'value' to the end of the data.
     void append(bsl::uint64_t value);
@@ -1513,6 +1525,18 @@ class AbstractObjectIdentifier
     bool equals(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
             bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5,
             bsl::uint64_t v6) const;
+
+    /// Return true if the identifier matches the specified 'v0', 'v1', 'v2',
+    /// 'v3', 'v4', 'v5', 'v6', 'v7' sequence, otherwise return false.
+    bool equals(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
+            bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5,
+            bsl::uint64_t v6, bsl::uint64_t v7) const;
+
+    /// Return true if the identifier matches the specified 'v0', 'v1', 'v2',
+    /// 'v3', 'v4', 'v5', 'v6', 'v7', 'v8' sequence, otherwise return false.
+    bool equals(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
+            bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5,
+            bsl::uint64_t v6, bsl::uint64_t v7, bsl::uint64_t v8) const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.

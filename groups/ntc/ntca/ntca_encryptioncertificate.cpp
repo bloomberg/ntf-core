@@ -6220,9 +6220,242 @@ bool operator<(const EncryptionCertificateIssuer& lhs,
     return lhs.less(rhs);
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const char* EncryptionCertificateSubjectKeyUsageExtendedType::toString(Value value)
+{
+    switch (value) {
+    case e_TLS_CLIENT:
+        return "TLS_CLIENT";
+    case e_TLS_SERVER:
+        return "TLS_SERVER";
+    case e_SSH_CLIENT:
+        return "TLS_CLIENT";
+    case e_SSH_SERVER:
+        return "TLS_SERVER";
+    case e_IPSEC_USER:
+        return "IPSEC_USER";
+    case e_IPSEC_TUNNEL:
+        return "IPSEC_TUNNEL";
+    case e_IPSEC_ENDPOINT:
+        return "IPSEC_ENDPOINT";
+    case e_KEY_TIMESTAMPING:
+        return "KEY_TIMESTAMPING";
+    case e_CODE_SIGNING:
+        return "CODE_SIGNING";
+    case e_EMAIL:
+        return "EMAIL";
+    }
+
+    BSLS_ASSERT(!"invalid enumerator");
+    return 0;
+}
+
+void EncryptionCertificateSubjectKeyUsageExtendedType::toObjectIdentifier(
+    ntsa::AbstractObjectIdentifier* result,
+    Value                           value)
+{
+    result->reset();
+
+    if (value == e_TLS_CLIENT) {
+        result->set(1, 3, 6, 1, 5, 5, 7, 3, 2);
+    }
+    else if (value == e_TLS_SERVER) {
+        result->set(1, 3, 6, 1, 5, 5, 7, 3, 1);
+    }
+    else if (value == e_SSH_CLIENT) {
+        result->set(1, 3, 6, 1, 5, 5, 7, 3, 21);
+    }
+    else if (value == e_SSH_SERVER) {
+        result->set(1, 3, 6, 1, 5, 5, 7, 3, 22);
+    }
+    else if (value == e_IPSEC_USER) {
+        result->set(1, 3, 6, 1, 5, 5, 7, 3, 7);
+    }
+    else if (value == e_IPSEC_TUNNEL) {
+        result->set(1, 3, 6, 1, 5, 5, 7, 3, 6);
+    }
+    else if (value == e_IPSEC_ENDPOINT) {
+        result->set(1, 3, 6, 1, 5, 5, 7, 3, 5);
+    }
+    else if (value == e_KEY_TIMESTAMPING) {
+        result->set(1, 3, 6, 1, 5, 5, 7, 3, 8);
+    }
+    else if (value == e_CODE_SIGNING) {
+        result->set(1, 3, 6, 1, 5, 5, 7, 3, 3);
+    }
+    else if (value == e_EMAIL) {
+        result->set(1, 3, 6, 1, 5, 5, 7, 3, 4);
+    }
+}
+
+int EncryptionCertificateSubjectKeyUsageExtendedType::fromString(
+    EncryptionCertificateSubjectKeyUsageExtendedType::Value* result,
+    const bslstl::StringRef&                            string)
+{
+    if (bdlb::String::areEqualCaseless(string, "TLS_CLIENT")) {
+        *result = e_TLS_CLIENT;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "TLS_SERVER")) {
+        *result = e_TLS_SERVER;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "SSH_CLIENT")) {
+        *result = e_SSH_CLIENT;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "SSH_SERVER")) {
+        *result = e_SSH_SERVER;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "IPSEC_USER")) {
+        *result = e_IPSEC_USER;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "IPSEC_TUNNEL")) {
+        *result = e_IPSEC_TUNNEL;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "IPSEC_ENDPOINT")) {
+        *result = e_IPSEC_ENDPOINT;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "KEY_TIMESTAMPING")) {
+        *result = e_KEY_TIMESTAMPING;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "CODE_SIGNING")) {
+        *result = e_CODE_SIGNING;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "EMAIL")) {
+        *result = e_EMAIL;
+        return 0;
+    }
+
+    return -1;
+}
+
+int EncryptionCertificateSubjectKeyUsageExtendedType::fromObjectIdentifier(
+    Value*                                result,
+    const ntsa::AbstractObjectIdentifier& identifier)
+{
+    if (identifier.equals(1, 3, 6, 1, 5, 5, 7, 3, 2)) {
+        *result = e_TLS_CLIENT;
+        return 0;
+    }
+
+    if (identifier.equals(1, 3, 6, 1, 5, 5, 7, 3, 1)) {
+        *result = e_TLS_SERVER;
+        return 0;
+    }
+
+    if (identifier.equals(1, 3, 6, 1, 5, 5, 7, 3, 21)) {
+        *result = e_SSH_CLIENT;
+        return 0;
+    }
+
+    if (identifier.equals(1, 3, 6, 1, 5, 5, 7, 3, 22)) {
+        *result = e_SSH_SERVER;
+        return 0;
+    }
+
+    if (identifier.equals(1, 3, 6, 1, 5, 5, 7, 3, 7)) {
+        *result = e_IPSEC_USER;
+        return 0;
+    }
+
+    if (identifier.equals(1, 3, 6, 1, 5, 5, 7, 3, 6)) {
+        *result = e_IPSEC_TUNNEL;
+        return 0;
+    }
+
+    if (identifier.equals(1, 3, 6, 1, 5, 5, 7, 3, 5)) {
+        *result = e_IPSEC_ENDPOINT;
+        return 0;
+    }
+
+    if (identifier.equals(1, 3, 6, 1, 5, 5, 7, 3, 8)) {
+        *result = e_KEY_TIMESTAMPING;
+        return 0;
+    }
+
+    if (identifier.equals(1, 3, 6, 1, 5, 5, 7, 3, 3)) {
+        *result = e_CODE_SIGNING;
+        return 0;
+    }
+
+    if (identifier.equals(1, 3, 6, 1, 5, 5, 7, 3, 4)) {
+        *result = e_EMAIL;
+        return 0;
+    }
+
+    return -1;
+}
+
+bsl::ostream& EncryptionCertificateSubjectKeyUsageExtendedType::print(
+    bsl::ostream& stream,
+    Value         value)
+{
+    return stream << toString(value);
+}
+
+bsl::ostream& operator<<(
+    bsl::ostream&                                      stream,
+    EncryptionCertificateSubjectKeyUsageExtendedType::Value rhs)
+{
+    return EncryptionCertificateSubjectKeyUsageExtendedType::print(stream, rhs);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 EncryptionCertificateSubjectKeyUsageExtended::EncryptionCertificateSubjectKeyUsageExtended(
     bslma::Allocator* basicAllocator)
-: d_value(basicAllocator)
+: d_identifiers(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
@@ -6230,7 +6463,7 @@ EncryptionCertificateSubjectKeyUsageExtended::EncryptionCertificateSubjectKeyUsa
 EncryptionCertificateSubjectKeyUsageExtended::EncryptionCertificateSubjectKeyUsageExtended(
     const EncryptionCertificateSubjectKeyUsageExtended& original,
     bslma::Allocator*                    basicAllocator)
-: d_value(original.d_value, basicAllocator)
+: d_identifiers(original.d_identifiers, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
@@ -6243,7 +6476,7 @@ EncryptionCertificateSubjectKeyUsageExtended& EncryptionCertificateSubjectKeyUsa
     const EncryptionCertificateSubjectKeyUsageExtended& other)
 {
     if (this != &other) {
-        d_value = other.d_value;
+        d_identifiers = other.d_identifiers;
     }
 
     return *this;
@@ -6251,7 +6484,29 @@ EncryptionCertificateSubjectKeyUsageExtended& EncryptionCertificateSubjectKeyUsa
 
 void EncryptionCertificateSubjectKeyUsageExtended::reset()
 {
-    d_value.reset();
+    d_identifiers.clear();
+}
+
+
+void EncryptionCertificateSubjectKeyUsageExtended::setIdentifierList(
+    const bsl::vector<ntsa::AbstractObjectIdentifier>& value)
+{
+    d_identifiers = value;
+}
+
+void EncryptionCertificateSubjectKeyUsageExtended::addIdentifier(
+    const ntsa::AbstractObjectIdentifier& value)
+{
+    d_identifiers.push_back(value);
+}
+
+void EncryptionCertificateSubjectKeyUsageExtended::addIdentifier(
+        EncryptionCertificateSubjectKeyUsageExtendedType::Value value)
+{
+    ntsa::AbstractObjectIdentifier identifier;
+    EncryptionCertificateSubjectKeyUsageExtendedType::toObjectIdentifier(&identifier, value);
+
+    d_identifiers.push_back(identifier);
 }
 
 ntsa::Error EncryptionCertificateSubjectKeyUsageExtended::decode(
@@ -6259,14 +6514,29 @@ ntsa::Error EncryptionCertificateSubjectKeyUsageExtended::decode(
 {
     ntsa::Error error;
 
-    error = decoder->decodeTag();
+    error = decoder->decodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
     if (error) {
         return error;
     }
 
-    error = decoder->decodeValue(&d_value);
-    if (error) {
-        return error;
+    while (decoder->contentBytesRemaining() > 0) {
+        error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OBJECT_IDENTIFIER);
+        if (error) {
+            return error;
+        }
+
+        ntsa::AbstractObjectIdentifier identifier;
+        error = decoder->decodeValue(&identifier);
+        if (error) {
+            return error;
+        }
+
+        d_identifiers.push_back(identifier);
+
+        error = decoder->decodeTagComplete();
+        if (error) {
+            return error;
+        }
     }
 
     error = decoder->decodeTagComplete();
@@ -6282,15 +6552,26 @@ ntsa::Error EncryptionCertificateSubjectKeyUsageExtended::encode(
 {
     ntsa::Error error;
 
-    error = encoder->encodeTag(
-        d_value.tagClass(), d_value.tagType(), d_value.tagNumber());
+    error = encoder->encodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
     if (error) {
         return error;
     }
 
-    error = encoder->encodeValue(d_value);
-    if (error) {
-        return error;
+    for (bsl::size_t i = 0; i < d_identifiers.size(); ++i) {
+        error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OBJECT_IDENTIFIER);
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeValue(d_identifiers[i]);
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
+        if (error) {
+            return error;
+        }
     }
 
     error = encoder->encodeTagComplete();
@@ -6301,26 +6582,44 @@ ntsa::Error EncryptionCertificateSubjectKeyUsageExtended::encode(
     return ntsa::Error();
 }
 
+const bsl::vector<ntsa::AbstractObjectIdentifier>& EncryptionCertificateSubjectKeyUsageExtended::identifierList() const
+{
+    return d_identifiers;
+}
+
+
+bool EncryptionCertificateSubjectKeyUsageExtended::has(const ntsa::AbstractObjectIdentifier& identifier) const
+{
+    bool result = false;
+
+    for (bsl::size_t i = 0; i < d_identifiers.size(); ++i) {
+        if (d_identifiers[i] == identifier) {
+            result = true;
+            break;
+        }
+    }
+
+    return result;
+}
+
+bool EncryptionCertificateSubjectKeyUsageExtended::has(EncryptionCertificateSubjectKeyUsageExtendedType::Value value) const
+{
+    ntsa::AbstractObjectIdentifier identifier;
+    EncryptionCertificateSubjectKeyUsageExtendedType::toObjectIdentifier(&identifier, value);
+
+    return this->has(identifier);
+}
+
 bool EncryptionCertificateSubjectKeyUsageExtended::equals(
     const EncryptionCertificateSubjectKeyUsageExtended& other) const
 {
-    return d_value == other.d_value;
+    return d_identifiers == other.d_identifiers;
 }
 
 bool EncryptionCertificateSubjectKeyUsageExtended::less(
     const EncryptionCertificateSubjectKeyUsageExtended& other) const
 {
-#if 0
-    if (d_value < other.d_value) {
-        return true;
-    }
-
-    if (other.d_value < d_value) {
-        return false;
-    }
-#endif
-
-    return d_value < other.d_value;
+    return d_identifiers < other.d_identifiers;
 }
 
 bsl::ostream& EncryptionCertificateSubjectKeyUsageExtended::print(bsl::ostream& stream,
@@ -6329,7 +6628,20 @@ bsl::ostream& EncryptionCertificateSubjectKeyUsageExtended::print(bsl::ostream& 
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute("value", d_value);
+
+    for (bsl::size_t i = 0; i < d_identifiers.size(); ++i) {
+        stream << ' ';
+
+        EncryptionCertificateSubjectKeyUsageExtendedType::Value value;
+        int rc = EncryptionCertificateSubjectKeyUsageExtendedType::fromObjectIdentifier(&value, d_identifiers[i]);
+        if (rc == 0) {
+            stream << EncryptionCertificateSubjectKeyUsageExtendedType::toString(value);
+        }
+        else {
+            stream << d_identifiers[i];
+        }
+    }
+
     printer.end();
     return stream;
 }
@@ -6529,6 +6841,17 @@ void EncryptionCertificateSubjectKeyUsage::reset()
     d_value.reset();
 }
 
+ 
+void EncryptionCertificateSubjectKeyUsage::enable(EncryptionCertificateSubjectKeyUsageType::Value value)
+{
+    d_value.setBit(static_cast<bsl::size_t>(value), true);
+}
+
+void EncryptionCertificateSubjectKeyUsage::disable(EncryptionCertificateSubjectKeyUsageType::Value value)
+{
+    d_value.setBit(static_cast<bsl::size_t>(value), false);
+}
+
 ntsa::Error EncryptionCertificateSubjectKeyUsage::decode(
     ntsa::AbstractSyntaxDecoder* decoder)
 {
@@ -6575,6 +6898,11 @@ ntsa::Error EncryptionCertificateSubjectKeyUsage::encode(
     return ntsa::Error();
 }
 
+bool EncryptionCertificateSubjectKeyUsage::supports(EncryptionCertificateSubjectKeyUsageType::Value value) const
+{
+    return d_value.getBit(static_cast<bsl::size_t>(value));
+}
+
 bool EncryptionCertificateSubjectKeyUsage::equals(
     const EncryptionCertificateSubjectKeyUsage& other) const
 {
@@ -6584,16 +6912,6 @@ bool EncryptionCertificateSubjectKeyUsage::equals(
 bool EncryptionCertificateSubjectKeyUsage::less(
     const EncryptionCertificateSubjectKeyUsage& other) const
 {
-#if 0
-    if (d_value < other.d_value) {
-        return true;
-    }
-
-    if (other.d_value < d_value) {
-        return false;
-    }
-#endif
-
     return d_value < other.d_value;
 }
 
@@ -7107,18 +7425,28 @@ bool operator<(const EncryptionCertificateSubject& lhs,
 const char* EncryptionCertificateExtensionAttributeType::toString(Value value)
 {
     switch (value) {
-    case e_BASIC_CONSTRAINTS:
-        return "BASIC_CONSTRAINTS";
-    case e_KEY_USAGE:
-        return "KEY_USAGE";
-    case e_KEY_USAGE_EXTENDED:
-        return "KEY_USAGE_EXTENDED";
-    case e_SUBJECT_KEY_IDENTIFIER:
-        return "SUBJECT_KEY_IDENTIFIER";
     case e_SUBJECT_ALTERNATIVE_NAME:
         return "SUBJECT_ALTERNATIVE_NAME";
-    case e_AUTHORITY_KEY_IDENTIFIER:
-        return "AUTHORITY_KEY_IDENTIFIER";
+    case e_SUBJECT_KEY_IDENTIFIER:
+        return "SUBJECT_KEY_IDENTIFIER";
+    case e_SUBJECT_KEY_USAGE:
+        return "SUBJECT_KEY_USAGE";
+    case e_SUBJECT_KEY_USAGE_EXTENDED:
+        return "SUBJECT_KEY_USAGE_EXTENDED";
+    case e_SUBJECT_CONSTRAINTS:
+        return "SUBJECT_CONSTRAINTS";
+    case e_ISSUER_ALTERNATIVE_NAME:
+        return "ISSUER_ALTERNATIVE_NAME";
+    case e_ISSUER_KEY_IDENTIFIER:
+        return "ISSUER_KEY_IDENTIFIER";
+    case e_ISSUER_INFORMATION_ACCESS:
+        return "ISSUER_INFORMATION_ACCESS";
+    case e_POLICY:
+        return "POLICY";
+    case e_POLICY_MAPPINGS:
+        return "POLICY_MAPPINGS";
+    case e_POLICY_CONSTRAINTS:
+        return "POLICY_CONSTRAINTS";
     }
 
     BSLS_ASSERT(!"invalid enumerator");
@@ -7131,23 +7459,42 @@ void EncryptionCertificateExtensionAttributeType::toObjectIdentifier(
 {
     result->reset();
 
-    if (value == e_BASIC_CONSTRAINTS) {
-        result->set(2, 5, 29, 19);
-    }
-    else if (value == e_KEY_USAGE) {
-        result->set(2, 5, 29, 15);
-    }
-    else if (value == e_KEY_USAGE_EXTENDED) {
-        result->set(2, 5, 29, 37);
+    if (value == e_SUBJECT_ALTERNATIVE_NAME) {
+        result->set(2, 5, 29, 17);
     }
     else if (value == e_SUBJECT_KEY_IDENTIFIER) {
         result->set(2, 5, 29, 14);
     }
-    else if (value == e_SUBJECT_ALTERNATIVE_NAME) {
-        result->set(2, 5, 29, 17);
+    else if (value == e_SUBJECT_KEY_USAGE) {
+        result->set(2, 5, 29, 15);
     }
-    else if (value == e_AUTHORITY_KEY_IDENTIFIER) {
+    else if (value == e_SUBJECT_KEY_USAGE_EXTENDED) {
+        result->set(2, 5, 29, 37);
+    }
+    // else if (value == e_SUBJECT_INFORMATION_ACCESS) {
+    //    result->set(1, 3, 6, 1, 5, 5, 7, 1, 11);
+    // }
+    else if (value == e_SUBJECT_CONSTRAINTS) {
+        result->set(2, 5, 29, 19);
+    }
+    
+    else if (value == e_ISSUER_ALTERNATIVE_NAME) {
+        result->set(2, 5, 29, 18);
+    }
+    else if (value == e_ISSUER_KEY_IDENTIFIER) {
         result->set(2, 5, 29, 35);
+    }
+    else if (value == e_ISSUER_INFORMATION_ACCESS) {
+        result->set(1, 3, 6, 1, 5, 5, 7, 1, 1);
+    }
+    else if (value == e_POLICY) {
+        result->set(2, 5, 29, 32);
+    }
+    else if (value == e_POLICY_MAPPINGS) {
+        result->set(2, 5, 29, 33);
+    }
+    else if (value == e_POLICY_CONSTRAINTS) {
+        result->set(2, 5, 29, 36);
     }
 }
 
@@ -7155,18 +7502,8 @@ int EncryptionCertificateExtensionAttributeType::fromString(
     EncryptionCertificateExtensionAttributeType::Value* result,
     const bslstl::StringRef&                            string)
 {
-    if (bdlb::String::areEqualCaseless(string, "BASIC_CONSTRAINTS")) {
-        *result = e_BASIC_CONSTRAINTS;
-        return 0;
-    }
-
-    if (bdlb::String::areEqualCaseless(string, "KEY_USAGE")) {
-        *result = e_KEY_USAGE;
-        return 0;
-    }
-
-    if (bdlb::String::areEqualCaseless(string, "KEY_USAGE_EXTENDED")) {
-        *result = e_KEY_USAGE_EXTENDED;
+    if (bdlb::String::areEqualCaseless(string, "SUBJECT_ALTERNATIVE_NAME")) {
+        *result = e_SUBJECT_ALTERNATIVE_NAME;
         return 0;
     }
 
@@ -7175,13 +7512,48 @@ int EncryptionCertificateExtensionAttributeType::fromString(
         return 0;
     }
 
-    if (bdlb::String::areEqualCaseless(string, "SUBJECT_ALTERNATIVE_NAME")) {
-        *result = e_SUBJECT_ALTERNATIVE_NAME;
+    if (bdlb::String::areEqualCaseless(string, "SUBJECT_KEY_USAGE")) {
+        *result = e_SUBJECT_KEY_USAGE;
         return 0;
     }
 
-    if (bdlb::String::areEqualCaseless(string, "AUTHORITY_KEY_IDENTIFIER")) {
-        *result = e_AUTHORITY_KEY_IDENTIFIER;
+    if (bdlb::String::areEqualCaseless(string, "SUBJECT_KEY_USAGE_EXTENDED")) {
+        *result = e_SUBJECT_KEY_USAGE_EXTENDED;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "SUBJECT_CONSTRAINTS")) {
+        *result = e_SUBJECT_CONSTRAINTS;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "ISSUER_ALTERNATIVE_NAME")) {
+        *result = e_ISSUER_ALTERNATIVE_NAME;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "ISSUER_KEY_IDENTIFIER")) {
+        *result = e_ISSUER_KEY_IDENTIFIER;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "ISSUER_INFORMATION_ACCESS")) {
+        *result = e_ISSUER_INFORMATION_ACCESS;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "POLICY")) {
+        *result = e_POLICY;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "POLICY_MAPPINGS")) {
+        *result = e_POLICY_MAPPINGS;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "POLICY_CONSTRAINTS")) {
+        *result = e_POLICY_CONSTRAINTS;
         return 0;
     }
 
@@ -7192,18 +7564,8 @@ int EncryptionCertificateExtensionAttributeType::fromObjectIdentifier(
     Value*                                result,
     const ntsa::AbstractObjectIdentifier& identifier)
 {
-    if (identifier.equals(2, 5, 29, 19)) {
-        *result = e_BASIC_CONSTRAINTS;
-        return 0;
-    }
-
-    if (identifier.equals(2, 5, 29, 15)) {
-        *result = e_KEY_USAGE;
-        return 0;
-    }
-
-    if (identifier.equals(2, 5, 29, 37)) {
-        *result = e_KEY_USAGE_EXTENDED;
+    if (identifier.equals(2, 5, 29, 17)) {
+        *result = e_SUBJECT_ALTERNATIVE_NAME;
         return 0;
     }
 
@@ -7212,13 +7574,48 @@ int EncryptionCertificateExtensionAttributeType::fromObjectIdentifier(
         return 0;
     }
 
-    if (identifier.equals(2, 5, 29, 17)) {
-        *result = e_SUBJECT_ALTERNATIVE_NAME;
+    if (identifier.equals(2, 5, 29, 15)) {
+        *result = e_SUBJECT_KEY_USAGE;
+        return 0;
+    }
+
+    if (identifier.equals(2, 5, 29, 37)) {
+        *result = e_SUBJECT_KEY_USAGE_EXTENDED;
+        return 0;
+    }
+
+    if (identifier.equals(2, 5, 29, 19)) {
+        *result = e_SUBJECT_CONSTRAINTS;
+        return 0;
+    }
+
+    if (identifier.equals(2, 5, 29, 18)) {
+        *result = e_ISSUER_ALTERNATIVE_NAME;
         return 0;
     }
 
     if (identifier.equals(2, 5, 29, 35)) {
-        *result = e_AUTHORITY_KEY_IDENTIFIER;
+        *result = e_ISSUER_KEY_IDENTIFIER;
+        return 0;
+    }
+
+    if (identifier.equals(1, 3, 6, 1, 5, 5, 7, 1, 1)) {
+        *result = e_ISSUER_INFORMATION_ACCESS;
+        return 0;
+    }
+
+    if (identifier.equals(2, 5, 29, 32)) {
+        *result = e_POLICY;
+        return 0;
+    }
+
+    if (identifier.equals(2, 5, 29, 33)) {
+        *result = e_POLICY_MAPPINGS;
+        return 0;
+    }
+
+    if (identifier.equals(2, 5, 29, 36)) {
+        *result = e_POLICY_CONSTRAINTS;
         return 0;
     }
 
@@ -8965,16 +9362,16 @@ ntsa::Error EncryptionCertificateExtension::decode(
         {
             if (d_attribute.equals(
                     EncryptionCertificateExtensionAttributeType::
-                        e_BASIC_CONSTRAINTS))
+                        e_SUBJECT_ALTERNATIVE_NAME))
             {
-                error = d_value.makeSubjectConstraints().decode(decoder);
+                error = d_value.makeNameAlternative().decode(decoder);
                 if (error) {
                     return error;
                 }
             }
             else if (d_attribute.equals(
                     EncryptionCertificateExtensionAttributeType::
-                        e_KEY_USAGE))
+                        e_SUBJECT_KEY_USAGE))
             {
                 error = d_value.makeSubjectKeyUsage().decode(decoder);
                 if (error) {
@@ -8983,9 +9380,72 @@ ntsa::Error EncryptionCertificateExtension::decode(
             }
             else if (d_attribute.equals(
                     EncryptionCertificateExtensionAttributeType::
-                        e_SUBJECT_ALTERNATIVE_NAME))
+                        e_SUBJECT_KEY_USAGE_EXTENDED))
+            {
+                error = d_value.makeSubjectKeyUsageExtended().decode(decoder);
+                if (error) {
+                    return error;
+                }
+            }
+            else if (d_attribute.equals(
+                    EncryptionCertificateExtensionAttributeType::
+                        e_SUBJECT_CONSTRAINTS))
+            {
+                error = d_value.makeSubjectConstraints().decode(decoder);
+                if (error) {
+                    return error;
+                }
+            }
+            else if (d_attribute.equals(
+                    EncryptionCertificateExtensionAttributeType::
+                        e_ISSUER_ALTERNATIVE_NAME))
             {
                 error = d_value.makeNameAlternative().decode(decoder);
+                if (error) {
+                    return error;
+                }
+            }
+            else if (d_attribute.equals(
+                    EncryptionCertificateExtensionAttributeType::
+                        e_ISSUER_KEY_IDENTIFIER))
+            {
+                error = d_value.makeIssuerKeyIdentifier().decode(decoder);
+                if (error) {
+                    return error;
+                }
+            }
+            else if (d_attribute.equals(
+                    EncryptionCertificateExtensionAttributeType::
+                        e_ISSUER_INFORMATION_ACCESS))
+            {
+                error = d_value.makeIssuerInformationAccess().decode(decoder);
+                if (error) {
+                    return error;
+                }
+            }
+            else if (d_attribute.equals(
+                    EncryptionCertificateExtensionAttributeType::
+                        e_POLICY))
+            {
+                error = d_value.makePolicy().decode(decoder);
+                if (error) {
+                    return error;
+                }
+            }
+            else if (d_attribute.equals(
+                    EncryptionCertificateExtensionAttributeType::
+                        e_POLICY_MAPPINGS))
+            {
+                error = d_value.makePolicyMappings().decode(decoder);
+                if (error) {
+                    return error;
+                }
+            }
+            else if (d_attribute.equals(
+                    EncryptionCertificateExtensionAttributeType::
+                        e_POLICY_CONSTRAINTS))
+            {
+                error = d_value.makePolicyConstraints().decode(decoder);
                 if (error) {
                     return error;
                 }

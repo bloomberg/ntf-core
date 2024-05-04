@@ -4884,6 +4884,112 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
     value.hash(algorithm);
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/// Enumerate well-known encryption certificate extension object identifiers.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntsa_data
+class EncryptionCertificateSubjectKeyUsageExtendedType
+{
+  public:
+    /// Enumerate well-known encryption certificate extension object
+    /// identifiers.
+    enum Value {
+        /// TLS client.
+        e_TLS_CLIENT,
+
+        /// TLS server.
+        e_TLS_SERVER,
+
+        /// SSH client.
+        e_SSH_CLIENT,
+
+        /// SSH server.
+        e_SSH_SERVER,
+
+        /// IPSEC user.
+        e_IPSEC_USER,
+
+        // IPSEC tunnel.
+        e_IPSEC_TUNNEL,
+
+        // IPSEC endpoint.
+        e_IPSEC_ENDPOINT,
+
+        // PKIX key purpose timestamping.
+        e_KEY_TIMESTAMPING,
+
+        // Code signature.
+        e_CODE_SIGNING,
+
+        // Email authenticiation.
+        e_EMAIL
+    };
+
+    /// Return the string representation exactly matching the enumerator
+    /// name corresponding to the specified enumeration 'value'.
+    static const char* toString(Value value);
+
+    /// Load into the specified 'result' the object identifier corresponding
+    /// to the specified 'value'.
+    static void toObjectIdentifier(ntsa::AbstractObjectIdentifier* result,
+                                   Value                           value);
+
+    /// Load into the specified 'result' the enumerator matching the
+    /// specified 'string'. Return 0 on success, and a non-zero value with
+    /// no effect on 'result' otherwise (i.e., 'string' does not match any
+    /// enumerator).
+    static int fromString(Value* result, const bslstl::StringRef& string);
+
+    /// Load into the specified 'result' the enumerator matching the specified
+    /// object 'identifier'. Return 0 on success, and a non-zero value with
+    /// no effect on 'result' otherwise (i.e., 'identifier' does not match any
+    /// enumerator).
+    static int fromObjectIdentifier(
+        Value*                                result,
+        const ntsa::AbstractObjectIdentifier& identifier);
+
+    /// Write to the specified 'stream' the string representation of the
+    /// specified enumeration 'value'.  Return a reference to the modifiable
+    /// 'stream'.
+    static bsl::ostream& print(bsl::ostream& stream, Value value);
+};
+
+/// Format the specified 'rhs' to the specified output 'stream' and return a
+/// reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificateSubjectKeyUsageExtendedType
+bsl::ostream& operator<<(
+    bsl::ostream&                                      stream,
+    EncryptionCertificateSubjectKeyUsageExtendedType::Value rhs);
+
+
+
+
+
+
+
+
+
+
+
+
 /// Describe MRM.
 ///
 /// @par Thread Safety
@@ -4892,7 +4998,7 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
 /// @ingroup module_ntci_encryption
 class EncryptionCertificateSubjectKeyUsageExtended
 {
-    ntsa::AbstractValue d_value;
+    bsl::vector<ntsa::AbstractObjectIdentifier> d_identifiers;
     bslma::Allocator*   d_allocator_p;
 
   public:
@@ -4923,11 +5029,35 @@ class EncryptionCertificateSubjectKeyUsageExtended
     /// construction.
     void reset();
 
+    /// Set the identifier list to the specified 'value'.
+    void setIdentifierList(
+        const bsl::vector<ntsa::AbstractObjectIdentifier>& value);
+
+    /// Add the specified 'value' to the identifier list.
+    void addIdentifier(const ntsa::AbstractObjectIdentifier& value);
+
+    /// Add the identifier corresponding to the specified 'value' to the 
+    /// identifier list.
+    void addIdentifier(
+        EncryptionCertificateSubjectKeyUsageExtendedType::Value value);
+
     /// Decode this object using the specified 'decoder'. Return the error.
     ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
 
     /// Encode this object using the specified 'encoder'. Return the error.
     ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return the identifier list.
+    const bsl::vector<ntsa::AbstractObjectIdentifier>& identifierList() const;
+
+
+    /// Return true if the extended usage contains the specified 'identifier',
+    /// otherwise return false. 
+    bool has(const ntsa::AbstractObjectIdentifier& identifier) const;
+
+    /// Return true if the extended usage contains the identifier corresponding
+    /// to the specified 'value', otherwise return false. 
+    bool has(EncryptionCertificateSubjectKeyUsageExtendedType::Value value) const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -5007,7 +5137,7 @@ void EncryptionCertificateSubjectKeyUsageExtended::hash(HASH_ALGORITHM& algorith
 {
     using bslh::hashAppend;
 
-    hashAppend(algorithm, d_value);
+    hashAppend(algorithm, d_identifiers);
 }
 
 template <typename HASH_ALGORITHM>
@@ -5135,11 +5265,21 @@ class EncryptionCertificateSubjectKeyUsage
     /// construction.
     void reset();
 
+    /// Enable the usage of the specified 'value' type. 
+    void enable(EncryptionCertificateSubjectKeyUsageType::Value value);
+
+    /// Disable the usage of the specified 'value' type. 
+    void disable(EncryptionCertificateSubjectKeyUsageType::Value value);
+
     /// Decode this object using the specified 'decoder'. Return the error.
     ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
 
     /// Encode this object using the specified 'encoder'. Return the error.
     ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return true if the usage supports the specified 'value' type, otherwise
+    /// return false. 
+    bool supports(EncryptionCertificateSubjectKeyUsageType::Value value) const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -5698,23 +5838,38 @@ class EncryptionCertificateExtensionAttributeType
     /// Enumerate well-known encryption certificate extension object
     /// identifiers.
     enum Value {
-        /// Basic constraints.
-        e_BASIC_CONSTRAINTS,
-
-        /// Key usage.
-        e_KEY_USAGE,
-
-        /// Extended key usage.
-        e_KEY_USAGE_EXTENDED,
+        /// Subject alternative name.
+        e_SUBJECT_ALTERNATIVE_NAME,
 
         /// Subject key identifier.
         e_SUBJECT_KEY_IDENTIFIER,
 
-        /// Subject alternative name.
-        e_SUBJECT_ALTERNATIVE_NAME,
+        /// Subject key usage.
+        e_SUBJECT_KEY_USAGE,
 
-        /// Authority key identifier.
-        e_AUTHORITY_KEY_IDENTIFIER
+        /// Subject key usage extension list.
+        e_SUBJECT_KEY_USAGE_EXTENDED,
+
+        /// Subject constraints (i.e. basic constraints).
+        e_SUBJECT_CONSTRAINTS,
+
+        /// Issuer alternative name.
+        e_ISSUER_ALTERNATIVE_NAME,
+
+        /// Issuer key identifier.
+        e_ISSUER_KEY_IDENTIFIER,
+
+        /// Issuer information access.
+        e_ISSUER_INFORMATION_ACCESS,
+
+        /// Policies.
+        e_POLICY,
+
+        /// Policy mappings.
+        e_POLICY_MAPPINGS,
+
+        /// Policy constraints.
+        e_POLICY_CONSTRAINTS
     };
 
     /// Return the string representation exactly matching the enumerator
@@ -5924,27 +6079,55 @@ void hashAppend(HASH_ALGORITHM&                                algorithm,
 class EncryptionCertificateExtensionValue
 {
     enum Type {
+        // The extension value is undefined.
         e_UNDEFINED        = -1,
+
+        // The extension value represents a boolean.
         e_BOOLEAN          = 0,
 
+        // The extension value represents a subject or issuer name.
         e_NAME = 1,
+
+        // The extension value represents a subject or issuer name alternative.
         e_NAME_ALTERNATIVE = 2,
 
+        // The extension value represents a certficate subject.
         e_SUBJECT = 3,
+
+        // The extension value represents a certficate subject key identifier.
         e_SUBJECT_KEY_IDENTIFIER = 4,
+
+        // The extension value represents subject key usage.
         e_SUBJECT_KEY_USAGE = 5,
+
+        // The extension value represents subject key usage extensions.
         e_SUBJECT_KEY_USAGE_EXTENDED = 6,
+
+        // The extension value represents subject constraints.
         e_SUBJECT_CONSTRAINTS = 7,
 
+        // The extension value represents a certficate issuer.
         e_ISSUER = 8,
+
+        // The extension value represents a certficate issuer key identifier.
         e_ISSUER_KEY_IDENTIFIER = 9,
+
+        // The extension value represents a certificate issuer information.
         e_ISSUER_INFORMATION_ACCESS = 10,
 
+        // The extension value represents certficate policies.
         e_POLICY = 11,
+
+        // The extension value represents certficate policy mappings.
         e_POLICY_MAPPINGS = 12,
+
+        // The extension value represents certficate policy constraints.
         e_POLICY_CONSTRAINTS = 13,
 
+        // The extension value represents an octet string.
         e_BYTE_SEQUENCE    = 14,
+
+        // The extension value represents any ASN.1 encoded value.
         e_ANY              = 15
     };
 
