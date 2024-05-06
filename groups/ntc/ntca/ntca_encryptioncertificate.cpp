@@ -83,27 +83,27 @@ const ntsa::AbstractSyntaxTagNumber::Value k_OBJECT_IDENTIFIER =
 
 }  // close unnamed namespace
 
-EncryptionCertificateTemplate::EncryptionCertificateTemplate(
+EncryptionCertificateObject::EncryptionCertificateObject(
     bslma::Allocator* basicAllocator)
 : d_value(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificateTemplate::EncryptionCertificateTemplate(
-    const EncryptionCertificateTemplate& original,
-    bslma::Allocator*                    basicAllocator)
+EncryptionCertificateObject::EncryptionCertificateObject(
+    const EncryptionCertificateObject& original,
+    bslma::Allocator*                  basicAllocator)
 : d_value(original.d_value, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificateTemplate::~EncryptionCertificateTemplate()
+EncryptionCertificateObject::~EncryptionCertificateObject()
 {
 }
 
-EncryptionCertificateTemplate& EncryptionCertificateTemplate::operator=(
-    const EncryptionCertificateTemplate& other)
+EncryptionCertificateObject& EncryptionCertificateObject::operator=(
+    const EncryptionCertificateObject& other)
 {
     if (this != &other) {
         d_value = other.d_value;
@@ -112,12 +112,12 @@ EncryptionCertificateTemplate& EncryptionCertificateTemplate::operator=(
     return *this;
 }
 
-void EncryptionCertificateTemplate::reset()
+void EncryptionCertificateObject::reset()
 {
     d_value.reset();
 }
 
-ntsa::Error EncryptionCertificateTemplate::decode(
+ntsa::Error EncryptionCertificateObject::decode(
     ntsa::AbstractSyntaxDecoder* decoder)
 {
     ntsa::Error error;
@@ -140,13 +140,14 @@ ntsa::Error EncryptionCertificateTemplate::decode(
     return ntsa::Error();
 }
 
-ntsa::Error EncryptionCertificateTemplate::encode(
+ntsa::Error EncryptionCertificateObject::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
     ntsa::Error error;
 
-    error = encoder->encodeTag(
-        d_value.tagClass(), d_value.tagType(), d_value.tagNumber());
+    error = encoder->encodeTag(d_value.tagClass(),
+                               d_value.tagType(),
+                               d_value.tagNumber());
     if (error) {
         return error;
     }
@@ -164,14 +165,14 @@ ntsa::Error EncryptionCertificateTemplate::encode(
     return ntsa::Error();
 }
 
-bool EncryptionCertificateTemplate::equals(
-    const EncryptionCertificateTemplate& other) const
+bool EncryptionCertificateObject::equals(
+    const EncryptionCertificateObject& other) const
 {
     return d_value == other.d_value;
 }
 
-bool EncryptionCertificateTemplate::less(
-    const EncryptionCertificateTemplate& other) const
+bool EncryptionCertificateObject::less(
+    const EncryptionCertificateObject& other) const
 {
 #if 0
     if (d_value < other.d_value) {
@@ -186,9 +187,9 @@ bool EncryptionCertificateTemplate::less(
     return d_value < other.d_value;
 }
 
-bsl::ostream& EncryptionCertificateTemplate::print(bsl::ostream& stream,
-                                                   int           level,
-                                                   int spacesPerLevel) const
+bsl::ostream& EncryptionCertificateObject::print(bsl::ostream& stream,
+                                                 int           level,
+                                                 int spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -197,26 +198,26 @@ bsl::ostream& EncryptionCertificateTemplate::print(bsl::ostream& stream,
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                        stream,
-                         const EncryptionCertificateTemplate& object)
+bsl::ostream& operator<<(bsl::ostream&                      stream,
+                         const EncryptionCertificateObject& object)
 {
     return object.print(stream, 0, -1);
 }
 
-bool operator==(const EncryptionCertificateTemplate& lhs,
-                const EncryptionCertificateTemplate& rhs)
+bool operator==(const EncryptionCertificateObject& lhs,
+                const EncryptionCertificateObject& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const EncryptionCertificateTemplate& lhs,
-                const EncryptionCertificateTemplate& rhs)
+bool operator!=(const EncryptionCertificateObject& lhs,
+                const EncryptionCertificateObject& rhs)
 {
     return !operator==(lhs, rhs);
 }
 
-bool operator<(const EncryptionCertificateTemplate& lhs,
-               const EncryptionCertificateTemplate& rhs)
+bool operator<(const EncryptionCertificateObject& lhs,
+               const EncryptionCertificateObject& rhs)
 {
     return lhs.less(rhs);
 }
@@ -362,7 +363,8 @@ bool operator<(const EncryptionCertificateVersion& lhs,
     return lhs.less(rhs);
 }
 
-const char* EncryptionCertificateNameAttributeType::toString(Value value)
+const char* EncryptionCertificateNameAttributeIdentifierType::toString(
+    Value value)
 {
     switch (value) {
     case e_NAME_PREFIX:
@@ -401,7 +403,7 @@ const char* EncryptionCertificateNameAttributeType::toString(Value value)
     return 0;
 }
 
-void EncryptionCertificateNameAttributeType::toObjectIdentifier(
+void EncryptionCertificateNameAttributeIdentifierType::toObjectIdentifier(
     ntsa::AbstractObjectIdentifier* result,
     Value                           value)
 {
@@ -454,9 +456,9 @@ void EncryptionCertificateNameAttributeType::toObjectIdentifier(
     }
 }
 
-int EncryptionCertificateNameAttributeType::fromString(
-    EncryptionCertificateNameAttributeType::Value* result,
-    const bslstl::StringRef&                       string)
+int EncryptionCertificateNameAttributeIdentifierType::fromString(
+    EncryptionCertificateNameAttributeIdentifierType::Value* result,
+    const bslstl::StringRef&                                 string)
 {
     if (bdlb::String::areEqualCaseless(string, "TITLE")) {
         *result = e_NAME_PREFIX;
@@ -536,7 +538,7 @@ int EncryptionCertificateNameAttributeType::fromString(
     return -1;
 }
 
-int EncryptionCertificateNameAttributeType::fromObjectIdentifier(
+int EncryptionCertificateNameAttributeIdentifierType::fromObjectIdentifier(
     Value*                                result,
     const ntsa::AbstractObjectIdentifier& identifier)
 {
@@ -618,40 +620,46 @@ int EncryptionCertificateNameAttributeType::fromObjectIdentifier(
     return -1;
 }
 
-bsl::ostream& EncryptionCertificateNameAttributeType::print(
+bsl::ostream& EncryptionCertificateNameAttributeIdentifierType::print(
     bsl::ostream& stream,
     Value         value)
 {
     return stream << toString(value);
 }
 
-bsl::ostream& operator<<(bsl::ostream&                                 stream,
-                         EncryptionCertificateNameAttributeType::Value rhs)
+bsl::ostream& operator<<(
+    bsl::ostream&                                           stream,
+    EncryptionCertificateNameAttributeIdentifierType::Value rhs)
 {
-    return EncryptionCertificateNameAttributeType::print(stream, rhs);
+    return EncryptionCertificateNameAttributeIdentifierType::print(stream,
+                                                                   rhs);
 }
 
-EncryptionCertificateNameAttribute::EncryptionCertificateNameAttribute(
-    bslma::Allocator* basicAllocator)
+EncryptionCertificateNameAttributeIdentifier::
+    EncryptionCertificateNameAttributeIdentifier(
+        bslma::Allocator* basicAllocator)
 : d_identifier(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificateNameAttribute::EncryptionCertificateNameAttribute(
-    const EncryptionCertificateNameAttribute& original,
-    bslma::Allocator*                         basicAllocator)
+EncryptionCertificateNameAttributeIdentifier::
+    EncryptionCertificateNameAttributeIdentifier(
+        const EncryptionCertificateNameAttributeIdentifier& original,
+        bslma::Allocator*                                   basicAllocator)
 : d_identifier(original.d_identifier, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificateNameAttribute::~EncryptionCertificateNameAttribute()
+EncryptionCertificateNameAttributeIdentifier::
+    ~EncryptionCertificateNameAttributeIdentifier()
 {
 }
 
-EncryptionCertificateNameAttribute& EncryptionCertificateNameAttribute::
-operator=(const EncryptionCertificateNameAttribute& other)
+EncryptionCertificateNameAttributeIdentifier&
+EncryptionCertificateNameAttributeIdentifier::operator=(
+    const EncryptionCertificateNameAttributeIdentifier& other)
 {
     if (this != &other) {
         d_identifier = other.d_identifier;
@@ -660,40 +668,44 @@ operator=(const EncryptionCertificateNameAttribute& other)
     return *this;
 }
 
-EncryptionCertificateNameAttribute& EncryptionCertificateNameAttribute::
-operator=(const ntsa::AbstractObjectIdentifier& value)
+EncryptionCertificateNameAttributeIdentifier&
+EncryptionCertificateNameAttributeIdentifier::operator=(
+    const ntsa::AbstractObjectIdentifier& value)
 {
     d_identifier = value;
     return *this;
 }
 
-EncryptionCertificateNameAttribute& EncryptionCertificateNameAttribute::
-operator=(EncryptionCertificateNameAttributeType::Value value)
+EncryptionCertificateNameAttributeIdentifier&
+EncryptionCertificateNameAttributeIdentifier::operator=(
+    EncryptionCertificateNameAttributeIdentifierType::Value value)
 {
-    EncryptionCertificateNameAttributeType::toObjectIdentifier(&d_identifier,
-                                                               value);
+    EncryptionCertificateNameAttributeIdentifierType::toObjectIdentifier(
+        &d_identifier,
+        value);
     return *this;
 }
 
-void EncryptionCertificateNameAttribute::reset()
+void EncryptionCertificateNameAttributeIdentifier::reset()
 {
     d_identifier.reset();
 }
 
-void EncryptionCertificateNameAttribute::setIdentifier(
+void EncryptionCertificateNameAttributeIdentifier::setIdentifier(
     const ntsa::AbstractObjectIdentifier& value)
 {
     d_identifier = value;
 }
 
-void EncryptionCertificateNameAttribute::setIdentifer(
-    EncryptionCertificateNameAttributeType::Value value)
+void EncryptionCertificateNameAttributeIdentifier::setIdentifer(
+    EncryptionCertificateNameAttributeIdentifierType::Value value)
 {
-    EncryptionCertificateNameAttributeType::toObjectIdentifier(&d_identifier,
-                                                               value);
+    EncryptionCertificateNameAttributeIdentifierType::toObjectIdentifier(
+        &d_identifier,
+        value);
 }
 
-ntsa::Error EncryptionCertificateNameAttribute::decode(
+ntsa::Error EncryptionCertificateNameAttributeIdentifier::decode(
     ntsa::AbstractSyntaxDecoder* decoder)
 {
     ntsa::Error error;
@@ -716,53 +728,53 @@ ntsa::Error EncryptionCertificateNameAttribute::decode(
     return ntsa::Error();
 }
 
-ntsa::Error EncryptionCertificateNameAttribute::encode(
+ntsa::Error EncryptionCertificateNameAttributeIdentifier::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
     NTCCFG_WARNING_UNUSED(encoder);
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
-const ntsa::AbstractObjectIdentifier& EncryptionCertificateNameAttribute::
-    identifier() const
+const ntsa::AbstractObjectIdentifier&
+EncryptionCertificateNameAttributeIdentifier::identifier() const
 {
     return d_identifier;
 }
 
-bool EncryptionCertificateNameAttribute::equals(
-    const EncryptionCertificateNameAttribute& other) const
+bool EncryptionCertificateNameAttributeIdentifier::equals(
+    const EncryptionCertificateNameAttributeIdentifier& other) const
 {
     return d_identifier == other.d_identifier;
 }
 
-bool EncryptionCertificateNameAttribute::equals(
-    EncryptionCertificateNameAttributeType::Value value) const
+bool EncryptionCertificateNameAttributeIdentifier::equals(
+    EncryptionCertificateNameAttributeIdentifierType::Value value) const
 {
     ntsa::AbstractObjectIdentifier identifier;
-    EncryptionCertificateNameAttributeType::toObjectIdentifier(&identifier,
-                                                               value);
+    EncryptionCertificateNameAttributeIdentifierType::toObjectIdentifier(
+        &identifier,
+        value);
 
     return d_identifier.equals(identifier);
 }
 
-bool EncryptionCertificateNameAttribute::less(
-    const EncryptionCertificateNameAttribute& other) const
+bool EncryptionCertificateNameAttributeIdentifier::less(
+    const EncryptionCertificateNameAttributeIdentifier& other) const
 {
     return d_identifier < other.d_identifier;
 }
 
-bsl::ostream& EncryptionCertificateNameAttribute::print(
+bsl::ostream& EncryptionCertificateNameAttributeIdentifier::print(
     bsl::ostream& stream,
     int           level,
     int           spacesPerLevel) const
 {
-    ntca::EncryptionCertificateNameAttributeType::Value type;
-    int                                                 rc =
-        ntca::EncryptionCertificateNameAttributeType::fromObjectIdentifier(
-            &type,
-            d_identifier);
+    ntca::EncryptionCertificateNameAttributeIdentifierType::Value type;
+    int rc = ntca::EncryptionCertificateNameAttributeIdentifierType::
+        fromObjectIdentifier(&type, d_identifier);
     if (rc == 0) {
-        stream << ntca::EncryptionCertificateNameAttributeType::toString(type);
+        stream << ntca::EncryptionCertificateNameAttributeIdentifierType::
+                toString(type);
     }
     else {
         d_identifier.print(stream, level, spacesPerLevel);
@@ -771,31 +783,32 @@ bsl::ostream& EncryptionCertificateNameAttribute::print(
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                             stream,
-                         const EncryptionCertificateNameAttribute& object)
+bsl::ostream& operator<<(
+    bsl::ostream&                                       stream,
+    const EncryptionCertificateNameAttributeIdentifier& object)
 {
     return object.print(stream, 0, -1);
 }
 
-bool operator==(const EncryptionCertificateNameAttribute& lhs,
-                const EncryptionCertificateNameAttribute& rhs)
+bool operator==(const EncryptionCertificateNameAttributeIdentifier& lhs,
+                const EncryptionCertificateNameAttributeIdentifier& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const EncryptionCertificateNameAttribute& lhs,
-                const EncryptionCertificateNameAttribute& rhs)
+bool operator!=(const EncryptionCertificateNameAttributeIdentifier& lhs,
+                const EncryptionCertificateNameAttributeIdentifier& rhs)
 {
     return !operator==(lhs, rhs);
 }
 
-bool operator<(const EncryptionCertificateNameAttribute& lhs,
-               const EncryptionCertificateNameAttribute& rhs)
+bool operator<(const EncryptionCertificateNameAttributeIdentifier& lhs,
+               const EncryptionCertificateNameAttributeIdentifier& rhs)
 {
     return lhs.less(rhs);
 }
 
-EncryptionCertificateNameComponent::EncryptionCertificateNameComponent(
+EncryptionCertificateNameAttribute::EncryptionCertificateNameAttribute(
     bslma::Allocator* basicAllocator)
 : d_attribute(basicAllocator)
 , d_value(basicAllocator)
@@ -803,8 +816,8 @@ EncryptionCertificateNameComponent::EncryptionCertificateNameComponent(
 {
 }
 
-EncryptionCertificateNameComponent::EncryptionCertificateNameComponent(
-    const EncryptionCertificateNameComponent& original,
+EncryptionCertificateNameAttribute::EncryptionCertificateNameAttribute(
+    const EncryptionCertificateNameAttribute& original,
     bslma::Allocator*                         basicAllocator)
 : d_attribute(original.d_attribute, basicAllocator)
 , d_value(original.d_value, basicAllocator)
@@ -812,12 +825,12 @@ EncryptionCertificateNameComponent::EncryptionCertificateNameComponent(
 {
 }
 
-EncryptionCertificateNameComponent::~EncryptionCertificateNameComponent()
+EncryptionCertificateNameAttribute::~EncryptionCertificateNameAttribute()
 {
 }
 
-EncryptionCertificateNameComponent& EncryptionCertificateNameComponent::
-operator=(const EncryptionCertificateNameComponent& other)
+EncryptionCertificateNameAttribute& EncryptionCertificateNameAttribute::
+operator=(const EncryptionCertificateNameAttribute& other)
 {
     if (this != &other) {
         d_attribute = other.d_attribute;
@@ -827,37 +840,37 @@ operator=(const EncryptionCertificateNameComponent& other)
     return *this;
 }
 
-void EncryptionCertificateNameComponent::reset()
+void EncryptionCertificateNameAttribute::reset()
 {
     d_attribute.reset();
     d_value.reset();
 }
 
-void EncryptionCertificateNameComponent::setAttribute(
-    const EncryptionCertificateNameAttribute& value)
+void EncryptionCertificateNameAttribute::setAttribute(
+    const EncryptionCertificateNameAttributeIdentifier& value)
 {
     d_attribute = value;
 }
 
-void EncryptionCertificateNameComponent::setAttribute(
+void EncryptionCertificateNameAttribute::setAttribute(
     const ntsa::AbstractObjectIdentifier& value)
 {
     d_attribute = value;
 }
 
-void EncryptionCertificateNameComponent::setAttribute(
-    ntca::EncryptionCertificateNameAttributeType::Value value)
+void EncryptionCertificateNameAttribute::setAttribute(
+    ntca::EncryptionCertificateNameAttributeIdentifierType::Value value)
 {
     d_attribute = value;
 }
 
-void EncryptionCertificateNameComponent::setValue(const bsl::string& value)
+void EncryptionCertificateNameAttribute::setValue(const bsl::string& value)
 {
     d_value.setType(k_UTF8_STRING);
     d_value.setValue(value);
 }
 
-ntsa::Error EncryptionCertificateNameComponent::decode(
+ntsa::Error EncryptionCertificateNameAttribute::decode(
     ntsa::AbstractSyntaxDecoder* decoder)
 {
     // AttributeTypeAndValue
@@ -901,20 +914,20 @@ ntsa::Error EncryptionCertificateNameComponent::decode(
     return ntsa::Error();
 }
 
-ntsa::Error EncryptionCertificateNameComponent::encode(
+ntsa::Error EncryptionCertificateNameAttribute::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
     NTCCFG_WARNING_UNUSED(encoder);
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
-const EncryptionCertificateNameAttribute& EncryptionCertificateNameComponent::
-    attribute() const
+const EncryptionCertificateNameAttributeIdentifier&
+EncryptionCertificateNameAttribute::attribute() const
 {
     return d_attribute;
 }
 
-bsl::string EncryptionCertificateNameComponent::value() const
+bsl::string EncryptionCertificateNameAttribute::value() const
 {
     ntsa::Error error;
 
@@ -925,17 +938,17 @@ bsl::string EncryptionCertificateNameComponent::value() const
     }
 
     // MRM: Enhance ntsa::AbstractString::convert to handle T61, etc.
-    return "<encoded>"; 
+    return "<encoded>";
 }
 
-bool EncryptionCertificateNameComponent::equals(
-    const EncryptionCertificateNameComponent& other) const
+bool EncryptionCertificateNameAttribute::equals(
+    const EncryptionCertificateNameAttribute& other) const
 {
     return d_attribute == other.d_attribute && d_value == other.d_value;
 }
 
-bool EncryptionCertificateNameComponent::less(
-    const EncryptionCertificateNameComponent& other) const
+bool EncryptionCertificateNameAttribute::less(
+    const EncryptionCertificateNameAttribute& other) const
 {
     if (d_attribute < other.d_attribute) {
         return true;
@@ -948,56 +961,84 @@ bool EncryptionCertificateNameComponent::less(
     return d_value < other.d_value;
 }
 
-bsl::ostream& EncryptionCertificateNameComponent::print(
+bsl::ostream& EncryptionCertificateNameAttribute::print(
     bsl::ostream& stream,
     int           level,
     int           spacesPerLevel) const
 {
-    bslim::Printer printer(&stream, level, spacesPerLevel);
-    printer.start();
-    printer.printAttribute("attribute", d_attribute);
-    printer.printAttribute("value", d_value);
-    printer.end();
+    EncryptionCertificateNameAttributeIdentifierType::Value type;
+    int rc = EncryptionCertificateNameAttributeIdentifierType::fromObjectIdentifier(&type, d_attribute.identifier());
+    if (rc == 0) {
+        bslim::Printer printer(&stream, level, spacesPerLevel);
+        printer.start();
+        printer.printAttribute(EncryptionCertificateNameAttributeIdentifierType::toString(type), d_value);
+        printer.end();
+    }
+    else {
+        bslim::Printer printer(&stream, level, spacesPerLevel);
+        printer.start();
+        printer.printAttribute("attribute", d_attribute);
+        printer.printAttribute("value", d_value);
+        printer.end();
+    }
+
     return stream;
 }
 
 bsl::ostream& operator<<(bsl::ostream&                             stream,
-                         const EncryptionCertificateNameComponent& object)
+                         const EncryptionCertificateNameAttribute& object)
 {
     return object.print(stream, 0, -1);
 }
 
-bool operator==(const EncryptionCertificateNameComponent& lhs,
-                const EncryptionCertificateNameComponent& rhs)
+bool operator==(const EncryptionCertificateNameAttribute& lhs,
+                const EncryptionCertificateNameAttribute& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const EncryptionCertificateNameComponent& lhs,
-                const EncryptionCertificateNameComponent& rhs)
+bool operator!=(const EncryptionCertificateNameAttribute& lhs,
+                const EncryptionCertificateNameAttribute& rhs)
 {
     return !operator==(lhs, rhs);
 }
 
-bool operator<(const EncryptionCertificateNameComponent& lhs,
-               const EncryptionCertificateNameComponent& rhs)
+bool operator<(const EncryptionCertificateNameAttribute& lhs,
+               const EncryptionCertificateNameAttribute& rhs)
 {
     return lhs.less(rhs);
 }
 
 void EncryptionCertificateName::format(
-    bsl::string*                                        result, 
-    ntca::EncryptionCertificateNameAttributeType::Value type) const
+    bsl::string*                                                  result,
+    ntca::EncryptionCertificateNameAttributeIdentifierType::Value type) const
 {
     for (bsl::size_t i = 0; i < d_attributeVector.size(); ++i) {
-        const EncryptionCertificateNameComponent& component = 
+        const EncryptionCertificateNameAttribute& component =
             d_attributeVector[i];
 
-        if (component.attribute().equals(type)) 
-        {
+        if (component.attribute().equals(type)) {
             if (!result->empty()) {
                 result->append(1, ',');
                 result->append(1, ' ');
+            }
+
+            result->append(component.value());
+        }
+    }
+}
+
+void EncryptionCertificateName::formatDot(
+    bsl::string*                                                  result,
+    ntca::EncryptionCertificateNameAttributeIdentifierType::Value type) const
+{
+    for (bsl::size_t i = 0; i < d_attributeVector.size(); ++i) {
+        const EncryptionCertificateNameAttribute& component =
+            d_attributeVector[i];
+
+        if (component.attribute().equals(type)) {
+            if (!result->empty()) {
+                result->append(1, '.');
             }
 
             result->append(component.value());
@@ -1040,22 +1081,22 @@ void EncryptionCertificateName::reset()
 }
 
 void EncryptionCertificateName::setAttributeSequence(
-    const bsl::vector<EncryptionCertificateNameComponent>& value)
+    const bsl::vector<EncryptionCertificateNameAttribute>& value)
 {
     d_attributeVector = value;
 }
 
 void EncryptionCertificateName::append(
-    const EncryptionCertificateNameComponent& value)
+    const EncryptionCertificateNameAttribute& value)
 {
     d_attributeVector.push_back(value);
 }
 
 void EncryptionCertificateName::append(
-    const EncryptionCertificateNameAttribute& attribute,
-    const bsl::string&                        value)
+    const EncryptionCertificateNameAttributeIdentifier& attribute,
+    const bsl::string&                                  value)
 {
-    EncryptionCertificateNameComponent component;
+    EncryptionCertificateNameAttribute component;
     component.setAttribute(attribute);
     component.setValue(value);
 
@@ -1066,7 +1107,7 @@ void EncryptionCertificateName::append(
     const ntsa::AbstractObjectIdentifier& attribute,
     const bsl::string&                    value)
 {
-    EncryptionCertificateNameComponent component;
+    EncryptionCertificateNameAttribute component;
     component.setAttribute(attribute);
     component.setValue(value);
 
@@ -1074,10 +1115,10 @@ void EncryptionCertificateName::append(
 }
 
 void EncryptionCertificateName::append(
-    EncryptionCertificateNameAttributeType::Value attribute,
-    const bsl::string&                            value)
+    EncryptionCertificateNameAttributeIdentifierType::Value attribute,
+    const bsl::string&                                      value)
 {
-    EncryptionCertificateNameComponent component;
+    EncryptionCertificateNameAttribute component;
     component.setAttribute(attribute);
     component.setValue(value);
 
@@ -1104,7 +1145,7 @@ ntsa::Error EncryptionCertificateName::decode(
             return error;
         }
 
-        EncryptionCertificateNameComponent attribute;
+        EncryptionCertificateNameAttribute attribute;
         error = attribute.decode(decoder);
         if (error) {
             return error;
@@ -1133,12 +1174,11 @@ ntsa::Error EncryptionCertificateName::encode(
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
-const bsl::vector<EncryptionCertificateNameComponent>& EncryptionCertificateName::
-    attributeSequence() const
+const bsl::vector<EncryptionCertificateNameAttribute>& EncryptionCertificateName::
+    attributes() const
 {
     return d_attributeVector;
 }
-
 
 bsl::string EncryptionCertificateName::standard() const
 {
@@ -1181,18 +1221,77 @@ bsl::string EncryptionCertificateName::common() const
 {
     bsl::string result;
     this->format(
-        &result, 
-        ntca::EncryptionCertificateNameAttributeType::e_NAME_COMMON);
-    
+        &result,
+        ntca::EncryptionCertificateNameAttributeIdentifierType::e_NAME_COMMON);
+
+    return result;
+}
+
+
+
+
+
+
+
+bsl::string EncryptionCertificateName::prefix() const
+{
+    bsl::string result;
+    this->format(&result,
+                 ntca::EncryptionCertificateNameAttributeIdentifierType::
+                     e_NAME_PREFIX);
+
+    return result;
+}
+
+
+bsl::string EncryptionCertificateName::given() const
+{
+    bsl::string result;
+    this->format(&result,
+                 ntca::EncryptionCertificateNameAttributeIdentifierType::
+                     e_NAME_GIVEN);
+
+    return result;
+}
+
+
+bsl::string EncryptionCertificateName::family() const
+{
+    bsl::string result;
+    this->format(&result,
+                 ntca::EncryptionCertificateNameAttributeIdentifierType::
+                     e_NAME_FAMILY);
+
+    return result;
+}
+
+
+bsl::string EncryptionCertificateName::pseudo() const
+{
+    bsl::string result;
+    this->format(&result,
+                 ntca::EncryptionCertificateNameAttributeIdentifierType::
+                     e_NAME_PSEUDO);
+
+    return result;
+}
+
+bsl::string EncryptionCertificateName::suffix() const
+{
+    bsl::string result;
+    this->format(&result,
+                 ntca::EncryptionCertificateNameAttributeIdentifierType::
+                     e_NAME_SUFFIX);
+
     return result;
 }
 
 bsl::string EncryptionCertificateName::organization() const
 {
     bsl::string result;
-    this->format(
-        &result, 
-        ntca::EncryptionCertificateNameAttributeType::e_ORGANIZATION);
+    this->format(&result,
+                 ntca::EncryptionCertificateNameAttributeIdentifierType::
+                     e_ORGANIZATION);
 
     return result;
 }
@@ -1200,9 +1299,80 @@ bsl::string EncryptionCertificateName::organization() const
 bsl::string EncryptionCertificateName::organizationUnit() const
 {
     bsl::string result;
-    this->format(
-        &result, 
-        ntca::EncryptionCertificateNameAttributeType::e_ORGANIZATION_UNIT);
+    this->format(&result,
+                 ntca::EncryptionCertificateNameAttributeIdentifierType::
+                     e_ORGANIZATION_UNIT);
+
+    return result;
+}
+
+
+bsl::string EncryptionCertificateName::addressStreet() const
+{
+    bsl::string result;
+    this->format(&result,
+                 ntca::EncryptionCertificateNameAttributeIdentifierType::
+                     e_ADDRESS_STREET);
+
+    return result;
+}
+
+bsl::string EncryptionCertificateName::addressLocality() const
+{
+    bsl::string result;
+    this->format(&result,
+                 ntca::EncryptionCertificateNameAttributeIdentifierType::
+                     e_ADDRESS_LOCALITY);
+
+    return result;
+}
+
+bsl::string EncryptionCertificateName::addressState() const
+{
+    bsl::string result;
+    this->format(&result,
+                 ntca::EncryptionCertificateNameAttributeIdentifierType::
+                     e_ADDRESS_STATE);
+
+    return result;
+}
+
+bsl::string EncryptionCertificateName::addressCountry() const
+{
+    bsl::string result;
+    this->format(&result,
+                 ntca::EncryptionCertificateNameAttributeIdentifierType::
+                     e_ADDRESS_COUNTRY);
+
+    return result;
+}
+
+bsl::string EncryptionCertificateName::domain() const
+{
+    bsl::string result;
+    this->formatDot(&result,
+                 ntca::EncryptionCertificateNameAttributeIdentifierType::
+                     e_DOMAIN_COMPONENT);
+
+    return result;
+}
+
+bsl::string EncryptionCertificateName::userId() const
+{
+    bsl::string result;
+    this->format(&result,
+                 ntca::EncryptionCertificateNameAttributeIdentifierType::
+                     e_USER_ID);
+
+    return result;
+}
+
+bsl::string EncryptionCertificateName::email() const
+{
+    bsl::string result;
+    this->format(&result,
+                 ntca::EncryptionCertificateNameAttributeIdentifierType::
+                     e_EMAIL);
 
     return result;
 }
@@ -1225,7 +1395,7 @@ bsl::ostream& EncryptionCertificateName::print(bsl::ostream& stream,
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute("attribute", d_attributeVector);
+    printer.printValue(d_attributeVector);
     printer.end();
     return stream;
 }
@@ -2149,6 +2319,12 @@ ntsa::Error EncryptionCertificateNameAlternativeList::encode(
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
+const bsl::vector<EncryptionCertificateNameAlternative>& 
+EncryptionCertificateNameAlternativeList::alternatives() const
+{
+    return d_container;
+}
+
 bool EncryptionCertificateNameAlternativeList::equals(
     const EncryptionCertificateNameAlternativeList& other) const
 {
@@ -2198,18 +2374,6 @@ bool operator<(const EncryptionCertificateNameAlternativeList& lhs,
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 EncryptionCertificateNameConstraints::EncryptionCertificateNameConstraints(
     bslma::Allocator* basicAllocator)
 : d_value(basicAllocator)
@@ -2219,7 +2383,7 @@ EncryptionCertificateNameConstraints::EncryptionCertificateNameConstraints(
 
 EncryptionCertificateNameConstraints::EncryptionCertificateNameConstraints(
     const EncryptionCertificateNameConstraints& original,
-    bslma::Allocator*                    basicAllocator)
+    bslma::Allocator*                           basicAllocator)
 : d_value(original.d_value, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -2229,8 +2393,8 @@ EncryptionCertificateNameConstraints::~EncryptionCertificateNameConstraints()
 {
 }
 
-EncryptionCertificateNameConstraints& EncryptionCertificateNameConstraints::operator=(
-    const EncryptionCertificateNameConstraints& other)
+EncryptionCertificateNameConstraints& EncryptionCertificateNameConstraints::
+operator=(const EncryptionCertificateNameConstraints& other)
 {
     if (this != &other) {
         d_value = other.d_value;
@@ -2272,8 +2436,9 @@ ntsa::Error EncryptionCertificateNameConstraints::encode(
 {
     ntsa::Error error;
 
-    error = encoder->encodeTag(
-        d_value.tagClass(), d_value.tagType(), d_value.tagNumber());
+    error = encoder->encodeTag(d_value.tagClass(),
+                               d_value.tagType(),
+                               d_value.tagNumber());
     if (error) {
         return error;
     }
@@ -2313,9 +2478,10 @@ bool EncryptionCertificateNameConstraints::less(
     return d_value < other.d_value;
 }
 
-bsl::ostream& EncryptionCertificateNameConstraints::print(bsl::ostream& stream,
-                                                   int           level,
-                                                   int spacesPerLevel) const
+bsl::ostream& EncryptionCertificateNameConstraints::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -2324,7 +2490,7 @@ bsl::ostream& EncryptionCertificateNameConstraints::print(bsl::ostream& stream,
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                        stream,
+bsl::ostream& operator<<(bsl::ostream&                               stream,
                          const EncryptionCertificateNameConstraints& object)
 {
     return object.print(stream, 0, -1);
@@ -2347,21 +2513,6 @@ bool operator<(const EncryptionCertificateNameConstraints& lhs,
 {
     return lhs.less(rhs);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 EncryptionCertificateValidity::EncryptionCertificateValidity(
     bslma::Allocator* basicAllocator)
@@ -2545,20 +2696,8 @@ bool operator<(const EncryptionCertificateValidity& lhs,
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-const char* EncryptionCertificatePublicKeyAlgorithmIdentifierType::toString(Value value)
+const char* EncryptionCertificatePublicKeyAlgorithmIdentifierType::toString(
+    Value value)
 {
     switch (value) {
     case e_RSA:
@@ -2602,9 +2741,9 @@ int EncryptionCertificatePublicKeyAlgorithmIdentifierType::fromString(
     return -1;
 }
 
-int EncryptionCertificatePublicKeyAlgorithmIdentifierType::fromObjectIdentifier(
-    Value*                                result,
-    const ntsa::AbstractObjectIdentifier& identifier)
+int EncryptionCertificatePublicKeyAlgorithmIdentifierType::
+    fromObjectIdentifier(Value*                                result,
+                         const ntsa::AbstractObjectIdentifier& identifier)
 {
     if (identifier.equals(1, 2, 840, 113549, 1, 1, 1)) {
         *result = e_RSA;
@@ -2627,28 +2766,16 @@ bsl::ostream& EncryptionCertificatePublicKeyAlgorithmIdentifierType::print(
 }
 
 bsl::ostream& operator<<(
-    bsl::ostream&                                      stream,
+    bsl::ostream&                                                stream,
     EncryptionCertificatePublicKeyAlgorithmIdentifierType::Value rhs)
 {
-    return EncryptionCertificatePublicKeyAlgorithmIdentifierType::print(stream, rhs);
+    return EncryptionCertificatePublicKeyAlgorithmIdentifierType::print(stream,
+                                                                        rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 EncryptionCertificatePublicKeyAlgorithmIdentifier::
-    EncryptionCertificatePublicKeyAlgorithmIdentifier(bslma::Allocator* basicAllocator)
+    EncryptionCertificatePublicKeyAlgorithmIdentifier(
+        bslma::Allocator* basicAllocator)
 : d_identifier(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -2657,7 +2784,7 @@ EncryptionCertificatePublicKeyAlgorithmIdentifier::
 EncryptionCertificatePublicKeyAlgorithmIdentifier::
     EncryptionCertificatePublicKeyAlgorithmIdentifier(
         const EncryptionCertificatePublicKeyAlgorithmIdentifier& original,
-        bslma::Allocator*                              basicAllocator)
+        bslma::Allocator* basicAllocator)
 : d_identifier(original.d_identifier, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -2668,8 +2795,9 @@ EncryptionCertificatePublicKeyAlgorithmIdentifier::
 {
 }
 
-EncryptionCertificatePublicKeyAlgorithmIdentifier& EncryptionCertificatePublicKeyAlgorithmIdentifier::
-operator=(const EncryptionCertificatePublicKeyAlgorithmIdentifier& other)
+EncryptionCertificatePublicKeyAlgorithmIdentifier&
+EncryptionCertificatePublicKeyAlgorithmIdentifier::operator=(
+    const EncryptionCertificatePublicKeyAlgorithmIdentifier& other)
 {
     if (this != &other) {
         d_identifier = other.d_identifier;
@@ -2678,15 +2806,17 @@ operator=(const EncryptionCertificatePublicKeyAlgorithmIdentifier& other)
     return *this;
 }
 
-EncryptionCertificatePublicKeyAlgorithmIdentifier& EncryptionCertificatePublicKeyAlgorithmIdentifier::
-operator=(const ntsa::AbstractObjectIdentifier& value)
+EncryptionCertificatePublicKeyAlgorithmIdentifier&
+EncryptionCertificatePublicKeyAlgorithmIdentifier::operator=(
+    const ntsa::AbstractObjectIdentifier& value)
 {
     d_identifier = value;
     return *this;
 }
 
-EncryptionCertificatePublicKeyAlgorithmIdentifier& EncryptionCertificatePublicKeyAlgorithmIdentifier::
-operator=(EncryptionCertificatePublicKeyAlgorithmIdentifierType::Value value)
+EncryptionCertificatePublicKeyAlgorithmIdentifier&
+EncryptionCertificatePublicKeyAlgorithmIdentifier::operator=(
+    EncryptionCertificatePublicKeyAlgorithmIdentifierType::Value value)
 {
     EncryptionCertificatePublicKeyAlgorithmIdentifierType::toObjectIdentifier(
         &d_identifier,
@@ -2743,8 +2873,8 @@ ntsa::Error EncryptionCertificatePublicKeyAlgorithmIdentifier::encode(
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
-const ntsa::AbstractObjectIdentifier& EncryptionCertificatePublicKeyAlgorithmIdentifier::
-    identifier() const
+const ntsa::AbstractObjectIdentifier&
+EncryptionCertificatePublicKeyAlgorithmIdentifier::identifier() const
 {
     return d_identifier;
 }
@@ -2781,8 +2911,8 @@ bsl::ostream& EncryptionCertificatePublicKeyAlgorithmIdentifier::print(
     int rc = ntca::EncryptionCertificatePublicKeyAlgorithmIdentifierType::
         fromObjectIdentifier(&type, d_identifier);
     if (rc == 0) {
-        stream << ntca::EncryptionCertificatePublicKeyAlgorithmIdentifierType::toString(
-            type);
+        stream << ntca::EncryptionCertificatePublicKeyAlgorithmIdentifierType::
+                toString(type);
     }
     else {
         d_identifier.print(stream, level, spacesPerLevel);
@@ -2791,8 +2921,9 @@ bsl::ostream& EncryptionCertificatePublicKeyAlgorithmIdentifier::print(
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                                  stream,
-                         const EncryptionCertificatePublicKeyAlgorithmIdentifier& object)
+bsl::ostream& operator<<(
+    bsl::ostream&                                            stream,
+    const EncryptionCertificatePublicKeyAlgorithmIdentifier& object)
 {
     return object.print(stream, 0, -1);
 }
@@ -2815,56 +2946,30 @@ bool operator<(const EncryptionCertificatePublicKeyAlgorithmIdentifier& lhs,
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-EncryptionCertificatePublicKeyAlgorithmParametersRsa::EncryptionCertificatePublicKeyAlgorithmParametersRsa(
-    bslma::Allocator* basicAllocator)
+EncryptionCertificatePublicKeyAlgorithmParametersRsa::
+    EncryptionCertificatePublicKeyAlgorithmParametersRsa(
+        bslma::Allocator* basicAllocator)
 : d_value(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-
 }
 
-EncryptionCertificatePublicKeyAlgorithmParametersRsa::EncryptionCertificatePublicKeyAlgorithmParametersRsa(
-    const EncryptionCertificatePublicKeyAlgorithmParametersRsa& original,
-    bslma::Allocator*                    basicAllocator)
+EncryptionCertificatePublicKeyAlgorithmParametersRsa::
+    EncryptionCertificatePublicKeyAlgorithmParametersRsa(
+        const EncryptionCertificatePublicKeyAlgorithmParametersRsa& original,
+        bslma::Allocator* basicAllocator)
 : d_value(original.d_value, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificatePublicKeyAlgorithmParametersRsa::~EncryptionCertificatePublicKeyAlgorithmParametersRsa()
+EncryptionCertificatePublicKeyAlgorithmParametersRsa::
+    ~EncryptionCertificatePublicKeyAlgorithmParametersRsa()
 {
 }
 
-EncryptionCertificatePublicKeyAlgorithmParametersRsa& EncryptionCertificatePublicKeyAlgorithmParametersRsa::operator=(
+EncryptionCertificatePublicKeyAlgorithmParametersRsa&
+EncryptionCertificatePublicKeyAlgorithmParametersRsa::operator=(
     const EncryptionCertificatePublicKeyAlgorithmParametersRsa& other)
 {
     if (this != &other) {
@@ -2921,13 +3026,13 @@ bool EncryptionCertificatePublicKeyAlgorithmParametersRsa::less(
     return d_value < other.d_value;
 }
 
-bsl::ostream& EncryptionCertificatePublicKeyAlgorithmParametersRsa::print(bsl::ostream& stream,
-                                                   int           level,
-                                                   int spacesPerLevel) const
+bsl::ostream& EncryptionCertificatePublicKeyAlgorithmParametersRsa::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
 {
     if (d_value.tagClass() == k_UNIVERSAL &&
-        d_value.tagType() == k_PRIMITIVE &&
-        d_value.tagNumber() == k_NULL)
+        d_value.tagType() == k_PRIMITIVE && d_value.tagNumber() == k_NULL)
     {
         stream << "NULL";
     }
@@ -2938,20 +3043,23 @@ bsl::ostream& EncryptionCertificatePublicKeyAlgorithmParametersRsa::print(bsl::o
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                        stream,
-                         const EncryptionCertificatePublicKeyAlgorithmParametersRsa& object)
+bsl::ostream& operator<<(
+    bsl::ostream&                                               stream,
+    const EncryptionCertificatePublicKeyAlgorithmParametersRsa& object)
 {
     return object.print(stream, 0, -1);
 }
 
-bool operator==(const EncryptionCertificatePublicKeyAlgorithmParametersRsa& lhs,
-                const EncryptionCertificatePublicKeyAlgorithmParametersRsa& rhs)
+bool operator==(
+    const EncryptionCertificatePublicKeyAlgorithmParametersRsa& lhs,
+    const EncryptionCertificatePublicKeyAlgorithmParametersRsa& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const EncryptionCertificatePublicKeyAlgorithmParametersRsa& lhs,
-                const EncryptionCertificatePublicKeyAlgorithmParametersRsa& rhs)
+bool operator!=(
+    const EncryptionCertificatePublicKeyAlgorithmParametersRsa& lhs,
+    const EncryptionCertificatePublicKeyAlgorithmParametersRsa& rhs)
 {
     return !operator==(lhs, rhs);
 }
@@ -2962,21 +3070,9 @@ bool operator<(const EncryptionCertificatePublicKeyAlgorithmParametersRsa& lhs,
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-const char* EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::toString(Value value)
+const char*
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::
+    toString(Value value)
 {
     switch (value) {
     case e_SEC_P256_R1:
@@ -2991,9 +3087,8 @@ const char* EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdenti
     return 0;
 }
 
-void EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::toObjectIdentifier(
-    ntsa::AbstractObjectIdentifier* result,
-    Value                           value)
+void EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::
+    toObjectIdentifier(ntsa::AbstractObjectIdentifier* result, Value value)
 {
     result->reset();
 
@@ -3008,9 +3103,8 @@ void EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierTyp
     }
 }
 
-int EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::fromString(
-    Value*                   result,
-    const bslstl::StringRef& string)
+int EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::
+    fromString(Value* result, const bslstl::StringRef& string)
 {
     if (bdlb::String::areEqualCaseless(string, "SEC_P256_R1")) {
         *result = e_SEC_P256_R1;
@@ -3030,9 +3124,9 @@ int EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType
     return -1;
 }
 
-int EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::fromObjectIdentifier(
-    Value*                                result,
-    const ntsa::AbstractObjectIdentifier& identifier)
+int EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::
+    fromObjectIdentifier(Value*                                result,
+                         const ntsa::AbstractObjectIdentifier& identifier)
 {
     if (identifier.equals(1, 2, 840, 10045, 3, 1, 7)) {
         *result = e_SEC_P256_R1;
@@ -3052,50 +3146,25 @@ int EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType
     return -1;
 }
 
-bsl::ostream& EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::print(
-    bsl::ostream& stream,
-    Value         value)
+bsl::ostream&
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::
+    print(bsl::ostream& stream, Value value)
 {
     return stream << toString(value);
 }
 
 bsl::ostream& operator<<(
-    bsl::ostream&                                      stream,
-    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::Value rhs)
+    bsl::ostream& stream,
+    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::
+        Value rhs)
 {
-    return EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::print(stream, rhs);
+    return EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::
+        print(stream, rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::
-    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier(bslma::Allocator* basicAllocator)
+    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier(
+        bslma::Allocator* basicAllocator)
 : d_identifier(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -3103,8 +3172,9 @@ EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::
 
 EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::
     EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier(
-        const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& original,
-        bslma::Allocator*                              basicAllocator)
+        const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+                          original,
+        bslma::Allocator* basicAllocator)
 : d_identifier(original.d_identifier, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -3115,8 +3185,11 @@ EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::
 {
 }
 
-EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::
-operator=(const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& other)
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::
+operator=(
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+        other)
 {
     if (this != &other) {
         d_identifier = other.d_identifier;
@@ -3125,43 +3198,49 @@ operator=(const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveId
     return *this;
 }
 
-EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::
 operator=(const ntsa::AbstractObjectIdentifier& value)
 {
     d_identifier = value;
     return *this;
 }
 
-EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::
-operator=(EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::Value value)
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::
+operator=(
+    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::
+        Value value)
 {
-    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::toObjectIdentifier(
-        &d_identifier,
-        value);
+    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::
+        toObjectIdentifier(&d_identifier, value);
     return *this;
 }
 
-void EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::reset()
+void EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::
+    reset()
 {
     d_identifier.reset();
 }
 
-void EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::setIdentifier(
-    const ntsa::AbstractObjectIdentifier& value)
+void EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::
+    setIdentifier(const ntsa::AbstractObjectIdentifier& value)
 {
     d_identifier = value;
 }
 
-void EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::setIdentifer(
-    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::Value value)
+void EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::
+    setIdentifer(
+        EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::
+            Value value)
 {
-    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::toObjectIdentifier(
-        &d_identifier,
-        value);
+    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::
+        toObjectIdentifier(&d_identifier, value);
 }
 
-ntsa::Error EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::decode(
-    ntsa::AbstractSyntaxDecoder* decoder)
+ntsa::Error
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::
+    decode(ntsa::AbstractSyntaxDecoder* decoder)
 {
     ntsa::Error error;
 
@@ -3183,53 +3262,63 @@ ntsa::Error EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdenti
     return ntsa::Error();
 }
 
-ntsa::Error EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::encode(
-    ntsa::AbstractSyntaxEncoder* encoder) const
+ntsa::Error
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::
+    encode(ntsa::AbstractSyntaxEncoder* encoder) const
 {
     NTCCFG_WARNING_UNUSED(encoder);
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
-const ntsa::AbstractObjectIdentifier& EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::
+const ntsa::AbstractObjectIdentifier&
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::
     identifier() const
 {
     return d_identifier;
 }
 
-bool EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::equals(
-    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& other) const
+bool EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::
+    equals(
+        const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+            other) const
 {
     return d_identifier == other.d_identifier;
 }
 
-bool EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::equals(
-    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::Value value) const
+bool EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::
+    equals(
+        EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::
+            Value value) const
 {
     ntsa::AbstractObjectIdentifier identifier;
-    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::toObjectIdentifier(
-        &identifier,
-        value);
+    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::
+        toObjectIdentifier(&identifier, value);
 
     return d_identifier.equals(identifier);
 }
 
-bool EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::less(
-    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& other) const
+bool EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::
+    less(
+        const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+            other) const
 {
     return d_identifier < other.d_identifier;
 }
 
-bsl::ostream& EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::print(
-    bsl::ostream& stream,
-    int           level,
-    int           spacesPerLevel) const
+bsl::ostream&
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::
+    print(bsl::ostream& stream, int level, int spacesPerLevel) const
 {
-    ntca::EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::Value type;
-    int rc = ntca::EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::
-        fromObjectIdentifier(&type, d_identifier);
+    ntca::
+        EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::
+            Value type;
+    int           rc = ntca::
+        EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::
+            fromObjectIdentifier(&type, d_identifier);
     if (rc == 0) {
-        stream << ntca::EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::toString(
-            type);
+        stream << ntca::
+                EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::
+                    toString(type);
     }
     else {
         d_identifier.print(stream, level, spacesPerLevel);
@@ -3238,62 +3327,54 @@ bsl::ostream& EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIden
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                                  stream,
-                         const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& object)
+bsl::ostream& operator<<(
+    bsl::ostream& stream,
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+        object)
 {
     return object.print(stream, 0, -1);
 }
 
-bool operator==(const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& lhs,
-                const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& rhs)
+bool operator==(
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+        lhs,
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+        rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& lhs,
-                const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& rhs)
+bool operator!=(
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+        lhs,
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+        rhs)
 {
     return !operator==(lhs, rhs);
 }
 
-bool operator<(const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& lhs,
-               const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& rhs)
+bool operator<(
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+        lhs,
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+        rhs)
 {
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve(
-    bslma::Allocator* basicAllocator)
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::
+    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve(
+        bslma::Allocator* basicAllocator)
 : d_type(e_UNDEFINED)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve(
-    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& original,
-    bslma::Allocator*                          basicAllocator)
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::
+    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve(
+        const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve&
+                          original,
+        bslma::Allocator* basicAllocator)
 : d_type(original.d_type)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -3312,13 +3393,16 @@ EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::EncryptionCertif
     }
 }
 
-EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::~EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve()
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::
+    ~EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve()
 {
     this->reset();
 }
 
-EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::
-operator=(const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& other)
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve&
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::operator=(
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve&
+        other)
 {
     if (this == &other) {
         return *this;
@@ -3341,7 +3425,8 @@ operator=(const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& 
 void EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::reset()
 {
     if (d_type == e_IDENTIFIER) {
-        typedef EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier Type;
+        typedef EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier
+            Type;
         d_identifier.object().~Type();
     }
     else if (d_type == e_ANY) {
@@ -3352,7 +3437,8 @@ void EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::reset()
     d_type = e_UNDEFINED;
 }
 
-EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::
     makeIdentifier()
 {
     if (d_type == e_IDENTIFIER) {
@@ -3361,15 +3447,18 @@ EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& Encryp
     else {
         this->reset();
         new (d_identifier.buffer())
-            EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier(d_allocator_p);
+            EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier(
+                d_allocator_p);
         d_type = e_IDENTIFIER;
     }
 
     return d_identifier.object();
 }
 
-EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::
-    makeIdentifier(const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& value)
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::makeIdentifier(
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+        value)
 {
     if (d_type == e_IDENTIFIER) {
         d_identifier.object() = value;
@@ -3377,14 +3466,17 @@ EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& Encryp
     else {
         this->reset();
         new (d_identifier.buffer())
-            EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier(value, d_allocator_p);
+            EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier(
+                value,
+                d_allocator_p);
         d_type = e_IDENTIFIER;
     }
 
     return d_identifier.object();
 }
 
-ntsa::AbstractValue& EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::makeAny()
+ntsa::AbstractValue&
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::makeAny()
 {
     if (d_type == e_ANY) {
         d_any.object().reset();
@@ -3398,7 +3490,8 @@ ntsa::AbstractValue& EncryptionCertificatePublicKeyAlgorithmParametersEllipticCu
     return d_any.object();
 }
 
-ntsa::AbstractValue& EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::makeAny(
+ntsa::AbstractValue&
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::makeAny(
     const ntsa::AbstractValue& value)
 {
     if (d_type == e_ANY) {
@@ -3413,49 +3506,56 @@ ntsa::AbstractValue& EncryptionCertificatePublicKeyAlgorithmParametersEllipticCu
     return d_any.object();
 }
 
-EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::
-    identifier()
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::identifier()
 {
     BSLS_ASSERT(this->isIdentifier());
     return d_identifier.object();
 }
 
-ntsa::AbstractValue& EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::any()
+ntsa::AbstractValue&
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::any()
 {
     BSLS_ASSERT(this->isAny());
     return d_any.object();
 }
 
 const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
-EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::identifier() const
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::identifier()
+    const
 {
     BSLS_ASSERT(this->isIdentifier());
     return d_identifier.object();
 }
 
-const ntsa::AbstractValue& EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::any() const
+const ntsa::AbstractValue&
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::any() const
 {
     BSLS_ASSERT(this->isAny());
     return d_any.object();
 }
 
-bool EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::isUndefined() const
+bool EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::
+    isUndefined() const
 {
     return d_type == e_UNDEFINED;
 }
 
-bool EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::isIdentifier() const
+bool EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::
+    isIdentifier() const
 {
     return d_type == e_IDENTIFIER;
 }
 
-bool EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::isAny() const
+bool EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::isAny()
+    const
 {
     return d_type == e_ANY;
 }
 
 bool EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::equals(
-    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& other) const
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve&
+        other) const
 {
     if (d_type != other.d_type) {
         return false;
@@ -3475,7 +3575,8 @@ bool EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::equals(
 }
 
 bool EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::less(
-    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& other) const
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve&
+        other) const
 {
     if (d_type < other.d_type) {
         return false;
@@ -3498,10 +3599,8 @@ bool EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::less(
     return false;
 }
 
-bsl::ostream& EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::print(
-    bsl::ostream& stream,
-    int           level,
-    int           spacesPerLevel) const
+bsl::ostream& EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::
+    print(bsl::ostream& stream, int level, int spacesPerLevel) const
 {
     NTCCFG_WARNING_UNUSED(level);
     NTCCFG_WARNING_UNUSED(spacesPerLevel);
@@ -3519,75 +3618,47 @@ bsl::ostream& EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::pr
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                              stream,
-                         const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& object)
+bsl::ostream& operator<<(
+    bsl::ostream& stream,
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve&
+        object)
 {
     return object.print(stream, 0, -1);
 }
 
-bool operator==(const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& lhs,
-                const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& rhs)
+bool operator==(
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& lhs,
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& lhs,
-                const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& rhs)
+bool operator!=(
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& lhs,
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& rhs)
 {
     return !operator==(lhs, rhs);
 }
 
-bool operator<(const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& lhs,
-               const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& rhs)
+bool operator<(
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& lhs,
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& rhs)
 {
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-EncryptionCertificatePublicKeyAlgorithmParameters::EncryptionCertificatePublicKeyAlgorithmParameters(
-    bslma::Allocator* basicAllocator)
+EncryptionCertificatePublicKeyAlgorithmParameters::
+    EncryptionCertificatePublicKeyAlgorithmParameters(
+        bslma::Allocator* basicAllocator)
 : d_type(e_UNDEFINED)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificatePublicKeyAlgorithmParameters::EncryptionCertificatePublicKeyAlgorithmParameters(
-    const EncryptionCertificatePublicKeyAlgorithmParameters& original,
-    bslma::Allocator*                          basicAllocator)
+EncryptionCertificatePublicKeyAlgorithmParameters::
+    EncryptionCertificatePublicKeyAlgorithmParameters(
+        const EncryptionCertificatePublicKeyAlgorithmParameters& original,
+        bslma::Allocator* basicAllocator)
 : d_type(original.d_type)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -3612,13 +3683,15 @@ EncryptionCertificatePublicKeyAlgorithmParameters::EncryptionCertificatePublicKe
     }
 }
 
-EncryptionCertificatePublicKeyAlgorithmParameters::~EncryptionCertificatePublicKeyAlgorithmParameters()
+EncryptionCertificatePublicKeyAlgorithmParameters::
+    ~EncryptionCertificatePublicKeyAlgorithmParameters()
 {
     this->reset();
 }
 
-EncryptionCertificatePublicKeyAlgorithmParameters& EncryptionCertificatePublicKeyAlgorithmParameters::
-operator=(const EncryptionCertificatePublicKeyAlgorithmParameters& other)
+EncryptionCertificatePublicKeyAlgorithmParameters&
+EncryptionCertificatePublicKeyAlgorithmParameters::operator=(
+    const EncryptionCertificatePublicKeyAlgorithmParameters& other)
 {
     if (this == &other) {
         return *this;
@@ -3644,11 +3717,9 @@ operator=(const EncryptionCertificatePublicKeyAlgorithmParameters& other)
 void EncryptionCertificatePublicKeyAlgorithmParameters::reset()
 {
     if (d_type == e_RSA) {
-        
         d_rsa.object().~RsaType();
     }
     else if (d_type == e_ELLIPTIC_CURVE) {
-        
         d_ellipticCurve.object().~EllipticCurveType();
     }
     else if (d_type == e_ANY) {
@@ -3659,12 +3730,8 @@ void EncryptionCertificatePublicKeyAlgorithmParameters::reset()
     d_type = e_UNDEFINED;
 }
 
-
-
-
-
-EncryptionCertificatePublicKeyAlgorithmParametersRsa& EncryptionCertificatePublicKeyAlgorithmParameters::
-    makeRsa()
+EncryptionCertificatePublicKeyAlgorithmParametersRsa&
+EncryptionCertificatePublicKeyAlgorithmParameters::makeRsa()
 {
     if (d_type == e_RSA) {
         d_rsa.object().reset();
@@ -3672,15 +3739,17 @@ EncryptionCertificatePublicKeyAlgorithmParametersRsa& EncryptionCertificatePubli
     else {
         this->reset();
         new (d_rsa.buffer())
-            EncryptionCertificatePublicKeyAlgorithmParametersRsa(d_allocator_p);
+            EncryptionCertificatePublicKeyAlgorithmParametersRsa(
+                d_allocator_p);
         d_type = e_RSA;
     }
 
     return d_rsa.object();
 }
 
-EncryptionCertificatePublicKeyAlgorithmParametersRsa& EncryptionCertificatePublicKeyAlgorithmParameters::
-    makeRsa(const EncryptionCertificatePublicKeyAlgorithmParametersRsa& value)
+EncryptionCertificatePublicKeyAlgorithmParametersRsa&
+EncryptionCertificatePublicKeyAlgorithmParameters::makeRsa(
+    const EncryptionCertificatePublicKeyAlgorithmParametersRsa& value)
 {
     if (d_type == e_RSA) {
         d_rsa.object() = value;
@@ -3688,20 +3757,17 @@ EncryptionCertificatePublicKeyAlgorithmParametersRsa& EncryptionCertificatePubli
     else {
         this->reset();
         new (d_rsa.buffer())
-            EncryptionCertificatePublicKeyAlgorithmParametersRsa(value, d_allocator_p);
+            EncryptionCertificatePublicKeyAlgorithmParametersRsa(
+                value,
+                d_allocator_p);
         d_type = e_RSA;
     }
 
     return d_rsa.object();
 }
 
-
-
-
-
-
-EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& EncryptionCertificatePublicKeyAlgorithmParameters::
-    makeEllipticCurve()
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve&
+EncryptionCertificatePublicKeyAlgorithmParameters::makeEllipticCurve()
 {
     if (d_type == e_ELLIPTIC_CURVE) {
         d_ellipticCurve.object().reset();
@@ -3709,15 +3775,18 @@ EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& EncryptionCertif
     else {
         this->reset();
         new (d_ellipticCurve.buffer())
-            EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve(d_allocator_p);
+            EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve(
+                d_allocator_p);
         d_type = e_ELLIPTIC_CURVE;
     }
 
     return d_ellipticCurve.object();
 }
 
-EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& EncryptionCertificatePublicKeyAlgorithmParameters::
-    makeEllipticCurve(const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& value)
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve&
+EncryptionCertificatePublicKeyAlgorithmParameters::makeEllipticCurve(
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve&
+        value)
 {
     if (d_type == e_ELLIPTIC_CURVE) {
         d_ellipticCurve.object() = value;
@@ -3725,14 +3794,17 @@ EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& EncryptionCertif
     else {
         this->reset();
         new (d_ellipticCurve.buffer())
-            EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve(value, d_allocator_p);
+            EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve(
+                value,
+                d_allocator_p);
         d_type = e_ELLIPTIC_CURVE;
     }
 
     return d_ellipticCurve.object();
 }
 
-ntsa::AbstractValue& EncryptionCertificatePublicKeyAlgorithmParameters::makeAny()
+ntsa::AbstractValue& EncryptionCertificatePublicKeyAlgorithmParameters::
+    makeAny()
 {
     if (d_type == e_ANY) {
         d_any.object().reset();
@@ -3746,8 +3818,8 @@ ntsa::AbstractValue& EncryptionCertificatePublicKeyAlgorithmParameters::makeAny(
     return d_any.object();
 }
 
-ntsa::AbstractValue& EncryptionCertificatePublicKeyAlgorithmParameters::makeAny(
-    const ntsa::AbstractValue& value)
+ntsa::AbstractValue& EncryptionCertificatePublicKeyAlgorithmParameters::
+    makeAny(const ntsa::AbstractValue& value)
 {
     if (d_type == e_ANY) {
         d_any.object() = value;
@@ -3761,16 +3833,15 @@ ntsa::AbstractValue& EncryptionCertificatePublicKeyAlgorithmParameters::makeAny(
     return d_any.object();
 }
 
-EncryptionCertificatePublicKeyAlgorithmParametersRsa& EncryptionCertificatePublicKeyAlgorithmParameters::
-    rsa()
+EncryptionCertificatePublicKeyAlgorithmParametersRsa&
+EncryptionCertificatePublicKeyAlgorithmParameters::rsa()
 {
     BSLS_ASSERT(this->isRsa());
     return d_rsa.object();
 }
 
-
-EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& EncryptionCertificatePublicKeyAlgorithmParameters::
-    ellipticCurve()
+EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve&
+EncryptionCertificatePublicKeyAlgorithmParameters::ellipticCurve()
 {
     BSLS_ASSERT(this->isEllipticCurve());
     return d_ellipticCurve.object();
@@ -3796,7 +3867,8 @@ EncryptionCertificatePublicKeyAlgorithmParameters::ellipticCurve() const
     return d_ellipticCurve.object();
 }
 
-const ntsa::AbstractValue& EncryptionCertificatePublicKeyAlgorithmParameters::any() const
+const ntsa::AbstractValue& EncryptionCertificatePublicKeyAlgorithmParameters::
+    any() const
 {
     BSLS_ASSERT(this->isAny());
     return d_any.object();
@@ -3896,8 +3968,9 @@ bsl::ostream& EncryptionCertificatePublicKeyAlgorithmParameters::print(
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                              stream,
-                         const EncryptionCertificatePublicKeyAlgorithmParameters& object)
+bsl::ostream& operator<<(
+    bsl::ostream&                                            stream,
+    const EncryptionCertificatePublicKeyAlgorithmParameters& object)
 {
     return object.print(stream, 0, -1);
 }
@@ -3920,51 +3993,31 @@ bool operator<(const EncryptionCertificatePublicKeyAlgorithmParameters& lhs,
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-EncryptionCertificatePublicKeyAlgorithm::EncryptionCertificatePublicKeyAlgorithm(
-    bslma::Allocator* basicAllocator)
+EncryptionCertificatePublicKeyAlgorithm::
+    EncryptionCertificatePublicKeyAlgorithm(bslma::Allocator* basicAllocator)
 : d_identifier(basicAllocator)
 , d_parameters(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificatePublicKeyAlgorithm::EncryptionCertificatePublicKeyAlgorithm(
-    const EncryptionCertificatePublicKeyAlgorithm& original,
-    bslma::Allocator*                    basicAllocator)
+EncryptionCertificatePublicKeyAlgorithm::
+    EncryptionCertificatePublicKeyAlgorithm(
+        const EncryptionCertificatePublicKeyAlgorithm& original,
+        bslma::Allocator*                              basicAllocator)
 : d_identifier(original.d_identifier, basicAllocator)
 , d_parameters(original.d_parameters, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificatePublicKeyAlgorithm::~EncryptionCertificatePublicKeyAlgorithm()
+EncryptionCertificatePublicKeyAlgorithm::
+    ~EncryptionCertificatePublicKeyAlgorithm()
 {
 }
 
-EncryptionCertificatePublicKeyAlgorithm& EncryptionCertificatePublicKeyAlgorithm::operator=(
-    const EncryptionCertificatePublicKeyAlgorithm& other)
+EncryptionCertificatePublicKeyAlgorithm& EncryptionCertificatePublicKeyAlgorithm::
+operator=(const EncryptionCertificatePublicKeyAlgorithm& other)
 {
     if (this != &other) {
         d_identifier = other.d_identifier;
@@ -3979,7 +4032,6 @@ void EncryptionCertificatePublicKeyAlgorithm::reset()
     d_identifier.reset();
     d_parameters.reset();
 }
-
 
 void EncryptionCertificatePublicKeyAlgorithm::setIdentifier(
     const EncryptionCertificatePublicKeyAlgorithmIdentifier& value)
@@ -4010,41 +4062,16 @@ ntsa::Error EncryptionCertificatePublicKeyAlgorithm::decode(
 
     if (decoder->contentBytesRemaining() > 0) {
         if (d_identifier.equals(
-            EncryptionCertificatePublicKeyAlgorithmIdentifierType::e_RSA)) 
+                EncryptionCertificatePublicKeyAlgorithmIdentifierType::e_RSA))
         {
-            error = d_parameters.makeRsa().decode(decoder);
+            error = d_parameters.makeValue().makeRsa().decode(decoder);
             if (error) {
                 return error;
             }
-
-            // MRM
-            #if 0
-            error = decoder->decodeTag();
-            if (error) {
-                return error;
-            }
-
-            if (decoder->current().tagClass() == k_UNIVERSAL &&
-                 decoder->current().tagType() == k_PRIMITIVE &&
-                 decoder->current().tagNumber() == k_NULL)
-            {
-                d_parameters.reset();
-            }
-            else {
-                error = decoder->decodeValue(&d_parameters.makeAny());
-                if (error) {
-                    return error;
-                }
-            }
-
-            error = decoder->decodeTagComplete();
-            if (error) {
-                return error;
-            }
-            #endif
         }
         else if (d_identifier.equals(
-            EncryptionCertificatePublicKeyAlgorithmIdentifierType::e_ELLIPTIC_CURVE))
+                     EncryptionCertificatePublicKeyAlgorithmIdentifierType::
+                         e_ELLIPTIC_CURVE))
         {
             error = decoder->decodeTag();
             if (error) {
@@ -4052,8 +4079,8 @@ ntsa::Error EncryptionCertificatePublicKeyAlgorithm::decode(
             }
 
             if (decoder->current().tagClass() == k_UNIVERSAL &&
-                 decoder->current().tagType() == k_PRIMITIVE &&
-                 decoder->current().tagNumber() == k_NULL)
+                decoder->current().tagType() == k_PRIMITIVE &&
+                decoder->current().tagNumber() == k_NULL)
             {
                 d_parameters.reset();
 
@@ -4071,15 +4098,17 @@ ntsa::Error EncryptionCertificatePublicKeyAlgorithm::decode(
                     return error;
                 }
 
-                error = 
-                    d_parameters.makeEllipticCurve().makeIdentifier().decode(decoder);
+                error = d_parameters.makeValue()
+                            .makeEllipticCurve()
+                            .makeIdentifier()
+                            .decode(decoder);
                 if (error) {
                     return error;
                 }
             }
             else {
                 error = decoder->decodeValue(
-                    &d_parameters.makeEllipticCurve().makeAny());
+                    &d_parameters.makeValue().makeEllipticCurve().makeAny());
                 if (error) {
                     return error;
                 }
@@ -4097,13 +4126,14 @@ ntsa::Error EncryptionCertificatePublicKeyAlgorithm::decode(
             }
 
             if (decoder->current().tagClass() == k_UNIVERSAL &&
-                 decoder->current().tagType() == k_PRIMITIVE &&
-                 decoder->current().tagNumber() == k_NULL)
+                decoder->current().tagType() == k_PRIMITIVE &&
+                decoder->current().tagNumber() == k_NULL)
             {
                 d_parameters.reset();
             }
             else {
-                error = decoder->decodeValue(&d_parameters.makeAny());
+                error =
+                    decoder->decodeValue(&d_parameters.makeValue().makeAny());
                 if (error) {
                     return error;
                 }
@@ -4131,21 +4161,23 @@ ntsa::Error EncryptionCertificatePublicKeyAlgorithm::encode(
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
-const EncryptionCertificatePublicKeyAlgorithmIdentifier& EncryptionCertificatePublicKeyAlgorithm::identifier() const
+const EncryptionCertificatePublicKeyAlgorithmIdentifier&
+EncryptionCertificatePublicKeyAlgorithm::identifier() const
 {
     return d_identifier;
 }
 
-const EncryptionCertificatePublicKeyAlgorithmParameters& EncryptionCertificatePublicKeyAlgorithm::parameters() const
+const bdlb::NullableValue<EncryptionCertificatePublicKeyAlgorithmParameters>&
+EncryptionCertificatePublicKeyAlgorithm::parameters() const
 {
     return d_parameters;
 }
 
-
 bool EncryptionCertificatePublicKeyAlgorithm::equals(
     const EncryptionCertificatePublicKeyAlgorithm& other) const
 {
-    return d_identifier == other.d_identifier && d_parameters == other.d_parameters;
+    return d_identifier == other.d_identifier &&
+           d_parameters == other.d_parameters;
 }
 
 bool EncryptionCertificatePublicKeyAlgorithm::less(
@@ -4162,23 +4194,26 @@ bool EncryptionCertificatePublicKeyAlgorithm::less(
     return d_parameters < other.d_parameters;
 }
 
-bsl::ostream& EncryptionCertificatePublicKeyAlgorithm::print(bsl::ostream& stream,
-                                                   int           level,
-                                                   int spacesPerLevel) const
+bsl::ostream& EncryptionCertificatePublicKeyAlgorithm::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
     printer.printAttribute("identifier", d_identifier);
-    
-    if (!d_parameters.isUndefined()) {
-        printer.printAttribute("parameters", d_parameters);
+
+    if (!d_parameters.isNull()) {
+        if (!d_parameters.value().isUndefined()) {
+            printer.printAttribute("parameters", d_parameters);
+        }
     }
 
     printer.end();
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                        stream,
+bsl::ostream& operator<<(bsl::ostream&                                  stream,
                          const EncryptionCertificatePublicKeyAlgorithm& object)
 {
     return object.print(stream, 0, -1);
@@ -4202,46 +4237,33 @@ bool operator<(const EncryptionCertificatePublicKeyAlgorithm& lhs,
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 EncryptionCertificatePublicKeyValueRsa::EncryptionCertificatePublicKeyValueRsa(
     bslma::Allocator* basicAllocator)
 : d_modulus(basicAllocator)
 , d_encryptionExponent(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-
 }
 
 EncryptionCertificatePublicKeyValueRsa::EncryptionCertificatePublicKeyValueRsa(
     const EncryptionCertificatePublicKeyValueRsa& original,
-    bslma::Allocator*                    basicAllocator)
+    bslma::Allocator*                             basicAllocator)
 : d_modulus(original.d_modulus, basicAllocator)
 , d_encryptionExponent(original.d_encryptionExponent, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificatePublicKeyValueRsa::~EncryptionCertificatePublicKeyValueRsa()
+EncryptionCertificatePublicKeyValueRsa::
+    ~EncryptionCertificatePublicKeyValueRsa()
 {
 }
 
-EncryptionCertificatePublicKeyValueRsa& EncryptionCertificatePublicKeyValueRsa::operator=(
-    const EncryptionCertificatePublicKeyValueRsa& other)
+EncryptionCertificatePublicKeyValueRsa& EncryptionCertificatePublicKeyValueRsa::
+operator=(const EncryptionCertificatePublicKeyValueRsa& other)
 {
     if (this != &other) {
-        d_modulus = other.d_modulus;
+        d_modulus            = other.d_modulus;
         d_encryptionExponent = other.d_encryptionExponent;
     }
 
@@ -4265,7 +4287,7 @@ ntsa::Error EncryptionCertificatePublicKeyValueRsa::decode(
     }
 
     bsl::uint8_t numBitsOmitted = 0;
-    error = decoder->decodeByte(&numBitsOmitted);
+    error                       = decoder->decodeByte(&numBitsOmitted);
     if (error) {
         return error;
     }
@@ -4338,7 +4360,8 @@ ntsa::Error EncryptionCertificatePublicKeyValueRsa::encode(
 bool EncryptionCertificatePublicKeyValueRsa::equals(
     const EncryptionCertificatePublicKeyValueRsa& other) const
 {
-    return d_modulus == other.d_modulus && d_encryptionExponent == other.d_encryptionExponent;
+    return d_modulus == other.d_modulus &&
+           d_encryptionExponent == other.d_encryptionExponent;
 }
 
 bool EncryptionCertificatePublicKeyValueRsa::less(
@@ -4355,9 +4378,10 @@ bool EncryptionCertificatePublicKeyValueRsa::less(
     return d_encryptionExponent < other.d_encryptionExponent;
 }
 
-bsl::ostream& EncryptionCertificatePublicKeyValueRsa::print(bsl::ostream& stream,
-                                                   int           level,
-                                                   int spacesPerLevel) const
+bsl::ostream& EncryptionCertificatePublicKeyValueRsa::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
 {
     // d_value.print(stream, level, spacesPerLevel);
 
@@ -4369,7 +4393,7 @@ bsl::ostream& EncryptionCertificatePublicKeyValueRsa::print(bsl::ostream& stream
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                        stream,
+bsl::ostream& operator<<(bsl::ostream&                                 stream,
                          const EncryptionCertificatePublicKeyValueRsa& object)
 {
     return object.print(stream, 0, -1);
@@ -4393,46 +4417,30 @@ bool operator<(const EncryptionCertificatePublicKeyValueRsa& lhs,
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-EncryptionCertificatePublicKeyValueEllipticCurve::EncryptionCertificatePublicKeyValueEllipticCurve(
-    bslma::Allocator* basicAllocator)
+EncryptionCertificatePublicKeyValueEllipticCurve::
+    EncryptionCertificatePublicKeyValueEllipticCurve(
+        bslma::Allocator* basicAllocator)
 : d_value(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-
 }
 
-EncryptionCertificatePublicKeyValueEllipticCurve::EncryptionCertificatePublicKeyValueEllipticCurve(
-    const EncryptionCertificatePublicKeyValueEllipticCurve& original,
-    bslma::Allocator*                    basicAllocator)
+EncryptionCertificatePublicKeyValueEllipticCurve::
+    EncryptionCertificatePublicKeyValueEllipticCurve(
+        const EncryptionCertificatePublicKeyValueEllipticCurve& original,
+        bslma::Allocator*                                       basicAllocator)
 : d_value(original.d_value, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificatePublicKeyValueEllipticCurve::~EncryptionCertificatePublicKeyValueEllipticCurve()
+EncryptionCertificatePublicKeyValueEllipticCurve::
+    ~EncryptionCertificatePublicKeyValueEllipticCurve()
 {
 }
 
-EncryptionCertificatePublicKeyValueEllipticCurve& EncryptionCertificatePublicKeyValueEllipticCurve::operator=(
+EncryptionCertificatePublicKeyValueEllipticCurve&
+EncryptionCertificatePublicKeyValueEllipticCurve::operator=(
     const EncryptionCertificatePublicKeyValueEllipticCurve& other)
 {
     if (this != &other) {
@@ -4489,16 +4497,18 @@ bool EncryptionCertificatePublicKeyValueEllipticCurve::less(
     return d_value < other.d_value;
 }
 
-bsl::ostream& EncryptionCertificatePublicKeyValueEllipticCurve::print(bsl::ostream& stream,
-                                                   int           level,
-                                                   int spacesPerLevel) const
+bsl::ostream& EncryptionCertificatePublicKeyValueEllipticCurve::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
 {
     d_value.print(stream, level, spacesPerLevel);
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                        stream,
-                         const EncryptionCertificatePublicKeyValueEllipticCurve& object)
+bsl::ostream& operator<<(
+    bsl::ostream&                                           stream,
+    const EncryptionCertificatePublicKeyValueEllipticCurve& object)
 {
     return object.print(stream, 0, -1);
 }
@@ -4521,22 +4531,6 @@ bool operator<(const EncryptionCertificatePublicKeyValueEllipticCurve& lhs,
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 EncryptionCertificatePublicKeyValue::EncryptionCertificatePublicKeyValue(
     bslma::Allocator* basicAllocator)
 : d_type(e_UNDEFINED)
@@ -4552,9 +4546,8 @@ EncryptionCertificatePublicKeyValue::EncryptionCertificatePublicKeyValue(
 {
     if (d_type == e_RSA) {
         new (d_rsa.buffer())
-            EncryptionCertificatePublicKeyValueRsa(
-                original.d_rsa.object(),
-                d_allocator_p);
+            EncryptionCertificatePublicKeyValueRsa(original.d_rsa.object(),
+                                                   d_allocator_p);
     }
     else if (d_type == e_ELLIPTIC_CURVE) {
         new (d_ellipticCurve.buffer())
@@ -4618,10 +4611,6 @@ void EncryptionCertificatePublicKeyValue::reset()
     d_type = e_UNDEFINED;
 }
 
-
-
-
-
 EncryptionCertificatePublicKeyValueRsa& EncryptionCertificatePublicKeyValue::
     makeRsa()
 {
@@ -4654,13 +4643,8 @@ EncryptionCertificatePublicKeyValueRsa& EncryptionCertificatePublicKeyValue::
     return d_rsa.object();
 }
 
-
-
-
-
-
-EncryptionCertificatePublicKeyValueEllipticCurve& EncryptionCertificatePublicKeyValue::
-    makeEllipticCurve()
+EncryptionCertificatePublicKeyValueEllipticCurve&
+EncryptionCertificatePublicKeyValue::makeEllipticCurve()
 {
     if (d_type == e_ELLIPTIC_CURVE) {
         d_ellipticCurve.object().reset();
@@ -4675,8 +4659,9 @@ EncryptionCertificatePublicKeyValueEllipticCurve& EncryptionCertificatePublicKey
     return d_ellipticCurve.object();
 }
 
-EncryptionCertificatePublicKeyValueEllipticCurve& EncryptionCertificatePublicKeyValue::
-    makeEllipticCurve(const EncryptionCertificatePublicKeyValueEllipticCurve& value)
+EncryptionCertificatePublicKeyValueEllipticCurve&
+EncryptionCertificatePublicKeyValue::makeEllipticCurve(
+    const EncryptionCertificatePublicKeyValueEllipticCurve& value)
 {
     if (d_type == e_ELLIPTIC_CURVE) {
         d_ellipticCurve.object() = value;
@@ -4684,7 +4669,8 @@ EncryptionCertificatePublicKeyValueEllipticCurve& EncryptionCertificatePublicKey
     else {
         this->reset();
         new (d_ellipticCurve.buffer())
-            EncryptionCertificatePublicKeyValueEllipticCurve(value, d_allocator_p);
+            EncryptionCertificatePublicKeyValueEllipticCurve(value,
+                                                             d_allocator_p);
         d_type = e_ELLIPTIC_CURVE;
     }
 
@@ -4727,9 +4713,8 @@ EncryptionCertificatePublicKeyValueRsa& EncryptionCertificatePublicKeyValue::
     return d_rsa.object();
 }
 
-
-EncryptionCertificatePublicKeyValueEllipticCurve& EncryptionCertificatePublicKeyValue::
-    ellipticCurve()
+EncryptionCertificatePublicKeyValueEllipticCurve&
+EncryptionCertificatePublicKeyValue::ellipticCurve()
 {
     BSLS_ASSERT(this->isEllipticCurve());
     return d_ellipticCurve.object();
@@ -4879,32 +4864,6 @@ bool operator<(const EncryptionCertificatePublicKeyValue& lhs,
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 EncryptionCertificatePublicKeyInfo::EncryptionCertificatePublicKeyInfo(
     bslma::Allocator* basicAllocator)
 : d_algorithm(basicAllocator)
@@ -4931,7 +4890,7 @@ operator=(const EncryptionCertificatePublicKeyInfo& other)
 {
     if (this != &other) {
         d_algorithm = other.d_algorithm;
-        d_value  = other.d_value;
+        d_value     = other.d_value;
     }
 
     return *this;
@@ -4961,7 +4920,8 @@ ntsa::Error EncryptionCertificatePublicKeyInfo::decode(
     }
 
     if (d_algorithm.identifier().equals(
-        ntca::EncryptionCertificatePublicKeyAlgorithmIdentifierType::e_RSA)) 
+            ntca::EncryptionCertificatePublicKeyAlgorithmIdentifierType::
+                e_RSA))
     {
         error = d_value.makeRsa().decode(decoder);
         if (error) {
@@ -4969,15 +4929,15 @@ ntsa::Error EncryptionCertificatePublicKeyInfo::decode(
         }
     }
     else if (d_algorithm.identifier().equals(
-        ntca::EncryptionCertificatePublicKeyAlgorithmIdentifierType::e_ELLIPTIC_CURVE)) 
+                 ntca::EncryptionCertificatePublicKeyAlgorithmIdentifierType::
+                     e_ELLIPTIC_CURVE))
     {
         error = d_value.makeEllipticCurve().decode(decoder);
         if (error) {
             return error;
         }
     }
-    else
-    {
+    else {
         error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_BIT_STRING);
         if (error) {
             return error;
@@ -5009,11 +4969,23 @@ ntsa::Error EncryptionCertificatePublicKeyInfo::encode(
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
+
+const ntca::EncryptionCertificatePublicKeyAlgorithm& 
+EncryptionCertificatePublicKeyInfo::algorithm() const
+{
+    return d_algorithm;
+}
+
+const ntca::EncryptionCertificatePublicKeyValue& 
+EncryptionCertificatePublicKeyInfo::value() const
+{
+    return d_value;
+}
+
 bool EncryptionCertificatePublicKeyInfo::equals(
     const EncryptionCertificatePublicKeyInfo& other) const
 {
-    return d_algorithm == other.d_algorithm &&
-           d_value == other.d_value;
+    return d_algorithm == other.d_algorithm && d_value == other.d_value;
 }
 
 bool EncryptionCertificatePublicKeyInfo::less(
@@ -5067,7 +5039,8 @@ bool operator<(const EncryptionCertificatePublicKeyInfo& lhs,
     return lhs.less(rhs);
 }
 
-const char* EncryptionCertificateSignatureAlgorithmType::toString(Value value)
+const char* EncryptionCertificateSignatureAlgorithmIdentifierType::toString(
+    Value value)
 {
     switch (value) {
     case e_MD2_RSA:
@@ -5100,7 +5073,7 @@ const char* EncryptionCertificateSignatureAlgorithmType::toString(Value value)
     return 0;
 }
 
-void EncryptionCertificateSignatureAlgorithmType::toObjectIdentifier(
+void EncryptionCertificateSignatureAlgorithmIdentifierType::toObjectIdentifier(
     ntsa::AbstractObjectIdentifier* result,
     Value                           value)
 {
@@ -5144,7 +5117,7 @@ void EncryptionCertificateSignatureAlgorithmType::toObjectIdentifier(
     }
 }
 
-int EncryptionCertificateSignatureAlgorithmType::fromString(
+int EncryptionCertificateSignatureAlgorithmIdentifierType::fromString(
     Value*                   result,
     const bslstl::StringRef& string)
 {
@@ -5211,9 +5184,9 @@ int EncryptionCertificateSignatureAlgorithmType::fromString(
     return -1;
 }
 
-int EncryptionCertificateSignatureAlgorithmType::fromObjectIdentifier(
-    Value*                                result,
-    const ntsa::AbstractObjectIdentifier& identifier)
+int EncryptionCertificateSignatureAlgorithmIdentifierType::
+    fromObjectIdentifier(Value*                                result,
+                         const ntsa::AbstractObjectIdentifier& identifier)
 {
     if (identifier.equals(1, 2, 840, 113549, 1, 1, 2)) {
         *result = e_MD2_RSA;
@@ -5278,7 +5251,7 @@ int EncryptionCertificateSignatureAlgorithmType::fromObjectIdentifier(
     return -1;
 }
 
-bsl::ostream& EncryptionCertificateSignatureAlgorithmType::print(
+bsl::ostream& EncryptionCertificateSignatureAlgorithmIdentifierType::print(
     bsl::ostream& stream,
     Value         value)
 {
@@ -5286,35 +5259,38 @@ bsl::ostream& EncryptionCertificateSignatureAlgorithmType::print(
 }
 
 bsl::ostream& operator<<(
-    bsl::ostream&                                      stream,
-    EncryptionCertificateSignatureAlgorithmType::Value rhs)
+    bsl::ostream&                                                stream,
+    EncryptionCertificateSignatureAlgorithmIdentifierType::Value rhs)
 {
-    return EncryptionCertificateSignatureAlgorithmType::print(stream, rhs);
+    return EncryptionCertificateSignatureAlgorithmIdentifierType::print(stream,
+                                                                        rhs);
 }
 
-EncryptionCertificateSignatureAlgorithm::
-    EncryptionCertificateSignatureAlgorithm(bslma::Allocator* basicAllocator)
+EncryptionCertificateSignatureAlgorithmIdentifier::
+    EncryptionCertificateSignatureAlgorithmIdentifier(
+        bslma::Allocator* basicAllocator)
 : d_identifier(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificateSignatureAlgorithm::
-    EncryptionCertificateSignatureAlgorithm(
-        const EncryptionCertificateSignatureAlgorithm& original,
-        bslma::Allocator*                              basicAllocator)
+EncryptionCertificateSignatureAlgorithmIdentifier::
+    EncryptionCertificateSignatureAlgorithmIdentifier(
+        const EncryptionCertificateSignatureAlgorithmIdentifier& original,
+        bslma::Allocator* basicAllocator)
 : d_identifier(original.d_identifier, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificateSignatureAlgorithm::
-    ~EncryptionCertificateSignatureAlgorithm()
+EncryptionCertificateSignatureAlgorithmIdentifier::
+    ~EncryptionCertificateSignatureAlgorithmIdentifier()
 {
 }
 
-EncryptionCertificateSignatureAlgorithm& EncryptionCertificateSignatureAlgorithm::
-operator=(const EncryptionCertificateSignatureAlgorithm& other)
+EncryptionCertificateSignatureAlgorithmIdentifier&
+EncryptionCertificateSignatureAlgorithmIdentifier::operator=(
+    const EncryptionCertificateSignatureAlgorithmIdentifier& other)
 {
     if (this != &other) {
         d_identifier = other.d_identifier;
@@ -5323,50 +5299,47 @@ operator=(const EncryptionCertificateSignatureAlgorithm& other)
     return *this;
 }
 
-EncryptionCertificateSignatureAlgorithm& EncryptionCertificateSignatureAlgorithm::
-operator=(const ntsa::AbstractObjectIdentifier& value)
+EncryptionCertificateSignatureAlgorithmIdentifier&
+EncryptionCertificateSignatureAlgorithmIdentifier::operator=(
+    const ntsa::AbstractObjectIdentifier& value)
 {
     d_identifier = value;
     return *this;
 }
 
-EncryptionCertificateSignatureAlgorithm& EncryptionCertificateSignatureAlgorithm::
-operator=(EncryptionCertificateSignatureAlgorithmType::Value value)
+EncryptionCertificateSignatureAlgorithmIdentifier&
+EncryptionCertificateSignatureAlgorithmIdentifier::operator=(
+    EncryptionCertificateSignatureAlgorithmIdentifierType::Value value)
 {
-    EncryptionCertificateSignatureAlgorithmType::toObjectIdentifier(
+    EncryptionCertificateSignatureAlgorithmIdentifierType::toObjectIdentifier(
         &d_identifier,
         value);
     return *this;
 }
 
-void EncryptionCertificateSignatureAlgorithm::reset()
+void EncryptionCertificateSignatureAlgorithmIdentifier::reset()
 {
     d_identifier.reset();
 }
 
-void EncryptionCertificateSignatureAlgorithm::setIdentifier(
+void EncryptionCertificateSignatureAlgorithmIdentifier::setIdentifier(
     const ntsa::AbstractObjectIdentifier& value)
 {
     d_identifier = value;
 }
 
-void EncryptionCertificateSignatureAlgorithm::setIdentifer(
-    EncryptionCertificateSignatureAlgorithmType::Value value)
+void EncryptionCertificateSignatureAlgorithmIdentifier::setIdentifer(
+    EncryptionCertificateSignatureAlgorithmIdentifierType::Value value)
 {
-    EncryptionCertificateSignatureAlgorithmType::toObjectIdentifier(
+    EncryptionCertificateSignatureAlgorithmIdentifierType::toObjectIdentifier(
         &d_identifier,
         value);
 }
 
-ntsa::Error EncryptionCertificateSignatureAlgorithm::decode(
+ntsa::Error EncryptionCertificateSignatureAlgorithmIdentifier::decode(
     ntsa::AbstractSyntaxDecoder* decoder)
 {
     ntsa::Error error;
-
-    error = decoder->decodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
-    if (error) {
-        return error;
-    }
 
     error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OBJECT_IDENTIFIER);
     if (error) {
@@ -5381,6 +5354,303 @@ ntsa::Error EncryptionCertificateSignatureAlgorithm::decode(
     error = decoder->decodeTagComplete();
     if (error) {
         return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionCertificateSignatureAlgorithmIdentifier::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    NTCCFG_WARNING_UNUSED(encoder);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+const ntsa::AbstractObjectIdentifier&
+EncryptionCertificateSignatureAlgorithmIdentifier::identifier() const
+{
+    return d_identifier;
+}
+
+bool EncryptionCertificateSignatureAlgorithmIdentifier::equals(
+    const EncryptionCertificateSignatureAlgorithmIdentifier& other) const
+{
+    return d_identifier == other.d_identifier;
+}
+
+bool EncryptionCertificateSignatureAlgorithmIdentifier::equals(
+    EncryptionCertificateSignatureAlgorithmIdentifierType::Value value) const
+{
+    ntsa::AbstractObjectIdentifier identifier;
+    EncryptionCertificateSignatureAlgorithmIdentifierType::toObjectIdentifier(
+        &identifier,
+        value);
+
+    return d_identifier.equals(identifier);
+}
+
+bool EncryptionCertificateSignatureAlgorithmIdentifier::less(
+    const EncryptionCertificateSignatureAlgorithmIdentifier& other) const
+{
+    return d_identifier < other.d_identifier;
+}
+
+bsl::ostream& EncryptionCertificateSignatureAlgorithmIdentifier::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
+{
+    ntca::EncryptionCertificateSignatureAlgorithmIdentifierType::Value type;
+    int rc = ntca::EncryptionCertificateSignatureAlgorithmIdentifierType::
+        fromObjectIdentifier(&type, d_identifier);
+    if (rc == 0) {
+        stream << ntca::EncryptionCertificateSignatureAlgorithmIdentifierType::
+                toString(type);
+    }
+    else {
+        d_identifier.print(stream, level, spacesPerLevel);
+    }
+
+    return stream;
+}
+
+bsl::ostream& operator<<(
+    bsl::ostream&                                            stream,
+    const EncryptionCertificateSignatureAlgorithmIdentifier& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionCertificateSignatureAlgorithmIdentifier& lhs,
+                const EncryptionCertificateSignatureAlgorithmIdentifier& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionCertificateSignatureAlgorithmIdentifier& lhs,
+                const EncryptionCertificateSignatureAlgorithmIdentifier& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionCertificateSignatureAlgorithmIdentifier& lhs,
+               const EncryptionCertificateSignatureAlgorithmIdentifier& rhs)
+{
+    return lhs.less(rhs);
+}
+
+EncryptionCertificateSignatureAlgorithmParameters::
+    EncryptionCertificateSignatureAlgorithmParameters(
+        bslma::Allocator* basicAllocator)
+: d_value(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateSignatureAlgorithmParameters::
+    EncryptionCertificateSignatureAlgorithmParameters(
+        const EncryptionCertificateSignatureAlgorithmParameters& original,
+        bslma::Allocator* basicAllocator)
+: d_value(original.d_value, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateSignatureAlgorithmParameters::
+    ~EncryptionCertificateSignatureAlgorithmParameters()
+{
+}
+
+EncryptionCertificateSignatureAlgorithmParameters&
+EncryptionCertificateSignatureAlgorithmParameters::operator=(
+    const EncryptionCertificateSignatureAlgorithmParameters& other)
+{
+    if (this != &other) {
+        d_value = other.d_value;
+    }
+
+    return *this;
+}
+
+void EncryptionCertificateSignatureAlgorithmParameters::reset()
+{
+    d_value.reset();
+}
+
+ntsa::Error EncryptionCertificateSignatureAlgorithmParameters::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    error = decoder->decodeTag();
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeValue(&d_value);
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionCertificateSignatureAlgorithmParameters::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    ntsa::Error error;
+
+    error = encoder->encodeTag(d_value.tagClass(),
+                               d_value.tagType(),
+                               d_value.tagNumber());
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeValue(d_value);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+bool EncryptionCertificateSignatureAlgorithmParameters::equals(
+    const EncryptionCertificateSignatureAlgorithmParameters& other) const
+{
+    return d_value == other.d_value;
+}
+
+bool EncryptionCertificateSignatureAlgorithmParameters::less(
+    const EncryptionCertificateSignatureAlgorithmParameters& other) const
+{
+    return d_value < other.d_value;
+}
+
+bsl::ostream& EncryptionCertificateSignatureAlgorithmParameters::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
+{
+    if (d_value.tagClass() == k_UNIVERSAL &&
+        d_value.tagType() == k_PRIMITIVE && d_value.tagNumber() == k_NULL)
+    {
+        stream << "NULL";
+    }
+    else {
+        d_value.print(stream, level, spacesPerLevel);
+    }
+
+    return stream;
+}
+
+bsl::ostream& operator<<(
+    bsl::ostream&                                            stream,
+    const EncryptionCertificateSignatureAlgorithmParameters& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionCertificateSignatureAlgorithmParameters& lhs,
+                const EncryptionCertificateSignatureAlgorithmParameters& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionCertificateSignatureAlgorithmParameters& lhs,
+                const EncryptionCertificateSignatureAlgorithmParameters& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionCertificateSignatureAlgorithmParameters& lhs,
+               const EncryptionCertificateSignatureAlgorithmParameters& rhs)
+{
+    return lhs.less(rhs);
+}
+
+EncryptionCertificateSignatureAlgorithm::
+    EncryptionCertificateSignatureAlgorithm(bslma::Allocator* basicAllocator)
+: d_identifier(basicAllocator)
+, d_parameters(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateSignatureAlgorithm::
+    EncryptionCertificateSignatureAlgorithm(
+        const EncryptionCertificateSignatureAlgorithm& original,
+        bslma::Allocator*                              basicAllocator)
+: d_identifier(original.d_identifier, basicAllocator)
+, d_parameters(original.d_parameters, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionCertificateSignatureAlgorithm::
+    ~EncryptionCertificateSignatureAlgorithm()
+{
+}
+
+EncryptionCertificateSignatureAlgorithm& EncryptionCertificateSignatureAlgorithm::
+operator=(const EncryptionCertificateSignatureAlgorithm& other)
+{
+    if (this != &other) {
+        d_identifier = other.d_identifier;
+        d_parameters = other.d_parameters;
+    }
+
+    return *this;
+}
+
+void EncryptionCertificateSignatureAlgorithm::reset()
+{
+    d_identifier.reset();
+    d_parameters.reset();
+}
+
+void EncryptionCertificateSignatureAlgorithm::setIdentifier(
+    const EncryptionCertificateSignatureAlgorithmIdentifier& value)
+{
+    d_identifier = value;
+}
+
+void EncryptionCertificateSignatureAlgorithm::setParameters(
+    const EncryptionCertificateSignatureAlgorithmParameters& value)
+{
+    d_parameters = value;
+}
+
+ntsa::Error EncryptionCertificateSignatureAlgorithm::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    error = decoder->decodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    if (error) {
+        return error;
+    }
+
+    error = d_identifier.decode(decoder);
+    if (error) {
+        return error;
+    }
+
+    if (decoder->contentBytesRemaining() > 0) {
+        error = d_parameters.makeValue().decode(decoder);
+        if (error) {
+            return error;
+        }
     }
 
     error = decoder->decodeTagComplete();
@@ -5398,33 +5668,37 @@ ntsa::Error EncryptionCertificateSignatureAlgorithm::encode(
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
-const ntsa::AbstractObjectIdentifier& EncryptionCertificateSignatureAlgorithm::
-    identifier() const
+const EncryptionCertificateSignatureAlgorithmIdentifier&
+EncryptionCertificateSignatureAlgorithm::identifier() const
 {
     return d_identifier;
+}
+
+const bdlb::NullableValue<EncryptionCertificateSignatureAlgorithmParameters>&
+EncryptionCertificateSignatureAlgorithm::parameters() const
+{
+    return d_parameters;
 }
 
 bool EncryptionCertificateSignatureAlgorithm::equals(
     const EncryptionCertificateSignatureAlgorithm& other) const
 {
-    return d_identifier == other.d_identifier;
-}
-
-bool EncryptionCertificateSignatureAlgorithm::equals(
-    EncryptionCertificateSignatureAlgorithmType::Value value) const
-{
-    ntsa::AbstractObjectIdentifier identifier;
-    EncryptionCertificateSignatureAlgorithmType::toObjectIdentifier(
-        &identifier,
-        value);
-
-    return d_identifier.equals(identifier);
+    return d_identifier == other.d_identifier &&
+           d_parameters == other.d_parameters;
 }
 
 bool EncryptionCertificateSignatureAlgorithm::less(
     const EncryptionCertificateSignatureAlgorithm& other) const
 {
-    return d_identifier < other.d_identifier;
+    if (d_identifier < other.d_identifier) {
+        return true;
+    }
+
+    if (other.d_identifier < d_identifier) {
+        return false;
+    }
+
+    return d_parameters < other.d_parameters;
 }
 
 bsl::ostream& EncryptionCertificateSignatureAlgorithm::print(
@@ -5432,17 +5706,15 @@ bsl::ostream& EncryptionCertificateSignatureAlgorithm::print(
     int           level,
     int           spacesPerLevel) const
 {
-    ntca::EncryptionCertificateSignatureAlgorithmType::Value type;
-    int rc = ntca::EncryptionCertificateSignatureAlgorithmType::
-        fromObjectIdentifier(&type, d_identifier);
-    if (rc == 0) {
-        stream << ntca::EncryptionCertificateSignatureAlgorithmType::toString(
-            type);
-    }
-    else {
-        d_identifier.print(stream, level, spacesPerLevel);
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute("identifier", d_identifier);
+
+    if (!d_parameters.isNull()) {
+        printer.printAttribute("parameters", d_parameters);
     }
 
+    printer.end();
     return stream;
 }
 
@@ -5603,18 +5875,19 @@ EncryptionCertificatePolicyConstraints::EncryptionCertificatePolicyConstraints(
 
 EncryptionCertificatePolicyConstraints::EncryptionCertificatePolicyConstraints(
     const EncryptionCertificatePolicyConstraints& original,
-    bslma::Allocator*                    basicAllocator)
+    bslma::Allocator*                             basicAllocator)
 : d_value(original.d_value, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificatePolicyConstraints::~EncryptionCertificatePolicyConstraints()
+EncryptionCertificatePolicyConstraints::
+    ~EncryptionCertificatePolicyConstraints()
 {
 }
 
-EncryptionCertificatePolicyConstraints& EncryptionCertificatePolicyConstraints::operator=(
-    const EncryptionCertificatePolicyConstraints& other)
+EncryptionCertificatePolicyConstraints& EncryptionCertificatePolicyConstraints::
+operator=(const EncryptionCertificatePolicyConstraints& other)
 {
     if (this != &other) {
         d_value = other.d_value;
@@ -5656,8 +5929,9 @@ ntsa::Error EncryptionCertificatePolicyConstraints::encode(
 {
     ntsa::Error error;
 
-    error = encoder->encodeTag(
-        d_value.tagClass(), d_value.tagType(), d_value.tagNumber());
+    error = encoder->encodeTag(d_value.tagClass(),
+                               d_value.tagType(),
+                               d_value.tagNumber());
     if (error) {
         return error;
     }
@@ -5697,9 +5971,10 @@ bool EncryptionCertificatePolicyConstraints::less(
     return d_value < other.d_value;
 }
 
-bsl::ostream& EncryptionCertificatePolicyConstraints::print(bsl::ostream& stream,
-                                                   int           level,
-                                                   int spacesPerLevel) const
+bsl::ostream& EncryptionCertificatePolicyConstraints::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -5708,7 +5983,7 @@ bsl::ostream& EncryptionCertificatePolicyConstraints::print(bsl::ostream& stream
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                        stream,
+bsl::ostream& operator<<(bsl::ostream&                                 stream,
                          const EncryptionCertificatePolicyConstraints& object)
 {
     return object.print(stream, 0, -1);
@@ -5741,7 +6016,7 @@ EncryptionCertificatePolicyMappings::EncryptionCertificatePolicyMappings(
 
 EncryptionCertificatePolicyMappings::EncryptionCertificatePolicyMappings(
     const EncryptionCertificatePolicyMappings& original,
-    bslma::Allocator*                    basicAllocator)
+    bslma::Allocator*                          basicAllocator)
 : d_value(original.d_value, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -5751,8 +6026,8 @@ EncryptionCertificatePolicyMappings::~EncryptionCertificatePolicyMappings()
 {
 }
 
-EncryptionCertificatePolicyMappings& EncryptionCertificatePolicyMappings::operator=(
-    const EncryptionCertificatePolicyMappings& other)
+EncryptionCertificatePolicyMappings& EncryptionCertificatePolicyMappings::
+operator=(const EncryptionCertificatePolicyMappings& other)
 {
     if (this != &other) {
         d_value = other.d_value;
@@ -5794,8 +6069,9 @@ ntsa::Error EncryptionCertificatePolicyMappings::encode(
 {
     ntsa::Error error;
 
-    error = encoder->encodeTag(
-        d_value.tagClass(), d_value.tagType(), d_value.tagNumber());
+    error = encoder->encodeTag(d_value.tagClass(),
+                               d_value.tagType(),
+                               d_value.tagNumber());
     if (error) {
         return error;
     }
@@ -5835,9 +6111,10 @@ bool EncryptionCertificatePolicyMappings::less(
     return d_value < other.d_value;
 }
 
-bsl::ostream& EncryptionCertificatePolicyMappings::print(bsl::ostream& stream,
-                                                   int           level,
-                                                   int spacesPerLevel) const
+bsl::ostream& EncryptionCertificatePolicyMappings::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -5846,7 +6123,7 @@ bsl::ostream& EncryptionCertificatePolicyMappings::print(bsl::ostream& stream,
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                        stream,
+bsl::ostream& operator<<(bsl::ostream&                              stream,
                          const EncryptionCertificatePolicyMappings& object)
 {
     return object.print(stream, 0, -1);
@@ -5879,7 +6156,7 @@ EncryptionCertificatePolicy::EncryptionCertificatePolicy(
 
 EncryptionCertificatePolicy::EncryptionCertificatePolicy(
     const EncryptionCertificatePolicy& original,
-    bslma::Allocator*                    basicAllocator)
+    bslma::Allocator*                  basicAllocator)
 : d_value(original.d_value, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -5932,8 +6209,9 @@ ntsa::Error EncryptionCertificatePolicy::encode(
 {
     ntsa::Error error;
 
-    error = encoder->encodeTag(
-        d_value.tagClass(), d_value.tagType(), d_value.tagNumber());
+    error = encoder->encodeTag(d_value.tagClass(),
+                               d_value.tagType(),
+                               d_value.tagNumber());
     if (error) {
         return error;
     }
@@ -5974,8 +6252,8 @@ bool EncryptionCertificatePolicy::less(
 }
 
 bsl::ostream& EncryptionCertificatePolicy::print(bsl::ostream& stream,
-                                                   int           level,
-                                                   int spacesPerLevel) const
+                                                 int           level,
+                                                 int spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -5984,7 +6262,7 @@ bsl::ostream& EncryptionCertificatePolicy::print(bsl::ostream& stream,
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                        stream,
+bsl::ostream& operator<<(bsl::ostream&                      stream,
                          const EncryptionCertificatePolicy& object)
 {
     return object.print(stream, 0, -1);
@@ -6008,26 +6286,29 @@ bool operator<(const EncryptionCertificatePolicy& lhs,
     return lhs.less(rhs);
 }
 
-EncryptionCertificateIssuerKeyIdentifier::EncryptionCertificateIssuerKeyIdentifier(
-    bslma::Allocator* basicAllocator)
+EncryptionCertificateIssuerKeyIdentifier::
+    EncryptionCertificateIssuerKeyIdentifier(bslma::Allocator* basicAllocator)
 : d_value(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificateIssuerKeyIdentifier::EncryptionCertificateIssuerKeyIdentifier(
-    const EncryptionCertificateIssuerKeyIdentifier& original,
-    bslma::Allocator*                    basicAllocator)
+EncryptionCertificateIssuerKeyIdentifier::
+    EncryptionCertificateIssuerKeyIdentifier(
+        const EncryptionCertificateIssuerKeyIdentifier& original,
+        bslma::Allocator*                               basicAllocator)
 : d_value(original.d_value, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificateIssuerKeyIdentifier::~EncryptionCertificateIssuerKeyIdentifier()
+EncryptionCertificateIssuerKeyIdentifier::
+    ~EncryptionCertificateIssuerKeyIdentifier()
 {
 }
 
-EncryptionCertificateIssuerKeyIdentifier& EncryptionCertificateIssuerKeyIdentifier::operator=(
+EncryptionCertificateIssuerKeyIdentifier&
+EncryptionCertificateIssuerKeyIdentifier::operator=(
     const EncryptionCertificateIssuerKeyIdentifier& other)
 {
     if (this != &other) {
@@ -6070,8 +6351,9 @@ ntsa::Error EncryptionCertificateIssuerKeyIdentifier::encode(
 {
     ntsa::Error error;
 
-    error = encoder->encodeTag(
-        d_value.tagClass(), d_value.tagType(), d_value.tagNumber());
+    error = encoder->encodeTag(d_value.tagClass(),
+                               d_value.tagType(),
+                               d_value.tagNumber());
     if (error) {
         return error;
     }
@@ -6111,9 +6393,10 @@ bool EncryptionCertificateIssuerKeyIdentifier::less(
     return d_value < other.d_value;
 }
 
-bsl::ostream& EncryptionCertificateIssuerKeyIdentifier::print(bsl::ostream& stream,
-                                                   int           level,
-                                                   int spacesPerLevel) const
+bsl::ostream& EncryptionCertificateIssuerKeyIdentifier::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -6122,8 +6405,9 @@ bsl::ostream& EncryptionCertificateIssuerKeyIdentifier::print(bsl::ostream& stre
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                        stream,
-                         const EncryptionCertificateIssuerKeyIdentifier& object)
+bsl::ostream& operator<<(
+    bsl::ostream&                                   stream,
+    const EncryptionCertificateIssuerKeyIdentifier& object)
 {
     return object.print(stream, 0, -1);
 }
@@ -6146,26 +6430,30 @@ bool operator<(const EncryptionCertificateIssuerKeyIdentifier& lhs,
     return lhs.less(rhs);
 }
 
-EncryptionCertificateIssuerInformationAccess::EncryptionCertificateIssuerInformationAccess(
-    bslma::Allocator* basicAllocator)
+EncryptionCertificateIssuerInformationAccess::
+    EncryptionCertificateIssuerInformationAccess(
+        bslma::Allocator* basicAllocator)
 : d_value(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificateIssuerInformationAccess::EncryptionCertificateIssuerInformationAccess(
-    const EncryptionCertificateIssuerInformationAccess& original,
-    bslma::Allocator*                    basicAllocator)
+EncryptionCertificateIssuerInformationAccess::
+    EncryptionCertificateIssuerInformationAccess(
+        const EncryptionCertificateIssuerInformationAccess& original,
+        bslma::Allocator*                                   basicAllocator)
 : d_value(original.d_value, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificateIssuerInformationAccess::~EncryptionCertificateIssuerInformationAccess()
+EncryptionCertificateIssuerInformationAccess::
+    ~EncryptionCertificateIssuerInformationAccess()
 {
 }
 
-EncryptionCertificateIssuerInformationAccess& EncryptionCertificateIssuerInformationAccess::operator=(
+EncryptionCertificateIssuerInformationAccess&
+EncryptionCertificateIssuerInformationAccess::operator=(
     const EncryptionCertificateIssuerInformationAccess& other)
 {
     if (this != &other) {
@@ -6208,8 +6496,9 @@ ntsa::Error EncryptionCertificateIssuerInformationAccess::encode(
 {
     ntsa::Error error;
 
-    error = encoder->encodeTag(
-        d_value.tagClass(), d_value.tagType(), d_value.tagNumber());
+    error = encoder->encodeTag(d_value.tagClass(),
+                               d_value.tagType(),
+                               d_value.tagNumber());
     if (error) {
         return error;
     }
@@ -6249,9 +6538,10 @@ bool EncryptionCertificateIssuerInformationAccess::less(
     return d_value < other.d_value;
 }
 
-bsl::ostream& EncryptionCertificateIssuerInformationAccess::print(bsl::ostream& stream,
-                                                   int           level,
-                                                   int spacesPerLevel) const
+bsl::ostream& EncryptionCertificateIssuerInformationAccess::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -6260,8 +6550,9 @@ bsl::ostream& EncryptionCertificateIssuerInformationAccess::print(bsl::ostream& 
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                        stream,
-                         const EncryptionCertificateIssuerInformationAccess& object)
+bsl::ostream& operator<<(
+    bsl::ostream&                                       stream,
+    const EncryptionCertificateIssuerInformationAccess& object)
 {
     return object.print(stream, 0, -1);
 }
@@ -6293,7 +6584,7 @@ EncryptionCertificateIssuer::EncryptionCertificateIssuer(
 
 EncryptionCertificateIssuer::EncryptionCertificateIssuer(
     const EncryptionCertificateIssuer& original,
-    bslma::Allocator*                    basicAllocator)
+    bslma::Allocator*                  basicAllocator)
 : d_name(original.d_name, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -6343,14 +6634,14 @@ bool EncryptionCertificateIssuer::less(
 }
 
 bsl::ostream& EncryptionCertificateIssuer::print(bsl::ostream& stream,
-                                                   int           level,
-                                                   int spacesPerLevel) const
+                                                 int           level,
+                                                 int spacesPerLevel) const
 {
     d_name.print(stream, level, spacesPerLevel);
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                        stream,
+bsl::ostream& operator<<(bsl::ostream&                      stream,
                          const EncryptionCertificateIssuer& object)
 {
     return object.print(stream, 0, -1);
@@ -6374,30 +6665,8 @@ bool operator<(const EncryptionCertificateIssuer& lhs,
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-const char* EncryptionCertificateSubjectKeyUsageExtendedType::toString(Value value)
+const char* EncryptionCertificateSubjectKeyUsageExtendedType::toString(
+    Value value)
 {
     switch (value) {
     case e_TLS_CLIENT:
@@ -6466,7 +6735,7 @@ void EncryptionCertificateSubjectKeyUsageExtendedType::toObjectIdentifier(
 
 int EncryptionCertificateSubjectKeyUsageExtendedType::fromString(
     EncryptionCertificateSubjectKeyUsageExtendedType::Value* result,
-    const bslstl::StringRef&                            string)
+    const bslstl::StringRef&                                 string)
 {
     if (bdlb::String::areEqualCaseless(string, "TLS_CLIENT")) {
         *result = e_TLS_CLIENT;
@@ -6586,47 +6855,37 @@ bsl::ostream& EncryptionCertificateSubjectKeyUsageExtendedType::print(
 }
 
 bsl::ostream& operator<<(
-    bsl::ostream&                                      stream,
+    bsl::ostream&                                           stream,
     EncryptionCertificateSubjectKeyUsageExtendedType::Value rhs)
 {
-    return EncryptionCertificateSubjectKeyUsageExtendedType::print(stream, rhs);
+    return EncryptionCertificateSubjectKeyUsageExtendedType::print(stream,
+                                                                   rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-EncryptionCertificateSubjectKeyUsageExtended::EncryptionCertificateSubjectKeyUsageExtended(
-    bslma::Allocator* basicAllocator)
+EncryptionCertificateSubjectKeyUsageExtended::
+    EncryptionCertificateSubjectKeyUsageExtended(
+        bslma::Allocator* basicAllocator)
 : d_identifiers(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificateSubjectKeyUsageExtended::EncryptionCertificateSubjectKeyUsageExtended(
-    const EncryptionCertificateSubjectKeyUsageExtended& original,
-    bslma::Allocator*                    basicAllocator)
+EncryptionCertificateSubjectKeyUsageExtended::
+    EncryptionCertificateSubjectKeyUsageExtended(
+        const EncryptionCertificateSubjectKeyUsageExtended& original,
+        bslma::Allocator*                                   basicAllocator)
 : d_identifiers(original.d_identifiers, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificateSubjectKeyUsageExtended::~EncryptionCertificateSubjectKeyUsageExtended()
+EncryptionCertificateSubjectKeyUsageExtended::
+    ~EncryptionCertificateSubjectKeyUsageExtended()
 {
 }
 
-EncryptionCertificateSubjectKeyUsageExtended& EncryptionCertificateSubjectKeyUsageExtended::operator=(
+EncryptionCertificateSubjectKeyUsageExtended&
+EncryptionCertificateSubjectKeyUsageExtended::operator=(
     const EncryptionCertificateSubjectKeyUsageExtended& other)
 {
     if (this != &other) {
@@ -6641,7 +6900,6 @@ void EncryptionCertificateSubjectKeyUsageExtended::reset()
     d_identifiers.clear();
 }
 
-
 void EncryptionCertificateSubjectKeyUsageExtended::setIdentifierList(
     const bsl::vector<ntsa::AbstractObjectIdentifier>& value)
 {
@@ -6655,10 +6913,12 @@ void EncryptionCertificateSubjectKeyUsageExtended::addIdentifier(
 }
 
 void EncryptionCertificateSubjectKeyUsageExtended::addIdentifier(
-        EncryptionCertificateSubjectKeyUsageExtendedType::Value value)
+    EncryptionCertificateSubjectKeyUsageExtendedType::Value value)
 {
     ntsa::AbstractObjectIdentifier identifier;
-    EncryptionCertificateSubjectKeyUsageExtendedType::toObjectIdentifier(&identifier, value);
+    EncryptionCertificateSubjectKeyUsageExtendedType::toObjectIdentifier(
+        &identifier,
+        value);
 
     d_identifiers.push_back(identifier);
 }
@@ -6674,7 +6934,8 @@ ntsa::Error EncryptionCertificateSubjectKeyUsageExtended::decode(
     }
 
     while (decoder->contentBytesRemaining() > 0) {
-        error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OBJECT_IDENTIFIER);
+        error =
+            decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OBJECT_IDENTIFIER);
         if (error) {
             return error;
         }
@@ -6712,7 +6973,8 @@ ntsa::Error EncryptionCertificateSubjectKeyUsageExtended::encode(
     }
 
     for (bsl::size_t i = 0; i < d_identifiers.size(); ++i) {
-        error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OBJECT_IDENTIFIER);
+        error =
+            encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OBJECT_IDENTIFIER);
         if (error) {
             return error;
         }
@@ -6736,13 +6998,14 @@ ntsa::Error EncryptionCertificateSubjectKeyUsageExtended::encode(
     return ntsa::Error();
 }
 
-const bsl::vector<ntsa::AbstractObjectIdentifier>& EncryptionCertificateSubjectKeyUsageExtended::identifierList() const
+const bsl::vector<ntsa::AbstractObjectIdentifier>&
+EncryptionCertificateSubjectKeyUsageExtended::identifierList() const
 {
     return d_identifiers;
 }
 
-
-bool EncryptionCertificateSubjectKeyUsageExtended::has(const ntsa::AbstractObjectIdentifier& identifier) const
+bool EncryptionCertificateSubjectKeyUsageExtended::has(
+    const ntsa::AbstractObjectIdentifier& identifier) const
 {
     bool result = false;
 
@@ -6756,10 +7019,13 @@ bool EncryptionCertificateSubjectKeyUsageExtended::has(const ntsa::AbstractObjec
     return result;
 }
 
-bool EncryptionCertificateSubjectKeyUsageExtended::has(EncryptionCertificateSubjectKeyUsageExtendedType::Value value) const
+bool EncryptionCertificateSubjectKeyUsageExtended::has(
+    EncryptionCertificateSubjectKeyUsageExtendedType::Value value) const
 {
     ntsa::AbstractObjectIdentifier identifier;
-    EncryptionCertificateSubjectKeyUsageExtendedType::toObjectIdentifier(&identifier, value);
+    EncryptionCertificateSubjectKeyUsageExtendedType::toObjectIdentifier(
+        &identifier,
+        value);
 
     return this->has(identifier);
 }
@@ -6776,9 +7042,10 @@ bool EncryptionCertificateSubjectKeyUsageExtended::less(
     return d_identifiers < other.d_identifiers;
 }
 
-bsl::ostream& EncryptionCertificateSubjectKeyUsageExtended::print(bsl::ostream& stream,
-                                                   int           level,
-                                                   int spacesPerLevel) const
+bsl::ostream& EncryptionCertificateSubjectKeyUsageExtended::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -6787,9 +7054,12 @@ bsl::ostream& EncryptionCertificateSubjectKeyUsageExtended::print(bsl::ostream& 
         stream << ' ';
 
         EncryptionCertificateSubjectKeyUsageExtendedType::Value value;
-        int rc = EncryptionCertificateSubjectKeyUsageExtendedType::fromObjectIdentifier(&value, d_identifiers[i]);
+        int rc = EncryptionCertificateSubjectKeyUsageExtendedType::
+            fromObjectIdentifier(&value, d_identifiers[i]);
         if (rc == 0) {
-            stream << EncryptionCertificateSubjectKeyUsageExtendedType::toString(value);
+            stream
+                << EncryptionCertificateSubjectKeyUsageExtendedType::toString(
+                       value);
         }
         else {
             stream << d_identifiers[i];
@@ -6800,8 +7070,9 @@ bsl::ostream& EncryptionCertificateSubjectKeyUsageExtended::print(bsl::ostream& 
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                        stream,
-                         const EncryptionCertificateSubjectKeyUsageExtended& object)
+bsl::ostream& operator<<(
+    bsl::ostream&                                       stream,
+    const EncryptionCertificateSubjectKeyUsageExtended& object)
 {
     return object.print(stream, 0, -1);
 }
@@ -6823,28 +7094,6 @@ bool operator<(const EncryptionCertificateSubjectKeyUsageExtended& lhs,
 {
     return lhs.less(rhs);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 const char* EncryptionCertificateSubjectKeyUsageType::toString(Value value)
 {
@@ -6873,11 +7122,9 @@ const char* EncryptionCertificateSubjectKeyUsageType::toString(Value value)
     return 0;
 }
 
-
-
 int EncryptionCertificateSubjectKeyUsageType::fromString(
     EncryptionCertificateSubjectKeyUsageType::Value* result,
-    const bslstl::StringRef&                       string)
+    const bslstl::StringRef&                         string)
 {
     if (bdlb::String::areEqualCaseless(string, "DIGITAL_SIGNATURE")) {
         *result = e_DIGITAL_SIGNATURE;
@@ -6909,7 +7156,10 @@ int EncryptionCertificateSubjectKeyUsageType::fromString(
         return 0;
     }
 
-    if (bdlb::String::areEqualCaseless(string, "CERTIFICATE_REVOCATION_LIST_SIGNATURE")) {
+    if (bdlb::String::areEqualCaseless(
+            string,
+            "CERTIFICATE_REVOCATION_LIST_SIGNATURE"))
+    {
         *result = e_CERTIFICATE_REVOCATION_LIST_SIGNATURE;
         return 0;
     }
@@ -6934,32 +7184,11 @@ bsl::ostream& EncryptionCertificateSubjectKeyUsageType::print(
     return stream << toString(value);
 }
 
-bsl::ostream& operator<<(bsl::ostream&                                 stream,
+bsl::ostream& operator<<(bsl::ostream& stream,
                          EncryptionCertificateSubjectKeyUsageType::Value rhs)
 {
     return EncryptionCertificateSubjectKeyUsageType::print(stream, rhs);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 EncryptionCertificateSubjectKeyUsage::EncryptionCertificateSubjectKeyUsage(
     bslma::Allocator* basicAllocator)
@@ -6970,7 +7199,7 @@ EncryptionCertificateSubjectKeyUsage::EncryptionCertificateSubjectKeyUsage(
 
 EncryptionCertificateSubjectKeyUsage::EncryptionCertificateSubjectKeyUsage(
     const EncryptionCertificateSubjectKeyUsage& original,
-    bslma::Allocator*                    basicAllocator)
+    bslma::Allocator*                           basicAllocator)
 : d_value(original.d_value, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -6980,8 +7209,8 @@ EncryptionCertificateSubjectKeyUsage::~EncryptionCertificateSubjectKeyUsage()
 {
 }
 
-EncryptionCertificateSubjectKeyUsage& EncryptionCertificateSubjectKeyUsage::operator=(
-    const EncryptionCertificateSubjectKeyUsage& other)
+EncryptionCertificateSubjectKeyUsage& EncryptionCertificateSubjectKeyUsage::
+operator=(const EncryptionCertificateSubjectKeyUsage& other)
 {
     if (this != &other) {
         d_value = other.d_value;
@@ -6995,13 +7224,14 @@ void EncryptionCertificateSubjectKeyUsage::reset()
     d_value.reset();
 }
 
- 
-void EncryptionCertificateSubjectKeyUsage::enable(EncryptionCertificateSubjectKeyUsageType::Value value)
+void EncryptionCertificateSubjectKeyUsage::enable(
+    EncryptionCertificateSubjectKeyUsageType::Value value)
 {
     d_value.setBit(static_cast<bsl::size_t>(value), true);
 }
 
-void EncryptionCertificateSubjectKeyUsage::disable(EncryptionCertificateSubjectKeyUsageType::Value value)
+void EncryptionCertificateSubjectKeyUsage::disable(
+    EncryptionCertificateSubjectKeyUsageType::Value value)
 {
     d_value.setBit(static_cast<bsl::size_t>(value), false);
 }
@@ -7052,7 +7282,8 @@ ntsa::Error EncryptionCertificateSubjectKeyUsage::encode(
     return ntsa::Error();
 }
 
-bool EncryptionCertificateSubjectKeyUsage::supports(EncryptionCertificateSubjectKeyUsageType::Value value) const
+bool EncryptionCertificateSubjectKeyUsage::supports(
+    EncryptionCertificateSubjectKeyUsageType::Value value) const
 {
     return d_value.getBit(static_cast<bsl::size_t>(value));
 }
@@ -7069,9 +7300,10 @@ bool EncryptionCertificateSubjectKeyUsage::less(
     return d_value < other.d_value;
 }
 
-bsl::ostream& EncryptionCertificateSubjectKeyUsage::print(bsl::ostream& stream,
-                                                   int           level,
-                                                   int spacesPerLevel) const
+bsl::ostream& EncryptionCertificateSubjectKeyUsage::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -7079,7 +7311,8 @@ bsl::ostream& EncryptionCertificateSubjectKeyUsage::print(bsl::ostream& stream,
     for (bsl::size_t enumerator = 0; enumerator <= 8; ++enumerator) {
         if (d_value.getBit(enumerator)) {
             stream << ' ';
-            stream << static_cast<EncryptionCertificateSubjectKeyUsageType::Value>(enumerator);
+            stream << static_cast<
+                EncryptionCertificateSubjectKeyUsageType::Value>(enumerator);
         }
     }
 
@@ -7087,7 +7320,7 @@ bsl::ostream& EncryptionCertificateSubjectKeyUsage::print(bsl::ostream& stream,
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                        stream,
+bsl::ostream& operator<<(bsl::ostream&                               stream,
                          const EncryptionCertificateSubjectKeyUsage& object)
 {
     return object.print(stream, 0, -1);
@@ -7111,26 +7344,29 @@ bool operator<(const EncryptionCertificateSubjectKeyUsage& lhs,
     return lhs.less(rhs);
 }
 
-EncryptionCertificateSubjectKeyIdentifier::EncryptionCertificateSubjectKeyIdentifier(
-    bslma::Allocator* basicAllocator)
+EncryptionCertificateSubjectKeyIdentifier::
+    EncryptionCertificateSubjectKeyIdentifier(bslma::Allocator* basicAllocator)
 : d_value(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificateSubjectKeyIdentifier::EncryptionCertificateSubjectKeyIdentifier(
-    const EncryptionCertificateSubjectKeyIdentifier& original,
-    bslma::Allocator*                    basicAllocator)
+EncryptionCertificateSubjectKeyIdentifier::
+    EncryptionCertificateSubjectKeyIdentifier(
+        const EncryptionCertificateSubjectKeyIdentifier& original,
+        bslma::Allocator*                                basicAllocator)
 : d_value(original.d_value, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificateSubjectKeyIdentifier::~EncryptionCertificateSubjectKeyIdentifier()
+EncryptionCertificateSubjectKeyIdentifier::
+    ~EncryptionCertificateSubjectKeyIdentifier()
 {
 }
 
-EncryptionCertificateSubjectKeyIdentifier& EncryptionCertificateSubjectKeyIdentifier::operator=(
+EncryptionCertificateSubjectKeyIdentifier&
+EncryptionCertificateSubjectKeyIdentifier::operator=(
     const EncryptionCertificateSubjectKeyIdentifier& other)
 {
     if (this != &other) {
@@ -7173,8 +7409,9 @@ ntsa::Error EncryptionCertificateSubjectKeyIdentifier::encode(
 {
     ntsa::Error error;
 
-    error = encoder->encodeTag(
-        d_value.tagClass(), d_value.tagType(), d_value.tagNumber());
+    error = encoder->encodeTag(d_value.tagClass(),
+                               d_value.tagType(),
+                               d_value.tagNumber());
     if (error) {
         return error;
     }
@@ -7214,9 +7451,10 @@ bool EncryptionCertificateSubjectKeyIdentifier::less(
     return d_value < other.d_value;
 }
 
-bsl::ostream& EncryptionCertificateSubjectKeyIdentifier::print(bsl::ostream& stream,
-                                                   int           level,
-                                                   int spacesPerLevel) const
+bsl::ostream& EncryptionCertificateSubjectKeyIdentifier::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -7225,8 +7463,9 @@ bsl::ostream& EncryptionCertificateSubjectKeyIdentifier::print(bsl::ostream& str
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                        stream,
-                         const EncryptionCertificateSubjectKeyIdentifier& object)
+bsl::ostream& operator<<(
+    bsl::ostream&                                    stream,
+    const EncryptionCertificateSubjectKeyIdentifier& object)
 {
     return object.print(stream, 0, -1);
 }
@@ -7249,32 +7488,34 @@ bool operator<(const EncryptionCertificateSubjectKeyIdentifier& lhs,
     return lhs.less(rhs);
 }
 
-EncryptionCertificateSubjectConstraints::EncryptionCertificateSubjectConstraints(
-    bslma::Allocator* basicAllocator)
+EncryptionCertificateSubjectConstraints::
+    EncryptionCertificateSubjectConstraints(bslma::Allocator* basicAllocator)
 : d_authority()
 , d_pathLength()
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificateSubjectConstraints::EncryptionCertificateSubjectConstraints(
-    const EncryptionCertificateSubjectConstraints& original,
-    bslma::Allocator*                    basicAllocator)
+EncryptionCertificateSubjectConstraints::
+    EncryptionCertificateSubjectConstraints(
+        const EncryptionCertificateSubjectConstraints& original,
+        bslma::Allocator*                              basicAllocator)
 : d_authority(original.d_authority)
 , d_pathLength(original.d_pathLength)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificateSubjectConstraints::~EncryptionCertificateSubjectConstraints()
+EncryptionCertificateSubjectConstraints::
+    ~EncryptionCertificateSubjectConstraints()
 {
 }
 
-EncryptionCertificateSubjectConstraints& EncryptionCertificateSubjectConstraints::operator=(
-    const EncryptionCertificateSubjectConstraints& other)
+EncryptionCertificateSubjectConstraints& EncryptionCertificateSubjectConstraints::
+operator=(const EncryptionCertificateSubjectConstraints& other)
 {
     if (this != &other) {
-        d_authority = other.d_authority;
+        d_authority  = other.d_authority;
         d_pathLength = other.d_pathLength;
     }
 
@@ -7297,7 +7538,7 @@ ntsa::Error EncryptionCertificateSubjectConstraints::decode(
         return error;
     }
 
-    bool wantAuthority = true;
+    bool wantAuthority  = true;
     bool wantPathLength = true;
 
     if (decoder->contentBytesRemaining() > 0) {
@@ -7306,10 +7547,9 @@ ntsa::Error EncryptionCertificateSubjectConstraints::decode(
             return error;
         }
 
-        if (decoder->current().tagClass()  == k_UNIVERSAL &&
-            decoder->current().tagType()   == k_PRIMITIVE &&
-            decoder->current().tagNumber() == k_BOOLEAN &&
-            wantAuthority)
+        if (decoder->current().tagClass() == k_UNIVERSAL &&
+            decoder->current().tagType() == k_PRIMITIVE &&
+            decoder->current().tagNumber() == k_BOOLEAN && wantAuthority)
         {
             error = decoder->decodeValue(&d_authority.makeValue());
             if (error) {
@@ -7320,10 +7560,8 @@ ntsa::Error EncryptionCertificateSubjectConstraints::decode(
         }
         else if (decoder->current().tagClass() == k_UNIVERSAL &&
                  decoder->current().tagType() == k_PRIMITIVE &&
-                 decoder->current().tagNumber() == k_INTEGER &&
-                 wantPathLength)
+                 decoder->current().tagNumber() == k_INTEGER && wantPathLength)
         {
-
             error = decoder->decodeValue(&d_pathLength.makeValue());
             if (error) {
                 return error;
@@ -7411,7 +7649,8 @@ ntsa::Error EncryptionCertificateSubjectConstraints::encode(
 bool EncryptionCertificateSubjectConstraints::equals(
     const EncryptionCertificateSubjectConstraints& other) const
 {
-    return d_authority == other.d_authority && d_pathLength == other.d_pathLength;
+    return d_authority == other.d_authority &&
+           d_pathLength == other.d_pathLength;
 }
 
 bool EncryptionCertificateSubjectConstraints::less(
@@ -7428,13 +7667,14 @@ bool EncryptionCertificateSubjectConstraints::less(
     return d_pathLength < other.d_pathLength;
 }
 
-bsl::ostream& EncryptionCertificateSubjectConstraints::print(bsl::ostream& stream,
-                                                   int           level,
-                                                   int spacesPerLevel) const
+bsl::ostream& EncryptionCertificateSubjectConstraints::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    
+
     if (!d_authority.isNull()) {
         printer.printAttribute("authority", d_authority.value());
     }
@@ -7447,7 +7687,7 @@ bsl::ostream& EncryptionCertificateSubjectConstraints::print(bsl::ostream& strea
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                        stream,
+bsl::ostream& operator<<(bsl::ostream&                                  stream,
                          const EncryptionCertificateSubjectConstraints& object)
 {
     return object.print(stream, 0, -1);
@@ -7480,7 +7720,7 @@ EncryptionCertificateSubject::EncryptionCertificateSubject(
 
 EncryptionCertificateSubject::EncryptionCertificateSubject(
     const EncryptionCertificateSubject& original,
-    bslma::Allocator*                    basicAllocator)
+    bslma::Allocator*                   basicAllocator)
 : d_name(original.d_name, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -7523,7 +7763,8 @@ ntsa::Error EncryptionCertificateSubject::encode(
     return d_name.encode(encoder);
 }
 
-const ntca::EncryptionCertificateName& EncryptionCertificateSubject::name() const
+const ntca::EncryptionCertificateName& EncryptionCertificateSubject::name()
+    const
 {
     return d_name;
 }
@@ -7541,14 +7782,13 @@ bool EncryptionCertificateSubject::less(
 }
 
 bsl::ostream& EncryptionCertificateSubject::print(bsl::ostream& stream,
-                                                   int           level,
-                                                   int spacesPerLevel) const
+                                                  int           level,
+                                                  int spacesPerLevel) const
 {
-    d_name.print(stream, level, spacesPerLevel);
-    return stream;
+    return d_name.print(stream, level, spacesPerLevel);
 }
 
-bsl::ostream& operator<<(bsl::ostream&                        stream,
+bsl::ostream& operator<<(bsl::ostream&                       stream,
                          const EncryptionCertificateSubject& object)
 {
     return object.print(stream, 0, -1);
@@ -7572,11 +7812,7 @@ bool operator<(const EncryptionCertificateSubject& lhs,
     return lhs.less(rhs);
 }
 
-
-// MRM: Insert
-
-
-const char* EncryptionCertificateExtensionAttributeType::toString(Value value)
+const char* EncryptionCertificateExtensionIdentifierType::toString(Value value)
 {
     switch (value) {
     case e_SUBJECT_ALTERNATIVE_NAME:
@@ -7607,7 +7843,7 @@ const char* EncryptionCertificateExtensionAttributeType::toString(Value value)
     return 0;
 }
 
-void EncryptionCertificateExtensionAttributeType::toObjectIdentifier(
+void EncryptionCertificateExtensionIdentifierType::toObjectIdentifier(
     ntsa::AbstractObjectIdentifier* result,
     Value                           value)
 {
@@ -7631,7 +7867,7 @@ void EncryptionCertificateExtensionAttributeType::toObjectIdentifier(
     else if (value == e_SUBJECT_CONSTRAINTS) {
         result->set(2, 5, 29, 19);
     }
-    
+
     else if (value == e_ISSUER_ALTERNATIVE_NAME) {
         result->set(2, 5, 29, 18);
     }
@@ -7652,9 +7888,9 @@ void EncryptionCertificateExtensionAttributeType::toObjectIdentifier(
     }
 }
 
-int EncryptionCertificateExtensionAttributeType::fromString(
-    EncryptionCertificateExtensionAttributeType::Value* result,
-    const bslstl::StringRef&                            string)
+int EncryptionCertificateExtensionIdentifierType::fromString(
+    EncryptionCertificateExtensionIdentifierType::Value* result,
+    const bslstl::StringRef&                             string)
 {
     if (bdlb::String::areEqualCaseless(string, "SUBJECT_ALTERNATIVE_NAME")) {
         *result = e_SUBJECT_ALTERNATIVE_NAME;
@@ -7714,7 +7950,7 @@ int EncryptionCertificateExtensionAttributeType::fromString(
     return -1;
 }
 
-int EncryptionCertificateExtensionAttributeType::fromObjectIdentifier(
+int EncryptionCertificateExtensionIdentifierType::fromObjectIdentifier(
     Value*                                result,
     const ntsa::AbstractObjectIdentifier& identifier)
 {
@@ -7776,7 +8012,7 @@ int EncryptionCertificateExtensionAttributeType::fromObjectIdentifier(
     return -1;
 }
 
-bsl::ostream& EncryptionCertificateExtensionAttributeType::print(
+bsl::ostream& EncryptionCertificateExtensionIdentifierType::print(
     bsl::ostream& stream,
     Value         value)
 {
@@ -7784,35 +8020,36 @@ bsl::ostream& EncryptionCertificateExtensionAttributeType::print(
 }
 
 bsl::ostream& operator<<(
-    bsl::ostream&                                      stream,
-    EncryptionCertificateExtensionAttributeType::Value rhs)
+    bsl::ostream&                                       stream,
+    EncryptionCertificateExtensionIdentifierType::Value rhs)
 {
-    return EncryptionCertificateExtensionAttributeType::print(stream, rhs);
+    return EncryptionCertificateExtensionIdentifierType::print(stream, rhs);
 }
 
-EncryptionCertificateExtensionAttribute::
-    EncryptionCertificateExtensionAttribute(bslma::Allocator* basicAllocator)
+EncryptionCertificateExtensionIdentifier::
+    EncryptionCertificateExtensionIdentifier(bslma::Allocator* basicAllocator)
 : d_identifier(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificateExtensionAttribute::
-    EncryptionCertificateExtensionAttribute(
-        const EncryptionCertificateExtensionAttribute& original,
-        bslma::Allocator*                              basicAllocator)
+EncryptionCertificateExtensionIdentifier::
+    EncryptionCertificateExtensionIdentifier(
+        const EncryptionCertificateExtensionIdentifier& original,
+        bslma::Allocator*                               basicAllocator)
 : d_identifier(original.d_identifier, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionCertificateExtensionAttribute::
-    ~EncryptionCertificateExtensionAttribute()
+EncryptionCertificateExtensionIdentifier::
+    ~EncryptionCertificateExtensionIdentifier()
 {
 }
 
-EncryptionCertificateExtensionAttribute& EncryptionCertificateExtensionAttribute::
-operator=(const EncryptionCertificateExtensionAttribute& other)
+EncryptionCertificateExtensionIdentifier&
+EncryptionCertificateExtensionIdentifier::operator=(
+    const EncryptionCertificateExtensionIdentifier& other)
 {
     if (this != &other) {
         d_identifier = other.d_identifier;
@@ -7821,42 +8058,44 @@ operator=(const EncryptionCertificateExtensionAttribute& other)
     return *this;
 }
 
-EncryptionCertificateExtensionAttribute& EncryptionCertificateExtensionAttribute::
-operator=(const ntsa::AbstractObjectIdentifier& value)
+EncryptionCertificateExtensionIdentifier&
+EncryptionCertificateExtensionIdentifier::operator=(
+    const ntsa::AbstractObjectIdentifier& value)
 {
     d_identifier = value;
     return *this;
 }
 
-EncryptionCertificateExtensionAttribute& EncryptionCertificateExtensionAttribute::
-operator=(EncryptionCertificateExtensionAttributeType::Value value)
+EncryptionCertificateExtensionIdentifier&
+EncryptionCertificateExtensionIdentifier::operator=(
+    EncryptionCertificateExtensionIdentifierType::Value value)
 {
-    EncryptionCertificateExtensionAttributeType::toObjectIdentifier(
+    EncryptionCertificateExtensionIdentifierType::toObjectIdentifier(
         &d_identifier,
         value);
     return *this;
 }
 
-void EncryptionCertificateExtensionAttribute::reset()
+void EncryptionCertificateExtensionIdentifier::reset()
 {
     d_identifier.reset();
 }
 
-void EncryptionCertificateExtensionAttribute::setIdentifier(
+void EncryptionCertificateExtensionIdentifier::setIdentifier(
     const ntsa::AbstractObjectIdentifier& value)
 {
     d_identifier = value;
 }
 
-void EncryptionCertificateExtensionAttribute::setIdentifer(
-    EncryptionCertificateExtensionAttributeType::Value value)
+void EncryptionCertificateExtensionIdentifier::setIdentifer(
+    EncryptionCertificateExtensionIdentifierType::Value value)
 {
-    EncryptionCertificateExtensionAttributeType::toObjectIdentifier(
+    EncryptionCertificateExtensionIdentifierType::toObjectIdentifier(
         &d_identifier,
         value);
 }
 
-ntsa::Error EncryptionCertificateExtensionAttribute::decode(
+ntsa::Error EncryptionCertificateExtensionIdentifier::decode(
     ntsa::AbstractSyntaxDecoder* decoder)
 {
     ntsa::Error error;
@@ -7879,52 +8118,52 @@ ntsa::Error EncryptionCertificateExtensionAttribute::decode(
     return ntsa::Error();
 }
 
-ntsa::Error EncryptionCertificateExtensionAttribute::encode(
+ntsa::Error EncryptionCertificateExtensionIdentifier::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
     NTCCFG_WARNING_UNUSED(encoder);
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
-const ntsa::AbstractObjectIdentifier& EncryptionCertificateExtensionAttribute::
+const ntsa::AbstractObjectIdentifier& EncryptionCertificateExtensionIdentifier::
     identifier() const
 {
     return d_identifier;
 }
 
-bool EncryptionCertificateExtensionAttribute::equals(
-    const EncryptionCertificateExtensionAttribute& other) const
+bool EncryptionCertificateExtensionIdentifier::equals(
+    const EncryptionCertificateExtensionIdentifier& other) const
 {
     return d_identifier == other.d_identifier;
 }
 
-bool EncryptionCertificateExtensionAttribute::equals(
-    EncryptionCertificateExtensionAttributeType::Value value) const
+bool EncryptionCertificateExtensionIdentifier::equals(
+    EncryptionCertificateExtensionIdentifierType::Value value) const
 {
     ntsa::AbstractObjectIdentifier identifier;
-    EncryptionCertificateExtensionAttributeType::toObjectIdentifier(
+    EncryptionCertificateExtensionIdentifierType::toObjectIdentifier(
         &identifier,
         value);
 
     return d_identifier.equals(identifier);
 }
 
-bool EncryptionCertificateExtensionAttribute::less(
-    const EncryptionCertificateExtensionAttribute& other) const
+bool EncryptionCertificateExtensionIdentifier::less(
+    const EncryptionCertificateExtensionIdentifier& other) const
 {
     return d_identifier < other.d_identifier;
 }
 
-bsl::ostream& EncryptionCertificateExtensionAttribute::print(
+bsl::ostream& EncryptionCertificateExtensionIdentifier::print(
     bsl::ostream& stream,
     int           level,
     int           spacesPerLevel) const
 {
-    ntca::EncryptionCertificateExtensionAttributeType::Value type;
-    int rc = ntca::EncryptionCertificateExtensionAttributeType::
+    ntca::EncryptionCertificateExtensionIdentifierType::Value type;
+    int rc = ntca::EncryptionCertificateExtensionIdentifierType::
         fromObjectIdentifier(&type, d_identifier);
     if (rc == 0) {
-        stream << ntca::EncryptionCertificateExtensionAttributeType::toString(
+        stream << ntca::EncryptionCertificateExtensionIdentifierType::toString(
             type);
     }
     else {
@@ -7934,26 +8173,27 @@ bsl::ostream& EncryptionCertificateExtensionAttribute::print(
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                                  stream,
-                         const EncryptionCertificateExtensionAttribute& object)
+bsl::ostream& operator<<(
+    bsl::ostream&                                   stream,
+    const EncryptionCertificateExtensionIdentifier& object)
 {
     return object.print(stream, 0, -1);
 }
 
-bool operator==(const EncryptionCertificateExtensionAttribute& lhs,
-                const EncryptionCertificateExtensionAttribute& rhs)
+bool operator==(const EncryptionCertificateExtensionIdentifier& lhs,
+                const EncryptionCertificateExtensionIdentifier& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const EncryptionCertificateExtensionAttribute& lhs,
-                const EncryptionCertificateExtensionAttribute& rhs)
+bool operator!=(const EncryptionCertificateExtensionIdentifier& lhs,
+                const EncryptionCertificateExtensionIdentifier& rhs)
 {
     return !operator==(lhs, rhs);
 }
 
-bool operator<(const EncryptionCertificateExtensionAttribute& lhs,
-               const EncryptionCertificateExtensionAttribute& rhs)
+bool operator<(const EncryptionCertificateExtensionIdentifier& lhs,
+               const EncryptionCertificateExtensionIdentifier& rhs)
 {
     return lhs.less(rhs);
 }
@@ -7976,9 +8216,7 @@ EncryptionCertificateExtensionValue::EncryptionCertificateExtensionValue(
     }
     else if (d_type == e_NAME) {
         new (d_name.buffer())
-            EncryptionCertificateName(
-                original.d_name.object(),
-                d_allocator_p);
+            EncryptionCertificateName(original.d_name.object(), d_allocator_p);
     }
     else if (d_type == e_NAME_ALTERNATIVE) {
         new (d_nameAlternative.buffer())
@@ -7988,9 +8226,8 @@ EncryptionCertificateExtensionValue::EncryptionCertificateExtensionValue(
     }
     else if (d_type == e_SUBJECT) {
         new (d_subject.buffer())
-            EncryptionCertificateSubject(
-                original.d_subject.object(),
-                d_allocator_p);
+            EncryptionCertificateSubject(original.d_subject.object(),
+                                         d_allocator_p);
     }
     else if (d_type == e_SUBJECT_KEY_IDENTIFIER) {
         new (d_subjectKeyIdentifier.buffer())
@@ -7999,10 +8236,9 @@ EncryptionCertificateExtensionValue::EncryptionCertificateExtensionValue(
                 d_allocator_p);
     }
     else if (d_type == e_SUBJECT_KEY_USAGE) {
-        new (d_subjectKeyUsage.buffer())
-            EncryptionCertificateSubjectKeyUsage(
-                original.d_subjectKeyUsage.object(),
-                d_allocator_p);
+        new (d_subjectKeyUsage.buffer()) EncryptionCertificateSubjectKeyUsage(
+            original.d_subjectKeyUsage.object(),
+            d_allocator_p);
     }
     else if (d_type == e_SUBJECT_KEY_USAGE_EXTENDED) {
         new (d_subjectKeyUsageExtended.buffer())
@@ -8018,9 +8254,8 @@ EncryptionCertificateExtensionValue::EncryptionCertificateExtensionValue(
     }
     else if (d_type == e_ISSUER) {
         new (d_issuer.buffer())
-            EncryptionCertificateIssuer(
-                original.d_issuer.object(),
-                d_allocator_p);
+            EncryptionCertificateIssuer(original.d_issuer.object(),
+                                        d_allocator_p);
     }
     else if (d_type == e_ISSUER_KEY_IDENTIFIER) {
         new (d_issuerKeyIdentifier.buffer())
@@ -8036,15 +8271,13 @@ EncryptionCertificateExtensionValue::EncryptionCertificateExtensionValue(
     }
     else if (d_type == e_POLICY) {
         new (d_policy.buffer())
-            EncryptionCertificatePolicy(
-                original.d_policy.object(),
-                d_allocator_p);
+            EncryptionCertificatePolicy(original.d_policy.object(),
+                                        d_allocator_p);
     }
     else if (d_type == e_POLICY_MAPPINGS) {
-        new (d_policyMappings.buffer())
-            EncryptionCertificatePolicyMappings(
-                original.d_policyMappings.object(),
-                d_allocator_p);
+        new (d_policyMappings.buffer()) EncryptionCertificatePolicyMappings(
+            original.d_policyMappings.object(),
+            d_allocator_p);
     }
     else if (d_type == e_POLICY_CONSTRAINTS) {
         new (d_policyConstraints.buffer())
@@ -8054,8 +8287,8 @@ EncryptionCertificateExtensionValue::EncryptionCertificateExtensionValue(
     }
     else if (d_type == e_BYTE_SEQUENCE) {
         new (d_byteSequence.buffer())
-            ntsa::AbstractOctetString(
-                original.d_byteSequence.object(), d_allocator_p);
+            ntsa::AbstractOctetString(original.d_byteSequence.object(),
+                                      d_allocator_p);
     }
     else if (d_type == e_ANY) {
         new (d_any.buffer())
@@ -8097,7 +8330,8 @@ operator=(const EncryptionCertificateExtensionValue& other)
         this->makeSubjectKeyUsage(other.d_subjectKeyUsage.object());
     }
     else if (other.d_type == e_SUBJECT_KEY_USAGE_EXTENDED) {
-        this->makeSubjectKeyUsageExtended(other.d_subjectKeyUsageExtended.object());
+        this->makeSubjectKeyUsageExtended(
+            other.d_subjectKeyUsageExtended.object());
     }
     else if (other.d_type == e_SUBJECT_CONSTRAINTS) {
         this->makeSubjectConstraints(other.d_subjectConstraints.object());
@@ -8109,7 +8343,8 @@ operator=(const EncryptionCertificateExtensionValue& other)
         this->makeIssuerKeyIdentifier(other.d_issuerKeyIdentifier.object());
     }
     else if (other.d_type == e_ISSUER_INFORMATION_ACCESS) {
-        this->makeIssuerInformationAccess(other.d_issuerInformationAccess.object());
+        this->makeIssuerInformationAccess(
+            other.d_issuerInformationAccess.object());
     }
     else if (other.d_type == e_POLICY) {
         this->makePolicy(other.d_policy.object());
@@ -8232,32 +8467,29 @@ bool& EncryptionCertificateExtensionValue::makeBoolean(bool value)
     return d_boolean.object();
 }
 
-EncryptionCertificateName& EncryptionCertificateExtensionValue::
-    makeName()
+EncryptionCertificateName& EncryptionCertificateExtensionValue::makeName()
 {
     if (d_type == e_NAME) {
         d_name.object().reset();
     }
     else {
         this->reset();
-        new (d_name.buffer())
-            EncryptionCertificateName(d_allocator_p);
+        new (d_name.buffer()) EncryptionCertificateName(d_allocator_p);
         d_type = e_NAME;
     }
 
     return d_name.object();
 }
 
-EncryptionCertificateName& EncryptionCertificateExtensionValue::
-    makeName(const EncryptionCertificateName& value)
+EncryptionCertificateName& EncryptionCertificateExtensionValue::makeName(
+    const EncryptionCertificateName& value)
 {
     if (d_type == e_NAME) {
         d_name.object() = value;
     }
     else {
         this->reset();
-        new (d_name.buffer())
-            EncryptionCertificateName(value, d_allocator_p);
+        new (d_name.buffer()) EncryptionCertificateName(value, d_allocator_p);
         d_type = e_NAME;
     }
 
@@ -8296,20 +8528,6 @@ EncryptionCertificateNameAlternativeList& EncryptionCertificateExtensionValue::
     return d_nameAlternative.object();
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 EncryptionCertificateSubject& EncryptionCertificateExtensionValue::
     makeSubject()
 {
@@ -8318,16 +8536,15 @@ EncryptionCertificateSubject& EncryptionCertificateExtensionValue::
     }
     else {
         this->reset();
-        new (d_subject.buffer())
-            EncryptionCertificateSubject(d_allocator_p);
+        new (d_subject.buffer()) EncryptionCertificateSubject(d_allocator_p);
         d_type = e_SUBJECT;
     }
 
     return d_subject.object();
 }
 
-EncryptionCertificateSubject& EncryptionCertificateExtensionValue::
-    makeSubject(const EncryptionCertificateSubject& value)
+EncryptionCertificateSubject& EncryptionCertificateExtensionValue::makeSubject(
+    const EncryptionCertificateSubject& value)
 {
     if (d_type == e_SUBJECT) {
         d_subject.object() = value;
@@ -8341,9 +8558,6 @@ EncryptionCertificateSubject& EncryptionCertificateExtensionValue::
 
     return d_subject.object();
 }
-
-
-
 
 EncryptionCertificateSubjectKeyIdentifier& EncryptionCertificateExtensionValue::
     makeSubjectKeyIdentifier()
@@ -8362,7 +8576,8 @@ EncryptionCertificateSubjectKeyIdentifier& EncryptionCertificateExtensionValue::
 }
 
 EncryptionCertificateSubjectKeyIdentifier& EncryptionCertificateExtensionValue::
-    makeSubjectKeyIdentifier(const EncryptionCertificateSubjectKeyIdentifier& value)
+    makeSubjectKeyIdentifier(
+        const EncryptionCertificateSubjectKeyIdentifier& value)
 {
     if (d_type == e_SUBJECT_KEY_IDENTIFIER) {
         d_subjectKeyIdentifier.object() = value;
@@ -8376,8 +8591,6 @@ EncryptionCertificateSubjectKeyIdentifier& EncryptionCertificateExtensionValue::
 
     return d_subjectKeyIdentifier.object();
 }
-
-
 
 EncryptionCertificateSubjectKeyUsage& EncryptionCertificateExtensionValue::
     makeSubjectKeyUsage()
@@ -8411,17 +8624,8 @@ EncryptionCertificateSubjectKeyUsage& EncryptionCertificateExtensionValue::
     return d_subjectKeyUsage.object();
 }
 
-
-
-
-
-
-
-
-
-
-EncryptionCertificateSubjectKeyUsageExtended& EncryptionCertificateExtensionValue::
-    makeSubjectKeyUsageExtended()
+EncryptionCertificateSubjectKeyUsageExtended&
+EncryptionCertificateExtensionValue::makeSubjectKeyUsageExtended()
 {
     if (d_type == e_SUBJECT_KEY_USAGE_EXTENDED) {
         d_subjectKeyUsageExtended.object().reset();
@@ -8436,8 +8640,9 @@ EncryptionCertificateSubjectKeyUsageExtended& EncryptionCertificateExtensionValu
     return d_subjectKeyUsageExtended.object();
 }
 
-EncryptionCertificateSubjectKeyUsageExtended& EncryptionCertificateExtensionValue::
-    makeSubjectKeyUsageExtended(const EncryptionCertificateSubjectKeyUsageExtended& value)
+EncryptionCertificateSubjectKeyUsageExtended&
+EncryptionCertificateExtensionValue::makeSubjectKeyUsageExtended(
+    const EncryptionCertificateSubjectKeyUsageExtended& value)
 {
     if (d_type == e_SUBJECT_KEY_USAGE_EXTENDED) {
         d_subjectKeyUsageExtended.object() = value;
@@ -8451,9 +8656,6 @@ EncryptionCertificateSubjectKeyUsageExtended& EncryptionCertificateExtensionValu
 
     return d_subjectKeyUsageExtended.object();
 }
-
-
-
 
 EncryptionCertificateSubjectConstraints& EncryptionCertificateExtensionValue::
     makeSubjectConstraints()
@@ -8472,7 +8674,8 @@ EncryptionCertificateSubjectConstraints& EncryptionCertificateExtensionValue::
 }
 
 EncryptionCertificateSubjectConstraints& EncryptionCertificateExtensionValue::
-    makeSubjectConstraints(const EncryptionCertificateSubjectConstraints& value)
+    makeSubjectConstraints(
+        const EncryptionCertificateSubjectConstraints& value)
 {
     if (d_type == e_SUBJECT_CONSTRAINTS) {
         d_subjectConstraints.object() = value;
@@ -8487,32 +8690,22 @@ EncryptionCertificateSubjectConstraints& EncryptionCertificateExtensionValue::
     return d_subjectConstraints.object();
 }
 
-
-
-
-
-
-
-
-
-EncryptionCertificateIssuer& EncryptionCertificateExtensionValue::
-    makeIssuer()
+EncryptionCertificateIssuer& EncryptionCertificateExtensionValue::makeIssuer()
 {
     if (d_type == e_ISSUER) {
         d_issuer.object().reset();
     }
     else {
         this->reset();
-        new (d_issuer.buffer())
-            EncryptionCertificateIssuer(d_allocator_p);
+        new (d_issuer.buffer()) EncryptionCertificateIssuer(d_allocator_p);
         d_type = e_ISSUER;
     }
 
     return d_issuer.object();
 }
 
-EncryptionCertificateIssuer& EncryptionCertificateExtensionValue::
-    makeIssuer(const EncryptionCertificateIssuer& value)
+EncryptionCertificateIssuer& EncryptionCertificateExtensionValue::makeIssuer(
+    const EncryptionCertificateIssuer& value)
 {
     if (d_type == e_ISSUER) {
         d_issuer.object() = value;
@@ -8526,16 +8719,6 @@ EncryptionCertificateIssuer& EncryptionCertificateExtensionValue::
 
     return d_issuer.object();
 }
-
-
-
-
-
-
-
-
-
-
 
 EncryptionCertificateIssuerKeyIdentifier& EncryptionCertificateExtensionValue::
     makeIssuerKeyIdentifier()
@@ -8554,7 +8737,8 @@ EncryptionCertificateIssuerKeyIdentifier& EncryptionCertificateExtensionValue::
 }
 
 EncryptionCertificateIssuerKeyIdentifier& EncryptionCertificateExtensionValue::
-    makeIssuerKeyIdentifier(const EncryptionCertificateIssuerKeyIdentifier& value)
+    makeIssuerKeyIdentifier(
+        const EncryptionCertificateIssuerKeyIdentifier& value)
 {
     if (d_type == e_ISSUER_KEY_IDENTIFIER) {
         d_issuerKeyIdentifier.object() = value;
@@ -8569,25 +8753,8 @@ EncryptionCertificateIssuerKeyIdentifier& EncryptionCertificateExtensionValue::
     return d_issuerKeyIdentifier.object();
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-EncryptionCertificateIssuerInformationAccess& EncryptionCertificateExtensionValue::
-    makeIssuerInformationAccess()
+EncryptionCertificateIssuerInformationAccess&
+EncryptionCertificateExtensionValue::makeIssuerInformationAccess()
 {
     if (d_type == e_ISSUER_INFORMATION_ACCESS) {
         d_issuerInformationAccess.object().reset();
@@ -8602,8 +8769,9 @@ EncryptionCertificateIssuerInformationAccess& EncryptionCertificateExtensionValu
     return d_issuerInformationAccess.object();
 }
 
-EncryptionCertificateIssuerInformationAccess& EncryptionCertificateExtensionValue::
-    makeIssuerInformationAccess(const EncryptionCertificateIssuerInformationAccess& value)
+EncryptionCertificateIssuerInformationAccess&
+EncryptionCertificateExtensionValue::makeIssuerInformationAccess(
+    const EncryptionCertificateIssuerInformationAccess& value)
 {
     if (d_type == e_ISSUER_INFORMATION_ACCESS) {
         d_issuerInformationAccess.object() = value;
@@ -8618,40 +8786,22 @@ EncryptionCertificateIssuerInformationAccess& EncryptionCertificateExtensionValu
     return d_issuerInformationAccess.object();
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-EncryptionCertificatePolicy& EncryptionCertificateExtensionValue::
-    makePolicy()
+EncryptionCertificatePolicy& EncryptionCertificateExtensionValue::makePolicy()
 {
     if (d_type == e_POLICY) {
         d_policy.object().reset();
     }
     else {
         this->reset();
-        new (d_policy.buffer())
-            EncryptionCertificatePolicy(d_allocator_p);
+        new (d_policy.buffer()) EncryptionCertificatePolicy(d_allocator_p);
         d_type = e_POLICY;
     }
 
     return d_policy.object();
 }
 
-EncryptionCertificatePolicy& EncryptionCertificateExtensionValue::
-    makePolicy(const EncryptionCertificatePolicy& value)
+EncryptionCertificatePolicy& EncryptionCertificateExtensionValue::makePolicy(
+    const EncryptionCertificatePolicy& value)
 {
     if (d_type == e_POLICY) {
         d_policy.object() = value;
@@ -8665,9 +8815,6 @@ EncryptionCertificatePolicy& EncryptionCertificateExtensionValue::
 
     return d_policy.object();
 }
-
-
-
 
 EncryptionCertificatePolicyMappings& EncryptionCertificateExtensionValue::
     makePolicyMappings()
@@ -8701,24 +8848,6 @@ EncryptionCertificatePolicyMappings& EncryptionCertificateExtensionValue::
     return d_policyMappings.object();
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 EncryptionCertificatePolicyConstraints& EncryptionCertificateExtensionValue::
     makePolicyConstraints()
 {
@@ -8751,24 +8880,8 @@ EncryptionCertificatePolicyConstraints& EncryptionCertificateExtensionValue::
     return d_policyConstraints.object();
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-ntsa::AbstractOctetString& EncryptionCertificateExtensionValue::makeByteSequence()
+ntsa::AbstractOctetString& EncryptionCertificateExtensionValue::
+    makeByteSequence()
 {
     if (d_type == e_BYTE_SEQUENCE) {
         d_byteSequence.object().reset();
@@ -8782,30 +8895,21 @@ ntsa::AbstractOctetString& EncryptionCertificateExtensionValue::makeByteSequence
     return d_byteSequence.object();
 }
 
-ntsa::AbstractOctetString& EncryptionCertificateExtensionValue::makeByteSequence(
-    const ntsa::AbstractOctetString& value)
+ntsa::AbstractOctetString& EncryptionCertificateExtensionValue::
+    makeByteSequence(const ntsa::AbstractOctetString& value)
 {
     if (d_type == e_BYTE_SEQUENCE) {
         d_byteSequence.object() = value;
     }
     else {
         this->reset();
-        new (d_byteSequence.buffer()) ntsa::AbstractOctetString(value, d_allocator_p);
+        new (d_byteSequence.buffer())
+            ntsa::AbstractOctetString(value, d_allocator_p);
         d_type = e_BYTE_SEQUENCE;
     }
 
     return d_byteSequence.object();
 }
-
-
-
-
-
-
-
-
-
-
 
 ntsa::AbstractValue& EncryptionCertificateExtensionValue::makeAny()
 {
@@ -8861,25 +8965,29 @@ EncryptionCertificateSubject& EncryptionCertificateExtensionValue::subject()
     return d_subject.object();
 }
 
-EncryptionCertificateSubjectKeyIdentifier& EncryptionCertificateExtensionValue::subjectKeyIdentifier()
+EncryptionCertificateSubjectKeyIdentifier& EncryptionCertificateExtensionValue::
+    subjectKeyIdentifier()
 {
     BSLS_ASSERT(this->isSubjectKeyIdentifier());
     return d_subjectKeyIdentifier.object();
 }
 
-EncryptionCertificateSubjectKeyUsage& EncryptionCertificateExtensionValue::subjectKeyUsage()
+EncryptionCertificateSubjectKeyUsage& EncryptionCertificateExtensionValue::
+    subjectKeyUsage()
 {
     BSLS_ASSERT(this->isSubjectKeyUsage());
     return d_subjectKeyUsage.object();
 }
 
-EncryptionCertificateSubjectKeyUsageExtended& EncryptionCertificateExtensionValue::subjectKeyUsageExtended()
+EncryptionCertificateSubjectKeyUsageExtended&
+EncryptionCertificateExtensionValue::subjectKeyUsageExtended()
 {
     BSLS_ASSERT(this->isSubjectKeyUsageExtended());
     return d_subjectKeyUsageExtended.object();
 }
 
-EncryptionCertificateSubjectConstraints& EncryptionCertificateExtensionValue::subjectConstraints()
+EncryptionCertificateSubjectConstraints& EncryptionCertificateExtensionValue::
+    subjectConstraints()
 {
     BSLS_ASSERT(this->isSubjectConstraints());
     return d_subjectConstraints.object();
@@ -8891,13 +8999,15 @@ EncryptionCertificateIssuer& EncryptionCertificateExtensionValue::issuer()
     return d_issuer.object();
 }
 
-EncryptionCertificateIssuerKeyIdentifier& EncryptionCertificateExtensionValue::issuerKeyIdentifier()
+EncryptionCertificateIssuerKeyIdentifier& EncryptionCertificateExtensionValue::
+    issuerKeyIdentifier()
 {
     BSLS_ASSERT(this->isIssuerKeyIdentifier());
     return d_issuerKeyIdentifier.object();
 }
 
-EncryptionCertificateIssuerInformationAccess& EncryptionCertificateExtensionValue::issuerInformationAccess()
+EncryptionCertificateIssuerInformationAccess&
+EncryptionCertificateExtensionValue::issuerInformationAccess()
 {
     BSLS_ASSERT(this->isIssuerInformationAccess());
     return d_issuerInformationAccess.object();
@@ -8909,23 +9019,19 @@ EncryptionCertificatePolicy& EncryptionCertificateExtensionValue::policy()
     return d_policy.object();
 }
 
-EncryptionCertificatePolicyMappings& EncryptionCertificateExtensionValue::policyMappings()
+EncryptionCertificatePolicyMappings& EncryptionCertificateExtensionValue::
+    policyMappings()
 {
     BSLS_ASSERT(this->isPolicyMappings());
     return d_policyMappings.object();
 }
 
-EncryptionCertificatePolicyConstraints& EncryptionCertificateExtensionValue::policyConstraints()
+EncryptionCertificatePolicyConstraints& EncryptionCertificateExtensionValue::
+    policyConstraints()
 {
     BSLS_ASSERT(this->isPolicyConstraints());
     return d_policyConstraints.object();
 }
-
-
-
-
-
-
 
 ntsa::AbstractOctetString& EncryptionCertificateExtensionValue::byteSequence()
 {
@@ -8959,9 +9065,8 @@ bool EncryptionCertificateExtensionValue::boolean() const
     return d_boolean.object();
 }
 
-
-const EncryptionCertificateName&
-EncryptionCertificateExtensionValue::name() const
+const EncryptionCertificateName& EncryptionCertificateExtensionValue::name()
+    const
 {
     BSLS_ASSERT(this->isName());
     return d_name.object();
@@ -8974,93 +9079,85 @@ EncryptionCertificateExtensionValue::nameAlternative() const
     return d_nameAlternative.object();
 }
 
-
-
-
-
-
-
-
-
-
-
-const EncryptionCertificateSubject& EncryptionCertificateExtensionValue::subject() const 
+const EncryptionCertificateSubject& EncryptionCertificateExtensionValue::
+    subject() const
 {
     BSLS_ASSERT(this->isSubject());
     return d_subject.object();
 }
 
-const EncryptionCertificateSubjectKeyIdentifier& EncryptionCertificateExtensionValue::subjectKeyIdentifier() const 
+const EncryptionCertificateSubjectKeyIdentifier&
+EncryptionCertificateExtensionValue::subjectKeyIdentifier() const
 {
     BSLS_ASSERT(this->isSubjectKeyIdentifier());
     return d_subjectKeyIdentifier.object();
 }
 
-const EncryptionCertificateSubjectKeyUsage& EncryptionCertificateExtensionValue::subjectKeyUsage() const 
+const EncryptionCertificateSubjectKeyUsage& EncryptionCertificateExtensionValue::
+    subjectKeyUsage() const
 {
     BSLS_ASSERT(this->isSubjectKeyUsage());
     return d_subjectKeyUsage.object();
 }
 
-const EncryptionCertificateSubjectKeyUsageExtended& EncryptionCertificateExtensionValue::subjectKeyUsageExtended() const 
+const EncryptionCertificateSubjectKeyUsageExtended&
+EncryptionCertificateExtensionValue::subjectKeyUsageExtended() const
 {
     BSLS_ASSERT(this->isSubjectKeyUsageExtended());
     return d_subjectKeyUsageExtended.object();
 }
 
-const EncryptionCertificateSubjectConstraints& EncryptionCertificateExtensionValue::subjectConstraints() const 
+const EncryptionCertificateSubjectConstraints&
+EncryptionCertificateExtensionValue::subjectConstraints() const
 {
     BSLS_ASSERT(this->isSubjectConstraints());
     return d_subjectConstraints.object();
 }
 
-const EncryptionCertificateIssuer& EncryptionCertificateExtensionValue::issuer() const 
+const EncryptionCertificateIssuer& EncryptionCertificateExtensionValue::
+    issuer() const
 {
     BSLS_ASSERT(this->isIssuer());
     return d_issuer.object();
 }
 
-const EncryptionCertificateIssuerKeyIdentifier& EncryptionCertificateExtensionValue::issuerKeyIdentifier() const 
+const EncryptionCertificateIssuerKeyIdentifier&
+EncryptionCertificateExtensionValue::issuerKeyIdentifier() const
 {
     BSLS_ASSERT(this->isIssuerKeyIdentifier());
     return d_issuerKeyIdentifier.object();
 }
 
-const EncryptionCertificateIssuerInformationAccess& EncryptionCertificateExtensionValue::issuerInformationAccess() const 
+const EncryptionCertificateIssuerInformationAccess&
+EncryptionCertificateExtensionValue::issuerInformationAccess() const
 {
     BSLS_ASSERT(this->isIssuerInformationAccess());
     return d_issuerInformationAccess.object();
 }
 
-const EncryptionCertificatePolicy& EncryptionCertificateExtensionValue::policy() const 
+const EncryptionCertificatePolicy& EncryptionCertificateExtensionValue::
+    policy() const
 {
     BSLS_ASSERT(this->isPolicy());
     return d_policy.object();
 }
 
-const EncryptionCertificatePolicyMappings& EncryptionCertificateExtensionValue::policyMappings() const 
+const EncryptionCertificatePolicyMappings& EncryptionCertificateExtensionValue::
+    policyMappings() const
 {
     BSLS_ASSERT(this->isPolicyMappings());
     return d_policyMappings.object();
 }
 
-const EncryptionCertificatePolicyConstraints& EncryptionCertificateExtensionValue::policyConstraints() const 
+const EncryptionCertificatePolicyConstraints&
+EncryptionCertificateExtensionValue::policyConstraints() const
 {
     BSLS_ASSERT(this->isPolicyConstraints());
     return d_policyConstraints.object();
 }
 
-
-
-
-
-
-
-
-
-
-
-const ntsa::AbstractOctetString& EncryptionCertificateExtensionValue::byteSequence() const
+const ntsa::AbstractOctetString& EncryptionCertificateExtensionValue::
+    byteSequence() const
 {
     BSLS_ASSERT(this->isByteSequence());
     return d_byteSequence.object();
@@ -9092,10 +9189,6 @@ bool EncryptionCertificateExtensionValue::isNameAlternative() const
     return d_type == e_NAME_ALTERNATIVE;
 }
 
-
-
-
-
 bool EncryptionCertificateExtensionValue::isSubject() const
 {
     return d_type == e_SUBJECT;
@@ -9121,9 +9214,6 @@ bool EncryptionCertificateExtensionValue::isSubjectConstraints() const
     return d_type == e_SUBJECT_CONSTRAINTS;
 }
 
-
-
-
 bool EncryptionCertificateExtensionValue::isIssuer() const
 {
     return d_type == e_ISSUER;
@@ -9139,9 +9229,6 @@ bool EncryptionCertificateExtensionValue::isIssuerInformationAccess() const
     return d_type == e_ISSUER_INFORMATION_ACCESS;
 }
 
-
-
-
 bool EncryptionCertificateExtensionValue::isPolicy() const
 {
     return d_type == e_POLICY;
@@ -9156,17 +9243,6 @@ bool EncryptionCertificateExtensionValue::isPolicyConstraints() const
 {
     return d_type == e_POLICY_CONSTRAINTS;
 }
-
-
-
-
-
-
-
-
-
-
-
 
 bool EncryptionCertificateExtensionValue::isByteSequence() const
 {
@@ -9201,25 +9277,30 @@ bool EncryptionCertificateExtensionValue::equals(
         return d_subject.object() == other.d_subject.object();
     }
     else if (d_type == e_SUBJECT_KEY_IDENTIFIER) {
-        return d_subjectKeyIdentifier.object() == other.d_subjectKeyIdentifier.object();
+        return d_subjectKeyIdentifier.object() ==
+               other.d_subjectKeyIdentifier.object();
     }
     else if (d_type == e_SUBJECT_KEY_USAGE) {
         return d_subjectKeyUsage.object() == other.d_subjectKeyUsage.object();
     }
     else if (d_type == e_SUBJECT_KEY_USAGE_EXTENDED) {
-        return d_subjectKeyUsageExtended.object() == other.d_subjectKeyUsageExtended.object();
+        return d_subjectKeyUsageExtended.object() ==
+               other.d_subjectKeyUsageExtended.object();
     }
     else if (d_type == e_SUBJECT_CONSTRAINTS) {
-        return d_subjectConstraints.object() == other.d_subjectConstraints.object();
+        return d_subjectConstraints.object() ==
+               other.d_subjectConstraints.object();
     }
     else if (d_type == e_ISSUER) {
         return d_issuer.object() == other.d_issuer.object();
     }
     else if (d_type == e_ISSUER_KEY_IDENTIFIER) {
-        return d_issuerKeyIdentifier.object() == other.d_issuerKeyIdentifier.object();
+        return d_issuerKeyIdentifier.object() ==
+               other.d_issuerKeyIdentifier.object();
     }
     else if (d_type == e_ISSUER_INFORMATION_ACCESS) {
-        return d_issuerInformationAccess.object() == other.d_issuerInformationAccess.object();
+        return d_issuerInformationAccess.object() ==
+               other.d_issuerInformationAccess.object();
     }
     else if (d_type == e_POLICY) {
         return d_policy.object() == other.d_policy.object();
@@ -9228,7 +9309,8 @@ bool EncryptionCertificateExtensionValue::equals(
         return d_policyMappings.object() == other.d_policyMappings.object();
     }
     else if (d_type == e_POLICY_CONSTRAINTS) {
-        return d_policyConstraints.object() == other.d_policyConstraints.object();
+        return d_policyConstraints.object() ==
+               other.d_policyConstraints.object();
     }
     else if (d_type == e_BYTE_SEQUENCE) {
         return d_byteSequence.object() == other.d_byteSequence.object();
@@ -9267,25 +9349,30 @@ bool EncryptionCertificateExtensionValue::less(
         return d_subject.object() < other.d_subject.object();
     }
     else if (d_type == e_SUBJECT_KEY_IDENTIFIER) {
-        return d_subjectKeyIdentifier.object() < other.d_subjectKeyIdentifier.object();
+        return d_subjectKeyIdentifier.object() <
+               other.d_subjectKeyIdentifier.object();
     }
     else if (d_type == e_SUBJECT_KEY_USAGE) {
         return d_subjectKeyUsage.object() < other.d_subjectKeyUsage.object();
     }
     else if (d_type == e_SUBJECT_KEY_USAGE_EXTENDED) {
-        return d_subjectKeyUsageExtended.object() < other.d_subjectKeyUsageExtended.object();
+        return d_subjectKeyUsageExtended.object() <
+               other.d_subjectKeyUsageExtended.object();
     }
     else if (d_type == e_SUBJECT_CONSTRAINTS) {
-        return d_subjectConstraints.object() < other.d_subjectConstraints.object();
+        return d_subjectConstraints.object() <
+               other.d_subjectConstraints.object();
     }
     else if (d_type == e_ISSUER) {
         return d_issuer.object() < other.d_issuer.object();
     }
     else if (d_type == e_ISSUER_KEY_IDENTIFIER) {
-        return d_issuerKeyIdentifier.object() < other.d_issuerKeyIdentifier.object();
+        return d_issuerKeyIdentifier.object() <
+               other.d_issuerKeyIdentifier.object();
     }
     else if (d_type == e_ISSUER_INFORMATION_ACCESS) {
-        return d_issuerInformationAccess.object() < other.d_issuerInformationAccess.object();
+        return d_issuerInformationAccess.object() <
+               other.d_issuerInformationAccess.object();
     }
     else if (d_type == e_POLICY) {
         return d_policy.object() < other.d_policy.object();
@@ -9294,7 +9381,8 @@ bool EncryptionCertificateExtensionValue::less(
         return d_policyMappings.object() < other.d_policyMappings.object();
     }
     else if (d_type == e_POLICY_CONSTRAINTS) {
-        return d_policyConstraints.object() < other.d_policyConstraints.object();
+        return d_policyConstraints.object() <
+               other.d_policyConstraints.object();
     }
     else if (d_type == e_BYTE_SEQUENCE) {
         return d_byteSequence.object() < other.d_byteSequence.object();
@@ -9333,7 +9421,9 @@ bsl::ostream& EncryptionCertificateExtensionValue::print(
         d_subjectKeyUsage.object().print(stream, level, spacesPerLevel);
     }
     else if (d_type == e_SUBJECT_KEY_USAGE_EXTENDED) {
-        d_subjectKeyUsageExtended.object().print(stream, level, spacesPerLevel);
+        d_subjectKeyUsageExtended.object().print(stream,
+                                                 level,
+                                                 spacesPerLevel);
     }
     else if (d_type == e_SUBJECT_CONSTRAINTS) {
         d_subjectConstraints.object().print(stream, level, spacesPerLevel);
@@ -9345,7 +9435,9 @@ bsl::ostream& EncryptionCertificateExtensionValue::print(
         d_issuerKeyIdentifier.object().print(stream, level, spacesPerLevel);
     }
     else if (d_type == e_ISSUER_INFORMATION_ACCESS) {
-        d_issuerInformationAccess.object().print(stream, level, spacesPerLevel);
+        d_issuerInformationAccess.object().print(stream,
+                                                 level,
+                                                 spacesPerLevel);
     }
     else if (d_type == e_POLICY) {
         d_policy.object().print(stream, level, spacesPerLevel);
@@ -9436,7 +9528,7 @@ void EncryptionCertificateExtension::reset()
 }
 
 void EncryptionCertificateExtension::setAttribute(
-    const EncryptionCertificateExtensionAttribute& value)
+    const EncryptionCertificateExtensionIdentifier& value)
 {
     d_attribute = value;
 }
@@ -9448,7 +9540,7 @@ void EncryptionCertificateExtension::setAttribute(
 }
 
 void EncryptionCertificateExtension::setAttribute(
-    ntca::EncryptionCertificateExtensionAttributeType::Value value)
+    ntca::EncryptionCertificateExtensionIdentifierType::Value value)
 {
     d_attribute = value;
 }
@@ -9515,7 +9607,7 @@ ntsa::Error EncryptionCertificateExtension::decode(
                  decoder->current().tagNumber() == k_OCTET_STRING)
         {
             if (d_attribute.equals(
-                    EncryptionCertificateExtensionAttributeType::
+                    EncryptionCertificateExtensionIdentifierType::
                         e_SUBJECT_ALTERNATIVE_NAME))
             {
                 error = d_value.makeNameAlternative().decode(decoder);
@@ -9524,8 +9616,8 @@ ntsa::Error EncryptionCertificateExtension::decode(
                 }
             }
             else if (d_attribute.equals(
-                    EncryptionCertificateExtensionAttributeType::
-                        e_SUBJECT_KEY_USAGE))
+                         EncryptionCertificateExtensionIdentifierType::
+                             e_SUBJECT_KEY_USAGE))
             {
                 error = d_value.makeSubjectKeyUsage().decode(decoder);
                 if (error) {
@@ -9533,8 +9625,8 @@ ntsa::Error EncryptionCertificateExtension::decode(
                 }
             }
             else if (d_attribute.equals(
-                    EncryptionCertificateExtensionAttributeType::
-                        e_SUBJECT_KEY_USAGE_EXTENDED))
+                         EncryptionCertificateExtensionIdentifierType::
+                             e_SUBJECT_KEY_USAGE_EXTENDED))
             {
                 error = d_value.makeSubjectKeyUsageExtended().decode(decoder);
                 if (error) {
@@ -9542,8 +9634,8 @@ ntsa::Error EncryptionCertificateExtension::decode(
                 }
             }
             else if (d_attribute.equals(
-                    EncryptionCertificateExtensionAttributeType::
-                        e_SUBJECT_CONSTRAINTS))
+                         EncryptionCertificateExtensionIdentifierType::
+                             e_SUBJECT_CONSTRAINTS))
             {
                 error = d_value.makeSubjectConstraints().decode(decoder);
                 if (error) {
@@ -9551,8 +9643,8 @@ ntsa::Error EncryptionCertificateExtension::decode(
                 }
             }
             else if (d_attribute.equals(
-                    EncryptionCertificateExtensionAttributeType::
-                        e_ISSUER_ALTERNATIVE_NAME))
+                         EncryptionCertificateExtensionIdentifierType::
+                             e_ISSUER_ALTERNATIVE_NAME))
             {
                 error = d_value.makeNameAlternative().decode(decoder);
                 if (error) {
@@ -9560,8 +9652,8 @@ ntsa::Error EncryptionCertificateExtension::decode(
                 }
             }
             else if (d_attribute.equals(
-                    EncryptionCertificateExtensionAttributeType::
-                        e_ISSUER_KEY_IDENTIFIER))
+                         EncryptionCertificateExtensionIdentifierType::
+                             e_ISSUER_KEY_IDENTIFIER))
             {
                 error = d_value.makeIssuerKeyIdentifier().decode(decoder);
                 if (error) {
@@ -9569,8 +9661,8 @@ ntsa::Error EncryptionCertificateExtension::decode(
                 }
             }
             else if (d_attribute.equals(
-                    EncryptionCertificateExtensionAttributeType::
-                        e_ISSUER_INFORMATION_ACCESS))
+                         EncryptionCertificateExtensionIdentifierType::
+                             e_ISSUER_INFORMATION_ACCESS))
             {
                 error = d_value.makeIssuerInformationAccess().decode(decoder);
                 if (error) {
@@ -9578,8 +9670,8 @@ ntsa::Error EncryptionCertificateExtension::decode(
                 }
             }
             else if (d_attribute.equals(
-                    EncryptionCertificateExtensionAttributeType::
-                        e_POLICY))
+                         EncryptionCertificateExtensionIdentifierType::
+                             e_POLICY))
             {
                 error = d_value.makePolicy().decode(decoder);
                 if (error) {
@@ -9587,8 +9679,8 @@ ntsa::Error EncryptionCertificateExtension::decode(
                 }
             }
             else if (d_attribute.equals(
-                    EncryptionCertificateExtensionAttributeType::
-                        e_POLICY_MAPPINGS))
+                         EncryptionCertificateExtensionIdentifierType::
+                             e_POLICY_MAPPINGS))
             {
                 error = d_value.makePolicyMappings().decode(decoder);
                 if (error) {
@@ -9596,8 +9688,8 @@ ntsa::Error EncryptionCertificateExtension::decode(
                 }
             }
             else if (d_attribute.equals(
-                    EncryptionCertificateExtensionAttributeType::
-                        e_POLICY_CONSTRAINTS))
+                         EncryptionCertificateExtensionIdentifierType::
+                             e_POLICY_CONSTRAINTS))
             {
                 error = d_value.makePolicyConstraints().decode(decoder);
                 if (error) {
@@ -9639,7 +9731,7 @@ ntsa::Error EncryptionCertificateExtension::encode(
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
-const EncryptionCertificateExtensionAttribute& EncryptionCertificateExtension::
+const EncryptionCertificateExtensionIdentifier& EncryptionCertificateExtension::
     attribute() const
 {
     return d_attribute;
@@ -10098,48 +10190,55 @@ const bsl::vector<bsl::string>& EncryptionCertificateEntity::hosts() const
 }
 #endif
 
-
 const ntsa::AbstractInteger& EncryptionCertificateEntity::serialNumber() const
 {
     return d_serialNumber;
 }
 
-const ntca::EncryptionCertificateSubject& EncryptionCertificateEntity::subject() const
+const ntca::EncryptionCertificateSubject& EncryptionCertificateEntity::
+    subject() const
 {
     return d_subject;
 }
 
-const bdlb::NullableValue<ntsa::AbstractBitString>& EncryptionCertificateEntity::subjectUniqueId() const
+const bdlb::NullableValue<ntsa::AbstractBitString>& EncryptionCertificateEntity::
+    subjectUniqueId() const
 {
     return d_subjectUniqueId;
 }
 
-const ntca::EncryptionCertificatePublicKeyInfo& EncryptionCertificateEntity::subjectPublicKeyInfo() const
+const ntca::EncryptionCertificatePublicKeyInfo& EncryptionCertificateEntity::
+    subjectPublicKeyInfo() const
 {
     return d_subjectPublicKeyInfo;
 }
 
-const ntca::EncryptionCertificateIssuer& EncryptionCertificateEntity::issuer() const
+const ntca::EncryptionCertificateIssuer& EncryptionCertificateEntity::issuer()
+    const
 {
     return d_issuer;
 }
 
-const bdlb::NullableValue<ntsa::AbstractBitString>& EncryptionCertificateEntity::issuerUniqueId() const
+const bdlb::NullableValue<ntsa::AbstractBitString>& EncryptionCertificateEntity::
+    issuerUniqueId() const
 {
     return d_issuerUniqueId;
 }
 
-const bdlb::NullableValue<ntca::EncryptionCertificateExtensionList>& EncryptionCertificateEntity::extensionList() const
+const bdlb::NullableValue<ntca::EncryptionCertificateExtensionList>&
+EncryptionCertificateEntity::extensionList() const
 {
     return d_extensionList;
 }
 
-const ntca::EncryptionCertificateValidity& EncryptionCertificateEntity::validity() const
+const ntca::EncryptionCertificateValidity& EncryptionCertificateEntity::
+    validity() const
 {
     return d_validity;
 }
 
-const ntca::EncryptionCertificateSignatureAlgorithm& EncryptionCertificateEntity::signatureAlgorithm() const
+const ntca::EncryptionCertificateSignatureAlgorithm& EncryptionCertificateEntity::
+    signatureAlgorithm() const
 {
     return d_signatureAlgorithm;
 }
@@ -10440,17 +10539,20 @@ const ntsa::AbstractInteger& EncryptionCertificate::serialNumber() const
     return d_entity.serialNumber();
 }
 
-const ntca::EncryptionCertificateSubject& EncryptionCertificate::subject() const
+const ntca::EncryptionCertificateSubject& EncryptionCertificate::subject()
+    const
 {
     return d_entity.subject();
 }
 
-const bdlb::NullableValue<ntsa::AbstractBitString>& EncryptionCertificate::subjectUniqueId() const
+const bdlb::NullableValue<ntsa::AbstractBitString>& EncryptionCertificate::
+    subjectUniqueId() const
 {
     return d_entity.subjectUniqueId();
 }
 
-const ntca::EncryptionCertificatePublicKeyInfo& EncryptionCertificate::subjectPublicKeyInfo() const
+const ntca::EncryptionCertificatePublicKeyInfo& EncryptionCertificate::
+    subjectPublicKeyInfo() const
 {
     return d_entity.subjectPublicKeyInfo();
 }
@@ -10460,17 +10562,20 @@ const ntca::EncryptionCertificateIssuer& EncryptionCertificate::issuer() const
     return d_entity.issuer();
 }
 
-const bdlb::NullableValue<ntsa::AbstractBitString>& EncryptionCertificate::issuerUniqueId() const
+const bdlb::NullableValue<ntsa::AbstractBitString>& EncryptionCertificate::
+    issuerUniqueId() const
 {
     return d_entity.issuerUniqueId();
 }
 
-const bdlb::NullableValue<ntca::EncryptionCertificateExtensionList>& EncryptionCertificate::extensionList() const
+const bdlb::NullableValue<ntca::EncryptionCertificateExtensionList>&
+EncryptionCertificate::extensionList() const
 {
     return d_entity.extensionList();
 }
 
-const ntca::EncryptionCertificateValidity& EncryptionCertificate::validity() const
+const ntca::EncryptionCertificateValidity& EncryptionCertificate::validity()
+    const
 {
     return d_entity.validity();
 }

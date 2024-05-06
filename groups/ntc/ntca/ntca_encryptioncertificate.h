@@ -34,60 +34,91 @@ namespace BloombergLP {
 namespace ntca {
 
 class EncryptionCertificateVersion;
-class EncryptionCertificateNameAttributeType;
+
+class EncryptionCertificateNameAttributeIdentifierType;
+class EncryptionCertificateNameAttributeIdentifier;
 class EncryptionCertificateNameAttribute;
-class EncryptionCertificateNameComponent;
 class EncryptionCertificateName;
 class EncryptionCertificateNameAlternative;
 class EncryptionCertificateNameAlternativeList;
 class EncryptionCertificateNameConstraints;
+
 class EncryptionCertificateValidity;
+
+class EncryptionCertificatePublicKeyAlgorithmIdentifierType;
+class EncryptionCertificatePublicKeyAlgorithmIdentifier;
+class EncryptionCertificatePublicKeyAlgorithmParametersRsa;
+class
+    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType;
+class EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier;
+class EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve;
+class EncryptionCertificatePublicKeyAlgorithmParameters;
+class EncryptionCertificatePublicKeyAlgorithm;
+class EncryptionCertificatePublicKeyValueRsa;
+class EncryptionCertificatePublicKeyValueEllipticCurve;
+class EncryptionCertificatePublicKeyValue;
 class EncryptionCertificatePublicKeyInfo;
-class EncryptionCertificateSignatureAlgorithmType;
+
+class EncryptionCertificateSignatureAlgorithmIdentifierType;
+class EncryptionCertificateSignatureAlgorithmIdentifier;
+class EncryptionCertificateSignatureAlgorithmParameters;
 class EncryptionCertificateSignatureAlgorithm;
 class EncryptionCertificateSignature;
-class EncryptionCertificateExtensionAttributeType;
-class EncryptionCertificateExtensionAttribute;
+
+class EncryptionCertificatePolicyConstraints;
+class EncryptionCertificatePolicyMappings;
+class EncryptionCertificatePolicy;
+class EncryptionCertificateIssuerKeyIdentifier;
+class EncryptionCertificateIssuerInformationAccess;
+class EncryptionCertificateIssuer;
+
+class EncryptionCertificateSubjectKeyUsageExtendedType;
+class EncryptionCertificateSubjectKeyUsageExtended;
+class EncryptionCertificateSubjectKeyUsageType;
+class EncryptionCertificateSubjectKeyUsage;
+class EncryptionCertificateSubjectKeyIdentifier;
+class EncryptionCertificateSubjectConstraints;
+class EncryptionCertificateSubject;
+
+class EncryptionCertificateExtensionIdentifierType;
+class EncryptionCertificateExtensionIdentifier;
 class EncryptionCertificateExtensionValue;
 class EncryptionCertificateExtension;
 class EncryptionCertificateExtensionList;
 class EncryptionCertificateEntity;
 class EncryptionCertificate;
 
-/// Describe MRM.
+/// Describe an encryption certificate structure with an unknown composition.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
 /// @ingroup module_ntci_encryption
-class EncryptionCertificateTemplate
+class EncryptionCertificateObject
 {
     ntsa::AbstractValue d_value;
     bslma::Allocator*   d_allocator_p;
 
   public:
-    /// Create a new certificate having the default
-    /// value. Optionally specify a 'basicAllocator' used to supply memory.
-    /// If 'basicAllocator' is 0, the currently installed default allocator
-    /// is used.
-    explicit EncryptionCertificateTemplate(
-        bslma::Allocator* basicAllocator = 0);
-
-    /// Create a new certificate having the same value
-    /// as the specified 'original' object. Optionally specify a
+    /// Create a new object having the default value. Optionally specify a
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
     /// currently installed default allocator is used.
-    EncryptionCertificateTemplate(
-        const EncryptionCertificateTemplate& original,
-        bslma::Allocator*                    basicAllocator = 0);
+    explicit EncryptionCertificateObject(bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
+    EncryptionCertificateObject(const EncryptionCertificateObject& original,
+                                bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
-    ~EncryptionCertificateTemplate();
+    ~EncryptionCertificateObject();
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
-    EncryptionCertificateTemplate& operator=(
-        const EncryptionCertificateTemplate& other);
+    EncryptionCertificateObject& operator=(
+        const EncryptionCertificateObject& other);
 
     /// Reset the value of this object to its value upon default
     /// construction.
@@ -101,11 +132,11 @@ class EncryptionCertificateTemplate
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
-    bool equals(const EncryptionCertificateTemplate& other) const;
+    bool equals(const EncryptionCertificateObject& other) const;
 
     /// Return true if the value of this object is less than the value of
     /// the specified 'other' object, otherwise return false.
-    bool less(const EncryptionCertificateTemplate& other) const;
+    bool less(const EncryptionCertificateObject& other) const;
 
     /// Contribute the values of the salient attributes of this object to the
     /// specified hash 'algorithm'.
@@ -130,50 +161,50 @@ class EncryptionCertificateTemplate
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateTemplate);
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateObject);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
-/// @related ntca::EncryptionCertificate
-bsl::ostream& operator<<(bsl::ostream&                        stream,
-                         const EncryptionCertificateTemplate& object);
+/// @related ntca::EncryptionCertificateObject
+bsl::ostream& operator<<(bsl::ostream&                      stream,
+                         const EncryptionCertificateObject& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
-/// @related ntca::EncryptionCertificate
-bool operator==(const EncryptionCertificateTemplate& lhs,
-                const EncryptionCertificateTemplate& rhs);
+/// @related ntca::EncryptionCertificateObject
+bool operator==(const EncryptionCertificateObject& lhs,
+                const EncryptionCertificateObject& rhs);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
 /// have the same value, and 'false' otherwise.  Two attribute objects do
 /// not have the same value if one or more respective attributes differ in
 /// values.
 ///
-/// @related ntca::EncryptionCertificate
-bool operator!=(const EncryptionCertificateTemplate& lhs,
-                const EncryptionCertificateTemplate& rhs);
+/// @related ntca::EncryptionCertificateObject
+bool operator!=(const EncryptionCertificateObject& lhs,
+                const EncryptionCertificateObject& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::EncryptionCertificate
-bool operator<(const EncryptionCertificateTemplate& lhs,
-               const EncryptionCertificateTemplate& rhs);
+/// @related ntca::EncryptionCertificateObject
+bool operator<(const EncryptionCertificateObject& lhs,
+               const EncryptionCertificateObject& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntca::EncryptionCertificateObject
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
-                const EncryptionCertificateTemplate& value);
+void hashAppend(HASH_ALGORITHM&                    algorithm,
+                const EncryptionCertificateObject& value);
 
 template <typename HASH_ALGORITHM>
-void EncryptionCertificateTemplate::hash(HASH_ALGORITHM& algorithm)
+void EncryptionCertificateObject::hash(HASH_ALGORITHM& algorithm)
 {
     using bslh::hashAppend;
 
@@ -181,8 +212,8 @@ void EncryptionCertificateTemplate::hash(HASH_ALGORITHM& algorithm)
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
-                const EncryptionCertificateTemplate& value)
+void hashAppend(HASH_ALGORITHM&                    algorithm,
+                const EncryptionCertificateObject& value)
 {
     value.hash(algorithm);
 }
@@ -199,16 +230,16 @@ class EncryptionCertificateVersion
     bslma::Allocator* d_allocator_p;
 
   public:
-    /// Create a new certificate version having the default value. Optionally
-    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
-    /// is 0, the currently installed default allocator is used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificateVersion(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate version having the same value as the specified
-    /// 'original' object. Optionally specify a 'basicAllocator' used to supply
-    /// memory. If 'basicAllocator' is 0, the currently installed default
-    /// allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificateVersion(const EncryptionCertificateVersion& original,
                                  bslma::Allocator* basicAllocator = 0);
 
@@ -273,7 +304,7 @@ class EncryptionCertificateVersion
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntca::EncryptionCertificateVersion
 bsl::ostream& operator<<(bsl::ostream&                       stream,
                          const EncryptionCertificateVersion& object);
 
@@ -281,7 +312,7 @@ bsl::ostream& operator<<(bsl::ostream&                       stream,
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntca::EncryptionCertificateVersion
 bool operator==(const EncryptionCertificateVersion& lhs,
                 const EncryptionCertificateVersion& rhs);
 
@@ -290,21 +321,21 @@ bool operator==(const EncryptionCertificateVersion& lhs,
 /// not have the same value if one or more respective attributes differ in
 /// values.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntca::EncryptionCertificateVersion
 bool operator!=(const EncryptionCertificateVersion& lhs,
                 const EncryptionCertificateVersion& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntca::EncryptionCertificateVersion
 bool operator<(const EncryptionCertificateVersion& lhs,
                const EncryptionCertificateVersion& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntca::EncryptionCertificateVersion
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM&                     algorithm,
                 const EncryptionCertificateVersion& value);
@@ -331,7 +362,7 @@ void hashAppend(HASH_ALGORITHM&                     algorithm,
 /// This class is thread safe.
 ///
 /// @ingroup module_ntsa_data
-class EncryptionCertificateNameAttributeType
+class EncryptionCertificateNameAttributeIdentifierType
 {
   public:
     /// Enumerate well-known encryption certificate name attribute object
@@ -415,54 +446,54 @@ class EncryptionCertificateNameAttributeType
 /// Format the specified 'rhs' to the specified output 'stream' and return a
 /// reference to the modifiable 'stream'.
 ///
-/// @related ntca::EncryptionCertificateNameAttributeType
-bsl::ostream& operator<<(bsl::ostream&                                 stream,
-                         EncryptionCertificateNameAttributeType::Value rhs);
+/// @related ntca::EncryptionCertificateNameAttributeIdentifierType
+bsl::ostream& operator<<(
+    bsl::ostream&                                           stream,
+    EncryptionCertificateNameAttributeIdentifierType::Value rhs);
 
-/// Describe an encryption certificate name attribute.
+/// Describe an encryption certificate name attribute identifier.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
 /// @ingroup module_ntci_encryption
-class EncryptionCertificateNameAttribute
+class EncryptionCertificateNameAttributeIdentifier
 {
     ntsa::AbstractObjectIdentifier d_identifier;
     bslma::Allocator*              d_allocator_p;
 
   public:
-    /// Create a new certificate name attribute having the default value.
-    /// Optionally specify a 'basicAllocator' used to supply memory. If
-    /// 'basicAllocator' is 0, the currently installed default allocator is
-    /// used.
-    explicit EncryptionCertificateNameAttribute(
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    explicit EncryptionCertificateNameAttributeIdentifier(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate name attribute having the same value as the
-    /// specified 'original' object. Optionally specify a 'basicAllocator' used
-    /// to supply memory. If 'basicAllocator' is 0, the currently installed
-    /// default allocator is used.
-    EncryptionCertificateNameAttribute(
-        const EncryptionCertificateNameAttribute& original,
-        bslma::Allocator*                         basicAllocator = 0);
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
+    EncryptionCertificateNameAttributeIdentifier(
+        const EncryptionCertificateNameAttributeIdentifier& original,
+        bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
-    ~EncryptionCertificateNameAttribute();
+    ~EncryptionCertificateNameAttributeIdentifier();
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
-    EncryptionCertificateNameAttribute& operator=(
-        const EncryptionCertificateNameAttribute& other);
+    EncryptionCertificateNameAttributeIdentifier& operator=(
+        const EncryptionCertificateNameAttributeIdentifier& other);
 
     /// Assign the value of the specified 'value' to this object. Return a
     /// reference to this modifiable object.
-    EncryptionCertificateNameAttribute& operator=(
+    EncryptionCertificateNameAttributeIdentifier& operator=(
         const ntsa::AbstractObjectIdentifier& value);
 
     /// Assign the value of the specified 'value' to this object. Return a
     /// reference to this modifiable object.
-    EncryptionCertificateNameAttribute& operator=(
-        EncryptionCertificateNameAttributeType::Value value);
+    EncryptionCertificateNameAttributeIdentifier& operator=(
+        EncryptionCertificateNameAttributeIdentifierType::Value value);
 
     /// Reset the value of this object to its value upon default
     /// construction.
@@ -473,7 +504,8 @@ class EncryptionCertificateNameAttribute
 
     /// Set the identifier to the object identifier corresponding to the
     /// specified 'value'.
-    void setIdentifer(EncryptionCertificateNameAttributeType::Value value);
+    void setIdentifer(
+        EncryptionCertificateNameAttributeIdentifierType::Value value);
 
     /// Decode this object using the specified 'decoder'. Return the error.
     ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
@@ -486,11 +518,170 @@ class EncryptionCertificateNameAttribute
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
-    bool equals(const EncryptionCertificateNameAttribute& other) const;
+    bool equals(
+        const EncryptionCertificateNameAttributeIdentifier& other) const;
 
     /// Return true if this object has the same value as the specified
     /// 'value', otherwise return false.
-    bool equals(EncryptionCertificateNameAttributeType::Value value) const;
+    bool equals(
+        EncryptionCertificateNameAttributeIdentifierType::Value value) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionCertificateNameAttributeIdentifier& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
+        EncryptionCertificateNameAttributeIdentifier);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificateNameAttributeIdentifier
+bsl::ostream& operator<<(
+    bsl::ostream&                                       stream,
+    const EncryptionCertificateNameAttributeIdentifier& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificateNameAttributeIdentifier
+bool operator==(const EncryptionCertificateNameAttributeIdentifier& lhs,
+                const EncryptionCertificateNameAttributeIdentifier& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificateNameAttributeIdentifier
+bool operator!=(const EncryptionCertificateNameAttributeIdentifier& lhs,
+                const EncryptionCertificateNameAttributeIdentifier& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificateNameAttributeIdentifier
+bool operator<(const EncryptionCertificateNameAttributeIdentifier& lhs,
+               const EncryptionCertificateNameAttributeIdentifier& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificateNameAttributeIdentifier
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                                     algorithm,
+                const EncryptionCertificateNameAttributeIdentifier& value);
+
+template <typename HASH_ALGORITHM>
+void EncryptionCertificateNameAttributeIdentifier::hash(
+    HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, d_identifier);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&                                     algorithm,
+                const EncryptionCertificateNameAttributeIdentifier& value)
+{
+    value.hash(algorithm);
+}
+
+/// Describe a component of an encryption certificate name.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateNameAttribute
+{
+    EncryptionCertificateNameAttributeIdentifier d_attribute;
+    ntsa::AbstractString                         d_value;
+    bslma::Allocator*                            d_allocator_p;
+
+  public:
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    explicit EncryptionCertificateNameAttribute(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
+    EncryptionCertificateNameAttribute(
+        const EncryptionCertificateNameAttribute& original,
+        bslma::Allocator*                         basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificateNameAttribute();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificateNameAttribute& operator=(
+        const EncryptionCertificateNameAttribute& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Set the attribute to the specified 'value'.
+    void setAttribute(
+        const EncryptionCertificateNameAttributeIdentifier& value);
+
+    /// Set the attribute to the specified 'value'.
+    void setAttribute(const ntsa::AbstractObjectIdentifier& value);
+
+    /// Set the attribute to the object identifier corresponding to the
+    /// specified 'value'.
+    void setAttribute(
+        EncryptionCertificateNameAttributeIdentifierType::Value value);
+
+    /// Set the attribute value to the specified 'value'.
+    void setValue(const bsl::string& value);
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return the component attribute.
+    const EncryptionCertificateNameAttributeIdentifier& attribute() const;
+
+    /// Return the component value.
+    bsl::string value() const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificateNameAttribute& other) const;
 
     /// Return true if the value of this object is less than the value of
     /// the specified 'other' object, otherwise return false.
@@ -567,167 +758,13 @@ void EncryptionCertificateNameAttribute::hash(HASH_ALGORITHM& algorithm)
 {
     using bslh::hashAppend;
 
-    hashAppend(algorithm, d_identifier);
-}
-
-template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                           algorithm,
-                const EncryptionCertificateNameAttribute& value)
-{
-    value.hash(algorithm);
-}
-
-/// Describe a component of an encryption certificate name.
-///
-/// @par Thread Safety
-/// This class is not thread safe.
-///
-/// @ingroup module_ntci_encryption
-class EncryptionCertificateNameComponent
-{
-    EncryptionCertificateNameAttribute d_attribute;
-    ntsa::AbstractString               d_value;
-    bslma::Allocator*                  d_allocator_p;
-
-  public:
-    /// Create a new certificate name component having the default value.
-    /// Optionally specify a 'basicAllocator' used to supply memory. If
-    /// 'basicAllocator' is 0, the currently installed default allocator is
-    /// used.
-    explicit EncryptionCertificateNameComponent(
-        bslma::Allocator* basicAllocator = 0);
-
-    /// Create a new certificate name component having the same value as the
-    /// specified 'original' object. Optionally specify a 'basicAllocator' used
-    /// to supply memory. If 'basicAllocator' is 0, the currently installed
-    /// default allocator is used.
-    EncryptionCertificateNameComponent(
-        const EncryptionCertificateNameComponent& original,
-        bslma::Allocator*                         basicAllocator = 0);
-
-    /// Destroy this object.
-    ~EncryptionCertificateNameComponent();
-
-    /// Assign the value of the specified 'other' object to this object.
-    /// Return a reference to this modifiable object.
-    EncryptionCertificateNameComponent& operator=(
-        const EncryptionCertificateNameComponent& other);
-
-    /// Reset the value of this object to its value upon default
-    /// construction.
-    void reset();
-
-    /// Set the attribute to the specified 'value'.
-    void setAttribute(const EncryptionCertificateNameAttribute& value);
-
-    /// Set the attribute to the specified 'value'.
-    void setAttribute(const ntsa::AbstractObjectIdentifier& value);
-
-    /// Set the attribute to the object identifier corresponding to the
-    /// specified 'value'.
-    void setAttribute(EncryptionCertificateNameAttributeType::Value value);
-
-    /// Set the attribute value to the specified 'value'.
-    void setValue(const bsl::string& value);
-
-    /// Decode this object using the specified 'decoder'. Return the error.
-    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
-
-    /// Encode this object using the specified 'encoder'. Return the error.
-    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
-
-    /// Return the component attribute.
-    const EncryptionCertificateNameAttribute& attribute() const;
-
-    /// Return the component value.
-    bsl::string value() const;
-
-    /// Return true if this object has the same value as the specified
-    /// 'other' object, otherwise return false.
-    bool equals(const EncryptionCertificateNameComponent& other) const;
-
-    /// Return true if the value of this object is less than the value of
-    /// the specified 'other' object, otherwise return false.
-    bool less(const EncryptionCertificateNameComponent& other) const;
-
-    /// Contribute the values of the salient attributes of this object to the
-    /// specified hash 'algorithm'.
-    template <typename HASH_ALGORITHM>
-    void hash(HASH_ALGORITHM& algorithm);
-
-    /// Format this object to the specified output 'stream' at the
-    /// optionally specified indentation 'level' and return a reference to
-    /// the modifiable 'stream'.  If 'level' is specified, optionally
-    /// specify 'spacesPerLevel', the number of spaces per indentation level
-    /// for this and all of its nested objects.  Each line is indented by
-    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
-    /// negative, suppress indentation of the first line.  If
-    /// 'spacesPerLevel' is negative, suppress line breaks and format the
-    /// entire output on one line.  If 'stream' is initially invalid, this
-    /// operation has no effect.  Note that a trailing newline is provided
-    /// in multiline mode only.
-    bsl::ostream& print(bsl::ostream& stream,
-                        int           level          = 0,
-                        int           spacesPerLevel = 4) const;
-
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionCertificateNameComponent);
-};
-
-/// Format the specified 'object' to the specified output 'stream' and
-/// return a reference to the modifiable 'stream'.
-///
-/// @related ntca::EncryptionCertificateNameComponent
-bsl::ostream& operator<<(bsl::ostream&                             stream,
-                         const EncryptionCertificateNameComponent& object);
-
-/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
-/// the same value, and 'false' otherwise.  Two attribute objects have the
-/// same value if each respective attribute has the same value.
-///
-/// @related ntca::EncryptionCertificateNameComponent
-bool operator==(const EncryptionCertificateNameComponent& lhs,
-                const EncryptionCertificateNameComponent& rhs);
-
-/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
-/// have the same value, and 'false' otherwise.  Two attribute objects do
-/// not have the same value if one or more respective attributes differ in
-/// values.
-///
-/// @related ntca::EncryptionCertificateNameComponent
-bool operator!=(const EncryptionCertificateNameComponent& lhs,
-                const EncryptionCertificateNameComponent& rhs);
-
-/// Return true if the value of the specified 'lhs' is less than the value
-/// of the specified 'rhs', otherwise return false.
-///
-/// @related ntca::EncryptionCertificateNameComponent
-bool operator<(const EncryptionCertificateNameComponent& lhs,
-               const EncryptionCertificateNameComponent& rhs);
-
-/// Contribute the values of the salient attributes of the specified 'value'
-/// to the specified hash 'algorithm'.
-///
-/// @related ntca::EncryptionCertificateNameComponent
-template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                           algorithm,
-                const EncryptionCertificateNameComponent& value);
-
-template <typename HASH_ALGORITHM>
-void EncryptionCertificateNameComponent::hash(HASH_ALGORITHM& algorithm)
-{
-    using bslh::hashAppend;
-
     hashAppend(algorithm, d_attribute);
     hashAppend(algorithm, d_value);
 }
 
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM&                           algorithm,
-                const EncryptionCertificateNameComponent& value)
+                const EncryptionCertificateNameAttribute& value)
 {
     value.hash(algorithm);
 }
@@ -740,27 +777,36 @@ void hashAppend(HASH_ALGORITHM&                           algorithm,
 /// @ingroup module_ntci_encryption
 class EncryptionCertificateName
 {
-    typedef bsl::vector<EncryptionCertificateNameComponent> AttributeVector;
+    typedef bsl::vector<EncryptionCertificateNameAttribute> AttributeVector;
 
     AttributeVector   d_attributeVector;
     bslma::Allocator* d_allocator_p;
 
   private:
     /// Append to the specified 'result' the values of each component having
-    /// the specified well-known attribute 'type'.
-    void format(bsl::string*                                        result, 
-                ntca::EncryptionCertificateNameAttributeType::Value type) const;
+    /// the specified well-known attribute 'type'. Separate each value by a 
+    /// comma followed by a space.
+    void format(bsl::string* result,
+                ntca::EncryptionCertificateNameAttributeIdentifierType::Value
+                    type) const;
+
+    /// Append to the specified 'result' the values of each component having
+    /// the specified well-known attribute 'type'. Separate each value by a 
+    /// dot.
+    void formatDot(bsl::string* result,
+                ntca::EncryptionCertificateNameAttributeIdentifierType::Value
+                    type) const;
 
   public:
-    /// Create a new certificate name having the default value. Optionally
-    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
-    /// is 0, the currently installed default allocator is used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificateName(bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate name having the same value as the specified
-    /// 'original' object. Optionally specify a 'basicAllocator' used to supply
-    /// memory. If 'basicAllocator' is 0, the currently installed default
-    /// allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificateName(const EncryptionCertificateName& original,
                               bslma::Allocator* basicAllocator = 0);
 
@@ -778,15 +824,15 @@ class EncryptionCertificateName
 
     /// Set the value to the specified 'value'.
     void setAttributeSequence(
-        const bsl::vector<EncryptionCertificateNameComponent>& value);
+        const bsl::vector<EncryptionCertificateNameAttribute>& value);
 
     /// Append a name component having the specified 'value'.
-    void append(const EncryptionCertificateNameComponent& value);
+    void append(const EncryptionCertificateNameAttribute& value);
 
     /// Append a name component having the specified 'attribute' with the
     /// specified 'value'.
-    void append(const EncryptionCertificateNameAttribute& attribute,
-                const bsl::string&                        value);
+    void append(const EncryptionCertificateNameAttributeIdentifier& attribute,
+                const bsl::string&                                  value);
 
     /// Append a name component having the specified 'attribute' with the
     /// specified 'value'.
@@ -795,8 +841,9 @@ class EncryptionCertificateName
 
     /// Append a name component having the specified 'attribute' with the
     /// specified 'value'.
-    void append(EncryptionCertificateNameAttributeType::Value attribute,
-                const bsl::string&                            value);
+    void append(
+        EncryptionCertificateNameAttributeIdentifierType::Value attribute,
+        const bsl::string&                                      value);
 
     /// Decode this object using the specified 'decoder'. Return the error.
     ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
@@ -805,7 +852,7 @@ class EncryptionCertificateName
     ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
 
     /// Return the attribute sequence.
-    const bsl::vector<EncryptionCertificateNameComponent>& attributeSequence()
+    const bsl::vector<EncryptionCertificateNameAttribute>& attributes()
         const;
 
     /// Return the concatenation of all standard attributes, or the empty
@@ -816,6 +863,26 @@ class EncryptionCertificateName
     /// string if the name contains no common name attributes.
     bsl::string common() const;
 
+    /// Return the concatenation of all prefix name attributes, or the empty
+    /// string if the name contains no prefix name attributes.
+    bsl::string prefix() const;
+
+    /// Return the concatenation of all given name attributes, or the empty
+    /// string if the name contains no given name attributes.
+    bsl::string given() const;
+
+    /// Return the concatenation of all family name attributes, or the empty
+    /// string if the name contains no family name attributes.
+    bsl::string family() const;
+
+    /// Return the concatenation of all pseudo name attributes, or the empty
+    /// string if the name contains no pseudo name attributes.
+    bsl::string pseudo() const;
+
+    /// Return the concatenation of all suffix name attributes, or the empty
+    /// string if the name contains no suffix name attributes.
+    bsl::string suffix() const;
+
     /// Return the concatenation of all organization attributes, or the empty
     /// string if the name contains no organization attributes.
     bsl::string organization() const;
@@ -823,6 +890,34 @@ class EncryptionCertificateName
     /// Return the concatenation of all organization unit attributes, or the
     /// empty string if the name contains no organization unit attributes.
     bsl::string organizationUnit() const;
+
+    /// Return the concatenation of all street attributes, or the empty string
+    /// if the name contains no street attributes.
+    bsl::string addressStreet() const;
+
+    /// Return the concatenation of all locality attributes, or the empty
+    /// string if the name contains no locality attributes.
+    bsl::string addressLocality() const;
+
+    /// Return the concatenation of all state attributes, or the empty string
+    /// if the name contains no state attributes.
+    bsl::string addressState() const;
+
+    /// Return the concatenation of all country attributes, or the empty string
+    /// if the name contains no country attributes.
+    bsl::string addressCountry() const;
+
+    /// Return the concatenation of all domain attributes, or the empty string
+    /// if the name contains no domain attributes.
+    bsl::string domain() const;
+
+    /// Return the concatenation of all user ID attributes, or the empty string
+    /// if the name contains no user ID attributes.
+    bsl::string userId() const;
+
+    /// Return the concatenation of all email attributes, or the empty string
+    /// if the name contains no email attributes.
+    bsl::string email() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -949,17 +1044,16 @@ class EncryptionCertificateNameAlternative
     bslma::Allocator* d_allocator_p;
 
   public:
-    /// Create a new alternative certificate name having the default value.
-    /// Optionally specify a 'basicAllocator' used to supply memory. If
-    /// 'basicAllocator' is 0, the currently installed default allocator is
-    /// used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificateNameAlternative(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new alternative certificate name having the same value as the
-    /// specified 'original' object. Optionally specify a 'basicAllocator' used
-    /// to supply memory. If 'basicAllocator' is 0, the currently installed
-    /// default allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificateNameAlternative(
         const EncryptionCertificateNameAlternative& original,
         bslma::Allocator*                           basicAllocator = 0);
@@ -1282,7 +1376,7 @@ void hashAppend(HASH_ALGORITHM&                             algorithm,
     value.hash(algorithm);
 }
 
-/// Describe a collection of alternative names associated with an encryption 
+/// Describe a collection of alternative names associated with an encryption
 /// certificate.
 ///
 /// @par Thread Safety
@@ -1295,17 +1389,16 @@ class EncryptionCertificateNameAlternativeList
     bslma::Allocator*                                 d_allocator_p;
 
   public:
-    /// Create a new alternative certificate name list having the default
-    /// value. Optionally specify a 'basicAllocator' used to supply memory. If
-    /// 'basicAllocator' is 0, the currently installed default allocator is
-    /// used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificateNameAlternativeList(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new alternative certificate name list having the same value as
-    /// the specified 'original' object. Optionally specify a 'basicAllocator'
-    /// used to supply memory. If 'basicAllocator' is 0, the currently
-    /// installed default allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificateNameAlternativeList(
         const EncryptionCertificateNameAlternativeList& original,
         bslma::Allocator*                               basicAllocator = 0);
@@ -1327,6 +1420,9 @@ class EncryptionCertificateNameAlternativeList
 
     /// Encode this object using the specified 'encoder'. Return the error.
     ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return the vector of name alternatives.
+    const bsl::vector<EncryptionCertificateNameAlternative>& alternatives() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -1418,12 +1514,7 @@ void hashAppend(HASH_ALGORITHM&                                 algorithm,
     value.hash(algorithm);
 }
 
-
-
-
-
-
-/// Describe MRM.
+/// Describe constraints on an encryption certificate name.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -1435,20 +1526,20 @@ class EncryptionCertificateNameConstraints
     bslma::Allocator*   d_allocator_p;
 
   public:
-    /// Create a new certificate having the default
-    /// value. Optionally specify a 'basicAllocator' used to supply memory.
-    /// If 'basicAllocator' is 0, the currently installed default allocator
-    /// is used.
+    /// Create new certificate name constraints having the default value.
+    /// Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     explicit EncryptionCertificateNameConstraints(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate having the same value
-    /// as the specified 'original' object. Optionally specify a
-    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
-    /// currently installed default allocator is used.
+    /// Create new certificate name constraints having the same value as the
+    /// specified 'original' object. Optionally specify a 'basicAllocator' used
+    /// to supply memory. If 'basicAllocator' is 0, the currently installed
+    /// default allocator is used.
     EncryptionCertificateNameConstraints(
         const EncryptionCertificateNameConstraints& original,
-        bslma::Allocator*                    basicAllocator = 0);
+        bslma::Allocator*                           basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionCertificateNameConstraints();
@@ -1499,14 +1590,15 @@ class EncryptionCertificateNameConstraints
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateNameConstraints);
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
+        EncryptionCertificateNameConstraints);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionCertificateNameConstraints
-bsl::ostream& operator<<(bsl::ostream&                        stream,
+bsl::ostream& operator<<(bsl::ostream&                               stream,
                          const EncryptionCertificateNameConstraints& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
@@ -1538,7 +1630,7 @@ bool operator<(const EncryptionCertificateNameConstraints& lhs,
 ///
 /// @related ntca::EncryptionCertificateNameConstraints
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                             algorithm,
                 const EncryptionCertificateNameConstraints& value);
 
 template <typename HASH_ALGORITHM>
@@ -1550,19 +1642,11 @@ void EncryptionCertificateNameConstraints::hash(HASH_ALGORITHM& algorithm)
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                             algorithm,
                 const EncryptionCertificateNameConstraints& value)
 {
     value.hash(algorithm);
 }
-
-
-
-
-
-
-
-
 
 /// Describe a date/time interval in which a certificate is valid.
 ///
@@ -1577,17 +1661,16 @@ class EncryptionCertificateValidity
     bslma::Allocator* d_allocator_p;
 
   public:
-    /// Create a new certificate validity interval having the default value.
-    /// Optionally specify a 'basicAllocator' used to supply memory. If
-    /// 'basicAllocator' is 0, the currently installed default allocator is
-    /// used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificateValidity(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate validity interval having the same value as the
-    /// specified 'original' object. Optionally specify a 'basicAllocator' used
-    /// to supply memory. If 'basicAllocator' is 0, the currently installed
-    /// default allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificateValidity(
         const EncryptionCertificateValidity& original,
         bslma::Allocator*                    basicAllocator = 0);
@@ -1714,14 +1797,6 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
     value.hash(algorithm);
 }
 
-
-
-
-
-
-
-
-
 /// Enumerate the well-known encryption certificate public key algorithm types.
 ///
 /// @par Thread Safety
@@ -1734,11 +1809,11 @@ class EncryptionCertificatePublicKeyAlgorithmIdentifierType
     /// Enumerate the well-known encryption certificate public key algorithm
     /// types.
     enum Value {
-        /// RSA. This enumerator corresponds to the object identifier 
+        /// RSA. This enumerator corresponds to the object identifier
         /// 1.2.840.113549.1.1.1.
         e_RSA,
 
-        /// Elliptic curve. This enumerator corresponds to the object 
+        /// Elliptic curve. This enumerator corresponds to the object
         /// identifier 1.2.840.10045.2.1.
         e_ELLIPTIC_CURVE
     };
@@ -1777,32 +1852,10 @@ class EncryptionCertificatePublicKeyAlgorithmIdentifierType
 ///
 /// @related ntca::EncryptionCertificatePublicKeyAlgorithmIdentifierType
 bsl::ostream& operator<<(
-    bsl::ostream&                                      stream,
+    bsl::ostream&                                                stream,
     EncryptionCertificatePublicKeyAlgorithmIdentifierType::Value rhs);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/// Describe an encryption certificate public key algorithm.
+/// Describe an encryption certificate public key algorithm identifier.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -1814,20 +1867,19 @@ class EncryptionCertificatePublicKeyAlgorithmIdentifier
     bslma::Allocator*              d_allocator_p;
 
   public:
-    /// Create a new certificate public key algorithm having the default value.
-    /// Optionally specify a 'basicAllocator' used to supply memory. If
-    /// 'basicAllocator' is 0, the currently installed default allocator is
-    /// used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificatePublicKeyAlgorithmIdentifier(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate public key algorithm having the same value as
-    /// the specified 'original' object. Optionally specify a 'basicAllocator'
-    /// used to supply memory. If 'basicAllocator' is 0, the currently
-    /// installed default allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificatePublicKeyAlgorithmIdentifier(
         const EncryptionCertificatePublicKeyAlgorithmIdentifier& original,
-        bslma::Allocator*                              basicAllocator = 0);
+        bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionCertificatePublicKeyAlgorithmIdentifier();
@@ -1870,16 +1922,18 @@ class EncryptionCertificatePublicKeyAlgorithmIdentifier
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
-    bool equals(const EncryptionCertificatePublicKeyAlgorithmIdentifier& other) const;
+    bool equals(
+        const EncryptionCertificatePublicKeyAlgorithmIdentifier& other) const;
 
     /// Return true if this object has the same value as the specified
     /// 'value', otherwise return false.
-    bool equals(
-        EncryptionCertificatePublicKeyAlgorithmIdentifierType::Value value) const;
+    bool equals(EncryptionCertificatePublicKeyAlgorithmIdentifierType::Value
+                    value) const;
 
     /// Return true if the value of this object is less than the value of
     /// the specified 'other' object, otherwise return false.
-    bool less(const EncryptionCertificatePublicKeyAlgorithmIdentifier& other) const;
+    bool less(
+        const EncryptionCertificatePublicKeyAlgorithmIdentifier& other) const;
 
     /// Contribute the values of the salient attributes of this object to the
     /// specified hash 'algorithm'.
@@ -1913,7 +1967,7 @@ class EncryptionCertificatePublicKeyAlgorithmIdentifier
 ///
 /// @related ntca::EncryptionCertificatePublicKeyAlgorithmIdentifier
 bsl::ostream& operator<<(
-    bsl::ostream&                                  stream,
+    bsl::ostream&                                            stream,
     const EncryptionCertificatePublicKeyAlgorithmIdentifier& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
@@ -1945,11 +1999,13 @@ bool operator<(const EncryptionCertificatePublicKeyAlgorithmIdentifier& lhs,
 ///
 /// @related ntca::EncryptionCertificatePublicKeyAlgorithmIdentifier
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                                algorithm,
-                const EncryptionCertificatePublicKeyAlgorithmIdentifier& value);
+void hashAppend(
+    HASH_ALGORITHM&                                          algorithm,
+    const EncryptionCertificatePublicKeyAlgorithmIdentifier& value);
 
 template <typename HASH_ALGORITHM>
-void EncryptionCertificatePublicKeyAlgorithmIdentifier::hash(HASH_ALGORITHM& algorithm)
+void EncryptionCertificatePublicKeyAlgorithmIdentifier::hash(
+    HASH_ALGORITHM& algorithm)
 {
     using bslh::hashAppend;
 
@@ -1957,29 +2013,14 @@ void EncryptionCertificatePublicKeyAlgorithmIdentifier::hash(HASH_ALGORITHM& alg
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                                algorithm,
+void hashAppend(HASH_ALGORITHM& algorithm,
                 const EncryptionCertificatePublicKeyAlgorithmIdentifier& value)
 {
     value.hash(algorithm);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/// Describe MRM.
+/// Describe encryption certificate public key algorithm parameters for the RSA
+/// algorithm.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -1991,20 +2032,19 @@ class EncryptionCertificatePublicKeyAlgorithmParametersRsa
     bslma::Allocator*   d_allocator_p;
 
   public:
-    /// Create a new certificate having the default
-    /// value. Optionally specify a 'basicAllocator' used to supply memory.
-    /// If 'basicAllocator' is 0, the currently installed default allocator
-    /// is used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificatePublicKeyAlgorithmParametersRsa(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate having the same value
-    /// as the specified 'original' object. Optionally specify a
-    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
-    /// currently installed default allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificatePublicKeyAlgorithmParametersRsa(
         const EncryptionCertificatePublicKeyAlgorithmParametersRsa& original,
-        bslma::Allocator*                    basicAllocator = 0);
+        bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionCertificatePublicKeyAlgorithmParametersRsa();
@@ -2026,11 +2066,13 @@ class EncryptionCertificatePublicKeyAlgorithmParametersRsa
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
-    bool equals(const EncryptionCertificatePublicKeyAlgorithmParametersRsa& other) const;
+    bool equals(const EncryptionCertificatePublicKeyAlgorithmParametersRsa&
+                    other) const;
 
     /// Return true if the value of this object is less than the value of
     /// the specified 'other' object, otherwise return false.
-    bool less(const EncryptionCertificatePublicKeyAlgorithmParametersRsa& other) const;
+    bool less(const EncryptionCertificatePublicKeyAlgorithmParametersRsa&
+                  other) const;
 
     /// Contribute the values of the salient attributes of this object to the
     /// specified hash 'algorithm'.
@@ -2055,50 +2097,57 @@ class EncryptionCertificatePublicKeyAlgorithmParametersRsa
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificatePublicKeyAlgorithmParametersRsa);
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
+        EncryptionCertificatePublicKeyAlgorithmParametersRsa);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
-/// @related ntca::EncryptionCertificate
-bsl::ostream& operator<<(bsl::ostream&                        stream,
-                         const EncryptionCertificatePublicKeyAlgorithmParametersRsa& object);
+/// @related ntca::EncryptionCertificatePublicKeyAlgorithmParametersRsa
+bsl::ostream& operator<<(
+    bsl::ostream&                                               stream,
+    const EncryptionCertificatePublicKeyAlgorithmParametersRsa& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
-/// @related ntca::EncryptionCertificate
-bool operator==(const EncryptionCertificatePublicKeyAlgorithmParametersRsa& lhs,
-                const EncryptionCertificatePublicKeyAlgorithmParametersRsa& rhs);
+/// @related ntca::EncryptionCertificatePublicKeyAlgorithmParametersRsa
+bool operator==(
+    const EncryptionCertificatePublicKeyAlgorithmParametersRsa& lhs,
+    const EncryptionCertificatePublicKeyAlgorithmParametersRsa& rhs);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
 /// have the same value, and 'false' otherwise.  Two attribute objects do
 /// not have the same value if one or more respective attributes differ in
 /// values.
 ///
-/// @related ntca::EncryptionCertificate
-bool operator!=(const EncryptionCertificatePublicKeyAlgorithmParametersRsa& lhs,
-                const EncryptionCertificatePublicKeyAlgorithmParametersRsa& rhs);
+/// @related ntca::EncryptionCertificatePublicKeyAlgorithmParametersRsa
+bool operator!=(
+    const EncryptionCertificatePublicKeyAlgorithmParametersRsa& lhs,
+    const EncryptionCertificatePublicKeyAlgorithmParametersRsa& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::EncryptionCertificate
-bool operator<(const EncryptionCertificatePublicKeyAlgorithmParametersRsa& lhs,
-               const EncryptionCertificatePublicKeyAlgorithmParametersRsa& rhs);
+/// @related ntca::EncryptionCertificatePublicKeyAlgorithmParametersRsa
+bool operator<(
+    const EncryptionCertificatePublicKeyAlgorithmParametersRsa& lhs,
+    const EncryptionCertificatePublicKeyAlgorithmParametersRsa& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntca::EncryptionCertificatePublicKeyAlgorithmParametersRsa
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
-                const EncryptionCertificatePublicKeyAlgorithmParametersRsa& value);
+void hashAppend(
+    HASH_ALGORITHM&                                             algorithm,
+    const EncryptionCertificatePublicKeyAlgorithmParametersRsa& value);
 
 template <typename HASH_ALGORITHM>
-void EncryptionCertificatePublicKeyAlgorithmParametersRsa::hash(HASH_ALGORITHM& algorithm)
+void EncryptionCertificatePublicKeyAlgorithmParametersRsa::hash(
+    HASH_ALGORITHM& algorithm)
 {
     using bslh::hashAppend;
 
@@ -2106,25 +2155,12 @@ void EncryptionCertificatePublicKeyAlgorithmParametersRsa::hash(HASH_ALGORITHM& 
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
-                const EncryptionCertificatePublicKeyAlgorithmParametersRsa& value)
+void hashAppend(
+    HASH_ALGORITHM&                                             algorithm,
+    const EncryptionCertificatePublicKeyAlgorithmParametersRsa& value)
 {
     value.hash(algorithm);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /// Enumerate the well-known encryption certificate public key algorithm types.
 ///
@@ -2132,16 +2168,13 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
 /// This class is thread safe.
 ///
 /// @ingroup module_ntsa_data
-class EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType
+class
+    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType
 {
   public:
     /// Enumerate the well-known encryption certificate public key algorithm
     /// types.
     enum Value {
-
-
-
-
         /// Elliptic curve with 256-bit field size and domain paraters chosen
         /// randomly. This enumerator corresponds to the object identifier
         /// 1.2.840.10045.3.1.7.
@@ -2157,8 +2190,9 @@ class EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierTy
         /// 1.3.132.0.35.
         e_SEC_P521_R1 = 2,
 
-
-        
+        /// Elliptic curve with 256-bit field size and domain paraters chosen
+        /// randomly. This enumerator corresponds to the object identifier
+        /// 1.2.840.10045.3.1.7. This enumerator is an alias for e_SEC_P256_R1.
         e_NIST_P256 = e_SEC_P256_R1
     };
 
@@ -2196,35 +2230,11 @@ class EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierTy
 ///
 /// @related ntca::EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType
 bsl::ostream& operator<<(
-    bsl::ostream&                                      stream,
-    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::Value rhs);
+    bsl::ostream& stream,
+    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::
+        Value rhs);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/// Describe an encryption certificate public key algorithm.
+/// Describe an identifier for well-known elliptic curve algorithm parameters.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -2236,38 +2246,42 @@ class EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier
     bslma::Allocator*              d_allocator_p;
 
   public:
-    /// Create a new certificate public key algorithm having the default value.
-    /// Optionally specify a 'basicAllocator' used to supply memory. If
-    /// 'basicAllocator' is 0, the currently installed default allocator is
-    /// used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate public key algorithm having the same value as
-    /// the specified 'original' object. Optionally specify a 'basicAllocator'
-    /// used to supply memory. If 'basicAllocator' is 0, the currently
-    /// installed default allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier(
-        const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& original,
-        bslma::Allocator*                              basicAllocator = 0);
+        const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+                          original,
+        bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier();
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
-    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& operator=(
-        const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& other);
+    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+    operator=(
+        const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+            other);
 
     /// Assign the value of the specified 'value' to this object. Return a
     /// reference to this modifiable object.
-    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& operator=(
-        const ntsa::AbstractObjectIdentifier& value);
+    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+    operator=(const ntsa::AbstractObjectIdentifier& value);
 
     /// Assign the value of the specified 'value' to this object. Return a
     /// reference to this modifiable object.
-    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& operator=(
-        EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::Value value);
+    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+    operator=(
+        EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::
+            Value value);
 
     /// Reset the value of this object to its value upon default
     /// construction.
@@ -2279,7 +2293,8 @@ class EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier
     /// Set the identifier to the object identifier corresponding to the
     /// specified 'value'.
     void setIdentifer(
-        EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::Value value);
+        EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::
+            Value value);
 
     /// Decode this object using the specified 'decoder'. Return the error.
     ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
@@ -2292,16 +2307,21 @@ class EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
-    bool equals(const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& other) const;
+    bool equals(
+        const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+            other) const;
 
     /// Return true if this object has the same value as the specified
     /// 'value', otherwise return false.
     bool equals(
-        EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::Value value) const;
+        EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType::
+            Value value) const;
 
     /// Return true if the value of this object is less than the value of
     /// the specified 'other' object, otherwise return false.
-    bool less(const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& other) const;
+    bool less(
+        const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+            other) const;
 
     /// Contribute the values of the salient attributes of this object to the
     /// specified hash 'algorithm'.
@@ -2335,16 +2355,20 @@ class EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier
 ///
 /// @related ntca::EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier
 bsl::ostream& operator<<(
-    bsl::ostream&                                  stream,
-    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& object);
+    bsl::ostream& stream,
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+        object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
 /// @related ntca::EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier
-bool operator==(const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& lhs,
-                const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& rhs);
+bool operator==(
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+        lhs,
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+        rhs);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
 /// have the same value, and 'false' otherwise.  Two attribute objects do
@@ -2352,26 +2376,35 @@ bool operator==(const EncryptionCertificatePublicKeyAlgorithmParametersEllipticC
 /// values.
 ///
 /// @related ntca::EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier
-bool operator!=(const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& lhs,
-                const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& rhs);
+bool operator!=(
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+        lhs,
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+        rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
 /// @related ntca::EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier
-bool operator<(const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& lhs,
-               const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& rhs);
+bool operator<(
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+        lhs,
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+        rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
 /// @related ntca::EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                                algorithm,
-                const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& value);
+void hashAppend(
+    HASH_ALGORITHM& algorithm,
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+        value);
 
 template <typename HASH_ALGORITHM>
-void EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::hash(HASH_ALGORITHM& algorithm)
+void EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::
+    hash(HASH_ALGORITHM& algorithm)
 {
     using bslh::hashAppend;
 
@@ -2379,42 +2412,15 @@ void EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::h
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                                algorithm,
-                const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& value)
+void hashAppend(
+    HASH_ALGORITHM& algorithm,
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+        value)
 {
     value.hash(algorithm);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/// Describe an encryption certificate extension value.
+/// Describe parameters to an elliptic curve algorithm.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -2422,14 +2428,11 @@ void hashAppend(HASH_ALGORITHM&                                algorithm,
 /// @ingroup module_ntci_encryption
 class EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve
 {
-    enum Type {
-        e_UNDEFINED = -1,
-        e_IDENTIFIER      = 1,
-        e_ANY       = 2
-    };
+    enum Type { e_UNDEFINED = -1, e_IDENTIFIER = 1, e_ANY = 2 };
 
     union {
-        bsls::ObjectBuffer<EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier>
+        bsls::ObjectBuffer<
+            EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier>
                                                 d_identifier;
         bsls::ObjectBuffer<ntsa::AbstractValue> d_any;
     };
@@ -2438,20 +2441,20 @@ class EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve
     bslma::Allocator* d_allocator_p;
 
   public:
-    /// Create a new certificate extension value having the default value.
-    /// Optionally specify a 'basicAllocator' used to supply memory. If
-    /// 'basicAllocator' is 0, the currently installed default allocator is
-    /// used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate extension value having the same value as the
-    /// specified 'original' object. Optionally specify a 'basicAllocator' used
-    /// to supply memory. If 'basicAllocator' is 0, the currently installed
-    /// default allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve(
-        const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& original,
-        bslma::Allocator*                          basicAllocator = 0);
+        const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve&
+                          original,
+        bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve();
@@ -2459,7 +2462,8 @@ class EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
     EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& operator=(
-        const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& other);
+        const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve&
+            other);
 
     /// Reset the value of this object to its value upon default
     /// construction.
@@ -2467,12 +2471,15 @@ class EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve
 
     /// Select the "identifier" representation. Return a reference to the
     /// modifiable representation.
-    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& makeIdentifier();
+    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+    makeIdentifier();
 
     /// Select the "identifier" representation initially having the
     /// specified 'value'. Return a reference to the modifiable representation.
-    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& makeIdentifier(
-        const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& value);
+    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+    makeIdentifier(
+        const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+            value);
 
     /// Select the "any" representation. Return a reference to the modifiable
     /// representation.
@@ -2484,7 +2491,8 @@ class EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve
 
     /// Return a reference to the modifiable "identifier" representation.
     /// The behavior is undefined unless 'isIdentifier()' is true.
-    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& identifier();
+    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+    identifier();
 
     /// Return a reference to the modifiable "any" representation. The
     /// behavior is undefined unless 'isAny()' is true.
@@ -2493,7 +2501,8 @@ class EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve
     /// Return a reference to the non-modifiable "identifier"
     /// representation. The behavior is undefined unless 'isIdentifier()'
     /// is true.
-    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier& identifier() const;
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier&
+    identifier() const;
 
     /// Return a reference to the non-modifiable "any" representation. The
     /// behavior is undefined unless 'isAny()' is true.
@@ -2512,11 +2521,15 @@ class EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
-    bool equals(const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& other) const;
+    bool equals(
+        const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve&
+            other) const;
 
     /// Return true if the value of this object is less than the value of
     /// the specified 'other' object, otherwise return false.
-    bool less(const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& other) const;
+    bool less(
+        const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve&
+            other) const;
 
     /// Contribute the values of the salient attributes of this object to the
     /// specified hash 'algorithm'.
@@ -2548,16 +2561,19 @@ class EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve
-bsl::ostream& operator<<(bsl::ostream&                              stream,
-                         const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& object);
+bsl::ostream& operator<<(
+    bsl::ostream& stream,
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve&
+        object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
 /// @related ntca::EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve
-bool operator==(const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& lhs,
-                const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& rhs);
+bool operator==(
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& lhs,
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& rhs);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
 /// have the same value, and 'false' otherwise.  Two attribute objects do
@@ -2565,26 +2581,31 @@ bool operator==(const EncryptionCertificatePublicKeyAlgorithmParametersEllipticC
 /// values.
 ///
 /// @related ntca::EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve
-bool operator!=(const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& lhs,
-                const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& rhs);
+bool operator!=(
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& lhs,
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
 /// @related ntca::EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve
-bool operator<(const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& lhs,
-               const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& rhs);
+bool operator<(
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& lhs,
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
 /// @related ntca::EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                            algorithm,
-                const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& value);
+void hashAppend(
+    HASH_ALGORITHM& algorithm,
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve&
+        value);
 
 template <typename HASH_ALGORITHM>
-void EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::hash(HASH_ALGORITHM& algorithm)
+void EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::hash(
+    HASH_ALGORITHM& algorithm)
 {
     using bslh::hashAppend;
 
@@ -2597,29 +2618,15 @@ void EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve::hash(HASH_A
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                            algorithm,
-                const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& value)
+void hashAppend(
+    HASH_ALGORITHM& algorithm,
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve&
+        value)
 {
     value.hash(algorithm);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/// Describe an encryption certificate extension value.
+/// Describe an encryption certificate public key algorithm parameters.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -2627,15 +2634,11 @@ void hashAppend(HASH_ALGORITHM&                            algorithm,
 /// @ingroup module_ntci_encryption
 class EncryptionCertificatePublicKeyAlgorithmParameters
 {
-    enum Type {
-        e_UNDEFINED = -1,
-        e_RSA = 0,
-        e_ELLIPTIC_CURVE = 1,
-        e_ANY = 2
-    };
+    enum Type { e_UNDEFINED = -1, e_RSA = 0, e_ELLIPTIC_CURVE = 1, e_ANY = 2 };
 
     typedef EncryptionCertificatePublicKeyAlgorithmParametersRsa RsaType;
-    typedef EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve EllipticCurveType;
+    typedef EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve
+        EllipticCurveType;
 
     union {
         bsls::ObjectBuffer<RsaType>             d_rsa;
@@ -2647,20 +2650,19 @@ class EncryptionCertificatePublicKeyAlgorithmParameters
     bslma::Allocator* d_allocator_p;
 
   public:
-    /// Create a new certificate extension value having the default value.
-    /// Optionally specify a 'basicAllocator' used to supply memory. If
-    /// 'basicAllocator' is 0, the currently installed default allocator is
-    /// used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificatePublicKeyAlgorithmParameters(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate extension value having the same value as the
-    /// specified 'original' object. Optionally specify a 'basicAllocator' used
-    /// to supply memory. If 'basicAllocator' is 0, the currently installed
-    /// default allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificatePublicKeyAlgorithmParameters(
         const EncryptionCertificatePublicKeyAlgorithmParameters& original,
-        bslma::Allocator*                          basicAllocator = 0);
+        bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionCertificatePublicKeyAlgorithmParameters();
@@ -2685,12 +2687,15 @@ class EncryptionCertificatePublicKeyAlgorithmParameters
 
     /// Select the "ellipticCurve" representation. Return a reference to the
     /// modifiable representation.
-    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& makeEllipticCurve();
+    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve&
+    makeEllipticCurve();
 
     /// Select the "ellipticCurve" representation initially having the
     /// specified 'value'. Return a reference to the modifiable representation.
-    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& makeEllipticCurve(
-        const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& value);
+    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve&
+    makeEllipticCurve(
+        const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve&
+            value);
 
     /// Select the "any" representation. Return a reference to the modifiable
     /// representation.
@@ -2706,7 +2711,8 @@ class EncryptionCertificatePublicKeyAlgorithmParameters
 
     /// Return a reference to the modifiable "ellipticCurve" representation.
     /// The behavior is undefined unless 'isEllipticCurve()' is true.
-    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& ellipticCurve();
+    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve&
+    ellipticCurve();
 
     /// Return a reference to the modifiable "any" representation. The
     /// behavior is undefined unless 'isAny()' is true.
@@ -2719,7 +2725,8 @@ class EncryptionCertificatePublicKeyAlgorithmParameters
     /// Return a reference to the non-modifiable "ellipticCurve"
     /// representation. The behavior is undefined unless 'isEllipticCurve()' is
     /// true.
-    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve& ellipticCurve() const;
+    const EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve&
+    ellipticCurve() const;
 
     /// Return a reference to the non-modifiable "any" representation. The
     /// behavior is undefined unless 'isAny()' is true.
@@ -2742,11 +2749,13 @@ class EncryptionCertificatePublicKeyAlgorithmParameters
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
-    bool equals(const EncryptionCertificatePublicKeyAlgorithmParameters& other) const;
+    bool equals(
+        const EncryptionCertificatePublicKeyAlgorithmParameters& other) const;
 
     /// Return true if the value of this object is less than the value of
     /// the specified 'other' object, otherwise return false.
-    bool less(const EncryptionCertificatePublicKeyAlgorithmParameters& other) const;
+    bool less(
+        const EncryptionCertificatePublicKeyAlgorithmParameters& other) const;
 
     /// Contribute the values of the salient attributes of this object to the
     /// specified hash 'algorithm'.
@@ -2778,8 +2787,9 @@ class EncryptionCertificatePublicKeyAlgorithmParameters
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionCertificatePublicKeyAlgorithmParameters
-bsl::ostream& operator<<(bsl::ostream&                              stream,
-                         const EncryptionCertificatePublicKeyAlgorithmParameters& object);
+bsl::ostream& operator<<(
+    bsl::ostream&                                            stream,
+    const EncryptionCertificatePublicKeyAlgorithmParameters& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
@@ -2810,11 +2820,13 @@ bool operator<(const EncryptionCertificatePublicKeyAlgorithmParameters& lhs,
 ///
 /// @related ntca::EncryptionCertificatePublicKeyAlgorithmParameters
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                            algorithm,
-                const EncryptionCertificatePublicKeyAlgorithmParameters& value);
+void hashAppend(
+    HASH_ALGORITHM&                                          algorithm,
+    const EncryptionCertificatePublicKeyAlgorithmParameters& value);
 
 template <typename HASH_ALGORITHM>
-void EncryptionCertificatePublicKeyAlgorithmParameters::hash(HASH_ALGORITHM& algorithm)
+void EncryptionCertificatePublicKeyAlgorithmParameters::hash(
+    HASH_ALGORITHM& algorithm)
 {
     using bslh::hashAppend;
 
@@ -2830,33 +2842,13 @@ void EncryptionCertificatePublicKeyAlgorithmParameters::hash(HASH_ALGORITHM& alg
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                            algorithm,
+void hashAppend(HASH_ALGORITHM& algorithm,
                 const EncryptionCertificatePublicKeyAlgorithmParameters& value)
 {
     value.hash(algorithm);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/// Describe MRM.
+/// Describe an encryption certificate public key algorithm.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -2865,24 +2857,24 @@ void hashAppend(HASH_ALGORITHM&                            algorithm,
 class EncryptionCertificatePublicKeyAlgorithm
 {
     EncryptionCertificatePublicKeyAlgorithmIdentifier d_identifier;
-    EncryptionCertificatePublicKeyAlgorithmParameters d_parameters;
+    bdlb::NullableValue<EncryptionCertificatePublicKeyAlgorithmParameters>
+                      d_parameters;
     bslma::Allocator* d_allocator_p;
 
   public:
-    /// Create a new certificate having the default
-    /// value. Optionally specify a 'basicAllocator' used to supply memory.
-    /// If 'basicAllocator' is 0, the currently installed default allocator
-    /// is used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificatePublicKeyAlgorithm(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate having the same value
-    /// as the specified 'original' object. Optionally specify a
-    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
-    /// currently installed default allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificatePublicKeyAlgorithm(
         const EncryptionCertificatePublicKeyAlgorithm& original,
-        bslma::Allocator*                    basicAllocator = 0);
+        bslma::Allocator*                              basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionCertificatePublicKeyAlgorithm();
@@ -2911,10 +2903,13 @@ class EncryptionCertificatePublicKeyAlgorithm
     ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
 
     /// Return the identifier.
-    const EncryptionCertificatePublicKeyAlgorithmIdentifier& identifier() const;
+    const EncryptionCertificatePublicKeyAlgorithmIdentifier& identifier()
+        const;
 
     /// Return the parameters.
-    const EncryptionCertificatePublicKeyAlgorithmParameters& parameters() const;
+    const bdlb::NullableValue<
+        EncryptionCertificatePublicKeyAlgorithmParameters>&
+    parameters() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -2947,21 +2942,23 @@ class EncryptionCertificatePublicKeyAlgorithm
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificatePublicKeyAlgorithm);
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
+        EncryptionCertificatePublicKeyAlgorithm);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
-/// @related ntca::EncryptionCertificate
-bsl::ostream& operator<<(bsl::ostream&                        stream,
-                         const EncryptionCertificatePublicKeyAlgorithm& object);
+/// @related ntca::EncryptionCertificatePublicKeyAlgorithm
+bsl::ostream& operator<<(
+    bsl::ostream&                                  stream,
+    const EncryptionCertificatePublicKeyAlgorithm& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntca::EncryptionCertificatePublicKeyAlgorithm
 bool operator==(const EncryptionCertificatePublicKeyAlgorithm& lhs,
                 const EncryptionCertificatePublicKeyAlgorithm& rhs);
 
@@ -2970,23 +2967,23 @@ bool operator==(const EncryptionCertificatePublicKeyAlgorithm& lhs,
 /// not have the same value if one or more respective attributes differ in
 /// values.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntca::EncryptionCertificatePublicKeyAlgorithm
 bool operator!=(const EncryptionCertificatePublicKeyAlgorithm& lhs,
                 const EncryptionCertificatePublicKeyAlgorithm& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntca::EncryptionCertificatePublicKeyAlgorithm
 bool operator<(const EncryptionCertificatePublicKeyAlgorithm& lhs,
                const EncryptionCertificatePublicKeyAlgorithm& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntca::EncryptionCertificatePublicKeyAlgorithm
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                                algorithm,
                 const EncryptionCertificatePublicKeyAlgorithm& value);
 
 template <typename HASH_ALGORITHM>
@@ -2999,24 +2996,13 @@ void EncryptionCertificatePublicKeyAlgorithm::hash(HASH_ALGORITHM& algorithm)
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                                algorithm,
                 const EncryptionCertificatePublicKeyAlgorithm& value)
 {
     value.hash(algorithm);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-/// Describe MRM.
+/// Describe an encryption certificate public key value for the RSA algorithm.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -3024,25 +3010,24 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
 /// @ingroup module_ntci_encryption
 class EncryptionCertificatePublicKeyValueRsa
 {
-    ntsa::AbstractInteger     d_modulus;
-    ntsa::AbstractInteger     d_encryptionExponent;
-    bslma::Allocator*         d_allocator_p;
+    ntsa::AbstractInteger d_modulus;
+    ntsa::AbstractInteger d_encryptionExponent;
+    bslma::Allocator*     d_allocator_p;
 
   public:
-    /// Create a new certificate having the default
-    /// value. Optionally specify a 'basicAllocator' used to supply memory.
-    /// If 'basicAllocator' is 0, the currently installed default allocator
-    /// is used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificatePublicKeyValueRsa(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate having the same value
-    /// as the specified 'original' object. Optionally specify a
-    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
-    /// currently installed default allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificatePublicKeyValueRsa(
         const EncryptionCertificatePublicKeyValueRsa& original,
-        bslma::Allocator*                    basicAllocator = 0);
+        bslma::Allocator*                             basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionCertificatePublicKeyValueRsa();
@@ -3093,21 +3078,22 @@ class EncryptionCertificatePublicKeyValueRsa
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificatePublicKeyValueRsa);
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
+        EncryptionCertificatePublicKeyValueRsa);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
-/// @related ntca::EncryptionCertificate
-bsl::ostream& operator<<(bsl::ostream&                        stream,
+/// @related ntca::EncryptionCertificatePublicKeyValueRsa
+bsl::ostream& operator<<(bsl::ostream&                                 stream,
                          const EncryptionCertificatePublicKeyValueRsa& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntca::EncryptionCertificatePublicKeyValueRsa
 bool operator==(const EncryptionCertificatePublicKeyValueRsa& lhs,
                 const EncryptionCertificatePublicKeyValueRsa& rhs);
 
@@ -3116,23 +3102,23 @@ bool operator==(const EncryptionCertificatePublicKeyValueRsa& lhs,
 /// not have the same value if one or more respective attributes differ in
 /// values.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntca::EncryptionCertificatePublicKeyValueRsa
 bool operator!=(const EncryptionCertificatePublicKeyValueRsa& lhs,
                 const EncryptionCertificatePublicKeyValueRsa& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntca::EncryptionCertificatePublicKeyValueRsa
 bool operator<(const EncryptionCertificatePublicKeyValueRsa& lhs,
                const EncryptionCertificatePublicKeyValueRsa& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntca::EncryptionCertificatePublicKeyValueRsa
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                               algorithm,
                 const EncryptionCertificatePublicKeyValueRsa& value);
 
 template <typename HASH_ALGORITHM>
@@ -3145,28 +3131,14 @@ void EncryptionCertificatePublicKeyValueRsa::hash(HASH_ALGORITHM& algorithm)
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                               algorithm,
                 const EncryptionCertificatePublicKeyValueRsa& value)
 {
     value.hash(algorithm);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/// Describe MRM.
+/// Describe an encryption certificate public key for an elliptic curve
+/// algorithm.
 ///
 /// See RFC 5480 "Elliptic Curve Cryptography Subject Public Key Information".
 ///
@@ -3177,23 +3149,22 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
 class EncryptionCertificatePublicKeyValueEllipticCurve
 {
     ntsa::AbstractBitString d_value;
-    bslma::Allocator*         d_allocator_p;
+    bslma::Allocator*       d_allocator_p;
 
   public:
-    /// Create a new certificate having the default
-    /// value. Optionally specify a 'basicAllocator' used to supply memory.
-    /// If 'basicAllocator' is 0, the currently installed default allocator
-    /// is used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificatePublicKeyValueEllipticCurve(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate having the same value
-    /// as the specified 'original' object. Optionally specify a
-    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
-    /// currently installed default allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificatePublicKeyValueEllipticCurve(
         const EncryptionCertificatePublicKeyValueEllipticCurve& original,
-        bslma::Allocator*                    basicAllocator = 0);
+        bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionCertificatePublicKeyValueEllipticCurve();
@@ -3215,11 +3186,13 @@ class EncryptionCertificatePublicKeyValueEllipticCurve
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
-    bool equals(const EncryptionCertificatePublicKeyValueEllipticCurve& other) const;
+    bool equals(
+        const EncryptionCertificatePublicKeyValueEllipticCurve& other) const;
 
     /// Return true if the value of this object is less than the value of
     /// the specified 'other' object, otherwise return false.
-    bool less(const EncryptionCertificatePublicKeyValueEllipticCurve& other) const;
+    bool less(
+        const EncryptionCertificatePublicKeyValueEllipticCurve& other) const;
 
     /// Contribute the values of the salient attributes of this object to the
     /// specified hash 'algorithm'.
@@ -3244,21 +3217,23 @@ class EncryptionCertificatePublicKeyValueEllipticCurve
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificatePublicKeyValueEllipticCurve);
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
+        EncryptionCertificatePublicKeyValueEllipticCurve);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
-/// @related ntca::EncryptionCertificate
-bsl::ostream& operator<<(bsl::ostream&                        stream,
-                         const EncryptionCertificatePublicKeyValueEllipticCurve& object);
+/// @related ntca::EncryptionCertificatePublicKeyValueEllipticCurve
+bsl::ostream& operator<<(
+    bsl::ostream&                                           stream,
+    const EncryptionCertificatePublicKeyValueEllipticCurve& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntca::EncryptionCertificatePublicKeyValueEllipticCurve
 bool operator==(const EncryptionCertificatePublicKeyValueEllipticCurve& lhs,
                 const EncryptionCertificatePublicKeyValueEllipticCurve& rhs);
 
@@ -3267,27 +3242,28 @@ bool operator==(const EncryptionCertificatePublicKeyValueEllipticCurve& lhs,
 /// not have the same value if one or more respective attributes differ in
 /// values.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntca::EncryptionCertificatePublicKeyValueEllipticCurve
 bool operator!=(const EncryptionCertificatePublicKeyValueEllipticCurve& lhs,
                 const EncryptionCertificatePublicKeyValueEllipticCurve& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntca::EncryptionCertificatePublicKeyValueEllipticCurve
 bool operator<(const EncryptionCertificatePublicKeyValueEllipticCurve& lhs,
                const EncryptionCertificatePublicKeyValueEllipticCurve& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
-/// @related ntca::EncryptionCertificate
+/// @related ntca::EncryptionCertificatePublicKeyValueEllipticCurve
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM& algorithm,
                 const EncryptionCertificatePublicKeyValueEllipticCurve& value);
 
 template <typename HASH_ALGORITHM>
-void EncryptionCertificatePublicKeyValueEllipticCurve::hash(HASH_ALGORITHM& algorithm)
+void EncryptionCertificatePublicKeyValueEllipticCurve::hash(
+    HASH_ALGORITHM& algorithm)
 {
     using bslh::hashAppend;
 
@@ -3295,32 +3271,13 @@ void EncryptionCertificatePublicKeyValueEllipticCurve::hash(HASH_ALGORITHM& algo
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM& algorithm,
                 const EncryptionCertificatePublicKeyValueEllipticCurve& value)
 {
     value.hash(algorithm);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/// Describe an encryption certificate extension value.
+/// Describe an encryption certificate public key.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -3328,18 +3285,12 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
 /// @ingroup module_ntci_encryption
 class EncryptionCertificatePublicKeyValue
 {
-    enum Type {
-        e_UNDEFINED = -1,
-        e_RSA = 0,
-        e_ELLIPTIC_CURVE = 1,
-        e_ANY = 2
-    };
+    enum Type { e_UNDEFINED = -1, e_RSA = 0, e_ELLIPTIC_CURVE = 1, e_ANY = 2 };
 
     union {
-        bsls::ObjectBuffer<EncryptionCertificatePublicKeyValueRsa>
-                                                d_rsa;
+        bsls::ObjectBuffer<EncryptionCertificatePublicKeyValueRsa> d_rsa;
         bsls::ObjectBuffer<EncryptionCertificatePublicKeyValueEllipticCurve>
-                                                d_ellipticCurve;
+                                                    d_ellipticCurve;
         bsls::ObjectBuffer<ntsa::AbstractBitString> d_any;
     };
 
@@ -3347,17 +3298,16 @@ class EncryptionCertificatePublicKeyValue
     bslma::Allocator* d_allocator_p;
 
   public:
-    /// Create a new certificate extension value having the default value.
-    /// Optionally specify a 'basicAllocator' used to supply memory. If
-    /// 'basicAllocator' is 0, the currently installed default allocator is
-    /// used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificatePublicKeyValue(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate extension value having the same value as the
-    /// specified 'original' object. Optionally specify a 'basicAllocator' used
-    /// to supply memory. If 'basicAllocator' is 0, the currently installed
-    /// default allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificatePublicKeyValue(
         const EncryptionCertificatePublicKeyValue& original,
         bslma::Allocator*                          basicAllocator = 0);
@@ -3419,7 +3369,8 @@ class EncryptionCertificatePublicKeyValue
     /// Return a reference to the non-modifiable "ellipticCurve"
     /// representation. The behavior is undefined unless 'isEllipticCurve()' is
     /// true.
-    const EncryptionCertificatePublicKeyValueEllipticCurve& ellipticCurve() const;
+    const EncryptionCertificatePublicKeyValueEllipticCurve& ellipticCurve()
+        const;
 
     /// Return a reference to the non-modifiable "any" representation. The
     /// behavior is undefined unless 'isAny()' is true.
@@ -3536,19 +3487,6 @@ void hashAppend(HASH_ALGORITHM&                            algorithm,
     value.hash(algorithm);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 /// Describe the public key of an encryption certificate.
 ///
 /// @par Thread Safety
@@ -3557,20 +3495,6 @@ void hashAppend(HASH_ALGORITHM&                            algorithm,
 /// @ingroup module_ntci_encryption
 class EncryptionCertificatePublicKeyInfo
 {
-    // MRM
-    // RSA keys: 
-    //   family = {iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-1(1) rsaEncryption(1)}
-    //            1 2 840 113549 1 1 1
-    //
-    //   type   = (null)
-    //
-    // EC keys:  
-    //   family = {iso(1) member-body(2) us(840) ansi-x962(10045) keyType(2) ecPublicKey(1)}
-    //            1 2 840 10045 2 1 (ecPublicKey)
-    //
-    //   type   = {iso(1) member-body(2) us(840) ansi-x962(10045) curves(3) prime(1) prime256v1(7)} 
-    //            1 2 840 10045 3 1 7 
-
     ntca::EncryptionCertificatePublicKeyAlgorithm d_algorithm;
     ntca::EncryptionCertificatePublicKeyValue     d_value;
     bslma::Allocator*                             d_allocator_p;
@@ -3608,6 +3532,12 @@ class EncryptionCertificatePublicKeyInfo
 
     /// Encode this object using the specified 'encoder'. Return the error.
     ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return the public key algorithm.
+    const ntca::EncryptionCertificatePublicKeyAlgorithm& algorithm() const;
+
+    /// Return the public key value.
+    const ntca::EncryptionCertificatePublicKeyValue& value() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -3705,21 +3635,21 @@ void hashAppend(HASH_ALGORITHM&                           algorithm,
 /// This class is thread safe.
 ///
 /// @ingroup module_ntsa_data
-class EncryptionCertificateSignatureAlgorithmType
+class EncryptionCertificateSignatureAlgorithmIdentifierType
 {
   public:
     /// Enumerate the well-known encryption certificate signature algorithm
     /// types.
     enum Value {
-        /// Message Digest 2 (MD2) checksum with Rivest, Shamir, and Adleman 
+        /// Message Digest 2 (MD2) checksum with Rivest, Shamir, and Adleman
         /// (RSA) encryption.
         e_MD2_RSA,
 
-        /// Message Digest 4 (MD4) checksum with Rivest, Shamir, and Adleman 
+        /// Message Digest 4 (MD4) checksum with Rivest, Shamir, and Adleman
         /// (RSA) encryption.
         e_MD4_RSA,
 
-        /// Message Digest 5 (MD5) checksum with Rivest, Shamir, and Adleman 
+        /// Message Digest 5 (MD5) checksum with Rivest, Shamir, and Adleman
         /// (RSA) encryption.
         e_MD5_RSA,
 
@@ -3727,15 +3657,15 @@ class EncryptionCertificateSignatureAlgorithmType
         /// (SHA-1) and Rivest, Shamir, and Adleman (RSA) encryption.
         e_SHA1_RSA,
 
-        /// PKCS1 version 1.5 signature algorithm with Secure Hash Algorithm 
+        /// PKCS1 version 1.5 signature algorithm with Secure Hash Algorithm
         /// 256 (SHA-256) and Rivest, Shamir, and Adleman (RSA) encryption.
         e_SHA256_RSA,
 
-        /// PKCS1 version 1.5 signature algorithm with Secure Hash Algorithm 
+        /// PKCS1 version 1.5 signature algorithm with Secure Hash Algorithm
         /// 384 (SHA-384) and Rivest, Shamir, and Adleman (RSA) encryption.
         e_SHA384_RSA,
 
-        /// PKCS1 version 1.5 signature algorithm with Secure Hash Algorithm 
+        /// PKCS1 version 1.5 signature algorithm with Secure Hash Algorithm
         /// 512 (SHA-512) and Rivest, Shamir, and Adleman (RSA) encryption.
         e_SHA512_RSA,
 
@@ -3797,10 +3727,10 @@ class EncryptionCertificateSignatureAlgorithmType
 /// Format the specified 'rhs' to the specified output 'stream' and return a
 /// reference to the modifiable 'stream'.
 ///
-/// @related ntca::EncryptionCertificateSignatureAlgorithmType
+/// @related ntca::EncryptionCertificateSignatureAlgorithmIdentifierType
 bsl::ostream& operator<<(
-    bsl::ostream&                                      stream,
-    EncryptionCertificateSignatureAlgorithmType::Value rhs);
+    bsl::ostream&                                                stream,
+    EncryptionCertificateSignatureAlgorithmIdentifierType::Value rhs);
 
 /// Describe an encryption certificate signature algorithm.
 ///
@@ -3808,44 +3738,43 @@ bsl::ostream& operator<<(
 /// This class is not thread safe.
 ///
 /// @ingroup module_ntci_encryption
-class EncryptionCertificateSignatureAlgorithm
+class EncryptionCertificateSignatureAlgorithmIdentifier
 {
     ntsa::AbstractObjectIdentifier d_identifier;
     bslma::Allocator*              d_allocator_p;
 
   public:
-    /// Create a new certificate signature algorithm having the default value.
-    /// Optionally specify a 'basicAllocator' used to supply memory. If
-    /// 'basicAllocator' is 0, the currently installed default allocator is
-    /// used.
-    explicit EncryptionCertificateSignatureAlgorithm(
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    explicit EncryptionCertificateSignatureAlgorithmIdentifier(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate signature algorithm having the same value as
-    /// the specified 'original' object. Optionally specify a 'basicAllocator'
-    /// used to supply memory. If 'basicAllocator' is 0, the currently
-    /// installed default allocator is used.
-    EncryptionCertificateSignatureAlgorithm(
-        const EncryptionCertificateSignatureAlgorithm& original,
-        bslma::Allocator*                              basicAllocator = 0);
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
+    EncryptionCertificateSignatureAlgorithmIdentifier(
+        const EncryptionCertificateSignatureAlgorithmIdentifier& original,
+        bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
-    ~EncryptionCertificateSignatureAlgorithm();
+    ~EncryptionCertificateSignatureAlgorithmIdentifier();
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
-    EncryptionCertificateSignatureAlgorithm& operator=(
-        const EncryptionCertificateSignatureAlgorithm& other);
+    EncryptionCertificateSignatureAlgorithmIdentifier& operator=(
+        const EncryptionCertificateSignatureAlgorithmIdentifier& other);
 
     /// Assign the value of the specified 'value' to this object. Return a
     /// reference to this modifiable object.
-    EncryptionCertificateSignatureAlgorithm& operator=(
+    EncryptionCertificateSignatureAlgorithmIdentifier& operator=(
         const ntsa::AbstractObjectIdentifier& value);
 
     /// Assign the value of the specified 'value' to this object. Return a
     /// reference to this modifiable object.
-    EncryptionCertificateSignatureAlgorithm& operator=(
-        EncryptionCertificateSignatureAlgorithmType::Value value);
+    EncryptionCertificateSignatureAlgorithmIdentifier& operator=(
+        EncryptionCertificateSignatureAlgorithmIdentifierType::Value value);
 
     /// Reset the value of this object to its value upon default
     /// construction.
@@ -3857,7 +3786,7 @@ class EncryptionCertificateSignatureAlgorithm
     /// Set the identifier to the object identifier corresponding to the
     /// specified 'value'.
     void setIdentifer(
-        EncryptionCertificateSignatureAlgorithmType::Value value);
+        EncryptionCertificateSignatureAlgorithmIdentifierType::Value value);
 
     /// Decode this object using the specified 'decoder'. Return the error.
     ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
@@ -3870,12 +3799,307 @@ class EncryptionCertificateSignatureAlgorithm
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
-    bool equals(const EncryptionCertificateSignatureAlgorithm& other) const;
+    bool equals(
+        const EncryptionCertificateSignatureAlgorithmIdentifier& other) const;
 
     /// Return true if this object has the same value as the specified
     /// 'value', otherwise return false.
+    bool equals(EncryptionCertificateSignatureAlgorithmIdentifierType::Value
+                    value) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(
+        const EncryptionCertificateSignatureAlgorithmIdentifier& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
+        EncryptionCertificateSignatureAlgorithmIdentifier);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificateSignatureAlgorithmIdentifier
+bsl::ostream& operator<<(
+    bsl::ostream&                                            stream,
+    const EncryptionCertificateSignatureAlgorithmIdentifier& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificateSignatureAlgorithmIdentifier
+bool operator==(const EncryptionCertificateSignatureAlgorithmIdentifier& lhs,
+                const EncryptionCertificateSignatureAlgorithmIdentifier& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificateSignatureAlgorithmIdentifier
+bool operator!=(const EncryptionCertificateSignatureAlgorithmIdentifier& lhs,
+                const EncryptionCertificateSignatureAlgorithmIdentifier& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificateSignatureAlgorithmIdentifier
+bool operator<(const EncryptionCertificateSignatureAlgorithmIdentifier& lhs,
+               const EncryptionCertificateSignatureAlgorithmIdentifier& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificateSignatureAlgorithmIdentifier
+template <typename HASH_ALGORITHM>
+void hashAppend(
+    HASH_ALGORITHM&                                          algorithm,
+    const EncryptionCertificateSignatureAlgorithmIdentifier& value);
+
+template <typename HASH_ALGORITHM>
+void EncryptionCertificateSignatureAlgorithmIdentifier::hash(
+    HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, d_identifier);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm,
+                const EncryptionCertificateSignatureAlgorithmIdentifier& value)
+{
+    value.hash(algorithm);
+}
+
+/// Describe an encryption certificate signature algorithm parameters.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateSignatureAlgorithmParameters
+{
+    ntsa::AbstractValue d_value;
+    bslma::Allocator*   d_allocator_p;
+
+  public:
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    explicit EncryptionCertificateSignatureAlgorithmParameters(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
+    EncryptionCertificateSignatureAlgorithmParameters(
+        const EncryptionCertificateSignatureAlgorithmParameters& original,
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificateSignatureAlgorithmParameters();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificateSignatureAlgorithmParameters& operator=(
+        const EncryptionCertificateSignatureAlgorithmParameters& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
     bool equals(
-        EncryptionCertificateSignatureAlgorithmType::Value value) const;
+        const EncryptionCertificateSignatureAlgorithmParameters& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(
+        const EncryptionCertificateSignatureAlgorithmParameters& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
+        EncryptionCertificateSignatureAlgorithmParameters);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionCertificateSignatureAlgorithmParameters
+bsl::ostream& operator<<(
+    bsl::ostream&                                            stream,
+    const EncryptionCertificateSignatureAlgorithmParameters& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionCertificateSignatureAlgorithmParameters
+bool operator==(const EncryptionCertificateSignatureAlgorithmParameters& lhs,
+                const EncryptionCertificateSignatureAlgorithmParameters& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionCertificateSignatureAlgorithmParameters
+bool operator!=(const EncryptionCertificateSignatureAlgorithmParameters& lhs,
+                const EncryptionCertificateSignatureAlgorithmParameters& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionCertificateSignatureAlgorithmParameters
+bool operator<(const EncryptionCertificateSignatureAlgorithmParameters& lhs,
+               const EncryptionCertificateSignatureAlgorithmParameters& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionCertificateSignatureAlgorithmParameters
+template <typename HASH_ALGORITHM>
+void hashAppend(
+    HASH_ALGORITHM&                                          algorithm,
+    const EncryptionCertificateSignatureAlgorithmParameters& value);
+
+template <typename HASH_ALGORITHM>
+void EncryptionCertificateSignatureAlgorithmParameters::hash(
+    HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, d_value);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm,
+                const EncryptionCertificateSignatureAlgorithmParameters& value)
+{
+    value.hash(algorithm);
+}
+
+/// Describe an encryption certificate signature algorithm.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateSignatureAlgorithm
+{
+    EncryptionCertificateSignatureAlgorithmIdentifier d_identifier;
+    bdlb::NullableValue<EncryptionCertificateSignatureAlgorithmParameters>
+                      d_parameters;
+    bslma::Allocator* d_allocator_p;
+
+  public:
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    explicit EncryptionCertificateSignatureAlgorithm(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
+    EncryptionCertificateSignatureAlgorithm(
+        const EncryptionCertificateSignatureAlgorithm& original,
+        bslma::Allocator*                              basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionCertificateSignatureAlgorithm();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionCertificateSignatureAlgorithm& operator=(
+        const EncryptionCertificateSignatureAlgorithm& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Set the identifier to the specified 'value'.
+    void setIdentifier(
+        const EncryptionCertificateSignatureAlgorithmIdentifier& value);
+
+    /// Set the parameters to the specified 'value'.
+    void setParameters(
+        const EncryptionCertificateSignatureAlgorithmParameters& value);
+
+    /// Decode this object using the specified 'decoder'. Return the error.
+    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
+
+    /// Encode this object using the specified 'encoder'. Return the error.
+    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
+
+    /// Return the identifier.
+    const EncryptionCertificateSignatureAlgorithmIdentifier& identifier()
+        const;
+
+    /// Return the parameters.
+    const bdlb::NullableValue<
+        EncryptionCertificateSignatureAlgorithmParameters>&
+    parameters() const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionCertificateSignatureAlgorithm& other) const;
 
     /// Return true if the value of this object is less than the value of
     /// the specified 'other' object, otherwise return false.
@@ -3954,6 +4178,7 @@ void EncryptionCertificateSignatureAlgorithm::hash(HASH_ALGORITHM& algorithm)
     using bslh::hashAppend;
 
     hashAppend(algorithm, d_identifier);
+    hashAppend(algorithm, d_parameters);
 }
 
 template <typename HASH_ALGORITHM>
@@ -3972,19 +4197,19 @@ void hashAppend(HASH_ALGORITHM&                                algorithm,
 class EncryptionCertificateSignature
 {
     ntsa::AbstractBitString d_value;
-    bslma::Allocator*         d_allocator_p;
+    bslma::Allocator*       d_allocator_p;
 
   public:
-    /// Create a new certificate signature having the default value. Optionally
-    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
-    /// is 0, the currently installed default allocator is used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificateSignature(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate signature having the same value as the
-    /// specified 'original' object. Optionally specify a 'basicAllocator' used
-    /// to supply memory. If 'basicAllocator' is 0, the currently installed
-    /// default allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificateSignature(
         const EncryptionCertificateSignature& original,
         bslma::Allocator*                     basicAllocator = 0);
@@ -4102,7 +4327,7 @@ void hashAppend(HASH_ALGORITHM&                       algorithm,
     value.hash(algorithm);
 }
 
-/// Describe MRM.
+/// Describe an encryption certificate policy constraints.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -4114,20 +4339,19 @@ class EncryptionCertificatePolicyConstraints
     bslma::Allocator*   d_allocator_p;
 
   public:
-    /// Create a new certificate having the default
-    /// value. Optionally specify a 'basicAllocator' used to supply memory.
-    /// If 'basicAllocator' is 0, the currently installed default allocator
-    /// is used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificatePolicyConstraints(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate having the same value
-    /// as the specified 'original' object. Optionally specify a
-    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
-    /// currently installed default allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificatePolicyConstraints(
         const EncryptionCertificatePolicyConstraints& original,
-        bslma::Allocator*                    basicAllocator = 0);
+        bslma::Allocator*                             basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionCertificatePolicyConstraints();
@@ -4178,14 +4402,15 @@ class EncryptionCertificatePolicyConstraints
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificatePolicyConstraints);
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
+        EncryptionCertificatePolicyConstraints);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionCertificatePolicyConstraints
-bsl::ostream& operator<<(bsl::ostream&                        stream,
+bsl::ostream& operator<<(bsl::ostream&                                 stream,
                          const EncryptionCertificatePolicyConstraints& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
@@ -4217,7 +4442,7 @@ bool operator<(const EncryptionCertificatePolicyConstraints& lhs,
 ///
 /// @related ntca::EncryptionCertificatePolicyConstraints
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                               algorithm,
                 const EncryptionCertificatePolicyConstraints& value);
 
 template <typename HASH_ALGORITHM>
@@ -4229,13 +4454,13 @@ void EncryptionCertificatePolicyConstraints::hash(HASH_ALGORITHM& algorithm)
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                               algorithm,
                 const EncryptionCertificatePolicyConstraints& value)
 {
     value.hash(algorithm);
 }
 
-/// Describe MRM.
+/// Describe an encryption certificate policy mapping.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -4247,20 +4472,19 @@ class EncryptionCertificatePolicyMappings
     bslma::Allocator*   d_allocator_p;
 
   public:
-    /// Create a new certificate having the default
-    /// value. Optionally specify a 'basicAllocator' used to supply memory.
-    /// If 'basicAllocator' is 0, the currently installed default allocator
-    /// is used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificatePolicyMappings(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate having the same value
-    /// as the specified 'original' object. Optionally specify a
-    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
-    /// currently installed default allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificatePolicyMappings(
         const EncryptionCertificatePolicyMappings& original,
-        bslma::Allocator*                    basicAllocator = 0);
+        bslma::Allocator*                          basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionCertificatePolicyMappings();
@@ -4311,14 +4535,15 @@ class EncryptionCertificatePolicyMappings
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificatePolicyMappings);
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
+        EncryptionCertificatePolicyMappings);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionCertificatePolicyMappings
-bsl::ostream& operator<<(bsl::ostream&                        stream,
+bsl::ostream& operator<<(bsl::ostream&                              stream,
                          const EncryptionCertificatePolicyMappings& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
@@ -4350,7 +4575,7 @@ bool operator<(const EncryptionCertificatePolicyMappings& lhs,
 ///
 /// @related ntca::EncryptionCertificatePolicyMappings
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                            algorithm,
                 const EncryptionCertificatePolicyMappings& value);
 
 template <typename HASH_ALGORITHM>
@@ -4362,14 +4587,13 @@ void EncryptionCertificatePolicyMappings::hash(HASH_ALGORITHM& algorithm)
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                            algorithm,
                 const EncryptionCertificatePolicyMappings& value)
 {
     value.hash(algorithm);
 }
 
-
-/// Describe MRM.
+/// Describe an encryption certificate policy set.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -4381,20 +4605,17 @@ class EncryptionCertificatePolicy
     bslma::Allocator*   d_allocator_p;
 
   public:
-    /// Create a new certificate having the default
-    /// value. Optionally specify a 'basicAllocator' used to supply memory.
-    /// If 'basicAllocator' is 0, the currently installed default allocator
-    /// is used.
-    explicit EncryptionCertificatePolicy(
-        bslma::Allocator* basicAllocator = 0);
-
-    /// Create a new certificate having the same value
-    /// as the specified 'original' object. Optionally specify a
+    /// Create a new object having the default value. Optionally specify a
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
     /// currently installed default allocator is used.
-    EncryptionCertificatePolicy(
-        const EncryptionCertificatePolicy& original,
-        bslma::Allocator*                    basicAllocator = 0);
+    explicit EncryptionCertificatePolicy(bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
+    EncryptionCertificatePolicy(const EncryptionCertificatePolicy& original,
+                                bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionCertificatePolicy();
@@ -4452,7 +4673,7 @@ class EncryptionCertificatePolicy
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionCertificatePolicy
-bsl::ostream& operator<<(bsl::ostream&                        stream,
+bsl::ostream& operator<<(bsl::ostream&                      stream,
                          const EncryptionCertificatePolicy& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
@@ -4484,7 +4705,7 @@ bool operator<(const EncryptionCertificatePolicy& lhs,
 ///
 /// @related ntca::EncryptionCertificatePolicy
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                    algorithm,
                 const EncryptionCertificatePolicy& value);
 
 template <typename HASH_ALGORITHM>
@@ -4496,13 +4717,13 @@ void EncryptionCertificatePolicy::hash(HASH_ALGORITHM& algorithm)
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                    algorithm,
                 const EncryptionCertificatePolicy& value)
 {
     value.hash(algorithm);
 }
 
-/// Describe MRM.
+/// Describe an encryption certificate issuer key identifier.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -4514,20 +4735,19 @@ class EncryptionCertificateIssuerKeyIdentifier
     bslma::Allocator*   d_allocator_p;
 
   public:
-    /// Create a new certificate having the default
-    /// value. Optionally specify a 'basicAllocator' used to supply memory.
-    /// If 'basicAllocator' is 0, the currently installed default allocator
-    /// is used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificateIssuerKeyIdentifier(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate having the same value
-    /// as the specified 'original' object. Optionally specify a
-    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
-    /// currently installed default allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificateIssuerKeyIdentifier(
         const EncryptionCertificateIssuerKeyIdentifier& original,
-        bslma::Allocator*                    basicAllocator = 0);
+        bslma::Allocator*                               basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionCertificateIssuerKeyIdentifier();
@@ -4578,15 +4798,17 @@ class EncryptionCertificateIssuerKeyIdentifier
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateIssuerKeyIdentifier);
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
+        EncryptionCertificateIssuerKeyIdentifier);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionCertificateIssuerKeyIdentifier
-bsl::ostream& operator<<(bsl::ostream&                        stream,
-                         const EncryptionCertificateIssuerKeyIdentifier& object);
+bsl::ostream& operator<<(
+    bsl::ostream&                                   stream,
+    const EncryptionCertificateIssuerKeyIdentifier& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
@@ -4617,7 +4839,7 @@ bool operator<(const EncryptionCertificateIssuerKeyIdentifier& lhs,
 ///
 /// @related ntca::EncryptionCertificateIssuerKeyIdentifier
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                                 algorithm,
                 const EncryptionCertificateIssuerKeyIdentifier& value);
 
 template <typename HASH_ALGORITHM>
@@ -4629,13 +4851,13 @@ void EncryptionCertificateIssuerKeyIdentifier::hash(HASH_ALGORITHM& algorithm)
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                                 algorithm,
                 const EncryptionCertificateIssuerKeyIdentifier& value)
 {
     value.hash(algorithm);
 }
 
-/// Describe MRM.
+/// Describe an encryption certificate issuer information access.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -4647,20 +4869,19 @@ class EncryptionCertificateIssuerInformationAccess
     bslma::Allocator*   d_allocator_p;
 
   public:
-    /// Create a new certificate having the default
-    /// value. Optionally specify a 'basicAllocator' used to supply memory.
-    /// If 'basicAllocator' is 0, the currently installed default allocator
-    /// is used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificateIssuerInformationAccess(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate having the same value
-    /// as the specified 'original' object. Optionally specify a
-    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
-    /// currently installed default allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificateIssuerInformationAccess(
         const EncryptionCertificateIssuerInformationAccess& original,
-        bslma::Allocator*                    basicAllocator = 0);
+        bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionCertificateIssuerInformationAccess();
@@ -4682,7 +4903,8 @@ class EncryptionCertificateIssuerInformationAccess
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
-    bool equals(const EncryptionCertificateIssuerInformationAccess& other) const;
+    bool equals(
+        const EncryptionCertificateIssuerInformationAccess& other) const;
 
     /// Return true if the value of this object is less than the value of
     /// the specified 'other' object, otherwise return false.
@@ -4711,15 +4933,17 @@ class EncryptionCertificateIssuerInformationAccess
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateIssuerInformationAccess);
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
+        EncryptionCertificateIssuerInformationAccess);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionCertificateIssuerInformationAccess
-bsl::ostream& operator<<(bsl::ostream&                        stream,
-                         const EncryptionCertificateIssuerInformationAccess& object);
+bsl::ostream& operator<<(
+    bsl::ostream&                                       stream,
+    const EncryptionCertificateIssuerInformationAccess& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
@@ -4750,11 +4974,12 @@ bool operator<(const EncryptionCertificateIssuerInformationAccess& lhs,
 ///
 /// @related ntca::EncryptionCertificateIssuerInformationAccess
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                                     algorithm,
                 const EncryptionCertificateIssuerInformationAccess& value);
 
 template <typename HASH_ALGORITHM>
-void EncryptionCertificateIssuerInformationAccess::hash(HASH_ALGORITHM& algorithm)
+void EncryptionCertificateIssuerInformationAccess::hash(
+    HASH_ALGORITHM& algorithm)
 {
     using bslh::hashAppend;
 
@@ -4762,13 +4987,13 @@ void EncryptionCertificateIssuerInformationAccess::hash(HASH_ALGORITHM& algorith
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                                     algorithm,
                 const EncryptionCertificateIssuerInformationAccess& value)
 {
     value.hash(algorithm);
 }
 
-/// Describe MRM.
+/// Describe an encryption certificate issuer.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -4777,23 +5002,20 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
 class EncryptionCertificateIssuer
 {
     ntca::EncryptionCertificateName d_name;
-    bslma::Allocator*   d_allocator_p;
+    bslma::Allocator*               d_allocator_p;
 
   public:
-    /// Create a new certificate having the default
-    /// value. Optionally specify a 'basicAllocator' used to supply memory.
-    /// If 'basicAllocator' is 0, the currently installed default allocator
-    /// is used.
-    explicit EncryptionCertificateIssuer(
-        bslma::Allocator* basicAllocator = 0);
-
-    /// Create a new certificate having the same value
-    /// as the specified 'original' object. Optionally specify a
+    /// Create a new object having the default value. Optionally specify a
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
     /// currently installed default allocator is used.
-    EncryptionCertificateIssuer(
-        const EncryptionCertificateIssuer& original,
-        bslma::Allocator*                    basicAllocator = 0);
+    explicit EncryptionCertificateIssuer(bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
+    EncryptionCertificateIssuer(const EncryptionCertificateIssuer& original,
+                                bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionCertificateIssuer();
@@ -4807,7 +5029,7 @@ class EncryptionCertificateIssuer
     /// construction.
     void reset();
 
-    /// Set the name to the specified 'value'. 
+    /// Set the name to the specified 'value'.
     void setName(const ntca::EncryptionCertificateName& value);
 
     /// Decode this object using the specified 'decoder'. Return the error.
@@ -4857,7 +5079,7 @@ class EncryptionCertificateIssuer
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionCertificateIssuer
-bsl::ostream& operator<<(bsl::ostream&                        stream,
+bsl::ostream& operator<<(bsl::ostream&                      stream,
                          const EncryptionCertificateIssuer& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
@@ -4889,7 +5111,7 @@ bool operator<(const EncryptionCertificateIssuer& lhs,
 ///
 /// @related ntca::EncryptionCertificateIssuer
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                    algorithm,
                 const EncryptionCertificateIssuer& value);
 
 template <typename HASH_ALGORITHM>
@@ -4901,28 +5123,14 @@ void EncryptionCertificateIssuer::hash(HASH_ALGORITHM& algorithm)
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                    algorithm,
                 const EncryptionCertificateIssuer& value)
 {
     value.hash(algorithm);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/// Enumerate well-known encryption certificate extension object identifiers.
+/// Enumerate well-known encryption certificate subject extended key usage
+/// object identifiers.
 ///
 /// @par Thread Safety
 /// This class is thread safe.
@@ -4999,21 +5207,10 @@ class EncryptionCertificateSubjectKeyUsageExtendedType
 ///
 /// @related ntca::EncryptionCertificateSubjectKeyUsageExtendedType
 bsl::ostream& operator<<(
-    bsl::ostream&                                      stream,
+    bsl::ostream&                                           stream,
     EncryptionCertificateSubjectKeyUsageExtendedType::Value rhs);
 
-
-
-
-
-
-
-
-
-
-
-
-/// Describe MRM.
+/// Describe encryption certificate subject extended key usage.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -5022,23 +5219,22 @@ bsl::ostream& operator<<(
 class EncryptionCertificateSubjectKeyUsageExtended
 {
     bsl::vector<ntsa::AbstractObjectIdentifier> d_identifiers;
-    bslma::Allocator*   d_allocator_p;
+    bslma::Allocator*                           d_allocator_p;
 
   public:
-    /// Create a new certificate having the default
-    /// value. Optionally specify a 'basicAllocator' used to supply memory.
-    /// If 'basicAllocator' is 0, the currently installed default allocator
-    /// is used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificateSubjectKeyUsageExtended(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate having the same value
-    /// as the specified 'original' object. Optionally specify a
-    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
-    /// currently installed default allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificateSubjectKeyUsageExtended(
         const EncryptionCertificateSubjectKeyUsageExtended& original,
-        bslma::Allocator*                    basicAllocator = 0);
+        bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionCertificateSubjectKeyUsageExtended();
@@ -5059,7 +5255,7 @@ class EncryptionCertificateSubjectKeyUsageExtended
     /// Add the specified 'value' to the identifier list.
     void addIdentifier(const ntsa::AbstractObjectIdentifier& value);
 
-    /// Add the identifier corresponding to the specified 'value' to the 
+    /// Add the identifier corresponding to the specified 'value' to the
     /// identifier list.
     void addIdentifier(
         EncryptionCertificateSubjectKeyUsageExtendedType::Value value);
@@ -5073,18 +5269,19 @@ class EncryptionCertificateSubjectKeyUsageExtended
     /// Return the identifier list.
     const bsl::vector<ntsa::AbstractObjectIdentifier>& identifierList() const;
 
-
     /// Return true if the extended usage contains the specified 'identifier',
-    /// otherwise return false. 
+    /// otherwise return false.
     bool has(const ntsa::AbstractObjectIdentifier& identifier) const;
 
     /// Return true if the extended usage contains the identifier corresponding
-    /// to the specified 'value', otherwise return false. 
-    bool has(EncryptionCertificateSubjectKeyUsageExtendedType::Value value) const;
+    /// to the specified 'value', otherwise return false.
+    bool has(
+        EncryptionCertificateSubjectKeyUsageExtendedType::Value value) const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
-    bool equals(const EncryptionCertificateSubjectKeyUsageExtended& other) const;
+    bool equals(
+        const EncryptionCertificateSubjectKeyUsageExtended& other) const;
 
     /// Return true if the value of this object is less than the value of
     /// the specified 'other' object, otherwise return false.
@@ -5113,15 +5310,17 @@ class EncryptionCertificateSubjectKeyUsageExtended
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateSubjectKeyUsageExtended);
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
+        EncryptionCertificateSubjectKeyUsageExtended);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionCertificateSubjectKeyUsageExtended
-bsl::ostream& operator<<(bsl::ostream&                        stream,
-                         const EncryptionCertificateSubjectKeyUsageExtended& object);
+bsl::ostream& operator<<(
+    bsl::ostream&                                       stream,
+    const EncryptionCertificateSubjectKeyUsageExtended& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
@@ -5152,11 +5351,12 @@ bool operator<(const EncryptionCertificateSubjectKeyUsageExtended& lhs,
 ///
 /// @related ntca::EncryptionCertificateSubjectKeyUsageExtended
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                                     algorithm,
                 const EncryptionCertificateSubjectKeyUsageExtended& value);
 
 template <typename HASH_ALGORITHM>
-void EncryptionCertificateSubjectKeyUsageExtended::hash(HASH_ALGORITHM& algorithm)
+void EncryptionCertificateSubjectKeyUsageExtended::hash(
+    HASH_ALGORITHM& algorithm)
 {
     using bslh::hashAppend;
 
@@ -5164,17 +5364,11 @@ void EncryptionCertificateSubjectKeyUsageExtended::hash(HASH_ALGORITHM& algorith
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                                     algorithm,
                 const EncryptionCertificateSubjectKeyUsageExtended& value)
 {
     value.hash(algorithm);
 }
-
-
-
-
-
-
 
 /// Enumerate subject key usage types.
 ///
@@ -5188,12 +5382,12 @@ class EncryptionCertificateSubjectKeyUsageType
     /// Enumerate subject key usage types.
     enum Value {
         /// The subject's key can be used to verify digital signatures that
-        /// aren't explicitly signatures in certicates and certificate 
+        /// aren't explicitly signatures in certicates and certificate
         /// revocation lists.
         e_DIGITAL_SIGNATURE = 0,
 
         /// The subject's key can be used to verify digital signatures that
-        /// aren't explicitly signatures in certicates and certificate 
+        /// aren't explicitly signatures in certicates and certificate
         /// revocation lists to provide non-repudiation, i.e., to prevent a
         /// signer from falsly denying their signature.
         e_CONTENT_COMMITMENT = 1,
@@ -5202,7 +5396,7 @@ class EncryptionCertificateSubjectKeyUsageType
         /// transporation of keys.
         e_KEY_ENCIPHER = 2,
 
-        /// The subject's key can be used to encipher user data without the 
+        /// The subject's key can be used to encipher user data without the
         /// use of an intermediate symmetric cipher.
         e_DATA_ENCIPHER = 3,
 
@@ -5217,12 +5411,12 @@ class EncryptionCertificateSubjectKeyUsageType
         e_CERTIFICATE_REVOCATION_LIST_SIGNATURE = 6,
 
         /// The subject's key can only be used to encipher data during key
-        /// agreement. 
+        /// agreement.
         e_ENCIPHER_ONLY = 7,
 
         /// The subject's key can only be used to decipher data during key
-        /// agreement. 
-        e_DECIPHER_ONLY = 8        
+        /// agreement.
+        e_DECIPHER_ONLY = 8
     };
 
     /// Return the string representation exactly matching the enumerator
@@ -5245,11 +5439,10 @@ class EncryptionCertificateSubjectKeyUsageType
 /// reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionCertificateSubjectKeyUsageType
-bsl::ostream& operator<<(bsl::ostream&                                 stream,
+bsl::ostream& operator<<(bsl::ostream& stream,
                          EncryptionCertificateSubjectKeyUsageType::Value rhs);
 
-
-/// Describe MRM.
+/// Describe encryption certificate subject key usage.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -5261,20 +5454,19 @@ class EncryptionCertificateSubjectKeyUsage
     bslma::Allocator*       d_allocator_p;
 
   public:
-    /// Create a new certificate having the default
-    /// value. Optionally specify a 'basicAllocator' used to supply memory.
-    /// If 'basicAllocator' is 0, the currently installed default allocator
-    /// is used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificateSubjectKeyUsage(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate having the same value
-    /// as the specified 'original' object. Optionally specify a
-    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
-    /// currently installed default allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificateSubjectKeyUsage(
         const EncryptionCertificateSubjectKeyUsage& original,
-        bslma::Allocator*                    basicAllocator = 0);
+        bslma::Allocator*                           basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionCertificateSubjectKeyUsage();
@@ -5288,10 +5480,10 @@ class EncryptionCertificateSubjectKeyUsage
     /// construction.
     void reset();
 
-    /// Enable the usage of the specified 'value' type. 
+    /// Enable the usage of the specified 'value' type.
     void enable(EncryptionCertificateSubjectKeyUsageType::Value value);
 
-    /// Disable the usage of the specified 'value' type. 
+    /// Disable the usage of the specified 'value' type.
     void disable(EncryptionCertificateSubjectKeyUsageType::Value value);
 
     /// Decode this object using the specified 'decoder'. Return the error.
@@ -5301,7 +5493,7 @@ class EncryptionCertificateSubjectKeyUsage
     ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
 
     /// Return true if the usage supports the specified 'value' type, otherwise
-    /// return false. 
+    /// return false.
     bool supports(EncryptionCertificateSubjectKeyUsageType::Value value) const;
 
     /// Return true if this object has the same value as the specified
@@ -5335,14 +5527,15 @@ class EncryptionCertificateSubjectKeyUsage
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateSubjectKeyUsage);
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
+        EncryptionCertificateSubjectKeyUsage);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionCertificateSubjectKeyUsage
-bsl::ostream& operator<<(bsl::ostream&                        stream,
+bsl::ostream& operator<<(bsl::ostream&                               stream,
                          const EncryptionCertificateSubjectKeyUsage& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
@@ -5374,7 +5567,7 @@ bool operator<(const EncryptionCertificateSubjectKeyUsage& lhs,
 ///
 /// @related ntca::EncryptionCertificateSubjectKeyUsage
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                             algorithm,
                 const EncryptionCertificateSubjectKeyUsage& value);
 
 template <typename HASH_ALGORITHM>
@@ -5386,13 +5579,13 @@ void EncryptionCertificateSubjectKeyUsage::hash(HASH_ALGORITHM& algorithm)
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                             algorithm,
                 const EncryptionCertificateSubjectKeyUsage& value)
 {
     value.hash(algorithm);
 }
 
-/// Describe MRM.
+/// Describe an encryption certificate subject key identifier.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -5404,20 +5597,19 @@ class EncryptionCertificateSubjectKeyIdentifier
     bslma::Allocator*   d_allocator_p;
 
   public:
-    /// Create a new certificate having the default
-    /// value. Optionally specify a 'basicAllocator' used to supply memory.
-    /// If 'basicAllocator' is 0, the currently installed default allocator
-    /// is used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificateSubjectKeyIdentifier(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate having the same value
-    /// as the specified 'original' object. Optionally specify a
-    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
-    /// currently installed default allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificateSubjectKeyIdentifier(
         const EncryptionCertificateSubjectKeyIdentifier& original,
-        bslma::Allocator*                    basicAllocator = 0);
+        bslma::Allocator*                                basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionCertificateSubjectKeyIdentifier();
@@ -5468,15 +5660,17 @@ class EncryptionCertificateSubjectKeyIdentifier
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateSubjectKeyIdentifier);
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
+        EncryptionCertificateSubjectKeyIdentifier);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionCertificateSubjectKeyIdentifier
-bsl::ostream& operator<<(bsl::ostream&                        stream,
-                         const EncryptionCertificateSubjectKeyIdentifier& object);
+bsl::ostream& operator<<(
+    bsl::ostream&                                    stream,
+    const EncryptionCertificateSubjectKeyIdentifier& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
@@ -5507,7 +5701,7 @@ bool operator<(const EncryptionCertificateSubjectKeyIdentifier& lhs,
 ///
 /// @related ntca::EncryptionCertificateSubjectKeyIdentifier
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                                  algorithm,
                 const EncryptionCertificateSubjectKeyIdentifier& value);
 
 template <typename HASH_ALGORITHM>
@@ -5519,14 +5713,13 @@ void EncryptionCertificateSubjectKeyIdentifier::hash(HASH_ALGORITHM& algorithm)
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                                  algorithm,
                 const EncryptionCertificateSubjectKeyIdentifier& value)
 {
     value.hash(algorithm);
 }
 
-
-/// Describe MRM.
+/// Describe encryption certificate subject (i.e. basic) contraints.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -5539,20 +5732,19 @@ class EncryptionCertificateSubjectConstraints
     bslma::Allocator*                d_allocator_p;
 
   public:
-    /// Create a new certificate having the default
-    /// value. Optionally specify a 'basicAllocator' used to supply memory.
-    /// If 'basicAllocator' is 0, the currently installed default allocator
-    /// is used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificateSubjectConstraints(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate having the same value
-    /// as the specified 'original' object. Optionally specify a
-    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
-    /// currently installed default allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificateSubjectConstraints(
         const EncryptionCertificateSubjectConstraints& original,
-        bslma::Allocator*                    basicAllocator = 0);
+        bslma::Allocator*                              basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionCertificateSubjectConstraints();
@@ -5572,7 +5764,7 @@ class EncryptionCertificateSubjectConstraints
 
     /// Set the maximum number of certificates to follow through the chain
     /// of trust when verifying a certificate signed by the subject to the
-    /// specified 'value'. 
+    /// specified 'value'.
     void setPathLength(bsl::size_t value);
 
     /// Decode this object using the specified 'decoder'. Return the error.
@@ -5581,7 +5773,7 @@ class EncryptionCertificateSubjectConstraints
     /// Encode this object using the specified 'encoder'. Return the error.
     ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
 
-    /// Return the flag indicating the subject may act as a certificate 
+    /// Return the flag indicating the subject may act as a certificate
     /// authority, or null to indicate the subject may not act as a certificate
     /// authority.
     const bdlb::NullableValue<bool>& authority() const;
@@ -5622,15 +5814,17 @@ class EncryptionCertificateSubjectConstraints
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateSubjectConstraints);
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
+        EncryptionCertificateSubjectConstraints);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionCertificateSubjectConstraints
-bsl::ostream& operator<<(bsl::ostream&                        stream,
-                         const EncryptionCertificateSubjectConstraints& object);
+bsl::ostream& operator<<(
+    bsl::ostream&                                  stream,
+    const EncryptionCertificateSubjectConstraints& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
@@ -5661,7 +5855,7 @@ bool operator<(const EncryptionCertificateSubjectConstraints& lhs,
 ///
 /// @related ntca::EncryptionCertificateSubjectConstraints
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                                algorithm,
                 const EncryptionCertificateSubjectConstraints& value);
 
 template <typename HASH_ALGORITHM>
@@ -5674,14 +5868,13 @@ void EncryptionCertificateSubjectConstraints::hash(HASH_ALGORITHM& algorithm)
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                                algorithm,
                 const EncryptionCertificateSubjectConstraints& value)
 {
     value.hash(algorithm);
 }
 
-
-/// Describe MRM.
+/// Describe an encryption certificate subject.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -5693,20 +5886,18 @@ class EncryptionCertificateSubject
     bslma::Allocator*               d_allocator_p;
 
   public:
-    /// Create a new certificate having the default
-    /// value. Optionally specify a 'basicAllocator' used to supply memory.
-    /// If 'basicAllocator' is 0, the currently installed default allocator
-    /// is used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificateSubject(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate having the same value
-    /// as the specified 'original' object. Optionally specify a
-    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
-    /// currently installed default allocator is used.
-    EncryptionCertificateSubject(
-        const EncryptionCertificateSubject& original,
-        bslma::Allocator*                    basicAllocator = 0);
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
+    EncryptionCertificateSubject(const EncryptionCertificateSubject& original,
+                                 bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionCertificateSubject();
@@ -5720,7 +5911,7 @@ class EncryptionCertificateSubject
     /// construction.
     void reset();
 
-    /// Set the name to the specified 'value'. 
+    /// Set the name to the specified 'value'.
     void setName(const ntca::EncryptionCertificateName& value);
 
     /// Decode this object using the specified 'decoder'. Return the error.
@@ -5770,7 +5961,7 @@ class EncryptionCertificateSubject
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntca::EncryptionCertificateSubject
-bsl::ostream& operator<<(bsl::ostream&                        stream,
+bsl::ostream& operator<<(bsl::ostream&                       stream,
                          const EncryptionCertificateSubject& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
@@ -5802,7 +5993,7 @@ bool operator<(const EncryptionCertificateSubject& lhs,
 ///
 /// @related ntca::EncryptionCertificateSubject
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                     algorithm,
                 const EncryptionCertificateSubject& value);
 
 template <typename HASH_ALGORITHM>
@@ -5814,40 +6005,11 @@ void EncryptionCertificateSubject::hash(HASH_ALGORITHM& algorithm)
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                      algorithm,
+void hashAppend(HASH_ALGORITHM&                     algorithm,
                 const EncryptionCertificateSubject& value)
 {
     value.hash(algorithm);
 }
-
-
-
-
-// MRM: XXXX
-
-// NameConstraints
-
-// PolicyContraints
-// PolicyMappings
-// Policy (CertificatePolicies)
-
-// IssuerKeyIdentifier
-// IssuerInformationAccess
-// Issuer
-
-// SubjectKeyUsageExtended
-// SubjectKeyUsage
-// SubjectKeyIdentifier
-// SubjectConstraints (BasicConstraints)
-// Subject
-
-
-
-
-
-
-
-/// MRM: Insert
 
 /// Enumerate well-known encryption certificate extension object identifiers.
 ///
@@ -5855,7 +6017,7 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
 /// This class is thread safe.
 ///
 /// @ingroup module_ntsa_data
-class EncryptionCertificateExtensionAttributeType
+class EncryptionCertificateExtensionIdentifierType
 {
   public:
     /// Enumerate well-known encryption certificate extension object
@@ -5927,10 +6089,10 @@ class EncryptionCertificateExtensionAttributeType
 /// Format the specified 'rhs' to the specified output 'stream' and return a
 /// reference to the modifiable 'stream'.
 ///
-/// @related ntca::EncryptionCertificateExtensionAttributeType
+/// @related ntca::EncryptionCertificateExtensionIdentifierType
 bsl::ostream& operator<<(
-    bsl::ostream&                                      stream,
-    EncryptionCertificateExtensionAttributeType::Value rhs);
+    bsl::ostream&                                       stream,
+    EncryptionCertificateExtensionIdentifierType::Value rhs);
 
 /// Describe an encryption certificate extension attribute.
 ///
@@ -5938,44 +6100,43 @@ bsl::ostream& operator<<(
 /// This class is not thread safe.
 ///
 /// @ingroup module_ntci_encryption
-class EncryptionCertificateExtensionAttribute
+class EncryptionCertificateExtensionIdentifier
 {
     ntsa::AbstractObjectIdentifier d_identifier;
     bslma::Allocator*              d_allocator_p;
 
   public:
-    /// Create a new certificate extension attribute having the default value.
-    /// Optionally specify a 'basicAllocator' used to supply memory. If
-    /// 'basicAllocator' is 0, the currently installed default allocator is
-    /// used.
-    explicit EncryptionCertificateExtensionAttribute(
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    explicit EncryptionCertificateExtensionIdentifier(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate extension attribute having the same value as
-    /// the specified 'original' object. Optionally specify a 'basicAllocator'
-    /// used to supply memory. If 'basicAllocator' is 0, the currently
-    /// installed default allocator is used.
-    EncryptionCertificateExtensionAttribute(
-        const EncryptionCertificateExtensionAttribute& original,
-        bslma::Allocator*                              basicAllocator = 0);
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
+    EncryptionCertificateExtensionIdentifier(
+        const EncryptionCertificateExtensionIdentifier& original,
+        bslma::Allocator*                               basicAllocator = 0);
 
     /// Destroy this object.
-    ~EncryptionCertificateExtensionAttribute();
+    ~EncryptionCertificateExtensionIdentifier();
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
-    EncryptionCertificateExtensionAttribute& operator=(
-        const EncryptionCertificateExtensionAttribute& other);
+    EncryptionCertificateExtensionIdentifier& operator=(
+        const EncryptionCertificateExtensionIdentifier& other);
 
     /// Assign the value of the specified 'value' to this object. Return a
     /// reference to this modifiable object.
-    EncryptionCertificateExtensionAttribute& operator=(
+    EncryptionCertificateExtensionIdentifier& operator=(
         const ntsa::AbstractObjectIdentifier& value);
 
     /// Assign the value of the specified 'value' to this object. Return a
     /// reference to this modifiable object.
-    EncryptionCertificateExtensionAttribute& operator=(
-        EncryptionCertificateExtensionAttributeType::Value value);
+    EncryptionCertificateExtensionIdentifier& operator=(
+        EncryptionCertificateExtensionIdentifierType::Value value);
 
     /// Reset the value of this object to its value upon default
     /// construction.
@@ -5987,7 +6148,7 @@ class EncryptionCertificateExtensionAttribute
     /// Set the identifier to the object identifier corresponding to the
     /// specified 'value'.
     void setIdentifer(
-        EncryptionCertificateExtensionAttributeType::Value value);
+        EncryptionCertificateExtensionIdentifierType::Value value);
 
     /// Decode this object using the specified 'decoder'. Return the error.
     ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
@@ -6000,16 +6161,16 @@ class EncryptionCertificateExtensionAttribute
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
-    bool equals(const EncryptionCertificateExtensionAttribute& other) const;
+    bool equals(const EncryptionCertificateExtensionIdentifier& other) const;
 
     /// Return true if this object has the same value as the specified
     /// 'value', otherwise return false.
     bool equals(
-        EncryptionCertificateExtensionAttributeType::Value value) const;
+        EncryptionCertificateExtensionIdentifierType::Value value) const;
 
     /// Return true if the value of this object is less than the value of
     /// the specified 'other' object, otherwise return false.
-    bool less(const EncryptionCertificateExtensionAttribute& other) const;
+    bool less(const EncryptionCertificateExtensionIdentifier& other) const;
 
     /// Contribute the values of the salient attributes of this object to the
     /// specified hash 'algorithm'.
@@ -6035,51 +6196,51 @@ class EncryptionCertificateExtensionAttribute
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
     NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionCertificateExtensionAttribute);
+        EncryptionCertificateExtensionIdentifier);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
-/// @related ntca::EncryptionCertificateExtensionAttribute
+/// @related ntca::EncryptionCertificateExtensionIdentifier
 bsl::ostream& operator<<(
-    bsl::ostream&                                  stream,
-    const EncryptionCertificateExtensionAttribute& object);
+    bsl::ostream&                                   stream,
+    const EncryptionCertificateExtensionIdentifier& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
-/// @related ntca::EncryptionCertificateExtensionAttribute
-bool operator==(const EncryptionCertificateExtensionAttribute& lhs,
-                const EncryptionCertificateExtensionAttribute& rhs);
+/// @related ntca::EncryptionCertificateExtensionIdentifier
+bool operator==(const EncryptionCertificateExtensionIdentifier& lhs,
+                const EncryptionCertificateExtensionIdentifier& rhs);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
 /// have the same value, and 'false' otherwise.  Two attribute objects do
 /// not have the same value if one or more respective attributes differ in
 /// values.
 ///
-/// @related ntca::EncryptionCertificateExtensionAttribute
-bool operator!=(const EncryptionCertificateExtensionAttribute& lhs,
-                const EncryptionCertificateExtensionAttribute& rhs);
+/// @related ntca::EncryptionCertificateExtensionIdentifier
+bool operator!=(const EncryptionCertificateExtensionIdentifier& lhs,
+                const EncryptionCertificateExtensionIdentifier& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::EncryptionCertificateExtensionAttribute
-bool operator<(const EncryptionCertificateExtensionAttribute& lhs,
-               const EncryptionCertificateExtensionAttribute& rhs);
+/// @related ntca::EncryptionCertificateExtensionIdentifier
+bool operator<(const EncryptionCertificateExtensionIdentifier& lhs,
+               const EncryptionCertificateExtensionIdentifier& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
-/// @related ntca::EncryptionCertificateExtensionAttribute
+/// @related ntca::EncryptionCertificateExtensionIdentifier
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                                algorithm,
-                const EncryptionCertificateExtensionAttribute& value);
+void hashAppend(HASH_ALGORITHM&                                 algorithm,
+                const EncryptionCertificateExtensionIdentifier& value);
 
 template <typename HASH_ALGORITHM>
-void EncryptionCertificateExtensionAttribute::hash(HASH_ALGORITHM& algorithm)
+void EncryptionCertificateExtensionIdentifier::hash(HASH_ALGORITHM& algorithm)
 {
     using bslh::hashAppend;
 
@@ -6087,8 +6248,8 @@ void EncryptionCertificateExtensionAttribute::hash(HASH_ALGORITHM& algorithm)
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM&                                algorithm,
-                const EncryptionCertificateExtensionAttribute& value)
+void hashAppend(HASH_ALGORITHM&                                 algorithm,
+                const EncryptionCertificateExtensionIdentifier& value)
 {
     value.hash(algorithm);
 }
@@ -6103,10 +6264,10 @@ class EncryptionCertificateExtensionValue
 {
     enum Type {
         // The extension value is undefined.
-        e_UNDEFINED        = -1,
+        e_UNDEFINED = -1,
 
         // The extension value represents a boolean.
-        e_BOOLEAN          = 0,
+        e_BOOLEAN = 0,
 
         // The extension value represents a subject or issuer name.
         e_NAME = 1,
@@ -6148,52 +6309,58 @@ class EncryptionCertificateExtensionValue
         e_POLICY_CONSTRAINTS = 13,
 
         // The extension value represents an octet string.
-        e_BYTE_SEQUENCE    = 14,
+        e_BYTE_SEQUENCE = 14,
 
         // The extension value represents any ASN.1 encoded value.
-        e_ANY              = 15
+        e_ANY = 15
     };
 
     union {
-        bsls::ObjectBuffer<bool> d_boolean;
-        bsls::ObjectBuffer<EncryptionCertificateName>
-                                                d_name;
+        bsls::ObjectBuffer<bool>                      d_boolean;
+        bsls::ObjectBuffer<EncryptionCertificateName> d_name;
         bsls::ObjectBuffer<EncryptionCertificateNameAlternativeList>
-                                                d_nameAlternative;
+            d_nameAlternative;
 
         bsls::ObjectBuffer<EncryptionCertificateSubject> d_subject;
-        bsls::ObjectBuffer<EncryptionCertificateSubjectKeyIdentifier> d_subjectKeyIdentifier;
-        bsls::ObjectBuffer<EncryptionCertificateSubjectKeyUsage> d_subjectKeyUsage;
-        bsls::ObjectBuffer<EncryptionCertificateSubjectKeyUsageExtended> d_subjectKeyUsageExtended;
-        bsls::ObjectBuffer<EncryptionCertificateSubjectConstraints> d_subjectConstraints;
+        bsls::ObjectBuffer<EncryptionCertificateSubjectKeyIdentifier>
+            d_subjectKeyIdentifier;
+        bsls::ObjectBuffer<EncryptionCertificateSubjectKeyUsage>
+            d_subjectKeyUsage;
+        bsls::ObjectBuffer<EncryptionCertificateSubjectKeyUsageExtended>
+            d_subjectKeyUsageExtended;
+        bsls::ObjectBuffer<EncryptionCertificateSubjectConstraints>
+            d_subjectConstraints;
 
         bsls::ObjectBuffer<EncryptionCertificateIssuer> d_issuer;
-        bsls::ObjectBuffer<EncryptionCertificateIssuerKeyIdentifier> d_issuerKeyIdentifier;
-        bsls::ObjectBuffer<EncryptionCertificateIssuerInformationAccess> d_issuerInformationAccess;
-        
-        bsls::ObjectBuffer<EncryptionCertificatePolicy> d_policy;
-        bsls::ObjectBuffer<EncryptionCertificatePolicyMappings> d_policyMappings;
-        bsls::ObjectBuffer<EncryptionCertificatePolicyConstraints> d_policyConstraints;
+        bsls::ObjectBuffer<EncryptionCertificateIssuerKeyIdentifier>
+            d_issuerKeyIdentifier;
+        bsls::ObjectBuffer<EncryptionCertificateIssuerInformationAccess>
+            d_issuerInformationAccess;
 
-        bsls::ObjectBuffer<ntsa::AbstractOctetString> d_byteSequence;                                        
-        bsls::ObjectBuffer<ntsa::AbstractValue> d_any;
+        bsls::ObjectBuffer<EncryptionCertificatePolicy> d_policy;
+        bsls::ObjectBuffer<EncryptionCertificatePolicyMappings>
+            d_policyMappings;
+        bsls::ObjectBuffer<EncryptionCertificatePolicyConstraints>
+            d_policyConstraints;
+
+        bsls::ObjectBuffer<ntsa::AbstractOctetString> d_byteSequence;
+        bsls::ObjectBuffer<ntsa::AbstractValue>       d_any;
     };
 
     Type              d_type;
     bslma::Allocator* d_allocator_p;
 
   public:
-    /// Create a new certificate extension value having the default value.
-    /// Optionally specify a 'basicAllocator' used to supply memory. If
-    /// 'basicAllocator' is 0, the currently installed default allocator is
-    /// used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificateExtensionValue(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate extension value having the same value as the
-    /// specified 'original' object. Optionally specify a 'basicAllocator' used
-    /// to supply memory. If 'basicAllocator' is 0, the currently installed
-    /// default allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificateExtensionValue(
         const EncryptionCertificateExtensionValue& original,
         bslma::Allocator*                          basicAllocator = 0);
@@ -6265,15 +6432,14 @@ class EncryptionCertificateExtensionValue
 
     /// Select the "subjectKeyUsageExtended" representation. Return a reference
     /// to the modifiable representation.
-    EncryptionCertificateSubjectKeyUsageExtended& 
-        makeSubjectKeyUsageExtended();
+    EncryptionCertificateSubjectKeyUsageExtended& makeSubjectKeyUsageExtended();
 
     /// Select the "subjectKeyUsageExtended" representation initially having
     /// the specified 'value'. Return a reference to the modifiable
     /// representation.
     EncryptionCertificateSubjectKeyUsageExtended& makeSubjectKeyUsageExtended(
         const EncryptionCertificateSubjectKeyUsageExtended& value);
-    
+
     /// Select the "subjectConstraints" representation. Return a reference to
     /// the modifiable representation.
     EncryptionCertificateSubjectConstraints& makeSubjectConstraints();
@@ -6449,7 +6615,8 @@ class EncryptionCertificateExtensionValue
 
     /// Return a reference to the non-modifiable "subjectKeyIdentifier"
     /// representation. The behavior is undefined unless 'isSubject()' is true.
-    const EncryptionCertificateSubjectKeyIdentifier& subjectKeyIdentifier() const;
+    const EncryptionCertificateSubjectKeyIdentifier& subjectKeyIdentifier()
+        const;
 
     /// Return a reference to the non-modifiable "subjectKeyUsage"
     /// representation. The behavior is undefined unless 'isSubjectKeyUsage()'
@@ -6459,7 +6626,8 @@ class EncryptionCertificateExtensionValue
     /// Return a reference to the non-modifiable "subjectKeyUsageExtended"
     /// representation. The behavior is undefined unless
     /// 'isSubjectKeyUsageExtended()' is true.
-    const EncryptionCertificateSubjectKeyUsageExtended& subjectKeyUsageExtended() const;
+    const EncryptionCertificateSubjectKeyUsageExtended& subjectKeyUsageExtended()
+        const;
 
     /// Return a reference to the non-modifiable "subjectConstraints"
     /// representation. The behavior is undefined unless
@@ -6473,12 +6641,14 @@ class EncryptionCertificateExtensionValue
     /// Return a reference to the non-modifiable "issuerKeyIdentifier"
     /// representation. The behavior is undefined unless
     /// 'isIssuerKeyIdentifier()' is true.
-    const EncryptionCertificateIssuerKeyIdentifier& issuerKeyIdentifier() const;
+    const EncryptionCertificateIssuerKeyIdentifier& issuerKeyIdentifier()
+        const;
 
     /// Return a reference to the non-modifiable "issuerInformationAccess"
     /// representation. The behavior is undefined unless
     /// 'isIssuerInformationAccess()' is true.
-    const EncryptionCertificateIssuerInformationAccess& issuerInformationAccess() const;
+    const EncryptionCertificateIssuerInformationAccess& issuerInformationAccess()
+        const;
 
     /// Return a reference to the non-modifiable "policy" representation. The
     /// behavior is undefined unless 'isPolicy()' is true.
@@ -6712,22 +6882,22 @@ void hashAppend(HASH_ALGORITHM&                            algorithm,
 /// @ingroup module_ntci_encryption
 class EncryptionCertificateExtension
 {
-    EncryptionCertificateExtensionAttribute d_attribute;
-    bdlb::NullableValue<bool>               d_critical;
-    EncryptionCertificateExtensionValue     d_value;
-    bslma::Allocator*                       d_allocator_p;
+    EncryptionCertificateExtensionIdentifier d_attribute;
+    bdlb::NullableValue<bool>                d_critical;
+    EncryptionCertificateExtensionValue      d_value;
+    bslma::Allocator*                        d_allocator_p;
 
   public:
-    /// Create a new certificate extension having the default value. Optionally
-    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
-    /// is 0, the currently installed default allocator is used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificateExtension(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate extension having the same value as the
-    /// specified 'original' object. Optionally specify a 'basicAllocator' used
-    /// to supply memory. If 'basicAllocator' is 0, the currently installed
-    /// default allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificateExtension(
         const EncryptionCertificateExtension& original,
         bslma::Allocator*                     basicAllocator = 0);
@@ -6745,7 +6915,7 @@ class EncryptionCertificateExtension
     void reset();
 
     /// Set the attribute to the specified 'value'.
-    void setAttribute(const EncryptionCertificateExtensionAttribute& value);
+    void setAttribute(const EncryptionCertificateExtensionIdentifier& value);
 
     /// Set the attribute to the specified 'value'.
     void setAttribute(const ntsa::AbstractObjectIdentifier& value);
@@ -6753,7 +6923,7 @@ class EncryptionCertificateExtension
     /// Set the attribute to the object identifier corresponding to the
     /// specified 'value'.
     void setAttribute(
-        EncryptionCertificateExtensionAttributeType::Value value);
+        EncryptionCertificateExtensionIdentifierType::Value value);
 
     /// Set the value to the specified 'value'.
     void setValue(bool value);
@@ -6777,7 +6947,7 @@ class EncryptionCertificateExtension
     ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
 
     /// Return the extension attribute.
-    const EncryptionCertificateExtensionAttribute& attribute() const;
+    const EncryptionCertificateExtensionIdentifier& attribute() const;
 
     /// Return the extension value.
     const EncryptionCertificateExtensionValue& value() const;
@@ -6888,17 +7058,16 @@ class EncryptionCertificateExtensionList
     bslma::Allocator*                           d_allocator_p;
 
   public:
-    /// Create a new certificate extension list having the default value.
-    /// Optionally specify a 'basicAllocator' used to supply memory. If
-    /// 'basicAllocator' is 0, the currently installed default allocator is
-    /// used.
+    /// Create a new object having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     explicit EncryptionCertificateExtensionList(
         bslma::Allocator* basicAllocator = 0);
 
-    /// Create a new certificate extension list having the same value as the
-    /// specified 'original' object. Optionally specify a 'basicAllocator' used
-    /// to supply memory. If 'basicAllocator' is 0, the currently installed
-    /// default allocator is used.
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificateExtensionList(
         const EncryptionCertificateExtensionList& original,
         bslma::Allocator*                         basicAllocator = 0);
@@ -7018,7 +7187,7 @@ void hashAppend(HASH_ALGORITHM&                           algorithm,
 /// @ingroup module_ntci_encryption
 class EncryptionCertificateEntity
 {
-    typedef ntsa::AbstractBitString                UniqueIdentifier;
+    typedef ntsa::AbstractBitString                  UniqueIdentifier;
     typedef ntca::EncryptionCertificateExtension     Extension;
     typedef ntca::EncryptionCertificateExtensionList ExtensionList;
 
@@ -7034,16 +7203,15 @@ class EncryptionCertificateEntity
     bdlb::NullableValue<ExtensionList>            d_extensionList;
 
   public:
-    /// Create a new certificate body having the default
-    /// value. Optionally specify a 'basicAllocator' used to supply memory.
-    /// If 'basicAllocator' is 0, the currently installed default allocator
-    /// is used.
-    explicit EncryptionCertificateEntity(bslma::Allocator* basicAllocator = 0);
-
-    /// Create a new certificate body having the same value
-    /// as the specified 'original' object. Optionally specify a
+    /// Create a new object having the default value. Optionally specify a
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
     /// currently installed default allocator is used.
+    explicit EncryptionCertificateEntity(bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificateEntity(const EncryptionCertificateEntity& original,
                                 bslma::Allocator* basicAllocator = 0);
 
@@ -7111,32 +7279,36 @@ class EncryptionCertificateEntity
     const bsl::vector<bsl::string>& hosts() const;
 #endif
 
-    /// Return the serial number. 
+    /// Return the serial number.
     const ntsa::AbstractInteger& serialNumber() const;
 
     // Return the subject.
     const ntca::EncryptionCertificateSubject& subject() const;
 
     // Return the unique identifier of the subject.
-    const bdlb::NullableValue<ntsa::AbstractBitString>& subjectUniqueId() const;
+    const bdlb::NullableValue<ntsa::AbstractBitString>& subjectUniqueId()
+        const;
 
     /// Return the subject's public key information.
-    const ntca::EncryptionCertificatePublicKeyInfo& subjectPublicKeyInfo() const;
+    const ntca::EncryptionCertificatePublicKeyInfo& subjectPublicKeyInfo()
+        const;
 
     // Return the issuer.
     const ntca::EncryptionCertificateIssuer& issuer() const;
 
     // Return the unique identifier of the issuer.
     const bdlb::NullableValue<ntsa::AbstractBitString>& issuerUniqueId() const;
-    
-    // Return the list of extensions.
-    const bdlb::NullableValue<ntca::EncryptionCertificateExtensionList>& extensionList() const;
 
-    /// Return the date/time interval within which the certificate is valid. 
+    // Return the list of extensions.
+    const bdlb::NullableValue<ntca::EncryptionCertificateExtensionList>&
+    extensionList() const;
+
+    /// Return the date/time interval within which the certificate is valid.
     const ntca::EncryptionCertificateValidity& validity() const;
 
     /// Return the signature algorithm.
-    const ntca::EncryptionCertificateSignatureAlgorithm& signatureAlgorithm() const;
+    const ntca::EncryptionCertificateSignatureAlgorithm& signatureAlgorithm()
+        const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -7265,16 +7437,15 @@ class EncryptionCertificate
     ntca::EncryptionCertificateSignature          d_signature;
 
   public:
-    /// Create a new certificate having the default
-    /// value. Optionally specify a 'basicAllocator' used to supply memory.
-    /// If 'basicAllocator' is 0, the currently installed default allocator
-    /// is used.
-    explicit EncryptionCertificate(bslma::Allocator* basicAllocator = 0);
-
-    /// Create a new certificate having the same value
-    /// as the specified 'original' object. Optionally specify a
+    /// Create a new object having the default value. Optionally specify a
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
     /// currently installed default allocator is used.
+    explicit EncryptionCertificate(bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new object having the same value as the specified 'original'
+    /// object. Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
     EncryptionCertificate(const EncryptionCertificate& original,
                           bslma::Allocator*            basicAllocator = 0);
 
@@ -7344,28 +7515,31 @@ class EncryptionCertificate
     /// Return the certificate entity.
     const ntca::EncryptionCertificateEntity& entity() const;
 
-    /// Return the serial number. 
+    /// Return the serial number.
     const ntsa::AbstractInteger& serialNumber() const;
 
     // Return the subject.
     const ntca::EncryptionCertificateSubject& subject() const;
 
     // Return the unique identifier of the subject.
-    const bdlb::NullableValue<ntsa::AbstractBitString>& subjectUniqueId() const;
+    const bdlb::NullableValue<ntsa::AbstractBitString>& subjectUniqueId()
+        const;
 
     /// Return the subject's public key information.
-    const ntca::EncryptionCertificatePublicKeyInfo& subjectPublicKeyInfo() const;
+    const ntca::EncryptionCertificatePublicKeyInfo& subjectPublicKeyInfo()
+        const;
 
     // Return the issuer.
     const ntca::EncryptionCertificateIssuer& issuer() const;
 
     // Return the unique identifier of the issuer.
     const bdlb::NullableValue<ntsa::AbstractBitString>& issuerUniqueId() const;
-    
-    // Return the list of extensions.
-    const bdlb::NullableValue<ntca::EncryptionCertificateExtensionList>& extensionList() const;
 
-    /// Return the date/time interval within which the certificate is valid. 
+    // Return the list of extensions.
+    const bdlb::NullableValue<ntca::EncryptionCertificateExtensionList>&
+    extensionList() const;
+
+    /// Return the date/time interval within which the certificate is valid.
     const ntca::EncryptionCertificateValidity& validity() const;
 
     /// Return the certificate signature algorithm.

@@ -529,7 +529,7 @@ class AbstractSyntaxEncoderFrame
     /// Write the encoding of the specified 'value'. Return the error.
     ntsa::Error encodeValue(unsigned long long value);
 
-        /// Write the encoding of the specified 'value'. Return the error.
+    /// Write the encoding of the specified 'value'. Return the error.
     ntsa::Error encodeValue(const bsl::string& value);
 
     /// Write the encoding of the specified 'value'. Return the error.
@@ -639,14 +639,14 @@ class AbstractSyntaxEncoder
     /// Begin encoding a new construction having the specified 'tagClass',
     /// 'tagType', and 'tagNumber'. Return the error.
     ntsa::Error encodeTag(AbstractSyntaxTagClass::Value  tagClass,
-                           AbstractSyntaxTagType::Value   tagType,
-                           AbstractSyntaxTagNumber::Value tagNumber);
+                          AbstractSyntaxTagType::Value   tagType,
+                          AbstractSyntaxTagNumber::Value tagNumber);
 
     /// Begin encoding a new construction having the specified 'tagClass',
     /// 'tagType', and 'tagNumber'. Return the error.
     ntsa::Error encodeTag(AbstractSyntaxTagClass::Value tagClass,
-                           AbstractSyntaxTagType::Value  tagType,
-                           bsl::size_t                   tagNumber);
+                          AbstractSyntaxTagType::Value  tagType,
+                          bsl::size_t                   tagNumber);
 
     /// Encode a NULL primitive. Return the error.
     ntsa::Error encodeNull();
@@ -719,7 +719,7 @@ class AbstractSyntaxEncoder
     /// Return the error.
     ntsa::Error encodeValue(const AbstractObjectIdentifier& value);
 
-    /// Encode the literal data of the specified 'value'. Return the error. 
+    /// Encode the literal data of the specified 'value'. Return the error.
     ntsa::Error encodeValue(const AbstractValue& value);
 
     // Complete encoding the current construction. Return the error.
@@ -791,7 +791,7 @@ class AbstractSyntaxEncoderUtil
     /// 'tagClass', 'tagType', and 'tagNumber' to the specified 'destination'.
     /// Return the error.
     static ntsa::Error encodeDatetimeTz(
-        bsl::streambuf* destination,
+        bsl::streambuf*                     destination,
         ntsa::AbstractSyntaxTagClass::Value tagClass,
         ntsa::AbstractSyntaxTagType::Value  tagType,
         bsl::size_t                         tagNumber,
@@ -984,7 +984,7 @@ class AbstractSyntaxDecoderFrame
     /// stream to the speicfied 'value'.
     void setTagPosition(bsl::uint64_t value);
 
-    /// Set the number of bytes comprising the tag (and the length) to the 
+    /// Set the number of bytes comprising the tag (and the length) to the
     /// specified 'value'.
     void setTagLength(bsl::size_t value);
 
@@ -1270,7 +1270,7 @@ class AbstractSyntaxDecoder
     /// is either e_UTC_TIME or e_GENERALIZED_TIME according to the top
     /// of the context stack and load the result into the specified 'result'.
     /// Return the error.
-    ntsa::Error decodeValue(bdlt::DatetimeTz* result);   
+    ntsa::Error decodeValue(bdlt::DatetimeTz* result);
 
     /// Decode a value of tag class UNIVERSAL type PRIMITIVE tag number
     /// INTEGER according to the top of the context stack and load the result
@@ -1298,10 +1298,10 @@ class AbstractSyntaxDecoder
     ntsa::Error decodeValue(AbstractObjectIdentifier* result);
 
     /// Decode the literal contents according to the top of the context stack
-    /// and load the result into the specified 'result'. Return the error. 
+    /// and load the result into the specified 'result'. Return the error.
     ntsa::Error decodeValue(AbstractValue* result);
 
-    /// Load the next literal byte into the specified 'result'. Return the 
+    /// Load the next literal byte into the specified 'result'. Return the
     /// error.
     ntsa::Error decodeByte(bsl::uint8_t* result);
 
@@ -1310,7 +1310,7 @@ class AbstractSyntaxDecoder
     ntsa::Error decodeTagComplete();
 
     /// Seek backwards to the start of the current tag (so it may be decoded
-    /// again), then pop the current frame. Return the error. 
+    /// again), then pop the current frame. Return the error.
     ntsa::Error rewindTag();
 
     /// Seek backwards to the start of the content of the current tag (so that
@@ -1318,7 +1318,7 @@ class AbstractSyntaxDecoder
     ntsa::Error rewindValue();
 
     /// Skip over any remaining un-decoded content of the current tag. Return
-    /// the error. 
+    /// the error.
     ntsa::Error skip();
 
     /// Seek to the specified absolute read 'position'. Return the error.
@@ -1327,7 +1327,7 @@ class AbstractSyntaxDecoder
     /// Return the current read position.
     bsl::uint64_t position() const;
 
-    /// Return the current structural depth. 
+    /// Return the current structural depth.
     bsl::size_t depth() const;
 
     /// Return the number of un-decoded bytes in this frame, or zero if the
@@ -1356,7 +1356,7 @@ class AbstractSyntaxDecoderUtil
     /// Return the current read position in the specified 'source'.
     static bsl::uint64_t position(bsl::streambuf* source);
 
-    /// Seek to the specified absolute read 'position' in the specified 
+    /// Seek to the specified absolute read 'position' in the specified
     /// 'source'. Return the error.
     static ntsa::Error seek(bsl::streambuf* source, bsl::uint64_t position);
 
@@ -1388,14 +1388,14 @@ class AbstractSyntaxDecoderUtil
     static ntsa::Error decodeIntegerBase128(bsl::uint64_t*  result,
                                             bsl::streambuf* source);
 
-    /// Load into the specified 'result' the date/time parsed from the 
+    /// Load into the specified 'result' the date/time parsed from the
     /// specified 'buffer' having the specified 'length'. Return the error.
     static ntsa::Error decodeDatetimeTz(
-        bdlt::DatetimeTz*                   result, 
+        bdlt::DatetimeTz*                   result,
         ntsa::AbstractSyntaxTagClass::Value tagClass,
         ntsa::AbstractSyntaxTagType::Value  tagType,
         bsl::size_t                         tagNumber,
-        const char*                         buffer, 
+        const char*                         buffer,
         bsl::size_t                         length);
 };
 
@@ -1446,34 +1446,59 @@ class AbstractObjectIdentifier
     void set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2);
 
     /// Set the value to the specified 'v0', 'v1', 'v2', 'v3' sequence.
-    void set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, bsl::uint64_t v3);
+    void set(bsl::uint64_t v0,
+             bsl::uint64_t v1,
+             bsl::uint64_t v2,
+             bsl::uint64_t v3);
 
     /// Set the value to the specified 'v0', 'v1', 'v2', 'v3', 'v4' sequence.
-    void set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
-             bsl::uint64_t v3, bsl::uint64_t v4);
+    void set(bsl::uint64_t v0,
+             bsl::uint64_t v1,
+             bsl::uint64_t v2,
+             bsl::uint64_t v3,
+             bsl::uint64_t v4);
 
-    /// Set the value to the specified 'v0', 'v1', 'v2', 'v3', 'v4', 'v5' 
+    /// Set the value to the specified 'v0', 'v1', 'v2', 'v3', 'v4', 'v5'
     /// sequence.
-    void set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
-             bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5);
+    void set(bsl::uint64_t v0,
+             bsl::uint64_t v1,
+             bsl::uint64_t v2,
+             bsl::uint64_t v3,
+             bsl::uint64_t v4,
+             bsl::uint64_t v5);
 
-    /// Set the value to the specified 'v0', 'v1', 'v2', 'v3', 'v4', 'v5', 'v6' 
+    /// Set the value to the specified 'v0', 'v1', 'v2', 'v3', 'v4', 'v5', 'v6'
     /// sequence.
-    void set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
-             bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5,
+    void set(bsl::uint64_t v0,
+             bsl::uint64_t v1,
+             bsl::uint64_t v2,
+             bsl::uint64_t v3,
+             bsl::uint64_t v4,
+             bsl::uint64_t v5,
              bsl::uint64_t v6);
 
     /// Set the value to the specified 'v0', 'v1', 'v2', 'v3', 'v4', 'v5',
     /// 'v6', 'v7' sequence.
-    void set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
-             bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5,
-             bsl::uint64_t v6, bsl::uint64_t v7);
+    void set(bsl::uint64_t v0,
+             bsl::uint64_t v1,
+             bsl::uint64_t v2,
+             bsl::uint64_t v3,
+             bsl::uint64_t v4,
+             bsl::uint64_t v5,
+             bsl::uint64_t v6,
+             bsl::uint64_t v7);
 
     /// Set the value to the specified 'v0', 'v1', 'v2', 'v3', 'v4', 'v5',
     /// 'v6', 'v7', 'v8' sequence.
-    void set(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
-             bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5,
-             bsl::uint64_t v6, bsl::uint64_t v7, bsl::uint64_t v8);
+    void set(bsl::uint64_t v0,
+             bsl::uint64_t v1,
+             bsl::uint64_t v2,
+             bsl::uint64_t v3,
+             bsl::uint64_t v4,
+             bsl::uint64_t v5,
+             bsl::uint64_t v6,
+             bsl::uint64_t v7,
+             bsl::uint64_t v8);
 
     /// Append the specified 'value' to the end of the data.
     void append(bsl::uint64_t value);
@@ -1481,11 +1506,11 @@ class AbstractObjectIdentifier
     /// Append the specified 'data' having the specified 'size'.
     void append(const bsl::uint64_t* data, bsl::size_t size);
 
-    // MRM
-    #if 0
+// MRM
+#if 0
     /// Set the data at the specified 'index' to the specified 'value'.
     void setByteAt(bsl::size_t index, bsl::uint64_t value);
-    #endif
+#endif
 
     /// Return the data at the specified 'index'.
     bsl::uint64_t get(bsl::size_t index) const;
@@ -1510,36 +1535,60 @@ class AbstractObjectIdentifier
 
     /// Return true if the identifier matches the specified 'v0', 'v1', 'v2',
     /// 'v3' sequence, otherwise return false.
-    bool equals(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
-            bsl::uint64_t v3) const;
+    bool equals(bsl::uint64_t v0,
+                bsl::uint64_t v1,
+                bsl::uint64_t v2,
+                bsl::uint64_t v3) const;
 
     /// Return true if the identifier matches the specified 'v0', 'v1', 'v2',
     /// 'v3', 'v4' sequence, otherwise return false.
-    bool equals(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
-            bsl::uint64_t v3, bsl::uint64_t v4) const;
+    bool equals(bsl::uint64_t v0,
+                bsl::uint64_t v1,
+                bsl::uint64_t v2,
+                bsl::uint64_t v3,
+                bsl::uint64_t v4) const;
 
     /// Return true if the identifier matches the specified 'v0', 'v1', 'v2',
     /// 'v3', 'v4', 'v5' sequence, otherwise return false.
-    bool equals(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
-            bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5) const;
+    bool equals(bsl::uint64_t v0,
+                bsl::uint64_t v1,
+                bsl::uint64_t v2,
+                bsl::uint64_t v3,
+                bsl::uint64_t v4,
+                bsl::uint64_t v5) const;
 
     /// Return true if the identifier matches the specified 'v0', 'v1', 'v2',
     /// 'v3', 'v4', 'v5', 'v6' sequence, otherwise return false.
-    bool equals(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
-            bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5,
-            bsl::uint64_t v6) const;
+    bool equals(bsl::uint64_t v0,
+                bsl::uint64_t v1,
+                bsl::uint64_t v2,
+                bsl::uint64_t v3,
+                bsl::uint64_t v4,
+                bsl::uint64_t v5,
+                bsl::uint64_t v6) const;
 
     /// Return true if the identifier matches the specified 'v0', 'v1', 'v2',
     /// 'v3', 'v4', 'v5', 'v6', 'v7' sequence, otherwise return false.
-    bool equals(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
-            bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5,
-            bsl::uint64_t v6, bsl::uint64_t v7) const;
+    bool equals(bsl::uint64_t v0,
+                bsl::uint64_t v1,
+                bsl::uint64_t v2,
+                bsl::uint64_t v3,
+                bsl::uint64_t v4,
+                bsl::uint64_t v5,
+                bsl::uint64_t v6,
+                bsl::uint64_t v7) const;
 
     /// Return true if the identifier matches the specified 'v0', 'v1', 'v2',
     /// 'v3', 'v4', 'v5', 'v6', 'v7', 'v8' sequence, otherwise return false.
-    bool equals(bsl::uint64_t v0, bsl::uint64_t v1, bsl::uint64_t v2, 
-            bsl::uint64_t v3, bsl::uint64_t v4, bsl::uint64_t v5,
-            bsl::uint64_t v6, bsl::uint64_t v7, bsl::uint64_t v8) const;
+    bool equals(bsl::uint64_t v0,
+                bsl::uint64_t v1,
+                bsl::uint64_t v2,
+                bsl::uint64_t v3,
+                bsl::uint64_t v4,
+                bsl::uint64_t v5,
+                bsl::uint64_t v6,
+                bsl::uint64_t v7,
+                bsl::uint64_t v8) const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -1629,27 +1678,6 @@ void hashAppend(HASH_ALGORITHM&                 algorithm,
     value.hash(algorithm);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /// Provide an Abstract Syntax Notation (ASN.1) string.
 ///
 /// @par Thread Safety
@@ -1674,7 +1702,7 @@ class AbstractValue
     /// memory. If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
     explicit AbstractValue(const AbstractValue& original,
-                            bslma::Allocator*     basicAllocator = 0);
+                           bslma::Allocator*    basicAllocator = 0);
 
     /// Destroy this object.
     ~AbstractValue();
@@ -1806,34 +1834,6 @@ void hashAppend(HASH_ALGORITHM& algorithm, const AbstractValue& value)
     value.hash(algorithm);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /// Provide an Abstract Syntax Notation (ASN.1) string.
 ///
 /// @par Thread Safety
@@ -1880,11 +1880,11 @@ class AbstractString
     /// Set the type to the specified 'value'.
     void setType(AbstractSyntaxTagNumber::Value value);
 
-    /// Set the value of the string to the specified 'value'. 
+    /// Set the value of the string to the specified 'value'.
     void setValue(const bsl::string& value);
 
     /// Read the specified 'size' number of bytes from the specified 'source'
-    /// and store them as the value of this object. Return the error. 
+    /// and store them as the value of this object. Return the error.
     ntsa::Error read(bsl::streambuf* source, bsl::size_t size);
 
     /// Return the tag number that indicates the type of string.
@@ -2019,7 +2019,7 @@ class AbstractByteSequence
     /// memory. If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
     explicit AbstractByteSequence(const AbstractByteSequence& original,
-                            bslma::Allocator*     basicAllocator = 0);
+                                  bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~AbstractByteSequence();
@@ -2038,7 +2038,7 @@ class AbstractByteSequence
     void append(AbstractByte value);
 
     /// Read the specified 'size' number of bytes from the specified 'source'
-    /// and store them as the value of this object. Return the error. 
+    /// and store them as the value of this object. Return the error.
     ntsa::Error read(bsl::streambuf* source, bsl::size_t size);
 
     /// Set the data at the specified 'index' to the specified 'value'.
@@ -2103,14 +2103,16 @@ class AbstractByteSequence
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntsa::AbstractByteSequence
-bsl::ostream& operator<<(bsl::ostream& stream, const AbstractByteSequence& object);
+bsl::ostream& operator<<(bsl::ostream&               stream,
+                         const AbstractByteSequence& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
 /// @related ntsa::AbstractByteSequence
-bool operator==(const AbstractByteSequence& lhs, const AbstractByteSequence& rhs);
+bool operator==(const AbstractByteSequence& lhs,
+                const AbstractByteSequence& rhs);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
 /// have the same value, and 'false' otherwise.  Two attribute objects do
@@ -2118,13 +2120,15 @@ bool operator==(const AbstractByteSequence& lhs, const AbstractByteSequence& rhs
 /// values.
 ///
 /// @related ntsa::AbstractByteSequence
-bool operator!=(const AbstractByteSequence& lhs, const AbstractByteSequence& rhs);
+bool operator!=(const AbstractByteSequence& lhs,
+                const AbstractByteSequence& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
 /// @related ntsa::AbstractByteSequence
-bool operator<(const AbstractByteSequence& lhs, const AbstractByteSequence& rhs);
+bool operator<(const AbstractByteSequence& lhs,
+               const AbstractByteSequence& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
@@ -2153,7 +2157,6 @@ typedef AbstractByte AbstractOctet;
 
 /// Define a type alias for the representation of an abstract octet sequence.
 typedef AbstractByteSequence AbstractOctetString;
-
 
 /// Define a type alias for the representation of an abstract bit.
 typedef bool AbstractBit;
@@ -2187,7 +2190,7 @@ class AbstractBitSequence
     /// memory. If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
     explicit AbstractBitSequence(const AbstractBitSequence& original,
-                            bslma::Allocator*     basicAllocator = 0);
+                                 bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~AbstractBitSequence();
@@ -2200,7 +2203,7 @@ class AbstractBitSequence
     void reset();
 
     /// Read the specified 'size' number of bytes from the specified 'source'
-    /// and store them as the value of this object. Return the error. 
+    /// and store them as the value of this object. Return the error.
     ntsa::Error read(bsl::streambuf* source, bsl::size_t size);
 
     /// Set the bit at the specified 'bitIndex' to the specified 'bitValue'.
@@ -2212,7 +2215,7 @@ class AbstractBitSequence
     /// Set the type to the specified 'value'.
     void setType(AbstractSyntaxTagNumber::Value value);
 
-    /// Set the number of leading bits omitted to the specified 'value'. 
+    /// Set the number of leading bits omitted to the specified 'value'.
     void setNumBitsOmitted(bsl::size_t value);
 
     /// Return the tag number that indicates the type of string.
@@ -2221,7 +2224,7 @@ class AbstractBitSequence
     /// Return the bit at the specified 'index'.
     AbstractBit getBit(bsl::size_t index) const;
 
-    /// Return the byte at the specified 'index'. 
+    /// Return the byte at the specified 'index'.
     AbstractByte getByte(bsl::size_t index) const;
 
     /// Return the data. Note that the data is null if the size is zero, and
@@ -2232,7 +2235,7 @@ class AbstractBitSequence
     /// Return the number of bytes of data.
     bsl::size_t numBytes() const;
 
-    /// Return the number of bits. 
+    /// Return the number of bits.
     bsl::size_t numBits() const;
 
     /// Return the number of bits omitted.
@@ -2283,14 +2286,16 @@ typedef AbstractBitSequence AbstractBitString;
 /// return a reference to the modifiable 'stream'.
 ///
 /// @related ntsa::AbstractBitSequence
-bsl::ostream& operator<<(bsl::ostream& stream, const AbstractBitSequence& object);
+bsl::ostream& operator<<(bsl::ostream&              stream,
+                         const AbstractBitSequence& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
 /// @related ntsa::AbstractBitSequence
-bool operator==(const AbstractBitSequence& lhs, const AbstractBitSequence& rhs);
+bool operator==(const AbstractBitSequence& lhs,
+                const AbstractBitSequence& rhs);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
 /// have the same value, and 'false' otherwise.  Two attribute objects do
@@ -2298,7 +2303,8 @@ bool operator==(const AbstractBitSequence& lhs, const AbstractBitSequence& rhs);
 /// values.
 ///
 /// @related ntsa::AbstractBitSequence
-bool operator!=(const AbstractBitSequence& lhs, const AbstractBitSequence& rhs);
+bool operator!=(const AbstractBitSequence& lhs,
+                const AbstractBitSequence& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
@@ -2328,38 +2334,6 @@ void hashAppend(HASH_ALGORITHM& algorithm, const AbstractBitSequence& value)
 {
     value.hash(algorithm);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /// Enumerate the signs of the representation of an abstract integer.
 ///

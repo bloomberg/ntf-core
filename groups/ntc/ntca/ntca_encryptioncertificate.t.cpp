@@ -553,12 +553,11 @@ NTCCFG_TEST_CASE(3)
     {
         ntsa::Error error;
 
-        NTCCFG_TEST_LOG_DEBUG
-            << "Decoding: "
-            << bdlb::PrintStringSingleLineHexDumper(
-                   (const char*)test::k_CA_CERTIFICATE_ASN1,
-                   sizeof test::k_CA_CERTIFICATE_ASN1)
-            << NTCCFG_TEST_LOG_END;
+        NTCCFG_TEST_LOG_DEBUG << "Decoding: "
+                              << bdlb::PrintStringSingleLineHexDumper(
+                                     (const char*)test::k_CA_CERTIFICATE_ASN1,
+                                     sizeof test::k_CA_CERTIFICATE_ASN1)
+                              << NTCCFG_TEST_LOG_END;
 
         bdlsb::FixedMemInStreamBuf isb(
             reinterpret_cast<const char*>(test::k_CA_CERTIFICATE_ASN1),
