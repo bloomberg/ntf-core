@@ -2859,7 +2859,8 @@ ntsa::Error AbstractSyntaxDecoder::decodeValue(AbstractString* result)
         if (context.tagNumber() != AbstractSyntaxTagNumber::e_UTF8_STRING &&
             context.tagNumber() != AbstractSyntaxTagNumber::e_IA5_STRING &&
             context.tagNumber() != AbstractSyntaxTagNumber::e_VISIBLE_STRING &&
-            context.tagNumber() != AbstractSyntaxTagNumber::e_PRINTABLE_STRING)
+            context.tagNumber() != AbstractSyntaxTagNumber::e_PRINTABLE_STRING &&
+            context.tagNumber() != AbstractSyntaxTagNumber::e_T61_STRING)
         {
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
@@ -2877,14 +2878,11 @@ ntsa::Error AbstractSyntaxDecoder::decodeValue(AbstractString* result)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    result->resize(context.contentLength().value());
+    result->setType(
+        static_cast<AbstractSyntaxTagNumber::Value>(context.tagNumber()));
 
-    error = AbstractSyntaxDecoderUtil::read(
-        const_cast<bsl::uint8_t*>(result->data()),
-        context.contentLength().value(),
-        d_buffer_p);
+    error = result->read(d_buffer_p, context.contentLength().value());
     if (error) {
-        result->reset();
         return error;
     }
 
@@ -4475,7 +4473,7 @@ void AbstractString::append(bsl::uint8_t value)
     d_data.push_back(value);
 }
 
-void AbstractString::set(bsl::size_t index, bsl::uint8_t value)
+void AbstractString::setByteAt(bsl::size_t index, bsl::uint8_t value)
 {
     if (index >= d_data.size()) {
         d_data.resize(index + 1);
@@ -4490,12 +4488,41 @@ void AbstractString::setType(AbstractSyntaxTagNumber::Value value)
     d_type = value;
 }
 
+void AbstractString::setValue(const bsl::string& value)
+{
+    d_data.clear();
+    d_data.assign(reinterpret_cast<const bsl::uint8_t*>(value.data()),
+                  reinterpret_cast<const bsl::uint8_t*>(value.data()) + 
+                  value.size());
+}
+
+ntsa::Error AbstractString::read(bsl::streambuf* source, bsl::size_t size)
+{
+    ntsa::Error error;
+
+    d_data.clear();
+
+    if (size == 0) {
+        return ntsa::Error();
+    }
+
+    d_data.resize(size);
+
+    error = AbstractSyntaxDecoderUtil::read(&d_data[0], size, source);
+    if (error) {
+        d_data.clear();
+        return error;
+    }
+
+    return error; 
+}
+
 AbstractSyntaxTagNumber::Value AbstractString::type() const
 {
     return d_type;
 }
 
-bsl::uint8_t AbstractString::get(bsl::size_t index) const
+bsl::uint8_t AbstractString::getByteAt(bsl::size_t index) const
 {
     if (index < d_data.size()) {
         return d_data[index];
@@ -4524,20 +4551,21 @@ ntsa::Error AbstractString::convert(bsl::string* result) const
 {
     result->clear();
 
-    if (d_type != AbstractSyntaxTagNumber::e_PRINTABLE_STRING &&
-        d_type != AbstractSyntaxTagNumber::e_CHARACTER_STRING &&
-        d_type != AbstractSyntaxTagNumber::e_IA5_STRING &&
-        d_type != AbstractSyntaxTagNumber::e_UTF8_STRING)
+    if (d_type == AbstractSyntaxTagNumber::e_PRINTABLE_STRING ||
+        d_type == AbstractSyntaxTagNumber::e_VISIBLE_STRING ||
+        d_type == AbstractSyntaxTagNumber::e_IA5_STRING ||
+        d_type == AbstractSyntaxTagNumber::e_UTF8_STRING)
     {
-        return ntsa::Error(ntsa::Error::e_INVALID);
+        if (!d_data.empty()) {
+            result->assign(reinterpret_cast<const char*>(&d_data.front()),
+                           reinterpret_cast<const char*>(&d_data.front()) + 
+                           d_data.size());
+        }
+
+        return ntsa::Error();
     }
 
-    if (!d_data.empty()) {
-        result->assign(reinterpret_cast<const char*>(&d_data.front()),
-                       d_data.size());
-    }
-
-    return ntsa::Error();
+    return ntsa::Error(ntsa::Error::e_INVALID);
 }
 
 bool AbstractString::equals(const AbstractString& other) const
@@ -4554,10 +4582,20 @@ bsl::ostream& AbstractString::print(bsl::ostream& stream,
                                     int           level,
                                     int           spacesPerLevel) const
 {
-    bslim::Printer printer(&stream, level, spacesPerLevel);
-    printer.start();
-    printer.printAttribute("data", d_data);
-    printer.end();
+    ntsa::Error error;
+
+    bsl::string text;
+    error = this->convert(&text);
+    if (!error) {
+        stream << '"' << text << '"';
+    }
+    else {
+        bslim::Printer printer(&stream, level, spacesPerLevel);
+        printer.start();
+        printer.printAttribute("data", d_data);
+        printer.end();
+    }
+
     return stream;
 }
 

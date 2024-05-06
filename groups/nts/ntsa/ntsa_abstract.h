@@ -1875,16 +1875,23 @@ class AbstractString
     void append(bsl::uint8_t value);
 
     /// Set the data at the specified 'index' to the specified 'value'.
-    void set(bsl::size_t index, bsl::uint8_t value);
+    void setByteAt(bsl::size_t index, bsl::uint8_t value);
 
     /// Set the type to the specified 'value'.
     void setType(AbstractSyntaxTagNumber::Value value);
+
+    /// Set the value of the string to the specified 'value'. 
+    void setValue(const bsl::string& value);
+
+    /// Read the specified 'size' number of bytes from the specified 'source'
+    /// and store them as the value of this object. Return the error. 
+    ntsa::Error read(bsl::streambuf* source, bsl::size_t size);
 
     /// Return the tag number that indicates the type of string.
     AbstractSyntaxTagNumber::Value type() const;
 
     /// Return the data at the specified 'index'.
-    bsl::uint8_t get(bsl::size_t index) const;
+    bsl::uint8_t getByteAt(bsl::size_t index) const;
 
     /// Return the data. Note that the data is null if the size is zero, and
     /// may contain embedded nulls but not necessarily null-terminated if the

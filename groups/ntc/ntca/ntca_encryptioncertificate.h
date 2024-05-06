@@ -586,7 +586,7 @@ void hashAppend(HASH_ALGORITHM&                           algorithm,
 class EncryptionCertificateNameComponent
 {
     EncryptionCertificateNameAttribute d_attribute;
-    bsl::string                        d_value;
+    ntsa::AbstractString               d_value;
     bslma::Allocator*                  d_allocator_p;
 
   public:
@@ -640,7 +640,7 @@ class EncryptionCertificateNameComponent
     const EncryptionCertificateNameAttribute& attribute() const;
 
     /// Return the component value.
-    const bsl::string& value() const;
+    bsl::string value() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -745,6 +745,12 @@ class EncryptionCertificateName
     AttributeVector   d_attributeVector;
     bslma::Allocator* d_allocator_p;
 
+  private:
+    /// Append to the specified 'result' the values of each component having
+    /// the specified well-known attribute 'type'.
+    void format(bsl::string*                                        result, 
+                ntca::EncryptionCertificateNameAttributeType::Value type) const;
+
   public:
     /// Create a new certificate name having the default value. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
@@ -801,6 +807,22 @@ class EncryptionCertificateName
     /// Return the attribute sequence.
     const bsl::vector<EncryptionCertificateNameComponent>& attributeSequence()
         const;
+
+    /// Return the concatenation of all standard attributes, or the empty
+    /// string if the name contains no standard attributes.
+    bsl::string standard() const;
+
+    /// Return the concatenation of all common name attributes, or the empty
+    /// string if the name contains no common name attributes.
+    bsl::string common() const;
+
+    /// Return the concatenation of all organization attributes, or the empty
+    /// string if the name contains no organization attributes.
+    bsl::string organization() const;
+
+    /// Return the concatenation of all organization unit attributes, or the
+    /// empty string if the name contains no organization unit attributes.
+    bsl::string organizationUnit() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -3689,6 +3711,34 @@ class EncryptionCertificateSignatureAlgorithmType
     /// Enumerate the well-known encryption certificate signature algorithm
     /// types.
     enum Value {
+        /// Message Digest 2 (MD2) checksum with Rivest, Shamir, and Adleman 
+        /// (RSA) encryption.
+        e_MD2_RSA,
+
+        /// Message Digest 4 (MD4) checksum with Rivest, Shamir, and Adleman 
+        /// (RSA) encryption.
+        e_MD4_RSA,
+
+        /// Message Digest 5 (MD5) checksum with Rivest, Shamir, and Adleman 
+        /// (RSA) encryption.
+        e_MD5_RSA,
+
+        /// PKCS1 version 1.5 signature algorithm with Secure Hash Algorithm 1
+        /// (SHA-1) and Rivest, Shamir, and Adleman (RSA) encryption.
+        e_SHA1_RSA,
+
+        /// PKCS1 version 1.5 signature algorithm with Secure Hash Algorithm 
+        /// 256 (SHA-256) and Rivest, Shamir, and Adleman (RSA) encryption.
+        e_SHA256_RSA,
+
+        /// PKCS1 version 1.5 signature algorithm with Secure Hash Algorithm 
+        /// 384 (SHA-384) and Rivest, Shamir, and Adleman (RSA) encryption.
+        e_SHA384_RSA,
+
+        /// PKCS1 version 1.5 signature algorithm with Secure Hash Algorithm 
+        /// 512 (SHA-512) and Rivest, Shamir, and Adleman (RSA) encryption.
+        e_SHA512_RSA,
+
         /// ANSI X9.62 Elliptic Curve Digital Signature Algorithm (ECDSA)
         /// coupled with the Secure Hash Algorithm 1 (SHA-1). This algorithm
         /// is assigned the object identifier 1.2.840.10045.4.1.
@@ -3712,19 +3762,7 @@ class EncryptionCertificateSignatureAlgorithmType
         /// ANSI X9.62 Elliptic Curve Digital Signature Algorithm (ECDSA)
         /// coupled with the Secure Hash Algorithm 256 (SHA-256). This
         /// algorithm is assigned the object identifier 1.2.840.10045.4.3.4.
-        e_ECDSA_SHA512,
-
-        /// PKCS1 version 1.5 signature algorithm with Secure Hash Algorithm 
-        /// 256 (SHA-256) and Rivest, Shamir, and Adleman (RSA) encryption.
-        e_SHA256_RSA,
-
-        /// PKCS1 version 1.5 signature algorithm with Secure Hash Algorithm 
-        /// 384 (SHA-384) and Rivest, Shamir, and Adleman (RSA) encryption.
-        e_SHA384_RSA,
-
-        /// PKCS1 version 1.5 signature algorithm with Secure Hash Algorithm 
-        /// 512 (SHA-512) and Rivest, Shamir, and Adleman (RSA) encryption.
-        e_SHA512_RSA
+        e_ECDSA_SHA512
     };
 
     /// Return the string representation exactly matching the enumerator
@@ -7073,6 +7111,33 @@ class EncryptionCertificateEntity
     const bsl::vector<bsl::string>& hosts() const;
 #endif
 
+    /// Return the serial number. 
+    const ntsa::AbstractInteger& serialNumber() const;
+
+    // Return the subject.
+    const ntca::EncryptionCertificateSubject& subject() const;
+
+    // Return the unique identifier of the subject.
+    const bdlb::NullableValue<ntsa::AbstractBitString>& subjectUniqueId() const;
+
+    /// Return the subject's public key information.
+    const ntca::EncryptionCertificatePublicKeyInfo& subjectPublicKeyInfo() const;
+
+    // Return the issuer.
+    const ntca::EncryptionCertificateIssuer& issuer() const;
+
+    // Return the unique identifier of the issuer.
+    const bdlb::NullableValue<ntsa::AbstractBitString>& issuerUniqueId() const;
+    
+    // Return the list of extensions.
+    const bdlb::NullableValue<ntca::EncryptionCertificateExtensionList>& extensionList() const;
+
+    /// Return the date/time interval within which the certificate is valid. 
+    const ntca::EncryptionCertificateValidity& validity() const;
+
+    /// Return the signature algorithm.
+    const ntca::EncryptionCertificateSignatureAlgorithm& signatureAlgorithm() const;
+
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
     bool equals(const EncryptionCertificateEntity& other) const;
@@ -7278,6 +7343,30 @@ class EncryptionCertificate
 
     /// Return the certificate entity.
     const ntca::EncryptionCertificateEntity& entity() const;
+
+    /// Return the serial number. 
+    const ntsa::AbstractInteger& serialNumber() const;
+
+    // Return the subject.
+    const ntca::EncryptionCertificateSubject& subject() const;
+
+    // Return the unique identifier of the subject.
+    const bdlb::NullableValue<ntsa::AbstractBitString>& subjectUniqueId() const;
+
+    /// Return the subject's public key information.
+    const ntca::EncryptionCertificatePublicKeyInfo& subjectPublicKeyInfo() const;
+
+    // Return the issuer.
+    const ntca::EncryptionCertificateIssuer& issuer() const;
+
+    // Return the unique identifier of the issuer.
+    const bdlb::NullableValue<ntsa::AbstractBitString>& issuerUniqueId() const;
+    
+    // Return the list of extensions.
+    const bdlb::NullableValue<ntca::EncryptionCertificateExtensionList>& extensionList() const;
+
+    /// Return the date/time interval within which the certificate is valid. 
+    const ntca::EncryptionCertificateValidity& validity() const;
 
     /// Return the certificate signature algorithm.
     const ntca::EncryptionCertificateSignatureAlgorithm& signatureAlgorithm()
