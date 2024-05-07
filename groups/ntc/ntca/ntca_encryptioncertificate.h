@@ -1656,9 +1656,11 @@ void hashAppend(HASH_ALGORITHM&                             algorithm,
 /// @ingroup module_ntci_encryption
 class EncryptionCertificateValidity
 {
-    bdlt::DatetimeTz  d_from;
-    bdlt::DatetimeTz  d_thru;
-    bslma::Allocator* d_allocator_p;
+    ntsa::AbstractSyntaxTagNumber::Value d_fromTagNumber;
+    bdlt::DatetimeTz                     d_from;
+    ntsa::AbstractSyntaxTagNumber::Value d_thruTagNumber;
+    bdlt::DatetimeTz                     d_thru;
+    bslma::Allocator*                    d_allocator_p;
 
   public:
     /// Create a new object having the default value. Optionally specify a
@@ -6520,12 +6522,6 @@ class EncryptionCertificateExtensionValue
     /// Select the "any" representation initially having the specified 'value'.
     /// Return a reference to the modifiable representation.
     ntsa::AbstractValue& makeAny(const ntsa::AbstractValue& value);
-
-    /// Decode this object using the specified 'decoder'. Return the error.
-    ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
-
-    /// Encode this object using the specified 'encoder'. Return the error.
-    ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
 
     /// Return a reference to the modifiable "boolean" representation. The
     /// behavior is undefined unless 'isBoolean()' is true.

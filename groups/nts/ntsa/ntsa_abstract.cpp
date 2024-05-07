@@ -517,10 +517,10 @@ ntsa::Error AbstractSyntaxEncoderFrame::encodeValue(bool value)
     ntsa::Error error;
 
     if (value) {
-        error = this->writeContent(0x00);
+        error = this->writeContent(0xFF);
     }
     else {
-        error = this->writeContent(0xFF);
+        error = this->writeContent(0x00);
     }
 
     if (error) {
@@ -824,13 +824,15 @@ ntsa::Error AbstractSyntaxEncoderFrame::synchronize(bsl::size_t* length)
 
     if (!d_children.empty()) {
         if (d_content.length() != 0) {
-            return ntsa::Error(ntsa::Error::e_INVALID);
+            // Handle manually-encoded bit string.
+            contentLength = d_content.length();
         }
 
         const bsl::size_t numChildren = d_children.size();
 
         for (bsl::size_t i = 0; i < numChildren; ++i) {
             AbstractSyntaxEncoderFrame* child = d_children[i];
+
             error = child->synchronize(&contentLength);
             if (error) {
                 return error;
@@ -882,21 +884,28 @@ ntsa::Error AbstractSyntaxEncoderFrame::flush(bsl::streambuf* buffer)
     }
 
     if (!d_children.empty()) {
+        // Handle manually encoded bit strings.
+        if (d_content.length() != 0) {
+            error = AbstractSyntaxEncoderUtil::write(buffer,
+                                                     d_content.data(),
+                                                     d_content.length());
+            if (error) {
+                return error;
+            }
+        }
+
         const bsl::size_t numChildren = d_children.size();
 
         for (bsl::size_t i = 0; i < numChildren; ++i) {
             AbstractSyntaxEncoderFrame* child = d_children[i];
-            error                             = child->flush(buffer);
+
+            error = child->flush(buffer);
             if (error) {
                 return error;
             }
         }
     }
-    else {
-        if (d_content.length() == 0) {
-            return ntsa::Error(ntsa::Error::e_INVALID);
-        }
-
+    else if (d_content.length() != 0) {
         error = AbstractSyntaxEncoderUtil::write(buffer,
                                                  d_content.data(),
                                                  d_content.length());
@@ -1288,6 +1297,23 @@ ntsa::Error AbstractSyntaxEncoder::encodeValue(const AbstractValue& value)
     return ntsa::Error();
 }
 
+
+ntsa::Error AbstractSyntaxEncoder::encodeLiteral(bsl::uint8_t value)
+{
+    ntsa::Error error;
+
+    if (d_current_p == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    error = d_current_p->writeContent(value);
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
 ntsa::Error AbstractSyntaxEncoder::encodeTagComplete()
 {
     ntsa::Error error;
@@ -1622,11 +1648,15 @@ ntsa::Error AbstractSyntaxEncoderUtil::encodeDatetimeTz(
     int offset      = value.offset();
 
     if (format == e_UTC) {
-        if (year < 2000) {
+        if (year >= 1950 && year < 2000) {
+            os << bsl::setw(2) << bsl::setfill('0') << (year - 1900);
+        }
+        else if (year >= 2000 && year < 2050) {
+            os << bsl::setw(2) << bsl::setfill('0') << (year - 2000);
+        }
+        else {
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
-
-        os << bsl::setw(2) << bsl::setfill('0') << (year - 2000);
     }
     else {
         os << bsl::setw(4) << bsl::setfill('0') << year;
@@ -3526,7 +3556,12 @@ ntsa::Error AbstractSyntaxDecoderUtil::decodeDatetimeTz(
         }
 
         if (format == e_UTC) {
-            year = static_cast<int>(2000 + yearHi);
+            if (yearHi >= 50) {
+                year = static_cast<int>(1900 + yearHi);
+            }
+            else {
+                year = static_cast<int>(2000 + yearHi);
+            }
         }
         else if (format == e_GENERALIZED) {
             bsls::Types::Uint64 yearLo = 0;

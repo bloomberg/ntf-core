@@ -527,6 +527,7 @@ NTCCFG_TEST_CASE(2)
     ntccfg::TestAllocator ta;
     {
         ntsa::Error error;
+        int         rc;
 
         bdlsb::FixedMemInStreamBuf isb(
             reinterpret_cast<const char*>(test::k_USER_CERTIFICATE_ASN1),
@@ -540,6 +541,23 @@ NTCCFG_TEST_CASE(2)
 
         NTCCFG_TEST_LOG_DEBUG << "Certificate = " << certificate
                               << NTCCFG_TEST_LOG_END;
+
+        bdlsb::MemOutStreamBuf osb(&ta);
+
+        ntsa::AbstractSyntaxEncoder encoder(&osb, &ta);
+
+        error = certificate.encode(&encoder);
+        NTCCFG_TEST_OK(error);
+
+        rc = osb.pubsync();
+        NTCCFG_TEST_EQ(rc, 0);
+
+        NTCCFG_TEST_EQ(osb.length(), sizeof test::k_USER_CERTIFICATE_ASN1);
+
+        rc = bsl::memcmp(osb.data(), 
+                         test::k_USER_CERTIFICATE_ASN1, 
+                         sizeof test::k_USER_CERTIFICATE_ASN1);
+        NTCCFG_TEST_EQ(rc, 0);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
@@ -552,6 +570,7 @@ NTCCFG_TEST_CASE(3)
     ntccfg::TestAllocator ta;
     {
         ntsa::Error error;
+        int         rc;
 
         NTCCFG_TEST_LOG_DEBUG << "Decoding: "
                               << bdlb::PrintStringSingleLineHexDumper(
@@ -571,6 +590,23 @@ NTCCFG_TEST_CASE(3)
 
         NTCCFG_TEST_LOG_DEBUG << "Certificate = " << certificate
                               << NTCCFG_TEST_LOG_END;
+
+        bdlsb::MemOutStreamBuf osb(&ta);
+
+        ntsa::AbstractSyntaxEncoder encoder(&osb, &ta);
+
+        error = certificate.encode(&encoder);
+        NTCCFG_TEST_OK(error);
+
+        rc = osb.pubsync();
+        NTCCFG_TEST_EQ(rc, 0);
+
+        NTCCFG_TEST_EQ(osb.length(), sizeof test::k_CA_CERTIFICATE_ASN1);
+
+        rc = bsl::memcmp(osb.data(), 
+                         test::k_CA_CERTIFICATE_ASN1, 
+                         sizeof test::k_CA_CERTIFICATE_ASN1);
+        NTCCFG_TEST_EQ(rc, 0);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
@@ -583,6 +619,7 @@ NTCCFG_TEST_CASE(4)
     ntccfg::TestAllocator ta;
     {
         ntsa::Error error;
+        int         rc;
 
         NTCCFG_TEST_LOG_DEBUG
             << "Decoding: "
@@ -603,6 +640,39 @@ NTCCFG_TEST_CASE(4)
 
         NTCCFG_TEST_LOG_DEBUG << "Certificate = " << certificate
                               << NTCCFG_TEST_LOG_END;
+
+        bdlsb::MemOutStreamBuf osb(&ta);
+
+        ntsa::AbstractSyntaxEncoder encoder(&osb, &ta);
+
+        error = certificate.encode(&encoder);
+        NTCCFG_TEST_OK(error);
+
+        rc = osb.pubsync();
+        NTCCFG_TEST_EQ(rc, 0);
+
+        NTCCFG_TEST_EQ(osb.length(), sizeof test::k_REAL_CERTIFICATE_ASN1);
+
+        rc = bsl::memcmp(osb.data(), 
+                         test::k_REAL_CERTIFICATE_ASN1, 
+                         sizeof test::k_REAL_CERTIFICATE_ASN1);
+
+        if (rc != 0) {
+            for (bsl::size_t i = 0; i < sizeof test::k_REAL_CERTIFICATE_ASN1; ++i)
+            {
+                bsl::uint8_t e = test::k_REAL_CERTIFICATE_ASN1[i];
+                bsl::uint8_t f = static_cast<bsl::uint8_t>(osb.data()[i]);
+
+                if (f != e) {
+                    NTCCFG_TEST_LOG_ERROR << "Mismatch at byte " << i << ":"
+                                          << "\nE: " << bsl::hex << static_cast<bsl::uint32_t>(e)
+                                          << "\nF: " << bsl::hex << static_cast<bsl::uint32_t>(f)
+                                          << NTCCFG_TEST_LOG_END;
+                }
+            }
+        }
+
+        NTCCFG_TEST_EQ(rc, 0);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }

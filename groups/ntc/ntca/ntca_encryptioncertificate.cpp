@@ -174,16 +174,6 @@ bool EncryptionCertificateObject::equals(
 bool EncryptionCertificateObject::less(
     const EncryptionCertificateObject& other) const
 {
-#if 0
-    if (d_value < other.d_value) {
-        return true;
-    }
-
-    if (other.d_value < d_value) {
-        return false;
-    }
-#endif
-
     return d_value < other.d_value;
 }
 
@@ -297,8 +287,34 @@ ntsa::Error EncryptionCertificateVersion::decode(
 ntsa::Error EncryptionCertificateVersion::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
-    NTCCFG_WARNING_UNUSED(encoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_CONTEXT_SPECIFIC, k_CONSTRUCTED, 0);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_INTEGER);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeValue(d_value);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 bsl::size_t EncryptionCertificateVersion::value() const
@@ -731,8 +747,24 @@ ntsa::Error EncryptionCertificateNameAttributeIdentifier::decode(
 ntsa::Error EncryptionCertificateNameAttributeIdentifier::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
-    NTCCFG_WARNING_UNUSED(encoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OBJECT_IDENTIFIER);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeValue(d_identifier);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 const ntsa::AbstractObjectIdentifier&
@@ -873,8 +905,6 @@ void EncryptionCertificateNameAttribute::setValue(const bsl::string& value)
 ntsa::Error EncryptionCertificateNameAttribute::decode(
     ntsa::AbstractSyntaxDecoder* decoder)
 {
-    // AttributeTypeAndValue
-
     ntsa::Error error;
 
     error = decoder->decodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
@@ -917,8 +947,43 @@ ntsa::Error EncryptionCertificateNameAttribute::decode(
 ntsa::Error EncryptionCertificateNameAttribute::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
-    NTCCFG_WARNING_UNUSED(encoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    if (error) {
+        return error;
+    }
+
+    {
+        error = d_attribute.encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+
+    {
+        error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, d_value.type());
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeValue(d_value);
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 const EncryptionCertificateNameAttributeIdentifier&
@@ -1170,8 +1235,43 @@ ntsa::Error EncryptionCertificateName::decode(
 ntsa::Error EncryptionCertificateName::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
-    NTCCFG_WARNING_UNUSED(encoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    if (error) {
+        return error;
+    }
+
+    if (d_attributeVector.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    for (bsl::size_t i = 0; i < d_attributeVector.size(); ++i) {
+        const EncryptionCertificateNameAttribute& attribute = 
+            d_attributeVector[i];
+
+        error = encoder->encodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SET);
+        if (error) {
+            return error;
+        }
+
+        error = attribute.encode(encoder);
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 const bsl::vector<EncryptionCertificateNameAttribute>& EncryptionCertificateName::
@@ -1226,12 +1326,6 @@ bsl::string EncryptionCertificateName::common() const
 
     return result;
 }
-
-
-
-
-
-
 
 bsl::string EncryptionCertificateName::prefix() const
 {
@@ -1898,6 +1992,14 @@ ntsa::Error EncryptionCertificateNameAlternative::decode(
         return error;
     }
 
+    if (decoder->current().tagClass() != k_CONTEXT_SPECIFIC) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (decoder->current().tagType() != k_PRIMITIVE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
     if (decoder->current().tagNumber() == e_OTHER) {
         error = decoder->decodeValue(&this->makeOther());
         if (error) {
@@ -1985,8 +2087,94 @@ ntsa::Error EncryptionCertificateNameAlternative::decode(
 ntsa::Error EncryptionCertificateNameAlternative::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
-    NTCCFG_WARNING_UNUSED(encoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_CONTEXT_SPECIFIC, k_PRIMITIVE, d_type);
+    if (error) {
+        return error;
+    }
+
+    if (this->isOther()) {
+        error = encoder->encodeValue(this->other());
+        if (error) {
+            return error;
+        }
+    }
+    else if (this->isEmail()) {
+        error = encoder->encodeValue(this->email());
+        if (error) {
+            return error;
+        }
+    }
+    else if (this->isDomain()) {
+        error = encoder->encodeValue(this->domain());
+        if (error) {
+            return error;
+        }
+    }
+    else if (this->isX400()) {
+        error = encoder->encodeValue(this->x400());
+        if (error) {
+            return error;
+        }
+    }
+    else if (this->isDirectory()) {
+        error = this->directory().encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+    else if (this->isEdi()) {
+        error = encoder->encodeValue(this->edi());
+        if (error) {
+            return error;
+        }
+    }
+    else if (this->isUri()) {
+        bsl::string text = this->uri().text();
+        error = encoder->encodeValue(NL_TEXTMAX);
+        if (error) {
+            return error;
+        }
+    }
+    else if (this->isIp()) {
+        ntsa::AbstractOctetString octets;
+
+        if (this->ip().isV4()) {
+            for (bsl::size_t i = 0; i < 4; ++i) {
+                octets.set(i, this->ip().v4()[i]);
+            }
+        }
+        else if (this->ip().isV6()) {
+            for (bsl::size_t i = 0; i < 16; ++i) {
+                octets.set(i, this->ip().v6()[i]);
+            }
+        }
+        else {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        error = encoder->encodeValue(octets);
+        if (error) {
+            return error;
+        }
+    }
+    else if (this->isIdentifier()) {
+        error = encoder->encodeValue(this->identifier());
+        if (error) {
+            return error;
+        }
+    }
+    else {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 const ntsa::AbstractValue& EncryptionCertificateNameAlternative::other() const
@@ -2315,8 +2503,31 @@ ntsa::Error EncryptionCertificateNameAlternativeList::decode(
 ntsa::Error EncryptionCertificateNameAlternativeList::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
-    NTCCFG_WARNING_UNUSED(encoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    ntsa::Error error;
+
+    if (d_container.empty()) {
+        return ntsa::Error();
+    }
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    if (error) {
+        return error;
+    }
+
+    for (bsl::size_t i = 0; i < d_container.size(); ++i) {
+        const EncryptionCertificateNameAlternative& element = d_container[i];
+        error = element.encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 const bsl::vector<EncryptionCertificateNameAlternative>& 
@@ -2516,25 +2727,20 @@ bool operator<(const EncryptionCertificateNameConstraints& lhs,
 
 EncryptionCertificateValidity::EncryptionCertificateValidity(
     bslma::Allocator* basicAllocator)
-: d_from()
+: d_fromTagNumber(ntsa::AbstractSyntaxTagNumber::e_GENERALIZED_TIME)
+, d_from()
+, d_thruTagNumber(ntsa::AbstractSyntaxTagNumber::e_GENERALIZED_TIME)
 , d_thru()
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    // MRM
-#if 0
-    d_from = bdlt::CurrentTime::asDatetimeTz();
-
-    bdlt::Datetime localExpirationTime = d_from.localDatetime();
-    localExpirationTime.addDays(365);
-
-    d_thru.setDatetimeTz(localExpirationTime, d_from.offset());
-#endif
 }
 
 EncryptionCertificateValidity::EncryptionCertificateValidity(
     const EncryptionCertificateValidity& original,
     bslma::Allocator*                    basicAllocator)
-: d_from(original.d_from)
+: d_fromTagNumber(original.d_fromTagNumber)
+, d_from(original.d_from)
+, d_thruTagNumber(original.d_thruTagNumber)
 , d_thru(original.d_thru)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -2548,7 +2754,9 @@ EncryptionCertificateValidity& EncryptionCertificateValidity::operator=(
     const EncryptionCertificateValidity& other)
 {
     if (this != &other) {
+        d_fromTagNumber = other.d_fromTagNumber;
         d_from = other.d_from;
+        d_thruTagNumber = other.d_thruTagNumber;
         d_thru = other.d_thru;
     }
 
@@ -2557,8 +2765,10 @@ EncryptionCertificateValidity& EncryptionCertificateValidity::operator=(
 
 void EncryptionCertificateValidity::reset()
 {
-    d_from = bdlt::DatetimeTz();
-    d_thru = bdlt::DatetimeTz();
+    d_fromTagNumber = ntsa::AbstractSyntaxTagNumber::e_GENERALIZED_TIME;
+    d_from          = bdlt::DatetimeTz();
+    d_thruTagNumber = ntsa::AbstractSyntaxTagNumber::e_GENERALIZED_TIME;
+    d_thru          = bdlt::DatetimeTz();
 }
 
 void EncryptionCertificateValidity::setFrom(const bdlt::DatetimeTz& value)
@@ -2587,6 +2797,17 @@ ntsa::Error EncryptionCertificateValidity::decode(
             return error;
         }
 
+        if (decoder->current().tagNumber() != 
+            ntsa::AbstractSyntaxTagNumber::e_GENERALIZED_TIME &&
+            decoder->current().tagNumber() != 
+            ntsa::AbstractSyntaxTagNumber::e_UTC_TIME)
+        {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        d_fromTagNumber = static_cast<ntsa::AbstractSyntaxTagNumber::Value>(
+            decoder->current().tagNumber());
+
         error = decoder->decodeValue(&d_from);
         if (error) {
             return error;
@@ -2603,6 +2824,17 @@ ntsa::Error EncryptionCertificateValidity::decode(
         if (error) {
             return error;
         }
+
+        if (decoder->current().tagNumber() != 
+            ntsa::AbstractSyntaxTagNumber::e_GENERALIZED_TIME &&
+            decoder->current().tagNumber() != 
+            ntsa::AbstractSyntaxTagNumber::e_UTC_TIME)
+        {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        d_thruTagNumber = static_cast<ntsa::AbstractSyntaxTagNumber::Value>(
+            decoder->current().tagNumber());
 
         error = decoder->decodeValue(&d_thru);
         if (error) {
@@ -2626,8 +2858,57 @@ ntsa::Error EncryptionCertificateValidity::decode(
 ntsa::Error EncryptionCertificateValidity::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
-    NTCCFG_WARNING_UNUSED(encoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    if (error) {
+        return error;
+    }
+
+    {
+        error = encoder->encodeTag(k_UNIVERSAL, 
+                                   k_PRIMITIVE, 
+                                   d_fromTagNumber);
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeValue(d_from);
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+
+    {
+        error = encoder->encodeTag(k_UNIVERSAL, 
+                                   k_PRIMITIVE, 
+                                   d_thruTagNumber);
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeValue(d_thru);
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 const bdlt::DatetimeTz& EncryptionCertificateValidity::from() const
@@ -2869,8 +3150,24 @@ ntsa::Error EncryptionCertificatePublicKeyAlgorithmIdentifier::decode(
 ntsa::Error EncryptionCertificatePublicKeyAlgorithmIdentifier::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
-    NTCCFG_WARNING_UNUSED(encoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OBJECT_IDENTIFIER);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeValue(d_identifier);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 const ntsa::AbstractObjectIdentifier&
@@ -3010,8 +3307,24 @@ ntsa::Error EncryptionCertificatePublicKeyAlgorithmParametersRsa::decode(
 ntsa::Error EncryptionCertificatePublicKeyAlgorithmParametersRsa::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
-    NTCCFG_WARNING_UNUSED(encoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_NULL);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeValue(d_value);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 bool EncryptionCertificatePublicKeyAlgorithmParametersRsa::equals(
@@ -3266,8 +3579,24 @@ ntsa::Error
 EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier::
     encode(ntsa::AbstractSyntaxEncoder* encoder) const
 {
-    NTCCFG_WARNING_UNUSED(encoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OBJECT_IDENTIFIER);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeValue(d_identifier);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 const ntsa::AbstractObjectIdentifier&
@@ -4157,8 +4486,73 @@ ntsa::Error EncryptionCertificatePublicKeyAlgorithm::decode(
 ntsa::Error EncryptionCertificatePublicKeyAlgorithm::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
-    NTCCFG_WARNING_UNUSED(encoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    if (error) {
+        return error;
+    }
+
+    error = d_identifier.encode(encoder);
+    if (error) {
+        return error;
+    }
+
+    if (!d_parameters.isNull()) {
+        if (d_parameters.value().isRsa()) {
+            error = d_parameters.value().rsa().encode(encoder);
+            if (error) {
+                return error;
+            }
+        }
+        else if (d_parameters.value().isEllipticCurve()) {
+            if (d_parameters.value().ellipticCurve().isIdentifier()) {
+                error = d_parameters.value().ellipticCurve().identifier().encode(encoder);
+                if (error) {
+                    return error;
+                }
+            }
+            else if (d_parameters.value().ellipticCurve().isAny()) {
+                error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OCTET_STRING);
+                if (error) {
+                    return error;
+                }
+
+                error = encoder->encodeValue(d_parameters.value().ellipticCurve().any());
+                if (error) {
+                    return error;
+                }
+
+                error = encoder->encodeTagComplete();
+                if (error) {
+                    return error;
+                }
+            }
+        }
+        else if (d_parameters.value().isAny()) {
+            error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OCTET_STRING);
+            if (error) {
+                return error;
+            }
+
+            error = encoder->encodeValue(d_parameters.value().any());
+            if (error) {
+                return error;
+            }
+
+            error = encoder->encodeTagComplete();
+            if (error) {
+                return error;
+            }
+        }
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 const EncryptionCertificatePublicKeyAlgorithmIdentifier&
@@ -4287,7 +4681,8 @@ ntsa::Error EncryptionCertificatePublicKeyValueRsa::decode(
     }
 
     bsl::uint8_t numBitsOmitted = 0;
-    error                       = decoder->decodeByte(&numBitsOmitted);
+
+    error = decoder->decodeByte(&numBitsOmitted);
     if (error) {
         return error;
     }
@@ -4353,8 +4748,76 @@ ntsa::Error EncryptionCertificatePublicKeyValueRsa::decode(
 ntsa::Error EncryptionCertificatePublicKeyValueRsa::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
-    NTCCFG_WARNING_UNUSED(encoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_BIT_STRING);
+    if (error) {
+        return error;
+    }
+
+    bsl::uint8_t numBitsOmitted = 0;
+
+    error = encoder->encodeLiteral(numBitsOmitted);
+    if (error) {
+        return error;
+    }
+
+    if (numBitsOmitted != 0) {
+        return error;
+    }
+
+    {
+        error = encoder->encodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+        if (error) {
+            return error;
+        }
+
+        {
+            error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_INTEGER);
+            if (error) {
+                return error;
+            }
+
+            error = encoder->encodeValue(d_modulus);
+            if (error) {
+                return error;
+            }
+
+            error = encoder->encodeTagComplete();
+            if (error) {
+                return error;
+            }
+        }
+
+        {
+            error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_INTEGER);
+            if (error) {
+                return error;
+            }
+
+            error = encoder->encodeValue(d_encryptionExponent);
+            if (error) {
+                return error;
+            }
+
+            error = encoder->encodeTagComplete();
+            if (error) {
+                return error;
+            }
+        }
+
+        error = encoder->encodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 bool EncryptionCertificatePublicKeyValueRsa::equals(
@@ -4481,8 +4944,24 @@ ntsa::Error EncryptionCertificatePublicKeyValueEllipticCurve::decode(
 ntsa::Error EncryptionCertificatePublicKeyValueEllipticCurve::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
-    NTCCFG_WARNING_UNUSED(encoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_BIT_STRING);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeValue(d_value);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 bool EncryptionCertificatePublicKeyValueEllipticCurve::equals(
@@ -4502,7 +4981,10 @@ bsl::ostream& EncryptionCertificatePublicKeyValueEllipticCurve::print(
     int           level,
     int           spacesPerLevel) const
 {
+    bsl::ostream::fmtflags previousFlags = stream.flags();
+    stream.setf(previousFlags | bsl::ostream::hex);
     d_value.print(stream, level, spacesPerLevel);
+    stream.flags(previousFlags);
     return stream;
 }
 
@@ -4912,11 +5394,9 @@ ntsa::Error EncryptionCertificatePublicKeyInfo::decode(
         return error;
     }
 
-    {
-        error = d_algorithm.decode(decoder);
-        if (error) {
-            return error;
-        }
+    error = d_algorithm.decode(decoder);
+    if (error) {
+        return error;
     }
 
     if (d_algorithm.identifier().equals(
@@ -4965,10 +5445,57 @@ ntsa::Error EncryptionCertificatePublicKeyInfo::decode(
 ntsa::Error EncryptionCertificatePublicKeyInfo::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
-    NTCCFG_WARNING_UNUSED(encoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
-}
+    ntsa::Error error;
 
+    error = encoder->encodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    if (error) {
+        return error;
+    }
+
+    error = d_algorithm.encode(encoder);
+    if (error) {
+        return error;
+    }
+
+    if (d_value.isRsa()) {
+        error = d_value.rsa().encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+    else if (d_value.isEllipticCurve()) {
+        error = d_value.ellipticCurve().encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+    else if (d_value.isAny()) {
+        error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_BIT_STRING);
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeValue(d_value.any());
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+    else {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
 
 const ntca::EncryptionCertificatePublicKeyAlgorithm& 
 EncryptionCertificatePublicKeyInfo::algorithm() const
@@ -5362,8 +5889,24 @@ ntsa::Error EncryptionCertificateSignatureAlgorithmIdentifier::decode(
 ntsa::Error EncryptionCertificateSignatureAlgorithmIdentifier::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
-    NTCCFG_WARNING_UNUSED(encoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OBJECT_IDENTIFIER);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeValue(d_identifier);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 const ntsa::AbstractObjectIdentifier&
@@ -5664,8 +6207,31 @@ ntsa::Error EncryptionCertificateSignatureAlgorithm::decode(
 ntsa::Error EncryptionCertificateSignatureAlgorithm::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
-    NTCCFG_WARNING_UNUSED(encoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    if (error) {
+        return error;
+    }
+
+    error = d_identifier.encode(encoder);
+    if (error) {
+        return error;
+    }
+
+    if (!d_parameters.isNull()) {
+        error = d_parameters.value().encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 const EncryptionCertificateSignatureAlgorithmIdentifier&
@@ -5810,8 +6376,24 @@ ntsa::Error EncryptionCertificateSignature::decode(
 ntsa::Error EncryptionCertificateSignature::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
-    NTCCFG_WARNING_UNUSED(encoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_BIT_STRING);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeValue(d_value);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 const ntsa::AbstractBitString& EncryptionCertificateSignature::value() const
@@ -5835,10 +6417,10 @@ bsl::ostream& EncryptionCertificateSignature::print(bsl::ostream& stream,
                                                     int           level,
                                                     int spacesPerLevel) const
 {
-    bslim::Printer printer(&stream, level, spacesPerLevel);
-    printer.start();
-    printer.printAttribute("value", d_value);
-    printer.end();
+    bsl::ostream::fmtflags previousFlags = stream.flags();
+    stream.setf(previousFlags | bsl::ostream::hex);
+    d_value.print(stream, level, spacesPerLevel);
+    stream.flags(previousFlags);
     return stream;
 }
 
@@ -7570,7 +8152,7 @@ ntsa::Error EncryptionCertificateSubjectConstraints::decode(
             wantPathLength = false;
         }
         else {
-            return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+            return ntsa::Error(ntsa::Error::e_INVALID);
         }
 
         error = decoder->decodeTagComplete();
@@ -8121,8 +8703,24 @@ ntsa::Error EncryptionCertificateExtensionIdentifier::decode(
 ntsa::Error EncryptionCertificateExtensionIdentifier::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
-    NTCCFG_WARNING_UNUSED(encoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OBJECT_IDENTIFIER);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeValue(d_identifier);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 const ntsa::AbstractObjectIdentifier& EncryptionCertificateExtensionIdentifier::
@@ -9045,20 +9643,6 @@ ntsa::AbstractValue& EncryptionCertificateExtensionValue::any()
     return d_any.object();
 }
 
-ntsa::Error EncryptionCertificateExtensionValue::decode(
-    ntsa::AbstractSyntaxDecoder* decoder)
-{
-    NTCCFG_WARNING_UNUSED(decoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
-}
-
-ntsa::Error EncryptionCertificateExtensionValue::encode(
-    ntsa::AbstractSyntaxEncoder* encoder) const
-{
-    NTCCFG_WARNING_UNUSED(encoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
-}
-
 bool EncryptionCertificateExtensionValue::boolean() const
 {
     BSLS_ASSERT(this->isBoolean());
@@ -9727,8 +10311,151 @@ ntsa::Error EncryptionCertificateExtension::decode(
 ntsa::Error EncryptionCertificateExtension::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
-    NTCCFG_WARNING_UNUSED(encoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    if (error) {
+        return error;
+    }
+
+    error = d_attribute.encode(encoder);
+    if (error) {
+        return error;
+    }
+
+    if (!d_critical.isNull()) {
+        error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_BOOLEAN);
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeValue(d_critical.value());
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OCTET_STRING);
+    if (error) {
+        return error;
+    }
+
+    if (d_value.isName()) {
+        error = encoder->encodeValue(d_value.boolean());
+        if (error) {
+            return error;
+        }
+    }
+    else if (d_value.isName()) {
+        error = d_value.name().encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+    else if (d_value.isNameAlternative()) {
+        error = d_value.nameAlternative().encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+    else if (d_value.isSubject()) {
+        error = d_value.subject().encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+    else if (d_value.isSubjectKeyIdentifier()) {
+        error = d_value.subjectKeyIdentifier().encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+    else if (d_value.isSubjectKeyUsage()) {
+        error = d_value.subjectKeyUsage().encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+    else if (d_value.isSubjectKeyUsageExtended()) {
+        error = d_value.subjectKeyUsageExtended().encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+    else if (d_value.isSubjectConstraints()) {
+        error = d_value.subjectConstraints().encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+    else if (d_value.isIssuer()) {
+        error = d_value.issuer().encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+    else if (d_value.isIssuerKeyIdentifier()) {
+        error = d_value.issuerKeyIdentifier().encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+    else if (d_value.isIssuerInformationAccess()) {
+        error = d_value.issuerInformationAccess().encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+    else if (d_value.isPolicy()) {
+        error = d_value.policy().encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+    else if (d_value.isPolicyMappings()) {
+        error = d_value.policyMappings().encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+    else if (d_value.isPolicyConstraints()) {
+        error = d_value.policyConstraints().encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+    else if (d_value.isByteSequence()) {
+        error = encoder->encodeValue(d_value.byteSequence());
+        if (error) {
+            return error;
+        }
+    }
+    else if (d_value.isAny()) {
+        error = encoder->encodeValue(d_value.any());
+        if (error) {
+            return error;
+        }
+    }
+    else {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 const EncryptionCertificateExtensionIdentifier& EncryptionCertificateExtension::
@@ -9875,8 +10602,31 @@ ntsa::Error EncryptionCertificateExtensionList::decode(
 ntsa::Error EncryptionCertificateExtensionList::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
-    NTCCFG_WARNING_UNUSED(encoder);
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    ntsa::Error error;
+
+    if (d_container.empty()) {
+        return ntsa::Error();
+    }
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    if (error) {
+        return error;
+    }
+
+    for (bsl::size_t i = 0; i < d_container.size(); ++i) {
+        const EncryptionCertificateExtension& element = d_container[i];
+        error = element.encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 bool EncryptionCertificateExtensionList::equals(
@@ -10033,21 +10783,15 @@ ntsa::Error EncryptionCertificateEntity::decode(
 {
     ntsa::Error error;
 
-    // Enter TBSCertificate
-
     error = decoder->decodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
     if (error) {
         return error;
     }
 
-    // Decode version.
-
     error = d_version.decode(decoder);
     if (error) {
         return error;
     }
-
-    // Enter TBSCertificate -> serialNumber
 
     error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_INTEGER);
     if (error) {
@@ -10058,8 +10802,6 @@ ntsa::Error EncryptionCertificateEntity::decode(
     if (error) {
         return error;
     }
-
-    // Leave TBSCertificate -> serialNumber
 
     error = decoder->decodeTagComplete();
     if (error) {
@@ -10134,8 +10876,6 @@ ntsa::Error EncryptionCertificateEntity::decode(
         }
     }
 
-    // Leave TBSCertificate
-
     error = decoder->decodeTagComplete();
     if (error) {
         return error;
@@ -10147,48 +10887,116 @@ ntsa::Error EncryptionCertificateEntity::decode(
 ntsa::Error EncryptionCertificateEntity::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
-    NTCCFG_WARNING_UNUSED(encoder);
-
-    NTCCFG_NOT_IMPLEMENTED();
-
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
-}
-
-// MRM
-#if 0
-int EncryptionCertificateEntity::serialNumber() const
-{
     ntsa::Error error;
 
-    int result = 0;
-    error      = d_serialNumber.convert(&result);
+    error = encoder->encodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
     if (error) {
-        return 0;
+        return error;
     }
 
-    return result;
-}
+    error = d_version.encode(encoder);
+    if (error) {
+        return error;
+    }
 
-const bdlt::DatetimeTz& EncryptionCertificateEntity::startTime() const
-{
-    return d_startTime;
-}
+    error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_INTEGER);
+    if (error) {
+        return error;
+    }
 
-const bdlt::DatetimeTz& EncryptionCertificateEntity::expirationTime() const
-{
-    return d_expirationTime;
-}
+    error = encoder->encodeValue(d_serialNumber);
+    if (error) {
+        return error;
+    }
 
-bool EncryptionCertificateEntity::authority() const
-{
-    return d_authority;
-}
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
 
-const bsl::vector<bsl::string>& EncryptionCertificateEntity::hosts() const
-{
-    return d_hosts;
+    error = d_signatureAlgorithm.encode(encoder);
+    if (error) {
+        return error;
+    }
+
+    error = d_issuer.encode(encoder);
+    if (error) {
+        return error;
+    }
+
+    error = d_validity.encode(encoder);
+    if (error) {
+        return error;
+    }
+
+    error = d_subject.encode(encoder);
+    if (error) {
+        return error;
+    }
+
+    error = d_subjectPublicKeyInfo.encode(encoder);
+    if (error) {
+        return error;
+    }
+
+    if (!d_issuerUniqueId.isNull()) {
+        error = encoder->encodeTag(k_CONTEXT_SPECIFIC, k_PRIMITIVE, 1);
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeValue(d_issuerUniqueId.value());
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+
+    if (!d_subjectUniqueId.isNull()) {
+        error = encoder->encodeTag(k_CONTEXT_SPECIFIC, k_PRIMITIVE, 2);
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeValue(d_subjectUniqueId.value());
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+
+    if (!d_extensionList.isNull()) {
+        error = encoder->encodeTag(k_CONTEXT_SPECIFIC, k_CONSTRUCTED, 3);
+        if (error) {
+            return error;
+        }
+
+        error = d_extensionList.value().encode(encoder);
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
-#endif
 
 const ntsa::AbstractInteger& EncryptionCertificateEntity::serialNumber() const
 {
@@ -10486,48 +11294,35 @@ ntsa::Error EncryptionCertificate::decode(ntsa::AbstractSyntaxDecoder* decoder)
 ntsa::Error EncryptionCertificate::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
-    NTCCFG_WARNING_UNUSED(encoder);
-
-    NTCCFG_NOT_IMPLEMENTED();
-
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
-}
-
-// MRM
-#if 0
-int EncryptionCertificate::serialNumber() const
-{
     ntsa::Error error;
 
-    int result = 0;
-    error      = d_serialNumber.convert(&result);
+    error = encoder->encodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
     if (error) {
-        return 0;
+        return error;
     }
 
-    return result;
-}
+    error = d_entity.encode(encoder);
+    if (error) {
+        return error;
+    }
 
-const bdlt::DatetimeTz& EncryptionCertificate::startTime() const
-{
-    return d_startTime;
-}
+    error = d_signatureAlgorithm.encode(encoder);
+    if (error) {
+        return error;
+    }
 
-const bdlt::DatetimeTz& EncryptionCertificate::expirationTime() const
-{
-    return d_expirationTime;
-}
+    error = d_signature.encode(encoder);
+    if (error) {
+        return error;
+    }
 
-bool EncryptionCertificate::authority() const
-{
-    return d_authority;
-}
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
 
-const bsl::vector<bsl::string>& EncryptionCertificate::hosts() const
-{
-    return d_hosts;
+    return ntsa::Error();
 }
-#endif
 
 const ntca::EncryptionCertificateEntity& EncryptionCertificate::entity() const
 {

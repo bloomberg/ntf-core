@@ -722,6 +722,9 @@ class AbstractSyntaxEncoder
     /// Encode the literal data of the specified 'value'. Return the error.
     ntsa::Error encodeValue(const AbstractValue& value);
 
+    /// Write the literal 'value'. Return the error.
+    ntsa::Error encodeLiteral(bsl::uint8_t value);
+
     // Complete encoding the current construction. Return the error.
     ntsa::Error encodeTagComplete();
 
