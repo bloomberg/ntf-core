@@ -1223,6 +1223,12 @@ struct System {
                                  ntsa::Handle                  socket,
                                  ntsa::SocketOptionType::Value type);
 
+    /// Load into the specified 'blocking' flag the blocking mode of the
+    /// specified 'socket'. Return the error. Note that this function always
+    /// returns an error on Windows, as determination of the blocking mode is
+    /// not supported on that platform.
+    static ntsa::Error getBlocking(ntsa::Handle socket, bool* blocking);
+
     /// Load into the specified 'result' the source (i.e. local) endpoint of
     /// the specified 'socket'. Return the error.
     static ntsa::Error getSourceEndpoint(ntsa::Endpoint* result,
@@ -1592,7 +1598,7 @@ struct System {
 class SystemGuard
 {
   private:
-    SystemGuard(const SystemGuard&) BSLS_KEYWORD_DELETED;
+                 SystemGuard(const SystemGuard&) BSLS_KEYWORD_DELETED;
     SystemGuard& operator=(const SystemGuard&) BSLS_KEYWORD_DELETED;
 
   public:
@@ -1622,7 +1628,7 @@ class HandleGuard
     ntsa::Handle d_handle;
 
   private:
-    HandleGuard(const HandleGuard&) BSLS_KEYWORD_DELETED;
+                 HandleGuard(const HandleGuard&) BSLS_KEYWORD_DELETED;
     HandleGuard& operator=(const HandleGuard&) BSLS_KEYWORD_DELETED;
 
   public:
