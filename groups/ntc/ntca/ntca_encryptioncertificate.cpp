@@ -1992,51 +1992,101 @@ ntsa::Error EncryptionCertificateNameAlternative::decode(
         return error;
     }
 
-    if (decoder->current().tagClass() != k_CONTEXT_SPECIFIC) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
-    if (decoder->current().tagType() != k_PRIMITIVE) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
+    const ntsa::AbstractSyntaxDecoderFrame& current = decoder->current();
 
     if (decoder->current().tagNumber() == e_OTHER) {
+        if (current.tagClass() != k_CONTEXT_SPECIFIC) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        if (current.tagType() != k_CONSTRUCTED) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
         error = decoder->decodeValue(&this->makeOther());
         if (error) {
             return error;
         }
     }
     else if (decoder->current().tagNumber() == e_EMAIL) {
+        if (current.tagClass() != k_CONTEXT_SPECIFIC) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        if (current.tagType() != k_PRIMITIVE) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
         error = decoder->decodeValue(&this->makeEmail());
         if (error) {
             return error;
         }
     }
     else if (decoder->current().tagNumber() == e_DOMAIN) {
+        if (current.tagClass() != k_CONTEXT_SPECIFIC) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        if (current.tagType() != k_PRIMITIVE) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
         error = decoder->decodeValue(&this->makeDomain());
         if (error) {
             return error;
         }
     }
     else if (decoder->current().tagNumber() == e_X400) {
+        if (current.tagClass() != k_CONTEXT_SPECIFIC) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        if (current.tagType() != k_CONSTRUCTED) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
         error = decoder->decodeValue(&this->makeX400());
         if (error) {
             return error;
         }
     }
     else if (decoder->current().tagNumber() == e_DIRECTORY) {
+        if (current.tagClass() != k_CONTEXT_SPECIFIC) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        if (current.tagType() != k_CONSTRUCTED) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
         error = this->makeDirectory().decode(decoder);
         if (error) {
             return error;
         }
     }
     else if (decoder->current().tagNumber() == e_EDI) {
+        if (current.tagClass() != k_CONTEXT_SPECIFIC) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        if (current.tagType() != k_CONSTRUCTED) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
         error = decoder->decodeValue(&this->makeEdi());
         if (error) {
             return error;
         }
     }
     else if (decoder->current().tagNumber() == e_URI) {
+        if (current.tagClass() != k_CONTEXT_SPECIFIC) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        if (current.tagType() != k_PRIMITIVE) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
         bsl::string text;
         error = decoder->decodeValue(&text);
         if (error) {
@@ -2048,6 +2098,14 @@ ntsa::Error EncryptionCertificateNameAlternative::decode(
         }
     }
     else if (decoder->current().tagNumber() == e_IP) {
+        if (current.tagClass() != k_CONTEXT_SPECIFIC) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        if (current.tagType() != k_PRIMITIVE) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
         ntsa::AbstractOctetString octets;
         error = decoder->decodeValue(&octets);
         if (error) {
@@ -2067,6 +2125,14 @@ ntsa::Error EncryptionCertificateNameAlternative::decode(
         }
     }
     else if (decoder->current().tagNumber() == e_IDENTIFIER) {
+        if (current.tagClass() != k_CONTEXT_SPECIFIC) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        if (current.tagType() != k_PRIMITIVE) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
         error = decoder->decodeValue(&this->makeIdentifier());
         if (error) {
             return error;
@@ -2089,55 +2155,127 @@ ntsa::Error EncryptionCertificateNameAlternative::encode(
 {
     ntsa::Error error;
 
-    error = encoder->encodeTag(k_CONTEXT_SPECIFIC, k_PRIMITIVE, d_type);
-    if (error) {
-        return error;
-    }
+    
 
     if (this->isOther()) {
+        error = encoder->encodeTag(k_CONTEXT_SPECIFIC, k_CONSTRUCTED, d_type);
+        if (error) {
+            return error;
+        }
+
         error = encoder->encodeValue(this->other());
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
         if (error) {
             return error;
         }
     }
     else if (this->isEmail()) {
+        error = encoder->encodeTag(k_CONTEXT_SPECIFIC, k_PRIMITIVE, d_type);
+        if (error) {
+            return error;
+        }
+
         error = encoder->encodeValue(this->email());
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
         if (error) {
             return error;
         }
     }
     else if (this->isDomain()) {
+        error = encoder->encodeTag(k_CONTEXT_SPECIFIC, k_PRIMITIVE, d_type);
+        if (error) {
+            return error;
+        }
+
         error = encoder->encodeValue(this->domain());
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
         if (error) {
             return error;
         }
     }
     else if (this->isX400()) {
+        error = encoder->encodeTag(k_CONTEXT_SPECIFIC, k_CONSTRUCTED, d_type);
+        if (error) {
+            return error;
+        }
+
         error = encoder->encodeValue(this->x400());
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
         if (error) {
             return error;
         }
     }
     else if (this->isDirectory()) {
+        error = encoder->encodeTag(k_CONTEXT_SPECIFIC, k_CONSTRUCTED, d_type);
+        if (error) {
+            return error;
+        }
+
         error = this->directory().encode(encoder);
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
         if (error) {
             return error;
         }
     }
     else if (this->isEdi()) {
+        error = encoder->encodeTag(k_CONTEXT_SPECIFIC, k_CONSTRUCTED, d_type);
+        if (error) {
+            return error;
+        }
+
         error = encoder->encodeValue(this->edi());
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
         if (error) {
             return error;
         }
     }
     else if (this->isUri()) {
+        error = encoder->encodeTag(k_CONTEXT_SPECIFIC, k_PRIMITIVE, d_type);
+        if (error) {
+            return error;
+        }
+
         bsl::string text = this->uri().text();
         error = encoder->encodeValue(NL_TEXTMAX);
         if (error) {
             return error;
         }
+
+        error = encoder->encodeTagComplete();
+        if (error) {
+            return error;
+        }
     }
     else if (this->isIp()) {
+        error = encoder->encodeTag(k_CONTEXT_SPECIFIC, k_PRIMITIVE, d_type);
+        if (error) {
+            return error;
+        }
+
         ntsa::AbstractOctetString octets;
 
         if (this->ip().isV4()) {
@@ -2158,20 +2296,30 @@ ntsa::Error EncryptionCertificateNameAlternative::encode(
         if (error) {
             return error;
         }
+
+        error = encoder->encodeTagComplete();
+        if (error) {
+            return error;
+        }
     }
     else if (this->isIdentifier()) {
+        error = encoder->encodeTag(k_CONTEXT_SPECIFIC, k_PRIMITIVE, d_type);
+        if (error) {
+            return error;
+        }
+
         error = encoder->encodeValue(this->identifier());
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
         if (error) {
             return error;
         }
     }
     else {
         return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
-    error = encoder->encodeTagComplete();
-    if (error) {
-        return error;
     }
 
     return ntsa::Error();
