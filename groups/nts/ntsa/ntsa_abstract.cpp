@@ -4438,8 +4438,23 @@ bsl::ostream& AbstractValue::print(bsl::ostream& stream,
     }
 
     if (!d_data.empty()) {
-        printer.printAttribute("length", d_data.size());
-        printer.printAttribute("data", d_data);
+        // printer.printAttribute("length", d_data.size());
+        // printer.printAttribute("data", d_data);
+
+        stream << " value = ";
+
+        const char k_HEX[] = "0123456789abcdef";
+
+        for (bsl::size_t i = 0; i < d_data.size(); ++i) {
+            if (i != 0) {
+                stream << ':';
+            }
+
+            bsl::uint8_t value = d_data[i];
+
+            stream << k_HEX[(value >> 4) & 0x0F];
+            stream << k_HEX[(value >> 0) & 0x0F];
+        }
     }
 
     printer.end();
