@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
+#include <ntca_encryptionkey.h>
 #include <ntsa_abstract.h>
 #include <ntsa_ipaddress.h>
 #include <ntsa_uri.h>
@@ -48,12 +49,12 @@ class EncryptionCertificateValidity;
 class EncryptionCertificatePublicKeyAlgorithmIdentifierType;
 class EncryptionCertificatePublicKeyAlgorithmIdentifier;
 class EncryptionCertificatePublicKeyAlgorithmParametersRsa;
-class
-    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType;
+class EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType;
 class EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifier;
 class EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurve;
 class EncryptionCertificatePublicKeyAlgorithmParameters;
 class EncryptionCertificatePublicKeyAlgorithm;
+
 class EncryptionCertificatePublicKeyValueRsa;
 class EncryptionCertificatePublicKeyValueEllipticCurve;
 class EncryptionCertificatePublicKeyValue;
@@ -1817,7 +1818,15 @@ class EncryptionCertificatePublicKeyAlgorithmIdentifierType
 
         /// Elliptic curve. This enumerator corresponds to the object
         /// identifier 1.2.840.10045.2.1.
-        e_ELLIPTIC_CURVE
+        e_ELLIPTIC_CURVE,
+
+        /// Edwards curve 25591. This enumerator corresponds to the object
+        /// identifier 1.3.101.112.
+        e_EDWARDS_CURVE_25519,
+
+        /// Edwards curve 448. This enumerator corresponds to the object
+        /// identifier 1.3.101.113.
+        e_EDWARDS_CURVE_448
     };
 
     /// Return the string representation exactly matching the enumerator
@@ -2170,8 +2179,7 @@ void hashAppend(
 /// This class is thread safe.
 ///
 /// @ingroup module_ntsa_data
-class
-    EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType
+class EncryptionCertificatePublicKeyAlgorithmParametersEllipticCurveIdentifierType
 {
   public:
     /// Enumerate the well-known encryption certificate public key algorithm
@@ -2190,12 +2198,7 @@ class
         /// Elliptic curve with 256-bit field size and domain paraters chosen
         /// randomly. This enumerator corresponds to the object identifier
         /// 1.3.132.0.35.
-        e_SEC_P521_R1 = 2,
-
-        /// Elliptic curve with 256-bit field size and domain paraters chosen
-        /// randomly. This enumerator corresponds to the object identifier
-        /// 1.2.840.10045.3.1.7. This enumerator is an alias for e_SEC_P256_R1.
-        e_NIST_P256 = e_SEC_P256_R1
+        e_SEC_P521_R1 = 2
     };
 
     /// Return the string representation exactly matching the enumerator
@@ -3694,7 +3697,15 @@ class EncryptionCertificateSignatureAlgorithmIdentifierType
         /// ANSI X9.62 Elliptic Curve Digital Signature Algorithm (ECDSA)
         /// coupled with the Secure Hash Algorithm 256 (SHA-256). This
         /// algorithm is assigned the object identifier 1.2.840.10045.4.3.4.
-        e_ECDSA_SHA512
+        e_ECDSA_SHA512,
+
+        /// Edwards curve 25591. This enumerator corresponds to the object
+        /// identifier 1.3.101.112.
+        e_EDDSA_25519,
+
+        /// Edwards curve 448. This enumerator corresponds to the object
+        /// identifier 1.3.101.113.
+        e_EDDSA_448
     };
 
     /// Return the string representation exactly matching the enumerator

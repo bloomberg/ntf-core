@@ -35,6 +35,155 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntca {
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/// Describe encryption storage in the PKCS1 format.
+///
+/// @par Attributes
+/// This class is composed of the following attributes.
+///
+/// @li @b key:
+/// The key.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionStoragePkcs1
+{
+    ntca::EncryptionKey d_key;
+    bsl::uint32_t       d_flags;
+
+  public:
+    /// Create a new encryption storage the PKCS1 format having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionStoragePkcs1(bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new encryption storage the PKCS1 format having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    EncryptionStoragePkcs1(const EncryptionStoragePkcs1& original,
+                           bslma::Allocator*             basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EncryptionStoragePkcs1();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionStoragePkcs1& operator=(const EncryptionStoragePkcs1& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Set the key to the specified 'value'.
+    void setKey(const ntca::EncryptionKey& value);
+
+    /// Return the key.
+    const ntca::EncryptionKey& key() const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionStoragePkcs1& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionStoragePkcs1& other) const;
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionStoragePkcs1);
+};
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionStoragePkcs1
+bsl::ostream& operator<<(bsl::ostream&                 stream,
+                         const EncryptionStoragePkcs1& object);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
+/// the same value, and 'false' otherwise.  Two attribute objects have the
+/// same value if each respective attribute has the same value.
+///
+/// @related ntca::EncryptionStoragePkcs1
+bool operator==(const EncryptionStoragePkcs1& lhs,
+                const EncryptionStoragePkcs1& rhs);
+
+/// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
+/// have the same value, and 'false' otherwise.  Two attribute objects do
+/// not have the same value if one or more respective attributes differ in
+/// values.
+///
+/// @related ntca::EncryptionStoragePkcs1
+bool operator!=(const EncryptionStoragePkcs1& lhs,
+                const EncryptionStoragePkcs1& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntca::EncryptionStoragePkcs1
+bool operator<(const EncryptionStoragePkcs1& lhs,
+               const EncryptionStoragePkcs1& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionStoragePkcs1
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM&               algorithm,
+                const EncryptionStoragePkcs1& value);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /// Describe encryption storage in the PKCS7 format.
 ///
 /// @par Attributes
@@ -439,6 +588,9 @@ void hashAppend(HASH_ALGORITHM&                algorithm,
 /// @li @b certificate:
 /// The certificate.
 ///
+/// @li @b pkcs1:
+/// The storage container in the PKCS1 format.
+///
 /// @li @b pkcs7:
 /// The storage container in the PKCS7 format.
 ///
@@ -451,16 +603,25 @@ void hashAppend(HASH_ALGORITHM&                algorithm,
 /// @ingroup module_ntci_encryption
 class EncryptionStoragePem
 {
-    enum Selection { e_UNDEFINED, e_KEY, e_CERTIFICATE, e_PKCS7, e_PKCS8 };
+    enum Selection { 
+        e_UNDEFINED, 
+        e_KEY, 
+        e_CERTIFICATE, 
+        e_PKCS1, 
+        e_PKCS7, 
+        e_PKCS8 
+    };
 
     typedef ntca::EncryptionKey          KeyType;
     typedef ntca::EncryptionCertificate  CertificateType;
+    typedef ntca::EncryptionStoragePkcs1 Pkcs1Type;
     typedef ntca::EncryptionStoragePkcs7 Pkcs7Type;
     typedef ntca::EncryptionStoragePkcs8 Pkcs8Type;
 
     union {
         bsls::ObjectBuffer<KeyType>         d_key;
         bsls::ObjectBuffer<CertificateType> d_certificate;
+        bsls::ObjectBuffer<Pkcs1Type>       d_pkcs1;
         bsls::ObjectBuffer<Pkcs7Type>       d_pkcs7;
         bsls::ObjectBuffer<Pkcs8Type>       d_pkcs8;
     };
@@ -510,6 +671,15 @@ class EncryptionStoragePem
     ntca::EncryptionCertificate& makeCertificate(
         const ntca::EncryptionCertificate& value);
 
+    /// Select the "pkcs1" representation. Return a reference to the
+    /// modifiable representation.
+    ntca::EncryptionStoragePkcs1& makePkcs1();
+
+    /// Select the "pkcs1" representation initially having the specified
+    /// 'value'. Return a reference to the modifiable representation.
+    ntca::EncryptionStoragePkcs1& makePkcs1(
+        const ntca::EncryptionStoragePkcs1& value);
+
     /// Select the "pkcs7" representation. Return a reference to the
     /// modifiable representation.
     ntca::EncryptionStoragePkcs7& makePkcs7();
@@ -536,6 +706,10 @@ class EncryptionStoragePem
     /// behavior is undefined unless 'isCertificate()' is true.
     ntca::EncryptionCertificate& certificate();
 
+    /// Return a reference to the modifiable "pkcs1" representation. The
+    /// behavior is undefined unless 'isPkcs1()' is true.
+    ntca::EncryptionStoragePkcs1& pkcs1();
+
     /// Return a reference to the modifiable "pkcs7" representation. The
     /// behavior is undefined unless 'isPkcs7()' is true.
     ntca::EncryptionStoragePkcs7& pkcs7();
@@ -551,6 +725,10 @@ class EncryptionStoragePem
     /// Return a reference to the non-modifiable "certificate" representation.
     /// The behavior is undefined unless 'isCertificate()' is true.
     const ntca::EncryptionCertificate& certificate() const;
+
+    /// Return a reference to the non-modifiable "pkcs1" representation. The
+    /// behavior is undefined unless 'isPkcs1()' is true.
+    const ntca::EncryptionStoragePkcs1& pkcs1() const;
 
     /// Return a reference to the non-modifiable "pkcs7" representation. The
     /// behavior is undefined unless 'isPkcs7()' is true.
@@ -570,6 +748,10 @@ class EncryptionStoragePem
     /// Return true if the "certificate" representation is currently selected,
     /// otherwise return false.
     bool isCertificate() const;
+
+    /// Return true if the "pkcs1" representation is currently selected,
+    /// otherwise return false.
+    bool isPkcs1() const;
 
     /// Return true if the "pkcs7" representation is currently selected,
     /// otherwise return false.
@@ -657,6 +839,9 @@ void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionStoragePem& value);
 /// @li @b certificate:
 /// The certificate.
 ///
+/// @li @b pkcs1:
+/// The storage container in the PKCS1 format.
+///
 /// @li @b pkcs7:
 /// The storage container in the PKCS7 format.
 ///
@@ -679,6 +864,7 @@ class EncryptionStorage
         e_UNDEFINED,
         e_KEY,
         e_CERTIFICATE,
+        e_PKCS1,
         e_PKCS7,
         e_PKCS8,
         e_PKCS12,
@@ -687,6 +873,7 @@ class EncryptionStorage
 
     typedef ntca::EncryptionKey           KeyType;
     typedef ntca::EncryptionCertificate   CertificateType;
+    typedef ntca::EncryptionStoragePkcs1  Pkcs1Type;
     typedef ntca::EncryptionStoragePkcs7  Pkcs7Type;
     typedef ntca::EncryptionStoragePkcs8  Pkcs8Type;
     typedef ntca::EncryptionStoragePkcs12 Pkcs12Type;
@@ -695,6 +882,7 @@ class EncryptionStorage
     union {
         bsls::ObjectBuffer<KeyType>         d_key;
         bsls::ObjectBuffer<CertificateType> d_certificate;
+        bsls::ObjectBuffer<Pkcs1Type>       d_pkcs1;
         bsls::ObjectBuffer<Pkcs7Type>       d_pkcs7;
         bsls::ObjectBuffer<Pkcs8Type>       d_pkcs8;
         bsls::ObjectBuffer<Pkcs12Type>      d_pkcs12;
@@ -745,6 +933,15 @@ class EncryptionStorage
     ntca::EncryptionCertificate& makeCertificate(
         const ntca::EncryptionCertificate& value);
 
+    /// Select the "pkcs1" representation. Return a reference to the
+    /// modifiable representation.
+    ntca::EncryptionStoragePkcs1& makePkcs1();
+
+    /// Select the "pkcs1" representation initially having the specified
+    /// 'value'. Return a reference to the modifiable representation.
+    ntca::EncryptionStoragePkcs1& makePkcs1(
+        const ntca::EncryptionStoragePkcs1& value);
+
     /// Select the "pkcs7" representation. Return a reference to the
     /// modifiable representation.
     ntca::EncryptionStoragePkcs7& makePkcs7();
@@ -789,6 +986,10 @@ class EncryptionStorage
     /// behavior is undefined unless 'isCertificate()' is true.
     ntca::EncryptionCertificate& certificate();
 
+    /// Return a reference to the modifiable "pkcs1" representation. The
+    /// behavior is undefined unless 'isPkcs1()' is true.
+    ntca::EncryptionStoragePkcs1& pkcs1();
+
     /// Return a reference to the modifiable "pkcs7" representation. The
     /// behavior is undefined unless 'isPkcs7()' is true.
     ntca::EncryptionStoragePkcs7& pkcs7();
@@ -812,6 +1013,10 @@ class EncryptionStorage
     /// Return a reference to the non-modifiable "certificate" representation.
     /// The behavior is undefined unless 'isCertificate()' is true.
     const ntca::EncryptionCertificate& certificate() const;
+
+    /// Return a reference to the non-modifiable "pkcs1" representation. The
+    /// behavior is undefined unless 'isPkcs1()' is true.
+    const ntca::EncryptionStoragePkcs1& pkcs1() const;
 
     /// Return a reference to the non-modifiable "pkcs7" representation. The
     /// behavior is undefined unless 'isPkcs7()' is true.
@@ -839,6 +1044,10 @@ class EncryptionStorage
     /// Return true if the "certificate" representation is currently selected,
     /// otherwise return false.
     bool isCertificate() const;
+
+    /// Return true if the "pkcs1" representation is currently selected,
+    /// otherwise return false.
+    bool isPkcs1() const;
 
     /// Return true if the "pkcs7" representation is currently selected,
     /// otherwise return false.
@@ -958,6 +1167,9 @@ void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionStoragePem& value)
     else if (value.isCertificate()) {
         hashAppend(algorithm, value.certificate());
     }
+    else if (value.isPkcs1()) {
+        hashAppend(algorithm, value.pkcs1());
+    }
     else if (value.isPkcs7()) {
         hashAppend(algorithm, value.pkcs7());
     }
@@ -976,6 +1188,9 @@ void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionStorage& value)
     }
     else if (value.isCertificate()) {
         hashAppend(algorithm, value.certificate());
+    }
+    else if (value.isPkcs1()) {
+        hashAppend(algorithm, value.pkcs1());
     }
     else if (value.isPkcs7()) {
         hashAppend(algorithm, value.pkcs7());

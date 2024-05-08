@@ -3133,6 +3133,10 @@ const char* EncryptionCertificatePublicKeyAlgorithmIdentifierType::toString(
         return "RSA";
     case e_ELLIPTIC_CURVE:
         return "ELLIPTIC_CURVE";
+    case e_EDWARDS_CURVE_25519:
+        return "EDWARDS_CURVE_25519";
+    case e_EDWARDS_CURVE_448:
+        return "EDWARDS_CURVE_448";
     }
 
     BSLS_ASSERT(!"invalid enumerator");
@@ -3151,6 +3155,12 @@ void EncryptionCertificatePublicKeyAlgorithmIdentifierType::toObjectIdentifier(
     else if (value == e_ELLIPTIC_CURVE) {
         result->set(1, 2, 840, 10045, 2, 1);
     }
+    else if (value == e_EDWARDS_CURVE_25519) {
+        result->set(1, 3, 101, 112);
+    }
+    else if (value == e_EDWARDS_CURVE_448) {
+        result->set(1, 3, 101, 113);
+    }
 }
 
 int EncryptionCertificatePublicKeyAlgorithmIdentifierType::fromString(
@@ -3164,6 +3174,16 @@ int EncryptionCertificatePublicKeyAlgorithmIdentifierType::fromString(
 
     if (bdlb::String::areEqualCaseless(string, "ELLIPTIC_CURVE")) {
         *result = e_ELLIPTIC_CURVE;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "EDWARDS_CURVE_25519")) {
+        *result = e_EDWARDS_CURVE_25519;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "EDWARDS_CURVE_448")) {
+        *result = e_EDWARDS_CURVE_448;
         return 0;
     }
 
@@ -3181,6 +3201,16 @@ int EncryptionCertificatePublicKeyAlgorithmIdentifierType::
 
     if (identifier.equals(1, 2, 840, 10045, 2, 1)) {
         *result = e_ELLIPTIC_CURVE;
+        return 0;
+    }
+
+    if (identifier.equals(1, 3, 101, 112)) {
+        *result = e_EDWARDS_CURVE_25519;
+        return 0;
+    }
+
+    if (identifier.equals(1, 3, 101, 113)) {
+        *result = e_EDWARDS_CURVE_448;
         return 0;
     }
 
@@ -5742,6 +5772,10 @@ const char* EncryptionCertificateSignatureAlgorithmIdentifierType::toString(
         return "ECDSA_SHA384";
     case e_ECDSA_SHA512:
         return "ECDSA_SHA512";
+    case e_EDDSA_25519:
+        return "EDDSA_25519";
+    case e_EDDSA_448:
+        return "EDDSA_448";
     }
 
     BSLS_ASSERT(!"invalid enumerator");
@@ -5789,6 +5823,12 @@ void EncryptionCertificateSignatureAlgorithmIdentifierType::toObjectIdentifier(
     }
     else if (value == e_ECDSA_SHA512) {
         result->set(1, 2, 840, 10045, 4, 3, 4);
+    }
+    else if (value == e_EDDSA_25519) {
+        result->set(1, 3, 101, 112);
+    }
+    else if (value == e_EDDSA_448) {
+        result->set(1, 3, 101, 113);
     }
 }
 
@@ -5856,6 +5896,16 @@ int EncryptionCertificateSignatureAlgorithmIdentifierType::fromString(
         return 0;
     }
 
+    if (bdlb::String::areEqualCaseless(string, "EDDSA_25519")) {
+        *result = e_EDDSA_25519;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "EDDSA_448")) {
+        *result = e_EDDSA_448;
+        return 0;
+    }
+
     return -1;
 }
 
@@ -5920,6 +5970,16 @@ int EncryptionCertificateSignatureAlgorithmIdentifierType::
 
     if (identifier.equals(1, 2, 840, 10045, 4, 3, 4)) {
         *result = e_ECDSA_SHA512;
+        return 0;
+    }
+
+    if (identifier.equals(1, 3, 101, 112)) {
+        *result = e_EDDSA_25519;
+        return 0;
+    }
+
+    if (identifier.equals(1, 3, 101, 113)) {
+        *result = e_EDDSA_448;
         return 0;
     }
 
@@ -8271,7 +8331,7 @@ ntsa::Error EncryptionCertificateSubjectConstraints::decode(
     bool wantAuthority  = true;
     bool wantPathLength = true;
 
-    if (decoder->contentBytesRemaining() > 0) {
+    while (decoder->contentBytesRemaining() > 0) {
         error = decoder->decodeTag();
         if (error) {
             return error;
