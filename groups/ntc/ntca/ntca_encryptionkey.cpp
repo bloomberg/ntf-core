@@ -2416,10 +2416,15 @@ bsl::ostream& EncryptionKeyEllipticCurveValuePrivate::print(bsl::ostream& stream
         printer.printAttribute("parameters", d_parameters.value());
     }
 
-    printer.printAttribute("privateKey", d_privateKey);
+    printer.printAttribute("private", d_privateKey);
 
     if (!d_publicKey.isNull()) {
-        printer.printAttribute("publicKey", d_publicKey.value());
+        bsl::ostream::fmtflags previousFlags = stream.flags();
+        stream.setf(previousFlags | bsl::ostream::hex);
+   
+        printer.printAttribute("public", d_publicKey.value());
+
+        stream.flags(previousFlags);
     }
 
     printer.end();
@@ -4312,14 +4317,20 @@ bsl::ostream& EncryptionKeyInfoPrivate::print(
     printer.start();
     printer.printAttribute("version", d_version);
     printer.printAttribute("algorithm", d_algorithm);
-    printer.printAttribute("privateKey", d_privateKey);
+    printer.printAttribute("private", d_privateKey);
+
+    if (!d_publicKey.isNull()) {
+
+        bsl::ostream::fmtflags previousFlags = stream.flags();
+        stream.setf(previousFlags | bsl::ostream::hex);
+   
+        printer.printAttribute("public", d_publicKey.value());
+
+        stream.flags(previousFlags);
+    }
 
     if (!d_attributes.isNull()) {
         printer.printAttribute("attributes", d_attributes);
-    }
-
-    if (!d_publicKey.isNull()) {
-        printer.printAttribute("publicKey", d_publicKey);
     }
 
     printer.end();
@@ -4687,7 +4698,12 @@ bsl::ostream& EncryptionKeyValuePublic::print(
         d_ellipticCurve.object().print(stream, level, spacesPerLevel);
     }
     else if (d_type == e_ANY) {
+        bsl::ostream::fmtflags previousFlags = stream.flags();
+        stream.setf(previousFlags | bsl::ostream::hex);
+
         d_any.object().print(stream, level, spacesPerLevel);
+        
+        stream.flags(previousFlags);
     }
     else {
         stream << "UNDEFINED";
