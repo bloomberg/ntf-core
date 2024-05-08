@@ -203,7 +203,7 @@ bool operator<(const EncryptionKeyRsaParameters& lhs,
 }
 
 
-EncryptionKeyRsaExtra::EncryptionKeyRsaExtra(
+EncryptionKeyRsaValuePrivateExtra::EncryptionKeyRsaValuePrivateExtra(
     bslma::Allocator* basicAllocator)
 : d_prime(basicAllocator)
 , d_exponent(basicAllocator)
@@ -212,8 +212,8 @@ EncryptionKeyRsaExtra::EncryptionKeyRsaExtra(
 {
 }
 
-EncryptionKeyRsaExtra::EncryptionKeyRsaExtra(
-    const EncryptionKeyRsaExtra& original,
+EncryptionKeyRsaValuePrivateExtra::EncryptionKeyRsaValuePrivateExtra(
+    const EncryptionKeyRsaValuePrivateExtra& original,
     bslma::Allocator*                  basicAllocator)
 : d_prime(original.d_prime, basicAllocator)
 , d_exponent(original.d_exponent, basicAllocator)
@@ -222,12 +222,12 @@ EncryptionKeyRsaExtra::EncryptionKeyRsaExtra(
 {
 }
 
-EncryptionKeyRsaExtra::~EncryptionKeyRsaExtra()
+EncryptionKeyRsaValuePrivateExtra::~EncryptionKeyRsaValuePrivateExtra()
 {
 }
 
-EncryptionKeyRsaExtra& EncryptionKeyRsaExtra::operator=(
-    const EncryptionKeyRsaExtra& other)
+EncryptionKeyRsaValuePrivateExtra& EncryptionKeyRsaValuePrivateExtra::operator=(
+    const EncryptionKeyRsaValuePrivateExtra& other)
 {
     if (this != &other) {
         d_prime = other.d_prime;
@@ -238,30 +238,30 @@ EncryptionKeyRsaExtra& EncryptionKeyRsaExtra::operator=(
     return *this;
 }
 
-void EncryptionKeyRsaExtra::reset()
+void EncryptionKeyRsaValuePrivateExtra::reset()
 {
     d_prime.reset();
     d_exponent.reset();
     d_coefficient.reset();
 }
 
-void EncryptionKeyRsaExtra::setPrime(const ntsa::AbstractInteger& value)
+void EncryptionKeyRsaValuePrivateExtra::setPrime(const ntsa::AbstractInteger& value)
 {
     d_prime = value;
 }
 
-void EncryptionKeyRsaExtra::setExponent(const ntsa::AbstractInteger& value)
+void EncryptionKeyRsaValuePrivateExtra::setExponent(const ntsa::AbstractInteger& value)
 {
     d_exponent = value;
 }
 
 
-void EncryptionKeyRsaExtra::setCoefficient(const ntsa::AbstractInteger& value)
+void EncryptionKeyRsaValuePrivateExtra::setCoefficient(const ntsa::AbstractInteger& value)
 {
     d_coefficient = value;
 }
 
-ntsa::Error EncryptionKeyRsaExtra::decode(
+ntsa::Error EncryptionKeyRsaValuePrivateExtra::decode(
     ntsa::AbstractSyntaxDecoder* decoder)
 {
     ntsa::Error error;
@@ -330,7 +330,7 @@ ntsa::Error EncryptionKeyRsaExtra::decode(
     return ntsa::Error();
 }
 
-ntsa::Error EncryptionKeyRsaExtra::encode(
+ntsa::Error EncryptionKeyRsaValuePrivateExtra::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
     ntsa::Error error;
@@ -399,29 +399,29 @@ ntsa::Error EncryptionKeyRsaExtra::encode(
     return ntsa::Error();
 }
 
-const ntsa::AbstractInteger& EncryptionKeyRsaExtra::prime() const
+const ntsa::AbstractInteger& EncryptionKeyRsaValuePrivateExtra::prime() const
 {
     return d_prime;
 }
 
-const ntsa::AbstractInteger& EncryptionKeyRsaExtra::exponent() const
+const ntsa::AbstractInteger& EncryptionKeyRsaValuePrivateExtra::exponent() const
 {
     return d_exponent;
 }
 
-const ntsa::AbstractInteger& EncryptionKeyRsaExtra::coefficient() const
+const ntsa::AbstractInteger& EncryptionKeyRsaValuePrivateExtra::coefficient() const
 {
     return d_coefficient;
 }
 
-bool EncryptionKeyRsaExtra::equals(
-    const EncryptionKeyRsaExtra& other) const
+bool EncryptionKeyRsaValuePrivateExtra::equals(
+    const EncryptionKeyRsaValuePrivateExtra& other) const
 {
     return d_prime == other.d_prime && d_exponent == other.d_exponent && d_coefficient == other.d_coefficient;
 }
 
-bool EncryptionKeyRsaExtra::less(
-    const EncryptionKeyRsaExtra& other) const
+bool EncryptionKeyRsaValuePrivateExtra::less(
+    const EncryptionKeyRsaValuePrivateExtra& other) const
 {
     if (d_prime < other.d_prime) {
         return true;
@@ -442,7 +442,7 @@ bool EncryptionKeyRsaExtra::less(
     return d_coefficient < other.d_coefficient;
 }
 
-bsl::ostream& EncryptionKeyRsaExtra::print(bsl::ostream& stream,
+bsl::ostream& EncryptionKeyRsaValuePrivateExtra::print(bsl::ostream& stream,
                                                  int           level,
                                                  int spacesPerLevel) const
 {
@@ -456,25 +456,25 @@ bsl::ostream& EncryptionKeyRsaExtra::print(bsl::ostream& stream,
 }
 
 bsl::ostream& operator<<(bsl::ostream&                      stream,
-                         const EncryptionKeyRsaExtra& object)
+                         const EncryptionKeyRsaValuePrivateExtra& object)
 {
     return object.print(stream, 0, -1);
 }
 
-bool operator==(const EncryptionKeyRsaExtra& lhs,
-                const EncryptionKeyRsaExtra& rhs)
+bool operator==(const EncryptionKeyRsaValuePrivateExtra& lhs,
+                const EncryptionKeyRsaValuePrivateExtra& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const EncryptionKeyRsaExtra& lhs,
-                const EncryptionKeyRsaExtra& rhs)
+bool operator!=(const EncryptionKeyRsaValuePrivateExtra& lhs,
+                const EncryptionKeyRsaValuePrivateExtra& rhs)
 {
     return !operator==(lhs, rhs);
 }
 
-bool operator<(const EncryptionKeyRsaExtra& lhs,
-               const EncryptionKeyRsaExtra& rhs)
+bool operator<(const EncryptionKeyRsaValuePrivateExtra& lhs,
+               const EncryptionKeyRsaValuePrivateExtra& rhs)
 {
     return lhs.less(rhs);
 }
@@ -489,7 +489,7 @@ bool operator<(const EncryptionKeyRsaExtra& lhs,
 
 
 
-EncryptionKeyRsa::EncryptionKeyRsa(bslma::Allocator* basicAllocator)
+EncryptionKeyRsaValuePrivate::EncryptionKeyRsaValuePrivate(bslma::Allocator* basicAllocator)
 : d_version(basicAllocator)
 , d_modulus(basicAllocator)
 , d_encryptionExponent(basicAllocator)
@@ -503,7 +503,7 @@ EncryptionKeyRsa::EncryptionKeyRsa(bslma::Allocator* basicAllocator)
 {
 }
 
-EncryptionKeyRsa::EncryptionKeyRsa(const EncryptionKeyRsa& original,
+EncryptionKeyRsaValuePrivate::EncryptionKeyRsaValuePrivate(const EncryptionKeyRsaValuePrivate& original,
                                    bslma::Allocator*       basicAllocator)
 : d_version(original.d_version, basicAllocator)
 , d_modulus(original.d_modulus, basicAllocator)
@@ -519,11 +519,11 @@ EncryptionKeyRsa::EncryptionKeyRsa(const EncryptionKeyRsa& original,
     NTCCFG_WARNING_UNUSED(basicAllocator);
 }
 
-EncryptionKeyRsa::~EncryptionKeyRsa()
+EncryptionKeyRsaValuePrivate::~EncryptionKeyRsaValuePrivate()
 {
 }
 
-EncryptionKeyRsa& EncryptionKeyRsa::operator=(const EncryptionKeyRsa& other)
+EncryptionKeyRsaValuePrivate& EncryptionKeyRsaValuePrivate::operator=(const EncryptionKeyRsaValuePrivate& other)
 {
     if (this != &other) {
         d_version         = other.d_version;
@@ -541,7 +541,7 @@ EncryptionKeyRsa& EncryptionKeyRsa::operator=(const EncryptionKeyRsa& other)
     return *this;
 }
 
-void EncryptionKeyRsa::reset()
+void EncryptionKeyRsaValuePrivate::reset()
 {
     d_version.reset();
     d_modulus.reset();
@@ -555,63 +555,63 @@ void EncryptionKeyRsa::reset()
     d_extra.clear();
 }
 
-void EncryptionKeyRsa::setVersion(const ntsa::AbstractInteger& value)
+void EncryptionKeyRsaValuePrivate::setVersion(const ntsa::AbstractInteger& value)
 {
     d_version = value;
 }
 
-void EncryptionKeyRsa::setModulus(const ntsa::AbstractInteger& value)
+void EncryptionKeyRsaValuePrivate::setModulus(const ntsa::AbstractInteger& value)
 {
     d_modulus = value;
 }
 
-void EncryptionKeyRsa::setEncryptionExponent(const ntsa::AbstractInteger& value)
+void EncryptionKeyRsaValuePrivate::setEncryptionExponent(const ntsa::AbstractInteger& value)
 {
     d_encryptionExponent = value;
 }
 
-void EncryptionKeyRsa::setDecryptionExponent(const ntsa::AbstractInteger& value)
+void EncryptionKeyRsaValuePrivate::setDecryptionExponent(const ntsa::AbstractInteger& value)
 {
     d_decryptionExponent = value;
 }
 
-void EncryptionKeyRsa::setPrime1(const ntsa::AbstractInteger& value)
+void EncryptionKeyRsaValuePrivate::setPrime1(const ntsa::AbstractInteger& value)
 {
     d_prime1 = value;
 }
 
-void EncryptionKeyRsa::setPrime2(const ntsa::AbstractInteger& value)
+void EncryptionKeyRsaValuePrivate::setPrime2(const ntsa::AbstractInteger& value)
 {
     d_prime2 = value;
 }
 
-void EncryptionKeyRsa::setExponent1(const ntsa::AbstractInteger& value)
+void EncryptionKeyRsaValuePrivate::setExponent1(const ntsa::AbstractInteger& value)
 {
     d_exponent1 = value;
 }
 
-void EncryptionKeyRsa::setExponent2(const ntsa::AbstractInteger& value)
+void EncryptionKeyRsaValuePrivate::setExponent2(const ntsa::AbstractInteger& value)
 {
     d_exponent2 = value;
 }
 
-void EncryptionKeyRsa::setCoefficient(const ntsa::AbstractInteger& value)
+void EncryptionKeyRsaValuePrivate::setCoefficient(const ntsa::AbstractInteger& value)
 {
     d_coefficient = value;
 }
 
-void EncryptionKeyRsa::setExtra(
-    const bsl::vector<ntca::EncryptionKeyRsaExtra>& value)
+void EncryptionKeyRsaValuePrivate::setExtra(
+    const bsl::vector<ntca::EncryptionKeyRsaValuePrivateExtra>& value)
 {
     d_extra = value;
 }
 
-void EncryptionKeyRsa::addExtra(const ntca::EncryptionKeyRsaExtra& value)
+void EncryptionKeyRsaValuePrivate::addExtra(const ntca::EncryptionKeyRsaValuePrivateExtra& value)
 {
     d_extra.push_back(value);
 }
 
-ntsa::Error EncryptionKeyRsa::decode(ntsa::AbstractSyntaxDecoder* decoder)
+ntsa::Error EncryptionKeyRsaValuePrivate::decode(ntsa::AbstractSyntaxDecoder* decoder)
 {
     ntsa::Error error;
 
@@ -780,7 +780,7 @@ ntsa::Error EncryptionKeyRsa::decode(ntsa::AbstractSyntaxDecoder* decoder)
         }
 
         while (decoder->contentBytesRemaining() > 0) {
-            ntca::EncryptionKeyRsaExtra extra;
+            ntca::EncryptionKeyRsaValuePrivateExtra extra;
 
             error = extra.decode(decoder);
             if (error) {
@@ -804,7 +804,7 @@ ntsa::Error EncryptionKeyRsa::decode(ntsa::AbstractSyntaxDecoder* decoder)
     return ntsa::Error();
 }
 
-ntsa::Error EncryptionKeyRsa::encode(ntsa::AbstractSyntaxEncoder* encoder) const
+ntsa::Error EncryptionKeyRsaValuePrivate::encode(ntsa::AbstractSyntaxEncoder* encoder) const
 {
     ntsa::Error error;
 
@@ -973,7 +973,7 @@ ntsa::Error EncryptionKeyRsa::encode(ntsa::AbstractSyntaxEncoder* encoder) const
         }
 
         for (bsl::size_t i = 0; i < d_extra.size(); ++i) {
-            const ntca::EncryptionKeyRsaExtra& extra = d_extra[i];
+            const ntca::EncryptionKeyRsaValuePrivateExtra& extra = d_extra[i];
 
             error = extra.encode(encoder);
             if (error) {
@@ -995,57 +995,57 @@ ntsa::Error EncryptionKeyRsa::encode(ntsa::AbstractSyntaxEncoder* encoder) const
     return ntsa::Error();
 }
 
-const ntsa::AbstractInteger& EncryptionKeyRsa::version() const
+const ntsa::AbstractInteger& EncryptionKeyRsaValuePrivate::version() const
 {
     return d_version;
 }
 
-const ntsa::AbstractInteger& EncryptionKeyRsa::modulus() const
+const ntsa::AbstractInteger& EncryptionKeyRsaValuePrivate::modulus() const
 {
     return d_modulus;
 }
 
-const ntsa::AbstractInteger& EncryptionKeyRsa::encryptionExponent() const
+const ntsa::AbstractInteger& EncryptionKeyRsaValuePrivate::encryptionExponent() const
 {
     return d_encryptionExponent;
 }
 
-const ntsa::AbstractInteger& EncryptionKeyRsa::decryptionExponent() const
+const ntsa::AbstractInteger& EncryptionKeyRsaValuePrivate::decryptionExponent() const
 {
     return d_decryptionExponent;
 }
 
-const ntsa::AbstractInteger& EncryptionKeyRsa::prime1() const
+const ntsa::AbstractInteger& EncryptionKeyRsaValuePrivate::prime1() const
 {
     return d_prime1;
 }
 
-const ntsa::AbstractInteger& EncryptionKeyRsa::prime2() const
+const ntsa::AbstractInteger& EncryptionKeyRsaValuePrivate::prime2() const
 {
     return d_prime2;
 }
 
-const ntsa::AbstractInteger& EncryptionKeyRsa::exponent1() const
+const ntsa::AbstractInteger& EncryptionKeyRsaValuePrivate::exponent1() const
 {
     return d_exponent1;
 }
 
-const ntsa::AbstractInteger& EncryptionKeyRsa::exponent2() const
+const ntsa::AbstractInteger& EncryptionKeyRsaValuePrivate::exponent2() const
 {
     return d_exponent2;
 }
 
-const ntsa::AbstractInteger& EncryptionKeyRsa::coefficient() const
+const ntsa::AbstractInteger& EncryptionKeyRsaValuePrivate::coefficient() const
 {
     return d_coefficient;
 }
 
-const bsl::vector<ntca::EncryptionKeyRsaExtra>& EncryptionKeyRsa::extra() const
+const bsl::vector<ntca::EncryptionKeyRsaValuePrivateExtra>& EncryptionKeyRsaValuePrivate::extra() const
 {
     return d_extra;
 }
 
-bool EncryptionKeyRsa::equals(const EncryptionKeyRsa& other) const
+bool EncryptionKeyRsaValuePrivate::equals(const EncryptionKeyRsaValuePrivate& other) const
 {
     return d_version == other.d_version && d_modulus == other.d_modulus &&
            d_encryptionExponent == other.d_encryptionExponent &&
@@ -1057,7 +1057,7 @@ bool EncryptionKeyRsa::equals(const EncryptionKeyRsa& other) const
            d_extra == other.d_extra;
 }
 
-bool EncryptionKeyRsa::less(const EncryptionKeyRsa& other) const
+bool EncryptionKeyRsaValuePrivate::less(const EncryptionKeyRsaValuePrivate& other) const
 {
     if (d_version < other.d_version) {
         return true;
@@ -1134,7 +1134,7 @@ bool EncryptionKeyRsa::less(const EncryptionKeyRsa& other) const
     return d_extra < other.d_extra;
 }
 
-bsl::ostream& EncryptionKeyRsa::print(bsl::ostream& stream,
+bsl::ostream& EncryptionKeyRsaValuePrivate::print(bsl::ostream& stream,
                                       int           level,
                                       int           spacesPerLevel) const
 {
@@ -1159,22 +1159,22 @@ bsl::ostream& EncryptionKeyRsa::print(bsl::ostream& stream,
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, const EncryptionKeyRsa& object)
+bsl::ostream& operator<<(bsl::ostream& stream, const EncryptionKeyRsaValuePrivate& object)
 {
     return object.print(stream, 0, -1);
 }
 
-bool operator==(const EncryptionKeyRsa& lhs, const EncryptionKeyRsa& rhs)
+bool operator==(const EncryptionKeyRsaValuePrivate& lhs, const EncryptionKeyRsaValuePrivate& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const EncryptionKeyRsa& lhs, const EncryptionKeyRsa& rhs)
+bool operator!=(const EncryptionKeyRsaValuePrivate& lhs, const EncryptionKeyRsaValuePrivate& rhs)
 {
     return !operator==(lhs, rhs);
 }
 
-bool operator<(const EncryptionKeyRsa& lhs, const EncryptionKeyRsa& rhs)
+bool operator<(const EncryptionKeyRsaValuePrivate& lhs, const EncryptionKeyRsaValuePrivate& rhs)
 {
     return lhs.less(rhs);
 }
@@ -1187,7 +1187,254 @@ bool operator<(const EncryptionKeyRsa& lhs, const EncryptionKeyRsa& rhs)
 
 
 
+EncryptionKeyRsaValuePublic::EncryptionKeyRsaValuePublic(
+    bslma::Allocator* basicAllocator)
+: d_modulus(basicAllocator)
+, d_encryptionExponent(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
 
+EncryptionKeyRsaValuePublic::EncryptionKeyRsaValuePublic(
+    const EncryptionKeyRsaValuePublic& original,
+    bslma::Allocator*                             basicAllocator)
+: d_modulus(original.d_modulus, basicAllocator)
+, d_encryptionExponent(original.d_encryptionExponent, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionKeyRsaValuePublic::
+    ~EncryptionKeyRsaValuePublic()
+{
+}
+
+EncryptionKeyRsaValuePublic& EncryptionKeyRsaValuePublic::
+operator=(const EncryptionKeyRsaValuePublic& other)
+{
+    if (this != &other) {
+        d_modulus            = other.d_modulus;
+        d_encryptionExponent = other.d_encryptionExponent;
+    }
+
+    return *this;
+}
+
+void EncryptionKeyRsaValuePublic::reset()
+{
+    d_modulus.reset();
+    d_encryptionExponent.reset();
+}
+
+ntsa::Error EncryptionKeyRsaValuePublic::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_BIT_STRING);
+    if (error) {
+        return error;
+    }
+
+    bsl::uint8_t numBitsOmitted = 0;
+
+    error = decoder->decodeByte(&numBitsOmitted);
+    if (error) {
+        return error;
+    }
+
+    if (numBitsOmitted != 0) {
+        return error;
+    }
+
+    {
+        error = decoder->decodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+        if (error) {
+            return error;
+        }
+
+        {
+            error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_INTEGER);
+            if (error) {
+                return error;
+            }
+
+            error = decoder->decodeValue(&d_modulus);
+            if (error) {
+                return error;
+            }
+
+            error = decoder->decodeTagComplete();
+            if (error) {
+                return error;
+            }
+        }
+
+        {
+            error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_INTEGER);
+            if (error) {
+                return error;
+            }
+
+            error = decoder->decodeValue(&d_encryptionExponent);
+            if (error) {
+                return error;
+            }
+
+            error = decoder->decodeTagComplete();
+            if (error) {
+                return error;
+            }
+        }
+
+        error = decoder->decodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionKeyRsaValuePublic::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_BIT_STRING);
+    if (error) {
+        return error;
+    }
+
+    bsl::uint8_t numBitsOmitted = 0;
+
+    error = encoder->encodeLiteral(numBitsOmitted);
+    if (error) {
+        return error;
+    }
+
+    if (numBitsOmitted != 0) {
+        return error;
+    }
+
+    {
+        error = encoder->encodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+        if (error) {
+            return error;
+        }
+
+        {
+            error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_INTEGER);
+            if (error) {
+                return error;
+            }
+
+            error = encoder->encodeValue(d_modulus);
+            if (error) {
+                return error;
+            }
+
+            error = encoder->encodeTagComplete();
+            if (error) {
+                return error;
+            }
+        }
+
+        {
+            error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_INTEGER);
+            if (error) {
+                return error;
+            }
+
+            error = encoder->encodeValue(d_encryptionExponent);
+            if (error) {
+                return error;
+            }
+
+            error = encoder->encodeTagComplete();
+            if (error) {
+                return error;
+            }
+        }
+
+        error = encoder->encodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+bool EncryptionKeyRsaValuePublic::equals(
+    const EncryptionKeyRsaValuePublic& other) const
+{
+    return d_modulus == other.d_modulus &&
+           d_encryptionExponent == other.d_encryptionExponent;
+}
+
+bool EncryptionKeyRsaValuePublic::less(
+    const EncryptionKeyRsaValuePublic& other) const
+{
+    if (d_modulus < other.d_modulus) {
+        return true;
+    }
+
+    if (other.d_modulus < d_modulus) {
+        return false;
+    }
+
+    return d_encryptionExponent < other.d_encryptionExponent;
+}
+
+bsl::ostream& EncryptionKeyRsaValuePublic::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
+{
+    // d_value.print(stream, level, spacesPerLevel);
+
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute("modulus", d_modulus);
+    printer.printAttribute("encryptionExponent", d_encryptionExponent);
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                                 stream,
+                         const EncryptionKeyRsaValuePublic& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionKeyRsaValuePublic& lhs,
+                const EncryptionKeyRsaValuePublic& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionKeyRsaValuePublic& lhs,
+                const EncryptionKeyRsaValuePublic& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionKeyRsaValuePublic& lhs,
+               const EncryptionKeyRsaValuePublic& rhs)
+{
+    return lhs.less(rhs);
+}
 
 
 
@@ -1801,7 +2048,7 @@ bool operator<(
 
 
 
-EncryptionKeyEllipticCurve::EncryptionKeyEllipticCurve(
+EncryptionKeyEllipticCurveValuePrivate::EncryptionKeyEllipticCurveValuePrivate(
     bslma::Allocator* basicAllocator)
 : d_version(basicAllocator)
 , d_privateKey(basicAllocator)
@@ -1811,8 +2058,8 @@ EncryptionKeyEllipticCurve::EncryptionKeyEllipticCurve(
     d_version.assign(1);
 }
 
-EncryptionKeyEllipticCurve::EncryptionKeyEllipticCurve(
-    const EncryptionKeyEllipticCurve& original,
+EncryptionKeyEllipticCurveValuePrivate::EncryptionKeyEllipticCurveValuePrivate(
+    const EncryptionKeyEllipticCurveValuePrivate& original,
     bslma::Allocator*                 basicAllocator)
 : d_version(original.d_version)
 , d_privateKey(original.d_privateKey, basicAllocator)
@@ -1821,12 +2068,12 @@ EncryptionKeyEllipticCurve::EncryptionKeyEllipticCurve(
 {
 }
 
-EncryptionKeyEllipticCurve::~EncryptionKeyEllipticCurve()
+EncryptionKeyEllipticCurveValuePrivate::~EncryptionKeyEllipticCurveValuePrivate()
 {
 }
 
-EncryptionKeyEllipticCurve& EncryptionKeyEllipticCurve::operator=(
-    const EncryptionKeyEllipticCurve& other)
+EncryptionKeyEllipticCurveValuePrivate& EncryptionKeyEllipticCurveValuePrivate::operator=(
+    const EncryptionKeyEllipticCurveValuePrivate& other)
 {
     if (this != &other) {
         d_version    = other.d_version;
@@ -1838,7 +2085,7 @@ EncryptionKeyEllipticCurve& EncryptionKeyEllipticCurve::operator=(
     return *this;
 }
 
-void EncryptionKeyEllipticCurve::reset()
+void EncryptionKeyEllipticCurveValuePrivate::reset()
 {
     d_version.reset();
     d_version.assign(1);
@@ -1848,7 +2095,7 @@ void EncryptionKeyEllipticCurve::reset()
     d_publicKey.reset();
 }
 
-ntsa::Error EncryptionKeyEllipticCurve::decode(
+ntsa::Error EncryptionKeyEllipticCurveValuePrivate::decode(
     ntsa::AbstractSyntaxDecoder* decoder)
 {
     ntsa::Error error;
@@ -1981,7 +2228,7 @@ ntsa::Error EncryptionKeyEllipticCurve::decode(
     return ntsa::Error();
 }
 
-ntsa::Error EncryptionKeyEllipticCurve::encode(
+ntsa::Error EncryptionKeyEllipticCurveValuePrivate::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
     ntsa::Error error;
@@ -2117,8 +2364,8 @@ ntsa::Error EncryptionKeyEllipticCurve::encode(
     return ntsa::Error();
 }
 
-bool EncryptionKeyEllipticCurve::equals(
-    const EncryptionKeyEllipticCurve& other) const
+bool EncryptionKeyEllipticCurveValuePrivate::equals(
+    const EncryptionKeyEllipticCurveValuePrivate& other) const
 {
     return d_version == other.d_version &&
            d_privateKey == other.d_privateKey &&
@@ -2126,8 +2373,8 @@ bool EncryptionKeyEllipticCurve::equals(
            d_publicKey == other.d_publicKey;
 }
 
-bool EncryptionKeyEllipticCurve::less(
-    const EncryptionKeyEllipticCurve& other) const
+bool EncryptionKeyEllipticCurveValuePrivate::less(
+    const EncryptionKeyEllipticCurveValuePrivate& other) const
 {
     if (d_version < other.d_version) {
         return true;
@@ -2156,7 +2403,7 @@ bool EncryptionKeyEllipticCurve::less(
     return d_publicKey < other.d_publicKey;
 }
 
-bsl::ostream& EncryptionKeyEllipticCurve::print(bsl::ostream& stream,
+bsl::ostream& EncryptionKeyEllipticCurveValuePrivate::print(bsl::ostream& stream,
                                                 int           level,
                                                 int spacesPerLevel) const
 {
@@ -2180,28 +2427,2536 @@ bsl::ostream& EncryptionKeyEllipticCurve::print(bsl::ostream& stream,
 }
 
 bsl::ostream& operator<<(bsl::ostream&                     stream,
-                         const EncryptionKeyEllipticCurve& object)
+                         const EncryptionKeyEllipticCurveValuePrivate& object)
 {
     return object.print(stream, 0, -1);
 }
 
-bool operator==(const EncryptionKeyEllipticCurve& lhs,
-                const EncryptionKeyEllipticCurve& rhs)
+bool operator==(const EncryptionKeyEllipticCurveValuePrivate& lhs,
+                const EncryptionKeyEllipticCurveValuePrivate& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const EncryptionKeyEllipticCurve& lhs,
-                const EncryptionKeyEllipticCurve& rhs)
+bool operator!=(const EncryptionKeyEllipticCurveValuePrivate& lhs,
+                const EncryptionKeyEllipticCurveValuePrivate& rhs)
 {
     return !operator==(lhs, rhs);
 }
 
-bool operator<(const EncryptionKeyEllipticCurve& lhs,
-               const EncryptionKeyEllipticCurve& rhs)
+bool operator<(const EncryptionKeyEllipticCurveValuePrivate& lhs,
+               const EncryptionKeyEllipticCurveValuePrivate& rhs)
 {
     return lhs.less(rhs);
 }
+
+
+
+
+
+
+
+
+
+EncryptionKeyEllipticCurveValuePublic::
+    EncryptionKeyEllipticCurveValuePublic(
+        bslma::Allocator* basicAllocator)
+: d_value(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionKeyEllipticCurveValuePublic::
+    EncryptionKeyEllipticCurveValuePublic(
+        const EncryptionKeyEllipticCurveValuePublic& original,
+        bslma::Allocator*                                       basicAllocator)
+: d_value(original.d_value, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionKeyEllipticCurveValuePublic::
+    ~EncryptionKeyEllipticCurveValuePublic()
+{
+}
+
+EncryptionKeyEllipticCurveValuePublic&
+EncryptionKeyEllipticCurveValuePublic::operator=(
+    const EncryptionKeyEllipticCurveValuePublic& other)
+{
+    if (this != &other) {
+        d_value = other.d_value;
+    }
+
+    return *this;
+}
+
+void EncryptionKeyEllipticCurveValuePublic::reset()
+{
+    d_value.reset();
+}
+
+ntsa::Error EncryptionKeyEllipticCurveValuePublic::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_BIT_STRING);
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeValue(&d_value);
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionKeyEllipticCurveValuePublic::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_BIT_STRING);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeValue(d_value);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+bool EncryptionKeyEllipticCurveValuePublic::equals(
+    const EncryptionKeyEllipticCurveValuePublic& other) const
+{
+    return d_value == other.d_value;
+}
+
+bool EncryptionKeyEllipticCurveValuePublic::less(
+    const EncryptionKeyEllipticCurveValuePublic& other) const
+{
+    return d_value < other.d_value;
+}
+
+bsl::ostream& EncryptionKeyEllipticCurveValuePublic::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
+{
+    bsl::ostream::fmtflags previousFlags = stream.flags();
+    stream.setf(previousFlags | bsl::ostream::hex);
+    d_value.print(stream, level, spacesPerLevel);
+    stream.flags(previousFlags);
+    return stream;
+}
+
+bsl::ostream& operator<<(
+    bsl::ostream&                                           stream,
+    const EncryptionKeyEllipticCurveValuePublic& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionKeyEllipticCurveValuePublic& lhs,
+                const EncryptionKeyEllipticCurveValuePublic& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionKeyEllipticCurveValuePublic& lhs,
+                const EncryptionKeyEllipticCurveValuePublic& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionKeyEllipticCurveValuePublic& lhs,
+               const EncryptionKeyEllipticCurveValuePublic& rhs)
+{
+    return lhs.less(rhs);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+const char* EncryptionKeyAlgorithmIdentifierType::toString(
+    Value value)
+{
+    switch (value) {
+    case e_RSA:
+        return "RSA";
+    case e_ELLIPTIC_CURVE:
+        return "ELLIPTIC_CURVE";
+    case e_EDWARDS_CURVE_25519:
+        return "EDWARDS_CURVE_25519";
+    case e_EDWARDS_CURVE_448:
+        return "EDWARDS_CURVE_448";
+    }
+
+    BSLS_ASSERT(!"invalid enumerator");
+    return 0;
+}
+
+void EncryptionKeyAlgorithmIdentifierType::toObjectIdentifier(
+    ntsa::AbstractObjectIdentifier* result,
+    Value                           value)
+{
+    result->reset();
+
+    if (value == e_RSA) {
+        result->set(1, 2, 840, 113549, 1, 1, 1);
+    }
+    else if (value == e_ELLIPTIC_CURVE) {
+        result->set(1, 2, 840, 10045, 2, 1);
+    }
+    else if (value == e_EDWARDS_CURVE_25519) {
+        result->set(1, 3, 101, 112);
+    }
+    else if (value == e_EDWARDS_CURVE_448) {
+        result->set(1, 3, 101, 113);
+    }
+}
+
+int EncryptionKeyAlgorithmIdentifierType::fromString(
+    Value*                   result,
+    const bslstl::StringRef& string)
+{
+    if (bdlb::String::areEqualCaseless(string, "RSA")) {
+        *result = e_RSA;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "ELLIPTIC_CURVE")) {
+        *result = e_ELLIPTIC_CURVE;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "EDWARDS_CURVE_25519")) {
+        *result = e_EDWARDS_CURVE_25519;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "EDWARDS_CURVE_448")) {
+        *result = e_EDWARDS_CURVE_448;
+        return 0;
+    }
+
+    return -1;
+}
+
+int EncryptionKeyAlgorithmIdentifierType::
+    fromObjectIdentifier(Value*                                result,
+                         const ntsa::AbstractObjectIdentifier& identifier)
+{
+    if (identifier.equals(1, 2, 840, 113549, 1, 1, 1)) {
+        *result = e_RSA;
+        return 0;
+    }
+
+    if (identifier.equals(1, 2, 840, 10045, 2, 1)) {
+        *result = e_ELLIPTIC_CURVE;
+        return 0;
+    }
+
+    if (identifier.equals(1, 3, 101, 112)) {
+        *result = e_EDWARDS_CURVE_25519;
+        return 0;
+    }
+
+    if (identifier.equals(1, 3, 101, 113)) {
+        *result = e_EDWARDS_CURVE_448;
+        return 0;
+    }
+
+    return -1;
+}
+
+bsl::ostream& EncryptionKeyAlgorithmIdentifierType::print(
+    bsl::ostream& stream,
+    Value         value)
+{
+    return stream << toString(value);
+}
+
+bsl::ostream& operator<<(
+    bsl::ostream&                                                stream,
+    EncryptionKeyAlgorithmIdentifierType::Value rhs)
+{
+    return EncryptionKeyAlgorithmIdentifierType::print(stream,
+                                                                        rhs);
+}
+
+EncryptionKeyAlgorithmIdentifier::
+    EncryptionKeyAlgorithmIdentifier(
+        bslma::Allocator* basicAllocator)
+: d_identifier(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionKeyAlgorithmIdentifier::
+    EncryptionKeyAlgorithmIdentifier(
+        const EncryptionKeyAlgorithmIdentifier& original,
+        bslma::Allocator* basicAllocator)
+: d_identifier(original.d_identifier, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionKeyAlgorithmIdentifier::
+    ~EncryptionKeyAlgorithmIdentifier()
+{
+}
+
+EncryptionKeyAlgorithmIdentifier&
+EncryptionKeyAlgorithmIdentifier::operator=(
+    const EncryptionKeyAlgorithmIdentifier& other)
+{
+    if (this != &other) {
+        d_identifier = other.d_identifier;
+    }
+
+    return *this;
+}
+
+EncryptionKeyAlgorithmIdentifier&
+EncryptionKeyAlgorithmIdentifier::operator=(
+    const ntsa::AbstractObjectIdentifier& value)
+{
+    d_identifier = value;
+    return *this;
+}
+
+EncryptionKeyAlgorithmIdentifier&
+EncryptionKeyAlgorithmIdentifier::operator=(
+    EncryptionKeyAlgorithmIdentifierType::Value value)
+{
+    EncryptionKeyAlgorithmIdentifierType::toObjectIdentifier(
+        &d_identifier,
+        value);
+    return *this;
+}
+
+void EncryptionKeyAlgorithmIdentifier::reset()
+{
+    d_identifier.reset();
+}
+
+void EncryptionKeyAlgorithmIdentifier::setIdentifier(
+    const ntsa::AbstractObjectIdentifier& value)
+{
+    d_identifier = value;
+}
+
+void EncryptionKeyAlgorithmIdentifier::setIdentifer(
+    EncryptionKeyAlgorithmIdentifierType::Value value)
+{
+    EncryptionKeyAlgorithmIdentifierType::toObjectIdentifier(
+        &d_identifier,
+        value);
+}
+
+ntsa::Error EncryptionKeyAlgorithmIdentifier::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OBJECT_IDENTIFIER);
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeValue(&d_identifier);
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionKeyAlgorithmIdentifier::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OBJECT_IDENTIFIER);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeValue(d_identifier);
+    if (error) {
+        return error;
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+const ntsa::AbstractObjectIdentifier&
+EncryptionKeyAlgorithmIdentifier::identifier() const
+{
+    return d_identifier;
+}
+
+bool EncryptionKeyAlgorithmIdentifier::equals(
+    const EncryptionKeyAlgorithmIdentifier& other) const
+{
+    return d_identifier == other.d_identifier;
+}
+
+bool EncryptionKeyAlgorithmIdentifier::equals(
+    EncryptionKeyAlgorithmIdentifierType::Value value) const
+{
+    ntsa::AbstractObjectIdentifier identifier;
+    EncryptionKeyAlgorithmIdentifierType::toObjectIdentifier(
+        &identifier,
+        value);
+
+    return d_identifier.equals(identifier);
+}
+
+bool EncryptionKeyAlgorithmIdentifier::less(
+    const EncryptionKeyAlgorithmIdentifier& other) const
+{
+    return d_identifier < other.d_identifier;
+}
+
+bsl::ostream& EncryptionKeyAlgorithmIdentifier::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
+{
+    ntca::EncryptionKeyAlgorithmIdentifierType::Value type;
+    int rc = ntca::EncryptionKeyAlgorithmIdentifierType::
+        fromObjectIdentifier(&type, d_identifier);
+    if (rc == 0) {
+        stream << ntca::EncryptionKeyAlgorithmIdentifierType::
+                toString(type);
+    }
+    else {
+        d_identifier.print(stream, level, spacesPerLevel);
+    }
+
+    return stream;
+}
+
+bsl::ostream& operator<<(
+    bsl::ostream&                                            stream,
+    const EncryptionKeyAlgorithmIdentifier& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionKeyAlgorithmIdentifier& lhs,
+                const EncryptionKeyAlgorithmIdentifier& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionKeyAlgorithmIdentifier& lhs,
+                const EncryptionKeyAlgorithmIdentifier& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionKeyAlgorithmIdentifier& lhs,
+               const EncryptionKeyAlgorithmIdentifier& rhs)
+{
+    return lhs.less(rhs);
+}
+
+
+
+
+
+
+
+EncryptionKeyAlgorithmParameters::
+    EncryptionKeyAlgorithmParameters(
+        bslma::Allocator* basicAllocator)
+: d_type(e_UNDEFINED)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionKeyAlgorithmParameters::
+    EncryptionKeyAlgorithmParameters(
+        const EncryptionKeyAlgorithmParameters& original,
+        bslma::Allocator* basicAllocator)
+: d_type(original.d_type)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+    if (d_type == e_RSA) {
+        new (d_rsa.buffer())
+            EncryptionKeyRsaParameters(
+                original.d_rsa.object(),
+                d_allocator_p);
+    }
+    else if (d_type == e_ELLIPTIC_CURVE) {
+        new (d_ellipticCurve.buffer())
+            EncryptionKeyEllipticCurveParameters(
+                original.d_ellipticCurve.object(),
+                d_allocator_p);
+    }
+    else if (d_type == e_ANY) {
+        new (d_any.buffer())
+            ntsa::AbstractValue(original.d_any.object(), d_allocator_p);
+    }
+    else {
+        BSLS_ASSERT(d_type == e_UNDEFINED);
+    }
+}
+
+EncryptionKeyAlgorithmParameters::
+    ~EncryptionKeyAlgorithmParameters()
+{
+    this->reset();
+}
+
+EncryptionKeyAlgorithmParameters&
+EncryptionKeyAlgorithmParameters::operator=(
+    const EncryptionKeyAlgorithmParameters& other)
+{
+    if (this == &other) {
+        return *this;
+    }
+
+    if (other.d_type == e_RSA) {
+        this->makeRsa(other.d_rsa.object());
+    }
+    else if (other.d_type == e_ELLIPTIC_CURVE) {
+        this->makeEllipticCurve(other.d_ellipticCurve.object());
+    }
+    else if (other.d_type == e_ANY) {
+        this->makeAny(other.d_any.object());
+    }
+    else {
+        BSLS_ASSERT(other.d_type == e_UNDEFINED);
+        this->reset();
+    }
+
+    return *this;
+}
+
+void EncryptionKeyAlgorithmParameters::reset()
+{
+    if (d_type == e_RSA) {
+        d_rsa.object().~RsaType();
+    }
+    else if (d_type == e_ELLIPTIC_CURVE) {
+        d_ellipticCurve.object().~EllipticCurveType();
+    }
+    else if (d_type == e_ANY) {
+        typedef ntsa::AbstractValue Type;
+        d_any.object().~Type();
+    }
+
+    d_type = e_UNDEFINED;
+}
+
+EncryptionKeyRsaParameters&
+EncryptionKeyAlgorithmParameters::makeRsa()
+{
+    if (d_type == e_RSA) {
+        d_rsa.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_rsa.buffer())
+            EncryptionKeyRsaParameters(
+                d_allocator_p);
+        d_type = e_RSA;
+    }
+
+    return d_rsa.object();
+}
+
+EncryptionKeyRsaParameters&
+EncryptionKeyAlgorithmParameters::makeRsa(
+    const EncryptionKeyRsaParameters& value)
+{
+    if (d_type == e_RSA) {
+        d_rsa.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_rsa.buffer())
+            EncryptionKeyRsaParameters(
+                value,
+                d_allocator_p);
+        d_type = e_RSA;
+    }
+
+    return d_rsa.object();
+}
+
+EncryptionKeyEllipticCurveParameters&
+EncryptionKeyAlgorithmParameters::makeEllipticCurve()
+{
+    if (d_type == e_ELLIPTIC_CURVE) {
+        d_ellipticCurve.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_ellipticCurve.buffer())
+            EncryptionKeyEllipticCurveParameters(
+                d_allocator_p);
+        d_type = e_ELLIPTIC_CURVE;
+    }
+
+    return d_ellipticCurve.object();
+}
+
+EncryptionKeyEllipticCurveParameters&
+EncryptionKeyAlgorithmParameters::makeEllipticCurve(
+    const EncryptionKeyEllipticCurveParameters&
+        value)
+{
+    if (d_type == e_ELLIPTIC_CURVE) {
+        d_ellipticCurve.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_ellipticCurve.buffer())
+            EncryptionKeyEllipticCurveParameters(
+                value,
+                d_allocator_p);
+        d_type = e_ELLIPTIC_CURVE;
+    }
+
+    return d_ellipticCurve.object();
+}
+
+ntsa::AbstractValue& EncryptionKeyAlgorithmParameters::
+    makeAny()
+{
+    if (d_type == e_ANY) {
+        d_any.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_any.buffer()) ntsa::AbstractValue(d_allocator_p);
+        d_type = e_ANY;
+    }
+
+    return d_any.object();
+}
+
+ntsa::AbstractValue& EncryptionKeyAlgorithmParameters::
+    makeAny(const ntsa::AbstractValue& value)
+{
+    if (d_type == e_ANY) {
+        d_any.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_any.buffer()) ntsa::AbstractValue(value, d_allocator_p);
+        d_type = e_ANY;
+    }
+
+    return d_any.object();
+}
+
+EncryptionKeyRsaParameters&
+EncryptionKeyAlgorithmParameters::rsa()
+{
+    BSLS_ASSERT(this->isRsa());
+    return d_rsa.object();
+}
+
+EncryptionKeyEllipticCurveParameters&
+EncryptionKeyAlgorithmParameters::ellipticCurve()
+{
+    BSLS_ASSERT(this->isEllipticCurve());
+    return d_ellipticCurve.object();
+}
+
+ntsa::AbstractValue& EncryptionKeyAlgorithmParameters::any()
+{
+    BSLS_ASSERT(this->isAny());
+    return d_any.object();
+}
+
+const EncryptionKeyRsaParameters&
+EncryptionKeyAlgorithmParameters::rsa() const
+{
+    BSLS_ASSERT(this->isRsa());
+    return d_rsa.object();
+}
+
+const EncryptionKeyEllipticCurveParameters&
+EncryptionKeyAlgorithmParameters::ellipticCurve() const
+{
+    BSLS_ASSERT(this->isEllipticCurve());
+    return d_ellipticCurve.object();
+}
+
+const ntsa::AbstractValue& EncryptionKeyAlgorithmParameters::
+    any() const
+{
+    BSLS_ASSERT(this->isAny());
+    return d_any.object();
+}
+
+bool EncryptionKeyAlgorithmParameters::isUndefined() const
+{
+    return d_type == e_UNDEFINED;
+}
+
+bool EncryptionKeyAlgorithmParameters::isRsa() const
+{
+    return d_type == e_RSA;
+}
+
+bool EncryptionKeyAlgorithmParameters::isEllipticCurve() const
+{
+    return d_type == e_ELLIPTIC_CURVE;
+}
+
+bool EncryptionKeyAlgorithmParameters::isAny() const
+{
+    return d_type == e_ANY;
+}
+
+bool EncryptionKeyAlgorithmParameters::equals(
+    const EncryptionKeyAlgorithmParameters& other) const
+{
+    if (d_type != other.d_type) {
+        return false;
+    }
+
+    if (d_type == e_UNDEFINED) {
+        return true;
+    }
+    else if (d_type == e_RSA) {
+        return d_rsa.object() == other.d_rsa.object();
+    }
+    else if (d_type == e_ELLIPTIC_CURVE) {
+        return d_ellipticCurve.object() == other.d_ellipticCurve.object();
+    }
+    else if (d_type == e_ANY) {
+        return d_any.object() == other.d_any.object();
+    }
+
+    return false;
+}
+
+bool EncryptionKeyAlgorithmParameters::less(
+    const EncryptionKeyAlgorithmParameters& other) const
+{
+    if (d_type < other.d_type) {
+        return false;
+    }
+
+    if (other.d_type < d_type) {
+        return true;
+    }
+
+    if (d_type == e_UNDEFINED) {
+        return true;
+    }
+    else if (d_type == e_RSA) {
+        return d_rsa.object() < other.d_rsa.object();
+    }
+    else if (d_type == e_ELLIPTIC_CURVE) {
+        return d_ellipticCurve.object() < other.d_ellipticCurve.object();
+    }
+    else if (d_type == e_ANY) {
+        return d_any.object() < other.d_any.object();
+    }
+
+    return false;
+}
+
+bsl::ostream& EncryptionKeyAlgorithmParameters::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
+{
+    NTCCFG_WARNING_UNUSED(level);
+    NTCCFG_WARNING_UNUSED(spacesPerLevel);
+
+    if (d_type == e_RSA) {
+        stream << d_rsa.object();
+    }
+    else if (d_type == e_ELLIPTIC_CURVE) {
+        stream << d_ellipticCurve.object();
+    }
+    else if (d_type == e_ANY) {
+        stream << d_any.object();
+    }
+    else {
+        stream << "UNDEFINED";
+    }
+
+    return stream;
+}
+
+bsl::ostream& operator<<(
+    bsl::ostream&                                            stream,
+    const EncryptionKeyAlgorithmParameters& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionKeyAlgorithmParameters& lhs,
+                const EncryptionKeyAlgorithmParameters& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionKeyAlgorithmParameters& lhs,
+                const EncryptionKeyAlgorithmParameters& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionKeyAlgorithmParameters& lhs,
+               const EncryptionKeyAlgorithmParameters& rhs)
+{
+    return lhs.less(rhs);
+}
+
+EncryptionKeyAlgorithm::
+    EncryptionKeyAlgorithm(bslma::Allocator* basicAllocator)
+: d_identifier(basicAllocator)
+, d_parameters(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionKeyAlgorithm::
+    EncryptionKeyAlgorithm(
+        const EncryptionKeyAlgorithm& original,
+        bslma::Allocator*                              basicAllocator)
+: d_identifier(original.d_identifier, basicAllocator)
+, d_parameters(original.d_parameters, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionKeyAlgorithm::
+    ~EncryptionKeyAlgorithm()
+{
+}
+
+EncryptionKeyAlgorithm& EncryptionKeyAlgorithm::
+operator=(const EncryptionKeyAlgorithm& other)
+{
+    if (this != &other) {
+        d_identifier = other.d_identifier;
+        d_parameters = other.d_parameters;
+    }
+
+    return *this;
+}
+
+void EncryptionKeyAlgorithm::reset()
+{
+    d_identifier.reset();
+    d_parameters.reset();
+}
+
+void EncryptionKeyAlgorithm::setIdentifier(
+    const EncryptionKeyAlgorithmIdentifier& value)
+{
+    d_identifier = value;
+}
+
+void EncryptionKeyAlgorithm::setParameters(
+    const EncryptionKeyAlgorithmParameters& value)
+{
+    d_parameters = value;
+}
+
+ntsa::Error EncryptionKeyAlgorithm::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    error = decoder->decodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    if (error) {
+        return error;
+    }
+
+    error = d_identifier.decode(decoder);
+    if (error) {
+        return error;
+    }
+
+    if (decoder->contentBytesRemaining() > 0) {
+        if (d_identifier.equals(
+                EncryptionKeyAlgorithmIdentifierType::e_RSA))
+        {
+            error = d_parameters.makeValue().makeRsa().decode(decoder);
+            if (error) {
+                return error;
+            }
+        }
+        else if (d_identifier.equals(
+                     EncryptionKeyAlgorithmIdentifierType::
+                         e_ELLIPTIC_CURVE))
+        {
+            error = decoder->decodeTag();
+            if (error) {
+                return error;
+            }
+
+            if (decoder->current().tagClass() == k_UNIVERSAL &&
+                decoder->current().tagType() == k_PRIMITIVE &&
+                decoder->current().tagNumber() == k_NULL)
+            {
+                d_parameters.reset();
+
+                error = decoder->decodeTagComplete();
+                if (error) {
+                    return error;
+                }
+            }
+            else if (decoder->current().tagClass() == k_UNIVERSAL &&
+                     decoder->current().tagType() == k_PRIMITIVE &&
+                     decoder->current().tagNumber() == k_OBJECT_IDENTIFIER)
+            {
+                error = decoder->rewindTag();
+                if (error) {
+                    return error;
+                }
+
+                error = d_parameters.makeValue()
+                            .makeEllipticCurve()
+                            .makeIdentifier()
+                            .decode(decoder);
+                if (error) {
+                    return error;
+                }
+            }
+            else {
+                error = decoder->decodeValue(
+                    &d_parameters.makeValue().makeEllipticCurve().makeAny());
+                if (error) {
+                    return error;
+                }
+
+                error = decoder->decodeTagComplete();
+                if (error) {
+                    return error;
+                }
+            }
+        }
+        else {
+            error = decoder->decodeTag();
+            if (error) {
+                return error;
+            }
+
+            if (decoder->current().tagClass() == k_UNIVERSAL &&
+                decoder->current().tagType() == k_PRIMITIVE &&
+                decoder->current().tagNumber() == k_NULL)
+            {
+                d_parameters.reset();
+            }
+            else {
+                error =
+                    decoder->decodeValue(&d_parameters.makeValue().makeAny());
+                if (error) {
+                    return error;
+                }
+            }
+
+            error = decoder->decodeTagComplete();
+            if (error) {
+                return error;
+            }
+        }
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionKeyAlgorithm::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    if (error) {
+        return error;
+    }
+
+    error = d_identifier.encode(encoder);
+    if (error) {
+        return error;
+    }
+
+    if (!d_parameters.isNull()) {
+        if (d_parameters.value().isRsa()) {
+            error = d_parameters.value().rsa().encode(encoder);
+            if (error) {
+                return error;
+            }
+        }
+        else if (d_parameters.value().isEllipticCurve()) {
+            if (d_parameters.value().ellipticCurve().isIdentifier()) {
+                error = d_parameters.value().ellipticCurve().identifier().encode(encoder);
+                if (error) {
+                    return error;
+                }
+            }
+            else if (d_parameters.value().ellipticCurve().isAny()) {
+                error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OCTET_STRING);
+                if (error) {
+                    return error;
+                }
+
+                error = encoder->encodeValue(d_parameters.value().ellipticCurve().any());
+                if (error) {
+                    return error;
+                }
+
+                error = encoder->encodeTagComplete();
+                if (error) {
+                    return error;
+                }
+            }
+        }
+        else if (d_parameters.value().isAny()) {
+            error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OCTET_STRING);
+            if (error) {
+                return error;
+            }
+
+            error = encoder->encodeValue(d_parameters.value().any());
+            if (error) {
+                return error;
+            }
+
+            error = encoder->encodeTagComplete();
+            if (error) {
+                return error;
+            }
+        }
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+const EncryptionKeyAlgorithmIdentifier&
+EncryptionKeyAlgorithm::identifier() const
+{
+    return d_identifier;
+}
+
+const bdlb::NullableValue<EncryptionKeyAlgorithmParameters>&
+EncryptionKeyAlgorithm::parameters() const
+{
+    return d_parameters;
+}
+
+bool EncryptionKeyAlgorithm::equals(
+    const EncryptionKeyAlgorithm& other) const
+{
+    return d_identifier == other.d_identifier &&
+           d_parameters == other.d_parameters;
+}
+
+bool EncryptionKeyAlgorithm::less(
+    const EncryptionKeyAlgorithm& other) const
+{
+    if (d_identifier < other.d_identifier) {
+        return true;
+    }
+
+    if (other.d_identifier < d_identifier) {
+        return false;
+    }
+
+    return d_parameters < other.d_parameters;
+}
+
+bsl::ostream& EncryptionKeyAlgorithm::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute("identifier", d_identifier);
+
+    if (!d_parameters.isNull()) {
+        if (!d_parameters.value().isUndefined()) {
+            printer.printAttribute("parameters", d_parameters);
+        }
+    }
+
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                                  stream,
+                         const EncryptionKeyAlgorithm& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionKeyAlgorithm& lhs,
+                const EncryptionKeyAlgorithm& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionKeyAlgorithm& lhs,
+                const EncryptionKeyAlgorithm& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionKeyAlgorithm& lhs,
+               const EncryptionKeyAlgorithm& rhs)
+{
+    return lhs.less(rhs);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+EncryptionKeyValuePrivate::EncryptionKeyValuePrivate(
+    bslma::Allocator* basicAllocator)
+: d_type(e_UNDEFINED)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionKeyValuePrivate::EncryptionKeyValuePrivate(
+    const EncryptionKeyValuePrivate& original,
+    bslma::Allocator*                          basicAllocator)
+: d_type(original.d_type)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+    if (d_type == e_RSA) {
+        new (d_rsa.buffer())
+            EncryptionKeyRsaValuePrivate(original.d_rsa.object(),
+                                                   d_allocator_p);
+    }
+    else if (d_type == e_ELLIPTIC_CURVE) {
+        new (d_ellipticCurve.buffer())
+            EncryptionKeyEllipticCurveValuePrivate(
+                original.d_ellipticCurve.object(),
+                d_allocator_p);
+    }
+    else if (d_type == e_ANY) {
+        new (d_any.buffer())
+            ntsa::AbstractOctetString(original.d_any.object(), d_allocator_p);
+    }
+    else {
+        BSLS_ASSERT(d_type == e_UNDEFINED);
+    }
+}
+
+EncryptionKeyValuePrivate::~EncryptionKeyValuePrivate()
+{
+    this->reset();
+}
+
+EncryptionKeyValuePrivate& EncryptionKeyValuePrivate::
+operator=(const EncryptionKeyValuePrivate& other)
+{
+    if (this == &other) {
+        return *this;
+    }
+
+    if (other.d_type == e_RSA) {
+        this->makeRsa(other.d_rsa.object());
+    }
+    else if (other.d_type == e_ELLIPTIC_CURVE) {
+        this->makeEllipticCurve(other.d_ellipticCurve.object());
+    }
+    else if (other.d_type == e_ANY) {
+        this->makeAny(other.d_any.object());
+    }
+    else {
+        BSLS_ASSERT(other.d_type == e_UNDEFINED);
+        this->reset();
+    }
+
+    return *this;
+}
+
+void EncryptionKeyValuePrivate::reset()
+{
+    if (d_type == e_RSA) {
+        d_rsa.object().~RsaType();
+    }
+    else if (d_type == e_ELLIPTIC_CURVE) {
+        d_ellipticCurve.object().~EllipticCurveType();
+    }
+    else if (d_type == e_ANY) {
+        d_any.object().~AnyType();
+    }
+
+    d_type = e_UNDEFINED;
+}
+
+EncryptionKeyRsaValuePrivate& EncryptionKeyValuePrivate::
+    makeRsa()
+{
+    if (d_type == e_RSA) {
+        d_rsa.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_rsa.buffer())
+            EncryptionKeyRsaValuePrivate(d_allocator_p);
+        d_type = e_RSA;
+    }
+
+    return d_rsa.object();
+}
+
+EncryptionKeyRsaValuePrivate& EncryptionKeyValuePrivate::
+    makeRsa(const EncryptionKeyRsaValuePrivate& value)
+{
+    if (d_type == e_RSA) {
+        d_rsa.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_rsa.buffer())
+            EncryptionKeyRsaValuePrivate(value, d_allocator_p);
+        d_type = e_RSA;
+    }
+
+    return d_rsa.object();
+}
+
+EncryptionKeyEllipticCurveValuePrivate&
+EncryptionKeyValuePrivate::makeEllipticCurve()
+{
+    if (d_type == e_ELLIPTIC_CURVE) {
+        d_ellipticCurve.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_ellipticCurve.buffer())
+            EncryptionKeyEllipticCurveValuePrivate(d_allocator_p);
+        d_type = e_ELLIPTIC_CURVE;
+    }
+
+    return d_ellipticCurve.object();
+}
+
+EncryptionKeyEllipticCurveValuePrivate&
+EncryptionKeyValuePrivate::makeEllipticCurve(
+    const EncryptionKeyEllipticCurveValuePrivate& value)
+{
+    if (d_type == e_ELLIPTIC_CURVE) {
+        d_ellipticCurve.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_ellipticCurve.buffer())
+            EncryptionKeyEllipticCurveValuePrivate(value,
+                                                             d_allocator_p);
+        d_type = e_ELLIPTIC_CURVE;
+    }
+
+    return d_ellipticCurve.object();
+}
+
+ntsa::AbstractOctetString& EncryptionKeyValuePrivate::makeAny()
+{
+    if (d_type == e_ANY) {
+        d_any.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_any.buffer()) ntsa::AbstractOctetString(d_allocator_p);
+        d_type = e_ANY;
+    }
+
+    return d_any.object();
+}
+
+ntsa::AbstractOctetString& EncryptionKeyValuePrivate::makeAny(
+    const ntsa::AbstractOctetString& value)
+{
+    if (d_type == e_ANY) {
+        d_any.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_any.buffer()) ntsa::AbstractOctetString(value, d_allocator_p);
+        d_type = e_ANY;
+    }
+
+    return d_any.object();
+}
+
+EncryptionKeyRsaValuePrivate& EncryptionKeyValuePrivate::
+    rsa()
+{
+    BSLS_ASSERT(this->isRsa());
+    return d_rsa.object();
+}
+
+EncryptionKeyEllipticCurveValuePrivate&
+EncryptionKeyValuePrivate::ellipticCurve()
+{
+    BSLS_ASSERT(this->isEllipticCurve());
+    return d_ellipticCurve.object();
+}
+
+ntsa::AbstractOctetString& EncryptionKeyValuePrivate::any()
+{
+    BSLS_ASSERT(this->isAny());
+    return d_any.object();
+}
+
+const EncryptionKeyRsaValuePrivate&
+EncryptionKeyValuePrivate::rsa() const
+{
+    BSLS_ASSERT(this->isRsa());
+    return d_rsa.object();
+}
+
+const EncryptionKeyEllipticCurveValuePrivate&
+EncryptionKeyValuePrivate::ellipticCurve() const
+{
+    BSLS_ASSERT(this->isEllipticCurve());
+    return d_ellipticCurve.object();
+}
+
+const ntsa::AbstractOctetString& EncryptionKeyValuePrivate::any() const
+{
+    BSLS_ASSERT(this->isAny());
+    return d_any.object();
+}
+
+bool EncryptionKeyValuePrivate::isUndefined() const
+{
+    return d_type == e_UNDEFINED;
+}
+
+bool EncryptionKeyValuePrivate::isRsa() const
+{
+    return d_type == e_RSA;
+}
+
+bool EncryptionKeyValuePrivate::isEllipticCurve() const
+{
+    return d_type == e_ELLIPTIC_CURVE;
+}
+
+bool EncryptionKeyValuePrivate::isAny() const
+{
+    return d_type == e_ANY;
+}
+
+bool EncryptionKeyValuePrivate::equals(
+    const EncryptionKeyValuePrivate& other) const
+{
+    if (d_type != other.d_type) {
+        return false;
+    }
+
+    if (d_type == e_UNDEFINED) {
+        return true;
+    }
+    else if (d_type == e_RSA) {
+        return d_rsa.object() == other.d_rsa.object();
+    }
+    else if (d_type == e_ELLIPTIC_CURVE) {
+        return d_ellipticCurve.object() == other.d_ellipticCurve.object();
+    }
+    else if (d_type == e_ANY) {
+        return d_any.object() == other.d_any.object();
+    }
+
+    return false;
+}
+
+bool EncryptionKeyValuePrivate::less(
+    const EncryptionKeyValuePrivate& other) const
+{
+    if (d_type < other.d_type) {
+        return false;
+    }
+
+    if (other.d_type < d_type) {
+        return true;
+    }
+
+    if (d_type == e_UNDEFINED) {
+        return true;
+    }
+    else if (d_type == e_RSA) {
+        return d_rsa.object() < other.d_rsa.object();
+    }
+    else if (d_type == e_ELLIPTIC_CURVE) {
+        return d_ellipticCurve.object() < other.d_ellipticCurve.object();
+    }
+    else if (d_type == e_ANY) {
+        return d_any.object() < other.d_any.object();
+    }
+
+    return false;
+}
+
+bsl::ostream& EncryptionKeyValuePrivate::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
+{
+    NTCCFG_WARNING_UNUSED(level);
+    NTCCFG_WARNING_UNUSED(spacesPerLevel);
+
+    if (d_type == e_RSA) {
+        d_rsa.object().print(stream, level, spacesPerLevel);
+    }
+    else if (d_type == e_ELLIPTIC_CURVE) {
+        d_ellipticCurve.object().print(stream, level, spacesPerLevel);
+    }
+    else if (d_type == e_ANY) {
+        d_any.object().print(stream, level, spacesPerLevel);
+    }
+    else {
+        stream << "UNDEFINED";
+    }
+
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                              stream,
+                         const EncryptionKeyValuePrivate& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionKeyValuePrivate& lhs,
+                const EncryptionKeyValuePrivate& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionKeyValuePrivate& lhs,
+                const EncryptionKeyValuePrivate& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionKeyValuePrivate& lhs,
+               const EncryptionKeyValuePrivate& rhs)
+{
+    return lhs.less(rhs);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+EncryptionKeyInfoPrivate::EncryptionKeyInfoPrivate(
+    bslma::Allocator* basicAllocator)
+: d_version(basicAllocator)
+, d_algorithm(basicAllocator)
+, d_privateKey(basicAllocator)
+, d_attributes(basicAllocator)
+, d_publicKey(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionKeyInfoPrivate::EncryptionKeyInfoPrivate(
+    const EncryptionKeyInfoPrivate& original,
+    bslma::Allocator*                         basicAllocator)
+: d_version(original.d_version, basicAllocator)
+, d_algorithm(original.d_algorithm, basicAllocator)
+, d_privateKey(original.d_privateKey, basicAllocator)
+, d_attributes(original.d_attributes, basicAllocator)
+, d_publicKey(original.d_publicKey, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionKeyInfoPrivate::~EncryptionKeyInfoPrivate()
+{
+}
+
+EncryptionKeyInfoPrivate& EncryptionKeyInfoPrivate::
+operator=(const EncryptionKeyInfoPrivate& other)
+{
+    if (this != &other) {
+        d_version = other.d_version;
+        d_algorithm = other.d_algorithm;
+        d_privateKey     = other.d_privateKey;
+        d_attributes = other.d_attributes;
+        d_publicKey = other.d_publicKey;
+    }
+
+    return *this;
+}
+
+void EncryptionKeyInfoPrivate::reset()
+{
+    d_version.reset();
+    d_algorithm.reset();
+    d_privateKey.reset();
+    d_attributes.reset();
+    d_publicKey.reset();
+}
+
+ntsa::Error EncryptionKeyInfoPrivate::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    error = decoder->decodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    if (error) {
+        return error;
+    }
+
+    {
+        error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_INTEGER);
+        if (error) {
+            return error;
+        }
+
+        error = decoder->decodeValue(&d_version);
+        if (error) {
+            return error;
+        }
+
+        error = decoder->decodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+
+    error = d_algorithm.decode(decoder);
+    if (error) {
+        return error;
+    }
+
+    error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OCTET_STRING);
+    if (error) {
+        return error;
+    }
+
+    if (d_algorithm.identifier().equals(
+            ntca::EncryptionKeyAlgorithmIdentifierType::
+                e_RSA))
+    {
+        error = d_privateKey.makeRsa().decode(decoder);
+        if (error) {
+            return error;
+        }
+    }
+    else if (d_algorithm.identifier().equals(
+                 ntca::EncryptionKeyAlgorithmIdentifierType::
+                     e_ELLIPTIC_CURVE))
+    {
+        error = d_privateKey.makeEllipticCurve().decode(decoder);
+        if (error) {
+            return error;
+        }
+    }
+    else {
+        error = decoder->decodeValue(&d_privateKey.makeAny());
+        if (error) {
+            return error;
+        }
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    bool wantAttributes = true;
+    bool wantPublicKey = true;
+
+    while (decoder->contentBytesRemaining() > 0) {
+        error = decoder->decodeTag();
+        if (error) {
+            return error;
+        }
+
+        if (decoder->current().tagClass() == k_CONTEXT_SPECIFIC &&
+            decoder->current().tagType() == k_CONSTRUCTED &&
+            decoder->current().tagNumber() == 0 && wantAttributes)
+        {
+            error = decoder->decodeTag();
+            if (error) {
+                return error;
+            }
+
+            error = decoder->decodeValue(&d_attributes.makeValue());
+            if (error) {
+                return error;
+            }
+
+            error = decoder->decodeTagComplete();
+            if (error) {
+                return error;
+            }
+
+            wantAttributes = false;
+        }
+        else if (decoder->current().tagClass() == k_CONTEXT_SPECIFIC &&
+                 decoder->current().tagType() == k_CONSTRUCTED &&
+                 decoder->current().tagNumber() == 1 && wantPublicKey)
+        {
+            error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_BIT_STRING);
+            if (error) {
+                return error;
+            }
+
+            error = decoder->decodeValue(&d_publicKey.makeValue());
+            if (error) {
+                return error;
+            }
+
+            error = decoder->decodeTagComplete();
+            if (error) {
+                return error;
+            }
+
+            wantPublicKey = false;
+        }
+        else {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        error = decoder->decodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionKeyInfoPrivate::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    if (error) {
+        return error;
+    }
+
+    {
+        error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_INTEGER);
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeValue(d_version);
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+
+    {
+        error = d_algorithm.encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+
+    {
+        error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OCTET_STRING);
+        if (error) {
+            return error;
+        }
+
+        if (d_privateKey.isRsa()) {
+            error = d_privateKey.rsa().encode(encoder);
+            if (error) {
+                return error;
+            }
+        }
+        else if (d_privateKey.isEllipticCurve()) {
+            error = d_privateKey.ellipticCurve().encode(encoder);
+            if (error) {
+                return error;
+            }
+        }
+        else if (d_privateKey.isAny()) {
+            error = encoder->encodeValue(d_privateKey.any());
+            if (error) {
+                return error;
+            }
+        }
+        else {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        error = encoder->encodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+
+    if (!d_attributes.isNull()) {
+        error = encoder->encodeTag(k_CONTEXT_SPECIFIC, k_CONSTRUCTED, 0);
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTag(d_attributes.value().tagClass(), 
+                                   d_attributes.value().tagType(), 
+                                   d_attributes.value().tagNumber());
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeValue(d_attributes.value());
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+
+    if (!d_publicKey.isNull()) {
+        error = encoder->encodeTag(k_CONTEXT_SPECIFIC, k_CONSTRUCTED, 1);
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_BIT_STRING);
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeValue(d_publicKey.value());
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+const ntca::EncryptionKeyAlgorithm& 
+EncryptionKeyInfoPrivate::algorithm() const
+{
+    return d_algorithm;
+}
+
+const ntca::EncryptionKeyValuePrivate& 
+EncryptionKeyInfoPrivate::privateKey() const
+{
+    return d_privateKey;
+}
+
+bool EncryptionKeyInfoPrivate::equals(
+    const EncryptionKeyInfoPrivate& other) const
+{
+    return d_version == other.d_version && 
+           d_algorithm == other.d_algorithm && 
+           d_privateKey == other.d_privateKey &&
+           d_attributes == other.d_attributes &&
+           d_publicKey == other.d_publicKey;
+}
+
+bool EncryptionKeyInfoPrivate::less(
+    const EncryptionKeyInfoPrivate& other) const
+{
+    if (d_version < other.d_version) {
+        return true;
+    }
+
+    if (other.d_version < d_version) {
+        return false;
+    }
+
+    if (d_algorithm < other.d_algorithm) {
+        return true;
+    }
+
+    if (other.d_algorithm < d_algorithm) {
+        return false;
+    }
+
+    if (d_privateKey < other.d_privateKey) {
+        return true;
+    }
+
+    if (other.d_privateKey < d_privateKey) {
+        return false;
+    }
+
+    if (d_attributes < other.d_attributes) {
+        return true;
+    }
+
+    if (other.d_attributes < d_attributes) {
+        return false;
+    }
+
+    return d_publicKey < other.d_publicKey;
+}
+
+bsl::ostream& EncryptionKeyInfoPrivate::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute("version", d_version);
+    printer.printAttribute("algorithm", d_algorithm);
+    printer.printAttribute("privateKey", d_privateKey);
+
+    if (!d_attributes.isNull()) {
+        printer.printAttribute("attributes", d_attributes);
+    }
+
+    if (!d_publicKey.isNull()) {
+        printer.printAttribute("publicKey", d_publicKey);
+    }
+
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                             stream,
+                         const EncryptionKeyInfoPrivate& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionKeyInfoPrivate& lhs,
+                const EncryptionKeyInfoPrivate& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionKeyInfoPrivate& lhs,
+                const EncryptionKeyInfoPrivate& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionKeyInfoPrivate& lhs,
+               const EncryptionKeyInfoPrivate& rhs)
+{
+    return lhs.less(rhs);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+EncryptionKeyValuePublic::EncryptionKeyValuePublic(
+    bslma::Allocator* basicAllocator)
+: d_type(e_UNDEFINED)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionKeyValuePublic::EncryptionKeyValuePublic(
+    const EncryptionKeyValuePublic& original,
+    bslma::Allocator*                          basicAllocator)
+: d_type(original.d_type)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+    if (d_type == e_RSA) {
+        new (d_rsa.buffer())
+            EncryptionKeyRsaValuePublic(original.d_rsa.object(),
+                                                   d_allocator_p);
+    }
+    else if (d_type == e_ELLIPTIC_CURVE) {
+        new (d_ellipticCurve.buffer())
+            EncryptionKeyEllipticCurveValuePublic(
+                original.d_ellipticCurve.object(),
+                d_allocator_p);
+    }
+    else if (d_type == e_ANY) {
+        new (d_any.buffer())
+            ntsa::AbstractBitString(original.d_any.object(), d_allocator_p);
+    }
+    else {
+        BSLS_ASSERT(d_type == e_UNDEFINED);
+    }
+}
+
+EncryptionKeyValuePublic::~EncryptionKeyValuePublic()
+{
+    this->reset();
+}
+
+EncryptionKeyValuePublic& EncryptionKeyValuePublic::
+operator=(const EncryptionKeyValuePublic& other)
+{
+    if (this == &other) {
+        return *this;
+    }
+
+    if (other.d_type == e_RSA) {
+        this->makeRsa(other.d_rsa.object());
+    }
+    else if (other.d_type == e_ELLIPTIC_CURVE) {
+        this->makeEllipticCurve(other.d_ellipticCurve.object());
+    }
+    else if (other.d_type == e_ANY) {
+        this->makeAny(other.d_any.object());
+    }
+    else {
+        BSLS_ASSERT(other.d_type == e_UNDEFINED);
+        this->reset();
+    }
+
+    return *this;
+}
+
+void EncryptionKeyValuePublic::reset()
+{
+    if (d_type == e_RSA) {
+        typedef EncryptionKeyRsaValuePublic Type;
+        d_rsa.object().~Type();
+    }
+    else if (d_type == e_ELLIPTIC_CURVE) {
+        typedef EncryptionKeyEllipticCurveValuePublic Type;
+        d_ellipticCurve.object().~Type();
+    }
+    else if (d_type == e_ANY) {
+        typedef ntsa::AbstractBitString Type;
+        d_any.object().~Type();
+    }
+
+    d_type = e_UNDEFINED;
+}
+
+EncryptionKeyRsaValuePublic& EncryptionKeyValuePublic::
+    makeRsa()
+{
+    if (d_type == e_RSA) {
+        d_rsa.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_rsa.buffer())
+            EncryptionKeyRsaValuePublic(d_allocator_p);
+        d_type = e_RSA;
+    }
+
+    return d_rsa.object();
+}
+
+EncryptionKeyRsaValuePublic& EncryptionKeyValuePublic::
+    makeRsa(const EncryptionKeyRsaValuePublic& value)
+{
+    if (d_type == e_RSA) {
+        d_rsa.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_rsa.buffer())
+            EncryptionKeyRsaValuePublic(value, d_allocator_p);
+        d_type = e_RSA;
+    }
+
+    return d_rsa.object();
+}
+
+EncryptionKeyEllipticCurveValuePublic&
+EncryptionKeyValuePublic::makeEllipticCurve()
+{
+    if (d_type == e_ELLIPTIC_CURVE) {
+        d_ellipticCurve.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_ellipticCurve.buffer())
+            EncryptionKeyEllipticCurveValuePublic(d_allocator_p);
+        d_type = e_ELLIPTIC_CURVE;
+    }
+
+    return d_ellipticCurve.object();
+}
+
+EncryptionKeyEllipticCurveValuePublic&
+EncryptionKeyValuePublic::makeEllipticCurve(
+    const EncryptionKeyEllipticCurveValuePublic& value)
+{
+    if (d_type == e_ELLIPTIC_CURVE) {
+        d_ellipticCurve.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_ellipticCurve.buffer())
+            EncryptionKeyEllipticCurveValuePublic(value,
+                                                             d_allocator_p);
+        d_type = e_ELLIPTIC_CURVE;
+    }
+
+    return d_ellipticCurve.object();
+}
+
+ntsa::AbstractBitString& EncryptionKeyValuePublic::makeAny()
+{
+    if (d_type == e_ANY) {
+        d_any.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_any.buffer()) ntsa::AbstractBitString(d_allocator_p);
+        d_type = e_ANY;
+    }
+
+    return d_any.object();
+}
+
+ntsa::AbstractBitString& EncryptionKeyValuePublic::makeAny(
+    const ntsa::AbstractBitString& value)
+{
+    if (d_type == e_ANY) {
+        d_any.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_any.buffer()) ntsa::AbstractBitString(value, d_allocator_p);
+        d_type = e_ANY;
+    }
+
+    return d_any.object();
+}
+
+EncryptionKeyRsaValuePublic& EncryptionKeyValuePublic::
+    rsa()
+{
+    BSLS_ASSERT(this->isRsa());
+    return d_rsa.object();
+}
+
+EncryptionKeyEllipticCurveValuePublic&
+EncryptionKeyValuePublic::ellipticCurve()
+{
+    BSLS_ASSERT(this->isEllipticCurve());
+    return d_ellipticCurve.object();
+}
+
+ntsa::AbstractBitString& EncryptionKeyValuePublic::any()
+{
+    BSLS_ASSERT(this->isAny());
+    return d_any.object();
+}
+
+const EncryptionKeyRsaValuePublic&
+EncryptionKeyValuePublic::rsa() const
+{
+    BSLS_ASSERT(this->isRsa());
+    return d_rsa.object();
+}
+
+const EncryptionKeyEllipticCurveValuePublic&
+EncryptionKeyValuePublic::ellipticCurve() const
+{
+    BSLS_ASSERT(this->isEllipticCurve());
+    return d_ellipticCurve.object();
+}
+
+const ntsa::AbstractBitString& EncryptionKeyValuePublic::any() const
+{
+    BSLS_ASSERT(this->isAny());
+    return d_any.object();
+}
+
+bool EncryptionKeyValuePublic::isUndefined() const
+{
+    return d_type == e_UNDEFINED;
+}
+
+bool EncryptionKeyValuePublic::isRsa() const
+{
+    return d_type == e_RSA;
+}
+
+bool EncryptionKeyValuePublic::isEllipticCurve() const
+{
+    return d_type == e_ELLIPTIC_CURVE;
+}
+
+bool EncryptionKeyValuePublic::isAny() const
+{
+    return d_type == e_ANY;
+}
+
+bool EncryptionKeyValuePublic::equals(
+    const EncryptionKeyValuePublic& other) const
+{
+    if (d_type != other.d_type) {
+        return false;
+    }
+
+    if (d_type == e_UNDEFINED) {
+        return true;
+    }
+    else if (d_type == e_RSA) {
+        return d_rsa.object() == other.d_rsa.object();
+    }
+    else if (d_type == e_ELLIPTIC_CURVE) {
+        return d_ellipticCurve.object() == other.d_ellipticCurve.object();
+    }
+    else if (d_type == e_ANY) {
+        return d_any.object() == other.d_any.object();
+    }
+
+    return false;
+}
+
+bool EncryptionKeyValuePublic::less(
+    const EncryptionKeyValuePublic& other) const
+{
+    if (d_type < other.d_type) {
+        return false;
+    }
+
+    if (other.d_type < d_type) {
+        return true;
+    }
+
+    if (d_type == e_UNDEFINED) {
+        return true;
+    }
+    else if (d_type == e_RSA) {
+        return d_rsa.object() < other.d_rsa.object();
+    }
+    else if (d_type == e_ELLIPTIC_CURVE) {
+        return d_ellipticCurve.object() < other.d_ellipticCurve.object();
+    }
+    else if (d_type == e_ANY) {
+        return d_any.object() < other.d_any.object();
+    }
+
+    return false;
+}
+
+bsl::ostream& EncryptionKeyValuePublic::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
+{
+    NTCCFG_WARNING_UNUSED(level);
+    NTCCFG_WARNING_UNUSED(spacesPerLevel);
+
+    if (d_type == e_RSA) {
+        d_rsa.object().print(stream, level, spacesPerLevel);
+    }
+    else if (d_type == e_ELLIPTIC_CURVE) {
+        d_ellipticCurve.object().print(stream, level, spacesPerLevel);
+    }
+    else if (d_type == e_ANY) {
+        d_any.object().print(stream, level, spacesPerLevel);
+    }
+    else {
+        stream << "UNDEFINED";
+    }
+
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                              stream,
+                         const EncryptionKeyValuePublic& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionKeyValuePublic& lhs,
+                const EncryptionKeyValuePublic& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionKeyValuePublic& lhs,
+                const EncryptionKeyValuePublic& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionKeyValuePublic& lhs,
+               const EncryptionKeyValuePublic& rhs)
+{
+    return lhs.less(rhs);
+}
+
+EncryptionKeyInfoPublic::EncryptionKeyInfoPublic(
+    bslma::Allocator* basicAllocator)
+: d_algorithm(basicAllocator)
+, d_value(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionKeyInfoPublic::EncryptionKeyInfoPublic(
+    const EncryptionKeyInfoPublic& original,
+    bslma::Allocator*                         basicAllocator)
+: d_algorithm(original.d_algorithm, basicAllocator)
+, d_value(original.d_value, basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+EncryptionKeyInfoPublic::~EncryptionKeyInfoPublic()
+{
+}
+
+EncryptionKeyInfoPublic& EncryptionKeyInfoPublic::
+operator=(const EncryptionKeyInfoPublic& other)
+{
+    if (this != &other) {
+        d_algorithm = other.d_algorithm;
+        d_value     = other.d_value;
+    }
+
+    return *this;
+}
+
+void EncryptionKeyInfoPublic::reset()
+{
+    d_algorithm.reset();
+    d_value.reset();
+}
+
+ntsa::Error EncryptionKeyInfoPublic::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    error = decoder->decodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    if (error) {
+        return error;
+    }
+
+    error = d_algorithm.decode(decoder);
+    if (error) {
+        return error;
+    }
+
+    if (d_algorithm.identifier().equals(
+            ntca::EncryptionKeyAlgorithmIdentifierType::
+                e_RSA))
+    {
+        error = d_value.makeRsa().decode(decoder);
+        if (error) {
+            return error;
+        }
+    }
+    else if (d_algorithm.identifier().equals(
+                 ntca::EncryptionKeyAlgorithmIdentifierType::
+                     e_ELLIPTIC_CURVE))
+    {
+        error = d_value.makeEllipticCurve().decode(decoder);
+        if (error) {
+            return error;
+        }
+    }
+    else {
+        error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_BIT_STRING);
+        if (error) {
+            return error;
+        }
+
+        error = decoder->decodeValue(&d_value.makeAny());
+        if (error) {
+            return error;
+        }
+
+        error = decoder->decodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+
+    error = decoder->decodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionKeyInfoPublic::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    ntsa::Error error;
+
+    error = encoder->encodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SEQUENCE);
+    if (error) {
+        return error;
+    }
+
+    error = d_algorithm.encode(encoder);
+    if (error) {
+        return error;
+    }
+
+    if (d_value.isRsa()) {
+        error = d_value.rsa().encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+    else if (d_value.isEllipticCurve()) {
+        error = d_value.ellipticCurve().encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+    else if (d_value.isAny()) {
+        error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_BIT_STRING);
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeValue(d_value.any());
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
+        if (error) {
+            return error;
+        }
+    }
+    else {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    error = encoder->encodeTagComplete();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+const ntca::EncryptionKeyAlgorithm& 
+EncryptionKeyInfoPublic::algorithm() const
+{
+    return d_algorithm;
+}
+
+const ntca::EncryptionKeyValuePublic& 
+EncryptionKeyInfoPublic::value() const
+{
+    return d_value;
+}
+
+bool EncryptionKeyInfoPublic::equals(
+    const EncryptionKeyInfoPublic& other) const
+{
+    return d_algorithm == other.d_algorithm && d_value == other.d_value;
+}
+
+bool EncryptionKeyInfoPublic::less(
+    const EncryptionKeyInfoPublic& other) const
+{
+    if (d_algorithm < other.d_algorithm) {
+        return true;
+    }
+
+    if (other.d_algorithm < d_algorithm) {
+        return false;
+    }
+
+    return d_value < other.d_value;
+}
+
+bsl::ostream& EncryptionKeyInfoPublic::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute("algorithm", d_algorithm);
+    printer.printAttribute("value", d_value);
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&                             stream,
+                         const EncryptionKeyInfoPublic& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const EncryptionKeyInfoPublic& lhs,
+                const EncryptionKeyInfoPublic& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const EncryptionKeyInfoPublic& lhs,
+                const EncryptionKeyInfoPublic& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const EncryptionKeyInfoPublic& lhs,
+               const EncryptionKeyInfoPublic& rhs)
+{
+    return lhs.less(rhs);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 EncryptionKey::EncryptionKey(bslma::Allocator* basicAllocator)
 : d_type(e_UNDEFINED)
@@ -2216,11 +4971,16 @@ EncryptionKey::EncryptionKey(const EncryptionKey& original,
 {
     if (d_type == e_RSA) {
         new (d_rsa.buffer())
-            ntca::EncryptionKeyRsa(original.d_rsa.object(), d_allocator_p);
+            ntca::EncryptionKeyRsaValuePrivate(original.d_rsa.object(), d_allocator_p);
     }
     else if (d_type == e_ELLIPTIC_CURVE) {
         new (d_ellipticCurve.buffer())
-            ntca::EncryptionKeyEllipticCurve(original.d_ellipticCurve.object(),
+            ntca::EncryptionKeyEllipticCurveValuePrivate(original.d_ellipticCurve.object(),
+                                             d_allocator_p);
+    }
+    else if (d_type == e_PRIVATE_KEY_INFO) {
+        new (d_info.buffer())
+            ntca::EncryptionKeyInfoPrivate(original.d_info.object(),
                                              d_allocator_p);
     }
     else {
@@ -2242,6 +5002,9 @@ EncryptionKey& EncryptionKey::operator=(const EncryptionKey& other)
         else if (other.d_type == e_ELLIPTIC_CURVE) {
             this->makeEllipticCurve(other.d_ellipticCurve.object());
         }
+        else if (other.d_type == e_PRIVATE_KEY_INFO) {
+            this->makeInfo(other.d_info.object());
+        }
         else {
             BSLS_ASSERT(other.d_type == e_UNDEFINED);
             this->reset();
@@ -2254,12 +5017,13 @@ EncryptionKey& EncryptionKey::operator=(const EncryptionKey& other)
 void EncryptionKey::reset()
 {
     if (d_type == e_RSA) {
-        typedef ntca::EncryptionKeyRsa Type;
-        d_rsa.object().~Type();
+        d_rsa.object().~RsaType();
     }
     else if (d_type == e_ELLIPTIC_CURVE) {
-        typedef ntca::EncryptionKeyEllipticCurve Type;
-        d_ellipticCurve.object().~Type();
+        d_ellipticCurve.object().~EllipticCurveType();
+    }
+    else if (d_type == e_PRIVATE_KEY_INFO) {
+        d_info.object().~InfoType();
     }
     else {
         BSLS_ASSERT(d_type == e_UNDEFINED);
@@ -2268,36 +5032,36 @@ void EncryptionKey::reset()
     d_type = e_UNDEFINED;
 }
 
-ntca::EncryptionKeyRsa& EncryptionKey::makeRsa()
+ntca::EncryptionKeyRsaValuePrivate& EncryptionKey::makeRsa()
 {
     if (d_type == e_RSA) {
         d_rsa.object().reset();
     }
     else {
         this->reset();
-        new (d_rsa.buffer()) ntca::EncryptionKeyRsa(d_allocator_p);
+        new (d_rsa.buffer()) ntca::EncryptionKeyRsaValuePrivate(d_allocator_p);
         d_type = e_RSA;
     }
 
     return d_rsa.object();
 }
 
-ntca::EncryptionKeyRsa& EncryptionKey::makeRsa(
-    const ntca::EncryptionKeyRsa& value)
+ntca::EncryptionKeyRsaValuePrivate& EncryptionKey::makeRsa(
+    const ntca::EncryptionKeyRsaValuePrivate& value)
 {
     if (d_type == e_RSA) {
         d_rsa.object() = value;
     }
     else {
         this->reset();
-        new (d_rsa.buffer()) ntca::EncryptionKeyRsa(value, d_allocator_p);
+        new (d_rsa.buffer()) ntca::EncryptionKeyRsaValuePrivate(value, d_allocator_p);
         d_type = e_RSA;
     }
 
     return d_rsa.object();
 }
 
-ntca::EncryptionKeyEllipticCurve& EncryptionKey::makeEllipticCurve()
+ntca::EncryptionKeyEllipticCurveValuePrivate& EncryptionKey::makeEllipticCurve()
 {
     if (d_type == e_ELLIPTIC_CURVE) {
         d_ellipticCurve.object().reset();
@@ -2305,15 +5069,15 @@ ntca::EncryptionKeyEllipticCurve& EncryptionKey::makeEllipticCurve()
     else {
         this->reset();
         new (d_ellipticCurve.buffer())
-            ntca::EncryptionKeyEllipticCurve(d_allocator_p);
+            ntca::EncryptionKeyEllipticCurveValuePrivate(d_allocator_p);
         d_type = e_ELLIPTIC_CURVE;
     }
 
     return d_ellipticCurve.object();
 }
 
-ntca::EncryptionKeyEllipticCurve& EncryptionKey::makeEllipticCurve(
-    const ntca::EncryptionKeyEllipticCurve& value)
+ntca::EncryptionKeyEllipticCurveValuePrivate& EncryptionKey::makeEllipticCurve(
+    const ntca::EncryptionKeyEllipticCurveValuePrivate& value)
 {
     if (d_type == e_ELLIPTIC_CURVE) {
         d_ellipticCurve.object() = value;
@@ -2321,35 +5085,148 @@ ntca::EncryptionKeyEllipticCurve& EncryptionKey::makeEllipticCurve(
     else {
         this->reset();
         new (d_ellipticCurve.buffer())
-            ntca::EncryptionKeyEllipticCurve(value, d_allocator_p);
+            ntca::EncryptionKeyEllipticCurveValuePrivate(value, d_allocator_p);
         d_type = e_ELLIPTIC_CURVE;
     }
 
     return d_ellipticCurve.object();
 }
 
-ntca::EncryptionKeyRsa& EncryptionKey::rsa()
+ntca::EncryptionKeyInfoPrivate& EncryptionKey::makeInfo()
+{
+    if (d_type == e_PRIVATE_KEY_INFO) {
+        d_info.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_info.buffer()) ntca::EncryptionKeyInfoPrivate(d_allocator_p);
+        d_type = e_PRIVATE_KEY_INFO;
+    }
+
+    return d_info.object();
+}
+
+ntca::EncryptionKeyInfoPrivate& EncryptionKey::makeInfo(
+    const ntca::EncryptionKeyInfoPrivate& value)
+{
+    if (d_type == e_PRIVATE_KEY_INFO) {
+        d_info.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_info.buffer()) ntca::EncryptionKeyInfoPrivate(value, d_allocator_p);
+        d_type = e_PRIVATE_KEY_INFO;
+    }
+
+    return d_info.object();
+}
+
+ntca::EncryptionKeyRsaValuePrivate& EncryptionKey::rsa()
 {
     BSLS_ASSERT(d_type == e_RSA);
     return d_rsa.object();
 }
 
-ntca::EncryptionKeyEllipticCurve& EncryptionKey::ellipticCurve()
+ntca::EncryptionKeyEllipticCurveValuePrivate& EncryptionKey::ellipticCurve()
 {
     BSLS_ASSERT(d_type == e_ELLIPTIC_CURVE);
     return d_ellipticCurve.object();
 }
 
-const ntca::EncryptionKeyRsa& EncryptionKey::rsa() const
+ntca::EncryptionKeyInfoPrivate& EncryptionKey::info()
+{
+    BSLS_ASSERT(d_type == e_PRIVATE_KEY_INFO);
+    return d_info.object();
+}
+
+
+ntsa::Error EncryptionKey::decode(ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    bsl::uint64_t position = decoder->position();
+
+    this->makeInfo();
+
+    error = d_info.object().decode(decoder);
+    if (!error) {
+        return ntsa::Error();
+    }
+
+    error = decoder->seek(position);
+    if (error) {
+        return ntsa::Error();
+    }
+
+    this->makeEllipticCurve();
+
+    error = d_ellipticCurve.object().decode(decoder);
+    if (!error) {
+        return ntsa::Error();
+    }
+
+    error = decoder->seek(position);
+    if (error) {
+        return ntsa::Error();
+    }
+
+    this->makeRsa();
+
+    error = d_rsa.object().decode(decoder);
+    if (!error) {
+        return ntsa::Error();
+    }
+
+    this->reset();
+
+    return ntsa::Error(ntsa::Error::e_INVALID);
+}
+
+ntsa::Error EncryptionKey::encode(ntsa::AbstractSyntaxEncoder* encoder) const
+{
+    ntsa::Error error;
+
+    if (this->isRsa()) {
+        error = this->rsa().encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+    else if (this->isEllipticCurve()) {
+        error = this->ellipticCurve().encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+    else if (this->isInfo()) {
+        error = this->info().encode(encoder);
+        if (error) {
+            return error;
+        }
+    }
+    else {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    return ntsa::Error();
+}
+
+const ntca::EncryptionKeyRsaValuePrivate& EncryptionKey::rsa() const
 {
     BSLS_ASSERT(d_type == e_RSA);
     return d_rsa.object();
 }
 
-const ntca::EncryptionKeyEllipticCurve& EncryptionKey::ellipticCurve() const
+const ntca::EncryptionKeyEllipticCurveValuePrivate& EncryptionKey::ellipticCurve() const
 {
     BSLS_ASSERT(d_type == e_ELLIPTIC_CURVE);
     return d_ellipticCurve.object();
+}
+
+const ntca::EncryptionKeyInfoPrivate& EncryptionKey::info() const
+{
+    BSLS_ASSERT(d_type == e_PRIVATE_KEY_INFO);
+    return d_info.object();
 }
 
 bool EncryptionKey::isUndefined() const
@@ -2367,6 +5244,11 @@ bool EncryptionKey::isEllipticCurve() const
     return d_type == e_ELLIPTIC_CURVE;
 }
 
+bool EncryptionKey::isInfo() const
+{
+    return d_type == e_PRIVATE_KEY_INFO;
+}
+
 bool EncryptionKey::equals(const EncryptionKey& other) const
 {
     if (d_type != other.d_type) {
@@ -2378,6 +5260,9 @@ bool EncryptionKey::equals(const EncryptionKey& other) const
     }
     else if (d_type == e_ELLIPTIC_CURVE) {
         return d_ellipticCurve.object().equals(other.d_ellipticCurve.object());
+    }
+    else if (d_type == e_PRIVATE_KEY_INFO) {
+        return d_info.object().equals(other.d_info.object());
     }
 
     return true;
@@ -2395,6 +5280,9 @@ bool EncryptionKey::less(const EncryptionKey& other) const
     else if (d_type == e_ELLIPTIC_CURVE) {
         return d_ellipticCurve.object().less(other.d_ellipticCurve.object());
     }
+    else if (d_type == e_PRIVATE_KEY_INFO) {
+        return d_info.object().less(other.d_info.object());
+    }
 
     return true;
 }
@@ -2408,6 +5296,9 @@ bsl::ostream& EncryptionKey::print(bsl::ostream& stream,
     }
     else if (d_type == e_ELLIPTIC_CURVE) {
         return d_ellipticCurve.object().print(stream, level, spacesPerLevel);
+    }
+    else if (d_type == e_PRIVATE_KEY_INFO) {
+        return d_info.object().print(stream, level, spacesPerLevel);
     }
 
     stream << "UNDEFINED";

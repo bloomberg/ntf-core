@@ -248,7 +248,7 @@ const unsigned char k_ED448[73] = {
 
 NTCCFG_TEST_CASE(1)
 {
-    // Concern: Encode/decode RSA keys.
+    // Concern: Encode/decode RSA keys in the RSAPrivateKey ASN.1 format.
     // Plan:
 
     ntccfg::TestAllocator ta;
@@ -262,39 +262,60 @@ NTCCFG_TEST_CASE(1)
                                      sizeof test::k_RSA)
                               << NTCCFG_TEST_LOG_END;
 
-        bdlsb::FixedMemInStreamBuf isb(
+        ntca::EncryptionKeyRsaValuePrivate rsa(&ta);
+        {
+            bdlsb::FixedMemInStreamBuf isb(
             reinterpret_cast<const char*>(test::k_RSA),
             sizeof test::k_RSA);
 
-        ntsa::AbstractSyntaxDecoder decoder(&isb, &ta);
+            ntsa::AbstractSyntaxDecoder decoder(&isb, &ta);
 
-        ntca::EncryptionKeyRsa key(&ta);
-        error = key.decode(&decoder);
-        NTCCFG_TEST_OK(error);
+            error = rsa.decode(&decoder);
+            NTCCFG_TEST_OK(error);
+        }
+
+        NTCCFG_TEST_LOG_DEBUG << "Key = " << rsa << NTCCFG_TEST_LOG_END;
+
+        bdlsb::MemOutStreamBuf osb(&ta);
+        {
+            ntsa::AbstractSyntaxEncoder encoder(&osb, &ta);
+
+            error = rsa.encode(&encoder);
+            NTCCFG_TEST_OK(error);
+
+            rc = osb.pubsync();
+            NTCCFG_TEST_EQ(rc, 0);
+
+            NTCCFG_TEST_EQ(osb.length(), sizeof test::k_RSA);
+
+            rc = bsl::memcmp(osb.data(), test::k_RSA, sizeof test::k_RSA);
+            NTCCFG_TEST_EQ(rc, 0);
+        }
+
+        ntca::EncryptionKey key(&ta);
+        {
+            bdlsb::FixedMemInStreamBuf isb(
+            reinterpret_cast<const char*>(test::k_RSA),
+            sizeof test::k_RSA);
+
+            ntsa::AbstractSyntaxDecoder decoder(&isb, &ta);
+
+            error = key.decode(&decoder);
+            NTCCFG_TEST_OK(error);
+        }
 
         NTCCFG_TEST_LOG_DEBUG << "Key = " << key << NTCCFG_TEST_LOG_END;
 
-        bdlsb::MemOutStreamBuf osb(&ta);
-
-        ntsa::AbstractSyntaxEncoder encoder(&osb, &ta);
-
-        error = key.encode(&encoder);
-        NTCCFG_TEST_OK(error);
-
-        rc = osb.pubsync();
-        NTCCFG_TEST_EQ(rc, 0);
-
-        NTCCFG_TEST_EQ(osb.length(), sizeof test::k_RSA);
-
-        rc = bsl::memcmp(osb.data(), test::k_RSA, sizeof test::k_RSA);
-        NTCCFG_TEST_EQ(rc, 0);
+        NTCCFG_TEST_TRUE(key.isRsa());
+        NTCCFG_TEST_EQ(key.rsa(), rsa);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
 NTCCFG_TEST_CASE(2)
 {
-    // Concern: Encode/decode elliptic curve keys using the NIST P-256 profile.
+    // Concern: Encode/decode elliptic curve keys using the NIST P-256 profile
+    //          in the ECPrivateKey ASN.1 format.
     // Plan:
     
     ntccfg::TestAllocator ta;
@@ -308,56 +329,78 @@ NTCCFG_TEST_CASE(2)
                                      sizeof test::k_NIST_P256)
                               << NTCCFG_TEST_LOG_END;
 
-        bdlsb::FixedMemInStreamBuf isb(
+        ntca::EncryptionKeyEllipticCurveValuePrivate ellipticCurve(&ta);
+        {
+            bdlsb::FixedMemInStreamBuf isb(
             reinterpret_cast<const char*>(test::k_NIST_P256),
             sizeof test::k_NIST_P256);
 
-        ntsa::AbstractSyntaxDecoder decoder(&isb, &ta);
+            ntsa::AbstractSyntaxDecoder decoder(&isb, &ta);
 
-        ntca::EncryptionKeyEllipticCurve key(&ta);
-        error = key.decode(&decoder);
-        NTCCFG_TEST_OK(error);
+            error = ellipticCurve.decode(&decoder);
+            NTCCFG_TEST_OK(error);
+        }
+
+        NTCCFG_TEST_LOG_DEBUG << "Key = " << ellipticCurve << NTCCFG_TEST_LOG_END;
+
+        bdlsb::MemOutStreamBuf osb(&ta);
+        {
+            ntsa::AbstractSyntaxEncoder encoder(&osb, &ta);
+
+            error = ellipticCurve.encode(&encoder);
+            NTCCFG_TEST_OK(error);
+
+            rc = osb.pubsync();
+            NTCCFG_TEST_EQ(rc, 0);
+
+            NTCCFG_TEST_EQ(osb.length(), sizeof test::k_NIST_P256);
+
+            rc = bsl::memcmp(
+                osb.data(), test::k_NIST_P256, sizeof test::k_NIST_P256);
+
+            if (rc != 0) {
+                for (bsl::size_t i = 0; i < sizeof test::k_NIST_P256; ++i)
+                {
+                    bsl::uint8_t e = test::k_NIST_P256[i];
+                    bsl::uint8_t f = static_cast<bsl::uint8_t>(osb.data()[i]);
+
+                    if (f != e) {
+                        NTCCFG_TEST_LOG_ERROR 
+                            << "Mismatch at byte " << i << ":"
+                            << "\nE: " << bsl::hex << static_cast<bsl::uint32_t>(e)
+                            << "\nF: " << bsl::hex << static_cast<bsl::uint32_t>(f)
+                            << NTCCFG_TEST_LOG_END;
+                    }
+                }
+            }
+
+            NTCCFG_TEST_EQ(rc, 0);
+        }
+
+        ntca::EncryptionKey key(&ta);
+        {
+            bdlsb::FixedMemInStreamBuf isb(
+            reinterpret_cast<const char*>(test::k_NIST_P256),
+            sizeof test::k_NIST_P256);
+
+            ntsa::AbstractSyntaxDecoder decoder(&isb, &ta);
+
+            error = key.decode(&decoder);
+            NTCCFG_TEST_OK(error);
+        }
 
         NTCCFG_TEST_LOG_DEBUG << "Key = " << key << NTCCFG_TEST_LOG_END;
 
-        bdlsb::MemOutStreamBuf osb(&ta);
-
-        ntsa::AbstractSyntaxEncoder encoder(&osb, &ta);
-
-        error = key.encode(&encoder);
-        NTCCFG_TEST_OK(error);
-
-        rc = osb.pubsync();
-        NTCCFG_TEST_EQ(rc, 0);
-
-        NTCCFG_TEST_EQ(osb.length(), sizeof test::k_NIST_P256);
-
-        rc = bsl::memcmp(
-            osb.data(), test::k_NIST_P256, sizeof test::k_NIST_P256);
-
-        if (rc != 0) {
-            for (bsl::size_t i = 0; i < sizeof test::k_NIST_P256; ++i)
-            {
-                bsl::uint8_t e = test::k_NIST_P256[i];
-                bsl::uint8_t f = static_cast<bsl::uint8_t>(osb.data()[i]);
-
-                if (f != e) {
-                    NTCCFG_TEST_LOG_ERROR << "Mismatch at byte " << i << ":"
-                                          << "\nE: " << bsl::hex << static_cast<bsl::uint32_t>(e)
-                                          << "\nF: " << bsl::hex << static_cast<bsl::uint32_t>(f)
-                                          << NTCCFG_TEST_LOG_END;
-                }
-            }
-        }
-
-        NTCCFG_TEST_EQ(rc, 0);
+        NTCCFG_TEST_TRUE(key.isEllipticCurve());
+        NTCCFG_TEST_EQ(key.ellipticCurve(), ellipticCurve);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
 NTCCFG_TEST_CASE(3)
 {
-    // Concern: Encode/decode elliptic curve keys using the NIST P-384 profile.
+    // Concern: Encode/decode elliptic curve keys using the NIST P-384 profile
+    //          in the ECPrivateKey ASN.1 format.
     // Plan:
     
     ntccfg::TestAllocator ta;
@@ -371,56 +414,78 @@ NTCCFG_TEST_CASE(3)
                                      sizeof test::k_NIST_P384)
                               << NTCCFG_TEST_LOG_END;
 
-        bdlsb::FixedMemInStreamBuf isb(
+        ntca::EncryptionKeyEllipticCurveValuePrivate ellipticCurve(&ta);
+        {
+            bdlsb::FixedMemInStreamBuf isb(
             reinterpret_cast<const char*>(test::k_NIST_P384),
             sizeof test::k_NIST_P384);
 
-        ntsa::AbstractSyntaxDecoder decoder(&isb, &ta);
+            ntsa::AbstractSyntaxDecoder decoder(&isb, &ta);
 
-        ntca::EncryptionKeyEllipticCurve key(&ta);
-        error = key.decode(&decoder);
-        NTCCFG_TEST_OK(error);
+            error = ellipticCurve.decode(&decoder);
+            NTCCFG_TEST_OK(error);
+        }
+
+        NTCCFG_TEST_LOG_DEBUG << "Key = " << ellipticCurve << NTCCFG_TEST_LOG_END;
+
+        bdlsb::MemOutStreamBuf osb(&ta);
+        {
+            ntsa::AbstractSyntaxEncoder encoder(&osb, &ta);
+
+            error = ellipticCurve.encode(&encoder);
+            NTCCFG_TEST_OK(error);
+
+            rc = osb.pubsync();
+            NTCCFG_TEST_EQ(rc, 0);
+
+            NTCCFG_TEST_EQ(osb.length(), sizeof test::k_NIST_P384);
+
+            rc = bsl::memcmp(
+                osb.data(), test::k_NIST_P384, sizeof test::k_NIST_P384);
+
+            if (rc != 0) {
+                for (bsl::size_t i = 0; i < sizeof test::k_NIST_P384; ++i)
+                {
+                    bsl::uint8_t e = test::k_NIST_P384[i];
+                    bsl::uint8_t f = static_cast<bsl::uint8_t>(osb.data()[i]);
+
+                    if (f != e) {
+                        NTCCFG_TEST_LOG_ERROR 
+                            << "Mismatch at byte " << i << ":"
+                            << "\nE: " << bsl::hex << static_cast<bsl::uint32_t>(e)
+                            << "\nF: " << bsl::hex << static_cast<bsl::uint32_t>(f)
+                            << NTCCFG_TEST_LOG_END;
+                    }
+                }
+            }
+
+            NTCCFG_TEST_EQ(rc, 0);
+        }
+
+        ntca::EncryptionKey key(&ta);
+        {
+            bdlsb::FixedMemInStreamBuf isb(
+            reinterpret_cast<const char*>(test::k_NIST_P384),
+            sizeof test::k_NIST_P384);
+
+            ntsa::AbstractSyntaxDecoder decoder(&isb, &ta);
+
+            error = key.decode(&decoder);
+            NTCCFG_TEST_OK(error);
+        }
 
         NTCCFG_TEST_LOG_DEBUG << "Key = " << key << NTCCFG_TEST_LOG_END;
 
-        bdlsb::MemOutStreamBuf osb(&ta);
-
-        ntsa::AbstractSyntaxEncoder encoder(&osb, &ta);
-
-        error = key.encode(&encoder);
-        NTCCFG_TEST_OK(error);
-
-        rc = osb.pubsync();
-        NTCCFG_TEST_EQ(rc, 0);
-
-        NTCCFG_TEST_EQ(osb.length(), sizeof test::k_NIST_P384);
-
-        rc = bsl::memcmp(
-            osb.data(), test::k_NIST_P384, sizeof test::k_NIST_P384);
-
-        if (rc != 0) {
-            for (bsl::size_t i = 0; i < sizeof test::k_NIST_P384; ++i)
-            {
-                bsl::uint8_t e = test::k_NIST_P384[i];
-                bsl::uint8_t f = static_cast<bsl::uint8_t>(osb.data()[i]);
-
-                if (f != e) {
-                    NTCCFG_TEST_LOG_ERROR << "Mismatch at byte " << i << ":"
-                                          << "\nE: " << bsl::hex << static_cast<bsl::uint32_t>(e)
-                                          << "\nF: " << bsl::hex << static_cast<bsl::uint32_t>(f)
-                                          << NTCCFG_TEST_LOG_END;
-                }
-            }
-        }
-
-        NTCCFG_TEST_EQ(rc, 0);
+        NTCCFG_TEST_TRUE(key.isEllipticCurve());
+        NTCCFG_TEST_EQ(key.ellipticCurve(), ellipticCurve);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
 NTCCFG_TEST_CASE(4)
 {
-    // Concern: Encode/decode elliptic curve keys using the NIST P-521 profile.
+    // Concern: Encode/decode elliptic curve keys using the NIST P-521 profile
+    //          in the ECPrivateKey ASN.1 format.
     // Plan:
     
     ntccfg::TestAllocator ta;
@@ -434,85 +499,240 @@ NTCCFG_TEST_CASE(4)
                                      sizeof test::k_NIST_P521)
                               << NTCCFG_TEST_LOG_END;
 
-        bdlsb::FixedMemInStreamBuf isb(
+        ntca::EncryptionKeyEllipticCurveValuePrivate ellipticCurve(&ta);
+        {
+            bdlsb::FixedMemInStreamBuf isb(
             reinterpret_cast<const char*>(test::k_NIST_P521),
             sizeof test::k_NIST_P521);
 
-        ntsa::AbstractSyntaxDecoder decoder(&isb, &ta);
+            ntsa::AbstractSyntaxDecoder decoder(&isb, &ta);
 
-        ntca::EncryptionKeyEllipticCurve key(&ta);
-        error = key.decode(&decoder);
-        NTCCFG_TEST_OK(error);
+            error = ellipticCurve.decode(&decoder);
+            NTCCFG_TEST_OK(error);
+        }
+
+        NTCCFG_TEST_LOG_DEBUG << "Key = " << ellipticCurve << NTCCFG_TEST_LOG_END;
+
+        bdlsb::MemOutStreamBuf osb(&ta);
+        {
+            ntsa::AbstractSyntaxEncoder encoder(&osb, &ta);
+
+            error = ellipticCurve.encode(&encoder);
+            NTCCFG_TEST_OK(error);
+
+            rc = osb.pubsync();
+            NTCCFG_TEST_EQ(rc, 0);
+
+            NTCCFG_TEST_EQ(osb.length(), sizeof test::k_NIST_P521);
+
+            rc = bsl::memcmp(
+                osb.data(), test::k_NIST_P521, sizeof test::k_NIST_P521);
+
+            if (rc != 0) {
+                for (bsl::size_t i = 0; i < sizeof test::k_NIST_P521; ++i)
+                {
+                    bsl::uint8_t e = test::k_NIST_P521[i];
+                    bsl::uint8_t f = static_cast<bsl::uint8_t>(osb.data()[i]);
+
+                    if (f != e) {
+                        NTCCFG_TEST_LOG_ERROR 
+                            << "Mismatch at byte " << i << ":"
+                            << "\nE: " << bsl::hex << static_cast<bsl::uint32_t>(e)
+                            << "\nF: " << bsl::hex << static_cast<bsl::uint32_t>(f)
+                            << NTCCFG_TEST_LOG_END;
+                    }
+                }
+            }
+
+            NTCCFG_TEST_EQ(rc, 0);
+        }
+
+        ntca::EncryptionKey key(&ta);
+        {
+            bdlsb::FixedMemInStreamBuf isb(
+            reinterpret_cast<const char*>(test::k_NIST_P521),
+            sizeof test::k_NIST_P521);
+
+            ntsa::AbstractSyntaxDecoder decoder(&isb, &ta);
+
+            error = key.decode(&decoder);
+            NTCCFG_TEST_OK(error);
+        }
 
         NTCCFG_TEST_LOG_DEBUG << "Key = " << key << NTCCFG_TEST_LOG_END;
 
-        bdlsb::MemOutStreamBuf osb(&ta);
-
-        ntsa::AbstractSyntaxEncoder encoder(&osb, &ta);
-
-        error = key.encode(&encoder);
-        NTCCFG_TEST_OK(error);
-
-        rc = osb.pubsync();
-        NTCCFG_TEST_EQ(rc, 0);
-
-        NTCCFG_TEST_EQ(osb.length(), sizeof test::k_NIST_P521);
-
-        rc = bsl::memcmp(
-            osb.data(), test::k_NIST_P521, sizeof test::k_NIST_P521);
-
-        if (rc != 0) {
-            for (bsl::size_t i = 0; i < sizeof test::k_NIST_P521; ++i)
-            {
-                bsl::uint8_t e = test::k_NIST_P521[i];
-                bsl::uint8_t f = static_cast<bsl::uint8_t>(osb.data()[i]);
-
-                if (f != e) {
-                    NTCCFG_TEST_LOG_ERROR << "Mismatch at byte " << i << ":"
-                                          << "\nE: " << bsl::hex << static_cast<bsl::uint32_t>(e)
-                                          << "\nF: " << bsl::hex << static_cast<bsl::uint32_t>(f)
-                                          << NTCCFG_TEST_LOG_END;
-                }
-            }
-        }
-
-        NTCCFG_TEST_EQ(rc, 0);
+        NTCCFG_TEST_TRUE(key.isEllipticCurve());
+        NTCCFG_TEST_EQ(key.ellipticCurve(), ellipticCurve);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
 NTCCFG_TEST_CASE(5)
 {
-    // Concern: Encode/decode Edwards Curve ED25519.
+    // Concern: Encode/decode Edwards Curve ED25519 in the PrivateKeyInfo ASN.1
+    //          format.
     // Plan:
     
     ntccfg::TestAllocator ta;
     {
         ntsa::Error error;
+        int         rc;
 
         NTCCFG_TEST_LOG_DEBUG << "Decoding: "
                               << bdlb::PrintStringSingleLineHexDumper(
                                      (const char*)test::k_ED25519,
                                      sizeof test::k_ED25519)
                               << NTCCFG_TEST_LOG_END;
+
+        ntca::EncryptionKeyInfoPrivate privateKeyInfo(&ta);
+        {
+            bdlsb::FixedMemInStreamBuf isb(
+            reinterpret_cast<const char*>(test::k_ED25519),
+            sizeof test::k_ED25519);
+
+            ntsa::AbstractSyntaxDecoder decoder(&isb, &ta);
+
+            error = privateKeyInfo.decode(&decoder);
+            NTCCFG_TEST_OK(error);
+        }
+
+        NTCCFG_TEST_LOG_DEBUG << "Key = " << privateKeyInfo << NTCCFG_TEST_LOG_END;
+
+        bdlsb::MemOutStreamBuf osb(&ta);
+        {
+            ntsa::AbstractSyntaxEncoder encoder(&osb, &ta);
+
+            error = privateKeyInfo.encode(&encoder);
+            NTCCFG_TEST_OK(error);
+
+            rc = osb.pubsync();
+            NTCCFG_TEST_EQ(rc, 0);
+
+            NTCCFG_TEST_EQ(osb.length(), sizeof test::k_ED25519);
+
+            rc = bsl::memcmp(
+                osb.data(), test::k_ED25519, sizeof test::k_ED25519);
+
+            if (rc != 0) {
+                for (bsl::size_t i = 0; i < sizeof test::k_ED25519; ++i)
+                {
+                    bsl::uint8_t e = test::k_ED25519[i];
+                    bsl::uint8_t f = static_cast<bsl::uint8_t>(osb.data()[i]);
+
+                    if (f != e) {
+                        NTCCFG_TEST_LOG_ERROR 
+                            << "Mismatch at byte " << i << ":"
+                            << "\nE: " << bsl::hex << static_cast<bsl::uint32_t>(e)
+                            << "\nF: " << bsl::hex << static_cast<bsl::uint32_t>(f)
+                            << NTCCFG_TEST_LOG_END;
+                    }
+                }
+            }
+
+            NTCCFG_TEST_EQ(rc, 0);
+        }
+
+        ntca::EncryptionKey key(&ta);
+        {
+            bdlsb::FixedMemInStreamBuf isb(
+            reinterpret_cast<const char*>(test::k_ED25519),
+            sizeof test::k_ED25519);
+
+            ntsa::AbstractSyntaxDecoder decoder(&isb, &ta);
+
+            error = key.decode(&decoder);
+            NTCCFG_TEST_OK(error);
+        }
+
+        NTCCFG_TEST_LOG_DEBUG << "Key = " << key << NTCCFG_TEST_LOG_END;
+
+        NTCCFG_TEST_TRUE(key.isInfo());
+        NTCCFG_TEST_EQ(key.info(), privateKeyInfo);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
 NTCCFG_TEST_CASE(6)
 {
-    // Concern: Encode/decode Edwards Curve ED25519.
+    // Concern: Encode/decode Edwards Curve ED448 in the PrivateKeyInfo ASN.1
+    //          format.
     // Plan:
     
     ntccfg::TestAllocator ta;
     {
         ntsa::Error error;
+        int         rc;
 
         NTCCFG_TEST_LOG_DEBUG << "Decoding: "
                               << bdlb::PrintStringSingleLineHexDumper(
                                      (const char*)test::k_ED448,
                                      sizeof test::k_ED448)
                               << NTCCFG_TEST_LOG_END;
+
+        ntca::EncryptionKeyInfoPrivate privateKeyInfo(&ta);
+        {
+            bdlsb::FixedMemInStreamBuf isb(
+            reinterpret_cast<const char*>(test::k_ED448),
+            sizeof test::k_ED448);
+
+            ntsa::AbstractSyntaxDecoder decoder(&isb, &ta);
+
+            error = privateKeyInfo.decode(&decoder);
+            NTCCFG_TEST_OK(error);
+        }
+
+        NTCCFG_TEST_LOG_DEBUG << "Key = " << privateKeyInfo << NTCCFG_TEST_LOG_END;
+
+        bdlsb::MemOutStreamBuf osb(&ta);
+        {
+            ntsa::AbstractSyntaxEncoder encoder(&osb, &ta);
+
+            error = privateKeyInfo.encode(&encoder);
+            NTCCFG_TEST_OK(error);
+
+            rc = osb.pubsync();
+            NTCCFG_TEST_EQ(rc, 0);
+
+            NTCCFG_TEST_EQ(osb.length(), sizeof test::k_ED448);
+
+            rc = bsl::memcmp(
+                osb.data(), test::k_ED448, sizeof test::k_ED448);
+
+            if (rc != 0) {
+                for (bsl::size_t i = 0; i < sizeof test::k_ED448; ++i)
+                {
+                    bsl::uint8_t e = test::k_ED448[i];
+                    bsl::uint8_t f = static_cast<bsl::uint8_t>(osb.data()[i]);
+
+                    if (f != e) {
+                        NTCCFG_TEST_LOG_ERROR 
+                            << "Mismatch at byte " << i << ":"
+                            << "\nE: " << bsl::hex << static_cast<bsl::uint32_t>(e)
+                            << "\nF: " << bsl::hex << static_cast<bsl::uint32_t>(f)
+                            << NTCCFG_TEST_LOG_END;
+                    }
+                }
+            }
+
+            NTCCFG_TEST_EQ(rc, 0);
+        }
+
+        ntca::EncryptionKey key(&ta);
+        {
+            bdlsb::FixedMemInStreamBuf isb(
+            reinterpret_cast<const char*>(test::k_ED448),
+            sizeof test::k_ED448);
+
+            ntsa::AbstractSyntaxDecoder decoder(&isb, &ta);
+
+            error = key.decode(&decoder);
+            NTCCFG_TEST_OK(error);
+        }
+
+        NTCCFG_TEST_LOG_DEBUG << "Key = " << key << NTCCFG_TEST_LOG_END;
+
+        NTCCFG_TEST_TRUE(key.isInfo());
+        NTCCFG_TEST_EQ(key.info(), privateKeyInfo);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
