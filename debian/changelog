@@ -1,9 +1,17 @@
-ntf-core (2.3.8) unstable; urgency=low
+ntf-core (2.3.9) unstable; urgency=low
 
+  * f42b8f0 Release 2.3.9
+  * d597d26 Implement ntsu::SocketOptionUtil::get/setTcpCongestionControl on Windows, implement ntsf::System::getBlocking
+
+ -- Matt Millett <mmillett2@bloomberg.net>  Thu, 9 May 2024 08:31:51 -0400
+
+ntf-core (2.3.8) git; urgency=low
+
+  * 7262361 Release 2.3.8 to DPKG
   * 481289b Release 2.3.8
   * a604360 Encapsulate mocking test structures and functions inside a struct instead of a nested namespace
 
- -- Matt Millett <mmillett2@bloomberg.net>  Sat, 4 May 2024 10:28:40 -0400
+ -- Matt Millett <mmillett2@bloomberg.net>  Sat, 4 May 2024 10:29:44 -0400
 
 ntf-core (2.3.7) git; urgency=low
 
