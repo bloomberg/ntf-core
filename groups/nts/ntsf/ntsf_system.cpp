@@ -864,6 +864,11 @@ ntsa::Error System::getOption(ntsa::SocketOption*           option,
     return ntsu::SocketOptionUtil::getOption(option, type, socket);
 }
 
+ntsa::Error System::getBlocking(ntsa::Handle socket, bool* blocking)
+{
+    return ntsu::SocketOptionUtil::getBlocking(socket, blocking);
+}
+
 ntsa::Error System::getSourceEndpoint(ntsa::Endpoint* result,
                                       ntsa::Handle    socket)
 {
