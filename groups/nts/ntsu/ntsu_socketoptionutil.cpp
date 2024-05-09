@@ -2163,6 +2163,16 @@ ntsa::Error SocketOptionUtil::setZeroCopy(ntsa::Handle socket, bool zeroCopy)
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
+ntsa::Error SocketOptionUtil::setTcpCongestionControl(
+    ntsa::Handle                      socket,
+    const ntsa::TcpCongestionControl& algorithm)
+{
+    NTSCFG_WARNING_UNUSED(socket);
+    NTSCFG_WARNING_UNUSED(algorithm);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 ntsa::Error SocketOptionUtil::setLinger(ntsa::Handle              socket,
                                         bool                      linger,
                                         const bsls::TimeInterval& duration)
@@ -2661,6 +2671,15 @@ ntsa::Error SocketOptionUtil::getZeroCopy(bool*        zeroCopyFlag,
 
     *zeroCopyFlag = false;
 
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error SocketOptionUtil::getTcpCongestionControl(
+    ntsa::TcpCongestionControl* algorithm,
+    ntsa::Handle                socket)
+{
+    NTSCFG_WARNING_UNUSED(algorithm);
+    NTSCFG_WARNING_UNUSED(socket);
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 

@@ -573,8 +573,6 @@ NTSCFG_TEST_CASE(5)
 {
     // Concern: Resolution from default resolver explicitly installed
 
-    ntsf::SystemGuard systemGuard(ntscfg::Signal::e_PIPE);
-
     ntscfg::TestAllocator ta;
     {
         ntsa::Error error;
@@ -671,6 +669,40 @@ NTSCFG_TEST_CASE(6)
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
+NTSCFG_TEST_CASE(7)
+{
+    ntscfg::TestAllocator ta;
+    {
+        bsl::shared_ptr<ntsi::DatagramSocket> socket =
+            ntsf::System::createDatagramSocket(&ta);
+
+        ntsa::Error error = socket->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+        NTSCFG_TEST_OK(error);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+        NTSCFG_TEST_OK(ntsf::System::setBlocking(socket->handle(), true));
+
+        bool blocking = false;
+        NTSCFG_TEST_OK(ntsf::System::getBlocking(socket->handle(), &blocking));
+        NTSCFG_TEST_TRUE(blocking);
+
+        NTSCFG_TEST_OK(ntsf::System::setBlocking(socket->handle(), false));
+
+        blocking = true;
+        NTSCFG_TEST_OK(ntsf::System::getBlocking(socket->handle(), &blocking));
+        NTSCFG_TEST_FALSE(blocking);
+#else
+        bool blocking = false;
+        NTSCFG_TEST_TRUE(
+            ntsf::System::getBlocking(socket->handle(), &blocking));
+
+#endif
+
+        error = socket->close();
+        NTSCFG_TEST_OK(error);
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
 NTSCFG_TEST_DRIVER
 {
     NTSCFG_TEST_REGISTER(1);
@@ -679,5 +711,6 @@ NTSCFG_TEST_DRIVER
     NTSCFG_TEST_REGISTER(4);
     NTSCFG_TEST_REGISTER(5);
     NTSCFG_TEST_REGISTER(6);
+    NTSCFG_TEST_REGISTER(7);
 }
 NTSCFG_TEST_DRIVER_END;
