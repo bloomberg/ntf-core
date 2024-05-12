@@ -28,24 +28,24 @@ namespace ntca {
 
 EncryptionResourceOptions::EncryptionResourceOptions(
     bslma::Allocator* basicAllocator)
-: d_type()
+: d_hint(e_ANY)
+, d_type()
 , d_label(basicAllocator)
 , d_secret(basicAllocator)
 , d_secretCallback(basicAllocator)
 , d_encrypted()
-, d_flags()
 {
 }
 
 EncryptionResourceOptions::EncryptionResourceOptions(
     const EncryptionResourceOptions& original,
     bslma::Allocator*                basicAllocator)
-: d_type(original.d_type)
+: d_hint(original.d_hint)
+, d_type(original.d_type)
 , d_label(original.d_label, basicAllocator)
 , d_secret(original.d_secret, basicAllocator)
 , d_secretCallback(original.d_secretCallback, basicAllocator)
 , d_encrypted(original.d_encrypted)
-, d_flags(original.d_flags)
 {
 }
 
@@ -57,12 +57,12 @@ EncryptionResourceOptions& EncryptionResourceOptions::operator=(
     const EncryptionResourceOptions& other)
 {
     if (this != &other) {
+        d_hint           = other.d_hint;
         d_type           = other.d_type;
         d_label          = other.d_label;
         d_secret         = other.d_secret;
         d_secretCallback = other.d_secretCallback;
         d_encrypted      = other.d_encrypted;
-        d_flags          = other.d_flags;
     }
 
     return *this;
@@ -70,12 +70,17 @@ EncryptionResourceOptions& EncryptionResourceOptions::operator=(
 
 void EncryptionResourceOptions::reset()
 {
+    d_hint = e_ANY;
     d_type.reset();
     d_label.reset();
     d_secret.reset();
     d_secretCallback.reset();
     d_encrypted.reset();
-    d_flags.reset();
+}
+
+void EncryptionResourceOptions::setHint(Hint value)
+{
+    d_hint = value;
 }
 
 void EncryptionResourceOptions::setType(
@@ -103,6 +108,11 @@ void EncryptionResourceOptions::setSecretCallback(
 void EncryptionResourceOptions::setEncrypted(bool value)
 {
     d_encrypted = value;
+}
+
+EncryptionResourceOptions::Hint EncryptionResourceOptions::hint() const
+{
+    return d_hint;
 }
 
 const bdlb::NullableValue<ntca::EncryptionResourceType::Value>&
@@ -139,12 +149,20 @@ bool EncryptionResourceOptions::equals(
 {
     return d_type == other.d_type && d_label == other.d_label &&
            d_secret == other.d_secret && d_encrypted == other.d_encrypted &&
-           d_flags == other.d_flags;
+           d_hint == other.d_hint;
 }
 
 bool EncryptionResourceOptions::less(
     const EncryptionResourceOptions& other) const
 {
+    if (d_hint < other.d_hint) {
+        return true;
+    }
+
+    if (other.d_hint < d_hint) {
+        return false;
+    }
+
     if (d_type < other.d_type) {
         return true;
     }
@@ -169,15 +187,7 @@ bool EncryptionResourceOptions::less(
         return false;
     }
 
-    if (d_encrypted < other.d_encrypted) {
-        return true;
-    }
-
-    if (other.d_encrypted < d_encrypted) {
-        return false;
-    }
-
-    return d_flags < other.d_flags;
+    return d_encrypted < other.d_encrypted;
 }
 
 bsl::ostream& EncryptionResourceOptions::print(bsl::ostream& stream,
@@ -186,6 +196,10 @@ bsl::ostream& EncryptionResourceOptions::print(bsl::ostream& stream,
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
+
+    if (d_hint != e_ANY) {
+        printer.printAttribute("hint", d_hint);
+    }
 
     if (!d_type.isNull()) {
         printer.printAttribute("type", d_type);

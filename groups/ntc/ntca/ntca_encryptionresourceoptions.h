@@ -67,12 +67,29 @@ namespace ntca {
 /// @ingroup module_ntci_encryption
 class EncryptionResourceOptions
 {
+  public:
+    /// Enumerate the hints of what the resource should contain.
+    enum Hint {
+        /// The resource should contain a private key.
+        e_PRIVATE_KEY = 0,
+
+        /// The resource should contain an end-user certificate.
+        e_CERTIFICATE = 1,
+
+        /// The resource should contain one or more trusted certificate
+        /// authorities.
+        e_CERTIFICATE_AUTHORITY = 2,
+
+        /// The contents of the resource are unknown.
+        e_ANY = 3
+    };
+
+    Hint                                                     d_hint;
     bdlb::NullableValue<ntca::EncryptionResourceType::Value> d_type;
     bdlb::NullableValue<bsl::string>                         d_label;
     bdlb::NullableValue<ntca::EncryptionSecret>              d_secret;
     bdlb::NullableValue<ntca::EncryptionSecretCallback>      d_secretCallback;
     bdlb::NullableValue<bool>                                d_encrypted;
-    bdlb::NullableValue<bsl::size_t>                         d_flags;
 
   public:
     /// Create new encryption resource options having the default value.
@@ -100,6 +117,10 @@ class EncryptionResourceOptions
     /// construction.
     void reset();
 
+    /// Set the hint that aids in prioritizing the contents of the resource to
+    /// the specified 'value'.
+    void setHint(Hint value);
+
     /// Set the resource type to the specified 'value'.
     void setType(ntca::EncryptionResourceType::Value value);
 
@@ -115,6 +136,9 @@ class EncryptionResourceOptions
     /// Set the flag that indicates the resource is, or should be,
     /// symmetrically-encrypted to the specified 'value'.
     void setEncrypted(bool value);
+
+    /// Return hint that aids in prioritizing the contents of the resource.
+    Hint hint() const;
 
     /// Return the resource type.
     const bdlb::NullableValue<ntca::EncryptionResourceType::Value>& type()
@@ -208,6 +232,7 @@ void hashAppend(HASH_ALGORITHM&                  algorithm,
 {
     using bslh::hashAppend;
 
+    hashAppend(algorithm, value.hint());
     hashAppend(algorithm, value.type());
     hashAppend(algorithm, value.label());
     hashAppend(algorithm, value.secret());

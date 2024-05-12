@@ -19,9 +19,9 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntca_encryptionkey.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
-#include <ntca_encryptionkey.h>
 #include <ntsa_abstract.h>
 #include <ntsa_ipaddress.h>
 #include <ntsa_uri.h>
@@ -33,54 +33,6 @@ BSLS_IDENT("$Id: $")
 
 namespace BloombergLP {
 namespace ntca {
-
-class EncryptionCertificateVersion;
-
-class EncryptionCertificateNameAttributeIdentifierType;
-class EncryptionCertificateNameAttributeIdentifier;
-class EncryptionCertificateNameAttribute;
-class EncryptionCertificateName;
-class EncryptionCertificateNameAlternative;
-class EncryptionCertificateNameAlternativeList;
-class EncryptionCertificateNameConstraints;
-
-class EncryptionCertificateValidity;
-
-
-
-
-
-class EncryptionKeyValuePublic;
-class EncryptionKeyInfoPublic;
-
-class EncryptionCertificateSignatureAlgorithmIdentifierType;
-class EncryptionCertificateSignatureAlgorithmIdentifier;
-class EncryptionCertificateSignatureAlgorithmParameters;
-class EncryptionCertificateSignatureAlgorithm;
-class EncryptionCertificateSignature;
-
-class EncryptionCertificatePolicyConstraints;
-class EncryptionCertificatePolicyMappings;
-class EncryptionCertificatePolicy;
-class EncryptionCertificateIssuerKeyIdentifier;
-class EncryptionCertificateIssuerInformationAccess;
-class EncryptionCertificateIssuer;
-
-class EncryptionCertificateSubjectKeyUsageExtendedType;
-class EncryptionCertificateSubjectKeyUsageExtended;
-class EncryptionCertificateSubjectKeyUsageType;
-class EncryptionCertificateSubjectKeyUsage;
-class EncryptionCertificateSubjectKeyIdentifier;
-class EncryptionCertificateSubjectConstraints;
-class EncryptionCertificateSubject;
-
-class EncryptionCertificateExtensionIdentifierType;
-class EncryptionCertificateExtensionIdentifier;
-class EncryptionCertificateExtensionValue;
-class EncryptionCertificateExtension;
-class EncryptionCertificateExtensionList;
-class EncryptionCertificateEntity;
-class EncryptionCertificate;
 
 /// Describe an encryption certificate structure with an unknown composition.
 ///
@@ -778,18 +730,19 @@ class EncryptionCertificateName
 
   private:
     /// Append to the specified 'result' the values of each component having
-    /// the specified well-known attribute 'type'. Separate each value by a 
+    /// the specified well-known attribute 'type'. Separate each value by a
     /// comma followed by a space.
     void format(bsl::string* result,
                 ntca::EncryptionCertificateNameAttributeIdentifierType::Value
                     type) const;
 
     /// Append to the specified 'result' the values of each component having
-    /// the specified well-known attribute 'type'. Separate each value by a 
+    /// the specified well-known attribute 'type'. Separate each value by a
     /// dot.
-    void formatDot(bsl::string* result,
-                ntca::EncryptionCertificateNameAttributeIdentifierType::Value
-                    type) const;
+    void formatDot(
+        bsl::string*                                                  result,
+        ntca::EncryptionCertificateNameAttributeIdentifierType::Value type)
+        const;
 
   public:
     /// Create a new object having the default value. Optionally specify a
@@ -846,8 +799,7 @@ class EncryptionCertificateName
     ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
 
     /// Return the attribute sequence.
-    const bsl::vector<EncryptionCertificateNameAttribute>& attributes()
-        const;
+    const bsl::vector<EncryptionCertificateNameAttribute>& attributes() const;
 
     /// Return the concatenation of all standard attributes, or the empty
     /// string if the name contains no standard attributes.
@@ -912,6 +864,14 @@ class EncryptionCertificateName
     /// Return the concatenation of all email attributes, or the empty string
     /// if the name contains no email attributes.
     bsl::string email() const;
+
+    /// Return true if the certificate is authentic for a request to the
+    /// specified 'domainName', otherwise return false.
+    bool matchesDomainName(const bsl::string& domainName) const;
+
+    /// Return true if the certificate is authentic for a request to the
+    /// specified 'ipAddress', otherwise return false.
+    bool matchesIpAddress(const ntsa::IpAddress& ipAddress) const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -1255,6 +1215,14 @@ class EncryptionCertificateNameAlternative
     /// otherwise return false.
     bool isIdentifier() const;
 
+    /// Return true if the certificate is authentic for a request to the
+    /// specified 'domainName', otherwise return false.
+    bool matchesDomainName(const bsl::string& domainName) const;
+
+    /// Return true if the certificate is authentic for a request to the
+    /// specified 'ipAddress', otherwise return false.
+    bool matchesIpAddress(const ntsa::IpAddress& ipAddress) const;
+
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
     bool equals(const EncryptionCertificateNameAlternative& other) const;
@@ -1416,7 +1384,16 @@ class EncryptionCertificateNameAlternativeList
     ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
 
     /// Return the vector of name alternatives.
-    const bsl::vector<EncryptionCertificateNameAlternative>& alternatives() const;
+    const bsl::vector<EncryptionCertificateNameAlternative>& alternatives()
+        const;
+
+    /// Return true if the certificate is authentic for a request to the
+    /// specified 'domainName', otherwise return false.
+    bool matchesDomainName(const bsl::string& domainName) const;
+
+    /// Return true if the certificate is authentic for a request to the
+    /// specified 'ipAddress', otherwise return false.
+    bool matchesIpAddress(const ntsa::IpAddress& ipAddress) const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -1792,11 +1769,6 @@ void hashAppend(HASH_ALGORITHM&                      algorithm,
 {
     value.hash(algorithm);
 }
-
-
-
-
-
 
 /// Enumerate the well-known encryption certificate signature algorithm types.
 ///
@@ -3218,6 +3190,14 @@ class EncryptionCertificateIssuer
     /// Return the name.
     const ntca::EncryptionCertificateName& name() const;
 
+    /// Return true if the certificate is authentic for a request to the
+    /// specified 'domainName', otherwise return false.
+    bool matchesDomainName(const bsl::string& domainName) const;
+
+    /// Return true if the certificate is authentic for a request to the
+    /// specified 'ipAddress', otherwise return false.
+    bool matchesIpAddress(const ntsa::IpAddress& ipAddress) const;
+
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
     bool equals(const EncryptionCertificateIssuer& other) const;
@@ -4099,6 +4079,14 @@ class EncryptionCertificateSubject
 
     /// Return the name.
     const ntca::EncryptionCertificateName& name() const;
+
+    /// Return true if the certificate is authentic for a request to the
+    /// specified 'domainName', otherwise return false.
+    bool matchesDomainName(const bsl::string& domainName) const;
+
+    /// Return true if the certificate is authentic for a request to the
+    /// specified 'ipAddress', otherwise return false.
+    bool matchesIpAddress(const ntsa::IpAddress& ipAddress) const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -5261,6 +5249,19 @@ class EncryptionCertificateExtensionList
     /// Encode this object using the specified 'encoder'. Return the error.
     ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
 
+    /// Return true if the certificate is a certificate authority, i.e. it
+    /// is granted permission to authenticate and sign intermediate
+    /// certificates or end-user certificates, otherwise return false.
+    bool isAuthority() const;
+
+    /// Return true if the certificate is authentic for a request to the
+    /// specified 'domainName', otherwise return false.
+    bool matchesDomainName(const bsl::string& domainName) const;
+
+    /// Return true if the certificate is authentic for a request to the
+    /// specified 'ipAddress', otherwise return false.
+    bool matchesIpAddress(const ntsa::IpAddress& ipAddress) const;
+
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
     bool equals(const EncryptionCertificateExtensionList& other) const;
@@ -5349,8 +5350,41 @@ void hashAppend(HASH_ALGORITHM&                           algorithm,
     value.hash(algorithm);
 }
 
-/// Describe a certificate of identity and authenticity as used in public key
-/// cryptography.
+/// Describes an un-verified certificate of identity and authenticity as used
+/// in public key cryptography.
+///
+/// @par Attributes
+/// This class is composed of the following attributes.
+///
+/// @li @b serialNumber:
+/// The unique number assigned to the certificate.
+///
+/// @li @b subject:
+/// The subject of the certificate.
+///
+/// @li @b subjectUniqueId:
+/// The unique identifier of the subject.
+///
+/// @li @b subjectPublicKeyInfo:
+/// The subject's public key.
+///
+/// @li @b issuer:
+/// The issuer of the certificate.
+///
+/// @li @b issuerUniqueId:
+/// The unique identifier of the issuer.
+///
+/// @li @b extensionList:
+/// The list of extensions that futher define properties of the certificate.
+///
+/// @li @b validity:
+/// The date/time interval in which the certificate is valid.
+///
+/// @li @b signatureAlgorithm:
+/// The algorithm used to sign the certificate.
+///
+/// @li @b signature:
+/// The signature of the certificate that proves its authenticity.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -5368,7 +5402,7 @@ class EncryptionCertificateEntity
     ntca::EncryptionCertificateIssuer             d_issuer;
     ntca::EncryptionCertificateValidity           d_validity;
     ntca::EncryptionCertificateSubject            d_subject;
-    ntca::EncryptionKeyInfoPublic      d_subjectPublicKeyInfo;
+    ntca::EncryptionKeyInfoPublic                 d_subjectPublicKeyInfo;
     bdlb::NullableValue<UniqueIdentifier>         d_issuerUniqueId;
     bdlb::NullableValue<UniqueIdentifier>         d_subjectUniqueId;
     bdlb::NullableValue<ExtensionList>            d_extensionList;
@@ -5398,57 +5432,11 @@ class EncryptionCertificateEntity
     /// construction.
     void reset();
 
-    // MRM
-#if 0
-    /// Set the serial number to the specified 'value'.
-    void setSerialNumber(int value);
-
-    /// Set the start time from which the certificate is valid to the
-    /// specified 'value'.
-    void setStartTime(const bdlt::DatetimeTz& value);
-
-    /// Set the expiration time at which the certificate is no longer valid
-    /// to the specified 'value'.
-    void setExpirationTime(const bdlt::DatetimeTz& value);
-
-    /// Set the flag that indicates the certificate is a certificate
-    /// authority according to the specified 'value'.
-    void setAuthority(bool value);
-
-    /// Set the domain names for which the certificate is valid to the
-    /// specified 'value'.
-    void setHostList(const bsl::vector<bsl::string>& value);
-
-    /// Add the specified 'value' to the list of domain names for which the
-    /// certificate is valid.
-    void addHost(const bsl::string& value);
-#endif
-
     /// Decode this object using the specified 'decoder'. Return the error.
     ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
 
     /// Encode this object using the specified 'encoder'. Return the error.
     ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
-
-    // MRM
-#if 0
-    /// Return the serial number.
-    int serialNumber() const;
-
-    /// Return the start time from which the certificate is valid.
-    const bdlt::DatetimeTz& startTime() const;
-
-    /// Return the expiration time at which the certificate is no longer
-    /// valid.
-    const bdlt::DatetimeTz& expirationTime() const;
-
-    /// Return flag that indicates the certificate is a certificate
-    /// authority.
-    bool authority() const;
-
-    /// Return the domain names for which the certificate is valid.
-    const bsl::vector<bsl::string>& hosts() const;
-#endif
 
     /// Return the serial number.
     const ntsa::AbstractInteger& serialNumber() const;
@@ -5461,8 +5449,7 @@ class EncryptionCertificateEntity
         const;
 
     /// Return the subject's public key information.
-    const ntca::EncryptionKeyInfoPublic& subjectPublicKeyInfo()
-        const;
+    const ntca::EncryptionKeyInfoPublic& subjectPublicKeyInfo() const;
 
     // Return the issuer.
     const ntca::EncryptionCertificateIssuer& issuer() const;
@@ -5480,6 +5467,19 @@ class EncryptionCertificateEntity
     /// Return the signature algorithm.
     const ntca::EncryptionCertificateSignatureAlgorithm& signatureAlgorithm()
         const;
+
+    /// Return true if the certificate is a certificate authority, i.e. it
+    /// is granted permission to authenticate and sign intermediate
+    /// certificates or end-user certificates, otherwise return false.
+    bool isAuthority() const;
+
+    /// Return true if the certificate is authentic for a request to the
+    /// specified 'domainName', otherwise return false.
+    bool matchesDomainName(const bsl::string& domainName) const;
+
+    /// Return true if the certificate is authentic for a request to the
+    /// specified 'ipAddress', otherwise return false.
+    bool matchesIpAddress(const ntsa::IpAddress& ipAddress) const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -5575,8 +5575,8 @@ void hashAppend(HASH_ALGORITHM&                    algorithm,
     value.hash(algorithm);
 }
 
-/// Describe a certificate of identity and authenticity as used in public key
-/// cryptography.
+/// Describes a verified certificate of identity and authenticity as used in
+/// public key cryptography.
 ///
 /// @par Attributes
 /// This class is composed of the following attributes.
@@ -5584,18 +5584,32 @@ void hashAppend(HASH_ALGORITHM&                    algorithm,
 /// @li @b serialNumber:
 /// The unique number assigned to the certificate.
 ///
-/// @li @b startTime:
-/// The starting time from which the certificate is valid.
+/// @li @b subject:
+/// The subject of the certificate.
 ///
-/// @li @b expirationTime:
-/// The time at which the certificate expires.
+/// @li @b subjectUniqueId:
+/// The unique identifier of the subject.
 ///
-/// @li @b authority:
-/// The flag that indicates the certificate is a Certficate Authority (CA).
+/// @li @b subjectPublicKeyInfo:
+/// The subject's public key.
 ///
-/// @li @b hosts:
-/// The list of domain names for which the certificate is valid (i.e., the
-/// subject alternative names.)
+/// @li @b issuer:
+/// The issuer of the certificate.
+///
+/// @li @b issuerUniqueId:
+/// The unique identifier of the issuer.
+///
+/// @li @b extensionList:
+/// The list of extensions that futher define properties of the certificate.
+///
+/// @li @b validity:
+/// The date/time interval in which the certificate is valid.
+///
+/// @li @b signatureAlgorithm:
+/// The algorithm used to sign the certificate.
+///
+/// @li @b signature:
+/// The signature of the certificate that proves its authenticity.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -5631,57 +5645,11 @@ class EncryptionCertificate
     /// construction.
     void reset();
 
-    // MRM
-#if 0
-    /// Set the serial number to the specified 'value'.
-    void setSerialNumber(int value);
-
-    /// Set the start time from which the certificate is valid to the
-    /// specified 'value'.
-    void setStartTime(const bdlt::DatetimeTz& value);
-
-    /// Set the expiration time at which the certificate is no longer valid
-    /// to the specified 'value'.
-    void setExpirationTime(const bdlt::DatetimeTz& value);
-
-    /// Set the flag that indicates the certificate is a certificate
-    /// authority according to the specified 'value'.
-    void setAuthority(bool value);
-
-    /// Set the domain names for which the certificate is valid to the
-    /// specified 'value'.
-    void setHostList(const bsl::vector<bsl::string>& value);
-
-    /// Add the specified 'value' to the list of domain names for which the
-    /// certificate is valid.
-    void addHost(const bsl::string& value);
-#endif
-
     /// Decode this object using the specified 'decoder'. Return the error.
     ntsa::Error decode(ntsa::AbstractSyntaxDecoder* decoder);
 
     /// Encode this object using the specified 'encoder'. Return the error.
     ntsa::Error encode(ntsa::AbstractSyntaxEncoder* encoder) const;
-
-    // MRM
-#if 0
-    /// Return the serial number.
-    int serialNumber() const;
-
-    /// Return the start time from which the certificate is valid.
-    const bdlt::DatetimeTz& startTime() const;
-
-    /// Return the expiration time at which the certificate is no longer
-    /// valid.
-    const bdlt::DatetimeTz& expirationTime() const;
-
-    /// Return flag that indicates the certificate is a certificate
-    /// authority.
-    bool authority() const;
-
-    /// Return the domain names for which the certificate is valid.
-    const bsl::vector<bsl::string>& hosts() const;
-#endif
 
     /// Return the certificate entity.
     const ntca::EncryptionCertificateEntity& entity() const;
@@ -5697,8 +5665,7 @@ class EncryptionCertificate
         const;
 
     /// Return the subject's public key information.
-    const ntca::EncryptionKeyInfoPublic& subjectPublicKeyInfo()
-        const;
+    const ntca::EncryptionKeyInfoPublic& subjectPublicKeyInfo() const;
 
     // Return the issuer.
     const ntca::EncryptionCertificateIssuer& issuer() const;
@@ -5719,6 +5686,19 @@ class EncryptionCertificate
 
     /// Return the certificate signature value.
     const ntca::EncryptionCertificateSignature& signature() const;
+
+    /// Return true if the certificate is a certificate authority, i.e. it
+    /// is granted permission to authenticate and sign intermediate
+    /// certificates or end-user certificates, otherwise return false.
+    bool isAuthority() const;
+
+    /// Return true if the certificate is authentic for a request to the
+    /// specified 'domainName', otherwise return false.
+    bool matchesDomainName(const bsl::string& domainName) const;
+
+    /// Return true if the certificate is authentic for a request to the
+    /// specified 'ipAddress', otherwise return false.
+    bool matchesIpAddress(const ntsa::IpAddress& ipAddress) const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -5812,6 +5792,94 @@ void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionCertificate& value)
 {
     value.hash(algorithm);
 }
+
+/// Provide utilities for certificates.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntci_encryption
+class EncryptionCertificateUtil
+{
+  public:
+    /// Return true if the specified 'requested' domain name or IP address
+    /// matches the specified 'certified' domain name or IP address, otherwise
+    /// return false.
+    static bool matches(const bsl::string& requested,
+                        const bsl::string& certified);
+
+    /// Return true if the specified 'requested' domain name or IP address
+    /// matches the specified 'certified' IP address, otherwise return false.
+    static bool matches(const bsl::string&     requested,
+                        const ntsa::IpAddress& certified);
+
+    /// Return true if the specified 'requested' domain name or IP address
+    /// matches the specified 'certified' URI, otherwise return false.
+    static bool matches(const bsl::string& requested,
+                        const ntsa::Uri&   certified);
+
+    /// Return true if the specified 'requested' endpoint matches the specified
+    /// 'certified' domain name or IP address, otherwise return false.
+    static bool matches(const ntsa::Endpoint& requested,
+                        const bsl::string&    certified);
+
+    /// Return true if the specified 'requested' endpoint matches the specified
+    /// 'certified' IP address, otherwise return false.
+    static bool matches(const ntsa::Endpoint&  requested,
+                        const ntsa::IpAddress& certified);
+
+    /// Return true if the specified 'requested' endpoint matches the specified
+    /// 'certified' URI, otherwise return false.
+    static bool matches(const ntsa::Endpoint& requested,
+                        const ntsa::Uri&      certified);
+
+    /// Return true if the specified 'requested' IP address matches the
+    /// specified 'certified' domain name or IP address , otherwise return
+    /// false.
+    static bool matches(const ntsa::IpAddress& requested,
+                        const bsl::string&     certified);
+
+    /// Return true if the specified 'requested' IP address matches the
+    /// specified 'certified' IP address, otherwise return false.
+    static bool matches(const ntsa::IpAddress& requested,
+                        const ntsa::IpAddress& certified);
+
+    /// Return true if the specified 'requested' IP address matches the
+    /// specified 'certified' URI, otherwise return false.
+    static bool matches(const ntsa::IpAddress& requested,
+                        const ntsa::Uri&       certified);
+
+    /// Return true if the specified 'requested' local name matches the
+    /// specified 'certified' domain name or IP address, otherwise return
+    /// false.
+    static bool matches(const ntsa::LocalName& requested,
+                        const bsl::string&     certified);
+
+    /// Return true if the specified 'requested' local name matches the
+    /// specified 'certified' IP address, otherwise return false.
+    static bool matches(const ntsa::LocalName& requested,
+                        const ntsa::IpAddress& certified);
+
+    /// Return true if the specified 'requested' local name matches the
+    /// specified 'certified' URI, otherwise return false.
+    static bool matches(const ntsa::LocalName& requested,
+                        const ntsa::Uri&       certified);
+
+    /// Return true if the specified 'requested' URI matches the specified
+    /// 'certified' domain name or IP address, otherwise return false.
+    static bool matches(const ntsa::Uri&   requested,
+                        const bsl::string& certified);
+
+    /// Return true if the specified 'requested' URI matches the specified
+    /// 'certified' IP address, otherwise return false.
+    static bool matches(const ntsa::Uri&       requested,
+                        const ntsa::IpAddress& certified);
+
+    /// Return true if the specified 'requested' URI matches the specified
+    /// 'certified' URI, otherwise return false.
+    static bool matches(const ntsa::Uri& requested,
+                        const ntsa::Uri& certified);
+};
 
 }  // close package namespace
 }  // close enterprise namespace

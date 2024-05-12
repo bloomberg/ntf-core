@@ -59,33 +59,28 @@ const ntsa::AbstractSyntaxTagNumber::Value k_OCTET_STRING =
 const ntsa::AbstractSyntaxTagNumber::Value k_OBJECT_IDENTIFIER =
     ntsa::AbstractSyntaxTagNumber::e_OBJECT_IDENTIFIER;
 
-} // close unnamed namespace
+}  // close unnamed namespace
 
-
-EncryptionKeyRsaParameters::
-    EncryptionKeyRsaParameters(
-        bslma::Allocator* basicAllocator)
+EncryptionKeyRsaParameters::EncryptionKeyRsaParameters(
+    bslma::Allocator* basicAllocator)
 : d_value(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionKeyRsaParameters::
-    EncryptionKeyRsaParameters(
-        const EncryptionKeyRsaParameters& original,
-        bslma::Allocator* basicAllocator)
+EncryptionKeyRsaParameters::EncryptionKeyRsaParameters(
+    const EncryptionKeyRsaParameters& original,
+    bslma::Allocator*                 basicAllocator)
 : d_value(original.d_value, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionKeyRsaParameters::
-    ~EncryptionKeyRsaParameters()
+EncryptionKeyRsaParameters::~EncryptionKeyRsaParameters()
 {
 }
 
-EncryptionKeyRsaParameters&
-EncryptionKeyRsaParameters::operator=(
+EncryptionKeyRsaParameters& EncryptionKeyRsaParameters::operator=(
     const EncryptionKeyRsaParameters& other)
 {
     if (this != &other) {
@@ -158,10 +153,9 @@ bool EncryptionKeyRsaParameters::less(
     return d_value < other.d_value;
 }
 
-bsl::ostream& EncryptionKeyRsaParameters::print(
-    bsl::ostream& stream,
-    int           level,
-    int           spacesPerLevel) const
+bsl::ostream& EncryptionKeyRsaParameters::print(bsl::ostream& stream,
+                                                int           level,
+                                                int spacesPerLevel) const
 {
     if (d_value.tagClass() == k_UNIVERSAL &&
         d_value.tagType() == k_PRIMITIVE && d_value.tagNumber() == k_NULL)
@@ -175,23 +169,20 @@ bsl::ostream& EncryptionKeyRsaParameters::print(
     return stream;
 }
 
-bsl::ostream& operator<<(
-    bsl::ostream&                                               stream,
-    const EncryptionKeyRsaParameters& object)
+bsl::ostream& operator<<(bsl::ostream&                     stream,
+                         const EncryptionKeyRsaParameters& object)
 {
     return object.print(stream, 0, -1);
 }
 
-bool operator==(
-    const EncryptionKeyRsaParameters& lhs,
-    const EncryptionKeyRsaParameters& rhs)
+bool operator==(const EncryptionKeyRsaParameters& lhs,
+                const EncryptionKeyRsaParameters& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(
-    const EncryptionKeyRsaParameters& lhs,
-    const EncryptionKeyRsaParameters& rhs)
+bool operator!=(const EncryptionKeyRsaParameters& lhs,
+                const EncryptionKeyRsaParameters& rhs)
 {
     return !operator==(lhs, rhs);
 }
@@ -201,7 +192,6 @@ bool operator<(const EncryptionKeyRsaParameters& lhs,
 {
     return lhs.less(rhs);
 }
-
 
 EncryptionKeyRsaValuePrivateExtra::EncryptionKeyRsaValuePrivateExtra(
     bslma::Allocator* basicAllocator)
@@ -214,7 +204,7 @@ EncryptionKeyRsaValuePrivateExtra::EncryptionKeyRsaValuePrivateExtra(
 
 EncryptionKeyRsaValuePrivateExtra::EncryptionKeyRsaValuePrivateExtra(
     const EncryptionKeyRsaValuePrivateExtra& original,
-    bslma::Allocator*                  basicAllocator)
+    bslma::Allocator*                        basicAllocator)
 : d_prime(original.d_prime, basicAllocator)
 , d_exponent(original.d_exponent, basicAllocator)
 , d_coefficient(original.d_coefficient, basicAllocator)
@@ -226,12 +216,12 @@ EncryptionKeyRsaValuePrivateExtra::~EncryptionKeyRsaValuePrivateExtra()
 {
 }
 
-EncryptionKeyRsaValuePrivateExtra& EncryptionKeyRsaValuePrivateExtra::operator=(
-    const EncryptionKeyRsaValuePrivateExtra& other)
+EncryptionKeyRsaValuePrivateExtra& EncryptionKeyRsaValuePrivateExtra::
+operator=(const EncryptionKeyRsaValuePrivateExtra& other)
 {
     if (this != &other) {
-        d_prime = other.d_prime;
-        d_exponent = other.d_exponent;
+        d_prime       = other.d_prime;
+        d_exponent    = other.d_exponent;
         d_coefficient = other.d_coefficient;
     }
 
@@ -245,18 +235,20 @@ void EncryptionKeyRsaValuePrivateExtra::reset()
     d_coefficient.reset();
 }
 
-void EncryptionKeyRsaValuePrivateExtra::setPrime(const ntsa::AbstractInteger& value)
+void EncryptionKeyRsaValuePrivateExtra::setPrime(
+    const ntsa::AbstractInteger& value)
 {
     d_prime = value;
 }
 
-void EncryptionKeyRsaValuePrivateExtra::setExponent(const ntsa::AbstractInteger& value)
+void EncryptionKeyRsaValuePrivateExtra::setExponent(
+    const ntsa::AbstractInteger& value)
 {
     d_exponent = value;
 }
 
-
-void EncryptionKeyRsaValuePrivateExtra::setCoefficient(const ntsa::AbstractInteger& value)
+void EncryptionKeyRsaValuePrivateExtra::setCoefficient(
+    const ntsa::AbstractInteger& value)
 {
     d_coefficient = value;
 }
@@ -404,12 +396,14 @@ const ntsa::AbstractInteger& EncryptionKeyRsaValuePrivateExtra::prime() const
     return d_prime;
 }
 
-const ntsa::AbstractInteger& EncryptionKeyRsaValuePrivateExtra::exponent() const
+const ntsa::AbstractInteger& EncryptionKeyRsaValuePrivateExtra::exponent()
+    const
 {
     return d_exponent;
 }
 
-const ntsa::AbstractInteger& EncryptionKeyRsaValuePrivateExtra::coefficient() const
+const ntsa::AbstractInteger& EncryptionKeyRsaValuePrivateExtra::coefficient()
+    const
 {
     return d_coefficient;
 }
@@ -417,7 +411,8 @@ const ntsa::AbstractInteger& EncryptionKeyRsaValuePrivateExtra::coefficient() co
 bool EncryptionKeyRsaValuePrivateExtra::equals(
     const EncryptionKeyRsaValuePrivateExtra& other) const
 {
-    return d_prime == other.d_prime && d_exponent == other.d_exponent && d_coefficient == other.d_coefficient;
+    return d_prime == other.d_prime && d_exponent == other.d_exponent &&
+           d_coefficient == other.d_coefficient;
 }
 
 bool EncryptionKeyRsaValuePrivateExtra::less(
@@ -442,9 +437,10 @@ bool EncryptionKeyRsaValuePrivateExtra::less(
     return d_coefficient < other.d_coefficient;
 }
 
-bsl::ostream& EncryptionKeyRsaValuePrivateExtra::print(bsl::ostream& stream,
-                                                 int           level,
-                                                 int spacesPerLevel) const
+bsl::ostream& EncryptionKeyRsaValuePrivateExtra::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -455,7 +451,7 @@ bsl::ostream& EncryptionKeyRsaValuePrivateExtra::print(bsl::ostream& stream,
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                      stream,
+bsl::ostream& operator<<(bsl::ostream&                            stream,
                          const EncryptionKeyRsaValuePrivateExtra& object)
 {
     return object.print(stream, 0, -1);
@@ -479,17 +475,8 @@ bool operator<(const EncryptionKeyRsaValuePrivateExtra& lhs,
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-EncryptionKeyRsaValuePrivate::EncryptionKeyRsaValuePrivate(bslma::Allocator* basicAllocator)
+EncryptionKeyRsaValuePrivate::EncryptionKeyRsaValuePrivate(
+    bslma::Allocator* basicAllocator)
 : d_version(basicAllocator)
 , d_modulus(basicAllocator)
 , d_encryptionExponent(basicAllocator)
@@ -503,8 +490,9 @@ EncryptionKeyRsaValuePrivate::EncryptionKeyRsaValuePrivate(bslma::Allocator* bas
 {
 }
 
-EncryptionKeyRsaValuePrivate::EncryptionKeyRsaValuePrivate(const EncryptionKeyRsaValuePrivate& original,
-                                   bslma::Allocator*       basicAllocator)
+EncryptionKeyRsaValuePrivate::EncryptionKeyRsaValuePrivate(
+    const EncryptionKeyRsaValuePrivate& original,
+    bslma::Allocator*                   basicAllocator)
 : d_version(original.d_version, basicAllocator)
 , d_modulus(original.d_modulus, basicAllocator)
 , d_encryptionExponent(original.d_encryptionExponent, basicAllocator)
@@ -523,19 +511,20 @@ EncryptionKeyRsaValuePrivate::~EncryptionKeyRsaValuePrivate()
 {
 }
 
-EncryptionKeyRsaValuePrivate& EncryptionKeyRsaValuePrivate::operator=(const EncryptionKeyRsaValuePrivate& other)
+EncryptionKeyRsaValuePrivate& EncryptionKeyRsaValuePrivate::operator=(
+    const EncryptionKeyRsaValuePrivate& other)
 {
     if (this != &other) {
-        d_version         = other.d_version;
-        d_modulus         = other.d_modulus;
-        d_encryptionExponent  = other.d_encryptionExponent;
+        d_version            = other.d_version;
+        d_modulus            = other.d_modulus;
+        d_encryptionExponent = other.d_encryptionExponent;
         d_decryptionExponent = other.d_decryptionExponent;
-        d_prime1          = other.d_prime1;
-        d_prime2          = other.d_prime2;
-        d_exponent1       = other.d_exponent1;
-        d_exponent2       = other.d_exponent2;
-        d_coefficient     = other.d_coefficient;
-        d_extra  = other.d_extra;
+        d_prime1             = other.d_prime1;
+        d_prime2             = other.d_prime2;
+        d_exponent1          = other.d_exponent1;
+        d_exponent2          = other.d_exponent2;
+        d_coefficient        = other.d_coefficient;
+        d_extra              = other.d_extra;
     }
 
     return *this;
@@ -555,47 +544,56 @@ void EncryptionKeyRsaValuePrivate::reset()
     d_extra.clear();
 }
 
-void EncryptionKeyRsaValuePrivate::setVersion(const ntsa::AbstractInteger& value)
+void EncryptionKeyRsaValuePrivate::setVersion(
+    const ntsa::AbstractInteger& value)
 {
     d_version = value;
 }
 
-void EncryptionKeyRsaValuePrivate::setModulus(const ntsa::AbstractInteger& value)
+void EncryptionKeyRsaValuePrivate::setModulus(
+    const ntsa::AbstractInteger& value)
 {
     d_modulus = value;
 }
 
-void EncryptionKeyRsaValuePrivate::setEncryptionExponent(const ntsa::AbstractInteger& value)
+void EncryptionKeyRsaValuePrivate::setEncryptionExponent(
+    const ntsa::AbstractInteger& value)
 {
     d_encryptionExponent = value;
 }
 
-void EncryptionKeyRsaValuePrivate::setDecryptionExponent(const ntsa::AbstractInteger& value)
+void EncryptionKeyRsaValuePrivate::setDecryptionExponent(
+    const ntsa::AbstractInteger& value)
 {
     d_decryptionExponent = value;
 }
 
-void EncryptionKeyRsaValuePrivate::setPrime1(const ntsa::AbstractInteger& value)
+void EncryptionKeyRsaValuePrivate::setPrime1(
+    const ntsa::AbstractInteger& value)
 {
     d_prime1 = value;
 }
 
-void EncryptionKeyRsaValuePrivate::setPrime2(const ntsa::AbstractInteger& value)
+void EncryptionKeyRsaValuePrivate::setPrime2(
+    const ntsa::AbstractInteger& value)
 {
     d_prime2 = value;
 }
 
-void EncryptionKeyRsaValuePrivate::setExponent1(const ntsa::AbstractInteger& value)
+void EncryptionKeyRsaValuePrivate::setExponent1(
+    const ntsa::AbstractInteger& value)
 {
     d_exponent1 = value;
 }
 
-void EncryptionKeyRsaValuePrivate::setExponent2(const ntsa::AbstractInteger& value)
+void EncryptionKeyRsaValuePrivate::setExponent2(
+    const ntsa::AbstractInteger& value)
 {
     d_exponent2 = value;
 }
 
-void EncryptionKeyRsaValuePrivate::setCoefficient(const ntsa::AbstractInteger& value)
+void EncryptionKeyRsaValuePrivate::setCoefficient(
+    const ntsa::AbstractInteger& value)
 {
     d_coefficient = value;
 }
@@ -606,12 +604,14 @@ void EncryptionKeyRsaValuePrivate::setExtra(
     d_extra = value;
 }
 
-void EncryptionKeyRsaValuePrivate::addExtra(const ntca::EncryptionKeyRsaValuePrivateExtra& value)
+void EncryptionKeyRsaValuePrivate::addExtra(
+    const ntca::EncryptionKeyRsaValuePrivateExtra& value)
 {
     d_extra.push_back(value);
 }
 
-ntsa::Error EncryptionKeyRsaValuePrivate::decode(ntsa::AbstractSyntaxDecoder* decoder)
+ntsa::Error EncryptionKeyRsaValuePrivate::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
 {
     ntsa::Error error;
 
@@ -804,7 +804,8 @@ ntsa::Error EncryptionKeyRsaValuePrivate::decode(ntsa::AbstractSyntaxDecoder* de
     return ntsa::Error();
 }
 
-ntsa::Error EncryptionKeyRsaValuePrivate::encode(ntsa::AbstractSyntaxEncoder* encoder) const
+ntsa::Error EncryptionKeyRsaValuePrivate::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
 {
     ntsa::Error error;
 
@@ -1005,12 +1006,14 @@ const ntsa::AbstractInteger& EncryptionKeyRsaValuePrivate::modulus() const
     return d_modulus;
 }
 
-const ntsa::AbstractInteger& EncryptionKeyRsaValuePrivate::encryptionExponent() const
+const ntsa::AbstractInteger& EncryptionKeyRsaValuePrivate::encryptionExponent()
+    const
 {
     return d_encryptionExponent;
 }
 
-const ntsa::AbstractInteger& EncryptionKeyRsaValuePrivate::decryptionExponent() const
+const ntsa::AbstractInteger& EncryptionKeyRsaValuePrivate::decryptionExponent()
+    const
 {
     return d_decryptionExponent;
 }
@@ -1040,12 +1043,14 @@ const ntsa::AbstractInteger& EncryptionKeyRsaValuePrivate::coefficient() const
     return d_coefficient;
 }
 
-const bsl::vector<ntca::EncryptionKeyRsaValuePrivateExtra>& EncryptionKeyRsaValuePrivate::extra() const
+const bsl::vector<ntca::EncryptionKeyRsaValuePrivateExtra>&
+EncryptionKeyRsaValuePrivate::extra() const
 {
     return d_extra;
 }
 
-bool EncryptionKeyRsaValuePrivate::equals(const EncryptionKeyRsaValuePrivate& other) const
+bool EncryptionKeyRsaValuePrivate::equals(
+    const EncryptionKeyRsaValuePrivate& other) const
 {
     return d_version == other.d_version && d_modulus == other.d_modulus &&
            d_encryptionExponent == other.d_encryptionExponent &&
@@ -1053,11 +1058,11 @@ bool EncryptionKeyRsaValuePrivate::equals(const EncryptionKeyRsaValuePrivate& ot
            d_prime1 == other.d_prime1 && d_prime2 == other.d_prime2 &&
            d_exponent1 == other.d_exponent1 &&
            d_exponent2 == other.d_exponent2 &&
-           d_coefficient == other.d_coefficient &&
-           d_extra == other.d_extra;
+           d_coefficient == other.d_coefficient && d_extra == other.d_extra;
 }
 
-bool EncryptionKeyRsaValuePrivate::less(const EncryptionKeyRsaValuePrivate& other) const
+bool EncryptionKeyRsaValuePrivate::less(
+    const EncryptionKeyRsaValuePrivate& other) const
 {
     if (d_version < other.d_version) {
         return true;
@@ -1135,8 +1140,8 @@ bool EncryptionKeyRsaValuePrivate::less(const EncryptionKeyRsaValuePrivate& othe
 }
 
 bsl::ostream& EncryptionKeyRsaValuePrivate::print(bsl::ostream& stream,
-                                      int           level,
-                                      int           spacesPerLevel) const
+                                                  int           level,
+                                                  int spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -1159,33 +1164,29 @@ bsl::ostream& EncryptionKeyRsaValuePrivate::print(bsl::ostream& stream,
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, const EncryptionKeyRsaValuePrivate& object)
+bsl::ostream& operator<<(bsl::ostream&                       stream,
+                         const EncryptionKeyRsaValuePrivate& object)
 {
     return object.print(stream, 0, -1);
 }
 
-bool operator==(const EncryptionKeyRsaValuePrivate& lhs, const EncryptionKeyRsaValuePrivate& rhs)
+bool operator==(const EncryptionKeyRsaValuePrivate& lhs,
+                const EncryptionKeyRsaValuePrivate& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const EncryptionKeyRsaValuePrivate& lhs, const EncryptionKeyRsaValuePrivate& rhs)
+bool operator!=(const EncryptionKeyRsaValuePrivate& lhs,
+                const EncryptionKeyRsaValuePrivate& rhs)
 {
     return !operator==(lhs, rhs);
 }
 
-bool operator<(const EncryptionKeyRsaValuePrivate& lhs, const EncryptionKeyRsaValuePrivate& rhs)
+bool operator<(const EncryptionKeyRsaValuePrivate& lhs,
+               const EncryptionKeyRsaValuePrivate& rhs)
 {
     return lhs.less(rhs);
 }
-
-
-
-
-
-
-
-
 
 EncryptionKeyRsaValuePublic::EncryptionKeyRsaValuePublic(
     bslma::Allocator* basicAllocator)
@@ -1197,20 +1198,19 @@ EncryptionKeyRsaValuePublic::EncryptionKeyRsaValuePublic(
 
 EncryptionKeyRsaValuePublic::EncryptionKeyRsaValuePublic(
     const EncryptionKeyRsaValuePublic& original,
-    bslma::Allocator*                             basicAllocator)
+    bslma::Allocator*                  basicAllocator)
 : d_modulus(original.d_modulus, basicAllocator)
 , d_encryptionExponent(original.d_encryptionExponent, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionKeyRsaValuePublic::
-    ~EncryptionKeyRsaValuePublic()
+EncryptionKeyRsaValuePublic::~EncryptionKeyRsaValuePublic()
 {
 }
 
-EncryptionKeyRsaValuePublic& EncryptionKeyRsaValuePublic::
-operator=(const EncryptionKeyRsaValuePublic& other)
+EncryptionKeyRsaValuePublic& EncryptionKeyRsaValuePublic::operator=(
+    const EncryptionKeyRsaValuePublic& other)
 {
     if (this != &other) {
         d_modulus            = other.d_modulus;
@@ -1397,10 +1397,9 @@ bool EncryptionKeyRsaValuePublic::less(
     return d_encryptionExponent < other.d_encryptionExponent;
 }
 
-bsl::ostream& EncryptionKeyRsaValuePublic::print(
-    bsl::ostream& stream,
-    int           level,
-    int           spacesPerLevel) const
+bsl::ostream& EncryptionKeyRsaValuePublic::print(bsl::ostream& stream,
+                                                 int           level,
+                                                 int spacesPerLevel) const
 {
     // d_value.print(stream, level, spacesPerLevel);
 
@@ -1412,7 +1411,7 @@ bsl::ostream& EncryptionKeyRsaValuePublic::print(
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                                 stream,
+bsl::ostream& operator<<(bsl::ostream&                      stream,
                          const EncryptionKeyRsaValuePublic& object)
 {
     return object.print(stream, 0, -1);
@@ -1436,16 +1435,8 @@ bool operator<(const EncryptionKeyRsaValuePublic& lhs,
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-
-const char*
-EncryptionKeyEllipticCurveParametersIdentifierType::
-    toString(Value value)
+const char* EncryptionKeyEllipticCurveParametersIdentifierType::toString(
+    Value value)
 {
     switch (value) {
     case e_SEC_P256_R1:
@@ -1460,8 +1451,9 @@ EncryptionKeyEllipticCurveParametersIdentifierType::
     return 0;
 }
 
-void EncryptionKeyEllipticCurveParametersIdentifierType::
-    toObjectIdentifier(ntsa::AbstractObjectIdentifier* result, Value value)
+void EncryptionKeyEllipticCurveParametersIdentifierType::toObjectIdentifier(
+    ntsa::AbstractObjectIdentifier* result,
+    Value                           value)
 {
     result->reset();
 
@@ -1476,8 +1468,9 @@ void EncryptionKeyEllipticCurveParametersIdentifierType::
     }
 }
 
-int EncryptionKeyEllipticCurveParametersIdentifierType::
-    fromString(Value* result, const bslstl::StringRef& string)
+int EncryptionKeyEllipticCurveParametersIdentifierType::fromString(
+    Value*                   result,
+    const bslstl::StringRef& string)
 {
     if (bdlb::String::areEqualCaseless(string, "SEC_P256_R1")) {
         *result = e_SEC_P256_R1;
@@ -1497,9 +1490,9 @@ int EncryptionKeyEllipticCurveParametersIdentifierType::
     return -1;
 }
 
-int EncryptionKeyEllipticCurveParametersIdentifierType::
-    fromObjectIdentifier(Value*                                result,
-                         const ntsa::AbstractObjectIdentifier& identifier)
+int EncryptionKeyEllipticCurveParametersIdentifierType::fromObjectIdentifier(
+    Value*                                result,
+    const ntsa::AbstractObjectIdentifier& identifier)
 {
     if (identifier.equals(1, 2, 840, 10045, 3, 1, 7)) {
         *result = e_SEC_P256_R1;
@@ -1519,20 +1512,19 @@ int EncryptionKeyEllipticCurveParametersIdentifierType::
     return -1;
 }
 
-bsl::ostream&
-EncryptionKeyEllipticCurveParametersIdentifierType::
-    print(bsl::ostream& stream, Value value)
+bsl::ostream& EncryptionKeyEllipticCurveParametersIdentifierType::print(
+    bsl::ostream& stream,
+    Value         value)
 {
     return stream << toString(value);
 }
 
 bsl::ostream& operator<<(
-    bsl::ostream& stream,
-    EncryptionKeyEllipticCurveParametersIdentifierType::
-        Value rhs)
+    bsl::ostream&                                             stream,
+    EncryptionKeyEllipticCurveParametersIdentifierType::Value rhs)
 {
-    return EncryptionKeyEllipticCurveParametersIdentifierType::
-        print(stream, rhs);
+    return EncryptionKeyEllipticCurveParametersIdentifierType::print(stream,
+                                                                     rhs);
 }
 
 EncryptionKeyEllipticCurveParametersIdentifier::
@@ -1545,9 +1537,8 @@ EncryptionKeyEllipticCurveParametersIdentifier::
 
 EncryptionKeyEllipticCurveParametersIdentifier::
     EncryptionKeyEllipticCurveParametersIdentifier(
-        const EncryptionKeyEllipticCurveParametersIdentifier&
-                          original,
-        bslma::Allocator* basicAllocator)
+        const EncryptionKeyEllipticCurveParametersIdentifier& original,
+        bslma::Allocator*                                     basicAllocator)
 : d_identifier(original.d_identifier, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -1559,10 +1550,8 @@ EncryptionKeyEllipticCurveParametersIdentifier::
 }
 
 EncryptionKeyEllipticCurveParametersIdentifier&
-EncryptionKeyEllipticCurveParametersIdentifier::
-operator=(
-    const EncryptionKeyEllipticCurveParametersIdentifier&
-        other)
+EncryptionKeyEllipticCurveParametersIdentifier::operator=(
+    const EncryptionKeyEllipticCurveParametersIdentifier& other)
 {
     if (this != &other) {
         d_identifier = other.d_identifier;
@@ -1572,48 +1561,44 @@ operator=(
 }
 
 EncryptionKeyEllipticCurveParametersIdentifier&
-EncryptionKeyEllipticCurveParametersIdentifier::
-operator=(const ntsa::AbstractObjectIdentifier& value)
+EncryptionKeyEllipticCurveParametersIdentifier::operator=(
+    const ntsa::AbstractObjectIdentifier& value)
 {
     d_identifier = value;
     return *this;
 }
 
 EncryptionKeyEllipticCurveParametersIdentifier&
-EncryptionKeyEllipticCurveParametersIdentifier::
-operator=(
-    EncryptionKeyEllipticCurveParametersIdentifierType::
-        Value value)
+EncryptionKeyEllipticCurveParametersIdentifier::operator=(
+    EncryptionKeyEllipticCurveParametersIdentifierType::Value value)
 {
-    EncryptionKeyEllipticCurveParametersIdentifierType::
-        toObjectIdentifier(&d_identifier, value);
+    EncryptionKeyEllipticCurveParametersIdentifierType::toObjectIdentifier(
+        &d_identifier,
+        value);
     return *this;
 }
 
-void EncryptionKeyEllipticCurveParametersIdentifier::
-    reset()
+void EncryptionKeyEllipticCurveParametersIdentifier::reset()
 {
     d_identifier.reset();
 }
 
-void EncryptionKeyEllipticCurveParametersIdentifier::
-    setIdentifier(const ntsa::AbstractObjectIdentifier& value)
+void EncryptionKeyEllipticCurveParametersIdentifier::setIdentifier(
+    const ntsa::AbstractObjectIdentifier& value)
 {
     d_identifier = value;
 }
 
-void EncryptionKeyEllipticCurveParametersIdentifier::
-    setIdentifer(
-        EncryptionKeyEllipticCurveParametersIdentifierType::
-            Value value)
+void EncryptionKeyEllipticCurveParametersIdentifier::setIdentifer(
+    EncryptionKeyEllipticCurveParametersIdentifierType::Value value)
 {
-    EncryptionKeyEllipticCurveParametersIdentifierType::
-        toObjectIdentifier(&d_identifier, value);
+    EncryptionKeyEllipticCurveParametersIdentifierType::toObjectIdentifier(
+        &d_identifier,
+        value);
 }
 
-ntsa::Error
-EncryptionKeyEllipticCurveParametersIdentifier::
-    decode(ntsa::AbstractSyntaxDecoder* decoder)
+ntsa::Error EncryptionKeyEllipticCurveParametersIdentifier::decode(
+    ntsa::AbstractSyntaxDecoder* decoder)
 {
     ntsa::Error error;
 
@@ -1635,9 +1620,8 @@ EncryptionKeyEllipticCurveParametersIdentifier::
     return ntsa::Error();
 }
 
-ntsa::Error
-EncryptionKeyEllipticCurveParametersIdentifier::
-    encode(ntsa::AbstractSyntaxEncoder* encoder) const
+ntsa::Error EncryptionKeyEllipticCurveParametersIdentifier::encode(
+    ntsa::AbstractSyntaxEncoder* encoder) const
 {
     ntsa::Error error;
 
@@ -1660,54 +1644,45 @@ EncryptionKeyEllipticCurveParametersIdentifier::
 }
 
 const ntsa::AbstractObjectIdentifier&
-EncryptionKeyEllipticCurveParametersIdentifier::
-    identifier() const
+EncryptionKeyEllipticCurveParametersIdentifier::identifier() const
 {
     return d_identifier;
 }
 
-bool EncryptionKeyEllipticCurveParametersIdentifier::
-    equals(
-        const EncryptionKeyEllipticCurveParametersIdentifier&
-            other) const
+bool EncryptionKeyEllipticCurveParametersIdentifier::equals(
+    const EncryptionKeyEllipticCurveParametersIdentifier& other) const
 {
     return d_identifier == other.d_identifier;
 }
 
-bool EncryptionKeyEllipticCurveParametersIdentifier::
-    equals(
-        EncryptionKeyEllipticCurveParametersIdentifierType::
-            Value value) const
+bool EncryptionKeyEllipticCurveParametersIdentifier::equals(
+    EncryptionKeyEllipticCurveParametersIdentifierType::Value value) const
 {
     ntsa::AbstractObjectIdentifier identifier;
-    EncryptionKeyEllipticCurveParametersIdentifierType::
-        toObjectIdentifier(&identifier, value);
+    EncryptionKeyEllipticCurveParametersIdentifierType::toObjectIdentifier(
+        &identifier,
+        value);
 
     return d_identifier.equals(identifier);
 }
 
-bool EncryptionKeyEllipticCurveParametersIdentifier::
-    less(
-        const EncryptionKeyEllipticCurveParametersIdentifier&
-            other) const
+bool EncryptionKeyEllipticCurveParametersIdentifier::less(
+    const EncryptionKeyEllipticCurveParametersIdentifier& other) const
 {
     return d_identifier < other.d_identifier;
 }
 
-bsl::ostream&
-EncryptionKeyEllipticCurveParametersIdentifier::
-    print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& EncryptionKeyEllipticCurveParametersIdentifier::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
 {
-    ntca::
-        EncryptionKeyEllipticCurveParametersIdentifierType::
-            Value type;
-    int           rc = ntca::
-        EncryptionKeyEllipticCurveParametersIdentifierType::
-            fromObjectIdentifier(&type, d_identifier);
+    ntca::EncryptionKeyEllipticCurveParametersIdentifierType::Value type;
+    int rc = ntca::EncryptionKeyEllipticCurveParametersIdentifierType::
+        fromObjectIdentifier(&type, d_identifier);
     if (rc == 0) {
-        stream << ntca::
-                EncryptionKeyEllipticCurveParametersIdentifierType::
-                    toString(type);
+        stream << ntca::EncryptionKeyEllipticCurveParametersIdentifierType::
+                toString(type);
     }
     else {
         d_identifier.print(stream, level, spacesPerLevel);
@@ -1717,53 +1692,40 @@ EncryptionKeyEllipticCurveParametersIdentifier::
 }
 
 bsl::ostream& operator<<(
-    bsl::ostream& stream,
-    const EncryptionKeyEllipticCurveParametersIdentifier&
-        object)
+    bsl::ostream&                                         stream,
+    const EncryptionKeyEllipticCurveParametersIdentifier& object)
 {
     return object.print(stream, 0, -1);
 }
 
-bool operator==(
-    const EncryptionKeyEllipticCurveParametersIdentifier&
-        lhs,
-    const EncryptionKeyEllipticCurveParametersIdentifier&
-        rhs)
+bool operator==(const EncryptionKeyEllipticCurveParametersIdentifier& lhs,
+                const EncryptionKeyEllipticCurveParametersIdentifier& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(
-    const EncryptionKeyEllipticCurveParametersIdentifier&
-        lhs,
-    const EncryptionKeyEllipticCurveParametersIdentifier&
-        rhs)
+bool operator!=(const EncryptionKeyEllipticCurveParametersIdentifier& lhs,
+                const EncryptionKeyEllipticCurveParametersIdentifier& rhs)
 {
     return !operator==(lhs, rhs);
 }
 
-bool operator<(
-    const EncryptionKeyEllipticCurveParametersIdentifier&
-        lhs,
-    const EncryptionKeyEllipticCurveParametersIdentifier&
-        rhs)
+bool operator<(const EncryptionKeyEllipticCurveParametersIdentifier& lhs,
+               const EncryptionKeyEllipticCurveParametersIdentifier& rhs)
 {
     return lhs.less(rhs);
 }
 
-EncryptionKeyEllipticCurveParameters::
-    EncryptionKeyEllipticCurveParameters(
-        bslma::Allocator* basicAllocator)
+EncryptionKeyEllipticCurveParameters::EncryptionKeyEllipticCurveParameters(
+    bslma::Allocator* basicAllocator)
 : d_type(e_UNDEFINED)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionKeyEllipticCurveParameters::
-    EncryptionKeyEllipticCurveParameters(
-        const EncryptionKeyEllipticCurveParameters&
-                          original,
-        bslma::Allocator* basicAllocator)
+EncryptionKeyEllipticCurveParameters::EncryptionKeyEllipticCurveParameters(
+    const EncryptionKeyEllipticCurveParameters& original,
+    bslma::Allocator*                           basicAllocator)
 : d_type(original.d_type)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -1782,16 +1744,13 @@ EncryptionKeyEllipticCurveParameters::
     }
 }
 
-EncryptionKeyEllipticCurveParameters::
-    ~EncryptionKeyEllipticCurveParameters()
+EncryptionKeyEllipticCurveParameters::~EncryptionKeyEllipticCurveParameters()
 {
     this->reset();
 }
 
-EncryptionKeyEllipticCurveParameters&
-EncryptionKeyEllipticCurveParameters::operator=(
-    const EncryptionKeyEllipticCurveParameters&
-        other)
+EncryptionKeyEllipticCurveParameters& EncryptionKeyEllipticCurveParameters::
+operator=(const EncryptionKeyEllipticCurveParameters& other)
 {
     if (this == &other) {
         return *this;
@@ -1814,21 +1773,17 @@ EncryptionKeyEllipticCurveParameters::operator=(
 void EncryptionKeyEllipticCurveParameters::reset()
 {
     if (d_type == e_IDENTIFIER) {
-        typedef EncryptionKeyEllipticCurveParametersIdentifier
-            Type;
-        d_identifier.object().~Type();
+        d_identifier.object().~IdentifierType();
     }
     else if (d_type == e_ANY) {
-        typedef ntsa::AbstractValue Type;
-        d_any.object().~Type();
+        d_any.object().~AnyType();
     }
 
     d_type = e_UNDEFINED;
 }
 
 EncryptionKeyEllipticCurveParametersIdentifier&
-EncryptionKeyEllipticCurveParameters::
-    makeIdentifier()
+EncryptionKeyEllipticCurveParameters::makeIdentifier()
 {
     if (d_type == e_IDENTIFIER) {
         d_identifier.object().reset();
@@ -1836,8 +1791,7 @@ EncryptionKeyEllipticCurveParameters::
     else {
         this->reset();
         new (d_identifier.buffer())
-            EncryptionKeyEllipticCurveParametersIdentifier(
-                d_allocator_p);
+            EncryptionKeyEllipticCurveParametersIdentifier(d_allocator_p);
         d_type = e_IDENTIFIER;
     }
 
@@ -1846,8 +1800,7 @@ EncryptionKeyEllipticCurveParameters::
 
 EncryptionKeyEllipticCurveParametersIdentifier&
 EncryptionKeyEllipticCurveParameters::makeIdentifier(
-    const EncryptionKeyEllipticCurveParametersIdentifier&
-        value)
+    const EncryptionKeyEllipticCurveParametersIdentifier& value)
 {
     if (d_type == e_IDENTIFIER) {
         d_identifier.object() = value;
@@ -1855,17 +1808,15 @@ EncryptionKeyEllipticCurveParameters::makeIdentifier(
     else {
         this->reset();
         new (d_identifier.buffer())
-            EncryptionKeyEllipticCurveParametersIdentifier(
-                value,
-                d_allocator_p);
+            EncryptionKeyEllipticCurveParametersIdentifier(value,
+                                                           d_allocator_p);
         d_type = e_IDENTIFIER;
     }
 
     return d_identifier.object();
 }
 
-ntsa::AbstractValue&
-EncryptionKeyEllipticCurveParameters::makeAny()
+ntsa::AbstractValue& EncryptionKeyEllipticCurveParameters::makeAny()
 {
     if (d_type == e_ANY) {
         d_any.object().reset();
@@ -1879,8 +1830,7 @@ EncryptionKeyEllipticCurveParameters::makeAny()
     return d_any.object();
 }
 
-ntsa::AbstractValue&
-EncryptionKeyEllipticCurveParameters::makeAny(
+ntsa::AbstractValue& EncryptionKeyEllipticCurveParameters::makeAny(
     const ntsa::AbstractValue& value)
 {
     if (d_type == e_ANY) {
@@ -1902,49 +1852,42 @@ EncryptionKeyEllipticCurveParameters::identifier()
     return d_identifier.object();
 }
 
-ntsa::AbstractValue&
-EncryptionKeyEllipticCurveParameters::any()
+ntsa::AbstractValue& EncryptionKeyEllipticCurveParameters::any()
 {
     BSLS_ASSERT(this->isAny());
     return d_any.object();
 }
 
 const EncryptionKeyEllipticCurveParametersIdentifier&
-EncryptionKeyEllipticCurveParameters::identifier()
-    const
+EncryptionKeyEllipticCurveParameters::identifier() const
 {
     BSLS_ASSERT(this->isIdentifier());
     return d_identifier.object();
 }
 
-const ntsa::AbstractValue&
-EncryptionKeyEllipticCurveParameters::any() const
+const ntsa::AbstractValue& EncryptionKeyEllipticCurveParameters::any() const
 {
     BSLS_ASSERT(this->isAny());
     return d_any.object();
 }
 
-bool EncryptionKeyEllipticCurveParameters::
-    isUndefined() const
+bool EncryptionKeyEllipticCurveParameters::isUndefined() const
 {
     return d_type == e_UNDEFINED;
 }
 
-bool EncryptionKeyEllipticCurveParameters::
-    isIdentifier() const
+bool EncryptionKeyEllipticCurveParameters::isIdentifier() const
 {
     return d_type == e_IDENTIFIER;
 }
 
-bool EncryptionKeyEllipticCurveParameters::isAny()
-    const
+bool EncryptionKeyEllipticCurveParameters::isAny() const
 {
     return d_type == e_ANY;
 }
 
 bool EncryptionKeyEllipticCurveParameters::equals(
-    const EncryptionKeyEllipticCurveParameters&
-        other) const
+    const EncryptionKeyEllipticCurveParameters& other) const
 {
     if (d_type != other.d_type) {
         return false;
@@ -1964,8 +1907,7 @@ bool EncryptionKeyEllipticCurveParameters::equals(
 }
 
 bool EncryptionKeyEllipticCurveParameters::less(
-    const EncryptionKeyEllipticCurveParameters&
-        other) const
+    const EncryptionKeyEllipticCurveParameters& other) const
 {
     if (d_type < other.d_type) {
         return false;
@@ -1988,8 +1930,10 @@ bool EncryptionKeyEllipticCurveParameters::less(
     return false;
 }
 
-bsl::ostream& EncryptionKeyEllipticCurveParameters::
-    print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& EncryptionKeyEllipticCurveParameters::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
 {
     NTCCFG_WARNING_UNUSED(level);
     NTCCFG_WARNING_UNUSED(spacesPerLevel);
@@ -2007,46 +1951,29 @@ bsl::ostream& EncryptionKeyEllipticCurveParameters::
     return stream;
 }
 
-bsl::ostream& operator<<(
-    bsl::ostream& stream,
-    const EncryptionKeyEllipticCurveParameters&
-        object)
+bsl::ostream& operator<<(bsl::ostream&                               stream,
+                         const EncryptionKeyEllipticCurveParameters& object)
 {
     return object.print(stream, 0, -1);
 }
 
-bool operator==(
-    const EncryptionKeyEllipticCurveParameters& lhs,
-    const EncryptionKeyEllipticCurveParameters& rhs)
+bool operator==(const EncryptionKeyEllipticCurveParameters& lhs,
+                const EncryptionKeyEllipticCurveParameters& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(
-    const EncryptionKeyEllipticCurveParameters& lhs,
-    const EncryptionKeyEllipticCurveParameters& rhs)
+bool operator!=(const EncryptionKeyEllipticCurveParameters& lhs,
+                const EncryptionKeyEllipticCurveParameters& rhs)
 {
     return !operator==(lhs, rhs);
 }
 
-bool operator<(
-    const EncryptionKeyEllipticCurveParameters& lhs,
-    const EncryptionKeyEllipticCurveParameters& rhs)
+bool operator<(const EncryptionKeyEllipticCurveParameters& lhs,
+               const EncryptionKeyEllipticCurveParameters& rhs)
 {
     return lhs.less(rhs);
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 EncryptionKeyEllipticCurveValuePrivate::EncryptionKeyEllipticCurveValuePrivate(
     bslma::Allocator* basicAllocator)
@@ -2060,7 +1987,7 @@ EncryptionKeyEllipticCurveValuePrivate::EncryptionKeyEllipticCurveValuePrivate(
 
 EncryptionKeyEllipticCurveValuePrivate::EncryptionKeyEllipticCurveValuePrivate(
     const EncryptionKeyEllipticCurveValuePrivate& original,
-    bslma::Allocator*                 basicAllocator)
+    bslma::Allocator*                             basicAllocator)
 : d_version(original.d_version)
 , d_privateKey(original.d_privateKey, basicAllocator)
 , d_parameters(original.d_parameters, basicAllocator)
@@ -2068,12 +1995,13 @@ EncryptionKeyEllipticCurveValuePrivate::EncryptionKeyEllipticCurveValuePrivate(
 {
 }
 
-EncryptionKeyEllipticCurveValuePrivate::~EncryptionKeyEllipticCurveValuePrivate()
+EncryptionKeyEllipticCurveValuePrivate::
+    ~EncryptionKeyEllipticCurveValuePrivate()
 {
 }
 
-EncryptionKeyEllipticCurveValuePrivate& EncryptionKeyEllipticCurveValuePrivate::operator=(
-    const EncryptionKeyEllipticCurveValuePrivate& other)
+EncryptionKeyEllipticCurveValuePrivate& EncryptionKeyEllipticCurveValuePrivate::
+operator=(const EncryptionKeyEllipticCurveValuePrivate& other)
 {
     if (this != &other) {
         d_version    = other.d_version;
@@ -2144,7 +2072,7 @@ ntsa::Error EncryptionKeyEllipticCurveValuePrivate::decode(
     }
 
     bool wantParameters = true;
-    bool wantPublicKey = true;
+    bool wantPublicKey  = true;
 
     while (decoder->contentBytesRemaining() > 0) {
         error = decoder->decodeTag();
@@ -2170,13 +2098,15 @@ ntsa::Error EncryptionKeyEllipticCurveValuePrivate::decode(
                     return error;
                 }
 
-                error = d_parameters.makeValue().makeIdentifier().decode(decoder);
+                error =
+                    d_parameters.makeValue().makeIdentifier().decode(decoder);
                 if (error) {
                     return error;
                 }
             }
             else {
-                error = decoder->decodeValue(&d_parameters.makeValue().makeAny());
+                error =
+                    decoder->decodeValue(&d_parameters.makeValue().makeAny());
                 if (error) {
                     return error;
                 }
@@ -2276,7 +2206,6 @@ ntsa::Error EncryptionKeyEllipticCurveValuePrivate::encode(
         }
     }
 
-   
     if (!d_parameters.isNull()) {
         error = encoder->encodeTag(k_CONTEXT_SPECIFIC, k_CONSTRUCTED, 0);
         if (error) {
@@ -2290,10 +2219,9 @@ ntsa::Error EncryptionKeyEllipticCurveValuePrivate::encode(
             }
         }
         else if (d_parameters.value().isAny()) {
-            error = encoder->encodeTag(
-                d_parameters.value().any().tagClass(),
-                d_parameters.value().any().tagType(),
-                d_parameters.value().any().tagNumber());
+            error = encoder->encodeTag(d_parameters.value().any().tagClass(),
+                                       d_parameters.value().any().tagType(),
+                                       d_parameters.value().any().tagNumber());
             if (error) {
                 return error;
             }
@@ -2403,15 +2331,16 @@ bool EncryptionKeyEllipticCurveValuePrivate::less(
     return d_publicKey < other.d_publicKey;
 }
 
-bsl::ostream& EncryptionKeyEllipticCurveValuePrivate::print(bsl::ostream& stream,
-                                                int           level,
-                                                int spacesPerLevel) const
+bsl::ostream& EncryptionKeyEllipticCurveValuePrivate::print(
+    bsl::ostream& stream,
+    int           level,
+    int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
 
     printer.printAttribute("version", d_version);
-    
+
     if (!d_parameters.isNull()) {
         printer.printAttribute("parameters", d_parameters.value());
     }
@@ -2421,7 +2350,7 @@ bsl::ostream& EncryptionKeyEllipticCurveValuePrivate::print(bsl::ostream& stream
     if (!d_publicKey.isNull()) {
         bsl::ostream::fmtflags previousFlags = stream.flags();
         stream.setf(previousFlags | bsl::ostream::hex);
-   
+
         printer.printAttribute("public", d_publicKey.value());
 
         stream.flags(previousFlags);
@@ -2431,7 +2360,7 @@ bsl::ostream& EncryptionKeyEllipticCurveValuePrivate::print(bsl::ostream& stream
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                     stream,
+bsl::ostream& operator<<(bsl::ostream&                                 stream,
                          const EncryptionKeyEllipticCurveValuePrivate& object)
 {
     return object.print(stream, 0, -1);
@@ -2455,39 +2384,27 @@ bool operator<(const EncryptionKeyEllipticCurveValuePrivate& lhs,
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-
-
-EncryptionKeyEllipticCurveValuePublic::
-    EncryptionKeyEllipticCurveValuePublic(
-        bslma::Allocator* basicAllocator)
+EncryptionKeyEllipticCurveValuePublic::EncryptionKeyEllipticCurveValuePublic(
+    bslma::Allocator* basicAllocator)
 : d_value(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionKeyEllipticCurveValuePublic::
-    EncryptionKeyEllipticCurveValuePublic(
-        const EncryptionKeyEllipticCurveValuePublic& original,
-        bslma::Allocator*                                       basicAllocator)
+EncryptionKeyEllipticCurveValuePublic::EncryptionKeyEllipticCurveValuePublic(
+    const EncryptionKeyEllipticCurveValuePublic& original,
+    bslma::Allocator*                            basicAllocator)
 : d_value(original.d_value, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionKeyEllipticCurveValuePublic::
-    ~EncryptionKeyEllipticCurveValuePublic()
+EncryptionKeyEllipticCurveValuePublic::~EncryptionKeyEllipticCurveValuePublic()
 {
 }
 
-EncryptionKeyEllipticCurveValuePublic&
-EncryptionKeyEllipticCurveValuePublic::operator=(
-    const EncryptionKeyEllipticCurveValuePublic& other)
+EncryptionKeyEllipticCurveValuePublic& EncryptionKeyEllipticCurveValuePublic::
+operator=(const EncryptionKeyEllipticCurveValuePublic& other)
 {
     if (this != &other) {
         d_value = other.d_value;
@@ -2571,9 +2488,8 @@ bsl::ostream& EncryptionKeyEllipticCurveValuePublic::print(
     return stream;
 }
 
-bsl::ostream& operator<<(
-    bsl::ostream&                                           stream,
-    const EncryptionKeyEllipticCurveValuePublic& object)
+bsl::ostream& operator<<(bsl::ostream&                                stream,
+                         const EncryptionKeyEllipticCurveValuePublic& object)
 {
     return object.print(stream, 0, -1);
 }
@@ -2596,20 +2512,7 @@ bool operator<(const EncryptionKeyEllipticCurveValuePublic& lhs,
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-const char* EncryptionKeyAlgorithmIdentifierType::toString(
-    Value value)
+const char* EncryptionKeyAlgorithmIdentifierType::toString(Value value)
 {
     switch (value) {
     case e_RSA:
@@ -2673,9 +2576,9 @@ int EncryptionKeyAlgorithmIdentifierType::fromString(
     return -1;
 }
 
-int EncryptionKeyAlgorithmIdentifierType::
-    fromObjectIdentifier(Value*                                result,
-                         const ntsa::AbstractObjectIdentifier& identifier)
+int EncryptionKeyAlgorithmIdentifierType::fromObjectIdentifier(
+    Value*                                result,
+    const ntsa::AbstractObjectIdentifier& identifier)
 {
     if (identifier.equals(1, 2, 840, 113549, 1, 1, 1)) {
         *result = e_RSA;
@@ -2700,45 +2603,38 @@ int EncryptionKeyAlgorithmIdentifierType::
     return -1;
 }
 
-bsl::ostream& EncryptionKeyAlgorithmIdentifierType::print(
-    bsl::ostream& stream,
-    Value         value)
+bsl::ostream& EncryptionKeyAlgorithmIdentifierType::print(bsl::ostream& stream,
+                                                          Value         value)
 {
     return stream << toString(value);
 }
 
-bsl::ostream& operator<<(
-    bsl::ostream&                                                stream,
-    EncryptionKeyAlgorithmIdentifierType::Value rhs)
+bsl::ostream& operator<<(bsl::ostream&                               stream,
+                         EncryptionKeyAlgorithmIdentifierType::Value rhs)
 {
-    return EncryptionKeyAlgorithmIdentifierType::print(stream,
-                                                                        rhs);
+    return EncryptionKeyAlgorithmIdentifierType::print(stream, rhs);
 }
 
-EncryptionKeyAlgorithmIdentifier::
-    EncryptionKeyAlgorithmIdentifier(
-        bslma::Allocator* basicAllocator)
+EncryptionKeyAlgorithmIdentifier::EncryptionKeyAlgorithmIdentifier(
+    bslma::Allocator* basicAllocator)
 : d_identifier(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionKeyAlgorithmIdentifier::
-    EncryptionKeyAlgorithmIdentifier(
-        const EncryptionKeyAlgorithmIdentifier& original,
-        bslma::Allocator* basicAllocator)
+EncryptionKeyAlgorithmIdentifier::EncryptionKeyAlgorithmIdentifier(
+    const EncryptionKeyAlgorithmIdentifier& original,
+    bslma::Allocator*                       basicAllocator)
 : d_identifier(original.d_identifier, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionKeyAlgorithmIdentifier::
-    ~EncryptionKeyAlgorithmIdentifier()
+EncryptionKeyAlgorithmIdentifier::~EncryptionKeyAlgorithmIdentifier()
 {
 }
 
-EncryptionKeyAlgorithmIdentifier&
-EncryptionKeyAlgorithmIdentifier::operator=(
+EncryptionKeyAlgorithmIdentifier& EncryptionKeyAlgorithmIdentifier::operator=(
     const EncryptionKeyAlgorithmIdentifier& other)
 {
     if (this != &other) {
@@ -2748,21 +2644,18 @@ EncryptionKeyAlgorithmIdentifier::operator=(
     return *this;
 }
 
-EncryptionKeyAlgorithmIdentifier&
-EncryptionKeyAlgorithmIdentifier::operator=(
+EncryptionKeyAlgorithmIdentifier& EncryptionKeyAlgorithmIdentifier::operator=(
     const ntsa::AbstractObjectIdentifier& value)
 {
     d_identifier = value;
     return *this;
 }
 
-EncryptionKeyAlgorithmIdentifier&
-EncryptionKeyAlgorithmIdentifier::operator=(
+EncryptionKeyAlgorithmIdentifier& EncryptionKeyAlgorithmIdentifier::operator=(
     EncryptionKeyAlgorithmIdentifierType::Value value)
 {
-    EncryptionKeyAlgorithmIdentifierType::toObjectIdentifier(
-        &d_identifier,
-        value);
+    EncryptionKeyAlgorithmIdentifierType::toObjectIdentifier(&d_identifier,
+                                                             value);
     return *this;
 }
 
@@ -2780,9 +2673,8 @@ void EncryptionKeyAlgorithmIdentifier::setIdentifier(
 void EncryptionKeyAlgorithmIdentifier::setIdentifer(
     EncryptionKeyAlgorithmIdentifierType::Value value)
 {
-    EncryptionKeyAlgorithmIdentifierType::toObjectIdentifier(
-        &d_identifier,
-        value);
+    EncryptionKeyAlgorithmIdentifierType::toObjectIdentifier(&d_identifier,
+                                                             value);
 }
 
 ntsa::Error EncryptionKeyAlgorithmIdentifier::decode(
@@ -2831,8 +2723,8 @@ ntsa::Error EncryptionKeyAlgorithmIdentifier::encode(
     return ntsa::Error();
 }
 
-const ntsa::AbstractObjectIdentifier&
-EncryptionKeyAlgorithmIdentifier::identifier() const
+const ntsa::AbstractObjectIdentifier& EncryptionKeyAlgorithmIdentifier::
+    identifier() const
 {
     return d_identifier;
 }
@@ -2847,9 +2739,8 @@ bool EncryptionKeyAlgorithmIdentifier::equals(
     EncryptionKeyAlgorithmIdentifierType::Value value) const
 {
     ntsa::AbstractObjectIdentifier identifier;
-    EncryptionKeyAlgorithmIdentifierType::toObjectIdentifier(
-        &identifier,
-        value);
+    EncryptionKeyAlgorithmIdentifierType::toObjectIdentifier(&identifier,
+                                                             value);
 
     return d_identifier.equals(identifier);
 }
@@ -2860,17 +2751,16 @@ bool EncryptionKeyAlgorithmIdentifier::less(
     return d_identifier < other.d_identifier;
 }
 
-bsl::ostream& EncryptionKeyAlgorithmIdentifier::print(
-    bsl::ostream& stream,
-    int           level,
-    int           spacesPerLevel) const
+bsl::ostream& EncryptionKeyAlgorithmIdentifier::print(bsl::ostream& stream,
+                                                      int           level,
+                                                      int spacesPerLevel) const
 {
     ntca::EncryptionKeyAlgorithmIdentifierType::Value type;
-    int rc = ntca::EncryptionKeyAlgorithmIdentifierType::
-        fromObjectIdentifier(&type, d_identifier);
+    int rc = ntca::EncryptionKeyAlgorithmIdentifierType::fromObjectIdentifier(
+        &type,
+        d_identifier);
     if (rc == 0) {
-        stream << ntca::EncryptionKeyAlgorithmIdentifierType::
-                toString(type);
+        stream << ntca::EncryptionKeyAlgorithmIdentifierType::toString(type);
     }
     else {
         d_identifier.print(stream, level, spacesPerLevel);
@@ -2879,9 +2769,8 @@ bsl::ostream& EncryptionKeyAlgorithmIdentifier::print(
     return stream;
 }
 
-bsl::ostream& operator<<(
-    bsl::ostream&                                            stream,
-    const EncryptionKeyAlgorithmIdentifier& object)
+bsl::ostream& operator<<(bsl::ostream&                           stream,
+                         const EncryptionKeyAlgorithmIdentifier& object)
 {
     return object.print(stream, 0, -1);
 }
@@ -2904,38 +2793,27 @@ bool operator<(const EncryptionKeyAlgorithmIdentifier& lhs,
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-EncryptionKeyAlgorithmParameters::
-    EncryptionKeyAlgorithmParameters(
-        bslma::Allocator* basicAllocator)
+EncryptionKeyAlgorithmParameters::EncryptionKeyAlgorithmParameters(
+    bslma::Allocator* basicAllocator)
 : d_type(e_UNDEFINED)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionKeyAlgorithmParameters::
-    EncryptionKeyAlgorithmParameters(
-        const EncryptionKeyAlgorithmParameters& original,
-        bslma::Allocator* basicAllocator)
+EncryptionKeyAlgorithmParameters::EncryptionKeyAlgorithmParameters(
+    const EncryptionKeyAlgorithmParameters& original,
+    bslma::Allocator*                       basicAllocator)
 : d_type(original.d_type)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     if (d_type == e_RSA) {
         new (d_rsa.buffer())
-            EncryptionKeyRsaParameters(
-                original.d_rsa.object(),
-                d_allocator_p);
+            EncryptionKeyRsaParameters(original.d_rsa.object(), d_allocator_p);
     }
     else if (d_type == e_ELLIPTIC_CURVE) {
-        new (d_ellipticCurve.buffer())
-            EncryptionKeyEllipticCurveParameters(
-                original.d_ellipticCurve.object(),
-                d_allocator_p);
+        new (d_ellipticCurve.buffer()) EncryptionKeyEllipticCurveParameters(
+            original.d_ellipticCurve.object(),
+            d_allocator_p);
     }
     else if (d_type == e_ANY) {
         new (d_any.buffer())
@@ -2946,14 +2824,12 @@ EncryptionKeyAlgorithmParameters::
     }
 }
 
-EncryptionKeyAlgorithmParameters::
-    ~EncryptionKeyAlgorithmParameters()
+EncryptionKeyAlgorithmParameters::~EncryptionKeyAlgorithmParameters()
 {
     this->reset();
 }
 
-EncryptionKeyAlgorithmParameters&
-EncryptionKeyAlgorithmParameters::operator=(
+EncryptionKeyAlgorithmParameters& EncryptionKeyAlgorithmParameters::operator=(
     const EncryptionKeyAlgorithmParameters& other)
 {
     if (this == &other) {
@@ -2993,25 +2869,21 @@ void EncryptionKeyAlgorithmParameters::reset()
     d_type = e_UNDEFINED;
 }
 
-EncryptionKeyRsaParameters&
-EncryptionKeyAlgorithmParameters::makeRsa()
+EncryptionKeyRsaParameters& EncryptionKeyAlgorithmParameters::makeRsa()
 {
     if (d_type == e_RSA) {
         d_rsa.object().reset();
     }
     else {
         this->reset();
-        new (d_rsa.buffer())
-            EncryptionKeyRsaParameters(
-                d_allocator_p);
+        new (d_rsa.buffer()) EncryptionKeyRsaParameters(d_allocator_p);
         d_type = e_RSA;
     }
 
     return d_rsa.object();
 }
 
-EncryptionKeyRsaParameters&
-EncryptionKeyAlgorithmParameters::makeRsa(
+EncryptionKeyRsaParameters& EncryptionKeyAlgorithmParameters::makeRsa(
     const EncryptionKeyRsaParameters& value)
 {
     if (d_type == e_RSA) {
@@ -3019,18 +2891,15 @@ EncryptionKeyAlgorithmParameters::makeRsa(
     }
     else {
         this->reset();
-        new (d_rsa.buffer())
-            EncryptionKeyRsaParameters(
-                value,
-                d_allocator_p);
+        new (d_rsa.buffer()) EncryptionKeyRsaParameters(value, d_allocator_p);
         d_type = e_RSA;
     }
 
     return d_rsa.object();
 }
 
-EncryptionKeyEllipticCurveParameters&
-EncryptionKeyAlgorithmParameters::makeEllipticCurve()
+EncryptionKeyEllipticCurveParameters& EncryptionKeyAlgorithmParameters::
+    makeEllipticCurve()
 {
     if (d_type == e_ELLIPTIC_CURVE) {
         d_ellipticCurve.object().reset();
@@ -3038,18 +2907,15 @@ EncryptionKeyAlgorithmParameters::makeEllipticCurve()
     else {
         this->reset();
         new (d_ellipticCurve.buffer())
-            EncryptionKeyEllipticCurveParameters(
-                d_allocator_p);
+            EncryptionKeyEllipticCurveParameters(d_allocator_p);
         d_type = e_ELLIPTIC_CURVE;
     }
 
     return d_ellipticCurve.object();
 }
 
-EncryptionKeyEllipticCurveParameters&
-EncryptionKeyAlgorithmParameters::makeEllipticCurve(
-    const EncryptionKeyEllipticCurveParameters&
-        value)
+EncryptionKeyEllipticCurveParameters& EncryptionKeyAlgorithmParameters::
+    makeEllipticCurve(const EncryptionKeyEllipticCurveParameters& value)
 {
     if (d_type == e_ELLIPTIC_CURVE) {
         d_ellipticCurve.object() = value;
@@ -3057,17 +2923,14 @@ EncryptionKeyAlgorithmParameters::makeEllipticCurve(
     else {
         this->reset();
         new (d_ellipticCurve.buffer())
-            EncryptionKeyEllipticCurveParameters(
-                value,
-                d_allocator_p);
+            EncryptionKeyEllipticCurveParameters(value, d_allocator_p);
         d_type = e_ELLIPTIC_CURVE;
     }
 
     return d_ellipticCurve.object();
 }
 
-ntsa::AbstractValue& EncryptionKeyAlgorithmParameters::
-    makeAny()
+ntsa::AbstractValue& EncryptionKeyAlgorithmParameters::makeAny()
 {
     if (d_type == e_ANY) {
         d_any.object().reset();
@@ -3081,8 +2944,8 @@ ntsa::AbstractValue& EncryptionKeyAlgorithmParameters::
     return d_any.object();
 }
 
-ntsa::AbstractValue& EncryptionKeyAlgorithmParameters::
-    makeAny(const ntsa::AbstractValue& value)
+ntsa::AbstractValue& EncryptionKeyAlgorithmParameters::makeAny(
+    const ntsa::AbstractValue& value)
 {
     if (d_type == e_ANY) {
         d_any.object() = value;
@@ -3096,15 +2959,14 @@ ntsa::AbstractValue& EncryptionKeyAlgorithmParameters::
     return d_any.object();
 }
 
-EncryptionKeyRsaParameters&
-EncryptionKeyAlgorithmParameters::rsa()
+EncryptionKeyRsaParameters& EncryptionKeyAlgorithmParameters::rsa()
 {
     BSLS_ASSERT(this->isRsa());
     return d_rsa.object();
 }
 
-EncryptionKeyEllipticCurveParameters&
-EncryptionKeyAlgorithmParameters::ellipticCurve()
+EncryptionKeyEllipticCurveParameters& EncryptionKeyAlgorithmParameters::
+    ellipticCurve()
 {
     BSLS_ASSERT(this->isEllipticCurve());
     return d_ellipticCurve.object();
@@ -3116,22 +2978,20 @@ ntsa::AbstractValue& EncryptionKeyAlgorithmParameters::any()
     return d_any.object();
 }
 
-const EncryptionKeyRsaParameters&
-EncryptionKeyAlgorithmParameters::rsa() const
+const EncryptionKeyRsaParameters& EncryptionKeyAlgorithmParameters::rsa() const
 {
     BSLS_ASSERT(this->isRsa());
     return d_rsa.object();
 }
 
-const EncryptionKeyEllipticCurveParameters&
-EncryptionKeyAlgorithmParameters::ellipticCurve() const
+const EncryptionKeyEllipticCurveParameters& EncryptionKeyAlgorithmParameters::
+    ellipticCurve() const
 {
     BSLS_ASSERT(this->isEllipticCurve());
     return d_ellipticCurve.object();
 }
 
-const ntsa::AbstractValue& EncryptionKeyAlgorithmParameters::
-    any() const
+const ntsa::AbstractValue& EncryptionKeyAlgorithmParameters::any() const
 {
     BSLS_ASSERT(this->isAny());
     return d_any.object();
@@ -3207,10 +3067,9 @@ bool EncryptionKeyAlgorithmParameters::less(
     return false;
 }
 
-bsl::ostream& EncryptionKeyAlgorithmParameters::print(
-    bsl::ostream& stream,
-    int           level,
-    int           spacesPerLevel) const
+bsl::ostream& EncryptionKeyAlgorithmParameters::print(bsl::ostream& stream,
+                                                      int           level,
+                                                      int spacesPerLevel) const
 {
     NTCCFG_WARNING_UNUSED(level);
     NTCCFG_WARNING_UNUSED(spacesPerLevel);
@@ -3231,9 +3090,8 @@ bsl::ostream& EncryptionKeyAlgorithmParameters::print(
     return stream;
 }
 
-bsl::ostream& operator<<(
-    bsl::ostream&                                            stream,
-    const EncryptionKeyAlgorithmParameters& object)
+bsl::ostream& operator<<(bsl::ostream&                           stream,
+                         const EncryptionKeyAlgorithmParameters& object)
 {
     return object.print(stream, 0, -1);
 }
@@ -3256,31 +3114,29 @@ bool operator<(const EncryptionKeyAlgorithmParameters& lhs,
     return lhs.less(rhs);
 }
 
-EncryptionKeyAlgorithm::
-    EncryptionKeyAlgorithm(bslma::Allocator* basicAllocator)
+EncryptionKeyAlgorithm::EncryptionKeyAlgorithm(
+    bslma::Allocator* basicAllocator)
 : d_identifier(basicAllocator)
 , d_parameters(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionKeyAlgorithm::
-    EncryptionKeyAlgorithm(
-        const EncryptionKeyAlgorithm& original,
-        bslma::Allocator*                              basicAllocator)
+EncryptionKeyAlgorithm::EncryptionKeyAlgorithm(
+    const EncryptionKeyAlgorithm& original,
+    bslma::Allocator*             basicAllocator)
 : d_identifier(original.d_identifier, basicAllocator)
 , d_parameters(original.d_parameters, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-EncryptionKeyAlgorithm::
-    ~EncryptionKeyAlgorithm()
+EncryptionKeyAlgorithm::~EncryptionKeyAlgorithm()
 {
 }
 
-EncryptionKeyAlgorithm& EncryptionKeyAlgorithm::
-operator=(const EncryptionKeyAlgorithm& other)
+EncryptionKeyAlgorithm& EncryptionKeyAlgorithm::operator=(
+    const EncryptionKeyAlgorithm& other)
 {
     if (this != &other) {
         d_identifier = other.d_identifier;
@@ -3324,17 +3180,14 @@ ntsa::Error EncryptionKeyAlgorithm::decode(
     }
 
     if (decoder->contentBytesRemaining() > 0) {
-        if (d_identifier.equals(
-                EncryptionKeyAlgorithmIdentifierType::e_RSA))
-        {
+        if (d_identifier.equals(EncryptionKeyAlgorithmIdentifierType::e_RSA)) {
             error = d_parameters.makeValue().makeRsa().decode(decoder);
             if (error) {
                 return error;
             }
         }
         else if (d_identifier.equals(
-                     EncryptionKeyAlgorithmIdentifierType::
-                         e_ELLIPTIC_CURVE))
+                     EncryptionKeyAlgorithmIdentifierType::e_ELLIPTIC_CURVE))
         {
             error = decoder->decodeTag();
             if (error) {
@@ -3441,18 +3294,23 @@ ntsa::Error EncryptionKeyAlgorithm::encode(
         }
         else if (d_parameters.value().isEllipticCurve()) {
             if (d_parameters.value().ellipticCurve().isIdentifier()) {
-                error = d_parameters.value().ellipticCurve().identifier().encode(encoder);
+                error =
+                    d_parameters.value().ellipticCurve().identifier().encode(
+                        encoder);
                 if (error) {
                     return error;
                 }
             }
             else if (d_parameters.value().ellipticCurve().isAny()) {
-                error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OCTET_STRING);
+                error = encoder->encodeTag(k_UNIVERSAL,
+                                           k_PRIMITIVE,
+                                           k_OCTET_STRING);
                 if (error) {
                     return error;
                 }
 
-                error = encoder->encodeValue(d_parameters.value().ellipticCurve().any());
+                error = encoder->encodeValue(
+                    d_parameters.value().ellipticCurve().any());
                 if (error) {
                     return error;
                 }
@@ -3464,7 +3322,8 @@ ntsa::Error EncryptionKeyAlgorithm::encode(
             }
         }
         else if (d_parameters.value().isAny()) {
-            error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OCTET_STRING);
+            error =
+                encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_OCTET_STRING);
             if (error) {
                 return error;
             }
@@ -3489,8 +3348,8 @@ ntsa::Error EncryptionKeyAlgorithm::encode(
     return ntsa::Error();
 }
 
-const EncryptionKeyAlgorithmIdentifier&
-EncryptionKeyAlgorithm::identifier() const
+const EncryptionKeyAlgorithmIdentifier& EncryptionKeyAlgorithm::identifier()
+    const
 {
     return d_identifier;
 }
@@ -3501,15 +3360,13 @@ EncryptionKeyAlgorithm::parameters() const
     return d_parameters;
 }
 
-bool EncryptionKeyAlgorithm::equals(
-    const EncryptionKeyAlgorithm& other) const
+bool EncryptionKeyAlgorithm::equals(const EncryptionKeyAlgorithm& other) const
 {
     return d_identifier == other.d_identifier &&
            d_parameters == other.d_parameters;
 }
 
-bool EncryptionKeyAlgorithm::less(
-    const EncryptionKeyAlgorithm& other) const
+bool EncryptionKeyAlgorithm::less(const EncryptionKeyAlgorithm& other) const
 {
     if (d_identifier < other.d_identifier) {
         return true;
@@ -3522,10 +3379,9 @@ bool EncryptionKeyAlgorithm::less(
     return d_parameters < other.d_parameters;
 }
 
-bsl::ostream& EncryptionKeyAlgorithm::print(
-    bsl::ostream& stream,
-    int           level,
-    int           spacesPerLevel) const
+bsl::ostream& EncryptionKeyAlgorithm::print(bsl::ostream& stream,
+                                            int           level,
+                                            int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -3541,7 +3397,7 @@ bsl::ostream& EncryptionKeyAlgorithm::print(
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                                  stream,
+bsl::ostream& operator<<(bsl::ostream&                 stream,
                          const EncryptionKeyAlgorithm& object)
 {
     return object.print(stream, 0, -1);
@@ -3565,17 +3421,6 @@ bool operator<(const EncryptionKeyAlgorithm& lhs,
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
 EncryptionKeyValuePrivate::EncryptionKeyValuePrivate(
     bslma::Allocator* basicAllocator)
 : d_type(e_UNDEFINED)
@@ -3585,20 +3430,19 @@ EncryptionKeyValuePrivate::EncryptionKeyValuePrivate(
 
 EncryptionKeyValuePrivate::EncryptionKeyValuePrivate(
     const EncryptionKeyValuePrivate& original,
-    bslma::Allocator*                          basicAllocator)
+    bslma::Allocator*                basicAllocator)
 : d_type(original.d_type)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     if (d_type == e_RSA) {
         new (d_rsa.buffer())
             EncryptionKeyRsaValuePrivate(original.d_rsa.object(),
-                                                   d_allocator_p);
+                                         d_allocator_p);
     }
     else if (d_type == e_ELLIPTIC_CURVE) {
-        new (d_ellipticCurve.buffer())
-            EncryptionKeyEllipticCurveValuePrivate(
-                original.d_ellipticCurve.object(),
-                d_allocator_p);
+        new (d_ellipticCurve.buffer()) EncryptionKeyEllipticCurveValuePrivate(
+            original.d_ellipticCurve.object(),
+            d_allocator_p);
     }
     else if (d_type == e_ANY) {
         new (d_any.buffer())
@@ -3614,8 +3458,8 @@ EncryptionKeyValuePrivate::~EncryptionKeyValuePrivate()
     this->reset();
 }
 
-EncryptionKeyValuePrivate& EncryptionKeyValuePrivate::
-operator=(const EncryptionKeyValuePrivate& other)
+EncryptionKeyValuePrivate& EncryptionKeyValuePrivate::operator=(
+    const EncryptionKeyValuePrivate& other)
 {
     if (this == &other) {
         return *this;
@@ -3653,24 +3497,22 @@ void EncryptionKeyValuePrivate::reset()
     d_type = e_UNDEFINED;
 }
 
-EncryptionKeyRsaValuePrivate& EncryptionKeyValuePrivate::
-    makeRsa()
+EncryptionKeyRsaValuePrivate& EncryptionKeyValuePrivate::makeRsa()
 {
     if (d_type == e_RSA) {
         d_rsa.object().reset();
     }
     else {
         this->reset();
-        new (d_rsa.buffer())
-            EncryptionKeyRsaValuePrivate(d_allocator_p);
+        new (d_rsa.buffer()) EncryptionKeyRsaValuePrivate(d_allocator_p);
         d_type = e_RSA;
     }
 
     return d_rsa.object();
 }
 
-EncryptionKeyRsaValuePrivate& EncryptionKeyValuePrivate::
-    makeRsa(const EncryptionKeyRsaValuePrivate& value)
+EncryptionKeyRsaValuePrivate& EncryptionKeyValuePrivate::makeRsa(
+    const EncryptionKeyRsaValuePrivate& value)
 {
     if (d_type == e_RSA) {
         d_rsa.object() = value;
@@ -3685,8 +3527,8 @@ EncryptionKeyRsaValuePrivate& EncryptionKeyValuePrivate::
     return d_rsa.object();
 }
 
-EncryptionKeyEllipticCurveValuePrivate&
-EncryptionKeyValuePrivate::makeEllipticCurve()
+EncryptionKeyEllipticCurveValuePrivate& EncryptionKeyValuePrivate::
+    makeEllipticCurve()
 {
     if (d_type == e_ELLIPTIC_CURVE) {
         d_ellipticCurve.object().reset();
@@ -3701,9 +3543,8 @@ EncryptionKeyValuePrivate::makeEllipticCurve()
     return d_ellipticCurve.object();
 }
 
-EncryptionKeyEllipticCurveValuePrivate&
-EncryptionKeyValuePrivate::makeEllipticCurve(
-    const EncryptionKeyEllipticCurveValuePrivate& value)
+EncryptionKeyEllipticCurveValuePrivate& EncryptionKeyValuePrivate::
+    makeEllipticCurve(const EncryptionKeyEllipticCurveValuePrivate& value)
 {
     if (d_type == e_ELLIPTIC_CURVE) {
         d_ellipticCurve.object() = value;
@@ -3711,8 +3552,7 @@ EncryptionKeyValuePrivate::makeEllipticCurve(
     else {
         this->reset();
         new (d_ellipticCurve.buffer())
-            EncryptionKeyEllipticCurveValuePrivate(value,
-                                                             d_allocator_p);
+            EncryptionKeyEllipticCurveValuePrivate(value, d_allocator_p);
         d_type = e_ELLIPTIC_CURVE;
     }
 
@@ -3748,15 +3588,14 @@ ntsa::AbstractOctetString& EncryptionKeyValuePrivate::makeAny(
     return d_any.object();
 }
 
-EncryptionKeyRsaValuePrivate& EncryptionKeyValuePrivate::
-    rsa()
+EncryptionKeyRsaValuePrivate& EncryptionKeyValuePrivate::rsa()
 {
     BSLS_ASSERT(this->isRsa());
     return d_rsa.object();
 }
 
-EncryptionKeyEllipticCurveValuePrivate&
-EncryptionKeyValuePrivate::ellipticCurve()
+EncryptionKeyEllipticCurveValuePrivate& EncryptionKeyValuePrivate::
+    ellipticCurve()
 {
     BSLS_ASSERT(this->isEllipticCurve());
     return d_ellipticCurve.object();
@@ -3768,15 +3607,14 @@ ntsa::AbstractOctetString& EncryptionKeyValuePrivate::any()
     return d_any.object();
 }
 
-const EncryptionKeyRsaValuePrivate&
-EncryptionKeyValuePrivate::rsa() const
+const EncryptionKeyRsaValuePrivate& EncryptionKeyValuePrivate::rsa() const
 {
     BSLS_ASSERT(this->isRsa());
     return d_rsa.object();
 }
 
-const EncryptionKeyEllipticCurveValuePrivate&
-EncryptionKeyValuePrivate::ellipticCurve() const
+const EncryptionKeyEllipticCurveValuePrivate& EncryptionKeyValuePrivate::
+    ellipticCurve() const
 {
     BSLS_ASSERT(this->isEllipticCurve());
     return d_ellipticCurve.object();
@@ -3858,10 +3696,9 @@ bool EncryptionKeyValuePrivate::less(
     return false;
 }
 
-bsl::ostream& EncryptionKeyValuePrivate::print(
-    bsl::ostream& stream,
-    int           level,
-    int           spacesPerLevel) const
+bsl::ostream& EncryptionKeyValuePrivate::print(bsl::ostream& stream,
+                                               int           level,
+                                               int spacesPerLevel) const
 {
     NTCCFG_WARNING_UNUSED(level);
     NTCCFG_WARNING_UNUSED(spacesPerLevel);
@@ -3882,7 +3719,7 @@ bsl::ostream& EncryptionKeyValuePrivate::print(
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                              stream,
+bsl::ostream& operator<<(bsl::ostream&                    stream,
                          const EncryptionKeyValuePrivate& object)
 {
     return object.print(stream, 0, -1);
@@ -3906,30 +3743,6 @@ bool operator<(const EncryptionKeyValuePrivate& lhs,
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 EncryptionKeyInfoPrivate::EncryptionKeyInfoPrivate(
     bslma::Allocator* basicAllocator)
 : d_version(basicAllocator)
@@ -3943,7 +3756,7 @@ EncryptionKeyInfoPrivate::EncryptionKeyInfoPrivate(
 
 EncryptionKeyInfoPrivate::EncryptionKeyInfoPrivate(
     const EncryptionKeyInfoPrivate& original,
-    bslma::Allocator*                         basicAllocator)
+    bslma::Allocator*               basicAllocator)
 : d_version(original.d_version, basicAllocator)
 , d_algorithm(original.d_algorithm, basicAllocator)
 , d_privateKey(original.d_privateKey, basicAllocator)
@@ -3957,15 +3770,15 @@ EncryptionKeyInfoPrivate::~EncryptionKeyInfoPrivate()
 {
 }
 
-EncryptionKeyInfoPrivate& EncryptionKeyInfoPrivate::
-operator=(const EncryptionKeyInfoPrivate& other)
+EncryptionKeyInfoPrivate& EncryptionKeyInfoPrivate::operator=(
+    const EncryptionKeyInfoPrivate& other)
 {
     if (this != &other) {
-        d_version = other.d_version;
-        d_algorithm = other.d_algorithm;
-        d_privateKey     = other.d_privateKey;
+        d_version    = other.d_version;
+        d_algorithm  = other.d_algorithm;
+        d_privateKey = other.d_privateKey;
         d_attributes = other.d_attributes;
-        d_publicKey = other.d_publicKey;
+        d_publicKey  = other.d_publicKey;
     }
 
     return *this;
@@ -4018,8 +3831,7 @@ ntsa::Error EncryptionKeyInfoPrivate::decode(
     }
 
     if (d_algorithm.identifier().equals(
-            ntca::EncryptionKeyAlgorithmIdentifierType::
-                e_RSA))
+            ntca::EncryptionKeyAlgorithmIdentifierType::e_RSA))
     {
         error = d_privateKey.makeRsa().decode(decoder);
         if (error) {
@@ -4027,8 +3839,7 @@ ntsa::Error EncryptionKeyInfoPrivate::decode(
         }
     }
     else if (d_algorithm.identifier().equals(
-                 ntca::EncryptionKeyAlgorithmIdentifierType::
-                     e_ELLIPTIC_CURVE))
+                 ntca::EncryptionKeyAlgorithmIdentifierType::e_ELLIPTIC_CURVE))
     {
         error = d_privateKey.makeEllipticCurve().decode(decoder);
         if (error) {
@@ -4048,7 +3859,7 @@ ntsa::Error EncryptionKeyInfoPrivate::decode(
     }
 
     bool wantAttributes = true;
-    bool wantPublicKey = true;
+    bool wantPublicKey  = true;
 
     while (decoder->contentBytesRemaining() > 0) {
         error = decoder->decodeTag();
@@ -4190,8 +4001,8 @@ ntsa::Error EncryptionKeyInfoPrivate::encode(
             return error;
         }
 
-        error = encoder->encodeTag(d_attributes.value().tagClass(), 
-                                   d_attributes.value().tagType(), 
+        error = encoder->encodeTag(d_attributes.value().tagClass(),
+                                   d_attributes.value().tagType(),
                                    d_attributes.value().tagNumber());
         if (error) {
             return error;
@@ -4248,14 +4059,13 @@ ntsa::Error EncryptionKeyInfoPrivate::encode(
     return ntsa::Error();
 }
 
-const ntca::EncryptionKeyAlgorithm& 
-EncryptionKeyInfoPrivate::algorithm() const
+const ntca::EncryptionKeyAlgorithm& EncryptionKeyInfoPrivate::algorithm() const
 {
     return d_algorithm;
 }
 
-const ntca::EncryptionKeyValuePrivate& 
-EncryptionKeyInfoPrivate::privateKey() const
+const ntca::EncryptionKeyValuePrivate& EncryptionKeyInfoPrivate::privateKey()
+    const
 {
     return d_privateKey;
 }
@@ -4263,8 +4073,7 @@ EncryptionKeyInfoPrivate::privateKey() const
 bool EncryptionKeyInfoPrivate::equals(
     const EncryptionKeyInfoPrivate& other) const
 {
-    return d_version == other.d_version && 
-           d_algorithm == other.d_algorithm && 
+    return d_version == other.d_version && d_algorithm == other.d_algorithm &&
            d_privateKey == other.d_privateKey &&
            d_attributes == other.d_attributes &&
            d_publicKey == other.d_publicKey;
@@ -4308,10 +4117,9 @@ bool EncryptionKeyInfoPrivate::less(
     return d_publicKey < other.d_publicKey;
 }
 
-bsl::ostream& EncryptionKeyInfoPrivate::print(
-    bsl::ostream& stream,
-    int           level,
-    int           spacesPerLevel) const
+bsl::ostream& EncryptionKeyInfoPrivate::print(bsl::ostream& stream,
+                                              int           level,
+                                              int spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -4320,10 +4128,9 @@ bsl::ostream& EncryptionKeyInfoPrivate::print(
     printer.printAttribute("private", d_privateKey);
 
     if (!d_publicKey.isNull()) {
-
         bsl::ostream::fmtflags previousFlags = stream.flags();
         stream.setf(previousFlags | bsl::ostream::hex);
-   
+
         printer.printAttribute("public", d_publicKey.value());
 
         stream.flags(previousFlags);
@@ -4337,7 +4144,7 @@ bsl::ostream& EncryptionKeyInfoPrivate::print(
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                             stream,
+bsl::ostream& operator<<(bsl::ostream&                   stream,
                          const EncryptionKeyInfoPrivate& object)
 {
     return object.print(stream, 0, -1);
@@ -4361,43 +4168,6 @@ bool operator<(const EncryptionKeyInfoPrivate& lhs,
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 EncryptionKeyValuePublic::EncryptionKeyValuePublic(
     bslma::Allocator* basicAllocator)
 : d_type(e_UNDEFINED)
@@ -4407,20 +4177,19 @@ EncryptionKeyValuePublic::EncryptionKeyValuePublic(
 
 EncryptionKeyValuePublic::EncryptionKeyValuePublic(
     const EncryptionKeyValuePublic& original,
-    bslma::Allocator*                          basicAllocator)
+    bslma::Allocator*               basicAllocator)
 : d_type(original.d_type)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     if (d_type == e_RSA) {
         new (d_rsa.buffer())
             EncryptionKeyRsaValuePublic(original.d_rsa.object(),
-                                                   d_allocator_p);
+                                        d_allocator_p);
     }
     else if (d_type == e_ELLIPTIC_CURVE) {
-        new (d_ellipticCurve.buffer())
-            EncryptionKeyEllipticCurveValuePublic(
-                original.d_ellipticCurve.object(),
-                d_allocator_p);
+        new (d_ellipticCurve.buffer()) EncryptionKeyEllipticCurveValuePublic(
+            original.d_ellipticCurve.object(),
+            d_allocator_p);
     }
     else if (d_type == e_ANY) {
         new (d_any.buffer())
@@ -4436,8 +4205,8 @@ EncryptionKeyValuePublic::~EncryptionKeyValuePublic()
     this->reset();
 }
 
-EncryptionKeyValuePublic& EncryptionKeyValuePublic::
-operator=(const EncryptionKeyValuePublic& other)
+EncryptionKeyValuePublic& EncryptionKeyValuePublic::operator=(
+    const EncryptionKeyValuePublic& other)
 {
     if (this == &other) {
         return *this;
@@ -4463,55 +4232,49 @@ operator=(const EncryptionKeyValuePublic& other)
 void EncryptionKeyValuePublic::reset()
 {
     if (d_type == e_RSA) {
-        typedef EncryptionKeyRsaValuePublic Type;
-        d_rsa.object().~Type();
+        d_rsa.object().~RsaType();
     }
     else if (d_type == e_ELLIPTIC_CURVE) {
-        typedef EncryptionKeyEllipticCurveValuePublic Type;
-        d_ellipticCurve.object().~Type();
+        d_ellipticCurve.object().~EllipticCurveType();
     }
     else if (d_type == e_ANY) {
-        typedef ntsa::AbstractBitString Type;
-        d_any.object().~Type();
+        d_any.object().~AnyType();
     }
 
     d_type = e_UNDEFINED;
 }
 
-EncryptionKeyRsaValuePublic& EncryptionKeyValuePublic::
-    makeRsa()
+EncryptionKeyRsaValuePublic& EncryptionKeyValuePublic::makeRsa()
 {
     if (d_type == e_RSA) {
         d_rsa.object().reset();
     }
     else {
         this->reset();
-        new (d_rsa.buffer())
-            EncryptionKeyRsaValuePublic(d_allocator_p);
+        new (d_rsa.buffer()) EncryptionKeyRsaValuePublic(d_allocator_p);
         d_type = e_RSA;
     }
 
     return d_rsa.object();
 }
 
-EncryptionKeyRsaValuePublic& EncryptionKeyValuePublic::
-    makeRsa(const EncryptionKeyRsaValuePublic& value)
+EncryptionKeyRsaValuePublic& EncryptionKeyValuePublic::makeRsa(
+    const EncryptionKeyRsaValuePublic& value)
 {
     if (d_type == e_RSA) {
         d_rsa.object() = value;
     }
     else {
         this->reset();
-        new (d_rsa.buffer())
-            EncryptionKeyRsaValuePublic(value, d_allocator_p);
+        new (d_rsa.buffer()) EncryptionKeyRsaValuePublic(value, d_allocator_p);
         d_type = e_RSA;
     }
 
     return d_rsa.object();
 }
 
-EncryptionKeyEllipticCurveValuePublic&
-EncryptionKeyValuePublic::makeEllipticCurve()
+EncryptionKeyEllipticCurveValuePublic& EncryptionKeyValuePublic::
+    makeEllipticCurve()
 {
     if (d_type == e_ELLIPTIC_CURVE) {
         d_ellipticCurve.object().reset();
@@ -4526,9 +4289,8 @@ EncryptionKeyValuePublic::makeEllipticCurve()
     return d_ellipticCurve.object();
 }
 
-EncryptionKeyEllipticCurveValuePublic&
-EncryptionKeyValuePublic::makeEllipticCurve(
-    const EncryptionKeyEllipticCurveValuePublic& value)
+EncryptionKeyEllipticCurveValuePublic& EncryptionKeyValuePublic::
+    makeEllipticCurve(const EncryptionKeyEllipticCurveValuePublic& value)
 {
     if (d_type == e_ELLIPTIC_CURVE) {
         d_ellipticCurve.object() = value;
@@ -4536,8 +4298,7 @@ EncryptionKeyValuePublic::makeEllipticCurve(
     else {
         this->reset();
         new (d_ellipticCurve.buffer())
-            EncryptionKeyEllipticCurveValuePublic(value,
-                                                             d_allocator_p);
+            EncryptionKeyEllipticCurveValuePublic(value, d_allocator_p);
         d_type = e_ELLIPTIC_CURVE;
     }
 
@@ -4573,15 +4334,14 @@ ntsa::AbstractBitString& EncryptionKeyValuePublic::makeAny(
     return d_any.object();
 }
 
-EncryptionKeyRsaValuePublic& EncryptionKeyValuePublic::
-    rsa()
+EncryptionKeyRsaValuePublic& EncryptionKeyValuePublic::rsa()
 {
     BSLS_ASSERT(this->isRsa());
     return d_rsa.object();
 }
 
-EncryptionKeyEllipticCurveValuePublic&
-EncryptionKeyValuePublic::ellipticCurve()
+EncryptionKeyEllipticCurveValuePublic& EncryptionKeyValuePublic::
+    ellipticCurve()
 {
     BSLS_ASSERT(this->isEllipticCurve());
     return d_ellipticCurve.object();
@@ -4593,15 +4353,14 @@ ntsa::AbstractBitString& EncryptionKeyValuePublic::any()
     return d_any.object();
 }
 
-const EncryptionKeyRsaValuePublic&
-EncryptionKeyValuePublic::rsa() const
+const EncryptionKeyRsaValuePublic& EncryptionKeyValuePublic::rsa() const
 {
     BSLS_ASSERT(this->isRsa());
     return d_rsa.object();
 }
 
-const EncryptionKeyEllipticCurveValuePublic&
-EncryptionKeyValuePublic::ellipticCurve() const
+const EncryptionKeyEllipticCurveValuePublic& EncryptionKeyValuePublic::
+    ellipticCurve() const
 {
     BSLS_ASSERT(this->isEllipticCurve());
     return d_ellipticCurve.object();
@@ -4683,10 +4442,9 @@ bool EncryptionKeyValuePublic::less(
     return false;
 }
 
-bsl::ostream& EncryptionKeyValuePublic::print(
-    bsl::ostream& stream,
-    int           level,
-    int           spacesPerLevel) const
+bsl::ostream& EncryptionKeyValuePublic::print(bsl::ostream& stream,
+                                              int           level,
+                                              int spacesPerLevel) const
 {
     NTCCFG_WARNING_UNUSED(level);
     NTCCFG_WARNING_UNUSED(spacesPerLevel);
@@ -4702,7 +4460,7 @@ bsl::ostream& EncryptionKeyValuePublic::print(
         stream.setf(previousFlags | bsl::ostream::hex);
 
         d_any.object().print(stream, level, spacesPerLevel);
-        
+
         stream.flags(previousFlags);
     }
     else {
@@ -4712,7 +4470,7 @@ bsl::ostream& EncryptionKeyValuePublic::print(
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                              stream,
+bsl::ostream& operator<<(bsl::ostream&                   stream,
                          const EncryptionKeyValuePublic& object)
 {
     return object.print(stream, 0, -1);
@@ -4746,7 +4504,7 @@ EncryptionKeyInfoPublic::EncryptionKeyInfoPublic(
 
 EncryptionKeyInfoPublic::EncryptionKeyInfoPublic(
     const EncryptionKeyInfoPublic& original,
-    bslma::Allocator*                         basicAllocator)
+    bslma::Allocator*              basicAllocator)
 : d_algorithm(original.d_algorithm, basicAllocator)
 , d_value(original.d_value, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
@@ -4757,8 +4515,8 @@ EncryptionKeyInfoPublic::~EncryptionKeyInfoPublic()
 {
 }
 
-EncryptionKeyInfoPublic& EncryptionKeyInfoPublic::
-operator=(const EncryptionKeyInfoPublic& other)
+EncryptionKeyInfoPublic& EncryptionKeyInfoPublic::operator=(
+    const EncryptionKeyInfoPublic& other)
 {
     if (this != &other) {
         d_algorithm = other.d_algorithm;
@@ -4790,8 +4548,7 @@ ntsa::Error EncryptionKeyInfoPublic::decode(
     }
 
     if (d_algorithm.identifier().equals(
-            ntca::EncryptionKeyAlgorithmIdentifierType::
-                e_RSA))
+            ntca::EncryptionKeyAlgorithmIdentifierType::e_RSA))
     {
         error = d_value.makeRsa().decode(decoder);
         if (error) {
@@ -4799,8 +4556,7 @@ ntsa::Error EncryptionKeyInfoPublic::decode(
         }
     }
     else if (d_algorithm.identifier().equals(
-                 ntca::EncryptionKeyAlgorithmIdentifierType::
-                     e_ELLIPTIC_CURVE))
+                 ntca::EncryptionKeyAlgorithmIdentifierType::e_ELLIPTIC_CURVE))
     {
         error = d_value.makeEllipticCurve().decode(decoder);
         if (error) {
@@ -4887,14 +4643,12 @@ ntsa::Error EncryptionKeyInfoPublic::encode(
     return ntsa::Error();
 }
 
-const ntca::EncryptionKeyAlgorithm& 
-EncryptionKeyInfoPublic::algorithm() const
+const ntca::EncryptionKeyAlgorithm& EncryptionKeyInfoPublic::algorithm() const
 {
     return d_algorithm;
 }
 
-const ntca::EncryptionKeyValuePublic& 
-EncryptionKeyInfoPublic::value() const
+const ntca::EncryptionKeyValuePublic& EncryptionKeyInfoPublic::value() const
 {
     return d_value;
 }
@@ -4905,8 +4659,7 @@ bool EncryptionKeyInfoPublic::equals(
     return d_algorithm == other.d_algorithm && d_value == other.d_value;
 }
 
-bool EncryptionKeyInfoPublic::less(
-    const EncryptionKeyInfoPublic& other) const
+bool EncryptionKeyInfoPublic::less(const EncryptionKeyInfoPublic& other) const
 {
     if (d_algorithm < other.d_algorithm) {
         return true;
@@ -4919,10 +4672,9 @@ bool EncryptionKeyInfoPublic::less(
     return d_value < other.d_value;
 }
 
-bsl::ostream& EncryptionKeyInfoPublic::print(
-    bsl::ostream& stream,
-    int           level,
-    int           spacesPerLevel) const
+bsl::ostream& EncryptionKeyInfoPublic::print(bsl::ostream& stream,
+                                             int           level,
+                                             int spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -4932,7 +4684,7 @@ bsl::ostream& EncryptionKeyInfoPublic::print(
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&                             stream,
+bsl::ostream& operator<<(bsl::ostream&                  stream,
                          const EncryptionKeyInfoPublic& object)
 {
     return object.print(stream, 0, -1);
@@ -4956,24 +4708,6 @@ bool operator<(const EncryptionKeyInfoPublic& lhs,
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 EncryptionKey::EncryptionKey(bslma::Allocator* basicAllocator)
 : d_type(e_UNDEFINED)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
@@ -4987,17 +4721,19 @@ EncryptionKey::EncryptionKey(const EncryptionKey& original,
 {
     if (d_type == e_RSA) {
         new (d_rsa.buffer())
-            ntca::EncryptionKeyRsaValuePrivate(original.d_rsa.object(), d_allocator_p);
+            ntca::EncryptionKeyRsaValuePrivate(original.d_rsa.object(),
+                                               d_allocator_p);
     }
     else if (d_type == e_ELLIPTIC_CURVE) {
         new (d_ellipticCurve.buffer())
-            ntca::EncryptionKeyEllipticCurveValuePrivate(original.d_ellipticCurve.object(),
-                                             d_allocator_p);
+            ntca::EncryptionKeyEllipticCurveValuePrivate(
+                original.d_ellipticCurve.object(),
+                d_allocator_p);
     }
     else if (d_type == e_PRIVATE_KEY_INFO) {
         new (d_info.buffer())
             ntca::EncryptionKeyInfoPrivate(original.d_info.object(),
-                                             d_allocator_p);
+                                           d_allocator_p);
     }
     else {
         BSLS_ASSERT(d_type == e_UNDEFINED);
@@ -5070,14 +4806,16 @@ ntca::EncryptionKeyRsaValuePrivate& EncryptionKey::makeRsa(
     }
     else {
         this->reset();
-        new (d_rsa.buffer()) ntca::EncryptionKeyRsaValuePrivate(value, d_allocator_p);
+        new (d_rsa.buffer())
+            ntca::EncryptionKeyRsaValuePrivate(value, d_allocator_p);
         d_type = e_RSA;
     }
 
     return d_rsa.object();
 }
 
-ntca::EncryptionKeyEllipticCurveValuePrivate& EncryptionKey::makeEllipticCurve()
+ntca::EncryptionKeyEllipticCurveValuePrivate& EncryptionKey::
+    makeEllipticCurve()
 {
     if (d_type == e_ELLIPTIC_CURVE) {
         d_ellipticCurve.object().reset();
@@ -5130,7 +4868,8 @@ ntca::EncryptionKeyInfoPrivate& EncryptionKey::makeInfo(
     }
     else {
         this->reset();
-        new (d_info.buffer()) ntca::EncryptionKeyInfoPrivate(value, d_allocator_p);
+        new (d_info.buffer())
+            ntca::EncryptionKeyInfoPrivate(value, d_allocator_p);
         d_type = e_PRIVATE_KEY_INFO;
     }
 
@@ -5154,7 +4893,6 @@ ntca::EncryptionKeyInfoPrivate& EncryptionKey::info()
     BSLS_ASSERT(d_type == e_PRIVATE_KEY_INFO);
     return d_info.object();
 }
-
 
 ntsa::Error EncryptionKey::decode(ntsa::AbstractSyntaxDecoder* decoder)
 {
@@ -5233,7 +4971,8 @@ const ntca::EncryptionKeyRsaValuePrivate& EncryptionKey::rsa() const
     return d_rsa.object();
 }
 
-const ntca::EncryptionKeyEllipticCurveValuePrivate& EncryptionKey::ellipticCurve() const
+const ntca::EncryptionKeyEllipticCurveValuePrivate& EncryptionKey::
+    ellipticCurve() const
 {
     BSLS_ASSERT(d_type == e_ELLIPTIC_CURVE);
     return d_ellipticCurve.object();

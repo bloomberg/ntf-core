@@ -40,7 +40,14 @@ EncryptionResourceDescriptor::EncryptionResourceDescriptor(
 : d_type(original.d_type)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    if (d_type == e_PATH) {
+    if (d_type == e_CERTIFICATE) {
+        new (d_certificate.buffer())
+            CertificateType(original.d_certificate.object(), d_allocator_p);
+    }
+    else if (d_type == e_KEY) {
+        new (d_key.buffer()) KeyType(original.d_key.object(), d_allocator_p);
+    }
+    else if (d_type == e_PATH) {
         new (d_path.buffer())
             PathType(original.d_path.object(), d_allocator_p);
     }
@@ -55,7 +62,13 @@ EncryptionResourceDescriptor::EncryptionResourceDescriptor(
 
 EncryptionResourceDescriptor::~EncryptionResourceDescriptor()
 {
-    if (d_type == e_PATH) {
+    if (d_type == e_CERTIFICATE) {
+        d_certificate.object().~CertificateType();
+    }
+    else if (d_type == e_KEY) {
+        d_key.object().~KeyType();
+    }
+    else if (d_type == e_PATH) {
         d_path.object().~PathType();
     }
     else if (d_type == e_DATA) {
@@ -70,7 +83,13 @@ EncryptionResourceDescriptor& EncryptionResourceDescriptor::operator=(
     const EncryptionResourceDescriptor& other)
 {
     if (this != &other) {
-        if (other.d_type == e_PATH) {
+        if (other.d_type == e_CERTIFICATE) {
+            this->makeCertificate(other.d_certificate.object());
+        }
+        else if (other.d_type == e_KEY) {
+            this->makeKey(other.d_key.object());
+        }
+        else if (other.d_type == e_PATH) {
             this->makePath(other.d_path.object());
         }
         else if (other.d_type == e_DATA) {
@@ -87,7 +106,13 @@ EncryptionResourceDescriptor& EncryptionResourceDescriptor::operator=(
 
 void EncryptionResourceDescriptor::reset()
 {
-    if (d_type == e_PATH) {
+    if (d_type == e_CERTIFICATE) {
+        d_certificate.object().~CertificateType();
+    }
+    else if (d_type == e_KEY) {
+        d_key.object().~KeyType();
+    }
+    else if (d_type == e_PATH) {
         d_path.object().~PathType();
     }
     else if (d_type == e_DATA) {
@@ -98,6 +123,64 @@ void EncryptionResourceDescriptor::reset()
     }
 
     d_type = e_UNDEFINED;
+}
+
+ntca::EncryptionCertificate& EncryptionResourceDescriptor::makeCertificate()
+{
+    if (d_type == e_CERTIFICATE) {
+        d_certificate.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_certificate.buffer()) CertificateType(d_allocator_p);
+        d_type = e_CERTIFICATE;
+    }
+
+    return d_certificate.object();
+}
+
+ntca::EncryptionCertificate& EncryptionResourceDescriptor::makeCertificate(
+    const ntca::EncryptionCertificate& value)
+{
+    if (d_type == e_CERTIFICATE) {
+        d_certificate.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_certificate.buffer()) CertificateType(value, d_allocator_p);
+        d_type = e_CERTIFICATE;
+    }
+
+    return d_certificate.object();
+}
+
+ntca::EncryptionKey& EncryptionResourceDescriptor::makeKey()
+{
+    if (d_type == e_KEY) {
+        d_key.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_key.buffer()) KeyType(d_allocator_p);
+        d_type = e_KEY;
+    }
+
+    return d_key.object();
+}
+
+ntca::EncryptionKey& EncryptionResourceDescriptor::makeKey(
+    const ntca::EncryptionKey& value)
+{
+    if (d_type == e_KEY) {
+        d_key.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_key.buffer()) KeyType(value, d_allocator_p);
+        d_type = e_KEY;
+    }
+
+    return d_key.object();
 }
 
 bsl::string& EncryptionResourceDescriptor::makePath()
@@ -157,6 +240,18 @@ bsl::vector<char>& EncryptionResourceDescriptor::makeData(
     return d_data.object();
 }
 
+ntca::EncryptionCertificate& EncryptionResourceDescriptor::certificate()
+{
+    BSLS_ASSERT(d_type == e_CERTIFICATE);
+    return d_certificate.object();
+}
+
+ntca::EncryptionKey& EncryptionResourceDescriptor::key()
+{
+    BSLS_ASSERT(d_type == e_KEY);
+    return d_key.object();
+}
+
 bsl::string& EncryptionResourceDescriptor::path()
 {
     BSLS_ASSERT(d_type == e_PATH);
@@ -167,6 +262,19 @@ bsl::vector<char>& EncryptionResourceDescriptor::data()
 {
     BSLS_ASSERT(d_type == e_DATA);
     return d_data.object();
+}
+
+const ntca::EncryptionCertificate& EncryptionResourceDescriptor::certificate()
+    const
+{
+    BSLS_ASSERT(d_type == e_CERTIFICATE);
+    return d_certificate.object();
+}
+
+const ntca::EncryptionKey& EncryptionResourceDescriptor::key() const
+{
+    BSLS_ASSERT(d_type == e_KEY);
+    return d_key.object();
 }
 
 const bsl::string& EncryptionResourceDescriptor::path() const
@@ -186,6 +294,16 @@ bool EncryptionResourceDescriptor::isUndefined() const
     return d_type == e_UNDEFINED;
 }
 
+bool EncryptionResourceDescriptor::isCertificate() const
+{
+    return d_type == e_CERTIFICATE;
+}
+
+bool EncryptionResourceDescriptor::isKey() const
+{
+    return d_type == e_KEY;
+}
+
 bool EncryptionResourceDescriptor::isPath() const
 {
     return d_type == e_PATH;
@@ -203,7 +321,13 @@ bool EncryptionResourceDescriptor::equals(
         return false;
     }
 
-    if (d_type == e_PATH) {
+    if (d_type == e_CERTIFICATE) {
+        return d_certificate.object() == other.d_certificate.object();
+    }
+    else if (d_type == e_KEY) {
+        return d_key.object() == other.d_key.object();
+    }
+    else if (d_type == e_PATH) {
         return d_path.object() == other.d_path.object();
     }
     else if (d_type == e_DATA) {
@@ -220,7 +344,13 @@ bool EncryptionResourceDescriptor::less(
         return false;
     }
 
-    if (d_type == e_PATH) {
+    if (d_type == e_CERTIFICATE) {
+        return d_certificate.object() < other.d_certificate.object();
+    }
+    else if (d_type == e_KEY) {
+        return d_key.object() < other.d_key.object();
+    }
+    else if (d_type == e_PATH) {
         return d_path.object() < other.d_path.object();
     }
     else if (d_type == e_DATA) {
@@ -237,7 +367,13 @@ bsl::ostream& EncryptionResourceDescriptor::print(bsl::ostream& stream,
     NTCCFG_WARNING_UNUSED(level);
     NTCCFG_WARNING_UNUSED(spacesPerLevel);
 
-    if (d_type == e_PATH) {
+    if (d_type == e_CERTIFICATE) {
+        stream << d_certificate.object();
+    }
+    else if (d_type == e_KEY) {
+        stream << d_key.object();
+    }
+    else if (d_type == e_PATH) {
         stream << d_path.object();
     }
     else if (d_type == e_DATA) {

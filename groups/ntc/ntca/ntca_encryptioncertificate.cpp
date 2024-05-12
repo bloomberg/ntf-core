@@ -331,16 +331,6 @@ bool EncryptionCertificateVersion::equals(
 bool EncryptionCertificateVersion::less(
     const EncryptionCertificateVersion& other) const
 {
-#if 0
-    if (d_value < other.d_value) {
-        return true;
-    }
-
-    if (other.d_value < d_value) {
-        return false;
-    }
-#endif
-
     return d_value < other.d_value;
 }
 
@@ -1002,7 +992,7 @@ bsl::string EncryptionCertificateNameAttribute::value() const
         return text;
     }
 
-    // MRM: Enhance ntsa::AbstractString::convert to handle T61, etc.
+    // TODO: Enhance ntsa::AbstractString::convert to handle T61, etc.
     return "<encoded>";
 }
 
@@ -1032,11 +1022,16 @@ bsl::ostream& EncryptionCertificateNameAttribute::print(
     int           spacesPerLevel) const
 {
     EncryptionCertificateNameAttributeIdentifierType::Value type;
-    int rc = EncryptionCertificateNameAttributeIdentifierType::fromObjectIdentifier(&type, d_attribute.identifier());
+    int                                                     rc =
+        EncryptionCertificateNameAttributeIdentifierType::fromObjectIdentifier(
+            &type,
+            d_attribute.identifier());
     if (rc == 0) {
         bslim::Printer printer(&stream, level, spacesPerLevel);
         printer.start();
-        printer.printAttribute(EncryptionCertificateNameAttributeIdentifierType::toString(type), d_value);
+        printer.printAttribute(
+            EncryptionCertificateNameAttributeIdentifierType::toString(type),
+            d_value);
         printer.end();
     }
     else {
@@ -1247,7 +1242,7 @@ ntsa::Error EncryptionCertificateName::encode(
     }
 
     for (bsl::size_t i = 0; i < d_attributeVector.size(); ++i) {
-        const EncryptionCertificateNameAttribute& attribute = 
+        const EncryptionCertificateNameAttribute& attribute =
             d_attributeVector[i];
 
         error = encoder->encodeTag(k_UNIVERSAL, k_CONSTRUCTED, k_SET);
@@ -1330,42 +1325,39 @@ bsl::string EncryptionCertificateName::common() const
 bsl::string EncryptionCertificateName::prefix() const
 {
     bsl::string result;
-    this->format(&result,
-                 ntca::EncryptionCertificateNameAttributeIdentifierType::
-                     e_NAME_PREFIX);
+    this->format(
+        &result,
+        ntca::EncryptionCertificateNameAttributeIdentifierType::e_NAME_PREFIX);
 
     return result;
 }
-
 
 bsl::string EncryptionCertificateName::given() const
 {
     bsl::string result;
-    this->format(&result,
-                 ntca::EncryptionCertificateNameAttributeIdentifierType::
-                     e_NAME_GIVEN);
+    this->format(
+        &result,
+        ntca::EncryptionCertificateNameAttributeIdentifierType::e_NAME_GIVEN);
 
     return result;
 }
-
 
 bsl::string EncryptionCertificateName::family() const
 {
     bsl::string result;
-    this->format(&result,
-                 ntca::EncryptionCertificateNameAttributeIdentifierType::
-                     e_NAME_FAMILY);
+    this->format(
+        &result,
+        ntca::EncryptionCertificateNameAttributeIdentifierType::e_NAME_FAMILY);
 
     return result;
 }
 
-
 bsl::string EncryptionCertificateName::pseudo() const
 {
     bsl::string result;
-    this->format(&result,
-                 ntca::EncryptionCertificateNameAttributeIdentifierType::
-                     e_NAME_PSEUDO);
+    this->format(
+        &result,
+        ntca::EncryptionCertificateNameAttributeIdentifierType::e_NAME_PSEUDO);
 
     return result;
 }
@@ -1373,9 +1365,9 @@ bsl::string EncryptionCertificateName::pseudo() const
 bsl::string EncryptionCertificateName::suffix() const
 {
     bsl::string result;
-    this->format(&result,
-                 ntca::EncryptionCertificateNameAttributeIdentifierType::
-                     e_NAME_SUFFIX);
+    this->format(
+        &result,
+        ntca::EncryptionCertificateNameAttributeIdentifierType::e_NAME_SUFFIX);
 
     return result;
 }
@@ -1399,7 +1391,6 @@ bsl::string EncryptionCertificateName::organizationUnit() const
 
     return result;
 }
-
 
 bsl::string EncryptionCertificateName::addressStreet() const
 {
@@ -1445,8 +1436,8 @@ bsl::string EncryptionCertificateName::domain() const
 {
     bsl::string result;
     this->formatDot(&result,
-                 ntca::EncryptionCertificateNameAttributeIdentifierType::
-                     e_DOMAIN_COMPONENT);
+                    ntca::EncryptionCertificateNameAttributeIdentifierType::
+                        e_DOMAIN_COMPONENT);
 
     return result;
 }
@@ -1454,9 +1445,9 @@ bsl::string EncryptionCertificateName::domain() const
 bsl::string EncryptionCertificateName::userId() const
 {
     bsl::string result;
-    this->format(&result,
-                 ntca::EncryptionCertificateNameAttributeIdentifierType::
-                     e_USER_ID);
+    this->format(
+        &result,
+        ntca::EncryptionCertificateNameAttributeIdentifierType::e_USER_ID);
 
     return result;
 }
@@ -1464,11 +1455,66 @@ bsl::string EncryptionCertificateName::userId() const
 bsl::string EncryptionCertificateName::email() const
 {
     bsl::string result;
-    this->format(&result,
-                 ntca::EncryptionCertificateNameAttributeIdentifierType::
-                     e_EMAIL);
+    this->format(
+        &result,
+        ntca::EncryptionCertificateNameAttributeIdentifierType::e_EMAIL);
 
     return result;
+}
+
+bool EncryptionCertificateName::matchesDomainName(
+    const bsl::string& domainName) const
+{
+    const ntca::EncryptionCertificateNameAttributeIdentifierType::Value
+        k_COMMON_NAME = ntca::
+            EncryptionCertificateNameAttributeIdentifierType::e_NAME_COMMON;
+
+    for (bsl::size_t i = 0; i < d_attributeVector.size(); ++i) {
+        const EncryptionCertificateNameAttribute& component =
+            d_attributeVector[i];
+
+        if (component.attribute().equals(k_COMMON_NAME)) {
+            if (EncryptionCertificateUtil::matches(domainName,
+                                                   component.value()))
+            {
+                return true;
+            }
+        }
+    }
+
+    bsl::string internalDomainName = this->domain();
+
+    if (!internalDomainName.empty()) {
+        if (EncryptionCertificateUtil::matches(domainName, internalDomainName))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool EncryptionCertificateName::matchesIpAddress(
+    const ntsa::IpAddress& ipAddress) const
+{
+    const ntca::EncryptionCertificateNameAttributeIdentifierType::Value
+        k_COMMON_NAME = ntca::
+            EncryptionCertificateNameAttributeIdentifierType::e_NAME_COMMON;
+
+    for (bsl::size_t i = 0; i < d_attributeVector.size(); ++i) {
+        const EncryptionCertificateNameAttribute& component =
+            d_attributeVector[i];
+
+        if (component.attribute().equals(k_COMMON_NAME)) {
+            if (EncryptionCertificateUtil::matches(ipAddress,
+                                                   component.value()))
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 bool EncryptionCertificateName::equals(
@@ -2155,8 +2201,6 @@ ntsa::Error EncryptionCertificateNameAlternative::encode(
 {
     ntsa::Error error;
 
-    
-
     if (this->isOther()) {
         error = encoder->encodeTag(k_CONTEXT_SPECIFIC, k_CONSTRUCTED, d_type);
         if (error) {
@@ -2260,7 +2304,7 @@ ntsa::Error EncryptionCertificateNameAlternative::encode(
         }
 
         bsl::string text = this->uri().text();
-        error = encoder->encodeValue(NL_TEXTMAX);
+        error            = encoder->encodeValue(NL_TEXTMAX);
         if (error) {
             return error;
         }
@@ -2429,6 +2473,50 @@ bool EncryptionCertificateNameAlternative::isIp() const
 bool EncryptionCertificateNameAlternative::isIdentifier() const
 {
     return d_type == e_IDENTIFIER;
+}
+
+bool EncryptionCertificateNameAlternative::matchesDomainName(
+    const bsl::string& domainName) const
+{
+    if (this->isDomain()) {
+        if (EncryptionCertificateUtil::matches(domainName, this->domain())) {
+            return true;
+        }
+    }
+    else if (this->isIp()) {
+        if (EncryptionCertificateUtil::matches(domainName, this->ip())) {
+            return true;
+        }
+    }
+    else if (this->isUri()) {
+        if (EncryptionCertificateUtil::matches(domainName, this->uri())) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool EncryptionCertificateNameAlternative::matchesIpAddress(
+    const ntsa::IpAddress& ipAddress) const
+{
+    if (this->isDomain()) {
+        if (EncryptionCertificateUtil::matches(ipAddress, this->domain())) {
+            return true;
+        }
+    }
+    else if (this->isIp()) {
+        if (EncryptionCertificateUtil::matches(ipAddress, this->ip())) {
+            return true;
+        }
+    }
+    else if (this->isUri()) {
+        if (EncryptionCertificateUtil::matches(ipAddress, this->uri())) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool EncryptionCertificateNameAlternative::equals(
@@ -2678,10 +2766,38 @@ ntsa::Error EncryptionCertificateNameAlternativeList::encode(
     return ntsa::Error();
 }
 
-const bsl::vector<EncryptionCertificateNameAlternative>& 
+const bsl::vector<EncryptionCertificateNameAlternative>&
 EncryptionCertificateNameAlternativeList::alternatives() const
 {
     return d_container;
+}
+
+bool EncryptionCertificateNameAlternativeList::matchesDomainName(
+    const bsl::string& domainName) const
+{
+    for (bsl::size_t i = 0; i < d_container.size(); ++i) {
+        const EncryptionCertificateNameAlternative& element = d_container[i];
+
+        if (element.matchesDomainName(domainName)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool EncryptionCertificateNameAlternativeList::matchesIpAddress(
+    const ntsa::IpAddress& ipAddress) const
+{
+    for (bsl::size_t i = 0; i < d_container.size(); ++i) {
+        const EncryptionCertificateNameAlternative& element = d_container[i];
+
+        if (element.matchesIpAddress(ipAddress)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool EncryptionCertificateNameAlternativeList::equals(
@@ -2824,16 +2940,6 @@ bool EncryptionCertificateNameConstraints::equals(
 bool EncryptionCertificateNameConstraints::less(
     const EncryptionCertificateNameConstraints& other) const
 {
-#if 0
-    if (d_value < other.d_value) {
-        return true;
-    }
-
-    if (other.d_value < d_value) {
-        return false;
-    }
-#endif
-
     return d_value < other.d_value;
 }
 
@@ -2903,9 +3009,9 @@ EncryptionCertificateValidity& EncryptionCertificateValidity::operator=(
 {
     if (this != &other) {
         d_fromTagNumber = other.d_fromTagNumber;
-        d_from = other.d_from;
+        d_from          = other.d_from;
         d_thruTagNumber = other.d_thruTagNumber;
-        d_thru = other.d_thru;
+        d_thru          = other.d_thru;
     }
 
     return *this;
@@ -2945,10 +3051,10 @@ ntsa::Error EncryptionCertificateValidity::decode(
             return error;
         }
 
-        if (decoder->current().tagNumber() != 
-            ntsa::AbstractSyntaxTagNumber::e_GENERALIZED_TIME &&
-            decoder->current().tagNumber() != 
-            ntsa::AbstractSyntaxTagNumber::e_UTC_TIME)
+        if (decoder->current().tagNumber() !=
+                ntsa::AbstractSyntaxTagNumber::e_GENERALIZED_TIME &&
+            decoder->current().tagNumber() !=
+                ntsa::AbstractSyntaxTagNumber::e_UTC_TIME)
         {
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
@@ -2973,10 +3079,10 @@ ntsa::Error EncryptionCertificateValidity::decode(
             return error;
         }
 
-        if (decoder->current().tagNumber() != 
-            ntsa::AbstractSyntaxTagNumber::e_GENERALIZED_TIME &&
-            decoder->current().tagNumber() != 
-            ntsa::AbstractSyntaxTagNumber::e_UTC_TIME)
+        if (decoder->current().tagNumber() !=
+                ntsa::AbstractSyntaxTagNumber::e_GENERALIZED_TIME &&
+            decoder->current().tagNumber() !=
+                ntsa::AbstractSyntaxTagNumber::e_UTC_TIME)
         {
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
@@ -3014,9 +3120,7 @@ ntsa::Error EncryptionCertificateValidity::encode(
     }
 
     {
-        error = encoder->encodeTag(k_UNIVERSAL, 
-                                   k_PRIMITIVE, 
-                                   d_fromTagNumber);
+        error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, d_fromTagNumber);
         if (error) {
             return error;
         }
@@ -3033,9 +3137,7 @@ ntsa::Error EncryptionCertificateValidity::encode(
     }
 
     {
-        error = encoder->encodeTag(k_UNIVERSAL, 
-                                   k_PRIMITIVE, 
-                                   d_thruTagNumber);
+        error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, d_thruTagNumber);
         if (error) {
             return error;
         }
@@ -3124,14 +3226,6 @@ bool operator<(const EncryptionCertificateValidity& lhs,
 {
     return lhs.less(rhs);
 }
-
-
-
-
-
-
-
-
 
 const char* EncryptionCertificateSignatureAlgorithmIdentifierType::toString(
     Value value)
@@ -4137,16 +4231,6 @@ bool EncryptionCertificatePolicyConstraints::equals(
 bool EncryptionCertificatePolicyConstraints::less(
     const EncryptionCertificatePolicyConstraints& other) const
 {
-#if 0
-    if (d_value < other.d_value) {
-        return true;
-    }
-
-    if (other.d_value < d_value) {
-        return false;
-    }
-#endif
-
     return d_value < other.d_value;
 }
 
@@ -4277,16 +4361,6 @@ bool EncryptionCertificatePolicyMappings::equals(
 bool EncryptionCertificatePolicyMappings::less(
     const EncryptionCertificatePolicyMappings& other) const
 {
-#if 0
-    if (d_value < other.d_value) {
-        return true;
-    }
-
-    if (other.d_value < d_value) {
-        return false;
-    }
-#endif
-
     return d_value < other.d_value;
 }
 
@@ -4417,16 +4491,6 @@ bool EncryptionCertificatePolicy::equals(
 bool EncryptionCertificatePolicy::less(
     const EncryptionCertificatePolicy& other) const
 {
-#if 0
-    if (d_value < other.d_value) {
-        return true;
-    }
-
-    if (other.d_value < d_value) {
-        return false;
-    }
-#endif
-
     return d_value < other.d_value;
 }
 
@@ -4559,16 +4623,6 @@ bool EncryptionCertificateIssuerKeyIdentifier::equals(
 bool EncryptionCertificateIssuerKeyIdentifier::less(
     const EncryptionCertificateIssuerKeyIdentifier& other) const
 {
-#if 0
-    if (d_value < other.d_value) {
-        return true;
-    }
-
-    if (other.d_value < d_value) {
-        return false;
-    }
-#endif
-
     return d_value < other.d_value;
 }
 
@@ -4704,16 +4758,6 @@ bool EncryptionCertificateIssuerInformationAccess::equals(
 bool EncryptionCertificateIssuerInformationAccess::less(
     const EncryptionCertificateIssuerInformationAccess& other) const
 {
-#if 0
-    if (d_value < other.d_value) {
-        return true;
-    }
-
-    if (other.d_value < d_value) {
-        return false;
-    }
-#endif
-
     return d_value < other.d_value;
 }
 
@@ -4798,6 +4842,18 @@ ntsa::Error EncryptionCertificateIssuer::encode(
     ntsa::AbstractSyntaxEncoder* encoder) const
 {
     return d_name.encode(encoder);
+}
+
+bool EncryptionCertificateIssuer::matchesDomainName(
+    const bsl::string& domainName) const
+{
+    return d_name.matchesDomainName(domainName);
+}
+
+bool EncryptionCertificateIssuer::matchesIpAddress(
+    const ntsa::IpAddress& ipAddress) const
+{
+    return d_name.matchesIpAddress(ipAddress);
 }
 
 bool EncryptionCertificateIssuer::equals(
@@ -5617,16 +5673,6 @@ bool EncryptionCertificateSubjectKeyIdentifier::equals(
 bool EncryptionCertificateSubjectKeyIdentifier::less(
     const EncryptionCertificateSubjectKeyIdentifier& other) const
 {
-#if 0
-    if (d_value < other.d_value) {
-        return true;
-    }
-
-    if (other.d_value < d_value) {
-        return false;
-    }
-#endif
-
     return d_value < other.d_value;
 }
 
@@ -5705,6 +5751,16 @@ void EncryptionCertificateSubjectConstraints::reset()
 {
     d_authority.reset();
     d_pathLength.reset();
+}
+
+void EncryptionCertificateSubjectConstraints::setAuthority(bool value)
+{
+    d_authority = value;
+}
+
+void EncryptionCertificateSubjectConstraints::setPathLength(bsl::size_t value)
+{
+    d_pathLength = value;
 }
 
 ntsa::Error EncryptionCertificateSubjectConstraints::decode(
@@ -5823,6 +5879,18 @@ ntsa::Error EncryptionCertificateSubjectConstraints::encode(
     }
 
     return ntsa::Error();
+}
+
+const bdlb::NullableValue<bool>& EncryptionCertificateSubjectConstraints::
+    authority() const
+{
+    return d_authority;
+}
+
+const bdlb::NullableValue<bsl::size_t>& EncryptionCertificateSubjectConstraints::
+    pathLength() const
+{
+    return d_pathLength;
 }
 
 bool EncryptionCertificateSubjectConstraints::equals(
@@ -5946,6 +6014,18 @@ const ntca::EncryptionCertificateName& EncryptionCertificateSubject::name()
     const
 {
     return d_name;
+}
+
+bool EncryptionCertificateSubject::matchesDomainName(
+    const bsl::string& domainName) const
+{
+    return d_name.matchesDomainName(domainName);
+}
+
+bool EncryptionCertificateSubject::matchesIpAddress(
+    const ntsa::IpAddress& ipAddress) const
+{
+    return d_name.matchesIpAddress(ipAddress);
 }
 
 bool EncryptionCertificateSubject::equals(
@@ -8226,6 +8306,83 @@ ntsa::Error EncryptionCertificateExtensionList::encode(
     return ntsa::Error();
 }
 
+bool EncryptionCertificateExtensionList::isAuthority() const
+{
+    const ntca::EncryptionCertificateExtensionIdentifierType::Value
+        k_SUBJECT_CONSTRAINTS =
+            ntca::EncryptionCertificateExtensionIdentifierType::
+                e_SUBJECT_CONSTRAINTS;
+
+    for (bsl::size_t i = 0; i < d_container.size(); ++i) {
+        const EncryptionCertificateExtension& element = d_container[i];
+
+        if (element.attribute().equals(k_SUBJECT_CONSTRAINTS)) {
+            if (element.value().isSubjectConstraints()) {
+                const EncryptionCertificateSubjectConstraints&
+                    subjectConstraints = element.value().subjectConstraints();
+
+                if (subjectConstraints.authority().value_or(false)) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+bool EncryptionCertificateExtensionList::matchesDomainName(
+    const bsl::string& domainName) const
+{
+    const ntca::EncryptionCertificateExtensionIdentifierType::Value
+        k_SUBJECT_ALTERNATIVE_NAME =
+            ntca::EncryptionCertificateExtensionIdentifierType::
+                e_SUBJECT_ALTERNATIVE_NAME;
+
+    for (bsl::size_t i = 0; i < d_container.size(); ++i) {
+        const EncryptionCertificateExtension& element = d_container[i];
+
+        if (element.attribute().equals(k_SUBJECT_ALTERNATIVE_NAME)) {
+            if (element.value().isNameAlternative()) {
+                const EncryptionCertificateNameAlternativeList&
+                    nameAlternativeList = element.value().nameAlternative();
+
+                if (nameAlternativeList.matchesDomainName(domainName)) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+bool EncryptionCertificateExtensionList::matchesIpAddress(
+    const ntsa::IpAddress& ipAddress) const
+{
+    const ntca::EncryptionCertificateExtensionIdentifierType::Value
+        k_SUBJECT_ALTERNATIVE_NAME =
+            ntca::EncryptionCertificateExtensionIdentifierType::
+                e_SUBJECT_ALTERNATIVE_NAME;
+
+    for (bsl::size_t i = 0; i < d_container.size(); ++i) {
+        const EncryptionCertificateExtension& element = d_container[i];
+
+        if (element.attribute().equals(k_SUBJECT_ALTERNATIVE_NAME)) {
+            if (element.value().isNameAlternative()) {
+                const EncryptionCertificateNameAlternativeList&
+                    nameAlternativeList = element.value().nameAlternative();
+
+                if (nameAlternativeList.matchesIpAddress(ipAddress)) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
 bool EncryptionCertificateExtensionList::equals(
     const EncryptionCertificateExtensionList& other) const
 {
@@ -8341,39 +8498,6 @@ void EncryptionCertificateEntity::reset()
     d_subjectUniqueId.reset();
     d_extensionList.reset();
 }
-
-// MRM
-#if 0
-void EncryptionCertificateEntity::setSerialNumber(int value)
-{
-    d_serialNumber = value;
-}
-
-void EncryptionCertificateEntity::setStartTime(const bdlt::DatetimeTz& value)
-{
-    d_startTime = value;
-}
-
-void EncryptionCertificateEntity::setExpirationTime(const bdlt::DatetimeTz& value)
-{
-    d_expirationTime = value;
-}
-
-void EncryptionCertificateEntity::setAuthority(bool value)
-{
-    d_authority = value;
-}
-
-void EncryptionCertificateEntity::setHostList(const bsl::vector<bsl::string>& value)
-{
-    d_hosts = value;
-}
-
-void EncryptionCertificateEntity::addHost(const bsl::string& value)
-{
-    d_hosts.push_back(value);
-}
-#endif
 
 ntsa::Error EncryptionCertificateEntity::decode(
     ntsa::AbstractSyntaxDecoder* decoder)
@@ -8648,6 +8772,51 @@ const ntca::EncryptionCertificateSignatureAlgorithm& EncryptionCertificateEntity
     return d_signatureAlgorithm;
 }
 
+bool EncryptionCertificateEntity::isAuthority() const
+{
+    if (!d_extensionList.isNull()) {
+        return d_extensionList.value().isAuthority();
+    }
+
+    return false;
+}
+
+bool EncryptionCertificateEntity::matchesDomainName(
+    const bsl::string& domainName) const
+{
+    bool result = d_subject.matchesDomainName(domainName);
+    if (result) {
+        return result;
+    }
+
+    if (!d_extensionList.isNull()) {
+        result = d_extensionList.value().matchesDomainName(domainName);
+        if (result) {
+            return result;
+        }
+    }
+
+    return false;
+}
+
+bool EncryptionCertificateEntity::matchesIpAddress(
+    const ntsa::IpAddress& ipAddress) const
+{
+    bool result = d_subject.matchesIpAddress(ipAddress);
+    if (result) {
+        return result;
+    }
+
+    if (!d_extensionList.isNull()) {
+        result = d_extensionList.value().matchesIpAddress(ipAddress);
+        if (result) {
+            return result;
+        }
+    }
+
+    return false;
+}
+
 bool EncryptionCertificateEntity::equals(
     const EncryptionCertificateEntity& other) const
 {
@@ -8823,39 +8992,6 @@ void EncryptionCertificate::reset()
     d_signature.reset();
 }
 
-// MRM
-#if 0
-void EncryptionCertificate::setSerialNumber(int value)
-{
-    d_serialNumber = value;
-}
-
-void EncryptionCertificate::setStartTime(const bdlt::DatetimeTz& value)
-{
-    d_startTime = value;
-}
-
-void EncryptionCertificate::setExpirationTime(const bdlt::DatetimeTz& value)
-{
-    d_expirationTime = value;
-}
-
-void EncryptionCertificate::setAuthority(bool value)
-{
-    d_authority = value;
-}
-
-void EncryptionCertificate::setHostList(const bsl::vector<bsl::string>& value)
-{
-    d_hosts = value;
-}
-
-void EncryptionCertificate::addHost(const bsl::string& value)
-{
-    d_hosts.push_back(value);
-}
-#endif
-
 ntsa::Error EncryptionCertificate::decode(ntsa::AbstractSyntaxDecoder* decoder)
 {
     ntsa::Error error;
@@ -8984,6 +9120,23 @@ const ntca::EncryptionCertificateSignature& EncryptionCertificate::signature()
     return d_signature;
 }
 
+bool EncryptionCertificate::isAuthority() const
+{
+    return d_entity.isAuthority();
+}
+
+bool EncryptionCertificate::matchesDomainName(
+    const bsl::string& domainName) const
+{
+    return d_entity.matchesDomainName(domainName);
+}
+
+bool EncryptionCertificate::matchesIpAddress(
+    const ntsa::IpAddress& ipAddress) const
+{
+    return d_entity.matchesIpAddress(ipAddress);
+}
+
 bool EncryptionCertificate::equals(const EncryptionCertificate& other) const
 {
     return d_entity == other.d_entity &&
@@ -9047,6 +9200,273 @@ bool operator<(const EncryptionCertificate& lhs,
                const EncryptionCertificate& rhs)
 {
     return lhs.less(rhs);
+}
+
+bool EncryptionCertificateUtil::matches(const bsl::string& requested,
+                                        const bsl::string& certified)
+{
+    if (requested == certified) {
+        return true;
+    }
+
+    {
+        ntsa::IpAddress requestedIpAddress;
+        if (requestedIpAddress.parse(requested)) {
+            return requested == certified;
+        }
+    }
+
+    {
+        ntsa::IpAddress certifiedIpAddress;
+        if (certifiedIpAddress.parse(certified)) {
+            return requested == certified;
+        }
+    }
+
+    bsl::vector<bsl::string> requestedDomains;
+    {
+        bsl::string::size_type u = 0U;
+        bsl::string::size_type v = requested.find('.');
+
+        while (v != std::string::npos) {
+            requestedDomains.push_back(requested.substr(u, v - u));
+            u = v + 1;
+            v = requested.find('.', u);
+        }
+
+        requestedDomains.push_back(requested.substr(u, v));
+    }
+
+    bsl::vector<bsl::string> certifiedDomains;
+    {
+        bsl::string::size_type u = 0U;
+        bsl::string::size_type v = certified.find('.');
+
+        while (v != std::string::npos) {
+            certifiedDomains.push_back(certified.substr(u, v - u));
+            u = v + 1;
+            v = certified.find('.', u);
+        }
+
+        certifiedDomains.push_back(certified.substr(u, v));
+    }
+
+    typedef bsl::vector<bsl::string>::const_reverse_iterator ReverseIterator;
+
+    ReverseIterator requestedCurrent = requestedDomains.rbegin();
+    ReverseIterator requestedEnd     = requestedDomains.rend();
+
+    ReverseIterator certifiedCurrent = certifiedDomains.rbegin();
+    ReverseIterator certifiedEnd     = certifiedDomains.rend();
+
+    while (true) {
+        if (requestedCurrent == requestedEnd) {
+            return false;
+        }
+
+        if (certifiedCurrent == certifiedEnd) {
+            return false;
+        }
+
+        if (*certifiedCurrent == "*") {
+            break;
+        }
+
+        if (*requestedCurrent != *certifiedCurrent) {
+            return false;
+        }
+
+        ++requestedCurrent;
+        ++certifiedCurrent;
+    }
+
+    return true;
+}
+
+bool EncryptionCertificateUtil::matches(const bsl::string&     requested,
+                                        const ntsa::IpAddress& certified)
+{
+    return requested == certified.text();
+}
+
+bool EncryptionCertificateUtil::matches(const bsl::string& requested,
+                                        const ntsa::Uri&   certified)
+{
+    if (requested == certified.text()) {
+        return true;
+    }
+
+    if (!certified.authority().isNull()) {
+        const ntsa::UriAuthority& authority = certified.authority().value();
+        if (!authority.host().isNull()) {
+            const ntsa::Host& host = authority.host().value();
+
+            if (bdlb::String::areEqualCaseless(requested, host.text())) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool EncryptionCertificateUtil::matches(const ntsa::Endpoint& requested,
+                                        const bsl::string&    certified)
+{
+    if (requested.isIp()) {
+        return EncryptionCertificateUtil::matches(requested.ip().host(),
+                                                  certified);
+    }
+    else if (requested.isLocal()) {
+        return EncryptionCertificateUtil::matches(requested.local(),
+                                                  certified);
+    }
+
+    return false;
+}
+
+bool EncryptionCertificateUtil::matches(const ntsa::Endpoint&  requested,
+                                        const ntsa::IpAddress& certified)
+{
+    if (requested.isIp()) {
+        return EncryptionCertificateUtil::matches(requested.ip().host(),
+                                                  certified);
+    }
+    else if (requested.isLocal()) {
+        return EncryptionCertificateUtil::matches(requested.local(),
+                                                  certified);
+    }
+
+    return false;
+}
+
+bool EncryptionCertificateUtil::matches(const ntsa::Endpoint& requested,
+                                        const ntsa::Uri&      certified)
+{
+    if (requested.isIp()) {
+        return EncryptionCertificateUtil::matches(requested.ip().host(),
+                                                  certified);
+    }
+    else if (requested.isLocal()) {
+        return EncryptionCertificateUtil::matches(requested.local(),
+                                                  certified);
+    }
+
+    return false;
+}
+
+bool EncryptionCertificateUtil::matches(const ntsa::IpAddress& requested,
+                                        const bsl::string&     certified)
+{
+    return requested.text() == certified;
+}
+
+bool EncryptionCertificateUtil::matches(const ntsa::IpAddress& requested,
+                                        const ntsa::IpAddress& certified)
+{
+    return requested == certified;
+}
+
+bool EncryptionCertificateUtil::matches(const ntsa::IpAddress& requested,
+                                        const ntsa::Uri&       certified)
+{
+    if (!certified.authority().isNull()) {
+        const ntsa::UriAuthority& authority = certified.authority().value();
+        if (!authority.host().isNull()) {
+            const ntsa::Host& host = authority.host().value();
+            if (host.isIp()) {
+                return requested == host.ip();
+            }
+        }
+    }
+
+    return false;
+}
+
+bool EncryptionCertificateUtil::matches(const ntsa::LocalName& requested,
+                                        const bsl::string&     certified)
+{
+    return requested.value() == certified;
+}
+
+bool EncryptionCertificateUtil::matches(const ntsa::LocalName& requested,
+                                        const ntsa::IpAddress& certified)
+{
+    NTCCFG_WARNING_UNUSED(requested);
+    NTCCFG_WARNING_UNUSED(certified);
+
+    return false;
+}
+
+bool EncryptionCertificateUtil::matches(const ntsa::LocalName& requested,
+                                        const ntsa::Uri&       certified)
+{
+    NTCCFG_WARNING_UNUSED(requested);
+    NTCCFG_WARNING_UNUSED(certified);
+
+    return false;
+}
+
+bool EncryptionCertificateUtil::matches(const ntsa::Uri&   requested,
+                                        const bsl::string& certified)
+{
+    if (!requested.authority().isNull()) {
+        const ntsa::UriAuthority& authority = requested.authority().value();
+        if (!authority.host().isNull()) {
+            const ntsa::Host& host = authority.host().value();
+
+            if (host.text() == certified) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool EncryptionCertificateUtil::matches(const ntsa::Uri&       requested,
+                                        const ntsa::IpAddress& certified)
+{
+    if (!requested.authority().isNull()) {
+        const ntsa::UriAuthority& authority = requested.authority().value();
+        if (!authority.host().isNull()) {
+            const ntsa::Host& host = authority.host().value();
+
+            if (host.text() == certified.text()) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool EncryptionCertificateUtil::matches(const ntsa::Uri& requested,
+                                        const ntsa::Uri& certified)
+{
+    if (requested.authority().isNull()) {
+        return false;
+    }
+
+    if (requested.authority().value().host().isNull()) {
+        return false;
+    }
+
+    if (certified.authority().isNull()) {
+        return false;
+    }
+
+    if (certified.authority().value().host().isNull()) {
+        return false;
+    }
+
+    if (requested.authority().value().host().value() ==
+        certified.authority().value().host().value())
+    {
+        return true;
+    }
+
+    return false;
 }
 
 }  // close package namespace

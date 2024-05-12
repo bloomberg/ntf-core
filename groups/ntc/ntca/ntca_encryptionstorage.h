@@ -35,20 +35,6 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntca {
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /// Describe encryption storage in the PKCS1 format.
 ///
 /// @par Attributes
@@ -164,25 +150,6 @@ bool operator<(const EncryptionStoragePkcs1& lhs,
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM&               algorithm,
                 const EncryptionStoragePkcs1& value);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /// Describe encryption storage in the PKCS7 format.
 ///
@@ -603,13 +570,13 @@ void hashAppend(HASH_ALGORITHM&                algorithm,
 /// @ingroup module_ntci_encryption
 class EncryptionStoragePem
 {
-    enum Selection { 
-        e_UNDEFINED, 
-        e_KEY, 
-        e_CERTIFICATE, 
-        e_PKCS1, 
-        e_PKCS7, 
-        e_PKCS8 
+    enum Selection {
+        e_UNDEFINED,
+        e_KEY,
+        e_CERTIFICATE,
+        e_PKCS1,
+        e_PKCS7,
+        e_PKCS8
     };
 
     typedef ntca::EncryptionKey          KeyType;

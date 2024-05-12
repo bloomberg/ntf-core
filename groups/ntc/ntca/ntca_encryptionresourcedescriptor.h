@@ -19,6 +19,8 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntca_encryptioncertificate.h>
+#include <ntca_encryptionkey.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 #include <bslh_hash.h>
@@ -52,17 +54,21 @@ namespace ntca {
 /// @ingroup module_ntci_encryption
 class EncryptionResourceDescriptor
 {
-    typedef bsl::string       PathType;
-    typedef bsl::vector<char> DataType;
+    typedef ntca::EncryptionCertificate CertificateType;
+    typedef ntca::EncryptionKey         KeyType;
+    typedef bsl::string                 PathType;
+    typedef bsl::vector<char>           DataType;
 
-    enum Type { e_UNDEFINED, e_PATH, e_DATA };
+    enum Selector { e_UNDEFINED, e_CERTIFICATE, e_KEY, e_PATH, e_DATA };
 
     union {
-        bsls::ObjectBuffer<PathType> d_path;
-        bsls::ObjectBuffer<DataType> d_data;
+        bsls::ObjectBuffer<CertificateType> d_certificate;
+        bsls::ObjectBuffer<KeyType>         d_key;
+        bsls::ObjectBuffer<PathType>        d_path;
+        bsls::ObjectBuffer<DataType>        d_data;
     };
 
-    Type              d_type;
+    Selector          d_type;
     bslma::Allocator* d_allocator_p;
 
   public:
@@ -91,6 +97,23 @@ class EncryptionResourceDescriptor
     /// Reset the value of this object to its value upon default construction.
     void reset();
 
+    /// Select the "certificate" representation. Return a reference to the
+    /// modifiable representation.
+    ntca::EncryptionCertificate& makeCertificate();
+
+    /// Select the "certificate" representation initially having the specified
+    /// 'value'. Return a reference to the modifiable representation.
+    ntca::EncryptionCertificate& makeCertificate(
+        const ntca::EncryptionCertificate& value);
+
+    /// Select the "key" representation. Return a reference to the modifiable
+    /// representation.
+    ntca::EncryptionKey& makeKey();
+
+    /// Select the "key" representation initially having the specified 'value'.
+    /// Return a reference to the modifiable representation.
+    ntca::EncryptionKey& makeKey(const ntca::EncryptionKey& value);
+
     /// Select the "path" representation. Return a reference to the modifiable
     /// representation.
     bsl::string& makePath();
@@ -107,6 +130,14 @@ class EncryptionResourceDescriptor
     /// 'value'. Return a reference to the modifiable representation.
     bsl::vector<char>& makeData(const bsl::vector<char>& value);
 
+    /// Return a reference to the modifiable "certificate" representation. The
+    /// behavior is undefined unless 'isCertificate()' is true.
+    ntca::EncryptionCertificate& certificate();
+
+    /// Return a reference to the modifiable "key" representation. The
+    /// behavior is undefined unless 'isKey()' is true.
+    ntca::EncryptionKey& key();
+
     /// Return a reference to the modifiable "path" representation. The
     /// behavior is undefined unless 'isPath()' is true.
     bsl::string& path();
@@ -114,6 +145,14 @@ class EncryptionResourceDescriptor
     /// Return a reference to the modifiable "data" representation. The
     /// behavior is undefined unless 'isData()' is true.
     bsl::vector<char>& data();
+
+    /// Return a reference to the non-modifiable "certificate" representation.
+    /// The behavior is undefined unless 'isCertificate()' is true.
+    const ntca::EncryptionCertificate& certificate() const;
+
+    /// Return a reference to the non-modifiable "key" representation. The
+    /// behavior is undefined unless 'isKey()' is true.
+    const ntca::EncryptionKey& key() const;
 
     /// Return a reference to the non-modifiable "path" representation. The
     /// behavior is undefined unless 'isPath()' is true.
@@ -125,6 +164,14 @@ class EncryptionResourceDescriptor
 
     /// Return true if the representation is undefined, otherwise return false.
     bool isUndefined() const;
+
+    /// Return true if the "certificate" representation is currently selected,
+    /// otherwise return false.
+    bool isCertificate() const;
+
+    /// Return true if the "key" representation is currently selected,
+    /// otherwise return false.
+    bool isKey() const;
 
     /// Return true if the "path" representation is currently selected,
     /// otherwise return false.
@@ -207,7 +254,13 @@ void hashAppend(HASH_ALGORITHM&                     algorithm,
 {
     using bslh::hashAppend;
 
-    if (value.isPath()) {
+    if (value.isCertificate()) {
+        hashAppend(algorithm, value.certificate());
+    }
+    else if (value.isKey()) {
+        hashAppend(algorithm, value.key());
+    }
+    else if (value.isPath()) {
         hashAppend(algorithm, value.path());
     }
     else if (value.isData()) {

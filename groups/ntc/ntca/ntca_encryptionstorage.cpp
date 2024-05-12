@@ -127,19 +127,6 @@ bool operator<(const EncryptionStoragePkcs1& lhs,
     return lhs.less(rhs);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 EncryptionStoragePkcs7::EncryptionStoragePkcs7(
     bslma::Allocator* basicAllocator)
 : d_certificate(basicAllocator)

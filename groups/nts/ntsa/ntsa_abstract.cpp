@@ -1297,7 +1297,6 @@ ntsa::Error AbstractSyntaxEncoder::encodeValue(const AbstractValue& value)
     return ntsa::Error();
 }
 
-
 ntsa::Error AbstractSyntaxEncoder::encodeLiteral(bsl::uint8_t value)
 {
     ntsa::Error error;

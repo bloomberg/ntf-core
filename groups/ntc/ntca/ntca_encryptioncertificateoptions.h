@@ -48,8 +48,8 @@ namespace ntca {
 /// The flag that indicates the certificate is a Certficate Authority (CA).
 ///
 /// @li @b hosts:
-/// The list of domain names for which the certificate is valid (i.e., the
-/// subject alternative names.)
+/// The list of domain names or IP addresses for which the certificate is valid
+/// (i.e., the subject alternative names.)
 ///
 /// @par Thread Safety
 /// This class is not thread safe.

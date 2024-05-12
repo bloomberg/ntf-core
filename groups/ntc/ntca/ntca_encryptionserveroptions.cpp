@@ -23,6 +23,30 @@ BSLS_IDENT_RCSID(ntca_encryptionserveroptions_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntca {
 
+namespace {
+
+bool sortResource(const ntca::EncryptionResource& lhs,
+                  const ntca::EncryptionResource& rhs)
+{
+    ntca::EncryptionResourceOptions::Hint lhsHint =
+        ntca::EncryptionResourceOptions::e_ANY;
+
+    if (!lhs.options().isNull()) {
+        lhsHint = lhs.options().value().hint();
+    }
+
+    ntca::EncryptionResourceOptions::Hint rhsHint =
+        ntca::EncryptionResourceOptions::e_ANY;
+
+    if (!rhs.options().isNull()) {
+        rhsHint = rhs.options().value().hint();
+    }
+
+    return static_cast<int>(lhsHint) < static_cast<int>(rhsHint);
+}
+
+}  // close unnamed namespace
+
 EncryptionServerOptions::EncryptionServerOptions(
     bslma::Allocator* basicAllocator)
 : d_minMethod(ntca::EncryptionMethod::e_TLS_V1_X)
@@ -104,39 +128,293 @@ void EncryptionServerOptions::setAuthorityDirectory(
     d_authorityDirectory = authorityDirectory;
 }
 
-void EncryptionServerOptions::setIdentityData(
-        const bsl::vector<char>& resourceData)
+void EncryptionServerOptions::addAuthorityList(
+    const ntca::EncryptionCertificateVector& certificates)
 {
-    this->addResourceData(resourceData);
+    for (bsl::size_t i = 0; i < certificates.size(); ++i) {
+        this->addAuthority(certificates[i]);
+    }
+}
+
+void EncryptionServerOptions::addAuthority(
+    const ntca::EncryptionCertificate& certificate)
+{
+    ntca::EncryptionResourceOptions effectiveResourceOptions;
+    effectiveResourceOptions.setHint(
+        ntca::EncryptionResourceOptions::e_CERTIFICATE_AUTHORITY);
+
+    ntca::EncryptionResourceDescriptor resourceDescriptor;
+    resourceDescriptor.makeCertificate(certificate);
+
+    ntca::EncryptionResource resource;
+    resource.setDescriptor(resourceDescriptor);
+    resource.setOptions(effectiveResourceOptions);
+
+    this->addResource(resource);
+}
+
+void EncryptionServerOptions::addAuthorityData(
+    const bsl::vector<char>& resourceData)
+{
+    ntca::EncryptionResourceOptions effectiveResourceOptions;
+    effectiveResourceOptions.setHint(
+        ntca::EncryptionResourceOptions::e_CERTIFICATE_AUTHORITY);
+
+    ntca::EncryptionResourceDescriptor resourceDescriptor;
+    resourceDescriptor.makeData(resourceData);
+
+    ntca::EncryptionResource resource;
+    resource.setDescriptor(resourceDescriptor);
+    resource.setOptions(effectiveResourceOptions);
+
+    this->addResource(resource);
+}
+
+void EncryptionServerOptions::addAuthorityData(
+    const bsl::vector<char>&               resourceData,
+    const ntca::EncryptionResourceOptions& resourceOptions)
+{
+    ntca::EncryptionResourceOptions effectiveResourceOptions = resourceOptions;
+    effectiveResourceOptions.setHint(
+        ntca::EncryptionResourceOptions::e_CERTIFICATE_AUTHORITY);
+
+    ntca::EncryptionResourceDescriptor resourceDescriptor;
+    resourceDescriptor.makeData(resourceData);
+
+    ntca::EncryptionResource resource;
+    resource.setDescriptor(resourceDescriptor);
+    resource.setOptions(effectiveResourceOptions);
+
+    this->addResource(resource);
+}
+
+void EncryptionServerOptions::addAuthorityFile(const bsl::string& resourcePath)
+{
+    ntca::EncryptionResourceOptions effectiveResourceOptions;
+    effectiveResourceOptions.setHint(
+        ntca::EncryptionResourceOptions::e_CERTIFICATE_AUTHORITY);
+
+    ntca::EncryptionResourceDescriptor resourceDescriptor;
+    resourceDescriptor.makePath(resourcePath);
+
+    ntca::EncryptionResource resource;
+    resource.setDescriptor(resourceDescriptor);
+    resource.setOptions(effectiveResourceOptions);
+
+    this->addResource(resource);
+}
+
+void EncryptionServerOptions::addAuthorityFile(
+    const bsl::string&                     resourcePath,
+    const ntca::EncryptionResourceOptions& resourceOptions)
+{
+    ntca::EncryptionResourceOptions effectiveResourceOptions = resourceOptions;
+    effectiveResourceOptions.setHint(
+        ntca::EncryptionResourceOptions::e_CERTIFICATE_AUTHORITY);
+
+    ntca::EncryptionResourceDescriptor resourceDescriptor;
+    resourceDescriptor.makePath(resourcePath);
+
+    ntca::EncryptionResource resource;
+    resource.setDescriptor(resourceDescriptor);
+    resource.setOptions(effectiveResourceOptions);
+
+    this->addResource(resource);
+}
+
+void EncryptionServerOptions::setIdentity(
+    const ntca::EncryptionCertificate& certificate)
+{
+    ntca::EncryptionResourceOptions effectiveResourceOptions;
+    effectiveResourceOptions.setHint(
+        ntca::EncryptionResourceOptions::e_CERTIFICATE);
+
+    ntca::EncryptionResourceDescriptor resourceDescriptor;
+    resourceDescriptor.makeCertificate(certificate);
+
+    ntca::EncryptionResource resource;
+    resource.setDescriptor(resourceDescriptor);
+    resource.setOptions(effectiveResourceOptions);
+
+    this->addResource(resource);
+}
+
+void EncryptionServerOptions::setIdentityData(
+    const bsl::vector<char>& resourceData)
+{
+    ntca::EncryptionResourceOptions effectiveResourceOptions;
+    effectiveResourceOptions.setHint(
+        ntca::EncryptionResourceOptions::e_CERTIFICATE);
+
+    ntca::EncryptionResourceDescriptor resourceDescriptor;
+    resourceDescriptor.makeData(resourceData);
+
+    ntca::EncryptionResource resource;
+    resource.setDescriptor(resourceDescriptor);
+    resource.setOptions(effectiveResourceOptions);
+
+    this->addResource(resource);
+}
+
+void EncryptionServerOptions::setIdentityData(
+    const bsl::vector<char>&               resourceData,
+    const ntca::EncryptionResourceOptions& resourceOptions)
+{
+    ntca::EncryptionResourceOptions effectiveResourceOptions = resourceOptions;
+    effectiveResourceOptions.setHint(
+        ntca::EncryptionResourceOptions::e_CERTIFICATE);
+
+    ntca::EncryptionResourceDescriptor resourceDescriptor;
+    resourceDescriptor.makeData(resourceData);
+
+    ntca::EncryptionResource resource;
+    resource.setDescriptor(resourceDescriptor);
+    resource.setOptions(effectiveResourceOptions);
+
+    this->addResource(resource);
 }
 
 void EncryptionServerOptions::setIdentityFile(const bsl::string& resourcePath)
 {
-    this->addResourcePath(resourcePath);
+    ntca::EncryptionResourceOptions effectiveResourceOptions;
+    effectiveResourceOptions.setHint(
+        ntca::EncryptionResourceOptions::e_CERTIFICATE);
+
+    ntca::EncryptionResourceDescriptor resourceDescriptor;
+    resourceDescriptor.makePath(resourcePath);
+
+    ntca::EncryptionResource resource;
+    resource.setDescriptor(resourceDescriptor);
+    resource.setOptions(effectiveResourceOptions);
+
+    this->addResource(resource);
+}
+
+void EncryptionServerOptions::setIdentityFile(
+    const bsl::string&                     resourcePath,
+    const ntca::EncryptionResourceOptions& resourceOptions)
+{
+    ntca::EncryptionResourceOptions effectiveResourceOptions = resourceOptions;
+    effectiveResourceOptions.setHint(
+        ntca::EncryptionResourceOptions::e_CERTIFICATE);
+
+    ntca::EncryptionResourceDescriptor resourceDescriptor;
+    resourceDescriptor.makePath(resourcePath);
+
+    ntca::EncryptionResource resource;
+    resource.setDescriptor(resourceDescriptor);
+    resource.setOptions(effectiveResourceOptions);
+
+    this->addResource(resource);
+}
+
+void EncryptionServerOptions::setPrivateKey(const ntca::EncryptionKey& key)
+{
+    ntca::EncryptionResourceOptions effectiveResourceOptions;
+    effectiveResourceOptions.setHint(
+        ntca::EncryptionResourceOptions::e_PRIVATE_KEY);
+
+    ntca::EncryptionResourceDescriptor resourceDescriptor;
+    resourceDescriptor.makeKey(key);
+
+    ntca::EncryptionResource resource;
+    resource.setDescriptor(resourceDescriptor);
+    resource.setOptions(effectiveResourceOptions);
+
+    this->addResource(resource);
 }
 
 void EncryptionServerOptions::setPrivateKeyData(
-        const bsl::vector<char>& resourceData)
+    const bsl::vector<char>& resourceData)
 {
-    this->addResourceData(resourceData);
+    ntca::EncryptionResourceOptions effectiveResourceOptions;
+    effectiveResourceOptions.setHint(
+        ntca::EncryptionResourceOptions::e_PRIVATE_KEY);
+
+    ntca::EncryptionResourceDescriptor resourceDescriptor;
+    resourceDescriptor.makeData(resourceData);
+
+    ntca::EncryptionResource resource;
+    resource.setDescriptor(resourceDescriptor);
+    resource.setOptions(effectiveResourceOptions);
+
+    this->addResource(resource);
 }
 
-void EncryptionServerOptions::setPrivateKeyFile(const bsl::string& resourcePath)
+void EncryptionServerOptions::setPrivateKeyData(
+    const bsl::vector<char>&               resourceData,
+    const ntca::EncryptionResourceOptions& resourceOptions)
 {
-    this->addResourcePath(resourcePath);
+    ntca::EncryptionResourceOptions effectiveResourceOptions = resourceOptions;
+    effectiveResourceOptions.setHint(
+        ntca::EncryptionResourceOptions::e_PRIVATE_KEY);
+
+    ntca::EncryptionResourceDescriptor resourceDescriptor;
+    resourceDescriptor.makeData(resourceData);
+
+    ntca::EncryptionResource resource;
+    resource.setDescriptor(resourceDescriptor);
+    resource.setOptions(effectiveResourceOptions);
+
+    this->addResource(resource);
+}
+
+void EncryptionServerOptions::setPrivateKeyFile(
+    const bsl::string& resourcePath)
+{
+    ntca::EncryptionResourceOptions effectiveResourceOptions;
+    effectiveResourceOptions.setHint(
+        ntca::EncryptionResourceOptions::e_PRIVATE_KEY);
+
+    ntca::EncryptionResourceDescriptor resourceDescriptor;
+    resourceDescriptor.makePath(resourcePath);
+
+    ntca::EncryptionResource resource;
+    resource.setDescriptor(resourceDescriptor);
+    resource.setOptions(effectiveResourceOptions);
+
+    this->addResource(resource);
+}
+
+void EncryptionServerOptions::setPrivateKeyFile(
+    const bsl::string&                     resourcePath,
+    const ntca::EncryptionResourceOptions& resourceOptions)
+{
+    ntca::EncryptionResourceOptions effectiveResourceOptions = resourceOptions;
+    effectiveResourceOptions.setHint(
+        ntca::EncryptionResourceOptions::e_PRIVATE_KEY);
+
+    ntca::EncryptionResourceDescriptor resourceDescriptor;
+    resourceDescriptor.makePath(resourcePath);
+
+    ntca::EncryptionResource resource;
+    resource.setDescriptor(resourceDescriptor);
+    resource.setOptions(effectiveResourceOptions);
+
+    this->addResource(resource);
 }
 
 void EncryptionServerOptions::addResource(
     const ntca::EncryptionResource& resource)
 {
     d_resourceVector.push_back(resource);
+
+    bsl::sort(d_resourceVector.begin(), d_resourceVector.end(), &sortResource);
 }
 
 void EncryptionServerOptions::addResourceData(
     const bsl::vector<char>& resourceData)
 {
     ntca::EncryptionResourceOptions resourceOptions;
-    this->addResourceData(resourceData, resourceOptions);
+
+    ntca::EncryptionResourceDescriptor resourceDescriptor;
+    resourceDescriptor.makeData(resourceData);
+
+    ntca::EncryptionResource resource;
+    resource.setDescriptor(resourceDescriptor);
+    resource.setOptions(resourceOptions);
+
+    this->addResource(resource);
 }
 
 void EncryptionServerOptions::addResourceData(
@@ -153,13 +431,21 @@ void EncryptionServerOptions::addResourceData(
     this->addResource(resource);
 }
 
-void EncryptionServerOptions::addResourcePath(const bsl::string& resourcePath)
+void EncryptionServerOptions::addResourceFile(const bsl::string& resourcePath)
 {
     ntca::EncryptionResourceOptions resourceOptions;
-    this->addResourcePath(resourcePath, resourceOptions);
+
+    ntca::EncryptionResourceDescriptor resourceDescriptor;
+    resourceDescriptor.makePath(resourcePath);
+
+    ntca::EncryptionResource resource;
+    resource.setDescriptor(resourceDescriptor);
+    resource.setOptions(resourceOptions);
+
+    this->addResource(resource);
 }
 
-void EncryptionServerOptions::addResourcePath(
+void EncryptionServerOptions::addResourceFile(
     const bsl::string&                     resourcePath,
     const ntca::EncryptionResourceOptions& resourceOptions)
 {

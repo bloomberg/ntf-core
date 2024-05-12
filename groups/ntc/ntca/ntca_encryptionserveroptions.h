@@ -42,20 +42,21 @@ namespace ntca {
 /// Describe the configuration of encryption in the server role.
 ///
 /// @details
-/// This class describes the configuration of a 'ntca::Encryptor' operating in
-/// the server role. Such 'ntca::Encryption' interfaces are used to actively
-/// initiate a cryptographically secure session of communication according to
-/// the Transport Layer Security (TLS) protocol, within which data is
-/// transformed from from cleartext to ciphertext.
+/// This class describes the configuration of a an encryption session operating
+/// in the server role. Encryption servers passively wait for the peer to
+/// initiate a cryptographically secure session of communication, typically
+/// according to either the Transport Layer Security (TLS) protocol or Secure
+/// Shell (SSH) protocol, within which data is transformed from from cleartext
+/// to ciphertext.
 ///
 /// @par Attributes
 /// This class is composed of the following attributes.
 ///
 /// @li @b minMethod:
-/// The minimum version of the TLS protocol acceptable for use.
+/// The type and minimum version of the encryption protocol acceptable for use.
 ///
 /// @li @b maxMethod:
-/// The maximum version of the TLS protocol acceptable for use.
+/// The type and maximum version of the encryption protocol acceptable for use.
 ///
 /// @li @b authentication:
 /// Flag that determines whether the peer's certificate is verified as signed
@@ -121,38 +122,144 @@ class EncryptionServerOptions
     void setAuthentication(
         ntca::EncryptionAuthentication::Value authentication);
 
-    /// Set the directory from which to load trusted certificate authorities
-    /// to the specified 'authorityDirectory'.
+    /// Set the directory from which to load trusted certificate authorities to
+    /// the specified 'authorityDirectory'.
     void setAuthorityDirectory(const bsl::string& authorityDirectory);
 
-    /// Set the encoded identity data to the specified 'resourceData'. Note
-    /// that the effect of calling this function is identical to simply calling
-    /// 'addResourceData'.
+    /// Add the specified 'certificates' as trusted certificate authorities.
+    /// Note that the effect of calling this function is identical to simply
+    /// repeatedly calling 'addResource' with resource options that indicate
+    /// the resource contains only trusted certificate authorities, for each
+    /// certificate in the 'certficates' vector.
+    void addAuthorityList(
+        const ntca::EncryptionCertificateVector& certificates);
+
+    /// Add the specified 'certificate' as a trusted certificate authority.
+    /// Note that the effect of calling this function is identical to simply
+    /// calling 'addResource' with resource options that indicate the resource
+    /// contains only trusted certificate authorities.
+    void addAuthority(const ntca::EncryptionCertificate& certificate);
+
+    /// Add the specified 'resourceData' as encoded resource data for one or
+    /// more trusted certificate authority. Note that the effect of calling
+    /// this function is identical to simply calling 'addResourceData' with
+    /// resource options that indicate the resource contains only trusted
+    /// certificate authorities.
+    void addAuthorityData(const bsl::vector<char>& resourceData);
+
+    /// Add the specified 'resourceData' as encoded resource data for one or
+    /// more trusted certificate authority that should be decoded according to
+    /// the specified 'resourceOptions'. Note that the effect of calling this
+    /// function is identical to simply calling 'addResourceData' with resource
+    /// options that indicate the resource contains only trusted certificate
+    /// authorities.
+    void addAuthorityData(
+        const bsl::vector<char>&               resourceData,
+        const ntca::EncryptionResourceOptions& resourceOptions);
+
+    /// Add the specified 'resourcePath' to encoded resource data on disk for
+    /// one or more trusted certificate authorities. Note that the effect of
+    /// calling this function is identical to simply calling 'addResourcePath'
+    /// with resource options that indicate the resource contains only trusted
+    /// certificate authorities.
+    void addAuthorityFile(const bsl::string& resourcePath);
+
+    /// Add the specified 'resourcePath' to encoded resource data on disk for
+    /// one or more trusted certificate authorities. Note that the effect of
+    /// calling this function is identical to simply calling 'addResourcePath'
+    /// with resource options that indicate the resource contains only trusted
+    /// certificate authorities.
+    void addAuthorityFile(
+        const bsl::string&                     resourcePath,
+        const ntca::EncryptionResourceOptions& resourceOptions);
+
+    /// Set the end-user identity to the specified 'certificate'. Note that the
+    /// effect of calling this function is identical to simply calling
+    /// 'addResource' with resource options that indicate the resource contains
+    /// an end-user certificate.
+    void setIdentity(const ntca::EncryptionCertificate& certificate);
+
+    /// Set the end-user identity data to the specified encoded 'resourceData'.
+    /// Note that the effect of calling this function is identical to simply
+    /// calling 'addResourceData' with resource options that indicate the
+    /// resource contains an end-user certificate.
     void setIdentityData(const bsl::vector<char>& resourceData);
 
-    /// Set the path to the encoded identity data on disk to the specified
-    /// 'resourcePath'. Note that the effect of calling this function is
-    /// identical to simply calling 'addResourcePath'.
+    /// Set the end-user identity data to the specified encoded 'resourceData'
+    /// decoded according to the specified 'resourceOptions'. Note that the
+    /// effect of calling this function is identical to simply calling
+    /// 'addResourceData' with resource options that indicate the resource
+    /// contains an end-user certificate.
+    void setIdentityData(
+        const bsl::vector<char>&               resourceData,
+        const ntca::EncryptionResourceOptions& resourceOptions);
+
+    /// Set the path to the encoded end-user identity data on disk to the
+    /// specified 'resourcePath'. Note that the effect of calling this function
+    /// is identical to simply calling 'addResourcePath' with resource options
+    /// that indicate the resource contains an end-user certificate.
     void setIdentityFile(const bsl::string& resourcePath);
 
-    /// Set the encoded private key data to the specified 'resourceData'. Note
+    /// Set the path to the encoded end-user identity data on disk to the
+    /// specified 'resourcePath' decoded according to the specified
+    /// 'resourceOptions'. Note that the effect of calling this function is
+    /// identical to simply calling 'addResourcePath' with resource options
+    /// that indicate the resource contains an end-user certificate.
+    void setIdentityFile(
+        const bsl::string&                     resourcePath,
+        const ntca::EncryptionResourceOptions& resourceOptions);
+
+    /// Set the private key to the specified 'certificate'. Note that the
+    /// effect of calling this function is identical to simply calling
+    /// 'addResource' with resource options that indicate the resource contains
+    /// a private key.
+    void setPrivateKey(const ntca::EncryptionKey& key);
+
+    /// Set the private key data to the specified encoded 'resourceData'. Note
     /// that the effect of calling this function is identical to simply calling
-    /// 'addResourceData'.
+    /// 'addResourceData' with resource options that indicate the resource
+    /// contains a private key.
     void setPrivateKeyData(const bsl::vector<char>& resourceData);
+
+    /// Set the private key data to the specified encoded 'resourceData'
+    /// decoded according to the specified 'resourceOptions'. Note that the
+    /// effect of calling this function is identical to simply calling
+    /// 'addResourceData' with resource options that indicate the resource
+    /// contains a private key.
+    void setPrivateKeyData(
+        const bsl::vector<char>&               resourceData,
+        const ntca::EncryptionResourceOptions& resourceOptions);
 
     /// Set the path to the encoded private key data on disk to the specified
     /// 'resourcePath'. Note that the effect of calling this function is
-    /// identical to simply calling 'addResourcePath'.
+    /// identical to simply calling 'addResourcePath' with resource options
+    /// that indicate the resource contains a private key.
     void setPrivateKeyFile(const bsl::string& resourcePath);
 
-    /// Add the specified encoded 'resource' to contribute an optional
-    /// private key, optional certificate, and optional list of trusted
+    /// Set the path to the encoded private key data on disk to the specified
+    /// 'resourcePath' decoded according to the specified 'resourceOptions'.
+    /// Note that the effect of calling this function is identical to simply
+    /// calling 'addResourcePath' with resource options that indicate the
+    /// resource contains a private key.
+    void setPrivateKeyFile(
+        const bsl::string&                     resourcePath,
+        const ntca::EncryptionResourceOptions& resourceOptions);
+
+    /// Add the specified 'certificate' as a resource contributing either
+    /// an end-user certificate or a trusted certificate authority.
+    void addResource(const ntca::EncryptionCertificate& certificate);
+
+    /// Add the specified 'key' as a resource to contribute a private key.
+    void addResource(const ntca::EncryptionKey& key);
+
+    /// Add the specified encoded 'resource' to contribute an optional private
+    /// key, optional end-user certificate, and optional list of trusted
     /// certificate authorities.
     void addResource(const ntca::EncryptionResource& resourceData);
 
     /// Add the specified encoded 'resourceData' to contribute an optional
-    /// private key, optional certificate, and optional list of trusted
-    /// certificate authorities.
+    /// private key, optional end-user certificate, and optional list of
+    /// trusted certificate authorities.
     void addResourceData(const bsl::vector<char>& resourceData);
 
     /// Add the specified encoded 'resourceData' to contribute an optional
@@ -167,13 +274,13 @@ class EncryptionServerOptions
     /// contribute an optional private key, optional certificate, and optional
     /// list of trusted certificate authorities. Interpret the 'resourceFile'
     /// according to the specified 'resourceOptions'.
-    void addResourcePath(const bsl::string& resourcePath);
+    void addResourceFile(const bsl::string& resourcePath);
 
     /// Add the encoded contents of the file at the specified 'resourcePath' to
     /// contribute an optional private key, optional certificate, and optional
     /// list of trusted certificate authorities. Interpret the 'resourceFile'
     /// according to the specified 'resourceOptions'.
-    void addResourcePath(
+    void addResourceFile(
         const bsl::string&                     resourcePath,
         const ntca::EncryptionResourceOptions& resourceOptions);
 
