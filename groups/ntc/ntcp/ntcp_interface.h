@@ -284,6 +284,36 @@ class Interface : public ntci::Interface,
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0,
     /// the currently installed default allocator is used. Return the error.
     ntsa::Error generateCertificate(
+        ntca::EncryptionCertificate*                  result,
+        const ntsa::DistinguishedName&                subjectIdentity,
+        const ntca::EncryptionKey&                    subjectPrivateKey,
+        const ntca::EncryptionCertificateOptions&     options,
+        bslma::Allocator*                             basicAllocator = 0) 
+        BSLS_KEYWORD_OVERRIDE;
+
+    /// Load into the specified 'result' a certificate generated according
+    /// to the specified 'options' for the specified 'subjectIdentity' and
+    /// 'subjectPrivateKey' signed by the certificate authority identified
+    /// by the specified 'issuerCertificate' that uses the specified
+    /// 'issuerPrivateKey'. Optionally specify a 'basicAllocator' used
+    /// to supply memory. If 'basicAllocator' is 0, the currently installed
+    /// default allocator is used. Return the error.
+    ntsa::Error generateCertificate(
+        ntca::EncryptionCertificate*              result,
+        const ntsa::DistinguishedName&            subjectIdentity,
+        const ntca::EncryptionKey&                subjectPrivateKey,
+        const ntca::EncryptionCertificate&        issuerCertificate,
+        const ntca::EncryptionKey&                issuerPrivateKey,
+        const ntca::EncryptionCertificateOptions& options,
+        bslma::Allocator*                         basicAllocator = 0) 
+        BSLS_KEYWORD_OVERRIDE;
+
+    /// Load into the specified 'result' a certificate generated according
+    /// to the specified 'options' for the specified 'subjectIdentity' and
+    /// 'subjectPrivateKey' signed by itself. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0,
+    /// the currently installed default allocator is used. Return the error.
+    ntsa::Error generateCertificate(
         bsl::shared_ptr<ntci::EncryptionCertificate>* result,
         const ntsa::DistinguishedName&                subjectIdentity,
         const bsl::shared_ptr<ntci::EncryptionKey>&   subjectPrivateKey,
@@ -341,6 +371,16 @@ class Interface : public ntci::Interface,
         bsl::streambuf*                               source,
         const ntca::EncryptionResourceOptions&        options,
         bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
+
+    /// Load into the specified 'result' an RSA key generated according to
+    /// the specified 'options'. Optionally specify a 'basicAllocator' used
+    /// to supply memory. If 'basicAllocator' is 0, the currently installed
+    /// default allocator is used. Return the error.
+    ntsa::Error generateKey(
+        ntca::EncryptionKey*                  result,
+        const ntca::EncryptionKeyOptions&     options,
+        bslma::Allocator*                     basicAllocator = 0) 
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Load into the specified 'result' an RSA key generated according to
     /// the specified 'options'. Optionally specify a 'basicAllocator' used

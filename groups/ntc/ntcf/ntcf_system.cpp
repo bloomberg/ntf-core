@@ -1456,6 +1456,64 @@ ntsa::Error System::createEncryptionServer(
                                                     basicAllocator);
 }
 
+
+
+
+
+ntsa::Error System::generateCertificate(
+        ntca::EncryptionCertificate*                  result,
+        const ntsa::DistinguishedName&                subjectIdentity,
+        const ntca::EncryptionKey&                    subjectPrivateKey,
+        const ntca::EncryptionCertificateOptions&     options,
+        bslma::Allocator*                             basicAllocator)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->generateCertificate(result,
+                                                 subjectIdentity,
+                                                 subjectPrivateKey,
+                                                 options,
+                                                 basicAllocator);
+}
+
+ntsa::Error System::generateCertificate(
+        ntca::EncryptionCertificate*              result,
+        const ntsa::DistinguishedName&            subjectIdentity,
+        const ntca::EncryptionKey&                subjectPrivateKey,
+        const ntca::EncryptionCertificate&        issuerCertificate,
+        const ntca::EncryptionKey&                issuerPrivateKey,
+        const ntca::EncryptionCertificateOptions& options,
+        bslma::Allocator*                         basicAllocator)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->generateCertificate(result,
+                                                 subjectIdentity,
+                                                 subjectPrivateKey,
+                                                 issuerCertificate,
+                                                 issuerPrivateKey,
+                                                 options,
+                                                 basicAllocator);
+}
+
 ntsa::Error System::generateCertificate(
     bsl::shared_ptr<ntci::EncryptionCertificate>* result,
     const ntsa::DistinguishedName&                subjectIdentity,
@@ -1911,6 +1969,25 @@ ntsa::Error System::decodeCertificate(
                                                source,
                                                options,
                                                basicAllocator);
+}
+
+ntsa::Error System::generateKey(
+        ntca::EncryptionKey*                  result,
+        const ntca::EncryptionKeyOptions&     options,
+        bslma::Allocator*                     basicAllocator)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->generateKey(result, options, basicAllocator);
 }
 
 ntsa::Error System::generateKey(bsl::shared_ptr<ntci::EncryptionKey>* result,

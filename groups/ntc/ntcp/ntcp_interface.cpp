@@ -1047,6 +1047,62 @@ ntsa::Error Interface::createEncryptionResource(
 }
 
 ntsa::Error Interface::generateCertificate(
+    ntca::EncryptionCertificate*                  result,
+    const ntsa::DistinguishedName&                subjectIdentity,
+    const ntca::EncryptionKey&                    subjectPrivateKey,
+    const ntca::EncryptionCertificateOptions&     options,
+    bslma::Allocator*                             basicAllocator) 
+{
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_CONTEXT_GUARD_OWNER(d_config.metricName().c_str());
+
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->generateCertificate(result,
+                                                 subjectIdentity,
+                                                 subjectPrivateKey,
+                                                 options,
+                                                 basicAllocator);
+}
+
+ntsa::Error Interface::generateCertificate(
+    ntca::EncryptionCertificate*              result,
+    const ntsa::DistinguishedName&            subjectIdentity,
+    const ntca::EncryptionKey&                subjectPrivateKey,
+    const ntca::EncryptionCertificate&        issuerCertificate,
+    const ntca::EncryptionKey&                issuerPrivateKey,
+    const ntca::EncryptionCertificateOptions& options,
+    bslma::Allocator*                         basicAllocator) 
+{
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_CONTEXT_GUARD_OWNER(d_config.metricName().c_str());
+
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->generateCertificate(result,
+                                                 subjectIdentity,
+                                                 subjectPrivateKey,
+                                                 issuerCertificate,
+                                                 issuerPrivateKey,
+                                                 options,
+                                                 basicAllocator);
+}
+
+ntsa::Error Interface::generateCertificate(
     bsl::shared_ptr<ntci::EncryptionCertificate>* result,
     const ntsa::DistinguishedName&                subjectIdentity,
     const bsl::shared_ptr<ntci::EncryptionKey>&   subjectPrivateKey,
@@ -1174,6 +1230,26 @@ ntsa::Error Interface::decodeCertificate(
                                                source,
                                                options,
                                                basicAllocator);
+}
+
+ntsa::Error Interface::generateKey(
+    ntca::EncryptionKey*                  result,
+    const ntca::EncryptionKeyOptions&     options,
+    bslma::Allocator*                     basicAllocator)
+{
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_CONTEXT_GUARD_OWNER(d_config.metricName().c_str());
+
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->generateKey(result, options, basicAllocator);
 }
 
 ntsa::Error Interface::generateKey(

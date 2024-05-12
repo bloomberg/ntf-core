@@ -22,6 +22,7 @@ BSLS_IDENT("$Id: $")
 #include <ntca_encryptionkeyoptions.h>
 #include <ntccfg_platform.h>
 #include <ntci_encryptionkey.h>
+#include <ntca_encryptionkey.h>
 #include <ntcscm_version.h>
 #include <bdlbb_blob.h>
 #include <bsl_memory.h>
@@ -44,6 +45,15 @@ class EncryptionKeyGenerator
   public:
     /// Destroy this object.
     virtual ~EncryptionKeyGenerator();
+
+    /// Load into the specified 'result' an RSA key generated according to
+    /// the specified 'options'. Optionally specify a 'basicAllocator' used
+    /// to supply memory. If 'basicAllocator' is 0, the currently installed
+    /// default allocator is used. Return the error.
+    virtual ntsa::Error generateKey(
+        ntca::EncryptionKey*                  result,
+        const ntca::EncryptionKeyOptions&     options,
+        bslma::Allocator*                     basicAllocator = 0) = 0;
 
     /// Load into the specified 'result' an RSA key generated according to
     /// the specified 'options'. Optionally specify a 'basicAllocator' used
