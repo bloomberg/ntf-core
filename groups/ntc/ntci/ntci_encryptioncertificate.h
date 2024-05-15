@@ -20,6 +20,7 @@
 BSLS_IDENT("$Id: $")
 
 #include <ntca_encryptionresourceoptions.h>
+#include <ntca_encryptioncertificate.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 #include <ntsa_distinguishedname.h>
@@ -116,6 +117,10 @@ class EncryptionCertificate
     virtual ntsa::Error encode(
         bsl::vector<char>*                     destination,
         const ntca::EncryptionResourceOptions& options) const;
+
+    /// Load into the specified 'result' the value-semantic representation
+    /// of this certificate. Return the error.
+    virtual ntsa::Error unwrap(ntca::EncryptionCertificate* result) const;
 
     /// Return the subject of the certificate.
     virtual const ntsa::DistinguishedName& subject() const = 0;

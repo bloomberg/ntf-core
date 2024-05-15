@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntca_encryptionauthentication.h>
 #include <ntca_encryptionmethod.h>
+#include <ntca_encryptionoptions.h>
 #include <ntca_encryptionresource.h>
 #include <ntca_encryptionresourcedescriptor.h>
 #include <ntca_encryptionresourceoptions.h>
@@ -32,6 +33,7 @@ BSLS_IDENT("$Id: $")
 #include <bslma_usesbslmaallocator.h>
 #include <bslmf_nestedtraitdeclaration.h>
 #include <bsl_iosfwd.h>
+#include <bsl_map.h>
 #include <bsl_memory.h>
 #include <bsl_string.h>
 #include <bsl_vector.h>
@@ -67,11 +69,17 @@ namespace ntca {
 /// certificate authorities.
 ///
 /// @li @b authorityDirectory:
-/// The directory containing files of PEM-encoded certificates for each trusted
+/// The directory containing files of encoded certificates for each trusted
 /// certificate authority.
 ///
 /// @li @b serverNameIndication:
-/// The domain name or IP address attributed to the server's certificate.
+/// The server name with which the connection is upgraded into a secure
+/// connection.
+///
+/// @li @b optionsMap
+/// The optional, effective options to use when connecting to a specific server
+/// name. Note that a server name, in this context, may be an IP address,
+/// domain name, or domain name wildcard such as "*.example.com".
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -79,14 +87,11 @@ namespace ntca {
 /// @ingroup module_ntci_encryption
 class EncryptionClientOptions
 {
-  private:
-    ntca::EncryptionMethod::Value         d_minMethod;
-    ntca::EncryptionMethod::Value         d_maxMethod;
-    ntca::EncryptionAuthentication::Value d_authentication;
-    ntca::EncryptionResourceVector        d_resourceVector;
-    bdlb::NullableValue<bsl::string>      d_authorityDirectory;
-    bdlb::NullableValue<bsl::string>      d_cipherSpec;
-    bdlb::NullableValue<bsl::string>      d_serverNameIndication;
+    typedef bsl::map<bsl::string, ntca::EncryptionOptions> OptionsMap;
+
+    ntca::EncryptionOptions          d_options;
+    OptionsMap                       d_optionsMap;
+    bdlb::NullableValue<bsl::string> d_serverNameIndication;
 
   public:
     /// Create new encryption client options.  Optionally specify a
@@ -288,6 +293,17 @@ class EncryptionClientOptions
         const bsl::string&                     resourcePath,
         const ntca::EncryptionResourceOptions& resourceOptions);
 
+    /// Add the specified 'options' to be used when connecting sessions to
+    /// the specified 'serverName'. If 'options' is empty or "*", interpret
+    /// 'options' as the default options. Note that 'serverName' may be an IP
+    /// address, domain name, or domain name wildcard such as "*.example.com".
+    void addOverrides(const bsl::string&             serverName,
+                      const ntca::EncryptionOptions& options);
+
+    /// Set the server name indication to the specified 'name', interpreted
+    /// as the host portion of any valid URI.
+    void setServerNameIndication(const bsl::string& name);
+
     /// Set the server name indication to the specified 'endpoint'.
     void setServerNameIndication(const ntsa::Endpoint& endpoint);
 
@@ -315,10 +331,6 @@ class EncryptionClientOptions
     /// Set the server name indication to the specified 'domainName'.
     void setServerNameIndication(const ntsa::DomainName& domainName);
 
-    /// Set the server name indication to the specified 'name', interpreted
-    /// as the host portion of any valid URI.
-    void setServerNameIndication(const bsl::string& name);
-
     /// Return the minimum permitted encryption method, inclusive.
     ntca::EncryptionMethod::Value minMethod() const;
 
@@ -340,6 +352,22 @@ class EncryptionClientOptions
 
     /// Return the server name indication, if any.
     const bdlb::NullableValue<bsl::string>& serverNameIndication() const;
+
+    /// Load into the specified 'result' the names of each registered server.
+    /// Note that 'serverName' may be an IP address, domain name, or domain
+    /// name wildcard such as "*.example.com". Also note that the first name
+    /// will always be "*" to denote the default options.
+    void loadServerNameList(bsl::vector<bsl::string>* result) const;
+
+    ///  Load into the specified 'result' the options for the specified
+    /// 'serverName'. Note that 'serverName' may be an IP address, domain name,
+    /// or domain name wildcard such as "*.example.com".
+    bool loadServerNameOptions(ntca::EncryptionOptions* result,
+                               const bsl::string&       serverName) const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionClientOptions& other) const;
 
     /// Format this object to the specified output 'stream' at the
     /// optionally specified indentation 'level' and return a reference to

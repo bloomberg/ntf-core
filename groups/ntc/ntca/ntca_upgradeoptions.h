@@ -22,6 +22,11 @@ BSLS_IDENT("$Id: $")
 #include <ntca_upgradetoken.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
+#include <ntsa_endpoint.h>
+#include <ntsa_host.h>
+#include <ntsa_ipaddress.h>
+#include <ntsa_localname.h>
+#include <ntsa_uri.h>
 #include <bdlb_nullablevalue.h>
 #include <bslh_hash.h>
 #include <bsls_timeinterval.h>
@@ -39,6 +44,15 @@ namespace ntca {
 /// @li @b token:
 /// The token used to cancel the operation.
 ///
+/// @li @b serverNameIndication:
+/// The server name with which the connection is upgraded into a secure
+/// connection.
+///
+/// @li @b serverNameVerification:
+/// The name that must be present in the certificate offered by the server,
+/// either in the subject common name, or as one of the subject's alternative
+/// names.
+///
 /// @li @b deadline:
 /// The deadline within which the connection must be upgraded, in absolute time
 /// since the Unix epoch.
@@ -55,16 +69,23 @@ namespace ntca {
 class UpgradeOptions
 {
     bdlb::NullableValue<ntca::UpgradeToken> d_token;
+    bdlb::NullableValue<bsl::string>        d_serverNameIndication;
+    bdlb::NullableValue<bsl::string>        d_serverNameVerification;
     bdlb::NullableValue<bsls::TimeInterval> d_deadline;
     bool                                    d_recurse;
 
   public:
-    /// Create new upgrade options having the default value.
-    UpgradeOptions();
+    /// Create new upgrade options having the default value. Optionally specify
+    /// a 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    explicit UpgradeOptions(bslma::Allocator* basicAllocator = 0);
 
     /// Create new upgrade options having the same value as the specified
-    /// 'original' object.
-    UpgradeOptions(const UpgradeOptions& original);
+    /// 'original' object. Optionally specify a 'basicAllocator' used to supply
+    /// memory. If 'basicAllocator' is 0, the currently installed default
+    /// allocator is used.
+    UpgradeOptions(const UpgradeOptions& original,
+                   bslma::Allocator*     basicAllocator = 0);
 
     /// Destroy this object.
     ~UpgradeOptions();
@@ -80,6 +101,66 @@ class UpgradeOptions
     /// Set the token used to cancel the operation to the specified 'value'.
     void setToken(const ntca::UpgradeToken& value);
 
+    /// Set the server name indication to the specified 'value'.
+    void setServerNameIndication(const bsl::string& value);
+
+    /// Set the server name indication to the specified 'value'.
+    void setServerNameIndication(const ntsa::Endpoint& value);
+
+    /// Set the server name indication to the specified 'value'.
+    void setServerNameIndication(const ntsa::IpEndpoint& value);
+
+    /// Set the server name indication to the specified 'value'.
+    void setServerNameIndication(const ntsa::IpAddress& value);
+
+    /// Set the server name indication to the specified 'value'.
+    void setServerNameIndication(const ntsa::Ipv4Address& value);
+
+    /// Set the server name indication to the specified 'value'.
+    void setServerNameIndication(const ntsa::Ipv6Address& value);
+
+    /// Set the server name indication to the specified 'value'.
+    void setServerNameIndication(const ntsa::LocalName& value);
+
+    /// Set the server name indication to the specified 'value'.
+    void setServerNameIndication(const ntsa::Host& value);
+
+    /// Set the server name indication to the specified 'value'.
+    void setServerNameIndication(const ntsa::DomainName& value);
+
+    /// Set the server name indication to the specified 'value'.
+    void setServerNameIndication(const ntsa::Uri& value);
+
+    /// Set the server name verification to the specified 'value'.
+    void setServerNameVerification(const bsl::string& value);
+
+    /// Set the server name verification to the specified 'value'.
+    void setServerNameVerification(const ntsa::Endpoint& value);
+
+    /// Set the server name verification to the specified 'value'.
+    void setServerNameVerification(const ntsa::IpEndpoint& value);
+
+    /// Set the server name verification to the specified 'value'.
+    void setServerNameVerification(const ntsa::IpAddress& value);
+
+    /// Set the server name verification to the specified 'value'.
+    void setServerNameVerification(const ntsa::Ipv4Address& value);
+
+    /// Set the server name verification to the specified 'value'.
+    void setServerNameVerification(const ntsa::Ipv6Address& value);
+
+    /// Set the server name verification to the specified 'value'.
+    void setServerNameVerification(const ntsa::LocalName& value);
+
+    /// Set the server name verification to the specified 'value'.
+    void setServerNameVerification(const ntsa::Host& value);
+
+    /// Set the server name verification to the specified 'value'.
+    void setServerNameVerification(const ntsa::DomainName& value);
+
+    /// Set the server name verification to the specified 'value'.
+    void setServerNameVerification(const ntsa::Uri& value);
+
     /// Set the deadline within which the connection must be upgraded to the
     /// specified 'value'.
     void setDeadline(const bsls::TimeInterval& value);
@@ -91,6 +172,12 @@ class UpgradeOptions
 
     /// Return the token used to cancel the operation.
     const bdlb::NullableValue<ntca::UpgradeToken>& token() const;
+
+    /// Return the server name indication.
+    const bdlb::NullableValue<bsl::string>& serverNameIndication() const;
+
+    /// Return the server name verification.
+    const bdlb::NullableValue<bsl::string>& serverNameVerification() const;
 
     /// Return the deadline within which the connection must be upgraded.
     const bdlb::NullableValue<bsls::TimeInterval>& deadline() const;
@@ -126,7 +213,7 @@ class UpgradeOptions
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    NTCCFG_DECLARE_NESTED_BITWISE_MOVABLE_TRAITS(UpgradeOptions);
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(UpgradeOptions);
 };
 
 /// Write the specified 'object' to the specified 'stream'. Return
@@ -161,16 +248,21 @@ template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const UpgradeOptions& value);
 
 NTCCFG_INLINE
-UpgradeOptions::UpgradeOptions()
+UpgradeOptions::UpgradeOptions(bslma::Allocator* basicAllocator)
 : d_token()
+, d_serverNameIndication(basicAllocator)
+, d_serverNameVerification(basicAllocator)
 , d_deadline()
 , d_recurse(false)
 {
 }
 
 NTCCFG_INLINE
-UpgradeOptions::UpgradeOptions(const UpgradeOptions& original)
+UpgradeOptions::UpgradeOptions(const UpgradeOptions& original,
+                               bslma::Allocator*     basicAllocator)
 : d_token(original.d_token)
+, d_serverNameIndication(original.d_serverNameIndication, basicAllocator)
+, d_serverNameVerification(original.d_serverNameVerification, basicAllocator)
 , d_deadline(original.d_deadline)
 , d_recurse(original.d_recurse)
 {
@@ -184,9 +276,14 @@ UpgradeOptions::~UpgradeOptions()
 NTCCFG_INLINE
 UpgradeOptions& UpgradeOptions::operator=(const UpgradeOptions& other)
 {
-    d_token    = other.d_token;
-    d_deadline = other.d_deadline;
-    d_recurse  = other.d_recurse;
+    if (this != &other) {
+        d_token                  = other.d_token;
+        d_serverNameIndication   = other.d_serverNameIndication;
+        d_serverNameVerification = other.d_serverNameVerification;
+        d_deadline               = other.d_deadline;
+        d_recurse                = other.d_recurse;
+    }
+
     return *this;
 }
 
@@ -194,6 +291,8 @@ NTCCFG_INLINE
 void UpgradeOptions::reset()
 {
     d_token.reset();
+    d_serverNameIndication.reset();
+    d_serverNameVerification.reset();
     d_deadline.reset();
     d_recurse = false;
 }
@@ -202,6 +301,180 @@ NTCCFG_INLINE
 void UpgradeOptions::setToken(const ntca::UpgradeToken& value)
 {
     d_token = value;
+}
+
+NTCCFG_INLINE
+void UpgradeOptions::setServerNameIndication(const bsl::string& value)
+{
+    ntsa::Uri uri;
+    if (uri.parse(value)) {
+        this->setServerNameIndication(uri);
+    }
+    else {
+        d_serverNameIndication.makeValue(value);
+    }
+}
+
+NTCCFG_INLINE
+void UpgradeOptions::setServerNameIndication(const ntsa::Endpoint& value)
+{
+    if (value.isIp()) {
+        this->setServerNameIndication(value.ip());
+    }
+    else if (value.isLocal()) {
+        this->setServerNameIndication(value.local());
+    }
+}
+
+NTCCFG_INLINE
+void UpgradeOptions::setServerNameIndication(const ntsa::IpEndpoint& value)
+{
+    this->setServerNameIndication(value.host());
+}
+
+NTCCFG_INLINE
+void UpgradeOptions::setServerNameIndication(const ntsa::IpAddress& value)
+{
+    if (value.isV4()) {
+        this->setServerNameIndication(value.v4());
+    }
+    else if (value.isV6()) {
+        this->setServerNameIndication(value.v6());
+    }
+}
+
+NTCCFG_INLINE
+void UpgradeOptions::setServerNameIndication(const ntsa::Ipv4Address& value)
+{
+    d_serverNameIndication.makeValue(value.text());
+}
+
+NTCCFG_INLINE
+void UpgradeOptions::setServerNameIndication(const ntsa::Ipv6Address& value)
+{
+    d_serverNameIndication.makeValue(value.text());
+}
+
+NTCCFG_INLINE
+void UpgradeOptions::setServerNameIndication(const ntsa::LocalName& value)
+{
+    d_serverNameIndication.makeValue(value.value());
+}
+
+NTCCFG_INLINE
+void UpgradeOptions::setServerNameIndication(const ntsa::Host& value)
+{
+    if (value.isDomainName()) {
+        this->setServerNameIndication(value.domainName());
+    }
+    else if (value.isIp()) {
+        this->setServerNameIndication(value.ip());
+    }
+}
+
+NTCCFG_INLINE
+void UpgradeOptions::setServerNameIndication(const ntsa::DomainName& value)
+{
+    d_serverNameIndication.makeValue(value.text());
+}
+
+NTCCFG_INLINE
+void UpgradeOptions::setServerNameIndication(const ntsa::Uri& value)
+{
+    if (!value.authority().isNull()) {
+        const ntsa::UriAuthority& authority = value.authority().value();
+        if (!authority.host().isNull()) {
+            const ntsa::Host& host = authority.host().value();
+            this->setServerNameIndication(host);
+        }
+    }
+}
+
+NTCCFG_INLINE
+void UpgradeOptions::setServerNameVerification(const bsl::string& value)
+{
+    ntsa::Uri uri;
+    if (uri.parse(value)) {
+        this->setServerNameVerification(uri);
+    }
+    else {
+        d_serverNameVerification.makeValue(value);
+    }
+}
+
+NTCCFG_INLINE
+void UpgradeOptions::setServerNameVerification(const ntsa::Endpoint& value)
+{
+    if (value.isIp()) {
+        this->setServerNameVerification(value.ip());
+    }
+    else if (value.isLocal()) {
+        this->setServerNameVerification(value.local());
+    }
+}
+
+NTCCFG_INLINE
+void UpgradeOptions::setServerNameVerification(const ntsa::IpEndpoint& value)
+{
+    this->setServerNameVerification(value.host());
+}
+
+NTCCFG_INLINE
+void UpgradeOptions::setServerNameVerification(const ntsa::IpAddress& value)
+{
+    if (value.isV4()) {
+        this->setServerNameVerification(value.v4());
+    }
+    else if (value.isV6()) {
+        this->setServerNameVerification(value.v6());
+    }
+}
+
+NTCCFG_INLINE
+void UpgradeOptions::setServerNameVerification(const ntsa::Ipv4Address& value)
+{
+    d_serverNameVerification.makeValue(value.text());
+}
+
+NTCCFG_INLINE
+void UpgradeOptions::setServerNameVerification(const ntsa::Ipv6Address& value)
+{
+    d_serverNameVerification.makeValue(value.text());
+}
+
+NTCCFG_INLINE
+void UpgradeOptions::setServerNameVerification(const ntsa::LocalName& value)
+{
+    d_serverNameVerification.makeValue(value.value());
+}
+
+NTCCFG_INLINE
+void UpgradeOptions::setServerNameVerification(const ntsa::Host& value)
+{
+    if (value.isDomainName()) {
+        this->setServerNameVerification(value.domainName());
+    }
+    else if (value.isIp()) {
+        this->setServerNameVerification(value.ip());
+    }
+}
+
+NTCCFG_INLINE
+void UpgradeOptions::setServerNameVerification(const ntsa::DomainName& value)
+{
+    d_serverNameVerification.makeValue(value.text());
+}
+
+NTCCFG_INLINE
+void UpgradeOptions::setServerNameVerification(const ntsa::Uri& value)
+{
+    if (!value.authority().isNull()) {
+        const ntsa::UriAuthority& authority = value.authority().value();
+        if (!authority.host().isNull()) {
+            const ntsa::Host& host = authority.host().value();
+            this->setServerNameVerification(host);
+        }
+    }
 }
 
 NTCCFG_INLINE
@@ -220,6 +493,20 @@ NTCCFG_INLINE
 const bdlb::NullableValue<ntca::UpgradeToken>& UpgradeOptions::token() const
 {
     return d_token;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<bsl::string>& UpgradeOptions::serverNameIndication()
+    const
+{
+    return d_serverNameIndication;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<bsl::string>& UpgradeOptions::
+    serverNameVerification() const
+{
+    return d_serverNameVerification;
 }
 
 NTCCFG_INLINE
@@ -264,6 +551,7 @@ void hashAppend(HASH_ALGORITHM& algorithm, const UpgradeOptions& value)
     using bslh::hashAppend;
 
     hashAppend(algorithm, value.token());
+    hashAppend(algorithm, value.serverNameIndication());
     hashAppend(algorithm, value.deadline());
     hashAppend(algorithm, value.recurse());
 }

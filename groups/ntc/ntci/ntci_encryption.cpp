@@ -25,5 +25,149 @@ Encryption::~Encryption()
 {
 }
 
+ntsa::Error Encryption::initiateHandshake(
+        const HandshakeCallback& callback)
+{
+    NTCCFG_WARNING_UNUSED(callback);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error Encryption::initiateHandshake(
+        const ntca::UpgradeOptions& upgradeOptions,
+        const HandshakeCallback&    callback)
+{
+    NTCCFG_WARNING_UNUSED(upgradeOptions);
+    NTCCFG_WARNING_UNUSED(callback);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error Encryption::pushIncomingCipherText(const bdlbb::Blob& input)
+{
+    NTCCFG_WARNING_UNUSED(input);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error Encryption::pushIncomingCipherText(const ntsa::Data& input)
+{
+    NTCCFG_WARNING_UNUSED(input);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error Encryption::pushOutgoingPlainText(const bdlbb::Blob& input)
+{
+    NTCCFG_WARNING_UNUSED(input);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error Encryption::pushOutgoingPlainText(const ntsa::Data& input)
+{
+    NTCCFG_WARNING_UNUSED(input);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error Encryption::popIncomingPlainText(bdlbb::Blob* output)
+{
+    NTCCFG_WARNING_UNUSED(output);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error Encryption::popOutgoingCipherText(bdlbb::Blob* output)
+{
+    NTCCFG_WARNING_UNUSED(output);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error Encryption::shutdown()
+{
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+bool Encryption::hasIncomingPlainText() const
+{
+    return false;
+}
+
+bool Encryption::hasOutgoingCipherText() const
+{
+    return false;
+}
+
+bool Encryption::getSourceCertificate(
+        ntca::EncryptionCertificate* result) const
+{
+    result->reset();
+    return false;
+}
+
+bool Encryption::getSourceCertificate(
+        bsl::shared_ptr<ntci::EncryptionCertificate>* result) const
+{
+    result->reset();
+    return false;
+}
+
+bool Encryption::getRemoteCertificate(
+        ntca::EncryptionCertificate* result) const
+{
+    result->reset();
+    return false;
+}
+
+bool Encryption::getRemoteCertificate(
+        bsl::shared_ptr<ntci::EncryptionCertificate>* result) const
+{
+    result->reset();
+    return false;
+}
+
+bool Encryption::getCipher(bsl::string* result) const
+{
+    result->clear();
+    return false;
+}
+
+bool Encryption::isHandshakeFinished() const
+{
+    return false;
+}
+
+bool Encryption::isShutdownSent() const
+{
+    return false;
+}
+
+bool Encryption::isShutdownReceived() const
+{
+    return false;
+}
+
+bool Encryption::isShutdownFinished() const
+{
+    return false;
+}
+
+bsl::shared_ptr<ntci::EncryptionCertificate> Encryption::sourceCertificate()
+        const
+{
+    return bsl::shared_ptr<ntci::EncryptionCertificate>();
+}
+
+bsl::shared_ptr<ntci::EncryptionCertificate> Encryption::remoteCertificate()
+        const
+{
+    return bsl::shared_ptr<ntci::EncryptionCertificate>();
+}
+
+bsl::shared_ptr<ntci::EncryptionKey> Encryption::privateKey() const
+{
+    return bsl::shared_ptr<ntci::EncryptionKey>();
+}
+
+ntsa::Error Encryption::serverNameIndication(bsl::string* result) const
+{
+    result->clear();
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 }  // close package namespace
 }  // close enterprise namespace

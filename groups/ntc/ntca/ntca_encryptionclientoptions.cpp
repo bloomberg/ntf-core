@@ -23,38 +23,10 @@ BSLS_IDENT_RCSID(ntca_encryptionclientoptions_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntca {
 
-namespace {
-
-bool sortResource(const ntca::EncryptionResource& lhs,
-                  const ntca::EncryptionResource& rhs)
-{
-    ntca::EncryptionResourceOptions::Hint lhsHint =
-        ntca::EncryptionResourceOptions::e_ANY;
-
-    if (!lhs.options().isNull()) {
-        lhsHint = lhs.options().value().hint();
-    }
-
-    ntca::EncryptionResourceOptions::Hint rhsHint =
-        ntca::EncryptionResourceOptions::e_ANY;
-
-    if (!rhs.options().isNull()) {
-        rhsHint = rhs.options().value().hint();
-    }
-
-    return static_cast<int>(lhsHint) < static_cast<int>(rhsHint);
-}
-
-}  // close unnamed namespace
-
 EncryptionClientOptions::EncryptionClientOptions(
     bslma::Allocator* basicAllocator)
-: d_minMethod(ntca::EncryptionMethod::e_TLS_V1_X)
-, d_maxMethod(ntca::EncryptionMethod::e_TLS_V1_X)
-, d_authentication(ntca::EncryptionAuthentication::e_NONE)
-, d_resourceVector(basicAllocator)
-, d_authorityDirectory(basicAllocator)
-, d_cipherSpec(basicAllocator)
+: d_options(basicAllocator)
+, d_optionsMap(basicAllocator)
 , d_serverNameIndication(basicAllocator)
 {
 }
@@ -62,12 +34,8 @@ EncryptionClientOptions::EncryptionClientOptions(
 EncryptionClientOptions::EncryptionClientOptions(
     const EncryptionClientOptions& other,
     bslma::Allocator*              basicAllocator)
-: d_minMethod(other.d_minMethod)
-, d_maxMethod(other.d_maxMethod)
-, d_authentication(other.d_authentication)
-, d_resourceVector(other.d_resourceVector, basicAllocator)
-, d_authorityDirectory(other.d_authorityDirectory, basicAllocator)
-, d_cipherSpec(other.d_cipherSpec, basicAllocator)
+: d_options(other.d_options, basicAllocator)
+, d_optionsMap(other.d_optionsMap, basicAllocator)
 , d_serverNameIndication(other.d_serverNameIndication, basicAllocator)
 {
 }
@@ -80,12 +48,8 @@ EncryptionClientOptions& EncryptionClientOptions::operator=(
     const EncryptionClientOptions& other)
 {
     if (this != &other) {
-        d_minMethod            = other.d_minMethod;
-        d_maxMethod            = other.d_maxMethod;
-        d_authentication       = other.d_authentication;
-        d_resourceVector       = other.d_resourceVector;
-        d_authorityDirectory   = other.d_authorityDirectory;
-        d_cipherSpec           = other.d_cipherSpec;
+        d_options              = other.d_options;
+        d_optionsMap           = other.d_optionsMap;
         d_serverNameIndication = other.d_serverNameIndication;
     }
 
@@ -94,373 +58,191 @@ EncryptionClientOptions& EncryptionClientOptions::operator=(
 
 void EncryptionClientOptions::reset()
 {
-    d_minMethod      = ntca::EncryptionMethod::e_TLS_V1_X;
-    d_maxMethod      = ntca::EncryptionMethod::e_TLS_V1_X;
-    d_authentication = ntca::EncryptionAuthentication::e_NONE;
-    d_resourceVector.clear();
-    d_authorityDirectory.reset();
-    d_cipherSpec.reset();
+    d_options.reset();
+    d_optionsMap.clear();
     d_serverNameIndication.reset();
 }
 
 void EncryptionClientOptions::setMinMethod(
     ntca::EncryptionMethod::Value minMethod)
 {
-    d_minMethod = minMethod;
+    d_options.setMinMethod(minMethod);
 }
 
 void EncryptionClientOptions::setMaxMethod(
     ntca::EncryptionMethod::Value maxMethod)
 {
-    d_maxMethod = maxMethod;
+    d_options.setMaxMethod(maxMethod);
 }
 
 void EncryptionClientOptions::setCipherSpec(const bsl::string& cipherSpec)
 {
-    d_cipherSpec = cipherSpec;
+    d_options.setCipherSpec(cipherSpec);
 }
 
 void EncryptionClientOptions::setAuthentication(
     ntca::EncryptionAuthentication::Value authentication)
 {
-    d_authentication = authentication;
+    d_options.setAuthentication(authentication);
 }
 
 void EncryptionClientOptions::setAuthorityDirectory(
     const bsl::string& authorityDirectory)
 {
-    d_authorityDirectory = authorityDirectory;
+    d_options.setAuthorityDirectory(authorityDirectory);
 }
 
 void EncryptionClientOptions::addAuthorityList(
     const ntca::EncryptionCertificateVector& certificates)
 {
-    for (bsl::size_t i = 0; i < certificates.size(); ++i) {
-        this->addAuthority(certificates[i]);
-    }
+    d_options.addAuthorityList(certificates);
 }
 
 void EncryptionClientOptions::addAuthority(
     const ntca::EncryptionCertificate& certificate)
 {
-    ntca::EncryptionResourceOptions effectiveResourceOptions;
-    effectiveResourceOptions.setHint(
-        ntca::EncryptionResourceOptions::e_CERTIFICATE_AUTHORITY);
-
-    ntca::EncryptionResourceDescriptor resourceDescriptor;
-    resourceDescriptor.makeCertificate(certificate);
-
-    ntca::EncryptionResource resource;
-    resource.setDescriptor(resourceDescriptor);
-    resource.setOptions(effectiveResourceOptions);
-
-    this->addResource(resource);
+    d_options.addAuthority(certificate);
 }
 
 void EncryptionClientOptions::addAuthorityData(
     const bsl::vector<char>& resourceData)
 {
-    ntca::EncryptionResourceOptions effectiveResourceOptions;
-    effectiveResourceOptions.setHint(
-        ntca::EncryptionResourceOptions::e_CERTIFICATE_AUTHORITY);
-
-    ntca::EncryptionResourceDescriptor resourceDescriptor;
-    resourceDescriptor.makeData(resourceData);
-
-    ntca::EncryptionResource resource;
-    resource.setDescriptor(resourceDescriptor);
-    resource.setOptions(effectiveResourceOptions);
-
-    this->addResource(resource);
+    d_options.addAuthorityData(resourceData);
 }
 
 void EncryptionClientOptions::addAuthorityData(
     const bsl::vector<char>&               resourceData,
     const ntca::EncryptionResourceOptions& resourceOptions)
 {
-    ntca::EncryptionResourceOptions effectiveResourceOptions = resourceOptions;
-    effectiveResourceOptions.setHint(
-        ntca::EncryptionResourceOptions::e_CERTIFICATE_AUTHORITY);
-
-    ntca::EncryptionResourceDescriptor resourceDescriptor;
-    resourceDescriptor.makeData(resourceData);
-
-    ntca::EncryptionResource resource;
-    resource.setDescriptor(resourceDescriptor);
-    resource.setOptions(effectiveResourceOptions);
-
-    this->addResource(resource);
+    d_options.addAuthorityData(resourceData, resourceOptions);
 }
 
 void EncryptionClientOptions::addAuthorityFile(const bsl::string& resourcePath)
 {
-    ntca::EncryptionResourceOptions effectiveResourceOptions;
-    effectiveResourceOptions.setHint(
-        ntca::EncryptionResourceOptions::e_CERTIFICATE_AUTHORITY);
-
-    ntca::EncryptionResourceDescriptor resourceDescriptor;
-    resourceDescriptor.makePath(resourcePath);
-
-    ntca::EncryptionResource resource;
-    resource.setDescriptor(resourceDescriptor);
-    resource.setOptions(effectiveResourceOptions);
-
-    this->addResource(resource);
+    d_options.addAuthorityFile(resourcePath);
 }
 
 void EncryptionClientOptions::addAuthorityFile(
     const bsl::string&                     resourcePath,
     const ntca::EncryptionResourceOptions& resourceOptions)
 {
-    ntca::EncryptionResourceOptions effectiveResourceOptions = resourceOptions;
-    effectiveResourceOptions.setHint(
-        ntca::EncryptionResourceOptions::e_CERTIFICATE_AUTHORITY);
-
-    ntca::EncryptionResourceDescriptor resourceDescriptor;
-    resourceDescriptor.makePath(resourcePath);
-
-    ntca::EncryptionResource resource;
-    resource.setDescriptor(resourceDescriptor);
-    resource.setOptions(effectiveResourceOptions);
-
-    this->addResource(resource);
+    d_options.addAuthorityFile(resourcePath, resourceOptions);
 }
 
 void EncryptionClientOptions::setIdentity(
     const ntca::EncryptionCertificate& certificate)
 {
-    ntca::EncryptionResourceOptions effectiveResourceOptions;
-    effectiveResourceOptions.setHint(
-        ntca::EncryptionResourceOptions::e_CERTIFICATE);
-
-    ntca::EncryptionResourceDescriptor resourceDescriptor;
-    resourceDescriptor.makeCertificate(certificate);
-
-    ntca::EncryptionResource resource;
-    resource.setDescriptor(resourceDescriptor);
-    resource.setOptions(effectiveResourceOptions);
-
-    this->addResource(resource);
+    d_options.setIdentity(certificate);
 }
 
 void EncryptionClientOptions::setIdentityData(
     const bsl::vector<char>& resourceData)
 {
-    ntca::EncryptionResourceOptions effectiveResourceOptions;
-    effectiveResourceOptions.setHint(
-        ntca::EncryptionResourceOptions::e_CERTIFICATE);
-
-    ntca::EncryptionResourceDescriptor resourceDescriptor;
-    resourceDescriptor.makeData(resourceData);
-
-    ntca::EncryptionResource resource;
-    resource.setDescriptor(resourceDescriptor);
-    resource.setOptions(effectiveResourceOptions);
-
-    this->addResource(resource);
+    d_options.setIdentityData(resourceData);
 }
 
 void EncryptionClientOptions::setIdentityData(
     const bsl::vector<char>&               resourceData,
     const ntca::EncryptionResourceOptions& resourceOptions)
 {
-    ntca::EncryptionResourceOptions effectiveResourceOptions = resourceOptions;
-    effectiveResourceOptions.setHint(
-        ntca::EncryptionResourceOptions::e_CERTIFICATE);
-
-    ntca::EncryptionResourceDescriptor resourceDescriptor;
-    resourceDescriptor.makeData(resourceData);
-
-    ntca::EncryptionResource resource;
-    resource.setDescriptor(resourceDescriptor);
-    resource.setOptions(effectiveResourceOptions);
-
-    this->addResource(resource);
+    d_options.setIdentityData(resourceData, resourceOptions);
 }
 
 void EncryptionClientOptions::setIdentityFile(const bsl::string& resourcePath)
 {
-    ntca::EncryptionResourceOptions effectiveResourceOptions;
-    effectiveResourceOptions.setHint(
-        ntca::EncryptionResourceOptions::e_CERTIFICATE);
-
-    ntca::EncryptionResourceDescriptor resourceDescriptor;
-    resourceDescriptor.makePath(resourcePath);
-
-    ntca::EncryptionResource resource;
-    resource.setDescriptor(resourceDescriptor);
-    resource.setOptions(effectiveResourceOptions);
-
-    this->addResource(resource);
+    d_options.setIdentityFile(resourcePath);
 }
 
 void EncryptionClientOptions::setIdentityFile(
     const bsl::string&                     resourcePath,
     const ntca::EncryptionResourceOptions& resourceOptions)
 {
-    ntca::EncryptionResourceOptions effectiveResourceOptions = resourceOptions;
-    effectiveResourceOptions.setHint(
-        ntca::EncryptionResourceOptions::e_CERTIFICATE);
-
-    ntca::EncryptionResourceDescriptor resourceDescriptor;
-    resourceDescriptor.makePath(resourcePath);
-
-    ntca::EncryptionResource resource;
-    resource.setDescriptor(resourceDescriptor);
-    resource.setOptions(effectiveResourceOptions);
-
-    this->addResource(resource);
+    d_options.setIdentityFile(resourcePath, resourceOptions);
 }
 
 void EncryptionClientOptions::setPrivateKey(const ntca::EncryptionKey& key)
 {
-    ntca::EncryptionResourceOptions effectiveResourceOptions;
-    effectiveResourceOptions.setHint(
-        ntca::EncryptionResourceOptions::e_PRIVATE_KEY);
-
-    ntca::EncryptionResourceDescriptor resourceDescriptor;
-    resourceDescriptor.makeKey(key);
-
-    ntca::EncryptionResource resource;
-    resource.setDescriptor(resourceDescriptor);
-    resource.setOptions(effectiveResourceOptions);
-
-    this->addResource(resource);
+    d_options.setPrivateKey(key);
 }
 
 void EncryptionClientOptions::setPrivateKeyData(
     const bsl::vector<char>& resourceData)
 {
-    ntca::EncryptionResourceOptions effectiveResourceOptions;
-    effectiveResourceOptions.setHint(
-        ntca::EncryptionResourceOptions::e_PRIVATE_KEY);
-
-    ntca::EncryptionResourceDescriptor resourceDescriptor;
-    resourceDescriptor.makeData(resourceData);
-
-    ntca::EncryptionResource resource;
-    resource.setDescriptor(resourceDescriptor);
-    resource.setOptions(effectiveResourceOptions);
-
-    this->addResource(resource);
+    d_options.setPrivateKeyData(resourceData);
 }
 
 void EncryptionClientOptions::setPrivateKeyData(
     const bsl::vector<char>&               resourceData,
     const ntca::EncryptionResourceOptions& resourceOptions)
 {
-    ntca::EncryptionResourceOptions effectiveResourceOptions = resourceOptions;
-    effectiveResourceOptions.setHint(
-        ntca::EncryptionResourceOptions::e_PRIVATE_KEY);
-
-    ntca::EncryptionResourceDescriptor resourceDescriptor;
-    resourceDescriptor.makeData(resourceData);
-
-    ntca::EncryptionResource resource;
-    resource.setDescriptor(resourceDescriptor);
-    resource.setOptions(effectiveResourceOptions);
-
-    this->addResource(resource);
+    d_options.setPrivateKeyData(resourceData, resourceOptions);
 }
 
 void EncryptionClientOptions::setPrivateKeyFile(
     const bsl::string& resourcePath)
 {
-    ntca::EncryptionResourceOptions effectiveResourceOptions;
-    effectiveResourceOptions.setHint(
-        ntca::EncryptionResourceOptions::e_PRIVATE_KEY);
-
-    ntca::EncryptionResourceDescriptor resourceDescriptor;
-    resourceDescriptor.makePath(resourcePath);
-
-    ntca::EncryptionResource resource;
-    resource.setDescriptor(resourceDescriptor);
-    resource.setOptions(effectiveResourceOptions);
-
-    this->addResource(resource);
+    d_options.setPrivateKeyFile(resourcePath);
 }
 
 void EncryptionClientOptions::setPrivateKeyFile(
     const bsl::string&                     resourcePath,
     const ntca::EncryptionResourceOptions& resourceOptions)
 {
-    ntca::EncryptionResourceOptions effectiveResourceOptions = resourceOptions;
-    effectiveResourceOptions.setHint(
-        ntca::EncryptionResourceOptions::e_PRIVATE_KEY);
-
-    ntca::EncryptionResourceDescriptor resourceDescriptor;
-    resourceDescriptor.makePath(resourcePath);
-
-    ntca::EncryptionResource resource;
-    resource.setDescriptor(resourceDescriptor);
-    resource.setOptions(effectiveResourceOptions);
-
-    this->addResource(resource);
+    d_options.setPrivateKeyFile(resourcePath, resourceOptions);
 }
 
 void EncryptionClientOptions::addResource(
     const ntca::EncryptionResource& resource)
 {
-    d_resourceVector.push_back(resource);
-
-    bsl::sort(d_resourceVector.begin(), d_resourceVector.end(), &sortResource);
+    d_options.addResource(resource);
 }
 
 void EncryptionClientOptions::addResourceData(
     const bsl::vector<char>& resourceData)
 {
-    ntca::EncryptionResourceOptions resourceOptions;
-
-    ntca::EncryptionResourceDescriptor resourceDescriptor;
-    resourceDescriptor.makeData(resourceData);
-
-    ntca::EncryptionResource resource;
-    resource.setDescriptor(resourceDescriptor);
-    resource.setOptions(resourceOptions);
-
-    this->addResource(resource);
+    d_options.addResourceData(resourceData);
 }
 
 void EncryptionClientOptions::addResourceData(
     const bsl::vector<char>&               resourceData,
     const ntca::EncryptionResourceOptions& resourceOptions)
 {
-    ntca::EncryptionResourceDescriptor resourceDescriptor;
-    resourceDescriptor.makeData(resourceData);
-
-    ntca::EncryptionResource resource;
-    resource.setDescriptor(resourceDescriptor);
-    resource.setOptions(resourceOptions);
-
-    this->addResource(resource);
+    d_options.addResourceData(resourceData, resourceOptions);
 }
 
 void EncryptionClientOptions::addResourceFile(const bsl::string& resourcePath)
 {
-    ntca::EncryptionResourceOptions resourceOptions;
-
-    ntca::EncryptionResourceDescriptor resourceDescriptor;
-    resourceDescriptor.makePath(resourcePath);
-
-    ntca::EncryptionResource resource;
-    resource.setDescriptor(resourceDescriptor);
-    resource.setOptions(resourceOptions);
-
-    this->addResource(resource);
+    d_options.addResourceFile(resourcePath);
 }
 
 void EncryptionClientOptions::addResourceFile(
     const bsl::string&                     resourcePath,
     const ntca::EncryptionResourceOptions& resourceOptions)
 {
-    ntca::EncryptionResourceDescriptor resourceDescriptor;
-    resourceDescriptor.makePath(resourcePath);
+    d_options.addResourceFile(resourcePath, resourceOptions);
+}
 
-    ntca::EncryptionResource resource;
-    resource.setDescriptor(resourceDescriptor);
-    resource.setOptions(resourceOptions);
+void EncryptionClientOptions::addOverrides(
+    const bsl::string&             serverName,
+    const ntca::EncryptionOptions& options)
+{
+    if (serverName.empty() || serverName == "*") {
+        d_options = options;
+    }
+    else {
+        d_optionsMap[serverName] = options;
+    }
+}
 
-    this->addResource(resource);
+void EncryptionClientOptions::setServerNameIndication(const bsl::string& name)
+{
+    ntsa::Uri uri;
+    if (uri.parse(name)) {
+        this->setServerNameIndication(uri);
+    }
+    else {
+        d_serverNameIndication.makeValue(name);
+    }
 }
 
 void EncryptionClientOptions::setServerNameIndication(
@@ -513,7 +295,6 @@ void EncryptionClientOptions::setServerNameIndication(const ntsa::Uri& uri)
 {
     if (!uri.authority().isNull()) {
         const ntsa::UriAuthority& authority = uri.authority().value();
-
         if (!authority.host().isNull()) {
             const ntsa::Host& host = authority.host().value();
             this->setServerNameIndication(host);
@@ -537,49 +318,38 @@ void EncryptionClientOptions::setServerNameIndication(
     d_serverNameIndication.makeValue(domainName.text());
 }
 
-void EncryptionClientOptions::setServerNameIndication(const bsl::string& name)
-{
-    ntsa::Uri uri;
-    if (uri.parse(name)) {
-        this->setServerNameIndication(uri);
-    }
-    else {
-        d_serverNameIndication.makeValue(name);
-    }
-}
-
 ntca::EncryptionMethod::Value EncryptionClientOptions::minMethod() const
 {
-    return d_minMethod;
+    return d_options.minMethod();
 }
 
 ntca::EncryptionMethod::Value EncryptionClientOptions::maxMethod() const
 {
-    return d_maxMethod;
+    return d_options.maxMethod();
 }
 
 const bdlb::NullableValue<bsl::string>& EncryptionClientOptions::cipherSpec()
     const
 {
-    return d_cipherSpec;
+    return d_options.cipherSpec();
 }
 
 ntca::EncryptionAuthentication::Value EncryptionClientOptions::authentication()
     const
 {
-    return d_authentication;
+    return d_options.authentication();
 }
 
 const bdlb::NullableValue<bsl::string>& EncryptionClientOptions::
     authorityDirectory() const
 {
-    return d_authorityDirectory;
+    return d_options.authorityDirectory();
 }
 
 const ntca::EncryptionResourceVector& EncryptionClientOptions::resources()
     const
 {
-    return d_resourceVector;
+    return d_options.resources();
 }
 
 const bdlb::NullableValue<bsl::string>& EncryptionClientOptions::
@@ -588,27 +358,78 @@ const bdlb::NullableValue<bsl::string>& EncryptionClientOptions::
     return d_serverNameIndication;
 }
 
+void EncryptionClientOptions::loadServerNameList(
+    bsl::vector<bsl::string>* result) const
+{
+    result->clear();
+
+    result->push_back("*");
+
+    for (OptionsMap::const_iterator it = d_optionsMap.begin();
+         it != d_optionsMap.end();
+         ++it)
+    {
+        result->push_back(it->first);
+    }
+}
+
+bool EncryptionClientOptions::loadServerNameOptions(
+    ntca::EncryptionOptions* result,
+    const bsl::string&       serverName) const
+{
+    result->reset();
+
+    if (serverName.empty() || serverName == "*") {
+        *result = d_options;
+    }
+    else {
+        OptionsMap::const_iterator it = d_optionsMap.find(serverName);
+        if (it == d_optionsMap.end()) {
+            return false;
+        }
+
+        *result = it->second;
+    }
+
+    return true;
+}
+
+bool EncryptionClientOptions::equals(
+    const EncryptionClientOptions& other) const
+{
+    return d_options == other.d_options &&
+           d_optionsMap == other.d_optionsMap &&
+           d_serverNameIndication == other.d_serverNameIndication;
+}
+
 bsl::ostream& EncryptionClientOptions::print(bsl::ostream& stream,
                                              int           level,
                                              int spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute("minMethod", d_minMethod);
-    printer.printAttribute("maxMethod", d_maxMethod);
-    printer.printAttribute("authentication", d_authentication);
 
-    if (!d_resourceVector.empty()) {
-        printer.printAttribute("resource", d_resourceVector);
-    }
+    printer.printAttribute("minMethod", d_options.minMethod());
+    printer.printAttribute("maxMethod", d_options.maxMethod());
+    printer.printAttribute("authentication", d_options.authentication());
 
-    if (!d_authorityDirectory.isNull()) {
+    if (!d_options.authorityDirectory().isNull()) {
         printer.printAttribute("authorityDirectory",
-                               d_authorityDirectory.value());
+                               d_options.authorityDirectory().value());
     }
 
-    if (!d_cipherSpec.isNull()) {
-        printer.printAttribute("cipherSpec", d_cipherSpec.value());
+    if (!d_options.cipherSpec().isNull()) {
+        printer.printAttribute("cipherSpec", d_options.cipherSpec().value());
+    }
+
+    if (!d_options.resources().empty()) {
+        printer.printAttribute("resource", d_options.resources());
+    }
+
+    printer.printAttribute("map", d_optionsMap);
+
+    if (!d_serverNameIndication.isNull()) {
+        printer.printAttribute("serverNameIndication", d_serverNameIndication);
     }
 
     printer.end();
@@ -618,12 +439,7 @@ bsl::ostream& EncryptionClientOptions::print(bsl::ostream& stream,
 bool operator==(const EncryptionClientOptions& lhs,
                 const EncryptionClientOptions& rhs)
 {
-    return lhs.minMethod() == rhs.minMethod() &&
-           lhs.maxMethod() == rhs.maxMethod() &&
-           lhs.authentication() == rhs.authentication() &&
-           lhs.resources() == rhs.resources() &&
-           lhs.authorityDirectory() == rhs.authorityDirectory() &&
-           lhs.cipherSpec() == rhs.cipherSpec();
+    return lhs.equals(rhs);
 }
 
 bool operator!=(const EncryptionClientOptions& lhs,

@@ -20,6 +20,7 @@
 BSLS_IDENT("$Id: $")
 
 #include <ntca_encryptionresourceoptions.h>
+#include <ntca_encryptionkey.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 #include <ntsa_error.h>
@@ -110,6 +111,10 @@ class EncryptionKey
     virtual ntsa::Error encode(
         bsl::vector<char>*                     destination,
         const ntca::EncryptionResourceOptions& options) const;
+
+    /// Load into the specified 'result' the value-semantic representation
+    /// of this key. Return the error.
+    virtual ntsa::Error unwrap(ntca::EncryptionKey* result) const;
 
     /// Print the public key parameters to the specified stream in an
     /// unspecified but human-readable form.

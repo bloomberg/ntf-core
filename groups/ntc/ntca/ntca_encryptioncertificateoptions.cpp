@@ -117,6 +117,72 @@ void EncryptionCertificateOptions::addHost(const bsl::string& value)
     d_hosts.push_back(value);
 }
 
+void EncryptionCertificateOptions::addHost(const ntsa::Endpoint& value)
+{
+    if (value.isIp()) {
+        this->addHost(value.ip());
+    }
+    else if (value.isLocal()) {
+        this->addHost(value.local());
+    }
+}
+
+void EncryptionCertificateOptions::addHost(const ntsa::IpEndpoint& value)
+{
+    this->addHost(value.host());
+}
+
+void EncryptionCertificateOptions::addHost(const ntsa::IpAddress& value)
+{
+    if (value.isV4()) {
+        this->addHost(value.v4());
+    }
+    else if (value.isV6()) {
+        this->addHost(value.v6());
+    }
+}
+
+void EncryptionCertificateOptions::addHost(const ntsa::Ipv4Address& value)
+{
+    d_hosts.push_back(value.text());
+}
+
+void EncryptionCertificateOptions::addHost(const ntsa::Ipv6Address& value)
+{
+    d_hosts.push_back(value.text());
+}
+
+void EncryptionCertificateOptions::addHost(const ntsa::LocalName& value)
+{
+    d_hosts.push_back(value.value());
+}
+
+void EncryptionCertificateOptions::addHost(const ntsa::Host& value)
+{
+    if (value.isDomainName()) {
+        this->addHost(value.domainName());
+    }
+    else if (value.isIp()) {
+        this->addHost(value.ip());
+    }
+}
+
+void EncryptionCertificateOptions::addHost(const ntsa::DomainName& value)
+{
+    d_hosts.push_back(value.text());
+}
+
+void EncryptionCertificateOptions::addHost(const ntsa::Uri& value)
+{
+    if (!value.authority().isNull()) {
+        const ntsa::UriAuthority& authority = value.authority().value();
+        if (!authority.host().isNull()) {
+            const ntsa::Host& host = authority.host().value();
+            this->addHost(host);
+        }
+    }
+}
+
 int EncryptionCertificateOptions::serialNumber() const
 {
     return d_serialNumber;

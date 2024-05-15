@@ -193,6 +193,13 @@ ntsa::Error EncryptionCertificate::encode(
     return ntsa::Error();
 }
 
+ntsa::Error EncryptionCertificate::unwrap(
+    ntca::EncryptionCertificate* result) const
+{
+    result->reset();
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 void EncryptionCertificate::print(bsl::ostream& stream) const
 {
     ntca::EncryptionResourceOptions options;

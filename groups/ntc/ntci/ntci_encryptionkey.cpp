@@ -193,6 +193,12 @@ ntsa::Error EncryptionKey::encode(
     return ntsa::Error();
 }
 
+ntsa::Error EncryptionKey::unwrap(ntca::EncryptionKey* result) const
+{
+    result->reset();
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 void EncryptionKey::print(bsl::ostream& stream) const
 {
     stream << "<private>";

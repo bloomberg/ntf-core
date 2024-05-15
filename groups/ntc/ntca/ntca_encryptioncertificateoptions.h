@@ -21,6 +21,11 @@ BSLS_IDENT("$Id: $")
 
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
+#include <ntsa_endpoint.h>
+#include <ntsa_ipaddress.h>
+#include <ntsa_localname.h>
+#include <ntsa_host.h>
+#include <ntsa_uri.h>
 #include <bdlt_datetimetz.h>
 #include <bsl_iosfwd.h>
 #include <bsl_memory.h>
@@ -112,6 +117,33 @@ class EncryptionCertificateOptions
     /// Add the specified 'value' to the list of domain names for which the
     /// certificate is valid.
     void addHost(const bsl::string& value);
+
+    /// Set the server name indication to the specified 'value'.
+    void addHost(const ntsa::Endpoint& value);
+
+    /// Set the server name indication to the specified 'value'.
+    void addHost(const ntsa::IpEndpoint& value);
+
+    /// Set the server name indication to the specified 'value'.
+    void addHost(const ntsa::IpAddress& value);
+
+    /// Set the server name indication to the specified 'value'.
+    void addHost(const ntsa::Ipv4Address& value);
+
+    /// Set the server name indication to the specified 'value'.
+    void addHost(const ntsa::Ipv6Address& value);
+
+    /// Set the server name indication to the specified 'value'.
+    void addHost(const ntsa::LocalName& value);
+
+    /// Set the server name indication to the specified 'value'.
+    void addHost(const ntsa::Host& value);
+
+    /// Set the server name indication to the specified 'value'.
+    void addHost(const ntsa::DomainName& value);
+
+    /// Set the server name indication to the specified 'value'.
+    void addHost(const ntsa::Uri& value);
 
     /// Return the serial number.
     int serialNumber() const;

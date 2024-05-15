@@ -13,15 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INCLUDED_NTCA_ENCRYPTIONSERVEROPTIONS
-#define INCLUDED_NTCA_ENCRYPTIONSERVEROPTIONS
+#ifndef INCLUDED_NTCA_ENCRYPTIONOPTIONS
+#define INCLUDED_NTCA_ENCRYPTIONOPTIONS
 
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
 #include <ntca_encryptionauthentication.h>
 #include <ntca_encryptionmethod.h>
-#include <ntca_encryptionoptions.h>
 #include <ntca_encryptionresource.h>
 #include <ntca_encryptionresourcedescriptor.h>
 #include <ntca_encryptionresourceoptions.h>
@@ -41,15 +40,19 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntca {
 
-/// Describe the configuration of encryption in the server role.
+/// Describe the configuration of encryption in the client or server role.
 ///
 /// @details
 /// This class describes the configuration of a an encryption session operating
-/// in the server role. Encryption servers passively wait for the peer to
-/// initiate a cryptographically secure session of communication, typically
-/// according to either the Transport Layer Security (TLS) protocol or Secure
-/// Shell (SSH) protocol, within which data is transformed from from cleartext
-/// to ciphertext.
+/// in the client or server role. Encryption clients actively initiate a
+/// cryptographically secure session of communication, typically according to
+/// either the Transport Layer Security (TLS) protocol or Secure Shell (SSH)
+/// protocol, within which data is transformed from from cleartext to
+/// ciphertext. Encryption servers passively wait for the peer to initiate a
+/// cryptographically secure session of communication, typically according to
+/// either the Transport Layer Security (TLS) protocol or Secure Shell (SSH)
+/// protocol, within which data is transformed from from cleartext to
+/// ciphertext.
 ///
 /// @par Attributes
 /// This class is composed of the following attributes.
@@ -69,44 +72,42 @@ namespace ntca {
 /// certificate authorities.
 ///
 /// @li @b authorityDirectory:
-/// The directory containing files of encoded certificates for each trusted
+/// The directory containing files of PEM-encoded certificates for each trusted
 /// certificate authority.
-///
-/// @li @b optionsMap
-/// The optional, effective options to use when listening as a specific server
-/// name. Note that a server name, in this context, may be an IP address,
-/// domain name, or domain name wildcard such as "*.example.com".
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
 /// @ingroup module_ntci_encryption
-class EncryptionServerOptions
+class EncryptionOptions
 {
-    typedef bsl::map<bsl::string, ntca::EncryptionOptions> OptionsMap;
-
-    ntca::EncryptionOptions d_options;
-    OptionsMap              d_optionsMap;
+  private:
+    ntca::EncryptionMethod::Value         d_minMethod;
+    ntca::EncryptionMethod::Value         d_maxMethod;
+    ntca::EncryptionAuthentication::Value d_authentication;
+    ntca::EncryptionResourceVector        d_resourceVector;
+    bdlb::NullableValue<bsl::string>      d_authorityDirectory;
+    bdlb::NullableValue<bsl::string>      d_cipherSpec;
 
   public:
     /// Create new encryption server options.  Optionally specify a
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
     /// currently installed default allocator is used.
-    explicit EncryptionServerOptions(bslma::Allocator* basicAllocator = 0);
+    explicit EncryptionOptions(bslma::Allocator* basicAllocator = 0);
 
     /// Create new encryption server options having the same value as the
     /// specified 'other' object.  Optionally specify a 'basicAllocator' used
     /// to supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
-    EncryptionServerOptions(const EncryptionServerOptions& other,
-                            bslma::Allocator*              basicAllocator = 0);
+    EncryptionOptions(const EncryptionOptions& other,
+                      bslma::Allocator*        basicAllocator = 0);
 
     /// Destroy this object.
-    ~EncryptionServerOptions();
+    ~EncryptionOptions();
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
-    EncryptionServerOptions& operator=(const EncryptionServerOptions& other);
+    EncryptionOptions& operator=(const EncryptionOptions& other);
 
     /// Reset the value of this object to its value upon default construction.
     void reset();
@@ -288,13 +289,6 @@ class EncryptionServerOptions
         const bsl::string&                     resourcePath,
         const ntca::EncryptionResourceOptions& resourceOptions);
 
-    /// Add the specified 'options' to be used when listening for sessions as
-    /// the specified 'serverName'. If 'options' is empty or "*", interpret
-    /// 'options' as the default options. Note that 'serverName' may be an IP
-    /// address, domain name, or domain name wildcard such as "*.example.com".
-    void addOverrides(const bsl::string&             serverName,
-                      const ntca::EncryptionOptions& options);
-
     /// Return the minimum permitted encryption method, inclusive.
     ntca::EncryptionMethod::Value minMethod() const;
 
@@ -314,22 +308,6 @@ class EncryptionServerOptions
     /// Return the resources.
     const ntca::EncryptionResourceVector& resources() const;
 
-    /// Load into the specified 'result' the names of each registered server.
-    /// Note that 'serverName' may be an IP address, domain name, or domain
-    /// name wildcard such as "*.example.com". Also note that the first name
-    /// will always be "*" to denote the default options.
-    void loadServerNameList(bsl::vector<bsl::string>* result) const;
-
-    ///  Load into the specified 'result' the options for the specified
-    /// 'serverName'. Note that 'serverName' may be an IP address, domain name,
-    /// or domain name wildcard such as "*.example.com".
-    bool loadServerNameOptions(ntca::EncryptionOptions* result,
-                               const bsl::string&       serverName) const;
-
-    /// Return true if this object has the same value as the specified
-    /// 'other' object, otherwise return false.
-    bool equals(const EncryptionServerOptions& other) const;
-
     /// Format this object to the specified output 'stream' at the
     /// optionally specified indentation 'level' and return a reference to
     /// the modifiable 'stream'.  If 'level' is specified, optionally
@@ -348,7 +326,7 @@ class EncryptionServerOptions
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
-    BSLMF_NESTED_TRAIT_DECLARATION(EncryptionServerOptions,
+    BSLMF_NESTED_TRAIT_DECLARATION(EncryptionOptions,
                                    bslma::UsesBslmaAllocator);
 };
 
@@ -356,25 +334,23 @@ class EncryptionServerOptions
 /// the same value, and 'false' otherwise.  Two attribute objects have the
 /// same value if each respective attribute has the same value.
 ///
-/// @related ntca::EncryptionServerOptions
-bool operator==(const EncryptionServerOptions& lhs,
-                const EncryptionServerOptions& rhs);
+/// @related ntca::EncryptionOptions
+bool operator==(const EncryptionOptions& lhs, const EncryptionOptions& rhs);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects do not
 /// have the same value, and 'false' otherwise.  Two attribute objects do
 /// not have the same value if one or more respective attributes differ in
 /// values.
 ///
-/// @related ntca::EncryptionServerOptions
-bool operator!=(const EncryptionServerOptions& lhs,
-                const EncryptionServerOptions& rhs);
+/// @related ntca::EncryptionOptions
+bool operator!=(const EncryptionOptions& lhs, const EncryptionOptions& rhs);
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
 ///
-/// @related ntca::EncryptionServerOptions
-bsl::ostream& operator<<(bsl::ostream&                  stream,
-                         const EncryptionServerOptions& object);
+/// @related ntca::EncryptionOptions
+bsl::ostream& operator<<(bsl::ostream&            stream,
+                         const EncryptionOptions& object);
 
 }  // end namespace ntca
 }  // end namespace BloombergLP

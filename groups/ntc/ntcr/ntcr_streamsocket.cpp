@@ -3975,7 +3975,8 @@ void StreamSocket::processRemoteEndpointResolution(
 }
 
 ntsa::Error StreamSocket::privateUpgrade(
-    const bsl::shared_ptr<StreamSocket>& self)
+    const bsl::shared_ptr<StreamSocket>& self,
+    const ntca::UpgradeOptions&          upgradeOptions)
 {
     NTCI_LOG_CONTEXT();
 
@@ -3991,7 +3992,8 @@ ntsa::Error StreamSocket::privateUpgrade(
         bdlf::MemFnUtil::memFn(&StreamSocket::privateEncryptionHandshake,
                                this);
 
-    error = d_encryption_sp->initiateHandshake(handshakeCallback);
+    error = d_encryption_sp->initiateHandshake(
+        upgradeOptions, handshakeCallback);
     if (error) {
         return error;
     }
@@ -5187,7 +5189,7 @@ ntsa::Error StreamSocket::upgrade(
 
     // Initiate the upgrade.
 
-    error = this->privateUpgrade(self);
+    error = this->privateUpgrade(self, options);
     if (error) {
         d_encryption_sp.reset();
         d_upgradeCallback.reset();
