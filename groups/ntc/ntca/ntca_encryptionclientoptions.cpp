@@ -27,7 +27,6 @@ EncryptionClientOptions::EncryptionClientOptions(
     bslma::Allocator* basicAllocator)
 : d_options(basicAllocator)
 , d_optionsMap(basicAllocator)
-, d_serverNameIndication(basicAllocator)
 {
 }
 
@@ -36,7 +35,6 @@ EncryptionClientOptions::EncryptionClientOptions(
     bslma::Allocator*              basicAllocator)
 : d_options(other.d_options, basicAllocator)
 , d_optionsMap(other.d_optionsMap, basicAllocator)
-, d_serverNameIndication(other.d_serverNameIndication, basicAllocator)
 {
 }
 
@@ -48,9 +46,8 @@ EncryptionClientOptions& EncryptionClientOptions::operator=(
     const EncryptionClientOptions& other)
 {
     if (this != &other) {
-        d_options              = other.d_options;
-        d_optionsMap           = other.d_optionsMap;
-        d_serverNameIndication = other.d_serverNameIndication;
+        d_options    = other.d_options;
+        d_optionsMap = other.d_optionsMap;
     }
 
     return *this;
@@ -60,7 +57,6 @@ void EncryptionClientOptions::reset()
 {
     d_options.reset();
     d_optionsMap.clear();
-    d_serverNameIndication.reset();
 }
 
 void EncryptionClientOptions::setMinMethod(
@@ -234,88 +230,126 @@ void EncryptionClientOptions::addOverrides(
     }
 }
 
-void EncryptionClientOptions::setServerNameIndication(const bsl::string& name)
+void EncryptionClientOptions::setServerNameIndication(const bsl::string& value)
 {
-    ntsa::Uri uri;
-    if (uri.parse(name)) {
-        this->setServerNameIndication(uri);
-    }
-    else {
-        d_serverNameIndication.makeValue(name);
-    }
+    d_options.setServerNameIndication(value);
 }
 
 void EncryptionClientOptions::setServerNameIndication(
-    const ntsa::Endpoint& endpoint)
+    const ntsa::Endpoint& value)
 {
-    if (endpoint.isIp()) {
-        this->setServerNameIndication(endpoint.ip());
-    }
-    else if (endpoint.isLocal()) {
-        this->setServerNameIndication(endpoint.local());
-    }
+    d_options.setServerNameIndication(value);
 }
 
 void EncryptionClientOptions::setServerNameIndication(
-    const ntsa::IpEndpoint& ipEndpoint)
+    const ntsa::IpEndpoint& value)
 {
-    if (ipEndpoint.host().isV4()) {
-        this->setServerNameIndication(ipEndpoint.host().v4());
-    }
-    else if (ipEndpoint.host().isV6()) {
-        this->setServerNameIndication(ipEndpoint.host().v6());
-    }
+    d_options.setServerNameIndication(value);
 }
 
 void EncryptionClientOptions::setServerNameIndication(
-    const ntsa::IpAddress& ipAddress)
+    const ntsa::IpAddress& value)
 {
-    d_serverNameIndication.makeValue(ipAddress.text());
+    d_options.setServerNameIndication(value);
 }
 
 void EncryptionClientOptions::setServerNameIndication(
-    const ntsa::Ipv4Address& ipAddress)
+    const ntsa::Ipv4Address& value)
 {
-    d_serverNameIndication.makeValue(ipAddress.text());
+    d_options.setServerNameIndication(value);
 }
 
 void EncryptionClientOptions::setServerNameIndication(
-    const ntsa::Ipv6Address& ipAddress)
+    const ntsa::Ipv6Address& value)
 {
-    d_serverNameIndication.makeValue(ipAddress.text());
+    d_options.setServerNameIndication(value);
 }
 
 void EncryptionClientOptions::setServerNameIndication(
-    const ntsa::LocalName& localName)
+    const ntsa::LocalName& value)
 {
-    d_serverNameIndication.makeValue(localName.value());
+    d_options.setServerNameIndication(value);
 }
 
-void EncryptionClientOptions::setServerNameIndication(const ntsa::Uri& uri)
+void EncryptionClientOptions::setServerNameIndication(const ntsa::Uri& value)
 {
-    if (!uri.authority().isNull()) {
-        const ntsa::UriAuthority& authority = uri.authority().value();
-        if (!authority.host().isNull()) {
-            const ntsa::Host& host = authority.host().value();
-            this->setServerNameIndication(host);
-        }
-    }
+    d_options.setServerNameIndication(value);
 }
 
-void EncryptionClientOptions::setServerNameIndication(const ntsa::Host& host)
+void EncryptionClientOptions::setServerNameIndication(const ntsa::Host& value)
 {
-    if (host.isDomainName()) {
-        this->setServerNameIndication(host.domainName());
-    }
-    else if (host.isIp()) {
-        this->setServerNameIndication(host.ip());
-    }
+    d_options.setServerNameIndication(value);
 }
 
 void EncryptionClientOptions::setServerNameIndication(
-    const ntsa::DomainName& domainName)
+    const ntsa::DomainName& value)
 {
-    d_serverNameIndication.makeValue(domainName.text());
+    d_options.setServerNameIndication(value);
+}
+
+void EncryptionClientOptions::setServerNameVerification(
+    const bsl::string& value)
+{
+    d_options.setServerNameVerification(value);
+}
+
+void EncryptionClientOptions::setServerNameVerification(
+    const ntsa::Endpoint& value)
+{
+    d_options.setServerNameVerification(value);
+}
+
+void EncryptionClientOptions::setServerNameVerification(
+    const ntsa::IpEndpoint& value)
+{
+    d_options.setServerNameVerification(value);
+}
+
+void EncryptionClientOptions::setServerNameVerification(
+    const ntsa::IpAddress& value)
+{
+    d_options.setServerNameVerification(value);
+}
+
+void EncryptionClientOptions::setServerNameVerification(
+    const ntsa::Ipv4Address& value)
+{
+    d_options.setServerNameVerification(value);
+}
+
+void EncryptionClientOptions::setServerNameVerification(
+    const ntsa::Ipv6Address& value)
+{
+    d_options.setServerNameVerification(value);
+}
+
+void EncryptionClientOptions::setServerNameVerification(
+    const ntsa::LocalName& value)
+{
+    d_options.setServerNameVerification(value);
+}
+
+void EncryptionClientOptions::setServerNameVerification(
+    const ntsa::Host& value)
+{
+    d_options.setServerNameVerification(value);
+}
+
+void EncryptionClientOptions::setServerNameVerification(
+    const ntsa::DomainName& value)
+{
+    d_options.setServerNameVerification(value);
+}
+
+void EncryptionClientOptions::setServerNameVerification(const ntsa::Uri& value)
+{
+    d_options.setServerNameVerification(value);
+}
+
+void EncryptionClientOptions::setCertificateValidationCallback(
+    const ntca::EncryptionCertificateValidationCallback& callback)
+{
+    d_options.setCertificateValidationCallback(callback);
 }
 
 ntca::EncryptionMethod::Value EncryptionClientOptions::minMethod() const
@@ -355,7 +389,19 @@ const ntca::EncryptionResourceVector& EncryptionClientOptions::resources()
 const bdlb::NullableValue<bsl::string>& EncryptionClientOptions::
     serverNameIndication() const
 {
-    return d_serverNameIndication;
+    return d_options.serverNameIndication();
+}
+
+const bdlb::NullableValue<bsl::string>& EncryptionClientOptions::
+    serverNameVerification() const
+{
+    return d_options.serverNameVerification();
+}
+
+const bdlb::NullableValue<ntca::EncryptionCertificateValidationCallback>&
+EncryptionClientOptions::certificateValidationCallback() const
+{
+    return d_options.certificateValidationCallback();
 }
 
 void EncryptionClientOptions::loadServerNameList(
@@ -397,9 +443,7 @@ bool EncryptionClientOptions::loadServerNameOptions(
 bool EncryptionClientOptions::equals(
     const EncryptionClientOptions& other) const
 {
-    return d_options == other.d_options &&
-           d_optionsMap == other.d_optionsMap &&
-           d_serverNameIndication == other.d_serverNameIndication;
+    return d_options == other.d_options && d_optionsMap == other.d_optionsMap;
 }
 
 bsl::ostream& EncryptionClientOptions::print(bsl::ostream& stream,
@@ -426,11 +470,17 @@ bsl::ostream& EncryptionClientOptions::print(bsl::ostream& stream,
         printer.printAttribute("resource", d_options.resources());
     }
 
-    printer.printAttribute("map", d_optionsMap);
-
-    if (!d_serverNameIndication.isNull()) {
-        printer.printAttribute("serverNameIndication", d_serverNameIndication);
+    if (!d_options.serverNameIndication().isNull()) {
+        printer.printAttribute("serverNameIndication",
+                               d_options.serverNameIndication());
     }
+
+    if (!d_options.serverNameVerification().isNull()) {
+        printer.printAttribute("serverNameVerification",
+                               d_options.serverNameVerification());
+    }
+
+    printer.printAttribute("map", d_optionsMap);
 
     printer.end();
     return stream;

@@ -20,6 +20,7 @@
 BSLS_IDENT("$Id: $")
 
 #include <ntca_encryptionauthentication.h>
+#include <ntca_encryptioncertificate.h>
 #include <ntca_encryptionmethod.h>
 #include <ntca_encryptionoptions.h>
 #include <ntca_encryptionresource.h>
@@ -74,7 +75,18 @@ namespace ntca {
 ///
 /// @li @b serverNameIndication:
 /// The server name with which the connection is upgraded into a secure
-/// connection.
+/// connection. This name may be, but is not restricted to, a subject
+/// alternative name attribute of the peer's certificate.
+///
+/// @li @b serverNameVerification:
+/// The name that must be present in the certificate offered by the server,
+/// either in the subject common name, or as one of the subject's alternative
+/// names.
+///
+/// @li @b certificateValidationCallback:
+/// The callback to be invoked to perform additional, user-defined validation
+/// of the peer's certificate. Note that most common validation is
+/// automatically performed by the encryption driver implementation.
 ///
 /// @li @b optionsMap
 /// The optional, effective options to use when connecting to a specific server
@@ -89,9 +101,8 @@ class EncryptionClientOptions
 {
     typedef bsl::map<bsl::string, ntca::EncryptionOptions> OptionsMap;
 
-    ntca::EncryptionOptions          d_options;
-    OptionsMap                       d_optionsMap;
-    bdlb::NullableValue<bsl::string> d_serverNameIndication;
+    ntca::EncryptionOptions d_options;
+    OptionsMap              d_optionsMap;
 
   public:
     /// Create new encryption client options.  Optionally specify a
@@ -300,36 +311,70 @@ class EncryptionClientOptions
     void addOverrides(const bsl::string&             serverName,
                       const ntca::EncryptionOptions& options);
 
-    /// Set the server name indication to the specified 'name', interpreted
-    /// as the host portion of any valid URI.
-    void setServerNameIndication(const bsl::string& name);
+    /// Set the server name indication to the specified 'value'.
+    void setServerNameIndication(const bsl::string& value);
 
-    /// Set the server name indication to the specified 'endpoint'.
-    void setServerNameIndication(const ntsa::Endpoint& endpoint);
+    /// Set the server name indication to the specified 'value'.
+    void setServerNameIndication(const ntsa::Endpoint& value);
 
-    /// Set the server name indication to the specified 'endpoint'.
-    void setServerNameIndication(const ntsa::IpEndpoint& ipEndpoint);
+    /// Set the server name indication to the specified 'value'.
+    void setServerNameIndication(const ntsa::IpEndpoint& value);
 
-    /// Set the server name indication to the specified 'ipAddress'.
-    void setServerNameIndication(const ntsa::IpAddress& ipAddress);
+    /// Set the server name indication to the specified 'value'.
+    void setServerNameIndication(const ntsa::IpAddress& value);
 
-    /// Set the server name indication to the specified 'ipAddress'.
-    void setServerNameIndication(const ntsa::Ipv4Address& ipAddress);
+    /// Set the server name indication to the specified 'value'.
+    void setServerNameIndication(const ntsa::Ipv4Address& value);
 
-    /// Set the server name indication to the specified 'ipAddress'.
-    void setServerNameIndication(const ntsa::Ipv6Address& ipAddress);
+    /// Set the server name indication to the specified 'value'.
+    void setServerNameIndication(const ntsa::Ipv6Address& value);
 
-    /// Set the server name indication to the specified 'localName'.
-    void setServerNameIndication(const ntsa::LocalName& localName);
+    /// Set the server name indication to the specified 'value'.
+    void setServerNameIndication(const ntsa::LocalName& value);
 
-    /// Set the server name indication to the specified 'uri'.
-    void setServerNameIndication(const ntsa::Uri& uri);
+    /// Set the server name indication to the specified 'value'.
+    void setServerNameIndication(const ntsa::Uri& value);
 
-    /// Set the server name indication to the specified 'host'.
-    void setServerNameIndication(const ntsa::Host& host);
+    /// Set the server name indication to the specified 'value'.
+    void setServerNameIndication(const ntsa::Host& value);
 
-    /// Set the server name indication to the specified 'domainName'.
-    void setServerNameIndication(const ntsa::DomainName& domainName);
+    /// Set the server name indication to the specified 'value'.
+    void setServerNameIndication(const ntsa::DomainName& value);
+
+    /// Set the server name verification to the specified 'value'.
+    void setServerNameVerification(const bsl::string& value);
+
+    /// Set the server name verification to the specified 'value'.
+    void setServerNameVerification(const ntsa::Endpoint& value);
+
+    /// Set the server name verification to the specified 'value'.
+    void setServerNameVerification(const ntsa::IpEndpoint& value);
+
+    /// Set the server name verification to the specified 'value'.
+    void setServerNameVerification(const ntsa::IpAddress& value);
+
+    /// Set the server name verification to the specified 'value'.
+    void setServerNameVerification(const ntsa::Ipv4Address& value);
+
+    /// Set the server name verification to the specified 'value'.
+    void setServerNameVerification(const ntsa::Ipv6Address& value);
+
+    /// Set the server name verification to the specified 'value'.
+    void setServerNameVerification(const ntsa::LocalName& value);
+
+    /// Set the server name verification to the specified 'value'.
+    void setServerNameVerification(const ntsa::Host& value);
+
+    /// Set the server name verification to the specified 'value'.
+    void setServerNameVerification(const ntsa::DomainName& value);
+
+    /// Set the server name verification to the specified 'value'.
+    void setServerNameVerification(const ntsa::Uri& value);
+
+    /// Set the specified 'callback' to be invoked to perform user-defined
+    /// validation of the peer's certificate.
+    void setCertificateValidationCallback(
+        const ntca::EncryptionCertificateValidationCallback& callback);
 
     /// Return the minimum permitted encryption method, inclusive.
     ntca::EncryptionMethod::Value minMethod() const;
@@ -352,6 +397,14 @@ class EncryptionClientOptions
 
     /// Return the server name indication, if any.
     const bdlb::NullableValue<bsl::string>& serverNameIndication() const;
+
+    /// Return the server name verification.
+    const bdlb::NullableValue<bsl::string>& serverNameVerification() const;
+
+    /// Return the callback to be invoked to perform user-defined validation of
+    /// the peer's certificate.
+    const bdlb::NullableValue<ntca::EncryptionCertificateValidationCallback>&
+    certificateValidationCallback() const;
 
     /// Load into the specified 'result' the names of each registered server.
     /// Note that 'serverName' may be an IP address, domain name, or domain

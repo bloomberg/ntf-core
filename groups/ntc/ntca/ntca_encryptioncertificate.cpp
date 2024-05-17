@@ -8917,14 +8917,14 @@ bsl::ostream& EncryptionCertificateEntity::print(bsl::ostream& stream,
     printer.start();
     printer.printAttribute("version", d_version);
     printer.printAttribute("serialNumber", d_serialNumber);
-    printer.printAttribute("signatureAlgorithm", d_signatureAlgorithm);
-    printer.printAttribute("issuer", d_issuer);
-    printer.printAttribute("validity", d_validity);
     printer.printAttribute("subject", d_subject);
-    printer.printAttribute("subjectPublicKeyInfo", d_subjectPublicKeyInfo);
-    printer.printAttribute("issuerUniqueId", d_issuerUniqueId);
     printer.printAttribute("subjectUniqueId", d_subjectUniqueId);
+    printer.printAttribute("subjectPublicKeyInfo", d_subjectPublicKeyInfo);
+    printer.printAttribute("issuer", d_issuer);
+    printer.printAttribute("issuerUniqueId", d_issuerUniqueId);
+    printer.printAttribute("validity", d_validity);
     printer.printAttribute("extensionList", d_extensionList);
+    printer.printAttribute("signatureAlgorithm", d_signatureAlgorithm);
     printer.end();
     return stream;
 }

@@ -19,6 +19,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntca_encryptioncertificate.h>
 #include <ntca_upgradetoken.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
@@ -46,12 +47,18 @@ namespace ntca {
 ///
 /// @li @b serverNameIndication:
 /// The server name with which the connection is upgraded into a secure
-/// connection.
+/// connection. This name may be, but is not restricted to, a subject
+/// alternative name attribute of the peer's certificate.
 ///
 /// @li @b serverNameVerification:
 /// The name that must be present in the certificate offered by the server,
 /// either in the subject common name, or as one of the subject's alternative
 /// names.
+///
+/// @li @b certificateValidationCallback:
+/// The callback to be invoked to perform additional, user-defined validation
+/// of the peer's certificate. Note that most common validation is
+/// automatically performed by the encryption driver implementation.
 ///
 /// @li @b deadline:
 /// The deadline within which the connection must be upgraded, in absolute time
@@ -68,9 +75,13 @@ namespace ntca {
 /// @ingroup module_ntci_operation_upgrade
 class UpgradeOptions
 {
+    typedef bdlb::NullableValue<ntca::EncryptionCertificateValidationCallback>
+        ValidationCallback;
+
     bdlb::NullableValue<ntca::UpgradeToken> d_token;
     bdlb::NullableValue<bsl::string>        d_serverNameIndication;
     bdlb::NullableValue<bsl::string>        d_serverNameVerification;
+    ValidationCallback                      d_certificateValidationCallback;
     bdlb::NullableValue<bsls::TimeInterval> d_deadline;
     bool                                    d_recurse;
 
@@ -161,6 +172,11 @@ class UpgradeOptions
     /// Set the server name verification to the specified 'value'.
     void setServerNameVerification(const ntsa::Uri& value);
 
+    /// Set the specified 'callback' to be invoked to perform user-defined
+    /// validation of the peer's certificate.
+    void setCertificateValidationCallback(
+        const ntca::EncryptionCertificateValidationCallback& callback);
+
     /// Set the deadline within which the connection must be upgraded to the
     /// specified 'value'.
     void setDeadline(const bsls::TimeInterval& value);
@@ -178,6 +194,11 @@ class UpgradeOptions
 
     /// Return the server name verification.
     const bdlb::NullableValue<bsl::string>& serverNameVerification() const;
+
+    /// Return the callback to be invoked to perform user-defined validation of
+    /// the peer's certificate.
+    const bdlb::NullableValue<ntca::EncryptionCertificateValidationCallback>&
+    certificateValidationCallback() const;
 
     /// Return the deadline within which the connection must be upgraded.
     const bdlb::NullableValue<bsls::TimeInterval>& deadline() const;
@@ -252,6 +273,7 @@ UpgradeOptions::UpgradeOptions(bslma::Allocator* basicAllocator)
 : d_token()
 , d_serverNameIndication(basicAllocator)
 , d_serverNameVerification(basicAllocator)
+, d_certificateValidationCallback(basicAllocator)
 , d_deadline()
 , d_recurse(false)
 {
@@ -263,6 +285,8 @@ UpgradeOptions::UpgradeOptions(const UpgradeOptions& original,
 : d_token(original.d_token)
 , d_serverNameIndication(original.d_serverNameIndication, basicAllocator)
 , d_serverNameVerification(original.d_serverNameVerification, basicAllocator)
+, d_certificateValidationCallback(original.d_certificateValidationCallback,
+                                  basicAllocator)
 , d_deadline(original.d_deadline)
 , d_recurse(original.d_recurse)
 {
@@ -280,8 +304,10 @@ UpgradeOptions& UpgradeOptions::operator=(const UpgradeOptions& other)
         d_token                  = other.d_token;
         d_serverNameIndication   = other.d_serverNameIndication;
         d_serverNameVerification = other.d_serverNameVerification;
-        d_deadline               = other.d_deadline;
-        d_recurse                = other.d_recurse;
+        d_certificateValidationCallback =
+            other.d_certificateValidationCallback;
+        d_deadline = other.d_deadline;
+        d_recurse  = other.d_recurse;
     }
 
     return *this;
@@ -293,6 +319,7 @@ void UpgradeOptions::reset()
     d_token.reset();
     d_serverNameIndication.reset();
     d_serverNameVerification.reset();
+    d_certificateValidationCallback.reset();
     d_deadline.reset();
     d_recurse = false;
 }
@@ -478,6 +505,13 @@ void UpgradeOptions::setServerNameVerification(const ntsa::Uri& value)
 }
 
 NTCCFG_INLINE
+void UpgradeOptions::setCertificateValidationCallback(
+    const ntca::EncryptionCertificateValidationCallback& callback)
+{
+    d_certificateValidationCallback = callback;
+}
+
+NTCCFG_INLINE
 void UpgradeOptions::setDeadline(const bsls::TimeInterval& value)
 {
     d_deadline = value;
@@ -507,6 +541,13 @@ const bdlb::NullableValue<bsl::string>& UpgradeOptions::
     serverNameVerification() const
 {
     return d_serverNameVerification;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<ntca::EncryptionCertificateValidationCallback>&
+UpgradeOptions::certificateValidationCallback() const
+{
+    return d_certificateValidationCallback;
 }
 
 NTCCFG_INLINE

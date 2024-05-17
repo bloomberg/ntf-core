@@ -230,6 +230,128 @@ void EncryptionServerOptions::addOverrides(
     }
 }
 
+void EncryptionServerOptions::setServerNameIndication(const bsl::string& value)
+{
+    d_options.setServerNameIndication(value);
+}
+
+void EncryptionServerOptions::setServerNameIndication(
+    const ntsa::Endpoint& value)
+{
+    d_options.setServerNameIndication(value);
+}
+
+void EncryptionServerOptions::setServerNameIndication(
+    const ntsa::IpEndpoint& value)
+{
+    d_options.setServerNameIndication(value);
+}
+
+void EncryptionServerOptions::setServerNameIndication(
+    const ntsa::IpAddress& value)
+{
+    d_options.setServerNameIndication(value);
+}
+
+void EncryptionServerOptions::setServerNameIndication(
+    const ntsa::Ipv4Address& value)
+{
+    d_options.setServerNameIndication(value);
+}
+
+void EncryptionServerOptions::setServerNameIndication(
+    const ntsa::Ipv6Address& value)
+{
+    d_options.setServerNameIndication(value);
+}
+
+void EncryptionServerOptions::setServerNameIndication(
+    const ntsa::LocalName& value)
+{
+    d_options.setServerNameIndication(value);
+}
+
+void EncryptionServerOptions::setServerNameIndication(const ntsa::Uri& value)
+{
+    d_options.setServerNameIndication(value);
+}
+
+void EncryptionServerOptions::setServerNameIndication(const ntsa::Host& value)
+{
+    d_options.setServerNameIndication(value);
+}
+
+void EncryptionServerOptions::setServerNameIndication(
+    const ntsa::DomainName& value)
+{
+    d_options.setServerNameIndication(value);
+}
+
+void EncryptionServerOptions::setServerNameVerification(
+    const bsl::string& value)
+{
+    d_options.setServerNameVerification(value);
+}
+
+void EncryptionServerOptions::setServerNameVerification(
+    const ntsa::Endpoint& value)
+{
+    d_options.setServerNameVerification(value);
+}
+
+void EncryptionServerOptions::setServerNameVerification(
+    const ntsa::IpEndpoint& value)
+{
+    d_options.setServerNameVerification(value);
+}
+
+void EncryptionServerOptions::setServerNameVerification(
+    const ntsa::IpAddress& value)
+{
+    d_options.setServerNameVerification(value);
+}
+
+void EncryptionServerOptions::setServerNameVerification(
+    const ntsa::Ipv4Address& value)
+{
+    d_options.setServerNameVerification(value);
+}
+
+void EncryptionServerOptions::setServerNameVerification(
+    const ntsa::Ipv6Address& value)
+{
+    d_options.setServerNameVerification(value);
+}
+
+void EncryptionServerOptions::setServerNameVerification(
+    const ntsa::LocalName& value)
+{
+    d_options.setServerNameVerification(value);
+}
+
+void EncryptionServerOptions::setServerNameVerification(
+    const ntsa::Host& value)
+{
+    d_options.setServerNameVerification(value);
+}
+
+void EncryptionServerOptions::setServerNameVerification(
+    const ntsa::DomainName& value)
+{
+    d_options.setServerNameVerification(value);
+}
+
+void EncryptionServerOptions::setServerNameVerification(const ntsa::Uri& value)
+{
+    d_options.setServerNameVerification(value);
+}
+
+void EncryptionServerOptions::setCertificateValidationCallback(
+    const ntca::EncryptionCertificateValidationCallback& callback)
+{
+    d_options.setCertificateValidationCallback(callback);
+}
+
 ntca::EncryptionMethod::Value EncryptionServerOptions::minMethod() const
 {
     return d_options.minMethod();
@@ -262,6 +384,24 @@ const ntca::EncryptionResourceVector& EncryptionServerOptions::resources()
     const
 {
     return d_options.resources();
+}
+
+const bdlb::NullableValue<bsl::string>& EncryptionServerOptions::
+    serverNameIndication() const
+{
+    return d_options.serverNameIndication();
+}
+
+const bdlb::NullableValue<bsl::string>& EncryptionServerOptions::
+    serverNameVerification() const
+{
+    return d_options.serverNameVerification();
+}
+
+const bdlb::NullableValue<ntca::EncryptionCertificateValidationCallback>&
+EncryptionServerOptions::certificateValidationCallback() const
+{
+    return d_options.certificateValidationCallback();
 }
 
 void EncryptionServerOptions::loadServerNameList(

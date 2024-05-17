@@ -54,17 +54,24 @@ EncryptionOptions::EncryptionOptions(bslma::Allocator* basicAllocator)
 , d_resourceVector(basicAllocator)
 , d_authorityDirectory(basicAllocator)
 , d_cipherSpec(basicAllocator)
+, d_serverNameIndication(basicAllocator)
+, d_serverNameVerification(basicAllocator)
+, d_certificateValidationCallback(basicAllocator)
 {
 }
 
-EncryptionOptions::EncryptionOptions(const EncryptionOptions& other,
+EncryptionOptions::EncryptionOptions(const EncryptionOptions& original,
                                      bslma::Allocator*        basicAllocator)
-: d_minMethod(other.d_minMethod)
-, d_maxMethod(other.d_maxMethod)
-, d_authentication(other.d_authentication)
-, d_resourceVector(other.d_resourceVector, basicAllocator)
-, d_authorityDirectory(other.d_authorityDirectory, basicAllocator)
-, d_cipherSpec(other.d_cipherSpec, basicAllocator)
+: d_minMethod(original.d_minMethod)
+, d_maxMethod(original.d_maxMethod)
+, d_authentication(original.d_authentication)
+, d_resourceVector(original.d_resourceVector, basicAllocator)
+, d_authorityDirectory(original.d_authorityDirectory, basicAllocator)
+, d_cipherSpec(original.d_cipherSpec, basicAllocator)
+, d_serverNameIndication(original.d_serverNameIndication, basicAllocator)
+, d_serverNameVerification(original.d_serverNameVerification, basicAllocator)
+, d_certificateValidationCallback(original.d_certificateValidationCallback,
+                                  basicAllocator)
 {
 }
 
@@ -75,12 +82,16 @@ EncryptionOptions::~EncryptionOptions()
 EncryptionOptions& EncryptionOptions::operator=(const EncryptionOptions& other)
 {
     if (this != &other) {
-        d_minMethod          = other.d_minMethod;
-        d_maxMethod          = other.d_maxMethod;
-        d_authentication     = other.d_authentication;
-        d_resourceVector     = other.d_resourceVector;
-        d_authorityDirectory = other.d_authorityDirectory;
-        d_cipherSpec         = other.d_cipherSpec;
+        d_minMethod              = other.d_minMethod;
+        d_maxMethod              = other.d_maxMethod;
+        d_authentication         = other.d_authentication;
+        d_resourceVector         = other.d_resourceVector;
+        d_authorityDirectory     = other.d_authorityDirectory;
+        d_cipherSpec             = other.d_cipherSpec;
+        d_serverNameIndication   = other.d_serverNameIndication;
+        d_serverNameVerification = other.d_serverNameVerification;
+        d_certificateValidationCallback =
+            other.d_certificateValidationCallback;
     }
 
     return *this;
@@ -94,6 +105,9 @@ void EncryptionOptions::reset()
     d_resourceVector.clear();
     d_authorityDirectory.reset();
     d_cipherSpec.reset();
+    d_serverNameIndication.reset();
+    d_serverNameVerification.reset();
+    d_certificateValidationCallback.reset();
 }
 
 void EncryptionOptions::setMinMethod(ntca::EncryptionMethod::Value minMethod)
@@ -449,6 +463,170 @@ void EncryptionOptions::addResourceFile(
     this->addResource(resource);
 }
 
+void EncryptionOptions::setServerNameIndication(const bsl::string& value)
+{
+    ntsa::Uri uri;
+    if (uri.parse(value)) {
+        this->setServerNameIndication(uri);
+    }
+    else {
+        d_serverNameIndication.makeValue(value);
+    }
+}
+
+void EncryptionOptions::setServerNameIndication(const ntsa::Endpoint& value)
+{
+    if (value.isIp()) {
+        this->setServerNameIndication(value.ip());
+    }
+    else if (value.isLocal()) {
+        this->setServerNameIndication(value.local());
+    }
+}
+
+void EncryptionOptions::setServerNameIndication(const ntsa::IpEndpoint& value)
+{
+    this->setServerNameIndication(value.host());
+}
+
+void EncryptionOptions::setServerNameIndication(const ntsa::IpAddress& value)
+{
+    if (value.isV4()) {
+        this->setServerNameIndication(value.v4());
+    }
+    else if (value.isV6()) {
+        this->setServerNameIndication(value.v6());
+    }
+}
+
+void EncryptionOptions::setServerNameIndication(const ntsa::Ipv4Address& value)
+{
+    d_serverNameIndication.makeValue(value.text());
+}
+
+void EncryptionOptions::setServerNameIndication(const ntsa::Ipv6Address& value)
+{
+    d_serverNameIndication.makeValue(value.text());
+}
+
+void EncryptionOptions::setServerNameIndication(const ntsa::LocalName& value)
+{
+    d_serverNameIndication.makeValue(value.value());
+}
+
+void EncryptionOptions::setServerNameIndication(const ntsa::Host& value)
+{
+    if (value.isDomainName()) {
+        this->setServerNameIndication(value.domainName());
+    }
+    else if (value.isIp()) {
+        this->setServerNameIndication(value.ip());
+    }
+}
+
+void EncryptionOptions::setServerNameIndication(const ntsa::DomainName& value)
+{
+    d_serverNameIndication.makeValue(value.text());
+}
+
+void EncryptionOptions::setServerNameIndication(const ntsa::Uri& value)
+{
+    if (!value.authority().isNull()) {
+        const ntsa::UriAuthority& authority = value.authority().value();
+        if (!authority.host().isNull()) {
+            const ntsa::Host& host = authority.host().value();
+            this->setServerNameIndication(host);
+        }
+    }
+}
+
+void EncryptionOptions::setServerNameVerification(const bsl::string& value)
+{
+    ntsa::Uri uri;
+    if (uri.parse(value)) {
+        this->setServerNameVerification(uri);
+    }
+    else {
+        d_serverNameVerification.makeValue(value);
+    }
+}
+
+void EncryptionOptions::setServerNameVerification(const ntsa::Endpoint& value)
+{
+    if (value.isIp()) {
+        this->setServerNameVerification(value.ip());
+    }
+    else if (value.isLocal()) {
+        this->setServerNameVerification(value.local());
+    }
+}
+
+void EncryptionOptions::setServerNameVerification(
+    const ntsa::IpEndpoint& value)
+{
+    this->setServerNameVerification(value.host());
+}
+
+void EncryptionOptions::setServerNameVerification(const ntsa::IpAddress& value)
+{
+    if (value.isV4()) {
+        this->setServerNameVerification(value.v4());
+    }
+    else if (value.isV6()) {
+        this->setServerNameVerification(value.v6());
+    }
+}
+
+void EncryptionOptions::setServerNameVerification(
+    const ntsa::Ipv4Address& value)
+{
+    d_serverNameVerification.makeValue(value.text());
+}
+
+void EncryptionOptions::setServerNameVerification(
+    const ntsa::Ipv6Address& value)
+{
+    d_serverNameVerification.makeValue(value.text());
+}
+
+void EncryptionOptions::setServerNameVerification(const ntsa::LocalName& value)
+{
+    d_serverNameVerification.makeValue(value.value());
+}
+
+void EncryptionOptions::setServerNameVerification(const ntsa::Host& value)
+{
+    if (value.isDomainName()) {
+        this->setServerNameVerification(value.domainName());
+    }
+    else if (value.isIp()) {
+        this->setServerNameVerification(value.ip());
+    }
+}
+
+void EncryptionOptions::setServerNameVerification(
+    const ntsa::DomainName& value)
+{
+    d_serverNameVerification.makeValue(value.text());
+}
+
+void EncryptionOptions::setServerNameVerification(const ntsa::Uri& value)
+{
+    if (!value.authority().isNull()) {
+        const ntsa::UriAuthority& authority = value.authority().value();
+        if (!authority.host().isNull()) {
+            const ntsa::Host& host = authority.host().value();
+            this->setServerNameVerification(host);
+        }
+    }
+}
+
+void EncryptionOptions::setCertificateValidationCallback(
+    const ntca::EncryptionCertificateValidationCallback& callback)
+{
+    d_certificateValidationCallback = callback;
+}
+
 ntca::EncryptionMethod::Value EncryptionOptions::minMethod() const
 {
     return d_minMethod;
@@ -480,6 +658,24 @@ const ntca::EncryptionResourceVector& EncryptionOptions::resources() const
     return d_resourceVector;
 }
 
+const bdlb::NullableValue<bsl::string>& EncryptionOptions::
+    serverNameIndication() const
+{
+    return d_serverNameIndication;
+}
+
+const bdlb::NullableValue<bsl::string>& EncryptionOptions::
+    serverNameVerification() const
+{
+    return d_serverNameVerification;
+}
+
+const bdlb::NullableValue<ntca::EncryptionCertificateValidationCallback>&
+EncryptionOptions::certificateValidationCallback() const
+{
+    return d_certificateValidationCallback;
+}
+
 bsl::ostream& EncryptionOptions::print(bsl::ostream& stream,
                                        int           level,
                                        int           spacesPerLevel) const
@@ -503,6 +699,15 @@ bsl::ostream& EncryptionOptions::print(bsl::ostream& stream,
         printer.printAttribute("cipherSpec", d_cipherSpec.value());
     }
 
+    if (!d_serverNameIndication.isNull()) {
+        printer.printAttribute("serverNameIndication", d_serverNameIndication);
+    }
+
+    if (!d_serverNameVerification.isNull()) {
+        printer.printAttribute("serverNameVerification",
+                               d_serverNameVerification);
+    }
+
     printer.end();
     return stream;
 }
@@ -514,7 +719,9 @@ bool operator==(const EncryptionOptions& lhs, const EncryptionOptions& rhs)
            lhs.authentication() == rhs.authentication() &&
            lhs.resources() == rhs.resources() &&
            lhs.authorityDirectory() == rhs.authorityDirectory() &&
-           lhs.cipherSpec() == rhs.cipherSpec();
+           lhs.cipherSpec() == rhs.cipherSpec() &&
+           lhs.serverNameIndication() == rhs.serverNameIndication() &&
+           lhs.serverNameVerification() == rhs.serverNameVerification();
 }
 
 bool operator!=(const EncryptionOptions& lhs, const EncryptionOptions& rhs)
