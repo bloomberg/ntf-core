@@ -90,6 +90,9 @@ namespace ntca {
 /// of the peer's certificate. Note that most common validation is
 /// automatically performed by the encryption driver implementation.
 ///
+/// @li @b trustSelfSignedCertificates:
+/// Trust all end-user self-signed certificates.
+///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
@@ -108,6 +111,7 @@ class EncryptionOptions
     bdlb::NullableValue<bsl::string>      d_serverNameIndication;
     bdlb::NullableValue<bsl::string>      d_serverNameVerification;
     ValidationCallback                    d_certificateValidationCallback;
+    bdlb::NullableValue<bool>             d_trustSelfSignedCertificates;
 
   public:
     /// Create new encryption server options.  Optionally specify a
@@ -374,6 +378,10 @@ class EncryptionOptions
     void setCertificateValidationCallback(
         const ntca::EncryptionCertificateValidationCallback& callback);
 
+    /// Set the flag that indicates all self-signed end-user certificates are
+    /// trusted to the specified 'value'.
+    void setTrustSelfSignedCertificates(bool value);
+
     /// Return the minimum permitted encryption method, inclusive.
     ntca::EncryptionMethod::Value minMethod() const;
 
@@ -403,6 +411,10 @@ class EncryptionOptions
     /// the peer's certificate.
     const bdlb::NullableValue<ntca::EncryptionCertificateValidationCallback>&
     certificateValidationCallback() const;
+
+    /// Return the flag that indicates all self-signed end-user certificates
+    /// are trusted.
+    const bdlb::NullableValue<bool>& trustSelfSignedCertificates() const;
 
     /// Format this object to the specified output 'stream' at the
     /// optionally specified indentation 'level' and return a reference to

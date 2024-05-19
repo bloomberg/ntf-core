@@ -352,6 +352,11 @@ void EncryptionClientOptions::setCertificateValidationCallback(
     d_options.setCertificateValidationCallback(callback);
 }
 
+void EncryptionClientOptions::setTrustSelfSignedCertificates(bool value)
+{
+    d_options.setTrustSelfSignedCertificates(value);
+}
+
 ntca::EncryptionMethod::Value EncryptionClientOptions::minMethod() const
 {
     return d_options.minMethod();
@@ -402,6 +407,12 @@ const bdlb::NullableValue<ntca::EncryptionCertificateValidationCallback>&
 EncryptionClientOptions::certificateValidationCallback() const
 {
     return d_options.certificateValidationCallback();
+}
+
+const bdlb::NullableValue<bool>& EncryptionClientOptions::
+    trustSelfSignedCertificates() const
+{
+    return d_options.trustSelfSignedCertificates();
 }
 
 void EncryptionClientOptions::loadServerNameList(
@@ -478,6 +489,11 @@ bsl::ostream& EncryptionClientOptions::print(bsl::ostream& stream,
     if (!d_options.serverNameVerification().isNull()) {
         printer.printAttribute("serverNameVerification",
                                d_options.serverNameVerification());
+    }
+
+    if (!d_options.trustSelfSignedCertificates().isNull()) {
+        printer.printAttribute("trustSelfSignedCertificates",
+                               d_options.trustSelfSignedCertificates());
     }
 
     printer.printAttribute("map", d_optionsMap);

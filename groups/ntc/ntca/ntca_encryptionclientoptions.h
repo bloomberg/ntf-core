@@ -88,6 +88,9 @@ namespace ntca {
 /// of the peer's certificate. Note that most common validation is
 /// automatically performed by the encryption driver implementation.
 ///
+/// @li @b trustSelfSignedCertificates:
+/// Trust all end-user self-signed certificates.
+///
 /// @li @b optionsMap
 /// The optional, effective options to use when connecting to a specific server
 /// name. Note that a server name, in this context, may be an IP address,
@@ -376,6 +379,10 @@ class EncryptionClientOptions
     void setCertificateValidationCallback(
         const ntca::EncryptionCertificateValidationCallback& callback);
 
+    /// Set the flag that indicates all self-signed end-user certificates are
+    /// trusted to the specified 'value'.
+    void setTrustSelfSignedCertificates(bool value);
+
     /// Return the minimum permitted encryption method, inclusive.
     ntca::EncryptionMethod::Value minMethod() const;
 
@@ -405,6 +412,10 @@ class EncryptionClientOptions
     /// the peer's certificate.
     const bdlb::NullableValue<ntca::EncryptionCertificateValidationCallback>&
     certificateValidationCallback() const;
+
+    /// Return the flag that indicates all self-signed end-user certificates
+    /// are trusted.
+    const bdlb::NullableValue<bool>& trustSelfSignedCertificates() const;
 
     /// Load into the specified 'result' the names of each registered server.
     /// Note that 'serverName' may be an IP address, domain name, or domain

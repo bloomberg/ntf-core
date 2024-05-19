@@ -88,6 +88,11 @@ bsl::ostream& UpgradeOptions::print(bsl::ostream& stream,
                                d_serverNameVerification);
     }
 
+    if (!d_trustSelfSignedCertificates.isNull()) {
+        printer.printAttribute("trustSelfSignedCertificates",
+                               d_trustSelfSignedCertificates);
+    }
+
     if (!d_deadline.isNull()) {
         printer.printAttribute("deadline", d_deadline);
     }

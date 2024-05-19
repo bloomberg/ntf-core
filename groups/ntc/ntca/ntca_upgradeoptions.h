@@ -60,6 +60,9 @@ namespace ntca {
 /// of the peer's certificate. Note that most common validation is
 /// automatically performed by the encryption driver implementation.
 ///
+/// @li @b trustSelfSignedCertificates:
+/// Trust all end-user self-signed certificates.
+///
 /// @li @b deadline:
 /// The deadline within which the connection must be upgraded, in absolute time
 /// since the Unix epoch.
@@ -82,6 +85,7 @@ class UpgradeOptions
     bdlb::NullableValue<bsl::string>        d_serverNameIndication;
     bdlb::NullableValue<bsl::string>        d_serverNameVerification;
     ValidationCallback                      d_certificateValidationCallback;
+    bdlb::NullableValue<bool>               d_trustSelfSignedCertificates;
     bdlb::NullableValue<bsls::TimeInterval> d_deadline;
     bool                                    d_recurse;
 
@@ -177,6 +181,10 @@ class UpgradeOptions
     void setCertificateValidationCallback(
         const ntca::EncryptionCertificateValidationCallback& callback);
 
+    /// Set the flag that indicates all self-signed end-user certificates are
+    /// trusted to the specified 'value'.
+    void setTrustSelfSignedCertificates(bool value);
+
     /// Set the deadline within which the connection must be upgraded to the
     /// specified 'value'.
     void setDeadline(const bsls::TimeInterval& value);
@@ -199,6 +207,10 @@ class UpgradeOptions
     /// the peer's certificate.
     const bdlb::NullableValue<ntca::EncryptionCertificateValidationCallback>&
     certificateValidationCallback() const;
+
+    /// Return the flag that indicates all self-signed end-user certificates
+    /// are trusted.
+    const bdlb::NullableValue<bool>& trustSelfSignedCertificates() const;
 
     /// Return the deadline within which the connection must be upgraded.
     const bdlb::NullableValue<bsls::TimeInterval>& deadline() const;
@@ -274,6 +286,7 @@ UpgradeOptions::UpgradeOptions(bslma::Allocator* basicAllocator)
 , d_serverNameIndication(basicAllocator)
 , d_serverNameVerification(basicAllocator)
 , d_certificateValidationCallback(basicAllocator)
+, d_trustSelfSignedCertificates()
 , d_deadline()
 , d_recurse(false)
 {
@@ -287,6 +300,7 @@ UpgradeOptions::UpgradeOptions(const UpgradeOptions& original,
 , d_serverNameVerification(original.d_serverNameVerification, basicAllocator)
 , d_certificateValidationCallback(original.d_certificateValidationCallback,
                                   basicAllocator)
+, d_trustSelfSignedCertificates(original.d_trustSelfSignedCertificates)
 , d_deadline(original.d_deadline)
 , d_recurse(original.d_recurse)
 {
@@ -306,6 +320,7 @@ UpgradeOptions& UpgradeOptions::operator=(const UpgradeOptions& other)
         d_serverNameVerification = other.d_serverNameVerification;
         d_certificateValidationCallback =
             other.d_certificateValidationCallback;
+        d_trustSelfSignedCertificates = other.d_trustSelfSignedCertificates;
         d_deadline = other.d_deadline;
         d_recurse  = other.d_recurse;
     }
@@ -320,6 +335,7 @@ void UpgradeOptions::reset()
     d_serverNameIndication.reset();
     d_serverNameVerification.reset();
     d_certificateValidationCallback.reset();
+    d_trustSelfSignedCertificates.reset();
     d_deadline.reset();
     d_recurse = false;
 }
@@ -512,6 +528,12 @@ void UpgradeOptions::setCertificateValidationCallback(
 }
 
 NTCCFG_INLINE
+void UpgradeOptions::setTrustSelfSignedCertificates(bool value)
+{
+    d_trustSelfSignedCertificates = value;
+}
+
+NTCCFG_INLINE
 void UpgradeOptions::setDeadline(const bsls::TimeInterval& value)
 {
     d_deadline = value;
@@ -548,6 +570,12 @@ const bdlb::NullableValue<ntca::EncryptionCertificateValidationCallback>&
 UpgradeOptions::certificateValidationCallback() const
 {
     return d_certificateValidationCallback;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<bool>& UpgradeOptions::trustSelfSignedCertificates() const
+{
+    return d_trustSelfSignedCertificates;
 }
 
 NTCCFG_INLINE

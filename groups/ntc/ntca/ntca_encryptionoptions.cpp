@@ -57,6 +57,7 @@ EncryptionOptions::EncryptionOptions(bslma::Allocator* basicAllocator)
 , d_serverNameIndication(basicAllocator)
 , d_serverNameVerification(basicAllocator)
 , d_certificateValidationCallback(basicAllocator)
+, d_trustSelfSignedCertificates()
 {
 }
 
@@ -72,6 +73,7 @@ EncryptionOptions::EncryptionOptions(const EncryptionOptions& original,
 , d_serverNameVerification(original.d_serverNameVerification, basicAllocator)
 , d_certificateValidationCallback(original.d_certificateValidationCallback,
                                   basicAllocator)
+, d_trustSelfSignedCertificates(original.d_trustSelfSignedCertificates)
 {
 }
 
@@ -92,6 +94,7 @@ EncryptionOptions& EncryptionOptions::operator=(const EncryptionOptions& other)
         d_serverNameVerification = other.d_serverNameVerification;
         d_certificateValidationCallback =
             other.d_certificateValidationCallback;
+        d_trustSelfSignedCertificates = other.d_trustSelfSignedCertificates;
     }
 
     return *this;
@@ -108,6 +111,7 @@ void EncryptionOptions::reset()
     d_serverNameIndication.reset();
     d_serverNameVerification.reset();
     d_certificateValidationCallback.reset();
+    d_trustSelfSignedCertificates.reset();
 }
 
 void EncryptionOptions::setMinMethod(ntca::EncryptionMethod::Value minMethod)
@@ -627,6 +631,11 @@ void EncryptionOptions::setCertificateValidationCallback(
     d_certificateValidationCallback = callback;
 }
 
+void EncryptionOptions::setTrustSelfSignedCertificates(bool value)
+{
+    d_trustSelfSignedCertificates = value;
+}
+
 ntca::EncryptionMethod::Value EncryptionOptions::minMethod() const
 {
     return d_minMethod;
@@ -676,6 +685,12 @@ EncryptionOptions::certificateValidationCallback() const
     return d_certificateValidationCallback;
 }
 
+const bdlb::NullableValue<bool>& EncryptionOptions::
+    trustSelfSignedCertificates() const
+{
+    return d_trustSelfSignedCertificates;
+}
+
 bsl::ostream& EncryptionOptions::print(bsl::ostream& stream,
                                        int           level,
                                        int           spacesPerLevel) const
@@ -708,6 +723,11 @@ bsl::ostream& EncryptionOptions::print(bsl::ostream& stream,
                                d_serverNameVerification);
     }
 
+    if (!d_trustSelfSignedCertificates.isNull()) {
+        printer.printAttribute("trustSelfSignedCertificates",
+                               d_trustSelfSignedCertificates);
+    }
+
     printer.end();
     return stream;
 }
@@ -721,7 +741,9 @@ bool operator==(const EncryptionOptions& lhs, const EncryptionOptions& rhs)
            lhs.authorityDirectory() == rhs.authorityDirectory() &&
            lhs.cipherSpec() == rhs.cipherSpec() &&
            lhs.serverNameIndication() == rhs.serverNameIndication() &&
-           lhs.serverNameVerification() == rhs.serverNameVerification();
+           lhs.serverNameVerification() == rhs.serverNameVerification() &&
+           lhs.trustSelfSignedCertificates() ==
+               rhs.trustSelfSignedCertificates();
 }
 
 bool operator!=(const EncryptionOptions& lhs, const EncryptionOptions& rhs)
