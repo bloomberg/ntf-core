@@ -65,6 +65,9 @@ namespace ntca {
 /// Flag that determines whether the peer's certificate is verified as signed
 /// by a trusted issuer.
 ///
+/// @li @b validation:
+/// The peer certificate validation requirements and allowances.
+///
 /// @li @b resources:
 /// The resources containing the private key, certificate, and trusted
 /// certificate authorities.
@@ -72,24 +75,6 @@ namespace ntca {
 /// @li @b authorityDirectory:
 /// The directory containing files of encoded certificates for each trusted
 /// certificate authority.
-///
-/// @li @b serverNameIndication:
-/// The server name with which the connection is upgraded into a secure
-/// connection. This name may be, but is not restricted to, a subject
-/// alternative name attribute of the peer's certificate.
-///
-/// @li @b serverNameVerification:
-/// The name that must be present in the certificate offered by the server,
-/// either in the subject common name, or as one of the subject's alternative
-/// names.
-///
-/// @li @b certificateValidationCallback:
-/// The callback to be invoked to perform additional, user-defined validation
-/// of the peer's certificate. Note that most common validation is
-/// automatically performed by the encryption driver implementation.
-///
-/// @li @b trustSelfSignedCertificates:
-/// Trust all end-user self-signed certificates.
 ///
 /// @li @b optionsMap
 /// The optional, effective options to use when connecting to a specific server
@@ -144,6 +129,10 @@ class EncryptionClientOptions
     /// Set the peer authentication to the specified 'authentication'.
     void setAuthentication(
         ntca::EncryptionAuthentication::Value authentication);
+
+    /// Set the peer certificate validation requirements and allowances to the
+    /// specified 'validation'.
+    void setValidation(const ntca::EncryptionValidation& validation);
 
     /// Set the directory from which to load trusted certificate authorities to
     /// the specified 'authorityDirectory'.
@@ -314,75 +303,6 @@ class EncryptionClientOptions
     void addOverrides(const bsl::string&             serverName,
                       const ntca::EncryptionOptions& options);
 
-    /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const bsl::string& value);
-
-    /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::Endpoint& value);
-
-    /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::IpEndpoint& value);
-
-    /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::IpAddress& value);
-
-    /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::Ipv4Address& value);
-
-    /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::Ipv6Address& value);
-
-    /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::LocalName& value);
-
-    /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::Uri& value);
-
-    /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::Host& value);
-
-    /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::DomainName& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const bsl::string& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::Endpoint& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::IpEndpoint& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::IpAddress& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::Ipv4Address& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::Ipv6Address& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::LocalName& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::Host& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::DomainName& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::Uri& value);
-
-    /// Set the specified 'callback' to be invoked to perform user-defined
-    /// validation of the peer's certificate.
-    void setCertificateValidationCallback(
-        const ntca::EncryptionCertificateValidationCallback& callback);
-
-    /// Set the flag that indicates all self-signed end-user certificates are
-    /// trusted to the specified 'value'.
-    void setTrustSelfSignedCertificates(bool value);
-
     /// Return the minimum permitted encryption method, inclusive.
     ntca::EncryptionMethod::Value minMethod() const;
 
@@ -395,27 +315,15 @@ class EncryptionClientOptions
     /// Return the peer authentication.
     ntca::EncryptionAuthentication::Value authentication() const;
 
+    /// Return the peer certificate validation requirements and allowances.
+    const bdlb::NullableValue<ntca::EncryptionValidation>& validation() const;
+
     /// Return the directory path to the directory containing the
     /// certificates of additional trusted authorities.
     const bdlb::NullableValue<bsl::string>& authorityDirectory() const;
 
     /// Return the resources.
     const ntca::EncryptionResourceVector& resources() const;
-
-    /// Return the server name indication, if any.
-    const bdlb::NullableValue<bsl::string>& serverNameIndication() const;
-
-    /// Return the server name verification.
-    const bdlb::NullableValue<bsl::string>& serverNameVerification() const;
-
-    /// Return the callback to be invoked to perform user-defined validation of
-    /// the peer's certificate.
-    const bdlb::NullableValue<ntca::EncryptionCertificateValidationCallback>&
-    certificateValidationCallback() const;
-
-    /// Return the flag that indicates all self-signed end-user certificates
-    /// are trusted.
-    const bdlb::NullableValue<bool>& trustSelfSignedCertificates() const;
 
     /// Load into the specified 'result' the names of each registered server.
     /// Note that 'serverName' may be an IP address, domain name, or domain

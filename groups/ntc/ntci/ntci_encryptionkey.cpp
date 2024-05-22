@@ -199,6 +199,12 @@ ntsa::Error EncryptionKey::unwrap(ntca::EncryptionKey* result) const
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
+bool EncryptionKey::equals(const ntci::EncryptionKey& other) const
+{
+    NTCCFG_WARNING_UNUSED(other);
+    return false;
+}
+
 void EncryptionKey::print(bsl::ostream& stream) const
 {
     stream << "<private>";

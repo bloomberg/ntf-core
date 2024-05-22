@@ -41,6 +41,7 @@ ntca_encryptionresourceoptions
 ntca_encryptionsecret
 ntca_encryptionserveroptions
 ntca_encryptionstorage
+ntca_encryptionvalidation
 ntca_errorcontext
 ntca_errorevent
 ntca_erroreventtype

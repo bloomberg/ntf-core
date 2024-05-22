@@ -5885,7 +5885,7 @@ class EncryptionCertificateUtil
 /// validation of the specified 'certificate'. Return true if the certificate 
 /// is valid, and false otherwise.
 typedef bsl::function<bool (const ntca::EncryptionCertificate& certificate)> 
-EncryptionCertificateValidationCallback;
+EncryptionCertificateValidator;
 
 }  // close package namespace
 }  // close enterprise namespace

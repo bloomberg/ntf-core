@@ -51,13 +51,10 @@ EncryptionOptions::EncryptionOptions(bslma::Allocator* basicAllocator)
 : d_minMethod(ntca::EncryptionMethod::e_TLS_V1_X)
 , d_maxMethod(ntca::EncryptionMethod::e_TLS_V1_X)
 , d_authentication(ntca::EncryptionAuthentication::e_NONE)
+, d_validation(basicAllocator)
 , d_resourceVector(basicAllocator)
 , d_authorityDirectory(basicAllocator)
 , d_cipherSpec(basicAllocator)
-, d_serverNameIndication(basicAllocator)
-, d_serverNameVerification(basicAllocator)
-, d_certificateValidationCallback(basicAllocator)
-, d_trustSelfSignedCertificates()
 {
 }
 
@@ -66,14 +63,10 @@ EncryptionOptions::EncryptionOptions(const EncryptionOptions& original,
 : d_minMethod(original.d_minMethod)
 , d_maxMethod(original.d_maxMethod)
 , d_authentication(original.d_authentication)
+, d_validation(original.d_validation, basicAllocator)
 , d_resourceVector(original.d_resourceVector, basicAllocator)
 , d_authorityDirectory(original.d_authorityDirectory, basicAllocator)
 , d_cipherSpec(original.d_cipherSpec, basicAllocator)
-, d_serverNameIndication(original.d_serverNameIndication, basicAllocator)
-, d_serverNameVerification(original.d_serverNameVerification, basicAllocator)
-, d_certificateValidationCallback(original.d_certificateValidationCallback,
-                                  basicAllocator)
-, d_trustSelfSignedCertificates(original.d_trustSelfSignedCertificates)
 {
 }
 
@@ -84,17 +77,13 @@ EncryptionOptions::~EncryptionOptions()
 EncryptionOptions& EncryptionOptions::operator=(const EncryptionOptions& other)
 {
     if (this != &other) {
-        d_minMethod              = other.d_minMethod;
-        d_maxMethod              = other.d_maxMethod;
-        d_authentication         = other.d_authentication;
-        d_resourceVector         = other.d_resourceVector;
-        d_authorityDirectory     = other.d_authorityDirectory;
-        d_cipherSpec             = other.d_cipherSpec;
-        d_serverNameIndication   = other.d_serverNameIndication;
-        d_serverNameVerification = other.d_serverNameVerification;
-        d_certificateValidationCallback =
-            other.d_certificateValidationCallback;
-        d_trustSelfSignedCertificates = other.d_trustSelfSignedCertificates;
+        d_minMethod          = other.d_minMethod;
+        d_maxMethod          = other.d_maxMethod;
+        d_authentication     = other.d_authentication;
+        d_validation         = other.d_validation;
+        d_resourceVector     = other.d_resourceVector;
+        d_authorityDirectory = other.d_authorityDirectory;
+        d_cipherSpec         = other.d_cipherSpec;
     }
 
     return *this;
@@ -105,13 +94,10 @@ void EncryptionOptions::reset()
     d_minMethod      = ntca::EncryptionMethod::e_TLS_V1_X;
     d_maxMethod      = ntca::EncryptionMethod::e_TLS_V1_X;
     d_authentication = ntca::EncryptionAuthentication::e_NONE;
+    d_validation.reset();
     d_resourceVector.clear();
     d_authorityDirectory.reset();
     d_cipherSpec.reset();
-    d_serverNameIndication.reset();
-    d_serverNameVerification.reset();
-    d_certificateValidationCallback.reset();
-    d_trustSelfSignedCertificates.reset();
 }
 
 void EncryptionOptions::setMinMethod(ntca::EncryptionMethod::Value minMethod)
@@ -133,6 +119,12 @@ void EncryptionOptions::setAuthentication(
     ntca::EncryptionAuthentication::Value authentication)
 {
     d_authentication = authentication;
+}
+
+void EncryptionOptions::setValidation(
+    const ntca::EncryptionValidation& validation)
+{
+    d_validation = validation;
 }
 
 void EncryptionOptions::setAuthorityDirectory(
@@ -467,175 +459,6 @@ void EncryptionOptions::addResourceFile(
     this->addResource(resource);
 }
 
-void EncryptionOptions::setServerNameIndication(const bsl::string& value)
-{
-    ntsa::Uri uri;
-    if (uri.parse(value)) {
-        this->setServerNameIndication(uri);
-    }
-    else {
-        d_serverNameIndication.makeValue(value);
-    }
-}
-
-void EncryptionOptions::setServerNameIndication(const ntsa::Endpoint& value)
-{
-    if (value.isIp()) {
-        this->setServerNameIndication(value.ip());
-    }
-    else if (value.isLocal()) {
-        this->setServerNameIndication(value.local());
-    }
-}
-
-void EncryptionOptions::setServerNameIndication(const ntsa::IpEndpoint& value)
-{
-    this->setServerNameIndication(value.host());
-}
-
-void EncryptionOptions::setServerNameIndication(const ntsa::IpAddress& value)
-{
-    if (value.isV4()) {
-        this->setServerNameIndication(value.v4());
-    }
-    else if (value.isV6()) {
-        this->setServerNameIndication(value.v6());
-    }
-}
-
-void EncryptionOptions::setServerNameIndication(const ntsa::Ipv4Address& value)
-{
-    d_serverNameIndication.makeValue(value.text());
-}
-
-void EncryptionOptions::setServerNameIndication(const ntsa::Ipv6Address& value)
-{
-    d_serverNameIndication.makeValue(value.text());
-}
-
-void EncryptionOptions::setServerNameIndication(const ntsa::LocalName& value)
-{
-    d_serverNameIndication.makeValue(value.value());
-}
-
-void EncryptionOptions::setServerNameIndication(const ntsa::Host& value)
-{
-    if (value.isDomainName()) {
-        this->setServerNameIndication(value.domainName());
-    }
-    else if (value.isIp()) {
-        this->setServerNameIndication(value.ip());
-    }
-}
-
-void EncryptionOptions::setServerNameIndication(const ntsa::DomainName& value)
-{
-    d_serverNameIndication.makeValue(value.text());
-}
-
-void EncryptionOptions::setServerNameIndication(const ntsa::Uri& value)
-{
-    if (!value.authority().isNull()) {
-        const ntsa::UriAuthority& authority = value.authority().value();
-        if (!authority.host().isNull()) {
-            const ntsa::Host& host = authority.host().value();
-            this->setServerNameIndication(host);
-        }
-    }
-}
-
-void EncryptionOptions::setServerNameVerification(const bsl::string& value)
-{
-    ntsa::Uri uri;
-    if (uri.parse(value)) {
-        this->setServerNameVerification(uri);
-    }
-    else {
-        d_serverNameVerification.makeValue(value);
-    }
-}
-
-void EncryptionOptions::setServerNameVerification(const ntsa::Endpoint& value)
-{
-    if (value.isIp()) {
-        this->setServerNameVerification(value.ip());
-    }
-    else if (value.isLocal()) {
-        this->setServerNameVerification(value.local());
-    }
-}
-
-void EncryptionOptions::setServerNameVerification(
-    const ntsa::IpEndpoint& value)
-{
-    this->setServerNameVerification(value.host());
-}
-
-void EncryptionOptions::setServerNameVerification(const ntsa::IpAddress& value)
-{
-    if (value.isV4()) {
-        this->setServerNameVerification(value.v4());
-    }
-    else if (value.isV6()) {
-        this->setServerNameVerification(value.v6());
-    }
-}
-
-void EncryptionOptions::setServerNameVerification(
-    const ntsa::Ipv4Address& value)
-{
-    d_serverNameVerification.makeValue(value.text());
-}
-
-void EncryptionOptions::setServerNameVerification(
-    const ntsa::Ipv6Address& value)
-{
-    d_serverNameVerification.makeValue(value.text());
-}
-
-void EncryptionOptions::setServerNameVerification(const ntsa::LocalName& value)
-{
-    d_serverNameVerification.makeValue(value.value());
-}
-
-void EncryptionOptions::setServerNameVerification(const ntsa::Host& value)
-{
-    if (value.isDomainName()) {
-        this->setServerNameVerification(value.domainName());
-    }
-    else if (value.isIp()) {
-        this->setServerNameVerification(value.ip());
-    }
-}
-
-void EncryptionOptions::setServerNameVerification(
-    const ntsa::DomainName& value)
-{
-    d_serverNameVerification.makeValue(value.text());
-}
-
-void EncryptionOptions::setServerNameVerification(const ntsa::Uri& value)
-{
-    if (!value.authority().isNull()) {
-        const ntsa::UriAuthority& authority = value.authority().value();
-        if (!authority.host().isNull()) {
-            const ntsa::Host& host = authority.host().value();
-            this->setServerNameVerification(host);
-        }
-    }
-}
-
-void EncryptionOptions::setCertificateValidationCallback(
-    const ntca::EncryptionCertificateValidationCallback& callback)
-{
-    d_certificateValidationCallback = callback;
-}
-
-void EncryptionOptions::setTrustSelfSignedCertificates(bool value)
-{
-    d_trustSelfSignedCertificates = value;
-}
-
 ntca::EncryptionMethod::Value EncryptionOptions::minMethod() const
 {
     return d_minMethod;
@@ -656,6 +479,12 @@ ntca::EncryptionAuthentication::Value EncryptionOptions::authentication() const
     return d_authentication;
 }
 
+const bdlb::NullableValue<ntca::EncryptionValidation>& EncryptionOptions::
+    validation() const
+{
+    return d_validation;
+}
+
 const bdlb::NullableValue<bsl::string>& EncryptionOptions::authorityDirectory()
     const
 {
@@ -667,30 +496,6 @@ const ntca::EncryptionResourceVector& EncryptionOptions::resources() const
     return d_resourceVector;
 }
 
-const bdlb::NullableValue<bsl::string>& EncryptionOptions::
-    serverNameIndication() const
-{
-    return d_serverNameIndication;
-}
-
-const bdlb::NullableValue<bsl::string>& EncryptionOptions::
-    serverNameVerification() const
-{
-    return d_serverNameVerification;
-}
-
-const bdlb::NullableValue<ntca::EncryptionCertificateValidationCallback>&
-EncryptionOptions::certificateValidationCallback() const
-{
-    return d_certificateValidationCallback;
-}
-
-const bdlb::NullableValue<bool>& EncryptionOptions::
-    trustSelfSignedCertificates() const
-{
-    return d_trustSelfSignedCertificates;
-}
-
 bsl::ostream& EncryptionOptions::print(bsl::ostream& stream,
                                        int           level,
                                        int           spacesPerLevel) const
@@ -700,6 +505,10 @@ bsl::ostream& EncryptionOptions::print(bsl::ostream& stream,
     printer.printAttribute("minMethod", d_minMethod);
     printer.printAttribute("maxMethod", d_maxMethod);
     printer.printAttribute("authentication", d_authentication);
+
+    if (!d_validation.isNull()) {
+        printer.printAttribute("validation", d_validation);
+    }
 
     if (!d_resourceVector.empty()) {
         printer.printAttribute("resource", d_resourceVector);
@@ -714,20 +523,6 @@ bsl::ostream& EncryptionOptions::print(bsl::ostream& stream,
         printer.printAttribute("cipherSpec", d_cipherSpec.value());
     }
 
-    if (!d_serverNameIndication.isNull()) {
-        printer.printAttribute("serverNameIndication", d_serverNameIndication);
-    }
-
-    if (!d_serverNameVerification.isNull()) {
-        printer.printAttribute("serverNameVerification",
-                               d_serverNameVerification);
-    }
-
-    if (!d_trustSelfSignedCertificates.isNull()) {
-        printer.printAttribute("trustSelfSignedCertificates",
-                               d_trustSelfSignedCertificates);
-    }
-
     printer.end();
     return stream;
 }
@@ -737,13 +532,10 @@ bool operator==(const EncryptionOptions& lhs, const EncryptionOptions& rhs)
     return lhs.minMethod() == rhs.minMethod() &&
            lhs.maxMethod() == rhs.maxMethod() &&
            lhs.authentication() == rhs.authentication() &&
+           lhs.validation() == rhs.validation() &&
            lhs.resources() == rhs.resources() &&
            lhs.authorityDirectory() == rhs.authorityDirectory() &&
-           lhs.cipherSpec() == rhs.cipherSpec() &&
-           lhs.serverNameIndication() == rhs.serverNameIndication() &&
-           lhs.serverNameVerification() == rhs.serverNameVerification() &&
-           lhs.trustSelfSignedCertificates() ==
-               rhs.trustSelfSignedCertificates();
+           lhs.cipherSpec() == rhs.cipherSpec();
 }
 
 bool operator!=(const EncryptionOptions& lhs, const EncryptionOptions& rhs)

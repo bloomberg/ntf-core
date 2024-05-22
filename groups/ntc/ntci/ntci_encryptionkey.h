@@ -116,6 +116,10 @@ class EncryptionKey
     /// of this key. Return the error.
     virtual ntsa::Error unwrap(ntca::EncryptionKey* result) const;
 
+    /// Return true if this key has the same value as the specified 'other'
+    /// key, otherwise return false. 
+    virtual bool equals(const ntci::EncryptionKey& other) const;
+
     /// Print the public key parameters to the specified stream in an
     /// unspecified but human-readable form.
     virtual void print(bsl::ostream& stream) const;

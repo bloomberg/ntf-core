@@ -128,6 +128,10 @@ class EncryptionCertificate
     /// Return the issuer of the certificate.
     virtual const ntsa::DistinguishedName& issuer() const = 0;
 
+    /// Return true if this certificate has the same value as the specified 
+    /// 'other' certificate, otherwise return false. 
+    virtual bool equals(const ntci::EncryptionCertificate& other) const;
+
     /// Print the certificate to the specified stream in an unspecified but
     /// human-readable form.
     virtual void print(bsl::ostream& stream) const;

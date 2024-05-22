@@ -200,6 +200,13 @@ ntsa::Error EncryptionCertificate::unwrap(
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
+bool EncryptionCertificate::equals(
+    const ntci::EncryptionCertificate& other) const
+{
+    NTCCFG_WARNING_UNUSED(other);
+    return false;
+}
+
 void EncryptionCertificate::print(bsl::ostream& stream) const
 {
     ntca::EncryptionResourceOptions options;

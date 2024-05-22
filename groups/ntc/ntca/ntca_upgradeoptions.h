@@ -20,6 +20,7 @@
 BSLS_IDENT("$Id: $")
 
 #include <ntca_encryptioncertificate.h>
+#include <ntca_encryptionvalidation.h>
 #include <ntca_upgradetoken.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
@@ -45,23 +46,16 @@ namespace ntca {
 /// @li @b token:
 /// The token used to cancel the operation.
 ///
-/// @li @b serverNameIndication:
-/// The server name with which the connection is upgraded into a secure
-/// connection. This name may be, but is not restricted to, a subject
-/// alternative name attribute of the peer's certificate.
+/// @li @b serverName:
+/// The optional server name indication (SNI) that identifies the peer. This
+/// name may be, but is not restricted to, a subject alternative name attribute
+/// of the peer's certificate. This option is ignored for server roles.
 ///
-/// @li @b serverNameVerification:
-/// The name that must be present in the certificate offered by the server,
-/// either in the subject common name, or as one of the subject's alternative
-/// names.
-///
-/// @li @b certificateValidationCallback:
-/// The callback to be invoked to perform additional, user-defined validation
-/// of the peer's certificate. Note that most common validation is
-/// automatically performed by the encryption driver implementation.
-///
-/// @li @b trustSelfSignedCertificates:
-/// Trust all end-user self-signed certificates.
+/// @li @b validation:
+/// The peer certificate validation requirements and allowances. If specified,
+/// these requirements and allowances override the default requirements and
+/// allowances configured for the encryption client or server that created the
+/// encryption session that is attempted to be established.
 ///
 /// @li @b deadline:
 /// The deadline within which the connection must be upgraded, in absolute time
@@ -78,16 +72,14 @@ namespace ntca {
 /// @ingroup module_ntci_operation_upgrade
 class UpgradeOptions
 {
-    typedef bdlb::NullableValue<ntca::EncryptionCertificateValidationCallback>
+    typedef bdlb::NullableValue<ntca::EncryptionCertificateValidator>
         ValidationCallback;
 
-    bdlb::NullableValue<ntca::UpgradeToken> d_token;
-    bdlb::NullableValue<bsl::string>        d_serverNameIndication;
-    bdlb::NullableValue<bsl::string>        d_serverNameVerification;
-    ValidationCallback                      d_certificateValidationCallback;
-    bdlb::NullableValue<bool>               d_trustSelfSignedCertificates;
-    bdlb::NullableValue<bsls::TimeInterval> d_deadline;
-    bool                                    d_recurse;
+    bdlb::NullableValue<ntca::UpgradeToken>         d_token;
+    bdlb::NullableValue<bsl::string>                d_serverName;
+    bdlb::NullableValue<ntca::EncryptionValidation> d_validation;
+    bdlb::NullableValue<bsls::TimeInterval>         d_deadline;
+    bool                                            d_recurse;
 
   public:
     /// Create new upgrade options having the default value. Optionally specify
@@ -105,85 +97,49 @@ class UpgradeOptions
     /// Destroy this object.
     ~UpgradeOptions();
 
-    /// Assign the value of the specified 'other' object to this object.
-    /// Return a reference to this modifiable object.
+    /// Assign the value of the specified 'other' object to this object. Return
+    /// a reference to this modifiable object.
     UpgradeOptions& operator=(const UpgradeOptions& other);
 
-    /// Reset the value of this object to its value upon default
-    /// construction.
+    /// Reset the value of this object to its value upon default construction.
     void reset();
 
     /// Set the token used to cancel the operation to the specified 'value'.
     void setToken(const ntca::UpgradeToken& value);
 
     /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const bsl::string& value);
+    void setServerName(const bsl::string& value);
 
     /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::Endpoint& value);
+    void setServerName(const ntsa::Endpoint& value);
 
     /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::IpEndpoint& value);
+    void setServerName(const ntsa::IpEndpoint& value);
 
     /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::IpAddress& value);
+    void setServerName(const ntsa::IpAddress& value);
 
     /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::Ipv4Address& value);
+    void setServerName(const ntsa::Ipv4Address& value);
 
     /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::Ipv6Address& value);
+    void setServerName(const ntsa::Ipv6Address& value);
 
     /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::LocalName& value);
+    void setServerName(const ntsa::LocalName& value);
 
     /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::Host& value);
+    void setServerName(const ntsa::Host& value);
 
     /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::DomainName& value);
+    void setServerName(const ntsa::DomainName& value);
 
     /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::Uri& value);
+    void setServerName(const ntsa::Uri& value);
 
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const bsl::string& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::Endpoint& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::IpEndpoint& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::IpAddress& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::Ipv4Address& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::Ipv6Address& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::LocalName& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::Host& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::DomainName& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::Uri& value);
-
-    /// Set the specified 'callback' to be invoked to perform user-defined
-    /// validation of the peer's certificate.
-    void setCertificateValidationCallback(
-        const ntca::EncryptionCertificateValidationCallback& callback);
-
-    /// Set the flag that indicates all self-signed end-user certificates are
-    /// trusted to the specified 'value'.
-    void setTrustSelfSignedCertificates(bool value);
+    /// Set the peer certificate validation requirements and allowances to the
+    /// specified 'validation'.
+    void setValidation(const ntca::EncryptionValidation& validation);
 
     /// Set the deadline within which the connection must be upgraded to the
     /// specified 'value'.
@@ -198,19 +154,10 @@ class UpgradeOptions
     const bdlb::NullableValue<ntca::UpgradeToken>& token() const;
 
     /// Return the server name indication.
-    const bdlb::NullableValue<bsl::string>& serverNameIndication() const;
+    const bdlb::NullableValue<bsl::string>& serverName() const;
 
-    /// Return the server name verification.
-    const bdlb::NullableValue<bsl::string>& serverNameVerification() const;
-
-    /// Return the callback to be invoked to perform user-defined validation of
-    /// the peer's certificate.
-    const bdlb::NullableValue<ntca::EncryptionCertificateValidationCallback>&
-    certificateValidationCallback() const;
-
-    /// Return the flag that indicates all self-signed end-user certificates
-    /// are trusted.
-    const bdlb::NullableValue<bool>& trustSelfSignedCertificates() const;
+    /// Return the peer certificate validation requirements and allowances.
+    const bdlb::NullableValue<ntca::EncryptionValidation>& validation() const;
 
     /// Return the deadline within which the connection must be upgraded.
     const bdlb::NullableValue<bsls::TimeInterval>& deadline() const;
@@ -283,10 +230,8 @@ void hashAppend(HASH_ALGORITHM& algorithm, const UpgradeOptions& value);
 NTCCFG_INLINE
 UpgradeOptions::UpgradeOptions(bslma::Allocator* basicAllocator)
 : d_token()
-, d_serverNameIndication(basicAllocator)
-, d_serverNameVerification(basicAllocator)
-, d_certificateValidationCallback(basicAllocator)
-, d_trustSelfSignedCertificates()
+, d_serverName(basicAllocator)
+, d_validation(basicAllocator)
 , d_deadline()
 , d_recurse(false)
 {
@@ -296,11 +241,8 @@ NTCCFG_INLINE
 UpgradeOptions::UpgradeOptions(const UpgradeOptions& original,
                                bslma::Allocator*     basicAllocator)
 : d_token(original.d_token)
-, d_serverNameIndication(original.d_serverNameIndication, basicAllocator)
-, d_serverNameVerification(original.d_serverNameVerification, basicAllocator)
-, d_certificateValidationCallback(original.d_certificateValidationCallback,
-                                  basicAllocator)
-, d_trustSelfSignedCertificates(original.d_trustSelfSignedCertificates)
+, d_serverName(original.d_serverName, basicAllocator)
+, d_validation(original.d_validation, basicAllocator)
 , d_deadline(original.d_deadline)
 , d_recurse(original.d_recurse)
 {
@@ -315,14 +257,11 @@ NTCCFG_INLINE
 UpgradeOptions& UpgradeOptions::operator=(const UpgradeOptions& other)
 {
     if (this != &other) {
-        d_token                  = other.d_token;
-        d_serverNameIndication   = other.d_serverNameIndication;
-        d_serverNameVerification = other.d_serverNameVerification;
-        d_certificateValidationCallback =
-            other.d_certificateValidationCallback;
-        d_trustSelfSignedCertificates = other.d_trustSelfSignedCertificates;
-        d_deadline = other.d_deadline;
-        d_recurse  = other.d_recurse;
+        d_token      = other.d_token;
+        d_serverName = other.d_serverName;
+        d_validation = other.d_validation;
+        d_deadline   = other.d_deadline;
+        d_recurse    = other.d_recurse;
     }
 
     return *this;
@@ -332,10 +271,8 @@ NTCCFG_INLINE
 void UpgradeOptions::reset()
 {
     d_token.reset();
-    d_serverNameIndication.reset();
-    d_serverNameVerification.reset();
-    d_certificateValidationCallback.reset();
-    d_trustSelfSignedCertificates.reset();
+    d_serverName.reset();
+    d_validation.reset();
     d_deadline.reset();
     d_recurse = false;
 }
@@ -347,190 +284,97 @@ void UpgradeOptions::setToken(const ntca::UpgradeToken& value)
 }
 
 NTCCFG_INLINE
-void UpgradeOptions::setServerNameIndication(const bsl::string& value)
+void UpgradeOptions::setServerName(const bsl::string& value)
 {
     ntsa::Uri uri;
     if (uri.parse(value)) {
-        this->setServerNameIndication(uri);
+        this->setServerName(uri);
     }
     else {
-        d_serverNameIndication.makeValue(value);
+        d_serverName.makeValue(value);
     }
 }
 
 NTCCFG_INLINE
-void UpgradeOptions::setServerNameIndication(const ntsa::Endpoint& value)
+void UpgradeOptions::setServerName(const ntsa::Endpoint& value)
 {
     if (value.isIp()) {
-        this->setServerNameIndication(value.ip());
+        this->setServerName(value.ip());
     }
     else if (value.isLocal()) {
-        this->setServerNameIndication(value.local());
+        this->setServerName(value.local());
     }
 }
 
 NTCCFG_INLINE
-void UpgradeOptions::setServerNameIndication(const ntsa::IpEndpoint& value)
+void UpgradeOptions::setServerName(const ntsa::IpEndpoint& value)
 {
-    this->setServerNameIndication(value.host());
+    this->setServerName(value.host());
 }
 
 NTCCFG_INLINE
-void UpgradeOptions::setServerNameIndication(const ntsa::IpAddress& value)
+void UpgradeOptions::setServerName(const ntsa::IpAddress& value)
 {
     if (value.isV4()) {
-        this->setServerNameIndication(value.v4());
+        this->setServerName(value.v4());
     }
     else if (value.isV6()) {
-        this->setServerNameIndication(value.v6());
+        this->setServerName(value.v6());
     }
 }
 
 NTCCFG_INLINE
-void UpgradeOptions::setServerNameIndication(const ntsa::Ipv4Address& value)
+void UpgradeOptions::setServerName(const ntsa::Ipv4Address& value)
 {
-    d_serverNameIndication.makeValue(value.text());
+    d_serverName.makeValue(value.text());
 }
 
 NTCCFG_INLINE
-void UpgradeOptions::setServerNameIndication(const ntsa::Ipv6Address& value)
+void UpgradeOptions::setServerName(const ntsa::Ipv6Address& value)
 {
-    d_serverNameIndication.makeValue(value.text());
+    d_serverName.makeValue(value.text());
 }
 
 NTCCFG_INLINE
-void UpgradeOptions::setServerNameIndication(const ntsa::LocalName& value)
+void UpgradeOptions::setServerName(const ntsa::LocalName& value)
 {
-    d_serverNameIndication.makeValue(value.value());
+    d_serverName.makeValue(value.value());
 }
 
 NTCCFG_INLINE
-void UpgradeOptions::setServerNameIndication(const ntsa::Host& value)
+void UpgradeOptions::setServerName(const ntsa::Host& value)
 {
     if (value.isDomainName()) {
-        this->setServerNameIndication(value.domainName());
+        this->setServerName(value.domainName());
     }
     else if (value.isIp()) {
-        this->setServerNameIndication(value.ip());
+        this->setServerName(value.ip());
     }
 }
 
 NTCCFG_INLINE
-void UpgradeOptions::setServerNameIndication(const ntsa::DomainName& value)
+void UpgradeOptions::setServerName(const ntsa::DomainName& value)
 {
-    d_serverNameIndication.makeValue(value.text());
+    d_serverName.makeValue(value.text());
 }
 
 NTCCFG_INLINE
-void UpgradeOptions::setServerNameIndication(const ntsa::Uri& value)
+void UpgradeOptions::setServerName(const ntsa::Uri& value)
 {
     if (!value.authority().isNull()) {
         const ntsa::UriAuthority& authority = value.authority().value();
         if (!authority.host().isNull()) {
             const ntsa::Host& host = authority.host().value();
-            this->setServerNameIndication(host);
+            this->setServerName(host);
         }
     }
 }
 
 NTCCFG_INLINE
-void UpgradeOptions::setServerNameVerification(const bsl::string& value)
+void UpgradeOptions::setValidation(
+    const ntca::EncryptionValidation& validation)
 {
-    ntsa::Uri uri;
-    if (uri.parse(value)) {
-        this->setServerNameVerification(uri);
-    }
-    else {
-        d_serverNameVerification.makeValue(value);
-    }
-}
-
-NTCCFG_INLINE
-void UpgradeOptions::setServerNameVerification(const ntsa::Endpoint& value)
-{
-    if (value.isIp()) {
-        this->setServerNameVerification(value.ip());
-    }
-    else if (value.isLocal()) {
-        this->setServerNameVerification(value.local());
-    }
-}
-
-NTCCFG_INLINE
-void UpgradeOptions::setServerNameVerification(const ntsa::IpEndpoint& value)
-{
-    this->setServerNameVerification(value.host());
-}
-
-NTCCFG_INLINE
-void UpgradeOptions::setServerNameVerification(const ntsa::IpAddress& value)
-{
-    if (value.isV4()) {
-        this->setServerNameVerification(value.v4());
-    }
-    else if (value.isV6()) {
-        this->setServerNameVerification(value.v6());
-    }
-}
-
-NTCCFG_INLINE
-void UpgradeOptions::setServerNameVerification(const ntsa::Ipv4Address& value)
-{
-    d_serverNameVerification.makeValue(value.text());
-}
-
-NTCCFG_INLINE
-void UpgradeOptions::setServerNameVerification(const ntsa::Ipv6Address& value)
-{
-    d_serverNameVerification.makeValue(value.text());
-}
-
-NTCCFG_INLINE
-void UpgradeOptions::setServerNameVerification(const ntsa::LocalName& value)
-{
-    d_serverNameVerification.makeValue(value.value());
-}
-
-NTCCFG_INLINE
-void UpgradeOptions::setServerNameVerification(const ntsa::Host& value)
-{
-    if (value.isDomainName()) {
-        this->setServerNameVerification(value.domainName());
-    }
-    else if (value.isIp()) {
-        this->setServerNameVerification(value.ip());
-    }
-}
-
-NTCCFG_INLINE
-void UpgradeOptions::setServerNameVerification(const ntsa::DomainName& value)
-{
-    d_serverNameVerification.makeValue(value.text());
-}
-
-NTCCFG_INLINE
-void UpgradeOptions::setServerNameVerification(const ntsa::Uri& value)
-{
-    if (!value.authority().isNull()) {
-        const ntsa::UriAuthority& authority = value.authority().value();
-        if (!authority.host().isNull()) {
-            const ntsa::Host& host = authority.host().value();
-            this->setServerNameVerification(host);
-        }
-    }
-}
-
-NTCCFG_INLINE
-void UpgradeOptions::setCertificateValidationCallback(
-    const ntca::EncryptionCertificateValidationCallback& callback)
-{
-    d_certificateValidationCallback = callback;
-}
-
-NTCCFG_INLINE
-void UpgradeOptions::setTrustSelfSignedCertificates(bool value)
-{
-    d_trustSelfSignedCertificates = value;
+    d_validation = validation;
 }
 
 NTCCFG_INLINE
@@ -552,30 +396,16 @@ const bdlb::NullableValue<ntca::UpgradeToken>& UpgradeOptions::token() const
 }
 
 NTCCFG_INLINE
-const bdlb::NullableValue<bsl::string>& UpgradeOptions::serverNameIndication()
-    const
+const bdlb::NullableValue<bsl::string>& UpgradeOptions::serverName() const
 {
-    return d_serverNameIndication;
+    return d_serverName;
 }
 
 NTCCFG_INLINE
-const bdlb::NullableValue<bsl::string>& UpgradeOptions::
-    serverNameVerification() const
+const bdlb::NullableValue<ntca::EncryptionValidation>& UpgradeOptions::
+    validation() const
 {
-    return d_serverNameVerification;
-}
-
-NTCCFG_INLINE
-const bdlb::NullableValue<ntca::EncryptionCertificateValidationCallback>&
-UpgradeOptions::certificateValidationCallback() const
-{
-    return d_certificateValidationCallback;
-}
-
-NTCCFG_INLINE
-const bdlb::NullableValue<bool>& UpgradeOptions::trustSelfSignedCertificates() const
-{
-    return d_trustSelfSignedCertificates;
+    return d_validation;
 }
 
 NTCCFG_INLINE
@@ -620,7 +450,7 @@ void hashAppend(HASH_ALGORITHM& algorithm, const UpgradeOptions& value)
     using bslh::hashAppend;
 
     hashAppend(algorithm, value.token());
-    hashAppend(algorithm, value.serverNameIndication());
+    hashAppend(algorithm, value.serverName());
     hashAppend(algorithm, value.deadline());
     hashAppend(algorithm, value.recurse());
 }

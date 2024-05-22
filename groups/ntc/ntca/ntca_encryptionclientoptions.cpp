@@ -82,6 +82,12 @@ void EncryptionClientOptions::setAuthentication(
     d_options.setAuthentication(authentication);
 }
 
+void EncryptionClientOptions::setValidation(
+    const ntca::EncryptionValidation& validation)
+{
+    d_options.setValidation(validation);
+}
+
 void EncryptionClientOptions::setAuthorityDirectory(
     const bsl::string& authorityDirectory)
 {
@@ -230,133 +236,6 @@ void EncryptionClientOptions::addOverrides(
     }
 }
 
-void EncryptionClientOptions::setServerNameIndication(const bsl::string& value)
-{
-    d_options.setServerNameIndication(value);
-}
-
-void EncryptionClientOptions::setServerNameIndication(
-    const ntsa::Endpoint& value)
-{
-    d_options.setServerNameIndication(value);
-}
-
-void EncryptionClientOptions::setServerNameIndication(
-    const ntsa::IpEndpoint& value)
-{
-    d_options.setServerNameIndication(value);
-}
-
-void EncryptionClientOptions::setServerNameIndication(
-    const ntsa::IpAddress& value)
-{
-    d_options.setServerNameIndication(value);
-}
-
-void EncryptionClientOptions::setServerNameIndication(
-    const ntsa::Ipv4Address& value)
-{
-    d_options.setServerNameIndication(value);
-}
-
-void EncryptionClientOptions::setServerNameIndication(
-    const ntsa::Ipv6Address& value)
-{
-    d_options.setServerNameIndication(value);
-}
-
-void EncryptionClientOptions::setServerNameIndication(
-    const ntsa::LocalName& value)
-{
-    d_options.setServerNameIndication(value);
-}
-
-void EncryptionClientOptions::setServerNameIndication(const ntsa::Uri& value)
-{
-    d_options.setServerNameIndication(value);
-}
-
-void EncryptionClientOptions::setServerNameIndication(const ntsa::Host& value)
-{
-    d_options.setServerNameIndication(value);
-}
-
-void EncryptionClientOptions::setServerNameIndication(
-    const ntsa::DomainName& value)
-{
-    d_options.setServerNameIndication(value);
-}
-
-void EncryptionClientOptions::setServerNameVerification(
-    const bsl::string& value)
-{
-    d_options.setServerNameVerification(value);
-}
-
-void EncryptionClientOptions::setServerNameVerification(
-    const ntsa::Endpoint& value)
-{
-    d_options.setServerNameVerification(value);
-}
-
-void EncryptionClientOptions::setServerNameVerification(
-    const ntsa::IpEndpoint& value)
-{
-    d_options.setServerNameVerification(value);
-}
-
-void EncryptionClientOptions::setServerNameVerification(
-    const ntsa::IpAddress& value)
-{
-    d_options.setServerNameVerification(value);
-}
-
-void EncryptionClientOptions::setServerNameVerification(
-    const ntsa::Ipv4Address& value)
-{
-    d_options.setServerNameVerification(value);
-}
-
-void EncryptionClientOptions::setServerNameVerification(
-    const ntsa::Ipv6Address& value)
-{
-    d_options.setServerNameVerification(value);
-}
-
-void EncryptionClientOptions::setServerNameVerification(
-    const ntsa::LocalName& value)
-{
-    d_options.setServerNameVerification(value);
-}
-
-void EncryptionClientOptions::setServerNameVerification(
-    const ntsa::Host& value)
-{
-    d_options.setServerNameVerification(value);
-}
-
-void EncryptionClientOptions::setServerNameVerification(
-    const ntsa::DomainName& value)
-{
-    d_options.setServerNameVerification(value);
-}
-
-void EncryptionClientOptions::setServerNameVerification(const ntsa::Uri& value)
-{
-    d_options.setServerNameVerification(value);
-}
-
-void EncryptionClientOptions::setCertificateValidationCallback(
-    const ntca::EncryptionCertificateValidationCallback& callback)
-{
-    d_options.setCertificateValidationCallback(callback);
-}
-
-void EncryptionClientOptions::setTrustSelfSignedCertificates(bool value)
-{
-    d_options.setTrustSelfSignedCertificates(value);
-}
-
 ntca::EncryptionMethod::Value EncryptionClientOptions::minMethod() const
 {
     return d_options.minMethod();
@@ -379,6 +258,12 @@ ntca::EncryptionAuthentication::Value EncryptionClientOptions::authentication()
     return d_options.authentication();
 }
 
+const bdlb::NullableValue<ntca::EncryptionValidation>& EncryptionClientOptions::
+    validation() const
+{
+    return d_options.validation();
+}
+
 const bdlb::NullableValue<bsl::string>& EncryptionClientOptions::
     authorityDirectory() const
 {
@@ -389,30 +274,6 @@ const ntca::EncryptionResourceVector& EncryptionClientOptions::resources()
     const
 {
     return d_options.resources();
-}
-
-const bdlb::NullableValue<bsl::string>& EncryptionClientOptions::
-    serverNameIndication() const
-{
-    return d_options.serverNameIndication();
-}
-
-const bdlb::NullableValue<bsl::string>& EncryptionClientOptions::
-    serverNameVerification() const
-{
-    return d_options.serverNameVerification();
-}
-
-const bdlb::NullableValue<ntca::EncryptionCertificateValidationCallback>&
-EncryptionClientOptions::certificateValidationCallback() const
-{
-    return d_options.certificateValidationCallback();
-}
-
-const bdlb::NullableValue<bool>& EncryptionClientOptions::
-    trustSelfSignedCertificates() const
-{
-    return d_options.trustSelfSignedCertificates();
 }
 
 void EncryptionClientOptions::loadServerNameList(
@@ -468,6 +329,10 @@ bsl::ostream& EncryptionClientOptions::print(bsl::ostream& stream,
     printer.printAttribute("maxMethod", d_options.maxMethod());
     printer.printAttribute("authentication", d_options.authentication());
 
+    if (!d_options.validation().isNull()) {
+        printer.printAttribute("validation", d_options.validation());
+    }
+
     if (!d_options.authorityDirectory().isNull()) {
         printer.printAttribute("authorityDirectory",
                                d_options.authorityDirectory().value());
@@ -479,21 +344,6 @@ bsl::ostream& EncryptionClientOptions::print(bsl::ostream& stream,
 
     if (!d_options.resources().empty()) {
         printer.printAttribute("resource", d_options.resources());
-    }
-
-    if (!d_options.serverNameIndication().isNull()) {
-        printer.printAttribute("serverNameIndication",
-                               d_options.serverNameIndication());
-    }
-
-    if (!d_options.serverNameVerification().isNull()) {
-        printer.printAttribute("serverNameVerification",
-                               d_options.serverNameVerification());
-    }
-
-    if (!d_options.trustSelfSignedCertificates().isNull()) {
-        printer.printAttribute("trustSelfSignedCertificates",
-                               d_options.trustSelfSignedCertificates());
     }
 
     printer.printAttribute("map", d_optionsMap);

@@ -25,9 +25,8 @@ namespace ntca {
 
 bool UpgradeOptions::equals(const UpgradeOptions& other) const
 {
-    return (d_token == other.d_token &&
-            d_serverNameIndication == other.d_serverNameIndication &&
-            d_serverNameVerification == other.d_serverNameVerification &&
+    return (d_token == other.d_token && d_serverName == other.d_serverName &&
+            d_validation == other.d_validation &&
             d_deadline == other.d_deadline && d_recurse == other.d_recurse);
 }
 
@@ -41,19 +40,19 @@ bool UpgradeOptions::less(const UpgradeOptions& other) const
         return false;
     }
 
-    if (d_serverNameIndication < other.d_serverNameIndication) {
+    if (d_serverName < other.d_serverName) {
         return true;
     }
 
-    if (other.d_serverNameIndication < d_serverNameIndication) {
+    if (other.d_serverName < d_serverName) {
         return false;
     }
 
-    if (d_serverNameVerification < other.d_serverNameVerification) {
+    if (d_validation < other.d_validation) {
         return true;
     }
 
-    if (other.d_serverNameVerification < d_serverNameVerification) {
+    if (other.d_validation < d_validation) {
         return false;
     }
 
@@ -79,18 +78,12 @@ bsl::ostream& UpgradeOptions::print(bsl::ostream& stream,
         printer.printAttribute("token", d_token);
     }
 
-    if (!d_serverNameIndication.isNull()) {
-        printer.printAttribute("serverNameIndication", d_serverNameIndication);
+    if (!d_serverName.isNull()) {
+        printer.printAttribute("serverName", d_serverName);
     }
 
-    if (!d_serverNameVerification.isNull()) {
-        printer.printAttribute("serverNameVerification",
-                               d_serverNameVerification);
-    }
-
-    if (!d_trustSelfSignedCertificates.isNull()) {
-        printer.printAttribute("trustSelfSignedCertificates",
-                               d_trustSelfSignedCertificates);
+    if (!d_validation.isNull()) {
+        printer.printAttribute("validation", d_validation);
     }
 
     if (!d_deadline.isNull()) {

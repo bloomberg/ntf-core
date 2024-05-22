@@ -25,6 +25,7 @@ BSLS_IDENT("$Id: $")
 #include <ntca_encryptionresourcedescriptor.h>
 #include <ntca_encryptionresourceoptions.h>
 #include <ntca_encryptionrole.h>
+#include <ntca_encryptionvalidation.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 #include <bdlb_nullablevalue.h>
@@ -67,6 +68,9 @@ namespace ntca {
 /// Flag that determines whether the peer's certificate is verified as signed
 /// by a trusted issuer.
 ///
+/// @li @b validation:
+/// The peer certificate validation requirements and allowances.
+///
 /// @li @b resources:
 /// The resources containing the private key, certificate, and trusted
 /// certificate authorities.
@@ -75,62 +79,41 @@ namespace ntca {
 /// The directory containing files of encoded certificates for each trusted
 /// certificate authority.
 ///
-/// @li @b serverNameIndication:
-/// The server name with which the connection is upgraded into a secure
-/// connection. This name may be, but is not restricted to, a subject
-/// alternative name attribute of the peer's certificate.
-///
-/// @li @b serverNameVerification:
-/// The name that must be present in the certificate offered by the server,
-/// either in the subject common name, or as one of the subject's alternative
-/// names.
-///
-/// @li @b certificateValidationCallback:
-/// The callback to be invoked to perform additional, user-defined validation
-/// of the peer's certificate. Note that most common validation is
-/// automatically performed by the encryption driver implementation.
-///
-/// @li @b trustSelfSignedCertificates:
-/// Trust all end-user self-signed certificates.
-///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
 /// @ingroup module_ntci_encryption
 class EncryptionOptions
 {
-    typedef bdlb::NullableValue<ntca::EncryptionCertificateValidationCallback>
+    typedef bdlb::NullableValue<ntca::EncryptionCertificateValidator>
         ValidationCallback;
 
-    ntca::EncryptionMethod::Value         d_minMethod;
-    ntca::EncryptionMethod::Value         d_maxMethod;
-    ntca::EncryptionAuthentication::Value d_authentication;
-    ntca::EncryptionResourceVector        d_resourceVector;
-    bdlb::NullableValue<bsl::string>      d_authorityDirectory;
-    bdlb::NullableValue<bsl::string>      d_cipherSpec;
-    bdlb::NullableValue<bsl::string>      d_serverNameIndication;
-    bdlb::NullableValue<bsl::string>      d_serverNameVerification;
-    ValidationCallback                    d_certificateValidationCallback;
-    bdlb::NullableValue<bool>             d_trustSelfSignedCertificates;
+    ntca::EncryptionMethod::Value                   d_minMethod;
+    ntca::EncryptionMethod::Value                   d_maxMethod;
+    ntca::EncryptionAuthentication::Value           d_authentication;
+    bdlb::NullableValue<ntca::EncryptionValidation> d_validation;
+    ntca::EncryptionResourceVector                  d_resourceVector;
+    bdlb::NullableValue<bsl::string>                d_authorityDirectory;
+    bdlb::NullableValue<bsl::string>                d_cipherSpec;
 
   public:
-    /// Create new encryption server options.  Optionally specify a
-    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
-    /// currently installed default allocator is used.
-    explicit EncryptionOptions(bslma::Allocator* basicAllocator = 0);
-
-    /// Create new encryption server options having the same value as the
-    /// specified 'original' object.  Optionally specify a 'basicAllocator'
+    /// Create new encryption options.  Optionally specify a 'basicAllocator'
     /// used to supply memory. If 'basicAllocator' is 0, the currently
     /// installed default allocator is used.
+    explicit EncryptionOptions(bslma::Allocator* basicAllocator = 0);
+
+    /// Create new encryption options having the same value as the specified
+    /// 'original' object.  Optionally specify a 'basicAllocator' used to
+    /// supply memory. If 'basicAllocator' is 0, the currently installed
+    /// default allocator is used.
     EncryptionOptions(const EncryptionOptions& original,
                       bslma::Allocator*        basicAllocator = 0);
 
     /// Destroy this object.
     ~EncryptionOptions();
 
-    /// Assign the value of the specified 'other' object to this object.
-    /// Return a reference to this modifiable object.
+    /// Assign the value of the specified 'other' object to this object. Return
+    /// a reference to this modifiable object.
     EncryptionOptions& operator=(const EncryptionOptions& other);
 
     /// Reset the value of this object to its value upon default construction.
@@ -150,6 +133,10 @@ class EncryptionOptions
     /// Set the peer authentication to the specified 'authentication'.
     void setAuthentication(
         ntca::EncryptionAuthentication::Value authentication);
+
+    /// Set the peer certificate validation requirements and allowances to the
+    /// specified 'validation'.
+    void setValidation(const ntca::EncryptionValidation& validation);
 
     /// Set the directory from which to load trusted certificate authorities to
     /// the specified 'authorityDirectory'.
@@ -313,75 +300,6 @@ class EncryptionOptions
         const bsl::string&                     resourcePath,
         const ntca::EncryptionResourceOptions& resourceOptions);
 
-    /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const bsl::string& value);
-
-    /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::Endpoint& value);
-
-    /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::IpEndpoint& value);
-
-    /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::IpAddress& value);
-
-    /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::Ipv4Address& value);
-
-    /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::Ipv6Address& value);
-
-    /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::LocalName& value);
-
-    /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::Host& value);
-
-    /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::DomainName& value);
-
-    /// Set the server name indication to the specified 'value'.
-    void setServerNameIndication(const ntsa::Uri& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const bsl::string& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::Endpoint& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::IpEndpoint& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::IpAddress& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::Ipv4Address& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::Ipv6Address& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::LocalName& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::Host& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::DomainName& value);
-
-    /// Set the server name verification to the specified 'value'.
-    void setServerNameVerification(const ntsa::Uri& value);
-
-    /// Set the specified 'callback' to be invoked to perform user-defined
-    /// validation of the peer's certificate.
-    void setCertificateValidationCallback(
-        const ntca::EncryptionCertificateValidationCallback& callback);
-
-    /// Set the flag that indicates all self-signed end-user certificates are
-    /// trusted to the specified 'value'.
-    void setTrustSelfSignedCertificates(bool value);
-
     /// Return the minimum permitted encryption method, inclusive.
     ntca::EncryptionMethod::Value minMethod() const;
 
@@ -394,27 +312,15 @@ class EncryptionOptions
     /// Return the peer authentication.
     ntca::EncryptionAuthentication::Value authentication() const;
 
+    /// Return the peer certificate validation requirements and allowances.
+    const bdlb::NullableValue<ntca::EncryptionValidation>& validation() const;
+
     /// Return the directory path to the directory containing the
     /// certificates of additional trusted authorities.
     const bdlb::NullableValue<bsl::string>& authorityDirectory() const;
 
     /// Return the resources.
     const ntca::EncryptionResourceVector& resources() const;
-
-    /// Return the server name indication.
-    const bdlb::NullableValue<bsl::string>& serverNameIndication() const;
-
-    /// Return the server name verification.
-    const bdlb::NullableValue<bsl::string>& serverNameVerification() const;
-
-    /// Return the callback to be invoked to perform user-defined validation of
-    /// the peer's certificate.
-    const bdlb::NullableValue<ntca::EncryptionCertificateValidationCallback>&
-    certificateValidationCallback() const;
-
-    /// Return the flag that indicates all self-signed end-user certificates
-    /// are trusted.
-    const bdlb::NullableValue<bool>& trustSelfSignedCertificates() const;
 
     /// Format this object to the specified output 'stream' at the
     /// optionally specified indentation 'level' and return a reference to
