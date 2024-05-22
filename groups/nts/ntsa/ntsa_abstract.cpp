@@ -4058,19 +4058,6 @@ void AbstractObjectIdentifier::append(const bsl::uint64_t* data,
     d_data.insert(d_data.end(), data, data + size);
 }
 
-// MRM
-#if 0
-void AbstractObjectIdentifier::setByteAt(bsl::size_t index, bsl::uint64_t value)
-{
-    if (index >= d_data.size()) {
-        d_data.resize(index + 1);
-    }
-
-    BSLS_ASSERT_OPT(index < d_data.size());
-    d_data[index] = value;
-}
-#endif
-
 bsl::uint64_t AbstractObjectIdentifier::get(bsl::size_t index) const
 {
     if (index < d_data.size()) {

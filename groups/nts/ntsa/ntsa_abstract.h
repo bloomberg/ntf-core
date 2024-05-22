@@ -1509,12 +1509,6 @@ class AbstractObjectIdentifier
     /// Append the specified 'data' having the specified 'size'.
     void append(const bsl::uint64_t* data, bsl::size_t size);
 
-// MRM
-#if 0
-    /// Set the data at the specified 'index' to the specified 'value'.
-    void setByteAt(bsl::size_t index, bsl::uint64_t value);
-#endif
-
     /// Return the data at the specified 'index'.
     bsl::uint64_t get(bsl::size_t index) const;
 

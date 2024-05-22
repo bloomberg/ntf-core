@@ -1814,6 +1814,31 @@ EncryptionDriver::~EncryptionDriver()
 }
 
 ntsa::Error EncryptionDriver::generateKey(
+        ntca::EncryptionKey*                  result,
+        const ntca::EncryptionKeyOptions&     options,
+        bslma::Allocator*                     basicAllocator) 
+{
+    ntsa::Error error;
+
+    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
+
+    bsl::shared_ptr<ntcd::EncryptionKey> key;
+    key.createInplace(allocator);
+
+    error = key->generate(options);
+    if (error) {
+        return error;
+    }
+
+    error = key->unwrap(result);
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionDriver::generateKey(
     bsl::shared_ptr<ntci::EncryptionKey>* result,
     const ntca::EncryptionKeyOptions&     options,
     bslma::Allocator*                     basicAllocator)
@@ -1866,6 +1891,42 @@ ntsa::Error EncryptionDriver::decodeKey(
 }
 
 ntsa::Error EncryptionDriver::generateCertificate(
+    ntca::EncryptionCertificate*                  result,
+    const ntsa::DistinguishedName&                subjectIdentity,
+    const ntca::EncryptionKey&                    subjectPrivateKey,
+    const ntca::EncryptionCertificateOptions&     options,
+    bslma::Allocator*                             basicAllocator) 
+{
+    NTCCFG_WARNING_UNUSED(result);
+    NTCCFG_WARNING_UNUSED(subjectIdentity);
+    NTCCFG_WARNING_UNUSED(subjectPrivateKey);
+    NTCCFG_WARNING_UNUSED(options);
+    NTCCFG_WARNING_UNUSED(basicAllocator);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error EncryptionDriver::generateCertificate(
+    ntca::EncryptionCertificate*              result,
+    const ntsa::DistinguishedName&            subjectIdentity,
+    const ntca::EncryptionKey&                subjectPrivateKey,
+    const ntca::EncryptionCertificate&        issuerCertificate,
+    const ntca::EncryptionKey&                issuerPrivateKey,
+    const ntca::EncryptionCertificateOptions& options,
+    bslma::Allocator*                         basicAllocator) 
+{
+    NTCCFG_WARNING_UNUSED(result);
+    NTCCFG_WARNING_UNUSED(subjectIdentity);
+    NTCCFG_WARNING_UNUSED(subjectPrivateKey);
+    NTCCFG_WARNING_UNUSED(issuerCertificate);
+    NTCCFG_WARNING_UNUSED(issuerPrivateKey);
+    NTCCFG_WARNING_UNUSED(options);
+    NTCCFG_WARNING_UNUSED(basicAllocator);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error EncryptionDriver::generateCertificate(
     bsl::shared_ptr<ntci::EncryptionCertificate>* result,
     const ntsa::DistinguishedName&                subjectIdentity,
     const bsl::shared_ptr<ntci::EncryptionKey>&   subjectPrivateKey,
@@ -1891,6 +1952,9 @@ ntsa::Error EncryptionDriver::generateCertificate(
     error = certificate->generate(subjectIdentity,
                                   concreteSubjectPrivateKey,
                                   options);
+    if (error) {
+        return error;
+    }
 
     *result = certificate;
 

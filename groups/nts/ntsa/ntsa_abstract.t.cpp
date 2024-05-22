@@ -1406,27 +1406,6 @@ NTSCFG_TEST_CASE(14)
             dataVector.push_back(EncodingData(k_DER, sizeof k_DER, -11927552));
         }
 
-#if 0
-        {
-            // CONSTRUCTED { INTEGER(9223372036854775807) }
-            const bsl::uint8_t k_DER[] = {
-                0x30, 0x0b, 0x02, 0x09, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc0
-            };
-
-            dataVector.push_back(EncodingData(k_DER, sizeof k_DER, LLONG_MAX));
-        }
-
-
-        {
-            // CONSTRUCTED { INTEGER(-9223372036854775808) }
-            const bsl::uint8_t k_DER[] = {
-                0x30, 0x0b, 0x02, 0x09, 0xff, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x40
-            };
-
-            dataVector.push_back(EncodingData(k_DER, sizeof k_DER, LLONG_MIN));
-        }
-#endif
-
         for (bsl::size_t i = 0; i < dataVector.size(); ++i) {
             const EncodingData& data = dataVector[i];
 
@@ -1622,27 +1601,6 @@ NTSCFG_TEST_CASE(15)
             dataVector.push_back(
                 EncodingData(k_DER, sizeof k_DER, "-11927552"));
         }
-
-#if 0
-        {
-            // CONSTRUCTED { INTEGER(9223372036854775807) }
-            const bsl::uint8_t k_DER[] = {
-                0x30, 0x0b, 0x02, 0x09, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc0
-            };
-
-            dataVector.push_back(EncodingData(k_DER, sizeof k_DER, "9223372036854775807"));
-        }
-
-
-        {
-            // CONSTRUCTED { INTEGER(-9223372036854775808) }
-            const bsl::uint8_t k_DER[] = {
-                0x30, 0x0b, 0x02, 0x09, 0xff, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x40
-            };
-
-            dataVector.push_back(EncodingData(k_DER, sizeof k_DER, "-9223372036854775808"));
-        }
-#endif
 
         for (bsl::size_t i = 0; i < dataVector.size(); ++i) {
             const EncodingData& data = dataVector[i];
