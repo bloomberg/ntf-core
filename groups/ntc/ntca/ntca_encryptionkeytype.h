@@ -21,7 +21,6 @@ BSLS_IDENT("$Id: $")
 
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
-#include <ntsa_abstract.h>
 
 namespace BloombergLP {
 namespace ntca {
@@ -62,24 +61,11 @@ struct EncryptionKeyType {
     /// name corresponding to the specified enumeration 'value'.
     static const char* toString(Value value);
 
-    /// Load into the specified 'result' the object identifier corresponding
-    /// to the specified 'value'.
-    static void toObjectIdentifier(ntsa::AbstractObjectIdentifier* result, 
-                                   Value                           value);
-
     /// Load into the specified 'result' the enumerator matching the
     /// specified 'string'.  Return 0 on success, and a non-zero value with
     /// no effect on 'result' otherwise (i.e., 'string' does not match any
     /// enumerator).
     static int fromString(Value* result, const bslstl::StringRef& string);
-
-    /// Load into the specified 'result' the enumerator matching the specified
-    /// object 'identifier'. Return 0 on success, and a non-zero value with
-    /// no effect on 'result' otherwise (i.e., 'identifier' does not match any
-    /// enumerator).
-    static int fromObjectIdentifier(
-        Value*                                result, 
-        const ntsa::AbstractObjectIdentifier& identifier);
 
     /// Load into the specified 'result' the enumerator matching the
     /// specified 'number'.  Return 0 on success, and a non-zero value with

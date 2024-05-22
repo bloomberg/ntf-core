@@ -56,6 +56,7 @@ BSLS_IDENT("$Id: $")
 #include <ntca_encryptionkeyoptions.h>
 #include <ntca_encryptionkeytype.h>
 #include <ntca_encryptionmethod.h>
+#include <ntca_encryptionoptions.h>
 #include <ntca_encryptionresource.h>
 #include <ntca_encryptionresourcedescriptor.h>
 #include <ntca_encryptionresourceoptions.h>
@@ -63,7 +64,7 @@ BSLS_IDENT("$Id: $")
 #include <ntca_encryptionrole.h>
 #include <ntca_encryptionsecret.h>
 #include <ntca_encryptionserveroptions.h>
-#include <ntca_encryptionstorage.h>
+#include <ntca_encryptionvalidation.h>
 #include <ntca_errorcontext.h>
 #include <ntca_errorevent.h>
 #include <ntca_erroreventtype.h>
@@ -202,6 +203,7 @@ BSLS_IDENT("$Id: $")
 #include <ntci_listenersocketsession.h>
 #include <ntci_log.h>
 #include <ntci_monitorable.h>
+#include <ntci_mutex.h>
 #include <ntci_proactor.h>
 #include <ntci_proactorfactory.h>
 #include <ntci_proactormetrics.h>

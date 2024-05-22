@@ -5881,11 +5881,11 @@ class EncryptionCertificateUtil
                         const ntsa::Uri& certified);
 };
 
-/// Define a type alias for a function invoked to perform user-defined 
-/// validation of the specified 'certificate'. Return true if the certificate 
+/// Define a type alias for a function invoked to perform user-defined
+/// validation of the specified 'certificate'. Return true if the certificate
 /// is valid, and false otherwise.
-typedef bsl::function<bool (const ntca::EncryptionCertificate& certificate)> 
-EncryptionCertificateValidator;
+typedef bsl::function<bool(const ntca::EncryptionCertificate& certificate)>
+    EncryptionCertificateValidator;
 
 }  // close package namespace
 }  // close enterprise namespace

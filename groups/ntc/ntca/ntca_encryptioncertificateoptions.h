@@ -22,9 +22,9 @@ BSLS_IDENT("$Id: $")
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 #include <ntsa_endpoint.h>
+#include <ntsa_host.h>
 #include <ntsa_ipaddress.h>
 #include <ntsa_localname.h>
-#include <ntsa_host.h>
 #include <ntsa_uri.h>
 #include <bdlt_datetimetz.h>
 #include <bsl_iosfwd.h>

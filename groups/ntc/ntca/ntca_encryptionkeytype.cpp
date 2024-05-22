@@ -83,54 +83,6 @@ int EncryptionKeyType::fromString(EncryptionKeyType::Value* result,
     return -1;
 }
 
-int EncryptionKeyType::fromObjectIdentifier(
-        Value*                                result, 
-        const ntsa::AbstractObjectIdentifier& identifier)
-{
-    // MRM
-    #if 0
-    if (identifier.equals(0)) {
-        *result = e_DSA;
-        return 0;
-    }
-
-    if (identifier.equals(0)) {
-        *result = e_RSA;
-        return 0;
-    }
-    #endif
-
-    if (identifier.equals(1, 2, 840, 10045, 3, 1, 7)) {
-        *result = e_NIST_P256;
-        return 0;
-    }
-
-    if (identifier.equals(1, 3, 132, 0, 34)) {
-        *result = e_NIST_P384;
-        return 0;
-    }
-
-    if (identifier.equals(1, 3, 132, 0, 35)) {
-        *result = e_NIST_P521;
-        return 0;
-    }
-
-    // MRM
-    #if 0
-    if (identifier.equals(0)) {
-        *result = e_ED25519;
-        return 0;
-    }
-
-    if (identifier.equals(0)) {
-        *result = e_ED448;
-        return 0;
-    }
-    #endif
-
-    return -1;
-}
-
 const char* EncryptionKeyType::toString(EncryptionKeyType::Value value)
 {
     switch (value) {
@@ -159,43 +111,6 @@ const char* EncryptionKeyType::toString(EncryptionKeyType::Value value)
 
     BSLS_ASSERT(!"invalid enumerator");
     return 0;
-}
-
-void EncryptionKeyType::toObjectIdentifier(
-    ntsa::AbstractObjectIdentifier* result, 
-    Value                           value)
-{
-    result->reset();
-
-    // MRM
-#if 0
-    if (value == e_DSA) {
-        result->set(0);
-    }
-    else if (value == e_RSA) {
-        result->set(0);
-    }
-#endif
-    
-    if (value == e_NIST_P256) {
-        result->set(1, 2, 840, 10045, 3, 1, 7);
-    }
-    else if (value == e_NIST_P384) {
-        result->set(1, 3, 132, 0, 34);
-    }
-    else if (value == e_NIST_P521) {
-        result->set(1, 3, 132, 0, 35);
-    }
-
-    // MRM
-#if 0
-    else if (value == e_ED25519) {
-        result->set(0);
-    }
-    else if (value == e_ED448) {
-        result->set(0);
-    }
-#endif
 }
 
 bsl::ostream& EncryptionKeyType::print(bsl::ostream&            stream,
