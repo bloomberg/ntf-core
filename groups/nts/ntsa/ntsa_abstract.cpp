@@ -785,7 +785,7 @@ ntsa::Error AbstractSyntaxEncoderFrame::encodeValue(
 
     const bsl::uint64_t vx = (v0 * 40) + v1;
 
-    error = this->writeContent(vx);
+    error = this->writeContent(static_cast<bsl::uint8_t>(vx));
     if (error) {
         return error;
     }
@@ -5363,7 +5363,7 @@ void AbstractIntegerRepresentation::assign(bsl::uint64_t value)
         bsl::uint64_t place  = remaining % radix;
         remaining           /= radix;
 
-        this->push(place);
+        this->push(static_cast<Block>(place));
     }
 }
 
@@ -5567,7 +5567,7 @@ void AbstractIntegerRepresentation::add(
             carry = false;
         }
 
-        sum->push(temp);
+        sum->push(static_cast<Block>(temp));
     }
 
     if (carry) {
@@ -5633,7 +5633,7 @@ void AbstractIntegerRepresentation::subtract(
             borrow = false;
         }
 
-        difference->push(temp);
+        difference->push(static_cast<Block>(temp));
     }
 
     difference->normalize();
@@ -5704,7 +5704,7 @@ void AbstractIntegerRepresentation::multiply(
                     bsl::uint64_t(u.get(i)) * bsl::uint64_t(v.get(j)) +
                     w->get(i + j) + k;
 
-                w->set(i + j, t % b);
+                w->set(i + j, static_cast<Block>(t % b));
                 k = t / b;
 
                 BSLS_ASSERT_OPT(k < b);
@@ -5717,7 +5717,7 @@ void AbstractIntegerRepresentation::multiply(
                     continue;
                 }
                 else {
-                    w->set(j + m, k);
+                    w->set(j + m, static_cast<Block>(k));
                     break;
                 }
             }
@@ -5812,11 +5812,11 @@ void AbstractIntegerRepresentation::divide(
         bsl::uint64_t k = 0;
 
         for (bsl::size_t j = m - 1; j < m; --j) {
-            q.set(j, (k * b + u.get(j)) / v.get(0));
+            q.set(j, static_cast<Block>((k * b + u.get(j)) / v.get(0)));
             k = (k * b + u.get(j)) - q.get(j) * v.get(0);
         }
 
-        r.set(0, k);
+        r.set(0, static_cast<Block>(k));
         q.normalize();
         r.normalize();
 
@@ -5935,6 +5935,9 @@ bool AbstractIntegerRepresentation::parse(
             else if (*it == 'x' || *it == 'X') {
                 base = 16;
                 ++it;
+                if (it == et) {
+                    return false;
+                }
             }
             else {
                 return false;
