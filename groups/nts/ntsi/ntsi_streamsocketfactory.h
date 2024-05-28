@@ -43,7 +43,7 @@ class StreamSocketFactory
     /// to supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
     virtual bsl::shared_ptr<ntsi::StreamSocket> createStreamSocket(
-                                     bslma::Allocator* basicAllocator = 0) = 0;
+        bslma::Allocator* basicAllocator = 0) = 0;
 };
 
 }  // close package namespace

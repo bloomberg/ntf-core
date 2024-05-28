@@ -266,22 +266,22 @@ class Event
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
-    char                                  d_message[64];
+    char d_message[64];
 #if defined(BSLS_PLATFORM_OS_LINUX) || defined(BSLS_PLATFORM_OS_DARWIN)
-    char                                  d_address[192];
+    char d_address[192];
 #elif defined(BSLS_PLATFORM_OS_SOLARIS)
-    char                                  d_address[256];
+    char d_address[256];
 #elif defined(BSLS_PLATFORM_OS_AIX)
-    char                                  d_address[2048];
+    char d_address[2048];
 #else
 #error Not implemented
 #endif
-    char                                  d_control[256];
-    char                                  d_buffers[1024 * 16];
+    char d_control[256];
+    char d_buffers[1024 * 16];
 
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
 
-    char                                  d_address[192];
+    char d_address[192];
 
 #else
 #error Not implemented
@@ -463,8 +463,7 @@ class EventPool : public bdlma::Factory<ntcs::Event>
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
 template <typename TYPE>
-NTCCFG_INLINE
-TYPE* Event::message()
+NTCCFG_INLINE TYPE* Event::message()
 {
     BSLMF_ASSERT(sizeof(d_message) >= sizeof(TYPE));
     BSLS_ASSERT_OPT(bsls::AlignmentUtil::is8ByteAligned(d_message));
@@ -473,8 +472,7 @@ TYPE* Event::message()
 }
 
 template <typename TYPE>
-NTCCFG_INLINE
-TYPE* Event::buffers(bsl::size_t* maxBuffers)
+NTCCFG_INLINE TYPE* Event::buffers(bsl::size_t* maxBuffers)
 {
     BSLMF_ASSERT(sizeof(d_buffers) >= sizeof(TYPE));
     BSLMF_ASSERT(sizeof(d_buffers) % sizeof(TYPE) == 0);
@@ -486,8 +484,7 @@ TYPE* Event::buffers(bsl::size_t* maxBuffers)
 #endif
 
 template <typename TYPE>
-NTCCFG_INLINE
-TYPE* Event::address()
+NTCCFG_INLINE TYPE* Event::address()
 {
     BSLMF_ASSERT(sizeof(d_address) >= sizeof(TYPE));
     BSLS_ASSERT_OPT(bsls::AlignmentUtil::is8ByteAligned(d_address));
@@ -496,8 +493,7 @@ TYPE* Event::address()
 }
 
 template <typename TYPE>
-NTCCFG_INLINE
-TYPE* Event::indicator()
+NTCCFG_INLINE TYPE* Event::indicator()
 {
     BSLMF_ASSERT(sizeof(TYPE) == 4);
     BSLMF_ASSERT(sizeof(d_numBytesIndicated) == 4);

@@ -54,8 +54,8 @@ namespace ntsa {
 /// be null. The default value is false.
 ///
 /// @li @b wantForeignHandles:
-/// The flag to indicate that any socket handles sent by the peer should also 
-/// be received and included in the resulting receive context. The default 
+/// The flag to indicate that any socket handles sent by the peer should also
+/// be received and included in the resulting receive context. The default
 /// value is false.
 ///
 /// @li @b maxBytes:
@@ -94,7 +94,7 @@ namespace ntsa {
 /// @ingroup module_ntsa_operation
 class ReceiveOptions
 {
-    /// The indexes of bits in the options data member that correspond to 
+    /// The indexes of bits in the options data member that correspond to
     /// flags set by the user.
     enum Flag {
         /// Do not receive the remote endpoint of the peer.
@@ -154,7 +154,7 @@ class ReceiveOptions
     void showForeignHandles();
 
     /// Set the flag which indicates that any socket handles sent by the peer
-    /// socket handles should also be received and included in the resulting 
+    /// socket handles should also be received and included in the resulting
     /// receive context.
     void hideForeignHandles();
 
@@ -173,7 +173,7 @@ class ReceiveOptions
     bool wantTimestamp() const;
 
     /// Return true if any socket handles sent by the peer should be included
-    /// in the resulting receive context, otherwise return false. 
+    /// in the resulting receive context, otherwise return false.
     bool wantForeignHandles() const;
 
     // Return true if either timestamps or foreign handles should be included
@@ -287,8 +287,7 @@ void ReceiveOptions::reset()
 NTSCFG_INLINE
 void ReceiveOptions::showEndpoint()
 {
-    d_options =
-        bdlb::BitUtil::withBitCleared(d_options, k_OMIT_ENDPOINT);
+    d_options = bdlb::BitUtil::withBitCleared(d_options, k_OMIT_ENDPOINT);
 }
 
 NTSCFG_INLINE
@@ -300,15 +299,13 @@ void ReceiveOptions::hideEndpoint()
 NTSCFG_INLINE
 void ReceiveOptions::showTimestamp()
 {
-    d_options =
-        bdlb::BitUtil::withBitSet(d_options, k_INCLUDE_TIMESTAMP);
+    d_options = bdlb::BitUtil::withBitSet(d_options, k_INCLUDE_TIMESTAMP);
 }
 
 NTSCFG_INLINE
 void ReceiveOptions::hideTimestamp()
 {
-    d_options =
-        bdlb::BitUtil::withBitCleared(d_options, k_INCLUDE_TIMESTAMP);
+    d_options = bdlb::BitUtil::withBitCleared(d_options, k_INCLUDE_TIMESTAMP);
 }
 
 NTSCFG_INLINE
@@ -358,7 +355,8 @@ bool ReceiveOptions::wantForeignHandles() const
 NTSCFG_INLINE
 bool ReceiveOptions::wantMetaData() const
 {
-    return (d_options & ((1 << k_INCLUDE_TIMESTAMP) | (1 << k_INCLUDE_FOREIGN_HANDLES))) != 0;
+    return (d_options & ((1 << k_INCLUDE_TIMESTAMP) |
+                         (1 << k_INCLUDE_FOREIGN_HANDLES))) != 0;
 }
 
 NTSCFG_INLINE

@@ -26,7 +26,7 @@ BSLS_IDENT_RCSID(ntccfg_platform_cpp, "$Id$ $CSID$")
 #if defined(BSLS_PLATFORM_OS_UNIX)
 #include <errno.h>
 #include <unistd.h>
-extern char **environ;
+extern char** environ;
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
 #include <direct.h>
 #include <windows.h>
@@ -97,7 +97,7 @@ int Platform::setEnvironmentVariable(const bsl::string& name,
 int Platform::getEnvironmentVariable(bsl::string*       result,
                                      const bsl::string& name)
 {
-    const char *value = ::getenv(name.c_str());
+    const char* value = ::getenv(name.c_str());
     if (value == 0) {
         return ENOENT;
     }

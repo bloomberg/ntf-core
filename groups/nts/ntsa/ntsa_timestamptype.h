@@ -38,21 +38,21 @@ struct TimestampType {
         /// The timestamp type is undefined.
         e_UNDEFINED = 0,
 
-        /// The timestamp measured at the time when the data enters the 
+        /// The timestamp measured at the time when the data enters the
         /// packet scheduler. The delta between such a timestamp and the time
         /// immediately before the data is enqueued to the send buffer is the
         /// time spent processing the data required by transport protocol.
-        e_SCHEDULED    = 1,
+        e_SCHEDULED = 1,
 
         /// The timestamp measured at the time when the data leaves the
-        /// operating system and is enqueue in the network device for 
+        /// operating system and is enqueue in the network device for
         /// transmission. The delta between such a timestamp and the scheduled
         /// timestamp is the time spending processing the data independant of
         /// the transport protocol.
         e_SENT = 2,
 
         /// The timestamp measured at the time when the ackowledgement of the
-        /// outgoing data has been received from the peer, for positive 
+        /// outgoing data has been received from the peer, for positive
         /// acknowledgement transport protocols such as TCP.
         e_ACKNOWLEDGED = 3
     };

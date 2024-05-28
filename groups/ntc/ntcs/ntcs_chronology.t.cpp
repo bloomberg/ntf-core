@@ -3024,9 +3024,9 @@ NTCCFG_TEST_CASE(34)
         const int numProducers = (numThreads + 1) / 2;
         const int iterations   = numThreads * 100 * 1000;
 #else
-        const int numConsumers = 8;
-        const int numProducers = 8;
-        const int iterations   = 1000000;
+        const int numConsumers      = 8;
+        const int numProducers      = 8;
+        const int iterations        = 1000000;
 #endif
 
         ts.d_numOneShotTimersToConsume = iterations;
@@ -3141,9 +3141,9 @@ NTCCFG_TEST_CASE(36)
         const int numProducers = (numThreads + 1) / 2;
         const int iterations   = 1000 * 1000;
 #else
-        const int numConsumers = 8;
-        const int numProducers = 8;
-        const int iterations   = 1000000;
+        const int numConsumers      = 8;
+        const int numProducers      = 8;
+        const int iterations        = 1000000;
 #endif
 
         ts.d_numOneShotTimersToConsume = iterations;

@@ -72,10 +72,10 @@ BSLS_IDENT_RCSID(ntso_select_cpp, "$Id$ $CSID$")
 
 #if NTSO_SELECT_ENABLED
 
+#include <ntsa_interest.h>
 #include <ntsi_reactor.h>
 #include <ntsu_socketoptionutil.h>
 #include <ntsu_socketutil.h>
-#include <ntsa_interest.h>
 
 #include <bdlma_localsequentialallocator.h>
 #include <bdlt_currenttime.h>
@@ -207,9 +207,8 @@ class Select : public ntsi::Reactor
     /// specified absolute 'deadline', if any, elapses. Load into the specified
     /// 'result' the events that describe the sockets and their conditions.
     /// Return the error.
-    ntsa::Error wait(
-        ntsa::EventSet*                                result,
-        const bdlb::NullableValue<bsls::TimeInterval>& deadline)
+    ntsa::Error wait(ntsa::EventSet*                                result,
+                     const bdlb::NullableValue<bsls::TimeInterval>& deadline)
         BSLS_KEYWORD_OVERRIDE;
 };
 
@@ -436,7 +435,7 @@ ntsa::Error Select::wait(
     bsl::size_t maxDescriptor = d_maxHandle + 1;
 
     struct ::timeval* tvPtr = 0;
-    struct ::timeval tv;
+    struct ::timeval  tv;
 
     if (!timeout.isNull()) {
         const bsls::TimeInterval now = bdlt::CurrentTime::now();
@@ -445,8 +444,7 @@ ntsa::Error Select::wait(
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
             tv.tv_sec  = static_cast<time_t>(delta.seconds());
-            tv.tv_usec =
-                static_cast<suseconds_t>(delta.nanoseconds() / 1000);
+            tv.tv_usec = static_cast<suseconds_t>(delta.nanoseconds() / 1000);
 #else
             tv.tv_sec  = static_cast<long>(delta.seconds());
             tv.tv_usec = static_cast<long>(delta.nanoseconds() / 1000);
@@ -455,7 +453,7 @@ ntsa::Error Select::wait(
             NTSO_SELECT_LOG_WAIT_TIMED(delta.totalMilliseconds());
         }
         else {
-            tv.tv_sec = 0;
+            tv.tv_sec  = 0;
             tv.tv_usec = 0;
 
             NTSO_SELECT_LOG_WAIT_TIMED(0);
@@ -476,7 +474,7 @@ ntsa::Error Select::wait(
     if (NTSCFG_LIKELY(rc > 0)) {
         NTSO_SELECT_LOG_WAIT_RESULT(rc);
 
-        int numResults = rc;
+        int numResults          = rc;
         int numResultsRemaining = numResults;
 
         ntsa::InterestSet::const_iterator it = d_interestSet.begin();
@@ -558,13 +556,12 @@ ntsa::Error Select::wait(
                 error == ntsa::Error(ntsa::Error::e_NOT_SOCKET))
             {
                 typedef bsl::vector<ntsa::Handle> HandleVector;
-                HandleVector garbage;
+                HandleVector                      garbage;
 
                 {
                     ntsa::InterestSet::const_iterator it =
                         d_interestSet.begin();
-                    ntsa::InterestSet::const_iterator et =
-                        d_interestSet.end();
+                    ntsa::InterestSet::const_iterator et = d_interestSet.end();
 
                     for (; it != et; ++it) {
                         const ntsa::Interest interest = *it;

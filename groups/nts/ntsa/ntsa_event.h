@@ -25,10 +25,10 @@ BSLS_IDENT("$Id: $")
 #include <ntsscm_version.h>
 #include <bdlb_nullablevalue.h>
 #include <bslh_hash.h>
-#include <bsl_map.h>
-#include <bsl_set.h>
 #include <bsl_cstddef.h>
 #include <bsl_iosfwd.h>
+#include <bsl_map.h>
+#include <bsl_set.h>
 
 namespace BloombergLP {
 namespace ntsa {
@@ -55,7 +55,7 @@ struct EventType {
         /// The socket has an error.
         e_ERROR = 4,
 
-        /// The remote socket has shut down writing from its side of the 
+        /// The remote socket has shut down writing from its side of the
         /// connection.
         e_SHUTDOWN = 5,
 
@@ -188,7 +188,7 @@ class Event
     /// Return the flag indicating the socket is writable.
     bool isWritable() const;
 
-    /// Return the flag indicating the socket is exceptional. 
+    /// Return the flag indicating the socket is exceptional.
     bool isExceptional() const;
 
     /// Return the flag indicating an error has been detected for
@@ -283,13 +283,13 @@ class EventSet
     typedef bsl::map<ntsa::Handle, ntsa::Event> Map;
 
     Map               d_map;
-    bslma::Allocator *d_allocator_p;
+    bslma::Allocator* d_allocator_p;
 
   public:
     /// Define a type alias for an iterator over the modifiable elements in the
     /// set.
     typedef Iterator iterator;
-    
+
     /// Define a type alias for an iterator over the immutable elemtns in the
     /// set.
     typedef ConstIterator const_iterator;
@@ -316,14 +316,14 @@ class EventSet
     void clear();
 
     /// Allocate capacity to store at least the specified 'size' number of
-    /// events. 
+    /// events.
     void reserve(bsl::size_t size);
 
-    /// Unconditionally insert the specified 'event' into the set. 
+    /// Unconditionally insert the specified 'event' into the set.
     void overwrite(const ntsa::Event& event);
 
     /// Merge the specified 'event' with the existing event, if any, in the
-    /// set. 
+    /// set.
     void merge(const ntsa::Event& event);
 
     /// Set the flag indicating the specified 'socket' is readable.
@@ -361,7 +361,7 @@ class EventSet
 
     /// Load into the specified 'result' the event for the specified 'socket'.
     /// Return true if and event for the 'socket' is found, and false
-    /// otherwise.  
+    /// otherwise.
     bool find(ntsa::Event* result, ntsa::Handle socket) const;
 
     /// Return true if the event set contains the specified 'socket', otherwise
@@ -374,7 +374,7 @@ class EventSet
     /// Return the flag indicating the socket is writable.
     bool isWritable(ntsa::Handle socket) const;
 
-    /// Return the flag indicating the socket is exceptional. 
+    /// Return the flag indicating the socket is exceptional.
     bool isExceptional(ntsa::Handle socket) const;
 
     /// Return the flag indicating an error has been detected for
@@ -390,7 +390,7 @@ class EventSet
     /// Return the number of events in the set.
     bsl::size_t size() const;
 
-    /// Return true if there are no events in the set, otherwise return false. 
+    /// Return true if there are no events in the set, otherwise return false.
     bool empty() const;
 
     /// Return the iterator to the beginning of the non-modifiable interest
@@ -500,7 +500,7 @@ class EventSet::ConstIterator
     ~ConstIterator();
 
     /// Assign the value of the specified 'other' object to this object. Return
-    /// a reference to this modifiable object. 
+    /// a reference to this modifiable object.
     ConstIterator operator=(const ConstIterator& other);
 
     // Increment this iterator to alias the next buffer in the blob and
@@ -574,7 +574,7 @@ class EventSet::Iterator
     ~Iterator();
 
     /// Assign the value of the specified 'other' object to this object. Return
-    /// a reference to this modifiable object. 
+    /// a reference to this modifiable object.
     Iterator operator=(const Iterator& other);
 
     // Increment this iterator to alias the next buffer in the blob and
@@ -702,7 +702,7 @@ NTSCFG_INLINE
 void Event::setError(const ntsa::Error& error)
 {
     d_state |= (1 << EventType::e_ERROR);
-    d_error = error;
+    d_error  = error;
 }
 
 NTSCFG_INLINE
@@ -833,17 +833,15 @@ EventSet::ConstIterator::ConstIterator()
 }
 
 NTSCFG_INLINE
-EventSet::ConstIterator::ConstIterator(
-    const EventSet* eventSet, 
-    BaseIterator    baseIterator)
+EventSet::ConstIterator::ConstIterator(const EventSet* eventSet,
+                                       BaseIterator    baseIterator)
 : d_eventSet_p(eventSet)
 , d_baseIterator(baseIterator)
 {
 }
 
 NTSCFG_INLINE
-EventSet::ConstIterator::ConstIterator(
-        const EventSet::ConstIterator& original)
+EventSet::ConstIterator::ConstIterator(const EventSet::ConstIterator& original)
 : d_eventSet_p(original.d_eventSet_p)
 , d_baseIterator(original.d_baseIterator)
 {
@@ -855,12 +853,11 @@ EventSet::ConstIterator::~ConstIterator()
 }
 
 NTSCFG_INLINE
-EventSet::ConstIterator 
-EventSet::ConstIterator::operator=(
+EventSet::ConstIterator EventSet::ConstIterator::operator=(
     const EventSet::ConstIterator& other)
 {
     if (this != &other) {
-        d_eventSet_p  = other.d_eventSet_p;
+        d_eventSet_p   = other.d_eventSet_p;
         d_baseIterator = other.d_baseIterator;
     }
 
@@ -868,16 +865,16 @@ EventSet::ConstIterator::operator=(
 }
 
 NTSCFG_INLINE
-EventSet::ConstIterator& 
-EventSet::ConstIterator::operator++() BSLS_KEYWORD_NOEXCEPT
+EventSet::ConstIterator& EventSet::ConstIterator::operator++()
+    BSLS_KEYWORD_NOEXCEPT
 {
     ++d_baseIterator;
     return *this;
 }
 
 NTSCFG_INLINE
-EventSet::ConstIterator 
-EventSet::ConstIterator::operator++(int) BSLS_KEYWORD_NOEXCEPT
+EventSet::ConstIterator EventSet::ConstIterator::operator++(int)
+    BSLS_KEYWORD_NOEXCEPT
 {
     ConstIterator temp(*this);
     ++(*this);
@@ -885,8 +882,8 @@ EventSet::ConstIterator::operator++(int) BSLS_KEYWORD_NOEXCEPT
 }
 
 NTSCFG_INLINE
-const EventSet::ConstIterator::value_type& 
-EventSet::ConstIterator::operator*() const BSLS_KEYWORD_NOEXCEPT
+const EventSet::ConstIterator::value_type& EventSet::ConstIterator::operator*()
+    const BSLS_KEYWORD_NOEXCEPT
 {
     return d_baseIterator->second;
 }
@@ -895,7 +892,7 @@ NTSCFG_INLINE
 bool EventSet::ConstIterator::operator==(
     const EventSet::ConstIterator& other) const BSLS_KEYWORD_NOEXCEPT
 {
-    return (d_eventSet_p  == other.d_eventSet_p &&
+    return (d_eventSet_p == other.d_eventSet_p &&
             d_baseIterator == other.d_baseIterator);
 }
 
@@ -914,9 +911,7 @@ EventSet::Iterator::Iterator()
 }
 
 NTSCFG_INLINE
-EventSet::Iterator::Iterator(
-    EventSet*    eventSet, 
-    BaseIterator baseIterator)
+EventSet::Iterator::Iterator(EventSet* eventSet, BaseIterator baseIterator)
 : d_eventSet_p(eventSet)
 , d_baseIterator(baseIterator)
 {
@@ -939,7 +934,7 @@ EventSet::Iterator EventSet::Iterator::operator=(
     const EventSet::Iterator& other)
 {
     if (this != &other) {
-        d_eventSet_p = other.d_eventSet_p;
+        d_eventSet_p   = other.d_eventSet_p;
         d_baseIterator = other.d_baseIterator;
     }
 
@@ -947,16 +942,14 @@ EventSet::Iterator EventSet::Iterator::operator=(
 }
 
 NTSCFG_INLINE
-EventSet::Iterator& 
-EventSet::Iterator::operator++() BSLS_KEYWORD_NOEXCEPT
+EventSet::Iterator& EventSet::Iterator::operator++() BSLS_KEYWORD_NOEXCEPT
 {
     ++d_baseIterator;
     return *this;
 }
 
 NTSCFG_INLINE
-EventSet::Iterator 
-EventSet::Iterator::operator++(int) BSLS_KEYWORD_NOEXCEPT
+EventSet::Iterator EventSet::Iterator::operator++(int) BSLS_KEYWORD_NOEXCEPT
 {
     Iterator temp(*this);
     ++(*this);
@@ -964,30 +957,30 @@ EventSet::Iterator::operator++(int) BSLS_KEYWORD_NOEXCEPT
 }
 
 NTSCFG_INLINE
-EventSet::Iterator::value_type& 
-EventSet::Iterator::operator*() const BSLS_KEYWORD_NOEXCEPT
+EventSet::Iterator::value_type& EventSet::Iterator::operator*() const
+    BSLS_KEYWORD_NOEXCEPT
 {
     return d_baseIterator->second;
 }
 
 NTSCFG_INLINE
-EventSet::Iterator::operator 
-EventSet::ConstIterator() const BSLS_KEYWORD_NOEXCEPT
+EventSet::Iterator::operator EventSet::ConstIterator() const
+    BSLS_KEYWORD_NOEXCEPT
 {
     return EventSet::ConstIterator(d_eventSet_p, d_baseIterator);
 }
 
 NTSCFG_INLINE
-bool EventSet::Iterator::operator==(
-    const EventSet::Iterator& other) const BSLS_KEYWORD_NOEXCEPT
+bool EventSet::Iterator::operator==(const EventSet::Iterator& other) const
+    BSLS_KEYWORD_NOEXCEPT
 {
-    return (d_eventSet_p  == other.d_eventSet_p &&
+    return (d_eventSet_p == other.d_eventSet_p &&
             d_baseIterator == other.d_baseIterator);
 }
 
 NTSCFG_INLINE
-bool EventSet::Iterator::operator!=(
-    const EventSet::Iterator& other) const BSLS_KEYWORD_NOEXCEPT
+bool EventSet::Iterator::operator!=(const EventSet::Iterator& other) const
+    BSLS_KEYWORD_NOEXCEPT
 {
     return !this->operator==(other);
 }

@@ -46,7 +46,8 @@ NTSCFG_TEST_CASE(1)
 
         NTSCFG_TEST_TRUE(endpoint.isIp());
         NTSCFG_TEST_TRUE(endpoint.ip().host().isV4());
-        NTSCFG_TEST_EQ(endpoint.ip().host().v4(), ntsa::Ipv4Address::loopback());
+        NTSCFG_TEST_EQ(endpoint.ip().host().v4(),
+                       ntsa::Ipv4Address::loopback());
         NTSCFG_TEST_EQ(endpoint.ip().port(), 12345);
 
         {
@@ -64,7 +65,7 @@ NTSCFG_TEST_CASE(1)
 
     {
         ntsa::Ipv4Endpoint ipv4Endpoint(e);
-        ntsa::Endpoint endpoint(ipv4Endpoint);
+        ntsa::Endpoint     endpoint(ipv4Endpoint);
 
         NTSCFG_TEST_TRUE(endpoint.isIp());
         NTSCFG_TEST_TRUE(endpoint.ip().host().isV4());
@@ -149,7 +150,7 @@ NTSCFG_TEST_CASE(2)
         const ntsa::Ipv6ScopeId s = 1;
 
         ntsa::Ipv6Endpoint ipv6Endpoint(e);
-        ntsa::Endpoint endpoint(ipv6Endpoint);
+        ntsa::Endpoint     endpoint(ipv6Endpoint);
 
         ntsa::Ipv6Address loopbackAddress = ntsa::Ipv6Address::loopback();
         loopbackAddress.setScopeId(s);

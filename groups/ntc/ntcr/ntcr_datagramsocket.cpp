@@ -33,8 +33,8 @@ BSLS_IDENT_RCSID(ntcr_datagramsocket_cpp, "$Id$ $CSID$")
 #include <ntsa_receiveoptions.h>
 #include <ntsa_sendcontext.h>
 #include <ntsa_sendoptions.h>
-#include <ntsu_timestamputil.h>
 #include <ntsf_system.h>
+#include <ntsu_timestamputil.h>
 #include <bdlbb_blobutil.h>
 #include <bdlf_bind.h>
 #include <bdls_pathutil.h>
@@ -227,7 +227,7 @@ const bsl::size_t k_ZERO_COPY_NEVER = (bsl::size_t)(-1);
 // The default zero-copy threshold value if none is explicitly specified.
 const bsl::size_t k_ZERO_COPY_DEFAULT = k_ZERO_COPY_NEVER;
 
-} // close unnamed namespace
+}  // close unnamed namespace
 
 void DatagramSocket::processSocketReadable(const ntca::ReactorEvent& event)
 {
@@ -384,7 +384,7 @@ void DatagramSocket::processNotifications(
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
     typedef bsl::vector<ntsa::Notification>::const_iterator
-    NotificationIterator;
+        NotificationIterator;
 
     NotificationIterator it = notifications.notifications().begin();
     NotificationIterator et = notifications.notifications().end();
@@ -406,8 +406,8 @@ void DatagramSocket::processNotifications(
 }
 
 ntsa::Error DatagramSocket::privateTimestampOutgoingData(
-        const bsl::shared_ptr<DatagramSocket>& self,
-        bool                                   enable)
+    const bsl::shared_ptr<DatagramSocket>& self,
+    bool                                   enable)
 {
     NTCCFG_WARNING_UNUSED(self);
 
@@ -495,8 +495,8 @@ ntsa::Error DatagramSocket::privateTimestampOutgoingData(
 }
 
 ntsa::Error DatagramSocket::privateTimestampIncomingData(
-        const bsl::shared_ptr<DatagramSocket>& self,
-        bool                                   enable)
+    const bsl::shared_ptr<DatagramSocket>& self,
+    bool                                   enable)
 {
     NTCCFG_WARNING_UNUSED(self);
 
@@ -525,7 +525,7 @@ ntsa::Error DatagramSocket::privateTimestampIncomingData(
             if (error != ntsa::Error::e_NOT_IMPLEMENTED) {
                 NTCI_LOG_DEBUG("Failed to set socket option: "
                                "timestamp incoming data: %s",
-                                error.text().c_str());
+                               error.text().c_str());
             }
             return error;
         }
@@ -575,8 +575,8 @@ ntsa::Error DatagramSocket::privateTimestampIncomingData(
 }
 
 void DatagramSocket::privateTimestampUpdate(
-        const bsl::shared_ptr<DatagramSocket>& self,
-        const ntsa::Timestamp&                 timestamp)
+    const bsl::shared_ptr<DatagramSocket>& self,
+    const ntsa::Timestamp&                 timestamp)
 {
     NTCCFG_WARNING_UNUSED(self);
 
@@ -607,8 +607,8 @@ void DatagramSocket::privateTimestampUpdate(
 }
 
 ntsa::Error DatagramSocket::privateZeroCopyEngage(
-        const bsl::shared_ptr<DatagramSocket>& self,
-        bsl::size_t                            threshold)
+    const bsl::shared_ptr<DatagramSocket>& self,
+    bsl::size_t                            threshold)
 {
     NTCCFG_WARNING_UNUSED(self);
 
@@ -660,8 +660,8 @@ ntsa::Error DatagramSocket::privateZeroCopyEngage(
 }
 
 void DatagramSocket::privateZeroCopyUpdate(
-        const bsl::shared_ptr<DatagramSocket>& self,
-        const ntsa::ZeroCopy&                  zeroCopy)
+    const bsl::shared_ptr<DatagramSocket>& self,
+    const ntsa::ZeroCopy&                  zeroCopy)
 {
     NTCI_LOG_CONTEXT();
 
@@ -679,7 +679,7 @@ void DatagramSocket::privateZeroCopyUpdate(
     if (d_zeroCopyQueue.ready()) {
         while (true) {
             ntci::SendCallback callback;
-            bool found = d_zeroCopyQueue.pop(&callback);
+            bool               found = d_zeroCopyQueue.pop(&callback);
             if (!found) {
                 break;
             }
@@ -688,8 +688,12 @@ void DatagramSocket::privateZeroCopyUpdate(
                 ntca::SendEvent event;
                 event.setType(ntca::SendEventType::e_COMPLETE);
 
-                callback.dispatch(
-                    self, event, d_reactorStrand_sp, self, false, &d_mutex);
+                callback.dispatch(self,
+                                  event,
+                                  d_reactorStrand_sp,
+                                  self,
+                                  false,
+                                  &d_mutex);
             }
         }
     }
@@ -777,8 +781,12 @@ void DatagramSocket::processSendDeadlineTimer(
             sendEvent.setType(ntca::SendEventType::e_ERROR);
             sendEvent.setContext(sendContext);
 
-            callback.dispatch(
-                self, sendEvent, d_reactorStrand_sp, self, false, &d_mutex);
+            callback.dispatch(self,
+                              sendEvent,
+                              d_reactorStrand_sp,
+                              self,
+                              false,
+                              &d_mutex);
         }
     }
 }
@@ -1055,8 +1063,12 @@ ntsa::Error DatagramSocket::privateSocketWritableIteration(
             ntca::SendEvent sendEvent;
             sendEvent.setType(ntca::SendEventType::e_COMPLETE);
 
-            callback.dispatch(
-                self, sendEvent, d_reactorStrand_sp, self, false, &d_mutex);
+            callback.dispatch(self,
+                              sendEvent,
+                              d_reactorStrand_sp,
+                              self,
+                              false,
+                              &d_mutex);
         }
 
         if (d_sendQueue.authorizeLowWatermarkEvent()) {
@@ -1385,8 +1397,12 @@ void DatagramSocket::privateShutdownSequenceComplete(
             sendEvent.setType(ntca::SendEventType::e_ERROR);
             sendEvent.setContext(sendContext);
 
-            callbackVector[i].dispatch(
-                self, sendEvent, d_reactorStrand_sp, self, defer, &d_mutex);
+            callbackVector[i].dispatch(self,
+                                       sendEvent,
+                                       d_reactorStrand_sp,
+                                       self,
+                                       defer,
+                                       &d_mutex);
         }
 
         callbackVector.clear();
@@ -2501,17 +2517,19 @@ ntsa::Error DatagramSocket::privateOpen(
 
     if (d_options.timestampOutgoingData().has_value()) {
         this->privateTimestampOutgoingData(
-            self, d_options.timestampOutgoingData().value());
+            self,
+            d_options.timestampOutgoingData().value());
     }
 
     if (d_options.timestampIncomingData().has_value()) {
         this->privateTimestampIncomingData(
-            self, d_options.timestampIncomingData().value());
+            self,
+            d_options.timestampIncomingData().value());
     }
 
     if (d_options.zeroCopyThreshold().has_value()) {
-        this->privateZeroCopyEngage(
-            self, d_options.zeroCopyThreshold().value());
+        this->privateZeroCopyEngage(self,
+                                    d_options.zeroCopyThreshold().value());
     }
 
     ntcs::Dispatch::announceEstablished(d_manager_sp,
@@ -3206,13 +3224,12 @@ ntsa::Error DatagramSocket::send(const bdlbb::Blob&        data,
 
                 const bool defer = !options.recurse();
 
-                callback.dispatch(
-                    self,
-                    sendEvent,
-                    ntci::Strand::unknown(),
-                    self,
-                    defer,
-                    &d_mutex);
+                callback.dispatch(self,
+                                  sendEvent,
+                                  ntci::Strand::unknown(),
+                                  self,
+                                  defer,
+                                  &d_mutex);
             }
 
             return ntsa::Error();
@@ -3367,13 +3384,12 @@ ntsa::Error DatagramSocket::send(const ntsa::Data&         data,
 
                 const bool defer = !options.recurse();
 
-                callback.dispatch(
-                    self,
-                    sendEvent,
-                    ntci::Strand::unknown(),
-                    self,
-                    defer,
-                    &d_mutex);
+                callback.dispatch(self,
+                                  sendEvent,
+                                  ntci::Strand::unknown(),
+                                  self,
+                                  defer,
+                                  &d_mutex);
             }
 
             return ntsa::Error();
@@ -3896,7 +3912,7 @@ ntsa::Error DatagramSocket::deregisterSession()
 ntsa::Error DatagramSocket::setZeroCopyThreshold(bsl::size_t value)
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    bslmt::LockGuard<bslmt::Mutex>  lock(&d_mutex);
 
     return this->privateZeroCopyEngage(self, value);
 }
@@ -4366,8 +4382,12 @@ ntsa::Error DatagramSocket::cancel(const ntca::SendToken& token)
         sendEvent.setType(ntca::SendEventType::e_ERROR);
         sendEvent.setContext(sendContext);
 
-        callback.dispatch(
-            self, sendEvent, ntci::Strand::unknown(), self, true, &d_mutex);
+        callback.dispatch(self,
+                          sendEvent,
+                          ntci::Strand::unknown(),
+                          self,
+                          true,
+                          &d_mutex);
 
         return ntsa::Error();
     }

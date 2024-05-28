@@ -622,20 +622,18 @@ const bdlb::NullableValue<bsl::size_t>& InterfaceConfig::receiveTimeout() const
     return d_receiveTimeout;
 }
 
-const bdlb::NullableValue<bool>& InterfaceConfig::timestampOutgoingData()
-    const
+const bdlb::NullableValue<bool>& InterfaceConfig::timestampOutgoingData() const
 {
     return d_timestampOutgoingData;
 }
 
-const bdlb::NullableValue<bool>& InterfaceConfig::timestampIncomingData()
-    const
+const bdlb::NullableValue<bool>& InterfaceConfig::timestampIncomingData() const
 {
     return d_timestampIncomingData;
 }
 
-const bdlb::NullableValue<bsl::size_t>& 
-InterfaceConfig::zeroCopyThreshold() const
+const bdlb::NullableValue<bsl::size_t>& InterfaceConfig::zeroCopyThreshold()
+    const
 {
     return d_zeroCopyThreshold;
 }
@@ -792,45 +790,43 @@ bsl::ostream& InterfaceConfig::print(bsl::ostream& stream,
     }
 
     if (!d_acceptQueueLowWatermark.isNull()) {
-        printer.printAttribute(
-            "acceptQueueLowWatermark", d_acceptQueueLowWatermark);
+        printer.printAttribute("acceptQueueLowWatermark",
+                               d_acceptQueueLowWatermark);
     }
 
     if (!d_acceptQueueHighWatermark.isNull()) {
-        printer.printAttribute(
-            "acceptQueueHighWatermark", d_acceptQueueHighWatermark);
+        printer.printAttribute("acceptQueueHighWatermark",
+                               d_acceptQueueHighWatermark);
     }
 
     if (!d_readQueueLowWatermark.isNull()) {
-        printer.printAttribute(
-            "readQueueLowWatermark", d_readQueueLowWatermark);
+        printer.printAttribute("readQueueLowWatermark",
+                               d_readQueueLowWatermark);
     }
 
     if (!d_readQueueHighWatermark.isNull()) {
-        printer.printAttribute(
-            "readQueueHighWatermark", d_readQueueHighWatermark);
+        printer.printAttribute("readQueueHighWatermark",
+                               d_readQueueHighWatermark);
     }
 
     if (!d_writeQueueLowWatermark.isNull()) {
-        printer.printAttribute(
-            "writeQueueLowWatermark", d_writeQueueLowWatermark);
+        printer.printAttribute("writeQueueLowWatermark",
+                               d_writeQueueLowWatermark);
     }
 
     if (!d_writeQueueHighWatermark.isNull()) {
-        printer.printAttribute(
-            "writeQueueHighWatermark", d_writeQueueHighWatermark);
+        printer.printAttribute("writeQueueHighWatermark",
+                               d_writeQueueHighWatermark);
     }
 
     if (!d_minIncomingStreamTransferSize.isNull()) {
-        printer.printAttribute(
-            "minIncomingStreamTransferSize", 
-            d_minIncomingStreamTransferSize);
+        printer.printAttribute("minIncomingStreamTransferSize",
+                               d_minIncomingStreamTransferSize);
     }
 
     if (!d_maxIncomingStreamTransferSize.isNull()) {
-        printer.printAttribute(
-            "maxIncomingStreamTransferSize", 
-            d_maxIncomingStreamTransferSize);
+        printer.printAttribute("maxIncomingStreamTransferSize",
+                               d_maxIncomingStreamTransferSize);
     }
 
     if (!d_acceptGreedily.isNull()) {
@@ -854,13 +850,13 @@ bsl::ostream& InterfaceConfig::print(bsl::ostream& stream,
     }
 
     if (!d_sendBufferLowWatermark.isNull()) {
-        printer.printAttribute(
-            "sendBufferLowWatermark", d_sendBufferLowWatermark);
+        printer.printAttribute("sendBufferLowWatermark",
+                               d_sendBufferLowWatermark);
     }
 
     if (!d_receiveBufferLowWatermark.isNull()) {
-        printer.printAttribute(
-            "receiveBufferLowWatermark", d_receiveBufferLowWatermark);
+        printer.printAttribute("receiveBufferLowWatermark",
+                               d_receiveBufferLowWatermark);
     }
 
     if (!d_sendTimeout.isNull()) {
@@ -872,18 +868,17 @@ bsl::ostream& InterfaceConfig::print(bsl::ostream& stream,
     }
 
     if (!d_timestampOutgoingData.isNull()) {
-        printer.printAttribute(
-            "timestampOutgoingData", d_timestampOutgoingData);
+        printer.printAttribute("timestampOutgoingData",
+                               d_timestampOutgoingData);
     }
 
     if (!d_timestampIncomingData.isNull()) {
-        printer.printAttribute(
-            "timestampIncomingData", d_timestampIncomingData);
+        printer.printAttribute("timestampIncomingData",
+                               d_timestampIncomingData);
     }
 
     if (!d_zeroCopyThreshold.isNull()) {
-        printer.printAttribute(
-            "zeroCopyThreshold", d_zeroCopyThreshold);
+        printer.printAttribute("zeroCopyThreshold", d_zeroCopyThreshold);
     }
 
     if (!d_keepAlive.isNull()) {
@@ -907,8 +902,8 @@ bsl::ostream& InterfaceConfig::print(bsl::ostream& stream,
     }
 
     if (!d_leaveOutOfBandDataInline.isNull()) {
-        printer.printAttribute(
-            "leaveOutOfBandDataInline", d_leaveOutOfBandDataInline);
+        printer.printAttribute("leaveOutOfBandDataInline",
+                               d_leaveOutOfBandDataInline);
     }
 
     if (!d_lingerFlag.isNull()) {
@@ -948,8 +943,8 @@ bsl::ostream& InterfaceConfig::print(bsl::ostream& stream,
     }
 
     if (!d_driverMetricsPerWaiter.isNull()) {
-        printer.printAttribute(
-            "driverMetricsPerWaiter", d_driverMetricsPerWaiter);
+        printer.printAttribute("driverMetricsPerWaiter",
+                               d_driverMetricsPerWaiter);
     }
 
     if (!d_socketMetrics.isNull()) {
@@ -957,8 +952,8 @@ bsl::ostream& InterfaceConfig::print(bsl::ostream& stream,
     }
 
     if (!d_socketMetricsPerHandle.isNull()) {
-        printer.printAttribute(
-            "socketMetricsPerHandle", d_socketMetricsPerHandle);
+        printer.printAttribute("socketMetricsPerHandle",
+                               d_socketMetricsPerHandle);
     }
 
     if (!d_resolverEnabled.isNull()) {
@@ -973,8 +968,7 @@ bsl::ostream& InterfaceConfig::print(bsl::ostream& stream,
     return stream;
 }
 
-bsl::ostream& operator<<(bsl::ostream&          stream,
-                         const InterfaceConfig& object)
+bsl::ostream& operator<<(bsl::ostream& stream, const InterfaceConfig& object)
 {
     return object.print(stream, 0, -1);
 }

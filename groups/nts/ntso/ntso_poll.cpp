@@ -20,10 +20,10 @@ BSLS_IDENT_RCSID(ntso_poll_cpp, "$Id$ $CSID$")
 
 #if NTSO_POLL_ENABLED
 
+#include <ntsa_interest.h>
 #include <ntsi_reactor.h>
 #include <ntsu_socketoptionutil.h>
 #include <ntsu_socketutil.h>
-#include <ntsa_interest.h>
 
 #include <bdlma_localsequentialallocator.h>
 #include <bdlt_currenttime.h>
@@ -111,14 +111,14 @@ BSLS_IDENT_RCSID(ntso_poll_cpp, "$Id$ $CSID$")
                    ((((event).revents & POLLHUP) != 0) ? " POLLHUP" : ""),    \
                    ((((event).revents & POLLNVAL) != 0) ? " POLLNVAL" : ""))
 
-#define NTSO_POLL_LOG_ADD(handle)                                             \
-    BSLS_LOG_TRACE("Descriptor %d added", handle)
+#define NTSO_POLL_LOG_ADD(handle) BSLS_LOG_TRACE("Descriptor %d added", handle)
 
 #define NTSO_POLL_LOG_UPDATE(handle, interestSet)                             \
-    BSLS_LOG_TRACE("Descriptor %d updated [%s%s ]",                           \
-                   (handle),                                                  \
-                   (((interestSet).wantReadable((handle))) ? " POLLIN" : ""), \
-                   (((interestSet).wantWritable((handle))) ? " POLLOUT" : ""))
+    BSLS_LOG_TRACE(                                                           \
+        "Descriptor %d updated [%s%s ]",                                      \
+        (handle),                                                             \
+        (((interestSet).wantReadable((handle))) ? " POLLIN" : ""),            \
+        (((interestSet).wantWritable((handle))) ? " POLLOUT" : ""))
 
 #define NTSO_POLL_LOG_REMOVE(handle)                                          \
     BSLS_LOG_TRACE("Descriptor %d removed", handle)
@@ -194,9 +194,8 @@ class Poll : public ntsi::Reactor
     /// specified absolute 'deadline', if any, elapses. Load into the specified
     /// 'result' the events that describe the sockets and their conditions.
     /// Return the error.
-    ntsa::Error wait(
-        ntsa::EventSet*                                result,
-        const bdlb::NullableValue<bsls::TimeInterval>& deadline)
+    ntsa::Error wait(ntsa::EventSet*                                result,
+                     const bdlb::NullableValue<bsls::TimeInterval>& deadline)
         BSLS_KEYWORD_OVERRIDE;
 };
 
@@ -374,9 +373,8 @@ ntsa::Error Poll::hideWritable(ntsa::Handle socket)
     return ntsa::Error();
 }
 
-ntsa::Error Poll::wait(
-    ntsa::EventSet*                                result,
-    const bdlb::NullableValue<bsls::TimeInterval>& timeout)
+ntsa::Error Poll::wait(ntsa::EventSet*                                result,
+                       const bdlb::NullableValue<bsls::TimeInterval>& timeout)
 {
     int rc;
 
@@ -549,13 +547,12 @@ ntsa::Error Poll::wait(
                 error == ntsa::Error(ntsa::Error::e_NOT_SOCKET))
             {
                 typedef bsl::vector<ntsa::Handle> HandleVector;
-                HandleVector garbage;
+                HandleVector                      garbage;
 
                 {
                     ntsa::InterestSet::const_iterator it =
                         d_interestSet.begin();
-                    ntsa::InterestSet::const_iterator et =
-                        d_interestSet.end();
+                    ntsa::InterestSet::const_iterator et = d_interestSet.end();
 
                     for (; it != et; ++it) {
                         const ntsa::Interest interest = *it;

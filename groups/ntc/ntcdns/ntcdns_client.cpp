@@ -176,7 +176,6 @@
             << NTCI_LOG_STREAM_END;                                           \
     } while (false)
 
-
 // Some versions of GCC erroneously warn when 'timeToLive.value()' is
 // called even when protected by a check of '!timeToLive.isNull()'.
 #if defined(BSLS_PLATFORM_CMP_GNU)

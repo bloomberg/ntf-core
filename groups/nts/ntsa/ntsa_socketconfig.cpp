@@ -344,12 +344,12 @@ bsl::ostream& SocketConfig::print(bsl::ostream& stream,
     }
 
     if (!d_delayTransmission.isNull()) {
-        printer.printAttribute("delayTransmission", 
+        printer.printAttribute("delayTransmission",
                                d_delayTransmission.value());
     }
 
     if (!d_delayAcknowledgement.isNull()) {
-        printer.printAttribute("delayAcknowledgement", 
+        printer.printAttribute("delayAcknowledgement",
                                d_delayAcknowledgement.value());
     }
 
@@ -363,7 +363,7 @@ bsl::ostream& SocketConfig::print(bsl::ostream& stream,
     }
 
     if (!d_receiveBufferSize.isNull()) {
-        printer.printAttribute("receiveBufferSize", 
+        printer.printAttribute("receiveBufferSize",
                                d_receiveBufferSize.value());
     }
 
@@ -389,17 +389,17 @@ bsl::ostream& SocketConfig::print(bsl::ostream& stream,
     }
 
     if (!d_inlineOutOfBandData.isNull()) {
-        printer.printAttribute("inlineOutOfBandData", 
+        printer.printAttribute("inlineOutOfBandData",
                                d_inlineOutOfBandData.value());
     }
 
     if (!d_timestampIncomingData.isNull()) {
-        printer.printAttribute("timestampIncomingData", 
+        printer.printAttribute("timestampIncomingData",
                                d_timestampIncomingData.value());
     }
 
     if (!d_timestampOutgoingData.isNull()) {
-        printer.printAttribute("timestampOutgoingData", 
+        printer.printAttribute("timestampOutgoingData",
                                d_timestampOutgoingData.value());
     }
 

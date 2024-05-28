@@ -36,8 +36,7 @@ namespace ntsu {
 
 BSLMF_ASSERT(ZeroCopyUtil::e_SO_ZEROCOPY == static_cast<int>(SO_ZEROCOPY));
 
-BSLMF_ASSERT(ZeroCopyUtil::e_MSG_ZEROCOPY ==
-             static_cast<int>(MSG_ZEROCOPY));
+BSLMF_ASSERT(ZeroCopyUtil::e_MSG_ZEROCOPY == static_cast<int>(MSG_ZEROCOPY));
 
 BSLMF_ASSERT(ZeroCopyUtil::e_SO_EE_ORIGIN_ZEROCOPY ==
              static_cast<int>(SO_EE_ORIGIN_ZEROCOPY));

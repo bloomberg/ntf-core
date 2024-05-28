@@ -19,9 +19,9 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntsa_timestamptype.h>
 #include <ntscfg_platform.h>
 #include <ntsscm_version.h>
-#include <ntsa_timestamptype.h>
 #include <bslh_hash.h>
 #include <bsls_timeinterval.h>
 

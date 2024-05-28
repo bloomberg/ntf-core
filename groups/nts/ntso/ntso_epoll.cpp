@@ -20,10 +20,10 @@ BSLS_IDENT_RCSID(ntso_epoll_cpp, "$Id$ $CSID$")
 
 #if NTSO_EPOLL_ENABLED
 
+#include <ntsa_interest.h>
 #include <ntsi_reactor.h>
 #include <ntsu_socketoptionutil.h>
 #include <ntsu_socketutil.h>
-#include <ntsa_interest.h>
 
 #include <bdlma_localsequentialallocator.h>
 #include <bdlt_currenttime.h>
@@ -185,9 +185,8 @@ class Epoll : public ntsi::Reactor
     /// specified absolute 'deadline', if any, elapses. Load into the specified
     /// 'result' the events that describe the sockets and their conditions.
     /// Return the error.
-    ntsa::Error wait(
-        ntsa::EventSet*                                result,
-        const bdlb::NullableValue<bsls::TimeInterval>& deadline)
+    ntsa::Error wait(ntsa::EventSet*                                result,
+                     const bdlb::NullableValue<bsls::TimeInterval>& deadline)
         BSLS_KEYWORD_OVERRIDE;
 };
 
@@ -252,7 +251,7 @@ Epoll::~Epoll()
 ntsa::Error Epoll::attachSocket(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     error = d_interestSet.attach(socket);
     if (error) {
@@ -285,7 +284,7 @@ ntsa::Error Epoll::attachSocket(ntsa::Handle socket)
 ntsa::Error Epoll::detachSocket(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     error = d_interestSet.detach(socket);
     if (error) {
@@ -317,7 +316,7 @@ ntsa::Error Epoll::detachSocket(ntsa::Handle socket)
 ntsa::Error Epoll::showReadable(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     if (d_config.autoAttach().value()) {
         if (!d_interestSet.contains(socket)) {
@@ -357,7 +356,7 @@ ntsa::Error Epoll::showReadable(ntsa::Handle socket)
 ntsa::Error Epoll::showWritable(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     if (d_config.autoAttach().value()) {
         if (!d_interestSet.contains(socket)) {
@@ -397,7 +396,7 @@ ntsa::Error Epoll::showWritable(ntsa::Handle socket)
 ntsa::Error Epoll::hideReadable(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     ntsa::Interest interest;
     error = d_interestSet.hideReadable(&interest, socket);
@@ -437,7 +436,7 @@ ntsa::Error Epoll::hideReadable(ntsa::Handle socket)
 ntsa::Error Epoll::hideWritable(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     ntsa::Interest interest;
     error = d_interestSet.hideWritable(&interest, socket);
@@ -474,9 +473,8 @@ ntsa::Error Epoll::hideWritable(ntsa::Handle socket)
     return ntsa::Error();
 }
 
-ntsa::Error Epoll::wait(
-    ntsa::EventSet*                                result,
-    const bdlb::NullableValue<bsls::TimeInterval>& timeout)
+ntsa::Error Epoll::wait(ntsa::EventSet*                                result,
+                        const bdlb::NullableValue<bsls::TimeInterval>& timeout)
 {
     ntsa::Error error;
     int         rc;
@@ -538,9 +536,8 @@ ntsa::Error Epoll::wait(
 
             if ((e.events & EPOLLERR) != 0) {
                 ntsa::Error lastError;
-                error =
-                    ntsu::SocketOptionUtil::getLastError(&lastError,
-                                                         e.data.fd);
+                error = ntsu::SocketOptionUtil::getLastError(&lastError,
+                                                             e.data.fd);
                 if (!error && lastError) {
                     event.setError(lastError);
                 }

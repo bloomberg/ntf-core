@@ -30,10 +30,10 @@ NTSCFG_TEST_CASE(1)
         bsl::strcmp(NotificationType::toString(NotificationType::e_TIMESTAMP),
                     "TIMESTAMP"),
         0);
-    NTSCFG_TEST_EQ(bsl::strcmp(NotificationType::toString(
-                                   NotificationType::e_ZERO_COPY),
-                               "ZERO_COPY"),
-                   0);
+    NTSCFG_TEST_EQ(
+        bsl::strcmp(NotificationType::toString(NotificationType::e_ZERO_COPY),
+                    "ZERO_COPY"),
+        0);
 }
 
 NTSCFG_TEST_CASE(2)

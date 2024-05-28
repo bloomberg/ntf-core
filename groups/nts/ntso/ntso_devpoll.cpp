@@ -20,10 +20,10 @@ BSLS_IDENT_RCSID(ntso_devpoll_cpp, "$Id$ $CSID$")
 
 #if NTSO_DEVPOLL_ENABLED
 
+#include <ntsa_interest.h>
 #include <ntsi_reactor.h>
 #include <ntsu_socketoptionutil.h>
 #include <ntsu_socketutil.h>
-#include <ntsa_interest.h>
 
 #include <bdlma_localsequentialallocator.h>
 #include <bdlt_currenttime.h>
@@ -148,8 +148,7 @@ class Devpoll : public ntsi::Reactor
   private:
     /// Update the specified 'socket' to have the specified 'interset' in the
     /// device. Return the error.
-    ntsa::Error update(ntsa::Handle          socket,
-                       const ntsa::Interest& interest);
+    ntsa::Error update(ntsa::Handle socket, const ntsa::Interest& interest);
 
     /// Return the events that correspond to the specified 'interest'.
     static short specify(const ntsa::Interest& interest);
@@ -190,9 +189,8 @@ class Devpoll : public ntsi::Reactor
     /// specified absolute 'deadline', if any, elapses. Load into the specified
     /// 'result' the events that describe the sockets and their conditions.
     /// Return the error.
-    ntsa::Error wait(
-        ntsa::EventSet*                                result,
-        const bdlb::NullableValue<bsls::TimeInterval>& deadline)
+    ntsa::Error wait(ntsa::EventSet*                                result,
+                     const bdlb::NullableValue<bsls::TimeInterval>& deadline)
         BSLS_KEYWORD_OVERRIDE;
 };
 
@@ -282,7 +280,7 @@ Devpoll::~Devpoll()
 ntsa::Error Devpoll::attachSocket(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     error = d_interestSet.attach(socket);
     if (error) {
@@ -316,7 +314,7 @@ ntsa::Error Devpoll::attachSocket(ntsa::Handle socket)
 ntsa::Error Devpoll::detachSocket(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     error = d_interestSet.detach(socket);
     if (error) {
@@ -349,7 +347,7 @@ ntsa::Error Devpoll::detachSocket(ntsa::Handle socket)
 ntsa::Error Devpoll::showReadable(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     if (d_config.autoAttach().value()) {
         if (!d_interestSet.contains(socket)) {
@@ -379,7 +377,7 @@ ntsa::Error Devpoll::showReadable(ntsa::Handle socket)
 ntsa::Error Devpoll::showWritable(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     if (d_config.autoAttach().value()) {
         if (!d_interestSet.contains(socket)) {
@@ -409,7 +407,7 @@ ntsa::Error Devpoll::showWritable(ntsa::Handle socket)
 ntsa::Error Devpoll::hideReadable(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     ntsa::Interest interest;
     error = d_interestSet.hideReadable(&interest, socket);
@@ -439,7 +437,7 @@ ntsa::Error Devpoll::hideReadable(ntsa::Handle socket)
 ntsa::Error Devpoll::hideWritable(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     ntsa::Interest interest;
     error = d_interestSet.hideWritable(&interest, socket);
@@ -608,13 +606,12 @@ ntsa::Error Devpoll::wait(
                 error == ntsa::Error(ntsa::Error::e_NOT_SOCKET))
             {
                 typedef bsl::vector<ntsa::Handle> HandleVector;
-                HandleVector garbage;
+                HandleVector                      garbage;
 
                 {
                     ntsa::InterestSet::const_iterator it =
                         d_interestSet.begin();
-                    ntsa::InterestSet::const_iterator et =
-                        d_interestSet.end();
+                    ntsa::InterestSet::const_iterator et = d_interestSet.end();
 
                     for (; it != et; ++it) {
                         const ntsa::Interest interest = *it;

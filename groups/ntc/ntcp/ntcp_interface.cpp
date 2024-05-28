@@ -1031,6 +1031,77 @@ ntsa::Error Interface::createEncryptionServer(
                                                     basicAllocator);
 }
 
+ntsa::Error Interface::createEncryptionResource(
+    bsl::shared_ptr<ntci::EncryptionResource>* result,
+    bslma::Allocator*                          basicAllocator)
+{
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->createEncryptionResource(result, basicAllocator);
+}
+
+ntsa::Error Interface::generateCertificate(
+    ntca::EncryptionCertificate*                  result,
+    const ntsa::DistinguishedName&                subjectIdentity,
+    const ntca::EncryptionKey&                    subjectPrivateKey,
+    const ntca::EncryptionCertificateOptions&     options,
+    bslma::Allocator*                             basicAllocator) 
+{
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_CONTEXT_GUARD_OWNER(d_config.metricName().c_str());
+
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->generateCertificate(result,
+                                                 subjectIdentity,
+                                                 subjectPrivateKey,
+                                                 options,
+                                                 basicAllocator);
+}
+
+ntsa::Error Interface::generateCertificate(
+    ntca::EncryptionCertificate*              result,
+    const ntsa::DistinguishedName&            subjectIdentity,
+    const ntca::EncryptionKey&                subjectPrivateKey,
+    const ntca::EncryptionCertificate&        issuerCertificate,
+    const ntca::EncryptionKey&                issuerPrivateKey,
+    const ntca::EncryptionCertificateOptions& options,
+    bslma::Allocator*                         basicAllocator) 
+{
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_CONTEXT_GUARD_OWNER(d_config.metricName().c_str());
+
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->generateCertificate(result,
+                                                 subjectIdentity,
+                                                 subjectPrivateKey,
+                                                 issuerCertificate,
+                                                 issuerPrivateKey,
+                                                 options,
+                                                 basicAllocator);
+}
+
 ntsa::Error Interface::generateCertificate(
     bsl::shared_ptr<ntci::EncryptionCertificate>* result,
     const ntsa::DistinguishedName&                subjectIdentity,
@@ -1089,7 +1160,8 @@ ntsa::Error Interface::generateCertificate(
 
 ntsa::Error Interface::loadCertificate(
     bsl::shared_ptr<ntci::EncryptionCertificate>* result,
-    const bsl::string&                            filePath,
+    const bsl::string&                            path,
+    const ntca::EncryptionResourceOptions&        options,
     bslma::Allocator*                             basicAllocator)
 {
     ntsa::Error error;
@@ -1100,12 +1172,32 @@ ntsa::Error Interface::loadCertificate(
         return error;
     }
 
-    return encryptionDriver->loadCertificate(result, filePath, basicAllocator);
+    return encryptionDriver->loadCertificate(result,
+                                             path,
+                                             options,
+                                             basicAllocator);
+}
+
+ntsa::Error Interface::saveCertificate(
+    const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
+    const bsl::string&                                  path,
+    const ntca::EncryptionResourceOptions&              options)
+{
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->saveCertificate(certificate, path, options);
 }
 
 ntsa::Error Interface::encodeCertificate(
     bsl::streambuf*                                     destination,
-    const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate)
+    const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
+    const ntca::EncryptionResourceOptions&              options)
 {
     ntsa::Error error;
 
@@ -1115,57 +1207,15 @@ ntsa::Error Interface::encodeCertificate(
         return error;
     }
 
-    return encryptionDriver->encodeCertificate(destination, certificate);
-}
-
-ntsa::Error Interface::encodeCertificate(
-    bdlbb::Blob*                                        destination,
-    const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate)
-{
-    ntsa::Error error;
-
-    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
-    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
-    if (error) {
-        return error;
-    }
-
-    return encryptionDriver->encodeCertificate(destination, certificate);
-}
-
-ntsa::Error Interface::encodeCertificate(
-    bsl::string*                                        destination,
-    const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate)
-{
-    ntsa::Error error;
-
-    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
-    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
-    if (error) {
-        return error;
-    }
-
-    return encryptionDriver->encodeCertificate(destination, certificate);
-}
-
-ntsa::Error Interface::encodeCertificate(
-    bsl::vector<char>*                                  destination,
-    const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate)
-{
-    ntsa::Error error;
-
-    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
-    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
-    if (error) {
-        return error;
-    }
-
-    return encryptionDriver->encodeCertificate(destination, certificate);
+    return encryptionDriver->encodeCertificate(destination,
+                                               certificate,
+                                               options);
 }
 
 ntsa::Error Interface::decodeCertificate(
     bsl::shared_ptr<ntci::EncryptionCertificate>* result,
     bsl::streambuf*                               source,
+    const ntca::EncryptionResourceOptions&        options,
     bslma::Allocator*                             basicAllocator)
 {
     ntsa::Error error;
@@ -1176,14 +1226,21 @@ ntsa::Error Interface::decodeCertificate(
         return error;
     }
 
-    return encryptionDriver->decodeCertificate(result, source, basicAllocator);
+    return encryptionDriver->decodeCertificate(result,
+                                               source,
+                                               options,
+                                               basicAllocator);
 }
 
-ntsa::Error Interface::decodeCertificate(
-    bsl::shared_ptr<ntci::EncryptionCertificate>* result,
-    const bdlbb::Blob&                            source,
-    bslma::Allocator*                             basicAllocator)
+ntsa::Error Interface::generateKey(
+    ntca::EncryptionKey*                  result,
+    const ntca::EncryptionKeyOptions&     options,
+    bslma::Allocator*                     basicAllocator)
 {
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_CONTEXT_GUARD_OWNER(d_config.metricName().c_str());
+
     ntsa::Error error;
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
@@ -1192,39 +1249,7 @@ ntsa::Error Interface::decodeCertificate(
         return error;
     }
 
-    return encryptionDriver->decodeCertificate(result, source, basicAllocator);
-}
-
-ntsa::Error Interface::decodeCertificate(
-    bsl::shared_ptr<ntci::EncryptionCertificate>* result,
-    const bsl::string&                            source,
-    bslma::Allocator*                             basicAllocator)
-{
-    ntsa::Error error;
-
-    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
-    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
-    if (error) {
-        return error;
-    }
-
-    return encryptionDriver->decodeCertificate(result, source, basicAllocator);
-}
-
-ntsa::Error Interface::decodeCertificate(
-    bsl::shared_ptr<ntci::EncryptionCertificate>* result,
-    const bsl::vector<char>&                      source,
-    bslma::Allocator*                             basicAllocator)
-{
-    ntsa::Error error;
-
-    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
-    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
-    if (error) {
-        return error;
-    }
-
-    return encryptionDriver->decodeCertificate(result, source, basicAllocator);
+    return encryptionDriver->generateKey(result, options, basicAllocator);
 }
 
 ntsa::Error Interface::generateKey(
@@ -1247,8 +1272,9 @@ ntsa::Error Interface::generateKey(
     return encryptionDriver->generateKey(result, options, basicAllocator);
 }
 
-ntsa::Error Interface::loadKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
-                               const bsl::string&                    filePath,
+ntsa::Error Interface::loadKey(bsl::shared_ptr<ntci::EncryptionKey>*  result,
+                               const bsl::string&                     path,
+                               const ntca::EncryptionResourceOptions& options,
                                bslma::Allocator* basicAllocator)
 {
     ntsa::Error error;
@@ -1259,12 +1285,29 @@ ntsa::Error Interface::loadKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
         return error;
     }
 
-    return encryptionDriver->loadKey(result, filePath, basicAllocator);
+    return encryptionDriver->loadKey(result, path, options, basicAllocator);
+}
+
+ntsa::Error Interface::saveKey(
+    const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
+    const bsl::string&                          path,
+    const ntca::EncryptionResourceOptions&      options)
+{
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
+    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
+    if (error) {
+        return error;
+    }
+
+    return encryptionDriver->saveKey(privateKey, path, options);
 }
 
 ntsa::Error Interface::encodeKey(
     bsl::streambuf*                             destination,
-    const bsl::shared_ptr<ntci::EncryptionKey>& privateKey)
+    const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
+    const ntca::EncryptionResourceOptions&      options)
 {
     ntsa::Error error;
 
@@ -1274,12 +1317,14 @@ ntsa::Error Interface::encodeKey(
         return error;
     }
 
-    return encryptionDriver->encodeKey(destination, privateKey);
+    return encryptionDriver->encodeKey(destination, privateKey, options);
 }
 
-ntsa::Error Interface::encodeKey(
-    bdlbb::Blob*                                destination,
-    const bsl::shared_ptr<ntci::EncryptionKey>& privateKey)
+ntsa::Error Interface::decodeKey(
+    bsl::shared_ptr<ntci::EncryptionKey>*  result,
+    bsl::streambuf*                        source,
+    const ntca::EncryptionResourceOptions& options,
+    bslma::Allocator*                      basicAllocator)
 {
     ntsa::Error error;
 
@@ -1289,97 +1334,10 @@ ntsa::Error Interface::encodeKey(
         return error;
     }
 
-    return encryptionDriver->encodeKey(destination, privateKey);
-}
-
-ntsa::Error Interface::encodeKey(
-    bsl::string*                                destination,
-    const bsl::shared_ptr<ntci::EncryptionKey>& privateKey)
-{
-    ntsa::Error error;
-
-    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
-    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
-    if (error) {
-        return error;
-    }
-
-    return encryptionDriver->encodeKey(destination, privateKey);
-}
-
-ntsa::Error Interface::encodeKey(
-    bsl::vector<char>*                          destination,
-    const bsl::shared_ptr<ntci::EncryptionKey>& privateKey)
-{
-    ntsa::Error error;
-
-    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
-    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
-    if (error) {
-        return error;
-    }
-
-    return encryptionDriver->encodeKey(destination, privateKey);
-}
-
-ntsa::Error Interface::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
-                                 bsl::streambuf*                       source,
-                                 bslma::Allocator* basicAllocator)
-{
-    ntsa::Error error;
-
-    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
-    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
-    if (error) {
-        return error;
-    }
-
-    return encryptionDriver->decodeKey(result, source, basicAllocator);
-}
-
-ntsa::Error Interface::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
-                                 const bdlbb::Blob&                    source,
-                                 bslma::Allocator* basicAllocator)
-{
-    ntsa::Error error;
-
-    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
-    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
-    if (error) {
-        return error;
-    }
-
-    return encryptionDriver->decodeKey(result, source, basicAllocator);
-}
-
-ntsa::Error Interface::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
-                                 const bsl::string&                    source,
-                                 bslma::Allocator* basicAllocator)
-{
-    ntsa::Error error;
-
-    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
-    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
-    if (error) {
-        return error;
-    }
-
-    return encryptionDriver->decodeKey(result, source, basicAllocator);
-}
-
-ntsa::Error Interface::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
-                                 const bsl::vector<char>&              source,
-                                 bslma::Allocator* basicAllocator)
-{
-    ntsa::Error error;
-
-    bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
-    error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
-    if (error) {
-        return error;
-    }
-
-    return encryptionDriver->decodeKey(result, source, basicAllocator);
+    return encryptionDriver->decodeKey(result,
+                                       source,
+                                       options,
+                                       basicAllocator);
 }
 
 void Interface::execute(const Functor& functor)

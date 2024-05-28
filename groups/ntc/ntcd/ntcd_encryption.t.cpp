@@ -382,8 +382,9 @@ void cycleShutdown(const bsl::shared_ptr<ntcd::Encryption>& clientSession,
     }
 }
 
-void execute(const test::Parameters& parameters,
-             bslma::Allocator*       basicAllocator = 0)
+void execute(const test::Parameters&                        parameters,
+             const bsl::shared_ptr<ntcd::EncryptionDriver>& driver,
+             bslma::Allocator*                              basicAllocator = 0)
 {
     // Execute the test described by the specified 'parameters' using the
     // specified 'authorityCertificate' and 'authorityPrivateKey' for the
@@ -421,8 +422,11 @@ void execute(const test::Parameters& parameters,
 
     ntca::EncryptionKeyOptions authorityKeyOptions;
 
-    bsl::shared_ptr<ntcd::EncryptionKey> authorityKey =
-        ntcd::EncryptionKey::generate(authorityKeyOptions, allocator);
+    bsl::shared_ptr<ntcd::EncryptionKey> authorityKey;
+    authorityKey.createInplace(allocator);
+
+    error = authorityKey->generate(authorityKeyOptions);
+    NTCCFG_TEST_OK(error);
 
     ntca::EncryptionCertificateOptions authorityCertificateOptions;
     authorityCertificateOptions.setAuthority(true);
@@ -430,11 +434,13 @@ void execute(const test::Parameters& parameters,
     authorityCertificateOptions.setStartTime(startTime);
     authorityCertificateOptions.setExpirationTime(expirationTime);
 
-    bsl::shared_ptr<ntcd::EncryptionCertificate> authorityCertificate =
-        ntcd::EncryptionCertificate::generate(authorityIdentity,
-                                              authorityKey,
-                                              authorityCertificateOptions,
-                                              allocator);
+    bsl::shared_ptr<ntcd::EncryptionCertificate> authorityCertificate;
+    authorityCertificate.createInplace(allocator, allocator);
+
+    error = authorityCertificate->generate(authorityIdentity,
+                                           authorityKey,
+                                           authorityCertificateOptions);
+    NTCCFG_TEST_OK(error);
 
     // Create the client certificate and key.
 
@@ -443,8 +449,11 @@ void execute(const test::Parameters& parameters,
 
     ntca::EncryptionKeyOptions clientKeyOptions;
 
-    bsl::shared_ptr<ntcd::EncryptionKey> clientKey =
-        ntcd::EncryptionKey::generate(clientKeyOptions, allocator);
+    bsl::shared_ptr<ntcd::EncryptionKey> clientKey;
+    clientKey.createInplace(allocator);
+
+    error = clientKey->generate(clientKeyOptions);
+    NTCCFG_TEST_OK(error);
 
     ntca::EncryptionCertificateOptions clientCertificateOptions;
     clientCertificateOptions.setAuthority(false);
@@ -452,13 +461,15 @@ void execute(const test::Parameters& parameters,
     clientCertificateOptions.setStartTime(startTime);
     clientCertificateOptions.setExpirationTime(expirationTime);
 
-    bsl::shared_ptr<ntcd::EncryptionCertificate> clientCertificate =
-        ntcd::EncryptionCertificate::generate(clientIdentity,
-                                              clientKey,
-                                              authorityCertificate,
-                                              authorityKey,
-                                              clientCertificateOptions,
-                                              allocator);
+    bsl::shared_ptr<ntcd::EncryptionCertificate> clientCertificate;
+    clientCertificate.createInplace(allocator, allocator);
+
+    error = clientCertificate->generate(clientIdentity,
+                                        clientKey,
+                                        authorityCertificate,
+                                        authorityKey,
+                                        clientCertificateOptions);
+    NTCCFG_TEST_OK(error);
 
     // Create the server certificate and key.
 
@@ -467,8 +478,11 @@ void execute(const test::Parameters& parameters,
 
     ntca::EncryptionKeyOptions serverKeyOptions;
 
-    bsl::shared_ptr<ntcd::EncryptionKey> serverKey =
-        ntcd::EncryptionKey::generate(serverKeyOptions, allocator);
+    bsl::shared_ptr<ntcd::EncryptionKey> serverKey;
+    serverKey.createInplace(allocator);
+
+    error = serverKey->generate(serverKeyOptions);
+    NTCCFG_TEST_OK(error);
 
     ntca::EncryptionCertificateOptions serverCertificateOptions;
     serverCertificateOptions.setAuthority(false);
@@ -476,13 +490,15 @@ void execute(const test::Parameters& parameters,
     serverCertificateOptions.setStartTime(startTime);
     serverCertificateOptions.setExpirationTime(expirationTime);
 
-    bsl::shared_ptr<ntcd::EncryptionCertificate> serverCertificate =
-        ntcd::EncryptionCertificate::generate(serverIdentity,
-                                              serverKey,
-                                              authorityCertificate,
-                                              authorityKey,
-                                              serverCertificateOptions,
-                                              allocator);
+    bsl::shared_ptr<ntcd::EncryptionCertificate> serverCertificate;
+    serverCertificate.createInplace(allocator, allocator);
+
+    error = serverCertificate->generate(serverIdentity,
+                                        serverKey,
+                                        authorityCertificate,
+                                        authorityKey,
+                                        serverCertificateOptions);
+    NTCCFG_TEST_OK(error);
 
     // Create the client session.
 
@@ -704,24 +720,28 @@ NTCCFG_TEST_CASE(1)
     {
         NTCI_LOG_CONTEXT();
 
-        ntsa::Error       error;
-        bsl::vector<char> buffer;
+        ntsa::Error        error;
+        ntsa::StreamBuffer buffer(&ta);
 
-        bsl::shared_ptr<ntcd::EncryptionKey> key1 =
-            ntcd::EncryptionKey::generate(ntca::EncryptionKeyOptions(), &ta);
+        ntca::EncryptionKeyOptions      keyOptions;
+        ntca::EncryptionResourceOptions keyStorageOptions;
 
-        NTCCFG_TEST_TRUE(key1);
+        bsl::shared_ptr<ntcd::EncryptionKey> key1;
+        key1.createInplace(&ta);
+
+        error = key1->generate(keyOptions);
+        NTCCFG_TEST_OK(error);
 
         NTCI_LOG_STREAM_DEBUG << "Key1 = " << *key1 << NTCI_LOG_STREAM_END;
 
-        error = key1->encode(&buffer);
+        error = key1->encode(&buffer, keyStorageOptions);
         NTCCFG_TEST_OK(error);
 
         bsl::shared_ptr<ntcd::EncryptionKey> key2;
-        error = ntcd::EncryptionKey::decode(&key2, buffer, &ta);
-        NTCCFG_TEST_OK(error);
+        key2.createInplace(&ta);
 
-        NTCCFG_TEST_TRUE(key2);
+        error = key2->decode(&buffer, keyStorageOptions);
+        NTCCFG_TEST_OK(error);
 
         NTCI_LOG_STREAM_DEBUG << "Key2 = " << *key2 << NTCI_LOG_STREAM_END;
 
@@ -742,12 +762,19 @@ NTCCFG_TEST_CASE(2)
         ntsa::Error error;
         int         rc;
 
-        bsl::vector<char> buffer;
+        ntsa::StreamBuffer buffer(&ta);
 
-        bsl::shared_ptr<ntcd::EncryptionKey> key1 =
-            ntcd::EncryptionKey::generate(ntca::EncryptionKeyOptions(), &ta);
+        ntca::EncryptionKeyOptions      keyOptions;
+        ntca::EncryptionResourceOptions keyStorageOptions;
 
-        NTCCFG_TEST_TRUE(key1);
+        ntca::EncryptionCertificateOptions certificateOptions;
+        ntca::EncryptionResourceOptions    certificateStorageOptions;
+
+        bsl::shared_ptr<ntcd::EncryptionKey> key1;
+        key1.createInplace(&ta);
+
+        error = key1->generate(keyOptions);
+        NTCCFG_TEST_OK(error);
 
         ntsa::DistinguishedName identity1;
         identity1[ntsa::DistinguishedName::e_COMMON_NAME].addAttribute(
@@ -755,27 +782,23 @@ NTCCFG_TEST_CASE(2)
         identity1[ntsa::DistinguishedName::e_ORGANIZATION_NAME].addAttribute(
             "Bloomberg");
 
-        bsl::shared_ptr<ntcd::EncryptionCertificate> certificate1 =
-            ntcd::EncryptionCertificate::generate(
-                identity1,
-                key1,
-                ntca::EncryptionCertificateOptions(),
-                &ta);
+        bsl::shared_ptr<ntcd::EncryptionCertificate> certificate1;
+        certificate1.createInplace(&ta, &ta);
 
-        NTCCFG_TEST_TRUE(certificate1);
+        error = certificate1->generate(identity1, key1, certificateOptions);
+        NTCCFG_TEST_OK(error);
 
         NTCI_LOG_STREAM_DEBUG << "Certificate1 = " << *certificate1
                               << NTCI_LOG_STREAM_END;
 
-        error = certificate1->encode(&buffer);
+        error = certificate1->encode(&buffer, certificateStorageOptions);
         NTCCFG_TEST_OK(error);
 
         bsl::shared_ptr<ntcd::EncryptionCertificate> certificate2;
-        error =
-            ntcd::EncryptionCertificate::decode(&certificate2, buffer, &ta);
-        NTCCFG_TEST_OK(error);
+        certificate2.createInplace(&ta, &ta);
 
-        NTCCFG_TEST_TRUE(certificate2);
+        error = certificate2->decode(&buffer, certificateStorageOptions);
+        NTCCFG_TEST_OK(error);
 
         NTCI_LOG_STREAM_DEBUG << "Certificate2 = " << *certificate2
                               << NTCI_LOG_STREAM_END;
@@ -802,13 +825,16 @@ NTCCFG_TEST_CASE(3)
 
     ntccfg::TestAllocator ta;
     {
+        bsl::shared_ptr<ntcd::EncryptionDriver> driver;
+        driver.createInplace(&ta, &ta);
+
         test::Parameters parameters;
         parameters.d_bufferSize          = 32;
         parameters.d_clientRejectsServer = false;
         parameters.d_serverRejectsClient = false;
         parameters.d_success             = true;
 
-        test::execute(parameters, &ta);
+        test::execute(parameters, driver, &ta);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
@@ -820,13 +846,16 @@ NTCCFG_TEST_CASE(4)
 
     ntccfg::TestAllocator ta;
     {
+        bsl::shared_ptr<ntcd::EncryptionDriver> driver;
+        driver.createInplace(&ta, &ta);
+
         test::Parameters parameters;
         parameters.d_bufferSize          = 32;
         parameters.d_clientRejectsServer = true;
         parameters.d_serverRejectsClient = false;
         parameters.d_success             = false;
 
-        test::execute(parameters, &ta);
+        test::execute(parameters, driver, &ta);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
@@ -838,13 +867,16 @@ NTCCFG_TEST_CASE(5)
 
     ntccfg::TestAllocator ta;
     {
+        bsl::shared_ptr<ntcd::EncryptionDriver> driver;
+        driver.createInplace(&ta, &ta);
+
         test::Parameters parameters;
         parameters.d_bufferSize          = 32;
         parameters.d_clientRejectsServer = false;
         parameters.d_serverRejectsClient = true;
         parameters.d_success             = false;
 
-        test::execute(parameters, &ta);
+        test::execute(parameters, driver, &ta);
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }

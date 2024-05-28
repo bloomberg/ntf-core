@@ -735,7 +735,7 @@ int main(int argc, char** argv)
         test::verbose = true;
     }
 
-    typedef int (*TestFunction)(bslma::Allocator * allocator);
+    typedef int (*TestFunction)(bslma::Allocator* allocator);
 
     struct TestCaseEntry {
         TestFunction d_testFunction;

@@ -34,16 +34,16 @@ namespace ntsa {
 struct NotificationType {
   public:
     /// Provide an enumeration of the notification types.
-    enum Value { 
+    enum Value {
         /// The notification type is not defined.
-        e_UNDEFINED = 0, 
+        e_UNDEFINED = 0,
 
         /// The notification describes a timestamp for outgoing data.
-        e_TIMESTAMP = 1, 
+        e_TIMESTAMP = 1,
 
         /// The notification describes the completion of one or more zero-copy
         /// operations to enqueue data to the socket send buffer.
-        e_ZERO_COPY = 2 
+        e_ZERO_COPY = 2
     };
 
     /// Return the string representation exactly matching the enumerator

@@ -128,6 +128,11 @@ ntsa::Error decodeDistinguishedName(ntsa::DistinguishedName* result,
 
 }  // close unnamed namespace
 
+EncryptionKey::EncryptionKey()
+: d_value(0)
+{
+}
+
 EncryptionKey::EncryptionKey(bsl::uint32_t value)
 : d_value(value)
 {
@@ -137,93 +142,9 @@ EncryptionKey::~EncryptionKey()
 {
 }
 
-ntsa::Error EncryptionKey::encode(bsl::streambuf* destination) const
-{
-    {
-        bdlb::BigEndianUint32 bigEndianValue;
-        bigEndianValue = static_cast<unsigned int>(d_value);
-
-        if (sizeof bigEndianValue !=
-            destination->sputn(reinterpret_cast<const char*>(&bigEndianValue),
-                               sizeof bigEndianValue))
-        {
-            return ntsa::Error(ntsa::Error::e_INVALID);
-        }
-    }
-
-    return ntsa::Error();
-}
-
-ntsa::Error EncryptionKey::encode(bdlbb::Blob* destination) const
-{
-    ntsa::Error error;
-
-    bdlbb::OutBlobStreamBuf osb(destination);
-
-    error = this->encode(&osb);
-    if (error) {
-        return error;
-    }
-
-    osb.pubsync();
-    return ntsa::Error();
-}
-
-ntsa::Error EncryptionKey::encode(bsl::string* destination) const
-{
-    ntsa::Error error;
-
-    bsl::ostringstream oss;
-
-    error = this->encode(oss.rdbuf());
-    if (error) {
-        return error;
-    }
-
-    oss.flush();
-    *destination = oss.str();
-
-    return ntsa::Error();
-}
-
-ntsa::Error EncryptionKey::encode(bsl::vector<char>* destination) const
-{
-    ntsa::Error error;
-
-    bdlsb::MemOutStreamBuf osb;
-
-    error = this->encode(&osb);
-    if (error) {
-        return error;
-    }
-
-    osb.pubsync();
-
-    destination->clear();
-    destination->insert(destination->begin(),
-                        osb.data(),
-                        osb.data() + osb.length());
-
-    return ntsa::Error();
-}
-
-void* EncryptionKey::handle() const
-{
-    return const_cast<EncryptionKey*>(this);
-}
-
-bsl::uint32_t EncryptionKey::value() const
-{
-    return d_value;
-}
-
-bsl::shared_ptr<ntcd::EncryptionKey> EncryptionKey::generate(
-    const ntca::EncryptionKeyOptions& options,
-    bslma::Allocator*                 basicAllocator)
+ntsa::Error EncryptionKey::generate(const ntca::EncryptionKeyOptions& options)
 {
     NTCCFG_WARNING_UNUSED(options);
-
-    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
 
     bsl::uint32_t value = 0;
 
@@ -239,82 +160,65 @@ bsl::shared_ptr<ntcd::EncryptionKey> EncryptionKey::generate(
         s_seed = nextSeed;
     }
 
-    bsl::shared_ptr<ntcd::EncryptionKey> key;
-    key.createInplace(allocator, value);
+    d_value = value;
 
-    return key;
-}
-
-ntsa::Error EncryptionKey::decode(bsl::shared_ptr<ntcd::EncryptionKey>* result,
-                                  bsl::streambuf*                       source,
-                                  bslma::Allocator* basicAllocator)
-{
-    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
-
-    bsl::uint32_t value = 0;
-    {
-        bdlb::BigEndianUint32 bigEndianValue;
-
-        if (sizeof bigEndianValue !=
-            source->sgetn(reinterpret_cast<char*>(&bigEndianValue),
-                          sizeof bigEndianValue))
-        {
-            return ntsa::Error(ntsa::Error::e_INVALID);
-        }
-
-        value = static_cast<unsigned int>(bigEndianValue);
-    }
-
-    result->createInplace(allocator, value);
     return ntsa::Error();
 }
 
-ntsa::Error EncryptionKey::decode(bsl::shared_ptr<ntcd::EncryptionKey>* result,
-                                  const bdlbb::Blob&                    source,
-                                  bslma::Allocator* basicAllocator)
+ntsa::Error EncryptionKey::decode(
+    bsl::streambuf*                        source,
+    const ntca::EncryptionResourceOptions& options)
 {
-    bdlbb::InBlobStreamBuf isb(&source);
-    return ntcd::EncryptionKey::decode(result, &isb, basicAllocator);
-}
+    NTCCFG_WARNING_UNUSED(options);
 
-ntsa::Error EncryptionKey::decode(bsl::shared_ptr<ntcd::EncryptionKey>* result,
-                                  const bsl::string&                    source,
-                                  bslma::Allocator* basicAllocator)
-{
-    bsl::istringstream iss(source);
-    return ntcd::EncryptionKey::decode(result, iss.rdbuf(), basicAllocator);
-}
+    bdlb::BigEndianUint32 bigEndianValue;
 
-ntsa::Error EncryptionKey::decode(bsl::shared_ptr<ntcd::EncryptionKey>* result,
-                                  const bsl::vector<char>&              source,
-                                  bslma::Allocator* basicAllocator)
-{
-    if (source.empty()) {
+    if (sizeof bigEndianValue !=
+        source->sgetn(reinterpret_cast<char*>(&bigEndianValue),
+                      sizeof bigEndianValue))
+    {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    bdlsb::FixedMemInStreamBuf isb(&source.front(), source.size());
-    return ntcd::EncryptionKey::decode(result, &isb, basicAllocator);
+    d_value = static_cast<unsigned int>(bigEndianValue);
+
+    return ntsa::Error();
 }
 
-ntsa::Error EncryptionKey::load(bsl::shared_ptr<ntcd::EncryptionKey>* result,
-                                const bsl::string&                    filePath,
-                                bslma::Allocator* basicAllocator)
+ntsa::Error EncryptionKey::encode(
+    bsl::streambuf*                        destination,
+    const ntca::EncryptionResourceOptions& options) const
 {
-    ntsa::Error error;
+    NTCCFG_WARNING_UNUSED(options);
 
-    bsl::fstream fs(filePath.c_str(), bsl::ios_base::in);
-    if (!fs) {
-        return ntsa::Error::last();
+    int rc;
+
+    bdlb::BigEndianUint32 bigEndianValue;
+    bigEndianValue = static_cast<unsigned int>(d_value);
+
+    if (sizeof bigEndianValue !=
+        destination->sputn(reinterpret_cast<const char*>(&bigEndianValue),
+                           sizeof bigEndianValue))
+    {
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    error = ntcd::EncryptionKey::decode(result, fs.rdbuf(), basicAllocator);
-    if (error) {
-        return error;
+    rc = destination->pubsync();
+    if (rc != 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    fs.close();
     return ntsa::Error();
+}
+
+void* EncryptionKey::handle() const
+{
+    return const_cast<EncryptionKey*>(this);
+}
+
+bsl::uint32_t EncryptionKey::value() const
+{
+    return d_value;
 }
 
 // FREE OPERATORS
@@ -322,6 +226,15 @@ bsl::ostream& operator<<(bsl::ostream&              stream,
                          const ntcd::EncryptionKey& object)
 {
     return stream << "[ value = " << object.value() << " ]";
+}
+
+EncryptionCertificate::EncryptionCertificate(bslma::Allocator* basicAllocator)
+: d_subject(basicAllocator)
+, d_subjectKey_sp()
+, d_issuer(basicAllocator)
+, d_issuerKey_sp()
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
 }
 
 EncryptionCertificate::EncryptionCertificate(
@@ -354,19 +267,84 @@ EncryptionCertificate::~EncryptionCertificate()
 {
 }
 
-const ntsa::DistinguishedName& EncryptionCertificate::subject() const
+ntsa::Error EncryptionCertificate::generate(
+    const ntsa::DistinguishedName&              subjectIdentity,
+    const bsl::shared_ptr<ntcd::EncryptionKey>& subjectPrivateKey,
+    const ntca::EncryptionCertificateOptions&   options)
 {
-    return d_subject;
+    NTCCFG_WARNING_UNUSED(options);
+
+    d_subject       = subjectIdentity;
+    d_subjectKey_sp = subjectPrivateKey;
+
+    d_issuer       = subjectIdentity;
+    d_issuerKey_sp = subjectPrivateKey;
+
+    return ntsa::Error();
 }
 
-const ntsa::DistinguishedName& EncryptionCertificate::issuer() const
+ntsa::Error EncryptionCertificate::generate(
+    const ntsa::DistinguishedName&                      subjectIdentity,
+    const bsl::shared_ptr<ntcd::EncryptionKey>&         subjectPrivateKey,
+    const bsl::shared_ptr<ntcd::EncryptionCertificate>& issuerCertificate,
+    const bsl::shared_ptr<ntcd::EncryptionKey>&         issuerPrivateKey,
+    const ntca::EncryptionCertificateOptions&           options)
 {
-    return d_issuer;
+    NTCCFG_WARNING_UNUSED(options);
+
+    d_subject       = subjectIdentity;
+    d_subjectKey_sp = subjectPrivateKey;
+
+    d_issuer       = issuerCertificate->subject();
+    d_issuerKey_sp = issuerPrivateKey;
+
+    return ntsa::Error();
 }
 
-ntsa::Error EncryptionCertificate::encode(bsl::streambuf* destination) const
+ntsa::Error EncryptionCertificate::decode(
+    bsl::streambuf*                        source,
+    const ntca::EncryptionResourceOptions& options)
 {
-    ntsa::Error error;
+    NTCCFG_WARNING_UNUSED(options);
+
+    ntsa::Error                     error;
+    ntca::EncryptionResourceOptions keyStorageOptions;
+
+    error = decodeDistinguishedName(&d_subject, source);
+    if (error) {
+        return error;
+    }
+
+    d_subjectKey_sp.createInplace(d_allocator_p);
+    error = d_subjectKey_sp->decode(source, keyStorageOptions);
+    if (error) {
+        return error;
+    }
+
+    error = decodeDistinguishedName(&d_issuer, source);
+    if (error) {
+        return error;
+    }
+
+    d_issuerKey_sp.createInplace(d_allocator_p);
+    error = d_issuerKey_sp->decode(source, keyStorageOptions);
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionCertificate::encode(
+    bsl::streambuf*                        destination,
+    const ntca::EncryptionResourceOptions& options) const
+{
+    NTCCFG_WARNING_UNUSED(options);
+
+    int rc;
+
+    ntsa::Error                     error;
+    ntca::EncryptionResourceOptions keyStorageOptions;
 
     error = encodeDistinguishedName(destination, d_subject);
     if (error) {
@@ -377,7 +355,7 @@ ntsa::Error EncryptionCertificate::encode(bsl::streambuf* destination) const
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    error = d_subjectKey_sp->encode(destination);
+    error = d_subjectKey_sp->encode(destination, keyStorageOptions);
     if (error) {
         return error;
     }
@@ -391,63 +369,15 @@ ntsa::Error EncryptionCertificate::encode(bsl::streambuf* destination) const
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    error = d_issuerKey_sp->encode(destination);
+    error = d_issuerKey_sp->encode(destination, keyStorageOptions);
     if (error) {
         return error;
     }
 
-    return ntsa::Error();
-}
-
-ntsa::Error EncryptionCertificate::encode(bdlbb::Blob* destination) const
-{
-    ntsa::Error error;
-
-    bdlbb::OutBlobStreamBuf osb(destination);
-
-    error = this->encode(&osb);
-    if (error) {
-        return error;
+    rc = destination->pubsync();
+    if (rc != 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
-
-    osb.pubsync();
-    return ntsa::Error();
-}
-
-ntsa::Error EncryptionCertificate::encode(bsl::string* destination) const
-{
-    ntsa::Error error;
-
-    bsl::ostringstream oss;
-
-    error = this->encode(oss.rdbuf());
-    if (error) {
-        return error;
-    }
-
-    oss.flush();
-    *destination = oss.str();
-
-    return ntsa::Error();
-}
-
-ntsa::Error EncryptionCertificate::encode(bsl::vector<char>* destination) const
-{
-    ntsa::Error error;
-
-    bdlsb::MemOutStreamBuf osb;
-
-    error = this->encode(&osb);
-    if (error) {
-        return error;
-    }
-
-    osb.pubsync();
-
-    destination->clear();
-    destination->insert(destination->begin(),
-                        osb.data(),
-                        osb.data() + osb.length());
 
     return ntsa::Error();
 }
@@ -463,6 +393,16 @@ void* EncryptionCertificate::handle() const
     return const_cast<EncryptionCertificate*>(this);
 }
 
+const ntsa::DistinguishedName& EncryptionCertificate::subject() const
+{
+    return d_subject;
+}
+
+const ntsa::DistinguishedName& EncryptionCertificate::issuer() const
+{
+    return d_issuer;
+}
+
 const bsl::shared_ptr<ntcd::EncryptionKey>& EncryptionCertificate::subjectKey()
     const
 {
@@ -473,149 +413,6 @@ const bsl::shared_ptr<ntcd::EncryptionKey>& EncryptionCertificate::issuerKey()
     const
 {
     return d_issuerKey_sp;
-}
-
-bsl::shared_ptr<ntcd::EncryptionCertificate> EncryptionCertificate::generate(
-    const ntsa::DistinguishedName&              subjectIdentity,
-    const bsl::shared_ptr<ntcd::EncryptionKey>& subjectPrivateKey,
-    const ntca::EncryptionCertificateOptions&   options,
-    bslma::Allocator*                           basicAllocator)
-{
-    NTCCFG_WARNING_UNUSED(options);
-
-    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
-
-    bsl::shared_ptr<ntcd::EncryptionCertificate> certificate;
-    certificate.createInplace(allocator,
-                              subjectIdentity,
-                              subjectPrivateKey,
-                              allocator);
-
-    return certificate;
-}
-
-bsl::shared_ptr<ntcd::EncryptionCertificate> EncryptionCertificate::generate(
-    const ntsa::DistinguishedName&                      subjectIdentity,
-    const bsl::shared_ptr<ntcd::EncryptionKey>&         subjectPrivateKey,
-    const bsl::shared_ptr<ntcd::EncryptionCertificate>& issuerCertificate,
-    const bsl::shared_ptr<ntcd::EncryptionKey>&         issuerPrivateKey,
-    const ntca::EncryptionCertificateOptions&           options,
-    bslma::Allocator*                                   basicAllocator)
-{
-    NTCCFG_WARNING_UNUSED(options);
-
-    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
-
-    bsl::shared_ptr<ntcd::EncryptionCertificate> certificate;
-    certificate.createInplace(allocator,
-                              subjectIdentity,
-                              subjectPrivateKey,
-                              issuerCertificate->subject(),
-                              issuerPrivateKey,
-                              allocator);
-
-    return certificate;
-}
-
-ntsa::Error EncryptionCertificate::decode(
-    bsl::shared_ptr<ntcd::EncryptionCertificate>* result,
-    bsl::streambuf*                               source,
-    bslma::Allocator*                             basicAllocator)
-{
-    ntsa::Error error;
-
-    result->reset();
-
-    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
-
-    ntsa::DistinguishedName subject;
-    error = decodeDistinguishedName(&subject, source);
-    if (error) {
-        return error;
-    }
-
-    bsl::shared_ptr<ntcd::EncryptionKey> subjectKey;
-    error = ntcd::EncryptionKey::decode(&subjectKey, source, allocator);
-    if (error) {
-        return error;
-    }
-
-    ntsa::DistinguishedName issuer;
-    error = decodeDistinguishedName(&issuer, source);
-    if (error) {
-        return error;
-    }
-
-    bsl::shared_ptr<ntcd::EncryptionKey> issuerKey;
-    error = ntcd::EncryptionKey::decode(&issuerKey, source, allocator);
-    if (error) {
-        return error;
-    }
-
-    result->createInplace(allocator,
-                          subject,
-                          subjectKey,
-                          issuer,
-                          issuerKey,
-                          allocator);
-
-    return ntsa::Error();
-}
-
-ntsa::Error EncryptionCertificate::decode(
-    bsl::shared_ptr<ntcd::EncryptionCertificate>* result,
-    const bdlbb::Blob&                            source,
-    bslma::Allocator*                             basicAllocator)
-{
-    bdlbb::InBlobStreamBuf isb(&source);
-    return ntcd::EncryptionCertificate::decode(result, &isb, basicAllocator);
-}
-
-ntsa::Error EncryptionCertificate::decode(
-    bsl::shared_ptr<ntcd::EncryptionCertificate>* result,
-    const bsl::string&                            source,
-    bslma::Allocator*                             basicAllocator)
-{
-    bsl::istringstream iss(source);
-    return ntcd::EncryptionCertificate::decode(result,
-                                               iss.rdbuf(),
-                                               basicAllocator);
-}
-
-ntsa::Error EncryptionCertificate::decode(
-    bsl::shared_ptr<ntcd::EncryptionCertificate>* result,
-    const bsl::vector<char>&                      source,
-    bslma::Allocator*                             basicAllocator)
-{
-    if (source.empty()) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
-    bdlsb::FixedMemInStreamBuf isb(&source.front(), source.size());
-    return ntcd::EncryptionCertificate::decode(result, &isb, basicAllocator);
-}
-
-ntsa::Error EncryptionCertificate::load(
-    bsl::shared_ptr<ntcd::EncryptionCertificate>* result,
-    const bsl::string&                            filePath,
-    bslma::Allocator*                             basicAllocator)
-{
-    ntsa::Error error;
-
-    bsl::fstream fs(filePath.c_str(), bsl::ios_base::in);
-    if (!fs) {
-        return ntsa::Error::last();
-    }
-
-    error = ntcd::EncryptionCertificate::decode(result,
-                                                fs.rdbuf(),
-                                                basicAllocator);
-    if (error) {
-        return error;
-    }
-
-    fs.close();
-    return ntsa::Error();
 }
 
 ntsa::DistinguishedName EncryptionCertificate::distinguishedName(
@@ -899,9 +696,10 @@ ntsa::Error EncryptionHandshake::decode(bsl::streambuf* source)
         }
     }
 
-    error = ntcd::EncryptionCertificate::decode(&d_certificate_sp,
-                                                source,
-                                                d_allocator_p);
+    ntca::EncryptionResourceOptions certificateStorageOptions;
+
+    d_certificate_sp.createInplace(d_allocator_p, d_allocator_p);
+    error = d_certificate_sp->decode(source, certificateStorageOptions);
     if (error) {
         return error;
     }
@@ -929,7 +727,9 @@ ntsa::Error EncryptionHandshake::encode(bsl::streambuf* destination) const
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    error = d_certificate_sp->encode(destination);
+    ntca::EncryptionResourceOptions certificateStorageOptions;
+
+    error = d_certificate_sp->encode(destination, certificateStorageOptions);
     if (error) {
         return error;
     }
@@ -1865,6 +1665,10 @@ ntsa::Error EncryptionClient::createEncryption(
     bsl::shared_ptr<ntci::Encryption>* result,
     bslma::Allocator*                  basicAllocator)
 {
+    // MRM
+    NTCCFG_WARNING_UNUSED(result);
+    NTCCFG_WARNING_UNUSED(basicAllocator);
+#if 0
     ntsa::Error error;
 
     bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
@@ -1902,6 +1706,7 @@ ntsa::Error EncryptionClient::createEncryption(
                              allocator);
 
     *result = encryption;
+#endif
     return ntsa::Error();
 }
 
@@ -1953,6 +1758,10 @@ ntsa::Error EncryptionServer::createEncryption(
     bsl::shared_ptr<ntci::Encryption>* result,
     bslma::Allocator*                  basicAllocator)
 {
+    // MRM
+    NTCCFG_WARNING_UNUSED(result);
+    NTCCFG_WARNING_UNUSED(basicAllocator);
+#if 0
     ntsa::Error error;
 
     bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
@@ -1990,6 +1799,8 @@ ntsa::Error EncryptionServer::createEncryption(
                              allocator);
 
     *result = encryption;
+#endif
+
     return ntsa::Error();
 }
 
@@ -2003,119 +1814,74 @@ EncryptionDriver::~EncryptionDriver()
 }
 
 ntsa::Error EncryptionDriver::generateKey(
+        ntca::EncryptionKey*                  result,
+        const ntca::EncryptionKeyOptions&     options,
+        bslma::Allocator*                     basicAllocator) 
+{
+    ntsa::Error error;
+
+    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
+
+    bsl::shared_ptr<ntcd::EncryptionKey> key;
+    key.createInplace(allocator);
+
+    error = key->generate(options);
+    if (error) {
+        return error;
+    }
+
+    error = key->unwrap(result);
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error EncryptionDriver::generateKey(
     bsl::shared_ptr<ntci::EncryptionKey>* result,
     const ntca::EncryptionKeyOptions&     options,
     bslma::Allocator*                     basicAllocator)
 {
-    *result = ntcd::EncryptionKey::generate(options, basicAllocator);
-    return ntsa::Error();
-}
-
-ntsa::Error EncryptionDriver::loadKey(
-    bsl::shared_ptr<ntci::EncryptionKey>* result,
-    const bsl::string&                    filePath,
-    bslma::Allocator*                     basicAllocator)
-{
     ntsa::Error error;
 
+    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
+
     bsl::shared_ptr<ntcd::EncryptionKey> key;
-    error = ntcd::EncryptionKey::load(&key, filePath, basicAllocator);
+    key.createInplace(allocator);
+
+    error = key->generate(options);
     if (error) {
         return error;
     }
 
     *result = key;
+
     return ntsa::Error();
 }
 
 ntsa::Error EncryptionDriver::encodeKey(
     bsl::streambuf*                             destination,
-    const bsl::shared_ptr<ntci::EncryptionKey>& privateKey)
+    const bsl::shared_ptr<ntci::EncryptionKey>& privateKey,
+    const ntca::EncryptionResourceOptions&      options)
 {
-    return privateKey->encode(destination);
-}
-
-ntsa::Error EncryptionDriver::encodeKey(
-    bdlbb::Blob*                                destination,
-    const bsl::shared_ptr<ntci::EncryptionKey>& privateKey)
-{
-    return privateKey->encode(destination);
-}
-
-ntsa::Error EncryptionDriver::encodeKey(
-    bsl::string*                                destination,
-    const bsl::shared_ptr<ntci::EncryptionKey>& privateKey)
-{
-    return privateKey->encode(destination);
-}
-
-ntsa::Error EncryptionDriver::encodeKey(
-    bsl::vector<char>*                          destination,
-    const bsl::shared_ptr<ntci::EncryptionKey>& privateKey)
-{
-    return privateKey->encode(destination);
+    return privateKey->encode(destination, options);
 }
 
 ntsa::Error EncryptionDriver::decodeKey(
-    bsl::shared_ptr<ntci::EncryptionKey>* result,
-    bsl::streambuf*                       source,
-    bslma::Allocator*                     basicAllocator)
+    bsl::shared_ptr<ntci::EncryptionKey>*  result,
+    bsl::streambuf*                        source,
+    const ntca::EncryptionResourceOptions& options,
+    bslma::Allocator*                      basicAllocator)
 {
     ntsa::Error error;
 
-    bsl::shared_ptr<ntcd::EncryptionKey> key;
-    error = ntcd::EncryptionKey::decode(&key, source, basicAllocator);
-    if (error) {
-        return error;
-    }
-
-    *result = key;
-    return ntsa::Error();
-}
-
-ntsa::Error EncryptionDriver::decodeKey(
-    bsl::shared_ptr<ntci::EncryptionKey>* result,
-    const bdlbb::Blob&                    source,
-    bslma::Allocator*                     basicAllocator)
-{
-    ntsa::Error error;
+    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
 
     bsl::shared_ptr<ntcd::EncryptionKey> key;
-    error = ntcd::EncryptionKey::decode(&key, source, basicAllocator);
-    if (error) {
-        return error;
-    }
+    key.createInplace(allocator);
 
-    *result = key;
-    return ntsa::Error();
-}
-
-ntsa::Error EncryptionDriver::decodeKey(
-    bsl::shared_ptr<ntci::EncryptionKey>* result,
-    const bsl::string&                    source,
-    bslma::Allocator*                     basicAllocator)
-{
-    ntsa::Error error;
-
-    bsl::shared_ptr<ntcd::EncryptionKey> key;
-    error = ntcd::EncryptionKey::decode(&key, source, basicAllocator);
-    if (error) {
-        return error;
-    }
-
-    *result = key;
-    return ntsa::Error();
-}
-
-ntsa::Error EncryptionDriver::decodeKey(
-    bsl::shared_ptr<ntci::EncryptionKey>* result,
-    const bsl::vector<char>&              source,
-    bslma::Allocator*                     basicAllocator)
-{
-    ntsa::Error error;
-
-    bsl::shared_ptr<ntcd::EncryptionKey> key;
-    error = ntcd::EncryptionKey::decode(&key, source, basicAllocator);
+    error = key->decode(source, options);
     if (error) {
         return error;
     }
@@ -2125,12 +1891,54 @@ ntsa::Error EncryptionDriver::decodeKey(
 }
 
 ntsa::Error EncryptionDriver::generateCertificate(
+    ntca::EncryptionCertificate*                  result,
+    const ntsa::DistinguishedName&                subjectIdentity,
+    const ntca::EncryptionKey&                    subjectPrivateKey,
+    const ntca::EncryptionCertificateOptions&     options,
+    bslma::Allocator*                             basicAllocator) 
+{
+    NTCCFG_WARNING_UNUSED(result);
+    NTCCFG_WARNING_UNUSED(subjectIdentity);
+    NTCCFG_WARNING_UNUSED(subjectPrivateKey);
+    NTCCFG_WARNING_UNUSED(options);
+    NTCCFG_WARNING_UNUSED(basicAllocator);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error EncryptionDriver::generateCertificate(
+    ntca::EncryptionCertificate*              result,
+    const ntsa::DistinguishedName&            subjectIdentity,
+    const ntca::EncryptionKey&                subjectPrivateKey,
+    const ntca::EncryptionCertificate&        issuerCertificate,
+    const ntca::EncryptionKey&                issuerPrivateKey,
+    const ntca::EncryptionCertificateOptions& options,
+    bslma::Allocator*                         basicAllocator) 
+{
+    NTCCFG_WARNING_UNUSED(result);
+    NTCCFG_WARNING_UNUSED(subjectIdentity);
+    NTCCFG_WARNING_UNUSED(subjectPrivateKey);
+    NTCCFG_WARNING_UNUSED(issuerCertificate);
+    NTCCFG_WARNING_UNUSED(issuerPrivateKey);
+    NTCCFG_WARNING_UNUSED(options);
+    NTCCFG_WARNING_UNUSED(basicAllocator);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error EncryptionDriver::generateCertificate(
     bsl::shared_ptr<ntci::EncryptionCertificate>* result,
     const ntsa::DistinguishedName&                subjectIdentity,
     const bsl::shared_ptr<ntci::EncryptionKey>&   subjectPrivateKey,
     const ntca::EncryptionCertificateOptions&     options,
     bslma::Allocator*                             basicAllocator)
 {
+    NTCCFG_WARNING_UNUSED(options);
+
+    ntsa::Error error;
+
+    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
+
     bsl::shared_ptr<ntcd::EncryptionKey> concreteSubjectPrivateKey;
     bslstl::SharedPtrUtil::dynamicCast(&concreteSubjectPrivateKey,
                                        subjectPrivateKey);
@@ -2138,10 +1946,17 @@ ntsa::Error EncryptionDriver::generateCertificate(
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    *result = ntcd::EncryptionCertificate::generate(subjectIdentity,
-                                                    concreteSubjectPrivateKey,
-                                                    options,
-                                                    basicAllocator);
+    bsl::shared_ptr<ntcd::EncryptionCertificate> certificate;
+    certificate.createInplace(allocator, allocator);
+
+    error = certificate->generate(subjectIdentity,
+                                  concreteSubjectPrivateKey,
+                                  options);
+    if (error) {
+        return error;
+    }
+
+    *result = certificate;
 
     return ntsa::Error();
 }
@@ -2155,6 +1970,12 @@ ntsa::Error EncryptionDriver::generateCertificate(
     const ntca::EncryptionCertificateOptions&           options,
     bslma::Allocator*                                   basicAllocator)
 {
+    NTCCFG_WARNING_UNUSED(options);
+
+    ntsa::Error error;
+
+    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
+
     bsl::shared_ptr<ntcd::EncryptionKey> concreteSubjectPrivateKey;
     bslstl::SharedPtrUtil::dynamicCast(&concreteSubjectPrivateKey,
                                        subjectPrivateKey);
@@ -2176,131 +1997,45 @@ ntsa::Error EncryptionDriver::generateCertificate(
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    *result = ntcd::EncryptionCertificate::generate(subjectIdentity,
-                                                    concreteSubjectPrivateKey,
-                                                    concreteIssuerCertificate,
-                                                    concreteIssuerPrivateKey,
-                                                    options,
-                                                    basicAllocator);
-
-    return ntsa::Error();
-}
-
-ntsa::Error EncryptionDriver::loadCertificate(
-    bsl::shared_ptr<ntci::EncryptionCertificate>* result,
-    const bsl::string&                            filePath,
-    bslma::Allocator*                             basicAllocator)
-{
-    ntsa::Error error;
-
     bsl::shared_ptr<ntcd::EncryptionCertificate> certificate;
-    error = ntcd::EncryptionCertificate::load(&certificate,
-                                              filePath,
-                                              basicAllocator);
+    certificate.createInplace(allocator, allocator);
+
+    error = certificate->generate(subjectIdentity,
+                                  concreteSubjectPrivateKey,
+                                  concreteIssuerCertificate,
+                                  concreteIssuerPrivateKey,
+                                  options);
     if (error) {
         return error;
     }
 
     *result = certificate;
+
     return ntsa::Error();
 }
 
 ntsa::Error EncryptionDriver::encodeCertificate(
     bsl::streambuf*                                     destination,
-    const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate)
+    const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
+    const ntca::EncryptionResourceOptions&              options)
 {
-    return certificate->encode(destination);
-}
-
-ntsa::Error EncryptionDriver::encodeCertificate(
-    bdlbb::Blob*                                        destination,
-    const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate)
-{
-    return certificate->encode(destination);
-}
-
-ntsa::Error EncryptionDriver::encodeCertificate(
-    bsl::string*                                        destination,
-    const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate)
-{
-    return certificate->encode(destination);
-}
-
-ntsa::Error EncryptionDriver::encodeCertificate(
-    bsl::vector<char>*                                  destination,
-    const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate)
-{
-    return certificate->encode(destination);
+    return certificate->encode(destination, options);
 }
 
 ntsa::Error EncryptionDriver::decodeCertificate(
     bsl::shared_ptr<ntci::EncryptionCertificate>* result,
     bsl::streambuf*                               source,
+    const ntca::EncryptionResourceOptions&        options,
     bslma::Allocator*                             basicAllocator)
 {
     ntsa::Error error;
 
-    bsl::shared_ptr<ntcd::EncryptionCertificate> certificate;
-    error = ntcd::EncryptionCertificate::decode(&certificate,
-                                                source,
-                                                basicAllocator);
-    if (error) {
-        return error;
-    }
-
-    *result = certificate;
-    return ntsa::Error();
-}
-
-ntsa::Error EncryptionDriver::decodeCertificate(
-    bsl::shared_ptr<ntci::EncryptionCertificate>* result,
-    const bdlbb::Blob&                            source,
-    bslma::Allocator*                             basicAllocator)
-{
-    ntsa::Error error;
+    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
 
     bsl::shared_ptr<ntcd::EncryptionCertificate> certificate;
-    error = ntcd::EncryptionCertificate::decode(&certificate,
-                                                source,
-                                                basicAllocator);
-    if (error) {
-        return error;
-    }
+    certificate.createInplace(allocator, allocator);
 
-    *result = certificate;
-    return ntsa::Error();
-}
-
-ntsa::Error EncryptionDriver::decodeCertificate(
-    bsl::shared_ptr<ntci::EncryptionCertificate>* result,
-    const bsl::string&                            source,
-    bslma::Allocator*                             basicAllocator)
-{
-    ntsa::Error error;
-
-    bsl::shared_ptr<ntcd::EncryptionCertificate> certificate;
-    error = ntcd::EncryptionCertificate::decode(&certificate,
-                                                source,
-                                                basicAllocator);
-    if (error) {
-        return error;
-    }
-
-    *result = certificate;
-    return ntsa::Error();
-}
-
-ntsa::Error EncryptionDriver::decodeCertificate(
-    bsl::shared_ptr<ntci::EncryptionCertificate>* result,
-    const bsl::vector<char>&                      source,
-    bslma::Allocator*                             basicAllocator)
-{
-    ntsa::Error error;
-
-    bsl::shared_ptr<ntcd::EncryptionCertificate> certificate;
-    error = ntcd::EncryptionCertificate::decode(&certificate,
-                                                source,
-                                                basicAllocator);
+    error = certificate->decode(source, options);
     if (error) {
         return error;
     }

@@ -302,16 +302,14 @@ NTSCFG_INLINE
 Endpoint::Endpoint(const ntsa::Ipv4Endpoint& value)
 : d_type(ntsa::EndpointType::e_IP)
 {
-    new (d_ip.buffer()) ntsa::IpEndpoint(value.host(),
-                                         value.port());
+    new (d_ip.buffer()) ntsa::IpEndpoint(value.host(), value.port());
 }
 
 NTSCFG_INLINE
 Endpoint::Endpoint(const ntsa::Ipv6Endpoint& value)
 : d_type(ntsa::EndpointType::e_IP)
 {
-    new (d_ip.buffer()) ntsa::IpEndpoint(value.host(),
-                                         value.port());
+    new (d_ip.buffer()) ntsa::IpEndpoint(value.host(), value.port());
 }
 
 NTSCFG_INLINE

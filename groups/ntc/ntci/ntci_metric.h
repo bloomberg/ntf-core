@@ -202,32 +202,32 @@ class MetricTotal
 
 #define NTCI_METRIC_METADATA_COUNT(name)                                      \
     {                                                                         \
-#name ".count", ntci::Monitorable::e_SUM                              \
+        #name ".count", ntci::Monitorable::e_SUM                              \
     }
 
 #define NTCI_METRIC_METADATA_TOTAL(name)                                      \
     {                                                                         \
-#name ".total", ntci::Monitorable::e_SUM                              \
+        #name ".total", ntci::Monitorable::e_SUM                              \
     }
 
 #define NTCI_METRIC_METADATA_MIN(name)                                        \
     {                                                                         \
-#name ".min", ntci::Monitorable::e_MINIMUM                            \
+        #name ".min", ntci::Monitorable::e_MINIMUM                            \
     }
 
 #define NTCI_METRIC_METADATA_AVG(name)                                        \
     {                                                                         \
-#name ".avg", ntci::Monitorable::e_AVERAGE                            \
+        #name ".avg", ntci::Monitorable::e_AVERAGE                            \
     }
 
 #define NTCI_METRIC_METADATA_MAX(name)                                        \
     {                                                                         \
-#name ".max", ntci::Monitorable::e_MAXIMUM                            \
+        #name ".max", ntci::Monitorable::e_MAXIMUM                            \
     }
 
 #define NTCI_METRIC_METADATA_GAUGE(name)                                      \
     {                                                                         \
-#name ".current", ntci::Monitorable::e_GAUGE                          \
+        #name ".current", ntci::Monitorable::e_GAUGE                          \
     }
 
 #define NTCI_METRIC_METADATA_SUMMARY(name)                                    \
@@ -260,9 +260,9 @@ void MetricValue::update(double value)
 {
     d_count   += 1;
     d_total   += value;
-    d_minimum = bsl::min(d_minimum, value);
-    d_maximum = bsl::max(d_maximum, value);
-    d_last    = value;
+    d_minimum  = bsl::min(d_minimum, value);
+    d_maximum  = bsl::max(d_maximum, value);
+    d_last     = value;
 }
 
 NTCCFG_INLINE

@@ -25,7 +25,7 @@ namespace ntsa {
 
 bool SendOptions::equals(const SendOptions& other) const
 {
-    return (d_endpoint == other.d_endpoint && 
+    return (d_endpoint == other.d_endpoint &&
             d_foreignHandle == other.d_foreignHandle &&
             d_maxBytes == other.d_maxBytes &&
             d_maxBuffers == other.d_maxBuffers &&

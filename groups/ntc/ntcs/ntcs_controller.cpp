@@ -285,7 +285,7 @@ ntsa::Error initEventFdPair(ntsa::Handle* clientHandle,
 }
 #endif
 
-} // close unnamed namespace
+}  // close unnamed namespace
 
 void Controller::processSocketReadable(const ntca::ReactorEvent& event)
 {

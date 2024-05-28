@@ -368,7 +368,7 @@ NTCCFG_INLINE void BlobBufferPoolHandleUtil<TYPE, ALIGNMENT>::set(
     BSLS_ASSERT((reinterpret_cast<bsl::size_t>(ptr) & TAG_MASK) == 0);
     BSLS_ASSERT((tag & PTR_MASK) == 0);
 
-    bsl::size_t number = reinterpret_cast<bsl::size_t>(ptr) & PTR_MASK;
+    bsl::size_t number  = reinterpret_cast<bsl::size_t>(ptr) & PTR_MASK;
     number             |= tag & TAG_MASK;
 
     *address = reinterpret_cast<TYPE*>(number);

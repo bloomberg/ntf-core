@@ -221,11 +221,11 @@ struct Platform {
     /// such as the Linux error queue.
     static bool supportsNotifications();
 
-    /// Return true if the local host database (i.e. "/etc/hosts" or the 
-    /// platform equivalent) exists, otherwise return false.  
+    /// Return true if the local host database (i.e. "/etc/hosts" or the
+    /// platform equivalent) exists, otherwise return false.
     static bool hasHostDatabase();
 
-    /// Return true if the local host database (i.e. "/etc/hosts" or the 
+    /// Return true if the local host database (i.e. "/etc/hosts" or the
     /// platform equivalent) exists, otherwise return false.
     static bool hasPortDatabase();
 };

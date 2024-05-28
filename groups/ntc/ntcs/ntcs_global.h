@@ -20,12 +20,12 @@
 BSLS_IDENT("$Id: $")
 
 #include <ntccfg_platform.h>
-#include <ntci_interface.h>
 #include <ntci_executor.h>
-#include <ntci_strand.h>
-#include <ntci_reactor.h>
+#include <ntci_interface.h>
 #include <ntci_proactor.h>
+#include <ntci_reactor.h>
 #include <ntci_resolver.h>
+#include <ntci_strand.h>
 #include <ntcs_globalallocator.h>
 #include <ntcs_globalexecutor.h>
 #include <ntcscm_version.h>
@@ -44,43 +44,43 @@ namespace ntcs {
 struct Global {
     /// Define a type alias for a function that creates an executor suitable
     /// for installing as the default executor.
-    typedef void (*ExecutorProvider)(
-        bsl::shared_ptr<ntci::Executor>* result, bslma::Allocator* allocator);
+    typedef void (*ExecutorProvider)(bsl::shared_ptr<ntci::Executor>* result,
+                                     bslma::Allocator* allocator);
 
     /// Define a type alias for a function that creates a strand suitable
     /// for installing as the default strand.
-    typedef void (*StrandProvider)(
-        bsl::shared_ptr<ntci::Strand>* result, bslma::Allocator* allocator);
+    typedef void (*StrandProvider)(bsl::shared_ptr<ntci::Strand>* result,
+                                   bslma::Allocator*              allocator);
 
     /// Define a type alias for a function that creates a driver suitable
     /// for installing as the default driver.
-    typedef void (*DriverProvider)(
-        bsl::shared_ptr<ntci::Driver>* result, bslma::Allocator* allocator);
+    typedef void (*DriverProvider)(bsl::shared_ptr<ntci::Driver>* result,
+                                   bslma::Allocator*              allocator);
 
     /// Define a type alias for a function that creates a reactor suitable
     /// for installing as the default reactor.
-    typedef void (*ReactorProvider)(
-        bsl::shared_ptr<ntci::Reactor>* result, bslma::Allocator* allocator);
+    typedef void (*ReactorProvider)(bsl::shared_ptr<ntci::Reactor>* result,
+                                    bslma::Allocator*               allocator);
 
     /// Define a type alias for a function that creates a proactor suitable
     /// for installing as the default proactor.
-    typedef void (*ProactorProvider)(
-        bsl::shared_ptr<ntci::Proactor>* result, bslma::Allocator* allocator);
+    typedef void (*ProactorProvider)(bsl::shared_ptr<ntci::Proactor>* result,
+                                     bslma::Allocator* allocator);
 
     /// Define a type alias for a function that creates an interface suitable
     /// for installing as the default interface.
-    typedef void (*InterfaceProvider)(
-        bsl::shared_ptr<ntci::Interface>* result, bslma::Allocator* allocator);
+    typedef void (*InterfaceProvider)(bsl::shared_ptr<ntci::Interface>* result,
+                                      bslma::Allocator* allocator);
 
     /// Define a type alias for a function that creates a resolver suitable
     /// for installing as the default resolver.
-    typedef void (*ResolverProvider)(
-        bsl::shared_ptr<ntci::Resolver>* result, bslma::Allocator* allocator);    
+    typedef void (*ResolverProvider)(bsl::shared_ptr<ntci::Resolver>* result,
+                                     bslma::Allocator* allocator);
 
     /// Initialize global objects.
     static void initialize();
 
-    /// Install the specified 'provider' as the function that creates an 
+    /// Install the specified 'provider' as the function that creates an
     /// executor suitable for installing as the default executor.
     static void setDefault(Global::ExecutorProvider provider);
 
@@ -100,7 +100,7 @@ struct Global {
     /// reactor suitable for installing as the default reactor.
     static void setDefault(Global::ProactorProvider provider);
 
-    /// Install the specified 'provider' as the function that creates an 
+    /// Install the specified 'provider' as the function that creates an
     /// interface suitable for installing as the default interface.
     static void setDefault(Global::InterfaceProvider provider);
 
