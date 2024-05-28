@@ -29,6 +29,7 @@ BSLS_IDENT("$Id: $")
 #include <bsls_keyword.h>
 #include <bsls_platform.h>
 #include <bsl_cstddef.h>
+#include <bsl_ios.h>
 #include <bsl_iterator.h>
 #include <bsl_streambuf.h>
 
@@ -1000,7 +1001,7 @@ class MutableBufferSequence<MUTABLE_BUFFER>::Iterator
 /// This class is not thread safe.
 ///
 /// @ingroup module_ntsa_data
-class MemoryBuffer : public bsl::streambuf
+class StreamBuffer : public bsl::streambuf
 {
     /// Enumerate the access policy of this stream buffer.
     enum Access {
@@ -1034,8 +1035,8 @@ class MemoryBuffer : public bsl::streambuf
     bslma::Allocator* d_allocator_p;
 
   private:
-    MemoryBuffer(const MemoryBuffer&) BSLS_KEYWORD_DELETED;
-    MemoryBuffer& operator=(const MemoryBuffer&) BSLS_KEYWORD_DELETED;
+    StreamBuffer(const StreamBuffer&) BSLS_KEYWORD_DELETED;
+    StreamBuffer& operator=(const StreamBuffer&) BSLS_KEYWORD_DELETED;
 
     /// Return the beginning of the readable byte sequence.
     const char* getReaderBegin() const;
@@ -1174,13 +1175,13 @@ class MemoryBuffer : public bsl::streambuf
     /// empty. Optionally specify a 'basicAllocator' used to supply memory. If
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
-    explicit MemoryBuffer(bslma::Allocator* basicAllocator = 0);
+    explicit StreamBuffer(bslma::Allocator* basicAllocator = 0);
 
     /// Create a new, read-only memory buffer of the specified 'data' having
     /// the specified 'size'. Optionally specify a 'basicAllocator' used to
     /// supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
-    MemoryBuffer(const void*       data,
+    StreamBuffer(const void*       data,
                  bsl::size_t       size,
                  bslma::Allocator* basicAllocator = 0);
 
@@ -1193,13 +1194,13 @@ class MemoryBuffer : public bsl::streambuf
     /// of the get area.) Optionally specify a 'basicAllocator' used to supply
     /// memory. If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
-    MemoryBuffer(void*             data,
+    StreamBuffer(void*             data,
                  bsl::size_t       size,
                  bsl::size_t       capacity,
                  bslma::Allocator* allocator = 0);
 
     /// Destroy this object.
-    ~MemoryBuffer();
+    ~StreamBuffer();
 
     /// Free all memory allocated by the stream buffer.
     void reset();

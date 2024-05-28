@@ -486,61 +486,61 @@ void ConstBufferArray::gather(bsl::size_t*            numBuffersTotal,
     *numBuffersTotal = cumulativeBuffersTotal;
 }
 
-const char* MemoryBuffer::getReaderBegin() const
+const char* StreamBuffer::getReaderBegin() const
 {
     return (const char*)(this->eback());
 }
 
-const char* MemoryBuffer::getReaderCurrent() const
+const char* StreamBuffer::getReaderCurrent() const
 {
     return (const char*)(this->gptr());
 }
 
-const char* MemoryBuffer::getReaderEnd() const
+const char* StreamBuffer::getReaderEnd() const
 {
     return (const char*)(this->egptr());
 }
 
-bsl::size_t MemoryBuffer::getReaderOffset() const
+bsl::size_t StreamBuffer::getReaderOffset() const
 {
     BSLS_ASSERT(this->gptr() >= this->eback());
     return (bsl::size_t)(this->gptr() - this->eback());
 }
 
-bsl::size_t MemoryBuffer::getReaderAvailable() const
+bsl::size_t StreamBuffer::getReaderAvailable() const
 {
     BSLS_ASSERT(this->egptr() >= this->gptr());
     return (bsl::size_t)(this->egptr() - this->gptr());
 }
 
-char* MemoryBuffer::getWriterBegin() const
+char* StreamBuffer::getWriterBegin() const
 {
     return (char*)(this->pbase());
 }
 
-char* MemoryBuffer::getWriterCurrent() const
+char* StreamBuffer::getWriterCurrent() const
 {
     return (char*)(this->pptr());
 }
 
-char* MemoryBuffer::getWriterEnd() const
+char* StreamBuffer::getWriterEnd() const
 {
     return (char*)(this->epptr());
 }
 
-bsl::size_t MemoryBuffer::getWriterOffset() const
+bsl::size_t StreamBuffer::getWriterOffset() const
 {
     BSLS_ASSERT(this->pptr() >= this->pbase());
     return (bsl::size_t)(this->pptr() - this->pbase());
 }
 
-bsl::size_t MemoryBuffer::getWriterAvailable() const
+bsl::size_t StreamBuffer::getWriterAvailable() const
 {
     BSLS_ASSERT(this->epptr() >= this->pptr());
     return (bsl::size_t)(this->epptr() - this->pptr());
 }
 
-void* MemoryBuffer::getMemory() const
+void* StreamBuffer::getMemory() const
 {
     if (d_access == e_READONLY) {
         return (void*)(this->getReaderBegin());
@@ -550,7 +550,7 @@ void* MemoryBuffer::getMemory() const
     }
 }
 
-bsl::size_t MemoryBuffer::getMemorySize() const
+bsl::size_t StreamBuffer::getMemorySize() const
 {
     if (d_access == e_READONLY) {
         return (bsl::size_t)(this->getReaderEnd() - this->getReaderBegin());
@@ -561,7 +561,7 @@ bsl::size_t MemoryBuffer::getMemorySize() const
     }
 }
 
-bsl::size_t MemoryBuffer::getMemoryCapacity() const
+bsl::size_t StreamBuffer::getMemoryCapacity() const
 {
     if (d_access == e_READONLY) {
         return (bsl::size_t)(this->getReaderEnd() - this->getReaderBegin());
@@ -571,7 +571,7 @@ bsl::size_t MemoryBuffer::getMemoryCapacity() const
     }
 }
 
-void MemoryBuffer::incrementReaderPosition(bsl::size_t size)
+void StreamBuffer::incrementReaderPosition(bsl::size_t size)
 {
     BSLMF_ASSERT(bsl::numeric_limits<bsl::streamsize>::is_signed);
 
@@ -602,7 +602,7 @@ void MemoryBuffer::incrementReaderPosition(bsl::size_t size)
     }
 }
 
-void MemoryBuffer::incrementWriterPosition(bsl::size_t size)
+void StreamBuffer::incrementWriterPosition(bsl::size_t size)
 {
     BSLMF_ASSERT(bsl::numeric_limits<bsl::streamsize>::is_signed);
 
@@ -633,7 +633,7 @@ void MemoryBuffer::incrementWriterPosition(bsl::size_t size)
     }
 }
 
-void MemoryBuffer::initialize()
+void StreamBuffer::initialize()
 {
     this->setp(0, 0);
     this->setg(0, 0, 0);
@@ -647,7 +647,7 @@ void MemoryBuffer::initialize()
     BSLS_ASSERT(this->egptr() == 0);
 }
 
-void MemoryBuffer::initialize(const void* data, bsl::size_t size)
+void StreamBuffer::initialize(const void* data, bsl::size_t size)
 {
     BSLS_ASSERT(data != 0);
 
@@ -663,7 +663,7 @@ void MemoryBuffer::initialize(const void* data, bsl::size_t size)
     BSLS_ASSERT(this->egptr() == (char*)(data) + size);
 }
 
-void MemoryBuffer::initialize(void*       data,
+void StreamBuffer::initialize(void*       data,
                               bsl::size_t size,
                               bsl::size_t capacity)
 {
@@ -682,7 +682,7 @@ void MemoryBuffer::initialize(void*       data,
     BSLS_ASSERT(this->egptr() == (char*)(data) + size);
 }
 
-void MemoryBuffer::expand(bsl::size_t overflow)
+void StreamBuffer::expand(bsl::size_t overflow)
 {
     BSLS_ASSERT(d_access == e_WRITABLE);
 
@@ -728,7 +728,7 @@ void MemoryBuffer::expand(bsl::size_t overflow)
     }
 }
 
-bsl::size_t MemoryBuffer::store(const char* source, bsl::size_t size)
+bsl::size_t StreamBuffer::store(const char* source, bsl::size_t size)
 {
     BSLS_ASSERT(source != 0);
     BSLS_ASSERT(size > 0);
@@ -747,7 +747,7 @@ bsl::size_t MemoryBuffer::store(const char* source, bsl::size_t size)
     return size;
 }
 
-bsl::size_t MemoryBuffer::fetch(char* destination, bsl::size_t size)
+bsl::size_t StreamBuffer::fetch(char* destination, bsl::size_t size)
 {
     BSLS_ASSERT(destination != 0);
     BSLS_ASSERT(size > 0);
@@ -767,7 +767,7 @@ bsl::size_t MemoryBuffer::fetch(char* destination, bsl::size_t size)
     return (bsl::streamsize)(numToCopy);
 }
 
-MemoryBuffer::int_type MemoryBuffer::overflow(int_type meta)
+StreamBuffer::int_type StreamBuffer::overflow(int_type meta)
 {
     if (d_access == e_READONLY) {
         return bsl::streambuf::traits_type::eof();
@@ -782,7 +782,7 @@ MemoryBuffer::int_type MemoryBuffer::overflow(int_type meta)
     return this->sputc((char_type)(meta));
 }
 
-bsl::streamsize MemoryBuffer::showmanyc()
+bsl::streamsize StreamBuffer::showmanyc()
 {
     bsl::streamsize result = (bsl::streamsize)(this->getReaderAvailable());
     if (0 == result) {
@@ -792,7 +792,7 @@ bsl::streamsize MemoryBuffer::showmanyc()
     return result;
 }
 
-bsl::streamsize MemoryBuffer::xsgetn(char_type*      destination,
+bsl::streamsize StreamBuffer::xsgetn(char_type*      destination,
                                      bsl::streamsize size)
 {
     BSLS_ASSERT(destination != 0);
@@ -801,7 +801,7 @@ bsl::streamsize MemoryBuffer::xsgetn(char_type*      destination,
     return (bsl::streamsize)(this->fetch(destination, (bsl::size_t)(size)));
 }
 
-bsl::streamsize MemoryBuffer::xsputn(const char_type* source,
+bsl::streamsize StreamBuffer::xsputn(const char_type* source,
                                      bsl::streamsize  size)
 {
     BSLS_ASSERT(source != 0);
@@ -814,7 +814,7 @@ bsl::streamsize MemoryBuffer::xsputn(const char_type* source,
     return (bsl::streamsize)(this->store(source, (bsl::size_t)(size)));
 }
 
-MemoryBuffer::pos_type MemoryBuffer::seekoff(off_type                offset,
+StreamBuffer::pos_type StreamBuffer::seekoff(off_type                offset,
                                              bsl::ios_base::seekdir  way,
                                              bsl::ios_base::openmode mode)
 {
@@ -889,13 +889,13 @@ MemoryBuffer::pos_type MemoryBuffer::seekoff(off_type                offset,
                                                         : putOffset);
 }
 
-MemoryBuffer::pos_type MemoryBuffer::seekpos(pos_type                position,
+StreamBuffer::pos_type StreamBuffer::seekpos(pos_type                position,
                                              bsl::ios_base::openmode mode)
 {
     return this->seekoff((off_type)(position), bsl::ios_base::beg, mode);
 }
 
-int MemoryBuffer::sync()
+int StreamBuffer::sync()
 {
     if (d_access == e_READONLY) {
         return 0;
@@ -914,7 +914,7 @@ int MemoryBuffer::sync()
     return 0;
 }
 
-MemoryBuffer::MemoryBuffer(bslma::Allocator* basicAllocator)
+StreamBuffer::StreamBuffer(bslma::Allocator* basicAllocator)
 : d_access(e_WRITABLE)
 , d_ownership(e_INTERNAL)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
@@ -922,7 +922,7 @@ MemoryBuffer::MemoryBuffer(bslma::Allocator* basicAllocator)
     this->initialize();
 }
 
-MemoryBuffer::MemoryBuffer(const void*       data,
+StreamBuffer::StreamBuffer(const void*       data,
                            bsl::size_t       size,
                            bslma::Allocator* basicAllocator)
 : d_access(e_READONLY)
@@ -937,7 +937,7 @@ MemoryBuffer::MemoryBuffer(const void*       data,
     }
 }
 
-MemoryBuffer::MemoryBuffer(void*             data,
+StreamBuffer::StreamBuffer(void*             data,
                            bsl::size_t       size,
                            bsl::size_t       capacity,
                            bslma::Allocator* basicAllocator)
@@ -954,7 +954,7 @@ MemoryBuffer::MemoryBuffer(void*             data,
     }
 }
 
-MemoryBuffer::~MemoryBuffer()
+StreamBuffer::~StreamBuffer()
 {
     void* currentMemory = this->getMemory();
     if (currentMemory != 0) {
@@ -965,7 +965,7 @@ MemoryBuffer::~MemoryBuffer()
     }
 }
 
-void MemoryBuffer::reset()
+void StreamBuffer::reset()
 {
     void* currentMemory = this->getMemory();
     if (currentMemory != 0) {
@@ -981,7 +981,7 @@ void MemoryBuffer::reset()
     d_ownership = e_INTERNAL;
 }
 
-void MemoryBuffer::reserve(bsl::size_t capacity)
+void StreamBuffer::reserve(bsl::size_t capacity)
 {
     const bsl::size_t currentCapacity = this->getMemoryCapacity();
 
@@ -994,22 +994,22 @@ void MemoryBuffer::reserve(bsl::size_t capacity)
     this->expand(overflow);
 }
 
-char* MemoryBuffer::data()
+char* StreamBuffer::data()
 {
     return (char*)(this->getMemory());
 }
 
-const char* MemoryBuffer::data() const
+const char* StreamBuffer::data() const
 {
     return (const char*)(this->getMemory());
 }
 
-bsl::size_t MemoryBuffer::size() const
+bsl::size_t StreamBuffer::size() const
 {
     return this->getMemorySize();
 }
 
-bsl::size_t MemoryBuffer::capacity() const
+bsl::size_t StreamBuffer::capacity() const
 {
     return this->getMemoryCapacity();
 }

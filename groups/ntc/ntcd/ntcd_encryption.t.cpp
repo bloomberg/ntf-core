@@ -721,7 +721,7 @@ NTCCFG_TEST_CASE(1)
         NTCI_LOG_CONTEXT();
 
         ntsa::Error        error;
-        ntsa::MemoryBuffer buffer(&ta);
+        ntsa::StreamBuffer buffer(&ta);
 
         ntca::EncryptionKeyOptions      keyOptions;
         ntca::EncryptionResourceOptions keyStorageOptions;
@@ -762,7 +762,7 @@ NTCCFG_TEST_CASE(2)
         ntsa::Error error;
         int         rc;
 
-        ntsa::MemoryBuffer buffer(&ta);
+        ntsa::StreamBuffer buffer(&ta);
 
         ntca::EncryptionKeyOptions      keyOptions;
         ntca::EncryptionResourceOptions keyStorageOptions;
