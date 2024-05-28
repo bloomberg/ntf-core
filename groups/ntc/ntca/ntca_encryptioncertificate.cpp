@@ -2304,7 +2304,7 @@ ntsa::Error EncryptionCertificateNameAlternative::encode(
         }
 
         bsl::string text = this->uri().text();
-        error            = encoder->encodeValue(NL_TEXTMAX);
+        error            = encoder->encodeValue(text);
         if (error) {
             return error;
         }
