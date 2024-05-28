@@ -134,6 +134,33 @@ struct SignedIntegerData {
 
 typedef bsl::vector<SignedIntegerData> SignedIntegerDataVector;
 
+struct HardwareIntegerEncodingData {
+    HardwareIntegerEncodingData(const bsl::uint8_t* data,
+                 bsl::size_t         size,
+                 bsl::int64_t        value)
+    : d_encoding(data, data + size)
+    , d_value(value)
+    {
+    }
+
+    bsl::vector<bsl::uint8_t> d_encoding;
+    bsl::int64_t              d_value;
+};
+
+
+struct SoftwareIntegerEncodingData {
+    SoftwareIntegerEncodingData(const bsl::uint8_t* data,
+                 bsl::size_t         size,
+                 bsl::string         value)
+    : d_encoding(data, data + size)
+    , d_value(value)
+    {
+    }
+
+    bsl::vector<bsl::uint8_t> d_encoding;
+    bsl::string               d_value;
+};
+
 // Provide implementations of test cases.
 class Case
 {
@@ -1326,19 +1353,7 @@ NTSCFG_TEST_CASE(14)
     {
         ntsa::Error error;
 
-        struct EncodingData {
-            EncodingData(const bsl::uint8_t* data,
-                         bsl::size_t         size,
-                         bsl::int64_t        value)
-            : d_encoding(data, data + size)
-            , d_value(value)
-            {
-            }
-
-            bsl::vector<bsl::uint8_t> d_encoding;
-            bsl::int64_t              d_value;
-        };
-
+        typedef test::HardwareIntegerEncodingData EncodingData;
         bsl::vector<EncodingData> dataVector;
 
         {
@@ -1520,19 +1535,7 @@ NTSCFG_TEST_CASE(15)
     {
         ntsa::Error error;
 
-        struct EncodingData {
-            EncodingData(const bsl::uint8_t* data,
-                         bsl::size_t         size,
-                         bsl::string         value)
-            : d_encoding(data, data + size)
-            , d_value(value)
-            {
-            }
-
-            bsl::vector<bsl::uint8_t> d_encoding;
-            bsl::string               d_value;
-        };
-
+        typedef test::SoftwareIntegerEncodingData EncodingData;
         bsl::vector<EncodingData> dataVector;
 
         {
@@ -1768,7 +1771,7 @@ NTSCFG_TEST_CASE(16)
         NTSCFG_TEST_EQ(value.get(9), 65536);
         NTSCFG_TEST_EQ(value.get(10), 4294967294);
         NTSCFG_TEST_EQ(value.get(11), 4294967295);
-        NTSCFG_TEST_EQ(value.get(12), 4294967296);
+        NTSCFG_TEST_EQ(value.get(12), 4294967296ULL);
 
         error = decoder.decodeTagComplete();
         NTSCFG_TEST_OK(error);
