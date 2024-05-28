@@ -21,7 +21,6 @@ using namespace BloombergLP;
 
 NTSCFG_TEST_CASE(1)
 {
-    
     bsl::string result;
 
     {
@@ -93,10 +92,6 @@ NTSCFG_TEST_CASE(1)
         result = ntsu::TimestampUtil::describeDelay(delay);
         BSLS_LOG_DEBUG(" 1.5s: %s", result.c_str());
     }
-
-
-
-
 }
 
 NTSCFG_TEST_DRIVER

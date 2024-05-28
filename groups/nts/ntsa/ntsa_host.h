@@ -148,24 +148,24 @@ class Host
     ntsa::IpAddress& makeIp(const ntsa::IpAddress& value);
 
     /// Return a reference to the modifiable "domain name" address
-    /// representation. The behavior is undefined unless 'is_DomainName()'
+    /// representation. The behavior is undefined unless 'isDomainName()'
     /// is true.
     ntsa::DomainName& domainName();
 
     /// Return a reference to the modifiable "ip" address representation.
-    /// The behavior is undefined unless 'is_ip()' is true.
+    /// The behavior is undefined unless 'isIp()' is true.
     ntsa::IpAddress& ip();
 
     /// Return the textual representation of this object.
     bsl::string text() const;
 
     /// Return a reference to the non-modifiable "domain name" address
-    /// representation. The behavior is undefined unless 'is_DomainName()'
+    /// representation. The behavior is undefined unless 'isDomainName()'
     /// is true.
     const ntsa::DomainName& domainName() const;
 
     /// Return a reference to the non-modifiable "ip" address
-    /// representation.  The behavior is undefined unless 'is_ip()' is true.
+    /// representation.  The behavior is undefined unless 'isIp()' is true.
     const ntsa::IpAddress& ip() const;
 
     /// Return the type of the address representation.

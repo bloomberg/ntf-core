@@ -20,10 +20,10 @@ BSLS_IDENT_RCSID(ntso_kqueue_cpp, "$Id$ $CSID$")
 
 #if NTSO_KQUEUE_ENABLED
 
+#include <ntsa_interest.h>
 #include <ntsi_reactor.h>
 #include <ntsu_socketoptionutil.h>
 #include <ntsu_socketutil.h>
-#include <ntsa_interest.h>
 
 #include <bdlma_localsequentialallocator.h>
 #include <bdlt_currenttime.h>
@@ -211,9 +211,8 @@ class Kqueue : public ntsi::Reactor
     /// specified absolute 'deadline', if any, elapses. Load into the specified
     /// 'result' the events that describe the sockets and their conditions.
     /// Return the error.
-    ntsa::Error wait(
-        ntsa::EventSet*                                result,
-        const bdlb::NullableValue<bsls::TimeInterval>& deadline)
+    ntsa::Error wait(ntsa::EventSet*                                result,
+                     const bdlb::NullableValue<bsls::TimeInterval>& deadline)
         BSLS_KEYWORD_OVERRIDE;
 };
 
@@ -490,20 +489,20 @@ ntsa::Error Kqueue::wait(
 
     result->clear();
 
-    struct ::timespec ts;
+    struct ::timespec  ts;
     struct ::timespec* tsPtr = 0;
 
     if (!timeout.isNull()) {
         const bsls::TimeInterval now = bdlt::CurrentTime::now();
         if (NTSCFG_LIKELY(timeout.value() > now)) {
             const bsls::TimeInterval delta = timeout.value() - now;
-            ts.tv_sec = delta.seconds();
-            ts.tv_nsec = delta.nanoseconds();
+            ts.tv_sec                      = delta.seconds();
+            ts.tv_nsec                     = delta.nanoseconds();
 
             NTSO_KQUEUE_LOG_WAIT_TIMED(delta.totalMilliseconds());
         }
         else {
-            ts.tv_sec = 0;
+            ts.tv_sec  = 0;
             ts.tv_nsec = 0;
 
             NTSO_KQUEUE_LOG_WAIT_TIMED(0);
@@ -562,9 +561,8 @@ ntsa::Error Kqueue::wait(
                 }
                 else {
                     ntsa::Error lastError;
-                    error =
-                        ntsu::SocketOptionUtil::getLastError(&lastError,
-                                                             handle);
+                    error = ntsu::SocketOptionUtil::getLastError(&lastError,
+                                                                 handle);
                     if (!error && lastError) {
                         event.setError(lastError);
                     }

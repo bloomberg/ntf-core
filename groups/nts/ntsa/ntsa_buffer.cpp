@@ -486,5 +486,533 @@ void ConstBufferArray::gather(bsl::size_t*            numBuffersTotal,
     *numBuffersTotal = cumulativeBuffersTotal;
 }
 
+const char* StreamBuffer::getReaderBegin() const
+{
+    return (const char*)(this->eback());
+}
+
+const char* StreamBuffer::getReaderCurrent() const
+{
+    return (const char*)(this->gptr());
+}
+
+const char* StreamBuffer::getReaderEnd() const
+{
+    return (const char*)(this->egptr());
+}
+
+bsl::size_t StreamBuffer::getReaderOffset() const
+{
+    BSLS_ASSERT(this->gptr() >= this->eback());
+    return (bsl::size_t)(this->gptr() - this->eback());
+}
+
+bsl::size_t StreamBuffer::getReaderAvailable() const
+{
+    BSLS_ASSERT(this->egptr() >= this->gptr());
+    return (bsl::size_t)(this->egptr() - this->gptr());
+}
+
+char* StreamBuffer::getWriterBegin() const
+{
+    return (char*)(this->pbase());
+}
+
+char* StreamBuffer::getWriterCurrent() const
+{
+    return (char*)(this->pptr());
+}
+
+char* StreamBuffer::getWriterEnd() const
+{
+    return (char*)(this->epptr());
+}
+
+bsl::size_t StreamBuffer::getWriterOffset() const
+{
+    BSLS_ASSERT(this->pptr() >= this->pbase());
+    return (bsl::size_t)(this->pptr() - this->pbase());
+}
+
+bsl::size_t StreamBuffer::getWriterAvailable() const
+{
+    BSLS_ASSERT(this->epptr() >= this->pptr());
+    return (bsl::size_t)(this->epptr() - this->pptr());
+}
+
+void* StreamBuffer::getMemory() const
+{
+    if (d_access == e_READONLY) {
+        return (void*)(this->getReaderBegin());
+    }
+    else {
+        return (void*)(this->getWriterBegin());
+    }
+}
+
+bsl::size_t StreamBuffer::getMemorySize() const
+{
+    if (d_access == e_READONLY) {
+        return (bsl::size_t)(this->getReaderEnd() - this->getReaderBegin());
+    }
+    else {
+        return (bsl::size_t)(this->getWriterCurrent() -
+                             this->getWriterBegin());
+    }
+}
+
+bsl::size_t StreamBuffer::getMemoryCapacity() const
+{
+    if (d_access == e_READONLY) {
+        return (bsl::size_t)(this->getReaderEnd() - this->getReaderBegin());
+    }
+    else {
+        return (bsl::size_t)(this->getWriterEnd() - this->getWriterBegin());
+    }
+}
+
+void StreamBuffer::incrementReaderPosition(bsl::size_t size)
+{
+    BSLMF_ASSERT(bsl::numeric_limits<bsl::streamsize>::is_signed);
+
+    BSLS_ASSERT(this->eback() != 0);
+    BSLS_ASSERT(this->gptr() != 0);
+    BSLS_ASSERT(this->gptr() >= this->eback());
+    BSLS_ASSERT(this->gptr() < this->egptr());
+
+    BSLS_ASSERT(size <= (bsl::size_t)(this->egptr() - this->gptr()));
+
+    const bsl::size_t numToIncrementMax =
+        (bsl::size_t)(bsl::numeric_limits<int>::max());
+
+    bsl::size_t numRemaining = size;
+
+    while (true) {
+        bsl::size_t numToIncrement = numRemaining;
+        if (numToIncrement > numToIncrementMax) {
+            numToIncrement = numToIncrementMax;
+        }
+
+        this->gbump((int)(numToIncrement));
+
+        numRemaining -= numToIncrement;
+        if (numRemaining == 0) {
+            break;
+        }
+    }
+}
+
+void StreamBuffer::incrementWriterPosition(bsl::size_t size)
+{
+    BSLMF_ASSERT(bsl::numeric_limits<bsl::streamsize>::is_signed);
+
+    BSLS_ASSERT(this->pbase() != 0);
+    BSLS_ASSERT(this->pptr() != 0);
+    BSLS_ASSERT(this->pptr() >= this->pbase());
+    BSLS_ASSERT(this->pptr() < this->epptr());
+
+    BSLS_ASSERT(size <= (bsl::size_t)(this->epptr() - this->pptr()));
+
+    const bsl::size_t numToIncrementMax =
+        (bsl::size_t)(bsl::numeric_limits<int>::max());
+
+    bsl::size_t numRemaining = size;
+
+    while (true) {
+        bsl::size_t numToIncrement = numRemaining;
+        if (numToIncrement > numToIncrementMax) {
+            numToIncrement = numToIncrementMax;
+        }
+
+        this->pbump((int)(numToIncrement));
+
+        numRemaining -= numToIncrement;
+        if (numRemaining == 0) {
+            break;
+        }
+    }
+}
+
+void StreamBuffer::initialize()
+{
+    this->setp(0, 0);
+    this->setg(0, 0, 0);
+
+    BSLS_ASSERT(this->pbase() == 0);
+    BSLS_ASSERT(this->pptr() == 0);
+    BSLS_ASSERT(this->epptr() == 0);
+
+    BSLS_ASSERT(this->eback() == 0);
+    BSLS_ASSERT(this->gptr() == 0);
+    BSLS_ASSERT(this->egptr() == 0);
+}
+
+void StreamBuffer::initialize(const void* data, bsl::size_t size)
+{
+    BSLS_ASSERT(data != 0);
+
+    this->setp(0, 0);
+    this->setg((char*)(data), (char*)(data), (char*)(data) + size);
+
+    BSLS_ASSERT(this->pbase() == 0);
+    BSLS_ASSERT(this->pptr() == 0);
+    BSLS_ASSERT(this->epptr() == 0);
+
+    BSLS_ASSERT(this->gptr() == (char*)(data));
+    BSLS_ASSERT(this->eback() == (char*)(data));
+    BSLS_ASSERT(this->egptr() == (char*)(data) + size);
+}
+
+void StreamBuffer::initialize(void*       data,
+                              bsl::size_t size,
+                              bsl::size_t capacity)
+{
+    BSLS_ASSERT(data != 0);
+    BSLS_ASSERT(size <= capacity);
+
+    this->setp((char*)(data), (char*)(data) + capacity);
+    this->setg((char*)(data), (char*)(data), (char*)(data) + size);
+
+    BSLS_ASSERT(this->pbase() == (char*)(data));
+    BSLS_ASSERT(this->pptr() == (char*)(data));
+    BSLS_ASSERT(this->epptr() == (char*)(data) + capacity);
+
+    BSLS_ASSERT(this->gptr() == (char*)(data));
+    BSLS_ASSERT(this->eback() == (char*)(data));
+    BSLS_ASSERT(this->egptr() == (char*)(data) + size);
+}
+
+void StreamBuffer::expand(bsl::size_t overflow)
+{
+    BSLS_ASSERT(d_access == e_WRITABLE);
+
+    void*             currentMemory         = this->getMemory();
+    const bsl::size_t currentMemoryCapacity = this->getMemoryCapacity();
+
+    const bsl::size_t currentReaderOffset = this->getReaderOffset();
+    const bsl::size_t currentWriterOffset = this->getWriterOffset();
+
+    bsl::size_t newMemoryCapacityMin = currentMemoryCapacity * 2;
+    if (newMemoryCapacityMin < e_MIN_CAPACITY) {
+        newMemoryCapacityMin = e_MIN_CAPACITY;
+    }
+
+    bsl::size_t newMemoryCapacity = currentMemoryCapacity + overflow;
+    if (newMemoryCapacity < newMemoryCapacityMin) {
+        newMemoryCapacity = newMemoryCapacityMin;
+    }
+
+    BSLS_ASSERT(d_allocator_p != 0);
+
+    void* newMemory = d_allocator_p->allocate(newMemoryCapacity);
+
+    if (currentMemory != 0) {
+        if (currentWriterOffset > 0) {
+            bsl::memcpy(newMemory, currentMemory, currentWriterOffset);
+        }
+
+        if (d_ownership == e_INTERNAL) {
+            d_allocator_p->deallocate(currentMemory);
+        }
+    }
+
+    this->initialize(newMemory, currentWriterOffset, newMemoryCapacity);
+    d_ownership = e_INTERNAL;
+
+    if (currentReaderOffset > 0) {
+        this->incrementReaderPosition(currentReaderOffset);
+    }
+
+    if (currentWriterOffset > 0) {
+        this->incrementWriterPosition(currentWriterOffset);
+    }
+}
+
+bsl::size_t StreamBuffer::store(const char* source, bsl::size_t size)
+{
+    BSLS_ASSERT(source != 0);
+    BSLS_ASSERT(size > 0);
+
+    BSLS_ASSERT(d_access == e_WRITABLE);
+
+    const bsl::size_t numAvailable = this->getWriterAvailable();
+
+    if (size > numAvailable) {
+        this->expand(size);
+    }
+
+    bsl::memcpy(this->getWriterCurrent(), source, size);
+    this->incrementWriterPosition(size);
+
+    return size;
+}
+
+bsl::size_t StreamBuffer::fetch(char* destination, bsl::size_t size)
+{
+    BSLS_ASSERT(destination != 0);
+    BSLS_ASSERT(size > 0);
+
+    const bsl::size_t numToCopyMax = this->getReaderAvailable();
+
+    bsl::size_t numToCopy = (bsl::size_t)(size);
+    if (numToCopy > numToCopyMax) {
+        numToCopy = numToCopyMax;
+    }
+
+    if (numToCopy > 0) {
+        bsl::memcpy(destination, this->getReaderCurrent(), numToCopy);
+        this->incrementReaderPosition(numToCopy);
+    }
+
+    return (bsl::streamsize)(numToCopy);
+}
+
+StreamBuffer::int_type StreamBuffer::overflow(int_type meta)
+{
+    if (d_access == e_READONLY) {
+        return bsl::streambuf::traits_type::eof();
+    }
+
+    if (traits_type::eof() == meta) {
+        return traits_type::not_eof(meta);
+    }
+
+    this->expand(1);
+
+    return this->sputc((char_type)(meta));
+}
+
+bsl::streamsize StreamBuffer::showmanyc()
+{
+    bsl::streamsize result = (bsl::streamsize)(this->getReaderAvailable());
+    if (0 == result) {
+        return -1;
+    }
+
+    return result;
+}
+
+bsl::streamsize StreamBuffer::xsgetn(char_type*      destination,
+                                     bsl::streamsize size)
+{
+    BSLS_ASSERT(destination != 0);
+    BSLS_ASSERT(size > 0);
+
+    return (bsl::streamsize)(this->fetch(destination, (bsl::size_t)(size)));
+}
+
+bsl::streamsize StreamBuffer::xsputn(const char_type* source,
+                                     bsl::streamsize  size)
+{
+    BSLS_ASSERT(source != 0);
+    BSLS_ASSERT(size > 0);
+
+    if (d_access == e_READONLY) {
+        return 0;
+    }
+
+    return (bsl::streamsize)(this->store(source, (bsl::size_t)(size)));
+}
+
+StreamBuffer::pos_type StreamBuffer::seekoff(off_type                offset,
+                                             bsl::ios_base::seekdir  way,
+                                             bsl::ios_base::openmode mode)
+{
+    if ((bsl::ios_base::out & mode) != 0) {
+        if (d_access == e_READONLY) {
+            return (pos_type)(-1);
+        }
+    }
+
+    bsl::streambuf::off_type getOffset = 0;
+    bsl::streambuf::off_type putOffset = 0;
+
+    if (way == bsl::ios_base::beg) {
+        getOffset = offset;
+        putOffset = offset;
+    }
+    else if (way == bsl::ios_base::cur) {
+        if (this->gptr() == 0) {
+            getOffset = 0;
+        }
+        else {
+            getOffset = (this->gptr() - this->eback()) + offset;
+        }
+
+        if (this->pptr() == 0) {
+            putOffset = 0;
+        }
+        else {
+            putOffset = (this->pptr() - this->pbase()) + offset;
+        }
+    }
+    else if (way == bsl::ios_base::end) {
+        if (this->gptr() == 0) {
+            getOffset = 0;
+        }
+        else {
+            getOffset = (off_type)(this->egptr() + offset);
+        }
+
+        if (this->pptr() == 0) {
+            putOffset = 0;
+        }
+        else {
+            putOffset = (off_type)(this->epptr() + offset);
+        }
+    }
+
+    char*       data     = this->data();
+    bsl::size_t size     = this->size();
+    bsl::size_t capacity = this->capacity();
+
+    if ((bsl::ios_base::in & mode) != 0) {
+        if (getOffset < 0 || static_cast<bsl::size_t>(getOffset) > size) {
+            return (pos_type)(-1);
+        }
+        else {
+            this->setg(data, data + getOffset, data + size);
+        }
+    }
+
+    if ((bsl::ios_base::out & mode) != 0) {
+        if (putOffset < 0 || static_cast<bsl::size_t>(putOffset) > size) {
+            return (pos_type)(-1);
+        }
+        else {
+            this->setp(data, data + capacity);
+            this->pbump((int)(putOffset));
+        }
+    }
+
+    return (pos_type)(((bsl::ios_base::in & mode) != 0) ? getOffset
+                                                        : putOffset);
+}
+
+StreamBuffer::pos_type StreamBuffer::seekpos(pos_type                position,
+                                             bsl::ios_base::openmode mode)
+{
+    return this->seekoff((off_type)(position), bsl::ios_base::beg, mode);
+}
+
+int StreamBuffer::sync()
+{
+    if (d_access == e_READONLY) {
+        return 0;
+    }
+
+    void*       writerMemory = this->getMemory();
+    bsl::size_t writerSize   = this->getMemorySize();
+    bsl::size_t readerOffset = this->getReaderOffset();
+
+    BSLS_ASSERT(readerOffset <= writerSize);
+
+    this->setg((char*)(writerMemory),
+               (char*)(writerMemory) + readerOffset,
+               (char*)(writerMemory) + writerSize);
+
+    return 0;
+}
+
+StreamBuffer::StreamBuffer(bslma::Allocator* basicAllocator)
+: d_access(e_WRITABLE)
+, d_ownership(e_INTERNAL)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+    this->initialize();
+}
+
+StreamBuffer::StreamBuffer(const void*       data,
+                           bsl::size_t       size,
+                           bslma::Allocator* basicAllocator)
+: d_access(e_READONLY)
+, d_ownership(e_EXTERNAL)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+    if (data == 0 || size == 0) {
+        this->initialize();
+    }
+    else {
+        this->initialize(data, size);
+    }
+}
+
+StreamBuffer::StreamBuffer(void*             data,
+                           bsl::size_t       size,
+                           bsl::size_t       capacity,
+                           bslma::Allocator* basicAllocator)
+: d_access(e_WRITABLE)
+, d_ownership(e_EXTERNAL)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+    if (data == 0 || capacity == 0) {
+        this->initialize();
+    }
+    else {
+        this->initialize(data, size, capacity);
+        this->incrementWriterPosition(size);
+    }
+}
+
+StreamBuffer::~StreamBuffer()
+{
+    void* currentMemory = this->getMemory();
+    if (currentMemory != 0) {
+        if (d_ownership == e_INTERNAL) {
+            BSLS_ASSERT(d_allocator_p != 0);
+            d_allocator_p->deallocate(currentMemory);
+        }
+    }
+}
+
+void StreamBuffer::reset()
+{
+    void* currentMemory = this->getMemory();
+    if (currentMemory != 0) {
+        if (d_ownership == e_INTERNAL) {
+            BSLS_ASSERT(d_allocator_p != 0);
+            d_allocator_p->deallocate(currentMemory);
+        }
+    }
+
+    this->initialize();
+
+    d_access    = e_WRITABLE;
+    d_ownership = e_INTERNAL;
+}
+
+void StreamBuffer::reserve(bsl::size_t capacity)
+{
+    const bsl::size_t currentCapacity = this->getMemoryCapacity();
+
+    if (capacity <= currentCapacity) {
+        return;
+    }
+
+    const bsl::size_t overflow = (bsl::size_t)(capacity - currentCapacity);
+
+    this->expand(overflow);
+}
+
+char* StreamBuffer::data()
+{
+    return (char*)(this->getMemory());
+}
+
+const char* StreamBuffer::data() const
+{
+    return (const char*)(this->getMemory());
+}
+
+bsl::size_t StreamBuffer::size() const
+{
+    return this->getMemorySize();
+}
+
+bsl::size_t StreamBuffer::capacity() const
+{
+    return this->getMemoryCapacity();
+}
+
 }  // close package namespace
 }  // close enterprise namespace

@@ -240,11 +240,11 @@ SendOptions::~SendOptions()
 NTSCFG_INLINE
 SendOptions& SendOptions::operator=(const SendOptions& other)
 {
-    d_endpoint   = other.d_endpoint;
+    d_endpoint      = other.d_endpoint;
     d_foreignHandle = other.d_foreignHandle;
-    d_maxBytes   = other.d_maxBytes;
-    d_maxBuffers = other.d_maxBuffers;
-    d_zeroCopy   = other.d_zeroCopy;
+    d_maxBytes      = other.d_maxBytes;
+    d_maxBuffers    = other.d_maxBuffers;
+    d_zeroCopy      = other.d_zeroCopy;
     return *this;
 }
 

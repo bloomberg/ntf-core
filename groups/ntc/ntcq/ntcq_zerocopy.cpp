@@ -58,8 +58,10 @@ void ZeroCopyEntry::match(const ntcq::ZeroCopyRange& complete)
         ntcq::ZeroCopyRange pending;
         ntcq::ZeroCopyRange overflow;
 
-        ntcq::ZeroCopyRange::difference(
-            &pending, &overflow, required, intersection);
+        ntcq::ZeroCopyRange::difference(&pending,
+                                        &overflow,
+                                        required,
+                                        intersection);
 
         if (overflow.empty()) {
             d_range = pending;
@@ -93,8 +95,10 @@ void ZeroCopyEntry::match(const ntcq::ZeroCopyRange& complete)
         ntcq::ZeroCopyRange pending;
         ntcq::ZeroCopyRange overflow;
 
-        ntcq::ZeroCopyRange::difference(
-            &pending, &overflow, required, intersection);
+        ntcq::ZeroCopyRange::difference(&pending,
+                                        &overflow,
+                                        required,
+                                        intersection);
 
         if (!pending.empty()) {
             d_rangeSet.push_back(pending);
@@ -157,9 +161,8 @@ bsl::ostream& ZeroCopyEntry::print(bsl::ostream& stream,
     return stream;
 }
 
-ZeroCopyQueue::ZeroCopyQueue(
-    const bsl::shared_ptr<ntci::DataPool>& dataPool,
-    bslma::Allocator*                      basicAllocator)
+ZeroCopyQueue::ZeroCopyQueue(const bsl::shared_ptr<ntci::DataPool>& dataPool,
+                             bslma::Allocator* basicAllocator)
 : d_generator()
 , d_waitList(basicAllocator)
 , d_doneList(basicAllocator)

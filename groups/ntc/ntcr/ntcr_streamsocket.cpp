@@ -283,7 +283,7 @@ const bsl::size_t k_ZERO_COPY_NEVER = (bsl::size_t)(-1);
 // The default zero-copy threshold value if none is explicitly specified.
 const bsl::size_t k_ZERO_COPY_DEFAULT = k_ZERO_COPY_NEVER;
 
-} // close unnamed namespace
+}  // close unnamed namespace
 
 void StreamSocket::processSocketReadable(const ntca::ReactorEvent& event)
 {
@@ -452,7 +452,7 @@ void StreamSocket::processNotifications(
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
 
     typedef bsl::vector<ntsa::Notification>::const_iterator
-    NotificationIterator;
+        NotificationIterator;
 
     NotificationIterator it = notifications.notifications().begin();
     NotificationIterator et = notifications.notifications().end();
@@ -666,11 +666,11 @@ void StreamSocket::processSendDeadlineTimer(
             sendEvent.setContext(sendContext);
 
             callback.dispatch(self,
-                                               sendEvent,
-                                               d_reactorStrand_sp,
-                                               self,
-                                               false,
-                                               &d_mutex);
+                              sendEvent,
+                              d_reactorStrand_sp,
+                              self,
+                              false,
+                              &d_mutex);
         }
     }
 }
@@ -1090,17 +1090,19 @@ ntsa::Error StreamSocket::privateSocketWritableConnection(
 
     if (d_options.timestampOutgoingData().has_value()) {
         this->privateTimestampOutgoingData(
-            self, d_options.timestampOutgoingData().value());
+            self,
+            d_options.timestampOutgoingData().value());
     }
 
     if (d_options.timestampIncomingData().has_value()) {
         this->privateTimestampIncomingData(
-            self, d_options.timestampIncomingData().value());
+            self,
+            d_options.timestampIncomingData().value());
     }
 
     if (d_options.zeroCopyThreshold().has_value()) {
-        this->privateZeroCopyEngage(
-            self, d_options.zeroCopyThreshold().value());
+        this->privateZeroCopyEngage(self,
+                                    d_options.zeroCopyThreshold().value());
     }
 
     ntci::ConnectCallback connectCallback = d_connectCallback;
@@ -1218,8 +1220,9 @@ ntsa::Error StreamSocket::privateSocketWritableIterationBatch(
             }
             else {
                 ntcq::ZeroCopyCounter zeroCopyCounter =
-                    d_zeroCopyQueue.push(
-                        entry.id(), entry.data(), entry.callback());
+                    d_zeroCopyQueue.push(entry.id(),
+                                         entry.data(),
+                                         entry.callback());
 
                 NTCCFG_WARNING_UNUSED(zeroCopyCounter);
                 NTCR_STREAMSOCKET_LOG_ZERO_COPY_STARTING(zeroCopyCounter);
@@ -1347,8 +1350,9 @@ ntsa::Error StreamSocket::privateSocketWritableIterationFront(
             }
             else {
                 ntcq::ZeroCopyCounter zeroCopyCounter =
-                    d_zeroCopyQueue.push(
-                        entry.id(), entry.data(), entry.callback());
+                    d_zeroCopyQueue.push(entry.id(),
+                                         entry.data(),
+                                         entry.callback());
 
                 NTCCFG_WARNING_UNUSED(zeroCopyCounter);
                 NTCR_STREAMSOCKET_LOG_ZERO_COPY_STARTING(zeroCopyCounter);
@@ -2081,13 +2085,12 @@ void StreamSocket::privateShutdownSequenceComplete(
             sendEvent.setType(ntca::SendEventType::e_ERROR);
             sendEvent.setContext(sendContext);
 
-            callbackVector[i].dispatch(
-                self,
-                sendEvent,
-                d_reactorStrand_sp,
-                self,
-                defer,
-                &d_mutex);
+            callbackVector[i].dispatch(self,
+                                       sendEvent,
+                                       d_reactorStrand_sp,
+                                       self,
+                                       defer,
+                                       &d_mutex);
         }
 
         callbackVector.clear();
@@ -2738,9 +2741,8 @@ ntsa::Error StreamSocket::privateEnqueueSendBuffer(
 
     if (d_timestampOutgoingData) {
         d_timestampCounter += static_cast<bsl::uint32_t>(context->bytesSent());
-        d_timestampCorrelator.saveTimestampBeforeSend(
-            timestamp,
-            d_timestampCounter - 1);
+        d_timestampCorrelator.saveTimestampBeforeSend(timestamp,
+                                                      d_timestampCounter - 1);
     }
 
     if (NTCCFG_UNLIKELY(d_sendRateLimiter_sp)) {
@@ -2838,9 +2840,8 @@ ntsa::Error StreamSocket::privateEnqueueSendBuffer(
 
     if (d_timestampOutgoingData) {
         d_timestampCounter += static_cast<bsl::uint32_t>(context->bytesSent());
-        d_timestampCorrelator.saveTimestampBeforeSend(
-            timestamp,
-            d_timestampCounter - 1);
+        d_timestampCorrelator.saveTimestampBeforeSend(timestamp,
+                                                      d_timestampCounter - 1);
     }
 
     if (NTCCFG_UNLIKELY(d_sendRateLimiter_sp)) {
@@ -3308,7 +3309,7 @@ ntsa::Error StreamSocket::privateSendRaw(
     }
 
     BSLS_ASSERT((!error && context.bytesSent() > 0) ||
-                 (error == ntsa::Error::e_WOULD_BLOCK));
+                (error == ntsa::Error::e_WOULD_BLOCK));
 
     if (context.bytesSent() == data.size()) {
         if (context.zeroCopy()) {
@@ -3410,13 +3411,12 @@ ntsa::Error StreamSocket::privateSendRaw(
     return ntsa::Error();
 }
 
-
 ntsa::Error StreamSocket::privateSendEncrypted(
-        const bsl::shared_ptr<StreamSocket>& self,
-        const bdlbb::Blob&                   data,
-        const ntcq::SendState&               state,
-        const ntca::SendOptions&             options,
-        const ntci::SendCallback&            callback)
+    const bsl::shared_ptr<StreamSocket>& self,
+    const bdlbb::Blob&                   data,
+    const ntcq::SendState&               state,
+    const ntca::SendOptions&             options,
+    const ntci::SendCallback&            callback)
 {
     ntsa::Error error;
 
@@ -3435,8 +3435,8 @@ ntsa::Error StreamSocket::privateSendEncrypted(
     }
 
     if (cipherData.length() > 0) {
-        error = this->privateSendRaw(
-            self, cipherData, state, options, callback);
+        error =
+            this->privateSendRaw(self, cipherData, state, options, callback);
         if (error) {
             return error;
         }
@@ -3448,23 +3448,22 @@ ntsa::Error StreamSocket::privateSendEncrypted(
         const bool defer = !options.recurse();
 
         callback.dispatch(self,
-                            sendEvent,
-                            ntci::Strand::unknown(),
-                            self,
-                            defer,
-                            &d_mutex);
+                          sendEvent,
+                          ntci::Strand::unknown(),
+                          self,
+                          defer,
+                          &d_mutex);
     }
 
     return ntsa::Error();
 }
 
-
 ntsa::Error StreamSocket::privateSendEncrypted(
-        const bsl::shared_ptr<StreamSocket>& self,
-        const ntsa::Data&                    data,
-        const ntcq::SendState&               state,
-        const ntca::SendOptions&             options,
-        const ntci::SendCallback&            callback)
+    const bsl::shared_ptr<StreamSocket>& self,
+    const ntsa::Data&                    data,
+    const ntcq::SendState&               state,
+    const ntca::SendOptions&             options,
+    const ntci::SendCallback&            callback)
 {
     ntsa::Error error;
 
@@ -3483,8 +3482,8 @@ ntsa::Error StreamSocket::privateSendEncrypted(
     }
 
     if (cipherData.length() > 0) {
-        error = this->privateSendRaw(
-            self, cipherData, state, options, callback);
+        error =
+            this->privateSendRaw(self, cipherData, state, options, callback);
         if (error) {
             return error;
         }
@@ -3756,17 +3755,19 @@ ntsa::Error StreamSocket::privateOpen(
 
         if (d_options.timestampOutgoingData().has_value()) {
             this->privateTimestampOutgoingData(
-                self, d_options.timestampOutgoingData().value());
+                self,
+                d_options.timestampOutgoingData().value());
         }
 
         if (d_options.timestampIncomingData().has_value()) {
             this->privateTimestampIncomingData(
-                self, d_options.timestampIncomingData().value());
+                self,
+                d_options.timestampIncomingData().value());
         }
 
         if (d_options.zeroCopyThreshold().has_value()) {
-            this->privateZeroCopyEngage(
-                self, d_options.zeroCopyThreshold().value());
+            this->privateZeroCopyEngage(self,
+                                        d_options.zeroCopyThreshold().value());
         }
 
         ntcs::Dispatch::announceEstablished(d_manager_sp,
@@ -3974,7 +3975,8 @@ void StreamSocket::processRemoteEndpointResolution(
 }
 
 ntsa::Error StreamSocket::privateUpgrade(
-    const bsl::shared_ptr<StreamSocket>& self)
+    const bsl::shared_ptr<StreamSocket>& self,
+    const ntca::UpgradeOptions&          upgradeOptions)
 {
     NTCI_LOG_CONTEXT();
 
@@ -3990,7 +3992,8 @@ ntsa::Error StreamSocket::privateUpgrade(
         bdlf::MemFnUtil::memFn(&StreamSocket::privateEncryptionHandshake,
                                this);
 
-    error = d_encryption_sp->initiateHandshake(handshakeCallback);
+    error = d_encryption_sp->initiateHandshake(
+        upgradeOptions, handshakeCallback);
     if (error) {
         return error;
     }
@@ -4068,8 +4071,11 @@ ntsa::Error StreamSocket::privateUpgrade(
         ntcq::SendState state;
         state.setCounter(d_sendCounter++);
 
-        error = this->privateSendRaw(
-            self, cipherData, state, ntca::SendOptions(), d_sendComplete);
+        error = this->privateSendRaw(self,
+                                     cipherData,
+                                     state,
+                                     ntca::SendOptions(),
+                                     d_sendComplete);
         if (error) {
             return error;
         }
@@ -4221,8 +4227,8 @@ ntsa::Error StreamSocket::privateRetryConnectToEndpoint(
 }
 
 ntsa::Error StreamSocket::privateTimestampOutgoingData(
-        const bsl::shared_ptr<StreamSocket>& self,
-        bool                                 enable)
+    const bsl::shared_ptr<StreamSocket>& self,
+    bool                                 enable)
 {
     NTCCFG_WARNING_UNUSED(self);
 
@@ -4313,8 +4319,8 @@ ntsa::Error StreamSocket::privateTimestampOutgoingData(
 }
 
 ntsa::Error StreamSocket::privateTimestampIncomingData(
-        const bsl::shared_ptr<StreamSocket>& self,
-        bool                                 enable)
+    const bsl::shared_ptr<StreamSocket>& self,
+    bool                                 enable)
 {
     NTCCFG_WARNING_UNUSED(self);
 
@@ -4393,8 +4399,8 @@ ntsa::Error StreamSocket::privateTimestampIncomingData(
 }
 
 void StreamSocket::privateTimestampUpdate(
-        const bsl::shared_ptr<StreamSocket>& self,
-        const ntsa::Timestamp&               timestamp)
+    const bsl::shared_ptr<StreamSocket>& self,
+    const ntsa::Timestamp&               timestamp)
 {
     NTCCFG_WARNING_UNUSED(self);
 
@@ -4429,8 +4435,8 @@ void StreamSocket::privateTimestampUpdate(
 }
 
 ntsa::Error StreamSocket::privateZeroCopyEngage(
-        const bsl::shared_ptr<StreamSocket>& self,
-        bsl::size_t                          threshold)
+    const bsl::shared_ptr<StreamSocket>& self,
+    bsl::size_t                          threshold)
 {
     NTCCFG_WARNING_UNUSED(self);
 
@@ -4482,8 +4488,8 @@ ntsa::Error StreamSocket::privateZeroCopyEngage(
 }
 
 void StreamSocket::privateZeroCopyUpdate(
-            const bsl::shared_ptr<StreamSocket>& self,
-            const ntsa::ZeroCopy&                zeroCopy)
+    const bsl::shared_ptr<StreamSocket>& self,
+    const ntsa::ZeroCopy&                zeroCopy)
 {
     NTCI_LOG_CONTEXT();
 
@@ -4501,7 +4507,7 @@ void StreamSocket::privateZeroCopyUpdate(
     if (d_zeroCopyQueue.ready()) {
         while (true) {
             ntci::SendCallback callback;
-            bool found = d_zeroCopyQueue.pop(&callback);
+            bool               found = d_zeroCopyQueue.pop(&callback);
             if (!found) {
                 break;
             }
@@ -4510,8 +4516,12 @@ void StreamSocket::privateZeroCopyUpdate(
                 ntca::SendEvent event;
                 event.setType(ntca::SendEventType::e_COMPLETE);
 
-                callback.dispatch(
-                    self, event, d_reactorStrand_sp, self, false, &d_mutex);
+                callback.dispatch(self,
+                                  event,
+                                  d_reactorStrand_sp,
+                                  self,
+                                  false,
+                                  &d_mutex);
             }
         }
     }
@@ -5179,7 +5189,7 @@ ntsa::Error StreamSocket::upgrade(
 
     // Initiate the upgrade.
 
-    error = this->privateUpgrade(self);
+    error = this->privateUpgrade(self, options);
     if (error) {
         d_encryption_sp.reset();
         d_upgradeCallback.reset();
@@ -5348,8 +5358,11 @@ ntsa::Error StreamSocket::send(const bdlbb::Blob&        data,
         return this->privateSendRaw(self, data, state, options, callback);
     }
     else {
-        return this->privateSendEncrypted(
-            self, data, state, options, callback);
+        return this->privateSendEncrypted(self,
+                                          data,
+                                          state,
+                                          options,
+                                          callback);
     }
 }
 
@@ -5422,8 +5435,11 @@ ntsa::Error StreamSocket::send(const ntsa::Data&         data,
         return this->privateSendRaw(self, data, state, options, callback);
     }
     else {
-        return this->privateSendEncrypted(
-            self, data, state, options, callback);
+        return this->privateSendEncrypted(self,
+                                          data,
+                                          state,
+                                          options,
+                                          callback);
     }
 }
 
@@ -5855,7 +5871,7 @@ ntsa::Error StreamSocket::deregisterSession()
 
 ntsa::Error StreamSocket::setZeroCopyThreshold(bsl::size_t value)
 {
-    bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
+    bsl::shared_ptr<StreamSocket>  self = this->getSelf(this);
     bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
 
     return this->privateZeroCopyEngage(self, value);
@@ -6347,11 +6363,11 @@ ntsa::Error StreamSocket::cancel(const ntca::SendToken& token)
         sendEvent.setContext(sendContext);
 
         callback.dispatch(self,
-                                           sendEvent,
-                                           d_reactorStrand_sp,
-                                           self,
-                                           true,
-                                           &d_mutex);
+                          sendEvent,
+                          d_reactorStrand_sp,
+                          self,
+                          true,
+                          &d_mutex);
 
         return ntsa::Error();
     }
@@ -6459,8 +6475,11 @@ ntsa::Error StreamSocket::downgrade()
         ntcq::SendState state;
         state.setCounter(d_sendCounter++);
 
-        error = this->privateSendRaw(
-            self, cipherData, state, ntca::SendOptions(), d_sendComplete);
+        error = this->privateSendRaw(self,
+                                     cipherData,
+                                     state,
+                                     ntca::SendOptions(),
+                                     d_sendComplete);
         if (error) {
             return error;
         }
@@ -6504,11 +6523,10 @@ ntsa::Error StreamSocket::shutdown(ntsa::ShutdownType::Value direction,
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
     if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
-        d_deferredCalls.push_back(NTCCFG_BIND(&StreamSocket::shutdown,
-                                              self,
-                                              direction,
-                                              mode));
-        return ntsa::Error();;
+        d_deferredCalls.push_back(
+            NTCCFG_BIND(&StreamSocket::shutdown, self, direction, mode));
+        return ntsa::Error();
+        ;
     }
 
     if (d_connectInProgress) {

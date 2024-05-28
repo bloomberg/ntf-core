@@ -482,7 +482,9 @@ class StreamSocket : public ntci::StreamSocket,
         bsl::size_t                            connectAttempts);
 
     /// Initiate the upgrade. Return the error.
-    ntsa::Error privateUpgrade(const bsl::shared_ptr<StreamSocket>& self);
+    ntsa::Error privateUpgrade(
+        const bsl::shared_ptr<StreamSocket>& self,
+        const ntca::UpgradeOptions&          upgradeOptions);
 
     /// Retry connecting to the remote peer.
     void privateRetryConnect(const bsl::shared_ptr<StreamSocket>& self);

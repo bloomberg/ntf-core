@@ -43,7 +43,7 @@ size_t BlobBufferUtil::calculateNumBytesToAllocate(size_t size,
     bsl::size_t numBytesToBeAvailable = (capacity - size) + numBytesToAllocate;
 
     if (numBytesToBeAvailable < minReceiveSize) {
-        bsl::size_t numBytesToAdjust = minReceiveSize - numBytesToBeAvailable;
+        bsl::size_t numBytesToAdjust  = minReceiveSize - numBytesToBeAvailable;
         numBytesToAllocate           += numBytesToAdjust;
     }
 

@@ -19,9 +19,9 @@
 BSLS_IDENT_RCSID(ntsa_interest_cpp, "$Id$ $CSID$")
 
 #include <bdlb_string.h>
+#include <bslim_printer.h>
 #include <bsls_assert.h>
 #include <bsl_ostream.h>
-#include <bslim_printer.h>
 
 namespace BloombergLP {
 namespace ntsa {
@@ -66,8 +66,8 @@ const char* InterestType::toString(InterestType::Value value)
     return 0;
 }
 
-bsl::ostream& InterestType::print(bsl::ostream&   stream,
-                              InterestType::Value value)
+bsl::ostream& InterestType::print(bsl::ostream&       stream,
+                                  InterestType::Value value)
 {
     return stream << toString(value);
 }
@@ -96,8 +96,8 @@ bool Interest::less(const Interest& other) const
 }
 
 bsl::ostream& Interest::print(bsl::ostream& stream,
-                           int           level,
-                           int           spacesPerLevel) const
+                              int           level,
+                              int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();

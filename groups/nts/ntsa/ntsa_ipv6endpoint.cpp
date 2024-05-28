@@ -190,7 +190,7 @@ bsl::size_t Ipv6Endpoint::format(char*       buffer,
         return capacity - c;
     }
 
-    *t = '[';
+    *t  = '[';
     t  += 1;
     c  -= 1;
 
@@ -204,7 +204,7 @@ bsl::size_t Ipv6Endpoint::format(char*       buffer,
         return capacity - c;
     }
 
-    *t = ']';
+    *t  = ']';
     t  += 1;
     c  -= 1;
 
@@ -212,7 +212,7 @@ bsl::size_t Ipv6Endpoint::format(char*       buffer,
         return capacity - c;
     }
 
-    *t = ':';
+    *t  = ':';
     t  += 1;
     c  -= 1;
 

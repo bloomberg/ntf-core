@@ -19,8 +19,11 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntca_encryptionkeytype.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
+#include <bdlb_nullablevalue.h>
+#include <bslh_hash.h>
 #include <bsl_iosfwd.h>
 #include <bsl_memory.h>
 #include <bsl_string.h>
@@ -34,8 +37,9 @@ namespace ntca {
 /// @par Attributes
 /// This class is composed of the following attributes.
 ///
-/// @li @b bits:
-/// The number of bits in the RSA key.
+/// @li @b type:
+/// The type of the key. If not defined, a suitable key type of strength
+/// suggested by current cryptographic standards is chosen.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -43,18 +47,47 @@ namespace ntca {
 /// @ingroup module_ntci_encryption
 class EncryptionKeyOptions
 {
-    int d_bits;  // The number of bits in the RSA key.
+    bdlb::NullableValue<ntca::EncryptionKeyType::Value> d_type;
+    bdlb::NullableValue<bsl::size_t>                    d_bits;
 
   public:
     /// Create a new key generation configuration having the default
-    /// value.
-    EncryptionKeyOptions();
+    /// value. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    explicit EncryptionKeyOptions(bslma::Allocator* basicAllocator = 0);
 
-    /// Set the number of bits in the RSA key to the specified 'bits'.
-    void setBits(int bits);
+    /// Create a new key generation configuration having the same value as
+    /// the specified 'original' object. Optionally specify a 'basicAllocator'
+    /// used to supply memory. If 'basicAllocator' is 0, the currently
+    /// installed default allocator is used.
+    EncryptionKeyOptions(const EncryptionKeyOptions& original,
+                         bslma::Allocator*           basicAllocator = 0);
 
-    /// Return the number of bits in the RSA key.
-    int bits() const;
+    /// Destroy this object.
+    ~EncryptionKeyOptions();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    EncryptionKeyOptions& operator=(const EncryptionKeyOptions& other);
+
+    /// Reset the value of this object to its value upon default
+    /// construction.
+    void reset();
+
+    /// Set the key type to the specified 'value'.
+    void setType(ntca::EncryptionKeyType::Value value);
+
+    /// Return the key type.
+    const bdlb::NullableValue<ntca::EncryptionKeyType::Value>& type() const;
+
+    /// Return true if this object has the same value as the specified
+    /// 'other' object, otherwise return false.
+    bool equals(const EncryptionKeyOptions& other) const;
+
+    /// Return true if the value of this object is less than the value of
+    /// the specified 'other' object, otherwise return false.
+    bool less(const EncryptionKeyOptions& other) const;
 
     /// Format this object to the specified output 'stream' at the
     /// optionally specified indentation 'level' and return a reference to
@@ -70,7 +103,19 @@ class EncryptionKeyOptions
     bsl::ostream& print(bsl::ostream& stream,
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
+
+    /// Defines the traits of this type. These traits can be used to select,
+    /// at compile-time, the most efficient algorithm to manipulate objects
+    /// of this type.
+    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionKeyOptions);
 };
+
+/// Format the specified 'object' to the specified output 'stream' and
+/// return a reference to the modifiable 'stream'.
+///
+/// @related ntca::EncryptionKeyOptions
+bsl::ostream& operator<<(bsl::ostream&               stream,
+                         const EncryptionKeyOptions& object);
 
 /// Return 'true' if the specified 'lhs' and 'rhs' attribute objects have
 /// the same value, and 'false' otherwise.  Two attribute objects have the
@@ -89,12 +134,27 @@ bool operator==(const EncryptionKeyOptions& lhs,
 bool operator!=(const EncryptionKeyOptions& lhs,
                 const EncryptionKeyOptions& rhs);
 
-/// Format the specified 'object' to the specified output 'stream' and
-/// return a reference to the modifiable 'stream'.
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
 ///
 /// @related ntca::EncryptionKeyOptions
-bsl::ostream& operator<<(bsl::ostream&               stream,
-                         const EncryptionKeyOptions& object);
+bool operator<(const EncryptionKeyOptions& lhs,
+               const EncryptionKeyOptions& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntca::EncryptionKeyOptions
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionKeyOptions& value);
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const EncryptionKeyOptions& value)
+{
+    using bslh::hashAppend;
+
+    hashAppend(algorithm, value.type());
+}
 
 }  // close package namespace
 }  // close enterprise namespace

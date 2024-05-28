@@ -19,9 +19,9 @@
 BSLS_IDENT_RCSID(ntsscm_version_cpp, "$Id$ $CSID$")
 
 #include <bdlb_numericparseutil.h>
-#include <bslscm_patchversion.h>
 #include <bslmt_once.h>
 #include <bsls_platform.h>
+#include <bslscm_patchversion.h>
 #include <bsl_cstring.h>
 #include <bsl_string_view.h>
 
@@ -33,7 +33,7 @@ BSLS_IDENT_RCSID(ntsscm_version_cpp, "$Id$ $CSID$")
 
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
 #include <windows.h>
-#pragma warning(disable: 4996)
+#pragma warning(disable : 4996)
 #endif
 
 namespace BloombergLP {
@@ -45,17 +45,16 @@ static int s_systemVersionError = 0;
 static int s_systemVersionMajor = 0;
 static int s_systemVersionMinor = 0;
 static int s_systemVersionPatch = 0;
-static int s_systemBuild = 0;
+static int s_systemBuild        = 0;
 
 /// @internal @brief
-/// Provide utilities for detecting the operating system version. 
+/// Provide utilities for detecting the operating system version.
 ///
 /// @par Thread Safety
 /// This class is thread safe.
 ///
 /// @ingroup module_ntsscm
-struct VersionUtil 
-{
+struct VersionUtil {
     /// Load into the specified 'major', 'minor', 'patch', and 'build' the
     /// version information of the operating system running the current
     /// process.  Return 0 on success and a non-zero value otherwise.
@@ -252,7 +251,7 @@ int VersionUtil::systemVersion(int* major, int* minor, int* patch, int* build)
 #error Not implemented
 #endif
 
-} // close unnnamed namespace
+}  // close unnnamed namespace
 
 #define STRINGIFY2(a) #a
 #define STRINGIFY(a) STRINGIFY2(a)
@@ -274,11 +273,11 @@ int Version::systemVersion(int* major, int* minor, int* patch, int* build)
 {
     BSLMT_ONCE_DO
     {
-        s_systemVersionError = VersionUtil::systemVersion(
-            &s_systemVersionMajor, 
-            &s_systemVersionMinor, 
-            &s_systemVersionPatch, 
-            &s_systemBuild);
+        s_systemVersionError =
+            VersionUtil::systemVersion(&s_systemVersionMajor,
+                                       &s_systemVersionMinor,
+                                       &s_systemVersionPatch,
+                                       &s_systemBuild);
     }
 
     *major = s_systemVersionMajor;

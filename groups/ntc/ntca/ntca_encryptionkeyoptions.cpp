@@ -26,26 +26,58 @@ BSLS_IDENT_RCSID(ntca_encryptionkeyoptions_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntca {
 
-namespace {
+EncryptionKeyOptions::EncryptionKeyOptions(bslma::Allocator* basicAllocator)
+: d_type()
+{
+    NTCCFG_WARNING_UNUSED(basicAllocator);
+}
 
-// The default number of bits to use when generating an RSA key.
-const int DEFAULT_BITS = 2048;
+EncryptionKeyOptions::EncryptionKeyOptions(
+    const EncryptionKeyOptions& original,
+    bslma::Allocator*           basicAllocator)
+: d_type(original.d_type)
+{
+    NTCCFG_WARNING_UNUSED(basicAllocator);
+}
 
-}  // close unnamed namespace
-
-EncryptionKeyOptions::EncryptionKeyOptions()
-: d_bits(DEFAULT_BITS)
+EncryptionKeyOptions::~EncryptionKeyOptions()
 {
 }
 
-void EncryptionKeyOptions::setBits(int bits)
+EncryptionKeyOptions& EncryptionKeyOptions::operator=(
+    const EncryptionKeyOptions& other)
 {
-    d_bits = bits;
+    if (this != &other) {
+        d_type = other.d_type;
+    }
+
+    return *this;
 }
 
-int EncryptionKeyOptions::bits() const
+void EncryptionKeyOptions::reset()
 {
-    return d_bits;
+    d_type.reset();
+}
+
+void EncryptionKeyOptions::setType(ntca::EncryptionKeyType::Value value)
+{
+    d_type = value;
+}
+
+const bdlb::NullableValue<ntca::EncryptionKeyType::Value>& EncryptionKeyOptions::
+    type() const
+{
+    return d_type;
+}
+
+bool EncryptionKeyOptions::equals(const EncryptionKeyOptions& other) const
+{
+    return d_type == other.d_type;
+}
+
+bool EncryptionKeyOptions::less(const EncryptionKeyOptions& other) const
+{
+    return d_type < other.d_type;
 }
 
 bsl::ostream& EncryptionKeyOptions::print(bsl::ostream& stream,
@@ -54,15 +86,25 @@ bsl::ostream& EncryptionKeyOptions::print(bsl::ostream& stream,
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute("d_bits", d_bits);
+
+    if (!d_type.isNull()) {
+        printer.printAttribute("type", d_type);
+    }
+
     printer.end();
     return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream&               stream,
+                         const EncryptionKeyOptions& object)
+{
+    return object.print(stream, 0, -1);
 }
 
 bool operator==(const EncryptionKeyOptions& lhs,
                 const EncryptionKeyOptions& rhs)
 {
-    return lhs.bits() == rhs.bits();
+    return lhs.equals(rhs);
 }
 
 bool operator!=(const EncryptionKeyOptions& lhs,
@@ -71,10 +113,10 @@ bool operator!=(const EncryptionKeyOptions& lhs,
     return !operator==(lhs, rhs);
 }
 
-bsl::ostream& operator<<(bsl::ostream&               stream,
-                         const EncryptionKeyOptions& object)
+bool operator<(const EncryptionKeyOptions& lhs,
+               const EncryptionKeyOptions& rhs)
 {
-    return object.print(stream, 0, -1);
+    return lhs.less(rhs);
 }
 
 }  // close package namespace

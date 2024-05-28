@@ -16,9 +16,9 @@
 #include <ntcs_controller.h>
 
 #include <ntccfg_test.h>
-#include <ntsu_socketoptionutil.h>
-#include <ntsi_reactor.h>
 #include <ntsf_system.h>
+#include <ntsi_reactor.h>
+#include <ntsu_socketoptionutil.h>
 
 using namespace BloombergLP;
 
@@ -85,7 +85,7 @@ void pollAndTest(const bsl::shared_ptr<ntsi::Reactor>& reactor,
     NTCCFG_TEST_EQ(readableFound, readableExpected);
 }
 
-} // close unnamed namespace
+}  // close unnamed namespace
 
 NTCCFG_TEST_CASE(1)
 {
@@ -190,9 +190,8 @@ NTCCFG_TEST_CASE(2)
 
             {
                 bsl::string tempDirNew;
-                for (bsl::size_t i = 0;
-                                 i < ntsa::LocalName::k_MAX_PATH_LENGTH;
-                               ++i)
+                for (bsl::size_t i = 0; i < ntsa::LocalName::k_MAX_PATH_LENGTH;
+                     ++i)
                 {
                     const char c = 'a' + (bsl::rand() % ('z' - 'a'));
                     tempDirNew.append(1, c);
@@ -206,8 +205,8 @@ NTCCFG_TEST_CASE(2)
             ntcs::Controller controller;
 
             bool isLocal = true;
-            error = ntsu::SocketOptionUtil::isLocal(&isLocal,
-                                                    controller.handle());
+            error =
+                ntsu::SocketOptionUtil::isLocal(&isLocal, controller.handle());
             NTCCFG_TEST_OK(error);
             NTCCFG_TEST_FALSE(isLocal);
 

@@ -201,7 +201,7 @@ ntsa::Error MemoryEncoder::encodeUint8(bsl::uint8_t value)
         return error;
     }
 
-    *d_current = value;
+    *d_current  = value;
     d_current  += sizeof value;
 
     return ntsa::Error();
@@ -266,7 +266,7 @@ ntsa::Error MemoryEncoder::encodeDomainName(const bsl::string& value)
             return error;
         }
 
-        *d_current = length;
+        *d_current  = length;
         d_current  += sizeof length;
 
         error = checkOverflow(d_end - d_current, token.size());
@@ -285,7 +285,7 @@ ntsa::Error MemoryEncoder::encodeDomainName(const bsl::string& value)
         return error;
     }
 
-    *d_current = 0;
+    *d_current  = 0;
     d_current  += 1;
 
     return ntsa::Error();
@@ -307,7 +307,7 @@ ntsa::Error MemoryEncoder::encodeCharacterString(const bsl::string& value)
         return error;
     }
 
-    *d_current = length;
+    *d_current  = length;
     d_current  += sizeof length;
 
     error = checkOverflow(d_end - d_current, value.size());
@@ -454,7 +454,7 @@ ntsa::Error MemoryDecoder::decodeUint8(bsl::uint8_t* value)
         return error;
     }
 
-    *value    = *d_current;
+    *value     = *d_current;
     d_current += sizeof *value;
 
     return ntsa::Error();
@@ -529,7 +529,7 @@ ntsa::Error MemoryDecoder::decodeDomainName(bsl::string* value)
             return error;
         }
 
-        length    = *d_current;
+        length     = *d_current;
         d_current += sizeof length;
 
         if (length == 0) {
@@ -561,7 +561,7 @@ ntsa::Error MemoryDecoder::decodeDomainName(bsl::string* value)
                     return error;
                 }
 
-                offsetLower = *d_current;
+                offsetLower  = *d_current;
                 d_current   += sizeof offsetLower;
 
                 bsl::uint16_t offset =
@@ -622,7 +622,7 @@ ntsa::Error MemoryDecoder::decodeLabel(bsl::string* value,
             return error;
         }
 
-        length  = *current;
+        length   = *current;
         current += sizeof length;
 
         if (length == 0) {
@@ -654,7 +654,7 @@ ntsa::Error MemoryDecoder::decodeLabel(bsl::string* value,
                     return error;
                 }
 
-                offsetLower = *current;
+                offsetLower  = *current;
                 current     += sizeof offsetLower;
 
                 bsl::uint16_t offset =
@@ -702,7 +702,7 @@ ntsa::Error MemoryDecoder::decodeCharacterString(bsl::string* value)
         return error;
     }
 
-    length    = *d_current;
+    length     = *d_current;
     d_current += sizeof length;
 
     if (length > 0) {

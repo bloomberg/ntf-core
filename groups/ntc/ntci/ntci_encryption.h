@@ -22,6 +22,7 @@ BSLS_IDENT("$Id: $")
 #include <ntca_encryptionauthentication.h>
 #include <ntca_encryptionmethod.h>
 #include <ntca_encryptionrole.h>
+#include <ntca_upgradeoptions.h>
 #include <ntccfg_platform.h>
 #include <ntci_encryptioncertificate.h>
 #include <ntci_encryptionkey.h>
@@ -69,71 +70,107 @@ class Encryption
     /// Initiate the handshake to begin the session. Invoke the specified
     /// 'callback' when the handshake completes. Return the error.
     virtual ntsa::Error initiateHandshake(
-        const HandshakeCallback& callback) = 0;
+        const HandshakeCallback& callback);
+
+    /// Initiate the handshake to begin the session according to the specified
+    /// 'upgradeOptions'. Invoke the specified 'callback' when the handshake 
+    /// completes. Return the error.
+    virtual ntsa::Error initiateHandshake(
+        const ntca::UpgradeOptions& upgradeOptions,
+        const HandshakeCallback&    callback);
 
     /// Add the specified 'input' containing ciphertext read from the peer.
     /// Return 0 on success and a non-zero value otherwise.
-    virtual ntsa::Error pushIncomingCipherText(const bdlbb::Blob& input) = 0;
+    virtual ntsa::Error pushIncomingCipherText(const bdlbb::Blob& input);
 
     /// Add the specified 'input' containing ciphertext read from the peer.
     /// Return 0 on success and a non-zero value otherwise.
-    virtual ntsa::Error pushIncomingCipherText(const ntsa::Data& input) = 0;
+    virtual ntsa::Error pushIncomingCipherText(const ntsa::Data& input);
 
     /// Add the specified 'input' containing plaintext to be sent to the
     /// peer. Return 0 on success and a non-zero value otherwise.
-    virtual ntsa::Error pushOutgoingPlainText(const bdlbb::Blob& input) = 0;
+    virtual ntsa::Error pushOutgoingPlainText(const bdlbb::Blob& input);
 
     /// Add the specified 'input' containing plaintext to be sent to the
     /// peer. Return 0 on success and a non-zero value otherwise.
-    virtual ntsa::Error pushOutgoingPlainText(const ntsa::Data& input) = 0;
+    virtual ntsa::Error pushOutgoingPlainText(const ntsa::Data& input);
 
     /// Pop plaintext read from the peer and append it to the specified
     /// 'output'. Return 0 on success and a non-zero value otherwise.
-    virtual ntsa::Error popIncomingPlainText(bdlbb::Blob* output) = 0;
+    virtual ntsa::Error popIncomingPlainText(bdlbb::Blob* output);
 
     /// Pop ciphertext to be read from the peer and append to the specified
     /// 'output'.
-    virtual ntsa::Error popOutgoingCipherText(bdlbb::Blob* output) = 0;
+    virtual ntsa::Error popOutgoingCipherText(bdlbb::Blob* output);
 
     /// Initiate the shutdown of the session.
-    virtual ntsa::Error shutdown() = 0;
+    virtual ntsa::Error shutdown();
 
     /// Return true if plaintext data is ready to be read.
-    virtual bool hasIncomingPlainText() const = 0;
+    virtual bool hasIncomingPlainText() const;
 
     /// Return true if ciphertext data is ready to be sent.
-    virtual bool hasOutgoingCipherText() const = 0;
+    virtual bool hasOutgoingCipherText() const;
+
+    /// Load into the specified 'result' the source certificate used by the
+    /// encryption session. Return true if such a certicate is defined, and
+    /// false otherwise.
+    virtual bool getSourceCertificate(
+        ntca::EncryptionCertificate* result) const;
+
+    /// Load into the specified 'result' the source certificate used by the
+    /// encryption session. Return true if such a certicate is defined, and
+    /// false otherwise.
+    virtual bool getSourceCertificate(
+        bsl::shared_ptr<ntci::EncryptionCertificate>* result) const;
+
+    /// Load into the specified 'result' the remote certificate used by the
+    /// encryption session. Return true if such a certicate is defined, and
+    /// false otherwise.
+    virtual bool getRemoteCertificate(
+        ntca::EncryptionCertificate* result) const;
+
+    /// Load into the specified 'result' the remote certificate used by the
+    /// encryption session. Return true if such a certicate is defined, and
+    /// false otherwise.
+    virtual bool getRemoteCertificate(
+        bsl::shared_ptr<ntci::EncryptionCertificate>* result) const;
 
     /// Load into the specified 'result' the cipher used to encrypt data
     /// passing through the filter. Return true if such a cipher has been
     /// negotiated, and false otherwise.
-    virtual bool getCipher(bsl::string* result) const = 0;
+    virtual bool getCipher(bsl::string* result) const;
 
     /// Return true if the handshake is finished, otherwise return false.
-    virtual bool isHandshakeFinished() const = 0;
+    virtual bool isHandshakeFinished() const;
 
     /// Return true if the shutdown has been sent, otherwise return false.
-    virtual bool isShutdownSent() const = 0;
+    virtual bool isShutdownSent() const;
 
     /// Return true if the shutdown has been received, otherwise return
     /// false.
-    virtual bool isShutdownReceived() const = 0;
+    virtual bool isShutdownReceived() const;
 
     /// Return true if the shutdown is finished, otherwise return false.
-    virtual bool isShutdownFinished() const = 0;
+    virtual bool isShutdownFinished() const;
 
     /// Return the source certificate used by the encryption session, if
     /// any.
     virtual bsl::shared_ptr<ntci::EncryptionCertificate> sourceCertificate()
-        const = 0;
+        const;
 
     /// Return the remote certificate used by the encryption session, if
     /// any.
     virtual bsl::shared_ptr<ntci::EncryptionCertificate> remoteCertificate()
-        const = 0;
+        const;
 
     /// Return the private key used by the encryption session, if any.
-    virtual bsl::shared_ptr<ntci::EncryptionKey> privateKey() const = 0;
+    virtual bsl::shared_ptr<ntci::EncryptionKey> privateKey() const;
+
+    /// Load into the specified 'result' the server name indication, if any.
+    /// Return the error, for example, when no server name indication is 
+    /// explicitly requested or accepted. 
+    virtual ntsa::Error serverNameIndication(bsl::string* result) const;
 };
 
 }  // end namespace ntci

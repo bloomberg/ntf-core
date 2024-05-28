@@ -43,7 +43,7 @@ class ProactorSocket : public ntci::ProactorSocket
     // 'name' for use by this test driver. Optionally specify a
     // 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
     // currently installed default allocator is used.
-    ProactorSocket(ntsa::Handle       handle, 
+    ProactorSocket(ntsa::Handle       handle,
                    const bsl::string& name,
                    bslma::Allocator*  basicAllocator = 0);
 
@@ -62,7 +62,7 @@ class ProactorSocket : public ntci::ProactorSocket
     // Return the name.
     const bsl::string& name() const;
 
-    // Return true if asynchronous detachment is complete, otherwise return 
+    // Return true if asynchronous detachment is complete, otherwise return
     // false.
     bool isDetached() const;
 };
@@ -73,7 +73,7 @@ class ProactorSocketContext : public ntcs::ProactorDetachContext
 {
   private:
     ProactorSocketContext(const ProactorSocketContext&) BSLS_KEYWORD_DELETED;
-    ProactorSocketContext& operator=(const ProactorSocketContext&) 
+    ProactorSocketContext& operator=(const ProactorSocketContext&)
         BSLS_KEYWORD_DELETED;
 
   public:
@@ -84,7 +84,7 @@ class ProactorSocketContext : public ntcs::ProactorDetachContext
     ~ProactorSocketContext();
 };
 
-ProactorSocket::ProactorSocket(ntsa::Handle       handle, 
+ProactorSocket::ProactorSocket(ntsa::Handle       handle,
                                const bsl::string& name,
                                bslma::Allocator*  basicAllocator)
 : d_handle(handle)
@@ -137,7 +137,7 @@ const bsl::string  k_SOCKET_NAME   = "default";
 
 typedef ntcs::ProactorDetachState State;
 
-} // close namespace test
+}  // close namespace test
 
 NTCCFG_TEST_CASE(1)
 {
@@ -157,8 +157,10 @@ NTCCFG_TEST_CASE(1)
         context.createInplace(&ta);
 
         bsl::shared_ptr<test::ProactorSocket> socket;
-        socket.createInplace(
-            &ta, test::k_SOCKET_HANDLE, test::k_SOCKET_NAME, &ta);
+        socket.createInplace(&ta,
+                             test::k_SOCKET_HANDLE,
+                             test::k_SOCKET_NAME,
+                             &ta);
 
         socket->setProactorContext(context);
 
@@ -200,8 +202,10 @@ NTCCFG_TEST_CASE(2)
         context.createInplace(&ta);
 
         bsl::shared_ptr<test::ProactorSocket> socket;
-        socket.createInplace(
-            &ta, test::k_SOCKET_HANDLE, test::k_SOCKET_NAME, &ta);
+        socket.createInplace(&ta,
+                             test::k_SOCKET_HANDLE,
+                             test::k_SOCKET_NAME,
+                             &ta);
 
         socket->setProactorContext(context);
 
@@ -212,7 +216,7 @@ NTCCFG_TEST_CASE(2)
 
         // Acquire lease (n = 1).
 
-        bslma::ManagedPtr<ntcs::Event> event = 
+        bslma::ManagedPtr<ntcs::Event> event =
             eventPool.getManagedObject(socket, context);
 
         NTCCFG_TEST_TRUE(event);
@@ -265,8 +269,10 @@ NTCCFG_TEST_CASE(3)
         context.createInplace(&ta);
 
         bsl::shared_ptr<test::ProactorSocket> socket;
-        socket.createInplace(
-            &ta, test::k_SOCKET_HANDLE, test::k_SOCKET_NAME, &ta);
+        socket.createInplace(&ta,
+                             test::k_SOCKET_HANDLE,
+                             test::k_SOCKET_NAME,
+                             &ta);
 
         socket->setProactorContext(context);
 
@@ -277,7 +283,7 @@ NTCCFG_TEST_CASE(3)
 
         // Acquire lease (n = 1).
 
-        bslma::ManagedPtr<ntcs::Event> event = 
+        bslma::ManagedPtr<ntcs::Event> event =
             eventPool.getManagedObject(socket, context);
 
         NTCCFG_TEST_TRUE(event);
@@ -332,8 +338,10 @@ NTCCFG_TEST_CASE(4)
         context.createInplace(&ta);
 
         bsl::shared_ptr<test::ProactorSocket> socket;
-        socket.createInplace(
-            &ta, test::k_SOCKET_HANDLE, test::k_SOCKET_NAME, &ta);
+        socket.createInplace(&ta,
+                             test::k_SOCKET_HANDLE,
+                             test::k_SOCKET_NAME,
+                             &ta);
 
         socket->setProactorContext(context);
 

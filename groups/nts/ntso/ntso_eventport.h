@@ -19,8 +19,8 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <ntscfg_platform.h>
 #include <ntsa_reactorconfig.h>
+#include <ntscfg_platform.h>
 #include <ntsi_reactor.h>
 #include <ntsscm_version.h>
 #include <bsl_memory.h>

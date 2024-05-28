@@ -20,10 +20,10 @@ BSLS_IDENT_RCSID(ntso_eventport_cpp, "$Id$ $CSID$")
 
 #if NTSO_EVENTPORT_ENABLED
 
+#include <ntsa_interest.h>
 #include <ntsi_reactor.h>
 #include <ntsu_socketoptionutil.h>
 #include <ntsu_socketutil.h>
-#include <ntsa_interest.h>
 
 #include <bdlma_localsequentialallocator.h>
 #include <bdlt_currenttime.h>
@@ -85,11 +85,11 @@ BSLS_IDENT_RCSID(ntso_eventport_cpp, "$Id$ $CSID$")
 #define NTSO_EVENTPORT_LOG_EVENTS(handle, events)                             \
     BSLS_LOG_TRACE("Descriptor %d polled%s%s%s%s%s",                          \
                    handle,                                                    \
-                   ((((events) & POLLIN) != 0) ? " POLLIN" : ""),             \
-                   ((((events) & POLLOUT) != 0) ? " POLLOUT" : ""),           \
-                   ((((events) & POLLERR) != 0) ? " POLLERR" : ""),           \
-                   ((((events) & POLLHUP) != 0) ? " POLLHUP" : ""),           \
-                   ((((events) & POLLNVAL) != 0) ? " POLLNVAL" : ""))
+                   ((((events)&POLLIN) != 0) ? " POLLIN" : ""),               \
+                   ((((events)&POLLOUT) != 0) ? " POLLOUT" : ""),             \
+                   ((((events)&POLLERR) != 0) ? " POLLERR" : ""),             \
+                   ((((events)&POLLHUP) != 0) ? " POLLHUP" : ""),             \
+                   ((((events)&POLLNVAL) != 0) ? " POLLNVAL" : ""))
 
 #define NTSO_EVENTPORT_LOG_ADD(handle)                                        \
     BSLS_LOG_TRACE("Descriptor %d added", handle)
@@ -151,8 +151,7 @@ class EventPort : public ntsi::Reactor
   private:
     /// Update the specified 'socket' to have the specified 'interset' in the
     /// device. Return the error.
-    ntsa::Error update(ntsa::Handle          socket,
-                       const ntsa::Interest& interest);
+    ntsa::Error update(ntsa::Handle socket, const ntsa::Interest& interest);
 
     /// Return the events that correspond to the specified 'interest'.
     static int specify(const ntsa::Interest& interest);
@@ -193,9 +192,8 @@ class EventPort : public ntsi::Reactor
     /// specified absolute 'deadline', if any, elapses. Load into the specified
     /// 'result' the events that describe the sockets and their conditions.
     /// Return the error.
-    ntsa::Error wait(
-        ntsa::EventSet*                                result,
-        const bdlb::NullableValue<bsls::TimeInterval>& deadline)
+    ntsa::Error wait(ntsa::EventSet*                                result,
+                     const bdlb::NullableValue<bsls::TimeInterval>& deadline)
         BSLS_KEYWORD_OVERRIDE;
 };
 
@@ -208,7 +206,7 @@ ntsa::Error EventPort::update(ntsa::Handle          socket,
 
     rc = port_associate(d_device, PORT_SOURCE_FD, socket, events, 0);
     if (rc != 0) {
-        int lastError = errno;
+        int         lastError = errno;
         ntsa::Error error(errno);
         NTSO_EVENTPORT_LOG_UPDATE_FAILURE(socket, error);
         return error;
@@ -278,7 +276,7 @@ EventPort::~EventPort()
 ntsa::Error EventPort::attachSocket(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     error = d_interestSet.attach(socket);
     if (error) {
@@ -304,7 +302,7 @@ ntsa::Error EventPort::attachSocket(ntsa::Handle socket)
 ntsa::Error EventPort::detachSocket(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     error = d_interestSet.detach(socket);
     if (error) {
@@ -329,7 +327,7 @@ ntsa::Error EventPort::detachSocket(ntsa::Handle socket)
 ntsa::Error EventPort::showReadable(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     if (d_config.autoAttach().value()) {
         if (!d_interestSet.contains(socket)) {
@@ -359,7 +357,7 @@ ntsa::Error EventPort::showReadable(ntsa::Handle socket)
 ntsa::Error EventPort::showWritable(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     if (d_config.autoAttach().value()) {
         if (!d_interestSet.contains(socket)) {
@@ -389,7 +387,7 @@ ntsa::Error EventPort::showWritable(ntsa::Handle socket)
 ntsa::Error EventPort::hideReadable(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     ntsa::Interest interest;
     error = d_interestSet.hideReadable(&interest, socket);
@@ -419,7 +417,7 @@ ntsa::Error EventPort::hideReadable(ntsa::Handle socket)
 ntsa::Error EventPort::hideWritable(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     ntsa::Interest interest;
     error = d_interestSet.hideWritable(&interest, socket);
@@ -455,20 +453,20 @@ ntsa::Error EventPort::wait(
 
     result->clear();
 
-    struct ::timespec ts;
+    struct ::timespec  ts;
     struct ::timespec* tsPtr = 0;
 
     if (!timeout.isNull()) {
         const bsls::TimeInterval now = bdlt::CurrentTime::now();
         if (NTSCFG_LIKELY(timeout.value() > now)) {
             const bsls::TimeInterval delta = timeout.value() - now;
-            ts.tv_sec = delta.seconds();
-            ts.tv_nsec = delta.nanoseconds();
+            ts.tv_sec                      = delta.seconds();
+            ts.tv_nsec                     = delta.nanoseconds();
 
             NTSO_EVENTPORT_LOG_WAIT_TIMED(delta.totalMilliseconds());
         }
         else {
-            ts.tv_sec = 0;
+            ts.tv_sec  = 0;
             ts.tv_nsec = 0;
 
             NTSO_EVENTPORT_LOG_WAIT_TIMED(0);
@@ -487,7 +485,7 @@ ntsa::Error EventPort::wait(
     }
 
     uint_t eventCount = 1;
-    rc = ::port_getn(d_device,
+    rc                = ::port_getn(d_device,
                      &d_outputList[0],
                      d_outputList.size(),
                      &eventCount,
@@ -588,13 +586,12 @@ ntsa::Error EventPort::wait(
                 error == ntsa::Error(ntsa::Error::e_NOT_SOCKET))
             {
                 typedef bsl::vector<ntsa::Handle> HandleVector;
-                HandleVector garbage;
+                HandleVector                      garbage;
 
                 {
                     ntsa::InterestSet::const_iterator it =
                         d_interestSet.begin();
-                    ntsa::InterestSet::const_iterator et =
-                        d_interestSet.end();
+                    ntsa::InterestSet::const_iterator et = d_interestSet.end();
 
                     for (; it != et; ++it) {
                         const ntsa::Interest interest = *it;

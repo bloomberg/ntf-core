@@ -19,6 +19,8 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntca_encryptionresourceoptions.h>
+#include <ntca_encryptionkey.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 #include <ntsa_error.h>
@@ -42,20 +44,88 @@ class EncryptionKey
     /// Destroy this object.
     virtual ~EncryptionKey();
 
-    /// Encode the key in PEM format to the specified 'destination'.
-    virtual ntsa::Error encode(bsl::streambuf* destination) const = 0;
+    /// Decode the key in PEM format from the specified 'source'.
+    virtual ntsa::Error decode(bsl::streambuf* source);
+
+    /// Decode the key according to the specified 'options' from the specified
+    /// 'source'.
+    virtual ntsa::Error decode(bsl::streambuf*                        source,
+                               const ntca::EncryptionResourceOptions& options);
+
+    /// Decode the key in PEM format from the specified 'source'.
+    virtual ntsa::Error decode(const bdlbb::Blob& source);
+
+    /// Decode the key according to the specified 'options' from the specified
+    /// 'source'.
+    virtual ntsa::Error decode(const bdlbb::Blob&                     source,
+                               const ntca::EncryptionResourceOptions& options);
+
+    /// Decode the key in PEM format from the specified 'source'.
+    virtual ntsa::Error decode(const bsl::string& source);
+
+    /// Decode the key according to the specified 'options' from the specified
+    /// 'source'.
+    virtual ntsa::Error decode(const bsl::string&                     source,
+                               const ntca::EncryptionResourceOptions& options);
+
+    /// Decode the key in PEM format from the specified 'source'.
+    virtual ntsa::Error decode(const bsl::vector<char>& source);
+
+    /// Decode the key according to the specified 'options' from the specified
+    /// 'source'.
+    virtual ntsa::Error decode(const bsl::vector<char>&               source,
+                               const ntca::EncryptionResourceOptions& options);
 
     /// Encode the key in PEM format to the specified 'destination'.
-    virtual ntsa::Error encode(bdlbb::Blob* destination) const = 0;
+    virtual ntsa::Error encode(bsl::streambuf* destination) const;
+
+    /// Encode the key according to the specified 'options' to the specified
+    /// 'destination'.
+    virtual ntsa::Error encode(
+        bsl::streambuf*                        destination,
+        const ntca::EncryptionResourceOptions& options) const;
 
     /// Encode the key in PEM format to the specified 'destination'.
-    virtual ntsa::Error encode(bsl::string* destination) const = 0;
+    virtual ntsa::Error encode(bdlbb::Blob* destination) const;
+
+    /// Encode the key according to the specified 'options' to the specified
+    /// 'destination'.
+    virtual ntsa::Error encode(
+        bdlbb::Blob*                           destination,
+        const ntca::EncryptionResourceOptions& options) const;
 
     /// Encode the key in PEM format to the specified 'destination'.
-    virtual ntsa::Error encode(bsl::vector<char>* destination) const = 0;
+    virtual ntsa::Error encode(bsl::string* destination) const;
+
+    /// Encode the key according to the specified 'options' to the specified
+    /// 'destination'.
+    virtual ntsa::Error encode(
+        bsl::string*                           destination,
+        const ntca::EncryptionResourceOptions& options) const;
+
+    /// Encode the key in PEM format to the specified 'destination'.
+    virtual ntsa::Error encode(bsl::vector<char>* destination) const;
+
+    /// Encode the key according to the specified 'options' to the specified
+    /// 'destination'.
+    virtual ntsa::Error encode(
+        bsl::vector<char>*                     destination,
+        const ntca::EncryptionResourceOptions& options) const;
+
+    /// Load into the specified 'result' the value-semantic representation
+    /// of this key. Return the error.
+    virtual ntsa::Error unwrap(ntca::EncryptionKey* result) const;
+
+    /// Return true if this key has the same value as the specified 'other'
+    /// key, otherwise return false. 
+    virtual bool equals(const ntci::EncryptionKey& other) const;
+
+    /// Print the public key parameters to the specified stream in an
+    /// unspecified but human-readable form.
+    virtual void print(bsl::ostream& stream) const;
 
     /// Return a handle to the private implementation.
-    virtual void* handle() const = 0;
+    virtual void* handle() const;
 };
 
 }  // end namespace ntci

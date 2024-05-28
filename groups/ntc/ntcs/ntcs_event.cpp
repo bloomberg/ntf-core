@@ -345,19 +345,19 @@ Event::~Event()
 Event& Event::operator=(const Event& other)
 {
     if (this != &other) {
-        d_overlapped          = other.d_overlapped;
-        d_type                = other.d_type;
-        d_status              = other.d_status;
-        d_socket              = other.d_socket;
-        d_context             = other.d_context;
-        d_target              = other.d_target;
-        d_receiveData_p       = other.d_receiveData_p;
-        d_numBytesAttempted   = other.d_numBytesAttempted;
-        d_numBytesCompleted   = other.d_numBytesCompleted;
-        d_numBytesIndicated   = other.d_numBytesIndicated;
-        d_function            = other.d_function;
-        d_error               = other.d_error;
-        d_user                = other.d_user;
+        d_overlapped        = other.d_overlapped;
+        d_type              = other.d_type;
+        d_status            = other.d_status;
+        d_socket            = other.d_socket;
+        d_context           = other.d_context;
+        d_target            = other.d_target;
+        d_receiveData_p     = other.d_receiveData_p;
+        d_numBytesAttempted = other.d_numBytesAttempted;
+        d_numBytesCompleted = other.d_numBytesCompleted;
+        d_numBytesIndicated = other.d_numBytesIndicated;
+        d_function          = other.d_function;
+        d_error             = other.d_error;
+        d_user              = other.d_user;
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
         bsl::memcpy(d_message, other.d_message, sizeof d_message);
@@ -376,13 +376,12 @@ Event& Event::operator=(const Event& other)
 
 void Event::reset()
 {
-    if (NTCCFG_LIKELY(d_context)) { 
+    if (NTCCFG_LIKELY(d_context)) {
         const bool announce = d_context->decrementReference();
         if (NTCCFG_UNLIKELY(announce)) {
             if (NTCCFG_LIKELY(d_socket)) {
                 d_socket->setProactorContext(bsl::shared_ptr<void>());
-                ntcs::Dispatch::announceDetached(d_socket, 
-                                                 d_socket->strand());
+                ntcs::Dispatch::announceDetached(d_socket, d_socket->strand());
             }
         }
     }
@@ -395,16 +394,15 @@ void Event::reset()
     d_socket.reset();
     d_context.reset();
 
-    d_target              = ntsa::k_INVALID_HANDLE;
-    d_receiveData_p       = 0;
-    d_numBytesAttempted   = 0;
-    d_numBytesCompleted   = 0;
-    d_numBytesIndicated   = 0;
-    d_function            = Functor();
-    d_error               = ntsa::Error();
-    d_user                = 0;
+    d_target            = ntsa::k_INVALID_HANDLE;
+    d_receiveData_p     = 0;
+    d_numBytesAttempted = 0;
+    d_numBytesCompleted = 0;
+    d_numBytesIndicated = 0;
+    d_function          = Functor();
+    d_error             = ntsa::Error();
+    d_user              = 0;
 }
-
 
 bsl::ostream& Event::print(bsl::ostream& stream,
                            int           level,

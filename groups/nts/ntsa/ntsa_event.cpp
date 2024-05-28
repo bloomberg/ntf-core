@@ -19,9 +19,9 @@
 BSLS_IDENT_RCSID(ntsa_event_cpp, "$Id$ $CSID$")
 
 #include <bdlb_string.h>
+#include <bslim_printer.h>
 #include <bsls_assert.h>
 #include <bsl_ostream.h>
-#include <bslim_printer.h>
 
 namespace BloombergLP {
 namespace ntsa {
@@ -42,8 +42,8 @@ int EventType::fromInt(EventType::Value* result, int number)
     }
 }
 
-int EventType::fromString(EventType::Value*     result,
-                             const bslstl::StringRef& string)
+int EventType::fromString(EventType::Value*        result,
+                          const bslstl::StringRef& string)
 {
     if (bdlb::String::areEqualCaseless(string, "READABLE")) {
         *result = e_READABLE;
@@ -94,8 +94,7 @@ const char* EventType::toString(EventType::Value value)
     return 0;
 }
 
-bsl::ostream& EventType::print(bsl::ostream&   stream,
-                              EventType::Value value)
+bsl::ostream& EventType::print(bsl::ostream& stream, EventType::Value value)
 {
     return stream << toString(value);
 }
@@ -411,7 +410,7 @@ bool EventSet::find(ntsa::Event* result, ntsa::Handle socket) const
     if (result) {
         result->reset();
     }
-    
+
     return false;
 }
 
@@ -492,7 +491,6 @@ bool EventSet::isHangup(ntsa::Handle socket) const
     return event.isHangup();
 }
 
-
 bsl::size_t EventSet::size() const
 {
     return d_map.size();
@@ -532,10 +530,7 @@ bsl::ostream& EventSet::print(bsl::ostream& stream,
                               int           level,
                               int           spacesPerLevel) const
 {
-    for (Map::const_iterator it  = d_map.begin();
-                             it != d_map.end();
-                           ++it)
-    {
+    for (Map::const_iterator it = d_map.begin(); it != d_map.end(); ++it) {
         const ntsa::Event& event = it->second;
         event.print(stream, level, spacesPerLevel);
     }

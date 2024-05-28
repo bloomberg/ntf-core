@@ -24,11 +24,11 @@ BSLS_IDENT("$Id: $")
 #include <ntscfg_platform.h>
 #include <ntsscm_version.h>
 #include <bslh_hash.h>
+#include <bsl_cstddef.h>
+#include <bsl_iosfwd.h>
 #include <bsl_map.h>
 #include <bsl_set.h>
 #include <bsl_vector.h>
-#include <bsl_cstddef.h>
-#include <bsl_iosfwd.h>
 
 namespace BloombergLP {
 namespace ntsa {
@@ -56,7 +56,7 @@ struct InterestType {
         /// available capacity as the send low watermark, and, for
         /// connection-oriented sockets, when the socket is connected. A socket
         /// may also become "writable" to indicate a write operation should be
-        /// performed to learn about the state of a sockets writability, or 
+        /// performed to learn about the state of a sockets writability, or
         /// connected-ness.
         e_WRITABLE = 2
     };
@@ -250,7 +250,7 @@ class InterestSet
 
     Vector            d_vector;
     Set               d_set;
-    bslma::Allocator *d_allocator_p;
+    bslma::Allocator* d_allocator_p;
 
     static const bsl::size_t k_MAX_INDEX = 100000;
 
@@ -604,8 +604,8 @@ NTSCFG_INLINE
 Interest& Interest::operator=(const Interest& other)
 {
     if (this != &other) {
-        d_handle   = other.d_handle;
-        d_state = other.d_state;
+        d_handle = other.d_handle;
+        d_state  = other.d_state;
     }
 
     return *this;
@@ -615,7 +615,7 @@ NTSCFG_INLINE
 void Interest::reset()
 {
     d_handle = ntsa::k_INVALID_HANDLE;
-    d_state = 0;
+    d_state  = 0;
 }
 
 NTSCFG_INLINE
@@ -1150,7 +1150,7 @@ InterestSet::ConstIterator::ConstIterator(
 
 NTSCFG_INLINE
 InterestSet::ConstIterator::ConstIterator(
-        const InterestSet::ConstIterator& original)
+    const InterestSet::ConstIterator& original)
 : d_interestSet_p(original.d_interestSet_p)
 , d_handleIterator(original.d_handleIterator)
 {
@@ -1162,8 +1162,7 @@ InterestSet::ConstIterator::~ConstIterator()
 }
 
 NTSCFG_INLINE
-InterestSet::ConstIterator
-InterestSet::ConstIterator::operator=(
+InterestSet::ConstIterator InterestSet::ConstIterator::operator=(
     const InterestSet::ConstIterator& other)
 {
     if (this != &other) {
@@ -1175,16 +1174,16 @@ InterestSet::ConstIterator::operator=(
 }
 
 NTSCFG_INLINE
-InterestSet::ConstIterator&
-InterestSet::ConstIterator::operator++() BSLS_KEYWORD_NOEXCEPT
+InterestSet::ConstIterator& InterestSet::ConstIterator::operator++()
+    BSLS_KEYWORD_NOEXCEPT
 {
     ++d_handleIterator;
     return *this;
 }
 
 NTSCFG_INLINE
-InterestSet::ConstIterator
-InterestSet::ConstIterator::operator++(int) BSLS_KEYWORD_NOEXCEPT
+InterestSet::ConstIterator InterestSet::ConstIterator::operator++(int)
+    BSLS_KEYWORD_NOEXCEPT
 {
     ConstIterator temp(*this);
     ++(*this);
@@ -1192,8 +1191,8 @@ InterestSet::ConstIterator::operator++(int) BSLS_KEYWORD_NOEXCEPT
 }
 
 NTSCFG_INLINE
-const InterestSet::ConstIterator::value_type&
-InterestSet::ConstIterator::operator*() const BSLS_KEYWORD_NOEXCEPT
+const InterestSet::ConstIterator::value_type& InterestSet::ConstIterator::
+operator*() const BSLS_KEYWORD_NOEXCEPT
 {
     const bsl::size_t index = static_cast<bsl::size_t>(*d_handleIterator);
     return d_interestSet_p->d_vector[index];
@@ -1203,7 +1202,7 @@ NTSCFG_INLINE
 bool InterestSet::ConstIterator::operator==(
     const InterestSet::ConstIterator& other) const BSLS_KEYWORD_NOEXCEPT
 {
-    return (d_interestSet_p  == other.d_interestSet_p &&
+    return (d_interestSet_p == other.d_interestSet_p &&
             d_handleIterator == other.d_handleIterator);
 }
 
@@ -1247,7 +1246,7 @@ InterestSet::Iterator InterestSet::Iterator::operator=(
     const InterestSet::Iterator& other)
 {
     if (this != &other) {
-        d_interestSet_p = other.d_interestSet_p;
+        d_interestSet_p  = other.d_interestSet_p;
         d_handleIterator = other.d_handleIterator;
     }
 
@@ -1255,16 +1254,16 @@ InterestSet::Iterator InterestSet::Iterator::operator=(
 }
 
 NTSCFG_INLINE
-InterestSet::Iterator&
-InterestSet::Iterator::operator++() BSLS_KEYWORD_NOEXCEPT
+InterestSet::Iterator& InterestSet::Iterator::operator++()
+    BSLS_KEYWORD_NOEXCEPT
 {
     ++d_handleIterator;
     return *this;
 }
 
 NTSCFG_INLINE
-InterestSet::Iterator
-InterestSet::Iterator::operator++(int) BSLS_KEYWORD_NOEXCEPT
+InterestSet::Iterator InterestSet::Iterator::operator++(int)
+    BSLS_KEYWORD_NOEXCEPT
 {
     Iterator temp(*this);
     ++(*this);
@@ -1272,16 +1271,16 @@ InterestSet::Iterator::operator++(int) BSLS_KEYWORD_NOEXCEPT
 }
 
 NTSCFG_INLINE
-InterestSet::Iterator::value_type&
-InterestSet::Iterator::operator*() const BSLS_KEYWORD_NOEXCEPT
+InterestSet::Iterator::value_type& InterestSet::Iterator::operator*() const
+    BSLS_KEYWORD_NOEXCEPT
 {
     const bsl::size_t index = static_cast<bsl::size_t>(*d_handleIterator);
     return d_interestSet_p->d_vector[index];
 }
 
 NTSCFG_INLINE
-InterestSet::Iterator::operator
-InterestSet::ConstIterator() const BSLS_KEYWORD_NOEXCEPT
+InterestSet::Iterator::operator InterestSet::ConstIterator() const
+    BSLS_KEYWORD_NOEXCEPT
 {
     return InterestSet::ConstIterator(d_interestSet_p, d_handleIterator);
 }
@@ -1290,7 +1289,7 @@ NTSCFG_INLINE
 bool InterestSet::Iterator::operator==(
     const InterestSet::Iterator& other) const BSLS_KEYWORD_NOEXCEPT
 {
-    return (d_interestSet_p  == other.d_interestSet_p &&
+    return (d_interestSet_p == other.d_interestSet_p &&
             d_handleIterator == other.d_handleIterator);
 }
 

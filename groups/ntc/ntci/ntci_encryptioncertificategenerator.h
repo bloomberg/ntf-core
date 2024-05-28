@@ -23,6 +23,7 @@ BSLS_IDENT("$Id: $")
 #include <ntccfg_platform.h>
 #include <ntci_encryptioncertificate.h>
 #include <ntci_encryptionkey.h>
+#include <ntca_encryptioncertificate.h>
 #include <ntcscm_version.h>
 #include <ntsa_distinguishedname.h>
 #include <bdlbb_blob.h>
@@ -53,6 +54,34 @@ class EncryptionCertificateGenerator
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0,
     /// the currently installed default allocator is used. Return the error.
     virtual ntsa::Error generateCertificate(
+        ntca::EncryptionCertificate*                  result,
+        const ntsa::DistinguishedName&                subjectIdentity,
+        const ntca::EncryptionKey&                    subjectPrivateKey,
+        const ntca::EncryptionCertificateOptions&     options,
+        bslma::Allocator*                             basicAllocator = 0) = 0;
+
+    /// Load into the specified 'result' a certificate generated according
+    /// to the specified 'options' for the specified 'subjectIdentity' and
+    /// 'subjectPrivateKey' signed by the certificate authority identified
+    /// by the specified 'issuerCertificate' that uses the specified
+    /// 'issuerPrivateKey'. Optionally specify a 'basicAllocator' used
+    /// to supply memory. If 'basicAllocator' is 0, the currently installed
+    /// default allocator is used. Return the error.
+    virtual ntsa::Error generateCertificate(
+        ntca::EncryptionCertificate*              result,
+        const ntsa::DistinguishedName&            subjectIdentity,
+        const ntca::EncryptionKey&                subjectPrivateKey,
+        const ntca::EncryptionCertificate&        issuerCertificate,
+        const ntca::EncryptionKey&                issuerPrivateKey,
+        const ntca::EncryptionCertificateOptions& options,
+        bslma::Allocator*                         basicAllocator = 0) = 0;
+
+    /// Load into the specified 'result' a certificate generated according
+    /// to the specified 'options' for the specified 'subjectIdentity' and
+    /// 'subjectPrivateKey' signed by itself. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0,
+    /// the currently installed default allocator is used. Return the error.
+    virtual ntsa::Error generateCertificate(
         bsl::shared_ptr<ntci::EncryptionCertificate>* result,
         const ntsa::DistinguishedName&                subjectIdentity,
         const bsl::shared_ptr<ntci::EncryptionKey>&   subjectPrivateKey,
@@ -74,80 +103,6 @@ class EncryptionCertificateGenerator
         const bsl::shared_ptr<ntci::EncryptionKey>&         issuerPrivateKey,
         const ntca::EncryptionCertificateOptions&           options,
         bslma::Allocator* basicAllocator = 0) = 0;
-
-    /// Load into the specified 'result' a certificate stored at the
-    /// specified 'filePath' in the Privacy Enhanced Mail (PEM) format.
-    /// Optionally specify a 'basicAllocator' used to supply memory. If
-    /// 'basicAllocator' is 0, the currently installed default allocator is
-    /// used.  Return the error.
-    virtual ntsa::Error loadCertificate(
-        bsl::shared_ptr<ntci::EncryptionCertificate>* result,
-        const bsl::string&                            filePath,
-        bslma::Allocator*                             basicAllocator = 0) = 0;
-
-    /// Encode the specified 'certificate' to the specified 'destination'
-    /// in the Privacy Enhanced Mail (PEM) format. Return the error.
-    virtual ntsa::Error encodeCertificate(
-        bsl::streambuf*                                     destination,
-        const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate) = 0;
-
-    /// Encode the specified 'certificate' to the specified 'destination'
-    /// in the Privacy Enhanced Mail (PEM) format. Return the error.
-    virtual ntsa::Error encodeCertificate(
-        bdlbb::Blob*                                        destination,
-        const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate) = 0;
-
-    /// Encode the specified 'certificate' to the specified 'destination'
-    /// in the Privacy Enhanced Mail (PEM) format. Return the error.
-    virtual ntsa::Error encodeCertificate(
-        bsl::string*                                        destination,
-        const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate) = 0;
-
-    /// Encode the specified 'certificate' to the specified 'destination'
-    /// in the Privacy Enhanced Mail (PEM) format. Return the error.
-    virtual ntsa::Error encodeCertificate(
-        bsl::vector<char>*                                  destination,
-        const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate) = 0;
-
-    /// Load into the specified 'result' a certificate decoded from the
-    /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
-    /// the error. Optionally specify a 'basicAllocator' used to supply
-    /// memory.  If 'basicAllocator' is 0, the currently installed default
-    /// allocator is used.
-    virtual ntsa::Error decodeCertificate(
-        bsl::shared_ptr<ntci::EncryptionCertificate>* result,
-        bsl::streambuf*                               source,
-        bslma::Allocator*                             basicAllocator = 0) = 0;
-
-    /// Load into the specified 'result' a certificate decoded from the
-    /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
-    /// the error. Optionally specify a 'basicAllocator' used to supply
-    /// memory.  If 'basicAllocator' is 0, the currently installed default
-    /// allocator is used.
-    virtual ntsa::Error decodeCertificate(
-        bsl::shared_ptr<ntci::EncryptionCertificate>* result,
-        const bdlbb::Blob&                            source,
-        bslma::Allocator*                             basicAllocator = 0) = 0;
-
-    /// Load into the specified 'result' a certificate decoded from the
-    /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
-    /// the error. Optionally specify a 'basicAllocator' used to supply
-    /// memory.  If 'basicAllocator' is 0, the currently installed default
-    /// allocator is used.
-    virtual ntsa::Error decodeCertificate(
-        bsl::shared_ptr<ntci::EncryptionCertificate>* result,
-        const bsl::string&                            source,
-        bslma::Allocator*                             basicAllocator = 0) = 0;
-
-    /// Load into the specified 'result' a certificate decoded from the
-    /// specified 'source' in the Privacy Enhanced Mail (PEM) format. Return
-    /// the error. Optionally specify a 'basicAllocator' used to supply
-    /// memory.  If 'basicAllocator' is 0, the currently installed default
-    /// allocator is used.
-    virtual ntsa::Error decodeCertificate(
-        bsl::shared_ptr<ntci::EncryptionCertificate>* result,
-        const bsl::vector<char>&                      source,
-        bslma::Allocator*                             basicAllocator = 0) = 0;
 };
 
 }  // end namespace ntci

@@ -21,17 +21,16 @@ BSLS_IDENT_RCSID(ntso_test_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntso {
 
-void Test::usage(
-        const ReactorVector& reactors, bslma::Allocator* allocator)
+void Test::usage(const ReactorVector& reactors, bslma::Allocator* allocator)
 {
     // Concern:
     // Plan:
 
     ntsa::Error error;
 
-    for (ReactorVector::const_iterator reactorIterator  = reactors.begin();
-                                       reactorIterator != reactors.end();
-                                     ++reactorIterator)
+    for (ReactorVector::const_iterator reactorIterator = reactors.begin();
+         reactorIterator != reactors.end();
+         ++reactorIterator)
     {
         const bsl::shared_ptr<ntsi::Reactor>& reactor = *reactorIterator;
 
@@ -345,17 +344,17 @@ void Test::usage(
     }
 }
 
-void Test::pollingAfterFullShutdown(
-        const ReactorVector& reactors, bslma::Allocator* allocator)
+void Test::pollingAfterFullShutdown(const ReactorVector& reactors,
+                                    bslma::Allocator*    allocator)
 {
     // Concern: Polling after a socket has been shutdown for both reading and
     // writing after both sides have shutdown writing does not block.
 
     ntsa::Error error;
 
-    for (ReactorVector::const_iterator reactorIterator  = reactors.begin();
-                                       reactorIterator != reactors.end();
-                                     ++reactorIterator)
+    for (ReactorVector::const_iterator reactorIterator = reactors.begin();
+         reactorIterator != reactors.end();
+         ++reactorIterator)
     {
         const bsl::shared_ptr<ntsi::Reactor>& reactor = *reactorIterator;
 
@@ -735,17 +734,17 @@ void Test::pollingAfterFullShutdown(
     }
 }
 
-void Test::pollingAfterClose(
-        const ReactorVector& reactors, bslma::Allocator* allocator)
+void Test::pollingAfterClose(const ReactorVector& reactors,
+                             bslma::Allocator*    allocator)
 {
     // Concern: Close socket while it still remains added to the reactor.
     // Polling the reactor times out.
 
     ntsa::Error error;
 
-    for (ReactorVector::const_iterator reactorIterator  = reactors.begin();
-                                       reactorIterator != reactors.end();
-                                     ++reactorIterator)
+    for (ReactorVector::const_iterator reactorIterator = reactors.begin();
+         reactorIterator != reactors.end();
+         ++reactorIterator)
     {
         const bsl::shared_ptr<ntsi::Reactor>& reactor = *reactorIterator;
 
@@ -968,7 +967,7 @@ void Test::pollingAfterClose(
             NTSCFG_TEST_TRUE(eventSet.isError(serverHandle));
 
             ntsa::Event event;
-            const bool found = eventSet.find(&event, serverHandle);
+            const bool  found = eventSet.find(&event, serverHandle);
             NTSCFG_TEST_TRUE(found);
             NTSCFG_TEST_TRUE(
                 event.error() == ntsa::Error(ntsa::Error::e_NOT_OPEN) ||
@@ -990,7 +989,7 @@ void Test::log(const bsl::vector<ntsa::Event>& eventSet)
 ntsa::Error Test::pair(bsl::shared_ptr<ntsi::StreamSocket>* client,
                        bsl::shared_ptr<ntsi::StreamSocket>* server,
                        ntsa::Transport::Value               type,
-                       bslma::Allocator* basicAllocator)
+                       bslma::Allocator*                    basicAllocator)
 {
     ntsa::Error error;
 
@@ -1018,9 +1017,9 @@ ntsa::Error Test::pair(bsl::shared_ptr<ntsi::StreamSocket>* client,
 
 void Test::log(const ntsa::EventSet& eventSet)
 {
-    for (ntsa::EventSet::const_iterator it  = eventSet.cbegin();
-                                        it != eventSet.cend();
-                                      ++it)
+    for (ntsa::EventSet::const_iterator it = eventSet.cbegin();
+         it != eventSet.cend();
+         ++it)
     {
         const ntsa::Event& event = *it;
 

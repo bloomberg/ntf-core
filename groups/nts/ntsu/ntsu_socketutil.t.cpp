@@ -1981,7 +1981,9 @@ void testStreamSocketMsgZeroCopy(ntsa::Transport::Value transport,
 
         while (!feedback.empty()) {
             const ntsa::ZeroCopy& zc = feedback.front();
-            NTSCFG_TEST_EQ(zc.type(), ntsa::ZeroCopyType::e_DEFERRED);  // we know that OS copied data
+            NTSCFG_TEST_EQ(zc.type(),
+                           ntsa::ZeroCopyType::
+                               e_DEFERRED);  // we know that OS copied data
             if (zc.from() == zc.thru()) {
                 NTSCFG_TEST_EQ(sendIDs.erase(zc.from()), 1);
             }
@@ -2344,7 +2346,8 @@ void testDatagramSocketTxTimestampsAndZeroCopy(
                     NTSCFG_TEST_EQ(zeroCopyToValidate.erase(zc.from()), 1);
                 }
                 else {
-                    for (bsl::uint32_t i = zc.from(); i != (zc.thru() + 1); ++i)
+                    for (bsl::uint32_t i = zc.from(); i != (zc.thru() + 1);
+                         ++i)
                     {
                         NTSCFG_TEST_EQ(zeroCopyToValidate.erase(i), 1);
                     }
@@ -2487,7 +2490,8 @@ void testStreamSocketTxTimestampsAndZeroCopy(ntsa::Transport::Value transport,
                     NTSCFG_TEST_EQ(zeroCopyToValidate.erase(zc.from()), 1);
                 }
                 else {
-                    for (bsl::uint32_t i = zc.from(); i != (zc.thru() + 1); ++i)
+                    for (bsl::uint32_t i = zc.from(); i != (zc.thru() + 1);
+                         ++i)
                     {
                         NTSCFG_TEST_EQ(zeroCopyToValidate.erase(i), 1);
                     }
@@ -2521,7 +2525,7 @@ void testStreamSocketReceiveNotifications(ntsa::Transport::Value transport,
         ntsu::SocketUtil::receiveNotifications(&notifications, server);
     }
 
-    const int msgSize = 200;
+    const int         msgSize = 200;
     bsl::vector<char> message(msgSize, allocator);
     for (int i = 0; i < msgSize; ++i) {
         message[i] = bsl::rand() % 100;
@@ -2530,7 +2534,6 @@ void testStreamSocketReceiveNotifications(ntsa::Transport::Value transport,
         ntsa::ConstBuffer(message.data(), message.size()));
     int totalSend = 0;
     {
-
         ntsa::SendContext context;
         ntsa::SendOptions options;
 
@@ -2541,8 +2544,7 @@ void testStreamSocketReceiveNotifications(ntsa::Transport::Value transport,
 
     bsl::vector<char> rBuffer(msgSize, allocator);
 
-    while(totalSend != 0)
-    {
+    while (totalSend != 0) {
         ntsa::ReceiveContext context;
         ntsa::ReceiveOptions options;
 
@@ -2560,12 +2562,13 @@ void testStreamSocketReceiveNotifications(ntsa::Transport::Value transport,
     }
 }
 
-void testDatagramSocketReceiveNotifications(ntsa::Transport::Value transport,
-                                            ntsa::Handle           server,
-                                            const ntsa::Endpoint&  serverEndpoint,
-                                            ntsa::Handle           client,
-                                            const ntsa::Endpoint&  clientEndpoint,
-                                            bslma::Allocator*      allocator)
+void testDatagramSocketReceiveNotifications(
+    ntsa::Transport::Value transport,
+    ntsa::Handle           server,
+    const ntsa::Endpoint&  serverEndpoint,
+    ntsa::Handle           client,
+    const ntsa::Endpoint&  clientEndpoint,
+    bslma::Allocator*      allocator)
 {
     NTSCFG_TEST_LOG_DEBUG << "Testing " << transport << NTSCFG_TEST_LOG_END;
 
@@ -2582,7 +2585,7 @@ void testDatagramSocketReceiveNotifications(ntsa::Transport::Value transport,
         ntsu::SocketUtil::receiveNotifications(&notifications, server);
     }
 
-    const int msgSize = 200;
+    const int         msgSize = 200;
     bsl::vector<char> message(msgSize, allocator);
     for (int i = 0; i < msgSize; ++i) {
         message[i] = bsl::rand() % 100;
@@ -2591,7 +2594,6 @@ void testDatagramSocketReceiveNotifications(ntsa::Transport::Value transport,
         ntsa::ConstBuffer(message.data(), message.size()));
     int totalSend = 0;
     {
-
         ntsa::SendContext context;
         ntsa::SendOptions options;
         options.setEndpoint(serverEndpoint);
@@ -2603,8 +2605,7 @@ void testDatagramSocketReceiveNotifications(ntsa::Transport::Value transport,
 
     bsl::vector<char> rBuffer(msgSize, allocator);
 
-    while(totalSend != 0)
-    {
+    while (totalSend != 0) {
         ntsa::ReceiveContext context;
         ntsa::ReceiveOptions options;
 
@@ -7043,8 +7044,7 @@ NTSCFG_TEST_CASE(17)
 
         // Validate RX timestamping functionality.
 
-        if (ntsu::SocketOptionUtil::supportsTimestamping(client))
-        {
+        if (ntsu::SocketOptionUtil::supportsTimestamping(client)) {
             error =
                 ntsu::SocketOptionUtil::setTimestampIncomingData(client, true);
             NTSCFG_TEST_OK(error);
@@ -7437,8 +7437,7 @@ NTSCFG_TEST_CASE(18)
 
         // Test RX timestamping functionality.
 
-        if (ntsu::SocketOptionUtil::supportsTimestamping(server))
-        {
+        if (ntsu::SocketOptionUtil::supportsTimestamping(server)) {
             error =
                 ntsu::SocketOptionUtil::setTimestampIncomingData(server, true);
             NTSCFG_TEST_OK(error);
@@ -8103,7 +8102,6 @@ NTSCFG_TEST_CASE(32)
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 #endif
 }
-
 
 NTSCFG_TEST_CASE(33)
 {

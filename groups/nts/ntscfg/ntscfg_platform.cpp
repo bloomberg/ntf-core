@@ -18,8 +18,8 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntscfg_platform_cpp, "$Id$ $CSID$")
 
-#include <bslmt_once.h>
 #include <bdls_filesystemutil.h>
+#include <bslmt_once.h>
 #include <bsls_log.h>
 #include <bsls_platform.h>
 #include <bsl_cstdlib.h>
@@ -178,12 +178,10 @@ bool Platform::supportsNotifications()
     int minor = 0;
     int patch = 0;
     int build = 0;
-    
+
     rc = ntsscm::Version::systemVersion(&major, &minor, &patch, &build);
     if (rc == 0) {
-        if (KERNEL_VERSION(major, minor, patch) >=
-            KERNEL_VERSION(4, 18, 0))
-        {
+        if (KERNEL_VERSION(major, minor, patch) >= KERNEL_VERSION(4, 18, 0)) {
             result = true;
         }
     }

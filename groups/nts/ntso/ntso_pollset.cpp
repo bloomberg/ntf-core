@@ -20,10 +20,10 @@ BSLS_IDENT_RCSID(ntso_pollset_cpp, "$Id$ $CSID$")
 
 #if NTSO_POLLSET_ENABLED
 
+#include <ntsa_interest.h>
 #include <ntsi_reactor.h>
 #include <ntsu_socketoptionutil.h>
 #include <ntsu_socketutil.h>
-#include <ntsa_interest.h>
 
 #include <bdlma_localsequentialallocator.h>
 #include <bdlt_currenttime.h>
@@ -145,8 +145,7 @@ class Pollset : public ntsi::Reactor
   private:
     /// Update the specified 'socket' to have the specified 'interset' in the
     /// device. Return the error.
-    ntsa::Error update(ntsa::Handle          socket,
-                       const ntsa::Interest& interest);
+    ntsa::Error update(ntsa::Handle socket, const ntsa::Interest& interest);
 
     /// Load into the specified 'result->fd' and 'result->events' the
     /// fields to monitor the specified 'socket' according to the specified
@@ -191,9 +190,8 @@ class Pollset : public ntsi::Reactor
     /// specified absolute 'deadline', if any, elapses. Load into the specified
     /// 'result' the events that describe the sockets and their conditions.
     /// Return the error.
-    ntsa::Error wait(
-        ntsa::EventSet*                                result,
-        const bdlb::NullableValue<bsls::TimeInterval>& deadline)
+    ntsa::Error wait(ntsa::EventSet*                                result,
+                     const bdlb::NullableValue<bsls::TimeInterval>& deadline)
         BSLS_KEYWORD_OVERRIDE;
 };
 
@@ -282,7 +280,7 @@ Pollset::~Pollset()
 ntsa::Error Pollset::attachSocket(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     if (socket < 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -318,7 +316,7 @@ ntsa::Error Pollset::attachSocket(ntsa::Handle socket)
 ntsa::Error Pollset::detachSocket(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     if (socket < 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -352,7 +350,7 @@ ntsa::Error Pollset::detachSocket(ntsa::Handle socket)
 ntsa::Error Pollset::showReadable(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     if (socket < 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -386,7 +384,7 @@ ntsa::Error Pollset::showReadable(ntsa::Handle socket)
 ntsa::Error Pollset::showWritable(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     if (socket < 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -420,7 +418,7 @@ ntsa::Error Pollset::showWritable(ntsa::Handle socket)
 ntsa::Error Pollset::hideReadable(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     if (socket < 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -454,7 +452,7 @@ ntsa::Error Pollset::hideReadable(ntsa::Handle socket)
 ntsa::Error Pollset::hideWritable(ntsa::Handle socket)
 {
     ntsa::Error error;
-    int rc;
+    int         rc;
 
     if (socket < 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -620,13 +618,12 @@ ntsa::Error Pollset::wait(
                 error == ntsa::Error(ntsa::Error::e_NOT_SOCKET))
             {
                 typedef bsl::vector<ntsa::Handle> HandleVector;
-                HandleVector garbage;
+                HandleVector                      garbage;
 
                 {
                     ntsa::InterestSet::const_iterator it =
                         d_interestSet.begin();
-                    ntsa::InterestSet::const_iterator et =
-                        d_interestSet.end();
+                    ntsa::InterestSet::const_iterator et = d_interestSet.end();
 
                     for (; it != et; ++it) {
                         const ntsa::Interest interest = *it;
@@ -656,8 +653,6 @@ ntsa::Error Pollset::wait(
             }
         }
     }
-
-
 
     return ntsa::Error();
 }

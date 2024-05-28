@@ -41,7 +41,7 @@ struct ZeroCopyType {
         e_AVOIDED = 0,
 
         /// The copy was deferred from the time of the system call until
-        /// nearer to the time of transmission but a deep copy was still 
+        /// nearer to the time of transmission but a deep copy was still
         /// performed.
         e_DEFERRED = 1
     };
@@ -104,9 +104,9 @@ class ZeroCopy
     ZeroCopy();
 
     /// Create a new '[from, thru]' zero-copy interval completed according to
-    /// the specified 'type'. 
-    ZeroCopy(bsl::uint32_t             from, 
-             bsl::uint32_t             thru, 
+    /// the specified 'type'.
+    ZeroCopy(bsl::uint32_t             from,
+             bsl::uint32_t             thru,
              ntsa::ZeroCopyType::Value type);
 
     /// Create new object having the same value as the specified 'original'
@@ -120,27 +120,27 @@ class ZeroCopy
     /// a reference to this modifiable object.
     ZeroCopy& operator=(const ZeroCopy& other);
 
-    /// Set the identifier of the first zero-copy send that completed, 
-    /// inclusive, to the specified 'value'. 
+    /// Set the identifier of the first zero-copy send that completed,
+    /// inclusive, to the specified 'value'.
     void setFrom(bsl::uint32_t value);
 
-    /// Set the identifier of the last zero-copy send that completed, 
-    /// inclusive, to the specified 'value'. 
+    /// Set the identifier of the last zero-copy send that completed,
+    /// inclusive, to the specified 'value'.
     void setThru(bsl::uint32_t value);
 
     /// Set the type indicating whether the copy was avoided or was performed
     /// to the specified 'value'.
     void setType(ntsa::ZeroCopyType::Value value);
 
-    /// Return the identifier of the first zero-copy send that completed, 
+    /// Return the identifier of the first zero-copy send that completed,
     /// inclusive.
     BSLS_ANNOTATION_NODISCARD bsl::uint32_t from() const;
 
-    /// Return the identifier of the last zero-copy send that completed, 
+    /// Return the identifier of the last zero-copy send that completed,
     /// inclusive.
     BSLS_ANNOTATION_NODISCARD bsl::uint32_t thru() const;
 
-    /// Return the type indicating whether the copy was avoided or was 
+    /// Return the type indicating whether the copy was avoided or was
     /// performed.
     BSLS_ANNOTATION_NODISCARD ntsa::ZeroCopyType::Value type() const;
 
@@ -212,8 +212,8 @@ ZeroCopy::ZeroCopy()
 }
 
 NTSCFG_INLINE
-ZeroCopy::ZeroCopy(bsl::uint32_t             from, 
-                   bsl::uint32_t             thru, 
+ZeroCopy::ZeroCopy(bsl::uint32_t             from,
+                   bsl::uint32_t             thru,
                    ntsa::ZeroCopyType::Value type)
 : d_from(from)
 , d_thru(thru)

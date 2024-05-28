@@ -3340,7 +3340,7 @@ TransferClient::TransferClient(
             error = d_parameters.d_clientCertificate_sp->encode(&identityData);
             NTCCFG_TEST_OK(error);
 
-            encryptionClientOptions.setIdentityData(identityData);
+            encryptionClientOptions.addResourceData(identityData);
         }
 
         {
@@ -3349,7 +3349,7 @@ TransferClient::TransferClient(
                 d_parameters.d_clientPrivateKey_sp->encode(&privateKeyData);
             NTCCFG_TEST_OK(error);
 
-            encryptionClientOptions.setPrivateKeyData(privateKeyData);
+            encryptionClientOptions.addResourceData(privateKeyData);
         }
 
         {
@@ -3358,7 +3358,7 @@ TransferClient::TransferClient(
                 d_parameters.d_authorityCertificate_sp->encode(&authorityData);
             NTCCFG_TEST_OK(error);
 
-            encryptionClientOptions.addAuthorityData(authorityData);
+            encryptionClientOptions.addResourceData(authorityData);
         }
 
         error = d_interface_sp->createEncryptionClient(&d_encryptionClient_sp,
@@ -3981,7 +3981,7 @@ TransferServer::TransferServer(
             error = d_parameters.d_serverCertificate_sp->encode(&identityData);
             NTCCFG_TEST_OK(error);
 
-            encryptionServerOptions.setIdentityData(identityData);
+            encryptionServerOptions.addResourceData(identityData);
         }
 
         {
@@ -3990,7 +3990,7 @@ TransferServer::TransferServer(
                 d_parameters.d_serverPrivateKey_sp->encode(&privateKeyData);
             NTCCFG_TEST_OK(error);
 
-            encryptionServerOptions.setPrivateKeyData(privateKeyData);
+            encryptionServerOptions.addResourceData(privateKeyData);
         }
 
         {
@@ -3999,7 +3999,7 @@ TransferServer::TransferServer(
                 d_parameters.d_authorityCertificate_sp->encode(&authorityData);
             NTCCFG_TEST_OK(error);
 
-            encryptionServerOptions.addAuthorityData(authorityData);
+            encryptionServerOptions.addResourceData(authorityData);
         }
 
         error = d_interface_sp->createEncryptionServer(&d_encryptionServer_sp,
@@ -6805,10 +6805,11 @@ void concernDataExchange(const bsl::shared_ptr<ntci::Interface>& interface,
 
 #endif
 
-    const bool ENCRYPTION[] = {false
+    const bool ENCRYPTION[] = {
+        false
 #if NTCF_SYSTEM_TEST_BUILD_WITH_TLS
-                               ,
-                               true
+        ,
+        true
 #endif
     };
 

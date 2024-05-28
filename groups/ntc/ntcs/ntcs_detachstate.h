@@ -19,8 +19,8 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <bsls_assert.h>
 #include <ntccfg_inline.h>
+#include <bsls_assert.h>
 
 namespace BloombergLP {
 namespace ntcs {
@@ -45,12 +45,14 @@ class DetachState
     explicit DetachState(Value state);
 
     /// Returns current value of socket detachment state
-    Value get() const {
+    Value get() const
+    {
         return d_state;
     }
 
     /// Sets socket detachment state to the specified 'state'
-    void set(Value state) {
+    void set(Value state)
+    {
         d_state = state;
     }
 

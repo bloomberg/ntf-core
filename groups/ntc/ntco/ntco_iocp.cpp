@@ -2466,8 +2466,8 @@ ntsa::Error Iocp::detachSocket(
     socket->setProactorContext(bsl::shared_ptr<void>());
 
     this->execute(NTCCFG_BIND(&ntcs::Dispatch::announceDetached,
-                                socket,
-                                socket->strand()));
+                              socket,
+                              socket->strand()));
 
     return ntsa::Error();
 }

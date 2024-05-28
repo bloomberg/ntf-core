@@ -25,32 +25,16 @@ namespace ntca {
 
 EncryptionClientOptions::EncryptionClientOptions(
     bslma::Allocator* basicAllocator)
-: d_minMethod(ntca::EncryptionMethod::e_TLS_V1_X)
-, d_maxMethod(ntca::EncryptionMethod::e_TLS_V1_X)
-, d_authentication(ntca::EncryptionAuthentication::e_NONE)
-, d_identityData(basicAllocator)
-, d_identityFile(basicAllocator)
-, d_privateKeyData(basicAllocator)
-, d_privateKeyFile(basicAllocator)
-, d_authorityDataList(basicAllocator)
-, d_authorityDirectory(basicAllocator)
-, d_cipherSpec(basicAllocator)
+: d_options(basicAllocator)
+, d_optionsMap(basicAllocator)
 {
 }
 
 EncryptionClientOptions::EncryptionClientOptions(
     const EncryptionClientOptions& other,
     bslma::Allocator*              basicAllocator)
-: d_minMethod(other.d_minMethod)
-, d_maxMethod(other.d_maxMethod)
-, d_authentication(other.d_authentication)
-, d_identityData(other.d_identityData, basicAllocator)
-, d_identityFile(other.d_identityFile, basicAllocator)
-, d_privateKeyData(other.d_privateKeyData, basicAllocator)
-, d_privateKeyFile(other.d_privateKeyFile, basicAllocator)
-, d_authorityDataList(other.d_authorityDataList, basicAllocator)
-, d_authorityDirectory(other.d_authorityDirectory, basicAllocator)
-, d_cipherSpec(other.d_cipherSpec, basicAllocator)
+: d_options(other.d_options, basicAllocator)
+, d_optionsMap(other.d_optionsMap, basicAllocator)
 {
 }
 
@@ -62,137 +46,276 @@ EncryptionClientOptions& EncryptionClientOptions::operator=(
     const EncryptionClientOptions& other)
 {
     if (this != &other) {
-        d_minMethod          = other.d_minMethod;
-        d_maxMethod          = other.d_maxMethod;
-        d_authentication     = other.d_authentication;
-        d_identityData       = other.d_identityData;
-        d_identityFile       = other.d_identityFile;
-        d_privateKeyData     = other.d_privateKeyData;
-        d_privateKeyFile     = other.d_privateKeyFile;
-        d_authorityDataList  = other.d_authorityDataList;
-        d_authorityDirectory = other.d_authorityDirectory;
-        d_cipherSpec         = other.d_cipherSpec;
+        d_options    = other.d_options;
+        d_optionsMap = other.d_optionsMap;
     }
 
     return *this;
 }
 
+void EncryptionClientOptions::reset()
+{
+    d_options.reset();
+    d_optionsMap.clear();
+}
+
 void EncryptionClientOptions::setMinMethod(
     ntca::EncryptionMethod::Value minMethod)
 {
-    d_minMethod = minMethod;
+    d_options.setMinMethod(minMethod);
 }
 
 void EncryptionClientOptions::setMaxMethod(
     ntca::EncryptionMethod::Value maxMethod)
 {
-    d_maxMethod = maxMethod;
+    d_options.setMaxMethod(maxMethod);
+}
+
+void EncryptionClientOptions::setCipherSpec(const bsl::string& cipherSpec)
+{
+    d_options.setCipherSpec(cipherSpec);
 }
 
 void EncryptionClientOptions::setAuthentication(
     ntca::EncryptionAuthentication::Value authentication)
 {
-    d_authentication = authentication;
+    d_options.setAuthentication(authentication);
 }
 
-void EncryptionClientOptions::setIdentityData(
-    const bsl::vector<char>& identityData)
+void EncryptionClientOptions::setValidation(
+    const ntca::EncryptionValidation& validation)
 {
-    d_identityData = identityData;
-}
-
-void EncryptionClientOptions::setIdentityFile(
-    const bslstl::StringRef& identityFile)
-{
-    d_identityFile = identityFile;
-}
-
-void EncryptionClientOptions::setPrivateKeyData(
-    const bsl::vector<char>& privateKeyData)
-{
-    d_privateKeyData = privateKeyData;
-}
-
-void EncryptionClientOptions::setPrivateKeyFile(
-    const bslstl::StringRef& privateKeyFile)
-{
-    d_privateKeyFile = privateKeyFile;
-}
-
-void EncryptionClientOptions::addAuthorityData(
-    const bsl::vector<char>& authorityData)
-{
-    d_authorityDataList.push_back(authorityData);
+    d_options.setValidation(validation);
 }
 
 void EncryptionClientOptions::setAuthorityDirectory(
-    const bslstl::StringRef& authorityDirectory)
+    const bsl::string& authorityDirectory)
 {
-    d_authorityDirectory = authorityDirectory;
+    d_options.setAuthorityDirectory(authorityDirectory);
 }
 
-void EncryptionClientOptions::setCipherSpec(
-    const bslstl::StringRef& cipherSpec)
+void EncryptionClientOptions::addAuthorityList(
+    const ntca::EncryptionCertificateVector& certificates)
 {
-    d_cipherSpec = cipherSpec;
+    d_options.addAuthorityList(certificates);
+}
+
+void EncryptionClientOptions::addAuthority(
+    const ntca::EncryptionCertificate& certificate)
+{
+    d_options.addAuthority(certificate);
+}
+
+void EncryptionClientOptions::addAuthorityData(
+    const bsl::vector<char>& resourceData)
+{
+    d_options.addAuthorityData(resourceData);
+}
+
+void EncryptionClientOptions::addAuthorityData(
+    const bsl::vector<char>&               resourceData,
+    const ntca::EncryptionResourceOptions& resourceOptions)
+{
+    d_options.addAuthorityData(resourceData, resourceOptions);
+}
+
+void EncryptionClientOptions::addAuthorityFile(const bsl::string& resourcePath)
+{
+    d_options.addAuthorityFile(resourcePath);
+}
+
+void EncryptionClientOptions::addAuthorityFile(
+    const bsl::string&                     resourcePath,
+    const ntca::EncryptionResourceOptions& resourceOptions)
+{
+    d_options.addAuthorityFile(resourcePath, resourceOptions);
+}
+
+void EncryptionClientOptions::setIdentity(
+    const ntca::EncryptionCertificate& certificate)
+{
+    d_options.setIdentity(certificate);
+}
+
+void EncryptionClientOptions::setIdentityData(
+    const bsl::vector<char>& resourceData)
+{
+    d_options.setIdentityData(resourceData);
+}
+
+void EncryptionClientOptions::setIdentityData(
+    const bsl::vector<char>&               resourceData,
+    const ntca::EncryptionResourceOptions& resourceOptions)
+{
+    d_options.setIdentityData(resourceData, resourceOptions);
+}
+
+void EncryptionClientOptions::setIdentityFile(const bsl::string& resourcePath)
+{
+    d_options.setIdentityFile(resourcePath);
+}
+
+void EncryptionClientOptions::setIdentityFile(
+    const bsl::string&                     resourcePath,
+    const ntca::EncryptionResourceOptions& resourceOptions)
+{
+    d_options.setIdentityFile(resourcePath, resourceOptions);
+}
+
+void EncryptionClientOptions::setPrivateKey(const ntca::EncryptionKey& key)
+{
+    d_options.setPrivateKey(key);
+}
+
+void EncryptionClientOptions::setPrivateKeyData(
+    const bsl::vector<char>& resourceData)
+{
+    d_options.setPrivateKeyData(resourceData);
+}
+
+void EncryptionClientOptions::setPrivateKeyData(
+    const bsl::vector<char>&               resourceData,
+    const ntca::EncryptionResourceOptions& resourceOptions)
+{
+    d_options.setPrivateKeyData(resourceData, resourceOptions);
+}
+
+void EncryptionClientOptions::setPrivateKeyFile(
+    const bsl::string& resourcePath)
+{
+    d_options.setPrivateKeyFile(resourcePath);
+}
+
+void EncryptionClientOptions::setPrivateKeyFile(
+    const bsl::string&                     resourcePath,
+    const ntca::EncryptionResourceOptions& resourceOptions)
+{
+    d_options.setPrivateKeyFile(resourcePath, resourceOptions);
+}
+
+void EncryptionClientOptions::addResource(
+    const ntca::EncryptionResource& resource)
+{
+    d_options.addResource(resource);
+}
+
+void EncryptionClientOptions::addResourceData(
+    const bsl::vector<char>& resourceData)
+{
+    d_options.addResourceData(resourceData);
+}
+
+void EncryptionClientOptions::addResourceData(
+    const bsl::vector<char>&               resourceData,
+    const ntca::EncryptionResourceOptions& resourceOptions)
+{
+    d_options.addResourceData(resourceData, resourceOptions);
+}
+
+void EncryptionClientOptions::addResourceFile(const bsl::string& resourcePath)
+{
+    d_options.addResourceFile(resourcePath);
+}
+
+void EncryptionClientOptions::addResourceFile(
+    const bsl::string&                     resourcePath,
+    const ntca::EncryptionResourceOptions& resourceOptions)
+{
+    d_options.addResourceFile(resourcePath, resourceOptions);
+}
+
+void EncryptionClientOptions::addOverrides(
+    const bsl::string&             serverName,
+    const ntca::EncryptionOptions& options)
+{
+    if (serverName.empty() || serverName == "*") {
+        d_options = options;
+    }
+    else {
+        d_optionsMap[serverName] = options;
+    }
 }
 
 ntca::EncryptionMethod::Value EncryptionClientOptions::minMethod() const
 {
-    return d_minMethod;
+    return d_options.minMethod();
 }
 
 ntca::EncryptionMethod::Value EncryptionClientOptions::maxMethod() const
 {
-    return d_maxMethod;
-}
-
-ntca::EncryptionAuthentication::Value EncryptionClientOptions::authentication()
-    const
-{
-    return d_authentication;
-}
-
-const bdlb::NullableValue<bsl::vector<char> >& EncryptionClientOptions::
-    identityData() const
-{
-    return d_identityData;
-}
-
-const bdlb::NullableValue<bsl::string>& EncryptionClientOptions::identityFile()
-    const
-{
-    return d_identityFile;
-}
-
-const bdlb::NullableValue<bsl::vector<char> >& EncryptionClientOptions::
-    privateKeyData() const
-{
-    return d_privateKeyData;
-}
-
-const bdlb::NullableValue<bsl::string>& EncryptionClientOptions::
-    privateKeyFile() const
-{
-    return d_privateKeyFile;
-}
-
-const EncryptionClientOptions::CertificateDataList& EncryptionClientOptions::
-    authorityDataList() const
-{
-    return d_authorityDataList;
-}
-
-const bdlb::NullableValue<bsl::string>& EncryptionClientOptions::
-    authorityDirectory() const
-{
-    return d_authorityDirectory;
+    return d_options.maxMethod();
 }
 
 const bdlb::NullableValue<bsl::string>& EncryptionClientOptions::cipherSpec()
     const
 {
-    return d_cipherSpec;
+    return d_options.cipherSpec();
+}
+
+ntca::EncryptionAuthentication::Value EncryptionClientOptions::authentication()
+    const
+{
+    return d_options.authentication();
+}
+
+const bdlb::NullableValue<ntca::EncryptionValidation>& EncryptionClientOptions::
+    validation() const
+{
+    return d_options.validation();
+}
+
+const bdlb::NullableValue<bsl::string>& EncryptionClientOptions::
+    authorityDirectory() const
+{
+    return d_options.authorityDirectory();
+}
+
+const ntca::EncryptionResourceVector& EncryptionClientOptions::resources()
+    const
+{
+    return d_options.resources();
+}
+
+void EncryptionClientOptions::loadServerNameList(
+    bsl::vector<bsl::string>* result) const
+{
+    result->clear();
+
+    result->push_back("*");
+
+    for (OptionsMap::const_iterator it = d_optionsMap.begin();
+         it != d_optionsMap.end();
+         ++it)
+    {
+        result->push_back(it->first);
+    }
+}
+
+bool EncryptionClientOptions::loadServerNameOptions(
+    ntca::EncryptionOptions* result,
+    const bsl::string&       serverName) const
+{
+    result->reset();
+
+    if (serverName.empty() || serverName == "*") {
+        *result = d_options;
+    }
+    else {
+        OptionsMap::const_iterator it = d_optionsMap.find(serverName);
+        if (it == d_optionsMap.end()) {
+            return false;
+        }
+
+        *result = it->second;
+    }
+
+    return true;
+}
+
+bool EncryptionClientOptions::equals(
+    const EncryptionClientOptions& other) const
+{
+    return d_options == other.d_options && d_optionsMap == other.d_optionsMap;
 }
 
 bsl::ostream& EncryptionClientOptions::print(bsl::ostream& stream,
@@ -201,31 +324,29 @@ bsl::ostream& EncryptionClientOptions::print(bsl::ostream& stream,
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute("minMethod", d_minMethod);
-    printer.printAttribute("maxMethod", d_maxMethod);
-    printer.printAttribute("authentication", d_authentication);
 
-    if (!d_identityFile.isNull()) {
-        printer.printAttribute("identityFile", d_identityFile.value());
+    printer.printAttribute("minMethod", d_options.minMethod());
+    printer.printAttribute("maxMethod", d_options.maxMethod());
+    printer.printAttribute("authentication", d_options.authentication());
+
+    if (!d_options.validation().isNull()) {
+        printer.printAttribute("validation", d_options.validation());
     }
 
-    if (!d_privateKeyFile.isNull()) {
-        printer.printAttribute("privateKeyFile", d_privateKeyFile.value());
+    if (!d_options.authorityDirectory().isNull()) {
+        printer.printAttribute("authorityDirectory",
+                               d_options.authorityDirectory().value());
     }
 
-    if (!d_authorityDataList.empty()) {
-        printer.printAttribute("authorityDataList",
-                               d_authorityDataList.size());
+    if (!d_options.cipherSpec().isNull()) {
+        printer.printAttribute("cipherSpec", d_options.cipherSpec().value());
     }
 
-    if (!d_authorityDirectory.isNull()) {
-        printer.printAttribute("authorityDirectoryList",
-                               d_authorityDirectory.value());
+    if (!d_options.resources().empty()) {
+        printer.printAttribute("resource", d_options.resources());
     }
 
-    if (!d_cipherSpec.isNull()) {
-        printer.printAttribute("cipherSpec", d_cipherSpec.value());
-    }
+    printer.printAttribute("map", d_optionsMap);
 
     printer.end();
     return stream;
@@ -234,16 +355,7 @@ bsl::ostream& EncryptionClientOptions::print(bsl::ostream& stream,
 bool operator==(const EncryptionClientOptions& lhs,
                 const EncryptionClientOptions& rhs)
 {
-    return lhs.minMethod() == rhs.minMethod() &&
-           lhs.maxMethod() == rhs.maxMethod() &&
-           lhs.authentication() == rhs.authentication() &&
-           lhs.identityData() == rhs.identityData() &&
-           lhs.identityFile() == rhs.identityFile() &&
-           lhs.privateKeyData() == rhs.privateKeyData() &&
-           lhs.privateKeyFile() == rhs.privateKeyFile() &&
-           lhs.authorityDataList() == rhs.authorityDataList() &&
-           lhs.authorityDirectory() == rhs.authorityDirectory() &&
-           lhs.cipherSpec() == rhs.cipherSpec();
+    return lhs.equals(rhs);
 }
 
 bool operator!=(const EncryptionClientOptions& lhs,

@@ -319,10 +319,9 @@ ntsa::Error ResolverUtil::getPort(bsl::vector<ntsa::Port>* result,
         unsigned short   portNumberLiteral = 0;
         bsl::string_view portNumberRemainder;
 
-        rc = bdlb::NumericParseUtil::parseUshort(
-            &portNumberLiteral,
-            &portNumberRemainder,
-            serviceNameTrimmed);
+        rc = bdlb::NumericParseUtil::parseUshort(&portNumberLiteral,
+                                                 &portNumberRemainder,
+                                                 serviceNameTrimmed);
 
         if (rc == 0) {
             if (!portNumberRemainder.empty()) {
