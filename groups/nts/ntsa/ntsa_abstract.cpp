@@ -59,9 +59,9 @@ struct AbstractIntegerBaseTraits {
 
 // clang-format off
 static const AbstractIntegerBaseTraits k_TRAITS[5] = {
-    {  1ULL << (sizeof(AbstractIntegerRepresentation::Block) * 8), 
-       0, 
-       (1ULL << (sizeof(AbstractIntegerRepresentation::Block) * 8)) - 1 
+    {  1ULL << (sizeof(AbstractIntegerRepresentation::Block) * 8),
+       0,
+       (1ULL << (sizeof(AbstractIntegerRepresentation::Block) * 8)) - 1
     },
     {     2, 0,     1 },
     {     8, 0,     7 },
@@ -1367,7 +1367,7 @@ bsl::size_t AbstractSyntaxEncoderUtil::numSignificantBits(bsl::uint64_t value)
         return 1;
     }
 
-    std::size_t i = 0;
+    bsl::size_t i = 0;
 
     while (value > 255) {
         value  = value >> 8;
@@ -1432,8 +1432,8 @@ ntsa::Error AbstractSyntaxEncoderUtil::encodeTag(
 {
     ntsa::Error error;
 
-    const std::size_t k_MAX_TAG_NUMBER_IN_ONE_OCTET = 30;
-    const std::size_t k_TAG_MASK_NUMBER             = 0x1F;
+    const bsl::size_t k_MAX_TAG_NUMBER_IN_ONE_OCTET = 30;
+    const bsl::size_t k_TAG_MASK_NUMBER             = 0x1F;
 
     bsl::uint8_t firstOctet = 0;
 
@@ -1483,7 +1483,7 @@ ntsa::Error AbstractSyntaxEncoderUtil::encodeLength(
         }
     }
     else {
-        std::size_t numOctets =
+        bsl::size_t numOctets =
             (AbstractSyntaxEncoderUtil::numSignificantBits(length) + 7) / 8;
 
         bsl::uint8_t firstOctet = static_cast<bsl::uint8_t>(numOctets | 0x80);
@@ -1493,10 +1493,10 @@ ntsa::Error AbstractSyntaxEncoderUtil::encodeLength(
             return error;
         }
 
-        std::size_t i = numOctets;
-        std::size_t j = (i - 1) * 8;
+        bsl::size_t i = numOctets;
+        bsl::size_t j = (i - 1) * 8;
 
-        std::size_t n = length;
+        bsl::size_t n = length;
 
         while (i > 0) {
             const bsl::uint8_t octet =
@@ -1552,13 +1552,13 @@ ntsa::Error AbstractSyntaxEncoderUtil::encodeIntegerBase128(
 {
     ntsa::Error error;
 
-    const std::size_t length =
+    const bsl::size_t length =
         (AbstractSyntaxEncoderUtil::numSignificantBits(value) + 6) / 7;
 
-    std::size_t i = length;
-    std::size_t j = (i - 1) * 7;
+    bsl::size_t i = length;
+    bsl::size_t j = (i - 1) * 7;
 
-    std::size_t n = value;
+    bsl::uint64_t n = value;
 
     while (i > 1) {
         const bsl::uint8_t octet =
@@ -4872,7 +4872,7 @@ bsl::ostream& AbstractBitSequence::print(bsl::ostream& stream,
     NTSCFG_WARNING_UNUSED(level);
     NTSCFG_WARNING_UNUSED(spacesPerLevel);
 
-    const bool hexFlag = (stream.flags() & std::ios_base::hex) != 0;
+    const bool hexFlag = (stream.flags() & bsl::ios_base::hex) != 0;
 
     if (hexFlag) {
         const char k_HEX[] = "0123456789abcdef";
@@ -7080,10 +7080,10 @@ bsl::ostream& AbstractIntegerQuantity::print(bsl::ostream& stream,
 
     const bsl::ostream::fmtflags flags = stream.flags();
 
-    if ((flags & std::ios_base::hex) != 0) {
+    if ((flags & bsl::ios_base::hex) != 0) {
         base = AbstractIntegerBase::e_HEXADECIMAL;
     }
-    else if ((flags & std::ios_base::oct) != 0) {
+    else if ((flags & bsl::ios_base::oct) != 0) {
         base = AbstractIntegerBase::e_OCTAL;
     }
 
@@ -8000,10 +8000,10 @@ bsl::ostream& AbstractInteger::print(bsl::ostream& stream,
 
     const bsl::ostream::fmtflags flags = stream.flags();
 
-    if ((flags & std::ios_base::hex) != 0) {
+    if ((flags & bsl::ios_base::hex) != 0) {
         base = AbstractIntegerBase::e_HEXADECIMAL;
     }
-    else if ((flags & std::ios_base::oct) != 0) {
+    else if ((flags & bsl::ios_base::oct) != 0) {
         base = AbstractIntegerBase::e_OCTAL;
     }
 
