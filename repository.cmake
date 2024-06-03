@@ -577,12 +577,15 @@ function (ntf_target_options_common_prolog target)
             ntf_target_build_option(
                 TARGET ${target} COMPILE LINK VALUE -fexceptions)
 
-            if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-                ntf_target_build_option(
-                    TARGET ${target} COMPILE LINK VALUE -fcoroutines-ts)
-            elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-                ntf_target_build_option(
-                    TARGET ${target} COMPILE LINK VALUE -fcoroutines)
+            if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+                if(DEFINED CMAKE_CXX_COMPILER_VERSION
+                    AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 16.0)
+                    ntf_target_build_option(TARGET ${target} COMPILE LINK VALUE
+                        -fcoroutines-ts)
+                endif()
+            else() #GCC
+                ntf_target_build_option(TARGET ${target} COMPILE LINK VALUE
+                        -fcoroutines)
             endif()
 
             ntf_target_build_option(

@@ -31,12 +31,12 @@ BSLS_IDENT("$Id: $")
 /// NTS release minor version.
 ///
 /// @ingroup module_ntsscm
-#define NTS_VERSION_MINOR 3
+#define NTS_VERSION_MINOR 4
 
 /// NTS release patch version.
 ///
 /// @ingroup module_ntsscm
-#define NTS_VERSION_PATCH 9
+#define NTS_VERSION_PATCH 0
 
 /// Construct a composite version number in the range [ 0 .. 999900 ] from
 /// the specified 'NTS_VERSION_MAJOR' and 'NTS_VERSION_MINOR' numbers
