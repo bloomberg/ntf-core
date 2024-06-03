@@ -1,9 +1,26 @@
-ntf-core (2.3.9) unstable; urgency=low
+ntf-core (2.4.1) unstable; urgency=low
 
+  * dc5cfe2 Release 2.4.1
+  * 2db3ec0 Remove -fcoroutines-ts flag for clang starting from 16.0
+
+ -- Matt Millett <mmillett2@bloomberg.net>  Mon, 3 Jun 2024 13:28:46 -0400
+
+ntf-core (2.4.0) git; urgency=low
+
+  * 2568497 Release 2.4.0
+  * 2470996 Fix bug incorrectly narrowing a 64-bit unsigned integer to a size_t when encoding to base-128
+  * 7985595 Fix compilation errors in the ntsa_abstract test driver for 32-bit platforms in C++03
+  * f1bc1f2 Modernize usage and support for public key cryptography
+
+ -- Matt Millett <mmillett@mailbox.org>  Mon, 3 Jun 2024 13:19:54 -0400
+
+ntf-core (2.3.9) git; urgency=low
+
+  * 65e8c02 Release 2.3.9 to DPKG
   * f42b8f0 Release 2.3.9
   * d597d26 Implement ntsu::SocketOptionUtil::get/setTcpCongestionControl on Windows, implement ntsf::System::getBlocking
 
- -- Matt Millett <mmillett2@bloomberg.net>  Thu, 9 May 2024 08:31:51 -0400
+ -- Matt Millett <mmillett2@bloomberg.net>  Thu, 9 May 2024 08:33:09 -0400
 
 ntf-core (2.3.8) git; urgency=low
 
