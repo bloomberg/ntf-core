@@ -7290,7 +7290,7 @@ NTSCFG_TEST_CASE(18)
 
         ntsa::Handle client;
         ntsa::Handle server;
-        error = ntsu::SocketUtil::pair(&client, &server, transport);
+        error = ntsu::SocketUtil::pair(&client, &server, transport, false);
         NTSCFG_TEST_ASSERT(!error);
 
         ntsa::Endpoint clientEndpoint;
@@ -7330,6 +7330,8 @@ NTSCFG_TEST_CASE(18)
             error =
                 ntsu::SocketUtil::receive(&context, &data, options, server);
             NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_EQ(context.bytesReceived(), 1);
+            NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
 
             NTSCFG_TEST_ASSERT(!context.endpoint().isNull());
 

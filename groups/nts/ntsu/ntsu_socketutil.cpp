@@ -3984,6 +3984,14 @@ ntsa::Error SocketUtil::pair(ntsa::Handle*          client,
                              ntsa::Handle*          server,
                              ntsa::Transport::Value type)
 {
+    return pair(client, server, type, true);
+}
+
+ntsa::Error SocketUtil::pair(ntsa::Handle*          client,
+                             ntsa::Handle*          server,
+                             ntsa::Transport::Value type,
+                             bool                   reuseAddress)
+{
     ntsa::Error error;
 
     if (type == ntsa::Transport::e_TCP_IPV4_STREAM) {
@@ -3997,7 +4005,7 @@ ntsa::Error SocketUtil::pair(ntsa::Handle*          client,
 
         error = ntsu::SocketUtil::bind(
             ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            true,
+            reuseAddress,
             listener);
         if (error) {
             return error;
@@ -4044,7 +4052,7 @@ ntsa::Error SocketUtil::pair(ntsa::Handle*          client,
 
         error = ntsu::SocketUtil::bind(
             ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv6Address::loopback(), 0)),
-            true,
+            reuseAddress,
             listener);
         if (error) {
             return error;
@@ -4097,7 +4105,7 @@ ntsa::Error SocketUtil::pair(ntsa::Handle*          client,
 
         error = ntsu::SocketUtil::bind(
             ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            true,
+            reuseAddress,
             *client);
         if (error) {
             return error;
@@ -4105,7 +4113,7 @@ ntsa::Error SocketUtil::pair(ntsa::Handle*          client,
 
         error = ntsu::SocketUtil::bind(
             ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            true,
+            reuseAddress,
             *server);
         if (error) {
             return error;
@@ -4153,7 +4161,7 @@ ntsa::Error SocketUtil::pair(ntsa::Handle*          client,
 
         error = ntsu::SocketUtil::bind(
             ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv6Address::loopback(), 0)),
-            true,
+            reuseAddress,
             *client);
         if (error) {
             return error;
@@ -4161,7 +4169,7 @@ ntsa::Error SocketUtil::pair(ntsa::Handle*          client,
 
         error = ntsu::SocketUtil::bind(
             ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv6Address::loopback(), 0)),
-            true,
+            reuseAddress,
             *server);
         if (error) {
             return error;
@@ -5389,7 +5397,7 @@ ntsa::Error SocketUtil::bind(const ntsa::Endpoint& endpoint,
     ntsa::Error error;
 
 #if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
-    const bool  isLocal = endpoint.isLocal();
+    const bool isLocal = endpoint.isLocal();
 #else
     const bool isLocal = false;
 #endif
@@ -6854,7 +6862,7 @@ ntsa::Error SocketUtil::receive(bsl::size_t* numBytesReceived,
     DWORD wsaFlags            = 0;
 
     int wsaRecvResult =
-            WSARecv(socket, &wsaBuf, 1, &wsaNumBytesReceived, &wsaFlags, 0, 0);
+        WSARecv(socket, &wsaBuf, 1, &wsaNumBytesReceived, &wsaFlags, 0, 0);
 
     if (wsaRecvResult != 0) {
         return ntsa::Error(WSAGetLastError());

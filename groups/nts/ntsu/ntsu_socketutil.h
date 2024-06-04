@@ -707,6 +707,14 @@ struct SocketUtil {
                             ntsa::Handle*          server,
                             ntsa::Transport::Value type);
 
+    /// Load into the specified 'client' and 'server' a connected pair of
+    /// sockets of the specified 'type'. Additionally, use the specified
+    /// 'reuseAddress' flag when binding the sockets. Return the error.
+    static ntsa::Error pair(ntsa::Handle*          client,
+                            ntsa::Handle*          server,
+                            ntsa::Transport::Value type,
+                            bool                   reuseAddress);
+
     /// Load into the specified 'endpoint' the conversion of the specified
     /// 'socketAddress' having the specified 'socketAddressSize'. Return the
     /// error.
