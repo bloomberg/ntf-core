@@ -160,10 +160,23 @@ NTSCFG_TEST_CASE(3)
     NTSCFG_TEST_ASSERT(addressSet.size() == 2);
 }
 
+NTSCFG_TEST_CASE(4)
+{
+    // Concern: IPv4 address comparison must yield consistent result across
+    //          CPUs with varying endianness
+    // Plan:
+
+    ntsa::Ipv4Address address1("10.0.0.11");
+    ntsa::Ipv4Address address2("11.0.0.10");
+
+    NTSCFG_TEST_ASSERT(address1 < address2);
+}
+
 NTSCFG_TEST_DRIVER
 {
     NTSCFG_TEST_REGISTER(1);
     NTSCFG_TEST_REGISTER(2);
     NTSCFG_TEST_REGISTER(3);
+    NTSCFG_TEST_REGISTER(4);
 }
 NTSCFG_TEST_DRIVER_END;
