@@ -7290,7 +7290,7 @@ NTSCFG_TEST_CASE(18)
 
         ntsa::Handle client;
         ntsa::Handle server;
-        error = ntsu::SocketUtil::pair(&client, &server, transport, false);
+        error = ntsu::SocketUtil::pair(&client, &server, transport);
         NTSCFG_TEST_ASSERT(!error);
 
         ntsa::Endpoint clientEndpoint;

@@ -3984,14 +3984,6 @@ ntsa::Error SocketUtil::pair(ntsa::Handle*          client,
                              ntsa::Handle*          server,
                              ntsa::Transport::Value type)
 {
-    return pair(client, server, type, true);
-}
-
-ntsa::Error SocketUtil::pair(ntsa::Handle*          client,
-                             ntsa::Handle*          server,
-                             ntsa::Transport::Value type,
-                             bool                   reuseAddress)
-{
     ntsa::Error error;
 
     if (type == ntsa::Transport::e_TCP_IPV4_STREAM) {
@@ -4005,7 +3997,7 @@ ntsa::Error SocketUtil::pair(ntsa::Handle*          client,
 
         error = ntsu::SocketUtil::bind(
             ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            reuseAddress,
+            false,
             listener);
         if (error) {
             return error;
@@ -4052,7 +4044,7 @@ ntsa::Error SocketUtil::pair(ntsa::Handle*          client,
 
         error = ntsu::SocketUtil::bind(
             ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv6Address::loopback(), 0)),
-            reuseAddress,
+            false,
             listener);
         if (error) {
             return error;
@@ -4105,7 +4097,7 @@ ntsa::Error SocketUtil::pair(ntsa::Handle*          client,
 
         error = ntsu::SocketUtil::bind(
             ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            reuseAddress,
+            false,
             *client);
         if (error) {
             return error;
@@ -4113,7 +4105,7 @@ ntsa::Error SocketUtil::pair(ntsa::Handle*          client,
 
         error = ntsu::SocketUtil::bind(
             ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            reuseAddress,
+            false,
             *server);
         if (error) {
             return error;
@@ -4161,7 +4153,7 @@ ntsa::Error SocketUtil::pair(ntsa::Handle*          client,
 
         error = ntsu::SocketUtil::bind(
             ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv6Address::loopback(), 0)),
-            reuseAddress,
+            false,
             *client);
         if (error) {
             return error;
@@ -4169,7 +4161,7 @@ ntsa::Error SocketUtil::pair(ntsa::Handle*          client,
 
         error = ntsu::SocketUtil::bind(
             ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv6Address::loopback(), 0)),
-            reuseAddress,
+            false,
             *server);
         if (error) {
             return error;
