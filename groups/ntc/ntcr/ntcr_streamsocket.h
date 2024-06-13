@@ -153,7 +153,7 @@ class StreamSocket : public ntci::StreamSocket,
     bslma::Allocator*                          d_allocator_p;
 
   private:
-    StreamSocket(const StreamSocket&) BSLS_KEYWORD_DELETED;
+                  StreamSocket(const StreamSocket&) BSLS_KEYWORD_DELETED;
     StreamSocket& operator=(const StreamSocket&) BSLS_KEYWORD_DELETED;
 
   private:
@@ -513,17 +513,22 @@ class StreamSocket : public ntci::StreamSocket,
         const ntca::GetEndpointEvent&          getEndpointEvent,
         bsl::size_t                            connectAttempts);
 
+    static void processRemoteEndpointResolutionWeak(
+        const bsl::weak_ptr<StreamSocket>&     socket,
+        const bsl::shared_ptr<ntci::Resolver>& resolver,
+        const ntsa::Endpoint&                  endpoint,
+        const ntca::GetEndpointEvent&          getEndpointEvent,
+        bsl::size_t                            connectAttempts);
+
     /// Initiate the upgrade. Return the error.
-    ntsa::Error privateUpgrade(
-        const bsl::shared_ptr<StreamSocket>& self,
-        const ntca::UpgradeOptions&          upgradeOptions);
+    ntsa::Error privateUpgrade(const bsl::shared_ptr<StreamSocket>& self,
+                               const ntca::UpgradeOptions& upgradeOptions);
 
     /// Retry connecting to the remote peer.
     void privateRetryConnect(const bsl::shared_ptr<StreamSocket>& self);
 
     /// Retry connecting to the remote name. Return the error.
-    ntsa::Error privateRetryConnectToName(
-        const bsl::shared_ptr<StreamSocket>& self);
+    ntsa::Error privateRetryConnectToName();
 
     /// Retry connecting to the remote endpoint. Return the error.
     ntsa::Error privateRetryConnectToEndpoint(

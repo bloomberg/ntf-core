@@ -3852,6 +3852,22 @@ void StreamSocket::processSourceEndpointResolution(
     }
 }
 
+void StreamSocket::processRemoteEndpointResolutionWeak(
+    const bsl::weak_ptr<StreamSocket>&     socket,
+    const bsl::shared_ptr<ntci::Resolver>& resolver,
+    const ntsa::Endpoint&                  endpoint,
+    const ntca::GetEndpointEvent&          getEndpointEvent,
+    bsl::size_t                            connectAttempts)
+{
+    const bsl::shared_ptr<StreamSocket> strongRef = socket.lock();
+    if (strongRef) {
+        strongRef->processRemoteEndpointResolution(resolver,
+                                                   endpoint,
+                                                   getEndpointEvent,
+                                                   connectAttempts);
+    }
+}
+
 void StreamSocket::processRemoteEndpointResolution(
     const bsl::shared_ptr<ntci::Resolver>& resolver,
     const ntsa::Endpoint&                  endpoint,
@@ -3992,8 +4008,8 @@ ntsa::Error StreamSocket::privateUpgrade(
         bdlf::MemFnUtil::memFn(&StreamSocket::privateEncryptionHandshake,
                                this);
 
-    error = d_encryption_sp->initiateHandshake(
-        upgradeOptions, handshakeCallback);
+    error =
+        d_encryption_sp->initiateHandshake(upgradeOptions, handshakeCallback);
     if (error) {
         return error;
     }
@@ -4126,7 +4142,7 @@ void StreamSocket::privateRetryConnect(
         error = this->privateRetryConnectToEndpoint(self);
     }
     else {
-        error = this->privateRetryConnectToName(self);
+        error = this->privateRetryConnectToName();
     }
 
     if (error) {
@@ -4134,8 +4150,7 @@ void StreamSocket::privateRetryConnect(
     }
 }
 
-ntsa::Error StreamSocket::privateRetryConnectToName(
-    const bsl::shared_ptr<StreamSocket>& self)
+ntsa::Error StreamSocket::privateRetryConnectToName()
 {
     ntsa::Error error;
 
@@ -4149,8 +4164,8 @@ ntsa::Error StreamSocket::privateRetryConnectToName(
 
     ntci::GetEndpointCallback getEndpointCallback =
         resolverRef->createGetEndpointCallback(
-            NTCCFG_BIND(&StreamSocket::processRemoteEndpointResolution,
-                        self,
+            NTCCFG_BIND(&StreamSocket::processRemoteEndpointResolutionWeak,
+                        this->weak_from_this(),
                         NTCCFG_BIND_PLACEHOLDER_1,
                         NTCCFG_BIND_PLACEHOLDER_2,
                         NTCCFG_BIND_PLACEHOLDER_3,
@@ -4277,9 +4292,9 @@ ntsa::Error StreamSocket::privateTimestampOutgoingData(
 
     {
         ntsa::SocketOption option(d_allocator_p);
-        error = d_socket_sp->getOption(
-            &option,
-            ntsa::SocketOptionType::e_TX_TIMESTAMPING);
+        error =
+            d_socket_sp->getOption(&option,
+                                   ntsa::SocketOptionType::e_TX_TIMESTAMPING);
         if (error) {
             if (error != ntsa::Error::e_NOT_IMPLEMENTED) {
                 NTCI_LOG_TRACE("Failed to get socket option: "
@@ -4357,9 +4372,9 @@ ntsa::Error StreamSocket::privateTimestampIncomingData(
 
     {
         ntsa::SocketOption option(d_allocator_p);
-        error = d_socket_sp->getOption(
-            &option,
-            ntsa::SocketOptionType::e_RX_TIMESTAMPING);
+        error =
+            d_socket_sp->getOption(&option,
+                                   ntsa::SocketOptionType::e_RX_TIMESTAMPING);
         if (error) {
             if (error != ntsa::Error::e_NOT_IMPLEMENTED) {
                 NTCI_LOG_TRACE("Failed to get socket option: "
