@@ -1,9 +1,21 @@
-ntf-core (2.4.1) unstable; urgency=low
+ntf-core (2.4.2) unstable; urgency=low
 
+  * c2e9609 Release 2.4.2
+  * c86b4c8 Allow the encryption certificate version to be omitted from the encoding if using X.509 v1
+  * 904bbe5 TSAN: Fix data race in ntcs::Chronology test driver
+  * efa622b Enhance mocking framework, re-enable mocking framework support in C++03, and enhance participating test drivers
+  * 81de50a ntsu::SocketUtil::pair: always set `reuseAddress` to false
+  * a591a82 Depend on system libraries based on system name, not on the compiler name (#166)
+
+ -- Matt Millett <mmillett2@bloomberg.net>  Fri, 14 Jun 2024 14:08:41 -0400
+
+ntf-core (2.4.1) git; urgency=low
+
+  * e21287c Release 2.4.1 to DPKG
   * dc5cfe2 Release 2.4.1
   * 2db3ec0 Remove -fcoroutines-ts flag for clang starting from 16.0
 
- -- Matt Millett <mmillett2@bloomberg.net>  Mon, 3 Jun 2024 13:28:46 -0400
+ -- Matt Millett <mmillett2@bloomberg.net>  Mon, 3 Jun 2024 13:34:03 -0400
 
 ntf-core (2.4.0) git; urgency=low
 
