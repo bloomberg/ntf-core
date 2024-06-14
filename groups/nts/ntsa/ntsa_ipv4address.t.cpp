@@ -39,6 +39,58 @@ using namespace ntsa;
 
 NTSCFG_TEST_CASE(1)
 {
+    // Concern: Value semantics
+    // Plan:
+
+    const bool isBitwiseInitializable = 
+        NTSCFG_TYPE_CHECK_BITWISE_INITIALIZABLE(ntsa::Ipv4Address);
+
+    NTSCFG_TEST_TRUE(isBitwiseInitializable);
+
+    const bool isBitwiseMovable = 
+        NTSCFG_TYPE_CHECK_BITWISE_MOVABLE(ntsa::Ipv4Address);
+
+    NTSCFG_TEST_TRUE(isBitwiseMovable);
+
+    const bool isBitwiseCopyable = 
+        NTSCFG_TYPE_CHECK_BITWISE_COPYABLE(ntsa::Ipv4Address);
+
+    NTSCFG_TEST_TRUE(isBitwiseCopyable);
+
+    const bool isBitwiseComparable = 
+        NTSCFG_TYPE_CHECK_BITWISE_COMPARABLE(ntsa::Ipv4Address);
+
+    NTSCFG_TEST_TRUE(isBitwiseComparable);
+
+    const bool isNothroMoveConstructible = 
+        bsl::is_nothrow_move_constructible<ntsa::Ipv4Address>::value;
+
+    NTSCFG_TEST_TRUE(isNothroMoveConstructible);
+
+    ntsa::Ipv4Address a("1.2.3.4");
+
+    NTSCFG_TEST_EQ(a[0], 1);
+    NTSCFG_TEST_EQ(a[1], 2);
+    NTSCFG_TEST_EQ(a[2], 3);
+    NTSCFG_TEST_EQ(a[3], 4);
+
+    ntsa::Ipv4Address b(NTSCFG_MOVE(a));
+
+    NTSCFG_TEST_EQ(b[0], 1);
+    NTSCFG_TEST_EQ(b[1], 2);
+    NTSCFG_TEST_EQ(b[2], 3);
+    NTSCFG_TEST_EQ(b[3], 4);
+
+#if NTSCFG_MOVE_RESET_ENABLED
+    NTSCFG_TEST_EQ(a[0], 0);
+    NTSCFG_TEST_EQ(a[1], 0);
+    NTSCFG_TEST_EQ(a[2], 0);
+    NTSCFG_TEST_EQ(a[3], 0);
+#endif
+}
+
+NTSCFG_TEST_CASE(2)
+{
     // Concern: Parsing
     // Plan:
 
@@ -101,7 +153,7 @@ NTSCFG_TEST_CASE(1)
 #endif
 }
 
-NTSCFG_TEST_CASE(2)
+NTSCFG_TEST_CASE(3)
 {
     // Concern: Generating
     // Plan:
@@ -145,7 +197,7 @@ NTSCFG_TEST_CASE(2)
 #endif
 }
 
-NTSCFG_TEST_CASE(3)
+NTSCFG_TEST_CASE(4)
 {
     // Concern:
     // Plan:
@@ -165,5 +217,6 @@ NTSCFG_TEST_DRIVER
     NTSCFG_TEST_REGISTER(1);
     NTSCFG_TEST_REGISTER(2);
     NTSCFG_TEST_REGISTER(3);
+    NTSCFG_TEST_REGISTER(4);
 }
 NTSCFG_TEST_DRIVER_END;
