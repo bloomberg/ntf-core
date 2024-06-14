@@ -172,11 +172,11 @@ class StrandMock : public ntci::Strand
     }
     // mocking base class method
 
-    void execute(const Functor& functor) BSLS_KEYWORD_OVERRIDE{};
+    void execute(const Functor& functor) BSLS_KEYWORD_OVERRIDE {};
     // mocking base class method
 
     void moveAndExecute(FunctorSequence* functorSequence,
-                        const Functor&   functor) BSLS_KEYWORD_OVERRIDE{};
+                        const Functor&   functor) BSLS_KEYWORD_OVERRIDE {};
     // mocking base class method
 };
 
@@ -475,6 +475,7 @@ class MtDriver : public ntcs::Driver,
         d_chronology = bsl::allocate_shared<ntcs::Chronology>(d_allocator_p,
                                                               this,
                                                               d_allocator_p);
+        d_run        = true;
         d_blocked    = true;
     }
 
@@ -513,9 +514,6 @@ class MtDriver : public ntcs::Driver,
     void run()
     {
         NTCI_LOG_CONTEXT();
-
-        d_run     = true;
-        d_blocked = true;
 
         while (d_run) {
             NTCI_LOG_DEBUG("iterating inside ");
@@ -631,7 +629,7 @@ class MtDriver : public ntcs::Driver,
     bslmt::Mutex                      d_mutex;
     bslmt::Condition                  d_condition;
     bool                              d_blocked;
-    bool                              d_run;
+    bsls::AtomicBool                  d_run;
     bsl::shared_ptr<ntcs::Chronology> d_chronology;
 };
 
@@ -3024,9 +3022,9 @@ NTCCFG_TEST_CASE(34)
         const int numProducers = (numThreads + 1) / 2;
         const int iterations   = numThreads * 100 * 1000;
 #else
-        const int numConsumers      = 8;
-        const int numProducers      = 8;
-        const int iterations        = 1000000;
+        const int numConsumers = 8;
+        const int numProducers = 8;
+        const int iterations   = 1000000;
 #endif
 
         ts.d_numOneShotTimersToConsume = iterations;
@@ -3141,9 +3139,9 @@ NTCCFG_TEST_CASE(36)
         const int numProducers = (numThreads + 1) / 2;
         const int iterations   = 1000 * 1000;
 #else
-        const int numConsumers      = 8;
-        const int numProducers      = 8;
-        const int iterations        = 1000000;
+        const int numConsumers = 8;
+        const int numProducers = 8;
+        const int iterations   = 1000000;
 #endif
 
         ts.d_numOneShotTimersToConsume = iterations;

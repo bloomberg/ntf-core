@@ -703,7 +703,7 @@ class TestAllocator : public bslma::Allocator
 #if defined(BDE_BUILD_TARGET_CPP20)
 #define NTCCFG_TEST_MOCK_ENABLED 1
 #else
-#define NTCCFG_TEST_MOCK_ENABLED 0
+#define NTCCFG_TEST_MOCK_ENABLED 1
 #endif
 
 #if NTCCFG_TEST_MOCK_ENABLED
@@ -723,9 +723,45 @@ class TestAllocator : public bslma::Allocator
     NTF_SELECT(NAME, NTF_VA_SIZE(__VA_ARGS__))(__VA_ARGS__)
 
 struct TestMock {
+    template <class T, bool FUNDAMENTAL>
+    struct PassTraitsHelper {
+        typedef T Type;
+    };
+    template <class T>
+    struct PassTraitsHelper<T, false> {
+        typedef T const& Type;
+    };
+
+    template <class T>
+    struct PassTraits {
+        typedef
+            typename PassTraitsHelper<T, bsl::is_fundamental<T>::value>::Type
+                PassType;
+    };
+
+    template <class T>
+    struct PassTraits<T*> {
+        typedef T* PassType;
+    };
+
+    template <class T>
+    struct PassTraits<T const*> {
+        typedef T const* PassType;
+    };
+
+    template <class T>
+    struct PassTraits<T&> {
+        typedef T& PassType;
+    };
+    template <class T>
+    struct PassTraits<T const&> {
+        typedef T const& PassType;
+    };
+
     template <class ARG>
     struct ProcessInterface {
-        virtual void process(const ARG& arg) = 0;
+        typedef typename bsl::remove_reference<ARG>::type ARGtype;
+        virtual void process(const ARGtype& arg) = 0;
         virtual ~    ProcessInterface()
         {
         }
@@ -733,7 +769,7 @@ struct TestMock {
 
     template <class ARG>
     struct SetterInterface {
-        virtual void process(ARG arg) = 0;
+        virtual void process(typename PassTraits<ARG>::PassType arg) = 0;
         virtual ~    SetterInterface()
         {
         }
@@ -759,9 +795,10 @@ struct TestMock {
     struct Setter {
         template <class ARG>
         struct SetterImpl {
-            static void process(ARG arg, const IN& in)
+            typedef typename PassTraits<ARG>::PassType PassType;
+            static void process(PassType arg, const IN& in)
             {
-                SET_POLICY<ARG, IN>::set(arg, in);
+                SET_POLICY<PassType, IN>::set(arg, in);
             }
         };
 
@@ -780,6 +817,18 @@ struct TestMock {
         return setter;
     }
 
+    template <class T>
+    static Setter<T, DefaultSetter> FROM(const T& val)
+    {
+        return createSetter<DefaultSetter>(val);
+    }
+
+    template <class T>
+    static Setter<T, DerefSetter> FROM_DEREF(const T& val)
+    {
+        return createSetter<DerefSetter>(val);
+    }
+
     template <class ARG, class SETTER>
     struct SetterHolder : SetterInterface<ARG> {
         explicit SetterHolder(const SETTER& setter)
@@ -787,7 +836,8 @@ struct TestMock {
         {
         }
 
-        void process(ARG arg) BSLS_KEYWORD_OVERRIDE
+        void process(typename PassTraits<ARG>::PassType arg)
+            BSLS_KEYWORD_OVERRIDE
         {
             SETTER::template SetterImpl<ARG>::process(arg, d_setter.d_in);
         }
@@ -834,14 +884,27 @@ struct TestMock {
         return extractor;
     }
 
+    template <class T>
+    static Extractor<T, NoDerefPolicy> TO(T* val)
+    {
+        return createExtractor<NoDerefPolicy>(val);
+    }
+
+    template <class T>
+    static Extractor<T, DerefPolicy> TO_DEREF(T* val)
+    {
+        return createExtractor<DerefPolicy>(val);
+    }
+
     template <class ARG, class EXTRACTOR>
     struct ExtractorHolder : ProcessInterface<ARG> {
-        ExtractorHolder(const EXTRACTOR& extractor)
+        explicit ExtractorHolder(const EXTRACTOR& extractor)
         : d_extractor(extractor)
         {
         }
 
-        void process(const ARG& arg) BSLS_KEYWORD_OVERRIDE
+        void process(const typename ProcessInterface<ARG>::ARGtype& arg)
+            BSLS_KEYWORD_OVERRIDE
         {
             d_extractor.process(arg);
         }
@@ -892,7 +955,7 @@ struct TestMock {
             return true;
         }
         template <class T>
-        void process(T)
+        static void process(T)
         {
         }
     };
@@ -904,14 +967,27 @@ struct TestMock {
         return matcher;
     }
 
+    template <class EXP>
+    static EqMatcher<EXP, DirectComparator> EQ(const EXP& val)
+    {
+        return createEqMatcher<DirectComparator>(val);
+    }
+
+    template <class EXP>
+    static EqMatcher<EXP, DerefComparator> EQ_DEREF(const EXP& val)
+    {
+        return createEqMatcher<DerefComparator>(val);
+    }
+
     template <class ARG, class MATCHER>
     struct MatcherHolder : ProcessInterface<ARG> {
-        MatcherHolder(const MATCHER& matcher)
+        explicit MatcherHolder(const MATCHER& matcher)
         : d_matcher(matcher)
         {
         }
 
-        void process(const ARG& arg) BSLS_KEYWORD_OVERRIDE
+        void process(const typename ProcessInterface<ARG>::ARGtype& arg)
+            BSLS_KEYWORD_OVERRIDE
         {
             d_matcher.process(arg);
         }
@@ -967,7 +1043,7 @@ struct TestMock {
     struct InvocationBaseWillReturn {
         virtual INVOCATION_DATA& getInvocationDataBack() = 0;
 
-        SELF& willReturn(const RESULT& result)
+        SELF& RETURN(const RESULT& result)
         {
             INVOCATION_DATA& invocation     = getInvocationDataBack();
             invocation.d_result.d_expResult = result;
@@ -984,10 +1060,10 @@ struct TestMock {
     struct InvocationBaseWillReturn<INVOCATION_DATA, SELF, RESULT&> {
         virtual INVOCATION_DATA& getInvocationDataBack() = 0;
 
-        SELF& willReturnRef(RESULT* result)
+        SELF& RETURNREF(RESULT& result)
         {
             INVOCATION_DATA& invocation     = getInvocationDataBack();
-            invocation.d_result.d_expResult = result;
+            invocation.d_result.d_expResult = &result;
             return *(static_cast<SELF*>(this));
         }
 
@@ -1001,10 +1077,10 @@ struct TestMock {
     struct InvocationBaseWillReturn<INVOCATION_DATA, SELF, RESULT const&> {
         virtual INVOCATION_DATA& getInvocationDataBack() = 0;
 
-        SELF& willReturnRef(RESULT const* result)
+        SELF& RETURNREF(RESULT const& result)
         {
             INVOCATION_DATA& invocation     = getInvocationDataBack();
-            invocation.d_result.d_expResult = result;
+            invocation.d_result.d_expResult = &result;
             return *(static_cast<SELF*>(this));
         }
 
@@ -1022,15 +1098,12 @@ struct TestMock {
     struct InvocationBaseTimes {
         virtual INVOCATION_DATA& getInvocationDataBack() = 0;
 
-        SELF& willOnce()
+        SELF& ONCE()
         {
-            INVOCATION_DATA& invocation = getInvocationDataBack();
-            NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
-            invocation.d_expectedCalls = 1;
-            return *(static_cast<SELF*>(this));
+            return TIMES(1);
         }
 
-        SELF& willAlways()
+        SELF& ALWAYS()
         {
             INVOCATION_DATA& invocation = getInvocationDataBack();
             NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
@@ -1038,13 +1111,18 @@ struct TestMock {
             return *(static_cast<SELF*>(this));
         }
 
-        SELF& willTimes(int times)
+        SELF& TIMES(int times)
         {
             NTCCFG_TEST_GT(times, 0);
             INVOCATION_DATA& invocation = getInvocationDataBack();
             NTCCFG_TEST_EQ(invocation.d_expectedCalls, 0);
             invocation.d_expectedCalls = times;
             return *(static_cast<SELF*>(this));
+        }
+
+      protected:
+        ~InvocationBaseTimes()
+        {
         }
     };
 
@@ -1071,26 +1149,7 @@ struct TestMock {
     struct InvocationArgsImpl;
 
     template <class TL>
-    struct InvocationArgsImpl<TL, bsl::integral_constant<int, 0> > {
-        typedef
-            typename BloombergLP::bslmf::TypeListTypeOf<1, TL>::Type ArgType;
-
-        bsl::shared_ptr<ProcessInterface<ArgType> > d_matcher;
-        bsl::shared_ptr<ProcessInterface<ArgType> > d_extractor;
-        bsl::shared_ptr<SetterInterface<ArgType> >  d_setter;
-
-        void processArg(ArgType arg)
-        {
-            if (d_matcher) {
-                d_matcher->process(arg);
-            }
-            if (d_extractor) {
-                d_extractor->process(arg);
-            }
-            if (d_setter) {
-                d_setter->process(arg);
-            }
-        }
+    struct InvocationArgsImpl<TL, bsl::integral_constant<int, -1> > {
     };
 
     template <class TL, int ARG_INDEX>
@@ -1099,12 +1158,13 @@ struct TestMock {
                                 bsl::integral_constant<int, ARG_INDEX - 1> > {
         typedef typename BloombergLP::bslmf::TypeListTypeOf<ARG_INDEX + 1,
                                                             TL>::Type ArgType;
+        typedef typename PassTraits<ArgType>::PassType ArgPassType;
 
         bsl::shared_ptr<ProcessInterface<ArgType> > d_matcher;
         bsl::shared_ptr<ProcessInterface<ArgType> > d_extractor;
         bsl::shared_ptr<SetterInterface<ArgType> >  d_setter;
 
-        void processArg(ArgType arg)
+        void processArg(ArgPassType arg)
         {
             if (d_matcher) {
                 d_matcher->process(arg);
@@ -1134,76 +1194,55 @@ struct TestMock {
             &args));
     }
 
-    template <int ARG_LIST_LEN, class ARG_LIST>
-    struct ProcessArgs;
-
     template <class ARG_LIST>
-    struct ProcessArgs<1, ARG_LIST> {
-        typedef typename BloombergLP::bslmf::TypeListTypeOf<1, ARG_LIST>::Type
-            Arg0;
+    struct ProcessArgs {
+        typedef typename BloombergLP::bslmf::TypeListTypeOf<1, ARG_LIST>::
+            TypeOrDefault ARG0;
+        typedef typename BloombergLP::bslmf::TypeListTypeOf<2, ARG_LIST>::
+            TypeOrDefault ARG1;
+        typedef typename BloombergLP::bslmf::TypeListTypeOf<3, ARG_LIST>::
+            TypeOrDefault ARG2;
+        typedef typename BloombergLP::bslmf::TypeListTypeOf<4, ARG_LIST>::
+            TypeOrDefault ARG3;
+
+        typedef typename PassTraits<ARG0>::PassType ARG0Pass;
+        typedef typename PassTraits<ARG1>::PassType ARG1Pass;
+        typedef typename PassTraits<ARG2>::PassType ARG2Pass;
+        typedef typename PassTraits<ARG3>::PassType ARG3Pass;
+
         template <class INVOCATION_ARGS>
-        static void process(INVOCATION_ARGS& args, Arg0 arg0)
+        static void process(INVOCATION_ARGS& args, ARG0Pass arg0)
         {
             getInvocationArgs<0>(args).processArg(arg0);
         }
-    };
-
-    template <class ARG_LIST>
-    struct ProcessArgs<2, ARG_LIST> {
-        typedef typename BloombergLP::bslmf::TypeListTypeOf<1, ARG_LIST>::Type
-            Arg0;
-        typedef typename BloombergLP::bslmf::TypeListTypeOf<2, ARG_LIST>::Type
-            Arg1;
-
-        template <class INVOCATION_ARGS>
-        static void process(INVOCATION_ARGS& args, Arg0 arg0, Arg1 arg1)
-        {
-            getInvocationArgs<0>(args).processArg(arg0);
-            getInvocationArgs<1>(args).processArg(arg1);
-        }
-    };
-
-    template <class ARG_LIST>
-    struct ProcessArgs<3, ARG_LIST> {
-        typedef typename BloombergLP::bslmf::TypeListTypeOf<1, ARG_LIST>::Type
-            Arg0;
-        typedef typename BloombergLP::bslmf::TypeListTypeOf<2, ARG_LIST>::Type
-            Arg1;
-        typedef typename BloombergLP::bslmf::TypeListTypeOf<3, ARG_LIST>::Type
-            Arg2;
-        template <class INVOCATION_ARGS>
-        static void process(INVOCATION_ARGS& args,
-                            Arg0             arg0,
-                            Arg1             arg1,
-                            Arg2             arg2)
-        {
-            getInvocationArgs<0>(args).processArg(arg0);
-            getInvocationArgs<1>(args).processArg(arg1);
-            getInvocationArgs<2>(args).processArg(arg2);
-        }
-    };
-
-    template <class ARG_LIST>
-    struct ProcessArgs<4, ARG_LIST> {
-        typedef typename BloombergLP::bslmf::TypeListTypeOf<1, ARG_LIST>::Type
-            Arg0;
-        typedef typename BloombergLP::bslmf::TypeListTypeOf<2, ARG_LIST>::Type
-            Arg1;
-        typedef typename BloombergLP::bslmf::TypeListTypeOf<3, ARG_LIST>::Type
-            Arg2;
-        typedef typename BloombergLP::bslmf::TypeListTypeOf<4, ARG_LIST>::Type
-            Arg3;
 
         template <class INVOCATION_ARGS>
         static void process(INVOCATION_ARGS& args,
-                            Arg0             arg0,
-                            Arg1             arg1,
-                            Arg2             arg2,
-                            Arg3             arg3)
+                            ARG0Pass         arg0,
+                            ARG1Pass         arg1)
         {
-            getInvocationArgs<0>(args).processArg(arg0);
+            process(args, arg0);
             getInvocationArgs<1>(args).processArg(arg1);
+        }
+
+        template <class INVOCATION_ARGS>
+        static void process(INVOCATION_ARGS& args,
+                            ARG0Pass         arg0,
+                            ARG1Pass         arg1,
+                            ARG2Pass         arg2)
+        {
+            process(args, arg0, arg1);
             getInvocationArgs<2>(args).processArg(arg2);
+        }
+
+        template <class INVOCATION_ARGS>
+        static void process(INVOCATION_ARGS& args,
+                            ARG0Pass         arg0,
+                            ARG1Pass         arg1,
+                            ARG2Pass         arg2,
+                            ARG3Pass         arg3)
+        {
+            process(args, arg0, arg1, arg2);
             getInvocationArgs<3>(args).processArg(arg3);
         }
     };
@@ -1254,6 +1293,11 @@ struct TestMock {
 
             return *(static_cast<SELF*>(this));
         }
+
+      protected:
+        ~InvocationBaseSaveSetArg()
+        {
+        }
     };
 
     template <class INVOCATION_DATA, class METHOD_INFO>
@@ -1285,31 +1329,40 @@ struct TestMock {
 
     template <class INVOCATION>
     struct InvocationImplBase {
-        InvocationImplBase(INVOCATION& inv)
+        explicit InvocationImplBase(INVOCATION& inv)
         : d_inv(inv)
         {
         }
         INVOCATION& d_inv;
     };
 
-    template <int ARG_SIZE, class METHOD_INFO, class RESULT, class ARG_LIST>
-    struct InvocationImpl;
-
     template <class METHOD_INFO, class RESULT, class ARG_LIST>
-    struct InvocationImpl<1, METHOD_INFO, RESULT, ARG_LIST>
+    struct InvocationImpl
     : public InvocationImplBase<Invocation<METHOD_INFO, RESULT, ARG_LIST> > {
         typedef Invocation<METHOD_INFO, RESULT, ARG_LIST> InvocationType;
         typedef InvocationImplBase<InvocationType>        BaseType;
         typedef typename InvocationType::InvocationDataT  InvocationDataT;
-        typedef typename BloombergLP::bslmf::TypeListTypeOf<1, ARG_LIST>::Type
-            ARG1;
+        typedef typename BloombergLP::bslmf::TypeListTypeOf<1, ARG_LIST>::
+            TypeOrDefault ARG0;
+        typedef typename BloombergLP::bslmf::TypeListTypeOf<2, ARG_LIST>::
+            TypeOrDefault ARG1;
+        typedef typename BloombergLP::bslmf::TypeListTypeOf<3, ARG_LIST>::
+            TypeOrDefault ARG2;
+        typedef typename BloombergLP::bslmf::TypeListTypeOf<4, ARG_LIST>::
+            TypeOrDefault ARG3;
 
-        InvocationImpl(InvocationType& inv)
+        typedef typename PassTraits<ARG0>::PassType ARG0Pass;
+        typedef typename PassTraits<ARG1>::PassType ARG1Pass;
+        typedef typename PassTraits<ARG2>::PassType ARG2Pass;
+        typedef typename PassTraits<ARG3>::PassType ARG3Pass;
+
+        explicit InvocationImpl(InvocationType& inv)
         : BaseType(inv)
         {
         }
 
-        RESULT invoke(ARG1 arg)
+      private:
+        InvocationDataT& invokePrologue()
         {
             if (this->d_inv.d_storage.d_invocations.empty()) {
                 BSLS_LOG_FATAL("%s: unexpected call to \"%s\"",
@@ -1324,9 +1377,11 @@ struct TestMock {
             {
                 NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
             }
+            return invocation;
+        }
 
-            ProcessArgs<ARG_LIST::LENGTH, ARG_LIST>::process(invocation, arg);
-
+        RESULT invokeEpilogue(InvocationDataT& invocation)
+        {
             InvocationResult<RESULT> result =
                 invocation.d_result;  //copy by value
             if (invocation.d_expectedCalls !=
@@ -1340,196 +1395,117 @@ struct TestMock {
             return result.get();
         }
 
-        template <class ARG1_MATCHER>
-        InvocationType& expect(const ARG1_MATCHER& arg1Matcher)
+        InvocationDataT& expectPrologue()
         {
-            BSLMF_ASSERT(ARG_LIST::LENGTH == 1);
             if (!this->d_inv.d_storage.d_invocations.empty()) {
                 NTCCFG_TEST_NE(
                     this->d_inv.d_storage.d_invocations.back().d_expectedCalls,
                     InvocationDataT::k_INFINITE_CALLS);
             }
             this->d_inv.d_storage.d_invocations.emplace_back();
+            return this->d_inv.d_storage.d_invocations.back();
+        }
 
-            if (!arg1Matcher.ignore()) {
-                InvocationDataT& data =
-                    this->d_inv.d_storage.d_invocations.back();
-                bsl::shared_ptr<MatcherHolder<ARG1, ARG1_MATCHER> >
+      public:
+        RESULT invoke(ARG0Pass arg0)
+        {
+            InvocationDataT& invocation = invokePrologue();
+
+            ProcessArgs<ARG_LIST>::process(invocation, arg0);
+
+            return invokeEpilogue(invocation);
+        }
+
+        RESULT invoke(ARG0Pass arg0, ARG1Pass arg1)
+        {
+            InvocationDataT& invocation = invokePrologue();
+
+            ProcessArgs<ARG_LIST>::process(invocation, arg0, arg1);
+
+            return invokeEpilogue(invocation);
+        }
+
+        RESULT invoke(ARG0Pass arg0, ARG1Pass arg1, ARG2Pass arg2)
+        {
+            InvocationDataT& invocation = invokePrologue();
+
+            ProcessArgs<ARG_LIST>::process(invocation, arg0, arg1, arg2);
+
+            return invokeEpilogue(invocation);
+        }
+
+        RESULT invoke(ARG0Pass arg0,
+                      ARG1Pass arg1,
+                      ARG2Pass arg2,
+                      ARG3Pass arg3)
+        {
+            InvocationDataT& invocation = invokePrologue();
+
+            ProcessArgs<ARG_LIST>::process(invocation, arg0, arg1, arg2, arg3);
+
+            return invokeEpilogue(invocation);
+        }
+
+        template <int ARG_INDEX, class ARG_MATCHER>
+        void saveMatcher(InvocationDataT& data, const ARG_MATCHER& matcher)
+        {
+            typedef typename BloombergLP::bslmf::TypeListTypeOf<ARG_INDEX + 1,
+                                                                ARG_LIST>::Type
+                ARG;
+            if (!matcher.ignore()) {
+                bsl::shared_ptr<MatcherHolder<ARG, ARG_MATCHER> >
                     matcherInterface(
-                        new MatcherHolder<ARG1, ARG1_MATCHER>(arg1Matcher));
+                        new MatcherHolder<ARG, ARG_MATCHER>(matcher));
 
-                getInvocationArgs<0>(data).d_matcher = matcherInterface;
+                getInvocationArgs<ARG_INDEX>(data).d_matcher =
+                    matcherInterface;
             }
+        }
+
+        template <class ARG0_MATCHER>
+        InvocationType& expect(const ARG0_MATCHER& arg0Matcher)
+        {
+            InvocationDataT& data = expectPrologue();
+            saveMatcher<0>(data, arg0Matcher);
             return this->d_inv;
         }
-    };
 
-    template <class METHOD_INFO, class RESULT, class ARG_LIST>
-    struct InvocationImpl<2, METHOD_INFO, RESULT, ARG_LIST>
-    : public InvocationImplBase<Invocation<METHOD_INFO, RESULT, ARG_LIST> > {
-        typedef Invocation<METHOD_INFO, RESULT, ARG_LIST> InvocationType;
-        typedef InvocationImplBase<InvocationType>        BaseType;
-        typedef typename InvocationType::InvocationDataT  InvocationDataT;
-        typedef typename BloombergLP::bslmf::TypeListTypeOf<1, ARG_LIST>::Type
-            ARG1;
-        typedef typename BloombergLP::bslmf::TypeListTypeOf<2, ARG_LIST>::Type
-            ARG2;
-
-        InvocationImpl(InvocationType& inv)
-        : BaseType(inv)
+        template <class ARG0_MATCHER, class ARG1_MATCHER>
+        InvocationType& expect(const ARG0_MATCHER& arg0Matcher,
+                               const ARG1_MATCHER& arg1Matcher)
         {
+            InvocationDataT& data = expectPrologue();
+            saveMatcher<0>(data, arg0Matcher);
+            saveMatcher<1>(data, arg1Matcher);
+            return this->d_inv;
         }
 
-        RESULT invoke(ARG1 arg1, ARG2 arg2)
-        {
-            if (this->d_inv.d_storage.d_invocations.empty()) {
-                BSLS_LOG_FATAL("%s: unexpected call to \"%s\"",
-                               METHOD_INFO().mockName,
-                               METHOD_INFO().name);
-                bsl::abort();
-            }
-            InvocationDataT& invocation =
-                this->d_inv.d_storage.d_invocations.front();
-            if (invocation.d_expectedCalls !=
-                InvocationDataT::k_INFINITE_CALLS)
-            {
-                NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
-            }
-
-            ProcessArgs<ARG_LIST::LENGTH, ARG_LIST>::process(invocation,
-                                                             arg1,
-                                                             arg2);
-
-            InvocationResult<RESULT> result =
-                invocation.d_result;  //copy by value
-            if (invocation.d_expectedCalls !=
-                InvocationDataT::k_INFINITE_CALLS)
-            {
-                --invocation.d_expectedCalls;
-                if (invocation.d_expectedCalls == 0) {
-                    this->d_inv.d_storage.d_invocations.pop_front();
-                }
-            }
-            return result.get();
-        }
-
-        template <class ARG1_MATCHER, class ARG2_MATCHER>
-        InvocationType& expect(const ARG1_MATCHER& arg1Matcher,
+        template <class ARG0_MATCHER, class ARG1_MATCHER, class ARG2_MATCHER>
+        InvocationType& expect(const ARG0_MATCHER& arg0Matcher,
+                               const ARG1_MATCHER& arg1Matcher,
                                const ARG2_MATCHER& arg2Matcher)
         {
-            if (!this->d_inv.d_storage.d_invocations.empty()) {
-                NTCCFG_TEST_NE(
-                    this->d_inv.d_storage.d_invocations.back().d_expectedCalls,
-                    InvocationDataT::k_INFINITE_CALLS);
-            }
-            this->d_inv.d_storage.d_invocations.emplace_back();
-            InvocationDataT& data = this->d_inv.d_storage.d_invocations.back();
-            if (!arg1Matcher.ignore()) {
-                bsl::shared_ptr<MatcherHolder<ARG1, ARG1_MATCHER> >
-                    matcherInterface1(
-                        new MatcherHolder<ARG1, ARG1_MATCHER>(arg1Matcher));
-
-                getInvocationArgs<0>(data).d_matcher = matcherInterface1;
-            }
-
-            if (!arg2Matcher.ignore()) {
-                bsl::shared_ptr<MatcherHolder<ARG2, ARG2_MATCHER> >
-                    matcherInterface2(
-                        new MatcherHolder<ARG2, ARG2_MATCHER>(arg2Matcher));
-
-                getInvocationArgs<1>(data).d_matcher = matcherInterface2;
-            }
+            InvocationDataT& data = expectPrologue();
+            saveMatcher<0>(data, arg0Matcher);
+            saveMatcher<1>(data, arg1Matcher);
+            saveMatcher<2>(data, arg2Matcher);
             return this->d_inv;
         }
-    };
 
-    template <class METHOD_INFO, class RESULT, class ARG_LIST>
-    struct InvocationImpl<3, METHOD_INFO, RESULT, ARG_LIST>
-    : public InvocationImplBase<Invocation<METHOD_INFO, RESULT, ARG_LIST> > {
-        typedef Invocation<METHOD_INFO, RESULT, ARG_LIST> InvocationType;
-        typedef InvocationImplBase<InvocationType>        BaseType;
-        typedef typename InvocationType::InvocationDataT  InvocationDataT;
-        typedef typename BloombergLP::bslmf::TypeListTypeOf<1, ARG_LIST>::Type
-            ARG1;
-        typedef typename BloombergLP::bslmf::TypeListTypeOf<2, ARG_LIST>::Type
-            ARG2;
-        typedef typename BloombergLP::bslmf::TypeListTypeOf<3, ARG_LIST>::Type
-            ARG3;
-
-        InvocationImpl(InvocationType& inv)
-        : BaseType(inv)
-        {
-        }
-
-        RESULT invoke(ARG1 arg1, ARG2 arg2, ARG3 arg3)
-        {
-            if (this->d_inv.d_storage.d_invocations.empty()) {
-                BSLS_LOG_FATAL("%s: unexpected call to \"%s\"",
-                               METHOD_INFO().mockName,
-                               METHOD_INFO().name);
-                bsl::abort();
-            }
-            InvocationDataT& invocation =
-                this->d_inv.d_storage.d_invocations.front();
-            if (invocation.d_expectedCalls !=
-                InvocationDataT::k_INFINITE_CALLS)
-            {
-                NTCCFG_TEST_GE(invocation.d_expectedCalls, 1);
-            }
-
-            ProcessArgs<ARG_LIST::LENGTH, ARG_LIST>::process(invocation,
-                                                             arg1,
-                                                             arg2,
-                                                             arg3);
-
-            InvocationResult<RESULT> result =
-                invocation.d_result;  //copy by value
-            if (invocation.d_expectedCalls !=
-                InvocationDataT::k_INFINITE_CALLS)
-            {
-                --invocation.d_expectedCalls;
-                if (invocation.d_expectedCalls == 0) {
-                    this->d_inv.d_storage.d_invocations.pop_front();
-                }
-            }
-            return result.get();
-        }
-
-        template <class ARG1_MATCHER, class ARG2_MATCHER, class ARG3_MATCHER>
-        InvocationType& expect(const ARG1_MATCHER& arg1Matcher,
+        template <class ARG0_MATCHER,
+                  class ARG1_MATCHER,
+                  class ARG2_MATCHER,
+                  class ARG3_MATCHER>
+        InvocationType& expect(const ARG0_MATCHER& arg0Matcher,
+                               const ARG1_MATCHER& arg1Matcher,
                                const ARG2_MATCHER& arg2Matcher,
                                const ARG3_MATCHER& arg3Matcher)
         {
-            if (!this->d_inv.d_storage.d_invocations.empty()) {
-                NTCCFG_TEST_NE(
-                    this->d_inv.d_storage.d_invocations.back().d_expectedCalls,
-                    InvocationDataT::k_INFINITE_CALLS);
-            }
-            this->d_inv.d_storage.d_invocations.emplace_back();
-            InvocationDataT& data = this->d_inv.d_storage.d_invocations.back();
-            if (!arg1Matcher.ignore()) {
-                bsl::shared_ptr<MatcherHolder<ARG1, ARG1_MATCHER> >
-                    matcherInterface1(
-                        new MatcherHolder<ARG1, ARG1_MATCHER>(arg1Matcher));
-
-                getInvocationArgs<0>(data).d_matcher = matcherInterface1;
-            }
-
-            if (!arg2Matcher.ignore()) {
-                bsl::shared_ptr<MatcherHolder<ARG2, ARG2_MATCHER> >
-                    matcherInterface2(
-                        new MatcherHolder<ARG2, ARG2_MATCHER>(arg2Matcher));
-
-                getInvocationArgs<1>(data).d_matcher = matcherInterface2;
-            }
-
-            if (!arg3Matcher.ignore()) {
-                bsl::shared_ptr<MatcherHolder<ARG3, ARG3_MATCHER> >
-                    matcherInterface3(
-                        new MatcherHolder<ARG3, ARG3_MATCHER>(arg3Matcher));
-
-                getInvocationArgs<2>(data).d_matcher = matcherInterface3;
-            }
+            InvocationDataT& data = expectPrologue();
+            saveMatcher<0>(data, arg0Matcher);
+            saveMatcher<1>(data, arg1Matcher);
+            saveMatcher<2>(data, arg2Matcher);
+            saveMatcher<3>(data, arg3Matcher);
             return this->d_inv;
         }
     };
@@ -1554,15 +1530,24 @@ struct TestMock {
             return d_storage.d_invocations.back();
         }
 
+        InvocationImpl<METHOD_INFO, RESULT, ARG_LIST>& get()
+        {
+            return d_impl;
+        }
+
+        Invocation()
+        : d_storage()
+        , d_impl(*this)
+        {
+        }
+
         InvocationDataStorage<InvocationDataT, METHOD_INFO> d_storage;
 
-        InvocationImpl<ARG_LIST::LENGTH, METHOD_INFO, RESULT, ARG_LIST> get()
-        {
-            return InvocationImpl<ARG_LIST::LENGTH,
-                                  METHOD_INFO,
-                                  RESULT,
-                                  ARG_LIST>(*this);
-        }
+      private:
+                    Invocation(const Invocation&);
+        Invocation& operator=(const Invocation&);
+
+        InvocationImpl<METHOD_INFO, RESULT, ARG_LIST> d_impl;
     };
 
     template <class METHOD_INFO, class RESULT>
@@ -1579,8 +1564,6 @@ struct TestMock {
             NTCCFG_TEST_FALSE(d_storage.d_invocations.empty());
             return d_storage.d_invocations.back();
         }
-
-        InvocationDataStorage<InvocationDataT, METHOD_INFO> d_storage;
 
         RESULT invoke()
         {
@@ -1618,6 +1601,17 @@ struct TestMock {
             d_storage.d_invocations.emplace_back();
             return *this;
         }
+
+        Invocation()
+        : d_storage()
+        {
+        }
+
+      private:
+                    Invocation(const Invocation&);
+        Invocation& operator=(const Invocation&);
+
+        InvocationDataStorage<InvocationDataT, METHOD_INFO> d_storage;
     };
 };
 
@@ -1655,84 +1649,128 @@ struct TestMock::InvocationResult<void> {
         Invocation<NTF_CAT2(MethodInfo, __LINE__), RESULT, TestMock::NoArgs>  \
             d_invocation_##METHOD_NAME;
 
-#define NTF_MOCK_METHOD_1_IMP(RESULT, METHOD_NAME, ARG1)                      \
+#define NTF_MOCK_METHOD_1_IMP(RESULT, METHOD_NAME, ARG0)                      \
     NTF_METHOD_INFO(METHOD_NAME)                                              \
   public:                                                                     \
     template <class MATCHER>                                                  \
     TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
                          RESULT,                                              \
-                         BloombergLP::bslmf::TypeList<ARG1> >&                \
-        expect_##METHOD_NAME(const MATCHER& arg1,                             \
+                         BloombergLP::bslmf::TypeList<ARG0> >&                \
+        expect_##METHOD_NAME(const MATCHER& arg0,                             \
+                             bsl::type_identity<ARG0> =                       \
+                                 bsl::type_identity<ARG0>())                  \
+    {                                                                         \
+        return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
+            .get()                                                            \
+            .expect(arg0);                                                    \
+    }                                                                         \
+                                                                              \
+  private:                                                                    \
+    mutable TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),              \
+                                 RESULT,                                      \
+                                 BloombergLP::bslmf::TypeList<ARG0> >         \
+        NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__);
+
+#define NTF_MOCK_METHOD_2_IMP(RESULT, METHOD_NAME, ARG0, ARG1)                \
+    NTF_METHOD_INFO(METHOD_NAME)                                              \
+  public:                                                                     \
+    template <class MATCHER0, class MATCHER1>                                 \
+    TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
+                         RESULT,                                              \
+                         BloombergLP::bslmf::TypeList<ARG0, ARG1> >&          \
+        expect_##METHOD_NAME(const MATCHER0& arg0, const MATCHER1& arg1)      \
+    {                                                                         \
+        return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
+            .get()                                                            \
+            .expect(arg0, arg1);                                              \
+    }                                                                         \
+                                                                              \
+    template <class MATCHER0, class MATCHER1>                                 \
+    TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
+                         RESULT,                                              \
+                         BloombergLP::bslmf::TypeList<ARG0, ARG1> >&          \
+        expect_##METHOD_NAME(const MATCHER0& arg0,                            \
+                             bsl::type_identity<ARG0>,                        \
+                             const MATCHER1& arg1,                            \
                              bsl::type_identity<ARG1> =                       \
                                  bsl::type_identity<ARG1>())                  \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .get()                                                            \
-            .expect(arg1);                                                    \
+            .expect(arg0, arg1);                                              \
     }                                                                         \
                                                                               \
   private:                                                                    \
     mutable TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),              \
                                  RESULT,                                      \
-                                 BloombergLP::bslmf::TypeList<ARG1> >         \
+                                 BloombergLP::bslmf::TypeList<ARG0, ARG1> >   \
         NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__);
 
-#define NTF_MOCK_METHOD_2_IMP(RESULT, METHOD_NAME, ARG1, ARG2)                \
+#define NTF_MOCK_METHOD_3_IMP(RESULT, METHOD_NAME, ARG0, ARG1, ARG2)          \
     NTF_METHOD_INFO(METHOD_NAME)                                              \
   public:                                                                     \
-    template <class MATCHER1, class MATCHER2>                                 \
+    template <class MATCHER0, class MATCHER1, class MATCHER2>                 \
     TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
                          RESULT,                                              \
-                         BloombergLP::bslmf::TypeList<ARG1, ARG2> >&          \
-        expect_##METHOD_NAME(const MATCHER1& arg1, const MATCHER2& arg2)      \
+                         BloombergLP::bslmf::TypeList<ARG0, ARG1, ARG2> >&    \
+        expect_##METHOD_NAME(const MATCHER0& arg0,                            \
+                             const MATCHER1& arg1,                            \
+                             const MATCHER2& arg2)                            \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .get()                                                            \
-            .expect(arg1, arg2);                                              \
+            .expect(arg0, arg1, arg2);                                        \
     }                                                                         \
                                                                               \
-    template <class MATCHER1, class MATCHER2>                                 \
+    template <class MATCHER0, class MATCHER1, class MATCHER2>                 \
     TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
                          RESULT,                                              \
-                         BloombergLP::bslmf::TypeList<ARG1, ARG2> >&          \
-        expect_##METHOD_NAME(const MATCHER1& arg1,                            \
+                         BloombergLP::bslmf::TypeList<ARG0, ARG1, ARG2> >&    \
+        expect_##METHOD_NAME(const MATCHER0& arg0,                            \
+                             bsl::type_identity<ARG0>,                        \
+                             const MATCHER1& arg1,                            \
                              bsl::type_identity<ARG1>,                        \
                              const MATCHER2& arg2,                            \
-                             bsl::type_identity<ARG2> =                       \
-                                 bsl::type_identity<ARG2>())                  \
+                             bsl::type_identity<ARG2>)                        \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .get()                                                            \
-            .expect(arg1, arg2);                                              \
+            .expect(arg0, arg1, arg2);                                        \
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),              \
-                                 RESULT,                                      \
-                                 BloombergLP::bslmf::TypeList<ARG1, ARG2> >   \
+    mutable TestMock::Invocation<                                             \
+        NTF_CAT2(MethodInfo, __LINE__),                                       \
+        RESULT,                                                               \
+        BloombergLP::bslmf::TypeList<ARG0, ARG1, ARG2> >                      \
         NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__);
 
-#define NTF_MOCK_METHOD_3_IMP(RESULT, METHOD_NAME, ARG1, ARG2, ARG3)          \
+#define NTF_MOCK_METHOD_4_IMP(RESULT, METHOD_NAME, ARG0, ARG1, ARG2, ARG3)    \
     NTF_METHOD_INFO(METHOD_NAME)                                              \
   public:                                                                     \
-    template <class MATCHER1, class MATCHER2, class MATCHER3>                 \
-    TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
-                         RESULT,                                              \
-                         BloombergLP::bslmf::TypeList<ARG1, ARG2, ARG3> >&    \
-        expect_##METHOD_NAME(const MATCHER1& arg1,                            \
+    template <class MATCHER0, class MATCHER1, class MATCHER2, class MATCHER3> \
+    TestMock::Invocation<                                                     \
+        NTF_CAT2(MethodInfo, __LINE__),                                       \
+        RESULT,                                                               \
+        BloombergLP::bslmf::TypeList<ARG0, ARG1, ARG2, ARG3> >&               \
+        expect_##METHOD_NAME(const MATCHER0& arg0,                            \
+                             const MATCHER1& arg1,                            \
                              const MATCHER2& arg2,                            \
                              const MATCHER3& arg3)                            \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .get()                                                            \
-            .expect(arg1, arg2, arg3);                                        \
+            .expect(arg0, arg1, arg2, arg3);                                  \
     }                                                                         \
                                                                               \
-    template <class MATCHER1, class MATCHER2, class MATCHER3>                 \
-    TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
-                         RESULT,                                              \
-                         BloombergLP::bslmf::TypeList<ARG1, ARG2, ARG3> >&    \
-        expect_##METHOD_NAME(const MATCHER1& arg1,                            \
+    template <class MATCHER0, class MATCHER1, class MATCHER2, class MATCHER3> \
+    TestMock::Invocation<                                                     \
+        NTF_CAT2(MethodInfo, __LINE__),                                       \
+        RESULT,                                                               \
+        BloombergLP::bslmf::TypeList<ARG0, ARG1, ARG2, ARG3> >&               \
+        expect_##METHOD_NAME(const MATCHER0& arg0,                            \
+                             bsl::type_identity<ARG0>,                        \
+                             const MATCHER1& arg1,                            \
                              bsl::type_identity<ARG1>,                        \
                              const MATCHER2& arg2,                            \
                              bsl::type_identity<ARG2>,                        \
@@ -1741,14 +1779,14 @@ struct TestMock::InvocationResult<void> {
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .get()                                                            \
-            .expect(arg1, arg2, arg3);                                        \
+            .expect(arg0, arg1, arg2, arg3);                                  \
     }                                                                         \
                                                                               \
   private:                                                                    \
     mutable TestMock::Invocation<                                             \
         NTF_CAT2(MethodInfo, __LINE__),                                       \
         RESULT,                                                               \
-        BloombergLP::bslmf::TypeList<ARG1, ARG2, ARG3> >                      \
+        BloombergLP::bslmf::TypeList<ARG0, ARG1, ARG2, ARG3> >                \
         NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__);
 
 #define NTF_MOCK_CLASS(MOCK_NAME, CLASS_TO_MOCK)                              \
@@ -1781,112 +1819,112 @@ struct TestMock::InvocationResult<void> {
     }                                                                         \
     NTF_MOCK_METHOD_0_IMP(RESULT, METHOD_NAME)
 
-#define NTF_MOCK_METHOD_1(RESULT, METHOD_NAME, ARG1)                          \
+#define NTF_MOCK_METHOD_1(RESULT, METHOD_NAME, ARG0)                          \
   public:                                                                     \
-    RESULT METHOD_NAME(ARG1 arg1) BSLS_KEYWORD_OVERRIDE                       \
+    RESULT METHOD_NAME(ARG0 arg0) BSLS_KEYWORD_OVERRIDE                       \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .get()                                                            \
-            .invoke(arg1);                                                    \
+            .invoke(arg0);                                                    \
     }                                                                         \
-    NTF_MOCK_METHOD_1_IMP(RESULT, METHOD_NAME, ARG1)
+    NTF_MOCK_METHOD_1_IMP(RESULT, METHOD_NAME, ARG0)
 
-#define NTF_MOCK_METHOD_CONST_1(RESULT, METHOD_NAME, ARG1)                    \
+#define NTF_MOCK_METHOD_CONST_1(RESULT, METHOD_NAME, ARG0)                    \
   public:                                                                     \
-    RESULT METHOD_NAME(ARG1 arg1) const BSLS_KEYWORD_OVERRIDE                 \
+    RESULT METHOD_NAME(ARG0 arg0) const BSLS_KEYWORD_OVERRIDE                 \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .get()                                                            \
-            .invoke(arg1);                                                    \
+            .invoke(arg0);                                                    \
     }                                                                         \
-    NTF_MOCK_METHOD_1_IMP(RESULT, METHOD_NAME, ARG1)
+    NTF_MOCK_METHOD_1_IMP(RESULT, METHOD_NAME, ARG0)
 
-#define NTF_MOCK_METHOD_2(RESULT, METHOD_NAME, ARG1, ARG2)                    \
+#define NTF_MOCK_METHOD_2(RESULT, METHOD_NAME, ARG0, ARG1)                    \
   public:                                                                     \
-    RESULT METHOD_NAME(ARG1 arg1, ARG2 arg2) BSLS_KEYWORD_OVERRIDE            \
+    RESULT METHOD_NAME(ARG0 arg0, ARG1 arg1) BSLS_KEYWORD_OVERRIDE            \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .get()                                                            \
-            .invoke(arg1, arg2);                                              \
+            .invoke(arg0, arg1);                                              \
     }                                                                         \
-    NTF_MOCK_METHOD_2_IMP(RESULT, METHOD_NAME, ARG1, ARG2)
+    NTF_MOCK_METHOD_2_IMP(RESULT, METHOD_NAME, ARG0, ARG1)
 
-#define NTF_MOCK_METHOD_CONST_2(RESULT, METHOD_NAME, ARG1, ARG2)              \
+#define NTF_MOCK_METHOD_CONST_2(RESULT, METHOD_NAME, ARG0, ARG1)              \
   public:                                                                     \
-    RESULT METHOD_NAME(ARG1 arg1, ARG2 arg2) const BSLS_KEYWORD_OVERRIDE      \
+    RESULT METHOD_NAME(ARG0 arg0, ARG1 arg1) const BSLS_KEYWORD_OVERRIDE      \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .get()                                                            \
-            .invoke(arg1, arg2);                                              \
+            .invoke(arg0, arg1);                                              \
     }                                                                         \
-    NTF_MOCK_METHOD_2_IMP(RESULT, METHOD_NAME, ARG1, ARG2)
+    NTF_MOCK_METHOD_2_IMP(RESULT, METHOD_NAME, ARG0, ARG1)
 
-#define NTF_MOCK_METHOD_3(RESULT, METHOD_NAME, ARG1, ARG2, ARG3)              \
+#define NTF_MOCK_METHOD_3(RESULT, METHOD_NAME, ARG0, ARG1, ARG2)              \
   public:                                                                     \
-    RESULT METHOD_NAME(ARG1 arg1, ARG2 arg2, ARG3 arg3) BSLS_KEYWORD_OVERRIDE \
+    RESULT METHOD_NAME(ARG0 arg0, ARG1 arg1, ARG2 arg2) BSLS_KEYWORD_OVERRIDE \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .get()                                                            \
-            .invoke(arg1, arg2, arg3);                                        \
+            .invoke(arg0, arg1, arg2);                                        \
     }                                                                         \
-    NTF_MOCK_METHOD_3_IMP(RESULT, METHOD_NAME, ARG1, ARG2, ARG3)
+    NTF_MOCK_METHOD_3_IMP(RESULT, METHOD_NAME, ARG0, ARG1, ARG2)
 
-#define NTF_MOCK_METHOD_CONST_3(RESULT, METHOD_NAME, ARG1, ARG2, ARG3)        \
+#define NTF_MOCK_METHOD_CONST_3(RESULT, METHOD_NAME, ARG0, ARG1, ARG2)        \
   public:                                                                     \
-    RESULT METHOD_NAME(ARG1 arg1, ARG2 arg2, ARG3 arg3)                       \
+    RESULT METHOD_NAME(ARG0 arg0, ARG1 arg1, ARG2 arg2)                       \
         const BSLS_KEYWORD_OVERRIDE                                           \
     {                                                                         \
         return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
             .get()                                                            \
-            .invoke(arg1, arg2, arg3);                                        \
+            .invoke(arg0, arg1, arg2);                                        \
     }                                                                         \
-    NTF_MOCK_METHOD_3_IMP(RESULT, METHOD_NAME, ARG1, ARG2, ARG3)
+    NTF_MOCK_METHOD_3_IMP(RESULT, METHOD_NAME, ARG0, ARG1, ARG2)
+
+#define NTF_MOCK_METHOD_4(RESULT, METHOD_NAME, ARG0, ARG1, ARG2, ARG3)        \
+  public:                                                                     \
+    RESULT METHOD_NAME(ARG0 arg0, ARG1 arg1, ARG2 arg2, ARG3 arg3)            \
+        BSLS_KEYWORD_OVERRIDE                                                 \
+    {                                                                         \
+        return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
+            .get()                                                            \
+            .invoke(arg0, arg1, arg2, arg3);                                  \
+    }                                                                         \
+    NTF_MOCK_METHOD_4_IMP(RESULT, METHOD_NAME, ARG0, ARG1, ARG2, ARG3)
+
+#define NTF_MOCK_METHOD_CONST_4(RESULT, METHOD_NAME, ARG0, ARG1, ARG2, ARG3)  \
+  public:                                                                     \
+    RESULT METHOD_NAME(ARG0 arg0, ARG1 arg1, ARG2 arg2, ARG3 arg3)            \
+        const BSLS_KEYWORD_OVERRIDE                                           \
+    {                                                                         \
+        return NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__)                 \
+            .get()                                                            \
+            .invoke(arg0, arg1, arg2, arg3);                                  \
+    }                                                                         \
+    NTF_MOCK_METHOD_4_IMP(RESULT, METHOD_NAME, ARG0, ARG1, ARG2, ARG3)
 
 #define NTF_MOCK_METHOD(...) NTF_VA_SELECT(NTF_MOCK_METHOD, __VA_ARGS__)
 
 #define NTF_MOCK_METHOD_CONST(...)                                            \
     NTF_VA_SELECT(NTF_MOCK_METHOD_CONST, __VA_ARGS__)
 
-#define NTF_EQ(ARG) TestMock::createEqMatcher<TestMock::DirectComparator>(ARG)
 #define NTF_EQ_SPEC(ARG, SPEC)                                                \
     TestMock::createEqMatcher<TestMock::DirectComparator>(ARG),               \
         bsl::type_identity<SPEC>()
+
 #define IGNORE_ARG TestMock::IgnoreArg()
 #define IGNORE_ARG_S(SPEC) TestMock::IgnoreArg(), bsl::type_identity<SPEC>()
 
-#define NTF_EQ_DEREF(ARG)                                                     \
-    TestMock::createEqMatcher<TestMock::DerefComparator>(ARG)
 #define NTF_EQ_DEREF_SPEC(ARG, SPEC)                                          \
     TestMock::createEqMatcher<TestMock::DerefComparator>(ARG),                \
         bsl::type_identity<SPEC>()
 
-#define NTF_EXPECT_0(MOCK_OBJECT, METHOD) (MOCK_OBJECT).expect_##METHOD()
-#define NTF_EXPECT_1(MOCK_OBJECT, METHOD, ...)                                \
+#define NTF_EXPECT(MOCK_OBJECT, METHOD, ...)                                  \
     (MOCK_OBJECT).expect_##METHOD(__VA_ARGS__)
-#define NTF_EXPECT_2(MOCK_OBJECT, METHOD, ...)                                \
-    (MOCK_OBJECT).expect_##METHOD(__VA_ARGS__)
-#define NTF_EXPECT_3(MOCK_OBJECT, METHOD, ...)                                \
-    (MOCK_OBJECT).expect_##METHOD(__VA_ARGS__)
-#define NTF_EXPECT_4(MOCK_OBJECT, METHOD, ...)                                \
-    (MOCK_OBJECT).expect_##METHOD(__VA_ARGS__)
-
-#define ONCE() willOnce()
-#define ALWAYS() willAlways()
-#define TIMES(x) willTimes(x)
-#define RETURN(VAL) willReturn(VAL)
-#define RETURNREF(VAL) willReturnRef(&VAL)
-
-#define TO(ARG) TestMock::createExtractor<TestMock::NoDerefPolicy>(ARG)
-#define TO_DEREF(ARG) TestMock::createExtractor<TestMock::DerefPolicy>(ARG)
 
 #define SAVE_ARG_1(...) saveArg<0>(__VA_ARGS__)
 #define SAVE_ARG_2(...) saveArg<1>(__VA_ARGS__)
 #define SAVE_ARG_3(...) saveArg<2>(__VA_ARGS__)
 #define SAVE_ARG_4(...) saveArg<3>(__VA_ARGS__)
-
-#define FROM(ARG) TestMock::createSetter<TestMock::DefaultSetter>(ARG)
-
-#define FROM_DEREF(ARG) TestMock::createSetter<TestMock::DerefSetter>(ARG)
 
 #define SET_ARG_1(...) setArg<0>(__VA_ARGS__)
 #define SET_ARG_2(...) setArg<1>(__VA_ARGS__)

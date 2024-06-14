@@ -53,17 +53,17 @@ install(
         nts-headers
 )
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "FreeBSD")
+if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
     target_link_libraries(ntscfg INTERFACE -lexecinfo -lutil -ldl)
     target_link_libraries(nts PUBLIC -lexecinfo -lutil -ldl)
 endif()
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Linux")
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_link_libraries(ntscfg INTERFACE -ldl)
     target_link_libraries(nts PUBLIC -ldl)
 endif()
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "SunPro")
+if (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
     target_link_libraries(ntscfg INTERFACE -lsendfile -lsocket -lnsl -ldl)
     target_link_libraries(nts PUBLIC -lsendfile -lsocket -lnsl -ldl)
 endif()

@@ -256,22 +256,12 @@ ntsa::Error EncryptionCertificateVersion::decode(
 {
     ntsa::Error error;
 
-    error = decoder->decodeTag(k_CONTEXT_SPECIFIC, k_CONSTRUCTED, 0);
-    if (error) {
-        return error;
-    }
-
     error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_INTEGER);
     if (error) {
         return error;
     }
 
     error = decoder->decodeValue(&d_value);
-    if (error) {
-        return error;
-    }
-
-    error = decoder->decodeTagComplete();
     if (error) {
         return error;
     }
@@ -289,22 +279,12 @@ ntsa::Error EncryptionCertificateVersion::encode(
 {
     ntsa::Error error;
 
-    error = encoder->encodeTag(k_CONTEXT_SPECIFIC, k_CONSTRUCTED, 0);
-    if (error) {
-        return error;
-    }
-
     error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_INTEGER);
     if (error) {
         return error;
     }
 
     error = encoder->encodeValue(d_value);
-    if (error) {
-        return error;
-    }
-
-    error = encoder->encodeTagComplete();
     if (error) {
         return error;
     }
@@ -8509,9 +8489,32 @@ ntsa::Error EncryptionCertificateEntity::decode(
         return error;
     }
 
-    error = d_version.decode(decoder);
-    if (error) {
-        return error;
+    {
+        error = decoder->decodeTag();
+        if (error) {
+            return error;
+        }
+
+        if (decoder->current().tagClass() == k_CONTEXT_SPECIFIC &&
+            decoder->current().tagType() == k_CONSTRUCTED &&
+            decoder->current().tagNumber() == 0)
+        {
+            error = d_version.makeValue().decode(decoder);
+            if (error) {
+                return error;
+            }
+
+            error = decoder->decodeTagComplete();
+            if (error) {
+                return error;
+            }
+        }
+        else {
+            error = decoder->rewindTag();
+            if (error) {
+                return error;
+            }
+        }
     }
 
     error = decoder->decodeTag(k_UNIVERSAL, k_PRIMITIVE, k_INTEGER);
@@ -8615,9 +8618,21 @@ ntsa::Error EncryptionCertificateEntity::encode(
         return error;
     }
 
-    error = d_version.encode(encoder);
-    if (error) {
-        return error;
+    if (!d_version.isNull()) {
+        error = encoder->encodeTag(k_CONTEXT_SPECIFIC, k_CONSTRUCTED, 0);
+        if (error) {
+            return error;
+        }
+
+        error = d_version.value().encode(encoder);
+        if (error) {
+            return error;
+        }
+
+        error = encoder->encodeTagComplete();
+        if (error) {
+            return error;
+        }
     }
 
     error = encoder->encodeTag(k_UNIVERSAL, k_PRIMITIVE, k_INTEGER);
@@ -8915,15 +8930,23 @@ bsl::ostream& EncryptionCertificateEntity::print(bsl::ostream& stream,
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute("version", d_version);
+    if (!d_version.isNull()) {
+        printer.printAttribute("version", d_version);
+    }
     printer.printAttribute("serialNumber", d_serialNumber);
     printer.printAttribute("subject", d_subject);
-    printer.printAttribute("subjectUniqueId", d_subjectUniqueId);
+    if (!d_subjectUniqueId.isNull()) {
+        printer.printAttribute("subjectUniqueId", d_subjectUniqueId);
+    }
     printer.printAttribute("subjectPublicKeyInfo", d_subjectPublicKeyInfo);
     printer.printAttribute("issuer", d_issuer);
-    printer.printAttribute("issuerUniqueId", d_issuerUniqueId);
+    if (!d_issuerUniqueId.isNull()) {
+        printer.printAttribute("issuerUniqueId", d_issuerUniqueId);
+    }
     printer.printAttribute("validity", d_validity);
-    printer.printAttribute("extensionList", d_extensionList);
+    if (!d_extensionList.isNull()) {
+        printer.printAttribute("extensionList", d_extensionList);
+    }
     printer.printAttribute("signatureAlgorithm", d_signatureAlgorithm);
     printer.end();
     return stream;

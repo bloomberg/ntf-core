@@ -852,6 +852,15 @@ class Session : public ntsi::DatagramSocket,
                      const ntsa::Data&        data,
                      const ntsa::SendOptions& options) BSLS_KEYWORD_OVERRIDE;
 
+    /// Enqueue the specified 'data' having the specified 'size' to the
+    /// socket send buffer according to the specified 'options'. Load into
+    /// the specified 'context' the result of the operation. Return the
+    /// error.
+    ntsa::Error send(ntsa::SendContext*       context,
+                     const ntsa::ConstBuffer* data,
+                     bsl::size_t              size,
+                     const ntsa::SendOptions& options) BSLS_KEYWORD_OVERRIDE;
+
     /// Dequeue from the socket receive buffer into the specified 'data'
     /// according to the specified 'options'. Load into the specified
     /// 'context' the result of the operation. Return the error.

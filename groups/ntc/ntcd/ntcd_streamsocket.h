@@ -52,7 +52,7 @@ class StreamSocket : public ntsi::StreamSocket
     bslma::Allocator*              d_allocator_p;
 
   private:
-                  StreamSocket(const StreamSocket&) BSLS_KEYWORD_DELETED;
+    StreamSocket(const StreamSocket&) BSLS_KEYWORD_DELETED;
     StreamSocket& operator=(const StreamSocket&) BSLS_KEYWORD_DELETED;
 
   public:
@@ -119,6 +119,15 @@ class StreamSocket : public ntsi::StreamSocket
     /// result of the operation. Return the error.
     ntsa::Error send(ntsa::SendContext*       context,
                      const ntsa::Data&        data,
+                     const ntsa::SendOptions& options) BSLS_KEYWORD_OVERRIDE;
+
+    /// Enqueue the specified 'data' having the specified 'size' to the
+    /// socket send buffer according to the specified 'options'. Load into
+    /// the specified 'context' the result of the operation. Return the
+    /// error.
+    ntsa::Error send(ntsa::SendContext*       context,
+                     const ntsa::ConstBuffer* data,
+                     bsl::size_t              size,
                      const ntsa::SendOptions& options) BSLS_KEYWORD_OVERRIDE;
 
     /// Dequeue from the socket receive buffer into the specified 'data'
@@ -271,6 +280,12 @@ NTF_MOCK_METHOD(ntsa::Error,
                 send,
                 ntsa::SendContext*,
                 const ntsa::Data&,
+                const ntsa::SendOptions&)
+NTF_MOCK_METHOD(ntsa::Error,
+                send,
+                ntsa::SendContext*,
+                const ntsa::ConstBuffer*,
+                bsl::size_t,
                 const ntsa::SendOptions&)
 
 NTF_MOCK_METHOD(ntsa::Error,

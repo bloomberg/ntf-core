@@ -57,6 +57,7 @@
 #if NTCCFG_TEST_MOCK_ENABLED
 
 using namespace BloombergLP;
+typedef TestMock TM;
 
 // Uncomment to test a particular style of socket-to-thread load balancing,
 // instead of both static and dynamic load balancing.
@@ -1377,14 +1378,16 @@ void variation(const test::Parameters& parameters)
 }
 
 struct Fixture {
-    Fixture(bslma::Allocator* allocator);
-    ~Fixture();
+    explicit Fixture(bslma::Allocator* allocator);
+    ~        Fixture();
 
     void setupReactorBase();
     void injectStreamSocket(ntcr::StreamSocket& socket);
 
     void connectCallback(const bsl::shared_ptr<ntci::Connector>& connector,
                          const ntca::ConnectEvent&               event);
+
+    void closeCallback();
 
     bslma::Allocator* d_allocator;
 
@@ -1408,6 +1411,8 @@ struct Fixture {
 
     bdlb::NullableValue<ntca::ConnectEvent> d_connectResult;
     ntci::ConnectFunction                   d_connectCallback;
+    bool                                    d_closed;
+    ntci::CloseFunction                     d_closeFunction;
 };
 
 const ntsa::Error Fixture::k_NO_ERROR = ntsa::Error();
@@ -1429,6 +1434,8 @@ Fixture::Fixture(bslma::Allocator* allocator)
                                     this,
                                     NTCCFG_BIND_PLACEHOLDER_1,
                                     NTCCFG_BIND_PLACEHOLDER_2);
+    d_closeFunction   = NTCCFG_BIND(&Fixture::closeCallback, this);
+    d_closed          = false;
 }
 
 Fixture::~Fixture()
@@ -1447,25 +1454,25 @@ Fixture::~Fixture()
 
 void Fixture::setupReactorBase()
 {
-    NTF_EXPECT_0(*d_reactorMock, dataPool).ALWAYS().RETURNREF(d_dataPool);
+    NTF_EXPECT(*d_reactorMock, dataPool).ALWAYS().RETURNREF(d_dataPool);
 
-    NTF_EXPECT_0(*d_reactorMock, outgoingBlobBufferFactory)
+    NTF_EXPECT(*d_reactorMock, outgoingBlobBufferFactory)
         .ALWAYS()
         .RETURNREF(d_bufferFactory);
-    NTF_EXPECT_0(*d_reactorMock, incomingBlobBufferFactory)
+    NTF_EXPECT(*d_reactorMock, incomingBlobBufferFactory)
         .ALWAYS()
         .RETURNREF(d_bufferFactory);
 
-    NTF_EXPECT_0(*d_reactorMock, oneShot).ALWAYS().RETURN(false);
-    NTF_EXPECT_0(*d_reactorMock, maxThreads).ALWAYS().RETURN(1);
+    NTF_EXPECT(*d_reactorMock, oneShot).ALWAYS().RETURN(false);
+    NTF_EXPECT(*d_reactorMock, maxThreads).ALWAYS().RETURN(1);
 
-    NTF_EXPECT_0(*d_dataPoolMock, createIncomingBlob)
+    NTF_EXPECT(*d_dataPoolMock, createIncomingBlob)
         .ALWAYS()
         .RETURN(d_nullBlob);
-    NTF_EXPECT_0(*d_dataPoolMock, createOutgoingBlob)
+    NTF_EXPECT(*d_dataPoolMock, createOutgoingBlob)
         .ALWAYS()
         .RETURN(d_nullBlob);
-    NTF_EXPECT_0(*d_dataPoolMock, createOutgoingData)
+    NTF_EXPECT(*d_dataPoolMock, createOutgoingData)
         .ALWAYS()
         .RETURN(d_dummyData);
 }
@@ -1477,23 +1484,23 @@ void Fixture::injectStreamSocket(ntcr::StreamSocket& socket)
     const size_t       maxBuffersPerSend    = 22;
     const size_t       maxBuffersPerReceive = 22;
 
-    NTF_EXPECT_0(*d_streamSocketMock, handle).ALWAYS().RETURN(handle);
+    NTF_EXPECT(*d_streamSocketMock, handle).ALWAYS().RETURN(handle);
 
-    NTF_EXPECT_1(*d_streamSocketMock,
-                 setBlocking,
-                 NTF_EQ(false))
+    NTF_EXPECT(*d_streamSocketMock,
+               setBlocking,
+               TM::EQ(false))
         .TIMES(2)
         .RETURN(ntsa::Error());  //TODO: for some reason it is called twice
 
-    NTF_EXPECT_1(*d_streamSocketMock, setOption, IGNORE_ARG)
+    NTF_EXPECT(*d_streamSocketMock, setOption, IGNORE_ARG)
         .ALWAYS()
         .RETURN(test::Fixture::k_NO_ERROR);
 
-    NTF_EXPECT_1(*d_streamSocketMock, sourceEndpoint, IGNORE_ARG)
+    NTF_EXPECT(*d_streamSocketMock, sourceEndpoint, IGNORE_ARG)
         .ONCE()
         .RETURN(ntsa::Error::invalid());
 
-    NTF_EXPECT_1(*d_streamSocketMock, remoteEndpoint, IGNORE_ARG)
+    NTF_EXPECT(*d_streamSocketMock, remoteEndpoint, IGNORE_ARG)
         .ONCE()
         .RETURN(ntsa::Error::invalid());
 
@@ -1502,33 +1509,31 @@ void Fixture::injectStreamSocket(ntcr::StreamSocket& socket)
     ntsa::SocketOption rcvBufferSizeOption;
     rcvBufferSizeOption.makeReceiveBufferSize(defaultBufferSize);
 
-    NTF_EXPECT_2(*d_streamSocketMock,
-                 getOption,
-                 IGNORE_ARG,
-                 NTF_EQ(ntsa::SocketOptionType::e_SEND_BUFFER_SIZE))
+    NTF_EXPECT(*d_streamSocketMock,
+               getOption,
+               IGNORE_ARG,
+               TM::EQ(ntsa::SocketOptionType::e_SEND_BUFFER_SIZE))
         .ONCE()
         .RETURN(test::Fixture::k_NO_ERROR)
-        .SET_ARG_1(FROM_DEREF(sendBufferSizeOption));
+        .SET_ARG_1(TM::FROM_DEREF(sendBufferSizeOption));
 
-    NTF_EXPECT_2(*d_streamSocketMock,
-                 getOption,
-                 IGNORE_ARG,
-                 NTF_EQ(ntsa::SocketOptionType::e_RECEIVE_BUFFER_SIZE))
+    NTF_EXPECT(*d_streamSocketMock,
+               getOption,
+               IGNORE_ARG,
+               TM::EQ(ntsa::SocketOptionType::e_RECEIVE_BUFFER_SIZE))
         .ONCE()
         .RETURN(test::Fixture::k_NO_ERROR)
-        .SET_ARG_1(FROM_DEREF(rcvBufferSizeOption));
+        .SET_ARG_1(TM::FROM_DEREF(rcvBufferSizeOption));
 
-    NTF_EXPECT_0(*d_streamSocketMock, maxBuffersPerSend)
+    NTF_EXPECT(*d_streamSocketMock, maxBuffersPerSend)
         .ONCE()
         .RETURN(maxBuffersPerSend);
-    NTF_EXPECT_0(*d_streamSocketMock, maxBuffersPerReceive)
+    NTF_EXPECT(*d_streamSocketMock, maxBuffersPerReceive)
         .ONCE()
         .RETURN(maxBuffersPerReceive);
 
-    NTF_EXPECT_0(*d_reactorMock, acquireHandleReservation)
-        .ALWAYS()
-        .RETURN(true);
-    NTF_EXPECT_0(*d_reactorMock, releaseHandleReservation).ALWAYS();
+    NTF_EXPECT(*d_reactorMock, acquireHandleReservation).ALWAYS().RETURN(true);
+    NTF_EXPECT(*d_reactorMock, releaseHandleReservation).ALWAYS();
 
     socket.open(ntsa::Transport::e_TCP_IPV4_STREAM, d_streamSocketMock);
 }
@@ -1538,6 +1543,12 @@ void Fixture::connectCallback(const bsl::shared_ptr<ntci::Connector>&,
 {
     NTCCFG_TEST_FALSE(d_connectResult.has_value());
     d_connectResult = event;
+}
+
+void Fixture::closeCallback()
+{
+    NTCCFG_TEST_FALSE(d_closed);
+    d_closed = true;
 }
 
 }  // close namespace test
@@ -3553,19 +3564,19 @@ NTCCFG_TEST_CASE(22)
 
         NTCI_LOG_DEBUG("Connection initiation...");
         {
-            NTF_EXPECT_3(*test.d_reactorMock,
-                         createTimer,
-                         IGNORE_ARG_S(const ntca::TimerOptions&),
-                         IGNORE_ARG_S(const ntci::TimerCallback&),
-                         IGNORE_ARG_S(bslma::Allocator*))
+            NTF_EXPECT(*test.d_reactorMock,
+                       createTimer,
+                       IGNORE_ARG_S(const ntca::TimerOptions&),
+                       IGNORE_ARG_S(const ntci::TimerCallback&),
+                       IGNORE_ARG_S(bslma::Allocator*))
                 .ONCE()
-                .SAVE_ARG_2(TO(&retryTimerCallback))
+                .SAVE_ARG_2(TM::TO(&retryTimerCallback))
                 .RETURN(test.d_connectRetryTimerMock);
 
-            NTF_EXPECT_2(*test.d_connectRetryTimerMock,
-                         schedule,
-                         IGNORE_ARG,
-                         IGNORE_ARG)
+            NTF_EXPECT(*test.d_connectRetryTimerMock,
+                       schedule,
+                       IGNORE_ARG,
+                       IGNORE_ARG)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR);
 
@@ -3576,11 +3587,11 @@ NTCCFG_TEST_CASE(22)
 
         NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
         {
-            NTF_EXPECT_3(*test.d_resolverMock,
-                         getEndpoint,
-                         NTF_EQ(epName),
-                         IGNORE_ARG,
-                         IGNORE_ARG)
+            NTF_EXPECT(*test.d_resolverMock,
+                       getEndpoint,
+                       TM::EQ(epName),
+                       IGNORE_ARG,
+                       IGNORE_ARG)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR);
 
@@ -3594,16 +3605,16 @@ NTCCFG_TEST_CASE(22)
         NTCI_LOG_DEBUG("Shutdown socket while it is waiting for remote "
                        "endpoint resolution");
         {
-            NTF_EXPECT_0(*test.d_connectRetryTimerMock, close)
+            NTF_EXPECT(*test.d_connectRetryTimerMock, close)
                 .ONCE()
                 .RETURN(ntsa::Error());
 
             ntci::Reactor::Functor callback;
-            NTF_EXPECT_1(*test.d_reactorMock, execute, IGNORE_ARG)
+            NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
                 .ONCE()
-                .SAVE_ARG_1(TO(&callback));
+                .SAVE_ARG_1(TM::TO(&callback));
 
-            NTF_EXPECT_2(
+            NTF_EXPECT(
                 *test.d_reactorMock,
                 detachSocket,
                 NTF_EQ_SPEC(socket,
@@ -3612,7 +3623,7 @@ NTCCFG_TEST_CASE(22)
                 .ONCE()
                 .RETURN(ntsa::Error::invalid());
 
-            NTF_EXPECT_0(*test.d_streamSocketMock, close)
+            NTF_EXPECT(*test.d_streamSocketMock, close)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR);
 
@@ -3666,19 +3677,19 @@ NTCCFG_TEST_CASE(23)
         const ntsa::Endpoint targetEp("127.0.0.1:1234");
         NTCI_LOG_DEBUG("Connection initiation...");
         {
-            NTF_EXPECT_3(*test.d_reactorMock,
-                         createTimer,
-                         IGNORE_ARG_S(const ntca::TimerOptions&),
-                         IGNORE_ARG_S(const ntci::TimerCallback&),
-                         IGNORE_ARG_S(bslma::Allocator*))
+            NTF_EXPECT(*test.d_reactorMock,
+                       createTimer,
+                       IGNORE_ARG_S(const ntca::TimerOptions&),
+                       IGNORE_ARG_S(const ntci::TimerCallback&),
+                       IGNORE_ARG_S(bslma::Allocator*))
                 .ONCE()
-                .SAVE_ARG_2(TO(&retryTimerCallback))
+                .SAVE_ARG_2(TM::TO(&retryTimerCallback))
                 .RETURN(test.d_connectRetryTimerMock);
 
-            NTF_EXPECT_2(*test.d_connectRetryTimerMock,
-                         schedule,
-                         IGNORE_ARG,
-                         IGNORE_ARG)
+            NTF_EXPECT(*test.d_connectRetryTimerMock,
+                       schedule,
+                       IGNORE_ARG,
+                       IGNORE_ARG)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR);
 
@@ -3690,7 +3701,7 @@ NTCCFG_TEST_CASE(23)
         NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
         {
             const ntsa::Endpoint sourceEp("127.0.0.1:22");
-            NTF_EXPECT_1(
+            NTF_EXPECT(
                 *test.d_reactorMock,
                 attachSocket,
                 NTF_EQ_SPEC(socket,
@@ -3698,21 +3709,21 @@ NTCCFG_TEST_CASE(23)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR);
 
-            NTF_EXPECT_2(*test.d_reactorMock,
-                         showWritable,
-                         NTF_EQ(socket),
-                         IGNORE_ARG)
+            NTF_EXPECT(*test.d_reactorMock,
+                       showWritable,
+                       TM::EQ(socket),
+                       IGNORE_ARG)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR);
 
-            NTF_EXPECT_1(*test.d_streamSocketMock, connect, NTF_EQ(targetEp))
+            NTF_EXPECT(*test.d_streamSocketMock, connect, TM::EQ(targetEp))
                 .ONCE()
                 .RETURN(ntsa::Error());
 
-            NTF_EXPECT_1(*test.d_streamSocketMock, sourceEndpoint, IGNORE_ARG)
+            NTF_EXPECT(*test.d_streamSocketMock, sourceEndpoint, IGNORE_ARG)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR)
-                .SET_ARG_1(FROM_DEREF(sourceEp));
+                .SET_ARG_1(TM::FROM_DEREF(sourceEp));
 
             ntca::TimerEvent timerEvent;
             timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
@@ -3724,24 +3735,20 @@ NTCCFG_TEST_CASE(23)
         NTCI_LOG_DEBUG(
             "Shutdown socket while it is waiting for connection result");
         {
-            NTF_EXPECT_0(*test.d_connectRetryTimerMock, close)
+            NTF_EXPECT(*test.d_connectRetryTimerMock, close)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR);
 
             ntci::SocketDetachedCallback detachCallback;
 
-            NTF_EXPECT_2(
+            NTF_EXPECT(
                 *test.d_reactorMock,
                 detachSocket,
                 NTF_EQ_SPEC(socket,
                             const bsl::shared_ptr<ntci::ReactorSocket>&),
                 IGNORE_ARG)
                 .ONCE()
-                .SAVE_ARG_2(TO(&detachCallback))
-                .RETURN(test::Fixture::k_NO_ERROR);
-
-            NTF_EXPECT_0(*test.d_streamSocketMock, close)
-                .ONCE()
+                .SAVE_ARG_2(TM::TO(&detachCallback))
                 .RETURN(test::Fixture::k_NO_ERROR);
 
             socket->shutdown(ntsa::ShutdownType::e_BOTH,
@@ -3749,10 +3756,14 @@ NTCCFG_TEST_CASE(23)
 
             NTCCFG_TEST_TRUE(detachCallback);
 
-            ntci::Reactor::Functor callback;
-            NTF_EXPECT_1(*test.d_reactorMock, execute, IGNORE_ARG)
+            NTF_EXPECT(*test.d_streamSocketMock, close)
                 .ONCE()
-                .SAVE_ARG_1(TO(&callback));
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            ntci::Reactor::Functor callback;
+            NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_1(TM::TO(&callback));
             detachCallback(test.d_nullStrand);
 
             callback();
@@ -3807,36 +3818,36 @@ NTCCFG_TEST_CASE(24)
             {
                 deadlineTime.setTotalHours(1);
 
-                NTF_EXPECT_3(*test.d_reactorMock,
-                             createTimer,
-                             IGNORE_ARG_S(const ntca::TimerOptions&),
-                             IGNORE_ARG_S(const ntci::TimerCallback&),
-                             IGNORE_ARG_S(bslma::Allocator*))
+                NTF_EXPECT(*test.d_reactorMock,
+                           createTimer,
+                           IGNORE_ARG_S(const ntca::TimerOptions&),
+                           IGNORE_ARG_S(const ntci::TimerCallback&),
+                           IGNORE_ARG_S(bslma::Allocator*))
                     .ONCE()
                     .RETURN(test.d_connectDeadlineTimerMock);
 
-                NTF_EXPECT_2(*test.d_connectDeadlineTimerMock,
-                             schedule,
-                             NTF_EQ(deadlineTime),
-                             NTF_EQ(bsls::TimeInterval()))
+                NTF_EXPECT(*test.d_connectDeadlineTimerMock,
+                           schedule,
+                           TM::EQ(deadlineTime),
+                           TM::EQ(bsls::TimeInterval()))
                     .ONCE()
                     .RETURN(ntsa::Error());
             }
 
             {
-                NTF_EXPECT_3(*test.d_reactorMock,
-                             createTimer,
-                             IGNORE_ARG_S(const ntca::TimerOptions&),
-                             IGNORE_ARG_S(const ntci::TimerCallback&),
-                             IGNORE_ARG_S(bslma::Allocator*))
+                NTF_EXPECT(*test.d_reactorMock,
+                           createTimer,
+                           IGNORE_ARG_S(const ntca::TimerOptions&),
+                           IGNORE_ARG_S(const ntci::TimerCallback&),
+                           IGNORE_ARG_S(bslma::Allocator*))
                     .ONCE()
-                    .SAVE_ARG_2(TO(&retryTimerCallback))
+                    .SAVE_ARG_2(TM::TO(&retryTimerCallback))
                     .RETURN(test.d_connectRetryTimerMock);
 
-                NTF_EXPECT_2(*test.d_connectRetryTimerMock,
-                             schedule,
-                             IGNORE_ARG,
-                             IGNORE_ARG)
+                NTF_EXPECT(*test.d_connectRetryTimerMock,
+                           schedule,
+                           IGNORE_ARG,
+                           IGNORE_ARG)
                     .ONCE()
                     .RETURN(ntsa::Error());
             }
@@ -3851,7 +3862,7 @@ NTCCFG_TEST_CASE(24)
         {
             const ntsa::Endpoint sourceEp("127.0.0.1:22");
 
-            NTF_EXPECT_1(
+            NTF_EXPECT(
                 *test.d_reactorMock,
                 attachSocket,
                 NTF_EQ_SPEC(socket,
@@ -3859,21 +3870,21 @@ NTCCFG_TEST_CASE(24)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR);
 
-            NTF_EXPECT_2(*test.d_reactorMock,
-                         showWritable,
-                         NTF_EQ(socket),
-                         IGNORE_ARG)
+            NTF_EXPECT(*test.d_reactorMock,
+                       showWritable,
+                       TM::EQ(socket),
+                       IGNORE_ARG)
                 .ONCE()
                 .RETURN(ntsa::Error());
 
-            NTF_EXPECT_1(*test.d_streamSocketMock, connect, NTF_EQ(targetEp))
+            NTF_EXPECT(*test.d_streamSocketMock, connect, TM::EQ(targetEp))
                 .ONCE()
                 .RETURN(ntsa::Error());
 
-            NTF_EXPECT_1(*test.d_streamSocketMock, sourceEndpoint, IGNORE_ARG)
+            NTF_EXPECT(*test.d_streamSocketMock, sourceEndpoint, IGNORE_ARG)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR)
-                .SET_ARG_1(FROM_DEREF(sourceEp));
+                .SET_ARG_1(TM::FROM_DEREF(sourceEp));
 
             ntca::TimerEvent timerEvent;
             timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
@@ -3886,25 +3897,21 @@ NTCCFG_TEST_CASE(24)
         NTCI_LOG_DEBUG(
             "Shutdown socket while it is waiting for connection result");
         {
-            NTF_EXPECT_0(*test.d_connectRetryTimerMock, close)
+            NTF_EXPECT(*test.d_connectRetryTimerMock, close)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR);
-            NTF_EXPECT_0(*test.d_connectDeadlineTimerMock, close)
+            NTF_EXPECT(*test.d_connectDeadlineTimerMock, close)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR);
 
-            NTF_EXPECT_2(
+            NTF_EXPECT(
                 *test.d_reactorMock,
                 detachSocket,
                 NTF_EQ_SPEC(socket,
                             const bsl::shared_ptr<ntci::ReactorSocket>&),
                 IGNORE_ARG)
                 .ONCE()
-                .SAVE_ARG_2(TO(&detachCallback))
-                .RETURN(test::Fixture::k_NO_ERROR);
-
-            NTF_EXPECT_0(*test.d_streamSocketMock, close)
-                .ONCE()
+                .SAVE_ARG_2(TM::TO(&detachCallback))
                 .RETURN(test::Fixture::k_NO_ERROR);
 
             socket->shutdown(ntsa::ShutdownType::e_BOTH,
@@ -3913,10 +3920,14 @@ NTCCFG_TEST_CASE(24)
         {
             NTCCFG_TEST_TRUE(detachCallback);
 
-            ntci::Reactor::Functor callback;
-            NTF_EXPECT_1(*test.d_reactorMock, execute, IGNORE_ARG)
+            NTF_EXPECT(*test.d_streamSocketMock, close)
                 .ONCE()
-                .SAVE_ARG_1(TO(&callback));
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            ntci::Reactor::Functor callback;
+            NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_1(TM::TO(&callback));
 
             detachCallback(test.d_nullStrand);
 
@@ -3974,36 +3985,36 @@ NTCCFG_TEST_CASE(25)
             {
                 deadlineTime.setTotalHours(1);
 
-                NTF_EXPECT_3(*test.d_reactorMock,
-                             createTimer,
-                             IGNORE_ARG_S(const ntca::TimerOptions&),
-                             IGNORE_ARG_S(const ntci::TimerCallback&),
-                             IGNORE_ARG_S(bslma::Allocator*))
+                NTF_EXPECT(*test.d_reactorMock,
+                           createTimer,
+                           IGNORE_ARG_S(const ntca::TimerOptions&),
+                           IGNORE_ARG_S(const ntci::TimerCallback&),
+                           IGNORE_ARG_S(bslma::Allocator*))
                     .ONCE()
                     .RETURN(test.d_connectDeadlineTimerMock);
 
-                NTF_EXPECT_2(*test.d_connectDeadlineTimerMock,
-                             schedule,
-                             NTF_EQ(deadlineTime),
-                             NTF_EQ(bsls::TimeInterval()))
+                NTF_EXPECT(*test.d_connectDeadlineTimerMock,
+                           schedule,
+                           TM::EQ(deadlineTime),
+                           TM::EQ(bsls::TimeInterval()))
                     .ONCE()
                     .RETURN(ntsa::Error());
             }
 
             {
-                NTF_EXPECT_3(*test.d_reactorMock,
-                             createTimer,
-                             IGNORE_ARG_S(const ntca::TimerOptions&),
-                             IGNORE_ARG_S(const ntci::TimerCallback&),
-                             IGNORE_ARG_S(bslma::Allocator*))
+                NTF_EXPECT(*test.d_reactorMock,
+                           createTimer,
+                           IGNORE_ARG_S(const ntca::TimerOptions&),
+                           IGNORE_ARG_S(const ntci::TimerCallback&),
+                           IGNORE_ARG_S(bslma::Allocator*))
                     .ONCE()
-                    .SAVE_ARG_2(TO(&retryTimerCallback))
+                    .SAVE_ARG_2(TM::TO(&retryTimerCallback))
                     .RETURN(test.d_connectRetryTimerMock);
 
-                NTF_EXPECT_2(*test.d_connectRetryTimerMock,
-                             schedule,
-                             IGNORE_ARG,
-                             IGNORE_ARG)
+                NTF_EXPECT(*test.d_connectRetryTimerMock,
+                           schedule,
+                           IGNORE_ARG,
+                           IGNORE_ARG)
                     .ONCE()
                     .RETURN(ntsa::Error());
             }
@@ -4019,7 +4030,7 @@ NTCCFG_TEST_CASE(25)
         {
             const ntsa::Endpoint sourceEp("127.0.0.1:22");
 
-            NTF_EXPECT_1(
+            NTF_EXPECT(
                 *test.d_reactorMock,
                 attachSocket,
                 NTF_EQ_SPEC(socket,
@@ -4027,23 +4038,23 @@ NTCCFG_TEST_CASE(25)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR);
 
-            NTF_EXPECT_2(*test.d_reactorMock,
-                         showWritable,
-                         NTF_EQ(socket),
-                         IGNORE_ARG)
+            NTF_EXPECT(*test.d_reactorMock,
+                       showWritable,
+                       TM::EQ(socket),
+                       IGNORE_ARG)
                 .ONCE()
                 .RETURN(ntsa::Error());
 
-            NTF_EXPECT_1(*test.d_streamSocketMock, connect, NTF_EQ(targetEp))
+            NTF_EXPECT(*test.d_streamSocketMock, connect, TM::EQ(targetEp))
                 .ONCE()
                 .RETURN(ntsa::Error());
 
-            NTF_EXPECT_1(*test.d_streamSocketMock, sourceEndpoint, IGNORE_ARG)
+            NTF_EXPECT(*test.d_streamSocketMock, sourceEndpoint, IGNORE_ARG)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR)
-                .SET_ARG_1(FROM_DEREF(sourceEp));
+                .SET_ARG_1(TM::FROM_DEREF(sourceEp));
 
-            NTF_EXPECT_0(*test.d_streamSocketMock, close)
+            NTF_EXPECT(*test.d_streamSocketMock, close)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR);
 
@@ -4056,16 +4067,16 @@ NTCCFG_TEST_CASE(25)
 
         NTCI_LOG_DEBUG("Indicate from the reactor that connection has failed");
         {
-            NTF_EXPECT_1(*test.d_streamSocketMock, getLastError, IGNORE_ARG)
+            NTF_EXPECT(*test.d_streamSocketMock, getLastError, IGNORE_ARG)
                 .ONCE()
-                .SET_ARG_1(FROM_DEREF(test::Fixture::k_NO_ERROR))
+                .SET_ARG_1(TM::FROM_DEREF(test::Fixture::k_NO_ERROR))
                 .RETURN(test::Fixture::k_NO_ERROR);
 
-            NTF_EXPECT_1(*test.d_streamSocketMock, remoteEndpoint, IGNORE_ARG)
+            NTF_EXPECT(*test.d_streamSocketMock, remoteEndpoint, IGNORE_ARG)
                 .ONCE()
                 .RETURN(ntsa::Error::invalid());
 
-            NTF_EXPECT_2(
+            NTF_EXPECT(
                 *test.d_reactorMock,
                 detachSocket,
                 NTF_EQ_SPEC(socket,
@@ -4090,17 +4101,17 @@ NTCCFG_TEST_CASE(25)
         NTCI_LOG_DEBUG(
             "Shutdown socket while waiting for the retry timer to fire");
         {
-            NTF_EXPECT_0(*test.d_connectRetryTimerMock, close)
+            NTF_EXPECT(*test.d_connectRetryTimerMock, close)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR);
-            NTF_EXPECT_0(*test.d_connectDeadlineTimerMock, close)
+            NTF_EXPECT(*test.d_connectDeadlineTimerMock, close)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR);
 
             ntci::Reactor::Functor callback;
-            NTF_EXPECT_1(*test.d_reactorMock, execute, IGNORE_ARG)
+            NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
                 .ONCE()
-                .SAVE_ARG_1(TO(&callback));
+                .SAVE_ARG_1(TM::TO(&callback));
 
             socket->shutdown(ntsa::ShutdownType::e_BOTH,
                              ntsa::ShutdownMode::e_GRACEFUL);
@@ -4161,36 +4172,36 @@ NTCCFG_TEST_CASE(26)
             {
                 deadlineTime.setTotalHours(1);
 
-                NTF_EXPECT_3(*test.d_reactorMock,
-                             createTimer,
-                             IGNORE_ARG_S(const ntca::TimerOptions&),
-                             IGNORE_ARG_S(const ntci::TimerCallback&),
-                             IGNORE_ARG_S(bslma::Allocator*))
+                NTF_EXPECT(*test.d_reactorMock,
+                           createTimer,
+                           IGNORE_ARG_S(const ntca::TimerOptions&),
+                           IGNORE_ARG_S(const ntci::TimerCallback&),
+                           IGNORE_ARG_S(bslma::Allocator*))
                     .ONCE()
                     .RETURN(test.d_connectDeadlineTimerMock);
 
-                NTF_EXPECT_2(*test.d_connectDeadlineTimerMock,
-                             schedule,
-                             NTF_EQ(deadlineTime),
-                             NTF_EQ(bsls::TimeInterval()))
+                NTF_EXPECT(*test.d_connectDeadlineTimerMock,
+                           schedule,
+                           TM::EQ(deadlineTime),
+                           TM::EQ(bsls::TimeInterval()))
                     .ONCE()
                     .RETURN(ntsa::Error());
             }
 
             {
-                NTF_EXPECT_3(*test.d_reactorMock,
-                             createTimer,
-                             IGNORE_ARG_S(const ntca::TimerOptions&),
-                             IGNORE_ARG_S(const ntci::TimerCallback&),
-                             IGNORE_ARG_S(bslma::Allocator*))
+                NTF_EXPECT(*test.d_reactorMock,
+                           createTimer,
+                           IGNORE_ARG_S(const ntca::TimerOptions&),
+                           IGNORE_ARG_S(const ntci::TimerCallback&),
+                           IGNORE_ARG_S(bslma::Allocator*))
                     .ONCE()
-                    .SAVE_ARG_2(TO(&retryTimerCallback))
+                    .SAVE_ARG_2(TM::TO(&retryTimerCallback))
                     .RETURN(test.d_connectRetryTimerMock);
 
-                NTF_EXPECT_2(*test.d_connectRetryTimerMock,
-                             schedule,
-                             IGNORE_ARG,
-                             IGNORE_ARG)
+                NTF_EXPECT(*test.d_connectRetryTimerMock,
+                           schedule,
+                           IGNORE_ARG,
+                           IGNORE_ARG)
                     .ONCE()
                     .RETURN(ntsa::Error());
             }
@@ -4206,7 +4217,7 @@ NTCCFG_TEST_CASE(26)
         {
             const ntsa::Endpoint sourceEp("127.0.0.1:22");
 
-            NTF_EXPECT_1(
+            NTF_EXPECT(
                 *test.d_reactorMock,
                 attachSocket,
                 NTF_EQ_SPEC(socket,
@@ -4214,21 +4225,21 @@ NTCCFG_TEST_CASE(26)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR);
 
-            NTF_EXPECT_2(*test.d_reactorMock,
-                         showWritable,
-                         NTF_EQ(socket),
-                         IGNORE_ARG)
+            NTF_EXPECT(*test.d_reactorMock,
+                       showWritable,
+                       TM::EQ(socket),
+                       IGNORE_ARG)
                 .ONCE()
                 .RETURN(ntsa::Error());
 
-            NTF_EXPECT_1(*test.d_streamSocketMock, connect, NTF_EQ(targetEp))
+            NTF_EXPECT(*test.d_streamSocketMock, connect, TM::EQ(targetEp))
                 .ONCE()
                 .RETURN(ntsa::Error());
 
-            NTF_EXPECT_1(*test.d_streamSocketMock, sourceEndpoint, IGNORE_ARG)
+            NTF_EXPECT(*test.d_streamSocketMock, sourceEndpoint, IGNORE_ARG)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR)
-                .SET_ARG_1(FROM_DEREF(sourceEp));
+                .SET_ARG_1(TM::FROM_DEREF(sourceEp));
 
             ntca::TimerEvent timerEvent;
             timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
@@ -4240,23 +4251,23 @@ NTCCFG_TEST_CASE(26)
         ntci::SocketDetachedCallback detachCallback;
         NTCI_LOG_DEBUG("Indicate from the reactor that connection has failed");
         {
-            NTF_EXPECT_1(*test.d_streamSocketMock, getLastError, IGNORE_ARG)
+            NTF_EXPECT(*test.d_streamSocketMock, getLastError, IGNORE_ARG)
                 .ONCE()
-                .SET_ARG_1(FROM_DEREF(test::Fixture::k_NO_ERROR))
+                .SET_ARG_1(TM::FROM_DEREF(test::Fixture::k_NO_ERROR))
                 .RETURN(test::Fixture::k_NO_ERROR);
 
-            NTF_EXPECT_1(*test.d_streamSocketMock, remoteEndpoint, IGNORE_ARG)
+            NTF_EXPECT(*test.d_streamSocketMock, remoteEndpoint, IGNORE_ARG)
                 .ONCE()
                 .RETURN(ntsa::Error::invalid());
 
-            NTF_EXPECT_2(
+            NTF_EXPECT(
                 *test.d_reactorMock,
                 detachSocket,
                 NTF_EQ_SPEC(socket,
                             const bsl::shared_ptr<ntci::ReactorSocket>&),
                 IGNORE_ARG)
                 .ONCE()
-                .SAVE_ARG_2(TO(&detachCallback))
+                .SAVE_ARG_2(TM::TO(&detachCallback))
                 .RETURN(test::Fixture::k_NO_ERROR);
 
             ntca::ReactorEvent                   event;
@@ -4272,16 +4283,16 @@ NTCCFG_TEST_CASE(26)
         ntci::Reactor::FunctorSequence functorSequence(&ta);
         NTCI_LOG_DEBUG("Indicate that detachment is finished");
         {
-            NTF_EXPECT_0(*test.d_streamSocketMock, close)
+            NTF_EXPECT(*test.d_streamSocketMock, close)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR);
 
-            NTF_EXPECT_2(*test.d_reactorMock,
-                         moveAndExecute,
-                         IGNORE_ARG,
-                         IGNORE_ARG)
+            NTF_EXPECT(*test.d_reactorMock,
+                       moveAndExecute,
+                       IGNORE_ARG,
+                       IGNORE_ARG)
                 .ONCE()
-                .SAVE_ARG_1(TO_DEREF(&functorSequence));
+                .SAVE_ARG_1(TM::TO_DEREF(&functorSequence));
 
             detachCallback(test.d_nullStrand);
 
@@ -4292,18 +4303,18 @@ NTCCFG_TEST_CASE(26)
         }
         NTCI_LOG_DEBUG("Execute postponed functions");
         {
-            NTF_EXPECT_0(*test.d_connectRetryTimerMock, close)
+            NTF_EXPECT(*test.d_connectRetryTimerMock, close)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR);
 
-            NTF_EXPECT_0(*test.d_connectDeadlineTimerMock, close)
+            NTF_EXPECT(*test.d_connectDeadlineTimerMock, close)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR);
 
             ntci::Reactor::Functor connectCallback;
-            NTF_EXPECT_1(*test.d_reactorMock, execute, IGNORE_ARG)
+            NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
                 .ONCE()
-                .SAVE_ARG_1(TO(&connectCallback));
+                .SAVE_ARG_1(TM::TO(&connectCallback));
 
             NTCCFG_TEST_EQ(functorSequence.size(), 1);
             functorSequence.front()();
@@ -4362,36 +4373,36 @@ NTCCFG_TEST_CASE(27)
             {
                 deadlineTime.setTotalHours(1);
 
-                NTF_EXPECT_3(*test.d_reactorMock,
-                             createTimer,
-                             IGNORE_ARG_S(const ntca::TimerOptions&),
-                             IGNORE_ARG_S(const ntci::TimerCallback&),
-                             IGNORE_ARG_S(bslma::Allocator*))
+                NTF_EXPECT(*test.d_reactorMock,
+                           createTimer,
+                           IGNORE_ARG_S(const ntca::TimerOptions&),
+                           IGNORE_ARG_S(const ntci::TimerCallback&),
+                           IGNORE_ARG_S(bslma::Allocator*))
                     .ONCE()
                     .RETURN(test.d_connectDeadlineTimerMock);
 
-                NTF_EXPECT_2(*test.d_connectDeadlineTimerMock,
-                             schedule,
-                             NTF_EQ(deadlineTime),
-                             NTF_EQ(bsls::TimeInterval()))
+                NTF_EXPECT(*test.d_connectDeadlineTimerMock,
+                           schedule,
+                           TM::EQ(deadlineTime),
+                           TM::EQ(bsls::TimeInterval()))
                     .ONCE()
                     .RETURN(ntsa::Error());
             }
 
             {
-                NTF_EXPECT_3(*test.d_reactorMock,
-                             createTimer,
-                             IGNORE_ARG_S(const ntca::TimerOptions&),
-                             IGNORE_ARG_S(const ntci::TimerCallback&),
-                             IGNORE_ARG_S(bslma::Allocator*))
+                NTF_EXPECT(*test.d_reactorMock,
+                           createTimer,
+                           IGNORE_ARG_S(const ntca::TimerOptions&),
+                           IGNORE_ARG_S(const ntci::TimerCallback&),
+                           IGNORE_ARG_S(bslma::Allocator*))
                     .ONCE()
-                    .SAVE_ARG_2(TO(&retryTimerCallback))
+                    .SAVE_ARG_2(TM::TO(&retryTimerCallback))
                     .RETURN(test.d_connectRetryTimerMock);
 
-                NTF_EXPECT_2(*test.d_connectRetryTimerMock,
-                             schedule,
-                             IGNORE_ARG,
-                             IGNORE_ARG)
+                NTF_EXPECT(*test.d_connectRetryTimerMock,
+                           schedule,
+                           IGNORE_ARG,
+                           IGNORE_ARG)
                     .ONCE()
                     .RETURN(ntsa::Error());
             }
@@ -4406,7 +4417,7 @@ NTCCFG_TEST_CASE(27)
         {
             const ntsa::Endpoint sourceEp("127.0.0.1:22");
 
-            NTF_EXPECT_1(
+            NTF_EXPECT(
                 *test.d_reactorMock,
                 attachSocket,
                 NTF_EQ_SPEC(socket,
@@ -4414,21 +4425,21 @@ NTCCFG_TEST_CASE(27)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR);
 
-            NTF_EXPECT_2(*test.d_reactorMock,
-                         showWritable,
-                         NTF_EQ(socket),
-                         IGNORE_ARG)
+            NTF_EXPECT(*test.d_reactorMock,
+                       showWritable,
+                       TM::EQ(socket),
+                       IGNORE_ARG)
                 .ONCE()
                 .RETURN(ntsa::Error());
 
-            NTF_EXPECT_1(*test.d_streamSocketMock, connect, NTF_EQ(targetEp))
+            NTF_EXPECT(*test.d_streamSocketMock, connect, TM::EQ(targetEp))
                 .ONCE()
                 .RETURN(ntsa::Error());
 
-            NTF_EXPECT_1(*test.d_streamSocketMock, sourceEndpoint, IGNORE_ARG)
+            NTF_EXPECT(*test.d_streamSocketMock, sourceEndpoint, IGNORE_ARG)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR)
-                .SET_ARG_1(FROM_DEREF(sourceEp));
+                .SET_ARG_1(TM::FROM_DEREF(sourceEp));
 
             ntca::TimerEvent timerEvent;
             timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
@@ -4440,30 +4451,30 @@ NTCCFG_TEST_CASE(27)
         ntci::SocketDetachedCallback detachCallback;
         NTCI_LOG_DEBUG("Indicate from the reactor that connection has failed");
         {
-            NTF_EXPECT_1(*test.d_streamSocketMock, getLastError, IGNORE_ARG)
+            NTF_EXPECT(*test.d_streamSocketMock, getLastError, IGNORE_ARG)
                 .ONCE()
-                .SET_ARG_1(FROM_DEREF(test::Fixture::k_NO_ERROR))
+                .SET_ARG_1(TM::FROM_DEREF(test::Fixture::k_NO_ERROR))
                 .RETURN(test::Fixture::k_NO_ERROR);
 
-            NTF_EXPECT_1(*test.d_streamSocketMock, remoteEndpoint, IGNORE_ARG)
+            NTF_EXPECT(*test.d_streamSocketMock, remoteEndpoint, IGNORE_ARG)
                 .ONCE()
                 .RETURN(ntsa::Error::invalid());
 
-            NTF_EXPECT_2(
+            NTF_EXPECT(
                 *test.d_reactorMock,
                 detachSocket,
                 NTF_EQ_SPEC(socket,
                             const bsl::shared_ptr<ntci::ReactorSocket>&),
                 IGNORE_ARG)
                 .ONCE()
-                .SAVE_ARG_2(TO(&detachCallback))
+                .SAVE_ARG_2(TM::TO(&detachCallback))
                 .RETURN(test::Fixture::k_NO_ERROR);
 
-            NTF_EXPECT_0(*test.d_connectRetryTimerMock, close)
+            NTF_EXPECT(*test.d_connectRetryTimerMock, close)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR);
 
-            NTF_EXPECT_0(*test.d_connectDeadlineTimerMock, close)
+            NTF_EXPECT(*test.d_connectDeadlineTimerMock, close)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR);
 
@@ -4480,16 +4491,16 @@ NTCCFG_TEST_CASE(27)
         ntci::Reactor::FunctorSequence functorSequence(&ta);
         NTCI_LOG_DEBUG("Indicate that detachment is finished");
         {
-            NTF_EXPECT_0(*test.d_streamSocketMock, close)
+            NTF_EXPECT(*test.d_streamSocketMock, close)
                 .ONCE()
                 .RETURN(test::Fixture::k_NO_ERROR);
 
-            NTF_EXPECT_2(*test.d_reactorMock,
-                         moveAndExecute,
-                         IGNORE_ARG,
-                         IGNORE_ARG)
+            NTF_EXPECT(*test.d_reactorMock,
+                       moveAndExecute,
+                       IGNORE_ARG,
+                       IGNORE_ARG)
                 .ONCE()
-                .SAVE_ARG_1(TO_DEREF(&functorSequence));
+                .SAVE_ARG_1(TM::TO_DEREF(&functorSequence));
 
             detachCallback(test.d_nullStrand);
 
@@ -4502,6 +4513,1441 @@ NTCCFG_TEST_CASE(27)
         {
             NTCCFG_TEST_EQ(functorSequence.size(), 1);
             functorSequence.front()();
+        }
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(28)
+{
+    // Concern: close socket while it is waiting for remote EP resolution
+    // 1) Create ntcr::StreamSocket
+    // 2) Initiate connection to remote name
+    // 3) Close socket while waiting for remote EP resolution
+    NTCI_LOG_CONTEXT();
+
+    ntccfg::TestAllocator ta;
+    {
+        NTCI_LOG_DEBUG("Fixture setup, socket creation...");
+
+        test::Fixture test(&ta);
+        test.setupReactorBase();
+
+        const ntca::StreamSocketOptions options;
+
+        bsl::shared_ptr<ntcr::StreamSocket> socket;
+        socket.createInplace(&ta,
+                             options,
+                             test.d_resolverMock,
+                             test.d_reactorMock,
+                             test.d_nullPool,
+                             test.d_nullMetrics,
+                             &ta);
+
+        NTCI_LOG_DEBUG("Inject mocked ntsi::StreamSocket");
+        {
+            test.injectStreamSocket(*socket);
+        }
+
+        const bsl::string   epName = "unreachable.bbg.com";
+        ntci::TimerCallback retryTimerCallback;
+
+        NTCI_LOG_DEBUG("Connection initiation...");
+        {
+            NTF_EXPECT(*test.d_reactorMock,
+                       createTimer,
+                       IGNORE_ARG_S(const ntca::TimerOptions&),
+                       IGNORE_ARG_S(const ntci::TimerCallback&),
+                       IGNORE_ARG_S(bslma::Allocator*))
+                .ONCE()
+                .SAVE_ARG_2(TM::TO(&retryTimerCallback))
+                .RETURN(test.d_connectRetryTimerMock);
+
+            NTF_EXPECT(*test.d_connectRetryTimerMock,
+                       schedule,
+                       IGNORE_ARG,
+                       IGNORE_ARG)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            const ntca::ConnectOptions connectOptions;
+
+            socket->connect(epName, connectOptions, test.d_connectCallback);
+        }
+
+        NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
+        {
+            NTF_EXPECT(*test.d_resolverMock,
+                       getEndpoint,
+                       TM::EQ(epName),
+                       IGNORE_ARG,
+                       IGNORE_ARG)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            ntca::TimerEvent timerEvent;
+            timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
+            retryTimerCallback(test.d_connectRetryTimerMock,
+                               timerEvent,
+                               test.d_nullStrand);
+        }
+
+        NTCI_LOG_DEBUG("Close socket while it is waiting for remote "
+                       "endpoint resolution");
+        {
+            NTF_EXPECT(*test.d_connectRetryTimerMock, close)
+                .ONCE()
+                .RETURN(ntsa::Error());
+
+            ntci::Reactor::Functor callback;
+            NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_1(TM::TO(&callback));
+
+            ntci::Reactor::Functor callback2;
+            NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_1(TM::TO(&callback2));
+
+            NTF_EXPECT(
+                *test.d_reactorMock,
+                detachSocket,
+                NTF_EQ_SPEC(socket,
+                            const bsl::shared_ptr<ntci::ReactorSocket>&),
+                IGNORE_ARG)
+                .ONCE()
+                .RETURN(ntsa::Error::invalid());
+
+            NTF_EXPECT(*test.d_streamSocketMock, close)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            socket->close(test.d_closeFunction);
+
+            callback();
+            callback2();
+
+            NTCCFG_TEST_TRUE(test.d_connectResult.has_value());
+            NTCCFG_TEST_EQ(test.d_connectResult.value().type(),
+                           ntca::ConnectEventType::e_ERROR);
+            NTCCFG_TEST_TRUE(test.d_closed);
+        }
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(29)
+{
+    // Concern: close socket while it is waiting for connection attempt
+    // result, no connection deadline timer
+    // 1) Create ntcr::StreamSocket
+    // 2) Initiate connection to some IP, no connection retries planned,
+    // no deadline time is set
+    // 3) Expect ntsi::StreamSocket::connect() to be called, then ->
+    // 4) close the socket
+    NTCI_LOG_CONTEXT();
+
+    ntccfg::TestAllocator ta;
+    {
+        NTCI_LOG_DEBUG("Fixture setup, socket creation...");
+
+        test::Fixture test(&ta);
+        test.setupReactorBase();
+
+        const ntca::StreamSocketOptions options;
+
+        bsl::shared_ptr<ntcr::StreamSocket> socket;
+        socket.createInplace(&ta,
+                             options,
+                             test.d_resolverMock,
+                             test.d_reactorMock,
+                             test.d_nullPool,
+                             test.d_nullMetrics,
+                             &ta);
+
+        NTCI_LOG_DEBUG("Inject mocked ntsi::StreamSocket");
+        {
+            test.injectStreamSocket(*socket);
+        }
+
+        ntci::TimerCallback  retryTimerCallback;
+        const ntsa::Endpoint targetEp("127.0.0.1:1234");
+        NTCI_LOG_DEBUG("Connection initiation...");
+        {
+            NTF_EXPECT(*test.d_reactorMock,
+                       createTimer,
+                       IGNORE_ARG_S(const ntca::TimerOptions&),
+                       IGNORE_ARG_S(const ntci::TimerCallback&),
+                       IGNORE_ARG_S(bslma::Allocator*))
+                .ONCE()
+                .SAVE_ARG_2(TM::TO(&retryTimerCallback))
+                .RETURN(test.d_connectRetryTimerMock);
+
+            NTF_EXPECT(*test.d_connectRetryTimerMock,
+                       schedule,
+                       IGNORE_ARG,
+                       IGNORE_ARG)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            const ntca::ConnectOptions connectOptions;
+
+            socket->connect(targetEp, connectOptions, test.d_connectCallback);
+        }
+
+        NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
+        {
+            const ntsa::Endpoint sourceEp("127.0.0.1:22");
+            NTF_EXPECT(
+                *test.d_reactorMock,
+                attachSocket,
+                NTF_EQ_SPEC(socket,
+                            const bsl::shared_ptr<ntci::ReactorSocket>&))
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            NTF_EXPECT(*test.d_reactorMock,
+                       showWritable,
+                       TM::EQ(socket),
+                       IGNORE_ARG)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            NTF_EXPECT(*test.d_streamSocketMock, connect, TM::EQ(targetEp))
+                .ONCE()
+                .RETURN(ntsa::Error());
+
+            NTF_EXPECT(*test.d_streamSocketMock, sourceEndpoint, IGNORE_ARG)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR)
+                .SET_ARG_1(TM::FROM_DEREF(sourceEp));
+
+            ntca::TimerEvent timerEvent;
+            timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
+            retryTimerCallback(test.d_connectRetryTimerMock,
+                               timerEvent,
+                               test.d_nullStrand);
+        }
+
+        NTCI_LOG_DEBUG(
+            "Close socket while it is waiting for connection result");
+        {
+            NTF_EXPECT(*test.d_connectRetryTimerMock, close)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            ntci::SocketDetachedCallback detachCallback;
+
+            NTF_EXPECT(
+                *test.d_reactorMock,
+                detachSocket,
+                NTF_EQ_SPEC(socket,
+                            const bsl::shared_ptr<ntci::ReactorSocket>&),
+                IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_2(TM::TO(&detachCallback))
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            socket->close(test.d_closeFunction);
+
+            NTCCFG_TEST_TRUE(detachCallback);
+
+            NTF_EXPECT(*test.d_streamSocketMock, close)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            ntci::Reactor::Functor callback;
+            NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_1(TM::TO(&callback));
+
+            ntci::Reactor::Functor callback2;
+            NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_1(TM::TO(&callback2));
+
+            detachCallback(test.d_nullStrand);
+
+            callback();
+            callback2();
+
+            NTCCFG_TEST_TRUE(test.d_connectResult.has_value());
+            NTCCFG_TEST_EQ(test.d_connectResult.value().type(),
+                           ntca::ConnectEventType::e_ERROR);
+            NTCCFG_TEST_TRUE(test.d_closed);
+        }
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(30)
+{
+    // Concern: close socket while it is waiting for connection attempt
+    // result, connection deadline timer is set
+    // 1) Create ntcr::StreamSocket
+    // 2) Initiate connection to some IP, no connection retries planned,
+    // deadline time is set
+    // 3) Expect ntsi::StreamSocket::connect() to be called, then ->
+    // 4) Trigger socket shutdown
+    NTCI_LOG_CONTEXT();
+
+    ntccfg::TestAllocator ta;
+    {
+        NTCI_LOG_DEBUG("Fixture setup, socket creation...");
+
+        test::Fixture test(&ta);
+        test.setupReactorBase();
+
+        const ntca::StreamSocketOptions options;
+
+        bsl::shared_ptr<ntcr::StreamSocket> socket;
+        socket.createInplace(&ta,
+                             options,
+                             test.d_resolverMock,
+                             test.d_reactorMock,
+                             test.d_nullPool,
+                             test.d_nullMetrics,
+                             &ta);
+
+        NTCI_LOG_DEBUG("Inject mocked ntsi::StreamSocket");
+        {
+            test.injectStreamSocket(*socket);
+        }
+
+        ntci::TimerCallback  retryTimerCallback;
+        const ntsa::Endpoint targetEp("127.0.0.1:1234");
+        NTCI_LOG_DEBUG("Connection initiation...");
+        {
+            bsls::TimeInterval deadlineTime;
+            {
+                deadlineTime.setTotalHours(1);
+
+                NTF_EXPECT(*test.d_reactorMock,
+                           createTimer,
+                           IGNORE_ARG_S(const ntca::TimerOptions&),
+                           IGNORE_ARG_S(const ntci::TimerCallback&),
+                           IGNORE_ARG_S(bslma::Allocator*))
+                    .ONCE()
+                    .RETURN(test.d_connectDeadlineTimerMock);
+
+                NTF_EXPECT(*test.d_connectDeadlineTimerMock,
+                           schedule,
+                           TM::EQ(deadlineTime),
+                           TM::EQ(bsls::TimeInterval()))
+                    .ONCE()
+                    .RETURN(ntsa::Error());
+            }
+
+            {
+                NTF_EXPECT(*test.d_reactorMock,
+                           createTimer,
+                           IGNORE_ARG_S(const ntca::TimerOptions&),
+                           IGNORE_ARG_S(const ntci::TimerCallback&),
+                           IGNORE_ARG_S(bslma::Allocator*))
+                    .ONCE()
+                    .SAVE_ARG_2(TM::TO(&retryTimerCallback))
+                    .RETURN(test.d_connectRetryTimerMock);
+
+                NTF_EXPECT(*test.d_connectRetryTimerMock,
+                           schedule,
+                           IGNORE_ARG,
+                           IGNORE_ARG)
+                    .ONCE()
+                    .RETURN(ntsa::Error());
+            }
+
+            ntca::ConnectOptions connectOptions;
+            connectOptions.setDeadline(deadlineTime);
+
+            socket->connect(targetEp, connectOptions, test.d_connectCallback);
+        }
+
+        NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
+        {
+            const ntsa::Endpoint sourceEp("127.0.0.1:22");
+
+            NTF_EXPECT(
+                *test.d_reactorMock,
+                attachSocket,
+                NTF_EQ_SPEC(socket,
+                            const bsl::shared_ptr<ntci::ReactorSocket>&))
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            NTF_EXPECT(*test.d_reactorMock,
+                       showWritable,
+                       TM::EQ(socket),
+                       IGNORE_ARG)
+                .ONCE()
+                .RETURN(ntsa::Error());
+
+            NTF_EXPECT(*test.d_streamSocketMock, connect, TM::EQ(targetEp))
+                .ONCE()
+                .RETURN(ntsa::Error());
+
+            NTF_EXPECT(*test.d_streamSocketMock, sourceEndpoint, IGNORE_ARG)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR)
+                .SET_ARG_1(TM::FROM_DEREF(sourceEp));
+
+            ntca::TimerEvent timerEvent;
+            timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
+            retryTimerCallback(test.d_connectRetryTimerMock,
+                               timerEvent,
+                               test.d_nullStrand);
+        }
+
+        ntci::SocketDetachedCallback detachCallback;
+        NTCI_LOG_DEBUG(
+            "Close socket while it is waiting for connection result");
+        {
+            NTF_EXPECT(*test.d_connectRetryTimerMock, close)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+            NTF_EXPECT(*test.d_connectDeadlineTimerMock, close)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            NTF_EXPECT(
+                *test.d_reactorMock,
+                detachSocket,
+                NTF_EQ_SPEC(socket,
+                            const bsl::shared_ptr<ntci::ReactorSocket>&),
+                IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_2(TM::TO(&detachCallback))
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            socket->close(test.d_closeFunction);
+        }
+        {
+            NTCCFG_TEST_TRUE(detachCallback);
+
+            NTF_EXPECT(*test.d_streamSocketMock, close)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            ntci::Reactor::Functor callback;
+            NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_1(TM::TO(&callback));
+
+            ntci::Reactor::Functor callback2;
+            NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_1(TM::TO(&callback2));
+
+            detachCallback(test.d_nullStrand);
+
+            callback();
+            callback2();
+
+            NTCCFG_TEST_TRUE(test.d_connectResult.has_value());
+            NTCCFG_TEST_EQ(test.d_connectResult.value().type(),
+                           ntca::ConnectEventType::e_ERROR);
+            NTCCFG_TEST_TRUE(test.d_closed);
+        }
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(31)
+{
+    // Concern: close socket while it is waiting for connection re-attempt
+    // 1) Create ntcr::StreamSocket
+    // 2) Initiate connection to some IP, some connection retries are planned
+    // 3) Expect ntsi::StreamSocket::connect() to be called, then ->
+    // 4) Indicate response from the reactor by calling processSocketWritable
+    // method, and then remoteEndpoint method should indicate an error
+    // 5) Shutdown socket
+
+    NTCI_LOG_CONTEXT();
+
+    ntccfg::TestAllocator ta;
+    {
+        NTCI_LOG_DEBUG("Fixture setup, socket creation...");
+
+        test::Fixture test(&ta);
+        test.setupReactorBase();
+
+        const ntca::StreamSocketOptions options;
+
+        bsl::shared_ptr<ntcr::StreamSocket> socket;
+        socket.createInplace(&ta,
+                             options,
+                             test.d_resolverMock,
+                             test.d_reactorMock,
+                             test.d_nullPool,
+                             test.d_nullMetrics,
+                             &ta);
+
+        NTCI_LOG_DEBUG("Inject mocked ntsi::StreamSocket");
+        {
+            test.injectStreamSocket(*socket);
+        }
+
+        ntci::TimerCallback  retryTimerCallback;
+        const ntsa::Endpoint targetEp("127.0.0.1:1234");
+        NTCI_LOG_DEBUG("Connection initiation...");
+        {
+            const bsl::size_t  k_CONNECT_RETRY_COUNT = 5;
+            bsls::TimeInterval deadlineTime;
+            {
+                deadlineTime.setTotalHours(1);
+
+                NTF_EXPECT(*test.d_reactorMock,
+                           createTimer,
+                           IGNORE_ARG_S(const ntca::TimerOptions&),
+                           IGNORE_ARG_S(const ntci::TimerCallback&),
+                           IGNORE_ARG_S(bslma::Allocator*))
+                    .ONCE()
+                    .RETURN(test.d_connectDeadlineTimerMock);
+
+                NTF_EXPECT(*test.d_connectDeadlineTimerMock,
+                           schedule,
+                           TM::EQ(deadlineTime),
+                           TM::EQ(bsls::TimeInterval()))
+                    .ONCE()
+                    .RETURN(ntsa::Error());
+            }
+
+            {
+                NTF_EXPECT(*test.d_reactorMock,
+                           createTimer,
+                           IGNORE_ARG_S(const ntca::TimerOptions&),
+                           IGNORE_ARG_S(const ntci::TimerCallback&),
+                           IGNORE_ARG_S(bslma::Allocator*))
+                    .ONCE()
+                    .SAVE_ARG_2(TM::TO(&retryTimerCallback))
+                    .RETURN(test.d_connectRetryTimerMock);
+
+                NTF_EXPECT(*test.d_connectRetryTimerMock,
+                           schedule,
+                           IGNORE_ARG,
+                           IGNORE_ARG)
+                    .ONCE()
+                    .RETURN(ntsa::Error());
+            }
+
+            ntca::ConnectOptions connectOptions;
+            connectOptions.setDeadline(deadlineTime);
+            connectOptions.setRetryCount(k_CONNECT_RETRY_COUNT);
+
+            socket->connect(targetEp, connectOptions, test.d_connectCallback);
+        }
+
+        NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
+        {
+            const ntsa::Endpoint sourceEp("127.0.0.1:22");
+
+            NTF_EXPECT(
+                *test.d_reactorMock,
+                attachSocket,
+                NTF_EQ_SPEC(socket,
+                            const bsl::shared_ptr<ntci::ReactorSocket>&))
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            NTF_EXPECT(*test.d_reactorMock,
+                       showWritable,
+                       TM::EQ(socket),
+                       IGNORE_ARG)
+                .ONCE()
+                .RETURN(ntsa::Error());
+
+            NTF_EXPECT(*test.d_streamSocketMock, connect, TM::EQ(targetEp))
+                .ONCE()
+                .RETURN(ntsa::Error());
+
+            NTF_EXPECT(*test.d_streamSocketMock, sourceEndpoint, IGNORE_ARG)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR)
+                .SET_ARG_1(TM::FROM_DEREF(sourceEp));
+
+            NTF_EXPECT(*test.d_streamSocketMock, close)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            ntca::TimerEvent timerEvent;
+            timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
+            retryTimerCallback(test.d_connectRetryTimerMock,
+                               timerEvent,
+                               test.d_nullStrand);
+        }
+
+        NTCI_LOG_DEBUG("Indicate from the reactor that connection has failed");
+        {
+            NTF_EXPECT(*test.d_streamSocketMock, getLastError, IGNORE_ARG)
+                .ONCE()
+                .SET_ARG_1(TM::FROM_DEREF(test::Fixture::k_NO_ERROR))
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            NTF_EXPECT(*test.d_streamSocketMock, remoteEndpoint, IGNORE_ARG)
+                .ONCE()
+                .RETURN(ntsa::Error::invalid());
+
+            NTF_EXPECT(
+                *test.d_reactorMock,
+                detachSocket,
+                NTF_EQ_SPEC(socket,
+                            const bsl::shared_ptr<ntci::ReactorSocket>&),
+                IGNORE_ARG)
+                .ONCE()
+                .RETURN(ntsa::Error::invalid());
+
+            ntca::ReactorEvent                   event;
+            bsl::shared_ptr<ntci::ReactorSocket> reactorSocket = socket;
+            reactorSocket->processSocketWritable(event);
+
+            NTCI_LOG_DEBUG("Ensure that connection callback was called and "
+                           "connection error was indicated");
+            {
+                NTCCFG_TEST_TRUE(test.d_connectResult.has_value());
+                NTCCFG_TEST_EQ(test.d_connectResult.value().type(),
+                               ntca::ConnectEventType::e_ERROR);
+                test.d_connectResult.reset();
+            }
+        }
+        NTCI_LOG_DEBUG(
+            "Close socket while waiting for the retry timer to fire");
+        {
+            NTF_EXPECT(*test.d_connectRetryTimerMock, close)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+            NTF_EXPECT(*test.d_connectDeadlineTimerMock, close)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            ntci::Reactor::Functor callback;
+            NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_1(TM::TO(&callback));
+            ntci::Reactor::Functor callback2;
+            NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_1(TM::TO(&callback2));
+
+            socket->close(test.d_closeFunction);
+
+            callback();
+            callback2();
+
+            NTCCFG_TEST_TRUE(test.d_connectResult.has_value());
+            NTCCFG_TEST_EQ(test.d_connectResult.value().type(),
+                           ntca::ConnectEventType::e_ERROR);
+            NTCCFG_TEST_TRUE(test.d_closed);
+        }
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(32)
+{
+    // Concern: close socket while it is being detached and conection
+    // retries are possible
+    // 1) Create ntcr::StreamSocket
+    // 2) Initiate connection to some IP, some connection retries are planned
+    // 3) Expect ntsi::StreamSocket::connect() to be called, then ->
+    // 4) Indicate response from the reactor by calling processSocketWritable
+    // method, and then remoteEndpoint method should indicate an error
+    // 5) Expect that reactor should detach socket ->
+    // 6) Close socket (current implementation postpones the procedure)
+    // 7) Indicate that socket is detached
+
+    NTCI_LOG_CONTEXT();
+
+    ntccfg::TestAllocator ta;
+    {
+        NTCI_LOG_DEBUG("Fixture setup, socket creation...");
+
+        test::Fixture test(&ta);
+        test.setupReactorBase();
+
+        const ntca::StreamSocketOptions options;
+
+        bsl::shared_ptr<ntcr::StreamSocket> socket;
+        socket.createInplace(&ta,
+                             options,
+                             test.d_resolverMock,
+                             test.d_reactorMock,
+                             test.d_nullPool,
+                             test.d_nullMetrics,
+                             &ta);
+
+        NTCI_LOG_DEBUG("Inject mocked ntsi::StreamSocket");
+        {
+            test.injectStreamSocket(*socket);
+        }
+
+        ntci::TimerCallback  retryTimerCallback;
+        const ntsa::Endpoint targetEp("127.0.0.1:1234");
+        NTCI_LOG_DEBUG("Connection initiation...");
+        {
+            const bsl::size_t  k_CONNECT_RETRY_COUNT = 5;
+            bsls::TimeInterval deadlineTime;
+            {
+                deadlineTime.setTotalHours(1);
+
+                NTF_EXPECT(*test.d_reactorMock,
+                           createTimer,
+                           IGNORE_ARG_S(const ntca::TimerOptions&),
+                           IGNORE_ARG_S(const ntci::TimerCallback&),
+                           IGNORE_ARG_S(bslma::Allocator*))
+                    .ONCE()
+                    .RETURN(test.d_connectDeadlineTimerMock);
+
+                NTF_EXPECT(*test.d_connectDeadlineTimerMock,
+                           schedule,
+                           TM::EQ(deadlineTime),
+                           TM::EQ(bsls::TimeInterval()))
+                    .ONCE()
+                    .RETURN(ntsa::Error());
+            }
+
+            {
+                NTF_EXPECT(*test.d_reactorMock,
+                           createTimer,
+                           IGNORE_ARG_S(const ntca::TimerOptions&),
+                           IGNORE_ARG_S(const ntci::TimerCallback&),
+                           IGNORE_ARG_S(bslma::Allocator*))
+                    .ONCE()
+                    .SAVE_ARG_2(TM::TO(&retryTimerCallback))
+                    .RETURN(test.d_connectRetryTimerMock);
+
+                NTF_EXPECT(*test.d_connectRetryTimerMock,
+                           schedule,
+                           IGNORE_ARG,
+                           IGNORE_ARG)
+                    .ONCE()
+                    .RETURN(ntsa::Error());
+            }
+
+            ntca::ConnectOptions connectOptions;
+            connectOptions.setDeadline(deadlineTime);
+            connectOptions.setRetryCount(k_CONNECT_RETRY_COUNT);
+
+            socket->connect(targetEp, connectOptions, test.d_connectCallback);
+        }
+
+        NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
+        {
+            const ntsa::Endpoint sourceEp("127.0.0.1:22");
+
+            NTF_EXPECT(
+                *test.d_reactorMock,
+                attachSocket,
+                NTF_EQ_SPEC(socket,
+                            const bsl::shared_ptr<ntci::ReactorSocket>&))
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            NTF_EXPECT(*test.d_reactorMock,
+                       showWritable,
+                       TM::EQ(socket),
+                       IGNORE_ARG)
+                .ONCE()
+                .RETURN(ntsa::Error());
+
+            NTF_EXPECT(*test.d_streamSocketMock, connect, TM::EQ(targetEp))
+                .ONCE()
+                .RETURN(ntsa::Error());
+
+            NTF_EXPECT(*test.d_streamSocketMock, sourceEndpoint, IGNORE_ARG)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR)
+                .SET_ARG_1(TM::FROM_DEREF(sourceEp));
+
+            ntca::TimerEvent timerEvent;
+            timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
+            retryTimerCallback(test.d_connectRetryTimerMock,
+                               timerEvent,
+                               test.d_nullStrand);
+        }
+
+        ntci::SocketDetachedCallback detachCallback;
+        NTCI_LOG_DEBUG("Indicate from the reactor that connection has failed");
+        {
+            NTF_EXPECT(*test.d_streamSocketMock, getLastError, IGNORE_ARG)
+                .ONCE()
+                .SET_ARG_1(TM::FROM_DEREF(test::Fixture::k_NO_ERROR))
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            NTF_EXPECT(*test.d_streamSocketMock, remoteEndpoint, IGNORE_ARG)
+                .ONCE()
+                .RETURN(ntsa::Error::invalid());
+
+            NTF_EXPECT(
+                *test.d_reactorMock,
+                detachSocket,
+                NTF_EQ_SPEC(socket,
+                            const bsl::shared_ptr<ntci::ReactorSocket>&),
+                IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_2(TM::TO(&detachCallback))
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            ntca::ReactorEvent                   event;
+            bsl::shared_ptr<ntci::ReactorSocket> reactorSocket = socket;
+            reactorSocket->processSocketWritable(event);
+            NTCCFG_TEST_TRUE(detachCallback);
+        }
+        NTCI_LOG_DEBUG("Shutdown socket while it is being detached");
+        {
+            socket->close(test.d_closeFunction);
+        }
+        ntci::Reactor::FunctorSequence functorSequence(&ta);
+        NTCI_LOG_DEBUG("Indicate that detachment is finished");
+        {
+            NTF_EXPECT(*test.d_streamSocketMock, close)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            NTF_EXPECT(*test.d_reactorMock,
+                       moveAndExecute,
+                       IGNORE_ARG,
+                       IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_1(TM::TO_DEREF(&functorSequence));
+
+            detachCallback(test.d_nullStrand);
+
+            NTCCFG_TEST_TRUE(test.d_connectResult.has_value());
+            NTCCFG_TEST_EQ(test.d_connectResult.value().type(),
+                           ntca::ConnectEventType::e_ERROR);
+            test.d_connectResult.reset();
+        }
+        NTCI_LOG_DEBUG("Execute postponed functions");
+        {
+            NTF_EXPECT(*test.d_connectRetryTimerMock, close)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            NTF_EXPECT(*test.d_connectDeadlineTimerMock, close)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            ntci::Reactor::Functor connectCallback;
+            NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_1(TM::TO(&connectCallback));
+
+            ntci::Reactor::Functor closeCallback;
+            NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_1(TM::TO(&closeCallback));
+
+            NTCCFG_TEST_EQ(functorSequence.size(), 1);
+            functorSequence.front()();
+
+            connectCallback();
+            NTCCFG_TEST_TRUE(test.d_connectResult.has_value());
+            NTCCFG_TEST_EQ(test.d_connectResult.value().type(),
+                           ntca::ConnectEventType::e_ERROR);
+
+            closeCallback();
+            NTCCFG_TEST_TRUE(test.d_closed);
+        }
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(33)
+{
+    // Concern: close socket while it is being detached, no connection
+    // retries are possible
+    // 1) Create ntcr::StreamSocket
+    // 2) Initiate connection to some IP
+    // 3) Expect ntsi::StreamSocket::connect() to be called, then ->
+    // 4) Indicate response from the reactor by calling processSocketWritable
+    // method, and then remoteEndpoint method should indicate an error
+    // 5) Expect that reactor should detach socket ->
+    // 6) Close socket (current implementation postpones the procedure)
+    // 7) Indicate that socket is detached
+    NTCI_LOG_CONTEXT();
+
+    ntccfg::TestAllocator ta;
+    {
+        NTCI_LOG_DEBUG("Fixture setup, socket creation...");
+
+        test::Fixture test(&ta);
+        test.setupReactorBase();
+
+        const ntca::StreamSocketOptions options;
+
+        bsl::shared_ptr<ntcr::StreamSocket> socket;
+        socket.createInplace(&ta,
+                             options,
+                             test.d_resolverMock,
+                             test.d_reactorMock,
+                             test.d_nullPool,
+                             test.d_nullMetrics,
+                             &ta);
+
+        NTCI_LOG_DEBUG("Inject mocked ntsi::StreamSocket");
+        {
+            test.injectStreamSocket(*socket);
+        }
+
+        ntci::TimerCallback  retryTimerCallback;
+        const ntsa::Endpoint targetEp("127.0.0.1:1234");
+        NTCI_LOG_DEBUG("Connection initiation...");
+        {
+            bsls::TimeInterval deadlineTime;
+            {
+                deadlineTime.setTotalHours(1);
+
+                NTF_EXPECT(*test.d_reactorMock,
+                           createTimer,
+                           IGNORE_ARG_S(const ntca::TimerOptions&),
+                           IGNORE_ARG_S(const ntci::TimerCallback&),
+                           IGNORE_ARG_S(bslma::Allocator*))
+                    .ONCE()
+                    .RETURN(test.d_connectDeadlineTimerMock);
+
+                NTF_EXPECT(*test.d_connectDeadlineTimerMock,
+                           schedule,
+                           TM::EQ(deadlineTime),
+                           TM::EQ(bsls::TimeInterval()))
+                    .ONCE()
+                    .RETURN(ntsa::Error());
+            }
+
+            {
+                NTF_EXPECT(*test.d_reactorMock,
+                           createTimer,
+                           IGNORE_ARG_S(const ntca::TimerOptions&),
+                           IGNORE_ARG_S(const ntci::TimerCallback&),
+                           IGNORE_ARG_S(bslma::Allocator*))
+                    .ONCE()
+                    .SAVE_ARG_2(TM::TO(&retryTimerCallback))
+                    .RETURN(test.d_connectRetryTimerMock);
+
+                NTF_EXPECT(*test.d_connectRetryTimerMock,
+                           schedule,
+                           IGNORE_ARG,
+                           IGNORE_ARG)
+                    .ONCE()
+                    .RETURN(ntsa::Error());
+            }
+
+            ntca::ConnectOptions connectOptions;
+            connectOptions.setDeadline(deadlineTime);
+
+            socket->connect(targetEp, connectOptions, test.d_connectCallback);
+        }
+
+        NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
+        {
+            const ntsa::Endpoint sourceEp("127.0.0.1:22");
+
+            NTF_EXPECT(
+                *test.d_reactorMock,
+                attachSocket,
+                NTF_EQ_SPEC(socket,
+                            const bsl::shared_ptr<ntci::ReactorSocket>&))
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            NTF_EXPECT(*test.d_reactorMock,
+                       showWritable,
+                       TM::EQ(socket),
+                       IGNORE_ARG)
+                .ONCE()
+                .RETURN(ntsa::Error());
+
+            NTF_EXPECT(*test.d_streamSocketMock, connect, TM::EQ(targetEp))
+                .ONCE()
+                .RETURN(ntsa::Error());
+
+            NTF_EXPECT(*test.d_streamSocketMock, sourceEndpoint, IGNORE_ARG)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR)
+                .SET_ARG_1(TM::FROM_DEREF(sourceEp));
+
+            ntca::TimerEvent timerEvent;
+            timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
+            retryTimerCallback(test.d_connectRetryTimerMock,
+                               timerEvent,
+                               test.d_nullStrand);
+        }
+
+        ntci::SocketDetachedCallback detachCallback;
+        NTCI_LOG_DEBUG("Indicate from the reactor that connection has failed");
+        {
+            NTF_EXPECT(*test.d_streamSocketMock, getLastError, IGNORE_ARG)
+                .ONCE()
+                .SET_ARG_1(TM::FROM_DEREF(test::Fixture::k_NO_ERROR))
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            NTF_EXPECT(*test.d_streamSocketMock, remoteEndpoint, IGNORE_ARG)
+                .ONCE()
+                .RETURN(ntsa::Error::invalid());
+
+            NTF_EXPECT(
+                *test.d_reactorMock,
+                detachSocket,
+                NTF_EQ_SPEC(socket,
+                            const bsl::shared_ptr<ntci::ReactorSocket>&),
+                IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_2(TM::TO(&detachCallback))
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            NTF_EXPECT(*test.d_connectRetryTimerMock, close)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            NTF_EXPECT(*test.d_connectDeadlineTimerMock, close)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            ntca::ReactorEvent                   event;
+            bsl::shared_ptr<ntci::ReactorSocket> reactorSocket = socket;
+            reactorSocket->processSocketWritable(event);
+            NTCCFG_TEST_TRUE(detachCallback);
+        }
+        NTCI_LOG_DEBUG("Close socket while it is being detached");
+        {
+            socket->close(test.d_closeFunction);
+        }
+        ntci::Reactor::FunctorSequence functorSequence(&ta);
+        NTCI_LOG_DEBUG("Indicate that detachment is finished");
+        {
+            NTF_EXPECT(*test.d_streamSocketMock, close)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            NTF_EXPECT(*test.d_reactorMock,
+                       moveAndExecute,
+                       IGNORE_ARG,
+                       IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_1(TM::TO_DEREF(&functorSequence));
+
+            detachCallback(test.d_nullStrand);
+
+            NTCCFG_TEST_TRUE(test.d_connectResult.has_value());
+            NTCCFG_TEST_EQ(test.d_connectResult.value().type(),
+                           ntca::ConnectEventType::e_ERROR);
+            test.d_connectResult.reset();
+        }
+        NTCI_LOG_DEBUG("Execute postponed functions");
+        {
+            ntci::Reactor::Functor closeCallback;
+            NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_1(TM::TO(&closeCallback));
+
+            NTCCFG_TEST_EQ(functorSequence.size(), 1);
+            functorSequence.front()();
+
+            closeCallback();
+            NTCCFG_TEST_TRUE(test.d_closed);
+        }
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(34)
+{
+    // Concern: shutdown and close socket while it is being detached and conection
+    // retries are possible
+    // 1) Create ntcr::StreamSocket
+    // 2) Initiate connection to some IP, some connection retries are planned
+    // 3) Expect ntsi::StreamSocket::connect() to be called, then ->
+    // 4) Indicate response from the reactor by calling processSocketWritable
+    // method, and then remoteEndpoint method should indicate an error
+    // 5) Expect that reactor should detach socket ->
+    // 6) Shutdown socket (current implementation postpones the procedure)
+    // 7) Indicate that socket is detached
+
+    NTCI_LOG_CONTEXT();
+
+    ntccfg::TestAllocator ta;
+    {
+        NTCI_LOG_DEBUG("Fixture setup, socket creation...");
+
+        test::Fixture test(&ta);
+        test.setupReactorBase();
+
+        const ntca::StreamSocketOptions options;
+
+        bsl::shared_ptr<ntcr::StreamSocket> socket;
+        socket.createInplace(&ta,
+                             options,
+                             test.d_resolverMock,
+                             test.d_reactorMock,
+                             test.d_nullPool,
+                             test.d_nullMetrics,
+                             &ta);
+
+        NTCI_LOG_DEBUG("Inject mocked ntsi::StreamSocket");
+        {
+            test.injectStreamSocket(*socket);
+        }
+
+        ntci::TimerCallback  retryTimerCallback;
+        const ntsa::Endpoint targetEp("127.0.0.1:1234");
+        NTCI_LOG_DEBUG("Connection initiation...");
+        {
+            const bsl::size_t  k_CONNECT_RETRY_COUNT = 5;
+            bsls::TimeInterval deadlineTime;
+            {
+                deadlineTime.setTotalHours(1);
+
+                NTF_EXPECT(*test.d_reactorMock,
+                           createTimer,
+                           IGNORE_ARG_S(const ntca::TimerOptions&),
+                           IGNORE_ARG_S(const ntci::TimerCallback&),
+                           IGNORE_ARG_S(bslma::Allocator*))
+                    .ONCE()
+                    .RETURN(test.d_connectDeadlineTimerMock);
+
+                NTF_EXPECT(*test.d_connectDeadlineTimerMock,
+                           schedule,
+                           TM::EQ(deadlineTime),
+                           TM::EQ(bsls::TimeInterval()))
+                    .ONCE()
+                    .RETURN(ntsa::Error());
+            }
+
+            {
+                NTF_EXPECT(*test.d_reactorMock,
+                           createTimer,
+                           IGNORE_ARG_S(const ntca::TimerOptions&),
+                           IGNORE_ARG_S(const ntci::TimerCallback&),
+                           IGNORE_ARG_S(bslma::Allocator*))
+                    .ONCE()
+                    .SAVE_ARG_2(TM::TO(&retryTimerCallback))
+                    .RETURN(test.d_connectRetryTimerMock);
+
+                NTF_EXPECT(*test.d_connectRetryTimerMock,
+                           schedule,
+                           IGNORE_ARG,
+                           IGNORE_ARG)
+                    .ONCE()
+                    .RETURN(ntsa::Error());
+            }
+
+            ntca::ConnectOptions connectOptions;
+            connectOptions.setDeadline(deadlineTime);
+            connectOptions.setRetryCount(k_CONNECT_RETRY_COUNT);
+
+            socket->connect(targetEp, connectOptions, test.d_connectCallback);
+        }
+
+        NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
+        {
+            const ntsa::Endpoint sourceEp("127.0.0.1:22");
+
+            NTF_EXPECT(
+                *test.d_reactorMock,
+                attachSocket,
+                NTF_EQ_SPEC(socket,
+                            const bsl::shared_ptr<ntci::ReactorSocket>&))
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            NTF_EXPECT(*test.d_reactorMock,
+                       showWritable,
+                       TM::EQ(socket),
+                       IGNORE_ARG)
+                .ONCE()
+                .RETURN(ntsa::Error());
+
+            NTF_EXPECT(*test.d_streamSocketMock, connect, TM::EQ(targetEp))
+                .ONCE()
+                .RETURN(ntsa::Error());
+
+            NTF_EXPECT(*test.d_streamSocketMock, sourceEndpoint, IGNORE_ARG)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR)
+                .SET_ARG_1(TM::FROM_DEREF(sourceEp));
+
+            ntca::TimerEvent timerEvent;
+            timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
+            retryTimerCallback(test.d_connectRetryTimerMock,
+                               timerEvent,
+                               test.d_nullStrand);
+        }
+
+        ntci::SocketDetachedCallback detachCallback;
+        NTCI_LOG_DEBUG("Indicate from the reactor that connection has failed");
+        {
+            NTF_EXPECT(*test.d_streamSocketMock, getLastError, IGNORE_ARG)
+                .ONCE()
+                .SET_ARG_1(TM::FROM_DEREF(test::Fixture::k_NO_ERROR))
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            NTF_EXPECT(*test.d_streamSocketMock, remoteEndpoint, IGNORE_ARG)
+                .ONCE()
+                .RETURN(ntsa::Error::invalid());
+
+            NTF_EXPECT(
+                *test.d_reactorMock,
+                detachSocket,
+                NTF_EQ_SPEC(socket,
+                            const bsl::shared_ptr<ntci::ReactorSocket>&),
+                IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_2(TM::TO(&detachCallback))
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            ntca::ReactorEvent                   event;
+            bsl::shared_ptr<ntci::ReactorSocket> reactorSocket = socket;
+            reactorSocket->processSocketWritable(event);
+            NTCCFG_TEST_TRUE(detachCallback);
+        }
+        NTCI_LOG_DEBUG("Shutdown and close socket while it is being detached");
+        {
+            socket->shutdown(ntsa::ShutdownType::e_BOTH,
+                             ntsa::ShutdownMode::e_GRACEFUL);
+            socket->close(test.d_closeFunction);
+        }
+        ntci::Reactor::FunctorSequence functorSequence(&ta);
+        NTCI_LOG_DEBUG("Indicate that detachment is finished");
+        {
+            NTF_EXPECT(*test.d_streamSocketMock, close)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            NTF_EXPECT(*test.d_reactorMock,
+                       moveAndExecute,
+                       IGNORE_ARG,
+                       IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_1(TM::TO_DEREF(&functorSequence));
+
+            detachCallback(test.d_nullStrand);
+
+            NTCCFG_TEST_TRUE(test.d_connectResult.has_value());
+            NTCCFG_TEST_EQ(test.d_connectResult.value().type(),
+                           ntca::ConnectEventType::e_ERROR);
+            test.d_connectResult.reset();
+        }
+        NTCI_LOG_DEBUG("Execute postponed functions");
+        {
+            NTF_EXPECT(*test.d_connectRetryTimerMock, close)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            NTF_EXPECT(*test.d_connectDeadlineTimerMock, close)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            ntci::Reactor::Functor connectCallback;
+            NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_1(TM::TO(&connectCallback));
+
+            NTCCFG_TEST_EQ(functorSequence.size(), 2);
+            functorSequence.front()();
+            functorSequence.pop_front();
+
+            connectCallback();
+            NTCCFG_TEST_TRUE(test.d_connectResult.has_value());
+            NTCCFG_TEST_EQ(test.d_connectResult.value().type(),
+                           ntca::ConnectEventType::e_ERROR);
+
+            ntci::Reactor::Functor closeCallback;
+            NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_1(TM::TO(&closeCallback));
+            functorSequence.front()();
+
+            closeCallback();
+            NTCCFG_TEST_TRUE(test.d_closed);
+        }
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
+NTCCFG_TEST_CASE(35)
+{
+    // Concern: close socket while it is being detached, and detachment is
+    // caused by previous shutdown call while the socket was waiting for
+    // connection attempt result, connection deadline timer is set
+    // 1) Create ntcr::StreamSocket
+    // 2) Initiate connection to some IP, no connection retries planned,
+    // deadline time is set
+    // 3) Expect ntsi::StreamSocket::connect() to be called, then ->
+    // 4) Trigger socket shutdown
+    // 5) When socket is waiting for detachmet -> close socket
+    NTCI_LOG_CONTEXT();
+
+    ntccfg::TestAllocator ta;
+    {
+        NTCI_LOG_DEBUG("Fixture setup, socket creation...");
+
+        test::Fixture test(&ta);
+        test.setupReactorBase();
+
+        const ntca::StreamSocketOptions options;
+
+        bsl::shared_ptr<ntcr::StreamSocket> socket;
+        socket.createInplace(&ta,
+                             options,
+                             test.d_resolverMock,
+                             test.d_reactorMock,
+                             test.d_nullPool,
+                             test.d_nullMetrics,
+                             &ta);
+
+        NTCI_LOG_DEBUG("Inject mocked ntsi::StreamSocket");
+        {
+            test.injectStreamSocket(*socket);
+        }
+
+        ntci::TimerCallback  retryTimerCallback;
+        const ntsa::Endpoint targetEp("127.0.0.1:1234");
+        NTCI_LOG_DEBUG("Connection initiation...");
+        {
+            bsls::TimeInterval deadlineTime;
+            {
+                deadlineTime.setTotalHours(1);
+
+                NTF_EXPECT(*test.d_reactorMock,
+                           createTimer,
+                           IGNORE_ARG_S(const ntca::TimerOptions&),
+                           IGNORE_ARG_S(const ntci::TimerCallback&),
+                           IGNORE_ARG_S(bslma::Allocator*))
+                    .ONCE()
+                    .RETURN(test.d_connectDeadlineTimerMock);
+
+                NTF_EXPECT(*test.d_connectDeadlineTimerMock,
+                           schedule,
+                           TM::EQ(deadlineTime),
+                           TM::EQ(bsls::TimeInterval()))
+                    .ONCE()
+                    .RETURN(ntsa::Error());
+            }
+
+            {
+                NTF_EXPECT(*test.d_reactorMock,
+                           createTimer,
+                           IGNORE_ARG_S(const ntca::TimerOptions&),
+                           IGNORE_ARG_S(const ntci::TimerCallback&),
+                           IGNORE_ARG_S(bslma::Allocator*))
+                    .ONCE()
+                    .SAVE_ARG_2(TM::TO(&retryTimerCallback))
+                    .RETURN(test.d_connectRetryTimerMock);
+
+                NTF_EXPECT(*test.d_connectRetryTimerMock,
+                           schedule,
+                           IGNORE_ARG,
+                           IGNORE_ARG)
+                    .ONCE()
+                    .RETURN(ntsa::Error());
+            }
+
+            ntca::ConnectOptions connectOptions;
+            connectOptions.setDeadline(deadlineTime);
+
+            socket->connect(targetEp, connectOptions, test.d_connectCallback);
+        }
+
+        NTCI_LOG_DEBUG("Trigger internal timer to initiate connection...");
+        {
+            const ntsa::Endpoint sourceEp("127.0.0.1:22");
+
+            NTF_EXPECT(
+                *test.d_reactorMock,
+                attachSocket,
+                NTF_EQ_SPEC(socket,
+                            const bsl::shared_ptr<ntci::ReactorSocket>&))
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            NTF_EXPECT(*test.d_reactorMock,
+                       showWritable,
+                       TM::EQ(socket),
+                       IGNORE_ARG)
+                .ONCE()
+                .RETURN(ntsa::Error());
+
+            NTF_EXPECT(*test.d_streamSocketMock, connect, TM::EQ(targetEp))
+                .ONCE()
+                .RETURN(ntsa::Error());
+
+            NTF_EXPECT(*test.d_streamSocketMock, sourceEndpoint, IGNORE_ARG)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR)
+                .SET_ARG_1(TM::FROM_DEREF(sourceEp));
+
+            ntca::TimerEvent timerEvent;
+            timerEvent.setType(ntca::TimerEventType::e_DEADLINE);
+            retryTimerCallback(test.d_connectRetryTimerMock,
+                               timerEvent,
+                               test.d_nullStrand);
+        }
+
+        ntci::SocketDetachedCallback detachCallback;
+        NTCI_LOG_DEBUG(
+            "Shutdown socket while it is waiting for connection result");
+        {
+            NTF_EXPECT(*test.d_connectRetryTimerMock, close)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+            NTF_EXPECT(*test.d_connectDeadlineTimerMock, close)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            NTF_EXPECT(
+                *test.d_reactorMock,
+                detachSocket,
+                NTF_EQ_SPEC(socket,
+                            const bsl::shared_ptr<ntci::ReactorSocket>&),
+                IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_2(TM::TO(&detachCallback))
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            socket->shutdown(ntsa::ShutdownType::e_BOTH,
+                             ntsa::ShutdownMode::e_GRACEFUL);
+        }
+        NTCI_LOG_DEBUG("Close socket while it is being detached");
+        {
+            socket->close(test.d_closeFunction);
+        }
+        NTCI_LOG_DEBUG("Indicate detachment is finished");
+        {
+            NTCCFG_TEST_TRUE(detachCallback);
+
+            NTF_EXPECT(*test.d_streamSocketMock, close)
+                .ONCE()
+                .RETURN(test::Fixture::k_NO_ERROR);
+
+            ntci::Reactor::Functor callback;
+            NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_1(TM::TO(&callback));
+
+            ntci::Reactor::FunctorSequence functorSequence(&ta);
+            NTF_EXPECT(*test.d_reactorMock,
+                       moveAndExecute,
+                       IGNORE_ARG,
+                       IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_1(TM::TO_DEREF(&functorSequence));
+
+            detachCallback(test.d_nullStrand);
+
+            callback();
+
+            NTCCFG_TEST_TRUE(test.d_connectResult.has_value());
+            NTCCFG_TEST_EQ(test.d_connectResult.value().type(),
+                           ntca::ConnectEventType::e_ERROR);
+
+
+            ntci::Reactor::Functor closeCallback;
+            NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
+                .ONCE()
+                .SAVE_ARG_1(TM::TO(&closeCallback));
+            NTCCFG_TEST_EQ(functorSequence.size(), 1);
+            functorSequence.front()();
+
+            closeCallback();
+            NTCCFG_TEST_TRUE(test.d_closed);
         }
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
@@ -4543,6 +5989,16 @@ NTCCFG_TEST_DRIVER
     NTCCFG_TEST_REGISTER(25);
     NTCCFG_TEST_REGISTER(26);
     NTCCFG_TEST_REGISTER(27);
+
+    NTCCFG_TEST_REGISTER(28);
+    NTCCFG_TEST_REGISTER(29);
+    NTCCFG_TEST_REGISTER(30);
+    NTCCFG_TEST_REGISTER(31);
+    NTCCFG_TEST_REGISTER(32);
+    NTCCFG_TEST_REGISTER(33);
+
+    NTCCFG_TEST_REGISTER(34);
+    NTCCFG_TEST_REGISTER(35);
 }
 NTCCFG_TEST_DRIVER_END;
 
