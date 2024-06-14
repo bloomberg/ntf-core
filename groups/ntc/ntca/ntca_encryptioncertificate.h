@@ -5392,11 +5392,12 @@ void hashAppend(HASH_ALGORITHM&                           algorithm,
 /// @ingroup module_ntci_encryption
 class EncryptionCertificateEntity
 {
+    typedef ntca::EncryptionCertificateVersion       Version;
     typedef ntsa::AbstractBitString                  UniqueIdentifier;
     typedef ntca::EncryptionCertificateExtension     Extension;
     typedef ntca::EncryptionCertificateExtensionList ExtensionList;
 
-    ntca::EncryptionCertificateVersion            d_version;
+    bdlb::NullableValue<Version>                  d_version;
     ntsa::AbstractInteger                         d_serialNumber;
     ntca::EncryptionCertificateSignatureAlgorithm d_signatureAlgorithm;
     ntca::EncryptionCertificateIssuer             d_issuer;
