@@ -44,16 +44,6 @@ ntf_repository_enable_coverage(
     ${NTF_BUILD_WITH_COVERAGE})
 
 if (${NTF_BUILD_WITH_NTS})
-    configure_file(
-        ${CMAKE_CURRENT_LIST_DIR}/cmake/templates/ntscfg_config.h
-        ${CMAKE_BINARY_DIR}/ntscfg_config.h
-        @ONLY)
-
-    configure_file(
-        ${CMAKE_CURRENT_LIST_DIR}/cmake/templates/ntscfg_config.cpp
-        ${CMAKE_BINARY_DIR}/ntscfg_config.cpp
-        @ONLY)
-
     ntf_group(
         NAME
             nts
@@ -87,6 +77,16 @@ if (${NTF_BUILD_WITH_NTS})
         REQUIRES
             ntsscm
     )
+
+    configure_file(
+        ${CMAKE_CURRENT_LIST_DIR}/cmake/templates/ntscfg_config.h
+        ${CMAKE_BINARY_DIR}/ntscfg_config.h
+        @ONLY)
+
+    configure_file(
+        ${CMAKE_CURRENT_LIST_DIR}/cmake/templates/ntscfg_config.cpp
+        ${CMAKE_BINARY_DIR}/ntscfg_config.cpp
+        @ONLY)
 
     ntf_component(PATH ${CMAKE_BINARY_DIR}/ntscfg_config.cpp)
     ntf_component(NAME ntscfg_limits)
@@ -295,16 +295,6 @@ if (${NTF_BUILD_WITH_NTS})
 endif()
 
 if (${NTF_BUILD_WITH_NTC})
-    configure_file(
-        ${CMAKE_CURRENT_LIST_DIR}/cmake/templates/ntccfg_config.h
-        ${CMAKE_BINARY_DIR}/ntccfg_config.h
-        @ONLY)
-
-    configure_file(
-        ${CMAKE_CURRENT_LIST_DIR}/cmake/templates/ntccfg_config.cpp
-        ${CMAKE_BINARY_DIR}/ntccfg_config.cpp
-        @ONLY)
-
     ntf_group(
         NAME
             ntc
@@ -341,6 +331,16 @@ if (${NTF_BUILD_WITH_NTC})
         REQUIRES
             ntcscm
     )
+
+    configure_file(
+        ${CMAKE_CURRENT_LIST_DIR}/cmake/templates/ntccfg_config.h
+        ${CMAKE_BINARY_DIR}/ntccfg_config.h
+        @ONLY)
+
+    configure_file(
+        ${CMAKE_CURRENT_LIST_DIR}/cmake/templates/ntccfg_config.cpp
+        ${CMAKE_BINARY_DIR}/ntccfg_config.cpp
+        @ONLY)
 
     ntf_component(PATH ${CMAKE_BINARY_DIR}/ntccfg_config.cpp)
 

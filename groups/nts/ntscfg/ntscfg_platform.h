@@ -228,6 +228,18 @@ struct Platform {
     /// Return true if the local host database (i.e. "/etc/hosts" or the
     /// platform equivalent) exists, otherwise return false.
     static bool hasPortDatabase();
+
+    /// Return the build branch, or the version string if the build branch
+    /// is unknown. 
+    static bsl::string buildBranch();
+
+    /// Return the build commit hash, or the empty string if the build commit
+    /// hash is unknown. 
+    static bsl::string buildCommitHash();
+
+    /// Return the build commit hash, abbreviated, or the empty string if the
+    /// build commit hash is unknown.
+    static bsl::string buildCommitHashAbbrev();
 };
 
 /// @internal @brief

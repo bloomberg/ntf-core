@@ -3013,6 +3013,65 @@ function (ntf_scan)
 
 endfunction()
 
+function (ntf_target_build_info)
+    cmake_parse_arguments(
+        NTF_TARGET "" "NAME;PATH" "" ${ARGN})
+
+    if ("${NTF_TARGET_NAME}" STREQUAL "")
+        message(FATAL_ERROR "Invalid parameter: NAME")
+    endif()
+
+    if ("${NTF_TARGET_PATH}" STREQUAL "")
+        message(FATAL_ERROR "Invalid parameter: PATH")
+    endif()
+
+    string(TOLOWER ${NTF_TARGET_NAME} target_lowercase)
+    string(TOUPPER ${NTF_TARGET_NAME} target_uppercase)
+
+    set(target ${target_lowercase})
+
+    if (IS_ABSOLUTE ${NTF_TARGET_PATH})
+        set(target_path ${NTF_TARGET_PATH})
+    else()
+        ntf_repository_path_get(OUTPUT repository_path)
+        file(REAL_PATH ${NTF_TARGET_PATH} target_path
+             BASE_DIRECTORY ${repository_path})
+    endif()
+
+    execute_process(
+      COMMAND git rev-parse --abbrev-ref HEAD
+      WORKING_DIRECTORY ${target_path}
+      OUTPUT_VARIABLE GIT_BRANCH
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+    execute_process(
+      COMMAND git log -1 --format=%H
+      WORKING_DIRECTORY ${target_path}
+      OUTPUT_VARIABLE GIT_COMMIT_HASH
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+    execute_process(
+      COMMAND git log -1 --format=%h
+      WORKING_DIRECTORY ${target_path}
+      OUTPUT_VARIABLE GIT_COMMIT_HASH_ABBREV
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+    set(${target_uppercase}_BUILD_BRANCH 
+        "${GIT_BRANCH}" 
+        CACHE INTERNAL "" FORCE)
+
+    set(${target_uppercase}_BUILD_COMMIT_HASH 
+        "${GIT_COMMIT_HASH}" 
+        CACHE INTERNAL "" FORCE)
+
+    set(${target_uppercase}_BUILD_COMMIT_HASH_ABBREV 
+        "${GIT_COMMIT_HASH_ABBREV}" 
+        CACHE INTERNAL "" FORCE)
+
+endfunction()
 
 # Begin the definition of a group.
 #
@@ -3136,6 +3195,8 @@ function (ntf_group)
             add_dependencies(documentation ${target})
         endif()
     endif()
+
+    ntf_target_build_info(NAME ${target} PATH ${target_path})
 
 endfunction()
 

@@ -225,5 +225,33 @@ bool Platform::hasPortDatabase()
 #error Not implemented
 #endif
 
+bsl::string Platform::buildBranch()
+{
+    bsl::string result = NTS_BUILD_BRANCH;
+    if (result.empty()) {
+        bsl::stringstream ss;
+        ss << NTS_VERSION_MAJOR
+           << '.'
+           << NTS_VERSION_MINOR
+           << '.'
+           << NTS_VERSION_PATCH;
+        result = ss.str();
+    }
+
+    return result;
+}
+
+bsl::string Platform::buildCommitHash()
+{
+    bsl::string result = NTS_BUILD_COMMIT_HASH;
+    return result;
+}
+
+bsl::string Platform::buildCommitHashAbbrev()
+{
+    bsl::string result = NTS_BUILD_COMMIT_HASH_ABBREV;
+    return result;
+}
+
 }  // close package namespace
 }  // close enterprise namespace
