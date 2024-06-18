@@ -27,11 +27,20 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntccfg {
 
-// The platform name.
+// The build platform name.
 #define NTC_BUILD_UNAME "@NTF_BUILD_UNAME@"
 
-// The platform build configuration flags.
+// The build configuration flags.
 #define NTC_BUILD_UFID "@NTF_BUILD_UFID@"
+
+// The build branch.
+#define NTC_BUILD_BRANCH "@NTC_BUILD_BRANCH@"
+
+// The build commit hash.
+#define NTC_BUILD_COMMIT_HASH "@NTC_BUILD_COMMIT_HASH@"
+
+// The build commit hash, abbreviated.
+#define NTC_BUILD_COMMIT_HASH_ABBREV "@NTC_BUILD_COMMIT_HASH_ABBREV@"
 
 // Build with BSL.
 #define NTC_BUILD_WITH_BSL @NTF_BUILD_WITH_BSL@
