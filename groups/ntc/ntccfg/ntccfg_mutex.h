@@ -345,7 +345,7 @@ typedef bslmt::LockGuard<ntccfg::SpinLock> LockGuard;
 /// @ingroup module_ntccfg
 typedef bslmt::UnLockGuard<ntccfg::SpinLock> UnLockGuard;
 
-#elif NTCCFG_MUTEX_IMPL == NTCCFG_MUTEX_IMPL_BSLMT_FUTEX
+#elif NTCCFG_MUTEX_IMPL == NTCCFG_MUTEX_IMPL_FUTEX
 
 /// @internal @brief
 /// Provide a synchronization primitive for mutually-exclusive access.
