@@ -42,7 +42,7 @@ namespace ntccfg {
 #if NTCCFG_FUTEX_ENABLED
 
 // Some versions of GCC issue a spurious warning that the 'current' paramter
-// is set but not used when 'Mutex::compareAndSwap' is called.
+// is set but not used when 'Futex::compareAndSwap' is called.
 #if defined(BSLS_PLATFORM_CMP_GNU)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
@@ -99,7 +99,7 @@ class __attribute__((__aligned__(sizeof(int)))) Futex
 };
 
 NTCCFG_INLINE
-int Mutex::compareAndSwap(int* current, int expected, int desired)
+int Futex::compareAndSwap(int* current, int expected, int desired)
 {
     int* ep = &expected;
     int* dp = &desired;
@@ -115,18 +115,18 @@ int Mutex::compareAndSwap(int* current, int expected, int desired)
 }
 
 NTCCFG_INLINE
-Mutex::Mutex()
+Futex::Futex()
 {
     __atomic_store_n(&d_value, 0, __ATOMIC_RELAXED);
 }
 
 NTCCFG_INLINE
-Mutex::~Mutex()
+Futex::~Futex()
 {
 }
 
 NTCCFG_INLINE
-void Mutex::lock()
+void Futex::lock()
 {
     int previous = compareAndSwap(&d_value, 0, 1);
     if (previous != 0) {
@@ -135,7 +135,7 @@ void Mutex::lock()
 }
 
 NTCCFG_INLINE
-void Mutex::unlock()
+void Futex::unlock()
 {
     int previous = __atomic_fetch_sub(&d_value, 1, __ATOMIC_SEQ_CST);
     if (previous != 1) {
