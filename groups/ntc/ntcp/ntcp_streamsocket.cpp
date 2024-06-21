@@ -3265,8 +3265,8 @@ ntsa::Error StreamSocket::privateUpgrade(
         bdlf::MemFnUtil::memFn(&StreamSocket::privateEncryptionHandshake,
                                this);
 
-    error = d_encryption_sp->initiateHandshake(upgradeOptions, 
-                                               handshakeCallback);
+    error =
+        d_encryption_sp->initiateHandshake(upgradeOptions, handshakeCallback);
     if (error) {
         return error;
     }
@@ -3392,7 +3392,7 @@ void StreamSocket::privateRetryConnect(
         error = this->privateRetryConnectToEndpoint(self);
     }
     else {
-        error = this->privateRetryConnectToName(self);
+        error = this->privateRetryConnectToName();
     }
 
     if (error) {
@@ -3400,9 +3400,25 @@ void StreamSocket::privateRetryConnect(
     }
 }
 
-ntsa::Error StreamSocket::privateRetryConnectToName(
-    const bsl::shared_ptr<StreamSocket>& self)
+ntsa::Error StreamSocket::privateRetryConnectToName()
 {
+    struct WeakBinder {
+        static void invoke(const bsl::weak_ptr<StreamSocket>&     socket,
+                           const bsl::shared_ptr<ntci::Resolver>& resolver,
+                           const ntsa::Endpoint&                  endpoint,
+                           const ntca::GetEndpointEvent& getEndpointEvent,
+                           bsl::size_t                   connectAttempts)
+        {
+            const bsl::shared_ptr<StreamSocket> strongRef = socket.lock();
+            if (strongRef) {
+                strongRef->processRemoteEndpointResolution(resolver,
+                                                           endpoint,
+                                                           getEndpointEvent,
+                                                           connectAttempts);
+            }
+        }
+    };
+
     ntsa::Error error;
 
     ntcs::ObserverRef<ntci::Resolver> resolverRef(&d_resolver);
@@ -3415,8 +3431,8 @@ ntsa::Error StreamSocket::privateRetryConnectToName(
 
     ntci::GetEndpointCallback getEndpointCallback =
         resolverRef->createGetEndpointCallback(
-            NTCCFG_BIND(&StreamSocket::processRemoteEndpointResolution,
-                        self,
+            NTCCFG_BIND(&WeakBinder::invoke,
+                        this->weak_from_this(),
                         NTCCFG_BIND_PLACEHOLDER_1,
                         NTCCFG_BIND_PLACEHOLDER_2,
                         NTCCFG_BIND_PLACEHOLDER_3,

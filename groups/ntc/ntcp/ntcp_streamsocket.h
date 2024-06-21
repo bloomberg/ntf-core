@@ -490,8 +490,7 @@ class StreamSocket : public ntci::StreamSocket,
     void privateRetryConnect(const bsl::shared_ptr<StreamSocket>& self);
 
     /// Retry connecting to the remote name. Return the error.
-    ntsa::Error privateRetryConnectToName(
-        const bsl::shared_ptr<StreamSocket>& self);
+    ntsa::Error privateRetryConnectToName();
 
     /// Retry connecting to the remote endpoint. Return the error.
     ntsa::Error privateRetryConnectToEndpoint(
