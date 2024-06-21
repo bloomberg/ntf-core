@@ -624,10 +624,11 @@ class Callback
     /// 'ntsa::Error::e_PENDING' if the function has been deferred to
     /// execute on this object's strand, and 'ntsa::Error::e_OK' if the
     /// function has been called and returned.
+    template <typename MUTEX>
     ntsa::Error dispatch(const bsl::shared_ptr<ntci::Strand>&   callerStrand,
                          const bsl::shared_ptr<ntci::Executor>& executor,
                          bool                                   defer,
-                         bslmt::Mutex*                          mutex) const;
+                         MUTEX*                                 mutex) const;
 
     /// Invoke the callback function with 1 argument. If the specified
     /// 'defer' flag is false and the requirements of this object's strand
@@ -642,12 +643,12 @@ class Callback
     /// 'ntsa::Error::e_PENDING' if the function has been deferred to
     /// execute on this object's strand, and 'ntsa::Error::e_OK' if the
     /// function has been called and returned.
-    template <typename ARG1>
+    template <typename ARG1, typename MUTEX>
     ntsa::Error dispatch(ARG1                                   arg1,
                          const bsl::shared_ptr<ntci::Strand>&   callerStrand,
                          const bsl::shared_ptr<ntci::Executor>& executor,
                          bool                                   defer,
-                         bslmt::Mutex*                          mutex) const;
+                         MUTEX*                                 mutex) const;
 
     /// Invoke the callback function with 2 arguments. If the specified
     /// 'defer' flag is false and the requirements of this object's strand
@@ -662,13 +663,13 @@ class Callback
     /// 'ntsa::Error::e_PENDING' if the function has been deferred to
     /// execute on this object's strand, and 'ntsa::Error::e_OK' if the
     /// function has been called and returned.
-    template <typename ARG1, typename ARG2>
+    template <typename ARG1, typename ARG2, typename MUTEX>
     ntsa::Error dispatch(ARG1                                   arg1,
                          ARG2                                   arg2,
                          const bsl::shared_ptr<ntci::Strand>&   callerStrand,
                          const bsl::shared_ptr<ntci::Executor>& executor,
                          bool                                   defer,
-                         bslmt::Mutex*                          mutex) const;
+                         MUTEX*                                 mutex) const;
 
     /// Invoke the callback function with 3 arguments. If the specified
     /// 'defer' flag is false and the requirements of this object's strand
@@ -683,14 +684,14 @@ class Callback
     /// 'ntsa::Error::e_PENDING' if the function has been deferred to
     /// execute on this object's strand, and 'ntsa::Error::e_OK' if the
     /// function has been called and returned.
-    template <typename ARG1, typename ARG2, typename ARG3>
+    template <typename ARG1, typename ARG2, typename ARG3, typename MUTEX>
     ntsa::Error dispatch(ARG1                                   arg1,
                          ARG2                                   arg2,
                          ARG3                                   arg3,
                          const bsl::shared_ptr<ntci::Strand>&   callerStrand,
                          const bsl::shared_ptr<ntci::Executor>& executor,
                          bool                                   defer,
-                         bslmt::Mutex*                          mutex) const;
+                         MUTEX*                                 mutex) const;
 
     /// Invoke the callback function with 4 arguments. If the specified
     /// 'defer' flag is false and the requirements of this object's strand
@@ -705,7 +706,11 @@ class Callback
     /// 'ntsa::Error::e_PENDING' if the function has been deferred to
     /// execute on this object's strand, and 'ntsa::Error::e_OK' if the
     /// function has been called and returned.
-    template <typename ARG1, typename ARG2, typename ARG3, typename ARG4>
+    template <typename ARG1,
+              typename ARG2,
+              typename ARG3,
+              typename ARG4,
+              typename MUTEX>
     ntsa::Error dispatch(ARG1                                   arg1,
                          ARG2                                   arg2,
                          ARG3                                   arg3,
@@ -713,7 +718,7 @@ class Callback
                          const bsl::shared_ptr<ntci::Strand>&   callerStrand,
                          const bsl::shared_ptr<ntci::Executor>& executor,
                          bool                                   defer,
-                         bslmt::Mutex*                          mutex) const;
+                         MUTEX*                                 mutex) const;
 
     /// Invoke the callback function with 5 arguments. If the specified
     /// 'defer' flag is false and the requirements of this object's strand
@@ -732,7 +737,8 @@ class Callback
               typename ARG2,
               typename ARG3,
               typename ARG4,
-              typename ARG5>
+              typename ARG5,
+              typename MUTEX>
     ntsa::Error dispatch(ARG1                                   arg1,
                          ARG2                                   arg2,
                          ARG3                                   arg3,
@@ -741,7 +747,7 @@ class Callback
                          const bsl::shared_ptr<ntci::Strand>&   callerStrand,
                          const bsl::shared_ptr<ntci::Executor>& executor,
                          bool                                   defer,
-                         bslmt::Mutex*                          mutex) const;
+                         MUTEX*                                 mutex) const;
 
     /// Invoke the callback function with 6 arguments. If the specified
     /// 'defer' flag is false and the requirements of this object's strand
@@ -761,7 +767,8 @@ class Callback
               typename ARG3,
               typename ARG4,
               typename ARG5,
-              typename ARG6>
+              typename ARG6,
+              typename MUTEX>
     ntsa::Error dispatch(ARG1                                   arg1,
                          ARG2                                   arg2,
                          ARG3                                   arg3,
@@ -771,7 +778,7 @@ class Callback
                          const bsl::shared_ptr<ntci::Strand>&   callerStrand,
                          const bsl::shared_ptr<ntci::Executor>& executor,
                          bool                                   defer,
-                         bslmt::Mutex*                          mutex) const;
+                         MUTEX*                                 mutex) const;
 
     /// Invoke the callback function with 7 arguments. If the specified
     /// 'defer' flag is false and the requirements of this object's strand
@@ -792,7 +799,8 @@ class Callback
               typename ARG4,
               typename ARG5,
               typename ARG6,
-              typename ARG7>
+              typename ARG7,
+              typename MUTEX>
     ntsa::Error dispatch(ARG1                                   arg1,
                          ARG2                                   arg2,
                          ARG3                                   arg3,
@@ -803,7 +811,7 @@ class Callback
                          const bsl::shared_ptr<ntci::Strand>&   callerStrand,
                          const bsl::shared_ptr<ntci::Executor>& executor,
                          bool                                   defer,
-                         bslmt::Mutex*                          mutex) const;
+                         MUTEX*                                 mutex) const;
 
     /// Invoke the callback function with 8 arguments. If the specified
     /// 'defer' flag is false and the requirements of this object's strand
@@ -825,7 +833,8 @@ class Callback
               typename ARG5,
               typename ARG6,
               typename ARG7,
-              typename ARG8>
+              typename ARG8,
+              typename MUTEX>
     ntsa::Error dispatch(ARG1                                   arg1,
                          ARG2                                   arg2,
                          ARG3                                   arg3,
@@ -837,7 +846,7 @@ class Callback
                          const bsl::shared_ptr<ntci::Strand>&   callerStrand,
                          const bsl::shared_ptr<ntci::Executor>& executor,
                          bool                                   defer,
-                         bslmt::Mutex*                          mutex) const;
+                         MUTEX*                                 mutex) const;
 
     /// Invoke the callback function with 9 arguments. If the specified
     /// 'defer' flag is false and the requirements of this object's strand
@@ -860,7 +869,8 @@ class Callback
               typename ARG6,
               typename ARG7,
               typename ARG8,
-              typename ARG9>
+              typename ARG9,
+              typename MUTEX>
     ntsa::Error dispatch(ARG1                                   arg1,
                          ARG2                                   arg2,
                          ARG3                                   arg3,
@@ -873,7 +883,7 @@ class Callback
                          const bsl::shared_ptr<ntci::Strand>&   callerStrand,
                          const bsl::shared_ptr<ntci::Executor>& executor,
                          bool                                   defer,
-                         bslmt::Mutex*                          mutex) const;
+                         MUTEX*                                 mutex) const;
 
     /// Return the strand, if any, on which the callback function should be
     /// executed.
@@ -1574,11 +1584,12 @@ NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::execute(
 }
 
 template <typename SIGNATURE>
+template <typename MUTEX>
 NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     const bsl::shared_ptr<ntci::Strand>&   callerStrand,
     const bsl::shared_ptr<ntci::Executor>& executor,
     bool                                   defer,
-    bslmt::Mutex*                          mutex) const
+    MUTEX*                                 mutex) const
 {
     if (NTCCFG_UNLIKELY(!d_invoker_sp)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -1587,7 +1598,7 @@ NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     if (NTCCFG_LIKELY(!defer &&
                       ntci::Strand::passthrough(d_strand_sp, callerStrand)))
     {
-        bslmt::UnLockGuard<bslmt::Mutex> guard(mutex);
+        bslmt::UnLockGuard<MUTEX> guard(mutex);
         return d_invoker_sp->call0();
     }
     else {
@@ -1609,13 +1620,13 @@ NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
 }
 
 template <typename SIGNATURE>
-template <typename ARG1>
+template <typename ARG1, typename MUTEX>
 NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     ARG1                                   arg1,
     const bsl::shared_ptr<ntci::Strand>&   callerStrand,
     const bsl::shared_ptr<ntci::Executor>& executor,
     bool                                   defer,
-    bslmt::Mutex*                          mutex) const
+    MUTEX*                                 mutex) const
 {
     if (NTCCFG_UNLIKELY(!d_invoker_sp)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -1624,7 +1635,7 @@ NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     if (NTCCFG_LIKELY(!defer &&
                       ntci::Strand::passthrough(d_strand_sp, callerStrand)))
     {
-        bslmt::UnLockGuard<bslmt::Mutex> guard(mutex);
+        bslmt::UnLockGuard<MUTEX> guard(mutex);
         return d_invoker_sp->call1(arg1);
     }
     else {
@@ -1648,14 +1659,14 @@ NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
 }
 
 template <typename SIGNATURE>
-template <typename ARG1, typename ARG2>
+template <typename ARG1, typename ARG2, typename MUTEX>
 NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     ARG1                                   arg1,
     ARG2                                   arg2,
     const bsl::shared_ptr<ntci::Strand>&   callerStrand,
     const bsl::shared_ptr<ntci::Executor>& executor,
     bool                                   defer,
-    bslmt::Mutex*                          mutex) const
+    MUTEX*                                 mutex) const
 {
     if (NTCCFG_UNLIKELY(!d_invoker_sp)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -1664,7 +1675,7 @@ NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     if (NTCCFG_LIKELY(!defer &&
                       ntci::Strand::passthrough(d_strand_sp, callerStrand)))
     {
-        bslmt::UnLockGuard<bslmt::Mutex> guard(mutex);
+        bslmt::UnLockGuard<MUTEX> guard(mutex);
         return d_invoker_sp->call2(arg1, arg2);
     }
     else {
@@ -1689,7 +1700,7 @@ NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
 }
 
 template <typename SIGNATURE>
-template <typename ARG1, typename ARG2, typename ARG3>
+template <typename ARG1, typename ARG2, typename ARG3, typename MUTEX>
 NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     ARG1                                   arg1,
     ARG2                                   arg2,
@@ -1697,7 +1708,7 @@ NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     const bsl::shared_ptr<ntci::Strand>&   callerStrand,
     const bsl::shared_ptr<ntci::Executor>& executor,
     bool                                   defer,
-    bslmt::Mutex*                          mutex) const
+    MUTEX*                                 mutex) const
 {
     if (NTCCFG_UNLIKELY(!d_invoker_sp)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -1706,7 +1717,7 @@ NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     if (NTCCFG_LIKELY(!defer &&
                       ntci::Strand::passthrough(d_strand_sp, callerStrand)))
     {
-        bslmt::UnLockGuard<bslmt::Mutex> guard(mutex);
+        bslmt::UnLockGuard<MUTEX> guard(mutex);
         return d_invoker_sp->call3(arg1, arg2, arg3);
     }
     else {
@@ -1732,7 +1743,11 @@ NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
 }
 
 template <typename SIGNATURE>
-template <typename ARG1, typename ARG2, typename ARG3, typename ARG4>
+template <typename ARG1,
+          typename ARG2,
+          typename ARG3,
+          typename ARG4,
+          typename MUTEX>
 NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     ARG1                                   arg1,
     ARG2                                   arg2,
@@ -1741,7 +1756,7 @@ NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     const bsl::shared_ptr<ntci::Strand>&   callerStrand,
     const bsl::shared_ptr<ntci::Executor>& executor,
     bool                                   defer,
-    bslmt::Mutex*                          mutex) const
+    MUTEX*                                 mutex) const
 {
     if (NTCCFG_UNLIKELY(!d_invoker_sp)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -1750,7 +1765,7 @@ NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     if (NTCCFG_LIKELY(!defer &&
                       ntci::Strand::passthrough(d_strand_sp, callerStrand)))
     {
-        bslmt::UnLockGuard<bslmt::Mutex> guard(mutex);
+        bslmt::UnLockGuard<MUTEX> guard(mutex);
         return d_invoker_sp->call4(arg1, arg2, arg3, arg4);
     }
     else {
@@ -1781,7 +1796,8 @@ template <typename ARG1,
           typename ARG2,
           typename ARG3,
           typename ARG4,
-          typename ARG5>
+          typename ARG5,
+          typename MUTEX>
 NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     ARG1                                   arg1,
     ARG2                                   arg2,
@@ -1791,7 +1807,7 @@ NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     const bsl::shared_ptr<ntci::Strand>&   callerStrand,
     const bsl::shared_ptr<ntci::Executor>& executor,
     bool                                   defer,
-    bslmt::Mutex*                          mutex) const
+    MUTEX*                                 mutex) const
 {
     if (NTCCFG_UNLIKELY(!d_invoker_sp)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -1800,7 +1816,7 @@ NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     if (NTCCFG_LIKELY(!defer &&
                       ntci::Strand::passthrough(d_strand_sp, callerStrand)))
     {
-        bslmt::UnLockGuard<bslmt::Mutex> guard(mutex);
+        bslmt::UnLockGuard<MUTEX> guard(mutex);
         return d_invoker_sp->call5(arg1, arg2, arg3, arg4, arg5);
     }
     else {
@@ -1833,7 +1849,8 @@ template <typename ARG1,
           typename ARG3,
           typename ARG4,
           typename ARG5,
-          typename ARG6>
+          typename ARG6,
+          typename MUTEX>
 NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     ARG1                                   arg1,
     ARG2                                   arg2,
@@ -1844,7 +1861,7 @@ NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     const bsl::shared_ptr<ntci::Strand>&   callerStrand,
     const bsl::shared_ptr<ntci::Executor>& executor,
     bool                                   defer,
-    bslmt::Mutex*                          mutex) const
+    MUTEX*                                 mutex) const
 {
     if (NTCCFG_UNLIKELY(!d_invoker_sp)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -1853,7 +1870,7 @@ NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     if (NTCCFG_LIKELY(!defer &&
                       ntci::Strand::passthrough(d_strand_sp, callerStrand)))
     {
-        bslmt::UnLockGuard<bslmt::Mutex> guard(mutex);
+        bslmt::UnLockGuard<MUTEX> guard(mutex);
         return d_invoker_sp->call6(arg1, arg2, arg3, arg4, arg5, arg6);
     }
     else {
@@ -1888,7 +1905,8 @@ template <typename ARG1,
           typename ARG4,
           typename ARG5,
           typename ARG6,
-          typename ARG7>
+          typename ARG7,
+          typename MUTEX>
 NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     ARG1                                   arg1,
     ARG2                                   arg2,
@@ -1900,7 +1918,7 @@ NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     const bsl::shared_ptr<ntci::Strand>&   callerStrand,
     const bsl::shared_ptr<ntci::Executor>& executor,
     bool                                   defer,
-    bslmt::Mutex*                          mutex) const
+    MUTEX*                                 mutex) const
 {
     if (NTCCFG_UNLIKELY(!d_invoker_sp)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -1909,7 +1927,7 @@ NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     if (NTCCFG_LIKELY(!defer &&
                       ntci::Strand::passthrough(d_strand_sp, callerStrand)))
     {
-        bslmt::UnLockGuard<bslmt::Mutex> guard(mutex);
+        bslmt::UnLockGuard<MUTEX> guard(mutex);
         return d_invoker_sp->call7(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
     }
     else {
@@ -1947,7 +1965,8 @@ template <typename ARG1,
           typename ARG5,
           typename ARG6,
           typename ARG7,
-          typename ARG8>
+          typename ARG8,
+          typename MUTEX>
 NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     ARG1                                   arg1,
     ARG2                                   arg2,
@@ -1960,7 +1979,7 @@ NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     const bsl::shared_ptr<ntci::Strand>&   callerStrand,
     const bsl::shared_ptr<ntci::Executor>& executor,
     bool                                   defer,
-    bslmt::Mutex*                          mutex) const
+    MUTEX*                                 mutex) const
 {
     if (NTCCFG_UNLIKELY(!d_invoker_sp)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -1969,7 +1988,7 @@ NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     if (NTCCFG_LIKELY(!defer &&
                       ntci::Strand::passthrough(d_strand_sp, callerStrand)))
     {
-        bslmt::UnLockGuard<bslmt::Mutex> guard(mutex);
+        bslmt::UnLockGuard<MUTEX> guard(mutex);
         return d_invoker_sp
             ->call8(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
     }
@@ -2010,7 +2029,8 @@ template <typename ARG1,
           typename ARG6,
           typename ARG7,
           typename ARG8,
-          typename ARG9>
+          typename ARG9,
+          typename MUTEX>
 NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     ARG1                                   arg1,
     ARG2                                   arg2,
@@ -2024,7 +2044,7 @@ NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     const bsl::shared_ptr<ntci::Strand>&   callerStrand,
     const bsl::shared_ptr<ntci::Executor>& executor,
     bool                                   defer,
-    bslmt::Mutex*                          mutex) const
+    MUTEX*                                 mutex) const
 {
     if (NTCCFG_UNLIKELY(!d_invoker_sp)) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -2033,7 +2053,7 @@ NTCCFG_INLINE ntsa::Error Callback<SIGNATURE>::dispatch(
     if (NTCCFG_LIKELY(!defer &&
                       ntci::Strand::passthrough(d_strand_sp, callerStrand)))
     {
-        bslmt::UnLockGuard<bslmt::Mutex> guard(mutex);
+        bslmt::UnLockGuard<MUTEX> guard(mutex);
         return d_invoker_sp
             ->call9(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
     }
