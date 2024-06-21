@@ -112,11 +112,25 @@ namespace ntccfg {
     } while (false)
 
 /// @internal @brief
+/// Concatenate two compile-type identifier into a single identifier.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_OBJECT_GUARD_NAME_JOIN(a, b) a##b
+
+/// @internal @brief
+/// The identifier of a lock scope, formed from the specified 'prefix'
+/// concatenated with the specified 'disambiguator'.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_OBJECT_GUARD_NAME(prefix, disambiguator)                       \
+    NTCCFG_OBJECT_GUARD_NAME_JOIN(prefix, disambiguator)
+
+/// @internal @brief
 /// Acquire a scoped strand execution lock.
 ///
 /// @ingroup module_ntccfg
 #define NTCCFG_OBJECT_GUARD(object)                                           \
-    ntccfg::ObjectGuard NTCCFG_LOCK_SCOPE_NAME(                               \
+    ntccfg::ObjectGuard NTCCFG_OBJECT_GUARD_NAME(                             \
         OBJECT_LOCK_SCOPE_GUARD_,                                             \
         __LINE__)((object), __FUNCTION__, __FILE__, __LINE__)
 
@@ -127,6 +141,8 @@ namespace ntccfg {
 ///
 /// @par Thread Safety
 /// This class is thread safe.
+///
+/// @ingroup module_ntccfg
 class Object
 {
     const char*  d_typeName;

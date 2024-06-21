@@ -319,12 +319,40 @@ if [[ -z "${NTF_CONFIGURE_WITH_METRICS}" ]]; then
     NTF_CONFIGURE_WITH_METRICS=1
 fi
 
+if [[ -z "${NTF_CONFIGURE_WITH_INLINING_SUGGESTED}" ]]; then
+    NTF_CONFIGURE_WITH_INLINING_SUGGESTED=0
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_INLINING_FORCED}" ]]; then
+    NTF_CONFIGURE_WITH_INLINING_FORCED=1
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_INLINING_DISABLED}" ]]; then
+    NTF_CONFIGURE_WITH_INLINING_DISABLED=0
+fi
+
 if [[ -z "${NTF_CONFIGURE_WITH_BRANCH_PREDICTION}" ]]; then
     NTF_CONFIGURE_WITH_BRANCH_PREDICTION=1
 fi
 
 if [[ -z "${NTF_CONFIGURE_WITH_SPIN_LOCKS}" ]]; then
     NTF_CONFIGURE_WITH_SPIN_LOCKS=0
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_USERSPACE_MUTEXES}" ]]; then
+    if [[ "${NTF_CONFIGURE_UNAME}" == "Linux" ]]; then
+        NTF_CONFIGURE_WITH_USERSPACE_MUTEXES=1
+    else
+        NTF_CONFIGURE_WITH_USERSPACE_MUTEXES=0
+    fi
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_SYSTEM_MUTEXES}" ]]; then
+    if [[ "${NTF_CONFIGURE_UNAME}" == "Linux" ]]; then
+        NTF_CONFIGURE_WITH_SYSTEM_MUTEXES=0
+    else
+        NTF_CONFIGURE_WITH_SYSTEM_MUTEXES=1
+    fi
 fi
 
 if [[ -z "${NTF_CONFIGURE_WITH_RECURSIVE_MUTEXES}" ]]; then
@@ -451,9 +479,16 @@ usage()
 
     echo "    --with-logging                     Build with logging [${NTF_CONFIGURE_WITH_LOGGING}]"
     echo "    --with-metrics                     Build with metrics [${NTF_CONFIGURE_WITH_METRICS}]"
+
+    echo "    --with-inlining-suggested          Build functions suggested to be inlined by the compiler [${NTF_CONFIGURE_WITH_INLINING_SUGGESTED}]"
+    echo "    --with-inlining-forced             Build functions forcibly inlined [${NTF_CONFIGURE_WITH_INLINING_FORCED}]"
+    echo "    --with-inlining-suggested          Build with no functions inlined [${NTF_CONFIGURE_WITH_INLINING_DISABLED}]"
+
     echo "    --with-branch-prediction           Build with branch prediction [${NTF_CONFIGURE_WITH_BRANCH_PREDICTION}]"
 
     echo "    --with-spin-locks                  Build with mutually-exclusive locks implemented as spin locks [${NTF_CONFIGURE_WITH_SPIN_LOCKS}]"
+    echo "    --with-userspace-mutexes           Build with mutually-exclusive locks implemented as userspace mutexes [${NTF_CONFIGURE_WITH_USERSPACE_MUTEXES}]"
+    echo "    --with-system-mutexes              Build with mutually-exclusive locks implemented as system mutexes [${NTF_CONFIGURE_WITH_SYSTEM_MUTEXES}]"
     echo "    --with-recursive-mutexes           Build with mutually-exclusive locks implemented as recursive mutexes [${NTF_CONFIGURE_WITH_RECURSIVE_MUTEXES}]"
 
     echo "    --with-stack-trace-leak-report     Build chronology with stack traces dumped upon function and timer leaks [${NTF_CONFIGURE_WITH_STACK_TRACE_LEAK_REPORT}]"
@@ -615,11 +650,23 @@ while true ; do
             NTF_CONFIGURE_WITH_LOGGING=1 ; shift ;;
         --with-metrics)
             NTF_CONFIGURE_WITH_METRICS=1 ; shift ;;
+
+        --with-inlining-suggested)
+            NTF_CONFIGURE_WITH_INLINING_SUGGESTED=1 ; shift ;;
+        --with-inlining-forced)
+            NTF_CONFIGURE_WITH_INLINING_FORCED=1 ; shift ;;
+        --with-inlining-disabled)
+            NTF_CONFIGURE_WITH_INLINING_DISABLED=1 ; shift ;;
+
         --with-branch-prediction)
             NTF_CONFIGURE_WITH_BRANCH_PREDICTION=1 ; shift ;;
 
         --with-spin-locks)
             NTF_CONFIGURE_WITH_SPIN_LOCKS=1 ; shift ;;
+        --with-userspace-mutexes)
+            NTF_CONFIGURE_WITH_USERSPACE_MUTEXES=1 ; shift ;;
+        --with-system-mutexes)
+            NTF_CONFIGURE_WITH_SYSTEM_MUTEXES=1 ; shift ;;
         --with-recursive-mutexes)
             NTF_CONFIGURE_WITH_RECURSIVE_MUTEXES=1 ; shift ;;
 
@@ -710,11 +757,23 @@ while true ; do
             NTF_CONFIGURE_WITH_LOGGING=0 ; shift ;;
         --without-metrics)
             NTF_CONFIGURE_WITH_METRICS=0 ; shift ;;
+
+        --without-inlining-suggested)
+            NTF_CONFIGURE_WITH_INLINING_SUGGESTED=0 ; shift ;;
+        --without-inlining-forced)
+            NTF_CONFIGURE_WITH_INLINING_FORCED=0 ; shift ;;
+        --without-inlining-disabled)
+            NTF_CONFIGURE_WITH_INLINING_DISABLED=0 ; shift ;;
+
         --without-branch-prediction)
             NTF_CONFIGURE_WITH_BRANCH_PREDICTION=0 ; shift ;;
 
         --without-spin-locks)
             NTF_CONFIGURE_WITH_SPIN_LOCKS=0 ; shift ;;
+        --without-userspace-mutexes)
+            NTF_CONFIGURE_WITH_USERSPACE_MUTEXES=0 ; shift ;;
+        --without-system-mutexes)
+            NTF_CONFIGURE_WITH_SYSTEM_MUTEXES=0 ; shift ;;
         --without-recursive-mutexes)
             NTF_CONFIGURE_WITH_RECURSIVE_MUTEXES=0 ; shift ;;
 
@@ -816,9 +875,16 @@ export NTF_CONFIGURE_WITH_DEPRECATED_FEATURES
 
 export NTF_CONFIGURE_WITH_LOGGING
 export NTF_CONFIGURE_WITH_METRICS
+
+export NTF_CONFIGURE_WITH_INLINING_SUGGESTED
+export NTF_CONFIGURE_WITH_INLINING_FORCED
+export NTF_CONFIGURE_WITH_INLINING_DISABLED
+
 export NTF_CONFIGURE_WITH_BRANCH_PREDICTION
 
 export NTF_CONFIGURE_WITH_SPIN_LOCKS
+export NTF_CONFIGURE_WITH_USERSPACE_MUTEXES
+export NTF_CONFIGURE_WITH_SYSTEM_MUTEXES
 export NTF_CONFIGURE_WITH_RECURSIVE_MUTEXES
 
 export NTF_CONFIGURE_WITH_STACK_TRACE_LEAK_REPORT

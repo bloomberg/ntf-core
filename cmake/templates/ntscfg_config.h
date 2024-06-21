@@ -103,8 +103,29 @@ namespace ntscfg {
 // Build with metrics.
 #define NTS_BUILD_WITH_METRICS @NTF_BUILD_WITH_METRICS@
 
+// Build with inlining suggested.
+#define NTS_BUILD_WITH_INLINING_SUGGESTED @NTF_BUILD_WITH_INLINING_SUGGESTED@
+
+// Build with inlining forced.
+#define NTS_BUILD_WITH_INLINING_FORCED @NTF_BUILD_WITH_INLINING_FORCED@
+
+// Build with inlining disabled.
+#define NTS_BUILD_WITH_INLINING_DISABLED @NTF_BUILD_WITH_INLINING_DISABLED@
+
 // Build with branch prediction.
 #define NTS_BUILD_WITH_BRANCH_PREDICTION @NTF_BUILD_WITH_BRANCH_PREDICTION@
+
+// Build with mutually-exclusive locks implemented with spin locks.
+#define NTS_BUILD_WITH_SPIN_LOCKS @NTF_BUILD_WITH_SPIN_LOCKS@
+
+// Build with mutually-exclusive locks implemented with userspace mutexes.
+#define NTS_BUILD_WITH_USERSPACE_MUTEXES @NTF_BUILD_WITH_USERSPACE_MUTEXES@
+
+// Build with mutually-exclusive locks implemented with system mutexes.
+#define NTS_BUILD_WITH_SYSTEM_MUTEXES @NTF_BUILD_WITH_SYSTEM_MUTEXES@
+
+// Build with mutually-exclusive locks implemented with recursive mutexes.
+#define NTS_BUILD_WITH_RECURSIVE_MUTEXES @NTF_BUILD_WITH_RECURSIVE_MUTEXES@
 
 // Build with a test allocator that dumps stack traces upon memory leaks.
 #define NTS_BUILD_WITH_STACK_TRACE_TEST_ALLOCATOR @NTF_BUILD_WITH_STACK_TRACE_TEST_ALLOCATOR@

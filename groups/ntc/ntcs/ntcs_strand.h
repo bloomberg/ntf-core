@@ -46,8 +46,14 @@ class Strand : public ntci::Strand, public ntccfg::Shared<Strand>
     /// execute on this thread.
     typedef ntci::Executor::FunctorSequence FunctorQueue;
 
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
     ntccfg::Object                 d_object;
-    mutable ntccfg::Mutex          d_functorQueueMutex;
+    mutable Mutex                  d_functorQueueMutex;
     FunctorQueue                   d_functorQueue;
     ntcs::Observer<ntci::Executor> d_executor;
     bool                           d_pending;

@@ -48,10 +48,16 @@ class Strand : public ntci::Strand, public ntccfg::Shared<Strand>
     /// execute on this thread.
     typedef ntci::Executor::FunctorSequence FunctorQueue;
 
-    ntccfg::Object        d_object;
-    mutable ntccfg::Mutex d_functorQueueMutex;
-    FunctorQueue          d_functorQueue;
-    bslma::Allocator*     d_allocator_p;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    ntccfg::Object    d_object;
+    mutable Mutex     d_functorQueueMutex;
+    FunctorQueue      d_functorQueue;
+    bslma::Allocator* d_allocator_p;
 
   private:
     Strand(const Strand&) BSLS_KEYWORD_DELETED;
@@ -104,33 +110,28 @@ Strand::~Strand()
 
 void Strand::execute(const Functor& function)
 {
-    NTCCFG_LOCK_SCOPE_ENTER(&d_functorQueueMutex);
+    LockGuard lock(&d_functorQueueMutex);
 
     d_functorQueue.push_back(function);
-
-    NTCCFG_LOCK_SCOPE_LEAVE(&d_functorQueueMutex);
 }
 
 void Strand::moveAndExecute(FunctorSequence* functorSequence,
                             const Functor&   functor)
 {
-    NTCCFG_LOCK_SCOPE_ENTER(&d_functorQueueMutex);
+    LockGuard lock(&d_functorQueueMutex);
 
     d_functorQueue.splice(d_functorQueue.end(), *functorSequence);
     if (functor) {
         d_functorQueue.push_back(functor);
     }
-
-    NTCCFG_LOCK_SCOPE_LEAVE(&d_functorQueueMutex);
 }
 
 void Strand::drain()
 {
     FunctorQueue functorQueue;
     {
-        NTCCFG_LOCK_SCOPE_ENTER(&d_functorQueueMutex);
+        LockGuard lock(&d_functorQueueMutex);
         functorQueue.swap(d_functorQueue);
-        NTCCFG_LOCK_SCOPE_LEAVE(&d_functorQueueMutex);
     }
 
     for (FunctorQueue::iterator it = functorQueue.begin();
@@ -143,11 +144,9 @@ void Strand::drain()
 
 void Strand::clear()
 {
-    NTCCFG_LOCK_SCOPE_ENTER(&d_functorQueueMutex);
+    LockGuard lock(&d_functorQueueMutex);
 
     d_functorQueue.clear();
-
-    NTCCFG_LOCK_SCOPE_LEAVE(&d_functorQueueMutex);
 }
 
 void processData(bsls::AtomicUint*                   numInvoked,

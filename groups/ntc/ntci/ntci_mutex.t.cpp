@@ -17,48 +17,10 @@
 
 #include <ntccfg_test.h>
 
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bsls_assert.h>
-
 using namespace BloombergLP;
-
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
-
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
 
 NTCCFG_TEST_CASE(1)
 {
-    // Concern:
-    // Plan:
-
-#if 0
-    {
-        int value = 1;
-
-        int previous = ntci::Mutex::compareAndSwap(&value, 1, 2);
-        NTCCFG_TEST_EQ(previous, 1);
-        NTCCFG_TEST_EQ(value, 2);
-    }
-
-    {
-        int value = 1;
-
-        int previous = ntci::Mutex::compareAndSwap(&value, 3, 2);
-        NTCCFG_TEST_EQ(previous, 1);
-        NTCCFG_TEST_EQ(value, 1);
-    }
-#endif
-
     ntci::Mutex mutex;
 
     mutex.lock();
