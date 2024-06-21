@@ -110,7 +110,7 @@ void Strand::invoke()
     while (true) {
         bdlb::NullableValue<FunctorQueue> functorQueue(d_allocator_p);
         {
-            NTCCFG_LOCK_SCOPE_ENTER(&d_functorQueueMutex);
+            LockGuard lock(&d_functorQueueMutex);
 
             BSLS_ASSERT(d_pending);
 
@@ -123,8 +123,6 @@ void Strand::invoke()
                 d_pending = false;
                 break;
             }
-
-            NTCCFG_LOCK_SCOPE_LEAVE(&d_functorQueueMutex);
         }
 
         NTCS_STRAND_LOG_EXECUTION_STARTING(this, functorQueue.value());
@@ -150,7 +148,7 @@ void Strand::invoke()
     bool    activate = false;
 
     {
-        NTCCFG_LOCK_SCOPE_ENTER(&d_functorQueueMutex);
+        LockGuard lock(&d_functorQueueMutex);
 
         BSLS_ASSERT(d_pending);
         BSLS_ASSERT(!d_functorQueue.empty());
@@ -161,8 +159,6 @@ void Strand::invoke()
 
         activate  = !d_functorQueue.empty();
         d_pending = activate;
-
-        NTCCFG_LOCK_SCOPE_LEAVE(&d_functorQueueMutex);
     }
 
     {
@@ -208,7 +204,7 @@ void Strand::execute(const Functor& function)
 {
     bool activate = false;
     {
-        NTCCFG_LOCK_SCOPE_ENTER(&d_functorQueueMutex);
+        LockGuard lock(&d_functorQueueMutex);
 
         d_functorQueue.push_back(function);
 
@@ -218,8 +214,6 @@ void Strand::execute(const Functor& function)
             d_pending = true;
             activate  = true;
         }
-
-        NTCCFG_LOCK_SCOPE_LEAVE(&d_functorQueueMutex);
     }
 
     if (activate) {
@@ -242,7 +236,7 @@ void Strand::moveAndExecute(FunctorSequence* functorSequence,
 {
     bool activate = false;
     {
-        NTCCFG_LOCK_SCOPE_ENTER(&d_functorQueueMutex);
+        LockGuard lock(&d_functorQueueMutex);
 
         d_functorQueue.splice(d_functorQueue.end(), *functorSequence);
         if (functor) {
@@ -253,8 +247,6 @@ void Strand::moveAndExecute(FunctorSequence* functorSequence,
             d_pending = true;
             activate  = true;
         }
-
-        NTCCFG_LOCK_SCOPE_LEAVE(&d_functorQueueMutex);
     }
 
     if (activate) {
@@ -275,7 +267,7 @@ void Strand::drain()
     while (true) {
         bdlb::NullableValue<FunctorQueue> functorQueue(d_allocator_p);
         {
-            NTCCFG_LOCK_SCOPE_ENTER(&d_functorQueueMutex);
+            LockGuard lock(&d_functorQueueMutex);
 
             BSLS_ASSERT(!d_pending);
 
@@ -287,8 +279,6 @@ void Strand::drain()
                 NTCS_STRAND_LOG_QUEUE_EMPTY(this);
                 break;
             }
-
-            NTCCFG_LOCK_SCOPE_LEAVE(&d_functorQueueMutex);
         }
 
         NTCS_STRAND_LOG_EXECUTION_STARTING(this, functorQueue.value());
@@ -311,11 +301,9 @@ void Strand::drain()
 
 void Strand::clear()
 {
-    NTCCFG_LOCK_SCOPE_ENTER(&d_functorQueueMutex);
+    LockGuard lock(&d_functorQueueMutex);
 
     d_functorQueue.clear();
-
-    NTCCFG_LOCK_SCOPE_LEAVE(&d_functorQueueMutex);
 }
 
 bool Strand::isRunningInCurrentThread() const

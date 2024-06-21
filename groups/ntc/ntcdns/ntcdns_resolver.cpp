@@ -838,7 +838,7 @@ ntsa::Error Resolver::getIpAddress(const bslstl::StringRef&         domainName,
                               d_strand_sp,
                               self,
                               true,
-                              0);
+                              (bslmt::Mutex*) NULL);
 
             return ntsa::Error();
         }
@@ -871,7 +871,7 @@ ntsa::Error Resolver::getIpAddress(const bslstl::StringRef&         domainName,
                               d_strand_sp,
                               self,
                               true,
-                              0);
+                              (bslmt::Mutex*) NULL);
 
             return ntsa::Error();
         }
@@ -905,7 +905,7 @@ ntsa::Error Resolver::getIpAddress(const bslstl::StringRef&         domainName,
                               d_strand_sp,
                               self,
                               true,
-                              0);
+                              (bslmt::Mutex*) NULL);
 
             return ntsa::Error();
         }
@@ -951,7 +951,7 @@ ntsa::Error Resolver::getIpAddress(const bslstl::StringRef&         domainName,
                           d_strand_sp,
                           self,
                           true,
-                          0);
+                          (bslmt::Mutex*) NULL);
     }
 
     return ntsa::Error();
@@ -1008,7 +1008,7 @@ ntsa::Error Resolver::getDomainName(
                               d_strand_sp,
                               self,
                               true,
-                              0);
+                              (bslmt::Mutex*) NULL);
 
             return ntsa::Error();
         }
@@ -1042,7 +1042,7 @@ ntsa::Error Resolver::getDomainName(
                               d_strand_sp,
                               self,
                               true,
-                              0);
+                              (bslmt::Mutex*) NULL);
 
             return ntsa::Error();
         }
@@ -1077,7 +1077,7 @@ ntsa::Error Resolver::getDomainName(
                               d_strand_sp,
                               self,
                               true,
-                              0);
+                              (bslmt::Mutex*) NULL);
 
             return ntsa::Error();
         }
@@ -1123,7 +1123,7 @@ ntsa::Error Resolver::getDomainName(
                           d_strand_sp,
                           self,
                           true,
-                          0);
+                          (bslmt::Mutex*) NULL);
     }
 
     return ntsa::Error();
@@ -1182,7 +1182,7 @@ ntsa::Error Resolver::getPort(const bslstl::StringRef&     serviceName,
                               d_strand_sp,
                               self,
                               true,
-                              0);
+                              (bslmt::Mutex*) NULL);
 
             return ntsa::Error();
         }
@@ -1214,7 +1214,7 @@ ntsa::Error Resolver::getPort(const bslstl::StringRef&     serviceName,
                               d_strand_sp,
                               self,
                               true,
-                              0);
+                              (bslmt::Mutex*) NULL);
 
             return ntsa::Error();
         }
@@ -1246,7 +1246,7 @@ ntsa::Error Resolver::getPort(const bslstl::StringRef&     serviceName,
                               d_strand_sp,
                               self,
                               true,
-                              0);
+                              (bslmt::Mutex*) NULL);
 
             return ntsa::Error();
         }
@@ -1275,7 +1275,7 @@ ntsa::Error Resolver::getPort(const bslstl::StringRef&     serviceName,
                               d_strand_sp,
                               self,
                               true,
-                              0);
+                              (bslmt::Mutex*) NULL);
             return ntsa::Error();
         }
     }
@@ -1307,7 +1307,7 @@ ntsa::Error Resolver::getPort(const bslstl::StringRef&     serviceName,
                           d_strand_sp,
                           self,
                           true,
-                          0);
+                          (bslmt::Mutex*) NULL);
     }
 
     return ntsa::Error();
@@ -1373,7 +1373,7 @@ ntsa::Error Resolver::getServiceName(
                               d_strand_sp,
                               self,
                               true,
-                              0);
+                              (bslmt::Mutex*) NULL);
 
             return ntsa::Error();
         }
@@ -1407,7 +1407,7 @@ ntsa::Error Resolver::getServiceName(
                               d_strand_sp,
                               self,
                               true,
-                              0);
+                              (bslmt::Mutex*) NULL);
 
             return ntsa::Error();
         }
@@ -1442,7 +1442,7 @@ ntsa::Error Resolver::getServiceName(
                               d_strand_sp,
                               self,
                               true,
-                              0);
+                              (bslmt::Mutex*) NULL);
 
             return ntsa::Error();
         }
@@ -1465,7 +1465,7 @@ ntsa::Error Resolver::getServiceName(
                               d_strand_sp,
                               self,
                               true,
-                              0);
+                              (bslmt::Mutex*) NULL);
 
             return ntsa::Error();
         }
@@ -1498,7 +1498,7 @@ ntsa::Error Resolver::getServiceName(
                           d_strand_sp,
                           self,
                           true,
-                          0);
+                          (bslmt::Mutex*) NULL);
     }
 
     return ntsa::Error();
@@ -1565,7 +1565,7 @@ ntsa::Error Resolver::getEndpoint(const bslstl::StringRef&         text,
             getEndpointEvent.setContext(getEndpointContext);
 
             callback.dispatch(
-                self, endpoint, getEndpointEvent, d_strand_sp, self, true, 0);
+                self, endpoint, getEndpointEvent, d_strand_sp, self, true, (bslmt::Mutex*) NULL);
 
             return ntsa::Error();
         }
@@ -1897,7 +1897,7 @@ ntsa::Error Resolver::getEndpoint(const bslstl::StringRef&         text,
                       d_strand_sp,
                       self,
                       true,
-                      0);
+                      (bslmt::Mutex*) NULL);
 
     return ntsa::Error();
 }

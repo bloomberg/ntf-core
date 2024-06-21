@@ -335,7 +335,7 @@ ntsa::Error Interface::addThread()
 bsl::shared_ptr<ntci::Proactor> Interface::acquireProactorUsedByThreadHandle(
     const ntca::LoadBalancingOptions& options)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     bsl::shared_ptr<ntci::Proactor> result;
 
@@ -366,7 +366,7 @@ bsl::shared_ptr<ntci::Proactor> Interface::acquireProactorUsedByThreadHandle(
 bsl::shared_ptr<ntci::Proactor> Interface::acquireProactorUsedByThreadIndex(
     const ntca::LoadBalancingOptions& options)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     bsl::shared_ptr<ntci::Proactor> result;
 
@@ -401,7 +401,7 @@ bsl::shared_ptr<ntci::Proactor> Interface::acquireProactorUsedByThreadIndex(
 bsl::shared_ptr<ntci::Proactor> Interface::acquireProactorWithLeastLoad(
     const ntca::LoadBalancingOptions& options)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -563,7 +563,7 @@ ntsa::Error Interface::start()
     bsl::shared_ptr<ntci::Resolver> resolver;
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        LockGuard lock(&d_mutex);
 
         if (!d_resolver_sp) {
             BSLS_ASSERT_OPT(!d_config.resolverEnabled().isNull());
@@ -618,7 +618,7 @@ void Interface::shutdown()
     bsl::shared_ptr<ntci::Resolver> resolver;
     ProactorVector                  proactorVector(d_allocator_p);
     {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        LockGuard lock(&d_mutex);
 
         resolver       = d_resolver_sp;
         proactorVector = d_proactorVector;
@@ -645,7 +645,7 @@ void Interface::linger()
     ThreadVector   threadVector(d_allocator_p);
     ProactorVector proactorVector(d_allocator_p);
     {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        LockGuard lock(&d_mutex);
 
         resolver       = d_resolver_sp;
         threadVector   = d_threadVector;
@@ -681,7 +681,7 @@ void Interface::linger()
     proactorVector.clear();
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        LockGuard lock(&d_mutex);
 
         d_threadVector.clear();
         d_threadMap.clear();
@@ -698,7 +698,7 @@ ntsa::Error Interface::closeAll()
 
     ProactorVector proactorVector(d_allocator_p);
     {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        LockGuard lock(&d_mutex);
         proactorVector = d_proactorVector;
     }
 
@@ -1489,7 +1489,7 @@ void Interface::releaseHandleReservation()
 
 bool Interface::expand()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -1510,13 +1510,13 @@ bool Interface::expand()
 
 bsl::size_t Interface::numProactors() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_proactorVector.size();
 }
 
 bsl::size_t Interface::numThreads() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_threadVector.size();
 }
 
@@ -1544,7 +1544,7 @@ bool Interface::lookupByThreadHandle(
     bsl::shared_ptr<ntci::Executor>* result,
     bslmt::ThreadUtil::Handle        threadHandle) const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     result->reset();
 
@@ -1575,7 +1575,7 @@ bool Interface::lookupByThreadHandle(
 bool Interface::lookupByThreadIndex(bsl::shared_ptr<ntci::Executor>* result,
                                     bsl::size_t threadIndex) const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     result->reset();
 

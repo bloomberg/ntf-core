@@ -121,11 +121,17 @@ class AsyncStrand : public ntci::Strand, public ntccfg::Shared<AsyncStrand>
     /// execute on this thread.
     typedef ntci::Executor::FunctorSequence FunctorQueue;
 
-    ntccfg::Object        d_object;
-    mutable ntccfg::Mutex d_functorQueueMutex;
-    FunctorQueue          d_functorQueue;
-    bool                  d_pending;
-    bslma::Allocator*     d_allocator_p;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    ntccfg::Object    d_object;
+    mutable Mutex     d_functorQueueMutex;
+    FunctorQueue      d_functorQueue;
+    bool              d_pending;
+    bslma::Allocator* d_allocator_p;
 
   private:
     AsyncStrand(const AsyncStrand&) BSLS_KEYWORD_DELETED;

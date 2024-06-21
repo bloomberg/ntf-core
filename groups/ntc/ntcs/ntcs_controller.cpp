@@ -440,7 +440,7 @@ ntsa::Error Controller::interrupt(unsigned int numWakeups)
 
     NTCI_LOG_CONTEXT();
 
-    NTCCFG_LOCK_SCOPE_ENTER(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (numWakeups <= d_pending) {
         return ntsa::Error();
@@ -481,15 +481,13 @@ ntsa::Error Controller::interrupt(unsigned int numWakeups)
 
     NTCS_CONTROLLER_LOG_ENQUEUE(numToWrite, d_pending);
 
-    NTCCFG_LOCK_SCOPE_LEAVE(&d_mutex);
-
     return ntsa::Error();
 
 #elif NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_ANONYMOUS_PIPE
 
     NTCI_LOG_CONTEXT();
 
-    NTCCFG_LOCK_SCOPE_ENTER(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (numWakeups <= d_pending) {
         return ntsa::Error();
@@ -525,15 +523,13 @@ ntsa::Error Controller::interrupt(unsigned int numWakeups)
 
     NTCS_CONTROLLER_LOG_ENQUEUE(numToWrite, d_pending);
 
-    NTCCFG_LOCK_SCOPE_LEAVE(&d_mutex);
-
     return ntsa::Error();
 
 #elif NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_EVENTFD
 
     NTCI_LOG_CONTEXT();
 
-    NTCCFG_LOCK_SCOPE_ENTER(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (numWakeups <= d_pending) {
         return ntsa::Error();
@@ -571,8 +567,6 @@ ntsa::Error Controller::interrupt(unsigned int numWakeups)
         NTCS_CONTROLLER_LOG_ENQUEUE(numToWrite, d_pending);
     }
 
-    NTCCFG_LOCK_SCOPE_LEAVE(&d_mutex);
-
     return ntsa::Error();
 
 #else
@@ -587,7 +581,7 @@ ntsa::Error Controller::acknowledge()
 
     NTCI_LOG_CONTEXT();
 
-    NTCCFG_LOCK_SCOPE_ENTER(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     char buffer;
 
@@ -613,15 +607,13 @@ ntsa::Error Controller::acknowledge()
 
     NTCS_CONTROLLER_LOG_DEQUEUE(context.bytesReceived(), d_pending);
 
-    NTCCFG_LOCK_SCOPE_LEAVE(&d_mutex);
-
     return ntsa::Error();
 
 #elif NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_ANONYMOUS_PIPE
 
     NTCI_LOG_CONTEXT();
 
-    NTCCFG_LOCK_SCOPE_ENTER(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     char        buffer;
     bsl::size_t bytesRead = 0;
@@ -647,15 +639,13 @@ ntsa::Error Controller::acknowledge()
 
     NTCS_CONTROLLER_LOG_DEQUEUE(bytesRead, d_pending);
 
-    NTCCFG_LOCK_SCOPE_LEAVE(&d_mutex);
-
     return ntsa::Error();
 
 #elif NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_EVENTFD
 
     NTCI_LOG_CONTEXT();
 
-    NTCCFG_LOCK_SCOPE_ENTER(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     bsl::uint64_t value = 0;
 
@@ -680,8 +670,6 @@ ntsa::Error Controller::acknowledge()
     d_pending -= static_cast<bsl::size_t>(value);
 
     NTCS_CONTROLLER_LOG_DEQUEUE(value, d_pending);
-
-    NTCCFG_LOCK_SCOPE_LEAVE(&d_mutex);
 
     return ntsa::Error();
 

@@ -13,8 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntci_mutex.h>
+#include <ntccfg_mutex.h>
 
-#include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntci_mutex_cpp, "$Id$ $CSID$")
+#include <ntccfg_test.h>
 
+#include <bslma_allocator.h>
+#include <bslma_default.h>
+#include <bsls_assert.h>
+
+using namespace BloombergLP;
+
+NTCCFG_TEST_CASE(1)
+{
+    ntccfg::Mutex mutex;
+
+    mutex.lock();
+    mutex.unlock();
+
+    mutex.lock();
+    mutex.unlock();
+}
+
+NTCCFG_TEST_DRIVER
+{
+    NTCCFG_TEST_REGISTER(1);
+}
+NTCCFG_TEST_DRIVER_END;

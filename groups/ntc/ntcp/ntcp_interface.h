@@ -76,28 +76,28 @@ class Interface : public ntci::Interface,
     /// Define a type alias for a vector of proactors.
     typedef bsl::vector<bsl::shared_ptr<ntci::Proactor> > ProactorVector;
 
-    ntccfg::Object d_object;
+    // Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
 
-    mutable ntccfg::Mutex d_mutex;
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
 
-    bsl::shared_ptr<ntcs::User>     d_user_sp;
-    bsl::shared_ptr<ntci::DataPool> d_dataPool_sp;
-    bsl::shared_ptr<ntci::Resolver> d_resolver_sp;
-
-    bsl::shared_ptr<ntci::Reservation> d_connectionLimiter_sp;
-    bsl::shared_ptr<ntcs::Metrics>     d_socketMetrics_sp;
-
+    ntccfg::Object                         d_object;
+    mutable Mutex                          d_mutex;
+    bsl::shared_ptr<ntcs::User>            d_user_sp;
+    bsl::shared_ptr<ntci::DataPool>        d_dataPool_sp;
+    bsl::shared_ptr<ntci::Resolver>        d_resolver_sp;
+    bsl::shared_ptr<ntci::Reservation>     d_connectionLimiter_sp;
+    bsl::shared_ptr<ntcs::Metrics>         d_socketMetrics_sp;
     bsl::shared_ptr<ntci::ProactorFactory> d_proactorFactory_sp;
     bsl::shared_ptr<ntci::ProactorMetrics> d_proactorMetrics_sp;
     ProactorVector                         d_proactorVector;
-
-    ThreadVector     d_threadVector;
-    ThreadMap        d_threadMap;
-    bslmt::Semaphore d_threadSemaphore;
-    bsl::size_t      d_threadWatermark;
-
-    ntca::InterfaceConfig d_config;
-    bslma::Allocator*     d_allocator_p;
+    ThreadVector                           d_threadVector;
+    ThreadMap                              d_threadMap;
+    bslmt::Semaphore                       d_threadSemaphore;
+    bsl::size_t                            d_threadWatermark;
+    ntca::InterfaceConfig                  d_config;
+    bslma::Allocator*                      d_allocator_p;
 
   private:
     Interface(const Interface&) BSLS_KEYWORD_DELETED;

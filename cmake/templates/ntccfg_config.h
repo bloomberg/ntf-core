@@ -124,11 +124,26 @@ namespace ntccfg {
 // Build with metrics.
 #define NTC_BUILD_WITH_METRICS @NTF_BUILD_WITH_METRICS@
 
+// Build with inlining suggested.
+#define NTC_BUILD_WITH_INLINING_SUGGESTED @NTF_BUILD_WITH_INLINING_SUGGESTED@
+
+// Build with inlining forced.
+#define NTC_BUILD_WITH_INLINING_FORCED @NTF_BUILD_WITH_INLINING_FORCED@
+
+// Build with inlining disabled.
+#define NTC_BUILD_WITH_INLINING_DISABLED @NTF_BUILD_WITH_INLINING_DISABLED@
+
 // Build with branch prediction.
 #define NTC_BUILD_WITH_BRANCH_PREDICTION @NTF_BUILD_WITH_BRANCH_PREDICTION@
 
 // Build with mutually-exclusive locks implemented with spin locks.
 #define NTC_BUILD_WITH_SPIN_LOCKS @NTF_BUILD_WITH_SPIN_LOCKS@
+
+// Build with mutually-exclusive locks implemented with userspace mutexes.
+#define NTC_BUILD_WITH_USERSPACE_MUTEXES @NTF_BUILD_WITH_USERSPACE_MUTEXES@
+
+// Build with mutually-exclusive locks implemented with system mutexes.
+#define NTC_BUILD_WITH_SYSTEM_MUTEXES @NTF_BUILD_WITH_SYSTEM_MUTEXES@
 
 // Build with mutually-exclusive locks implemented with recursive mutexes.
 #define NTC_BUILD_WITH_RECURSIVE_MUTEXES @NTF_BUILD_WITH_RECURSIVE_MUTEXES@
