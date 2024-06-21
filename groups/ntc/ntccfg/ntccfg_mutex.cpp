@@ -35,7 +35,7 @@ namespace ntccfg {
 #if NTCCFG_FUTEX_ENABLED
 
 // Some versions of GCC issue a spurious warning that the 'current' paramter
-// is set but not used when 'Mutex::compareAndSwap' is called.
+// is set but not used when 'Futex::compareAndSwap' is called.
 #if defined(BSLS_PLATFORM_CMP_GNU)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
@@ -51,7 +51,7 @@ __attribute__((noinline)) void Futex::wake()
     syscall(SYS_futex, (int*)(&d_value), FUTEX_WAKE, 1, 0, 0, 0);
 }
 
-__attribute__((noinline)) void Mutex::lockContention(int c)
+__attribute__((noinline)) void Futex::lockContention(int c)
 {
     do {
         if (c == 2 || compareAndSwap(&d_value, 1, 2) != 0) {
