@@ -39,6 +39,8 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntscfg {
 
+#if NTS_BUILD_WITH_INLINING_FORCED 
+
 #if defined(NDEBUG) || defined(BDE_BUILD_TARGET_OPT)
 #if defined(BSLS_PLATFORM_CMP_GNU) || defined(BSLS_PLATFORM_CMP_CLANG)
 
@@ -65,6 +67,18 @@ namespace ntscfg {
 /// @ingroup module_ntscfg
 #define NTSCFG_INLINE inline
 
+#endif
+
+#elif NTS_BUILD_WITH_INLINING_SUGGESTED
+
+/// Hint that the following function can be inlined at its call site.
+/// @ingroup module_ntccfg
+#define NTSCFG_INLINE inline
+
+#elif NTS_BUILD_WITH_INLINING_DISABLED
+#error Not implemented
+#else
+#error Not implemented
 #endif
 
 #if NTS_BUILD_WITH_BRANCH_PREDICTION

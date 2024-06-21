@@ -27,6 +27,7 @@ BSLS_IDENT("$Id: $")
 #include <ntccfg_likely.h>
 #include <ntccfg_limits.h>
 #include <ntccfg_lock.h>
+#include <ntccfg_mutex.h>
 #include <ntccfg_object.h>
 #include <ntccfg_traits.h>
 #include <ntcscm_version.h>

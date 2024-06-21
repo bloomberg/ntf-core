@@ -199,7 +199,7 @@ void AsyncStrand::invoke()
     while (true) {
         bdlb::NullableValue<FunctorQueue> functorQueue(d_allocator_p);
         {
-            NTCCFG_LOCK_SCOPE_ENTER(&d_functorQueueMutex);
+            LockGuard lock(&d_functorQueueMutex);
 
             BSLS_ASSERT(d_pending);
 
@@ -210,8 +210,6 @@ void AsyncStrand::invoke()
                 d_pending = false;
                 break;
             }
-
-            NTCCFG_LOCK_SCOPE_LEAVE(&d_functorQueueMutex);
         }
 
         FunctorQueue::iterator it = functorQueue.value().begin();
@@ -246,7 +244,7 @@ void AsyncStrand::execute(const Functor& function)
 {
     bool activate = false;
     {
-        NTCCFG_LOCK_SCOPE_ENTER(&d_functorQueueMutex);
+        LockGuard lock(&d_functorQueueMutex);
 
         d_functorQueue.push_back(function);
 
@@ -254,8 +252,6 @@ void AsyncStrand::execute(const Functor& function)
             d_pending = true;
             activate  = true;
         }
-
-        NTCCFG_LOCK_SCOPE_LEAVE(&d_functorQueueMutex);
     }
 
     if (activate) {
@@ -269,7 +265,7 @@ void AsyncStrand::moveAndExecute(FunctorSequence* functorSequence,
 {
     bool activate = false;
     {
-        NTCCFG_LOCK_SCOPE_ENTER(&d_functorQueueMutex);
+        LockGuard lock(&d_functorQueueMutex);
 
         d_functorQueue.splice(d_functorQueue.end(), *functorSequence);
         if (functor) {
@@ -280,8 +276,6 @@ void AsyncStrand::moveAndExecute(FunctorSequence* functorSequence,
             d_pending = true;
             activate  = true;
         }
-
-        NTCCFG_LOCK_SCOPE_LEAVE(&d_functorQueueMutex);
     }
 
     if (activate) {
@@ -295,7 +289,7 @@ void AsyncStrand::drain()
     while (true) {
         bdlb::NullableValue<FunctorQueue> functorQueue(d_allocator_p);
         {
-            NTCCFG_LOCK_SCOPE_ENTER(&d_functorQueueMutex);
+            LockGuard lock(&d_functorQueueMutex);
 
             BSLS_ASSERT(!d_pending);
 
@@ -305,8 +299,6 @@ void AsyncStrand::drain()
             else {
                 break;
             }
-
-            NTCCFG_LOCK_SCOPE_LEAVE(&d_functorQueueMutex);
         }
 
         FunctorQueue::iterator it = functorQueue.value().begin();
@@ -325,11 +317,9 @@ void AsyncStrand::drain()
 
 void AsyncStrand::clear()
 {
-    NTCCFG_LOCK_SCOPE_ENTER(&d_functorQueueMutex);
+    LockGuard lock(&d_functorQueueMutex);
 
     d_functorQueue.clear();
-
-    NTCCFG_LOCK_SCOPE_LEAVE(&d_functorQueueMutex);
 }
 
 bool AsyncStrand::isRunningInCurrentThread() const

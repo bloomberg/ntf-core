@@ -59,7 +59,13 @@ class Controller : public ntci::ReactorSocket
         e_EVENT
     };
 
-    ntccfg::Mutex                 d_mutex;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    Mutex                         d_mutex;
     ntsa::Handle                  d_clientHandle;
     ntsa::Handle                  d_serverHandle;
     bsl::size_t                   d_pending;

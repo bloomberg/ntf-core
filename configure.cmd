@@ -125,12 +125,32 @@ IF NOT DEFINED NTF_CONFIGURE_WITH_METRICS (
     set NTF_CONFIGURE_WITH_METRICS=1
 )
 
+IF NOT DEFINED NTF_CONFIGURE_WITH_INLINING_SUGGESTED (
+    set NTF_CONFIGURE_WITH_INLINING_SUGGESTED=0
+)
+
+IF NOT DEFINED NTF_CONFIGURE_WITH_INLINING_FORCED (
+    set NTF_CONFIGURE_WITH_INLINING_FORCED=1
+)
+
+IF NOT DEFINED NTF_CONFIGURE_WITH_INLINING_DISABLED (
+    set NTF_CONFIGURE_WITH_INLINING_DISABLED=0
+)
+
 IF NOT DEFINED NTF_CONFIGURE_WITH_BRANCH_PREDICTION (
     set NTF_CONFIGURE_WITH_BRANCH_PREDICTION=1
 )
 
 IF NOT DEFINED NTF_CONFIGURE_WITH_SPIN_LOCKS (
     set NTF_CONFIGURE_WITH_SPIN_LOCKS=0
+)
+
+IF NOT DEFINED NTF_CONFIGURE_WITH_USERSPACE_MUTEXES (
+    set NTF_CONFIGURE_WITH_USERSPACE_MUTEXES=0
+)
+
+IF NOT DEFINED NTF_CONFIGURE_WITH_SYSTEM_MUTEXES (
+    set NTF_CONFIGURE_WITH_SYSTEM_MUTEXES=0
 )
 
 IF NOT DEFINED NTF_CONFIGURE_WITH_RECURSIVE_MUTEXES (
@@ -290,8 +310,32 @@ if not "%1"=="" (
     if "%1"=="--with-metrics" (
         set NTF_CONFIGURE_WITH_METRICS=1
     )
+
+    if "%1"=="--with-inlining-suggested" (
+        set NTF_CONFIGURE_WITH_INLINING_SUGGESTED=1
+    )
+    if "%1"=="--with-inlining-forced" (
+        set NTF_CONFIGURE_WITH_INLINING_FORCED=1
+    )
+    if "%1"=="--with-inlining-disabled" (
+        set NTF_CONFIGURE_WITH_INLINING_DISABLED=1
+    )
+
     if "%1"=="--with-branch-prediction" (
         set NTF_CONFIGURE_WITH_BRANCH_PREDICTION=1
+    )
+
+    if "%1"=="--with-spin-locks" (
+        set NTF_CONFIGURE_WITH_SPIN_LOCKS=1
+    )
+    if "%1"=="--with-userspace-mutexes" (
+        set NTF_CONFIGURE_WITH_USERSPACE_MUTEXES=1
+    )
+    if "%1"=="--with-system-mutexes" (
+        set NTF_CONFIGURE_WITH_SYSTEM_MUTEXES=1
+    )
+    if "%1"=="--with-recursive-mutexes" (
+        set NTF_CONFIGURE_WITH_RECURSIVE_MUTEXES=1
     )
 
     if "%1"=="--with-usage-examples" (
@@ -382,8 +426,32 @@ if not "%1"=="" (
     if "%1"=="--without-metrics" (
         set NTF_CONFIGURE_WITH_METRICS=0
     )
+
+    if "%1"=="--without-inlining-suggested" (
+        set NTF_CONFIGURE_WITH_INLINING_SUGGESTED=0
+    )
+    if "%1"=="--without-inlining-forced" (
+        set NTF_CONFIGURE_WITH_INLINING_FORCED=0
+    )
+    if "%1"=="--without-inlining-disabled" (
+        set NTF_CONFIGURE_WITH_INLINING_DISABLED=0
+    )
+
     if "%1"=="--without-branch-prediction" (
         set NTF_CONFIGURE_WITH_BRANCH_PREDICTION=0
+    )
+
+    if "%1"=="--without-spin-locks" (
+        set NTF_CONFIGURE_WITH_SPIN_LOCKS=0
+    )
+    if "%1"=="--without-userspace-mutexes" (
+        set NTF_CONFIGURE_WITH_USERSPACE_MUTEXES=0
+    )
+    if "%1"=="--without-system-mutexes" (
+        set NTF_CONFIGURE_WITH_SYSTEM_MUTEXES=0
+    )
+    if "%1"=="--without-recursive-mutexes" (
+        set NTF_CONFIGURE_WITH_RECURSIVE_MUTEXES=0
     )
 
     if "%1"=="--without-usage-examples" (
