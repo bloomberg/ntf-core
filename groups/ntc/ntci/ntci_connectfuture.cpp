@@ -36,7 +36,7 @@ void ConnectFuture::arrive(const bsl::shared_ptr<ntci::Connector>& connector,
 {
     NTCCFG_WARNING_UNUSED(connector);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     ConnectResult result;
     result.setConnector(connector);
@@ -62,7 +62,7 @@ ConnectFuture::~ConnectFuture()
 
 ntsa::Error ConnectFuture::wait(ntci::ConnectResult* result)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     while (d_resultQueue.empty()) {
         d_condition.wait(&d_mutex);
@@ -77,7 +77,7 @@ ntsa::Error ConnectFuture::wait(ntci::ConnectResult* result)
 ntsa::Error ConnectFuture::wait(ntci::ConnectResult*      result,
                                 const bsls::TimeInterval& timeout)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     while (d_resultQueue.empty()) {
         int rc = d_condition.timedWait(&d_mutex, timeout);

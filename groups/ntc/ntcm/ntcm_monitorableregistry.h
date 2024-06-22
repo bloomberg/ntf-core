@@ -51,7 +51,13 @@ class MonitorableRegistry : public ntci::MonitorableRegistry
     typedef bsl::unordered_map<int, bsl::shared_ptr<ntci::Monitorable> >
         ObjectMap;
 
-    mutable bslmt::Mutex            d_mutex;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    mutable Mutex                   d_mutex;
     ObjectMap                       d_objects;
     ntca::MonitorableRegistryConfig d_config;
     bslma::Allocator*               d_allocator_p;

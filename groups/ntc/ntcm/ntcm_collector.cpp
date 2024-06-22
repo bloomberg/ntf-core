@@ -71,14 +71,14 @@ Collector::~Collector()
 void Collector::registerPublisher(
     const bsl::shared_ptr<ntci::MonitorablePublisher>& publisher)
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
     d_publishers.insert(publisher);
 }
 
 void Collector::deregisterPublisher(
     const bsl::shared_ptr<ntci::MonitorablePublisher>& publisher)
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
     d_publishers.erase(publisher);
 }
 
@@ -101,7 +101,7 @@ void Collector::collect()
                     PublisherVector;
     PublisherVector publishers(&sequentialAllocator);
     {
-        bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+        LockGuard guard(&d_mutex);
 
         publishers.reserve(d_publishers.size());
         publishers.assign(d_publishers.begin(), d_publishers.end());

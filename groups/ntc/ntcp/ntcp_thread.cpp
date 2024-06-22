@@ -80,7 +80,7 @@ void* Thread::run(ntcp::Thread* thread)
                    thread->d_config.threadName().value().c_str());
 
     {
-        bslmt::LockGuard<bslmt::Mutex> guard(&thread->d_runMutex);
+        ntccfg::ConditionMutexGuard guard(&thread->d_runMutex);
         thread->d_runState = RUN_STATE_STARTED;
         thread->d_runCondition.signal();
     }
@@ -293,7 +293,7 @@ ntsa::Error Thread::start(const bslmt::ThreadAttributes& threadAttributes)
         return error;
     }
 
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_runMutex);
+    ntccfg::ConditionMutexGuard guard(&d_runMutex);
     while (d_runState != RUN_STATE_STARTED) {
         d_runCondition.wait(&d_runMutex);
     }
@@ -307,7 +307,7 @@ void Thread::shutdown()
 
     NTCI_LOG_CONTEXT_GUARD_OWNER(d_config.metricName().value().c_str());
 
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_runMutex);
+    ntccfg::ConditionMutexGuard guard(&d_runMutex);
 
     if (d_runState != RUN_STATE_STARTED) {
         return;

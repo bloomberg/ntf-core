@@ -48,9 +48,9 @@ class ReceiveFuture : public ntci::ReceiveCallback
     /// Define a type alias for a queue of results.
     typedef bsl::list<ntci::ReceiveResult> ResultQueue;
 
-    bslmt::Mutex     d_mutex;
-    bslmt::Condition d_condition;
-    ResultQueue      d_resultQueue;
+    ntccfg::ConditionMutex d_mutex;
+    ntccfg::Condition      d_condition;
+    ResultQueue            d_resultQueue;
 
   private:
     ReceiveFuture(const ReceiveFuture&) BSLS_KEYWORD_DELETED;

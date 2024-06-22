@@ -160,7 +160,13 @@ class ObjectStatistic
 /// test driver.
 class Object : public ntci::Monitorable
 {
-    mutable bslmt::Mutex d_mutex;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    mutable Mutex        d_mutex;
     bsls::TimeInterval   d_currentTime;
     int                  d_seed;
     ObjectStatistic      d_statistic;
@@ -254,9 +260,15 @@ class Object : public ntci::Monitorable
 /// thread safe.
 class Publisher : public ntci::MonitorablePublisher
 {
-    mutable bslmt::Mutex d_mutex;
-    bslmt::Semaphore     d_semaphore;
-    int                  d_numPublications;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    mutable Mutex    d_mutex;
+    bslmt::Semaphore d_semaphore;
+    int              d_numPublications;
 
   private:
     Publisher(const Publisher&) BSLS_KEYWORD_DELETED;
@@ -394,7 +406,7 @@ void Object::execute()
 
 void Object::getStats(bdld::ManagedDatum* result)
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     bsl::int64_t count, total, min, max;
 
@@ -497,7 +509,7 @@ void Publisher::publish(const bsl::shared_ptr<ntci::Monitorable>& monitorable,
                         const bsls::TimeInterval&                 time,
                         bool                                      final)
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     ASSERT(statistics.isArray());
 

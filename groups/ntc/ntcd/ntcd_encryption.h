@@ -473,7 +473,13 @@ class Encryption : public ntci::Encryption
     /// authorized to complete the handshake.
     typedef bsl::unordered_set<bsl::string> AuthorizationSet;
 
-    mutable bslmt::Mutex                             d_mutex;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    mutable Mutex                                    d_mutex;
     ntca::EncryptionRole::Value                      d_role;
     bdlb::NullableValue<ntcd::EncryptionFrameHeader> d_incomingHeader;
     bsl::shared_ptr<bdlbb::Blob>                     d_incomingPlainText_sp;

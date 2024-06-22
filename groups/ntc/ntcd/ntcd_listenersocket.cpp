@@ -52,7 +52,7 @@ ListenerSocket::~ListenerSocket()
 
 ntsa::Error ListenerSocket::open(ntsa::Transport::Value transport)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -71,7 +71,7 @@ ntsa::Error ListenerSocket::open(ntsa::Transport::Value transport)
 
 ntsa::Error ListenerSocket::acquire(ntsa::Handle handle)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -90,7 +90,7 @@ ntsa::Error ListenerSocket::acquire(ntsa::Handle handle)
 
 ntsa::Handle ListenerSocket::release()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::k_INVALID_HANDLE;
@@ -105,7 +105,7 @@ ntsa::Handle ListenerSocket::release()
 ntsa::Error ListenerSocket::bind(const ntsa::Endpoint& endpoint,
                                  bool                  reuseAddress)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -117,7 +117,7 @@ ntsa::Error ListenerSocket::bind(const ntsa::Endpoint& endpoint,
 ntsa::Error ListenerSocket::bindAny(ntsa::Transport::Value transport,
                                     bool                   reuseAddress)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -128,7 +128,7 @@ ntsa::Error ListenerSocket::bindAny(ntsa::Transport::Value transport,
 
 ntsa::Error ListenerSocket::listen(bsl::size_t backlog)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -139,7 +139,7 @@ ntsa::Error ListenerSocket::listen(bsl::size_t backlog)
 
 ntsa::Error ListenerSocket::accept(ntsa::Handle* result)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -152,7 +152,7 @@ ntsa::Error ListenerSocket::accept(
     bslma::ManagedPtr<ntsi::StreamSocket>* result,
     bslma::Allocator*                      basicAllocator)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -176,7 +176,7 @@ ntsa::Error ListenerSocket::accept(
 ntsa::Error ListenerSocket::accept(bsl::shared_ptr<ntsi::StreamSocket>* result,
                                    bslma::Allocator* basicAllocator)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -200,7 +200,7 @@ ntsa::Error ListenerSocket::accept(bsl::shared_ptr<ntsi::StreamSocket>* result,
 
 ntsa::Error ListenerSocket::shutdown(ntsa::ShutdownType::Value direction)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -211,7 +211,7 @@ ntsa::Error ListenerSocket::shutdown(ntsa::ShutdownType::Value direction)
 
 ntsa::Error ListenerSocket::unlink()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -222,7 +222,7 @@ ntsa::Error ListenerSocket::unlink()
 
 ntsa::Error ListenerSocket::close()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -236,7 +236,7 @@ ntsa::Error ListenerSocket::close()
 
 ntsa::Error ListenerSocket::sourceEndpoint(ntsa::Endpoint* result) const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -247,7 +247,7 @@ ntsa::Error ListenerSocket::sourceEndpoint(ntsa::Endpoint* result) const
 
 ntsa::Handle ListenerSocket::handle() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::k_INVALID_HANDLE;
@@ -260,7 +260,7 @@ ntsa::Handle ListenerSocket::handle() const
 
 ntsa::Error ListenerSocket::setBlocking(bool blocking)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -271,7 +271,7 @@ ntsa::Error ListenerSocket::setBlocking(bool blocking)
 
 ntsa::Error ListenerSocket::setOption(const ntsa::SocketOption& option)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -283,7 +283,7 @@ ntsa::Error ListenerSocket::setOption(const ntsa::SocketOption& option)
 ntsa::Error ListenerSocket::getOption(ntsa::SocketOption*           option,
                                       ntsa::SocketOptionType::Value type)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);

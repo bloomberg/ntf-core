@@ -46,13 +46,17 @@ class BlobBufferFactoryMetrics
 : public ntci::Monitorable,
   public ntccfg::Shared<BlobBufferFactoryMetrics>
 {
-    mutable bslmt::Mutex d_mutex;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
 
-    bsls::AtomicUint64 d_numAllocated;
-    bsls::AtomicUint64 d_numAvailable;
-    bsls::AtomicUint64 d_numPooled;
-    bsls::AtomicUint64 d_numBytesInUse;
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
 
+    mutable Mutex                                   d_mutex;
+    bsls::AtomicUint64                              d_numAllocated;
+    bsls::AtomicUint64                              d_numAvailable;
+    bsls::AtomicUint64                              d_numPooled;
+    bsls::AtomicUint64                              d_numBytesInUse;
     bsl::string                                     d_prefix;
     bsl::string                                     d_objectName;
     bsl::shared_ptr<ntcs::BlobBufferFactoryMetrics> d_parent_sp;

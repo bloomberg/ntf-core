@@ -36,7 +36,7 @@ void BindFuture::arrive(const bsl::shared_ptr<ntci::Bindable>& bindable,
 {
     NTCCFG_WARNING_UNUSED(bindable);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     BindResult result;
     result.setBindable(bindable);
@@ -62,7 +62,7 @@ BindFuture::~BindFuture()
 
 ntsa::Error BindFuture::wait(ntci::BindResult* result)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     while (d_resultQueue.empty()) {
         d_condition.wait(&d_mutex);
@@ -77,7 +77,7 @@ ntsa::Error BindFuture::wait(ntci::BindResult* result)
 ntsa::Error BindFuture::wait(ntci::BindResult*         result,
                              const bsls::TimeInterval& timeout)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     while (d_resultQueue.empty()) {
         int rc = d_condition.timedWait(&d_mutex, timeout);

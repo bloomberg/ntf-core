@@ -174,7 +174,7 @@ void DatagramSocket::processSocketReceived(const ntsa::Error&          error,
 
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (NTCCFG_UNLIKELY(d_detachState.get() ==
                         ntcs::DetachState::e_DETACH_INITIATED))
@@ -228,7 +228,7 @@ void DatagramSocket::processSocketSent(const ntsa::Error&       error,
 
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (NTCCFG_UNLIKELY(d_detachState.get() ==
                         ntcs::DetachState::e_DETACH_INITIATED))
@@ -264,7 +264,7 @@ void DatagramSocket::processSocketError(const ntsa::Error& error)
 
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (NTCCFG_UNLIKELY(d_detachState.get() ==
                         ntcs::DetachState::e_DETACH_INITIATED))
@@ -284,7 +284,7 @@ void DatagramSocket::processSocketDetached()
 {
     NTCCFG_OBJECT_GUARD(&d_object);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
@@ -310,7 +310,7 @@ void DatagramSocket::processSendRateTimer(
 
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -354,7 +354,7 @@ void DatagramSocket::processSendDeadlineTimer(
 
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -401,7 +401,7 @@ void DatagramSocket::processReceiveRateTimer(
 
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -445,7 +445,7 @@ void DatagramSocket::processReceiveDeadlineTimer(
 
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -1869,7 +1869,7 @@ void DatagramSocket::processSourceEndpointResolution(
 
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error       error;
     ntca::BindContext bindContext;
@@ -1943,7 +1943,7 @@ void DatagramSocket::processRemoteEndpointResolution(
 
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error          error;
     ntca::ConnectContext connectContext;
@@ -2156,7 +2156,7 @@ ntsa::Error DatagramSocket::open()
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     return this->privateOpen(self);
 }
@@ -2165,7 +2165,7 @@ ntsa::Error DatagramSocket::open(ntsa::Transport::Value transport)
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     return this->privateOpen(self, transport);
 }
@@ -2175,7 +2175,7 @@ ntsa::Error DatagramSocket::open(ntsa::Transport::Value transport,
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     return this->privateOpen(self, transport, handle);
 }
@@ -2186,7 +2186,7 @@ ntsa::Error DatagramSocket::open(
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     return this->privateOpen(self, transport, datagramSocket);
 }
@@ -2206,7 +2206,7 @@ ntsa::Error DatagramSocket::bind(const ntsa::Endpoint&     endpoint,
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -2269,7 +2269,7 @@ ntsa::Error DatagramSocket::bind(const bsl::string&        name,
 
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -2312,7 +2312,7 @@ ntsa::Error DatagramSocket::connect(const ntsa::Endpoint&        endpoint,
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -2412,7 +2412,7 @@ ntsa::Error DatagramSocket::connect(const bsl::string&           name,
 
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -2445,7 +2445,7 @@ ntsa::Error DatagramSocket::send(const bdlbb::Blob&       data,
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -2551,7 +2551,7 @@ ntsa::Error DatagramSocket::send(const ntsa::Data&        data,
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -2665,7 +2665,7 @@ ntsa::Error DatagramSocket::send(const bdlbb::Blob&        data,
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -2785,7 +2785,7 @@ ntsa::Error DatagramSocket::send(const ntsa::Data&         data,
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -2896,7 +2896,7 @@ ntsa::Error DatagramSocket::receive(ntca::ReceiveContext*       context,
 
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -2974,7 +2974,7 @@ ntsa::Error DatagramSocket::receive(const ntca::ReceiveOptions&  options,
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -3093,14 +3093,14 @@ ntsa::Error DatagramSocket::receive(const ntca::ReceiveOptions&  options,
 ntsa::Error DatagramSocket::registerResolver(
     const bsl::shared_ptr<ntci::Resolver>& resolver)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     d_resolver = resolver;
     return ntsa::Error();
 }
 
 ntsa::Error DatagramSocket::deregisterResolver()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     d_resolver.reset();
     return ntsa::Error();
 }
@@ -3110,7 +3110,7 @@ ntsa::Error DatagramSocket::registerManager(
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (manager) {
         d_manager_sp       = manager;
@@ -3130,7 +3130,7 @@ ntsa::Error DatagramSocket::registerManager(
 
 ntsa::Error DatagramSocket::deregisterManager()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     d_manager_sp.reset();
     d_managerStrand_sp.reset();
@@ -3143,7 +3143,7 @@ ntsa::Error DatagramSocket::registerSession(
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (session) {
         d_session_sp       = session;
@@ -3166,7 +3166,7 @@ ntsa::Error DatagramSocket::registerSessionCallback(
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (callback) {
         bsl::shared_ptr<ntcu::DatagramSocketSession> session;
@@ -3196,7 +3196,7 @@ ntsa::Error DatagramSocket::registerSessionCallback(
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (callback) {
         bsl::shared_ptr<ntcu::DatagramSocketSession> session;
@@ -3219,7 +3219,7 @@ ntsa::Error DatagramSocket::registerSessionCallback(
 
 ntsa::Error DatagramSocket::deregisterSession()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     d_session_sp.reset();
     d_sessionStrand_sp.reset();
@@ -3232,7 +3232,7 @@ ntsa::Error DatagramSocket::setWriteRateLimiter(
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -3260,7 +3260,7 @@ ntsa::Error DatagramSocket::setWriteQueueLowWatermark(bsl::size_t lowWatermark)
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -3295,7 +3295,7 @@ ntsa::Error DatagramSocket::setWriteQueueHighWatermark(
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -3330,7 +3330,7 @@ ntsa::Error DatagramSocket::setWriteQueueWatermarks(bsl::size_t lowWatermark,
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -3384,7 +3384,7 @@ ntsa::Error DatagramSocket::setReadRateLimiter(
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -3412,7 +3412,7 @@ ntsa::Error DatagramSocket::setReadQueueLowWatermark(bsl::size_t lowWatermark)
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -3453,7 +3453,7 @@ ntsa::Error DatagramSocket::setReadQueueHighWatermark(
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -3478,7 +3478,7 @@ ntsa::Error DatagramSocket::setReadQueueWatermarks(bsl::size_t lowWatermark,
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -3508,7 +3508,7 @@ ntsa::Error DatagramSocket::setReadQueueWatermarks(bsl::size_t lowWatermark,
 
 ntsa::Error DatagramSocket::setMulticastLoopback(bool value)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (d_socket_sp) {
         return d_socket_sp->setMulticastLoopback(value);
@@ -3520,7 +3520,7 @@ ntsa::Error DatagramSocket::setMulticastLoopback(bool value)
 
 ntsa::Error DatagramSocket::setMulticastTimeToLive(bsl::size_t value)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (d_socket_sp) {
         return d_socket_sp->setMulticastTimeToLive(value);
@@ -3532,7 +3532,7 @@ ntsa::Error DatagramSocket::setMulticastTimeToLive(bsl::size_t value)
 
 ntsa::Error DatagramSocket::setMulticastInterface(const ntsa::IpAddress& value)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (d_socket_sp) {
         return d_socket_sp->setMulticastInterface(value);
@@ -3546,7 +3546,7 @@ ntsa::Error DatagramSocket::joinMulticastGroup(
     const ntsa::IpAddress& interface,
     const ntsa::IpAddress& group)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (d_socket_sp) {
         return d_socket_sp->joinMulticastGroup(interface, group);
@@ -3560,7 +3560,7 @@ ntsa::Error DatagramSocket::leaveMulticastGroup(
     const ntsa::IpAddress& interface,
     const ntsa::IpAddress& group)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (d_socket_sp) {
         return d_socket_sp->leaveMulticastGroup(interface, group);
@@ -3575,7 +3575,7 @@ ntsa::Error DatagramSocket::relaxFlowControl(
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -3591,7 +3591,7 @@ ntsa::Error DatagramSocket::applyFlowControl(
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -3637,7 +3637,7 @@ ntsa::Error DatagramSocket::cancel(const ntca::SendToken& token)
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -3681,7 +3681,7 @@ ntsa::Error DatagramSocket::cancel(const ntca::ReceiveToken& token)
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -3722,7 +3722,7 @@ ntsa::Error DatagramSocket::shutdown(ntsa::ShutdownType::Value direction,
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -3747,7 +3747,7 @@ void DatagramSocket::close(const ntci::CloseCallback& callback)
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -3888,13 +3888,13 @@ ntsa::Transport::Value DatagramSocket::transport() const
 
 ntsa::Endpoint DatagramSocket::sourceEndpoint() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_sourceEndpoint;
 }
 
 ntsa::Endpoint DatagramSocket::remoteEndpoint() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_remoteEndpoint;
 }
 
@@ -3927,37 +3927,37 @@ bsl::size_t DatagramSocket::threadIndex() const
 
 bsl::size_t DatagramSocket::readQueueSize() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_receiveQueue.size();
 }
 
 bsl::size_t DatagramSocket::readQueueLowWatermark() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_receiveQueue.lowWatermark();
 }
 
 bsl::size_t DatagramSocket::readQueueHighWatermark() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_receiveQueue.highWatermark();
 }
 
 bsl::size_t DatagramSocket::writeQueueSize() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_sendQueue.size();
 }
 
 bsl::size_t DatagramSocket::writeQueueLowWatermark() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_sendQueue.lowWatermark();
 }
 
 bsl::size_t DatagramSocket::writeQueueHighWatermark() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_sendQueue.highWatermark();
 }
 

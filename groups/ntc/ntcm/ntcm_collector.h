@@ -63,7 +63,13 @@ class Collector : public ntci::MonitorableCollector
     typedef bsl::unordered_set<bsl::shared_ptr<ntci::MonitorablePublisher> >
         PublisherSet;
 
-    bslmt::Mutex                        d_mutex;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    Mutex                               d_mutex;
     PublisherSet                        d_publishers;
     bdlma::ConcurrentMultipoolAllocator d_memoryPools;
     LoadCallback                        d_loader;

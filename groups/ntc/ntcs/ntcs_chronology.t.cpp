@@ -495,14 +495,14 @@ class MtDriver : public ntcs::Driver,
 
     void interruptOne() BSLS_KEYWORD_OVERRIDE
     {
-        bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+        ntccfg::ConditionMutexGuard guard(&d_mutex);
         d_blocked = false;
         d_condition.signal();
     }
 
     void interruptAll() BSLS_KEYWORD_OVERRIDE
     {
-        bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+        ntccfg::ConditionMutexGuard guard(&d_mutex);
         d_blocked = false;
         d_condition.broadcast();
     }
@@ -566,7 +566,7 @@ class MtDriver : public ntcs::Driver,
     /// Defer the execution of the specified 'functor'.
     void execute(const Functor& functor) BSLS_KEYWORD_OVERRIDE
     {
-        bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+        ntccfg::ConditionMutexGuard guard(&d_mutex);
         d_chronology->defer(functor);
         d_blocked = false;
         d_condition.signal();
@@ -578,7 +578,7 @@ class MtDriver : public ntcs::Driver,
     void moveAndExecute(FunctorSequence* functorSequence,
                         const Functor&   functor) BSLS_KEYWORD_OVERRIDE
     {
-        bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+        ntccfg::ConditionMutexGuard guard(&d_mutex);
         d_chronology->defer(functorSequence, functor);
         d_blocked = false;
         d_condition.signal();
@@ -626,8 +626,8 @@ class MtDriver : public ntcs::Driver,
   private:
     bslma::Allocator* d_allocator_p;
 
-    bslmt::Mutex                      d_mutex;
-    bslmt::Condition                  d_condition;
+    ntccfg::ConditionMutex            d_mutex;
+    ntccfg::Condition                 d_condition;
     bool                              d_blocked;
     bsls::AtomicBool                  d_run;
     bsl::shared_ptr<ntcs::Chronology> d_chronology;
@@ -810,7 +810,7 @@ class MtTestSuite
         NTCI_LOG_DEBUG("processTimer called: remaining = %d", res);
 
         if (res == 0) {
-            bslmt::LockGuard<bslmt::Mutex> lock(&d_allOneShotConsumedMutex);
+            ntccfg::ConditionMutexGuard lock(&d_allOneShotConsumedMutex);
             d_allOneShotConsumedCondition.signal();
         }
 
@@ -895,12 +895,12 @@ class MtTestSuite
     bsl::shared_ptr<bslmt::ThreadGroup> d_consumers;
     bsl::shared_ptr<bslmt::ThreadGroup> d_producers;
 
-    bsls::AtomicInt  d_numTimersToProduce;
-    bsls::AtomicInt  d_numOneShotTimersToConsume;
-    bsls::AtomicInt  d_numExpectedCloseEvents;
-    bsls::AtomicInt  d_numPeriodicTimersShot;
-    bslmt::Condition d_allOneShotConsumedCondition;
-    bslmt::Mutex     d_allOneShotConsumedMutex;
+    bsls::AtomicInt        d_numTimersToProduce;
+    bsls::AtomicInt        d_numOneShotTimersToConsume;
+    bsls::AtomicInt        d_numExpectedCloseEvents;
+    bsls::AtomicInt        d_numPeriodicTimersShot;
+    ntccfg::Condition      d_allOneShotConsumedCondition;
+    ntccfg::ConditionMutex d_allOneShotConsumedMutex;
 
     typedef bsl::pair<bsl::shared_ptr<ntcs::Strand>, bsls::AtomicBool>
         StrandAndFlag;

@@ -58,8 +58,8 @@ class ListenerSocketEventQueue : public ntci::ListenerSocketSession
         k_NUM_EVENT_TYPES = 4
     };
 
-    bslmt::Mutex                  d_mutex;
-    bslmt::Condition              d_condition;
+    ntccfg::ConditionMutex        d_mutex;
+    ntccfg::Condition             d_condition;
     Queue                         d_queue;
     bsl::uint32_t                 d_interest[k_NUM_EVENT_TYPES];
     bool                          d_closed;

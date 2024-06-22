@@ -213,7 +213,7 @@ void StreamSocket::processSocketConnected(const ntsa::Error& error)
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (NTCCFG_UNLIKELY(d_detachState.get() ==
                         ntcs::DetachState::e_DETACH_INITIATED))
@@ -244,7 +244,7 @@ void StreamSocket::processSocketReceived(const ntsa::Error&          error,
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (NTCCFG_UNLIKELY(d_detachState.get() ==
                         ntcs::DetachState::e_DETACH_INITIATED))
@@ -283,7 +283,7 @@ void StreamSocket::processSocketSent(const ntsa::Error&       error,
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (NTCCFG_UNLIKELY(d_detachState.get() ==
                         ntcs::DetachState::e_DETACH_INITIATED))
@@ -319,7 +319,7 @@ void StreamSocket::processSocketError(const ntsa::Error& error)
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (NTCCFG_UNLIKELY(d_detachState.get() ==
                         ntcs::DetachState::e_DETACH_INITIATED))
@@ -340,7 +340,7 @@ void StreamSocket::processSocketDetached()
 {
     NTCCFG_OBJECT_GUARD(&d_object);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
@@ -366,7 +366,7 @@ void StreamSocket::processConnectDeadlineTimer(
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -408,7 +408,7 @@ void StreamSocket::processConnectRetryTimer(
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -448,7 +448,7 @@ void StreamSocket::processUpgradeTimer(
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -477,7 +477,7 @@ void StreamSocket::processSendRateTimer(
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -522,7 +522,7 @@ void StreamSocket::processSendDeadlineTimer(
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -569,7 +569,7 @@ void StreamSocket::processReceiveRateTimer(
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -614,7 +614,7 @@ void StreamSocket::processReceiveDeadlineTimer(
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -3083,7 +3083,7 @@ void StreamSocket::processSourceEndpointResolution(
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error       error;
     ntca::BindContext bindContext;
@@ -3158,7 +3158,7 @@ void StreamSocket::processRemoteEndpointResolution(
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (NTCCFG_UNLIKELY(d_detachState.get() ==
                         ntcs::DetachState::e_DETACH_INITIATED))
@@ -3660,7 +3660,7 @@ ntsa::Error StreamSocket::open()
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     return this->privateOpen(self);
 }
@@ -3669,7 +3669,7 @@ ntsa::Error StreamSocket::open(ntsa::Transport::Value transport)
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     return this->privateOpen(self, transport);
 }
@@ -3679,7 +3679,7 @@ ntsa::Error StreamSocket::open(ntsa::Transport::Value transport,
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     return this->privateOpen(self, transport, handle);
 }
@@ -3690,7 +3690,7 @@ ntsa::Error StreamSocket::open(
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     return this->privateOpen(self, transport, streamSocket);
 }
@@ -3702,7 +3702,7 @@ ntsa::Error StreamSocket::open(
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     return this->privateOpen(self, transport, handle, acceptor);
 }
@@ -3714,7 +3714,7 @@ ntsa::Error StreamSocket::open(
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     return this->privateOpen(self, transport, streamSocket, acceptor);
 }
@@ -3734,7 +3734,7 @@ ntsa::Error StreamSocket::bind(const ntsa::Endpoint&     endpoint,
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -3801,7 +3801,7 @@ ntsa::Error StreamSocket::bind(const bsl::string&        name,
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -3848,7 +3848,7 @@ ntsa::Error StreamSocket::connect(const ntsa::Endpoint&        endpoint,
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -3983,7 +3983,7 @@ ntsa::Error StreamSocket::connect(const bsl::string&           name,
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -4100,7 +4100,7 @@ ntsa::Error StreamSocket::upgrade(
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -4231,7 +4231,7 @@ ntsa::Error StreamSocket::send(const bdlbb::Blob&       data,
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -4312,7 +4312,7 @@ ntsa::Error StreamSocket::send(const ntsa::Data&        data,
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -4403,7 +4403,7 @@ ntsa::Error StreamSocket::send(const bdlbb::Blob&        data,
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -4510,7 +4510,7 @@ ntsa::Error StreamSocket::send(const ntsa::Data&         data,
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -4608,7 +4608,7 @@ ntsa::Error StreamSocket::receive(ntca::ReceiveContext*       context,
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -4730,7 +4730,7 @@ ntsa::Error StreamSocket::receive(const ntca::ReceiveOptions&  options,
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -4894,14 +4894,14 @@ ntsa::Error StreamSocket::receive(const ntca::ReceiveOptions&  options,
 ntsa::Error StreamSocket::registerResolver(
     const bsl::shared_ptr<ntci::Resolver>& resolver)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     d_resolver = resolver;
     return ntsa::Error();
 }
 
 ntsa::Error StreamSocket::deregisterResolver()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     d_resolver.reset();
     return ntsa::Error();
 }
@@ -4911,7 +4911,7 @@ ntsa::Error StreamSocket::registerManager(
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (manager) {
         d_manager_sp       = manager;
@@ -4931,7 +4931,7 @@ ntsa::Error StreamSocket::registerManager(
 
 ntsa::Error StreamSocket::deregisterManager()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     d_manager_sp.reset();
     d_managerStrand_sp.reset();
@@ -4944,7 +4944,7 @@ ntsa::Error StreamSocket::registerSession(
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (session) {
         d_session_sp       = session;
@@ -4967,7 +4967,7 @@ ntsa::Error StreamSocket::registerSessionCallback(
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (callback) {
         bsl::shared_ptr<ntcu::StreamSocketSession> session;
@@ -4997,7 +4997,7 @@ ntsa::Error StreamSocket::registerSessionCallback(
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (callback) {
         bsl::shared_ptr<ntcu::StreamSocketSession> session;
@@ -5020,7 +5020,7 @@ ntsa::Error StreamSocket::registerSessionCallback(
 
 ntsa::Error StreamSocket::deregisterSession()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     d_session_sp.reset();
     d_sessionStrand_sp.reset();
@@ -5033,7 +5033,7 @@ ntsa::Error StreamSocket::setWriteRateLimiter(
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5062,7 +5062,7 @@ ntsa::Error StreamSocket::setWriteQueueLowWatermark(bsl::size_t lowWatermark)
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5101,7 +5101,7 @@ ntsa::Error StreamSocket::setWriteQueueHighWatermark(bsl::size_t highWatermark)
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5141,7 +5141,7 @@ ntsa::Error StreamSocket::setWriteQueueWatermarks(bsl::size_t lowWatermark,
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5204,7 +5204,7 @@ ntsa::Error StreamSocket::setReadRateLimiter(
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5233,7 +5233,7 @@ ntsa::Error StreamSocket::setReadQueueLowWatermark(bsl::size_t lowWatermark)
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5274,7 +5274,7 @@ ntsa::Error StreamSocket::setReadQueueHighWatermark(bsl::size_t highWatermark)
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5300,7 +5300,7 @@ ntsa::Error StreamSocket::setReadQueueWatermarks(bsl::size_t lowWatermark,
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5334,7 +5334,7 @@ ntsa::Error StreamSocket::relaxFlowControl(
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5351,7 +5351,7 @@ ntsa::Error StreamSocket::applyFlowControl(
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5393,7 +5393,7 @@ ntsa::Error StreamSocket::cancel(const ntca::ConnectToken& token)
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5419,7 +5419,7 @@ ntsa::Error StreamSocket::cancel(const ntca::UpgradeToken& token)
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5468,7 +5468,7 @@ ntsa::Error StreamSocket::cancel(const ntca::SendToken& token)
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5512,7 +5512,7 @@ ntsa::Error StreamSocket::cancel(const ntca::ReceiveToken& token)
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5553,7 +5553,7 @@ ntsa::Error StreamSocket::downgrade()
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5640,7 +5640,7 @@ ntsa::Error StreamSocket::shutdown(ntsa::ShutdownType::Value direction,
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5686,7 +5686,7 @@ void StreamSocket::close(const ntci::CloseCallback& callback)
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5838,20 +5838,20 @@ ntsa::Transport::Value StreamSocket::transport() const
 
 ntsa::Endpoint StreamSocket::sourceEndpoint() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_sourceEndpoint;
 }
 
 ntsa::Endpoint StreamSocket::remoteEndpoint() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_remoteEndpoint;
 }
 
 bsl::shared_ptr<ntci::EncryptionCertificate> StreamSocket::sourceCertificate()
     const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     bsl::shared_ptr<ntci::EncryptionCertificate> result;
     if (d_encryption_sp) {
@@ -5864,7 +5864,7 @@ bsl::shared_ptr<ntci::EncryptionCertificate> StreamSocket::sourceCertificate()
 bsl::shared_ptr<ntci::EncryptionCertificate> StreamSocket::remoteCertificate()
     const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     bsl::shared_ptr<ntci::EncryptionCertificate> result;
     if (d_encryption_sp) {
@@ -5876,7 +5876,7 @@ bsl::shared_ptr<ntci::EncryptionCertificate> StreamSocket::remoteCertificate()
 
 bsl::shared_ptr<ntci::EncryptionKey> StreamSocket::privateKey() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     bsl::shared_ptr<ntci::EncryptionKey> result;
     if (d_encryption_sp) {
@@ -5920,37 +5920,37 @@ bsl::size_t StreamSocket::threadIndex() const
 
 bsl::size_t StreamSocket::readQueueSize() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_receiveQueue.size();
 }
 
 bsl::size_t StreamSocket::readQueueLowWatermark() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_receiveQueue.lowWatermark();
 }
 
 bsl::size_t StreamSocket::readQueueHighWatermark() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_receiveQueue.highWatermark();
 }
 
 bsl::size_t StreamSocket::writeQueueSize() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_sendQueue.size();
 }
 
 bsl::size_t StreamSocket::writeQueueLowWatermark() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_sendQueue.lowWatermark();
 }
 
 bsl::size_t StreamSocket::writeQueueHighWatermark() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_sendQueue.highWatermark();
 }
 

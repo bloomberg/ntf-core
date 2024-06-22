@@ -184,7 +184,7 @@ void ReactorMetrics::logErrorCallback(const bsls::TimeInterval& duration)
 
 void ReactorMetrics::getStats(bdld::ManagedDatum* result)
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     bdld::DatumMutableArrayRef array;
     bdld::Datum::createUninitializedArray(&array,

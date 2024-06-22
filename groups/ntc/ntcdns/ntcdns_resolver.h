@@ -55,8 +55,14 @@ class Resolver : public ntci::Resolver, public ntccfg::Shared<Resolver>
 {
     enum State { e_STATE_STARTED, e_STATE_STOPPING, e_STATE_STOPPED };
 
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
     ntccfg::Object                               d_object;
-    mutable bslmt::Mutex                         d_mutex;
+    mutable Mutex                                d_mutex;
     bsl::shared_ptr<ntci::Interface>             d_interface_sp;
     bool                                         d_interfaceOwned;
     bsl::shared_ptr<ntci::DatagramSocketFactory> d_datagramSocketFactory_sp;

@@ -66,7 +66,7 @@ void ReceiveCallbackQueueEntry::dispatch(
     const bsl::shared_ptr<ntci::Strand>&                    strand,
     const bsl::shared_ptr<ntci::Executor>&                  executor,
     bool                                                    defer,
-    bslmt::Mutex*                                           mutex)
+    ntccfg::Mutex*                                          mutex)
 {
     if (NTCCFG_LIKELY(entry->d_state.finish())) {
         if (entry->d_timer_sp) {

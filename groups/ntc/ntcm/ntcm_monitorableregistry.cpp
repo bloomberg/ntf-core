@@ -48,7 +48,7 @@ MonitorableRegistry::~MonitorableRegistry()
 void MonitorableRegistry::registerMonitorable(
     const bsl::shared_ptr<ntci::Monitorable>& object)
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     if (!d_config.maxSize().isNull()) {
         if (d_objects.size() >= d_config.maxSize().value()) {
@@ -62,7 +62,7 @@ void MonitorableRegistry::registerMonitorable(
 void MonitorableRegistry::deregisterMonitorable(
     const bsl::shared_ptr<ntci::Monitorable>& object)
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     d_objects.erase(static_cast<int>(object->objectId()));
 }
@@ -70,7 +70,7 @@ void MonitorableRegistry::deregisterMonitorable(
 void MonitorableRegistry::loadRegisteredObjects(
     bsl::vector<bsl::shared_ptr<ntci::Monitorable> >* result) const
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     result->reserve(result->size() + d_objects.size());
 

@@ -82,6 +82,12 @@ class Proactor : public ntci::Proactor,
     /// This typedef defines a map of work pending for the socket.
     typedef bsl::unordered_map<ntsa::Handle, bsl::shared_ptr<Work> > WorkMap;
 
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
     bsl::shared_ptr<ntcd::Machine>               d_machine_sp;
     bsl::shared_ptr<ntcd::Monitor>               d_monitor_sp;
     bsl::shared_ptr<ntci::User>                  d_user_sp;
@@ -96,9 +102,9 @@ class Proactor : public ntci::Proactor,
     bsl::shared_ptr<ntcs::RegistryEntryCatalog::EntryFunctor>
                                                 d_detachFunctor_sp;
     bsl::shared_ptr<ntcs::RegistryEntryCatalog> d_registry_sp;
-    mutable bslmt::Mutex                        d_waiterSetMutex;
+    mutable Mutex                               d_waiterSetMutex;
     WaiterSet                                   d_waiterSet;
-    mutable bslmt::Mutex                        d_workMapMutex;
+    mutable Mutex                               d_workMapMutex;
     WorkMap                                     d_workMap;
     bslmt::ThreadUtil::Handle                   d_threadHandle;
     bsl::size_t                                 d_threadIndex;

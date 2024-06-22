@@ -155,7 +155,7 @@ void ListenerSocket::processSocketReadable(const ntca::ReactorEvent& event)
 
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -215,7 +215,7 @@ void ListenerSocket::processSocketError(const ntca::ReactorEvent& event)
 
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -245,7 +245,7 @@ void ListenerSocket::processAcceptRateTimer(
 
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -288,7 +288,7 @@ void ListenerSocket::processAcceptBackoffTimer(
 
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -317,7 +317,7 @@ void ListenerSocket::processAcceptDeadlineTimer(
 
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -1471,7 +1471,7 @@ void ListenerSocket::processSourceEndpointResolution(
 
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -1657,7 +1657,7 @@ ntsa::Error ListenerSocket::open()
 {
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     return this->privateOpen(self);
 }
@@ -1666,7 +1666,7 @@ ntsa::Error ListenerSocket::open(ntsa::Transport::Value transport)
 {
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     return this->privateOpen(self, transport);
 }
@@ -1676,7 +1676,7 @@ ntsa::Error ListenerSocket::open(ntsa::Transport::Value transport,
 {
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     return this->privateOpen(self, transport, handle);
 }
@@ -1687,7 +1687,7 @@ ntsa::Error ListenerSocket::open(
 {
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     return this->privateOpen(self, transport, listenerSocket);
 }
@@ -1707,7 +1707,7 @@ ntsa::Error ListenerSocket::bind(const ntsa::Endpoint&     endpoint,
 {
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -1770,7 +1770,7 @@ ntsa::Error ListenerSocket::bind(const bsl::string&        name,
 
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -1812,7 +1812,7 @@ ntsa::Error ListenerSocket::listen(bsl::size_t backlog)
 {
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -1866,7 +1866,7 @@ ntsa::Error ListenerSocket::accept(
 
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -1948,7 +1948,7 @@ ntsa::Error ListenerSocket::accept(const ntca::AcceptOptions&  options,
 {
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -2122,14 +2122,14 @@ ntsa::Error ListenerSocket::accept(const ntca::AcceptOptions&  options,
 ntsa::Error ListenerSocket::registerResolver(
     const bsl::shared_ptr<ntci::Resolver>& resolver)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     d_resolver = resolver;
     return ntsa::Error();
 }
 
 ntsa::Error ListenerSocket::deregisterResolver()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     d_resolver.reset();
     return ntsa::Error();
 }
@@ -2139,7 +2139,7 @@ ntsa::Error ListenerSocket::registerManager(
 {
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (manager) {
         d_manager_sp       = manager;
@@ -2159,7 +2159,7 @@ ntsa::Error ListenerSocket::registerManager(
 
 ntsa::Error ListenerSocket::deregisterManager()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     d_manager_sp.reset();
     d_managerStrand_sp.reset();
@@ -2172,7 +2172,7 @@ ntsa::Error ListenerSocket::registerSession(
 {
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (session) {
         d_session_sp       = session;
@@ -2195,7 +2195,7 @@ ntsa::Error ListenerSocket::registerSessionCallback(
 {
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (callback) {
         bsl::shared_ptr<ntcu::ListenerSocketSession> session;
@@ -2225,7 +2225,7 @@ ntsa::Error ListenerSocket::registerSessionCallback(
 {
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (callback) {
         bsl::shared_ptr<ntcu::ListenerSocketSession> session;
@@ -2248,7 +2248,7 @@ ntsa::Error ListenerSocket::registerSessionCallback(
 
 ntsa::Error ListenerSocket::deregisterSession()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     d_session_sp.reset();
     d_sessionStrand_sp.reset();
@@ -2261,7 +2261,7 @@ ntsa::Error ListenerSocket::setAcceptRateLimiter(
 {
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -2290,7 +2290,7 @@ ntsa::Error ListenerSocket::setAcceptQueueLowWatermark(
 {
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -2331,7 +2331,7 @@ ntsa::Error ListenerSocket::setAcceptQueueHighWatermark(
 {
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -2356,7 +2356,7 @@ ntsa::Error ListenerSocket::setAcceptQueueWatermarks(bsl::size_t lowWatermark,
 {
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -2389,7 +2389,7 @@ ntsa::Error ListenerSocket::relaxFlowControl(
 {
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -2405,7 +2405,7 @@ ntsa::Error ListenerSocket::applyFlowControl(
 {
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -2435,7 +2435,7 @@ ntsa::Error ListenerSocket::cancel(const ntca::AcceptToken& token)
 {
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -2473,7 +2473,7 @@ ntsa::Error ListenerSocket::shutdown()
 {
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -2501,7 +2501,7 @@ void ListenerSocket::close(const ntci::CloseCallback& callback)
 {
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -2670,7 +2670,7 @@ ntsa::Transport::Value ListenerSocket::transport() const
 
 ntsa::Endpoint ListenerSocket::sourceEndpoint() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_sourceEndpoint;
 }
 
@@ -2703,19 +2703,19 @@ bsl::size_t ListenerSocket::threadIndex() const
 
 bsl::size_t ListenerSocket::acceptQueueSize() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_acceptQueue.size();
 }
 
 bsl::size_t ListenerSocket::acceptQueueLowWatermark() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_acceptQueue.lowWatermark();
 }
 
 bsl::size_t ListenerSocket::acceptQueueHighWatermark() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_acceptQueue.highWatermark();
 }
 

@@ -123,7 +123,13 @@ class HostDatabase
         unordered_map<ntsa::IpAddress, bslstl::StringRef, IpAddressHash>
             DomainNameByIpAddress;
 
-    mutable bslmt::Mutex          d_mutex;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    mutable Mutex                 d_mutex;
     bdlma::MultipoolAllocator     d_pool;
     IpAddressByDomainName         d_ipAddressByDomainName;
     DomainNameByIpAddress         d_domainNameByIpAddress;
@@ -228,7 +234,13 @@ class PortDatabase
     typedef bsl::unordered_map<ntsa::Port, bslstl::StringRef>
         ServiceNameByPort;
 
-    mutable bslmt::Mutex          d_mutex;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    mutable Mutex                 d_mutex;
     PortByServiceName             d_tcpPortByServiceName;
     ServiceNameByPort             d_tcpServiceNameByPort;
     PortByServiceName             d_udpPortByServiceName;

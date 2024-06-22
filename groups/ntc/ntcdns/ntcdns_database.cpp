@@ -610,7 +610,7 @@ ntsa::Error HostDatabase::load(const bsl::shared_ptr<ntcdns::File>& file)
 #endif
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        LockGuard lock(&d_mutex);
 
         d_ipAddressByDomainName.swap(ipAddressByDomainName);
         d_domainNameByIpAddress.swap(domainNameByIpAddress);
@@ -636,7 +636,7 @@ HostDatabase::~HostDatabase()
 
 void HostDatabase::clear()
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     d_ipAddressByDomainName.clear();
     d_domainNameByIpAddress.clear();
@@ -726,7 +726,7 @@ ntsa::Error HostDatabase::getIpAddress(
     }
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        LockGuard lock(&d_mutex);
 
         IpAddressByDomainName::const_iterator it =
             d_ipAddressByDomainName.find(domainName);
@@ -783,7 +783,7 @@ ntsa::Error HostDatabase::getDomainName(
 {
     NTCCFG_WARNING_UNUSED(options);
 
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     DomainNameByIpAddress::const_iterator it =
         d_domainNameByIpAddress.find(ipAddress);
@@ -1116,7 +1116,7 @@ ntsa::Error PortDatabase::load(const bsl::shared_ptr<ntcdns::File>& file)
 #endif
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        LockGuard lock(&d_mutex);
 
         d_tcpPortByServiceName.swap(tcpPortByServiceName);
         d_tcpServiceNameByPort.swap(tcpServiceNameByPort);
@@ -1146,7 +1146,7 @@ PortDatabase::~PortDatabase()
 
 void PortDatabase::clear()
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     d_tcpPortByServiceName.clear();
     d_tcpServiceNameByPort.clear();
@@ -1259,7 +1259,7 @@ ntsa::Error PortDatabase::getPort(ntca::GetPortContext*       context,
     }
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        LockGuard lock(&d_mutex);
 
         if (examineTcpPortList) {
             PortByServiceName::const_iterator it =
@@ -1342,7 +1342,7 @@ ntsa::Error PortDatabase::getServiceName(
     const ntsa::Port&                  port,
     const ntca::GetServiceNameOptions& options) const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     bool found = false;
 
@@ -1424,7 +1424,7 @@ void PortDatabase::dump(bsl::vector<ntcdns::PortEntry>* result) const
 {
     result->clear();
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     result->reserve(d_tcpServiceNameByPort.size() +
                     d_udpServiceNameByPort.size());

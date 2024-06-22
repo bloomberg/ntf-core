@@ -1129,7 +1129,7 @@ ntsa::Error PacketQueue::setHighWatermark(bsl::size_t highWatermark)
     return ntsa::Error();
 }
 
-ntsa::Error PacketQueue::enqueue(bslmt::Mutex*                  mutex,
+ntsa::Error PacketQueue::enqueue(ntccfg::ConditionMutex*        mutex,
                                  bsl::shared_ptr<ntcd::Packet>& packet,
                                  bool                           block,
                                  PacketFunctor                  packetFunctor)
@@ -1221,7 +1221,7 @@ void PacketQueue::retry(const PacketVector& packetVector)
     }
 }
 
-ntsa::Error PacketQueue::dequeue(bslmt::Mutex*                  mutex,
+ntsa::Error PacketQueue::dequeue(ntccfg::ConditionMutex*        mutex,
                                  bsl::shared_ptr<ntcd::Packet>* result,
                                  bool                           block)
 {
@@ -1268,7 +1268,7 @@ ntsa::Error PacketQueue::dequeue(bslmt::Mutex*                  mutex,
     return ntsa::Error();
 }
 
-ntsa::Error PacketQueue::peek(bslmt::Mutex*                  mutex,
+ntsa::Error PacketQueue::peek(ntccfg::ConditionMutex*        mutex,
                               bsl::shared_ptr<ntcd::Packet>* result,
                               bool                           block)
 {
@@ -1301,7 +1301,7 @@ ntsa::Error PacketQueue::peek(bslmt::Mutex*                  mutex,
     return ntsa::Error();
 }
 
-ntsa::Error PacketQueue::pop(bslmt::Mutex* mutex, bool block)
+ntsa::Error PacketQueue::pop(ntccfg::ConditionMutex* mutex, bool block)
 {
     return this->dequeue(mutex, 0, block);
 }
@@ -1477,7 +1477,7 @@ PortMap::~PortMap()
 
 ntsa::Error PortMap::acquire(ntsa::Port* result, ntsa::Port requested)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     *result = 0;
 
@@ -1514,21 +1514,21 @@ ntsa::Error PortMap::acquire(ntsa::Port* result, ntsa::Port requested)
 
 void PortMap::release(ntsa::Port port)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     d_bitset.reset(port);
 }
 
 bool PortMap::isUsed(ntsa::Port port)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     return d_bitset.test(port);
 }
 
 bool PortMap::isFree(ntsa::Port port)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     return !d_bitset.test(port);
 }
@@ -1575,7 +1575,7 @@ ntsa::Error SessionQueue::setHighWatermark(bsl::size_t highWatermark)
 }
 
 ntsa::Error SessionQueue::enqueueSession(
-    bslmt::Mutex*                         mutex,
+    ntccfg::ConditionMutex*               mutex,
     const bsl::shared_ptr<ntcd::Session>& session,
     bool                                  block)
 {
@@ -1619,7 +1619,7 @@ ntsa::Error SessionQueue::enqueueSession(
 }
 
 ntsa::Error SessionQueue::dequeueSession(
-    bslmt::Mutex*                   mutex,
+    ntccfg::ConditionMutex*         mutex,
     bsl::shared_ptr<ntcd::Session>* result,
     bool                            block)
 {
@@ -2175,7 +2175,7 @@ ntsa::Error Session::open(ntsa::Transport::Value transport)
 {
     NTCCFG_WARNING_UNUSED(transport);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     bsl::shared_ptr<Session> self = this->getSelf(this);
 
@@ -2215,7 +2215,7 @@ ntsa::Error Session::acquire(ntsa::Handle handle)
 
 ntsa::Handle Session::release()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     ntsa::Handle handle = d_handle;
 
@@ -2232,7 +2232,7 @@ ntsa::Error Session::bind(const ntsa::Endpoint& endpoint, bool reuseAddress)
 {
     NTCCFG_WARNING_UNUSED(reuseAddress);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     bsl::shared_ptr<Session> self = this->getSelf(this);
 
@@ -2265,7 +2265,7 @@ ntsa::Error Session::bindAny(ntsa::Transport::Value transport,
 {
     NTCCFG_WARNING_UNUSED(reuseAddress);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     bsl::shared_ptr<Session> self = this->getSelf(this);
 
@@ -2320,7 +2320,7 @@ ntsa::Error Session::bindAny(ntsa::Transport::Value transport,
 
 ntsa::Error Session::listen(bsl::size_t backlog)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     if (d_handle == ntsa::k_INVALID_HANDLE) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -2352,7 +2352,7 @@ ntsa::Error Session::listen(bsl::size_t backlog)
 
 ntsa::Error Session::accept(ntsa::Handle* result)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     *result = ntsa::k_INVALID_HANDLE;
 
@@ -2411,7 +2411,7 @@ ntsa::Error Session::accept(bsl::shared_ptr<ntcd::Session>* result,
 {
     NTCCFG_WARNING_UNUSED(basicAllocator);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     UpdateGuard update(this);
 
@@ -2450,7 +2450,7 @@ ntsa::Error Session::accept(bsl::shared_ptr<ntcd::Session>* result,
 
 ntsa::Error Session::connect(const ntsa::Endpoint& endpoint)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     UpdateGuard update(this);
 
@@ -2544,7 +2544,7 @@ ntsa::Error Session::connect(const ntsa::Endpoint& endpoint)
             return this->privateError();
         }
 
-        bslmt::LockGuard<bslmt::Mutex> peerLock(&peer->d_mutex);
+        ntccfg::ConditionMutexGuard peerLock(&peer->d_mutex);
 
         UpdateGuard peerUpdate(peer.get());
 
@@ -2614,7 +2614,7 @@ ntsa::Error Session::send(ntsa::SendContext*       context,
                           const bdlbb::Blob&       data,
                           const ntsa::SendOptions& options)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     UpdateGuard update(this);
 
@@ -2847,7 +2847,7 @@ ntsa::Error Session::send(ntsa::SendContext*       context,
                           const ntsa::Data&        data,
                           const ntsa::SendOptions& options)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     UpdateGuard update(this);
 
@@ -3085,7 +3085,7 @@ ntsa::Error Session::receive(ntsa::ReceiveContext*       context,
                              bdlbb::Blob*                data,
                              const ntsa::ReceiveOptions& options)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     UpdateGuard update(this);
 
@@ -3225,7 +3225,7 @@ ntsa::Error Session::receive(ntsa::ReceiveContext*       context,
                              ntsa::Data*                 data,
                              const ntsa::ReceiveOptions& options)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     UpdateGuard update(this);
 
@@ -3364,7 +3364,7 @@ ntsa::Error Session::receive(ntsa::ReceiveContext*       context,
 ntsa::Error Session::receiveNotifications(
     ntsa::NotificationQueue* notifications)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     UpdateGuard update(this);
 
@@ -3385,7 +3385,7 @@ ntsa::Error Session::receiveNotifications(
 
 ntsa::Error Session::shutdown(ntsa::ShutdownType::Value direction)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     UpdateGuard update(this);
 
@@ -3470,7 +3470,7 @@ ntsa::Error Session::unlink()
 
 ntsa::Error Session::close()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -3505,7 +3505,7 @@ ntsa::Error Session::close()
 ntsa::Error Session::registerMonitor(
     const bsl::shared_ptr<ntcd::Monitor>& monitor)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     if (d_monitor_sp) {
         if (monitor != d_monitor_sp) {
@@ -3530,7 +3530,7 @@ ntsa::Error Session::registerMonitor(
 ntsa::Error Session::deregisterMonitor(
     const bsl::shared_ptr<ntcd::Monitor>& monitor)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     if (d_monitor_sp) {
         if (monitor != d_monitor_sp) {
@@ -3545,7 +3545,7 @@ ntsa::Error Session::deregisterMonitor(
 
 ntsa::Error Session::step(bool block)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     UpdateGuard update(this);
 
@@ -3633,7 +3633,7 @@ ntsa::Error Session::step(bool block)
             }
         }
 
-        bslmt::LockGuard<bslmt::Mutex> remoteLock(&remoteSession->d_mutex);
+        ntccfg::ConditionMutexGuard remoteLock(&remoteSession->d_mutex);
 
         if (!remoteSession->d_incomingPacketQueue_sp) {
             NTCD_SESSION_LOG_TRANSFERRING_PACKET_FAILED_PEER_DEAD(d_machine_sp,
@@ -3702,13 +3702,13 @@ ntsa::Error Session::step(bool block)
 
 ntsa::Handle Session::handle() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
     return d_handle;
 }
 
 ntsa::Error Session::sourceEndpoint(ntsa::Endpoint* result) const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     if (d_sourceEndpoint.isUndefined()) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -3720,7 +3720,7 @@ ntsa::Error Session::sourceEndpoint(ntsa::Endpoint* result) const
 
 ntsa::Error Session::remoteEndpoint(ntsa::Endpoint* result) const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     if (d_errorCode) {
         return this->privateError();
@@ -3738,7 +3738,7 @@ ntsa::Error Session::remoteEndpoint(ntsa::Endpoint* result) const
 
 ntsa::Error Session::setMulticastLoopback(bool enabled)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     if (d_handle == ntsa::k_INVALID_HANDLE) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -3751,7 +3751,7 @@ ntsa::Error Session::setMulticastLoopback(bool enabled)
 
 ntsa::Error Session::setMulticastInterface(const ntsa::IpAddress& interface)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     if (d_handle == ntsa::k_INVALID_HANDLE) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -3764,7 +3764,7 @@ ntsa::Error Session::setMulticastInterface(const ntsa::IpAddress& interface)
 
 ntsa::Error Session::setMulticastTimeToLive(bsl::size_t maxHops)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     if (d_handle == ntsa::k_INVALID_HANDLE) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -3778,7 +3778,7 @@ ntsa::Error Session::setMulticastTimeToLive(bsl::size_t maxHops)
 ntsa::Error Session::joinMulticastGroup(const ntsa::IpAddress& interface,
                                         const ntsa::IpAddress& group)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     if (d_handle == ntsa::k_INVALID_HANDLE) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -3793,7 +3793,7 @@ ntsa::Error Session::joinMulticastGroup(const ntsa::IpAddress& interface,
 ntsa::Error Session::leaveMulticastGroup(const ntsa::IpAddress& interface,
                                          const ntsa::IpAddress& group)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     if (d_handle == ntsa::k_INVALID_HANDLE) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -3809,7 +3809,7 @@ ntsa::Error Session::leaveMulticastGroup(const ntsa::IpAddress& interface,
 
 ntsa::Error Session::setBlocking(bool blocking)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     if (d_handle == ntsa::k_INVALID_HANDLE) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -3822,7 +3822,7 @@ ntsa::Error Session::setBlocking(bool blocking)
 
 ntsa::Error Session::setOption(const ntsa::SocketOption& option)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     if (d_handle == ntsa::k_INVALID_HANDLE) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -3864,7 +3864,7 @@ ntsa::Error Session::setOption(const ntsa::SocketOption& option)
 ntsa::Error Session::getOption(ntsa::SocketOption*           option,
                                ntsa::SocketOptionType::Value type)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     if (d_handle == ntsa::k_INVALID_HANDLE) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -4269,14 +4269,14 @@ void Monitor::setOneShot(bool oneShot)
 
 void Monitor::registerWaiter()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     d_waiters += 1;
 }
 
 void Monitor::deregisterWaiter()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     d_waiters -= 1;
 }
@@ -4303,7 +4303,7 @@ ntsa::Error Monitor::add(const bsl::shared_ptr<ntcd::Session>& session)
 {
     ntsa::Handle handle = session->handle();
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     EntryMap::iterator it = d_map.find(handle);
     if (it != d_map.end()) {
@@ -4347,7 +4347,7 @@ ntsa::Error Monitor::remove(const bsl::shared_ptr<ntcd::Session>& session)
 {
     ntsa::Handle handle = session->handle();
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     EntryMap::iterator it = d_map.find(handle);
     if (it == d_map.end()) {
@@ -4392,7 +4392,7 @@ ntsa::Error Monitor::update(ntsa::Handle handle, ntcs::Interest interest)
     const bool hasError        = session->hasError();
     const bool hasNotification = session->hasNotification();
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     EntryMap::iterator it = d_map.find(handle);
     if (it == d_map.end()) {
@@ -4566,7 +4566,7 @@ ntsa::Error Monitor::update(const bsl::shared_ptr<ntcd::Session>& session,
     const bool hasError        = session->hasError();
     const bool hasNotification = session->hasNotification();
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     EntryMap::iterator it = d_map.find(handle);
     if (it == d_map.end()) {
@@ -4749,7 +4749,7 @@ ntsa::Error Monitor::show(const bsl::shared_ptr<ntcd::Session>& session,
     const bool hasError   = session->hasError();
     // const bool hasNotification   = session->hasNotification();
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     EntryMap::iterator it = d_map.find(handle);
     if (it == d_map.end()) {
@@ -4839,7 +4839,7 @@ ntsa::Error Monitor::hide(const bsl::shared_ptr<ntcd::Session>& session,
 
     ntsa::Handle handle = session->handle();
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     EntryMap::iterator it = d_map.find(handle);
     if (it == d_map.end()) {
@@ -4882,7 +4882,7 @@ ntsa::Error Monitor::enable(ntsa::Handle                          handle,
 {
     NTCI_LOG_CONTEXT();
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     EntryMap::iterator it = d_map.find(handle);
     if (it == d_map.end()) {
@@ -4929,7 +4929,7 @@ ntsa::Error Monitor::enableNotifications(
 {
     NTCI_LOG_CONTEXT();
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     EntryMap::iterator it = d_map.find(handle);
     if (it == d_map.end()) {
@@ -4956,7 +4956,7 @@ ntsa::Error Monitor::disable(ntsa::Handle                          handle,
 {
     NTCI_LOG_CONTEXT();
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     EntryMap::iterator it = d_map.find(handle);
     if (it == d_map.end()) {
@@ -5003,7 +5003,7 @@ ntsa::Error Monitor::disableNotifications(
 {
     NTCI_LOG_CONTEXT();
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     EntryMap::iterator it = d_map.find(handle);
     if (it == d_map.end()) {
@@ -5025,7 +5025,7 @@ ntsa::Error Monitor::dequeue(bsl::vector<ntca::ReactorEvent>* result)
 {
     NTCI_LOG_CONTEXT();
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     while (d_run && d_queue.empty() && d_interrupt == 0) {
         NTCD_MONITOR_LOG_WAITING(d_machine_sp, this);
@@ -5072,7 +5072,7 @@ ntsa::Error Monitor::dequeue(bsl::vector<ntca::ReactorEvent>* result,
 {
     NTCI_LOG_CONTEXT();
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     while (d_run && d_queue.empty() && d_interrupt == 0) {
         NTCD_MONITOR_LOG_WAITING(d_machine_sp, this);
@@ -5119,7 +5119,7 @@ ntsa::Error Monitor::dequeue(bsl::vector<ntca::ReactorEvent>* result,
 
 void Monitor::interruptOne()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     bsl::uint64_t interrupt = d_interrupt.load();
     bsl::uint64_t waiters   = d_waiters.load();
@@ -5132,7 +5132,7 @@ void Monitor::interruptOne()
 
 void Monitor::interruptAll()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     bsl::uint64_t interrupt = d_interrupt.load();
     bsl::uint64_t waiters   = d_waiters.load();
@@ -5146,7 +5146,7 @@ void Monitor::interruptAll()
 
 void Monitor::stop()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     d_run = false;
 
@@ -5162,7 +5162,7 @@ void Monitor::stop()
 
 void Monitor::restart()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     d_run = true;
     d_condition.broadcast();
@@ -5219,7 +5219,7 @@ ntsa::Error Machine::acquireHandle(
 {
     NTCCFG_WARNING_UNUSED(transport);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     *result = ntsa::k_INVALID_HANDLE;
 
@@ -5280,7 +5280,7 @@ ntsa::Error Machine::releaseHandle(ntsa::Handle           handle,
 {
     NTCCFG_WARNING_UNUSED(transport);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -5343,7 +5343,7 @@ ntsa::Error Machine::acquireSourceEndpoint(
     ntsa::Transport::Value                transport,
     const bsl::shared_ptr<ntcd::Session>& session)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -5463,7 +5463,7 @@ ntsa::Error Machine::releaseSourceEndpoint(
     const ntsa::Endpoint&  sourceEndpoint,
     ntsa::Transport::Value transport)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -5520,7 +5520,7 @@ ntsa::Error Machine::acquireBinding(
     ntsa::Transport::Value                transport,
     const bsl::shared_ptr<ntcd::Session>& session)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -5669,7 +5669,7 @@ ntsa::Error Machine::acquireBinding(
 ntsa::Error Machine::releaseBinding(const ntcd::Binding&   binding,
                                     ntsa::Transport::Value transport)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     ntsa::TransportProtocol::Value protocol =
         ntsa::Transport::getProtocol(transport);
@@ -5748,7 +5748,7 @@ void Machine::update(const bsl::shared_ptr<ntcd::Session>& session)
 {
     NTCCFG_WARNING_UNUSED(session);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     bool d_alreadyNeedsUpdate = d_update.swap(true);
     if (!d_alreadyNeedsUpdate) {
@@ -5801,7 +5801,7 @@ ntsa::Error Machine::step(bool block)
 
     SessionVector sessions;
     {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
 
         while (true) {
             bool needsUpdate = d_update.testAndSwap(true, false);
@@ -5862,7 +5862,7 @@ void Machine::stop()
 ntsa::Error Machine::lookupSession(bsl::weak_ptr<ntcd::Session>* result,
                                    ntsa::Handle                  handle) const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     SessionByHandleMap::const_iterator it = d_sessionByHandleMap.find(handle);
     if (it == d_sessionByHandleMap.end()) {
@@ -5878,7 +5878,7 @@ ntsa::Error Machine::lookupSession(bsl::weak_ptr<ntcd::Session>* result,
                                    const ntsa::Endpoint&  sourceEndpoint,
                                    ntsa::Transport::Value transport) const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     ntsa::TransportProtocol::Value protocol =
         ntsa::Transport::getProtocol(transport);
@@ -5934,7 +5934,7 @@ ntsa::Error Machine::lookupSession(bsl::weak_ptr<ntcd::Session>* result,
                                    const ntcd::Binding&          binding,
                                    ntsa::Transport::Value transport) const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     result->reset();
 
@@ -6149,7 +6149,7 @@ bool Machine::discoverAdapter(ntsa::Adapter*             result,
 
 bool Machine::hasIpAddress(const ntsa::IpAddress& ipAddress) const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     bsl::vector<ntsa::IpAddress>::const_iterator it =
         bsl::find(d_ipAddressList.begin(), d_ipAddressList.end(), ipAddress);

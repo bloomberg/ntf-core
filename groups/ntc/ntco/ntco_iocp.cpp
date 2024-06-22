@@ -241,6 +241,12 @@ class Iocp : public ntci::Proactor,
     // Define a type alias for a map of proactive handles
     // to descriptors.
 
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
     struct Result;
     // This struct describes the context of a waiter.
 
@@ -265,9 +271,9 @@ class Iocp : public ntci::Proactor,
     bsl::shared_ptr<ntci::Resolver>        d_resolver_sp;
     bsl::shared_ptr<ntci::Reservation>     d_connectionLimiter_sp;
     bsl::shared_ptr<ntci::ProactorMetrics> d_metrics_sp;
-    mutable bslmt::Mutex                   d_proactorSocketMapMutex;
+    mutable Mutex                          d_proactorSocketMapMutex;
     ProactorSocketMap                      d_proactorSocketMap;
-    mutable bslmt::Mutex                   d_waiterSetMutex;
+    mutable Mutex                          d_waiterSetMutex;
     WaiterSet                              d_waiterSet;
     bslmt::ThreadUtil::Handle              d_threadHandle;
     bsl::size_t                            d_threadIndex;
@@ -1230,7 +1236,7 @@ ntci::Waiter Iocp::registerWaiter(const ntca::WaiterOptions& waiterOptions)
     bdlb::NullableValue<bslmt::ThreadUtil::Handle> principleThreadHandle;
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_waiterSetMutex);
+        LockGuard lockGuard(&d_waiterSetMutex);
 
         if (result->d_options.threadHandle() == bslmt::ThreadUtil::Handle()) {
             result->d_options.setThreadHandle(bslmt::ThreadUtil::self());
@@ -1289,7 +1295,7 @@ void Iocp::deregisterWaiter(ntci::Waiter waiter)
     bool nowEmpty = false;
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_waiterSetMutex);
+        LockGuard lockGuard(&d_waiterSetMutex);
 
         bsl::size_t n = d_waiterSet.erase(result);
         BSLS_ASSERT_OPT(n == 1);
@@ -1343,7 +1349,7 @@ ntsa::Error Iocp::attachSocket(
     }
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_proactorSocketMapMutex);
+        LockGuard lockGuard(&d_proactorSocketMapMutex);
 
         bsl::pair<ProactorSocketMap::iterator, bool> insertResult =
             d_proactorSocketMap.insert(
@@ -2447,7 +2453,7 @@ ntsa::Error Iocp::detachSocket(
     this->cancel(socket);
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_proactorSocketMapMutex);
+        LockGuard lockGuard(&d_proactorSocketMapMutex);
 
         bsl::size_t n = d_proactorSocketMap.erase(socket->handle());
         if (n == 0) {
@@ -2476,7 +2482,7 @@ ntsa::Error Iocp::closeAll()
 {
     ProactorSocketMap proactorSocketMap;
     {
-        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_proactorSocketMapMutex);
+        LockGuard lockGuard(&d_proactorSocketMapMutex);
         proactorSocketMap = d_proactorSocketMap;
     }
 
@@ -2585,7 +2591,7 @@ void Iocp::interruptAll()
     else {
         bsl::size_t numWaiters;
         {
-            bslmt::LockGuard<bslmt::Mutex> guard(&d_waiterSetMutex);
+            LockGuard guard(&d_waiterSetMutex);
             numWaiters = d_waiterSet.size();
         }
 
@@ -2629,7 +2635,7 @@ void Iocp::clearTimers()
 
 void Iocp::clearSockets()
 {
-    bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_proactorSocketMapMutex);
+    LockGuard lockGuard(&d_proactorSocketMapMutex);
     d_proactorSocketMap.clear();
 }
 
@@ -2637,7 +2643,7 @@ void Iocp::clear()
 {
     d_chronology.clear();
 
-    bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_proactorSocketMapMutex);
+    LockGuard lockGuard(&d_proactorSocketMapMutex);
     d_proactorSocketMap.clear();
 }
 
@@ -2765,7 +2771,7 @@ void Iocp::createOutgoingBlobBuffer(bdlbb::BlobBuffer* blobBuffer)
 
 bsl::size_t Iocp::numSockets() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_proactorSocketMapMutex);
+    LockGuard lockGuard(&d_proactorSocketMapMutex);
     return d_proactorSocketMap.size();
 }
 
@@ -2791,19 +2797,19 @@ bsl::size_t Iocp::load() const
 
 bslmt::ThreadUtil::Handle Iocp::threadHandle() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_waiterSetMutex);
+    LockGuard lock(&d_waiterSetMutex);
     return d_threadHandle;
 }
 
 bsl::size_t Iocp::threadIndex() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_waiterSetMutex);
+    LockGuard lock(&d_waiterSetMutex);
     return d_threadIndex;
 }
 
 bsl::size_t Iocp::numWaiters() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_waiterSetMutex);
+    LockGuard lock(&d_waiterSetMutex);
     return d_waiterSet.size();
 }
 

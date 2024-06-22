@@ -74,7 +74,13 @@ class System : public ntci::Executor,
 {
     enum State { e_STATE_STARTED, e_STATE_STOPPING, e_STATE_STOPPED };
 
-    bslmt::Mutex                       d_mutex;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    Mutex                              d_mutex;
     bsl::shared_ptr<bdlmt::ThreadPool> d_threadPool_sp;
     int                                d_minThreads;
     int                                d_maxThreads;
