@@ -47,9 +47,9 @@ class CloseFuture : public ntci::CloseCallback
     /// Define a type alias for a queue of results.
     typedef bsl::list<ntci::CloseResult> ResultQueue;
 
-    bslmt::Mutex     d_mutex;
-    bslmt::Condition d_condition;
-    ResultQueue      d_resultQueue;
+    ntccfg::ConditionMutex d_mutex;
+    ntccfg::Condition      d_condition;
+    ResultQueue            d_resultQueue;
 
   private:
     CloseFuture(const CloseFuture&) BSLS_KEYWORD_DELETED;

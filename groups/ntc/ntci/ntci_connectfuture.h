@@ -47,9 +47,9 @@ class ConnectFuture : public ntci::ConnectCallback
     /// Define a type alias for a queue of results.
     typedef bsl::list<ntci::ConnectResult> ResultQueue;
 
-    bslmt::Mutex     d_mutex;
-    bslmt::Condition d_condition;
-    ResultQueue      d_resultQueue;
+    ntccfg::ConditionMutex d_mutex;
+    ntccfg::Condition      d_condition;
+    ResultQueue            d_resultQueue;
 
   private:
     ConnectFuture(const ConnectFuture&) BSLS_KEYWORD_DELETED;

@@ -76,7 +76,13 @@ struct LogJournal {
         d_records.resize(k_MAX_LOG_RECORDS);
     }
 
-    bslmt::Mutex           d_mutex;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    Mutex                  d_mutex;
     bsl::vector<LogRecord> d_records;
     int                    d_position;
     bslma::Allocator*      d_allocator_p;

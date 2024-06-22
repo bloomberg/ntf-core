@@ -71,7 +71,13 @@ class HostDatabase
     typedef bsl::unordered_map<ntsa::IpAddress, bsl::string>
         DomainNameByIpAddress;
 
-    mutable bslmt::Mutex  d_mutex;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    mutable Mutex         d_mutex;
     IpAddressByDomainName d_ipAddressByDomainName;
     DomainNameByIpAddress d_domainNameByIpAddress;
     bslma::Allocator*     d_allocator_p;
@@ -145,12 +151,18 @@ class PortDatabase
     /// service names.
     typedef bsl::unordered_map<ntsa::Port, bsl::string> ServiceNameByPort;
 
-    mutable bslmt::Mutex d_mutex;
-    PortByServiceName    d_tcpPortByServiceName;
-    ServiceNameByPort    d_tcpServiceNameByPort;
-    PortByServiceName    d_udpPortByServiceName;
-    ServiceNameByPort    d_udpServiceNameByPort;
-    bslma::Allocator*    d_allocator_p;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    mutable Mutex     d_mutex;
+    PortByServiceName d_tcpPortByServiceName;
+    ServiceNameByPort d_tcpServiceNameByPort;
+    PortByServiceName d_udpPortByServiceName;
+    ServiceNameByPort d_udpServiceNameByPort;
+    bslma::Allocator* d_allocator_p;
 
   private:
     PortDatabase(const PortDatabase&) BSLS_KEYWORD_DELETED;
@@ -216,7 +228,7 @@ HostDatabase::~HostDatabase()
 
 void HostDatabase::clear()
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     d_ipAddressByDomainName.clear();
     d_domainNameByIpAddress.clear();
@@ -246,7 +258,7 @@ ntsa::Error HostDatabase::addHostEntry(const ntcdns::HostEntry& entry)
 {
     NTCI_LOG_CONTEXT();
 
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     ntsa::Error error;
 
@@ -372,7 +384,7 @@ ntsa::Error HostDatabase::getIpAddress(
     }
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        LockGuard lock(&d_mutex);
 
         IpAddressByDomainName::const_iterator it =
             d_ipAddressByDomainName.find(domainName);
@@ -422,7 +434,7 @@ ntsa::Error HostDatabase::getDomainName(
     const ntsa::IpAddress&            ipAddress,
     const ntca::GetDomainNameOptions& options) const
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     DomainNameByIpAddress::const_iterator it =
         d_domainNameByIpAddress.find(ipAddress);
@@ -459,7 +471,7 @@ PortDatabase::~PortDatabase()
 
 void PortDatabase::clear()
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     d_tcpPortByServiceName.clear();
     d_tcpServiceNameByPort.clear();
@@ -493,7 +505,7 @@ ntsa::Error PortDatabase::addPortEntry(const ntcdns::PortEntry& entry)
 
     ntsa::Error error;
 
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     if (entry.service().empty()) {
         NTCI_LOG_STREAM_WARN << "Failed to add port entry " << entry
@@ -595,7 +607,7 @@ ntsa::Error PortDatabase::getPort(ntca::GetPortContext*       context,
     }
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        LockGuard lock(&d_mutex);
 
         if (examineTcpPortList) {
             PortByServiceName::const_iterator it =
@@ -677,7 +689,7 @@ ntsa::Error PortDatabase::getServiceName(
     const ntsa::Port&                  port,
     const ntca::GetServiceNameOptions& options) const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     bool found = false;
 

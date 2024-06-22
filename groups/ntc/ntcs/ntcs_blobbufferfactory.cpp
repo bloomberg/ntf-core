@@ -162,7 +162,7 @@ BlobBufferFactoryMetrics::~BlobBufferFactoryMetrics()
 
 void BlobBufferFactoryMetrics::getStats(bdld::ManagedDatum* result)
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     bdld::DatumMutableArrayRef array;
     bdld::Datum::createUninitializedArray(&array,

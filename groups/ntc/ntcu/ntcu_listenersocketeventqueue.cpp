@@ -52,7 +52,7 @@ void ListenerSocketEventQueue::processAcceptQueueFlowControlRelaxed(
 
     NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, event);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     BSLS_ASSERT(event.type() ==
                 ntca::AcceptQueueEventType::e_FLOW_CONTROL_RELAXED);
@@ -73,7 +73,7 @@ void ListenerSocketEventQueue::processAcceptQueueFlowControlApplied(
 
     NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, event);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     BSLS_ASSERT(event.type() ==
                 ntca::AcceptQueueEventType::e_FLOW_CONTROL_APPLIED);
@@ -94,7 +94,7 @@ void ListenerSocketEventQueue::processAcceptQueueLowWatermark(
 
     NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, event);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     BSLS_ASSERT(event.type() == ntca::AcceptQueueEventType::e_LOW_WATERMARK);
 
@@ -114,7 +114,7 @@ void ListenerSocketEventQueue::processAcceptQueueHighWatermark(
 
     NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, event);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     BSLS_ASSERT(event.type() == ntca::AcceptQueueEventType::e_HIGH_WATERMARK);
 
@@ -134,7 +134,7 @@ void ListenerSocketEventQueue::processAcceptQueueDiscarded(
 
     NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, event);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     BSLS_ASSERT(event.type() == ntca::AcceptQueueEventType::e_DISCARDED);
 
@@ -154,7 +154,7 @@ void ListenerSocketEventQueue::processShutdownInitiated(
 
     NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, event);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     BSLS_ASSERT(event.type() == ntca::ShutdownEventType::e_INITIATED);
 
@@ -174,7 +174,7 @@ void ListenerSocketEventQueue::processShutdownReceive(
 
     NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, event);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     BSLS_ASSERT(event.type() == ntca::ShutdownEventType::e_RECEIVE);
 
@@ -194,7 +194,7 @@ void ListenerSocketEventQueue::processShutdownSend(
 
     NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, event);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     BSLS_ASSERT(event.type() == ntca::ShutdownEventType::e_SEND);
 
@@ -214,7 +214,7 @@ void ListenerSocketEventQueue::processShutdownComplete(
 
     NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, event);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     BSLS_ASSERT(event.type() == ntca::ShutdownEventType::e_COMPLETE);
 
@@ -234,7 +234,7 @@ void ListenerSocketEventQueue::processError(
 
     NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, event);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     if (!d_closed && this->want(event.type())) {
         d_queue.push_back(ntca::ListenerSocketEvent(event));
@@ -402,7 +402,7 @@ void ListenerSocketEventQueue::hide(ntca::ErrorEventType::Value type)
 
 ntsa::Error ListenerSocketEventQueue::wait(ntca::ListenerSocketEvent* result)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     while (!d_closed && d_queue.empty()) {
         d_condition.wait(&d_mutex);
@@ -421,7 +421,7 @@ ntsa::Error ListenerSocketEventQueue::wait(ntca::ListenerSocketEvent* result)
 ntsa::Error ListenerSocketEventQueue::wait(ntca::ListenerSocketEvent* result,
                                            const bsls::TimeInterval&  timeout)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     while (!d_closed && d_queue.empty()) {
         int rc = d_condition.timedWait(&d_mutex, timeout);
@@ -449,7 +449,7 @@ ntsa::Error ListenerSocketEventQueue::wait(ntca::ListenerSocketEvent* result,
 ntsa::Error ListenerSocketEventQueue::wait(ntca::AcceptQueueEvent* result)
 {
     while (true) {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
 
         while (!d_closed && d_queue.empty()) {
             d_condition.wait(&d_mutex);
@@ -474,7 +474,7 @@ ntsa::Error ListenerSocketEventQueue::wait(ntca::AcceptQueueEvent*   result,
                                            const bsls::TimeInterval& timeout)
 {
     while (true) {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
 
         while (!d_closed && d_queue.empty()) {
             int rc = d_condition.timedWait(&d_mutex, timeout);
@@ -509,7 +509,7 @@ ntsa::Error ListenerSocketEventQueue::wait(
     ntca::AcceptQueueEventType::Value type)
 {
     while (true) {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
 
         while (!d_closed && d_queue.empty()) {
             d_condition.wait(&d_mutex);
@@ -538,7 +538,7 @@ ntsa::Error ListenerSocketEventQueue::wait(
     const bsls::TimeInterval&         timeout)
 {
     while (true) {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
 
         while (!d_closed && d_queue.empty()) {
             int rc = d_condition.timedWait(&d_mutex, timeout);
@@ -573,7 +573,7 @@ ntsa::Error ListenerSocketEventQueue::wait(
 ntsa::Error ListenerSocketEventQueue::wait(ntca::ShutdownEvent* result)
 {
     while (true) {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
 
         while (!d_closed && d_queue.empty()) {
             d_condition.wait(&d_mutex);
@@ -598,7 +598,7 @@ ntsa::Error ListenerSocketEventQueue::wait(ntca::ShutdownEvent*      result,
                                            const bsls::TimeInterval& timeout)
 {
     while (true) {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
 
         while (!d_closed && d_queue.empty()) {
             int rc = d_condition.timedWait(&d_mutex, timeout);
@@ -632,7 +632,7 @@ ntsa::Error ListenerSocketEventQueue::wait(ntca::ShutdownEvent* result,
                                            ntca::ShutdownEventType::Value type)
 {
     while (true) {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
 
         while (!d_closed && d_queue.empty()) {
             d_condition.wait(&d_mutex);
@@ -660,7 +660,7 @@ ntsa::Error ListenerSocketEventQueue::wait(ntca::ShutdownEvent* result,
                                            const bsls::TimeInterval& timeout)
 {
     while (true) {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
 
         while (!d_closed && d_queue.empty()) {
             int rc = d_condition.timedWait(&d_mutex, timeout);
@@ -695,7 +695,7 @@ ntsa::Error ListenerSocketEventQueue::wait(ntca::ShutdownEvent* result,
 ntsa::Error ListenerSocketEventQueue::wait(ntca::ErrorEvent* result)
 {
     while (true) {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
 
         while (!d_closed && d_queue.empty()) {
             d_condition.wait(&d_mutex);
@@ -720,7 +720,7 @@ ntsa::Error ListenerSocketEventQueue::wait(ntca::ErrorEvent*         result,
                                            const bsls::TimeInterval& timeout)
 {
     while (true) {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
 
         while (!d_closed && d_queue.empty()) {
             int rc = d_condition.timedWait(&d_mutex, timeout);
@@ -754,7 +754,7 @@ ntsa::Error ListenerSocketEventQueue::wait(ntca::ErrorEvent*           result,
                                            ntca::ErrorEventType::Value type)
 {
     while (true) {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
 
         while (!d_closed && d_queue.empty()) {
             d_condition.wait(&d_mutex);
@@ -780,7 +780,7 @@ ntsa::Error ListenerSocketEventQueue::wait(ntca::ErrorEvent*           result,
                                            const bsls::TimeInterval&   timeout)
 {
     while (true) {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
 
         while (!d_closed && d_queue.empty()) {
             int rc = d_condition.timedWait(&d_mutex, timeout);
@@ -812,7 +812,7 @@ ntsa::Error ListenerSocketEventQueue::wait(ntca::ErrorEvent*           result,
 
 void ListenerSocketEventQueue::close()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     if (!d_closed) {
         d_closed = true;

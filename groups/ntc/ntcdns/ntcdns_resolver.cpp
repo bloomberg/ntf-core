@@ -524,7 +524,7 @@ Resolver::~Resolver()
 
 ntsa::Error Resolver::start()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (d_state == e_STATE_STARTED) {
         return ntsa::Error();
@@ -549,7 +549,7 @@ void Resolver::shutdown()
     bsl::shared_ptr<ntcdns::System> system;
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        LockGuard lock(&d_mutex);
 
         if (d_state != e_STATE_STARTED) {
             return;
@@ -578,7 +578,7 @@ void Resolver::linger()
     bsl::shared_ptr<ntci::Interface>   interface;
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        LockGuard lock(&d_mutex);
 
         if (d_state == e_STATE_STOPPED) {
             return;
@@ -614,7 +614,7 @@ ntsa::Error Resolver::setIpAddress(
     const bslstl::StringRef&            domainName,
     const bsl::vector<ntsa::IpAddress>& ipAddressList)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -634,7 +634,7 @@ ntsa::Error Resolver::addIpAddress(
     const bslstl::StringRef&            domainName,
     const bsl::vector<ntsa::IpAddress>& ipAddressList)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -653,7 +653,7 @@ ntsa::Error Resolver::addIpAddress(
 ntsa::Error Resolver::addIpAddress(const bslstl::StringRef& domainName,
                                    const ntsa::IpAddress&   ipAddress)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -673,7 +673,7 @@ ntsa::Error Resolver::setPort(const bslstl::StringRef&       serviceName,
                               const bsl::vector<ntsa::Port>& portList,
                               ntsa::Transport::Value         transport)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -693,7 +693,7 @@ ntsa::Error Resolver::addPort(const bslstl::StringRef&       serviceName,
                               const bsl::vector<ntsa::Port>& portList,
                               ntsa::Transport::Value         transport)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -713,7 +713,7 @@ ntsa::Error Resolver::addPort(const bslstl::StringRef& serviceName,
                               ntsa::Port               port,
                               ntsa::Transport::Value   transport)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -732,7 +732,7 @@ ntsa::Error Resolver::addPort(const bslstl::StringRef& serviceName,
 ntsa::Error Resolver::setLocalIpAddress(
     const bsl::vector<ntsa::IpAddress>& ipAddressList)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -750,7 +750,7 @@ ntsa::Error Resolver::setLocalIpAddress(
 
 ntsa::Error Resolver::setHostname(const bsl::string& name)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -768,7 +768,7 @@ ntsa::Error Resolver::setHostname(const bsl::string& name)
 
 ntsa::Error Resolver::setHostnameFullyQualified(const bsl::string& name)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -788,7 +788,7 @@ ntsa::Error Resolver::getIpAddress(const bslstl::StringRef&         domainName,
                                    const ntca::GetIpAddressOptions& options,
                                    const ntci::GetIpAddressCallback& callback)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -838,7 +838,7 @@ ntsa::Error Resolver::getIpAddress(const bslstl::StringRef&         domainName,
                               d_strand_sp,
                               self,
                               true,
-                              (bslmt::Mutex*) NULL);
+                              NTCCFG_MUTEX_NULL);
 
             return ntsa::Error();
         }
@@ -871,7 +871,7 @@ ntsa::Error Resolver::getIpAddress(const bslstl::StringRef&         domainName,
                               d_strand_sp,
                               self,
                               true,
-                              (bslmt::Mutex*) NULL);
+                              NTCCFG_MUTEX_NULL);
 
             return ntsa::Error();
         }
@@ -905,7 +905,7 @@ ntsa::Error Resolver::getIpAddress(const bslstl::StringRef&         domainName,
                               d_strand_sp,
                               self,
                               true,
-                              (bslmt::Mutex*) NULL);
+                              NTCCFG_MUTEX_NULL);
 
             return ntsa::Error();
         }
@@ -951,7 +951,7 @@ ntsa::Error Resolver::getIpAddress(const bslstl::StringRef&         domainName,
                           d_strand_sp,
                           self,
                           true,
-                          (bslmt::Mutex*) NULL);
+                          NTCCFG_MUTEX_NULL);
     }
 
     return ntsa::Error();
@@ -962,7 +962,7 @@ ntsa::Error Resolver::getDomainName(
     const ntca::GetDomainNameOptions&  options,
     const ntci::GetDomainNameCallback& callback)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -1008,7 +1008,7 @@ ntsa::Error Resolver::getDomainName(
                               d_strand_sp,
                               self,
                               true,
-                              (bslmt::Mutex*) NULL);
+                              NTCCFG_MUTEX_NULL);
 
             return ntsa::Error();
         }
@@ -1042,7 +1042,7 @@ ntsa::Error Resolver::getDomainName(
                               d_strand_sp,
                               self,
                               true,
-                              (bslmt::Mutex*) NULL);
+                              NTCCFG_MUTEX_NULL);
 
             return ntsa::Error();
         }
@@ -1077,7 +1077,7 @@ ntsa::Error Resolver::getDomainName(
                               d_strand_sp,
                               self,
                               true,
-                              (bslmt::Mutex*) NULL);
+                              NTCCFG_MUTEX_NULL);
 
             return ntsa::Error();
         }
@@ -1123,7 +1123,7 @@ ntsa::Error Resolver::getDomainName(
                           d_strand_sp,
                           self,
                           true,
-                          (bslmt::Mutex*) NULL);
+                          NTCCFG_MUTEX_NULL);
     }
 
     return ntsa::Error();
@@ -1133,7 +1133,7 @@ ntsa::Error Resolver::getPort(const bslstl::StringRef&     serviceName,
                               const ntca::GetPortOptions&  options,
                               const ntci::GetPortCallback& callback)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -1182,7 +1182,7 @@ ntsa::Error Resolver::getPort(const bslstl::StringRef&     serviceName,
                               d_strand_sp,
                               self,
                               true,
-                              (bslmt::Mutex*) NULL);
+                              NTCCFG_MUTEX_NULL);
 
             return ntsa::Error();
         }
@@ -1214,7 +1214,7 @@ ntsa::Error Resolver::getPort(const bslstl::StringRef&     serviceName,
                               d_strand_sp,
                               self,
                               true,
-                              (bslmt::Mutex*) NULL);
+                              NTCCFG_MUTEX_NULL);
 
             return ntsa::Error();
         }
@@ -1246,7 +1246,7 @@ ntsa::Error Resolver::getPort(const bslstl::StringRef&     serviceName,
                               d_strand_sp,
                               self,
                               true,
-                              (bslmt::Mutex*) NULL);
+                              NTCCFG_MUTEX_NULL);
 
             return ntsa::Error();
         }
@@ -1275,7 +1275,7 @@ ntsa::Error Resolver::getPort(const bslstl::StringRef&     serviceName,
                               d_strand_sp,
                               self,
                               true,
-                              (bslmt::Mutex*) NULL);
+                              NTCCFG_MUTEX_NULL);
             return ntsa::Error();
         }
     }
@@ -1307,7 +1307,7 @@ ntsa::Error Resolver::getPort(const bslstl::StringRef&     serviceName,
                           d_strand_sp,
                           self,
                           true,
-                          (bslmt::Mutex*) NULL);
+                          NTCCFG_MUTEX_NULL);
     }
 
     return ntsa::Error();
@@ -1318,7 +1318,7 @@ ntsa::Error Resolver::getServiceName(
     const ntca::GetServiceNameOptions&  options,
     const ntci::GetServiceNameCallback& callback)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -1373,7 +1373,7 @@ ntsa::Error Resolver::getServiceName(
                               d_strand_sp,
                               self,
                               true,
-                              (bslmt::Mutex*) NULL);
+                              NTCCFG_MUTEX_NULL);
 
             return ntsa::Error();
         }
@@ -1407,7 +1407,7 @@ ntsa::Error Resolver::getServiceName(
                               d_strand_sp,
                               self,
                               true,
-                              (bslmt::Mutex*) NULL);
+                              NTCCFG_MUTEX_NULL);
 
             return ntsa::Error();
         }
@@ -1442,7 +1442,7 @@ ntsa::Error Resolver::getServiceName(
                               d_strand_sp,
                               self,
                               true,
-                              (bslmt::Mutex*) NULL);
+                              NTCCFG_MUTEX_NULL);
 
             return ntsa::Error();
         }
@@ -1465,7 +1465,7 @@ ntsa::Error Resolver::getServiceName(
                               d_strand_sp,
                               self,
                               true,
-                              (bslmt::Mutex*) NULL);
+                              NTCCFG_MUTEX_NULL);
 
             return ntsa::Error();
         }
@@ -1498,7 +1498,7 @@ ntsa::Error Resolver::getServiceName(
                           d_strand_sp,
                           self,
                           true,
-                          (bslmt::Mutex*) NULL);
+                          NTCCFG_MUTEX_NULL);
     }
 
     return ntsa::Error();
@@ -1565,7 +1565,7 @@ ntsa::Error Resolver::getEndpoint(const bslstl::StringRef&         text,
             getEndpointEvent.setContext(getEndpointContext);
 
             callback.dispatch(
-                self, endpoint, getEndpointEvent, d_strand_sp, self, true, (bslmt::Mutex*) NULL);
+                self, endpoint, getEndpointEvent, d_strand_sp, self, true, NTCCFG_MUTEX_NULL);
 
             return ntsa::Error();
         }
@@ -1742,7 +1742,7 @@ ntsa::Error Resolver::getEndpoint(const bslstl::StringRef&         text,
         bool needPort = true;
 
         {
-            bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+            LockGuard lock(&d_mutex);
 
             if (needPort && d_overrides_sp) {
                 error = d_overrides_sp->getPort(&portList,
@@ -1897,7 +1897,7 @@ ntsa::Error Resolver::getEndpoint(const bslstl::StringRef&         text,
                       d_strand_sp,
                       self,
                       true,
-                      (bslmt::Mutex*) NULL);
+                      NTCCFG_MUTEX_NULL);
 
     return ntsa::Error();
 }
@@ -1908,7 +1908,7 @@ ntsa::Error Resolver::getLocalIpAddress(bsl::vector<ntsa::IpAddress>* result,
     ntsa::Error error;
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        LockGuard lock(&d_mutex);
 
         if (d_overrides_sp) {
             error = d_overrides_sp->getLocalIpAddress(result, options);
@@ -1926,7 +1926,7 @@ ntsa::Error Resolver::getHostname(bsl::string* result)
     ntsa::Error error;
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        LockGuard lock(&d_mutex);
 
         if (d_overrides_sp) {
             error = d_overrides_sp->getHostname(result);
@@ -1944,7 +1944,7 @@ ntsa::Error Resolver::getHostnameFullyQualified(bsl::string* result)
     ntsa::Error error;
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        LockGuard lock(&d_mutex);
 
         if (d_overrides_sp) {
             error = d_overrides_sp->getHostnameFullyQualified(result);
@@ -2054,7 +2054,7 @@ bsl::shared_ptr<ntci::Timer> Resolver::createTimer(
 
 ntsa::Error Resolver::loadHostDatabaseText(const char* data, bsl::size_t size)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -2079,7 +2079,7 @@ ntsa::Error Resolver::loadHostDatabaseText(const char* data, bsl::size_t size)
 
 ntsa::Error Resolver::loadPortDatabaseText(const char* data, bsl::size_t size)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -2108,7 +2108,7 @@ ntsa::Error Resolver::cacheHost(const bsl::string&        domainName,
                                 bsl::size_t               timeToLive,
                                 const bsls::TimeInterval& now)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 

@@ -36,7 +36,7 @@ void TimerFuture::arrive(const bsl::shared_ptr<ntci::Timer>& timer,
 {
     NTCCFG_WARNING_UNUSED(timer);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     TimerResult result;
     result.setTimer(timer);
@@ -62,7 +62,7 @@ TimerFuture::~TimerFuture()
 
 ntsa::Error TimerFuture::wait(ntci::TimerResult* result)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     while (d_resultQueue.empty()) {
         d_condition.wait(&d_mutex);
@@ -77,7 +77,7 @@ ntsa::Error TimerFuture::wait(ntci::TimerResult* result)
 ntsa::Error TimerFuture::wait(ntci::TimerResult*        result,
                               const bsls::TimeInterval& timeout)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     while (d_resultQueue.empty()) {
         int rc = d_condition.timedWait(&d_mutex, timeout);

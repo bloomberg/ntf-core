@@ -22,6 +22,8 @@ BSLS_IDENT("$Id: $")
 #include <ntscfg_config.h>
 #include <ntsscm_version.h>
 #include <bslalg_typetraits.h>
+#include <bslmt_lockguard.h>
+#include <bslmt_mutex.h>
 #include <bsls_assert.h>
 #include <bsls_keyword.h>
 #include <bsls_log.h>
@@ -283,6 +285,27 @@ NTSCFG_INLINE bsl::shared_ptr<TYPE> Shared<TYPE>::getSelf(TYPE* self)
 
     return sharedSelf;
 }
+
+/// @internal @brief
+/// Provide a synchronization primitive for mutually-exclusive access.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntscfg
+typedef bslmt::Mutex Mutex;
+
+/// @internal @brief
+/// Define a type alias for a guard to lock and unlock a mutex.
+///
+/// @ingroup module_ntscfg
+typedef bslmt::LockGuard<bslmt::Mutex> LockGuard;
+
+/// @internal @brief
+/// Define a type alias for a guard to unlock and lock a mutex.
+///
+/// @ingroup module_ntscfg
+typedef bslmt::UnLockGuard<bslmt::Mutex> UnLockGuard;
 
 }  // close package namespace
 }  // close enterprise namespace

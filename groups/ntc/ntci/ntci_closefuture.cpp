@@ -33,7 +33,7 @@ namespace ntci {
 
 void CloseFuture::arrive()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     CloseResult result;
 
@@ -57,7 +57,7 @@ CloseFuture::~CloseFuture()
 
 ntsa::Error CloseFuture::wait(ntci::CloseResult* result)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     while (d_resultQueue.empty()) {
         d_condition.wait(&d_mutex);
@@ -72,7 +72,7 @@ ntsa::Error CloseFuture::wait(ntci::CloseResult* result)
 ntsa::Error CloseFuture::wait(ntci::CloseResult*        result,
                               const bsls::TimeInterval& timeout)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     while (d_resultQueue.empty()) {
         int rc = d_condition.timedWait(&d_mutex, timeout);

@@ -89,7 +89,7 @@ class BindCallbackEntry
                          const bsl::shared_ptr<ntci::Strand>&   strand,
                          const bsl::shared_ptr<ntci::Executor>& executor,
                          bool                                   defer,
-                         bslmt::Mutex*                          mutex);
+                         ntccfg::Mutex*                         mutex);
 
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects

@@ -173,8 +173,8 @@ bool complete(const bsl::shared_ptr<ntcq::ReceiveCallbackQueueEntry>& entry)
     bsl::shared_ptr<ntci::Strand>   strand;
     bsl::shared_ptr<ntci::Executor> executor;
 
-    bslmt::Mutex                   mutex;
-    bslmt::LockGuard<bslmt::Mutex> guard(&mutex);
+    ntccfg::Mutex     mutex;
+    ntccfg::LockGuard guard(&mutex);
 
     bsl::shared_ptr<bdlbb::Blob> data;
 
@@ -187,8 +187,8 @@ bool fail(const bsl::shared_ptr<ntcq::ReceiveCallbackQueueEntry>& entry)
     bsl::shared_ptr<ntci::Strand>   strand;
     bsl::shared_ptr<ntci::Executor> executor;
 
-    bslmt::Mutex                   mutex;
-    bslmt::LockGuard<bslmt::Mutex> guard(&mutex);
+    ntccfg::Mutex     mutex;
+    ntccfg::LockGuard guard(&mutex);
 
     return ntcq::ReceiveCallbackQueueEntry::fail(
         entry,

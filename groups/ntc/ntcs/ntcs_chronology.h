@@ -52,11 +52,6 @@ BSLS_IDENT("$Id: $")
 // Undefine or set to 0 to use a linked list.
 #define NTCS_CHRONOLOGY_USE_FUNCTOR_QUEUE_VECTOR 1
 
-// Define and set to 1 to use a custom mutex implementation that directly
-// makes futex system calls on Linux, and devolves to 'bslmt::Mutex' on
-// other platforms. Undefine or set to 0 to use 'bslmt::Mutex'.
-#define NTCS_CHRONOLOGY_USE_CUSTOM_MUTEX 1
-
 namespace BloombergLP {
 namespace ntcs {
 class Chronology;
@@ -406,13 +401,11 @@ class Chronology
         TimerNode*                   d_next_p;
     };
 
-#if NTCS_CHRONOLOGY_USE_CUSTOM_MUTEX
-    typedef ntci::Mutex                   Mutex;
-    typedef bslmt::LockGuard<ntci::Mutex> LockGuard;
-#else
-    typedef bslmt::Mutex                    Mutex;
-    typedef bslmt::LockGuard<ntccfg::Mutex> LockGuard;
-#endif
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
 
     ntccfg::Object                      d_object;
     mutable Mutex                       d_mutex;

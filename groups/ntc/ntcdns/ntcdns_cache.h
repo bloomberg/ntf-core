@@ -207,7 +207,13 @@ bsl::ostream& operator<<(bsl::ostream& stream, const CacheHostEntry& object);
 /// @ingroup module_ntcdns
 class Cache
 {
-    mutable bslmt::Mutex                       d_mutex;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    mutable Mutex                              d_mutex;
     mutable ntcdns::CacheHostEntryByDomainName d_cacheEntryByDomainName;
     mutable ntcdns::CacheHostEntryByIpAddress  d_cacheEntryByIpAddress;
     mutable bsl::size_t                        d_cacheEntryCount;

@@ -36,7 +36,7 @@ void SendFuture::arrive(const bsl::shared_ptr<ntci::Sender>& sender,
 {
     NTCCFG_WARNING_UNUSED(sender);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     SendResult result;
     result.setSender(sender);
@@ -62,7 +62,7 @@ SendFuture::~SendFuture()
 
 ntsa::Error SendFuture::wait(ntci::SendResult* result)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     while (d_resultQueue.empty()) {
         d_condition.wait(&d_mutex);
@@ -77,7 +77,7 @@ ntsa::Error SendFuture::wait(ntci::SendResult* result)
 ntsa::Error SendFuture::wait(ntci::SendResult*         result,
                              const bsls::TimeInterval& timeout)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     while (d_resultQueue.empty()) {
         int rc = d_condition.timedWait(&d_mutex, timeout);

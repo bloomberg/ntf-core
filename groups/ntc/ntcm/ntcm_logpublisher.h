@@ -152,7 +152,13 @@ class LogPublisher : public ntci::MonitorablePublisher
     /// statistics.
     typedef bsl::vector<LogPublisherRecord> RecordVector;
 
-    bslmt::Mutex      d_mutex;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    Mutex             d_mutex;
     RecordVector      d_records;
     bsls::AtomicInt   d_severityLevel;
     bslma::Allocator* d_allocator_p;

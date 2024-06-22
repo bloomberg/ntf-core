@@ -47,9 +47,9 @@ class BindFuture : public ntci::BindCallback
     /// Define a type alias for a queue of results.
     typedef bsl::list<ntci::BindResult> ResultQueue;
 
-    bslmt::Mutex     d_mutex;
-    bslmt::Condition d_condition;
-    ResultQueue      d_resultQueue;
+    ntccfg::ConditionMutex d_mutex;
+    ntccfg::Condition      d_condition;
+    ResultQueue            d_resultQueue;
 
   private:
     BindFuture(const BindFuture&) BSLS_KEYWORD_DELETED;

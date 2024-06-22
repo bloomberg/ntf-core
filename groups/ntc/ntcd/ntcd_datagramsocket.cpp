@@ -52,7 +52,7 @@ DatagramSocket::~DatagramSocket()
 
 ntsa::Error DatagramSocket::open(ntsa::Transport::Value transport)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -71,7 +71,7 @@ ntsa::Error DatagramSocket::open(ntsa::Transport::Value transport)
 
 ntsa::Error DatagramSocket::acquire(ntsa::Handle handle)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -90,7 +90,7 @@ ntsa::Error DatagramSocket::acquire(ntsa::Handle handle)
 
 ntsa::Handle DatagramSocket::release()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::k_INVALID_HANDLE;
@@ -105,7 +105,7 @@ ntsa::Handle DatagramSocket::release()
 ntsa::Error DatagramSocket::bind(const ntsa::Endpoint& endpoint,
                                  bool                  reuseAddress)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -117,7 +117,7 @@ ntsa::Error DatagramSocket::bind(const ntsa::Endpoint& endpoint,
 ntsa::Error DatagramSocket::bindAny(ntsa::Transport::Value transport,
                                     bool                   reuseAddress)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -128,7 +128,7 @@ ntsa::Error DatagramSocket::bindAny(ntsa::Transport::Value transport,
 
 ntsa::Error DatagramSocket::connect(const ntsa::Endpoint& endpoint)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -141,7 +141,7 @@ ntsa::Error DatagramSocket::send(ntsa::SendContext*       context,
                                  const bdlbb::Blob&       data,
                                  const ntsa::SendOptions& options)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -154,7 +154,7 @@ ntsa::Error DatagramSocket::send(ntsa::SendContext*       context,
                                  const ntsa::Data&        data,
                                  const ntsa::SendOptions& options)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -175,7 +175,7 @@ ntsa::Error DatagramSocket::receive(ntsa::ReceiveContext*       context,
                                     bdlbb::Blob*                data,
                                     const ntsa::ReceiveOptions& options)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -188,7 +188,7 @@ ntsa::Error DatagramSocket::receive(ntsa::ReceiveContext*       context,
                                     ntsa::Data*                 data,
                                     const ntsa::ReceiveOptions& options)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -199,7 +199,7 @@ ntsa::Error DatagramSocket::receive(ntsa::ReceiveContext*       context,
 
 ntsa::Error DatagramSocket::shutdown(ntsa::ShutdownType::Value direction)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -210,7 +210,7 @@ ntsa::Error DatagramSocket::shutdown(ntsa::ShutdownType::Value direction)
 
 ntsa::Error DatagramSocket::unlink()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -221,7 +221,7 @@ ntsa::Error DatagramSocket::unlink()
 
 ntsa::Error DatagramSocket::close()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -235,7 +235,7 @@ ntsa::Error DatagramSocket::close()
 
 ntsa::Error DatagramSocket::sourceEndpoint(ntsa::Endpoint* result) const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -246,7 +246,7 @@ ntsa::Error DatagramSocket::sourceEndpoint(ntsa::Endpoint* result) const
 
 ntsa::Error DatagramSocket::remoteEndpoint(ntsa::Endpoint* result) const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -257,7 +257,7 @@ ntsa::Error DatagramSocket::remoteEndpoint(ntsa::Endpoint* result) const
 
 ntsa::Handle DatagramSocket::handle() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::k_INVALID_HANDLE;
@@ -270,7 +270,7 @@ ntsa::Handle DatagramSocket::handle() const
 
 ntsa::Error DatagramSocket::setMulticastLoopback(bool enabled)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -282,7 +282,7 @@ ntsa::Error DatagramSocket::setMulticastLoopback(bool enabled)
 ntsa::Error DatagramSocket::setMulticastInterface(
     const ntsa::IpAddress& interface)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -293,7 +293,7 @@ ntsa::Error DatagramSocket::setMulticastInterface(
 
 ntsa::Error DatagramSocket::setMulticastTimeToLive(bsl::size_t maxHops)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -306,7 +306,7 @@ ntsa::Error DatagramSocket::joinMulticastGroup(
     const ntsa::IpAddress& interface,
     const ntsa::IpAddress& group)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -319,7 +319,7 @@ ntsa::Error DatagramSocket::leaveMulticastGroup(
     const ntsa::IpAddress& interface,
     const ntsa::IpAddress& group)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -332,7 +332,7 @@ ntsa::Error DatagramSocket::leaveMulticastGroup(
 
 ntsa::Error DatagramSocket::setBlocking(bool blocking)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -343,7 +343,7 @@ ntsa::Error DatagramSocket::setBlocking(bool blocking)
 
 ntsa::Error DatagramSocket::setOption(const ntsa::SocketOption& option)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -355,7 +355,7 @@ ntsa::Error DatagramSocket::setOption(const ntsa::SocketOption& option)
 ntsa::Error DatagramSocket::getOption(ntsa::SocketOption*           option,
                                       ntsa::SocketOptionType::Value type)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -366,7 +366,7 @@ ntsa::Error DatagramSocket::getOption(ntsa::SocketOption*           option,
 
 bsl::size_t DatagramSocket::maxBuffersPerSend() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return 1;
@@ -377,7 +377,7 @@ bsl::size_t DatagramSocket::maxBuffersPerSend() const
 
 bsl::size_t DatagramSocket::maxBuffersPerReceive() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return 1;

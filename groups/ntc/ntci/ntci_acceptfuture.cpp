@@ -38,7 +38,7 @@ void AcceptFuture::arrive(
 {
     NTCCFG_WARNING_UNUSED(acceptor);
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     AcceptResult result;
     result.setAcceptor(acceptor);
@@ -65,7 +65,7 @@ AcceptFuture::~AcceptFuture()
 
 ntsa::Error AcceptFuture::wait(ntci::AcceptResult* result)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     while (d_resultQueue.empty()) {
         d_condition.wait(&d_mutex);
@@ -80,7 +80,7 @@ ntsa::Error AcceptFuture::wait(ntci::AcceptResult* result)
 ntsa::Error AcceptFuture::wait(ntci::AcceptResult*       result,
                                const bsls::TimeInterval& timeout)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     while (d_resultQueue.empty()) {
         int rc = d_condition.timedWait(&d_mutex, timeout);
