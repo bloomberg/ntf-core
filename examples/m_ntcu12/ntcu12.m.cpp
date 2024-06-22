@@ -358,7 +358,13 @@ class ClientSocket : public ntci::StreamSocketSession,
     // to be invoked when the response for that transaction ID is received.
     typedef bdlcc::ObjectCatalog<ResponseCallback> PendingCatalog;
 
-    bslmt::Mutex                        d_mutex;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    Mutex                               d_mutex;
     bsl::shared_ptr<ntci::StreamSocket> d_streamSocket_sp;
     PendingCatalog                      d_pendingRequests;
     example::MessageParser              d_parser;
@@ -489,7 +495,7 @@ void ClientSocket::processDowngradeComplete(
     example::ClientSocket::Callback downgradeCallback(bsl::allocator_arg,
                                                       d_allocator_p);
     {
-        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
+        LockGuard lockGuard(&d_mutex);
         d_downgradeCallback.swap(downgradeCallback);
     }
 
@@ -508,7 +514,7 @@ void ClientSocket::processUpgrade(
         example::ClientSocket::Callback upgradeCallback(bsl::allocator_arg,
                                                         d_allocator_p);
         {
-            bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
+            LockGuard lockGuard(&d_mutex);
             d_upgradeCallback.swap(upgradeCallback);
         }
 
@@ -553,7 +559,7 @@ void ClientSocket::upgrade(
     const example::ClientSocket::Callback&         downgradeCallback)
 {
     {
-        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
+        LockGuard lockGuard(&d_mutex);
         d_upgradeCallback   = upgradeCallback;
         d_downgradeCallback = downgradeCallback;
     }
@@ -638,7 +644,13 @@ class ServerSocket : public ntci::StreamSocketSession,
     typedef bsl::function<void()> Callback;
 
   private:
-    bslmt::Mutex                        d_mutex;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    Mutex                               d_mutex;
     bsl::shared_ptr<ntci::StreamSocket> d_streamSocket_sp;
     example::MessageParser              d_parser;
     example::ServerSocket::Callback     d_upgradeCallback;
@@ -742,7 +754,7 @@ void ServerSocket::processDowngradeComplete(
     example::ServerSocket::Callback downgradeCallback(bsl::allocator_arg,
                                                       d_allocator_p);
     {
-        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
+        LockGuard lockGuard(&d_mutex);
         d_downgradeCallback.swap(downgradeCallback);
     }
 
@@ -761,7 +773,7 @@ void ServerSocket::processUpgrade(
         example::ServerSocket::Callback upgradeCallback(bsl::allocator_arg,
                                                         d_allocator_p);
         {
-            bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
+            LockGuard lockGuard(&d_mutex);
             d_upgradeCallback.swap(upgradeCallback);
         }
 
@@ -812,7 +824,7 @@ void ServerSocket::upgrade(
     const example::ServerSocket::Callback&         downgradeCallback)
 {
     {
-        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
+        LockGuard lockGuard(&d_mutex);
         d_upgradeCallback   = upgradeCallback;
         d_downgradeCallback = downgradeCallback;
     }
@@ -872,7 +884,13 @@ class ListenerSocket : public ntci::ListenerSocketSession,
     typedef bsl::function<void()> Callback;
 
   private:
-    bslmt::Mutex                          d_mutex;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    Mutex                                 d_mutex;
     bsl::shared_ptr<ntci::ListenerSocket> d_listenerSocket_sp;
     bslma::Allocator*                     d_allocator_p;
 
@@ -1008,11 +1026,11 @@ class Client : public ntci::StreamSocketManager, public ntccfg::Shared<Client>
                                bsl::shared_ptr<example::ClientSocket> >
         StreamSocketMap;
 
-    bslmt::Mutex                     d_mutex;
+    ntccfg::ConditionMutex           d_mutex;
     bsl::shared_ptr<ntci::Interface> d_interface_sp;
     PendingConnectionMap             d_pendingConnections;
     StreamSocketMap                  d_streamSockets;
-    bslmt::Condition                 d_linger;
+    ntccfg::Condition                d_linger;
     bslma::Allocator*                d_allocator_p;
 
   private:
@@ -1071,7 +1089,7 @@ void Client::processStreamSocketEstablished(
     example::Client::ClientSocketCallback  callback;
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
+        ntccfg::ConditionMutexGuard lockGuard(&d_mutex);
 
         PendingConnectionMap::iterator it =
             d_pendingConnections.find(streamSocket);
@@ -1093,7 +1111,7 @@ void Client::processStreamSocketEstablished(
 void Client::processStreamSocketClosed(
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
 {
-    bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
+    ntccfg::ConditionMutexGuard lockGuard(&d_mutex);
 
     d_streamSockets.erase(streamSocket);
 
@@ -1144,7 +1162,7 @@ void Client::connect(const ntsa::Endpoint& remoteEndpoint,
     streamSocket->registerManager(this->getSelf(this));
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
+        ntccfg::ConditionMutexGuard lockGuard(&d_mutex);
         d_pendingConnections[streamSocket] = callback;
     }
 
@@ -1165,7 +1183,7 @@ void Client::shutdown()
 {
     StreamSocketMap streamSockets;
     {
-        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
+        ntccfg::ConditionMutexGuard lockGuard(&d_mutex);
         streamSockets = d_streamSockets;
     }
 
@@ -1179,7 +1197,7 @@ void Client::shutdown()
 
 void Client::linger()
 {
-    bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
+    ntccfg::ConditionMutexGuard lockGuard(&d_mutex);
 
     while (!d_streamSockets.empty()) {
         d_linger.wait(&d_mutex);
@@ -1225,12 +1243,12 @@ class Server : public ntci::ListenerSocketManager,
                                bsl::shared_ptr<example::ServerSocket> >
         StreamSocketMap;
 
-    mutable bslmt::Mutex             d_mutex;
+    mutable ntccfg::ConditionMutex   d_mutex;
     bsl::shared_ptr<ntci::Interface> d_interface_sp;
     PendingConnectionMap             d_pendingConnections;
     ListenerSocketMap                d_listenerSockets;
     StreamSocketMap                  d_streamSockets;
-    bslmt::Condition                 d_linger;
+    ntccfg::Condition                d_linger;
     bslma::Allocator*                d_allocator_p;
 
   private:
@@ -1292,7 +1310,7 @@ void Server::processListenerSocketEstablished(
 {
     bsl::shared_ptr<example::ListenerSocket> listenerSocketSession;
     {
-        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
+        ntccfg::ConditionMutexGuard lockGuard(&d_mutex);
 
         listenerSocketSession.createInplace(d_allocator_p,
                                             listenerSocket,
@@ -1309,7 +1327,7 @@ void Server::processListenerSocketEstablished(
 void Server::processListenerSocketClosed(
     const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket)
 {
-    bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
+    ntccfg::ConditionMutexGuard lockGuard(&d_mutex);
 
     {
         std::size_t n = d_pendingConnections.erase(listenerSocket);
@@ -1338,7 +1356,7 @@ void Server::processStreamSocketEstablished(
 
     ServerSocketCallback callback;
     {
-        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
+        ntccfg::ConditionMutexGuard lockGuard(&d_mutex);
 
         callback = d_pendingConnections[streamSocket->acceptor()];
         d_streamSockets[streamSocket] = serverSocket;
@@ -1350,7 +1368,7 @@ void Server::processStreamSocketEstablished(
 void Server::processStreamSocketClosed(
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
 {
-    bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
+    ntccfg::ConditionMutexGuard lockGuard(&d_mutex);
 
     std::size_t n = d_streamSockets.erase(streamSocket);
     BSLS_ASSERT_OPT(n == 1);
@@ -1394,7 +1412,7 @@ ntsa::Endpoint Server::listen(const ntsa::Endpoint&       sourceEndpoint,
     listenerSocket->registerSession(this->getSelf(this));
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
+        ntccfg::ConditionMutexGuard lockGuard(&d_mutex);
         d_pendingConnections[listenerSocket] = callback;
     }
 
@@ -1412,7 +1430,7 @@ void Server::shutdown()
     ListenerSocketMap listenerSockets;
     StreamSocketMap   streamSockets;
     {
-        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
+        ntccfg::ConditionMutexGuard lockGuard(&d_mutex);
         listenerSockets = d_listenerSockets;
         streamSockets   = d_streamSockets;
     }
@@ -1434,7 +1452,7 @@ void Server::shutdown()
 
 void Server::linger()
 {
-    bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_mutex);
+    ntccfg::ConditionMutexGuard lockGuard(&d_mutex);
     while (!d_pendingConnections.empty() || !d_listenerSockets.empty() ||
            !d_streamSockets.empty())
     {

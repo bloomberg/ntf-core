@@ -64,8 +64,8 @@ class Thread : public ntci::Thread, public ntccfg::Shared<Thread>
     bsl::shared_ptr<ntci::Proactor> d_proactor_sp;
     bslmt::ThreadUtil::Handle       d_threadHandle;
     bslmt::ThreadAttributes         d_threadAttributes;
-    bslmt::Mutex                    d_runMutex;
-    bslmt::Condition                d_runCondition;
+    ntccfg::ConditionMutex          d_runMutex;
+    ntccfg::Condition               d_runCondition;
     bsls::AtomicInt                 d_runState;
     ntca::ThreadConfig              d_config;
     bslma::Allocator*               d_allocator_p;

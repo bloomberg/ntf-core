@@ -428,10 +428,16 @@ class DatagramSocketManager : public ntci::DatagramSocketManager,
                                bsl::shared_ptr<DatagramSocketSession> >
         DatagramSocketApplicationMap;
 
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
     ntccfg::Object                 d_object;
     bsl::shared_ptr<ntci::Reactor> d_reactor_sp;
     bsl::shared_ptr<ntcs::Metrics> d_metrics_sp;
-    bslmt::Mutex                   d_socketMapMutex;
+    Mutex                          d_socketMapMutex;
     DatagramSocketApplicationMap   d_socketMap;
     bslmt::Latch                   d_socketsEstablished;
     bslmt::Latch                   d_socketsClosed;
@@ -976,7 +982,7 @@ void DatagramSocketManager::processDatagramSocketEstablished(
     }
 
     {
-        bslmt::LockGuard<bslmt::Mutex> guard(&d_socketMapMutex);
+        LockGuard guard(&d_socketMapMutex);
         d_socketMap.insert(
             DatagramSocketApplicationMap::value_type(datagramSocket,
                                                      datagramSocketSession));
@@ -996,7 +1002,7 @@ void DatagramSocketManager::processDatagramSocketClosed(
                    (int)(datagramSocket->handle()));
 
     {
-        bslmt::LockGuard<bslmt::Mutex> guard(&d_socketMapMutex);
+        LockGuard guard(&d_socketMapMutex);
         bsl::size_t                    n = d_socketMap.erase(datagramSocket);
         NTCCFG_TEST_EQ(n, 1);
     }
@@ -1102,7 +1108,7 @@ void DatagramSocketManager::run()
     // Start the timers for each datagram socket.
 
     {
-        bslmt::LockGuard<bslmt::Mutex> guard(&d_socketMapMutex);
+        LockGuard guard(&d_socketMapMutex);
 
         for (DatagramSocketApplicationMap::const_iterator it =
                  d_socketMap.begin();
@@ -1117,7 +1123,7 @@ void DatagramSocketManager::run()
     // Send data between each datagram socket pair.
 
     {
-        bslmt::LockGuard<bslmt::Mutex> guard(&d_socketMapMutex);
+        LockGuard guard(&d_socketMapMutex);
 
         BSLS_ASSERT(d_socketMap.size() % 2 == 0);
 
@@ -1155,7 +1161,7 @@ void DatagramSocketManager::run()
     // datagram socket.
 
     {
-        bslmt::LockGuard<bslmt::Mutex> guard(&d_socketMapMutex);
+        LockGuard guard(&d_socketMapMutex);
 
         for (DatagramSocketApplicationMap::const_iterator it =
                  d_socketMap.begin();
@@ -1345,7 +1351,7 @@ void DatagramSocketManager::run()
         socketVector.reserve(d_socketMap.size());
 
         {
-            bslmt::LockGuard<bslmt::Mutex> guard(&d_socketMapMutex);
+            LockGuard guard(&d_socketMapMutex);
 
             for (DatagramSocketApplicationMap::const_iterator it =
                      d_socketMap.begin();

@@ -22,6 +22,7 @@ BSLS_IDENT("$Id: $")
 #include <ntccfg_config.h>
 #include <ntccfg_inline.h>
 #include <ntcscm_version.h>
+#include <bslmt_condition.h>
 #include <bslmt_lockguard.h>
 #include <bslmt_mutex.h>
 #include <bslmt_recursivemutex.h>
@@ -371,6 +372,35 @@ typedef bslmt::UnLockGuard<ntccfg::Futex> UnLockGuard;
 #else
 #error Not implemented
 #endif
+
+#define NTCCFG_MUTEX_NULL ((ntccfg::Mutex*)(0))
+
+/// @internal @brief
+/// Define a type alias for a condition variable.
+///
+/// @ingroup module_ntccfg
+typedef bslmt::Condition Condition;
+
+/// @internal @brief
+/// Define a type alias for a mutex to lock the state associated with a 
+/// condition variable.
+///
+/// @ingroup module_ntccfg
+typedef bslmt::Mutex ConditionMutex;
+
+/// @internal @brief
+/// Define a type alias for a guard to lock and unlock a condition variable 
+/// mutex.
+///
+/// @ingroup module_ntccfg
+typedef bslmt::LockGuard<bslmt::Mutex> ConditionMutexGuard;
+
+/// @internal @brief
+/// Define a type alias for a guard to unlock and lock a condition variable 
+/// mutex.
+///
+/// @ingroup module_ntccfg
+typedef bslmt::UnLockGuard<bslmt::Mutex> ConditionMutexUnLockGuard;
 
 }  // close package namespace
 }  // close enterprise namespace

@@ -163,7 +163,7 @@ bool RegistryEntry::announceDetached(
     }
     if (process) {
         if (NTCCFG_LIKELY(callback)) {
-            callback.dispatch(d_unknown_sp, executor, true, (bslmt::Mutex*) NULL);
+            callback.dispatch(d_unknown_sp, executor, true, NTCCFG_MUTEX_NULL);
         }
     }
     return process;

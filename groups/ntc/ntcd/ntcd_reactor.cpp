@@ -495,7 +495,7 @@ ntci::Waiter Reactor::registerWaiter(const ntca::WaiterOptions& waiterOptions)
     result->d_options = waiterOptions;
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_waiterSetMutex);
+        LockGuard lockGuard(&d_waiterSetMutex);
 
         if (result->d_options.threadHandle() == bslmt::ThreadUtil::Handle()) {
             result->d_options.setThreadHandle(bslmt::ThreadUtil::self());
@@ -551,7 +551,7 @@ void Reactor::deregisterWaiter(ntci::Waiter waiter)
     bool flush = false;
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lockGuard(&d_waiterSetMutex);
+        LockGuard lockGuard(&d_waiterSetMutex);
 
         bsl::size_t n = d_waiterSet.erase(result);
         BSLS_ASSERT_OPT(n == 1);
@@ -1602,19 +1602,19 @@ bsl::size_t Reactor::load() const
 
 bslmt::ThreadUtil::Handle Reactor::threadHandle() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_waiterSetMutex);
+    LockGuard lock(&d_waiterSetMutex);
     return d_threadHandle;
 }
 
 bsl::size_t Reactor::threadIndex() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_waiterSetMutex);
+    LockGuard lock(&d_waiterSetMutex);
     return d_threadIndex;
 }
 
 bsl::size_t Reactor::numWaiters() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_waiterSetMutex);
+    LockGuard lock(&d_waiterSetMutex);
     return d_waiterSet.size();
 }
 

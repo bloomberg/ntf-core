@@ -62,7 +62,7 @@ StreamSocket::~StreamSocket()
 
 ntsa::Error StreamSocket::open(ntsa::Transport::Value transport)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -81,7 +81,7 @@ ntsa::Error StreamSocket::open(ntsa::Transport::Value transport)
 
 ntsa::Error StreamSocket::acquire(ntsa::Handle handle)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -100,7 +100,7 @@ ntsa::Error StreamSocket::acquire(ntsa::Handle handle)
 
 ntsa::Handle StreamSocket::release()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::k_INVALID_HANDLE;
@@ -115,7 +115,7 @@ ntsa::Handle StreamSocket::release()
 ntsa::Error StreamSocket::bind(const ntsa::Endpoint& endpoint,
                                bool                  reuseAddress)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -127,7 +127,7 @@ ntsa::Error StreamSocket::bind(const ntsa::Endpoint& endpoint,
 ntsa::Error StreamSocket::bindAny(ntsa::Transport::Value transport,
                                   bool                   reuseAddress)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -138,7 +138,7 @@ ntsa::Error StreamSocket::bindAny(ntsa::Transport::Value transport,
 
 ntsa::Error StreamSocket::connect(const ntsa::Endpoint& endpoint)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -151,7 +151,7 @@ ntsa::Error StreamSocket::send(ntsa::SendContext*       context,
                                const bdlbb::Blob&       data,
                                const ntsa::SendOptions& options)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -164,7 +164,7 @@ ntsa::Error StreamSocket::send(ntsa::SendContext*       context,
                                const ntsa::Data&        data,
                                const ntsa::SendOptions& options)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -185,7 +185,7 @@ ntsa::Error StreamSocket::receive(ntsa::ReceiveContext*       context,
                                   bdlbb::Blob*                data,
                                   const ntsa::ReceiveOptions& options)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -198,7 +198,7 @@ ntsa::Error StreamSocket::receive(ntsa::ReceiveContext*       context,
                                   ntsa::Data*                 data,
                                   const ntsa::ReceiveOptions& options)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -209,7 +209,7 @@ ntsa::Error StreamSocket::receive(ntsa::ReceiveContext*       context,
 
 ntsa::Error StreamSocket::shutdown(ntsa::ShutdownType::Value direction)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -220,7 +220,7 @@ ntsa::Error StreamSocket::shutdown(ntsa::ShutdownType::Value direction)
 
 ntsa::Error StreamSocket::unlink()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -231,7 +231,7 @@ ntsa::Error StreamSocket::unlink()
 
 ntsa::Error StreamSocket::close()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -245,7 +245,7 @@ ntsa::Error StreamSocket::close()
 
 ntsa::Error StreamSocket::sourceEndpoint(ntsa::Endpoint* result) const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -256,7 +256,7 @@ ntsa::Error StreamSocket::sourceEndpoint(ntsa::Endpoint* result) const
 
 ntsa::Error StreamSocket::remoteEndpoint(ntsa::Endpoint* result) const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -267,7 +267,7 @@ ntsa::Error StreamSocket::remoteEndpoint(ntsa::Endpoint* result) const
 
 ntsa::Handle StreamSocket::handle() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::k_INVALID_HANDLE;
@@ -280,7 +280,7 @@ ntsa::Handle StreamSocket::handle() const
 
 ntsa::Error StreamSocket::setBlocking(bool blocking)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -291,7 +291,7 @@ ntsa::Error StreamSocket::setBlocking(bool blocking)
 
 ntsa::Error StreamSocket::setOption(const ntsa::SocketOption& option)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -303,7 +303,7 @@ ntsa::Error StreamSocket::setOption(const ntsa::SocketOption& option)
 ntsa::Error StreamSocket::getOption(ntsa::SocketOption*           option,
                                     ntsa::SocketOptionType::Value type)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -314,7 +314,7 @@ ntsa::Error StreamSocket::getOption(ntsa::SocketOption*           option,
 
 ntsa::Error StreamSocket::getLastError(ntsa::Error* result)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -325,7 +325,7 @@ ntsa::Error StreamSocket::getLastError(ntsa::Error* result)
 
 bsl::size_t StreamSocket::maxBuffersPerSend() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return 1;
@@ -336,7 +336,7 @@ bsl::size_t StreamSocket::maxBuffersPerSend() const
 
 bsl::size_t StreamSocket::maxBuffersPerReceive() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_session_sp) {
         return 1;

@@ -250,7 +250,7 @@ ntsa::Error Controller::interrupt(unsigned int numWakeups)
 #if NTSB_CONTROLLER_IMP == NTSB_CONTROLLER_IMP_TCP_SOCKET ||                  \
     NTSB_CONTROLLER_IMP == NTSB_CONTROLLER_IMP_UNIX_DOMAIN_SOCKET
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (numWakeups <= d_pending) {
         return ntsa::Error();
@@ -295,7 +295,7 @@ ntsa::Error Controller::interrupt(unsigned int numWakeups)
 
 #elif NTSB_CONTROLLER_IMP == NTSB_CONTROLLER_IMP_ANONYMOUS_PIPE
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (numWakeups <= d_pending) {
         return ntsa::Error();
@@ -335,7 +335,7 @@ ntsa::Error Controller::interrupt(unsigned int numWakeups)
 
 #elif NTSB_CONTROLLER_IMP == NTSB_CONTROLLER_IMP_EVENTFD
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (numWakeups <= d_pending) {
         return ntsa::Error();
@@ -385,7 +385,7 @@ ntsa::Error Controller::acknowledge()
 #if NTSB_CONTROLLER_IMP == NTSB_CONTROLLER_IMP_TCP_SOCKET ||                  \
     NTSB_CONTROLLER_IMP == NTSB_CONTROLLER_IMP_UNIX_DOMAIN_SOCKET
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     char buffer;
 
@@ -415,7 +415,7 @@ ntsa::Error Controller::acknowledge()
 
 #elif NTSB_CONTROLLER_IMP == NTSB_CONTROLLER_IMP_ANONYMOUS_PIPE
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     char        buffer;
     bsl::size_t bytesRead = 0;
@@ -445,7 +445,7 @@ ntsa::Error Controller::acknowledge()
 
 #elif NTSB_CONTROLLER_IMP == NTSB_CONTROLLER_IMP_EVENTFD
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     bsl::uint64_t value = 0;
 

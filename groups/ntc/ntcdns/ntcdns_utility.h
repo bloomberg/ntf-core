@@ -164,10 +164,17 @@ struct Utility {
 template <typename KEY, typename VALUE>
 class Map
 {
+    /// Define a type alias for the container type.
     typedef bsl::unordered_map<KEY, VALUE> Container;
 
-    mutable bslmt::Mutex d_mutex;
-    Container            d_container;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    mutable Mutex d_mutex;
+    Container     d_container;
 
   private:
     Map(const Map&) BSLS_KEYWORD_DELETED;
@@ -247,10 +254,17 @@ class Map
 template <typename TYPE>
 class Queue
 {
+    /// Define a type alias for the container type.
     typedef bsl::list<TYPE> Container;
 
-    mutable bslmt::Mutex d_mutex;
-    Container            d_container;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    mutable Mutex d_mutex;
+    Container     d_container;
 
   private:
     Queue(const Queue&) BSLS_KEYWORD_DELETED;
@@ -315,7 +329,7 @@ Map<KEY, VALUE>::~Map()
 template <typename KEY, typename VALUE>
 bool Map<KEY, VALUE>::add(const KEY& key, const VALUE& value)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     return d_container.insert(typename Container::value_type(key, value))
         .second;
@@ -324,7 +338,7 @@ bool Map<KEY, VALUE>::add(const KEY& key, const VALUE& value)
 template <typename KEY, typename VALUE>
 bool Map<KEY, VALUE>::replace(const KEY& key, const VALUE& value)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     typename Container::iterator it = d_container.find(key);
     if (it != d_container.end()) {
@@ -338,7 +352,7 @@ bool Map<KEY, VALUE>::replace(const KEY& key, const VALUE& value)
 template <typename KEY, typename VALUE>
 bool Map<KEY, VALUE>::find(VALUE* result, const KEY& key)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     typename Container::iterator it = d_container.find(key);
     if (it != d_container.end()) {
@@ -352,7 +366,7 @@ bool Map<KEY, VALUE>::find(VALUE* result, const KEY& key)
 template <typename KEY, typename VALUE>
 bool Map<KEY, VALUE>::remove(const KEY& key)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     bsl::size_t n = d_container.erase(key);
     return n == 1;
@@ -361,7 +375,7 @@ bool Map<KEY, VALUE>::remove(const KEY& key)
 template <typename KEY, typename VALUE>
 bool Map<KEY, VALUE>::remove(VALUE* result, const KEY& key)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     typename Container::iterator it = d_container.find(key);
     if (it != d_container.end()) {
@@ -376,7 +390,7 @@ bool Map<KEY, VALUE>::remove(VALUE* result, const KEY& key)
 template <typename KEY, typename VALUE>
 bsl::size_t Map<KEY, VALUE>::removeValue(const VALUE& value, bool all)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     bsl::size_t result = 0;
 
@@ -413,13 +427,13 @@ template <typename KEY, typename VALUE>
 void Map<KEY, VALUE>::swap(Map* other)
 {
     if (this < other) {
-        bslmt::LockGuard<bslmt::Mutex> lock1(&d_mutex);
-        bslmt::LockGuard<bslmt::Mutex> lock2(&other->d_mutex);
+        LockGuard lock1(&d_mutex);
+        LockGuard lock2(&other->d_mutex);
         d_container.swap(other->d_container);
     }
     else {
-        bslmt::LockGuard<bslmt::Mutex> lock1(&other->d_mutex);
-        bslmt::LockGuard<bslmt::Mutex> lock2(&d_mutex);
+        LockGuard lock1(&other->d_mutex);
+        LockGuard lock2(&d_mutex);
         d_container.swap(other->d_container);
     }
 }
@@ -427,14 +441,14 @@ void Map<KEY, VALUE>::swap(Map* other)
 template <typename KEY, typename VALUE>
 void Map<KEY, VALUE>::clear()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     d_container.clear();
 }
 
 template <typename KEY, typename VALUE>
 bool Map<KEY, VALUE>::contains(const KEY& key) const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     typename Container::const_iterator it = d_container.find(key);
     if (it != d_container.end()) {
@@ -447,7 +461,7 @@ bool Map<KEY, VALUE>::contains(const KEY& key) const
 template <typename KEY, typename VALUE>
 void Map<KEY, VALUE>::keys(bsl::vector<VALUE>* result) const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     result->reserve(result->size() + d_container.size());
 
@@ -462,7 +476,7 @@ void Map<KEY, VALUE>::keys(bsl::vector<VALUE>* result) const
 template <typename KEY, typename VALUE>
 void Map<KEY, VALUE>::values(bsl::vector<VALUE>* result) const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     result->reserve(result->size() + d_container.size());
 
@@ -477,14 +491,14 @@ void Map<KEY, VALUE>::values(bsl::vector<VALUE>* result) const
 template <typename KEY, typename VALUE>
 bsl::size_t Map<KEY, VALUE>::size() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_container.size();
 }
 
 template <typename KEY, typename VALUE>
 bool Map<KEY, VALUE>::empty() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_container.empty();
 }
 
@@ -503,7 +517,7 @@ Queue<TYPE>::~Queue()
 template <typename TYPE>
 void Queue<TYPE>::push(const TYPE& value)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     d_container.push_back(value);
 }
 
@@ -511,15 +525,15 @@ template <typename TYPE>
 void Queue<TYPE>::push(const Queue& other)
 {
     if (this < &other) {
-        bslmt::LockGuard<bslmt::Mutex> lock1(&d_mutex);
-        bslmt::LockGuard<bslmt::Mutex> lock2(&other.d_mutex);
+        LockGuard lock1(&d_mutex);
+        LockGuard lock2(&other.d_mutex);
         d_container.insert(d_container.end(),
                            other.d_container.begin(),
                            other.d_container.end());
     }
     else {
-        bslmt::LockGuard<bslmt::Mutex> lock1(&other.d_mutex);
-        bslmt::LockGuard<bslmt::Mutex> lock2(&d_mutex);
+        LockGuard lock1(&other.d_mutex);
+        LockGuard lock2(&d_mutex);
         d_container.insert(d_container.end(),
                            other.d_container.begin(),
                            other.d_container.end());
@@ -529,7 +543,7 @@ void Queue<TYPE>::push(const Queue& other)
 template <typename TYPE>
 bool Queue<TYPE>::pop(TYPE* result)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (!d_container.empty()) {
         *result = d_container.front();
@@ -543,7 +557,7 @@ bool Queue<TYPE>::pop(TYPE* result)
 template <typename TYPE>
 bsl::size_t Queue<TYPE>::remove(const TYPE& value, bool all)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     bsl::size_t result = 0;
 
@@ -580,13 +594,13 @@ template <typename TYPE>
 void Queue<TYPE>::swap(Queue* other)
 {
     if (this < other) {
-        bslmt::LockGuard<bslmt::Mutex> lock1(&d_mutex);
-        bslmt::LockGuard<bslmt::Mutex> lock2(&other->d_mutex);
+        LockGuard lock1(&d_mutex);
+        LockGuard lock2(&other->d_mutex);
         d_container.swap(other->d_container);
     }
     else {
-        bslmt::LockGuard<bslmt::Mutex> lock1(&other->d_mutex);
-        bslmt::LockGuard<bslmt::Mutex> lock2(&d_mutex);
+        LockGuard lock1(&other->d_mutex);
+        LockGuard lock2(&d_mutex);
         d_container.swap(other->d_container);
     }
 }
@@ -594,14 +608,14 @@ void Queue<TYPE>::swap(Queue* other)
 template <typename TYPE>
 void Queue<TYPE>::clear()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     d_container.clear();
 }
 
 template <typename TYPE>
 void Queue<TYPE>::load(bsl::vector<TYPE>* result) const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     result->reserve(result->size() + d_container.size());
 
@@ -616,14 +630,14 @@ void Queue<TYPE>::load(bsl::vector<TYPE>* result) const
 template <typename TYPE>
 bsl::size_t Queue<TYPE>::size() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_container.size();
 }
 
 template <typename TYPE>
 bool Queue<TYPE>::empty() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_container.empty();
 }
 

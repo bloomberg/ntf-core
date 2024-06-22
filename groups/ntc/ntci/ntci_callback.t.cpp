@@ -1586,8 +1586,8 @@ NTCCFG_TEST_CASE(6)
     {
         ntsa::Error error;
 
-        bslmt::Mutex                   mutex;
-        bslmt::LockGuard<bslmt::Mutex> mutexGuard(&mutex);
+        ntccfg::Mutex     mutex;
+        ntccfg::LockGuard mutexGuard(&mutex);
 
         {
             CallbackArg0 callback(&ta);

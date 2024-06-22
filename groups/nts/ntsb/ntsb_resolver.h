@@ -69,7 +69,7 @@ class ResolverOverrides
     /// service names.
     typedef bsl::unordered_map<ntsa::Port, bsl::string> ServiceNameByPort;
 
-    mutable bslmt::Mutex             d_mutex;
+    mutable ntscfg::Mutex            d_mutex;
     IpAddressByDomainName            d_ipAddressByDomainName;
     DomainNameByIpAddress            d_domainNameByIpAddress;
     PortByServiceName                d_tcpPortByServiceName;

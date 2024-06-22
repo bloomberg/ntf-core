@@ -52,7 +52,7 @@ ntsa::Error ResolverOverrides::setIpAddress(
     const bslstl::StringRef&            domainName,
     const bsl::vector<ntsa::IpAddress>& ipAddressList)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntscfg::LockGuard lock(&d_mutex);
 
     IpAddressVector& target = d_ipAddressByDomainName[domainName];
 
@@ -82,7 +82,7 @@ ntsa::Error ResolverOverrides::addIpAddress(
     const bslstl::StringRef&            domainName,
     const bsl::vector<ntsa::IpAddress>& ipAddressList)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntscfg::LockGuard lock(&d_mutex);
 
     IpAddressVector& target = d_ipAddressByDomainName[domainName];
 
@@ -103,7 +103,7 @@ ntsa::Error ResolverOverrides::addIpAddress(
     const bslstl::StringRef& domainName,
     const ntsa::IpAddress&   ipAddress)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntscfg::LockGuard lock(&d_mutex);
 
     IpAddressVector& target = d_ipAddressByDomainName[domainName];
     target.push_back(ipAddress);
@@ -116,7 +116,7 @@ ntsa::Error ResolverOverrides::setPort(const bslstl::StringRef& serviceName,
                                        const bsl::vector<ntsa::Port>& portList,
                                        ntsa::Transport::Value transport)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntscfg::LockGuard lock(&d_mutex);
 
     if (transport == ntsa::Transport::e_TCP_IPV4_STREAM ||
         transport == ntsa::Transport::e_TCP_IPV6_STREAM)
@@ -175,7 +175,7 @@ ntsa::Error ResolverOverrides::addPort(const bslstl::StringRef& serviceName,
                                        const bsl::vector<ntsa::Port>& portList,
                                        ntsa::Transport::Value transport)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntscfg::LockGuard lock(&d_mutex);
 
     if (transport == ntsa::Transport::e_TCP_IPV4_STREAM ||
         transport == ntsa::Transport::e_TCP_IPV6_STREAM)
@@ -216,7 +216,7 @@ ntsa::Error ResolverOverrides::addPort(const bslstl::StringRef& serviceName,
                                        ntsa::Port               port,
                                        ntsa::Transport::Value   transport)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntscfg::LockGuard lock(&d_mutex);
 
     if (transport == ntsa::Transport::e_TCP_IPV4_STREAM ||
         transport == ntsa::Transport::e_TCP_IPV6_STREAM)
@@ -242,14 +242,14 @@ ntsa::Error ResolverOverrides::addPort(const bslstl::StringRef& serviceName,
 ntsa::Error ResolverOverrides::setLocalIpAddress(
     const bsl::vector<ntsa::IpAddress>& ipAddressList)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntscfg::LockGuard lock(&d_mutex);
     d_localIpAddressList = ipAddressList;
     return ntsa::Error();
 }
 
 ntsa::Error ResolverOverrides::setHostname(const bsl::string& name)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntscfg::LockGuard lock(&d_mutex);
     d_hostname = name;
     return ntsa::Error();
 }
@@ -257,7 +257,7 @@ ntsa::Error ResolverOverrides::setHostname(const bsl::string& name)
 ntsa::Error ResolverOverrides::setHostnameFullyQualified(
     const bsl::string& name)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntscfg::LockGuard lock(&d_mutex);
     d_hostnameFullyQualified = name;
     return ntsa::Error();
 }
@@ -279,7 +279,7 @@ ntsa::Error ResolverOverrides::getIpAddress(
     }
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        ntscfg::LockGuard lock(&d_mutex);
 
         IpAddressByDomainName::const_iterator it =
             d_ipAddressByDomainName.find(domainName);
@@ -326,7 +326,7 @@ ntsa::Error ResolverOverrides::getDomainName(
     bsl::string*           result,
     const ntsa::IpAddress& ipAddress) const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntscfg::LockGuard lock(&d_mutex);
 
     DomainNameByIpAddress::const_iterator it =
         d_domainNameByIpAddress.find(ipAddress);
@@ -380,7 +380,7 @@ ntsa::Error ResolverOverrides::getPort(bsl::vector<ntsa::Port>* result,
     }
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        ntscfg::LockGuard lock(&d_mutex);
 
         if (examineTcpPortList) {
             PortByServiceName::const_iterator it =
@@ -425,7 +425,7 @@ ntsa::Error ResolverOverrides::getServiceName(
     ntsa::Port             port,
     ntsa::Transport::Value transport) const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntscfg::LockGuard lock(&d_mutex);
 
     bool found = false;
 
@@ -486,7 +486,7 @@ ntsa::Error ResolverOverrides::getLocalIpAddress(
     }
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        ntscfg::LockGuard lock(&d_mutex);
 
         if (ipAddressType.isNull()) {
             ipAddressList = d_localIpAddressList;
@@ -523,7 +523,7 @@ ntsa::Error ResolverOverrides::getLocalIpAddress(
 
 ntsa::Error ResolverOverrides::getHostname(bsl::string* result) const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntscfg::LockGuard lock(&d_mutex);
 
     if (d_hostname.isNull()) {
         return ntsa::Error(ntsa::Error::e_EOF);
@@ -536,7 +536,7 @@ ntsa::Error ResolverOverrides::getHostname(bsl::string* result) const
 ntsa::Error ResolverOverrides::getHostnameFullyQualified(
     bsl::string* result) const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    ntscfg::LockGuard lock(&d_mutex);
 
     if (d_hostnameFullyQualified.isNull()) {
         return ntsa::Error(ntsa::Error::e_EOF);

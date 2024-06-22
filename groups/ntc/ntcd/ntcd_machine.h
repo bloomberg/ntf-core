@@ -375,7 +375,6 @@ class PacketQueue
     /// This typedef defines a queue of packets.
     typedef bsl::list<bsl::shared_ptr<ntcd::Packet> > Storage;
 
-    // MRM: mutable bslmt::Mutex  d_mutex;
     bslmt::Condition   d_allowDequeue;
     bslmt::Condition   d_allowEnqueue;
     Storage            d_storage;
@@ -414,7 +413,7 @@ class PacketQueue
     /// true, block until sufficient capacity is availble to store the
     /// 'packet'. If 'packetFunctor' is set then apply it to the packet in
     /// case of succesful enqueueing. Return the error.
-    ntsa::Error enqueue(bslmt::Mutex*                  mutex,
+    ntsa::Error enqueue(ntccfg::ConditionMutex*        mutex,
                         bsl::shared_ptr<ntcd::Packet>& packet,
                         bool                           block,
                         PacketFunctor packetFunctor = PacketFunctor());
@@ -429,7 +428,7 @@ class PacketQueue
     /// Dequeue a packet from the queue and load the dequeued packet into
     /// the specified 'result'. If the specified 'block' flag is true, block
     /// until a packet is available to dequeue. Return the error.
-    ntsa::Error dequeue(bslmt::Mutex*                  mutex,
+    ntsa::Error dequeue(ntccfg::ConditionMutex*        mutex,
                         bsl::shared_ptr<ntcd::Packet>* result,
                         bool                           block);
 
@@ -437,14 +436,14 @@ class PacketQueue
     /// 'result', but do not dequeue the packet If the specified 'block'
     /// flag is true, block until a packet is available to dequeue. Return
     /// the error.
-    ntsa::Error peek(bslmt::Mutex*                  mutex,
+    ntsa::Error peek(ntccfg::ConditionMutex*        mutex,
                      bsl::shared_ptr<ntcd::Packet>* result,
                      bool                           block);
 
     /// Dequeue a packet from the queue.  If the specified 'block'
     /// flag is true, block until a packet is available to dequeue. Return
     /// the error.
-    ntsa::Error pop(bslmt::Mutex* mutex, bool block);
+    ntsa::Error pop(ntccfg::ConditionMutex* mutex, bool block);
 
     /// Wake up any threads blocked on this queue. Return the error.
     ntsa::Error wakeup();
@@ -577,7 +576,13 @@ class PortMap
         k_MAX_PORT           = k_MAX_EPHEMERAL_PORT
     };
 
-    mutable bslmt::Mutex    d_mutex;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    mutable Mutex           d_mutex;
     bsl::bitset<k_MAX_PORT> d_bitset;
     bslma::Allocator*       d_allocator_p;
 
@@ -625,7 +630,6 @@ class SessionQueue
     /// This typedef defines a queue of contexts.
     typedef bsl::list<bsl::shared_ptr<ntcd::Session> > Storage;
 
-    // MRM: mutable bslmt::Mutex  d_mutex;
     bslmt::Condition   d_allowDequeue;
     bslmt::Condition   d_allowEnqueue;
     Storage            d_storage;
@@ -658,14 +662,14 @@ class SessionQueue
     /// Enqueue the specified 'session'. If the specified 'block' flag is
     /// true, block until sufficient capacity is availble to store the
     /// 'session'. Return the error.
-    ntsa::Error enqueueSession(bslmt::Mutex*                         mutex,
+    ntsa::Error enqueueSession(ntccfg::ConditionMutex*               mutex,
                                const bsl::shared_ptr<ntcd::Session>& session,
                                bool                                  block);
 
     /// Dequeue a context from the queue and load the dequeued context into
     /// the specified 'result'. If the specified 'block' flag is true, block
     /// until a context is available to dequeue. Return the error.
-    ntsa::Error dequeueSession(bslmt::Mutex*                   mutex,
+    ntsa::Error dequeueSession(ntccfg::ConditionMutex*         mutex,
                                bsl::shared_ptr<ntcd::Session>* result,
                                bool                            block);
 
@@ -704,7 +708,7 @@ class Session : public ntsi::DatagramSocket,
 
     typedef bsl::list<ntsa::Notification> SocketErrorQueue;
 
-    mutable bslmt::Mutex                        d_mutex;
+    mutable ntccfg::ConditionMutex              d_mutex;
     ntsa::Handle                                d_handle;
     ntsa::Transport::Value                      d_transport;
     ntsa::Endpoint                              d_sourceEndpoint;
@@ -1021,8 +1025,8 @@ class Monitor : public ntccfg::Shared<Monitor>
     /// readiness of events for the sessions identified by those handles.
     typedef bsl::unordered_map<ntsa::Handle, bsl::shared_ptr<Entry> > EntryMap;
 
-    bslmt::Mutex                     d_mutex;
-    bslmt::Condition                 d_condition;
+    ntccfg::ConditionMutex           d_mutex;
+    ntccfg::Condition                d_condition;
     bsls::AtomicBool                 d_run;
     bsls::AtomicUint64               d_interrupt;
     bsls::AtomicUint64               d_waiters;
@@ -1197,8 +1201,8 @@ class Machine : public ntccfg::Shared<Machine>
     typedef bsl::map<ntcd::Binding, bsl::weak_ptr<ntcd::Session> >
         SessionByBindingMap;
 
-    mutable bslmt::Mutex           d_mutex;
-    mutable bslmt::Condition       d_condition;
+    mutable ntccfg::ConditionMutex d_mutex;
+    mutable ntccfg::Condition      d_condition;
     bsl::string                    d_name;
     bsl::vector<ntsa::IpAddress>   d_ipAddressList;
     bdlbb::PooledBlobBufferFactory d_blobBufferFactory;

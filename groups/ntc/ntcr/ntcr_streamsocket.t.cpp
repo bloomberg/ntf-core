@@ -444,10 +444,16 @@ class StreamSocketManager : public ntci::StreamSocketManager,
                                bsl::shared_ptr<StreamSocketSession> >
         StreamSocketApplicationMap;
 
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
     ntccfg::Object                 d_object;
     bsl::shared_ptr<ntci::Reactor> d_reactor_sp;
     bsl::shared_ptr<ntcs::Metrics> d_metrics_sp;
-    bslmt::Mutex                   d_socketMapMutex;
+    Mutex                          d_socketMapMutex;
     StreamSocketApplicationMap     d_socketMap;
     bslmt::Latch                   d_socketsEstablished;
     bslmt::Latch                   d_socketsClosed;
@@ -949,7 +955,7 @@ void StreamSocketManager::processStreamSocketEstablished(
     }
 
     {
-        bslmt::LockGuard<bslmt::Mutex> guard(&d_socketMapMutex);
+        LockGuard guard(&d_socketMapMutex);
         d_socketMap.insert(
             StreamSocketApplicationMap::value_type(streamSocket,
                                                    streamSocketSession));
@@ -968,7 +974,7 @@ void StreamSocketManager::processStreamSocketClosed(
     NTCI_LOG_DEBUG("Stream socket %d closed", (int)(streamSocket->handle()));
 
     {
-        bslmt::LockGuard<bslmt::Mutex> guard(&d_socketMapMutex);
+        LockGuard guard(&d_socketMapMutex);
         bsl::size_t                    n = d_socketMap.erase(streamSocket);
         NTCCFG_TEST_EQ(n, 1);
     }
@@ -1091,7 +1097,7 @@ void StreamSocketManager::run()
     // Start the timers for each stream socket.
 
     {
-        bslmt::LockGuard<bslmt::Mutex> guard(&d_socketMapMutex);
+        LockGuard guard(&d_socketMapMutex);
 
         for (StreamSocketApplicationMap::const_iterator it =
                  d_socketMap.begin();
@@ -1106,7 +1112,7 @@ void StreamSocketManager::run()
     // Send data between each stream socket pair.
 
     {
-        bslmt::LockGuard<bslmt::Mutex> guard(&d_socketMapMutex);
+        LockGuard guard(&d_socketMapMutex);
 
         for (StreamSocketApplicationMap::const_iterator it =
                  d_socketMap.begin();
@@ -1122,7 +1128,7 @@ void StreamSocketManager::run()
     // stream socket.
 
     {
-        bslmt::LockGuard<bslmt::Mutex> guard(&d_socketMapMutex);
+        LockGuard guard(&d_socketMapMutex);
 
         for (StreamSocketApplicationMap::const_iterator it =
                  d_socketMap.begin();
@@ -1313,7 +1319,7 @@ void StreamSocketManager::run()
         socketVector.reserve(d_socketMap.size());
 
         {
-            bslmt::LockGuard<bslmt::Mutex> guard(&d_socketMapMutex);
+            LockGuard guard(&d_socketMapMutex);
 
             for (StreamSocketApplicationMap::const_iterator it =
                      d_socketMap.begin();

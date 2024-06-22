@@ -330,7 +330,7 @@ System::~System()
 
 ntsa::Error System::start()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (d_state == e_STATE_STARTED) {
         return ntsa::Error();
@@ -353,7 +353,7 @@ void System::linger()
 {
     bsl::shared_ptr<bdlmt::ThreadPool> threadPool;
     {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        LockGuard lock(&d_mutex);
         threadPool = d_threadPool_sp;
     }
 
@@ -363,7 +363,7 @@ void System::linger()
     }
 
     {
-        bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+        LockGuard lock(&d_mutex);
         d_state = e_STATE_STOPPED;
         d_threadPool_sp.reset();
     }
@@ -376,7 +376,7 @@ ntsa::Error System::getIpAddress(
     const ntca::GetIpAddressOptions&       options,
     const ntci::GetIpAddressCallback&      callback)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
     int         rc;
@@ -414,7 +414,7 @@ ntsa::Error System::getDomainName(
     const ntca::GetDomainNameOptions&      options,
     const ntci::GetDomainNameCallback&     callback)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
     int         rc;
@@ -451,7 +451,7 @@ ntsa::Error System::getPort(const bsl::shared_ptr<ntci::Resolver>& resolver,
                             const ntca::GetPortOptions&            options,
                             const ntci::GetPortCallback&           callback)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
     int         rc;
@@ -489,7 +489,7 @@ ntsa::Error System::getServiceName(
     const ntca::GetServiceNameOptions&     options,
     const ntci::GetServiceNameCallback&    callback)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
     int         rc;
@@ -522,7 +522,7 @@ ntsa::Error System::getServiceName(
 
 void System::execute(const Functor& functor)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
     int         rc;
@@ -547,7 +547,7 @@ void System::execute(const Functor& functor)
 void System::moveAndExecute(FunctorSequence* functorSequence,
                             const Functor&   functor)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
     int         rc;

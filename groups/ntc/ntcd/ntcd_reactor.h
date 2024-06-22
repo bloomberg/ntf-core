@@ -62,6 +62,12 @@ class Reactor : public ntci::Reactor,
     /// This typedef defines a set of waiters.
     typedef bsl::unordered_set<ntci::Waiter> WaiterSet;
 
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
     struct Result;
     // This struct describes the context of a waiter.
 
@@ -91,7 +97,7 @@ class Reactor : public ntci::Reactor,
     bsl::shared_ptr<ntcs::RegistryEntryCatalog::EntryFunctor>
                                                 d_detachFunctor_sp;
     bsl::shared_ptr<ntcs::RegistryEntryCatalog> d_registry_sp;
-    mutable bslmt::Mutex                        d_waiterSetMutex;
+    mutable Mutex                               d_waiterSetMutex;
     WaiterSet                                   d_waiterSet;
     bslmt::ThreadUtil::Handle                   d_threadHandle;
     bsl::size_t                                 d_threadIndex;

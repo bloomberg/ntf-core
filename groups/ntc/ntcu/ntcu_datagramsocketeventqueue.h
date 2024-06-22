@@ -51,6 +51,12 @@ class DatagramSocketEventQueue : public ntci::DatagramSocketSession
     /// Define a type alias for a queue of events.
     typedef bsl::list<ntca::DatagramSocketEvent> Queue;
 
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
     enum Constant {
         // This enumeration defines the constants used by this class.
 
@@ -58,8 +64,8 @@ class DatagramSocketEventQueue : public ntci::DatagramSocketSession
         k_NUM_EVENT_TYPES = 6
     };
 
-    bslmt::Mutex                  d_mutex;
-    bslmt::Condition              d_condition;
+    ntccfg::ConditionMutex        d_mutex;
+    ntccfg::Condition             d_condition;
     Queue                         d_queue;
     bsl::uint32_t                 d_interest[k_NUM_EVENT_TYPES];
     bool                          d_closed;

@@ -46,7 +46,13 @@ namespace ntcd {
 /// @ingroup module_ntcd
 class StreamSocket : public ntsi::StreamSocket
 {
-    mutable bslmt::Mutex           d_mutex;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    mutable Mutex                  d_mutex;
     bsl::shared_ptr<ntcd::Machine> d_machine_sp;
     bsl::shared_ptr<ntcd::Session> d_session_sp;
     bslma::Allocator*              d_allocator_p;

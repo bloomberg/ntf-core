@@ -153,7 +153,13 @@ class ObjectStatistic
 /// test driver.
 class Object : public ntci::Monitorable
 {
-    mutable bslmt::Mutex d_mutex;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+    
+    mutable Mutex        d_mutex;
     bsls::TimeInterval   d_currentTime;
     int                  d_seed;
     ObjectStatistic      d_statistic;
@@ -251,8 +257,14 @@ class ObjectRegistry : public ntci::MonitorableRegistry
     /// so identified.
     typedef bsl::map<int, bsl::shared_ptr<ntci::Monitorable> > ObjectMap;
 
-    mutable bslmt::Mutex d_mutex;
-    ObjectMap            d_objects;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    mutable Mutex d_mutex;
+    ObjectMap     d_objects;
 
   private:
     ObjectRegistry(const ObjectRegistry&) BSLS_KEYWORD_DELETED;
@@ -403,7 +415,7 @@ void Object::execute()
 
 void Object::getStats(bdld::ManagedDatum* result)
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     bsl::int64_t count, total, min, max;
     d_statistic.load(&count, &total, &min, &max, true);
@@ -503,7 +515,7 @@ ObjectRegistry::~ObjectRegistry()
 void ObjectRegistry::registerMonitorable(
     const bsl::shared_ptr<ntci::Monitorable>& object)
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     d_objects[static_cast<int>(object->objectId())] = object;
 }
@@ -511,7 +523,7 @@ void ObjectRegistry::registerMonitorable(
 void ObjectRegistry::deregisterMonitorable(
     const bsl::shared_ptr<ntci::Monitorable>& object)
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     d_objects.erase(static_cast<int>(object->objectId()));
 }
@@ -519,7 +531,7 @@ void ObjectRegistry::deregisterMonitorable(
 void ObjectRegistry::loadRegisteredObjects(
     bsl::vector<bsl::shared_ptr<ntci::Monitorable> >* result) const
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     result->reserve(result->size() + d_objects.size());
 

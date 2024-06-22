@@ -38,7 +38,7 @@ void Dispatch::announceEstablished(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!manager) {
         return;
@@ -48,7 +48,7 @@ void Dispatch::announceEstablished(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::DatagramSocketManager> managerGuard = manager;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         managerGuard->processDatagramSocketEstablished(socket);
     }
     else if (destination) {
@@ -72,7 +72,7 @@ void Dispatch::announceClosed(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!manager) {
         return;
@@ -82,7 +82,7 @@ void Dispatch::announceClosed(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::DatagramSocketManager> managerGuard = manager;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         managerGuard->processDatagramSocketClosed(socket);
     }
     else if (destination) {
@@ -107,7 +107,7 @@ void Dispatch::announceReadQueueFlowControlRelaxed(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -117,7 +117,7 @@ void Dispatch::announceReadQueueFlowControlRelaxed(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processReadQueueFlowControlRelaxed(socket, event);
     }
     else if (destination) {
@@ -144,7 +144,7 @@ void Dispatch::announceReadQueueFlowControlApplied(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -154,7 +154,7 @@ void Dispatch::announceReadQueueFlowControlApplied(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processReadQueueFlowControlApplied(socket, event);
     }
     else if (destination) {
@@ -181,7 +181,7 @@ void Dispatch::announceReadQueueLowWatermark(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -191,7 +191,7 @@ void Dispatch::announceReadQueueLowWatermark(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processReadQueueLowWatermark(socket, event);
     }
     else if (destination) {
@@ -218,7 +218,7 @@ void Dispatch::announceReadQueueHighWatermark(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -228,7 +228,7 @@ void Dispatch::announceReadQueueHighWatermark(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processReadQueueHighWatermark(socket, event);
     }
     else if (destination) {
@@ -255,7 +255,7 @@ void Dispatch::announceReadQueueDiscarded(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -265,7 +265,7 @@ void Dispatch::announceReadQueueDiscarded(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processReadQueueDiscarded(socket, event);
     }
     else if (destination) {
@@ -292,7 +292,7 @@ void Dispatch::announceReadQueueRateLimitApplied(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -302,7 +302,7 @@ void Dispatch::announceReadQueueRateLimitApplied(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processReadQueueRateLimitApplied(socket, event);
     }
     else if (destination) {
@@ -329,7 +329,7 @@ void Dispatch::announceReadQueueRateLimitRelaxed(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -339,7 +339,7 @@ void Dispatch::announceReadQueueRateLimitRelaxed(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processReadQueueRateLimitRelaxed(socket, event);
     }
     else if (destination) {
@@ -366,7 +366,7 @@ void Dispatch::announceWriteQueueFlowControlRelaxed(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -376,7 +376,7 @@ void Dispatch::announceWriteQueueFlowControlRelaxed(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processWriteQueueFlowControlRelaxed(socket, event);
     }
     else if (destination) {
@@ -403,7 +403,7 @@ void Dispatch::announceWriteQueueFlowControlApplied(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -413,7 +413,7 @@ void Dispatch::announceWriteQueueFlowControlApplied(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processWriteQueueFlowControlApplied(socket, event);
     }
     else if (destination) {
@@ -440,7 +440,7 @@ void Dispatch::announceWriteQueueLowWatermark(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -450,7 +450,7 @@ void Dispatch::announceWriteQueueLowWatermark(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processWriteQueueLowWatermark(socket, event);
     }
     else if (destination) {
@@ -477,7 +477,7 @@ void Dispatch::announceWriteQueueHighWatermark(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -487,7 +487,7 @@ void Dispatch::announceWriteQueueHighWatermark(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processWriteQueueHighWatermark(socket, event);
     }
     else if (destination) {
@@ -514,7 +514,7 @@ void Dispatch::announceWriteQueueDiscarded(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -524,7 +524,7 @@ void Dispatch::announceWriteQueueDiscarded(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processWriteQueueDiscarded(socket, event);
     }
     else if (destination) {
@@ -551,7 +551,7 @@ void Dispatch::announceWriteQueueRateLimitApplied(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -561,7 +561,7 @@ void Dispatch::announceWriteQueueRateLimitApplied(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processWriteQueueRateLimitApplied(socket, event);
     }
     else if (destination) {
@@ -588,7 +588,7 @@ void Dispatch::announceWriteQueueRateLimitRelaxed(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -598,7 +598,7 @@ void Dispatch::announceWriteQueueRateLimitRelaxed(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processWriteQueueRateLimitRelaxed(socket, event);
     }
     else if (destination) {
@@ -625,7 +625,7 @@ void Dispatch::announceShutdownInitiated(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -635,7 +635,7 @@ void Dispatch::announceShutdownInitiated(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processShutdownInitiated(socket, event);
     }
     else if (destination) {
@@ -662,7 +662,7 @@ void Dispatch::announceShutdownReceive(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -672,7 +672,7 @@ void Dispatch::announceShutdownReceive(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processShutdownReceive(socket, event);
     }
     else if (destination) {
@@ -699,7 +699,7 @@ void Dispatch::announceShutdownSend(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -709,7 +709,7 @@ void Dispatch::announceShutdownSend(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processShutdownSend(socket, event);
     }
     else if (destination) {
@@ -736,7 +736,7 @@ void Dispatch::announceShutdownComplete(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -746,7 +746,7 @@ void Dispatch::announceShutdownComplete(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processShutdownComplete(socket, event);
     }
     else if (destination) {
@@ -773,7 +773,7 @@ void Dispatch::announceError(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -783,7 +783,7 @@ void Dispatch::announceError(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processError(socket, event);
     }
     else if (destination) {
@@ -811,7 +811,7 @@ void Dispatch::announceEstablished(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!manager) {
         return;
@@ -821,7 +821,7 @@ void Dispatch::announceEstablished(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::ListenerSocketManager> managerGuard = manager;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         managerGuard->processListenerSocketEstablished(socket);
     }
     else if (destination) {
@@ -845,7 +845,7 @@ void Dispatch::announceClosed(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!manager) {
         return;
@@ -855,7 +855,7 @@ void Dispatch::announceClosed(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::ListenerSocketManager> managerGuard = manager;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         managerGuard->processListenerSocketClosed(socket);
     }
     else if (destination) {
@@ -880,7 +880,7 @@ void Dispatch::announceAcceptQueueFlowControlRelaxed(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -890,7 +890,7 @@ void Dispatch::announceAcceptQueueFlowControlRelaxed(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::ListenerSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processAcceptQueueFlowControlRelaxed(socket, event);
     }
     else if (destination) {
@@ -917,7 +917,7 @@ void Dispatch::announceAcceptQueueFlowControlApplied(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -927,7 +927,7 @@ void Dispatch::announceAcceptQueueFlowControlApplied(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::ListenerSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processAcceptQueueFlowControlApplied(socket, event);
     }
     else if (destination) {
@@ -954,7 +954,7 @@ void Dispatch::announceAcceptQueueLowWatermark(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -964,7 +964,7 @@ void Dispatch::announceAcceptQueueLowWatermark(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::ListenerSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processAcceptQueueLowWatermark(socket, event);
     }
     else if (destination) {
@@ -991,7 +991,7 @@ void Dispatch::announceAcceptQueueHighWatermark(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -1001,7 +1001,7 @@ void Dispatch::announceAcceptQueueHighWatermark(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::ListenerSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processAcceptQueueHighWatermark(socket, event);
     }
     else if (destination) {
@@ -1028,7 +1028,7 @@ void Dispatch::announceAcceptQueueDiscarded(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -1038,7 +1038,7 @@ void Dispatch::announceAcceptQueueDiscarded(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::ListenerSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processAcceptQueueDiscarded(socket, event);
     }
     else if (destination) {
@@ -1065,7 +1065,7 @@ void Dispatch::announceAcceptQueueRateLimitApplied(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -1075,7 +1075,7 @@ void Dispatch::announceAcceptQueueRateLimitApplied(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::ListenerSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processAcceptQueueRateLimitApplied(socket, event);
     }
     else if (destination) {
@@ -1102,7 +1102,7 @@ void Dispatch::announceAcceptQueueRateLimitRelaxed(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -1112,7 +1112,7 @@ void Dispatch::announceAcceptQueueRateLimitRelaxed(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::ListenerSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processAcceptQueueRateLimitRelaxed(socket, event);
     }
     else if (destination) {
@@ -1139,7 +1139,7 @@ void Dispatch::announceShutdownInitiated(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -1149,7 +1149,7 @@ void Dispatch::announceShutdownInitiated(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::ListenerSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processShutdownInitiated(socket, event);
     }
     else if (destination) {
@@ -1176,7 +1176,7 @@ void Dispatch::announceShutdownReceive(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -1186,7 +1186,7 @@ void Dispatch::announceShutdownReceive(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::ListenerSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processShutdownReceive(socket, event);
     }
     else if (destination) {
@@ -1213,7 +1213,7 @@ void Dispatch::announceShutdownSend(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -1223,7 +1223,7 @@ void Dispatch::announceShutdownSend(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::ListenerSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processShutdownSend(socket, event);
     }
     else if (destination) {
@@ -1250,7 +1250,7 @@ void Dispatch::announceShutdownComplete(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -1260,7 +1260,7 @@ void Dispatch::announceShutdownComplete(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::ListenerSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processShutdownComplete(socket, event);
     }
     else if (destination) {
@@ -1287,7 +1287,7 @@ void Dispatch::announceError(
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
-    bslmt::Mutex*                                       mutex)
+    ntccfg::Mutex*                                      mutex)
 {
     if (!session) {
         return;
@@ -1297,7 +1297,7 @@ void Dispatch::announceError(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::ListenerSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>             guard(mutex);
+        ntccfg::UnLockGuard                          guard(mutex);
         sessionGuard->processError(socket, event);
     }
     else if (destination) {
@@ -1325,7 +1325,7 @@ void Dispatch::announceEstablished(
     const bsl::shared_ptr<ntci::Strand>&              source,
     const bsl::shared_ptr<ntci::Executor>&            executor,
     bool                                              defer,
-    bslmt::Mutex*                                     mutex)
+    ntccfg::Mutex*                                    mutex)
 {
     if (!manager) {
         return;
@@ -1335,7 +1335,7 @@ void Dispatch::announceEstablished(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::StreamSocketManager> managerGuard = manager;
-        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        ntccfg::UnLockGuard                        guard(mutex);
         managerGuard->processStreamSocketEstablished(socket);
     }
     else if (destination) {
@@ -1359,7 +1359,7 @@ void Dispatch::announceClosed(
     const bsl::shared_ptr<ntci::Strand>&              source,
     const bsl::shared_ptr<ntci::Executor>&            executor,
     bool                                              defer,
-    bslmt::Mutex*                                     mutex)
+    ntccfg::Mutex*                                    mutex)
 {
     if (!manager) {
         return;
@@ -1369,7 +1369,7 @@ void Dispatch::announceClosed(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::StreamSocketManager> managerGuard = manager;
-        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        ntccfg::UnLockGuard                        guard(mutex);
         managerGuard->processStreamSocketClosed(socket);
     }
     else if (destination) {
@@ -1394,7 +1394,7 @@ void Dispatch::announceReadQueueFlowControlRelaxed(
     const bsl::shared_ptr<ntci::Strand>&              source,
     const bsl::shared_ptr<ntci::Executor>&            executor,
     bool                                              defer,
-    bslmt::Mutex*                                     mutex)
+    ntccfg::Mutex*                                    mutex)
 {
     if (!session) {
         return;
@@ -1404,7 +1404,7 @@ void Dispatch::announceReadQueueFlowControlRelaxed(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        ntccfg::UnLockGuard                        guard(mutex);
         sessionGuard->processReadQueueFlowControlRelaxed(socket, event);
     }
     else if (destination) {
@@ -1431,7 +1431,7 @@ void Dispatch::announceReadQueueFlowControlApplied(
     const bsl::shared_ptr<ntci::Strand>&              source,
     const bsl::shared_ptr<ntci::Executor>&            executor,
     bool                                              defer,
-    bslmt::Mutex*                                     mutex)
+    ntccfg::Mutex*                                    mutex)
 {
     if (!session) {
         return;
@@ -1441,7 +1441,7 @@ void Dispatch::announceReadQueueFlowControlApplied(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        ntccfg::UnLockGuard                        guard(mutex);
         sessionGuard->processReadQueueFlowControlApplied(socket, event);
     }
     else if (destination) {
@@ -1468,7 +1468,7 @@ void Dispatch::announceReadQueueLowWatermark(
     const bsl::shared_ptr<ntci::Strand>&              source,
     const bsl::shared_ptr<ntci::Executor>&            executor,
     bool                                              defer,
-    bslmt::Mutex*                                     mutex)
+    ntccfg::Mutex*                                    mutex)
 {
     if (!session) {
         return;
@@ -1478,7 +1478,7 @@ void Dispatch::announceReadQueueLowWatermark(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        ntccfg::UnLockGuard                        guard(mutex);
         sessionGuard->processReadQueueLowWatermark(socket, event);
     }
     else if (destination) {
@@ -1505,7 +1505,7 @@ void Dispatch::announceReadQueueHighWatermark(
     const bsl::shared_ptr<ntci::Strand>&              source,
     const bsl::shared_ptr<ntci::Executor>&            executor,
     bool                                              defer,
-    bslmt::Mutex*                                     mutex)
+    ntccfg::Mutex*                                    mutex)
 {
     if (!session) {
         return;
@@ -1515,7 +1515,7 @@ void Dispatch::announceReadQueueHighWatermark(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        ntccfg::UnLockGuard                        guard(mutex);
         sessionGuard->processReadQueueHighWatermark(socket, event);
     }
     else if (destination) {
@@ -1542,7 +1542,7 @@ void Dispatch::announceReadQueueDiscarded(
     const bsl::shared_ptr<ntci::Strand>&              source,
     const bsl::shared_ptr<ntci::Executor>&            executor,
     bool                                              defer,
-    bslmt::Mutex*                                     mutex)
+    ntccfg::Mutex*                                    mutex)
 {
     if (!session) {
         return;
@@ -1552,7 +1552,7 @@ void Dispatch::announceReadQueueDiscarded(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        ntccfg::UnLockGuard                        guard(mutex);
         sessionGuard->processReadQueueDiscarded(socket, event);
     }
     else if (destination) {
@@ -1579,7 +1579,7 @@ void Dispatch::announceReadQueueRateLimitApplied(
     const bsl::shared_ptr<ntci::Strand>&              source,
     const bsl::shared_ptr<ntci::Executor>&            executor,
     bool                                              defer,
-    bslmt::Mutex*                                     mutex)
+    ntccfg::Mutex*                                    mutex)
 {
     if (!session) {
         return;
@@ -1589,7 +1589,7 @@ void Dispatch::announceReadQueueRateLimitApplied(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        ntccfg::UnLockGuard                        guard(mutex);
         sessionGuard->processReadQueueRateLimitApplied(socket, event);
     }
     else if (destination) {
@@ -1616,7 +1616,7 @@ void Dispatch::announceReadQueueRateLimitRelaxed(
     const bsl::shared_ptr<ntci::Strand>&              source,
     const bsl::shared_ptr<ntci::Executor>&            executor,
     bool                                              defer,
-    bslmt::Mutex*                                     mutex)
+    ntccfg::Mutex*                                    mutex)
 {
     if (!session) {
         return;
@@ -1626,7 +1626,7 @@ void Dispatch::announceReadQueueRateLimitRelaxed(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        ntccfg::UnLockGuard                        guard(mutex);
         sessionGuard->processReadQueueRateLimitRelaxed(socket, event);
     }
     else if (destination) {
@@ -1653,7 +1653,7 @@ void Dispatch::announceWriteQueueFlowControlRelaxed(
     const bsl::shared_ptr<ntci::Strand>&              source,
     const bsl::shared_ptr<ntci::Executor>&            executor,
     bool                                              defer,
-    bslmt::Mutex*                                     mutex)
+    ntccfg::Mutex*                                    mutex)
 {
     if (!session) {
         return;
@@ -1663,7 +1663,7 @@ void Dispatch::announceWriteQueueFlowControlRelaxed(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        ntccfg::UnLockGuard                        guard(mutex);
         sessionGuard->processWriteQueueFlowControlRelaxed(socket, event);
     }
     else if (destination) {
@@ -1690,7 +1690,7 @@ void Dispatch::announceWriteQueueFlowControlApplied(
     const bsl::shared_ptr<ntci::Strand>&              source,
     const bsl::shared_ptr<ntci::Executor>&            executor,
     bool                                              defer,
-    bslmt::Mutex*                                     mutex)
+    ntccfg::Mutex*                                    mutex)
 {
     if (!session) {
         return;
@@ -1700,7 +1700,7 @@ void Dispatch::announceWriteQueueFlowControlApplied(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        ntccfg::UnLockGuard                        guard(mutex);
         sessionGuard->processWriteQueueFlowControlApplied(socket, event);
     }
     else if (destination) {
@@ -1727,7 +1727,7 @@ void Dispatch::announceWriteQueueLowWatermark(
     const bsl::shared_ptr<ntci::Strand>&              source,
     const bsl::shared_ptr<ntci::Executor>&            executor,
     bool                                              defer,
-    bslmt::Mutex*                                     mutex)
+    ntccfg::Mutex*                                    mutex)
 {
     if (!session) {
         return;
@@ -1737,7 +1737,7 @@ void Dispatch::announceWriteQueueLowWatermark(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        ntccfg::UnLockGuard                        guard(mutex);
         sessionGuard->processWriteQueueLowWatermark(socket, event);
     }
     else if (destination) {
@@ -1764,7 +1764,7 @@ void Dispatch::announceWriteQueueHighWatermark(
     const bsl::shared_ptr<ntci::Strand>&              source,
     const bsl::shared_ptr<ntci::Executor>&            executor,
     bool                                              defer,
-    bslmt::Mutex*                                     mutex)
+    ntccfg::Mutex*                                    mutex)
 {
     if (!session) {
         return;
@@ -1774,7 +1774,7 @@ void Dispatch::announceWriteQueueHighWatermark(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        ntccfg::UnLockGuard                        guard(mutex);
         sessionGuard->processWriteQueueHighWatermark(socket, event);
     }
     else if (destination) {
@@ -1801,7 +1801,7 @@ void Dispatch::announceWriteQueueDiscarded(
     const bsl::shared_ptr<ntci::Strand>&              source,
     const bsl::shared_ptr<ntci::Executor>&            executor,
     bool                                              defer,
-    bslmt::Mutex*                                     mutex)
+    ntccfg::Mutex*                                    mutex)
 {
     if (!session) {
         return;
@@ -1811,7 +1811,7 @@ void Dispatch::announceWriteQueueDiscarded(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        ntccfg::UnLockGuard                        guard(mutex);
         sessionGuard->processWriteQueueDiscarded(socket, event);
     }
     else if (destination) {
@@ -1838,7 +1838,7 @@ void Dispatch::announceWriteQueueRateLimitApplied(
     const bsl::shared_ptr<ntci::Strand>&              source,
     const bsl::shared_ptr<ntci::Executor>&            executor,
     bool                                              defer,
-    bslmt::Mutex*                                     mutex)
+    ntccfg::Mutex*                                    mutex)
 {
     if (!session) {
         return;
@@ -1848,7 +1848,7 @@ void Dispatch::announceWriteQueueRateLimitApplied(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        ntccfg::UnLockGuard                        guard(mutex);
         sessionGuard->processWriteQueueRateLimitApplied(socket, event);
     }
     else if (destination) {
@@ -1875,7 +1875,7 @@ void Dispatch::announceWriteQueueRateLimitRelaxed(
     const bsl::shared_ptr<ntci::Strand>&              source,
     const bsl::shared_ptr<ntci::Executor>&            executor,
     bool                                              defer,
-    bslmt::Mutex*                                     mutex)
+    ntccfg::Mutex*                                    mutex)
 {
     if (!session) {
         return;
@@ -1885,7 +1885,7 @@ void Dispatch::announceWriteQueueRateLimitRelaxed(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        ntccfg::UnLockGuard                        guard(mutex);
         sessionGuard->processWriteQueueRateLimitRelaxed(socket, event);
     }
     else if (destination) {
@@ -1912,7 +1912,7 @@ void Dispatch::announceDowngradeInitiated(
     const bsl::shared_ptr<ntci::Strand>&              source,
     const bsl::shared_ptr<ntci::Executor>&            executor,
     bool                                              defer,
-    bslmt::Mutex*                                     mutex)
+    ntccfg::Mutex*                                    mutex)
 {
     if (!session) {
         return;
@@ -1922,7 +1922,7 @@ void Dispatch::announceDowngradeInitiated(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        ntccfg::UnLockGuard                        guard(mutex);
         sessionGuard->processDowngradeInitiated(socket, event);
     }
     else if (destination) {
@@ -1949,7 +1949,7 @@ void Dispatch::announceDowngradeComplete(
     const bsl::shared_ptr<ntci::Strand>&              source,
     const bsl::shared_ptr<ntci::Executor>&            executor,
     bool                                              defer,
-    bslmt::Mutex*                                     mutex)
+    ntccfg::Mutex*                                    mutex)
 {
     if (!session) {
         return;
@@ -1959,7 +1959,7 @@ void Dispatch::announceDowngradeComplete(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        ntccfg::UnLockGuard                        guard(mutex);
         sessionGuard->processDowngradeComplete(socket, event);
     }
     else if (destination) {
@@ -1986,7 +1986,7 @@ void Dispatch::announceShutdownInitiated(
     const bsl::shared_ptr<ntci::Strand>&              source,
     const bsl::shared_ptr<ntci::Executor>&            executor,
     bool                                              defer,
-    bslmt::Mutex*                                     mutex)
+    ntccfg::Mutex*                                    mutex)
 {
     if (!session) {
         return;
@@ -1996,7 +1996,7 @@ void Dispatch::announceShutdownInitiated(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        ntccfg::UnLockGuard                        guard(mutex);
         sessionGuard->processShutdownInitiated(socket, event);
     }
     else if (destination) {
@@ -2023,7 +2023,7 @@ void Dispatch::announceShutdownReceive(
     const bsl::shared_ptr<ntci::Strand>&              source,
     const bsl::shared_ptr<ntci::Executor>&            executor,
     bool                                              defer,
-    bslmt::Mutex*                                     mutex)
+    ntccfg::Mutex*                                    mutex)
 {
     if (!session) {
         return;
@@ -2033,7 +2033,7 @@ void Dispatch::announceShutdownReceive(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        ntccfg::UnLockGuard                        guard(mutex);
         sessionGuard->processShutdownReceive(socket, event);
     }
     else if (destination) {
@@ -2060,7 +2060,7 @@ void Dispatch::announceShutdownSend(
     const bsl::shared_ptr<ntci::Strand>&              source,
     const bsl::shared_ptr<ntci::Executor>&            executor,
     bool                                              defer,
-    bslmt::Mutex*                                     mutex)
+    ntccfg::Mutex*                                    mutex)
 {
     if (!session) {
         return;
@@ -2070,7 +2070,7 @@ void Dispatch::announceShutdownSend(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        ntccfg::UnLockGuard                        guard(mutex);
         sessionGuard->processShutdownSend(socket, event);
     }
     else if (destination) {
@@ -2097,7 +2097,7 @@ void Dispatch::announceShutdownComplete(
     const bsl::shared_ptr<ntci::Strand>&              source,
     const bsl::shared_ptr<ntci::Executor>&            executor,
     bool                                              defer,
-    bslmt::Mutex*                                     mutex)
+    ntccfg::Mutex*                                    mutex)
 {
     if (!session) {
         return;
@@ -2107,7 +2107,7 @@ void Dispatch::announceShutdownComplete(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        ntccfg::UnLockGuard                        guard(mutex);
         sessionGuard->processShutdownComplete(socket, event);
     }
     else if (destination) {
@@ -2134,7 +2134,7 @@ void Dispatch::announceError(
     const bsl::shared_ptr<ntci::Strand>&              source,
     const bsl::shared_ptr<ntci::Executor>&            executor,
     bool                                              defer,
-    bslmt::Mutex*                                     mutex)
+    ntccfg::Mutex*                                    mutex)
 {
     if (!session) {
         return;
@@ -2144,7 +2144,7 @@ void Dispatch::announceError(
                       ntci::Strand::passthrough(destination, source)))
     {
         bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
-        bslmt::UnLockGuard<bslmt::Mutex>           guard(mutex);
+        ntccfg::UnLockGuard                        guard(mutex);
         sessionGuard->processError(socket, event);
     }
     else if (destination) {

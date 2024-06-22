@@ -42,7 +42,13 @@ namespace ntcs {
 class ProcessMetrics : public ntci::Monitorable,
                        public ntccfg::Shared<ProcessMetrics>
 {
-    mutable bslmt::Mutex d_mutex;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    mutable Mutex        d_mutex;
     ntci::MetricTotal    d_cpuTimeUser;
     ntci::MetricTotal    d_cpuTimeSystem;
     ntci::MetricGauge    d_memoryResident;

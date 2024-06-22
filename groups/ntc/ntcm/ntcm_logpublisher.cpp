@@ -334,7 +334,7 @@ void LogPublisher::publish(
         return;
     }
 
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     // For each statistic retrieved from the monitorable object...
 

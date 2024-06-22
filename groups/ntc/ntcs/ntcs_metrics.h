@@ -41,7 +41,13 @@ namespace ntcs {
 /// @ingroup module_ntcs
 class Metrics : public ntci::Monitorable, public ntccfg::Shared<Metrics>
 {
-    mutable bslmt::Mutex           d_mutex;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    mutable Mutex                  d_mutex;
     ntci::Metric                   d_numBytesSendable;
     ntci::Metric                   d_numBytesSent;
     ntci::Metric                   d_numBytesReceivable;

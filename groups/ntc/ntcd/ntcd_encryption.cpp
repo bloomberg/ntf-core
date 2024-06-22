@@ -1188,7 +1188,7 @@ ntsa::Error Encryption::processIncomingHello()
         d_shutdownState.close();
         d_handshakeState = e_FAILED;
         {
-            bslmt::UnLockGuard<bslmt::Mutex> guard(&d_mutex);
+            ntccfg::UnLockGuard guard(&d_mutex);
             d_handshakeCallback(ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED),
                                 bsl::shared_ptr<ntci::EncryptionCertificate>(),
                                 "Not authorized");
@@ -1207,7 +1207,7 @@ ntsa::Error Encryption::processIncomingHello()
             BSLS_ASSERT(d_remoteCertificate_sp);
             d_handshakeState = e_ESTABLISHED;
             {
-                bslmt::UnLockGuard<bslmt::Mutex> guard(&d_mutex);
+                ntccfg::UnLockGuard guard(&d_mutex);
                 d_handshakeCallback(ntsa::Error(), d_remoteCertificate_sp, "");
             }
             d_handshakeCallback = ntci::Encryption::HandshakeCallback();
@@ -1260,7 +1260,7 @@ ntsa::Error Encryption::processIncomingAccept()
             BSLS_ASSERT(d_remoteCertificate_sp);
             d_handshakeState = e_ESTABLISHED;
             {
-                bslmt::UnLockGuard<bslmt::Mutex> guard(&d_mutex);
+                ntccfg::UnLockGuard guard(&d_mutex);
                 d_handshakeCallback(ntsa::Error(), d_remoteCertificate_sp, "");
             }
             d_handshakeCallback = ntci::Encryption::HandshakeCallback();
@@ -1270,7 +1270,7 @@ ntsa::Error Encryption::processIncomingAccept()
         d_shutdownState.close();
         d_handshakeState = e_FAILED;
         {
-            bslmt::UnLockGuard<bslmt::Mutex> guard(&d_mutex);
+            ntccfg::UnLockGuard guard(&d_mutex);
             d_handshakeCallback(ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED),
                                 bsl::shared_ptr<ntci::EncryptionCertificate>(),
                                 "Not authorized");
@@ -1423,13 +1423,13 @@ Encryption::~Encryption()
 
 void Encryption::authorizePeer(const bsl::string& name)
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
     d_authorizationSet.insert(name);
 }
 
 ntsa::Error Encryption::initiateHandshake(const HandshakeCallback& callback)
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     ntsa::Error error;
 
@@ -1453,7 +1453,7 @@ ntsa::Error Encryption::initiateHandshake(const HandshakeCallback& callback)
 
 ntsa::Error Encryption::pushIncomingCipherText(const bdlbb::Blob& input)
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     if (!d_shutdownState.canReceive()) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -1466,7 +1466,7 @@ ntsa::Error Encryption::pushIncomingCipherText(const bdlbb::Blob& input)
 
 ntsa::Error Encryption::pushIncomingCipherText(const ntsa::Data& input)
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     if (!d_shutdownState.canReceive()) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -1479,7 +1479,7 @@ ntsa::Error Encryption::pushIncomingCipherText(const ntsa::Data& input)
 
 ntsa::Error Encryption::pushOutgoingPlainText(const bdlbb::Blob& input)
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     if (!d_shutdownState.canSend()) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -1492,7 +1492,7 @@ ntsa::Error Encryption::pushOutgoingPlainText(const bdlbb::Blob& input)
 
 ntsa::Error Encryption::pushOutgoingPlainText(const ntsa::Data& input)
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     if (!d_shutdownState.canSend()) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -1505,7 +1505,7 @@ ntsa::Error Encryption::pushOutgoingPlainText(const ntsa::Data& input)
 
 ntsa::Error Encryption::popIncomingPlainText(bdlbb::Blob* output)
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     if (d_incomingPlainText_sp->length() > 0) {
         bdlbb::BlobUtil::append(output, *d_incomingPlainText_sp);
@@ -1519,7 +1519,7 @@ ntsa::Error Encryption::popIncomingPlainText(bdlbb::Blob* output)
 
 ntsa::Error Encryption::popOutgoingCipherText(bdlbb::Blob* output)
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     if (d_outgoingCipherText_sp->length() > 0) {
         bdlbb::BlobUtil::append(output, *d_outgoingCipherText_sp);
@@ -1533,7 +1533,7 @@ ntsa::Error Encryption::popOutgoingCipherText(bdlbb::Blob* output)
 
 ntsa::Error Encryption::shutdown()
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
 
     ntsa::Error error;
 
@@ -1554,13 +1554,13 @@ ntsa::Error Encryption::shutdown()
 
 bool Encryption::hasIncomingPlainText() const
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
     return d_incomingPlainText_sp->length() > 0;
 }
 
 bool Encryption::hasOutgoingCipherText() const
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
     return d_outgoingCipherText_sp->length() > 0;
 }
 
@@ -1572,7 +1572,7 @@ bool Encryption::getCipher(bsl::string* result) const
 
 bool Encryption::isHandshakeFinished() const
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
     return d_handshakeState == e_ESTABLISHED || d_handshakeState == e_FAILED;
 }
 
@@ -1594,20 +1594,20 @@ bool Encryption::isShutdownFinished() const
 bsl::shared_ptr<ntci::EncryptionCertificate> Encryption::sourceCertificate()
     const
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
     return d_sourceCertificate_sp;
 }
 
 bsl::shared_ptr<ntci::EncryptionCertificate> Encryption::remoteCertificate()
     const
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
     return d_remoteCertificate_sp;
 }
 
 bsl::shared_ptr<ntci::EncryptionKey> Encryption::privateKey() const
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_mutex);
+    LockGuard guard(&d_mutex);
     return d_sourceKey_sp;
 }
 

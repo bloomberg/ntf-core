@@ -40,11 +40,11 @@ namespace test {
 /// Provide an interface to execute a function.
 class Executor : public ntci::Executor
 {
-    bslmt::Mutex      d_functorQueueMutex;
-    bslmt::Condition  d_functorQueueCondition;
-    FunctorSequence   d_functorQueue;
-    bool              d_stop;
-    bslma::Allocator* d_allocator_p;
+    ntccfg::ConditionMutex d_functorQueueMutex;
+    ntccfg::Condition      d_functorQueueCondition;
+    FunctorSequence        d_functorQueue;
+    bool                   d_stop;
+    bslma::Allocator*      d_allocator_p;
 
   private:
     Executor(const Executor&) BSLS_KEYWORD_DELETED;
@@ -90,7 +90,7 @@ Executor::~Executor()
 
 void Executor::run()
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_functorQueueMutex);
+    ntccfg::ConditionMutexGuard guard(&d_functorQueueMutex);
 
     while (!d_stop) {
         if (d_functorQueue.empty()) {
@@ -101,7 +101,7 @@ void Executor::run()
             functorQueue.swap(d_functorQueue);
 
             {
-                bslmt::UnLockGuard<bslmt::Mutex> unlockGuard(
+                ntccfg::ConditionMutexUnLockGuard unlockGuard(
                     &d_functorQueueMutex);
 
                 for (FunctorSequence::iterator it = functorQueue.begin();
@@ -117,14 +117,14 @@ void Executor::run()
 
 void Executor::stop()
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_functorQueueMutex);
+    ntccfg::ConditionMutexGuard guard(&d_functorQueueMutex);
     d_stop = true;
     d_functorQueueCondition.broadcast();
 }
 
 void Executor::execute(const Functor& functor)
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_functorQueueMutex);
+    ntccfg::ConditionMutexGuard guard(&d_functorQueueMutex);
     d_functorQueue.push_back(functor);
 
     d_functorQueueCondition.signal();
@@ -133,7 +133,7 @@ void Executor::execute(const Functor& functor)
 void Executor::moveAndExecute(FunctorSequence* functorSequence,
                               const Functor&   functor)
 {
-    bslmt::LockGuard<bslmt::Mutex> guard(&d_functorQueueMutex);
+    ntccfg::ConditionMutexGuard guard(&d_functorQueueMutex);
 
     d_functorQueue.splice(d_functorQueue.end(), *functorSequence);
     if (functor) {
@@ -350,7 +350,7 @@ void enqueueFunction(const bsl::shared_ptr<test::Executor>& executor,
                      const bsl::shared_ptr<ntci::Strand>&   strand,
                      bsl::size_t                            threadIndex,
                      bslmt::Barrier*                        enqueueBarrier,
-                     bslmt::Mutex*                          enqueueMutex,
+                     ntccfg::Mutex*                         enqueueMutex,
                      bsl::size_t*      enqueueSequenceNumber,
                      test::Count*      enqueueCount,
                      bsls::AtomicUint* dequeueSequenceNumber,
@@ -392,7 +392,7 @@ void enqueueFunction(const bsl::shared_ptr<test::Executor>& executor,
         // Lock function submission to that functions are properly sequenced
         // between enqueueing threads.
 
-        bslmt::LockGuard<bslmt::Mutex> guard(enqueueMutex);
+        ntccfg::LockGuard guard(enqueueMutex);
 
         // Stop when all sequence numbers have been enqueued.
 
@@ -445,7 +445,7 @@ void execute(bsl::size_t       numEnqueueThreads,
     bslmt::Barrier enqueueBarrier(numEnqueueThreads);
     bslmt::Barrier dequeueBarrier(numDequeueThreads + 1);
 
-    bslmt::Mutex enqueueMutex;
+    ntccfg::Mutex enqueueMutex;
 
     test::Count enqueueCount("Enqueue",
                              numEnqueueThreads,

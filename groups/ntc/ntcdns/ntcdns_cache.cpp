@@ -230,7 +230,7 @@ void Cache::setNegativeCacheMaxTimeToLive(bsl::size_t value)
 
 void Cache::clear()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     d_cacheEntryByDomainName.clear();
     d_cacheEntryByIpAddress.clear();
@@ -248,7 +248,7 @@ void Cache::updateHost(const bsl::string&        domainName,
     bsl::shared_ptr<ntcdns::CacheHostEntry> newCacheEntry;
     bool                                    oldCacheEntryUpdated = false;
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     {
         bool mustInsert = true;
@@ -464,7 +464,7 @@ ntsa::Error Cache::getIpAddress(ntca::GetIpAddressContext*       context,
         return error;
     }
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     bsl::string key = domainName;
 
@@ -605,7 +605,7 @@ ntsa::Error Cache::getDomainName(ntca::GetDomainNameContext*       context,
     bdlb::NullableValue<ntsa::Endpoint>     nameServer;
     bdlb::NullableValue<bsls::TimeInterval> timeToLive;
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntcdns::CacheHostEntryByIpAddressIterator it =
         d_cacheEntryByIpAddress.find(ipAddress);

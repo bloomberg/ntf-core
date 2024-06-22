@@ -577,7 +577,7 @@ void ClientGetIpAddressOperation::processError(const ntsa::Error& error)
 bsl::shared_ptr<ntcdns::ClientNameServer> ClientGetIpAddressOperation::
     tryNextServer()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     bsl::shared_ptr<ntcdns::ClientNameServer> result;
 
@@ -592,7 +592,7 @@ bsl::shared_ptr<ntcdns::ClientNameServer> ClientGetIpAddressOperation::
 
 bool ClientGetIpAddressOperation::tryNextSearch()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (d_searchIndex < d_searchList.size() - 1) {
         ++d_searchIndex;
@@ -614,13 +614,13 @@ const ntca::GetIpAddressOptions& ClientGetIpAddressOperation::options() const
 
 bsl::size_t ClientGetIpAddressOperation::serverIndex() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_serverIndex;
 }
 
 bsl::size_t ClientGetIpAddressOperation::searchIndex() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_searchIndex;
 }
 
@@ -869,7 +869,7 @@ void ClientGetDomainNameOperation::processError(const ntsa::Error& error)
 bsl::shared_ptr<ntcdns::ClientNameServer> ClientGetDomainNameOperation::
     tryNextServer()
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     bsl::shared_ptr<ntcdns::ClientNameServer> result;
 
@@ -898,7 +898,7 @@ const ntca::GetDomainNameOptions& ClientGetDomainNameOperation::options() const
 
 bsl::size_t ClientGetDomainNameOperation::serverIndex() const
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
     return d_serverIndex;
 }
 
@@ -1094,11 +1094,11 @@ void ClientNameServer::processShutdownComplete(
 {
     NTCCFG_WARNING_UNUSED(event);
 
-    bslmt::LockGuard<bslmt::Mutex> stateSocketLock(&d_stateMutex);
+    ntccfg::ConditionMutexGuard stateSocketLock(&d_stateMutex);
 
-    bslmt::LockGuard<bslmt::Mutex> datagramSocketLock(&d_datagramSocketMutex);
+    LockGuard datagramSocketLock(&d_datagramSocketMutex);
 
-    bslmt::LockGuard<bslmt::Mutex> streamSocketLock(&d_streamSocketMutex);
+    LockGuard streamSocketLock(&d_streamSocketMutex);
 
     if (datagramSocket == d_datagramSocket_sp) {
         d_datagramSocket_sp->registerSession(
@@ -1186,11 +1186,11 @@ void ClientNameServer::processShutdownComplete(
 {
     NTCCFG_WARNING_UNUSED(event);
 
-    bslmt::LockGuard<bslmt::Mutex> stateSocketLock(&d_stateMutex);
+    ntccfg::ConditionMutexGuard stateSocketLock(&d_stateMutex);
 
-    bslmt::LockGuard<bslmt::Mutex> datagramSocketLock(&d_datagramSocketMutex);
+    LockGuard datagramSocketLock(&d_datagramSocketMutex);
 
-    bslmt::LockGuard<bslmt::Mutex> streamSocketLock(&d_streamSocketMutex);
+    LockGuard streamSocketLock(&d_streamSocketMutex);
 
     if (streamSocket == d_streamSocket_sp) {
         d_streamSocket_sp->registerSession(
@@ -1378,7 +1378,7 @@ void ClientNameServer::processDatagramSocketConnected(
         return;
     }
 
-    bslmt::LockGuard<bslmt::Mutex> datagramSocketLock(&d_datagramSocketMutex);
+    LockGuard datagramSocketLock(&d_datagramSocketMutex);
 
     d_datagramSocket_sp = datagramSocket;
 
@@ -1409,7 +1409,7 @@ void ClientNameServer::processStreamSocketConnected(
         return;
     }
 
-    bslmt::LockGuard<bslmt::Mutex> streamSocketLock(&d_streamSocketMutex);
+    LockGuard streamSocketLock(&d_streamSocketMutex);
 
     d_streamSocket_sp = streamSocket;
 
@@ -1505,7 +1505,7 @@ ntsa::Error ClientNameServer::start()
 
     bsl::shared_ptr<ClientNameServer> self = this->getSelf(this);
 
-    bslmt::LockGuard<bslmt::Mutex> stateLock(&d_stateMutex);
+    ntccfg::ConditionMutexGuard stateLock(&d_stateMutex);
 
     if (d_state == e_STATE_STARTED) {
         return ntsa::Error();
@@ -1528,7 +1528,7 @@ ntsa::Error ClientNameServer::initiate(
 {
     ntsa::Error error;
 
-    bslmt::LockGuard<bslmt::Mutex> stateLock(&d_stateMutex);
+    ntccfg::ConditionMutexGuard stateLock(&d_stateMutex);
 
     if (d_state != e_STATE_STARTED) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -1539,7 +1539,7 @@ ntsa::Error ClientNameServer::initiate(
     d_operationQueue.push(operation);
 
     {
-        bslmt::LockGuard<bslmt::Mutex> datagramSocketLock(
+        LockGuard datagramSocketLock(
             &d_datagramSocketMutex);
 
         if (!d_datagramSocket_sp) {
@@ -1615,7 +1615,7 @@ void ClientNameServer::shutdown()
 {
     NTCI_LOG_CONTEXT();
 
-    bslmt::LockGuard<bslmt::Mutex> stateLock(&d_stateMutex);
+    ntccfg::ConditionMutexGuard stateLock(&d_stateMutex);
 
     if (d_state != e_STATE_STARTED) {
         return;
@@ -1627,9 +1627,9 @@ void ClientNameServer::shutdown()
 
     this->cancelAll();
 
-    bslmt::LockGuard<bslmt::Mutex> datagramSocketLock(&d_datagramSocketMutex);
+    LockGuard datagramSocketLock(&d_datagramSocketMutex);
 
-    bslmt::LockGuard<bslmt::Mutex> streamSocketLock(&d_streamSocketMutex);
+    LockGuard streamSocketLock(&d_streamSocketMutex);
 
     if (!d_datagramSocket_sp && !d_streamSocket_sp) {
         d_state = e_STATE_STOPPED;
@@ -1654,7 +1654,7 @@ void ClientNameServer::linger()
 {
     NTCI_LOG_CONTEXT();
 
-    bslmt::LockGuard<bslmt::Mutex> stateLock(&d_stateMutex);
+    ntccfg::ConditionMutexGuard stateLock(&d_stateMutex);
 
     while (d_state != e_STATE_STOPPED) {
         d_stateCondition.wait(&d_stateMutex);
@@ -1779,7 +1779,7 @@ ntsa::Error Client::start()
 
     ntsa::Error error;
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (d_state == e_STATE_STARTED) {
         return ntsa::Error();
@@ -1811,7 +1811,7 @@ void Client::shutdown()
 {
     NTCI_LOG_CONTEXT();
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (d_state != e_STATE_STARTED) {
         return;
@@ -1836,7 +1836,7 @@ void Client::linger()
 {
     NTCI_LOG_CONTEXT();
 
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     if (d_state == e_STATE_STOPPED) {
         return;
@@ -1872,7 +1872,7 @@ ntsa::Error Client::getIpAddress(
     const ntca::GetIpAddressOptions&       options,
     const ntci::GetIpAddressCallback&      callback)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -1964,7 +1964,7 @@ ntsa::Error Client::getDomainName(
     const ntca::GetDomainNameOptions&      options,
     const ntci::GetDomainNameCallback&     callback)
 {
-    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
+    LockGuard lock(&d_mutex);
 
     ntsa::Error error;
 

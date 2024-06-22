@@ -143,8 +143,14 @@ class ClientGetIpAddressOperation
     typedef bsl::vector<bsl::shared_ptr<ntcdns::ClientNameServer> > ServerList;
 
   private:
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
     ntccfg::Object                  d_object;
-    mutable bslmt::Mutex            d_mutex;
+    mutable Mutex                   d_mutex;
     bsl::shared_ptr<ntci::Resolver> d_resolver_sp;
     const bsl::string               d_name;
     ServerList                      d_serverList;
@@ -256,8 +262,14 @@ class ClientGetDomainNameOperation
     typedef bsl::vector<bsl::shared_ptr<ntcdns::ClientNameServer> > ServerList;
 
   private:
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
     ntccfg::Object                   d_object;
-    mutable bslmt::Mutex             d_mutex;
+    mutable Mutex                    d_mutex;
     bsl::shared_ptr<ntci::Resolver>  d_resolver_sp;
     const ntsa::IpAddress            d_ipAddress;
     ServerList                       d_serverList;
@@ -372,6 +384,12 @@ class ClientNameServer : public ntci::DatagramSocketSession,
                         bsl::shared_ptr<ntcdns::ClientOperation> >
         OperationMap;
 
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
     enum State {
         // This enumeration enumerates the states of operation.
 
@@ -383,14 +401,14 @@ class ClientNameServer : public ntci::DatagramSocketSession,
     ntccfg::Object                               d_object;
     OperationQueue                               d_operationQueue;
     OperationMap                                 d_operationMap;
-    bslmt::Mutex                                 d_datagramSocketMutex;
+    Mutex                                        d_datagramSocketMutex;
     bsl::shared_ptr<ntci::DatagramSocket>        d_datagramSocket_sp;
     bsl::shared_ptr<ntci::DatagramSocketFactory> d_datagramSocketFactory_sp;
-    bslmt::Mutex                                 d_streamSocketMutex;
+    Mutex                                        d_streamSocketMutex;
     bsl::shared_ptr<ntci::StreamSocket>          d_streamSocket_sp;
     bsl::shared_ptr<ntci::StreamSocketFactory>   d_streamSocketFactory_sp;
-    bslmt::Mutex                                 d_stateMutex;
-    bslmt::Condition                             d_stateCondition;
+    ntccfg::ConditionMutex                       d_stateMutex;
+    ntccfg::Condition                            d_stateCondition;
     State                                        d_state;
     const ntsa::Endpoint                         d_endpoint;
     const bsl::size_t                            d_index;
@@ -605,6 +623,12 @@ class Client : public ntccfg::Shared<Client>
     /// try when performing the operation.
     typedef bsl::vector<bsl::shared_ptr<ntcdns::ClientNameServer> > ServerList;
 
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
     enum State {
         // This enumeraiton enumerates the states of operation.
 
@@ -614,7 +638,7 @@ class Client : public ntccfg::Shared<Client>
     };
 
     ntccfg::Object                               d_object;
-    bslmt::Mutex                                 d_mutex;
+    Mutex                                        d_mutex;
     bsl::shared_ptr<ntci::DatagramSocketFactory> d_datagramSocketFactory_sp;
     bsl::shared_ptr<ntci::StreamSocketFactory>   d_streamSocketFactory_sp;
     bsl::shared_ptr<ntcdns::Cache>               d_cache_sp;

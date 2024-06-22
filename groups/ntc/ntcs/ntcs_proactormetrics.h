@@ -45,7 +45,13 @@ namespace ntcs {
 class ProactorMetrics : public ntci::ProactorMetrics,
                         public ntccfg::Shared<ProactorMetrics>
 {
-    mutable bslmt::Mutex                   d_mutex;
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    mutable Mutex                          d_mutex;
     ntci::Metric                           d_numInterrupts;
     ntci::Metric                           d_numReadablePerPoll;
     ntci::Metric                           d_numWritablePerPoll;
