@@ -1,5 +1,23 @@
-ntf-core (2.4.2) unstable; urgency=low
+ntf-core (2.4.3) unstable; urgency=low
 
+  * c935d1a Release 2.4.3 (#182)
+  * 82c5f6c ntsu_adapterutil: fixed assigments in assertions to be equality comparisons
+  * b37883c Adopt ntccfg::Mutex or ntccfg::ConditionMutex instead of bslmt::Mutex
+  * 0020e47 Use lock guards suitable for configurable mutex implementations
+  * e1d25f0 Fix incorrect mutex implementation selector when futexes are desired
+  * a624d18 Enable mutex implementation and inlining strategy to be configurable at build-time
+  * a9571fa Use weak_ptr when creating a callback for resolver in ntcr/ntcp::StreamSocket
+  * 043113c Add tsan.supp file to ignore some tsan warnings
+  * 5d5372d Templatize the type of a mutex parameter specified to ntci::Callback::dispatch
+  * 53ec376 Define build branch and commit in generated configuration files
+  * 5adc5ff Add optimizations log
+  * 2686795 Define build branch and commit in generated configuration files
+
+ -- Matt Millett <mmillett2@bloomberg.net>  Sun, 23 Jun 2024 12:51:40 -0400
+
+ntf-core (2.4.2) git; urgency=low
+
+  * 2392567 Release 2.4.2 to DPKG
   * c2e9609 Release 2.4.2
   * c86b4c8 Allow the encryption certificate version to be omitted from the encoding if using X.509 v1
   * 904bbe5 TSAN: Fix data race in ntcs::Chronology test driver
@@ -7,7 +25,7 @@ ntf-core (2.4.2) unstable; urgency=low
   * 81de50a ntsu::SocketUtil::pair: always set `reuseAddress` to false
   * a591a82 Depend on system libraries based on system name, not on the compiler name (#166)
 
- -- Matt Millett <mmillett2@bloomberg.net>  Fri, 14 Jun 2024 14:08:41 -0400
+ -- Matt Millett <mmillett2@bloomberg.net>  Fri, 14 Jun 2024 14:11:24 -0400
 
 ntf-core (2.4.1) git; urgency=low
 
