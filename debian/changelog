@@ -1,5 +1,13 @@
-ntf-core (2.4.3) unstable; urgency=low
+ntf-core (2.4.4) unstable; urgency=low
 
+  * ba9aa3d Release 2.4.4
+  * 8c193bf Add ntccfg_mutex to ntccfg.mem
+
+ -- Matt Millett <mmillett2@bloomberg.net>  Sun, 23 Jun 2024 19:02:08 -0400
+
+ntf-core (2.4.3) git; urgency=low
+
+  * cb3e629 Release 2.4.3 to DPKG
   * c935d1a Release 2.4.3 (#182)
   * 82c5f6c ntsu_adapterutil: fixed assigments in assertions to be equality comparisons
   * b37883c Adopt ntccfg::Mutex or ntccfg::ConditionMutex instead of bslmt::Mutex
@@ -13,7 +21,7 @@ ntf-core (2.4.3) unstable; urgency=low
   * 5adc5ff Add optimizations log
   * 2686795 Define build branch and commit in generated configuration files
 
- -- Matt Millett <mmillett2@bloomberg.net>  Sun, 23 Jun 2024 12:51:40 -0400
+ -- Matt Millett <mmillett2@bloomberg.net>  Sun, 23 Jun 2024 12:53:39 -0400
 
 ntf-core (2.4.2) git; urgency=low
 
