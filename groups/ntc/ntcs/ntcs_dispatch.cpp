@@ -1131,6 +1131,45 @@ void Dispatch::announceAcceptQueueRateLimitRelaxed(
     }
 }
 
+void Dispatch::announceConnectionRejectedDescriptorLimit(
+    const bsl::shared_ptr<ntci::ListenerSocketSession>& session,
+    const bsl::shared_ptr<ntci::ListenerSocket>&        socket,
+    const ntca::ConnectEvent&                           event,
+    const bsl::shared_ptr<ntci::Strand>&                destination,
+    const bsl::shared_ptr<ntci::Strand>&                source,
+    const bsl::shared_ptr<ntci::Executor>&              executor,
+    bool                                                defer,
+    ntccfg::Mutex*                                      mutex)
+{
+    if (!session) {
+        return;
+    }
+
+    if (NTCCFG_LIKELY(!defer &&
+                      ntci::Strand::passthrough(destination, source)))
+    {
+        bsl::shared_ptr<ntci::ListenerSocketSession> sessionGuard = session;
+        ntccfg::UnLockGuard                          guard(mutex);
+        sessionGuard->processConnectionRejectedLimitReached(socket, event);
+    }
+    else if (destination) {
+        destination->execute(
+            NTCCFG_BIND(&ntci::ListenerSocketSession::
+                            processConnectionRejectedLimitReached,
+                        session,
+                        socket,
+                        event));
+    }
+    else {
+        executor->execute(
+            NTCCFG_BIND(&ntci::ListenerSocketSession::
+                            processConnectionRejectedLimitReached,
+                        session,
+                        socket,
+                        event));
+    }
+}
+
 void Dispatch::announceShutdownInitiated(
     const bsl::shared_ptr<ntci::ListenerSocketSession>& session,
     const bsl::shared_ptr<ntci::ListenerSocket>&        socket,

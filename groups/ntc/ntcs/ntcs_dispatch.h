@@ -758,6 +758,16 @@ struct Dispatch {
         bool                                                defer,
         ntccfg::Mutex*                                      mutex);
 
+    static void announceConnectionRejectedDescriptorLimit(
+        const bsl::shared_ptr<ntci::ListenerSocketSession>& session,
+        const bsl::shared_ptr<ntci::ListenerSocket>&        socket,
+        const ntca::ConnectEvent&                           event,
+        const bsl::shared_ptr<ntci::Strand>&                destination,
+        const bsl::shared_ptr<ntci::Strand>&                source,
+        const bsl::shared_ptr<ntci::Executor>&              executor,
+        bool                                                defer,
+        ntccfg::Mutex*                                      mutex);
+
     /// Announce to the specified 'session' the initiation of the shutdown
     /// sequence of the specified 'socket' from the specified 'origin'. If
     /// the specified 'defer' flag is false and the requirements of the
