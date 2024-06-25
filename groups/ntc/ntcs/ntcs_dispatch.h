@@ -1401,6 +1401,16 @@ struct Dispatch {
         bool                                              defer,
         ntccfg::Mutex*                                    mutex);
 
+    static void announceConnectionRejectedDescriptorLimit(
+        const bsl::shared_ptr<ntci::StreamSocketSession>& session,
+        const bsl::shared_ptr<ntci::StreamSocket>&        socket,
+        const ntca::ConnectEvent&                         event,
+        const bsl::shared_ptr<ntci::Strand>&              destination,
+        const bsl::shared_ptr<ntci::Strand>&              source,
+        const bsl::shared_ptr<ntci::Executor>&            executor,
+        bool                                              defer,
+        ntccfg::Mutex*                                    mutex);
+
     /// Announce to the specified 'session' the detection of an error for
     /// the specified 'socket'. If the specified 'defer' flag is false and
     /// the requirements of the specified 'destination' strand permits the

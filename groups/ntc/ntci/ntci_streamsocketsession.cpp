@@ -187,6 +187,14 @@ void StreamSocketSession::processShutdownComplete(
     NTCCFG_WARNING_UNUSED(event);
 }
 
+void StreamSocketSession::processConnectionRejectedLimitReached(
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::ConnectEvent&                  event)
+{
+    NTCCFG_WARNING_UNUSED(streamSocket);
+    NTCCFG_WARNING_UNUSED(event);
+}
+
 void StreamSocketSession::processError(
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
     const ntca::ErrorEvent&                    event)

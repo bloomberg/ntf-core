@@ -24,19 +24,10 @@ BSLS_IDENT("$Id: $")
 #include <ntca_errorevent.h>
 #include <ntca_readqueueevent.h>
 #include <ntca_shutdownevent.h>
-#include <ntca_upgradeevent.h>
 #include <ntca_writequeueevent.h>
 #include <ntccfg_platform.h>
-#include <ntci_encryptioncertificate.h>
 #include <ntci_strand.h>
-#include <ntcscm_version.h>
-#include <ntsa_endpoint.h>
-#include <ntsa_error.h>
-#include <ntsa_shutdownorigin.h>
-#include <ntsa_shutdowntype.h>
-#include <bdlbb_blob.h>
 #include <bsl_memory.h>
-#include <bsl_string.h>
 
 namespace BloombergLP {
 namespace ntci {
@@ -189,6 +180,10 @@ class StreamSocketSession
     virtual void processError(
         const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
         const ntca::ErrorEvent&                    event);
+
+    virtual void processConnectionRejectedLimitReached(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::ConnectEvent&                  event);
 
     /// Return the strand on which this object's functions should be called.
     virtual const bsl::shared_ptr<ntci::Strand>& strand() const;

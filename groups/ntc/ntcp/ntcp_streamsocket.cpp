@@ -871,6 +871,24 @@ void StreamSocket::privateFailConnect(
         d_connectOptions.setRetryCount(0);
     }
 
+    if (error == ntsa::Error::e_LIMIT) {
+        if (d_session_sp) {
+            ntca::ConnectEvent event;
+            //TODO:
+
+            ntcs::Dispatch::announceConnectionRejectedDescriptorLimit(
+                d_session_sp,
+                self,
+                event,
+                d_sessionStrand_sp,
+                ntci::Strand::
+                    unknown(),  //TODO: should I use the sicket strand?
+                self,
+                true,
+                &d_mutex);
+        }
+    }
+
     if (!d_connectContext.error() || close) {
         NTCI_LOG_DEBUG("Connection attempt has failed: %s",
                        error.text().c_str());
