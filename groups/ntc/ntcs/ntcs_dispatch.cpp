@@ -1131,7 +1131,7 @@ void Dispatch::announceAcceptQueueRateLimitRelaxed(
     }
 }
 
-void Dispatch::announceConnectionRejectedDescriptorLimit(
+void Dispatch::announceConnectionRejected(
     const bsl::shared_ptr<ntci::ListenerSocketSession>& session,
     const bsl::shared_ptr<ntci::ListenerSocket>&        socket,
     const ntca::ConnectEvent&                           event,
@@ -2165,7 +2165,7 @@ void Dispatch::announceShutdownComplete(
     }
 }
 
-void Dispatch::announceConnectionRejectedDescriptorLimit(
+void Dispatch::announceConnectionRejected(
     const bsl::shared_ptr<ntci::StreamSocketSession>& session,
     const bsl::shared_ptr<ntci::StreamSocket>&        socket,
     const ntca::ConnectEvent&                         event,

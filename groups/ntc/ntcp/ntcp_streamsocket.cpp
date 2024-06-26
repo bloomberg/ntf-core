@@ -874,18 +874,17 @@ void StreamSocket::privateFailConnect(
     if (error == ntsa::Error::e_LIMIT) {
         if (d_session_sp) {
             ntca::ConnectEvent event;
-            //TODO:
+            event.setType(ntca::ConnectEventType::e_REJECTED_BY_LIMIT);
+            event.setContext(d_connectContext);
 
-            ntcs::Dispatch::announceConnectionRejectedDescriptorLimit(
-                d_session_sp,
-                self,
-                event,
-                d_sessionStrand_sp,
-                ntci::Strand::
-                    unknown(),  //TODO: should I use the sicket strand?
-                self,
-                true,
-                &d_mutex);
+            ntcs::Dispatch::announceConnectionRejected(d_session_sp,
+                                                       self,
+                                                       event,
+                                                       d_sessionStrand_sp,
+                                                       d_proactorStrand_sp,
+                                                       self,
+                                                       true,
+                                                       &d_mutex);
         }
     }
 

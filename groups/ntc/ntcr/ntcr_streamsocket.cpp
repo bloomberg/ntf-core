@@ -1459,17 +1459,17 @@ void StreamSocket::privateFailConnect(
     if (error == ntsa::Error::e_LIMIT) {
         if (d_session_sp) {
             ntca::ConnectEvent event;
-            //TODO:
+            event.setType(ntca::ConnectEventType::e_REJECTED_BY_LIMIT);
+            event.setContext(d_connectContext);
 
-            ntcs::Dispatch::announceConnectionRejectedDescriptorLimit(
-                d_session_sp,
-                self,
-                event,
-                d_sessionStrand_sp,
-                ntci::Strand::unknown(),
-                self,
-                true,
-                &d_mutex);
+            ntcs::Dispatch::announceConnectionRejected(d_session_sp,
+                                                       self,
+                                                       event,
+                                                       d_sessionStrand_sp,
+                                                       d_reactorStrand_sp,
+                                                       self,
+                                                       true,
+                                                       &d_mutex);
         }
     }
 
@@ -5903,8 +5903,8 @@ ntsa::Error StreamSocket::deregisterSession()
 
 ntsa::Error StreamSocket::setZeroCopyThreshold(bsl::size_t value)
 {
-    bsl::shared_ptr<StreamSocket>  self = this->getSelf(this);
-    LockGuard lock(&d_mutex);
+    bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
+    LockGuard                     lock(&d_mutex);
 
     return this->privateZeroCopyEngage(self, value);
 }

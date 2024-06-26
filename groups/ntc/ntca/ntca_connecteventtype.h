@@ -39,7 +39,11 @@ struct ConnectEventType {
         e_COMPLETE = 0,
 
         // An error has been detected during the connection sequence.
-        e_ERROR = 1
+        e_ERROR = 1,
+
+        // Connection cannot be established due to maximum number of
+        // connections reached
+        e_REJECTED_BY_LIMIT = 2
     };
 
     /// Return the string representation exactly matching the enumerator

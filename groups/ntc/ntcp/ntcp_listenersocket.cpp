@@ -479,9 +479,9 @@ void ListenerSocket::privateCompleteAccept(
         if (error == ntsa::Error::e_LIMIT) {
             if (d_session_sp) {
                 ntca::ConnectEvent event;
-                //TODO:
+                event.setType(ntca::ConnectEventType::e_REJECTED_BY_LIMIT);
 
-                ntcs::Dispatch::announceConnectionRejectedDescriptorLimit(
+                ntcs::Dispatch::announceConnectionRejected(
                     d_session_sp,
                     self,
                     event,
