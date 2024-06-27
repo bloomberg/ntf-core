@@ -277,7 +277,8 @@ namespace ntscfg {
 ///
 /// @ingroup module_ntscfg
 #define NTSCFG_TYPE_CHECK_BITWISE_MOVABLE(Type) \
-    bslmf::IsBitwiseMoveable<Type>::value
+    ((bslmf::IsBitwiseMoveable<Type>::value) && \
+     (bsl::is_nothrow_move_constructible<ntsa::Ipv4Address>::value))
 
 /// Return true if the specified 'type' is bitwise-copyable, otherwise return
 /// false.
@@ -298,7 +299,7 @@ namespace ntscfg {
 ///
 /// @ingroup module_ntscfg
 #define NTSCFG_TYPE_CHECK_ALLOCATOR_AWARE(Type) \
-    bslalg::TypeTraitUsesBslmaAllocator<Type>::Value
+    bslalg::HasTrait<Type, bslalg::TypeTraitUsesBslmaAllocator>::VALUE
 
 /// @internal @brief
 /// Throw an exception having the specified string 'description'.

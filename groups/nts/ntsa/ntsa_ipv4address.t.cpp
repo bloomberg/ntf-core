@@ -14,6 +14,10 @@
 // limitations under the License.
 
 #include <ntsa_ipv4address.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsa_ipv4address_t_cpp, "$Id$ $CSID$")
+
 #include <ntscfg_test.h>
 #include <bslma_testallocator.h>
 #include <bsls_platform.h>
@@ -22,78 +26,248 @@
 #include <bsl_unordered_set.h>
 
 using namespace BloombergLP;
-using namespace ntsa;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntsa {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
-
-NTSCFG_TEST_CASE(1)
+// Provide tests for 'ntsa::Ipv4Address'.
+class Ipv4AddressTest
 {
-    // Concern: Value semantics
-    // Plan:
+  public:
+    // Test value semantics: type traits.
+    static void verifyTypeTraits();
 
-    const bool isBitwiseInitializable = 
+    // Test value semantics:default constructor.
+    static void verifyDefaultConstructor();
+
+    // Test value semantics: move constructor.
+    static void verifyMoveConstructor();
+
+    // Test value semantics: copy constructor.
+    static void verifyCopyConstructor();
+
+    // Test value semantics: overload constructor.
+    static void verifyOverloadConstructor();
+
+    // Test value semantics: copy assignment.
+    static void verifyCopyAssignment();
+
+    // Test value semantics: move assignment.
+    static void verifyMoveAssignment();
+
+    // Test value semantics: overload assignment.
+    static void verifyOverloadAssignment();
+
+    // Test value semantics: resetting.
+    static void verifyReset();
+
+    // Test parsing.
+    static void verifyParsing();
+
+    // Test generation.
+    static void verifyGeneration();
+
+    // Test hashing.
+    static void verifyHashing();
+
+    // Test comparison. In particular, comparison must yield consistent results
+    // across different CPUs with different endianness.
+    static void verifyComparison();
+};
+
+void Ipv4AddressTest::verifyTypeTraits()
+{
+    const bool isBitwiseInitializable =
         NTSCFG_TYPE_CHECK_BITWISE_INITIALIZABLE(ntsa::Ipv4Address);
 
     NTSCFG_TEST_TRUE(isBitwiseInitializable);
 
-    const bool isBitwiseMovable = 
+    const bool isBitwiseMovable =
         NTSCFG_TYPE_CHECK_BITWISE_MOVABLE(ntsa::Ipv4Address);
 
     NTSCFG_TEST_TRUE(isBitwiseMovable);
 
-    const bool isBitwiseCopyable = 
+    const bool isBitwiseCopyable =
         NTSCFG_TYPE_CHECK_BITWISE_COPYABLE(ntsa::Ipv4Address);
 
     NTSCFG_TEST_TRUE(isBitwiseCopyable);
 
-    const bool isBitwiseComparable = 
+    const bool isBitwiseComparable =
         NTSCFG_TYPE_CHECK_BITWISE_COMPARABLE(ntsa::Ipv4Address);
 
     NTSCFG_TEST_TRUE(isBitwiseComparable);
+}
 
-    const bool isNothroMoveConstructible = 
-        bsl::is_nothrow_move_constructible<ntsa::Ipv4Address>::value;
+void Ipv4AddressTest::verifyDefaultConstructor()
+{
+    ntsa::Ipv4Address u;
 
-    NTSCFG_TEST_TRUE(isNothroMoveConstructible);
+    NTSCFG_TEST_EQ(u[0], 0);
+    NTSCFG_TEST_EQ(u[1], 0);
+    NTSCFG_TEST_EQ(u[2], 0);
+    NTSCFG_TEST_EQ(u[3], 0);
+}
 
-    ntsa::Ipv4Address a("1.2.3.4");
+void Ipv4AddressTest::verifyMoveConstructor()
+{
+    ntsa::Ipv4Address u("1.2.3.4");
 
-    NTSCFG_TEST_EQ(a[0], 1);
-    NTSCFG_TEST_EQ(a[1], 2);
-    NTSCFG_TEST_EQ(a[2], 3);
-    NTSCFG_TEST_EQ(a[3], 4);
+    NTSCFG_TEST_EQ(u[0], 1);
+    NTSCFG_TEST_EQ(u[1], 2);
+    NTSCFG_TEST_EQ(u[2], 3);
+    NTSCFG_TEST_EQ(u[3], 4);
 
-    ntsa::Ipv4Address b(NTSCFG_MOVE(a));
+    ntsa::Ipv4Address v(NTSCFG_MOVE(u));
 
-    NTSCFG_TEST_EQ(b[0], 1);
-    NTSCFG_TEST_EQ(b[1], 2);
-    NTSCFG_TEST_EQ(b[2], 3);
-    NTSCFG_TEST_EQ(b[3], 4);
+    NTSCFG_TEST_EQ(v[0], 1);
+    NTSCFG_TEST_EQ(v[1], 2);
+    NTSCFG_TEST_EQ(v[2], 3);
+    NTSCFG_TEST_EQ(v[3], 4);
 
 #if NTSCFG_MOVE_RESET_ENABLED
-    NTSCFG_TEST_EQ(a[0], 0);
-    NTSCFG_TEST_EQ(a[1], 0);
-    NTSCFG_TEST_EQ(a[2], 0);
-    NTSCFG_TEST_EQ(a[3], 0);
+    NTSCFG_TEST_EQ(u[0], 0);
+    NTSCFG_TEST_EQ(u[1], 0);
+    NTSCFG_TEST_EQ(u[2], 0);
+    NTSCFG_TEST_EQ(u[3], 0);
 #endif
 }
 
-NTSCFG_TEST_CASE(2)
+void Ipv4AddressTest::verifyCopyConstructor()
 {
-    // Concern: Parsing
-    // Plan:
+    ntsa::Ipv4Address u("1.2.3.4");
 
+    NTSCFG_TEST_EQ(u[0], 1);
+    NTSCFG_TEST_EQ(u[1], 2);
+    NTSCFG_TEST_EQ(u[2], 3);
+    NTSCFG_TEST_EQ(u[3], 4);
+
+    ntsa::Ipv4Address v(u);
+
+    NTSCFG_TEST_EQ(v[0], 1);
+    NTSCFG_TEST_EQ(v[1], 2);
+    NTSCFG_TEST_EQ(v[2], 3);
+    NTSCFG_TEST_EQ(v[3], 4);
+}
+
+void Ipv4AddressTest::verifyOverloadConstructor()
+{
+    {
+        bsl::uint32_t value = 0;
+        {
+            bsl::uint8_t buffer[4]{0x01, 0x02, 0x03, 0x04};
+            NTSCFG_TEST_EQ(sizeof buffer, sizeof value);
+            bsl::memcpy(&value, buffer, sizeof buffer);
+        }
+
+        ntsa::Ipv4Address u(value);
+
+        NTSCFG_TEST_EQ(u[0], 1);
+        NTSCFG_TEST_EQ(u[1], 2);
+        NTSCFG_TEST_EQ(u[2], 3);
+        NTSCFG_TEST_EQ(u[3], 4);
+    }
+
+    {
+        ntsa::Ipv4Address u("1.2.3.4");
+
+        NTSCFG_TEST_EQ(u[0], 1);
+        NTSCFG_TEST_EQ(u[1], 2);
+        NTSCFG_TEST_EQ(u[2], 3);
+        NTSCFG_TEST_EQ(u[3], 4);
+    }
+}
+
+void Ipv4AddressTest::verifyCopyAssignment()
+{
+    ntsa::Ipv4Address u("1.2.3.4");
+
+    NTSCFG_TEST_EQ(u[0], 1);
+    NTSCFG_TEST_EQ(u[1], 2);
+    NTSCFG_TEST_EQ(u[2], 3);
+    NTSCFG_TEST_EQ(u[3], 4);
+
+    ntsa::Ipv4Address v;
+
+    NTSCFG_TEST_EQ(v[0], 0);
+    NTSCFG_TEST_EQ(v[1], 0);
+    NTSCFG_TEST_EQ(v[2], 0);
+    NTSCFG_TEST_EQ(v[3], 0);
+
+    v = u;
+
+    NTSCFG_TEST_EQ(v[0], 1);
+    NTSCFG_TEST_EQ(v[1], 2);
+    NTSCFG_TEST_EQ(v[2], 3);
+    NTSCFG_TEST_EQ(v[3], 4);
+}
+
+void Ipv4AddressTest::verifyMoveAssignment()
+{
+    ntsa::Ipv4Address u("1.2.3.4");
+
+    NTSCFG_TEST_EQ(u[0], 1);
+    NTSCFG_TEST_EQ(u[1], 2);
+    NTSCFG_TEST_EQ(u[2], 3);
+    NTSCFG_TEST_EQ(u[3], 4);
+
+    ntsa::Ipv4Address v;
+
+    NTSCFG_TEST_EQ(v[0], 0);
+    NTSCFG_TEST_EQ(v[1], 0);
+    NTSCFG_TEST_EQ(v[2], 0);
+    NTSCFG_TEST_EQ(v[3], 0);
+
+    v = NTSCFG_MOVE(u);
+
+    NTSCFG_TEST_EQ(v[0], 1);
+    NTSCFG_TEST_EQ(v[1], 2);
+    NTSCFG_TEST_EQ(v[2], 3);
+    NTSCFG_TEST_EQ(v[3], 4);
+
+#if NTSCFG_MOVE_RESET_ENABLED
+    NTSCFG_TEST_EQ(u[0], 0);
+    NTSCFG_TEST_EQ(u[1], 0);
+    NTSCFG_TEST_EQ(u[2], 0);
+    NTSCFG_TEST_EQ(u[3], 0);
+#endif
+}
+
+void Ipv4AddressTest::verifyOverloadAssignment()
+{
+    ntsa::Ipv4Address u;
+
+    NTSCFG_TEST_EQ(u[0], 0);
+    NTSCFG_TEST_EQ(u[1], 0);
+    NTSCFG_TEST_EQ(u[2], 0);
+    NTSCFG_TEST_EQ(u[3], 0);
+
+    u = "1.2.3.4";
+
+    NTSCFG_TEST_EQ(u[0], 1);
+    NTSCFG_TEST_EQ(u[1], 2);
+    NTSCFG_TEST_EQ(u[2], 3);
+    NTSCFG_TEST_EQ(u[3], 4);
+}
+
+void Ipv4AddressTest::verifyReset()
+{
+    ntsa::Ipv4Address u("1.2.3.4");
+
+    NTSCFG_TEST_EQ(u[0], 1);
+    NTSCFG_TEST_EQ(u[1], 2);
+    NTSCFG_TEST_EQ(u[2], 3);
+    NTSCFG_TEST_EQ(u[3], 4);
+
+    u.reset();
+
+    NTSCFG_TEST_EQ(u[0], 0);
+    NTSCFG_TEST_EQ(u[1], 0);
+    NTSCFG_TEST_EQ(u[2], 0);
+    NTSCFG_TEST_EQ(u[3], 0);
+}
+
+void Ipv4AddressTest::verifyParsing()
+{
     // Microsoft Visual Studio 2013 does not compile the array literal
     // initialization.
 #if !defined(BSLS_PLATFORM_OS_WINDOWS)
@@ -153,11 +327,8 @@ NTSCFG_TEST_CASE(2)
 #endif
 }
 
-NTSCFG_TEST_CASE(3)
+void Ipv4AddressTest::verifyGeneration()
 {
-    // Concern: Generating
-    // Plan:
-
     // Microsoft Visual Studio 2013 does not compile the array literal
     // initialization.
 #if !defined(BSLS_PLATFORM_OS_WINDOWS)
@@ -197,11 +368,8 @@ NTSCFG_TEST_CASE(3)
 #endif
 }
 
-NTSCFG_TEST_CASE(4)
+void Ipv4AddressTest::verifyHashing()
 {
-    // Concern:
-    // Plan:
-
     ntsa::Ipv4Address address1("127.0.0.1");
     ntsa::Ipv4Address address2("196.168.0.1");
 
@@ -209,14 +377,34 @@ NTSCFG_TEST_CASE(4)
     addressSet.insert(address1);
     addressSet.insert(address2);
 
-    NTSCFG_TEST_ASSERT(addressSet.size() == 2);
+    NTSCFG_TEST_EQ(addressSet.size(), 2);
 }
 
-NTSCFG_TEST_DRIVER
+void Ipv4AddressTest::verifyComparison()
 {
-    NTSCFG_TEST_REGISTER(1);
-    NTSCFG_TEST_REGISTER(2);
-    NTSCFG_TEST_REGISTER(3);
-    NTSCFG_TEST_REGISTER(4);
+    ntsa::Ipv4Address address1("10.0.0.11");
+    ntsa::Ipv4Address address2("11.0.0.10");
+
+    NTSCFG_TEST_LT(address1, address2);
 }
-NTSCFG_TEST_DRIVER_END;
+
+}  // close namespace ntsa
+}  // close namespace BloombergLP
+
+NTSCFG_TEST_SUITE
+{
+    NTSCFG_TEST_FUNCTION(&ntsa::Ipv4AddressTest::verifyTypeTraits);
+    NTSCFG_TEST_FUNCTION(&ntsa::Ipv4AddressTest::verifyDefaultConstructor);
+    NTSCFG_TEST_FUNCTION(&ntsa::Ipv4AddressTest::verifyMoveConstructor);
+    NTSCFG_TEST_FUNCTION(&ntsa::Ipv4AddressTest::verifyCopyConstructor);
+    NTSCFG_TEST_FUNCTION(&ntsa::Ipv4AddressTest::verifyOverloadConstructor);
+    NTSCFG_TEST_FUNCTION(&ntsa::Ipv4AddressTest::verifyCopyAssignment);
+    NTSCFG_TEST_FUNCTION(&ntsa::Ipv4AddressTest::verifyMoveAssignment);
+    NTSCFG_TEST_FUNCTION(&ntsa::Ipv4AddressTest::verifyOverloadAssignment);
+    NTSCFG_TEST_FUNCTION(&ntsa::Ipv4AddressTest::verifyReset);
+    NTSCFG_TEST_FUNCTION(&ntsa::Ipv4AddressTest::verifyParsing);
+    NTSCFG_TEST_FUNCTION(&ntsa::Ipv4AddressTest::verifyGeneration);
+    NTSCFG_TEST_FUNCTION(&ntsa::Ipv4AddressTest::verifyHashing);
+    NTSCFG_TEST_FUNCTION(&ntsa::Ipv4AddressTest::verifyComparison);
+}
+NTSCFG_TEST_SUITE_END;

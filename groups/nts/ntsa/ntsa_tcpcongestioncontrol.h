@@ -19,8 +19,8 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <ntsa_tcpcongestioncontrolalgorithm.h>
 #include <ntsa_error.h>
+#include <ntsa_tcpcongestioncontrolalgorithm.h>
 #include <ntscfg_platform.h>
 #include <ntsscm_version.h>
 #include <bsl_ostream.h>
@@ -29,17 +29,13 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntsa {
 
-/// Provide a value identifying tcp congestion control algorithm.
-///
-/// @details
-/// Provide a value-semantic type that identifies tcp congestion control
-/// algorithm.
+/// Describe a TCP congestion control strategy.
 ///
 /// @par Attributes
 /// This class is composed of the following attributes.
 ///
-/// @li d_buffer:
-/// Buffer which contains name of the tcp congestion control algorithm.
+/// @li @b algorithm:
+/// The name of the TCP congestion control algorithm.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -47,7 +43,7 @@ namespace ntsa {
 /// @ingroup module_ntsa_system
 class TcpCongestionControl
 {
-    bsl::string d_buffer;
+    bsl::string d_algorithm;
 
   public:
     /// Create a new TCP congestion control specification having the default
@@ -56,11 +52,26 @@ class TcpCongestionControl
     /// used.
     explicit TcpCongestionControl(bslma::Allocator* basicAllocator = 0);
 
+    /// Create a new TCP congestion control specification using the specified
+    /// 'algorithm'. Optionally specify a 'basicAllocator' used to supply
+    /// memory. If 'basicAllocator' is 0, the currently installed default
+    /// allocator is used.
+    explicit TcpCongestionControl(const bsl::string_view& algorithm,
+                                  bslma::Allocator*       basicAllocator = 0);
+
+    /// Create a new TCP congestion control specification using the specified
+    /// 'algorithm'. Optionally specify a 'basicAllocator' used to supply
+    /// memory. If 'basicAllocator' is 0, the currently installed default
+    /// allocator is used.
+    explicit TcpCongestionControl(
+        TcpCongestionControlAlgorithm::Value algorithm,
+        bslma::Allocator*                    basicAllocator = 0);
+
     /// Create a new TCP congestion control specification having the same value
     /// and allocator as the specified 'original' object. Assign an unspecified
     /// but valid value to the 'original' original.
-    TcpCongestionControl(bslmf::MovableRef<TcpCongestionControl> original) 
-                         NTSCFG_NOEXCEPT;
+    TcpCongestionControl(bslmf::MovableRef<TcpCongestionControl> original)
+        NTSCFG_NOEXCEPT;
 
     /// Create a new TCP congestion control specification having the same value
     /// as the specified 'original' object. Optionally specify a
@@ -95,6 +106,9 @@ class TcpCongestionControl
     /// Return a reference to a string containing name of the tcp congestion
     /// control algorithm.
     const bsl::string& algorithm() const;
+
+    /// Return the allocator used to supply memory.
+    bslma::Allocator* allocator() const;
 
     /// Return true if this object has the same value as the specified 'other'
     /// object, otherwise return false.

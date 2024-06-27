@@ -70,7 +70,7 @@ class Ipv4Address
     Ipv4Address() NTSCFG_NOEXCEPT;
 
     /// Create a new IPv4 address having the same value as the specified
-    /// 'original' object. Assign an unspecified but valid value to the 
+    /// 'original' object. Assign an unspecified but valid value to the
     /// 'original' original.
     Ipv4Address(bslmf::MovableRef<Ipv4Address> original) NTSCFG_NOEXCEPT;
 
@@ -92,7 +92,7 @@ class Ipv4Address
     /// Assign the value of the specified 'other' object to this object. Assign
     /// an unspecified but valid value to the 'original' original. Return a
     /// reference to this modifiable object.
-    Ipv4Address& operator=(bslmf::MovableRef<Ipv4Address> other) 
+    Ipv4Address& operator=(bslmf::MovableRef<Ipv4Address> other)
         NTSCFG_NOEXCEPT;
 
     /// Assign the value of the specified 'other' object to this object.
@@ -128,13 +128,13 @@ class Ipv4Address
     /// Copy the value of this object to the representation in the specified
     /// 'destination' having the specified 'capacity'. Return the number of
     /// bytes written.
-    bsl::size_t copyTo(void* destination, bsl::size_t capacity) const 
-                       NTSCFG_NOEXCEPT;
+    bsl::size_t copyTo(void*       destination,
+                       bsl::size_t capacity) const NTSCFG_NOEXCEPT;
 
     /// Format the IPv4 address into the specified 'buffer' having the
     /// specified 'capacity'. Return the number of bytes written.
-    bsl::size_t format(char* buffer, bsl::size_t capacity) const 
-                       NTSCFG_NOEXCEPT;
+    bsl::size_t format(char*       buffer,
+                       bsl::size_t capacity) const NTSCFG_NOEXCEPT;
 
     /// Return the value of this object encoded in network byte order.
     bsl::uint32_t value() const NTSCFG_NOEXCEPT;
@@ -256,8 +256,8 @@ Ipv4Address::Ipv4Address() NTSCFG_NOEXCEPT
 }
 
 NTSCFG_INLINE
-Ipv4Address::Ipv4Address(bslmf::MovableRef<Ipv4Address> original) 
-                         NTSCFG_NOEXCEPT
+Ipv4Address::Ipv4Address(bslmf::MovableRef<Ipv4Address> original)
+    NTSCFG_NOEXCEPT
 {
     d_value.d_asDword = NTSCFG_MOVE_FROM(original, d_value.d_asDword);
     NTSCFG_MOVE_RESET(original);
@@ -281,8 +281,8 @@ Ipv4Address::~Ipv4Address() NTSCFG_NOEXCEPT
 }
 
 NTSCFG_INLINE
-Ipv4Address& Ipv4Address::operator=(bslmf::MovableRef<Ipv4Address> other) 
-        NTSCFG_NOEXCEPT
+Ipv4Address& Ipv4Address::operator=(bslmf::MovableRef<Ipv4Address> other)
+    NTSCFG_NOEXCEPT
 {
     d_value.d_asDword = NTSCFG_MOVE_FROM(other, d_value.d_asDword);
     NTSCFG_MOVE_RESET(other);
@@ -383,8 +383,8 @@ bool Ipv4Address::less(const Ipv4Address& other) const NTSCFG_NOEXCEPT
 }
 
 template <typename HASH_ALGORITHM>
-NTSCFG_INLINE
-void Ipv4Address::hash(HASH_ALGORITHM& algorithm) const NTSCFG_NOEXCEPT
+NTSCFG_INLINE void Ipv4Address::hash(HASH_ALGORITHM& algorithm) const
+    NTSCFG_NOEXCEPT
 {
     using bslh::hashAppend;
     hashAppend(algorithm, BSLS_BYTEORDER_NTOHL(d_value.d_asDword));
@@ -422,8 +422,8 @@ bool operator<(const Ipv4Address& lhs, const Ipv4Address& rhs)
 }
 
 template <typename HASH_ALGORITHM>
-NTSCFG_INLINE
-void hashAppend(HASH_ALGORITHM& algorithm, const Ipv4Address& value)
+NTSCFG_INLINE void hashAppend(HASH_ALGORITHM&    algorithm,
+                              const Ipv4Address& value)
 {
     value.hash(algorithm);
 }
