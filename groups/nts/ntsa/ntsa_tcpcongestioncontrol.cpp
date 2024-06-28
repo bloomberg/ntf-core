@@ -24,16 +24,35 @@ namespace BloombergLP {
 namespace ntsa {
 
 TcpCongestionControl::TcpCongestionControl(bslma::Allocator* basicAllocator)
-: d_buffer(bslma::Default::allocator(basicAllocator))
-, d_allocator_p(bslma::Default::allocator(basicAllocator))
+: d_algorithm(bslma::Default::allocator(basicAllocator))
 {
+}
+
+TcpCongestionControl::TcpCongestionControl(const bsl::string_view& algorithm,
+                                           bslma::Allocator* basicAllocator)
+: d_algorithm(algorithm, basicAllocator)
+{
+}
+
+TcpCongestionControl::TcpCongestionControl(
+    TcpCongestionControlAlgorithm::Value algorithm,
+    bslma::Allocator*                    basicAllocator)
+: d_algorithm(TcpCongestionControlAlgorithm::toString(algorithm),
+              basicAllocator)
+{
+}
+
+TcpCongestionControl::TcpCongestionControl(
+    bslmf::MovableRef<TcpCongestionControl> original) NTSCFG_NOEXCEPT
+: d_algorithm(NTSCFG_MOVE_FROM(original, d_algorithm))
+{
+    NTSCFG_MOVE_RESET(original);
 }
 
 TcpCongestionControl::TcpCongestionControl(
     const BloombergLP::ntsa::TcpCongestionControl& original,
     bslma::Allocator*                              basicAllocator)
-: d_buffer(original.d_buffer, basicAllocator)
-, d_allocator_p(bslma::Default::allocator(basicAllocator))
+: d_algorithm(original.d_algorithm, basicAllocator)
 {
 }
 
@@ -42,25 +61,34 @@ TcpCongestionControl::~TcpCongestionControl()
 }
 
 TcpCongestionControl& TcpCongestionControl::operator=(
+    bslmf::MovableRef<TcpCongestionControl> other)
+{
+    d_algorithm = NTSCFG_MOVE_FROM(other, d_algorithm);
+    NTSCFG_MOVE_RESET(other);
+
+    return *this;
+}
+
+TcpCongestionControl& TcpCongestionControl::operator=(
     const BloombergLP::ntsa::TcpCongestionControl& other)
 {
     if (this != &other) {
-        d_buffer      = other.d_buffer;
-        d_allocator_p = other.d_allocator_p;
+        d_algorithm = other.d_algorithm;
     }
+
     return *this;
+}
+
+void TcpCongestionControl::reset()
+{
+    d_algorithm.clear();
 }
 
 ntsa::Error TcpCongestionControl::setAlgorithmName(
     const bsl::string_view& name)
 {
-    d_buffer = name;
+    d_algorithm = name;
     return ntsa::Error();
-}
-
-const bsl::string& TcpCongestionControl::algorithm() const
-{
-    return d_buffer;
 }
 
 ntsa::Error TcpCongestionControl::setAlgorithm(
@@ -68,35 +96,41 @@ ntsa::Error TcpCongestionControl::setAlgorithm(
 {
     const char* name = TcpCongestionControlAlgorithm::toString(value);
     if (name == 0) {
-        return ntsa::Error::invalid();
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
-    return this->setAlgorithmName(name);
+
+    d_algorithm = name;
+    return ntsa::Error();
 }
 
-void TcpCongestionControl::reset()
+const bsl::string& TcpCongestionControl::algorithm() const
 {
-    d_buffer.clear();
+    return d_algorithm;
+}
+
+bslma::Allocator* TcpCongestionControl::allocator() const
+{
+    return d_algorithm.get_allocator().mechanism();
 }
 
 bool TcpCongestionControl::equals(const TcpCongestionControl& other) const
 {
-    return d_buffer == other.d_buffer;
+    return d_algorithm == other.d_algorithm;
 }
 
 bool TcpCongestionControl::less(const TcpCongestionControl& other) const
 {
-    return d_buffer < other.d_buffer;
+    return d_algorithm < other.d_algorithm;
 }
 
 bsl::ostream& TcpCongestionControl::print(bsl::ostream& stream,
                                           int           level,
                                           int           spacesPerLevel) const
 {
-    bslim::Printer printer(&stream, level, spacesPerLevel);
-    printer.start();
-    printer.printAttribute("d_buffer", d_buffer);
-    printer.end();
-    return stream;
+    NTSCFG_WARNING_UNUSED(level);
+    NTSCFG_WARNING_UNUSED(spacesPerLevel);
+
+    return stream << d_algorithm;
 }
 
 bsl::ostream& operator<<(bsl::ostream&               stream,

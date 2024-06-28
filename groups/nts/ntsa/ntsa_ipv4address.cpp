@@ -74,7 +74,7 @@ Ipv4Address& Ipv4Address::operator=(const bslstl::StringRef& text)
     return *this;
 }
 
-bool Ipv4Address::parse(const bslstl::StringRef& text)
+bool Ipv4Address::parse(const bslstl::StringRef& text) NTSCFG_NOEXCEPT
 {
     BSLMF_ASSERT(sizeof d_value == 4);
     BSLMF_ASSERT(sizeof *this == 4);
@@ -135,7 +135,8 @@ bool Ipv4Address::parse(const bslstl::StringRef& text)
     return true;
 }
 
-bsl::size_t Ipv4Address::copyFrom(const void* source, bsl::size_t size)
+bsl::size_t Ipv4Address::copyFrom(const void* source,
+                                  bsl::size_t size) NTSCFG_NOEXCEPT
 {
     if (!checkIpv4BufferUnderflow(size)) {
         return 0;
@@ -145,7 +146,8 @@ bsl::size_t Ipv4Address::copyFrom(const void* source, bsl::size_t size)
     return sizeof d_value;
 }
 
-bsl::size_t Ipv4Address::copyTo(void* destination, bsl::size_t capacity) const
+bsl::size_t Ipv4Address::copyTo(void*       destination,
+                                bsl::size_t capacity) const NTSCFG_NOEXCEPT
 {
     if (!checkIpv4BufferOverflow(capacity)) {
         return 0;
@@ -155,7 +157,8 @@ bsl::size_t Ipv4Address::copyTo(void* destination, bsl::size_t capacity) const
     return sizeof d_value;
 }
 
-bsl::size_t Ipv4Address::format(char* buffer, bsl::size_t capacity) const
+bsl::size_t Ipv4Address::format(char*       buffer,
+                                bsl::size_t capacity) const NTSCFG_NOEXCEPT
 {
     if (capacity < ntsa::Ipv4Address::MAX_TEXT_LENGTH + 1) {
         if (capacity > 0) {
@@ -206,14 +209,14 @@ bsl::size_t Ipv4Address::format(char* buffer, bsl::size_t capacity) const
     return count;
 }
 
-Ipv4Address Ipv4Address::any()
+Ipv4Address Ipv4Address::any() NTSCFG_NOEXCEPT
 {
     Ipv4Address result;
     result.d_value.d_asDword = 0;
     return result;
 }
 
-Ipv4Address Ipv4Address::loopback()
+Ipv4Address Ipv4Address::loopback() NTSCFG_NOEXCEPT
 {
     Ipv4Address result;
 #if defined(BSLS_PLATFORM_IS_BIG_ENDIAN)

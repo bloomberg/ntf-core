@@ -21,10 +21,26 @@ BSLS_IDENT("$Id: $")
 
 #include <ntscfg_config.h>
 #include <ntsscm_version.h>
+#include <bsla_annotations.h>
+#include <bsla_deprecated.h>
 #include <bslalg_typetraits.h>
+#include <bslalg_hastrait.h>
+#include <bslalg_typetraitbitwisecopyable.h>
+#include <bslalg_typetraitbitwisemoveable.h>
+#include <bslalg_typetraitbitwiseequalitycomparable.h>
+#include <bslalg_typetraithastrivialdefaultconstructor.h>
+#include <bslalg_typetraitusesbslmaallocator.h>
+#include <bslmf_isbitwisecopyable.h>
+#include <bslmf_isbitwisemoveable.h>
+#include <bslmf_isbitwiseequalitycomparable.h>
+#include <bslmf_isnothrowmoveconstructible.h>
+#include <bslmf_isnothrowswappable.h>
+#include <bslmf_nestedtraitdeclaration.h>
+#include <bslmf_movableref.h>
 #include <bslmt_lockguard.h>
 #include <bslmt_mutex.h>
 #include <bsls_assert.h>
+#include <bsls_compilerfeatures.h>
 #include <bsls_keyword.h>
 #include <bsls_log.h>
 #include <bsls_performancehint.h>
@@ -41,7 +57,7 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntscfg {
 
-#if NTS_BUILD_WITH_INLINING_FORCED 
+#if NTS_BUILD_WITH_INLINING_FORCED
 
 #if defined(NDEBUG) || defined(BDE_BUILD_TARGET_OPT)
 #if defined(BSLS_PLATFORM_CMP_GNU) || defined(BSLS_PLATFORM_CMP_CLANG)
@@ -115,20 +131,186 @@ namespace ntscfg {
 
 #endif
 
+/// @internal @brief
+/// Fail to compile unless the caller reads the value of the return type.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_NODISCARD BSLA_NODISCARD
+
+/// @internal @brief
+/// The function never throws an exception.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_NOEXCEPT BSLS_KEYWORD_NOEXCEPT
+
+/// @internal @brief
+/// No other class may derive from this class.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_FINAL BSLS_KEYWORD_FINAL
+
+/// @internal @brief
+/// The function may be overriden by a derived class.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_VIRTUAL virtual
+
+/// @internal @brief
+/// The function overrides a function in a base class.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_OVERRIDE BSLS_KEYWORD_OVERRIDE
+
+/// @internal @brief
+/// The function must be overriden by a derived class.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_PURE = 0
+
+/// @internal @brief
+/// Return a movable reference to the specified 'x'.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_MOVE(x) bslmf::MovableRefUtil::move(x)
+
+/// @internal @brief
+/// Access the movable reference 'x'.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_MOVE_ACCESS(x) bslmf::MovableRefUtil::access(x)
+
+/// @internal @brief
+/// Return a movable reference to 'object.member'.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_MOVE_FROM(object, member) \
+    NTSCFG_MOVE(NTSCFG_MOVE_ACCESS(object).member)
+
+#if defined(BDE_BUILD_TARGET_OPT)
+
+/// Reset the value of 'x' after its value has been moved elsewhere to a valid
+/// but unspecified value.
+#define NTSCFG_MOVE_RESET(x)
+
+/// Return true if NTSCFG_MOVE_RESET is *not* a no-op, otherwise return false.
+#define NTSCFG_MOVE_RESET_ENABLED false
+
+#else
+
+/// Reset the value of 'x' after its value has been moved elsewhere to a valid
+/// but unspecified value.
+#define NTSCFG_MOVE_RESET(x) NTSCFG_MOVE_ACCESS(x).reset();
+
+/// Return true if NTSCFG_MOVE_RESET is *not* a no-op, otherwise return false.
+#define NTSCFG_MOVE_RESET_ENABLED true
+
+#endif
+
 /// Declare the specified 'TYPE' is bitwise-movable.
+///
 /// @ingroup module_ntscfg
 #define NTSCFG_DECLARE_NESTED_BITWISE_MOVABLE_TRAITS(TYPE)                    \
-    BSLALG_DECLARE_NESTED_TRAITS4(                                            \
+    BSLALG_DECLARE_NESTED_TRAITS(                                             \
         TYPE,                                                                 \
-        bslalg::TypeTraitBitwiseMoveable,                                     \
-        bslalg::TypeTraitBitwiseCopyable,                                     \
-        bslalg::TypeTraitBitwiseEqualityComparable,                           \
-        bslalg::TypeTraitHasTrivialDefaultConstructor)
+        bslalg::TypeTraitBitwiseMoveable)
 
 /// Declare the specified 'TYPE' uses an allocator to supply memory.
+///
 /// @ingroup module_ntscfg
 #define NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(TYPE)                     \
     BSLALG_DECLARE_NESTED_TRAITS(TYPE, bslalg::TypeTraitUsesBslmaAllocator)
+
+/// Declare a type trait for the specified 'type' to indicate its default
+/// constructor is equivalent to setting each byte of the object's footprint to
+/// zero. Note that traits, such that this one, can be used to select, at
+/// compile-time, the correct and/or most efficient algorithm for objects of
+/// this type.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_TYPE_TRAIT_BITWISE_INITIALIZABLE(Type) \
+    BSLMF_NESTED_TRAIT_DECLARATION( \
+        Type, bsl::is_trivially_default_constructible)
+
+/// Declare a type trait for the specified 'type' to indicate its
+/// copy-constructor and copy-assignment operator is equivalent to copying each
+/// byte of the source object's footprint to each corresponding byte of the
+/// destination object's footprint. Note that traits, such that this one, can
+/// be used to select, at compile-time, the correct and/or most efficient
+/// algorithm for objects of this type. Also note that this trait implies an
+/// object of this type has a trivial destructor.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(Type) \
+    BSLMF_NESTED_TRAIT_DECLARATION(Type, bslmf::IsBitwiseCopyable)
+
+/// Declare a type trait for the specified 'type' to indicate its
+/// move-constructor and move-assignment operator is equivalent to copying each
+/// byte of the source object's footprint to each corresponding byte of the
+/// destination object's footprint. These traits can be used to select, at
+/// compile-time, the most efficient algorithm to manipulate objects of this
+/// type.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(Type) \
+    BSLMF_NESTED_TRAIT_DECLARATION(Type, bslmf::IsBitwiseMoveable)
+
+/// Declare a type trait for the specified 'type' to indicate its
+/// equality-comparison operator is equivalent to comparing each byte of one
+/// comparand's footprint to each corresponding byte of the other comparand's
+/// footprint. Note that traits, such that this one, can be used to select, at
+/// compile-time, the correct and/or most efficient algorithm for objects of
+/// this type. Also note that this trait implies that an object of this type
+/// has no padding bytes between data members.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_TYPE_TRAIT_BITWISE_COMPARABLE(Type) \
+    BSLMF_NESTED_TRAIT_DECLARATION(Type, bslmf::IsBitwiseEqualityComparable)
+
+/// Declare a type trait for the specified 'type' to indicate it accepts an
+/// allocator argument to its constructors and may dynamically allocate memory
+/// during its operation. Note that traits, such that this one, can be used to
+/// select, at compile-time, the correct and/or most efficient algorithm for
+/// objects of this type.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(Type) \
+    BSLALG_DECLARE_NESTED_TRAITS(Type, bslalg::TypeTraitUsesBslmaAllocator)
+
+/// Return true if the specified 'type' is bitwise-initializable, otherwise
+/// return false.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_TYPE_CHECK_BITWISE_INITIALIZABLE(Type) \
+    bsl::is_trivially_default_constructible<Type>::value
+
+/// Return true if the specified 'type' is bitwise-movable, otherwise return
+/// false.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_TYPE_CHECK_BITWISE_MOVABLE(Type) \
+    ((bslmf::IsBitwiseMoveable<Type>::value) && \
+     (bsl::is_nothrow_move_constructible<ntsa::Ipv4Address>::value))
+
+/// Return true if the specified 'type' is bitwise-copyable, otherwise return
+/// false.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_TYPE_CHECK_BITWISE_COPYABLE(Type) \
+    bslmf::IsBitwiseCopyable<Type>::value
+
+/// Return true if the specified 'type' is bitwise-comparable, otherwise return
+/// false.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_TYPE_CHECK_BITWISE_COMPARABLE(Type) \
+    bslmf::IsBitwiseEqualityComparable<Type>::value
+
+/// Return true if the specified 'type' accepts an allocator argument to its
+/// constructors, otherwise return false.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_TYPE_CHECK_ALLOCATOR_AWARE(Type) \
+    bslalg::HasTrait<Type, bslalg::TypeTraitUsesBslmaAllocator>::VALUE
 
 /// @internal @brief
 /// Throw an exception having the specified string 'description'.
@@ -246,11 +428,11 @@ struct Platform {
     static bool hasPortDatabase();
 
     /// Return the build branch, or the version string if the build branch
-    /// is unknown. 
+    /// is unknown.
     static bsl::string buildBranch();
 
     /// Return the build commit hash, or the empty string if the build commit
-    /// hash is unknown. 
+    /// hash is unknown.
     static bsl::string buildCommitHash();
 
     /// Return the build commit hash, abbreviated, or the empty string if the
