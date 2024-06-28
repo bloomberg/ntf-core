@@ -24,6 +24,17 @@ BSLS_IDENT("$Id: $")
 #include <bsla_annotations.h>
 #include <bsla_deprecated.h>
 #include <bslalg_typetraits.h>
+#include <bslalg_hastrait.h>
+#include <bslalg_typetraitbitwisecopyable.h>
+#include <bslalg_typetraitbitwisemoveable.h>
+#include <bslalg_typetraitbitwiseequalitycomparable.h>
+#include <bslalg_typetraithastrivialdefaultconstructor.h>
+#include <bslalg_typetraitusesbslmaallocator.h>
+#include <bslmf_isbitwisecopyable.h>
+#include <bslmf_isbitwisemoveable.h>
+#include <bslmf_isbitwiseequalitycomparable.h>
+#include <bslmf_isnothrowmoveconstructible.h>
+#include <bslmf_isnothrowswappable.h>
 #include <bslmf_nestedtraitdeclaration.h>
 #include <bslmf_movableref.h>
 #include <bslmt_lockguard.h>
