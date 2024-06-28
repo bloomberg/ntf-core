@@ -110,7 +110,7 @@ const bsl::string& TcpCongestionControl::algorithm() const
 
 bslma::Allocator* TcpCongestionControl::allocator() const
 {
-    return d_algorithm.allocator().mechanism();
+    return d_algorithm.get_allocator().mechanism();
 }
 
 bool TcpCongestionControl::equals(const TcpCongestionControl& other) const
