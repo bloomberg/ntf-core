@@ -116,7 +116,8 @@ class ListenerSocketSession
         const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
         const ntca::ErrorEvent&                      event);
 
-    virtual void processConnectionRejectedLimitReached(
+    /// Process indication of connection rejection due to established limit.
+    virtual void processListenerSocketLimit(
         const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
         const ntca::ConnectEvent& event);
 

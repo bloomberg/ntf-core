@@ -124,7 +124,7 @@ void ListenerSocketSession::processError(
     NTCCFG_WARNING_UNUSED(event);
 }
 
-void ListenerSocketSession::processConnectionRejectedLimitReached(
+void ListenerSocketSession::processListenerSocketLimit(
     const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
     const ntca::ConnectEvent& event)
 {

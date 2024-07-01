@@ -1150,12 +1150,12 @@ void Dispatch::announceConnectionLimit(
     {
         bsl::shared_ptr<ntci::ListenerSocketSession> sessionGuard = session;
         ntccfg::UnLockGuard                          guard(mutex);
-        sessionGuard->processConnectionRejectedLimitReached(socket, event);
+        sessionGuard->processListenerSocketLimit(socket, event);
     }
     else if (destination) {
         destination->execute(
             NTCCFG_BIND(&ntci::ListenerSocketSession::
-                            processConnectionRejectedLimitReached,
+                            processListenerSocketLimit,
                         session,
                         socket,
                         event));
@@ -1163,7 +1163,7 @@ void Dispatch::announceConnectionLimit(
     else {
         executor->execute(
             NTCCFG_BIND(&ntci::ListenerSocketSession::
-                            processConnectionRejectedLimitReached,
+                            processListenerSocketLimit,
                         session,
                         socket,
                         event));
