@@ -48,9 +48,9 @@ bool sortResource(const ntca::EncryptionResource& lhs,
 }  // close unnamed namespace
 
 EncryptionOptions::EncryptionOptions(bslma::Allocator* basicAllocator)
-: d_minMethod(ntca::EncryptionMethod::e_TLS_V1_X)
-, d_maxMethod(ntca::EncryptionMethod::e_TLS_V1_X)
-, d_authentication(ntca::EncryptionAuthentication::e_NONE)
+: d_minMethod(ntca::EncryptionMethod::e_DEFAULT)
+, d_maxMethod(ntca::EncryptionMethod::e_DEFAULT)
+, d_authentication(ntca::EncryptionAuthentication::e_DEFAULT)
 , d_validation(basicAllocator)
 , d_resourceVector(basicAllocator)
 , d_authorityDirectory(basicAllocator)
@@ -91,9 +91,9 @@ EncryptionOptions& EncryptionOptions::operator=(const EncryptionOptions& other)
 
 void EncryptionOptions::reset()
 {
-    d_minMethod      = ntca::EncryptionMethod::e_TLS_V1_X;
-    d_maxMethod      = ntca::EncryptionMethod::e_TLS_V1_X;
-    d_authentication = ntca::EncryptionAuthentication::e_NONE;
+    d_minMethod      = ntca::EncryptionMethod::e_DEFAULT;
+    d_maxMethod      = ntca::EncryptionMethod::e_DEFAULT;
+    d_authentication = ntca::EncryptionAuthentication::e_DEFAULT;
     d_validation.reset();
     d_resourceVector.clear();
     d_authorityDirectory.reset();

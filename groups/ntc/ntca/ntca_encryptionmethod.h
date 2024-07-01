@@ -35,24 +35,31 @@ struct EncryptionMethod {
   public:
     /// Enumerate the methods of encryption.
     enum Value {
-        // A TLS/SSL connection established with these methods will only
-        // understand the TLSv1 protocol.
+        /// When specified as a minimum version, the minimum version is
+        /// interpreted as the minimum version suggested by the current
+        /// standards of cryptography. When specified as a maximum version, the
+        /// maximum version is interpreted as the maximum version supported by
+        /// the implementation.
+        e_DEFAULT,
+
+        /// A TLS/SSL connection established with these methods will only
+        /// understand the TLSv1 protocol.
         e_TLS_V1_0,
 
-        // A TLS/SSL connection established with these methods will only
-        // understand the TLSv1.1 protocol.
+        /// A TLS/SSL connection established with these methods will only
+        /// understand the TLSv1.1 protocol.
         e_TLS_V1_1,
 
-        // A TLS/SSL connection established with these methods will only
-        // understand the TLSv1.2 protocol.
+        /// A TLS/SSL connection established with these methods will only
+        /// understand the TLSv1.2 protocol.
         e_TLS_V1_2,
 
-        // A TLS/SSL connection established with these methods will only
-        // understand the TLSv1.3 protocol.
+        /// A TLS/SSL connection established with these methods will only
+        /// understand the TLSv1.3 protocol.
         e_TLS_V1_3,
 
-        // A TLS/SSL connection established with these methods may
-        // understand the TLSv1, TLSv1.1 and TLSv1.2 protocols.
+        /// A TLS/SSL connection established with these methods may understand
+        /// the TLSv1, TLSv1.1 and TLSv1.2 protocols.
         e_TLS_V1_X
     };
 
