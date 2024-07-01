@@ -20,72 +20,95 @@
 BSLS_IDENT("$Id: $")
 
 #include <ntsa_error.h>
+#include <ntsa_tcpcongestioncontrolalgorithm.h>
 #include <ntscfg_platform.h>
 #include <ntsscm_version.h>
 #include <bsl_ostream.h>
 #include <bsl_string.h>
 
-#include <ntsa_tcpcongestioncontrolalgorithm.h>
-
 namespace BloombergLP {
 namespace ntsa {
 
-/// Provide a value identifying tcp congestion control algorithm.
-///
-/// @details
-/// Provide a value-semantic type that identifies tcp congestion control
-/// algorithm.
+/// Describe a TCP congestion control strategy.
 ///
 /// @par Attributes
 /// This class is composed of the following attributes.
 ///
-/// @li d_buffer:
-/// Buffer which contains name of the tcp congestion control algorithm.
+/// @li @b algorithm:
+/// The name of the TCP congestion control algorithm.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
 /// @ingroup module_ntsa_system
-
 class TcpCongestionControl
 {
-    bsl::string       d_buffer;
-    bslma::Allocator* d_allocator_p;
+    bsl::string d_algorithm;
 
   public:
-    /// Create new TcpCongestionControl instance having the default value.
-    /// Optionally specify a 'basicAllocator' used to supply memory. If
+    /// Create a new TCP congestion control specification having the default
+    /// value. Optionally specify a 'basicAllocator' used to supply memory. If
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
     explicit TcpCongestionControl(bslma::Allocator* basicAllocator = 0);
 
-    /// Create new TcpCongestionControl instance having the same value as the
-    /// specified `original`. Optionally specify a 'basicAllocator' used to
-    /// supply memory. If 'basicAllocator' is 0, the currently installed
-    /// default allocator is used.
+    /// Create a new TCP congestion control specification using the specified
+    /// 'algorithm'. Optionally specify a 'basicAllocator' used to supply
+    /// memory. If 'basicAllocator' is 0, the currently installed default
+    /// allocator is used.
+    explicit TcpCongestionControl(const bsl::string_view& algorithm,
+                                  bslma::Allocator*       basicAllocator = 0);
+
+    /// Create a new TCP congestion control specification using the specified
+    /// 'algorithm'. Optionally specify a 'basicAllocator' used to supply
+    /// memory. If 'basicAllocator' is 0, the currently installed default
+    /// allocator is used.
+    explicit TcpCongestionControl(
+        TcpCongestionControlAlgorithm::Value algorithm,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Create a new TCP congestion control specification having the same value
+    /// and allocator as the specified 'original' object. Assign an unspecified
+    /// but valid value to the 'original' original.
+    TcpCongestionControl(bslmf::MovableRef<TcpCongestionControl> original)
+        NTSCFG_NOEXCEPT;
+
+    /// Create a new TCP congestion control specification having the same value
+    /// as the specified 'original' object. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
     TcpCongestionControl(const TcpCongestionControl& original,
-                         bslma::Allocator*           basicAllocator);
+                         bslma::Allocator*           basicAllocator = 0);
 
     /// Destroy this object.
     ~TcpCongestionControl();
+
+    /// Assign the value of the specified 'other' object to this object. Assign
+    /// an unspecified but valid value to the 'original' original. Return a
+    /// reference to this modifiable object.
+    TcpCongestionControl& operator=(
+        bslmf::MovableRef<TcpCongestionControl> other);
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
     TcpCongestionControl& operator=(const TcpCongestionControl& other);
 
-    /// Set algorithm name to the specified `value`. Return the error.
+    /// Reset the value of this object to its value upon default construction.
+    void reset();
+
+    /// Set algorithm name to the specified 'value'. Return the error.
     ntsa::Error setAlgorithmName(const bsl::string_view& value);
+
+    /// Set TCP congestion control algorithm set accordingly to the specified
+    /// 'value'. Return the error.
+    ntsa::Error setAlgorithm(TcpCongestionControlAlgorithm::Value value);
 
     /// Return a reference to a string containing name of the tcp congestion
     /// control algorithm.
     const bsl::string& algorithm() const;
 
-    /// Set TCP congestion control algorithm set accordingly to the specified
-    /// `value`. Return the error.
-    ntsa::Error setAlgorithm(TcpCongestionControlAlgorithm::Value value);
-
-    /// Reset the value of this object to its value upon default construction.
-    void reset();
+    /// Return the allocator used to supply memory.
+    bslma::Allocator* allocator() const;
 
     /// Return true if this object has the same value as the specified 'other'
     /// object, otherwise return false.
@@ -94,6 +117,11 @@ class TcpCongestionControl
     /// Return true if the value of this object is less than the value of the
     /// specified 'other' object, otherwise return false.
     bool less(const TcpCongestionControl& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm) const;
 
     /// Format this object to the specified output 'stream' at the
     /// optionally specified indentation 'level' and return a reference to
@@ -110,10 +138,9 @@ class TcpCongestionControl
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(TcpCongestionControl);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(TcpCongestionControl);
 };
 
 /// Write the specified 'object' to the specified 'stream'. Return a modifiable
@@ -152,10 +179,17 @@ template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const TcpCongestionControl& value);
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const TcpCongestionControl& value)
+NTSCFG_INLINE void TcpCongestionControl::hash(HASH_ALGORITHM& algorithm) const
 {
     using bslh::hashAppend;
-    hashAppend(algorithm, value.algorithm());
+    hashAppend(algorithm, d_algorithm);
+}
+
+template <typename HASH_ALGORITHM>
+NTSCFG_INLINE
+void hashAppend(HASH_ALGORITHM& algorithm, const TcpCongestionControl& value)
+{
+    value.hash(algorithm);
 }
 
 }  // close package namespace

@@ -25,9 +25,12 @@ BSLS_IDENT("$Id: $")
 #include <bdlt_currenttime.h>
 #include <bdlt_datetime.h>
 #include <bdlt_epochutil.h>
+#include <bslma_allocator.h>
+#include <bslma_default.h>
 #include <bslma_mallocfreeallocator.h>
 #include <bslma_testallocator.h>
 #include <bslmt_threadutil.h>
+#include <bsls_assert.h>
 #include <bsls_log.h>
 #include <bsls_logseverity.h>
 #include <bsls_platform.h>
@@ -35,9 +38,16 @@ BSLS_IDENT("$Id: $")
 #include <bsl_cstdio.h>
 #include <bsl_cstdlib.h>
 #include <bsl_cstring.h>
+#include <bsl_functional.h>
+#include <bsl_map.h>
+#include <bsl_iostream.h>
+#include <bsl_iomanip.h>
 #include <bsl_ostream.h>
 #include <bsl_sstream.h>
 #include <bsl_stdexcept.h>
+#include <bsl_string.h>
+#include <bsl_utility.h>
+#include <bsl_vector.h>
 
 #if NTS_BUILD_WITH_STACK_TRACE_TEST_ALLOCATOR
 #include <balst_stacktracetestallocator.h>
@@ -45,6 +55,137 @@ BSLS_IDENT("$Id: $")
 
 namespace BloombergLP {
 namespace ntscfg {
+
+/// @internal @brief
+/// Describe a test case context.
+///
+/// @ingroup module_ntscfg
+class TestCaseContext 
+{
+    int                   d_number;
+    bsl::string           d_name;
+    bsl::function<void()> d_function;
+
+private:
+    TestCaseContext(const TestCaseContext&) BSLS_KEYWORD_DELETED;
+    TestCaseContext& operator=(const TestCaseContext&) BSLS_KEYWORD_DELETED;
+
+public:
+    /// Create a new test case context. Optionally specify a 'basicAllocator'
+    /// used to supply memory. If 'basicAllocator' is 0, the currently 
+    /// installed global allocator is used.
+    explicit TestCaseContext(bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new test case context. Optionally specify a 'basicAllocator'
+    /// used to supply memory. If 'basicAllocator' is 0, the currently 
+    /// installed global allocator is used.
+    TestCaseContext(const TestCaseContext& original, 
+                    bslma::Allocator*      basicAllocator = 0);
+
+    /// Destroy this object.
+    ~TestCaseContext();
+
+    /// Set the case number to the specified 'value'.
+    void setNumber(int value);
+
+    /// Set the case name to the specified 'value'.
+    void setName(const bsl::string& value);
+
+    // Set the function that implements the test case to the specified 'value'.
+    void setFunction(const bsl::function<void()>& value);
+
+    /// Execute the test.
+    void execute();
+
+    /// Return the case number.
+    int number() const;
+
+    /// Return the case name.
+    const bsl::string& name() const;
+
+    /// Return true if the test case is defined, otherwise return false.
+    bool isDefined() const;
+
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(TestCaseContext);
+};
+
+NTSCFG_INLINE
+TestCaseContext::TestCaseContext(bslma::Allocator* basicAllocator)
+: d_number(0)
+, d_name(basicAllocator ? basicAllocator : bslma::Default::globalAllocator())
+, d_function(bsl::allocator_arg, 
+             basicAllocator ? basicAllocator : 
+             bslma::Default::globalAllocator())
+{
+}
+
+NTSCFG_INLINE
+TestCaseContext::TestCaseContext(const TestCaseContext& original, 
+                                 bslma::Allocator*      basicAllocator)
+: d_number(original.d_number)
+, d_name(original.d_name, 
+         basicAllocator ? basicAllocator : bslma::Default::globalAllocator())
+, d_function(bsl::allocator_arg, 
+             basicAllocator ? basicAllocator : 
+             bslma::Default::globalAllocator(),
+             original.d_function)
+{
+}
+
+NTSCFG_INLINE
+TestCaseContext::~TestCaseContext()
+{
+}
+
+NTSCFG_INLINE
+void TestCaseContext::setNumber(int value)
+{
+    d_number = value;
+}
+
+NTSCFG_INLINE
+void TestCaseContext::setName(const bsl::string& value)
+{
+    d_name = value;
+}
+
+NTSCFG_INLINE
+void TestCaseContext::setFunction(const bsl::function<void()>& value)
+{
+    d_function = value;
+}
+
+NTSCFG_INLINE
+void TestCaseContext::execute()
+{
+    BSLS_LOG_INFO("Testing: %s", d_name.c_str());
+    d_function();
+}
+
+NTSCFG_INLINE
+int TestCaseContext::number() const
+{
+    return d_number;
+}
+
+NTSCFG_INLINE
+const bsl::string& TestCaseContext::name() const
+{
+    return d_name;
+}
+
+NTSCFG_INLINE
+bool TestCaseContext::isDefined() const
+{
+    if (d_function) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
 
 /// @internal @brief
 /// The test case number.
@@ -71,17 +212,44 @@ extern int testArgc;
 extern char** testArgv;
 
 /// @internal @brief
+/// The test allocator.
+///
+/// @ingroup module_ntscfg
+extern bslma::Allocator* testAllocator;
+
+/// @internal @brief
 /// Defines a type alias for a function invoked to initialize any global state
 /// used by the test driver.
 ///
 /// @ingroup module_ntscfg
 typedef void (*TestInitCallback)();
 
+/// @internal @brief
 /// Defines a type alias for a function invoked to clean up any global state
 /// used by the test driver.
 ///
 /// @ingroup module_ntscfg
 typedef void (*TestExitCallback)();
+
+/// @internal @brief
+/// Defines a type alias for a function invoked to execute a test case.
+///
+/// @ingroup module_ntscfg
+typedef bsl::function<void()> TestCaseFunction;
+
+/// @internal @brief
+/// Defines a type alias for a map of test case numbers to the associated 
+/// function to invoke to execute that test case.
+///
+/// @ingroup module_ntscfg
+typedef bsl::map<int, ntscfg::TestCaseContext> TestCaseContextMap;
+
+/// @internal @brief
+/// Defines a type alias for a map of test case numbers to the associated 
+/// function to invoke to execute that test case.
+///
+/// @ingroup module_ntscfg
+typedef bsl::vector<TestCaseContextMap::iterator> TestCaseContextVector;
 
 /// The function invoked to initialize any global state used by the test
 /// driver.
@@ -218,6 +386,9 @@ class TestAllocator : public bslma::Allocator
 
 }  // close package namespace
 }  // close enterprise namespace
+
+
+
 
 /// @internal @brief
 /// Assert the 'expression' is true.
@@ -427,10 +598,16 @@ class TestAllocator : public bslma::Allocator
 #define NTSCFG_TEST_ARGC BloombergLP::ntscfg::testArgc
 
 /// @internal @brief
-/// Return the array of command line arguments.
+/// The array of command line arguments.
 ///
 /// @ingroup module_ntscfg
 #define NTSCFG_TEST_ARGV BloombergLP::ntscfg::testArgv
+
+/// @internal @brief
+/// The pointer to the test allocator.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_TEST_ALLOCATOR BloombergLP::ntscfg::testAllocator
 
 /// @internal @brief
 /// Begin a functional test case identified by the specified 'number'.
@@ -702,6 +879,257 @@ class TestAllocator : public bslma::Allocator
         return 0;
 
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/// Begin the definition of the dispatcher for a component test driver.
+#define NTSCFG_TEST_SUITE                                                     \
+    namespace BloombergLP {                                                   \
+    namespace ntscfg {                                                        \
+                                                                              \
+    int               testCase;                                               \
+    int               testVerbosity;                                          \
+    int               testArgc;                                               \
+    char**            testArgv;                                               \
+    bslma::Allocator* testAllocator;                                          \
+    TestInitCallback  testInit;                                               \
+    TestExitCallback  testExit;                                               \
+                                                                              \
+    void printLogMessage(bsls::LogSeverity::Enum severity,                    \
+                         const char*             file,                        \
+                         int                     line,                        \
+                         const char*             message)                     \
+    {                                                                         \
+        bdlt::Datetime now = bdlt::CurrentTime::utc();                        \
+                                                                              \
+        char nowBuffer[256];                                                  \
+        now.printToBuffer(nowBuffer, sizeof nowBuffer, 3);                    \
+                                                                              \
+        bsl::uint64_t thread = bslmt::ThreadUtil::selfIdAsUint64();           \
+                                                                              \
+        bsl::string threadName;                                               \
+        bslmt::ThreadUtil::getThreadName(&threadName);                        \
+                                                                              \
+        bsl::string fileString = file;                                        \
+                                                                              \
+        bsl::string::size_type n = fileString.find_last_of("/\\");            \
+        if (n != bsl::string::npos) {                                         \
+            fileString = fileString.substr(n + 1);                            \
+        }                                                                     \
+                                                                              \
+        bsl::stringstream fileStream;                                         \
+        fileStream << fileString;                                             \
+        fileStream << ':' << line;                                            \
+        fileStream.flush();                                                   \
+                                                                              \
+        char severityCode;                                                    \
+        switch (severity) {                                                   \
+        case bsls::LogSeverity::e_FATAL:                                      \
+            severityCode = 'F';                                               \
+            break;                                                            \
+        case bsls::LogSeverity::e_ERROR:                                      \
+            severityCode = 'E';                                               \
+            break;                                                            \
+        case bsls::LogSeverity::e_WARN:                                       \
+            severityCode = 'W';                                               \
+            break;                                                            \
+        case bsls::LogSeverity::e_INFO:                                       \
+            severityCode = 'I';                                               \
+            break;                                                            \
+        case bsls::LogSeverity::e_DEBUG:                                      \
+            severityCode = 'D';                                               \
+            break;                                                            \
+        case bsls::LogSeverity::e_TRACE:                                      \
+            severityCode = 'T';                                               \
+            break;                                                            \
+        default:                                                              \
+            severityCode = 'X';                                               \
+        }                                                                     \
+                                                                              \
+        if (threadName.empty()) {                                             \
+            bsl::fprintf(stdout,                                              \
+                         "[ %c ][ %s ][ %012llu ][ %40s ]: %s\n",             \
+                         severityCode,                                        \
+                         nowBuffer,                                           \
+                         static_cast<unsigned long long>(thread),             \
+                         fileStream.str().c_str(),                            \
+                         message);                                            \
+        }                                                                     \
+        else {                                                                \
+            bsl::fprintf(stdout,                                              \
+                         "[ %c ][ %s ][ %16s ][ %40s ]: %s\n",                \
+                         severityCode,                                        \
+                         nowBuffer,                                           \
+                         threadName.c_str(),                                  \
+                         fileStream.str().c_str(),                            \
+                         message);                                            \
+        }                                                                     \
+                                                                              \
+        bsl::fflush(stdout);                                                  \
+    }                                                                         \
+    }                                                                         \
+    }                                                                         \
+                                                                              \
+    int main(int argc, char** argv)                                           \
+    {                                                                         \
+        BloombergLP::ntscfg::Platform::initialize();                          \
+        BloombergLP::ntscfg::Platform::ignore(                                \
+            BloombergLP::ntscfg::Signal::e_PIPE);                             \
+                                                                              \
+        BloombergLP::bslmt::ThreadUtil::setThreadName("main");                \
+                                                                              \
+        BloombergLP::bsls::Log::setLogMessageHandler(                         \
+            &BloombergLP::ntscfg::printLogMessage);                           \
+                                                                              \
+        BloombergLP::ntscfg::testCase      = 0;                               \
+        BloombergLP::ntscfg::testVerbosity = 0;                               \
+        BloombergLP::ntscfg::testArgc      = argc;                            \
+        BloombergLP::ntscfg::testArgv      = argv;                            \
+        BloombergLP::ntscfg::testAllocator = 0;                               \
+                                                                              \
+        try {                                                                 \
+            if (argc > 6) {                                                   \
+                bsl::printf("%s\n",                                           \
+                            "usage: <test-driver>.exe "                       \
+                            "[ <test-case> ] [ <verbose> ]");                 \
+                return 1;                                                     \
+            }                                                                 \
+                                                                              \
+            if (argc >= 2) {                                                  \
+                BloombergLP::ntscfg::testCase = bsl::atoi(argv[1]);           \
+            }                                                                 \
+                                                                              \
+            if (argc == 2) {                                                  \
+                BloombergLP::ntscfg::testVerbosity = 0;                       \
+                BloombergLP::bsls::Log::setSeverityThreshold(                 \
+                    BloombergLP::bsls::LogSeverity::e_FATAL);                 \
+            }                                                                 \
+                                                                              \
+            if (argc >= 3) {                                                  \
+                BloombergLP::ntscfg::testVerbosity = 2;                       \
+                BloombergLP::bsls::Log::setSeverityThreshold(                 \
+                    BloombergLP::bsls::LogSeverity::e_WARN);                  \
+            }                                                                 \
+                                                                              \
+            if (argc >= 4) {                                                  \
+                BloombergLP::ntscfg::testVerbosity = 3;                       \
+                BloombergLP::bsls::Log::setSeverityThreshold(                 \
+                    BloombergLP::bsls::LogSeverity::e_INFO);                  \
+            }                                                                 \
+                                                                              \
+            if (argc >= 5) {                                                  \
+                BloombergLP::ntscfg::testVerbosity = 4;                       \
+                BloombergLP::bsls::Log::setSeverityThreshold(                 \
+                    BloombergLP::bsls::LogSeverity::e_DEBUG);                 \
+            }                                                                 \
+                                                                              \
+            if (argc == 6) {                                                  \
+                BloombergLP::ntscfg::testVerbosity = 5;                       \
+                BloombergLP::bsls::Log::setSeverityThreshold(                 \
+                    BloombergLP::bsls::LogSeverity::e_TRACE);                 \
+            }                                                                 \
+                                                                              \
+            BloombergLP::ntscfg::TestGuard testGuard;                         \
+                                                                              \
+            BloombergLP::ntscfg::TestCaseContextMap    testCaseMap;           \
+            BloombergLP::ntscfg::TestCaseContextVector testCaseVector;        \
+
+/// Register a functional test case inside a dispatcher for a component test
+/// driver.
+#define NTSCFG_TEST_FUNCTION_INDEX(number, function)                          \
+    testCaseMap[number] = function
+
+/// Register a functional test case inside a dispatcher for a component test
+/// driver.
+#define NTSCFG_TEST_FUNCTION(function)                                        \
+    {                                                                         \
+        const int testCaseNumber =                                            \
+            static_cast<int>(testCaseVector.size() + 1);                      \
+                                                                              \
+        ntscfg::TestCaseContext& testCaseContext =                            \
+            testCaseMap[testCaseNumber];                                      \
+                                                                              \
+        testCaseContext.setNumber(testCaseNumber);                            \
+        testCaseContext.setName(#function);                                   \
+        testCaseContext.setFunction(function);                                \
+                                                                              \
+        testCaseVector.push_back(testCaseMap.find(testCaseNumber));           \
+    }
+
+/// End the definition of the dispatcher for a component test driver.
+#define NTSCFG_TEST_SUITE_END                                                 \
+    if (BloombergLP::ntscfg::testCase == 0) {                                 \
+        BloombergLP::ntscfg::testCase = 1;                                    \
+        while (true) {                                                        \
+            BloombergLP::ntscfg::TestCaseContext& testCaseContext =           \
+                testCaseMap[BloombergLP::ntscfg::testCase];                   \
+                                                                              \
+            if (testCaseContext.isDefined()) {                                \
+                BloombergLP::ntscfg::TestAllocator ta;                        \
+                BloombergLP::ntscfg::testAllocator = &ta;                     \
+                testCaseContext.execute();                                    \
+                NTSCFG_TEST_EQ(ta.numBlocksInUse(), 0);                       \
+                ++BloombergLP::ntscfg::testCase;                              \
+            }                                                                 \
+            else {                                                            \
+                break;                                                        \
+            }                                                                 \
+        }                                                                     \
+    }                                                                         \
+    else {                                                                    \
+        BloombergLP::ntscfg::TestCaseContext& testCaseContext =               \
+            testCaseMap[BloombergLP::ntscfg::testCase];                       \
+                                                                              \
+        if (testCaseContext.isDefined()) {                                    \
+            BloombergLP::ntscfg::TestAllocator ta;                            \
+            BloombergLP::ntscfg::testAllocator = &ta;                         \
+            testCaseContext.execute();                                        \
+            NTSCFG_TEST_EQ(ta.numBlocksInUse(), 0);                           \
+        }                                                                     \
+        else {                                                                \
+            return -1;                                                        \
+        }                                                                     \
+    }                                                                         \
+    }                                                                         \
+    catch (const bsl::exception& e) {                                         \
+        bsl::printf("Test %d failed: %s\n",                                   \
+                    BloombergLP::ntscfg::testCase,                            \
+                    e.what());                                                \
+        return 1;                                                             \
+    }                                                                         \
+    catch (...) {                                                             \
+        bsl::printf("Test %d failed: %s\n",                                   \
+                    BloombergLP::ntscfg::testCase,                            \
+                    "Unknown exception");                                     \
+        return 1;                                                             \
+    }                                                                         \
+                                                                              \
+    BloombergLP::ntscfg::Platform::exit();                                    \
+                                                                              \
+    return 0;                                                                 \
+    }
+
+
+
+
+
+
+
+
+
+
 
 /// @internal @brief
 /// Log at the fatal severity level.

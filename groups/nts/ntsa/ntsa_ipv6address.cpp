@@ -77,7 +77,7 @@ Ipv6Address& Ipv6Address::operator=(const bslstl::StringRef& text)
     return *this;
 }
 
-bool Ipv6Address::parse(const bslstl::StringRef& text)
+bool Ipv6Address::parse(const bslstl::StringRef& text) NTSCFG_NOEXCEPT
 {
     BSLMF_ASSERT(sizeof d_value == 16);
     BSLMF_ASSERT(sizeof d_scopeId == 4);
@@ -189,7 +189,8 @@ bool Ipv6Address::parse(const bslstl::StringRef& text)
     return true;
 }
 
-bsl::size_t Ipv6Address::copyFrom(const void* source, bsl::size_t size)
+bsl::size_t Ipv6Address::copyFrom(const void* source,
+                                  bsl::size_t size) NTSCFG_NOEXCEPT
 {
     if (!checkIpv6BufferUnderflow(size)) {
         return 0;
@@ -201,7 +202,8 @@ bsl::size_t Ipv6Address::copyFrom(const void* source, bsl::size_t size)
     return sizeof d_value;
 }
 
-bsl::size_t Ipv6Address::copyTo(void* destination, bsl::size_t capacity) const
+bsl::size_t Ipv6Address::copyTo(void*       destination,
+                                bsl::size_t capacity) const NTSCFG_NOEXCEPT
 {
     if (!checkIpv6BufferOverflow(capacity)) {
         return 0;
@@ -215,7 +217,7 @@ bsl::size_t Ipv6Address::copyTo(void* destination, bsl::size_t capacity) const
 
 bsl::size_t Ipv6Address::format(char*       buffer,
                                 bsl::size_t capacity,
-                                bool        collapse) const
+                                bool        collapse) const NTSCFG_NOEXCEPT
 {
     if (capacity < ntsa::Ipv6Address::MAX_TEXT_LENGTH + 1) {
         if (capacity > 0) {
@@ -335,7 +337,7 @@ bsl::size_t Ipv6Address::format(char*       buffer,
     return bsl::strlen(buffer);
 }
 
-Ipv6Address Ipv6Address::any()
+Ipv6Address Ipv6Address::any() NTSCFG_NOEXCEPT
 {
     Ipv6Address result;
     result.d_value.d_byQword[0] = 0;
@@ -343,7 +345,7 @@ Ipv6Address Ipv6Address::any()
     return result;
 }
 
-Ipv6Address Ipv6Address::loopback()
+Ipv6Address Ipv6Address::loopback() NTSCFG_NOEXCEPT
 {
     Ipv6Address result;
 #if defined(BSLS_PLATFORM_IS_BIG_ENDIAN)

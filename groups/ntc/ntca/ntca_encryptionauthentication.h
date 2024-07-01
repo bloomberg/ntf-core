@@ -35,6 +35,13 @@ struct EncryptionAuthentication {
   public:
     /// Enumerate the authentication modes.
     enum Value {
+        /// If the socket context is operating in server mode, the server will
+        /// not request a certificate from the client.  If the socket is
+        /// operating in client mode, the handshake will fail if there is no
+        /// trusted certificate authority through which to verify the server's
+        /// identity.
+        e_DEFAULT,
+
         /// If the socket context is operating in server mode, the server
         /// will not request a certificate from the client.  If the socket
         /// context is operating in client mode, the handshake will succeed
@@ -44,9 +51,9 @@ struct EncryptionAuthentication {
         /// If the socket context is operating in server mode, the server
         /// will request a certificate from the client, and the handshake
         /// will fail if either the client does not return a certificate or
-        /// if there is no matching certificate authority through which to
-        /// verify the client's identity.  If the socket is operating in
-        /// client mode, the handshake will fail if there is not matching
+        /// if there is no trusted certificate authority through which to
+        /// verify the client's identity. If the socket is operating in
+        /// client mode, the handshake will fail if there is no trusted
         /// certificate authority through which to verify the server's
         /// identity.
         e_VERIFY

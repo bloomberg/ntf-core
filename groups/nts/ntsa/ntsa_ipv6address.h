@@ -70,51 +70,63 @@ class Ipv6Address
     };
 
     /// Create a new IPv6 address having a default value.
-    Ipv6Address();
+    Ipv6Address() NTSCFG_NOEXCEPT;
 
     /// Create a new IPv6 address parsed from the specified 'text'
     /// representation.
     explicit Ipv6Address(const bslstl::StringRef& text);
 
+    /// Create a new IPv4 address having the same value as the specified
+    /// 'original' object. Assign an unspecified but valid value to the
+    /// 'original' original.
+    Ipv6Address(bslmf::MovableRef<Ipv6Address> original) NTSCFG_NOEXCEPT;
+
     /// Create a new IPv6 address having the same value as the specified
-    /// 'other' object.
-    Ipv6Address(const Ipv6Address& other);
+    /// 'original' object.
+    Ipv6Address(const Ipv6Address& original) NTSCFG_NOEXCEPT;
 
     /// Destroy this object.
-    ~Ipv6Address();
+    ~Ipv6Address() NTSCFG_NOEXCEPT;
+
+    /// Assign the value of the specified 'other' object to this object. Assign
+    /// an unspecified but valid value to the 'original' original. Return a
+    /// reference to this modifiable object.
+    Ipv6Address& operator=(bslmf::MovableRef<Ipv6Address> other)
+        NTSCFG_NOEXCEPT;
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
-    Ipv6Address& operator=(const Ipv6Address& other);
+    Ipv6Address& operator=(const Ipv6Address& other) NTSCFG_NOEXCEPT;
 
     /// Set the value of the object from the specified 'text'.
     Ipv6Address& operator=(const bslstl::StringRef& text);
 
     /// Reset the value of this object to its value upon default
     /// construction.
-    void reset();
+    void reset() NTSCFG_NOEXCEPT;
 
     /// Set the value of this object from the value parsed from its textual
     /// representation. Return true if the 'text' is in a valid format and
     /// was parsed successfully, otherwise return false.
-    bool parse(const bslstl::StringRef& text);
+    bool parse(const bslstl::StringRef& text) NTSCFG_NOEXCEPT;
 
     /// Copy the representation of the IPv6 address from the specified
     /// 'source' having the specified 'size' to this object. Return the
     /// number of bytes read.
-    bsl::size_t copyFrom(const void* source, bsl::size_t size);
+    bsl::size_t copyFrom(const void* source, bsl::size_t size) NTSCFG_NOEXCEPT;
 
     /// Return a reference to the modifiable byte at the specified 'index'.
     /// The behavior is undefined unless 'index < 16'.
-    bsl::uint8_t& operator[](bsl::size_t index);
+    bsl::uint8_t& operator[](bsl::size_t index) NTSCFG_NOEXCEPT;
 
     /// Set the scope ID of the IPv6 address to the specified 'scopeId'.
-    void setScopeId(ntsa::Ipv6ScopeId scopeId);
+    void setScopeId(ntsa::Ipv6ScopeId scopeId) NTSCFG_NOEXCEPT;
 
     /// Copy the value of this object to the representation in the specified
     /// 'destination' having the specified 'capacity'. Return the number of
     /// bytes written.
-    bsl::size_t copyTo(void* destination, bsl::size_t capacity) const;
+    bsl::size_t copyTo(void*       destination,
+                       bsl::size_t capacity) const NTSCFG_NOEXCEPT;
 
     /// Format the IPv6 address into the specified 'buffer' having the
     /// specified 'capacity'. If the specified 'collapse' flag is true,
@@ -124,48 +136,53 @@ class Ipv6Address
     /// of bytes written.
     bsl::size_t format(char*       buffer,
                        bsl::size_t capacity,
-                       bool        collapse = true) const;
+                       bool        collapse = true) const NTSCFG_NOEXCEPT;
 
     /// Return the textual representation of this object.
     bsl::string text() const;
 
     /// Return the value by quad-word at the specified 'index'. The behavior
     /// is undefined unless 'index' < 2.
-    bsl::uint64_t byQword(bsl::size_t index) const;
+    bsl::uint64_t byQword(bsl::size_t index) const NTSCFG_NOEXCEPT;
 
     /// Return true if the IPv6 address is the wildcard address, otherwise
     /// return false.
-    bool isAny() const;
+    bool isAny() const NTSCFG_NOEXCEPT;
 
     /// Return true if the IPv6 address identifies the loopback device,
     /// otherwise return false.
-    bool isLoopback() const;
+    bool isLoopback() const NTSCFG_NOEXCEPT;
 
     /// Return true if the IPv6 address is a private address, otherwise
     /// return false.
-    bool isPrivate() const;
+    bool isPrivate() const NTSCFG_NOEXCEPT;
 
     /// Return true if the IPv6 address is a link-local address, otherwise
     /// return false.
-    bool isLinkLocal() const;
+    bool isLinkLocal() const NTSCFG_NOEXCEPT;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
-    bool equals(const Ipv6Address& other) const;
+    bool equals(const Ipv6Address& other) const NTSCFG_NOEXCEPT;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, without considering the scope ID, otherwise return
     /// false.
-    bool equalsScopeless(const Ipv6Address& other) const;
+    bool equalsScopeless(const Ipv6Address& other) const NTSCFG_NOEXCEPT;
 
     /// Return true if the value of this object is less than the value of
     /// the specified 'other' object, otherwise return false.
-    bool less(const Ipv6Address& other) const;
+    bool less(const Ipv6Address& other) const NTSCFG_NOEXCEPT;
 
     /// Return true if the value of this object is less than the value of
     /// the specified 'other' object, without considering the scope ID,
     /// otherwise return false.
-    bool lessScopeless(const Ipv6Address& other) const;
+    bool lessScopeless(const Ipv6Address& other) const NTSCFG_NOEXCEPT;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm) const;
 
     /// Format this object to the specified output 'stream' at the
     /// optionally specified indentation 'level' and return a reference to
@@ -184,21 +201,36 @@ class Ipv6Address
 
     /// Return the value of the byte at the specified 'index'. The behavior
     /// is undefined unless 'index < 16'.
-    bsl::uint8_t operator[](bsl::size_t index) const;
+    bsl::uint8_t operator[](bsl::size_t index) const NTSCFG_NOEXCEPT;
 
     /// Return the scope ID of the IPv6 address.
-    ntsa::Ipv6ScopeId scopeId() const;
+    ntsa::Ipv6ScopeId scopeId() const NTSCFG_NOEXCEPT;
 
     /// Return the wildcard address.
-    static Ipv6Address any();
+    static Ipv6Address any() NTSCFG_NOEXCEPT;
 
     /// Return the loopback address.
-    static Ipv6Address loopback();
+    static Ipv6Address loopback() NTSCFG_NOEXCEPT;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTSCFG_DECLARE_NESTED_BITWISE_MOVABLE_TRAITS(Ipv6Address);
+    /// This type's default constructor is equivalent to setting each byte of
+    /// the object's footprint to zero.
+    NTSCFG_TYPE_TRAIT_BITWISE_INITIALIZABLE(Ipv6Address);
+
+    /// This type's copy-constructor and copy-assignment operator is equivalent
+    /// to copying each byte of the source object's footprint to each
+    /// corresponding byte of the destination object's footprint.
+    NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(Ipv6Address);
+
+    /// This type's move-constructor and move-assignment operator is equivalent
+    /// to copying each byte of the source object's footprint to each
+    /// corresponding byte of the destination object's footprint.
+    NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(Ipv6Address);
+
+    /// This type's equality-comparison operator is equivalent to comparing
+    /// each byte of one comparand's footprint to each corresponding byte of
+    /// the other comparand's footprint. Note that this trait implies that an
+    /// object of this type has no padding bytes between data members.
+    NTSCFG_TYPE_TRAIT_BITWISE_COMPARABLE(Ipv6Address);
 };
 
 /// Write a formatted, human-readable description of the specified 'object'
@@ -212,19 +244,21 @@ bsl::ostream& operator<<(bsl::ostream& stream, const Ipv6Address& object);
 /// 'rhs', otherwise return false.
 ///
 /// @related ntsa::Ipv6Address
-bool operator==(const Ipv6Address& lhs, const Ipv6Address& rhs);
+bool operator==(const Ipv6Address& lhs,
+                const Ipv6Address& rhs) NTSCFG_NOEXCEPT;
 
 /// Return true if the specified 'lhs' does not have the same value as the
 /// specified 'rhs', otherwise return false.
 ///
 /// @related ntsa::Ipv6Address
-bool operator!=(const Ipv6Address& lhs, const Ipv6Address& rhs);
+bool operator!=(const Ipv6Address& lhs,
+                const Ipv6Address& rhs) NTSCFG_NOEXCEPT;
 
 /// Return true if the specified 'lhs' is "less than" the specified 'rhs',
 /// otherwise return false.
 ///
 /// @related ntsa::Ipv6Address
-bool operator<(const Ipv6Address& lhs, const Ipv6Address& rhs);
+bool operator<(const Ipv6Address& lhs, const Ipv6Address& rhs) NTSCFG_NOEXCEPT;
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
@@ -243,7 +277,7 @@ void hashAppend(HASH_ALGORITHM& algorithm, const Ipv6Address& value);
 #endif
 
 NTSCFG_INLINE
-Ipv6Address::Ipv6Address()
+Ipv6Address::Ipv6Address() NTSCFG_NOEXCEPT
 {
     d_value.d_byQword[0] = 0;
     d_value.d_byQword[1] = 0;
@@ -251,15 +285,26 @@ Ipv6Address::Ipv6Address()
 }
 
 NTSCFG_INLINE
-Ipv6Address::Ipv6Address(const Ipv6Address& other)
+Ipv6Address::Ipv6Address(bslmf::MovableRef<Ipv6Address> original)
+    NTSCFG_NOEXCEPT
 {
-    d_value.d_byQword[0] = other.d_value.d_byQword[0];
-    d_value.d_byQword[1] = other.d_value.d_byQword[1];
-    d_scopeId            = other.d_scopeId;
+    d_value.d_byQword[0] = NTSCFG_MOVE_FROM(original, d_value.d_byQword[0]);
+    d_value.d_byQword[1] = NTSCFG_MOVE_FROM(original, d_value.d_byQword[1]);
+    d_scopeId            = NTSCFG_MOVE_FROM(original, d_scopeId);
+
+    NTSCFG_MOVE_RESET(original);
 }
 
 NTSCFG_INLINE
-Ipv6Address::~Ipv6Address()
+Ipv6Address::Ipv6Address(const Ipv6Address& original) NTSCFG_NOEXCEPT
+{
+    d_value.d_byQword[0] = original.d_value.d_byQword[0];
+    d_value.d_byQword[1] = original.d_value.d_byQword[1];
+    d_scopeId            = original.d_scopeId;
+}
+
+NTSCFG_INLINE
+Ipv6Address::~Ipv6Address() NTSCFG_NOEXCEPT
 {
 }
 
@@ -268,7 +313,20 @@ Ipv6Address::~Ipv6Address()
 #endif
 
 NTSCFG_INLINE
-Ipv6Address& Ipv6Address::operator=(const Ipv6Address& other)
+Ipv6Address& Ipv6Address::operator=(bslmf::MovableRef<Ipv6Address> other)
+    NTSCFG_NOEXCEPT
+{
+    d_value.d_byQword[0] = NTSCFG_MOVE_FROM(other, d_value.d_byQword[0]);
+    d_value.d_byQword[1] = NTSCFG_MOVE_FROM(other, d_value.d_byQword[1]);
+    d_scopeId            = NTSCFG_MOVE_FROM(other, d_scopeId);
+
+    NTSCFG_MOVE_RESET(other);
+
+    return *this;
+}
+
+NTSCFG_INLINE
+Ipv6Address& Ipv6Address::operator=(const Ipv6Address& other) NTSCFG_NOEXCEPT
 {
     d_value.d_byQword[0] = other.d_value.d_byQword[0];
     d_value.d_byQword[1] = other.d_value.d_byQword[1];
@@ -278,7 +336,7 @@ Ipv6Address& Ipv6Address::operator=(const Ipv6Address& other)
 }
 
 NTSCFG_INLINE
-void Ipv6Address::reset()
+void Ipv6Address::reset() NTSCFG_NOEXCEPT
 {
     d_value.d_byQword[0] = 0;
     d_value.d_byQword[1] = 0;
@@ -286,44 +344,44 @@ void Ipv6Address::reset()
 }
 
 NTSCFG_INLINE
-bsl::uint8_t& Ipv6Address::operator[](bsl::size_t index)
+bsl::uint8_t& Ipv6Address::operator[](bsl::size_t index) NTSCFG_NOEXCEPT
 {
     BSLS_ASSERT(index < sizeof d_value);
     return d_value.d_asBytes[index];
 }
 
 NTSCFG_INLINE
-void Ipv6Address::setScopeId(ntsa::Ipv6ScopeId scopeId)
+void Ipv6Address::setScopeId(ntsa::Ipv6ScopeId scopeId) NTSCFG_NOEXCEPT
 {
     d_scopeId = scopeId;
 }
 
 NTSCFG_INLINE
-bool Ipv6Address::isAny() const
+bool Ipv6Address::isAny() const NTSCFG_NOEXCEPT
 {
-    return (*this == Ipv6Address::any());
+    return this->equals(Ipv6Address::any());
 }
 
 NTSCFG_INLINE
-bool Ipv6Address::isLoopback() const
+bool Ipv6Address::isLoopback() const NTSCFG_NOEXCEPT
 {
-    return (*this == Ipv6Address::loopback());
+    return this->equals(Ipv6Address::loopback());
 }
 
 NTSCFG_INLINE
-bool Ipv6Address::isPrivate() const
+bool Ipv6Address::isPrivate() const NTSCFG_NOEXCEPT
 {
     return (d_value.d_asBytes[0] == 0xFD && d_value.d_asBytes[1] == 0x00);
 }
 
 NTSCFG_INLINE
-bool Ipv6Address::isLinkLocal() const
+bool Ipv6Address::isLinkLocal() const NTSCFG_NOEXCEPT
 {
     return (d_value.d_asBytes[0] == 0xFE && d_value.d_asBytes[1] == 0x80);
 }
 
 NTSCFG_INLINE
-bool Ipv6Address::equals(const Ipv6Address& other) const
+bool Ipv6Address::equals(const Ipv6Address& other) const NTSCFG_NOEXCEPT
 {
     return d_value.d_byQword[0] == other.d_value.d_byQword[0] &&
            d_value.d_byQword[1] == other.d_value.d_byQword[1] &&
@@ -332,13 +390,14 @@ bool Ipv6Address::equals(const Ipv6Address& other) const
 
 NTSCFG_INLINE
 bool Ipv6Address::equalsScopeless(const Ipv6Address& other) const
+    NTSCFG_NOEXCEPT
 {
     return d_value.d_byQword[0] == other.d_value.d_byQword[0] &&
            d_value.d_byQword[1] == other.d_value.d_byQword[1];
 }
 
 NTSCFG_INLINE
-bool Ipv6Address::less(const Ipv6Address& other) const
+bool Ipv6Address::less(const Ipv6Address& other) const NTSCFG_NOEXCEPT
 {
     bsl::uint64_t lc0 = BSLS_BYTEORDER_NTOHLL(d_value.d_byQword[0]);
     bsl::uint64_t rc0 = BSLS_BYTEORDER_NTOHLL(other.d_value.d_byQword[0]);
@@ -366,7 +425,7 @@ bool Ipv6Address::less(const Ipv6Address& other) const
 }
 
 NTSCFG_INLINE
-bool Ipv6Address::lessScopeless(const Ipv6Address& other) const
+bool Ipv6Address::lessScopeless(const Ipv6Address& other) const NTSCFG_NOEXCEPT
 {
     bsl::uint64_t lc0 = BSLS_BYTEORDER_NTOHLL(d_value.d_byQword[0]);
     bsl::uint64_t rc0 = BSLS_BYTEORDER_NTOHLL(other.d_value.d_byQword[0]);
@@ -385,21 +444,29 @@ bool Ipv6Address::lessScopeless(const Ipv6Address& other) const
     return lc1 < rc1;
 }
 
+template <typename HASH_ALGORITHM>
+NTSCFG_INLINE void Ipv6Address::hash(HASH_ALGORITHM& algorithm) const
+{
+    using bslh::hashAppend;
+    hashAppend(algorithm, d_value.d_byQword[0]);
+    hashAppend(algorithm, d_value.d_byQword[1]);
+}
+
 NTSCFG_INLINE
-bsl::uint8_t Ipv6Address::operator[](bsl::size_t index) const
+bsl::uint8_t Ipv6Address::operator[](bsl::size_t index) const NTSCFG_NOEXCEPT
 {
     BSLS_ASSERT(index < sizeof d_value);
     return d_value.d_asBytes[index];
 }
 
 NTSCFG_INLINE
-ntsa::Ipv6ScopeId Ipv6Address::scopeId() const
+ntsa::Ipv6ScopeId Ipv6Address::scopeId() const NTSCFG_NOEXCEPT
 {
     return d_scopeId;
 }
 
 NTSCFG_INLINE
-bsl::uint64_t Ipv6Address::byQword(bsl::size_t index) const
+bsl::uint64_t Ipv6Address::byQword(bsl::size_t index) const NTSCFG_NOEXCEPT
 {
     BSLS_ASSERT(index < 2);
     return d_value.d_byQword[index];
@@ -412,19 +479,19 @@ bsl::ostream& operator<<(bsl::ostream& stream, const Ipv6Address& object)
 }
 
 NTSCFG_INLINE
-bool operator==(const Ipv6Address& lhs, const Ipv6Address& rhs)
+bool operator==(const Ipv6Address& lhs, const Ipv6Address& rhs) NTSCFG_NOEXCEPT
 {
     return lhs.equals(rhs);
 }
 
 NTSCFG_INLINE
-bool operator!=(const Ipv6Address& lhs, const Ipv6Address& rhs)
+bool operator!=(const Ipv6Address& lhs, const Ipv6Address& rhs) NTSCFG_NOEXCEPT
 {
     return !operator==(lhs, rhs);
 }
 
 NTSCFG_INLINE
-bool operator<(const Ipv6Address& lhs, const Ipv6Address& rhs)
+bool operator<(const Ipv6Address& lhs, const Ipv6Address& rhs) NTSCFG_NOEXCEPT
 {
     return lhs.less(rhs);
 }
@@ -432,9 +499,7 @@ bool operator<(const Ipv6Address& lhs, const Ipv6Address& rhs)
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const Ipv6Address& value)
 {
-    using bslh::hashAppend;
-    hashAppend(algorithm, value.byQword(0));
-    hashAppend(algorithm, value.byQword(1));
+    value.hash(algorithm);
 }
 
 }  // close package namespace

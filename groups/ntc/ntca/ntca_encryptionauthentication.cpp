@@ -29,6 +29,7 @@ int EncryptionAuthentication::fromInt(EncryptionAuthentication::Value* result,
                                       int                              number)
 {
     switch (number) {
+    case EncryptionAuthentication::e_DEFAULT:
     case EncryptionAuthentication::e_NONE:
     case EncryptionAuthentication::e_VERIFY:
         *result = static_cast<EncryptionAuthentication::Value>(number);
@@ -42,6 +43,10 @@ int EncryptionAuthentication::fromString(
     EncryptionAuthentication::Value* result,
     const bslstl::StringRef&         string)
 {
+    if (bdlb::String::areEqualCaseless(string, "DEFAULT")) {
+        *result = e_DEFAULT;
+        return 0;
+    }
     if (bdlb::String::areEqualCaseless(string, "NONE")) {
         *result = e_NONE;
         return 0;
@@ -58,6 +63,9 @@ const char* EncryptionAuthentication::toString(
     EncryptionAuthentication::Value value)
 {
     switch (value) {
+    case e_DEFAULT: {
+        return "DEFAULT";
+    } break;
     case e_NONE: {
         return "NONE";
     } break;
