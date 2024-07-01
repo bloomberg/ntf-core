@@ -154,7 +154,7 @@ void Ipv4AddressTest::verifyOverloadConstructor()
     {
         bsl::uint32_t value = 0;
         {
-            bsl::uint8_t buffer[4]{0x01, 0x02, 0x03, 0x04};
+            bsl::uint8_t buffer[4] = {0x01, 0x02, 0x03, 0x04};
             NTSCFG_TEST_EQ(sizeof buffer, sizeof value);
             bsl::memcpy(&value, buffer, sizeof buffer);
         }
