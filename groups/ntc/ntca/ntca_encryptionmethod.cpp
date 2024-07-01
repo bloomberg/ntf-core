@@ -28,6 +28,7 @@ namespace ntca {
 int EncryptionMethod::fromInt(EncryptionMethod::Value* result, int number)
 {
     switch (number) {
+    case EncryptionMethod::e_DEFAULT:
     case EncryptionMethod::e_TLS_V1_X:
     case EncryptionMethod::e_TLS_V1_0:
     case EncryptionMethod::e_TLS_V1_1:
@@ -43,6 +44,10 @@ int EncryptionMethod::fromInt(EncryptionMethod::Value* result, int number)
 int EncryptionMethod::fromString(EncryptionMethod::Value* result,
                                  const bslstl::StringRef& string)
 {
+    if (bdlb::String::areEqualCaseless(string, "DEFAULT")) {
+        *result = e_DEFAULT;
+        return 0;
+    }
     if (bdlb::String::areEqualCaseless(string, "TLS_V1_X")) {
         *result = e_TLS_V1_X;
         return 0;
@@ -70,6 +75,9 @@ int EncryptionMethod::fromString(EncryptionMethod::Value* result,
 const char* EncryptionMethod::toString(EncryptionMethod::Value value)
 {
     switch (value) {
+    case e_DEFAULT: {
+        return "DEFAULT";
+    } break;
     case e_TLS_V1_X: {
         return "TLS_V1_X";
     } break;
