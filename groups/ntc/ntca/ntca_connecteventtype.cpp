@@ -30,7 +30,6 @@ int ConnectEventType::fromInt(ConnectEventType::Value* result, int number)
     switch (number) {
     case ConnectEventType::e_COMPLETE:
     case ConnectEventType::e_ERROR:
-    case ConnectEventType::e_REJECTED_BY_LIMIT:
         *result = static_cast<ConnectEventType::Value>(number);
         return 0;
     default:
@@ -49,10 +48,6 @@ int ConnectEventType::fromString(ConnectEventType::Value* result,
         *result = e_ERROR;
         return 0;
     }
-    if (bdlb::String::areEqualCaseless(string, "REJECTED_BY_LIMIT")) {
-        *result = e_REJECTED_BY_LIMIT;
-        return 0;
-    }
 
     return -1;
 }
@@ -65,9 +60,6 @@ const char* ConnectEventType::toString(ConnectEventType::Value value)
     } break;
     case e_ERROR: {
         return "ERROR";
-    } break;
-    case e_REJECTED_BY_LIMIT: {
-        return "REJECTED_BY_LIMIT";
     } break;
     }
 

@@ -1456,23 +1456,6 @@ void StreamSocket::privateFailConnect(
         d_connectOptions.setRetryCount(0);
     }
 
-    if (error == ntsa::Error::e_LIMIT) {
-        if (d_session_sp) {
-            ntca::ConnectEvent event;
-            event.setType(ntca::ConnectEventType::e_REJECTED_BY_LIMIT);
-            event.setContext(d_connectContext);
-
-            ntcs::Dispatch::announceConnectionRejected(d_session_sp,
-                                                       self,
-                                                       event,
-                                                       d_sessionStrand_sp,
-                                                       d_reactorStrand_sp,
-                                                       self,
-                                                       true,
-                                                       &d_mutex);
-        }
-    }
-
     if (!d_connectContext.error() || close) {
         NTCI_LOG_DEBUG("Connection attempt has failed: %s",
                        error.text().c_str());

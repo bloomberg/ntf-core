@@ -181,10 +181,6 @@ class StreamSocketSession
         const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
         const ntca::ErrorEvent&                    event);
 
-    virtual void processConnectionRejectedLimitReached(
-        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-        const ntca::ConnectEvent&                  event);
-
     /// Return the strand on which this object's functions should be called.
     virtual const bsl::shared_ptr<ntci::Strand>& strand() const;
 };

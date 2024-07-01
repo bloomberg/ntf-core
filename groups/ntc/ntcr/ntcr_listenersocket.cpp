@@ -1263,10 +1263,14 @@ ntsa::Error ListenerSocket::privateDequeueBacklog(
 
         if (error == ntsa::Error::e_LIMIT) {
             if (d_session_sp) {
-                ntca::ConnectEvent event;
-                event.setType(ntca::ConnectEventType::e_REJECTED_BY_LIMIT);
+                ntca::ConnectContext context;
+                context.setError(error);
 
-                ntcs::Dispatch::announceConnectionRejected(
+                ntca::ConnectEvent event;
+                event.setType(ntca::ConnectEventType::e_ERROR);
+                event.setContext(context);
+
+                ntcs::Dispatch::announceConnectionLimit(
                     d_session_sp,
                     self,
                     event,
