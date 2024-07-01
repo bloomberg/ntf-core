@@ -69,6 +69,14 @@ class Ipv4Address
     /// Create a new IPv4 address having a default value.
     Ipv4Address() NTSCFG_NOEXCEPT;
 
+    /// Create a new IPv4 address having the specified 'value' encoded in
+    /// network byte order.
+    explicit Ipv4Address(bsl::uint32_t value) NTSCFG_NOEXCEPT;
+
+    /// Create a new IPv4 address parsed from the specified 'text'
+    /// representation.
+    explicit Ipv4Address(const bslstl::StringRef& text);
+
     /// Create a new IPv4 address having the same value as the specified
     /// 'original' object. Assign an unspecified but valid value to the
     /// 'original' original.
@@ -77,14 +85,6 @@ class Ipv4Address
     /// Create a new IPv4 address having the same value as the specified
     /// 'original' object.
     Ipv4Address(const Ipv4Address& original) NTSCFG_NOEXCEPT;
-
-    /// Create a new IPv4 address having the specified 'value' encoded in
-    /// network byte order.
-    explicit Ipv4Address(bsl::uint32_t value) NTSCFG_NOEXCEPT;
-
-    /// Create a new IPv4 address parsed from the specified 'text'
-    /// representation.
-    explicit Ipv4Address(const bslstl::StringRef& text);
 
     /// Destroy this object.
     ~Ipv4Address() NTSCFG_NOEXCEPT;
@@ -169,7 +169,7 @@ class Ipv4Address
     /// Contribute the values of the salient attributes of this object to the
     /// specified hash 'algorithm'.
     template <typename HASH_ALGORITHM>
-    void hash(HASH_ALGORITHM& algorithm) const NTSCFG_NOEXCEPT;
+    void hash(HASH_ALGORITHM& algorithm) const;
 
     /// Format this object to the specified output 'stream' at the
     /// optionally specified indentation 'level' and return a reference to
@@ -228,19 +228,19 @@ bsl::ostream& operator<<(bsl::ostream& stream, const Ipv4Address& object);
 /// 'rhs', otherwise return false.
 ///
 /// @related ntsa::Ipv4Address
-bool operator==(const Ipv4Address& lhs, const Ipv4Address& rhs);
+bool operator==(const Ipv4Address& lhs, const Ipv4Address& rhs) NTSCFG_NOEXCEPT;
 
 /// Return true if the specified 'lhs' does not have the same value as the
 /// specified 'rhs', otherwise return false.
 ///
 /// @related ntsa::Ipv4Address
-bool operator!=(const Ipv4Address& lhs, const Ipv4Address& rhs);
+bool operator!=(const Ipv4Address& lhs, const Ipv4Address& rhs) NTSCFG_NOEXCEPT;
 
 /// Return true if the specified 'lhs' is "less than" the specified 'rhs',
 /// otherwise return false.
 ///
 /// @related ntsa::Ipv4Address
-bool operator<(const Ipv4Address& lhs, const Ipv4Address& rhs);
+bool operator<(const Ipv4Address& lhs, const Ipv4Address& rhs) NTSCFG_NOEXCEPT;
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
@@ -256,6 +256,12 @@ Ipv4Address::Ipv4Address() NTSCFG_NOEXCEPT
 }
 
 NTSCFG_INLINE
+Ipv4Address::Ipv4Address(bsl::uint32_t value) NTSCFG_NOEXCEPT
+{
+    d_value.d_asDword = value;
+}
+
+NTSCFG_INLINE
 Ipv4Address::Ipv4Address(bslmf::MovableRef<Ipv4Address> original)
     NTSCFG_NOEXCEPT
 {
@@ -267,12 +273,6 @@ NTSCFG_INLINE
 Ipv4Address::Ipv4Address(const Ipv4Address& original) NTSCFG_NOEXCEPT
 {
     d_value.d_asDword = original.d_value.d_asDword;
-}
-
-NTSCFG_INLINE
-Ipv4Address::Ipv4Address(bsl::uint32_t value) NTSCFG_NOEXCEPT
-{
-    d_value.d_asDword = value;
 }
 
 NTSCFG_INLINE
@@ -384,7 +384,6 @@ bool Ipv4Address::less(const Ipv4Address& other) const NTSCFG_NOEXCEPT
 
 template <typename HASH_ALGORITHM>
 NTSCFG_INLINE void Ipv4Address::hash(HASH_ALGORITHM& algorithm) const
-    NTSCFG_NOEXCEPT
 {
     using bslh::hashAppend;
     hashAppend(algorithm, BSLS_BYTEORDER_NTOHL(d_value.d_asDword));
@@ -404,19 +403,19 @@ bsl::ostream& operator<<(bsl::ostream& stream, const Ipv4Address& object)
 }
 
 NTSCFG_INLINE
-bool operator==(const Ipv4Address& lhs, const Ipv4Address& rhs)
+bool operator==(const Ipv4Address& lhs, const Ipv4Address& rhs) NTSCFG_NOEXCEPT
 {
     return lhs.equals(rhs);
 }
 
 NTSCFG_INLINE
-bool operator!=(const Ipv4Address& lhs, const Ipv4Address& rhs)
+bool operator!=(const Ipv4Address& lhs, const Ipv4Address& rhs) NTSCFG_NOEXCEPT
 {
     return !operator==(lhs, rhs);
 }
 
 NTSCFG_INLINE
-bool operator<(const Ipv4Address& lhs, const Ipv4Address& rhs)
+bool operator<(const Ipv4Address& lhs, const Ipv4Address& rhs) NTSCFG_NOEXCEPT
 {
     return lhs.less(rhs);
 }

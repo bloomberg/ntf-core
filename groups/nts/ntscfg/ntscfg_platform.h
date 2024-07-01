@@ -289,7 +289,7 @@ namespace ntscfg {
 /// @ingroup module_ntscfg
 #define NTSCFG_TYPE_CHECK_BITWISE_MOVABLE(Type) \
     ((bslmf::IsBitwiseMoveable<Type>::value) && \
-     (bsl::is_nothrow_move_constructible<ntsa::Ipv4Address>::value))
+     (bsl::is_nothrow_move_constructible<Type>::value))
 
 /// Return true if the specified 'type' is bitwise-copyable, otherwise return
 /// false.

@@ -118,6 +118,11 @@ class TcpCongestionControl
     /// specified 'other' object, otherwise return false.
     bool less(const TcpCongestionControl& other) const;
 
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm) const;
+
     /// Format this object to the specified output 'stream' at the
     /// optionally specified indentation 'level' and return a reference to
     /// the modifiable 'stream'.  If 'level' is specified, optionally
@@ -174,10 +179,17 @@ template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const TcpCongestionControl& value);
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const TcpCongestionControl& value)
+NTSCFG_INLINE void TcpCongestionControl::hash(HASH_ALGORITHM& algorithm) const
 {
     using bslh::hashAppend;
-    hashAppend(algorithm, value.algorithm());
+    hashAppend(algorithm, d_algorithm);
+}
+
+template <typename HASH_ALGORITHM>
+NTSCFG_INLINE
+void hashAppend(HASH_ALGORITHM& algorithm, const TcpCongestionControl& value)
+{
+    value.hash(algorithm);
 }
 
 }  // close package namespace
