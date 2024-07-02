@@ -20,7 +20,6 @@
 BSLS_IDENT("$Id: $")
 
 #include <ntca_acceptqueueevent.h>
-#include <ntca_connectevent.h>
 #include <ntca_errorevent.h>
 #include <ntca_shutdownevent.h>
 #include <ntccfg_platform.h>
@@ -115,11 +114,6 @@ class ListenerSocketSession
     virtual void processError(
         const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
         const ntca::ErrorEvent&                      event);
-
-    /// Process indication of connection rejection due to established limit.
-    virtual void processListenerSocketLimit(
-        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
-        const ntca::ConnectEvent& event);
 
     /// Return the strand on which this object's functions should be called.
     virtual const bsl::shared_ptr<ntci::Strand>& strand() const;

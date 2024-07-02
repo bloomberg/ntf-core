@@ -758,7 +758,7 @@ struct Dispatch {
         bool                                                defer,
         ntccfg::Mutex*                                      mutex);
 
-    /// Announce to the specified 'session' the specified 'socket' rejected
+    /// Announce to the specified 'manager' the specified 'socket' rejected
     /// the connection. If the specified 'defer' flag is
     /// false and the requirements of the specified 'destination' strand
     /// permits the announcement to be executed immediately by the specified
@@ -772,9 +772,8 @@ struct Dispatch {
     /// announcement may be invoked on any strand by any thread; a null
     /// 'source' strand indicates the source strand is unknown.
     static void announceConnectionLimit(
-        const bsl::shared_ptr<ntci::ListenerSocketSession>& session,
+        const bsl::shared_ptr<ntci::ListenerSocketManager>& manager,
         const bsl::shared_ptr<ntci::ListenerSocket>&        socket,
-        const ntca::ConnectEvent&                           event,
         const bsl::shared_ptr<ntci::Strand>&                destination,
         const bsl::shared_ptr<ntci::Strand>&                source,
         const bsl::shared_ptr<ntci::Executor>&              executor,

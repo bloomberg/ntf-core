@@ -1262,19 +1262,11 @@ ntsa::Error ListenerSocket::privateDequeueBacklog(
         streamSocket->close();
 
         if (error == ntsa::Error::e_LIMIT) {
-            if (d_session_sp) {
-                ntca::ConnectContext context;
-                context.setError(error);
-
-                ntca::ConnectEvent event;
-                event.setType(ntca::ConnectEventType::e_ERROR);
-                event.setContext(context);
-
+            if (d_manager_sp) {
                 ntcs::Dispatch::announceConnectionLimit(
-                    d_session_sp,
+                    d_manager_sp,
                     self,
-                    event,
-                    d_sessionStrand_sp,
+                    d_managerStrand_sp,
                     ntci::Strand::unknown(),
                     self,
                     true,

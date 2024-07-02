@@ -1132,41 +1132,36 @@ void Dispatch::announceAcceptQueueRateLimitRelaxed(
 }
 
 void Dispatch::announceConnectionLimit(
-    const bsl::shared_ptr<ntci::ListenerSocketSession>& session,
+    const bsl::shared_ptr<ntci::ListenerSocketManager>& manager,
     const bsl::shared_ptr<ntci::ListenerSocket>&        socket,
-    const ntca::ConnectEvent&                           event,
     const bsl::shared_ptr<ntci::Strand>&                destination,
     const bsl::shared_ptr<ntci::Strand>&                source,
     const bsl::shared_ptr<ntci::Executor>&              executor,
     bool                                                defer,
     ntccfg::Mutex*                                      mutex)
 {
-    if (!session) {
+    if (!manager) {
         return;
     }
 
     if (NTCCFG_LIKELY(!defer &&
                       ntci::Strand::passthrough(destination, source)))
     {
-        bsl::shared_ptr<ntci::ListenerSocketSession> sessionGuard = session;
+        bsl::shared_ptr<ntci::ListenerSocketManager> managerGuard = manager;
         ntccfg::UnLockGuard                          guard(mutex);
-        sessionGuard->processListenerSocketLimit(socket, event);
+        managerGuard->processListenerSocketLimit(socket);
     }
     else if (destination) {
-        destination->execute(
-            NTCCFG_BIND(&ntci::ListenerSocketSession::
-                            processListenerSocketLimit,
-                        session,
-                        socket,
-                        event));
+        destination->execute(NTCCFG_BIND(
+            &ntci::ListenerSocketManager::processListenerSocketLimit,
+            manager,
+            socket));
     }
     else {
-        executor->execute(
-            NTCCFG_BIND(&ntci::ListenerSocketSession::
-                            processListenerSocketLimit,
-                        session,
-                        socket,
-                        event));
+        executor->execute(NTCCFG_BIND(
+            &ntci::ListenerSocketManager::processListenerSocketLimit,
+            manager,
+            socket));
     }
 }
 

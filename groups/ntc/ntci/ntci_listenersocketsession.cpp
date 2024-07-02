@@ -124,14 +124,6 @@ void ListenerSocketSession::processError(
     NTCCFG_WARNING_UNUSED(event);
 }
 
-void ListenerSocketSession::processListenerSocketLimit(
-    const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
-    const ntca::ConnectEvent& event)
-{
-    NTCCFG_WARNING_UNUSED(listenerSocket);
-    NTCCFG_WARNING_UNUSED(event);
-}
-
 const bsl::shared_ptr<ntci::Strand>& ListenerSocketSession::strand() const
 {
     return ntci::Strand::unspecified();
