@@ -475,6 +475,20 @@ void ListenerSocket::privateCompleteAccept(
             error);
         NTCS_METRICS_UPDATE_ACCEPT_FAILURE();
         streamSocket->close();
+
+        if (error == ntsa::Error::e_LIMIT) {
+            if (d_manager_sp) {
+                ntcs::Dispatch::announceConnectionLimit(
+                    d_manager_sp,
+                    self,
+                    d_managerStrand_sp,
+                    ntci::Strand::unknown(),
+                    self,
+                    true,
+                    &d_mutex);
+            }
+        }
+
         return;
     }
 

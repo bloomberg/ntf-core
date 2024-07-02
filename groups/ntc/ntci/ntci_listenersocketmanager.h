@@ -19,13 +19,8 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <ntccfg_platform.h>
 #include <ntci_strand.h>
 #include <ntci_streamsocketmanager.h>
-#include <ntcscm_version.h>
-#include <ntsa_endpoint.h>
-#include <ntsa_error.h>
-#include <ntsi_descriptor.h>
 #include <bsl_memory.h>
 
 namespace BloombergLP {
@@ -51,6 +46,11 @@ class ListenerSocketManager : public ntci::StreamSocketManager
 
     /// Process the closure of the specified 'listenerSocket'.
     virtual void processListenerSocketClosed(
+        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket);
+
+    /// Process indication that the specified 'listenerSocket' rejected
+    /// incoming connection.
+    virtual void processListenerSocketLimit(
         const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket);
 
     /// Return the strand on which this object's functions should be called.

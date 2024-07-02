@@ -5886,8 +5886,8 @@ ntsa::Error StreamSocket::deregisterSession()
 
 ntsa::Error StreamSocket::setZeroCopyThreshold(bsl::size_t value)
 {
-    bsl::shared_ptr<StreamSocket>  self = this->getSelf(this);
-    LockGuard lock(&d_mutex);
+    bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
+    LockGuard                     lock(&d_mutex);
 
     return this->privateZeroCopyEngage(self, value);
 }

@@ -758,6 +758,28 @@ struct Dispatch {
         bool                                                defer,
         ntccfg::Mutex*                                      mutex);
 
+    /// Announce to the specified 'manager' the specified 'socket' rejected
+    /// the connection. If the specified 'defer' flag is
+    /// false and the requirements of the specified 'destination' strand
+    /// permits the announcement to be executed immediately by the specified
+    /// 'source' strand, unlock the specified 'mutex', execute the
+    /// announcement, then relock the 'mutex'. Otherwise, enqueue the
+    /// announcement to be executed on the 'destination' strand, if not
+    /// null, or by the specified 'executor' otherwise. The behavior is
+    /// undefined if 'mutex' is null or not locked. The behavior is *not*
+    /// undefined if either the 'destination' strand is null or the 'source'
+    /// strand is null; a null 'destination' strand indicates the
+    /// announcement may be invoked on any strand by any thread; a null
+    /// 'source' strand indicates the source strand is unknown.
+    static void announceConnectionLimit(
+        const bsl::shared_ptr<ntci::ListenerSocketManager>& manager,
+        const bsl::shared_ptr<ntci::ListenerSocket>&        socket,
+        const bsl::shared_ptr<ntci::Strand>&                destination,
+        const bsl::shared_ptr<ntci::Strand>&                source,
+        const bsl::shared_ptr<ntci::Executor>&              executor,
+        bool                                                defer,
+        ntccfg::Mutex*                                      mutex);
+
     /// Announce to the specified 'session' the initiation of the shutdown
     /// sequence of the specified 'socket' from the specified 'origin'. If
     /// the specified 'defer' flag is false and the requirements of the
