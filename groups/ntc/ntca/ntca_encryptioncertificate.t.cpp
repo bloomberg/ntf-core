@@ -615,6 +615,66 @@ NTCCFG_TEST_CASE(5)
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
+NTCCFG_TEST_CASE(6)
+{
+    // Concern: Examine the fields of a certificate.
+
+    ntccfg::TestAllocator ta;
+    {
+        ntsa::Error error;
+        int         rc;
+
+        NTCCFG_TEST_LOG_DEBUG
+            << "Decoding: "
+            << bdlb::PrintStringSingleLineHexDumper(
+                   (const char*)test::k_USER_CERTIFICATE_ASN1,
+                   sizeof test::k_USER_CERTIFICATE_ASN1)
+            << NTCCFG_TEST_LOG_END;
+
+        bdlsb::FixedMemInStreamBuf isb(
+            reinterpret_cast<const char*>(test::k_USER_CERTIFICATE_ASN1),
+            sizeof test::k_USER_CERTIFICATE_ASN1);
+
+        ntsa::AbstractSyntaxDecoder decoder(&isb, &ta);
+
+        ntca::EncryptionCertificate certificate(&ta);
+        error = certificate.decode(&decoder);
+        NTCCFG_TEST_OK(error);
+
+        NTCCFG_TEST_LOG_DEBUG << "Certificate = " << certificate
+                              << NTCCFG_TEST_LOG_END;
+
+        bool matchesSubjectDomainName = 
+            certificate.matchesSubjectDomainName("ntf.bloomberg.com");
+
+        bool isEllipticCurve = certificate.usesSubjectPublicKeyAlgorithm(
+                ntca::EncryptionKeyAlgorithmIdentifierType::e_ELLIPTIC_CURVE);
+        NTCCFG_TEST_TRUE(isEllipticCurve);
+
+        bool isEllipticCurveP256 = 
+            certificate.usesSubjectPublicKeyAlgorithmParameters(
+                ntca::EncryptionKeyEllipticCurveParametersIdentifierType
+                ::e_SEC_P256_R1);
+        NTCCFG_TEST_TRUE(isEllipticCurveP256);
+
+        bool allowsDigitalSignatures = 
+            certificate.allowsKeyUsage(
+                ntca::EncryptionCertificateSubjectKeyUsageType
+                ::e_DIGITAL_SIGNATURE);
+        NTCCFG_TEST_FALSE(allowsDigitalSignatures);
+
+        bool allowsTlsClients = 
+            certificate.allowsKeyUsage(
+                ntca::EncryptionCertificateSubjectKeyUsageExtendedType
+                ::e_TLS_CLIENT);
+        NTCCFG_TEST_FALSE(allowsTlsClients);
+
+        bool isCa = certificate.isAuthority();
+        NTCCFG_TEST_FALSE(isCa);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
 NTCCFG_TEST_DRIVER
 {
     NTCCFG_TEST_REGISTER(1);
@@ -622,5 +682,6 @@ NTCCFG_TEST_DRIVER
     NTCCFG_TEST_REGISTER(3);
     NTCCFG_TEST_REGISTER(4);
     NTCCFG_TEST_REGISTER(5);
+    NTCCFG_TEST_REGISTER(6);
 }
 NTCCFG_TEST_DRIVER_END;

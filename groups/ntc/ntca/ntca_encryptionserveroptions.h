@@ -45,28 +45,39 @@ namespace ntca {
 /// Describe the configuration of encryption in the server role.
 ///
 /// @details
-/// This class describes the configuration of a an encryption session operating
-/// in the server role. Encryption servers passively wait for the peer to
-/// initiate a cryptographically secure session of communication, typically
-/// according to either the Transport Layer Security (TLS) protocol or Secure
-/// Shell (SSH) protocol, within which data is transformed from from cleartext
-/// to ciphertext.
+/// This class describes the configuration of a source of encryption sessions
+/// operating in the server role. Encryption servers passively wait for the
+/// peer to initiate a cryptographically secure session of communication,
+/// typically according to either the Transport Layer Security (TLS) protocol
+/// or Secure Shell (SSH) protocol, within which data is transformed from from
+/// cleartext to ciphertext. An encryption server may generate one or more 
+/// encryption sessions acting in the server role.
 ///
 /// @par Attributes
 /// This class is composed of the following attributes.
 ///
 /// @li @b minMethod:
 /// The type and minimum version of the encryption protocol acceptable for use.
+/// If set to 'ntca::EncryptionMethod::e_DEFAULT' (the default value) the
+/// minimum version is interpreted as the minimum version suggested by the
+/// current standards of cryptography.
 ///
 /// @li @b maxMethod:
 /// The type and maximum version of the encryption protocol acceptable for use.
+/// If set to 'ntca::EncryptionMethod::e_DEFAULT' (the default value) the
+/// maximum version is interpreted as the maximum version supported by the 
+/// TLS implementation.
 ///
 /// @li @b authentication:
 /// Flag that determines whether the peer's certificate is verified as signed
-/// by a trusted issuer.
+/// by a trusted issuer. If set to 'ntca::EncryptionAuthentication::e_DEFAULT'
+/// (the default value), the server does not verify any of its clients's 
+/// identities.
 ///
 /// @li @b validation:
-/// The peer certificate validation requirements and allowances.
+/// The peer certificate validation requirements and allowances. The default
+/// value verifies the peer's certificate is signed by a trusted certificate
+/// authority, if peer authentication is enabled.
 ///
 /// @li @b resources:
 /// The resources containing the private key, certificate, and trusted
@@ -79,10 +90,183 @@ namespace ntca {
 /// @li @b optionsMap
 /// The optional, effective options to use when listening as a specific server
 /// name. Note that a server name, in this context, may be an IP address,
-/// domain name, or domain name wildcard such as "*.example.com".
+/// domain name, a domain name wildcard such as "*.example.com", or any 
+/// sequence of characters used to identify the server.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
+///
+/// @par Usage Example: Defining trusted certificate authorities
+/// Typically, servers that desire to communicate securely with a remote client
+/// do not also also verify the identity claimed by the client is authentic
+/// (i.e., the client is who they say they are.). However, in certain cases
+/// authentication of the clients is desired. In TLS, authentication is
+/// achieved by verifying the issuer and signer of the peer's certificate is
+/// trusted by server, forming a chain a trust: if the server trusts the signer
+/// of the peer's certificate, the server trusts the signer has verified the
+/// peer's identity, and transitively trusts the peer. 
+///
+/// To build and verify this chain of trust, the server must explicitly define
+/// which certificates form the roots of each chain. By default, all
+/// certificate authorities trusted by the system are also trusted by the
+/// server, or alternatively, the server may specify a directory from which
+/// trusted certificates are discovered and loaded. Additionally, the server
+/// may specify paths to the trusted certificate authorities stored on disk.
+///
+/// For the purposes of this example, let's imagine there exists a directory
+/// "/etc/pki/trust/default" that contains certificates of trusted certificate
+/// authorities. Furthermore, let's imagine there exists two additional files,
+/// "/etc/pki/trust/extra/mozilla.pki" and "/etc/pki/trust/extra/google.pki",
+/// each containing certificate(s) that should also be trusted.
+///
+/// Now, let's define encryption server options for an encryption server whose
+/// encryption sessions authenticate the peer's certificate against these
+/// trusted certificate authorities.
+///
+///     ntca::EncryptionServerOptions encryptionServerOptions;
+///
+///     encryptionServerOptions.setAuthentication(
+///         ntca::EncryptionAuthentication::e_VERIFY);
+///
+///     encryptionServerOptions.setAuthorityDirectory(
+///         "/etc/pki/trust/default");
+///
+///     encryptionServerOptions.addAuthorityFile(
+///         "/etc/pki/trust/extra/mozilla.pki");
+///
+///     encryptionServerOptions.addAuthorityFile(
+///         "/etc/pki/trust/extra/google.pki");
+///
+/// Note that "mozilla.pki" and "google.pki" may be any supported format
+/// enumerated by ntca::EncryptionResourceType, and may even contain a
+/// concatenation of multiple objects of that resource type (the files may
+/// contain a concatenation of PEM-encoded certificates, for example.) 
+///
+/// Also note that if any file contains more than one resource type (i.e. a
+/// private key, and/or an end-user certificate, and/or a set of trusted
+/// certificate authorities) then the whole bundle can be loaded simultanously.
+/// Let's imagine there exists "/etc/pki/application/task.pki" that contains
+/// all the public key cryptography objects required for operation: the
+/// server's private key, its end-user certificate, and all the trusted
+/// certificate authorities. All those objects can be loaded by calling the
+/// single function:
+///
+///     encryptionServerOptions.addResourceFile(
+///         "/etc/pki/application/task.pki");
+///
+/// This function will set any private key found in the file to the servers's
+/// private key, set any end-user certificate found in the file as the server's
+/// certificate, and the server will trust any certificate authorities found 
+/// in the file.
+///
+/// @par Usage Example: Defining end-user certificates and private keys
+/// Typically, clients that desire to communicate securely with a remote server
+/// also desire to verify the identity claimed by the server is authentic
+/// (i.e., the server is who they say they are.). The user must assign an
+/// end-user certificate and private key to the encryption server options, with
+/// the certificate signed by some authority that the client must trust for the
+/// handshake to succeed.
+///
+/// Let's imagine this servers's certificate and keys are stored in
+/// "/etc/pki/my/certificate.pki" and "/etc/pki/my/key.pki". Let's register
+/// that certificate and private key to be use during the encryption session.
+///
+///     ntca::EncryptionServerOptions encryptionServerOptions;
+///
+///     encryptionServerOptions.setIdentityFile("/etc/pki/my/certificate.pki");
+///     encryptionServerOptions.setPrivateKeyFile("/etc/pki/my/key.pki");
+///
+/// If the end-user certificate and private key are bundled in the same
+/// file, they may be loaded simulatenously. Let's say the aforementioned
+/// certificate and private key are bundled together into the same file
+/// "/etc/pki/my/bundle.pki", the certificate and private key may be registered
+/// simulatenously:
+///
+///     encryptionServerOptions.addResourceFile("/etc/pki/my/bundle.pki");
+///
+/// @par Usage Example: Loading symmetrically-encrypted private keys
+/// Since resources may be bundled together into the same file, or the user may
+/// wish the store or transmit this file containing the private key unsecurely,
+/// the private key itself may be symmetrically encrypted and require a
+/// "passphrase" to decrypt it. Processing such symmetrically-encrypted private
+/// keys requires the user to install a callback, invoked to resolve the
+/// required passphrase to decode the private key.
+///
+/// Let's imagine a symmetrically-encrypted private key is stored at
+/// "/etc/pki/my/key.pki" encrypted using the passphrase "My$3cret!". To
+/// register this private key, the user must implement a passphrase callback
+/// and register than callback to be invoked when the private key is decoded:
+///
+///     ntsa::Error passphraseCallback(ntca::EncryptionSecret* result)
+///     {
+///         result->append("My$3cret!", 9);
+///         return ntsa::Error(ntsa::Error::e_INVALID);
+///     }
+///
+/// Now, let's register the private key to be used by the server, associated
+/// with our passphrase callback.
+///
+///     ntca::EncryptionResourceOptions resourceOptions;
+///     resourceOptions.setSecretCallback(&passphraseCallback);
+///
+///     ntca::EncryptionServerOptions encryptionServerOptions;
+///     
+///     encryptionServerOptions.setPrivateKeyFile(
+///         "/etc/pki/my/key.pki", resourceOptions);
+///
+/// @par Usage Example: Defining server name-specific configuration
+/// The TLS protocol allows the client to specify the "name" of the server with
+/// which they wish to establish secure communication. This feature is termed
+/// "server name indication", or SNI. See RFC 6066 section 3 for more
+/// information on how an why SNI should be used. Clients may optionally
+/// specify the "server name" to which they are connecting when initiating the
+/// upgrade operation (see 'ntci::StreamSocket::upgrade'.) The server may
+/// define a configuration "override" for that server name, which, for example,
+/// uses different end-user certificates and private keys depending on the
+/// targetr server name.
+///
+/// Let's imagine there exists three files, "/etc/pki/trust/server/default.pki"
+/// "/etc/pki/trust/server/beta.pki", and "/etc/pki/trust/server/internal.pki",
+/// each containing a certificate and private key; the first file should be
+/// used when the client does not specify a server name, the second when the
+/// client indicates it requests the server name "beta.example.com", and the
+/// third when client indicates it requests "internal.example.com". (Note the
+/// server name is usually a domain name, but this is not required.)
+///
+/// First, let's define the default server configuration. This configuration
+/// is effective when the client does not specify an explicit server name
+/// during the handshake to establishing the TLS session.
+///
+///     ntca::EncryptionServerOptions encryptionServerOptions;
+///
+///     encryptionServerOptions.addResourceFile(
+///         "/etc/pki/trust/server/default.pki");
+///
+/// Next, let's define the server configuration effective when the user 
+/// upgrades specifically to "beta.example.com".
+///
+///     ntca::EncryptionOptions betaServerNameOverrides;
+///     
+///     betaServerNameOverrides.addResourceFile(
+///         "/etc/pki/trust/server/beta.pk");
+///
+///     encryptionClientOptions.addOverrides(
+///         "beta.example.com", betaServerNameOverrides);
+///
+/// Finally, let's define the server configuration effective when the user 
+/// upgrades specifically to "internal.example.com".
+///
+///     ntca::EncryptionOptions internalServerNameOverrides;
+///     
+///     internalServerNameOverrides.addResourceFile(
+///         "/etc/pki/trust/server/internal.pk");
+///
+///     encryptionClientOptions.addOverrides(
+///         "internal.example.com", internalServerNameOverrides);
+///
+/// Note that wildcard name matching is available, so for example, if overrides
+/// are registered for "*.example.com" then the overrides would match for 
+/// TLS sessions to either "test.example.com" or "production.example.com".
 ///
 /// @ingroup module_ntci_encryption
 class EncryptionServerOptions

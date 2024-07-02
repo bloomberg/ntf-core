@@ -66,8 +66,6 @@ namespace ntca {
 /// may be specified; a certificate is considered valid if its contents match
 /// all of the specified usages.
 ///
-///
-///
 /// @li @b allowSelfSigned:
 /// Trust all end-user self-signed certificates. Note that this option should
 /// be set with care; when set, it bypasses the standard validation that the
