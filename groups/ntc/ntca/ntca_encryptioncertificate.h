@@ -3428,11 +3428,11 @@ class EncryptionCertificateSubjectKeyUsageExtended
 
     /// Return true if the extended usage contains the specified 'identifier',
     /// otherwise return false.
-    bool has(const ntsa::AbstractObjectIdentifier& identifier) const;
+    bool allows(const ntsa::AbstractObjectIdentifier& identifier) const;
 
     /// Return true if the extended usage contains the identifier corresponding
     /// to the specified 'value', otherwise return false.
-    bool has(
+    bool allows(
         EncryptionCertificateSubjectKeyUsageExtendedType::Value value) const;
 
     /// Return true if this object has the same value as the specified
@@ -3651,7 +3651,7 @@ class EncryptionCertificateSubjectKeyUsage
 
     /// Return true if the usage supports the specified 'value' type, otherwise
     /// return false.
-    bool supports(EncryptionCertificateSubjectKeyUsageType::Value value) const;
+    bool allows(EncryptionCertificateSubjectKeyUsageType::Value value) const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -5254,13 +5254,32 @@ class EncryptionCertificateExtensionList
     /// certificates or end-user certificates, otherwise return false.
     bool isAuthority() const;
 
-    /// Return true if the certificate is authentic for a request to the
-    /// specified 'domainName', otherwise return false.
-    bool matchesDomainName(const bsl::string& domainName) const;
+    /// Return true if the certificate subject matches the specified
+    /// 'domainName', otherwise return false.
+    bool matchesSubjectDomainName(const bsl::string& domainName) const;
 
-    /// Return true if the certificate is authentic for a request to the
-    /// specified 'ipAddress', otherwise return false.
-    bool matchesIpAddress(const ntsa::IpAddress& ipAddress) const;
+    /// Return true if the certificate subject matches specified 'ipAddress',
+    /// otherwise return false.
+    bool matchesSubjectIpAddress(const ntsa::IpAddress& ipAddress) const;
+
+    /// Return true if the certificate issuer matches the specified
+    /// 'domainName', otherwise return false.
+    bool matchesIssuerDomainName(const bsl::string& domainName) const;
+
+    /// Return true if the certificate issuer matches specified 'ipAddress',
+    /// otherwise return false.
+    bool matchesIssuerIpAddress(const ntsa::IpAddress& ipAddress) const;
+
+    /// Return true if the certificate supports the specified well-known key
+    /// 'usage', otherwise return false.
+    bool allowsKeyUsage(
+        ntca::EncryptionCertificateSubjectKeyUsageType::Value usage) const;
+        
+    /// Return true if the certificate supports the specified well-known 
+    /// extended key 'usage', otherwise return false.
+    bool allowsKeyUsage(
+        ntca::EncryptionCertificateSubjectKeyUsageExtendedType::Value usage) 
+        const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -5474,13 +5493,32 @@ class EncryptionCertificateEntity
     /// certificates or end-user certificates, otherwise return false.
     bool isAuthority() const;
 
-    /// Return true if the certificate is authentic for a request to the
-    /// specified 'domainName', otherwise return false.
-    bool matchesDomainName(const bsl::string& domainName) const;
+    /// Return true if the certificate subject matches the specified
+    /// 'domainName', otherwise return false.
+    bool matchesSubjectDomainName(const bsl::string& domainName) const;
 
-    /// Return true if the certificate is authentic for a request to the
-    /// specified 'ipAddress', otherwise return false.
-    bool matchesIpAddress(const ntsa::IpAddress& ipAddress) const;
+    /// Return true if the certificate subject matches specified 'ipAddress',
+    /// otherwise return false.
+    bool matchesSubjectIpAddress(const ntsa::IpAddress& ipAddress) const;
+
+    /// Return true if the certificate issuer matches the specified
+    /// 'domainName', otherwise return false.
+    bool matchesIssuerDomainName(const bsl::string& domainName) const;
+
+    /// Return true if the certificate issuer matches specified 'ipAddress',
+    /// otherwise return false.
+    bool matchesIssuerIpAddress(const ntsa::IpAddress& ipAddress) const;
+
+    /// Return true if the certificate supports the specified well-known key
+    /// 'usage', otherwise return false.
+    bool allowsKeyUsage(
+        ntca::EncryptionCertificateSubjectKeyUsageType::Value usage) const;
+        
+    /// Return true if the certificate supports the specified well-known 
+    /// extended key 'usage', otherwise return false.
+    bool allowsKeyUsage(
+        ntca::EncryptionCertificateSubjectKeyUsageExtendedType::Value usage) 
+        const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -5693,13 +5731,43 @@ class EncryptionCertificate
     /// certificates or end-user certificates, otherwise return false.
     bool isAuthority() const;
 
-    /// Return true if the certificate is authentic for a request to the
-    /// specified 'domainName', otherwise return false.
-    bool matchesDomainName(const bsl::string& domainName) const;
+    /// Return true if the certificate subject matches the specified
+    /// 'domainName', otherwise return false.
+    bool matchesSubjectDomainName(const bsl::string& domainName) const;
 
-    /// Return true if the certificate is authentic for a request to the
-    /// specified 'ipAddress', otherwise return false.
-    bool matchesIpAddress(const ntsa::IpAddress& ipAddress) const;
+    /// Return true if the certificate subject matches specified 'ipAddress',
+    /// otherwise return false.
+    bool matchesSubjectIpAddress(const ntsa::IpAddress& ipAddress) const;
+
+    /// Return true if the certificate issuer matches the specified
+    /// 'domainName', otherwise return false.
+    bool matchesIssuerDomainName(const bsl::string& domainName) const;
+
+    /// Return true if the certificate issuer matches specified 'ipAddress',
+    /// otherwise return false.
+    bool matchesIssuerIpAddress(const ntsa::IpAddress& ipAddress) const;
+
+    /// Return true if the certificate supports the specified well-known key
+    /// 'usage', otherwise return false.
+    bool allowsKeyUsage(
+        ntca::EncryptionCertificateSubjectKeyUsageType::Value usage) const;
+        
+    /// Return true if the certificate supports the specified well-known 
+    /// extended key 'usage', otherwise return false.
+    bool allowsKeyUsage(
+        ntca::EncryptionCertificateSubjectKeyUsageExtendedType::Value usage) 
+        const;
+
+    /// Return true if the certificate uses the specified well-known public key
+    /// 'algorithm', otherwise return false.
+    bool usesSubjectPublicKeyAlgorithm(
+        ntca::EncryptionKeyAlgorithmIdentifierType::Value algorithm) const;
+    
+    /// Return true if the certificate uses the specified well-known public key
+    /// algorithm 'parameters', otherwise return false. 
+    bool usesSubjectPublicKeyAlgorithmParameters(
+        ntca::EncryptionKeyEllipticCurveParametersIdentifierType::Value 
+        parameters) const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
