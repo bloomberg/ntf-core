@@ -37,6 +37,12 @@ void ListenerSocketManager::processListenerSocketClosed(
     NTCCFG_WARNING_UNUSED(listenerSocket);
 }
 
+void ListenerSocketManager::processListenerSocketLimit(
+    const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket)
+{
+    NTCCFG_WARNING_UNUSED(listenerSocket);
+}
+
 const bsl::shared_ptr<ntci::Strand>& ListenerSocketManager::strand() const
 {
     return ntci::Strand::unspecified();

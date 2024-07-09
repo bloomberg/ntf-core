@@ -53,6 +53,11 @@ class ListenerSocketManager : public ntci::StreamSocketManager
     virtual void processListenerSocketClosed(
         const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket);
 
+    /// Process indication that the specified 'listenerSocket' rejected
+    /// incoming connection.
+    virtual void processListenerSocketLimit(
+        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket);
+
     /// Return the strand on which this object's functions should be called.
     virtual const bsl::shared_ptr<ntci::Strand>& strand() const;
 };
