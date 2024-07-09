@@ -19,8 +19,13 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntccfg_platform.h>
 #include <ntci_strand.h>
 #include <ntci_streamsocketmanager.h>
+#include <ntcscm_version.h>
+#include <ntsa_endpoint.h>
+#include <ntsa_error.h>
+#include <ntsi_descriptor.h>
 #include <bsl_memory.h>
 
 namespace BloombergLP {

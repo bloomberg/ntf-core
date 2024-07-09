@@ -24,10 +24,19 @@ BSLS_IDENT("$Id: $")
 #include <ntca_errorevent.h>
 #include <ntca_readqueueevent.h>
 #include <ntca_shutdownevent.h>
+#include <ntca_upgradeevent.h>
 #include <ntca_writequeueevent.h>
 #include <ntccfg_platform.h>
+#include <ntci_encryptioncertificate.h>
 #include <ntci_strand.h>
+#include <ntcscm_version.h>
+#include <ntsa_endpoint.h>
+#include <ntsa_error.h>
+#include <ntsa_shutdownorigin.h>
+#include <ntsa_shutdowntype.h>
+#include <bdlbb_blob.h>
 #include <bsl_memory.h>
+#include <bsl_string.h>
 
 namespace BloombergLP {
 namespace ntci {
