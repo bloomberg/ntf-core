@@ -58,7 +58,9 @@ BSLS_IDENT("$Id: $")
 #define NTCI_LOG(severity, ...)                                               \
     do {                                                                      \
         if (__LOG_CONTEXT__) {                                                \
-            if ((severity) <= BloombergLP::bsls::Log::severityThreshold()) {  \
+            if (NTCCFG_UNLIKELY((severity) <=                                 \
+                BloombergLP::bsls::Log::severityThreshold()))                 \
+            {                                                                 \
                 BloombergLP::ntci::Log::write(__LOG_CONTEXT__,                \
                                               (severity),                     \
                                               __FILE__,                       \
@@ -75,7 +77,9 @@ BSLS_IDENT("$Id: $")
 #define NTCI_LOG_RAW(severity, data, size)                                    \
     do {                                                                      \
         if (__LOG_CONTEXT__) {                                                \
-            if ((severity) <= BloombergLP::bsls::Log::severityThreshold()) {  \
+            if (NTCCFG_UNLIKELY((severity) <=                                 \
+                BloombergLP::bsls::Log::severityThreshold()))                 \
+            {                                                                 \
                 BloombergLP::ntci::Log::writeRaw(__LOG_CONTEXT__,             \
                                                  (severity),                  \
                                                  __FILE__,                    \
