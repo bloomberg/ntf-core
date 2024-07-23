@@ -21,15 +21,18 @@ BSLS_IDENT_RCSID(ntccfg_platform_cpp, "$Id$ $CSID$")
 #include <ntsf_system.h>
 #include <bsls_log.h>
 #include <bsl_cstdlib.h>
+#include <bsl_cstdio.h>
 #include <bsl_cstring.h>
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
 #include <errno.h>
 #include <unistd.h>
+#include <dlfcn.h>
 extern char** environ;
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
 #include <direct.h>
 #include <windows.h>
+#include <libloaderapi.h>
 #else
 #error Not implemented
 #endif
@@ -122,6 +125,43 @@ int Platform::getWorkingDirectory(bsl::string* result)
     return 0;
 }
 
+
+void* Platform::getDynamicObjectHandle()
+{
+    void* handle = dlopen(0, RTLD_LAZY);
+    if (handle == 0) {
+        bsl::fprintf(
+            stderr, "%s: %s\n", "Failed to open handle to self", dlerror());
+        return 0;
+    }
+
+    return handle;
+}
+
+void* Platform::getDynamicObjectHandle(const bsl::string& path)
+{
+    void* handle = dlopen(path.c_str(), RTLD_LAZY);
+    if (handle == 0) {
+        bsl::fprintf(
+            stderr, "%s: %s\n", "Failed to open handle to self", dlerror());
+        return 0;
+    }
+
+    return handle;
+}
+
+void* Platform::getDynamicObjectFunction(void* module, const bsl::string& name)
+{
+    void* function = dlsym(module, name.c_str());
+    if (function == 0) {
+        bsl::fprintf(
+            stderr, "%s: %s\n", "Failed to open function", dlerror());
+        return 0;
+    }
+
+    return function;
+}
+
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
 
 int Platform::setEnvironmentVariable(const bsl::string& name,
@@ -185,6 +225,26 @@ int Platform::getWorkingDirectory(bsl::string* result)
     }
 
     result->assign(temp);
+    return 0;
+}
+
+void* Platform::getDynamicObjectHandle()
+{
+    return 0;
+}
+
+void* Platform::getDynamicObjectHandle(const bsl::string& path)
+{
+    (void)(path);
+
+    return 0;
+}
+
+void* Platform::getDynamicObjectFunction(void* module, const bsl::string& name)
+{
+    (void)(module);
+    (void)(name);
+
     return 0;
 }
 
