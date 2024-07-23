@@ -850,6 +850,44 @@ bool AdapterUtil::discoverAdapter(ntsa::Adapter*             result,
 }
 
 bsl::uint32_t AdapterUtil::discoverInterfaceIndex(
+    const ntsa::IpAddress& address)
+{
+    if (address.isV4()) {
+        return AdapterUtil::discoverInterfaceIndex(address.v4());
+    }
+    else if (address.isV6()) {
+        return AdapterUtil::discoverInterfaceIndex(address.v6());
+    }
+    else {
+        return 0;
+    }
+}
+
+bsl::uint32_t AdapterUtil::discoverInterfaceIndex(
+    const ntsa::Ipv4Address& address)
+{
+    bsl::uint32_t interfaceIndex = 0;
+
+    bsl::vector<ntsa::Adapter> adapters;
+    ntsu::AdapterUtil::discoverAdapterList(&adapters);
+
+    for (bsl::vector<ntsa::Adapter>::const_iterator it = adapters.begin();
+         it != adapters.end();
+         ++it)
+    {
+        const ntsa::Adapter& adapter = *it;
+        if (!adapter.ipv4Address().isNull()) {
+            if (adapter.ipv4Address().value() == address) {
+                interfaceIndex = adapter.index();
+                break;
+            }
+        }
+    }
+
+    return interfaceIndex;
+}
+
+bsl::uint32_t AdapterUtil::discoverInterfaceIndex(
     const ntsa::Ipv6Address& address)
 {
     bsl::uint32_t interfaceIndex = 0;

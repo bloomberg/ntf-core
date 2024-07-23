@@ -196,6 +196,24 @@ ntsa::Error DatagramSocket::joinMulticastGroup(
                                                       group);
 }
 
+ntsa::Error DatagramSocket::joinMulticastGroupSource(
+        const ntsa::IpAddress& interface,
+        const ntsa::IpAddress& group,
+        const ntsa::IpAddress& source)
+{
+    return ntsu::SocketOptionUtil::joinMulticastGroupSource(
+        d_handle, interface, group, source);
+}
+
+ntsa::Error DatagramSocket::leaveMulticastGroupSource(
+        const ntsa::IpAddress& interface,
+        const ntsa::IpAddress& group,
+        const ntsa::IpAddress& source)
+{
+    return ntsu::SocketOptionUtil::leaveMulticastGroupSource(
+        d_handle, interface, group, source);
+}
+
 ntsa::Error DatagramSocket::leaveMulticastGroup(
     const ntsa::IpAddress& interface,
     const ntsa::IpAddress& group)

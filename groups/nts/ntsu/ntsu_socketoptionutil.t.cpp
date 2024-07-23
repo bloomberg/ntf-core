@@ -1367,6 +1367,62 @@ NTSCFG_TEST_CASE(3)
                 }
             }
 
+            // Test join source-specific multicast group.
+
+            {
+                if (transport == ntsa::Transport::e_UDP_IPV4_DATAGRAM) {
+                    error = ntsu::SocketOptionUtil::joinMulticastGroupSource(
+                        socket,
+                        ntsa::IpAddress(adapter.ipv4Address().value()),
+                        ntsa::IpAddress("224.0.0.0"),
+                        ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+                }
+                else {
+                    error = ntsu::SocketOptionUtil::joinMulticastGroupSource(
+                        socket,
+                        ntsa::IpAddress(adapter.ipv6Address().value()),
+                        ntsa::IpAddress(
+                            "ff00:0000:0000:0000:0000:0000:0000:0000"),
+                        ntsa::IpAddress(ntsa::Ipv6Address::loopback()));
+                }
+
+                BSLS_LOG_INFO("joinMulticastGroupSource: %s",
+                              error.text().c_str());
+
+                if (error) {
+                    NTSCFG_TEST_TRUE(error == ntsa::Error::e_INVALID ||
+                                     error == ntsa::Error::e_NOT_IMPLEMENTED);
+                }
+            }
+
+            // Test leave source-specific multicast group.
+
+            {
+                if (transport == ntsa::Transport::e_UDP_IPV4_DATAGRAM) {
+                    error = ntsu::SocketOptionUtil::leaveMulticastGroupSource(
+                        socket,
+                        ntsa::IpAddress(adapter.ipv4Address().value()),
+                        ntsa::IpAddress("224.0.0.0"),
+                        ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+                }
+                else {
+                    error = ntsu::SocketOptionUtil::leaveMulticastGroupSource(
+                        socket,
+                        ntsa::IpAddress(adapter.ipv6Address().value()),
+                        ntsa::IpAddress(
+                            "ff00:0000:0000:0000:0000:0000:0000:0000"),
+                        ntsa::IpAddress(ntsa::Ipv6Address::loopback()));
+                }
+
+                BSLS_LOG_INFO("leaveMulticastGroupSource: %s",
+                              error.text().c_str());
+
+                if (error) {
+                    NTSCFG_TEST_TRUE(error == ntsa::Error::e_INVALID ||
+                                     error == ntsa::Error::e_NOT_IMPLEMENTED);
+                }
+            }
+
             // Close the socket.
 
             ntsu::SocketUtil::close(socket);
