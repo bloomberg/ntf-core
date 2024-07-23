@@ -1193,6 +1193,31 @@ struct System {
                                            const ntsa::IpAddress& interface,
                                            const ntsa::IpAddress& group);
 
+    /// Issue an IGMP message to add the specified 'socket' to the specified
+    /// source-specific multicast 'group' on the adapter identified by the
+    /// specified 'interface' and allow receiving datagrams only from the
+    /// specified 'source'. Return the error. Note that this function may be
+    /// called multiple times to allow receiving multicast datagrams only from
+    /// a particular set of source addresses.
+    static ntsa::Error joinMulticastGroupSource(
+        ntsa::Handle           socket,
+        const ntsa::IpAddress& interface,
+        const ntsa::IpAddress& group,
+        const ntsa::IpAddress& source);
+
+    /// Issue an IGMP message to remove the specified 'socket' from the
+    /// specified source-specific multicast 'group' on the adapter identified
+    /// by the specified 'interface', disallowing datagrams sent by the
+    /// specified 'source'. Return the error. If the 'socket' has subscribed to
+    /// multiple sources within the same group, data from the remaining sources
+    /// will still be delivered.  To stop receiving data from all sources at
+    /// once, use 'leaveMulticastGroup'.
+    static ntsa::Error leaveMulticastGroupSource(
+        ntsa::Handle           socket,
+        const ntsa::IpAddress& interface,
+        const ntsa::IpAddress& group,
+        const ntsa::IpAddress& source);
+
     /// Set the option for the 'socket' that controls its blocking mode
     /// according to the specified 'blocking' flag. Return the error.
     static ntsa::Error setBlocking(ntsa::Handle socket, bool blocking);

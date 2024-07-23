@@ -92,7 +92,17 @@ struct AdapterUtil {
                                 bool                       multicast);
 
     /// Return the interface index for the adapter assigned the specified
-    /// 'address'.
+    /// 'address', or 0 if no such adapter is assigned the address.
+    static bsl::uint32_t discoverInterfaceIndex(
+        const ntsa::IpAddress& address);
+
+    /// Return the interface index for the adapter assigned the specified
+    /// 'address', or 0 if no such adapter is assigned the address.
+    static bsl::uint32_t discoverInterfaceIndex(
+        const ntsa::Ipv4Address& address);
+
+    /// Return the interface index for the adapter assigned the specified
+    /// 'address', or 0 if no such adapter is assigned the address.
     static bsl::uint32_t discoverInterfaceIndex(
         const ntsa::Ipv6Address& address);
 
