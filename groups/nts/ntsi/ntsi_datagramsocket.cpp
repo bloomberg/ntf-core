@@ -186,6 +186,30 @@ ntsa::Error DatagramSocket::leaveMulticastGroup(
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
+ntsa::Error DatagramSocket::joinMulticastGroupSource(
+        const ntsa::IpAddress& interface,
+        const ntsa::IpAddress& group,
+        const ntsa::IpAddress& source)
+{
+    NTSCFG_WARNING_UNUSED(interface);
+    NTSCFG_WARNING_UNUSED(group);
+    NTSCFG_WARNING_UNUSED(source);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error DatagramSocket::leaveMulticastGroupSource(
+        const ntsa::IpAddress& interface,
+        const ntsa::IpAddress& group,
+        const ntsa::IpAddress& source)
+{
+    NTSCFG_WARNING_UNUSED(interface);
+    NTSCFG_WARNING_UNUSED(group);
+    NTSCFG_WARNING_UNUSED(source);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 ntsa::Error DatagramSocket::setBlocking(bool blocking)
 {
     NTSCFG_WARNING_UNUSED(blocking);

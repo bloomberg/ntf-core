@@ -193,6 +193,27 @@ class DatagramSocket : public ntsi::DatagramSocket
                                     const ntsa::IpAddress& group)
         BSLS_KEYWORD_OVERRIDE;
 
+    /// Join the specified source-specific multicast 'group' on the adapter
+    /// identified by the specified 'interface' and allow receiving datagrams
+    /// only from the specified 'source'. Return the error. Note that this
+    /// function may be called multiple times to allow receiving multicast
+    /// datagrams only from a particular set of source addresses.
+    ntsa::Error joinMulticastGroupSource(
+        const ntsa::IpAddress& interface,
+        const ntsa::IpAddress& group,
+        const ntsa::IpAddress& source) BSLS_KEYWORD_OVERRIDE;
+
+    /// Leave the specified source-specific multicast 'group' on the adapter
+    /// identified by the specified 'interface', disallowing datagrams sent by
+    /// the specified 'source'. Return the error. If the 'socket' has
+    /// subscribed to multiple sources within the same group, data from the
+    /// remaining sources will still be delivered. To stop receiving data from
+    /// all sources at once, use 'leaveMulticastGroup'.
+    ntsa::Error leaveMulticastGroupSource(
+        const ntsa::IpAddress& interface,
+        const ntsa::IpAddress& group,
+        const ntsa::IpAddress& source) BSLS_KEYWORD_OVERRIDE;
+
     // *** Socket Options ***
 
     /// Set the option for the 'socket' that controls its blocking mode
