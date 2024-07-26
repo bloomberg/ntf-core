@@ -1444,9 +1444,11 @@ NTCCFG_TEST_CASE(1)
         NTCCFG_TEST_EQ(test->submissionQueueCapacity(), k_QUEUE_DEPTH);
         NTCCFG_TEST_EQ(test->completionQueueCapacity(), k_QUEUE_DEPTH * 2);
 
-        const bsl::size_t k_ROUND_COUNT = 3;
         const bsl::size_t k_SUBMISSION_COUNT =
-            test->completionQueueCapacity() * k_ROUND_COUNT;
+            test->completionQueueCapacity() + test->submissionQueueCapacity() -
+            1;
+        // We shall not overflow completion queue, so at maximum we push
+        // k_SUBMISSION_COUNT entries
 
         for (bsl::size_t id = 0; id < k_SUBMISSION_COUNT; ++id) {
             NTCO_IORING_TEST_LOG_PUSH_STARTING(test, id);
@@ -1454,18 +1456,37 @@ NTCCFG_TEST_CASE(1)
             NTCO_IORING_TEST_LOG_PUSH_COMPLETE(test, id);
         }
 
-        for (bsl::size_t round = 0; round < k_ROUND_COUNT; ++round) {
+        bsl::size_t expectedId = 0;
+        {
             bsl::vector<bsl::uint64_t> result;
             test->wait(&result, test->completionQueueCapacity());
 
             NTCCFG_TEST_EQ(result.size(), test->completionQueueCapacity());
 
             for (bsl::size_t i = 0; i < result.size(); ++i) {
-                const bsl::uint64_t id = static_cast<bsl::uint64_t>(
-                    (round * test->completionQueueCapacity()) + i);
-
                 NTCO_IORING_TEST_LOG_POPPED(test, result[i]);
-                NTCCFG_TEST_EQ(result[i], id);
+                NTCCFG_TEST_EQ(result[i], expectedId);
+                ++expectedId;
+            }
+        }
+
+        {
+            // Add one more submission entry, it will automatically cause
+            // entering the io_ring and submission of existing entries
+            NTCO_IORING_TEST_LOG_PUSH_STARTING(test, k_SUBMISSION_COUNT);
+            test->defer(k_SUBMISSION_COUNT);
+            NTCO_IORING_TEST_LOG_PUSH_COMPLETE(test, k_SUBMISSION_COUNT);
+
+            const size_t entriesToWait = test->submissionQueueCapacity();
+            bsl::vector<bsl::uint64_t> result;
+            test->wait(&result, entriesToWait);
+
+            NTCCFG_TEST_EQ(result.size(), entriesToWait);
+
+            for (bsl::size_t i = 0; i < result.size(); ++i) {
+                NTCO_IORING_TEST_LOG_POPPED(test, result[i]);
+                NTCCFG_TEST_EQ(result[i], expectedId);
+                ++expectedId;
             }
         }
     }

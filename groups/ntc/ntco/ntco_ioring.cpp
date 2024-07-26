@@ -3384,6 +3384,8 @@ ntsa::Error IoRingSubmissionQueue::map(int                       ring,
 ntsa::Error IoRingSubmissionQueue::push(const ntco::IoRingSubmission& entry,
                                         IoRingSubmissionMode::Value   mode)
 {
+    enum Actions { EXIT = 0x1, SUBMIT = 0x2, CYCLE = 0x4 };
+
     NTCI_LOG_CONTEXT();
 
     ntsa::Error error;
@@ -3396,7 +3398,7 @@ ntsa::Error IoRingSubmissionQueue::push(const ntco::IoRingSubmission& entry,
     LockGuard guard(&d_mutex);
 
     while (true) {
-        bool force = false;
+        uint8_t nextActions = EXIT;
 
         bsl::uint32_t mask = *d_mask_p;
         bsl::uint32_t head = *d_head_p;
@@ -3416,20 +3418,44 @@ ntsa::Error IoRingSubmissionQueue::push(const ntco::IoRingSubmission& entry,
                                                  tailIndex,
                                                  nextIndex);
 
-        if (NTCCFG_LIKELY(nextIndex != headIndex)) {
+        if (NTCCFG_UNLIKELY(tailIndex == headIndex && head != tail)) {
+            // Just after submission queue mapping there is a condition when
+            // tailIndex == headIndex (0 == 0), but that does not mean the
+            // ring buffer is full, so need to additionally check that
+            // head != tail.
+
+            NTCO_IORING_LOG_SUBMISSION_QUEUE_FULL();
+            nextActions = CYCLE;
+
+            BSLS_ASSERT(d_pending.load() == 0);
+
+            // It is useless to enter the io_ring again as existing entries
+            // were already submitted.
+            bslmt::ThreadUtil::yield();
+        }
+        else {
             d_entryArray[tailIndex] = entry;
             d_array_p[tailIndex]    = tailIndex;
             *d_tail_p               = next;
             ++d_pending;
 
             NTCO_IORING_WRITER_BARRIER();
-        }
-        else {
-            NTCO_IORING_LOG_SUBMISSION_QUEUE_FULL();
-            force = true;
+
+            if (nextIndex == headIndex ||
+                mode == ntco::IoRingSubmissionMode::e_IMMEDIATE)
+            {
+                // Either queue became full after adding this entry, or this
+                // entry has e_IMMEDIATE submission mode, need to submit all
+                // and exit
+                nextActions = SUBMIT | EXIT;
+
+                if (nextIndex == headIndex) {
+                    NTCO_IORING_LOG_SUBMISSION_QUEUE_FULL();
+                }
+            }
         }
 
-        if (mode == ntco::IoRingSubmissionMode::e_IMMEDIATE || force) {
+        if (nextActions & SUBMIT) {
             const bsl::size_t numToSubmit = this->gather();
 
             NTCO_IORING_LOG_ENTER_STARTING(numToSubmit, 0);
@@ -3445,10 +3471,12 @@ ntsa::Error IoRingSubmissionQueue::push(const ntco::IoRingSubmission& entry,
             BSLS_ASSERT(static_cast<bsl::size_t>(rc) == numToSubmit);
         }
 
-        if (force) {
+        if (NTCCFG_UNLIKELY(nextActions & CYCLE)) {
+            BSLS_ASSERT(!(nextActions & EXIT));
+            BSLS_ASSERT(!(nextActions & SUBMIT));
             continue;
         }
-        else {
+        if (nextActions & EXIT) {
             break;
         }
     }
