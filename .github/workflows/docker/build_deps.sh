@@ -28,7 +28,7 @@ fetch_deps() {
 configure() {
     PATH="$PATH:$(realpath srcs/bde-tools/bin)"
     export PATH
-    eval "$(bbs_build_env -u opt_64_cpp17)"
+    eval "$(bbs_build_env -u opt_64_cpp20)"
 }
 
 build_bde() {
