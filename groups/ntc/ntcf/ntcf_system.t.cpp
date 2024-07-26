@@ -109,8 +109,8 @@ using namespace BloombergLP;
 // "POLLSET"     Implementation using the pollset API.
 // "KQUEUE"      Implementation using kqueue/kevent
 // "IOCP"        Implementation using I/O completion ports
-// "IOCP"        Implementation using I/O rings
-// #define NTCF_SYSTEM_TEST_DRIVER_TYPE "IOCP"
+// "IORING"     Implementation using I/O rings
+//#define NTCF_SYSTEM_TEST_DRIVER_TYPE "IORING"
 
 // Uncomment to test a specific address family, instead of all address
 // families.
