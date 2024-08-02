@@ -822,6 +822,12 @@ bsl::string Chronology::convertToDateTime(Microseconds timeInMicroseconds)
     return bsl::string(buffer);
 }
 
+bool Chronology::sortAuxTimers(const AuxTimerPair& lhs, 
+                               const AuxTimerPair& rhs)
+{
+    return lhs.first < rhs.first;
+}
+
 Chronology::Chronology(ntcs::Driver* driver, bslma::Allocator* basicAllocator)
 : d_object("ntcs::Chronology")
 , d_mutex(NTCCFG_LOCK_INIT)
@@ -829,6 +835,7 @@ Chronology::Chronology(ntcs::Driver* driver, bslma::Allocator* basicAllocator)
 , d_driver_sp(bsl::shared_ptr<ntcs::Driver>(driver,
                                             bslstl::SharedPtrNilDeleter(),
                                             basicAllocator))
+, d_parent_sp()
 , d_nodePool(sizeof(TimerNode), d_allocator_p)
 , d_nodeArray(d_allocator_p)
 , d_nodeFree_p(0)
@@ -851,6 +858,7 @@ Chronology::Chronology(const bsl::shared_ptr<ntcs::Driver>& driver,
 , d_mutex(NTCCFG_LOCK_INIT)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 , d_driver_sp(driver)
+, d_parent_sp()
 , d_nodePool(sizeof(TimerNode), d_allocator_p)
 , d_nodeArray(d_allocator_p)
 , d_nodeFree_p(0)
@@ -866,6 +874,66 @@ Chronology::Chronology(const bsl::shared_ptr<ntcs::Driver>& driver,
 , d_functorQueueEmpty(true)
 {
 }
+
+
+
+
+
+
+
+Chronology::Chronology(ntcs::Driver*                            driver, 
+                       const bsl::shared_ptr<ntcs::Chronology>& parent,
+                       bslma::Allocator* basicAllocator)
+: d_object("ntcs::Chronology")
+, d_mutex(NTCCFG_LOCK_INIT)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+, d_driver_sp(bsl::shared_ptr<ntcs::Driver>(driver,
+                                            bslstl::SharedPtrNilDeleter(),
+                                            basicAllocator))
+, d_parent_sp(parent)
+, d_nodePool(sizeof(TimerNode), d_allocator_p)
+, d_nodeArray(d_allocator_p)
+, d_nodeFree_p(0)
+, d_nodeCount(0)
+, d_deadlineMapPool(16, d_allocator_p)
+, d_deadlineMapAllocator_p(&d_deadlineMapPool)
+, d_deadlineMap(d_deadlineMapAllocator_p)
+, d_deadlineMapEmpty(true)
+, d_deadlineMapEarliest(0)
+, d_functorQueuePool(16, d_allocator_p)
+, d_functorQueueAllocator_p(&d_functorQueuePool)
+, d_functorQueue(d_functorQueueAllocator_p)
+, d_functorQueueEmpty(true)
+{
+}
+
+Chronology::Chronology(const bsl::shared_ptr<ntcs::Driver>&     driver,
+                       const bsl::shared_ptr<ntcs::Chronology>& parent,
+                       bslma::Allocator*                        basicAllocator)
+: d_object("ntcs::Chronology")
+, d_mutex(NTCCFG_LOCK_INIT)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+, d_driver_sp(driver)
+, d_parent_sp(parent)
+, d_nodePool(sizeof(TimerNode), d_allocator_p)
+, d_nodeArray(d_allocator_p)
+, d_nodeFree_p(0)
+, d_nodeCount(0)
+, d_deadlineMapPool(16, d_allocator_p)
+, d_deadlineMapAllocator_p(&d_deadlineMapPool)
+, d_deadlineMap(d_deadlineMapAllocator_p)
+, d_deadlineMapEmpty(true)
+, d_deadlineMapEarliest(0)
+, d_functorQueuePool(16, d_allocator_p)
+, d_functorQueueAllocator_p(&d_functorQueuePool)
+, d_functorQueue(d_functorQueueAllocator_p)
+, d_functorQueueEmpty(true)
+{
+}
+
+
+
+
 
 Chronology::~Chronology()
 {
@@ -1179,6 +1247,10 @@ void Chronology::announce()
 
         timersDue.clear();
     }
+
+    if (d_parent_sp) {
+        d_parent_sp->announce();
+    }
 }
 
 void Chronology::drain()
@@ -1204,6 +1276,10 @@ void Chronology::drain()
             functor = Functor();
             ++it;
         }
+    }
+
+    if (d_parent_sp) {
+        d_parent_sp->drain();
     }
 }
 
@@ -1247,94 +1323,75 @@ void Chronology::closeAll()
     }
 
     timers.clear();
+
+    if (d_parent_sp) {
+        d_parent_sp->closeAll();
+    }
 }
 
 void Chronology::load(TimerVector* result) const
 {
-    LockGuard lock(&d_mutex);
+    typedef bsl::pair<Microseconds, bsl::shared_ptr<Chronology::Timer> 
+    > AuxTimerPair;
 
-    DeadlineMap::Pair* rawHandle = d_deadlineMap.front();
-    while (rawHandle) {
-        const DeadlineMapEntry& entry = rawHandle->data();
+    typedef bsl::vector<AuxTimerPair> AuxTimerPairVector;
 
-        TimerRep* timerRep = entry.d_node_p->d_storage.address();
-        Timer*    timer    = timerRep->getObject();
-        timerRep->acquireRef();
+    AuxTimerPairVector sequence;
 
-        result->push_back(bsl::shared_ptr<Chronology::Timer>(timer, timerRep));
-
-        d_deadlineMap.skipForward(&rawHandle);
-    }
-}
-
-bdlb::NullableValue<bsls::TimeInterval> Chronology::timeoutInterval() const
-{
-    if (!d_functorQueueEmpty) {
-        return bdlb::NullableValue<bsls::TimeInterval>(bsls::TimeInterval());
-    }
-
-    bdlb::NullableValue<bsls::TimeInterval> timeout;
     {
-        bdlb::NullableValue<bsls::TimeInterval> deadline;
-        if (!d_deadlineMapEmpty) {
-            this->findEarliest(&deadline);
-        }
+        LockGuard lock(&d_mutex);
 
-        if (!deadline.isNull()) {
-            bsls::TimeInterval now = this->currentTime();
-            if (deadline > now) {
-                timeout = deadline.value() - now;
-            }
-            else {
-                timeout.makeValue(bsls::TimeInterval());
-            }
+        DeadlineMap::Pair* rawHandle = d_deadlineMap.front();
+        while (rawHandle) {
+            const Microseconds deadline   = rawHandle->key();
+            const DeadlineMapEntry& entry = rawHandle->data();
+
+            TimerRep* timerRep = entry.d_node_p->d_storage.address();
+            Timer*    timer    = timerRep->getObject();
+            timerRep->acquireRef();
+
+            sequence.push_back(
+                AuxTimerPair(
+                    deadline,
+                    bsl::shared_ptr<Chronology::Timer>(timer, timerRep)));
+
+            d_deadlineMap.skipForward(&rawHandle);
         }
     }
 
-    return timeout;
-}
+    if (d_parent_sp) {
+        LockGuard lock(&d_parent_sp->d_mutex);
 
-int Chronology::timeoutInMilliseconds() const
-{
-    if (!d_functorQueueEmpty) {
-        return 0;
+        DeadlineMap::Pair* rawHandle = d_parent_sp->d_deadlineMap.front();
+        while (rawHandle) {
+            const Microseconds deadline   = rawHandle->key();
+            const DeadlineMapEntry& entry = rawHandle->data();
+
+            TimerRep* timerRep = entry.d_node_p->d_storage.address();
+            Timer*    timer    = timerRep->getObject();
+            timerRep->acquireRef();
+
+            sequence.push_back(
+                AuxTimerPair(
+                    deadline,
+                    bsl::shared_ptr<Chronology::Timer>(timer, timerRep)));
+
+            d_parent_sp->d_deadlineMap.skipForward(&rawHandle);
+        }
     }
 
-    int timeout = -1;
+    if (!sequence.empty()) {
+        bsl::sort(sequence.begin(), 
+                  sequence.end(), 
+                  &Chronology::sortAuxTimers);
 
-    bdlb::NullableValue<bsls::TimeInterval> deadline;
-    if (!d_deadlineMapEmpty) {
-        this->findEarliest(&deadline);
-    }
-
-    if (!deadline.isNull()) {
-        bsls::TimeInterval now = this->currentTime();
-
-        const bsl::int64_t deadlineTotalMilliseconds =
-            deadline.value().totalMilliseconds();
-
-        const bsl::int64_t nowTotalMilliseconds = now.totalMilliseconds();
-
-        bsl::int64_t differenceInMilliseconds;
-        if (NTCCFG_LIKELY(deadlineTotalMilliseconds >= nowTotalMilliseconds)) {
-            differenceInMilliseconds =
-                deadlineTotalMilliseconds - nowTotalMilliseconds;
-        }
-        else {
-            differenceInMilliseconds = 0;
-        }
-
-        if (NTCCFG_LIKELY(differenceInMilliseconds <=
-                          bsl::numeric_limits<int>::max()))
+        for (AuxTimerPairVector::const_iterator it  = sequence.begin(); 
+                                                it != sequence.end(); 
+                                              ++it) 
         {
-            timeout = NTCCFG_WARNING_NARROW(int, differenceInMilliseconds);
-        }
-        else {
-            timeout = bsl::numeric_limits<int>::max();
+            result->push_back(it->second);
         }
     }
-
-    return timeout;
 }
 
 bsl::size_t Chronology::numRegistered() const

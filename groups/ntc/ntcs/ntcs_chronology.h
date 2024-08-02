@@ -401,6 +401,11 @@ class Chronology
         TimerNode*                   d_next_p;
     };
 
+    typedef bsl::pair<Microseconds, bsl::shared_ptr<Chronology::Timer> 
+    > AuxTimerPair;
+
+    typedef bsl::vector<AuxTimerPair> AuxTimerPairVector;
+
     /// Define a type alias for a mutex.
     typedef ntccfg::Mutex Mutex;
 
@@ -411,6 +416,7 @@ class Chronology
     mutable Mutex                       d_mutex;
     bslma::Allocator*                   d_allocator_p;
     bsl::shared_ptr<ntcs::Driver>       d_driver_sp;
+    bsl::shared_ptr<ntcs::Chronology>   d_parent_sp;
     bdlma::Pool                         d_nodePool;
     bsl::vector<TimerNode*>             d_nodeArray;
     TimerNode*                          d_nodeFree_p;
@@ -441,6 +447,11 @@ class Chronology
     /// the Unix epoch in a date/time format.
     static bsl::string convertToDateTime(Microseconds timeInMicroseconds);
 
+    /// Return true if the deadline of the specified 'lhs' timer is less than 
+    /// the deadline of the specified 'rhs' timer.
+    static bool sortAuxTimers(const AuxTimerPair& lhs, 
+                              const AuxTimerPair& rhs);
+
   public:
     /// The time interval that is LLONG_MAX microseconds from the Unix
     /// epoch.
@@ -463,6 +474,21 @@ class Chronology
     /// used to supply memory. If 'basicAllocator' is 0, the currently
     /// installed default allocator is used.
     explicit Chronology(const bsl::shared_ptr<ntcs::Driver>& driver,
+                        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new timer chronology that drives each timer and deferred
+    /// function using the specified 'driver'. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0,
+    /// the currently installed default allocator is used.
+    explicit Chronology(ntcs::Driver*                            driver,
+                        const bsl::shared_ptr<ntcs::Chronology>& parent,
+                        bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new timer chronology. Optionally specify a 'basicAllocator'
+    /// used to supply memory. If 'basicAllocator' is 0, the currently
+    /// installed default allocator is used.
+    explicit Chronology(const bsl::shared_ptr<ntcs::Driver>&     driver,
+                        const bsl::shared_ptr<ntcs::Chronology>& parent,
                         bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
@@ -611,30 +637,109 @@ bdlb::NullableValue<bsls::TimeInterval> Chronology::earliest() const
         return bdlb::NullableValue<bsls::TimeInterval>(bsls::TimeInterval());
     }
 
-    bdlb::NullableValue<bsls::TimeInterval> deadline;
+    bdlb::NullableValue<bsls::TimeInterval> parentEarliest;
+    if (d_parent_sp) {
+        parentEarliest = d_parent_sp->earliest();
+    }
+    
+    bdlb::NullableValue<bsls::TimeInterval> thisEarliest;
     if (!d_deadlineMapEmpty) {
-        this->findEarliest(&deadline);
+        this->findEarliest(&thisEarliest);
+    }
+
+    bdlb::NullableValue<bsls::TimeInterval> deadline;
+    if (thisEarliest.has_value()) {
+        deadline = thisEarliest.value();
+        if (parentEarliest.has_value()) {
+            if (parentEarliest.value() < deadline.value()) {
+                deadline = parentEarliest;
+            }
+        }
+    }
+    else {
+        deadline = parentEarliest;
     }
 
     return deadline;
 }
 
 NTCCFG_INLINE
+bdlb::NullableValue<bsls::TimeInterval> Chronology::timeoutInterval() const
+{
+    const bdlb::NullableValue<bsls::TimeInterval> deadline = this->earliest();
+
+    bdlb::NullableValue<bsls::TimeInterval> timeout;
+
+    if (deadline.has_value()) {
+        const bsls::TimeInterval now = this->currentTime();
+        if (deadline > now) {
+            timeout = deadline.value() - now;
+        }
+        else {
+            timeout.makeValue(bsls::TimeInterval());
+        }
+    }
+
+    return timeout;
+}
+
+NTCCFG_INLINE
+int Chronology::timeoutInMilliseconds() const
+{
+    int timeout = -1;
+
+    const bdlb::NullableValue<bsls::TimeInterval> timeoutDuration = 
+        this->timeoutInterval();
+
+    if (timeoutDuration.has_value()) {
+        const bsls::Types::Int64 totalMilliseconds = 
+            timeoutDuration.value().totalMilliseconds();
+
+        if (NTCCFG_LIKELY(totalMilliseconds <=
+            static_cast<bsls::Types::Int64>(bsl::numeric_limits<int>::max())))
+        {
+            timeout = static_cast<int>(totalMilliseconds);
+        }
+        else {
+            timeout = bsl::numeric_limits<int>::max();
+        }
+    }
+
+    return timeout;
+}
+
+NTCCFG_INLINE
 bool Chronology::hasAnyScheduled() const
 {
-    return !d_deadlineMapEmpty;
+    if (d_parent_sp) {
+        return !d_deadlineMapEmpty || d_parent_sp->hasAnyScheduled();
+    }
+    else {
+        return !d_deadlineMapEmpty;
+    }
 }
 
 NTCCFG_INLINE
 bool Chronology::hasAnyDeferred() const
 {
-    return !d_functorQueueEmpty;
+    if (d_parent_sp) {
+        return !d_functorQueueEmpty || d_parent_sp->hasAnyDeferred();
+    }
+    else {
+        return !d_functorQueueEmpty;
+    }
 }
 
 NTCCFG_INLINE
 bool Chronology::hasAnyScheduledOrDeferred() const
 {
-    return !d_deadlineMapEmpty || !d_functorQueueEmpty;
+    if (d_parent_sp) {
+        return !d_deadlineMapEmpty || !d_functorQueueEmpty || 
+                d_parent_sp->hasAnyScheduledOrDeferred();
+    }
+    else {
+        return !d_deadlineMapEmpty || !d_functorQueueEmpty;
+    }
 }
 
 NTCCFG_INLINE
