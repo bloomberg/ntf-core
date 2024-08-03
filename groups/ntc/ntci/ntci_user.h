@@ -57,13 +57,19 @@ class User
     virtual const bsl::shared_ptr<ntci::Reservation>& connectionLimiter()
         const = 0;
 
-    /// Return the resolver, if any.
+    /// Return the reactor metrics, if any.
     virtual const bsl::shared_ptr<ntci::ReactorMetrics>& reactorMetrics()
         const = 0;
 
-    /// Return the resolver, if any.
+    /// Return the reactor private state, if any.
+    virtual const bsl::shared_ptr<void>& reactorState() const = 0;
+
+    /// Return the proactor metrics, if any.
     virtual const bsl::shared_ptr<ntci::ProactorMetrics>& proactorMetrics()
         const = 0;
+
+    /// Return the proactor private state, if any.
+    virtual const bsl::shared_ptr<void>& proactorState() const = 0;
 };
 
 }  // end namespace ntci

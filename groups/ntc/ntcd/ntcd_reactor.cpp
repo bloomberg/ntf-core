@@ -145,6 +145,10 @@ void Reactor::initialize()
         d_config.setMinThreads(d_config.maxThreads().value());
     }
 
+    if (d_config.maxThreads().value() > 1) {
+        d_dynamic = true;
+    }
+
     BSLS_ASSERT(d_config.minThreads().value() <=
                 d_config.maxThreads().value());
     BSLS_ASSERT(d_config.maxThreads().value() <= NTCCFG_DEFAULT_MAX_THREADS);
@@ -206,6 +210,13 @@ void Reactor::initialize()
         d_dataPool_sp = dataPool;
     }
 
+    d_chronology_sp.createInplace(
+        d_allocator_p,
+        bsl::shared_ptr<ntcs::Driver>(this,
+                                      bslstl::SharedPtrNilDeleter(),
+                                      d_allocator_p),
+        d_allocator_p);
+
     if (d_user_sp) {
         d_resolver_sp = d_user_sp->resolver();
     }
@@ -222,17 +233,21 @@ void Reactor::initialize()
         d_metrics_sp = d_user_sp->reactorMetrics();
     }
 
+    if (d_user_sp) {
+        bsl::shared_ptr<void> reactorState = d_user_sp->reactorState();
+        if (reactorState) {
+            bsl::shared_ptr<ntcs::Chronology> chronology;
+            bslstl::SharedPtrUtil::staticCast(&chronology, reactorState);
+            BSLS_ASSERT_OPT(chronology);
+
+            d_chronology_sp->setParent(chronology);
+        }
+    }
+
     d_monitor_sp = d_machine_sp->createMonitor(d_allocator_p);
 
     d_monitor_sp->setTrigger(d_config.trigger().value());
     d_monitor_sp->setOneShot(d_config.oneShot().value());
-
-    d_chronology_sp.createInplace(
-        d_allocator_p,
-        bsl::shared_ptr<ntcs::Driver>(this,
-                                      bslstl::SharedPtrNilDeleter(),
-                                      d_allocator_p),
-        d_allocator_p);
 
 #if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
     d_detachFunctor_sp.createInplace(d_allocator_p, [this](const auto& entry) {
@@ -255,7 +270,7 @@ void Reactor::initialize()
 void Reactor::flush()
 {
     while (d_chronology_sp->hasAnyScheduledOrDeferred()) {
-        d_chronology_sp->announce();
+        d_chronology_sp->announce(d_dynamic);
     }
 }
 
@@ -373,6 +388,7 @@ Reactor::Reactor(const ntca::ReactorConfig&         configuration,
 , d_waiterSet(basicAllocator)
 , d_threadHandle(bslmt::ThreadUtil::invalidHandle())
 , d_threadIndex(0)
+, d_dynamic(false)
 , d_load(0)
 , d_run(true)
 , d_config(configuration, basicAllocator)
@@ -1390,7 +1406,7 @@ void Reactor::poll(ntci::Waiter waiter)
     bsl::size_t numCycles = d_config.maxCyclesPerWait().value();
     while (numCycles != 0) {
         if (d_chronology_sp->hasAnyScheduledOrDeferred()) {
-            d_chronology_sp->announce();
+            d_chronology_sp->announce(d_dynamic);
             --numCycles;
         }
         else {
@@ -1475,14 +1491,12 @@ void Reactor::clear()
 void Reactor::execute(const Functor& functor)
 {
     d_chronology_sp->defer(functor);
-    this->interruptAll();
 }
 
 void Reactor::moveAndExecute(FunctorSequence* functorSequence,
                              const Functor&   functor)
 {
     d_chronology_sp->defer(functorSequence, functor);
-    this->interruptAll();
 }
 
 bsl::shared_ptr<ntci::Timer> Reactor::createTimer(

@@ -348,7 +348,7 @@ ntsa::Error Chronology::Timer::schedule(const bsls::TimeInterval& deadline,
     }
 
     if (newFrontFlag) {
-        d_chronology_p->d_driver_sp->interruptAll();
+        d_chronology_p->d_interruptor_sp->interruptAll();
     }
 
     return ntsa::Error();
@@ -426,16 +426,12 @@ ntsa::Error Chronology::Timer::cancel()
                     NTCCFG_BIND(&Chronology::Timer::processCallbackCancelled,
                                 self,
                                 callback));
-
-                d_chronology_p->d_driver_sp->interruptAll();
             }
             else if (session) {
                 d_chronology_p->defer(
                     NTCCFG_BIND(&Chronology::Timer::processSessionCancelled,
                                 self,
                                 session));
-
-                d_chronology_p->d_driver_sp->interruptAll();
             }
         }
 
@@ -528,16 +524,12 @@ ntsa::Error Chronology::Timer::close()
                     &Chronology::Timer::processCallbackCancelledAndClosed,
                     self,
                     callback));
-
-                d_chronology_p->d_driver_sp->interruptAll();
             }
             else if (session) {
                 d_chronology_p->defer(NTCCFG_BIND(
                     &Chronology::Timer::processSessionCancelledAndClosed,
                     self,
                     session));
-
-                d_chronology_p->d_driver_sp->interruptAll();
             }
         }
         else {
@@ -546,16 +538,12 @@ ntsa::Error Chronology::Timer::close()
                     NTCCFG_BIND(&Chronology::Timer::processCallbackClosed,
                                 self,
                                 callback));
-
-                d_chronology_p->d_driver_sp->interruptAll();
             }
             else if (session) {
                 d_chronology_p->defer(
                     NTCCFG_BIND(&Chronology::Timer::processSessionClosed,
                                 self,
                                 session));
-
-                d_chronology_p->d_driver_sp->interruptAll();
             }
         }
     }
@@ -567,16 +555,12 @@ ntsa::Error Chronology::Timer::close()
                 NTCCFG_BIND(&Chronology::Timer::processCallbackCancelled,
                             self,
                             callback));
-
-            d_chronology_p->d_driver_sp->interruptAll();
         }
         else if (session) {
             d_chronology_p->defer(
                 NTCCFG_BIND(&Chronology::Timer::processSessionCancelled,
                             self,
                             session));
-
-            d_chronology_p->d_driver_sp->interruptAll();
         }
     }
 
@@ -675,12 +659,12 @@ bool Chronology::Timer::oneShot() const
 
 bslmt::ThreadUtil::Handle Chronology::Timer::threadHandle() const
 {
-    return d_chronology_p->d_driver_sp->threadHandle();
+    return d_chronology_p->d_interruptor_sp->threadHandle();
 }
 
 bsl::size_t Chronology::Timer::threadIndex() const
 {
-    return d_chronology_p->d_driver_sp->threadIndex();
+    return d_chronology_p->d_interruptor_sp->threadIndex();
 }
 
 const bsl::shared_ptr<ntci::Strand>& Chronology::Timer::strand() const
@@ -828,11 +812,11 @@ bool Chronology::sortAuxTimers(const AuxTimerPair& lhs,
     return lhs.first < rhs.first;
 }
 
-Chronology::Chronology(ntcs::Driver* driver, bslma::Allocator* basicAllocator)
+Chronology::Chronology(ntcs::Interruptor* interruptor, bslma::Allocator* basicAllocator)
 : d_object("ntcs::Chronology")
 , d_mutex(NTCCFG_LOCK_INIT)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
-, d_driver_sp(bsl::shared_ptr<ntcs::Driver>(driver,
+, d_interruptor_sp(bsl::shared_ptr<ntcs::Interruptor>(interruptor,
                                             bslstl::SharedPtrNilDeleter(),
                                             basicAllocator))
 , d_parent_sp()
@@ -852,12 +836,12 @@ Chronology::Chronology(ntcs::Driver* driver, bslma::Allocator* basicAllocator)
 {
 }
 
-Chronology::Chronology(const bsl::shared_ptr<ntcs::Driver>& driver,
+Chronology::Chronology(const bsl::shared_ptr<ntcs::Interruptor>& interruptor,
                        bslma::Allocator*                    basicAllocator)
 : d_object("ntcs::Chronology")
 , d_mutex(NTCCFG_LOCK_INIT)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
-, d_driver_sp(driver)
+, d_interruptor_sp(interruptor)
 , d_parent_sp()
 , d_nodePool(sizeof(TimerNode), d_allocator_p)
 , d_nodeArray(d_allocator_p)
@@ -875,19 +859,13 @@ Chronology::Chronology(const bsl::shared_ptr<ntcs::Driver>& driver,
 {
 }
 
-
-
-
-
-
-
-Chronology::Chronology(ntcs::Driver*                            driver, 
+Chronology::Chronology(ntcs::Interruptor*                            interruptor, 
                        const bsl::shared_ptr<ntcs::Chronology>& parent,
                        bslma::Allocator* basicAllocator)
 : d_object("ntcs::Chronology")
 , d_mutex(NTCCFG_LOCK_INIT)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
-, d_driver_sp(bsl::shared_ptr<ntcs::Driver>(driver,
+, d_interruptor_sp(bsl::shared_ptr<ntcs::Interruptor>(interruptor,
                                             bslstl::SharedPtrNilDeleter(),
                                             basicAllocator))
 , d_parent_sp(parent)
@@ -907,13 +885,13 @@ Chronology::Chronology(ntcs::Driver*                            driver,
 {
 }
 
-Chronology::Chronology(const bsl::shared_ptr<ntcs::Driver>&     driver,
+Chronology::Chronology(const bsl::shared_ptr<ntcs::Interruptor>&     interruptor,
                        const bsl::shared_ptr<ntcs::Chronology>& parent,
                        bslma::Allocator*                        basicAllocator)
 : d_object("ntcs::Chronology")
 , d_mutex(NTCCFG_LOCK_INIT)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
-, d_driver_sp(driver)
+, d_interruptor_sp(interruptor)
 , d_parent_sp(parent)
 , d_nodePool(sizeof(TimerNode), d_allocator_p)
 , d_nodeArray(d_allocator_p)
@@ -930,16 +908,17 @@ Chronology::Chronology(const bsl::shared_ptr<ntcs::Driver>&     driver,
 , d_functorQueueEmpty(true)
 {
 }
-
-
-
-
 
 Chronology::~Chronology()
 {
     BSLS_ASSERT(d_functorQueue.empty());
     BSLS_ASSERT(d_deadlineMap.isEmpty());
     BSLS_ASSERT(d_nodeCount == 0);
+}
+
+void Chronology::setParent(const bsl::shared_ptr<ntcs::Chronology>& parent)
+{
+    d_parent_sp = parent;
 }
 
 void Chronology::clear()
@@ -976,6 +955,10 @@ void Chronology::clear()
         TimerNode* node = *it;
         node->d_storage.object().releaseRef();
     }
+
+    if (d_parent_sp) {
+        d_parent_sp->clear();
+    }
 }
 
 void Chronology::clearFunctions()
@@ -990,6 +973,10 @@ void Chronology::clearFunctions()
     }
 
     functorQueue.clear();
+
+    if (d_parent_sp) {
+        d_parent_sp->clearFunctions();
+    }
 }
 
 void Chronology::clearTimers()
@@ -1019,6 +1006,10 @@ void Chronology::clearTimers()
     for (NodeVector::iterator it = nodes.begin(); it != nodes.end(); ++it) {
         TimerNode* node = *it;
         node->d_storage.object().releaseRef();
+    }
+
+    if (d_parent_sp) {
+        d_parent_sp->clearTimers();
     }
 }
 
@@ -1086,21 +1077,21 @@ bsl::shared_ptr<ntci::Timer> Chronology::createTimer(
         static_cast<bslma::SharedPtrRep*>(rep));
 }
 
-// This method contains a while loop wich iterates over all timers in
-// 'd_deadlineMap' which are due now.  During this iteration non recurring
-// timers are removed from 'd_deadlineMap' while recurring timers are
-// repositioned via d_deadlineMap.updateR(...) to their next deadline.  It can
-// happen that next deadline of a recurring timer would be equal to current
-// time.  In order to avoid processing the same recurring timer twice in the
-// same loop handle of the first timer of such kind is remembered as
-// 'firstReinsertedTimer' variable.  Later this handle is used to stop
-// iterating over ;d_deadlineMap'. This works because ntcs::SkipList
-// ('d_deadlineMap') maintains an order of items (timers) with the same key
-// (deadlines) in a way that item which was added/updated earlier than another
-// is always placed earlier in the list.
-
-void Chronology::announce()
+void Chronology::announce(bool single)
 {
+    // This method contains a while loop wich iterates over all timers in
+    // 'd_deadlineMap' which are due now.  During this iteration non recurring
+    // timers are removed from 'd_deadlineMap' while recurring timers are
+    // repositioned via 'd_deadlineMap.updateR(...)' to their next deadline.
+    // It can happen that next deadline of a recurring timer would be equal to
+    // current time.  In order to avoid processing the same recurring timer
+    // twice in the same loop handle of the first timer of such kind is
+    // remembered as 'firstReinsertedTimer' variable.  Later this handle is
+    // used to stop iterating over 'd_deadlineMap'. This works because
+    // ntcs::SkipList ('d_deadlineMap') maintains an order of items (timers)
+    // with the same key (deadlines) in a way that item which was added/updated
+    // earlier than another is always placed earlier in the list.
+
 #if NTCS_CHRONOLOGY_LOG
     NTCI_LOG_CONTEXT();
 #endif
@@ -1115,15 +1106,29 @@ void Chronology::announce()
         d_deadlineMapAllocator_p);
     DueVector timersDue(&timersDueAllocator);
 
+    bool done = false;
+
     {
         LockGuard lock(&d_mutex);
 
         if (NTCCFG_UNLIKELY(!d_functorQueue.empty())) {
-            functorsDue.makeValue().swap(d_functorQueue);
-            d_functorQueueEmpty = true;
+            if (!single) {
+                functorsDue.makeValue().swap(d_functorQueue);
+                d_functorQueueEmpty = true;
+            }
+            else {
+                functorsDue.makeValue().resize(1);
+                functorsDue.value().front().swap(
+                    d_functorQueue.front());
+                d_functorQueue.erase(d_functorQueue.begin());
+                if (d_functorQueue.empty()) {
+                    d_functorQueueEmpty = true;
+                }
+                done = true;
+            }
         }
 
-        if (!d_deadlineMap.isEmpty()) {
+        if (!d_deadlineMap.isEmpty() && !done) {
             now = this->currentTime();
 
             const Microseconds nowInMicroseconds = now.totalMicroseconds();
@@ -1173,6 +1178,10 @@ void Chronology::announce()
                                              isRecurring));
 #endif
 
+                if (single) {
+                    done = true;
+                }
+
                 if (NTCCFG_UNLIKELY(isRecurring)) {
                     Microseconds nextDeadlineInMicroseconds =
                         timerDeadlineInMicroseconds +
@@ -1197,7 +1206,7 @@ void Chronology::announce()
                     timer->d_deadlineMapHandle = 0;
                 }
 
-            }  //end while
+            }
 
             if (d_deadlineMap.isEmpty()) {
                 d_deadlineMapEmpty    = true;
@@ -1248,8 +1257,8 @@ void Chronology::announce()
         timersDue.clear();
     }
 
-    if (d_parent_sp) {
-        d_parent_sp->announce();
+    if (!done && d_parent_sp && d_parent_sp->hasAnyScheduledOrDeferred()) {
+        d_parent_sp->announce(true);
     }
 }
 

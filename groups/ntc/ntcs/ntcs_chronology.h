@@ -415,7 +415,7 @@ class Chronology
     ntccfg::Object                      d_object;
     mutable Mutex                       d_mutex;
     bslma::Allocator*                   d_allocator_p;
-    bsl::shared_ptr<ntcs::Driver>       d_driver_sp;
+    bsl::shared_ptr<ntcs::Interruptor>  d_interruptor_sp;
     bsl::shared_ptr<ntcs::Chronology>   d_parent_sp;
     bdlma::Pool                         d_nodePool;
     bsl::vector<TimerNode*>             d_nodeArray;
@@ -464,35 +464,38 @@ class Chronology
     typedef bsl::vector<bsl::shared_ptr<ntci::Timer> > TimerVector;
 
     /// Create a new timer chronology that drives each timer and deferred
-    /// function using the specified 'driver'. Optionally specify a
+    /// function using the specified 'interruptor'. Optionally specify a
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0,
     /// the currently installed default allocator is used.
-    explicit Chronology(ntcs::Driver*     driver,
-                        bslma::Allocator* basicAllocator = 0);
+    explicit Chronology(ntcs::Interruptor* interruptor,
+                        bslma::Allocator*  basicAllocator = 0);
 
     /// Create a new timer chronology. Optionally specify a 'basicAllocator'
     /// used to supply memory. If 'basicAllocator' is 0, the currently
     /// installed default allocator is used.
-    explicit Chronology(const bsl::shared_ptr<ntcs::Driver>& driver,
+    explicit Chronology(const bsl::shared_ptr<ntcs::Interruptor>& interruptor,
                         bslma::Allocator* basicAllocator = 0);
 
     /// Create a new timer chronology that drives each timer and deferred
-    /// function using the specified 'driver'. Optionally specify a
+    /// function using the specified 'interruptor'. Optionally specify a
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0,
     /// the currently installed default allocator is used.
-    explicit Chronology(ntcs::Driver*                            driver,
+    explicit Chronology(ntcs::Interruptor*                       interruptor,
                         const bsl::shared_ptr<ntcs::Chronology>& parent,
                         bslma::Allocator* basicAllocator = 0);
 
     /// Create a new timer chronology. Optionally specify a 'basicAllocator'
     /// used to supply memory. If 'basicAllocator' is 0, the currently
     /// installed default allocator is used.
-    explicit Chronology(const bsl::shared_ptr<ntcs::Driver>&     driver,
+    explicit Chronology(const bsl::shared_ptr<ntcs::Interruptor>& interruptor,
                         const bsl::shared_ptr<ntcs::Chronology>& parent,
                         bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~Chronology();
+
+    /// Set the parent to the specified 'parent'.
+    void setParent(const bsl::shared_ptr<ntcs::Chronology>& parent);
 
     /// Remove all functions and timers from the chronology.
     void clear();
@@ -527,7 +530,7 @@ class Chronology
 
     /// Invoke all deferred functions and announce the deadline event of any
     /// timer whose deadline is earlier than or equal to the current time.
-    void announce();
+    void announce(bool single = false);
 
     /// Invoke all deferred functions.
     void drain();
@@ -593,41 +596,49 @@ class Chronology
 NTCCFG_INLINE
 void Chronology::defer(const ntci::Executor::Functor& functor)
 {
-    LockGuard lock(&d_mutex);
+    {
+        LockGuard lock(&d_mutex);
 
-    bool wasEmpty = d_functorQueue.empty();
-    d_functorQueue.push_back(functor);
+        bool wasEmpty = d_functorQueue.empty();
+        d_functorQueue.push_back(functor);
 
-    if (wasEmpty) {
-        d_functorQueueEmpty = false;
+        if (wasEmpty) {
+            d_functorQueueEmpty = false;
+        }
     }
+
+    d_interruptor_sp->interruptAll();
 }
 
 NTCCFG_INLINE
 void Chronology::defer(ntci::Executor::FunctorSequence* functorSequence,
                        const ntci::Executor::Functor&   functor)
 {
-    LockGuard lock(&d_mutex);
+    {
+        LockGuard lock(&d_mutex);
 
 #if NTCS_CHRONOLOGY_USE_FUNCTOR_QUEUE_VECTOR
 
-    d_functorQueue.insert(d_functorQueue.end(),
-                          functorSequence->begin(),
-                          functorSequence->end());
-    if (functor) {
-        d_functorQueue.push_back(functor);
-    }
-    d_functorQueueEmpty = d_functorQueue.empty();
+        d_functorQueue.insert(d_functorQueue.end(),
+                            functorSequence->begin(),
+                            functorSequence->end());
+        if (functor) {
+            d_functorQueue.push_back(functor);
+        }
+        d_functorQueueEmpty = d_functorQueue.empty();
 
 #else
 
-    d_functorQueue.splice(d_functorQueue.end(), *functorSequence);
-    if (functor) {
-        d_functorQueue.push_back(functor);
-    }
-    d_functorQueueEmpty = d_functorQueue.empty();
+        d_functorQueue.splice(d_functorQueue.end(), *functorSequence);
+        if (functor) {
+            d_functorQueue.push_back(functor);
+        }
+        d_functorQueueEmpty = d_functorQueue.empty();
 
 #endif
+    }
+
+    d_interruptor_sp->interruptAll();
 }
 
 NTCCFG_INLINE

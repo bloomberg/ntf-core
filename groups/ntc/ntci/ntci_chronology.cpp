@@ -13,19 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntcs_driver.h>
+#include <ntci_chronology.h>
 
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntcs_driver_cpp, "$Id$ $CSID$")
+BSLS_IDENT_RCSID(ntci_chronology_cpp, "$Id$ $CSID$")
 
 namespace BloombergLP {
-namespace ntcs {
+namespace ntci {
 
-Interruptor::~Interruptor()
-{
-}
-
-Driver::~Driver()
+Chronology::~Chronology()
 {
 }
 

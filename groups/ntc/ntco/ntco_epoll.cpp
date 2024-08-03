@@ -235,6 +235,7 @@ class Epoll : public ntci::Reactor,
     bslmt::ThreadUtil::Handle                d_threadHandle;
     bsl::size_t                              d_threadIndex;
     bsls::AtomicUint64                       d_threadId;
+    bool                                     d_dynamic;
     bsls::AtomicUint64                       d_load;
     bsls::AtomicBool                         d_run;
     ntca::ReactorConfig                      d_config;
@@ -742,7 +743,7 @@ void Epoll::flush()
 {
     if (d_chronology.hasAnyScheduledOrDeferred()) {
         do {
-            d_chronology.announce();
+            d_chronology.announce(d_dynamic);
         } while (d_chronology.hasAnyDeferred());
     }
 }
@@ -1094,6 +1095,7 @@ Epoll::Epoll(const ntca::ReactorConfig&         configuration,
 , d_threadHandle(bslmt::ThreadUtil::invalidHandle())
 , d_threadIndex(0)
 , d_threadId(0)
+, d_dynamic(false)
 , d_load(0)
 , d_run(true)
 , d_config(configuration, basicAllocator)
@@ -1128,6 +1130,10 @@ Epoll::Epoll(const ntca::ReactorConfig&         configuration,
 
     if (d_config.minThreads().value() > d_config.maxThreads().value()) {
         d_config.setMinThreads(d_config.maxThreads().value());
+    }
+
+    if (d_config.maxThreads().value() > 1) {
+        d_dynamic = true;
     }
 
     BSLS_ASSERT(d_config.minThreads().value() <=
@@ -1215,6 +1221,17 @@ Epoll::Epoll(const ntca::ReactorConfig&         configuration,
 
     if (d_user_sp) {
         d_metrics_sp = d_user_sp->reactorMetrics();
+    }
+
+    if (d_user_sp) {
+        bsl::shared_ptr<void> reactorState = d_user_sp->reactorState();
+        if (reactorState) {
+            bsl::shared_ptr<ntcs::Chronology> chronology;
+            bslstl::SharedPtrUtil::staticCast(&chronology, reactorState);
+            BSLS_ASSERT_OPT(chronology);
+
+            d_chronology.setParent(chronology);
+        }
     }
 
     d_registry.setDefaultTrigger(d_config.trigger().value());
@@ -2432,7 +2449,7 @@ void Epoll::run(ntci::Waiter waiter)
         bsl::size_t numCycles = d_config.maxCyclesPerWait().value();
         while (numCycles != 0) {
             if (d_chronology.hasAnyScheduledOrDeferred()) {
-                d_chronology.announce();
+                d_chronology.announce(d_dynamic);
                 --numCycles;
             }
             else {
@@ -2723,7 +2740,7 @@ void Epoll::poll(ntci::Waiter waiter)
     bsl::size_t numCycles = d_config.maxCyclesPerWait().value();
     while (numCycles != 0) {
         if (d_chronology.hasAnyScheduledOrDeferred()) {
-            d_chronology.announce();
+            d_chronology.announce(d_dynamic);
             --numCycles;
         }
         else {
@@ -2838,14 +2855,12 @@ void Epoll::clear()
 void Epoll::execute(const Functor& functor)
 {
     d_chronology.defer(functor);
-    Epoll::interruptAll();
 }
 
 void Epoll::moveAndExecute(FunctorSequence* functorSequence,
                            const Functor&   functor)
 {
     d_chronology.defer(functorSequence, functor);
-    Epoll::interruptAll();
 }
 
 bsl::shared_ptr<ntci::Timer> Epoll::createTimer(

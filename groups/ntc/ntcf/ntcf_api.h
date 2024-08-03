@@ -154,6 +154,7 @@ BSLS_IDENT("$Id: $")
 #include <ntci_bindresult.h>
 #include <ntci_callback.h>
 #include <ntci_cancellation.h>
+#include <ntci_chronology.h>
 #include <ntci_closable.h>
 #include <ntci_closecallback.h>
 #include <ntci_closecallbackfactory.h>

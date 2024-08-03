@@ -461,6 +461,42 @@ bsl::shared_ptr<ntci::Reactor> Interface::acquireReactorWithLeastLoad(
     return result;
 }
 
+void Interface::interruptOne()
+{
+    LockGuard lock(&d_mutex);
+
+    for (ReactorVector::iterator it  = d_reactorVector.begin();
+                                 it != d_reactorVector.end();
+                               ++it)
+    {
+        const bsl::shared_ptr<ntci::Reactor>& reactor = *it;
+        reactor->interruptOne();
+    }
+}
+
+void Interface::interruptAll()
+{
+    LockGuard lock(&d_mutex);
+
+    for (ReactorVector::iterator it  = d_reactorVector.begin();
+                                 it != d_reactorVector.end();
+                               ++it)
+    {
+        const bsl::shared_ptr<ntci::Reactor>& reactor = *it;
+        reactor->interruptAll();
+    }
+}
+
+bslmt::ThreadUtil::Handle Interface::threadHandle() const
+{
+    return bslmt::ThreadUtil::invalidHandle();
+}
+
+bsl::size_t Interface::threadIndex() const
+{
+    return 0;
+}
+
 Interface::Interface(
     const ntca::InterfaceConfig&                 configuration,
     const bsl::shared_ptr<ntci::DataPool>&       dataPool,
@@ -473,6 +509,7 @@ Interface::Interface(
 , d_resolver_sp()
 , d_connectionLimiter_sp()
 , d_socketMetrics_sp()
+, d_chronology_sp()
 , d_reactorFactory_sp(reactorFactory)
 , d_reactorMetrics_sp()
 , d_reactorVector(basicAllocator)
@@ -524,6 +561,12 @@ Interface::Interface(
 
         d_connectionLimiter_sp = connectionLimiter;
         d_user_sp->setConnectionLimiter(d_connectionLimiter_sp);
+    }
+
+    BSLS_ASSERT_OPT(!d_config.dynamicLoadBalancing().isNull());
+    if (!d_config.dynamicLoadBalancing().value()) {
+        d_chronology_sp.createInplace(d_allocator_p, this, d_allocator_p);
+        d_user_sp->setChronology(d_chronology_sp);
     }
 }
 
@@ -1357,6 +1400,11 @@ void Interface::execute(const Functor& functor)
 
     NTCI_LOG_CONTEXT_GUARD_OWNER(d_config.metricName().c_str());
 
+    if (d_chronology_sp) {
+        d_chronology_sp->defer(functor);
+        return;
+    }
+
     ntca::LoadBalancingOptions loadBalancingOptions;
     loadBalancingOptions.setWeight(0);
 
@@ -1373,6 +1421,11 @@ void Interface::moveAndExecute(FunctorSequence* functorSequence,
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_OWNER(d_config.metricName().c_str());
+
+    if (d_chronology_sp) {
+        d_chronology_sp->defer(functorSequence, functor);
+        return;
+    }
 
     ntca::LoadBalancingOptions loadBalancingOptions;
     loadBalancingOptions.setWeight(0);
@@ -1393,6 +1446,10 @@ bsl::shared_ptr<ntci::Timer> Interface::createTimer(
 
     NTCI_LOG_CONTEXT_GUARD_OWNER(d_config.metricName().c_str());
 
+    if (d_chronology_sp) {
+        return d_chronology_sp->createTimer(options, session, basicAllocator);
+    }
+
     ntca::LoadBalancingOptions loadBalancingOptions;
     loadBalancingOptions.setWeight(0);
 
@@ -1411,6 +1468,10 @@ bsl::shared_ptr<ntci::Timer> Interface::createTimer(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_OWNER(d_config.metricName().c_str());
+
+    if (d_chronology_sp) {
+        return d_chronology_sp->createTimer(options, callback, basicAllocator);
+    }
 
     ntca::LoadBalancingOptions loadBalancingOptions;
     loadBalancingOptions.setWeight(0);
@@ -1625,6 +1686,11 @@ const bsl::shared_ptr<bdlbb::BlobBufferFactory>& Interface::
 const bsl::shared_ptr<ntci::Resolver>& Interface::resolver() const
 {
     return d_resolver_sp;
+}
+
+const ntca::InterfaceConfig& Interface::configuration() const
+{
+    return d_config;
 }
 
 bool Interface::isSupported(const bsl::string& driverName,

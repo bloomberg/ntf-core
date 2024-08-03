@@ -17,6 +17,7 @@ ntci_connectcallback
 ntci_connectcallbackfactory
 ntci_connectfuture
 ntci_connectresult
+ntci_chronology
 ntci_closable
 ntci_closecallback
 ntci_closecallbackfactory

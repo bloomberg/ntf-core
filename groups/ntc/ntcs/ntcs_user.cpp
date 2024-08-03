@@ -31,6 +31,7 @@ User::User(bslma::Allocator* basicAllocator)
 , d_connectionLimiter_sp()
 , d_reactorMetrics_sp()
 , d_proactorMetrics_sp()
+, d_chronology_sp()
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
@@ -67,6 +68,11 @@ void User::setProactorMetrics(
     d_proactorMetrics_sp = proactorMetrics;
 }
 
+void User::setChronology(const bsl::shared_ptr<ntcs::Chronology>& chronology)
+{
+    d_chronology_sp = chronology;
+}
+
 const bsl::shared_ptr<ntci::DataPool>& User::dataPool() const
 {
     return d_dataPool_sp;
@@ -87,9 +93,19 @@ const bsl::shared_ptr<ntci::ReactorMetrics>& User::reactorMetrics() const
     return d_reactorMetrics_sp;
 }
 
+const bsl::shared_ptr<void>& User::reactorState() const
+{
+    return d_chronology_sp;
+}
+
 const bsl::shared_ptr<ntci::ProactorMetrics>& User::proactorMetrics() const
 {
     return d_proactorMetrics_sp;
+}
+
+const bsl::shared_ptr<void>& User::proactorState() const
+{
+    return d_chronology_sp;
 }
 
 }  // close package namespace

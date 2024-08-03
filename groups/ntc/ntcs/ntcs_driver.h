@@ -29,17 +29,50 @@ namespace BloombergLP {
 namespace ntcs {
 
 /// @internal @brief
+/// Provide an interface to interrupt a reactor or proactor.
+///
+/// @details
+/// This class provide the common interruption functionality present in reactor
+/// and proactor drivers.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntcs
+class Interruptor
+{
+  public:
+    /// Destroy this object.
+    virtual ~Interruptor();
+
+    /// Unblock one waiter blocked on 'wait'.
+    virtual void interruptOne() = 0;
+
+    /// Unblock all waiters blocked on 'wait'.
+    virtual void interruptAll() = 0;
+
+    /// Return the handle of the thread that will be calling 'wait()', or
+    /// the default value if no such thread has been set.
+    virtual bslmt::ThreadUtil::Handle threadHandle() const = 0;
+
+    /// Return the index of the thread that will be calling 'wait()', or
+    /// the default value if no such thread has been set.
+    virtual bsl::size_t threadIndex() const = 0;
+};
+
+/// @internal @brief
 /// Provide an interface to drive a reactor or proactor.
 ///
 /// @details
-/// Provide the common functionality present in reactor and
+/// This class provides the common waiter registration, interruption, and
+/// socket, timer, and deferred function functionality present in reactor and
 /// proactor drivers.
 ///
 /// @par Thread Safety
 /// This class is thread safe.
 ///
 /// @ingroup module_ntcs
-class Driver
+class Driver : public ntcs::Interruptor
 {
   public:
     /// Destroy this object.
@@ -53,25 +86,11 @@ class Driver
     /// Deregister the specified 'waiter'.
     virtual void deregisterWaiter(ntci::Waiter waiter) = 0;
 
-    /// Unblock one waiter blocked on 'wait'.
-    virtual void interruptOne() = 0;
-
-    /// Unblock all waiters blocked on 'wait'.
-    virtual void interruptAll() = 0;
-
     /// Clear all resources managed by this object.
     virtual void clear() = 0;
 
     /// Return the name of the driver.
     virtual const char* name() const = 0;
-
-    /// Return the handle of the thread that will be calling 'wait()', or
-    /// the default value if no such thread has been set.
-    virtual bslmt::ThreadUtil::Handle threadHandle() const = 0;
-
-    /// Return the index of the thread that will be calling 'wait()', or
-    /// the default value if no such thread has been set.
-    virtual bsl::size_t threadIndex() const = 0;
 
     /// Return the current number of registered waiters.
     virtual bsl::size_t numWaiters() const = 0;
