@@ -1038,12 +1038,8 @@ EventPort::EventPort(const ntca::ReactorConfig&         configuration,
     }
 
     if (d_user_sp) {
-        bsl::shared_ptr<void> reactorState = d_user_sp->reactorState();
-        if (reactorState) {
-            bsl::shared_ptr<ntcs::Chronology> chronology;
-            bslstl::SharedPtrUtil::staticCast(&chronology, reactorState);
-            BSLS_ASSERT_OPT(chronology);
-
+        bsl::shared_ptr<ntci::Chronology> chronology = d_user_sp->chronology();
+        if (chronology) {
             d_chronology.setParent(chronology);
         }
     }
@@ -1825,11 +1821,17 @@ void EventPort::run(ntci::Waiter waiter)
             NTCO_EVENTPORT_LOG_WAIT_INDEFINITE();
         }
 
-        rc = ::port_getn(d_port,
-                         eventList,
-                         MAX_EVENTS,
-                         &eventCount,
-                         timeout >= 0 ? &ts : 0);
+        if (timeout == 0 && this->numSockets() == 0) {
+            rc         = 0;
+            eventCount = 0;
+        }
+        else {
+            rc = ::port_getn(d_port,
+                             eventList,
+                             MAX_EVENTS,
+                             &eventCount,
+                             timeout >= 0 ? &ts : 0);
+        }
 
         if (rc == 0 && eventCount > 0) {
             bsl::size_t numReadable    = 0;
@@ -2070,11 +2072,17 @@ void EventPort::poll(ntci::Waiter waiter)
         NTCO_EVENTPORT_LOG_WAIT_INDEFINITE();
     }
 
-    rc = ::port_getn(d_port,
-                     eventList,
-                     MAX_EVENTS,
-                     &eventCount,
-                     timeout >= 0 ? &ts : 0);
+    if (timeout == 0 && this->numSockets() == 0) {
+        rc         = 0;
+        eventCount = 0;
+    }
+    else {
+        rc = ::port_getn(d_port,
+                         eventList,
+                         MAX_EVENTS,
+                         &eventCount,
+                         timeout >= 0 ? &ts : 0);
+    }
 
     if (rc == 0 && eventCount > 0) {
         bsl::size_t numReadable    = 0;
@@ -2381,13 +2389,13 @@ void EventPort::clear()
 
 void EventPort::execute(const Functor& functor)
 {
-    d_chronology.defer(functor);
+    d_chronology.execute(functor);
 }
 
 void EventPort::moveAndExecute(FunctorSequence* functorSequence,
                                const Functor&   functor)
 {
-    d_chronology.defer(functorSequence, functor);
+    d_chronology.moveAndExecute(functorSequence, functor);
 }
 
 bsl::shared_ptr<ntci::Timer> EventPort::createTimer(

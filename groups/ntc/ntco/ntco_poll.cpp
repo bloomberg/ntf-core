@@ -1115,12 +1115,8 @@ Poll::Poll(const ntca::ReactorConfig&         configuration,
     }
 
     if (d_user_sp) {
-        bsl::shared_ptr<void> reactorState = d_user_sp->reactorState();
-        if (reactorState) {
-            bsl::shared_ptr<ntcs::Chronology> chronology;
-            bslstl::SharedPtrUtil::staticCast(&chronology, reactorState);
-            BSLS_ASSERT_OPT(chronology);
-
+        bsl::shared_ptr<ntci::Chronology> chronology = d_user_sp->chronology();
+        if (chronology) {
             d_chronology.setParent(chronology);
         }
     }
@@ -2071,15 +2067,25 @@ void Poll::run(ntci::Waiter waiter)
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
-        rc = ::poll(&result->d_descriptorList[0],
-                    static_cast<nfds_t>(result->d_descriptorList.size()),
-                    wait);
+        if (timeout == 0 && this->numSockets() == 0) {
+            rc = 0;
+        }
+        else {
+            rc = ::poll(&result->d_descriptorList[0],
+                        static_cast<nfds_t>(result->d_descriptorList.size()),
+                        wait);
+        }
 
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
 
-        rc = WSAPoll(&result->d_descriptorList[0],
-                     static_cast<ULONG>(result->d_descriptorList.size()),
-                     wait);
+        if (timeout == 0 && this->numSockets() == 0) {
+            rc = 0;
+        }
+        else {
+            rc = WSAPoll(&result->d_descriptorList[0],
+                         static_cast<ULONG>(result->d_descriptorList.size()),
+                         wait);
+        }
 
 #else
 #error Not implemented
@@ -2456,15 +2462,25 @@ void Poll::poll(ntci::Waiter waiter)
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
-    rc = ::poll(&result->d_descriptorList[0],
-                static_cast<nfds_t>(result->d_descriptorList.size()),
-                wait);
+    if (timeout == 0 && this->numSockets() == 0) {
+        rc = 0;
+    }
+    else {
+        rc = ::poll(&result->d_descriptorList[0],
+                    static_cast<nfds_t>(result->d_descriptorList.size()),
+                    wait);
+    }
 
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
 
-    rc = WSAPoll(&result->d_descriptorList[0],
-                 static_cast<ULONG>(result->d_descriptorList.size()),
-                 wait);
+    if (timeout == 0 && this->numSockets() == 0) {
+        rc = 0;
+    }
+    else {
+        rc = WSAPoll(&result->d_descriptorList[0],
+                     static_cast<ULONG>(result->d_descriptorList.size()),
+                     wait);
+    }
 
 #else
 #error Not implemented
@@ -2866,13 +2882,13 @@ void Poll::clear()
 
 void Poll::execute(const Functor& functor)
 {
-    d_chronology.defer(functor);
+    d_chronology.execute(functor);
 }
 
 void Poll::moveAndExecute(FunctorSequence* functorSequence,
                           const Functor&   functor)
 {
-    d_chronology.defer(functorSequence, functor);
+    d_chronology.moveAndExecute(functorSequence, functor);
 }
 
 bsl::shared_ptr<ntci::Timer> Poll::createTimer(

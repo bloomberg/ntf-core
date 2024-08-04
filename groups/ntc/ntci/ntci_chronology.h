@@ -21,8 +21,10 @@ BSLS_IDENT("$Id: $")
 
 #include <ntccfg_platform.h>
 #include <ntca_timeroptions.h>
+#include <ntci_executor.h>
 #include <ntci_timer.h>
 #include <ntci_timercallback.h>
+#include <ntci_timerfactory.h>
 #include <ntci_timersession.h>
 #include <ntci_strand.h>
 #include <ntcscm_version.h>
@@ -42,9 +44,12 @@ namespace ntci {
 /// This class is thread safe.
 ///
 /// @ingroup module_ntci_timer
-class Chronology
+class Chronology : public ntci::Executor, ntci::TimerFactory
 {
   public:
+    /// Defines a type alias for a vector of shared pointers to timers.
+    typedef bsl::vector<bsl::shared_ptr<ntci::Timer> > TimerVector;
+
     /// Destroy this object.
     virtual ~Chronology();
 
@@ -71,16 +76,36 @@ class Chronology
         bslma::Allocator*          basicAllocator = 0) = 0;
 
     /// Push the specified 'functor' on the queue.
-    virtual void defer(const ntci::Executor::Functor& functor);
+    virtual void execute(const ntci::Executor::Functor& functor) = 0;
 
     /// Atomically push the specified 'functorSequence' immediately followed
     /// by the specified 'functor', then clear the 'functorSequence'.
-    virtual void defer(ntci::Executor::FunctorSequence* functorSequence,
-               const ntci::Executor::Functor&   functor) = 0;
+    virtual void moveAndExecute(
+        ntci::Executor::FunctorSequence* functorSequence,
+        const ntci::Executor::Functor&   functor) = 0;
 
     /// Invoke all deferred functions and announce the deadline event of any
     /// timer whose deadline is earlier than or equal to the current time.
     virtual void announce(bool single = false) = 0;
+
+    /// Invoke all deferred functions.
+    virtual void drain() = 0;
+
+    /// Remove all functions and timers from the chronology.
+    virtual void clear() = 0;
+
+    /// Remove all functions from the chronology.
+    virtual void clearFunctions() = 0;
+
+    /// Remove all timers from the chronology.
+    virtual void clearTimers() = 0;
+
+    /// Close all timers.
+    virtual void closeAll() = 0;
+
+    /// Load into the specified 'result' all the scheduled timers in the
+    /// chronology.
+    virtual void load(TimerVector* result) const = 0;
 
     /// Return the absolute time the earliest scheduled timer is due, if any.
     virtual bdlb::NullableValue<bsls::TimeInterval> earliest() const = 0;
@@ -121,6 +146,9 @@ class Chronology
     /// Return true if there are any scheduled timers or deferred functions
     /// in the chronology, otherwise return false.
     virtual bool hasAnyScheduledOrDeferred() const = 0;
+
+    /// Return the strand on which this object's functions should be called.
+    virtual const bsl::shared_ptr<ntci::Strand>& strand() const = 0;
 
     /// Return the current elapsed time since the Unix epoch.
     virtual bsls::TimeInterval currentTime() const = 0;

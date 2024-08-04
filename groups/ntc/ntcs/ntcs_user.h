@@ -47,10 +47,10 @@ class User : public ntci::User
 {
     bsl::shared_ptr<ntci::DataPool>        d_dataPool_sp;
     bsl::shared_ptr<ntci::Resolver>        d_resolver_sp;
+    bsl::shared_ptr<ntci::Chronology>      d_chronology_sp;
     bsl::shared_ptr<ntci::Reservation>     d_connectionLimiter_sp;
     bsl::shared_ptr<ntci::ReactorMetrics>  d_reactorMetrics_sp;
     bsl::shared_ptr<ntci::ProactorMetrics> d_proactorMetrics_sp;
-    bsl::shared_ptr<void>                  d_chronology_sp;
     bslma::Allocator*                      d_allocator_p;
 
   private:
@@ -86,7 +86,7 @@ class User : public ntci::User
 
     /// Set the overall chronology perceived by all reactors or proactors to
     /// the specified 'chronology'.
-    void setChronology(const bsl::shared_ptr<ntcs::Chronology>& chronology);
+    void setChronology(const bsl::shared_ptr<ntci::Chronology>& chronology);
 
     /// Return the data pool, if any.
     const bsl::shared_ptr<ntci::DataPool>& dataPool() const
@@ -96,6 +96,10 @@ class User : public ntci::User
     const bsl::shared_ptr<ntci::Resolver>& resolver() const
         BSLS_KEYWORD_OVERRIDE;
 
+    // Return the shared chronology, if any.
+    const bsl::shared_ptr<ntci::Chronology>& chronology() const 
+    BSLS_KEYWORD_OVERRIDE;
+
     /// Return the connection amount limiter, if any.
     const bsl::shared_ptr<ntci::Reservation>& connectionLimiter() const
         BSLS_KEYWORD_OVERRIDE;
@@ -104,15 +108,9 @@ class User : public ntci::User
     const bsl::shared_ptr<ntci::ReactorMetrics>& reactorMetrics() const
         BSLS_KEYWORD_OVERRIDE;
 
-    /// Return the reactor private state, if any.
-    const bsl::shared_ptr<void>& reactorState() const BSLS_KEYWORD_OVERRIDE;
-
     /// Return the resolver, if any.
     const bsl::shared_ptr<ntci::ProactorMetrics>& proactorMetrics() const
         BSLS_KEYWORD_OVERRIDE;
-
-    /// Return the proactor private state, if any.
-    const bsl::shared_ptr<void>& proactorState() const BSLS_KEYWORD_OVERRIDE;
 };
 
 }  // close package namespace

@@ -1004,12 +1004,8 @@ void Proactor::initialize()
     }
 
     if (d_user_sp) {
-        bsl::shared_ptr<void> reactorState = d_user_sp->reactorState();
-        if (reactorState) {
-            bsl::shared_ptr<ntcs::Chronology> chronology;
-            bslstl::SharedPtrUtil::staticCast(&chronology, reactorState);
-            BSLS_ASSERT_OPT(chronology);
-
+        bsl::shared_ptr<ntci::Chronology> chronology = d_user_sp->chronology();
+        if (chronology) {
             d_chronology_sp->setParent(chronology);
         }
     }
@@ -1805,13 +1801,13 @@ void Proactor::clear()
 
 void Proactor::execute(const Functor& functor)
 {
-    d_chronology_sp->defer(functor);
+    d_chronology_sp->execute(functor);
 }
 
 void Proactor::moveAndExecute(FunctorSequence* functorSequence,
                               const Functor&   functor)
 {
-    d_chronology_sp->defer(functorSequence, functor);
+    d_chronology_sp->moveAndExecute(functorSequence, functor);
 }
 
 bsl::shared_ptr<ntci::Timer> Proactor::createTimer(

@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntccfg_platform.h>
 #include <ntci_datapool.h>
+#include <ntci_chronology.h>
 #include <ntci_proactormetrics.h>
 #include <ntci_reactormetrics.h>
 #include <ntci_reservation.h>
@@ -53,6 +54,9 @@ class User
     /// Return the resolver, if any.
     virtual const bsl::shared_ptr<ntci::Resolver>& resolver() const = 0;
 
+    // Return the shared chronology, if any.
+    virtual const bsl::shared_ptr<ntci::Chronology>& chronology() const = 0;
+
     /// Return the connection amount limiter, if any.
     virtual const bsl::shared_ptr<ntci::Reservation>& connectionLimiter()
         const = 0;
@@ -61,15 +65,9 @@ class User
     virtual const bsl::shared_ptr<ntci::ReactorMetrics>& reactorMetrics()
         const = 0;
 
-    /// Return the reactor private state, if any.
-    virtual const bsl::shared_ptr<void>& reactorState() const = 0;
-
     /// Return the proactor metrics, if any.
     virtual const bsl::shared_ptr<ntci::ProactorMetrics>& proactorMetrics()
         const = 0;
-
-    /// Return the proactor private state, if any.
-    virtual const bsl::shared_ptr<void>& proactorState() const = 0;
 };
 
 }  // end namespace ntci

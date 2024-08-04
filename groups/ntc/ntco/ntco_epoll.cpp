@@ -1224,12 +1224,8 @@ Epoll::Epoll(const ntca::ReactorConfig&         configuration,
     }
 
     if (d_user_sp) {
-        bsl::shared_ptr<void> reactorState = d_user_sp->reactorState();
-        if (reactorState) {
-            bsl::shared_ptr<ntcs::Chronology> chronology;
-            bslstl::SharedPtrUtil::staticCast(&chronology, reactorState);
-            BSLS_ASSERT_OPT(chronology);
-
+        bsl::shared_ptr<ntci::Chronology> chronology = d_user_sp->chronology();
+        if (chronology) {
             d_chronology.setParent(chronology);
         }
     }
@@ -2234,23 +2230,15 @@ void Epoll::run(ntci::Waiter waiter)
 
 #endif
 
-        // Note: it is possible to perform an optimization where no actual wait
-        // is required if it is determine that an instantenous poll is desired
-        // but there are no sockets registered. This optimization is currently
-        // *not* performed because it is unlikely that no sockets are
-        // registered in typical usage, and it is undesirable to incur the cost
-        // of learning that no sockets are registered.
-        //
-        // if (wait == 0 && this->numSockets() == 0) {
-        //     NTCO_EPOLL_LOG_WAIT_TIMEOUT();
-        //     NTCS_METRICS_UPDATE_POLL(0, 0, 0);
-        //     return ntsa::Error();
-        // }
-
         enum { MAX_EVENTS = 128 };
         struct ::epoll_event results[MAX_EVENTS];
 
-        rc = ::epoll_wait(d_epoll, results, MAX_EVENTS, wait);
+        if (wait == 0 && this->numSockets() == 0) {
+            rc = 0;
+        }
+        else {
+            rc = ::epoll_wait(d_epoll, results, MAX_EVENTS, wait);
+        }
 
         if (NTCCFG_LIKELY(rc > 0)) {
             NTCO_EPOLL_LOG_WAIT_RESULT_OR_TIMEOUT(rc, results);
@@ -2533,23 +2521,15 @@ void Epoll::poll(ntci::Waiter waiter)
 
 #endif
 
-    // Note: it is possible to perform an optimization where no actual wait
-    // is required if it is determine that an instantenous poll is desired
-    // but there are no sockets registered. This optimization is currently
-    // *not* performed because it is unlikely that no sockets are registered
-    // in typical usage, and it is undesirable to incur the cost of learning
-    // that no sockets are registered.
-    //
-    // if (wait == 0 && this->numSockets() == 0) {
-    //     NTCO_EPOLL_LOG_WAIT_TIMEOUT();
-    //     NTCS_METRICS_UPDATE_POLL(0, 0, 0);
-    //     return ntsa::Error();
-    // }
-
     enum { MAX_EVENTS = 128 };
     struct ::epoll_event results[MAX_EVENTS];
 
-    rc = ::epoll_wait(d_epoll, results, MAX_EVENTS, wait);
+    if (wait == 0 && this->numSockets() == 0) {
+        rc = 0;
+    }
+    else {
+        rc = ::epoll_wait(d_epoll, results, MAX_EVENTS, wait);
+    }
 
     if (NTCCFG_LIKELY(rc > 0)) {
         NTCO_EPOLL_LOG_WAIT_RESULT_OR_TIMEOUT(rc, results);
@@ -2854,13 +2834,13 @@ void Epoll::clear()
 
 void Epoll::execute(const Functor& functor)
 {
-    d_chronology.defer(functor);
+    d_chronology.execute(functor);
 }
 
 void Epoll::moveAndExecute(FunctorSequence* functorSequence,
                            const Functor&   functor)
 {
-    d_chronology.defer(functorSequence, functor);
+    d_chronology.moveAndExecute(functorSequence, functor);
 }
 
 bsl::shared_ptr<ntci::Timer> Epoll::createTimer(

@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntca_timeroptions.h>
 #include <ntccfg_platform.h>
+#include <ntci_chronology.h>
 #include <ntci_executor.h>
 #include <ntci_mutex.h>
 #include <ntci_timer.h>
@@ -65,7 +66,7 @@ namespace ntcs {
 /// This class is thread safe.
 ///
 /// @ingroup module_ntcs
-class Chronology
+class Chronology NTSCFG_FINAL : public ntci::Chronology
 {
     struct TimerNode;
     // This struct describes a node in the timer object catalog.
@@ -144,7 +145,7 @@ class Chronology
         enum State { e_STATE_WAITING, e_STATE_SCHEDULED, e_STATE_CLOSED };
 
         ntccfg::Object                      d_object;
-        bsls::SpinLock                      d_lock;
+        mutable bsls::SpinLock              d_lock;
         ntcs::Chronology*                   d_chronology_p;
         TimerNode*                          d_node_p;
         const ntca::TimerOptions            d_options;
@@ -291,6 +292,14 @@ class Chronology
         /// false.
         bool oneShot() const BSLS_KEYWORD_OVERRIDE;
 
+        /// Return the deadline, or null if no deadline is scheduled.
+        bdlb::NullableValue<bsls::TimeInterval> deadline() const 
+        BSLS_KEYWORD_OVERRIDE;
+
+        /// Return the period, or null if the timer is not periodic.
+        bdlb::NullableValue<bsls::TimeInterval> period() const 
+        BSLS_KEYWORD_OVERRIDE;
+
         /// Return the handle of the thread that manages this socket, or
         /// the default value if no such thread has been set.
         bslmt::ThreadUtil::Handle threadHandle() const BSLS_KEYWORD_OVERRIDE;
@@ -401,11 +410,6 @@ class Chronology
         TimerNode*                   d_next_p;
     };
 
-    typedef bsl::pair<Microseconds, bsl::shared_ptr<Chronology::Timer> 
-    > AuxTimerPair;
-
-    typedef bsl::vector<AuxTimerPair> AuxTimerPairVector;
-
     /// Define a type alias for a mutex.
     typedef ntccfg::Mutex Mutex;
 
@@ -416,7 +420,7 @@ class Chronology
     mutable Mutex                       d_mutex;
     bslma::Allocator*                   d_allocator_p;
     bsl::shared_ptr<ntcs::Interruptor>  d_interruptor_sp;
-    bsl::shared_ptr<ntcs::Chronology>   d_parent_sp;
+    bsl::shared_ptr<ntci::Chronology>   d_parent_sp;
     bdlma::Pool                         d_nodePool;
     bsl::vector<TimerNode*>             d_nodeArray;
     TimerNode*                          d_nodeFree_p;
@@ -449,8 +453,8 @@ class Chronology
 
     /// Return true if the deadline of the specified 'lhs' timer is less than 
     /// the deadline of the specified 'rhs' timer.
-    static bool sortAuxTimers(const AuxTimerPair& lhs, 
-                              const AuxTimerPair& rhs);
+    static bool sortTimers(const bsl::shared_ptr<ntci::Timer>& lhs, 
+                           const bsl::shared_ptr<ntci::Timer>& rhs);
 
   public:
     /// The time interval that is LLONG_MAX microseconds from the Unix
@@ -459,9 +463,6 @@ class Chronology
 
     /// Equivalent to LLONG_MAX microseconds.
     static const bsl::int64_t k_MAX_TIME_INTERVAL_IN_MICROSECONDS;
-
-    /// Defines a type alias for a vector of shared pointers to timers.
-    typedef bsl::vector<bsl::shared_ptr<ntci::Timer> > TimerVector;
 
     /// Create a new timer chronology that drives each timer and deferred
     /// function using the specified 'interruptor'. Optionally specify a
@@ -481,30 +482,30 @@ class Chronology
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0,
     /// the currently installed default allocator is used.
     explicit Chronology(ntcs::Interruptor*                       interruptor,
-                        const bsl::shared_ptr<ntcs::Chronology>& parent,
+                        const bsl::shared_ptr<ntci::Chronology>& parent,
                         bslma::Allocator* basicAllocator = 0);
 
     /// Create a new timer chronology. Optionally specify a 'basicAllocator'
     /// used to supply memory. If 'basicAllocator' is 0, the currently
     /// installed default allocator is used.
     explicit Chronology(const bsl::shared_ptr<ntcs::Interruptor>& interruptor,
-                        const bsl::shared_ptr<ntcs::Chronology>& parent,
+                        const bsl::shared_ptr<ntci::Chronology>& parent,
                         bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
-    ~Chronology();
+    ~Chronology() BSLS_KEYWORD_OVERRIDE;
 
     /// Set the parent to the specified 'parent'.
-    void setParent(const bsl::shared_ptr<ntcs::Chronology>& parent);
+    void setParent(const bsl::shared_ptr<ntci::Chronology>& parent);
 
     /// Remove all functions and timers from the chronology.
-    void clear();
+    void clear() BSLS_KEYWORD_OVERRIDE;
 
     /// Remove all functions from the chronology.
-    void clearFunctions();
+    void clearFunctions() BSLS_KEYWORD_OVERRIDE;
 
     /// Remove all timers from the chronology.
-    void clearTimers();
+    void clearTimers() BSLS_KEYWORD_OVERRIDE;
 
     /// Create a new timer according to the specified 'options' that invokes
     /// the specified 'session' for each timer event on this object's
@@ -515,7 +516,8 @@ class Chronology
     bsl::shared_ptr<ntci::Timer> createTimer(
         const ntca::TimerOptions&                  options,
         const bsl::shared_ptr<ntci::TimerSession>& session,
-        bslma::Allocator*                          basicAllocator = 0);
+        bslma::Allocator*                          basicAllocator = 0) 
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Create a new timer according to the specified 'options' that invokes
     /// the specified 'callback' for each timer event on this object's
@@ -526,238 +528,78 @@ class Chronology
     bsl::shared_ptr<ntci::Timer> createTimer(
         const ntca::TimerOptions&  options,
         const ntci::TimerCallback& callback,
-        bslma::Allocator*          basicAllocator = 0);
+        bslma::Allocator*          basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
 
     /// Invoke all deferred functions and announce the deadline event of any
     /// timer whose deadline is earlier than or equal to the current time.
-    void announce(bool single = false);
+    void announce(bool single = false) BSLS_KEYWORD_OVERRIDE;
 
     /// Invoke all deferred functions.
-    void drain();
+    void drain() BSLS_KEYWORD_OVERRIDE;
 
     /// Close all timers.
-    void closeAll();
+    void closeAll() BSLS_KEYWORD_OVERRIDE;
 
     /// Push the specified 'functor' on the queue.
-    void defer(const ntci::Executor::Functor& functor);
+    void execute(const ntci::Executor::Functor& functor) BSLS_KEYWORD_OVERRIDE;
 
     /// Atomically push the specified 'functorSequence' immediately followed
     /// by the specified 'functor', then clear the 'functorSequence'.
-    void defer(ntci::Executor::FunctorSequence* functorSequence,
-               const ntci::Executor::Functor&   functor);
+    void moveAndExecute(
+        ntci::Executor::FunctorSequence* functorSequence,
+        const ntci::Executor::Functor&   functor) BSLS_KEYWORD_OVERRIDE;
 
     /// Load into the specified 'result' all the scheduled timers in the
     /// chronology.
-    void load(TimerVector* result) const;
+    void load(TimerVector* result) const BSLS_KEYWORD_OVERRIDE;
 
     /// Return the absolute time the earliest scheduled timer is due, if any.
-    bdlb::NullableValue<bsls::TimeInterval> earliest() const;
+    bdlb::NullableValue<bsls::TimeInterval> earliest() const 
+    BSLS_KEYWORD_OVERRIDE;
 
     /// Return the relative time interval to wait until the earliest timer
     /// is due, if any, from the current time, or null if no timer is
     /// scheduled.
-    bdlb::NullableValue<bsls::TimeInterval> timeoutInterval() const;
+    bdlb::NullableValue<bsls::TimeInterval> timeoutInterval() const 
+    BSLS_KEYWORD_OVERRIDE;
 
     /// Return the number of milliseconds to wait until the earliest timer
     /// is due, if any, from the current time, or -1 if no timer is
     /// scheduled.
-    int timeoutInMilliseconds() const;
+    int timeoutInMilliseconds() const BSLS_KEYWORD_OVERRIDE;
 
     /// Return the number of registered, but not necessarily scheduled
     /// timers in the chronology.
-    bsl::size_t numRegistered() const;
+    bsl::size_t numRegistered() const BSLS_KEYWORD_OVERRIDE;
 
     /// Return true if there are any registered, but not necessarily
     /// scheduled timers in the chronology, otherwise return false.
-    bool hasAnyRegistered() const;
+    bool hasAnyRegistered() const BSLS_KEYWORD_OVERRIDE;
 
     /// Return the number of scheduled timers in the chronology.
-    bsl::size_t numScheduled() const;
+    bsl::size_t numScheduled() const BSLS_KEYWORD_OVERRIDE;
 
     /// Return true if there are any scheduled timers in the chronology,
     /// otherwise return false.
-    bool hasAnyScheduled() const;
+    bool hasAnyScheduled() const BSLS_KEYWORD_OVERRIDE;
 
     /// Return the number of deferred functions in the chronology.
-    bsl::size_t numDeferred() const;
+    bsl::size_t numDeferred() const BSLS_KEYWORD_OVERRIDE;
 
     /// Return true if there are any deferred functions in the chronology,
     /// otherwise return false.
-    bool hasAnyDeferred() const;
+    bool hasAnyDeferred() const BSLS_KEYWORD_OVERRIDE;
 
     /// Return true if there are any scheduled timers or deferred functions
     /// in the chronology, otherwise return false.
-    bool hasAnyScheduledOrDeferred() const;
+    bool hasAnyScheduledOrDeferred() const BSLS_KEYWORD_OVERRIDE;
+
+    /// Return the strand on which this object's functions should be called.
+    const bsl::shared_ptr<ntci::Strand>& strand() const BSLS_KEYWORD_OVERRIDE;
 
     /// Return the current elapsed time since the Unix epoch.
-    bsls::TimeInterval currentTime() const;
+    bsls::TimeInterval currentTime() const BSLS_KEYWORD_OVERRIDE;
 };
-
-NTCCFG_INLINE
-void Chronology::defer(const ntci::Executor::Functor& functor)
-{
-    {
-        LockGuard lock(&d_mutex);
-
-        bool wasEmpty = d_functorQueue.empty();
-        d_functorQueue.push_back(functor);
-
-        if (wasEmpty) {
-            d_functorQueueEmpty = false;
-        }
-    }
-
-    d_interruptor_sp->interruptAll();
-}
-
-NTCCFG_INLINE
-void Chronology::defer(ntci::Executor::FunctorSequence* functorSequence,
-                       const ntci::Executor::Functor&   functor)
-{
-    {
-        LockGuard lock(&d_mutex);
-
-#if NTCS_CHRONOLOGY_USE_FUNCTOR_QUEUE_VECTOR
-
-        d_functorQueue.insert(d_functorQueue.end(),
-                            functorSequence->begin(),
-                            functorSequence->end());
-        if (functor) {
-            d_functorQueue.push_back(functor);
-        }
-        d_functorQueueEmpty = d_functorQueue.empty();
-
-#else
-
-        d_functorQueue.splice(d_functorQueue.end(), *functorSequence);
-        if (functor) {
-            d_functorQueue.push_back(functor);
-        }
-        d_functorQueueEmpty = d_functorQueue.empty();
-
-#endif
-    }
-
-    d_interruptor_sp->interruptAll();
-}
-
-NTCCFG_INLINE
-bdlb::NullableValue<bsls::TimeInterval> Chronology::earliest() const
-{
-    if (!d_functorQueueEmpty) {
-        return bdlb::NullableValue<bsls::TimeInterval>(bsls::TimeInterval());
-    }
-
-    bdlb::NullableValue<bsls::TimeInterval> parentEarliest;
-    if (d_parent_sp) {
-        parentEarliest = d_parent_sp->earliest();
-    }
-    
-    bdlb::NullableValue<bsls::TimeInterval> thisEarliest;
-    if (!d_deadlineMapEmpty) {
-        this->findEarliest(&thisEarliest);
-    }
-
-    bdlb::NullableValue<bsls::TimeInterval> deadline;
-    if (thisEarliest.has_value()) {
-        deadline = thisEarliest.value();
-        if (parentEarliest.has_value()) {
-            if (parentEarliest.value() < deadline.value()) {
-                deadline = parentEarliest;
-            }
-        }
-    }
-    else {
-        deadline = parentEarliest;
-    }
-
-    return deadline;
-}
-
-NTCCFG_INLINE
-bdlb::NullableValue<bsls::TimeInterval> Chronology::timeoutInterval() const
-{
-    const bdlb::NullableValue<bsls::TimeInterval> deadline = this->earliest();
-
-    bdlb::NullableValue<bsls::TimeInterval> timeout;
-
-    if (deadline.has_value()) {
-        const bsls::TimeInterval now = this->currentTime();
-        if (deadline > now) {
-            timeout = deadline.value() - now;
-        }
-        else {
-            timeout.makeValue(bsls::TimeInterval());
-        }
-    }
-
-    return timeout;
-}
-
-NTCCFG_INLINE
-int Chronology::timeoutInMilliseconds() const
-{
-    int timeout = -1;
-
-    const bdlb::NullableValue<bsls::TimeInterval> timeoutDuration = 
-        this->timeoutInterval();
-
-    if (timeoutDuration.has_value()) {
-        const bsls::Types::Int64 totalMilliseconds = 
-            timeoutDuration.value().totalMilliseconds();
-
-        if (NTCCFG_LIKELY(totalMilliseconds <=
-            static_cast<bsls::Types::Int64>(bsl::numeric_limits<int>::max())))
-        {
-            timeout = static_cast<int>(totalMilliseconds);
-        }
-        else {
-            timeout = bsl::numeric_limits<int>::max();
-        }
-    }
-
-    return timeout;
-}
-
-NTCCFG_INLINE
-bool Chronology::hasAnyScheduled() const
-{
-    if (d_parent_sp) {
-        return !d_deadlineMapEmpty || d_parent_sp->hasAnyScheduled();
-    }
-    else {
-        return !d_deadlineMapEmpty;
-    }
-}
-
-NTCCFG_INLINE
-bool Chronology::hasAnyDeferred() const
-{
-    if (d_parent_sp) {
-        return !d_functorQueueEmpty || d_parent_sp->hasAnyDeferred();
-    }
-    else {
-        return !d_functorQueueEmpty;
-    }
-}
-
-NTCCFG_INLINE
-bool Chronology::hasAnyScheduledOrDeferred() const
-{
-    if (d_parent_sp) {
-        return !d_deadlineMapEmpty || !d_functorQueueEmpty || 
-                d_parent_sp->hasAnyScheduledOrDeferred();
-    }
-    else {
-        return !d_deadlineMapEmpty || !d_functorQueueEmpty;
-    }
-}
-
-NTCCFG_INLINE
-bsls::TimeInterval Chronology::currentTime() const
-{
-    return bdlt::CurrentTime::now();
-}
 
 }  // close package namespace
 }  // close enterprise namespace

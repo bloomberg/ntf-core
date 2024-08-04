@@ -1139,12 +1139,8 @@ Devpoll::Devpoll(const ntca::ReactorConfig&         configuration,
     }
 
     if (d_user_sp) {
-        bsl::shared_ptr<void> reactorState = d_user_sp->reactorState();
-        if (reactorState) {
-            bsl::shared_ptr<ntcs::Chronology> chronology;
-            bslstl::SharedPtrUtil::staticCast(&chronology, reactorState);
-            BSLS_ASSERT_OPT(chronology);
-
+        bsl::shared_ptr<ntci::Chronology> chronology = d_user_sp->chronology();
+        if (chronology) {
             d_chronology.setParent(chronology);
         }
     }
@@ -2611,13 +2607,13 @@ void Devpoll::clear()
 
 void Devpoll::execute(const Functor& functor)
 {
-    d_chronology.defer(functor);
+    d_chronology.execute(functor);
 }
 
 void Devpoll::moveAndExecute(FunctorSequence* functorSequence,
                              const Functor&   functor)
 {
-    d_chronology.defer(functorSequence, functor);
+    d_chronology.moveAndExecute(functorSequence, functor);
 }
 
 bsl::shared_ptr<ntci::Timer> Devpoll::createTimer(

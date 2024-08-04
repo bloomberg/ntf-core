@@ -1148,12 +1148,8 @@ Select::Select(const ntca::ReactorConfig&         configuration,
     }
 
     if (d_user_sp) {
-        bsl::shared_ptr<void> reactorState = d_user_sp->reactorState();
-        if (reactorState) {
-            bsl::shared_ptr<ntcs::Chronology> chronology;
-            bslstl::SharedPtrUtil::staticCast(&chronology, reactorState);
-            BSLS_ASSERT_OPT(chronology);
-
+        bsl::shared_ptr<ntci::Chronology> chronology = d_user_sp->chronology();
+        if (chronology) {
             d_chronology.setParent(chronology);
         }
     }
@@ -1967,11 +1963,16 @@ void Select::run(ntci::Waiter waiter)
             NTCO_SELECT_LOG_WAIT_INDEFINITE();
         }
 
-        rc = ::select(static_cast<int>(maxDescriptor),
-                      &result->d_readable,
-                      &result->d_writable,
-                      &result->d_exceptional,
-                      timeout >= 0 ? &timeval : 0);
+        if (timeout == 0 && this->numSockets() == 0) {
+            rc = 0;
+        }
+        else {
+            rc = ::select(static_cast<int>(maxDescriptor),
+                          &result->d_readable,
+                          &result->d_writable,
+                          &result->d_exceptional,
+                          timeout >= 0 ? &timeval : 0);
+        }
 
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
 
@@ -1991,11 +1992,16 @@ void Select::run(ntci::Waiter waiter)
             NTCO_SELECT_LOG_WAIT_INDEFINITE();
         }
 
-        rc = ::select(static_cast<int>(maxDescriptor),
-                      &result->d_readable,
-                      &result->d_writable,
-                      &result->d_exceptional,
-                      timeout >= 0 ? &timeval : 0);
+        if (timeout == 0 && this->numSockets() == 0) {
+            rc = 0;
+        }
+        else {
+            rc = ::select(static_cast<int>(maxDescriptor),
+                          &result->d_readable,
+                          &result->d_writable,
+                          &result->d_exceptional,
+                          timeout >= 0 ? &timeval : 0);
+        }
 
 #else
 #error Not implemented
@@ -2084,7 +2090,6 @@ void Select::run(ntci::Waiter waiter)
             BSLS_ASSERT(numResultsRemaining == 0);
         }
 
-        //Process control channel here
         if (rc > 0) {
             const bool isError =
                 FD_ISSET(d_controllerDescriptorHandle, &result->d_exceptional);
@@ -2102,7 +2107,6 @@ void Select::run(ntci::Waiter waiter)
                     }
                     else {
                         bsl::shared_ptr<ntcs::RegistryEntry> entry;
-                        //TODO: it is possible to optimize registry and store controller handle there explicitly
                         if (d_registry.lookup(&entry,
                                               d_controllerDescriptorHandle))
                         {
@@ -2409,11 +2413,16 @@ void Select::poll(ntci::Waiter waiter)
         NTCO_SELECT_LOG_WAIT_INDEFINITE();
     }
 
-    rc = ::select(static_cast<int>(maxDescriptor),
-                  &result->d_readable,
-                  &result->d_writable,
-                  &result->d_exceptional,
-                  timeout >= 0 ? &timeval : 0);
+    if (timeout == 0 && this->numSockets() == 0) {
+        rc = 0;
+    }
+    else {
+        rc = ::select(static_cast<int>(maxDescriptor),
+                      &result->d_readable,
+                      &result->d_writable,
+                      &result->d_exceptional,
+                      timeout >= 0 ? &timeval : 0);
+    }
 
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
 
@@ -2433,11 +2442,16 @@ void Select::poll(ntci::Waiter waiter)
         NTCO_SELECT_LOG_WAIT_INDEFINITE();
     }
 
-    rc = ::select(static_cast<int>(maxDescriptor),
-                  &result->d_readable,
-                  &result->d_writable,
-                  &result->d_exceptional,
-                  timeout >= 0 ? &timeval : 0);
+    if (timeout == 0 && this->numSockets() == 0) {
+        rc = 0;
+    }
+    else {
+        rc = ::select(static_cast<int>(maxDescriptor),
+                      &result->d_readable,
+                      &result->d_writable,
+                      &result->d_exceptional,
+                      timeout >= 0 ? &timeval : 0);
+    }
 
 #else
 #error Not implemented
@@ -2870,13 +2884,13 @@ void Select::clear()
 
 void Select::execute(const Functor& functor)
 {
-    d_chronology.defer(functor);
+    d_chronology.execute(functor);
 }
 
 void Select::moveAndExecute(FunctorSequence* functorSequence,
                             const Functor&   functor)
 {
-    d_chronology.defer(functorSequence, functor);
+    d_chronology.moveAndExecute(functorSequence, functor);
 }
 
 bsl::shared_ptr<ntci::Timer> Select::createTimer(

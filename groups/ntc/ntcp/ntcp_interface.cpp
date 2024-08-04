@@ -556,7 +556,10 @@ Interface::Interface(
     }
 
     BSLS_ASSERT_OPT(!d_config.dynamicLoadBalancing().isNull());
-    if (!d_config.dynamicLoadBalancing().value()) {
+    
+    if (d_config.maxThreads() > 1 && 
+        !d_config.dynamicLoadBalancing().value()) 
+    {
         d_chronology_sp.createInplace(d_allocator_p, this, d_allocator_p);
         d_user_sp->setChronology(d_chronology_sp);
     }
@@ -860,6 +863,12 @@ bsl::shared_ptr<ntci::Strand> Interface::createStrand(
     NTCI_LOG_CONTEXT_GUARD_OWNER(d_config.metricName().c_str());
 
     bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
+
+    if (d_chronology_sp) {
+        bsl::shared_ptr<ntcs::Strand> strand;
+        strand.createInplace(allocator, d_chronology_sp, allocator);
+        return strand;
+    }
 
     ntca::LoadBalancingOptions loadBalancingOptions;
     loadBalancingOptions.setWeight(0);
@@ -1391,7 +1400,7 @@ void Interface::execute(const Functor& functor)
     NTCI_LOG_CONTEXT_GUARD_OWNER(d_config.metricName().c_str());
 
     if (d_chronology_sp) {
-        d_chronology_sp->defer(functor);
+        d_chronology_sp->execute(functor);
         return;
     }
 
@@ -1413,7 +1422,7 @@ void Interface::moveAndExecute(FunctorSequence* functorSequence,
     NTCI_LOG_CONTEXT_GUARD_OWNER(d_config.metricName().c_str());
 
     if (d_chronology_sp) {
-        d_chronology_sp->defer(functorSequence, functor);
+        d_chronology_sp->moveAndExecute(functorSequence, functor);
         return;
     }
 

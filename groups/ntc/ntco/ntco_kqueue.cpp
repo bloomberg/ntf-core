@@ -1214,12 +1214,8 @@ Kqueue::Kqueue(const ntca::ReactorConfig&         configuration,
     }
 
     if (d_user_sp) {
-        bsl::shared_ptr<void> reactorState = d_user_sp->reactorState();
-        if (reactorState) {
-            bsl::shared_ptr<ntcs::Chronology> chronology;
-            bslstl::SharedPtrUtil::staticCast(&chronology, reactorState);
-            BSLS_ASSERT_OPT(chronology);
-
+        bsl::shared_ptr<ntci::Chronology> chronology = d_user_sp->chronology();
+        if (chronology) {
             d_chronology.setParent(chronology);
         }
     }
@@ -1997,7 +1993,14 @@ void Kqueue::run(ntci::Waiter waiter)
             NTCO_KQUEUE_LOG_WAIT_INDEFINITE();
         }
 
-        rc = ::kevent(d_kqueue, 0, 0, results, MAX_EVENTS, tsPtr);
+        if (tsPtr && tsPtr->tv_sec == 0 && tsPtr->tv_nsec == 0 && 
+            this->numSockets() == 0) 
+        {
+            rc = 0;
+        }
+        else {
+            rc = ::kevent(d_kqueue, 0, 0, results, MAX_EVENTS, tsPtr);
+        }
 
         if (NTCCFG_LIKELY(rc > 0)) {
             NTCO_KQUEUE_LOG_WAIT_RESULT(rc);
@@ -2193,7 +2196,14 @@ void Kqueue::poll(ntci::Waiter waiter)
         NTCO_KQUEUE_LOG_WAIT_INDEFINITE();
     }
 
-    rc = ::kevent(d_kqueue, 0, 0, results, MAX_EVENTS, tsPtr);
+    if (tsPtr && tsPtr->tv_sec == 0 && tsPtr->tv_nsec == 0 && 
+        this->numSockets() == 0) 
+    {
+        rc = 0;
+    }
+    else {
+        rc = ::kevent(d_kqueue, 0, 0, results, MAX_EVENTS, tsPtr);
+    }
 
     if (NTCCFG_LIKELY(rc > 0)) {
         NTCO_KQUEUE_LOG_WAIT_RESULT(rc);
@@ -2457,13 +2467,13 @@ void Kqueue::clear()
 
 void Kqueue::execute(const Functor& functor)
 {
-    d_chronology.defer(functor);
+    d_chronology.execute(functor);
 }
 
 void Kqueue::moveAndExecute(FunctorSequence* functorSequence,
                             const Functor&   functor)
 {
-    d_chronology.defer(functorSequence, functor);
+    d_chronology.moveAndExecute(functorSequence, functor);
 }
 
 bsl::shared_ptr<ntci::Timer> Kqueue::createTimer(
