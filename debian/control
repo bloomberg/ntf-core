@@ -4,7 +4,6 @@ Priority: extra
 Maintainer: Matt Millett <mmillett2@bloomberg.net>
 Build-Depends:
  bde-internal-tools,
- bdedox [amd64],
  dpkg,
  libbal-dev-extra,
  libbal-dev,
