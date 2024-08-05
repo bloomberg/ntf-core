@@ -235,6 +235,7 @@ class Epoll : public ntci::Reactor,
     bslmt::ThreadUtil::Handle                d_threadHandle;
     bsl::size_t                              d_threadIndex;
     bsls::AtomicUint64                       d_threadId;
+    bool                                     d_dynamic;
     bsls::AtomicUint64                       d_load;
     bsls::AtomicBool                         d_run;
     ntca::ReactorConfig                      d_config;
@@ -742,7 +743,7 @@ void Epoll::flush()
 {
     if (d_chronology.hasAnyScheduledOrDeferred()) {
         do {
-            d_chronology.announce();
+            d_chronology.announce(d_dynamic);
         } while (d_chronology.hasAnyDeferred());
     }
 }
@@ -1094,6 +1095,7 @@ Epoll::Epoll(const ntca::ReactorConfig&         configuration,
 , d_threadHandle(bslmt::ThreadUtil::invalidHandle())
 , d_threadIndex(0)
 , d_threadId(0)
+, d_dynamic(false)
 , d_load(0)
 , d_run(true)
 , d_config(configuration, basicAllocator)
@@ -1128,6 +1130,10 @@ Epoll::Epoll(const ntca::ReactorConfig&         configuration,
 
     if (d_config.minThreads().value() > d_config.maxThreads().value()) {
         d_config.setMinThreads(d_config.maxThreads().value());
+    }
+
+    if (d_config.maxThreads().value() > 1) {
+        d_dynamic = true;
     }
 
     BSLS_ASSERT(d_config.minThreads().value() <=
@@ -1215,6 +1221,13 @@ Epoll::Epoll(const ntca::ReactorConfig&         configuration,
 
     if (d_user_sp) {
         d_metrics_sp = d_user_sp->reactorMetrics();
+    }
+
+    if (d_user_sp) {
+        bsl::shared_ptr<ntci::Chronology> chronology = d_user_sp->chronology();
+        if (chronology) {
+            d_chronology.setParent(chronology);
+        }
     }
 
     d_registry.setDefaultTrigger(d_config.trigger().value());
@@ -2217,23 +2230,15 @@ void Epoll::run(ntci::Waiter waiter)
 
 #endif
 
-        // Note: it is possible to perform an optimization where no actual wait
-        // is required if it is determine that an instantenous poll is desired
-        // but there are no sockets registered. This optimization is currently
-        // *not* performed because it is unlikely that no sockets are
-        // registered in typical usage, and it is undesirable to incur the cost
-        // of learning that no sockets are registered.
-        //
-        // if (wait == 0 && this->numSockets() == 0) {
-        //     NTCO_EPOLL_LOG_WAIT_TIMEOUT();
-        //     NTCS_METRICS_UPDATE_POLL(0, 0, 0);
-        //     return ntsa::Error();
-        // }
-
         enum { MAX_EVENTS = 128 };
         struct ::epoll_event results[MAX_EVENTS];
 
-        rc = ::epoll_wait(d_epoll, results, MAX_EVENTS, wait);
+        if (wait == 0 && this->numSockets() == 0) {
+            rc = 0;
+        }
+        else {
+            rc = ::epoll_wait(d_epoll, results, MAX_EVENTS, wait);
+        }
 
         if (NTCCFG_LIKELY(rc > 0)) {
             NTCO_EPOLL_LOG_WAIT_RESULT_OR_TIMEOUT(rc, results);
@@ -2432,7 +2437,7 @@ void Epoll::run(ntci::Waiter waiter)
         bsl::size_t numCycles = d_config.maxCyclesPerWait().value();
         while (numCycles != 0) {
             if (d_chronology.hasAnyScheduledOrDeferred()) {
-                d_chronology.announce();
+                d_chronology.announce(d_dynamic);
                 --numCycles;
             }
             else {
@@ -2516,23 +2521,15 @@ void Epoll::poll(ntci::Waiter waiter)
 
 #endif
 
-    // Note: it is possible to perform an optimization where no actual wait
-    // is required if it is determine that an instantenous poll is desired
-    // but there are no sockets registered. This optimization is currently
-    // *not* performed because it is unlikely that no sockets are registered
-    // in typical usage, and it is undesirable to incur the cost of learning
-    // that no sockets are registered.
-    //
-    // if (wait == 0 && this->numSockets() == 0) {
-    //     NTCO_EPOLL_LOG_WAIT_TIMEOUT();
-    //     NTCS_METRICS_UPDATE_POLL(0, 0, 0);
-    //     return ntsa::Error();
-    // }
-
     enum { MAX_EVENTS = 128 };
     struct ::epoll_event results[MAX_EVENTS];
 
-    rc = ::epoll_wait(d_epoll, results, MAX_EVENTS, wait);
+    if (wait == 0 && this->numSockets() == 0) {
+        rc = 0;
+    }
+    else {
+        rc = ::epoll_wait(d_epoll, results, MAX_EVENTS, wait);
+    }
 
     if (NTCCFG_LIKELY(rc > 0)) {
         NTCO_EPOLL_LOG_WAIT_RESULT_OR_TIMEOUT(rc, results);
@@ -2723,7 +2720,7 @@ void Epoll::poll(ntci::Waiter waiter)
     bsl::size_t numCycles = d_config.maxCyclesPerWait().value();
     while (numCycles != 0) {
         if (d_chronology.hasAnyScheduledOrDeferred()) {
-            d_chronology.announce();
+            d_chronology.announce(d_dynamic);
             --numCycles;
         }
         else {
@@ -2837,15 +2834,13 @@ void Epoll::clear()
 
 void Epoll::execute(const Functor& functor)
 {
-    d_chronology.defer(functor);
-    Epoll::interruptAll();
+    d_chronology.execute(functor);
 }
 
 void Epoll::moveAndExecute(FunctorSequence* functorSequence,
                            const Functor&   functor)
 {
-    d_chronology.defer(functorSequence, functor);
-    Epoll::interruptAll();
+    d_chronology.moveAndExecute(functorSequence, functor);
 }
 
 bsl::shared_ptr<ntci::Timer> Epoll::createTimer(

@@ -315,7 +315,7 @@ class RegistryEntryCatalog
     ntccfg::Object                   d_object;
     mutable Mutex                    d_mutex;
     Vector                           d_vector;
-    bsl::size_t                      d_size;
+    bsls::AtomicUint                 d_size;
     ntca::ReactorEventTrigger::Value d_trigger;
     bool                             d_oneShot;
     bslma::Allocator*                d_allocator_p;
@@ -1382,8 +1382,7 @@ void RegistryEntryCatalog::forEach(const ForEachCallback& callback)
 NTCCFG_INLINE
 bsl::size_t RegistryEntryCatalog::size() const
 {
-    LockGuard lock(&d_mutex);
-    return d_size;
+    return static_cast<bsl::size_t>(d_size.load());
 }
 
 }  // close package namespace

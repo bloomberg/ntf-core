@@ -26,6 +26,7 @@ BSLS_IDENT("$Id: $")
 #include <ntci_reservation.h>
 #include <ntci_resolver.h>
 #include <ntci_user.h>
+#include <ntcs_chronology.h>
 #include <ntcs_metrics.h>
 #include <ntcscm_version.h>
 #include <bsl_memory.h>
@@ -46,6 +47,7 @@ class User : public ntci::User
 {
     bsl::shared_ptr<ntci::DataPool>        d_dataPool_sp;
     bsl::shared_ptr<ntci::Resolver>        d_resolver_sp;
+    bsl::shared_ptr<ntci::Chronology>      d_chronology_sp;
     bsl::shared_ptr<ntci::Reservation>     d_connectionLimiter_sp;
     bsl::shared_ptr<ntci::ReactorMetrics>  d_reactorMetrics_sp;
     bsl::shared_ptr<ntci::ProactorMetrics> d_proactorMetrics_sp;
@@ -82,6 +84,10 @@ class User : public ntci::User
     void setProactorMetrics(
         const bsl::shared_ptr<ntci::ProactorMetrics>& proactorMetrics);
 
+    /// Set the overall chronology perceived by all reactors or proactors to
+    /// the specified 'chronology'.
+    void setChronology(const bsl::shared_ptr<ntci::Chronology>& chronology);
+
     /// Return the data pool, if any.
     const bsl::shared_ptr<ntci::DataPool>& dataPool() const
         BSLS_KEYWORD_OVERRIDE;
@@ -89,6 +95,10 @@ class User : public ntci::User
     /// Return the resolver, if any.
     const bsl::shared_ptr<ntci::Resolver>& resolver() const
         BSLS_KEYWORD_OVERRIDE;
+
+    // Return the shared chronology, if any.
+    const bsl::shared_ptr<ntci::Chronology>& chronology() const 
+    BSLS_KEYWORD_OVERRIDE;
 
     /// Return the connection amount limiter, if any.
     const bsl::shared_ptr<ntci::Reservation>& connectionLimiter() const

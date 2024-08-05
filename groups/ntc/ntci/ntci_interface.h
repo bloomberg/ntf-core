@@ -24,6 +24,7 @@ BSLS_IDENT("$Id: $")
 #include <ntca_encryptionclientoptions.h>
 #include <ntca_encryptionkeyoptions.h>
 #include <ntca_encryptionserveroptions.h>
+#include <ntca_interfaceconfig.h>
 #include <ntca_listenersocketoptions.h>
 #include <ntca_streamsocketoptions.h>
 #include <ntccfg_platform.h>
@@ -310,6 +311,9 @@ class Interface : public ntci::DatagramSocketFactory,
 
     /// Return the current elapsed time since the Unix epoch.
     virtual bsls::TimeInterval currentTime() const = 0;
+
+    /// Return the configuration. 
+    virtual const ntca::InterfaceConfig& configuration() const = 0;
 };
 
 /// Provide a guard to automatically stop an interface and

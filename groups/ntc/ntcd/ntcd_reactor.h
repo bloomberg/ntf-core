@@ -101,6 +101,7 @@ class Reactor : public ntci::Reactor,
     WaiterSet                                   d_waiterSet;
     bslmt::ThreadUtil::Handle                   d_threadHandle;
     bsl::size_t                                 d_threadIndex;
+    bool                                        d_dynamic;
     bsls::AtomicUint64                          d_load;
     bsls::AtomicBool                            d_run;
     ntca::ReactorConfig                         d_config;

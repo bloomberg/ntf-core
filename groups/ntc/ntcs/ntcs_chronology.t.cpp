@@ -566,10 +566,7 @@ class MtDriver : public ntcs::Driver,
     /// Defer the execution of the specified 'functor'.
     void execute(const Functor& functor) BSLS_KEYWORD_OVERRIDE
     {
-        ntccfg::ConditionMutexGuard guard(&d_mutex);
         d_chronology->defer(functor);
-        d_blocked = false;
-        d_condition.signal();
     }
 
     /// Atomically defer the execution of the specified 'functorSequence'
@@ -578,10 +575,7 @@ class MtDriver : public ntcs::Driver,
     void moveAndExecute(FunctorSequence* functorSequence,
                         const Functor&   functor) BSLS_KEYWORD_OVERRIDE
     {
-        ntccfg::ConditionMutexGuard guard(&d_mutex);
         d_chronology->defer(functorSequence, functor);
-        d_blocked = false;
-        d_condition.signal();
     }
 
     bsl::shared_ptr<ntcs::Strand> createStrand()

@@ -13046,6 +13046,87 @@ void concernListenerSocketAcceptRateLimitTimerEventNotifications(
     }
 }
 
+void distributedFunction(bslmt::Barrier* suspendBarrier,
+                         bslmt::Barrier* releaseBarrier,
+                         bsl::size_t     threadIndex)
+{
+    NTCCFG_WARNING_UNUSED(suspendBarrier);
+    NTCCFG_WARNING_UNUSED(releaseBarrier);
+    NTCCFG_WARNING_UNUSED(threadIndex);
+
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_INFO("Thread %zu enter", threadIndex);
+
+    suspendBarrier->wait();
+
+    NTCI_LOG_INFO("Thread %zu leave", threadIndex);
+
+    releaseBarrier->wait();
+}
+
+void distributedTimer(bslmt::Barrier*                     suspendBarrier,
+                      bslmt::Barrier*                     releaseBarrier,
+                      const bsl::shared_ptr<ntci::Timer>& timer,
+                      const ntca::TimerEvent&             event,
+                      bsl::size_t                         threadIndex)
+{
+    NTCCFG_WARNING_UNUSED(suspendBarrier);
+    NTCCFG_WARNING_UNUSED(releaseBarrier);
+    NTCCFG_WARNING_UNUSED(timer);
+    NTCCFG_WARNING_UNUSED(event);
+    NTCCFG_WARNING_UNUSED(threadIndex);
+}
+
+void concernInterfaceFunctionAndTimerDistribution(
+    const bsl::shared_ptr<ntci::Interface>& interface,
+    bslma::Allocator*                       allocator)
+{
+    // Concern: Functions and timers deferred/scheduled at the interface/level
+    // are distributed amongst threads, so one thread blocked on processing
+    // a function/timer does not prevent another thread from processing another
+    // function/timer that is due, regardless of whether static or dynamic
+    // load balancing is configured.
+
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_DEBUG("Test started");
+
+    // Get the interface configuration.
+
+    const ntca::InterfaceConfig& interfaceConfig = interface->configuration();
+
+    const bsl::size_t minThreads = interfaceConfig.minThreads();
+    const bsl::size_t maxThreads = interfaceConfig.maxThreads();
+
+    // This test assumes that there are a fixed number of threads run by 
+    // the interface.
+
+    NTCCFG_TEST_EQ(minThreads, maxThreads);
+
+    const bsl::size_t numThreads = maxThreads;
+    if (numThreads > 1) {
+        bslmt::Barrier suspendBarrier(numThreads + 1);
+        bslmt::Barrier releaseBarrier(numThreads + 1);
+
+        for (bsl::size_t threadIndex = 0; 
+                         threadIndex < numThreads; 
+                       ++threadIndex) 
+        {
+            interface->execute(
+                NTCCFG_BIND(&distributedFunction,
+                            &suspendBarrier,
+                            &releaseBarrier,
+                            threadIndex));
+        }
+
+        suspendBarrier.wait();
+        releaseBarrier.wait();
+    }
+
+    NTCI_LOG_DEBUG("Test complete");
+}
+
 }  // close namespace 'test'
 
 NTCCFG_TEST_CASE(1)
@@ -14309,6 +14390,16 @@ NTCCFG_TEST_CASE(81)
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
+NTCCFG_TEST_CASE(82)
+{
+    ntccfg::TestAllocator ta;
+    {
+        test::concern(&test::concernInterfaceFunctionAndTimerDistribution,
+                      &ta);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
 NTCCFG_TEST_DRIVER
 {
     NTCCFG_TEST_REGISTER(1);
@@ -14392,5 +14483,6 @@ NTCCFG_TEST_DRIVER
     NTCCFG_TEST_REGISTER(79);
     NTCCFG_TEST_REGISTER(80);
     NTCCFG_TEST_REGISTER(81);
+    NTCCFG_TEST_REGISTER(82);
 }
 NTCCFG_TEST_DRIVER_END;
