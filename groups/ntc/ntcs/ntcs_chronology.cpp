@@ -1395,7 +1395,10 @@ void Chronology::load(TimerVector* result) const
             Timer*    timer    = timerRep->getObject();
             timerRep->acquireRef();
 
-            result->push_back(bsl::shared_ptr<ntci::Timer>(timer, timerRep));
+            result->push_back(
+                bsl::shared_ptr<ntci::Timer>(
+                              static_cast<ntci::Timer*>(timer),
+                              static_cast<bslma::SharedPtrRep*>(timerRep)));
 
             d_deadlineMap.skipForward(&rawHandle);
         }
