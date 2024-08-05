@@ -28,6 +28,7 @@ namespace ntcs {
 User::User(bslma::Allocator* basicAllocator)
 : d_dataPool_sp()
 , d_resolver_sp()
+, d_chronology_sp()
 , d_connectionLimiter_sp()
 , d_reactorMetrics_sp()
 , d_proactorMetrics_sp()
@@ -67,6 +68,11 @@ void User::setProactorMetrics(
     d_proactorMetrics_sp = proactorMetrics;
 }
 
+void User::setChronology(const bsl::shared_ptr<ntci::Chronology>& chronology)
+{
+    d_chronology_sp = chronology;
+}
+
 const bsl::shared_ptr<ntci::DataPool>& User::dataPool() const
 {
     return d_dataPool_sp;
@@ -75,6 +81,11 @@ const bsl::shared_ptr<ntci::DataPool>& User::dataPool() const
 const bsl::shared_ptr<ntci::Resolver>& User::resolver() const
 {
     return d_resolver_sp;
+}
+
+const bsl::shared_ptr<ntci::Chronology>& User::chronology() const
+{
+    return d_chronology_sp;
 }
 
 const bsl::shared_ptr<ntci::Reservation>& User::connectionLimiter() const

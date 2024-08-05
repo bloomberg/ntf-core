@@ -108,6 +108,7 @@ class Proactor : public ntci::Proactor,
     WorkMap                                     d_workMap;
     bslmt::ThreadUtil::Handle                   d_threadHandle;
     bsl::size_t                                 d_threadIndex;
+    bool                                        d_dynamic;
     bsls::AtomicUint64                          d_load;
     bsls::AtomicBool                            d_run;
     ntca::ProactorConfig                        d_config;

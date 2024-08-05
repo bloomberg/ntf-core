@@ -13,21 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntcs_driver.h>
+#include <ntca_schedulerconfig.h>
 
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntcs_driver_cpp, "$Id$ $CSID$")
-
-namespace BloombergLP {
-namespace ntcs {
-
-Interruptor::~Interruptor()
-{
-}
-
-Driver::~Driver()
-{
-}
-
-}  // close package namespace
-}  // close enterprise namespace
+BSLS_IDENT_RCSID(ntca_schedulerconfig_cpp, "$Id$ $CSID$")

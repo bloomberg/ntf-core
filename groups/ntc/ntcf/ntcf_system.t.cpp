@@ -299,7 +299,7 @@ class DatagramSocketManager : public ntci::DatagramSocketManager,
     typedef ntccfg::LockGuard LockGuard;
 
     ntccfg::Object                   d_object;
-    bsl::shared_ptr<ntci::Interface> d_interface_sp;
+    bsl::shared_ptr<ntci::Scheduler> d_interface_sp;
     Mutex                            d_socketMapMutex;
     DatagramSocketApplicationMap     d_socketMap;
     bslmt::Latch                     d_socketsEstablished;
@@ -326,10 +326,10 @@ class DatagramSocketManager : public ntci::DatagramSocketManager,
   public:
     /// Create a new datagram socket manager operating according to the
     /// specified test 'parameters' whose sockets are driven by the
-    /// specified 'interface'. Optionally specify a 'basicAllocator' used to
+    /// specified 'scheduler'. Optionally specify a 'basicAllocator' used to
     /// supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
-    DatagramSocketManager(const bsl::shared_ptr<ntci::Interface>& interface,
+    DatagramSocketManager(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                           const test::DatagramSocketParameters&   parameters,
                           bslma::Allocator* basicAllocator = 0);
 
@@ -874,11 +874,11 @@ void DatagramSocketManager::processDatagramSocketClosed(
 }
 
 DatagramSocketManager::DatagramSocketManager(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     const test::DatagramSocketParameters&   parameters,
     bslma::Allocator*                       basicAllocator)
 : d_object("test::DatagramSocketManager")
-, d_interface_sp(interface)
+, d_interface_sp(scheduler)
 , d_socketMapMutex()
 , d_socketMap(basicAllocator)
 , d_socketsEstablished(parameters.d_numSocketPairs * 2)
@@ -1269,7 +1269,7 @@ class StreamSocketManager : public ntci::ListenerSocketManager,
     typedef ntccfg::LockGuard LockGuard;
 
     ntccfg::Object                   d_object;
-    bsl::shared_ptr<ntci::Interface> d_interface_sp;
+    bsl::shared_ptr<ntci::Scheduler> d_interface_sp;
     Mutex                            d_listenerSocketMapMutex;
     ListenerSocketApplicationMap     d_listenerSocketMap;
     bslmt::Latch                     d_listenerSocketsEstablished;
@@ -1320,7 +1320,7 @@ class StreamSocketManager : public ntci::ListenerSocketManager,
     /// specified 'reactor'. Optionally specify a 'basicAllocator' used to
     /// supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
-    StreamSocketManager(const bsl::shared_ptr<ntci::Interface>& interface,
+    StreamSocketManager(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                         const test::StreamSocketParameters&     parameters,
                         bslma::Allocator* basicAllocator = 0);
 
@@ -2133,11 +2133,11 @@ void StreamSocketManager::processConnect(
 }
 
 StreamSocketManager::StreamSocketManager(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     const test::StreamSocketParameters&     parameters,
     bslma::Allocator*                       basicAllocator)
 : d_object("test::StreamSocketManager")
-, d_interface_sp(interface)
+, d_interface_sp(scheduler)
 , d_listenerSocketMapMutex()
 , d_listenerSocketMap(basicAllocator)
 , d_listenerSocketsEstablished(parameters.d_numListeners)
@@ -2657,7 +2657,7 @@ class TransferClient : public ntci::StreamSocketManager
     typedef ntccfg::LockGuard LockGuard;
 
     Mutex                                   d_mutex;
-    bsl::shared_ptr<ntci::Interface>        d_interface_sp;
+    bsl::shared_ptr<ntci::Scheduler>        d_interface_sp;
     bsl::shared_ptr<ntci::EncryptionClient> d_encryptionClient_sp;
     StreamSocketMap                         d_streamSockets;
     bslmt::Latch                            d_streamSocketsEstablished;
@@ -2687,12 +2687,12 @@ class TransferClient : public ntci::StreamSocketManager
         const ntca::ConnectEvent&                  connectEvent);
 
   public:
-    /// Create a new client implemented using the specified 'interface'.
+    /// Create a new client implemented using the specified 'scheduler'.
     /// Perform the test described by the specified 'parameters'.
     /// Optionally specify a 'basicAllocator' used to supply memory. If
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
-    TransferClient(const bsl::shared_ptr<ntci::Interface>& interface,
+    TransferClient(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                    const test::TransferParameters&         parameters,
                    bslma::Allocator*                       basicAllocator = 0);
 
@@ -2915,7 +2915,7 @@ class TransferServer : public ntci::ListenerSocketManager
     typedef ntccfg::LockGuard LockGuard;
 
     mutable Mutex                           d_mutex;
-    bsl::shared_ptr<ntci::Interface>        d_interface_sp;
+    bsl::shared_ptr<ntci::Scheduler>        d_interface_sp;
     bsl::shared_ptr<ntci::EncryptionServer> d_encryptionServer_sp;
     ListenerSocketMap                       d_listenerSockets;
     bslmt::Latch                            d_listenerSocketsEstablished;
@@ -2951,11 +2951,11 @@ class TransferServer : public ntci::ListenerSocketManager
                                        streamSocket) BSLS_KEYWORD_OVERRIDE;
 
   public:
-    /// Create a new server implemented using the specified 'interface'.
+    /// Create a new server implemented using the specified 'scheduler'.
     /// Perform the test described by the specified 'parameters'. Optionally
     /// specify a 'basicAllocator used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
-    TransferServer(const bsl::shared_ptr<ntci::Interface>& interface,
+    TransferServer(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                    const test::TransferParameters&         parameters,
                    bslma::Allocator*                       basicAllocator = 0);
 
@@ -3347,11 +3347,11 @@ void TransferClient::processConnect(
 }
 
 TransferClient::TransferClient(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     const test::TransferParameters&         parameters,
     bslma::Allocator*                       basicAllocator)
 : d_mutex()
-, d_interface_sp(interface)
+, d_interface_sp(scheduler)
 , d_encryptionClient_sp()
 , d_streamSockets(basicAllocator)
 , d_streamSocketsEstablished(NTCCFG_WARNING_NARROW(
@@ -3983,11 +3983,11 @@ void TransferServer::processStreamSocketClosed(
 }
 
 TransferServer::TransferServer(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     const test::TransferParameters&         parameters,
     bslma::Allocator*                       basicAllocator)
 : d_mutex()
-, d_interface_sp(interface)
+, d_interface_sp(scheduler)
 , d_encryptionServer_sp()
 , d_listenerSockets(basicAllocator)
 , d_listenerSocketsEstablished(
@@ -5580,7 +5580,7 @@ void StreamSocketUtil::cancelReceive(
 
 //                              CONCERNS
 
-typedef NTCCFG_FUNCTION(const bsl::shared_ptr<ntci::Interface>& interface,
+typedef NTCCFG_FUNCTION(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                         bslma::Allocator* allocator) ConcernCallback;
 
 void concern(const ConcernCallback& concernCallback,
@@ -5652,26 +5652,26 @@ void concern(const ConcernCallback& concernCallback,
                               (dynamicLoadBalancing ? "dynamic" : "static"),
                               (forceZeroCopy ? "enabled" : "disabled"));
 
-                ntca::InterfaceConfig interfaceConfig;
-                interfaceConfig.setDriverName(driverType);
-                interfaceConfig.setThreadName("network");
-                interfaceConfig.setMinThreads(MIN_THREADS);
-                interfaceConfig.setMaxThreads(MAX_THREADS);
-                interfaceConfig.setThreadLoadFactor(LOAD_FACTOR);
-                interfaceConfig.setDynamicLoadBalancing(dynamicLoadBalancing);
+                ntca::SchedulerConfig schedulerConfig;
+                schedulerConfig.setDriverName(driverType);
+                schedulerConfig.setThreadName("network");
+                schedulerConfig.setMinThreads(MIN_THREADS);
+                schedulerConfig.setMaxThreads(MAX_THREADS);
+                schedulerConfig.setThreadLoadFactor(LOAD_FACTOR);
+                schedulerConfig.setDynamicLoadBalancing(dynamicLoadBalancing);
                 if (forceZeroCopy) {
-                    interfaceConfig.setZeroCopyThreshold(0);
+                    schedulerConfig.setZeroCopyThreshold(0);
                 }
 
-                bsl::shared_ptr<ntci::Interface> interface =
-                    ntcf::System::createInterface(interfaceConfig, allocator);
+                bsl::shared_ptr<ntci::Scheduler> scheduler =
+                    ntcf::System::createScheduler(schedulerConfig, allocator);
 
-                interface->start();
+                scheduler->start();
 
-                concernCallback(interface, allocator);
+                concernCallback(scheduler, allocator);
 
-                interface->shutdown();
-                interface->linger();
+                scheduler->shutdown();
+                scheduler->linger();
             }
         }
     }
@@ -5843,15 +5843,15 @@ void concernExample2(bslma::Allocator* allocator)
 
     // Create and start pool of I/O threads.
 
-    ntca::InterfaceConfig interfaceConfig;
-    interfaceConfig.setThreadName("example");
-    interfaceConfig.setMinThreads(3);
-    interfaceConfig.setMaxThreads(3);
+    ntca::SchedulerConfig schedulerConfig;
+    schedulerConfig.setThreadName("example");
+    schedulerConfig.setMinThreads(3);
+    schedulerConfig.setMaxThreads(3);
 
-    bsl::shared_ptr<ntci::Interface> interface =
-        ntcf::System::createInterface(interfaceConfig);
+    bsl::shared_ptr<ntci::Scheduler> scheduler =
+        ntcf::System::createScheduler(schedulerConfig);
 
-    interface->start();
+    scheduler->start();
 
     // Create a listener socket and begin listening.
 
@@ -5861,7 +5861,7 @@ void concernExample2(bslma::Allocator* allocator)
         ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0));
 
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
-        interface->createListenerSocket(listenerSocketOptions);
+        scheduler->createListenerSocket(listenerSocketOptions);
 
     error = listenerSocket->open();
     BSLS_ASSERT(!error);
@@ -5875,7 +5875,7 @@ void concernExample2(bslma::Allocator* allocator)
     streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> clientSocket =
-        interface->createStreamSocket(streamSocketOptions);
+        scheduler->createStreamSocket(streamSocketOptions);
 
     ntci::ConnectCallback connectCallback =
         clientSocket->createConnectCallback(
@@ -5982,8 +5982,8 @@ void concernExample2(bslma::Allocator* allocator)
 
     // Stop the thread pool.
 
-    interface->shutdown();
-    interface->linger();
+    scheduler->shutdown();
+    scheduler->linger();
 }
 
 void concernExample3(bslma::Allocator* allocator)
@@ -6225,22 +6225,22 @@ void concernExample4(bslma::Allocator* allocator)
 
     // Create and start pool of I/O threads.
 
-    ntca::InterfaceConfig interfaceConfig;
-    interfaceConfig.setThreadName("incoming");
-    interfaceConfig.setMinThreads(3);
-    interfaceConfig.setMaxThreads(3);
-    interfaceConfig.setDriverMetrics(true);
-    interfaceConfig.setDriverMetricsPerWaiter(true);
-    interfaceConfig.setSocketMetrics(true);
-    interfaceConfig.setSocketMetricsPerHandle(false);
+    ntca::SchedulerConfig schedulerConfig;
+    schedulerConfig.setThreadName("incoming");
+    schedulerConfig.setMinThreads(3);
+    schedulerConfig.setMaxThreads(3);
+    schedulerConfig.setDriverMetrics(true);
+    schedulerConfig.setDriverMetricsPerWaiter(true);
+    schedulerConfig.setSocketMetrics(true);
+    schedulerConfig.setSocketMetricsPerHandle(false);
 
     bsl::shared_ptr<ntci::DataPool> dataPool =
         ntcf::System::createDataPool(4096, 4096);
 
-    bsl::shared_ptr<ntci::Interface> interface =
-        ntcf::System::createInterface(interfaceConfig, dataPool);
+    bsl::shared_ptr<ntci::Scheduler> scheduler =
+        ntcf::System::createScheduler(schedulerConfig, dataPool);
 
-    interface->start();
+    scheduler->start();
 
     // Create a listener socket and begin listening.
 
@@ -6249,7 +6249,7 @@ void concernExample4(bslma::Allocator* allocator)
         ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0));
 
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
-        interface->createListenerSocket(listenerSocketOptions);
+        scheduler->createListenerSocket(listenerSocketOptions);
 
     error = listenerSocket->open();
     BSLS_ASSERT(!error);
@@ -6262,7 +6262,7 @@ void concernExample4(bslma::Allocator* allocator)
     ntca::StreamSocketOptions streamSocketOptions;
 
     bsl::shared_ptr<ntci::StreamSocket> clientSocket =
-        interface->createStreamSocket(streamSocketOptions);
+        scheduler->createStreamSocket(streamSocketOptions);
 
     ntca::ConnectOptions connectOptions;
 
@@ -6388,8 +6388,8 @@ void concernExample4(bslma::Allocator* allocator)
 
     // Stop the thread pool.
 
-    interface->shutdown();
-    interface->linger();
+    scheduler->shutdown();
+    scheduler->linger();
 }
 
 void concernResolverGetIpAddress(bslma::Allocator* allocator)
@@ -6722,27 +6722,27 @@ void concernInterfaceResolverGetIpAddressFromOverride(
     resolverConfig.setClientEnabled(false);
     resolverConfig.setSystemEnabled(false);
 
-    // Define an interface configuration that uses the resolver configuration.
+    // Define an scheduler configuration that uses the resolver configuration.
 
-    ntca::InterfaceConfig interfaceConfig;
+    ntca::SchedulerConfig schedulerConfig;
 
-    interfaceConfig.setThreadName("test");
-    interfaceConfig.setMinThreads(1);
-    interfaceConfig.setMaxThreads(1);
-    interfaceConfig.setResolverConfig(resolverConfig);
+    schedulerConfig.setThreadName("test");
+    schedulerConfig.setMinThreads(1);
+    schedulerConfig.setMaxThreads(1);
+    schedulerConfig.setResolverConfig(resolverConfig);
 
-    // Create and start an interface.
+    // Create and start an scheduler.
 
-    bsl::shared_ptr<ntci::Interface> interface =
-        ntcf::System::createInterface(interfaceConfig, allocator);
+    bsl::shared_ptr<ntci::Scheduler> scheduler =
+        ntcf::System::createScheduler(schedulerConfig, allocator);
 
-    error = interface->start();
+    error = scheduler->start();
     NTCCFG_TEST_OK(error);
 
     {
-        // Get the resolver used by the interface.
+        // Get the resolver used by the scheduler.
 
-        bsl::shared_ptr<ntci::Resolver> resolver = interface->resolver();
+        bsl::shared_ptr<ntci::Resolver> resolver = scheduler->resolver();
 
         // Set overrides.
 
@@ -6801,10 +6801,10 @@ void concernInterfaceResolverGetIpAddressFromOverride(
         NTCCFG_TEST_EQ(ipAddressList[2], ntsa::IpAddress("192.168.0.102"));
     }
 
-    // Stop the interface.
+    // Stop the scheduler.
 
-    interface->shutdown();
-    interface->linger();
+    scheduler->shutdown();
+    scheduler->linger();
 }
 
 void concernInterfaceResolverGetIpAddressFromSystem(
@@ -6819,7 +6819,7 @@ void concernInterfaceResolverGetIpAddressFromServer(
     // TODO
 }
 
-void concernDataExchange(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernDataExchange(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                          bslma::Allocator*                       allocator)
 {
     // Concern: Listen, connect, accept, send and receive
@@ -6917,7 +6917,7 @@ void concernDataExchange(const bsl::shared_ptr<ntci::Interface>& interface,
                 authorityIdentity["O"]  = "Bloomberg LP";
 
                 NTCI_LOG_INFO("Generating authority key");
-                error = interface->generateKey(
+                error = scheduler->generateKey(
                     &parameters.d_authorityPrivateKey_sp,
                     ntca::EncryptionKeyOptions(),
                     allocator);
@@ -6928,7 +6928,7 @@ void concernDataExchange(const bsl::shared_ptr<ntci::Interface>& interface,
                 authorityCertificateOptions.setAuthority(true);
 
                 NTCI_LOG_INFO("Generating authority certificate");
-                error = interface->generateCertificate(
+                error = scheduler->generateCertificate(
                     &parameters.d_authorityCertificate_sp,
                     authorityIdentity,
                     parameters.d_authorityPrivateKey_sp,
@@ -6942,13 +6942,13 @@ void concernDataExchange(const bsl::shared_ptr<ntci::Interface>& interface,
 
                 NTCI_LOG_INFO("Generating client key");
                 error =
-                    interface->generateKey(&parameters.d_clientPrivateKey_sp,
+                    scheduler->generateKey(&parameters.d_clientPrivateKey_sp,
                                            ntca::EncryptionKeyOptions(),
                                            allocator);
                 NTCCFG_TEST_OK(error);
 
                 NTCI_LOG_INFO("Generating client certificate");
-                error = interface->generateCertificate(
+                error = scheduler->generateCertificate(
                     &parameters.d_clientCertificate_sp,
                     clientIdentity,
                     parameters.d_clientPrivateKey_sp,
@@ -6964,13 +6964,13 @@ void concernDataExchange(const bsl::shared_ptr<ntci::Interface>& interface,
 
                 NTCI_LOG_INFO("Generating server key");
                 error =
-                    interface->generateKey(&parameters.d_serverPrivateKey_sp,
+                    scheduler->generateKey(&parameters.d_serverPrivateKey_sp,
                                            ntca::EncryptionKeyOptions(),
                                            allocator);
                 NTCCFG_TEST_OK(error);
 
                 NTCI_LOG_INFO("Generating server certificate");
-                error = interface->generateCertificate(
+                error = scheduler->generateCertificate(
                     &parameters.d_serverCertificate_sp,
                     serverIdentity,
                     parameters.d_serverPrivateKey_sp,
@@ -6991,19 +6991,19 @@ void concernDataExchange(const bsl::shared_ptr<ntci::Interface>& interface,
                 parameters.d_numMessages               = 10;
             }
 
-            parameters.d_message_sp = interface->createOutgoingBlob();
+            parameters.d_message_sp = scheduler->createOutgoingBlob();
 
             ntcd::DataUtil::generateData(parameters.d_message_sp.get(),
                                          parameters.d_messageSize);
 
-            test::TransferServer server(interface, parameters, allocator);
+            test::TransferServer server(scheduler, parameters, allocator);
 
             server.listen();
 
             bsl::vector<ntsa::Endpoint> endpoints;
             server.getListenerEndpoints(&endpoints);
 
-            test::TransferClient client(interface, parameters, allocator);
+            test::TransferClient client(scheduler, parameters, allocator);
             NTCCFG_FOREACH_ITERATOR(
                 bsl::vector<ntsa::Endpoint>::const_iterator,
                 it,
@@ -7035,17 +7035,17 @@ void concernClose(bslma::Allocator* allocator)
     ntsa::Error      error;
     bslmt::Semaphore semaphore;
 
-    // Create and start an interface.
+    // Create and start an scheduler.
 
-    ntca::InterfaceConfig interfaceConfig;
-    interfaceConfig.setThreadName("example");
-    interfaceConfig.setMinThreads(3);
-    interfaceConfig.setMaxThreads(3);
+    ntca::SchedulerConfig schedulerConfig;
+    schedulerConfig.setThreadName("example");
+    schedulerConfig.setMinThreads(3);
+    schedulerConfig.setMaxThreads(3);
 
-    bsl::shared_ptr<ntci::Interface> interface =
-        ntcf::System::createInterface(interfaceConfig, allocator);
+    bsl::shared_ptr<ntci::Scheduler> scheduler =
+        ntcf::System::createScheduler(schedulerConfig, allocator);
 
-    interface->start();
+    scheduler->start();
 
     ntca::StreamSocketOptions streamSocketOptions;
     streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
@@ -7057,7 +7057,7 @@ void concernClose(bslma::Allocator* allocator)
 
     {
         bsl::shared_ptr<ntci::StreamSocket> clientSocket =
-            interface->createStreamSocket(streamSocketOptions, allocator);
+            scheduler->createStreamSocket(streamSocketOptions, allocator);
 
         ntci::StreamSocketCloseGuard closeGuard(clientSocket);
     }
@@ -7069,7 +7069,7 @@ void concernClose(bslma::Allocator* allocator)
 
     {
         bsl::shared_ptr<ntci::StreamSocket> clientSocket =
-            interface->createStreamSocket(streamSocketOptions, allocator);
+            scheduler->createStreamSocket(streamSocketOptions, allocator);
 
         error = clientSocket->open();
         NTCCFG_TEST_OK(error);
@@ -7083,7 +7083,7 @@ void concernClose(bslma::Allocator* allocator)
 
     {
         bsl::shared_ptr<ntci::StreamSocket> clientSocket =
-            interface->createStreamSocket(streamSocketOptions, allocator);
+            scheduler->createStreamSocket(streamSocketOptions, allocator);
 
         ntca::ConnectOptions connectOptions;
 
@@ -7108,14 +7108,14 @@ void concernClose(bslma::Allocator* allocator)
         semaphore.wait();
     }
 
-    // Stop the interface.
+    // Stop the scheduler.
 
-    interface->shutdown();
-    interface->linger();
+    scheduler->shutdown();
+    scheduler->linger();
 }
 
 void concernConnectAndShutdown(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: test that shutdown works without assertions firing when it is
@@ -7141,7 +7141,7 @@ void concernConnectAndShutdown(
     streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> streamSocket =
-        interface->createStreamSocket(streamSocketOptions, allocator);
+        scheduler->createStreamSocket(streamSocketOptions, allocator);
 
     const ntci::StreamSocketCloseGuard closeGuard(streamSocket);
 
@@ -7161,7 +7161,7 @@ void concernConnectAndShutdown(
     NTCCFG_TEST_OK(error);
 }
 
-void concernConnectEndpoint1(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectEndpoint1(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                              bslma::Allocator*                       allocator)
 {
     // Concern: Connect to endpoint periodically fails but eventually succeeds
@@ -7186,7 +7186,7 @@ void concernConnectEndpoint1(const bsl::shared_ptr<ntci::Interface>& interface,
     streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> streamSocket =
-        interface->createStreamSocket(streamSocketOptions, allocator);
+        scheduler->createStreamSocket(streamSocketOptions, allocator);
 
     ntci::StreamSocketCloseGuard closeGuard(streamSocket);
 
@@ -7339,7 +7339,7 @@ void concernConnectEndpoint1(const bsl::shared_ptr<ntci::Interface>& interface,
     }
 }
 
-void concernConnectEndpoint2(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectEndpoint2(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                              bslma::Allocator*                       allocator)
 {
     // Concern: Connect to endpoint periodically refused until all attempts are
@@ -7366,7 +7366,7 @@ void concernConnectEndpoint2(const bsl::shared_ptr<ntci::Interface>& interface,
     streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> streamSocket =
-        interface->createStreamSocket(streamSocketOptions, allocator);
+        scheduler->createStreamSocket(streamSocketOptions, allocator);
 
     ntci::StreamSocketCloseGuard closeGuard(streamSocket);
 
@@ -7459,7 +7459,7 @@ void concernConnectEndpoint2(const bsl::shared_ptr<ntci::Interface>& interface,
     }
 }
 
-void concernConnectEndpoint3(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectEndpoint3(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                              bslma::Allocator*                       allocator)
 {
     // Concern: Connect to endpoint periodically failes due to either timeouts
@@ -7487,7 +7487,7 @@ void concernConnectEndpoint3(const bsl::shared_ptr<ntci::Interface>& interface,
     streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> streamSocket =
-        interface->createStreamSocket(streamSocketOptions, allocator);
+        scheduler->createStreamSocket(streamSocketOptions, allocator);
 
     ntci::StreamSocketCloseGuard closeGuard(streamSocket);
 
@@ -7560,7 +7560,7 @@ void concernConnectEndpoint3(const bsl::shared_ptr<ntci::Interface>& interface,
     }
 }
 
-void concernConnectEndpoint4(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectEndpoint4(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                              bslma::Allocator*                       allocator)
 {
     // Concern: Connections to endpoints may be cancelled while waiting to
@@ -7587,7 +7587,7 @@ void concernConnectEndpoint4(const bsl::shared_ptr<ntci::Interface>& interface,
     streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> streamSocket =
-        interface->createStreamSocket(streamSocketOptions, allocator);
+        scheduler->createStreamSocket(streamSocketOptions, allocator);
 
     ntci::StreamSocketCloseGuard closeGuard(streamSocket);
 
@@ -7608,7 +7608,7 @@ void concernConnectEndpoint4(const bsl::shared_ptr<ntci::Interface>& interface,
     NTCCFG_TEST_OK(error);
 
     // Ideally, we'd like to bind to an ephemeral port on the loopback
-    // interface but not begin listening, then have connection attempts
+    // scheduler but not begin listening, then have connection attempts
     // made to that address fail with ECONNREFUSED. However, only
     // Linux has this behavior. All other platforms just time out the
     // connection attempt.
@@ -7717,7 +7717,7 @@ void concernConnectEndpoint4(const bsl::shared_ptr<ntci::Interface>& interface,
     }
 }
 
-void concernConnectEndpoint5(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectEndpoint5(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                              bslma::Allocator*                       allocator)
 {
     // Concern: Connections to endpoints may be cancelled while connections
@@ -7744,7 +7744,7 @@ void concernConnectEndpoint5(const bsl::shared_ptr<ntci::Interface>& interface,
     streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> streamSocket =
-        interface->createStreamSocket(streamSocketOptions, allocator);
+        scheduler->createStreamSocket(streamSocketOptions, allocator);
 
     ntci::StreamSocketCloseGuard closeGuard(streamSocket);
 
@@ -7877,7 +7877,7 @@ void concernConnectEndpoint5(const bsl::shared_ptr<ntci::Interface>& interface,
     }
 }
 
-void concernConnectEndpoint6(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectEndpoint6(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                              bslma::Allocator*                       allocator)
 {
     // Concern: Connections to endpoints may reach their deadline while waiting
@@ -7905,7 +7905,7 @@ void concernConnectEndpoint6(const bsl::shared_ptr<ntci::Interface>& interface,
     streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> streamSocket =
-        interface->createStreamSocket(streamSocketOptions, allocator);
+        scheduler->createStreamSocket(streamSocketOptions, allocator);
 
     ntci::StreamSocketCloseGuard closeGuard(streamSocket);
 
@@ -7928,7 +7928,7 @@ void concernConnectEndpoint6(const bsl::shared_ptr<ntci::Interface>& interface,
     NTCCFG_TEST_OK(error);
 
     // Ideally, we'd like to bind to an ephemeral port on the loopback
-    // interface but not begin listening, then have connection attempts
+    // scheduler but not begin listening, then have connection attempts
     // made to that address fail with ECONNREFUSED. However, only
     // Linux has this behavior. All other platforms just time out the
     // connection attempt.
@@ -8003,7 +8003,7 @@ void concernConnectEndpoint6(const bsl::shared_ptr<ntci::Interface>& interface,
     }
 }
 
-void concernConnectEndpoint7(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectEndpoint7(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                              bslma::Allocator*                       allocator)
 {
     // Concern: Connections to endpoints may be reach their deadline while
@@ -8031,7 +8031,7 @@ void concernConnectEndpoint7(const bsl::shared_ptr<ntci::Interface>& interface,
     streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> streamSocket =
-        interface->createStreamSocket(streamSocketOptions, allocator);
+        scheduler->createStreamSocket(streamSocketOptions, allocator);
 
     ntci::StreamSocketCloseGuard closeGuard(streamSocket);
 
@@ -8129,7 +8129,7 @@ void concernConnectEndpoint7(const bsl::shared_ptr<ntci::Interface>& interface,
     }
 }
 
-void concernConnectEndpoint8(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectEndpoint8(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                              bslma::Allocator*                       allocator)
 {
     // Concern: Connect to endpoint periodically times out nearly
@@ -8160,7 +8160,7 @@ void concernConnectEndpoint8(const bsl::shared_ptr<ntci::Interface>& interface,
     streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> streamSocket =
-        interface->createStreamSocket(streamSocketOptions, allocator);
+        scheduler->createStreamSocket(streamSocketOptions, allocator);
 
     ntci::StreamSocketCloseGuard closeGuard(streamSocket);
 
@@ -8238,7 +8238,7 @@ void concernConnectEndpoint8(const bsl::shared_ptr<ntci::Interface>& interface,
     }
 }
 
-void concernConnectName1(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectName1(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                          bslma::Allocator*                       allocator)
 {
     // Concern: Connect to name periodically fails but eventually succeeds
@@ -8263,7 +8263,7 @@ void concernConnectName1(const bsl::shared_ptr<ntci::Interface>& interface,
     streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> streamSocket =
-        interface->createStreamSocket(streamSocketOptions, allocator);
+        scheduler->createStreamSocket(streamSocketOptions, allocator);
 
     ntci::StreamSocketCloseGuard closeGuard(streamSocket);
 
@@ -8421,7 +8421,7 @@ void concernConnectName1(const bsl::shared_ptr<ntci::Interface>& interface,
     }
 }
 
-void concernConnectName2(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectName2(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                          bslma::Allocator*                       allocator)
 {
     // Concern: Connect to name periodically refused until all attempts are
@@ -8448,7 +8448,7 @@ void concernConnectName2(const bsl::shared_ptr<ntci::Interface>& interface,
     streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> streamSocket =
-        interface->createStreamSocket(streamSocketOptions, allocator);
+        scheduler->createStreamSocket(streamSocketOptions, allocator);
 
     ntci::StreamSocketCloseGuard closeGuard(streamSocket);
 
@@ -8544,7 +8544,7 @@ void concernConnectName2(const bsl::shared_ptr<ntci::Interface>& interface,
     }
 }
 
-void concernConnectName3(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectName3(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                          bslma::Allocator*                       allocator)
 {
     // Concern: Connect to name periodically times out until all attempts
@@ -8581,7 +8581,7 @@ void concernConnectName3(const bsl::shared_ptr<ntci::Interface>& interface,
     streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> streamSocket =
-        interface->createStreamSocket(streamSocketOptions, allocator);
+        scheduler->createStreamSocket(streamSocketOptions, allocator);
 
     streamSocket->registerResolver(resolver);
 
@@ -8650,7 +8650,7 @@ void concernConnectName3(const bsl::shared_ptr<ntci::Interface>& interface,
     resolver->linger();
 }
 
-void concernConnectName4(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectName4(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                          bslma::Allocator*                       allocator)
 {
     // Concern: Connections to names may be cancelled while waiting to
@@ -8677,7 +8677,7 @@ void concernConnectName4(const bsl::shared_ptr<ntci::Interface>& interface,
     streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> streamSocket =
-        interface->createStreamSocket(streamSocketOptions, allocator);
+        scheduler->createStreamSocket(streamSocketOptions, allocator);
 
     ntci::StreamSocketCloseGuard closeGuard(streamSocket);
 
@@ -8698,7 +8698,7 @@ void concernConnectName4(const bsl::shared_ptr<ntci::Interface>& interface,
     NTCCFG_TEST_OK(error);
 
     // Ideally, we'd like to bind to an ephemeral port on the loopback
-    // interface but not begin listening, then have connection attempts
+    // scheduler but not begin listening, then have connection attempts
     // made to that address fail with ECONNREFUSED. However, only
     // Linux has this behavior. All other platforms just time out the
     // connection attempt.
@@ -8807,7 +8807,7 @@ void concernConnectName4(const bsl::shared_ptr<ntci::Interface>& interface,
     }
 }
 
-void concernConnectName5(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectName5(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                          bslma::Allocator*                       allocator)
 {
     // Concern: Connections to names may be cancelled while connections have
@@ -8844,7 +8844,7 @@ void concernConnectName5(const bsl::shared_ptr<ntci::Interface>& interface,
     streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> streamSocket =
-        interface->createStreamSocket(streamSocketOptions, allocator);
+        scheduler->createStreamSocket(streamSocketOptions, allocator);
 
     streamSocket->registerResolver(resolver);
 
@@ -8979,7 +8979,7 @@ void concernConnectName5(const bsl::shared_ptr<ntci::Interface>& interface,
     resolver->linger();
 }
 
-void concernConnectName6(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectName6(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                          bslma::Allocator*                       allocator)
 {
     // Concern: Connections to names may be reach their deadline while waiting
@@ -9007,7 +9007,7 @@ void concernConnectName6(const bsl::shared_ptr<ntci::Interface>& interface,
     streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> streamSocket =
-        interface->createStreamSocket(streamSocketOptions, allocator);
+        scheduler->createStreamSocket(streamSocketOptions, allocator);
 
     ntci::StreamSocketCloseGuard closeGuard(streamSocket);
 
@@ -9030,7 +9030,7 @@ void concernConnectName6(const bsl::shared_ptr<ntci::Interface>& interface,
     NTCCFG_TEST_OK(error);
 
     // Ideally, we'd like to bind to an ephemeral port on the loopback
-    // interface but not begin listening, then have connection attempts
+    // scheduler but not begin listening, then have connection attempts
     // made to that address fail with ECONNREFUSED. However, only
     // Linux has this behavior. All other platforms just time out the
     // connection attempt.
@@ -9104,7 +9104,7 @@ void concernConnectName6(const bsl::shared_ptr<ntci::Interface>& interface,
     }
 }
 
-void concernConnectName7(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectName7(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                          bslma::Allocator*                       allocator)
 {
     // Concern: Connections to names may reach their deadline while connections
@@ -9142,7 +9142,7 @@ void concernConnectName7(const bsl::shared_ptr<ntci::Interface>& interface,
     streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> streamSocket =
-        interface->createStreamSocket(streamSocketOptions, allocator);
+        scheduler->createStreamSocket(streamSocketOptions, allocator);
 
     streamSocket->registerResolver(resolver);
 
@@ -9244,7 +9244,7 @@ void concernConnectName7(const bsl::shared_ptr<ntci::Interface>& interface,
     resolver->linger();
 }
 
-void concernConnectName8(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectName8(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                          bslma::Allocator*                       allocator)
 {
     // Concern: Connect to name periodically times out with a nearly
@@ -9275,7 +9275,7 @@ void concernConnectName8(const bsl::shared_ptr<ntci::Interface>& interface,
     streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> streamSocket =
-        interface->createStreamSocket(streamSocketOptions, allocator);
+        scheduler->createStreamSocket(streamSocketOptions, allocator);
 
     ntci::StreamSocketCloseGuard closeGuard(streamSocket);
 
@@ -9372,18 +9372,18 @@ void concernConnectLimitActive(bslma::Allocator* allocator)
 
     ntsa::Error error;
 
-    // Create an interface that only allows one connection at a time.
+    // Create an scheduler that only allows one connection at a time.
 
-    ntca::InterfaceConfig interfaceConfig;
-    interfaceConfig.setThreadName("test");
-    interfaceConfig.setMinThreads(2);
-    interfaceConfig.setMaxThreads(2);
-    interfaceConfig.setMaxConnections(1);
+    ntca::SchedulerConfig schedulerConfig;
+    schedulerConfig.setThreadName("test");
+    schedulerConfig.setMinThreads(2);
+    schedulerConfig.setMaxThreads(2);
+    schedulerConfig.setMaxConnections(1);
 
-    bsl::shared_ptr<ntci::Interface> interface =
-        ntcf::System::createInterface(interfaceConfig, allocator);
+    bsl::shared_ptr<ntci::Scheduler> scheduler =
+        ntcf::System::createScheduler(schedulerConfig, allocator);
 
-    error = interface->start();
+    error = scheduler->start();
     NTCCFG_TEST_OK(error);
 
     // Create two stream sockets.
@@ -9392,13 +9392,13 @@ void concernConnectLimitActive(bslma::Allocator* allocator)
     streamSocketOptionsA.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> streamSocketA =
-        interface->createStreamSocket(streamSocketOptionsA, allocator);
+        scheduler->createStreamSocket(streamSocketOptionsA, allocator);
 
     ntca::StreamSocketOptions streamSocketOptionsB;
     streamSocketOptionsB.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> streamSocketB =
-        interface->createStreamSocket(streamSocketOptionsB, allocator);
+        scheduler->createStreamSocket(streamSocketOptionsB, allocator);
 
     // Create the listener socket.
 
@@ -9503,10 +9503,10 @@ void concernConnectLimitActive(bslma::Allocator* allocator)
         ntci::StreamSocketCloseGuard guard(streamSocketB);
     }
 
-    // Stop the interface.
+    // Stop the scheduler.
 
-    interface->shutdown();
-    interface->linger();
+    scheduler->shutdown();
+    scheduler->linger();
 }
 
 void concernConnectLimitPassive(bslma::Allocator* allocator)
@@ -9516,18 +9516,18 @@ void concernConnectLimitPassive(bslma::Allocator* allocator)
 
     ntsa::Error error;
 
-    // Create an interface that only allows one connection at a time.
+    // Create an scheduler that only allows one connection at a time.
 
-    ntca::InterfaceConfig interfaceConfig;
-    interfaceConfig.setThreadName("test");
-    interfaceConfig.setMinThreads(2);
-    interfaceConfig.setMaxThreads(2);
-    interfaceConfig.setMaxConnections(1);
+    ntca::SchedulerConfig schedulerConfig;
+    schedulerConfig.setThreadName("test");
+    schedulerConfig.setMinThreads(2);
+    schedulerConfig.setMaxThreads(2);
+    schedulerConfig.setMaxConnections(1);
 
-    bsl::shared_ptr<ntci::Interface> interface =
-        ntcf::System::createInterface(interfaceConfig, allocator);
+    bsl::shared_ptr<ntci::Scheduler> scheduler =
+        ntcf::System::createScheduler(schedulerConfig, allocator);
 
-    error = interface->start();
+    error = scheduler->start();
     NTCCFG_TEST_OK(error);
 
     // Create a listener socket and begin listening.
@@ -9543,7 +9543,7 @@ void concernConnectLimitPassive(bslma::Allocator* allocator)
     listenerSocketOptions.setAcceptQueueHighWatermark(100);
 
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
-        interface->createListenerSocket(listenerSocketOptions, allocator);
+        scheduler->createListenerSocket(listenerSocketOptions, allocator);
 
     error = listenerSocket->open();
     NTCCFG_TEST_OK(error);
@@ -9646,32 +9646,32 @@ void concernConnectLimitPassive(bslma::Allocator* allocator)
 
     listenerSocket.reset();
 
-    // Stop the interface.
+    // Stop the scheduler.
 
-    interface->shutdown();
-    interface->linger();
+    scheduler->shutdown();
+    scheduler->linger();
 }
 
 void concernAcceptClosure(bslma::Allocator* allocator)
 {
     // Concern: Connections that have been accepted by a listening socket
-    //          but not used are automatically closed if the ntci::Interface
+    //          but not used are automatically closed if the ntci::Scheduler
     //          is instructed to close all sockets.
     // Plan:
 
     ntsa::Error error;
 
-    // Create an interface.
+    // Create an scheduler.
 
-    ntca::InterfaceConfig interfaceConfig;
-    interfaceConfig.setThreadName("test");
-    interfaceConfig.setMinThreads(1);
-    interfaceConfig.setMaxThreads(1);
+    ntca::SchedulerConfig schedulerConfig;
+    schedulerConfig.setThreadName("test");
+    schedulerConfig.setMinThreads(1);
+    schedulerConfig.setMaxThreads(1);
 
-    bsl::shared_ptr<ntci::Interface> interface =
-        ntcf::System::createInterface(interfaceConfig, allocator);
+    bsl::shared_ptr<ntci::Scheduler> scheduler =
+        ntcf::System::createScheduler(schedulerConfig, allocator);
 
-    error = interface->start();
+    error = scheduler->start();
     NTCCFG_TEST_OK(error);
 
     // Create a listener socket and begin listening.
@@ -9682,7 +9682,7 @@ void concernAcceptClosure(bslma::Allocator* allocator)
         ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)));
 
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
-        interface->createListenerSocket(listenerSocketOptions, allocator);
+        scheduler->createListenerSocket(listenerSocketOptions, allocator);
 
     error = listenerSocket->open();
     NTCCFG_TEST_OK(error);
@@ -9696,7 +9696,7 @@ void concernAcceptClosure(bslma::Allocator* allocator)
     streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
     bsl::shared_ptr<ntci::StreamSocket> streamSocket =
-        interface->createStreamSocket(streamSocketOptions, allocator);
+        scheduler->createStreamSocket(streamSocketOptions, allocator);
 
     // Connect the stream socket to the listening socket.
 
@@ -9740,17 +9740,17 @@ void concernAcceptClosure(bslma::Allocator* allocator)
 
     NTCCFG_TEST_TRUE(acceptResult.event().isComplete());
 
-    // Close all sockets managed by the interface.
+    // Close all sockets managed by the scheduler.
 
-    interface->closeAll();
+    scheduler->closeAll();
 
-    // Stop the interface.
+    // Stop the scheduler.
 
-    interface->shutdown();
-    interface->linger();
+    scheduler->shutdown();
+    scheduler->linger();
 }
 
-void concernDatagramSocket(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernDatagramSocket(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                            const test::DatagramSocketParameters&   parameters,
                            bslma::Allocator*                       allocator)
 {
@@ -9767,7 +9767,7 @@ void concernDatagramSocket(const bsl::shared_ptr<ntci::Interface>& interface,
 
     bsl::shared_ptr<test::DatagramSocketManager> datagramSocketManager;
     datagramSocketManager.createInplace(allocator,
-                                        interface,
+                                        scheduler,
                                         parameters,
                                         allocator);
 
@@ -9866,7 +9866,7 @@ void concernDatagramSocketStressProactive(bslma::Allocator* allocator)
 }
 
 void concernDatagramSocketReceiveDeadline(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: Receive deadlines.
@@ -9890,7 +9890,7 @@ void concernDatagramSocketReceiveDeadline(
     bsl::shared_ptr<ntci::Resolver> resolver;
 
     bsl::shared_ptr<ntci::DatagramSocket> datagramSocket =
-        interface->createDatagramSocket(options, allocator);
+        scheduler->createDatagramSocket(options, allocator);
 
     error = datagramSocket->open();
     NTCCFG_TEST_FALSE(error);
@@ -9928,7 +9928,7 @@ void concernDatagramSocketReceiveDeadline(
 }
 
 void concernDatagramSocketReceiveDeadlineClose(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that receive deadline timer is automatically closed
@@ -9953,7 +9953,7 @@ void concernDatagramSocketReceiveDeadlineClose(
     bsl::shared_ptr<ntci::Resolver> resolver;
 
     bsl::shared_ptr<ntci::DatagramSocket> datagramSocket =
-        interface->createDatagramSocket(options, allocator);
+        scheduler->createDatagramSocket(options, allocator);
 
     error = datagramSocket->open();
     NTCCFG_TEST_FALSE(error);
@@ -9991,7 +9991,7 @@ void concernDatagramSocketReceiveDeadlineClose(
 }
 
 void concernDatagramSocketReceiveCancellation(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: Receive cancellation.
@@ -10015,7 +10015,7 @@ void concernDatagramSocketReceiveCancellation(
     bsl::shared_ptr<ntci::Resolver> resolver;
 
     bsl::shared_ptr<ntci::DatagramSocket> datagramSocket =
-        interface->createDatagramSocket(options, allocator);
+        scheduler->createDatagramSocket(options, allocator);
 
     error = datagramSocket->open();
     NTCCFG_TEST_FALSE(error);
@@ -10073,7 +10073,7 @@ void concernDatagramSocketReceiveCancellation(
 }
 
 void concernListenerSocketAcceptDeadline(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: Accept deadlines.
@@ -10095,7 +10095,7 @@ void concernListenerSocketAcceptDeadline(
     options.setSourceEndpoint(test::EndpointUtil::any(transport));
 
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
-        interface->createListenerSocket(options, allocator);
+        scheduler->createListenerSocket(options, allocator);
 
     error = listenerSocket->open();
     NTCCFG_TEST_FALSE(error);
@@ -10135,7 +10135,7 @@ void concernListenerSocketAcceptDeadline(
 }
 
 void concernListenerSocketAcceptCancellation(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: Accept cancellation.
@@ -10159,7 +10159,7 @@ void concernListenerSocketAcceptCancellation(
     bsl::shared_ptr<ntci::Resolver> resolver;
 
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
-        interface->createListenerSocket(options, allocator);
+        scheduler->createListenerSocket(options, allocator);
 
     error = listenerSocket->open();
     NTCCFG_TEST_FALSE(error);
@@ -10220,7 +10220,7 @@ void concernListenerSocketAcceptCancellation(
     NTCI_LOG_DEBUG("Listener socket accept cancellation test complete");
 }
 
-void concernStreamSocket(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernStreamSocket(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                          const test::StreamSocketParameters&     parameters,
                          bslma::Allocator*                       allocator)
 {
@@ -10237,7 +10237,7 @@ void concernStreamSocket(const bsl::shared_ptr<ntci::Interface>& interface,
 
     bsl::shared_ptr<test::StreamSocketManager> streamSocketManager;
     streamSocketManager.createInplace(allocator,
-                                      interface,
+                                      scheduler,
                                       parameters,
                                       allocator);
 
@@ -10517,7 +10517,7 @@ void concernStreamSocketStressProactive(bslma::Allocator* allocator)
 }
 
 void concernStreamSocketReceiveDeadline(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: Receive deadlines.
@@ -10548,12 +10548,12 @@ void concernStreamSocketReceiveDeadline(
                                                      transport);
         NTCCFG_TEST_FALSE(error);
 
-        clientStreamSocket = interface->createStreamSocket(options, allocator);
+        clientStreamSocket = scheduler->createStreamSocket(options, allocator);
 
         error = clientStreamSocket->open(transport, basicClientSocket);
         NTCCFG_TEST_FALSE(error);
 
-        serverStreamSocket = interface->createStreamSocket(options, allocator);
+        serverStreamSocket = scheduler->createStreamSocket(options, allocator);
 
         error = serverStreamSocket->open(transport, basicServerSocket);
         NTCCFG_TEST_FALSE(error);
@@ -10596,7 +10596,7 @@ void concernStreamSocketReceiveDeadline(
 }
 
 void concernStreamSocketReceiveCancellation(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: Receive cancellation.
@@ -10627,12 +10627,12 @@ void concernStreamSocketReceiveCancellation(
                                                      transport);
         NTCCFG_TEST_FALSE(error);
 
-        clientStreamSocket = interface->createStreamSocket(options, allocator);
+        clientStreamSocket = scheduler->createStreamSocket(options, allocator);
 
         error = clientStreamSocket->open(transport, basicClientSocket);
         NTCCFG_TEST_FALSE(error);
 
-        serverStreamSocket = interface->createStreamSocket(options, allocator);
+        serverStreamSocket = scheduler->createStreamSocket(options, allocator);
 
         error = serverStreamSocket->open(transport, basicServerSocket);
         NTCCFG_TEST_FALSE(error);
@@ -10698,7 +10698,7 @@ void concernStreamSocketReceiveCancellation(
 }
 
 void concernStreamSocketReceiveDeadlineClose(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that receive deadline timer is automatically closed
@@ -10730,12 +10730,12 @@ void concernStreamSocketReceiveDeadlineClose(
                                                      transport);
         NTCCFG_TEST_FALSE(error);
 
-        clientStreamSocket = interface->createStreamSocket(options, allocator);
+        clientStreamSocket = scheduler->createStreamSocket(options, allocator);
 
         error = clientStreamSocket->open(transport, basicClientSocket);
         NTCCFG_TEST_FALSE(error);
 
-        serverStreamSocket = interface->createStreamSocket(options, allocator);
+        serverStreamSocket = scheduler->createStreamSocket(options, allocator);
 
         error = serverStreamSocket->open(transport, basicServerSocket);
         NTCCFG_TEST_FALSE(error);
@@ -10778,7 +10778,7 @@ void concernStreamSocketReceiveDeadlineClose(
 }
 
 void concernStreamSocketSendDeadline(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: Send deadlines.
@@ -10820,12 +10820,12 @@ void concernStreamSocketSendDeadline(
                                                      transport);
         NTCCFG_TEST_FALSE(error);
 
-        clientStreamSocket = interface->createStreamSocket(options, allocator);
+        clientStreamSocket = scheduler->createStreamSocket(options, allocator);
 
         error = clientStreamSocket->open(transport, basicClientSocket);
         NTCCFG_TEST_FALSE(error);
 
-        serverStreamSocket = interface->createStreamSocket(options, allocator);
+        serverStreamSocket = scheduler->createStreamSocket(options, allocator);
 
         error = serverStreamSocket->open(transport, basicServerSocket);
         NTCCFG_TEST_FALSE(error);
@@ -10962,7 +10962,7 @@ void concernStreamSocketSendDeadline(
 }
 
 void concernStreamSocketSendCancellation(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: Send cancellation.
@@ -11004,12 +11004,12 @@ void concernStreamSocketSendCancellation(
                                                      transport);
         NTCCFG_TEST_FALSE(error);
 
-        clientStreamSocket = interface->createStreamSocket(options, allocator);
+        clientStreamSocket = scheduler->createStreamSocket(options, allocator);
 
         error = clientStreamSocket->open(transport, basicClientSocket);
         NTCCFG_TEST_FALSE(error);
 
-        serverStreamSocket = interface->createStreamSocket(options, allocator);
+        serverStreamSocket = scheduler->createStreamSocket(options, allocator);
 
         error = serverStreamSocket->open(transport, basicServerSocket);
         NTCCFG_TEST_FALSE(error);
@@ -11170,7 +11170,7 @@ void concernStreamSocketSendCancellation(
 }
 
 void concernStreamSocketSendDeadlineClose(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that send deadline timer is automatically closed
@@ -11212,12 +11212,12 @@ void concernStreamSocketSendDeadlineClose(
                                                      transport);
         NTCCFG_TEST_FALSE(error);
 
-        clientStreamSocket = interface->createStreamSocket(options, allocator);
+        clientStreamSocket = scheduler->createStreamSocket(options, allocator);
 
         error = clientStreamSocket->open(transport, basicClientSocket);
         NTCCFG_TEST_FALSE(error);
 
-        serverStreamSocket = interface->createStreamSocket(options, allocator);
+        serverStreamSocket = scheduler->createStreamSocket(options, allocator);
 
         error = serverStreamSocket->open(transport, basicServerSocket);
         NTCCFG_TEST_FALSE(error);
@@ -11286,7 +11286,7 @@ void concernStreamSocketSendDeadlineClose(
 }
 
 void concernListenerSocketAcceptClose(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that accept deadline timer is automatically closed
@@ -11311,7 +11311,7 @@ void concernListenerSocketAcceptClose(
     bsl::shared_ptr<ntci::Resolver> resolver;
 
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
-        interface->createListenerSocket(options, allocator);
+        scheduler->createListenerSocket(options, allocator);
 
     error = listenerSocket->open();
     NTCCFG_TEST_FALSE(error);
@@ -11660,7 +11660,7 @@ int ListenerSocketSession::rateLimitRelaxed() const
 }  // rateLimit
 
 void concernDatagramSocketReceiveRateLimitTimerClose(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that receive rate limit timer is automatically closed
@@ -11717,13 +11717,13 @@ void concernDatagramSocketReceiveRateLimitTimerClose(
         }
 
         clientDatagramSocket =
-            interface->createDatagramSocket(options, allocator);
+            scheduler->createDatagramSocket(options, allocator);
 
         error = clientDatagramSocket->open(transport, basicClientSocket);
         NTCCFG_TEST_FALSE(error);
 
         serverDatagramSocket =
-            interface->createDatagramSocket(options, allocator);
+            scheduler->createDatagramSocket(options, allocator);
 
         error = serverDatagramSocket->open(transport, basicServerSocket);
         NTCCFG_TEST_FALSE(error);
@@ -11805,7 +11805,7 @@ void concernDatagramSocketReceiveRateLimitTimerClose(
 }
 
 void concernStreamSocketReceiveRateLimitTimerClose(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that receive rate limit timer is automatically closed
@@ -11835,12 +11835,12 @@ void concernStreamSocketReceiveRateLimitTimerClose(
                                                      transport);
         NTCCFG_TEST_FALSE(error);
 
-        clientStreamSocket = interface->createStreamSocket(options, allocator);
+        clientStreamSocket = scheduler->createStreamSocket(options, allocator);
 
         error = clientStreamSocket->open(transport, basicClientSocket);
         NTCCFG_TEST_FALSE(error);
 
-        serverStreamSocket = interface->createStreamSocket(options, allocator);
+        serverStreamSocket = scheduler->createStreamSocket(options, allocator);
 
         error = serverStreamSocket->open(transport, basicServerSocket);
         NTCCFG_TEST_FALSE(error);
@@ -11925,7 +11925,7 @@ void concernStreamSocketReceiveRateLimitTimerClose(
 }
 
 void concernDatagramSocketSendRateLimitTimerClose(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that send rate limit timer is automatically closed
@@ -11981,13 +11981,13 @@ void concernDatagramSocketSendRateLimitTimerClose(
         }
 
         clientDatagramSocket =
-            interface->createDatagramSocket(options, allocator);
+            scheduler->createDatagramSocket(options, allocator);
 
         error = clientDatagramSocket->open(transport, basicClientSocket);
         NTCCFG_TEST_FALSE(error);
 
         serverDatagramSocket =
-            interface->createDatagramSocket(options, allocator);
+            scheduler->createDatagramSocket(options, allocator);
 
         error = serverDatagramSocket->open(transport, basicServerSocket);
         NTCCFG_TEST_FALSE(error);
@@ -12050,7 +12050,7 @@ void concernDatagramSocketSendRateLimitTimerClose(
 }
 
 void concernStreamSocketSendRateLimitTimerClose(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that send rate limit timer is automatically closed
@@ -12080,12 +12080,12 @@ void concernStreamSocketSendRateLimitTimerClose(
                                                      transport);
         NTCCFG_TEST_FALSE(error);
 
-        clientStreamSocket = interface->createStreamSocket(options, allocator);
+        clientStreamSocket = scheduler->createStreamSocket(options, allocator);
 
         error = clientStreamSocket->open(transport, basicClientSocket);
         NTCCFG_TEST_FALSE(error);
 
-        serverStreamSocket = interface->createStreamSocket(options, allocator);
+        serverStreamSocket = scheduler->createStreamSocket(options, allocator);
 
         error = serverStreamSocket->open(transport, basicServerSocket);
         NTCCFG_TEST_FALSE(error);
@@ -12150,7 +12150,7 @@ void concernStreamSocketSendRateLimitTimerClose(
 }
 
 void concernListenerSocketAcceptRateLimitTimerClose(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that accept rate limit timer is automatically closed
@@ -12171,7 +12171,7 @@ void concernListenerSocketAcceptRateLimitTimerClose(
         options.setTransport(transport);
         options.setSourceEndpoint(test::EndpointUtil::any(transport));
 
-        listenerSocket = interface->createListenerSocket(options, allocator);
+        listenerSocket = scheduler->createListenerSocket(options, allocator);
     }
 
     bsl::shared_ptr<rateLimit::ListenerSocketSession> session;
@@ -12223,7 +12223,7 @@ void concernListenerSocketAcceptRateLimitTimerClose(
         options.setTransport(transport);
 
         bsl::shared_ptr<ntci::StreamSocket> clientStreamSocket =
-            interface->createStreamSocket(options, allocator);
+            scheduler->createStreamSocket(options, allocator);
 
         error = clientStreamSocket->open();
         NTCCFG_TEST_OK(error);
@@ -12287,7 +12287,7 @@ void concernListenerSocketAcceptRateLimitTimerClose(
 }
 
 void concernStreamSocketConnectRetryTimerClose(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that connect retry timer is automatically closed
@@ -12309,7 +12309,7 @@ void concernStreamSocketConnectRetryTimerClose(
         streamSocketOptions.setTransport(transport);
 
         streamSocket =
-            interface->createStreamSocket(streamSocketOptions, allocator);
+            scheduler->createStreamSocket(streamSocketOptions, allocator);
     }
 
     NTCI_LOG_DEBUG("Creating and binding listener socket");
@@ -12319,7 +12319,7 @@ void concernStreamSocketConnectRetryTimerClose(
         options.setTransport(transport);
         options.setSourceEndpoint(test::EndpointUtil::any(transport));
 
-        listenerSocket = interface->createListenerSocket(options, allocator);
+        listenerSocket = scheduler->createListenerSocket(options, allocator);
         listenerSocket->open();
     }
     ntci::ListenerSocketCloseGuard listenerCloseGuard(listenerSocket);
@@ -12349,7 +12349,7 @@ void concernStreamSocketConnectRetryTimerClose(
 }
 
 void concernStreamSocketConnectDeadlineTimerClose(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that connect deadline timer is automatically closed
@@ -12372,7 +12372,7 @@ void concernStreamSocketConnectDeadlineTimerClose(
         streamSocketOptions.setTransport(transport);
 
         streamSocket =
-            interface->createStreamSocket(streamSocketOptions, allocator);
+            scheduler->createStreamSocket(streamSocketOptions, allocator);
     }
 
     NTCI_LOG_DEBUG("Creating and binding listener socket");
@@ -12382,7 +12382,7 @@ void concernStreamSocketConnectDeadlineTimerClose(
         options.setTransport(transport);
         options.setSourceEndpoint(test::EndpointUtil::any(transport));
 
-        listenerSocket = interface->createListenerSocket(options, allocator);
+        listenerSocket = scheduler->createListenerSocket(options, allocator);
         listenerSocket->open();
     }
     ntci::ListenerSocketCloseGuard listenerCloseGuard(listenerSocket);
@@ -12418,7 +12418,7 @@ void concernStreamSocketConnectDeadlineTimerClose(
 }
 
 void concernDatagramSocketReceiveRateLimitTimerEventNotifications(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that e_RATE_LIMIT_APPLIED and e_RATE_LIMIT_RELAXED
@@ -12475,13 +12475,13 @@ void concernDatagramSocketReceiveRateLimitTimerEventNotifications(
         }
 
         clientDatagramSocket =
-            interface->createDatagramSocket(options, allocator);
+            scheduler->createDatagramSocket(options, allocator);
 
         error = clientDatagramSocket->open(transport, basicClientSocket);
         NTCCFG_TEST_FALSE(error);
 
         serverDatagramSocket =
-            interface->createDatagramSocket(options, allocator);
+            scheduler->createDatagramSocket(options, allocator);
 
         error = serverDatagramSocket->open(transport, basicServerSocket);
         NTCCFG_TEST_FALSE(error);
@@ -12569,7 +12569,7 @@ void concernDatagramSocketReceiveRateLimitTimerEventNotifications(
 }
 
 void concernDatagramSocketSendRateLimitTimerEventNotifications(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that e_RATE_LIMIT_APPLIED and e_RATE_LIMIT_RELAXED
@@ -12626,13 +12626,13 @@ void concernDatagramSocketSendRateLimitTimerEventNotifications(
         }
 
         clientDatagramSocket =
-            interface->createDatagramSocket(options, allocator);
+            scheduler->createDatagramSocket(options, allocator);
 
         error = clientDatagramSocket->open(transport, basicClientSocket);
         NTCCFG_TEST_FALSE(error);
 
         serverDatagramSocket =
-            interface->createDatagramSocket(options, allocator);
+            scheduler->createDatagramSocket(options, allocator);
 
         error = serverDatagramSocket->open(transport, basicServerSocket);
         NTCCFG_TEST_FALSE(error);
@@ -12694,7 +12694,7 @@ void concernDatagramSocketSendRateLimitTimerEventNotifications(
 }
 
 void concernStreamSocketReceiveRateLimitTimerEventNotifications(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that e_RATE_LIMIT_APPLIED and e_RATE_LIMIT_RELAXED
@@ -12724,12 +12724,12 @@ void concernStreamSocketReceiveRateLimitTimerEventNotifications(
                                                      transport);
         NTCCFG_TEST_FALSE(error);
 
-        clientStreamSocket = interface->createStreamSocket(options, allocator);
+        clientStreamSocket = scheduler->createStreamSocket(options, allocator);
 
         error = clientStreamSocket->open(transport, basicClientSocket);
         NTCCFG_TEST_FALSE(error);
 
-        serverStreamSocket = interface->createStreamSocket(options, allocator);
+        serverStreamSocket = scheduler->createStreamSocket(options, allocator);
 
         error = serverStreamSocket->open(transport, basicServerSocket);
         NTCCFG_TEST_FALSE(error);
@@ -12815,7 +12815,7 @@ void concernStreamSocketReceiveRateLimitTimerEventNotifications(
 }
 
 void concernStreamSocketSendRateLimitTimerEventNotifications(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that e_RATE_LIMIT_APPLIED and e_RATE_LIMIT_RELAXED
@@ -12844,12 +12844,12 @@ void concernStreamSocketSendRateLimitTimerEventNotifications(
                                                      transport);
         NTCCFG_TEST_FALSE(error);
 
-        clientStreamSocket = interface->createStreamSocket(options, allocator);
+        clientStreamSocket = scheduler->createStreamSocket(options, allocator);
 
         error = clientStreamSocket->open(transport, basicClientSocket);
         NTCCFG_TEST_FALSE(error);
 
-        serverStreamSocket = interface->createStreamSocket(options, allocator);
+        serverStreamSocket = scheduler->createStreamSocket(options, allocator);
 
         error = serverStreamSocket->open(transport, basicServerSocket);
         NTCCFG_TEST_FALSE(error);
@@ -12915,7 +12915,7 @@ void concernStreamSocketSendRateLimitTimerEventNotifications(
 }
 
 void concernListenerSocketAcceptRateLimitTimerEventNotifications(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that e_RATE_LIMIT_APPLIED and e_RATE_LIMIT_RELAXED
@@ -12936,7 +12936,7 @@ void concernListenerSocketAcceptRateLimitTimerEventNotifications(
         options.setTransport(transport);
         options.setSourceEndpoint(test::EndpointUtil::any(transport));
 
-        listenerSocket = interface->createListenerSocket(options, allocator);
+        listenerSocket = scheduler->createListenerSocket(options, allocator);
     }
 
     bsl::shared_ptr<rateLimit::ListenerSocketSession> session;
@@ -12988,7 +12988,7 @@ void concernListenerSocketAcceptRateLimitTimerEventNotifications(
         options.setTransport(transport);
 
         bsl::shared_ptr<ntci::StreamSocket> clientStreamSocket =
-            interface->createStreamSocket(options, allocator);
+            scheduler->createStreamSocket(options, allocator);
 
         error = clientStreamSocket->open();
         NTCCFG_TEST_OK(error);
@@ -13044,6 +13044,87 @@ void concernListenerSocketAcceptRateLimitTimerEventNotifications(
     for (size_t i = 0; i < clientSockets.size(); ++i) {
         ntci::StreamSocketCloseGuard closeGuard(clientSockets[i]);
     }
+}
+
+void distributedFunction(bslmt::Barrier* suspendBarrier,
+                         bslmt::Barrier* releaseBarrier,
+                         bsl::size_t     threadIndex)
+{
+    NTCCFG_WARNING_UNUSED(suspendBarrier);
+    NTCCFG_WARNING_UNUSED(releaseBarrier);
+    NTCCFG_WARNING_UNUSED(threadIndex);
+
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_INFO("Thread %zu enter", threadIndex);
+
+    suspendBarrier->wait();
+
+    NTCI_LOG_INFO("Thread %zu leave", threadIndex);
+
+    releaseBarrier->wait();
+}
+
+void distributedTimer(bslmt::Barrier*                     suspendBarrier,
+                      bslmt::Barrier*                     releaseBarrier,
+                      const bsl::shared_ptr<ntci::Timer>& timer,
+                      const ntca::TimerEvent&             event,
+                      bsl::size_t                         threadIndex)
+{
+    NTCCFG_WARNING_UNUSED(suspendBarrier);
+    NTCCFG_WARNING_UNUSED(releaseBarrier);
+    NTCCFG_WARNING_UNUSED(timer);
+    NTCCFG_WARNING_UNUSED(event);
+    NTCCFG_WARNING_UNUSED(threadIndex);
+}
+
+void concernInterfaceFunctionAndTimerDistribution(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
+{
+    // Concern: Functions and timers deferred/scheduled at the scheduler/level
+    // are distributed amongst threads, so one thread blocked on processing
+    // a function/timer does not prevent another thread from processing another
+    // function/timer that is due, regardless of whether static or dynamic
+    // load balancing is configured.
+
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_DEBUG("Test started");
+
+    // Get the scheduler configuration.
+
+    const ntca::SchedulerConfig& schedulerConfig = scheduler->configuration();
+
+    const bsl::size_t minThreads = schedulerConfig.minThreads();
+    const bsl::size_t maxThreads = schedulerConfig.maxThreads();
+
+    // This test assumes that there are a fixed number of threads run by 
+    // the scheduler.
+
+    NTCCFG_TEST_EQ(minThreads, maxThreads);
+
+    const bsl::size_t numThreads = maxThreads;
+    if (numThreads > 1) {
+        bslmt::Barrier suspendBarrier(numThreads + 1);
+        bslmt::Barrier releaseBarrier(numThreads + 1);
+
+        for (bsl::size_t threadIndex = 0; 
+                         threadIndex < numThreads; 
+                       ++threadIndex) 
+        {
+            scheduler->execute(
+                NTCCFG_BIND(&distributedFunction,
+                            &suspendBarrier,
+                            &releaseBarrier,
+                            threadIndex));
+        }
+
+        suspendBarrier.wait();
+        releaseBarrier.wait();
+    }
+
+    NTCI_LOG_DEBUG("Test complete");
 }
 
 }  // close namespace 'test'
@@ -13632,11 +13713,11 @@ NTCCFG_TEST_CASE(63)
 
     ntccfg::TestAllocator ta;
     {
-        bsl::shared_ptr<ntci::Interface> interface;
-        ntcf::System::getDefault(&interface);
+        bsl::shared_ptr<ntci::Scheduler> scheduler;
+        ntcf::System::getDefault(&scheduler);
 
         bslmt::Latch latch(1);
-        interface->execute(NTCCFG_BIND(&bslmt::Latch::arrive, &latch));
+        scheduler->execute(NTCCFG_BIND(&bslmt::Latch::arrive, &latch));
         latch.wait();
     }
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
@@ -13804,17 +13885,17 @@ NTCCFG_TEST_CASE(64)
 
         ntsa::Error error;
 
-        ntca::InterfaceConfig interfaceConfig;
-        interfaceConfig.setThreadName("test");
-        interfaceConfig.setMinThreads(1);
-        interfaceConfig.setMaxThreads(1);
+        ntca::SchedulerConfig schedulerConfig;
+        schedulerConfig.setThreadName("test");
+        schedulerConfig.setMinThreads(1);
+        schedulerConfig.setMaxThreads(1);
 
-        bsl::shared_ptr<ntci::Interface> interface =
-            ntcf::System::createInterface(interfaceConfig, &ta);
+        bsl::shared_ptr<ntci::Scheduler> scheduler =
+            ntcf::System::createScheduler(schedulerConfig, &ta);
 
-        ntci::InterfaceStopGuard interfaceGuard(interface);
+        ntci::SchedulerStopGuard schedulerGuard(scheduler);
 
-        error = interface->start();
+        error = scheduler->start();
         NTCCFG_TEST_OK(error);
 
         ntca::ListenerSocketOptions listenerSocketOptions;
@@ -13827,7 +13908,7 @@ NTCCFG_TEST_CASE(64)
             ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)));
 
         bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
-            interface->createListenerSocket(listenerSocketOptions, &ta);
+            scheduler->createListenerSocket(listenerSocketOptions, &ta);
 
         ntci::ListenerSocketCloseGuard listenerGuard(listenerSocket);
 
@@ -13846,7 +13927,7 @@ NTCCFG_TEST_CASE(64)
             ntsa::Transport::e_TCP_IPV4_STREAM);
 
         bsl::shared_ptr<ntci::StreamSocket> clientStreamSocket =
-            interface->createStreamSocket(clientStreamSocketOptions, &ta);
+            scheduler->createStreamSocket(clientStreamSocketOptions, &ta);
 
         ntci::ConnectFuture connectFuture;
         error = clientStreamSocket->connect(listenerSocket->sourceEndpoint(),
@@ -13968,7 +14049,7 @@ NTCCFG_TEST_CASE(64)
         NTCCFG_TEST_OK(error);
 
         bslmt::Barrier barrier(2);
-        interface->execute(NTCCFG_BIND(&case64::processBarrier, &barrier));
+        scheduler->execute(NTCCFG_BIND(&case64::processBarrier, &barrier));
 
         NTCI_LOG_INFO("Closing client");
 
@@ -14086,17 +14167,17 @@ NTCCFG_TEST_CASE(65)
 
         ntsa::Error error;
 
-        ntca::InterfaceConfig interfaceConfig;
-        interfaceConfig.setThreadName("test");
-        interfaceConfig.setMinThreads(1);
-        interfaceConfig.setMaxThreads(1);
+        ntca::SchedulerConfig schedulerConfig;
+        schedulerConfig.setThreadName("test");
+        schedulerConfig.setMinThreads(1);
+        schedulerConfig.setMaxThreads(1);
 
-        bsl::shared_ptr<ntci::Interface> interface =
-            ntcf::System::createInterface(interfaceConfig, &ta);
+        bsl::shared_ptr<ntci::Scheduler> scheduler =
+            ntcf::System::createScheduler(schedulerConfig, &ta);
 
-        ntci::InterfaceStopGuard interfaceGuard(interface);
+        ntci::SchedulerStopGuard schedulerGuard(scheduler);
 
-        error = interface->start();
+        error = scheduler->start();
         NTCCFG_TEST_OK(error);
 
         ntca::DatagramSocketOptions datagramSocketOptions;
@@ -14104,7 +14185,7 @@ NTCCFG_TEST_CASE(65)
             ntsa::Transport::e_UDP_IPV4_DATAGRAM);
 
         bsl::shared_ptr<ntci::DatagramSocket> datagramSocket =
-            interface->createDatagramSocket(datagramSocketOptions, &ta);
+            scheduler->createDatagramSocket(datagramSocketOptions, &ta);
 
         ntci::DatagramSocketCloseGuard closeGuard(datagramSocket);
 
@@ -14133,7 +14214,7 @@ NTCCFG_TEST_CASE(65)
         datagramSocket->registerSession(datagramSocketSession);
 
         bslmt::Barrier barrier(2);
-        interface->execute(NTCCFG_BIND(&case64::processBarrier, &barrier));
+        scheduler->execute(NTCCFG_BIND(&case64::processBarrier, &barrier));
 
         datagramSocket->close(externalCloseCallback);
         datagramSocket->close(externalCloseCallback);
@@ -14309,6 +14390,16 @@ NTCCFG_TEST_CASE(81)
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
+NTCCFG_TEST_CASE(82)
+{
+    ntccfg::TestAllocator ta;
+    {
+        test::concern(&test::concernInterfaceFunctionAndTimerDistribution,
+                      &ta);
+    }
+    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
 NTCCFG_TEST_DRIVER
 {
     NTCCFG_TEST_REGISTER(1);
@@ -14392,5 +14483,6 @@ NTCCFG_TEST_DRIVER
     NTCCFG_TEST_REGISTER(79);
     NTCCFG_TEST_REGISTER(80);
     NTCCFG_TEST_REGISTER(81);
+    NTCCFG_TEST_REGISTER(82);
 }
 NTCCFG_TEST_DRIVER_END;

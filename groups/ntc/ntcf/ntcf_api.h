@@ -115,6 +115,7 @@ BSLS_IDENT("$Id: $")
 #include <ntca_receivetoken.h>
 #include <ntca_resolverconfig.h>
 #include <ntca_resolversource.h>
+#include <ntca_schedulerconfig.h>
 #include <ntca_sendcontext.h>
 #include <ntca_sendevent.h>
 #include <ntca_sendeventtype.h>
@@ -154,6 +155,7 @@ BSLS_IDENT("$Id: $")
 #include <ntci_bindresult.h>
 #include <ntci_callback.h>
 #include <ntci_cancellation.h>
+#include <ntci_chronology.h>
 #include <ntci_closable.h>
 #include <ntci_closecallback.h>
 #include <ntci_closecallbackfactory.h>

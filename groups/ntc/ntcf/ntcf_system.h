@@ -299,6 +299,34 @@ struct System {
     /// Ignore the specified 'signal'. Return the error.
     static ntsa::Error ignore(ntscfg::Signal::Value signal);
 
+    /// Create a new scheduler having the specified 'configuration'.
+    /// Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
+    static bsl::shared_ptr<ntci::Scheduler> createScheduler(
+        const ntca::SchedulerConfig& configuration,
+        bslma::Allocator*            basicAllocator = 0);
+
+    /// Create a new scheduler having the specified 'configuration'.
+    /// Allocate blob buffers for incoming data using the specified
+    /// 'blobBufferFactory'. Optionally specify a 'basicAllocator' used to
+    /// supply memory. If 'basicAllocator' is 0, the currently installed
+    /// default allocator is used.
+    static bsl::shared_ptr<ntci::Scheduler> createScheduler(
+        const ntca::SchedulerConfig&                     configuration,
+        const bsl::shared_ptr<bdlbb::BlobBufferFactory>& blobBufferFactory,
+        bslma::Allocator*                                basicAllocator = 0);
+
+    /// Create a new scheduler having the specified 'configuration'.
+    /// Allocate data containers using the specified 'dataPool'. Optionally
+    /// specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
+    static bsl::shared_ptr<ntci::Scheduler> createScheduler(
+        const ntca::SchedulerConfig&           configuration,
+        const bsl::shared_ptr<ntci::DataPool>& dataPool,
+        bslma::Allocator*                      basicAllocator = 0);
+
     /// Create a new interface having the specified 'configuration'.
     /// Optionally specify a 'basicAllocator' used to supply memory. If
     /// 'basicAllocator' is 0, the currently installed default allocator is

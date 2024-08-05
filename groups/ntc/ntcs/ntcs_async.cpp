@@ -395,6 +395,16 @@ bool AsyncTimer::oneShot() const
     return d_options.oneShot();
 }
 
+bdlb::NullableValue<bsls::TimeInterval> AsyncTimer::deadline() const
+{
+    return bdlb::NullableValue<bsls::TimeInterval>();
+}
+
+bdlb::NullableValue<bsls::TimeInterval> AsyncTimer::period() const
+{
+    return bdlb::NullableValue<bsls::TimeInterval>();
+}
+
 bslmt::ThreadUtil::Handle AsyncTimer::threadHandle() const
 {
     return bslmt::ThreadUtil::invalidHandle();

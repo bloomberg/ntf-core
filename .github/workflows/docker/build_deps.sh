@@ -21,14 +21,14 @@ fetch_git() {
 }
 
 fetch_deps() {
-    fetch_git bloomberg bde-tools 3.117.0.0
-    fetch_git bloomberg bde 3.117.0.0
+    fetch_git bloomberg bde-tools 4.8.0.0
+    fetch_git bloomberg bde 4.8.0.0
 }
 
 configure() {
     PATH="$PATH:$(realpath srcs/bde-tools/bin)"
     export PATH
-    eval "$(bbs_build_env -u opt_64_cpp17)"
+    eval "$(bbs_build_env -u opt_64_cpp20)"
 }
 
 build_bde() {

@@ -42,6 +42,8 @@ NTF_MOCK_METHOD(void,
 NTF_MOCK_METHOD_CONST(void*, handle)
 NTF_MOCK_METHOD_CONST(int, id)
 NTF_MOCK_METHOD_CONST(bool, oneShot)
+NTF_MOCK_METHOD_CONST(bdlb::NullableValue<bsls::TimeInterval>, deadline)
+NTF_MOCK_METHOD_CONST(bdlb::NullableValue<bsls::TimeInterval>, period)
 NTF_MOCK_METHOD_CONST(bslmt::ThreadUtil::Handle, threadHandle)
 NTF_MOCK_METHOD_CONST(size_t, threadIndex)
 NTF_MOCK_METHOD_CONST(const bsl::shared_ptr<ntci::Strand>&, strand)

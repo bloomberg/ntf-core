@@ -17,13 +17,3 @@
 
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntci_scheduler_cpp, "$Id$ $CSID$")
-
-namespace BloombergLP {
-namespace ntci {
-
-Scheduler::~Scheduler()
-{
-}
-
-}  // close package namespace
-}  // close enterprise namespace

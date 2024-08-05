@@ -566,22 +566,16 @@ class MtDriver : public ntcs::Driver,
     /// Defer the execution of the specified 'functor'.
     void execute(const Functor& functor) BSLS_KEYWORD_OVERRIDE
     {
-        ntccfg::ConditionMutexGuard guard(&d_mutex);
-        d_chronology->defer(functor);
-        d_blocked = false;
-        d_condition.signal();
+        d_chronology->execute(functor);
     }
 
-    /// Atomically defer the execution of the specified 'functorSequence'
+    /// Atomically execute the execution of the specified 'functorSequence'
     /// immediately followed by the specified 'functor', then clear the
     /// 'functorSequence'.
     void moveAndExecute(FunctorSequence* functorSequence,
                         const Functor&   functor) BSLS_KEYWORD_OVERRIDE
     {
-        ntccfg::ConditionMutexGuard guard(&d_mutex);
-        d_chronology->defer(functorSequence, functor);
-        d_blocked = false;
-        d_condition.signal();
+        d_chronology->moveAndExecute(functorSequence, functor);
     }
 
     bsl::shared_ptr<ntcs::Strand> createStrand()
@@ -1238,8 +1232,10 @@ NTCCFG_TEST_CASE(10)
         seq.push_back(f);
         seq.push_back(f);
         seq.push_back(f);
-        s.chronology->defer(&seq, f);
+        s.chronology->moveAndExecute(&seq, f);
         NTCCFG_TEST_EQ(s.chronology->numDeferred(), 4);
+
+        s.driver->validateInterruptAllCalled();
 
         s.chronology->clearFunctions();
 
@@ -1265,8 +1261,10 @@ NTCCFG_TEST_CASE(11)
         seq.push_back(f);
         seq.push_back(f);
         seq.push_back(f);
-        s.chronology->defer(&seq, f);
+        s.chronology->moveAndExecute(&seq, f);
         NTCCFG_TEST_EQ(s.chronology->numDeferred(), 4);
+
+        s.driver->validateInterruptAllCalled();
 
         s.chronology->drain();
 
@@ -2526,7 +2524,7 @@ NTCCFG_TEST_CASE(27)
 
 NTCCFG_TEST_CASE(28)
 {
-    // Concern: test defer (functor and functor sequence),
+    // Concern: test execute (functor and functor sequence),
     // numDeferred and hasAnyDeferred
 
     test::TestSuite s;
@@ -2538,10 +2536,12 @@ NTCCFG_TEST_CASE(28)
             NTCCFG_BIND(&test::TestSuite::incrementCallback,
                         bsl::ref(callCounter));
 
-        s.chronology->defer(f);
+        s.chronology->execute(f);
         NTCCFG_TEST_EQ(s.chronology->numDeferred(), 1);
         NTCCFG_TEST_TRUE(s.chronology->hasAnyDeferred());
         NTCCFG_TEST_EQ(callCounter, 0);
+
+        s.driver->validateInterruptAllCalled();
 
         s.chronology->announce();
         NTCCFG_TEST_EQ(callCounter, 1);
@@ -2554,8 +2554,10 @@ NTCCFG_TEST_CASE(28)
         NTCCFG_TEST_EQ(s.chronology->numDeferred(), 0);
         NTCCFG_TEST_FALSE(s.chronology->hasAnyDeferred());
 
-        s.chronology->defer(f);
-        s.chronology->defer(f);
+        s.chronology->execute(f);
+        s.driver->validateInterruptAllCalled();
+        s.chronology->execute(f);
+        s.driver->validateInterruptAllCalled();
         NTCCFG_TEST_EQ(s.chronology->numDeferred(), 2);
         NTCCFG_TEST_TRUE(s.chronology->hasAnyDeferred());
         s.chronology->announce();
@@ -2566,7 +2568,8 @@ NTCCFG_TEST_CASE(28)
         seq.push_back(f);
         seq.push_back(f);
         seq.push_back(f);
-        s.chronology->defer(&seq, f);
+        s.chronology->moveAndExecute(&seq, f);
+        s.driver->validateInterruptAllCalled();
         NTCCFG_TEST_EQ(s.chronology->numDeferred(), 4);
         s.chronology->announce();
         NTCCFG_TEST_EQ(callCounter, 4);
@@ -2610,7 +2613,8 @@ NTCCFG_TEST_CASE(29)
         }
         NTCI_LOG_DEBUG("Part 2, add deferred functor");
         {
-            s.chronology->defer(f);
+            s.chronology->execute(f);
+            s.driver->validateInterruptAllCalled();
             NTCCFG_TEST_EQ(functorCallCtr, 0);
             NTCCFG_TEST_TRUE(s.chronology->hasAnyScheduledOrDeferred());
         }

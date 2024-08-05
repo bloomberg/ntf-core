@@ -23,6 +23,7 @@ BSLS_IDENT("$Id: $")
 #include <ntccfg_platform.h>
 #include <ntci_interface.h>
 #include <ntci_proactorfactory.h>
+#include <ntcs_chronology.h>
 #include <ntcs_metrics.h>
 #include <ntcs_proactormetrics.h>
 #include <ntcs_reservation.h>
@@ -62,6 +63,7 @@ namespace ntcp {
 /// @ingroup module_ntcp
 class Interface : public ntci::Interface,
                   public ntci::ProactorPool,
+                  public ntcs::Interruptor,
                   public ntccfg::Shared<Interface>
 {
     /// Define a type alias for a map of thread handle
@@ -89,6 +91,7 @@ class Interface : public ntci::Interface,
     bsl::shared_ptr<ntci::Resolver>        d_resolver_sp;
     bsl::shared_ptr<ntci::Reservation>     d_connectionLimiter_sp;
     bsl::shared_ptr<ntcs::Metrics>         d_socketMetrics_sp;
+    bsl::shared_ptr<ntcs::Chronology>      d_chronology_sp;
     bsl::shared_ptr<ntci::ProactorFactory> d_proactorFactory_sp;
     bsl::shared_ptr<ntci::ProactorMetrics> d_proactorMetrics_sp;
     ProactorVector                         d_proactorVector;
@@ -142,6 +145,20 @@ class Interface : public ntci::Interface,
     /// acquired.
     bsl::shared_ptr<ntci::Proactor> acquireProactorWithLeastLoad(
         const ntca::LoadBalancingOptions& options);
+
+    /// Unblock one waiter blocked on 'wait'.
+    void interruptOne() BSLS_KEYWORD_OVERRIDE;
+
+    /// Unblock all waiters blocked on 'wait'.
+    void interruptAll() BSLS_KEYWORD_OVERRIDE;
+
+    /// Return the handle of the thread that will be calling 'wait()', or
+    /// the default value if no such thread has been set.
+    bslmt::ThreadUtil::Handle threadHandle() const BSLS_KEYWORD_OVERRIDE;
+
+    /// Return the index of the thread that will be calling 'wait()', or
+    /// the default value if no such thread has been set.
+    bsl::size_t threadIndex() const BSLS_KEYWORD_OVERRIDE;
 
   public:
     /// Create a new interface having the specified 'configuration'.
@@ -555,6 +572,9 @@ class Interface : public ntci::Interface,
     /// Return the resolver used by this interface.
     const bsl::shared_ptr<ntci::Resolver>& resolver() const
         BSLS_KEYWORD_OVERRIDE;
+
+    /// Return the configuration. 
+    const ntca::InterfaceConfig& configuration() const BSLS_KEYWORD_OVERRIDE;
 
     /// Return true if the specified 'driverType' is supported on the
     /// current platform with the specified 'dynamicLoadBalancing' behavior,

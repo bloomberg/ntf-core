@@ -23,6 +23,7 @@ BSLS_IDENT("$Id: $")
 #include <ntci_strand.h>
 #include <ntcscm_version.h>
 #include <ntsa_error.h>
+#include <bdlb_nullablevalue.h>
 #include <bslmt_threadutil.h>
 #include <bsls_timeinterval.h>
 #include <bsls_types.h>
@@ -799,6 +800,12 @@ class Timer
     /// Return true if this timer is in one-shot mode, otherwise return
     /// false.
     virtual bool oneShot() const = 0;
+
+    /// Return the deadline, or null if no deadline is scheduled.
+    virtual bdlb::NullableValue<bsls::TimeInterval> deadline() const = 0;
+
+    /// Return the period, or null if the timer is not periodic.
+    virtual bdlb::NullableValue<bsls::TimeInterval> period() const = 0;
 
     /// Return the handle of the thread that manages this socket, or
     /// the default value if no such thread has been set.

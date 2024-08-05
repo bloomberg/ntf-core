@@ -1813,7 +1813,7 @@ ntsa::Error SocketOptionUtil::joinMulticastGroupSource(
         const ntsa::IpAddress& group,
         const ntsa::IpAddress& source)
 {
-#if defined(BSLS_PLATFORM_OS_LINUX)
+#if defined(BSLS_PLATFORM_OS_LINUX) || defined(BSLS_PLATFORM_OS_DARWIN)
 
     ntsa::Error error;
     int         rc;
@@ -1899,6 +1899,7 @@ ntsa::Error SocketOptionUtil::joinMulticastGroupSource(
             source.v4().copyTo(&mreq.imr_sourceaddr.s_addr,
                                sizeof mreq.imr_sourceaddr.s_addr);
 
+            errno = 0;
             rc = ::setsockopt(socket,
                               IPPROTO_IP,
                               IP_ADD_SOURCE_MEMBERSHIP,
@@ -1931,7 +1932,7 @@ ntsa::Error SocketOptionUtil::leaveMulticastGroupSource(
         const ntsa::IpAddress& group,
         const ntsa::IpAddress& source)
 {
-#if defined(BSLS_PLATFORM_OS_LINUX)
+#if defined(BSLS_PLATFORM_OS_LINUX) || defined(BSLS_PLATFORM_OS_DARWIN)
 
     ntsa::Error error;
     int         rc;
