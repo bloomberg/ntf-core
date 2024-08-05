@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntci_scheduler.h>
+#include <ntca_schedulerconfig.h>
 
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntci_scheduler_cpp, "$Id$ $CSID$")
+BSLS_IDENT_RCSID(ntca_schedulerconfig_cpp, "$Id$ $CSID$")

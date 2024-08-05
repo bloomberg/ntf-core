@@ -299,7 +299,7 @@ class DatagramSocketManager : public ntci::DatagramSocketManager,
     typedef ntccfg::LockGuard LockGuard;
 
     ntccfg::Object                   d_object;
-    bsl::shared_ptr<ntci::Interface> d_interface_sp;
+    bsl::shared_ptr<ntci::Scheduler> d_interface_sp;
     Mutex                            d_socketMapMutex;
     DatagramSocketApplicationMap     d_socketMap;
     bslmt::Latch                     d_socketsEstablished;
@@ -329,7 +329,7 @@ class DatagramSocketManager : public ntci::DatagramSocketManager,
     /// specified 'interface'. Optionally specify a 'basicAllocator' used to
     /// supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
-    DatagramSocketManager(const bsl::shared_ptr<ntci::Interface>& interface,
+    DatagramSocketManager(const bsl::shared_ptr<ntci::Scheduler>& interface,
                           const test::DatagramSocketParameters&   parameters,
                           bslma::Allocator* basicAllocator = 0);
 
@@ -874,7 +874,7 @@ void DatagramSocketManager::processDatagramSocketClosed(
 }
 
 DatagramSocketManager::DatagramSocketManager(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     const test::DatagramSocketParameters&   parameters,
     bslma::Allocator*                       basicAllocator)
 : d_object("test::DatagramSocketManager")
@@ -1269,7 +1269,7 @@ class StreamSocketManager : public ntci::ListenerSocketManager,
     typedef ntccfg::LockGuard LockGuard;
 
     ntccfg::Object                   d_object;
-    bsl::shared_ptr<ntci::Interface> d_interface_sp;
+    bsl::shared_ptr<ntci::Scheduler> d_interface_sp;
     Mutex                            d_listenerSocketMapMutex;
     ListenerSocketApplicationMap     d_listenerSocketMap;
     bslmt::Latch                     d_listenerSocketsEstablished;
@@ -1320,7 +1320,7 @@ class StreamSocketManager : public ntci::ListenerSocketManager,
     /// specified 'reactor'. Optionally specify a 'basicAllocator' used to
     /// supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
-    StreamSocketManager(const bsl::shared_ptr<ntci::Interface>& interface,
+    StreamSocketManager(const bsl::shared_ptr<ntci::Scheduler>& interface,
                         const test::StreamSocketParameters&     parameters,
                         bslma::Allocator* basicAllocator = 0);
 
@@ -2133,7 +2133,7 @@ void StreamSocketManager::processConnect(
 }
 
 StreamSocketManager::StreamSocketManager(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     const test::StreamSocketParameters&     parameters,
     bslma::Allocator*                       basicAllocator)
 : d_object("test::StreamSocketManager")
@@ -2657,7 +2657,7 @@ class TransferClient : public ntci::StreamSocketManager
     typedef ntccfg::LockGuard LockGuard;
 
     Mutex                                   d_mutex;
-    bsl::shared_ptr<ntci::Interface>        d_interface_sp;
+    bsl::shared_ptr<ntci::Scheduler>        d_interface_sp;
     bsl::shared_ptr<ntci::EncryptionClient> d_encryptionClient_sp;
     StreamSocketMap                         d_streamSockets;
     bslmt::Latch                            d_streamSocketsEstablished;
@@ -2692,7 +2692,7 @@ class TransferClient : public ntci::StreamSocketManager
     /// Optionally specify a 'basicAllocator' used to supply memory. If
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
-    TransferClient(const bsl::shared_ptr<ntci::Interface>& interface,
+    TransferClient(const bsl::shared_ptr<ntci::Scheduler>& interface,
                    const test::TransferParameters&         parameters,
                    bslma::Allocator*                       basicAllocator = 0);
 
@@ -2915,7 +2915,7 @@ class TransferServer : public ntci::ListenerSocketManager
     typedef ntccfg::LockGuard LockGuard;
 
     mutable Mutex                           d_mutex;
-    bsl::shared_ptr<ntci::Interface>        d_interface_sp;
+    bsl::shared_ptr<ntci::Scheduler>        d_interface_sp;
     bsl::shared_ptr<ntci::EncryptionServer> d_encryptionServer_sp;
     ListenerSocketMap                       d_listenerSockets;
     bslmt::Latch                            d_listenerSocketsEstablished;
@@ -2955,7 +2955,7 @@ class TransferServer : public ntci::ListenerSocketManager
     /// Perform the test described by the specified 'parameters'. Optionally
     /// specify a 'basicAllocator used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
-    TransferServer(const bsl::shared_ptr<ntci::Interface>& interface,
+    TransferServer(const bsl::shared_ptr<ntci::Scheduler>& interface,
                    const test::TransferParameters&         parameters,
                    bslma::Allocator*                       basicAllocator = 0);
 
@@ -3347,7 +3347,7 @@ void TransferClient::processConnect(
 }
 
 TransferClient::TransferClient(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     const test::TransferParameters&         parameters,
     bslma::Allocator*                       basicAllocator)
 : d_mutex()
@@ -3983,7 +3983,7 @@ void TransferServer::processStreamSocketClosed(
 }
 
 TransferServer::TransferServer(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     const test::TransferParameters&         parameters,
     bslma::Allocator*                       basicAllocator)
 : d_mutex()
@@ -5580,7 +5580,7 @@ void StreamSocketUtil::cancelReceive(
 
 //                              CONCERNS
 
-typedef NTCCFG_FUNCTION(const bsl::shared_ptr<ntci::Interface>& interface,
+typedef NTCCFG_FUNCTION(const bsl::shared_ptr<ntci::Scheduler>& interface,
                         bslma::Allocator* allocator) ConcernCallback;
 
 void concern(const ConcernCallback& concernCallback,
@@ -5652,19 +5652,19 @@ void concern(const ConcernCallback& concernCallback,
                               (dynamicLoadBalancing ? "dynamic" : "static"),
                               (forceZeroCopy ? "enabled" : "disabled"));
 
-                ntca::InterfaceConfig interfaceConfig;
-                interfaceConfig.setDriverName(driverType);
-                interfaceConfig.setThreadName("network");
-                interfaceConfig.setMinThreads(MIN_THREADS);
-                interfaceConfig.setMaxThreads(MAX_THREADS);
-                interfaceConfig.setThreadLoadFactor(LOAD_FACTOR);
-                interfaceConfig.setDynamicLoadBalancing(dynamicLoadBalancing);
+                ntca::SchedulerConfig schedulerConfig;
+                schedulerConfig.setDriverName(driverType);
+                schedulerConfig.setThreadName("network");
+                schedulerConfig.setMinThreads(MIN_THREADS);
+                schedulerConfig.setMaxThreads(MAX_THREADS);
+                schedulerConfig.setThreadLoadFactor(LOAD_FACTOR);
+                schedulerConfig.setDynamicLoadBalancing(dynamicLoadBalancing);
                 if (forceZeroCopy) {
-                    interfaceConfig.setZeroCopyThreshold(0);
+                    schedulerConfig.setZeroCopyThreshold(0);
                 }
 
-                bsl::shared_ptr<ntci::Interface> interface =
-                    ntcf::System::createInterface(interfaceConfig, allocator);
+                bsl::shared_ptr<ntci::Scheduler> interface =
+                    ntcf::System::createScheduler(schedulerConfig, allocator);
 
                 interface->start();
 
@@ -5843,13 +5843,13 @@ void concernExample2(bslma::Allocator* allocator)
 
     // Create and start pool of I/O threads.
 
-    ntca::InterfaceConfig interfaceConfig;
-    interfaceConfig.setThreadName("example");
-    interfaceConfig.setMinThreads(3);
-    interfaceConfig.setMaxThreads(3);
+    ntca::SchedulerConfig schedulerConfig;
+    schedulerConfig.setThreadName("example");
+    schedulerConfig.setMinThreads(3);
+    schedulerConfig.setMaxThreads(3);
 
-    bsl::shared_ptr<ntci::Interface> interface =
-        ntcf::System::createInterface(interfaceConfig);
+    bsl::shared_ptr<ntci::Scheduler> interface =
+        ntcf::System::createScheduler(schedulerConfig);
 
     interface->start();
 
@@ -6225,20 +6225,20 @@ void concernExample4(bslma::Allocator* allocator)
 
     // Create and start pool of I/O threads.
 
-    ntca::InterfaceConfig interfaceConfig;
-    interfaceConfig.setThreadName("incoming");
-    interfaceConfig.setMinThreads(3);
-    interfaceConfig.setMaxThreads(3);
-    interfaceConfig.setDriverMetrics(true);
-    interfaceConfig.setDriverMetricsPerWaiter(true);
-    interfaceConfig.setSocketMetrics(true);
-    interfaceConfig.setSocketMetricsPerHandle(false);
+    ntca::SchedulerConfig schedulerConfig;
+    schedulerConfig.setThreadName("incoming");
+    schedulerConfig.setMinThreads(3);
+    schedulerConfig.setMaxThreads(3);
+    schedulerConfig.setDriverMetrics(true);
+    schedulerConfig.setDriverMetricsPerWaiter(true);
+    schedulerConfig.setSocketMetrics(true);
+    schedulerConfig.setSocketMetricsPerHandle(false);
 
     bsl::shared_ptr<ntci::DataPool> dataPool =
         ntcf::System::createDataPool(4096, 4096);
 
-    bsl::shared_ptr<ntci::Interface> interface =
-        ntcf::System::createInterface(interfaceConfig, dataPool);
+    bsl::shared_ptr<ntci::Scheduler> interface =
+        ntcf::System::createScheduler(schedulerConfig, dataPool);
 
     interface->start();
 
@@ -6724,17 +6724,17 @@ void concernInterfaceResolverGetIpAddressFromOverride(
 
     // Define an interface configuration that uses the resolver configuration.
 
-    ntca::InterfaceConfig interfaceConfig;
+    ntca::SchedulerConfig schedulerConfig;
 
-    interfaceConfig.setThreadName("test");
-    interfaceConfig.setMinThreads(1);
-    interfaceConfig.setMaxThreads(1);
-    interfaceConfig.setResolverConfig(resolverConfig);
+    schedulerConfig.setThreadName("test");
+    schedulerConfig.setMinThreads(1);
+    schedulerConfig.setMaxThreads(1);
+    schedulerConfig.setResolverConfig(resolverConfig);
 
     // Create and start an interface.
 
-    bsl::shared_ptr<ntci::Interface> interface =
-        ntcf::System::createInterface(interfaceConfig, allocator);
+    bsl::shared_ptr<ntci::Scheduler> interface =
+        ntcf::System::createScheduler(schedulerConfig, allocator);
 
     error = interface->start();
     NTCCFG_TEST_OK(error);
@@ -6819,7 +6819,7 @@ void concernInterfaceResolverGetIpAddressFromServer(
     // TODO
 }
 
-void concernDataExchange(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernDataExchange(const bsl::shared_ptr<ntci::Scheduler>& interface,
                          bslma::Allocator*                       allocator)
 {
     // Concern: Listen, connect, accept, send and receive
@@ -7037,13 +7037,13 @@ void concernClose(bslma::Allocator* allocator)
 
     // Create and start an interface.
 
-    ntca::InterfaceConfig interfaceConfig;
-    interfaceConfig.setThreadName("example");
-    interfaceConfig.setMinThreads(3);
-    interfaceConfig.setMaxThreads(3);
+    ntca::SchedulerConfig schedulerConfig;
+    schedulerConfig.setThreadName("example");
+    schedulerConfig.setMinThreads(3);
+    schedulerConfig.setMaxThreads(3);
 
-    bsl::shared_ptr<ntci::Interface> interface =
-        ntcf::System::createInterface(interfaceConfig, allocator);
+    bsl::shared_ptr<ntci::Scheduler> interface =
+        ntcf::System::createScheduler(schedulerConfig, allocator);
 
     interface->start();
 
@@ -7115,7 +7115,7 @@ void concernClose(bslma::Allocator* allocator)
 }
 
 void concernConnectAndShutdown(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: test that shutdown works without assertions firing when it is
@@ -7161,7 +7161,7 @@ void concernConnectAndShutdown(
     NTCCFG_TEST_OK(error);
 }
 
-void concernConnectEndpoint1(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectEndpoint1(const bsl::shared_ptr<ntci::Scheduler>& interface,
                              bslma::Allocator*                       allocator)
 {
     // Concern: Connect to endpoint periodically fails but eventually succeeds
@@ -7339,7 +7339,7 @@ void concernConnectEndpoint1(const bsl::shared_ptr<ntci::Interface>& interface,
     }
 }
 
-void concernConnectEndpoint2(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectEndpoint2(const bsl::shared_ptr<ntci::Scheduler>& interface,
                              bslma::Allocator*                       allocator)
 {
     // Concern: Connect to endpoint periodically refused until all attempts are
@@ -7459,7 +7459,7 @@ void concernConnectEndpoint2(const bsl::shared_ptr<ntci::Interface>& interface,
     }
 }
 
-void concernConnectEndpoint3(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectEndpoint3(const bsl::shared_ptr<ntci::Scheduler>& interface,
                              bslma::Allocator*                       allocator)
 {
     // Concern: Connect to endpoint periodically failes due to either timeouts
@@ -7560,7 +7560,7 @@ void concernConnectEndpoint3(const bsl::shared_ptr<ntci::Interface>& interface,
     }
 }
 
-void concernConnectEndpoint4(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectEndpoint4(const bsl::shared_ptr<ntci::Scheduler>& interface,
                              bslma::Allocator*                       allocator)
 {
     // Concern: Connections to endpoints may be cancelled while waiting to
@@ -7717,7 +7717,7 @@ void concernConnectEndpoint4(const bsl::shared_ptr<ntci::Interface>& interface,
     }
 }
 
-void concernConnectEndpoint5(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectEndpoint5(const bsl::shared_ptr<ntci::Scheduler>& interface,
                              bslma::Allocator*                       allocator)
 {
     // Concern: Connections to endpoints may be cancelled while connections
@@ -7877,7 +7877,7 @@ void concernConnectEndpoint5(const bsl::shared_ptr<ntci::Interface>& interface,
     }
 }
 
-void concernConnectEndpoint6(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectEndpoint6(const bsl::shared_ptr<ntci::Scheduler>& interface,
                              bslma::Allocator*                       allocator)
 {
     // Concern: Connections to endpoints may reach their deadline while waiting
@@ -8003,7 +8003,7 @@ void concernConnectEndpoint6(const bsl::shared_ptr<ntci::Interface>& interface,
     }
 }
 
-void concernConnectEndpoint7(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectEndpoint7(const bsl::shared_ptr<ntci::Scheduler>& interface,
                              bslma::Allocator*                       allocator)
 {
     // Concern: Connections to endpoints may be reach their deadline while
@@ -8129,7 +8129,7 @@ void concernConnectEndpoint7(const bsl::shared_ptr<ntci::Interface>& interface,
     }
 }
 
-void concernConnectEndpoint8(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectEndpoint8(const bsl::shared_ptr<ntci::Scheduler>& interface,
                              bslma::Allocator*                       allocator)
 {
     // Concern: Connect to endpoint periodically times out nearly
@@ -8238,7 +8238,7 @@ void concernConnectEndpoint8(const bsl::shared_ptr<ntci::Interface>& interface,
     }
 }
 
-void concernConnectName1(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectName1(const bsl::shared_ptr<ntci::Scheduler>& interface,
                          bslma::Allocator*                       allocator)
 {
     // Concern: Connect to name periodically fails but eventually succeeds
@@ -8421,7 +8421,7 @@ void concernConnectName1(const bsl::shared_ptr<ntci::Interface>& interface,
     }
 }
 
-void concernConnectName2(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectName2(const bsl::shared_ptr<ntci::Scheduler>& interface,
                          bslma::Allocator*                       allocator)
 {
     // Concern: Connect to name periodically refused until all attempts are
@@ -8544,7 +8544,7 @@ void concernConnectName2(const bsl::shared_ptr<ntci::Interface>& interface,
     }
 }
 
-void concernConnectName3(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectName3(const bsl::shared_ptr<ntci::Scheduler>& interface,
                          bslma::Allocator*                       allocator)
 {
     // Concern: Connect to name periodically times out until all attempts
@@ -8650,7 +8650,7 @@ void concernConnectName3(const bsl::shared_ptr<ntci::Interface>& interface,
     resolver->linger();
 }
 
-void concernConnectName4(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectName4(const bsl::shared_ptr<ntci::Scheduler>& interface,
                          bslma::Allocator*                       allocator)
 {
     // Concern: Connections to names may be cancelled while waiting to
@@ -8807,7 +8807,7 @@ void concernConnectName4(const bsl::shared_ptr<ntci::Interface>& interface,
     }
 }
 
-void concernConnectName5(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectName5(const bsl::shared_ptr<ntci::Scheduler>& interface,
                          bslma::Allocator*                       allocator)
 {
     // Concern: Connections to names may be cancelled while connections have
@@ -8979,7 +8979,7 @@ void concernConnectName5(const bsl::shared_ptr<ntci::Interface>& interface,
     resolver->linger();
 }
 
-void concernConnectName6(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectName6(const bsl::shared_ptr<ntci::Scheduler>& interface,
                          bslma::Allocator*                       allocator)
 {
     // Concern: Connections to names may be reach their deadline while waiting
@@ -9104,7 +9104,7 @@ void concernConnectName6(const bsl::shared_ptr<ntci::Interface>& interface,
     }
 }
 
-void concernConnectName7(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectName7(const bsl::shared_ptr<ntci::Scheduler>& interface,
                          bslma::Allocator*                       allocator)
 {
     // Concern: Connections to names may reach their deadline while connections
@@ -9244,7 +9244,7 @@ void concernConnectName7(const bsl::shared_ptr<ntci::Interface>& interface,
     resolver->linger();
 }
 
-void concernConnectName8(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernConnectName8(const bsl::shared_ptr<ntci::Scheduler>& interface,
                          bslma::Allocator*                       allocator)
 {
     // Concern: Connect to name periodically times out with a nearly
@@ -9374,14 +9374,14 @@ void concernConnectLimitActive(bslma::Allocator* allocator)
 
     // Create an interface that only allows one connection at a time.
 
-    ntca::InterfaceConfig interfaceConfig;
-    interfaceConfig.setThreadName("test");
-    interfaceConfig.setMinThreads(2);
-    interfaceConfig.setMaxThreads(2);
-    interfaceConfig.setMaxConnections(1);
+    ntca::SchedulerConfig schedulerConfig;
+    schedulerConfig.setThreadName("test");
+    schedulerConfig.setMinThreads(2);
+    schedulerConfig.setMaxThreads(2);
+    schedulerConfig.setMaxConnections(1);
 
-    bsl::shared_ptr<ntci::Interface> interface =
-        ntcf::System::createInterface(interfaceConfig, allocator);
+    bsl::shared_ptr<ntci::Scheduler> interface =
+        ntcf::System::createScheduler(schedulerConfig, allocator);
 
     error = interface->start();
     NTCCFG_TEST_OK(error);
@@ -9518,14 +9518,14 @@ void concernConnectLimitPassive(bslma::Allocator* allocator)
 
     // Create an interface that only allows one connection at a time.
 
-    ntca::InterfaceConfig interfaceConfig;
-    interfaceConfig.setThreadName("test");
-    interfaceConfig.setMinThreads(2);
-    interfaceConfig.setMaxThreads(2);
-    interfaceConfig.setMaxConnections(1);
+    ntca::SchedulerConfig schedulerConfig;
+    schedulerConfig.setThreadName("test");
+    schedulerConfig.setMinThreads(2);
+    schedulerConfig.setMaxThreads(2);
+    schedulerConfig.setMaxConnections(1);
 
-    bsl::shared_ptr<ntci::Interface> interface =
-        ntcf::System::createInterface(interfaceConfig, allocator);
+    bsl::shared_ptr<ntci::Scheduler> interface =
+        ntcf::System::createScheduler(schedulerConfig, allocator);
 
     error = interface->start();
     NTCCFG_TEST_OK(error);
@@ -9655,7 +9655,7 @@ void concernConnectLimitPassive(bslma::Allocator* allocator)
 void concernAcceptClosure(bslma::Allocator* allocator)
 {
     // Concern: Connections that have been accepted by a listening socket
-    //          but not used are automatically closed if the ntci::Interface
+    //          but not used are automatically closed if the ntci::Scheduler
     //          is instructed to close all sockets.
     // Plan:
 
@@ -9663,13 +9663,13 @@ void concernAcceptClosure(bslma::Allocator* allocator)
 
     // Create an interface.
 
-    ntca::InterfaceConfig interfaceConfig;
-    interfaceConfig.setThreadName("test");
-    interfaceConfig.setMinThreads(1);
-    interfaceConfig.setMaxThreads(1);
+    ntca::SchedulerConfig schedulerConfig;
+    schedulerConfig.setThreadName("test");
+    schedulerConfig.setMinThreads(1);
+    schedulerConfig.setMaxThreads(1);
 
-    bsl::shared_ptr<ntci::Interface> interface =
-        ntcf::System::createInterface(interfaceConfig, allocator);
+    bsl::shared_ptr<ntci::Scheduler> interface =
+        ntcf::System::createScheduler(schedulerConfig, allocator);
 
     error = interface->start();
     NTCCFG_TEST_OK(error);
@@ -9750,7 +9750,7 @@ void concernAcceptClosure(bslma::Allocator* allocator)
     interface->linger();
 }
 
-void concernDatagramSocket(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernDatagramSocket(const bsl::shared_ptr<ntci::Scheduler>& interface,
                            const test::DatagramSocketParameters&   parameters,
                            bslma::Allocator*                       allocator)
 {
@@ -9866,7 +9866,7 @@ void concernDatagramSocketStressProactive(bslma::Allocator* allocator)
 }
 
 void concernDatagramSocketReceiveDeadline(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: Receive deadlines.
@@ -9928,7 +9928,7 @@ void concernDatagramSocketReceiveDeadline(
 }
 
 void concernDatagramSocketReceiveDeadlineClose(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that receive deadline timer is automatically closed
@@ -9991,7 +9991,7 @@ void concernDatagramSocketReceiveDeadlineClose(
 }
 
 void concernDatagramSocketReceiveCancellation(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: Receive cancellation.
@@ -10073,7 +10073,7 @@ void concernDatagramSocketReceiveCancellation(
 }
 
 void concernListenerSocketAcceptDeadline(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: Accept deadlines.
@@ -10135,7 +10135,7 @@ void concernListenerSocketAcceptDeadline(
 }
 
 void concernListenerSocketAcceptCancellation(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: Accept cancellation.
@@ -10220,7 +10220,7 @@ void concernListenerSocketAcceptCancellation(
     NTCI_LOG_DEBUG("Listener socket accept cancellation test complete");
 }
 
-void concernStreamSocket(const bsl::shared_ptr<ntci::Interface>& interface,
+void concernStreamSocket(const bsl::shared_ptr<ntci::Scheduler>& interface,
                          const test::StreamSocketParameters&     parameters,
                          bslma::Allocator*                       allocator)
 {
@@ -10517,7 +10517,7 @@ void concernStreamSocketStressProactive(bslma::Allocator* allocator)
 }
 
 void concernStreamSocketReceiveDeadline(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: Receive deadlines.
@@ -10596,7 +10596,7 @@ void concernStreamSocketReceiveDeadline(
 }
 
 void concernStreamSocketReceiveCancellation(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: Receive cancellation.
@@ -10698,7 +10698,7 @@ void concernStreamSocketReceiveCancellation(
 }
 
 void concernStreamSocketReceiveDeadlineClose(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that receive deadline timer is automatically closed
@@ -10778,7 +10778,7 @@ void concernStreamSocketReceiveDeadlineClose(
 }
 
 void concernStreamSocketSendDeadline(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: Send deadlines.
@@ -10962,7 +10962,7 @@ void concernStreamSocketSendDeadline(
 }
 
 void concernStreamSocketSendCancellation(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: Send cancellation.
@@ -11170,7 +11170,7 @@ void concernStreamSocketSendCancellation(
 }
 
 void concernStreamSocketSendDeadlineClose(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that send deadline timer is automatically closed
@@ -11286,7 +11286,7 @@ void concernStreamSocketSendDeadlineClose(
 }
 
 void concernListenerSocketAcceptClose(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that accept deadline timer is automatically closed
@@ -11660,7 +11660,7 @@ int ListenerSocketSession::rateLimitRelaxed() const
 }  // rateLimit
 
 void concernDatagramSocketReceiveRateLimitTimerClose(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that receive rate limit timer is automatically closed
@@ -11805,7 +11805,7 @@ void concernDatagramSocketReceiveRateLimitTimerClose(
 }
 
 void concernStreamSocketReceiveRateLimitTimerClose(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that receive rate limit timer is automatically closed
@@ -11925,7 +11925,7 @@ void concernStreamSocketReceiveRateLimitTimerClose(
 }
 
 void concernDatagramSocketSendRateLimitTimerClose(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that send rate limit timer is automatically closed
@@ -12050,7 +12050,7 @@ void concernDatagramSocketSendRateLimitTimerClose(
 }
 
 void concernStreamSocketSendRateLimitTimerClose(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that send rate limit timer is automatically closed
@@ -12150,7 +12150,7 @@ void concernStreamSocketSendRateLimitTimerClose(
 }
 
 void concernListenerSocketAcceptRateLimitTimerClose(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that accept rate limit timer is automatically closed
@@ -12287,7 +12287,7 @@ void concernListenerSocketAcceptRateLimitTimerClose(
 }
 
 void concernStreamSocketConnectRetryTimerClose(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that connect retry timer is automatically closed
@@ -12349,7 +12349,7 @@ void concernStreamSocketConnectRetryTimerClose(
 }
 
 void concernStreamSocketConnectDeadlineTimerClose(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that connect deadline timer is automatically closed
@@ -12418,7 +12418,7 @@ void concernStreamSocketConnectDeadlineTimerClose(
 }
 
 void concernDatagramSocketReceiveRateLimitTimerEventNotifications(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that e_RATE_LIMIT_APPLIED and e_RATE_LIMIT_RELAXED
@@ -12569,7 +12569,7 @@ void concernDatagramSocketReceiveRateLimitTimerEventNotifications(
 }
 
 void concernDatagramSocketSendRateLimitTimerEventNotifications(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that e_RATE_LIMIT_APPLIED and e_RATE_LIMIT_RELAXED
@@ -12694,7 +12694,7 @@ void concernDatagramSocketSendRateLimitTimerEventNotifications(
 }
 
 void concernStreamSocketReceiveRateLimitTimerEventNotifications(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that e_RATE_LIMIT_APPLIED and e_RATE_LIMIT_RELAXED
@@ -12815,7 +12815,7 @@ void concernStreamSocketReceiveRateLimitTimerEventNotifications(
 }
 
 void concernStreamSocketSendRateLimitTimerEventNotifications(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that e_RATE_LIMIT_APPLIED and e_RATE_LIMIT_RELAXED
@@ -12915,7 +12915,7 @@ void concernStreamSocketSendRateLimitTimerEventNotifications(
 }
 
 void concernListenerSocketAcceptRateLimitTimerEventNotifications(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: validate that e_RATE_LIMIT_APPLIED and e_RATE_LIMIT_RELAXED
@@ -13079,7 +13079,7 @@ void distributedTimer(bslmt::Barrier*                     suspendBarrier,
 }
 
 void concernInterfaceFunctionAndTimerDistribution(
-    const bsl::shared_ptr<ntci::Interface>& interface,
+    const bsl::shared_ptr<ntci::Scheduler>& interface,
     bslma::Allocator*                       allocator)
 {
     // Concern: Functions and timers deferred/scheduled at the interface/level
@@ -13094,10 +13094,10 @@ void concernInterfaceFunctionAndTimerDistribution(
 
     // Get the interface configuration.
 
-    const ntca::InterfaceConfig& interfaceConfig = interface->configuration();
+    const ntca::SchedulerConfig& schedulerConfig = interface->configuration();
 
-    const bsl::size_t minThreads = interfaceConfig.minThreads();
-    const bsl::size_t maxThreads = interfaceConfig.maxThreads();
+    const bsl::size_t minThreads = schedulerConfig.minThreads();
+    const bsl::size_t maxThreads = schedulerConfig.maxThreads();
 
     // This test assumes that there are a fixed number of threads run by 
     // the interface.
@@ -13713,7 +13713,7 @@ NTCCFG_TEST_CASE(63)
 
     ntccfg::TestAllocator ta;
     {
-        bsl::shared_ptr<ntci::Interface> interface;
+        bsl::shared_ptr<ntci::Scheduler> interface;
         ntcf::System::getDefault(&interface);
 
         bslmt::Latch latch(1);
@@ -13885,15 +13885,15 @@ NTCCFG_TEST_CASE(64)
 
         ntsa::Error error;
 
-        ntca::InterfaceConfig interfaceConfig;
-        interfaceConfig.setThreadName("test");
-        interfaceConfig.setMinThreads(1);
-        interfaceConfig.setMaxThreads(1);
+        ntca::SchedulerConfig schedulerConfig;
+        schedulerConfig.setThreadName("test");
+        schedulerConfig.setMinThreads(1);
+        schedulerConfig.setMaxThreads(1);
 
-        bsl::shared_ptr<ntci::Interface> interface =
-            ntcf::System::createInterface(interfaceConfig, &ta);
+        bsl::shared_ptr<ntci::Scheduler> interface =
+            ntcf::System::createScheduler(schedulerConfig, &ta);
 
-        ntci::InterfaceStopGuard interfaceGuard(interface);
+        ntci::SchedulerStopGuard interfaceGuard(interface);
 
         error = interface->start();
         NTCCFG_TEST_OK(error);
@@ -14167,15 +14167,15 @@ NTCCFG_TEST_CASE(65)
 
         ntsa::Error error;
 
-        ntca::InterfaceConfig interfaceConfig;
-        interfaceConfig.setThreadName("test");
-        interfaceConfig.setMinThreads(1);
-        interfaceConfig.setMaxThreads(1);
+        ntca::SchedulerConfig schedulerConfig;
+        schedulerConfig.setThreadName("test");
+        schedulerConfig.setMinThreads(1);
+        schedulerConfig.setMaxThreads(1);
 
-        bsl::shared_ptr<ntci::Interface> interface =
-            ntcf::System::createInterface(interfaceConfig, &ta);
+        bsl::shared_ptr<ntci::Scheduler> interface =
+            ntcf::System::createScheduler(schedulerConfig, &ta);
 
-        ntci::InterfaceStopGuard interfaceGuard(interface);
+        ntci::SchedulerStopGuard interfaceGuard(interface);
 
         error = interface->start();
         NTCCFG_TEST_OK(error);
