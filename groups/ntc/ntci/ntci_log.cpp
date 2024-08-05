@@ -34,7 +34,7 @@ BSLS_IDENT_RCSID(ntci_log_cpp, "$Id$ $CSID$")
 #include <bsl_limits.h>
 #include <bsl_sstream.h>
 
-#define NTCI_LOG_UNSET_CONTEXT 1
+#define NTCI_LOG_UNSET_CONTEXT 0
 
 // Define to 1 to use 'vsprintf'. Uncomment, undefine or set to zero to use
 // the custom formatting functions.
