@@ -379,6 +379,30 @@ ntsa::Error System::ignore(ntscfg::Signal::Value signal)
     return ntsf::System::ignore(signal);
 }
 
+bsl::shared_ptr<ntci::Scheduler> System::createScheduler(
+    const ntca::SchedulerConfig& configuration,
+    bslma::Allocator*            basicAllocator)
+{
+    return System::createInterface(configuration, basicAllocator);
+}
+
+bsl::shared_ptr<ntci::Scheduler> System::createScheduler(
+    const ntca::SchedulerConfig&                     configuration,
+    const bsl::shared_ptr<bdlbb::BlobBufferFactory>& blobBufferFactory,
+    bslma::Allocator*                                basicAllocator)
+{
+    return System::createInterface(
+        configuration, blobBufferFactory, basicAllocator);
+}
+
+bsl::shared_ptr<ntci::Scheduler> System::createScheduler(
+    const ntca::SchedulerConfig&           configuration,
+    const bsl::shared_ptr<ntci::DataPool>& dataPool,
+    bslma::Allocator*                      basicAllocator)
+{
+    return System::createInterface(configuration, dataPool, basicAllocator);
+}
+
 bsl::shared_ptr<ntci::Interface> System::createInterface(
     const ntca::InterfaceConfig& configuration,
     bslma::Allocator*            basicAllocator)

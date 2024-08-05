@@ -318,6 +318,8 @@ class Interface : public ntci::DatagramSocketFactory,
 
 /// Provide a guard to automatically stop an interface and
 /// block until the interface is asynchronously stopped.
+///
+/// @ingroup module_ntci_runtime
 class InterfaceStopGuard
 {
     bsl::shared_ptr<ntci::Interface> d_interface_sp;

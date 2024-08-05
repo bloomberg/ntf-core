@@ -32,6 +32,10 @@
 #include <sys/socket.h>
 #endif
 
+#if defined(BSLS_PLATFORM_OS_DARWIN)
+#include <errno.h>
+#endif
+
 using namespace BloombergLP;
 
 // Undefine to test all socket types.
@@ -1337,8 +1341,17 @@ NTSCFG_TEST_CASE(3)
                 BSLS_LOG_INFO("joinMulticastGroup: %s", error.text().c_str());
 
                 if (error) {
+#if defined(BSLS_PLATFORM_OS_LINUX)
                     NTSCFG_TEST_TRUE(error == ntsa::Error::e_INVALID ||
                                      error == ntsa::Error::e_NOT_IMPLEMENTED);
+#elif defined(BSLS_PLATFORM_OS_DARWIN)
+                    NTSCFG_TEST_TRUE(error == ntsa::Error::e_INVALID ||
+                                     error == ntsa::Error::e_NOT_IMPLEMENTED ||
+                                     error.number() == ENOEXEC);
+#else
+                    NTSCFG_TEST_TRUE(error == ntsa::Error::e_INVALID ||
+                                     error == ntsa::Error::e_NOT_IMPLEMENTED);
+#endif
                 }
             }
 
@@ -1362,8 +1375,17 @@ NTSCFG_TEST_CASE(3)
                 BSLS_LOG_INFO("leaveMulticastGroup: %s", error.text().c_str());
 
                 if (error) {
+#if defined(BSLS_PLATFORM_OS_LINUX)
                     NTSCFG_TEST_TRUE(error == ntsa::Error::e_INVALID ||
                                      error == ntsa::Error::e_NOT_IMPLEMENTED);
+#elif defined(BSLS_PLATFORM_OS_DARWIN)
+                    NTSCFG_TEST_TRUE(error == ntsa::Error::e_INVALID ||
+                                     error == ntsa::Error::e_NOT_IMPLEMENTED ||
+                                     error.number() == ENOEXEC);
+#else
+                    NTSCFG_TEST_TRUE(error == ntsa::Error::e_INVALID ||
+                                     error == ntsa::Error::e_NOT_IMPLEMENTED);
+#endif
                 }
             }
 
@@ -1390,8 +1412,17 @@ NTSCFG_TEST_CASE(3)
                               error.text().c_str());
 
                 if (error) {
+#if defined(BSLS_PLATFORM_OS_LINUX)
                     NTSCFG_TEST_TRUE(error == ntsa::Error::e_INVALID ||
                                      error == ntsa::Error::e_NOT_IMPLEMENTED);
+#elif defined(BSLS_PLATFORM_OS_DARWIN)
+                    NTSCFG_TEST_TRUE(error == ntsa::Error::e_INVALID ||
+                                     error == ntsa::Error::e_NOT_IMPLEMENTED ||
+                                     error.number() == ENOEXEC);
+#else
+                    NTSCFG_TEST_TRUE(error == ntsa::Error::e_INVALID ||
+                                     error == ntsa::Error::e_NOT_IMPLEMENTED);
+#endif
                 }
             }
 
@@ -1418,8 +1449,17 @@ NTSCFG_TEST_CASE(3)
                               error.text().c_str());
 
                 if (error) {
+#if defined(BSLS_PLATFORM_OS_LINUX)
                     NTSCFG_TEST_TRUE(error == ntsa::Error::e_INVALID ||
                                      error == ntsa::Error::e_NOT_IMPLEMENTED);
+#elif defined(BSLS_PLATFORM_OS_DARWIN)
+                    NTSCFG_TEST_TRUE(error == ntsa::Error::e_INVALID ||
+                                     error == ntsa::Error::e_NOT_IMPLEMENTED ||
+                                     error.number() == ENOEXEC);
+#else
+                    NTSCFG_TEST_TRUE(error == ntsa::Error::e_INVALID ||
+                                     error == ntsa::Error::e_NOT_IMPLEMENTED);
+#endif
                 }
             }
 

@@ -115,6 +115,7 @@ BSLS_IDENT("$Id: $")
 #include <ntca_receivetoken.h>
 #include <ntca_resolverconfig.h>
 #include <ntca_resolversource.h>
+#include <ntca_schedulerconfig.h>
 #include <ntca_sendcontext.h>
 #include <ntca_sendevent.h>
 #include <ntca_sendeventtype.h>

@@ -20,25 +20,23 @@
 BSLS_IDENT("$Id: $")
 
 #include <ntccfg_platform.h>
-#include <ntci_strand.h>
-#include <ntci_timerfactory.h>
+#include <ntci_interface.h>
 #include <ntcscm_version.h>
 
 namespace BloombergLP {
 namespace ntci {
 
-/// Provide an interface to a scheduler of asynchronous operations.
-///
-/// @par Thread Safety
-/// This class is thread safe.
+/// Provide an interface to create asynchronous, multiplexed sockets and timers
+/// using reactors or proactors driven by a pool of threads.
 ///
 /// @ingroup module_ntci_runtime
-class Scheduler : public ntci::TimerFactory
-{
-  public:
-    /// Destroy this object.
-    virtual ~Scheduler();
-};
+typedef Interface Scheduler;
+
+/// Provide a guard to automatically stop an interface and
+/// block until the interface is asynchronously stopped.
+///
+/// @ingroup module_ntci_runtime
+typedef InterfaceStopGuard SchedulerStopGuard;
 
 }  // end namespace ntci
 }  // end namespace BloombergLP

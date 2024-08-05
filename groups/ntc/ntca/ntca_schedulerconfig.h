@@ -13,7 +13,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntci_scheduler.h>
+#ifndef INCLUDED_NTCA_SCHEDULER
+#define INCLUDED_NTCA_SCHEDULER
 
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntci_scheduler_cpp, "$Id$ $CSID$")
+BSLS_IDENT("$Id: $")
+
+#include <ntccfg_platform.h>
+#include <ntca_interfaceconfig.h>
+#include <ntcscm_version.h>
+
+namespace BloombergLP {
+namespace ntca {
+
+/// Describe the configuration of a scheduler of asynchronous operation.
+///
+/// @ingroup module_ntci_runtime
+typedef InterfaceConfig SchedulerConfig;
+
+}  // end namespace ntca
+}  // end namespace BloombergLP
+#endif

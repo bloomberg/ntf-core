@@ -91,6 +91,7 @@ ntca_receiveevent
 ntca_receiveeventtype
 ntca_resolverconfig
 ntca_resolversource
+ntca_schedulerconfig
 ntca_sendtoken
 ntca_sendoptions
 ntca_sendcontext
