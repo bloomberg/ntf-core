@@ -840,18 +840,6 @@ bsl::string Chronology::convertToDateTime(Microseconds timeInMicroseconds)
     return bsl::string(buffer);
 }
 
-bool Chronology::sortTimers(const bsl::shared_ptr<ntci::Timer>& lhs, 
-                            const bsl::shared_ptr<ntci::Timer>& rhs)
-{
-    const bdlb::NullableValue<bsls::TimeInterval> lhsDeadline = 
-        lhs->deadline();
-
-    const bdlb::NullableValue<bsls::TimeInterval> rhsDeadline = 
-        rhs->deadline();
-
-    return lhsDeadline < rhsDeadline;
-}
-
 Chronology::Chronology(ntcs::Interruptor* interruptor, 
                        bslma::Allocator*  basicAllocator)
 : d_object("ntcs::Chronology")
@@ -1406,12 +1394,6 @@ void Chronology::load(TimerVector* result) const
 
     if (d_parent_sp) {
         d_parent_sp->load(result);
-    }
-
-    if (!result->empty()) {
-        bsl::sort(result->begin(), 
-                  result->end(), 
-                  &Chronology::sortTimers);
     }
 }
 
