@@ -451,11 +451,6 @@ class Chronology NTSCFG_FINAL : public ntci::Chronology
     /// the Unix epoch in a date/time format.
     static bsl::string convertToDateTime(Microseconds timeInMicroseconds);
 
-    /// Return true if the deadline of the specified 'lhs' timer is less than 
-    /// the deadline of the specified 'rhs' timer.
-    static bool sortTimers(const bsl::shared_ptr<ntci::Timer>& lhs, 
-                           const bsl::shared_ptr<ntci::Timer>& rhs);
-
   public:
     /// The time interval that is LLONG_MAX microseconds from the Unix
     /// epoch.
