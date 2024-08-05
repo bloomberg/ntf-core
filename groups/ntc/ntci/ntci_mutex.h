@@ -45,7 +45,7 @@ typedef ntccfg::LockGuard LockGuard;
 /// Define a type alias for a guard to unlock and lock a mutex.
 ///
 /// @ingroup module_ntci_utility
-typedef ntccfg::LockGuard UnLockGuard;
+typedef ntccfg::UnLockGuard UnLockGuard;
 
 }  // close package namespace
 }  // close enterprise namespace
