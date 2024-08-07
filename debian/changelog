@@ -1,5 +1,23 @@
-ntf-core (2.4.5) unstable; urgency=low
+ntf-core (2.4.6) unstable; urgency=low
 
+  * 5e23063 Release 2.4.6
+  * 794dbee Avoid sorting timers in ntcs::Chronology::load during potential timer rescheduling
+  * bf1e585 Fix typedef for ntci::UnLockGuard to properly alias the correct guard class
+  * 67fd2c8 Resolve compiler ambiguity in bslma::SharedPtrRep-based shared pointer ctor on Solaris
+  * cc7e467 Remove bdedox from build dependencies (#41)
+  * b760843 Begin migrating ntci::Interface to ntci::Scheduler, part 1: introduce typedef (#201)
+  * 54869ed Enable functions and timers deferred/scheduled at the ntci::Interface level to be distributed between all threads
+  * dfb36b6 GitHub Actions: increase BDE version to 4.8.0.0 & set C++ standard to C++20
+  * 490d57d Support MCAST_JOIN_SOURCE_GROUP on Linux
+  * 82a5978 Apply branch prediction to NTCI_LOG
+  * 203863a Provide an abstraction of dlopen/dlsym on Unixes
+  * 2f7fab3 Announce ntci::ListenerSocketManager::processListenerSocketLimit when max connections is violated
+
+ -- Matt Millett <mmillett2@bloomberg.net>  Wed, 7 Aug 2024 10:54:45 -0400
+
+ntf-core (2.4.5) git; urgency=low
+
+  * bbb23b3 Release 2.4.5 to DPKG
   * 3fe9912 Release 2.4.5
   * d719427 Add usage examples for ntca::EncryptionServerOptions
   * 9312907 Add usage examples for ntca::EncryptionClientOptions
@@ -8,7 +26,7 @@ ntf-core (2.4.5) unstable; urgency=low
   * 03f27b3 Define move and nothrow semantics for ntsa::Ipv6Address
   * 0830433 Define move and nothrow semantics for ntsa::Ipv4Address and ntsa::TcpCongestionControl
 
- -- Matt Millett <mmillett2@bloomberg.net>  Tue, 2 Jul 2024 11:31:27 -0400
+ -- Matt Millett <mmillett2@bloomberg.net>  Tue, 2 Jul 2024 11:32:14 -0400
 
 ntf-core (2.4.4) git; urgency=low
 
