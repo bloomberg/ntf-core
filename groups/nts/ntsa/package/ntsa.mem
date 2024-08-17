@@ -9,6 +9,9 @@ ntsa_endpoint
 ntsa_endpointoptions
 ntsa_endpointtype
 ntsa_error
+ntsa_ethernetaddress
+ntsa_ethernetheader
+ntsa_ethernetprotocol
 ntsa_event
 ntsa_file
 ntsa_guid
