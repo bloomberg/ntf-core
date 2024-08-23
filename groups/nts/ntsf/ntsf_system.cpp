@@ -1225,8 +1225,6 @@ void System::setDefault(const bsl::shared_ptr<ntsi::Resolver>& resolver)
     error = ntsf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
-    bsl::shared_ptr<ntsi::Resolver> result;
-
     ntscfg::LockGuard lock(s_globalMutex_p);
 
     if (s_globalResolver_p != 0) {
@@ -1251,8 +1249,6 @@ void System::setDefault(const bsl::shared_ptr<ntsi::Resolver>& resolver)
 
     BSLS_ASSERT_OPT(s_globalResolver_p);
     BSLS_ASSERT_OPT(s_globalResolverRep_p);
-
-    s_globalResolverRep_p->acquireRef();
 }
 
 void System::getDefault(bsl::shared_ptr<ntsi::Resolver>* result)

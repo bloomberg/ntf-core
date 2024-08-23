@@ -136,6 +136,9 @@ namespace ntscfg {
 // Build with compiler instrumentation for code coverage.
 #define NTS_BUILD_WITH_COVERAGE @NTF_BUILD_WITH_COVERAGE@
 
+// Build with the expectation that executables are run under valgrind.
+#define NTS_BUILD_WITH_VALGRIND @NTF_BUILD_WITH_VALGRIND@
+
 // Build from a packaging environment.
 #define NTS_BUILD_FROM_PACKAGING @NTF_BUILD_FROM_PACKAGING@
 
