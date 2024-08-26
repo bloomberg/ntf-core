@@ -7129,7 +7129,12 @@ void concernConnectAndShutdown(
     // even if connection is not refused or shutdown is called not during
     // socket detachment process
 
+#if NTC_BUILD_WITH_VALGRIND
+    const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
+#else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
+#endif
+
     const int         k_TIMEOUT_MICROSEC        = 100;
     const char*       address                   = "127.0.0.1:51";
 
@@ -7167,7 +7172,11 @@ void concernConnectEndpoint1(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     // Concern: Connect to endpoint periodically fails but eventually succeeds
     // Testing: ECONNREFUSED, connection established
 
+#if NTC_BUILD_WITH_VALGRIND
+    const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
+#else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
+#endif
 
     const double k_RETRY_INTERVAL_SECONDS = 0.1;
 
@@ -7572,7 +7581,11 @@ void concernConnectEndpoint4(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
 
     BSLS_LOG_WARN("ECONNREFUSED (x4), ECANCELED");
 
+#if NTC_BUILD_WITH_VALGRIND
+    const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
+#else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
+#endif
 
     const double k_RETRY_INTERVAL_SECONDS = 0.1;
 
@@ -7729,7 +7742,11 @@ void concernConnectEndpoint5(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
 
     BSLS_LOG_WARN("ETIMEDOUT (x4), ECANCELED");
 
+#if NTC_BUILD_WITH_VALGRIND
+    const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
+#else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
+#endif
 
     const double k_RETRY_INTERVAL_SECONDS = 0.1;
 
@@ -7889,7 +7906,11 @@ void concernConnectEndpoint6(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
 
     BSLS_LOG_WARN("ECONNREFUSED (x4), ETIMEDOUT/ECANCELED");
 
+#if NTC_BUILD_WITH_VALGRIND
+    const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
+#else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
+#endif
 
     const double k_RETRY_INTERVAL_SECONDS = 0.1;
 
@@ -8015,7 +8036,11 @@ void concernConnectEndpoint7(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
 
     BSLS_LOG_WARN("ETIMEDOUT (x4), ETIMEDOUT/ECANCELED");
 
+#if NTC_BUILD_WITH_VALGRIND
+    const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
+#else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
+#endif
 
     const double k_RETRY_INTERVAL_SECONDS = 0.1;
 
@@ -8145,7 +8170,11 @@ void concernConnectEndpoint8(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     BSLS_LOG_WARN(
         "ETIMEDOUT/ECONNREFUSED/ECONNABORTED (x100) (instantaneous)");
 
+#if NTC_BUILD_WITH_VALGRIND
+    const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
+#else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
+#endif
 
     const double k_RETRY_INTERVAL_SECONDS = 0.1;
 
@@ -8244,7 +8273,11 @@ void concernConnectName1(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     // Concern: Connect to name periodically fails but eventually succeeds
     // Testing: ECONNREFUSED, connection established
 
+#if NTC_BUILD_WITH_VALGRIND
+    const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
+#else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
+#endif
 
     const double k_RETRY_INTERVAL_SECONDS = 0.1;
 
@@ -8662,7 +8695,11 @@ void concernConnectName4(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
 
     BSLS_LOG_WARN("ECONNREFUSED (x4), ECANCELED");
 
+#if NTC_BUILD_WITH_VALGRIND
+    const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
+#else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
+#endif
 
     const double k_RETRY_INTERVAL_SECONDS = 0.1;
 
@@ -8819,7 +8856,11 @@ void concernConnectName5(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
 
     BSLS_LOG_WARN("ETIMEDOUT (x4), ECANCELED");
 
+#if NTC_BUILD_WITH_VALGRIND
+    const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
+#else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
+#endif
 
     const double k_RETRY_INTERVAL_SECONDS = 0.1;
 
@@ -8991,7 +9032,11 @@ void concernConnectName6(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
 
     BSLS_LOG_WARN("ECONNREFUSED (x4), ETIMEDOUT/ECANCELED");
 
+#if NTC_BUILD_WITH_VALGRIND
+    const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
+#else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
+#endif
 
     const double k_RETRY_INTERVAL_SECONDS = 0.1;
 
@@ -9116,7 +9161,11 @@ void concernConnectName7(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
 
     BSLS_LOG_WARN("ETIMEDOUT (x4), ETIMEDOUT/ECANCELED");
 
+#if NTC_BUILD_WITH_VALGRIND
+    const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
+#else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
+#endif
 
     const double k_RETRY_INTERVAL_SECONDS = 0.1;
 
@@ -9260,7 +9309,11 @@ void concernConnectName8(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     BSLS_LOG_WARN(
         "ETIMEDOUT/ECONNREFUSED/ECONNABORTED (x100) (instantaneous)");
 
+#if NTC_BUILD_WITH_VALGRIND
+    const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
+#else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
+#endif
 
     const double k_RETRY_INTERVAL_SECONDS = 0.1;
 
@@ -12355,7 +12408,12 @@ void concernStreamSocketConnectDeadlineTimerClose(
     // Concern: validate that connect deadline timer is automatically closed
     // when the socket is closed and then destroyed
 
+#if NTC_BUILD_WITH_VALGRIND
+    const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 6;
+#else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 60;
+#endif
+
     const int         k_DEADLINE_INTERVAL_HOURS = 1;
     const int         k_RETRY_INTERVAL_MINUTES  = 1;
 
