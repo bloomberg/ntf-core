@@ -776,10 +776,17 @@ NTCCFG_TEST_CASE(7)
         bsl::size_t d_numIterations;
     }
     DATA[] = {
+#if NTC_BUILD_WITH_VALGRIND
+        { 1,    100000 },
+        { 2,     50000 },
+        { 4,     25000 },
+        { 10,    10000 }
+#else
         { 1,  10000000 },
         { 2,   5000000 },
         { 4,   2500000 },
         { 10,  1000000 }
+#endif
     };
     // clang-format on
 
@@ -850,10 +857,17 @@ NTCCFG_TEST_CASE(8)
         bsl::size_t d_numIterations;
     }
     DATA[] = {
+#if NTC_BUILD_WITH_VALGRIND
+        { 1,    100000 },
+        { 2,     50000 },
+        { 4,     25000 },
+        { 10,    10000 }
+#else
         { 1,  10000000 },
         { 2,   5000000 },
         { 4,   2500000 },
         { 10,  1000000 }
+#endif
     };
     // clang-format on
 
@@ -934,10 +948,17 @@ NTCCFG_TEST_CASE(9)
         bsl::size_t d_numIterations;
     }
     DATA[] = {
+#if NTC_BUILD_WITH_VALGRIND
+        { 1,    100000 },
+        { 2,     50000 },
+        { 4,     25000 },
+        { 10,    10000 }
+#else
         { 1,  10000000 },
         { 2,   5000000 },
         { 4,   2500000 },
         { 10,  1000000 }
+#endif
     };
     // clang-format on
 

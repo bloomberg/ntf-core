@@ -215,6 +215,11 @@ class DomainName
     /// the specified 'text', otherwise return false.
     bool less(const bslstl::StringRef& text) const;
 
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm) const;
+
     /// Format this object to the specified output 'stream' at the
     /// optionally specified indentation 'level' and return a reference to
     /// the modifiable 'stream'.  If 'level' is specified, optionally
@@ -298,6 +303,14 @@ bsl::string DomainName::text() const
     return result;
 }
 
+template <typename HASH_ALGORITHM>
+NTSCFG_INLINE
+void DomainName::hash(HASH_ALGORITHM& algorithm) const
+{
+    using bslh::hashAppend;
+    algorithm(d_buffer, d_size);
+}
+
 NTSCFG_INLINE
 bsl::ostream& operator<<(bsl::ostream& stream, const DomainName& object)
 {
@@ -323,10 +336,10 @@ bool operator<(const DomainName& lhs, const DomainName& rhs)
 }
 
 template <typename HASH_ALGORITHM>
+NTSCFG_INLINE
 void hashAppend(HASH_ALGORITHM& algorithm, const DomainName& value)
 {
-    using bslh::hashAppend;
-    algorithm(reinterpret_cast<const char*>(&value), sizeof value);
+    value.hash(algorithm);
 }
 
 }  // close package namespace

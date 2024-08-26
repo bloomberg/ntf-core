@@ -587,10 +587,16 @@ NTSCFG_TEST_CASE(5)
                     resolverConfig,
                     bslma::Default::globalAllocator());
 
+            NTSCFG_TEST_EQ(resolver.use_count(), 1);
+
             ntsf::System::setDefault(resolver);
+
+            NTSCFG_TEST_EQ(resolver.use_count(), 2);
 
             bsl::shared_ptr<ntsi::Resolver> resolverDefault;
             ntsf::System::getDefault(&resolverDefault);
+
+            NTSCFG_TEST_EQ(resolver.use_count(), 3);
 
             NTSCFG_TEST_EQ(resolverDefault, resolver);
         }

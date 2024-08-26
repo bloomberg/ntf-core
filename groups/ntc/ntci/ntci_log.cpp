@@ -19,6 +19,7 @@
 BSLS_IDENT_RCSID(ntci_log_cpp, "$Id$ $CSID$")
 
 #include <ntccfg_tune.h>
+#include <bdlb_chartype.h>
 #include <bdlsb_fixedmemoutstreambuf.h>
 #include <bslma_allocator.h>
 #include <bslma_default.h>
@@ -33,6 +34,10 @@ BSLS_IDENT_RCSID(ntci_log_cpp, "$Id$ $CSID$")
 #include <bsl_cstring.h>
 #include <bsl_limits.h>
 #include <bsl_sstream.h>
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+#include <sys/syscall.h>
+#endif
 
 #define NTCI_LOG_UNSET_CONTEXT 0
 
@@ -106,38 +111,104 @@ void flushLogJournalLocked()
     s_journal_p->d_position = 0;
 }
 
-void destroyKey(void* key)
+// Provide process-wide initialization.
+struct Initializer {
+    // Perform process-wide initialization for this component.
+    Initializer();
+
+    // Perform process-wide cleanup for this component.
+    ~Initializer(); 
+
+    // Allocate memory for a new log context.
+    static void* allocateLogContext();
+
+    // Free the memory for a log context at the specified 'address'.
+    static void freeLogContext(void* address);
+
+    // Destroy the log context at the specified 'key'.
+    static void destroyKey(void* key);
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    // The memory for the main thread's log context.
+    alignas(16) char d_mainThreadContext[sizeof(ntci::LogContext)];
+#endif
+
+} s_initializer;
+
+Initializer::Initializer()
 {
-    if (key) {
+    int rc = bslmt::ThreadUtil::createKey(&s_key, &destroyKey);
+    BSLS_ASSERT_OPT(rc == 0);
+
+    bool journal;
+    if (ntccfg::Tune::configure(&journal, "NTC_LOG_JOURNAL")) {
+        ntci::Log::initialize(journal);
+    }
+}
+
+Initializer::~Initializer()
+{
+    ntci::Log::exit();
+
+    // int rc = bslmt::ThreadUtil::deleteKey(s_key);
+    // BSLS_ASSERT_OPT(rc == 0);
+}
+
+void* Initializer::allocateLogContext()
+{
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
+    const pid_t tid = (pid_t) syscall(SYS_gettid);
+    const pid_t pid = (pid_t) getpid();
+
+    if (tid == pid) {
+        BSLS_ASSERT_OPT(
+            (bsl::size_t)(bsl::uintptr_t)(s_initializer.d_mainThreadContext) 
+            % 16 == 0);
+
+        return (void*) s_initializer.d_mainThreadContext;
+    }
+    else {
+        return bsl::malloc(sizeof(ntci::LogContext));
+    }
+
+#else
+
+    return bsl::malloc(sizeof(ntci::LogContext));
+
+#endif
+}
+
+void Initializer::freeLogContext(void* address)
+{
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
+    if (address != 0) {
+        if (address != (void*) s_initializer.d_mainThreadContext) {
+            bsl::free(address);
+        }
+    }
+
+#else
+
+    if (address != 0) {
+        bsl::free(address);
+    }
+
+#endif
+}
+
+void Initializer::destroyKey(void* key)
+{
+    if (key != 0) {
         typedef ntci::LogContext Type;
 
         Type* logContext = reinterpret_cast<Type*>(key);
         logContext->~Type();
 
-        bsl::free(key);
+        Initializer::freeLogContext(key);
     }
 }
-
-struct Initializer {
-    Initializer()
-    {
-        int rc = bslmt::ThreadUtil::createKey(&s_key, &destroyKey);
-        BSLS_ASSERT_OPT(rc == 0);
-
-        bool journal;
-        if (ntccfg::Tune::configure(&journal, "NTC_LOG_JOURNAL")) {
-            ntci::Log::initialize(journal);
-        }
-    }
-
-    ~Initializer()
-    {
-        ntci::Log::exit();
-
-        // int rc = bslmt::ThreadUtil::deleteKey(s_key);
-        // BSLS_ASSERT_OPT(rc == 0);
-    }
-} s_initializer;
 
 // enum PrintFieldType
 
@@ -3001,7 +3072,7 @@ ntci::LogContext* LogContext::getThreadLocal()
         bslmt::ThreadUtil::getSpecific(s_key));
 
     if (current == 0) {
-        void* arena = bsl::malloc(sizeof(ntci::LogContext));
+        void* arena = Initializer::allocateLogContext();
         current     = new (arena) ntci::LogContext();
         int rc      = bslmt::ThreadUtil::setSpecific(
             s_key,
@@ -3361,11 +3432,15 @@ bsl::size_t LogUtil::formatContext(char*                   destination,
 
     bsl::size_t n = static_cast<bsl::size_t>(osb.length());
 
-    if (n == destinationCapacity) {
-        --n;
+    if (n != 0) {
+        if (n == destinationCapacity) {
+            --n;
+        }
+
+        destination[0] = 
+            static_cast<char>(bdlb::CharType::toUpper(destination[0]));
     }
 
-    destination[0] = static_cast<char>(toupper(destination[0]));
     destination[n] = 0;
 
     return n;

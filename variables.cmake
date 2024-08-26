@@ -202,6 +202,17 @@ if (NOT DEFINED NTF_BUILD_WITH_COVERAGE)
     endif()
 endif()
 
+if (NOT DEFINED NTF_BUILD_WITH_VALGRIND)
+    if (DEFINED NTF_CONFIGURE_WITH_VALGRIND)
+        set(NTF_BUILD_WITH_VALGRIND
+            ${NTF_CONFIGURE_WITH_VALGRIND} CACHE INTERNAL "")
+    elseif (DEFINED ENV{NTF_CONFIGURE_WITH_VALGRIND})
+        set(NTF_BUILD_WITH_VALGRIND
+            $ENV{NTF_CONFIGURE_WITH_VALGRIND} CACHE INTERNAL "")
+    else()
+        set(NTF_BUILD_WITH_VALGRIND FALSE CACHE INTERNAL "")
+    endif()
+endif()
 
 if (NOT DEFINED NTF_BUILD_WITH_TIME_TRACE)
     if (DEFINED NTF_CONFIGURE_WITH_TIME_TRACE)
@@ -1084,3 +1095,10 @@ if (${NTF_BUILD_WITH_COVERAGE})
 else()
     message(STATUS "NTF: Building with coverage:                    no")
 endif()
+
+if (${NTF_BUILD_WITH_VALGRIND})
+    message(STATUS "NTF: Building with valgrind:                    yes")
+else()
+    message(STATUS "NTF: Building with valgrind:                    no")
+endif()
+
