@@ -407,6 +407,10 @@ if [[ -z "${NTF_CONFIGURE_WITH_COVERAGE}" ]]; then
     NTF_CONFIGURE_WITH_COVERAGE=0
 fi
 
+if [[ -z "${NTF_CONFIGURE_WITH_VALGRIND}" ]]; then
+    NTF_CONFIGURE_WITH_VALGRIND=0
+fi
+
 if [[ -z "${NTF_CONFIGURE_WITH_DOCUMENTATION}" ]]; then
     NTF_CONFIGURE_WITH_DOCUMENTATION=0
 fi
@@ -499,6 +503,7 @@ usage()
     echo "    --with-time-trace                  Build with time traces enabled [${NTF_CONFIGURE_WITH_TIME_TRACE}]"
     echo "    --with-time-report                 Build with time reports enabled [${NTF_CONFIGURE_WITH_TIME_REPORT}]"
     echo "    --with-coverage                    Build with code coverage enabled [${NTF_CONFIGURE_WITH_COVERAGE}]"
+    echo "    --with-valgrind                    Build with tests running under valgrind [${NTF_CONFIGURE_WITH_VALGRIND}]"
 
     echo "    --with-applications                Build applications [${NTF_CONFIGURE_WITH_APPLICATIONS}]"
     echo "    --with-usage-examples              Build usage examples [${NTF_CONFIGURE_WITH_USAGE_EXAMPLES}]"
@@ -592,6 +597,8 @@ while true ; do
             NTF_CONFIGURE_WITH_TIME_REPORT=1 ; shift ;;
         --with-coverage)
             NTF_CONFIGURE_WITH_COVERAGE=1 ; shift ;;
+        --with-valgrind)
+            NTF_CONFIGURE_WITH_VALGRIND=1 ; shift ;;
 
         --with-bsl)
             NTF_CONFIGURE_WITH_BSL=1 ; shift ;;
@@ -699,6 +706,8 @@ while true ; do
             NTF_CONFIGURE_WITH_TIME_REPORT=0 ; shift ;;
         --without-coverage)
             NTF_CONFIGURE_WITH_COVERAGE=0 ; shift ;;
+        --without-valgrind)
+            NTF_CONFIGURE_WITH_VALGRIND=0 ; shift ;;
 
         --without-bsl)
             NTF_CONFIGURE_WITH_BSL=0 ; shift ;;
@@ -844,6 +853,7 @@ export NTF_CONFIGURE_WITH_WARNINGS_AS_ERRORS
 export NTF_CONFIGURE_WITH_TIME_TRACE
 export NTF_CONFIGURE_WITH_TIME_REPORT
 export NTF_CONFIGURE_WITH_COVERAGE
+export NTF_CONFIGURE_WITH_VALGRIND
 
 export NTF_CONFIGURE_WITH_BSL
 export NTF_CONFIGURE_WITH_BDL

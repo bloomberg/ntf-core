@@ -177,6 +177,22 @@ IF NOT DEFINED NTF_CONFIGURE_WITH_WARNINGS_AS_ERRORS (
     set NTF_CONFIGURE_WITH_WARNINGS_AS_ERRORS=1
 )
 
+IF NOT DEFINED NTF_CONFIGURE_WITH_TIME_TRACE (
+    set NTF_CONFIGURE_WITH_TIME_TRACE=0
+)
+
+IF NOT DEFINED NTF_CONFIGURE_WITH_TIME_REPORT (
+    set NTF_CONFIGURE_WITH_TIME_REPORT=0
+)
+
+IF NOT DEFINED NTF_CONFIGURE_WITH_COVERAGE (
+    set NTF_CONFIGURE_WITH_COVERAGE=0
+)
+
+IF NOT DEFINED NTF_CONFIGURE_WITH_VALGRIND (
+    set NTF_CONFIGURE_WITH_VALGRIND=0
+)
+
 IF NOT DEFINED NTF_CONFIGURE_WITH_DOCUMENTATION (
     set NTF_CONFIGURE_WITH_DOCUMENTATION=0
 )
@@ -244,6 +260,18 @@ if not "%1"=="" (
     )
     if "%1"=="--with-warnings-as-errors" (
         set NTF_CONFIGURE_WITH_WARNINGS_AS_ERRORS=1
+    )
+    if "%1"=="--with-time-trace" (
+        set NTF_CONFIGURE_WITH_TIME_TRACE=1
+    )
+    if "%1"=="--with-time-reports" (
+        set NTF_CONFIGURE_WITH_TIME_REPORTS=1
+    )
+    if "%1"=="--with-coverage" (
+        set NTF_CONFIGURE_WITH_COVERAGE=1
+    )
+    if "%1"=="--with-valgrind" (
+        set NTF_CONFIGURE_WITH_VALGRIND=1
     )
 
     if "%1"=="--with-bsl" (
@@ -360,6 +388,18 @@ if not "%1"=="" (
     )
     if "%1"=="--without-warnings-as-errors" (
         set NTF_CONFIGURE_WITH_WARNINGS_AS_ERRORS=0
+    )
+    if "%1"=="--without-time-trace" (
+        set NTF_CONFIGURE_WITH_TIME_TRACE=0
+    )
+    if "%1"=="--without-time-report" (
+        set NTF_CONFIGURE_WITH_TIME_REPORT=0
+    )
+    if "%1"=="--without-coverage" (
+        set NTF_CONFIGURE_WITH_COVERAGE=0
+    )
+    if "%1"=="--without-valgrind" (
+        set NTF_CONFIGURE_WITH_VALGRIND=0
     )
 
     if "%1"=="--without-bsl" (
@@ -810,6 +850,10 @@ echo     --with-spin-locks                Build with mutually-exclusive locks im
 echo     --with-recursive-mutexes         Build with mutually-exclusive locks implemented as recursive mutexes
 echo     --with-warnings                  Build with warnings enabled
 echo     --with-warnings-as-errors        Build with warnings as errors
+echo     --with-time-trace                Build with time traces enabled
+echo     --with-time-report               Build with time reports enabled
+echo     --with-coverage                  Build with code coverage enabled
+echo     --with-valgrind                  Build with tests running under valgrind
 
 echo     --with-documentation             Build documentation
 echo     --with-documentation-internal    Build documentation of internals

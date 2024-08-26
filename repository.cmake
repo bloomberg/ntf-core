@@ -1646,10 +1646,22 @@ function (ntf_executable)
             test_usage_executable
             ${runtime_output_path} ${target})
 
-        add_test(
-            NAME ${executable_test_build_target}
-            COMMAND ${test_usage_executable}
-        )
+        if (${NTF_BUILD_WITH_VALGRIND})
+            if (NOT DEFINED VALGRIND_PATH)
+                message(FATAL_ERROR "Valgrind is not found")
+            endif()
+
+            add_test(
+                NAME ${executable_test_build_target}
+                COMMAND ${VALGRIND_PATH} --tool=memcheck --leak-check=full --show-leak-kinds=all --error-exitcode=1 ${test_usage_executable}
+            )
+
+        else()
+            add_test(
+                NAME ${executable_test_build_target}
+                COMMAND ${test_usage_executable}
+            )
+        endif()
 
         set_tests_properties(${executable_test_build_target} PROPERTIES TIMEOUT 600)
 
@@ -1718,7 +1730,7 @@ function (ntf_executable)
     if (NOT TARGET test_${target})
         add_custom_target(
             test_${target}
-            COMMAND ${CMAKE_CTEST_COMMAND} -R ${target})
+            COMMAND ${CMAKE_CTEST_COMMAND} --stop-on-failure --output-on-failure -R ${target})
     endif()
 
     if (NOT TARGET format_${target})
@@ -2457,7 +2469,7 @@ function (ntf_adapter)
         if (NOT TARGET test_${target})
             add_custom_target(
                 test_${target}
-                COMMAND ${CMAKE_CTEST_COMMAND} -R ${target})
+                COMMAND ${CMAKE_CTEST_COMMAND} --stop-on-failure --output-on-failure -R ${target})
         endif()
 
         if (NOT TARGET format_${target})
@@ -3183,7 +3195,7 @@ function (ntf_group)
         if (NOT TARGET test_${target})
             add_custom_target(
                 test_${target}
-                COMMAND ${CMAKE_CTEST_COMMAND} -R ${target})
+                COMMAND ${CMAKE_CTEST_COMMAND} --stop-on-failure --output-on-failure -R ${target})
         endif()
 
         if (NOT TARGET format_${target})
@@ -3840,7 +3852,7 @@ function (ntf_package)
         if (NOT TARGET test_${target})
             add_custom_target(
                 test_${target}
-                COMMAND ${CMAKE_CTEST_COMMAND} -R ${target})
+                COMMAND ${CMAKE_CTEST_COMMAND} --stop-on-failure --output-on-failure -R ${target})
         endif()
 
         if (NOT TARGET format_${target})
@@ -4361,16 +4373,29 @@ function (ntf_component)
 
         ntf_target_options_common_epilog(${target})
 
-        add_test(
-            NAME ${component_test_build_target}
-            COMMAND ${component_test_build_target}
-        )
+        cmake_path(
+            APPEND
+            component_test_build_target_path
+            ${runtime_output_path} ${component_test_build_target})
+
+        if (${NTF_BUILD_WITH_VALGRIND})
+            add_test(
+                NAME ${component_test_build_target}
+                COMMAND ${VALGRIND_PATH} --tool=memcheck --leak-check=full --show-leak-kinds=all --error-exitcode=1 ${component_test_build_target_path}
+            )
+
+        else()
+            add_test(
+                NAME ${component_test_build_target}
+                COMMAND ${component_test_build_target}
+            )
+        endif()
 
         set_tests_properties(${component_test_build_target} PROPERTIES TIMEOUT 600)
 
         add_custom_target(
             test_${component}
-            COMMAND ${CMAKE_CTEST_COMMAND} -R ${component})
+            COMMAND ${CMAKE_CTEST_COMMAND} --stop-on-failure --output-on-failure -R ${component})
 
         ntf_ide_vs_code_tasks_add_target(${component_test_build_target})
         ntf_ide_vs_code_launch_add_target(${component_test_build_target})
@@ -6055,6 +6080,15 @@ function (ntf_repository)
         CLANG_FORMAT_PATH
         NAMES
             clang-format
+        PATHS
+            ${install_refroot}/${install_prefix}/bin
+            /opt/bb/bin
+    )
+
+    find_program(
+        VALGRIND_PATH
+        NAMES
+            valgrind
         PATHS
             ${install_refroot}/${install_prefix}/bin
             /opt/bb/bin
