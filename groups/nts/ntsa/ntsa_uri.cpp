@@ -435,6 +435,40 @@ ntsa::Error UriAuthority::setPort(ntsa::Port value)
     return ntsa::Error();
 }
 
+ntsa::Error UriAuthority::setEndpoint(const ntsa::Endpoint& endpoint)
+{
+    if (endpoint.isIp()) {
+        if (d_host.isNull()) {
+            d_host.makeValue().makeIp(endpoint.ip().host());
+        }
+        else {
+            d_host.value().makeIp(endpoint.ip().host());
+        }
+
+        if (d_port.isNull()) {
+            d_port.makeValue(endpoint.ip().port());
+        }
+        else {
+            d_port.value() = endpoint.ip().port();
+        }
+    }
+    else if (endpoint.isLocal()) {
+        if (d_host.isNull()) {
+            d_host.makeValue().makeLocalName(endpoint.local());
+        }
+        else {
+            d_host.value().makeLocalName(endpoint.local());
+        }
+
+        d_port.reset();
+    }
+    else {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    return ntsa::Error();
+}
+
 ntsa::Error UriAuthority::setTransport(ntsa::Transport::Value value)
 {
     if (d_transport.isNull()) {
@@ -1041,6 +1075,26 @@ ntsa::Error Uri::setPort(ntsa::Port value)
     return ntsa::Error();
 }
 
+ntsa::Error Uri::setEndpoint(const ntsa::Endpoint& value)
+{
+    ntsa::Error error;
+
+    if (d_authority.isNull()) {
+        error = d_authority.makeValue().setEndpoint(value);
+        if (error) {
+            return error;
+        }
+    }
+    else {
+        error = d_authority.value().setEndpoint(value);
+        if (error) {
+            return error;
+        }
+    }
+
+    return ntsa::Error();
+}
+
 ntsa::Error Uri::setTransport(ntsa::Transport::Value value)
 {
     ntsa::Error error;
@@ -1496,21 +1550,36 @@ bsl::ostream& Uri::print(bsl::ostream& stream,
         }
 
         if (!d_authority.value().user().isNull()) {
-            if (d_authority.value().user().value().empty()) {
-                return stream;
-            }
+            if (!d_authority.value().user().value().empty()) {
+                bsl::string user;
+                error = encodeUrl(&user, d_authority.value().user().value());
+                if (error) {
+                    return stream;
+                }
 
-            bsl::string user;
-            error = encodeUrl(&user, d_authority.value().user().value());
-            if (error) {
-                return stream;
+                stream << user << '@';
             }
-
-            stream << user << '@';
         }
 
         if (!d_authority.value().host().isNull()) {
-            stream << d_authority.value().host().value();
+            if (d_authority.value().host().value().isDomainName()) {
+                stream << d_authority.value().host().value().domainName();
+            }
+            else if (d_authority.value().host().value().isIp()) {
+                if (d_authority.value().host().value().ip().isV4()) {
+                    stream << d_authority.value().host().value().ip().v4();
+                }
+                else if (d_authority.value().host().value().ip().isV6()) {
+                    stream << '[' 
+                           << d_authority.value().host().value().ip().v6() 
+                           << ']';
+                }
+            }
+            else if (d_authority.value().host().value().isLocalName()) {
+                stream << '@' 
+                       << d_authority.value().host().value().localName()
+                       << '@';
+            }
         }
 
         if (!d_authority.value().port().isNull()) {

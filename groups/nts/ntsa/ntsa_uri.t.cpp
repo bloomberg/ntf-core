@@ -677,9 +677,140 @@ NTSCFG_TEST_CASE(2)
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
+NTSCFG_TEST_CASE(3)
+{
+    ntscfg::TestAllocator ta;
+    {
+        ntsa::Error error;
+
+        {
+            ntsa::Endpoint endpoint(
+                ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 80));
+
+            ntsa::Uri uri(&ta);
+
+            error = uri.setEndpoint(endpoint);
+            NTSCFG_TEST_OK(error);
+
+            error = uri.setPath("path/to/resource");
+            NTSCFG_TEST_OK(error);
+
+            if (NTSCFG_TEST_VERBOSITY) {
+                bsl::cout << "URI: " << uri.text() 
+                          << " (endpoint: " << endpoint << ")" << bsl::endl;
+            }
+        }
+
+        {
+            ntsa::Endpoint endpoint(
+                ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 80));
+
+            ntsa::Uri uri(&ta);
+
+            error = uri.setScheme("http");
+            NTSCFG_TEST_OK(error);
+
+            error = uri.setEndpoint(endpoint);
+            NTSCFG_TEST_OK(error);
+
+            error = uri.setPath("path/to/resource");
+            NTSCFG_TEST_OK(error);
+
+            if (NTSCFG_TEST_VERBOSITY) {
+                bsl::cout << "URI: " << uri.text() 
+                          << " (endpoint: " << endpoint << ")" << bsl::endl;
+            }
+        }
+
+        {
+            ntsa::Endpoint endpoint(
+                ntsa::IpEndpoint(ntsa::Ipv6Address::loopback(), 80));
+
+            ntsa::Uri uri(&ta);
+
+            error = uri.setEndpoint(endpoint);
+            NTSCFG_TEST_OK(error);
+
+            error = uri.setPath("path/to/resource");
+            NTSCFG_TEST_OK(error);
+
+            if (NTSCFG_TEST_VERBOSITY) {
+                bsl::cout << "URI: " << uri.text() 
+                          << " (endpoint: " << endpoint << ")" << bsl::endl;
+            }
+        }
+
+        {
+            ntsa::Endpoint endpoint(
+                ntsa::IpEndpoint(ntsa::Ipv6Address::loopback(), 80));
+
+            ntsa::Uri uri(&ta);
+
+            error = uri.setScheme("http");
+            NTSCFG_TEST_OK(error);
+
+            error = uri.setEndpoint(endpoint);
+            NTSCFG_TEST_OK(error);
+
+            error = uri.setPath("path/to/resource");
+            NTSCFG_TEST_OK(error);
+
+            if (NTSCFG_TEST_VERBOSITY) {
+                bsl::cout << "URI: " << uri.text() 
+                          << " (endpoint: " << endpoint << ")" << bsl::endl;
+            }
+        }
+
+        {
+            ntsa::LocalName localName;
+            localName.setValue("/tmp/ntf/socket");
+
+            ntsa::Endpoint endpoint(localName);
+
+            ntsa::Uri uri(&ta);
+
+            error = uri.setEndpoint(endpoint);
+            NTSCFG_TEST_OK(error);
+
+            error = uri.setPath("path/to/resource");
+            NTSCFG_TEST_OK(error);
+
+            if (NTSCFG_TEST_VERBOSITY) {
+                bsl::cout << "URI: " << uri.text() 
+                          << " (endpoint: " << endpoint << ")" << bsl::endl;
+            }
+        }
+
+        {
+            ntsa::LocalName localName;
+            localName.setValue("/tmp/ntf/socket");
+            
+            ntsa::Endpoint endpoint(localName);
+
+            ntsa::Uri uri(&ta);
+
+            error = uri.setScheme("http");
+            NTSCFG_TEST_OK(error);
+
+            error = uri.setEndpoint(endpoint);
+            NTSCFG_TEST_OK(error);
+
+            error = uri.setPath("path/to/resource");
+            NTSCFG_TEST_OK(error);
+
+            if (NTSCFG_TEST_VERBOSITY) {
+                bsl::cout << "URI: " << uri.text() 
+                          << " (endpoint: " << endpoint << ")" << bsl::endl;
+            }
+        }
+    }
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+}
+
 NTSCFG_TEST_DRIVER
 {
     NTSCFG_TEST_REGISTER(1);
     NTSCFG_TEST_REGISTER(2);
+    NTSCFG_TEST_REGISTER(3);
 }
 NTSCFG_TEST_DRIVER_END;

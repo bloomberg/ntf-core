@@ -84,29 +84,35 @@ class UriAuthority
     ntsa::Error setUser(const bslstl::StringRef& value);
 
     /// Set the host specified in the authority portion of the URI to the
-    /// // specified 'value'. Return the error.
+    /// specified 'value'. Return the error.
     ntsa::Error setHost(const ntsa::Host& value);
 
     /// Set the host specified in the authority portion of the URI to the
-    /// // specified 'value'. Return the error.
+    /// specified 'value'. Return the error.
     ntsa::Error setHost(const bslstl::StringRef& value);
 
     /// Set the host specified in the authority portion of the URI to the
-    /// // specified 'value'. Return the error.
+    /// specified 'value'. Return the error.
     ntsa::Error setHost(const ntsa::IpAddress& value);
 
     /// Set the host specified in the authority portion of the URI to the
-    /// // specified 'value'. Return the error.
+    /// specified 'value'. Return the error.
     ntsa::Error setHost(const ntsa::Ipv4Address& value);
 
     /// Set the host specified in the authority portion of the URI to the
-    /// // specified 'value'. Return the error.
+    /// specified 'value'. Return the error.
     ntsa::Error setHost(const ntsa::Ipv6Address& value);
 
-    /// Set the port specified in the authority portion of the URI.
+    /// Set the port specified in the authority portion of the URI to the
+    /// specified 'value'. Return the error.
     ntsa::Error setPort(ntsa::Port value);
 
-    /// Set the transport specified in the authority portion of the URI. 
+    /// Set the host and port in the authority portion of the URI to the
+    /// specified 'value'. Return the error.
+    ntsa::Error setEndpoint(const ntsa::Endpoint& value);
+
+    /// Set the transport specified in the authority portion of the URI to the
+    /// specified 'value'. Return the error.
     ntsa::Error setTransport(ntsa::Transport::Value value);
 
     /// Return the user specified in the authority portion of the URI.
@@ -489,6 +495,10 @@ class Uri
     /// Set the port specified in the authority portion of the URI to the
     /// specified 'value'. Return the error.
     ntsa::Error setPort(ntsa::Port value);
+
+    /// Set the host and port in the authority portion of the URI to the
+    /// specified 'value'. Return the error.
+    ntsa::Error setEndpoint(const ntsa::Endpoint& value);
 
     /// Set the transport specified in the authority portion of the URI to the
     /// specified 'value'. Return the error.
