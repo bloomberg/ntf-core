@@ -311,6 +311,7 @@ UriAuthority::UriAuthority(bslma::Allocator* basicAllocator)
 : d_user(basicAllocator)
 , d_host()
 , d_port()
+, d_transport()
 {
 }
 
@@ -319,6 +320,7 @@ UriAuthority::UriAuthority(const UriAuthority& other,
 : d_user(other.d_user, basicAllocator)
 , d_host(other.d_host)
 , d_port(other.d_port)
+, d_transport(other.d_transport)
 {
 }
 
@@ -329,9 +331,10 @@ UriAuthority::~UriAuthority()
 UriAuthority& UriAuthority::operator=(const UriAuthority& other)
 {
     if (this != &other) {
-        d_user = other.d_user;
-        d_host = other.d_host;
-        d_port = other.d_port;
+        d_user      = other.d_user;
+        d_host      = other.d_host;
+        d_port      = other.d_port;
+        d_transport = other.d_transport;
     }
 
     return *this;
@@ -342,6 +345,7 @@ void UriAuthority::reset()
     d_user.reset();
     d_host.reset();
     d_port.reset();
+    d_transport.reset();
 }
 
 ntsa::Error UriAuthority::setUser(const bslstl::StringRef& value)
@@ -431,6 +435,18 @@ ntsa::Error UriAuthority::setPort(ntsa::Port value)
     return ntsa::Error();
 }
 
+ntsa::Error UriAuthority::setTransport(ntsa::Transport::Value value)
+{
+    if (d_transport.isNull()) {
+        d_transport.makeValue(value);
+    }
+    else {
+        d_transport.value() = value;
+    }
+
+    return ntsa::Error();
+}
+
 const bdlb::NullableValue<bsl::string>& UriAuthority::user() const
 {
     return d_user;
@@ -446,10 +462,16 @@ const bdlb::NullableValue<ntsa::Port>& UriAuthority::port() const
     return d_port;
 }
 
+const bdlb::NullableValue<ntsa::Transport::Value>& 
+UriAuthority::transport() const
+{
+    return d_transport;
+}
+
 bool UriAuthority::equals(const UriAuthority& other) const
 {
     return d_user == other.d_user && d_host == other.d_host &&
-           d_port == other.d_port;
+           d_port == other.d_port && d_transport == other.d_transport;
 }
 
 bool UriAuthority::less(const UriAuthority& other) const
@@ -458,7 +480,7 @@ bool UriAuthority::less(const UriAuthority& other) const
         return true;
     }
 
-    if (other.d_user < other.d_user) {
+    if (other.d_user < d_user) {
         return false;
     }
 
@@ -466,11 +488,19 @@ bool UriAuthority::less(const UriAuthority& other) const
         return true;
     }
 
-    if (other.d_host < other.d_host) {
+    if (other.d_host < d_host) {
         return false;
     }
 
-    return d_port < other.d_port;
+    if (d_port < other.d_port) {
+        return true;
+    }
+
+    if (other.d_port < d_port) {
+        return false;
+    }
+
+    return d_transport < other.d_transport;
 }
 
 bsl::ostream& UriAuthority::print(bsl::ostream& stream,
@@ -490,6 +520,10 @@ bsl::ostream& UriAuthority::print(bsl::ostream& stream,
 
     if (!d_port.isNull()) {
         printer.printAttribute("port", d_port);
+    }
+
+    if (!d_transport.isNull()) {
+        printer.printAttribute("transport", d_transport);
     }
 
     printer.end();
@@ -999,6 +1033,26 @@ ntsa::Error Uri::setPort(ntsa::Port value)
     }
     else {
         error = d_authority.value().setPort(value);
+        if (error) {
+            return error;
+        }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error Uri::setTransport(ntsa::Transport::Value value)
+{
+    ntsa::Error error;
+
+    if (d_authority.isNull()) {
+        error = d_authority.makeValue().setTransport(value);
+        if (error) {
+            return error;
+        }
+    }
+    else {
+        error = d_authority.value().setTransport(value);
         if (error) {
             return error;
         }

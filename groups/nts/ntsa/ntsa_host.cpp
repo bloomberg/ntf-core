@@ -51,10 +51,15 @@ Host::Host(const ntsa::DomainName& value)
 }
 
 Host::Host(const ntsa::IpAddress& value)
-: d_type(ntsa::HostType::e_UNDEFINED)
+: d_type(ntsa::HostType::e_IP)
 {
     new (d_ip.buffer()) ntsa::IpAddress(value);
-    d_type = ntsa::HostType::e_IP;
+}
+
+Host::Host(const ntsa::LocalName& value)
+: d_type(ntsa::HostType::e_LOCAL_NAME)
+{
+    new (d_localName.buffer()) ntsa::LocalName(value);
 }
 
 Host::Host(const Host& other)
@@ -67,6 +72,9 @@ Host::Host(const Host& other)
         break;
     case ntsa::HostType::e_IP:
         new (d_ip.buffer()) ntsa::IpAddress(other.d_ip.object());
+        break;
+    case ntsa::HostType::e_LOCAL_NAME:
+        new (d_localName.buffer()) ntsa::LocalName(other.d_localName.object());
         break;
     default:
         BSLS_ASSERT(d_type == ntsa::HostType::e_UNDEFINED);
@@ -85,6 +93,9 @@ Host& Host::operator=(const Host& other)
         break;
     case ntsa::HostType::e_IP:
         this->makeIp(other.d_ip.object());
+        break;
+    case ntsa::HostType::e_LOCAL_NAME:
+        this->makeLocalName(other.d_localName.object());
         break;
     default:
         BSLS_ASSERT(other.d_type == ntsa::HostType::e_UNDEFINED);
@@ -106,6 +117,12 @@ Host& Host::operator=(const ntsa::IpAddress& other)
     return *this;
 }
 
+Host& Host::operator=(const ntsa::LocalName& other)
+{
+    this->makeLocalName(other);
+    return *this;
+}
+
 Host& Host::operator=(const bslstl::StringRef& text)
 {
     this->reset();
@@ -123,6 +140,11 @@ Host& Host::operator=(const bslstl::StringRef& text)
 
     valid = this->makeDomainName().parse(text);
     if (valid) {
+        return *this;
+    }
+
+    if (text.size() > 0 && text[0] == '/') {
+        this->makeLocalName().setValue(text);
         return *this;
     }
 
@@ -149,6 +171,11 @@ bool Host::parse(const bslstl::StringRef& text)
 
     valid = this->makeDomainName().parse(text);
     if (valid) {
+        return true;
+    }
+
+    if (text.size() > 0 && text[0] == '/') {
+        this->makeLocalName().setValue(text);
         return true;
     }
 
@@ -212,6 +239,34 @@ ntsa::IpAddress& Host::makeIp(const ntsa::IpAddress& value)
     return d_ip.object();
 }
 
+ntsa::LocalName& Host::makeLocalName()
+{
+    if (d_type == ntsa::HostType::e_LOCAL_NAME) {
+        d_localName.object().reset();
+    }
+    else {
+        this->reset();
+        new (d_localName.buffer()) ntsa::LocalName();
+        d_type = ntsa::HostType::e_LOCAL_NAME;
+    }
+
+    return d_localName.object();
+}
+
+ntsa::LocalName& Host::makeLocalName(const ntsa::LocalName& value)
+{
+    if (d_type == ntsa::HostType::e_LOCAL_NAME) {
+        d_localName.object() = value;
+    }
+    else {
+        this->reset();
+        new (d_localName.buffer()) ntsa::LocalName(value);
+        d_type = ntsa::HostType::e_LOCAL_NAME;
+    }
+
+    return d_localName.object();
+}
+
 bsl::string Host::text() const
 {
     switch (d_type) {
@@ -219,6 +274,8 @@ bsl::string Host::text() const
         return d_domainName.object().text();
     case ntsa::HostType::e_IP:
         return d_ip.object().text();
+    case ntsa::HostType::e_LOCAL_NAME:
+        return d_localName.object().value();
     default:
         return "";
     }
@@ -235,6 +292,8 @@ bool Host::equals(const Host& other) const
         return d_domainName.object() == other.d_domainName.object();
     case ntsa::HostType::e_IP:
         return d_ip.object().equals(other.d_ip.object());
+    case ntsa::HostType::e_LOCAL_NAME:
+        return d_localName.object().equals(other.d_localName.object());
     default:
         return true;
     }
@@ -251,6 +310,8 @@ bool Host::less(const Host& other) const
         return d_domainName.object().less(other.d_domainName.object());
     case ntsa::HostType::e_IP:
         return d_ip.object().less(other.d_ip.object());
+    case ntsa::HostType::e_LOCAL_NAME:
+        return d_localName.object().less(other.d_localName.object());
     default:
         return true;
     }
@@ -266,6 +327,9 @@ bsl::ostream& Host::print(bsl::ostream& stream,
         break;
     case ntsa::HostType::e_IP:
         d_ip.object().print(stream, level, spacesPerLevel);
+        break;
+    case ntsa::HostType::e_LOCAL_NAME:
+        d_localName.object().print(stream, level, spacesPerLevel);
         break;
     default:
         BSLS_ASSERT(d_type == ntsa::HostType::e_UNDEFINED);
