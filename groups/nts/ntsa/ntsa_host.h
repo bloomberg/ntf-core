@@ -301,6 +301,13 @@ ntsa::IpAddress& Host::ip()
 }
 
 NTSCFG_INLINE
+ntsa::LocalName& Host::localName()
+{
+    BSLS_ASSERT(d_type == ntsa::HostType::e_LOCAL_NAME);
+    return d_localName.object();
+}
+
+NTSCFG_INLINE
 const ntsa::DomainName& Host::domainName() const
 {
     BSLS_ASSERT(d_type == ntsa::HostType::e_DOMAIN_NAME);
@@ -312,6 +319,13 @@ const ntsa::IpAddress& Host::ip() const
 {
     BSLS_ASSERT(d_type == ntsa::HostType::e_IP);
     return d_ip.object();
+}
+
+NTSCFG_INLINE
+const ntsa::LocalName& Host::localName() const
+{
+    BSLS_ASSERT(d_type == ntsa::HostType::e_LOCAL_NAME);
+    return d_localName.object();
 }
 
 NTSCFG_INLINE
@@ -336,6 +350,12 @@ NTSCFG_INLINE
 bool Host::isIp() const
 {
     return (d_type == ntsa::HostType::e_IP);
+}
+
+NTSCFG_INLINE
+bool Host::isLocalName() const
+{
+    return (d_type == ntsa::HostType::e_LOCAL_NAME);
 }
 
 NTSCFG_INLINE
