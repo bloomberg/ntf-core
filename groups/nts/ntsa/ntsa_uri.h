@@ -25,6 +25,7 @@ BSLS_IDENT("$Id: $")
 #include <ntsa_host.h>
 #include <ntsa_ipaddress.h>
 #include <ntsa_port.h>
+#include <ntsa_transport.h>
 #include <ntscfg_platform.h>
 #include <ntsscm_version.h>
 #include <bdlb_nullablevalue.h>
@@ -49,9 +50,10 @@ namespace ntsa {
 /// @ingroup module_ntsa_identity
 class UriAuthority
 {
-    bdlb::NullableValue<bsl::string> d_user;
-    bdlb::NullableValue<ntsa::Host>  d_host;
-    bdlb::NullableValue<ntsa::Port>  d_port;
+    bdlb::NullableValue<bsl::string>            d_user;
+    bdlb::NullableValue<ntsa::Host>             d_host;
+    bdlb::NullableValue<ntsa::Port>             d_port;
+    bdlb::NullableValue<ntsa::Transport::Value> d_transport;
 
   public:
     /// Create a new URI authority. Optionally specify an 'basicAllocator'
@@ -104,6 +106,9 @@ class UriAuthority
     /// Set the port specified in the authority portion of the URI.
     ntsa::Error setPort(ntsa::Port value);
 
+    /// Set the transport specified in the authority portion of the URI. 
+    ntsa::Error setTransport(ntsa::Transport::Value value);
+
     /// Return the user specified in the authority portion of the URI.
     const bdlb::NullableValue<bsl::string>& user() const;
 
@@ -112,6 +117,9 @@ class UriAuthority
 
     /// Return the port specified in the authority portion of the URI.
     const bdlb::NullableValue<ntsa::Port>& port() const;
+
+    /// Return the transport specified in the authority portion of the URI. 
+    const bdlb::NullableValue<ntsa::Transport::Value>& transport() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -478,9 +486,13 @@ class Uri
     /// specified 'value'. Return the error.
     ntsa::Error setHost(const ntsa::Ipv6Address& value);
 
-    /// Set the port specified in the authority portion of the URI. Return
-    /// the error.
+    /// Set the port specified in the authority portion of the URI to the
+    /// specified 'value'. Return the error.
     ntsa::Error setPort(ntsa::Port value);
+
+    /// Set the transport specified in the authority portion of the URI to the
+    /// specified 'value'. Return the error.
+    ntsa::Error setTransport(ntsa::Transport::Value value);
 
     /// Set the path to the resource to the specified 'value'. Return the
     /// error.
@@ -606,6 +618,7 @@ void hashAppend(HASH_ALGORITHM& algorithm, const UriAuthority& value)
     hashAppend(algorithm, value.user());
     hashAppend(algorithm, value.host());
     hashAppend(algorithm, value.port());
+    hashAppend(algorithm, value.transport());
 }
 
 template <typename HASH_ALGORITHM>

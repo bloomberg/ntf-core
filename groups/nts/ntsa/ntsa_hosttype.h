@@ -42,7 +42,10 @@ struct HostType {
         e_DOMAIN_NAME = 1,
 
         /// The host type is an IP address
-        e_IP = 2
+        e_IP = 2,
+
+        /// The host type is a local name.
+        e_LOCAL_NAME = 3
     };
 
     /// Return the string representation exactly matching the enumerator
