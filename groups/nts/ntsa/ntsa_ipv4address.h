@@ -332,7 +332,7 @@ bool Ipv4Address::isAny() const NTSCFG_NOEXCEPT
 NTSCFG_INLINE
 bool Ipv4Address::isLoopback() const NTSCFG_NOEXCEPT
 {
-    return (*this == Ipv4Address::loopback());
+    return d_value.d_asBytes[0] == 127;
 }
 
 NTSCFG_INLINE
