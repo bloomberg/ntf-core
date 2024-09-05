@@ -73,6 +73,9 @@ class Ipv4AddressTest
     // Test comparison. In particular, comparison must yield consistent results
     // across different CPUs with different endianness.
     static void verifyComparison();
+
+    // Test check if an address is the loopback address.
+    static void verifyLoopback();
 };
 
 void Ipv4AddressTest::verifyTypeTraits()
@@ -388,6 +391,22 @@ void Ipv4AddressTest::verifyComparison()
     NTSCFG_TEST_LT(address1, address2);
 }
 
+void Ipv4AddressTest::verifyLoopback()
+{
+    ntsa::Ipv4Address address1("127.0.0.1");
+    ntsa::Ipv4Address address2 = ntsa::Ipv4Address::loopback();
+    ntsa::Ipv4Address address3("128.0.0.1");
+    ntsa::Ipv4Address address4("127.0.10.10");
+    ntsa::Ipv4Address address5("127.255.255.255");
+
+    NTSCFG_TEST_EQ(address1, address2);
+    NTSCFG_TEST_TRUE(address1.isLoopback());
+    NTSCFG_TEST_TRUE(address2.isLoopback());
+    NTSCFG_TEST_FALSE(address3.isLoopback());
+    NTSCFG_TEST_TRUE(address4.isLoopback());
+    NTSCFG_TEST_TRUE(address5.isLoopback());
+}
+
 }  // close namespace ntsa
 }  // close namespace BloombergLP
 
@@ -406,5 +425,6 @@ NTSCFG_TEST_SUITE
     NTSCFG_TEST_FUNCTION(&ntsa::Ipv4AddressTest::verifyGeneration);
     NTSCFG_TEST_FUNCTION(&ntsa::Ipv4AddressTest::verifyHashing);
     NTSCFG_TEST_FUNCTION(&ntsa::Ipv4AddressTest::verifyComparison);
+    NTSCFG_TEST_FUNCTION(&ntsa::Ipv4AddressTest::verifyLoopback);
 }
 NTSCFG_TEST_SUITE_END;

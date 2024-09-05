@@ -3351,7 +3351,7 @@ bsl::size_t LogUtil::formatContext(char*                   destination,
             if (!empty) {
                 os << ' ';
             }
-            os << "transport '" << logContext.d_owner << "'";
+            os << "scheduler '" << logContext.d_owner << "'";
             empty = false;
         }
 

@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntsa_domainname.h>
 #include <ntsa_hosttype.h>
+#include <ntsa_localname.h>
 #include <ntsa_ipaddress.h>
 #include <ntscfg_platform.h>
 #include <ntsscm_version.h>
@@ -78,21 +79,26 @@ class Host
     union {
         bsls::ObjectBuffer<ntsa::DomainName> d_domainName;
         bsls::ObjectBuffer<ntsa::IpAddress>  d_ip;
+        bsls::ObjectBuffer<ntsa::LocalName>  d_localName;
     };
 
     ntsa::HostType::Value d_type;
 
   public:
-    /// Create a new address having an undefined type.
+    /// Create a new host having an undefined type.
     Host();
 
-    /// Create a new address having a "domain name" representation having
-    /// the specified 'value'.
+    /// Create a new host having a "domain name" representation having the
+    /// specified 'value'.
     explicit Host(const ntsa::DomainName& value);
 
-    /// Create a new address having a "ip" representation having the
-    /// specified 'value'.
+    /// Create a new host having a "ip" representation having the specified
+    /// 'value'.
     explicit Host(const ntsa::IpAddress& value);
+
+    /// Create a new host having a "local name" representation having the
+    /// specified 'value'.
+    explicit Host(const ntsa::LocalName& value);
 
     /// Create a new address parsed from the specified 'text'
     /// representation.
@@ -116,6 +122,10 @@ class Host
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
     Host& operator=(const ntsa::IpAddress& other);
+
+    /// Assign the value of the specified 'other' object to this object. Return
+    /// a reference to this modifiable object.
+    Host& operator=(const ntsa::LocalName& other);
 
     /// Set the value of the object from the specified 'text'.
     Host& operator=(const bslstl::StringRef& text);
@@ -147,26 +157,44 @@ class Host
     /// representation.
     ntsa::IpAddress& makeIp(const ntsa::IpAddress& value);
 
+    /// Select the "local name" address representation. Return a reference to
+    /// the modifiable representation.
+    ntsa::LocalName& makeLocalName();
+
+    /// Select the "local name" address representation initially having the
+    /// specified 'value'. Return a reference to the modifiable representation.
+    ntsa::LocalName& makeLocalName(const ntsa::LocalName& value);
+
     /// Return a reference to the modifiable "domain name" address
-    /// representation. The behavior is undefined unless 'isDomainName()'
-    /// is true.
+    /// representation. The behavior is undefined unless 'isDomainName()' is
+    /// true.
     ntsa::DomainName& domainName();
 
-    /// Return a reference to the modifiable "ip" address representation.
-    /// The behavior is undefined unless 'isIp()' is true.
+    /// Return a reference to the modifiable "ip" address representation. The
+    /// behavior is undefined unless 'isIp()' is true.
     ntsa::IpAddress& ip();
+
+    /// Return a reference to the modifiable "local name" address
+    /// representation. The behavior is undefined unless 'isLocalName()' is
+    /// true.
+    ntsa::LocalName& localName();
 
     /// Return the textual representation of this object.
     bsl::string text() const;
 
     /// Return a reference to the non-modifiable "domain name" address
-    /// representation. The behavior is undefined unless 'isDomainName()'
-    /// is true.
+    /// representation. The behavior is undefined unless 'isDomainName()' is
+    /// true.
     const ntsa::DomainName& domainName() const;
 
-    /// Return a reference to the non-modifiable "ip" address
-    /// representation.  The behavior is undefined unless 'isIp()' is true.
+    /// Return a reference to the non-modifiable "ip" address representation.
+    /// The behavior is undefined unless 'isIp()' is true.
     const ntsa::IpAddress& ip() const;
+
+    /// Return a reference to the non-modifiable "local name" address
+    /// representation. The behavior is undefined unless 'isLocalName()' is
+    /// true.
+    const ntsa::LocalName& localName() const;
 
     /// Return the type of the address representation.
     ntsa::HostType::Value type() const;
@@ -182,6 +210,10 @@ class Host
     /// Return true if the "ip" address representation is currently
     /// selected, otherwise return false.
     bool isIp() const;
+
+    /// Return true if the "local name" address representation is currently
+    /// selected, otherwise return false.
+    bool isLocalName() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -269,6 +301,13 @@ ntsa::IpAddress& Host::ip()
 }
 
 NTSCFG_INLINE
+ntsa::LocalName& Host::localName()
+{
+    BSLS_ASSERT(d_type == ntsa::HostType::e_LOCAL_NAME);
+    return d_localName.object();
+}
+
+NTSCFG_INLINE
 const ntsa::DomainName& Host::domainName() const
 {
     BSLS_ASSERT(d_type == ntsa::HostType::e_DOMAIN_NAME);
@@ -280,6 +319,13 @@ const ntsa::IpAddress& Host::ip() const
 {
     BSLS_ASSERT(d_type == ntsa::HostType::e_IP);
     return d_ip.object();
+}
+
+NTSCFG_INLINE
+const ntsa::LocalName& Host::localName() const
+{
+    BSLS_ASSERT(d_type == ntsa::HostType::e_LOCAL_NAME);
+    return d_localName.object();
 }
 
 NTSCFG_INLINE
@@ -304,6 +350,12 @@ NTSCFG_INLINE
 bool Host::isIp() const
 {
     return (d_type == ntsa::HostType::e_IP);
+}
+
+NTSCFG_INLINE
+bool Host::isLocalName() const
+{
+    return (d_type == ntsa::HostType::e_LOCAL_NAME);
 }
 
 NTSCFG_INLINE

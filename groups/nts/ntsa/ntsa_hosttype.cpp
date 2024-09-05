@@ -29,6 +29,7 @@ int HostType::fromInt(HostType::Value* result, int number)
     case HostType::e_UNDEFINED:
     case HostType::e_DOMAIN_NAME:
     case HostType::e_IP:
+    case HostType::e_LOCAL_NAME:
         *result = static_cast<HostType::Value>(number);
         return 0;
     default:
@@ -51,6 +52,10 @@ int HostType::fromString(HostType::Value*         result,
         *result = e_IP;
         return 0;
     }
+    if (bdlb::String::areEqualCaseless(string, "LOCAL_NAME")) {
+        *result = e_LOCAL_NAME;
+        return 0;
+    }
 
     return -1;
 }
@@ -66,6 +71,9 @@ const char* HostType::toString(HostType::Value value)
     } break;
     case e_IP: {
         return "IP";
+    } break;
+    case e_LOCAL_NAME: {
+        return "LOCAL_NAME";
     } break;
     }
 

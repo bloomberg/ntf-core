@@ -30,6 +30,7 @@ BSLS_IDENT_RCSID(ntscfg_platform_cpp, "$Id$ $CSID$")
 #include <errno.h>
 #include <signal.h>
 #include <unistd.h>
+#include <limits.h>
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
 #include <linux/version.h>
@@ -40,6 +41,7 @@ BSLS_IDENT_RCSID(ntscfg_platform_cpp, "$Id$ $CSID$")
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
 #include <windows.h>
 #include <winsock2.h>
+#include <sysinfoapi.h>
 #pragma comment(lib, "ws2_32.lib")
 #endif
 
@@ -157,6 +159,31 @@ int Platform::exit()
         WSACleanup();
     }
     return 0;
+
+#else
+#error Not implemented
+#endif
+}
+
+
+bsl::size_t Platform::numCores()
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+
+    errno = 0;
+    const int cpuCount = sysconf(_SC_NPROCESSORS_ONLN);
+    if (cpuCount < 0) {
+        return 1;
+    }
+
+    return static_cast<bsl::size_t>(cpuCount);
+
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+
+    SYSTEM_INFO systemInfo;
+    GetSystemInfo(&systemInfo);
+
+    return static_cast<bsl::size_t>(systemInfo.dwNumberOfProcessors);
 
 #else
 #error Not implemented
