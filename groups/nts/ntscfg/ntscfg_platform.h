@@ -414,6 +414,9 @@ struct Platform {
     /// error otherwise.
     static int exit();
 
+    /// Return the number of CPU cores on the current machine. 
+    static bsl::size_t numCores();
+
     /// Return true if the version of the operating system running the current
     /// process supports asynchronous socket notifications via some mechanism
     /// such as the Linux error queue.

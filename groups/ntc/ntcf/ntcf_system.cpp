@@ -222,7 +222,7 @@ void createDefaultInterface(bsl::shared_ptr<ntci::Interface>* result,
     ntca::InterfaceConfig interfaceConfig;
     interfaceConfig.setThreadName("default");
     interfaceConfig.setMinThreads(1);
-    interfaceConfig.setMaxThreads(64);
+    interfaceConfig.setMaxThreads(ntscfg::Platform::numCores());
 
     bsl::shared_ptr<ntci::Interface> interface =
         ntcf::System::createInterface(interfaceConfig, allocator);
