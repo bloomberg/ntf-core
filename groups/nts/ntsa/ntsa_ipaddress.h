@@ -139,22 +139,22 @@ class IpAddress
     ntsa::Ipv6Address& makeV6(const ntsa::Ipv6Address& value);
 
     /// Return a reference to the modifiable "v4" address representation.
-    /// The behavior is undefined unless 'is_ipv4()' is true.
+    /// The behavior is undefined unless 'isV4()' is true.
     ntsa::Ipv4Address& v4();
 
     /// Return a reference to the modifiable "v6" address representation.
-    /// The behavior is undefined unless 'is_v6()' is true.
+    /// The behavior is undefined unless 'isV6()' is true.
     ntsa::Ipv6Address& v6();
 
     /// Return the textual representation of this object.
     bsl::string text() const;
 
     /// Return a reference to the non-modifiable "v4" address
-    /// representation.  The behavior is undefined unless 'is_v4()' is true.
+    /// representation.  The behavior is undefined unless 'isV4()' is true.
     const ntsa::Ipv4Address& v4() const;
 
     /// Return a reference to the non-modifiable "v6" address
-    /// representation.  The behavior is undefined unless 'is_v6()' is true.
+    /// representation.  The behavior is undefined unless 'isV6()' is true.
     const ntsa::Ipv6Address& v6() const;
 
     /// Return the type of the IP address representation.
