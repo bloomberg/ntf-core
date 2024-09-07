@@ -1710,6 +1710,18 @@ ntsa::Error EncryptionClient::createEncryption(
     return ntsa::Error();
 }
 
+ntsa::Error EncryptionClient::createEncryption(
+    bsl::shared_ptr<ntci::Encryption>*     result,
+    const bsl::shared_ptr<ntci::DataPool>& dataPool,
+    bslma::Allocator*                      basicAllocator)
+{
+    NTCCFG_WARNING_UNUSED(result);
+    NTCCFG_WARNING_UNUSED(dataPool);
+    NTCCFG_WARNING_UNUSED(basicAllocator);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 EncryptionServer::EncryptionServer(
     const ntca::EncryptionServerOptions& options,
     bslma::Allocator*                    basicAllocator)
@@ -1802,6 +1814,18 @@ ntsa::Error EncryptionServer::createEncryption(
 #endif
 
     return ntsa::Error();
+}
+
+ntsa::Error EncryptionServer::createEncryption(
+    bsl::shared_ptr<ntci::Encryption>*     result,
+    const bsl::shared_ptr<ntci::DataPool>& dataPool,
+    bslma::Allocator*                      basicAllocator)
+{
+    NTCCFG_WARNING_UNUSED(result);
+    NTCCFG_WARNING_UNUSED(dataPool);
+    NTCCFG_WARNING_UNUSED(basicAllocator);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 EncryptionDriver::EncryptionDriver(bslma::Allocator* basicAllocator)
