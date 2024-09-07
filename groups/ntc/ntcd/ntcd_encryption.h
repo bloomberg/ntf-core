@@ -700,6 +700,16 @@ class EncryptionClient : public ntci::EncryptionClient
     ntsa::Error createEncryption(bsl::shared_ptr<ntci::Encryption>* result,
                                  bslma::Allocator* basicAllocator = 0)
         BSLS_KEYWORD_OVERRIDE;
+
+    /// Load into the specified 'result' a new client-side encryption session.
+    /// Allocate blob buffers from the specified 'dataPool'. Optionally specify
+    /// a 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used. Return the error.
+    ntsa::Error createEncryption(
+        bsl::shared_ptr<ntci::Encryption>*     result,
+        const bsl::shared_ptr<ntci::DataPool>& dataPool,
+        bslma::Allocator*                      basicAllocator = 0) 
+        BSLS_KEYWORD_OVERRIDE;
 };
 
 /// @internal @brief
@@ -754,6 +764,16 @@ class EncryptionServer : public ntci::EncryptionServer
     virtual ntsa::Error createEncryption(
         bsl::shared_ptr<ntci::Encryption>* result,
         bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
+
+    /// Load into the specified 'result' a new server-side encryption session.
+    /// Allocate blob buffers from the specified 'dataPool'. Optionally specify
+    /// a 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used. Return the error.
+    ntsa::Error createEncryption(
+        bsl::shared_ptr<ntci::Encryption>*     result,
+        const bsl::shared_ptr<ntci::DataPool>& dataPool,
+        bslma::Allocator*                      basicAllocator = 0) 
+        BSLS_KEYWORD_OVERRIDE;
 };
 
 /// @internal @brief
