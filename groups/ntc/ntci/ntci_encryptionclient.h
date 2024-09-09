@@ -20,6 +20,7 @@
 BSLS_IDENT("$Id: $")
 
 #include <ntccfg_platform.h>
+#include <ntci_datapool.h>
 #include <ntci_encryption.h>
 #include <ntcscm_version.h>
 #include <bsl_iosfwd.h>
@@ -54,6 +55,15 @@ class EncryptionClient
     virtual ntsa::Error createEncryption(
         bsl::shared_ptr<ntci::Encryption>* result,
         bslma::Allocator*                  basicAllocator = 0) = 0;
+
+    /// Load into the specified 'result' a new client-side encryption session.
+    /// Allocate blob buffers from the specified 'dataPool'. Optionally specify
+    /// a 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used. Return the error.
+    virtual ntsa::Error createEncryption(
+        bsl::shared_ptr<ntci::Encryption>*     result,
+        const bsl::shared_ptr<ntci::DataPool>& dataPool,
+        bslma::Allocator*                      basicAllocator = 0) = 0;
 };
 
 }  // end namespace ntci
