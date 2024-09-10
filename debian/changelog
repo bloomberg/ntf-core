@@ -1,5 +1,23 @@
-ntf-core (2.4.6) unstable; urgency=low
+ntf-core (2.4.8) unstable; urgency=low
 
+  * 45c0bdc Release 2.4.8
+  * 592a6a4 Include cstring for memset in ntsa_ethernetheader.h
+  * e5663a0 Release 2.4.7
+  * e78e7f2 Fix typos in the documentation of ntsa::IpAddress::v4() and v6()
+  * 4c9e412 Inject the stream socket's data pool into the encryption mechanism for it to use when allocating blob buffers
+  * 37cac88 ntsa::Ipv4Address::isLoopback() should return true for all 127.0. 0.0/8 and not just 127.0.0.1
+  * 32d51a4 Configure the default scheduler with a maximum number of threads equal to the number of cores on the machine
+  * a35689e Allow setting URI host and port by ntsa::Endpoint
+  * 666102e Allow ntsa::Host to represent a local name and include and optional transport hint in ntsa::Uri
+  * 47463b0 Support valgrind-aware builds and fix accidental reads from uninitialized data when hashing ntsa::DomainName
+  * 02da370 Utilize full I/O uring submission queue capacity and correct ntco_ioring test case 1
+  * 72dcabc Describe Ethernet addresses, protocols, and its header
+
+ -- Matt Millett <mmillett2@bloomberg.net>  Mon, 9 Sep 2024 22:54:59 -0400
+
+ntf-core (2.4.6) git; urgency=low
+
+  * 122f1de Release 2.4.6 to DPKG
   * 5e23063 Release 2.4.6
   * 794dbee Avoid sorting timers in ntcs::Chronology::load during potential timer rescheduling
   * bf1e585 Fix typedef for ntci::UnLockGuard to properly alias the correct guard class
@@ -13,7 +31,7 @@ ntf-core (2.4.6) unstable; urgency=low
   * 203863a Provide an abstraction of dlopen/dlsym on Unixes
   * 2f7fab3 Announce ntci::ListenerSocketManager::processListenerSocketLimit when max connections is violated
 
- -- Matt Millett <mmillett2@bloomberg.net>  Wed, 7 Aug 2024 10:54:45 -0400
+ -- Matt Millett <mmillett2@bloomberg.net>  Wed, 7 Aug 2024 10:56:11 -0400
 
 ntf-core (2.4.5) git; urgency=low
 
