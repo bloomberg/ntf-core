@@ -23,6 +23,7 @@ BSLS_IDENT("$Id: $")
 #include <ntsscm_version.h>
 #include <bslh_hash.h>
 #include <bsls_assert.h>
+#include <bsl_cstring.h>
 #include <bsl_iosfwd.h>
 #include <bsl_string.h>
 
