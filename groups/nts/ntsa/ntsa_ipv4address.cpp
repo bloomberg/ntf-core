@@ -20,8 +20,11 @@ BSLS_IDENT_RCSID(ntsa_ipv4address_cpp, "$Id$ $CSID$")
 
 #include <bslim_printer.h>
 #include <bsl_cstdlib.h>
+#include <bsl_cmath.h>
 #include <bsl_cstring.h>
+#include <bsl_limits.h>
 #include <bsl_sstream.h>
+
 
 namespace BloombergLP {
 namespace ntsa {
@@ -90,22 +93,25 @@ bool Ipv4Address::parse(const bslstl::StringRef& text) NTSCFG_NOEXCEPT
     Representation newValue;
     newValue.d_asDword = 0;
 
-    bsl::uint32_t byteAtIndex = 0;
+    bsl::uint64_t numAtIndex = 0;
 
     while (current != end) {
         const char ch = *current;
         if (NTSCFG_LIKELY(ch >= '0' && ch <= '9')) {
-            byteAtIndex *= 10;
-            byteAtIndex += ch - '0';
+            numAtIndex *= 10;
+            numAtIndex += ch - '0';
+            if (numAtIndex > bsl::numeric_limits<bsl::uint32_t>::max()) {
+                return false;
+            }
         }
         else {
             if (ch == '.') {
-                if (byteAtIndex > 255) {
+                if (numAtIndex > 255) {
                     return false;
                 }
                 newValue.d_asBytes[index] =
-                    NTSCFG_WARNING_NARROW(bsl::uint8_t, byteAtIndex);
-                byteAtIndex = 0;
+                    NTSCFG_WARNING_NARROW(bsl::uint8_t, numAtIndex);
+                numAtIndex = 0;
                 ++index;
                 if (index > 3) {
                     return false;
@@ -119,16 +125,17 @@ bool Ipv4Address::parse(const bslstl::StringRef& text) NTSCFG_NOEXCEPT
         ++current;
     }
 
-    if (index != 3) {
+    bsl::uint64_t numOctetsLeft = 4 - index;
+    if (numAtIndex >= bsl::pow(256,numOctetsLeft)) {
         return false;
     }
 
-    if (byteAtIndex > 255) {
-        return false;
+    for (size_t oct = 0; oct < numOctetsLeft; ++oct) {
+        bsl::uint8_t octet = NTSCFG_WARNING_NARROW(bsl::uint8_t,
+                                                   numAtIndex % 256);
+        newValue.d_asBytes[3 - oct] = octet;
+        numAtIndex /= 256;
     }
-
-    newValue.d_asBytes[index] =
-        NTSCFG_WARNING_NARROW(bsl::uint8_t, byteAtIndex);
 
     d_value.d_asDword = newValue.d_asDword;
 
