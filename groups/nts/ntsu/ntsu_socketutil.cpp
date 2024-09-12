@@ -4998,7 +4998,7 @@ ntsa::Error reportInfoProcNetTcp(bsl::vector<ntsa::SocketInfo>* result,
 
     FILE* file = bsl::fopen(fileName, "r");
     if (file == 0) {
-        error = ntsa::Error(bsl::ferror(file));
+        error = ntsa::Error(errno);
         BSLS_LOG_ERROR("Failed to open '%s': %s",
                        fileName,
                        error.text().c_str());
@@ -5008,7 +5008,8 @@ ntsa::Error reportInfoProcNetTcp(bsl::vector<ntsa::SocketInfo>* result,
     char line[256];
 
     if (bsl::fgets(line, sizeof(line), file) == 0) {
-        error = ntsa::Error(bsl::ferror(file));
+        error = bsl::ferror(file) ? ntsa::Error(errno)
+                                  : ntsa::Error(ntsa::Error::e_EOF);
         BSLS_LOG_ERROR("Failed to read '%s': "
                        "failed to read header line: %s",
                        fileName,
@@ -5061,7 +5062,7 @@ ntsa::Error reportInfoProcNetUdp(bsl::vector<ntsa::SocketInfo>* result,
 
     FILE* file = bsl::fopen(fileName, "r");
     if (file == 0) {
-        error = ntsa::Error(bsl::ferror(file));
+        error = ntsa::Error(errno);
         BSLS_LOG_ERROR("Failed to open '%s': %s",
                        fileName,
                        error.text().c_str());
@@ -5071,7 +5072,8 @@ ntsa::Error reportInfoProcNetUdp(bsl::vector<ntsa::SocketInfo>* result,
     char line[256];
 
     if (bsl::fgets(line, sizeof(line), file) == 0) {
-        error = ntsa::Error(bsl::ferror(file));
+        error = bsl::ferror(file) ? ntsa::Error(errno)
+                                  : ntsa::Error(ntsa::Error::e_EOF);
         BSLS_LOG_ERROR("Failed to read '%s': "
                        "failed to read header line: %s",
                        fileName,
