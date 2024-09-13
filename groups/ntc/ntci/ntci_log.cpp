@@ -37,6 +37,7 @@ BSLS_IDENT_RCSID(ntci_log_cpp, "$Id$ $CSID$")
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
 #include <sys/syscall.h>
+#include <unistd.h>
 #endif
 
 #define NTCI_LOG_UNSET_CONTEXT 0
