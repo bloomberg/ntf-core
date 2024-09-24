@@ -330,5 +330,48 @@ bool operator<(const IpEndpoint& lhs, const IpEndpoint& rhs)
     return lhs.less(rhs);
 }
 
+const bdlat_AttributeInfo* IpEndpoint::lookupAttributeInfo(int id)
+{
+    const int numAttributes = 
+        sizeof(ATTRIBUTE_INFO_ARRAY) / sizeof(ATTRIBUTE_INFO_ARRAY[0]);
+
+    if (id < 0 || id >= numAttributes) {
+        return 0;
+    }
+
+    return &ATTRIBUTE_INFO_ARRAY[id];
+}
+
+const bdlat_AttributeInfo* IpEndpoint::lookupAttributeInfo(
+    const char* name, 
+    int         nameLength)
+{
+    const bsl::size_t numAttributes = 
+        sizeof(ATTRIBUTE_INFO_ARRAY) / sizeof(ATTRIBUTE_INFO_ARRAY[0]);
+
+    for (bsl::size_t i = 0; i < numAttributes; ++i) {
+        const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
+        if (attributeInfo.d_nameLength == nameLength) {
+            const int compare = 
+                bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
+            if (compare == 0) {
+                return &attributeInfo;
+            }
+        }
+    }
+
+    return 0;
+}
+
+const char IpEndpoint::CLASS_NAME[17] = "ntsa::IpEndpoint";
+
+// clang-format off
+const bdlat_AttributeInfo IpEndpoint::ATTRIBUTE_INFO_ARRAY[2] =
+{
+    { e_ATTRIBUTE_ID_HOST, "host", 4, "", 0 },
+    { e_ATTRIBUTE_ID_PORT, "port", 4, "", 0 },
+};
+// clang-format on
+
 }  // close package namespace
 }  // close enterprise namespace
