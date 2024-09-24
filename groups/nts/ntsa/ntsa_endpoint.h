@@ -27,6 +27,9 @@ BSLS_IDENT("$Id: $")
 #include <ntsa_transport.h>
 #include <ntscfg_platform.h>
 #include <ntsscm_version.h>
+#include <bdlat_typetraits.h>
+#include <bdlat_selectioninfo.h>
+#include <bdlat_choicefunctions.h>
 #include <bslh_hash.h>
 #include <bsls_assert.h>
 #include <bsls_objectbuffer.h>
@@ -93,6 +96,10 @@ class Endpoint
     ntsa::EndpointType::Value d_type;
 
   public:
+    /// Defines a type alias for the base serialization type customized by this
+    /// type.
+    typedef bslstl::StringRef BaseType;
+
     /// Create a new endpoint having an undefined type.
     Endpoint();
 
@@ -253,6 +260,51 @@ class Endpoint
     bsl::ostream& print(bsl::ostream& stream,
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
+
+    /// Set the value of this object to be the default for the selection 
+    /// indicated by the specified 'id'. Return 0 on success, and non-zero 
+    /// value otherwise (i.e., the selection is not found). 
+    int makeSelection(int id);
+
+    /// Set the value of this object to be the default for the selection 
+    /// indicated by the specified 'name' of the specified 'nameLength'. 
+    /// Return 0 on success, and non-zero value otherwise (i.e., the selection 
+    /// is not found). 
+    int makeSelection(const char* name, int nameLength);
+
+    /// Return the selection ID of the current selection in the choice. 
+    int selectionId() const;
+
+    /// Invoke the specified 'manipulator' on the address of the modifiable 
+    /// selection, supplying 'manipulator' with the corresponding selection 
+    /// information structure. Return the value returned from the invocation 
+    /// of 'manipulator' if this object has a defined selection, and -1 
+    /// otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateSelection(MANIPULATOR& manipulator);
+
+    /// Invoke the specified 'accessor' on the non-modifiable selection, 
+    /// supplying 'accessor' with the corresponding selection information 
+    /// structure. Return the value returned from the invocation of 'accessor' 
+    /// if this object has a defined selection, and -1 otherwise. 
+    template <typename ACCESSOR>
+    int accessSelection(ACCESSOR& accessor) const;
+
+    /// Return the compiler-independant name for this class. 
+    static const char CLASS_NAME[15];
+
+    /// The selection info array, indexed by selection index. 
+    static const bdlat_SelectionInfo SELECTION_INFO_ARRAY[3];
+
+    /// Return selection information for the selection indicated by the 
+    /// specified 'id' if the selection exists, and 0 otherwise. 
+    static const bdlat_SelectionInfo* lookupSelectionInfo(int id);
+
+    /// Return selection information for the selection indicated by the 
+    /// specified 'name' of the specified 'nameLength' if the selection 
+    /// exists, and 0 otherwise. 
+    static const bdlat_SelectionInfo* lookupSelectionInfo(
+        const char* name, int nameLength);
 
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
@@ -552,6 +604,107 @@ void hashAppend(HASH_ALGORITHM& algorithm, const Endpoint& value)
     }
 }
 
+NTSCFG_INLINE
+int Endpoint::makeSelection(int id)
+{
+    switch (id) {
+    case ntsa::EndpointType::e_UNDEFINED:
+        this->reset();
+        break;
+    case ntsa::EndpointType::e_IP:
+        this->makeIp();
+        break;
+    case ntsa::EndpointType::e_LOCAL:
+        this->makeLocal();
+        break;
+    default:
+        return -1;
+    }
+
+    return 0;
+}
+
+NTSCFG_INLINE
+int Endpoint::makeSelection(const char* name, int nameLength)
+{
+    const bdlat_SelectionInfo *selectionInfo =
+        ntsa::Endpoint::lookupSelectionInfo(name, nameLength);
+    if (selectionInfo == 0) {
+        return -1;
+    }
+
+    return this->makeSelection(selectionInfo->d_id);
+}
+
+NTSCFG_INLINE
+int Endpoint::selectionId() const
+{
+    return static_cast<int>(d_type);
+}
+
+template <typename MANIPULATOR>
+int Endpoint::manipulateSelection(MANIPULATOR& manipulator)
+{
+    int rc;
+
+    if (d_type == ntsa::EndpointType::e_UNDEFINED) {
+        ;
+    }
+    else if (d_type == ntsa::EndpointType::e_IP) {
+        rc = manipulator(&d_ip.object(), SELECTION_INFO_ARRAY[d_type]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else if (d_type == ntsa::EndpointType::e_LOCAL) {
+        rc = manipulator(&d_local.object(), SELECTION_INFO_ARRAY[d_type]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else {
+        return -1;
+    }
+
+    return 0;
+}
+
+template <typename ACCESSOR>
+int Endpoint::accessSelection(ACCESSOR& accessor) const
+{
+    int rc;
+    
+    const bdlat_SelectionInfo *selectionInfo =
+        ntsa::Endpoint::lookupSelectionInfo(d_type);
+    if (selectionInfo == 0) {
+        return -1;
+    }
+
+    if (d_type == ntsa::EndpointType::e_UNDEFINED) {
+        ;
+    }
+    else if (d_type == ntsa::EndpointType::e_IP) {
+        rc = accessor(d_ip.object(), SELECTION_INFO_ARRAY[d_type]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else if (d_type == ntsa::EndpointType::e_LOCAL) {
+        rc = accessor(d_local.object(), SELECTION_INFO_ARRAY[d_type]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else {
+        return -1;
+    }
+
+    return 0;
+}
+
 }  // close package namespace
+
+BDLAT_DECL_CHOICE_TRAITS(ntsa::Endpoint)
+
 }  // close enterprise namespace
 #endif

@@ -15,6 +15,12 @@
 
 #include <ntsa_localname.h>
 #include <ntscfg_test.h>
+#include <balber_berdecoder.h>
+#include <balber_berencoder.h>
+#include <baljsn_decoder.h>
+#include <baljsn_encoder.h>
+#include <bdlsb_memoutstreambuf.h>
+#include <bdlsb_fixedmeminstreambuf.h>
 #include <bsl_iostream.h>
 
 using namespace BloombergLP;
@@ -362,6 +368,113 @@ NTSCFG_TEST_CASE(5)
     }
 }
 
+NTSCFG_TEST_CASE(6)
+{
+    int rc;
+
+    ntscfg::TestAllocator ta;
+    {
+        ntsa::LocalName e1;
+        e1.setValue("/tmp/ntf/test");
+
+        ntsa::LocalName e2;
+
+        bdlsb::MemOutStreamBuf osb(&ta);
+
+        balber::BerEncoder encoder(0, &ta);
+        rc = encoder.encode(&osb, e1);
+        if (rc != 0) {
+            NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages() 
+                                << NTSCFG_TEST_LOG_END;
+
+            NTSCFG_TEST_EQ(rc, 0);
+        }
+
+        rc = osb.pubsync();
+        NTSCFG_TEST_EQ(rc, 0);
+
+        NTSCFG_TEST_GT(osb.length(), 0);
+        NTSCFG_TEST_NE(osb.data(), 0);
+
+        NTSCFG_TEST_LOG_DEBUG << "Encoded:\n" 
+                              << bdlb::PrintStringHexDumper(
+                                    osb.data(), 
+                                    static_cast<bsl::size_t>(osb.length())) 
+                              << NTSCFG_TEST_LOG_END;
+
+        bdlsb::FixedMemInStreamBuf isb(osb.data(), osb.length());
+
+        balber::BerDecoder decoder(0, &ta);
+        rc = decoder.decode(&isb, &e2);
+        if (rc != 0) {
+            NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages() 
+                                << NTSCFG_TEST_LOG_END;
+
+            NTSCFG_TEST_EQ(rc, 0);
+        }
+
+        NTSCFG_TEST_EQ(e2, e1);
+    }
+    NTSCFG_TEST_EQ(ta.numBlocksInUse(), 0);
+}
+
+NTSCFG_TEST_CASE(7)
+{
+    int rc;
+
+    ntscfg::TestAllocator ta;
+    {
+        ntsa::LocalName localName;
+        localName.setValue("/tmp/ntf/test");
+
+        bsl::vector<ntsa::LocalName> e1(&ta);
+        bsl::vector<ntsa::LocalName> e2(&ta);
+
+        e1.push_back(localName);
+
+        bdlsb::MemOutStreamBuf osb(&ta);
+
+        baljsn::Encoder encoder(&ta);
+        rc = encoder.encode(&osb, e1);
+        if (rc != 0) {
+            NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages() 
+                                << NTSCFG_TEST_LOG_END;
+
+            NTSCFG_TEST_EQ(rc, 0);
+        }
+
+        rc = osb.pubsync();
+        NTSCFG_TEST_EQ(rc, 0);
+
+        NTSCFG_TEST_GT(osb.length(), 0);
+        NTSCFG_TEST_NE(osb.data(), 0);
+
+        NTSCFG_TEST_LOG_DEBUG << "Encoded: " 
+                              << bsl::string_view(
+                                    osb.data(), 
+                                    static_cast<bsl::size_t>(osb.length())) 
+                              << NTSCFG_TEST_LOG_END;
+
+        bdlsb::FixedMemInStreamBuf isb(osb.data(), osb.length());
+
+        baljsn::Decoder decoder(&ta);
+        rc = decoder.decode(&isb, &e2);
+        if (rc != 0) {
+            NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages() 
+                                << NTSCFG_TEST_LOG_END;
+
+            NTSCFG_TEST_EQ(rc, 0);
+        }
+
+        NTSCFG_TEST_EQ(e2.size(), e1.size());
+
+        for (bsl::size_t i = 0; i < e1.size(); ++i) {
+            NTSCFG_TEST_EQ(e2[i], e1[i]);
+        }
+    }
+    NTSCFG_TEST_EQ(ta.numBlocksInUse(), 0);
+}
+
 NTSCFG_TEST_DRIVER
 {
     NTSCFG_TEST_REGISTER(1);
@@ -369,6 +482,8 @@ NTSCFG_TEST_DRIVER
     NTSCFG_TEST_REGISTER(3);
     NTSCFG_TEST_REGISTER(4);
     NTSCFG_TEST_REGISTER(5);
+    NTSCFG_TEST_REGISTER(6);
+    NTSCFG_TEST_REGISTER(7);
 }
 NTSCFG_TEST_DRIVER_END;
 
