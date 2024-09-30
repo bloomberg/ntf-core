@@ -275,6 +275,13 @@ int Transport::fromString(Transport::Value*        result,
     return -1;
 }
 
+int Transport::fromString(Value* result, const char* string, int stringLength)
+{
+    return Transport::fromString(
+        result, 
+        bslstl::StringRef(string, static_cast<bsl::size_t>(stringLength)));
+}
+
 const char* Transport::toString(Transport::Value value)
 {
     switch (value) {

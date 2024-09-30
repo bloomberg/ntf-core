@@ -564,6 +564,53 @@ bsl::ostream& UriAuthority::print(bsl::ostream& stream,
     return stream;
 }
 
+const bdlat_AttributeInfo* UriAuthority::lookupAttributeInfo(int id)
+{
+    const int numAttributes = 
+        sizeof(ATTRIBUTE_INFO_ARRAY) / sizeof(ATTRIBUTE_INFO_ARRAY[0]);
+
+    if (id < 0 || id >= numAttributes) {
+        return 0;
+    }
+
+    return &ATTRIBUTE_INFO_ARRAY[id];
+}
+
+const bdlat_AttributeInfo* UriAuthority::lookupAttributeInfo(
+    const char* name, 
+    int         nameLength)
+{
+    const bsl::size_t numAttributes = 
+        sizeof(ATTRIBUTE_INFO_ARRAY) / sizeof(ATTRIBUTE_INFO_ARRAY[0]);
+
+    for (bsl::size_t i = 0; i < numAttributes; ++i) {
+        const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
+        if (attributeInfo.d_nameLength == nameLength) {
+            const int compare = 
+                bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
+            if (compare == 0) {
+                return &attributeInfo;
+            }
+        }
+    }
+
+    return 0;
+}
+
+const char UriAuthority::CLASS_NAME[19] = "ntsa::UriAuthority";
+
+// clang-format off
+const bdlat_AttributeInfo UriAuthority::ATTRIBUTE_INFO_ARRAY[4] =
+{
+    { e_ATTRIBUTE_ID_USER,      "user",      4, "", 0 },
+    { e_ATTRIBUTE_ID_HOST,      "host",      4, "", 0 },
+    { e_ATTRIBUTE_ID_PORT,      "port",      4, "", 0 },
+    { e_ATTRIBUTE_ID_TRANSPORT, "transport", 9, "", 0 }
+};
+// clang-format on
+
+
+
 bsl::ostream& operator<<(bsl::ostream& stream, const UriAuthority& object)
 {
     return object.print(stream, 0, -1);
@@ -639,7 +686,6 @@ ntsa::Error UriParameter::setValue(const bslstl::StringRef& value)
     return ntsa::Error();
 }
 
-// ACCCESSORS
 const bsl::string& UriParameter::name() const
 {
     return d_name;
@@ -684,6 +730,49 @@ bsl::ostream& UriParameter::print(bsl::ostream& stream,
     printer.end();
     return stream;
 }
+
+const bdlat_AttributeInfo* UriParameter::lookupAttributeInfo(int id)
+{
+    const int numAttributes = 
+        sizeof(ATTRIBUTE_INFO_ARRAY) / sizeof(ATTRIBUTE_INFO_ARRAY[0]);
+
+    if (id < 0 || id >= numAttributes) {
+        return 0;
+    }
+
+    return &ATTRIBUTE_INFO_ARRAY[id];
+}
+
+const bdlat_AttributeInfo* UriParameter::lookupAttributeInfo(
+    const char* name, 
+    int         nameLength)
+{
+    const bsl::size_t numAttributes = 
+        sizeof(ATTRIBUTE_INFO_ARRAY) / sizeof(ATTRIBUTE_INFO_ARRAY[0]);
+
+    for (bsl::size_t i = 0; i < numAttributes; ++i) {
+        const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
+        if (attributeInfo.d_nameLength == nameLength) {
+            const int compare = 
+                bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
+            if (compare == 0) {
+                return &attributeInfo;
+            }
+        }
+    }
+
+    return 0;
+}
+
+const char UriParameter::CLASS_NAME[19] = "ntsa::UriParameter";
+
+// clang-format off
+const bdlat_AttributeInfo UriParameter::ATTRIBUTE_INFO_ARRAY[2] =
+{
+    { e_ATTRIBUTE_ID_NAME,  "name",  4, "", 0 },
+    { e_ATTRIBUTE_ID_VALUE, "value", 5, "", 0 }
+};
+// clang-format on
 
 bsl::ostream& operator<<(bsl::ostream& stream, const UriParameter& object)
 {
@@ -842,6 +931,48 @@ bsl::ostream& UriQuery::print(bsl::ostream& stream,
     printer.end();
     return stream;
 }
+
+const bdlat_AttributeInfo* UriQuery::lookupAttributeInfo(int id)
+{
+    const int numAttributes = 
+        sizeof(ATTRIBUTE_INFO_ARRAY) / sizeof(ATTRIBUTE_INFO_ARRAY[0]);
+
+    if (id < 0 || id >= numAttributes) {
+        return 0;
+    }
+
+    return &ATTRIBUTE_INFO_ARRAY[id];
+}
+
+const bdlat_AttributeInfo* UriQuery::lookupAttributeInfo(
+    const char* name, 
+    int         nameLength)
+{
+    const bsl::size_t numAttributes = 
+        sizeof(ATTRIBUTE_INFO_ARRAY) / sizeof(ATTRIBUTE_INFO_ARRAY[0]);
+
+    for (bsl::size_t i = 0; i < numAttributes; ++i) {
+        const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
+        if (attributeInfo.d_nameLength == nameLength) {
+            const int compare = 
+                bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
+            if (compare == 0) {
+                return &attributeInfo;
+            }
+        }
+    }
+
+    return 0;
+}
+
+const char UriQuery::CLASS_NAME[15] = "ntsa::UriQuery";
+
+// clang-format off
+const bdlat_AttributeInfo UriQuery::ATTRIBUTE_INFO_ARRAY[1] =
+{
+    { e_ATTRIBUTE_ID_PARAMETER, "parameter", 9, "", 0 }
+};
+// clang-format on
 
 bsl::ostream& operator<<(bsl::ostream& stream, const UriQuery& object)
 {
@@ -1665,6 +1796,53 @@ bsl::ostream& Uri::print(bsl::ostream& stream,
 
     return stream;
 }
+
+const bdlat_AttributeInfo* Uri::lookupAttributeInfo(int id)
+{
+    const int numAttributes = 
+        sizeof(ATTRIBUTE_INFO_ARRAY) / sizeof(ATTRIBUTE_INFO_ARRAY[0]);
+
+    if (id < 0 || id >= numAttributes) {
+        return 0;
+    }
+
+    return &ATTRIBUTE_INFO_ARRAY[id];
+}
+
+const bdlat_AttributeInfo* Uri::lookupAttributeInfo(
+    const char* name, 
+    int         nameLength)
+{
+    const bsl::size_t numAttributes = 
+        sizeof(ATTRIBUTE_INFO_ARRAY) / sizeof(ATTRIBUTE_INFO_ARRAY[0]);
+
+    for (bsl::size_t i = 0; i < numAttributes; ++i) {
+        const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
+        if (attributeInfo.d_nameLength == nameLength) {
+            const int compare = 
+                bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
+            if (compare == 0) {
+                return &attributeInfo;
+            }
+        }
+    }
+
+    return 0;
+}
+
+const char Uri::CLASS_NAME[10] = "ntsa::Uri";
+
+// clang-format off
+const bdlat_AttributeInfo Uri::ATTRIBUTE_INFO_ARRAY[5] =
+{
+    { e_ATTRIBUTE_ID_SCHEME,    "scheme",    6, "", 0 },
+    { e_ATTRIBUTE_ID_AUTHORITY, "authority", 9, "", 0 },
+    { e_ATTRIBUTE_ID_PATH,      "path",      4, "", 0 },
+    { e_ATTRIBUTE_ID_QUERY,     "query",     5, "", 0 },
+    { e_ATTRIBUTE_ID_FRAGMENT,  "fragment",  8, "", 0 },
+    
+};
+// clang-format on
 
 bsl::ostream& operator<<(bsl::ostream& stream, const Uri& object)
 {
