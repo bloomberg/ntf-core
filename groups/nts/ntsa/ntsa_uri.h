@@ -28,6 +28,9 @@ BSLS_IDENT("$Id: $")
 #include <ntsa_transport.h>
 #include <ntscfg_platform.h>
 #include <ntsscm_version.h>
+#include <bdlat_typetraits.h>
+#include <bdlat_attributeinfo.h>
+#include <bdlat_sequencefunctions.h>
 #include <bdlb_nullablevalue.h>
 #include <bslh_hash.h>
 #include <bsls_objectbuffer.h>
@@ -50,6 +53,13 @@ namespace ntsa {
 /// @ingroup module_ntsa_identity
 class UriAuthority
 {
+    enum {
+        e_ATTRIBUTE_ID_USER      = 0,
+        e_ATTRIBUTE_ID_HOST      = 1,
+        e_ATTRIBUTE_ID_PORT      = 2,
+        e_ATTRIBUTE_ID_TRANSPORT = 3 
+    };
+
     bdlb::NullableValue<bsl::string>            d_user;
     bdlb::NullableValue<ntsa::Host>             d_host;
     bdlb::NullableValue<ntsa::Port>             d_port;
@@ -150,6 +160,77 @@ class UriAuthority
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
+    /// Invoke the specified 'manipulator' sequentially on the address of each 
+    /// (modifiable) attribute of this object, supplying 'manipulator' with 
+    /// the corresponding attribute information structure until such 
+    /// invocation returns a non-zero value. Return the value from the last 
+    /// invocation of 'manipulator' (i.e., the invocation that terminated the 
+    /// sequence). 
+    template <typename MANIPULATOR>
+    int manipulateAttributes(MANIPULATOR& manipulator);
+
+    /// Invoke the specified 'manipulator' on the address of the (modifiable) 
+    /// attribute indicated by the specified 'id', supplying 'manipulator' 
+    /// with the corresponding attribute information structure. Return the 
+    /// value returned from the invocation of 'manipulator' if 'id' identifies 
+    /// an attribute of this class, and -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, int id);
+
+    /// Invoke the specified 'manipulator' on the address of the (modifiable) 
+    /// attribute indicated by the specified 'name' of the specified 
+    /// 'nameLength', supplying 'manipulator' with the corresponding attribute 
+    /// information structure. Return the value returned from the invocation 
+    /// of 'manipulator' if 'name' identifies an attribute of this class, and 
+    /// -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, 
+                            const char*  name, 
+                            int          nameLength);
+
+    /// Invoke the specified 'accessor' sequentially on each (non-modifiable) 
+    /// attribute of this object, supplying 'accessor' with the corresponding 
+    /// attribute information structure until such invocation returns a 
+    /// non-zero value. Return the value from the last invocation of 
+    /// 'accessor' (i.e., the invocation that terminated the sequence). 
+    template <typename ACCESSOR>
+    int accessAttributes(ACCESSOR& accessor) const;
+
+    /// Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    /// this object indicated by the specified 'id', supplying 'accessor' with 
+    /// the corresponding attribute information structure. Return the value 
+    /// returned from the invocation of 'accessor' if 'id' identifies an 
+    /// attribute of this class, and -1 otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, int id) const;
+
+    /// Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    /// this object indicated by the specified 'name' of the specified 
+    /// 'nameLength', supplying 'accessor' with the corresponding attribute 
+    /// information structure. Return the value returned from the invocation 
+    /// of 'accessor' if 'name' identifies an attribute of this class, and -1 
+    /// otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR&   accessor, 
+                        const char* name, 
+                        int         nameLength) const;
+
+    /// Return attribute information for the attribute indicated by the 
+    /// specified 'id' if the attribute exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
+
+    /// Return attribute information for the attribute indicated by the 
+    /// specified 'name' of the specified 'nameLength' if the attribute 
+    /// exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(
+        const char* name, int nameLength);
+
+    /// Return the compiler-independant name for this class. 
+    static const char CLASS_NAME[19];
+
+    /// The attribute info array, indexed by attribute index. 
+    static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[4];
+
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
@@ -200,6 +281,11 @@ void hashAppend(HASH_ALGORITHM& algorithm, const UriAuthority& value);
 /// @ingroup module_ntsa_identity
 class UriParameter
 {
+    enum {
+        e_ATTRIBUTE_ID_NAME = 0,
+        e_ATTRIBUTE_ID_VALUE = 1 
+    };
+
     bsl::string                      d_name;
     bdlb::NullableValue<bsl::string> d_value;
 
@@ -266,6 +352,77 @@ class UriParameter
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
+    /// Invoke the specified 'manipulator' sequentially on the address of each 
+    /// (modifiable) attribute of this object, supplying 'manipulator' with 
+    /// the corresponding attribute information structure until such 
+    /// invocation returns a non-zero value. Return the value from the last 
+    /// invocation of 'manipulator' (i.e., the invocation that terminated the 
+    /// sequence). 
+    template <typename MANIPULATOR>
+    int manipulateAttributes(MANIPULATOR& manipulator);
+
+    /// Invoke the specified 'manipulator' on the address of the (modifiable) 
+    /// attribute indicated by the specified 'id', supplying 'manipulator' 
+    /// with the corresponding attribute information structure. Return the 
+    /// value returned from the invocation of 'manipulator' if 'id' identifies 
+    /// an attribute of this class, and -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, int id);
+
+    /// Invoke the specified 'manipulator' on the address of the (modifiable) 
+    /// attribute indicated by the specified 'name' of the specified 
+    /// 'nameLength', supplying 'manipulator' with the corresponding attribute 
+    /// information structure. Return the value returned from the invocation 
+    /// of 'manipulator' if 'name' identifies an attribute of this class, and 
+    /// -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, 
+                            const char*  name, 
+                            int          nameLength);
+
+    /// Invoke the specified 'accessor' sequentially on each (non-modifiable) 
+    /// attribute of this object, supplying 'accessor' with the corresponding 
+    /// attribute information structure until such invocation returns a 
+    /// non-zero value. Return the value from the last invocation of 
+    /// 'accessor' (i.e., the invocation that terminated the sequence). 
+    template <typename ACCESSOR>
+    int accessAttributes(ACCESSOR& accessor) const;
+
+    /// Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    /// this object indicated by the specified 'id', supplying 'accessor' with 
+    /// the corresponding attribute information structure. Return the value 
+    /// returned from the invocation of 'accessor' if 'id' identifies an 
+    /// attribute of this class, and -1 otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, int id) const;
+
+    /// Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    /// this object indicated by the specified 'name' of the specified 
+    /// 'nameLength', supplying 'accessor' with the corresponding attribute 
+    /// information structure. Return the value returned from the invocation 
+    /// of 'accessor' if 'name' identifies an attribute of this class, and -1 
+    /// otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR&   accessor, 
+                        const char* name, 
+                        int         nameLength) const;
+
+    /// Return attribute information for the attribute indicated by the 
+    /// specified 'id' if the attribute exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
+
+    /// Return attribute information for the attribute indicated by the 
+    /// specified 'name' of the specified 'nameLength' if the attribute 
+    /// exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(
+        const char* name, int nameLength);
+
+    /// Return the compiler-independant name for this class. 
+    static const char CLASS_NAME[19];
+
+    /// The attribute info array, indexed by attribute index. 
+    static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[2];
+
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
@@ -315,6 +472,10 @@ void hashAppend(HASH_ALGORITHM& algorithm, const UriParameter& value);
 /// @ingroup module_ntsa_identity
 class UriQuery
 {
+    enum {
+        e_ATTRIBUTE_ID_PARAMETER = 0
+    };
+
     bsl::vector<ntsa::UriParameter> d_parameterList;
 
   public:
@@ -382,6 +543,77 @@ class UriQuery
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
+    /// Invoke the specified 'manipulator' sequentially on the address of each 
+    /// (modifiable) attribute of this object, supplying 'manipulator' with 
+    /// the corresponding attribute information structure until such 
+    /// invocation returns a non-zero value. Return the value from the last 
+    /// invocation of 'manipulator' (i.e., the invocation that terminated the 
+    /// sequence). 
+    template <typename MANIPULATOR>
+    int manipulateAttributes(MANIPULATOR& manipulator);
+
+    /// Invoke the specified 'manipulator' on the address of the (modifiable) 
+    /// attribute indicated by the specified 'id', supplying 'manipulator' 
+    /// with the corresponding attribute information structure. Return the 
+    /// value returned from the invocation of 'manipulator' if 'id' identifies 
+    /// an attribute of this class, and -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, int id);
+
+    /// Invoke the specified 'manipulator' on the address of the (modifiable) 
+    /// attribute indicated by the specified 'name' of the specified 
+    /// 'nameLength', supplying 'manipulator' with the corresponding attribute 
+    /// information structure. Return the value returned from the invocation 
+    /// of 'manipulator' if 'name' identifies an attribute of this class, and 
+    /// -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, 
+                            const char*  name, 
+                            int          nameLength);
+
+    /// Invoke the specified 'accessor' sequentially on each (non-modifiable) 
+    /// attribute of this object, supplying 'accessor' with the corresponding 
+    /// attribute information structure until such invocation returns a 
+    /// non-zero value. Return the value from the last invocation of 
+    /// 'accessor' (i.e., the invocation that terminated the sequence). 
+    template <typename ACCESSOR>
+    int accessAttributes(ACCESSOR& accessor) const;
+
+    /// Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    /// this object indicated by the specified 'id', supplying 'accessor' with 
+    /// the corresponding attribute information structure. Return the value 
+    /// returned from the invocation of 'accessor' if 'id' identifies an 
+    /// attribute of this class, and -1 otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, int id) const;
+
+    /// Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    /// this object indicated by the specified 'name' of the specified 
+    /// 'nameLength', supplying 'accessor' with the corresponding attribute 
+    /// information structure. Return the value returned from the invocation 
+    /// of 'accessor' if 'name' identifies an attribute of this class, and -1 
+    /// otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR&   accessor, 
+                        const char* name, 
+                        int         nameLength) const;
+
+    /// Return attribute information for the attribute indicated by the 
+    /// specified 'id' if the attribute exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
+
+    /// Return attribute information for the attribute indicated by the 
+    /// specified 'name' of the specified 'nameLength' if the attribute 
+    /// exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(
+        const char* name, int nameLength);
+
+    /// Return the compiler-independant name for this class. 
+    static const char CLASS_NAME[15];
+
+    /// The attribute info array, indexed by attribute index. 
+    static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[1];
+
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
@@ -431,6 +663,14 @@ void hashAppend(HASH_ALGORITHM& algorithm, const UriQuery& value);
 /// @ingroup module_ntsa_identity
 class Uri
 {
+    enum {
+        e_ATTRIBUTE_ID_SCHEME    = 0,
+        e_ATTRIBUTE_ID_AUTHORITY = 1,
+        e_ATTRIBUTE_ID_PATH      = 2,
+        e_ATTRIBUTE_ID_QUERY     = 3,
+        e_ATTRIBUTE_ID_FRAGMENT  = 4
+    };
+
     bdlb::NullableValue<bsl::string>        d_scheme;
     bdlb::NullableValue<ntsa::UriAuthority> d_authority;
     bdlb::NullableValue<bsl::string>        d_path;
@@ -582,6 +822,77 @@ class Uri
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
+    /// Invoke the specified 'manipulator' sequentially on the address of each 
+    /// (modifiable) attribute of this object, supplying 'manipulator' with 
+    /// the corresponding attribute information structure until such 
+    /// invocation returns a non-zero value. Return the value from the last 
+    /// invocation of 'manipulator' (i.e., the invocation that terminated the 
+    /// sequence). 
+    template <typename MANIPULATOR>
+    int manipulateAttributes(MANIPULATOR& manipulator);
+
+    /// Invoke the specified 'manipulator' on the address of the (modifiable) 
+    /// attribute indicated by the specified 'id', supplying 'manipulator' 
+    /// with the corresponding attribute information structure. Return the 
+    /// value returned from the invocation of 'manipulator' if 'id' identifies 
+    /// an attribute of this class, and -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, int id);
+
+    /// Invoke the specified 'manipulator' on the address of the (modifiable) 
+    /// attribute indicated by the specified 'name' of the specified 
+    /// 'nameLength', supplying 'manipulator' with the corresponding attribute 
+    /// information structure. Return the value returned from the invocation 
+    /// of 'manipulator' if 'name' identifies an attribute of this class, and 
+    /// -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, 
+                            const char*  name, 
+                            int          nameLength);
+
+    /// Invoke the specified 'accessor' sequentially on each (non-modifiable) 
+    /// attribute of this object, supplying 'accessor' with the corresponding 
+    /// attribute information structure until such invocation returns a 
+    /// non-zero value. Return the value from the last invocation of 
+    /// 'accessor' (i.e., the invocation that terminated the sequence). 
+    template <typename ACCESSOR>
+    int accessAttributes(ACCESSOR& accessor) const;
+
+    /// Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    /// this object indicated by the specified 'id', supplying 'accessor' with 
+    /// the corresponding attribute information structure. Return the value 
+    /// returned from the invocation of 'accessor' if 'id' identifies an 
+    /// attribute of this class, and -1 otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, int id) const;
+
+    /// Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    /// this object indicated by the specified 'name' of the specified 
+    /// 'nameLength', supplying 'accessor' with the corresponding attribute 
+    /// information structure. Return the value returned from the invocation 
+    /// of 'accessor' if 'name' identifies an attribute of this class, and -1 
+    /// otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR&   accessor, 
+                        const char* name, 
+                        int         nameLength) const;
+
+    /// Return attribute information for the attribute indicated by the 
+    /// specified 'id' if the attribute exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
+
+    /// Return attribute information for the attribute indicated by the 
+    /// specified 'name' of the specified 'nameLength' if the attribute 
+    /// exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(
+        const char* name, int nameLength);
+
+    /// Return the compiler-independant name for this class. 
+    static const char CLASS_NAME[10];
+
+    /// The attribute info array, indexed by attribute index. 
+    static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[5];
+
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.
@@ -660,6 +971,548 @@ void hashAppend(HASH_ALGORITHM& algorithm, const Uri& value)
     hashAppend(algorithm, value.fragment());
 }
 
+template <typename MANIPULATOR>
+int UriParameter::manipulateAttributes(MANIPULATOR& manipulator)
+{
+    int rc;
+
+    rc = this->manipulateAttribute(manipulator, e_ATTRIBUTE_ID_NAME);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = this->manipulateAttribute(manipulator, e_ATTRIBUTE_ID_VALUE);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename MANIPULATOR>
+int UriParameter::manipulateAttribute(MANIPULATOR& manipulator, int id)
+{
+    int rc;
+
+    if (id == e_ATTRIBUTE_ID_NAME) {
+        rc = manipulator(&d_name, ATTRIBUTE_INFO_ARRAY[id]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else if (id == e_ATTRIBUTE_ID_VALUE) {
+        rc = manipulator(&d_value, ATTRIBUTE_INFO_ARRAY[id]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else {
+        return -1;
+    }
+
+    return 0;
+}
+
+template <typename MANIPULATOR>
+int UriParameter::manipulateAttribute(MANIPULATOR& manipulator, 
+                                      const char*  name, 
+                                      int          nameLength)
+{
+    const bdlat_AttributeInfo* info = 
+        ntsa::UriParameter::lookupAttributeInfo(name, nameLength);
+    if (info == 0) {
+        return -1;
+    }
+
+    return this->manipulateAttribute(manipulator, info->d_id);
+}
+
+template <typename ACCESSOR>
+int UriParameter::accessAttributes(ACCESSOR& accessor) const
+{
+    int rc;
+
+    rc = this->accessAttribute(accessor, e_ATTRIBUTE_ID_NAME);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = this->accessAttribute(accessor, e_ATTRIBUTE_ID_VALUE);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename ACCESSOR>
+int UriParameter::accessAttribute(ACCESSOR& accessor, int id) const
+{
+    int rc;
+
+    if (id == e_ATTRIBUTE_ID_NAME) {
+        rc = accessor(d_name, ATTRIBUTE_INFO_ARRAY[id]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else if (id == e_ATTRIBUTE_ID_VALUE) {
+        rc = accessor(d_value, ATTRIBUTE_INFO_ARRAY[id]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else {
+        return -1;
+    }
+
+    return 0;
+}
+
+template <typename ACCESSOR>
+int UriParameter::accessAttribute(ACCESSOR&   accessor, 
+                                  const char* name, 
+                                  int         nameLength) const
+{
+    const bdlat_AttributeInfo* info = 
+        ntsa::UriParameter::lookupAttributeInfo(name, nameLength);
+    if (info == 0) {
+        return -1;
+    }
+
+    return this->accessAttribute(accessor, info->d_id);
+}
+
+template <typename MANIPULATOR>
+int UriQuery::manipulateAttributes(MANIPULATOR& manipulator)
+{
+    int rc;
+
+    rc = this->manipulateAttribute(manipulator, e_ATTRIBUTE_ID_PARAMETER);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename MANIPULATOR>
+int UriQuery::manipulateAttribute(MANIPULATOR& manipulator, int id)
+{
+    int rc;
+
+    if (id == e_ATTRIBUTE_ID_PARAMETER) {
+        rc = manipulator(&d_parameterList, ATTRIBUTE_INFO_ARRAY[id]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else {
+        return -1;
+    }
+
+    return 0;
+}
+
+template <typename MANIPULATOR>
+int UriQuery::manipulateAttribute(MANIPULATOR& manipulator, 
+                                      const char*  name, 
+                                      int          nameLength)
+{
+    const bdlat_AttributeInfo* info = 
+        ntsa::UriQuery::lookupAttributeInfo(name, nameLength);
+    if (info == 0) {
+        return -1;
+    }
+
+    return this->manipulateAttribute(manipulator, info->d_id);
+}
+
+template <typename ACCESSOR>
+int UriQuery::accessAttributes(ACCESSOR& accessor) const
+{
+    int rc;
+
+    rc = this->accessAttribute(accessor, e_ATTRIBUTE_ID_PARAMETER);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename ACCESSOR>
+int UriQuery::accessAttribute(ACCESSOR& accessor, int id) const
+{
+    int rc;
+
+    if (id == e_ATTRIBUTE_ID_PARAMETER) {
+        rc = accessor(d_parameterList, ATTRIBUTE_INFO_ARRAY[id]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else {
+        return -1;
+    }
+
+    return 0;
+}
+
+template <typename ACCESSOR>
+int UriQuery::accessAttribute(ACCESSOR&   accessor, 
+                              const char* name, 
+                              int         nameLength) const
+{
+    const bdlat_AttributeInfo* info = 
+        ntsa::UriQuery::lookupAttributeInfo(name, nameLength);
+    if (info == 0) {
+        return -1;
+    }
+
+    return this->accessAttribute(accessor, info->d_id);
+}
+
+template <typename MANIPULATOR>
+int UriAuthority::manipulateAttributes(MANIPULATOR& manipulator)
+{
+    int rc;
+
+    rc = this->manipulateAttribute(manipulator, e_ATTRIBUTE_ID_USER);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = this->manipulateAttribute(manipulator, e_ATTRIBUTE_ID_HOST);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = this->manipulateAttribute(manipulator, e_ATTRIBUTE_ID_PORT);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = this->manipulateAttribute(manipulator, e_ATTRIBUTE_ID_TRANSPORT);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename MANIPULATOR>
+int UriAuthority::manipulateAttribute(MANIPULATOR& manipulator, int id)
+{
+    int rc;
+
+    if (id == e_ATTRIBUTE_ID_USER) {
+        rc = manipulator(&d_user, ATTRIBUTE_INFO_ARRAY[id]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else if (id == e_ATTRIBUTE_ID_HOST) {
+        rc = manipulator(&d_host, ATTRIBUTE_INFO_ARRAY[id]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else if (id == e_ATTRIBUTE_ID_PORT) {
+        rc = manipulator(&d_port, ATTRIBUTE_INFO_ARRAY[id]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else if (id == e_ATTRIBUTE_ID_TRANSPORT) {
+        rc = manipulator(&d_transport, ATTRIBUTE_INFO_ARRAY[id]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else {
+        return -1;
+    }
+
+    return 0;
+}
+
+template <typename MANIPULATOR>
+int UriAuthority::manipulateAttribute(MANIPULATOR& manipulator, 
+                                      const char*  name, 
+                                      int          nameLength)
+{
+    const bdlat_AttributeInfo* info = 
+        ntsa::UriAuthority::lookupAttributeInfo(name, nameLength);
+    if (info == 0) {
+        return -1;
+    }
+
+    return this->manipulateAttribute(manipulator, info->d_id);
+}
+
+template <typename ACCESSOR>
+int UriAuthority::accessAttributes(ACCESSOR& accessor) const
+{
+    int rc;
+
+    rc = this->accessAttribute(accessor, e_ATTRIBUTE_ID_USER);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = this->accessAttribute(accessor, e_ATTRIBUTE_ID_HOST);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = this->accessAttribute(accessor, e_ATTRIBUTE_ID_PORT);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = this->accessAttribute(accessor, e_ATTRIBUTE_ID_TRANSPORT);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename ACCESSOR>
+int UriAuthority::accessAttribute(ACCESSOR& accessor, int id) const
+{
+    int rc;
+
+    if (id == e_ATTRIBUTE_ID_USER) {
+        rc = accessor(d_user, ATTRIBUTE_INFO_ARRAY[id]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else if (id == e_ATTRIBUTE_ID_HOST) {
+        rc = accessor(d_host, ATTRIBUTE_INFO_ARRAY[id]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else if (id == e_ATTRIBUTE_ID_PORT) {
+        rc = accessor(d_port, ATTRIBUTE_INFO_ARRAY[id]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else if (id == e_ATTRIBUTE_ID_TRANSPORT) {
+        rc = accessor(d_transport, ATTRIBUTE_INFO_ARRAY[id]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else {
+        return -1;
+    }
+
+    return 0;
+}
+
+template <typename ACCESSOR>
+int UriAuthority::accessAttribute(ACCESSOR&   accessor, 
+                                  const char* name, 
+                                  int         nameLength) const
+{
+    const bdlat_AttributeInfo* info = 
+        ntsa::UriAuthority::lookupAttributeInfo(name, nameLength);
+    if (info == 0) {
+        return -1;
+    }
+
+    return this->accessAttribute(accessor, info->d_id);
+}
+
+template <typename MANIPULATOR>
+int Uri::manipulateAttributes(MANIPULATOR& manipulator)
+{
+    int rc;
+
+    rc = this->manipulateAttribute(manipulator, e_ATTRIBUTE_ID_SCHEME);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = this->manipulateAttribute(manipulator, e_ATTRIBUTE_ID_AUTHORITY);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = this->manipulateAttribute(manipulator, e_ATTRIBUTE_ID_PATH);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = this->manipulateAttribute(manipulator, e_ATTRIBUTE_ID_QUERY);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = this->manipulateAttribute(manipulator, e_ATTRIBUTE_ID_FRAGMENT);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename MANIPULATOR>
+int Uri::manipulateAttribute(MANIPULATOR& manipulator, int id)
+{
+    int rc;
+
+    if (id == e_ATTRIBUTE_ID_SCHEME) {
+        rc = manipulator(&d_scheme, ATTRIBUTE_INFO_ARRAY[id]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else if (id == e_ATTRIBUTE_ID_AUTHORITY) {
+        rc = manipulator(&d_authority, ATTRIBUTE_INFO_ARRAY[id]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else if (id == e_ATTRIBUTE_ID_PATH) {
+        rc = manipulator(&d_path, ATTRIBUTE_INFO_ARRAY[id]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else if (id == e_ATTRIBUTE_ID_QUERY) {
+        rc = manipulator(&d_query, ATTRIBUTE_INFO_ARRAY[id]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else if (id == e_ATTRIBUTE_ID_FRAGMENT) {
+        rc = manipulator(&d_fragment, ATTRIBUTE_INFO_ARRAY[id]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else {
+        return -1;
+    }
+
+    return 0;
+}
+
+template <typename MANIPULATOR>
+int Uri::manipulateAttribute(MANIPULATOR& manipulator, 
+                             const char*  name, 
+                             int          nameLength)
+{
+    const bdlat_AttributeInfo* info = 
+        ntsa::Uri::lookupAttributeInfo(name, nameLength);
+    if (info == 0) {
+        return -1;
+    }
+
+    return this->manipulateAttribute(manipulator, info->d_id);
+}
+
+template <typename ACCESSOR>
+int Uri::accessAttributes(ACCESSOR& accessor) const
+{
+    int rc;
+
+    rc = this->accessAttribute(accessor, e_ATTRIBUTE_ID_SCHEME);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = this->accessAttribute(accessor, e_ATTRIBUTE_ID_AUTHORITY);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = this->accessAttribute(accessor, e_ATTRIBUTE_ID_PATH);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = this->accessAttribute(accessor, e_ATTRIBUTE_ID_QUERY);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = this->accessAttribute(accessor, e_ATTRIBUTE_ID_FRAGMENT);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename ACCESSOR>
+int Uri::accessAttribute(ACCESSOR& accessor, int id) const
+{
+    int rc;
+
+    if (id == e_ATTRIBUTE_ID_SCHEME) {
+        rc = accessor(d_scheme, ATTRIBUTE_INFO_ARRAY[id]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else if (id == e_ATTRIBUTE_ID_AUTHORITY) {
+        rc = accessor(d_authority, ATTRIBUTE_INFO_ARRAY[id]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else if (id == e_ATTRIBUTE_ID_PATH) {
+        rc = accessor(d_path, ATTRIBUTE_INFO_ARRAY[id]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else if (id == e_ATTRIBUTE_ID_QUERY) {
+        rc = accessor(d_query, ATTRIBUTE_INFO_ARRAY[id]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else if (id == e_ATTRIBUTE_ID_FRAGMENT) {
+        rc = accessor(d_fragment, ATTRIBUTE_INFO_ARRAY[id]);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    else {
+        return -1;
+    }
+
+    return 0;
+}
+
+template <typename ACCESSOR>
+int Uri::accessAttribute(ACCESSOR&   accessor, 
+                         const char* name, 
+                         int         nameLength) const
+{
+    const bdlat_AttributeInfo* info = 
+        ntsa::Uri::lookupAttributeInfo(name, nameLength);
+    if (info == 0) {
+        return -1;
+    }
+
+    return this->accessAttribute(accessor, info->d_id);
+}
+
 }  // close package namespace
+
+BDLAT_DECL_SEQUENCE_TRAITS(ntsa::UriAuthority)
+BDLAT_DECL_SEQUENCE_TRAITS(ntsa::UriParameter)
+BDLAT_DECL_SEQUENCE_TRAITS(ntsa::UriQuery)
+BDLAT_DECL_SEQUENCE_TRAITS(ntsa::Uri)
+
 }  // close enterprise namespace
 #endif

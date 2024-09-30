@@ -19,6 +19,9 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <bdlat_typetraits.h>
+#include <bdlat_enumeratorinfo.h>
+#include <bdlat_enumfunctions.h>
 #include <ntsa_ipaddresstype.h>
 #include <ntscfg_platform.h>
 #include <ntsscm_version.h>
@@ -71,8 +74,6 @@ struct TransportProtocol {
     static bsl::ostream& print(bsl::ostream& stream, Value value);
 };
 
-// FREE OPERATORS
-
 /// Format the specified 'rhs' to the specified output 'stream' and return a
 /// reference to the modifiable 'stream'.
 ///
@@ -124,8 +125,6 @@ struct TransportDomain {
     static bsl::ostream& print(bsl::ostream& stream, Value value);
 };
 
-// FREE OPERATORS
-
 /// Format the specified 'rhs' to the specified output 'stream' and return a
 /// reference to the modifiable 'stream'.
 ///
@@ -173,8 +172,6 @@ struct TransportMode {
     /// 'stream'.
     static bsl::ostream& print(bsl::ostream& stream, Value value);
 };
-
-// FREE OPERATORS
 
 /// Format the specified 'rhs' to the specified output 'stream' and return a
 /// reference to the modifiable 'stream'.
@@ -236,6 +233,12 @@ struct Transport {
     /// enumerator).
     static int fromString(Value* result, const bslstl::StringRef& string);
 
+    /// Load into the specified `result` the enumerator matching the
+    /// specified `string` of the specified `stringLength`.  Return 0 on
+    /// success, and a non-zero value with no effect on `result` otherwise
+    /// (i.e., `string` does not match any enumerator).
+    static int fromString(Value* result, const char* string, int stringLength);
+
     /// Load into the specified 'result' the enumerator matching the
     /// specified 'number'.  Return 0 on success, and a non-zero value with
     /// no effect on 'result' otherwise (i.e., 'number' does not match any
@@ -257,8 +260,6 @@ struct Transport {
     static bsl::ostream& print(bsl::ostream& stream, Value value);
 };
 
-// FREE OPERATORS
-
 /// Format the specified 'rhs' to the specified output 'stream' and return a
 /// reference to the modifiable 'stream'.
 ///
@@ -266,5 +267,8 @@ struct Transport {
 bsl::ostream& operator<<(bsl::ostream& stream, Transport::Value rhs);
 
 }  // end namespace ntsa
+
+BDLAT_DECL_ENUMERATION_TRAITS(ntsa::Transport)
+
 }  // end namespace BloombergLP
 #endif
