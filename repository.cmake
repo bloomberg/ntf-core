@@ -291,6 +291,42 @@ function (ntf_target_thirdparty_get)
     set(${ARG_OUTPUT} ${result} PARENT_SCOPE)
 endfunction()
 
+# Set the "pseudo" variable scoped to a target.
+#
+# TARGET - The target.
+# VALUE  - The variable value.
+function (ntf_target_pseudo_set)
+    cmake_parse_arguments(
+        ARG "" "TARGET" "VALUE" ${ARGN})
+
+    ntf_assert_defined(${ARG_TARGET})
+
+    if (NOT "${ARG_VALUE}" STREQUAL "")
+        ntf_target_variable_set(
+            TARGET ${ARG_TARGET} VARIABLE "pseudo" VALUE ${ARG_VALUE})
+    else()
+        ntf_target_variable_set(
+            TARGET ${ARG_TARGET} VARIABLE "pseudo" VALUE "")
+    endif()
+endfunction()
+
+# Get the "pseudo" variable scoped to a target.
+#
+# TARGET - The target.
+# OUTPUT - The variable name set in the parent scope.
+function (ntf_target_pseudo_get)
+    cmake_parse_arguments(
+        ARG "" "TARGET;OUTPUT" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_TARGET})
+    ntf_assert_defined(${ARG_OUTPUT})
+
+    ntf_target_variable_get(
+        TARGET ${ARG_TARGET} VARIABLE "pseudo" OUTPUT result)
+
+    set(${ARG_OUTPUT} ${result} PARENT_SCOPE)
+endfunction()
+
 # Set the "requires" variable scoped to a target.
 #
 # TARGET - The target.
@@ -577,15 +613,15 @@ function (ntf_target_options_common_prolog target)
             ntf_target_build_option(
                 TARGET ${target} COMPILE LINK VALUE -fexceptions)
 
-            if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-                if(DEFINED CMAKE_CXX_COMPILER_VERSION
-                    AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 16.0)
+            if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+                if (DEFINED CMAKE_CXX_COMPILER_VERSION
+                       AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 16.0)
                     ntf_target_build_option(TARGET ${target} COMPILE LINK VALUE
-                        -fcoroutines-ts)
+                    -fcoroutines-ts)
                 endif()
-            else() #GCC
+            else()
                 ntf_target_build_option(TARGET ${target} COMPILE LINK VALUE
-                        -fcoroutines)
+                    -fcoroutines)
             endif()
 
             ntf_target_build_option(
@@ -1057,19 +1093,37 @@ endfunction()
 
 # Set the compiler and linker options for a target based upon the "asan" UFID.
 function (ntf_target_options_asan target)
-    ntf_target_build_definition(
-        TARGET ${target} VALUE BDE_BUILD_TARGET_ASAN)
+    if (NOT DEFINED NTF_BUILD_HAS_LINK_DYNAMIC_ASAN)
+        ntf_check_build_has_link_dynamic_asan(VARIABLE LINK_DYNAMIC_ASAN)
+    endif()
 
-    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        ntf_target_build_option(
-            TARGET ${target} COMPILE LINK VALUE -fsanitize=address)
-        ntf_target_build_option(
-            TARGET ${target} LINK VALUE -static-libsan)
-    elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-        ntf_target_build_option(
-            TARGET ${target} COMPILE LINK VALUE -fsanitize=address)
-        ntf_target_build_option(
-            TARGET ${target} LINK VALUE -static-libasan)
+    if (${NTF_BUILD_HAS_LINK_DYNAMIC_ASAN})
+        ntf_target_build_definition(
+            TARGET ${target} VALUE BDE_BUILD_TARGET_ASAN)
+
+        if (NOT DEFINED NTF_BUILD_HAS_LINK_STATIC_ASAN)
+            ntf_check_build_has_link_static_asan(VARIABLE LINK_STATIC_ASAN)
+        endif()
+
+        if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+            ntf_target_build_option(
+                TARGET ${target} COMPILE LINK VALUE -fsanitize=address)
+
+            if (${NTF_BUILD_HAS_LINK_STATIC_ASAN})
+                ntf_target_build_option(
+                    TARGET ${target} LINK VALUE -static-libsan)
+            endif()
+        elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+            ntf_target_build_option(
+                TARGET ${target} COMPILE LINK VALUE -fsanitize=address)
+
+            if (${NTF_BUILD_HAS_LINK_STATIC_ASAN})
+                ntf_target_build_option(
+                    TARGET ${target} LINK VALUE -static-libasan)
+            endif()
+        else()
+            ntf_die("Not implemented")
+        endif()
     else()
         ntf_die("The UFID flag 'asan' is not supported by compiler: ${CMAKE_CXX_COMPILER_ID}")
     endif()
@@ -1077,13 +1131,29 @@ endfunction()
 
 # Set the compiler and linker options for a target based upon the "msan" UFID.
 function (ntf_target_options_msan target)
-    ntf_target_build_definition(TARGET ${target} VALUE BDE_BUILD_TARGET_MSAN)
+    if (NOT DEFINED NTF_BUILD_HAS_LINK_DYNAMIC_MSAN)
+        ntf_check_build_has_link_dynamic_msan(VARIABLE LINK_DYNAMIC_MSAN)
+    endif()
 
-    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        ntf_target_build_option(
-            TARGET ${target} COMPILE LINK VALUE -fsanitize=memory)
-        ntf_target_build_option(
-            TARGET ${target} LINK VALUE -static-libsan)
+    if (${NTF_BUILD_HAS_LINK_DYNAMIC_MSAN})
+        ntf_target_build_definition(
+            TARGET ${target} VALUE BDE_BUILD_TARGET_MSAN)
+
+        if (NOT DEFINED NTF_BUILD_HAS_LINK_STATIC_MSAN)
+            ntf_check_build_has_link_static_msan(VARIABLE LINK_STATIC_MSAN)
+        endif()
+
+        if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+            ntf_target_build_option(
+                TARGET ${target} COMPILE LINK VALUE -fsanitize=memory)
+
+            if (${NTF_BUILD_HAS_LINK_STATIC_MSAN})
+                ntf_target_build_option(
+                    TARGET ${target} LINK VALUE -static-libsan)
+            endif()
+        else()
+            ntf_die("Not implemented")
+        endif()
     else()
         ntf_die("The UFID flag 'msan' is not supported by compiler: ${CMAKE_CXX_COMPILER_ID}")
     endif()
@@ -1091,18 +1161,37 @@ endfunction()
 
 # Set the compiler and linker options for a target based upon the "tsan" UFID.
 function (ntf_target_options_tsan target)
-    ntf_target_build_definition(TARGET ${target} VALUE BDE_BUILD_TARGET_TSAN)
+    if (NOT DEFINED NTF_BUILD_HAS_LINK_DYNAMIC_TSAN)
+        ntf_check_build_has_link_dynamic_tsan(VARIABLE LINK_DYNAMIC_TSAN)
+    endif()
 
-    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        ntf_target_build_option(
-            TARGET ${target} COMPILE LINK VALUE -fsanitize=thread)
-        ntf_target_build_option(
-            TARGET ${target} LINK VALUE -static-libsan)
-    elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-        ntf_target_build_option(
-            TARGET ${target} COMPILE LINK VALUE -fsanitize=thread)
-        ntf_target_build_option(
-            TARGET ${target} LINK VALUE -static-libtsan)
+    if (${NTF_BUILD_HAS_LINK_DYNAMIC_TSAN})
+        ntf_target_build_definition(
+            TARGET ${target} VALUE BDE_BUILD_TARGET_TSAN)
+
+        if (NOT DEFINED NTF_BUILD_HAS_LINK_STATIC_TSAN)
+            ntf_check_build_has_link_static_tsan(VARIABLE LINK_STATIC_TSAN)
+        endif()
+
+        if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+            ntf_target_build_option(
+                TARGET ${target} COMPILE LINK VALUE -fsanitize=thread)
+
+            if (${NTF_BUILD_HAS_LINK_STATIC_TSAN})
+                ntf_target_build_option(
+                    TARGET ${target} LINK VALUE -static-libsan)
+            endif()
+        elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+            ntf_target_build_option(
+                TARGET ${target} COMPILE LINK VALUE -fsanitize=thread)
+
+            if (${NTF_BUILD_HAS_LINK_STATIC_TSAN})
+                ntf_target_build_option(
+                    TARGET ${target} LINK VALUE -static-libtsan)
+            endif()
+        else()
+            ntf_die("Not implemented")
+        endif()
     else()
         ntf_die("The UFID flag 'tsan' is not supported by compiler: ${CMAKE_CXX_COMPILER_ID}")
     endif()
@@ -1110,18 +1199,37 @@ endfunction()
 
 # Set the compiler and linker options for a target based upon the "ubsan" UFID.
 function (ntf_target_options_ubsan target)
-    ntf_target_build_definition(TARGET ${target} VALUE BDE_BUILD_TARGET_UBSAN)
+    if (NOT DEFINED NTF_BUILD_HAS_LINK_DYNAMIC_UBSAN)
+        ntf_check_build_has_link_dynamic_ubsan(VARIABLE LINK_DYNAMIC_UBSAN)
+    endif()
 
-    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        ntf_target_build_option(
-            TARGET ${target} COMPILE LINK VALUE -fsanitize=undefined)
-        ntf_target_build_option(
-            TARGET ${target} LINK VALUE -static-libsan)
-    elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-        ntf_target_build_option(
-            TARGET ${target} COMPILE LINK VALUE -fsanitize=undefined)
-        ntf_target_build_option(
-            TARGET ${target} LINK VALUE -static-libubsan)
+    if (${NTF_BUILD_HAS_LINK_DYNAMIC_UBSAN})
+        ntf_target_build_definition(
+            TARGET ${target} VALUE BDE_BUILD_TARGET_UBSAN)
+
+        if (NOT DEFINED NTF_BUILD_HAS_LINK_STATIC_UBSAN)
+            ntf_check_build_has_link_static_ubsan(VARIABLE LINK_STATIC_UBSAN)
+        endif()
+
+        if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+            ntf_target_build_option(
+                TARGET ${target} COMPILE LINK VALUE -fsanitize=undefined)
+
+            if (${NTF_BUILD_HAS_LINK_STATIC_UBSAN})
+                ntf_target_build_option(
+                    TARGET ${target} LINK VALUE -static-libsan)
+            endif()
+        elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+            ntf_target_build_option(
+                TARGET ${target} COMPILE LINK VALUE -fsanitize=undefined)
+
+            if (${NTF_BUILD_HAS_LINK_STATIC_UBSAN})
+                ntf_target_build_option(
+                    TARGET ${target} LINK VALUE -static-libubsan)
+            endif()
+        else()
+            ntf_die("Not implemented")
+        endif()
     else()
         ntf_die("The UFID flag 'ubsan' is not supported by compiler: ${CMAKE_CXX_COMPILER_ID}")
     endif()
@@ -1500,6 +1608,7 @@ endfunction()
 # NAME        - The name of the executable.
 # PATH        - The path to the executable. If the path is relative, the path
 #               is interpreted relative to the root of the repository.
+# MAIN        - Optional path to the main source file.
 # DESCRIPTION - The single line description of the executable, as it should
 #               appear in package meta-data.
 # REQUIRES    - The intra-repository dependencies of the executable.
@@ -1511,7 +1620,7 @@ endfunction()
 #               suite for the repository.
 function (ntf_executable)
     cmake_parse_arguments(
-        NTF_EXECUTABLE "PRIVATE;TEST;EXAMPLE" "NAME;PATH;OUTPUT" "REQUIRES" ${ARGN})
+        NTF_EXECUTABLE "PRIVATE;TEST;EXAMPLE" "NAME;PATH;MAIN;OUTPUT" "REQUIRES" ${ARGN})
 
     if ("${NTF_EXECUTABLE_NAME}" STREQUAL "")
         message(FATAL_ERROR "Invalid parameter: NAME")
@@ -1543,8 +1652,18 @@ function (ntf_executable)
     ntf_repository_library_output_path_get(OUTPUT library_output_path)
     ntf_repository_runtime_output_path_get(OUTPUT runtime_output_path)
 
-    string(REPLACE "m_" "" target_undecorated "${target}")
-    cmake_path(APPEND main_path ${target_path} "${target_undecorated}.m.cpp")
+    set(main_path)
+    if (NOT "${NTF_EXECUTABLE_MAIN}" STREQUAL "")
+        if (IS_ABSOLUTE ${NTF_EXECUTABLE_MAIN})
+            set(main_path ${NTF_EXECUTABLE_MAIN})
+        else()
+            file(REAL_PATH ${NTF_EXECUTABLE_MAIN} main_path
+                 BASE_DIRECTORY ${target_path})
+        endif()
+    else()
+        string(REPLACE "m_" "" target_undecorated "${target}")
+        cmake_path(APPEND main_path ${target_path} "${target_undecorated}.m.cpp")
+    endif()
 
     if (VERBOSE)
         message(STATUS "NTF Build: adding executable '${target}'")
@@ -1741,6 +1860,8 @@ function (ntf_executable)
     if (TARGET documentation)
         add_dependencies(documentation ${target})
     endif()
+
+    ntf_target_build_info(NAME ${target} PATH ${target_path})
 
 endfunction()
 
@@ -2260,7 +2381,21 @@ endif()\n\
 
             set(target_libs_string "")
             foreach (target_libs_entry ${target_libs})
-                set(target_libs_string "${target_libs_string} -l${target_libs_entry}")
+                if (${target_libs_entry} MATCHES "^(-l|-framework)")
+                    set(target_libs_string "${target_libs_string} ${target_libs_entry}")
+                else()
+                    if (TARGET ${target_libs_entry})
+                        get_target_property(target_libs_entry_name ${target_libs_entry} OUTPUT_NAME)
+                        if ("${target_libs_entry_name}" STREQUAL "" OR
+                            "${target_libs_entry_name}" STREQUAL "target_libs_entry_name-NOTFOUND")
+                            set(target_libs_entry_name ${target_libs_entry})
+                        endif()
+                    else()
+                        set(target_libs_entry_name ${target_libs_entry})
+                    endif()
+
+                    set(target_libs_string "${target_libs_string} -l${target_libs_entry_name}")
+                endif()
             endforeach()
 
             # TODO: Set 'prefix' to "${pcfiledir}/../.." in the top-level
@@ -2340,7 +2475,7 @@ endfunction()
 #               and should not be installed.
 function (ntf_adapter)
     cmake_parse_arguments(
-        NTF_ADAPTER "PRIVATE;THIRDPARTY" "NAME;PATH;DESCRIPTION;OUTPUT" "REQUIRES" ${ARGN})
+        NTF_ADAPTER "PRIVATE;THIRDPARTY;PSEUDO" "NAME;PATH;DESCRIPTION;OUTPUT" "REQUIRES" ${ARGN})
 
     if ("${NTF_ADAPTER_NAME}" STREQUAL "")
         message(FATAL_ERROR "Invalid parameter: NAME")
@@ -2377,11 +2512,20 @@ function (ntf_adapter)
         set(target_thirdparty FALSE)
     endif()
 
+    set(target_pseudo ${NTF_ADAPTER_PSEUDO})
+    if ("${target_pseudo}" STREQUAL "")
+        set(target_pseudo FALSE)
+    endif()
+
     ntf_repository_archive_output_path_get(OUTPUT archive_output_path)
     ntf_repository_library_output_path_get(OUTPUT library_output_path)
     ntf_repository_runtime_output_path_get(OUTPUT runtime_output_path)
 
-    add_library(${target} STATIC)
+    if (${target_pseudo})
+        add_library(${target} OBJECT)
+    else()
+        add_library(${target} STATIC)
+    endif()
 
     # Set the C standard.
 
@@ -2411,9 +2555,9 @@ function (ntf_adapter)
             ${target} PROPERTIES OUTPUT_NAME ${NTF_ADAPTER_OUTPUT}
         )
 
-        set_target_properties(
-            ${target} PROPERTIES EXPORT_NAME ${NTF_ADAPTER_OUTPUT}
-        )
+        # set_target_properties(
+        #        ${target} PROPERTIES EXPORT_NAME ${NTF_ADAPTER_OUTPUT}
+        #    )
     endif()
 
     ntf_target_options(TARGET ${target})
@@ -2429,6 +2573,9 @@ function (ntf_adapter)
 
     ntf_target_thirdparty_set(
         TARGET ${target} VALUE ${target_thirdparty})
+
+    ntf_target_pseudo_set(
+        TARGET ${target} VALUE ${target_pseudo})
 
     ntf_target_requires_set(
         TARGET ${target} VALUE ${NTF_ADAPTER_REQUIRES})
@@ -2482,6 +2629,8 @@ function (ntf_adapter)
         endif()
     endif()
 
+    ntf_target_build_info(NAME ${target} PATH ${target_path})
+
 endfunction()
 
 # Set the core base name of the artifact that is the result of building the
@@ -2504,9 +2653,9 @@ function (ntf_adapter_output)
         ${target} PROPERTIES OUTPUT_NAME ${ARG_OUTPUT}
     )
 
-    set_target_properties(
-        ${target} PROPERTIES EXPORT_NAME ${ARG_OUTPUT}
-    )
+    # set_target_properties(
+    #        ${target} PROPERTIES EXPORT_NAME ${ARG_OUTPUT}
+    #    )
 endfunction()
 
 # Add a dependency to an adapter, attempting to find the dependency through
@@ -2549,6 +2698,7 @@ function (ntf_adapter_end)
     ntf_assert_target_defined(${target})
 
     ntf_target_private_get(TARGET ${target} OUTPUT target_private)
+    ntf_target_pseudo_get(TARGET ${target} OUTPUT target_pseudo)
 
     ntf_target_options_common_epilog(${target})
 
@@ -2629,7 +2779,7 @@ function (ntf_adapter_end)
     set(install_cmake_metadata TRUE)
 
     if (${install_cmake_metadata})
-        if (NOT ${target_private})
+        if (NOT ${target_private} AND NOT ${target_pseudo})
             # CMake meta data names, version 1:
 
             # ${target}Config.cmake
@@ -2702,14 +2852,16 @@ function (ntf_adapter_end)
                     set(alternate_library_name ${CMAKE_STATIC_LIBRARY_PREFIX}${target_output_name}.${alternate_install_ufid}${CMAKE_STATIC_LIBRARY_SUFFIX})
                 endif()
 
-                install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_library_name}\")")
+                if (NOT ${target_pseudo})
+                    install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_library_name}\")")
 
-                ntf_path_normalize(
-                    OUTPUT link_target
-                    INPUT  "${install_ufid}/${canonical_library_name}"
-                    NATIVE ESCAPE)
+                    ntf_path_normalize(
+                        OUTPUT link_target
+                        INPUT  "${install_ufid}/${canonical_library_name}"
+                        NATIVE ESCAPE)
 
-                install(CODE "file(CREATE_LINK ${link_target} \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_library_name} SYMBOLIC)")
+                    install(CODE "file(CREATE_LINK ${link_target} \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_library_name} SYMBOLIC)")
+                endif()
 
             endforeach()
 
@@ -2830,7 +2982,7 @@ endif()\n\
 
         endif()
     else()
-        if (NOT ${target_private})
+        if (NOT ${target_private} AND NOT ${target_pseudo})
             set(archive_basename ${CMAKE_STATIC_LIBRARY_PREFIX}${target_output_name}${CMAKE_STATIC_LIBRARY_SUFFIX})
 
             ntf_repository_archive_output_path_get(OUTPUT archive_output_path)
@@ -2858,7 +3010,7 @@ endif()\n\
     set(install_pkgconfig_metadata TRUE)
 
     if (${install_pkgconfig_metadata})
-        if (NOT ${target_private})
+        if (NOT ${target_private} AND NOT ${target_pseudo})
             ntf_target_description_get(TARGET ${target} OUTPUT target_description)
             ntf_target_requires_get(TARGET ${target} OUTPUT target_requires)
             ntf_target_libs_get(TARGET ${target} OUTPUT target_libs)
@@ -2867,17 +3019,21 @@ endif()\n\
 
             set(target_libs_string "")
             foreach (target_libs_entry ${target_libs})
-                if (TARGET ${target_libs_entry})
-                    get_target_property(target_libs_entry_name ${target_libs_entry} OUTPUT_NAME)
-                    if ("${target_libs_entry_name}" STREQUAL "" OR
-                        "${target_libs_entry_name}" STREQUAL "target_libs_entry_name-NOTFOUND")
+                if (${target_libs_entry} MATCHES "^(-l|-framework)")
+                    set(target_libs_string "${target_libs_string} ${target_libs_entry}")
+                else()
+                    if (TARGET ${target_libs_entry})
+                        get_target_property(target_libs_entry_name ${target_libs_entry} OUTPUT_NAME)
+                        if ("${target_libs_entry_name}" STREQUAL "" OR
+                            "${target_libs_entry_name}" STREQUAL "target_libs_entry_name-NOTFOUND")
+                            set(target_libs_entry_name ${target_libs_entry})
+                        endif()
+                    else()
                         set(target_libs_entry_name ${target_libs_entry})
                     endif()
-                else()
-                    set(target_libs_entry_name ${target_libs_entry})
-                endif()
 
-                set(target_libs_string "${target_libs_string} -l${target_libs_entry_name}")
+                    set(target_libs_string "${target_libs_string} -l${target_libs_entry_name}")
+                endif()
             endforeach()
 
             # TODO: Set 'prefix' to "${pcfiledir}/../.." in the top-level
@@ -2893,7 +3049,24 @@ endif()\n\
                 string (REPLACE "_" "-" target_pkgconfig_name "${target}")
             endif()
 
-            set(target_pc_content "\
+            if (${target_pseudo})
+                set(target_pc_content "\
+prefix=${CMAKE_INSTALL_PREFIX}\n\
+libdir=\${prefix}/${library_install_ufid_relative_path}\n\
+includedir=\${prefix}/include\n\
+\n\
+Name: ${target_pkgconfig_name}\n\
+Description: ${target_description}\n\
+URL: ${CMAKE_PROJECT_HOMEPAGE_URL}\n\
+Version: ${CMAKE_PROJECT_VERSION}\n\
+Requires: \n\
+Requires.private: ${target_requires_string}\n\
+Cflags: -I\${includedir}\n\
+Libs: -L\${libdir}\n\
+Libs.private:${target_libs_string}\n\
+")
+            else()
+                set(target_pc_content "\
 prefix=${CMAKE_INSTALL_PREFIX}\n\
 libdir=\${prefix}/${library_install_ufid_relative_path}\n\
 includedir=\${prefix}/include\n\
@@ -2908,6 +3081,7 @@ Cflags: -I\${includedir}\n\
 Libs: -L\${libdir} -l${target_output_name}\n\
 Libs.private:${target_libs_string}\n\
 ")
+            endif()
 
             file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${target_pkgconfig_name}.pc"
                 ${target_pc_content})
@@ -3022,66 +3196,6 @@ function (ntf_scan)
     else()
         ntf_die("Unsupported taxonomy for '${name}': ${taxonomy}")
     endif()
-
-endfunction()
-
-function (ntf_target_build_info)
-    cmake_parse_arguments(
-        NTF_TARGET "" "NAME;PATH" "" ${ARGN})
-
-    if ("${NTF_TARGET_NAME}" STREQUAL "")
-        message(FATAL_ERROR "Invalid parameter: NAME")
-    endif()
-
-    if ("${NTF_TARGET_PATH}" STREQUAL "")
-        message(FATAL_ERROR "Invalid parameter: PATH")
-    endif()
-
-    string(TOLOWER ${NTF_TARGET_NAME} target_lowercase)
-    string(TOUPPER ${NTF_TARGET_NAME} target_uppercase)
-
-    set(target ${target_lowercase})
-
-    if (IS_ABSOLUTE ${NTF_TARGET_PATH})
-        set(target_path ${NTF_TARGET_PATH})
-    else()
-        ntf_repository_path_get(OUTPUT repository_path)
-        file(REAL_PATH ${NTF_TARGET_PATH} target_path
-             BASE_DIRECTORY ${repository_path})
-    endif()
-
-    execute_process(
-      COMMAND git rev-parse --abbrev-ref HEAD
-      WORKING_DIRECTORY ${target_path}
-      OUTPUT_VARIABLE GIT_BRANCH
-      OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-
-    execute_process(
-      COMMAND git log -1 --format=%H
-      WORKING_DIRECTORY ${target_path}
-      OUTPUT_VARIABLE GIT_COMMIT_HASH
-      OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-
-    execute_process(
-      COMMAND git log -1 --format=%h
-      WORKING_DIRECTORY ${target_path}
-      OUTPUT_VARIABLE GIT_COMMIT_HASH_ABBREV
-      OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-
-    set(${target_uppercase}_BUILD_BRANCH 
-        "${GIT_BRANCH}" 
-        CACHE INTERNAL "" FORCE)
-
-    set(${target_uppercase}_BUILD_COMMIT_HASH 
-        "${GIT_COMMIT_HASH}" 
-        CACHE INTERNAL "" FORCE)
-
-    set(${target_uppercase}_BUILD_COMMIT_HASH_ABBREV 
-        "${GIT_COMMIT_HASH_ABBREV}" 
-        CACHE INTERNAL "" FORCE)
 
 endfunction()
 
@@ -3570,17 +3684,21 @@ endif()\n\
 
             set(target_libs_string "")
             foreach (target_libs_entry ${target_libs})
-                if (TARGET ${target_libs_entry})
-                    get_target_property(target_libs_entry_name ${target_libs_entry} OUTPUT_NAME)
-                    if ("${target_libs_entry_name}" STREQUAL "" OR
-                        "${target_libs_entry_name}" STREQUAL "target_libs_entry_name-NOTFOUND")
+                if (${target_libs_entry} MATCHES "^(-l|-framework)")
+                    set(target_libs_string "${target_libs_string} ${target_libs_entry}")
+                else()
+                    if (TARGET ${target_libs_entry})
+                        get_target_property(target_libs_entry_name ${target_libs_entry} OUTPUT_NAME)
+                        if ("${target_libs_entry_name}" STREQUAL "" OR
+                            "${target_libs_entry_name}" STREQUAL "target_libs_entry_name-NOTFOUND")
+                            set(target_libs_entry_name ${target_libs_entry})
+                        endif()
+                    else()
                         set(target_libs_entry_name ${target_libs_entry})
                     endif()
-                else()
-                    set(target_libs_entry_name ${target_libs_entry})
-                endif()
 
-                set(target_libs_string "${target_libs_string} -l${target_libs_entry_name}")
+                    set(target_libs_string "${target_libs_string} -l${target_libs_entry_name}")
+                endif()
             endforeach()
 
             # TODO: Set 'prefix' to "${pcfiledir}/../.." in the top-level
@@ -4048,9 +4166,18 @@ endfunction()
 
 # Add a source to a target. This function does not automatically add any
 # include directories, nor does it add any test driver.
+#
+# TARGET      - The target to which to add the source.
+# PATH        - The path to the source file. If the path is relative, the path is
+#               interpreted relative to the location of the target.
+# INCLUDE     - The source-specifiec additional include directories.
+# DEFINITIONS - The source-specifiec additional compiler definitions.
+# OPTIONS     - The source-specifiec additional compiler options.
+# PRIVATE     - The flag indicating the source belongs to a private target.
+# THIRDPARTY  - The flag indicating the source belongs to a thirdparty target.
 function (ntf_source)
     cmake_parse_arguments(
-        NTF_SOURCE "PRIVATE;THIRDPARTY" "PATH;TARGET" "" ${ARGN})
+        NTF_SOURCE "PRIVATE;THIRDPARTY" "PATH;TARGET" "INCLUDE;DEFINE;OPTIONS" ${ARGN})
 
     if ("${NTF_SOURCE_PATH}" STREQUAL "")
         ntf_die("Specify source path")
@@ -4115,6 +4242,24 @@ function (ntf_source)
     #         $<BUILD_INTERFACE:${directory}>
     #     )
     # endif()
+
+    foreach (source_include ${NTF_SOURCE_INCLUDE})
+        set_property(
+            SOURCE ${source_path}
+            APPEND PROPERTY INCLUDE_DIRECTORIES ${source_include})
+    endforeach()
+
+    foreach (source_define ${NTF_SOURCE_DEFINE})
+        set_property(
+            SOURCE ${source_path}
+            APPEND PROPERTY COMPILE_DEFINITIONS ${source_define})
+    endforeach()
+
+    foreach (source_option ${NTF_SOURCE_OPTIONS})
+        set_property(
+            SOURCE ${source_path}
+            APPEND PROPERTY COMPILE_OPTIONS ${source_option})
+    endforeach()
 
 endfunction()
 
@@ -5125,6 +5270,66 @@ function (ntf_target_link_dependency)
     if (NOT "${ARG_OUTPUT}" STREQUAL "")
         set(${ARG_OUTPUT} FALSE PARENT_SCOPE)
     endif()
+
+endfunction()
+
+function (ntf_target_build_info)
+    cmake_parse_arguments(
+        NTF_TARGET "" "NAME;PATH" "" ${ARGN})
+
+    if ("${NTF_TARGET_NAME}" STREQUAL "")
+        message(FATAL_ERROR "Invalid parameter: NAME")
+    endif()
+
+    if ("${NTF_TARGET_PATH}" STREQUAL "")
+        message(FATAL_ERROR "Invalid parameter: PATH")
+    endif()
+
+    string(TOLOWER ${NTF_TARGET_NAME} target_lowercase)
+    string(TOUPPER ${NTF_TARGET_NAME} target_uppercase)
+
+    set(target ${target_lowercase})
+
+    if (IS_ABSOLUTE ${NTF_TARGET_PATH})
+        set(target_path ${NTF_TARGET_PATH})
+    else()
+        ntf_repository_path_get(OUTPUT repository_path)
+        file(REAL_PATH ${NTF_TARGET_PATH} target_path
+             BASE_DIRECTORY ${repository_path})
+    endif()
+
+    execute_process(
+      COMMAND git rev-parse --abbrev-ref HEAD
+      WORKING_DIRECTORY ${target_path}
+      OUTPUT_VARIABLE GIT_BRANCH
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+    execute_process(
+      COMMAND git log -1 --format=%H
+      WORKING_DIRECTORY ${target_path}
+      OUTPUT_VARIABLE GIT_COMMIT_HASH
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+    execute_process(
+      COMMAND git log -1 --format=%h
+      WORKING_DIRECTORY ${target_path}
+      OUTPUT_VARIABLE GIT_COMMIT_HASH_ABBREV
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+    set(${target_uppercase}_BUILD_BRANCH
+        "${GIT_BRANCH}"
+        CACHE INTERNAL "" FORCE)
+
+    set(${target_uppercase}_BUILD_COMMIT_HASH
+        "${GIT_COMMIT_HASH}"
+        CACHE INTERNAL "" FORCE)
+
+    set(${target_uppercase}_BUILD_COMMIT_HASH_ABBREV
+        "${GIT_COMMIT_HASH_ABBREV}"
+        CACHE INTERNAL "" FORCE)
 
 endfunction()
 
@@ -7094,4 +7299,789 @@ function (ntf_test)
     endforeach()
 
     message(FATAL_ERROR "Test complete")
+endfunction()
+
+set(CMAKE_TRY_COMPILE_CONFIGURATION "Debug")
+
+include(CMakePushCheckState)
+include(CheckIncludeFile)
+include(CheckIncludeFiles)
+include(CheckTypeSize)
+include(CheckFunctionExists)
+include(CheckVariableExists)
+include(CheckSymbolExists)
+include(CheckStructHasMember)
+include(CheckPrototypeDefinition)
+include(CheckCSourceCompiles)
+include(CheckCXXSourceCompiles)
+include(CheckCXXSourceRuns)
+
+set(CMAKE_REQUIRED_FLAGS "" CACHE INTERNAL "")
+set(CMAKE_REQUIRED_DEFINITIONS "" CACHE INTERNAL "")
+set(CMAKE_REQUIRED_INCLUDES "" CACHE INTERNAL "")
+set(CMAKE_REQUIRED_LIBRARIES "" CACHE INTERNAL "")
+set(CMAKE_REQUIRED_QUIET TRUE CACHE INTERNAL "")
+
+set(CMAKE_EXTRA_INCLUDE_FILES "" CACHE INTERNAL "")
+
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+    set(CMAKE_REQUIRED_DEFINITIONS -D_BSD_SOURCE)
+elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "FreeBSD")
+    set(CMAKE_REQUIRED_DEFINITIONS -D_BSD_SOURCE)
+elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+    set(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "OpenBSD")
+    set(CMAKE_REQUIRED_DEFINITIONS -D_BSD_SOURCE)
+elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS")
+    set(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+    set(CMAKE_REQUIRED_LIBRARIES socket nsl)
+elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
+    set(CMAKE_REQUIRED_LIBRARIES ws2_32 shell32 advapi32)
+    set(CMAKE_REQUIRED_DEFINITIONS -DWIN32_LEAN_AND_MEAN -D_WIN32_WINNT=0x0600)
+endif()
+
+find_package(Threads QUIET)
+list(APPEND CMAKE_REQUIRED_LIBRARIES Threads::Threads)
+
+function (ntf_check_diagnostic)
+    cmake_parse_arguments(
+        ARG "" "MESSAGE;VALUE;SIZE" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_MESSAGE})
+    ntf_assert_defined(${ARG_VALUE})
+
+    set(diagnostic_description "${ARG_MESSAGE}")
+
+    set(diagnostic_line "")
+    string(APPEND diagnostic_line ${diagnostic_description})
+
+    string(LENGTH ${diagnostic_description} diagnostic_description_length)
+
+    math(EXPR diagnostic_padding_length
+         "48 - ${diagnostic_description_length}")
+
+    string(REPEAT " " ${diagnostic_padding_length} diagnostic_padding)
+
+    if ("${ARG_VALUE}" STREQUAL "1" OR
+        "${ARG_VALUE}" STREQUAL "ON" OR
+        "${ARG_VALUE}" STREQUAL "TRUE")
+        set(diagnostic_value "yes")
+    else()
+        set(diagnostic_value "no")
+    endif()
+
+    if (NOT "${ARG_SIZE}" STREQUAL "")
+        string(APPEND diagnostic_value " (${ARG_SIZE})")
+    endif()
+
+    string(APPEND diagnostic_line ${diagnostic_padding})
+    string(APPEND diagnostic_line "${diagnostic_value}")
+
+    message(STATUS ${diagnostic_line})
+endfunction()
+
+# Check if a header is found on the default search paths of the system, and
+# if so, define a variable in the cache and append the header to
+# CMAKE_EXTRA_INCLUDE_FILES.
+#
+# VARIABLE - The name of the variable to define in the cache if the header
+#            is found.
+# PATH     - The path to the header.
+#
+# For example, if "stddef.h" is found, then ntf_check_header(PATH "stddef.h")
+# results in:
+#     HAVE_STDDEF_H = 1
+#     NTF_BUILD_HAS_STDDEF_H = 1
+# otherwise, when "stddef.h" is not found
+#     HAVE_STDDEF_H = undefined
+#     NTF_BUILD_HAS_STDDEF_H = 0
+function (ntf_check_header)
+    cmake_parse_arguments(
+        ARG "" "VARIABLE;PATH" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_PATH})
+
+    if (NOT "${ARG_VARIABLE}" STREQUAL "")
+        set(VARIABLE "${ARG_VARIABLE}")
+    else()
+        string(REGEX REPLACE "[./]" "_" VARIABLE ${ARG_PATH})
+        string(TOUPPER "${VARIABLE}" VARIABLE)
+    endif()
+
+    set(HAVE_VARIABLE "HAVE_${VARIABLE}")
+
+    set(header_list ${CMAKE_EXTRA_INCLUDE_FILES})
+    list(APPEND header_list ${ARG_PATH})
+
+    CHECK_INCLUDE_FILES("${header_list}" ${HAVE_VARIABLE})
+
+    if (${${HAVE_VARIABLE}})
+        set(NTF_BUILD_HAS_${VARIABLE} 1 CACHE INTERNAL "")
+        set(CMAKE_EXTRA_INCLUDE_FILES ${header_list} CACHE INTERNAL "")
+    else()
+        set(NTF_BUILD_HAS_${VARIABLE} 0 CACHE INTERNAL "")
+    endif()
+
+    ntf_check_diagnostic(
+        MESSAGE
+            "Checking for header: ${ARG_PATH}"
+        VALUE
+            "${NTF_BUILD_HAS_${VARIABLE}}")
+endfunction()
+
+# Check if a symbol is declared by any of a set of headers found on the default
+# search paths of the system, and if so, define a variable in the cache.
+#
+# VARIABLE - The name of the variable to define in the cache if the function
+#            is found.
+# NAME     - The symbol name.
+# HEADERS  - The semicolon-separated list of headers to include when
+#            checking for the existence of the function.
+#
+# For example, ntf_check_function(NAME printf) results in:
+#     HAVE_PRINTF = 1
+#     NTF_BUILD_HAS_PRINTF = 1
+function (ntf_check_function)
+    cmake_parse_arguments(
+        ARG "" "VARIABLE;NAME" "HEADERS" ${ARGN})
+
+    ntf_assert_defined(${ARG_NAME})
+
+    if (NOT "${ARG_VARIABLE}" STREQUAL "")
+        set(VARIABLE "${ARG_VARIABLE}")
+    else()
+        string(TOUPPER "${ARG_NAME}" VARIABLE)
+    endif()
+
+    set(HAVE_VARIABLE "HAVE_${VARIABLE}")
+
+    if (DEFINED ${HAVE_VARIABLE})
+        return()
+    endif()
+
+    if (NOT "${ARG_HEADERS}" STREQUAL "")
+        set(header_list ${ARG_HEADERS})
+    else()
+        set(header_list ${CMAKE_EXTRA_INCLUDE_FILES})
+    endif()
+
+    CHECK_SYMBOL_EXISTS(${ARG_NAME} "${header_list}" ${HAVE_VARIABLE})
+
+    if (${HAVE_VARIABLE})
+        set(NTF_BUILD_HAS_${VARIABLE} 1 CACHE INTERNAL "")
+    else()
+        set(NTF_BUILD_HAS_${VARIABLE} 0 CACHE INTERNAL "")
+    endif()
+
+    ntf_check_diagnostic(
+        MESSAGE
+            "Checking for function: ${ARG_NAME}"
+        VALUE
+            "${NTF_BUILD_HAS_${VARIABLE}}")
+
+endfunction()
+
+# Check if a function protoype is declared by any of a set of headers found on
+# the default search paths of the system, and if so, define a variable in the
+# cache.
+#
+# VARIABLE - The name of the variable to define in the cache if the function
+#            is found.
+# FUNCTION - The symbol name.
+# PROTOYPE - The function prototype.
+# RETURN   - The return value of the function.
+# HEADERS  - The semicolon-separated list of headers to include when
+#            checking for the existence of the function.
+#
+# For example:
+#
+# ntf_check_function_prototype(
+#     FUNCTION  "getpwent_r"
+#     PROTOTYPE "struct passwd *getpwent_r(struct passwd*, char*, int)"
+#     RETURN    "NULL"
+#     VARIABLE  "GETPWENT_R_ARG_3")
+#
+# Results in:
+#     HAVE_GETPWENT_R_ARG_3 = 1
+#     NTF_BUILD_HAS_GETPWENT_R_ARG_3 = 1
+function (ntf_check_function_prototype)
+    cmake_parse_arguments(
+        ARG "" "VARIABLE;FUNCTION;PROTOTYPE;RETURN" "HEADERS" ${ARGN})
+
+    ntf_assert_defined(${ARG_FUNCTION})
+    ntf_assert_defined(${ARG_PROTOTYPE})
+    ntf_assert_defined(${ARG_RETURN})
+
+    if (NOT "${ARG_VARIABLE}" STREQUAL "")
+        set(VARIABLE "${ARG_VARIABLE}")
+    else()
+        string(TOUPPER "${ARG_FUNCTION}" VARIABLE)
+    endif()
+
+    set(HAVE_VARIABLE "HAVE_${VARIABLE}")
+
+    if (DEFINED ${HAVE_VARIABLE})
+        return()
+    endif()
+
+    if (NOT "${ARG_HEADERS}" STREQUAL "")
+        set(header_list ${ARG_HEADERS})
+    else()
+        set(header_list ${CMAKE_EXTRA_INCLUDE_FILES})
+    endif()
+
+    check_prototype_definition(
+        ${ARG_FUNCTION}
+        ${ARG_PROTOTYPE}
+        ${ARG_RETURN}
+        "${header_list}"
+        ${HAVE_VARIABLE})
+
+    if (${HAVE_VARIABLE})
+        set(NTF_BUILD_HAS_${VARIABLE} 1 CACHE INTERNAL "")
+    else()
+        set(NTF_BUILD_HAS_${VARIABLE} 0 CACHE INTERNAL "")
+    endif()
+
+    ntf_check_diagnostic(
+        MESSAGE
+            "Checking for: ${HAVE_VARIABLE}"
+        VALUE
+            "${NTF_BUILD_HAS_${VARIABLE}}")
+
+endfunction()
+
+# Check if a constant is declared by any of a set of headers found on the
+# default search paths of the system, and if so, define a variable in the
+# cache.
+#
+# VARIABLE - The name of the variable to define in the cache if the constant
+#            is found.
+# NAME     - The constant name.
+# HEADERS  - The semicolon-separated list of headers to include when
+#              checking for the existence of the symbol.
+#
+# For example, ntf_check_constant(NAME "FD_SETSIZE") results in:
+#     HAVE_FD_SETSIZE = 1
+#     NTF_BUILD_HAS_FD_SETSIZE = 1
+function (ntf_check_constant)
+    cmake_parse_arguments(
+        ARG "" "VARIABLE;NAME" "HEADERS" ${ARGN})
+
+    ntf_assert_defined(${ARG_NAME})
+
+    if (NOT "${ARG_VARIABLE}" STREQUAL "")
+        set(VARIABLE "${ARG_VARIABLE}")
+    else()
+        string(TOUPPER "${ARG_NAME}" VARIABLE)
+    endif()
+
+    set(HAVE_VARIABLE "HAVE_${VARIABLE}")
+
+    if (DEFINED ${HAVE_VARIABLE})
+        return()
+    endif()
+
+    if (NOT "${ARG_HEADERS}" STREQUAL "")
+        set(header_list ${ARG_HEADERS})
+    else()
+        set(header_list ${CMAKE_EXTRA_INCLUDE_FILES})
+    endif()
+
+    set(program "")
+    foreach (header ${header_list})
+        string(APPEND program "#include <${header}>\n")
+    endforeach()
+
+    string(APPEND program
+        "int main() { int value = (int)(${ARG_NAME}); return 0; }\n")
+
+    check_c_source_compiles("${program}" ${HAVE_VARIABLE})
+
+    if (${${HAVE_VARIABLE}})
+      set(${HAVE_VARIABLE} 1 CACHE INTERNAL "")
+      set(NTF_BUILD_HAS_${VARIABLE} 1 CACHE INTERNAL "")
+    else()
+      set(${HAVE_VARIABLE} 0 CACHE INTERNAL "")
+      set(NTF_BUILD_HAS_${VARIABLE} 0 CACHE INTERNAL "")
+    endif()
+
+    ntf_check_diagnostic(
+        MESSAGE
+            "Checking for constant: ${ARG_NAME}"
+        VALUE
+            "${NTF_BUILD_HAS_${VARIABLE}}")
+
+endfunction()
+
+# Check if a type is declared by any of a set of headers found on the default
+# search paths of the system, and if so, define a variable in the cache.
+#
+# NAME    - The type name.
+# VARIABLE - The name of the variable to define in the cache if the function
+#            is found.
+#
+# For example, given ntf_check_type(NAME "size_t"):
+#     HAVE_SIZE_T = 1
+#     HAVE_SIZEOF_SIZE_T = 1
+#     SIZEOF_SIZE_T = 8
+#     NTF_BUILD_SIZEOF_SIZE_T = 8
+#     NTF_BUILD_TYPEOF_SIZE_T = size_t
+#
+# For example, given ntf_check_type(NAME "struct sockaddr_storage"):
+#     HAVE_STRUCT_SOCKADDR_STORAGE = 1
+#     HAVE_SIZEOF_STRUCT_SOCKADDR_STORAGE = 1
+#     SIZEOF_STRUCT_SOCKADDR_STORAGE = 8
+#     NTF_BUILD_SIZEOF_STRUCT_SOCKADDR_STORAGE = 8
+#     NTF_BUILD_TYPEOF_STRUCT_SOCKADDR_STORAGE = struct socketaddr_storage
+function (ntf_check_type)
+    cmake_parse_arguments(
+        ARG "" "NAME;VARIABLE" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_NAME})
+
+    if (NOT "${ARG_VARIABLE}" STREQUAL "")
+        set(VARIABLE ${ARG_VARIABLE})
+    else()
+        string(REPLACE " " "_" VARIABLE ${ARG_NAME})
+        string(TOUPPER "${VARIABLE}" VARIABLE)
+    endif()
+
+    set(SIZEOF_VARIABLE "SIZEOF_${VARIABLE}")
+    set(HAVE_SIZEOF_VARIABLE "HAVE_SIZEOF_${VARIABLE}")
+
+    unset(${SIZEOF_VARIABLE} CACHE)
+    unset(${HAVE_SIZEOF_VARIABLE} CACHE)
+
+    check_type_size(${ARG_NAME} ${SIZEOF_VARIABLE})
+
+    if (DEFINED ${SIZEOF_VARIABLE} AND DEFINED ${HAVE_SIZEOF_VARIABLE} AND ${${HAVE_SIZEOF_VARIABLE}})
+
+        set(HAVE_${VARIABLE} 1 CACHE INTERNAL "")
+        set(${HAVE_SIZEOF_VARIABLE} 1 CACHE INTERNAL "")
+
+        set(NTF_BUILD_HAS_${VARIABLE} 1 CACHE INTERNAL "")
+
+        set(NTF_BUILD_SIZEOF_${VARIABLE} ${${SIZEOF_VARIABLE}} CACHE INTERNAL "")
+        set(NTF_BUILD_TYPEOF_${VARIABLE} ${ARG_NAME} CACHE INTERNAL "")
+    else()
+        set(NTF_BUILD_HAS_${VARIABLE} 0 CACHE INTERNAL "")
+    endif()
+
+    ntf_check_diagnostic(
+        MESSAGE
+            "Checking for type: ${ARG_NAME}"
+        VALUE
+            "${NTF_BUILD_HAS_${VARIABLE}}"
+        SIZE
+            "${NTF_BUILD_SIZEOF_${VARIABLE}}")
+
+endfunction()
+
+# Check if a minimal program compiles and links with specific options, and if
+# so, define a variable in the cache.
+#
+# VARIABLE - The name of the variable to define in the cache if the minimal
+#            program compiles and links.
+# CFLAGS  - The semicolon-separated list of options to use when compiling.
+# LFLAGS  - The semicolon-separated list of options to use when linking.
+#
+# For example, ntf_check_program(
+#    CFLAGS -fsanitize=thread
+#    LFLAGS -fsanitize=thread VARIABLE LINK_DYNAMIC_TSAN)
+# results in:
+#     HAVE_LINK_DYNAMIC_TSAN = 1
+#     NTF_BUILD_HAS_LINK_DYNAMIC_TSAN = 1
+function (ntf_check_program)
+    cmake_parse_arguments(
+        ARG "" "VARIABLE" "HEADERS;CFLAGS;LFLAGS" ${ARGN})
+
+    ntf_assert_defined(${ARG_VARIABLE})
+
+    set(VARIABLE "${ARG_VARIABLE}")
+
+    set(HAVE_VARIABLE "HAVE_${VARIABLE}")
+
+    if (DEFINED ${HAVE_VARIABLE})
+        return()
+    endif()
+
+    if (NOT "${ARG_HEADERS}" STREQUAL "")
+        set(header_list ${ARG_HEADERS})
+    else()
+        set(header_list ${CMAKE_EXTRA_INCLUDE_FILES})
+    endif()
+
+    set(program "")
+    foreach (header ${header_list})
+        string(APPEND program "#include <${header}>\n")
+    endforeach()
+
+    string(APPEND program
+        "int main() { return 0; }\n")
+
+    list(APPEND CMAKE_REQUIRED_FLAGS ${ARG_CFLAGS})
+    list(APPEND CMAKE_REQUIRED_LINK_OPTIONS ${ARG_LFLAGS})
+
+    set(CMAKE_REQUIRED_QUIET TRUE)
+
+    check_cxx_source_compiles("${program}" ${HAVE_VARIABLE})
+
+    if (${${HAVE_VARIABLE}})
+      set(${HAVE_VARIABLE} 1 CACHE INTERNAL "")
+      set(NTF_BUILD_HAS_${VARIABLE} 1 CACHE INTERNAL "")
+    else()
+      set(${HAVE_VARIABLE} 0 CACHE INTERNAL "")
+      set(NTF_BUILD_HAS_${VARIABLE} 0 CACHE INTERNAL "")
+    endif()
+
+    ntf_check_diagnostic(
+        MESSAGE
+            "Checking for link option: ${ARG_VARIABLE}"
+        VALUE
+            "${NTF_BUILD_HAS_${VARIABLE}}")
+
+endfunction()
+
+# Check if a minimal program compiles and links statically to the
+# compiler-specific address sanitization libraries, and if so, define a
+# variable in the cache.
+#
+# VARIABLE - The name of the variable to define in the cache if statically
+#            linking address sanitization libraries is supported.
+#
+# For example:
+#
+#     ntf_check_build_has_link_static_asan(VARIABLE LINK_STATIC_ASAN)
+#
+# results in:
+#
+#     HAVE_LINK_STATIC_ASAN = 1
+#     NTF_BUILD_HAS_LINK_STATIC_ASAN = 1
+#
+# on platforms that support statically linking to address sanitization
+# libaries.
+function (ntf_check_build_has_link_static_asan)
+    cmake_parse_arguments(
+        ARG "" "VARIABLE" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_VARIABLE})
+
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        ntf_check_program(
+            CFLAGS -fsanitize=address
+            LFLAGS -fsanitize=address -static-libsan VARIABLE ${ARG_VARIABLE}
+        )
+    elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        ntf_check_program(
+            CFLAGS -fsanitize=address
+            LFLAGS -fsanitize=address -static-libasan VARIABLE ${ARG_VARIABLE}
+        )
+    else()
+        set(VARIABLE "${ARG_VARIABLE}")
+        set(HAVE_VARIABLE "HAVE_${VARIABLE}")
+
+        set(${HAVE_VARIABLE} 0 CACHE INTERNAL "")
+        set(NTF_BUILD_HAS_${VARIABLE} 0 CACHE INTERNAL "")
+    endif()
+
+endfunction()
+
+# Check if a minimal program compiles and links dynamically to the
+# compiler-specific address sanitization libraries, and if so, define a
+# variable in the cache.
+#
+# VARIABLE - The name of the variable to define in the cache if dynamically
+#            linking address sanitization libraries is supported.
+#
+# For example:
+#
+#     ntf_check_build_has_link_dynamic_asan(VARIABLE LINK_DYNAMIC_ASAN)
+#
+# results in:
+#
+#     HAVE_LINK_DYNAMIC_ASAN = 1
+#     NTF_BUILD_HAS_LINK_DYNAMIC_ASAN = 1
+#
+# on platforms that support dynamically linking to address sanitization
+# libaries.
+function (ntf_check_build_has_link_dynamic_asan)
+    cmake_parse_arguments(
+        ARG "" "VARIABLE" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_VARIABLE})
+
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        ntf_check_program(
+            CFLAGS -fsanitize=address
+            LFLAGS -fsanitize=address VARIABLE ${ARG_VARIABLE}
+        )
+    elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        ntf_check_program(
+            CFLAGS -fsanitize=address
+            LFLAGS -fsanitize=address VARIABLE ${ARG_VARIABLE}
+        )
+    else()
+        set(VARIABLE "${ARG_VARIABLE}")
+        set(HAVE_VARIABLE "HAVE_${VARIABLE}")
+
+        set(${HAVE_VARIABLE} 0 CACHE INTERNAL "")
+        set(NTF_BUILD_HAS_${VARIABLE} 0 CACHE INTERNAL "")
+    endif()
+
+endfunction()
+
+# Check if a minimal program compiles and links statically to the
+# compiler-specific memory sanitization libraries, and if so, define a
+# variable in the cache.
+#
+# VARIABLE - The name of the variable to define in the cache if statically
+#            linking memory sanitization libraries is supported.
+#
+# For example:
+#
+#     ntf_check_build_has_link_static_msan(VARIABLE LINK_STATIC_MSAN)
+#
+# results in:
+#
+#     HAVE_LINK_STATIC_MSAN = 1
+#     NTF_BUILD_HAS_LINK_STATIC_MSAN = 1
+#
+# on platforms that support statically linking to memory sanitization
+# libaries.
+function (ntf_check_build_has_link_static_msan)
+    cmake_parse_arguments(
+        ARG "" "VARIABLE" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_VARIABLE})
+
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        ntf_check_program(
+            CFLAGS -fsanitize=memory
+            LFLAGS -fsanitize=memory -static-libsan VARIABLE ${ARG_VARIABLE}
+        )
+    else()
+        set(VARIABLE "${ARG_VARIABLE}")
+        set(HAVE_VARIABLE "HAVE_${VARIABLE}")
+
+        set(${HAVE_VARIABLE} 0 CACHE INTERNAL "")
+        set(NTF_BUILD_HAS_${VARIABLE} 0 CACHE INTERNAL "")
+    endif()
+
+endfunction()
+
+# Check if a minimal program compiles and links dynamically to the
+# compiler-specific memory sanitization libraries, and if so, define a
+# variable in the cache.
+#
+# VARIABLE - The name of the variable to define in the cache if dynamically
+#            linking memory sanitization libraries is supported.
+#
+# For example:
+#
+#     ntf_check_build_has_link_dynamic_msan(VARIABLE LINK_DYNAMIC_MSAN)
+#
+# results in:
+#
+#     HAVE_LINK_DYNAMIC_MSAN = 1
+#     NTF_BUILD_HAS_LINK_DYNAMIC_MSAN = 1
+#
+# on platforms that support dynamically linking to memory sanitization
+# libaries.
+function (ntf_check_build_has_link_dynamic_msan)
+    cmake_parse_arguments(
+        ARG "" "VARIABLE" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_VARIABLE})
+
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        ntf_check_program(
+            CFLAGS -fsanitize=memory
+            LFLAGS -fsanitize=memory VARIABLE ${ARG_VARIABLE}
+        )
+    else()
+        set(VARIABLE "${ARG_VARIABLE}")
+        set(HAVE_VARIABLE "HAVE_${VARIABLE}")
+
+        set(${HAVE_VARIABLE} 0 CACHE INTERNAL "")
+        set(NTF_BUILD_HAS_${VARIABLE} 0 CACHE INTERNAL "")
+    endif()
+
+endfunction()
+
+# Check if a minimal program compiles and links statically to the
+# compiler-specific thread sanitization libraries, and if so, define a
+# variable in the cache.
+#
+# VARIABLE - The name of the variable to define in the cache if statically
+#            linking thread sanitization libraries is supported.
+#
+# For example:
+#
+#     ntf_check_build_has_link_static_tsan(VARIABLE LINK_STATIC_TSAN)
+#
+# results in:
+#
+#     HAVE_LINK_STATIC_TSAN = 1
+#     NTF_BUILD_HAS_LINK_STATIC_TSAN = 1
+#
+# on platforms that support statically linking to thread sanitization libaries.
+function (ntf_check_build_has_link_static_tsan)
+    cmake_parse_arguments(
+        ARG "" "VARIABLE" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_VARIABLE})
+
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        ntf_check_program(
+            CFLAGS -fsanitize=thread
+            LFLAGS -fsanitize=thread -static-libsan VARIABLE ${ARG_VARIABLE}
+        )
+    elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        ntf_check_program(
+            CFLAGS -fsanitize=thread
+            LFLAGS -fsanitize=thread -static-libtsan VARIABLE ${ARG_VARIABLE}
+        )
+    else()
+        set(VARIABLE "${ARG_VARIABLE}")
+        set(HAVE_VARIABLE "HAVE_${VARIABLE}")
+
+        set(${HAVE_VARIABLE} 0 CACHE INTERNAL "")
+        set(NTF_BUILD_HAS_${VARIABLE} 0 CACHE INTERNAL "")
+    endif()
+
+endfunction()
+
+# Check if a minimal program compiles and links dynamically to the
+# compiler-specific thread sanitization libraries, and if so, define a
+# variable in the cache.
+#
+# VARIABLE - The name of the variable to define in the cache if dynamically
+#            linking thread sanitization libraries is supported.
+#
+# For example:
+#
+#     ntf_check_build_has_link_dynamic_tsan(VARIABLE LINK_DYNAMIC_TSAN)
+#
+# results in:
+#
+#     HAVE_LINK_DYNAMIC_TSAN = 1
+#     NTF_BUILD_HAS_LINK_DYNAMIC_TSAN = 1
+#
+# on platforms that support dynamically linking to thread sanitization
+# libaries.
+function (ntf_check_build_has_link_dynamic_tsan)
+    cmake_parse_arguments(
+        ARG "" "VARIABLE" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_VARIABLE})
+
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        ntf_check_program(
+            CFLAGS -fsanitize=thread
+            LFLAGS -fsanitize=thread VARIABLE ${ARG_VARIABLE}
+        )
+    elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        ntf_check_program(
+            CFLAGS -fsanitize=thread
+            LFLAGS -fsanitize=thread VARIABLE ${ARG_VARIABLE}
+        )
+    else()
+        set(VARIABLE "${ARG_VARIABLE}")
+        set(HAVE_VARIABLE "HAVE_${VARIABLE}")
+
+        set(${HAVE_VARIABLE} 0 CACHE INTERNAL "")
+        set(NTF_BUILD_HAS_${VARIABLE} 0 CACHE INTERNAL "")
+    endif()
+
+endfunction()
+
+# Check if a minimal program compiles and links statically to the
+# compiler-specific undefined behavior sanitization libraries, and if so,
+# define a variable in the cache.
+#
+# VARIABLE - The name of the variable to define in the cache if statically
+#            linking undefined behavior sanitization libraries is supported.
+#
+# For example:
+#
+#     ntf_check_build_has_link_static_ubsan(VARIABLE LINK_STATIC_UBSAN)
+#
+# results in:
+#
+#     HAVE_LINK_STATIC_UBSAN = 1
+#     NTF_BUILD_HAS_LINK_STATIC_UBSAN = 1
+#
+# on platforms that support statically linking to undefined behavior
+# sanitization libaries.
+function (ntf_check_build_has_link_static_ubsan)
+    cmake_parse_arguments(
+        ARG "" "VARIABLE" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_VARIABLE})
+
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        ntf_check_program(
+            CFLAGS -fsanitize=undefined
+            LFLAGS -fsanitize=undefined -static-libsan
+            VARIABLE ${ARG_VARIABLE}
+        )
+    elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        ntf_check_program(
+            CFLAGS -fsanitize=undefined
+            LFLAGS -fsanitize=undefined -static-libubsan
+            VARIABLE ${ARG_VARIABLE}
+        )
+    else()
+        set(VARIABLE "${ARG_VARIABLE}")
+        set(HAVE_VARIABLE "HAVE_${VARIABLE}")
+
+        set(${HAVE_VARIABLE} 0 CACHE INTERNAL "")
+        set(NTF_BUILD_HAS_${VARIABLE} 0 CACHE INTERNAL "")
+    endif()
+
+endfunction()
+
+# Check if a minimal program compiles and links dynamically to the
+# compiler-specific undefined behavior sanitization libraries, and if so,
+# define a variable in the cache.
+#
+# VARIABLE - The name of the variable to define in the cache if dynamically
+#            linking undefined behavior sanitization libraries is supported.
+#
+# For example:
+#
+#     ntf_check_build_has_link_dynamic_ubsan(VARIABLE LINK_DYNAMIC_UBSAN)
+#
+# results in:
+#
+#     HAVE_LINK_DYNAMIC_UBSAN = 1
+#     NTF_BUILD_HAS_LINK_DYNAMIC_UBSAN = 1
+#
+# on platforms that support dynamically linking to undefined behavior
+# sanitization libaries.
+function (ntf_check_build_has_link_dynamic_ubsan)
+    cmake_parse_arguments(
+        ARG "" "VARIABLE" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_VARIABLE})
+
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        ntf_check_program(
+            CFLAGS -fsanitize=undefined
+            LFLAGS -fsanitize=undefined VARIABLE ${ARG_VARIABLE}
+        )
+    elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        ntf_check_program(
+            CFLAGS -fsanitize=undefined
+            LFLAGS -fsanitize=undefined VARIABLE ${ARG_VARIABLE}
+        )
+    else()
+        set(VARIABLE "${ARG_VARIABLE}")
+        set(HAVE_VARIABLE "HAVE_${VARIABLE}")
+
+        set(${HAVE_VARIABLE} 0 CACHE INTERNAL "")
+        set(NTF_BUILD_HAS_${VARIABLE} 0 CACHE INTERNAL "")
+    endif()
+
 endfunction()
