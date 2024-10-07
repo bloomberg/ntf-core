@@ -13,197 +13,86 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsa_id.h>
-
 #include <ntscfg_test.h>
 
-#include <bslma_testallocator.h>
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsa_id_t_cpp, "$Id$ $CSID$")
 
-#include <bsl_cstdlib.h>
-#include <bsl_iostream.h>
-#include <bsl_sstream.h>
-#include <bsl_stdexcept.h>
+#include <ntsa_id.h>
 
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-// This test driver ensures the basic properties of the locally-unique
-// identifier generation system: that new objects are automatically assigned
-// identifiers unique to the current process, that objects are properly
-// formatted when written to streams, and that copy-construction does not
-// generate new identifiers.
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntsa {
 
-//=============================================================================
-//                      STANDARD BDE ASSERT TEST MACRO
-//-----------------------------------------------------------------------------
-static int testStatus = 0;
-
-static void aSsErT(int c, const char* s, int i)
+// Provide tests for 'ntsa::Id'.
+class IdTest
 {
-    if (c) {
-        bsl::cout << "Error " << __FILE__ << "(" << i << "): " << s
-                  << "    (failed)" << bsl::endl;
-        if (0 <= testStatus && testStatus <= 100)
-            ++testStatus;
+  public:
+    // TODO
+    static void verify();
+};
+
+NTSCFG_TEST_FUNCTION(ntsa::IdTest::verify)
+{
+    // TESTING OBJECT ID CREATION
+    //
+    // Concerns:
+    //   Objects that automatically generated identifiers unique within
+    //   the current process. Copy construction does not generate new
+    //   values. Object are properly formatted when written to streams.
+    //
+    // Plan:
+    //   This test plan assumes that no other objects in this process
+    //   have previously called 'ntsa::Id::generate()'. First,
+    //   create two 'ntsa::Id's. Ensure they have been assigned
+    //   integer identifiers monitonically increasing starting at 1.
+    //   Ensure the objects are properly formatted when written to streams.
+    //   Ensure that copy construction does not generate new identifiers;
+    //   a copy-constructed 'ntsa::Id' conceptually identifies the
+    //   same object as the value from which it was constructed.
+
+    // Generate the first locally-unique identifier to this process and
+    // ensure it is assigned the integer value 1.
+
+    ntsa::Id id1(ntsa::Id::generate());
+    NTSCFG_TEST_EQ(static_cast<int>(id1), 1);
+    
+    {
+        bsl::ostringstream ss;
+        ss << id1;
+        NTSCFG_TEST_EQ(ss.str(), "id:000001");
     }
+
+    // Generate the second locally-unique identifier to this process and
+    // ensure it is assigned the integer value 1.
+
+    ntsa::Id id2(ntsa::Id::generate());
+    NTSCFG_TEST_EQ(static_cast<int>(id2), 2);
+    {
+        bsl::ostringstream ss;
+        ss << id2;
+        NTSCFG_TEST_EQ(ss.str(), "id:000002");
+    }
+
+    // Ensure that the two identifiers do not have the same value.
+
+    NTSCFG_TEST_NE(id1, id2);
+
+    // Copy construct the first identifier and ensure it has the same
+    // value as the original value: copy-construction does not generate
+    // an new unique value.
+
+    ntsa::Id id1copy(id1);
+    NTSCFG_TEST_EQ(id1, id1copy);
+
+    // Copy construct the second identifier and ensure it has the same
+    // value as the original value: copy-construction does not generate
+    // an new unique value.
+
+    ntsa::Id id2copy(id2);
+    NTSCFG_TEST_EQ(id2, id2copy);
 }
 
-#define ASSERT(X)                                                             \
-    {                                                                         \
-        aSsErT(!(X), #X, __LINE__);                                           \
-    }
-
-//=============================================================================
-//                  STANDARD BDE LOOP-ASSERT TEST MACROS
-//-----------------------------------------------------------------------------
-#define LOOP_ASSERT(I, X)                                                     \
-    {                                                                         \
-        if (!(X)) {                                                           \
-            bsl::cout << #I << ": " << I << "\n";                             \
-            aSsErT(1, #X, __LINE__);                                          \
-        }                                                                     \
-    }
-
-#define LOOP2_ASSERT(I, J, X)                                                 \
-    {                                                                         \
-        if (!(X)) {                                                           \
-            bsl::cout << #I << ": " << I << "\t" << #J << ": " << J << "\n";  \
-            aSsErT(1, #X, __LINE__);                                          \
-        }                                                                     \
-    }
-
-#define LOOP3_ASSERT(I, J, K, X)                                              \
-    {                                                                         \
-        if (!(X)) {                                                           \
-            bsl::cout << #I << ": " << I << "\t" << #J << ": " << J << "\t"   \
-                      << #K << ": " << K << "\n";                             \
-            aSsErT(1, #X, __LINE__);                                          \
-        }                                                                     \
-    }
-
-//=============================================================================
-//                  SEMI-STANDARD TEST OUTPUT MACROS
-//-----------------------------------------------------------------------------
-#define P(X) bsl::cout << #X " = " << (X) << bsl::endl;
-#define Q(X) bsl::cout << "<| " #X " |>" << bsl::endl;
-#define P_(X) bsl::cout << #X " = " << (X) << ", " << bsl::flush;
-#define L_ __LINE__
-#define NL "\n"
-#define T_() bsl::cout << "    " << bsl::flush;
-
-//=============================================================================
-//                  GLOBAL TYPEDEFS/CONSTANTS FOR TESTING
-//-----------------------------------------------------------------------------
-
-static int verbose             = 0;
-static int veryVerbose         = 0;
-static int veryVeryVerbose     = 0;
-static int veryVeryVeryVerbose = 0;
-
-//=============================================================================
-//                        HELPER FUNCTIONS AND CLASSES
-//-----------------------------------------------------------------------------
-
-//=============================================================================
-//                              MAIN PROGRAM
-//-----------------------------------------------------------------------------
-
-int main(int argc, char* argv[])
-{
-    int test            = argc > 1 ? bsl::atoi(argv[1]) : 0;
-    verbose             = (argc > 2);
-    veryVerbose         = (argc > 3);
-    veryVeryVerbose     = (argc > 4);
-    veryVeryVeryVerbose = (argc > 5);
-    bsl::cout << "TEST " << __FILE__ << " CASE " << test << bsl::endl;
-    ;
-
-    switch (test) {
-    case 0:  // Zero is always the leading case.
-    case 1: {
-        // TESTING OBJECT ID CREATION
-        //
-        // Concerns:
-        //   Objects that automatically generated identifiers unique within
-        //   the current process. Copy construction does not generate new
-        //   values. Object are properly formatted when written to streams.
-        //
-        // Plan:
-        //   This test plan assumes that no other objects in this process
-        //   have previously called 'ntsa::Id::generate()'. First,
-        //   create two 'ntsa::Id's. Ensure they have been assigned
-        //   integer identifiers monitonically increasing starting at 1.
-        //   Ensure the objects are properly formatted when written to streams.
-        //   Ensure that copy construction does not generate new identifiers;
-        //   a copy-constructed 'ntsa::Id' conceptually identifies the
-        //   same object as the value from which it was constructed.
-
-        // Generate the first locally-unique identifier to this process and
-        // ensure it is assigned the integer value 1.
-
-        ntsa::Id id1(ntsa::Id::generate());
-        if (verbose) {
-            bsl::cout << "id1 = " << id1 << bsl::endl;
-        }
-        ASSERT(static_cast<int>(id1) == 1);
-        {
-            bsl::ostringstream ss;
-            ss << id1;
-            ASSERT(ss.str() == "id:000001");
-        }
-
-        // Generate the second locally-unique identifier to this process and
-        // ensure it is assigned the integer value 1.
-
-        ntsa::Id id2(ntsa::Id::generate());
-        if (verbose) {
-            bsl::cout << "id2 = " << id2 << bsl::endl;
-        }
-        ASSERT(static_cast<int>(id2) == 2);
-        {
-            bsl::ostringstream ss;
-            ss << id2;
-            ASSERT(ss.str() == "id:000002");
-        }
-
-        // Ensure that the two identifiers do not have the same value.
-
-        ASSERT(id1 != id2);
-
-        // Copy construct the first identifier and ensure it has the same
-        // value as the original value: copy-construction does not generate
-        // an new unique value.
-
-        ntsa::Id id1copy(id1);
-        if (verbose) {
-            bsl::cout << "id1copy = " << id1copy << bsl::endl;
-        }
-        ASSERT(id1 == id1copy);
-
-        // Copy construct the second identifier and ensure it has the same
-        // value as the original value: copy-construction does not generate
-        // an new unique value.
-
-        ntsa::Id id2copy(id2);
-        if (verbose) {
-            bsl::cout << "id2copy = " << id2copy << bsl::endl;
-        }
-        ASSERT(id2 == id2copy);
-    } break;
-    default: {
-        bsl::cerr << "WARNING: CASE `" << test << "' NOT FOUND." << bsl::endl;
-        testStatus = -1;
-    }
-    }
-
-    if (testStatus > 0) {
-        bsl::cerr << "Error, non-zero test status = " << testStatus << "."
-                  << bsl::endl;
-    }
-    return testStatus;
-}
+}  // close namespace ntsa
+}  // close namespace BloombergLP

@@ -13,152 +13,136 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsa_receiveoptions.h>
-
 #include <ntscfg_test.h>
 
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bsls_assert.h>
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsa_receiveoptions_t_cpp, "$Id$ $CSID$")
+
+#include <ntsa_receiveoptions.h>
 
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntsa {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
+// Provide tests for 'ntsa::ReceiveOptions'.
+class ReceiveOptionsTest
+{
+  public:
+    // TODO
+    static void verifyCase1();
 
-NTSCFG_TEST_CASE(1)
+    // TODO
+    static void verifyCase2();
+
+    // TODO
+    static void verifyCase3();
+
+    // TODO
+    static void verifyCase4();
+};
+
+NTSCFG_TEST_FUNCTION(ntsa::ReceiveOptionsTest::verifyCase1)
 {
     // Concern: Test want/show/hide endpoint, timestamp, and foreign handles.
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::ReceiveOptions opt;
-        NTSCFG_TEST_FALSE(opt.wantTimestamp());
-        NTSCFG_TEST_TRUE(opt.wantEndpoint());
+    ntsa::ReceiveOptions opt;
+    NTSCFG_TEST_FALSE(opt.wantTimestamp());
+    NTSCFG_TEST_TRUE(opt.wantEndpoint());
 
-        opt.hideEndpoint();
-        opt.showTimestamp();
-        NTSCFG_TEST_TRUE(opt.wantTimestamp());
-        NTSCFG_TEST_FALSE(opt.wantEndpoint());
+    opt.hideEndpoint();
+    opt.showTimestamp();
+    NTSCFG_TEST_TRUE(opt.wantTimestamp());
+    NTSCFG_TEST_FALSE(opt.wantEndpoint());
 
-        opt.showEndpoint();
-        NTSCFG_TEST_TRUE(opt.wantTimestamp());
-        NTSCFG_TEST_TRUE(opt.wantEndpoint());
+    opt.showEndpoint();
+    NTSCFG_TEST_TRUE(opt.wantTimestamp());
+    NTSCFG_TEST_TRUE(opt.wantEndpoint());
 
-        opt.hideEndpoint();
-        NTSCFG_TEST_TRUE(opt.wantTimestamp());
-        NTSCFG_TEST_FALSE(opt.wantEndpoint());
+    opt.hideEndpoint();
+    NTSCFG_TEST_TRUE(opt.wantTimestamp());
+    NTSCFG_TEST_FALSE(opt.wantEndpoint());
 
-        opt.hideTimestamp();
-        NTSCFG_TEST_FALSE(opt.wantTimestamp());
-        NTSCFG_TEST_FALSE(opt.wantEndpoint());
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    opt.hideTimestamp();
+    NTSCFG_TEST_FALSE(opt.wantTimestamp());
+    NTSCFG_TEST_FALSE(opt.wantEndpoint());
 }
 
-NTSCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntsa::ReceiveOptionsTest::verifyCase2)
 {
-    // Concern: test equals() method (boolean options considered only)
+    // Concern: test equals() method (boolean options considered only).
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::ReceiveOptions opt1;
-        ntsa::ReceiveOptions opt2;
-        NTSCFG_TEST_TRUE(opt1.equals(opt2));
+    ntsa::ReceiveOptions opt1;
+    ntsa::ReceiveOptions opt2;
+    NTSCFG_TEST_TRUE(opt1.equals(opt2));
 
-        opt1.showTimestamp();
-        NTSCFG_TEST_FALSE(opt1.equals(opt2));
+    opt1.showTimestamp();
+    NTSCFG_TEST_FALSE(opt1.equals(opt2));
 
-        opt2.showTimestamp();
-        NTSCFG_TEST_TRUE(opt1.equals(opt2));
+    opt2.showTimestamp();
+    NTSCFG_TEST_TRUE(opt1.equals(opt2));
 
-        opt2.hideEndpoint();
-        opt1.hideEndpoint();
-        NTSCFG_TEST_TRUE(opt1.equals(opt2));
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    opt2.hideEndpoint();
+    opt1.hideEndpoint();
+    NTSCFG_TEST_TRUE(opt1.equals(opt2));
 }
 
-NTSCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntsa::ReceiveOptionsTest::verifyCase3)
 {
-    // Concern: test less() method (boolean options considered only)
+    // Concern: test less() method (boolean options considered only).
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::ReceiveOptions opt1;
-        ntsa::ReceiveOptions opt2;
-        NTSCFG_TEST_FALSE(opt1.less(opt2));
+    ntsa::ReceiveOptions opt1;
+    ntsa::ReceiveOptions opt2;
+    NTSCFG_TEST_FALSE(opt1.less(opt2));
 
-        opt1.showTimestamp();
-        NTSCFG_TEST_FALSE(opt1.less(opt2));
+    opt1.showTimestamp();
+    NTSCFG_TEST_FALSE(opt1.less(opt2));
 
-        opt2.hideEndpoint();
-        NTSCFG_TEST_TRUE(opt2.less(opt1));
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    opt2.hideEndpoint();
+    NTSCFG_TEST_TRUE(opt2.less(opt1));
 }
 
-NTSCFG_TEST_CASE(4)
+NTSCFG_TEST_FUNCTION(ntsa::ReceiveOptionsTest::verifyCase4)
 {
     // Concern: wantMetaData
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::ReceiveOptions options;
+    ntsa::ReceiveOptions options;
 
-        NTSCFG_TEST_FALSE(options.wantTimestamp());
-        NTSCFG_TEST_FALSE(options.wantForeignHandles());
-        NTSCFG_TEST_FALSE(options.wantMetaData());
+    NTSCFG_TEST_FALSE(options.wantTimestamp());
+    NTSCFG_TEST_FALSE(options.wantForeignHandles());
+    NTSCFG_TEST_FALSE(options.wantMetaData());
 
-        options.showTimestamp();
+    options.showTimestamp();
 
-        NTSCFG_TEST_TRUE(options.wantTimestamp());
-        NTSCFG_TEST_FALSE(options.wantForeignHandles());
-        NTSCFG_TEST_TRUE(options.wantMetaData());
+    NTSCFG_TEST_TRUE(options.wantTimestamp());
+    NTSCFG_TEST_FALSE(options.wantForeignHandles());
+    NTSCFG_TEST_TRUE(options.wantMetaData());
 
-        options.reset();
+    options.reset();
 
-        NTSCFG_TEST_FALSE(options.wantTimestamp());
-        NTSCFG_TEST_FALSE(options.wantForeignHandles());
-        NTSCFG_TEST_FALSE(options.wantMetaData());
+    NTSCFG_TEST_FALSE(options.wantTimestamp());
+    NTSCFG_TEST_FALSE(options.wantForeignHandles());
+    NTSCFG_TEST_FALSE(options.wantMetaData());
 
-        options.showForeignHandles();
+    options.showForeignHandles();
 
-        NTSCFG_TEST_FALSE(options.wantTimestamp());
-        NTSCFG_TEST_TRUE(options.wantForeignHandles());
-        NTSCFG_TEST_TRUE(options.wantMetaData());
+    NTSCFG_TEST_FALSE(options.wantTimestamp());
+    NTSCFG_TEST_TRUE(options.wantForeignHandles());
+    NTSCFG_TEST_TRUE(options.wantMetaData());
 
-        options.reset();
+    options.reset();
 
-        NTSCFG_TEST_FALSE(options.wantTimestamp());
-        NTSCFG_TEST_FALSE(options.wantForeignHandles());
-        NTSCFG_TEST_FALSE(options.wantMetaData());
+    NTSCFG_TEST_FALSE(options.wantTimestamp());
+    NTSCFG_TEST_FALSE(options.wantForeignHandles());
+    NTSCFG_TEST_FALSE(options.wantMetaData());
 
-        options.showTimestamp();
-        options.showForeignHandles();
+    options.showTimestamp();
+    options.showForeignHandles();
 
-        NTSCFG_TEST_TRUE(options.wantTimestamp());
-        NTSCFG_TEST_TRUE(options.wantForeignHandles());
-        NTSCFG_TEST_TRUE(options.wantMetaData());
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_TRUE(options.wantTimestamp());
+    NTSCFG_TEST_TRUE(options.wantForeignHandles());
+    NTSCFG_TEST_TRUE(options.wantMetaData());
 }
 
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-    NTSCFG_TEST_REGISTER(2);
-    NTSCFG_TEST_REGISTER(3);
-    NTSCFG_TEST_REGISTER(4);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsa
+}  // close namespace BloombergLP

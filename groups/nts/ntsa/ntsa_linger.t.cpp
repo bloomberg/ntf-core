@@ -13,42 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsa_linger.h>
-
 #include <ntscfg_test.h>
 
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bsls_assert.h>
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsa_linger_t_cpp, "$Id$ $CSID$")
+
+#include <ntsa_linger.h>
 
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntsa {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
-
-NTSCFG_TEST_CASE(1)
+// Provide tests for 'ntsa::Linger'.
+class LingerTest
 {
-    // Concern:
-    // Plan:
+  public:
+    // TODO
+    static void verify();
+};
 
-    ntscfg::TestAllocator ta;
-    {
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+NTSCFG_TEST_FUNCTION(ntsa::LingerTest::verify)
+{
 }
 
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsa
+}  // close namespace BloombergLP

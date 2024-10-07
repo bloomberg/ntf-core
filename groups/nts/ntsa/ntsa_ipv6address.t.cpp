@@ -13,17 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsa_ipv6address.h>
+#include <ntscfg_test.h>
 
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntsa_ipv6address_t_cpp, "$Id$ $CSID$")
 
-#include <ntscfg_test.h>
-#include <bslma_testallocator.h>
-#include <bsls_platform.h>
-#include <bsl_sstream.h>
-#include <bsl_string.h>
-#include <bsl_unordered_set.h>
+#include <ntsa_ipv6address.h>
 
 using namespace BloombergLP;
 
@@ -81,7 +76,7 @@ class Ipv6AddressTest
     static void verifyComparison();
 };
 
-void Ipv6AddressTest::verifyTypeTraits()
+NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyTypeTraits)
 {
     const bool isBitwiseInitializable =
         NTSCFG_TYPE_CHECK_BITWISE_INITIALIZABLE(ntsa::Ipv6Address);
@@ -104,7 +99,7 @@ void Ipv6AddressTest::verifyTypeTraits()
     NTSCFG_TEST_TRUE(isBitwiseComparable);
 }
 
-void Ipv6AddressTest::verifyDefaultConstructor()
+NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyDefaultConstructor)
 {
     ntsa::Ipv6Address u;
 
@@ -113,7 +108,7 @@ void Ipv6AddressTest::verifyDefaultConstructor()
     NTSCFG_TEST_EQ(u.scopeId(), 0);
 }
 
-void Ipv6AddressTest::verifyMoveConstructor()
+NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyMoveConstructor)
 {
     ntsa::Ipv6Address u("2606:2800:220:1:248:1893:25c8:1946%123");
 
@@ -162,7 +157,7 @@ void Ipv6AddressTest::verifyMoveConstructor()
 #endif
 }
 
-void Ipv6AddressTest::verifyCopyConstructor()
+NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyCopyConstructor)
 {
     ntsa::Ipv6Address u("2606:2800:220:1:248:1893:25c8:1946%123");
 
@@ -205,11 +200,11 @@ void Ipv6AddressTest::verifyCopyConstructor()
     NTSCFG_TEST_EQ(v[0x0F], 0x46);
 }
 
-void Ipv6AddressTest::verifyOverloadConstructor()
+NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyOverloadConstructor)
 {
 }
 
-void Ipv6AddressTest::verifyCopyAssignment()
+NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyCopyAssignment)
 {
     ntsa::Ipv6Address u("2606:2800:220:1:248:1893:25c8:1946%123");
 
@@ -253,7 +248,7 @@ void Ipv6AddressTest::verifyCopyAssignment()
     NTSCFG_TEST_EQ(v[0x0F], 0x46);
 }
 
-void Ipv6AddressTest::verifyMoveAssignment()
+NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyMoveAssignment)
 {
     ntsa::Ipv6Address u("2606:2800:220:1:248:1893:25c8:1946%123");
 
@@ -303,11 +298,11 @@ void Ipv6AddressTest::verifyMoveAssignment()
 #endif
 }
 
-void Ipv6AddressTest::verifyOverloadAssignment()
+NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyOverloadAssignment)
 {
 }
 
-void Ipv6AddressTest::verifyReset()
+NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyReset)
 {
     ntsa::Ipv6Address u("2606:2800:220:1:248:1893:25c8:1946%123");
 
@@ -337,7 +332,7 @@ void Ipv6AddressTest::verifyReset()
     NTSCFG_TEST_EQ(u.scopeId(), 0);
 }
 
-void Ipv6AddressTest::verifyFormatting()
+NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyFormatting)
 {
     // a
 
@@ -1136,7 +1131,7 @@ void Ipv6AddressTest::verifyFormatting()
     }
 }
 
-void Ipv6AddressTest::verifyParsing()
+NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyParsing)
 {
     // Microsoft Visual Studio 2013 does not compile the array literal
     // initialization.
@@ -1347,7 +1342,7 @@ void Ipv6AddressTest::verifyParsing()
 #endif
 }
 
-void Ipv6AddressTest::verifyParsingScopeId()
+NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyParsingScopeId)
 {
     {
         ntsa::Ipv6Address address;
@@ -1382,7 +1377,7 @@ void Ipv6AddressTest::verifyParsingScopeId()
     }
 }
 
-void Ipv6AddressTest::verifyParsingAbbreviation()
+NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyParsingAbbreviation)
 {
     {
         bslstl::StringRef INPUT("1:2:3:4:5:6:7:8");
@@ -1480,7 +1475,7 @@ void Ipv6AddressTest::verifyParsingAbbreviation()
     }
 }
 
-void Ipv6AddressTest::verifyHashing()
+NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyHashing)
 {
     ntsa::Ipv6Address address1("2606:2800:220:1:248:1893:25c8:1946");
     ntsa::Ipv6Address address2("2001:41c0::1");
@@ -1492,29 +1487,10 @@ void Ipv6AddressTest::verifyHashing()
     NTSCFG_TEST_ASSERT(addressSet.size() == 2);
 }
 
-void Ipv6AddressTest::verifyComparison()
+NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyComparison)
 {
 }
 
 }  // close namespace ntsa
 }  // close namespace BloombergLP
 
-NTSCFG_TEST_SUITE
-{
-    NTSCFG_TEST_FUNCTION(&ntsa::Ipv6AddressTest::verifyTypeTraits);
-    NTSCFG_TEST_FUNCTION(&ntsa::Ipv6AddressTest::verifyDefaultConstructor);
-    NTSCFG_TEST_FUNCTION(&ntsa::Ipv6AddressTest::verifyMoveConstructor);
-    NTSCFG_TEST_FUNCTION(&ntsa::Ipv6AddressTest::verifyCopyConstructor);
-    NTSCFG_TEST_FUNCTION(&ntsa::Ipv6AddressTest::verifyOverloadConstructor);
-    NTSCFG_TEST_FUNCTION(&ntsa::Ipv6AddressTest::verifyCopyAssignment);
-    NTSCFG_TEST_FUNCTION(&ntsa::Ipv6AddressTest::verifyMoveAssignment);
-    NTSCFG_TEST_FUNCTION(&ntsa::Ipv6AddressTest::verifyOverloadAssignment);
-    NTSCFG_TEST_FUNCTION(&ntsa::Ipv6AddressTest::verifyReset);
-    NTSCFG_TEST_FUNCTION(&ntsa::Ipv6AddressTest::verifyFormatting);
-    NTSCFG_TEST_FUNCTION(&ntsa::Ipv6AddressTest::verifyParsing);
-    NTSCFG_TEST_FUNCTION(&ntsa::Ipv6AddressTest::verifyParsingScopeId);
-    NTSCFG_TEST_FUNCTION(&ntsa::Ipv6AddressTest::verifyParsingAbbreviation);
-    NTSCFG_TEST_FUNCTION(&ntsa::Ipv6AddressTest::verifyHashing);
-    NTSCFG_TEST_FUNCTION(&ntsa::Ipv6AddressTest::verifyComparison);
-}
-NTSCFG_TEST_SUITE_END;

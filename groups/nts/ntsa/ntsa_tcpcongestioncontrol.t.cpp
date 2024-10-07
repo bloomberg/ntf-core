@@ -1,4 +1,4 @@
-// Copyright 2024 Bloomberg Finance L.P.
+// Copyright 2020-2023 Bloomberg Finance L.P.
 // SPDX-License-Identifier: Apache-2.0
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,12 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsa_tcpcongestioncontrol.h>
+#include <ntscfg_test.h>
 
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntsa_tcpcongestioncontrol_t_cpp, "$Id$ $CSID$")
 
-#include <ntscfg_test.h>
+#include <ntsa_tcpcongestioncontrol.h>
 
 using namespace BloombergLP;
 
@@ -61,7 +61,7 @@ class TcpCongestionControlTest
     static void verifyWellKnownEnumerators();
 };
 
-void TcpCongestionControlTest::verifyTypeTraits()
+NTSCFG_TEST_FUNCTION(ntsa::TcpCongestionControlTest::verifyTypeTraits)
 {
     const bool isAllocatorAware =
         NTSCFG_TYPE_CHECK_ALLOCATOR_AWARE(ntsa::TcpCongestionControl);
@@ -69,7 +69,7 @@ void TcpCongestionControlTest::verifyTypeTraits()
     NTSCFG_TEST_TRUE(isAllocatorAware);
 }
 
-void TcpCongestionControlTest::verifyDefaultConstructor()
+NTSCFG_TEST_FUNCTION(ntsa::TcpCongestionControlTest::verifyDefaultConstructor)
 {
     ntsa::TcpCongestionControl congestionControl(NTSCFG_TEST_ALLOCATOR);
 
@@ -77,7 +77,7 @@ void TcpCongestionControlTest::verifyDefaultConstructor()
     NTSCFG_TEST_EQ(congestionControl.allocator(), NTSCFG_TEST_ALLOCATOR);
 }
 
-void TcpCongestionControlTest::verifyMoveConstructor()
+NTSCFG_TEST_FUNCTION(ntsa::TcpCongestionControlTest::verifyMoveConstructor)
 {
     ntsa::TcpCongestionControl source(NTSCFG_TEST_ALLOCATOR);
 
@@ -95,7 +95,7 @@ void TcpCongestionControlTest::verifyMoveConstructor()
 #endif
 }
 
-void TcpCongestionControlTest::verifyCopyConstructor()
+NTSCFG_TEST_FUNCTION(ntsa::TcpCongestionControlTest::verifyCopyConstructor)
 {
     ntsa::TcpCongestionControl source(NTSCFG_TEST_ALLOCATOR);
 
@@ -108,7 +108,7 @@ void TcpCongestionControlTest::verifyCopyConstructor()
     NTSCFG_TEST_EQ(destination.allocator(), NTSCFG_TEST_ALLOCATOR);
 }
 
-void TcpCongestionControlTest::verifyOverloadConstructor()
+NTSCFG_TEST_FUNCTION(ntsa::TcpCongestionControlTest::verifyOverloadConstructor)
 {
     {
         ntsa::TcpCongestionControl source("debug", NTSCFG_TEST_ALLOCATOR);
@@ -125,7 +125,7 @@ void TcpCongestionControlTest::verifyOverloadConstructor()
     }
 }
 
-void TcpCongestionControlTest::verifyCopyAssignment()
+NTSCFG_TEST_FUNCTION(ntsa::TcpCongestionControlTest::verifyCopyAssignment)
 {
     ntsa::TcpCongestionControl source("debug", NTSCFG_TEST_ALLOCATOR);
     NTSCFG_TEST_EQ(source.algorithm(), "debug");
@@ -141,7 +141,7 @@ void TcpCongestionControlTest::verifyCopyAssignment()
     NTSCFG_TEST_EQ(destination.allocator(), bslma::Default::allocator());
 }
 
-void TcpCongestionControlTest::verifyMoveAssignment()
+NTSCFG_TEST_FUNCTION(ntsa::TcpCongestionControlTest::verifyMoveAssignment)
 {
     {
         ntsa::TcpCongestionControl source("debug", NTSCFG_TEST_ALLOCATOR);
@@ -184,11 +184,11 @@ void TcpCongestionControlTest::verifyMoveAssignment()
     }
 }
 
-void TcpCongestionControlTest::verifyOverloadAssignment()
+NTSCFG_TEST_FUNCTION(ntsa::TcpCongestionControlTest::verifyOverloadAssignment)
 {
 }
 
-void TcpCongestionControlTest::verifyReset()
+NTSCFG_TEST_FUNCTION(ntsa::TcpCongestionControlTest::verifyReset)
 {
     ntsa::TcpCongestionControl source("debug", NTSCFG_TEST_ALLOCATOR);
     NTSCFG_TEST_EQ(source.algorithm(), "debug");
@@ -200,7 +200,7 @@ void TcpCongestionControlTest::verifyReset()
     NTSCFG_TEST_EQ(source.allocator(), NTSCFG_TEST_ALLOCATOR);
 }
 
-void TcpCongestionControlTest::verifyWellKnownEnumerators()
+NTSCFG_TEST_FUNCTION(ntsa::TcpCongestionControlTest::verifyWellKnownEnumerators)
 {
     ntsa::Error error;
 
@@ -253,26 +253,3 @@ void TcpCongestionControlTest::verifyWellKnownEnumerators()
 
 }  // close namespace ntsa
 }  // close namespace BloombergLP
-
-NTSCFG_TEST_SUITE
-{
-    NTSCFG_TEST_FUNCTION(&ntsa::TcpCongestionControlTest::verifyTypeTraits);
-    NTSCFG_TEST_FUNCTION(
-        &ntsa::TcpCongestionControlTest::verifyDefaultConstructor);
-    NTSCFG_TEST_FUNCTION(
-        &ntsa::TcpCongestionControlTest::verifyMoveConstructor);
-    NTSCFG_TEST_FUNCTION(
-        &ntsa::TcpCongestionControlTest::verifyCopyConstructor);
-    NTSCFG_TEST_FUNCTION(
-        &ntsa::TcpCongestionControlTest::verifyOverloadConstructor);
-    NTSCFG_TEST_FUNCTION(
-        &ntsa::TcpCongestionControlTest::verifyCopyAssignment);
-    NTSCFG_TEST_FUNCTION(
-        &ntsa::TcpCongestionControlTest::verifyMoveAssignment);
-    NTSCFG_TEST_FUNCTION(
-        &ntsa::TcpCongestionControlTest::verifyOverloadAssignment);
-    NTSCFG_TEST_FUNCTION(&ntsa::TcpCongestionControlTest::verifyReset);
-    NTSCFG_TEST_FUNCTION(
-        &ntsa::TcpCongestionControlTest::verifyWellKnownEnumerators);
-}
-NTSCFG_TEST_SUITE_END;

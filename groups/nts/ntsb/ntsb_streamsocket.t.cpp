@@ -13,124 +13,50 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsb_streamsocket_t_cpp, "$Id$ $CSID$")
+
 #include <ntsb_streamsocket.h>
 
-#include <ntscfg_test.h>
 #include <ntsu_adapterutil.h>
-#include <ntsu_socketoptionutil.h>
 #include <ntsu_socketutil.h>
-#include <bdlbb_blob.h>
-#include <bdlbb_blobutil.h>
-#include <bdlbb_pooledblobbufferfactory.h>
-#include <bdlf_bind.h>
-#include <bdlf_placeholder.h>
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bslma_testallocator.h>
-#include <bslmt_threadgroup.h>
-#include <bsls_assert.h>
-#include <bsls_log.h>
-#include <bsl_sstream.h>
-#include <bsl_string.h>
 
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntsb {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
-
-namespace test {
-
-namespace {
-
-/// Provide a suite of utilities for generating test data.
-/// This struct is completely thread safe.
-struct DataUtil {
-    /// Return the byte at the specified 'position' in the specified
-    /// 'dataset'.
-    static char generateByte(int position, int dataset);
-
-    /// Load into the specified 'result' the specified 'size' sequence of
-    /// bytes from the specified 'dataset' starting at the specified
-    /// 'offset'.
-    static void generateData(bsl::string* result,
-                             int          size,
-                             int          offset  = 0,
-                             int          dataset = 0);
-
-    /// Load into the specified 'result' the specified 'size' sequence of
-    /// bytes from the specified 'dataset' starting at the specified
-    /// 'offset'.
-    static void generateData(bdlbb::Blob* result,
-                             int          size,
-                             int          offset  = 0,
-                             int          dataset = 0);
-};
-
-char DataUtil::generateByte(int position, int dataset)
+// Provide tests for 'ntsb::StreamSocket'.
+class StreamSocketTest
 {
-    struct {
-        const char* source;
-        int         length;
-    } DATA[] = {
-        {"abcdefghijklmnopqrstuvwxyz", 26},
-        {"ABCDEFGHIJKLMNOPQRSTUVWXYZ", 26}
-    };
+  public:
+    // TODO
+    static void verifyCase1();
 
-    enum { NUM_DATA = sizeof(DATA) / sizeof(*DATA) };
+    // TODO
+    static void verifyCase2();
 
-    dataset = dataset % NUM_DATA;
-    return DATA[dataset].source[position % DATA[dataset].length];
-}
+  private:
+    /// Test the implementations of the specified 'client' and 'server'
+    /// send and receive data correctly using basic, contiguous buffers.
+    /// Optionally specify a 'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    static void testBufferIO(const bsl::shared_ptr<ntsb::StreamSocket>& client,
+                             const bsl::shared_ptr<ntsb::StreamSocket>& server,
+                             bslma::Allocator* basicAllocator = 0);
 
-void DataUtil::generateData(bsl::string* result,
-                            int          size,
-                            int          offset,
-                            int          dataset)
-{
-    result->clear();
-    result->resize(size);
+    /// Test the implementations of the specified 'client' and 'server'
+    /// send and receive data correctly using vectored I/O and the
+    /// scatter/gather paradigm. Optionally specify a 'basicAllocator' used
+    /// to supply memory. If 'basicAllocator' is 0, the currently installed
+    /// default allocator is used.
+    static void testVectorIO(const bsl::shared_ptr<ntsb::StreamSocket>& client,
+                             const bsl::shared_ptr<ntsb::StreamSocket>& server,
+                             bslma::Allocator* basicAllocator = 0);
 
-    for (int i = offset; i < offset + size; ++i) {
-        (*result)[i] = generateByte(offset + i, dataset);
-    }
-}
-
-void DataUtil::generateData(bdlbb::Blob* result,
-                            int          size,
-                            int          offset,
-                            int          dataset)
-{
-    result->removeAll();
-    result->setLength(size);
-
-    int k = 0;
-
-    for (int i = 0; i < result->numDataBuffers(); ++i) {
-        const bdlbb::BlobBuffer& buffer = result->buffer(i);
-
-        int numBytesToWrite = i == result->numDataBuffers() - 1
-                                  ? result->lastDataBufferLength()
-                                  : buffer.size();
-
-        for (int j = 0; j < numBytesToWrite; ++j) {
-            buffer.data()[j] = generateByte(offset + k, dataset);
-            ++k;
-        }
-    }
-}
-
-/// Provide utilities for testing stream sockets.
-struct StreamSocketUtil {
     /// Send all the specified 'data' having the specified 'size' through
     /// the specified 'socket', using as many system calls as necessary.
     /// Return the error.
@@ -153,9 +79,253 @@ struct StreamSocketUtil {
     /// 'data' from the specified 'socket', using as many system calls as
     /// necessary. Return the error.
     static ntsa::Error receiveAll(bdlbb::Blob* data, ntsa::Handle socket);
+
+    /// Send from the specified 'client' all the specified 'clientData'
+    /// to the peer of the 'client'.
+    static void sendString(const bsl::shared_ptr<ntsb::StreamSocket>& client,
+                           const bsl::string* clientData);
+
+    /// Receive from the specified 'server' into the pre-ressized
+    /// 'serverData' all the data sent by the peer of the 'server'.
+    static void receiveString(
+        const bsl::shared_ptr<ntsb::StreamSocket>& server,
+        bsl::string*                               serverData);
+
+    /// Send from the specified 'client' all the specified 'clientData'
+    /// to the peer of the 'client'.
+    static void sendBlob(const bsl::shared_ptr<ntsb::StreamSocket>& client,
+                         const bdlbb::Blob* clientData);
+
+    /// Receive from the specified 'server' into the pre-ressized
+    /// 'serverData' all the data sent by the peer of the 'server'.
+    static void receiveBlob(const bsl::shared_ptr<ntsb::StreamSocket>& server,
+                            bdlbb::Blob* serverData);
 };
 
-ntsa::Error StreamSocketUtil::sendAll(const void*  data,
+NTSCFG_TEST_FUNCTION(ntsb::StreamSocketTest::verifyCase1)
+{
+    bsl::vector<ntsa::Transport::Value> socketTypes;
+
+    if (ntsu::AdapterUtil::supportsTransport(
+            ntsa::Transport::e_TCP_IPV4_STREAM))
+    {
+        socketTypes.push_back(ntsa::Transport::e_TCP_IPV4_STREAM);
+    }
+
+    if (ntsu::AdapterUtil::supportsTransport(
+            ntsa::Transport::e_TCP_IPV6_STREAM))
+    {
+        socketTypes.push_back(ntsa::Transport::e_TCP_IPV6_STREAM);
+    }
+
+    if (ntsu::AdapterUtil::supportsTransport(ntsa::Transport::e_LOCAL_STREAM))
+    {
+        socketTypes.push_back(ntsa::Transport::e_LOCAL_STREAM);
+    }
+
+    for (bsl::size_t i = 0; i < socketTypes.size(); ++i) {
+        ntsa::Transport::Value transport = socketTypes[i];
+
+        ntscfg::TestAllocator ta;
+        {
+            ntsa::Error error;
+
+            bsl::shared_ptr<ntsb::StreamSocket> client;
+            bsl::shared_ptr<ntsb::StreamSocket> server;
+
+            error = ntsb::StreamSocket::pair(&client, &server, transport, &ta);
+            NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+
+            StreamSocketTest::testBufferIO(client, server, &ta);
+
+            error = client->shutdown(ntsa::ShutdownType::e_SEND);
+            NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+
+            error = server->shutdown(ntsa::ShutdownType::e_SEND);
+            NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+
+            error = client->close();
+            NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+
+            error = server->close();
+            NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+        }
+        NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntsb::StreamSocketTest::verifyCase2)
+{
+    bsl::vector<ntsa::Transport::Value> socketTypes;
+
+    if (ntsu::AdapterUtil::supportsTransport(
+            ntsa::Transport::e_TCP_IPV4_STREAM))
+    {
+        socketTypes.push_back(ntsa::Transport::e_TCP_IPV4_STREAM);
+    }
+
+    if (ntsu::AdapterUtil::supportsTransport(
+            ntsa::Transport::e_TCP_IPV6_STREAM))
+    {
+        socketTypes.push_back(ntsa::Transport::e_TCP_IPV6_STREAM);
+    }
+
+    if (ntsu::AdapterUtil::supportsTransport(ntsa::Transport::e_LOCAL_STREAM))
+    {
+        socketTypes.push_back(ntsa::Transport::e_LOCAL_STREAM);
+    }
+
+    for (bsl::size_t i = 0; i < socketTypes.size(); ++i) {
+        ntsa::Transport::Value transport = socketTypes[i];
+
+        ntscfg::TestAllocator ta;
+        {
+            ntsa::Error error;
+
+            bsl::shared_ptr<ntsb::StreamSocket> client;
+            bsl::shared_ptr<ntsb::StreamSocket> server;
+
+            error = ntsb::StreamSocket::pair(&client, &server, transport, &ta);
+            NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+
+            StreamSocketTest::testVectorIO(client, server, &ta);
+
+            error = client->shutdown(ntsa::ShutdownType::e_SEND);
+            NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+
+            error = server->shutdown(ntsa::ShutdownType::e_SEND);
+            NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+
+            error = client->close();
+            NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+
+            error = server->close();
+            NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+        }
+        NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    }
+}
+
+void StreamSocketTest::testBufferIO(
+    const bsl::shared_ptr<ntsb::StreamSocket>& client,
+    const bsl::shared_ptr<ntsb::StreamSocket>& server,
+    bslma::Allocator*                          basicAllocator)
+{
+    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
+
+    ntsa::Error error;
+
+    const bsl::size_t SIZE = 1024 * 1024 * 64;
+
+    bsl::string clientData(allocator);
+    ntscfg::TestDataUtil::generateData(&clientData, SIZE);
+
+    bsl::string serverData(allocator);
+    serverData.resize(SIZE);
+
+    bslmt::ThreadGroup threadGroup(allocator);
+    threadGroup.addThread(
+        bdlf::BindUtil::bind(&StreamSocketTest::sendString, client, &clientData));
+    threadGroup.addThread(
+        bdlf::BindUtil::bind(&StreamSocketTest::receiveString, server, &serverData));
+
+    threadGroup.joinAll();
+
+    NTSCFG_TEST_EQ(serverData, clientData);
+
+    ntsa::Endpoint clientSourceEndpoint;
+    error = client->sourceEndpoint(&clientSourceEndpoint);
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+
+    ntsa::Endpoint serverSourceEndpoint;
+    error = server->sourceEndpoint(&serverSourceEndpoint);
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+
+    {
+        bsl::string clientSourceEndpointDescription;
+        {
+            bsl::stringstream ss;
+            ss << clientSourceEndpoint;
+            clientSourceEndpointDescription = ss.str();
+        }
+
+        bsl::string serverSourceEndpointDescription;
+        {
+            bsl::stringstream ss;
+            ss << serverSourceEndpoint;
+            serverSourceEndpointDescription = ss.str();
+        }
+
+        BSLS_LOG_DEBUG(
+            "Test buffer I/O complete using stream socket pair %s / %s",
+            clientSourceEndpointDescription.c_str(),
+            serverSourceEndpointDescription.c_str());
+    }
+}
+
+void StreamSocketTest::testVectorIO(
+    const bsl::shared_ptr<ntsb::StreamSocket>& client,
+    const bsl::shared_ptr<ntsb::StreamSocket>& server,
+    bslma::Allocator*                          basicAllocator)
+{
+    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
+
+    ntsa::Error error;
+
+    bdlbb::PooledBlobBufferFactory blobBufferFactory(4096, allocator);
+
+    const bsl::size_t SIZE = 1024 * 1024 * 64;
+
+    bdlbb::Blob clientData(&blobBufferFactory, allocator);
+    ntscfg::TestDataUtil::generateData(&clientData, SIZE);
+
+    bdlbb::Blob serverData(&blobBufferFactory, allocator);
+    serverData.setLength(SIZE);
+    serverData.setLength(0);
+    NTSCFG_TEST_EQ(serverData.length(), 0);
+    NTSCFG_TEST_EQ(serverData.totalSize(), SIZE);
+
+    bslmt::ThreadGroup threadGroup(allocator);
+    threadGroup.addThread(
+        bdlf::BindUtil::bind(&StreamSocketTest::sendBlob, client, &clientData));
+    threadGroup.addThread(
+        bdlf::BindUtil::bind(&StreamSocketTest::receiveBlob, server, &serverData));
+
+    threadGroup.joinAll();
+
+    NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(serverData, clientData), 0);
+
+    ntsa::Endpoint clientSourceEndpoint;
+    error = client->sourceEndpoint(&clientSourceEndpoint);
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+
+    ntsa::Endpoint serverSourceEndpoint;
+    error = server->sourceEndpoint(&serverSourceEndpoint);
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+
+    {
+        bsl::string clientSourceEndpointDescription;
+        {
+            bsl::stringstream ss;
+            ss << clientSourceEndpoint;
+            clientSourceEndpointDescription = ss.str();
+        }
+
+        bsl::string serverSourceEndpointDescription;
+        {
+            bsl::stringstream ss;
+            ss << serverSourceEndpoint;
+            serverSourceEndpointDescription = ss.str();
+        }
+
+        BSLS_LOG_DEBUG(
+            "Test vector I/O complete using stream socket pair %s / %s",
+            clientSourceEndpointDescription.c_str(),
+            serverSourceEndpointDescription.c_str());
+    }
+}
+
+ntsa::Error StreamSocketTest::sendAll(const void*  data,
                                       bsl::size_t  size,
                                       ntsa::Handle socket)
 {
@@ -201,7 +371,7 @@ ntsa::Error StreamSocketUtil::sendAll(const void*  data,
     return ntsa::Error();
 }
 
-ntsa::Error StreamSocketUtil::receiveAll(void*        data,
+ntsa::Error StreamSocketTest::receiveAll(void*        data,
                                          bsl::size_t  size,
                                          ntsa::Handle socket)
 {
@@ -247,7 +417,7 @@ ntsa::Error StreamSocketUtil::receiveAll(void*        data,
     return ntsa::Error();
 }
 
-ntsa::Error StreamSocketUtil::sendAll(const bdlbb::Blob& data,
+ntsa::Error StreamSocketTest::sendAll(const bdlbb::Blob& data,
                                       ntsa::Handle       socket)
 {
     bdlbb::Blob dataRemaining = data;
@@ -277,7 +447,7 @@ ntsa::Error StreamSocketUtil::sendAll(const bdlbb::Blob& data,
     return ntsa::Error();
 }
 
-ntsa::Error StreamSocketUtil::receiveAll(bdlbb::Blob* data,
+ntsa::Error StreamSocketTest::receiveAll(bdlbb::Blob* data,
                                          ntsa::Handle socket)
 {
     do {
@@ -303,323 +473,40 @@ ntsa::Error StreamSocketUtil::receiveAll(bdlbb::Blob* data,
     return ntsa::Error();
 }
 
-/// Provide utilities for sending and receiving data.
-struct AsyncUtil {
-    /// Send from the specified 'client' all the specified 'clientData'
-    /// to the peer of the 'client'.
-    static void sendString(const bsl::shared_ptr<ntsb::StreamSocket>& client,
-                           const bsl::string* clientData);
-
-    /// Receive from the specified 'server' into the pre-ressized
-    /// 'serverData' all the data sent by the peer of the 'server'.
-    static void receiveString(
-        const bsl::shared_ptr<ntsb::StreamSocket>& server,
-        bsl::string*                               serverData);
-
-    /// Send from the specified 'client' all the specified 'clientData'
-    /// to the peer of the 'client'.
-    static void sendBlob(const bsl::shared_ptr<ntsb::StreamSocket>& client,
-                         const bdlbb::Blob* clientData);
-
-    /// Receive from the specified 'server' into the pre-ressized
-    /// 'serverData' all the data sent by the peer of the 'server'.
-    static void receiveBlob(const bsl::shared_ptr<ntsb::StreamSocket>& server,
-                            bdlbb::Blob* serverData);
-};
-
-void AsyncUtil::sendString(const bsl::shared_ptr<ntsb::StreamSocket>& client,
+void StreamSocketTest::sendString(const bsl::shared_ptr<ntsb::StreamSocket>& client,
                            const bsl::string* clientData)
 {
-    ntsa::Error error = StreamSocketUtil::sendAll(&(*clientData)[0],
+    ntsa::Error error = StreamSocketTest::sendAll(&(*clientData)[0],
                                                   clientData->size(),
                                                   client->handle());
     NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
 }
 
-void AsyncUtil::receiveString(
+void StreamSocketTest::receiveString(
     const bsl::shared_ptr<ntsb::StreamSocket>& server,
     bsl::string*                               serverData)
 {
-    ntsa::Error error = StreamSocketUtil::receiveAll(&(*serverData)[0],
+    ntsa::Error error = StreamSocketTest::receiveAll(&(*serverData)[0],
                                                      serverData->size(),
                                                      server->handle());
     NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
 }
 
-void AsyncUtil::sendBlob(const bsl::shared_ptr<ntsb::StreamSocket>& client,
+void StreamSocketTest::sendBlob(const bsl::shared_ptr<ntsb::StreamSocket>& client,
                          const bdlbb::Blob*                         clientData)
 {
     ntsa::Error error =
-        StreamSocketUtil::sendAll(*clientData, client->handle());
+        StreamSocketTest::sendAll(*clientData, client->handle());
     NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
 }
 
-void AsyncUtil::receiveBlob(const bsl::shared_ptr<ntsb::StreamSocket>& server,
+void StreamSocketTest::receiveBlob(const bsl::shared_ptr<ntsb::StreamSocket>& server,
                             bdlbb::Blob* serverData)
 {
     ntsa::Error error =
-        StreamSocketUtil::receiveAll(serverData, server->handle());
+        StreamSocketTest::receiveAll(serverData, server->handle());
     NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
 }
 
-/// Provide facilities to test different stream sockets
-/// conveniently in one place.
-struct StreamSocketTester {
-    /// Test the implementations of the specified 'client' and 'server'
-    /// send and receive data correctly using basic, contiguous buffers.
-    /// Optionally specify a 'basicAllocator' used to supply memory. If
-    /// 'basicAllocator' is 0, the currently installed default allocator
-    /// is used.
-    static void testBufferIO(const bsl::shared_ptr<ntsb::StreamSocket>& client,
-                             const bsl::shared_ptr<ntsb::StreamSocket>& server,
-                             bslma::Allocator* basicAllocator = 0);
-
-    /// Test the implementations of the specified 'client' and 'server'
-    /// send and receive data correctly using vectored I/O and the
-    /// scatter/gather paradigm. Optionally specify a 'basicAllocator' used
-    /// to supply memory. If 'basicAllocator' is 0, the currently installed
-    /// default allocator is used.
-    static void testVectorIO(const bsl::shared_ptr<ntsb::StreamSocket>& client,
-                             const bsl::shared_ptr<ntsb::StreamSocket>& server,
-                             bslma::Allocator* basicAllocator = 0);
-};
-
-void StreamSocketTester::testBufferIO(
-    const bsl::shared_ptr<ntsb::StreamSocket>& client,
-    const bsl::shared_ptr<ntsb::StreamSocket>& server,
-    bslma::Allocator*                          basicAllocator)
-{
-    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
-
-    ntsa::Error error;
-
-    const bsl::size_t SIZE = 1024 * 1024 * 64;
-
-    bsl::string clientData(allocator);
-    DataUtil::generateData(&clientData, SIZE);
-
-    bsl::string serverData(allocator);
-    serverData.resize(SIZE);
-
-    bslmt::ThreadGroup threadGroup(allocator);
-    threadGroup.addThread(
-        bdlf::BindUtil::bind(&AsyncUtil::sendString, client, &clientData));
-    threadGroup.addThread(
-        bdlf::BindUtil::bind(&AsyncUtil::receiveString, server, &serverData));
-
-    threadGroup.joinAll();
-
-    NTSCFG_TEST_EQ(serverData, clientData);
-
-    ntsa::Endpoint clientSourceEndpoint;
-    error = client->sourceEndpoint(&clientSourceEndpoint);
-    NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
-
-    ntsa::Endpoint serverSourceEndpoint;
-    error = server->sourceEndpoint(&serverSourceEndpoint);
-    NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
-
-    {
-        bsl::string clientSourceEndpointDescription;
-        {
-            bsl::stringstream ss;
-            ss << clientSourceEndpoint;
-            clientSourceEndpointDescription = ss.str();
-        }
-
-        bsl::string serverSourceEndpointDescription;
-        {
-            bsl::stringstream ss;
-            ss << serverSourceEndpoint;
-            serverSourceEndpointDescription = ss.str();
-        }
-
-        BSLS_LOG_DEBUG(
-            "Test buffer I/O complete using stream socket pair %s / %s",
-            clientSourceEndpointDescription.c_str(),
-            serverSourceEndpointDescription.c_str());
-    }
-}
-
-void StreamSocketTester::testVectorIO(
-    const bsl::shared_ptr<ntsb::StreamSocket>& client,
-    const bsl::shared_ptr<ntsb::StreamSocket>& server,
-    bslma::Allocator*                          basicAllocator)
-{
-    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
-
-    ntsa::Error error;
-
-    bdlbb::PooledBlobBufferFactory blobBufferFactory(4096, allocator);
-
-    const bsl::size_t SIZE = 1024 * 1024 * 64;
-
-    bdlbb::Blob clientData(&blobBufferFactory, allocator);
-    DataUtil::generateData(&clientData, SIZE);
-
-    bdlbb::Blob serverData(&blobBufferFactory, allocator);
-    serverData.setLength(SIZE);
-    serverData.setLength(0);
-    NTSCFG_TEST_EQ(serverData.length(), 0);
-    NTSCFG_TEST_EQ(serverData.totalSize(), SIZE);
-
-    bslmt::ThreadGroup threadGroup(allocator);
-    threadGroup.addThread(
-        bdlf::BindUtil::bind(&AsyncUtil::sendBlob, client, &clientData));
-    threadGroup.addThread(
-        bdlf::BindUtil::bind(&AsyncUtil::receiveBlob, server, &serverData));
-
-    threadGroup.joinAll();
-
-    NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(serverData, clientData), 0);
-
-    ntsa::Endpoint clientSourceEndpoint;
-    error = client->sourceEndpoint(&clientSourceEndpoint);
-    NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
-
-    ntsa::Endpoint serverSourceEndpoint;
-    error = server->sourceEndpoint(&serverSourceEndpoint);
-    NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
-
-    {
-        bsl::string clientSourceEndpointDescription;
-        {
-            bsl::stringstream ss;
-            ss << clientSourceEndpoint;
-            clientSourceEndpointDescription = ss.str();
-        }
-
-        bsl::string serverSourceEndpointDescription;
-        {
-            bsl::stringstream ss;
-            ss << serverSourceEndpoint;
-            serverSourceEndpointDescription = ss.str();
-        }
-
-        BSLS_LOG_DEBUG(
-            "Test vector I/O complete using stream socket pair %s / %s",
-            clientSourceEndpointDescription.c_str(),
-            serverSourceEndpointDescription.c_str());
-    }
-}
-
-}  // close unnamed namespace
-
-}  // close namespace test
-
-NTSCFG_TEST_CASE(1)
-{
-    // Concern:
-    // Plan:
-
-    bsl::vector<ntsa::Transport::Value> socketTypes;
-
-    if (ntsu::AdapterUtil::supportsTransport(
-            ntsa::Transport::e_TCP_IPV4_STREAM))
-    {
-        socketTypes.push_back(ntsa::Transport::e_TCP_IPV4_STREAM);
-    }
-
-    if (ntsu::AdapterUtil::supportsTransport(
-            ntsa::Transport::e_TCP_IPV6_STREAM))
-    {
-        socketTypes.push_back(ntsa::Transport::e_TCP_IPV6_STREAM);
-    }
-
-    if (ntsu::AdapterUtil::supportsTransport(ntsa::Transport::e_LOCAL_STREAM))
-    {
-        socketTypes.push_back(ntsa::Transport::e_LOCAL_STREAM);
-    }
-
-    for (bsl::size_t i = 0; i < socketTypes.size(); ++i) {
-        ntsa::Transport::Value transport = socketTypes[i];
-
-        ntscfg::TestAllocator ta;
-        {
-            ntsa::Error error;
-
-            bsl::shared_ptr<ntsb::StreamSocket> client;
-            bsl::shared_ptr<ntsb::StreamSocket> server;
-
-            error = ntsb::StreamSocket::pair(&client, &server, transport, &ta);
-            NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
-
-            test::StreamSocketTester::testBufferIO(client, server, &ta);
-
-            error = client->shutdown(ntsa::ShutdownType::e_SEND);
-            NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
-
-            error = server->shutdown(ntsa::ShutdownType::e_SEND);
-            NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
-
-            error = client->close();
-            NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
-
-            error = server->close();
-            NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
-        }
-        NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-    }
-}
-
-NTSCFG_TEST_CASE(2)
-{
-    // Concern:
-    // Plan:
-
-    bsl::vector<ntsa::Transport::Value> socketTypes;
-
-    if (ntsu::AdapterUtil::supportsTransport(
-            ntsa::Transport::e_TCP_IPV4_STREAM))
-    {
-        socketTypes.push_back(ntsa::Transport::e_TCP_IPV4_STREAM);
-    }
-
-    if (ntsu::AdapterUtil::supportsTransport(
-            ntsa::Transport::e_TCP_IPV6_STREAM))
-    {
-        socketTypes.push_back(ntsa::Transport::e_TCP_IPV6_STREAM);
-    }
-
-    if (ntsu::AdapterUtil::supportsTransport(ntsa::Transport::e_LOCAL_STREAM))
-    {
-        socketTypes.push_back(ntsa::Transport::e_LOCAL_STREAM);
-    }
-
-    for (bsl::size_t i = 0; i < socketTypes.size(); ++i) {
-        ntsa::Transport::Value transport = socketTypes[i];
-
-        ntscfg::TestAllocator ta;
-        {
-            ntsa::Error error;
-
-            bsl::shared_ptr<ntsb::StreamSocket> client;
-            bsl::shared_ptr<ntsb::StreamSocket> server;
-
-            error = ntsb::StreamSocket::pair(&client, &server, transport, &ta);
-            NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
-
-            test::StreamSocketTester::testVectorIO(client, server, &ta);
-
-            error = client->shutdown(ntsa::ShutdownType::e_SEND);
-            NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
-
-            error = server->shutdown(ntsa::ShutdownType::e_SEND);
-            NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
-
-            error = client->close();
-            NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
-
-            error = server->close();
-            NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
-        }
-        NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-    }
-}
-
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-    NTSCFG_TEST_REGISTER(2);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsb
+}  // close namespace BloombergLP

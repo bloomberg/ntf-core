@@ -13,47 +13,53 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsa_ipaddress.h>
 #include <ntscfg_test.h>
-#include <bslma_testallocator.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsa_ipaddress_t_cpp, "$Id$ $CSID$")
+
+#include <ntsa_ipaddress.h>
 
 using namespace BloombergLP;
-using namespace ntsa;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntsa {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
-
-NTSCFG_TEST_CASE(1)
+// Provide tests for 'ntsa::IpAddress'.
+class IpAddressTest
 {
-    // Concern:
-    // Plan:
+  public:
+    // TODO
+    static void verifyCase1();
 
+    // TODO
+    static void verifyCase2();
+
+    // TODO
+    static void verifyCase3();
+
+    // TODO
+    static void verifyCase4();
+
+    // TODO
+    static void verifyCase5();
+};
+
+NTSCFG_TEST_FUNCTION(ntsa::IpAddressTest::verifyCase1)
+{
     ntsa::IpAddress ipAddress("127.0.0.1");
     NTSCFG_TEST_TRUE(ipAddress.isV4());
     NTSCFG_TEST_EQ(ipAddress.v4(), ntsa::Ipv4Address::loopback());
 }
 
-NTSCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntsa::IpAddressTest::verifyCase2)
 {
-    // Concern:
-    // Plan:
-
     ntsa::IpAddress ipAddress("::1");
     NTSCFG_TEST_TRUE(ipAddress.isV6());
     NTSCFG_TEST_EQ(ipAddress.v6(), ntsa::Ipv6Address::loopback());
 }
 
-NTSCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntsa::IpAddressTest::verifyCase3)
 {
     ntsa::IpAddress ipAddress("123.45.67.89");
 
@@ -62,7 +68,7 @@ NTSCFG_TEST_CASE(3)
     NTSCFG_TEST_TRUE(ipAddress.isUndefined());
 }
 
-NTSCFG_TEST_CASE(4)
+NTSCFG_TEST_FUNCTION(ntsa::IpAddressTest::verifyCase4)
 {
     ntsa::IpAddress ipAddress;
 
@@ -73,7 +79,7 @@ NTSCFG_TEST_CASE(4)
     NTSCFG_TEST_EQ(ipAddress.v4(), ntsa::Ipv4Address(ipv4));
 }
 
-NTSCFG_TEST_CASE(5)
+NTSCFG_TEST_FUNCTION(ntsa::IpAddressTest::verifyCase5)
 {
     ntsa::IpAddress ipAddress;
 
@@ -84,12 +90,5 @@ NTSCFG_TEST_CASE(5)
     NTSCFG_TEST_EQ(ipAddress.v6(), ntsa::Ipv6Address(ipv6));
 }
 
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-    NTSCFG_TEST_REGISTER(2);
-    NTSCFG_TEST_REGISTER(3);
-    NTSCFG_TEST_REGISTER(4);
-    NTSCFG_TEST_REGISTER(5);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsa
+}  // close namespace BloombergLP

@@ -13,27 +13,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsa_socketoption.h>
 #include <ntscfg_test.h>
-#include <bslma_testallocator.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsa_socketoption_t_cpp, "$Id$ $CSID$")
+
+#include <ntsa_socketoption.h>
 
 using namespace BloombergLP;
-using namespace ntsa;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntsa {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
+// Provide tests for 'ntsa::SocketOption'.
+class SocketOptionTest
+{
+  public:
+    // TODO
+    static void verifyCase1();
 
-NTSCFG_TEST_CASE(1)
+    // TODO
+    static void verifyCase2();
+
+    // TODO
+    static void verifyCase3();
+};
+
+NTSCFG_TEST_FUNCTION(ntsa::SocketOptionTest::verifyCase1)
 {
     // Concern: test timestampIncomingData option
 
@@ -58,7 +64,7 @@ NTSCFG_TEST_CASE(1)
     NTSCFG_TEST_FALSE(so.isTimestampIncomingData());
 }
 
-NTSCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntsa::SocketOptionTest::verifyCase2)
 {
     // Concern: test timestampOutgoingData option
 
@@ -83,7 +89,7 @@ NTSCFG_TEST_CASE(2)
     NTSCFG_TEST_FALSE(so.isTimestampOutgoingData());
 }
 
-NTSCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntsa::SocketOptionTest::verifyCase3)
 {
     // Concern: test allowMsgZeroCopy option
 
@@ -108,10 +114,5 @@ NTSCFG_TEST_CASE(3)
     NTSCFG_TEST_FALSE(so.isZeroCopy());
 }
 
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-    NTSCFG_TEST_REGISTER(2);
-    NTSCFG_TEST_REGISTER(3);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsa
+}  // close namespace BloombergLP

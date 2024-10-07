@@ -13,37 +13,54 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsa_localname.h>
 #include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsa_localname_t_cpp, "$Id$ $CSID$")
+
+#include <ntsa_localname.h>
+
 #include <balber_berdecoder.h>
 #include <balber_berencoder.h>
 #include <baljsn_decoder.h>
 #include <baljsn_encoder.h>
-#include <bdlsb_memoutstreambuf.h>
-#include <bdlsb_fixedmeminstreambuf.h>
-#include <bsl_iostream.h>
 
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
-
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntsa {
 
 #if NTSCFG_BUILD_WITH_ADDRESS_FAMILY_LOCAL
 
-NTSCFG_TEST_CASE(1)
+// Provide tests for 'ntsa::LocalName'.
+class LocalNameTest
+{
+  public:
+    // TODO
+    static void verifyCase1();
+
+    // TODO
+    static void verifyCase2();
+
+    // TODO
+    static void verifyCase3();
+
+    // TODO
+    static void verifyCase4();
+
+    // TODO
+    static void verifyCase5();
+
+    // TODO
+    static void verifyCase6();
+
+    // TODO
+    static void verifyCase7();
+};
+
+NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase1)
 {
     // Concern: Local name explicitly set to an absolute path.
-    // Plan:
 
     {
         ntsa::LocalName localName;
@@ -113,7 +130,7 @@ NTSCFG_TEST_CASE(1)
 #endif
 }
 
-NTSCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase2)
 {
     // Concern: Local name explicitly set to an absolute path.
     // Plan:
@@ -212,7 +229,7 @@ NTSCFG_TEST_CASE(2)
 #endif
 }
 
-NTSCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase3)
 {
     // Concern: Local name generated from a unique GUID.
     // Plan:
@@ -237,7 +254,7 @@ NTSCFG_TEST_CASE(3)
     }
 }
 
-NTSCFG_TEST_CASE(4)
+NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase4)
 {
     // Concern: Try to set explicitly value which is longer than can be stored
     // Plan:
@@ -287,7 +304,7 @@ NTSCFG_TEST_CASE(4)
     }
 }
 
-NTSCFG_TEST_CASE(5)
+NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase5)
 {
     // Concern: Test generateUniqueName fails if generated path is long enough
     // Notes:
@@ -368,135 +385,106 @@ NTSCFG_TEST_CASE(5)
     }
 }
 
-NTSCFG_TEST_CASE(6)
+NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase6)
+{
+    int rc;
+    
+    ntsa::LocalName e1;
+    e1.setValue("/tmp/ntf/test");
+
+    ntsa::LocalName e2;
+
+    bdlsb::MemOutStreamBuf osb(NTSCFG_TEST_ALLOCATOR);
+
+    balber::BerEncoder encoder(0, NTSCFG_TEST_ALLOCATOR);
+    rc = encoder.encode(&osb, e1);
+    if (rc != 0) {
+        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages() 
+                            << NTSCFG_TEST_LOG_END;
+
+        NTSCFG_TEST_EQ(rc, 0);
+    }
+
+    rc = osb.pubsync();
+    NTSCFG_TEST_EQ(rc, 0);
+
+    NTSCFG_TEST_GT(osb.length(), 0);
+    NTSCFG_TEST_NE(osb.data(), 0);
+
+    NTSCFG_TEST_LOG_DEBUG << "Encoded:\n" 
+                            << bdlb::PrintStringHexDumper(
+                                osb.data(), 
+                                static_cast<bsl::size_t>(osb.length())) 
+                            << NTSCFG_TEST_LOG_END;
+
+    bdlsb::FixedMemInStreamBuf isb(osb.data(), osb.length());
+
+    balber::BerDecoder decoder(0, NTSCFG_TEST_ALLOCATOR);
+    rc = decoder.decode(&isb, &e2);
+    if (rc != 0) {
+        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages() 
+                            << NTSCFG_TEST_LOG_END;
+
+        NTSCFG_TEST_EQ(rc, 0);
+    }
+
+    NTSCFG_TEST_EQ(e2, e1);
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase7)
 {
     int rc;
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::LocalName e1;
-        e1.setValue("/tmp/ntf/test");
+    ntsa::LocalName localName;
+    localName.setValue("/tmp/ntf/test");
 
-        ntsa::LocalName e2;
+    bsl::vector<ntsa::LocalName> e1(NTSCFG_TEST_ALLOCATOR);
+    bsl::vector<ntsa::LocalName> e2(NTSCFG_TEST_ALLOCATOR);
 
-        bdlsb::MemOutStreamBuf osb(&ta);
+    e1.push_back(localName);
 
-        balber::BerEncoder encoder(0, &ta);
-        rc = encoder.encode(&osb, e1);
-        if (rc != 0) {
-            NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages() 
-                                << NTSCFG_TEST_LOG_END;
+    bdlsb::MemOutStreamBuf osb(NTSCFG_TEST_ALLOCATOR);
 
-            NTSCFG_TEST_EQ(rc, 0);
-        }
+    baljsn::Encoder encoder(NTSCFG_TEST_ALLOCATOR);
+    rc = encoder.encode(&osb, e1);
+    if (rc != 0) {
+        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages() 
+                            << NTSCFG_TEST_LOG_END;
 
-        rc = osb.pubsync();
         NTSCFG_TEST_EQ(rc, 0);
-
-        NTSCFG_TEST_GT(osb.length(), 0);
-        NTSCFG_TEST_NE(osb.data(), 0);
-
-        NTSCFG_TEST_LOG_DEBUG << "Encoded:\n" 
-                              << bdlb::PrintStringHexDumper(
-                                    osb.data(), 
-                                    static_cast<bsl::size_t>(osb.length())) 
-                              << NTSCFG_TEST_LOG_END;
-
-        bdlsb::FixedMemInStreamBuf isb(osb.data(), osb.length());
-
-        balber::BerDecoder decoder(0, &ta);
-        rc = decoder.decode(&isb, &e2);
-        if (rc != 0) {
-            NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages() 
-                                << NTSCFG_TEST_LOG_END;
-
-            NTSCFG_TEST_EQ(rc, 0);
-        }
-
-        NTSCFG_TEST_EQ(e2, e1);
     }
-    NTSCFG_TEST_EQ(ta.numBlocksInUse(), 0);
-}
 
-NTSCFG_TEST_CASE(7)
-{
-    int rc;
+    rc = osb.pubsync();
+    NTSCFG_TEST_EQ(rc, 0);
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::LocalName localName;
-        localName.setValue("/tmp/ntf/test");
+    NTSCFG_TEST_GT(osb.length(), 0);
+    NTSCFG_TEST_NE(osb.data(), 0);
 
-        bsl::vector<ntsa::LocalName> e1(&ta);
-        bsl::vector<ntsa::LocalName> e2(&ta);
+    NTSCFG_TEST_LOG_DEBUG << "Encoded: " 
+                            << bsl::string_view(
+                                osb.data(), 
+                                static_cast<bsl::size_t>(osb.length())) 
+                            << NTSCFG_TEST_LOG_END;
 
-        e1.push_back(localName);
+    bdlsb::FixedMemInStreamBuf isb(osb.data(), osb.length());
 
-        bdlsb::MemOutStreamBuf osb(&ta);
+    baljsn::Decoder decoder(NTSCFG_TEST_ALLOCATOR);
+    rc = decoder.decode(&isb, &e2);
+    if (rc != 0) {
+        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages() 
+                            << NTSCFG_TEST_LOG_END;
 
-        baljsn::Encoder encoder(&ta);
-        rc = encoder.encode(&osb, e1);
-        if (rc != 0) {
-            NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages() 
-                                << NTSCFG_TEST_LOG_END;
-
-            NTSCFG_TEST_EQ(rc, 0);
-        }
-
-        rc = osb.pubsync();
         NTSCFG_TEST_EQ(rc, 0);
-
-        NTSCFG_TEST_GT(osb.length(), 0);
-        NTSCFG_TEST_NE(osb.data(), 0);
-
-        NTSCFG_TEST_LOG_DEBUG << "Encoded: " 
-                              << bsl::string_view(
-                                    osb.data(), 
-                                    static_cast<bsl::size_t>(osb.length())) 
-                              << NTSCFG_TEST_LOG_END;
-
-        bdlsb::FixedMemInStreamBuf isb(osb.data(), osb.length());
-
-        baljsn::Decoder decoder(&ta);
-        rc = decoder.decode(&isb, &e2);
-        if (rc != 0) {
-            NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages() 
-                                << NTSCFG_TEST_LOG_END;
-
-            NTSCFG_TEST_EQ(rc, 0);
-        }
-
-        NTSCFG_TEST_EQ(e2.size(), e1.size());
-
-        for (bsl::size_t i = 0; i < e1.size(); ++i) {
-            NTSCFG_TEST_EQ(e2[i], e1[i]);
-        }
     }
-    NTSCFG_TEST_EQ(ta.numBlocksInUse(), 0);
-}
 
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-    NTSCFG_TEST_REGISTER(2);
-    NTSCFG_TEST_REGISTER(3);
-    NTSCFG_TEST_REGISTER(4);
-    NTSCFG_TEST_REGISTER(5);
-    NTSCFG_TEST_REGISTER(6);
-    NTSCFG_TEST_REGISTER(7);
-}
-NTSCFG_TEST_DRIVER_END;
+    NTSCFG_TEST_EQ(e2.size(), e1.size());
 
-#else
-
-NTSCFG_TEST_CASE(1)
-{
+    for (bsl::size_t i = 0; i < e1.size(); ++i) {
+        NTSCFG_TEST_EQ(e2[i], e1[i]);
+    }
 }
-
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-}
-NTSCFG_TEST_DRIVER_END;
 
 #endif
+
+}  // close namespace ntsa
+}  // close namespace BloombergLP

@@ -13,59 +13,57 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsa_ethernetaddress.h>
-
 #include <ntscfg_test.h>
 
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bsls_assert.h>
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsa_ethernetaddress_t_cpp, "$Id$ $CSID$")
+
+#include <ntsa_ethernetaddress.h>
 
 using namespace BloombergLP;
-using namespace ntsa;
 
-NTSCFG_TEST_CASE(1)
+namespace BloombergLP {
+namespace ntsa {
+
+// Provide tests for 'ntsa::EthernetAddress'.
+class EthernetAddressTest
 {
-    // Concern:
-    // Plan:
+  public:
+    // TODO
+    static void verify();
+};
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::EthernetAddress address1;
+NTSCFG_TEST_FUNCTION(ntsa::EthernetAddressTest::verify)
+{
+    ntsa::EthernetAddress address1;
 
-        address1[0] = 0xb8;
-        address1[1] = 0xe6;
-        address1[2] = 0x0c;
-        address1[3] = 0x06;
-        address1[4] = 0x3c;
-        address1[5] = 0x7b;
+    address1[0] = 0xb8;
+    address1[1] = 0xe6;
+    address1[2] = 0x0c;
+    address1[3] = 0x06;
+    address1[4] = 0x3c;
+    address1[5] = 0x7b;
 
-        NTSCFG_TEST_LOG_DEBUG << "Address1 = " << address1 
-                              << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Address1 = " << address1 
+                          << NTSCFG_TEST_LOG_END;
 
-        char buffer[ntsa::EthernetAddress::MAX_TEXT_LENGTH + 1];
-        bsl::memset(buffer, 0, sizeof buffer);
+    char buffer[ntsa::EthernetAddress::MAX_TEXT_LENGTH + 1];
+    bsl::memset(buffer, 0, sizeof buffer);
 
-        bsl::size_t n = address1.format(buffer, sizeof buffer);
-        NTSCFG_TEST_EQ(n, ntsa::EthernetAddress::MAX_TEXT_LENGTH);
+    bsl::size_t n = address1.format(buffer, sizeof buffer);
+    NTSCFG_TEST_EQ(n, ntsa::EthernetAddress::MAX_TEXT_LENGTH);
 
-        ntsa::EthernetAddress address2;
+    ntsa::EthernetAddress address2;
 
-        bool result = address2.parse(
-            bslstl::StringRef(buffer, ntsa::EthernetAddress::MAX_TEXT_LENGTH));
-        NTSCFG_TEST_TRUE(result);
+    bool result = address2.parse(
+        bslstl::StringRef(buffer, ntsa::EthernetAddress::MAX_TEXT_LENGTH));
+    NTSCFG_TEST_TRUE(result);
 
-        NTSCFG_TEST_LOG_DEBUG << "Address2 = " << address2 
-                              << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Address2 = " << address2 
+                          << NTSCFG_TEST_LOG_END;
 
-        NTSCFG_TEST_EQ(address1, address2);
-
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_EQ(address1, address2);
 }
 
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsa
+}  // close namespace BloombergLP

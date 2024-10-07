@@ -16,26 +16,26 @@
 #include <ntscfg_test.h>
 
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntsa_notificationtype_t_cpp, "$Id$ $CSID$")
+BSLS_IDENT_RCSID(ntscfg_limits_t_cpp, "$Id$ $CSID$")
 
-#include <ntsa_notificationtype.h>
+#include <ntscfg_limits.h>
 
 using namespace BloombergLP;
 
 namespace BloombergLP {
-namespace ntsa {
+namespace ntscfg {
 
-// Provide tests for 'ntsa::NotificationType'.
-class NotificationTypeTest
+// Provide tests for 'ntscfg::Limit'.
+class LimitTest
 {
   public:
     // TODO
     static void verify();
 };
 
-NTSCFG_TEST_FUNCTION(ntsa::NotificationTypeTest::verify)
+NTSCFG_TEST_FUNCTION(ntscfg::LimitTest::verify)
 {
 }
 
-}  // close namespace ntsa
+}  // close namespace ntscfg
 }  // close namespace BloombergLP
