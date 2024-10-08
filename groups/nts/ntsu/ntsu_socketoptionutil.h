@@ -323,7 +323,7 @@ struct SocketOptionUtil {
         ntsa::Handle           socket,
         const ntsa::IpAddress& interface,
         const ntsa::IpAddress& group,
-        const ntsa::IpAddress& source);    
+        const ntsa::IpAddress& source);
 
     /// Load into the specified 'result' the flag that indicates if the
     /// socket type is a stream socket. Return the error.

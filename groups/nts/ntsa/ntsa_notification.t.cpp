@@ -1,4 +1,4 @@
-// Copyright 2023 Bloomberg Finance L.P.
+// Copyright 2020-2023 Bloomberg Finance L.P.
 // SPDX-License-Identifier: Apache-2.0
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,14 +13,45 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsa_notification.h>
-
 #include <ntscfg_test.h>
 
-using namespace BloombergLP;
-using namespace ntsa;
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsa_notification_t_cpp, "$Id$ $CSID$")
 
-NTSCFG_TEST_CASE(1)
+#include <ntsa_notification.h>
+
+using namespace BloombergLP;
+
+namespace BloombergLP {
+namespace ntsa {
+
+// Provide tests for 'ntsa::Notification'.
+class NotificationTest
+{
+  public:
+    // TODO
+    static void verifyCase1();
+
+    // TODO
+    static void verifyCase2();
+
+    // TODO
+    static void verifyCase3();
+
+    // TODO
+    static void verifyCase4();
+
+    // TODO
+    static void verifyCase5();
+
+    // TODO
+    static void verifyCase6();
+
+    // TODO
+    static void verifyCase7();
+};
+
+NTSCFG_TEST_FUNCTION(ntsa::NotificationTest::verifyCase1)
 {
     const bsl::uint32_t        id     = 12;
     const TimestampType::Value tsType = TimestampType::e_ACKNOWLEDGED;
@@ -42,7 +73,7 @@ NTSCFG_TEST_CASE(1)
     NTSCFG_TEST_EQ(n.timestamp(), ts);
 }
 
-NTSCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntsa::NotificationTest::verifyCase2)
 {
     const bsl::uint32_t        id   = 123;
     const TimestampType::Value type = TimestampType::e_ACKNOWLEDGED;
@@ -61,7 +92,7 @@ NTSCFG_TEST_CASE(2)
     NTSCFG_TEST_EQ(n.type(), NotificationType::e_TIMESTAMP);
 }
 
-NTSCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntsa::NotificationTest::verifyCase3)
 {
     const bsl::uint32_t        id   = 456;
     const TimestampType::Value type = TimestampType::e_SENT;
@@ -83,7 +114,7 @@ NTSCFG_TEST_CASE(3)
     NTSCFG_TEST_EQ(n.type(), NotificationType::e_UNDEFINED);
 }
 
-NTSCFG_TEST_CASE(4)
+NTSCFG_TEST_FUNCTION(ntsa::NotificationTest::verifyCase4)
 {
     Notification n1;
     Notification n2;
@@ -97,7 +128,7 @@ NTSCFG_TEST_CASE(4)
     NTSCFG_TEST_NE(n1, n2);
 }
 
-NTSCFG_TEST_CASE(5)
+NTSCFG_TEST_FUNCTION(ntsa::NotificationTest::verifyCase5)
 {
     const bsl::uint32_t        id   = 456;
     const TimestampType::Value type = TimestampType::e_SENT;
@@ -117,7 +148,7 @@ NTSCFG_TEST_CASE(5)
     NTSCFG_TEST_EQ(n2.timestamp(), t);
 }
 
-NTSCFG_TEST_CASE(6)
+NTSCFG_TEST_FUNCTION(ntsa::NotificationTest::verifyCase6)
 {
     Notification n;
     NTSCFG_TEST_TRUE(n.isUndefined());
@@ -136,7 +167,7 @@ NTSCFG_TEST_CASE(6)
     NTSCFG_TEST_EQ(n.zeroCopy(), zc);
 }
 
-NTSCFG_TEST_CASE(7)
+NTSCFG_TEST_FUNCTION(ntsa::NotificationTest::verifyCase7)
 {
     ZeroCopy zc;
     zc.setFrom(1);
@@ -154,14 +185,5 @@ NTSCFG_TEST_CASE(7)
     NTSCFG_TEST_EQ(n.type(), NotificationType::e_UNDEFINED);
 }
 
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-    NTSCFG_TEST_REGISTER(2);
-    NTSCFG_TEST_REGISTER(3);
-    NTSCFG_TEST_REGISTER(4);
-    NTSCFG_TEST_REGISTER(5);
-    NTSCFG_TEST_REGISTER(6);
-    NTSCFG_TEST_REGISTER(7);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsa
+}  // close namespace BloombergLP

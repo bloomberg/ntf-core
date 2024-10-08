@@ -13,17 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsa_adapter.h>
 #include <ntscfg_test.h>
-#include <ntsu_adapterutil.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsu_socketoptionutil_t_cpp, "$Id$ $CSID$")
+
 #include <ntsu_socketoptionutil.h>
+
+#include <ntsa_adapter.h>
+#include <ntsu_adapterutil.h>
 #include <ntsu_socketutil.h>
 #include <ntsu_timestamputil.h>
-#include <bslma_testallocator.h>
-#include <bsl_array.h>
-#include <bsl_fstream.h>
-#include <bsl_iostream.h>
-#include <bsl_vector.h>
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
 #include <linux/net_tstamp.h>
@@ -38,24 +38,46 @@
 
 using namespace BloombergLP;
 
+namespace BloombergLP {
+namespace ntsu {
+
+// Provide tests for 'ntsu::SocketOptionUtil'.
+class SocketOptionUtilTest
+{
+  public:
+    // TODO
+    static void verifyCase1();
+
+    // TODO
+    static void verifyCase2();
+
+    // TODO
+    static void verifyCase3();
+
+    // TODO
+    static void verifyCase4();
+
+    // TODO
+    static void verifyCase5();
+
+    // TODO
+    static void verifyCase6();
+
+    // TODO
+    static void verifyCase7();
+
+    // TODO
+    static void verifyCase8();
+
+    // TODO
+    static void verifyCase9();
+};
+
 // Undefine to test all socket types.
-// #define NTSU_SOCKETOPTUTIL_TEST_SOCKET_TYPE
+// #define NTSU_SOCKETOPTIONUTIL_TEST_SOCKET_TYPE
 //         ntsa::Transport::e_TCP_IPV4_STREAM
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
-
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
-
-NTSCFG_TEST_CASE(1)
+NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase1)
 {
     // Concern: Socket options on TCP/IPv4 sockets, using the raw API.
     // Plan:
@@ -79,8 +101,8 @@ NTSCFG_TEST_CASE(1)
     {
         ntsa::Transport::Value transport = SOCKET_TYPES[socketTypeIndex];
 
-#if defined(NTSU_SOCKETOPTUTIL_TEST_SOCKET_TYPE)
-        if (transport != NTSU_SOCKETOPTUTIL_TEST_SOCKET_TYPE) {
+#if defined(NTSU_SOCKETOPTIONUTIL_TEST_SOCKET_TYPE)
+        if (transport != NTSU_SOCKETOPTIONUTIL_TEST_SOCKET_TYPE) {
             continue;
         }
 #endif
@@ -582,7 +604,7 @@ NTSCFG_TEST_CASE(1)
     }
 }
 
-NTSCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase2)
 {
     // Concern: Socket options on TCP/IPv4 sockets, using the union API.
     // Plan:
@@ -606,8 +628,8 @@ NTSCFG_TEST_CASE(2)
     {
         ntsa::Transport::Value transport = SOCKET_TYPES[socketTypeIndex];
 
-#if defined(NTSU_SOCKETOPTUTIL_TEST_SOCKET_TYPE)
-        if (transport != NTSU_SOCKETOPTUTIL_TEST_SOCKET_TYPE) {
+#if defined(NTSU_SOCKETOPTIONUTIL_TEST_SOCKET_TYPE)
+        if (transport != NTSU_SOCKETOPTIONUTIL_TEST_SOCKET_TYPE) {
             continue;
         }
 #endif
@@ -1176,7 +1198,7 @@ NTSCFG_TEST_CASE(2)
     }
 }
 
-NTSCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase3)
 {
     // Concern: Multicast options
     // Plan:
@@ -1205,8 +1227,8 @@ NTSCFG_TEST_CASE(3)
         {
             ntsa::Transport::Value transport = SOCKET_TYPES[socketTypeIndex];
 
-#if defined(NTSU_SOCKETOPTUTIL_TEST_SOCKET_TYPE)
-            if (transport != NTSU_SOCKETOPTUTIL_TEST_SOCKET_TYPE) {
+#if defined(NTSU_SOCKETOPTIONUTIL_TEST_SOCKET_TYPE)
+            if (transport != NTSU_SOCKETOPTIONUTIL_TEST_SOCKET_TYPE) {
                 continue;
             }
 #endif
@@ -1470,7 +1492,7 @@ NTSCFG_TEST_CASE(3)
     }
 }
 
-NTSCFG_TEST_CASE(4)
+NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase4)
 {
     // Concern: Default Socket options on TCP/IPv4 sockets.
     // Plan:
@@ -1497,7 +1519,7 @@ NTSCFG_TEST_CASE(4)
     ntsu::SocketUtil::close(socket);
 }
 
-NTSCFG_TEST_CASE(5)
+NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase5)
 {
     // Concern: Timestamping support and platform assumptions.
 
@@ -1826,7 +1848,7 @@ NTSCFG_TEST_CASE(5)
     }
 }
 
-NTSCFG_TEST_CASE(6)
+NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase6)
 {
     // Concern: Zero-copy support and platform assumptions.
 
@@ -1922,7 +1944,7 @@ NTSCFG_TEST_CASE(6)
     }
 }
 
-NTSCFG_TEST_CASE(7)
+NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase7)
 {
     // Concern: test isLocal
 
@@ -1987,7 +2009,7 @@ NTSCFG_TEST_CASE(7)
     }
 }
 
-NTSCFG_TEST_CASE(8)
+NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase8)
 {
     // Concern: test setBlocking/getBlocking
 
@@ -2088,7 +2110,7 @@ NTSCFG_TEST_CASE(8)
     }
 }
 
-NTSCFG_TEST_CASE(9)
+NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase9)
 {
     // Concern: getTcpCongestionControl and setTcpCongestionControl
 
@@ -2187,16 +2209,5 @@ NTSCFG_TEST_CASE(9)
     NTSCFG_TEST_EQ(ta.numBlocksInUse(), 0);
 }
 
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-    NTSCFG_TEST_REGISTER(2);
-    NTSCFG_TEST_REGISTER(3);
-    NTSCFG_TEST_REGISTER(4);
-    NTSCFG_TEST_REGISTER(5);
-    NTSCFG_TEST_REGISTER(6);
-    NTSCFG_TEST_REGISTER(7);
-    NTSCFG_TEST_REGISTER(8);
-    NTSCFG_TEST_REGISTER(9);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsu
+}  // close namespace BloombergLP

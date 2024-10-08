@@ -13,28 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntscfg_limits_t_cpp, "$Id$ $CSID$")
+
 #include <ntscfg_platform.h>
 
-#include <bsl_cstdlib.h>
+using namespace BloombergLP;
 
-int testCase1()
+namespace BloombergLP {
+namespace ntscfg {
+
+// Provide tests for 'ntscfg::Platform'.
+class PlatformTest
 {
-    return 0;
+  public:
+    // TODO
+    static void verify();
+};
+
+NTSCFG_TEST_FUNCTION(ntscfg::PlatformTest::verify)
+{
 }
 
-int main(int argc, char** argv)
-{
-    int testCase = 0;
-    if (argc > 1) {
-        testCase = bsl::atoi(argv[1]);
-    }
-
-    if (testCase == 0 || testCase == 1) {
-        return testCase1();
-    }
-    else {
-        return -1;
-    }
-
-    return 0;
-}
+}  // close namespace ntscfg
+}  // close namespace BloombergLP

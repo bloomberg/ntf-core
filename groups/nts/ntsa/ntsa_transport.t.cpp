@@ -13,30 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsa_handle.h>
 #include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsa_transport_t_cpp, "$Id$ $CSID$")
+
+#include <ntsa_transport.h>
 
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntsa {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
+// Provide tests for 'ntsa::Transport'.
+class TransportTest
+{
+  public:
+    // TODO
+    static void verify();
+};
 
-NTSCFG_TEST_CASE(1)
+NTSCFG_TEST_FUNCTION(ntsa::TransportTest::verify)
 {
 }
 
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsa
+}  // close namespace BloombergLP

@@ -13,89 +13,74 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsa_temporary.h>
-
 #include <ntscfg_test.h>
 
-#include <bdls_filesystemutil.h>
-#include <bdls_pathutil.h>
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bsls_assert.h>
-#include <bsl_fstream.h>
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsa_temporary_t_cpp, "$Id$ $CSID$")
+
+#include <ntsa_temporary.h>
 
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntsa {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
+// Provide tests for 'ntsa::Temporary'.
+class TemporaryTest
+{
+  public:
+    // TODO
+    static void verifyCase1();
 
-NTSCFG_TEST_CASE(1)
+    // TODO
+    static void verifyCase2();
+};
+
+NTSCFG_TEST_FUNCTION(ntsa::TemporaryTest::verifyCase1)
 {
     // Concern: A temporary directory is automatically created and removed
     // by a temporary directory guard.
 
-    ntscfg::TestAllocator ta;
+    bsl::string directoryPath;
     {
-        bsl::string directoryPath;
-        {
-            ntsa::TemporaryDirectory tempDirectory;
-            directoryPath = tempDirectory.path();
+        ntsa::TemporaryDirectory tempDirectory;
+        directoryPath = tempDirectory.path();
 
-            BSLS_LOG_DEBUG("Create temporary directory: %s",
-                           directoryPath.c_str());
+        BSLS_LOG_DEBUG("Create temporary directory: %s",
+                       directoryPath.c_str());
 
-            bsl::string filePath = tempDirectory.path();
-            bdls::PathUtil::appendRaw(&filePath, "file.txt");
+        bsl::string filePath = tempDirectory.path();
+        bdls::PathUtil::appendRaw(&filePath, "file.txt");
 
-            bsl::ofstream ofs(filePath.c_str());
-            BSLS_ASSERT(ofs);
+        bsl::ofstream ofs(filePath.c_str());
+        BSLS_ASSERT(ofs);
 
-            ofs << "Hello, world!" << bsl::endl;
-        }
-
-        BSLS_ASSERT(!bdls::FilesystemUtil::exists(directoryPath));
+        ofs << "Hello, world!" << bsl::endl;
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    BSLS_ASSERT(!bdls::FilesystemUtil::exists(directoryPath));
 }
 
-NTSCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntsa::TemporaryTest::verifyCase2)
 {
     // Concern: A temporary file is automatically created and removed
     // by a temporary file guard.
 
-    ntscfg::TestAllocator ta;
+    bsl::string filePath;
     {
-        bsl::string filePath;
-        {
-            ntsa::TemporaryFile tempFile;
-            filePath = tempFile.path();
+        ntsa::TemporaryFile tempFile;
+        filePath = tempFile.path();
 
-            BSLS_LOG_DEBUG("Create temporary file: %s", filePath.c_str());
+        BSLS_LOG_DEBUG("Create temporary file: %s", filePath.c_str());
 
-            bsl::ofstream ofs(filePath.c_str());
-            BSLS_ASSERT(ofs);
+        bsl::ofstream ofs(filePath.c_str());
+        BSLS_ASSERT(ofs);
 
-            ofs << "Hello, world!";
-        }
-
-        BSLS_ASSERT(!bdls::FilesystemUtil::exists(filePath));
+        ofs << "Hello, world!";
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    BSLS_ASSERT(!bdls::FilesystemUtil::exists(filePath));
 }
 
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-    NTSCFG_TEST_REGISTER(2);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsa
+}  // close namespace BloombergLP

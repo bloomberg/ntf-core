@@ -14,77 +14,118 @@
 // limitations under the License.
 
 #include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsu_resolverutil_t_cpp, "$Id$ $CSID$")
+
 #include <ntsu_resolverutil.h>
-
-#include <bdls_filesystemutil.h>
-
-#include <bsl_algorithm.h>
-#include <bsl_set.h>
-#include <bsl_string.h>
-#include <bsl_vector.h>
 
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntsu {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
-
-namespace test {
-
-const char       IANA_SERVICE_NAME[]   = "discard";
-const ntsa::Port IANA_SERVICE_TCP_PORT = 9;
-const ntsa::Port IANA_SERVICE_UDP_PORT = 9;
-
-}  // close namespace test
-
-NTSCFG_TEST_CASE(1)
+// Provide tests for 'ntsu::ResolverUtil'.
+class ResolverUtilTest
 {
-    // Concern: 'getHostname'.
-    // Plan:
+  public:
+    // Verify concern: getHostname.
+    static void verifyGetHostname();
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::Error error;
+    // Verify concern: getHostnameFullyQualified.
+    static void verifyGetHostnameFullyQualified();
 
-        bsl::string hostname(&ta);
-        error = ntsu::ResolverUtil::getHostname(&hostname);
-        NTSCFG_TEST_FALSE(error);
+    // Verify concern: getIpAddress.
+    static void verifyGetIpAddress();
 
-        NTSCFG_TEST_LOG_DEBUG << "Hostname: " << hostname
-                              << NTSCFG_TEST_LOG_END;
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    // Verify concern: getIpAddress(V4).
+    static void verifyGetIpAddressV4();
+
+    // Verify concern: getIpAddress(V6).
+    static void verifyGetIpAddressV6();
+
+    // Verify concern: getIpAddress(TCP_V4).
+    static void verifyGetIpAddressTcpV4();
+
+    // Verify concern: getIpAddress(UDP_V4).
+    static void verifyGetIpAddressUdpV4();
+
+    // Verify concern: getIpAddress(TCP_V6).
+    static void verifyGetIpAddressTcpV6();
+
+    // Verify concern: getIpAddress(UDP_V6).
+    static void verifyGetIpAddressUdpV6();
+
+    // Verify concern: getDomainName.
+    static void verifyGetDomainName();
+
+    // Verify concern: getPort.
+    static void verifyGetPort();
+
+    // Verify concern: getPort(TCP).
+    static void verifyGetPortTcp();
+
+    // Verify concern: getPort(UDP).
+    static void verifyGetPortUdp();
+
+    // Verify concern: getServiceName.
+    static void verifyGetServiceName();
+
+    // Verify concern: getLocalIpAddress.
+    static void verifyGetLocalIpAddress();
+
+    // Verify concern: getLocalIpAddress(V4).
+    static void verifyGetLocalIpAddressV4();
+
+    // Verify concern: getLocalIpAddress(V6).
+    static void verifyGetLocalIpAddressV6();
+
+    // Verify concern: getLocalIpAddress(TCP_V4).
+    static void verifyGetLocalIpAddressTcpV4();
+
+    // Verify concern: getLocalIpAddress(UDP_V4).
+    static void verifyGetLocalIpAddressUdpV4();
+
+    // Verify concern: getLocalIpAddress(TCP_V6).
+    static void verifyGetLocalIpAddressTcpV6();
+
+    // Verify concern: getLocalIpAddress(UDP_V6).
+    static void verifyGetLocalIpAddressUdpV6();
+
+  private:
+    // The expected well-known service name.
+    static const char k_IANA_SERVICE_NAME[8];
+
+    // The expected well-known service TCP port.
+    static const ntsa::Port k_IANA_SERVICE_TCP_PORT;
+
+    // The expected well-known service UDP port.
+    static const ntsa::Port k_IANA_SERVICE_UDP_PORT;
+};
+
+NTSCFG_TEST_FUNCTION(ntsu::ResolverUtilTest::verifyGetHostname)
+{
+    ntsa::Error error;
+
+    bsl::string hostname(NTSCFG_TEST_ALLOCATOR);
+    error = ntsu::ResolverUtil::getHostname(&hostname);
+    NTSCFG_TEST_FALSE(error);
+
+    NTSCFG_TEST_LOG_DEBUG << "Hostname: " << hostname << NTSCFG_TEST_LOG_END;
 }
 
-NTSCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntsu::ResolverUtilTest::verifyGetHostnameFullyQualified)
 {
-    // Concern: 'getHostnameFullyQualified'.
-    // Plan:
+    ntsa::Error error;
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::Error error;
+    bsl::string hostname(NTSCFG_TEST_ALLOCATOR);
+    error = ntsu::ResolverUtil::getHostnameFullyQualified(&hostname);
+    NTSCFG_TEST_FALSE(error);
 
-        bsl::string hostname(&ta);
-        error = ntsu::ResolverUtil::getHostnameFullyQualified(&hostname);
-        NTSCFG_TEST_FALSE(error);
-
-        NTSCFG_TEST_LOG_DEBUG << "Hostname: " << hostname
-                              << NTSCFG_TEST_LOG_END;
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_LOG_DEBUG << "Hostname: " << hostname << NTSCFG_TEST_LOG_END;
 }
 
-NTSCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntsu::ResolverUtilTest::verifyGetIpAddress)
 {
     // Concern: Test resolution of domain names to IP addresses for use by
     // an unspecified transport.
@@ -92,128 +133,116 @@ NTSCFG_TEST_CASE(3)
     // Plan: Ensure 'dns.google.com' resolves to at least two of the known
     // IP addresses at which it has been assigned, as of 2020.
 
-    ntscfg::TestAllocator ta;
+    ntsa::Error error;
+
+    bsl::set<ntsa::IpAddress> ipAddressSet(NTSCFG_TEST_ALLOCATOR);
+    ipAddressSet.insert(ntsa::IpAddress("8.8.8.8"));
+    ipAddressSet.insert(ntsa::IpAddress("8.8.4.4"));
+
+    NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
+
+    bsl::vector<ntsa::IpAddress> ipAddressList(NTSCFG_TEST_ALLOCATOR);
+    ntsa::IpAddressOptions       ipAddressOptions;
+
+    error = ntsu::ResolverUtil::getIpAddress(&ipAddressList,
+                                             "dns.google.com",
+                                             ipAddressOptions);
+    NTSCFG_TEST_FALSE(error);
+
+    for (bsl::vector<ntsa::IpAddress>::const_iterator it =
+             ipAddressList.begin();
+         it != ipAddressList.end();
+         ++it)
     {
-        ntsa::Error error;
+        NTSCFG_TEST_LOG_DEBUG << "Address: " << it->text()
+                              << NTSCFG_TEST_LOG_END;
 
-        bsl::set<ntsa::IpAddress> ipAddressSet(&ta);
-        ipAddressSet.insert(ntsa::IpAddress("8.8.8.8"));
-        ipAddressSet.insert(ntsa::IpAddress("8.8.4.4"));
-
-        NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
-
-        bsl::vector<ntsa::IpAddress> ipAddressList(&ta);
-        ntsa::IpAddressOptions       ipAddressOptions;
-
-        error = ntsu::ResolverUtil::getIpAddress(&ipAddressList,
-                                                 "dns.google.com",
-                                                 ipAddressOptions);
-        NTSCFG_TEST_FALSE(error);
-
-        for (bsl::vector<ntsa::IpAddress>::const_iterator it =
-                 ipAddressList.begin();
-             it != ipAddressList.end();
-             ++it)
-        {
-            NTSCFG_TEST_LOG_DEBUG << "Address: " << it->text()
-                                  << NTSCFG_TEST_LOG_END;
-
-            ipAddressSet.erase(*it);
-        }
-
-        NTSCFG_TEST_TRUE(ipAddressSet.empty());
+        ipAddressSet.erase(*it);
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    NTSCFG_TEST_TRUE(ipAddressSet.empty());
 }
 
-NTSCFG_TEST_CASE(4)
+NTSCFG_TEST_FUNCTION(ntsu::ResolverUtilTest::verifyGetIpAddressV4)
 {
     // Concern: Test resolution of domain names to IPv4 addresses.
     //
     // Plan: Ensure 'dns.google.com' resolves to at least two of the known
     // IP addresses at which it has been assigned, as of 2020.
 
-    ntscfg::TestAllocator ta;
+    ntsa::Error error;
+
+    bsl::set<ntsa::IpAddress> ipAddressSet(NTSCFG_TEST_ALLOCATOR);
+    ipAddressSet.insert(ntsa::IpAddress("8.8.8.8"));
+    ipAddressSet.insert(ntsa::IpAddress("8.8.4.4"));
+
+    NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
+
+    bsl::vector<ntsa::IpAddress> ipAddressList(NTSCFG_TEST_ALLOCATOR);
+    ntsa::IpAddressOptions       ipAddressOptions;
+
+    ipAddressOptions.setIpAddressType(ntsa::IpAddressType::e_V4);
+
+    error = ntsu::ResolverUtil::getIpAddress(&ipAddressList,
+                                             "dns.google.com",
+                                             ipAddressOptions);
+    NTSCFG_TEST_FALSE(error);
+
+    for (bsl::vector<ntsa::IpAddress>::const_iterator it =
+             ipAddressList.begin();
+         it != ipAddressList.end();
+         ++it)
     {
-        ntsa::Error error;
+        NTSCFG_TEST_LOG_DEBUG << "Address: " << it->text()
+                              << NTSCFG_TEST_LOG_END;
 
-        bsl::set<ntsa::IpAddress> ipAddressSet(&ta);
-        ipAddressSet.insert(ntsa::IpAddress("8.8.8.8"));
-        ipAddressSet.insert(ntsa::IpAddress("8.8.4.4"));
-
-        NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
-
-        bsl::vector<ntsa::IpAddress> ipAddressList(&ta);
-        ntsa::IpAddressOptions       ipAddressOptions;
-
-        ipAddressOptions.setIpAddressType(ntsa::IpAddressType::e_V4);
-
-        error = ntsu::ResolverUtil::getIpAddress(&ipAddressList,
-                                                 "dns.google.com",
-                                                 ipAddressOptions);
-        NTSCFG_TEST_FALSE(error);
-
-        for (bsl::vector<ntsa::IpAddress>::const_iterator it =
-                 ipAddressList.begin();
-             it != ipAddressList.end();
-             ++it)
-        {
-            NTSCFG_TEST_LOG_DEBUG << "Address: " << it->text()
-                                  << NTSCFG_TEST_LOG_END;
-
-            ipAddressSet.erase(*it);
-        }
-
-        NTSCFG_TEST_TRUE(ipAddressSet.empty());
+        ipAddressSet.erase(*it);
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    NTSCFG_TEST_TRUE(ipAddressSet.empty());
 }
 
-NTSCFG_TEST_CASE(5)
+NTSCFG_TEST_FUNCTION(ntsu::ResolverUtilTest::verifyGetIpAddressV6)
 {
     // Concern: Test resolution of domain names to IPv6 addresses.
     //
     // Plan: Ensure 'dns.google.com' resolves to at least two of the known
     // IP addresses at which it has been assigned, as of 2020.
 
-    ntscfg::TestAllocator ta;
+    ntsa::Error error;
+
+    bsl::set<ntsa::IpAddress> ipAddressSet(NTSCFG_TEST_ALLOCATOR);
+    // TODO: ipAddressSet.insert(ntsa::IpAddress("???"));
+    // TODO: ipAddressSet.insert(ntsa::IpAddress("???"));
+
+    // TODO: NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
+
+    bsl::vector<ntsa::IpAddress> ipAddressList(NTSCFG_TEST_ALLOCATOR);
+    ntsa::IpAddressOptions       ipAddressOptions;
+
+    ipAddressOptions.setIpAddressType(ntsa::IpAddressType::e_V6);
+
+    error = ntsu::ResolverUtil::getIpAddress(&ipAddressList,
+                                             "dns.google.com",
+                                             ipAddressOptions);
+    // TODO: NTSCFG_TEST_FALSE(error);
+
+    for (bsl::vector<ntsa::IpAddress>::const_iterator it =
+             ipAddressList.begin();
+         it != ipAddressList.end();
+         ++it)
     {
-        ntsa::Error error;
+        NTSCFG_TEST_LOG_DEBUG << "Address: " << it->text()
+                              << NTSCFG_TEST_LOG_END;
 
-        bsl::set<ntsa::IpAddress> ipAddressSet(&ta);
-        // TODO: ipAddressSet.insert(ntsa::IpAddress("???"));
-        // TODO: ipAddressSet.insert(ntsa::IpAddress("???"));
-
-        // TODO: NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
-
-        bsl::vector<ntsa::IpAddress> ipAddressList(&ta);
-        ntsa::IpAddressOptions       ipAddressOptions;
-
-        ipAddressOptions.setIpAddressType(ntsa::IpAddressType::e_V6);
-
-        error = ntsu::ResolverUtil::getIpAddress(&ipAddressList,
-                                                 "dns.google.com",
-                                                 ipAddressOptions);
-        // TODO: NTSCFG_TEST_FALSE(error);
-
-        for (bsl::vector<ntsa::IpAddress>::const_iterator it =
-                 ipAddressList.begin();
-             it != ipAddressList.end();
-             ++it)
-        {
-            NTSCFG_TEST_LOG_DEBUG << "Address: " << it->text()
-                                  << NTSCFG_TEST_LOG_END;
-
-            // TODO: bsl::size_t n = ipAddressSet.erase(*it);
-            // TODO: NTSCFG_TEST_EQ(n, 1);
-        }
-
-        NTSCFG_TEST_TRUE(ipAddressSet.empty());
+        // TODO: bsl::size_t n = ipAddressSet.erase(*it);
+        // TODO: NTSCFG_TEST_EQ(n, 1);
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    NTSCFG_TEST_TRUE(ipAddressSet.empty());
 }
 
-NTSCFG_TEST_CASE(6)
+NTSCFG_TEST_FUNCTION(ntsu::ResolverUtilTest::verifyGetIpAddressTcpV4)
 {
     // Concern: Test resolution of domain names to IP addresses for use by
     // a specific TCP/IPv4-based transport.
@@ -221,43 +250,39 @@ NTSCFG_TEST_CASE(6)
     // Plan: Ensure 'dns.google.com' resolves to at least two of the known
     // IP addresses at which it has been assigned, as of 2020.
 
-    ntscfg::TestAllocator ta;
+    ntsa::Error error;
+
+    bsl::set<ntsa::IpAddress> ipAddressSet(NTSCFG_TEST_ALLOCATOR);
+    ipAddressSet.insert(ntsa::IpAddress("8.8.8.8"));
+    ipAddressSet.insert(ntsa::IpAddress("8.8.4.4"));
+
+    NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
+
+    bsl::vector<ntsa::IpAddress> ipAddressList(NTSCFG_TEST_ALLOCATOR);
+    ntsa::IpAddressOptions       ipAddressOptions;
+
+    ipAddressOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+
+    error = ntsu::ResolverUtil::getIpAddress(&ipAddressList,
+                                             "dns.google.com",
+                                             ipAddressOptions);
+    NTSCFG_TEST_FALSE(error);
+
+    for (bsl::vector<ntsa::IpAddress>::const_iterator it =
+             ipAddressList.begin();
+         it != ipAddressList.end();
+         ++it)
     {
-        ntsa::Error error;
+        NTSCFG_TEST_LOG_DEBUG << "Address: " << it->text()
+                              << NTSCFG_TEST_LOG_END;
 
-        bsl::set<ntsa::IpAddress> ipAddressSet(&ta);
-        ipAddressSet.insert(ntsa::IpAddress("8.8.8.8"));
-        ipAddressSet.insert(ntsa::IpAddress("8.8.4.4"));
-
-        NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
-
-        bsl::vector<ntsa::IpAddress> ipAddressList(&ta);
-        ntsa::IpAddressOptions       ipAddressOptions;
-
-        ipAddressOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
-
-        error = ntsu::ResolverUtil::getIpAddress(&ipAddressList,
-                                                 "dns.google.com",
-                                                 ipAddressOptions);
-        NTSCFG_TEST_FALSE(error);
-
-        for (bsl::vector<ntsa::IpAddress>::const_iterator it =
-                 ipAddressList.begin();
-             it != ipAddressList.end();
-             ++it)
-        {
-            NTSCFG_TEST_LOG_DEBUG << "Address: " << it->text()
-                                  << NTSCFG_TEST_LOG_END;
-
-            ipAddressSet.erase(*it);
-        }
-
-        NTSCFG_TEST_TRUE(ipAddressSet.empty());
+        ipAddressSet.erase(*it);
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    NTSCFG_TEST_TRUE(ipAddressSet.empty());
 }
 
-NTSCFG_TEST_CASE(7)
+NTSCFG_TEST_FUNCTION(ntsu::ResolverUtilTest::verifyGetIpAddressUdpV4)
 {
     // Concern: Test resolution of domain names to IP addresses for use by
     // a specific UDP/IPv4-based transport.
@@ -265,43 +290,39 @@ NTSCFG_TEST_CASE(7)
     // Plan: Ensure 'dns.google.com' resolves to at least two of the known
     // IP addresses at which it has been assigned, as of 2020.
 
-    ntscfg::TestAllocator ta;
+    ntsa::Error error;
+
+    bsl::set<ntsa::IpAddress> ipAddressSet(NTSCFG_TEST_ALLOCATOR);
+    ipAddressSet.insert(ntsa::IpAddress("8.8.8.8"));
+    ipAddressSet.insert(ntsa::IpAddress("8.8.4.4"));
+
+    NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
+
+    bsl::vector<ntsa::IpAddress> ipAddressList(NTSCFG_TEST_ALLOCATOR);
+    ntsa::IpAddressOptions       ipAddressOptions;
+
+    ipAddressOptions.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+
+    error = ntsu::ResolverUtil::getIpAddress(&ipAddressList,
+                                             "dns.google.com",
+                                             ipAddressOptions);
+    NTSCFG_TEST_FALSE(error);
+
+    for (bsl::vector<ntsa::IpAddress>::const_iterator it =
+             ipAddressList.begin();
+         it != ipAddressList.end();
+         ++it)
     {
-        ntsa::Error error;
+        NTSCFG_TEST_LOG_DEBUG << "Address: " << it->text()
+                              << NTSCFG_TEST_LOG_END;
 
-        bsl::set<ntsa::IpAddress> ipAddressSet(&ta);
-        ipAddressSet.insert(ntsa::IpAddress("8.8.8.8"));
-        ipAddressSet.insert(ntsa::IpAddress("8.8.4.4"));
-
-        NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
-
-        bsl::vector<ntsa::IpAddress> ipAddressList(&ta);
-        ntsa::IpAddressOptions       ipAddressOptions;
-
-        ipAddressOptions.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-
-        error = ntsu::ResolverUtil::getIpAddress(&ipAddressList,
-                                                 "dns.google.com",
-                                                 ipAddressOptions);
-        NTSCFG_TEST_FALSE(error);
-
-        for (bsl::vector<ntsa::IpAddress>::const_iterator it =
-                 ipAddressList.begin();
-             it != ipAddressList.end();
-             ++it)
-        {
-            NTSCFG_TEST_LOG_DEBUG << "Address: " << it->text()
-                                  << NTSCFG_TEST_LOG_END;
-
-            ipAddressSet.erase(*it);
-        }
-
-        NTSCFG_TEST_TRUE(ipAddressSet.empty());
+        ipAddressSet.erase(*it);
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    NTSCFG_TEST_TRUE(ipAddressSet.empty());
 }
 
-NTSCFG_TEST_CASE(8)
+NTSCFG_TEST_FUNCTION(ntsu::ResolverUtilTest::verifyGetIpAddressTcpV6)
 {
     // Concern: Test resolution of domain names to IP addresses for use by
     // a specific TCP/IPv6-based transport.
@@ -309,44 +330,40 @@ NTSCFG_TEST_CASE(8)
     // Plan: Ensure 'dns.google.com' resolves to at least two of the known
     // IP addresses at which it has been assigned, as of 2020.
 
-    ntscfg::TestAllocator ta;
+    ntsa::Error error;
+
+    bsl::set<ntsa::IpAddress> ipAddressSet(NTSCFG_TEST_ALLOCATOR);
+    // TODO: ipAddressSet.insert(ntsa::IpAddress("???"));
+    // TODO: ipAddressSet.insert(ntsa::IpAddress("???"));
+
+    // TODO: NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
+
+    bsl::vector<ntsa::IpAddress> ipAddressList(NTSCFG_TEST_ALLOCATOR);
+    ntsa::IpAddressOptions       ipAddressOptions;
+
+    ipAddressOptions.setTransport(ntsa::Transport::e_TCP_IPV6_STREAM);
+
+    error = ntsu::ResolverUtil::getIpAddress(&ipAddressList,
+                                             "dns.google.com",
+                                             ipAddressOptions);
+    // TODO: NTSCFG_TEST_FALSE(error);
+
+    for (bsl::vector<ntsa::IpAddress>::const_iterator it =
+             ipAddressList.begin();
+         it != ipAddressList.end();
+         ++it)
     {
-        ntsa::Error error;
+        NTSCFG_TEST_LOG_DEBUG << "Address: " << it->text()
+                              << NTSCFG_TEST_LOG_END;
 
-        bsl::set<ntsa::IpAddress> ipAddressSet(&ta);
-        // TODO: ipAddressSet.insert(ntsa::IpAddress("???"));
-        // TODO: ipAddressSet.insert(ntsa::IpAddress("???"));
-
-        // TODO: NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
-
-        bsl::vector<ntsa::IpAddress> ipAddressList(&ta);
-        ntsa::IpAddressOptions       ipAddressOptions;
-
-        ipAddressOptions.setTransport(ntsa::Transport::e_TCP_IPV6_STREAM);
-
-        error = ntsu::ResolverUtil::getIpAddress(&ipAddressList,
-                                                 "dns.google.com",
-                                                 ipAddressOptions);
-        // TODO: NTSCFG_TEST_FALSE(error);
-
-        for (bsl::vector<ntsa::IpAddress>::const_iterator it =
-                 ipAddressList.begin();
-             it != ipAddressList.end();
-             ++it)
-        {
-            NTSCFG_TEST_LOG_DEBUG << "Address: " << it->text()
-                                  << NTSCFG_TEST_LOG_END;
-
-            // TODO: bsl::size_t n = ipAddressSet.erase(*it);
-            // TODO: NTSCFG_TEST_EQ(n, 1);
-        }
-
-        NTSCFG_TEST_TRUE(ipAddressSet.empty());
+        // TODO: bsl::size_t n = ipAddressSet.erase(*it);
+        // TODO: NTSCFG_TEST_EQ(n, 1);
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    NTSCFG_TEST_TRUE(ipAddressSet.empty());
 }
 
-NTSCFG_TEST_CASE(9)
+NTSCFG_TEST_FUNCTION(ntsu::ResolverUtilTest::verifyGetIpAddressUdpV6)
 {
     // Concern: Test resolution of domain names to IP addresses for use by
     // a specific UDP/IPv6-based transport.
@@ -354,72 +371,64 @@ NTSCFG_TEST_CASE(9)
     // Plan: Ensure 'dns.google.com' resolves to at least two of the known
     // IP addresses at which it has been assigned, as of 2020.
 
-    ntscfg::TestAllocator ta;
+    ntsa::Error error;
+
+    bsl::set<ntsa::IpAddress> ipAddressSet(NTSCFG_TEST_ALLOCATOR);
+    // TODO: ipAddressSet.insert(ntsa::IpAddress("???"));
+    // TODO: ipAddressSet.insert(ntsa::IpAddress("???"));
+
+    // TODO: NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
+
+    bsl::vector<ntsa::IpAddress> ipAddressList(NTSCFG_TEST_ALLOCATOR);
+    ntsa::IpAddressOptions       ipAddressOptions;
+
+    ipAddressOptions.setTransport(ntsa::Transport::e_UDP_IPV6_DATAGRAM);
+
+    error = ntsu::ResolverUtil::getIpAddress(&ipAddressList,
+                                             "dns.google.com",
+                                             ipAddressOptions);
+    // TODO: NTSCFG_TEST_FALSE(error);
+
+    for (bsl::vector<ntsa::IpAddress>::const_iterator it =
+             ipAddressList.begin();
+         it != ipAddressList.end();
+         ++it)
     {
-        ntsa::Error error;
+        NTSCFG_TEST_LOG_DEBUG << "Address: " << it->text()
+                              << NTSCFG_TEST_LOG_END;
 
-        bsl::set<ntsa::IpAddress> ipAddressSet(&ta);
-        // TODO: ipAddressSet.insert(ntsa::IpAddress("???"));
-        // TODO: ipAddressSet.insert(ntsa::IpAddress("???"));
-
-        // TODO: NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
-
-        bsl::vector<ntsa::IpAddress> ipAddressList(&ta);
-        ntsa::IpAddressOptions       ipAddressOptions;
-
-        ipAddressOptions.setTransport(ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-
-        error = ntsu::ResolverUtil::getIpAddress(&ipAddressList,
-                                                 "dns.google.com",
-                                                 ipAddressOptions);
-        // TODO: NTSCFG_TEST_FALSE(error);
-
-        for (bsl::vector<ntsa::IpAddress>::const_iterator it =
-                 ipAddressList.begin();
-             it != ipAddressList.end();
-             ++it)
-        {
-            NTSCFG_TEST_LOG_DEBUG << "Address: " << it->text()
-                                  << NTSCFG_TEST_LOG_END;
-
-            // TODO: bsl::size_t n = ipAddressSet.erase(*it);
-            // TODO: NTSCFG_TEST_EQ(n, 1);
-        }
-
-        NTSCFG_TEST_TRUE(ipAddressSet.empty());
+        // TODO: bsl::size_t n = ipAddressSet.erase(*it);
+        // TODO: NTSCFG_TEST_EQ(n, 1);
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    NTSCFG_TEST_TRUE(ipAddressSet.empty());
 }
 
-NTSCFG_TEST_CASE(10)
+NTSCFG_TEST_FUNCTION(ntsu::ResolverUtilTest::verifyGetDomainName)
 {
     // Concern: Test resolution of IP addresses to domain names.
     // Plan: Resolve the well-known IP address of Google's public DNS server
     // to "dns.google".
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::Error error;
+    ntsa::Error error;
 
-        bsl::string domainName(&ta);
-        error = ntsu::ResolverUtil::getDomainName(&domainName,
-                                                  ntsa::IpAddress("8.8.8.8"));
+    bsl::string domainName(NTSCFG_TEST_ALLOCATOR);
+    error = ntsu::ResolverUtil::getDomainName(&domainName,
+                                              ntsa::IpAddress("8.8.8.8"));
 
-        if (error) {
-            NTSCFG_TEST_LOG_ERROR << "Error: " << error << NTSCFG_TEST_LOG_END;
-        }
-        else {
-            NTSCFG_TEST_LOG_DEBUG << "Domain name: " << domainName
-                                  << NTSCFG_TEST_LOG_END;
-        }
-
-        NTSCFG_TEST_FALSE(error);
-        NTSCFG_TEST_EQ(domainName, "dns.google");
+    if (error) {
+        NTSCFG_TEST_LOG_ERROR << "Error: " << error << NTSCFG_TEST_LOG_END;
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    else {
+        NTSCFG_TEST_LOG_DEBUG << "Domain name: " << domainName
+                              << NTSCFG_TEST_LOG_END;
+    }
+
+    NTSCFG_TEST_FALSE(error);
+    NTSCFG_TEST_EQ(domainName, "dns.google");
 }
 
-NTSCFG_TEST_CASE(11)
+NTSCFG_TEST_FUNCTION(ntsu::ResolverUtilTest::verifyGetPort)
 {
     // Concern: Test resolution of service names to port numbers for use by
     // an unspecified transport.
@@ -428,50 +437,45 @@ NTSCFG_TEST_CASE(11)
         return;
     }
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::Error error;
+    ntsa::Error error;
 
-        bsl::vector<ntsa::Port> portList(&ta);
-        ntsa::PortOptions       portOptions;
+    bsl::vector<ntsa::Port> portList(NTSCFG_TEST_ALLOCATOR);
+    ntsa::PortOptions       portOptions;
 
-        error = ntsu::ResolverUtil::getPort(&portList,
-                                            test::IANA_SERVICE_NAME,
-                                            portOptions);
+    error = ntsu::ResolverUtil::getPort(&portList,
+                                        k_IANA_SERVICE_NAME,
+                                        portOptions);
 
-        if (error) {
-            NTSCFG_TEST_LOG_ERROR << "Error: " << error << NTSCFG_TEST_LOG_END;
-        }
-        else {
-            for (bsl::vector<ntsa::Port>::const_iterator it = portList.begin();
-                 it != portList.end();
-                 ++it)
-            {
-                NTSCFG_TEST_LOG_DEBUG << "Port: " << *it
-                                      << NTSCFG_TEST_LOG_END;
-            }
-        }
-
-        NTSCFG_TEST_FALSE(error);
-
+    if (error) {
+        NTSCFG_TEST_LOG_ERROR << "Error: " << error << NTSCFG_TEST_LOG_END;
+    }
+    else {
+        for (bsl::vector<ntsa::Port>::const_iterator it = portList.begin();
+             it != portList.end();
+             ++it)
         {
-            bsl::size_t count = bsl::count(portList.begin(),
-                                           portList.end(),
-                                           test::IANA_SERVICE_TCP_PORT);
-            NTSCFG_TEST_GE(count, 1);
-        }
-
-        {
-            bsl::size_t count = bsl::count(portList.begin(),
-                                           portList.end(),
-                                           test::IANA_SERVICE_UDP_PORT);
-            NTSCFG_TEST_GE(count, 1);
+            NTSCFG_TEST_LOG_DEBUG << "Port: " << *it << NTSCFG_TEST_LOG_END;
         }
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    NTSCFG_TEST_FALSE(error);
+
+    {
+        bsl::size_t count = bsl::count(portList.begin(),
+                                       portList.end(),
+                                       k_IANA_SERVICE_TCP_PORT);
+        NTSCFG_TEST_GE(count, 1);
+    }
+
+    {
+        bsl::size_t count = bsl::count(portList.begin(),
+                                       portList.end(),
+                                       k_IANA_SERVICE_UDP_PORT);
+        NTSCFG_TEST_GE(count, 1);
+    }
 }
 
-NTSCFG_TEST_CASE(12)
+NTSCFG_TEST_FUNCTION(ntsu::ResolverUtilTest::verifyGetPortTcp)
 {
     // Concern: Test resolution of service names to port numbers for use by
     // a specific TCP-based transport.
@@ -480,43 +484,37 @@ NTSCFG_TEST_CASE(12)
         return;
     }
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::Error error;
+    ntsa::Error error;
 
-        bsl::vector<ntsa::Port> portList(&ta);
-        ntsa::PortOptions       portOptions;
+    bsl::vector<ntsa::Port> portList(NTSCFG_TEST_ALLOCATOR);
+    ntsa::PortOptions       portOptions;
 
-        portOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+    portOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
-        error = ntsu::ResolverUtil::getPort(&portList,
-                                            test::IANA_SERVICE_NAME,
-                                            portOptions);
+    error = ntsu::ResolverUtil::getPort(&portList,
+                                        k_IANA_SERVICE_NAME,
+                                        portOptions);
 
-        if (error) {
-            NTSCFG_TEST_LOG_ERROR << "Error: " << error << NTSCFG_TEST_LOG_END;
-        }
-        else {
-            for (bsl::vector<ntsa::Port>::const_iterator it = portList.begin();
-                 it != portList.end();
-                 ++it)
-            {
-                NTSCFG_TEST_LOG_DEBUG << "Port: " << *it
-                                      << NTSCFG_TEST_LOG_END;
-            }
-        }
-
-        NTSCFG_TEST_FALSE(error);
-
-        bsl::size_t count = bsl::count(portList.begin(),
-                                       portList.end(),
-                                       test::IANA_SERVICE_TCP_PORT);
-        NTSCFG_TEST_GE(count, 1);
+    if (error) {
+        NTSCFG_TEST_LOG_ERROR << "Error: " << error << NTSCFG_TEST_LOG_END;
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    else {
+        for (bsl::vector<ntsa::Port>::const_iterator it = portList.begin();
+             it != portList.end();
+             ++it)
+        {
+            NTSCFG_TEST_LOG_DEBUG << "Port: " << *it << NTSCFG_TEST_LOG_END;
+        }
+    }
+
+    NTSCFG_TEST_FALSE(error);
+
+    bsl::size_t count =
+        bsl::count(portList.begin(), portList.end(), k_IANA_SERVICE_TCP_PORT);
+    NTSCFG_TEST_GE(count, 1);
 }
 
-NTSCFG_TEST_CASE(13)
+NTSCFG_TEST_FUNCTION(ntsu::ResolverUtilTest::verifyGetPortUdp)
 {
     // Concern: Test resolution of service names to port numbers for use by
     // a specific UDP-based transport.
@@ -525,42 +523,36 @@ NTSCFG_TEST_CASE(13)
         return;
     }
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::Error error;
+    ntsa::Error error;
 
-        bsl::vector<ntsa::Port> portList(&ta);
-        ntsa::PortOptions       portOptions;
+    bsl::vector<ntsa::Port> portList(NTSCFG_TEST_ALLOCATOR);
+    ntsa::PortOptions       portOptions;
 
-        portOptions.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+    portOptions.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
 
-        error = ntsu::ResolverUtil::getPort(&portList,
-                                            test::IANA_SERVICE_NAME,
-                                            portOptions);
+    error = ntsu::ResolverUtil::getPort(&portList,
+                                        k_IANA_SERVICE_NAME,
+                                        portOptions);
 
-        if (error) {
-            NTSCFG_TEST_LOG_ERROR << "Error: " << error << NTSCFG_TEST_LOG_END;
-        }
-        else {
-            for (bsl::vector<ntsa::Port>::const_iterator it = portList.begin();
-                 it != portList.end();
-                 ++it)
-            {
-                NTSCFG_TEST_LOG_DEBUG << "Port: " << *it
-                                      << NTSCFG_TEST_LOG_END;
-            }
-        }
-
-        NTSCFG_TEST_FALSE(error);
-        bsl::size_t count = bsl::count(portList.begin(),
-                                       portList.end(),
-                                       test::IANA_SERVICE_UDP_PORT);
-        NTSCFG_TEST_GE(count, 1);
+    if (error) {
+        NTSCFG_TEST_LOG_ERROR << "Error: " << error << NTSCFG_TEST_LOG_END;
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    else {
+        for (bsl::vector<ntsa::Port>::const_iterator it = portList.begin();
+             it != portList.end();
+             ++it)
+        {
+            NTSCFG_TEST_LOG_DEBUG << "Port: " << *it << NTSCFG_TEST_LOG_END;
+        }
+    }
+
+    NTSCFG_TEST_FALSE(error);
+    bsl::size_t count =
+        bsl::count(portList.begin(), portList.end(), k_IANA_SERVICE_UDP_PORT);
+    NTSCFG_TEST_GE(count, 1);
 }
 
-NTSCFG_TEST_CASE(14)
+NTSCFG_TEST_FUNCTION(ntsu::ResolverUtilTest::verifyGetServiceName)
 {
     // Concern: Test resolution of port numbers to service names.
     // Plan:
@@ -569,285 +561,227 @@ NTSCFG_TEST_CASE(14)
         return;
     }
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::Error error;
+    ntsa::Error error;
 
-        bsl::string serviceName(&ta);
-        error = ntsu::ResolverUtil::getServiceName(
-            &serviceName,
-            test::IANA_SERVICE_TCP_PORT,
-            ntsa::Transport::e_TCP_IPV4_STREAM);
+    bsl::string serviceName(NTSCFG_TEST_ALLOCATOR);
+    error =
+        ntsu::ResolverUtil::getServiceName(&serviceName,
+                                           k_IANA_SERVICE_TCP_PORT,
+                                           ntsa::Transport::e_TCP_IPV4_STREAM);
 
-        if (error) {
-            NTSCFG_TEST_LOG_ERROR << "Error: " << error << NTSCFG_TEST_LOG_END;
-        }
-        else {
-            NTSCFG_TEST_LOG_DEBUG << "Service name: " << serviceName
-                                  << NTSCFG_TEST_LOG_END;
-        }
-
-        NTSCFG_TEST_FALSE(error);
-        NTSCFG_TEST_EQ(serviceName, test::IANA_SERVICE_NAME);
+    if (error) {
+        NTSCFG_TEST_LOG_ERROR << "Error: " << error << NTSCFG_TEST_LOG_END;
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    else {
+        NTSCFG_TEST_LOG_DEBUG << "Service name: " << serviceName
+                              << NTSCFG_TEST_LOG_END;
+    }
+
+    NTSCFG_TEST_FALSE(error);
+    NTSCFG_TEST_EQ(serviceName, k_IANA_SERVICE_NAME);
 }
 
-NTSCFG_TEST_CASE(15)
+NTSCFG_TEST_FUNCTION(ntsu::ResolverUtilTest::verifyGetLocalIpAddress)
 {
     // Concern: Test getting the IP addresses assigned to the local machine.
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::Error error;
+    ntsa::Error error;
 
-        bsl::vector<ntsa::IpAddress> ipAddressList(&ta);
-        ntsa::IpAddressOptions       ipAddressOptions;
+    bsl::vector<ntsa::IpAddress> ipAddressList(NTSCFG_TEST_ALLOCATOR);
+    ntsa::IpAddressOptions       ipAddressOptions;
 
-        error = ntsu::ResolverUtil::getLocalIpAddress(&ipAddressList,
-                                                      ipAddressOptions);
+    error = ntsu::ResolverUtil::getLocalIpAddress(&ipAddressList,
+                                                  ipAddressOptions);
 
-        if (error) {
-            NTSCFG_TEST_LOG_ERROR << "Error: " << error << NTSCFG_TEST_LOG_END;
-        }
-        else {
-            for (bsl::vector<ntsa::IpAddress>::const_iterator it =
-                     ipAddressList.begin();
-                 it != ipAddressList.end();
-                 ++it)
-            {
-                NTSCFG_TEST_LOG_DEBUG << "Address: " << *it
-                                      << NTSCFG_TEST_LOG_END;
-            }
+    if (error) {
+        NTSCFG_TEST_LOG_ERROR << "Error: " << error << NTSCFG_TEST_LOG_END;
+    }
+    else {
+        for (bsl::vector<ntsa::IpAddress>::const_iterator it =
+                 ipAddressList.begin();
+             it != ipAddressList.end();
+             ++it)
+        {
+            NTSCFG_TEST_LOG_DEBUG << "Address: " << *it << NTSCFG_TEST_LOG_END;
         }
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTSCFG_TEST_CASE(16)
+NTSCFG_TEST_FUNCTION(ntsu::ResolverUtilTest::verifyGetLocalIpAddressV4)
 {
     // Concern: Test getting the IPv4 addresses assigned to the local machine.
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::Error error;
+    ntsa::Error error;
 
-        bsl::vector<ntsa::IpAddress> ipAddressList(&ta);
-        ntsa::IpAddressOptions       ipAddressOptions;
+    bsl::vector<ntsa::IpAddress> ipAddressList(NTSCFG_TEST_ALLOCATOR);
+    ntsa::IpAddressOptions       ipAddressOptions;
 
-        ipAddressOptions.setIpAddressType(ntsa::IpAddressType::e_V4);
+    ipAddressOptions.setIpAddressType(ntsa::IpAddressType::e_V4);
 
-        error = ntsu::ResolverUtil::getLocalIpAddress(&ipAddressList,
-                                                      ipAddressOptions);
+    error = ntsu::ResolverUtil::getLocalIpAddress(&ipAddressList,
+                                                  ipAddressOptions);
 
-        if (error) {
-            NTSCFG_TEST_LOG_ERROR << "Error: " << error << NTSCFG_TEST_LOG_END;
-        }
-        else {
-            for (bsl::vector<ntsa::IpAddress>::const_iterator it =
-                     ipAddressList.begin();
-                 it != ipAddressList.end();
-                 ++it)
-            {
-                NTSCFG_TEST_LOG_DEBUG << "Address: " << *it
-                                      << NTSCFG_TEST_LOG_END;
-            }
+    if (error) {
+        NTSCFG_TEST_LOG_ERROR << "Error: " << error << NTSCFG_TEST_LOG_END;
+    }
+    else {
+        for (bsl::vector<ntsa::IpAddress>::const_iterator it =
+                 ipAddressList.begin();
+             it != ipAddressList.end();
+             ++it)
+        {
+            NTSCFG_TEST_LOG_DEBUG << "Address: " << *it << NTSCFG_TEST_LOG_END;
         }
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTSCFG_TEST_CASE(17)
+NTSCFG_TEST_FUNCTION(ntsu::ResolverUtilTest::verifyGetLocalIpAddressV6)
 {
     // Concern: Test getting the IPv6 addresses assigned to the local machine.
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::Error error;
+    ntsa::Error error;
 
-        bsl::vector<ntsa::IpAddress> ipAddressList(&ta);
-        ntsa::IpAddressOptions       ipAddressOptions;
+    bsl::vector<ntsa::IpAddress> ipAddressList(NTSCFG_TEST_ALLOCATOR);
+    ntsa::IpAddressOptions       ipAddressOptions;
 
-        ipAddressOptions.setIpAddressType(ntsa::IpAddressType::e_V6);
+    ipAddressOptions.setIpAddressType(ntsa::IpAddressType::e_V6);
 
-        error = ntsu::ResolverUtil::getLocalIpAddress(&ipAddressList,
-                                                      ipAddressOptions);
+    error = ntsu::ResolverUtil::getLocalIpAddress(&ipAddressList,
+                                                  ipAddressOptions);
 
-        if (error) {
-            NTSCFG_TEST_LOG_DEBUG << "Error: " << error << NTSCFG_TEST_LOG_END;
-        }
-        else {
-            for (bsl::vector<ntsa::IpAddress>::const_iterator it =
-                     ipAddressList.begin();
-                 it != ipAddressList.end();
-                 ++it)
-            {
-                NTSCFG_TEST_LOG_DEBUG << "Address: " << *it
-                                      << NTSCFG_TEST_LOG_END;
-            }
+    if (error) {
+        NTSCFG_TEST_LOG_DEBUG << "Error: " << error << NTSCFG_TEST_LOG_END;
+    }
+    else {
+        for (bsl::vector<ntsa::IpAddress>::const_iterator it =
+                 ipAddressList.begin();
+             it != ipAddressList.end();
+             ++it)
+        {
+            NTSCFG_TEST_LOG_DEBUG << "Address: " << *it << NTSCFG_TEST_LOG_END;
         }
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTSCFG_TEST_CASE(18)
+NTSCFG_TEST_FUNCTION(ntsu::ResolverUtilTest::verifyGetLocalIpAddressTcpV4)
 {
     // Concern: Test getting the IP addresses assigned to the local machine
     // for use by a TCP/IPv4 transport.
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::Error error;
+    ntsa::Error error;
 
-        bsl::vector<ntsa::IpAddress> ipAddressList(&ta);
-        ntsa::IpAddressOptions       ipAddressOptions;
+    bsl::vector<ntsa::IpAddress> ipAddressList(NTSCFG_TEST_ALLOCATOR);
+    ntsa::IpAddressOptions       ipAddressOptions;
 
-        ipAddressOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+    ipAddressOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
-        error = ntsu::ResolverUtil::getLocalIpAddress(&ipAddressList,
-                                                      ipAddressOptions);
+    error = ntsu::ResolverUtil::getLocalIpAddress(&ipAddressList,
+                                                  ipAddressOptions);
 
-        if (error) {
-            NTSCFG_TEST_LOG_ERROR << "Error: " << error << NTSCFG_TEST_LOG_END;
-        }
-        else {
-            for (bsl::vector<ntsa::IpAddress>::const_iterator it =
-                     ipAddressList.begin();
-                 it != ipAddressList.end();
-                 ++it)
-            {
-                NTSCFG_TEST_LOG_DEBUG << "Address: " << *it
-                                      << NTSCFG_TEST_LOG_END;
-            }
+    if (error) {
+        NTSCFG_TEST_LOG_ERROR << "Error: " << error << NTSCFG_TEST_LOG_END;
+    }
+    else {
+        for (bsl::vector<ntsa::IpAddress>::const_iterator it =
+                 ipAddressList.begin();
+             it != ipAddressList.end();
+             ++it)
+        {
+            NTSCFG_TEST_LOG_DEBUG << "Address: " << *it << NTSCFG_TEST_LOG_END;
         }
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTSCFG_TEST_CASE(19)
+NTSCFG_TEST_FUNCTION(ntsu::ResolverUtilTest::verifyGetLocalIpAddressUdpV4)
 {
     // Concern: Test getting the IP addresses assigned to the local machine
     // for use by a UDP/IPv4 transport.
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::Error error;
+    ntsa::Error error;
 
-        bsl::vector<ntsa::IpAddress> ipAddressList(&ta);
-        ntsa::IpAddressOptions       ipAddressOptions;
+    bsl::vector<ntsa::IpAddress> ipAddressList(NTSCFG_TEST_ALLOCATOR);
+    ntsa::IpAddressOptions       ipAddressOptions;
 
-        ipAddressOptions.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+    ipAddressOptions.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
 
-        error = ntsu::ResolverUtil::getLocalIpAddress(&ipAddressList,
-                                                      ipAddressOptions);
+    error = ntsu::ResolverUtil::getLocalIpAddress(&ipAddressList,
+                                                  ipAddressOptions);
 
-        if (error) {
-            NTSCFG_TEST_LOG_ERROR << "Error: " << error << NTSCFG_TEST_LOG_END;
-        }
-        else {
-            for (bsl::vector<ntsa::IpAddress>::const_iterator it =
-                     ipAddressList.begin();
-                 it != ipAddressList.end();
-                 ++it)
-            {
-                NTSCFG_TEST_LOG_DEBUG << "Address: " << *it
-                                      << NTSCFG_TEST_LOG_END;
-            }
+    if (error) {
+        NTSCFG_TEST_LOG_ERROR << "Error: " << error << NTSCFG_TEST_LOG_END;
+    }
+    else {
+        for (bsl::vector<ntsa::IpAddress>::const_iterator it =
+                 ipAddressList.begin();
+             it != ipAddressList.end();
+             ++it)
+        {
+            NTSCFG_TEST_LOG_DEBUG << "Address: " << *it << NTSCFG_TEST_LOG_END;
         }
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTSCFG_TEST_CASE(20)
+NTSCFG_TEST_FUNCTION(ntsu::ResolverUtilTest::verifyGetLocalIpAddressTcpV6)
 {
     // Concern: Test getting the IP addresses assigned to the local machine
     // for use by a TCP/IPv6 transport.
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::Error error;
+    ntsa::Error error;
 
-        bsl::vector<ntsa::IpAddress> ipAddressList(&ta);
-        ntsa::IpAddressOptions       ipAddressOptions;
+    bsl::vector<ntsa::IpAddress> ipAddressList(NTSCFG_TEST_ALLOCATOR);
+    ntsa::IpAddressOptions       ipAddressOptions;
 
-        ipAddressOptions.setTransport(ntsa::Transport::e_TCP_IPV6_STREAM);
+    ipAddressOptions.setTransport(ntsa::Transport::e_TCP_IPV6_STREAM);
 
-        error = ntsu::ResolverUtil::getLocalIpAddress(&ipAddressList,
-                                                      ipAddressOptions);
+    error = ntsu::ResolverUtil::getLocalIpAddress(&ipAddressList,
+                                                  ipAddressOptions);
 
-        if (error) {
-            NTSCFG_TEST_LOG_DEBUG << "Error: " << error << NTSCFG_TEST_LOG_END;
-        }
-        else {
-            for (bsl::vector<ntsa::IpAddress>::const_iterator it =
-                     ipAddressList.begin();
-                 it != ipAddressList.end();
-                 ++it)
-            {
-                NTSCFG_TEST_LOG_DEBUG << "Address: " << *it
-                                      << NTSCFG_TEST_LOG_END;
-            }
+    if (error) {
+        NTSCFG_TEST_LOG_DEBUG << "Error: " << error << NTSCFG_TEST_LOG_END;
+    }
+    else {
+        for (bsl::vector<ntsa::IpAddress>::const_iterator it =
+                 ipAddressList.begin();
+             it != ipAddressList.end();
+             ++it)
+        {
+            NTSCFG_TEST_LOG_DEBUG << "Address: " << *it << NTSCFG_TEST_LOG_END;
         }
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTSCFG_TEST_CASE(21)
+NTSCFG_TEST_FUNCTION(ntsu::ResolverUtilTest::verifyGetLocalIpAddressUdpV6)
 {
     // Concern: Test getting the IP addresses assigned to the local machine
     // for use by a UDP/IPv6 transport.
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::Error error;
+    ntsa::Error error;
 
-        bsl::vector<ntsa::IpAddress> ipAddressList(&ta);
-        ntsa::IpAddressOptions       ipAddressOptions;
+    bsl::vector<ntsa::IpAddress> ipAddressList(NTSCFG_TEST_ALLOCATOR);
+    ntsa::IpAddressOptions       ipAddressOptions;
 
-        ipAddressOptions.setTransport(ntsa::Transport::e_UDP_IPV6_DATAGRAM);
+    ipAddressOptions.setTransport(ntsa::Transport::e_UDP_IPV6_DATAGRAM);
 
-        error = ntsu::ResolverUtil::getLocalIpAddress(&ipAddressList,
-                                                      ipAddressOptions);
+    error = ntsu::ResolverUtil::getLocalIpAddress(&ipAddressList,
+                                                  ipAddressOptions);
 
-        if (error) {
-            NTSCFG_TEST_LOG_DEBUG << "Error: " << error << NTSCFG_TEST_LOG_END;
-        }
-        else {
-            for (bsl::vector<ntsa::IpAddress>::const_iterator it =
-                     ipAddressList.begin();
-                 it != ipAddressList.end();
-                 ++it)
-            {
-                NTSCFG_TEST_LOG_DEBUG << "Address: " << *it
-                                      << NTSCFG_TEST_LOG_END;
-            }
+    if (error) {
+        NTSCFG_TEST_LOG_DEBUG << "Error: " << error << NTSCFG_TEST_LOG_END;
+    }
+    else {
+        for (bsl::vector<ntsa::IpAddress>::const_iterator it =
+                 ipAddressList.begin();
+             it != ipAddressList.end();
+             ++it)
+        {
+            NTSCFG_TEST_LOG_DEBUG << "Address: " << *it << NTSCFG_TEST_LOG_END;
         }
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);   // getHostname
-    NTSCFG_TEST_REGISTER(2);   // getHostnameFullyQualified
-    NTSCFG_TEST_REGISTER(3);   // getIpAddress
-    NTSCFG_TEST_REGISTER(4);   // getIpAddress(V4)
-    NTSCFG_TEST_REGISTER(5);   // getIpAddress(V6)
-    NTSCFG_TEST_REGISTER(6);   // getIpAddress(TCP_V4)
-    NTSCFG_TEST_REGISTER(7);   // getIpAddress(UDP_V4)
-    NTSCFG_TEST_REGISTER(8);   // getIpAddress(TCP_V6)
-    NTSCFG_TEST_REGISTER(9);   // getIpAddress(UDP_V6)
-    NTSCFG_TEST_REGISTER(10);  // getDomainName
-    NTSCFG_TEST_REGISTER(11);  // getPort
-    NTSCFG_TEST_REGISTER(12);  // getPort(TCP)
-    NTSCFG_TEST_REGISTER(13);  // getPort(UDP)
-    NTSCFG_TEST_REGISTER(14);  // getServiceName
-    NTSCFG_TEST_REGISTER(15);  // getLocalIpAddress
-    NTSCFG_TEST_REGISTER(16);  // getLocalIpAddress(V4)
-    NTSCFG_TEST_REGISTER(17);  // getLocalIpAddress(V6)
-    NTSCFG_TEST_REGISTER(18);  // getLocalIpAddress(TCP_V4)
-    NTSCFG_TEST_REGISTER(19);  // getLocalIpAddress(UDP_V4)
-    NTSCFG_TEST_REGISTER(20);  // getLocalIpAddress(TCP_V6)
-    NTSCFG_TEST_REGISTER(21);  // getLocalIpAddress(UDP_V6)
-}
-NTSCFG_TEST_DRIVER_END;
+const char       ResolverUtilTest::k_IANA_SERVICE_NAME[8]  = "discard";
+const ntsa::Port ResolverUtilTest::k_IANA_SERVICE_TCP_PORT = 9;
+const ntsa::Port ResolverUtilTest::k_IANA_SERVICE_UDP_PORT = 9;
+
+}  // close namespace ntsu
+}  // close namespace BloombergLP

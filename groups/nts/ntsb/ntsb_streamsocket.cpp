@@ -109,7 +109,7 @@ ntsa::Error StreamSocket::send(ntsa::SendContext*       context,
 }
 
 ntsa::Error StreamSocket::send(ntsa::SendContext*       context,
-                               const ntsa::ConstBuffer *data,
+                               const ntsa::ConstBuffer* data,
                                bsl::size_t              size,
                                const ntsa::SendOptions& options)
 {

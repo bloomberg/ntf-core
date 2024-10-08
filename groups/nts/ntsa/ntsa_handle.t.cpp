@@ -13,9 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsa_handle.h>
 #include <ntscfg_test.h>
-#include <bslmf_assert.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsa_handle_t_cpp, "$Id$ $CSID$")
+
+#include <ntsa_handle.h>
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
 #include <sys/types.h>
@@ -28,20 +31,18 @@
 
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntsa {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
+// Provide tests for 'ntsa::Handle'.
+class HandleTest
+{
+  public:
+    // TODO
+    static void verify();
+};
 
-NTSCFG_TEST_CASE(1)
+NTSCFG_TEST_FUNCTION(ntsa::HandleTest::verify)
 {
 #if defined(BSLS_PLATFORM_OS_UNIX)
     BSLMF_ASSERT(sizeof(ntsa::Handle) == sizeof(int));
@@ -50,8 +51,5 @@ NTSCFG_TEST_CASE(1)
 #endif
 }
 
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsa
+}  // close namespace BloombergLP

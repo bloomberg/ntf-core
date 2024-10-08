@@ -228,13 +228,15 @@ bsl::ostream& operator<<(bsl::ostream& stream, const Ipv4Address& object);
 /// 'rhs', otherwise return false.
 ///
 /// @related ntsa::Ipv4Address
-bool operator==(const Ipv4Address& lhs, const Ipv4Address& rhs) NTSCFG_NOEXCEPT;
+bool operator==(const Ipv4Address& lhs,
+                const Ipv4Address& rhs) NTSCFG_NOEXCEPT;
 
 /// Return true if the specified 'lhs' does not have the same value as the
 /// specified 'rhs', otherwise return false.
 ///
 /// @related ntsa::Ipv4Address
-bool operator!=(const Ipv4Address& lhs, const Ipv4Address& rhs) NTSCFG_NOEXCEPT;
+bool operator!=(const Ipv4Address& lhs,
+                const Ipv4Address& rhs) NTSCFG_NOEXCEPT;
 
 /// Return true if the specified 'lhs' is "less than" the specified 'rhs',
 /// otherwise return false.

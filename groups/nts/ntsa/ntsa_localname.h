@@ -22,10 +22,10 @@ BSLS_IDENT("$Id: $")
 #include <ntsa_error.h>
 #include <ntscfg_platform.h>
 #include <ntsscm_version.h>
-#include <bdlb_nullablevalue.h>
-#include <bdlat_typetraits.h>
 #include <bdlat_attributeinfo.h>
 #include <bdlat_sequencefunctions.h>
+#include <bdlat_typetraits.h>
+#include <bdlb_nullablevalue.h>
 #include <bslh_hash.h>
 #include <bsl_iosfwd.h>
 #include <bsl_string.h>
@@ -62,10 +62,7 @@ class LocalName
 #endif
 
   private:
-    enum {
-        e_ATTRIBUTE_ID_PATH     = 0,
-        e_ATTRIBUTE_ID_ABSTRACT = 1 
-    };
+    enum { e_ATTRIBUTE_ID_PATH = 0, e_ATTRIBUTE_ID_ABSTRACT = 1 };
 
     char         d_path[k_MAX_PATH_LENGTH];
     bsl::uint8_t d_size;
@@ -159,59 +156,59 @@ class LocalName
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Invoke the specified 'manipulator' sequentially on the address of each 
-    /// (modifiable) attribute of this object, supplying 'manipulator' with 
-    /// the corresponding attribute information structure until such 
-    /// invocation returns a non-zero value. Return the value from the last 
-    /// invocation of 'manipulator' (i.e., the invocation that terminated the 
-    /// sequence). 
+    /// Invoke the specified 'manipulator' sequentially on the address of each
+    /// (modifiable) attribute of this object, supplying 'manipulator' with
+    /// the corresponding attribute information structure until such
+    /// invocation returns a non-zero value. Return the value from the last
+    /// invocation of 'manipulator' (i.e., the invocation that terminated the
+    /// sequence).
     template <typename MANIPULATOR>
     int manipulateAttributes(MANIPULATOR& manipulator);
 
-    /// Invoke the specified 'manipulator' on the address of the (modifiable) 
-    /// attribute indicated by the specified 'id', supplying 'manipulator' 
-    /// with the corresponding attribute information structure. Return the 
-    /// value returned from the invocation of 'manipulator' if 'id' identifies 
-    /// an attribute of this class, and -1 otherwise. 
+    /// Invoke the specified 'manipulator' on the address of the (modifiable)
+    /// attribute indicated by the specified 'id', supplying 'manipulator'
+    /// with the corresponding attribute information structure. Return the
+    /// value returned from the invocation of 'manipulator' if 'id' identifies
+    /// an attribute of this class, and -1 otherwise.
     template <typename MANIPULATOR>
     int manipulateAttribute(MANIPULATOR& manipulator, int id);
 
-    /// Invoke the specified 'manipulator' on the address of the (modifiable) 
-    /// attribute indicated by the specified 'name' of the specified 
-    /// 'nameLength', supplying 'manipulator' with the corresponding attribute 
-    /// information structure. Return the value returned from the invocation 
-    /// of 'manipulator' if 'name' identifies an attribute of this class, and 
-    /// -1 otherwise. 
+    /// Invoke the specified 'manipulator' on the address of the (modifiable)
+    /// attribute indicated by the specified 'name' of the specified
+    /// 'nameLength', supplying 'manipulator' with the corresponding attribute
+    /// information structure. Return the value returned from the invocation
+    /// of 'manipulator' if 'name' identifies an attribute of this class, and
+    /// -1 otherwise.
     template <typename MANIPULATOR>
-    int manipulateAttribute(MANIPULATOR& manipulator, 
-                            const char*  name, 
+    int manipulateAttribute(MANIPULATOR& manipulator,
+                            const char*  name,
                             int          nameLength);
 
-    /// Invoke the specified 'accessor' sequentially on each (non-modifiable) 
-    /// attribute of this object, supplying 'accessor' with the corresponding 
-    /// attribute information structure until such invocation returns a 
-    /// non-zero value. Return the value from the last invocation of 
-    /// 'accessor' (i.e., the invocation that terminated the sequence). 
+    /// Invoke the specified 'accessor' sequentially on each (non-modifiable)
+    /// attribute of this object, supplying 'accessor' with the corresponding
+    /// attribute information structure until such invocation returns a
+    /// non-zero value. Return the value from the last invocation of
+    /// 'accessor' (i.e., the invocation that terminated the sequence).
     template <typename ACCESSOR>
     int accessAttributes(ACCESSOR& accessor) const;
 
-    /// Invoke the specified 'accessor' on the (non-modifiable) attribute of 
-    /// this object indicated by the specified 'id', supplying 'accessor' with 
-    /// the corresponding attribute information structure. Return the value 
-    /// returned from the invocation of 'accessor' if 'id' identifies an 
-    /// attribute of this class, and -1 otherwise. 
+    /// Invoke the specified 'accessor' on the (non-modifiable) attribute of
+    /// this object indicated by the specified 'id', supplying 'accessor' with
+    /// the corresponding attribute information structure. Return the value
+    /// returned from the invocation of 'accessor' if 'id' identifies an
+    /// attribute of this class, and -1 otherwise.
     template <typename ACCESSOR>
     int accessAttribute(ACCESSOR& accessor, int id) const;
 
-    /// Invoke the specified 'accessor' on the (non-modifiable) attribute of 
-    /// this object indicated by the specified 'name' of the specified 
-    /// 'nameLength', supplying 'accessor' with the corresponding attribute 
-    /// information structure. Return the value returned from the invocation 
-    /// of 'accessor' if 'name' identifies an attribute of this class, and -1 
-    /// otherwise. 
+    /// Invoke the specified 'accessor' on the (non-modifiable) attribute of
+    /// this object indicated by the specified 'name' of the specified
+    /// 'nameLength', supplying 'accessor' with the corresponding attribute
+    /// information structure. Return the value returned from the invocation
+    /// of 'accessor' if 'name' identifies an attribute of this class, and -1
+    /// otherwise.
     template <typename ACCESSOR>
-    int accessAttribute(ACCESSOR&   accessor, 
-                        const char* name, 
+    int accessAttribute(ACCESSOR&   accessor,
+                        const char* name,
                         int         nameLength) const;
 
     /// Generate a unique local name. The name will be abstract if the
@@ -225,20 +222,20 @@ class LocalName
     /// TMP directory is longer than sockaddr_un can store)
     static ntsa::Error generateUnique(ntsa::LocalName* name);
 
-    /// Return attribute information for the attribute indicated by the 
-    /// specified 'id' if the attribute exists, and 0 otherwise. 
+    /// Return attribute information for the attribute indicated by the
+    /// specified 'id' if the attribute exists, and 0 otherwise.
     static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
 
-    /// Return attribute information for the attribute indicated by the 
-    /// specified 'name' of the specified 'nameLength' if the attribute 
-    /// exists, and 0 otherwise. 
-    static const bdlat_AttributeInfo* lookupAttributeInfo(
-        const char* name, int nameLength);
+    /// Return attribute information for the attribute indicated by the
+    /// specified 'name' of the specified 'nameLength' if the attribute
+    /// exists, and 0 otherwise.
+    static const bdlat_AttributeInfo* lookupAttributeInfo(const char* name,
+                                                          int nameLength);
 
-    /// Return the compiler-independant name for this class. 
+    /// Return the compiler-independant name for this class.
     static const char CLASS_NAME[16];
 
-    /// The attribute info array, indexed by attribute index. 
+    /// The attribute info array, indexed by attribute index.
     static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[2];
 
     /// Defines the traits of this type. These traits can be used to select,
@@ -359,11 +356,11 @@ int LocalName::manipulateAttribute(MANIPULATOR& manipulator, int id)
 }
 
 template <typename MANIPULATOR>
-int LocalName::manipulateAttribute(MANIPULATOR& manipulator, 
-                                   const char*  name, 
+int LocalName::manipulateAttribute(MANIPULATOR& manipulator,
+                                   const char*  name,
                                    int          nameLength)
 {
-    const bdlat_AttributeInfo* info = 
+    const bdlat_AttributeInfo* info =
         ntsa::LocalName::lookupAttributeInfo(name, nameLength);
     if (info == 0) {
         return -1;
@@ -397,7 +394,7 @@ int LocalName::accessAttribute(ACCESSOR& accessor, int id) const
 
     if (id == e_ATTRIBUTE_ID_PATH) {
         bsl::string path = this->value();
-        rc = accessor(path, ATTRIBUTE_INFO_ARRAY[id]);
+        rc               = accessor(path, ATTRIBUTE_INFO_ARRAY[id]);
         if (rc != 0) {
             return rc;
         }
@@ -421,11 +418,11 @@ int LocalName::accessAttribute(ACCESSOR& accessor, int id) const
 }
 
 template <typename ACCESSOR>
-int LocalName::accessAttribute(ACCESSOR&   accessor, 
-                               const char* name, 
+int LocalName::accessAttribute(ACCESSOR&   accessor,
+                               const char* name,
                                int         nameLength) const
 {
-    const bdlat_AttributeInfo* info = 
+    const bdlat_AttributeInfo* info =
         ntsa::LocalName::lookupAttributeInfo(name, nameLength);
     if (info == 0) {
         return -1;

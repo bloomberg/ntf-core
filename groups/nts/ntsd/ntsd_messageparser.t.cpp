@@ -13,45 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsd_messageparser.h>
-
-#include <ntsd_datautil.h>
-#include <ntsd_message.h>
-
 #include <ntscfg_test.h>
 
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bsls_assert.h>
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsd_messageparser_t_cpp, "$Id$ $CSID$")
+
+#include <ntsd_messageparser.h>
 
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntsd {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
-
-NTSCFG_TEST_CASE(1)
+// Provide tests for 'ntsd::MessageParser'.
+class MessageParserTest
 {
-    // Concern:
-    // Plan:
+  public:
+    // TODO
+    static void verify();
+};
 
-    ntscfg::TestAllocator ta;
-    {
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+NTSCFG_TEST_FUNCTION(ntsd::MessageParserTest::verify)
+{
 }
 
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsd
+}  // close namespace BloombergLP

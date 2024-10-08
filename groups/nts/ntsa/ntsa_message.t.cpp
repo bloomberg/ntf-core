@@ -13,56 +13,39 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsa_message.h>
 #include <ntscfg_test.h>
-#include <bslma_testallocator.h>
-#include <bsl_cstdint.h>
-#include <bsl_sstream.h>
-#include <bsl_string.h>
-#include <bsl_unordered_set.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsa_message_t_cpp, "$Id$ $CSID$")
+
+#include <ntsa_message.h>
 
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntsa {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
-
-namespace test {
-
-const char s_buffer[1] = {0};
-
-const void* constBufferData(bsl::size_t bufferIndex)
+// Provide tests for 'ntsa::Message'.
+class MessageTest
 {
-    return &s_buffer[0] + bufferIndex;
-}
+  public:
+    // TODO
+    static void verifyCase1();
 
-bsl::size_t constBufferSize(bsl::size_t bufferIndex)
-{
-    return 10 * bufferIndex;
-}
+    // TODO
+    static void verifyCase2();
 
-void* mutableBufferData(bsl::size_t bufferIndex)
-{
-    return const_cast<char*>(&s_buffer[0]) + bufferIndex;
-}
+  private:
+    static const char s_buffer[1];
 
-bsl::size_t mutableBufferSize(bsl::size_t bufferIndex)
-{
-    return 100 * bufferIndex;
-}
+    static const void* constBufferData(bsl::size_t bufferIndex);
+    static bsl::size_t constBufferSize(bsl::size_t bufferIndex);
 
-}  // close namespace 'test'
+    static void*       mutableBufferData(bsl::size_t bufferIndex);
+    static bsl::size_t mutableBufferSize(bsl::size_t bufferIndex);
+};
 
-NTSCFG_TEST_CASE(1)
+NTSCFG_TEST_FUNCTION(ntsa::MessageTest::verifyCase1)
 {
     // Concern: The semantics of 'ntsa::ConstMessage' are correct.
     // Plan:
@@ -70,63 +53,54 @@ NTSCFG_TEST_CASE(1)
     const bsl::size_t MAX_RESET_ITERATION = 2;
     const bsl::size_t MAX_BUFFER_INDEX    = 64;
 
-    ntscfg::TestAllocator ta;
+    ntsa::ConstMessage constMessage(NTSCFG_TEST_ALLOCATOR);
+
+    for (bsl::size_t resetIteration = 0; resetIteration < 2; ++resetIteration)
     {
-        ntsa::ConstMessage constMessage(&ta);
+        NTSCFG_TEST_EQ(constMessage.endpoint(), ntsa::Endpoint());
+        NTSCFG_TEST_EQ(constMessage.numBuffers(), 0);
+        NTSCFG_TEST_EQ(constMessage.size(), 0);
+        NTSCFG_TEST_EQ(constMessage.capacity(), 0);
 
-        for (bsl::size_t resetIteration = 0; resetIteration < 2;
-             ++resetIteration)
+        bsl::vector<ntsa::ConstBuffer> constBufferArray;
+
+        for (bsl::size_t bufferIndex = 0; bufferIndex < MAX_BUFFER_INDEX;
+             ++bufferIndex)
         {
-            NTSCFG_TEST_EQ(constMessage.endpoint(), ntsa::Endpoint());
-            NTSCFG_TEST_EQ(constMessage.numBuffers(), 0);
-            NTSCFG_TEST_EQ(constMessage.size(), 0);
-            NTSCFG_TEST_EQ(constMessage.capacity(), 0);
+            ntsa::ConstBuffer constBuffer(constBufferData(bufferIndex),
+                                          constBufferSize(bufferIndex));
 
-            bsl::vector<ntsa::ConstBuffer> constBufferArray;
+            constMessage.appendBuffer(constBuffer);
+            constBufferArray.push_back(constBuffer);
 
-            for (bsl::size_t bufferIndex = 0; bufferIndex < MAX_BUFFER_INDEX;
-                 ++bufferIndex)
+            bsl::size_t expectedNumBuffers = bufferIndex + 1;
+
+            NTSCFG_TEST_EQ(constMessage.numBuffers(), expectedNumBuffers);
+
+            bsl::size_t expectedCapacity = 0;
+            for (bsl::size_t existingBufferIndex = 0;
+                 existingBufferIndex <= bufferIndex;
+                 ++existingBufferIndex)
             {
-                ntsa::ConstBuffer constBuffer(
-                    test::constBufferData(bufferIndex),
-                    test::constBufferSize(bufferIndex));
+                NTSCFG_TEST_EQ(constMessage.buffer(existingBufferIndex).data(),
+                               constBufferArray[existingBufferIndex].data());
+                NTSCFG_TEST_EQ(constMessage.buffer(existingBufferIndex).size(),
+                               constBufferArray[existingBufferIndex].size());
 
-                constMessage.appendBuffer(constBuffer);
-                constBufferArray.push_back(constBuffer);
-
-                bsl::size_t expectedNumBuffers = bufferIndex + 1;
-
-                NTSCFG_TEST_EQ(constMessage.numBuffers(), expectedNumBuffers);
-
-                bsl::size_t expectedCapacity = 0;
-                for (bsl::size_t existingBufferIndex = 0;
-                     existingBufferIndex <= bufferIndex;
-                     ++existingBufferIndex)
-                {
-                    NTSCFG_TEST_EQ(
-                        constMessage.buffer(existingBufferIndex).data(),
-                        constBufferArray[existingBufferIndex].data());
-                    NTSCFG_TEST_EQ(
-                        constMessage.buffer(existingBufferIndex).size(),
-                        constBufferArray[existingBufferIndex].size());
-
-                    expectedCapacity +=
-                        test::constBufferSize(existingBufferIndex);
-                }
-
-                bsl::size_t expectedSize = expectedCapacity;
-
-                NTSCFG_TEST_EQ(constMessage.size(), expectedSize);
-                NTSCFG_TEST_EQ(constMessage.capacity(), expectedCapacity);
+                expectedCapacity += constBufferSize(existingBufferIndex);
             }
 
-            constMessage.reset();
+            bsl::size_t expectedSize = expectedCapacity;
+
+            NTSCFG_TEST_EQ(constMessage.size(), expectedSize);
+            NTSCFG_TEST_EQ(constMessage.capacity(), expectedCapacity);
         }
+
+        constMessage.reset();
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTSCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntsa::MessageTest::verifyCase2)
 {
     // Concern: The semantics of 'ntsa::MutableMessage' are correct.
     // Plan:
@@ -134,66 +108,76 @@ NTSCFG_TEST_CASE(2)
     const bsl::size_t MAX_RESET_ITERATION = 2;
     const bsl::size_t MAX_BUFFER_INDEX    = 64;
 
-    ntscfg::TestAllocator ta;
+    ntsa::MutableMessage mutableMessage(NTSCFG_TEST_ALLOCATOR);
+
+    for (bsl::size_t resetIteration = 0; resetIteration < 2; ++resetIteration)
     {
-        ntsa::MutableMessage mutableMessage(&ta);
+        NTSCFG_TEST_EQ(mutableMessage.endpoint(), ntsa::Endpoint());
+        NTSCFG_TEST_EQ(mutableMessage.numBuffers(), 0);
+        NTSCFG_TEST_EQ(mutableMessage.size(), 0);
+        NTSCFG_TEST_EQ(mutableMessage.capacity(), 0);
 
-        for (bsl::size_t resetIteration = 0; resetIteration < 2;
-             ++resetIteration)
+        bsl::vector<ntsa::MutableBuffer> mutableBufferArray;
+
+        for (bsl::size_t bufferIndex = 0; bufferIndex < MAX_BUFFER_INDEX;
+             ++bufferIndex)
         {
-            NTSCFG_TEST_EQ(mutableMessage.endpoint(), ntsa::Endpoint());
-            NTSCFG_TEST_EQ(mutableMessage.numBuffers(), 0);
-            NTSCFG_TEST_EQ(mutableMessage.size(), 0);
-            NTSCFG_TEST_EQ(mutableMessage.capacity(), 0);
+            ntsa::MutableBuffer mutableBuffer(mutableBufferData(bufferIndex),
+                                              mutableBufferSize(bufferIndex));
 
-            bsl::vector<ntsa::MutableBuffer> mutableBufferArray;
+            mutableMessage.appendBuffer(mutableBuffer);
+            mutableBufferArray.push_back(mutableBuffer);
 
-            for (bsl::size_t bufferIndex = 0; bufferIndex < MAX_BUFFER_INDEX;
-                 ++bufferIndex)
+            bsl::size_t expectedNumBuffers = bufferIndex + 1;
+
+            NTSCFG_TEST_EQ(mutableMessage.numBuffers(), expectedNumBuffers);
+
+            bsl::size_t expectedCapacity = 0;
+            for (bsl::size_t existingBufferIndex = 0;
+                 existingBufferIndex <= bufferIndex;
+                 ++existingBufferIndex)
             {
-                ntsa::MutableBuffer mutableBuffer(
-                    test::mutableBufferData(bufferIndex),
-                    test::mutableBufferSize(bufferIndex));
+                NTSCFG_TEST_EQ(
+                    mutableMessage.buffer(existingBufferIndex).data(),
+                    mutableBufferArray[existingBufferIndex].data());
+                NTSCFG_TEST_EQ(
+                    mutableMessage.buffer(existingBufferIndex).size(),
+                    mutableBufferArray[existingBufferIndex].size());
 
-                mutableMessage.appendBuffer(mutableBuffer);
-                mutableBufferArray.push_back(mutableBuffer);
-
-                bsl::size_t expectedNumBuffers = bufferIndex + 1;
-
-                NTSCFG_TEST_EQ(mutableMessage.numBuffers(),
-                               expectedNumBuffers);
-
-                bsl::size_t expectedCapacity = 0;
-                for (bsl::size_t existingBufferIndex = 0;
-                     existingBufferIndex <= bufferIndex;
-                     ++existingBufferIndex)
-                {
-                    NTSCFG_TEST_EQ(
-                        mutableMessage.buffer(existingBufferIndex).data(),
-                        mutableBufferArray[existingBufferIndex].data());
-                    NTSCFG_TEST_EQ(
-                        mutableMessage.buffer(existingBufferIndex).size(),
-                        mutableBufferArray[existingBufferIndex].size());
-
-                    expectedCapacity +=
-                        test::mutableBufferSize(existingBufferIndex);
-                }
-
-                bsl::size_t expectedSize = 0;
-
-                NTSCFG_TEST_EQ(mutableMessage.size(), expectedSize);
-                NTSCFG_TEST_EQ(mutableMessage.capacity(), expectedCapacity);
+                expectedCapacity += mutableBufferSize(existingBufferIndex);
             }
 
-            mutableMessage.reset();
+            bsl::size_t expectedSize = 0;
+
+            NTSCFG_TEST_EQ(mutableMessage.size(), expectedSize);
+            NTSCFG_TEST_EQ(mutableMessage.capacity(), expectedCapacity);
         }
+
+        mutableMessage.reset();
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTSCFG_TEST_DRIVER
+const char MessageTest::s_buffer[1] = {0};
+
+const void* MessageTest::constBufferData(bsl::size_t bufferIndex)
 {
-    NTSCFG_TEST_REGISTER(1);
-    NTSCFG_TEST_REGISTER(2);
+    return &s_buffer[0] + bufferIndex;
 }
-NTSCFG_TEST_DRIVER_END;
+
+bsl::size_t MessageTest::constBufferSize(bsl::size_t bufferIndex)
+{
+    return 10 * bufferIndex;
+}
+
+void* MessageTest::mutableBufferData(bsl::size_t bufferIndex)
+{
+    return const_cast<char*>(&s_buffer[0]) + bufferIndex;
+}
+
+bsl::size_t MessageTest::mutableBufferSize(bsl::size_t bufferIndex)
+{
+    return 100 * bufferIndex;
+}
+
+}  // close namespace ntsa
+}  // close namespace BloombergLP

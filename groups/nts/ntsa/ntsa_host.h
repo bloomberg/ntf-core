@@ -21,13 +21,13 @@ BSLS_IDENT("$Id: $")
 
 #include <ntsa_domainname.h>
 #include <ntsa_hosttype.h>
-#include <ntsa_localname.h>
 #include <ntsa_ipaddress.h>
+#include <ntsa_localname.h>
 #include <ntscfg_platform.h>
 #include <ntsscm_version.h>
-#include <bdlat_typetraits.h>
-#include <bdlat_selectioninfo.h>
 #include <bdlat_choicefunctions.h>
+#include <bdlat_selectioninfo.h>
+#include <bdlat_typetraits.h>
 #include <bslh_hash.h>
 #include <bsls_assert.h>
 #include <bsls_objectbuffer.h>
@@ -241,50 +241,50 @@ class Host
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Set the value of this object to be the default for the selection 
-    /// indicated by the specified 'id'. Return 0 on success, and non-zero 
-    /// value otherwise (i.e., the selection is not found). 
+    /// Set the value of this object to be the default for the selection
+    /// indicated by the specified 'id'. Return 0 on success, and non-zero
+    /// value otherwise (i.e., the selection is not found).
     int makeSelection(int id);
 
-    /// Set the value of this object to be the default for the selection 
-    /// indicated by the specified 'name' of the specified 'nameLength'. 
-    /// Return 0 on success, and non-zero value otherwise (i.e., the selection 
-    /// is not found). 
+    /// Set the value of this object to be the default for the selection
+    /// indicated by the specified 'name' of the specified 'nameLength'.
+    /// Return 0 on success, and non-zero value otherwise (i.e., the selection
+    /// is not found).
     int makeSelection(const char* name, int nameLength);
 
-    /// Return the selection ID of the current selection in the choice. 
+    /// Return the selection ID of the current selection in the choice.
     int selectionId() const;
 
-    /// Invoke the specified 'manipulator' on the address of the modifiable 
-    /// selection, supplying 'manipulator' with the corresponding selection 
-    /// information structure. Return the value returned from the invocation 
-    /// of 'manipulator' if this object has a defined selection, and -1 
-    /// otherwise. 
+    /// Invoke the specified 'manipulator' on the address of the modifiable
+    /// selection, supplying 'manipulator' with the corresponding selection
+    /// information structure. Return the value returned from the invocation
+    /// of 'manipulator' if this object has a defined selection, and -1
+    /// otherwise.
     template <typename MANIPULATOR>
     int manipulateSelection(MANIPULATOR& manipulator);
 
-    /// Invoke the specified 'accessor' on the non-modifiable selection, 
-    /// supplying 'accessor' with the corresponding selection information 
-    /// structure. Return the value returned from the invocation of 'accessor' 
-    /// if this object has a defined selection, and -1 otherwise. 
+    /// Invoke the specified 'accessor' on the non-modifiable selection,
+    /// supplying 'accessor' with the corresponding selection information
+    /// structure. Return the value returned from the invocation of 'accessor'
+    /// if this object has a defined selection, and -1 otherwise.
     template <typename ACCESSOR>
     int accessSelection(ACCESSOR& accessor) const;
 
-    /// Return the compiler-independant name for this class. 
+    /// Return the compiler-independant name for this class.
     static const char CLASS_NAME[11];
 
-    /// The selection info array, indexed by selection index. 
+    /// The selection info array, indexed by selection index.
     static const bdlat_SelectionInfo SELECTION_INFO_ARRAY[4];
 
-    /// Return selection information for the selection indicated by the 
-    /// specified 'id' if the selection exists, and 0 otherwise. 
+    /// Return selection information for the selection indicated by the
+    /// specified 'id' if the selection exists, and 0 otherwise.
     static const bdlat_SelectionInfo* lookupSelectionInfo(int id);
 
-    /// Return selection information for the selection indicated by the 
-    /// specified 'name' of the specified 'nameLength' if the selection 
-    /// exists, and 0 otherwise. 
-    static const bdlat_SelectionInfo* lookupSelectionInfo(
-        const char* name, int nameLength);
+    /// Return selection information for the selection indicated by the
+    /// specified 'name' of the specified 'nameLength' if the selection
+    /// exists, and 0 otherwise.
+    static const bdlat_SelectionInfo* lookupSelectionInfo(const char* name,
+                                                          int nameLength);
 
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
@@ -469,7 +469,7 @@ int Host::makeSelection(int id)
 NTSCFG_INLINE
 int Host::makeSelection(const char* name, int nameLength)
 {
-    const bdlat_SelectionInfo *selectionInfo =
+    const bdlat_SelectionInfo* selectionInfo =
         ntsa::Host::lookupSelectionInfo(name, nameLength);
     if (selectionInfo == 0) {
         return -1;
@@ -531,8 +531,8 @@ template <typename ACCESSOR>
 int Host::accessSelection(ACCESSOR& accessor) const
 {
     int rc;
-    
-    const bdlat_SelectionInfo *selectionInfo =
+
+    const bdlat_SelectionInfo* selectionInfo =
         ntsa::Host::lookupSelectionInfo(d_type);
     if (selectionInfo == 0) {
         return -1;

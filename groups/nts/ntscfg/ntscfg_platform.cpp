@@ -28,9 +28,9 @@ BSLS_IDENT_RCSID(ntscfg_platform_cpp, "$Id$ $CSID$")
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
 #include <errno.h>
+#include <limits.h>
 #include <signal.h>
 #include <unistd.h>
-#include <limits.h>
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
 #include <linux/version.h>
@@ -39,9 +39,9 @@ BSLS_IDENT_RCSID(ntscfg_platform_cpp, "$Id$ $CSID$")
 #endif
 
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
+#include <sysinfoapi.h>
 #include <windows.h>
 #include <winsock2.h>
-#include <sysinfoapi.h>
 #pragma comment(lib, "ws2_32.lib")
 #endif
 
@@ -165,12 +165,11 @@ int Platform::exit()
 #endif
 }
 
-
 bsl::size_t Platform::numCores()
 {
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
-    errno = 0;
+    errno              = 0;
     const int cpuCount = sysconf(_SC_NPROCESSORS_ONLN);
     if (cpuCount < 0) {
         return 1;
@@ -257,10 +256,7 @@ bsl::string Platform::buildBranch()
     bsl::string result = NTS_BUILD_BRANCH;
     if (result.empty()) {
         bsl::stringstream ss;
-        ss << NTS_VERSION_MAJOR
-           << '.'
-           << NTS_VERSION_MINOR
-           << '.'
+        ss << NTS_VERSION_MAJOR << '.' << NTS_VERSION_MINOR << '.'
            << NTS_VERSION_PATCH;
         result = ss.str();
     }

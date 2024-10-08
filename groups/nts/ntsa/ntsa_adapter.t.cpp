@@ -16,24 +16,24 @@
 #include <ntscfg_test.h>
 
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntsa_notificationtype_t_cpp, "$Id$ $CSID$")
+BSLS_IDENT_RCSID(ntsa_adapter_t_cpp, "$Id$ $CSID$")
 
-#include <ntsa_notificationtype.h>
+#include <ntsa_adapter.h>
 
 using namespace BloombergLP;
 
 namespace BloombergLP {
 namespace ntsa {
 
-// Provide tests for 'ntsa::NotificationType'.
-class NotificationTypeTest
+// Provide tests for 'ntsa::Adapter'.
+class AdapterTest
 {
   public:
     // TODO
     static void verify();
 };
 
-NTSCFG_TEST_FUNCTION(ntsa::NotificationTypeTest::verify)
+NTSCFG_TEST_FUNCTION(ntsa::AdapterTest::verify)
 {
 }
 

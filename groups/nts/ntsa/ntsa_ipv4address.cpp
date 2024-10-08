@@ -25,7 +25,6 @@ BSLS_IDENT_RCSID(ntsa_ipv4address_cpp, "$Id$ $CSID$")
 #include <bsl_limits.h>
 #include <bsl_sstream.h>
 
-
 namespace BloombergLP {
 namespace ntsa {
 
@@ -126,15 +125,15 @@ bool Ipv4Address::parse(const bslstl::StringRef& text) NTSCFG_NOEXCEPT
     }
 
     bsl::uint64_t numOctetsLeft = 4 - index;
-    if (numAtIndex >= bsl::pow(256,numOctetsLeft)) {
+    if (numAtIndex >= bsl::pow(256, numOctetsLeft)) {
         return false;
     }
 
     for (size_t oct = 0; oct < numOctetsLeft; ++oct) {
-        bsl::uint8_t octet = NTSCFG_WARNING_NARROW(bsl::uint8_t,
-                                                   numAtIndex % 256);
-        newValue.d_asBytes[3 - oct] = octet;
-        numAtIndex /= 256;
+        bsl::uint8_t octet =
+            NTSCFG_WARNING_NARROW(bsl::uint8_t, numAtIndex % 256);
+        newValue.d_asBytes[3 - oct]  = octet;
+        numAtIndex                  /= 256;
     }
 
     d_value.d_asDword = newValue.d_asDword;

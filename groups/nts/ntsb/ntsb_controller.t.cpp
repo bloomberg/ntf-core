@@ -13,39 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsb_controller.h>
-
 #include <ntscfg_test.h>
-#include <bslma_testallocator.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsb_controller_t_cpp, "$Id$ $CSID$")
+
+#include <ntsb_controller.h>
 
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntsb {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
-
-NTSCFG_TEST_CASE(1)
+// Provide tests for 'ntsb::Controller'.
+class ControllerTest
 {
-    // Concern:
-    // Plan:
+  public:
+    // TODO
+    static void verify();
+};
 
-    ntscfg::TestAllocator ta;
-    {
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+NTSCFG_TEST_FUNCTION(ntsb::ControllerTest::verify)
+{
 }
 
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsb
+}  // close namespace BloombergLP

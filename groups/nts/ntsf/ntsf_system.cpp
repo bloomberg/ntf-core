@@ -829,24 +829,26 @@ ntsa::Error System::leaveMulticastGroup(ntsa::Handle           socket,
                                                        group);
 }
 
-ntsa::Error System::joinMulticastGroupSource(
-    ntsa::Handle           socket,
-    const ntsa::IpAddress& interface,
-    const ntsa::IpAddress& group,
-    const ntsa::IpAddress& source)
+ntsa::Error System::joinMulticastGroupSource(ntsa::Handle           socket,
+                                             const ntsa::IpAddress& interface,
+                                             const ntsa::IpAddress& group,
+                                             const ntsa::IpAddress& source)
 {
-    return ntsu::SocketOptionUtil::joinMulticastGroupSource(
-        socket, interface, group, source);
+    return ntsu::SocketOptionUtil::joinMulticastGroupSource(socket,
+                                                            interface,
+                                                            group,
+                                                            source);
 }
 
-ntsa::Error System::leaveMulticastGroupSource(
-    ntsa::Handle           socket,
-    const ntsa::IpAddress& interface,
-    const ntsa::IpAddress& group,
-    const ntsa::IpAddress& source)
+ntsa::Error System::leaveMulticastGroupSource(ntsa::Handle           socket,
+                                              const ntsa::IpAddress& interface,
+                                              const ntsa::IpAddress& group,
+                                              const ntsa::IpAddress& source)
 {
-    return ntsu::SocketOptionUtil::leaveMulticastGroupSource(
-        socket, interface, group, source);
+    return ntsu::SocketOptionUtil::leaveMulticastGroupSource(socket,
+                                                             interface,
+                                                             group,
+                                                             source);
 }
 
 ntsa::Error System::setBlocking(ntsa::Handle socket, bool blocking)

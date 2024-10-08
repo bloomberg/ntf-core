@@ -304,8 +304,7 @@ bsl::string DomainName::text() const
 }
 
 template <typename HASH_ALGORITHM>
-NTSCFG_INLINE
-void DomainName::hash(HASH_ALGORITHM& algorithm) const
+NTSCFG_INLINE void DomainName::hash(HASH_ALGORITHM& algorithm) const
 {
     using bslh::hashAppend;
     algorithm(d_buffer, d_size);
@@ -336,8 +335,8 @@ bool operator<(const DomainName& lhs, const DomainName& rhs)
 }
 
 template <typename HASH_ALGORITHM>
-NTSCFG_INLINE
-void hashAppend(HASH_ALGORITHM& algorithm, const DomainName& value)
+NTSCFG_INLINE void hashAppend(HASH_ALGORITHM&   algorithm,
+                              const DomainName& value)
 {
     value.hash(algorithm);
 }

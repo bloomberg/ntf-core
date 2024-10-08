@@ -13,12 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsa_ethernetheader.h>
+#include <ntscfg_test.h>
 
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntsa_ethernetheader_t_cpp, "$Id$ $CSID$")
 
-#include <ntscfg_test.h>
+#include <ntsa_ethernetheader.h>
 
 using namespace BloombergLP;
 
@@ -36,7 +36,7 @@ class EthernetHeaderTest
     static void verifyUsage();
 };
 
-void EthernetHeaderTest::verifyTypeTraits()
+NTSCFG_TEST_FUNCTION(ntsa::EthernetHeaderTest::verifyTypeTraits)
 {
     const bool isBitwiseInitializable =
         NTSCFG_TYPE_CHECK_BITWISE_INITIALIZABLE(ntsa::EthernetHeader);
@@ -54,7 +54,7 @@ void EthernetHeaderTest::verifyTypeTraits()
     NTSCFG_TEST_TRUE(isBitwiseCopyable);
 }
 
-void EthernetHeaderTest::verifyUsage()
+NTSCFG_TEST_FUNCTION(ntsa::EthernetHeaderTest::verifyUsage)
 {
     ntsa::EthernetHeader header;
 
@@ -67,10 +67,3 @@ void EthernetHeaderTest::verifyUsage()
 
 }  // close namespace ntsa
 }  // close namespace BloombergLP
-
-NTSCFG_TEST_SUITE
-{
-    NTSCFG_TEST_FUNCTION(&ntsa::EthernetHeaderTest::verifyTypeTraits);
-    NTSCFG_TEST_FUNCTION(&ntsa::EthernetHeaderTest::verifyUsage);
-}
-NTSCFG_TEST_SUITE_END;

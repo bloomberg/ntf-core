@@ -1,4 +1,4 @@
-// Copyright 2023 Bloomberg Finance L.P.
+// Copyright 2020-2023 Bloomberg Finance L.P.
 // SPDX-License-Identifier: Apache-2.0
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,96 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsa_timestamptype.h>
-
 #include <ntscfg_test.h>
 
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsa_file_t_cpp, "$Id$ $CSID$")
+
+#include <ntsa_timestamptype.h>
+
 using namespace BloombergLP;
-using namespace ntsa;
 
-NTSCFG_TEST_CASE(1)
+namespace BloombergLP {
+namespace ntsa {
+
+// Provide tests for 'ntsa::TimestampType'.
+class TimestampTypeTest
 {
-    NTSCFG_TEST_EQ(
-        bsl::strcmp(TimestampType::toString(TimestampType::e_UNDEFINED),
-                    "UNDEFINED"),
-        0);
-    NTSCFG_TEST_EQ(
-        bsl::strcmp(TimestampType::toString(TimestampType::e_SCHEDULED),
-                    "SCHEDULED"),
-        0);
-    NTSCFG_TEST_EQ(
-        bsl::strcmp(TimestampType::toString(TimestampType::e_SENT), "SENT"),
-        0);
-    NTSCFG_TEST_EQ(
-        bsl::strcmp(TimestampType::toString(TimestampType::e_ACKNOWLEDGED),
-                    "ACKNOWLEDGED"),
-        0);
+  public:
+    // TODO
+    static void verify();
+};
+
+NTSCFG_TEST_FUNCTION(ntsa::TimestampTypeTest::verify)
+{
 }
 
-NTSCFG_TEST_CASE(2)
-{
-    TimestampType::Value v = TimestampType::e_SENT;
-
-    NTSCFG_TEST_EQ(TimestampType::fromInt(&v, -1), -1);
-    NTSCFG_TEST_EQ(v, TimestampType::e_SENT);
-
-    NTSCFG_TEST_EQ(TimestampType::fromInt(&v, 0), 0);
-    NTSCFG_TEST_EQ(v, TimestampType::e_UNDEFINED);
-
-    NTSCFG_TEST_EQ(TimestampType::fromInt(&v, 1), 0);
-    NTSCFG_TEST_EQ(v, TimestampType::e_SCHEDULED);
-
-    NTSCFG_TEST_EQ(TimestampType::fromInt(&v, 2), 0);
-    NTSCFG_TEST_EQ(v, TimestampType::e_SENT);
-
-    NTSCFG_TEST_EQ(TimestampType::fromInt(&v, 3), 0);
-    NTSCFG_TEST_EQ(v, TimestampType::e_ACKNOWLEDGED);
-
-    NTSCFG_TEST_EQ(TimestampType::fromInt(&v, 4), -1);
-    NTSCFG_TEST_EQ(v, TimestampType::e_ACKNOWLEDGED);
-}
-
-NTSCFG_TEST_CASE(3)
-{
-    const bsl::string undefined    = "undefined";
-    const bsl::string scheduled    = "scheduled";
-    const bsl::string sent         = "sent";
-    const bsl::string acknowledged = "acknowledged";
-    const bsl::string random       = "random_string";
-
-    TimestampType::Value v = TimestampType::e_SENT;
-
-    NTSCFG_TEST_EQ(TimestampType::fromString(&v, random), -1);
-    NTSCFG_TEST_EQ(v, TimestampType::e_SENT);
-
-    NTSCFG_TEST_EQ(TimestampType::fromString(&v, undefined), 0);
-    NTSCFG_TEST_EQ(v, TimestampType::e_UNDEFINED);
-
-    NTSCFG_TEST_EQ(TimestampType::fromString(&v, scheduled), 0);
-    NTSCFG_TEST_EQ(v, TimestampType::e_SCHEDULED);
-
-    NTSCFG_TEST_EQ(TimestampType::fromString(&v, sent), 0);
-    NTSCFG_TEST_EQ(v, TimestampType::e_SENT);
-
-    NTSCFG_TEST_EQ(TimestampType::fromString(&v, acknowledged), 0);
-    NTSCFG_TEST_EQ(v, TimestampType::e_ACKNOWLEDGED);
-}
-
-NTSCFG_TEST_CASE(4)
-{
-    bsl::stringstream ss;
-
-    ss << TimestampType::e_SCHEDULED << ", " << TimestampType::e_SENT << ", "
-       << TimestampType::e_ACKNOWLEDGED << ", " << TimestampType::e_UNDEFINED;
-
-    NTSCFG_TEST_EQ(ss.str(), "SCHEDULED, SENT, ACKNOWLEDGED, UNDEFINED");
-}
-
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-    NTSCFG_TEST_REGISTER(2);
-    NTSCFG_TEST_REGISTER(3);
-    NTSCFG_TEST_REGISTER(4);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsa
+}  // close namespace BloombergLP

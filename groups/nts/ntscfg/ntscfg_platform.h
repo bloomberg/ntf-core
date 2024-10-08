@@ -23,20 +23,20 @@ BSLS_IDENT("$Id: $")
 #include <ntsscm_version.h>
 #include <bsla_annotations.h>
 #include <bsla_deprecated.h>
-#include <bslalg_typetraits.h>
 #include <bslalg_hastrait.h>
 #include <bslalg_typetraitbitwisecopyable.h>
-#include <bslalg_typetraitbitwisemoveable.h>
 #include <bslalg_typetraitbitwiseequalitycomparable.h>
+#include <bslalg_typetraitbitwisemoveable.h>
 #include <bslalg_typetraithastrivialdefaultconstructor.h>
+#include <bslalg_typetraits.h>
 #include <bslalg_typetraitusesbslmaallocator.h>
 #include <bslmf_isbitwisecopyable.h>
-#include <bslmf_isbitwisemoveable.h>
 #include <bslmf_isbitwiseequalitycomparable.h>
+#include <bslmf_isbitwisemoveable.h>
 #include <bslmf_isnothrowmoveconstructible.h>
 #include <bslmf_isnothrowswappable.h>
-#include <bslmf_nestedtraitdeclaration.h>
 #include <bslmf_movableref.h>
+#include <bslmf_nestedtraitdeclaration.h>
 #include <bslmt_lockguard.h>
 #include <bslmt_mutex.h>
 #include <bsls_assert.h>
@@ -183,7 +183,7 @@ namespace ntscfg {
 /// Return a movable reference to 'object.member'.
 ///
 /// @ingroup module_ntscfg
-#define NTSCFG_MOVE_FROM(object, member) \
+#define NTSCFG_MOVE_FROM(object, member)                                      \
     NTSCFG_MOVE(NTSCFG_MOVE_ACCESS(object).member)
 
 #if defined(BDE_BUILD_TARGET_OPT)
@@ -210,9 +210,7 @@ namespace ntscfg {
 ///
 /// @ingroup module_ntscfg
 #define NTSCFG_DECLARE_NESTED_BITWISE_MOVABLE_TRAITS(TYPE)                    \
-    BSLALG_DECLARE_NESTED_TRAITS(                                             \
-        TYPE,                                                                 \
-        bslalg::TypeTraitBitwiseMoveable)
+    BSLALG_DECLARE_NESTED_TRAITS(TYPE, bslalg::TypeTraitBitwiseMoveable)
 
 /// Declare the specified 'TYPE' uses an allocator to supply memory.
 ///
@@ -227,9 +225,9 @@ namespace ntscfg {
 /// this type.
 ///
 /// @ingroup module_ntscfg
-#define NTSCFG_TYPE_TRAIT_BITWISE_INITIALIZABLE(Type) \
-    BSLMF_NESTED_TRAIT_DECLARATION( \
-        Type, bsl::is_trivially_default_constructible)
+#define NTSCFG_TYPE_TRAIT_BITWISE_INITIALIZABLE(Type)                         \
+    BSLMF_NESTED_TRAIT_DECLARATION(Type,                                      \
+                                   bsl::is_trivially_default_constructible)
 
 /// Declare a type trait for the specified 'type' to indicate its
 /// copy-constructor and copy-assignment operator is equivalent to copying each
@@ -240,7 +238,7 @@ namespace ntscfg {
 /// object of this type has a trivial destructor.
 ///
 /// @ingroup module_ntscfg
-#define NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(Type) \
+#define NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(Type)                              \
     BSLMF_NESTED_TRAIT_DECLARATION(Type, bslmf::IsBitwiseCopyable)
 
 /// Declare a type trait for the specified 'type' to indicate its
@@ -251,7 +249,7 @@ namespace ntscfg {
 /// type.
 ///
 /// @ingroup module_ntscfg
-#define NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(Type) \
+#define NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(Type)                               \
     BSLMF_NESTED_TRAIT_DECLARATION(Type, bslmf::IsBitwiseMoveable)
 
 /// Declare a type trait for the specified 'type' to indicate its
@@ -263,7 +261,7 @@ namespace ntscfg {
 /// has no padding bytes between data members.
 ///
 /// @ingroup module_ntscfg
-#define NTSCFG_TYPE_TRAIT_BITWISE_COMPARABLE(Type) \
+#define NTSCFG_TYPE_TRAIT_BITWISE_COMPARABLE(Type)                            \
     BSLMF_NESTED_TRAIT_DECLARATION(Type, bslmf::IsBitwiseEqualityComparable)
 
 /// Declare a type trait for the specified 'type' to indicate it accepts an
@@ -273,43 +271,43 @@ namespace ntscfg {
 /// objects of this type.
 ///
 /// @ingroup module_ntscfg
-#define NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(Type) \
+#define NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(Type)                               \
     BSLALG_DECLARE_NESTED_TRAITS(Type, bslalg::TypeTraitUsesBslmaAllocator)
 
 /// Return true if the specified 'type' is bitwise-initializable, otherwise
 /// return false.
 ///
 /// @ingroup module_ntscfg
-#define NTSCFG_TYPE_CHECK_BITWISE_INITIALIZABLE(Type) \
+#define NTSCFG_TYPE_CHECK_BITWISE_INITIALIZABLE(Type)                         \
     bsl::is_trivially_default_constructible<Type>::value
 
 /// Return true if the specified 'type' is bitwise-movable, otherwise return
 /// false.
 ///
 /// @ingroup module_ntscfg
-#define NTSCFG_TYPE_CHECK_BITWISE_MOVABLE(Type) \
-    ((bslmf::IsBitwiseMoveable<Type>::value) && \
+#define NTSCFG_TYPE_CHECK_BITWISE_MOVABLE(Type)                               \
+    ((bslmf::IsBitwiseMoveable<Type>::value) &&                               \
      (bsl::is_nothrow_move_constructible<Type>::value))
 
 /// Return true if the specified 'type' is bitwise-copyable, otherwise return
 /// false.
 ///
 /// @ingroup module_ntscfg
-#define NTSCFG_TYPE_CHECK_BITWISE_COPYABLE(Type) \
+#define NTSCFG_TYPE_CHECK_BITWISE_COPYABLE(Type)                              \
     bslmf::IsBitwiseCopyable<Type>::value
 
 /// Return true if the specified 'type' is bitwise-comparable, otherwise return
 /// false.
 ///
 /// @ingroup module_ntscfg
-#define NTSCFG_TYPE_CHECK_BITWISE_COMPARABLE(Type) \
+#define NTSCFG_TYPE_CHECK_BITWISE_COMPARABLE(Type)                            \
     bslmf::IsBitwiseEqualityComparable<Type>::value
 
 /// Return true if the specified 'type' accepts an allocator argument to its
 /// constructors, otherwise return false.
 ///
 /// @ingroup module_ntscfg
-#define NTSCFG_TYPE_CHECK_ALLOCATOR_AWARE(Type) \
+#define NTSCFG_TYPE_CHECK_ALLOCATOR_AWARE(Type)                               \
     bslalg::HasTrait<Type, bslalg::TypeTraitUsesBslmaAllocator>::VALUE
 
 /// @internal @brief
@@ -414,7 +412,7 @@ struct Platform {
     /// error otherwise.
     static int exit();
 
-    /// Return the number of CPU cores on the current machine. 
+    /// Return the number of CPU cores on the current machine.
     static bsl::size_t numCores();
 
     /// Return true if the version of the operating system running the current

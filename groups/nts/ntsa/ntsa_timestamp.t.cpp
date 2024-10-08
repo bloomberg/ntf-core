@@ -1,4 +1,4 @@
-// Copyright 2023 Bloomberg Finance L.P.
+// Copyright 2020-2023 Bloomberg Finance L.P.
 // SPDX-License-Identifier: Apache-2.0
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,14 +13,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsa_timestamp.h>
-
 #include <ntscfg_test.h>
 
-using namespace BloombergLP;
-using namespace ntsa;
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsa_timestamp_t_cpp, "$Id$ $CSID$")
 
-NTSCFG_TEST_CASE(1)
+#include <ntsa_timestamp.h>
+
+using namespace BloombergLP;
+
+namespace BloombergLP {
+namespace ntsa {
+
+// Provide tests for 'ntsa::Timestamp'.
+class TimestampTest
+{
+  public:
+    // TODO
+    static void verifyCase1();
+
+    // TODO
+    static void verifyCase2();
+
+    // TODO
+    static void verifyCase3();
+
+    // TODO
+    static void verifyCase4();
+};
+
+NTSCFG_TEST_FUNCTION(ntsa::TimestampTest::verifyCase1)
 {
     Timestamp t;
     NTSCFG_TEST_EQ(t.type(), TimestampType::e_UNDEFINED);
@@ -28,7 +50,7 @@ NTSCFG_TEST_CASE(1)
     NTSCFG_TEST_EQ(t.time(), bsls::TimeInterval());
 }
 
-NTSCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntsa::TimestampTest::verifyCase2)
 {
     const bsl::uint32_t        id   = 123;
     const TimestampType::Value type = TimestampType::e_ACKNOWLEDGED;
@@ -44,7 +66,7 @@ NTSCFG_TEST_CASE(2)
     NTSCFG_TEST_EQ(t.time(), time);
 }
 
-NTSCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntsa::TimestampTest::verifyCase3)
 {
     const bsl::uint32_t        id   = 456;
     const TimestampType::Value type = TimestampType::e_SENT;
@@ -68,7 +90,7 @@ NTSCFG_TEST_CASE(3)
     NTSCFG_TEST_EQ(t2.time(), t3.time());
 }
 
-NTSCFG_TEST_CASE(4)
+NTSCFG_TEST_FUNCTION(ntsa::TimestampTest::verifyCase4)
 {
     const bsl::uint32_t        id   = 456;
     const TimestampType::Value type = TimestampType::e_SENT;
@@ -100,11 +122,5 @@ NTSCFG_TEST_CASE(4)
     NTSCFG_TEST_EQ(t1, t2);
 }
 
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-    NTSCFG_TEST_REGISTER(2);
-    NTSCFG_TEST_REGISTER(3);
-    NTSCFG_TEST_REGISTER(4);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsa
+}  // close namespace BloombergLP

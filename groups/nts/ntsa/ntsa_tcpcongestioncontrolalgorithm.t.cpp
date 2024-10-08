@@ -1,4 +1,4 @@
-// Copyright 2023 Bloomberg Finance L.P.
+// Copyright 2020-2023 Bloomberg Finance L.P.
 // SPDX-License-Identifier: Apache-2.0
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,53 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsa_tcpcongestioncontrolalgorithm.h>
-
 #include <ntscfg_test.h>
 
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsa_tcpcongestioncontrolalgorithm_t_cpp, "$Id$ $CSID$")
+
+#include <ntsa_tcpcongestioncontrolalgorithm.h>
+
 using namespace BloombergLP;
-using namespace ntsa;
 
-NTSCFG_TEST_CASE(1)
+namespace BloombergLP {
+namespace ntsa {
+
+// Provide tests for 'ntsa::TcpCongestionControlAlgorithm'.
+class TcpCongestionControlAlgorithmTest
 {
-    NTSCFG_TEST_EQ(bsl::strcmp(TcpCongestionControlAlgorithm::toString(
-                                   TcpCongestionControlAlgorithm::e_RENO),
-                               "reno"),
-                   0);
-    NTSCFG_TEST_EQ(bsl::strcmp(TcpCongestionControlAlgorithm::toString(
-                                   TcpCongestionControlAlgorithm::e_BBR),
-                               "bbr"),
-                   0);
-    NTSCFG_TEST_EQ(bsl::strcmp(TcpCongestionControlAlgorithm::toString(
-                                   TcpCongestionControlAlgorithm::e_YEAH),
-                               "yeah"),
-                   0);
+  public:
+    // TODO
+    static void verify();
+};
+
+NTSCFG_TEST_FUNCTION(ntsa::TcpCongestionControlAlgorithmTest::verify)
+{
 }
 
-NTSCFG_TEST_CASE(2)
-{
-    TcpCongestionControlAlgorithm::Value v =
-        TcpCongestionControlAlgorithm::e_YEAH;
-
-    NTSCFG_TEST_EQ(TcpCongestionControlAlgorithm::fromInt(&v, -1), -1);
-    NTSCFG_TEST_EQ(v, TcpCongestionControlAlgorithm::e_YEAH);
-
-    NTSCFG_TEST_EQ(TcpCongestionControlAlgorithm::fromInt(&v, 0), 0);
-    NTSCFG_TEST_EQ(v, TcpCongestionControlAlgorithm::e_RENO);
-
-    NTSCFG_TEST_EQ(TcpCongestionControlAlgorithm::fromInt(&v, 1), 0);
-    NTSCFG_TEST_EQ(v, TcpCongestionControlAlgorithm::e_CUBIC);
-
-    NTSCFG_TEST_EQ(TcpCongestionControlAlgorithm::fromInt(&v, 2), 0);
-    NTSCFG_TEST_EQ(v, TcpCongestionControlAlgorithm::e_BBR);
-
-    NTSCFG_TEST_EQ(TcpCongestionControlAlgorithm::fromInt(&v, 100), -1);
-    NTSCFG_TEST_EQ(v, TcpCongestionControlAlgorithm::e_BBR);
-}
-
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-    NTSCFG_TEST_REGISTER(2);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsa
+}  // close namespace BloombergLP

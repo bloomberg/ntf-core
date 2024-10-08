@@ -14,24 +14,16 @@
 // limitations under the License.
 
 #include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsu_socketutil_t_cpp, "$Id$ $CSID$")
+
+#include <ntsu_socketutil.h>
+
 #include <ntsu_adapterutil.h>
 #include <ntsu_socketoptionutil.h>
 #include <ntsu_socketutil.h>
 #include <ntsu_timestamputil.h>
-#include <bdlbb_blob.h>
-#include <bdlbb_blobutil.h>
-#include <bdlbb_simpleblobbufferfactory.h>
-#include <bdlf_bind.h>
-#include <bdlf_placeholder.h>
-#include <bdls_filesystemutil.h>
-#include <bslma_testallocator.h>
-#include <bslmt_threadgroup.h>
-#include <bsls_platform.h>
-#include <bsl_iostream.h>
-#include <bsl_list.h>
-#include <bsl_set.h>
-#include <bsl_unordered_map.h>
-#include <bsl_unordered_set.h>
 
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
 #define WIN32_LEAN_AND_MEAN
@@ -39,34 +31,350 @@
 #endif
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
-#include <linux/version.h>
-
 #include <linux/ethtool.h>
 #include <linux/sockios.h>
+#include <linux/version.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
 #endif
 
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntsu {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
+// Provide tests for 'ntsu::SocketUtil'.
+class SocketUtilTest
+{
+    /// This typedef defines a callback function invoked to test a particular
+    /// portion of the component using the specified connected 'server' and
+    /// 'client' having the specified stream socket 'transport', supplying
+    /// memory using the specified 'allocator'.
+    typedef bsl::function<void(ntsa::Transport::Value transport,
+                               ntsa::Handle           server,
+                               ntsa::Handle           client,
+                               bslma::Allocator*      allocator)>
+        StreamSocketTestCallback;
 
-namespace test {
+    /// This typedef defines a callback function invoked to test a particular
+    /// portion of the component using using the specified 'server' bound to the
+    /// specified 'serverEndpoint' and 'client' bound to the specified
+    /// 'clientEndpoint', each 'client' and 'server' socket having the
+    /// specified 'transport', supplying
+    /// memory using the specified 'allocator'.
+    typedef bsl::function<void(ntsa::Transport::Value transport,
+                               ntsa::Handle           server,
+                               const ntsa::Endpoint&  serverEndpoint,
+                               ntsa::Handle           client,
+                               const ntsa::Endpoint&  clientEndpoint,
+                               bslma::Allocator*      allocator)>
+        DatagramSocketTestCallback;
+
+    // Provide a in-core storage of bytes.
+    template <unsigned N>
+    class Storage;
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
+    // Return the native flags indicating timestamping support for the
+    // specified 'socket'.
+    static bsl::uint32_t timestampingSupport(ntsa::Handle socket);
+
+#endif
+
+    // Return true if the specified 'socket' supports RX timestamps.
+    static bool supportsRxTimestamps(ntsa::Handle socket);
+
+    // Return true if the specified 'socket' supports TX timestamps.
+    static bool supportsTxTimestamps(ntsa::Handle socket);
+
+    // Load into the specified 'result' the zero-copy notifications for the
+    // specified 'handle'.
+    static void extractZeroCopyNotifications(bsl::list<ntsa::ZeroCopy>* result,
+                                             ntsa::Handle               handle,
+                                             bslma::Allocator* allocator);
+
+    // Load into the specified 'result' the timestamp notifications for the
+    // specified 'handle'.
+    static void extractTimestampNotifications(
+        bsl::list<ntsa::Timestamp>* result,
+        ntsa::Handle                handle,
+        bslma::Allocator*           allocator);
+
+    // Load into the specified 'result' the notifications for the specified
+    // 'handle'.
+    static void extractNotifications(bsl::list<ntsa::Notification>* result,
+                                     ntsa::Handle                   handle,
+                                     bslma::Allocator*              allocator);
+
+    // Execute the specified 'test'.
+    static void executeStreamSocketTest(const StreamSocketTestCallback& test,
+                                        bslma::Allocator* basicAllocator = 0);
+
+    // Execute the specified 'test'.
+    static void executeDatagramSocketTest(
+        const DatagramSocketTestCallback& test,
+        bslma::Allocator*                 basicAllocator = 0);
+
+    static void testStreamSocketTransmissionSingleBuffer(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        ntsa::Handle           client,
+        bslma::Allocator*      allocator);
+
+    static void testStreamSocketTransmissionSingleBufferWithControlMsg(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        ntsa::Handle           client,
+        bslma::Allocator*      allocator);
+
+    static void testStreamSocketTransmissionMultipleBuffers(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        ntsa::Handle           client,
+        bslma::Allocator*      allocator);
+
+    static void testStreamSocketTransmissionBlob(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        ntsa::Handle           client,
+        bslma::Allocator*      allocator);
+
+    static void testStreamSocketTransmissionBlobWithControlMsg(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        ntsa::Handle           client,
+        bslma::Allocator*      allocator);
+
+    static void testStreamSocketTransmissionWithControlMsgDropped(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        ntsa::Handle           client,
+        bslma::Allocator*      allocator);
+
+    static void testStreamSocketTransmissionFile(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        ntsa::Handle           client,
+        bslma::Allocator*      allocator);
+
+    static void testDatagramSocketTransmissionSingleBuffer(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator);
+
+    static void testDatagramSocketTransmissionSingleBufferWithControlMsg(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator);
+
+    static void testDatagramSocketTransmissionMultipleBuffers(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator);
+
+    static void testDatagramSocketTransmissionBlob(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator);
+
+    static void testDatagramSocketTransmissionBlobWithControlMsg(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator);
+
+    static void testDatagramSocketTransmissionWithControlMsgDropped(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator);
+
+    static void testDatagramSocketTransmissionSingleMessage(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator);
+
+    static void testDatagramSocketTransmissionMultipleMessages(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator);
+
+    static void testStreamSocketMsgZeroCopy(ntsa::Transport::Value transport,
+                                            ntsa::Handle           server,
+                                            ntsa::Handle           client,
+                                            bslma::Allocator*      allocator);
+
+    static void testDatagramSocketTxTimestamps(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator);
+
+    static void testStreamSocketTxTimestamps(ntsa::Transport::Value transport,
+                                             ntsa::Handle           server,
+                                             ntsa::Handle           client,
+                                             bslma::Allocator*      allocator);
+
+    static void testDatagramSocketTxTimestampsAndZeroCopy(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator);
+
+    static void testStreamSocketTxTimestampsAndZeroCopy(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        ntsa::Handle           client,
+        bslma::Allocator*      allocator);
+
+    static void testStreamSocketReceiveNotifications(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        ntsa::Handle           client,
+        bslma::Allocator*      allocator);
+
+    static void testDatagramSocketReceiveNotifications(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator);
+
+  public:
+    // TODO
+    static void verifyCase1();
+
+    // TODO
+    static void verifyCase2();
+
+    // TODO
+    static void verifyCase3();
+
+    // TODO
+    static void verifyCase4();
+
+    // TODO
+    static void verifyCase5();
+
+    // TODO
+    static void verifyCase6();
+
+    // TODO
+    static void verifyCase7();
+
+    // TODO
+    static void verifyCase8();
+
+    // TODO
+    static void verifyCase9();
+
+    // TODO
+    static void verifyCase10();
+
+    // TODO
+    static void verifyCase11();
+
+    // TODO
+    static void verifyCase12();
+
+    // TODO
+    static void verifyCase13();
+
+    // TODO
+    static void verifyCase14();
+
+    // TODO
+    static void verifyCase15();
+
+    // TODO
+    static void verifyCase16();
+
+    // TODO
+    static void verifyCase17();
+
+    // TODO
+    static void verifyCase18();
+
+    // TODO
+    static void verifyCase19();
+
+    // TODO
+    static void verifyCase20();
+
+    // TODO
+    static void verifyCase21();
+
+    // TODO
+    static void verifyCase22();
+
+    // TODO
+    static void verifyCase23();
+
+    // TODO
+    static void verifyCase24();
+
+    // TODO
+    static void verifyCase25();
+
+    // TODO
+    static void verifyCase26();
+
+    // TODO
+    static void verifyCase27();
+
+    // TODO
+    static void verifyCase28();
+
+    // TODO
+    static void verifyCase29();
+
+    // TODO
+    static void verifyCase30();
+
+    // TODO
+    static void verifyCase31();
+
+    // TODO
+    static void verifyCase32();
+
+    // TODO
+    static void verifyCase33();
+
+    // TODO
+    static void verifyCase34();
+};
 
 /// Provide a in-core storage of bytes.
 template <unsigned N>
-class Storage
+class SocketUtilTest::Storage
 {
     char d_buffer[N];
 
@@ -84,7 +392,7 @@ class Storage
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
 
-bsl::uint32_t timestampingSupport(ntsa::Handle socket)
+bsl::uint32_t SocketUtilTest::timestampingSupport(ntsa::Handle socket)
 {
     ntsa::Error error;
     int         rc;
@@ -111,13 +419,13 @@ bsl::uint32_t timestampingSupport(ntsa::Handle socket)
     return static_cast<bsl::uint32_t>(info.so_timestamping);
 }
 
-bool supportsRxTimestamps(ntsa::Handle socket)
+bool SocketUtilTest::supportsRxTimestamps(ntsa::Handle socket)
 {
     const bsl::uint32_t flags = timestampingSupport(socket);
     return (flags & ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_SOFTWARE) != 0;
 }
 
-bool supportsTxTimestamps(ntsa::Handle socket)
+bool SocketUtilTest::supportsTxTimestamps(ntsa::Handle socket)
 {
     const bsl::uint32_t flags = timestampingSupport(socket);
     return (flags & ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_SOFTWARE) != 0;
@@ -125,13 +433,13 @@ bool supportsTxTimestamps(ntsa::Handle socket)
 
 #else
 
-bool supportsRxTimestamps(ntsa::Handle socket)
+bool SocketUtilTest::supportsRxTimestamps(ntsa::Handle socket)
 {
     NTSCFG_WARNING_UNUSED(socket);
     return false;
 }
 
-bool supportsTxTimestamps(ntsa::Handle socket)
+bool SocketUtilTest::supportsTxTimestamps(ntsa::Handle socket)
 {
     NTSCFG_WARNING_UNUSED(socket);
     return false;
@@ -139,9 +447,10 @@ bool supportsTxTimestamps(ntsa::Handle socket)
 
 #endif
 
-void extractZeroCopyNotifications(bsl::list<ntsa::ZeroCopy>* zerocopy,
-                                  ntsa::Handle               handle,
-                                  bslma::Allocator*          allocator)
+void SocketUtilTest::extractZeroCopyNotifications(
+    bsl::list<ntsa::ZeroCopy>* result,
+    ntsa::Handle               handle,
+    bslma::Allocator*          allocator)
 {
     ntsa::NotificationQueue notifications(allocator);
     notifications.setHandle(handle);
@@ -158,13 +467,14 @@ void extractZeroCopyNotifications(bsl::list<ntsa::ZeroCopy>* zerocopy,
          ++it)
     {
         NTSCFG_TEST_TRUE(it->isZeroCopy());
-        zerocopy->push_back(it->zeroCopy());
+        result->push_back(it->zeroCopy());
     }
 }
 
-void extractTimestampNotifications(bsl::list<ntsa::Timestamp>* ts,
-                                   ntsa::Handle                handle,
-                                   bslma::Allocator*           allocator)
+void SocketUtilTest::extractTimestampNotifications(
+    bsl::list<ntsa::Timestamp>* result,
+    ntsa::Handle                handle,
+    bslma::Allocator*           allocator)
 {
     ntsa::NotificationQueue notifications(allocator);
     notifications.setHandle(handle);
@@ -181,13 +491,14 @@ void extractTimestampNotifications(bsl::list<ntsa::Timestamp>* ts,
          ++it)
     {
         NTSCFG_TEST_TRUE(it->isTimestamp());
-        ts->push_back(it->timestamp());
+        result->push_back(it->timestamp());
     }
 }
 
-void extractNotifications(bsl::list<ntsa::Notification>* nt,
-                          ntsa::Handle                   handle,
-                          bslma::Allocator*              allocator)
+void SocketUtilTest::extractNotifications(
+    bsl::list<ntsa::Notification>* result,
+    ntsa::Handle                   handle,
+    bslma::Allocator*              allocator)
 {
     ntsa::NotificationQueue notifications(allocator);
     notifications.setHandle(handle);
@@ -203,36 +514,13 @@ void extractNotifications(bsl::list<ntsa::Notification>* nt,
          it != notifications.notifications().cend();
          ++it)
     {
-        nt->push_back(*it);
+        result->push_back(*it);
     }
 }
 
-/// This typedef defines a callback function invoked to test a particular
-/// portion of the component using the specified connected 'server' and
-/// 'client' having the specified stream socket 'transport', supplying
-/// memory using the specified 'allocator'.
-typedef bsl::function<void(ntsa::Transport::Value transport,
-                           ntsa::Handle           server,
-                           ntsa::Handle           client,
-                           bslma::Allocator*      allocator)>
-    StreamSocketTestCallback;
-
-/// This typedef defines a callback function invoked to test a particular
-/// portion of the component using using the specified 'server' bound to the
-/// specified 'serverEndpoint' and 'client' bound to the specified
-/// 'clientEndpoint', each 'client' and 'server' socket having the
-/// specified 'transport', supplying
-/// memory using the specified 'allocator'.
-typedef bsl::function<void(ntsa::Transport::Value transport,
-                           ntsa::Handle           server,
-                           const ntsa::Endpoint&  serverEndpoint,
-                           ntsa::Handle           client,
-                           const ntsa::Endpoint&  clientEndpoint,
-                           bslma::Allocator*      allocator)>
-    DatagramSocketTestCallback;
-
-void executeStreamSocketTest(const StreamSocketTestCallback& test,
-                             bslma::Allocator* basicAllocator = 0)
+void SocketUtilTest::executeStreamSocketTest(
+    const StreamSocketTestCallback& test,
+    bslma::Allocator*               basicAllocator)
 {
     // Execute the specified stream socket 'test'.
 
@@ -386,8 +674,9 @@ void executeStreamSocketTest(const StreamSocketTestCallback& test,
     }
 }
 
-void executeDatagramSocketTest(const DatagramSocketTestCallback& test,
-                               bslma::Allocator* basicAllocator = 0)
+void SocketUtilTest::executeDatagramSocketTest(
+    const DatagramSocketTestCallback& test,
+    bslma::Allocator*                 basicAllocator)
 {
     // Execute the specified datagram socket 'test'.
 
@@ -515,10 +804,11 @@ void executeDatagramSocketTest(const DatagramSocketTestCallback& test,
     }
 }
 
-void testStreamSocketTransmissionSingleBuffer(ntsa::Transport::Value transport,
-                                              ntsa::Handle           server,
-                                              ntsa::Handle           client,
-                                              bslma::Allocator*      allocator)
+void SocketUtilTest::testStreamSocketTransmissionSingleBuffer(
+    ntsa::Transport::Value transport,
+    ntsa::Handle           server,
+    ntsa::Handle           client,
+    bslma::Allocator*      allocator)
 {
     NTSCFG_TEST_LOG_DEBUG << "Testing " << transport << ": send/recv"
                           << NTSCFG_TEST_LOG_END;
@@ -567,7 +857,7 @@ void testStreamSocketTransmissionSingleBuffer(ntsa::Transport::Value transport,
     }
 }
 
-void testStreamSocketTransmissionSingleBufferWithControlMsg(
+void SocketUtilTest::testStreamSocketTransmissionSingleBufferWithControlMsg(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     ntsa::Handle           client,
@@ -659,7 +949,7 @@ void testStreamSocketTransmissionSingleBufferWithControlMsg(
     }
 }
 
-void testStreamSocketTransmissionMultipleBuffers(
+void SocketUtilTest::testStreamSocketTransmissionMultipleBuffers(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     ntsa::Handle           client,
@@ -735,10 +1025,11 @@ void testStreamSocketTransmissionMultipleBuffers(
     }
 }
 
-void testStreamSocketTransmissionBlob(ntsa::Transport::Value transport,
-                                      ntsa::Handle           server,
-                                      ntsa::Handle           client,
-                                      bslma::Allocator*      allocator)
+void SocketUtilTest::testStreamSocketTransmissionBlob(
+    ntsa::Transport::Value transport,
+    ntsa::Handle           server,
+    ntsa::Handle           client,
+    bslma::Allocator*      allocator)
 {
     NTSCFG_TEST_LOG_DEBUG << "Testing " << transport << ": writev/readv (blob)"
                           << NTSCFG_TEST_LOG_END;
@@ -788,7 +1079,7 @@ void testStreamSocketTransmissionBlob(ntsa::Transport::Value transport,
     }
 }
 
-void testStreamSocketTransmissionBlobWithControlMsg(
+void SocketUtilTest::testStreamSocketTransmissionBlobWithControlMsg(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     ntsa::Handle           client,
@@ -882,7 +1173,7 @@ void testStreamSocketTransmissionBlobWithControlMsg(
     }
 }
 
-void testStreamSocketTransmissionWithControlMsgDropped(
+void SocketUtilTest::testStreamSocketTransmissionWithControlMsgDropped(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     ntsa::Handle           client,
@@ -987,10 +1278,11 @@ void testStreamSocketTransmissionWithControlMsgDropped(
     }
 }
 
-void testStreamSocketTransmissionFile(ntsa::Transport::Value transport,
-                                      ntsa::Handle           server,
-                                      ntsa::Handle           client,
-                                      bslma::Allocator*      allocator)
+void SocketUtilTest::testStreamSocketTransmissionFile(
+    ntsa::Transport::Value transport,
+    ntsa::Handle           server,
+    ntsa::Handle           client,
+    bslma::Allocator*      allocator)
 {
     // This test succeeds when run locally but fails when run on build machines
     // during continuous integration, probably because the temporary files
@@ -1138,7 +1430,7 @@ void testStreamSocketTransmissionFile(ntsa::Transport::Value transport,
 #endif
 }
 
-void testDatagramSocketTransmissionSingleBuffer(
+void SocketUtilTest::testDatagramSocketTransmissionSingleBuffer(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     const ntsa::Endpoint&  serverEndpoint,
@@ -1198,7 +1490,7 @@ void testDatagramSocketTransmissionSingleBuffer(
     }
 }
 
-void testDatagramSocketTransmissionSingleBufferWithControlMsg(
+void SocketUtilTest::testDatagramSocketTransmissionSingleBufferWithControlMsg(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     const ntsa::Endpoint&  serverEndpoint,
@@ -1296,7 +1588,7 @@ void testDatagramSocketTransmissionSingleBufferWithControlMsg(
     }
 }
 
-void testDatagramSocketTransmissionMultipleBuffers(
+void SocketUtilTest::testDatagramSocketTransmissionMultipleBuffers(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     const ntsa::Endpoint&  serverEndpoint,
@@ -1380,12 +1672,13 @@ void testDatagramSocketTransmissionMultipleBuffers(
     }
 }
 
-void testDatagramSocketTransmissionBlob(ntsa::Transport::Value transport,
-                                        ntsa::Handle           server,
-                                        const ntsa::Endpoint&  serverEndpoint,
-                                        ntsa::Handle           client,
-                                        const ntsa::Endpoint&  clientEndpoint,
-                                        bslma::Allocator*      allocator)
+void SocketUtilTest::testDatagramSocketTransmissionBlob(
+    ntsa::Transport::Value transport,
+    ntsa::Handle           server,
+    const ntsa::Endpoint&  serverEndpoint,
+    ntsa::Handle           client,
+    const ntsa::Endpoint&  clientEndpoint,
+    bslma::Allocator*      allocator)
 {
     NTSCFG_TEST_LOG_DEBUG << "Testing " << transport
                           << ": sendmsg/recvmsg (blob)" << NTSCFG_TEST_LOG_END;
@@ -1440,7 +1733,7 @@ void testDatagramSocketTransmissionBlob(ntsa::Transport::Value transport,
     }
 }
 
-void testDatagramSocketTransmissionBlobWithControlMsg(
+void SocketUtilTest::testDatagramSocketTransmissionBlobWithControlMsg(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     const ntsa::Endpoint&  serverEndpoint,
@@ -1540,7 +1833,7 @@ void testDatagramSocketTransmissionBlobWithControlMsg(
     }
 }
 
-void testDatagramSocketTransmissionWithControlMsgDropped(
+void SocketUtilTest::testDatagramSocketTransmissionWithControlMsgDropped(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     const ntsa::Endpoint&  serverEndpoint,
@@ -1652,7 +1945,7 @@ void testDatagramSocketTransmissionWithControlMsgDropped(
     }
 }
 
-void testDatagramSocketTransmissionSingleMessage(
+void SocketUtilTest::testDatagramSocketTransmissionSingleMessage(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     const ntsa::Endpoint&  serverEndpoint,
@@ -1742,7 +2035,7 @@ void testDatagramSocketTransmissionSingleMessage(
 #endif
 }
 
-void testDatagramSocketTransmissionMultipleMessages(
+void SocketUtilTest::testDatagramSocketTransmissionMultipleMessages(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     const ntsa::Endpoint&  serverEndpoint,
@@ -1759,7 +2052,7 @@ void testDatagramSocketTransmissionMultipleMessages(
 
     char DATA[] = "123456789";
 
-    typedef test::Storage<sizeof DATA - 1> StorageBuffer;
+    typedef SocketUtilTest::Storage<sizeof DATA - 1> StorageBuffer;
 
     StorageBuffer clientBuffer0[NUM_MESSAGES];
     StorageBuffer clientBuffer1[NUM_MESSAGES];
@@ -1903,10 +2196,11 @@ void testDatagramSocketTransmissionMultipleMessages(
     }
 }
 
-void testStreamSocketMsgZeroCopy(ntsa::Transport::Value transport,
-                                 ntsa::Handle           server,
-                                 ntsa::Handle           client,
-                                 bslma::Allocator*      allocator)
+void SocketUtilTest::testStreamSocketMsgZeroCopy(
+    ntsa::Transport::Value transport,
+    ntsa::Handle           server,
+    ntsa::Handle           client,
+    bslma::Allocator*      allocator)
 {
     if (transport == ntsa::Transport::e_LOCAL_STREAM) {
         return;
@@ -1953,7 +2247,9 @@ void testStreamSocketMsgZeroCopy(ntsa::Transport::Value transport,
         NTSCFG_TEST_ASSERT(context.bytesSendable() == msgSize);
         NTSCFG_TEST_ASSERT(context.bytesSent() == msgSize);
 
-        test::extractZeroCopyNotifications(&feedback, client, allocator);
+        SocketUtilTest::extractZeroCopyNotifications(&feedback,
+                                                     client,
+                                                     allocator);
     }
 
     // receive data
@@ -1977,7 +2273,9 @@ void testStreamSocketMsgZeroCopy(ntsa::Transport::Value transport,
     // retrieve data from the socket error queue until all send system
     // calls are acknowledged by the OS
     while (!sendIDs.empty()) {
-        test::extractZeroCopyNotifications(&feedback, client, allocator);
+        SocketUtilTest::extractZeroCopyNotifications(&feedback,
+                                                     client,
+                                                     allocator);
 
         while (!feedback.empty()) {
             const ntsa::ZeroCopy& zc = feedback.front();
@@ -1997,12 +2295,13 @@ void testStreamSocketMsgZeroCopy(ntsa::Transport::Value transport,
     }
 }
 
-void testDatagramSocketTxTimestamps(ntsa::Transport::Value transport,
-                                    ntsa::Handle           server,
-                                    const ntsa::Endpoint&  serverEndpoint,
-                                    ntsa::Handle           client,
-                                    const ntsa::Endpoint&  clientEndpoint,
-                                    bslma::Allocator*      allocator)
+void SocketUtilTest::testDatagramSocketTxTimestamps(
+    ntsa::Transport::Value transport,
+    ntsa::Handle           server,
+    const ntsa::Endpoint&  serverEndpoint,
+    ntsa::Handle           client,
+    const ntsa::Endpoint&  clientEndpoint,
+    bslma::Allocator*      allocator)
 {
     if (transport == ntsa::Transport::e_LOCAL_DATAGRAM) {
         return;
@@ -2064,7 +2363,9 @@ void testDatagramSocketTxTimestamps(ntsa::Transport::Value transport,
         NTSCFG_TEST_ASSERT(context.bytesSendable() == msgSize);
         NTSCFG_TEST_ASSERT(context.bytesSent() == msgSize);
 
-        test::extractTimestampNotifications(&feedback, client, allocator);
+        SocketUtilTest::extractTimestampNotifications(&feedback,
+                                                      client,
+                                                      allocator);
     }
 
     // receive data
@@ -2088,7 +2389,9 @@ void testDatagramSocketTxTimestamps(ntsa::Transport::Value transport,
     // retrieve data from the socket error queue until all send system
     // calls related timestamps received
     while (!timestampsToValidate.empty()) {
-        test::extractTimestampNotifications(&feedback, client, allocator);
+        SocketUtilTest::extractTimestampNotifications(&feedback,
+                                                      client,
+                                                      allocator);
 
         while (!feedback.empty()) {
             const ntsa::Timestamp& ts = feedback.front();
@@ -2105,10 +2408,11 @@ void testDatagramSocketTxTimestamps(ntsa::Transport::Value transport,
     }
 }
 
-void testStreamSocketTxTimestamps(ntsa::Transport::Value transport,
-                                  ntsa::Handle           server,
-                                  ntsa::Handle           client,
-                                  bslma::Allocator*      allocator)
+void SocketUtilTest::testStreamSocketTxTimestamps(
+    ntsa::Transport::Value transport,
+    ntsa::Handle           server,
+    ntsa::Handle           client,
+    bslma::Allocator*      allocator)
 {
     if (transport == ntsa::Transport::e_LOCAL_STREAM) {
         return;
@@ -2175,7 +2479,9 @@ void testStreamSocketTxTimestamps(ntsa::Transport::Value transport,
                             [ntsa::TimestampType::e_ACKNOWLEDGED] =
                                 sysTimeBeforeSending;
 
-        test::extractTimestampNotifications(&feedback, client, allocator);
+        SocketUtilTest::extractTimestampNotifications(&feedback,
+                                                      client,
+                                                      allocator);
     }
 
     // receive data
@@ -2199,7 +2505,9 @@ void testStreamSocketTxTimestamps(ntsa::Transport::Value transport,
     // retrieve data from the socket error queue until all send system
     // calls related timestamps received
     while (!timestampsToValidate.empty()) {
-        test::extractTimestampNotifications(&feedback, client, allocator);
+        SocketUtilTest::extractTimestampNotifications(&feedback,
+                                                      client,
+                                                      allocator);
 
         while (!feedback.empty()) {
             const ntsa::Timestamp& ts = feedback.front();
@@ -2216,7 +2524,7 @@ void testStreamSocketTxTimestamps(ntsa::Transport::Value transport,
     }
 }
 
-void testDatagramSocketTxTimestampsAndZeroCopy(
+void SocketUtilTest::testDatagramSocketTxTimestampsAndZeroCopy(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     const ntsa::Endpoint&  serverEndpoint,
@@ -2299,7 +2607,7 @@ void testDatagramSocketTxTimestampsAndZeroCopy(
         NTSCFG_TEST_ASSERT(context.bytesSendable() == msgSize);
         NTSCFG_TEST_ASSERT(context.bytesSent() == msgSize);
 
-        test::extractNotifications(&feedback, client, allocator);
+        SocketUtilTest::extractNotifications(&feedback, client, allocator);
     }
 
     // receive data
@@ -2323,7 +2631,7 @@ void testDatagramSocketTxTimestampsAndZeroCopy(
     // retrieve data from the socket error queue until all send system
     // calls related timestamps received
     while (!timestampsToValidate.empty() || !zeroCopyToValidate.empty()) {
-        test::extractNotifications(&feedback, client, allocator);
+        SocketUtilTest::extractNotifications(&feedback, client, allocator);
 
         while (!feedback.empty()) {
             const ntsa::Notification& nt = feedback.front();
@@ -2361,10 +2669,11 @@ void testDatagramSocketTxTimestampsAndZeroCopy(
     }
 }
 
-void testStreamSocketTxTimestampsAndZeroCopy(ntsa::Transport::Value transport,
-                                             ntsa::Handle           server,
-                                             ntsa::Handle           client,
-                                             bslma::Allocator*      allocator)
+void SocketUtilTest::testStreamSocketTxTimestampsAndZeroCopy(
+    ntsa::Transport::Value transport,
+    ntsa::Handle           server,
+    ntsa::Handle           client,
+    bslma::Allocator*      allocator)
 {
     if (transport == ntsa::Transport::e_LOCAL_STREAM) {
         return;
@@ -2443,7 +2752,7 @@ void testStreamSocketTxTimestampsAndZeroCopy(ntsa::Transport::Value transport,
         NTSCFG_TEST_ASSERT(context.bytesSendable() == msgSize);
         NTSCFG_TEST_ASSERT(context.bytesSent() == msgSize);
 
-        test::extractNotifications(&feedback, client, allocator);
+        SocketUtilTest::extractNotifications(&feedback, client, allocator);
     }
 
     // receive data
@@ -2467,7 +2776,7 @@ void testStreamSocketTxTimestampsAndZeroCopy(ntsa::Transport::Value transport,
     // retrieve data from the socket error queue until all send system
     // calls related timestamps received
     while (!timestampsToValidate.empty() || !zeroCopyToValidate.empty()) {
-        test::extractNotifications(&feedback, client, allocator);
+        SocketUtilTest::extractNotifications(&feedback, client, allocator);
 
         while (!feedback.empty()) {
             const ntsa::Notification& nt = feedback.front();
@@ -2505,10 +2814,11 @@ void testStreamSocketTxTimestampsAndZeroCopy(ntsa::Transport::Value transport,
     }
 }
 
-void testStreamSocketReceiveNotifications(ntsa::Transport::Value transport,
-                                          ntsa::Handle           server,
-                                          ntsa::Handle           client,
-                                          bslma::Allocator*      allocator)
+void SocketUtilTest::testStreamSocketReceiveNotifications(
+    ntsa::Transport::Value transport,
+    ntsa::Handle           server,
+    ntsa::Handle           client,
+    bslma::Allocator*      allocator)
 {
     NTSCFG_TEST_LOG_DEBUG << "Testing " << transport << NTSCFG_TEST_LOG_END;
 
@@ -2562,7 +2872,7 @@ void testStreamSocketReceiveNotifications(ntsa::Transport::Value transport,
     }
 }
 
-void testDatagramSocketReceiveNotifications(
+void SocketUtilTest::testDatagramSocketReceiveNotifications(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     const ntsa::Endpoint&  serverEndpoint,
@@ -2623,9 +2933,7 @@ void testDatagramSocketReceiveNotifications(
     }
 }
 
-}  // close namespace 'test'
-
-NTSCFG_TEST_CASE(1)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase1)
 {
     // Concern: Stream socket breathing test, which also serves as the
     // usage example.
@@ -2878,7 +3186,7 @@ NTSCFG_TEST_CASE(1)
     }
 }
 
-NTSCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase2)
 {
     // Concern: Datagram socket breathing test, which also serves as the
     // usage example.
@@ -3076,433 +3384,384 @@ NTSCFG_TEST_CASE(2)
     }
 }
 
-NTSCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase3)
 {
     // Concern: Stream socket transmission: single buffer.
     // Plan:
 
-    ntscfg::TestAllocator ta;
-    {
-        test::executeStreamSocketTest(
-            &test::testStreamSocketTransmissionSingleBuffer);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    SocketUtilTest::executeStreamSocketTest(
+        &SocketUtilTest::testStreamSocketTransmissionSingleBuffer);
 }
 
-NTSCFG_TEST_CASE(4)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase4)
 {
     // Concern: Stream socket transmission: multiple buffers.
     // Plan:
 
-    ntscfg::TestAllocator ta;
-    {
-        test::executeStreamSocketTest(
-            &test::testStreamSocketTransmissionMultipleBuffers);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    SocketUtilTest::executeStreamSocketTest(
+        &SocketUtilTest::testStreamSocketTransmissionMultipleBuffers);
 }
 
-NTSCFG_TEST_CASE(5)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase5)
 {
     // Concern: Stream socket transmission: blob.
     // Plan:
 
-    ntscfg::TestAllocator ta;
-    {
-        test::executeStreamSocketTest(&test::testStreamSocketTransmissionBlob);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    SocketUtilTest::executeStreamSocketTest(
+        &SocketUtilTest::testStreamSocketTransmissionBlob);
 }
 
-NTSCFG_TEST_CASE(6)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase6)
 {
     // Concern: Stream socket transmission: file.
     // Plan:
 
-    ntscfg::TestAllocator ta;
-    {
-        test::executeStreamSocketTest(&test::testStreamSocketTransmissionFile);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    SocketUtilTest::executeStreamSocketTest(
+        &SocketUtilTest::testStreamSocketTransmissionFile);
 }
 
-NTSCFG_TEST_CASE(7)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase7)
 {
     // Concern: Stream socket transmission: single buffer.
     // Plan:
 
-    ntscfg::TestAllocator ta;
-    {
-        test::executeDatagramSocketTest(
-            &test::testDatagramSocketTransmissionSingleBuffer);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    SocketUtilTest::executeDatagramSocketTest(
+        &SocketUtilTest::testDatagramSocketTransmissionSingleBuffer);
 }
 
-NTSCFG_TEST_CASE(8)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase8)
 {
     // Concern: Stream socket transmission: multiple buffers.
     // Plan:
 
-    ntscfg::TestAllocator ta;
-    {
-        test::executeDatagramSocketTest(
-            &test::testDatagramSocketTransmissionMultipleBuffers);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    SocketUtilTest::executeDatagramSocketTest(
+        &SocketUtilTest::testDatagramSocketTransmissionMultipleBuffers);
 }
 
-NTSCFG_TEST_CASE(9)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase9)
 {
     // Concern: Stream socket transmission: blob.
     // Plan:
 
-    ntscfg::TestAllocator ta;
-    {
-        test::executeDatagramSocketTest(
-            &test::testDatagramSocketTransmissionBlob);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    SocketUtilTest::executeDatagramSocketTest(
+        &SocketUtilTest::testDatagramSocketTransmissionBlob);
 }
 
-NTSCFG_TEST_CASE(10)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase10)
 {
     // Concern: Stream socket transmission: single message.
     // Plan:
 
-    ntscfg::TestAllocator ta;
-    {
-        test::executeDatagramSocketTest(
-            &test::testDatagramSocketTransmissionSingleMessage);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    SocketUtilTest::executeDatagramSocketTest(
+        &SocketUtilTest::testDatagramSocketTransmissionSingleMessage);
 }
 
-NTSCFG_TEST_CASE(11)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase11)
 {
     // Concern: Stream socket transmission: multiple messages.
     // Plan:
 
-    ntscfg::TestAllocator ta;
-    {
-        test::executeDatagramSocketTest(
-            &test::testDatagramSocketTransmissionMultipleMessages);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    SocketUtilTest::executeDatagramSocketTest(
+        &SocketUtilTest::testDatagramSocketTransmissionMultipleMessages);
 }
 
-NTSCFG_TEST_CASE(12)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase12)
 {
     // Concern: Listener socket maximum backlog
     // Plan:
 
-    ntscfg::TestAllocator ta;
+    ntsa::Error error;
+
+    bsl::vector<ntsa::Transport::Value> socketTypes;
+
+    if (ntsu::AdapterUtil::supportsTransport(
+            ntsa::Transport::e_TCP_IPV4_STREAM))
     {
-        ntsa::Error error;
+        socketTypes.push_back(ntsa::Transport::e_TCP_IPV4_STREAM);
+    }
 
-        bsl::vector<ntsa::Transport::Value> socketTypes;
+    if (ntsu::AdapterUtil::supportsTransport(
+            ntsa::Transport::e_TCP_IPV6_STREAM))
+    {
+        socketTypes.push_back(ntsa::Transport::e_TCP_IPV6_STREAM);
+    }
 
-        if (ntsu::AdapterUtil::supportsTransport(
-                ntsa::Transport::e_TCP_IPV4_STREAM))
-        {
-            socketTypes.push_back(ntsa::Transport::e_TCP_IPV4_STREAM);
-        }
+    if (ntsu::AdapterUtil::supportsTransport(ntsa::Transport::e_LOCAL_STREAM))
+    {
+        socketTypes.push_back(ntsa::Transport::e_LOCAL_STREAM);
+    }
 
-        if (ntsu::AdapterUtil::supportsTransport(
-                ntsa::Transport::e_TCP_IPV6_STREAM))
-        {
-            socketTypes.push_back(ntsa::Transport::e_TCP_IPV6_STREAM);
-        }
+    const bsl::size_t systemSoMaxConn = ntsu::SocketUtil::maxBacklog();
 
-        if (ntsu::AdapterUtil::supportsTransport(
-                ntsa::Transport::e_LOCAL_STREAM))
-        {
-            socketTypes.push_back(ntsa::Transport::e_LOCAL_STREAM);
-        }
+    if (NTSCFG_TEST_VERBOSITY > 0) {
+        bsl::cout << "SOMAXCONN = " << systemSoMaxConn << bsl::endl;
+    }
 
-        const bsl::size_t systemSoMaxConn = ntsu::SocketUtil::maxBacklog();
+    for (bsl::size_t i = 0; i < socketTypes.size(); ++i) {
+        ntsa::Transport::Value transport = socketTypes[i];
 
-        if (NTSCFG_TEST_VERBOSITY > 0) {
-            bsl::cout << "SOMAXCONN = " << systemSoMaxConn << bsl::endl;
-        }
+        bsl::size_t BACKLOG[7];
+        BACKLOG[0] = 0;
+        BACKLOG[1] = 1;
+        BACKLOG[2] = systemSoMaxConn - 1;
+        BACKLOG[3] = systemSoMaxConn;
+        BACKLOG[4] = systemSoMaxConn + 1;
+        BACKLOG[5] = 4096;
+        BACKLOG[6] = 8192;
 
-        for (bsl::size_t i = 0; i < socketTypes.size(); ++i) {
-            ntsa::Transport::Value transport = socketTypes[i];
+        for (bsl::size_t backlogIndex = 0; backlogIndex < 7; ++backlogIndex) {
+            bsl::size_t backlog = BACKLOG[backlogIndex];
 
-            bsl::size_t BACKLOG[7];
-            BACKLOG[0] = 0;
-            BACKLOG[1] = 1;
-            BACKLOG[2] = systemSoMaxConn - 1;
-            BACKLOG[3] = systemSoMaxConn;
-            BACKLOG[4] = systemSoMaxConn + 1;
-            BACKLOG[5] = 4096;
-            BACKLOG[6] = 8192;
+            // Create a blocking socket, bind it to any port on the loopback
+            // address, then begin listening for connections.
 
-            for (bsl::size_t backlogIndex = 0; backlogIndex < 7;
-                 ++backlogIndex)
-            {
-                bsl::size_t backlog = BACKLOG[backlogIndex];
+            ntsa::Handle listener;
+            error = ntsu::SocketUtil::create(&listener, transport);
+            NTSCFG_TEST_ASSERT(!error);
 
-                // Create a blocking socket, bind it to any port on the loopback
-                // address, then begin listening for connections.
-
-                ntsa::Handle listener;
-                error = ntsu::SocketUtil::create(&listener, transport);
-                NTSCFG_TEST_ASSERT(!error);
-
-                if (transport == ntsa::Transport::e_TCP_IPV4_STREAM) {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
-                        false,
-                        listener);
-                    NTSCFG_TEST_ASSERT(!error);
-                }
-                else if (transport == ntsa::Transport::e_TCP_IPV6_STREAM) {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
-                        false,
-                        listener);
-                    NTSCFG_TEST_ASSERT(!error);
-                }
-                else if (transport == ntsa::Transport::e_LOCAL_STREAM) {
-                    ntsa::LocalName localName;
-                    error = ntsa::LocalName::generateUnique(&localName);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::bind(ntsa::Endpoint(localName),
-                                                   false,
-                                                   listener);
-                    NTSCFG_TEST_ASSERT(!error);
-                }
-                else {
-                    NTSCFG_TEST_TRUE(false);
-                }
-
-                ntsa::Endpoint listenerEndpoint;
-                error = ntsu::SocketUtil::sourceEndpoint(&listenerEndpoint,
-                                                         listener);
-                NTSCFG_TEST_ASSERT(!error);
-
-                if (NTSCFG_TEST_VERBOSITY > 0) {
-                    bsl::cout << "Testing backlog = " << backlog << bsl::endl;
-                }
-
-                error = ntsu::SocketUtil::listen(backlog, listener);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(listener);
+            if (transport == ntsa::Transport::e_TCP_IPV4_STREAM) {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
+                    false,
+                    listener);
                 NTSCFG_TEST_ASSERT(!error);
             }
+            else if (transport == ntsa::Transport::e_TCP_IPV6_STREAM) {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
+                    false,
+                    listener);
+                NTSCFG_TEST_ASSERT(!error);
+            }
+            else if (transport == ntsa::Transport::e_LOCAL_STREAM) {
+                ntsa::LocalName localName;
+                error = ntsa::LocalName::generateUnique(&localName);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error = ntsu::SocketUtil::bind(ntsa::Endpoint(localName),
+                                               false,
+                                               listener);
+                NTSCFG_TEST_ASSERT(!error);
+            }
+            else {
+                NTSCFG_TEST_TRUE(false);
+            }
+
+            ntsa::Endpoint listenerEndpoint;
+            error =
+                ntsu::SocketUtil::sourceEndpoint(&listenerEndpoint, listener);
+            NTSCFG_TEST_ASSERT(!error);
+
+            if (NTSCFG_TEST_VERBOSITY > 0) {
+                bsl::cout << "Testing backlog = " << backlog << bsl::endl;
+            }
+
+            error = ntsu::SocketUtil::listen(backlog, listener);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(listener);
+            NTSCFG_TEST_ASSERT(!error);
         }
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTSCFG_TEST_CASE(13)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase13)
 {
     // Concern: Duplicating sockets
     // Plan:
 
-    ntscfg::TestAllocator ta;
+    ntsa::Error error;
+
+    // Create a blocking socket, bind it to any port on the loopback
+    // address, then begin listening for connections.
+
+    ntsa::Handle listener;
+    error = ntsu::SocketUtil::create(&listener,
+                                     ntsa::Transport::e_TCP_IPV4_STREAM);
+    NTSCFG_TEST_ASSERT(!error);
+
+    error = ntsu::SocketUtil::bind(
+        ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
+        false,
+        listener);
+    NTSCFG_TEST_ASSERT(!error);
+
+    error = ntsu::SocketUtil::listen(1, listener);
+    NTSCFG_TEST_ASSERT(!error);
+
+    // Create a blocking socket for the client, then connect that socket to
+    // the listener socket's local endpoint.
+
+    ntsa::Handle client;
+    error =
+        ntsu::SocketUtil::create(&client, ntsa::Transport::e_TCP_IPV4_STREAM);
+    NTSCFG_TEST_ASSERT(!error);
+
+    ntsa::Endpoint listenerEndpoint;
+    error = ntsu::SocketUtil::sourceEndpoint(&listenerEndpoint, listener);
+    NTSCFG_TEST_ASSERT(!error);
+
+    error = ntsu::SocketUtil::connect(listenerEndpoint, client);
+    NTSCFG_TEST_ASSERT(!error);
+
+    // Create a blocking socket for the server by accepting the connection
+    // made to the listener socket.
+
+    ntsa::Handle server;
+    error = ntsu::SocketUtil::accept(&server, listener);
+    NTSCFG_TEST_ASSERT(!error);
+
+    // Duplicate the client socket handle the close it. The subseequent
+    // test ensures that operations on the socket still succeed, because
+    // the original handle is not yet closed.
+
     {
-        ntsa::Error error;
+        ntsa::Handle clientDuplicate = ntsa::k_INVALID_HANDLE;
+        error = ntsu::SocketUtil::duplicate(&clientDuplicate, client);
+        NTSCFG_TEST_NE(clientDuplicate, ntsa::k_INVALID_HANDLE);
 
-        // Create a blocking socket, bind it to any port on the loopback
-        // address, then begin listening for connections.
-
-        ntsa::Handle listener;
-        error = ntsu::SocketUtil::create(&listener,
-                                         ntsa::Transport::e_TCP_IPV4_STREAM);
-        NTSCFG_TEST_ASSERT(!error);
-
-        error = ntsu::SocketUtil::bind(
-            ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
-            false,
-            listener);
-        NTSCFG_TEST_ASSERT(!error);
-
-        error = ntsu::SocketUtil::listen(1, listener);
-        NTSCFG_TEST_ASSERT(!error);
-
-        // Create a blocking socket for the client, then connect that socket to
-        // the listener socket's local endpoint.
-
-        ntsa::Handle client;
-        error = ntsu::SocketUtil::create(&client,
-                                         ntsa::Transport::e_TCP_IPV4_STREAM);
-        NTSCFG_TEST_ASSERT(!error);
-
-        ntsa::Endpoint listenerEndpoint;
-        error = ntsu::SocketUtil::sourceEndpoint(&listenerEndpoint, listener);
-        NTSCFG_TEST_ASSERT(!error);
-
-        error = ntsu::SocketUtil::connect(listenerEndpoint, client);
-        NTSCFG_TEST_ASSERT(!error);
-
-        // Create a blocking socket for the server by accepting the connection
-        // made to the listener socket.
-
-        ntsa::Handle server;
-        error = ntsu::SocketUtil::accept(&server, listener);
-        NTSCFG_TEST_ASSERT(!error);
-
-        // Duplicate the client socket handle the close it. The subseequent
-        // test ensures that operations on the socket still succeed, because
-        // the original handle is not yet closed.
-
-        {
-            ntsa::Handle clientDuplicate = ntsa::k_INVALID_HANDLE;
-            error = ntsu::SocketUtil::duplicate(&clientDuplicate, client);
-            NTSCFG_TEST_NE(clientDuplicate, ntsa::k_INVALID_HANDLE);
-
-            error = ntsu::SocketUtil::close(clientDuplicate);
-            NTSCFG_TEST_ASSERT(!error);
-        }
-
-        // Duplicate the server socket handle the close it. The subseequent
-        // test ensures that operations on the socket still succeed, because
-        // the original handle is not yet closed.
-
-        {
-            ntsa::Handle serverDuplicate = ntsa::k_INVALID_HANDLE;
-            error = ntsu::SocketUtil::duplicate(&serverDuplicate, server);
-            NTSCFG_TEST_NE(serverDuplicate, ntsa::k_INVALID_HANDLE);
-
-            error = ntsu::SocketUtil::close(serverDuplicate);
-            NTSCFG_TEST_ASSERT(!error);
-        }
-
-        // Enqueue outgoing data to transmit by the client socket.
-
-        {
-            char              buffer = 'C';
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            ntsa::Data data(ntsa::ConstBuffer(&buffer, 1));
-
-            error = ntsu::SocketUtil::send(&context, data, options, client);
-            NTSCFG_TEST_ASSERT(!error);
-
-            NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
-            NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
-        }
-
-        // Dequeue incoming data received by the server socket.
-
-        {
-            char                 buffer;
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            ntsa::Data data(ntsa::MutableBuffer(&buffer, 1));
-
-            error =
-                ntsu::SocketUtil::receive(&context, &data, options, server);
-            NTSCFG_TEST_ASSERT(!error);
-
-            NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
-            NTSCFG_TEST_ASSERT(context.bytesReceived() == 1);
-            NTSCFG_TEST_ASSERT(buffer == 'C');
-        }
-
-        // Enqueue outgoing data to transmit by the server socket.
-
-        {
-            char              buffer = 'S';
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            ntsa::Data data(ntsa::ConstBuffer(&buffer, 1));
-
-            error = ntsu::SocketUtil::send(&context, data, options, server);
-            NTSCFG_TEST_ASSERT(!error);
-
-            NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
-            NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
-        }
-
-        // Dequeue incoming data received by the client socket.
-
-        {
-            char                 buffer;
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            ntsa::Data data(ntsa::MutableBuffer(&buffer, 1));
-
-            error =
-                ntsu::SocketUtil::receive(&context, &data, options, client);
-            NTSCFG_TEST_ASSERT(!error);
-
-            NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
-            NTSCFG_TEST_ASSERT(context.bytesReceived() == 1);
-            NTSCFG_TEST_ASSERT(buffer == 'S');
-        }
-
-        // Shutdown writing by the client socket.
-
-        error = ntsu::SocketUtil::shutdown(ntsa::ShutdownType::e_SEND, client);
-        NTSCFG_TEST_ASSERT(!error);
-
-        // Dequeue incoming data received by the server socket, and observe
-        // that zero bytes are successfully dequeued, indicating the client
-        // socket has shut down writing from its side of the connection.
-
-        {
-            char                 buffer;
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            ntsa::Data data(ntsa::MutableBuffer(&buffer, 1));
-
-            error =
-                ntsu::SocketUtil::receive(&context, &data, options, server);
-            NTSCFG_TEST_ASSERT(!error);
-
-            NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
-            NTSCFG_TEST_ASSERT(context.bytesReceived() == 0);
-        }
-
-        // Shutdown writing by the server socket.
-
-        error = ntsu::SocketUtil::shutdown(ntsa::ShutdownType::e_SEND, server);
-        NTSCFG_TEST_ASSERT(!error);
-
-        // Dequeue incoming data received by the client socket, and observe
-        // that zero bytes are successfully dequeued, indicating the server
-        // socket has shut down writing from its side of the connection.
-
-        {
-            char                 buffer;
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            ntsa::Data data(ntsa::MutableBuffer(&buffer, 1));
-
-            error =
-                ntsu::SocketUtil::receive(&context, &data, options, client);
-            NTSCFG_TEST_ASSERT(!error);
-
-            NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
-            NTSCFG_TEST_ASSERT(context.bytesReceived() == 0);
-        }
-
-        // Close each socket.
-
-        error = ntsu::SocketUtil::close(listener);
-        NTSCFG_TEST_ASSERT(!error);
-
-        error = ntsu::SocketUtil::close(client);
-        NTSCFG_TEST_ASSERT(!error);
-
-        error = ntsu::SocketUtil::close(server);
+        error = ntsu::SocketUtil::close(clientDuplicate);
         NTSCFG_TEST_ASSERT(!error);
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    // Duplicate the server socket handle the close it. The subseequent
+    // test ensures that operations on the socket still succeed, because
+    // the original handle is not yet closed.
+
+    {
+        ntsa::Handle serverDuplicate = ntsa::k_INVALID_HANDLE;
+        error = ntsu::SocketUtil::duplicate(&serverDuplicate, server);
+        NTSCFG_TEST_NE(serverDuplicate, ntsa::k_INVALID_HANDLE);
+
+        error = ntsu::SocketUtil::close(serverDuplicate);
+        NTSCFG_TEST_ASSERT(!error);
+    }
+
+    // Enqueue outgoing data to transmit by the client socket.
+
+    {
+        char              buffer = 'C';
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        ntsa::Data data(ntsa::ConstBuffer(&buffer, 1));
+
+        error = ntsu::SocketUtil::send(&context, data, options, client);
+        NTSCFG_TEST_ASSERT(!error);
+
+        NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
+        NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
+    }
+
+    // Dequeue incoming data received by the server socket.
+
+    {
+        char                 buffer;
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        ntsa::Data data(ntsa::MutableBuffer(&buffer, 1));
+
+        error = ntsu::SocketUtil::receive(&context, &data, options, server);
+        NTSCFG_TEST_ASSERT(!error);
+
+        NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
+        NTSCFG_TEST_ASSERT(context.bytesReceived() == 1);
+        NTSCFG_TEST_ASSERT(buffer == 'C');
+    }
+
+    // Enqueue outgoing data to transmit by the server socket.
+
+    {
+        char              buffer = 'S';
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        ntsa::Data data(ntsa::ConstBuffer(&buffer, 1));
+
+        error = ntsu::SocketUtil::send(&context, data, options, server);
+        NTSCFG_TEST_ASSERT(!error);
+
+        NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
+        NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
+    }
+
+    // Dequeue incoming data received by the client socket.
+
+    {
+        char                 buffer;
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        ntsa::Data data(ntsa::MutableBuffer(&buffer, 1));
+
+        error = ntsu::SocketUtil::receive(&context, &data, options, client);
+        NTSCFG_TEST_ASSERT(!error);
+
+        NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
+        NTSCFG_TEST_ASSERT(context.bytesReceived() == 1);
+        NTSCFG_TEST_ASSERT(buffer == 'S');
+    }
+
+    // Shutdown writing by the client socket.
+
+    error = ntsu::SocketUtil::shutdown(ntsa::ShutdownType::e_SEND, client);
+    NTSCFG_TEST_ASSERT(!error);
+
+    // Dequeue incoming data received by the server socket, and observe
+    // that zero bytes are successfully dequeued, indicating the client
+    // socket has shut down writing from its side of the connection.
+
+    {
+        char                 buffer;
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        ntsa::Data data(ntsa::MutableBuffer(&buffer, 1));
+
+        error = ntsu::SocketUtil::receive(&context, &data, options, server);
+        NTSCFG_TEST_ASSERT(!error);
+
+        NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
+        NTSCFG_TEST_ASSERT(context.bytesReceived() == 0);
+    }
+
+    // Shutdown writing by the server socket.
+
+    error = ntsu::SocketUtil::shutdown(ntsa::ShutdownType::e_SEND, server);
+    NTSCFG_TEST_ASSERT(!error);
+
+    // Dequeue incoming data received by the client socket, and observe
+    // that zero bytes are successfully dequeued, indicating the server
+    // socket has shut down writing from its side of the connection.
+
+    {
+        char                 buffer;
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        ntsa::Data data(ntsa::MutableBuffer(&buffer, 1));
+
+        error = ntsu::SocketUtil::receive(&context, &data, options, client);
+        NTSCFG_TEST_ASSERT(!error);
+
+        NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
+        NTSCFG_TEST_ASSERT(context.bytesReceived() == 0);
+    }
+
+    // Close each socket.
+
+    error = ntsu::SocketUtil::close(listener);
+    NTSCFG_TEST_ASSERT(!error);
+
+    error = ntsu::SocketUtil::close(client);
+    NTSCFG_TEST_ASSERT(!error);
+
+    error = ntsu::SocketUtil::close(server);
+    NTSCFG_TEST_ASSERT(!error);
 }
 
-NTSCFG_TEST_CASE(14)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
 {
     // Concern: Binding datagram sockets.
     //
@@ -3577,3337 +3836,3297 @@ NTSCFG_TEST_CASE(14)
     // sendto(<DA>:<DP>)                          0.0.0.0:<SP>
     // connect(<DA>:<DP>)                         <SA>:<SP>
 
-    ntscfg::TestAllocator ta;
+    ntsa::Error error;
+
+    const bool k_REUSE_ADDRESS = false;
+
+    // Test IPv4.
+
     {
-        ntsa::Error error;
-
-        const bool k_REUSE_ADDRESS = false;
-
-        // Test IPv4.
+        // Concern 1: The source endpoint of a socket initially after
+        // creation is "0.0.0.0:0". [On Windows 'getsockname' returns an
+        // error.
 
         {
-            // Concern 1: The source endpoint of a socket initially after
-            // creation is "0.0.0.0:0". [On Windows 'getsockname' returns an
-            // error.
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
 
             {
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_ASSERT(!error);
 
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
 
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
-                    NTSCFG_TEST_ASSERT(error);
+                NTSCFG_TEST_ASSERT(error);
 #endif
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
             }
 
-            // Concern 2: The socket may be bound after creation to
-            // "0.0.0.0:0", and the socket's resulting source endpoint is the
-            // host "0.0.0.0" with a non-zero port.
-
-            {
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv4Address::any(), 0),
-                        k_REUSE_ADDRESS,
-                        socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(error);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 3: After the socket is bound to "0.0.0.0:0", the
-            // socket's resulting source endpoint is the host "0.0.0.0" with
-            // a non-zero port. The socket may *not* be subsequently bound to
-            // an IPv4 address that matches one of IPv4 addresses assigned to
-            // one of the network interfaces even if the port matches the
-            // existing port to which the socket is bound.
-
-            {
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv4Address::any(), 0),
-                        k_REUSE_ADDRESS,
-                        socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
-                }
-
-                {
-                    ntsa::Endpoint sourceEndpoint1;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint1,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint1.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint1.ip().host().isV4());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint1.ip().host().v4().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint1.ip().port() != 0);
-
-                    ntsa::Endpoint sourceEndpoint2;
-                    {
-                        ntsa::Adapter adapter;
-                        bool found = ntsu::AdapterUtil::discoverAdapter(
-                            &adapter,
-                            ntsa::IpAddressType::e_V4,
-                            false);
-                        NTSCFG_TEST_TRUE(found);
-                        NTSCFG_TEST_FALSE(adapter.ipv4Address().isNull());
-
-                        sourceEndpoint2 =
-                            ntsa::Endpoint(adapter.ipv4Address().value(),
-                                           sourceEndpoint1.ip().port());
-                    }
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint2,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(error);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 4: The socket may be bound after creation to an IPv4
-            // address that matches one of IPv4 addresses assigned to one of
-            // the network interfaces and port zero, and the resulting socket's
-            // source endpoint is that IPv4 address with a port chosen by the
-            // operating system.
-
-            {
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint explicitSourceEndpoint;
-                    {
-                        ntsa::Adapter adapter;
-                        bool found = ntsu::AdapterUtil::discoverAdapter(
-                            &adapter,
-                            ntsa::IpAddressType::e_V4,
-                            false);
-                        NTSCFG_TEST_TRUE(found);
-                        NTSCFG_TEST_FALSE(adapter.ipv4Address().isNull());
-
-                        explicitSourceEndpoint =
-                            ntsa::Endpoint(adapter.ipv4Address().value(), 0);
-                    }
-
-                    error = ntsu::SocketUtil::bind(explicitSourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_EQ(sourceEndpoint.ip().host(),
-                                   explicitSourceEndpoint.ip().host());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 5: A datagram socket is implicitly bound to an explicit
-            // source endpoint as a result of calling 'connect', and may not
-            // explicitly rebind afterwards.
-
-            {
-                ntsa::Handle server;
-                error = ntsu::SocketUtil::create(
-                    &server,
-                    ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                ntsa::Endpoint serverEndpoint;
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
-                        k_REUSE_ADDRESS,
-                        server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::sourceEndpoint(&serverEndpoint,
-                                                             server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(serverEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_FALSE(serverEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
-                }
-
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-#if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-                    NTSCFG_TEST_ASSERT(error);
-#endif
-                }
-
-                {
-                    error = ntsu::SocketUtil::connect(serverEndpoint, socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
-
-                    ntsa::Endpoint remoteEndpoint;
-                    error = ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_EQ(remoteEndpoint, serverEndpoint);
-                }
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(error);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(server);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 5a: A datagram socket may be explicitly bound to "any"
-            // address and "any" port, which results in the source endpoint
-            // being the "any" address and a non-zero port. The socket may then
-            // be implicitly rebound by the operating system as a result of
-            // calling 'connect', so that the resulting source endpoint is now
-            // an explicit IP address but still having the same port (i.e., the
-            // address changes from "any" to a specific IP address assigned to
-            // a network interface, but the port does not change), but the
-            // datagram socket may not explicitly rebound afterwards.
-
-            {
-                ntsa::Handle server;
-                error = ntsu::SocketUtil::create(
-                    &server,
-                    ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                ntsa::Endpoint serverEndpoint;
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
-                        k_REUSE_ADDRESS,
-                        server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::sourceEndpoint(&serverEndpoint,
-                                                             server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(serverEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_FALSE(serverEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
-                }
-
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-#if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-                    NTSCFG_TEST_ASSERT(error);
-#endif
-                }
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv4Address::any(), 0),
-                        k_REUSE_ADDRESS,
-                        socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
-                }
-
-                {
-                    error = ntsu::SocketUtil::connect(serverEndpoint, socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
-
-                    ntsa::Endpoint remoteEndpoint;
-                    error = ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_EQ(remoteEndpoint, serverEndpoint);
-                }
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(error);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(server);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 6: A datagram socket is implicitly bound to an explicit
-            // source endpoint as a result of calling 'sendto', and may not
-            // explicitly rebind afterwards.
-
-            {
-                ntsa::Handle server;
-                error = ntsu::SocketUtil::create(
-                    &server,
-                    ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                ntsa::Endpoint serverEndpoint;
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
-                        k_REUSE_ADDRESS,
-                        server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::sourceEndpoint(&serverEndpoint,
-                                                             server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(serverEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_FALSE(serverEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
-                }
-
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-#if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-                    NTSCFG_TEST_ASSERT(error);
-#endif
-                }
-
-                {
-                    ntsa::SendContext sendContext;
-                    ntsa::SendOptions sendOptions;
-
-                    sendOptions.setEndpoint(serverEndpoint);
-
-                    char storage = 'X';
-
-                    error = ntsu::SocketUtil::send(
-                        &sendContext,
-                        ntsa::Data(ntsa::ConstBuffer(&storage, 1)),
-                        sendOptions,
-                        socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
-                }
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(error);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(server);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 7: A datagram socket is implicitly bound to an explicit
-            // source endpoint as a result of calling 'sendto', *will* be
-            // implicitly rebound as a result of calling 'connect', and may not
-            // explicitly rebind afterwards.
-
-            {
-                ntsa::Handle server;
-                error = ntsu::SocketUtil::create(
-                    &server,
-                    ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                ntsa::Endpoint serverEndpoint;
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
-                        k_REUSE_ADDRESS,
-                        server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::sourceEndpoint(&serverEndpoint,
-                                                             server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(serverEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_FALSE(serverEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
-                }
-
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-#if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-                    NTSCFG_TEST_ASSERT(error);
-#endif
-                }
-
-                {
-                    ntsa::SendContext sendContext;
-                    ntsa::SendOptions sendOptions;
-
-                    sendOptions.setEndpoint(serverEndpoint);
-
-                    char storage = 'X';
-
-                    error = ntsu::SocketUtil::send(
-                        &sendContext,
-                        ntsa::Data(ntsa::ConstBuffer(&storage, 1)),
-                        sendOptions,
-                        socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
-                }
-
-                {
-                    error = ntsu::SocketUtil::connect(serverEndpoint, socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
-
-                    ntsa::Endpoint remoteEndpoint;
-                    error = ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_EQ(remoteEndpoint, serverEndpoint);
-                }
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(error);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(server);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 8: A datagram socket may connect and reconnect to the
-            // same remote endpoint successfully, and may, while already
-            // connected, connect and reconnect to a different remote endpoint
-            // successfully.
-
-            {
-                ntsa::Handle serverOne;
-                error = ntsu::SocketUtil::create(
-                    &serverOne,
-                    ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                ntsa::Endpoint serverOneEndpoint;
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
-                        k_REUSE_ADDRESS,
-                        serverOne);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error =
-                        ntsu::SocketUtil::sourceEndpoint(&serverOneEndpoint,
-                                                         serverOne);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(serverOneEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(serverOneEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_FALSE(
-                        serverOneEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_FALSE(serverOneEndpoint.ip().port() == 0);
-                }
-
-                ntsa::Handle serverTwo;
-                error = ntsu::SocketUtil::create(
-                    &serverTwo,
-                    ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                ntsa::Endpoint serverTwoEndpoint;
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
-                        k_REUSE_ADDRESS,
-                        serverTwo);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error =
-                        ntsu::SocketUtil::sourceEndpoint(&serverTwoEndpoint,
-                                                         serverTwo);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(serverTwoEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(serverTwoEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_FALSE(
-                        serverTwoEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_FALSE(serverTwoEndpoint.ip().port() == 0);
-                }
-
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-#if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-                    NTSCFG_TEST_ASSERT(error);
-#endif
-                }
-
-                for (bsl::size_t i = 0; i < 2; ++i) {
-                    // Connect to server one then reconnect to server one.
-
-                    for (bsl::size_t j = 0; j < 2; ++j) {
-                        error = ntsu::SocketUtil::connect(serverOneEndpoint,
-                                                          socket);
-                        NTSCFG_TEST_ASSERT(!error);
-
-                        ntsa::Endpoint sourceEndpoint;
-                        error =
-                            ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                        NTSCFG_TEST_ASSERT(!error);
-
-                        NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                        NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                        NTSCFG_TEST_FALSE(
-                            sourceEndpoint.ip().host().v4().isAny());
-                        NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
-
-                        ntsa::Endpoint remoteEndpoint;
-                        error =
-                            ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint,
-                                                             socket);
-                        NTSCFG_TEST_ASSERT(!error);
-
-                        NTSCFG_TEST_EQ(remoteEndpoint, serverOneEndpoint);
-                    }
-
-                    // Connect to server two then reconnect to server two.
-
-                    for (bsl::size_t j = 0; j < 2; ++j) {
-                        error = ntsu::SocketUtil::connect(serverTwoEndpoint,
-                                                          socket);
-                        NTSCFG_TEST_ASSERT(!error);
-
-                        ntsa::Endpoint sourceEndpoint;
-                        error =
-                            ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                        NTSCFG_TEST_ASSERT(!error);
-
-                        NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                        NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                        NTSCFG_TEST_FALSE(
-                            sourceEndpoint.ip().host().v4().isAny());
-                        NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
-
-                        ntsa::Endpoint remoteEndpoint;
-                        error =
-                            ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint,
-                                                             socket);
-                        NTSCFG_TEST_ASSERT(!error);
-
-                        NTSCFG_TEST_EQ(remoteEndpoint, serverTwoEndpoint);
-                    }
-
-                    // Note: attempting to "disconnect" from the remote
-                    // endpoint, by connecting to something like AF_UNSPEC,
-                    // fails on Linux and Darwin. We assume "disconnecting"
-                    // a connected datagram socket is either entirely not
-                    // supported or at least very unportable.
-                }
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(error);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(serverTwo);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(serverOne);
-                NTSCFG_TEST_ASSERT(!error);
-            }
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
         }
 
-        // Test IPv6.
+        // Concern 2: The socket may be bound after creation to
+        // "0.0.0.0:0", and the socket's resulting source endpoint is the
+        // host "0.0.0.0" with a non-zero port.
 
-        if (ntsu::AdapterUtil::supportsIpv6()) {
-            // Concern 1: The source endpoint of a socket initially after
-            // creation is "[:0]:0".
-
-            {
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-#if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-                    NTSCFG_TEST_ASSERT(error);
-#endif
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 2: The socket may be bound after creation to
-            // "[:0]:0", and the socket's resulting source endpoint is the
-            // host ":0" with a non-zero port.
+        {
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
 
             {
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_UDP_IPV6_DATAGRAM);
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv4Address::any(), 0),
+                    k_REUSE_ADDRESS,
+                    socket);
                 NTSCFG_TEST_ASSERT(!error);
 
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv6Address::any(), 0),
-                        k_REUSE_ADDRESS,
-                        socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(error);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
                 NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(error);
             }
 
-            // Concern 3: After the socket is bound to "[:0]:0", the
-            // socket's resulting source endpoint is the host ":0" with
-            // a non-zero port. The socket may *not* be subsequently bound to
-            // an IPv6 address that matches one of IPv6 addresses assigned to
-            // one of the network interfaces even if the port matches the
-            // existing port to which the socket is bound.
-
-            {
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv6Address::any(), 0),
-                        k_REUSE_ADDRESS,
-                        socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
-                }
-
-                {
-                    ntsa::Endpoint sourceEndpoint1;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint1,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint1.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint1.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint1.ip().host().v6().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint1.ip().port() != 0);
-
-                    ntsa::Endpoint sourceEndpoint2;
-                    {
-                        ntsa::Adapter adapter;
-                        bool found = ntsu::AdapterUtil::discoverAdapter(
-                            &adapter,
-                            ntsa::IpAddressType::e_V6,
-                            false);
-                        NTSCFG_TEST_TRUE(found);
-                        NTSCFG_TEST_FALSE(adapter.ipv6Address().isNull());
-
-                        sourceEndpoint2 =
-                            ntsa::Endpoint(adapter.ipv6Address().value(),
-                                           sourceEndpoint1.ip().port());
-                    }
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint2,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(error);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 4: The socket may be bound after creation to an IPv6
-            // address that matches one of IPv6 addresses assigned to one of
-            // the network interfaces and port zero, and the resulting socket's
-            // source endpoint is that IPv6 address with a port chosen by the
-            // operating system.
-
-            {
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint explicitSourceEndpoint;
-                    {
-                        ntsa::Adapter adapter;
-                        bool found = ntsu::AdapterUtil::discoverAdapter(
-                            &adapter,
-                            ntsa::IpAddressType::e_V6,
-                            false);
-                        NTSCFG_TEST_TRUE(found);
-                        NTSCFG_TEST_FALSE(adapter.ipv6Address().isNull());
-
-                        explicitSourceEndpoint =
-                            ntsa::Endpoint(adapter.ipv6Address().value(), 0);
-                    }
-
-                    error = ntsu::SocketUtil::bind(explicitSourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_EQ(sourceEndpoint.ip().host(),
-                                   explicitSourceEndpoint.ip().host());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 5: A datagram socket is implicitly bound to an explicit
-            // source endpoint as a result of calling 'connect', and may not
-            // explicitly rebind afterwards.
-
-            {
-                ntsa::Handle server;
-                error = ntsu::SocketUtil::create(
-                    &server,
-                    ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                ntsa::Endpoint serverEndpoint;
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
-                        k_REUSE_ADDRESS,
-                        server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::sourceEndpoint(&serverEndpoint,
-                                                             server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(serverEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_FALSE(serverEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
-                }
-
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-#if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-                    NTSCFG_TEST_ASSERT(error);
-#endif
-                }
-
-                {
-                    error = ntsu::SocketUtil::connect(serverEndpoint, socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
-
-                    ntsa::Endpoint remoteEndpoint;
-                    error = ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(remoteEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(remoteEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(serverEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(
-                        remoteEndpoint.ip().host().v6().equalsScopeless(
-                            serverEndpoint.ip().host().v6()));
-                    NTSCFG_TEST_TRUE(remoteEndpoint.ip().port() ==
-                                     serverEndpoint.ip().port());
-                }
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(error);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(server);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 5a: A datagram socket may be explicitly bound to "any"
-            // address and "any" port, which results in the source endpoint
-            // being the "any" address and a non-zero port. The socket may then
-            // be implicitly rebound by the operating system as a result of
-            // calling 'connect', so that the resulting source endpoint is now
-            // an explicit IP address but still having the same port (i.e., the
-            // address changes from "any" to a specific IP address assigned to
-            // a network interface, but the port does not change), but the
-            // datagram socket may not explicitly rebound afterwards.
-
-            {
-                ntsa::Handle server;
-                error = ntsu::SocketUtil::create(
-                    &server,
-                    ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                ntsa::Endpoint serverEndpoint;
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
-                        k_REUSE_ADDRESS,
-                        server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::sourceEndpoint(&serverEndpoint,
-                                                             server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(serverEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_FALSE(serverEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
-                }
-
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-#if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-                    NTSCFG_TEST_ASSERT(error);
-#endif
-                }
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv6Address::any(), 0),
-                        k_REUSE_ADDRESS,
-                        socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
-                }
-
-                {
-                    error = ntsu::SocketUtil::connect(serverEndpoint, socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
-
-                    ntsa::Endpoint remoteEndpoint;
-                    error = ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(remoteEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(remoteEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(serverEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(
-                        remoteEndpoint.ip().host().v6().equalsScopeless(
-                            serverEndpoint.ip().host().v6()));
-                    NTSCFG_TEST_TRUE(remoteEndpoint.ip().port() ==
-                                     serverEndpoint.ip().port());
-                }
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(error);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(server);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 6: A datagram socket is implicitly bound to an explicit
-            // source endpoint as a result of calling 'sendto', and may not
-            // explicitly rebind afterwards.
-
-            {
-                ntsa::Handle server;
-                error = ntsu::SocketUtil::create(
-                    &server,
-                    ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                ntsa::Endpoint serverEndpoint;
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
-                        k_REUSE_ADDRESS,
-                        server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::sourceEndpoint(&serverEndpoint,
-                                                             server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(serverEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_FALSE(serverEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
-                }
-
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-#if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-                    NTSCFG_TEST_ASSERT(error);
-#endif
-                }
-
-                {
-                    ntsa::SendContext sendContext;
-                    ntsa::SendOptions sendOptions;
-
-                    sendOptions.setEndpoint(serverEndpoint);
-
-                    char storage = 'X';
-
-                    error = ntsu::SocketUtil::send(
-                        &sendContext,
-                        ntsa::Data(ntsa::ConstBuffer(&storage, 1)),
-                        sendOptions,
-                        socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
-                }
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(error);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(server);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 7: A datagram socket is implicitly bound to an explicit
-            // source endpoint as a result of calling 'sendto', *will* be
-            // implicitly rebound as a result of calling 'connect', and may not
-            // explicitly rebind afterwards.
-
-            {
-                ntsa::Handle server;
-                error = ntsu::SocketUtil::create(
-                    &server,
-                    ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                ntsa::Endpoint serverEndpoint;
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
-                        k_REUSE_ADDRESS,
-                        server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::sourceEndpoint(&serverEndpoint,
-                                                             server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(serverEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_FALSE(serverEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
-                }
-
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-#if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-                    NTSCFG_TEST_ASSERT(error);
-#endif
-                }
-
-                {
-                    ntsa::SendContext sendContext;
-                    ntsa::SendOptions sendOptions;
-
-                    sendOptions.setEndpoint(serverEndpoint);
-
-                    char storage = 'X';
-
-                    error = ntsu::SocketUtil::send(
-                        &sendContext,
-                        ntsa::Data(ntsa::ConstBuffer(&storage, 1)),
-                        sendOptions,
-                        socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
-                }
-
-                {
-                    error = ntsu::SocketUtil::connect(serverEndpoint, socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
-
-                    ntsa::Endpoint remoteEndpoint;
-                    error = ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(
-                        remoteEndpoint.ip().host().v6().equalsScopeless(
-                            serverEndpoint.ip().host().v6()));
-                    NTSCFG_TEST_TRUE(remoteEndpoint.ip().port() ==
-                                     serverEndpoint.ip().port());
-                }
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(error);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(server);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 8: A datagram socket may connect and reconnect to the
-            // same remote endpoint successfully, and may, while already
-            // connected, connect and reconnect to a different remote endpoint
-            // successfully.
-
-            {
-                ntsa::Handle serverOne;
-                error = ntsu::SocketUtil::create(
-                    &serverOne,
-                    ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                ntsa::Endpoint serverOneEndpoint;
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
-                        k_REUSE_ADDRESS,
-                        serverOne);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error =
-                        ntsu::SocketUtil::sourceEndpoint(&serverOneEndpoint,
-                                                         serverOne);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(serverOneEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(serverOneEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_FALSE(
-                        serverOneEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_FALSE(serverOneEndpoint.ip().port() == 0);
-                }
-
-                ntsa::Handle serverTwo;
-                error = ntsu::SocketUtil::create(
-                    &serverTwo,
-                    ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                ntsa::Endpoint serverTwoEndpoint;
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
-                        k_REUSE_ADDRESS,
-                        serverTwo);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error =
-                        ntsu::SocketUtil::sourceEndpoint(&serverTwoEndpoint,
-                                                         serverTwo);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(serverTwoEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(serverTwoEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_FALSE(
-                        serverTwoEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_FALSE(serverTwoEndpoint.ip().port() == 0);
-                }
-
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-#if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-                    NTSCFG_TEST_ASSERT(error);
-#endif
-                }
-
-                for (bsl::size_t i = 0; i < 2; ++i) {
-                    // Connect to server one then reconnect to server one.
-
-                    for (bsl::size_t j = 0; j < 2; ++j) {
-                        error = ntsu::SocketUtil::connect(serverOneEndpoint,
-                                                          socket);
-                        NTSCFG_TEST_ASSERT(!error);
-
-                        ntsa::Endpoint sourceEndpoint;
-                        error =
-                            ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                        NTSCFG_TEST_ASSERT(!error);
-
-                        NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                        NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                        NTSCFG_TEST_FALSE(
-                            sourceEndpoint.ip().host().v6().isAny());
-                        NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
-
-                        ntsa::Endpoint remoteEndpoint;
-                        error =
-                            ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint,
-                                                             socket);
-                        NTSCFG_TEST_ASSERT(!error);
-
-                        NTSCFG_TEST_TRUE(
-                            remoteEndpoint.ip().host().v6().equalsScopeless(
-                                serverOneEndpoint.ip().host().v6()));
-                        NTSCFG_TEST_TRUE(remoteEndpoint.ip().port() ==
-                                         serverOneEndpoint.ip().port());
-                    }
-
-                    // Connect to server two then reconnect to server two.
-
-                    for (bsl::size_t j = 0; j < 2; ++j) {
-                        error = ntsu::SocketUtil::connect(serverTwoEndpoint,
-                                                          socket);
-                        NTSCFG_TEST_ASSERT(!error);
-
-                        ntsa::Endpoint sourceEndpoint;
-                        error =
-                            ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                        NTSCFG_TEST_ASSERT(!error);
-
-                        NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                        NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                        NTSCFG_TEST_FALSE(
-                            sourceEndpoint.ip().host().v6().isAny());
-                        NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
-
-                        ntsa::Endpoint remoteEndpoint;
-                        error =
-                            ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint,
-                                                             socket);
-                        NTSCFG_TEST_ASSERT(!error);
-
-                        NTSCFG_TEST_TRUE(
-                            remoteEndpoint.ip().host().v6().equalsScopeless(
-                                serverTwoEndpoint.ip().host().v6()));
-                        NTSCFG_TEST_TRUE(remoteEndpoint.ip().port() ==
-                                         serverTwoEndpoint.ip().port());
-                    }
-
-                    // Note: attempting to "disconnect" from the remote
-                    // endpoint, by connecting to something like AF_UNSPEC,
-                    // fails on Linux and Darwin. We assume "disconnecting"
-                    // a connected datagram socket is either entirely not
-                    // supported or at least very unportable.
-                }
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(error);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(serverTwo);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(serverOne);
-                NTSCFG_TEST_ASSERT(!error);
-            }
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
         }
 
-        // Test Unix domain.
+        // Concern 3: After the socket is bound to "0.0.0.0:0", the
+        // socket's resulting source endpoint is the host "0.0.0.0" with
+        // a non-zero port. The socket may *not* be subsequently bound to
+        // an IPv4 address that matches one of IPv4 addresses assigned to
+        // one of the network interfaces even if the port matches the
+        // existing port to which the socket is bound.
+
+        {
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv4Address::any(), 0),
+                    k_REUSE_ADDRESS,
+                    socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
+            }
+
+            {
+                ntsa::Endpoint sourceEndpoint1;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint1, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint1.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint1.ip().host().isV4());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint1.ip().host().v4().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint1.ip().port() != 0);
+
+                ntsa::Endpoint sourceEndpoint2;
+                {
+                    ntsa::Adapter adapter;
+                    bool          found = ntsu::AdapterUtil::discoverAdapter(
+                        &adapter,
+                        ntsa::IpAddressType::e_V4,
+                        false);
+                    NTSCFG_TEST_TRUE(found);
+                    NTSCFG_TEST_FALSE(adapter.ipv4Address().isNull());
+
+                    sourceEndpoint2 =
+                        ntsa::Endpoint(adapter.ipv4Address().value(),
+                                       sourceEndpoint1.ip().port());
+                }
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint2,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(error);
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 4: The socket may be bound after creation to an IPv4
+        // address that matches one of IPv4 addresses assigned to one of
+        // the network interfaces and port zero, and the resulting socket's
+        // source endpoint is that IPv4 address with a port chosen by the
+        // operating system.
+
+        {
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint explicitSourceEndpoint;
+                {
+                    ntsa::Adapter adapter;
+                    bool          found = ntsu::AdapterUtil::discoverAdapter(
+                        &adapter,
+                        ntsa::IpAddressType::e_V4,
+                        false);
+                    NTSCFG_TEST_TRUE(found);
+                    NTSCFG_TEST_FALSE(adapter.ipv4Address().isNull());
+
+                    explicitSourceEndpoint =
+                        ntsa::Endpoint(adapter.ipv4Address().value(), 0);
+                }
+
+                error = ntsu::SocketUtil::bind(explicitSourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_EQ(sourceEndpoint.ip().host(),
+                               explicitSourceEndpoint.ip().host());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 5: A datagram socket is implicitly bound to an explicit
+        // source endpoint as a result of calling 'connect', and may not
+        // explicitly rebind afterwards.
+
+        {
+            ntsa::Handle server;
+            error =
+                ntsu::SocketUtil::create(&server,
+                                         ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            ntsa::Endpoint serverEndpoint;
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
+                    k_REUSE_ADDRESS,
+                    server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(serverEndpoint.isIp());
+                NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_FALSE(serverEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
+            }
+
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+                NTSCFG_TEST_ASSERT(error);
+#endif
+            }
+
+            {
+                error = ntsu::SocketUtil::connect(serverEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
+
+                ntsa::Endpoint remoteEndpoint;
+                error =
+                    ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_EQ(remoteEndpoint, serverEndpoint);
+            }
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(error);
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(server);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 5a: A datagram socket may be explicitly bound to "any"
+        // address and "any" port, which results in the source endpoint
+        // being the "any" address and a non-zero port. The socket may then
+        // be implicitly rebound by the operating system as a result of
+        // calling 'connect', so that the resulting source endpoint is now
+        // an explicit IP address but still having the same port (i.e., the
+        // address changes from "any" to a specific IP address assigned to
+        // a network interface, but the port does not change), but the
+        // datagram socket may not explicitly rebound afterwards.
+
+        {
+            ntsa::Handle server;
+            error =
+                ntsu::SocketUtil::create(&server,
+                                         ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            ntsa::Endpoint serverEndpoint;
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
+                    k_REUSE_ADDRESS,
+                    server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(serverEndpoint.isIp());
+                NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_FALSE(serverEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
+            }
+
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+                NTSCFG_TEST_ASSERT(error);
+#endif
+            }
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv4Address::any(), 0),
+                    k_REUSE_ADDRESS,
+                    socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
+            }
+
+            {
+                error = ntsu::SocketUtil::connect(serverEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
+
+                ntsa::Endpoint remoteEndpoint;
+                error =
+                    ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_EQ(remoteEndpoint, serverEndpoint);
+            }
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(error);
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(server);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 6: A datagram socket is implicitly bound to an explicit
+        // source endpoint as a result of calling 'sendto', and may not
+        // explicitly rebind afterwards.
+
+        {
+            ntsa::Handle server;
+            error =
+                ntsu::SocketUtil::create(&server,
+                                         ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            ntsa::Endpoint serverEndpoint;
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
+                    k_REUSE_ADDRESS,
+                    server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(serverEndpoint.isIp());
+                NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_FALSE(serverEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
+            }
+
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+                NTSCFG_TEST_ASSERT(error);
+#endif
+            }
+
+            {
+                ntsa::SendContext sendContext;
+                ntsa::SendOptions sendOptions;
+
+                sendOptions.setEndpoint(serverEndpoint);
+
+                char storage = 'X';
+
+                error = ntsu::SocketUtil::send(
+                    &sendContext,
+                    ntsa::Data(ntsa::ConstBuffer(&storage, 1)),
+                    sendOptions,
+                    socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
+            }
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(error);
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(server);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 7: A datagram socket is implicitly bound to an explicit
+        // source endpoint as a result of calling 'sendto', *will* be
+        // implicitly rebound as a result of calling 'connect', and may not
+        // explicitly rebind afterwards.
+
+        {
+            ntsa::Handle server;
+            error =
+                ntsu::SocketUtil::create(&server,
+                                         ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            ntsa::Endpoint serverEndpoint;
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
+                    k_REUSE_ADDRESS,
+                    server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(serverEndpoint.isIp());
+                NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_FALSE(serverEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
+            }
+
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+                NTSCFG_TEST_ASSERT(error);
+#endif
+            }
+
+            {
+                ntsa::SendContext sendContext;
+                ntsa::SendOptions sendOptions;
+
+                sendOptions.setEndpoint(serverEndpoint);
+
+                char storage = 'X';
+
+                error = ntsu::SocketUtil::send(
+                    &sendContext,
+                    ntsa::Data(ntsa::ConstBuffer(&storage, 1)),
+                    sendOptions,
+                    socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
+            }
+
+            {
+                error = ntsu::SocketUtil::connect(serverEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
+
+                ntsa::Endpoint remoteEndpoint;
+                error =
+                    ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_EQ(remoteEndpoint, serverEndpoint);
+            }
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(error);
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(server);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 8: A datagram socket may connect and reconnect to the
+        // same remote endpoint successfully, and may, while already
+        // connected, connect and reconnect to a different remote endpoint
+        // successfully.
+
+        {
+            ntsa::Handle serverOne;
+            error =
+                ntsu::SocketUtil::create(&serverOne,
+                                         ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            ntsa::Endpoint serverOneEndpoint;
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
+                    k_REUSE_ADDRESS,
+                    serverOne);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error = ntsu::SocketUtil::sourceEndpoint(&serverOneEndpoint,
+                                                         serverOne);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(serverOneEndpoint.isIp());
+                NTSCFG_TEST_TRUE(serverOneEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_FALSE(serverOneEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_FALSE(serverOneEndpoint.ip().port() == 0);
+            }
+
+            ntsa::Handle serverTwo;
+            error =
+                ntsu::SocketUtil::create(&serverTwo,
+                                         ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            ntsa::Endpoint serverTwoEndpoint;
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
+                    k_REUSE_ADDRESS,
+                    serverTwo);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error = ntsu::SocketUtil::sourceEndpoint(&serverTwoEndpoint,
+                                                         serverTwo);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(serverTwoEndpoint.isIp());
+                NTSCFG_TEST_TRUE(serverTwoEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_FALSE(serverTwoEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_FALSE(serverTwoEndpoint.ip().port() == 0);
+            }
+
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+                NTSCFG_TEST_ASSERT(error);
+#endif
+            }
+
+            for (bsl::size_t i = 0; i < 2; ++i) {
+                // Connect to server one then reconnect to server one.
+
+                for (bsl::size_t j = 0; j < 2; ++j) {
+                    error =
+                        ntsu::SocketUtil::connect(serverOneEndpoint, socket);
+                    NTSCFG_TEST_ASSERT(!error);
+
+                    ntsa::Endpoint sourceEndpoint;
+                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
+                                                             socket);
+                    NTSCFG_TEST_ASSERT(!error);
+
+                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().host().v4().isAny());
+                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
+
+                    ntsa::Endpoint remoteEndpoint;
+                    error = ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint,
+                                                             socket);
+                    NTSCFG_TEST_ASSERT(!error);
+
+                    NTSCFG_TEST_EQ(remoteEndpoint, serverOneEndpoint);
+                }
+
+                // Connect to server two then reconnect to server two.
+
+                for (bsl::size_t j = 0; j < 2; ++j) {
+                    error =
+                        ntsu::SocketUtil::connect(serverTwoEndpoint, socket);
+                    NTSCFG_TEST_ASSERT(!error);
+
+                    ntsa::Endpoint sourceEndpoint;
+                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
+                                                             socket);
+                    NTSCFG_TEST_ASSERT(!error);
+
+                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().host().v4().isAny());
+                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
+
+                    ntsa::Endpoint remoteEndpoint;
+                    error = ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint,
+                                                             socket);
+                    NTSCFG_TEST_ASSERT(!error);
+
+                    NTSCFG_TEST_EQ(remoteEndpoint, serverTwoEndpoint);
+                }
+
+                // Note: attempting to "disconnect" from the remote
+                // endpoint, by connecting to something like AF_UNSPEC,
+                // fails on Linux and Darwin. We assume "disconnecting"
+                // a connected datagram socket is either entirely not
+                // supported or at least very unportable.
+            }
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(error);
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(serverTwo);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(serverOne);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+    }
+
+    // Test IPv6.
+
+    if (ntsu::AdapterUtil::supportsIpv6()) {
+        // Concern 1: The source endpoint of a socket initially after
+        // creation is "[:0]:0".
+
+        {
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_UDP_IPV6_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+                NTSCFG_TEST_ASSERT(error);
+#endif
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 2: The socket may be bound after creation to
+        // "[:0]:0", and the socket's resulting source endpoint is the
+        // host ":0" with a non-zero port.
+
+        {
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_UDP_IPV6_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv6Address::any(), 0),
+                    k_REUSE_ADDRESS,
+                    socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(error);
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 3: After the socket is bound to "[:0]:0", the
+        // socket's resulting source endpoint is the host ":0" with
+        // a non-zero port. The socket may *not* be subsequently bound to
+        // an IPv6 address that matches one of IPv6 addresses assigned to
+        // one of the network interfaces even if the port matches the
+        // existing port to which the socket is bound.
+
+        {
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_UDP_IPV6_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv6Address::any(), 0),
+                    k_REUSE_ADDRESS,
+                    socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
+            }
+
+            {
+                ntsa::Endpoint sourceEndpoint1;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint1, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint1.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint1.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint1.ip().host().v6().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint1.ip().port() != 0);
+
+                ntsa::Endpoint sourceEndpoint2;
+                {
+                    ntsa::Adapter adapter;
+                    bool          found = ntsu::AdapterUtil::discoverAdapter(
+                        &adapter,
+                        ntsa::IpAddressType::e_V6,
+                        false);
+                    NTSCFG_TEST_TRUE(found);
+                    NTSCFG_TEST_FALSE(adapter.ipv6Address().isNull());
+
+                    sourceEndpoint2 =
+                        ntsa::Endpoint(adapter.ipv6Address().value(),
+                                       sourceEndpoint1.ip().port());
+                }
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint2,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(error);
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 4: The socket may be bound after creation to an IPv6
+        // address that matches one of IPv6 addresses assigned to one of
+        // the network interfaces and port zero, and the resulting socket's
+        // source endpoint is that IPv6 address with a port chosen by the
+        // operating system.
+
+        {
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_UDP_IPV6_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint explicitSourceEndpoint;
+                {
+                    ntsa::Adapter adapter;
+                    bool          found = ntsu::AdapterUtil::discoverAdapter(
+                        &adapter,
+                        ntsa::IpAddressType::e_V6,
+                        false);
+                    NTSCFG_TEST_TRUE(found);
+                    NTSCFG_TEST_FALSE(adapter.ipv6Address().isNull());
+
+                    explicitSourceEndpoint =
+                        ntsa::Endpoint(adapter.ipv6Address().value(), 0);
+                }
+
+                error = ntsu::SocketUtil::bind(explicitSourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_EQ(sourceEndpoint.ip().host(),
+                               explicitSourceEndpoint.ip().host());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 5: A datagram socket is implicitly bound to an explicit
+        // source endpoint as a result of calling 'connect', and may not
+        // explicitly rebind afterwards.
+
+        {
+            ntsa::Handle server;
+            error =
+                ntsu::SocketUtil::create(&server,
+                                         ntsa::Transport::e_UDP_IPV6_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            ntsa::Endpoint serverEndpoint;
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
+                    k_REUSE_ADDRESS,
+                    server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(serverEndpoint.isIp());
+                NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_FALSE(serverEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
+            }
+
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_UDP_IPV6_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+                NTSCFG_TEST_ASSERT(error);
+#endif
+            }
+
+            {
+                error = ntsu::SocketUtil::connect(serverEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
+
+                ntsa::Endpoint remoteEndpoint;
+                error =
+                    ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(remoteEndpoint.isIp());
+                NTSCFG_TEST_TRUE(remoteEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(serverEndpoint.isIp());
+                NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(
+                    remoteEndpoint.ip().host().v6().equalsScopeless(
+                        serverEndpoint.ip().host().v6()));
+                NTSCFG_TEST_TRUE(remoteEndpoint.ip().port() ==
+                                 serverEndpoint.ip().port());
+            }
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(error);
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(server);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 5a: A datagram socket may be explicitly bound to "any"
+        // address and "any" port, which results in the source endpoint
+        // being the "any" address and a non-zero port. The socket may then
+        // be implicitly rebound by the operating system as a result of
+        // calling 'connect', so that the resulting source endpoint is now
+        // an explicit IP address but still having the same port (i.e., the
+        // address changes from "any" to a specific IP address assigned to
+        // a network interface, but the port does not change), but the
+        // datagram socket may not explicitly rebound afterwards.
+
+        {
+            ntsa::Handle server;
+            error =
+                ntsu::SocketUtil::create(&server,
+                                         ntsa::Transport::e_UDP_IPV6_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            ntsa::Endpoint serverEndpoint;
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
+                    k_REUSE_ADDRESS,
+                    server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(serverEndpoint.isIp());
+                NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_FALSE(serverEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
+            }
+
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_UDP_IPV6_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+                NTSCFG_TEST_ASSERT(error);
+#endif
+            }
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv6Address::any(), 0),
+                    k_REUSE_ADDRESS,
+                    socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
+            }
+
+            {
+                error = ntsu::SocketUtil::connect(serverEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
+
+                ntsa::Endpoint remoteEndpoint;
+                error =
+                    ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(remoteEndpoint.isIp());
+                NTSCFG_TEST_TRUE(remoteEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(serverEndpoint.isIp());
+                NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(
+                    remoteEndpoint.ip().host().v6().equalsScopeless(
+                        serverEndpoint.ip().host().v6()));
+                NTSCFG_TEST_TRUE(remoteEndpoint.ip().port() ==
+                                 serverEndpoint.ip().port());
+            }
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(error);
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(server);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 6: A datagram socket is implicitly bound to an explicit
+        // source endpoint as a result of calling 'sendto', and may not
+        // explicitly rebind afterwards.
+
+        {
+            ntsa::Handle server;
+            error =
+                ntsu::SocketUtil::create(&server,
+                                         ntsa::Transport::e_UDP_IPV6_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            ntsa::Endpoint serverEndpoint;
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
+                    k_REUSE_ADDRESS,
+                    server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(serverEndpoint.isIp());
+                NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_FALSE(serverEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
+            }
+
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_UDP_IPV6_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+                NTSCFG_TEST_ASSERT(error);
+#endif
+            }
+
+            {
+                ntsa::SendContext sendContext;
+                ntsa::SendOptions sendOptions;
+
+                sendOptions.setEndpoint(serverEndpoint);
+
+                char storage = 'X';
+
+                error = ntsu::SocketUtil::send(
+                    &sendContext,
+                    ntsa::Data(ntsa::ConstBuffer(&storage, 1)),
+                    sendOptions,
+                    socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
+            }
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(error);
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(server);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 7: A datagram socket is implicitly bound to an explicit
+        // source endpoint as a result of calling 'sendto', *will* be
+        // implicitly rebound as a result of calling 'connect', and may not
+        // explicitly rebind afterwards.
+
+        {
+            ntsa::Handle server;
+            error =
+                ntsu::SocketUtil::create(&server,
+                                         ntsa::Transport::e_UDP_IPV6_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            ntsa::Endpoint serverEndpoint;
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
+                    k_REUSE_ADDRESS,
+                    server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(serverEndpoint.isIp());
+                NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_FALSE(serverEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
+            }
+
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_UDP_IPV6_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+                NTSCFG_TEST_ASSERT(error);
+#endif
+            }
+
+            {
+                ntsa::SendContext sendContext;
+                ntsa::SendOptions sendOptions;
+
+                sendOptions.setEndpoint(serverEndpoint);
+
+                char storage = 'X';
+
+                error = ntsu::SocketUtil::send(
+                    &sendContext,
+                    ntsa::Data(ntsa::ConstBuffer(&storage, 1)),
+                    sendOptions,
+                    socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
+            }
+
+            {
+                error = ntsu::SocketUtil::connect(serverEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
+
+                ntsa::Endpoint remoteEndpoint;
+                error =
+                    ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(
+                    remoteEndpoint.ip().host().v6().equalsScopeless(
+                        serverEndpoint.ip().host().v6()));
+                NTSCFG_TEST_TRUE(remoteEndpoint.ip().port() ==
+                                 serverEndpoint.ip().port());
+            }
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(error);
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(server);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 8: A datagram socket may connect and reconnect to the
+        // same remote endpoint successfully, and may, while already
+        // connected, connect and reconnect to a different remote endpoint
+        // successfully.
+
+        {
+            ntsa::Handle serverOne;
+            error =
+                ntsu::SocketUtil::create(&serverOne,
+                                         ntsa::Transport::e_UDP_IPV6_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            ntsa::Endpoint serverOneEndpoint;
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
+                    k_REUSE_ADDRESS,
+                    serverOne);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error = ntsu::SocketUtil::sourceEndpoint(&serverOneEndpoint,
+                                                         serverOne);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(serverOneEndpoint.isIp());
+                NTSCFG_TEST_TRUE(serverOneEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_FALSE(serverOneEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_FALSE(serverOneEndpoint.ip().port() == 0);
+            }
+
+            ntsa::Handle serverTwo;
+            error =
+                ntsu::SocketUtil::create(&serverTwo,
+                                         ntsa::Transport::e_UDP_IPV6_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            ntsa::Endpoint serverTwoEndpoint;
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
+                    k_REUSE_ADDRESS,
+                    serverTwo);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error = ntsu::SocketUtil::sourceEndpoint(&serverTwoEndpoint,
+                                                         serverTwo);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(serverTwoEndpoint.isIp());
+                NTSCFG_TEST_TRUE(serverTwoEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_FALSE(serverTwoEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_FALSE(serverTwoEndpoint.ip().port() == 0);
+            }
+
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_UDP_IPV6_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+                NTSCFG_TEST_ASSERT(error);
+#endif
+            }
+
+            for (bsl::size_t i = 0; i < 2; ++i) {
+                // Connect to server one then reconnect to server one.
+
+                for (bsl::size_t j = 0; j < 2; ++j) {
+                    error =
+                        ntsu::SocketUtil::connect(serverOneEndpoint, socket);
+                    NTSCFG_TEST_ASSERT(!error);
+
+                    ntsa::Endpoint sourceEndpoint;
+                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
+                                                             socket);
+                    NTSCFG_TEST_ASSERT(!error);
+
+                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().host().v6().isAny());
+                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
+
+                    ntsa::Endpoint remoteEndpoint;
+                    error = ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint,
+                                                             socket);
+                    NTSCFG_TEST_ASSERT(!error);
+
+                    NTSCFG_TEST_TRUE(
+                        remoteEndpoint.ip().host().v6().equalsScopeless(
+                            serverOneEndpoint.ip().host().v6()));
+                    NTSCFG_TEST_TRUE(remoteEndpoint.ip().port() ==
+                                     serverOneEndpoint.ip().port());
+                }
+
+                // Connect to server two then reconnect to server two.
+
+                for (bsl::size_t j = 0; j < 2; ++j) {
+                    error =
+                        ntsu::SocketUtil::connect(serverTwoEndpoint, socket);
+                    NTSCFG_TEST_ASSERT(!error);
+
+                    ntsa::Endpoint sourceEndpoint;
+                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
+                                                             socket);
+                    NTSCFG_TEST_ASSERT(!error);
+
+                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().host().v6().isAny());
+                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
+
+                    ntsa::Endpoint remoteEndpoint;
+                    error = ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint,
+                                                             socket);
+                    NTSCFG_TEST_ASSERT(!error);
+
+                    NTSCFG_TEST_TRUE(
+                        remoteEndpoint.ip().host().v6().equalsScopeless(
+                            serverTwoEndpoint.ip().host().v6()));
+                    NTSCFG_TEST_TRUE(remoteEndpoint.ip().port() ==
+                                     serverTwoEndpoint.ip().port());
+                }
+
+                // Note: attempting to "disconnect" from the remote
+                // endpoint, by connecting to something like AF_UNSPEC,
+                // fails on Linux and Darwin. We assume "disconnecting"
+                // a connected datagram socket is either entirely not
+                // supported or at least very unportable.
+            }
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(error);
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(serverTwo);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(serverOne);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+    }
+
+    // Test Unix domain.
 
 #if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL &&                             \
     !defined(BSLS_PLATFORM_OS_WINDOWS)
+    {
+        // Concern 1: The source endpoint of a socket initially after
+        // creation is the unnamed local name.
+
         {
-            // Concern 1: The source endpoint of a socket initially after
-            // creation is the unnamed local name.
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_LOCAL_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
 
             {
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_LOCAL_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    if (error) {
-                        BSLS_LOG_ERROR("Failed to get source endpoint: %s",
-                                       error.text().c_str());
-                    }
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                if (error) {
+                    BSLS_LOG_ERROR("Failed to get source endpoint: %s",
+                                   error.text().c_str());
                 }
-
-                error = ntsu::SocketUtil::unlink(socket);
                 NTSCFG_TEST_ASSERT(!error);
 
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
+                NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
             }
 
-            // Concern 2: The socket may be bound after creation to an unnamed
-            // name, and the socket's resulting source endpoint is *not* the
-            // unnamed name, but an explicit name chosen by the operating
-            // system (on Linux, in the abstract namespace.) [This
-            // functionality is only true on Linux].
+            error = ntsu::SocketUtil::unlink(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 2: The socket may be bound after creation to an unnamed
+        // name, and the socket's resulting source endpoint is *not* the
+        // unnamed name, but an explicit name chosen by the operating
+        // system (on Linux, in the abstract namespace.) [This
+        // functionality is only true on Linux].
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
+        {
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_LOCAL_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
             {
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_LOCAL_DATAGRAM);
+                ntsa::Endpoint unnamedSourceEndpoint =
+                    ntsa::Endpoint(ntsa::LocalName());
+                NTSCFG_TEST_ASSERT(unnamedSourceEndpoint.isLocal());
+                NTSCFG_TEST_ASSERT(unnamedSourceEndpoint.local().isUnnamed());
+
+                error = ntsu::SocketUtil::bind(unnamedSourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
                 NTSCFG_TEST_ASSERT(!error);
 
-                {
-                    ntsa::Endpoint unnamedSourceEndpoint =
-                        ntsa::Endpoint(ntsa::LocalName());
-                    NTSCFG_TEST_ASSERT(unnamedSourceEndpoint.isLocal());
-                    NTSCFG_TEST_ASSERT(
-                        unnamedSourceEndpoint.local().isUnnamed());
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
 
-                    error = ntsu::SocketUtil::bind(unnamedSourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
-                    NTSCFG_TEST_NE(sourceEndpoint, unnamedSourceEndpoint);
-                    NTSCFG_TEST_GT(sourceEndpoint.local().value().size(), 0);
+                NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
+                NTSCFG_TEST_NE(sourceEndpoint, unnamedSourceEndpoint);
+                NTSCFG_TEST_GT(sourceEndpoint.local().value().size(), 0);
 #if defined(BSLS_PLATFORM_OS_LINUX)
-                    NTSCFG_TEST_TRUE(sourceEndpoint.local().isAbstract());
+                NTSCFG_TEST_TRUE(sourceEndpoint.local().isAbstract());
 #endif
-                }
-
-                error = ntsu::SocketUtil::unlink(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-#endif
-
-            // Concern 3: The socket may be bound after creation to an explicit
-            // name, and the socket's resulting source endpoint is the explicit
-            // name.
-
-            {
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_LOCAL_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::LocalName localName;
-                    error = ntsa::LocalName::generateUnique(&localName);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint explicitSourceEndpoint =
-                        ntsa::Endpoint(localName);
-
-                    error = ntsu::SocketUtil::bind(explicitSourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
-                    NTSCFG_TEST_EQ(sourceEndpoint, explicitSourceEndpoint);
-                }
-
-                error = ntsu::SocketUtil::unlink(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
             }
 
-            // Concern 4: A datagram socket is implicitly bound to an unnamed
-            // source endpoint as a result of calling 'connect', and *may*,
-            // on Linux, explicitly rebind afterwards.
+            error = ntsu::SocketUtil::unlink(socket);
+            NTSCFG_TEST_ASSERT(!error);
 
-            {
-                ntsa::Handle server;
-                error = ntsu::SocketUtil::create(
-                    &server,
-                    ntsa::Transport::e_LOCAL_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                ntsa::Endpoint serverEndpoint;
-
-                {
-                    ntsa::LocalName localName;
-                    error = ntsa::LocalName::generateUnique(&localName);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint explicitServerEndpoint =
-                        ntsa::Endpoint(localName);
-
-                    error = ntsu::SocketUtil::bind(explicitServerEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::sourceEndpoint(&serverEndpoint,
-                                                             server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(serverEndpoint.isLocal());
-                    NTSCFG_TEST_EQ(serverEndpoint, explicitServerEndpoint);
-                }
-
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_LOCAL_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
-                }
-
-                {
-                    error = ntsu::SocketUtil::connect(serverEndpoint, socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
-
-                    ntsa::Endpoint remoteEndpoint;
-                    error = ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_EQ(remoteEndpoint, serverEndpoint);
-                }
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-#if defined(BSLS_PLATFORM_OS_LINUX)
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(!error);
-#endif
-                }
-
-                error = ntsu::SocketUtil::unlink(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::unlink(server);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(server);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 5: A datagram socket is implicitly bound to an
-            // *implicit* source endpoint as a result of calling 'sendto'
-            // (i.e., the operating system does not generate a name), and
-            // *may*, on Linux, explicitly rebind afterwards.
-
-            {
-                ntsa::Handle server;
-                error = ntsu::SocketUtil::create(
-                    &server,
-                    ntsa::Transport::e_LOCAL_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                ntsa::Endpoint serverEndpoint;
-
-                {
-                    ntsa::LocalName localName;
-                    error = ntsa::LocalName::generateUnique(&localName);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint explicitServerEndpoint =
-                        ntsa::Endpoint(localName);
-
-                    error = ntsu::SocketUtil::bind(explicitServerEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::sourceEndpoint(&serverEndpoint,
-                                                             server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(serverEndpoint.isLocal());
-                    NTSCFG_TEST_EQ(serverEndpoint, explicitServerEndpoint);
-                }
-
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_LOCAL_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
-                }
-
-                {
-                    ntsa::SendContext sendContext;
-                    ntsa::SendOptions sendOptions;
-
-                    sendOptions.setEndpoint(serverEndpoint);
-
-                    char storage = 'X';
-
-                    error = ntsu::SocketUtil::send(
-                        &sendContext,
-                        ntsa::Data(ntsa::ConstBuffer(&storage, 1)),
-                        sendOptions,
-                        socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
-                }
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-#if defined(BSLS_PLATFORM_OS_LINUX)
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(!error);
-#endif
-                }
-
-                error = ntsu::SocketUtil::unlink(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::unlink(server);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(server);
-                NTSCFG_TEST_ASSERT(!error);
-            }
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
         }
 #endif
+
+        // Concern 3: The socket may be bound after creation to an explicit
+        // name, and the socket's resulting source endpoint is the explicit
+        // name.
+
+        {
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_LOCAL_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::LocalName localName;
+                error = ntsa::LocalName::generateUnique(&localName);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint explicitSourceEndpoint =
+                    ntsa::Endpoint(localName);
+
+                error = ntsu::SocketUtil::bind(explicitSourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
+                NTSCFG_TEST_EQ(sourceEndpoint, explicitSourceEndpoint);
+            }
+
+            error = ntsu::SocketUtil::unlink(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 4: A datagram socket is implicitly bound to an unnamed
+        // source endpoint as a result of calling 'connect', and *may*,
+        // on Linux, explicitly rebind afterwards.
+
+        {
+            ntsa::Handle server;
+            error =
+                ntsu::SocketUtil::create(&server,
+                                         ntsa::Transport::e_LOCAL_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            ntsa::Endpoint serverEndpoint;
+
+            {
+                ntsa::LocalName localName;
+                error = ntsa::LocalName::generateUnique(&localName);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint explicitServerEndpoint =
+                    ntsa::Endpoint(localName);
+
+                error = ntsu::SocketUtil::bind(explicitServerEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(serverEndpoint.isLocal());
+                NTSCFG_TEST_EQ(serverEndpoint, explicitServerEndpoint);
+            }
+
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_LOCAL_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
+                NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
+            }
+
+            {
+                error = ntsu::SocketUtil::connect(serverEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
+                NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
+
+                ntsa::Endpoint remoteEndpoint;
+                error =
+                    ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_EQ(remoteEndpoint, serverEndpoint);
+            }
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(!error);
+#endif
+            }
+
+            error = ntsu::SocketUtil::unlink(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::unlink(server);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(server);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 5: A datagram socket is implicitly bound to an
+        // *implicit* source endpoint as a result of calling 'sendto'
+        // (i.e., the operating system does not generate a name), and
+        // *may*, on Linux, explicitly rebind afterwards.
+
+        {
+            ntsa::Handle server;
+            error =
+                ntsu::SocketUtil::create(&server,
+                                         ntsa::Transport::e_LOCAL_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            ntsa::Endpoint serverEndpoint;
+
+            {
+                ntsa::LocalName localName;
+                error = ntsa::LocalName::generateUnique(&localName);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint explicitServerEndpoint =
+                    ntsa::Endpoint(localName);
+
+                error = ntsu::SocketUtil::bind(explicitServerEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(serverEndpoint.isLocal());
+                NTSCFG_TEST_EQ(serverEndpoint, explicitServerEndpoint);
+            }
+
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_LOCAL_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
+                NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
+            }
+
+            {
+                ntsa::SendContext sendContext;
+                ntsa::SendOptions sendOptions;
+
+                sendOptions.setEndpoint(serverEndpoint);
+
+                char storage = 'X';
+
+                error = ntsu::SocketUtil::send(
+                    &sendContext,
+                    ntsa::Data(ntsa::ConstBuffer(&storage, 1)),
+                    sendOptions,
+                    socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
+                NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
+            }
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(!error);
+#endif
+            }
+
+            error = ntsu::SocketUtil::unlink(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::unlink(server);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(server);
+            NTSCFG_TEST_ASSERT(!error);
+        }
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+#endif
 }
 
-NTSCFG_TEST_CASE(15)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
 {
     // Concern: Binding stream sockets.
     // Plan:
 
-    ntscfg::TestAllocator ta;
+    ntsa::Error error;
+
+    const bool k_REUSE_ADDRESS = false;
+
+    // Test IPv4.
+
     {
-        ntsa::Error error;
-
-        const bool k_REUSE_ADDRESS = false;
-
-        // Test IPv4.
+        // Concern 1: The source endpoint of a socket initially after
+        // creation is "0.0.0.0:0".
 
         {
-            // Concern 1: The source endpoint of a socket initially after
-            // creation is "0.0.0.0:0".
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_TCP_IPV4_STREAM);
+            NTSCFG_TEST_ASSERT(!error);
 
             {
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_TCP_IPV4_STREAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_ASSERT(!error);
 
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
 
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
-                    NTSCFG_TEST_ASSERT(error);
+                NTSCFG_TEST_ASSERT(error);
 #endif
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
             }
 
-            // Concern 2: The socket may be bound after creation to
-            // "0.0.0.0:0", and the socket's resulting source endpoint is the
-            // host "0.0.0.0" with a non-zero port.
-
-            {
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_TCP_IPV4_STREAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv4Address::any(), 0),
-                        k_REUSE_ADDRESS,
-                        socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(error);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 3: After the socket is bound to "0.0.0.0:0", the
-            // socket's resulting source endpoint is the host "0.0.0.0" with
-            // a non-zero port. The socket may *not* be subsequently bound to
-            // an IPv4 address that matches one of IPv4 addresses assigned to
-            // one of the network interfaces even if the port matches the
-            // existing port to which the socket is bound.
-
-            {
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_TCP_IPV4_STREAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv4Address::any(), 0),
-                        k_REUSE_ADDRESS,
-                        socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
-                }
-
-                {
-                    ntsa::Endpoint sourceEndpoint1;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint1,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint1.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint1.ip().host().isV4());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint1.ip().host().v4().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint1.ip().port() != 0);
-
-                    ntsa::Endpoint sourceEndpoint2;
-                    {
-                        ntsa::Adapter adapter;
-                        bool found = ntsu::AdapterUtil::discoverAdapter(
-                            &adapter,
-                            ntsa::IpAddressType::e_V4,
-                            false);
-                        NTSCFG_TEST_TRUE(found);
-                        NTSCFG_TEST_FALSE(adapter.ipv4Address().isNull());
-
-                        sourceEndpoint2 =
-                            ntsa::Endpoint(adapter.ipv4Address().value(),
-                                           sourceEndpoint1.ip().port());
-                    }
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint2,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(error);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 4: The socket may be bound after creation to an IPv4
-            // address that matches one of IPv4 addresses assigned to one of
-            // the network interfaces and port zero, and the resulting socket's
-            // source endpoint is that IPv4 address with a port chosen by the
-            // operating system.
-
-            {
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_TCP_IPV4_STREAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint explicitSourceEndpoint;
-                    {
-                        ntsa::Adapter adapter;
-                        bool found = ntsu::AdapterUtil::discoverAdapter(
-                            &adapter,
-                            ntsa::IpAddressType::e_V4,
-                            false);
-                        NTSCFG_TEST_TRUE(found);
-                        NTSCFG_TEST_FALSE(adapter.ipv4Address().isNull());
-
-                        explicitSourceEndpoint =
-                            ntsa::Endpoint(adapter.ipv4Address().value(), 0);
-                    }
-
-                    error = ntsu::SocketUtil::bind(explicitSourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_EQ(sourceEndpoint.ip().host(),
-                                   explicitSourceEndpoint.ip().host());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 5: A stream socket is implicitly bound to an explicit
-            // source endpoint as a result of calling 'connect', and may not
-            // explicitly rebind afterwards.
-
-            {
-                ntsa::Handle server;
-                error = ntsu::SocketUtil::create(
-                    &server,
-                    ntsa::Transport::e_TCP_IPV4_STREAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                ntsa::Endpoint serverEndpoint;
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
-                        k_REUSE_ADDRESS,
-                        server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::sourceEndpoint(&serverEndpoint,
-                                                             server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(serverEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_FALSE(serverEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
-
-                    error = ntsu::SocketUtil::listen(100, server);
-                    NTSCFG_TEST_ASSERT(!error);
-                }
-
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-#if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-                    NTSCFG_TEST_ASSERT(error);
-#endif
-                }
-
-                {
-                    error = ntsu::SocketUtil::connect(serverEndpoint, socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
-
-                    ntsa::Endpoint remoteEndpoint;
-                    error = ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_EQ(remoteEndpoint, serverEndpoint);
-                }
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(error);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(server);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 5a: A stream socket may be explicitly bound to "any"
-            // address and "any" port, which results in the source endpoint
-            // being the "any" address and a non-zero port. The socket may then
-            // be implicitly rebound by the operating system as a result of
-            // calling 'connect', so that the resulting source endpoint is now
-            // an explicit IP address but still having the same port (i.e., the
-            // address changes from "any" to a specific IP address assigned to
-            // a network interface, but the port does not change), but the
-            // stream socket may not explicitly rebound afterwards.
-
-            {
-                ntsa::Handle server;
-                error = ntsu::SocketUtil::create(
-                    &server,
-                    ntsa::Transport::e_TCP_IPV4_STREAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                ntsa::Endpoint serverEndpoint;
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
-                        k_REUSE_ADDRESS,
-                        server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::sourceEndpoint(&serverEndpoint,
-                                                             server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(serverEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_FALSE(serverEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
-
-                    error = ntsu::SocketUtil::listen(100, server);
-                    NTSCFG_TEST_ASSERT(!error);
-                }
-
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_TCP_IPV4_STREAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-#if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-                    NTSCFG_TEST_ASSERT(error);
-#endif
-                }
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv4Address::any(), 0),
-                        k_REUSE_ADDRESS,
-                        socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
-                }
-
-                {
-                    error = ntsu::SocketUtil::connect(serverEndpoint, socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
-
-                    ntsa::Endpoint remoteEndpoint;
-                    error = ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_EQ(remoteEndpoint, serverEndpoint);
-                }
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(error);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(server);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 6: A stream socket is implicitly bound to an explicit
-            // source endpoint as a result of calling 'listen', and may not
-            // explicitly rebind afterwards. [On Windows this is an error.]
-
-            {
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_TCP_IPV4_STREAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-#if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-                    NTSCFG_TEST_ASSERT(error);
-#endif
-                }
-
-                {
-                    error = ntsu::SocketUtil::listen(100, socket);
-#if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-                    NTSCFG_TEST_ASSERT(error);
-#endif
-                }
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-#if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(error);
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-                    NTSCFG_TEST_ASSERT(error);
-#endif
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-            }
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
         }
 
-        // Test IPv6.
+        // Concern 2: The socket may be bound after creation to
+        // "0.0.0.0:0", and the socket's resulting source endpoint is the
+        // host "0.0.0.0" with a non-zero port.
 
-        if (ntsu::AdapterUtil::supportsIpv6()) {
-            // Concern 1: The source endpoint of a socket initially after
-            // creation is "[:0]:0".
-
-            {
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_TCP_IPV6_STREAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-#if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-                    NTSCFG_TEST_ASSERT(error);
-#endif
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 2: The socket may be bound after creation to
-            // "[:0]:0", and the socket's resulting source endpoint is the
-            // host ":0" with a non-zero port.
+        {
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_TCP_IPV4_STREAM);
+            NTSCFG_TEST_ASSERT(!error);
 
             {
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_TCP_IPV6_STREAM);
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv4Address::any(), 0),
+                    k_REUSE_ADDRESS,
+                    socket);
                 NTSCFG_TEST_ASSERT(!error);
 
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv6Address::any(), 0),
-                        k_REUSE_ADDRESS,
-                        socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(error);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
                 NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(error);
             }
 
-            // Concern 3: After the socket is bound to "[:0]:0", the
-            // socket's resulting source endpoint is the host ":0" with
-            // a non-zero port. The socket may *not* be subsequently bound to
-            // an IPv6 address that matches one of IPv6 addresses assigned to
-            // one of the network interfaces even if the port matches the
-            // existing port to which the socket is bound.
-
-            {
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_TCP_IPV6_STREAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv6Address::any(), 0),
-                        k_REUSE_ADDRESS,
-                        socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
-                }
-
-                {
-                    ntsa::Endpoint sourceEndpoint1;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint1,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint1.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint1.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint1.ip().host().v6().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint1.ip().port() != 0);
-
-                    ntsa::Endpoint sourceEndpoint2;
-                    {
-                        ntsa::Adapter adapter;
-                        bool found = ntsu::AdapterUtil::discoverAdapter(
-                            &adapter,
-                            ntsa::IpAddressType::e_V6,
-                            false);
-                        NTSCFG_TEST_TRUE(found);
-                        NTSCFG_TEST_FALSE(adapter.ipv6Address().isNull());
-
-                        sourceEndpoint2 =
-                            ntsa::Endpoint(adapter.ipv6Address().value(),
-                                           sourceEndpoint1.ip().port());
-                    }
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint2,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(error);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 4: The socket may be bound after creation to an IPv6
-            // address that matches one of IPv6 addresses assigned to one of
-            // the network interfaces and port zero, and the resulting socket's
-            // source endpoint is that IPv6 address with a port chosen by the
-            // operating system.
-
-            {
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_TCP_IPV6_STREAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint explicitSourceEndpoint;
-                    {
-                        ntsa::Adapter adapter;
-                        bool found = ntsu::AdapterUtil::discoverAdapter(
-                            &adapter,
-                            ntsa::IpAddressType::e_V6,
-                            false);
-                        NTSCFG_TEST_TRUE(found);
-                        NTSCFG_TEST_FALSE(adapter.ipv6Address().isNull());
-
-                        explicitSourceEndpoint =
-                            ntsa::Endpoint(adapter.ipv6Address().value(), 0);
-                    }
-
-                    error = ntsu::SocketUtil::bind(explicitSourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_EQ(sourceEndpoint.ip().host(),
-                                   explicitSourceEndpoint.ip().host());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 5: A stream socket is implicitly bound to an explicit
-            // source endpoint as a result of calling 'connect', and may not
-            // explicitly rebind afterwards.
-
-            {
-                ntsa::Handle server;
-                error = ntsu::SocketUtil::create(
-                    &server,
-                    ntsa::Transport::e_TCP_IPV6_STREAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                ntsa::Endpoint serverEndpoint;
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
-                        k_REUSE_ADDRESS,
-                        server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::sourceEndpoint(&serverEndpoint,
-                                                             server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(serverEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_FALSE(serverEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
-
-                    error = ntsu::SocketUtil::listen(100, server);
-                    NTSCFG_TEST_ASSERT(!error);
-                }
-
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-#if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-                    NTSCFG_TEST_ASSERT(error);
-#endif
-                }
-
-                {
-                    error = ntsu::SocketUtil::connect(serverEndpoint, socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
-
-                    ntsa::Endpoint remoteEndpoint;
-                    error = ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(remoteEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(remoteEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(serverEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(
-                        remoteEndpoint.ip().host().v6().equalsScopeless(
-                            serverEndpoint.ip().host().v6()));
-                    NTSCFG_TEST_TRUE(remoteEndpoint.ip().port() ==
-                                     serverEndpoint.ip().port());
-                }
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(error);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(server);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 5a: A stream socket may be explicitly bound to "any"
-            // address and "any" port, which results in the source endpoint
-            // being the "any" address and a non-zero port. The socket may then
-            // be implicitly rebound by the operating system as a result of
-            // calling 'connect', so that the resulting source endpoint is now
-            // an explicit IP address but still having the same port (i.e., the
-            // address changes from "any" to a specific IP address assigned to
-            // a network interface, but the port does not change), but the
-            // stream socket may not explicitly rebound afterwards.
-
-            {
-                ntsa::Handle server;
-                error = ntsu::SocketUtil::create(
-                    &server,
-                    ntsa::Transport::e_TCP_IPV6_STREAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                ntsa::Endpoint serverEndpoint;
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
-                        k_REUSE_ADDRESS,
-                        server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::sourceEndpoint(&serverEndpoint,
-                                                             server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(serverEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_FALSE(serverEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
-
-                    error = ntsu::SocketUtil::listen(100, server);
-                    NTSCFG_TEST_ASSERT(!error);
-                }
-
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_TCP_IPV6_STREAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-#if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-                    NTSCFG_TEST_ASSERT(error);
-#endif
-                }
-
-                {
-                    error = ntsu::SocketUtil::bind(
-                        ntsa::Endpoint(ntsa::Ipv6Address::any(), 0),
-                        k_REUSE_ADDRESS,
-                        socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
-                }
-
-                {
-                    error = ntsu::SocketUtil::connect(serverEndpoint, socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
-
-                    ntsa::Endpoint remoteEndpoint;
-                    error = ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(remoteEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(remoteEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(serverEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(
-                        remoteEndpoint.ip().host().v6().equalsScopeless(
-                            serverEndpoint.ip().host().v6()));
-                    NTSCFG_TEST_TRUE(remoteEndpoint.ip().port() ==
-                                     serverEndpoint.ip().port());
-                }
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(error);
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(server);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 6: A stream socket is implicitly bound to an explicit
-            // source endpoint as a result of calling 'listen', and may not
-            // explicitly rebind afterwards. [On Windows this is an error.]
-
-            {
-                ntsa::Handle socket;
-                error = ntsu::SocketUtil::create(
-                    &socket,
-                    ntsa::Transport::e_TCP_IPV6_STREAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-#if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-                    NTSCFG_TEST_ASSERT(error);
-#endif
-                }
-
-                {
-                    error = ntsu::SocketUtil::listen(100, socket);
-#if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
-                    NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-                    NTSCFG_TEST_ASSERT(error);
-#endif
-                }
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-#if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(error);
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-                    NTSCFG_TEST_ASSERT(error);
-#endif
-                }
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-            }
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
         }
 
-        // Test Unix domain.
+        // Concern 3: After the socket is bound to "0.0.0.0:0", the
+        // socket's resulting source endpoint is the host "0.0.0.0" with
+        // a non-zero port. The socket may *not* be subsequently bound to
+        // an IPv4 address that matches one of IPv4 addresses assigned to
+        // one of the network interfaces even if the port matches the
+        // existing port to which the socket is bound.
+
+        {
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_TCP_IPV4_STREAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv4Address::any(), 0),
+                    k_REUSE_ADDRESS,
+                    socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
+            }
+
+            {
+                ntsa::Endpoint sourceEndpoint1;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint1, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint1.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint1.ip().host().isV4());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint1.ip().host().v4().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint1.ip().port() != 0);
+
+                ntsa::Endpoint sourceEndpoint2;
+                {
+                    ntsa::Adapter adapter;
+                    bool          found = ntsu::AdapterUtil::discoverAdapter(
+                        &adapter,
+                        ntsa::IpAddressType::e_V4,
+                        false);
+                    NTSCFG_TEST_TRUE(found);
+                    NTSCFG_TEST_FALSE(adapter.ipv4Address().isNull());
+
+                    sourceEndpoint2 =
+                        ntsa::Endpoint(adapter.ipv4Address().value(),
+                                       sourceEndpoint1.ip().port());
+                }
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint2,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(error);
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 4: The socket may be bound after creation to an IPv4
+        // address that matches one of IPv4 addresses assigned to one of
+        // the network interfaces and port zero, and the resulting socket's
+        // source endpoint is that IPv4 address with a port chosen by the
+        // operating system.
+
+        {
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_TCP_IPV4_STREAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint explicitSourceEndpoint;
+                {
+                    ntsa::Adapter adapter;
+                    bool          found = ntsu::AdapterUtil::discoverAdapter(
+                        &adapter,
+                        ntsa::IpAddressType::e_V4,
+                        false);
+                    NTSCFG_TEST_TRUE(found);
+                    NTSCFG_TEST_FALSE(adapter.ipv4Address().isNull());
+
+                    explicitSourceEndpoint =
+                        ntsa::Endpoint(adapter.ipv4Address().value(), 0);
+                }
+
+                error = ntsu::SocketUtil::bind(explicitSourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_EQ(sourceEndpoint.ip().host(),
+                               explicitSourceEndpoint.ip().host());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 5: A stream socket is implicitly bound to an explicit
+        // source endpoint as a result of calling 'connect', and may not
+        // explicitly rebind afterwards.
+
+        {
+            ntsa::Handle server;
+            error =
+                ntsu::SocketUtil::create(&server,
+                                         ntsa::Transport::e_TCP_IPV4_STREAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            ntsa::Endpoint serverEndpoint;
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
+                    k_REUSE_ADDRESS,
+                    server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(serverEndpoint.isIp());
+                NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_FALSE(serverEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
+
+                error = ntsu::SocketUtil::listen(100, server);
+                NTSCFG_TEST_ASSERT(!error);
+            }
+
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+                NTSCFG_TEST_ASSERT(error);
+#endif
+            }
+
+            {
+                error = ntsu::SocketUtil::connect(serverEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
+
+                ntsa::Endpoint remoteEndpoint;
+                error =
+                    ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_EQ(remoteEndpoint, serverEndpoint);
+            }
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(error);
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(server);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 5a: A stream socket may be explicitly bound to "any"
+        // address and "any" port, which results in the source endpoint
+        // being the "any" address and a non-zero port. The socket may then
+        // be implicitly rebound by the operating system as a result of
+        // calling 'connect', so that the resulting source endpoint is now
+        // an explicit IP address but still having the same port (i.e., the
+        // address changes from "any" to a specific IP address assigned to
+        // a network interface, but the port does not change), but the
+        // stream socket may not explicitly rebound afterwards.
+
+        {
+            ntsa::Handle server;
+            error =
+                ntsu::SocketUtil::create(&server,
+                                         ntsa::Transport::e_TCP_IPV4_STREAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            ntsa::Endpoint serverEndpoint;
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
+                    k_REUSE_ADDRESS,
+                    server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(serverEndpoint.isIp());
+                NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_FALSE(serverEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
+
+                error = ntsu::SocketUtil::listen(100, server);
+                NTSCFG_TEST_ASSERT(!error);
+            }
+
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_TCP_IPV4_STREAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+                NTSCFG_TEST_ASSERT(error);
+#endif
+            }
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv4Address::any(), 0),
+                    k_REUSE_ADDRESS,
+                    socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
+            }
+
+            {
+                error = ntsu::SocketUtil::connect(serverEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
+
+                ntsa::Endpoint remoteEndpoint;
+                error =
+                    ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_EQ(remoteEndpoint, serverEndpoint);
+            }
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(error);
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(server);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 6: A stream socket is implicitly bound to an explicit
+        // source endpoint as a result of calling 'listen', and may not
+        // explicitly rebind afterwards. [On Windows this is an error.]
+
+        {
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_TCP_IPV4_STREAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+                NTSCFG_TEST_ASSERT(error);
+#endif
+            }
+
+            {
+                error = ntsu::SocketUtil::listen(100, socket);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v4().isAny());
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+                NTSCFG_TEST_ASSERT(error);
+#endif
+            }
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+                NTSCFG_TEST_ASSERT(!error);
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(error);
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+                NTSCFG_TEST_ASSERT(error);
+#endif
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+    }
+
+    // Test IPv6.
+
+    if (ntsu::AdapterUtil::supportsIpv6()) {
+        // Concern 1: The source endpoint of a socket initially after
+        // creation is "[:0]:0".
+
+        {
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_TCP_IPV6_STREAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+                NTSCFG_TEST_ASSERT(error);
+#endif
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 2: The socket may be bound after creation to
+        // "[:0]:0", and the socket's resulting source endpoint is the
+        // host ":0" with a non-zero port.
+
+        {
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_TCP_IPV6_STREAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv6Address::any(), 0),
+                    k_REUSE_ADDRESS,
+                    socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(error);
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 3: After the socket is bound to "[:0]:0", the
+        // socket's resulting source endpoint is the host ":0" with
+        // a non-zero port. The socket may *not* be subsequently bound to
+        // an IPv6 address that matches one of IPv6 addresses assigned to
+        // one of the network interfaces even if the port matches the
+        // existing port to which the socket is bound.
+
+        {
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_TCP_IPV6_STREAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv6Address::any(), 0),
+                    k_REUSE_ADDRESS,
+                    socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
+            }
+
+            {
+                ntsa::Endpoint sourceEndpoint1;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint1, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint1.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint1.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint1.ip().host().v6().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint1.ip().port() != 0);
+
+                ntsa::Endpoint sourceEndpoint2;
+                {
+                    ntsa::Adapter adapter;
+                    bool          found = ntsu::AdapterUtil::discoverAdapter(
+                        &adapter,
+                        ntsa::IpAddressType::e_V6,
+                        false);
+                    NTSCFG_TEST_TRUE(found);
+                    NTSCFG_TEST_FALSE(adapter.ipv6Address().isNull());
+
+                    sourceEndpoint2 =
+                        ntsa::Endpoint(adapter.ipv6Address().value(),
+                                       sourceEndpoint1.ip().port());
+                }
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint2,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(error);
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 4: The socket may be bound after creation to an IPv6
+        // address that matches one of IPv6 addresses assigned to one of
+        // the network interfaces and port zero, and the resulting socket's
+        // source endpoint is that IPv6 address with a port chosen by the
+        // operating system.
+
+        {
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_TCP_IPV6_STREAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint explicitSourceEndpoint;
+                {
+                    ntsa::Adapter adapter;
+                    bool          found = ntsu::AdapterUtil::discoverAdapter(
+                        &adapter,
+                        ntsa::IpAddressType::e_V6,
+                        false);
+                    NTSCFG_TEST_TRUE(found);
+                    NTSCFG_TEST_FALSE(adapter.ipv6Address().isNull());
+
+                    explicitSourceEndpoint =
+                        ntsa::Endpoint(adapter.ipv6Address().value(), 0);
+                }
+
+                error = ntsu::SocketUtil::bind(explicitSourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_EQ(sourceEndpoint.ip().host(),
+                               explicitSourceEndpoint.ip().host());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 5: A stream socket is implicitly bound to an explicit
+        // source endpoint as a result of calling 'connect', and may not
+        // explicitly rebind afterwards.
+
+        {
+            ntsa::Handle server;
+            error =
+                ntsu::SocketUtil::create(&server,
+                                         ntsa::Transport::e_TCP_IPV6_STREAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            ntsa::Endpoint serverEndpoint;
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
+                    k_REUSE_ADDRESS,
+                    server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(serverEndpoint.isIp());
+                NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_FALSE(serverEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
+
+                error = ntsu::SocketUtil::listen(100, server);
+                NTSCFG_TEST_ASSERT(!error);
+            }
+
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_UDP_IPV6_DATAGRAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+                NTSCFG_TEST_ASSERT(error);
+#endif
+            }
+
+            {
+                error = ntsu::SocketUtil::connect(serverEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
+
+                ntsa::Endpoint remoteEndpoint;
+                error =
+                    ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(remoteEndpoint.isIp());
+                NTSCFG_TEST_TRUE(remoteEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(serverEndpoint.isIp());
+                NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(
+                    remoteEndpoint.ip().host().v6().equalsScopeless(
+                        serverEndpoint.ip().host().v6()));
+                NTSCFG_TEST_TRUE(remoteEndpoint.ip().port() ==
+                                 serverEndpoint.ip().port());
+            }
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(error);
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(server);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 5a: A stream socket may be explicitly bound to "any"
+        // address and "any" port, which results in the source endpoint
+        // being the "any" address and a non-zero port. The socket may then
+        // be implicitly rebound by the operating system as a result of
+        // calling 'connect', so that the resulting source endpoint is now
+        // an explicit IP address but still having the same port (i.e., the
+        // address changes from "any" to a specific IP address assigned to
+        // a network interface, but the port does not change), but the
+        // stream socket may not explicitly rebound afterwards.
+
+        {
+            ntsa::Handle server;
+            error =
+                ntsu::SocketUtil::create(&server,
+                                         ntsa::Transport::e_TCP_IPV6_STREAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            ntsa::Endpoint serverEndpoint;
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
+                    k_REUSE_ADDRESS,
+                    server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(serverEndpoint.isIp());
+                NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_FALSE(serverEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
+
+                error = ntsu::SocketUtil::listen(100, server);
+                NTSCFG_TEST_ASSERT(!error);
+            }
+
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_TCP_IPV6_STREAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+                NTSCFG_TEST_ASSERT(error);
+#endif
+            }
+
+            {
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::Ipv6Address::any(), 0),
+                    k_REUSE_ADDRESS,
+                    socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() != 0);
+            }
+
+            {
+                error = ntsu::SocketUtil::connect(serverEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
+
+                ntsa::Endpoint remoteEndpoint;
+                error =
+                    ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(remoteEndpoint.isIp());
+                NTSCFG_TEST_TRUE(remoteEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(serverEndpoint.isIp());
+                NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(
+                    remoteEndpoint.ip().host().v6().equalsScopeless(
+                        serverEndpoint.ip().host().v6()));
+                NTSCFG_TEST_TRUE(remoteEndpoint.ip().port() ==
+                                 serverEndpoint.ip().port());
+            }
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(error);
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(server);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 6: A stream socket is implicitly bound to an explicit
+        // source endpoint as a result of calling 'listen', and may not
+        // explicitly rebind afterwards. [On Windows this is an error.]
+
+        {
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_TCP_IPV6_STREAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().port() == 0);
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+                NTSCFG_TEST_ASSERT(error);
+#endif
+            }
+
+            {
+                error = ntsu::SocketUtil::listen(100, socket);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().v6().isAny());
+                NTSCFG_TEST_FALSE(sourceEndpoint.ip().port() == 0);
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+                NTSCFG_TEST_ASSERT(error);
+#endif
+            }
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+#if defined(BSLS_PLATFORM_OS_UNIX)
+                NTSCFG_TEST_ASSERT(!error);
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(error);
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+                NTSCFG_TEST_ASSERT(error);
+#endif
+            }
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+    }
+
+    // Test Unix domain.
 
 #if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+    {
+        // Concern 1: The source endpoint of a socket initially after
+        // creation is the unnamed local name, except on Windows, which
+        // specifically describes its non-standard behavior where a
+        // Unix domain socket is not implicitly assigned the unnamed
+        // address.
+
         {
-            // Concern 1: The source endpoint of a socket initially after
-            // creation is the unnamed local name, except on Windows, which
-            // specifically describes its non-standard behavior where a
-            // Unix domain socket is not implicitly assigned the unnamed
-            // address.
+            ntsa::Handle socket;
+            error = ntsu::SocketUtil::create(&socket,
+                                             ntsa::Transport::e_LOCAL_STREAM);
+            NTSCFG_TEST_ASSERT(!error);
 
             {
-                ntsa::Handle socket;
+                ntsa::Endpoint sourceEndpoint;
                 error =
-                    ntsu::SocketUtil::create(&socket,
-                                             ntsa::Transport::e_LOCAL_STREAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
+                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
+                NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
 #else
-                    NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isUndefined());
+                NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+                NTSCFG_TEST_TRUE(sourceEndpoint.isUndefined());
 #endif
-                }
-
-                error = ntsu::SocketUtil::unlink(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
             }
 
-            // Concern 2: The socket may be bound after creation to an unnamed
-            // name, and the socket's resulting source endpoint is *not* the
-            // unnamed name, but an explicit name chosen by the operating
-            // system (on Linux, in the abstract namespace.) [This
-            // functionality is only available on Linux.]
+            error = ntsu::SocketUtil::unlink(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 2: The socket may be bound after creation to an unnamed
+        // name, and the socket's resulting source endpoint is *not* the
+        // unnamed name, but an explicit name chosen by the operating
+        // system (on Linux, in the abstract namespace.) [This
+        // functionality is only available on Linux.]
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
-            {
-                ntsa::Handle socket;
-                error =
-                    ntsu::SocketUtil::create(&socket,
+        {
+            ntsa::Handle socket;
+            error = ntsu::SocketUtil::create(&socket,
                                              ntsa::Transport::e_LOCAL_STREAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint unnamedSourceEndpoint =
+                    ntsa::Endpoint(ntsa::LocalName());
+                NTSCFG_TEST_ASSERT(unnamedSourceEndpoint.isLocal());
+                NTSCFG_TEST_ASSERT(unnamedSourceEndpoint.local().isUnnamed());
+
+                error = ntsu::SocketUtil::bind(unnamedSourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
                 NTSCFG_TEST_ASSERT(!error);
 
-                {
-                    ntsa::Endpoint unnamedSourceEndpoint =
-                        ntsa::Endpoint(ntsa::LocalName());
-                    NTSCFG_TEST_ASSERT(unnamedSourceEndpoint.isLocal());
-                    NTSCFG_TEST_ASSERT(
-                        unnamedSourceEndpoint.local().isUnnamed());
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
 
-                    error = ntsu::SocketUtil::bind(unnamedSourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
-                    NTSCFG_TEST_NE(sourceEndpoint, unnamedSourceEndpoint);
-                    NTSCFG_TEST_GT(sourceEndpoint.local().value().size(), 0);
+                NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
+                NTSCFG_TEST_NE(sourceEndpoint, unnamedSourceEndpoint);
+                NTSCFG_TEST_GT(sourceEndpoint.local().value().size(), 0);
 #if defined(BSLS_PLATFORM_OS_LINUX)
-                    NTSCFG_TEST_TRUE(sourceEndpoint.local().isAbstract());
+                NTSCFG_TEST_TRUE(sourceEndpoint.local().isAbstract());
 #endif
-                }
-
-                error = ntsu::SocketUtil::unlink(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-#endif
-
-            // Concern 3: The socket may be bound after creation to an explicit
-            // name, and the socket's resulting source endpoint is the explicit
-            // name.
-
-            {
-                ntsa::Handle socket;
-                error =
-                    ntsu::SocketUtil::create(&socket,
-                                             ntsa::Transport::e_LOCAL_STREAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::LocalName localName;
-                    error = ntsa::LocalName::generateUnique(&localName);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint explicitSourceEndpoint =
-                        ntsa::Endpoint(localName);
-
-                    error = ntsu::SocketUtil::bind(explicitSourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
-                    NTSCFG_TEST_EQ(sourceEndpoint, explicitSourceEndpoint);
-                }
-
-                error = ntsu::SocketUtil::unlink(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
             }
 
-            // Concern 4: A stream socket is implicitly bound to an unnamed
-            // source endpoint as a result of calling 'connect', and *may*, on
-            // Linux, explicitly rebind afterwards.
+            error = ntsu::SocketUtil::unlink(socket);
+            NTSCFG_TEST_ASSERT(!error);
 
-            {
-                ntsa::Handle server;
-                error =
-                    ntsu::SocketUtil::create(&server,
-                                             ntsa::Transport::e_LOCAL_STREAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                ntsa::Endpoint serverEndpoint;
-
-                {
-                    ntsa::LocalName localName;
-                    error = ntsa::LocalName::generateUnique(&localName);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint explicitServerEndpoint =
-                        ntsa::Endpoint(localName);
-
-                    error = ntsu::SocketUtil::bind(explicitServerEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::sourceEndpoint(&serverEndpoint,
-                                                             server);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(serverEndpoint.isLocal());
-                    NTSCFG_TEST_EQ(serverEndpoint, explicitServerEndpoint);
-
-                    error = ntsu::SocketUtil::listen(100, server);
-                    NTSCFG_TEST_ASSERT(!error);
-                }
-
-                ntsa::Handle socket;
-                error =
-                    ntsu::SocketUtil::create(&socket,
-                                             ntsa::Transport::e_LOCAL_STREAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-
-#if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
-#else
-                    NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isUndefined());
-#endif
-                }
-
-                {
-                    error = ntsu::SocketUtil::connect(serverEndpoint, socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
-
-                    ntsa::Endpoint remoteEndpoint;
-                    error = ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    NTSCFG_TEST_EQ(remoteEndpoint, serverEndpoint);
-                }
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-#if defined(BSLS_PLATFORM_OS_LINUX)
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(!error);
-
-                    error = ntsu::SocketUtil::bind(sourceEndpoint,
-                                                   k_REUSE_ADDRESS,
-                                                   socket);
-                    NTSCFG_TEST_ASSERT(!error);
-#endif
-                }
-
-                error = ntsu::SocketUtil::unlink(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::unlink(server);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(server);
-                NTSCFG_TEST_ASSERT(!error);
-            }
-
-            // Concern 5: A stream socket is implicitly bound to an unnamed
-            // source endpoint as a result of calling 'listen', and *may*
-            // explicitly rebind afterwards. [This functionality is only
-            // available on Linux, on all other platforms a stream socket
-            // must be explicitly bound before calling 'listen'.)
-
-            {
-                ntsa::Handle socket;
-                error =
-                    ntsu::SocketUtil::create(&socket,
-                                             ntsa::Transport::e_LOCAL_STREAM);
-                NTSCFG_TEST_ASSERT(!error);
-
-                {
-                    ntsa::Endpoint sourceEndpoint;
-                    error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
-                                                             socket);
-
-#if defined(BSLS_PLATFORM_OS_UNIX)
-                    NTSCFG_TEST_ASSERT(!error);
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
-                    NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
-#else
-                    NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
-                    NTSCFG_TEST_TRUE(sourceEndpoint.isUndefined());
-#endif
-                }
-
-                {
-                    error = ntsu::SocketUtil::listen(100, socket);
-                    NTSCFG_TEST_ASSERT(error);
-                }
-
-                error = ntsu::SocketUtil::unlink(socket);
-                NTSCFG_TEST_ASSERT(!error);
-
-                error = ntsu::SocketUtil::close(socket);
-                NTSCFG_TEST_ASSERT(!error);
-            }
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
         }
 #endif
+
+        // Concern 3: The socket may be bound after creation to an explicit
+        // name, and the socket's resulting source endpoint is the explicit
+        // name.
+
+        {
+            ntsa::Handle socket;
+            error = ntsu::SocketUtil::create(&socket,
+                                             ntsa::Transport::e_LOCAL_STREAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::LocalName localName;
+                error = ntsa::LocalName::generateUnique(&localName);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint explicitSourceEndpoint =
+                    ntsa::Endpoint(localName);
+
+                error = ntsu::SocketUtil::bind(explicitSourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
+                NTSCFG_TEST_EQ(sourceEndpoint, explicitSourceEndpoint);
+            }
+
+            error = ntsu::SocketUtil::unlink(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 4: A stream socket is implicitly bound to an unnamed
+        // source endpoint as a result of calling 'connect', and *may*, on
+        // Linux, explicitly rebind afterwards.
+
+        {
+            ntsa::Handle server;
+            error = ntsu::SocketUtil::create(&server,
+                                             ntsa::Transport::e_LOCAL_STREAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            ntsa::Endpoint serverEndpoint;
+
+            {
+                ntsa::LocalName localName;
+                error = ntsa::LocalName::generateUnique(&localName);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint explicitServerEndpoint =
+                    ntsa::Endpoint(localName);
+
+                error = ntsu::SocketUtil::bind(explicitServerEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(serverEndpoint.isLocal());
+                NTSCFG_TEST_EQ(serverEndpoint, explicitServerEndpoint);
+
+                error = ntsu::SocketUtil::listen(100, server);
+                NTSCFG_TEST_ASSERT(!error);
+            }
+
+            ntsa::Handle socket;
+            error = ntsu::SocketUtil::create(&socket,
+                                             ntsa::Transport::e_LOCAL_STREAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+
+#if defined(BSLS_PLATFORM_OS_UNIX)
+                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
+                NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
+#else
+                NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+                NTSCFG_TEST_TRUE(sourceEndpoint.isUndefined());
+#endif
+            }
+
+            {
+                error = ntsu::SocketUtil::connect(serverEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
+                NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
+
+                ntsa::Endpoint remoteEndpoint;
+                error =
+                    ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                NTSCFG_TEST_EQ(remoteEndpoint, serverEndpoint);
+            }
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(!error);
+
+                error = ntsu::SocketUtil::bind(sourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_ASSERT(!error);
+#endif
+            }
+
+            error = ntsu::SocketUtil::unlink(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::unlink(server);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(server);
+            NTSCFG_TEST_ASSERT(!error);
+        }
+
+        // Concern 5: A stream socket is implicitly bound to an unnamed
+        // source endpoint as a result of calling 'listen', and *may*
+        // explicitly rebind afterwards. [This functionality is only
+        // available on Linux, on all other platforms a stream socket
+        // must be explicitly bound before calling 'listen'.)
+
+        {
+            ntsa::Handle socket;
+            error = ntsu::SocketUtil::create(&socket,
+                                             ntsa::Transport::e_LOCAL_STREAM);
+            NTSCFG_TEST_ASSERT(!error);
+
+            {
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+
+#if defined(BSLS_PLATFORM_OS_UNIX)
+                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
+                NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
+#else
+                NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+                NTSCFG_TEST_TRUE(sourceEndpoint.isUndefined());
+#endif
+            }
+
+            {
+                error = ntsu::SocketUtil::listen(100, socket);
+                NTSCFG_TEST_ASSERT(error);
+            }
+
+            error = ntsu::SocketUtil::unlink(socket);
+            NTSCFG_TEST_ASSERT(!error);
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_ASSERT(!error);
+        }
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+#endif
 }
 
-NTSCFG_TEST_CASE(16)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase16)
 {
     // Concern: Listing system sockets.
 
-    ntscfg::TestAllocator ta;
+    ntsa::Error error;
+
+    ntsa::Handle listener;
+    error = ntsu::SocketUtil::create(&listener,
+                                     ntsa::Transport::e_TCP_IPV4_STREAM);
+    NTSCFG_TEST_ASSERT(!error);
+
+    error = ntsu::SocketUtil::bind(
+        ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
+        true,
+        listener);
+    NTSCFG_TEST_ASSERT(!error);
+
+    ntsa::Endpoint listenerEndpoint;
+    error = ntsu::SocketUtil::sourceEndpoint(&listenerEndpoint, listener);
+    NTSCFG_TEST_ASSERT(!error);
+
+    error = ntsu::SocketUtil::listen(1, listener);
+    NTSCFG_TEST_ASSERT(!error);
+
+    BSLS_LOG_INFO("Listening at %s", listenerEndpoint.text().c_str());
+
     {
-        ntsa::Error error;
+        ntsa::SocketInfoFilter filter;
+        filter.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+        filter.setAll(false);
 
-        ntsa::Handle listener;
-        error = ntsu::SocketUtil::create(&listener,
-                                         ntsa::Transport::e_TCP_IPV4_STREAM);
-        NTSCFG_TEST_ASSERT(!error);
+        bsl::stringstream ss;
+        ntsu::SocketUtil::reportInfo(ss, filter);
 
-        error = ntsu::SocketUtil::bind(
-            ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
-            true,
-            listener);
-        NTSCFG_TEST_ASSERT(!error);
-
-        ntsa::Endpoint listenerEndpoint;
-        error = ntsu::SocketUtil::sourceEndpoint(&listenerEndpoint, listener);
-        NTSCFG_TEST_ASSERT(!error);
-
-        error = ntsu::SocketUtil::listen(1, listener);
-        NTSCFG_TEST_ASSERT(!error);
-
-        BSLS_LOG_INFO("Listening at %s", listenerEndpoint.text().c_str());
-
-        {
-            ntsa::SocketInfoFilter filter;
-            filter.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
-            filter.setAll(false);
-
-            bsl::stringstream ss;
-            ntsu::SocketUtil::reportInfo(ss, filter);
-
-            BSLS_LOG_INFO("Dump status:\n%s", ss.str().c_str());
-        }
-
-        error = ntsu::SocketUtil::close(listener);
-        NTSCFG_TEST_ASSERT(!error);
-
-        {
-            ntsa::SocketInfoFilter filter;
-            filter.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
-            filter.setAll(false);
-
-            bsl::stringstream ss;
-            ntsu::SocketUtil::reportInfo(ss, filter);
-
-            BSLS_LOG_INFO("Dump status:\n%s", ss.str().c_str());
-        }
+        BSLS_LOG_INFO("Dump status:\n%s", ss.str().c_str());
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    error = ntsu::SocketUtil::close(listener);
+    NTSCFG_TEST_ASSERT(!error);
+
+    {
+        ntsa::SocketInfoFilter filter;
+        filter.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+        filter.setAll(false);
+
+        bsl::stringstream ss;
+        ntsu::SocketUtil::reportInfo(ss, filter);
+
+        BSLS_LOG_INFO("Dump status:\n%s", ss.str().c_str());
+    }
 }
 
-NTSCFG_TEST_CASE(17)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase17)
 {
     // Concern: Create stream socket pairs.
     //
@@ -7255,7 +7474,7 @@ NTSCFG_TEST_CASE(17)
     }
 }
 
-NTSCFG_TEST_CASE(18)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase18)
 {
     // Concern: Create datagram socket pairs.
     //
@@ -7598,97 +7817,87 @@ NTSCFG_TEST_CASE(18)
     }
 }
 
-NTSCFG_TEST_CASE(19)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase19)
 {
     // Concern: Datagram socket transmission with control data: single buffer.
     // Plan:
 
 #if defined(BSLS_PLATFORM_UNIX)
-    ntscfg::TestAllocator ta;
-    {
-        test::executeDatagramSocketTest(
-            &test::testDatagramSocketTransmissionSingleBufferWithControlMsg);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    SocketUtilTest::executeDatagramSocketTest(
+        &SocketUtilTest::
+            testDatagramSocketTransmissionSingleBufferWithControlMsg);
+
 #endif
 }
 
-NTSCFG_TEST_CASE(20)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase20)
 {
     // Concern: Datagram socket transmission with control data: blob.
     // Plan:
 
 #if defined(BSLS_PLATFORM_UNIX)
-    ntscfg::TestAllocator ta;
-    {
-        test::executeDatagramSocketTest(
-            &test::testDatagramSocketTransmissionBlobWithControlMsg);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    SocketUtilTest::executeDatagramSocketTest(
+        &SocketUtilTest::testDatagramSocketTransmissionBlobWithControlMsg);
+
 #endif
 }
 
-NTSCFG_TEST_CASE(21)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase21)
 {
     // Concern: Datagram socket transmission with control data: dropped.
     // Plan:
 
 #if defined(BSLS_PLATFORM_UNIX)
-    ntscfg::TestAllocator ta;
-    {
-        test::executeDatagramSocketTest(
-            &test::testDatagramSocketTransmissionWithControlMsgDropped);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    SocketUtilTest::executeDatagramSocketTest(
+        &SocketUtilTest::testDatagramSocketTransmissionWithControlMsgDropped);
+
 #endif
 }
 
-NTSCFG_TEST_CASE(22)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase22)
 {
     // Concern: Stream socket transmission with control data: single buffer.
     // Plan:
 
 #if defined(BSLS_PLATFORM_UNIX)
-    ntscfg::TestAllocator ta;
-    {
-        test::executeStreamSocketTest(
-            &test::testStreamSocketTransmissionSingleBufferWithControlMsg);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    SocketUtilTest::executeStreamSocketTest(
+        &SocketUtilTest::
+            testStreamSocketTransmissionSingleBufferWithControlMsg);
+
 #endif
 }
 
-NTSCFG_TEST_CASE(23)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase23)
 {
     // Concern: Stream socket transmission with control data: blob.
     // Plan:
 
 #if defined(BSLS_PLATFORM_UNIX)
-    ntscfg::TestAllocator ta;
-    {
-        test::executeStreamSocketTest(
-            &test::testStreamSocketTransmissionBlobWithControlMsg);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    SocketUtilTest::executeStreamSocketTest(
+        &SocketUtilTest::testStreamSocketTransmissionBlobWithControlMsg);
+
 #endif
 }
 
-NTSCFG_TEST_CASE(24)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase24)
 {
     // Concern: Stream socket transmission with control data: dropped
     // Plan:
 
 #if defined(BSLS_PLATFORM_UNIX)
-    ntscfg::TestAllocator ta;
-    {
-        test::executeStreamSocketTest(
-            &test::testStreamSocketTransmissionWithControlMsgDropped);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    SocketUtilTest::executeStreamSocketTest(
+        &SocketUtilTest::testStreamSocketTransmissionWithControlMsgDropped);
+
 #endif
 }
 
-NTSCFG_TEST_CASE(25)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase25)
 {
     // Concern: validate that an incoming software timestamp and a file handle
     // can be simultaneously retrieved from one control message
@@ -7800,7 +8009,7 @@ NTSCFG_TEST_CASE(25)
     NTSCFG_TEST_ASSERT(!error);
 }
 
-NTSCFG_TEST_CASE(26)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase26)
 {
     // Concern: ntsu::SocketUtil::isSocket correctly indicates true if a
     // file descriptor is an alias for a socket, and false, after the file
@@ -7835,7 +8044,7 @@ NTSCFG_TEST_CASE(26)
     }
 }
 
-NTSCFG_TEST_CASE(27)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase27)
 {
     // Concern: Test that Linux MSG_ZEROCOPY mechanism is applied for DATAGRAM
     // sockets
@@ -7884,95 +8093,94 @@ NTSCFG_TEST_CASE(27)
         NTSCFG_TEST_LOG_DEBUG << "Testing " << *transport
                               << NTSCFG_TEST_LOG_END;
 
-        ntscfg::TestAllocator ta;
-        {
-            // Observation: if system MTU is 1500 bytes then maximum payload
-            // size of UDP IPV4 packet for which MSG_ZEROCOPY functionality can
-            // really work is 1472 bytes (because UDP header is 8 bytes and
-            // IPV4 header is 20 bytes).
+        // Observation: if system MTU is 1500 bytes then maximum payload
+        // size of UDP IPV4 packet for which MSG_ZEROCOPY functionality can
+        // really work is 1472 bytes (because UDP header is 8 bytes and
+        // IPV4 header is 20 bytes).
 
-            const int msgSize           = 1472;
-            const int numMessagesToSend = 200;
+        const int msgSize           = 1472;
+        const int numMessagesToSend = 200;
 
-            ntsa::Error  error;
-            ntsa::Handle handle = ntsa::k_INVALID_HANDLE;
+        ntsa::Error  error;
+        ntsa::Handle handle = ntsa::k_INVALID_HANDLE;
 
-            error = ntsu::SocketUtil::create(&handle, *transport);
-            NTSCFG_TEST_ASSERT(!error);
+        error = ntsu::SocketUtil::create(&handle, *transport);
+        NTSCFG_TEST_ASSERT(!error);
 
-            error = ntsu::SocketOptionUtil::setZeroCopy(handle, true);
+        error = ntsu::SocketOptionUtil::setZeroCopy(handle, true);
+        NTSCFG_TEST_OK(error);
+
+        bsl::vector<char> message(msgSize, &ta);
+        for (int i = 0; i < msgSize; ++i) {
+            message[i] = bsl::rand() % 100;
+        }
+        const ntsa::Data data(
+            ntsa::ConstBuffer(message.data(), message.size()));
+
+        ntsa::Endpoint endpoint;
+        if (*transport == ntsa::Transport::e_UDP_IPV4_DATAGRAM) {
+            NTSCFG_TEST_TRUE(endpoint.parse("127.0.0.1:5555"));
+            // NTSCFG_TEST_TRUE(endpoint.parse("108.22.44.23:5555"));
+        }
+        else if (*transport == ntsa::Transport::e_UDP_IPV6_DATAGRAM) {
+            NTSCFG_TEST_TRUE(endpoint.parse("[::1]:5555"));
+            // NTSCFG_TEST_TRUE(endpoint.parse("[fe80::215:5dff:fe8d:6bd1]:5555"));
+        }
+
+        bsl::list<ntsa::ZeroCopy>         feedback(&ta);
+        bsl::unordered_set<bsl::uint32_t> sendIDs(&ta);
+
+        for (int i = 0; i < numMessagesToSend; ++i) {
+            ntsa::SendContext context;
+            ntsa::SendOptions options;
+            options.setEndpoint(endpoint);
+            options.setZeroCopy(true);
+
+            error = ntsu::SocketUtil::send(&context, data, options, handle);
+            if (error == ntsa::Error(ntsa::Error::e_WOULD_BLOCK) ||
+                error == ntsa::Error(ntsa::Error::e_LIMIT))
+            {
+                --i;
+                continue;
+            }
             NTSCFG_TEST_OK(error);
+            sendIDs.insert(i);
 
-            bsl::vector<char> message(msgSize, &ta);
-            for (int i = 0; i < msgSize; ++i) {
-                message[i] = bsl::rand() % 100;
-            }
-            const ntsa::Data data(
-                ntsa::ConstBuffer(message.data(), message.size()));
+            NTSCFG_TEST_ASSERT(context.bytesSendable() == msgSize);
+            NTSCFG_TEST_ASSERT(context.bytesSent() == msgSize);
 
-            ntsa::Endpoint endpoint;
-            if (*transport == ntsa::Transport::e_UDP_IPV4_DATAGRAM) {
-                NTSCFG_TEST_TRUE(endpoint.parse("127.0.0.1:5555"));
-                // NTSCFG_TEST_TRUE(endpoint.parse("108.22.44.23:5555"));
-            }
-            else if (*transport == ntsa::Transport::e_UDP_IPV6_DATAGRAM) {
-                NTSCFG_TEST_TRUE(endpoint.parse("[::1]:5555"));
-                // NTSCFG_TEST_TRUE(endpoint.parse("[fe80::215:5dff:fe8d:6bd1]:5555"));
-            }
+            SocketUtilTest::extractZeroCopyNotifications(&feedback,
+                                                         handle,
+                                                         &ta);
+        }
 
-            bsl::list<ntsa::ZeroCopy>         feedback(&ta);
-            bsl::unordered_set<bsl::uint32_t> sendIDs(&ta);
+        // retrieve data from the socket error queue until all send system
+        // calls are acknowledged by the OS
+        while (!sendIDs.empty()) {
+            SocketUtilTest::extractZeroCopyNotifications(&feedback,
+                                                         handle,
+                                                         &ta);
 
-            for (int i = 0; i < numMessagesToSend; ++i) {
-                ntsa::SendContext context;
-                ntsa::SendOptions options;
-                options.setEndpoint(endpoint);
-                options.setZeroCopy(true);
-
-                error =
-                    ntsu::SocketUtil::send(&context, data, options, handle);
-                if (error == ntsa::Error(ntsa::Error::e_WOULD_BLOCK) ||
-                    error == ntsa::Error(ntsa::Error::e_LIMIT))
-                {
-                    --i;
-                    continue;
+            while (!feedback.empty()) {
+                const ntsa::ZeroCopy& zc = feedback.front();
+                if (zc.from() == zc.thru()) {
+                    NTSCFG_TEST_EQ(sendIDs.erase(zc.from()), 1);
                 }
-                NTSCFG_TEST_OK(error);
-                sendIDs.insert(i);
-
-                NTSCFG_TEST_ASSERT(context.bytesSendable() == msgSize);
-                NTSCFG_TEST_ASSERT(context.bytesSent() == msgSize);
-
-                test::extractZeroCopyNotifications(&feedback, handle, &ta);
-            }
-
-            // retrieve data from the socket error queue until all send system
-            // calls are acknowledged by the OS
-            while (!sendIDs.empty()) {
-                test::extractZeroCopyNotifications(&feedback, handle, &ta);
-
-                while (!feedback.empty()) {
-                    const ntsa::ZeroCopy& zc = feedback.front();
-                    if (zc.from() == zc.thru()) {
-                        NTSCFG_TEST_EQ(sendIDs.erase(zc.from()), 1);
+                else {
+                    for (bsl::uint32_t i = zc.from(); i != (zc.thru() + 1);
+                         ++i)
+                    {
+                        NTSCFG_TEST_EQ(sendIDs.erase(i), 1);
                     }
-                    else {
-                        for (bsl::uint32_t i = zc.from(); i != (zc.thru() + 1);
-                             ++i)
-                        {
-                            NTSCFG_TEST_EQ(sendIDs.erase(i), 1);
-                        }
-                    }
-                    feedback.pop_front();
                 }
+                feedback.pop_front();
             }
         }
-        NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
     }
 #endif
 }
 
-NTSCFG_TEST_CASE(28)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase28)
 {
     // Concern: Test that Linux MSG_ZEROCOPY mechanism is applied for STREAM
     // sockets
@@ -7995,15 +8203,14 @@ NTSCFG_TEST_CASE(28)
             return;
         }
     }
-    ntscfg::TestAllocator ta;
-    {
-        test::executeStreamSocketTest(&test::testStreamSocketMsgZeroCopy);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    SocketUtilTest::executeStreamSocketTest(
+        &SocketUtilTest::testStreamSocketMsgZeroCopy);
+
 #endif
 }
 
-NTSCFG_TEST_CASE(29)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase29)
 {
     // Concern: Test TX timestamping functionality for DATAGRAM sockets
 #if defined(BSLS_PLATFORM_OS_LINUX)
@@ -8019,15 +8226,14 @@ NTSCFG_TEST_CASE(29)
             return;
         }
     }
-    ntscfg::TestAllocator ta;
-    {
-        test::executeDatagramSocketTest(&test::testDatagramSocketTxTimestamps);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    SocketUtilTest::executeDatagramSocketTest(
+        &SocketUtilTest::testDatagramSocketTxTimestamps);
+
 #endif
 }
 
-NTSCFG_TEST_CASE(30)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase30)
 {
     // Concern: Test TX timestamping functionality for STREAM sockets
 #if defined(BSLS_PLATFORM_OS_LINUX)
@@ -8043,15 +8249,14 @@ NTSCFG_TEST_CASE(30)
             return;
         }
     }
-    ntscfg::TestAllocator ta;
-    {
-        test::executeStreamSocketTest(&test::testStreamSocketTxTimestamps);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    SocketUtilTest::executeStreamSocketTest(
+        &SocketUtilTest::testStreamSocketTxTimestamps);
+
 #endif
 }
 
-NTSCFG_TEST_CASE(31)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase31)
 {
     // Concern: Test TX timestamping an MSG_ZEROCOPY functionality for
     // DATAGRAM sockets
@@ -8070,16 +8275,13 @@ NTSCFG_TEST_CASE(31)
         }
     }
 
-    ntscfg::TestAllocator ta;
-    {
-        test::executeDatagramSocketTest(
-            &test::testDatagramSocketTxTimestampsAndZeroCopy);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    SocketUtilTest::executeDatagramSocketTest(
+        &SocketUtilTest::testDatagramSocketTxTimestampsAndZeroCopy);
+
 #endif
 }
 
-NTSCFG_TEST_CASE(32)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase32)
 {
     // Concern: Test TX timestamping an MSG_ZEROCOPY functionality for
     // STREAM sockets
@@ -8096,16 +8298,14 @@ NTSCFG_TEST_CASE(32)
             return;
         }
     }
-    ntscfg::TestAllocator ta;
-    {
-        test::executeStreamSocketTest(
-            &test::testStreamSocketTxTimestampsAndZeroCopy);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    SocketUtilTest::executeStreamSocketTest(
+        &SocketUtilTest::testStreamSocketTxTimestampsAndZeroCopy);
+
 #endif
 }
 
-NTSCFG_TEST_CASE(33)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase33)
 {
     // Concern: test that for stream sockets configured in a blocking mode
     // attempt to read data from the socket error queue does not lead to a
@@ -8113,15 +8313,11 @@ NTSCFG_TEST_CASE(33)
     // in its receive buffer and call to ::recvmsg can return 0,
     // receiveNotifications does not hang in an endless loop.
 
-    ntscfg::TestAllocator ta;
-    {
-        test::executeStreamSocketTest(
-            &test::testStreamSocketReceiveNotifications);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    SocketUtilTest::executeStreamSocketTest(
+        &SocketUtilTest::testStreamSocketReceiveNotifications);
 }
 
-NTSCFG_TEST_CASE(34)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase34)
 {
     // Concern: test that for datagram sockets configured in a blocking mode
     // attempt to read data from the socket error queue does not lead to a
@@ -8129,49 +8325,9 @@ NTSCFG_TEST_CASE(34)
     // in its receive buffer and call to ::recvmsg can return 0,
     // receiveNotifications does not hang in an endless loop.
 
-    ntscfg::TestAllocator ta;
-    {
-        test::executeDatagramSocketTest(
-            &test::testDatagramSocketReceiveNotifications);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    SocketUtilTest::executeDatagramSocketTest(
+        &SocketUtilTest::testDatagramSocketReceiveNotifications);
 }
 
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-    NTSCFG_TEST_REGISTER(2);
-    NTSCFG_TEST_REGISTER(3);
-    NTSCFG_TEST_REGISTER(4);
-    NTSCFG_TEST_REGISTER(5);
-    NTSCFG_TEST_REGISTER(6);
-    NTSCFG_TEST_REGISTER(7);
-    NTSCFG_TEST_REGISTER(8);
-    NTSCFG_TEST_REGISTER(9);
-    NTSCFG_TEST_REGISTER(10);
-    NTSCFG_TEST_REGISTER(11);
-    NTSCFG_TEST_REGISTER(12);
-    NTSCFG_TEST_REGISTER(13);
-    NTSCFG_TEST_REGISTER(14);
-    NTSCFG_TEST_REGISTER(15);
-    NTSCFG_TEST_REGISTER(16);
-    NTSCFG_TEST_REGISTER(17);
-    NTSCFG_TEST_REGISTER(18);
-    NTSCFG_TEST_REGISTER(19);
-    NTSCFG_TEST_REGISTER(20);
-    NTSCFG_TEST_REGISTER(21);
-    NTSCFG_TEST_REGISTER(22);
-    NTSCFG_TEST_REGISTER(23);
-    NTSCFG_TEST_REGISTER(24);
-    NTSCFG_TEST_REGISTER(25);
-    NTSCFG_TEST_REGISTER(26);
-    NTSCFG_TEST_REGISTER(27);
-    NTSCFG_TEST_REGISTER(28);
-    NTSCFG_TEST_REGISTER(29);
-    NTSCFG_TEST_REGISTER(30);
-    NTSCFG_TEST_REGISTER(31);
-    NTSCFG_TEST_REGISTER(32);
-    NTSCFG_TEST_REGISTER(33);
-    NTSCFG_TEST_REGISTER(34);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsu
+}  // close namespace BloombergLP

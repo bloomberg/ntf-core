@@ -299,7 +299,7 @@ void ConstBuffer::copy(bdlbb::Blob*             blob,
         BSLS_ASSERT(0 < currentVecAvailable);
     }
 
-    int currentVecOffset = static_cast<int>(offset) - prefixLength;
+    int currentVecOffset  = static_cast<int>(offset) - prefixLength;
     currentVecAvailable  -= currentVecOffset;
     BSLS_ASSERT(0 <= currentVecOffset);
     BSLS_ASSERT(0 < currentVecAvailable);
@@ -318,7 +318,7 @@ void ConstBuffer::copy(bdlbb::Blob*             blob,
     // Compute number of bytes available to read or write in current vec or
     // buffer.  This must be done *after* setting the blob length.
 
-    int currentBufAvailable = blob->buffer(currentBufIndex).size();
+    int currentBufAvailable  = blob->buffer(currentBufIndex).size();
     currentBufAvailable     -= currentBufOffset;
     BSLS_ASSERT(0 < currentBufAvailable);
 
@@ -337,11 +337,11 @@ void ConstBuffer::copy(bdlbb::Blob*             blob,
         int numBytesCopied =
             bsl::min(currentVecAvailable, currentBufAvailable);
 
-        bsl::memcpy(blob->buffer(currentBufIndex).data() + currentBufOffset,
-                    static_cast<const char*>(
-                        bufferArray[currentVecIndex].buffer()) +
-                        currentVecOffset,
-                    numBytesCopied);
+        bsl::memcpy(
+            blob->buffer(currentBufIndex).data() + currentBufOffset,
+            static_cast<const char*>(bufferArray[currentVecIndex].buffer()) +
+                currentVecOffset,
+            numBytesCopied);
 
         currentBufOffset += numBytesCopied;
         currentVecOffset += numBytesCopied;
@@ -352,8 +352,8 @@ void ConstBuffer::copy(bdlbb::Blob*             blob,
                 return;
             }
             currentVecAvailable =
-                NTSCFG_WARNING_NARROW(
-                    int, bufferArray[currentVecIndex].length());
+                NTSCFG_WARNING_NARROW(int,
+                                      bufferArray[currentVecIndex].length());
         }
         else {
             currentVecAvailable -= numBytesCopied;

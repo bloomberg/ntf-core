@@ -13,32 +13,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsa_domainname.h>
 #include <ntscfg_test.h>
-#include <bslma_testallocator.h>
-#include <bsl_unordered_set.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsa_domainname_t_cpp, "$Id$ $CSID$")
+
+#include <ntsa_domainname.h>
 
 using namespace BloombergLP;
-using namespace ntsa;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntsa {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
-
-NTSCFG_TEST_CASE(1)
+// Provide tests for 'ntsa::DomainName'.
+class DomainNameTest
 {
-    // Concern:
-    // Plan:
+  public:
+    // TODO
+    static void verifyCase1();
 
+    // TODO
+    static void verifyCase2();
+};
+
+NTSCFG_TEST_FUNCTION(ntsa::DomainNameTest::verifyCase1)
+{
     bool valid;
     bool equals;
     bool less;
@@ -197,11 +196,8 @@ NTSCFG_TEST_CASE(1)
     }
 }
 
-NTSCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntsa::DomainNameTest::verifyCase2)
 {
-    // Concern:
-    // Plan:
-
     ntsa::DomainName domainName1("one", "example.com");
     ntsa::DomainName domainName2("two", "example.com");
 
@@ -212,9 +208,5 @@ NTSCFG_TEST_CASE(2)
     NTSCFG_TEST_EQ(domainNameSet.size(), 2);
 }
 
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-    NTSCFG_TEST_REGISTER(2);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsa
+}  // close namespace BloombergLP

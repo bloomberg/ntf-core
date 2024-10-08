@@ -106,7 +106,7 @@ class StreamSocket : public ntsi::StreamSocket
     /// the specified 'context' the result of the operation. Return the
     /// error.
     ntsa::Error send(ntsa::SendContext*       context,
-                     const ntsa::ConstBuffer *data,
+                     const ntsa::ConstBuffer* data,
                      bsl::size_t              size,
                      const ntsa::SendOptions& options) BSLS_KEYWORD_OVERRIDE;
 

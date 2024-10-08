@@ -13,16 +13,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsa_event.h>
 #include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsa_event_t_cpp, "$Id$ $CSID$")
+
+#include <ntsa_event.h>
 
 using namespace BloombergLP;
 
-NTSCFG_TEST_CASE(1)
+namespace BloombergLP {
+namespace ntsa {
+
+// Provide tests for 'ntsa::Event'.
+class EventTest
 {
+  public:
     // Concern: ntsa::Event stores the event types and correctly reports
     // whether the event type has occurred.
+    static void verifyCase1();
 
+    // Concern: Events for the same socket may be merged together.
+    static void verifyCase2();
+
+    // Concern: Events for different sockets may not be merged together.
+    static void verifyCase3();
+
+    // Concern: The event set stores and merges socket events.
+    static void verifyCase4();
+
+    // Concern: The event set is iteratable.
+    static void verifyCase5();
+};
+
+NTSCFG_TEST_FUNCTION(ntsa::EventTest::verifyCase1)
+{
     const ntsa::Handle k_SOCKET         = 10;
     const ntsa::Handle k_SOCKET_INVALID = ntsa::k_INVALID_HANDLE;
 
@@ -125,10 +150,8 @@ NTSCFG_TEST_CASE(1)
     NTSCFG_TEST_EQ(event.error(), ntsa::Error(ntsa::Error::e_INVALID));
 }
 
-NTSCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntsa::EventTest::verifyCase2)
 {
-    // Concern: Events for the same socket may be merged together.
-
     ntsa::Error error;
 
     const ntsa::Handle k_SOCKET = 10;
@@ -157,10 +180,8 @@ NTSCFG_TEST_CASE(2)
     NTSCFG_TEST_TRUE(eventA.isWritable());
 }
 
-NTSCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntsa::EventTest::verifyCase3)
 {
-    // Concern: Events for different sockets may not be merged together.
-
     ntsa::Error error;
 
     const ntsa::Handle k_SOCKET_A = 10;
@@ -190,128 +211,107 @@ NTSCFG_TEST_CASE(3)
     NTSCFG_TEST_FALSE(eventA.isWritable());
 }
 
-NTSCFG_TEST_CASE(4)
+NTSCFG_TEST_FUNCTION(ntsa::EventTest::verifyCase4)
 {
-    // Concern: The event set stores and merges socket events.
+    const ntsa::Handle k_SOCKET_A = 10;
+    const ntsa::Handle k_SOCKET_B = 100;
+    const ntsa::Handle k_SOCKET_C = 1000;
 
-    ntscfg::TestAllocator ta;
+    ntsa::EventSet eventSet(NTSCFG_TEST_ALLOCATOR);
+
+    NTSCFG_TEST_EQ(eventSet.size(), 0);
+
     {
-        const ntsa::Handle k_SOCKET_A = 10;
-        const ntsa::Handle k_SOCKET_B = 100;
-        const ntsa::Handle k_SOCKET_C = 1000;
+        ntsa::Event event;
+        event.setHandle(k_SOCKET_C);
+        event.setReadable();
 
-        ntsa::EventSet eventSet(&ta);
-
-        NTSCFG_TEST_EQ(eventSet.size(), 0);
-
-        {
-            ntsa::Event event;
-            event.setHandle(k_SOCKET_C);
-            event.setReadable();
-
-            eventSet.merge(event);
-        }
-
-        NTSCFG_TEST_EQ(eventSet.size(), 1);
-
-        {
-            ntsa::Event event;
-            event.setHandle(k_SOCKET_C);
-            event.setWritable();
-
-            eventSet.merge(event);
-        }
-
-        NTSCFG_TEST_EQ(eventSet.size(), 1);
-
-        {
-            ntsa::Event event;
-            event.setHandle(k_SOCKET_B);
-            event.setWritable();
-
-            eventSet.merge(event);
-        }
-
-        NTSCFG_TEST_EQ(eventSet.size(), 2);
-
-        {
-            ntsa::Event event;
-            event.setHandle(k_SOCKET_A);
-            event.setReadable();
-
-            eventSet.merge(event);
-        }
-
-        NTSCFG_TEST_EQ(eventSet.size(), 3);
-
-        NTSCFG_TEST_TRUE(eventSet.isReadable(k_SOCKET_A));
-        NTSCFG_TEST_FALSE(eventSet.isWritable(k_SOCKET_A));
-
-        NTSCFG_TEST_FALSE(eventSet.isReadable(k_SOCKET_B));
-        NTSCFG_TEST_TRUE(eventSet.isWritable(k_SOCKET_B));
-
-        NTSCFG_TEST_TRUE(eventSet.isReadable(k_SOCKET_C));
-        NTSCFG_TEST_TRUE(eventSet.isWritable(k_SOCKET_C));
+        eventSet.merge(event);
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
 
-NTSCFG_TEST_CASE(5)
-{
-    // Concern: The event set is iteratable.
+    NTSCFG_TEST_EQ(eventSet.size(), 1);
 
-    ntscfg::TestAllocator ta;
     {
-        const ntsa::Handle k_SOCKET_A = 10;
-        const ntsa::Handle k_SOCKET_B = 100;
-        const ntsa::Handle k_SOCKET_C = 1000;
+        ntsa::Event event;
+        event.setHandle(k_SOCKET_C);
+        event.setWritable();
 
-        ntsa::EventSet eventSet(&ta);
-
-        eventSet.setReadable(k_SOCKET_C);
-        eventSet.setWritable(k_SOCKET_C);
-        eventSet.setWritable(k_SOCKET_B);
-        eventSet.setReadable(k_SOCKET_A);
-
-        NTSCFG_TEST_LOG_DEBUG << "Event set = " << eventSet
-                              << NTSCFG_TEST_LOG_END;
-
-        typedef bsl::vector<ntsa::Event> EventVector;
-        EventVector                      eventVector(&ta);
-
-        for (ntsa::EventSet::const_iterator it = eventSet.cbegin();
-             it != eventSet.cend();
-             ++it)
-        {
-            const ntsa::Event& event = *it;
-
-            NTSCFG_TEST_LOG_DEBUG << "Event = " << event
-                                  << NTSCFG_TEST_LOG_END;
-
-            eventVector.push_back(event);
-        }
-
-        NTSCFG_TEST_EQ(eventVector.size(), 3);
-
-        NTSCFG_TEST_EQ(eventVector[0].handle(), k_SOCKET_A);
-        NTSCFG_TEST_TRUE(eventVector[0].isReadable());
-
-        NTSCFG_TEST_EQ(eventVector[1].handle(), k_SOCKET_B);
-        NTSCFG_TEST_TRUE(eventVector[1].isWritable());
-
-        NTSCFG_TEST_EQ(eventVector[2].handle(), k_SOCKET_C);
-        NTSCFG_TEST_TRUE(eventVector[2].isReadable());
-        NTSCFG_TEST_TRUE(eventVector[2].isWritable());
+        eventSet.merge(event);
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    NTSCFG_TEST_EQ(eventSet.size(), 1);
+
+    {
+        ntsa::Event event;
+        event.setHandle(k_SOCKET_B);
+        event.setWritable();
+
+        eventSet.merge(event);
+    }
+
+    NTSCFG_TEST_EQ(eventSet.size(), 2);
+
+    {
+        ntsa::Event event;
+        event.setHandle(k_SOCKET_A);
+        event.setReadable();
+
+        eventSet.merge(event);
+    }
+
+    NTSCFG_TEST_EQ(eventSet.size(), 3);
+
+    NTSCFG_TEST_TRUE(eventSet.isReadable(k_SOCKET_A));
+    NTSCFG_TEST_FALSE(eventSet.isWritable(k_SOCKET_A));
+
+    NTSCFG_TEST_FALSE(eventSet.isReadable(k_SOCKET_B));
+    NTSCFG_TEST_TRUE(eventSet.isWritable(k_SOCKET_B));
+
+    NTSCFG_TEST_TRUE(eventSet.isReadable(k_SOCKET_C));
+    NTSCFG_TEST_TRUE(eventSet.isWritable(k_SOCKET_C));
 }
 
-NTSCFG_TEST_DRIVER
+NTSCFG_TEST_FUNCTION(ntsa::EventTest::verifyCase5)
 {
-    NTSCFG_TEST_REGISTER(1);
-    NTSCFG_TEST_REGISTER(2);
-    NTSCFG_TEST_REGISTER(3);
-    NTSCFG_TEST_REGISTER(4);
-    NTSCFG_TEST_REGISTER(5);
+    const ntsa::Handle k_SOCKET_A = 10;
+    const ntsa::Handle k_SOCKET_B = 100;
+    const ntsa::Handle k_SOCKET_C = 1000;
+
+    ntsa::EventSet eventSet(NTSCFG_TEST_ALLOCATOR);
+
+    eventSet.setReadable(k_SOCKET_C);
+    eventSet.setWritable(k_SOCKET_C);
+    eventSet.setWritable(k_SOCKET_B);
+    eventSet.setReadable(k_SOCKET_A);
+
+    NTSCFG_TEST_LOG_DEBUG << "Event set = " << eventSet << NTSCFG_TEST_LOG_END;
+
+    typedef bsl::vector<ntsa::Event> EventVector;
+    EventVector                      eventVector(NTSCFG_TEST_ALLOCATOR);
+
+    for (ntsa::EventSet::const_iterator it = eventSet.cbegin();
+         it != eventSet.cend();
+         ++it)
+    {
+        const ntsa::Event& event = *it;
+
+        NTSCFG_TEST_LOG_DEBUG << "Event = " << event << NTSCFG_TEST_LOG_END;
+
+        eventVector.push_back(event);
+    }
+
+    NTSCFG_TEST_EQ(eventVector.size(), 3);
+
+    NTSCFG_TEST_EQ(eventVector[0].handle(), k_SOCKET_A);
+    NTSCFG_TEST_TRUE(eventVector[0].isReadable());
+
+    NTSCFG_TEST_EQ(eventVector[1].handle(), k_SOCKET_B);
+    NTSCFG_TEST_TRUE(eventVector[1].isWritable());
+
+    NTSCFG_TEST_EQ(eventVector[2].handle(), k_SOCKET_C);
+    NTSCFG_TEST_TRUE(eventVector[2].isReadable());
+    NTSCFG_TEST_TRUE(eventVector[2].isWritable());
 }
-NTSCFG_TEST_DRIVER_END;
+
+}  // close namespace ntsa
+}  // close namespace BloombergLP

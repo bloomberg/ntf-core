@@ -38,7 +38,7 @@ int EthernetProtocol::fromInt(EthernetProtocol::Value* result, int number)
     }
 }
 
-int EthernetProtocol::fromString(EthernetProtocol::Value*    result,
+int EthernetProtocol::fromString(EthernetProtocol::Value* result,
                                  const bslstl::StringRef& string)
 {
     if (bdlb::String::areEqualCaseless(string, "UNDEFINED")) {
@@ -89,7 +89,7 @@ const char* EthernetProtocol::toString(EthernetProtocol::Value value)
     return 0;
 }
 
-bsl::ostream& EthernetProtocol::print(bsl::ostream&        stream,
+bsl::ostream& EthernetProtocol::print(bsl::ostream&           stream,
                                       EthernetProtocol::Value value)
 {
     return stream << toString(value);

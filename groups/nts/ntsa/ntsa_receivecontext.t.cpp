@@ -13,85 +13,69 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsa_receivecontext.h>
-
 #include <ntscfg_test.h>
 
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bsls_assert.h>
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsa_receivecontext_t_cpp, "$Id$ $CSID$")
+
+#include <ntsa_receivecontext.h>
 
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntsa {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
-
-NTSCFG_TEST_CASE(1)
+// Provide tests for 'ntsa::ReceiveContext'.
+class ReceiveContextTest
 {
-    // Concern: test set and get methods for sw and hw timestamps
+  public:
+    // TODO
+    static void verifyCase1();
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::ReceiveContext ctx;
+    // TODO
+    static void verifyCase2();
+};
 
-        NTSCFG_TEST_TRUE(ctx.softwareTimestamp().isNull());
-        NTSCFG_TEST_TRUE(ctx.hardwareTimestamp().isNull());
+NTSCFG_TEST_FUNCTION(ntsa::ReceiveContextTest::verifyCase1)
+{
+    ntsa::ReceiveContext ctx;
 
-        const bsls::TimeInterval swTs(100, 200);
-        const bsls::TimeInterval hwTs(300, 500);
+    NTSCFG_TEST_TRUE(ctx.softwareTimestamp().isNull());
+    NTSCFG_TEST_TRUE(ctx.hardwareTimestamp().isNull());
 
-        ctx.setSoftwareTimestamp(swTs);
-        ctx.setHardwareTimestamp(hwTs);
+    const bsls::TimeInterval swTs(100, 200);
+    const bsls::TimeInterval hwTs(300, 500);
 
-        NTSCFG_TEST_FALSE(ctx.softwareTimestamp().isNull());
-        NTSCFG_TEST_FALSE(ctx.hardwareTimestamp().isNull());
+    ctx.setSoftwareTimestamp(swTs);
+    ctx.setHardwareTimestamp(hwTs);
 
-        NTSCFG_TEST_EQ(ctx.softwareTimestamp().value(), swTs);
-        NTSCFG_TEST_EQ(ctx.hardwareTimestamp().value(), hwTs);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_FALSE(ctx.softwareTimestamp().isNull());
+    NTSCFG_TEST_FALSE(ctx.hardwareTimestamp().isNull());
+
+    NTSCFG_TEST_EQ(ctx.softwareTimestamp().value(), swTs);
+    NTSCFG_TEST_EQ(ctx.hardwareTimestamp().value(), hwTs);
 }
 
-NTSCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntsa::ReceiveContextTest::verifyCase2)
 {
-    // Concern: test equals() method (timestamps related only)
+    ntsa::ReceiveContext ctx1;
+    ntsa::ReceiveContext ctx2;
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::ReceiveContext ctx1;
-        ntsa::ReceiveContext ctx2;
+    NTSCFG_TEST_TRUE(ctx1.equals(ctx2));
 
-        NTSCFG_TEST_TRUE(ctx1.equals(ctx2));
+    const bsls::TimeInterval bigTs(200, 0);
+    const bsls::TimeInterval smallTs(100, 0);
 
-        const bsls::TimeInterval bigTs(200, 0);
-        const bsls::TimeInterval smallTs(100, 0);
+    ctx1.setHardwareTimestamp(bigTs);
+    ctx2.setHardwareTimestamp(smallTs);
 
-        ctx1.setHardwareTimestamp(bigTs);
-        ctx2.setHardwareTimestamp(smallTs);
+    NTSCFG_TEST_TRUE(ctx2.less(ctx1));
 
-        NTSCFG_TEST_TRUE(ctx2.less(ctx1));
+    ctx1.setSoftwareTimestamp(smallTs);
+    ctx2.setSoftwareTimestamp(bigTs);
 
-        ctx1.setSoftwareTimestamp(smallTs);
-        ctx2.setSoftwareTimestamp(bigTs);
-
-        NTSCFG_TEST_TRUE(ctx1.less(ctx2));
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_TRUE(ctx1.less(ctx2));
 }
 
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-    NTSCFG_TEST_REGISTER(2);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsa
+}  // close namespace BloombergLP

@@ -13,39 +13,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsa_ipv6endpoint.h>
 #include <ntscfg_test.h>
-#include <bslma_testallocator.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsa_ipv6endpoint_t_cpp, "$Id$ $CSID$")
+
+#include <ntsa_ipv6endpoint.h>
 
 using namespace BloombergLP;
-using namespace ntsa;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntsa {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
-
-NTSCFG_TEST_CASE(1)
+// Provide tests for 'ntsa::Ipv6Endpoint'.
+class Ipv6EndpointTest
 {
-    // Concern:
-    // Plan:
+  public:
+    // TODO
+    static void verify();
+};
 
+NTSCFG_TEST_FUNCTION(ntsa::Ipv6EndpointTest::verify)
+{
     ntsa::Ipv6Endpoint ipv6Endpoint("[::1]:12345");
 
     NTSCFG_TEST_EQ(ipv6Endpoint.host(), ntsa::Ipv6Address::loopback());
     NTSCFG_TEST_EQ(ipv6Endpoint.port(), 12345);
 }
 
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsa
+}  // close namespace BloombergLP
