@@ -8129,7 +8129,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase27)
         error = ntsu::SocketOptionUtil::setZeroCopy(handle, true);
         NTSCFG_TEST_OK(error);
 
-        bsl::vector<char> message(msgSize, &ta);
+        bsl::vector<char> message(msgSize, NTSCFG_TEST_ALLOCATOR);
         for (int i = 0; i < msgSize; ++i) {
             message[i] = bsl::rand() % 100;
         }
@@ -8146,8 +8146,8 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase27)
             // NTSCFG_TEST_TRUE(endpoint.parse("[fe80::215:5dff:fe8d:6bd1]:5555"));
         }
 
-        bsl::list<ntsa::ZeroCopy>         feedback(&ta);
-        bsl::unordered_set<bsl::uint32_t> sendIDs(&ta);
+        bsl::list<ntsa::ZeroCopy>         feedback(NTSCFG_TEST_ALLOCATOR);
+        bsl::unordered_set<bsl::uint32_t> sendIDs(NTSCFG_TEST_ALLOCATOR);
 
         for (int i = 0; i < numMessagesToSend; ++i) {
             ntsa::SendContext context;
@@ -8170,7 +8170,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase27)
 
             SocketUtilTest::extractZeroCopyNotifications(&feedback,
                                                          handle,
-                                                         &ta);
+                                                         NTSCFG_TEST_ALLOCATOR);
         }
 
         // retrieve data from the socket error queue until all send system
@@ -8178,7 +8178,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase27)
         while (!sendIDs.empty()) {
             SocketUtilTest::extractZeroCopyNotifications(&feedback,
                                                          handle,
-                                                         &ta);
+                                                         NTSCFG_TEST_ALLOCATOR);
 
             while (!feedback.empty()) {
                 const ntsa::ZeroCopy& zc = feedback.front();
