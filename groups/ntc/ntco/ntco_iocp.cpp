@@ -95,6 +95,8 @@ BSLS_IDENT_RCSID(ntco_iocp_cpp, "$Id$ $CSID$")
 #include <mswsock.h>
 #include <ws2tcpip.h>
 #include <ws2def.h>
+// clang-format on
+
 // Unix Domain Socket requirements on Windows:
 //
 // 1) Support for the AF_UNIX socket driver can be detected by running
@@ -111,7 +113,7 @@ BSLS_IDENT_RCSID(ntco_iocp_cpp, "$Id$ $CSID$")
 // dynamically loaded. If this DLL is missing, it is not currently known if
 // the either the WSASocket function call simply fails or if some other, more
 // drastic negative consequence to the process occurs.
-// clang-format on
+
 #ifdef interface
 #undef interface
 #endif
