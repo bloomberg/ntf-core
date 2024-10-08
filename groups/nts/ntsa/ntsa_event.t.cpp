@@ -284,20 +284,18 @@ NTSCFG_TEST_FUNCTION(ntsa::EventTest::verifyCase5)
     eventSet.setWritable(k_SOCKET_B);
     eventSet.setReadable(k_SOCKET_A);
 
-    NTSCFG_TEST_LOG_DEBUG << "Event set = " << eventSet
-                          << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Event set = " << eventSet << NTSCFG_TEST_LOG_END;
 
     typedef bsl::vector<ntsa::Event> EventVector;
     EventVector                      eventVector(NTSCFG_TEST_ALLOCATOR);
 
     for (ntsa::EventSet::const_iterator it = eventSet.cbegin();
-            it != eventSet.cend();
-            ++it)
+         it != eventSet.cend();
+         ++it)
     {
         const ntsa::Event& event = *it;
 
-        NTSCFG_TEST_LOG_DEBUG << "Event = " << event
-                              << NTSCFG_TEST_LOG_END;
+        NTSCFG_TEST_LOG_DEBUG << "Event = " << event << NTSCFG_TEST_LOG_END;
 
         eventVector.push_back(event);
     }

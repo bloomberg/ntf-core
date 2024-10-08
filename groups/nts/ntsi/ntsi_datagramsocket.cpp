@@ -73,7 +73,7 @@ ntsa::Error DatagramSocket::send(ntsa::SendContext*       context,
 }
 
 ntsa::Error DatagramSocket::send(ntsa::SendContext*       context,
-                                 const ntsa::ConstBuffer *data,
+                                 const ntsa::ConstBuffer* data,
                                  bsl::size_t              size,
                                  const ntsa::SendOptions& options)
 {
@@ -187,9 +187,9 @@ ntsa::Error DatagramSocket::leaveMulticastGroup(
 }
 
 ntsa::Error DatagramSocket::joinMulticastGroupSource(
-        const ntsa::IpAddress& interface,
-        const ntsa::IpAddress& group,
-        const ntsa::IpAddress& source)
+    const ntsa::IpAddress& interface,
+    const ntsa::IpAddress& group,
+    const ntsa::IpAddress& source)
 {
     NTSCFG_WARNING_UNUSED(interface);
     NTSCFG_WARNING_UNUSED(group);
@@ -199,9 +199,9 @@ ntsa::Error DatagramSocket::joinMulticastGroupSource(
 }
 
 ntsa::Error DatagramSocket::leaveMulticastGroupSource(
-        const ntsa::IpAddress& interface,
-        const ntsa::IpAddress& group,
-        const ntsa::IpAddress& source)
+    const ntsa::IpAddress& interface,
+    const ntsa::IpAddress& group,
+    const ntsa::IpAddress& source)
 {
     NTSCFG_WARNING_UNUSED(interface);
     NTSCFG_WARNING_UNUSED(group);

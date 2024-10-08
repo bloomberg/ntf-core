@@ -19,11 +19,11 @@
 BSLS_IDENT_RCSID(ntsa_ethernetaddress_cpp, "$Id$ $CSID$")
 
 #include <bslim_printer.h>
-#include <bsl_sstream.h>
-#include <bsl_cstdlib.h>
 #include <bsl_cctype.h>
 #include <bsl_cstdio.h>
+#include <bsl_cstdlib.h>
 #include <bsl_cstring.h>
+#include <bsl_sstream.h>
 
 namespace BloombergLP {
 namespace ntsa {
@@ -33,8 +33,7 @@ namespace {
 void throwEthernetInvalidFormat(const bslstl::StringRef& text)
 {
     bsl::stringstream ss;
-    ss << "Failed to parse Ethernet address: the text '" 
-       << text 
+    ss << "Failed to parse Ethernet address: the text '" << text
        << "' is invalid";
 
     NTSCFG_THROW(ss.str());
@@ -109,14 +108,11 @@ bool EthernetAddress::parse(const bslstl::StringRef& text)
         const char ch1 = *current++;
         const char ch2 = *current++;
 
-        const bsl::uint8_t hi = static_cast<char>(bsl::isdigit(ch1)
-                                 ? ch1 - '0'
-                                 : bsl::tolower(ch1) - 'a' + 10);
+        const bsl::uint8_t hi = static_cast<char>(
+            bsl::isdigit(ch1) ? ch1 - '0' : bsl::tolower(ch1) - 'a' + 10);
 
-        const bsl::uint8_t lo = static_cast<char>(bsl::isdigit(ch2)
-                                 ? ch2 - '0'
-                                 : bsl::tolower(ch2) - 'a' + 10);
-
+        const bsl::uint8_t lo = static_cast<char>(
+            bsl::isdigit(ch2) ? ch2 - '0' : bsl::tolower(ch2) - 'a' + 10);
 
         d_value[i] = hi << 4 | lo;
     }
@@ -124,8 +120,7 @@ bool EthernetAddress::parse(const bslstl::StringRef& text)
     return true;
 }
 
-bsl::size_t EthernetAddress::format(char*       buffer,
-                                    bsl::size_t capacity) const
+bsl::size_t EthernetAddress::format(char* buffer, bsl::size_t capacity) const
 {
     if (capacity < ntsa::EthernetAddress::MAX_TEXT_LENGTH + 1) {
         if (capacity > 0) {
@@ -168,8 +163,8 @@ bsl::size_t EthernetAddress::format(char*       buffer,
 }
 
 bsl::ostream& EthernetAddress::print(bsl::ostream& stream,
-                    int           level,
-                    int           spacesPerLevel) const
+                                     int           level,
+                                     int           spacesPerLevel) const
 {
     char              buffer[ntsa::EthernetAddress::MAX_TEXT_LENGTH + 1];
     const bsl::size_t size = EthernetAddress::format(buffer, sizeof buffer);

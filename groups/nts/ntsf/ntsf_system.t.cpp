@@ -88,8 +88,8 @@ NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase1)
     // Learn the port assigned to the "outer" socket.
 
     ntsa::Endpoint listenerSocketOneSourceEndpoint;
-    error = listenerSocketOne->sourceEndpoint(
-        &listenerSocketOneSourceEndpoint);
+    error =
+        listenerSocketOne->sourceEndpoint(&listenerSocketOneSourceEndpoint);
     NTSCFG_TEST_OK(error);
 
     // Create an "inner" TCP/IPv4 listener socket.
@@ -106,7 +106,7 @@ NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase1)
     error = listenerSocketTwo->bind(
         ntsa::Endpoint(
             ntsa::IpEndpoint(ntsa::Ipv4Address::any(),
-                                listenerSocketOneSourceEndpoint.ip().port())),
+                             listenerSocketOneSourceEndpoint.ip().port())),
         k_REUSE_ADDRESS);
 
     // Assert the binding succeeds on Linux and AIX, and fails on all
@@ -119,15 +119,15 @@ NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase1)
     // Learn the port assigned to the "inner" socket.
 
     ntsa::Endpoint listenerSocketTwoSourceEndpoint;
-    error = listenerSocketTwo->sourceEndpoint(
-        &listenerSocketTwoSourceEndpoint);
+    error =
+        listenerSocketTwo->sourceEndpoint(&listenerSocketTwoSourceEndpoint);
     NTSCFG_TEST_OK(error);
 
     // Assert the endpoints to which the two sockets are bound are the
     // same.
 
     NTSCFG_TEST_EQ(listenerSocketOneSourceEndpoint.ip().port(),
-                    listenerSocketTwoSourceEndpoint.ip().port());
+                   listenerSocketTwoSourceEndpoint.ip().port());
 
     // Begin listening on the "inner" listener socket.
 
@@ -173,9 +173,9 @@ NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase1)
     char receiveData[13];
 
     error = serverSocket->receive(&receiveContext,
-                                    receiveData,
-                                    sizeof receiveData,
-                                    receiveOptions);
+                                  receiveData,
+                                  sizeof receiveData,
+                                  receiveOptions);
     NTSCFG_TEST_OK(error);
     NTSCFG_TEST_EQ(receiveContext.bytesReceived(), 13);
 
@@ -255,8 +255,8 @@ NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase2)
     // Learn the port assigned to the "outer" socket.
 
     ntsa::Endpoint listenerSocketOneSourceEndpoint;
-    error = listenerSocketOne->sourceEndpoint(
-        &listenerSocketOneSourceEndpoint);
+    error =
+        listenerSocketOne->sourceEndpoint(&listenerSocketOneSourceEndpoint);
     NTSCFG_TEST_OK(error);
 
     // Create an "inner" TCP/IPv4 listener socket.
@@ -273,22 +273,22 @@ NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase2)
     error = listenerSocketTwo->bind(
         ntsa::Endpoint(
             ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(),
-                                listenerSocketOneSourceEndpoint.ip().port())),
+                             listenerSocketOneSourceEndpoint.ip().port())),
         k_REUSE_ADDRESS);
     NTSCFG_TEST_OK(error);
 
     // Learn the port assigned to the "inner" socket.
 
     ntsa::Endpoint listenerSocketTwoSourceEndpoint;
-    error = listenerSocketTwo->sourceEndpoint(
-        &listenerSocketTwoSourceEndpoint);
+    error =
+        listenerSocketTwo->sourceEndpoint(&listenerSocketTwoSourceEndpoint);
     NTSCFG_TEST_OK(error);
 
     // Assert the endpoints to which the two sockets are bound are the
     // same.
 
     NTSCFG_TEST_EQ(listenerSocketOneSourceEndpoint.ip().port(),
-                    listenerSocketTwoSourceEndpoint.ip().port());
+                   listenerSocketTwoSourceEndpoint.ip().port());
 
     // Begin listening on the "inner" listener socket.
 
@@ -334,9 +334,9 @@ NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase2)
     char receiveData[13];
 
     error = serverSocket->receive(&receiveContext,
-                                    receiveData,
-                                    sizeof receiveData,
-                                    receiveOptions);
+                                  receiveData,
+                                  sizeof receiveData,
+                                  receiveOptions);
     NTSCFG_TEST_OK(error);
     NTSCFG_TEST_EQ(receiveContext.bytesReceived(), 13);
 
@@ -368,7 +368,7 @@ NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase2)
 
 NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase3)
 {
-        // Concern: A TCP/IPv4 socket may bind to the same port number assigned to
+    // Concern: A TCP/IPv4 socket may bind to the same port number assigned to
     // another TCP/IPv4 socket as long as the first socket binds to INADDR_ANY
     // and both sockets specify SO_REUSEADDR.
     //
@@ -389,8 +389,8 @@ NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase3)
     ntsa::Adapter adapter;
     bool          adapterFound =
         ntsf::System::discoverAdapter(&adapter,
-                                        ntsa::IpAddressType::e_V4,
-                                        false);
+                                      ntsa::IpAddressType::e_V4,
+                                      false);
     NTSCFG_TEST_TRUE(adapterFound);
 
     NTSCFG_TEST_FALSE(adapter.ipv4Address().isNull());
@@ -415,8 +415,8 @@ NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase3)
     // Learn the port assigned to the "outer" socket.
 
     ntsa::Endpoint listenerSocketOneSourceEndpoint;
-    error = listenerSocketOne->sourceEndpoint(
-        &listenerSocketOneSourceEndpoint);
+    error =
+        listenerSocketOne->sourceEndpoint(&listenerSocketOneSourceEndpoint);
     NTSCFG_TEST_OK(error);
 
     // Create an "inner" TCP/IPv4 listener socket.
@@ -433,22 +433,22 @@ NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase3)
     error = listenerSocketTwo->bind(
         ntsa::Endpoint(
             ntsa::IpEndpoint(adapterAddress,
-                                listenerSocketOneSourceEndpoint.ip().port())),
+                             listenerSocketOneSourceEndpoint.ip().port())),
         k_REUSE_ADDRESS);
     NTSCFG_TEST_OK(error);
 
     // Learn the port assigned to the "inner" socket.
 
     ntsa::Endpoint listenerSocketTwoSourceEndpoint;
-    error = listenerSocketTwo->sourceEndpoint(
-        &listenerSocketTwoSourceEndpoint);
+    error =
+        listenerSocketTwo->sourceEndpoint(&listenerSocketTwoSourceEndpoint);
     NTSCFG_TEST_OK(error);
 
     // Assert the endpoints to which the two sockets are bound are the
     // same.
 
     NTSCFG_TEST_EQ(listenerSocketOneSourceEndpoint.ip().port(),
-                    listenerSocketTwoSourceEndpoint.ip().port());
+                   listenerSocketTwoSourceEndpoint.ip().port());
 
     // Begin listening on the "inner" listener socket.
 
@@ -494,9 +494,9 @@ NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase3)
     char receiveData[13];
 
     error = serverSocket->receive(&receiveContext,
-                                    receiveData,
-                                    sizeof receiveData,
-                                    receiveOptions);
+                                  receiveData,
+                                  sizeof receiveData,
+                                  receiveOptions);
     NTSCFG_TEST_OK(error);
     NTSCFG_TEST_EQ(receiveContext.bytesReceived(), 13);
 
@@ -536,12 +536,11 @@ NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase4)
     ipAddressListOverride.push_back(ntsa::IpAddress("4.4.4.4"));
     ipAddressListOverride.push_back(ntsa::IpAddress("8.8.8.8"));
 
-    error =
-        ntsf::System::setIpAddress("example.com", ipAddressListOverride);
+    error = ntsf::System::setIpAddress("example.com", ipAddressListOverride);
     NTSCFG_TEST_OK(error);
 
     bsl::set<ntsa::IpAddress> ipAddressSet(ipAddressListOverride.begin(),
-                                            ipAddressListOverride.end());
+                                           ipAddressListOverride.end());
 
     NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
 
@@ -549,17 +548,17 @@ NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase4)
     ntsa::IpAddressOptions       ipAddressOptions;
 
     error = ntsf::System::getIpAddress(&ipAddressList,
-                                        "example.com",
-                                        ipAddressOptions);
+                                       "example.com",
+                                       ipAddressOptions);
     NTSCFG_TEST_FALSE(error);
 
     for (bsl::vector<ntsa::IpAddress>::const_iterator it =
-                ipAddressList.begin();
-            it != ipAddressList.end();
-            ++it)
+             ipAddressList.begin();
+         it != ipAddressList.end();
+         ++it)
     {
         NTSCFG_TEST_LOG_DEBUG << "Address: " << it->text()
-                                << NTSCFG_TEST_LOG_END;
+                              << NTSCFG_TEST_LOG_END;
 
         bsl::size_t n = ipAddressSet.erase(*it);
         NTSCFG_TEST_EQ(n, 1);
@@ -580,9 +579,8 @@ NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase5)
         resolverConfig.setSystemEnabled(false);
 
         bsl::shared_ptr<ntsi::Resolver> resolver =
-            ntsf::System::createResolver(
-                resolverConfig,
-                bslma::Default::globalAllocator());
+            ntsf::System::createResolver(resolverConfig,
+                                         bslma::Default::globalAllocator());
 
         NTSCFG_TEST_EQ(resolver.use_count(), 1);
 
@@ -602,12 +600,11 @@ NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase5)
     ipAddressListOverride.push_back(ntsa::IpAddress("4.4.4.4"));
     ipAddressListOverride.push_back(ntsa::IpAddress("8.8.8.8"));
 
-    error =
-        ntsf::System::setIpAddress("example.com", ipAddressListOverride);
+    error = ntsf::System::setIpAddress("example.com", ipAddressListOverride);
     NTSCFG_TEST_OK(error);
 
     bsl::set<ntsa::IpAddress> ipAddressSet(ipAddressListOverride.begin(),
-                                            ipAddressListOverride.end());
+                                           ipAddressListOverride.end());
 
     NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
 
@@ -615,17 +612,17 @@ NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase5)
     ntsa::IpAddressOptions       ipAddressOptions;
 
     error = ntsf::System::getIpAddress(&ipAddressList,
-                                        "example.com",
-                                        ipAddressOptions);
+                                       "example.com",
+                                       ipAddressOptions);
     NTSCFG_TEST_FALSE(error);
 
     for (bsl::vector<ntsa::IpAddress>::const_iterator it =
-                ipAddressList.begin();
-            it != ipAddressList.end();
-            ++it)
+             ipAddressList.begin();
+         it != ipAddressList.end();
+         ++it)
     {
         NTSCFG_TEST_LOG_DEBUG << "Address: " << it->text()
-                                << NTSCFG_TEST_LOG_END;
+                              << NTSCFG_TEST_LOG_END;
 
         bsl::size_t n = ipAddressSet.erase(*it);
         NTSCFG_TEST_EQ(n, 1);
@@ -642,17 +639,16 @@ NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase6)
     ntsa::Error error;
 
     bsl::vector<bsl::string> supportedAlgorithms(NTSCFG_TEST_ALLOCATOR);
-    error =
-        ntsf::System::loadTcpCongestionControlAlgorithmSupport(
-            &supportedAlgorithms);
+    error = ntsf::System::loadTcpCongestionControlAlgorithmSupport(
+        &supportedAlgorithms);
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
     NTSCFG_TEST_OK(error);
 
     for (bsl::vector<bsl::string>::const_iterator it =
-                supportedAlgorithms.cbegin();
-            it != supportedAlgorithms.cend();
-            ++it)
+             supportedAlgorithms.cbegin();
+         it != supportedAlgorithms.cend();
+         ++it)
     {
         NTSCFG_TEST_TRUE(
             ntsf::System::testTcpCongestionControlAlgorithmSupport(*it));
@@ -662,8 +658,7 @@ NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase6)
 #endif
 
     NTSCFG_TEST_FALSE(
-        ntsf::System::testTcpCongestionControlAlgorithmSupport(
-            "random_name"));
+        ntsf::System::testTcpCongestionControlAlgorithmSupport("random_name"));
 }
 
 NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase7)
@@ -683,7 +678,7 @@ NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase7)
     NTSCFG_TEST_OK(error);
 
     bool blocking = false;
-    error = ntsf::System::getBlocking(socket->handle(), &blocking);
+    error         = ntsf::System::getBlocking(socket->handle(), &blocking);
     NTSCFG_TEST_OK(error);
     NTSCFG_TEST_TRUE(blocking);
 
@@ -691,14 +686,14 @@ NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase7)
     NTSCFG_TEST_OK(error);
 
     blocking = true;
-    error = ntsf::System::getBlocking(socket->handle(), &blocking);
+    error    = ntsf::System::getBlocking(socket->handle(), &blocking);
     NTSCFG_TEST_OK(error);
     NTSCFG_TEST_FALSE(blocking);
 
 #else
 
     bool blocking = false;
-    error = ntsf::System::getBlocking(socket->handle(), &blocking);
+    error         = ntsf::System::getBlocking(socket->handle(), &blocking);
     NTSCFG_TEST_TRUE(error);
 
 #endif

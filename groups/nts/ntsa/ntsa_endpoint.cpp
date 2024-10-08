@@ -226,7 +226,7 @@ bsl::ostream& Endpoint::print(bsl::ostream& stream,
 
 const bdlat_SelectionInfo* Endpoint::lookupSelectionInfo(int id)
 {
-    const int numSelections = 
+    const int numSelections =
         sizeof(SELECTION_INFO_ARRAY) / sizeof(SELECTION_INFO_ARRAY[0]);
 
     if (id < 0 || id >= numSelections) {
@@ -236,17 +236,16 @@ const bdlat_SelectionInfo* Endpoint::lookupSelectionInfo(int id)
     return &SELECTION_INFO_ARRAY[id];
 }
 
-const bdlat_SelectionInfo* Endpoint::lookupSelectionInfo(
-    const char* name, 
-    int         nameLength)
+const bdlat_SelectionInfo* Endpoint::lookupSelectionInfo(const char* name,
+                                                         int nameLength)
 {
-    const bsl::size_t numSelections = 
+    const bsl::size_t numSelections =
         sizeof(SELECTION_INFO_ARRAY) / sizeof(SELECTION_INFO_ARRAY[0]);
 
     for (bsl::size_t i = 0; i < numSelections; ++i) {
         const bdlat_SelectionInfo& selectionInfo = SELECTION_INFO_ARRAY[i];
         if (selectionInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(selectionInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &selectionInfo;

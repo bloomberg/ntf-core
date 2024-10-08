@@ -186,8 +186,8 @@ NTSCFG_INLINE void TcpCongestionControl::hash(HASH_ALGORITHM& algorithm) const
 }
 
 template <typename HASH_ALGORITHM>
-NTSCFG_INLINE
-void hashAppend(HASH_ALGORITHM& algorithm, const TcpCongestionControl& value)
+NTSCFG_INLINE void hashAppend(HASH_ALGORITHM&             algorithm,
+                              const TcpCongestionControl& value)
 {
     value.hash(algorithm);
 }

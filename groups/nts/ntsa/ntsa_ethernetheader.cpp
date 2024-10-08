@@ -28,8 +28,8 @@ namespace ntsa {
 
 bool EthernetHeader::equals(const EthernetHeader& other) const
 {
-    return d_source == other.d_source && 
-           d_destination == other.d_destination && 
+    return d_source == other.d_source &&
+           d_destination == other.d_destination &&
            d_protocol == other.d_protocol;
 }
 

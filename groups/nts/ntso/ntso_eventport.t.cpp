@@ -52,7 +52,8 @@ NTSCFG_TEST_FUNCTION(ntso::EventPortTest::verifyCase1)
     reactorConfig.setDriverName("eventport");
 
     bsl::shared_ptr<ntsi::Reactor> reactor =
-        ntso::EventPortUtil::createReactor(reactorConfig, NTSCFG_TEST_ALLOCATOR);
+        ntso::EventPortUtil::createReactor(reactorConfig,
+                                           NTSCFG_TEST_ALLOCATOR);
 
     ntso::Test::ReactorVector reactorVector(NTSCFG_TEST_ALLOCATOR);
     reactorVector.push_back(reactor);
@@ -69,7 +70,8 @@ NTSCFG_TEST_FUNCTION(ntso::EventPortTest::verifyCase2)
     reactorConfig.setDriverName("eventport");
 
     bsl::shared_ptr<ntsi::Reactor> reactor =
-        ntso::EventPortUtil::createReactor(reactorConfig, NTSCFG_TEST_ALLOCATOR);
+        ntso::EventPortUtil::createReactor(reactorConfig,
+                                           NTSCFG_TEST_ALLOCATOR);
 
     ntso::Test::ReactorVector reactorVector(NTSCFG_TEST_ALLOCATOR);
     reactorVector.push_back(reactor);
@@ -86,7 +88,8 @@ NTSCFG_TEST_FUNCTION(ntso::EventPortTest::verifyCase3)
     reactorConfig.setDriverName("eventport");
 
     bsl::shared_ptr<ntsi::Reactor> reactor =
-        ntso::EventPortUtil::createReactor(reactorConfig, NTSCFG_TEST_ALLOCATOR);
+        ntso::EventPortUtil::createReactor(reactorConfig,
+                                           NTSCFG_TEST_ALLOCATOR);
 
     ntso::Test::ReactorVector reactorVector(NTSCFG_TEST_ALLOCATOR);
     reactorVector.push_back(reactor);

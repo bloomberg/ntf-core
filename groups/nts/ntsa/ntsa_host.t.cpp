@@ -49,7 +49,7 @@ class HostTest
 
 NTSCFG_TEST_FUNCTION(ntsa::HostTest::verifyCase1)
 {
-     {
+    {
         ntsa::Host host;
         bool       valid = host.parse("192.168.1.250");
         NTSCFG_TEST_ASSERT(valid);
@@ -66,7 +66,7 @@ NTSCFG_TEST_FUNCTION(ntsa::HostTest::verifyCase1)
 
     {
         ntsa::Host host;
-        bool valid = host.parse("2001:41c0::645:a65e:60ff:feda:589d");
+        bool       valid = host.parse("2001:41c0::645:a65e:60ff:feda:589d");
         NTSCFG_TEST_ASSERT(valid);
         NTSCFG_TEST_ASSERT(host.isIp());
         NTSCFG_TEST_ASSERT(host.ip().isV6());
@@ -125,7 +125,7 @@ NTSCFG_TEST_FUNCTION(ntsa::HostTest::verifyCase2)
 NTSCFG_TEST_FUNCTION(ntsa::HostTest::verifyCase3)
 {
     int rc;
-    
+
     ntsa::Host e1("10.26.55.100");
     ntsa::Host e2;
 
@@ -134,8 +134,8 @@ NTSCFG_TEST_FUNCTION(ntsa::HostTest::verifyCase3)
     balber::BerEncoder encoder(0, NTSCFG_TEST_ALLOCATOR);
     rc = encoder.encode(&osb, e1);
     if (rc != 0) {
-        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages() 
-                            << NTSCFG_TEST_LOG_END;
+        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages()
+                              << NTSCFG_TEST_LOG_END;
 
         NTSCFG_TEST_EQ(rc, 0);
     }
@@ -146,19 +146,19 @@ NTSCFG_TEST_FUNCTION(ntsa::HostTest::verifyCase3)
     NTSCFG_TEST_GT(osb.length(), 0);
     NTSCFG_TEST_NE(osb.data(), 0);
 
-    NTSCFG_TEST_LOG_DEBUG << "Encoded:\n" 
-                            << bdlb::PrintStringHexDumper(
-                                osb.data(), 
-                                static_cast<bsl::size_t>(osb.length())) 
-                            << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Encoded:\n"
+                          << bdlb::PrintStringHexDumper(
+                                 osb.data(),
+                                 static_cast<bsl::size_t>(osb.length()))
+                          << NTSCFG_TEST_LOG_END;
 
     bdlsb::FixedMemInStreamBuf isb(osb.data(), osb.length());
 
     balber::BerDecoder decoder(0, NTSCFG_TEST_ALLOCATOR);
     rc = decoder.decode(&isb, &e2);
     if (rc != 0) {
-        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages() 
-                            << NTSCFG_TEST_LOG_END;
+        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages()
+                              << NTSCFG_TEST_LOG_END;
 
         NTSCFG_TEST_EQ(rc, 0);
     }
@@ -182,8 +182,8 @@ NTSCFG_TEST_FUNCTION(ntsa::HostTest::verifyCase4)
     baljsn::Encoder encoder(NTSCFG_TEST_ALLOCATOR);
     rc = encoder.encode(&osb, e1);
     if (rc != 0) {
-        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages() 
-                            << NTSCFG_TEST_LOG_END;
+        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages()
+                              << NTSCFG_TEST_LOG_END;
 
         NTSCFG_TEST_EQ(rc, 0);
     }
@@ -194,19 +194,19 @@ NTSCFG_TEST_FUNCTION(ntsa::HostTest::verifyCase4)
     NTSCFG_TEST_GT(osb.length(), 0);
     NTSCFG_TEST_NE(osb.data(), 0);
 
-    NTSCFG_TEST_LOG_DEBUG << "Encoded: " 
-                        << bsl::string_view(
-                                osb.data(), 
-                                static_cast<bsl::size_t>(osb.length())) 
-                        << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Encoded: "
+                          << bsl::string_view(
+                                 osb.data(),
+                                 static_cast<bsl::size_t>(osb.length()))
+                          << NTSCFG_TEST_LOG_END;
 
     bdlsb::FixedMemInStreamBuf isb(osb.data(), osb.length());
 
     baljsn::Decoder decoder(NTSCFG_TEST_ALLOCATOR);
     rc = decoder.decode(&isb, &e2);
     if (rc != 0) {
-        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages() 
-                            << NTSCFG_TEST_LOG_END;
+        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages()
+                              << NTSCFG_TEST_LOG_END;
 
         NTSCFG_TEST_EQ(rc, 0);
     }

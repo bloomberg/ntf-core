@@ -40,7 +40,7 @@ class EthernetAddress
 {
     bsl::uint8_t d_value[6];
 
-public:
+  public:
     /// Declare constants used by this implementation.
     enum Constant {
         /// The maximum required capacity of a buffer to store the longest
@@ -68,8 +68,8 @@ public:
     /// Create a new Ethernet address having the same value as the specified
     /// 'original' object. Assign an unspecified but valid value to the
     /// 'original' original.
-    EthernetAddress(
-        bslmf::MovableRef<EthernetAddress> original) NTSCFG_NOEXCEPT;
+    EthernetAddress(bslmf::MovableRef<EthernetAddress> original)
+        NTSCFG_NOEXCEPT;
 
     /// Create a new Ethernet address with the same value as the specified
     /// 'original' object.
@@ -110,13 +110,11 @@ public:
     /// Copy the value of this object to the representation in the specified
     /// 'destination' having the specified 'capacity'. Return the number of
     /// bytes written.
-    bsl::size_t copyTo(void*       destination,
-                       bsl::size_t capacity) const;
+    bsl::size_t copyTo(void* destination, bsl::size_t capacity) const;
 
     /// Format the IPv4 address into the specified 'buffer' having the
     /// specified 'capacity'. Return the number of bytes written.
-    bsl::size_t format(char*       buffer,
-                       bsl::size_t capacity) const;
+    bsl::size_t format(char* buffer, bsl::size_t capacity) const;
 
     /// Return the string representation of this object.
     bsl::string text() const;
@@ -229,8 +227,8 @@ EthernetAddress::EthernetAddress(bsl::uint8_t byte0,
 }
 
 NTSCFG_INLINE
-EthernetAddress::EthernetAddress(
-    bslmf::MovableRef<EthernetAddress> original) NTSCFG_NOEXCEPT
+EthernetAddress::EthernetAddress(bslmf::MovableRef<EthernetAddress> original)
+    NTSCFG_NOEXCEPT
 {
     bsl::memcpy(d_value, NTSCFG_MOVE_FROM(original, d_value), sizeof d_value);
     NTSCFG_MOVE_RESET(original);
@@ -248,8 +246,8 @@ EthernetAddress::~EthernetAddress()
 }
 
 NTSCFG_INLINE
-EthernetAddress& EthernetAddress::operator=(bslmf::MovableRef<EthernetAddress> other)
-    NTSCFG_NOEXCEPT
+EthernetAddress& EthernetAddress::operator=(
+    bslmf::MovableRef<EthernetAddress> other) NTSCFG_NOEXCEPT
 {
     bsl::memcpy(d_value, NTSCFG_MOVE_FROM(other, d_value), sizeof d_value);
     NTSCFG_MOVE_RESET(other);
@@ -302,8 +300,7 @@ bool EthernetAddress::less(const EthernetAddress& other) const
 }
 
 template <typename HASH_ALGORITHM>
-NTSCFG_INLINE
-void EthernetAddress::hash(HASH_ALGORITHM& algorithm) const
+NTSCFG_INLINE void EthernetAddress::hash(HASH_ALGORITHM& algorithm) const
 {
     algorithm(reinterpret_cast<const char*>(d_value), sizeof d_value);
 }
@@ -340,8 +337,8 @@ bool operator<(const EthernetAddress& lhs, const EthernetAddress& rhs)
 }
 
 template <typename HASH_ALGORITHM>
-NTSCFG_INLINE
-void hashAppend(HASH_ALGORITHM& algorithm, const EthernetAddress& value)
+NTSCFG_INLINE void hashAppend(HASH_ALGORITHM&        algorithm,
+                              const EthernetAddress& value)
 {
     value.hash(algorithm);
 }

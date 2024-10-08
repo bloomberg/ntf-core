@@ -39,4 +39,3 @@ NTSCFG_TEST_FUNCTION(ntscfg::PlatformTest::verify)
 
 }  // close namespace ntscfg
 }  // close namespace BloombergLP
-

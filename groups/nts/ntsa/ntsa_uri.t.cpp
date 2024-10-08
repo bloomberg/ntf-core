@@ -390,7 +390,7 @@ NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyCase1)
 
             if (NTSCFG_TEST_VERBOSITY) {
                 bsl::cout << "URI: "
-                            << "INVALID" << bsl::endl;
+                          << "INVALID" << bsl::endl;
             }
         }
         else {
@@ -693,8 +693,8 @@ NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyCase3)
         NTSCFG_TEST_OK(error);
 
         if (NTSCFG_TEST_VERBOSITY) {
-            bsl::cout << "URI: " << uri.text() 
-                        << " (endpoint: " << endpoint << ")" << bsl::endl;
+            bsl::cout << "URI: " << uri.text() << " (endpoint: " << endpoint
+                      << ")" << bsl::endl;
         }
     }
 
@@ -714,8 +714,8 @@ NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyCase3)
         NTSCFG_TEST_OK(error);
 
         if (NTSCFG_TEST_VERBOSITY) {
-            bsl::cout << "URI: " << uri.text() 
-                        << " (endpoint: " << endpoint << ")" << bsl::endl;
+            bsl::cout << "URI: " << uri.text() << " (endpoint: " << endpoint
+                      << ")" << bsl::endl;
         }
     }
 
@@ -732,8 +732,8 @@ NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyCase3)
         NTSCFG_TEST_OK(error);
 
         if (NTSCFG_TEST_VERBOSITY) {
-            bsl::cout << "URI: " << uri.text() 
-                        << " (endpoint: " << endpoint << ")" << bsl::endl;
+            bsl::cout << "URI: " << uri.text() << " (endpoint: " << endpoint
+                      << ")" << bsl::endl;
         }
     }
 
@@ -753,8 +753,8 @@ NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyCase3)
         NTSCFG_TEST_OK(error);
 
         if (NTSCFG_TEST_VERBOSITY) {
-            bsl::cout << "URI: " << uri.text() 
-                        << " (endpoint: " << endpoint << ")" << bsl::endl;
+            bsl::cout << "URI: " << uri.text() << " (endpoint: " << endpoint
+                      << ")" << bsl::endl;
         }
     }
 
@@ -773,15 +773,15 @@ NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyCase3)
         NTSCFG_TEST_OK(error);
 
         if (NTSCFG_TEST_VERBOSITY) {
-            bsl::cout << "URI: " << uri.text() 
-                        << " (endpoint: " << endpoint << ")" << bsl::endl;
+            bsl::cout << "URI: " << uri.text() << " (endpoint: " << endpoint
+                      << ")" << bsl::endl;
         }
     }
 
     {
         ntsa::LocalName localName;
         localName.setValue("/tmp/ntf/socket");
-        
+
         ntsa::Endpoint endpoint(localName);
 
         ntsa::Uri uri(NTSCFG_TEST_ALLOCATOR);
@@ -796,8 +796,8 @@ NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyCase3)
         NTSCFG_TEST_OK(error);
 
         if (NTSCFG_TEST_VERBOSITY) {
-            bsl::cout << "URI: " << uri.text() 
-                        << " (endpoint: " << endpoint << ")" << bsl::endl;
+            bsl::cout << "URI: " << uri.text() << " (endpoint: " << endpoint
+                      << ")" << bsl::endl;
         }
     }
 }
@@ -809,7 +809,7 @@ NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyCase4)
     ntsa::Uri e1;
     ntsa::Uri e2;
 
-    bool valid = 
+    bool valid =
         e1.parse("http://10.26.55.100:12345/path/to/resource?foo=bar#baz");
     NTSCFG_TEST_TRUE(valid);
 
@@ -818,8 +818,8 @@ NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyCase4)
     balber::BerEncoder encoder(0, NTSCFG_TEST_ALLOCATOR);
     rc = encoder.encode(&osb, e1);
     if (rc != 0) {
-        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages() 
-                                << NTSCFG_TEST_LOG_END;
+        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages()
+                              << NTSCFG_TEST_LOG_END;
 
         NTSCFG_TEST_EQ(rc, 0);
     }
@@ -830,19 +830,19 @@ NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyCase4)
     NTSCFG_TEST_GT(osb.length(), 0);
     NTSCFG_TEST_NE(osb.data(), 0);
 
-    NTSCFG_TEST_LOG_DEBUG << "Encoded:\n" 
-                            << bdlb::PrintStringHexDumper(
-                                osb.data(), 
-                                static_cast<bsl::size_t>(osb.length())) 
-                            << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Encoded:\n"
+                          << bdlb::PrintStringHexDumper(
+                                 osb.data(),
+                                 static_cast<bsl::size_t>(osb.length()))
+                          << NTSCFG_TEST_LOG_END;
 
     bdlsb::FixedMemInStreamBuf isb(osb.data(), osb.length());
 
     balber::BerDecoder decoder(0, NTSCFG_TEST_ALLOCATOR);
     rc = decoder.decode(&isb, &e2);
     if (rc != 0) {
-        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages() 
-                            << NTSCFG_TEST_LOG_END;
+        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages()
+                              << NTSCFG_TEST_LOG_END;
 
         NTSCFG_TEST_EQ(rc, 0);
     }
@@ -869,7 +869,7 @@ NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyCase5)
 
     {
         ntsa::Uri element;
-        
+
         bool valid = element.parse(
             "http://10.26.55.100:12345/path/to/resource?foo=bar#baz");
         NTSCFG_TEST_TRUE(valid);
@@ -893,8 +893,8 @@ NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyCase5)
     baljsn::Encoder encoder(NTSCFG_TEST_ALLOCATOR);
     rc = encoder.encode(&osb, e1);
     if (rc != 0) {
-        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages() 
-                            << NTSCFG_TEST_LOG_END;
+        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages()
+                              << NTSCFG_TEST_LOG_END;
 
         NTSCFG_TEST_EQ(rc, 0);
     }
@@ -905,19 +905,19 @@ NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyCase5)
     NTSCFG_TEST_GT(osb.length(), 0);
     NTSCFG_TEST_NE(osb.data(), 0);
 
-    NTSCFG_TEST_LOG_DEBUG << "Encoded: " 
-                        << bsl::string_view(
-                                osb.data(), 
-                                static_cast<bsl::size_t>(osb.length())) 
-                        << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Encoded: "
+                          << bsl::string_view(
+                                 osb.data(),
+                                 static_cast<bsl::size_t>(osb.length()))
+                          << NTSCFG_TEST_LOG_END;
 
     bdlsb::FixedMemInStreamBuf isb(osb.data(), osb.length());
 
     baljsn::Decoder decoder(NTSCFG_TEST_ALLOCATOR);
     rc = decoder.decode(&isb, &e2);
     if (rc != 0) {
-        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages() 
-                                << NTSCFG_TEST_LOG_END;
+        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages()
+                              << NTSCFG_TEST_LOG_END;
 
         NTSCFG_TEST_EQ(rc, 0);
     }

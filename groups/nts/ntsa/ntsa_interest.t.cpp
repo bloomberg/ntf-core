@@ -28,7 +28,7 @@ namespace ntsa {
 // Provide tests for 'ntsa::Interest'.
 class InterestTest
 {
-public:
+  public:
     // TODO
     static void verifyCase1();
 
@@ -41,33 +41,32 @@ public:
     // TODO
     static void verifyCase4();
 
-private:
-    // Ensure the specified 'socket' is not found in the specified 
+  private:
+    // Ensure the specified 'socket' is not found in the specified
     // 'interestSet'.
-    static void ensureNotFound(
-        const ntsa::InterestSet& interestSet, ntsa::Handle socket);
+    static void ensureNotFound(const ntsa::InterestSet& interestSet,
+                               ntsa::Handle             socket);
 
     // Ensure the specified 'socket' is found in the specified 'interestSet'
     // but there is interest in neither readability nor writability.
-    static void ensureWantNone(
-        const ntsa::InterestSet& interestSet, ntsa::Handle socket);
+    static void ensureWantNone(const ntsa::InterestSet& interestSet,
+                               ntsa::Handle             socket);
 
     // Ensure the specified 'socket' is found in the specified 'interestSet'
     // with interest in readability but not writability.
-    static void ensureWantReadable(
-        const ntsa::InterestSet& interestSet, ntsa::Handle socket);
+    static void ensureWantReadable(const ntsa::InterestSet& interestSet,
+                                   ntsa::Handle             socket);
 
     // Ensure the specified 'socket' is found in the specified 'interestSet'
     // with interest in writability but not readability.
-    static void ensureWantWritable(
-        const ntsa::InterestSet& interestSet, ntsa::Handle socket);
+    static void ensureWantWritable(const ntsa::InterestSet& interestSet,
+                                   ntsa::Handle             socket);
 
     // Ensure the specified 'socket' is found in the specified 'interestSet' with
     // interest in both readability and writability.
-    static void ensureWantBoth(
-        const ntsa::InterestSet& interestSet, ntsa::Handle socket);
+    static void ensureWantBoth(const ntsa::InterestSet& interestSet,
+                               ntsa::Handle             socket);
 };
-
 
 NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase1)
 {
@@ -624,19 +623,18 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase4)
     interestSet.showWritable(k_SOCKET_D);
 
     NTSCFG_TEST_LOG_DEBUG << "Interest set = " << interestSet
-                            << NTSCFG_TEST_LOG_END;
+                          << NTSCFG_TEST_LOG_END;
 
     typedef bsl::vector<ntsa::Interest> InterestVector;
     InterestVector                      interestVector(NTSCFG_TEST_ALLOCATOR);
 
     for (ntsa::InterestSet::const_iterator it = interestSet.cbegin();
-            it != interestSet.cend();
-            ++it)
+         it != interestSet.cend();
+         ++it)
     {
         const ntsa::Interest& interest = *it;
 
-        NTSCFG_TEST_LOG_DEBUG << "Interest = " << *it
-                                << NTSCFG_TEST_LOG_END;
+        NTSCFG_TEST_LOG_DEBUG << "Interest = " << *it << NTSCFG_TEST_LOG_END;
 
         interestVector.push_back(interest);
     }
@@ -656,8 +654,8 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase4)
     NTSCFG_TEST_TRUE(interestVector[3].wantBoth());
 }
 
-void InterestTest::ensureNotFound(
-    const ntsa::InterestSet& interestSet, ntsa::Handle socket)
+void InterestTest::ensureNotFound(const ntsa::InterestSet& interestSet,
+                                  ntsa::Handle             socket)
 {
     NTSCFG_TEST_FALSE(interestSet.contains(socket));
 
@@ -666,8 +664,8 @@ void InterestTest::ensureNotFound(
     NTSCFG_TEST_FALSE(found);
 }
 
-void InterestTest::ensureWantNone(
-    const ntsa::InterestSet& interestSet, ntsa::Handle socket)
+void InterestTest::ensureWantNone(const ntsa::InterestSet& interestSet,
+                                  ntsa::Handle             socket)
 {
     NTSCFG_TEST_TRUE(interestSet.contains(socket));
 
@@ -690,8 +688,8 @@ void InterestTest::ensureWantNone(
     NTSCFG_TEST_TRUE(interestSet.wantNone(socket));
 }
 
-void InterestTest::ensureWantReadable(
-    const ntsa::InterestSet& interestSet, ntsa::Handle socket)
+void InterestTest::ensureWantReadable(const ntsa::InterestSet& interestSet,
+                                      ntsa::Handle             socket)
 {
     NTSCFG_TEST_TRUE(interestSet.contains(socket));
 
@@ -714,8 +712,8 @@ void InterestTest::ensureWantReadable(
     NTSCFG_TEST_FALSE(interestSet.wantNone(socket));
 }
 
-void InterestTest::ensureWantWritable(
-    const ntsa::InterestSet& interestSet, ntsa::Handle socket)
+void InterestTest::ensureWantWritable(const ntsa::InterestSet& interestSet,
+                                      ntsa::Handle             socket)
 {
     NTSCFG_TEST_TRUE(interestSet.contains(socket));
 
@@ -738,9 +736,8 @@ void InterestTest::ensureWantWritable(
     NTSCFG_TEST_FALSE(interestSet.wantNone(socket));
 }
 
-
-void InterestTest::ensureWantBoth(
-    const ntsa::InterestSet& interestSet, ntsa::Handle socket)
+void InterestTest::ensureWantBoth(const ntsa::InterestSet& interestSet,
+                                  ntsa::Handle             socket)
 {
     NTSCFG_TEST_TRUE(interestSet.contains(socket));
 

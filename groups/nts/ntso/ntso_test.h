@@ -37,8 +37,7 @@ namespace ntso {
 // This struct is thread safe.
 ///
 /// @ingroup module_ntso
-struct Test 
-{
+struct Test {
     /// Define a type alias for a vector of reactors.
     typedef bsl::vector<bsl::shared_ptr<ntsi::Reactor> > ReactorVector;
 
@@ -89,8 +88,8 @@ struct Test
     static void log(const ntsa::EventSet& eventSet);
 };
 
-inline
-void Test::usage(const ReactorVector& reactors, bslma::Allocator* allocator)
+inline void Test::usage(const ReactorVector& reactors,
+                        bslma::Allocator*    allocator)
 {
     // Concern:
     // Plan:
@@ -413,9 +412,8 @@ void Test::usage(const ReactorVector& reactors, bslma::Allocator* allocator)
     }
 }
 
-inline
-void Test::pollingAfterFullShutdown(const ReactorVector& reactors,
-                                    bslma::Allocator*    allocator)
+inline void Test::pollingAfterFullShutdown(const ReactorVector& reactors,
+                                           bslma::Allocator*    allocator)
 {
     // Concern: Polling after a socket has been shutdown for both reading and
     // writing after both sides have shutdown writing does not block.
@@ -804,9 +802,8 @@ void Test::pollingAfterFullShutdown(const ReactorVector& reactors,
     }
 }
 
-inline
-void Test::pollingAfterClose(const ReactorVector& reactors,
-                             bslma::Allocator*    allocator)
+inline void Test::pollingAfterClose(const ReactorVector& reactors,
+                                    bslma::Allocator*    allocator)
 {
     // Concern: Close socket while it still remains added to the reactor.
     // Polling the reactor times out.
@@ -1047,8 +1044,7 @@ void Test::pollingAfterClose(const ReactorVector& reactors,
     }
 }
 
-inline
-void Test::log(const bsl::vector<ntsa::Event>& eventSet)
+inline void Test::log(const bsl::vector<ntsa::Event>& eventSet)
 {
     for (bsl::size_t i = 0; i < eventSet.size(); ++i) {
         bsl::stringstream ss;
@@ -1058,11 +1054,10 @@ void Test::log(const bsl::vector<ntsa::Event>& eventSet)
     }
 }
 
-inline
-ntsa::Error Test::pair(bsl::shared_ptr<ntsi::StreamSocket>* client,
-                       bsl::shared_ptr<ntsi::StreamSocket>* server,
-                       ntsa::Transport::Value               type,
-                       bslma::Allocator*                    basicAllocator)
+inline ntsa::Error Test::pair(bsl::shared_ptr<ntsi::StreamSocket>* client,
+                              bsl::shared_ptr<ntsi::StreamSocket>* server,
+                              ntsa::Transport::Value               type,
+                              bslma::Allocator* basicAllocator)
 {
     ntsa::Error error;
 
@@ -1088,8 +1083,7 @@ ntsa::Error Test::pair(bsl::shared_ptr<ntsi::StreamSocket>* client,
     return ntsa::Error();
 }
 
-inline
-void Test::log(const ntsa::EventSet& eventSet)
+inline void Test::log(const ntsa::EventSet& eventSet)
 {
     for (ntsa::EventSet::const_iterator it = eventSet.cbegin();
          it != eventSet.cend();

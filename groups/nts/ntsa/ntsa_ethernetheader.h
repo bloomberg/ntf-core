@@ -76,19 +76,19 @@ class EthernetHeader
     /// construction.
     void reset();
 
-    /// Set the source address to the specified 'value'. 
+    /// Set the source address to the specified 'value'.
     void setSource(const ntsa::EthernetAddress& value);
 
-    /// Set the destination address to the specified 'value'. 
+    /// Set the destination address to the specified 'value'.
     void setDestination(const ntsa::EthernetAddress& value);
 
-    /// Set the protocol to the specified 'value'. 
+    /// Set the protocol to the specified 'value'.
     void setProtocol(ntsa::EthernetProtocol::Value value);
 
-    /// Return the source address. 
+    /// Return the source address.
     const ntsa::EthernetAddress& source() const;
 
-    /// Return the destination address. 
+    /// Return the destination address.
     const ntsa::EthernetAddress& destination() const;
 
     /// Return the protocol.
@@ -178,11 +178,10 @@ EthernetHeader::EthernetHeader()
 }
 
 NTSCFG_INLINE
-EthernetHeader::EthernetHeader(
-    bslmf::MovableRef<EthernetHeader> original) NTSCFG_NOEXCEPT
-: d_source(NTSCFG_MOVE_FROM(original, d_source))
-, d_destination(NTSCFG_MOVE_FROM(original, d_destination))
-, d_protocol(NTSCFG_MOVE_FROM(original, d_protocol))
+EthernetHeader::EthernetHeader(bslmf::MovableRef<EthernetHeader> original)
+    NTSCFG_NOEXCEPT : d_source(NTSCFG_MOVE_FROM(original, d_source)),
+                      d_destination(NTSCFG_MOVE_FROM(original, d_destination)),
+                      d_protocol(NTSCFG_MOVE_FROM(original, d_protocol))
 {
     NTSCFG_MOVE_RESET(original);
 }
@@ -216,9 +215,9 @@ EthernetHeader& EthernetHeader::operator=(
 NTSCFG_INLINE
 EthernetHeader& EthernetHeader::operator=(const EthernetHeader& other)
 {
-    d_source = other.d_source;
+    d_source      = other.d_source;
     d_destination = other.d_destination;
-    d_protocol = other.d_protocol;
+    d_protocol    = other.d_protocol;
     return *this;
 }
 
@@ -300,7 +299,7 @@ bool operator<(const EthernetHeader& lhs, const EthernetHeader& rhs)
 }
 
 template <typename HASH_ALGORITHM>
-NTSCFG_INLINE void hashAppend(HASH_ALGORITHM&    algorithm,
+NTSCFG_INLINE void hashAppend(HASH_ALGORITHM&       algorithm,
                               const EthernetHeader& value)
 {
     value.hash(algorithm);

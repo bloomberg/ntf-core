@@ -19,12 +19,12 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <bdlat_typetraits.h>
-#include <bdlat_enumeratorinfo.h>
-#include <bdlat_enumfunctions.h>
 #include <ntsa_ipaddresstype.h>
 #include <ntscfg_platform.h>
 #include <ntsscm_version.h>
+#include <bdlat_enumeratorinfo.h>
+#include <bdlat_enumfunctions.h>
+#include <bdlat_typetraits.h>
 
 namespace BloombergLP {
 namespace ntsa {

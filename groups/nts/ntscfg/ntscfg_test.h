@@ -10,18 +10,18 @@ BSLS_IDENT("$Id: $")
 #include <bdlb_string.h>
 #include <bdlb_stringrefutil.h>
 #include <bdlbb_blob.h>
-#include <bdlbb_blobutil.h>
 #include <bdlbb_blobstreambuf.h>
+#include <bdlbb_blobutil.h>
 #include <bdlbb_pooledblobbufferfactory.h>
 #include <bdlbb_simpleblobbufferfactory.h>
 #include <bdlf_bind.h>
 #include <bdlf_memfn.h>
 #include <bdlf_placeholder.h>
-#include <bdlsb_memoutstreambuf.h>
-#include <bdlsb_fixedmeminstreambuf.h>
 #include <bdls_filesystemutil.h>
 #include <bdls_pathutil.h>
 #include <bdls_processutil.h>
+#include <bdlsb_fixedmeminstreambuf.h>
+#include <bdlsb_memoutstreambuf.h>
 #include <bdlt_currenttime.h>
 #include <bdlt_datetime.h>
 #include <bdlt_epochutil.h>
@@ -35,8 +35,8 @@ BSLS_IDENT("$Id: $")
 #include <bslmt_lockguard.h>
 #include <bslmt_mutex.h>
 #include <bslmt_semaphore.h>
-#include <bslmt_threadutil.h>
 #include <bslmt_threadgroup.h>
+#include <bslmt_threadutil.h>
 #include <bsls_assert.h>
 #include <bsls_atomic.h>
 #include <bsls_log.h>
@@ -49,8 +49,8 @@ BSLS_IDENT("$Id: $")
 #include <bsl_cstdio.h>
 #include <bsl_cstdlib.h>
 #include <bsl_cstring.h>
-#include <bsl_functional.h>
 #include <bsl_fstream.h>
+#include <bsl_functional.h>
 #include <bsl_iomanip.h>
 #include <bsl_iostream.h>
 #include <bsl_list.h>
@@ -132,12 +132,11 @@ class TestCaseContext
 
     /// This type accepts an allocator argument to its constructors and may
     /// dynamically allocate memory during its operation.
-    BSLALG_DECLARE_NESTED_TRAITS(TestCaseContext, 
+    BSLALG_DECLARE_NESTED_TRAITS(TestCaseContext,
                                  bslalg::TypeTraitUsesBslmaAllocator);
 };
 
-inline
-TestCaseContext::TestCaseContext(bslma::Allocator* basicAllocator)
+inline TestCaseContext::TestCaseContext(bslma::Allocator* basicAllocator)
 : d_number(0)
 , d_name(basicAllocator ? basicAllocator : bslma::Default::globalAllocator())
 , d_function(
@@ -146,9 +145,8 @@ TestCaseContext::TestCaseContext(bslma::Allocator* basicAllocator)
 {
 }
 
-inline
-TestCaseContext::TestCaseContext(const TestCaseContext& original,
-                                 bslma::Allocator*      basicAllocator)
+inline TestCaseContext::TestCaseContext(const TestCaseContext& original,
+                                        bslma::Allocator*      basicAllocator)
 : d_number(original.d_number)
 , d_name(original.d_name,
          basicAllocator ? basicAllocator : bslma::Default::globalAllocator())
@@ -159,50 +157,42 @@ TestCaseContext::TestCaseContext(const TestCaseContext& original,
 {
 }
 
-inline
-TestCaseContext::~TestCaseContext()
+inline TestCaseContext::~TestCaseContext()
 {
 }
 
-inline
-void TestCaseContext::setNumber(int value)
+inline void TestCaseContext::setNumber(int value)
 {
     d_number = value;
 }
 
-inline
-void TestCaseContext::setName(const bsl::string& value)
+inline void TestCaseContext::setName(const bsl::string& value)
 {
     d_name = value;
 }
 
-inline
-void TestCaseContext::setFunction(const bsl::function<void()>& value)
+inline void TestCaseContext::setFunction(const bsl::function<void()>& value)
 {
     d_function = value;
 }
 
-inline
-void TestCaseContext::execute()
+inline void TestCaseContext::execute()
 {
     BSLS_LOG_INFO("Testing: %s", d_name.c_str());
     d_function();
 }
 
-inline
-int TestCaseContext::number() const
+inline int TestCaseContext::number() const
 {
     return d_number;
 }
 
-inline
-const bsl::string& TestCaseContext::name() const
+inline const bsl::string& TestCaseContext::name() const
 {
     return d_name;
 }
 
-inline
-bool TestCaseContext::isDefined() const
+inline bool TestCaseContext::isDefined() const
 {
     if (d_function) {
         return true;
@@ -257,31 +247,26 @@ class TestAllocator : public bslma::Allocator
     bsl::int64_t numBlocksInUse() const;
 };
 
-inline
-TestAllocator::TestAllocator()
+inline TestAllocator::TestAllocator()
 : d_base(64)
 {
 }
 
-inline
-TestAllocator::~TestAllocator()
+inline TestAllocator::~TestAllocator()
 {
 }
 
-inline
-void* TestAllocator::allocate(size_type size)
+inline void* TestAllocator::allocate(size_type size)
 {
     return d_base.allocate(size);
 }
 
-inline
-void TestAllocator::deallocate(void* address)
+inline void TestAllocator::deallocate(void* address)
 {
     d_base.deallocate(address);
 }
 
-inline
-bsl::int64_t TestAllocator::numBlocksInUse() const
+inline bsl::int64_t TestAllocator::numBlocksInUse() const
 {
     // Intentionally report 0 blocks in use and assert in the destructor.
     return 0;
@@ -337,31 +322,26 @@ class TestAllocator : public bslma::Allocator
     bsl::int64_t numBlocksInUse() const;
 };
 
-inline
-TestAllocator::TestAllocator()
+inline TestAllocator::TestAllocator()
 : d_base()
 {
 }
 
-inline
-TestAllocator::~TestAllocator()
+inline TestAllocator::~TestAllocator()
 {
 }
 
-inline
-void* TestAllocator::allocate(size_type size)
+inline void* TestAllocator::allocate(size_type size)
 {
     return d_base.allocate(size);
 }
 
-inline
-void TestAllocator::deallocate(void* address)
+inline void TestAllocator::deallocate(void* address)
 {
     d_base.deallocate(address);
 }
 
-inline
-bsl::int64_t TestAllocator::numBlocksInUse() const
+inline bsl::int64_t TestAllocator::numBlocksInUse() const
 {
     return d_base.numBlocksInUse();
 }
@@ -403,8 +383,7 @@ class TestLog
                                 const char*             message);
 };
 
-inline
-TestLog::TestLog(int verbosity, bslma::Allocator* basicAllocator)
+inline TestLog::TestLog(int verbosity, bslma::Allocator* basicAllocator)
 : d_allocator_p(basicAllocator ? basicAllocator
                                : bslma::Default::globalAllocator())
 , d_manager_p(0)
@@ -452,8 +431,7 @@ TestLog::TestLog(int verbosity, bslma::Allocator* basicAllocator)
     BSLS_ASSERT_OPT(rc == 0);
 }
 
-inline
-TestLog::~TestLog()
+inline TestLog::~TestLog()
 {
     // Do not explicitly shut down the logger singleton becuase it must
     // remain alive during the execution of static destructors.
@@ -539,9 +517,9 @@ void TestLog::printLogMessage(bsls::LogSeverity::Enum severity,
 ///
 /// @par Thread Safety
 /// This class is thread safe.
-class TestDataUtil 
+class TestDataUtil
 {
-public:
+  public:
     /// Return the byte at the specified 'position' in the specified
     /// 'dataset'.
     static char generateByte(bsl::size_t position, bsl::size_t dataset);
@@ -563,8 +541,8 @@ public:
                              bsl::size_t  dataset = 0);
 };
 
-inline
-char TestDataUtil::generateByte(bsl::size_t position, bsl::size_t dataset)
+inline char TestDataUtil::generateByte(bsl::size_t position,
+                                       bsl::size_t dataset)
 {
     struct {
         const char* source;
@@ -580,11 +558,10 @@ char TestDataUtil::generateByte(bsl::size_t position, bsl::size_t dataset)
     return DATA[dataset].source[position % DATA[dataset].length];
 }
 
-inline
-void TestDataUtil::generateData(bsl::string* result,
-                                bsl::size_t  size,
-                                bsl::size_t  offset,
-                                bsl::size_t  dataset)
+inline void TestDataUtil::generateData(bsl::string* result,
+                                       bsl::size_t  size,
+                                       bsl::size_t  offset,
+                                       bsl::size_t  dataset)
 {
     result->clear();
     result->resize(size);
@@ -594,11 +571,10 @@ void TestDataUtil::generateData(bsl::string* result,
     }
 }
 
-inline
-void TestDataUtil::generateData(bdlbb::Blob* result,
-                                bsl::size_t  size,
-                                bsl::size_t  offset,
-                                bsl::size_t  dataset)
+inline void TestDataUtil::generateData(bdlbb::Blob* result,
+                                       bsl::size_t  size,
+                                       bsl::size_t  offset,
+                                       bsl::size_t  dataset)
 {
     result->removeAll();
     result->setLength(static_cast<int>(size));

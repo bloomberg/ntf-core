@@ -57,7 +57,7 @@ NTSCFG_TEST_FUNCTION(ntsa::IdTest::verify)
 
     ntsa::Id id1(ntsa::Id::generate());
     NTSCFG_TEST_EQ(static_cast<int>(id1), 1);
-    
+
     {
         bsl::ostringstream ss;
         ss << id1;

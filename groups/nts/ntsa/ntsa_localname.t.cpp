@@ -272,8 +272,7 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase4)
     {
         ntsa::LocalName localName;
         NTSCFG_TEST_OK(localName.setAbstract());
-        NTSCFG_TEST_ERROR(localName.setValue(ss.str()),
-                          ntsa::Error::e_LIMIT);
+        NTSCFG_TEST_ERROR(localName.setValue(ss.str()), ntsa::Error::e_LIMIT);
     }
     {
         ntsa::LocalName localName;
@@ -284,8 +283,7 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase4)
     {
         ntsa::LocalName localName;
         NTSCFG_TEST_OK(localName.setValue(ss.str()));
-        NTSCFG_TEST_ERROR(localName.setAbstract(),
-                          ntsa::Error::e_LIMIT);
+        NTSCFG_TEST_ERROR(localName.setAbstract(), ntsa::Error::e_LIMIT);
     }
 #endif
 
@@ -388,7 +386,7 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase5)
 NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase6)
 {
     int rc;
-    
+
     ntsa::LocalName e1;
     e1.setValue("/tmp/ntf/test");
 
@@ -399,8 +397,8 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase6)
     balber::BerEncoder encoder(0, NTSCFG_TEST_ALLOCATOR);
     rc = encoder.encode(&osb, e1);
     if (rc != 0) {
-        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages() 
-                            << NTSCFG_TEST_LOG_END;
+        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages()
+                              << NTSCFG_TEST_LOG_END;
 
         NTSCFG_TEST_EQ(rc, 0);
     }
@@ -411,19 +409,19 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase6)
     NTSCFG_TEST_GT(osb.length(), 0);
     NTSCFG_TEST_NE(osb.data(), 0);
 
-    NTSCFG_TEST_LOG_DEBUG << "Encoded:\n" 
-                            << bdlb::PrintStringHexDumper(
-                                osb.data(), 
-                                static_cast<bsl::size_t>(osb.length())) 
-                            << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Encoded:\n"
+                          << bdlb::PrintStringHexDumper(
+                                 osb.data(),
+                                 static_cast<bsl::size_t>(osb.length()))
+                          << NTSCFG_TEST_LOG_END;
 
     bdlsb::FixedMemInStreamBuf isb(osb.data(), osb.length());
 
     balber::BerDecoder decoder(0, NTSCFG_TEST_ALLOCATOR);
     rc = decoder.decode(&isb, &e2);
     if (rc != 0) {
-        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages() 
-                            << NTSCFG_TEST_LOG_END;
+        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages()
+                              << NTSCFG_TEST_LOG_END;
 
         NTSCFG_TEST_EQ(rc, 0);
     }
@@ -448,8 +446,8 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase7)
     baljsn::Encoder encoder(NTSCFG_TEST_ALLOCATOR);
     rc = encoder.encode(&osb, e1);
     if (rc != 0) {
-        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages() 
-                            << NTSCFG_TEST_LOG_END;
+        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages()
+                              << NTSCFG_TEST_LOG_END;
 
         NTSCFG_TEST_EQ(rc, 0);
     }
@@ -460,19 +458,19 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase7)
     NTSCFG_TEST_GT(osb.length(), 0);
     NTSCFG_TEST_NE(osb.data(), 0);
 
-    NTSCFG_TEST_LOG_DEBUG << "Encoded: " 
-                            << bsl::string_view(
-                                osb.data(), 
-                                static_cast<bsl::size_t>(osb.length())) 
-                            << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Encoded: "
+                          << bsl::string_view(
+                                 osb.data(),
+                                 static_cast<bsl::size_t>(osb.length()))
+                          << NTSCFG_TEST_LOG_END;
 
     bdlsb::FixedMemInStreamBuf isb(osb.data(), osb.length());
 
     baljsn::Decoder decoder(NTSCFG_TEST_ALLOCATOR);
     rc = decoder.decode(&isb, &e2);
     if (rc != 0) {
-        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages() 
-                            << NTSCFG_TEST_LOG_END;
+        NTSCFG_TEST_LOG_DEBUG << encoder.loggedMessages()
+                              << NTSCFG_TEST_LOG_END;
 
         NTSCFG_TEST_EQ(rc, 0);
     }

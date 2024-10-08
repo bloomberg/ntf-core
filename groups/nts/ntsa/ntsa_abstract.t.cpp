@@ -87,8 +87,8 @@ class AbstractTest
 
     struct HardwareIntegerEncodingData {
         HardwareIntegerEncodingData(const bsl::uint8_t* data,
-                    bsl::size_t         size,
-                    bsl::int64_t        value)
+                                    bsl::size_t         size,
+                                    bsl::int64_t        value)
         : d_encoding(data, data + size)
         , d_value(value)
         {
@@ -98,11 +98,10 @@ class AbstractTest
         bsl::int64_t              d_value;
     };
 
-
     struct SoftwareIntegerEncodingData {
         SoftwareIntegerEncodingData(const bsl::uint8_t* data,
-                    bsl::size_t         size,
-                    bsl::string         value)
+                                    bsl::size_t         size,
+                                    bsl::string         value)
         : d_encoding(data, data + size)
         , d_value(value)
         {
@@ -212,9 +211,6 @@ class AbstractTest
                               << "\nE: " << ess.str() << "\nF: " << fss.str() \
                               << NTSCFG_TEST_LOG_END;                         \
     } while (false)
-
-
-
 
 void AbstractTest::loadUnsignedIntegerData(UnsignedIntegerDataVector* result)
 {
@@ -417,17 +413,14 @@ void AbstractTest::verifyRepresentation()
 
 void AbstractTest::verifyDecoderUtilityTag()
 {
-
 }
 
 void AbstractTest::verifyDecoderUtilityLength()
 {
-
 }
 
 void AbstractTest::verifyDecoderUtilityInteger()
 {
-
 }
 
 void AbstractTest::verifyDecoderUtilityDatetime()
@@ -948,7 +941,6 @@ NTSCFG_TEST_FUNCTION(ntsa::AbstractTest::verifyUnsignedIntegerDivide)
 
 NTSCFG_TEST_FUNCTION(ntsa::AbstractTest::verifyUnsignedIntegerFacilities)
 {
-
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::AbstractTest::verifySignedIntegerAdd)
@@ -1175,7 +1167,6 @@ NTSCFG_TEST_FUNCTION(ntsa::AbstractTest::verifySignedIntegerFacilities)
     }
 }
 
-
 NTSCFG_TEST_FUNCTION(ntsa::AbstractTest::verifyDecoderUtility)
 {
     verifyDecoderUtilityTag();
@@ -1197,7 +1188,7 @@ NTSCFG_TEST_FUNCTION(ntsa::AbstractTest::verifyHardwareIntegerCodec)
     ntsa::Error error;
 
     typedef HardwareIntegerEncodingData EncodingData;
-    bsl::vector<EncodingData> dataVector;
+    bsl::vector<EncodingData>           dataVector;
 
     {
         // CONSTRUCTED { INTEGER(0) }
@@ -1279,13 +1270,13 @@ NTSCFG_TEST_FUNCTION(ntsa::AbstractTest::verifyHardwareIntegerCodec)
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_LOG_DEBUG << "Context = " << contextOuter
-                                    << NTSCFG_TEST_LOG_END;
+                                  << NTSCFG_TEST_LOG_END;
 
             NTSCFG_TEST_EQ(contextOuter.tagClass(),
-                            ntsa::AbstractSyntaxTagClass::e_UNIVERSAL);
+                           ntsa::AbstractSyntaxTagClass::e_UNIVERSAL);
 
             NTSCFG_TEST_EQ(contextOuter.tagType(),
-                            ntsa::AbstractSyntaxTagType::e_CONSTRUCTED);
+                           ntsa::AbstractSyntaxTagType::e_CONSTRUCTED);
 
             NTSCFG_TEST_EQ(contextOuter.contentLength().has_value(), true);
 
@@ -1295,24 +1286,22 @@ NTSCFG_TEST_FUNCTION(ntsa::AbstractTest::verifyHardwareIntegerCodec)
                 NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_LOG_DEBUG << "Context = " << contextInner
-                                        << NTSCFG_TEST_LOG_END;
+                                      << NTSCFG_TEST_LOG_END;
 
                 NTSCFG_TEST_EQ(contextInner.tagClass(),
-                                ntsa::AbstractSyntaxTagClass::e_UNIVERSAL);
+                               ntsa::AbstractSyntaxTagClass::e_UNIVERSAL);
 
                 NTSCFG_TEST_EQ(contextInner.tagType(),
-                                ntsa::AbstractSyntaxTagType::e_PRIMITIVE);
+                               ntsa::AbstractSyntaxTagType::e_PRIMITIVE);
 
-                NTSCFG_TEST_EQ(contextInner.contentLength().has_value(),
-                                true);
+                NTSCFG_TEST_EQ(contextInner.contentLength().has_value(), true);
 
-                bsl::int32_t value =
-                    bsl::numeric_limits<bsl::int32_t>::max();
-                error = decoder.decodeValue(&value);
+                bsl::int32_t value = bsl::numeric_limits<bsl::int32_t>::max();
+                error              = decoder.decodeValue(&value);
                 NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_LOG_DEBUG << "Value = " << value
-                                        << NTSCFG_TEST_LOG_END;
+                                      << NTSCFG_TEST_LOG_END;
 
                 NTSCFG_TEST_EQ(value, data.d_value);
 
@@ -1328,16 +1317,14 @@ NTSCFG_TEST_FUNCTION(ntsa::AbstractTest::verifyHardwareIntegerCodec)
 
         ntsa::AbstractSyntaxEncoder encoder(&osb, NTSCFG_TEST_ALLOCATOR);
 
-        error =
-            encoder.encodeTag(ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
-                                ntsa::AbstractSyntaxTagType::e_CONSTRUCTED,
-                                ntsa::AbstractSyntaxTagNumber::e_SEQUENCE);
+        error = encoder.encodeTag(ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
+                                  ntsa::AbstractSyntaxTagType::e_CONSTRUCTED,
+                                  ntsa::AbstractSyntaxTagNumber::e_SEQUENCE);
         NTSCFG_TEST_OK(error);
 
-        error =
-            encoder.encodeTag(ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
-                                ntsa::AbstractSyntaxTagType::e_PRIMITIVE,
-                                ntsa::AbstractSyntaxTagNumber::e_INTEGER);
+        error = encoder.encodeTag(ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
+                                  ntsa::AbstractSyntaxTagType::e_PRIMITIVE,
+                                  ntsa::AbstractSyntaxTagNumber::e_INTEGER);
         NTSCFG_TEST_OK(error);
 
         error = encoder.encodeValue(data.d_value);
@@ -1354,14 +1341,13 @@ NTSCFG_TEST_FUNCTION(ntsa::AbstractTest::verifyHardwareIntegerCodec)
 
         bsl::vector<bsl::uint8_t> encoding(
             reinterpret_cast<const bsl::uint8_t*>(osb.data()),
-            reinterpret_cast<const bsl::uint8_t*>(osb.data()) +
-                osb.length());
+            reinterpret_cast<const bsl::uint8_t*>(osb.data()) + osb.length());
 
         bool sameEncoding = encoding == data.d_encoding;
         if (!sameEncoding) {
             NTSA_ABSTRACT_TEST_LOG_ENCODING_MISMATCH(data.d_value,
-                                                        data.d_encoding,
-                                                        encoding);
+                                                     data.d_encoding,
+                                                     encoding);
         }
 
         NTSCFG_TEST_TRUE(sameEncoding);
@@ -1373,7 +1359,7 @@ NTSCFG_TEST_FUNCTION(ntsa::AbstractTest::verifySoftwareIntegerCodec)
     ntsa::Error error;
 
     typedef SoftwareIntegerEncodingData EncodingData;
-    bsl::vector<EncodingData> dataVector;
+    bsl::vector<EncodingData>           dataVector;
 
     {
         // CONSTRUCTED { INTEGER(0) }
@@ -1429,8 +1415,7 @@ NTSCFG_TEST_FUNCTION(ntsa::AbstractTest::verifySoftwareIntegerCodec)
         const bsl::uint8_t k_DER[] =
             {0x30, 0x06, 0x02, 0x04, 0x00, 0xb6, 0x00, 0x00};
 
-        dataVector.push_back(
-            EncodingData(k_DER, sizeof k_DER, "11927552"));
+        dataVector.push_back(EncodingData(k_DER, sizeof k_DER, "11927552"));
     }
 
     {
@@ -1438,8 +1423,7 @@ NTSCFG_TEST_FUNCTION(ntsa::AbstractTest::verifySoftwareIntegerCodec)
         const bsl::uint8_t k_DER[] =
             {0x30, 0x06, 0x02, 0x04, 0xff, 0x4a, 0x00, 0x00};
 
-        dataVector.push_back(
-            EncodingData(k_DER, sizeof k_DER, "-11927552"));
+        dataVector.push_back(EncodingData(k_DER, sizeof k_DER, "-11927552"));
     }
 
     for (bsl::size_t i = 0; i < dataVector.size(); ++i) {
@@ -1459,13 +1443,13 @@ NTSCFG_TEST_FUNCTION(ntsa::AbstractTest::verifySoftwareIntegerCodec)
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_LOG_DEBUG << "Context = " << contextOuter
-                                    << NTSCFG_TEST_LOG_END;
+                                  << NTSCFG_TEST_LOG_END;
 
             NTSCFG_TEST_EQ(contextOuter.tagClass(),
-                            ntsa::AbstractSyntaxTagClass::e_UNIVERSAL);
+                           ntsa::AbstractSyntaxTagClass::e_UNIVERSAL);
 
             NTSCFG_TEST_EQ(contextOuter.tagType(),
-                            ntsa::AbstractSyntaxTagType::e_CONSTRUCTED);
+                           ntsa::AbstractSyntaxTagType::e_CONSTRUCTED);
 
             NTSCFG_TEST_EQ(contextOuter.contentLength().has_value(), true);
 
@@ -1475,26 +1459,25 @@ NTSCFG_TEST_FUNCTION(ntsa::AbstractTest::verifySoftwareIntegerCodec)
                 NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_LOG_DEBUG << "Context = " << contextInner
-                                        << NTSCFG_TEST_LOG_END;
+                                      << NTSCFG_TEST_LOG_END;
 
                 NTSCFG_TEST_EQ(contextInner.tagClass(),
-                                ntsa::AbstractSyntaxTagClass::e_UNIVERSAL);
+                               ntsa::AbstractSyntaxTagClass::e_UNIVERSAL);
 
                 NTSCFG_TEST_EQ(contextInner.tagType(),
-                                ntsa::AbstractSyntaxTagType::e_PRIMITIVE);
+                               ntsa::AbstractSyntaxTagType::e_PRIMITIVE);
 
-                NTSCFG_TEST_EQ(contextInner.contentLength().has_value(),
-                                true);
+                NTSCFG_TEST_EQ(contextInner.contentLength().has_value(), true);
 
                 error = decoder.decodeValue(&value);
                 NTSCFG_TEST_OK(error);
 
                 bsl::string valueString;
                 value.generate(&valueString,
-                                ntsa::AbstractIntegerBase::e_DECIMAL);
+                               ntsa::AbstractIntegerBase::e_DECIMAL);
 
                 NTSCFG_TEST_LOG_DEBUG << "Value = " << valueString
-                                        << NTSCFG_TEST_LOG_END;
+                                      << NTSCFG_TEST_LOG_END;
 
                 NTSCFG_TEST_EQ(valueString, data.d_value);
 
@@ -1510,16 +1493,14 @@ NTSCFG_TEST_FUNCTION(ntsa::AbstractTest::verifySoftwareIntegerCodec)
 
         ntsa::AbstractSyntaxEncoder encoder(&osb, NTSCFG_TEST_ALLOCATOR);
 
-        error =
-            encoder.encodeTag(ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
-                                ntsa::AbstractSyntaxTagType::e_CONSTRUCTED,
-                                ntsa::AbstractSyntaxTagNumber::e_SEQUENCE);
+        error = encoder.encodeTag(ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
+                                  ntsa::AbstractSyntaxTagType::e_CONSTRUCTED,
+                                  ntsa::AbstractSyntaxTagNumber::e_SEQUENCE);
         NTSCFG_TEST_OK(error);
 
-        error =
-            encoder.encodeTag(ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
-                                ntsa::AbstractSyntaxTagType::e_PRIMITIVE,
-                                ntsa::AbstractSyntaxTagNumber::e_INTEGER);
+        error = encoder.encodeTag(ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
+                                  ntsa::AbstractSyntaxTagType::e_PRIMITIVE,
+                                  ntsa::AbstractSyntaxTagNumber::e_INTEGER);
         NTSCFG_TEST_OK(error);
 
         error = encoder.encodeValue(value);
@@ -1536,14 +1517,13 @@ NTSCFG_TEST_FUNCTION(ntsa::AbstractTest::verifySoftwareIntegerCodec)
 
         bsl::vector<bsl::uint8_t> encoding(
             reinterpret_cast<const bsl::uint8_t*>(osb.data()),
-            reinterpret_cast<const bsl::uint8_t*>(osb.data()) +
-                osb.length());
+            reinterpret_cast<const bsl::uint8_t*>(osb.data()) + osb.length());
 
         bool sameEncoding = encoding == data.d_encoding;
         if (!sameEncoding) {
             NTSA_ABSTRACT_TEST_LOG_ENCODING_MISMATCH(value,
-                                                        data.d_encoding,
-                                                        encoding);
+                                                     data.d_encoding,
+                                                     encoding);
         }
 
         NTSCFG_TEST_TRUE(sameEncoding);
@@ -1555,14 +1535,12 @@ NTSCFG_TEST_FUNCTION(ntsa::AbstractTest::verifyObjectIdentifier)
     ntsa::Error error;
 
     const bsl::uint8_t k_ENCODING[] = {
-        0x06, 0x21, 0x2a, 0x03, 0x04, 0x81, 0x7e, 0x81, 0x7f,
-        0x82, 0x00, 0x83, 0xff, 0x7e, 0x83, 0xff, 0x7f, 0x84,
-        0x80, 0x00, 0x8f, 0xff, 0xff, 0xff, 0x7e, 0x8f, 0xff,
-        0xff, 0xff, 0x7f, 0x90, 0x80, 0x80, 0x80, 0x00};
+        0x06, 0x21, 0x2a, 0x03, 0x04, 0x81, 0x7e, 0x81, 0x7f, 0x82, 0x00, 0x83,
+        0xff, 0x7e, 0x83, 0xff, 0x7f, 0x84, 0x80, 0x00, 0x8f, 0xff, 0xff, 0xff,
+        0x7e, 0x8f, 0xff, 0xff, 0xff, 0x7f, 0x90, 0x80, 0x80, 0x80, 0x00};
 
-    bdlsb::FixedMemInStreamBuf isb(
-        reinterpret_cast<const char*>(k_ENCODING),
-        sizeof k_ENCODING);
+    bdlsb::FixedMemInStreamBuf isb(reinterpret_cast<const char*>(k_ENCODING),
+                                   sizeof k_ENCODING);
 
     ntsa::AbstractSyntaxDecoder decoder(&isb, NTSCFG_TEST_ALLOCATOR);
 
@@ -1573,13 +1551,13 @@ NTSCFG_TEST_FUNCTION(ntsa::AbstractTest::verifyObjectIdentifier)
     NTSCFG_TEST_OK(error);
 
     NTSCFG_TEST_LOG_DEBUG << "Context = " << decoderFrame
-                            << NTSCFG_TEST_LOG_END;
+                          << NTSCFG_TEST_LOG_END;
 
     NTSCFG_TEST_EQ(decoderFrame.tagClass(),
-                    ntsa::AbstractSyntaxTagClass::e_UNIVERSAL);
+                   ntsa::AbstractSyntaxTagClass::e_UNIVERSAL);
 
     NTSCFG_TEST_EQ(decoderFrame.tagType(),
-                    ntsa::AbstractSyntaxTagType::e_PRIMITIVE);
+                   ntsa::AbstractSyntaxTagType::e_PRIMITIVE);
 
     NTSCFG_TEST_EQ(decoderFrame.contentLength().has_value(), true);
 
@@ -1611,10 +1589,10 @@ NTSCFG_TEST_FUNCTION(ntsa::AbstractTest::verifyObjectIdentifier)
 
     ntsa::AbstractSyntaxEncoder encoder(&osb, NTSCFG_TEST_ALLOCATOR);
 
-    error = encoder.encodeTag(
-        ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
-        ntsa::AbstractSyntaxTagType::e_PRIMITIVE,
-        ntsa::AbstractSyntaxTagNumber::e_OBJECT_IDENTIFIER);
+    error =
+        encoder.encodeTag(ntsa::AbstractSyntaxTagClass::e_UNIVERSAL,
+                          ntsa::AbstractSyntaxTagType::e_PRIMITIVE,
+                          ntsa::AbstractSyntaxTagNumber::e_OBJECT_IDENTIFIER);
     NTSCFG_TEST_OK(error);
 
     error = encoder.encodeValue(value);
@@ -1632,14 +1610,13 @@ NTSCFG_TEST_FUNCTION(ntsa::AbstractTest::verifyObjectIdentifier)
 
     bsl::vector<bsl::uint8_t> expectedEncoding(
         reinterpret_cast<const bsl::uint8_t*>(k_ENCODING),
-        reinterpret_cast<const bsl::uint8_t*>(k_ENCODING) +
-            sizeof k_ENCODING);
+        reinterpret_cast<const bsl::uint8_t*>(k_ENCODING) + sizeof k_ENCODING);
 
     bool sameEncoding = encoding == expectedEncoding;
     if (!sameEncoding) {
         NTSA_ABSTRACT_TEST_LOG_ENCODING_MISMATCH(value,
-                                                    expectedEncoding,
-                                                    encoding);
+                                                 expectedEncoding,
+                                                 encoding);
     }
 
     NTSCFG_TEST_TRUE(sameEncoding);

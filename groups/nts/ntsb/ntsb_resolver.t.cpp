@@ -70,80 +70,80 @@ class ResolverTest
     static bsl::string makeEndpointSpecifier(const bsl::string& host,
                                              const bsl::string& port);
 
-    static bsl::string makeEndpointSpecifier(
-        const bsl::string& host, ntsa::Port port);
+    static bsl::string makeEndpointSpecifier(const bsl::string& host,
+                                             ntsa::Port         port);
 
     static bsl::string makeEndpointSpecifier(const ntsa::Ipv4Address& host);
 
     static bsl::string makeEndpointSpecifier(const ntsa::Ipv4Address& host,
-                                  const bsl::string&       port);
+                                             const bsl::string&       port);
 
     static bsl::string makeEndpointSpecifier(const ntsa::Ipv4Address& host,
-                                  ntsa::Port               port);
+                                             ntsa::Port               port);
 
     static bsl::string makeEndpointSpecifier(const ntsa::Ipv6Address& host);
 
     static bsl::string makeEndpointSpecifier(const ntsa::Ipv6Address& host,
-                                  const bsl::string&       port);
+                                             const bsl::string&       port);
 
     static bsl::string makeEndpointSpecifier(const ntsa::Ipv6Address& host,
-                                  ntsa::Port               port);
+                                             ntsa::Port               port);
 
     static ntsa::Error getEndpoint(ntsb::Resolver*              resolver,
-                        ntsa::Endpoint*              endpoint,
-                        const ntsa::EndpointOptions& options,
-                        ntsa::Port                   port);
+                                   ntsa::Endpoint*              endpoint,
+                                   const ntsa::EndpointOptions& options,
+                                   ntsa::Port                   port);
 
     static ntsa::Error getEndpoint(ntsb::Resolver*              resolver,
-                        ntsa::Endpoint*              endpoint,
-                        const ntsa::EndpointOptions& options,
-                        const bsl::string&           host);
+                                   ntsa::Endpoint*              endpoint,
+                                   const ntsa::EndpointOptions& options,
+                                   const bsl::string&           host);
 
     static ntsa::Error getEndpoint(ntsb::Resolver*              resolver,
-                        ntsa::Endpoint*              endpoint,
-                        const ntsa::EndpointOptions& options,
-                        const bsl::string&           host,
-                        const bsl::string&           port);
+                                   ntsa::Endpoint*              endpoint,
+                                   const ntsa::EndpointOptions& options,
+                                   const bsl::string&           host,
+                                   const bsl::string&           port);
 
     static ntsa::Error getEndpoint(ntsb::Resolver*              resolver,
-                        ntsa::Endpoint*              endpoint,
-                        const ntsa::EndpointOptions& options,
-                        const bsl::string&           host,
-                        ntsa::Port                   port);
+                                   ntsa::Endpoint*              endpoint,
+                                   const ntsa::EndpointOptions& options,
+                                   const bsl::string&           host,
+                                   ntsa::Port                   port);
 
     static ntsa::Error getEndpoint(ntsb::Resolver*              resolver,
-                        ntsa::Endpoint*              endpoint,
-                        const ntsa::EndpointOptions& options,
-                        const ntsa::Ipv4Address&     host);
+                                   ntsa::Endpoint*              endpoint,
+                                   const ntsa::EndpointOptions& options,
+                                   const ntsa::Ipv4Address&     host);
 
     static ntsa::Error getEndpoint(ntsb::Resolver*              resolver,
-                        ntsa::Endpoint*              endpoint,
-                        const ntsa::EndpointOptions& options,
-                        const ntsa::Ipv4Address&     host,
-                        const bsl::string&           port);
+                                   ntsa::Endpoint*              endpoint,
+                                   const ntsa::EndpointOptions& options,
+                                   const ntsa::Ipv4Address&     host,
+                                   const bsl::string&           port);
 
     static ntsa::Error getEndpoint(ntsb::Resolver*              resolver,
-                        ntsa::Endpoint*              endpoint,
-                        const ntsa::EndpointOptions& options,
-                        const ntsa::Ipv4Address&     host,
-                        ntsa::Port                   port);
+                                   ntsa::Endpoint*              endpoint,
+                                   const ntsa::EndpointOptions& options,
+                                   const ntsa::Ipv4Address&     host,
+                                   ntsa::Port                   port);
 
     static ntsa::Error getEndpoint(ntsb::Resolver*              resolver,
-                        ntsa::Endpoint*              endpoint,
-                        const ntsa::EndpointOptions& options,
-                        const ntsa::Ipv6Address&     host);
+                                   ntsa::Endpoint*              endpoint,
+                                   const ntsa::EndpointOptions& options,
+                                   const ntsa::Ipv6Address&     host);
 
     static ntsa::Error getEndpoint(ntsb::Resolver*              resolver,
-                        ntsa::Endpoint*              endpoint,
-                        const ntsa::EndpointOptions& options,
-                        const ntsa::Ipv6Address&     host,
-                        const bsl::string&           port);
+                                   ntsa::Endpoint*              endpoint,
+                                   const ntsa::EndpointOptions& options,
+                                   const ntsa::Ipv6Address&     host,
+                                   const bsl::string&           port);
 
     static ntsa::Error getEndpoint(ntsb::Resolver*              resolver,
-                        ntsa::Endpoint*              endpoint,
-                        const ntsa::EndpointOptions& options,
-                        const ntsa::Ipv6Address&     host,
-                        ntsa::Port                   port);
+                                   ntsa::Endpoint*              endpoint,
+                                   const ntsa::EndpointOptions& options,
+                                   const ntsa::Ipv6Address&     host,
+                                   ntsa::Port                   port);
 };
 
 // Uncomment or set to 0 to disable tests for invalid domain names, which
@@ -166,8 +166,7 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase1)
     ntsa::Error error = resolver.getHostname(&hostname);
     NTSCFG_TEST_FALSE(error);
 
-    NTSCFG_TEST_LOG_DEBUG << "Hostname: " << hostname
-                            << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Hostname: " << hostname << NTSCFG_TEST_LOG_END;
 }
 
 NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase2)
@@ -180,8 +179,7 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase2)
     ntsa::Error error = resolver.getHostnameFullyQualified(&hostname);
     NTSCFG_TEST_FALSE(error);
 
-    NTSCFG_TEST_LOG_DEBUG << "Hostname: " << hostname
-                            << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Hostname: " << hostname << NTSCFG_TEST_LOG_END;
 }
 
 NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase3)
@@ -206,17 +204,17 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase3)
     ntsa::IpAddressOptions       ipAddressOptions;
 
     error = resolver.getIpAddress(&ipAddressList,
-                                    "dns.google.com",
-                                    ipAddressOptions);
+                                  "dns.google.com",
+                                  ipAddressOptions);
     NTSCFG_TEST_FALSE(error);
 
     for (bsl::vector<ntsa::IpAddress>::const_iterator it =
-                ipAddressList.begin();
-            it != ipAddressList.end();
-            ++it)
+             ipAddressList.begin();
+         it != ipAddressList.end();
+         ++it)
     {
         NTSCFG_TEST_LOG_DEBUG << "Address: " << it->text()
-                                << NTSCFG_TEST_LOG_END;
+                              << NTSCFG_TEST_LOG_END;
 
         ipAddressSet.erase(*it);
     }
@@ -237,15 +235,14 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase4)
     ntsb::Resolver resolver(NTSCFG_TEST_ALLOCATOR);
 
     bsl::string domainName;
-    error =
-        resolver.getDomainName(&domainName, ntsa::IpAddress("8.8.8.8"));
+    error = resolver.getDomainName(&domainName, ntsa::IpAddress("8.8.8.8"));
 
     if (error) {
         NTSCFG_TEST_LOG_DEBUG << "Error: " << error << NTSCFG_TEST_LOG_END;
     }
     else {
         NTSCFG_TEST_LOG_DEBUG << "Domain name: " << domainName
-                                << NTSCFG_TEST_LOG_END;
+                              << NTSCFG_TEST_LOG_END;
     }
 
     NTSCFG_TEST_FALSE(error);
@@ -268,8 +265,7 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase5)
 
     NTSCFG_TEST_EQ(hostname, bsl::string("test"));
 
-    NTSCFG_TEST_LOG_DEBUG << "Hostname: " << hostname
-                            << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Hostname: " << hostname << NTSCFG_TEST_LOG_END;
 }
 
 NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase6)
@@ -288,8 +284,7 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase6)
 
     NTSCFG_TEST_EQ(hostname, bsl::string("test.home"));
 
-    NTSCFG_TEST_LOG_DEBUG << "Hostname: " << hostname
-                            << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Hostname: " << hostname << NTSCFG_TEST_LOG_END;
 }
 
 NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase7)
@@ -308,25 +303,24 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase7)
     resolver.setIpAddress("example.com", ipAddressListOverride);
 
     bsl::set<ntsa::IpAddress> ipAddressSet(ipAddressListOverride.begin(),
-                                            ipAddressListOverride.end());
+                                           ipAddressListOverride.end());
 
     NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
 
     bsl::vector<ntsa::IpAddress> ipAddressList;
     ntsa::IpAddressOptions       ipAddressOptions;
 
-    error = resolver.getIpAddress(&ipAddressList,
-                                    "example.com",
-                                    ipAddressOptions);
+    error =
+        resolver.getIpAddress(&ipAddressList, "example.com", ipAddressOptions);
     NTSCFG_TEST_FALSE(error);
 
     for (bsl::vector<ntsa::IpAddress>::const_iterator it =
-                ipAddressList.begin();
-            it != ipAddressList.end();
-            ++it)
+             ipAddressList.begin();
+         it != ipAddressList.end();
+         ++it)
     {
         NTSCFG_TEST_LOG_DEBUG << "Address: " << it->text()
-                                << NTSCFG_TEST_LOG_END;
+                              << NTSCFG_TEST_LOG_END;
 
         bsl::size_t n = ipAddressSet.erase(*it);
         NTSCFG_TEST_EQ(n, 1);
@@ -354,15 +348,14 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase8)
     resolver.setIpAddress("example.com", ipAddressListOverride);
 
     bsl::string domainName;
-    error =
-        resolver.getDomainName(&domainName, ntsa::IpAddress("8.8.8.8"));
+    error = resolver.getDomainName(&domainName, ntsa::IpAddress("8.8.8.8"));
 
     if (error) {
         NTSCFG_TEST_LOG_DEBUG << "Error: " << error << NTSCFG_TEST_LOG_END;
     }
     else {
         NTSCFG_TEST_LOG_DEBUG << "Domain name: " << domainName
-                                << NTSCFG_TEST_LOG_END;
+                              << NTSCFG_TEST_LOG_END;
     }
 
     NTSCFG_TEST_FALSE(error);
@@ -399,11 +392,11 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
 
     bsl::vector<ntsa::IpAddress> ipAddressList;
     ipAddressList.insert(ipAddressList.end(),
-                            ipv4AddressList.begin(),
-                            ipv4AddressList.end());
+                         ipv4AddressList.begin(),
+                         ipv4AddressList.end());
     ipAddressList.insert(ipAddressList.end(),
-                            ipv6AddressList.begin(),
-                            ipv6AddressList.end());
+                         ipv6AddressList.begin(),
+                         ipv6AddressList.end());
 
     ntsa::Ipv4Address ipv4AddressFallback("10.10.1.20");
     ntsa::Ipv6Address ipv6AddressFallback(
@@ -426,12 +419,8 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
     udpPortList.push_back(9803);
 
     bsl::vector<ntsa::Port> portList;
-    portList.insert(portList.end(),
-                    tcpPortList.begin(),
-                    tcpPortList.end());
-    portList.insert(portList.end(),
-                    udpPortList.begin(),
-                    udpPortList.end());
+    portList.insert(portList.end(), tcpPortList.begin(), tcpPortList.end());
+    portList.insert(portList.end(), udpPortList.begin(), udpPortList.end());
 
     ntsa::Port portFallback = 6484;
 
@@ -441,13 +430,13 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
     NTSCFG_TEST_FALSE(error);
 
     error = resolver.setPort(SERVICE_NAME,
-                                tcpPortList,
-                                ntsa::Transport::e_TCP_IPV4_STREAM);
+                             tcpPortList,
+                             ntsa::Transport::e_TCP_IPV4_STREAM);
     NTSCFG_TEST_FALSE(error);
 
     error = resolver.setPort(SERVICE_NAME,
-                                udpPortList,
-                                ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+                             udpPortList,
+                             ntsa::Transport::e_UDP_IPV4_DATAGRAM);
     NTSCFG_TEST_FALSE(error);
 
     //
@@ -524,8 +513,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         ntsa::Endpoint        endpoint;
         ntsa::EndpointOptions options;
 
-        error =
-            ResolverTest::getEndpoint(&resolver, &endpoint, options, portList[0]);
+        error = ResolverTest::getEndpoint(&resolver,
+                                          &endpoint,
+                                          options,
+                                          portList[0]);
         NTSCFG_TEST_ERROR(error, ntsa::Error::e_INVALID);
     }
 
@@ -545,8 +536,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
 
         options.setIpAddressFallback(ntsa::IpAddress(ipv4AddressFallback));
 
-        error =
-            ResolverTest::getEndpoint(&resolver, &endpoint, options, portList[0]);
+        error = ResolverTest::getEndpoint(&resolver,
+                                          &endpoint,
+                                          options,
+                                          portList[0]);
         NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_EQ(endpoint.ip().host().v4(), ipv4AddressFallback);
@@ -569,8 +562,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
 
         options.setIpAddressFallback(ntsa::IpAddress(ipv6AddressFallback));
 
-        error =
-            ResolverTest::getEndpoint(&resolver, &endpoint, options, portList[0]);
+        error = ResolverTest::getEndpoint(&resolver,
+                                          &endpoint,
+                                          options,
+                                          portList[0]);
         NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_EQ(endpoint.ip().host().v6(), ipv6AddressFallback);
@@ -658,9 +653,9 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setPortFallback(portFallback);
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    ipv4AddressList[0]);
+                                          &endpoint,
+                                          options,
+                                          ipv4AddressList[0]);
         NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_EQ(endpoint.ip().host().v4(), ipv4AddressList[0]);
@@ -706,10 +701,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         ntsa::EndpointOptions options;
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    ipv4AddressList[0],
-                                    portList[0]);
+                                          &endpoint,
+                                          options,
+                                          ipv4AddressList[0],
+                                          portList[0]);
         NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_EQ(endpoint.ip().host().v4(), ipv4AddressList[0]);
@@ -778,10 +773,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             ntsa::EndpointOptions options;
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        ipv4AddressList[0],
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              ipv4AddressList[0],
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host().v4(), ipv4AddressList[0]);
@@ -795,15 +790,15 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setPortSelector(j);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        ipv4AddressList[0],
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              ipv4AddressList[0],
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host().v4(), ipv4AddressList[0]);
             NTSCFG_TEST_EQ(endpoint.ip().port(),
-                            portList[j % portList.size()]);
+                           portList[j % portList.size()]);
         }
     }
 
@@ -817,10 +812,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        ipv4AddressList[0],
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              ipv4AddressList[0],
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host().v4(), ipv4AddressList[0]);
@@ -835,15 +830,15 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setPortSelector(j);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        ipv4AddressList[0],
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              ipv4AddressList[0],
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host().v4(), ipv4AddressList[0]);
             NTSCFG_TEST_EQ(endpoint.ip().port(),
-                            tcpPortList[j % tcpPortList.size()]);
+                           tcpPortList[j % tcpPortList.size()]);
         }
     }
 
@@ -856,10 +851,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setTransport(ntsa::Transport::e_TCP_IPV6_STREAM);
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    ipv4AddressList[0],
-                                    SERVICE_NAME);
+                                          &endpoint,
+                                          options,
+                                          ipv4AddressList[0],
+                                          SERVICE_NAME);
         NTSCFG_TEST_ERROR(error, ntsa::Error::e_INVALID);
     }
 
@@ -873,10 +868,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        ipv4AddressList[0],
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              ipv4AddressList[0],
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host().v4(), ipv4AddressList[0]);
@@ -891,15 +886,15 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setPortSelector(j);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        ipv4AddressList[0],
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              ipv4AddressList[0],
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host().v4(), ipv4AddressList[0]);
             NTSCFG_TEST_EQ(endpoint.ip().port(),
-                            udpPortList[j % udpPortList.size()]);
+                           udpPortList[j % udpPortList.size()]);
         }
     }
 
@@ -912,10 +907,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setTransport(ntsa::Transport::e_UDP_IPV6_DATAGRAM);
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    ipv4AddressList[0],
-                                    SERVICE_NAME);
+                                          &endpoint,
+                                          options,
+                                          ipv4AddressList[0],
+                                          SERVICE_NAME);
         NTSCFG_TEST_ERROR(error, ntsa::Error::e_INVALID);
     }
 
@@ -977,10 +972,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         ntsa::EndpointOptions options;
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    ipv4AddressList[0],
-                                    SERVICE_NAME_INVALID);
+                                          &endpoint,
+                                          options,
+                                          ipv4AddressList[0],
+                                          SERVICE_NAME_INVALID);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -1003,10 +998,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setIpAddressFallback(ntsa::IpAddress(ipv4AddressFallback));
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    ipv4AddressList[0],
-                                    SERVICE_NAME_INVALID);
+                                          &endpoint,
+                                          options,
+                                          ipv4AddressList[0],
+                                          SERVICE_NAME_INVALID);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -1029,10 +1024,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setIpAddressFallback(ntsa::IpAddress(ipv6AddressFallback));
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    ipv4AddressList[0],
-                                    SERVICE_NAME_INVALID);
+                                          &endpoint,
+                                          options,
+                                          ipv4AddressList[0],
+                                          SERVICE_NAME_INVALID);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -1055,10 +1050,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setPortFallback(portFallback);
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    ipv4AddressList[0],
-                                    SERVICE_NAME_INVALID);
+                                          &endpoint,
+                                          options,
+                                          ipv4AddressList[0],
+                                          SERVICE_NAME_INVALID);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -1134,9 +1129,9 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setPortFallback(portFallback);
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    ipv6AddressList[0]);
+                                          &endpoint,
+                                          options,
+                                          ipv6AddressList[0]);
         NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_EQ(endpoint.ip().host().v6(), ipv6AddressList[0]);
@@ -1182,10 +1177,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         ntsa::EndpointOptions options;
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    ipv6AddressList[0],
-                                    portList[0]);
+                                          &endpoint,
+                                          options,
+                                          ipv6AddressList[0],
+                                          portList[0]);
         NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_EQ(endpoint.ip().host().v6(), ipv6AddressList[0]);
@@ -1254,10 +1249,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             ntsa::EndpointOptions options;
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        ipv6AddressList[0],
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              ipv6AddressList[0],
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host().v6(), ipv6AddressList[0]);
@@ -1271,15 +1266,15 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setPortSelector(j);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        ipv6AddressList[0],
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              ipv6AddressList[0],
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host().v6(), ipv6AddressList[0]);
             NTSCFG_TEST_EQ(endpoint.ip().port(),
-                            portList[j % portList.size()]);
+                           portList[j % portList.size()]);
         }
     }
 
@@ -1292,10 +1287,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    ipv6AddressList[0],
-                                    SERVICE_NAME);
+                                          &endpoint,
+                                          options,
+                                          ipv6AddressList[0],
+                                          SERVICE_NAME);
         NTSCFG_TEST_ERROR(error, ntsa::Error::e_INVALID);
     }
 
@@ -1309,10 +1304,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setTransport(ntsa::Transport::e_TCP_IPV6_STREAM);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        ipv6AddressList[0],
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              ipv6AddressList[0],
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host().v6(), ipv6AddressList[0]);
@@ -1327,15 +1322,15 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setPortSelector(j);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        ipv6AddressList[0],
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              ipv6AddressList[0],
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host().v6(), ipv6AddressList[0]);
             NTSCFG_TEST_EQ(endpoint.ip().port(),
-                            tcpPortList[j % tcpPortList.size()]);
+                           tcpPortList[j % tcpPortList.size()]);
         }
     }
 
@@ -1348,10 +1343,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    ipv6AddressList[0],
-                                    SERVICE_NAME);
+                                          &endpoint,
+                                          options,
+                                          ipv6AddressList[0],
+                                          SERVICE_NAME);
         NTSCFG_TEST_ERROR(error, ntsa::Error::e_INVALID);
     }
 
@@ -1365,10 +1360,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setTransport(ntsa::Transport::e_UDP_IPV6_DATAGRAM);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        ipv6AddressList[0],
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              ipv6AddressList[0],
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host().v6(), ipv6AddressList[0]);
@@ -1383,15 +1378,15 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setPortSelector(j);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        ipv6AddressList[0],
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              ipv6AddressList[0],
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host().v6(), ipv6AddressList[0]);
             NTSCFG_TEST_EQ(endpoint.ip().port(),
-                            udpPortList[j % udpPortList.size()]);
+                           udpPortList[j % udpPortList.size()]);
         }
     }
 
@@ -1453,10 +1448,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         ntsa::EndpointOptions options;
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    ipv6AddressList[0],
-                                    SERVICE_NAME_INVALID);
+                                          &endpoint,
+                                          options,
+                                          ipv6AddressList[0],
+                                          SERVICE_NAME_INVALID);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -1479,10 +1474,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setIpAddressFallback(ntsa::IpAddress(ipv4AddressFallback));
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    ipv6AddressList[0],
-                                    SERVICE_NAME_INVALID);
+                                          &endpoint,
+                                          options,
+                                          ipv6AddressList[0],
+                                          SERVICE_NAME_INVALID);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -1505,10 +1500,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setIpAddressFallback(ntsa::IpAddress(ipv6AddressFallback));
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    ipv6AddressList[0],
-                                    SERVICE_NAME_INVALID);
+                                          &endpoint,
+                                          options,
+                                          ipv6AddressList[0],
+                                          SERVICE_NAME_INVALID);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -1531,10 +1526,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setPortFallback(portFallback);
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    ipv6AddressList[0],
-                                    SERVICE_NAME_INVALID);
+                                          &endpoint,
+                                          options,
+                                          ipv6AddressList[0],
+                                          SERVICE_NAME_INVALID);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -1639,9 +1634,9 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         ntsa::EndpointOptions options;
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    DOMAIN_NAME_INVALID);
+                                          &endpoint,
+                                          options,
+                                          DOMAIN_NAME_INVALID);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -1664,9 +1659,9 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setIpAddressFallback(ntsa::IpAddress(ipv4AddressFallback));
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    DOMAIN_NAME_INVALID);
+                                          &endpoint,
+                                          options,
+                                          DOMAIN_NAME_INVALID);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -1689,9 +1684,9 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setIpAddressFallback(ntsa::IpAddress(ipv6AddressFallback));
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    DOMAIN_NAME_INVALID);
+                                          &endpoint,
+                                          options,
+                                          DOMAIN_NAME_INVALID);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -1714,9 +1709,9 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setPortFallback(portFallback);
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    DOMAIN_NAME_INVALID);
+                                          &endpoint,
+                                          options,
+                                          DOMAIN_NAME_INVALID);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -1761,10 +1756,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             ntsa::EndpointOptions options;
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        DOMAIN_NAME,
-                                        portList[0]);
+                                              &endpoint,
+                                              options,
+                                              DOMAIN_NAME,
+                                              portList[0]);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host(), ipAddressList[0]);
@@ -1778,14 +1773,14 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setIpAddressSelector(i);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        DOMAIN_NAME,
-                                        portList[0]);
+                                              &endpoint,
+                                              options,
+                                              DOMAIN_NAME,
+                                              portList[0]);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host(),
-                            ipAddressList[i % ipAddressList.size()]);
+                           ipAddressList[i % ipAddressList.size()]);
             NTSCFG_TEST_EQ(endpoint.ip().port(), portList[0]);
         }
     }
@@ -1856,10 +1851,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         ntsa::EndpointOptions options;
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    DOMAIN_NAME_INVALID,
-                                    portList[0]);
+                                          &endpoint,
+                                          options,
+                                          DOMAIN_NAME_INVALID,
+                                          portList[0]);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -1882,10 +1877,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setIpAddressFallback(ntsa::IpAddress(ipv4AddressFallback));
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    DOMAIN_NAME_INVALID,
-                                    portList[0]);
+                                          &endpoint,
+                                          options,
+                                          DOMAIN_NAME_INVALID,
+                                          portList[0]);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -1908,10 +1903,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setIpAddressFallback(ntsa::IpAddress(ipv6AddressFallback));
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    DOMAIN_NAME_INVALID,
-                                    portList[0]);
+                                          &endpoint,
+                                          options,
+                                          DOMAIN_NAME_INVALID,
+                                          portList[0]);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -1934,10 +1929,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setPortFallback(portFallback);
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    DOMAIN_NAME_INVALID,
-                                    portList[0]);
+                                          &endpoint,
+                                          options,
+                                          DOMAIN_NAME_INVALID,
+                                          portList[0]);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -1982,10 +1977,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             ntsa::EndpointOptions options;
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        DOMAIN_NAME,
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              DOMAIN_NAME,
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host(), ipAddressList[0]);
@@ -1999,14 +1994,14 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setIpAddressSelector(i);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        DOMAIN_NAME,
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              DOMAIN_NAME,
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host(),
-                            ipAddressList[i % ipAddressList.size()]);
+                           ipAddressList[i % ipAddressList.size()]);
             NTSCFG_TEST_EQ(endpoint.ip().port(), portList[0]);
         }
 
@@ -2017,15 +2012,15 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setPortSelector(j);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        DOMAIN_NAME,
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              DOMAIN_NAME,
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host(), ipAddressList[0]);
             NTSCFG_TEST_EQ(endpoint.ip().port(),
-                            portList[j % portList.size()]);
+                           portList[j % portList.size()]);
         }
 
         for (bsl::size_t i = 0; i < 2 * ipAddressList.size(); ++i) {
@@ -2037,16 +2032,16 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
                 options.setPortSelector(j);
 
                 error = ResolverTest::getEndpoint(&resolver,
-                                            &endpoint,
-                                            options,
-                                            DOMAIN_NAME,
-                                            SERVICE_NAME);
+                                                  &endpoint,
+                                                  options,
+                                                  DOMAIN_NAME,
+                                                  SERVICE_NAME);
                 NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_EQ(endpoint.ip().host(),
-                                ipAddressList[i % ipAddressList.size()]);
+                               ipAddressList[i % ipAddressList.size()]);
                 NTSCFG_TEST_EQ(endpoint.ip().port(),
-                                portList[j % portList.size()]);
+                               portList[j % portList.size()]);
             }
         }
     }
@@ -2061,10 +2056,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        DOMAIN_NAME,
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              DOMAIN_NAME,
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host().v4(), ipv4AddressList[0]);
@@ -2079,14 +2074,14 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setIpAddressSelector(i);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        DOMAIN_NAME,
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              DOMAIN_NAME,
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host().v4(),
-                            ipv4AddressList[i % ipv4AddressList.size()]);
+                           ipv4AddressList[i % ipv4AddressList.size()]);
             NTSCFG_TEST_EQ(endpoint.ip().port(), tcpPortList[0]);
         }
 
@@ -2098,15 +2093,15 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setPortSelector(j);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        DOMAIN_NAME,
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              DOMAIN_NAME,
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host().v4(), ipv4AddressList[0]);
             NTSCFG_TEST_EQ(endpoint.ip().port(),
-                            tcpPortList[j % tcpPortList.size()]);
+                           tcpPortList[j % tcpPortList.size()]);
         }
 
         for (bsl::size_t i = 0; i < 2 * ipAddressList.size(); ++i) {
@@ -2119,17 +2114,16 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
                 options.setPortSelector(j);
 
                 error = ResolverTest::getEndpoint(&resolver,
-                                            &endpoint,
-                                            options,
-                                            DOMAIN_NAME,
-                                            SERVICE_NAME);
+                                                  &endpoint,
+                                                  options,
+                                                  DOMAIN_NAME,
+                                                  SERVICE_NAME);
                 NTSCFG_TEST_OK(error);
 
-                NTSCFG_TEST_EQ(
-                    endpoint.ip().host().v4(),
-                    ipv4AddressList[i % ipv4AddressList.size()]);
+                NTSCFG_TEST_EQ(endpoint.ip().host().v4(),
+                               ipv4AddressList[i % ipv4AddressList.size()]);
                 NTSCFG_TEST_EQ(endpoint.ip().port(),
-                                tcpPortList[j % tcpPortList.size()]);
+                               tcpPortList[j % tcpPortList.size()]);
             }
         }
     }
@@ -2144,10 +2138,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setTransport(ntsa::Transport::e_TCP_IPV6_STREAM);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        DOMAIN_NAME,
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              DOMAIN_NAME,
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host().v6(), ipv6AddressList[0]);
@@ -2162,14 +2156,14 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setIpAddressSelector(i);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        DOMAIN_NAME,
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              DOMAIN_NAME,
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host().v6(),
-                            ipv6AddressList[i % ipv6AddressList.size()]);
+                           ipv6AddressList[i % ipv6AddressList.size()]);
             NTSCFG_TEST_EQ(endpoint.ip().port(), tcpPortList[0]);
         }
 
@@ -2181,15 +2175,15 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setPortSelector(j);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        DOMAIN_NAME,
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              DOMAIN_NAME,
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host().v6(), ipv6AddressList[0]);
             NTSCFG_TEST_EQ(endpoint.ip().port(),
-                            tcpPortList[j % tcpPortList.size()]);
+                           tcpPortList[j % tcpPortList.size()]);
         }
 
         for (bsl::size_t i = 0; i < 2 * ipAddressList.size(); ++i) {
@@ -2202,17 +2196,16 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
                 options.setPortSelector(j);
 
                 error = ResolverTest::getEndpoint(&resolver,
-                                            &endpoint,
-                                            options,
-                                            DOMAIN_NAME,
-                                            SERVICE_NAME);
+                                                  &endpoint,
+                                                  options,
+                                                  DOMAIN_NAME,
+                                                  SERVICE_NAME);
                 NTSCFG_TEST_OK(error);
 
-                NTSCFG_TEST_EQ(
-                    endpoint.ip().host().v6(),
-                    ipv6AddressList[i % ipv6AddressList.size()]);
+                NTSCFG_TEST_EQ(endpoint.ip().host().v6(),
+                               ipv6AddressList[i % ipv6AddressList.size()]);
                 NTSCFG_TEST_EQ(endpoint.ip().port(),
-                                tcpPortList[j % tcpPortList.size()]);
+                               tcpPortList[j % tcpPortList.size()]);
             }
         }
     }
@@ -2227,10 +2220,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        DOMAIN_NAME,
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              DOMAIN_NAME,
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host().v4(), ipv4AddressList[0]);
@@ -2245,14 +2238,14 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setIpAddressSelector(i);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        DOMAIN_NAME,
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              DOMAIN_NAME,
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host().v4(),
-                            ipv4AddressList[i % ipv4AddressList.size()]);
+                           ipv4AddressList[i % ipv4AddressList.size()]);
             NTSCFG_TEST_EQ(endpoint.ip().port(), udpPortList[0]);
         }
 
@@ -2264,15 +2257,15 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setPortSelector(j);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        DOMAIN_NAME,
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              DOMAIN_NAME,
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host().v4(), ipv4AddressList[0]);
             NTSCFG_TEST_EQ(endpoint.ip().port(),
-                            udpPortList[j % udpPortList.size()]);
+                           udpPortList[j % udpPortList.size()]);
         }
 
         for (bsl::size_t i = 0; i < 2 * ipAddressList.size(); ++i) {
@@ -2285,17 +2278,16 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
                 options.setPortSelector(j);
 
                 error = ResolverTest::getEndpoint(&resolver,
-                                            &endpoint,
-                                            options,
-                                            DOMAIN_NAME,
-                                            SERVICE_NAME);
+                                                  &endpoint,
+                                                  options,
+                                                  DOMAIN_NAME,
+                                                  SERVICE_NAME);
                 NTSCFG_TEST_OK(error);
 
-                NTSCFG_TEST_EQ(
-                    endpoint.ip().host().v4(),
-                    ipv4AddressList[i % ipv4AddressList.size()]);
+                NTSCFG_TEST_EQ(endpoint.ip().host().v4(),
+                               ipv4AddressList[i % ipv4AddressList.size()]);
                 NTSCFG_TEST_EQ(endpoint.ip().port(),
-                                udpPortList[j % udpPortList.size()]);
+                               udpPortList[j % udpPortList.size()]);
             }
         }
     }
@@ -2310,10 +2302,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setTransport(ntsa::Transport::e_UDP_IPV6_DATAGRAM);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        DOMAIN_NAME,
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              DOMAIN_NAME,
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host().v6(), ipv6AddressList[0]);
@@ -2328,14 +2320,14 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setIpAddressSelector(i);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        DOMAIN_NAME,
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              DOMAIN_NAME,
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host().v6(),
-                            ipv6AddressList[i % ipv6AddressList.size()]);
+                           ipv6AddressList[i % ipv6AddressList.size()]);
             NTSCFG_TEST_EQ(endpoint.ip().port(), udpPortList[0]);
         }
 
@@ -2347,15 +2339,15 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
             options.setPortSelector(j);
 
             error = ResolverTest::getEndpoint(&resolver,
-                                        &endpoint,
-                                        options,
-                                        DOMAIN_NAME,
-                                        SERVICE_NAME);
+                                              &endpoint,
+                                              options,
+                                              DOMAIN_NAME,
+                                              SERVICE_NAME);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(endpoint.ip().host().v6(), ipv6AddressList[0]);
             NTSCFG_TEST_EQ(endpoint.ip().port(),
-                            udpPortList[j % udpPortList.size()]);
+                           udpPortList[j % udpPortList.size()]);
         }
 
         for (bsl::size_t i = 0; i < 2 * ipAddressList.size(); ++i) {
@@ -2368,17 +2360,16 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
                 options.setPortSelector(j);
 
                 error = ResolverTest::getEndpoint(&resolver,
-                                            &endpoint,
-                                            options,
-                                            DOMAIN_NAME,
-                                            SERVICE_NAME);
+                                                  &endpoint,
+                                                  options,
+                                                  DOMAIN_NAME,
+                                                  SERVICE_NAME);
                 NTSCFG_TEST_OK(error);
 
-                NTSCFG_TEST_EQ(
-                    endpoint.ip().host().v6(),
-                    ipv6AddressList[i % ipv6AddressList.size()]);
+                NTSCFG_TEST_EQ(endpoint.ip().host().v6(),
+                               ipv6AddressList[i % ipv6AddressList.size()]);
                 NTSCFG_TEST_EQ(endpoint.ip().port(),
-                                udpPortList[j % udpPortList.size()]);
+                               udpPortList[j % udpPortList.size()]);
             }
         }
     }
@@ -2441,10 +2432,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         ntsa::EndpointOptions options;
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    DOMAIN_NAME_INVALID,
-                                    SERVICE_NAME);
+                                          &endpoint,
+                                          options,
+                                          DOMAIN_NAME_INVALID,
+                                          SERVICE_NAME);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -2467,10 +2458,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setIpAddressFallback(ntsa::IpAddress(ipv4AddressFallback));
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    DOMAIN_NAME_INVALID,
-                                    SERVICE_NAME);
+                                          &endpoint,
+                                          options,
+                                          DOMAIN_NAME_INVALID,
+                                          SERVICE_NAME);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -2493,10 +2484,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setIpAddressFallback(ntsa::IpAddress(ipv6AddressFallback));
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    DOMAIN_NAME_INVALID,
-                                    SERVICE_NAME);
+                                          &endpoint,
+                                          options,
+                                          DOMAIN_NAME_INVALID,
+                                          SERVICE_NAME);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -2519,10 +2510,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setPortFallback(portFallback);
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    DOMAIN_NAME_INVALID,
-                                    SERVICE_NAME);
+                                          &endpoint,
+                                          options,
+                                          DOMAIN_NAME_INVALID,
+                                          SERVICE_NAME);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -2563,10 +2554,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         ntsa::EndpointOptions options;
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    DOMAIN_NAME,
-                                    SERVICE_NAME_INVALID);
+                                          &endpoint,
+                                          options,
+                                          DOMAIN_NAME,
+                                          SERVICE_NAME_INVALID);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -2589,10 +2580,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setIpAddressFallback(ntsa::IpAddress(ipv4AddressFallback));
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    DOMAIN_NAME,
-                                    SERVICE_NAME_INVALID);
+                                          &endpoint,
+                                          options,
+                                          DOMAIN_NAME,
+                                          SERVICE_NAME_INVALID);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -2615,10 +2606,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setIpAddressFallback(ntsa::IpAddress(ipv6AddressFallback));
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    DOMAIN_NAME,
-                                    SERVICE_NAME_INVALID);
+                                          &endpoint,
+                                          options,
+                                          DOMAIN_NAME,
+                                          SERVICE_NAME_INVALID);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -2641,10 +2632,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setPortFallback(portFallback);
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    DOMAIN_NAME,
-                                    SERVICE_NAME_INVALID);
+                                          &endpoint,
+                                          options,
+                                          DOMAIN_NAME,
+                                          SERVICE_NAME_INVALID);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -2685,10 +2676,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         ntsa::EndpointOptions options;
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    DOMAIN_NAME_INVALID,
-                                    SERVICE_NAME_INVALID);
+                                          &endpoint,
+                                          options,
+                                          DOMAIN_NAME_INVALID,
+                                          SERVICE_NAME_INVALID);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -2711,10 +2702,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setIpAddressFallback(ntsa::IpAddress(ipv4AddressFallback));
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    DOMAIN_NAME_INVALID,
-                                    SERVICE_NAME_INVALID);
+                                          &endpoint,
+                                          options,
+                                          DOMAIN_NAME_INVALID,
+                                          SERVICE_NAME_INVALID);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -2737,10 +2728,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setIpAddressFallback(ntsa::IpAddress(ipv6AddressFallback));
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    DOMAIN_NAME_INVALID,
-                                    SERVICE_NAME_INVALID);
+                                          &endpoint,
+                                          options,
+                                          DOMAIN_NAME_INVALID,
+                                          SERVICE_NAME_INVALID);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -2763,10 +2754,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase9)
         options.setPortFallback(portFallback);
 
         error = ResolverTest::getEndpoint(&resolver,
-                                    &endpoint,
-                                    options,
-                                    DOMAIN_NAME_INVALID,
-                                    SERVICE_NAME_INVALID);
+                                          &endpoint,
+                                          options,
+                                          DOMAIN_NAME_INVALID,
+                                          SERVICE_NAME_INVALID);
         NTSCFG_TEST_TRUE(error);
     }
 #endif
@@ -2818,8 +2809,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase10)
 
         bsl::string emptyString;
 
-        error =
-            ResolverTest::getEndpoint(&resolver, &endpoint, options, emptyString);
+        error = ResolverTest::getEndpoint(&resolver,
+                                          &endpoint,
+                                          options,
+                                          emptyString);
         NTSCFG_TEST_TRUE(error);
     }
 
@@ -2831,8 +2824,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase10)
 
         bsl::string emptyString;
 
-        error =
-            ResolverTest::getEndpoint(&resolver, &endpoint, options, emptyString);
+        error = ResolverTest::getEndpoint(&resolver,
+                                          &endpoint,
+                                          options,
+                                          emptyString);
         NTSCFG_TEST_TRUE(error);
     }
 
@@ -2844,8 +2839,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase10)
 
         bsl::string emptyString;
 
-        error =
-            ResolverTest::getEndpoint(&resolver, &endpoint, options, emptyString);
+        error = ResolverTest::getEndpoint(&resolver,
+                                          &endpoint,
+                                          options,
+                                          emptyString);
         NTSCFG_TEST_TRUE(error);
     }
 
@@ -2858,8 +2855,10 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase10)
 
         bsl::string emptyString;
 
-        error =
-            ResolverTest::getEndpoint(&resolver, &endpoint, options, emptyString);
+        error = ResolverTest::getEndpoint(&resolver,
+                                          &endpoint,
+                                          options,
+                                          emptyString);
         NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_EQ(endpoint.ip().host().v4(), ipv4AddressFallback);
@@ -2994,8 +2993,8 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase11)
     for (bsl::size_t i = 0; i < sizeof(DATA) / sizeof(DATA[0]); ++i) {
         bsl::vector<ntsa::Port> portList;
         error = resolver.getPort(&portList,
-                                    bslstl::StringRef(DATA[i].d_serviceName),
-                                    portOptions);
+                                 bslstl::StringRef(DATA[i].d_serviceName),
+                                 portOptions);
 
         bsl::size_t portNumber = 0;
         if (!portList.empty()) {
@@ -3003,9 +3002,9 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase11)
         }
 
         BSLS_LOG_DEBUG("Service name '%s' => port %zu: error = %s",
-                        DATA[i].d_serviceName,
-                        portNumber,
-                        error.text().c_str());
+                       DATA[i].d_serviceName,
+                       portNumber,
+                       error.text().c_str());
 
         if (DATA[i].d_success) {
             NTSCFG_TEST_OK(error);
@@ -3018,7 +3017,6 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase11)
         }
     }
 }
-
 
 bsl::string ResolverTest::makeEndpointSpecifier(ntsa::Port port)
 {
@@ -3037,7 +3035,7 @@ bsl::string ResolverTest::makeEndpointSpecifier(const bsl::string& host)
 }
 
 bsl::string ResolverTest::makeEndpointSpecifier(const bsl::string& host,
-                                  const bsl::string& port)
+                                                const bsl::string& port)
 {
     bsl::stringstream ss;
     ss << host << ':' << port;
@@ -3045,7 +3043,8 @@ bsl::string ResolverTest::makeEndpointSpecifier(const bsl::string& host,
     return ss.str();
 }
 
-bsl::string ResolverTest::makeEndpointSpecifier(const bsl::string& host, ntsa::Port port)
+bsl::string ResolverTest::makeEndpointSpecifier(const bsl::string& host,
+                                                ntsa::Port         port)
 {
     bsl::stringstream ss;
     ss << host << ':' << port;
@@ -3062,7 +3061,7 @@ bsl::string ResolverTest::makeEndpointSpecifier(const ntsa::Ipv4Address& host)
 }
 
 bsl::string ResolverTest::makeEndpointSpecifier(const ntsa::Ipv4Address& host,
-                                  const bsl::string&       port)
+                                                const bsl::string&       port)
 {
     bsl::stringstream ss;
     ss << host << ':' << port;
@@ -3071,7 +3070,7 @@ bsl::string ResolverTest::makeEndpointSpecifier(const ntsa::Ipv4Address& host,
 }
 
 bsl::string ResolverTest::makeEndpointSpecifier(const ntsa::Ipv4Address& host,
-                                  ntsa::Port               port)
+                                                ntsa::Port               port)
 {
     bsl::stringstream ss;
     ss << host << ':' << port;
@@ -3088,7 +3087,7 @@ bsl::string ResolverTest::makeEndpointSpecifier(const ntsa::Ipv6Address& host)
 }
 
 bsl::string ResolverTest::makeEndpointSpecifier(const ntsa::Ipv6Address& host,
-                                  const bsl::string&       port)
+                                                const bsl::string&       port)
 {
     bsl::stringstream ss;
     ss << '[' << host << ']' << ':' << port;
@@ -3097,7 +3096,7 @@ bsl::string ResolverTest::makeEndpointSpecifier(const ntsa::Ipv6Address& host,
 }
 
 bsl::string ResolverTest::makeEndpointSpecifier(const ntsa::Ipv6Address& host,
-                                  ntsa::Port               port)
+                                                ntsa::Port               port)
 {
     bsl::stringstream ss;
     ss << '[' << host << ']' << ':' << port;
@@ -3106,9 +3105,9 @@ bsl::string ResolverTest::makeEndpointSpecifier(const ntsa::Ipv6Address& host,
 }
 
 ntsa::Error ResolverTest::getEndpoint(ntsb::Resolver*              resolver,
-                        ntsa::Endpoint*              endpoint,
-                        const ntsa::EndpointOptions& options,
-                        ntsa::Port                   port)
+                                      ntsa::Endpoint*              endpoint,
+                                      const ntsa::EndpointOptions& options,
+                                      ntsa::Port                   port)
 {
     ntsa::Error error;
 
@@ -3132,9 +3131,9 @@ ntsa::Error ResolverTest::getEndpoint(ntsb::Resolver*              resolver,
 }
 
 ntsa::Error ResolverTest::getEndpoint(ntsb::Resolver*              resolver,
-                        ntsa::Endpoint*              endpoint,
-                        const ntsa::EndpointOptions& options,
-                        const bsl::string&           host)
+                                      ntsa::Endpoint*              endpoint,
+                                      const ntsa::EndpointOptions& options,
+                                      const bsl::string&           host)
 {
     ntsa::Error error;
 
@@ -3158,10 +3157,10 @@ ntsa::Error ResolverTest::getEndpoint(ntsb::Resolver*              resolver,
 }
 
 ntsa::Error ResolverTest::getEndpoint(ntsb::Resolver*              resolver,
-                        ntsa::Endpoint*              endpoint,
-                        const ntsa::EndpointOptions& options,
-                        const bsl::string&           host,
-                        const bsl::string&           port)
+                                      ntsa::Endpoint*              endpoint,
+                                      const ntsa::EndpointOptions& options,
+                                      const bsl::string&           host,
+                                      const bsl::string&           port)
 {
     ntsa::Error error;
 
@@ -3185,10 +3184,10 @@ ntsa::Error ResolverTest::getEndpoint(ntsb::Resolver*              resolver,
 }
 
 ntsa::Error ResolverTest::getEndpoint(ntsb::Resolver*              resolver,
-                        ntsa::Endpoint*              endpoint,
-                        const ntsa::EndpointOptions& options,
-                        const bsl::string&           host,
-                        ntsa::Port                   port)
+                                      ntsa::Endpoint*              endpoint,
+                                      const ntsa::EndpointOptions& options,
+                                      const bsl::string&           host,
+                                      ntsa::Port                   port)
 {
     ntsa::Error error;
 
@@ -3212,9 +3211,9 @@ ntsa::Error ResolverTest::getEndpoint(ntsb::Resolver*              resolver,
 }
 
 ntsa::Error ResolverTest::getEndpoint(ntsb::Resolver*              resolver,
-                        ntsa::Endpoint*              endpoint,
-                        const ntsa::EndpointOptions& options,
-                        const ntsa::Ipv4Address&     host)
+                                      ntsa::Endpoint*              endpoint,
+                                      const ntsa::EndpointOptions& options,
+                                      const ntsa::Ipv4Address&     host)
 {
     ntsa::Error error;
 
@@ -3238,10 +3237,10 @@ ntsa::Error ResolverTest::getEndpoint(ntsb::Resolver*              resolver,
 }
 
 ntsa::Error ResolverTest::getEndpoint(ntsb::Resolver*              resolver,
-                        ntsa::Endpoint*              endpoint,
-                        const ntsa::EndpointOptions& options,
-                        const ntsa::Ipv4Address&     host,
-                        const bsl::string&           port)
+                                      ntsa::Endpoint*              endpoint,
+                                      const ntsa::EndpointOptions& options,
+                                      const ntsa::Ipv4Address&     host,
+                                      const bsl::string&           port)
 {
     ntsa::Error error;
 
@@ -3265,10 +3264,10 @@ ntsa::Error ResolverTest::getEndpoint(ntsb::Resolver*              resolver,
 }
 
 ntsa::Error ResolverTest::getEndpoint(ntsb::Resolver*              resolver,
-                        ntsa::Endpoint*              endpoint,
-                        const ntsa::EndpointOptions& options,
-                        const ntsa::Ipv4Address&     host,
-                        ntsa::Port                   port)
+                                      ntsa::Endpoint*              endpoint,
+                                      const ntsa::EndpointOptions& options,
+                                      const ntsa::Ipv4Address&     host,
+                                      ntsa::Port                   port)
 {
     ntsa::Error error;
 
@@ -3292,9 +3291,9 @@ ntsa::Error ResolverTest::getEndpoint(ntsb::Resolver*              resolver,
 }
 
 ntsa::Error ResolverTest::getEndpoint(ntsb::Resolver*              resolver,
-                        ntsa::Endpoint*              endpoint,
-                        const ntsa::EndpointOptions& options,
-                        const ntsa::Ipv6Address&     host)
+                                      ntsa::Endpoint*              endpoint,
+                                      const ntsa::EndpointOptions& options,
+                                      const ntsa::Ipv6Address&     host)
 {
     ntsa::Error error;
 
@@ -3318,10 +3317,10 @@ ntsa::Error ResolverTest::getEndpoint(ntsb::Resolver*              resolver,
 }
 
 ntsa::Error ResolverTest::getEndpoint(ntsb::Resolver*              resolver,
-                        ntsa::Endpoint*              endpoint,
-                        const ntsa::EndpointOptions& options,
-                        const ntsa::Ipv6Address&     host,
-                        const bsl::string&           port)
+                                      ntsa::Endpoint*              endpoint,
+                                      const ntsa::EndpointOptions& options,
+                                      const ntsa::Ipv6Address&     host,
+                                      const bsl::string&           port)
 {
     ntsa::Error error;
 
@@ -3345,10 +3344,10 @@ ntsa::Error ResolverTest::getEndpoint(ntsb::Resolver*              resolver,
 }
 
 ntsa::Error ResolverTest::getEndpoint(ntsb::Resolver*              resolver,
-                        ntsa::Endpoint*              endpoint,
-                        const ntsa::EndpointOptions& options,
-                        const ntsa::Ipv6Address&     host,
-                        ntsa::Port                   port)
+                                      ntsa::Endpoint*              endpoint,
+                                      const ntsa::EndpointOptions& options,
+                                      const ntsa::Ipv6Address&     host,
+                                      ntsa::Port                   port)
 {
     ntsa::Error error;
 

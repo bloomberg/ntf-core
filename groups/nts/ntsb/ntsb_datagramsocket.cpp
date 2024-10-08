@@ -109,7 +109,7 @@ ntsa::Error DatagramSocket::send(ntsa::SendContext*       context,
 }
 
 ntsa::Error DatagramSocket::send(ntsa::SendContext*       context,
-                                 const ntsa::ConstBuffer *data,
+                                 const ntsa::ConstBuffer* data,
                                  bsl::size_t              size,
                                  const ntsa::SendOptions& options)
 {
@@ -197,21 +197,25 @@ ntsa::Error DatagramSocket::joinMulticastGroup(
 }
 
 ntsa::Error DatagramSocket::joinMulticastGroupSource(
-        const ntsa::IpAddress& interface,
-        const ntsa::IpAddress& group,
-        const ntsa::IpAddress& source)
+    const ntsa::IpAddress& interface,
+    const ntsa::IpAddress& group,
+    const ntsa::IpAddress& source)
 {
-    return ntsu::SocketOptionUtil::joinMulticastGroupSource(
-        d_handle, interface, group, source);
+    return ntsu::SocketOptionUtil::joinMulticastGroupSource(d_handle,
+                                                            interface,
+                                                            group,
+                                                            source);
 }
 
 ntsa::Error DatagramSocket::leaveMulticastGroupSource(
-        const ntsa::IpAddress& interface,
-        const ntsa::IpAddress& group,
-        const ntsa::IpAddress& source)
+    const ntsa::IpAddress& interface,
+    const ntsa::IpAddress& group,
+    const ntsa::IpAddress& source)
 {
-    return ntsu::SocketOptionUtil::leaveMulticastGroupSource(
-        d_handle, interface, group, source);
+    return ntsu::SocketOptionUtil::leaveMulticastGroupSource(d_handle,
+                                                             interface,
+                                                             group,
+                                                             source);
 }
 
 ntsa::Error DatagramSocket::leaveMulticastGroup(

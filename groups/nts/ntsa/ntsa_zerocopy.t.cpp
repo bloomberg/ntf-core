@@ -52,7 +52,7 @@ NTSCFG_TEST_FUNCTION(ntsa::ZeroCopyTest::verify)
         NTSCFG_TEST_EQ(zc.thru(), thru);
         NTSCFG_TEST_EQ(zc.type(), type);
     }
-    
+
     {
         const bsl::uint32_t             from = 10;
         const bsl::uint32_t             thru = 22;

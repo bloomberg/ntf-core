@@ -44,8 +44,7 @@ NTSCFG_TEST_FUNCTION(ntsa::EthernetAddressTest::verify)
     address1[4] = 0x3c;
     address1[5] = 0x7b;
 
-    NTSCFG_TEST_LOG_DEBUG << "Address1 = " << address1 
-                          << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Address1 = " << address1 << NTSCFG_TEST_LOG_END;
 
     char buffer[ntsa::EthernetAddress::MAX_TEXT_LENGTH + 1];
     bsl::memset(buffer, 0, sizeof buffer);
@@ -59,8 +58,7 @@ NTSCFG_TEST_FUNCTION(ntsa::EthernetAddressTest::verify)
         bslstl::StringRef(buffer, ntsa::EthernetAddress::MAX_TEXT_LENGTH));
     NTSCFG_TEST_TRUE(result);
 
-    NTSCFG_TEST_LOG_DEBUG << "Address2 = " << address2 
-                          << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Address2 = " << address2 << NTSCFG_TEST_LOG_END;
 
     NTSCFG_TEST_EQ(address1, address2);
 }

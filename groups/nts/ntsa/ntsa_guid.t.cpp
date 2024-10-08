@@ -92,7 +92,7 @@ NTSCFG_TEST_FUNCTION(ntsa::GuidTest::verifyGeneration)
 NTSCFG_TEST_FUNCTION(ntsa::GuidTest::verifyWriteText)
 {
     ntsa::Guid guid(ntsa::Guid::generate());
-    
+
     const char magic =
         static_cast<char>(bdls::ProcessUtil::getProcessId() & 0xFF);
 
@@ -100,7 +100,7 @@ NTSCFG_TEST_FUNCTION(ntsa::GuidTest::verifyWriteText)
     text[ntsa::Guid::SIZE_TEXT] = magic;
 
     guid.writeText(text);
-    
+
     NTSCFG_TEST_EQ(magic, text[ntsa::Guid::SIZE_TEXT]);
 }
 
@@ -119,7 +119,7 @@ NTSCFG_TEST_FUNCTION(ntsa::GuidTest::verifyBasicOperations)
     NTSCFG_TEST_NE(guid1, guid2);
     NTSCFG_TEST_TRUE((guid1 < guid2) == (guid2 > guid1));
     NTSCFG_TEST_TRUE((guid1 > guid2) == (guid2 < guid1));
-    
+
     ntsa::Guid guid1eq(guid1);
     NTSCFG_TEST_EQ(guid1, guid1eq);
 

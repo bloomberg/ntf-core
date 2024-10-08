@@ -269,7 +269,7 @@ class StreamSocket : public ntsi::Channel
     /// the specified 'context' the result of the operation. Return the
     /// error.
     virtual ntsa::Error send(ntsa::SendContext*       context,
-                             const ntsa::ConstBuffer *data,
+                             const ntsa::ConstBuffer* data,
                              bsl::size_t              size,
                              const ntsa::SendOptions& options);
 

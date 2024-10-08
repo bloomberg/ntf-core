@@ -59,8 +59,8 @@ NTSCFG_TEST_FUNCTION(ntsa::Ipv6ScopeIdTest::verifyCase1)
         ntsa::Ipv6ScopeId scopeId;
         bool              result =
             ntsa::Ipv6ScopeIdUtil::parse(&scopeId,
-                                            DATA[i].d_text,
-                                            bsl::strlen(DATA[i].d_text));
+                                         DATA[i].d_text,
+                                         bsl::strlen(DATA[i].d_text));
         if (DATA[i].d_success) {
             NTSCFG_TEST_TRUE(result);
             NTSCFG_TEST_EQ(scopeId, DATA[i].d_value);
@@ -90,8 +90,8 @@ NTSCFG_TEST_FUNCTION(ntsa::Ipv6ScopeIdTest::verifyCase2)
     for (bsl::size_t i = 0; i < NUM_DATA; ++i) {
         char        buffer[ntsa::Ipv6ScopeIdUtil::MAX_LENGTH + 1];
         bsl::size_t size = ntsa::Ipv6ScopeIdUtil::format(buffer,
-                                                            sizeof buffer,
-                                                            DATA[i].d_value);
+                                                         sizeof buffer,
+                                                         DATA[i].d_value);
         NTSCFG_TEST_EQ(size, bsl::strlen(buffer));
         NTSCFG_TEST_EQ(0, bsl::strcmp(buffer, DATA[i].d_text));
     }

@@ -35,7 +35,7 @@ class MessageTest
     // TODO
     static void verifyCase2();
 
-private:
+  private:
     static const char s_buffer[1];
 
     static const void* constBufferData(bsl::size_t bufferIndex);
@@ -49,14 +49,13 @@ NTSCFG_TEST_FUNCTION(ntsa::MessageTest::verifyCase1)
 {
     // Concern: The semantics of 'ntsa::ConstMessage' are correct.
     // Plan:
-    
+
     const bsl::size_t MAX_RESET_ITERATION = 2;
     const bsl::size_t MAX_BUFFER_INDEX    = 64;
 
     ntsa::ConstMessage constMessage(NTSCFG_TEST_ALLOCATOR);
 
-    for (bsl::size_t resetIteration = 0; resetIteration < 2;
-            ++resetIteration)
+    for (bsl::size_t resetIteration = 0; resetIteration < 2; ++resetIteration)
     {
         NTSCFG_TEST_EQ(constMessage.endpoint(), ntsa::Endpoint());
         NTSCFG_TEST_EQ(constMessage.numBuffers(), 0);
@@ -66,11 +65,10 @@ NTSCFG_TEST_FUNCTION(ntsa::MessageTest::verifyCase1)
         bsl::vector<ntsa::ConstBuffer> constBufferArray;
 
         for (bsl::size_t bufferIndex = 0; bufferIndex < MAX_BUFFER_INDEX;
-                ++bufferIndex)
+             ++bufferIndex)
         {
-            ntsa::ConstBuffer constBuffer(
-                constBufferData(bufferIndex),
-                constBufferSize(bufferIndex));
+            ntsa::ConstBuffer constBuffer(constBufferData(bufferIndex),
+                                          constBufferSize(bufferIndex));
 
             constMessage.appendBuffer(constBuffer);
             constBufferArray.push_back(constBuffer);
@@ -81,18 +79,15 @@ NTSCFG_TEST_FUNCTION(ntsa::MessageTest::verifyCase1)
 
             bsl::size_t expectedCapacity = 0;
             for (bsl::size_t existingBufferIndex = 0;
-                    existingBufferIndex <= bufferIndex;
-                    ++existingBufferIndex)
+                 existingBufferIndex <= bufferIndex;
+                 ++existingBufferIndex)
             {
-                NTSCFG_TEST_EQ(
-                    constMessage.buffer(existingBufferIndex).data(),
-                    constBufferArray[existingBufferIndex].data());
-                NTSCFG_TEST_EQ(
-                    constMessage.buffer(existingBufferIndex).size(),
-                    constBufferArray[existingBufferIndex].size());
+                NTSCFG_TEST_EQ(constMessage.buffer(existingBufferIndex).data(),
+                               constBufferArray[existingBufferIndex].data());
+                NTSCFG_TEST_EQ(constMessage.buffer(existingBufferIndex).size(),
+                               constBufferArray[existingBufferIndex].size());
 
-                expectedCapacity +=
-                    constBufferSize(existingBufferIndex);
+                expectedCapacity += constBufferSize(existingBufferIndex);
             }
 
             bsl::size_t expectedSize = expectedCapacity;
@@ -115,8 +110,7 @@ NTSCFG_TEST_FUNCTION(ntsa::MessageTest::verifyCase2)
 
     ntsa::MutableMessage mutableMessage(NTSCFG_TEST_ALLOCATOR);
 
-    for (bsl::size_t resetIteration = 0; resetIteration < 2;
-            ++resetIteration)
+    for (bsl::size_t resetIteration = 0; resetIteration < 2; ++resetIteration)
     {
         NTSCFG_TEST_EQ(mutableMessage.endpoint(), ntsa::Endpoint());
         NTSCFG_TEST_EQ(mutableMessage.numBuffers(), 0);
@@ -126,24 +120,22 @@ NTSCFG_TEST_FUNCTION(ntsa::MessageTest::verifyCase2)
         bsl::vector<ntsa::MutableBuffer> mutableBufferArray;
 
         for (bsl::size_t bufferIndex = 0; bufferIndex < MAX_BUFFER_INDEX;
-                ++bufferIndex)
+             ++bufferIndex)
         {
-            ntsa::MutableBuffer mutableBuffer(
-                mutableBufferData(bufferIndex),
-                mutableBufferSize(bufferIndex));
+            ntsa::MutableBuffer mutableBuffer(mutableBufferData(bufferIndex),
+                                              mutableBufferSize(bufferIndex));
 
             mutableMessage.appendBuffer(mutableBuffer);
             mutableBufferArray.push_back(mutableBuffer);
 
             bsl::size_t expectedNumBuffers = bufferIndex + 1;
 
-            NTSCFG_TEST_EQ(mutableMessage.numBuffers(),
-                            expectedNumBuffers);
+            NTSCFG_TEST_EQ(mutableMessage.numBuffers(), expectedNumBuffers);
 
             bsl::size_t expectedCapacity = 0;
             for (bsl::size_t existingBufferIndex = 0;
-                    existingBufferIndex <= bufferIndex;
-                    ++existingBufferIndex)
+                 existingBufferIndex <= bufferIndex;
+                 ++existingBufferIndex)
             {
                 NTSCFG_TEST_EQ(
                     mutableMessage.buffer(existingBufferIndex).data(),
@@ -152,8 +144,7 @@ NTSCFG_TEST_FUNCTION(ntsa::MessageTest::verifyCase2)
                     mutableMessage.buffer(existingBufferIndex).size(),
                     mutableBufferArray[existingBufferIndex].size());
 
-                expectedCapacity +=
-                    mutableBufferSize(existingBufferIndex);
+                expectedCapacity += mutableBufferSize(existingBufferIndex);
             }
 
             bsl::size_t expectedSize = 0;

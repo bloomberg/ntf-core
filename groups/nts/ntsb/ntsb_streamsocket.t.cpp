@@ -224,10 +224,13 @@ void StreamSocketTest::testBufferIO(
     serverData.resize(SIZE);
 
     bslmt::ThreadGroup threadGroup(allocator);
+    threadGroup.addThread(bdlf::BindUtil::bind(&StreamSocketTest::sendString,
+                                               client,
+                                               &clientData));
     threadGroup.addThread(
-        bdlf::BindUtil::bind(&StreamSocketTest::sendString, client, &clientData));
-    threadGroup.addThread(
-        bdlf::BindUtil::bind(&StreamSocketTest::receiveString, server, &serverData));
+        bdlf::BindUtil::bind(&StreamSocketTest::receiveString,
+                             server,
+                             &serverData));
 
     threadGroup.joinAll();
 
@@ -286,10 +289,12 @@ void StreamSocketTest::testVectorIO(
     NTSCFG_TEST_EQ(serverData.totalSize(), SIZE);
 
     bslmt::ThreadGroup threadGroup(allocator);
-    threadGroup.addThread(
-        bdlf::BindUtil::bind(&StreamSocketTest::sendBlob, client, &clientData));
-    threadGroup.addThread(
-        bdlf::BindUtil::bind(&StreamSocketTest::receiveBlob, server, &serverData));
+    threadGroup.addThread(bdlf::BindUtil::bind(&StreamSocketTest::sendBlob,
+                                               client,
+                                               &clientData));
+    threadGroup.addThread(bdlf::BindUtil::bind(&StreamSocketTest::receiveBlob,
+                                               server,
+                                               &serverData));
 
     threadGroup.joinAll();
 
@@ -473,8 +478,9 @@ ntsa::Error StreamSocketTest::receiveAll(bdlbb::Blob* data,
     return ntsa::Error();
 }
 
-void StreamSocketTest::sendString(const bsl::shared_ptr<ntsb::StreamSocket>& client,
-                           const bsl::string* clientData)
+void StreamSocketTest::sendString(
+    const bsl::shared_ptr<ntsb::StreamSocket>& client,
+    const bsl::string*                         clientData)
 {
     ntsa::Error error = StreamSocketTest::sendAll(&(*clientData)[0],
                                                   clientData->size(),
@@ -492,16 +498,18 @@ void StreamSocketTest::receiveString(
     NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
 }
 
-void StreamSocketTest::sendBlob(const bsl::shared_ptr<ntsb::StreamSocket>& client,
-                         const bdlbb::Blob*                         clientData)
+void StreamSocketTest::sendBlob(
+    const bsl::shared_ptr<ntsb::StreamSocket>& client,
+    const bdlbb::Blob*                         clientData)
 {
     ntsa::Error error =
         StreamSocketTest::sendAll(*clientData, client->handle());
     NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
 }
 
-void StreamSocketTest::receiveBlob(const bsl::shared_ptr<ntsb::StreamSocket>& server,
-                            bdlbb::Blob* serverData)
+void StreamSocketTest::receiveBlob(
+    const bsl::shared_ptr<ntsb::StreamSocket>& server,
+    bdlbb::Blob*                               serverData)
 {
     ntsa::Error error =
         StreamSocketTest::receiveAll(serverData, server->handle());

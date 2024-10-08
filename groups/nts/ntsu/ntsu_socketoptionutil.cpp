@@ -102,10 +102,9 @@ struct SocketStorageUtil {
                                const ntsa::IpAddress& ipAddress);
 };
 
-ntsa::Error SocketStorageUtil::convert(
-    sockaddr_storage*      socketAddress,
-    socklen_t*             socketAddressSize,
-    const ntsa::IpAddress& ipAddress)
+ntsa::Error SocketStorageUtil::convert(sockaddr_storage* socketAddress,
+                                       socklen_t*        socketAddressSize,
+                                       const ntsa::IpAddress& ipAddress)
 {
     bsl::memset(socketAddress, 0, sizeof(sockaddr_storage));
     *socketAddressSize = 0;
@@ -119,9 +118,8 @@ ntsa::Error SocketStorageUtil::convert(
         socketAddressIpv4->sin_family = AF_INET;
         socketAddressIpv4->sin_port   = 0;
 
-        ipAddress.v4().copyTo(
-            &socketAddressIpv4->sin_addr,
-            sizeof socketAddressIpv4->sin_addr);
+        ipAddress.v4().copyTo(&socketAddressIpv4->sin_addr,
+                              sizeof socketAddressIpv4->sin_addr);
     }
     else if (ipAddress.isV6()) {
         sockaddr_in6* socketAddressIpv6 =
@@ -132,12 +130,10 @@ ntsa::Error SocketStorageUtil::convert(
         socketAddressIpv6->sin6_family = AF_INET6;
         socketAddressIpv6->sin6_port   = 0;
 
-        ipAddress.v6().copyTo(
-            &socketAddressIpv6->sin6_addr,
-            sizeof socketAddressIpv6->sin6_addr);
+        ipAddress.v6().copyTo(&socketAddressIpv6->sin6_addr,
+                              sizeof socketAddressIpv6->sin6_addr);
 
-        socketAddressIpv6->sin6_scope_id =
-            ipAddress.v6().scopeId();
+        socketAddressIpv6->sin6_scope_id = ipAddress.v6().scopeId();
     }
     else {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -146,7 +142,7 @@ ntsa::Error SocketStorageUtil::convert(
     return ntsa::Error();
 }
 
-} // close unnamed namespace
+}  // close unnamed namespace
 
 ntsa::Error SocketOptionUtil::setOption(ntsa::Handle              socket,
                                         const ntsa::SocketOption& option)
@@ -1808,10 +1804,10 @@ ntsa::Error SocketOptionUtil::leaveMulticastGroup(
 }
 
 ntsa::Error SocketOptionUtil::joinMulticastGroupSource(
-        ntsa::Handle           socket,
-        const ntsa::IpAddress& interface,
-        const ntsa::IpAddress& group,
-        const ntsa::IpAddress& source)
+    ntsa::Handle           socket,
+    const ntsa::IpAddress& interface,
+    const ntsa::IpAddress& group,
+    const ntsa::IpAddress& source)
 {
 #if defined(BSLS_PLATFORM_OS_LINUX) || defined(BSLS_PLATFORM_OS_DARWIN)
 
@@ -1830,13 +1826,13 @@ ntsa::Error SocketOptionUtil::joinMulticastGroupSource(
         return ntsa::Error(errno);
     }
 
-    if (socketAddress.ss_family != AF_INET && 
-        socketAddress.ss_family != AF_INET6) 
+    if (socketAddress.ss_family != AF_INET &&
+        socketAddress.ss_family != AF_INET6)
     {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    const bsl::uint32_t interfaceIndex = 
+    const bsl::uint32_t interfaceIndex =
         ntsu::AdapterUtil::discoverInterfaceIndex(interface);
 
     if (interfaceIndex == 0) {
@@ -1848,15 +1844,16 @@ ntsa::Error SocketOptionUtil::joinMulticastGroupSource(
     req.gsr_interface = interfaceIndex;
 
     socklen_t groupAddressSize = 0;
-    error = SocketStorageUtil::convert(
-        &req.gsr_group, &groupAddressSize, group);
+    error =
+        SocketStorageUtil::convert(&req.gsr_group, &groupAddressSize, group);
     if (error) {
         return error;
     }
 
     socklen_t sourceAddressSize = 0;
-    error = SocketStorageUtil::convert(
-        &req.gsr_source, &sourceAddressSize, source);
+    error                       = SocketStorageUtil::convert(&req.gsr_source,
+                                       &sourceAddressSize,
+                                       source);
     if (error) {
         return error;
     }
@@ -1900,7 +1897,7 @@ ntsa::Error SocketOptionUtil::joinMulticastGroupSource(
                                sizeof mreq.imr_sourceaddr.s_addr);
 
             errno = 0;
-            rc = ::setsockopt(socket,
+            rc    = ::setsockopt(socket,
                               IPPROTO_IP,
                               IP_ADD_SOURCE_MEMBERSHIP,
                               reinterpret_cast<char*>(&mreq),
@@ -1927,10 +1924,10 @@ ntsa::Error SocketOptionUtil::joinMulticastGroupSource(
 }
 
 ntsa::Error SocketOptionUtil::leaveMulticastGroupSource(
-        ntsa::Handle           socket,
-        const ntsa::IpAddress& interface,
-        const ntsa::IpAddress& group,
-        const ntsa::IpAddress& source)
+    ntsa::Handle           socket,
+    const ntsa::IpAddress& interface,
+    const ntsa::IpAddress& group,
+    const ntsa::IpAddress& source)
 {
 #if defined(BSLS_PLATFORM_OS_LINUX) || defined(BSLS_PLATFORM_OS_DARWIN)
 
@@ -1949,13 +1946,13 @@ ntsa::Error SocketOptionUtil::leaveMulticastGroupSource(
         return ntsa::Error(errno);
     }
 
-    if (socketAddress.ss_family != AF_INET && 
-        socketAddress.ss_family != AF_INET6) 
+    if (socketAddress.ss_family != AF_INET &&
+        socketAddress.ss_family != AF_INET6)
     {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    const bsl::uint32_t interfaceIndex = 
+    const bsl::uint32_t interfaceIndex =
         ntsu::AdapterUtil::discoverInterfaceIndex(interface);
 
     if (interfaceIndex == 0) {
@@ -1967,15 +1964,16 @@ ntsa::Error SocketOptionUtil::leaveMulticastGroupSource(
     req.gsr_interface = interfaceIndex;
 
     socklen_t groupAddressSize = 0;
-    error = SocketStorageUtil::convert(
-        &req.gsr_group, &groupAddressSize, group);
+    error =
+        SocketStorageUtil::convert(&req.gsr_group, &groupAddressSize, group);
     if (error) {
         return error;
     }
 
     socklen_t sourceAddressSize = 0;
-    error = SocketStorageUtil::convert(
-        &req.gsr_source, &sourceAddressSize, source);
+    error                       = SocketStorageUtil::convert(&req.gsr_source,
+                                       &sourceAddressSize,
+                                       source);
     if (error) {
         return error;
     }
@@ -3307,10 +3305,10 @@ ntsa::Error SocketOptionUtil::leaveMulticastGroup(
 }
 
 ntsa::Error SocketOptionUtil::joinMulticastGroupSource(
-        ntsa::Handle           socket,
-        const ntsa::IpAddress& interface,
-        const ntsa::IpAddress& group,
-        const ntsa::IpAddress& source)
+    ntsa::Handle           socket,
+    const ntsa::IpAddress& interface,
+    const ntsa::IpAddress& group,
+    const ntsa::IpAddress& source)
 {
     NTSCFG_WARNING_UNUSED(socket);
     NTSCFG_WARNING_UNUSED(interface);
@@ -3321,10 +3319,10 @@ ntsa::Error SocketOptionUtil::joinMulticastGroupSource(
 }
 
 ntsa::Error SocketOptionUtil::leaveMulticastGroupSource(
-        ntsa::Handle           socket,
-        const ntsa::IpAddress& interface,
-        const ntsa::IpAddress& group,
-        const ntsa::IpAddress& source)
+    ntsa::Handle           socket,
+    const ntsa::IpAddress& interface,
+    const ntsa::IpAddress& group,
+    const ntsa::IpAddress& source)
 {
     NTSCFG_WARNING_UNUSED(socket);
     NTSCFG_WARNING_UNUSED(interface);

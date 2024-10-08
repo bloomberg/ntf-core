@@ -39,11 +39,10 @@ namespace ntsa {
 class BufferTest
 {
     /// Define a type alias for a non-modifiable buffer sequence.
-    typedef ntsa::ConstBufferSequence<ntsa::ConstBuffer> 
-        ConstBufferSequence;
+    typedef ntsa::ConstBufferSequence<ntsa::ConstBuffer> ConstBufferSequence;
 
     /// Define a type alias for a modifiable buffer sequence.
-    typedef ntsa::MutableBufferSequence<ntsa::MutableBuffer> 
+    typedef ntsa::MutableBufferSequence<ntsa::MutableBuffer>
         MutableBufferSequence;
 
   public:
@@ -1001,26 +1000,25 @@ NTSCFG_TEST_FUNCTION(ntsa::BufferTest::verifyCase19)
     const int MIN_MESSAGE_SIZE = 1;
     const int MAX_MESSAGE_SIZE = 64;
 
-    for (int messageSize = MIN_MESSAGE_SIZE;
-             messageSize <= MAX_MESSAGE_SIZE;
-           ++messageSize)
+    for (int messageSize = MIN_MESSAGE_SIZE; messageSize <= MAX_MESSAGE_SIZE;
+         ++messageSize)
     {
         NTSCFG_TEST_LOG_DEBUG << "Testing message size " << messageSize
-                                << NTSCFG_TEST_LOG_END;
+                              << NTSCFG_TEST_LOG_END;
 
         for (int sourceBufferSize = MIN_SOURCE_BUFFER_SIZE;
-                sourceBufferSize <= MAX_SOURCE_BUFFER_SIZE;
-                ++sourceBufferSize)
+             sourceBufferSize <= MAX_SOURCE_BUFFER_SIZE;
+             ++sourceBufferSize)
         {
             NTSCFG_TEST_LOG_DEBUG << "Testing source buffer size "
-                                    << sourceBufferSize
-                                    << NTSCFG_TEST_LOG_END;
+                                  << sourceBufferSize << NTSCFG_TEST_LOG_END;
 
             bdlbb::PooledBlobBufferFactory sourceBlobBufferFactory(
                 sourceBufferSize,
                 NTSCFG_TEST_ALLOCATOR);
 
-            bdlbb::Blob sourceBlob(&sourceBlobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+            bdlbb::Blob sourceBlob(&sourceBlobBufferFactory,
+                                   NTSCFG_TEST_ALLOCATOR);
             ntscfg::TestDataUtil::generateData(&sourceBlob, messageSize);
 
             bsl::vector<ntsa::ConstBuffer> sourceBufferArray;
@@ -1030,34 +1028,30 @@ NTSCFG_TEST_FUNCTION(ntsa::BufferTest::verifyCase19)
             bsl::size_t numSourceBytes;
 
             ntsa::ConstBuffer::gather(&numSourceBuffers,
-                                        &numSourceBytes,
-                                        &sourceBufferArray[0],
-                                        sourceBufferArray.size(),
-                                        sourceBlob,
-                                        MAX_MESSAGE_SIZE);
+                                      &numSourceBytes,
+                                      &sourceBufferArray[0],
+                                      sourceBufferArray.size(),
+                                      sourceBlob,
+                                      MAX_MESSAGE_SIZE);
 
             NTSCFG_TEST_EQ(numSourceBuffers, sourceBlob.numDataBuffers());
             NTSCFG_TEST_EQ(numSourceBytes, sourceBlob.length());
 
             for (int destinationBufferSize = MIN_DESTINATION_BUFFER_SIZE;
-                    destinationBufferSize <= MAX_DESTINATION_BUFFER_SIZE;
-                    ++destinationBufferSize)
+                 destinationBufferSize <= MAX_DESTINATION_BUFFER_SIZE;
+                 ++destinationBufferSize)
             {
                 NTSCFG_TEST_LOG_DEBUG << "Testing destination buffer size "
-                                        << destinationBufferSize
-                                        << NTSCFG_TEST_LOG_END;
+                                      << destinationBufferSize
+                                      << NTSCFG_TEST_LOG_END;
 
-                bdlbb::PooledBlobBufferFactory
-                    destinationBlobBufferFactory(destinationBufferSize,
-                                                    NTSCFG_TEST_ALLOCATOR);
+                bdlbb::PooledBlobBufferFactory destinationBlobBufferFactory(
+                    destinationBufferSize,
+                    NTSCFG_TEST_ALLOCATOR);
 
-                for (int offset = 0; offset < sourceBlob.length();
-                        ++offset)
-                {
+                for (int offset = 0; offset < sourceBlob.length(); ++offset) {
                     bdlbb::Blob truncatedSourceBlob = sourceBlob;
-                    bdlbb::BlobUtil::erase(&truncatedSourceBlob,
-                                            0,
-                                            offset);
+                    bdlbb::BlobUtil::erase(&truncatedSourceBlob, 0, offset);
 
                     {
                         bdlbb::Blob destinationBlob(
@@ -1070,11 +1064,11 @@ NTSCFG_TEST_FUNCTION(ntsa::BufferTest::verifyCase19)
                                                 offset);
 
                         NTSCFG_TEST_EQ(destinationBlob.length(),
-                                        truncatedSourceBlob.length());
+                                       truncatedSourceBlob.length());
 
                         NTSCFG_TEST_EQ(
                             bdlbb::BlobUtil::compare(destinationBlob,
-                                                        truncatedSourceBlob),
+                                                     truncatedSourceBlob),
                             0);
                     }
 
@@ -1091,11 +1085,11 @@ NTSCFG_TEST_FUNCTION(ntsa::BufferTest::verifyCase19)
                             offset);
 
                         NTSCFG_TEST_EQ(destinationBlob.length(),
-                                        truncatedSourceBlob.length());
+                                       truncatedSourceBlob.length());
 
                         NTSCFG_TEST_EQ(
                             bdlbb::BlobUtil::compare(destinationBlob,
-                                                        truncatedSourceBlob),
+                                                     truncatedSourceBlob),
                             0);
                     }
                 }
@@ -1107,7 +1101,7 @@ NTSCFG_TEST_FUNCTION(ntsa::BufferTest::verifyCase19)
 NTSCFG_TEST_FUNCTION(ntsa::BufferTest::verifyCase20)
 {
     bdlbb::PooledBlobBufferFactory blobBufferFactory(8, NTSCFG_TEST_ALLOCATOR);
-    bdlbb::Blob                    blob(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+    bdlbb::Blob blob(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
 
     bdlbb::BlobUtil::append(&blob, "Hello, world!", 0, 13);
 
@@ -1116,8 +1110,7 @@ NTSCFG_TEST_FUNCTION(ntsa::BufferTest::verifyCase20)
     const bdlbb::BlobBuffer& blobBuffer1 = blob.buffer(0);
     const bdlbb::BlobBuffer& blobBuffer2 = blob.buffer(1);
 
-    ntsa::ConstBufferSequence<ntsa::ConstBuffer> constBufferSequence(
-        &blob);
+    ntsa::ConstBufferSequence<ntsa::ConstBuffer> constBufferSequence(&blob);
 
     ntsa::ConstBufferSequence<ntsa::ConstBuffer>::Iterator it;
 
@@ -1146,7 +1139,7 @@ NTSCFG_TEST_FUNCTION(ntsa::BufferTest::verifyCase20)
 NTSCFG_TEST_FUNCTION(ntsa::BufferTest::verifyCase21)
 {
     bdlbb::PooledBlobBufferFactory blobBufferFactory(8, NTSCFG_TEST_ALLOCATOR);
-    bdlbb::Blob                    blob(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+    bdlbb::Blob blob(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
 
     bdlbb::BlobUtil::append(&blob, "Hello, world!", 0, 13);
 

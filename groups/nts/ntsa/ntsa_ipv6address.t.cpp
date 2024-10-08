@@ -1493,4 +1493,3 @@ NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyComparison)
 
 }  // close namespace ntsa
 }  // close namespace BloombergLP
-

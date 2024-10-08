@@ -112,7 +112,7 @@ class DatagramSocket : public ntsi::DatagramSocket
     /// the specified 'context' the result of the operation. Return the
     /// error.
     ntsa::Error send(ntsa::SendContext*       context,
-                     const ntsa::ConstBuffer *data,
+                     const ntsa::ConstBuffer* data,
                      bsl::size_t              size,
                      const ntsa::SendOptions& options) BSLS_KEYWORD_OVERRIDE;
 
@@ -198,10 +198,10 @@ class DatagramSocket : public ntsi::DatagramSocket
     /// only from the specified 'source'. Return the error. Note that this
     /// function may be called multiple times to allow receiving multicast
     /// datagrams only from a particular set of source addresses.
-    ntsa::Error joinMulticastGroupSource(
-        const ntsa::IpAddress& interface,
-        const ntsa::IpAddress& group,
-        const ntsa::IpAddress& source) BSLS_KEYWORD_OVERRIDE;
+    ntsa::Error joinMulticastGroupSource(const ntsa::IpAddress& interface,
+                                         const ntsa::IpAddress& group,
+                                         const ntsa::IpAddress& source)
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Leave the specified source-specific multicast 'group' on the adapter
     /// identified by the specified 'interface', disallowing datagrams sent by
@@ -209,10 +209,10 @@ class DatagramSocket : public ntsi::DatagramSocket
     /// subscribed to multiple sources within the same group, data from the
     /// remaining sources will still be delivered. To stop receiving data from
     /// all sources at once, use 'leaveMulticastGroup'.
-    ntsa::Error leaveMulticastGroupSource(
-        const ntsa::IpAddress& interface,
-        const ntsa::IpAddress& group,
-        const ntsa::IpAddress& source) BSLS_KEYWORD_OVERRIDE;
+    ntsa::Error leaveMulticastGroupSource(const ntsa::IpAddress& interface,
+                                          const ntsa::IpAddress& group,
+                                          const ntsa::IpAddress& source)
+        BSLS_KEYWORD_OVERRIDE;
 
     // *** Socket Options ***
 

@@ -5391,7 +5391,7 @@ ntsa::Error SocketUtil::bind(const ntsa::Endpoint& endpoint,
     ntsa::Error error;
 
 #if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
-    const bool isLocal = endpoint.isLocal();
+    const bool  isLocal = endpoint.isLocal();
 #else
     const bool isLocal = false;
 #endif

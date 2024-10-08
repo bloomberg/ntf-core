@@ -54,15 +54,14 @@ NTSCFG_TEST_FUNCTION(ntsa::DistinguishedNameTest::verifyGenerate)
     NTSCFG_TEST_EQ(rc, 0);
 
     NTSCFG_TEST_LOG_DEBUG << "Generated distinguished name = " << result
-                            << NTSCFG_TEST_LOG_END;
+                          << NTSCFG_TEST_LOG_END;
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::DistinguishedNameTest::verifyParse)
 {
     typedef ntsa::DistinguishedName DN;
 
-    bsl::string NAME =
-        "CN=John Doe,O=Technical Corporation,OU=Engineering";
+    bsl::string NAME = "CN=John Doe,O=Technical Corporation,OU=Engineering";
 
     DN identity(NTSCFG_TEST_ALLOCATOR);
 
@@ -70,7 +69,7 @@ NTSCFG_TEST_FUNCTION(ntsa::DistinguishedNameTest::verifyParse)
     NTSCFG_TEST_EQ(0, rc);
 
     NTSCFG_TEST_LOG_DEBUG << "Parsed distinguished name = " << identity
-                            << NTSCFG_TEST_LOG_END;
+                          << NTSCFG_TEST_LOG_END;
 
     DN::Component* component;
 
@@ -95,7 +94,7 @@ NTSCFG_TEST_FUNCTION(ntsa::DistinguishedNameTest::verifyParse)
     NTSCFG_TEST_EQ(0, rc);
 
     NTSCFG_TEST_LOG_DEBUG << "Parsed distinguished name = " << identity
-                            << NTSCFG_TEST_LOG_END;
+                          << NTSCFG_TEST_LOG_END;
 
     NTSCFG_TEST_EQ(0, identity.find(&component, "CN"));
     NTSCFG_TEST_NE(static_cast<DN::Component*>(0), component);
@@ -135,7 +134,7 @@ NTSCFG_TEST_FUNCTION(ntsa::DistinguishedNameTest::verifyUsage)
     identity["DC"].addAttribute("com");
 
     NTSCFG_TEST_LOG_DEBUG << "DistinguishedName = " << identity
-                            << NTSCFG_TEST_LOG_END;
+                          << NTSCFG_TEST_LOG_END;
 
     DN::Component* rdn;
 

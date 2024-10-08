@@ -238,13 +238,14 @@ void DatagramSocketTest::testBufferIO(
                                                NUM_MESSAGES,
                                                allocator));
 
-    threadGroup.addThread(bdlf::BindUtil::bind(&DatagramSocketTest::receiveString,
-                                               server,
-                                               clientSourceEndpoint,
-                                               &clientData,
-                                               NUM_MESSAGES,
-                                               &numMessagesReceived,
-                                               allocator));
+    threadGroup.addThread(
+        bdlf::BindUtil::bind(&DatagramSocketTest::receiveString,
+                             server,
+                             clientSourceEndpoint,
+                             &clientData,
+                             NUM_MESSAGES,
+                             &numMessagesReceived,
+                             allocator));
 
     threadGroup.joinAll();
 
@@ -310,14 +311,15 @@ void DatagramSocketTest::testVectorIO(
                                                NUM_MESSAGES,
                                                allocator));
 
-    threadGroup.addThread(bdlf::BindUtil::bind(&DatagramSocketTest::receiveBlob,
-                                               server,
-                                               clientSourceEndpoint,
-                                               &clientData,
-                                               NUM_MESSAGES,
-                                               &numMessagesReceived,
-                                               &blobBufferFactory,
-                                               allocator));
+    threadGroup.addThread(
+        bdlf::BindUtil::bind(&DatagramSocketTest::receiveBlob,
+                             server,
+                             clientSourceEndpoint,
+                             &clientData,
+                             NUM_MESSAGES,
+                             &numMessagesReceived,
+                             &blobBufferFactory,
+                             allocator));
 
     threadGroup.joinAll();
 
@@ -347,11 +349,12 @@ void DatagramSocketTest::testVectorIO(
     }
 }
 
-void DatagramSocketTest::sendString(const bsl::shared_ptr<ntsb::DatagramSocket>& client,
-                           const ntsa::Endpoint& serverEndpoint,
-                           const bsl::string*    clientData,
-                           bsl::size_t           numMessages,
-                           bslma::Allocator*     allocator)
+void DatagramSocketTest::sendString(
+    const bsl::shared_ptr<ntsb::DatagramSocket>& client,
+    const ntsa::Endpoint&                        serverEndpoint,
+    const bsl::string*                           clientData,
+    bsl::size_t                                  numMessages,
+    bslma::Allocator*                            allocator)
 {
     NTSCFG_WARNING_UNUSED(allocator);
 
@@ -472,11 +475,12 @@ void DatagramSocketTest::receiveString(
     }
 }
 
-void DatagramSocketTest::sendBlob(const bsl::shared_ptr<ntsb::DatagramSocket>& client,
-                         const ntsa::Endpoint& serverEndpoint,
-                         const bdlbb::Blob*    clientData,
-                         bsl::size_t           numMessages,
-                         bslma::Allocator*     allocator)
+void DatagramSocketTest::sendBlob(
+    const bsl::shared_ptr<ntsb::DatagramSocket>& client,
+    const ntsa::Endpoint&                        serverEndpoint,
+    const bdlbb::Blob*                           clientData,
+    bsl::size_t                                  numMessages,
+    bslma::Allocator*                            allocator)
 {
     NTSCFG_WARNING_UNUSED(allocator);
 

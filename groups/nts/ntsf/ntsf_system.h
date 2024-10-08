@@ -1623,7 +1623,7 @@ struct System {
 class SystemGuard
 {
   private:
-                 SystemGuard(const SystemGuard&) BSLS_KEYWORD_DELETED;
+    SystemGuard(const SystemGuard&) BSLS_KEYWORD_DELETED;
     SystemGuard& operator=(const SystemGuard&) BSLS_KEYWORD_DELETED;
 
   public:
@@ -1653,7 +1653,7 @@ class HandleGuard
     ntsa::Handle d_handle;
 
   private:
-                 HandleGuard(const HandleGuard&) BSLS_KEYWORD_DELETED;
+    HandleGuard(const HandleGuard&) BSLS_KEYWORD_DELETED;
     HandleGuard& operator=(const HandleGuard&) BSLS_KEYWORD_DELETED;
 
   public:

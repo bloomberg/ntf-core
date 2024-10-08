@@ -200,7 +200,8 @@ NTSCFG_TEST_FUNCTION(ntsa::TcpCongestionControlTest::verifyReset)
     NTSCFG_TEST_EQ(source.allocator(), NTSCFG_TEST_ALLOCATOR);
 }
 
-NTSCFG_TEST_FUNCTION(ntsa::TcpCongestionControlTest::verifyWellKnownEnumerators)
+NTSCFG_TEST_FUNCTION(
+    ntsa::TcpCongestionControlTest::verifyWellKnownEnumerators)
 {
     ntsa::Error error;
 
