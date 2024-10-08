@@ -13,6 +13,7 @@ BSLS_IDENT("$Id: $")
 #include <bdlbb_blobutil.h>
 #include <bdlbb_blobstreambuf.h>
 #include <bdlbb_pooledblobbufferfactory.h>
+#include <bdlbb_simpleblobbufferfactory.h>
 #include <bdlf_bind.h>
 #include <bdlf_memfn.h>
 #include <bdlf_placeholder.h>
@@ -43,6 +44,8 @@ BSLS_IDENT("$Id: $")
 #include <bsls_platform.h>
 #include <bsls_timeinterval.h>
 #include <bsls_types.h>
+#include <bsl_algorithm.h>
+#include <bsl_array.h>
 #include <bsl_cstdio.h>
 #include <bsl_cstdlib.h>
 #include <bsl_cstring.h>
@@ -50,6 +53,7 @@ BSLS_IDENT("$Id: $")
 #include <bsl_fstream.h>
 #include <bsl_iomanip.h>
 #include <bsl_iostream.h>
+#include <bsl_list.h>
 #include <bsl_map.h>
 #include <bsl_ostream.h>
 #include <bsl_set.h>
@@ -819,24 +823,24 @@ int main(int argc, char** argv)
 
         int i = 1;
         while (i < argc) {
-            const char* argvValue = argv[i];
+            const char* arg = argv[i];
 
-            if ((0 == bsl::strcmp(argv[i], "-?")) ||
-                (0 == bsl::strcmp(argv[i], "--help")))
+            if ((0 == bsl::strcmp(arg, "-?")) ||
+                (0 == bsl::strcmp(arg, "--help")))
             {
                 BloombergLP::ntscfg::TestUtil::help();
                 return 1;
             }
 
-            if ((0 == bsl::strcmp(argv[i], "-l")) ||
-                (0 == bsl::strcmp(argv[i], "--list")))
+            if ((0 == bsl::strcmp(arg, "-l")) ||
+                (0 == bsl::strcmp(arg, "--list")))
             {
                 BloombergLP::ntscfg::TestUtil::list();
                 return 0;
             }
 
-            if ((0 == bsl::strcmp(argv[i], "-v")) ||
-                (0 == bsl::strcmp(argv[i], "--verbosity")))
+            if ((0 == bsl::strcmp(arg, "-v")) ||
+                (0 == bsl::strcmp(arg, "--verbosity")))
             {
                 ++i;
                 if (i >= argc) {
@@ -845,7 +849,7 @@ int main(int argc, char** argv)
                 }
 
                 int level;
-                if (BloombergLP::ntscfg::TestUtil::parseInt(&level, argv[i])) {
+                if (BloombergLP::ntscfg::TestUtil::parseInt(&level, arg)) {
                     BloombergLP::ntscfg::testVerbosity = level;
                 }
                 else {
@@ -858,19 +862,19 @@ int main(int argc, char** argv)
                 continue;
             }
 
-            if (0 == bsl::strcmp(argv[i], "--concern")) {
+            if (0 == bsl::strcmp(arg, "--concern")) {
                 ++i;
                 if (i >= argc) {
                     BloombergLP::ntscfg::TestUtil::help();
                     return 1;
                 }
-                concern.makeValue(bsl::string(argv[i]));
+                concern.makeValue(bsl::string(arg));
                 ++i;
                 continue;
             }
 
             if (concern.isNull()) {
-                concern.makeValue(bsl::string(argv[i]));
+                concern.makeValue(bsl::string(arg));
             }
             else {
                 BloombergLP::ntscfg::testVerbosity++;

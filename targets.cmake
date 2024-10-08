@@ -272,7 +272,7 @@ if (${NTF_BUILD_WITH_NTS})
     ntf_component(NAME ntso_poll)
     ntf_component(NAME ntso_pollset)
     ntf_component(NAME ntso_select)
-    ntf_component(NAME ntso_test)
+    ntf_component(NAME ntso_test PRIVATE)
 
     ntf_package_end(NAME ntso)
 

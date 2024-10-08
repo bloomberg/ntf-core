@@ -26,7 +26,7 @@ namespace BloombergLP {
 namespace ntsa {
 
 // Provide tests for 'ntsa::DataType'.
-class DataTypeTets
+class DataTypeTest
 {
   public:
     // TODO

@@ -13,94 +13,88 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntso_epoll.h>
-
+#include <ntscfg_test.h>
 #include <ntso_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntso_test_t_cpp, "$Id$ $CSID$")
+
+#include <ntso_epoll.h>
 
 using namespace BloombergLP;
 
+namespace BloombergLP {
+namespace ntso {
+
 #if NTSO_EPOLL_ENABLED
 
-NTSCFG_TEST_CASE(1)
+// Provide tests for 'ntso::Epoll'.
+class EpollTest
+{
+  public:
+    // Concern: Test the usage example.
+    static void verifyCase1();
+
+    // Concern: Polling after a socket has been shutdown for both reading and
+    // writing after both sides have shutdown writing does not block.
+    static void verifyCase2();
+
+    // Concern: Close socket while it still remains added to the reactor.
+    // Polling the reactor times out.
+    static void verifyCase3();
+};
+
+NTSCFG_TEST_FUNCTION(ntso::EpollTest::verifyCase1)
 {
     // Concern: Test the usage example.
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::ReactorConfig reactorConfig(&ta);
-        reactorConfig.setDriverName("epoll");
+    ntsa::ReactorConfig reactorConfig(NTSCFG_TEST_ALLOCATOR);
+    reactorConfig.setDriverName("epoll");
 
-        bsl::shared_ptr<ntsi::Reactor> reactor =
-            ntso::EpollUtil::createReactor(reactorConfig, &ta);
+    bsl::shared_ptr<ntsi::Reactor> reactor =
+        ntso::EpollUtil::createReactor(reactorConfig, NTSCFG_TEST_ALLOCATOR);
 
-        ntso::Test::ReactorVector reactorVector(&ta);
-        reactorVector.push_back(reactor);
+    ntso::Test::ReactorVector reactorVector(NTSCFG_TEST_ALLOCATOR);
+    reactorVector.push_back(reactor);
 
-        ntso::Test::usage(reactorVector, &ta);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    ntso::Test::usage(reactorVector, NTSCFG_TEST_ALLOCATOR);
 }
 
-NTSCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntso::EpollTest::verifyCase2)
 {
     // Concern: Polling after a socket has been shutdown for both reading and
     // writing after both sides have shutdown writing does not block.
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::ReactorConfig reactorConfig(&ta);
-        reactorConfig.setDriverName("epoll");
+    ntsa::ReactorConfig reactorConfig(NTSCFG_TEST_ALLOCATOR);
+    reactorConfig.setDriverName("epoll");
 
-        bsl::shared_ptr<ntsi::Reactor> reactor =
-            ntso::EpollUtil::createReactor(reactorConfig, &ta);
+    bsl::shared_ptr<ntsi::Reactor> reactor =
+        ntso::EpollUtil::createReactor(reactorConfig, NTSCFG_TEST_ALLOCATOR);
 
-        ntso::Test::ReactorVector reactorVector(&ta);
-        reactorVector.push_back(reactor);
+    ntso::Test::ReactorVector reactorVector(NTSCFG_TEST_ALLOCATOR);
+    reactorVector.push_back(reactor);
 
-        ntso::Test::pollingAfterFullShutdown(reactorVector, &ta);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    ntso::Test::pollingAfterFullShutdown(reactorVector, NTSCFG_TEST_ALLOCATOR);
 }
 
-NTSCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntso::EpollTest::verifyCase3)
 {
     // Concern: Close socket while it still remains added to the reactor.
     // Polling the reactor times out.
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::ReactorConfig reactorConfig(&ta);
-        reactorConfig.setDriverName("epoll");
+    ntsa::ReactorConfig reactorConfig(NTSCFG_TEST_ALLOCATOR);
+    reactorConfig.setDriverName("epoll");
 
-        bsl::shared_ptr<ntsi::Reactor> reactor =
-            ntso::EpollUtil::createReactor(reactorConfig, &ta);
+    bsl::shared_ptr<ntsi::Reactor> reactor =
+        ntso::EpollUtil::createReactor(reactorConfig, NTSCFG_TEST_ALLOCATOR);
 
-        ntso::Test::ReactorVector reactorVector(&ta);
-        reactorVector.push_back(reactor);
+    ntso::Test::ReactorVector reactorVector(NTSCFG_TEST_ALLOCATOR);
+    reactorVector.push_back(reactor);
 
-        ntso::Test::pollingAfterClose(reactorVector, &ta);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    ntso::Test::pollingAfterClose(reactorVector, NTSCFG_TEST_ALLOCATOR);
 }
-
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-    NTSCFG_TEST_REGISTER(2);
-    NTSCFG_TEST_REGISTER(3);
-}
-NTSCFG_TEST_DRIVER_END;
-
-#else
-
-NTSCFG_TEST_CASE(1)
-{
-}
-
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-}
-NTSCFG_TEST_DRIVER_END;
 
 #endif
+
+}  // close namespace ntso
+}  // close namespace BloombergLP

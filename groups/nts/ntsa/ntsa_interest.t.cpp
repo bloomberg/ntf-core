@@ -226,7 +226,7 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase2)
     NTSCFG_TEST_TRUE(interestSet.empty());
 
     for (ntsa::Handle i = k_SOCKET_MIN; i <= k_SOCKET_MAX; ++i) {
-        test::ensureNotFound(interestSet, i);
+        InterestTest::ensureNotFound(interestSet, i);
     }
 
     // Attach each socket to the interest set.
@@ -237,10 +237,10 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase2)
 
         for (ntsa::Handle j = k_SOCKET_MIN; j <= k_SOCKET_MAX; ++j) {
             if (j <= i) {
-                test::ensureWantNone(interestSet, j);
+                InterestTest::ensureWantNone(interestSet, j);
             }
             else {
-                test::ensureNotFound(interestSet, j);
+                InterestTest::ensureNotFound(interestSet, j);
             }
         }
     }
@@ -253,10 +253,10 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase2)
 
         for (ntsa::Handle j = k_SOCKET_MIN; j <= k_SOCKET_MAX; ++j) {
             if (j <= i) {
-                test::ensureWantReadable(interestSet, j);
+                InterestTest::ensureWantReadable(interestSet, j);
             }
             else {
-                test::ensureWantNone(interestSet, j);
+                InterestTest::ensureWantNone(interestSet, j);
             }
         }
     }
@@ -269,10 +269,10 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase2)
 
         for (ntsa::Handle j = k_SOCKET_MIN; j <= k_SOCKET_MAX; ++j) {
             if (j <= i) {
-                test::ensureWantNone(interestSet, j);
+                InterestTest::ensureWantNone(interestSet, j);
             }
             else {
-                test::ensureWantReadable(interestSet, j);
+                InterestTest::ensureWantReadable(interestSet, j);
             }
         }
     }
@@ -285,10 +285,10 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase2)
 
         for (ntsa::Handle j = k_SOCKET_MIN; j <= k_SOCKET_MAX; ++j) {
             if (j <= i) {
-                test::ensureWantWritable(interestSet, j);
+                InterestTest::ensureWantWritable(interestSet, j);
             }
             else {
-                test::ensureWantNone(interestSet, j);
+                InterestTest::ensureWantNone(interestSet, j);
             }
         }
     }
@@ -301,10 +301,10 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase2)
 
         for (ntsa::Handle j = k_SOCKET_MIN; j <= k_SOCKET_MAX; ++j) {
             if (j <= i) {
-                test::ensureWantNone(interestSet, j);
+                InterestTest::ensureWantNone(interestSet, j);
             }
             else {
-                test::ensureWantWritable(interestSet, j);
+                InterestTest::ensureWantWritable(interestSet, j);
             }
         }
     }
@@ -318,10 +318,10 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase2)
 
         for (ntsa::Handle j = k_SOCKET_MIN; j <= k_SOCKET_MAX; ++j) {
             if (j <= i) {
-                test::ensureWantReadable(interestSet, j);
+                InterestTest::ensureWantReadable(interestSet, j);
             }
             else {
-                test::ensureWantNone(interestSet, j);
+                InterestTest::ensureWantNone(interestSet, j);
             }
         }
     }
@@ -332,10 +332,10 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase2)
 
         for (ntsa::Handle j = k_SOCKET_MIN; j <= k_SOCKET_MAX; ++j) {
             if (j <= i) {
-                test::ensureWantBoth(interestSet, j);
+                InterestTest::ensureWantBoth(interestSet, j);
             }
             else {
-                test::ensureWantReadable(interestSet, j);
+                InterestTest::ensureWantReadable(interestSet, j);
             }
         }
     }
@@ -349,10 +349,10 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase2)
 
         for (ntsa::Handle j = k_SOCKET_MIN; j <= k_SOCKET_MAX; ++j) {
             if (j <= i) {
-                test::ensureWantWritable(interestSet, j);
+                InterestTest::ensureWantWritable(interestSet, j);
             }
             else {
-                test::ensureWantBoth(interestSet, j);
+                InterestTest::ensureWantBoth(interestSet, j);
             }
         }
     }
@@ -363,10 +363,10 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase2)
 
         for (ntsa::Handle j = k_SOCKET_MIN; j <= k_SOCKET_MAX; ++j) {
             if (j <= i) {
-                test::ensureWantNone(interestSet, j);
+                InterestTest::ensureWantNone(interestSet, j);
             }
             else {
-                test::ensureWantWritable(interestSet, j);
+                InterestTest::ensureWantWritable(interestSet, j);
             }
         }
     }
@@ -380,10 +380,10 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase2)
 
         for (ntsa::Handle j = k_SOCKET_MIN; j <= k_SOCKET_MAX; ++j) {
             if (j <= i) {
-                test::ensureWantReadable(interestSet, j);
+                InterestTest::ensureWantReadable(interestSet, j);
             }
             else {
-                test::ensureWantNone(interestSet, j);
+                InterestTest::ensureWantNone(interestSet, j);
             }
         }
     }
@@ -394,10 +394,10 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase2)
 
         for (ntsa::Handle j = k_SOCKET_MIN; j <= k_SOCKET_MAX; ++j) {
             if (j <= i) {
-                test::ensureWantBoth(interestSet, j);
+                InterestTest::ensureWantBoth(interestSet, j);
             }
             else {
-                test::ensureWantReadable(interestSet, j);
+                InterestTest::ensureWantReadable(interestSet, j);
             }
         }
     }
@@ -411,10 +411,10 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase2)
 
         for (ntsa::Handle j = k_SOCKET_MIN; j <= k_SOCKET_MAX; ++j) {
             if (j <= i) {
-                test::ensureWantReadable(interestSet, j);
+                InterestTest::ensureWantReadable(interestSet, j);
             }
             else {
-                test::ensureWantBoth(interestSet, j);
+                InterestTest::ensureWantBoth(interestSet, j);
             }
         }
     }
@@ -425,10 +425,10 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase2)
 
         for (ntsa::Handle j = k_SOCKET_MIN; j <= k_SOCKET_MAX; ++j) {
             if (j <= i) {
-                test::ensureWantNone(interestSet, j);
+                InterestTest::ensureWantNone(interestSet, j);
             }
             else {
-                test::ensureWantReadable(interestSet, j);
+                InterestTest::ensureWantReadable(interestSet, j);
             }
         }
     }
@@ -442,10 +442,10 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase2)
 
         for (ntsa::Handle j = k_SOCKET_MIN; j <= k_SOCKET_MAX; ++j) {
             if (j <= i) {
-                test::ensureWantWritable(interestSet, j);
+                InterestTest::ensureWantWritable(interestSet, j);
             }
             else {
-                test::ensureWantNone(interestSet, j);
+                InterestTest::ensureWantNone(interestSet, j);
             }
         }
     }
@@ -456,10 +456,10 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase2)
 
         for (ntsa::Handle j = k_SOCKET_MIN; j <= k_SOCKET_MAX; ++j) {
             if (j <= i) {
-                test::ensureWantBoth(interestSet, j);
+                InterestTest::ensureWantBoth(interestSet, j);
             }
             else {
-                test::ensureWantWritable(interestSet, j);
+                InterestTest::ensureWantWritable(interestSet, j);
             }
         }
     }
@@ -473,10 +473,10 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase2)
 
         for (ntsa::Handle j = k_SOCKET_MIN; j <= k_SOCKET_MAX; ++j) {
             if (j <= i) {
-                test::ensureWantReadable(interestSet, j);
+                InterestTest::ensureWantReadable(interestSet, j);
             }
             else {
-                test::ensureWantBoth(interestSet, j);
+                InterestTest::ensureWantBoth(interestSet, j);
             }
         }
     }
@@ -487,10 +487,10 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase2)
 
         for (ntsa::Handle j = k_SOCKET_MIN; j <= k_SOCKET_MAX; ++j) {
             if (j <= i) {
-                test::ensureWantNone(interestSet, j);
+                InterestTest::ensureWantNone(interestSet, j);
             }
             else {
-                test::ensureWantReadable(interestSet, j);
+                InterestTest::ensureWantReadable(interestSet, j);
             }
         }
     }
@@ -504,10 +504,10 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase2)
 
         for (ntsa::Handle j = k_SOCKET_MIN; j <= k_SOCKET_MAX; ++j) {
             if (j <= i) {
-                test::ensureWantWritable(interestSet, j);
+                InterestTest::ensureWantWritable(interestSet, j);
             }
             else {
-                test::ensureWantNone(interestSet, j);
+                InterestTest::ensureWantNone(interestSet, j);
             }
         }
     }
@@ -518,10 +518,10 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase2)
 
         for (ntsa::Handle j = k_SOCKET_MIN; j <= k_SOCKET_MAX; ++j) {
             if (j <= i) {
-                test::ensureWantBoth(interestSet, j);
+                InterestTest::ensureWantBoth(interestSet, j);
             }
             else {
-                test::ensureWantWritable(interestSet, j);
+                InterestTest::ensureWantWritable(interestSet, j);
             }
         }
     }
@@ -535,10 +535,10 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase2)
 
         for (ntsa::Handle j = k_SOCKET_MIN; j <= k_SOCKET_MAX; ++j) {
             if (j <= i) {
-                test::ensureWantWritable(interestSet, j);
+                InterestTest::ensureWantWritable(interestSet, j);
             }
             else {
-                test::ensureWantBoth(interestSet, j);
+                InterestTest::ensureWantBoth(interestSet, j);
             }
         }
     }
@@ -549,10 +549,10 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase2)
 
         for (ntsa::Handle j = k_SOCKET_MIN; j <= k_SOCKET_MAX; ++j) {
             if (j <= i) {
-                test::ensureWantNone(interestSet, j);
+                InterestTest::ensureWantNone(interestSet, j);
             }
             else {
-                test::ensureWantWritable(interestSet, j);
+                InterestTest::ensureWantWritable(interestSet, j);
             }
         }
     }
@@ -565,10 +565,10 @@ NTSCFG_TEST_FUNCTION(ntsa::InterestTest::verifyCase2)
 
         for (ntsa::Handle j = k_SOCKET_MIN; j <= k_SOCKET_MAX; ++j) {
             if (j <= i) {
-                test::ensureNotFound(interestSet, j);
+                InterestTest::ensureNotFound(interestSet, j);
             }
             else {
-                test::ensureWantNone(interestSet, j);
+                InterestTest::ensureWantNone(interestSet, j);
             }
         }
     }

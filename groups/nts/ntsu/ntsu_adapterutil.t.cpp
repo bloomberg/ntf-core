@@ -14,32 +14,83 @@
 // limitations under the License.
 
 #include <ntscfg_test.h>
-#include <ntsu_adapterutil.h>
-#include <bslma_testallocator.h>
 
-#include <bsl_iomanip.h>
-#include <bsl_iostream.h>
-#include <bsl_sstream.h>
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsu_adapterutil_t_cpp, "$Id$ $CSID$")
+
+#include <ntsu_adapterutil.h>
 
 using namespace BloombergLP;
-using namespace ntsu;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntsu {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
+// Provide tests for 'ntsu::AdapterUtil'.
+class AdapterUtilTest
+{
+  public:
+    // TODO
+    static void verifyCase1();
 
-namespace test {
+    // TODO
+    static void verifyCase2();
 
-void logAdapterList(const bsl::vector<ntsa::Adapter>& adapterList)
+  private:
+    // Print the specified 'adapterList' to the log.
+    static void log(const bsl::vector<ntsa::Adapter>& adapterList);
+};
+
+NTSCFG_TEST_FUNCTION(ntsu::AdapterUtilTest::verifyCase1)
+{
+    bsl::vector<ntsa::Adapter> adapterList(NTSCFG_TEST_ALLOCATOR);
+    ntsu::AdapterUtil::discoverAdapterList(&adapterList);
+    ntsu::AdapterUtilTest::log(adapterList);
+}
+
+NTSCFG_TEST_FUNCTION(ntsu::AdapterUtilTest::verifyCase2)
+{
+    const bool supportsIpv4 = ntsu::AdapterUtil::supportsIpv4();
+    NTSCFG_TEST_TRUE(supportsIpv4);
+
+#if defined(BSLS_PLATFORM_OS_UNIX)
+
+    const bool supportsLocalStream = ntsu::AdapterUtil::supportsLocalStream();
+
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+    NTSCFG_TEST_TRUE(supportsLocalStream);
+#else
+    NTSCFG_TEST_FALSE(supportsLocalStream);
+#endif
+
+    const bool supportsLocalDatagram =
+        ntsu::AdapterUtil::supportsLocalDatagram();
+
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+    NTSCFG_TEST_TRUE(supportsLocalDatagram);
+#else
+    NTSCFG_TEST_FALSE(supportsLocalDatagram);
+#endif
+
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+
+    const bool supportsLocalStream = ntsu::AdapterUtil::supportsLocalStream();
+
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+    NTSCFG_TEST_TRUE(supportsLocalStream);
+#else
+    NTSCFG_TEST_FALSE(supportsLocalStream);
+#endif
+
+    const bool supportsLocalDatagram =
+        ntsu::AdapterUtil::supportsLocalDatagram();
+    NTSCFG_TEST_FALSE(supportsLocalDatagram);
+
+#else
+#error Unsupported platform
+#endif
+}
+
+void AdapterUtilTest::log(const bsl::vector<ntsa::Adapter>& adapterList)
 {
     const bsl::size_t WN = 40;
     const bsl::size_t WI = 6;
@@ -102,68 +153,5 @@ void logAdapterList(const bsl::vector<ntsa::Adapter>& adapterList)
     BSLS_LOG_DEBUG("\nAdapter list:\n%s", adapterListReport.c_str());
 }
 
-}  // close namespace test
-
-NTSCFG_TEST_CASE(1)
-{
-    // Concern:
-    // Plan:
-
-    ntscfg::TestAllocator ta;
-    {
-        bsl::vector<ntsa::Adapter> adapterList;
-        ntsu::AdapterUtil::discoverAdapterList(&adapterList);
-        test::logAdapterList(adapterList);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTSCFG_TEST_CASE(2)
-{
-    const bool supportsIpv4 = ntsu::AdapterUtil::supportsIpv4();
-    NTSCFG_TEST_TRUE(supportsIpv4);
-
-#if defined(BSLS_PLATFORM_OS_UNIX)
-
-    const bool supportsLocalStream = ntsu::AdapterUtil::supportsLocalStream();
-
-#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
-    NTSCFG_TEST_TRUE(supportsLocalStream);
-#else
-    NTSCFG_TEST_FALSE(supportsLocalStream);
-#endif
-
-    const bool supportsLocalDatagram =
-        ntsu::AdapterUtil::supportsLocalDatagram();
-
-#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
-    NTSCFG_TEST_TRUE(supportsLocalDatagram);
-#else
-    NTSCFG_TEST_FALSE(supportsLocalDatagram);
-#endif
-
-#elif defined(BSLS_PLATFORM_OS_WINDOWS)
-
-    const bool supportsLocalStream = ntsu::AdapterUtil::supportsLocalStream();
-
-#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
-    NTSCFG_TEST_TRUE(supportsLocalStream);
-#else
-    NTSCFG_TEST_FALSE(supportsLocalStream);
-#endif
-
-    const bool supportsLocalDatagram =
-        ntsu::AdapterUtil::supportsLocalDatagram();
-    NTSCFG_TEST_FALSE(supportsLocalDatagram);
-
-#else
-#error Unsupported platform
-#endif
-}
-
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-    NTSCFG_TEST_REGISTER(2);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsu
+}  // close namespace BloombergLP

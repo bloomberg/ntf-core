@@ -13,30 +13,45 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsf_system.h>
-
 #include <ntscfg_test.h>
 
-#include <bsl_set.h>
-#include <bsl_string.h>
-#include <bsl_vector.h>
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsf_system_t_cpp, "$Id$ $CSID$")
+
+#include <ntsf_system.h>
 
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntsf {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
+// Provide tests for 'ntsf::System'.
+class SystemTest
+{
+  public:
+    // TODO
+    static void verifyCase1();
 
-NTSCFG_TEST_CASE(1)
+    // TODO
+    static void verifyCase2();
+
+    // TODO
+    static void verifyCase3();
+
+    // TODO
+    static void verifyCase4();
+
+    // TODO
+    static void verifyCase5();
+
+    // TODO
+    static void verifyCase6();
+
+    // TODO
+    static void verifyCase7();
+};
+
+NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase1)
 {
     // Concern: A TCP/IPv4 socket may bind to the same port number assigned to
     // another TCP/IPv4 socket as long as the first socket binds to INADDR_ANY
@@ -51,164 +66,160 @@ NTSCFG_TEST_CASE(1)
     // and verifies the assumption that the binding only succeeds on certain
     // operating systems but fails on others.
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::Error error;
+    ntsa::Error error;
 
-        const bool k_REUSE_ADDRESS = true;
+    const bool k_REUSE_ADDRESS = true;
 
-        // Create an "outer" TCP/IPv4 listener socket.
+    // Create an "outer" TCP/IPv4 listener socket.
 
-        bsl::shared_ptr<ntsi::ListenerSocket> listenerSocketOne =
-            ntsf::System::createListenerSocket(&ta);
+    bsl::shared_ptr<ntsi::ListenerSocket> listenerSocketOne =
+        ntsf::System::createListenerSocket(NTSCFG_TEST_ALLOCATOR);
 
-        error = listenerSocketOne->open(ntsa::Transport::e_TCP_IPV4_STREAM);
-        NTSCFG_TEST_OK(error);
+    error = listenerSocketOne->open(ntsa::Transport::e_TCP_IPV4_STREAM);
+    NTSCFG_TEST_OK(error);
 
-        // Bind the "outer" listener socket to INADDR_ANY:0.
+    // Bind the "outer" listener socket to INADDR_ANY:0.
 
-        error = listenerSocketOne->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::any(), 0)),
-            k_REUSE_ADDRESS);
-        NTSCFG_TEST_OK(error);
+    error = listenerSocketOne->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::any(), 0)),
+        k_REUSE_ADDRESS);
+    NTSCFG_TEST_OK(error);
 
-        // Learn the port assigned to the "outer" socket.
+    // Learn the port assigned to the "outer" socket.
 
-        ntsa::Endpoint listenerSocketOneSourceEndpoint;
-        error = listenerSocketOne->sourceEndpoint(
-            &listenerSocketOneSourceEndpoint);
-        NTSCFG_TEST_OK(error);
+    ntsa::Endpoint listenerSocketOneSourceEndpoint;
+    error = listenerSocketOne->sourceEndpoint(
+        &listenerSocketOneSourceEndpoint);
+    NTSCFG_TEST_OK(error);
 
-        // Create an "inner" TCP/IPv4 listener socket.
+    // Create an "inner" TCP/IPv4 listener socket.
 
-        bsl::shared_ptr<ntsi::ListenerSocket> listenerSocketTwo =
-            ntsf::System::createListenerSocket(&ta);
+    bsl::shared_ptr<ntsi::ListenerSocket> listenerSocketTwo =
+        ntsf::System::createListenerSocket(NTSCFG_TEST_ALLOCATOR);
 
-        error = listenerSocketTwo->open(ntsa::Transport::e_TCP_IPV4_STREAM);
-        NTSCFG_TEST_OK(error);
+    error = listenerSocketTwo->open(ntsa::Transport::e_TCP_IPV4_STREAM);
+    NTSCFG_TEST_OK(error);
 
-        // Bind the "inner" listener socket to INADDR_ANY and the port of the
-        // "outer" listener socket.
+    // Bind the "inner" listener socket to INADDR_ANY and the port of the
+    // "outer" listener socket.
 
-        error = listenerSocketTwo->bind(
-            ntsa::Endpoint(
-                ntsa::IpEndpoint(ntsa::Ipv4Address::any(),
-                                 listenerSocketOneSourceEndpoint.ip().port())),
-            k_REUSE_ADDRESS);
+    error = listenerSocketTwo->bind(
+        ntsa::Endpoint(
+            ntsa::IpEndpoint(ntsa::Ipv4Address::any(),
+                                listenerSocketOneSourceEndpoint.ip().port())),
+        k_REUSE_ADDRESS);
 
-        // Assert the binding succeeds on Linux and AIX, and fails on all
-        // other operating systems.
+    // Assert the binding succeeds on Linux and AIX, and fails on all
+    // other operating systems.
 
 #if defined(BSLS_PLATFORM_OS_AIX) || defined(BSLS_PLATFORM_OS_LINUX)
 
-        NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
-        // Learn the port assigned to the "inner" socket.
+    // Learn the port assigned to the "inner" socket.
 
-        ntsa::Endpoint listenerSocketTwoSourceEndpoint;
-        error = listenerSocketTwo->sourceEndpoint(
-            &listenerSocketTwoSourceEndpoint);
-        NTSCFG_TEST_OK(error);
+    ntsa::Endpoint listenerSocketTwoSourceEndpoint;
+    error = listenerSocketTwo->sourceEndpoint(
+        &listenerSocketTwoSourceEndpoint);
+    NTSCFG_TEST_OK(error);
 
-        // Assert the endpoints to which the two sockets are bound are the
-        // same.
+    // Assert the endpoints to which the two sockets are bound are the
+    // same.
 
-        NTSCFG_TEST_EQ(listenerSocketOneSourceEndpoint.ip().port(),
-                       listenerSocketTwoSourceEndpoint.ip().port());
+    NTSCFG_TEST_EQ(listenerSocketOneSourceEndpoint.ip().port(),
+                    listenerSocketTwoSourceEndpoint.ip().port());
 
-        // Begin listening on the "inner" listener socket.
+    // Begin listening on the "inner" listener socket.
 
-        error = listenerSocketTwo->listen(1);
-        NTSCFG_TEST_OK(error);
+    error = listenerSocketTwo->listen(1);
+    NTSCFG_TEST_OK(error);
 
-        // Create a "client" TCP/IPv4 stream socket.
+    // Create a "client" TCP/IPv4 stream socket.
 
-        bsl::shared_ptr<ntsi::StreamSocket> clientSocket =
-            ntsf::System::createStreamSocket(&ta);
+    bsl::shared_ptr<ntsi::StreamSocket> clientSocket =
+        ntsf::System::createStreamSocket(NTSCFG_TEST_ALLOCATOR);
 
-        error = clientSocket->open(ntsa::Transport::e_TCP_IPV4_STREAM);
-        NTSCFG_TEST_OK(error);
+    error = clientSocket->open(ntsa::Transport::e_TCP_IPV4_STREAM);
+    NTSCFG_TEST_OK(error);
 
-        // Connect the "client" stream socket to the "inner" listening socket.
+    // Connect the "client" stream socket to the "inner" listening socket.
 
-        error = clientSocket->connect(listenerSocketTwoSourceEndpoint);
-        NTSCFG_TEST_OK(error);
+    error = clientSocket->connect(listenerSocketTwoSourceEndpoint);
+    NTSCFG_TEST_OK(error);
 
-        // Accept a "server" stream socket from the "inner" listening socket.
+    // Accept a "server" stream socket from the "inner" listening socket.
 
-        bsl::shared_ptr<ntsi::StreamSocket> serverSocket;
-        error = listenerSocketTwo->accept(&serverSocket, &ta);
-        NTSCFG_TEST_OK(error);
+    bsl::shared_ptr<ntsi::StreamSocket> serverSocket;
+    error = listenerSocketTwo->accept(&serverSocket, NTSCFG_TEST_ALLOCATOR);
+    NTSCFG_TEST_OK(error);
 
-        // Send data from the "client" socket to the "server" socket.
+    // Send data from the "client" socket to the "server" socket.
 
-        ntsa::SendContext sendContext;
-        ntsa::SendOptions sendOptions;
+    ntsa::SendContext sendContext;
+    ntsa::SendOptions sendOptions;
 
-        char sendData[13];
-        bsl::memcpy(sendData, "Hello, world!", 13);
+    char sendData[13];
+    bsl::memcpy(sendData, "Hello, world!", 13);
 
-        error = clientSocket->send(&sendContext, sendData, 13, sendOptions);
-        NTSCFG_TEST_OK(error);
-        NTSCFG_TEST_EQ(sendContext.bytesSent(), 13);
+    error = clientSocket->send(&sendContext, sendData, 13, sendOptions);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_EQ(sendContext.bytesSent(), 13);
 
-        // Receive data at the "server" socket send by the "client" socket.
+    // Receive data at the "server" socket send by the "client" socket.
 
-        ntsa::ReceiveContext receiveContext;
-        ntsa::ReceiveOptions receiveOptions;
+    ntsa::ReceiveContext receiveContext;
+    ntsa::ReceiveOptions receiveOptions;
 
-        char receiveData[13];
+    char receiveData[13];
 
-        error = serverSocket->receive(&receiveContext,
-                                      receiveData,
-                                      sizeof receiveData,
-                                      receiveOptions);
-        NTSCFG_TEST_OK(error);
-        NTSCFG_TEST_EQ(receiveContext.bytesReceived(), 13);
+    error = serverSocket->receive(&receiveContext,
+                                    receiveData,
+                                    sizeof receiveData,
+                                    receiveOptions);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_EQ(receiveContext.bytesReceived(), 13);
 
-        // Assert the data received by the "server" socket matches the data
-        // send by the "client" socket.
+    // Assert the data received by the "server" socket matches the data
+    // send by the "client" socket.
 
-        NTSCFG_TEST_EQ(bsl::memcmp(receiveData, sendData, 13), 0);
+    NTSCFG_TEST_EQ(bsl::memcmp(receiveData, sendData, 13), 0);
 
-        // Close the "client" socket.
+    // Close the "client" socket.
 
-        error = clientSocket->close();
-        NTSCFG_TEST_OK(error);
+    error = clientSocket->close();
+    NTSCFG_TEST_OK(error);
 
-        // Close the "server" socket.
+    // Close the "server" socket.
 
-        error = serverSocket->close();
-        NTSCFG_TEST_OK(error);
+    error = serverSocket->close();
+    NTSCFG_TEST_OK(error);
 
 #elif defined(BSLS_PLATFORM_OS_SOLARIS)
 
-        // Assert that Solaris refuses to allow two sockets to bind to the
-        // same port, despite both sockets having SO_REUSEADDR set, unless
-        // the second sockets binds to an IPv4 address that is different
-        // than the IPv4 address to which the first socket is bound. Note that
-        // other operating systems may also exhibit the same behavior, but
-        // this test case is simply verifying that this combination of
-        // parameters is not portable.
+    // Assert that Solaris refuses to allow two sockets to bind to the
+    // same port, despite both sockets having SO_REUSEADDR set, unless
+    // the second sockets binds to an IPv4 address that is different
+    // than the IPv4 address to which the first socket is bound. Note that
+    // other operating systems may also exhibit the same behavior, but
+    // this test case is simply verifying that this combination of
+    // parameters is not portable.
 
-        NTSCFG_TEST_ERROR(error, ntsa::Error::e_ADDRESS_IN_USE);
+    NTSCFG_TEST_ERROR(error, ntsa::Error::e_ADDRESS_IN_USE);
 
 #endif
 
-        // Close the "inner" listener socket.
+    // Close the "inner" listener socket.
 
-        error = listenerSocketTwo->close();
-        NTSCFG_TEST_OK(error);
+    error = listenerSocketTwo->close();
+    NTSCFG_TEST_OK(error);
 
-        // Close the "outer" listener socket.
+    // Close the "outer" listener socket.
 
-        error = listenerSocketOne->close();
-        NTSCFG_TEST_OK(error);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    error = listenerSocketOne->close();
+    NTSCFG_TEST_OK(error);
 }
 
-NTSCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase2)
 {
     // Concern: A TCP/IPv4 socket may bind to the same port number assigned to
     // another TCP/IPv4 socket as long as the first socket binds to INADDR_ANY
@@ -222,146 +233,142 @@ NTSCFG_TEST_CASE(2)
     // This case specifically tests binding the second socket to the loopback
     // address.
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::Error error;
+    ntsa::Error error;
 
-        const bool k_REUSE_ADDRESS = true;
+    const bool k_REUSE_ADDRESS = true;
 
-        // Create an "outer" TCP/IPv4 listener socket.
+    // Create an "outer" TCP/IPv4 listener socket.
 
-        bsl::shared_ptr<ntsi::ListenerSocket> listenerSocketOne =
-            ntsf::System::createListenerSocket(&ta);
+    bsl::shared_ptr<ntsi::ListenerSocket> listenerSocketOne =
+        ntsf::System::createListenerSocket(NTSCFG_TEST_ALLOCATOR);
 
-        error = listenerSocketOne->open(ntsa::Transport::e_TCP_IPV4_STREAM);
-        NTSCFG_TEST_OK(error);
+    error = listenerSocketOne->open(ntsa::Transport::e_TCP_IPV4_STREAM);
+    NTSCFG_TEST_OK(error);
 
-        // Bind the "outer" listener socket to INADDRY_ANY:0.
+    // Bind the "outer" listener socket to INADDRY_ANY:0.
 
-        error = listenerSocketOne->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::any(), 0)),
-            k_REUSE_ADDRESS);
-        NTSCFG_TEST_OK(error);
+    error = listenerSocketOne->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::any(), 0)),
+        k_REUSE_ADDRESS);
+    NTSCFG_TEST_OK(error);
 
-        // Learn the port assigned to the "outer" socket.
+    // Learn the port assigned to the "outer" socket.
 
-        ntsa::Endpoint listenerSocketOneSourceEndpoint;
-        error = listenerSocketOne->sourceEndpoint(
-            &listenerSocketOneSourceEndpoint);
-        NTSCFG_TEST_OK(error);
+    ntsa::Endpoint listenerSocketOneSourceEndpoint;
+    error = listenerSocketOne->sourceEndpoint(
+        &listenerSocketOneSourceEndpoint);
+    NTSCFG_TEST_OK(error);
 
-        // Create an "inner" TCP/IPv4 listener socket.
+    // Create an "inner" TCP/IPv4 listener socket.
 
-        bsl::shared_ptr<ntsi::ListenerSocket> listenerSocketTwo =
-            ntsf::System::createListenerSocket(&ta);
+    bsl::shared_ptr<ntsi::ListenerSocket> listenerSocketTwo =
+        ntsf::System::createListenerSocket(NTSCFG_TEST_ALLOCATOR);
 
-        error = listenerSocketTwo->open(ntsa::Transport::e_TCP_IPV4_STREAM);
-        NTSCFG_TEST_OK(error);
+    error = listenerSocketTwo->open(ntsa::Transport::e_TCP_IPV4_STREAM);
+    NTSCFG_TEST_OK(error);
 
-        // Bind the "inner" listener socket to 127.0.0.1 and the port of the
-        // "outer" listener socket.
+    // Bind the "inner" listener socket to 127.0.0.1 and the port of the
+    // "outer" listener socket.
 
-        error = listenerSocketTwo->bind(
-            ntsa::Endpoint(
-                ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(),
-                                 listenerSocketOneSourceEndpoint.ip().port())),
-            k_REUSE_ADDRESS);
-        NTSCFG_TEST_OK(error);
+    error = listenerSocketTwo->bind(
+        ntsa::Endpoint(
+            ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(),
+                                listenerSocketOneSourceEndpoint.ip().port())),
+        k_REUSE_ADDRESS);
+    NTSCFG_TEST_OK(error);
 
-        // Learn the port assigned to the "inner" socket.
+    // Learn the port assigned to the "inner" socket.
 
-        ntsa::Endpoint listenerSocketTwoSourceEndpoint;
-        error = listenerSocketTwo->sourceEndpoint(
-            &listenerSocketTwoSourceEndpoint);
-        NTSCFG_TEST_OK(error);
+    ntsa::Endpoint listenerSocketTwoSourceEndpoint;
+    error = listenerSocketTwo->sourceEndpoint(
+        &listenerSocketTwoSourceEndpoint);
+    NTSCFG_TEST_OK(error);
 
-        // Assert the endpoints to which the two sockets are bound are the
-        // same.
+    // Assert the endpoints to which the two sockets are bound are the
+    // same.
 
-        NTSCFG_TEST_EQ(listenerSocketOneSourceEndpoint.ip().port(),
-                       listenerSocketTwoSourceEndpoint.ip().port());
+    NTSCFG_TEST_EQ(listenerSocketOneSourceEndpoint.ip().port(),
+                    listenerSocketTwoSourceEndpoint.ip().port());
 
-        // Begin listening on the "inner" listener socket.
+    // Begin listening on the "inner" listener socket.
 
-        error = listenerSocketTwo->listen(1);
-        NTSCFG_TEST_OK(error);
+    error = listenerSocketTwo->listen(1);
+    NTSCFG_TEST_OK(error);
 
-        // Create a "client" TCP/IPv4 stream socket.
+    // Create a "client" TCP/IPv4 stream socket.
 
-        bsl::shared_ptr<ntsi::StreamSocket> clientSocket =
-            ntsf::System::createStreamSocket(&ta);
+    bsl::shared_ptr<ntsi::StreamSocket> clientSocket =
+        ntsf::System::createStreamSocket(NTSCFG_TEST_ALLOCATOR);
 
-        error = clientSocket->open(ntsa::Transport::e_TCP_IPV4_STREAM);
-        NTSCFG_TEST_OK(error);
+    error = clientSocket->open(ntsa::Transport::e_TCP_IPV4_STREAM);
+    NTSCFG_TEST_OK(error);
 
-        // Connect the "client" stream socket to the "inner" listening socket.
+    // Connect the "client" stream socket to the "inner" listening socket.
 
-        error = clientSocket->connect(listenerSocketTwoSourceEndpoint);
-        NTSCFG_TEST_OK(error);
+    error = clientSocket->connect(listenerSocketTwoSourceEndpoint);
+    NTSCFG_TEST_OK(error);
 
-        // Accept a "server" stream socket from the "inner" listening socket.
+    // Accept a "server" stream socket from the "inner" listening socket.
 
-        bsl::shared_ptr<ntsi::StreamSocket> serverSocket;
-        error = listenerSocketTwo->accept(&serverSocket, &ta);
-        NTSCFG_TEST_OK(error);
+    bsl::shared_ptr<ntsi::StreamSocket> serverSocket;
+    error = listenerSocketTwo->accept(&serverSocket, NTSCFG_TEST_ALLOCATOR);
+    NTSCFG_TEST_OK(error);
 
-        // Send data from the "client" socket to the "server" socket.
+    // Send data from the "client" socket to the "server" socket.
 
-        ntsa::SendContext sendContext;
-        ntsa::SendOptions sendOptions;
+    ntsa::SendContext sendContext;
+    ntsa::SendOptions sendOptions;
 
-        char sendData[13];
-        bsl::memcpy(sendData, "Hello, world!", 13);
+    char sendData[13];
+    bsl::memcpy(sendData, "Hello, world!", 13);
 
-        error = clientSocket->send(&sendContext, sendData, 13, sendOptions);
-        NTSCFG_TEST_OK(error);
-        NTSCFG_TEST_EQ(sendContext.bytesSent(), 13);
+    error = clientSocket->send(&sendContext, sendData, 13, sendOptions);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_EQ(sendContext.bytesSent(), 13);
 
-        // Receive data at the "server" socket send by the "client" socket.
+    // Receive data at the "server" socket send by the "client" socket.
 
-        ntsa::ReceiveContext receiveContext;
-        ntsa::ReceiveOptions receiveOptions;
+    ntsa::ReceiveContext receiveContext;
+    ntsa::ReceiveOptions receiveOptions;
 
-        char receiveData[13];
+    char receiveData[13];
 
-        error = serverSocket->receive(&receiveContext,
-                                      receiveData,
-                                      sizeof receiveData,
-                                      receiveOptions);
-        NTSCFG_TEST_OK(error);
-        NTSCFG_TEST_EQ(receiveContext.bytesReceived(), 13);
+    error = serverSocket->receive(&receiveContext,
+                                    receiveData,
+                                    sizeof receiveData,
+                                    receiveOptions);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_EQ(receiveContext.bytesReceived(), 13);
 
-        // Assert the data received by the "server" socket matches the data
-        // send by the "client" socket.
+    // Assert the data received by the "server" socket matches the data
+    // send by the "client" socket.
 
-        NTSCFG_TEST_EQ(bsl::memcmp(receiveData, sendData, 13), 0);
+    NTSCFG_TEST_EQ(bsl::memcmp(receiveData, sendData, 13), 0);
 
-        // Close the "client" socket.
+    // Close the "client" socket.
 
-        error = clientSocket->close();
-        NTSCFG_TEST_OK(error);
+    error = clientSocket->close();
+    NTSCFG_TEST_OK(error);
 
-        // Close the "server" socket.
+    // Close the "server" socket.
 
-        error = serverSocket->close();
-        NTSCFG_TEST_OK(error);
+    error = serverSocket->close();
+    NTSCFG_TEST_OK(error);
 
-        // Close the "inner" listener socket.
+    // Close the "inner" listener socket.
 
-        error = listenerSocketTwo->close();
-        NTSCFG_TEST_OK(error);
+    error = listenerSocketTwo->close();
+    NTSCFG_TEST_OK(error);
 
-        // Close the "outer" listener socket.
+    // Close the "outer" listener socket.
 
-        error = listenerSocketOne->close();
-        NTSCFG_TEST_OK(error);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    error = listenerSocketOne->close();
+    NTSCFG_TEST_OK(error);
 }
 
-NTSCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase3)
 {
-    // Concern: A TCP/IPv4 socket may bind to the same port number assigned to
+        // Concern: A TCP/IPv4 socket may bind to the same port number assigned to
     // another TCP/IPv4 socket as long as the first socket binds to INADDR_ANY
     // and both sockets specify SO_REUSEADDR.
     //
@@ -373,350 +380,332 @@ NTSCFG_TEST_CASE(3)
     // This case specifically tests binding the second socket to the IPv4
     // address assigned to a network interface.
 
-    ntscfg::TestAllocator ta;
-    {
-        ntsa::Error error;
+    ntsa::Error error;
 
-        const bool k_REUSE_ADDRESS = true;
+    const bool k_REUSE_ADDRESS = true;
 
-        // Discover the principle network interface assigned an IPv4 address.
+    // Discover the principle network interface assigned an IPv4 address.
 
-        ntsa::Adapter adapter;
-        bool          adapterFound =
-            ntsf::System::discoverAdapter(&adapter,
-                                          ntsa::IpAddressType::e_V4,
-                                          false);
-        NTSCFG_TEST_TRUE(adapterFound);
+    ntsa::Adapter adapter;
+    bool          adapterFound =
+        ntsf::System::discoverAdapter(&adapter,
+                                        ntsa::IpAddressType::e_V4,
+                                        false);
+    NTSCFG_TEST_TRUE(adapterFound);
 
-        NTSCFG_TEST_FALSE(adapter.ipv4Address().isNull());
+    NTSCFG_TEST_FALSE(adapter.ipv4Address().isNull());
 
-        ntsa::Ipv4Address adapterAddress = adapter.ipv4Address().value();
+    ntsa::Ipv4Address adapterAddress = adapter.ipv4Address().value();
 
-        // Create an "outer" TCP/IPv4 listener socket.
+    // Create an "outer" TCP/IPv4 listener socket.
 
-        bsl::shared_ptr<ntsi::ListenerSocket> listenerSocketOne =
-            ntsf::System::createListenerSocket(&ta);
+    bsl::shared_ptr<ntsi::ListenerSocket> listenerSocketOne =
+        ntsf::System::createListenerSocket(NTSCFG_TEST_ALLOCATOR);
 
-        error = listenerSocketOne->open(ntsa::Transport::e_TCP_IPV4_STREAM);
-        NTSCFG_TEST_OK(error);
+    error = listenerSocketOne->open(ntsa::Transport::e_TCP_IPV4_STREAM);
+    NTSCFG_TEST_OK(error);
 
-        // Bind the "outer" listener socket to the adapter address.
+    // Bind the "outer" listener socket to the adapter address.
 
-        error = listenerSocketOne->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::any(), 0)),
-            k_REUSE_ADDRESS);
-        NTSCFG_TEST_OK(error);
+    error = listenerSocketOne->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::any(), 0)),
+        k_REUSE_ADDRESS);
+    NTSCFG_TEST_OK(error);
 
-        // Learn the port assigned to the "outer" socket.
+    // Learn the port assigned to the "outer" socket.
 
-        ntsa::Endpoint listenerSocketOneSourceEndpoint;
-        error = listenerSocketOne->sourceEndpoint(
-            &listenerSocketOneSourceEndpoint);
-        NTSCFG_TEST_OK(error);
+    ntsa::Endpoint listenerSocketOneSourceEndpoint;
+    error = listenerSocketOne->sourceEndpoint(
+        &listenerSocketOneSourceEndpoint);
+    NTSCFG_TEST_OK(error);
 
-        // Create an "inner" TCP/IPv4 listener socket.
+    // Create an "inner" TCP/IPv4 listener socket.
 
-        bsl::shared_ptr<ntsi::ListenerSocket> listenerSocketTwo =
-            ntsf::System::createListenerSocket(&ta);
+    bsl::shared_ptr<ntsi::ListenerSocket> listenerSocketTwo =
+        ntsf::System::createListenerSocket(NTSCFG_TEST_ALLOCATOR);
 
-        error = listenerSocketTwo->open(ntsa::Transport::e_TCP_IPV4_STREAM);
-        NTSCFG_TEST_OK(error);
+    error = listenerSocketTwo->open(ntsa::Transport::e_TCP_IPV4_STREAM);
+    NTSCFG_TEST_OK(error);
 
-        // Bind the "inner" listener socket to the adapter address and the port
-        // of the "outer" listener socket.
+    // Bind the "inner" listener socket to the adapter address and the port
+    // of the "outer" listener socket.
 
-        error = listenerSocketTwo->bind(
-            ntsa::Endpoint(
-                ntsa::IpEndpoint(adapterAddress,
-                                 listenerSocketOneSourceEndpoint.ip().port())),
-            k_REUSE_ADDRESS);
-        NTSCFG_TEST_OK(error);
+    error = listenerSocketTwo->bind(
+        ntsa::Endpoint(
+            ntsa::IpEndpoint(adapterAddress,
+                                listenerSocketOneSourceEndpoint.ip().port())),
+        k_REUSE_ADDRESS);
+    NTSCFG_TEST_OK(error);
 
-        // Learn the port assigned to the "inner" socket.
+    // Learn the port assigned to the "inner" socket.
 
-        ntsa::Endpoint listenerSocketTwoSourceEndpoint;
-        error = listenerSocketTwo->sourceEndpoint(
-            &listenerSocketTwoSourceEndpoint);
-        NTSCFG_TEST_OK(error);
+    ntsa::Endpoint listenerSocketTwoSourceEndpoint;
+    error = listenerSocketTwo->sourceEndpoint(
+        &listenerSocketTwoSourceEndpoint);
+    NTSCFG_TEST_OK(error);
 
-        // Assert the endpoints to which the two sockets are bound are the
-        // same.
+    // Assert the endpoints to which the two sockets are bound are the
+    // same.
 
-        NTSCFG_TEST_EQ(listenerSocketOneSourceEndpoint.ip().port(),
-                       listenerSocketTwoSourceEndpoint.ip().port());
+    NTSCFG_TEST_EQ(listenerSocketOneSourceEndpoint.ip().port(),
+                    listenerSocketTwoSourceEndpoint.ip().port());
 
-        // Begin listening on the "inner" listener socket.
+    // Begin listening on the "inner" listener socket.
 
-        error = listenerSocketTwo->listen(1);
-        NTSCFG_TEST_OK(error);
+    error = listenerSocketTwo->listen(1);
+    NTSCFG_TEST_OK(error);
 
-        // Create a "client" TCP/IPv4 stream socket.
+    // Create a "client" TCP/IPv4 stream socket.
 
-        bsl::shared_ptr<ntsi::StreamSocket> clientSocket =
-            ntsf::System::createStreamSocket(&ta);
+    bsl::shared_ptr<ntsi::StreamSocket> clientSocket =
+        ntsf::System::createStreamSocket(NTSCFG_TEST_ALLOCATOR);
 
-        error = clientSocket->open(ntsa::Transport::e_TCP_IPV4_STREAM);
-        NTSCFG_TEST_OK(error);
+    error = clientSocket->open(ntsa::Transport::e_TCP_IPV4_STREAM);
+    NTSCFG_TEST_OK(error);
 
-        // Connect the "client" stream socket to the "inner" listening socket.
+    // Connect the "client" stream socket to the "inner" listening socket.
 
-        error = clientSocket->connect(listenerSocketTwoSourceEndpoint);
-        NTSCFG_TEST_OK(error);
+    error = clientSocket->connect(listenerSocketTwoSourceEndpoint);
+    NTSCFG_TEST_OK(error);
 
-        // Accept a "server" stream socket from the "inner" listening socket.
+    // Accept a "server" stream socket from the "inner" listening socket.
 
-        bsl::shared_ptr<ntsi::StreamSocket> serverSocket;
-        error = listenerSocketTwo->accept(&serverSocket, &ta);
-        NTSCFG_TEST_OK(error);
+    bsl::shared_ptr<ntsi::StreamSocket> serverSocket;
+    error = listenerSocketTwo->accept(&serverSocket, NTSCFG_TEST_ALLOCATOR);
+    NTSCFG_TEST_OK(error);
 
-        // Send data from the "client" socket to the "server" socket.
+    // Send data from the "client" socket to the "server" socket.
 
-        ntsa::SendContext sendContext;
-        ntsa::SendOptions sendOptions;
+    ntsa::SendContext sendContext;
+    ntsa::SendOptions sendOptions;
 
-        char sendData[13];
-        bsl::memcpy(sendData, "Hello, world!", 13);
+    char sendData[13];
+    bsl::memcpy(sendData, "Hello, world!", 13);
 
-        error = clientSocket->send(&sendContext, sendData, 13, sendOptions);
-        NTSCFG_TEST_OK(error);
-        NTSCFG_TEST_EQ(sendContext.bytesSent(), 13);
+    error = clientSocket->send(&sendContext, sendData, 13, sendOptions);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_EQ(sendContext.bytesSent(), 13);
 
-        // Receive data at the "server" socket send by the "client" socket.
+    // Receive data at the "server" socket send by the "client" socket.
 
-        ntsa::ReceiveContext receiveContext;
-        ntsa::ReceiveOptions receiveOptions;
+    ntsa::ReceiveContext receiveContext;
+    ntsa::ReceiveOptions receiveOptions;
 
-        char receiveData[13];
+    char receiveData[13];
 
-        error = serverSocket->receive(&receiveContext,
-                                      receiveData,
-                                      sizeof receiveData,
-                                      receiveOptions);
-        NTSCFG_TEST_OK(error);
-        NTSCFG_TEST_EQ(receiveContext.bytesReceived(), 13);
+    error = serverSocket->receive(&receiveContext,
+                                    receiveData,
+                                    sizeof receiveData,
+                                    receiveOptions);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_EQ(receiveContext.bytesReceived(), 13);
 
-        // Assert the data received by the "server" socket matches the data
-        // send by the "client" socket.
+    // Assert the data received by the "server" socket matches the data
+    // send by the "client" socket.
 
-        NTSCFG_TEST_EQ(bsl::memcmp(receiveData, sendData, 13), 0);
+    NTSCFG_TEST_EQ(bsl::memcmp(receiveData, sendData, 13), 0);
 
-        // Close the "client" socket.
+    // Close the "client" socket.
 
-        error = clientSocket->close();
-        NTSCFG_TEST_OK(error);
+    error = clientSocket->close();
+    NTSCFG_TEST_OK(error);
 
-        // Close the "server" socket.
+    // Close the "server" socket.
 
-        error = serverSocket->close();
-        NTSCFG_TEST_OK(error);
+    error = serverSocket->close();
+    NTSCFG_TEST_OK(error);
 
-        // Close the "inner" listener socket.
+    // Close the "inner" listener socket.
 
-        error = listenerSocketTwo->close();
-        NTSCFG_TEST_OK(error);
+    error = listenerSocketTwo->close();
+    NTSCFG_TEST_OK(error);
 
-        // Close the "outer" listener socket.
+    // Close the "outer" listener socket.
 
-        error = listenerSocketOne->close();
-        NTSCFG_TEST_OK(error);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    error = listenerSocketOne->close();
+    NTSCFG_TEST_OK(error);
 }
 
-NTSCFG_TEST_CASE(4)
+NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase4)
 {
     // Concern: Resolution from default resolver automatically initialized
 
-    ntscfg::TestAllocator ta;
+    ntsa::Error error;
+
+    bsl::vector<ntsa::IpAddress> ipAddressListOverride;
+    ipAddressListOverride.push_back(ntsa::IpAddress("4.4.4.4"));
+    ipAddressListOverride.push_back(ntsa::IpAddress("8.8.8.8"));
+
+    error =
+        ntsf::System::setIpAddress("example.com", ipAddressListOverride);
+    NTSCFG_TEST_OK(error);
+
+    bsl::set<ntsa::IpAddress> ipAddressSet(ipAddressListOverride.begin(),
+                                            ipAddressListOverride.end());
+
+    NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
+
+    bsl::vector<ntsa::IpAddress> ipAddressList;
+    ntsa::IpAddressOptions       ipAddressOptions;
+
+    error = ntsf::System::getIpAddress(&ipAddressList,
+                                        "example.com",
+                                        ipAddressOptions);
+    NTSCFG_TEST_FALSE(error);
+
+    for (bsl::vector<ntsa::IpAddress>::const_iterator it =
+                ipAddressList.begin();
+            it != ipAddressList.end();
+            ++it)
     {
-        ntsa::Error error;
+        NTSCFG_TEST_LOG_DEBUG << "Address: " << it->text()
+                                << NTSCFG_TEST_LOG_END;
 
-        bsl::vector<ntsa::IpAddress> ipAddressListOverride;
-        ipAddressListOverride.push_back(ntsa::IpAddress("4.4.4.4"));
-        ipAddressListOverride.push_back(ntsa::IpAddress("8.8.8.8"));
-
-        error =
-            ntsf::System::setIpAddress("example.com", ipAddressListOverride);
-        NTSCFG_TEST_OK(error);
-
-        bsl::set<ntsa::IpAddress> ipAddressSet(ipAddressListOverride.begin(),
-                                               ipAddressListOverride.end());
-
-        NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
-
-        bsl::vector<ntsa::IpAddress> ipAddressList;
-        ntsa::IpAddressOptions       ipAddressOptions;
-
-        error = ntsf::System::getIpAddress(&ipAddressList,
-                                           "example.com",
-                                           ipAddressOptions);
-        NTSCFG_TEST_FALSE(error);
-
-        for (bsl::vector<ntsa::IpAddress>::const_iterator it =
-                 ipAddressList.begin();
-             it != ipAddressList.end();
-             ++it)
-        {
-            NTSCFG_TEST_LOG_DEBUG << "Address: " << it->text()
-                                  << NTSCFG_TEST_LOG_END;
-
-            bsl::size_t n = ipAddressSet.erase(*it);
-            NTSCFG_TEST_EQ(n, 1);
-        }
-
-        NTSCFG_TEST_TRUE(ipAddressSet.empty());
+        bsl::size_t n = ipAddressSet.erase(*it);
+        NTSCFG_TEST_EQ(n, 1);
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    NTSCFG_TEST_TRUE(ipAddressSet.empty());
 }
 
-NTSCFG_TEST_CASE(5)
+NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase5)
 {
     // Concern: Resolution from default resolver explicitly installed
 
-    ntscfg::TestAllocator ta;
+    ntsa::Error error;
+
     {
-        ntsa::Error error;
+        ntsa::ResolverConfig resolverConfig;
+        resolverConfig.setOverridesEnabled(true);
+        resolverConfig.setSystemEnabled(false);
 
-        {
-            ntsa::ResolverConfig resolverConfig;
-            resolverConfig.setOverridesEnabled(true);
-            resolverConfig.setSystemEnabled(false);
+        bsl::shared_ptr<ntsi::Resolver> resolver =
+            ntsf::System::createResolver(
+                resolverConfig,
+                bslma::Default::globalAllocator());
 
-            bsl::shared_ptr<ntsi::Resolver> resolver =
-                ntsf::System::createResolver(
-                    resolverConfig,
-                    bslma::Default::globalAllocator());
+        NTSCFG_TEST_EQ(resolver.use_count(), 1);
 
-            NTSCFG_TEST_EQ(resolver.use_count(), 1);
+        ntsf::System::setDefault(resolver);
 
-            ntsf::System::setDefault(resolver);
+        NTSCFG_TEST_EQ(resolver.use_count(), 2);
 
-            NTSCFG_TEST_EQ(resolver.use_count(), 2);
+        bsl::shared_ptr<ntsi::Resolver> resolverDefault;
+        ntsf::System::getDefault(&resolverDefault);
 
-            bsl::shared_ptr<ntsi::Resolver> resolverDefault;
-            ntsf::System::getDefault(&resolverDefault);
+        NTSCFG_TEST_EQ(resolver.use_count(), 3);
 
-            NTSCFG_TEST_EQ(resolver.use_count(), 3);
-
-            NTSCFG_TEST_EQ(resolverDefault, resolver);
-        }
-
-        bsl::vector<ntsa::IpAddress> ipAddressListOverride;
-        ipAddressListOverride.push_back(ntsa::IpAddress("4.4.4.4"));
-        ipAddressListOverride.push_back(ntsa::IpAddress("8.8.8.8"));
-
-        error =
-            ntsf::System::setIpAddress("example.com", ipAddressListOverride);
-        NTSCFG_TEST_OK(error);
-
-        bsl::set<ntsa::IpAddress> ipAddressSet(ipAddressListOverride.begin(),
-                                               ipAddressListOverride.end());
-
-        NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
-
-        bsl::vector<ntsa::IpAddress> ipAddressList;
-        ntsa::IpAddressOptions       ipAddressOptions;
-
-        error = ntsf::System::getIpAddress(&ipAddressList,
-                                           "example.com",
-                                           ipAddressOptions);
-        NTSCFG_TEST_FALSE(error);
-
-        for (bsl::vector<ntsa::IpAddress>::const_iterator it =
-                 ipAddressList.begin();
-             it != ipAddressList.end();
-             ++it)
-        {
-            NTSCFG_TEST_LOG_DEBUG << "Address: " << it->text()
-                                  << NTSCFG_TEST_LOG_END;
-
-            bsl::size_t n = ipAddressSet.erase(*it);
-            NTSCFG_TEST_EQ(n, 1);
-        }
-
-        NTSCFG_TEST_TRUE(ipAddressSet.empty());
+        NTSCFG_TEST_EQ(resolverDefault, resolver);
     }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    bsl::vector<ntsa::IpAddress> ipAddressListOverride;
+    ipAddressListOverride.push_back(ntsa::IpAddress("4.4.4.4"));
+    ipAddressListOverride.push_back(ntsa::IpAddress("8.8.8.8"));
+
+    error =
+        ntsf::System::setIpAddress("example.com", ipAddressListOverride);
+    NTSCFG_TEST_OK(error);
+
+    bsl::set<ntsa::IpAddress> ipAddressSet(ipAddressListOverride.begin(),
+                                            ipAddressListOverride.end());
+
+    NTSCFG_TEST_EQ(ipAddressSet.size(), 2);
+
+    bsl::vector<ntsa::IpAddress> ipAddressList;
+    ntsa::IpAddressOptions       ipAddressOptions;
+
+    error = ntsf::System::getIpAddress(&ipAddressList,
+                                        "example.com",
+                                        ipAddressOptions);
+    NTSCFG_TEST_FALSE(error);
+
+    for (bsl::vector<ntsa::IpAddress>::const_iterator it =
+                ipAddressList.begin();
+            it != ipAddressList.end();
+            ++it)
+    {
+        NTSCFG_TEST_LOG_DEBUG << "Address: " << it->text()
+                                << NTSCFG_TEST_LOG_END;
+
+        bsl::size_t n = ipAddressSet.erase(*it);
+        NTSCFG_TEST_EQ(n, 1);
+    }
+
+    NTSCFG_TEST_TRUE(ipAddressSet.empty());
 }
 
-NTSCFG_TEST_CASE(6)
+NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase6)
 {
     // Concern: test that loadTcpCongestionControlAlgorithmSupport does not
-    // contradict with testTcpCongestionControlAlgorithmSupport
+    // contradict with testTcpCongestionControlAlgorithmSupport.
 
-    ntscfg::TestAllocator ta;
-    {
-        bsl::vector<bsl::string> supportedAlgorithms(&ta);
+    ntsa::Error error;
 
-        const ntsa::Error error =
-            ntsf::System::loadTcpCongestionControlAlgorithmSupport(
-                &supportedAlgorithms);
+    bsl::vector<bsl::string> supportedAlgorithms(NTSCFG_TEST_ALLOCATOR);
+    error =
+        ntsf::System::loadTcpCongestionControlAlgorithmSupport(
+            &supportedAlgorithms);
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
-        NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
-        for (bsl::vector<bsl::string>::const_iterator it =
-                 supportedAlgorithms.cbegin();
-             it != supportedAlgorithms.cend();
-             ++it)
-        {
-            NTSCFG_TEST_TRUE(
-                ntsf::System::testTcpCongestionControlAlgorithmSupport(*it));
-        }
-#else
-        NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
-#endif
-
-        // test some random unsupported name:
-        NTSCFG_TEST_FALSE(
-            ntsf::System::testTcpCongestionControlAlgorithmSupport(
-                "random_name"));
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTSCFG_TEST_CASE(7)
-{
-    ntscfg::TestAllocator ta;
+    for (bsl::vector<bsl::string>::const_iterator it =
+                supportedAlgorithms.cbegin();
+            it != supportedAlgorithms.cend();
+            ++it)
     {
-        bsl::shared_ptr<ntsi::DatagramSocket> socket =
-            ntsf::System::createDatagramSocket(&ta);
-
-        ntsa::Error error = socket->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-        NTSCFG_TEST_OK(error);
-#if defined(BSLS_PLATFORM_OS_UNIX)
-        NTSCFG_TEST_OK(ntsf::System::setBlocking(socket->handle(), true));
-
-        bool blocking = false;
-        NTSCFG_TEST_OK(ntsf::System::getBlocking(socket->handle(), &blocking));
-        NTSCFG_TEST_TRUE(blocking);
-
-        NTSCFG_TEST_OK(ntsf::System::setBlocking(socket->handle(), false));
-
-        blocking = true;
-        NTSCFG_TEST_OK(ntsf::System::getBlocking(socket->handle(), &blocking));
-        NTSCFG_TEST_FALSE(blocking);
-#else
-        bool blocking = false;
         NTSCFG_TEST_TRUE(
-            ntsf::System::getBlocking(socket->handle(), &blocking));
+            ntsf::System::testTcpCongestionControlAlgorithmSupport(*it));
+    }
+#else
+    NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
+#endif
+
+    NTSCFG_TEST_FALSE(
+        ntsf::System::testTcpCongestionControlAlgorithmSupport(
+            "random_name"));
+}
+
+NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase7)
+{
+    // Concern: setBlocking/getBlocking.
+
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntsi::DatagramSocket> socket =
+        ntsf::System::createDatagramSocket(NTSCFG_TEST_ALLOCATOR);
+
+    error = socket->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+    NTSCFG_TEST_OK(error);
+
+#if defined(BSLS_PLATFORM_OS_UNIX)
+    error = ntsf::System::setBlocking(socket->handle(), true);
+    NTSCFG_TEST_OK(error);
+
+    bool blocking = false;
+    error = ntsf::System::getBlocking(socket->handle(), &blocking);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_TRUE(blocking);
+
+    error = ntsf::System::setBlocking(socket->handle(), false);
+    NTSCFG_TEST_OK(error);
+
+    blocking = true;
+    error = ntsf::System::getBlocking(socket->handle(), &blocking);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_FALSE(blocking);
+
+#else
+
+    bool blocking = false;
+    error = ntsf::System::getBlocking(socket->handle(), &blocking);
+    NTSCFG_TEST_TRUE(error);
 
 #endif
 
-        error = socket->close();
-        NTSCFG_TEST_OK(error);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    error = socket->close();
+    NTSCFG_TEST_OK(error);
 }
 
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-    NTSCFG_TEST_REGISTER(2);
-    NTSCFG_TEST_REGISTER(3);
-    NTSCFG_TEST_REGISTER(4);
-    NTSCFG_TEST_REGISTER(5);
-    NTSCFG_TEST_REGISTER(6);
-    NTSCFG_TEST_REGISTER(7);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsf
+}  // close namespace BloombergLP

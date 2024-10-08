@@ -13,16 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntso_test.h>
-
 #include <ntscfg_test.h>
 
-NTSCFG_TEST_CASE(1)
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntso_test_t_cpp, "$Id$ $CSID$")
+
+#include <ntso_test.h>
+
+using namespace BloombergLP;
+
+namespace BloombergLP {
+namespace ntso {
+
+// Provide tests for 'ntso::Test'.
+class TestTest
+{
+  public:
+    // TODO
+    static void verify();
+};
+
+NTSCFG_TEST_FUNCTION(ntso::TestTest::verify)
 {
 }
 
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntso
+}  // close namespace BloombergLP

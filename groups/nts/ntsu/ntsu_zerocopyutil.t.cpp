@@ -1,4 +1,4 @@
-// Copyright 2023 Bloomberg Finance L.P.
+// Copyright 2020-2023 Bloomberg Finance L.P.
 // SPDX-License-Identifier: Apache-2.0
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,14 +15,27 @@
 
 #include <ntscfg_test.h>
 
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsu_zerocopyutil_t_cpp, "$Id$ $CSID$")
+
+#include <ntsu_zerocopyutil.h>
+
 using namespace BloombergLP;
 
-NTSCFG_TEST_CASE(1)
+namespace BloombergLP {
+namespace ntsu {
+
+// Provide tests for 'ntsu::ZeroCopyUtil'.
+class ZeroCopyUtilTest
+{
+  public:
+    // TODO
+    static void verify();
+};
+
+NTSCFG_TEST_FUNCTION(ntsu::ZeroCopyUtilTest::verify)
 {
 }
 
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsu
+}  // close namespace BloombergLP

@@ -14,24 +14,16 @@
 // limitations under the License.
 
 #include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsu_socketutil_t_cpp, "$Id$ $CSID$")
+
+#include <ntsu_socketutil.h>
+
 #include <ntsu_adapterutil.h>
 #include <ntsu_socketoptionutil.h>
 #include <ntsu_socketutil.h>
 #include <ntsu_timestamputil.h>
-#include <bdlbb_blob.h>
-#include <bdlbb_blobutil.h>
-#include <bdlbb_simpleblobbufferfactory.h>
-#include <bdlf_bind.h>
-#include <bdlf_placeholder.h>
-#include <bdls_filesystemutil.h>
-#include <bslma_testallocator.h>
-#include <bslmt_threadgroup.h>
-#include <bsls_platform.h>
-#include <bsl_iostream.h>
-#include <bsl_list.h>
-#include <bsl_set.h>
-#include <bsl_unordered_map.h>
-#include <bsl_unordered_set.h>
 
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
 #define WIN32_LEAN_AND_MEAN
@@ -40,7 +32,6 @@
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
 #include <linux/version.h>
-
 #include <linux/ethtool.h>
 #include <linux/sockios.h>
 #include <net/if.h>
@@ -49,24 +40,346 @@
 
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntsu {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
+// Provide tests for 'ntsu::SocketUtil'.
+class SocketUtilTest
+{
+    /// This typedef defines a callback function invoked to test a particular
+    /// portion of the component using the specified connected 'server' and
+    /// 'client' having the specified stream socket 'transport', supplying
+    /// memory using the specified 'allocator'.
+    typedef bsl::function<void(ntsa::Transport::Value transport,
+                            ntsa::Handle           server,
+                            ntsa::Handle           client,
+                            bslma::Allocator*      allocator)>
+        StreamSocketTestCallback;
 
-namespace test {
+    /// This typedef defines a callback function invoked to test a particular
+    /// portion of the component using using the specified 'server' bound to the
+    /// specified 'serverEndpoint' and 'client' bound to the specified
+    /// 'clientEndpoint', each 'client' and 'server' socket having the
+    /// specified 'transport', supplying
+    /// memory using the specified 'allocator'.
+    typedef bsl::function<void(ntsa::Transport::Value transport,
+                            ntsa::Handle           server,
+                            const ntsa::Endpoint&  serverEndpoint,
+                            ntsa::Handle           client,
+                            const ntsa::Endpoint&  clientEndpoint,
+                            bslma::Allocator*      allocator)>
+        DatagramSocketTestCallback;
+
+    // Provide a in-core storage of bytes.
+    template <unsigned N>
+    class Storage;
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
+    // Return the native flags indicating timestamping support for the 
+    // specified 'socket'.
+    static bsl::uint32_t timestampingSupport(ntsa::Handle socket);
+
+#endif
+
+    // Return true if the specified 'socket' supports RX timestamps.
+    static bool supportsRxTimestamps(ntsa::Handle socket);
+
+    // Return true if the specified 'socket' supports TX timestamps.
+    static bool supportsTxTimestamps(ntsa::Handle socket);
+
+    // Load into the specified 'result' the zero-copy notifications for the
+    // specified 'handle'.
+    static void extractZeroCopyNotifications(
+        bsl::list<ntsa::ZeroCopy>* result,
+        ntsa::Handle               handle,
+        bslma::Allocator*          allocator);
+
+    // Load into the specified 'result' the timestamp notifications for the
+    // specified 'handle'.
+    static void extractTimestampNotifications(
+        bsl::list<ntsa::Timestamp>* result,
+        ntsa::Handle                handle,
+        bslma::Allocator*           allocator);
+
+    // Load into the specified 'result' the notifications for the specified
+    // 'handle'.
+    static void extractNotifications(
+        bsl::list<ntsa::Notification>* result,
+        ntsa::Handle                   handle,
+        bslma::Allocator*              allocator);
+
+    // Execute the specified 'test'.
+    static void executeStreamSocketTest(
+        const StreamSocketTestCallback& test,
+        bslma::Allocator* basicAllocator = 0);
+
+    // Execute the specified 'test'.
+    static void executeDatagramSocketTest(
+        const DatagramSocketTestCallback& test,
+        bslma::Allocator* basicAllocator = 0);
+
+    static void testStreamSocketTransmissionSingleBuffer(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        ntsa::Handle           client,
+        bslma::Allocator*      allocator);
+
+    static void testStreamSocketTransmissionSingleBufferWithControlMsg(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        ntsa::Handle           client,
+        bslma::Allocator*      allocator);
+
+    static void testStreamSocketTransmissionMultipleBuffers(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        ntsa::Handle           client,
+        bslma::Allocator*      allocator);
+
+    static void testStreamSocketTransmissionBlob(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        ntsa::Handle           client,
+        bslma::Allocator*      allocator);
+
+    static void testStreamSocketTransmissionBlobWithControlMsg(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        ntsa::Handle           client,
+        bslma::Allocator*      allocator);
+    
+    static void testStreamSocketTransmissionWithControlMsgDropped(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        ntsa::Handle           client,
+        bslma::Allocator*      allocator);
+
+    static void testStreamSocketTransmissionFile(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        ntsa::Handle           client,
+        bslma::Allocator*      allocator);
+
+    static void testDatagramSocketTransmissionSingleBuffer(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator);
+
+    static void testDatagramSocketTransmissionSingleBufferWithControlMsg(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator);
+
+    static void testDatagramSocketTransmissionMultipleBuffers(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator);
+
+    static void testDatagramSocketTransmissionBlob(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator);
+
+    static void testDatagramSocketTransmissionBlobWithControlMsg(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator);
+
+    static void testDatagramSocketTransmissionWithControlMsgDropped(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator);
+
+    static void testDatagramSocketTransmissionSingleMessage(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator);
+
+    static void testDatagramSocketTransmissionMultipleMessages(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator);
+
+    static void testStreamSocketMsgZeroCopy(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        ntsa::Handle           client,
+        bslma::Allocator*      allocator);
+
+    static void testDatagramSocketTxTimestamps(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator);
+
+    static void testStreamSocketTxTimestamps(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        ntsa::Handle           client,
+        bslma::Allocator*      allocator);
+
+    static void testDatagramSocketTxTimestampsAndZeroCopy(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator);
+
+    static void testStreamSocketTxTimestampsAndZeroCopy(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        ntsa::Handle           client,
+        bslma::Allocator*      allocator);
+
+    static void testStreamSocketReceiveNotifications(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        ntsa::Handle           client,
+        bslma::Allocator*      allocator);
+
+    static void testDatagramSocketReceiveNotifications(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator);
+
+  public:
+    // TODO
+    static void verifyCase1();
+
+    // TODO
+    static void verifyCase2();
+
+    // TODO
+    static void verifyCase3();
+
+    // TODO
+    static void verifyCase4();
+
+    // TODO
+    static void verifyCase5();
+
+    // TODO
+    static void verifyCase6();
+
+    // TODO
+    static void verifyCase7();
+
+    // TODO
+    static void verifyCase8();
+
+    // TODO
+    static void verifyCase9();
+
+    // TODO
+    static void verifyCase10();
+
+    // TODO
+    static void verifyCase11();
+
+    // TODO
+    static void verifyCase12();
+
+    // TODO
+    static void verifyCase13();
+
+    // TODO
+    static void verifyCase14();
+
+    // TODO
+    static void verifyCase15();
+
+    // TODO
+    static void verifyCase16();
+
+    // TODO
+    static void verifyCase17();
+
+    // TODO
+    static void verifyCase18();
+
+    // TODO
+    static void verifyCase19();
+
+    // TODO
+    static void verifyCase20();
+
+    // TODO
+    static void verifyCase21();
+
+    // TODO
+    static void verifyCase22();
+
+    // TODO
+    static void verifyCase23();
+
+    // TODO
+    static void verifyCase24();
+
+    // TODO
+    static void verifyCase25();
+
+    // TODO
+    static void verifyCase26();
+
+    // TODO
+    static void verifyCase27();
+
+    // TODO
+    static void verifyCase28();
+
+    // TODO
+    static void verifyCase29();
+
+    // TODO
+    static void verifyCase30();
+
+    // TODO
+    static void verifyCase31();
+
+    // TODO
+    static void verifyCase32();
+
+    // TODO
+    static void verifyCase33();
+
+    // TODO
+    static void verifyCase34();
+};
 
 /// Provide a in-core storage of bytes.
 template <unsigned N>
-class Storage
+class SocketUtilTest::Storage
 {
     char d_buffer[N];
 
@@ -84,7 +397,7 @@ class Storage
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
 
-bsl::uint32_t timestampingSupport(ntsa::Handle socket)
+bsl::uint32_t SocketUtilTest::timestampingSupport(ntsa::Handle socket)
 {
     ntsa::Error error;
     int         rc;
@@ -111,13 +424,13 @@ bsl::uint32_t timestampingSupport(ntsa::Handle socket)
     return static_cast<bsl::uint32_t>(info.so_timestamping);
 }
 
-bool supportsRxTimestamps(ntsa::Handle socket)
+bool SocketUtilTest::supportsRxTimestamps(ntsa::Handle socket)
 {
     const bsl::uint32_t flags = timestampingSupport(socket);
     return (flags & ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_SOFTWARE) != 0;
 }
 
-bool supportsTxTimestamps(ntsa::Handle socket)
+bool SocketUtilTest::supportsTxTimestamps(ntsa::Handle socket)
 {
     const bsl::uint32_t flags = timestampingSupport(socket);
     return (flags & ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_SOFTWARE) != 0;
@@ -125,13 +438,13 @@ bool supportsTxTimestamps(ntsa::Handle socket)
 
 #else
 
-bool supportsRxTimestamps(ntsa::Handle socket)
+bool SocketUtilTest::supportsRxTimestamps(ntsa::Handle socket)
 {
     NTSCFG_WARNING_UNUSED(socket);
     return false;
 }
 
-bool supportsTxTimestamps(ntsa::Handle socket)
+bool SocketUtilTest::supportsTxTimestamps(ntsa::Handle socket)
 {
     NTSCFG_WARNING_UNUSED(socket);
     return false;
@@ -139,7 +452,7 @@ bool supportsTxTimestamps(ntsa::Handle socket)
 
 #endif
 
-void extractZeroCopyNotifications(bsl::list<ntsa::ZeroCopy>* zerocopy,
+void SocketUtilTest::extractZeroCopyNotifications(bsl::list<ntsa::ZeroCopy>* result,
                                   ntsa::Handle               handle,
                                   bslma::Allocator*          allocator)
 {
@@ -158,11 +471,11 @@ void extractZeroCopyNotifications(bsl::list<ntsa::ZeroCopy>* zerocopy,
          ++it)
     {
         NTSCFG_TEST_TRUE(it->isZeroCopy());
-        zerocopy->push_back(it->zeroCopy());
+        result->push_back(it->zeroCopy());
     }
 }
 
-void extractTimestampNotifications(bsl::list<ntsa::Timestamp>* ts,
+void SocketUtilTest::extractTimestampNotifications(bsl::list<ntsa::Timestamp>* result,
                                    ntsa::Handle                handle,
                                    bslma::Allocator*           allocator)
 {
@@ -181,11 +494,11 @@ void extractTimestampNotifications(bsl::list<ntsa::Timestamp>* ts,
          ++it)
     {
         NTSCFG_TEST_TRUE(it->isTimestamp());
-        ts->push_back(it->timestamp());
+        result->push_back(it->timestamp());
     }
 }
 
-void extractNotifications(bsl::list<ntsa::Notification>* nt,
+void SocketUtilTest::extractNotifications(bsl::list<ntsa::Notification>* result,
                           ntsa::Handle                   handle,
                           bslma::Allocator*              allocator)
 {
@@ -203,36 +516,12 @@ void extractNotifications(bsl::list<ntsa::Notification>* nt,
          it != notifications.notifications().cend();
          ++it)
     {
-        nt->push_back(*it);
+        result->push_back(*it);
     }
 }
 
-/// This typedef defines a callback function invoked to test a particular
-/// portion of the component using the specified connected 'server' and
-/// 'client' having the specified stream socket 'transport', supplying
-/// memory using the specified 'allocator'.
-typedef bsl::function<void(ntsa::Transport::Value transport,
-                           ntsa::Handle           server,
-                           ntsa::Handle           client,
-                           bslma::Allocator*      allocator)>
-    StreamSocketTestCallback;
-
-/// This typedef defines a callback function invoked to test a particular
-/// portion of the component using using the specified 'server' bound to the
-/// specified 'serverEndpoint' and 'client' bound to the specified
-/// 'clientEndpoint', each 'client' and 'server' socket having the
-/// specified 'transport', supplying
-/// memory using the specified 'allocator'.
-typedef bsl::function<void(ntsa::Transport::Value transport,
-                           ntsa::Handle           server,
-                           const ntsa::Endpoint&  serverEndpoint,
-                           ntsa::Handle           client,
-                           const ntsa::Endpoint&  clientEndpoint,
-                           bslma::Allocator*      allocator)>
-    DatagramSocketTestCallback;
-
-void executeStreamSocketTest(const StreamSocketTestCallback& test,
-                             bslma::Allocator* basicAllocator = 0)
+void SocketUtilTest::executeStreamSocketTest(const StreamSocketTestCallback& test,
+                             bslma::Allocator* basicAllocator)
 {
     // Execute the specified stream socket 'test'.
 
@@ -386,8 +675,8 @@ void executeStreamSocketTest(const StreamSocketTestCallback& test,
     }
 }
 
-void executeDatagramSocketTest(const DatagramSocketTestCallback& test,
-                               bslma::Allocator* basicAllocator = 0)
+void SocketUtilTest::executeDatagramSocketTest(const DatagramSocketTestCallback& test,
+                               bslma::Allocator* basicAllocator)
 {
     // Execute the specified datagram socket 'test'.
 
@@ -515,10 +804,11 @@ void executeDatagramSocketTest(const DatagramSocketTestCallback& test,
     }
 }
 
-void testStreamSocketTransmissionSingleBuffer(ntsa::Transport::Value transport,
-                                              ntsa::Handle           server,
-                                              ntsa::Handle           client,
-                                              bslma::Allocator*      allocator)
+void SocketUtilTest::testStreamSocketTransmissionSingleBuffer(
+    ntsa::Transport::Value transport,
+    ntsa::Handle           server,
+    ntsa::Handle           client,
+    bslma::Allocator*      allocator)
 {
     NTSCFG_TEST_LOG_DEBUG << "Testing " << transport << ": send/recv"
                           << NTSCFG_TEST_LOG_END;
@@ -567,7 +857,7 @@ void testStreamSocketTransmissionSingleBuffer(ntsa::Transport::Value transport,
     }
 }
 
-void testStreamSocketTransmissionSingleBufferWithControlMsg(
+void SocketUtilTest::testStreamSocketTransmissionSingleBufferWithControlMsg(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     ntsa::Handle           client,
@@ -659,7 +949,7 @@ void testStreamSocketTransmissionSingleBufferWithControlMsg(
     }
 }
 
-void testStreamSocketTransmissionMultipleBuffers(
+void SocketUtilTest::testStreamSocketTransmissionMultipleBuffers(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     ntsa::Handle           client,
@@ -735,7 +1025,8 @@ void testStreamSocketTransmissionMultipleBuffers(
     }
 }
 
-void testStreamSocketTransmissionBlob(ntsa::Transport::Value transport,
+void SocketUtilTest::testStreamSocketTransmissionBlob(
+        ntsa::Transport::Value transport,
                                       ntsa::Handle           server,
                                       ntsa::Handle           client,
                                       bslma::Allocator*      allocator)
@@ -788,7 +1079,7 @@ void testStreamSocketTransmissionBlob(ntsa::Transport::Value transport,
     }
 }
 
-void testStreamSocketTransmissionBlobWithControlMsg(
+void SocketUtilTest::testStreamSocketTransmissionBlobWithControlMsg(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     ntsa::Handle           client,
@@ -882,7 +1173,7 @@ void testStreamSocketTransmissionBlobWithControlMsg(
     }
 }
 
-void testStreamSocketTransmissionWithControlMsgDropped(
+void SocketUtilTest::testStreamSocketTransmissionWithControlMsgDropped(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     ntsa::Handle           client,
@@ -987,7 +1278,7 @@ void testStreamSocketTransmissionWithControlMsgDropped(
     }
 }
 
-void testStreamSocketTransmissionFile(ntsa::Transport::Value transport,
+void SocketUtilTest::testStreamSocketTransmissionFile(ntsa::Transport::Value transport,
                                       ntsa::Handle           server,
                                       ntsa::Handle           client,
                                       bslma::Allocator*      allocator)
@@ -1138,7 +1429,7 @@ void testStreamSocketTransmissionFile(ntsa::Transport::Value transport,
 #endif
 }
 
-void testDatagramSocketTransmissionSingleBuffer(
+void SocketUtilTest::testDatagramSocketTransmissionSingleBuffer(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     const ntsa::Endpoint&  serverEndpoint,
@@ -1198,7 +1489,7 @@ void testDatagramSocketTransmissionSingleBuffer(
     }
 }
 
-void testDatagramSocketTransmissionSingleBufferWithControlMsg(
+void SocketUtilTest::testDatagramSocketTransmissionSingleBufferWithControlMsg(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     const ntsa::Endpoint&  serverEndpoint,
@@ -1296,7 +1587,7 @@ void testDatagramSocketTransmissionSingleBufferWithControlMsg(
     }
 }
 
-void testDatagramSocketTransmissionMultipleBuffers(
+void SocketUtilTest::testDatagramSocketTransmissionMultipleBuffers(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     const ntsa::Endpoint&  serverEndpoint,
@@ -1380,7 +1671,7 @@ void testDatagramSocketTransmissionMultipleBuffers(
     }
 }
 
-void testDatagramSocketTransmissionBlob(ntsa::Transport::Value transport,
+void SocketUtilTest::testDatagramSocketTransmissionBlob(ntsa::Transport::Value transport,
                                         ntsa::Handle           server,
                                         const ntsa::Endpoint&  serverEndpoint,
                                         ntsa::Handle           client,
@@ -1440,7 +1731,7 @@ void testDatagramSocketTransmissionBlob(ntsa::Transport::Value transport,
     }
 }
 
-void testDatagramSocketTransmissionBlobWithControlMsg(
+void SocketUtilTest::testDatagramSocketTransmissionBlobWithControlMsg(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     const ntsa::Endpoint&  serverEndpoint,
@@ -1540,7 +1831,7 @@ void testDatagramSocketTransmissionBlobWithControlMsg(
     }
 }
 
-void testDatagramSocketTransmissionWithControlMsgDropped(
+void SocketUtilTest::testDatagramSocketTransmissionWithControlMsgDropped(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     const ntsa::Endpoint&  serverEndpoint,
@@ -1652,7 +1943,7 @@ void testDatagramSocketTransmissionWithControlMsgDropped(
     }
 }
 
-void testDatagramSocketTransmissionSingleMessage(
+void SocketUtilTest::testDatagramSocketTransmissionSingleMessage(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     const ntsa::Endpoint&  serverEndpoint,
@@ -1742,7 +2033,7 @@ void testDatagramSocketTransmissionSingleMessage(
 #endif
 }
 
-void testDatagramSocketTransmissionMultipleMessages(
+void SocketUtilTest::testDatagramSocketTransmissionMultipleMessages(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     const ntsa::Endpoint&  serverEndpoint,
@@ -1759,7 +2050,7 @@ void testDatagramSocketTransmissionMultipleMessages(
 
     char DATA[] = "123456789";
 
-    typedef test::Storage<sizeof DATA - 1> StorageBuffer;
+    typedef SocketUtilTest::Storage<sizeof DATA - 1> StorageBuffer;
 
     StorageBuffer clientBuffer0[NUM_MESSAGES];
     StorageBuffer clientBuffer1[NUM_MESSAGES];
@@ -1903,7 +2194,8 @@ void testDatagramSocketTransmissionMultipleMessages(
     }
 }
 
-void testStreamSocketMsgZeroCopy(ntsa::Transport::Value transport,
+void SocketUtilTest::testStreamSocketMsgZeroCopy(
+        ntsa::Transport::Value transport,
                                  ntsa::Handle           server,
                                  ntsa::Handle           client,
                                  bslma::Allocator*      allocator)
@@ -1953,7 +2245,7 @@ void testStreamSocketMsgZeroCopy(ntsa::Transport::Value transport,
         NTSCFG_TEST_ASSERT(context.bytesSendable() == msgSize);
         NTSCFG_TEST_ASSERT(context.bytesSent() == msgSize);
 
-        test::extractZeroCopyNotifications(&feedback, client, allocator);
+        SocketUtilTest::extractZeroCopyNotifications(&feedback, client, allocator);
     }
 
     // receive data
@@ -1977,7 +2269,7 @@ void testStreamSocketMsgZeroCopy(ntsa::Transport::Value transport,
     // retrieve data from the socket error queue until all send system
     // calls are acknowledged by the OS
     while (!sendIDs.empty()) {
-        test::extractZeroCopyNotifications(&feedback, client, allocator);
+        SocketUtilTest::extractZeroCopyNotifications(&feedback, client, allocator);
 
         while (!feedback.empty()) {
             const ntsa::ZeroCopy& zc = feedback.front();
@@ -1997,7 +2289,7 @@ void testStreamSocketMsgZeroCopy(ntsa::Transport::Value transport,
     }
 }
 
-void testDatagramSocketTxTimestamps(ntsa::Transport::Value transport,
+void SocketUtilTest::testDatagramSocketTxTimestamps(ntsa::Transport::Value transport,
                                     ntsa::Handle           server,
                                     const ntsa::Endpoint&  serverEndpoint,
                                     ntsa::Handle           client,
@@ -2064,7 +2356,7 @@ void testDatagramSocketTxTimestamps(ntsa::Transport::Value transport,
         NTSCFG_TEST_ASSERT(context.bytesSendable() == msgSize);
         NTSCFG_TEST_ASSERT(context.bytesSent() == msgSize);
 
-        test::extractTimestampNotifications(&feedback, client, allocator);
+        SocketUtilTest::extractTimestampNotifications(&feedback, client, allocator);
     }
 
     // receive data
@@ -2088,7 +2380,7 @@ void testDatagramSocketTxTimestamps(ntsa::Transport::Value transport,
     // retrieve data from the socket error queue until all send system
     // calls related timestamps received
     while (!timestampsToValidate.empty()) {
-        test::extractTimestampNotifications(&feedback, client, allocator);
+        SocketUtilTest::extractTimestampNotifications(&feedback, client, allocator);
 
         while (!feedback.empty()) {
             const ntsa::Timestamp& ts = feedback.front();
@@ -2105,7 +2397,7 @@ void testDatagramSocketTxTimestamps(ntsa::Transport::Value transport,
     }
 }
 
-void testStreamSocketTxTimestamps(ntsa::Transport::Value transport,
+void SocketUtilTest::testStreamSocketTxTimestamps(ntsa::Transport::Value transport,
                                   ntsa::Handle           server,
                                   ntsa::Handle           client,
                                   bslma::Allocator*      allocator)
@@ -2175,7 +2467,7 @@ void testStreamSocketTxTimestamps(ntsa::Transport::Value transport,
                             [ntsa::TimestampType::e_ACKNOWLEDGED] =
                                 sysTimeBeforeSending;
 
-        test::extractTimestampNotifications(&feedback, client, allocator);
+        SocketUtilTest::extractTimestampNotifications(&feedback, client, allocator);
     }
 
     // receive data
@@ -2199,7 +2491,7 @@ void testStreamSocketTxTimestamps(ntsa::Transport::Value transport,
     // retrieve data from the socket error queue until all send system
     // calls related timestamps received
     while (!timestampsToValidate.empty()) {
-        test::extractTimestampNotifications(&feedback, client, allocator);
+        SocketUtilTest::extractTimestampNotifications(&feedback, client, allocator);
 
         while (!feedback.empty()) {
             const ntsa::Timestamp& ts = feedback.front();
@@ -2216,7 +2508,7 @@ void testStreamSocketTxTimestamps(ntsa::Transport::Value transport,
     }
 }
 
-void testDatagramSocketTxTimestampsAndZeroCopy(
+void SocketUtilTest::testDatagramSocketTxTimestampsAndZeroCopy(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     const ntsa::Endpoint&  serverEndpoint,
@@ -2299,7 +2591,7 @@ void testDatagramSocketTxTimestampsAndZeroCopy(
         NTSCFG_TEST_ASSERT(context.bytesSendable() == msgSize);
         NTSCFG_TEST_ASSERT(context.bytesSent() == msgSize);
 
-        test::extractNotifications(&feedback, client, allocator);
+        SocketUtilTest::extractNotifications(&feedback, client, allocator);
     }
 
     // receive data
@@ -2323,7 +2615,7 @@ void testDatagramSocketTxTimestampsAndZeroCopy(
     // retrieve data from the socket error queue until all send system
     // calls related timestamps received
     while (!timestampsToValidate.empty() || !zeroCopyToValidate.empty()) {
-        test::extractNotifications(&feedback, client, allocator);
+        SocketUtilTest::extractNotifications(&feedback, client, allocator);
 
         while (!feedback.empty()) {
             const ntsa::Notification& nt = feedback.front();
@@ -2361,10 +2653,11 @@ void testDatagramSocketTxTimestampsAndZeroCopy(
     }
 }
 
-void testStreamSocketTxTimestampsAndZeroCopy(ntsa::Transport::Value transport,
-                                             ntsa::Handle           server,
-                                             ntsa::Handle           client,
-                                             bslma::Allocator*      allocator)
+void SocketUtilTest::testStreamSocketTxTimestampsAndZeroCopy(
+    ntsa::Transport::Value transport,
+    ntsa::Handle           server,
+    ntsa::Handle           client,
+    bslma::Allocator*      allocator)
 {
     if (transport == ntsa::Transport::e_LOCAL_STREAM) {
         return;
@@ -2443,7 +2736,7 @@ void testStreamSocketTxTimestampsAndZeroCopy(ntsa::Transport::Value transport,
         NTSCFG_TEST_ASSERT(context.bytesSendable() == msgSize);
         NTSCFG_TEST_ASSERT(context.bytesSent() == msgSize);
 
-        test::extractNotifications(&feedback, client, allocator);
+        SocketUtilTest::extractNotifications(&feedback, client, allocator);
     }
 
     // receive data
@@ -2467,7 +2760,7 @@ void testStreamSocketTxTimestampsAndZeroCopy(ntsa::Transport::Value transport,
     // retrieve data from the socket error queue until all send system
     // calls related timestamps received
     while (!timestampsToValidate.empty() || !zeroCopyToValidate.empty()) {
-        test::extractNotifications(&feedback, client, allocator);
+        SocketUtilTest::extractNotifications(&feedback, client, allocator);
 
         while (!feedback.empty()) {
             const ntsa::Notification& nt = feedback.front();
@@ -2505,10 +2798,11 @@ void testStreamSocketTxTimestampsAndZeroCopy(ntsa::Transport::Value transport,
     }
 }
 
-void testStreamSocketReceiveNotifications(ntsa::Transport::Value transport,
-                                          ntsa::Handle           server,
-                                          ntsa::Handle           client,
-                                          bslma::Allocator*      allocator)
+void SocketUtilTest::testStreamSocketReceiveNotifications(
+    ntsa::Transport::Value transport,
+    ntsa::Handle           server,
+    ntsa::Handle           client,
+    bslma::Allocator*      allocator)
 {
     NTSCFG_TEST_LOG_DEBUG << "Testing " << transport << NTSCFG_TEST_LOG_END;
 
@@ -2562,7 +2856,7 @@ void testStreamSocketReceiveNotifications(ntsa::Transport::Value transport,
     }
 }
 
-void testDatagramSocketReceiveNotifications(
+void SocketUtilTest::testDatagramSocketReceiveNotifications(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     const ntsa::Endpoint&  serverEndpoint,
@@ -2623,9 +2917,7 @@ void testDatagramSocketReceiveNotifications(
     }
 }
 
-}  // close namespace 'test'
-
-NTSCFG_TEST_CASE(1)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase1)
 {
     // Concern: Stream socket breathing test, which also serves as the
     // usage example.
@@ -2878,7 +3170,7 @@ NTSCFG_TEST_CASE(1)
     }
 }
 
-NTSCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase2)
 {
     // Concern: Datagram socket breathing test, which also serves as the
     // usage example.
@@ -3076,128 +3368,94 @@ NTSCFG_TEST_CASE(2)
     }
 }
 
-NTSCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase3)
 {
     // Concern: Stream socket transmission: single buffer.
     // Plan:
 
-    ntscfg::TestAllocator ta;
-    {
-        test::executeStreamSocketTest(
-            &test::testStreamSocketTransmissionSingleBuffer);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+        SocketUtilTest::executeStreamSocketTest(
+            &SocketUtilTest::testStreamSocketTransmissionSingleBuffer);
 }
 
-NTSCFG_TEST_CASE(4)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase4)
 {
     // Concern: Stream socket transmission: multiple buffers.
     // Plan:
 
-    ntscfg::TestAllocator ta;
-    {
-        test::executeStreamSocketTest(
-            &test::testStreamSocketTransmissionMultipleBuffers);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+        SocketUtilTest::executeStreamSocketTest(
+            &SocketUtilTest::testStreamSocketTransmissionMultipleBuffers);
 }
 
-NTSCFG_TEST_CASE(5)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase5)
 {
     // Concern: Stream socket transmission: blob.
     // Plan:
 
-    ntscfg::TestAllocator ta;
-    {
-        test::executeStreamSocketTest(&test::testStreamSocketTransmissionBlob);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+        SocketUtilTest::executeStreamSocketTest(&SocketUtilTest::testStreamSocketTransmissionBlob);
 }
 
-NTSCFG_TEST_CASE(6)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase6)
 {
     // Concern: Stream socket transmission: file.
     // Plan:
 
-    ntscfg::TestAllocator ta;
-    {
-        test::executeStreamSocketTest(&test::testStreamSocketTransmissionFile);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+        SocketUtilTest::executeStreamSocketTest(&SocketUtilTest::testStreamSocketTransmissionFile);
 }
 
-NTSCFG_TEST_CASE(7)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase7)
 {
     // Concern: Stream socket transmission: single buffer.
     // Plan:
 
-    ntscfg::TestAllocator ta;
-    {
-        test::executeDatagramSocketTest(
-            &test::testDatagramSocketTransmissionSingleBuffer);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+        SocketUtilTest::executeDatagramSocketTest(
+            &SocketUtilTest::testDatagramSocketTransmissionSingleBuffer);
 }
 
-NTSCFG_TEST_CASE(8)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase8)
 {
     // Concern: Stream socket transmission: multiple buffers.
     // Plan:
 
-    ntscfg::TestAllocator ta;
-    {
-        test::executeDatagramSocketTest(
-            &test::testDatagramSocketTransmissionMultipleBuffers);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+        SocketUtilTest::executeDatagramSocketTest(
+            &SocketUtilTest::testDatagramSocketTransmissionMultipleBuffers);
 }
 
-NTSCFG_TEST_CASE(9)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase9)
 {
     // Concern: Stream socket transmission: blob.
     // Plan:
 
-    ntscfg::TestAllocator ta;
-    {
-        test::executeDatagramSocketTest(
-            &test::testDatagramSocketTransmissionBlob);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+        SocketUtilTest::executeDatagramSocketTest(
+            &SocketUtilTest::testDatagramSocketTransmissionBlob);
 }
 
-NTSCFG_TEST_CASE(10)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase10)
 {
     // Concern: Stream socket transmission: single message.
     // Plan:
 
-    ntscfg::TestAllocator ta;
-    {
-        test::executeDatagramSocketTest(
-            &test::testDatagramSocketTransmissionSingleMessage);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+        SocketUtilTest::executeDatagramSocketTest(
+            &SocketUtilTest::testDatagramSocketTransmissionSingleMessage);
 }
 
-NTSCFG_TEST_CASE(11)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase11)
 {
     // Concern: Stream socket transmission: multiple messages.
     // Plan:
 
-    ntscfg::TestAllocator ta;
-    {
-        test::executeDatagramSocketTest(
-            &test::testDatagramSocketTransmissionMultipleMessages);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+        SocketUtilTest::executeDatagramSocketTest(
+            &SocketUtilTest::testDatagramSocketTransmissionMultipleMessages);
 }
 
-NTSCFG_TEST_CASE(12)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase12)
 {
     // Concern: Listener socket maximum backlog
     // Plan:
 
-    ntscfg::TestAllocator ta;
-    {
         ntsa::Error error;
 
         bsl::vector<ntsa::Transport::Value> socketTypes;
@@ -3294,17 +3552,13 @@ NTSCFG_TEST_CASE(12)
                 NTSCFG_TEST_ASSERT(!error);
             }
         }
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTSCFG_TEST_CASE(13)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase13)
 {
     // Concern: Duplicating sockets
     // Plan:
 
-    ntscfg::TestAllocator ta;
-    {
         ntsa::Error error;
 
         // Create a blocking socket, bind it to any port on the loopback
@@ -3498,11 +3752,9 @@ NTSCFG_TEST_CASE(13)
 
         error = ntsu::SocketUtil::close(server);
         NTSCFG_TEST_ASSERT(!error);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTSCFG_TEST_CASE(14)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
 {
     // Concern: Binding datagram sockets.
     //
@@ -3577,8 +3829,7 @@ NTSCFG_TEST_CASE(14)
     // sendto(<DA>:<DP>)                          0.0.0.0:<SP>
     // connect(<DA>:<DP>)                         <SA>:<SP>
 
-    ntscfg::TestAllocator ta;
-    {
+
         ntsa::Error error;
 
         const bool k_REUSE_ADDRESS = false;
@@ -5566,17 +5817,13 @@ NTSCFG_TEST_CASE(14)
             }
         }
 #endif
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTSCFG_TEST_CASE(15)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
 {
     // Concern: Binding stream sockets.
     // Plan:
 
-    ntscfg::TestAllocator ta;
-    {
         ntsa::Error error;
 
         const bool k_REUSE_ADDRESS = false;
@@ -6847,16 +7094,12 @@ NTSCFG_TEST_CASE(15)
             }
         }
 #endif
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTSCFG_TEST_CASE(16)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase16)
 {
     // Concern: Listing system sockets.
 
-    ntscfg::TestAllocator ta;
-    {
         ntsa::Error error;
 
         ntsa::Handle listener;
@@ -6903,11 +7146,9 @@ NTSCFG_TEST_CASE(16)
 
             BSLS_LOG_INFO("Dump status:\n%s", ss.str().c_str());
         }
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTSCFG_TEST_CASE(17)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase17)
 {
     // Concern: Create stream socket pairs.
     //
@@ -7255,7 +7496,7 @@ NTSCFG_TEST_CASE(17)
     }
 }
 
-NTSCFG_TEST_CASE(18)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase18)
 {
     // Concern: Create datagram socket pairs.
     //
@@ -7598,97 +7839,85 @@ NTSCFG_TEST_CASE(18)
     }
 }
 
-NTSCFG_TEST_CASE(19)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase19)
 {
     // Concern: Datagram socket transmission with control data: single buffer.
     // Plan:
 
 #if defined(BSLS_PLATFORM_UNIX)
-    ntscfg::TestAllocator ta;
-    {
-        test::executeDatagramSocketTest(
-            &test::testDatagramSocketTransmissionSingleBufferWithControlMsg);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+        SocketUtilTest::executeDatagramSocketTest(
+            &SocketUtilTest::testDatagramSocketTransmissionSingleBufferWithControlMsg);
+
 #endif
 }
 
-NTSCFG_TEST_CASE(20)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase20)
 {
     // Concern: Datagram socket transmission with control data: blob.
     // Plan:
 
 #if defined(BSLS_PLATFORM_UNIX)
-    ntscfg::TestAllocator ta;
-    {
-        test::executeDatagramSocketTest(
-            &test::testDatagramSocketTransmissionBlobWithControlMsg);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+        SocketUtilTest::executeDatagramSocketTest(
+            &SocketUtilTest::testDatagramSocketTransmissionBlobWithControlMsg);
+
 #endif
 }
 
-NTSCFG_TEST_CASE(21)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase21)
 {
     // Concern: Datagram socket transmission with control data: dropped.
     // Plan:
 
 #if defined(BSLS_PLATFORM_UNIX)
-    ntscfg::TestAllocator ta;
-    {
-        test::executeDatagramSocketTest(
-            &test::testDatagramSocketTransmissionWithControlMsgDropped);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+        SocketUtilTest::executeDatagramSocketTest(
+            &SocketUtilTest::testDatagramSocketTransmissionWithControlMsgDropped);
+
 #endif
 }
 
-NTSCFG_TEST_CASE(22)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase22)
 {
     // Concern: Stream socket transmission with control data: single buffer.
     // Plan:
 
 #if defined(BSLS_PLATFORM_UNIX)
-    ntscfg::TestAllocator ta;
-    {
-        test::executeStreamSocketTest(
-            &test::testStreamSocketTransmissionSingleBufferWithControlMsg);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+        SocketUtilTest::executeStreamSocketTest(
+            &SocketUtilTest::testStreamSocketTransmissionSingleBufferWithControlMsg);
+
 #endif
 }
 
-NTSCFG_TEST_CASE(23)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase23)
 {
     // Concern: Stream socket transmission with control data: blob.
     // Plan:
 
 #if defined(BSLS_PLATFORM_UNIX)
-    ntscfg::TestAllocator ta;
-    {
-        test::executeStreamSocketTest(
-            &test::testStreamSocketTransmissionBlobWithControlMsg);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+        SocketUtilTest::executeStreamSocketTest(
+            &SocketUtilTest::testStreamSocketTransmissionBlobWithControlMsg);
+
 #endif
 }
 
-NTSCFG_TEST_CASE(24)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase24)
 {
     // Concern: Stream socket transmission with control data: dropped
     // Plan:
 
 #if defined(BSLS_PLATFORM_UNIX)
-    ntscfg::TestAllocator ta;
-    {
-        test::executeStreamSocketTest(
-            &test::testStreamSocketTransmissionWithControlMsgDropped);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+        SocketUtilTest::executeStreamSocketTest(
+            &SocketUtilTest::testStreamSocketTransmissionWithControlMsgDropped);
+
 #endif
 }
 
-NTSCFG_TEST_CASE(25)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase25)
 {
     // Concern: validate that an incoming software timestamp and a file handle
     // can be simultaneously retrieved from one control message
@@ -7800,7 +8029,7 @@ NTSCFG_TEST_CASE(25)
     NTSCFG_TEST_ASSERT(!error);
 }
 
-NTSCFG_TEST_CASE(26)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase26)
 {
     // Concern: ntsu::SocketUtil::isSocket correctly indicates true if a
     // file descriptor is an alias for a socket, and false, after the file
@@ -7835,7 +8064,7 @@ NTSCFG_TEST_CASE(26)
     }
 }
 
-NTSCFG_TEST_CASE(27)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase27)
 {
     // Concern: Test that Linux MSG_ZEROCOPY mechanism is applied for DATAGRAM
     // sockets
@@ -7884,8 +8113,7 @@ NTSCFG_TEST_CASE(27)
         NTSCFG_TEST_LOG_DEBUG << "Testing " << *transport
                               << NTSCFG_TEST_LOG_END;
 
-        ntscfg::TestAllocator ta;
-        {
+
             // Observation: if system MTU is 1500 bytes then maximum payload
             // size of UDP IPV4 packet for which MSG_ZEROCOPY functionality can
             // really work is 1472 bytes (because UDP header is 8 bytes and
@@ -7943,13 +8171,13 @@ NTSCFG_TEST_CASE(27)
                 NTSCFG_TEST_ASSERT(context.bytesSendable() == msgSize);
                 NTSCFG_TEST_ASSERT(context.bytesSent() == msgSize);
 
-                test::extractZeroCopyNotifications(&feedback, handle, &ta);
+                SocketUtilTest::extractZeroCopyNotifications(&feedback, handle, &ta);
             }
 
             // retrieve data from the socket error queue until all send system
             // calls are acknowledged by the OS
             while (!sendIDs.empty()) {
-                test::extractZeroCopyNotifications(&feedback, handle, &ta);
+                SocketUtilTest::extractZeroCopyNotifications(&feedback, handle, &ta);
 
                 while (!feedback.empty()) {
                     const ntsa::ZeroCopy& zc = feedback.front();
@@ -7966,13 +8194,11 @@ NTSCFG_TEST_CASE(27)
                     feedback.pop_front();
                 }
             }
-        }
-        NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
     }
 #endif
 }
 
-NTSCFG_TEST_CASE(28)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase28)
 {
     // Concern: Test that Linux MSG_ZEROCOPY mechanism is applied for STREAM
     // sockets
@@ -7995,15 +8221,13 @@ NTSCFG_TEST_CASE(28)
             return;
         }
     }
-    ntscfg::TestAllocator ta;
-    {
-        test::executeStreamSocketTest(&test::testStreamSocketMsgZeroCopy);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+        SocketUtilTest::executeStreamSocketTest(&SocketUtilTest::testStreamSocketMsgZeroCopy);
+
 #endif
 }
 
-NTSCFG_TEST_CASE(29)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase29)
 {
     // Concern: Test TX timestamping functionality for DATAGRAM sockets
 #if defined(BSLS_PLATFORM_OS_LINUX)
@@ -8019,15 +8243,13 @@ NTSCFG_TEST_CASE(29)
             return;
         }
     }
-    ntscfg::TestAllocator ta;
-    {
-        test::executeDatagramSocketTest(&test::testDatagramSocketTxTimestamps);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+        SocketUtilTest::executeDatagramSocketTest(&SocketUtilTest::testDatagramSocketTxTimestamps);
+
 #endif
 }
 
-NTSCFG_TEST_CASE(30)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase30)
 {
     // Concern: Test TX timestamping functionality for STREAM sockets
 #if defined(BSLS_PLATFORM_OS_LINUX)
@@ -8043,15 +8265,13 @@ NTSCFG_TEST_CASE(30)
             return;
         }
     }
-    ntscfg::TestAllocator ta;
-    {
-        test::executeStreamSocketTest(&test::testStreamSocketTxTimestamps);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+        SocketUtilTest::executeStreamSocketTest(&SocketUtilTest::testStreamSocketTxTimestamps);
+
 #endif
 }
 
-NTSCFG_TEST_CASE(31)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase31)
 {
     // Concern: Test TX timestamping an MSG_ZEROCOPY functionality for
     // DATAGRAM sockets
@@ -8070,16 +8290,13 @@ NTSCFG_TEST_CASE(31)
         }
     }
 
-    ntscfg::TestAllocator ta;
-    {
-        test::executeDatagramSocketTest(
-            &test::testDatagramSocketTxTimestampsAndZeroCopy);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+        SocketUtilTest::executeDatagramSocketTest(
+            &SocketUtilTest::testDatagramSocketTxTimestampsAndZeroCopy);
+
 #endif
 }
 
-NTSCFG_TEST_CASE(32)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase32)
 {
     // Concern: Test TX timestamping an MSG_ZEROCOPY functionality for
     // STREAM sockets
@@ -8096,16 +8313,14 @@ NTSCFG_TEST_CASE(32)
             return;
         }
     }
-    ntscfg::TestAllocator ta;
-    {
-        test::executeStreamSocketTest(
-            &test::testStreamSocketTxTimestampsAndZeroCopy);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+        SocketUtilTest::executeStreamSocketTest(
+            &SocketUtilTest::testStreamSocketTxTimestampsAndZeroCopy);
+
 #endif
 }
 
-NTSCFG_TEST_CASE(33)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase33)
 {
     // Concern: test that for stream sockets configured in a blocking mode
     // attempt to read data from the socket error queue does not lead to a
@@ -8113,15 +8328,11 @@ NTSCFG_TEST_CASE(33)
     // in its receive buffer and call to ::recvmsg can return 0,
     // receiveNotifications does not hang in an endless loop.
 
-    ntscfg::TestAllocator ta;
-    {
-        test::executeStreamSocketTest(
-            &test::testStreamSocketReceiveNotifications);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+        SocketUtilTest::executeStreamSocketTest(
+            &SocketUtilTest::testStreamSocketReceiveNotifications);
 }
 
-NTSCFG_TEST_CASE(34)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase34)
 {
     // Concern: test that for datagram sockets configured in a blocking mode
     // attempt to read data from the socket error queue does not lead to a
@@ -8129,49 +8340,9 @@ NTSCFG_TEST_CASE(34)
     // in its receive buffer and call to ::recvmsg can return 0,
     // receiveNotifications does not hang in an endless loop.
 
-    ntscfg::TestAllocator ta;
-    {
-        test::executeDatagramSocketTest(
-            &test::testDatagramSocketReceiveNotifications);
-    }
-    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+        SocketUtilTest::executeDatagramSocketTest(
+            &SocketUtilTest::testDatagramSocketReceiveNotifications);
 }
 
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-    NTSCFG_TEST_REGISTER(2);
-    NTSCFG_TEST_REGISTER(3);
-    NTSCFG_TEST_REGISTER(4);
-    NTSCFG_TEST_REGISTER(5);
-    NTSCFG_TEST_REGISTER(6);
-    NTSCFG_TEST_REGISTER(7);
-    NTSCFG_TEST_REGISTER(8);
-    NTSCFG_TEST_REGISTER(9);
-    NTSCFG_TEST_REGISTER(10);
-    NTSCFG_TEST_REGISTER(11);
-    NTSCFG_TEST_REGISTER(12);
-    NTSCFG_TEST_REGISTER(13);
-    NTSCFG_TEST_REGISTER(14);
-    NTSCFG_TEST_REGISTER(15);
-    NTSCFG_TEST_REGISTER(16);
-    NTSCFG_TEST_REGISTER(17);
-    NTSCFG_TEST_REGISTER(18);
-    NTSCFG_TEST_REGISTER(19);
-    NTSCFG_TEST_REGISTER(20);
-    NTSCFG_TEST_REGISTER(21);
-    NTSCFG_TEST_REGISTER(22);
-    NTSCFG_TEST_REGISTER(23);
-    NTSCFG_TEST_REGISTER(24);
-    NTSCFG_TEST_REGISTER(25);
-    NTSCFG_TEST_REGISTER(26);
-    NTSCFG_TEST_REGISTER(27);
-    NTSCFG_TEST_REGISTER(28);
-    NTSCFG_TEST_REGISTER(29);
-    NTSCFG_TEST_REGISTER(30);
-    NTSCFG_TEST_REGISTER(31);
-    NTSCFG_TEST_REGISTER(32);
-    NTSCFG_TEST_REGISTER(33);
-    NTSCFG_TEST_REGISTER(34);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsu
+}  // close namespace BloombergLP

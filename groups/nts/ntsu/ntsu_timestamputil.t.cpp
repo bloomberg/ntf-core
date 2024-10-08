@@ -1,4 +1,4 @@
-// Copyright 2023 Bloomberg Finance L.P.
+// Copyright 2020-2023 Bloomberg Finance L.P.
 // SPDX-License-Identifier: Apache-2.0
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,13 +13,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntsu_timestamputil.h>
-
 #include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntsu_timestamputil_t_cpp, "$Id$ $CSID$")
+
+#include <ntsu_timestamputil.h>
 
 using namespace BloombergLP;
 
-NTSCFG_TEST_CASE(1)
+namespace BloombergLP {
+namespace ntsu {
+
+// Provide tests for 'ntsu::TimestampUtil'.
+class TimestampUtilTest
+{
+  public:
+    // TODO
+    static void verify();
+};
+
+NTSCFG_TEST_FUNCTION(ntsu::TimestampUtilTest::verify)
 {
     bsl::string result;
 
@@ -94,8 +108,5 @@ NTSCFG_TEST_CASE(1)
     }
 }
 
-NTSCFG_TEST_DRIVER
-{
-    NTSCFG_TEST_REGISTER(1);
-}
-NTSCFG_TEST_DRIVER_END;
+}  // close namespace ntsu
+}  // close namespace BloombergLP
