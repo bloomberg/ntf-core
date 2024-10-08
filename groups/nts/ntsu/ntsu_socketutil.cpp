@@ -132,6 +132,7 @@ BSLS_IDENT_RCSID(ntsu_socketutil_cpp, "$Id$ $CSID$")
 #include <mswsock.h>
 #include <ws2tcpip.h>
 #include <ws2def.h>
+// clang-format on
 #if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
 // Unix Domain Socket requirements on Windows:
 //
@@ -150,7 +151,6 @@ BSLS_IDENT_RCSID(ntsu_socketutil_cpp, "$Id$ $CSID$")
 // the either the WSASocket function call simply fails or if some other, more
 // drastic negative consequence to the process occurs.
 #endif
-// clang-format on
 #ifdef interface
 #undef interface
 #endif

@@ -32,7 +32,27 @@ BSLS_IDENT_RCSID(ntsscm_version_cpp, "$Id$ $CSID$")
 #endif
 
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
+#ifdef NTDDI_VERSION
+#undef NTDDI_VERSION
+#endif
+#ifdef WINVER
+#undef WINVER
+#endif
+#ifdef _WIN32_WINNT
+#undef _WIN32_WINNT
+#endif
+#define NTDDI_VERSION 0x06000100
+#define WINVER 0x0600
+#define _WIN32_WINNT 0x0600
+#ifndef _WINSOCK_DEPRECATED_NO_WARNINGS
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+// clang-format off
 #include <windows.h>
+// clang-format on
 #pragma warning(disable : 4996)
 #endif
 
