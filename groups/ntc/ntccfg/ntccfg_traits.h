@@ -26,12 +26,10 @@ BSLS_IDENT("$Id: $")
 /// Declare the specified 'TYPE' is bitwise-movable.
 /// @ingroup module_ntccfg
 #define NTCCFG_DECLARE_NESTED_BITWISE_MOVABLE_TRAITS(TYPE)                    \
-    BSLALG_DECLARE_NESTED_TRAITS4(                                            \
+    BSLALG_DECLARE_NESTED_TRAITS2(                                            \
         TYPE,                                                                 \
         bslalg::TypeTraitBitwiseMoveable,                                     \
-        bslalg::TypeTraitBitwiseCopyable,                                     \
-        bslalg::TypeTraitBitwiseEqualityComparable,                           \
-        bslalg::TypeTraitHasTrivialDefaultConstructor)
+        bslalg::TypeTraitBitwiseCopyable)
 
 /// Declare the specified 'TYPE' uses an allocator to supply memory.
 /// @ingroup module_ntccfg

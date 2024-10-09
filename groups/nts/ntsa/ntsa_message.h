@@ -85,10 +85,9 @@ class Message
     /// Return the length of the message.
     bsl::size_t length() const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(Message);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(Message);
 };
 
 /// Provide a  contiguous sequence of buffers of non-modifable, potentially
@@ -168,10 +167,9 @@ class ConstMessage
     /// Return the capacity of the message.
     bsl::size_t capacity() const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(ConstMessage);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(ConstMessage);
 };
 
 /// Provide a contiguous sequence of buffers of modifable, potentially
@@ -250,10 +248,9 @@ class MutableMessage
     /// Return the capacity of the message.
     bsl::size_t capacity() const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(MutableMessage);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(MutableMessage);
 };
 
 NTSCFG_INLINE

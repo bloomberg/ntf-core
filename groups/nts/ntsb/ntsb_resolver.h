@@ -190,6 +190,10 @@ class ResolverOverrides
 
     /// Return the canonical, fully-qualified hostname of the local machine.
     ntsa::Error getHostnameFullyQualified(bsl::string* result) const;
+
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(ResolverOverrides);
 };
 
 /// Provide a blocking resolver implemented by the system.
@@ -390,6 +394,10 @@ class Resolver : public ntsi::Resolver
     /// Return the canonical, fully-qualified hostname of the local machine.
     ntsa::Error getHostnameFullyQualified(bsl::string* result)
         BSLS_KEYWORD_OVERRIDE;
+
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(Resolver);
 };
 
 }  // close package namespace

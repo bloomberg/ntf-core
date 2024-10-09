@@ -120,9 +120,21 @@ class Id
 
     /// Return a new identifier locally unique to the current process.
     static Id generate();
-};
 
-// FREE OPERATORS
+    /// This type's default constructor is equivalent to setting each byte of
+    /// the object's footprint to zero.
+    NTSCFG_TYPE_TRAIT_BITWISE_INITIALIZABLE(Id);
+
+    /// This type's copy-constructor and copy-assignment operator is equivalent
+    /// to copying each byte of the source object's footprint to each
+    /// corresponding byte of the destination object's footprint.
+    NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(Id);
+
+    /// This type's move-constructor and move-assignment operator is equivalent
+    /// to copying each byte of the source object's footprint to each
+    /// corresponding byte of the destination object's footprint.
+    NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(Id);
+};
 
 /// Write the specified 'value' to the specified 'stream' in a
 /// human-readable format. Return a reference to the modifiable 'stream'.

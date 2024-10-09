@@ -214,6 +214,10 @@ class Kqueue : public ntsi::Reactor
     ntsa::Error wait(ntsa::EventSet*                                result,
                      const bdlb::NullableValue<bsls::TimeInterval>& deadline)
         BSLS_KEYWORD_OVERRIDE;
+
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(Kqueue);
 };
 
 Kqueue::Kqueue(const ntsa::ReactorConfig& configuration,

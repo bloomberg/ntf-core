@@ -359,10 +359,9 @@ class AbstractSyntaxEncoderOptions
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(AbstractSyntaxEncoderOptions);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(AbstractSyntaxEncoderOptions);
 };
 
 /// Write the specified 'object' to the specified 'stream'. Return
@@ -879,10 +878,9 @@ class AbstractSyntaxDecoderOptions
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(AbstractSyntaxDecoderOptions);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(AbstractSyntaxDecoderOptions);
 };
 
 /// Write the specified 'object' to the specified 'stream'. Return
@@ -1045,10 +1043,15 @@ class AbstractSyntaxDecoderFrame
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTSCFG_DECLARE_NESTED_BITWISE_MOVABLE_TRAITS(AbstractSyntaxDecoderFrame);
+    /// This type's copy-constructor and copy-assignment operator is equivalent
+    /// to copying each byte of the source object's footprint to each
+    /// corresponding byte of the destination object's footprint.
+    NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(AbstractSyntaxDecoderFrame);
+
+    /// This type's move-constructor and move-assignment operator is equivalent
+    /// to copying each byte of the source object's footprint to each
+    /// corresponding byte of the destination object's footprint.
+    NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(AbstractSyntaxDecoderFrame);
 };
 
 /// Write the specified 'object' to the specified 'stream'. Return
@@ -1615,10 +1618,9 @@ class AbstractObjectIdentifier
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(AbstractObjectIdentifier);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(AbstractObjectIdentifier);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -1774,10 +1776,9 @@ class AbstractValue
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(AbstractValue);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(AbstractValue);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -1930,10 +1931,9 @@ class AbstractString
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(AbstractString);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(AbstractString);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -2090,10 +2090,9 @@ class AbstractByteSequence
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(AbstractByteSequence);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(AbstractByteSequence);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -2270,10 +2269,9 @@ class AbstractBitSequence
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(AbstractBitSequence);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(AbstractBitSequence);
 };
 
 /// Define a type alias for the representation of an abstract octet sequence.
@@ -2652,10 +2650,9 @@ class AbstractIntegerRepresentation
                          AbstractIntegerSign::Value           sign,
                          AbstractIntegerBase::Value           base);
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(AbstractIntegerRepresentation);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(AbstractIntegerRepresentation);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -3302,10 +3299,9 @@ class AbstractIntegerQuantity
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(AbstractIntegerQuantity);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(AbstractIntegerQuantity);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -4037,10 +4033,9 @@ class AbstractInteger
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(AbstractInteger);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(AbstractInteger);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and

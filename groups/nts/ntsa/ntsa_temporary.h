@@ -88,6 +88,10 @@ class TemporaryDirectory
 
     /// Return the path to the directory.
     const bsl::string& path() const;
+
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(TemporaryDirectory);
 };
 
 /// Provide a temporary file.
@@ -161,6 +165,10 @@ class TemporaryFile
 
     // Return the path to the file.
     const bsl::string& path() const;
+
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(TemporaryFile);
 };
 
 }  // close package namespace

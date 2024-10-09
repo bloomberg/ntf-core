@@ -251,10 +251,19 @@ class Error
     /// Return the last error.
     static ntsa::Error last();
 
-    // Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTSCFG_DECLARE_NESTED_BITWISE_MOVABLE_TRAITS(Error);
+    /// This type's default constructor is equivalent to setting each byte of
+    /// the object's footprint to zero.
+    NTSCFG_TYPE_TRAIT_BITWISE_INITIALIZABLE(Error);
+
+    /// This type's copy-constructor and copy-assignment operator is equivalent
+    /// to copying each byte of the source object's footprint to each
+    /// corresponding byte of the destination object's footprint.
+    NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(Error);
+
+    /// This type's move-constructor and move-assignment operator is equivalent
+    /// to copying each byte of the source object's footprint to each
+    /// corresponding byte of the destination object's footprint.
+    NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(Error);
 };
 
 /// Return true if the specified 'lhs' has the same value as the specified

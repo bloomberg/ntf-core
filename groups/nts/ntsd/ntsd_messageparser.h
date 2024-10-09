@@ -82,6 +82,10 @@ class MessageParser
     ntsa::Error parse(ntsd::Message* message,
                       int*           numNeeded,
                       bdlbb::Blob*   readQueue);
+
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(MessageParser);
 };
 
 }  // close package namespace
