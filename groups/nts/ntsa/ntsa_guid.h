@@ -287,9 +287,27 @@ class Guid
 
     /// Return the timestamp component of this GUID object value.
     bsl::uint64_t timestamp() const;
-};
 
-// FREE OPERATORS
+    /// This type's default constructor is equivalent to setting each byte of
+    /// the object's footprint to zero.
+    NTSCFG_TYPE_TRAIT_BITWISE_INITIALIZABLE(Guid);
+
+    /// This type's copy-constructor and copy-assignment operator is equivalent
+    /// to copying each byte of the source object's footprint to each
+    /// corresponding byte of the destination object's footprint.
+    NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(Guid);
+
+    /// This type's move-constructor and move-assignment operator is equivalent
+    /// to copying each byte of the source object's footprint to each
+    /// corresponding byte of the destination object's footprint.
+    NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(Guid);
+
+    /// This type's equality-comparison operator is equivalent to comparing
+    /// each byte of one comparand's footprint to each corresponding byte of
+    /// the other comparand's footprint. Note that this trait implies that an
+    /// object of this type has no padding bytes between data members.
+    NTSCFG_TYPE_TRAIT_BITWISE_COMPARABLE(Guid);
+};
 
 /// Return true if the specified 'lhs' has the same value as the specified
 /// 'rhs', otherwise return false.

@@ -38,7 +38,8 @@ typedef bsl::uint16_t Port;
 /// @ingroup module_ntsa_identity
 struct PortUtil {
     enum {
-        /// The maximum number of digits in a port number.
+        /// The maximum length of the string representation of a port number,
+        /// not including the null terminator.
         MAX_LENGTH = 5
     };
 

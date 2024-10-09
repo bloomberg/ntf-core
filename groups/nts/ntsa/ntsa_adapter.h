@@ -113,6 +113,10 @@ class Adapter
     /// Return the flag that indicates this adapter can be a multicast
     /// recipient.
     bool multicast() const;
+
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(Adapter);
 };
 
 }  // close package namespace

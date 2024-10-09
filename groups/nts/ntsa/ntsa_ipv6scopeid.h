@@ -37,7 +37,11 @@ typedef bsl::uint32_t Ipv6ScopeId;
 ///
 /// @ingroup module_ntsa_identity
 struct Ipv6ScopeIdUtil {
-    enum { MAX_LENGTH = 5 };
+    enum { 
+        /// The maximum length of the string representation of an IPv6 scope 
+        /// ID, not including the null terminator.
+        MAX_LENGTH = 5 
+    };
 
     /// Encode the specified 'scopeId' to the specified 'destination' having
     /// the specified 'capacity'. Return the number of bytes written.

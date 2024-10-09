@@ -262,13 +262,9 @@ class DistinguishedName
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    BSLALG_DECLARE_NESTED_TRAITS(DistinguishedName,
-                                 bslalg::TypeTraitUsesBslmaAllocator);
-
-    // FRIEND OPERATORS
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(DistinguishedName);
 
     /// Format the specified 'rhs' to the specified output 'stream' and
     /// return a reference to the modifiable 'stream'.
@@ -347,13 +343,9 @@ class DistinguishedName::Component
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    BSLALG_DECLARE_NESTED_TRAITS(Component,
-                                 bslalg::TypeTraitUsesBslmaAllocator);
-
-    // FRIEND OPERATORS
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(Component);
 
     /// Format the specified 'rhs' to the specified output 'stream' and
     /// return a reference to the modifiable 'stream'.

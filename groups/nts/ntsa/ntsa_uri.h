@@ -231,10 +231,9 @@ class UriAuthority
     /// The attribute info array, indexed by attribute index.
     static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[4];
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(UriAuthority);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(UriAuthority);
 };
 
 /// Insert a formatted, human-readable description of the the specified
@@ -420,10 +419,9 @@ class UriParameter
     /// The attribute info array, indexed by attribute index.
     static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[2];
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(UriParameter);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(UriParameter);
 };
 
 /// Insert a formatted, human-readable description of the the specified
@@ -609,10 +607,9 @@ class UriQuery
     /// The attribute info array, indexed by attribute index.
     static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[1];
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(UriQuery);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(UriQuery);
 };
 
 /// Insert a formatted, human-readable description of the the specified
@@ -888,10 +885,9 @@ class Uri
     /// The attribute info array, indexed by attribute index.
     static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[5];
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTSCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(Uri);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(Uri);
 };
 
 /// Insert a formatted, human-readable description of the the specified

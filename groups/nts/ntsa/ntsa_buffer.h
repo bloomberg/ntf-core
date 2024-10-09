@@ -149,11 +149,19 @@ class MutableBuffer
                      bsl::size_t                bufferCount,
                      bsl::size_t                offset);
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    BSLALG_DECLARE_NESTED_TRAITS(MutableBuffer,
-                                 bslalg::TypeTraitBitwiseCopyable);
+    /// This type's default constructor is equivalent to setting each byte of
+    /// the object's footprint to zero.
+    NTSCFG_TYPE_TRAIT_BITWISE_INITIALIZABLE(MutableBuffer);
+
+    /// This type's copy-constructor and copy-assignment operator is equivalent
+    /// to copying each byte of the source object's footprint to each
+    /// corresponding byte of the destination object's footprint.
+    NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(MutableBuffer);
+
+    /// This type's move-constructor and move-assignment operator is equivalent
+    /// to copying each byte of the source object's footprint to each
+    /// corresponding byte of the destination object's footprint.
+    NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(MutableBuffer);
 };
 
 /// Return true if the specified 'lhs' has the same value as the specified
@@ -292,11 +300,19 @@ class ConstBuffer
                      bsl::size_t              bufferCount,
                      bsl::size_t              offset);
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    BSLALG_DECLARE_NESTED_TRAITS(ConstBuffer,
-                                 bslalg::TypeTraitBitwiseCopyable);
+    /// This type's default constructor is equivalent to setting each byte of
+    /// the object's footprint to zero.
+    NTSCFG_TYPE_TRAIT_BITWISE_INITIALIZABLE(ConstBuffer);
+
+    /// This type's copy-constructor and copy-assignment operator is equivalent
+    /// to copying each byte of the source object's footprint to each
+    /// corresponding byte of the destination object's footprint.
+    NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(ConstBuffer);
+
+    /// This type's move-constructor and move-assignment operator is equivalent
+    /// to copying each byte of the source object's footprint to each
+    /// corresponding byte of the destination object's footprint.
+    NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(ConstBuffer);
 };
 
 /// Return true if the specified 'lhs' has the same value as the specified
@@ -424,11 +440,9 @@ class ConstBufferArray
                        const bdlbb::Blob&      data,
                        bsl::size_t             maxBytes);
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    BSLALG_DECLARE_NESTED_TRAITS(ConstBufferArray,
-                                 bslalg::TypeTraitUsesBslmaAllocator);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(ConstBufferArray);
 };
 
 /// Provide a held pointer to an array of contiguous pointers to potentially
@@ -506,11 +520,19 @@ class ConstBufferPtrArray
     /// array.
     bsl::size_t numBytes() const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    BSLALG_DECLARE_NESTED_TRAITS(ConstBufferPtrArray,
-                                 bslalg::TypeTraitBitwiseCopyable);
+    /// This type's default constructor is equivalent to setting each byte of
+    /// the object's footprint to zero.
+    NTSCFG_TYPE_TRAIT_BITWISE_INITIALIZABLE(ConstBufferPtrArray);
+
+    /// This type's copy-constructor and copy-assignment operator is equivalent
+    /// to copying each byte of the source object's footprint to each
+    /// corresponding byte of the destination object's footprint.
+    NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(ConstBufferPtrArray);
+
+    /// This type's move-constructor and move-assignment operator is equivalent
+    /// to copying each byte of the source object's footprint to each
+    /// corresponding byte of the destination object's footprint.
+    NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(ConstBufferPtrArray);
 };
 
 /// Provide an array of contiguous pointers to potentially discontiguous,
@@ -626,11 +648,9 @@ class MutableBufferArray
                         bdlbb::Blob*              data,
                         bsl::size_t               maxBytes);
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    BSLALG_DECLARE_NESTED_TRAITS(MutableBufferArray,
-                                 bslalg::TypeTraitUsesBslmaAllocator);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(MutableBufferArray);
 };
 
 /// Provide a held pointer to an array of contiguous pointers to potentially
@@ -709,11 +729,19 @@ class MutableBufferPtrArray
     /// array.
     bsl::size_t numBytes() const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    BSLALG_DECLARE_NESTED_TRAITS(MutableBufferPtrArray,
-                                 bslalg::TypeTraitBitwiseCopyable);
+    /// This type's default constructor is equivalent to setting each byte of
+    /// the object's footprint to zero.
+    NTSCFG_TYPE_TRAIT_BITWISE_INITIALIZABLE(MutableBufferPtrArray);
+
+    /// This type's copy-constructor and copy-assignment operator is equivalent
+    /// to copying each byte of the source object's footprint to each
+    /// corresponding byte of the destination object's footprint.
+    NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(MutableBufferPtrArray);
+
+    /// This type's move-constructor and move-assignment operator is equivalent
+    /// to copying each byte of the source object's footprint to each
+    /// corresponding byte of the destination object's footprint.
+    NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(MutableBufferPtrArray);
 };
 
 /// Provide a sequence of non-modifiable buffers.
@@ -1219,6 +1247,10 @@ class StreamBuffer : public bsl::streambuf
 
     /// Return the number of writable bytes.
     bsl::size_t capacity() const;
+
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(StreamBuffer);
 };
 
 NTSCFG_INLINE
