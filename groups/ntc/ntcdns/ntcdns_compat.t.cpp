@@ -16,26 +16,26 @@
 #include <ntscfg_test.h>
 
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntcd_blobbufferfactory_t_cpp, "$Id$ $CSID$")
+BSLS_IDENT_RCSID(ntcdns_compat_t_cpp, "$Id$ $CSID$")
 
-#include <ntcd_blobbufferfactory.h>
+#include <ntcdns_compat.h>
 
 using namespace BloombergLP;
 
 namespace BloombergLP {
-namespace ntcd {
+namespace ntcdns {
 
-// Provide tests for 'ntcd::BlobBufferFactory'.
-class BlobBufferFactoryTest
+// Provide tests for 'ntcdns::Compat'.
+class CompatTest
 {
   public:
     // TODO
     static void verify();
 };
 
-NTSCFG_TEST_FUNCTION(ntcd::BlobBufferFactoryTest::verify)
+NTSCFG_TEST_FUNCTION(ntcdns::CompatTest::verify)
 {
 }
 
-}  // close namespace ntcd
+}  // close namespace ntcdns
 }  // close namespace BloombergLP

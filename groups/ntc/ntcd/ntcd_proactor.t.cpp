@@ -13,35 +13,50 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntcd_proactor_t_cpp, "$Id$ $CSID$")
+
 #include <ntcd_proactor.h>
 
-#include <ntccfg_test.h>
-
-#include <ntccfg_bind.h>
 #include <ntcd_simulation.h>
 #include <ntci_log.h>
 #include <ntsf_system.h>
-#include <bdlb_guid.h>
-#include <bdlb_guidutil.h>
-#include <bdlbb_blob.h>
-#include <bdlbb_blobutil.h>
-#include <bdlbb_pooledblobbufferfactory.h>
-#include <bdlf_bind.h>
-#include <bdlf_memfn.h>
-#include <bdlf_placeholder.h>
-#include <bslmt_barrier.h>
-#include <bslmt_latch.h>
-#include <bslmt_semaphore.h>
-#include <bslmt_threadgroup.h>
-#include <bslmt_threadutil.h>
-#include <bsls_stopwatch.h>
-#include <bsls_timeinterval.h>
-#include <bsl_functional.h>
-#include <bsl_iostream.h>
-#include <bsl_list.h>
-#include <bsl_unordered_map.h>
-#include <bsl_unordered_set.h>
-#include <bsl_vector.h>
+
+using namespace BloombergLP;
+
+namespace BloombergLP {
+namespace ntcd {
+
+// Provide tests for 'ntcd::Proactor'.
+class ProactorTest
+{
+    // Provide an implementation of the 'ntci::StreamSocket' protocol for use
+    // by this test driver.
+    class ProactorStreamSocket;
+
+    // Provide an implementation of the 'ntci::ListenerSocket' protocol for use
+    // by this test driver.
+    class ProactorListenerSocket;
+
+    /// Provide an implementation of the 'ntci::TimerSession'
+    /// protocol for use by this test driver.
+    class TimerSession;
+
+    // Arrive at the specified 'latch'.
+    static void processFunction(bslmt::Latch* latch);
+
+  public:
+    // TODO
+    static void verifyCase1();
+
+    // TODO
+    static void verifyCase2();
+
+    // TODO
+    static void verifyCase3();
+};
 
 // Uncomment to enable testing of shutting down writes.
 #define NTCD_PROACTOR_TEST_SHUTDOWN_WRITE 1
@@ -54,18 +69,11 @@
 // test cannot pass without some sort of emulation of the desired behavior.
 #define NTCD_PROACTOR_TEST_SHUTDOWN_READ 0
 
-using namespace BloombergLP;
-
-namespace test {
-namespace case1 {
-
-class ProactorStreamSocket;
-class ProactorListenerSocket;
-
 /// Provide an implementation of a proactor socket for use by
 /// this test driver.
-class ProactorStreamSocket : public ntci::ProactorSocket,
-                             public ntccfg::Shared<ProactorStreamSocket>
+class ProactorTest::ProactorStreamSocket
+: public ntci::ProactorSocket,
+  public ntccfg::Shared<ProactorStreamSocket>
 {
   public:
     /// Define a type alias for a function invoked when the
@@ -300,14 +308,14 @@ class ProactorStreamSocket : public ntci::ProactorSocket,
     ntsa::Error lastError() const;
 };
 
-void ProactorStreamSocket::processSocketAccepted(
+void ProactorTest::ProactorStreamSocket::processSocketAccepted(
     const ntsa::Error&                         asyncError,
     const bsl::shared_ptr<ntsi::StreamSocket>& streamSocket)
 {
-    NTCCFG_TEST_TRUE(false);
+    NTSCFG_TEST_TRUE(false);
 }
 
-void ProactorStreamSocket::processSocketConnected(
+void ProactorTest::ProactorStreamSocket::processSocketConnected(
     const ntsa::Error& asyncError)
 {
     if (asyncError) {
@@ -315,13 +323,13 @@ void ProactorStreamSocket::processSocketConnected(
             return;
         }
 
-        NTCCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor "
+        NTSCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor "
                               << d_handle << " at " << d_sourceEndpoint
                               << " failed to connect: " << asyncError
-                              << NTCCFG_TEST_LOG_END;
+                              << NTSCFG_TEST_LOG_END;
 
         if (d_abortOnErrorFlag) {
-            NTCCFG_TEST_EQ(asyncError, ntsa::Error::e_OK);
+            NTSCFG_TEST_EQ(asyncError, ntsa::Error::e_OK);
         }
 
         d_lastError = asyncError;
@@ -335,22 +343,22 @@ void ProactorStreamSocket::processSocketConnected(
         return;
     }
 
-    NTCCFG_TEST_FALSE(asyncError);
+    NTSCFG_TEST_FALSE(asyncError);
 
     ntsa::Error error;
 
     ntsa::Endpoint sourceEndpoint;
     error = d_streamSocket_sp->sourceEndpoint(&sourceEndpoint);
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
     ntsa::Endpoint remoteEndpoint;
     error = d_streamSocket_sp->remoteEndpoint(&remoteEndpoint);
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
-    NTCCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor " << d_handle
+    NTSCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor " << d_handle
                           << " at " << sourceEndpoint << " to "
                           << remoteEndpoint << " connected"
-                          << NTCCFG_TEST_LOG_END;
+                          << NTSCFG_TEST_LOG_END;
 
     d_sourceEndpoint = sourceEndpoint;
     d_remoteEndpoint = remoteEndpoint;
@@ -362,7 +370,7 @@ void ProactorStreamSocket::processSocketConnected(
     }
 }
 
-void ProactorStreamSocket::processSocketReceived(
+void ProactorTest::ProactorStreamSocket::processSocketReceived(
     const ntsa::Error&          asyncError,
     const ntsa::ReceiveContext& context)
 {
@@ -372,10 +380,10 @@ void ProactorStreamSocket::processSocketReceived(
         }
 
         if (asyncError == ntsa::Error(ntsa::Error::e_EOF)) {
-            NTCCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor "
+            NTSCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor "
                                   << d_handle << " at " << d_sourceEndpoint
                                   << " to " << d_remoteEndpoint << " shutdown"
-                                  << NTCCFG_TEST_LOG_END;
+                                  << NTSCFG_TEST_LOG_END;
 
             d_shutdownSemaphore.post();
 
@@ -384,13 +392,13 @@ void ProactorStreamSocket::processSocketReceived(
             }
         }
         else {
-            NTCCFG_TEST_LOG_DEBUG
+            NTSCFG_TEST_LOG_DEBUG
                 << "Proactor stream socket descriptor " << d_handle << " at "
                 << d_sourceEndpoint << " to " << d_remoteEndpoint
-                << " failed to receive: " << asyncError << NTCCFG_TEST_LOG_END;
+                << " failed to receive: " << asyncError << NTSCFG_TEST_LOG_END;
 
             if (d_abortOnErrorFlag) {
-                NTCCFG_TEST_EQ(asyncError, ntsa::Error::e_OK);
+                NTSCFG_TEST_EQ(asyncError, ntsa::Error::e_OK);
             }
 
             d_lastError = asyncError;
@@ -405,26 +413,26 @@ void ProactorStreamSocket::processSocketReceived(
         return;
     }
 
-    NTCCFG_TEST_FALSE(asyncError);
+    NTSCFG_TEST_FALSE(asyncError);
 
-    NTCCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor " << d_handle
+    NTSCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor " << d_handle
                           << " at " << d_sourceEndpoint << " to "
                           << d_remoteEndpoint << " received "
                           << context.bytesReceived() << "/"
                           << context.bytesReceivable()
                           << (context.bytesReceivable() == 1 ? " byte"
                                                              : " bytes")
-                          << NTCCFG_TEST_LOG_END;
+                          << NTSCFG_TEST_LOG_END;
 
-    NTCCFG_TEST_TRUE(d_receiveData_sp);
+    NTSCFG_TEST_TRUE(d_receiveData_sp);
     bsl::shared_ptr<bdlbb::Blob> data = d_receiveData_sp;
     d_receiveData_sp.reset();
 
     if (context.bytesReceived() == 0) {
-        NTCCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor "
+        NTSCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor "
                               << d_handle << " at " << d_sourceEndpoint
                               << " to " << d_remoteEndpoint << " shutdown"
-                              << NTCCFG_TEST_LOG_END;
+                              << NTSCFG_TEST_LOG_END;
 
         d_shutdownSemaphore.post();
 
@@ -441,21 +449,22 @@ void ProactorStreamSocket::processSocketReceived(
     }
 }
 
-void ProactorStreamSocket::processSocketSent(const ntsa::Error& asyncError,
-                                             const ntsa::SendContext& context)
+void ProactorTest::ProactorStreamSocket::processSocketSent(
+    const ntsa::Error&       asyncError,
+    const ntsa::SendContext& context)
 {
     if (asyncError) {
         if (asyncError == ntsa::Error::e_CANCELLED) {
             return;
         }
 
-        NTCCFG_TEST_LOG_DEBUG
+        NTSCFG_TEST_LOG_DEBUG
             << "Proactor stream socket descriptor " << d_handle << " at "
             << d_sourceEndpoint << " to " << d_remoteEndpoint
-            << " failed to send: " << asyncError << NTCCFG_TEST_LOG_END;
+            << " failed to send: " << asyncError << NTSCFG_TEST_LOG_END;
 
         if (d_abortOnErrorFlag) {
-            NTCCFG_TEST_EQ(asyncError, ntsa::Error::e_OK);
+            NTSCFG_TEST_EQ(asyncError, ntsa::Error::e_OK);
         }
 
         d_lastError = asyncError;
@@ -469,18 +478,18 @@ void ProactorStreamSocket::processSocketSent(const ntsa::Error& asyncError,
         return;
     }
 
-    NTCCFG_TEST_FALSE(asyncError);
+    NTSCFG_TEST_FALSE(asyncError);
 
-    NTCCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor " << d_handle
+    NTSCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor " << d_handle
                           << " at " << d_sourceEndpoint << " to "
                           << d_remoteEndpoint << " sent "
                           << context.bytesSent() << "/"
                           << context.bytesSendable()
                           << (context.bytesSendable() == 1 ? " byte"
                                                            : " bytes")
-                          << NTCCFG_TEST_LOG_END;
+                          << NTSCFG_TEST_LOG_END;
 
-    NTCCFG_TEST_TRUE(d_sendData_sp);
+    NTSCFG_TEST_TRUE(d_sendData_sp);
     bsl::shared_ptr<bdlbb::Blob> data = d_sendData_sp;
     d_sendData_sp.reset();
 
@@ -491,15 +500,16 @@ void ProactorStreamSocket::processSocketSent(const ntsa::Error& asyncError,
     }
 }
 
-void ProactorStreamSocket::processSocketError(const ntsa::Error& error)
+void ProactorTest::ProactorStreamSocket::processSocketError(
+    const ntsa::Error& error)
 {
-    NTCCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor " << d_handle
+    NTSCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor " << d_handle
                           << " at " << d_sourceEndpoint << " to "
                           << d_remoteEndpoint << " error: " << error
-                          << NTCCFG_TEST_LOG_END;
+                          << NTSCFG_TEST_LOG_END;
 
     if (d_abortOnErrorFlag) {
-        NTCCFG_TEST_EQ(error, ntsa::Error::e_OK);
+        NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
     }
 
     d_lastError = error;
@@ -511,47 +521,48 @@ void ProactorStreamSocket::processSocketError(const ntsa::Error& error)
     }
 }
 
-void ProactorStreamSocket::processSocketDetached()
+void ProactorTest::ProactorStreamSocket::processSocketDetached()
 {
     d_detachSemaphore.post();
 }
 
-void ProactorStreamSocket::close()
+void ProactorTest::ProactorStreamSocket::close()
 {
     d_streamSocket_sp->close();
 }
 
-bool ProactorStreamSocket::isStream() const
+bool ProactorTest::ProactorStreamSocket::isStream() const
 {
     return true;
 }
 
-bool ProactorStreamSocket::isDatagram() const
+bool ProactorTest::ProactorStreamSocket::isDatagram() const
 {
     return false;
 }
 
-bool ProactorStreamSocket::isListener() const
+bool ProactorTest::ProactorStreamSocket::isListener() const
 {
     return false;
 }
 
-ntsa::Transport::Value ProactorStreamSocket::transport() const
+ntsa::Transport::Value ProactorTest::ProactorStreamSocket::transport() const
 {
     return ntsa::Transport::e_TCP_IPV4_STREAM;
 }
 
-const bsl::shared_ptr<ntci::Strand>& ProactorStreamSocket::strand() const
+const bsl::shared_ptr<ntci::Strand>& ProactorTest::ProactorStreamSocket::
+    strand() const
 {
     return d_strand_sp;
 }
 
-ntsa::Handle ProactorStreamSocket::handle() const
+ntsa::Handle ProactorTest::ProactorStreamSocket::handle() const
 {
     return d_handle;
 }
 
-ProactorStreamSocket::ProactorStreamSocket(
+ProactorTest::ProactorStreamSocket::ProactorStreamSocket(
     const bsl::shared_ptr<ntcd::Simulation>& simulation,
     const bsl::shared_ptr<ntci::Proactor>&   proactor,
     bslma::Allocator*                        basicAllocator)
@@ -584,33 +595,33 @@ ProactorStreamSocket::ProactorStreamSocket(
     d_streamSocket_sp = d_simulation_sp->createStreamSocket(d_allocator_p);
 
     error = d_streamSocket_sp->open(ntsa::Transport::e_TCP_IPV4_STREAM);
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
     d_handle = d_streamSocket_sp->handle();
 
     error = d_streamSocket_sp->setBlocking(false);
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
     error =
         d_streamSocket_sp->bind(ntsa::Endpoint(ntsa::IpEndpoint(
                                     ntsa::IpEndpoint::loopbackIpv4Address(),
                                     ntsa::IpEndpoint::anyPort())),
                                 true);
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
     error = d_streamSocket_sp->sourceEndpoint(&d_sourceEndpoint);
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
     if (d_proactor_sp->maxThreads() > 1) {
         d_strand_sp = d_proactor_sp->createStrand();
     }
 
-    NTCCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor " << d_handle
+    NTSCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor " << d_handle
                           << " at " << d_sourceEndpoint << " created"
-                          << NTCCFG_TEST_LOG_END;
+                          << NTSCFG_TEST_LOG_END;
 }
 
-ProactorStreamSocket::ProactorStreamSocket(
+ProactorTest::ProactorStreamSocket::ProactorStreamSocket(
     const bsl::shared_ptr<ntcd::Simulation>&   simulation,
     const bsl::shared_ptr<ntci::Proactor>&     proactor,
     const bsl::shared_ptr<ntcd::StreamSocket>& streamSocket,
@@ -644,63 +655,68 @@ ProactorStreamSocket::ProactorStreamSocket(
     d_handle = d_streamSocket_sp->handle();
 
     error = d_streamSocket_sp->setBlocking(false);
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
     error = d_streamSocket_sp->sourceEndpoint(&d_sourceEndpoint);
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
     error = d_streamSocket_sp->remoteEndpoint(&d_remoteEndpoint);
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
     if (d_proactor_sp->maxThreads() > 1) {
         d_strand_sp = d_proactor_sp->createStrand();
     }
 
-    NTCCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor " << d_handle
+    NTSCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor " << d_handle
                           << " at " << d_sourceEndpoint << " to "
                           << d_remoteEndpoint << " created"
-                          << NTCCFG_TEST_LOG_END;
+                          << NTSCFG_TEST_LOG_END;
 }
 
-ProactorStreamSocket::~ProactorStreamSocket()
+ProactorTest::ProactorStreamSocket::~ProactorStreamSocket()
 {
     d_streamSocket_sp.reset();
     d_proactor_sp.reset();
     d_simulation_sp.reset();
 
-    NTCCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor " << d_handle
+    NTSCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor " << d_handle
                           << " at " << d_sourceEndpoint << " to "
                           << d_remoteEndpoint << " destroyed"
-                          << NTCCFG_TEST_LOG_END;
+                          << NTSCFG_TEST_LOG_END;
 }
 
-void ProactorStreamSocket::setConnectCallback(const ConnectCallback& callback)
+void ProactorTest::ProactorStreamSocket::setConnectCallback(
+    const ConnectCallback& callback)
 {
     d_connectCallback = callback;
 }
 
-void ProactorStreamSocket::setSendCallback(const SendCallback& callback)
+void ProactorTest::ProactorStreamSocket::setSendCallback(
+    const SendCallback& callback)
 {
     d_sendCallback = callback;
 }
 
-void ProactorStreamSocket::setReceiveCallback(const ReceiveCallback& callback)
+void ProactorTest::ProactorStreamSocket::setReceiveCallback(
+    const ReceiveCallback& callback)
 {
     d_receiveCallback = callback;
 }
 
-void ProactorStreamSocket::setShutdownCallback(
+void ProactorTest::ProactorStreamSocket::setShutdownCallback(
     const ShutdownCallback& callback)
 {
     d_shutdownCallback = callback;
 }
 
-void ProactorStreamSocket::setErrorCallback(const ErrorCallback& callback)
+void ProactorTest::ProactorStreamSocket::setErrorCallback(
+    const ErrorCallback& callback)
 {
     d_errorCallback = callback;
 }
 
-ntsa::Error ProactorStreamSocket::bind(const ntsa::Endpoint& sourceEndpoint)
+ntsa::Error ProactorTest::ProactorStreamSocket::bind(
+    const ntsa::Endpoint& sourceEndpoint)
 {
     ntsa::Error error;
 
@@ -710,159 +726,162 @@ ntsa::Error ProactorStreamSocket::bind(const ntsa::Endpoint& sourceEndpoint)
     }
 
     error = d_streamSocket_sp->sourceEndpoint(&d_sourceEndpoint);
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
-    NTCCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor " << d_handle
+    NTSCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor " << d_handle
                           << " at " << d_sourceEndpoint << " is bound"
-                          << NTCCFG_TEST_LOG_END;
+                          << NTSCFG_TEST_LOG_END;
 
     return ntsa::Error();
 }
 
-ntsa::Error ProactorStreamSocket::connect(const ntsa::Endpoint& remoteEndpoint)
+ntsa::Error ProactorTest::ProactorStreamSocket::connect(
+    const ntsa::Endpoint& remoteEndpoint)
 {
     d_remoteEndpoint = remoteEndpoint;
 
-    NTCCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor " << d_handle
+    NTSCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor " << d_handle
                           << " at " << d_sourceEndpoint << " to "
                           << d_remoteEndpoint << " is connecting"
-                          << NTCCFG_TEST_LOG_END;
+                          << NTSCFG_TEST_LOG_END;
 
     bsl::shared_ptr<ProactorStreamSocket> self = this->getSelf(this);
 
     return d_proactor_sp->connect(self, remoteEndpoint);
 }
 
-ntsa::Error ProactorStreamSocket::send(
+ntsa::Error ProactorTest::ProactorStreamSocket::send(
     const bsl::shared_ptr<bdlbb::Blob>& data)
 {
-    NTCCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor " << d_handle
+    NTSCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor " << d_handle
                           << " at " << d_sourceEndpoint << " to "
                           << d_remoteEndpoint << " sending up to "
                           << data->length()
                           << (data->length() == 1 ? " byte" : " bytes")
-                          << NTCCFG_TEST_LOG_END;
+                          << NTSCFG_TEST_LOG_END;
 
     bsl::shared_ptr<ProactorStreamSocket> self = this->getSelf(this);
 
-    NTCCFG_TEST_FALSE(d_sendData_sp);
+    NTSCFG_TEST_FALSE(d_sendData_sp);
     d_sendData_sp = data;
 
     return d_proactor_sp->send(self, *data, ntsa::SendOptions());
 }
 
-ntsa::Error ProactorStreamSocket::receive(
+ntsa::Error ProactorTest::ProactorStreamSocket::receive(
     const bsl::shared_ptr<bdlbb::Blob>& data)
 {
-    NTCCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor " << d_handle
+    NTSCFG_TEST_LOG_DEBUG << "Proactor stream socket descriptor " << d_handle
                           << " at " << d_sourceEndpoint << " to "
                           << d_remoteEndpoint << " receiving up to "
                           << data->totalSize() - data->length()
                           << (data->totalSize() - data->length() == 1
                                   ? " byte"
                                   : " bytes")
-                          << NTCCFG_TEST_LOG_END;
+                          << NTSCFG_TEST_LOG_END;
 
     bsl::shared_ptr<ProactorStreamSocket> self = this->getSelf(this);
 
-    NTCCFG_TEST_FALSE(d_receiveData_sp);
+    NTSCFG_TEST_FALSE(d_receiveData_sp);
     d_receiveData_sp = data;
 
     return d_proactor_sp->receive(self, data.get(), ntsa::ReceiveOptions());
 }
 
-ntsa::Error ProactorStreamSocket::shutdown(ntsa::ShutdownType::Value direction)
+ntsa::Error ProactorTest::ProactorStreamSocket::shutdown(
+    ntsa::ShutdownType::Value direction)
 {
     bsl::shared_ptr<ProactorStreamSocket> self = this->getSelf(this);
 
     return d_proactor_sp->shutdown(self, direction);
 }
 
-void ProactorStreamSocket::abortOnError(bool value)
+void ProactorTest::ProactorStreamSocket::abortOnError(bool value)
 {
     d_abortOnErrorFlag = value;
 }
 
-void ProactorStreamSocket::waitForConnected()
+void ProactorTest::ProactorStreamSocket::waitForConnected()
 {
     d_connectSemaphore.wait();
 }
 
-void ProactorStreamSocket::waitForSent()
+void ProactorTest::ProactorStreamSocket::waitForSent()
 {
     d_sendSemaphore.wait();
 }
 
-void ProactorStreamSocket::waitForReceived()
+void ProactorTest::ProactorStreamSocket::waitForReceived()
 {
     d_receiveSemaphore.wait();
 }
 
-void ProactorStreamSocket::waitForShutdown()
+void ProactorTest::ProactorStreamSocket::waitForShutdown()
 {
     d_shutdownSemaphore.wait();
 }
 
-void ProactorStreamSocket::waitForError()
+void ProactorTest::ProactorStreamSocket::waitForError()
 {
     d_errorSemaphore.wait();
 }
 
-bool ProactorStreamSocket::pollForConnected()
+bool ProactorTest::ProactorStreamSocket::pollForConnected()
 {
     return d_connectSemaphore.tryWait() == 0;
 }
 
-bool ProactorStreamSocket::pollForSent()
+bool ProactorTest::ProactorStreamSocket::pollForSent()
 {
     return d_sendSemaphore.tryWait() == 0;
 }
 
-bool ProactorStreamSocket::pollForReceived()
+bool ProactorTest::ProactorStreamSocket::pollForReceived()
 {
     return d_receiveSemaphore.tryWait() == 0;
 }
 
-bool ProactorStreamSocket::pollForShutdown()
+bool ProactorTest::ProactorStreamSocket::pollForShutdown()
 {
     return d_shutdownSemaphore.tryWait() == 0;
 }
 
-bool ProactorStreamSocket::pollForError()
+bool ProactorTest::ProactorStreamSocket::pollForError()
 {
     return d_errorSemaphore.tryWait() == 0;
 }
 
-bool ProactorStreamSocket::pollForDetachment()
+bool ProactorTest::ProactorStreamSocket::pollForDetachment()
 {
     return d_detachSemaphore.tryWait() == 0;
 }
 
-ntsa::Endpoint ProactorStreamSocket::sourceEndpoint() const
+ntsa::Endpoint ProactorTest::ProactorStreamSocket::sourceEndpoint() const
 {
     return d_sourceEndpoint;
 }
 
-ntsa::Endpoint ProactorStreamSocket::remoteEndpoint() const
+ntsa::Endpoint ProactorTest::ProactorStreamSocket::remoteEndpoint() const
 {
     return d_remoteEndpoint;
 }
 
-ntsa::Error ProactorStreamSocket::lastError() const
+ntsa::Error ProactorTest::ProactorStreamSocket::lastError() const
 {
     return d_lastError;
 }
 
 /// Provide an implementation of a proactor listener socket for
 /// use by this test driver. This class is thread safe.
-class ProactorListenerSocket : public ntci::ProactorSocket,
-                               public ntccfg::Shared<ProactorListenerSocket>
+class ProactorTest::ProactorListenerSocket
+: public ntci::ProactorSocket,
+  public ntccfg::Shared<ProactorListenerSocket>
 {
   public:
     /// Define a type alias for a function invoked when the
     /// socket has accepted a connection from a peer.
     typedef NTCCFG_FUNCTION(
-        const bsl::shared_ptr<test::case1::ProactorStreamSocket>&
+        const bsl::shared_ptr<ProactorTest::ProactorStreamSocket>&
             acceptedSocket) AcceptCallback;
 
     /// Define a type alias for a function invoked when the
@@ -871,7 +890,7 @@ class ProactorListenerSocket : public ntci::ProactorSocket,
 
   private:
     /// Define a type alias for a queue of accepted sockets.
-    typedef bsl::list<bsl::shared_ptr<test::case1::ProactorStreamSocket> >
+    typedef bsl::list<bsl::shared_ptr<ProactorTest::ProactorStreamSocket> >
         AcceptQueue;
 
     bsl::shared_ptr<ntcd::Simulation>     d_simulation_sp;
@@ -987,7 +1006,7 @@ class ProactorListenerSocket : public ntci::ProactorSocket,
     ntsa::Error accept();
 
     /// Pop and return the next available accepted socket.
-    bsl::shared_ptr<test::case1::ProactorStreamSocket> accepted();
+    bsl::shared_ptr<ProactorTest::ProactorStreamSocket> accepted();
 
     /// Fail the test if the socket encounters and error according to the
     /// specified 'value'.
@@ -1019,7 +1038,7 @@ class ProactorListenerSocket : public ntci::ProactorSocket,
     ntsa::Error lastError() const;
 };
 
-void ProactorListenerSocket::processSocketAccepted(
+void ProactorTest::ProactorListenerSocket::processSocketAccepted(
     const ntsa::Error&                         asyncError,
     const bsl::shared_ptr<ntsi::StreamSocket>& streamSocket)
 {
@@ -1028,13 +1047,13 @@ void ProactorListenerSocket::processSocketAccepted(
             return;
         }
 
-        NTCCFG_TEST_LOG_DEBUG << "Proactor socket descriptor " << d_handle
+        NTSCFG_TEST_LOG_DEBUG << "Proactor socket descriptor " << d_handle
                               << " at " << d_sourceEndpoint
                               << " failed to accept: " << asyncError
-                              << NTCCFG_TEST_LOG_END;
+                              << NTSCFG_TEST_LOG_END;
 
         if (d_abortOnErrorFlag) {
-            NTCCFG_TEST_EQ(asyncError, ntsa::Error::e_OK);
+            NTSCFG_TEST_EQ(asyncError, ntsa::Error::e_OK);
         }
 
         d_lastError = asyncError;
@@ -1048,31 +1067,31 @@ void ProactorListenerSocket::processSocketAccepted(
         return;
     }
 
-    NTCCFG_TEST_FALSE(asyncError);
+    NTSCFG_TEST_FALSE(asyncError);
 
     ntsa::Error error;
 
     error = streamSocket->setBlocking(false);
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
     ntsa::Endpoint sourceEndpoint;
     error = streamSocket->sourceEndpoint(&sourceEndpoint);
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
     ntsa::Endpoint remoteEndpoint;
     error = streamSocket->remoteEndpoint(&remoteEndpoint);
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
-    NTCCFG_TEST_LOG_DEBUG << "Proactor listener socket descriptor " << d_handle
+    NTSCFG_TEST_LOG_DEBUG << "Proactor listener socket descriptor " << d_handle
                           << " at " << d_sourceEndpoint
                           << " accepted proactor stream socket descriptor "
                           << streamSocket->handle() << " at " << sourceEndpoint
-                          << " to " << remoteEndpoint << NTCCFG_TEST_LOG_END;
+                          << " to " << remoteEndpoint << NTSCFG_TEST_LOG_END;
 
     bsl::shared_ptr<ntcd::StreamSocket> serverSocket;
     bslstl::SharedPtrUtil::dynamicCast(&serverSocket, streamSocket);
 
-    bsl::shared_ptr<test::case1::ProactorStreamSocket> proactorSocket;
+    bsl::shared_ptr<ProactorTest::ProactorStreamSocket> proactorSocket;
     proactorSocket.createInplace(d_allocator_p,
                                  d_simulation_sp,
                                  d_proactor_sp,
@@ -1088,34 +1107,35 @@ void ProactorListenerSocket::processSocketAccepted(
     }
 }
 
-void ProactorListenerSocket::processSocketConnected(
+void ProactorTest::ProactorListenerSocket::processSocketConnected(
     const ntsa::Error& asyncError)
 {
-    NTCCFG_TEST_TRUE(false);
+    NTSCFG_TEST_TRUE(false);
 }
 
-void ProactorListenerSocket::processSocketReceived(
+void ProactorTest::ProactorTest::ProactorListenerSocket::processSocketReceived(
     const ntsa::Error&          asyncError,
     const ntsa::ReceiveContext& context)
 {
-    NTCCFG_TEST_TRUE(false);
+    NTSCFG_TEST_TRUE(false);
 }
 
-void ProactorListenerSocket::processSocketSent(
+void ProactorTest::ProactorListenerSocket::processSocketSent(
     const ntsa::Error&       asyncError,
     const ntsa::SendContext& context)
 {
-    NTCCFG_TEST_TRUE(false);
+    NTSCFG_TEST_TRUE(false);
 }
 
-void ProactorListenerSocket::processSocketError(const ntsa::Error& error)
+void ProactorTest::ProactorListenerSocket::processSocketError(
+    const ntsa::Error& error)
 {
-    NTCCFG_TEST_LOG_DEBUG << "Proactor listener socket descriptor " << d_handle
+    NTSCFG_TEST_LOG_DEBUG << "Proactor listener socket descriptor " << d_handle
                           << " at " << d_sourceEndpoint << " error: " << error
-                          << NTCCFG_TEST_LOG_END;
+                          << NTSCFG_TEST_LOG_END;
 
     if (d_abortOnErrorFlag) {
-        NTCCFG_TEST_EQ(error, ntsa::Error::e_OK);
+        NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
     }
 
     d_lastError = error;
@@ -1127,47 +1147,48 @@ void ProactorListenerSocket::processSocketError(const ntsa::Error& error)
     }
 }
 
-void ProactorListenerSocket::processSocketDetached()
+void ProactorTest::ProactorListenerSocket::processSocketDetached()
 {
     d_detachmentSemaphore.post();
 }
 
-void ProactorListenerSocket::close()
+void ProactorTest::ProactorListenerSocket::close()
 {
     d_listenerSocket_sp->close();
 }
 
-bool ProactorListenerSocket::isStream() const
+bool ProactorTest::ProactorListenerSocket::isStream() const
 {
     return true;
 }
 
-bool ProactorListenerSocket::isDatagram() const
+bool ProactorTest::ProactorListenerSocket::isDatagram() const
 {
     return false;
 }
 
-bool ProactorListenerSocket::isListener() const
+bool ProactorTest::ProactorListenerSocket::isListener() const
 {
     return true;
 }
 
-ntsa::Transport::Value ProactorListenerSocket::transport() const
+ntsa::Transport::Value ProactorTest::ProactorListenerSocket::transport() const
 {
     return ntsa::Transport::e_TCP_IPV4_STREAM;
 }
 
-const bsl::shared_ptr<ntci::Strand>& ProactorListenerSocket::strand() const
+const bsl::shared_ptr<ntci::Strand>& ProactorTest::ProactorListenerSocket::
+    strand() const
 {
     return d_strand_sp;
 }
 
-ntsa::Handle ProactorListenerSocket::handle() const
+ntsa::Handle ProactorTest::ProactorListenerSocket::handle() const
 {
     return d_handle;
 }
 
-ProactorListenerSocket::ProactorListenerSocket(
+ProactorTest::ProactorListenerSocket::ProactorListenerSocket(
     const bsl::shared_ptr<ntcd::Simulation>& simulation,
     const bsl::shared_ptr<ntci::Proactor>&   proactor,
     bslma::Allocator*                        basicAllocator)
@@ -1192,33 +1213,33 @@ ProactorListenerSocket::ProactorListenerSocket(
     d_listenerSocket_sp = d_simulation_sp->createListenerSocket(d_allocator_p);
 
     error = d_listenerSocket_sp->open(ntsa::Transport::e_TCP_IPV4_STREAM);
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
     d_handle = d_listenerSocket_sp->handle();
 
     error = d_listenerSocket_sp->setBlocking(false);
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
     error =
         d_listenerSocket_sp->bind(ntsa::Endpoint(ntsa::IpEndpoint(
                                       ntsa::IpEndpoint::loopbackIpv4Address(),
                                       ntsa::IpEndpoint::anyPort())),
                                   false);
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
     error = d_listenerSocket_sp->sourceEndpoint(&d_sourceEndpoint);
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
     if (d_proactor_sp->maxThreads() > 1) {
         d_strand_sp = d_proactor_sp->createStrand();
     }
 
-    NTCCFG_TEST_LOG_DEBUG << "Proactor listener socket descriptor " << d_handle
+    NTSCFG_TEST_LOG_DEBUG << "Proactor listener socket descriptor " << d_handle
                           << " at " << d_sourceEndpoint << " created"
-                          << NTCCFG_TEST_LOG_END;
+                          << NTSCFG_TEST_LOG_END;
 }
 
-ProactorListenerSocket::~ProactorListenerSocket()
+ProactorTest::ProactorListenerSocket::~ProactorListenerSocket()
 {
     d_acceptQueue.clear();
 
@@ -1226,22 +1247,25 @@ ProactorListenerSocket::~ProactorListenerSocket()
     d_proactor_sp.reset();
     d_simulation_sp.reset();
 
-    NTCCFG_TEST_LOG_DEBUG << "Proactor listener socket descriptor " << d_handle
+    NTSCFG_TEST_LOG_DEBUG << "Proactor listener socket descriptor " << d_handle
                           << " at " << d_sourceEndpoint << " destroyed"
-                          << NTCCFG_TEST_LOG_END;
+                          << NTSCFG_TEST_LOG_END;
 }
 
-void ProactorListenerSocket::setAcceptCallback(const AcceptCallback& callback)
+void ProactorTest::ProactorListenerSocket::setAcceptCallback(
+    const AcceptCallback& callback)
 {
     d_acceptCallback = callback;
 }
 
-void ProactorListenerSocket::setErrorCallback(const ErrorCallback& callback)
+void ProactorTest::ProactorListenerSocket::setErrorCallback(
+    const ErrorCallback& callback)
 {
     d_errorCallback = callback;
 }
 
-ntsa::Error ProactorListenerSocket::bind(const ntsa::Endpoint& sourceEndpoint)
+ntsa::Error ProactorTest::ProactorListenerSocket::bind(
+    const ntsa::Endpoint& sourceEndpoint)
 {
     ntsa::Error error;
 
@@ -1251,451 +1275,90 @@ ntsa::Error ProactorListenerSocket::bind(const ntsa::Endpoint& sourceEndpoint)
     }
 
     error = d_listenerSocket_sp->sourceEndpoint(&d_sourceEndpoint);
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
-    NTCCFG_TEST_LOG_DEBUG << "Proactor listener socket descriptor " << d_handle
+    NTSCFG_TEST_LOG_DEBUG << "Proactor listener socket descriptor " << d_handle
                           << "at " << d_sourceEndpoint << " is bound"
-                          << NTCCFG_TEST_LOG_END;
+                          << NTSCFG_TEST_LOG_END;
 
     return ntsa::Error();
 }
 
-ntsa::Error ProactorListenerSocket::listen()
+ntsa::Error ProactorTest::ProactorListenerSocket::listen()
 {
-    NTCCFG_TEST_LOG_DEBUG << "Proactor listener socket descriptor " << d_handle
+    NTSCFG_TEST_LOG_DEBUG << "Proactor listener socket descriptor " << d_handle
                           << " at " << d_sourceEndpoint << " is listening"
-                          << NTCCFG_TEST_LOG_END;
+                          << NTSCFG_TEST_LOG_END;
 
     return d_listenerSocket_sp->listen(1);
 }
 
-ntsa::Error ProactorListenerSocket::accept()
+ntsa::Error ProactorTest::ProactorListenerSocket::accept()
 {
-    NTCCFG_TEST_LOG_DEBUG << "Proactor listener socket descriptor " << d_handle
+    NTSCFG_TEST_LOG_DEBUG << "Proactor listener socket descriptor " << d_handle
                           << " at " << d_sourceEndpoint << " initiating accept"
-                          << NTCCFG_TEST_LOG_END;
+                          << NTSCFG_TEST_LOG_END;
 
     bsl::shared_ptr<ProactorSocket> self = this->getSelf(this);
 
     return d_proactor_sp->accept(self);
 }
 
-bsl::shared_ptr<test::case1::ProactorStreamSocket> ProactorListenerSocket::
-    accepted()
+bsl::shared_ptr<ProactorTest::ProactorStreamSocket> ProactorTest::
+    ProactorListenerSocket::accepted()
 {
-    NTCCFG_TEST_FALSE(d_acceptQueue.empty());
+    NTSCFG_TEST_FALSE(d_acceptQueue.empty());
 
-    bsl::shared_ptr<test::case1::ProactorStreamSocket> result =
+    bsl::shared_ptr<ProactorTest::ProactorStreamSocket> result =
         d_acceptQueue.front();
     d_acceptQueue.pop_front();
 
     return result;
 }
 
-void ProactorListenerSocket::abortOnError(bool value)
+void ProactorTest::ProactorListenerSocket::abortOnError(bool value)
 {
     d_abortOnErrorFlag = value;
 }
 
-void ProactorListenerSocket::waitForAccepted()
+void ProactorTest::ProactorListenerSocket::waitForAccepted()
 {
     d_acceptSemaphore.wait();
 }
 
-void ProactorListenerSocket::waitForError()
+void ProactorTest::ProactorListenerSocket::waitForError()
 {
     d_errorSemaphore.wait();
 }
 
-bool ProactorListenerSocket::pollForAccepted()
+bool ProactorTest::ProactorListenerSocket::pollForAccepted()
 {
     return d_acceptSemaphore.tryWait() == 0;
 }
 
-bool ProactorListenerSocket::pollForError()
+bool ProactorTest::ProactorListenerSocket::pollForError()
 {
     return d_errorSemaphore.tryWait() == 0;
 }
 
-bool ProactorListenerSocket::pollForDetachment()
+bool ProactorTest::ProactorListenerSocket::pollForDetachment()
 {
     return d_detachmentSemaphore.tryWait() == 0;
 }
 
-ntsa::Endpoint ProactorListenerSocket::sourceEndpoint() const
+ntsa::Endpoint ProactorTest::ProactorListenerSocket::sourceEndpoint() const
 {
     return d_sourceEndpoint;
 }
 
-ntsa::Error ProactorListenerSocket::lastError() const
+ntsa::Error ProactorTest::ProactorListenerSocket::lastError() const
 {
     return d_lastError;
 }
 
-}  // close namespace case1
-}  // close test namespace
-
-NTCCFG_TEST_CASE(1)
-{
-    NTCI_LOG_CONTEXT();
-    NTCI_LOG_CONTEXT_GUARD_OWNER("test");
-
-    ntccfg::TestAllocator ta;
-    {
-        ntsa::Error error;
-
-        // Create the blob buffer factory.
-
-        bdlbb::PooledBlobBufferFactory blobBufferFactory(32, &ta);
-
-        // Create the simulation.
-
-        bsl::shared_ptr<ntcd::Simulation> simulation;
-        simulation.createInplace(&ta, &ta);
-
-        error = simulation->run();
-        NTCCFG_TEST_OK(error);
-
-        // Define the user.
-
-        bsl::shared_ptr<ntci::User> user;
-
-        // Create the proactor.
-
-        ntca::ProactorConfig proactorConfig;
-        proactorConfig.setMetricName("test");
-        proactorConfig.setMinThreads(1);
-        proactorConfig.setMaxThreads(1);
-
-        bsl::shared_ptr<ntcd::Proactor> proactor =
-            simulation->createProactor(proactorConfig, user, &ta);
-
-        // Register this thread as the thread that will wait on the
-        // proactor.
-
-        ntci::Waiter waiter = proactor->registerWaiter(ntca::WaiterOptions());
-
-        // Create a TCP/IPv4 non-blocking socket bound to any ephemeral
-        // port on the IPv4 loopback address. This socket will act as the
-        // listener.
-
-        bsl::shared_ptr<test::case1::ProactorListenerSocket> listener;
-        listener.createInplace(&ta, simulation, proactor, &ta);
-
-        listener->abortOnError(true);
-
-        // Begin listening for connections.
-
-        error = listener->listen();
-        NTCCFG_TEST_OK(error);
-
-        // Attach the listener socket to the proactor.
-
-        error = proactor->attachSocket(listener);
-        NTCCFG_TEST_OK(error);
-
-        // Create a TCP/IPv4 non-blocking socket. This socket will act as
-        // the client.
-
-        bsl::shared_ptr<test::case1::ProactorStreamSocket> client;
-        client.createInplace(&ta, simulation, proactor, &ta);
-
-        client->abortOnError(true);
-
-        // Attach the client socket to the proactor.
-
-        error = proactor->attachSocket(client);
-        NTCCFG_TEST_OK(error);
-
-        // Asynchronously accept the next connection.
-
-        error = listener->accept();
-        NTCCFG_TEST_OK(error);
-
-        // Asynchronously connect the client socket to the listener's local
-        // endpoint.
-
-        ntsa::Endpoint serverEndpoint = listener->sourceEndpoint();
-        serverEndpoint.ip().setHost(ntsa::Ipv4Address::loopback());
-
-        error = client->connect(listener->sourceEndpoint());
-        NTCCFG_TEST_OK(error);
-
-        // Wait for the listener to accept the connection from the client
-        // and pop that socket off the accept queue. This socket will
-        // act as the server socket.
-
-        while (!listener->pollForAccepted()) {
-            proactor->poll(waiter);
-        }
-
-        bsl::shared_ptr<test::case1::ProactorStreamSocket> server =
-            listener->accepted();
-
-        server->abortOnError(true);
-
-        // Attach the server socket to the proactor.
-
-        error = proactor->attachSocket(server);
-        NTCCFG_TEST_OK(error);
-
-        // Wait for the client to become connected.
-
-        while (!client->pollForConnected()) {
-            proactor->poll(waiter);
-        }
-
-        // Send a single byte to the server.
-
-        {
-            bsl::shared_ptr<bdlbb::Blob> data;
-            data.createInplace(&ta, &blobBufferFactory, &ta);
-
-            bdlbb::BlobUtil::append(data.get(), "X", 1);
-
-            error = client->send(data);
-            NTCCFG_TEST_OK(error);
-        }
-
-        // Wait for the data to be copied to the client's socket send
-        // buffer.
-
-        while (!client->pollForSent()) {
-            proactor->poll(waiter);
-        }
-
-        // Receive a single byte from the client.
-
-        {
-            bsl::shared_ptr<bdlbb::Blob> data;
-            data.createInplace(&ta, &blobBufferFactory, &ta);
-
-            data->setLength(1);
-            data->setLength(0);
-
-            error = server->receive(data);
-            NTCCFG_TEST_OK(error);
-        }
-
-        // Wait for the data to be copied from the server's socket receive
-        // buffer.
-
-        while (!server->pollForReceived()) {
-            proactor->poll(waiter);
-        }
-
-#if NTCD_PROACTOR_TEST_SHUTDOWN_WRITE
-
-        client->abortOnError(false);
-        server->abortOnError(false);
-
-        // Shutdown writing from the server.
-
-        error = server->shutdown(ntsa::ShutdownType::e_SEND);
-        NTCCFG_TEST_OK(error);
-
-        // Try to send a single byte to the client, but observe the send
-        // fails because the server has shutdown writing from its side of
-        // the connection.
-
-        {
-            bsl::shared_ptr<bdlbb::Blob> data;
-            data.createInplace(&ta, &blobBufferFactory, &ta);
-
-            bdlbb::BlobUtil::append(data.get(), "X", 1);
-
-            error = server->send(data);
-            if (error) {
-                NTCCFG_TEST_EQ(error, ntsa::Error::e_CONNECTION_DEAD);
-            }
-            else {
-                // Wait until the send attempt results in an error.
-
-                while (!server->pollForError()) {
-                    proactor->poll(waiter);
-                }
-
-                error = server->lastError();
-                NTCCFG_TEST_EQ(error, ntsa::Error::e_CONNECTION_DEAD);
-            }
-        }
-
-        // Receive a single byte from the server, but observe that zero
-        // bytes have been successfully read, indicating the server has
-        // shutdown writing from its side of the connection.
-
-        {
-            bsl::shared_ptr<bdlbb::Blob> data;
-            data.createInplace(&ta, &blobBufferFactory, &ta);
-
-            data->setLength(1);
-            data->setLength(0);
-
-            error = client->receive(data);
-            NTCCFG_TEST_OK(error);
-        }
-
-        // Wait for the client detects the socket has been shutdown.
-
-        while (!client->pollForShutdown()) {
-            proactor->poll(waiter);
-        }
-
-        // Shutdown writing from the client.
-
-        error = client->shutdown(ntsa::ShutdownType::e_SEND);
-        NTCCFG_TEST_OK(error);
-
-        // Try to send a single byte to the server, but observe the send
-        // fails because the client has shutdown writing from its side of
-        // the connection.
-
-        {
-            bsl::shared_ptr<bdlbb::Blob> data;
-            data.createInplace(&ta, &blobBufferFactory, &ta);
-
-            bdlbb::BlobUtil::append(data.get(), "X", 1);
-
-            error = client->send(data);
-
-            if (error) {
-                NTCCFG_TEST_EQ(error, ntsa::Error::e_CONNECTION_DEAD);
-            }
-            else {
-                // Wait until the send attempt results in an error.
-
-                while (!client->pollForError()) {
-                    proactor->poll(waiter);
-                }
-
-                error = client->lastError();
-                NTCCFG_TEST_EQ(error, ntsa::Error::e_CONNECTION_DEAD);
-            }
-        }
-
-        // Receive a single byte from the client, but observe that zero
-        // bytes have been successfully read, indicating the client has
-        // shutdown writing from its side of the connection.
-
-        {
-            bsl::shared_ptr<bdlbb::Blob> data;
-            data.createInplace(&ta, &blobBufferFactory, &ta);
-
-            data->setLength(1);
-            data->setLength(0);
-
-            error = server->receive(data);
-            NTCCFG_TEST_OK(error);
-        }
-
-        // Wait for the server detects the socket has been shutdown.
-
-        while (!server->pollForShutdown()) {
-            proactor->poll(waiter);
-        }
-
-#endif
-
-#if NTCD_PROACTOR_TEST_SHUTDOWN_READ
-
-        // Shutdown reading from the server.
-
-        error = server->shutdown(ntsa::ShutdownType::e_RECEIVE);
-        NTCCFG_TEST_OK(error);
-
-        // Try to receive a single byte from the client, and observe the
-        // receive fails indicating the connection is dead.
-
-        {
-            bsl::shared_ptr<bdlbb::Blob> data;
-            data.createInplace(&ta, &blobBufferFactory, &ta);
-
-            data->setLength(1);
-            data->setLength(0);
-
-            error = server->receive(data);
-            if (error) {
-                NTCCFG_TEST_EQ(error, ntsa::Error::e_CONNECTION_DEAD);
-            }
-            else {
-                while (!server->pollForError()) {
-                    proactor->poll(waiter);
-                }
-
-                error = server->lastError();
-                NTCCFG_TEST_EQ(error, ntsa::Error::e_CONNECTION_DEAD);
-            }
-        }
-
-        // Shutdown reading from the client.
-
-        error = client->shutdown(ntsa::ShutdownType::e_RECEIVE);
-        NTCCFG_TEST_OK(error);
-
-        // Try to receive a single byte from the server, and observe the
-        // receive fails indicating the connection is dead.
-
-        {
-            bsl::shared_ptr<bdlbb::Blob> data;
-            data.createInplace(&ta, &blobBufferFactory, &ta);
-
-            data->setLength(1);
-            data->setLength(0);
-
-            error = client->receive(data);
-            if (error) {
-                NTCCFG_TEST_EQ(error, ntsa::Error::e_CONNECTION_DEAD);
-            }
-            else {
-                while (!client->pollForError()) {
-                    proactor->poll(waiter);
-                }
-
-                error = client->lastError();
-                NTCCFG_TEST_EQ(error, ntsa::Error::e_CONNECTION_DEAD);
-            }
-        }
-
-#endif
-
-        // Detach the server from the proactor.
-
-        error = proactor->detachSocket(server);
-        NTCCFG_TEST_OK(error);
-
-        // Detach the client from the proactor.
-
-        error = proactor->detachSocket(client);
-        NTCCFG_TEST_OK(error);
-
-        // Detach the listener from the proactor.
-
-        proactor->detachSocket(listener);
-        NTCCFG_TEST_OK(error);
-
-        while (!server->pollForDetachment() || !client->pollForDetachment() ||
-               !listener->pollForDetachment())
-        {
-            proactor->poll(waiter);
-        }
-
-        // Deregister the waiter.
-
-        proactor->deregisterWaiter(waiter);
-
-        // Stop the simulation.
-
-        simulation->stop();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-namespace test {
-namespace case2 {
-
 /// Provide an implementation of the 'ntci::TimerSession'
 /// protocol for use by this test driver.
-class TimerSession : public ntci::TimerSession
+class ProactorTest::TimerSession : public ntci::TimerSession
 {
     bsl::string  d_name;
     bslmt::Latch d_deadline;
@@ -1752,49 +1415,49 @@ class TimerSession : public ntci::TimerSession
     bsl::size_t count(ntca::TimerEventType::Value timerEventType);
 };
 
-void TimerSession::processTimerDeadline(
+void ProactorTest::TimerSession::processTimerDeadline(
     const bsl::shared_ptr<ntci::Timer>& timer,
     const ntca::TimerEvent&             event)
 {
-    NTCCFG_TEST_EQ(event.type(), ntca::TimerEventType::e_DEADLINE);
+    NTSCFG_TEST_EQ(event.type(), ntca::TimerEventType::e_DEADLINE);
 
-    NTCCFG_TEST_LOG_DEBUG << "Timer '" << d_name << "' deadline"
-                          << NTCCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Timer '" << d_name << "' deadline"
+                          << NTSCFG_TEST_LOG_END;
 
     d_deadline.arrive();
 }
 
-void TimerSession::processTimerCancelled(
+void ProactorTest::TimerSession::processTimerCancelled(
     const bsl::shared_ptr<ntci::Timer>& timer,
     const ntca::TimerEvent&             event)
 {
-    NTCCFG_TEST_EQ(event.type(), ntca::TimerEventType::e_CANCELED);
+    NTSCFG_TEST_EQ(event.type(), ntca::TimerEventType::e_CANCELED);
 
-    NTCCFG_TEST_LOG_DEBUG << "Timer '" << d_name << "' cancelled"
-                          << NTCCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Timer '" << d_name << "' cancelled"
+                          << NTSCFG_TEST_LOG_END;
 
     d_cancelled.arrive();
 }
 
-void TimerSession::processTimerClosed(
+void ProactorTest::TimerSession::processTimerClosed(
     const bsl::shared_ptr<ntci::Timer>& timer,
     const ntca::TimerEvent&             event)
 {
-    NTCCFG_TEST_EQ(event.type(), ntca::TimerEventType::e_CLOSED);
+    NTSCFG_TEST_EQ(event.type(), ntca::TimerEventType::e_CLOSED);
 
-    NTCCFG_TEST_LOG_DEBUG << "Timer '" << d_name << "' closed"
-                          << NTCCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Timer '" << d_name << "' closed"
+                          << NTSCFG_TEST_LOG_END;
 
     d_closed.arrive();
 }
 
-const bsl::shared_ptr<ntci::Strand>& TimerSession::strand() const
+const bsl::shared_ptr<ntci::Strand>& ProactorTest::TimerSession::strand() const
 {
     return ntci::Strand::unspecified();
 }
 
-TimerSession::TimerSession(const bsl::string& name,
-                           bslma::Allocator*  basicAllocator)
+ProactorTest::TimerSession::TimerSession(const bsl::string& name,
+                                         bslma::Allocator*  basicAllocator)
 : d_name(name, basicAllocator)
 , d_deadline(1)
 , d_cancelled(1)
@@ -1802,11 +1465,12 @@ TimerSession::TimerSession(const bsl::string& name,
 {
 }
 
-TimerSession::~TimerSession()
+ProactorTest::TimerSession::~TimerSession()
 {
 }
 
-void TimerSession::wait(ntca::TimerEventType::Value timerEventType)
+void ProactorTest::TimerSession::wait(
+    ntca::TimerEventType::Value timerEventType)
 {
     if (timerEventType == ntca::TimerEventType::e_DEADLINE) {
         d_deadline.wait();
@@ -1818,11 +1482,12 @@ void TimerSession::wait(ntca::TimerEventType::Value timerEventType)
         d_closed.wait();
     }
     else {
-        NTCCFG_TEST_TRUE(false);
+        NTSCFG_TEST_TRUE(false);
     }
 }
 
-bool TimerSession::tryWait(ntca::TimerEventType::Value timerEventType)
+bool ProactorTest::TimerSession::tryWait(
+    ntca::TimerEventType::Value timerEventType)
 {
     if (timerEventType == ntca::TimerEventType::e_DEADLINE) {
         return d_deadline.tryWait();
@@ -1834,12 +1499,13 @@ bool TimerSession::tryWait(ntca::TimerEventType::Value timerEventType)
         return d_closed.tryWait();
     }
     else {
-        NTCCFG_TEST_TRUE(false);
+        NTSCFG_TEST_TRUE(false);
         return false;
     }
 }
 
-bool TimerSession::has(ntca::TimerEventType::Value timerEventType)
+bool ProactorTest::TimerSession::has(
+    ntca::TimerEventType::Value timerEventType)
 {
     if (timerEventType == ntca::TimerEventType::e_DEADLINE) {
         return d_deadline.currentCount() != 1;
@@ -1851,12 +1517,13 @@ bool TimerSession::has(ntca::TimerEventType::Value timerEventType)
         return d_closed.currentCount() != 1;
     }
     else {
-        NTCCFG_TEST_TRUE(false);
+        NTSCFG_TEST_TRUE(false);
         return 0;
     }
 }
 
-bsl::size_t TimerSession::count(ntca::TimerEventType::Value timerEventType)
+bsl::size_t ProactorTest::TimerSession::count(
+    ntca::TimerEventType::Value timerEventType)
 {
     if (timerEventType == ntca::TimerEventType::e_DEADLINE) {
         return 1 - d_deadline.currentCount();
@@ -1868,15 +1535,393 @@ bsl::size_t TimerSession::count(ntca::TimerEventType::Value timerEventType)
         return 1 - d_closed.currentCount();
     }
     else {
-        NTCCFG_TEST_TRUE(false);
+        NTSCFG_TEST_TRUE(false);
         return 0;
     }
 }
 
-}  // close namespace case2
-}  // close namespace test
+void ProactorTest::processFunction(bslmt::Latch* latch)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_DEBUG("Executed function");
 
-NTCCFG_TEST_CASE(2)
+    latch->arrive();
+}
+
+NTSCFG_TEST_FUNCTION(ntcd::ProactorTest::verifyCase1)
+{
+    ntsa::Error error;
+
+    // Create the blob buffer factory.
+
+    bdlbb::PooledBlobBufferFactory blobBufferFactory(32,
+                                                     NTSCFG_TEST_ALLOCATOR);
+
+    // Create the simulation.
+
+    bsl::shared_ptr<ntcd::Simulation> simulation;
+    simulation.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+
+    error = simulation->run();
+    NTSCFG_TEST_OK(error);
+
+    // Define the user.
+
+    bsl::shared_ptr<ntci::User> user;
+
+    // Create the proactor.
+
+    ntca::ProactorConfig proactorConfig;
+    proactorConfig.setMetricName("test");
+    proactorConfig.setMinThreads(1);
+    proactorConfig.setMaxThreads(1);
+
+    bsl::shared_ptr<ntcd::Proactor> proactor =
+        simulation->createProactor(proactorConfig,
+                                   user,
+                                   NTSCFG_TEST_ALLOCATOR);
+
+    // Register this thread as the thread that will wait on the
+    // proactor.
+
+    ntci::Waiter waiter = proactor->registerWaiter(ntca::WaiterOptions());
+
+    // Create a TCP/IPv4 non-blocking socket bound to any ephemeral
+    // port on the IPv4 loopback address. This socket will act as the
+    // listener.
+
+    bsl::shared_ptr<ProactorTest::ProactorListenerSocket> listener;
+    listener.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           simulation,
+                           proactor,
+                           NTSCFG_TEST_ALLOCATOR);
+
+    listener->abortOnError(true);
+
+    // Begin listening for connections.
+
+    error = listener->listen();
+    NTSCFG_TEST_OK(error);
+
+    // Attach the listener socket to the proactor.
+
+    error = proactor->attachSocket(listener);
+    NTSCFG_TEST_OK(error);
+
+    // Create a TCP/IPv4 non-blocking socket. This socket will act as
+    // the client.
+
+    bsl::shared_ptr<ProactorTest::ProactorStreamSocket> client;
+    client.createInplace(NTSCFG_TEST_ALLOCATOR,
+                         simulation,
+                         proactor,
+                         NTSCFG_TEST_ALLOCATOR);
+
+    client->abortOnError(true);
+
+    // Attach the client socket to the proactor.
+
+    error = proactor->attachSocket(client);
+    NTSCFG_TEST_OK(error);
+
+    // Asynchronously accept the next connection.
+
+    error = listener->accept();
+    NTSCFG_TEST_OK(error);
+
+    // Asynchronously connect the client socket to the listener's local
+    // endpoint.
+
+    ntsa::Endpoint serverEndpoint = listener->sourceEndpoint();
+    serverEndpoint.ip().setHost(ntsa::Ipv4Address::loopback());
+
+    error = client->connect(listener->sourceEndpoint());
+    NTSCFG_TEST_OK(error);
+
+    // Wait for the listener to accept the connection from the client
+    // and pop that socket off the accept queue. This socket will
+    // act as the server socket.
+
+    while (!listener->pollForAccepted()) {
+        proactor->poll(waiter);
+    }
+
+    bsl::shared_ptr<ProactorTest::ProactorStreamSocket> server =
+        listener->accepted();
+
+    server->abortOnError(true);
+
+    // Attach the server socket to the proactor.
+
+    error = proactor->attachSocket(server);
+    NTSCFG_TEST_OK(error);
+
+    // Wait for the client to become connected.
+
+    while (!client->pollForConnected()) {
+        proactor->poll(waiter);
+    }
+
+    // Send a single byte to the server.
+
+    {
+        bsl::shared_ptr<bdlbb::Blob> data;
+        data.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           &blobBufferFactory,
+                           NTSCFG_TEST_ALLOCATOR);
+
+        bdlbb::BlobUtil::append(data.get(), "X", 1);
+
+        error = client->send(data);
+        NTSCFG_TEST_OK(error);
+    }
+
+    // Wait for the data to be copied to the client's socket send
+    // buffer.
+
+    while (!client->pollForSent()) {
+        proactor->poll(waiter);
+    }
+
+    // Receive a single byte from the client.
+
+    {
+        bsl::shared_ptr<bdlbb::Blob> data;
+        data.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           &blobBufferFactory,
+                           NTSCFG_TEST_ALLOCATOR);
+
+        data->setLength(1);
+        data->setLength(0);
+
+        error = server->receive(data);
+        NTSCFG_TEST_OK(error);
+    }
+
+    // Wait for the data to be copied from the server's socket receive
+    // buffer.
+
+    while (!server->pollForReceived()) {
+        proactor->poll(waiter);
+    }
+
+#if NTCD_PROACTOR_TEST_SHUTDOWN_WRITE
+
+    client->abortOnError(false);
+    server->abortOnError(false);
+
+    // Shutdown writing from the server.
+
+    error = server->shutdown(ntsa::ShutdownType::e_SEND);
+    NTSCFG_TEST_OK(error);
+
+    // Try to send a single byte to the client, but observe the send
+    // fails because the server has shutdown writing from its side of
+    // the connection.
+
+    {
+        bsl::shared_ptr<bdlbb::Blob> data;
+        data.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           &blobBufferFactory,
+                           NTSCFG_TEST_ALLOCATOR);
+
+        bdlbb::BlobUtil::append(data.get(), "X", 1);
+
+        error = server->send(data);
+        if (error) {
+            NTSCFG_TEST_EQ(error, ntsa::Error::e_CONNECTION_DEAD);
+        }
+        else {
+            // Wait until the send attempt results in an error.
+
+            while (!server->pollForError()) {
+                proactor->poll(waiter);
+            }
+
+            error = server->lastError();
+            NTSCFG_TEST_EQ(error, ntsa::Error::e_CONNECTION_DEAD);
+        }
+    }
+
+    // Receive a single byte from the server, but observe that zero
+    // bytes have been successfully read, indicating the server has
+    // shutdown writing from its side of the connection.
+
+    {
+        bsl::shared_ptr<bdlbb::Blob> data;
+        data.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           &blobBufferFactory,
+                           NTSCFG_TEST_ALLOCATOR);
+
+        data->setLength(1);
+        data->setLength(0);
+
+        error = client->receive(data);
+        NTSCFG_TEST_OK(error);
+    }
+
+    // Wait for the client detects the socket has been shutdown.
+
+    while (!client->pollForShutdown()) {
+        proactor->poll(waiter);
+    }
+
+    // Shutdown writing from the client.
+
+    error = client->shutdown(ntsa::ShutdownType::e_SEND);
+    NTSCFG_TEST_OK(error);
+
+    // Try to send a single byte to the server, but observe the send
+    // fails because the client has shutdown writing from its side of
+    // the connection.
+
+    {
+        bsl::shared_ptr<bdlbb::Blob> data;
+        data.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           &blobBufferFactory,
+                           NTSCFG_TEST_ALLOCATOR);
+
+        bdlbb::BlobUtil::append(data.get(), "X", 1);
+
+        error = client->send(data);
+
+        if (error) {
+            NTSCFG_TEST_EQ(error, ntsa::Error::e_CONNECTION_DEAD);
+        }
+        else {
+            // Wait until the send attempt results in an error.
+
+            while (!client->pollForError()) {
+                proactor->poll(waiter);
+            }
+
+            error = client->lastError();
+            NTSCFG_TEST_EQ(error, ntsa::Error::e_CONNECTION_DEAD);
+        }
+    }
+
+    // Receive a single byte from the client, but observe that zero
+    // bytes have been successfully read, indicating the client has
+    // shutdown writing from its side of the connection.
+
+    {
+        bsl::shared_ptr<bdlbb::Blob> data;
+        data.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           &blobBufferFactory,
+                           NTSCFG_TEST_ALLOCATOR);
+
+        data->setLength(1);
+        data->setLength(0);
+
+        error = server->receive(data);
+        NTSCFG_TEST_OK(error);
+    }
+
+    // Wait for the server detects the socket has been shutdown.
+
+    while (!server->pollForShutdown()) {
+        proactor->poll(waiter);
+    }
+
+#endif
+
+#if NTCD_PROACTOR_TEST_SHUTDOWN_READ
+
+    // Shutdown reading from the server.
+
+    error = server->shutdown(ntsa::ShutdownType::e_RECEIVE);
+    NTSCFG_TEST_OK(error);
+
+    // Try to receive a single byte from the client, and observe the
+    // receive fails indicating the connection is dead.
+
+    {
+        bsl::shared_ptr<bdlbb::Blob> data;
+        data.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           &blobBufferFactory,
+                           NTSCFG_TEST_ALLOCATOR);
+
+        data->setLength(1);
+        data->setLength(0);
+
+        error = server->receive(data);
+        if (error) {
+            NTSCFG_TEST_EQ(error, ntsa::Error::e_CONNECTION_DEAD);
+        }
+        else {
+            while (!server->pollForError()) {
+                proactor->poll(waiter);
+            }
+
+            error = server->lastError();
+            NTSCFG_TEST_EQ(error, ntsa::Error::e_CONNECTION_DEAD);
+        }
+    }
+
+    // Shutdown reading from the client.
+
+    error = client->shutdown(ntsa::ShutdownType::e_RECEIVE);
+    NTSCFG_TEST_OK(error);
+
+    // Try to receive a single byte from the server, and observe the
+    // receive fails indicating the connection is dead.
+
+    {
+        bsl::shared_ptr<bdlbb::Blob> data;
+        data.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           &blobBufferFactory,
+                           NTSCFG_TEST_ALLOCATOR);
+
+        data->setLength(1);
+        data->setLength(0);
+
+        error = client->receive(data);
+        if (error) {
+            NTSCFG_TEST_EQ(error, ntsa::Error::e_CONNECTION_DEAD);
+        }
+        else {
+            while (!client->pollForError()) {
+                proactor->poll(waiter);
+            }
+
+            error = client->lastError();
+            NTSCFG_TEST_EQ(error, ntsa::Error::e_CONNECTION_DEAD);
+        }
+    }
+
+#endif
+
+    // Detach the server from the proactor.
+
+    error = proactor->detachSocket(server);
+    NTSCFG_TEST_OK(error);
+
+    // Detach the client from the proactor.
+
+    error = proactor->detachSocket(client);
+    NTSCFG_TEST_OK(error);
+
+    // Detach the listener from the proactor.
+
+    proactor->detachSocket(listener);
+    NTSCFG_TEST_OK(error);
+
+    while (!server->pollForDetachment() || !client->pollForDetachment() ||
+           !listener->pollForDetachment())
+    {
+        proactor->poll(waiter);
+    }
+
+    // Deregister the waiter.
+
+    proactor->deregisterWaiter(waiter);
+
+    // Stop the simulation.
+
+    simulation->stop();
+}
+
+NTSCFG_TEST_FUNCTION(ntcd::ProactorTest::verifyCase2)
 {
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
@@ -1917,238 +1962,224 @@ NTCCFG_TEST_CASE(2)
                 timerOptions.setOneShot(true);
             }
 
-            NTCCFG_TEST_LOG_INFO << "Testing timer options = " << timerOptions
-                                 << NTCCFG_TEST_LOG_END;
+            NTSCFG_TEST_LOG_INFO << "Testing timer options = " << timerOptions
+                                 << NTSCFG_TEST_LOG_END;
 
-            ntccfg::TestAllocator ta;
-            {
-                ntsa::Error error;
+            ntsa::Error error;
 
-                // Create the simulation.
+            // Create the simulation.
 
-                bsl::shared_ptr<ntcd::Simulation> simulation;
-                simulation.createInplace(&ta, &ta);
+            bsl::shared_ptr<ntcd::Simulation> simulation;
+            simulation.createInplace(NTSCFG_TEST_ALLOCATOR,
+                                     NTSCFG_TEST_ALLOCATOR);
 
-                error = simulation->run();
-                NTCCFG_TEST_OK(error);
+            error = simulation->run();
+            NTSCFG_TEST_OK(error);
 
-                // Define the user.
+            // Define the user.
 
-                bsl::shared_ptr<ntci::User> user;
+            bsl::shared_ptr<ntci::User> user;
 
-                // Create the proactor.
+            // Create the proactor.
 
-                ntca::ProactorConfig proactorConfig;
-                proactorConfig.setMetricName("test");
-                proactorConfig.setMinThreads(1);
-                proactorConfig.setMaxThreads(1);
+            ntca::ProactorConfig proactorConfig;
+            proactorConfig.setMetricName("test");
+            proactorConfig.setMinThreads(1);
+            proactorConfig.setMaxThreads(1);
 
-                bsl::shared_ptr<ntcd::Proactor> proactor =
-                    simulation->createProactor(proactorConfig, user, &ta);
+            bsl::shared_ptr<ntcd::Proactor> proactor =
+                simulation->createProactor(proactorConfig,
+                                           user,
+                                           NTSCFG_TEST_ALLOCATOR);
 
-                // Register this thread as a thread that will wait on the
-                // proactor.
+            // Register this thread as a thread that will wait on the
+            // proactor.
 
-                ntci::Waiter waiter =
-                    proactor->registerWaiter(ntca::WaiterOptions());
+            ntci::Waiter waiter =
+                proactor->registerWaiter(ntca::WaiterOptions());
 
-                // Register three timers to fire at t1, t2, and t3. Implement the
-                // first timer so that when it fires at t1, it cancels the timer
-                // at t2.
+            // Register three timers to fire at t1, t2, and t3. Implement the
+            // first timer so that when it fires at t1, it cancels the timer
+            // at t2.
 
-                bslma::Allocator* allocator =
-                    bslma::Default::defaultAllocator();
+            bslma::Allocator* allocator = bslma::Default::defaultAllocator();
 
-                bsl::shared_ptr<test::case2::TimerSession> timerSession1;
-                timerSession1.createInplace(&ta, "timer1", &ta);
+            bsl::shared_ptr<ProactorTest::TimerSession> timerSession1;
+            timerSession1.createInplace(NTSCFG_TEST_ALLOCATOR,
+                                        "timer1",
+                                        NTSCFG_TEST_ALLOCATOR);
 
-                bsl::shared_ptr<test::case2::TimerSession> timerSession2;
-                timerSession2.createInplace(&ta, "timer2", &ta);
+            bsl::shared_ptr<ProactorTest::TimerSession> timerSession2;
+            timerSession2.createInplace(NTSCFG_TEST_ALLOCATOR,
+                                        "timer2",
+                                        NTSCFG_TEST_ALLOCATOR);
 
-                bsl::shared_ptr<test::case2::TimerSession> timerSession3;
-                timerSession3.createInplace(&ta, "timer3", &ta);
+            bsl::shared_ptr<ProactorTest::TimerSession> timerSession3;
+            timerSession3.createInplace(NTSCFG_TEST_ALLOCATOR,
+                                        "timer3",
+                                        NTSCFG_TEST_ALLOCATOR);
 
-                bsl::shared_ptr<ntci::Timer> timer1 = proactor->createTimer(
-                    timerOptions,
-                    static_cast<bsl::shared_ptr<ntci::TimerSession> >(
-                        timerSession1),
-                    &ta);
+            bsl::shared_ptr<ntci::Timer> timer1 = proactor->createTimer(
+                timerOptions,
+                static_cast<bsl::shared_ptr<ntci::TimerSession> >(
+                    timerSession1),
+                NTSCFG_TEST_ALLOCATOR);
 
-                bsl::shared_ptr<ntci::Timer> timer2 = proactor->createTimer(
-                    timerOptions,
-                    static_cast<bsl::shared_ptr<ntci::TimerSession> >(
-                        timerSession2),
-                    &ta);
+            bsl::shared_ptr<ntci::Timer> timer2 = proactor->createTimer(
+                timerOptions,
+                static_cast<bsl::shared_ptr<ntci::TimerSession> >(
+                    timerSession2),
+                NTSCFG_TEST_ALLOCATOR);
 
-                bsl::shared_ptr<ntci::Timer> timer3 = proactor->createTimer(
-                    timerOptions,
-                    static_cast<bsl::shared_ptr<ntci::TimerSession> >(
-                        timerSession3),
-                    &ta);
+            bsl::shared_ptr<ntci::Timer> timer3 = proactor->createTimer(
+                timerOptions,
+                static_cast<bsl::shared_ptr<ntci::TimerSession> >(
+                    timerSession3),
+                NTSCFG_TEST_ALLOCATOR);
 
-                bsls::TimeInterval now = bdlt::CurrentTime::now();
+            bsls::TimeInterval now = bdlt::CurrentTime::now();
 
-                timer1->schedule(now + bsls::TimeInterval(1));
-                timer2->schedule(now + bsls::TimeInterval(2));
-                timer3->schedule(now + bsls::TimeInterval(3));
+            timer1->schedule(now + bsls::TimeInterval(1));
+            timer2->schedule(now + bsls::TimeInterval(2));
+            timer3->schedule(now + bsls::TimeInterval(3));
 
-                // Wait for the first timer at t1 to fire.
+            // Wait for the first timer at t1 to fire.
 
-                NTCCFG_TEST_TRUE(
-                    timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE));
+            NTSCFG_TEST_TRUE(
+                timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE));
 
-                while (
-                    !timerSession1->tryWait(ntca::TimerEventType::e_DEADLINE))
-                {
-                    proactor->poll(waiter);
-                }
-
-                if (!timerOptions.oneShot()) {
-                    timer1->close();
-                }
-
-                // Cancel the timer at t2.
-
-                timer2->close();
-
-                // Wait for the timer at t1 to be closed.
-
-                if (timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED)) {
-                    while (!timerSession1->tryWait(
-                        ntca::TimerEventType::e_CLOSED))
-                    {
-                        proactor->poll(waiter);
-                    }
-                }
-
-                // Wait for the timer at t2 to be cancelled.
-
-                if (timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED)) {
-                    while (!timerSession2->tryWait(
-                        ntca::TimerEventType::e_CANCELED))
-                    {
-                        proactor->poll(waiter);
-                    }
-                }
-
-                // Wait for the timer at t2 to be closed.
-
-                if (timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED)) {
-                    while (!timerSession2->tryWait(
-                        ntca::TimerEventType::e_CLOSED))
-                    {
-                        proactor->poll(waiter);
-                    }
-                }
-
-                // Wait for the timer at t3 to fire.
-
-                NTCCFG_TEST_TRUE(
-                    timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE));
-
-                while (
-                    !timerSession3->tryWait(ntca::TimerEventType::e_DEADLINE))
-                {
-                    proactor->poll(waiter);
-                }
-
-                if (!timerOptions.oneShot()) {
-                    timer3->close();
-                }
-
-                // Wait for the timer at t3 to be closed.
-
-                if (timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED)) {
-                    while (!timerSession3->tryWait(
-                        ntca::TimerEventType::e_CLOSED))
-                    {
-                        proactor->poll(waiter);
-                    }
-                }
-
-                // Ensure the timer at t1 fired and was not cancelled.
-
-                NTCCFG_TEST_EQ(
-                    timerSession1->count(ntca::TimerEventType::e_DEADLINE),
-                    1);
-                if (timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED)) {
-                    NTCCFG_TEST_EQ(
-                        timerSession1->count(ntca::TimerEventType::e_CANCELED),
-                        0);
-                }
-
-                // Ensure the timer at t2 did not fire, because it was cancelled
-                // by the timer at t1.
-
-                NTCCFG_TEST_EQ(
-                    timerSession2->count(ntca::TimerEventType::e_DEADLINE),
-                    0);
-                if (timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED)) {
-                    NTCCFG_TEST_EQ(
-                        timerSession2->count(ntca::TimerEventType::e_CANCELED),
-                        1);
-                }
-
-                // Ensure the timer at t3 fired and was not canceled.
-
-                NTCCFG_TEST_EQ(
-                    timerSession3->count(ntca::TimerEventType::e_DEADLINE),
-                    1);
-                if (timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED)) {
-                    NTCCFG_TEST_EQ(
-                        timerSession3->count(ntca::TimerEventType::e_CANCELED),
-                        0);
-                }
-
-                // Ensure all three timers are closed.
-
-                if (timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED)) {
-                    NTCCFG_TEST_EQ(
-                        timerSession1->count(ntca::TimerEventType::e_CLOSED),
-                        1);
-                    NTCCFG_TEST_EQ(
-                        timerSession2->count(ntca::TimerEventType::e_CLOSED),
-                        1);
-                    NTCCFG_TEST_EQ(
-                        timerSession3->count(ntca::TimerEventType::e_CLOSED),
-                        1);
-                }
-
-                // Deregister the waiter.
-
-                proactor->deregisterWaiter(waiter);
-
-                // Stop the simulation.
-
-                simulation->stop();
+            while (!timerSession1->tryWait(ntca::TimerEventType::e_DEADLINE)) {
+                proactor->poll(waiter);
             }
-            NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+            if (!timerOptions.oneShot()) {
+                timer1->close();
+            }
+
+            // Cancel the timer at t2.
+
+            timer2->close();
+
+            // Wait for the timer at t1 to be closed.
+
+            if (timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED)) {
+                while (!timerSession1->tryWait(ntca::TimerEventType::e_CLOSED))
+                {
+                    proactor->poll(waiter);
+                }
+            }
+
+            // Wait for the timer at t2 to be cancelled.
+
+            if (timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED)) {
+                while (
+                    !timerSession2->tryWait(ntca::TimerEventType::e_CANCELED))
+                {
+                    proactor->poll(waiter);
+                }
+            }
+
+            // Wait for the timer at t2 to be closed.
+
+            if (timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED)) {
+                while (!timerSession2->tryWait(ntca::TimerEventType::e_CLOSED))
+                {
+                    proactor->poll(waiter);
+                }
+            }
+
+            // Wait for the timer at t3 to fire.
+
+            NTSCFG_TEST_TRUE(
+                timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE));
+
+            while (!timerSession3->tryWait(ntca::TimerEventType::e_DEADLINE)) {
+                proactor->poll(waiter);
+            }
+
+            if (!timerOptions.oneShot()) {
+                timer3->close();
+            }
+
+            // Wait for the timer at t3 to be closed.
+
+            if (timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED)) {
+                while (!timerSession3->tryWait(ntca::TimerEventType::e_CLOSED))
+                {
+                    proactor->poll(waiter);
+                }
+            }
+
+            // Ensure the timer at t1 fired and was not cancelled.
+
+            NTSCFG_TEST_EQ(
+                timerSession1->count(ntca::TimerEventType::e_DEADLINE),
+                1);
+            if (timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED)) {
+                NTSCFG_TEST_EQ(
+                    timerSession1->count(ntca::TimerEventType::e_CANCELED),
+                    0);
+            }
+
+            // Ensure the timer at t2 did not fire, because it was cancelled
+            // by the timer at t1.
+
+            NTSCFG_TEST_EQ(
+                timerSession2->count(ntca::TimerEventType::e_DEADLINE),
+                0);
+            if (timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED)) {
+                NTSCFG_TEST_EQ(
+                    timerSession2->count(ntca::TimerEventType::e_CANCELED),
+                    1);
+            }
+
+            // Ensure the timer at t3 fired and was not canceled.
+
+            NTSCFG_TEST_EQ(
+                timerSession3->count(ntca::TimerEventType::e_DEADLINE),
+                1);
+            if (timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED)) {
+                NTSCFG_TEST_EQ(
+                    timerSession3->count(ntca::TimerEventType::e_CANCELED),
+                    0);
+            }
+
+            // Ensure all three timers are closed.
+
+            if (timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED)) {
+                NTSCFG_TEST_EQ(
+                    timerSession1->count(ntca::TimerEventType::e_CLOSED),
+                    1);
+                NTSCFG_TEST_EQ(
+                    timerSession2->count(ntca::TimerEventType::e_CLOSED),
+                    1);
+                NTSCFG_TEST_EQ(
+                    timerSession3->count(ntca::TimerEventType::e_CLOSED),
+                    1);
+            }
+
+            // Deregister the waiter.
+
+            proactor->deregisterWaiter(waiter);
+
+            // Stop the simulation.
+
+            simulation->stop();
         }
     }
 }
 
-namespace test {
-namespace case3 {
-
-void processFunction(bslmt::Latch* latch)
-{
-    NTCI_LOG_CONTEXT();
-    NTCI_LOG_DEBUG("Executed function");
-
-    latch->arrive();
-}
-
-void execute(bslma::Allocator* allocator)
+NTSCFG_TEST_FUNCTION(ntcd::ProactorTest::verifyCase3)
 {
     ntsa::Error error;
 
     // Create the simulation.
 
     bsl::shared_ptr<ntcd::Simulation> simulation;
-    simulation.createInplace(allocator, allocator);
+    simulation.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     error = simulation->run();
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
     // Create the user.
 
@@ -2163,7 +2194,9 @@ void execute(bslma::Allocator* allocator)
     proactorConfig.setMaxThreads(1);
 
     bsl::shared_ptr<ntcd::Proactor> proactor =
-        simulation->createProactor(proactorConfig, user, allocator);
+        simulation->createProactor(proactorConfig,
+                                   user,
+                                   NTSCFG_TEST_ALLOCATOR);
 
     // Register this thread as a thread that will wait on the proactor.
 
@@ -2187,25 +2220,5 @@ void execute(bslma::Allocator* allocator)
     simulation->stop();
 }
 
-}  // close namespace case3
-}  // close namespace test
-
-NTCCFG_TEST_CASE(3)
-{
-    NTCI_LOG_CONTEXT();
-    NTCI_LOG_CONTEXT_GUARD_OWNER("test");
-
-    ntccfg::TestAllocator ta;
-    {
-        test::case3::execute(&ta);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-    NTCCFG_TEST_REGISTER(2);
-    NTCCFG_TEST_REGISTER(3);
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntcd
+}  // close namespace BloombergLP

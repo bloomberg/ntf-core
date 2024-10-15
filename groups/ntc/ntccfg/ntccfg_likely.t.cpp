@@ -16,26 +16,26 @@
 #include <ntscfg_test.h>
 
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntcd_blobbufferfactory_t_cpp, "$Id$ $CSID$")
+BSLS_IDENT_RCSID(ntccfg_likely_t_cpp, "$Id$ $CSID$")
 
-#include <ntcd_blobbufferfactory.h>
+#include <ntccfg_likely.h>
 
 using namespace BloombergLP;
 
 namespace BloombergLP {
-namespace ntcd {
+namespace ntccfg {
 
-// Provide tests for 'ntcd::BlobBufferFactory'.
-class BlobBufferFactoryTest
+// Provide tests for 'ntccfg::Likely'.
+class LikelyTest
 {
   public:
     // TODO
     static void verify();
 };
 
-NTSCFG_TEST_FUNCTION(ntcd::BlobBufferFactoryTest::verify)
+NTSCFG_TEST_FUNCTION(ntccfg::LikelyTest::verify)
 {
 }
 
-}  // close namespace ntcd
+}  // close namespace ntccfg
 }  // close namespace BloombergLP

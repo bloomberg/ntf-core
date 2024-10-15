@@ -108,7 +108,7 @@ class Reactor : public ntci::Reactor,
     bslma::Allocator*                           d_allocator_p;
 
   private:
-             Reactor(const Reactor&) BSLS_KEYWORD_DELETED;
+    Reactor(const Reactor&) BSLS_KEYWORD_DELETED;
     Reactor& operator=(const Reactor&) BSLS_KEYWORD_DELETED;
 
   private:
@@ -606,7 +606,7 @@ class ReactorFactory : public ntci::ReactorFactory
     bslma::Allocator* d_allocator_p;
 
   private:
-                    ReactorFactory(const ReactorFactory&) BSLS_KEYWORD_DELETED;
+    ReactorFactory(const ReactorFactory&) BSLS_KEYWORD_DELETED;
     ReactorFactory& operator=(const ReactorFactory&) BSLS_KEYWORD_DELETED;
 
   public:

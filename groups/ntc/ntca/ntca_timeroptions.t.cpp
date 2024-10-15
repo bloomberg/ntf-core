@@ -1,3 +1,4 @@
+
 // Copyright 2020-2023 Bloomberg Finance L.P.
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -13,90 +14,123 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntca_timeroptions_t_cpp, "$Id$ $CSID$")
+
 #include <ntca_timeroptions.h>
-
-#include <ntccfg_test.h>
-
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bsls_assert.h>
-#include <bsl_iostream.h>
-#include <bsl_sstream.h>
 
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntca {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
+// Provide tests for 'ntca::TimerOptions'.
+class TimerOptionsTest
+{
+  public:
+    // Test default constructor.
+    static void verifyDefaultConstructor();
 
-namespace test {
+    // Test copy constructor.
+    static void verifyCopyConstructor();
 
-void*      k_HANDLE   = reinterpret_cast<void*>(static_cast<bsl::intptr_t>(1));
-const int  k_ID       = 2;
-const bool k_ONE_SHOT = true;
-const bool k_DRIFT    = true;
+    // Test move constructor.
+    static void verifyMoveConstructor();
 
+    // Test assignment operator.
+    static void verifyCopyAssignmentOperator();
+
+    // Test move-assignment operator.
+    static void verifyMoveAssignmentOperator();
+
+    // Test 'reset'.
+    static void verifyReset();
+
+    // Test 'move'.
+    static void verifyMove();
+
+    // Test 'setHandle'.
+    static void verifySetHandle();
+
+    // Test 'setId'.
+    static void verifySetId();
+
+    // Test 'setOneShot'.
+    static void verifySetOneShot();
+
+    // Test 'setDrift'.
+    static void verifySetDrift();
+
+    // Test 'showEvent', 'hideEvent', and 'wantEvent'.
+    static void verifyShowEvent();
+
+    // Test 'equals'.
+    static void verifyEquals();
+
+    // Test 'less'.
+    static void verifyLess();
+
+    // Test 'hash'.
+    static void verifyHash();
+
+    // Test 'print'.
+    static void verifyPrint();
+
+  private:
+    static const void* k_HANDLE;
+    static const int   k_ID;
+    static const bool  k_ONE_SHOT;
+    static const bool  k_DRIFT;
 };
 
-NTCCFG_TEST_CASE(1)
+NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifyDefaultConstructor)
 {
-    // Test default constructor.
-
     ntca::TimerOptions timerOptions;
 
-    NTCCFG_TEST_EQ(timerOptions.handle(),
+    NTSCFG_TEST_EQ(timerOptions.handle(),
                    reinterpret_cast<void*>(static_cast<bsl::intptr_t>(0)));
-    NTCCFG_TEST_EQ(timerOptions.id(), 0);
-    NTCCFG_TEST_EQ(timerOptions.oneShot(), false);
-    NTCCFG_TEST_EQ(timerOptions.drift(), false);
+    NTSCFG_TEST_EQ(timerOptions.id(), 0);
+    NTSCFG_TEST_EQ(timerOptions.oneShot(), false);
+    NTSCFG_TEST_EQ(timerOptions.drift(), false);
 
-    NTCCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE),
+    NTSCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE),
                    true);
-    NTCCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED),
+    NTSCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED),
                    true);
-    NTCCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
+    NTSCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
                    true);
 }
 
-NTCCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifyCopyConstructor)
 {
-    // Test copy constructor.
-
     // Define other timer options that does not have the same value as a
     // default-constructed timer options.
 
     ntca::TimerOptions otherTimerOptions;
 
-    otherTimerOptions.setHandle(test::k_HANDLE);
-    otherTimerOptions.setId(test::k_ID);
-    otherTimerOptions.setOneShot(test::k_ONE_SHOT);
-    otherTimerOptions.setDrift(test::k_DRIFT);
+    otherTimerOptions.setHandle((void*)k_HANDLE);
+    otherTimerOptions.setId(k_ID);
+    otherTimerOptions.setOneShot(k_ONE_SHOT);
+    otherTimerOptions.setDrift(k_DRIFT);
     otherTimerOptions.hideEvent(ntca::TimerEventType::e_CANCELED);
     otherTimerOptions.hideEvent(ntca::TimerEventType::e_CLOSED);
 
     // Ensure the other timer options has the expected value.
 
-    NTCCFG_TEST_EQ(otherTimerOptions.handle(), test::k_HANDLE);
-    NTCCFG_TEST_EQ(otherTimerOptions.id(), test::k_ID);
-    NTCCFG_TEST_EQ(otherTimerOptions.oneShot(), test::k_ONE_SHOT);
-    NTCCFG_TEST_EQ(otherTimerOptions.drift(), test::k_DRIFT);
+    NTSCFG_TEST_EQ(otherTimerOptions.handle(), k_HANDLE);
+    NTSCFG_TEST_EQ(otherTimerOptions.id(), k_ID);
+    NTSCFG_TEST_EQ(otherTimerOptions.oneShot(), k_ONE_SHOT);
+    NTSCFG_TEST_EQ(otherTimerOptions.drift(), k_DRIFT);
 
-    NTCCFG_TEST_EQ(
+    NTSCFG_TEST_EQ(
         otherTimerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE),
         true);
-    NTCCFG_TEST_EQ(
+    NTSCFG_TEST_EQ(
         otherTimerOptions.wantEvent(ntca::TimerEventType::e_CANCELED),
         false);
-    NTCCFG_TEST_EQ(otherTimerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
+    NTSCFG_TEST_EQ(otherTimerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
                    false);
 
     // Copy-construct a timer options from the other timer options.
@@ -107,65 +141,63 @@ NTCCFG_TEST_CASE(2)
 
     // Ensure the copy-constructed timer options has the expected value.
 
-    NTCCFG_TEST_EQ(timerOptions->handle(), test::k_HANDLE);
-    NTCCFG_TEST_EQ(timerOptions->id(), test::k_ID);
-    NTCCFG_TEST_EQ(timerOptions->oneShot(), test::k_ONE_SHOT);
-    NTCCFG_TEST_EQ(timerOptions->drift(), test::k_DRIFT);
+    NTSCFG_TEST_EQ(timerOptions->handle(), k_HANDLE);
+    NTSCFG_TEST_EQ(timerOptions->id(), k_ID);
+    NTSCFG_TEST_EQ(timerOptions->oneShot(), k_ONE_SHOT);
+    NTSCFG_TEST_EQ(timerOptions->drift(), k_DRIFT);
 
-    NTCCFG_TEST_EQ(timerOptions->wantEvent(ntca::TimerEventType::e_DEADLINE),
+    NTSCFG_TEST_EQ(timerOptions->wantEvent(ntca::TimerEventType::e_DEADLINE),
                    true);
-    NTCCFG_TEST_EQ(timerOptions->wantEvent(ntca::TimerEventType::e_CANCELED),
+    NTSCFG_TEST_EQ(timerOptions->wantEvent(ntca::TimerEventType::e_CANCELED),
                    false);
-    NTCCFG_TEST_EQ(timerOptions->wantEvent(ntca::TimerEventType::e_CLOSED),
+    NTSCFG_TEST_EQ(timerOptions->wantEvent(ntca::TimerEventType::e_CLOSED),
                    false);
 
     // Ensure the other time options still has its original value.
 
-    NTCCFG_TEST_EQ(otherTimerOptions.handle(), test::k_HANDLE);
-    NTCCFG_TEST_EQ(otherTimerOptions.id(), test::k_ID);
-    NTCCFG_TEST_EQ(otherTimerOptions.oneShot(), test::k_ONE_SHOT);
-    NTCCFG_TEST_EQ(otherTimerOptions.drift(), test::k_DRIFT);
+    NTSCFG_TEST_EQ(otherTimerOptions.handle(), k_HANDLE);
+    NTSCFG_TEST_EQ(otherTimerOptions.id(), k_ID);
+    NTSCFG_TEST_EQ(otherTimerOptions.oneShot(), k_ONE_SHOT);
+    NTSCFG_TEST_EQ(otherTimerOptions.drift(), k_DRIFT);
 
-    NTCCFG_TEST_EQ(
+    NTSCFG_TEST_EQ(
         otherTimerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE),
         true);
-    NTCCFG_TEST_EQ(
+    NTSCFG_TEST_EQ(
         otherTimerOptions.wantEvent(ntca::TimerEventType::e_CANCELED),
         false);
-    NTCCFG_TEST_EQ(otherTimerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
+    NTSCFG_TEST_EQ(otherTimerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
                    false);
 }
 
-NTCCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifyMoveConstructor)
 {
-    // Test move constructor.
-
     // Define other timer options that does not have the same value as a
     // default-constructed timer options.
 
     ntca::TimerOptions otherTimerOptions;
 
-    otherTimerOptions.setHandle(test::k_HANDLE);
-    otherTimerOptions.setId(test::k_ID);
-    otherTimerOptions.setOneShot(test::k_ONE_SHOT);
-    otherTimerOptions.setDrift(test::k_DRIFT);
+    otherTimerOptions.setHandle((void*)k_HANDLE);
+    otherTimerOptions.setId(k_ID);
+    otherTimerOptions.setOneShot(k_ONE_SHOT);
+    otherTimerOptions.setDrift(k_DRIFT);
     otherTimerOptions.hideEvent(ntca::TimerEventType::e_CANCELED);
     otherTimerOptions.hideEvent(ntca::TimerEventType::e_CLOSED);
 
     // Ensure the other timer options has the expected value.
 
-    NTCCFG_TEST_EQ(otherTimerOptions.handle(), test::k_HANDLE);
-    NTCCFG_TEST_EQ(otherTimerOptions.id(), test::k_ID);
-    NTCCFG_TEST_EQ(otherTimerOptions.oneShot(), test::k_ONE_SHOT);
-    NTCCFG_TEST_EQ(otherTimerOptions.drift(), test::k_DRIFT);
+    NTSCFG_TEST_EQ(otherTimerOptions.handle(), k_HANDLE);
+    NTSCFG_TEST_EQ(otherTimerOptions.id(), k_ID);
+    NTSCFG_TEST_EQ(otherTimerOptions.oneShot(), k_ONE_SHOT);
+    NTSCFG_TEST_EQ(otherTimerOptions.drift(), k_DRIFT);
 
-    NTCCFG_TEST_EQ(
+    NTSCFG_TEST_EQ(
         otherTimerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE),
         true);
-    NTCCFG_TEST_EQ(
+    NTSCFG_TEST_EQ(
         otherTimerOptions.wantEvent(ntca::TimerEventType::e_CANCELED),
         false);
-    NTCCFG_TEST_EQ(otherTimerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
+    NTSCFG_TEST_EQ(otherTimerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
                    false);
 
     // Move-construct a timer options from the other timer options.
@@ -176,65 +208,63 @@ NTCCFG_TEST_CASE(3)
 
     // Ensure the move-constructed timer options has the expected value.
 
-    NTCCFG_TEST_EQ(timerOptions->handle(), test::k_HANDLE);
-    NTCCFG_TEST_EQ(timerOptions->id(), test::k_ID);
-    NTCCFG_TEST_EQ(timerOptions->oneShot(), test::k_ONE_SHOT);
-    NTCCFG_TEST_EQ(timerOptions->drift(), test::k_DRIFT);
+    NTSCFG_TEST_EQ(timerOptions->handle(), k_HANDLE);
+    NTSCFG_TEST_EQ(timerOptions->id(), k_ID);
+    NTSCFG_TEST_EQ(timerOptions->oneShot(), k_ONE_SHOT);
+    NTSCFG_TEST_EQ(timerOptions->drift(), k_DRIFT);
 
-    NTCCFG_TEST_EQ(timerOptions->wantEvent(ntca::TimerEventType::e_DEADLINE),
+    NTSCFG_TEST_EQ(timerOptions->wantEvent(ntca::TimerEventType::e_DEADLINE),
                    true);
-    NTCCFG_TEST_EQ(timerOptions->wantEvent(ntca::TimerEventType::e_CANCELED),
+    NTSCFG_TEST_EQ(timerOptions->wantEvent(ntca::TimerEventType::e_CANCELED),
                    false);
-    NTCCFG_TEST_EQ(timerOptions->wantEvent(ntca::TimerEventType::e_CLOSED),
+    NTSCFG_TEST_EQ(timerOptions->wantEvent(ntca::TimerEventType::e_CLOSED),
                    false);
 
     // Ensure the other time options still has its original value.
 
-    NTCCFG_TEST_EQ(otherTimerOptions.handle(), test::k_HANDLE);
-    NTCCFG_TEST_EQ(otherTimerOptions.id(), test::k_ID);
-    NTCCFG_TEST_EQ(otherTimerOptions.oneShot(), test::k_ONE_SHOT);
-    NTCCFG_TEST_EQ(otherTimerOptions.drift(), test::k_DRIFT);
+    NTSCFG_TEST_EQ(otherTimerOptions.handle(), k_HANDLE);
+    NTSCFG_TEST_EQ(otherTimerOptions.id(), k_ID);
+    NTSCFG_TEST_EQ(otherTimerOptions.oneShot(), k_ONE_SHOT);
+    NTSCFG_TEST_EQ(otherTimerOptions.drift(), k_DRIFT);
 
-    NTCCFG_TEST_EQ(
+    NTSCFG_TEST_EQ(
         otherTimerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE),
         true);
-    NTCCFG_TEST_EQ(
+    NTSCFG_TEST_EQ(
         otherTimerOptions.wantEvent(ntca::TimerEventType::e_CANCELED),
         false);
-    NTCCFG_TEST_EQ(otherTimerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
+    NTSCFG_TEST_EQ(otherTimerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
                    false);
 }
 
-NTCCFG_TEST_CASE(4)
+NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifyCopyAssignmentOperator)
 {
-    // Test assignment operator.
-
     // Define other timer options that does not have the same value as a
     // default-constructed timer options.
 
     ntca::TimerOptions otherTimerOptions;
 
-    otherTimerOptions.setHandle(test::k_HANDLE);
-    otherTimerOptions.setId(test::k_ID);
-    otherTimerOptions.setOneShot(test::k_ONE_SHOT);
-    otherTimerOptions.setDrift(test::k_DRIFT);
+    otherTimerOptions.setHandle((void*)k_HANDLE);
+    otherTimerOptions.setId(k_ID);
+    otherTimerOptions.setOneShot(k_ONE_SHOT);
+    otherTimerOptions.setDrift(k_DRIFT);
     otherTimerOptions.hideEvent(ntca::TimerEventType::e_CANCELED);
     otherTimerOptions.hideEvent(ntca::TimerEventType::e_CLOSED);
 
     // Ensure the other timer options has the expected value.
 
-    NTCCFG_TEST_EQ(otherTimerOptions.handle(), test::k_HANDLE);
-    NTCCFG_TEST_EQ(otherTimerOptions.id(), test::k_ID);
-    NTCCFG_TEST_EQ(otherTimerOptions.oneShot(), test::k_ONE_SHOT);
-    NTCCFG_TEST_EQ(otherTimerOptions.drift(), test::k_DRIFT);
+    NTSCFG_TEST_EQ(otherTimerOptions.handle(), k_HANDLE);
+    NTSCFG_TEST_EQ(otherTimerOptions.id(), k_ID);
+    NTSCFG_TEST_EQ(otherTimerOptions.oneShot(), k_ONE_SHOT);
+    NTSCFG_TEST_EQ(otherTimerOptions.drift(), k_DRIFT);
 
-    NTCCFG_TEST_EQ(
+    NTSCFG_TEST_EQ(
         otherTimerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE),
         true);
-    NTCCFG_TEST_EQ(
+    NTSCFG_TEST_EQ(
         otherTimerOptions.wantEvent(ntca::TimerEventType::e_CANCELED),
         false);
-    NTCCFG_TEST_EQ(otherTimerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
+    NTSCFG_TEST_EQ(otherTimerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
                    false);
 
     // Assign the other timer options to the timer options.
@@ -244,65 +274,63 @@ NTCCFG_TEST_CASE(4)
 
     // Ensure the copy-constructed timer options has the expected value.
 
-    NTCCFG_TEST_EQ(timerOptions.handle(), test::k_HANDLE);
-    NTCCFG_TEST_EQ(timerOptions.id(), test::k_ID);
-    NTCCFG_TEST_EQ(timerOptions.oneShot(), test::k_ONE_SHOT);
-    NTCCFG_TEST_EQ(timerOptions.drift(), test::k_DRIFT);
+    NTSCFG_TEST_EQ(timerOptions.handle(), k_HANDLE);
+    NTSCFG_TEST_EQ(timerOptions.id(), k_ID);
+    NTSCFG_TEST_EQ(timerOptions.oneShot(), k_ONE_SHOT);
+    NTSCFG_TEST_EQ(timerOptions.drift(), k_DRIFT);
 
-    NTCCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE),
+    NTSCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE),
                    true);
-    NTCCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED),
+    NTSCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED),
                    false);
-    NTCCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
+    NTSCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
                    false);
 
     // Ensure the other time options still has its original value.
 
-    NTCCFG_TEST_EQ(otherTimerOptions.handle(), test::k_HANDLE);
-    NTCCFG_TEST_EQ(otherTimerOptions.id(), test::k_ID);
-    NTCCFG_TEST_EQ(otherTimerOptions.oneShot(), test::k_ONE_SHOT);
-    NTCCFG_TEST_EQ(otherTimerOptions.drift(), test::k_DRIFT);
+    NTSCFG_TEST_EQ(otherTimerOptions.handle(), k_HANDLE);
+    NTSCFG_TEST_EQ(otherTimerOptions.id(), k_ID);
+    NTSCFG_TEST_EQ(otherTimerOptions.oneShot(), k_ONE_SHOT);
+    NTSCFG_TEST_EQ(otherTimerOptions.drift(), k_DRIFT);
 
-    NTCCFG_TEST_EQ(
+    NTSCFG_TEST_EQ(
         otherTimerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE),
         true);
-    NTCCFG_TEST_EQ(
+    NTSCFG_TEST_EQ(
         otherTimerOptions.wantEvent(ntca::TimerEventType::e_CANCELED),
         false);
-    NTCCFG_TEST_EQ(otherTimerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
+    NTSCFG_TEST_EQ(otherTimerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
                    false);
 }
 
-NTCCFG_TEST_CASE(5)
+NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifyMoveAssignmentOperator)
 {
-    // Test move-assignment operator.
-
     // Define other timer options that does not have the same value as a
     // default-constructed timer options.
 
     ntca::TimerOptions otherTimerOptions;
 
-    otherTimerOptions.setHandle(test::k_HANDLE);
-    otherTimerOptions.setId(test::k_ID);
-    otherTimerOptions.setOneShot(test::k_ONE_SHOT);
-    otherTimerOptions.setDrift(test::k_DRIFT);
+    otherTimerOptions.setHandle((void*)k_HANDLE);
+    otherTimerOptions.setId(k_ID);
+    otherTimerOptions.setOneShot(k_ONE_SHOT);
+    otherTimerOptions.setDrift(k_DRIFT);
     otherTimerOptions.hideEvent(ntca::TimerEventType::e_CANCELED);
     otherTimerOptions.hideEvent(ntca::TimerEventType::e_CLOSED);
 
     // Ensure the other timer options has the expected value.
 
-    NTCCFG_TEST_EQ(otherTimerOptions.handle(), test::k_HANDLE);
-    NTCCFG_TEST_EQ(otherTimerOptions.id(), test::k_ID);
-    NTCCFG_TEST_EQ(otherTimerOptions.oneShot(), test::k_ONE_SHOT);
-    NTCCFG_TEST_EQ(otherTimerOptions.drift(), test::k_DRIFT);
+    NTSCFG_TEST_EQ(otherTimerOptions.handle(), k_HANDLE);
+    NTSCFG_TEST_EQ(otherTimerOptions.id(), k_ID);
+    NTSCFG_TEST_EQ(otherTimerOptions.oneShot(), k_ONE_SHOT);
+    NTSCFG_TEST_EQ(otherTimerOptions.drift(), k_DRIFT);
 
-    NTCCFG_TEST_EQ(
+    NTSCFG_TEST_EQ(
         otherTimerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE),
         true);
-    NTCCFG_TEST_EQ(
+    NTSCFG_TEST_EQ(
         otherTimerOptions.wantEvent(ntca::TimerEventType::e_CANCELED),
         false);
-    NTCCFG_TEST_EQ(otherTimerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
+    NTSCFG_TEST_EQ(otherTimerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
                    false);
 
     // Move-assign the other timer options to the timer options.
@@ -312,63 +340,61 @@ NTCCFG_TEST_CASE(5)
 
     // Ensure the move-constructed timer options has the expected value.
 
-    NTCCFG_TEST_EQ(timerOptions.handle(), test::k_HANDLE);
-    NTCCFG_TEST_EQ(timerOptions.id(), test::k_ID);
-    NTCCFG_TEST_EQ(timerOptions.oneShot(), test::k_ONE_SHOT);
-    NTCCFG_TEST_EQ(timerOptions.drift(), test::k_DRIFT);
+    NTSCFG_TEST_EQ(timerOptions.handle(), k_HANDLE);
+    NTSCFG_TEST_EQ(timerOptions.id(), k_ID);
+    NTSCFG_TEST_EQ(timerOptions.oneShot(), k_ONE_SHOT);
+    NTSCFG_TEST_EQ(timerOptions.drift(), k_DRIFT);
 
-    NTCCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE),
+    NTSCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE),
                    true);
-    NTCCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED),
+    NTSCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED),
                    false);
-    NTCCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
+    NTSCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
                    false);
 
     // Ensure the other time options still has its original value.
 
-    NTCCFG_TEST_EQ(otherTimerOptions.handle(), test::k_HANDLE);
-    NTCCFG_TEST_EQ(otherTimerOptions.id(), test::k_ID);
-    NTCCFG_TEST_EQ(otherTimerOptions.oneShot(), test::k_ONE_SHOT);
-    NTCCFG_TEST_EQ(otherTimerOptions.drift(), test::k_DRIFT);
+    NTSCFG_TEST_EQ(otherTimerOptions.handle(), k_HANDLE);
+    NTSCFG_TEST_EQ(otherTimerOptions.id(), k_ID);
+    NTSCFG_TEST_EQ(otherTimerOptions.oneShot(), k_ONE_SHOT);
+    NTSCFG_TEST_EQ(otherTimerOptions.drift(), k_DRIFT);
 
-    NTCCFG_TEST_EQ(
+    NTSCFG_TEST_EQ(
         otherTimerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE),
         true);
-    NTCCFG_TEST_EQ(
+    NTSCFG_TEST_EQ(
         otherTimerOptions.wantEvent(ntca::TimerEventType::e_CANCELED),
         false);
-    NTCCFG_TEST_EQ(otherTimerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
+    NTSCFG_TEST_EQ(otherTimerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
                    false);
 }
 
-NTCCFG_TEST_CASE(6)
+NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifyReset)
 {
-    // Test 'reset'.
-
     // Define other timer options that does not have the same value as a
     // default-constructed timer options.
 
     ntca::TimerOptions timerOptions;
 
-    timerOptions.setHandle(test::k_HANDLE);
-    timerOptions.setId(test::k_ID);
-    timerOptions.setOneShot(test::k_ONE_SHOT);
-    timerOptions.setDrift(test::k_DRIFT);
+    timerOptions.setHandle((void*)k_HANDLE);
+    timerOptions.setId(k_ID);
+    timerOptions.setOneShot(k_ONE_SHOT);
+    timerOptions.setDrift(k_DRIFT);
     timerOptions.hideEvent(ntca::TimerEventType::e_CANCELED);
     timerOptions.hideEvent(ntca::TimerEventType::e_CLOSED);
 
     // Ensure the other timer options has the expected value.
 
-    NTCCFG_TEST_EQ(timerOptions.handle(), test::k_HANDLE);
-    NTCCFG_TEST_EQ(timerOptions.id(), test::k_ID);
-    NTCCFG_TEST_EQ(timerOptions.oneShot(), test::k_ONE_SHOT);
-    NTCCFG_TEST_EQ(timerOptions.drift(), test::k_DRIFT);
+    NTSCFG_TEST_EQ(timerOptions.handle(), k_HANDLE);
+    NTSCFG_TEST_EQ(timerOptions.id(), k_ID);
+    NTSCFG_TEST_EQ(timerOptions.oneShot(), k_ONE_SHOT);
+    NTSCFG_TEST_EQ(timerOptions.drift(), k_DRIFT);
 
-    NTCCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE),
+    NTSCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE),
                    true);
-    NTCCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED),
+    NTSCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED),
                    false);
-    NTCCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
+    NTSCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
                    false);
 
     // Reset the value of the timer options to its value upon default
@@ -378,147 +404,134 @@ NTCCFG_TEST_CASE(6)
 
     // Ensure the timer options has the expected value.
 
-    NTCCFG_TEST_EQ(timerOptions.handle(),
+    NTSCFG_TEST_EQ(timerOptions.handle(),
                    reinterpret_cast<void*>(static_cast<bsl::intptr_t>(0)));
-    NTCCFG_TEST_EQ(timerOptions.id(), 0);
-    NTCCFG_TEST_EQ(timerOptions.oneShot(), false);
-    NTCCFG_TEST_EQ(timerOptions.drift(), false);
+    NTSCFG_TEST_EQ(timerOptions.id(), 0);
+    NTSCFG_TEST_EQ(timerOptions.oneShot(), false);
+    NTSCFG_TEST_EQ(timerOptions.drift(), false);
 
-    NTCCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE),
+    NTSCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE),
                    true);
-    NTCCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED),
+    NTSCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED),
                    true);
-    NTCCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
+    NTSCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
                    true);
 }
 
-NTCCFG_TEST_CASE(7)
+NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifyMove)
 {
-    // Test 'move'.
 }
 
-NTCCFG_TEST_CASE(8)
+NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifySetHandle)
 {
-    // Test 'setHandle'.
-
     ntca::TimerOptions timerOptions;
 
-    NTCCFG_TEST_EQ(timerOptions.handle(),
+    NTSCFG_TEST_EQ(timerOptions.handle(),
                    reinterpret_cast<void*>(static_cast<bsl::intptr_t>(0)));
 
-    timerOptions.setHandle(test::k_HANDLE);
+    timerOptions.setHandle((void*)k_HANDLE);
 
-    NTCCFG_TEST_EQ(timerOptions.handle(), test::k_HANDLE);
+    NTSCFG_TEST_EQ(timerOptions.handle(), k_HANDLE);
 }
 
-NTCCFG_TEST_CASE(9)
+NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifySetId)
 {
-    // Test 'setId'.
-
     ntca::TimerOptions timerOptions;
 
-    NTCCFG_TEST_EQ(timerOptions.id(), 0);
+    NTSCFG_TEST_EQ(timerOptions.id(), 0);
 
-    timerOptions.setId(test::k_ID);
+    timerOptions.setId(k_ID);
 
-    NTCCFG_TEST_EQ(timerOptions.id(), test::k_ID);
+    NTSCFG_TEST_EQ(timerOptions.id(), k_ID);
 }
 
-NTCCFG_TEST_CASE(10)
+NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifySetOneShot)
 {
-    // Test 'setOneShot'.
-
     ntca::TimerOptions timerOptions;
 
-    NTCCFG_TEST_EQ(timerOptions.oneShot(), false);
+    NTSCFG_TEST_EQ(timerOptions.oneShot(), false);
 
-    timerOptions.setOneShot(test::k_ONE_SHOT);
+    timerOptions.setOneShot(k_ONE_SHOT);
 
-    NTCCFG_TEST_EQ(timerOptions.oneShot(), test::k_ONE_SHOT);
+    NTSCFG_TEST_EQ(timerOptions.oneShot(), k_ONE_SHOT);
 }
 
-NTCCFG_TEST_CASE(11)
+NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifySetDrift)
 {
-    // Test 'setDrift'.
-
     ntca::TimerOptions timerOptions;
 
-    NTCCFG_TEST_EQ(timerOptions.drift(), false);
+    NTSCFG_TEST_EQ(timerOptions.drift(), false);
 
-    timerOptions.setDrift(test::k_DRIFT);
+    timerOptions.setDrift(k_DRIFT);
 
-    NTCCFG_TEST_EQ(timerOptions.drift(), test::k_DRIFT);
+    NTSCFG_TEST_EQ(timerOptions.drift(), k_DRIFT);
 }
 
-NTCCFG_TEST_CASE(12)
+NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifyShowEvent)
 {
-    // Test 'showEvent', 'hideEvent', and 'wantEvent'.
-
     ntca::TimerOptions timerOptions;
 
-    NTCCFG_TEST_TRUE(timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE));
-    NTCCFG_TEST_TRUE(timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED));
-    NTCCFG_TEST_TRUE(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED));
+    NTSCFG_TEST_TRUE(timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE));
+    NTSCFG_TEST_TRUE(timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED));
+    NTSCFG_TEST_TRUE(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED));
 
     timerOptions.hideEvent(ntca::TimerEventType::e_DEADLINE);
 
-    NTCCFG_TEST_FALSE(
+    NTSCFG_TEST_FALSE(
         timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE));
-    NTCCFG_TEST_TRUE(timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED));
-    NTCCFG_TEST_TRUE(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED));
+    NTSCFG_TEST_TRUE(timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED));
+    NTSCFG_TEST_TRUE(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED));
 
     timerOptions.hideEvent(ntca::TimerEventType::e_CANCELED);
 
-    NTCCFG_TEST_FALSE(
+    NTSCFG_TEST_FALSE(
         timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE));
-    NTCCFG_TEST_FALSE(
+    NTSCFG_TEST_FALSE(
         timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED));
-    NTCCFG_TEST_TRUE(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED));
+    NTSCFG_TEST_TRUE(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED));
 
     timerOptions.hideEvent(ntca::TimerEventType::e_CLOSED);
 
-    NTCCFG_TEST_FALSE(
+    NTSCFG_TEST_FALSE(
         timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE));
-    NTCCFG_TEST_FALSE(
+    NTSCFG_TEST_FALSE(
         timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED));
-    NTCCFG_TEST_FALSE(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED));
+    NTSCFG_TEST_FALSE(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED));
 
     timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
 
-    NTCCFG_TEST_TRUE(timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE));
-    NTCCFG_TEST_FALSE(
+    NTSCFG_TEST_TRUE(timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE));
+    NTSCFG_TEST_FALSE(
         timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED));
-    NTCCFG_TEST_FALSE(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED));
+    NTSCFG_TEST_FALSE(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED));
 
     timerOptions.showEvent(ntca::TimerEventType::e_CANCELED);
 
-    NTCCFG_TEST_TRUE(timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE));
-    NTCCFG_TEST_TRUE(timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED));
-    NTCCFG_TEST_FALSE(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED));
+    NTSCFG_TEST_TRUE(timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE));
+    NTSCFG_TEST_TRUE(timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED));
+    NTSCFG_TEST_FALSE(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED));
 
     timerOptions.showEvent(ntca::TimerEventType::e_CLOSED);
 
-    NTCCFG_TEST_TRUE(timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE));
-    NTCCFG_TEST_TRUE(timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED));
-    NTCCFG_TEST_TRUE(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED));
+    NTSCFG_TEST_TRUE(timerOptions.wantEvent(ntca::TimerEventType::e_DEADLINE));
+    NTSCFG_TEST_TRUE(timerOptions.wantEvent(ntca::TimerEventType::e_CANCELED));
+    NTSCFG_TEST_TRUE(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED));
 }
 
-NTCCFG_TEST_CASE(13)
+NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifyEquals)
 {
-    // Test 'equals'.
-
-    {
+     {
         ntca::TimerOptions timerOptions;
         ntca::TimerOptions otherTimerOptions;
 
         {
             bool result = timerOptions == otherTimerOptions;
-            NTCCFG_TEST_EQ(result, true);
+            NTSCFG_TEST_EQ(result, true);
         }
 
         {
             bool result = timerOptions != otherTimerOptions;
-            NTCCFG_TEST_EQ(result, false);
+            NTSCFG_TEST_EQ(result, false);
         }
     }
 
@@ -526,36 +539,34 @@ NTCCFG_TEST_CASE(13)
         ntca::TimerOptions timerOptions;
         ntca::TimerOptions otherTimerOptions;
 
-        otherTimerOptions.setHandle(test::k_HANDLE);
-        otherTimerOptions.setId(test::k_ID);
-        otherTimerOptions.setOneShot(test::k_ONE_SHOT);
-        otherTimerOptions.setDrift(test::k_DRIFT);
+        otherTimerOptions.setHandle((void*)k_HANDLE);
+        otherTimerOptions.setId(k_ID);
+        otherTimerOptions.setOneShot(k_ONE_SHOT);
+        otherTimerOptions.setDrift(k_DRIFT);
         otherTimerOptions.hideEvent(ntca::TimerEventType::e_CANCELED);
         otherTimerOptions.hideEvent(ntca::TimerEventType::e_CLOSED);
 
         {
             bool result = timerOptions == otherTimerOptions;
-            NTCCFG_TEST_EQ(result, false);
+            NTSCFG_TEST_EQ(result, false);
         }
 
         {
             bool result = timerOptions != otherTimerOptions;
-            NTCCFG_TEST_EQ(result, true);
+            NTSCFG_TEST_EQ(result, true);
         }
     }
 }
 
-NTCCFG_TEST_CASE(14)
+NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifyLess)
 {
-    // Test 'less'.
-
     {
         ntca::TimerOptions timerOptions;
         ntca::TimerOptions otherTimerOptions;
 
         {
             bool result = timerOptions < otherTimerOptions;
-            NTCCFG_TEST_EQ(result, false);
+            NTSCFG_TEST_EQ(result, false);
         }
     }
 
@@ -563,24 +574,22 @@ NTCCFG_TEST_CASE(14)
         ntca::TimerOptions timerOptions;
         ntca::TimerOptions otherTimerOptions;
 
-        otherTimerOptions.setHandle(test::k_HANDLE);
-        otherTimerOptions.setId(test::k_ID);
-        otherTimerOptions.setOneShot(test::k_ONE_SHOT);
-        otherTimerOptions.setDrift(test::k_DRIFT);
+        otherTimerOptions.setHandle((void*)k_HANDLE);
+        otherTimerOptions.setId(k_ID);
+        otherTimerOptions.setOneShot(k_ONE_SHOT);
+        otherTimerOptions.setDrift(k_DRIFT);
         otherTimerOptions.hideEvent(ntca::TimerEventType::e_CANCELED);
         otherTimerOptions.hideEvent(ntca::TimerEventType::e_CLOSED);
 
         {
             bool result = timerOptions < otherTimerOptions;
-            NTCCFG_TEST_EQ(result, true);
+            NTSCFG_TEST_EQ(result, true);
         }
     }
 }
 
-NTCCFG_TEST_CASE(15)
+NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifyHash)
 {
-    // Test 'hash'.
-
     // Test hash member function with default hash algorithm.
 
     {
@@ -590,24 +599,24 @@ NTCCFG_TEST_CASE(15)
         bsl::size_t h1 = timerOptions.hash();
         bsl::size_t h2 = otherTimerOptions.hash();
 
-        NTCCFG_TEST_EQ(h1, h2);
+        NTSCFG_TEST_EQ(h1, h2);
     }
 
     {
         ntca::TimerOptions timerOptions;
         ntca::TimerOptions otherTimerOptions;
 
-        otherTimerOptions.setHandle(test::k_HANDLE);
-        otherTimerOptions.setId(test::k_ID);
-        otherTimerOptions.setOneShot(test::k_ONE_SHOT);
-        otherTimerOptions.setDrift(test::k_DRIFT);
+        otherTimerOptions.setHandle((void*)k_HANDLE);
+        otherTimerOptions.setId(k_ID);
+        otherTimerOptions.setOneShot(k_ONE_SHOT);
+        otherTimerOptions.setDrift(k_DRIFT);
         otherTimerOptions.hideEvent(ntca::TimerEventType::e_CANCELED);
         otherTimerOptions.hideEvent(ntca::TimerEventType::e_CLOSED);
 
         bsl::size_t h1 = timerOptions.hash();
         bsl::size_t h2 = otherTimerOptions.hash();
 
-        NTCCFG_TEST_NE(h1, h2);
+        NTSCFG_TEST_NE(h1, h2);
     }
 
     // Test hash member function with default hash algorithm.
@@ -619,24 +628,24 @@ NTCCFG_TEST_CASE(15)
         bsl::size_t h1 = timerOptions.hash<bslh::DefaultHashAlgorithm>();
         bsl::size_t h2 = otherTimerOptions.hash<bslh::DefaultHashAlgorithm>();
 
-        NTCCFG_TEST_EQ(h1, h2);
+        NTSCFG_TEST_EQ(h1, h2);
     }
 
     {
         ntca::TimerOptions timerOptions;
         ntca::TimerOptions otherTimerOptions;
 
-        otherTimerOptions.setHandle(test::k_HANDLE);
-        otherTimerOptions.setId(test::k_ID);
-        otherTimerOptions.setOneShot(test::k_ONE_SHOT);
-        otherTimerOptions.setDrift(test::k_DRIFT);
+        otherTimerOptions.setHandle((void*)k_HANDLE);
+        otherTimerOptions.setId(k_ID);
+        otherTimerOptions.setOneShot(k_ONE_SHOT);
+        otherTimerOptions.setDrift(k_DRIFT);
         otherTimerOptions.hideEvent(ntca::TimerEventType::e_CANCELED);
         otherTimerOptions.hideEvent(ntca::TimerEventType::e_CLOSED);
 
         bsl::size_t h1 = timerOptions.hash<bslh::DefaultHashAlgorithm>();
         bsl::size_t h2 = otherTimerOptions.hash<bslh::DefaultHashAlgorithm>();
 
-        NTCCFG_TEST_NE(h1, h2);
+        NTSCFG_TEST_NE(h1, h2);
     }
 
     // Test using bslh::Hash.
@@ -648,37 +657,35 @@ NTCCFG_TEST_CASE(15)
         bsl::size_t h1 = bslh::Hash<>()(timerOptions);
         bsl::size_t h2 = bslh::Hash<>()(otherTimerOptions);
 
-        NTCCFG_TEST_EQ(h1, h2);
+        NTSCFG_TEST_EQ(h1, h2);
     }
 
     {
         ntca::TimerOptions timerOptions;
         ntca::TimerOptions otherTimerOptions;
 
-        otherTimerOptions.setHandle(test::k_HANDLE);
-        otherTimerOptions.setId(test::k_ID);
-        otherTimerOptions.setOneShot(test::k_ONE_SHOT);
-        otherTimerOptions.setDrift(test::k_DRIFT);
+        otherTimerOptions.setHandle((void*)k_HANDLE);
+        otherTimerOptions.setId(k_ID);
+        otherTimerOptions.setOneShot(k_ONE_SHOT);
+        otherTimerOptions.setDrift(k_DRIFT);
         otherTimerOptions.hideEvent(ntca::TimerEventType::e_CANCELED);
         otherTimerOptions.hideEvent(ntca::TimerEventType::e_CLOSED);
 
         bsl::size_t h1 = bslh::Hash<>()(timerOptions);
         bsl::size_t h2 = bslh::Hash<>()(otherTimerOptions);
 
-        NTCCFG_TEST_NE(h1, h2);
+        NTSCFG_TEST_NE(h1, h2);
     }
 }
 
-NTCCFG_TEST_CASE(16)
+NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifyPrint)
 {
-    // Test 'print'.
-
     ntca::TimerOptions timerOptions;
 
     {
         bsl::stringstream ss;
         timerOptions.print(ss, 0, -1);
-        if (NTCCFG_TEST_VERBOSITY) {
+        if (NTSCFG_TEST_VERBOSITY) {
             bsl::cout << "Timer options = " << ss.str() << bsl::endl;
         }
     }
@@ -686,7 +693,7 @@ NTCCFG_TEST_CASE(16)
     {
         bsl::stringstream ss;
         timerOptions.print(ss, 1, 4);
-        if (NTCCFG_TEST_VERBOSITY) {
+        if (NTSCFG_TEST_VERBOSITY) {
             bsl::cout << "Timer options = " << ss.str() << bsl::endl;
         }
     }
@@ -696,17 +703,17 @@ NTCCFG_TEST_CASE(16)
 
     ntca::TimerOptions otherTimerOptions;
 
-    otherTimerOptions.setHandle(test::k_HANDLE);
-    otherTimerOptions.setId(test::k_ID);
-    otherTimerOptions.setOneShot(test::k_ONE_SHOT);
-    otherTimerOptions.setDrift(test::k_DRIFT);
+    otherTimerOptions.setHandle((void*)k_HANDLE);
+    otherTimerOptions.setId(k_ID);
+    otherTimerOptions.setOneShot(k_ONE_SHOT);
+    otherTimerOptions.setDrift(k_DRIFT);
     otherTimerOptions.hideEvent(ntca::TimerEventType::e_CANCELED);
     otherTimerOptions.hideEvent(ntca::TimerEventType::e_CLOSED);
 
     {
         bsl::stringstream ss;
         otherTimerOptions.print(ss, 0, -1);
-        if (NTCCFG_TEST_VERBOSITY) {
+        if (NTSCFG_TEST_VERBOSITY) {
             bsl::cout << "Timer options = " << ss.str() << bsl::endl;
         }
     }
@@ -714,35 +721,18 @@ NTCCFG_TEST_CASE(16)
     {
         bsl::stringstream ss;
         otherTimerOptions.print(ss, 1, 4);
-        if (NTCCFG_TEST_VERBOSITY) {
+        if (NTSCFG_TEST_VERBOSITY) {
             bsl::cout << "Timer options = " << ss.str() << bsl::endl;
         }
     }
 }
 
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);  // Test Default constructor
-    NTCCFG_TEST_REGISTER(2);  // Test copy constructor
-    NTCCFG_TEST_REGISTER(3);  // Test cove constructor
+const void* TimerOptionsTest::k_HANDLE = 
+    reinterpret_cast<void*>(static_cast<bsl::intptr_t>(1));
 
-    NTCCFG_TEST_REGISTER(4);  // Test assignment operator
-    NTCCFG_TEST_REGISTER(5);  // Test move-assignment operator
+const int  TimerOptionsTest::k_ID       = 2;
+const bool TimerOptionsTest::k_ONE_SHOT = true;
+const bool TimerOptionsTest::k_DRIFT    = true;
 
-    NTCCFG_TEST_REGISTER(6);  // Test 'reset'
-    NTCCFG_TEST_REGISTER(7);  // Test 'move'
-
-    NTCCFG_TEST_REGISTER(8);   // Test 'setHandle'
-    NTCCFG_TEST_REGISTER(9);   // Test 'setId'
-    NTCCFG_TEST_REGISTER(10);  // Test 'setOneShot'
-    NTCCFG_TEST_REGISTER(11);  // Test 'setDrift'
-
-    NTCCFG_TEST_REGISTER(
-        12);  // Test 'showEvent', 'hideEvent', and 'wantEvent'
-
-    NTCCFG_TEST_REGISTER(13);  // Test 'equals'
-    NTCCFG_TEST_REGISTER(14);  // Test 'less'
-    NTCCFG_TEST_REGISTER(15);  // Test 'hash'
-    NTCCFG_TEST_REGISTER(16);  // Test 'print'
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntca
+}  // close namespace BloombergLP

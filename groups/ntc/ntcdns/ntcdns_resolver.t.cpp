@@ -13,38 +13,124 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntcdns_resolver_t_cpp, "$Id$ $CSID$")
+
 #include <ntcdns_resolver.h>
 
-#include <ntccfg_test.h>
 #include <ntci_log.h>
-#include <bslmt_semaphore.h>
-
-#include <bdlf_bind.h>
-#include <bdlf_placeholder.h>
-
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bsls_assert.h>
-#include <bsl_iostream.h>
 
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntcdns {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
+// Provide tests for 'ntcdns::Resolver'.
+class ResolverTest
+{
+    static void processGetIpAddressResult(
+        const bsl::shared_ptr<ntci::Resolver>& resolver,
+        const bsl::vector<ntsa::IpAddress>&    ipAddressList,
+        const ntca::GetIpAddressEvent&         event,
+        ntca::ResolverSource::Value            source,
+        bslmt::Semaphore*                      semaphore);
 
-namespace test {
+    static void processGetDomainNameResult(
+        const bsl::shared_ptr<ntci::Resolver>& resolver,
+        const bsl::string&                     domainName,
+        const ntca::GetDomainNameEvent&        event,
+        ntca::ResolverSource::Value            source,
+        bslmt::Semaphore*                      semaphore);
 
-void processGetIpAddressResult(
+    static void processGetPortResult(
+        const bsl::shared_ptr<ntci::Resolver>& resolver,
+        const bsl::vector<ntsa::Port>&         portList,
+        const ntca::GetPortEvent&              event,
+        ntca::ResolverSource::Value            source,
+        bslmt::Semaphore*                      semaphore);
+
+    static void processGetServiceNameResult(
+        const bsl::shared_ptr<ntci::Resolver>& resolver,
+        const bsl::string&                     serviceName,
+        const ntca::GetServiceNameEvent&       event,
+        ntca::ResolverSource::Value            source,
+        bslmt::Semaphore*                      semaphore);
+
+    static void processGetEndpointResult(
+        const bsl::shared_ptr<ntci::Resolver>& resolver,
+        const ntsa::Endpoint&                  endpoint,
+        const ntca::GetEndpointEvent&          event,
+        ntca::ResolverSource::Value            source,
+        bslmt::Semaphore*                      semaphore);
+
+  public:
+    // TODO
+    static void verifyCase1();
+
+    // TODO
+    static void verifyCase2();
+
+    // TODO
+    static void verifyCase3();
+
+    // TODO
+    static void verifyCase4();
+
+    // TODO
+    static void verifyCase5();
+
+    // TODO
+    static void verifyCase6();
+
+    // TODO
+    static void verifyCase7();
+
+    // TODO
+    static void verifyCase8();
+
+    // TODO
+    static void verifyCase9();
+
+    // TODO
+    static void verifyCase10();
+
+    // TODO
+    static void verifyCase11();
+
+    // TODO
+    static void verifyCase12();
+
+    // TODO
+    static void verifyCase13();
+
+    // TODO
+    static void verifyCase14();
+
+    // TODO
+    static void verifyCase15();
+
+    // TODO
+    static void verifyCase16();
+
+    // TODO
+    static void verifyCase17();
+
+    // TODO
+    static void verifyCase18();
+
+    // TODO
+    static void verifyCase19();
+
+    // TODO
+    static void verifyCase20();
+
+    // TODO
+    static void verifyCase21();
+};
+
+void ResolverTest::processGetIpAddressResult(
     const bsl::shared_ptr<ntci::Resolver>& resolver,
     const bsl::vector<ntsa::IpAddress>&    ipAddressList,
     const ntca::GetIpAddressEvent&         event,
@@ -58,7 +144,7 @@ void processGetIpAddressResult(
 
     if (event.type() == ntca::GetIpAddressEventType::e_COMPLETE) {
         if (ipAddressList.size() > 0) {
-            NTCCFG_TEST_EQ(event.context().source(), source);
+            NTSCFG_TEST_EQ(event.context().source(), source);
             for (bsl::size_t i = 0; i < ipAddressList.size(); ++i) {
                 const ntsa::IpAddress& ipAddress = ipAddressList[i];
                 NTCI_LOG_STREAM_INFO << "The domain name '"
@@ -77,7 +163,7 @@ void processGetIpAddressResult(
     semaphore->post();
 }
 
-void processGetDomainNameResult(
+void ResolverTest::processGetDomainNameResult(
     const bsl::shared_ptr<ntci::Resolver>& resolver,
     const bsl::string&                     domainName,
     const ntca::GetDomainNameEvent&        event,
@@ -91,7 +177,7 @@ void processGetDomainNameResult(
 
     if (event.type() == ntca::GetDomainNameEventType::e_COMPLETE) {
         if (!domainName.empty()) {
-            NTCCFG_TEST_EQ(event.context().source(), source);
+            NTSCFG_TEST_EQ(event.context().source(), source);
             NTCI_LOG_STREAM_INFO
                 << "The IP address " << event.context().ipAddress()
                 << " has resolved to the domain name '" << domainName << "'"
@@ -108,11 +194,12 @@ void processGetDomainNameResult(
     semaphore->post();
 }
 
-void processGetPortResult(const bsl::shared_ptr<ntci::Resolver>& resolver,
-                          const bsl::vector<ntsa::Port>&         portList,
-                          const ntca::GetPortEvent&              event,
-                          ntca::ResolverSource::Value            source,
-                          bslmt::Semaphore*                      semaphore)
+void ResolverTest::processGetPortResult(
+    const bsl::shared_ptr<ntci::Resolver>& resolver,
+    const bsl::vector<ntsa::Port>&         portList,
+    const ntca::GetPortEvent&              event,
+    ntca::ResolverSource::Value            source,
+    bslmt::Semaphore*                      semaphore)
 {
     NTCI_LOG_CONTEXT();
 
@@ -121,7 +208,7 @@ void processGetPortResult(const bsl::shared_ptr<ntci::Resolver>& resolver,
 
     if (event.type() == ntca::GetPortEventType::e_COMPLETE) {
         if (portList.size() > 0) {
-            NTCCFG_TEST_EQ(event.context().source(), source);
+            NTSCFG_TEST_EQ(event.context().source(), source);
             for (bsl::size_t i = 0; i < portList.size(); ++i) {
                 ntsa::Port port = portList[i];
                 NTCI_LOG_STREAM_INFO << "The service name '"
@@ -140,7 +227,7 @@ void processGetPortResult(const bsl::shared_ptr<ntci::Resolver>& resolver,
     semaphore->post();
 }
 
-void processGetServiceNameResult(
+void ResolverTest::processGetServiceNameResult(
     const bsl::shared_ptr<ntci::Resolver>& resolver,
     const bsl::string&                     serviceName,
     const ntca::GetServiceNameEvent&       event,
@@ -154,7 +241,7 @@ void processGetServiceNameResult(
 
     if (event.type() == ntca::GetServiceNameEventType::e_COMPLETE) {
         if (!serviceName.empty()) {
-            NTCCFG_TEST_EQ(event.context().source(), source);
+            NTSCFG_TEST_EQ(event.context().source(), source);
             NTCI_LOG_STREAM_INFO << "The port " << event.context().port()
                                  << " has resolved to the service name '"
                                  << serviceName << "'" << NTCI_LOG_STREAM_END;
@@ -169,11 +256,12 @@ void processGetServiceNameResult(
     semaphore->post();
 }
 
-void processGetEndpointResult(const bsl::shared_ptr<ntci::Resolver>& resolver,
-                              const ntsa::Endpoint&                  endpoint,
-                              const ntca::GetEndpointEvent&          event,
-                              ntca::ResolverSource::Value            source,
-                              bslmt::Semaphore*                      semaphore)
+void ResolverTest::processGetEndpointResult(
+    const bsl::shared_ptr<ntci::Resolver>& resolver,
+    const ntsa::Endpoint&                  endpoint,
+    const ntca::GetEndpointEvent&          event,
+    ntca::ResolverSource::Value            source,
+    bslmt::Semaphore*                      semaphore)
 {
     NTCI_LOG_CONTEXT();
 
@@ -181,7 +269,7 @@ void processGetEndpointResult(const bsl::shared_ptr<ntci::Resolver>& resolver,
                           << NTCI_LOG_STREAM_END;
 
     if (event.type() == ntca::GetEndpointEventType::e_COMPLETE) {
-        NTCCFG_TEST_EQ(event.context().source(), source);
+        NTSCFG_TEST_EQ(event.context().source(), source);
         NTCI_LOG_STREAM_INFO
             << "The authority '" << event.context().authority()
             << "' has resolved to " << endpoint << NTCI_LOG_STREAM_END;
@@ -190,13 +278,11 @@ void processGetEndpointResult(const bsl::shared_ptr<ntci::Resolver>& resolver,
     semaphore->post();
 }
 
-}  // close namespace test
-
 //
 // Test overrides.
 //
 
-NTCCFG_TEST_CASE(1)
+NTSCFG_TEST_FUNCTION(ntcdns::ResolverTest::verifyCase1)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -208,78 +294,75 @@ NTCCFG_TEST_CASE(1)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        // Define a resolver configuration with the DNS client disabled.
+    // Define a resolver configuration with the DNS client disabled.
 
-        ntca::ResolverConfig resolverConfig;
-        resolverConfig.setClientEnabled(false);
-        resolverConfig.setHostDatabaseEnabled(false);
-        resolverConfig.setPortDatabaseEnabled(false);
-        resolverConfig.setPositiveCacheEnabled(false);
-        resolverConfig.setNegativeCacheEnabled(false);
-        resolverConfig.setSystemEnabled(false);
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setHostDatabaseEnabled(false);
+    resolverConfig.setPortDatabaseEnabled(false);
+    resolverConfig.setPositiveCacheEnabled(false);
+    resolverConfig.setNegativeCacheEnabled(false);
+    resolverConfig.setSystemEnabled(false);
 
-        // Create a start a resolver.
+    // Create a start a resolver.
 
-        bsl::shared_ptr<ntcdns::Resolver> resolver;
-        resolver.createInplace(&ta, resolverConfig, &ta);
+    bsl::shared_ptr<ntcdns::Resolver> resolver;
+    resolver.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           resolverConfig,
+                           NTSCFG_TEST_ALLOCATOR);
 
-        error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->start();
+    NTSCFG_TEST_FALSE(error);
 
-        // Set overrides.
+    // Set overrides.
 
-        error = resolver->addIpAddress("test.example.net",
-                                       ntsa::IpAddress("192.168.0.100"));
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->addIpAddress("test.example.net",
+                                   ntsa::IpAddress("192.168.0.100"));
+    NTSCFG_TEST_FALSE(error);
 
-        // Create the callback.
+    // Create the callback.
 
-        bslmt::Semaphore semaphore;
+    bslmt::Semaphore semaphore;
 
-        ntci::GetIpAddressCallback callback =
-            resolver->createGetIpAddressCallback(
-                bdlf::BindUtil::bind(&test::processGetIpAddressResult,
-                                     bdlf::PlaceHolders::_1,
-                                     bdlf::PlaceHolders::_2,
-                                     bdlf::PlaceHolders::_3,
-                                     ntca::ResolverSource::e_OVERRIDE,
-                                     &semaphore),
-                &ta);
+    ntci::GetIpAddressCallback callback = resolver->createGetIpAddressCallback(
+        bdlf::BindUtil::bind(&ResolverTest::processGetIpAddressResult,
+                             bdlf::PlaceHolders::_1,
+                             bdlf::PlaceHolders::_2,
+                             bdlf::PlaceHolders::_3,
+                             ntca::ResolverSource::e_OVERRIDE,
+                             &semaphore),
+        NTSCFG_TEST_ALLOCATOR);
 
-        // Define the options.
+    // Define the options.
 
-        ntca::GetIpAddressOptions options;
-        options.setIpAddressType(ntsa::IpAddressType::e_V4);
+    ntca::GetIpAddressOptions options;
+    options.setIpAddressType(ntsa::IpAddressType::e_V4);
 
-        // Get the IP addresses assigned to "test.example.net".
+    // Get the IP addresses assigned to "test.example.net".
 
-        error = resolver->getIpAddress("test.example.net", options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getIpAddress("test.example.net", options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Get the IP addresses assigned to "test.example.net".
+    // Get the IP addresses assigned to "test.example.net".
 
-        error = resolver->getIpAddress("test.example.net", options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getIpAddress("test.example.net", options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Stop the resolver.
+    // Stop the resolver.
 
-        callback.reset();
+    callback.reset();
 
-        resolver->shutdown();
-        resolver->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    resolver->shutdown();
+    resolver->linger();
 
 #endif
 }
 
-NTCCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntcdns::ResolverTest::verifyCase2)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -291,81 +374,79 @@ NTCCFG_TEST_CASE(2)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        // Define a resolver configuration with the DNS client disabled.
+    // Define a resolver configuration with the DNS client disabled.
 
-        ntca::ResolverConfig resolverConfig;
-        resolverConfig.setClientEnabled(false);
-        resolverConfig.setHostDatabaseEnabled(false);
-        resolverConfig.setPortDatabaseEnabled(false);
-        resolverConfig.setPositiveCacheEnabled(false);
-        resolverConfig.setNegativeCacheEnabled(false);
-        resolverConfig.setSystemEnabled(false);
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setHostDatabaseEnabled(false);
+    resolverConfig.setPortDatabaseEnabled(false);
+    resolverConfig.setPositiveCacheEnabled(false);
+    resolverConfig.setNegativeCacheEnabled(false);
+    resolverConfig.setSystemEnabled(false);
 
-        // Create a start a resolver.
+    // Create a start a resolver.
 
-        bsl::shared_ptr<ntcdns::Resolver> resolver;
-        resolver.createInplace(&ta, resolverConfig, &ta);
+    bsl::shared_ptr<ntcdns::Resolver> resolver;
+    resolver.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           resolverConfig,
+                           NTSCFG_TEST_ALLOCATOR);
 
-        error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->start();
+    NTSCFG_TEST_FALSE(error);
 
-        // Set overrides.
+    // Set overrides.
 
-        error = resolver->addIpAddress("test.example.net",
-                                       ntsa::IpAddress("192.168.0.100"));
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->addIpAddress("test.example.net",
+                                   ntsa::IpAddress("192.168.0.100"));
+    NTSCFG_TEST_FALSE(error);
 
-        // Create the callback.
+    // Create the callback.
 
-        bslmt::Semaphore semaphore;
+    bslmt::Semaphore semaphore;
 
-        ntci::GetDomainNameCallback callback =
-            resolver->createGetDomainNameCallback(
-                bdlf::BindUtil::bind(&test::processGetDomainNameResult,
-                                     bdlf::PlaceHolders::_1,
-                                     bdlf::PlaceHolders::_2,
-                                     bdlf::PlaceHolders::_3,
-                                     ntca::ResolverSource::e_OVERRIDE,
-                                     &semaphore),
-                &ta);
+    ntci::GetDomainNameCallback callback =
+        resolver->createGetDomainNameCallback(
+            bdlf::BindUtil::bind(&ResolverTest::processGetDomainNameResult,
+                                 bdlf::PlaceHolders::_1,
+                                 bdlf::PlaceHolders::_2,
+                                 bdlf::PlaceHolders::_3,
+                                 ntca::ResolverSource::e_OVERRIDE,
+                                 &semaphore),
+            NTSCFG_TEST_ALLOCATOR);
 
-        // Define the options.
+    // Define the options.
 
-        ntca::GetDomainNameOptions options;
+    ntca::GetDomainNameOptions options;
 
-        // Get the domain name to which "192.168.0.100" is assigned.
+    // Get the domain name to which "192.168.0.100" is assigned.
 
-        error = resolver->getDomainName(ntsa::IpAddress("192.168.0.100"),
-                                        options,
-                                        callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getDomainName(ntsa::IpAddress("192.168.0.100"),
+                                    options,
+                                    callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Get the domain name to which "192.168.0.100" is assigned.
+    // Get the domain name to which "192.168.0.100" is assigned.
 
-        error = resolver->getDomainName(ntsa::IpAddress("192.168.0.100"),
-                                        options,
-                                        callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getDomainName(ntsa::IpAddress("192.168.0.100"),
+                                    options,
+                                    callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Stop the resolver.
+    // Stop the resolver.
 
-        callback.reset();
+    callback.reset();
 
-        resolver->shutdown();
-        resolver->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    resolver->shutdown();
+    resolver->linger();
 
 #endif
 }
 
-NTCCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntcdns::ResolverTest::verifyCase3)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -377,78 +458,75 @@ NTCCFG_TEST_CASE(3)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        // Define a resolver configuration with the DNS client disabled.
+    // Define a resolver configuration with the DNS client disabled.
 
-        ntca::ResolverConfig resolverConfig;
-        resolverConfig.setClientEnabled(false);
-        resolverConfig.setHostDatabaseEnabled(false);
-        resolverConfig.setPortDatabaseEnabled(false);
-        resolverConfig.setPositiveCacheEnabled(false);
-        resolverConfig.setNegativeCacheEnabled(false);
-        resolverConfig.setSystemEnabled(false);
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setHostDatabaseEnabled(false);
+    resolverConfig.setPortDatabaseEnabled(false);
+    resolverConfig.setPositiveCacheEnabled(false);
+    resolverConfig.setNegativeCacheEnabled(false);
+    resolverConfig.setSystemEnabled(false);
 
-        // Create a start a resolver.
+    // Create a start a resolver.
 
-        bsl::shared_ptr<ntcdns::Resolver> resolver;
-        resolver.createInplace(&ta, resolverConfig, &ta);
+    bsl::shared_ptr<ntcdns::Resolver> resolver;
+    resolver.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           resolverConfig,
+                           NTSCFG_TEST_ALLOCATOR);
 
-        error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->start();
+    NTSCFG_TEST_FALSE(error);
 
-        // Set overrides.
+    // Set overrides.
 
-        error = resolver->addPort("ntsp",
-                                  6245,
-                                  ntsa::Transport::e_TCP_IPV4_STREAM);
-        NTCCFG_TEST_FALSE(error);
+    error =
+        resolver->addPort("ntsp", 6245, ntsa::Transport::e_TCP_IPV4_STREAM);
+    NTSCFG_TEST_FALSE(error);
 
-        // Create the callback.
+    // Create the callback.
 
-        bslmt::Semaphore semaphore;
+    bslmt::Semaphore semaphore;
 
-        ntci::GetPortCallback callback = resolver->createGetPortCallback(
-            bdlf::BindUtil::bind(&test::processGetPortResult,
-                                 bdlf::PlaceHolders::_1,
-                                 bdlf::PlaceHolders::_2,
-                                 bdlf::PlaceHolders::_3,
-                                 ntca::ResolverSource::e_OVERRIDE,
-                                 &semaphore),
-            &ta);
+    ntci::GetPortCallback callback = resolver->createGetPortCallback(
+        bdlf::BindUtil::bind(&ResolverTest::processGetPortResult,
+                             bdlf::PlaceHolders::_1,
+                             bdlf::PlaceHolders::_2,
+                             bdlf::PlaceHolders::_3,
+                             ntca::ResolverSource::e_OVERRIDE,
+                             &semaphore),
+        NTSCFG_TEST_ALLOCATOR);
 
-        // Define the options.
+    // Define the options.
 
-        ntca::GetPortOptions options;
-        options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+    ntca::GetPortOptions options;
+    options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
-        // Get the ports assigned to the "ntsp" service.
+    // Get the ports assigned to the "ntsp" service.
 
-        error = resolver->getPort("ntsp", options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getPort("ntsp", options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Get the ports assigned to the "ntsp" service.
+    // Get the ports assigned to the "ntsp" service.
 
-        error = resolver->getPort("ntsp", options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getPort("ntsp", options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Stop the resolver.
+    // Stop the resolver.
 
-        callback.reset();
+    callback.reset();
 
-        resolver->shutdown();
-        resolver->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    resolver->shutdown();
+    resolver->linger();
 
 #endif
 }
 
-NTCCFG_TEST_CASE(4)
+NTSCFG_TEST_FUNCTION(ntcdns::ResolverTest::verifyCase4)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -460,79 +538,76 @@ NTCCFG_TEST_CASE(4)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        // Define a resolver configuration with the DNS client disabled.
+    // Define a resolver configuration with the DNS client disabled.
 
-        ntca::ResolverConfig resolverConfig;
-        resolverConfig.setClientEnabled(false);
-        resolverConfig.setHostDatabaseEnabled(false);
-        resolverConfig.setPortDatabaseEnabled(false);
-        resolverConfig.setPositiveCacheEnabled(false);
-        resolverConfig.setNegativeCacheEnabled(false);
-        resolverConfig.setSystemEnabled(false);
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setHostDatabaseEnabled(false);
+    resolverConfig.setPortDatabaseEnabled(false);
+    resolverConfig.setPositiveCacheEnabled(false);
+    resolverConfig.setNegativeCacheEnabled(false);
+    resolverConfig.setSystemEnabled(false);
 
-        // Create a start a resolver.
+    // Create a start a resolver.
 
-        bsl::shared_ptr<ntcdns::Resolver> resolver;
-        resolver.createInplace(&ta, resolverConfig, &ta);
+    bsl::shared_ptr<ntcdns::Resolver> resolver;
+    resolver.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           resolverConfig,
+                           NTSCFG_TEST_ALLOCATOR);
 
-        error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->start();
+    NTSCFG_TEST_FALSE(error);
 
-        // Set overrides.
+    // Set overrides.
 
-        error = resolver->addPort("ntsp",
-                                  6245,
-                                  ntsa::Transport::e_TCP_IPV4_STREAM);
-        NTCCFG_TEST_FALSE(error);
+    error =
+        resolver->addPort("ntsp", 6245, ntsa::Transport::e_TCP_IPV4_STREAM);
+    NTSCFG_TEST_FALSE(error);
 
-        // Create the callback.
+    // Create the callback.
 
-        bslmt::Semaphore semaphore;
+    bslmt::Semaphore semaphore;
 
-        ntci::GetServiceNameCallback callback =
-            resolver->createGetServiceNameCallback(
-                bdlf::BindUtil::bind(&test::processGetServiceNameResult,
-                                     bdlf::PlaceHolders::_1,
-                                     bdlf::PlaceHolders::_2,
-                                     bdlf::PlaceHolders::_3,
-                                     ntca::ResolverSource::e_OVERRIDE,
-                                     &semaphore),
-                &ta);
+    ntci::GetServiceNameCallback callback =
+        resolver->createGetServiceNameCallback(
+            bdlf::BindUtil::bind(&ResolverTest::processGetServiceNameResult,
+                                 bdlf::PlaceHolders::_1,
+                                 bdlf::PlaceHolders::_2,
+                                 bdlf::PlaceHolders::_3,
+                                 ntca::ResolverSource::e_OVERRIDE,
+                                 &semaphore),
+            NTSCFG_TEST_ALLOCATOR);
 
-        // Define the options.
+    // Define the options.
 
-        ntca::GetServiceNameOptions options;
-        options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+    ntca::GetServiceNameOptions options;
+    options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
-        // Get the service name to which TCP port 6245 is assigned.
+    // Get the service name to which TCP port 6245 is assigned.
 
-        error = resolver->getServiceName(6245, options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getServiceName(6245, options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Get the service name to which TCP port 6245 is assigned.
+    // Get the service name to which TCP port 6245 is assigned.
 
-        error = resolver->getServiceName(6245, options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getServiceName(6245, options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Stop the resolver.
+    // Stop the resolver.
 
-        callback.reset();
+    callback.reset();
 
-        resolver->shutdown();
-        resolver->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    resolver->shutdown();
+    resolver->linger();
 
 #endif
 }
 
-NTCCFG_TEST_CASE(5)
+NTSCFG_TEST_FUNCTION(ntcdns::ResolverTest::verifyCase5)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -544,80 +619,74 @@ NTCCFG_TEST_CASE(5)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        // Define a resolver configuration with the DNS client disabled.
+    // Define a resolver configuration with the DNS client disabled.
 
-        ntca::ResolverConfig resolverConfig;
-        resolverConfig.setClientEnabled(false);
-        resolverConfig.setHostDatabaseEnabled(false);
-        resolverConfig.setPortDatabaseEnabled(false);
-        resolverConfig.setPositiveCacheEnabled(false);
-        resolverConfig.setNegativeCacheEnabled(false);
-        resolverConfig.setSystemEnabled(false);
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setHostDatabaseEnabled(false);
+    resolverConfig.setPortDatabaseEnabled(false);
+    resolverConfig.setPositiveCacheEnabled(false);
+    resolverConfig.setNegativeCacheEnabled(false);
+    resolverConfig.setSystemEnabled(false);
 
-        // Create a start a resolver.
+    // Create a start a resolver.
 
-        bsl::shared_ptr<ntcdns::Resolver> resolver;
-        resolver.createInplace(&ta, resolverConfig, &ta);
+    bsl::shared_ptr<ntcdns::Resolver> resolver;
+    resolver.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           resolverConfig,
+                           NTSCFG_TEST_ALLOCATOR);
 
-        error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->start();
+    NTSCFG_TEST_FALSE(error);
 
-        // Set overrides.
+    // Set overrides.
 
-        error = resolver->addIpAddress("test.example.net",
-                                       ntsa::IpAddress("192.168.0.100"));
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->addIpAddress("test.example.net",
+                                   ntsa::IpAddress("192.168.0.100"));
+    NTSCFG_TEST_FALSE(error);
 
-        error = resolver->addPort("ntsp",
-                                  6245,
-                                  ntsa::Transport::e_TCP_IPV4_STREAM);
-        NTCCFG_TEST_FALSE(error);
+    error =
+        resolver->addPort("ntsp", 6245, ntsa::Transport::e_TCP_IPV4_STREAM);
+    NTSCFG_TEST_FALSE(error);
 
-        // Create the callback.
+    // Create the callback.
 
-        bslmt::Semaphore semaphore;
+    bslmt::Semaphore semaphore;
 
-        ntci::GetEndpointCallback callback =
-            resolver->createGetEndpointCallback(
-                bdlf::BindUtil::bind(&test::processGetEndpointResult,
-                                     bdlf::PlaceHolders::_1,
-                                     bdlf::PlaceHolders::_2,
-                                     bdlf::PlaceHolders::_3,
-                                     ntca::ResolverSource::e_OVERRIDE,
-                                     &semaphore),
-                &ta);
+    ntci::GetEndpointCallback callback = resolver->createGetEndpointCallback(
+        bdlf::BindUtil::bind(&ResolverTest::processGetEndpointResult,
+                             bdlf::PlaceHolders::_1,
+                             bdlf::PlaceHolders::_2,
+                             bdlf::PlaceHolders::_3,
+                             ntca::ResolverSource::e_OVERRIDE,
+                             &semaphore),
+        NTSCFG_TEST_ALLOCATOR);
 
-        // Define the options.
+    // Define the options.
 
-        ntca::GetEndpointOptions options;
-        options.setIpAddressType(ntsa::IpAddressType::e_V4);
+    ntca::GetEndpointOptions options;
+    options.setIpAddressType(ntsa::IpAddressType::e_V4);
 
-        // Get the endpoint assigned to "test.example.net:ntsp".
+    // Get the endpoint assigned to "test.example.net:ntsp".
 
-        error =
-            resolver->getEndpoint("test.example.net:ntsp", options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getEndpoint("test.example.net:ntsp", options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Get the endpoint assigned to "test.example.net:ntsp".
+    // Get the endpoint assigned to "test.example.net:ntsp".
 
-        error =
-            resolver->getEndpoint("test.example.net:ntsp", options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getEndpoint("test.example.net:ntsp", options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Stop the resolver.
+    // Stop the resolver.
 
-        callback.reset();
+    callback.reset();
 
-        resolver->shutdown();
-        resolver->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    resolver->shutdown();
+    resolver->linger();
 
 #endif
 }
@@ -626,7 +695,7 @@ NTCCFG_TEST_CASE(5)
 // Test database.
 //
 
-NTCCFG_TEST_CASE(6)
+NTSCFG_TEST_FUNCTION(ntcdns::ResolverTest::verifyCase6)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -646,29 +715,29 @@ NTCCFG_TEST_CASE(6)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        // Define a resolver configuration with the DNS client disabled.
+    // Define a resolver configuration with the DNS client disabled.
 
-        ntca::ResolverConfig resolverConfig;
-        resolverConfig.setClientEnabled(false);
-        resolverConfig.setHostDatabaseEnabled(true);
-        resolverConfig.setPortDatabaseEnabled(true);
-        resolverConfig.setPositiveCacheEnabled(false);
-        resolverConfig.setNegativeCacheEnabled(false);
-        resolverConfig.setSystemEnabled(false);
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setHostDatabaseEnabled(true);
+    resolverConfig.setPortDatabaseEnabled(true);
+    resolverConfig.setPositiveCacheEnabled(false);
+    resolverConfig.setNegativeCacheEnabled(false);
+    resolverConfig.setSystemEnabled(false);
 
-        // Create a start a resolver.
+    // Create a start a resolver.
 
-        bsl::shared_ptr<ntcdns::Resolver> resolver;
-        resolver.createInplace(&ta, resolverConfig, &ta);
+    bsl::shared_ptr<ntcdns::Resolver> resolver;
+    resolver.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           resolverConfig,
+                           NTSCFG_TEST_ALLOCATOR);
 
-        error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->start();
+    NTSCFG_TEST_FALSE(error);
 
-        // Set database.
+    // Set database.
 
-        // clang-format off
+    // clang-format off
         const char HOST_DATABASE[] = ""
         "192.168.0.100 test.example.net\n"
         "\n";
@@ -677,62 +746,59 @@ NTCCFG_TEST_CASE(6)
         "ntsp 6245/tcp\n"
         "ntsp 6245/udp\n"
         "\n";
-        // clang-format on
+    // clang-format on
 
-        error = resolver->loadHostDatabaseText(HOST_DATABASE,
-                                               sizeof HOST_DATABASE - 1);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->loadHostDatabaseText(HOST_DATABASE,
+                                           sizeof HOST_DATABASE - 1);
+    NTSCFG_TEST_FALSE(error);
 
-        error = resolver->loadPortDatabaseText(PORT_DATABASE,
-                                               sizeof PORT_DATABASE - 1);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->loadPortDatabaseText(PORT_DATABASE,
+                                           sizeof PORT_DATABASE - 1);
+    NTSCFG_TEST_FALSE(error);
 
-        // Create the callback.
+    // Create the callback.
 
-        bslmt::Semaphore semaphore;
+    bslmt::Semaphore semaphore;
 
-        ntci::GetIpAddressCallback callback =
-            resolver->createGetIpAddressCallback(
-                bdlf::BindUtil::bind(&test::processGetIpAddressResult,
-                                     bdlf::PlaceHolders::_1,
-                                     bdlf::PlaceHolders::_2,
-                                     bdlf::PlaceHolders::_3,
-                                     ntca::ResolverSource::e_DATABASE,
-                                     &semaphore),
-                &ta);
+    ntci::GetIpAddressCallback callback = resolver->createGetIpAddressCallback(
+        bdlf::BindUtil::bind(&ResolverTest::processGetIpAddressResult,
+                             bdlf::PlaceHolders::_1,
+                             bdlf::PlaceHolders::_2,
+                             bdlf::PlaceHolders::_3,
+                             ntca::ResolverSource::e_DATABASE,
+                             &semaphore),
+        NTSCFG_TEST_ALLOCATOR);
 
-        // Define the options.
+    // Define the options.
 
-        ntca::GetIpAddressOptions options;
-        options.setIpAddressType(ntsa::IpAddressType::e_V4);
+    ntca::GetIpAddressOptions options;
+    options.setIpAddressType(ntsa::IpAddressType::e_V4);
 
-        // Get the IP addresses assigned to "test.example.net".
+    // Get the IP addresses assigned to "test.example.net".
 
-        error = resolver->getIpAddress("test.example.net", options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getIpAddress("test.example.net", options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Get the IP addresses assigned to "test.example.net".
+    // Get the IP addresses assigned to "test.example.net".
 
-        error = resolver->getIpAddress("test.example.net", options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getIpAddress("test.example.net", options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Stop the resolver.
+    // Stop the resolver.
 
-        callback.reset();
+    callback.reset();
 
-        resolver->shutdown();
-        resolver->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    resolver->shutdown();
+    resolver->linger();
 
 #endif
 }
 
-NTCCFG_TEST_CASE(7)
+NTSCFG_TEST_FUNCTION(ntcdns::ResolverTest::verifyCase7)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -752,29 +818,29 @@ NTCCFG_TEST_CASE(7)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        // Define a resolver configuration with the DNS client disabled.
+    // Define a resolver configuration with the DNS client disabled.
 
-        ntca::ResolverConfig resolverConfig;
-        resolverConfig.setClientEnabled(false);
-        resolverConfig.setHostDatabaseEnabled(true);
-        resolverConfig.setPortDatabaseEnabled(true);
-        resolverConfig.setPositiveCacheEnabled(false);
-        resolverConfig.setNegativeCacheEnabled(false);
-        resolverConfig.setSystemEnabled(false);
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setHostDatabaseEnabled(true);
+    resolverConfig.setPortDatabaseEnabled(true);
+    resolverConfig.setPositiveCacheEnabled(false);
+    resolverConfig.setNegativeCacheEnabled(false);
+    resolverConfig.setSystemEnabled(false);
 
-        // Create a start a resolver.
+    // Create a start a resolver.
 
-        bsl::shared_ptr<ntcdns::Resolver> resolver;
-        resolver.createInplace(&ta, resolverConfig, &ta);
+    bsl::shared_ptr<ntcdns::Resolver> resolver;
+    resolver.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           resolverConfig,
+                           NTSCFG_TEST_ALLOCATOR);
 
-        error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->start();
+    NTSCFG_TEST_FALSE(error);
 
-        // Set database.
+    // Set database.
 
-        // clang-format off
+    // clang-format off
         const char HOST_DATABASE[] = ""
         "192.168.0.100 test.example.net\n"
         "\n";
@@ -783,65 +849,63 @@ NTCCFG_TEST_CASE(7)
         "ntsp 6245/tcp\n"
         "ntsp 6245/udp\n"
         "\n";
-        // clang-format on
+    // clang-format on
 
-        error = resolver->loadHostDatabaseText(HOST_DATABASE,
-                                               sizeof HOST_DATABASE - 1);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->loadHostDatabaseText(HOST_DATABASE,
+                                           sizeof HOST_DATABASE - 1);
+    NTSCFG_TEST_FALSE(error);
 
-        error = resolver->loadPortDatabaseText(PORT_DATABASE,
-                                               sizeof PORT_DATABASE - 1);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->loadPortDatabaseText(PORT_DATABASE,
+                                           sizeof PORT_DATABASE - 1);
+    NTSCFG_TEST_FALSE(error);
 
-        // Create the callback.
+    // Create the callback.
 
-        bslmt::Semaphore semaphore;
+    bslmt::Semaphore semaphore;
 
-        ntci::GetDomainNameCallback callback =
-            resolver->createGetDomainNameCallback(
-                bdlf::BindUtil::bind(&test::processGetDomainNameResult,
-                                     bdlf::PlaceHolders::_1,
-                                     bdlf::PlaceHolders::_2,
-                                     bdlf::PlaceHolders::_3,
-                                     ntca::ResolverSource::e_DATABASE,
-                                     &semaphore),
-                &ta);
+    ntci::GetDomainNameCallback callback =
+        resolver->createGetDomainNameCallback(
+            bdlf::BindUtil::bind(&ResolverTest::processGetDomainNameResult,
+                                 bdlf::PlaceHolders::_1,
+                                 bdlf::PlaceHolders::_2,
+                                 bdlf::PlaceHolders::_3,
+                                 ntca::ResolverSource::e_DATABASE,
+                                 &semaphore),
+            NTSCFG_TEST_ALLOCATOR);
 
-        // Define the options.
+    // Define the options.
 
-        ntca::GetDomainNameOptions options;
+    ntca::GetDomainNameOptions options;
 
-        // Get the domain name to which "192.168.0.100" is assigned.
+    // Get the domain name to which "192.168.0.100" is assigned.
 
-        error = resolver->getDomainName(ntsa::IpAddress("192.168.0.100"),
-                                        options,
-                                        callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getDomainName(ntsa::IpAddress("192.168.0.100"),
+                                    options,
+                                    callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Get the domain name to which "192.168.0.100" is assigned.
+    // Get the domain name to which "192.168.0.100" is assigned.
 
-        error = resolver->getDomainName(ntsa::IpAddress("192.168.0.100"),
-                                        options,
-                                        callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getDomainName(ntsa::IpAddress("192.168.0.100"),
+                                    options,
+                                    callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Stop the resolver.
+    // Stop the resolver.
 
-        callback.reset();
+    callback.reset();
 
-        resolver->shutdown();
-        resolver->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    resolver->shutdown();
+    resolver->linger();
 
 #endif
 }
 
-NTCCFG_TEST_CASE(8)
+NTSCFG_TEST_FUNCTION(ntcdns::ResolverTest::verifyCase8)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -861,29 +925,29 @@ NTCCFG_TEST_CASE(8)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        // Define a resolver configuration with the DNS client disabled.
+    // Define a resolver configuration with the DNS client disabled.
 
-        ntca::ResolverConfig resolverConfig;
-        resolverConfig.setClientEnabled(false);
-        resolverConfig.setHostDatabaseEnabled(true);
-        resolverConfig.setPortDatabaseEnabled(true);
-        resolverConfig.setPositiveCacheEnabled(false);
-        resolverConfig.setNegativeCacheEnabled(false);
-        resolverConfig.setSystemEnabled(false);
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setHostDatabaseEnabled(true);
+    resolverConfig.setPortDatabaseEnabled(true);
+    resolverConfig.setPositiveCacheEnabled(false);
+    resolverConfig.setNegativeCacheEnabled(false);
+    resolverConfig.setSystemEnabled(false);
 
-        // Create a start a resolver.
+    // Create a start a resolver.
 
-        bsl::shared_ptr<ntcdns::Resolver> resolver;
-        resolver.createInplace(&ta, resolverConfig, &ta);
+    bsl::shared_ptr<ntcdns::Resolver> resolver;
+    resolver.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           resolverConfig,
+                           NTSCFG_TEST_ALLOCATOR);
 
-        error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->start();
+    NTSCFG_TEST_FALSE(error);
 
-        // Set database.
+    // Set database.
 
-        // clang-format off
+    // clang-format off
         const char HOST_DATABASE[] = ""
         "192.168.0.100 test.example.net\n"
         "\n";
@@ -892,61 +956,59 @@ NTCCFG_TEST_CASE(8)
         "ntsp 6245/tcp\n"
         "ntsp 6245/udp\n"
         "\n";
-        // clang-format on
+    // clang-format on
 
-        error = resolver->loadHostDatabaseText(HOST_DATABASE,
-                                               sizeof HOST_DATABASE - 1);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->loadHostDatabaseText(HOST_DATABASE,
+                                           sizeof HOST_DATABASE - 1);
+    NTSCFG_TEST_FALSE(error);
 
-        error = resolver->loadPortDatabaseText(PORT_DATABASE,
-                                               sizeof PORT_DATABASE - 1);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->loadPortDatabaseText(PORT_DATABASE,
+                                           sizeof PORT_DATABASE - 1);
+    NTSCFG_TEST_FALSE(error);
 
-        // Create the callback.
+    // Create the callback.
 
-        bslmt::Semaphore semaphore;
+    bslmt::Semaphore semaphore;
 
-        ntci::GetPortCallback callback = resolver->createGetPortCallback(
-            bdlf::BindUtil::bind(&test::processGetPortResult,
-                                 bdlf::PlaceHolders::_1,
-                                 bdlf::PlaceHolders::_2,
-                                 bdlf::PlaceHolders::_3,
-                                 ntca::ResolverSource::e_DATABASE,
-                                 &semaphore),
-            &ta);
+    ntci::GetPortCallback callback = resolver->createGetPortCallback(
+        bdlf::BindUtil::bind(&ResolverTest::processGetPortResult,
+                             bdlf::PlaceHolders::_1,
+                             bdlf::PlaceHolders::_2,
+                             bdlf::PlaceHolders::_3,
+                             ntca::ResolverSource::e_DATABASE,
+                             &semaphore),
+        NTSCFG_TEST_ALLOCATOR);
 
-        // Define the options.
+    // Define the options.
 
-        ntca::GetPortOptions options;
-        options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+    ntca::GetPortOptions options;
+    options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
-        // Get the ports assigned to the "ntsp" service.
+    // Get the ports assigned to the "ntsp" service.
 
-        error = resolver->getPort("ntsp", options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getPort("ntsp", options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Get the ports assigned to the "ntsp" service.
+    // Get the ports assigned to the "ntsp" service.
 
-        error = resolver->getPort("ntsp", options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getPort("ntsp", options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Stop the resolver.
+    // Stop the resolver.
 
-        callback.reset();
+    callback.reset();
 
-        resolver->shutdown();
-        resolver->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    resolver->shutdown();
+    resolver->linger();
 
 #endif
 }
 
-NTCCFG_TEST_CASE(9)
+NTSCFG_TEST_FUNCTION(ntcdns::ResolverTest::verifyCase9)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -966,29 +1028,29 @@ NTCCFG_TEST_CASE(9)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        // Define a resolver configuration with the DNS client disabled.
+    // Define a resolver configuration with the DNS client disabled.
 
-        ntca::ResolverConfig resolverConfig;
-        resolverConfig.setClientEnabled(false);
-        resolverConfig.setHostDatabaseEnabled(true);
-        resolverConfig.setPortDatabaseEnabled(true);
-        resolverConfig.setPositiveCacheEnabled(false);
-        resolverConfig.setNegativeCacheEnabled(false);
-        resolverConfig.setSystemEnabled(false);
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setHostDatabaseEnabled(true);
+    resolverConfig.setPortDatabaseEnabled(true);
+    resolverConfig.setPositiveCacheEnabled(false);
+    resolverConfig.setNegativeCacheEnabled(false);
+    resolverConfig.setSystemEnabled(false);
 
-        // Create a start a resolver.
+    // Create a start a resolver.
 
-        bsl::shared_ptr<ntcdns::Resolver> resolver;
-        resolver.createInplace(&ta, resolverConfig, &ta);
+    bsl::shared_ptr<ntcdns::Resolver> resolver;
+    resolver.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           resolverConfig,
+                           NTSCFG_TEST_ALLOCATOR);
 
-        error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->start();
+    NTSCFG_TEST_FALSE(error);
 
-        // Set database.
+    // Set database.
 
-        // clang-format off
+    // clang-format off
         const char HOST_DATABASE[] = ""
         "192.168.0.100 test.example.net\n"
         "\n";
@@ -997,62 +1059,60 @@ NTCCFG_TEST_CASE(9)
         "ntsp 6245/tcp\n"
         "ntsp 6245/udp\n"
         "\n";
-        // clang-format on
+    // clang-format on
 
-        error = resolver->loadHostDatabaseText(HOST_DATABASE,
-                                               sizeof HOST_DATABASE - 1);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->loadHostDatabaseText(HOST_DATABASE,
+                                           sizeof HOST_DATABASE - 1);
+    NTSCFG_TEST_FALSE(error);
 
-        error = resolver->loadPortDatabaseText(PORT_DATABASE,
-                                               sizeof PORT_DATABASE - 1);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->loadPortDatabaseText(PORT_DATABASE,
+                                           sizeof PORT_DATABASE - 1);
+    NTSCFG_TEST_FALSE(error);
 
-        // Create the callback.
+    // Create the callback.
 
-        bslmt::Semaphore semaphore;
+    bslmt::Semaphore semaphore;
 
-        ntci::GetServiceNameCallback callback =
-            resolver->createGetServiceNameCallback(
-                bdlf::BindUtil::bind(&test::processGetServiceNameResult,
-                                     bdlf::PlaceHolders::_1,
-                                     bdlf::PlaceHolders::_2,
-                                     bdlf::PlaceHolders::_3,
-                                     ntca::ResolverSource::e_DATABASE,
-                                     &semaphore),
-                &ta);
+    ntci::GetServiceNameCallback callback =
+        resolver->createGetServiceNameCallback(
+            bdlf::BindUtil::bind(&ResolverTest::processGetServiceNameResult,
+                                 bdlf::PlaceHolders::_1,
+                                 bdlf::PlaceHolders::_2,
+                                 bdlf::PlaceHolders::_3,
+                                 ntca::ResolverSource::e_DATABASE,
+                                 &semaphore),
+            NTSCFG_TEST_ALLOCATOR);
 
-        // Define the options.
+    // Define the options.
 
-        ntca::GetServiceNameOptions options;
-        options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+    ntca::GetServiceNameOptions options;
+    options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
-        // Get the service name to which TCP port 6245 is assigned.
+    // Get the service name to which TCP port 6245 is assigned.
 
-        error = resolver->getServiceName(6245, options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getServiceName(6245, options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Get the service name to which TCP port 6245 is assigned.
+    // Get the service name to which TCP port 6245 is assigned.
 
-        error = resolver->getServiceName(6245, options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getServiceName(6245, options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Stop the resolver.
+    // Stop the resolver.
 
-        callback.reset();
+    callback.reset();
 
-        resolver->shutdown();
-        resolver->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    resolver->shutdown();
+    resolver->linger();
 
 #endif
 }
 
-NTCCFG_TEST_CASE(10)
+NTSCFG_TEST_FUNCTION(ntcdns::ResolverTest::verifyCase10)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -1072,29 +1132,29 @@ NTCCFG_TEST_CASE(10)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        // Define a resolver configuration with the DNS client disabled.
+    // Define a resolver configuration with the DNS client disabled.
 
-        ntca::ResolverConfig resolverConfig;
-        resolverConfig.setClientEnabled(false);
-        resolverConfig.setHostDatabaseEnabled(true);
-        resolverConfig.setPortDatabaseEnabled(true);
-        resolverConfig.setPositiveCacheEnabled(false);
-        resolverConfig.setNegativeCacheEnabled(false);
-        resolverConfig.setSystemEnabled(false);
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setHostDatabaseEnabled(true);
+    resolverConfig.setPortDatabaseEnabled(true);
+    resolverConfig.setPositiveCacheEnabled(false);
+    resolverConfig.setNegativeCacheEnabled(false);
+    resolverConfig.setSystemEnabled(false);
 
-        // Create a start a resolver.
+    // Create a start a resolver.
 
-        bsl::shared_ptr<ntcdns::Resolver> resolver;
-        resolver.createInplace(&ta, resolverConfig, &ta);
+    bsl::shared_ptr<ntcdns::Resolver> resolver;
+    resolver.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           resolverConfig,
+                           NTSCFG_TEST_ALLOCATOR);
 
-        error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->start();
+    NTSCFG_TEST_FALSE(error);
 
-        // Set database.
+    // Set database.
 
-        // clang-format off
+    // clang-format off
         const char HOST_DATABASE[] = ""
         "192.168.0.100 test.example.net\n"
         "\n";
@@ -1103,59 +1163,54 @@ NTCCFG_TEST_CASE(10)
         "ntsp 6245/tcp\n"
         "ntsp 6245/udp\n"
         "\n";
-        // clang-format on
+    // clang-format on
 
-        error = resolver->loadHostDatabaseText(HOST_DATABASE,
-                                               sizeof HOST_DATABASE - 1);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->loadHostDatabaseText(HOST_DATABASE,
+                                           sizeof HOST_DATABASE - 1);
+    NTSCFG_TEST_FALSE(error);
 
-        error = resolver->loadPortDatabaseText(PORT_DATABASE,
-                                               sizeof PORT_DATABASE - 1);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->loadPortDatabaseText(PORT_DATABASE,
+                                           sizeof PORT_DATABASE - 1);
+    NTSCFG_TEST_FALSE(error);
 
-        // Create the callback.
+    // Create the callback.
 
-        bslmt::Semaphore semaphore;
+    bslmt::Semaphore semaphore;
 
-        ntci::GetEndpointCallback callback =
-            resolver->createGetEndpointCallback(
-                bdlf::BindUtil::bind(&test::processGetEndpointResult,
-                                     bdlf::PlaceHolders::_1,
-                                     bdlf::PlaceHolders::_2,
-                                     bdlf::PlaceHolders::_3,
-                                     ntca::ResolverSource::e_DATABASE,
-                                     &semaphore),
-                &ta);
+    ntci::GetEndpointCallback callback = resolver->createGetEndpointCallback(
+        bdlf::BindUtil::bind(&ResolverTest::processGetEndpointResult,
+                             bdlf::PlaceHolders::_1,
+                             bdlf::PlaceHolders::_2,
+                             bdlf::PlaceHolders::_3,
+                             ntca::ResolverSource::e_DATABASE,
+                             &semaphore),
+        NTSCFG_TEST_ALLOCATOR);
 
-        // Define the options.
+    // Define the options.
 
-        ntca::GetEndpointOptions options;
-        options.setIpAddressType(ntsa::IpAddressType::e_V4);
+    ntca::GetEndpointOptions options;
+    options.setIpAddressType(ntsa::IpAddressType::e_V4);
 
-        // Get the endpoint assigned to "test.example.net:ntsp".
+    // Get the endpoint assigned to "test.example.net:ntsp".
 
-        error =
-            resolver->getEndpoint("test.example.net:ntsp", options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getEndpoint("test.example.net:ntsp", options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Get the endpoint assigned to "test.example.net:ntsp".
+    // Get the endpoint assigned to "test.example.net:ntsp".
 
-        error =
-            resolver->getEndpoint("test.example.net:ntsp", options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getEndpoint("test.example.net:ntsp", options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Stop the resolver.
+    // Stop the resolver.
 
-        callback.reset();
+    callback.reset();
 
-        resolver->shutdown();
-        resolver->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    resolver->shutdown();
+    resolver->linger();
 
 #endif
 }
@@ -1164,7 +1219,7 @@ NTCCFG_TEST_CASE(10)
 // Test cache.
 //
 
-NTCCFG_TEST_CASE(11)
+NTSCFG_TEST_FUNCTION(ntcdns::ResolverTest::verifyCase11)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -1176,81 +1231,78 @@ NTCCFG_TEST_CASE(11)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        // Define a resolver configuration with the DNS client disabled.
+    // Define a resolver configuration with the DNS client disabled.
 
-        ntca::ResolverConfig resolverConfig;
-        resolverConfig.setClientEnabled(false);
-        resolverConfig.setHostDatabaseEnabled(false);
-        resolverConfig.setPortDatabaseEnabled(false);
-        resolverConfig.setPositiveCacheEnabled(true);
-        resolverConfig.setNegativeCacheEnabled(true);
-        resolverConfig.setSystemEnabled(false);
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setHostDatabaseEnabled(false);
+    resolverConfig.setPortDatabaseEnabled(false);
+    resolverConfig.setPositiveCacheEnabled(true);
+    resolverConfig.setNegativeCacheEnabled(true);
+    resolverConfig.setSystemEnabled(false);
 
-        // Create a start a resolver.
+    // Create a start a resolver.
 
-        bsl::shared_ptr<ntcdns::Resolver> resolver;
-        resolver.createInplace(&ta, resolverConfig, &ta);
+    bsl::shared_ptr<ntcdns::Resolver> resolver;
+    resolver.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           resolverConfig,
+                           NTSCFG_TEST_ALLOCATOR);
 
-        error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->start();
+    NTSCFG_TEST_FALSE(error);
 
-        // Set the cache.
+    // Set the cache.
 
-        error = resolver->cacheHost("test.example.net",
-                                    ntsa::IpAddress("192.168.0.100"),
-                                    ntsa::Endpoint("192.168.1.1"),
-                                    3600,
-                                    bdlt::CurrentTime::now());
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->cacheHost("test.example.net",
+                                ntsa::IpAddress("192.168.0.100"),
+                                ntsa::Endpoint("192.168.1.1"),
+                                3600,
+                                bdlt::CurrentTime::now());
+    NTSCFG_TEST_FALSE(error);
 
-        // Create the callback.
+    // Create the callback.
 
-        bslmt::Semaphore semaphore;
+    bslmt::Semaphore semaphore;
 
-        ntci::GetIpAddressCallback callback =
-            resolver->createGetIpAddressCallback(
-                bdlf::BindUtil::bind(&test::processGetIpAddressResult,
-                                     bdlf::PlaceHolders::_1,
-                                     bdlf::PlaceHolders::_2,
-                                     bdlf::PlaceHolders::_3,
-                                     ntca::ResolverSource::e_CACHE,
-                                     &semaphore),
-                &ta);
+    ntci::GetIpAddressCallback callback = resolver->createGetIpAddressCallback(
+        bdlf::BindUtil::bind(&ResolverTest::processGetIpAddressResult,
+                             bdlf::PlaceHolders::_1,
+                             bdlf::PlaceHolders::_2,
+                             bdlf::PlaceHolders::_3,
+                             ntca::ResolverSource::e_CACHE,
+                             &semaphore),
+        NTSCFG_TEST_ALLOCATOR);
 
-        // Define the options.
+    // Define the options.
 
-        ntca::GetIpAddressOptions options;
-        options.setIpAddressType(ntsa::IpAddressType::e_V4);
+    ntca::GetIpAddressOptions options;
+    options.setIpAddressType(ntsa::IpAddressType::e_V4);
 
-        // Get the IP addresses assigned to "test.example.net".
+    // Get the IP addresses assigned to "test.example.net".
 
-        error = resolver->getIpAddress("test.example.net", options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getIpAddress("test.example.net", options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Get the IP addresses assigned to "test.example.net".
+    // Get the IP addresses assigned to "test.example.net".
 
-        error = resolver->getIpAddress("test.example.net", options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getIpAddress("test.example.net", options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Stop the resolver.
+    // Stop the resolver.
 
-        callback.reset();
+    callback.reset();
 
-        resolver->shutdown();
-        resolver->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    resolver->shutdown();
+    resolver->linger();
 
 #endif
 }
 
-NTCCFG_TEST_CASE(12)
+NTSCFG_TEST_FUNCTION(ntcdns::ResolverTest::verifyCase12)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -1262,84 +1314,82 @@ NTCCFG_TEST_CASE(12)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        // Define a resolver configuration with the DNS client disabled.
+    // Define a resolver configuration with the DNS client disabled.
 
-        ntca::ResolverConfig resolverConfig;
-        resolverConfig.setClientEnabled(false);
-        resolverConfig.setHostDatabaseEnabled(false);
-        resolverConfig.setPortDatabaseEnabled(false);
-        resolverConfig.setPositiveCacheEnabled(true);
-        resolverConfig.setNegativeCacheEnabled(true);
-        resolverConfig.setSystemEnabled(false);
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setHostDatabaseEnabled(false);
+    resolverConfig.setPortDatabaseEnabled(false);
+    resolverConfig.setPositiveCacheEnabled(true);
+    resolverConfig.setNegativeCacheEnabled(true);
+    resolverConfig.setSystemEnabled(false);
 
-        // Create a start a resolver.
+    // Create a start a resolver.
 
-        bsl::shared_ptr<ntcdns::Resolver> resolver;
-        resolver.createInplace(&ta, resolverConfig, &ta);
+    bsl::shared_ptr<ntcdns::Resolver> resolver;
+    resolver.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           resolverConfig,
+                           NTSCFG_TEST_ALLOCATOR);
 
-        error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->start();
+    NTSCFG_TEST_FALSE(error);
 
-        // Set the cache.
+    // Set the cache.
 
-        error = resolver->cacheHost("test.example.net",
-                                    ntsa::IpAddress("192.168.0.100"),
-                                    ntsa::Endpoint("192.168.1.1"),
-                                    3600,
-                                    bdlt::CurrentTime::now());
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->cacheHost("test.example.net",
+                                ntsa::IpAddress("192.168.0.100"),
+                                ntsa::Endpoint("192.168.1.1"),
+                                3600,
+                                bdlt::CurrentTime::now());
+    NTSCFG_TEST_FALSE(error);
 
-        // Create the callback.
+    // Create the callback.
 
-        bslmt::Semaphore semaphore;
+    bslmt::Semaphore semaphore;
 
-        ntci::GetDomainNameCallback callback =
-            resolver->createGetDomainNameCallback(
-                bdlf::BindUtil::bind(&test::processGetDomainNameResult,
-                                     bdlf::PlaceHolders::_1,
-                                     bdlf::PlaceHolders::_2,
-                                     bdlf::PlaceHolders::_3,
-                                     ntca::ResolverSource::e_CACHE,
-                                     &semaphore),
-                &ta);
+    ntci::GetDomainNameCallback callback =
+        resolver->createGetDomainNameCallback(
+            bdlf::BindUtil::bind(&ResolverTest::processGetDomainNameResult,
+                                 bdlf::PlaceHolders::_1,
+                                 bdlf::PlaceHolders::_2,
+                                 bdlf::PlaceHolders::_3,
+                                 ntca::ResolverSource::e_CACHE,
+                                 &semaphore),
+            NTSCFG_TEST_ALLOCATOR);
 
-        // Define the options.
+    // Define the options.
 
-        ntca::GetDomainNameOptions options;
+    ntca::GetDomainNameOptions options;
 
-        // Get the domain name to which "192.168.0.100" is assigned.
+    // Get the domain name to which "192.168.0.100" is assigned.
 
-        error = resolver->getDomainName(ntsa::IpAddress("192.168.0.100"),
-                                        options,
-                                        callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getDomainName(ntsa::IpAddress("192.168.0.100"),
+                                    options,
+                                    callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Get the domain name to which "192.168.0.100" is assigned.
+    // Get the domain name to which "192.168.0.100" is assigned.
 
-        error = resolver->getDomainName(ntsa::IpAddress("192.168.0.100"),
-                                        options,
-                                        callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getDomainName(ntsa::IpAddress("192.168.0.100"),
+                                    options,
+                                    callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Stop the resolver.
+    // Stop the resolver.
 
-        callback.reset();
+    callback.reset();
 
-        resolver->shutdown();
-        resolver->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    resolver->shutdown();
+    resolver->linger();
 
 #endif
 }
 
-NTCCFG_TEST_CASE(13)
+NTSCFG_TEST_FUNCTION(ntcdns::ResolverTest::verifyCase13)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -1353,8 +1403,6 @@ NTCCFG_TEST_CASE(13)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
         // Define a resolver configuration with the DNS client disabled.
 
         ntca::ResolverConfig resolverConfig;
@@ -1368,10 +1416,10 @@ NTCCFG_TEST_CASE(13)
         // Create a start a resolver.
 
         bsl::shared_ptr<ntcdns::Resolver> resolver;
-        resolver.createInplace(&ta, resolverConfig, &ta);
+        resolver.createInplace(NTSCFG_TEST_ALLOCATOR, resolverConfig, NTSCFG_TEST_ALLOCATOR);
 
         error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+        NTSCFG_TEST_FALSE(error);
 
         // Set the cache.
 
@@ -1381,20 +1429,20 @@ NTCCFG_TEST_CASE(13)
             ntsa::Endpoint("192.168.1.1"),
             3600,
             bdlt::CurrentTime::now());
-        NTCCFG_TEST_FALSE(error);
+        NTSCFG_TEST_FALSE(error);
 
         // Create the callback.
 
         bslmt::Semaphore semaphore;
 
         ntci::GetPortCallback callback = resolver->createGetPortCallback(
-            bdlf::BindUtil::bind(&test::processGetPortResult,
+            bdlf::BindUtil::bind(&ResolverTest::processGetPortResult,
                                  bdlf::PlaceHolders::_1,
                                  bdlf::PlaceHolders::_2,
                                  bdlf::PlaceHolders::_3,
                                  ntca::ResolverSource::e_CACHE,
                                  &semaphore),
-            &ta);
+            NTSCFG_TEST_ALLOCATOR);
 
         // Define the options.
 
@@ -1404,14 +1452,14 @@ NTCCFG_TEST_CASE(13)
         // Get the ports assigned to the "ntsp" service.
 
         error = resolver->getPort("ntsp", options, callback);
-        NTCCFG_TEST_FALSE(error);
+        NTSCFG_TEST_FALSE(error);
 
         semaphore.wait();
 
         // Get the ports assigned to the "ntsp" service.
 
         error = resolver->getPort("ntsp", options, callback);
-        NTCCFG_TEST_FALSE(error);
+        NTSCFG_TEST_FALSE(error);
 
         semaphore.wait();
 
@@ -1421,14 +1469,13 @@ NTCCFG_TEST_CASE(13)
 
         resolver->shutdown();
         resolver->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
 #endif
 
 #endif
 }
 
-NTCCFG_TEST_CASE(14)
+NTSCFG_TEST_FUNCTION(ntcdns::ResolverTest::verifyCase14)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -1442,8 +1489,6 @@ NTCCFG_TEST_CASE(14)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
         // Define a resolver configuration with the DNS client disabled.
 
         ntca::ResolverConfig resolverConfig;
@@ -1457,10 +1502,10 @@ NTCCFG_TEST_CASE(14)
         // Create a start a resolver.
 
         bsl::shared_ptr<ntcdns::Resolver> resolver;
-        resolver.createInplace(&ta, resolverConfig, &ta);
+        resolver.createInplace(NTSCFG_TEST_ALLOCATOR, resolverConfig, NTSCFG_TEST_ALLOCATOR);
 
         error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+        NTSCFG_TEST_FALSE(error);
 
         // Set the cache.
 
@@ -1470,7 +1515,7 @@ NTCCFG_TEST_CASE(14)
             ntsa::Endpoint("192.168.1.1"),
             3600,
             bdlt::CurrentTime::now());
-        NTCCFG_TEST_FALSE(error);
+        NTSCFG_TEST_FALSE(error);
 
         // Create the callback.
 
@@ -1478,13 +1523,13 @@ NTCCFG_TEST_CASE(14)
 
         ntci::GetServiceNameCallback callback =
             resolver->createGetServiceNameCallback(
-                bdlf::BindUtil::bind(&test::processGetServiceNameResult,
+                bdlf::BindUtil::bind(&ResolverTest::processGetServiceNameResult,
                                      bdlf::PlaceHolders::_1,
                                      bdlf::PlaceHolders::_2,
                                      bdlf::PlaceHolders::_3,
                                      ntca::ResolverSource::e_CACHE,
                                      &semaphore),
-                &ta);
+                NTSCFG_TEST_ALLOCATOR);
 
         // Define the options.
 
@@ -1494,14 +1539,14 @@ NTCCFG_TEST_CASE(14)
         // Get the service name to which TCP port 6245 is assigned.
 
         error = resolver->getServiceName(6245, options, callback);
-        NTCCFG_TEST_FALSE(error);
+        NTSCFG_TEST_FALSE(error);
 
         semaphore.wait();
 
         // Get the service name to which TCP port 6245 is assigned.
 
         error = resolver->getServiceName(6245, options, callback);
-        NTCCFG_TEST_FALSE(error);
+        NTSCFG_TEST_FALSE(error);
 
         semaphore.wait();
 
@@ -1511,14 +1556,12 @@ NTCCFG_TEST_CASE(14)
 
         resolver->shutdown();
         resolver->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 #endif
 
 #endif
 }
 
-NTCCFG_TEST_CASE(15)
+NTSCFG_TEST_FUNCTION(ntcdns::ResolverTest::verifyCase15)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -1530,78 +1573,73 @@ NTCCFG_TEST_CASE(15)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        // Define a resolver configuration with the DNS client disabled.
+    // Define a resolver configuration with the DNS client disabled.
 
-        ntca::ResolverConfig resolverConfig;
-        resolverConfig.setClientEnabled(false);
-        resolverConfig.setHostDatabaseEnabled(false);
-        resolverConfig.setPortDatabaseEnabled(false);
-        resolverConfig.setPositiveCacheEnabled(true);
-        resolverConfig.setNegativeCacheEnabled(true);
-        resolverConfig.setSystemEnabled(false);
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setHostDatabaseEnabled(false);
+    resolverConfig.setPortDatabaseEnabled(false);
+    resolverConfig.setPositiveCacheEnabled(true);
+    resolverConfig.setNegativeCacheEnabled(true);
+    resolverConfig.setSystemEnabled(false);
 
-        // Create a start a resolver.
+    // Create a start a resolver.
 
-        bsl::shared_ptr<ntcdns::Resolver> resolver;
-        resolver.createInplace(&ta, resolverConfig, &ta);
+    bsl::shared_ptr<ntcdns::Resolver> resolver;
+    resolver.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           resolverConfig,
+                           NTSCFG_TEST_ALLOCATOR);
 
-        error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->start();
+    NTSCFG_TEST_FALSE(error);
 
-        // Set the cache.
+    // Set the cache.
 
-        error = resolver->cacheHost("test.example.net",
-                                    ntsa::IpAddress("192.168.0.100"),
-                                    ntsa::Endpoint("192.168.1.1"),
-                                    3600,
-                                    bdlt::CurrentTime::now());
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->cacheHost("test.example.net",
+                                ntsa::IpAddress("192.168.0.100"),
+                                ntsa::Endpoint("192.168.1.1"),
+                                3600,
+                                bdlt::CurrentTime::now());
+    NTSCFG_TEST_FALSE(error);
 
-        // Create the callback.
+    // Create the callback.
 
-        bslmt::Semaphore semaphore;
+    bslmt::Semaphore semaphore;
 
-        ntci::GetEndpointCallback callback =
-            resolver->createGetEndpointCallback(
-                bdlf::BindUtil::bind(&test::processGetEndpointResult,
-                                     bdlf::PlaceHolders::_1,
-                                     bdlf::PlaceHolders::_2,
-                                     bdlf::PlaceHolders::_3,
-                                     ntca::ResolverSource::e_CACHE,
-                                     &semaphore),
-                &ta);
+    ntci::GetEndpointCallback callback = resolver->createGetEndpointCallback(
+        bdlf::BindUtil::bind(&ResolverTest::processGetEndpointResult,
+                             bdlf::PlaceHolders::_1,
+                             bdlf::PlaceHolders::_2,
+                             bdlf::PlaceHolders::_3,
+                             ntca::ResolverSource::e_CACHE,
+                             &semaphore),
+        NTSCFG_TEST_ALLOCATOR);
 
-        // Define the options.
+    // Define the options.
 
-        ntca::GetEndpointOptions options;
-        options.setIpAddressType(ntsa::IpAddressType::e_V4);
+    ntca::GetEndpointOptions options;
+    options.setIpAddressType(ntsa::IpAddressType::e_V4);
 
-        // Get the endpoint assigned to "test.example.net:6245".
+    // Get the endpoint assigned to "test.example.net:6245".
 
-        error =
-            resolver->getEndpoint("test.example.net:6245", options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getEndpoint("test.example.net:6245", options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Get the endpoint assigned to "test.example.net:6245".
+    // Get the endpoint assigned to "test.example.net:6245".
 
-        error =
-            resolver->getEndpoint("test.example.net:6245", options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getEndpoint("test.example.net:6245", options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Stop the resolver.
+    // Stop the resolver.
 
-        callback.reset();
+    callback.reset();
 
-        resolver->shutdown();
-        resolver->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    resolver->shutdown();
+    resolver->linger();
 
 #endif
 }
@@ -1610,7 +1648,7 @@ NTCCFG_TEST_CASE(15)
 // Test system.
 //
 
-NTCCFG_TEST_CASE(16)
+NTSCFG_TEST_FUNCTION(ntcdns::ResolverTest::verifyCase16)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -1622,72 +1660,69 @@ NTCCFG_TEST_CASE(16)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        // Define a resolver configuration with the DNS client disabled.
+    // Define a resolver configuration with the DNS client disabled.
 
-        ntca::ResolverConfig resolverConfig;
-        resolverConfig.setClientEnabled(false);
-        resolverConfig.setHostDatabaseEnabled(false);
-        resolverConfig.setPortDatabaseEnabled(false);
-        resolverConfig.setPositiveCacheEnabled(false);
-        resolverConfig.setNegativeCacheEnabled(false);
-        resolverConfig.setSystemEnabled(true);
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setHostDatabaseEnabled(false);
+    resolverConfig.setPortDatabaseEnabled(false);
+    resolverConfig.setPositiveCacheEnabled(false);
+    resolverConfig.setNegativeCacheEnabled(false);
+    resolverConfig.setSystemEnabled(true);
 
-        // Create a start a resolver.
+    // Create a start a resolver.
 
-        bsl::shared_ptr<ntcdns::Resolver> resolver;
-        resolver.createInplace(&ta, resolverConfig, &ta);
+    bsl::shared_ptr<ntcdns::Resolver> resolver;
+    resolver.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           resolverConfig,
+                           NTSCFG_TEST_ALLOCATOR);
 
-        error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->start();
+    NTSCFG_TEST_FALSE(error);
 
-        // Create the callback.
+    // Create the callback.
 
-        bslmt::Semaphore semaphore;
+    bslmt::Semaphore semaphore;
 
-        ntci::GetIpAddressCallback callback =
-            resolver->createGetIpAddressCallback(
-                bdlf::BindUtil::bind(&test::processGetIpAddressResult,
-                                     bdlf::PlaceHolders::_1,
-                                     bdlf::PlaceHolders::_2,
-                                     bdlf::PlaceHolders::_3,
-                                     ntca::ResolverSource::e_SYSTEM,
-                                     &semaphore),
-                &ta);
+    ntci::GetIpAddressCallback callback = resolver->createGetIpAddressCallback(
+        bdlf::BindUtil::bind(&ResolverTest::processGetIpAddressResult,
+                             bdlf::PlaceHolders::_1,
+                             bdlf::PlaceHolders::_2,
+                             bdlf::PlaceHolders::_3,
+                             ntca::ResolverSource::e_SYSTEM,
+                             &semaphore),
+        NTSCFG_TEST_ALLOCATOR);
 
-        // Define the options.
+    // Define the options.
 
-        ntca::GetIpAddressOptions options;
-        options.setIpAddressType(ntsa::IpAddressType::e_V4);
+    ntca::GetIpAddressOptions options;
+    options.setIpAddressType(ntsa::IpAddressType::e_V4);
 
-        // Get the IP addresses assigned to "google.com".
+    // Get the IP addresses assigned to "google.com".
 
-        error = resolver->getIpAddress("google.com", options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getIpAddress("google.com", options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Get the IP addresses assigned to "google.com".
+    // Get the IP addresses assigned to "google.com".
 
-        error = resolver->getIpAddress("google.com", options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getIpAddress("google.com", options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Stop the resolver.
+    // Stop the resolver.
 
-        callback.reset();
+    callback.reset();
 
-        resolver->shutdown();
-        resolver->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    resolver->shutdown();
+    resolver->linger();
 
 #endif
 }
 
-NTCCFG_TEST_CASE(17)
+NTSCFG_TEST_FUNCTION(ntcdns::ResolverTest::verifyCase17)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -1699,75 +1734,71 @@ NTCCFG_TEST_CASE(17)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        // Define a resolver configuration with the DNS client disabled.
+    // Define a resolver configuration with the DNS client disabled.
 
-        ntca::ResolverConfig resolverConfig;
-        resolverConfig.setClientEnabled(false);
-        resolverConfig.setHostDatabaseEnabled(false);
-        resolverConfig.setPortDatabaseEnabled(false);
-        resolverConfig.setPositiveCacheEnabled(false);
-        resolverConfig.setNegativeCacheEnabled(false);
-        resolverConfig.setSystemEnabled(true);
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setHostDatabaseEnabled(false);
+    resolverConfig.setPortDatabaseEnabled(false);
+    resolverConfig.setPositiveCacheEnabled(false);
+    resolverConfig.setNegativeCacheEnabled(false);
+    resolverConfig.setSystemEnabled(true);
 
-        // Create a start a resolver.
+    // Create a start a resolver.
 
-        bsl::shared_ptr<ntcdns::Resolver> resolver;
-        resolver.createInplace(&ta, resolverConfig, &ta);
+    bsl::shared_ptr<ntcdns::Resolver> resolver;
+    resolver.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           resolverConfig,
+                           NTSCFG_TEST_ALLOCATOR);
 
-        error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->start();
+    NTSCFG_TEST_FALSE(error);
 
-        // Create the callback.
+    // Create the callback.
 
-        bslmt::Semaphore semaphore;
+    bslmt::Semaphore semaphore;
 
-        ntci::GetDomainNameCallback callback =
-            resolver->createGetDomainNameCallback(
-                bdlf::BindUtil::bind(&test::processGetDomainNameResult,
-                                     bdlf::PlaceHolders::_1,
-                                     bdlf::PlaceHolders::_2,
-                                     bdlf::PlaceHolders::_3,
-                                     ntca::ResolverSource::e_SYSTEM,
-                                     &semaphore),
-                &ta);
+    ntci::GetDomainNameCallback callback =
+        resolver->createGetDomainNameCallback(
+            bdlf::BindUtil::bind(&ResolverTest::processGetDomainNameResult,
+                                 bdlf::PlaceHolders::_1,
+                                 bdlf::PlaceHolders::_2,
+                                 bdlf::PlaceHolders::_3,
+                                 ntca::ResolverSource::e_SYSTEM,
+                                 &semaphore),
+            NTSCFG_TEST_ALLOCATOR);
 
-        // Define the options.
+    // Define the options.
 
-        ntca::GetDomainNameOptions options;
+    ntca::GetDomainNameOptions options;
 
-        // Get the domain name to which "8.8.8.8" is assigned.
+    // Get the domain name to which "8.8.8.8" is assigned.
 
-        error = resolver->getDomainName(ntsa::IpAddress("8.8.8.8"),
-                                        options,
-                                        callback);
-        NTCCFG_TEST_FALSE(error);
+    error =
+        resolver->getDomainName(ntsa::IpAddress("8.8.8.8"), options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Get the domain name to which "8.8.8.8" is assigned.
+    // Get the domain name to which "8.8.8.8" is assigned.
 
-        error = resolver->getDomainName(ntsa::IpAddress("8.8.8.8"),
-                                        options,
-                                        callback);
-        NTCCFG_TEST_FALSE(error);
+    error =
+        resolver->getDomainName(ntsa::IpAddress("8.8.8.8"), options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Stop the resolver.
+    // Stop the resolver.
 
-        callback.reset();
+    callback.reset();
 
-        resolver->shutdown();
-        resolver->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    resolver->shutdown();
+    resolver->linger();
 
 #endif
 }
 
-NTCCFG_TEST_CASE(18)
+NTSCFG_TEST_FUNCTION(ntcdns::ResolverTest::verifyCase18)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -1783,71 +1814,69 @@ NTCCFG_TEST_CASE(18)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        // Define a resolver configuration with the DNS client disabled.
+    // Define a resolver configuration with the DNS client disabled.
 
-        ntca::ResolverConfig resolverConfig;
-        resolverConfig.setClientEnabled(false);
-        resolverConfig.setHostDatabaseEnabled(false);
-        resolverConfig.setPortDatabaseEnabled(false);
-        resolverConfig.setPositiveCacheEnabled(false);
-        resolverConfig.setNegativeCacheEnabled(false);
-        resolverConfig.setSystemEnabled(true);
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setHostDatabaseEnabled(false);
+    resolverConfig.setPortDatabaseEnabled(false);
+    resolverConfig.setPositiveCacheEnabled(false);
+    resolverConfig.setNegativeCacheEnabled(false);
+    resolverConfig.setSystemEnabled(true);
 
-        // Create a start a resolver.
+    // Create a start a resolver.
 
-        bsl::shared_ptr<ntcdns::Resolver> resolver;
-        resolver.createInplace(&ta, resolverConfig, &ta);
+    bsl::shared_ptr<ntcdns::Resolver> resolver;
+    resolver.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           resolverConfig,
+                           NTSCFG_TEST_ALLOCATOR);
 
-        error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->start();
+    NTSCFG_TEST_FALSE(error);
 
-        // Create the callback.
+    // Create the callback.
 
-        bslmt::Semaphore semaphore;
+    bslmt::Semaphore semaphore;
 
-        ntci::GetPortCallback callback = resolver->createGetPortCallback(
-            bdlf::BindUtil::bind(&test::processGetPortResult,
-                                 bdlf::PlaceHolders::_1,
-                                 bdlf::PlaceHolders::_2,
-                                 bdlf::PlaceHolders::_3,
-                                 ntca::ResolverSource::e_SYSTEM,
-                                 &semaphore),
-            &ta);
+    ntci::GetPortCallback callback = resolver->createGetPortCallback(
+        bdlf::BindUtil::bind(&ResolverTest::processGetPortResult,
+                             bdlf::PlaceHolders::_1,
+                             bdlf::PlaceHolders::_2,
+                             bdlf::PlaceHolders::_3,
+                             ntca::ResolverSource::e_SYSTEM,
+                             &semaphore),
+        NTSCFG_TEST_ALLOCATOR);
 
-        // Define the options.
+    // Define the options.
 
-        ntca::GetPortOptions options;
-        options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+    ntca::GetPortOptions options;
+    options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
-        // Get the ports assigned to the "echo" service.
+    // Get the ports assigned to the "echo" service.
 
-        error = resolver->getPort("echo", options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getPort("echo", options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Get the ports assigned to the "echo" service.
+    // Get the ports assigned to the "echo" service.
 
-        error = resolver->getPort("echo", options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getPort("echo", options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Stop the resolver.
+    // Stop the resolver.
 
-        callback.reset();
+    callback.reset();
 
-        resolver->shutdown();
-        resolver->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    resolver->shutdown();
+    resolver->linger();
 
 #endif
 }
 
-NTCCFG_TEST_CASE(19)
+NTSCFG_TEST_FUNCTION(ntcdns::ResolverTest::verifyCase19)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -1863,72 +1892,70 @@ NTCCFG_TEST_CASE(19)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        // Define a resolver configuration with the DNS client disabled.
+    // Define a resolver configuration with the DNS client disabled.
 
-        ntca::ResolverConfig resolverConfig;
-        resolverConfig.setClientEnabled(false);
-        resolverConfig.setHostDatabaseEnabled(false);
-        resolverConfig.setPortDatabaseEnabled(false);
-        resolverConfig.setPositiveCacheEnabled(false);
-        resolverConfig.setNegativeCacheEnabled(false);
-        resolverConfig.setSystemEnabled(true);
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setHostDatabaseEnabled(false);
+    resolverConfig.setPortDatabaseEnabled(false);
+    resolverConfig.setPositiveCacheEnabled(false);
+    resolverConfig.setNegativeCacheEnabled(false);
+    resolverConfig.setSystemEnabled(true);
 
-        // Create a start a resolver.
+    // Create a start a resolver.
 
-        bsl::shared_ptr<ntcdns::Resolver> resolver;
-        resolver.createInplace(&ta, resolverConfig, &ta);
+    bsl::shared_ptr<ntcdns::Resolver> resolver;
+    resolver.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           resolverConfig,
+                           NTSCFG_TEST_ALLOCATOR);
 
-        error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->start();
+    NTSCFG_TEST_FALSE(error);
 
-        // Create the callback.
+    // Create the callback.
 
-        bslmt::Semaphore semaphore;
+    bslmt::Semaphore semaphore;
 
-        ntci::GetServiceNameCallback callback =
-            resolver->createGetServiceNameCallback(
-                bdlf::BindUtil::bind(&test::processGetServiceNameResult,
-                                     bdlf::PlaceHolders::_1,
-                                     bdlf::PlaceHolders::_2,
-                                     bdlf::PlaceHolders::_3,
-                                     ntca::ResolverSource::e_SYSTEM,
-                                     &semaphore),
-                &ta);
+    ntci::GetServiceNameCallback callback =
+        resolver->createGetServiceNameCallback(
+            bdlf::BindUtil::bind(&ResolverTest::processGetServiceNameResult,
+                                 bdlf::PlaceHolders::_1,
+                                 bdlf::PlaceHolders::_2,
+                                 bdlf::PlaceHolders::_3,
+                                 ntca::ResolverSource::e_SYSTEM,
+                                 &semaphore),
+            NTSCFG_TEST_ALLOCATOR);
 
-        // Define the options.
+    // Define the options.
 
-        ntca::GetServiceNameOptions options;
-        options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+    ntca::GetServiceNameOptions options;
+    options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
-        // Get the service name to which TCP port 7 is assigned.
+    // Get the service name to which TCP port 7 is assigned.
 
-        error = resolver->getServiceName(7, options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getServiceName(7, options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Get the service name to which TCP port 7 is assigned.
+    // Get the service name to which TCP port 7 is assigned.
 
-        error = resolver->getServiceName(7, options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getServiceName(7, options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Stop the resolver.
+    // Stop the resolver.
 
-        callback.reset();
+    callback.reset();
 
-        resolver->shutdown();
-        resolver->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    resolver->shutdown();
+    resolver->linger();
 
 #endif
 }
 
-NTCCFG_TEST_CASE(20)
+NTSCFG_TEST_FUNCTION(ntcdns::ResolverTest::verifyCase20)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -1948,74 +1975,69 @@ NTCCFG_TEST_CASE(20)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        // Define a resolver configuration with the DNS client disabled.
+    // Define a resolver configuration with the DNS client disabled.
 
-        ntca::ResolverConfig resolverConfig;
-        resolverConfig.setClientEnabled(false);
-        resolverConfig.setHostDatabaseEnabled(false);
-        resolverConfig.setPortDatabaseEnabled(false);
-        resolverConfig.setPositiveCacheEnabled(false);
-        resolverConfig.setNegativeCacheEnabled(false);
-        resolverConfig.setSystemEnabled(true);
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setHostDatabaseEnabled(false);
+    resolverConfig.setPortDatabaseEnabled(false);
+    resolverConfig.setPositiveCacheEnabled(false);
+    resolverConfig.setNegativeCacheEnabled(false);
+    resolverConfig.setSystemEnabled(true);
 
-        // Create a start a resolver.
+    // Create a start a resolver.
 
-        bsl::shared_ptr<ntcdns::Resolver> resolver;
-        resolver.createInplace(&ta, resolverConfig, &ta);
+    bsl::shared_ptr<ntcdns::Resolver> resolver;
+    resolver.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           resolverConfig,
+                           NTSCFG_TEST_ALLOCATOR);
 
-        error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->start();
+    NTSCFG_TEST_FALSE(error);
 
-        // Create the callback.
+    // Create the callback.
 
-        bslmt::Semaphore semaphore;
+    bslmt::Semaphore semaphore;
 
-        ntci::GetEndpointCallback callback =
-            resolver->createGetEndpointCallback(
-                bdlf::BindUtil::bind(&test::processGetEndpointResult,
-                                     bdlf::PlaceHolders::_1,
-                                     bdlf::PlaceHolders::_2,
-                                     bdlf::PlaceHolders::_3,
-                                     ntca::ResolverSource::e_SYSTEM,
-                                     &semaphore),
-                &ta);
+    ntci::GetEndpointCallback callback = resolver->createGetEndpointCallback(
+        bdlf::BindUtil::bind(&ResolverTest::processGetEndpointResult,
+                             bdlf::PlaceHolders::_1,
+                             bdlf::PlaceHolders::_2,
+                             bdlf::PlaceHolders::_3,
+                             ntca::ResolverSource::e_SYSTEM,
+                             &semaphore),
+        NTSCFG_TEST_ALLOCATOR);
 
-        // Define the options.
+    // Define the options.
 
-        ntca::GetEndpointOptions options;
-        options.setIpAddressType(ntsa::IpAddressType::e_V4);
+    ntca::GetEndpointOptions options;
+    options.setIpAddressType(ntsa::IpAddressType::e_V4);
 
-        // Get the endpoint assigned to "dns.google.com:http".
+    // Get the endpoint assigned to "dns.google.com:http".
 
-        error =
-            resolver->getEndpoint("dns.google.com:http", options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getEndpoint("dns.google.com:http", options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Get the endpoint assigned to "dns.google.com:http".
+    // Get the endpoint assigned to "dns.google.com:http".
 
-        error =
-            resolver->getEndpoint("dns.google.com:http", options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getEndpoint("dns.google.com:http", options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Stop the resolver.
+    // Stop the resolver.
 
-        callback.reset();
+    callback.reset();
 
-        resolver->shutdown();
-        resolver->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    resolver->shutdown();
+    resolver->linger();
 
 #endif
 }
 
-NTCCFG_TEST_CASE(21)
+NTSCFG_TEST_FUNCTION(ntcdns::ResolverTest::verifyCase21)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -2029,185 +2051,146 @@ NTCCFG_TEST_CASE(21)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
+    // Define a resolver configuration with the DNS client disabled.
+
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setHostDatabaseEnabled(false);
+    resolverConfig.setPortDatabaseEnabled(false);
+    resolverConfig.setPositiveCacheEnabled(false);
+    resolverConfig.setNegativeCacheEnabled(false);
+    resolverConfig.setSystemEnabled(false);
+
+    // Create a start a resolver.
+
+    bsl::shared_ptr<ntcdns::Resolver> resolver;
+    resolver.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           resolverConfig,
+                           NTSCFG_TEST_ALLOCATOR);
+
+    error = resolver->start();
+    NTSCFG_TEST_FALSE(error);
+
     {
-        // Define a resolver configuration with the DNS client disabled.
+        // Create the callback.
 
-        ntca::ResolverConfig resolverConfig;
-        resolverConfig.setClientEnabled(false);
-        resolverConfig.setHostDatabaseEnabled(false);
-        resolverConfig.setPortDatabaseEnabled(false);
-        resolverConfig.setPositiveCacheEnabled(false);
-        resolverConfig.setNegativeCacheEnabled(false);
-        resolverConfig.setSystemEnabled(false);
+        bslmt::Semaphore semaphore;
 
-        // Create a start a resolver.
+        ntci::GetEndpointCallback callback =
+            resolver->createGetEndpointCallback(
+                bdlf::BindUtil::bind(&ResolverTest::processGetEndpointResult,
+                                     bdlf::PlaceHolders::_1,
+                                     bdlf::PlaceHolders::_2,
+                                     bdlf::PlaceHolders::_3,
+                                     ntca::ResolverSource::e_UNKNOWN,
+                                     &semaphore),
+                NTSCFG_TEST_ALLOCATOR);
 
-        bsl::shared_ptr<ntcdns::Resolver> resolver;
-        resolver.createInplace(&ta, resolverConfig, &ta);
+        // Define the options.
 
-        error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+        ntca::GetEndpointOptions options;
 
-        {
-            // Create the callback.
+        // Get the endpoint assigned to the empty string, which should be
+        // interpreted as the IP address fallback and port fallback,
+        // neither of which are defined, which should result in an error.
 
-            bslmt::Semaphore semaphore;
-
-            ntci::GetEndpointCallback callback =
-                resolver->createGetEndpointCallback(
-                    bdlf::BindUtil::bind(&test::processGetEndpointResult,
-                                         bdlf::PlaceHolders::_1,
-                                         bdlf::PlaceHolders::_2,
-                                         bdlf::PlaceHolders::_3,
-                                         ntca::ResolverSource::e_UNKNOWN,
-                                         &semaphore),
-                    &ta);
-
-            // Define the options.
-
-            ntca::GetEndpointOptions options;
-
-            // Get the endpoint assigned to the empty string, which should be
-            // interpreted as the IP address fallback and port fallback,
-            // neither of which are defined, which should result in an error.
-
-            error = resolver->getEndpoint("", options, callback);
-            NTCCFG_TEST_TRUE(error);
-        }
-
-        {
-            // Create the callback.
-
-            bslmt::Semaphore semaphore;
-
-            ntci::GetEndpointCallback callback =
-                resolver->createGetEndpointCallback(
-                    bdlf::BindUtil::bind(&test::processGetEndpointResult,
-                                         bdlf::PlaceHolders::_1,
-                                         bdlf::PlaceHolders::_2,
-                                         bdlf::PlaceHolders::_3,
-                                         ntca::ResolverSource::e_UNKNOWN,
-                                         &semaphore),
-                    &ta);
-
-            // Define the options.
-
-            ntca::GetEndpointOptions options;
-            options.setIpAddressFallback(ntsa::IpAddress("192.168.0.100"));
-
-            // Get the endpoint assigned to the empty string, which should be
-            // interpreted as the IP address fallback and port fallback,
-            // one of which is not defined, which should result in an error.
-
-            error = resolver->getEndpoint("", options, callback);
-            NTCCFG_TEST_TRUE(error);
-        }
-
-        {
-            // Create the callback.
-
-            bslmt::Semaphore semaphore;
-
-            ntci::GetEndpointCallback callback =
-                resolver->createGetEndpointCallback(
-                    bdlf::BindUtil::bind(&test::processGetEndpointResult,
-                                         bdlf::PlaceHolders::_1,
-                                         bdlf::PlaceHolders::_2,
-                                         bdlf::PlaceHolders::_3,
-                                         ntca::ResolverSource::e_UNKNOWN,
-                                         &semaphore),
-                    &ta);
-
-            // Define the options.
-
-            ntca::GetEndpointOptions options;
-            options.setPortFallback(12345);
-
-            // Get the endpoint assigned to the empty string, which should be
-            // interpreted as the IP address fallback and port fallback,
-            // one of which is not defined, which should result in an error.
-
-            error = resolver->getEndpoint("", options, callback);
-            NTCCFG_TEST_TRUE(error);
-        }
-
-        {
-            // Create the callback.
-
-            bslmt::Semaphore semaphore;
-
-            ntci::GetEndpointCallback callback =
-                resolver->createGetEndpointCallback(
-                    bdlf::BindUtil::bind(&test::processGetEndpointResult,
-                                         bdlf::PlaceHolders::_1,
-                                         bdlf::PlaceHolders::_2,
-                                         bdlf::PlaceHolders::_3,
-                                         ntca::ResolverSource::e_UNKNOWN,
-                                         &semaphore),
-                    &ta);
-
-            // Define the options.
-
-            ntca::GetEndpointOptions options;
-            options.setIpAddressFallback(ntsa::IpAddress("192.168.0.100"));
-            options.setPortFallback(12345);
-
-            // Get the endpoint assigned to the empty string, which should be
-            // interpreted as the IP address fallback and port fallback.
-
-            error = resolver->getEndpoint("", options, callback);
-            NTCCFG_TEST_FALSE(error);
-
-            semaphore.wait();
-        }
-
-        // Stop the resolver.
-
-        resolver->shutdown();
-        resolver->linger();
+        error = resolver->getEndpoint("", options, callback);
+        NTSCFG_TEST_TRUE(error);
     }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    {
+        // Create the callback.
+
+        bslmt::Semaphore semaphore;
+
+        ntci::GetEndpointCallback callback =
+            resolver->createGetEndpointCallback(
+                bdlf::BindUtil::bind(&ResolverTest::processGetEndpointResult,
+                                     bdlf::PlaceHolders::_1,
+                                     bdlf::PlaceHolders::_2,
+                                     bdlf::PlaceHolders::_3,
+                                     ntca::ResolverSource::e_UNKNOWN,
+                                     &semaphore),
+                NTSCFG_TEST_ALLOCATOR);
+
+        // Define the options.
+
+        ntca::GetEndpointOptions options;
+        options.setIpAddressFallback(ntsa::IpAddress("192.168.0.100"));
+
+        // Get the endpoint assigned to the empty string, which should be
+        // interpreted as the IP address fallback and port fallback,
+        // one of which is not defined, which should result in an error.
+
+        error = resolver->getEndpoint("", options, callback);
+        NTSCFG_TEST_TRUE(error);
+    }
+
+    {
+        // Create the callback.
+
+        bslmt::Semaphore semaphore;
+
+        ntci::GetEndpointCallback callback =
+            resolver->createGetEndpointCallback(
+                bdlf::BindUtil::bind(&ResolverTest::processGetEndpointResult,
+                                     bdlf::PlaceHolders::_1,
+                                     bdlf::PlaceHolders::_2,
+                                     bdlf::PlaceHolders::_3,
+                                     ntca::ResolverSource::e_UNKNOWN,
+                                     &semaphore),
+                NTSCFG_TEST_ALLOCATOR);
+
+        // Define the options.
+
+        ntca::GetEndpointOptions options;
+        options.setPortFallback(12345);
+
+        // Get the endpoint assigned to the empty string, which should be
+        // interpreted as the IP address fallback and port fallback,
+        // one of which is not defined, which should result in an error.
+
+        error = resolver->getEndpoint("", options, callback);
+        NTSCFG_TEST_TRUE(error);
+    }
+
+    {
+        // Create the callback.
+
+        bslmt::Semaphore semaphore;
+
+        ntci::GetEndpointCallback callback =
+            resolver->createGetEndpointCallback(
+                bdlf::BindUtil::bind(&ResolverTest::processGetEndpointResult,
+                                     bdlf::PlaceHolders::_1,
+                                     bdlf::PlaceHolders::_2,
+                                     bdlf::PlaceHolders::_3,
+                                     ntca::ResolverSource::e_UNKNOWN,
+                                     &semaphore),
+                NTSCFG_TEST_ALLOCATOR);
+
+        // Define the options.
+
+        ntca::GetEndpointOptions options;
+        options.setIpAddressFallback(ntsa::IpAddress("192.168.0.100"));
+        options.setPortFallback(12345);
+
+        // Get the endpoint assigned to the empty string, which should be
+        // interpreted as the IP address fallback and port fallback.
+
+        error = resolver->getEndpoint("", options, callback);
+        NTSCFG_TEST_FALSE(error);
+
+        semaphore.wait();
+    }
+
+    // Stop the resolver.
+
+    resolver->shutdown();
+    resolver->linger();
 
 #endif
 }
 
-NTCCFG_TEST_DRIVER
-{
-    // Override
-
-    NTCCFG_TEST_REGISTER(1);
-    NTCCFG_TEST_REGISTER(2);
-    NTCCFG_TEST_REGISTER(3);
-    NTCCFG_TEST_REGISTER(4);
-    NTCCFG_TEST_REGISTER(5);
-
-    // Database
-
-    NTCCFG_TEST_REGISTER(6);
-    NTCCFG_TEST_REGISTER(7);
-    NTCCFG_TEST_REGISTER(8);
-    NTCCFG_TEST_REGISTER(9);
-    NTCCFG_TEST_REGISTER(10);
-
-    // Cache
-
-    NTCCFG_TEST_REGISTER(11);
-    NTCCFG_TEST_REGISTER(12);
-    NTCCFG_TEST_REGISTER(13);
-    NTCCFG_TEST_REGISTER(14);
-    NTCCFG_TEST_REGISTER(15);
-
-    // System
-
-    NTCCFG_TEST_REGISTER(16);
-    NTCCFG_TEST_REGISTER(17);
-    NTCCFG_TEST_REGISTER(18);
-    NTCCFG_TEST_REGISTER(19);
-    NTCCFG_TEST_REGISTER(20);
-
-    // Empty
-
-    NTCCFG_TEST_REGISTER(21);
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntcdns
+}  // close namespace BloombergLP

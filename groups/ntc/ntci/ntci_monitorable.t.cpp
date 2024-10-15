@@ -13,118 +13,45 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntci_monitorable_t_cpp, "$Id$ $CSID$")
+
 #include <ntci_monitorable.h>
-
-#include <ntccfg_test.h>
-
-#include <bdlb_random.h>
-#include <bdld_manageddatum.h>
-#include <bdlt_currenttime.h>
-
-#include <bslma_testallocator.h>
-#include <bslmt_lockguard.h>
-#include <bslmt_mutex.h>
-#include <bslmt_threadutil.h>
-#include <bsls_timeinterval.h>
-#include <bsls_timeutil.h>
-
-#include <bsl_cstdlib.h>
-#include <bsl_ctime.h>
-#include <bsl_iostream.h>
-#include <bsl_map.h>
-#include <bsl_sstream.h>
-#include <bsl_stdexcept.h>
 
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-// This test driver ensure that a coherent implementation of the interfaces
-// provided by the component under test are possible. The implementations
-// of these interfaces are excercised the test the integrity of the design,
-// with respect to measurement throttling, querying, snapshots, and reset
-// semantics.
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntci {
 
-//=============================================================================
-//                      STANDARD BDE ASSERT TEST MACRO
-//-----------------------------------------------------------------------------
-static int testStatus = 0;
-
-static void aSsErT(int c, const char* s, int i)
+// Provide tests for 'ntci::Monitorable'.
+class MonitorableTest
 {
-    if (c) {
-        bsl::cout << "Error " << __FILE__ << "(" << i << "): " << s
-                  << "    (failed)" << bsl::endl;
-        if (0 <= testStatus && testStatus <= 100)
-            ++testStatus;
-    }
-}
+  public:
+    // TODO
+    static void verify();
 
-#define ASSERT(X)                                                             \
-    {                                                                         \
-        aSsErT(!(X), #X, __LINE__);                                           \
-    }
+  private:
+    /// This struct describes a statistic measured by an object in this
+    /// test driver.
+    class ObjectStatistic;
 
-//=============================================================================
-//                  STANDARD BDE LOOP-ASSERT TEST MACROS
-//-----------------------------------------------------------------------------
-#define LOOP_ASSERT(I, X)                                                     \
-    {                                                                         \
-        if (!(X)) {                                                           \
-            bsl::cout << #I << ": " << I << "\n";                             \
-            aSsErT(1, #X, __LINE__);                                          \
-        }                                                                     \
-    }
+    /// This class implements the 'ntci::Monitorable' interface for use by this
+    /// test driver.
+    class Object;
 
-#define LOOP2_ASSERT(I, J, X)                                                 \
-    {                                                                         \
-        if (!(X)) {                                                           \
-            bsl::cout << #I << ": " << I << "\t" << #J << ": " << J << "\n";  \
-            aSsErT(1, #X, __LINE__);                                          \
-        }                                                                     \
-    }
+    /// This class implements the 'ntci::MonitorableRegistry' interface for use
+    /// by this test driver.
+    class ObjectRegistry;
 
-#define LOOP3_ASSERT(I, J, K, X)                                              \
-    {                                                                         \
-        if (!(X)) {                                                           \
-            bsl::cout << #I << ": " << I << "\t" << #J << ": " << J << "\t"   \
-                      << #K << ": " << K << "\n";                             \
-            aSsErT(1, #X, __LINE__);                                          \
-        }                                                                     \
-    }
-
-//=============================================================================
-//                  SEMI-STANDARD TEST OUTPUT MACROS
-//-----------------------------------------------------------------------------
-#define P(X) bsl::cout << #X " = " << (X) << bsl::endl;
-#define Q(X) bsl::cout << "<| " #X " |>" << bsl::endl;
-#define P_(X) bsl::cout << #X " = " << (X) << ", " << bsl::flush;
-#define L_ __LINE__
-#define NL "\n"
-#define T_() bsl::cout << "    " << bsl::flush;
-
-//=============================================================================
-//                  GLOBAL TYPEDEFS/CONSTANTS FOR TESTING
-//-----------------------------------------------------------------------------
-
-static int verbose             = 0;
-static int veryVerbose         = 0;
-static int veryVeryVerbose     = 0;
-static int veryVeryVeryVerbose = 0;
-
-//=============================================================================
-//                        HELPER FUNCTIONS AND CLASSES
-//-----------------------------------------------------------------------------
-
-namespace test {
+    // This class provides utilities for this test driver.
+    class ObjectUtil;
+};
 
 /// This struct describes a statistic measured by an object in this
 /// test driver.
-class ObjectStatistic
+class MonitorableTest::ObjectStatistic
 {
     bsls::SpinLock d_lock;
     bsl::int64_t   d_count;
@@ -151,7 +78,7 @@ class ObjectStatistic
 
 /// This class implements the 'ntci::Monitorable' interface for use by this
 /// test driver.
-class Object : public ntci::Monitorable
+class MonitorableTest::Object : public ntci::Monitorable
 {
     /// Define a type alias for a mutex.
     typedef ntccfg::Mutex Mutex;
@@ -162,7 +89,7 @@ class Object : public ntci::Monitorable
     mutable Mutex        d_mutex;
     bsls::TimeInterval   d_currentTime;
     int                  d_seed;
-    ObjectStatistic      d_statistic;
+    MonitorableTest::ObjectStatistic      d_statistic;
 
     static struct StatisticMetadata {
         const char*                      prefix;
@@ -191,7 +118,7 @@ class Object : public ntci::Monitorable
     Object();
 
     /// Destroy this object.
-    ~Object();
+    ~Object() BSLS_KEYWORD_OVERRIDE;
 
     /// Set the current time observed by this object to the specified
     /// 'currentTime'.
@@ -208,49 +135,49 @@ class Object : public ntci::Monitorable
     /// is e_INTERVAL_WITH_RESET then reset all internal measurements.  Note
     /// that 'result->theArray().length()' is expected to have the same
     /// value each time this function returns.
-    virtual void getStats(bdld::ManagedDatum* result);
+    void getStats(bdld::ManagedDatum* result) BSLS_KEYWORD_OVERRIDE;
 
     /// Return the prefix corresponding to the field at the specified
     /// 'ordinal' position, or 0 if no field at the 'ordinal' position
     /// exists.
-    virtual const char* getFieldPrefix(int ordinal) const;
+    const char* getFieldPrefix(int ordinal) const BSLS_KEYWORD_OVERRIDE;
 
     /// Return the field name corresponding to the field at the specified
     /// 'ordinal' position, or 0 if no field at the 'ordinal' position
     /// exists.
-    virtual const char* getFieldName(int ordinal) const;
+    const char* getFieldName(int ordinal) const BSLS_KEYWORD_OVERRIDE;
 
     /// Return the field description corresponding to the field at the
     /// specified 'ordinal' position, or 0 if no field at the 'ordinal'
     /// position exists.
-    virtual const char* getFieldDescription(int ordinal) const;
+    const char* getFieldDescription(int ordinal) const BSLS_KEYWORD_OVERRIDE;
 
     /// Return the type of the statistic at the specified 'ordinal'
     /// position, or e_AVERAGE if no field at the 'ordinal' position exists
     /// or the type is unknown.
-    virtual StatisticType getFieldType(int ordinal) const;
+    StatisticType getFieldType(int ordinal) const BSLS_KEYWORD_OVERRIDE;
 
     /// Return the flags that indicate which indexes to apply to the
     /// statistics measured by this monitorable object.
-    virtual int getFieldTags(int ordinal) const;
+    int getFieldTags(int ordinal) const BSLS_KEYWORD_OVERRIDE;
 
     /// Return the ordinal of the specified 'fieldName', or a negative value
     /// if no field identified by 'fieldName' exists.
-    virtual int getFieldOrdinal(const char* fieldName) const;
+    int getFieldOrdinal(const char* fieldName) const BSLS_KEYWORD_OVERRIDE;
 
     /// Return the maximum number of elements in a datum resulting from
     /// a call to 'getStats()'.
-    virtual int numOrdinals() const;
+    int numOrdinals() const BSLS_KEYWORD_OVERRIDE;
 
     /// Return the human-readable name of the monitorable object, or 0 or
     /// the empty string if no such human-readable name has been assigned to
     /// the monitorable object.
-    virtual const char* objectName() const;
+    const char* objectName() const  BSLS_KEYWORD_OVERRIDE;
 };
 
 /// This class implements the 'ntci::MonitorableRegistry' interface for use
 /// by this test driver.
-class ObjectRegistry : public ntci::MonitorableRegistry
+class MonitorableTest::ObjectRegistry : public ntci::MonitorableRegistry
 {
     /// Define a type alias for a map of locally-unique object
     /// identifiers to the shared pointers to registered monitorable objects
@@ -277,36 +204,37 @@ class ObjectRegistry : public ntci::MonitorableRegistry
     explicit ObjectRegistry(bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
-    virtual ~ObjectRegistry();
+    ~ObjectRegistry() BSLS_KEYWORD_OVERRIDE;
 
     /// Add the specified 'object' to this monitorable object registry.
-    virtual void registerMonitorable(
-        const bsl::shared_ptr<ntci::Monitorable>& object);
+    void registerMonitorable(
+        const bsl::shared_ptr<ntci::Monitorable>& object) BSLS_KEYWORD_OVERRIDE;
 
     /// Remove the specified 'object' from this monitorable object
     /// registry.
-    virtual void deregisterMonitorable(
-        const bsl::shared_ptr<ntci::Monitorable>& object);
+    void deregisterMonitorable(
+        const bsl::shared_ptr<ntci::Monitorable>& object) BSLS_KEYWORD_OVERRIDE;
 
     /// Load into the specified 'result' each currently registered
     /// monitorable object.
-    virtual void loadRegisteredObjects(
-        bsl::vector<bsl::shared_ptr<ntci::Monitorable> >* result) const;
+    void loadRegisteredObjects(
+        bsl::vector<bsl::shared_ptr<ntci::Monitorable> >* result) const BSLS_KEYWORD_OVERRIDE;
 };
 
 /// Provide utilities for querying statistics from a
-/// 'test::Object' and verifying their basic properties.
-struct ObjectUtil {
+/// 'MonitorableTest::Object' and verifying their basic properties.
+class MonitorableTest::ObjectUtil 
+{
+public:
     /// Load into the specified 'result' array the statistics for the
     /// specified 'object', stored in the specified 'snapshot', according to
     /// the specified 'operation'. Use the specified 'allocator' to supply
     /// memory.
-    static void getStats(bsl::int64_t      result[4],
-                         test::Object*     object,
-                         bslma::Allocator* allocator);
+    static void getStats(bsl::int64_t             result[4],
+                         MonitorableTest::Object* object);
 };
 
-ObjectStatistic::ObjectStatistic()
+MonitorableTest::ObjectStatistic::ObjectStatistic()
 : d_lock(bsls::SpinLock::s_unlocked)
 , d_count(0)
 , d_total(0)
@@ -315,7 +243,7 @@ ObjectStatistic::ObjectStatistic()
 {
 }
 
-void ObjectStatistic::update(bsl::int64_t amount)
+void MonitorableTest::ObjectStatistic::update(bsl::int64_t amount)
 {
     bsls::SpinLockGuard guard(&d_lock);
 
@@ -331,7 +259,7 @@ void ObjectStatistic::update(bsl::int64_t amount)
     }
 }
 
-void ObjectStatistic::load(bsl::int64_t* count,
+void MonitorableTest::ObjectStatistic::load(bsl::int64_t* count,
                            bsl::int64_t* total,
                            bsl::int64_t* min,
                            bsl::int64_t* max,
@@ -352,7 +280,7 @@ void ObjectStatistic::load(bsl::int64_t* count,
     }
 }
 
-Object::StatisticMetadata Object::STATISTICS[] = {
+MonitorableTest::Object::StatisticMetadata MonitorableTest::Object::STATISTICS[] = {
     {"test.object",
      "execute.calls",         "Number of calls to execute",
      ntci::Monitorable::e_SUM    },
@@ -367,23 +295,23 @@ Object::StatisticMetadata Object::STATISTICS[] = {
      ntci::Monitorable::e_MAXIMUM}
 };
 
-Object::Object()
+MonitorableTest::Object::Object()
 : d_mutex()
 , d_currentTime()
 , d_seed(static_cast<int>(::time(0)))
 {
 }
 
-Object::~Object()
+MonitorableTest::Object::~Object()
 {
 }
 
-void Object::setCurrentTime(const bsls::TimeInterval& currentTime)
+void MonitorableTest::Object::setCurrentTime(const bsls::TimeInterval& currentTime)
 {
     d_currentTime = currentTime;
 }
 
-void Object::execute()
+void MonitorableTest::Object::execute()
 {
     const bool measure = true;
 
@@ -413,7 +341,7 @@ void Object::execute()
     }
 }
 
-void Object::getStats(bdld::ManagedDatum* result)
+void MonitorableTest::Object::getStats(bdld::ManagedDatum* result)
 {
     LockGuard guard(&d_mutex);
 
@@ -434,7 +362,7 @@ void Object::getStats(bdld::ManagedDatum* result)
     result->adopt(bdld::Datum::adoptArray(array));
 }
 
-const char* Object::getFieldPrefix(int ordinal) const
+const char* MonitorableTest::Object::getFieldPrefix(int ordinal) const
 {
     if (ordinal < numOrdinals()) {
         return Object::STATISTICS[ordinal].prefix;
@@ -444,7 +372,7 @@ const char* Object::getFieldPrefix(int ordinal) const
     }
 }
 
-const char* Object::getFieldName(int ordinal) const
+const char* MonitorableTest::Object::getFieldName(int ordinal) const
 {
     if (ordinal < numOrdinals()) {
         return Object::STATISTICS[ordinal].name;
@@ -454,7 +382,7 @@ const char* Object::getFieldName(int ordinal) const
     }
 }
 
-const char* Object::getFieldDescription(int ordinal) const
+const char* MonitorableTest::Object::getFieldDescription(int ordinal) const
 {
     if (ordinal < numOrdinals()) {
         return Object::STATISTICS[ordinal].description;
@@ -464,7 +392,7 @@ const char* Object::getFieldDescription(int ordinal) const
     }
 }
 
-ntci::Monitorable::StatisticType Object::getFieldType(int ordinal) const
+ntci::Monitorable::StatisticType MonitorableTest::Object::getFieldType(int ordinal) const
 {
     if (ordinal < numOrdinals()) {
         return Object::STATISTICS[ordinal].type;
@@ -474,13 +402,13 @@ ntci::Monitorable::StatisticType Object::getFieldType(int ordinal) const
     }
 }
 
-int Object::getFieldTags(int ordinal) const
+int MonitorableTest::Object::getFieldTags(int ordinal) const
 {
     NTCCFG_WARNING_UNUSED(ordinal);
     return ntci::Monitorable::e_ANONYMOUS;
 }
 
-int Object::getFieldOrdinal(const char* fieldName) const
+int MonitorableTest::Object::getFieldOrdinal(const char* fieldName) const
 {
     int result = 0;
 
@@ -493,27 +421,27 @@ int Object::getFieldOrdinal(const char* fieldName) const
     return result;
 }
 
-int Object::numOrdinals() const
+int MonitorableTest::Object::numOrdinals() const
 {
     return sizeof Object::STATISTICS / sizeof Object::STATISTICS[0];
 }
 
-const char* Object::objectName() const
+const char* MonitorableTest::Object::objectName() const
 {
     return 0;
 }
 
-ObjectRegistry::ObjectRegistry(bslma::Allocator* basicAllocator)
+MonitorableTest::ObjectRegistry::ObjectRegistry(bslma::Allocator* basicAllocator)
 : d_mutex()
 , d_objects(basicAllocator)
 {
 }
 
-ObjectRegistry::~ObjectRegistry()
+MonitorableTest::ObjectRegistry::~ObjectRegistry()
 {
 }
 
-void ObjectRegistry::registerMonitorable(
+void MonitorableTest::ObjectRegistry::registerMonitorable(
     const bsl::shared_ptr<ntci::Monitorable>& object)
 {
     LockGuard guard(&d_mutex);
@@ -521,7 +449,7 @@ void ObjectRegistry::registerMonitorable(
     d_objects[static_cast<int>(object->objectId())] = object;
 }
 
-void ObjectRegistry::deregisterMonitorable(
+void MonitorableTest::ObjectRegistry::deregisterMonitorable(
     const bsl::shared_ptr<ntci::Monitorable>& object)
 {
     LockGuard guard(&d_mutex);
@@ -529,7 +457,7 @@ void ObjectRegistry::deregisterMonitorable(
     d_objects.erase(static_cast<int>(object->objectId()));
 }
 
-void ObjectRegistry::loadRegisteredObjects(
+void MonitorableTest::ObjectRegistry::loadRegisteredObjects(
     bsl::vector<bsl::shared_ptr<ntci::Monitorable> >* result) const
 {
     LockGuard guard(&d_mutex);
@@ -544,193 +472,157 @@ void ObjectRegistry::loadRegisteredObjects(
     }
 }
 
-void ObjectUtil::getStats(bsl::int64_t      result[4],
-                          test::Object*     object,
-                          bslma::Allocator* allocator)
+void MonitorableTest::ObjectUtil::getStats(bsl::int64_t      result[4],
+                          MonitorableTest::Object*     object)
 {
-    ASSERT(allocator);
-
-    bdld::ManagedDatum stats(allocator);
+    bdld::ManagedDatum stats(NTSCFG_TEST_ALLOCATOR);
     object->getStats(&stats);
 
     bdld::Datum datum(stats.datum());
 
-    if (verbose) {
-        bsl::cout << "--" << bsl::endl
-                  << "Object " << object->objectId() << " GUID "
-                  << object->guid() << bsl::endl
-                  << "--" << bsl::endl;
+    NTSCFG_TEST_LOG_DEBUG << "--" << bsl::endl
+                << "Object " << object->objectId() << " GUID "
+                << object->guid() << bsl::endl
+                << "--" << NTSCFG_TEST_LOG_END;
 
-        if (veryVerbose) {
-            bsl::cout << "Datum = " << datum << bsl::endl << "--" << bsl::endl;
-        }
-    }
+    NTSCFG_TEST_LOG_TRACE << "Datum = " << datum << bsl::endl << "--" 
+        << NTSCFG_TEST_LOG_END;
 
-    ASSERT(datum.isArray());
-    ASSERT(datum.theArray().length() == test::Object::NUM_STATISTICS);
+    NTSCFG_TEST_TRUE(datum.isArray());
+    NTSCFG_TEST_EQ(datum.theArray().length(), 
+                   MonitorableTest::Object::NUM_STATISTICS);
 
     for (int ordinal = 0;
          ordinal < static_cast<int>(datum.theArray().length());
          ++ordinal)
     {
-        ASSERT(datum.theArray().data()[ordinal].isInteger64());
+        NTSCFG_TEST_TRUE(datum.theArray().data()[ordinal].isInteger64());
 
         result[ordinal] = datum.theArray().data()[ordinal].theInteger64();
 
-        if (verbose) {
-            bsl::cout << "    " << bsl::setw(15) << bsl::left
-                      << object->getFieldPrefix(ordinal) << "  "
-                      << bsl::setw(30) << bsl::left
-                      << object->getFieldName(ordinal) << "  " << bsl::setw(22)
-                      << bsl::right
-                      << datum.theArray().data()[ordinal].theInteger64()
-                      << "  " << bsl::left
-                      << object->getFieldDescription(ordinal) << bsl::endl;
-        }
+        NTSCFG_TEST_LOG_DEBUG << "    " << bsl::setw(15) << bsl::left
+                    << object->getFieldPrefix(ordinal) << "  "
+                    << bsl::setw(30) << bsl::left
+                    << object->getFieldName(ordinal) << "  " << bsl::setw(22)
+                    << bsl::right
+                    << datum.theArray().data()[ordinal].theInteger64()
+                    << "  " << bsl::left
+                    << object->getFieldDescription(ordinal) 
+                    << NTSCFG_TEST_LOG_END;
     }
 }
 
-}  // close test namespace
-
-//=============================================================================
-//                              MAIN PROGRAM
-//-----------------------------------------------------------------------------
-
-int main(int argc, char* argv[])
+NTSCFG_TEST_FUNCTION(ntci::MonitorableTest::verify)
 {
-    int test            = argc > 1 ? bsl::atoi(argv[1]) : 0;
-    verbose             = (argc > 2);
-    veryVerbose         = (argc > 3);
-    veryVeryVerbose     = (argc > 4);
-    veryVeryVeryVerbose = (argc > 5);
-    bsl::cout << "TEST " << __FILE__ << " CASE " << test << bsl::endl;
-    ;
+    // TESTING STATISTICS MEASUREMENT, THROTTLING, AND QUERYING
+    //
+    // Concerns:
+    //   Monitorable objects measure statistics governed by a control
+    //   mechanism that limits the rate at which the measurements may be
+    //   made. The measurements are stored simlulatenously in an
+    //   "application" and "internal" snapshot. The measurements may be
+    //   queried with various "reset" semantics.
+    //
+    // Plan:
+    //   Implement the 'ntci::Monitorable' and 'ntci::MonitorableRegistry'
+    //   interfaces suitable for this test driver. The monitorable object
+    //   simulates some responsibilty to do work and measures the time it
+    //   takes for perform that work. Test the various "reset" semantics
+    //   when querying statistics. Test that statistics are maintained in
+    //   separate "application" and "internal" snapshots. Test that the
+    //   cumulative statistics are never reset.
 
-    switch (test) {
-    case 0:  // Zero is always the leading case.
-    case 1: {
-        // TESTING STATISTICS MEASUREMENT, THROTTLING, AND QUERYING
-        //
-        // Concerns:
-        //   Monitorable objects measure statistics governed by a control
-        //   mechanism that limits the rate at which the measurements may be
-        //   made. The measurements are stored simlulatenously in an
-        //   "application" and "internal" snapshot. The measurements may be
-        //   queried with various "reset" semantics.
-        //
-        // Plan:
-        //   Implement the 'ntci::Monitorable' and 'ntci::MonitorableRegistry'
-        //   interfaces suitable for this test driver. The monitorable object
-        //   simulates some responsibilty to do work and measures the time it
-        //   takes for perform that work. Test the various "reset" semantics
-        //   when querying statistics. Test that statistics are maintained in
-        //   separate "application" and "internal" snapshots. Test that the
-        //   cumulative statistics are never reset.
+    bsls::TimeInterval currentTime = bdlt::CurrentTime::now();
 
-        ntccfg::TestAllocator ta;
-        {
-            bsls::TimeInterval currentTime = bdlt::CurrentTime::now();
+    // Create the monitorable object registry and set it as the
+    // default monitorable registry.
 
-            // Create the monitorable object registry and set it as the
-            // default monitorable registry.
+    bsl::shared_ptr<MonitorableTest::ObjectRegistry> objectRegistry;
+    objectRegistry.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-            bsl::shared_ptr<test::ObjectRegistry> objectRegistry;
-            objectRegistry.createInplace(&ta, &ta);
+    // Create a monitorable object and register it with the default
+    // monitorable registry.
 
-            // Create a monitorable object and register it with the default
-            // monitorable registry.
+    bsl::shared_ptr<MonitorableTest::Object> object;
+    object.createInplace(NTSCFG_TEST_ALLOCATOR);
 
-            bsl::shared_ptr<test::Object> object;
-            object.createInplace(&ta);
+    objectRegistry->registerMonitorable(object);
 
-            objectRegistry->registerMonitorable(object);
+    // Ensure the registry is tracking this monitorable object.
 
-            // Ensure the registry is tracking this monitorable object.
+    {
+        bsl::vector<bsl::shared_ptr<ntci::Monitorable> >
+            registeredObjects;
 
-            {
-                bsl::vector<bsl::shared_ptr<ntci::Monitorable> >
-                    registeredObjects;
+        objectRegistry->loadRegisteredObjects(&registeredObjects);
 
-                objectRegistry->loadRegisteredObjects(&registeredObjects);
-
-                ASSERT(registeredObjects.size() == 1);
-                ASSERT(registeredObjects[0] == object);
-            }
-
-            // Test three measurement intervals...
-
-            for (bsl::int64_t currentInterval = 0; currentInterval < 3;
-                 ++currentInterval)
-            {
-                // Advance to the next measurment interval.
-
-                currentTime.addSeconds(1);
-                object->setCurrentTime(currentTime);
-
-                // Perform two iterations of work.
-
-                object->execute();
-                object->execute();
-
-                // Get the internal snapshot statistics measured by the
-                // monitorable object since they were last reset, and reset
-                // their values. Ensure the statistics are not zero.
-
-                bsl::int64_t stats1[test::Object::NUM_STATISTICS];
-                test::ObjectUtil::getStats(stats1, object.get(), &ta);
-
-                ASSERT(stats1[test::Object::STATISTIC_COUNT] > 0);
-                ASSERT(stats1[test::Object::STATISTIC_TOTAL] > 0);
-
-                ASSERT(stats1[test::Object::STATISTIC_MIN] !=
-                       bsl::numeric_limits<bsl::int64_t>::max());
-
-                ASSERT(stats1[test::Object::STATISTIC_MAX] !=
-                       bsl::numeric_limits<bsl::int64_t>::min());
-
-                // Get the internal snapshot statistics measured by the
-                // monitorable object since they were last reset, and reset
-                // their values.  Ensure the statistics are zero since there
-                // has been no activity since the last query.
-
-                bsl::int64_t stats2[test::Object::NUM_STATISTICS];
-                test::ObjectUtil::getStats(stats2, object.get(), &ta);
-
-                ASSERT(stats2[test::Object::STATISTIC_COUNT] == 0);
-                ASSERT(stats2[test::Object::STATISTIC_TOTAL] == 0);
-                ASSERT(stats2[test::Object::STATISTIC_MIN] ==
-                       bsl::numeric_limits<bsl::int64_t>::max());
-                ASSERT(stats2[test::Object::STATISTIC_MAX] ==
-                       bsl::numeric_limits<bsl::int64_t>::min());
-            }
-
-            // Deregister the monitorable object.
-
-            objectRegistry->deregisterMonitorable(object);
-
-            // Ensure the registry is no longer tracking this monitorable
-            // object.
-
-            {
-                bsl::vector<bsl::shared_ptr<ntci::Monitorable> >
-                    registeredObjects;
-
-                objectRegistry->loadRegisteredObjects(&registeredObjects);
-
-                ASSERT(registeredObjects.size() == 0);
-            }
-        }
-        ASSERT(0 == ta.numBlocksInUse());
-    } break;
-    default: {
-        bsl::cerr << "WARNING: CASE `" << test << "' NOT FOUND." << bsl::endl;
-        testStatus = -1;
-    }
+        NTSCFG_TEST_EQ(registeredObjects.size(), 1);
+        NTSCFG_TEST_EQ(registeredObjects[0], object);
     }
 
-    if (testStatus > 0) {
-        bsl::cerr << "Error, non-zero test status = " << testStatus << "."
-                  << bsl::endl;
+    // Test three measurement intervals...
+
+    for (bsl::int64_t currentInterval = 0; currentInterval < 3;
+            ++currentInterval)
+    {
+        // Advance to the next measurment interval.
+
+        currentTime.addSeconds(1);
+        object->setCurrentTime(currentTime);
+
+        // Perform two iterations of work.
+
+        object->execute();
+        object->execute();
+
+        // Get the internal snapshot statistics measured by the
+        // monitorable object since they were last reset, and reset
+        // their values. Ensure the statistics are not zero.
+
+        bsl::int64_t stats1[MonitorableTest::Object::NUM_STATISTICS];
+        MonitorableTest::ObjectUtil::getStats(stats1, object.get());
+
+        NTSCFG_TEST_GT(stats1[MonitorableTest::Object::STATISTIC_COUNT], 0);
+        NTSCFG_TEST_GT(stats1[MonitorableTest::Object::STATISTIC_TOTAL], 0);
+
+        NTSCFG_TEST_NE(stats1[MonitorableTest::Object::STATISTIC_MIN],
+                bsl::numeric_limits<bsl::int64_t>::max());
+
+        NTSCFG_TEST_NE(stats1[MonitorableTest::Object::STATISTIC_MAX],
+                bsl::numeric_limits<bsl::int64_t>::min());
+
+        // Get the internal snapshot statistics measured by the
+        // monitorable object since they were last reset, and reset
+        // their values.  Ensure the statistics are zero since there
+        // has been no activity since the last query.
+
+        bsl::int64_t stats2[MonitorableTest::Object::NUM_STATISTICS];
+        MonitorableTest::ObjectUtil::getStats(stats2, object.get());
+
+        NTSCFG_TEST_EQ(stats2[MonitorableTest::Object::STATISTIC_COUNT], 0);
+        NTSCFG_TEST_EQ(stats2[MonitorableTest::Object::STATISTIC_TOTAL], 0);
+        NTSCFG_TEST_EQ(stats2[MonitorableTest::Object::STATISTIC_MIN],
+                bsl::numeric_limits<bsl::int64_t>::max());
+        NTSCFG_TEST_EQ(stats2[MonitorableTest::Object::STATISTIC_MAX],
+                bsl::numeric_limits<bsl::int64_t>::min());
     }
-    return testStatus;
+
+    // Deregister the monitorable object.
+
+    objectRegistry->deregisterMonitorable(object);
+
+    // Ensure the registry is no longer tracking this monitorable
+    // object.
+
+    {
+        bsl::vector<bsl::shared_ptr<ntci::Monitorable> >
+            registeredObjects;
+
+        objectRegistry->loadRegisteredObjects(&registeredObjects);
+
+        NTSCFG_TEST_EQ(registeredObjects.size(), 0);
+    }
 }
+
+}  // close namespace ntci
+}  // close namespace BloombergLP

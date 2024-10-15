@@ -1838,9 +1838,9 @@ EncryptionDriver::~EncryptionDriver()
 }
 
 ntsa::Error EncryptionDriver::generateKey(
-        ntca::EncryptionKey*                  result,
-        const ntca::EncryptionKeyOptions&     options,
-        bslma::Allocator*                     basicAllocator) 
+    ntca::EncryptionKey*              result,
+    const ntca::EncryptionKeyOptions& options,
+    bslma::Allocator*                 basicAllocator)
 {
     ntsa::Error error;
 
@@ -1915,11 +1915,11 @@ ntsa::Error EncryptionDriver::decodeKey(
 }
 
 ntsa::Error EncryptionDriver::generateCertificate(
-    ntca::EncryptionCertificate*                  result,
-    const ntsa::DistinguishedName&                subjectIdentity,
-    const ntca::EncryptionKey&                    subjectPrivateKey,
-    const ntca::EncryptionCertificateOptions&     options,
-    bslma::Allocator*                             basicAllocator) 
+    ntca::EncryptionCertificate*              result,
+    const ntsa::DistinguishedName&            subjectIdentity,
+    const ntca::EncryptionKey&                subjectPrivateKey,
+    const ntca::EncryptionCertificateOptions& options,
+    bslma::Allocator*                         basicAllocator)
 {
     NTCCFG_WARNING_UNUSED(result);
     NTCCFG_WARNING_UNUSED(subjectIdentity);
@@ -1937,7 +1937,7 @@ ntsa::Error EncryptionDriver::generateCertificate(
     const ntca::EncryptionCertificate&        issuerCertificate,
     const ntca::EncryptionKey&                issuerPrivateKey,
     const ntca::EncryptionCertificateOptions& options,
-    bslma::Allocator*                         basicAllocator) 
+    bslma::Allocator*                         basicAllocator)
 {
     NTCCFG_WARNING_UNUSED(result);
     NTCCFG_WARNING_UNUSED(subjectIdentity);

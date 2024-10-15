@@ -13,4339 +13,4255 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntcd_machine_t_cpp, "$Id$ $CSID$")
+
 #include <ntcd_machine.h>
 
-#include <ntccfg_test.h>
 #include <ntcd_datautil.h>
 #include <ntci_log.h>
 
-#include <bdlbb_blob.h>
-#include <bdlbb_blobutil.h>
-#include <bdlbb_pooledblobbufferfactory.h>
-
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bsls_assert.h>
-
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntcd {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
-
-NTCCFG_TEST_CASE(1)
+// Provide tests for 'ntcd::Machine'.
+class MachineTest
 {
+  public:
     // Concern: Opening and closing handles.
-    // Plan:
+    static void verifyOpen();
 
-    ntccfg::TestAllocator ta;
-    {
-        NTCI_LOG_CONTEXT();
-        NTCI_LOG_CONTEXT_GUARD_OWNER("main");
-
-        ntsa::Error error;
-
-        // Create a machine.
-
-        bsl::shared_ptr<ntcd::Machine> machine;
-        machine.createInplace(&ta, &ta);
-
-        bsl::shared_ptr<ntcd::Session> sessionA = machine->createSession(&ta);
-        bsl::shared_ptr<ntcd::Session> sessionB = machine->createSession(&ta);
-        bsl::shared_ptr<ntcd::Session> sessionC = machine->createSession(&ta);
-
-        const ntsa::Transport::Value transport =
-            ntsa::Transport::e_UDP_IPV4_DATAGRAM;
-
-        // Open a session and ensure the session is assigned handle 3.
-
-        error = sessionA->open(transport);
-        NTCCFG_TEST_OK(error);
-
-        NTCCFG_TEST_EQ(sessionA->handle(), 3);
-
-        // Close the session.
-
-        error = sessionA->close();
-        NTCCFG_TEST_OK(error);
-
-        // Open the session and ensure the session is again assigned handle 3,
-        // the handle is immediately reused.
-
-        error = sessionA->open(transport);
-        NTCCFG_TEST_OK(error);
-
-        NTCCFG_TEST_EQ(sessionA->handle(), 3);
-
-        // Open another session and ensure the session is assigned handle 4.
-
-        error = sessionB->open(transport);
-        NTCCFG_TEST_OK(error);
-
-        NTCCFG_TEST_EQ(sessionB->handle(), 4);
-
-        // Open another session and ensure the session is assigned handle 5.
-
-        error = sessionC->open(transport);
-        NTCCFG_TEST_OK(error);
-
-        NTCCFG_TEST_EQ(sessionC->handle(), 5);
-
-        // Close the session that has been assigned handle 4.
-
-        error = sessionB->close();
-        NTCCFG_TEST_OK(error);
-
-        // Open another session and ensure the session is again assigned handle
-        // 4, the handle is immediately reused despite being in the "gap"
-        // between the still-open handles 3 and 5.
-
-        error = sessionB->open(transport);
-        NTCCFG_TEST_OK(error);
-
-        NTCCFG_TEST_EQ(sessionB->handle(), 4);
-
-        // Close all sessions.
-
-        error = sessionA->close();
-        NTCCFG_TEST_OK(error);
-
-        error = sessionB->close();
-        NTCCFG_TEST_OK(error);
-
-        error = sessionC->close();
-        NTCCFG_TEST_OK(error);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(2)
-{
     // Concern: Binding to ports.
-    // Plan:
+    static void verifyBind();
 
-    ntccfg::TestAllocator ta;
-    {
-        NTCI_LOG_CONTEXT();
-        NTCI_LOG_CONTEXT_GUARD_OWNER("main");
+    // Concern: Simulate blocking IPv4 datagram sockets, manually stepping the
+    // simulated machine.
+    static void verifyForegroundBlockingDatagramSockets();
 
-        ntsa::Error error;
-
-        // Create a machine.
-
-        bsl::shared_ptr<ntcd::Machine> machine;
-        machine.createInplace(&ta, &ta);
-
-        bsl::shared_ptr<ntcd::Session> sessionA = machine->createSession(&ta);
-        bsl::shared_ptr<ntcd::Session> sessionB = machine->createSession(&ta);
-        bsl::shared_ptr<ntcd::Session> sessionC = machine->createSession(&ta);
-
-        ntsa::Endpoint sourceEndpointA;
-        ntsa::Endpoint sourceEndpointB;
-        ntsa::Endpoint sourceEndpointC;
-
-        const ntsa::Transport::Value transport =
-            ntsa::Transport::e_UDP_IPV4_DATAGRAM;
-
-        // Open a session.
-
-        error = sessionA->open(transport);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint and ensure the operation fails.
-
-        error = sessionA->sourceEndpoint(&sourceEndpointA);
-        NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
-
-        // Bind the session to the loopback address and request that the
-        // assigned port is any available ephemeral port.
-
-        error = sessionA->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint and ensure the session was bound to the
-        // loopback address and the first available port in the ephemeral port
-        // range.
-
-        error = sessionA->sourceEndpoint(&sourceEndpointA);
-        NTCCFG_TEST_OK(error);
-
-        NTCCFG_TEST_TRUE(sourceEndpointA.isIp());
-        NTCCFG_TEST_EQ(sourceEndpointA.ip().host(),
-                       ntsa::IpAddress::loopbackIpv4());
-        NTCCFG_TEST_EQ(sourceEndpointA.ip().port(), 49152);
-
-        // Close the session.
-
-        error = sessionA->close();
-        NTCCFG_TEST_OK(error);
-
-        // Open the session again.
-
-        error = sessionA->open(transport);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint and ensure the operation fails.
-
-        error = sessionA->sourceEndpoint(&sourceEndpointA);
-        NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
-
-        // Bind the session to the loopback address and request that the
-        // assigned port is any available ephemeral port.
-
-        error = sessionA->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint and ensure the session was again bound to
-        // the loopback address and the first available port in the ephemeral
-        // port range; the port is immediately reused.
-
-        error = sessionA->sourceEndpoint(&sourceEndpointA);
-        NTCCFG_TEST_OK(error);
-
-        NTCCFG_TEST_TRUE(sourceEndpointA.isIp());
-        NTCCFG_TEST_EQ(sourceEndpointA.ip().host(),
-                       ntsa::IpAddress::loopbackIpv4());
-        NTCCFG_TEST_EQ(sourceEndpointA.ip().port(), 49152);
-
-        // Open another session.
-
-        error = sessionB->open(transport);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint and ensure the operation fails.
-
-        error = sessionB->sourceEndpoint(&sourceEndpointB);
-        NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
-
-        // Bind the session to the loopback address and request that the
-        // assigned port is any available ephemeral port.
-
-        error = sessionB->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint and ensure the session was bound to
-        // the loopback address and the second available port in the ephemeral
-        // port range.
-
-        error = sessionB->sourceEndpoint(&sourceEndpointB);
-        NTCCFG_TEST_OK(error);
-
-        NTCCFG_TEST_TRUE(sourceEndpointB.isIp());
-        NTCCFG_TEST_EQ(sourceEndpointB.ip().host(),
-                       ntsa::IpAddress::loopbackIpv4());
-        NTCCFG_TEST_EQ(sourceEndpointB.ip().port(), 49152 + 1);
-
-        // Open yet another session.
-
-        error = sessionC->open(transport);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint and ensure the operation fails.
-
-        error = sessionC->sourceEndpoint(&sourceEndpointC);
-        NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
-
-        // Bind the session to the loopback address and request that the
-        // assigned port is any available ephemeral port.
-
-        error = sessionC->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint and ensure the session was bound to
-        // the loopback address and the second available port in the ephemeral
-        // port range.
-
-        error = sessionC->sourceEndpoint(&sourceEndpointC);
-        NTCCFG_TEST_OK(error);
-
-        NTCCFG_TEST_TRUE(sourceEndpointC.isIp());
-        NTCCFG_TEST_EQ(sourceEndpointC.ip().host(),
-                       ntsa::IpAddress::loopbackIpv4());
-        NTCCFG_TEST_EQ(sourceEndpointC.ip().port(), 49152 + 2);
-
-        // Close the second session.
-
-        error = sessionB->close();
-        NTCCFG_TEST_OK(error);
-
-        // Open the second session again.
-
-        error = sessionB->open(transport);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint and ensure the operation fails.
-
-        error = sessionB->sourceEndpoint(&sourceEndpointB);
-        NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
-
-        // Bind the session to the loopback address and request that the
-        // assigned port is any available ephemeral port.
-
-        error = sessionB->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint and ensure the session was bound to
-        // the loopback address and the second available port in the ephemeral
-        // port range, the port is reused from the "gap".
-
-        error = sessionB->sourceEndpoint(&sourceEndpointB);
-        NTCCFG_TEST_OK(error);
-
-        NTCCFG_TEST_TRUE(sourceEndpointB.isIp());
-        NTCCFG_TEST_EQ(sourceEndpointB.ip().host(),
-                       ntsa::IpAddress::loopbackIpv4());
-        NTCCFG_TEST_EQ(sourceEndpointB.ip().port(), 49152 + 1);
-
-        // Close all sessions.
-
-        error = sessionA->close();
-        NTCCFG_TEST_OK(error);
-
-        error = sessionB->close();
-        NTCCFG_TEST_OK(error);
-
-        error = sessionC->close();
-        NTCCFG_TEST_OK(error);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(3)
-{
-    // Concern: Simulate blocking IPv4 datagram sockets, manually stepping
-    //          the simulated machine.
-    // Plan:
-
-    ntccfg::TestAllocator ta;
-    {
-        NTCI_LOG_CONTEXT();
-        NTCI_LOG_CONTEXT_GUARD_OWNER("main");
-
-        ntsa::Error error;
-
-        // Create a machine.
-
-        bsl::shared_ptr<ntcd::Machine> machine;
-        machine.createInplace(&ta, &ta);
-
-        // Create a client.
-
-        bsl::shared_ptr<ntcd::Session> client = machine->createSession(&ta);
-
-        // Open the client as an IPv4 datagram socket.
-
-        error = client->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-        NTCCFG_TEST_OK(error);
-
-        // Bind the client to any port on the IPv4 loopback address.
-
-        error = client->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the client.
-
-        ntsa::Endpoint clientSourceEndpoint;
-        error = client->sourceEndpoint(&clientSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Client source endpoint = " << clientSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the client is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(clientSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
-
-        // Create a server.
-
-        bsl::shared_ptr<ntcd::Session> server = machine->createSession(&ta);
-
-        // Open the server as an IPv4 datagram socket.
-
-        error = server->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-        NTCCFG_TEST_OK(error);
-
-        // Bind the server to any port on the IPv4 loopback address.
-
-        error = server->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the server.
-
-        ntsa::Endpoint serverSourceEndpoint;
-        error = server->sourceEndpoint(&serverSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Server source endpoint = " << serverSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the server is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(serverSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
-
-        // Ensure the source endpoint of the client is different than the
-        // source endpoint of the server.
-
-        NTCCFG_TEST_NE(clientSourceEndpoint, serverSourceEndpoint);
-
-        // Send data from the client to the server.
-
-        const char CLIENT_DATA = 'C';
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            options.setEndpoint(serverSourceEndpoint);
-
-            error = client->send(&context, data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesSendable(), 1);
-            NTCCFG_TEST_EQ(context.bytesSent(), 1);
-        }
-
-        // Advance the simulation.
-
-        error = machine->step(false);
-        NTCCFG_TEST_OK(error);
-
-        // Receive data at the server.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = server->receive(&context, &data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesReceivable(), 1);
-            NTCCFG_TEST_EQ(context.bytesReceived(), 1);
-
-            NTCCFG_TEST_EQ(remoteData, CLIENT_DATA);
-
-            NTCCFG_TEST_FALSE(context.endpoint().isNull());
-            NTCCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
-        }
-
-        // Send data from the server to the client.
-
-        const char SERVER_DATA = 'S';
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            options.setEndpoint(clientSourceEndpoint);
-
-            error = server->send(&context, data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesSendable(), 1);
-            NTCCFG_TEST_EQ(context.bytesSent(), 1);
-        }
-
-        // Advance the simulation.
-
-        error = machine->step(false);
-        NTCCFG_TEST_OK(error);
-
-        // Receive data at the client.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = client->receive(&context, &data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesReceivable(), 1);
-            NTCCFG_TEST_EQ(context.bytesReceived(), 1);
-
-            NTCCFG_TEST_EQ(remoteData, SERVER_DATA);
-
-            NTCCFG_TEST_FALSE(context.endpoint().isNull());
-            NTCCFG_TEST_EQ(context.endpoint().value(), serverSourceEndpoint);
-        }
-
-        // Close the client.
-
-        error = client->close();
-        NTCCFG_TEST_OK(error);
-
-        // Close the server.
-
-        error = server->close();
-        NTCCFG_TEST_OK(error);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(4)
-{
     // Concern: Simulate blocking one-way connected IPv4 datagram sockets,
-    //          manually stepping the simulated machine.
-    // Plan:
+    // manually stepping the simulated machine.
+    static void verifyForegroundBlockingDatagramSocketsConnectedOneWay();
 
-    ntccfg::TestAllocator ta;
-    {
-        NTCI_LOG_CONTEXT();
-        NTCI_LOG_CONTEXT_GUARD_OWNER("main");
-
-        ntsa::Error error;
-
-        // Create a machine.
-
-        bsl::shared_ptr<ntcd::Machine> machine;
-        machine.createInplace(&ta, &ta);
-
-        // Create a client.
-
-        bsl::shared_ptr<ntcd::Session> client = machine->createSession(&ta);
-
-        // Open the client as an IPv4 datagram socket.
-
-        error = client->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-        NTCCFG_TEST_OK(error);
-
-        // Bind the client to any port on the IPv4 loopback address.
-
-        error = client->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the client.
-
-        ntsa::Endpoint clientSourceEndpoint;
-        error = client->sourceEndpoint(&clientSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Client source endpoint = " << clientSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the client is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(clientSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
-
-        // Create a server.
-
-        bsl::shared_ptr<ntcd::Session> server = machine->createSession(&ta);
-
-        // Open the server as an IPv4 datagram socket.
-
-        error = server->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-        NTCCFG_TEST_OK(error);
-
-        // Bind the server to any port on the IPv4 loopback address.
-
-        error = server->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the server.
-
-        ntsa::Endpoint serverSourceEndpoint;
-        error = server->sourceEndpoint(&serverSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Server source endpoint = " << serverSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the server is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(serverSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
-
-        // Ensure the source endpoint of the client is different than the
-        // source endpoint of the server.
-
-        NTCCFG_TEST_NE(clientSourceEndpoint, serverSourceEndpoint);
-
-        // Connect the client to the server.
-
-        error = client->connect(serverSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        // Advance the simulation.
-
-        error = machine->step(false);
-        NTCCFG_TEST_OK(error);
-
-        // Send data from the client to the server.
-
-        const char CLIENT_DATA = 'C';
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            error = client->send(&context, data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesSendable(), 1);
-            NTCCFG_TEST_EQ(context.bytesSent(), 1);
-        }
-
-        // Advance the simulation.
-
-        error = machine->step(false);
-        NTCCFG_TEST_OK(error);
-
-        // Receive data at the server.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = server->receive(&context, &data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesReceivable(), 1);
-            NTCCFG_TEST_EQ(context.bytesReceived(), 1);
-
-            NTCCFG_TEST_EQ(remoteData, CLIENT_DATA);
-
-            NTCCFG_TEST_FALSE(context.endpoint().isNull());
-            NTCCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
-        }
-
-        // Send data from the server to the client.
-
-        const char SERVER_DATA = 'S';
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            options.setEndpoint(clientSourceEndpoint);
-
-            error = server->send(&context, data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesSendable(), 1);
-            NTCCFG_TEST_EQ(context.bytesSent(), 1);
-        }
-
-        // Advance the simulation.
-
-        error = machine->step(false);
-        NTCCFG_TEST_OK(error);
-
-        // Receive data at the client.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = client->receive(&context, &data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesReceivable(), 1);
-            NTCCFG_TEST_EQ(context.bytesReceived(), 1);
-
-            NTCCFG_TEST_EQ(remoteData, SERVER_DATA);
-
-            NTCCFG_TEST_FALSE(context.endpoint().isNull());
-            NTCCFG_TEST_EQ(context.endpoint().value(), serverSourceEndpoint);
-        }
-
-        // Close the client.
-
-        error = client->close();
-        NTCCFG_TEST_OK(error);
-
-        // Close the server.
-
-        error = server->close();
-        NTCCFG_TEST_OK(error);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(5)
-{
     // Concern: Simulate blocking two-way connected IPv4 datagram sockets,
-    //          manually stepping the simulated machine.
-    // Plan:
+    // manually stepping the simulated machine.
+    static void verifyForegroundBlockingDatagramSocketsConnectedTwoWay();
 
-    ntccfg::TestAllocator ta;
-    {
-        NTCI_LOG_CONTEXT();
-        NTCI_LOG_CONTEXT_GUARD_OWNER("main");
-
-        ntsa::Error error;
-
-        // Create a machine.
-
-        bsl::shared_ptr<ntcd::Machine> machine;
-        machine.createInplace(&ta, &ta);
-
-        // Create a client.
-
-        bsl::shared_ptr<ntcd::Session> client = machine->createSession(&ta);
-
-        // Open the client as an IPv4 datagram socket.
-
-        error = client->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-        NTCCFG_TEST_OK(error);
-
-        // Bind the client to any port on the IPv4 loopback address.
-
-        error = client->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the client.
-
-        ntsa::Endpoint clientSourceEndpoint;
-        error = client->sourceEndpoint(&clientSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Client source endpoint = " << clientSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the client is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(clientSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
-
-        // Create a server.
-
-        bsl::shared_ptr<ntcd::Session> server = machine->createSession(&ta);
-
-        // Open the server as an IPv4 datagram socket.
-
-        error = server->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-        NTCCFG_TEST_OK(error);
-
-        // Bind the server to any port on the IPv4 loopback address.
-
-        error = server->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the server.
-
-        ntsa::Endpoint serverSourceEndpoint;
-        error = server->sourceEndpoint(&serverSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Server source endpoint = " << serverSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the server is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(serverSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
-
-        // Ensure the source endpoint of the client is different than the
-        // source endpoint of the server.
-
-        NTCCFG_TEST_NE(clientSourceEndpoint, serverSourceEndpoint);
-
-        // Connect the client to the server.
-
-        error = client->connect(serverSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        // Connect the server to the client.
-
-        error = server->connect(clientSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        // Advance the simulation.
-
-        error = machine->step(false);
-        NTCCFG_TEST_OK(error);
-
-        // Send data from the client to the server.
-
-        const char CLIENT_DATA = 'C';
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            error = client->send(&context, data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesSendable(), 1);
-            NTCCFG_TEST_EQ(context.bytesSent(), 1);
-        }
-
-        // Advance the simulation.
-
-        error = machine->step(false);
-        NTCCFG_TEST_OK(error);
-
-        // Receive data at the server.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = server->receive(&context, &data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesReceivable(), 1);
-            NTCCFG_TEST_EQ(context.bytesReceived(), 1);
-
-            NTCCFG_TEST_EQ(remoteData, CLIENT_DATA);
-
-            NTCCFG_TEST_FALSE(context.endpoint().isNull());
-            NTCCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
-        }
-
-        // Send data from the server to the client.
-
-        const char SERVER_DATA = 'S';
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            error = server->send(&context, data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesSendable(), 1);
-            NTCCFG_TEST_EQ(context.bytesSent(), 1);
-        }
-
-        // Advance the simulation.
-
-        error = machine->step(false);
-        NTCCFG_TEST_OK(error);
-
-        // Receive data at the client.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = client->receive(&context, &data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesReceivable(), 1);
-            NTCCFG_TEST_EQ(context.bytesReceived(), 1);
-
-            NTCCFG_TEST_EQ(remoteData, SERVER_DATA);
-
-            NTCCFG_TEST_FALSE(context.endpoint().isNull());
-            NTCCFG_TEST_EQ(context.endpoint().value(), serverSourceEndpoint);
-        }
-
-        // Close the client.
-
-        error = client->close();
-        NTCCFG_TEST_OK(error);
-
-        // Close the server.
-
-        error = server->close();
-        NTCCFG_TEST_OK(error);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(6)
-{
     // Concern: Simulate blocking IPv4 stream sockets, manually stepping the
-    //          simulated machine.
-    // Plan:
+    // simulated machine.
+    static void verifyForegroundBlockingStreamSockets();
 
-    ntccfg::TestAllocator ta;
-    {
-        NTCI_LOG_CONTEXT();
-        NTCI_LOG_CONTEXT_GUARD_OWNER("main");
-
-        ntsa::Error error;
-
-        // Create a machine.
-
-        bsl::shared_ptr<ntcd::Machine> machine;
-        machine.createInplace(&ta, &ta);
-
-        // Create a listener.
-
-        bsl::shared_ptr<ntcd::Session> listener = machine->createSession(&ta);
-
-        // Open the listener for IPv4 stream sockets.
-
-        error = error = listener->open(ntsa::Transport::e_TCP_IPV4_STREAM);
-        NTCCFG_TEST_OK(error);
-
-        // Bind the listener to any port on the IPv4 loopback address.
-
-        error = listener->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the listener.
-
-        ntsa::Endpoint listenerSourceEndpoint;
-        error = listener->sourceEndpoint(&listenerSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Listener source endpoint = " << listenerSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the listener is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(listenerSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(listenerSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(listenerSourceEndpoint.ip().port(), 0);
-
-        // Begin listening for connections.
-
-        error = listener->listen(0);
-        NTCCFG_TEST_OK(error);
-
-        // Create a client.
-
-        bsl::shared_ptr<ntcd::Session> client = machine->createSession(&ta);
-
-        // Open the client as an IPv4 stream socket.
-
-        error = client->open(ntsa::Transport::e_TCP_IPV4_STREAM);
-        NTCCFG_TEST_OK(error);
-
-        // Connect the client to the listener.
-
-        error = client->connect(listenerSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        // Advance the simulation.
-
-        error = machine->step(false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the client.
-
-        ntsa::Endpoint clientSourceEndpoint;
-        error = client->sourceEndpoint(&clientSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Client source endpoint = " << clientSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Get the remote endpoint of the client.
-
-        ntsa::Endpoint clientRemoteEndpoint;
-        error = client->remoteEndpoint(&clientRemoteEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Client remote endpoint = " << clientRemoteEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the client is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(clientSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
-
-        // Accept a server from the listener.
-
-        bsl::shared_ptr<ntcd::Session> server;
-        error = listener->accept(&server);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the server.
-
-        ntsa::Endpoint serverSourceEndpoint;
-        error = server->sourceEndpoint(&serverSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Server source endpoint = " << serverSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Get the remote endpoint of the server.
-
-        ntsa::Endpoint serverRemoteEndpoint;
-        error = server->remoteEndpoint(&serverRemoteEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Server remote endpoint = " << serverRemoteEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the server is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(serverSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
-
-        // Ensure the remote endpoint of the client is the source endpoint of
-        // the server.
-
-        NTCCFG_TEST_EQ(clientRemoteEndpoint, serverSourceEndpoint);
-
-        // Ensure the remote endpoint of the server is the source endpoint of
-        // the client.
-
-        NTCCFG_TEST_EQ(serverRemoteEndpoint, clientSourceEndpoint);
-
-        // Send data from the client to the server.
-
-        const char CLIENT_DATA = 'C';
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            error = client->send(&context, data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesSendable(), 1);
-            NTCCFG_TEST_EQ(context.bytesSent(), 1);
-        }
-
-        // Advance the simulation.
-
-        error = machine->step(false);
-        NTCCFG_TEST_OK(error);
-
-        // Receive data at the server.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = server->receive(&context, &data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesReceivable(), 1);
-            NTCCFG_TEST_EQ(context.bytesReceived(), 1);
-
-            NTCCFG_TEST_EQ(remoteData, CLIENT_DATA);
-
-            NTCCFG_TEST_FALSE(context.endpoint().isNull());
-            NTCCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
-        }
-
-        // Send data from the server to the client.
-
-        const char SERVER_DATA = 'S';
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            error = server->send(&context, data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesSendable(), 1);
-            NTCCFG_TEST_EQ(context.bytesSent(), 1);
-        }
-
-        // Advance the simulation.
-
-        error = machine->step(false);
-        NTCCFG_TEST_OK(error);
-
-        // Receive data at the client.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = client->receive(&context, &data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesReceivable(), 1);
-            NTCCFG_TEST_EQ(context.bytesReceived(), 1);
-
-            NTCCFG_TEST_EQ(remoteData, SERVER_DATA);
-
-            NTCCFG_TEST_FALSE(context.endpoint().isNull());
-            NTCCFG_TEST_EQ(context.endpoint().value(), serverSourceEndpoint);
-        }
-
-        // Shutdown the client.
-
-        error = client->shutdown(ntsa::ShutdownType::e_SEND);
-        NTCCFG_TEST_OK(error);
-
-        // Advance the simulation.
-
-        error = machine->step(false);
-        NTCCFG_TEST_OK(error);
-
-        // Receive data at the server.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = server->receive(&context, &data, options);
-            NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_EOF));
-            NTCCFG_TEST_EQ(context.bytesReceived(), 0);
-        }
-
-        // Shutdown the server.
-
-        error = server->shutdown(ntsa::ShutdownType::e_SEND);
-        NTCCFG_TEST_OK(error);
-
-        // Advance the simulation.
-
-        error = machine->step(false);
-        NTCCFG_TEST_OK(error);
-
-        // Receive data at the client.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = client->receive(&context, &data, options);
-            NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_EOF));
-            NTCCFG_TEST_EQ(context.bytesReceived(), 0);
-        }
-
-        // Try to send data from the client to the server and ensure the
-        // operation fails because the client has been shutdown for sending.
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            error = client->send(&context, data, options);
-            NTCCFG_TEST_TRUE(error);
-
-            NTCCFG_TEST_EQ(context.bytesSent(), 0);
-        }
-
-        // Try to send data from the server to the client and ensure the
-        // operation fails because the server has been shutdown for sending.
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            error = server->send(&context, data, options);
-            NTCCFG_TEST_TRUE(error);
-
-            NTCCFG_TEST_EQ(context.bytesSent(), 0);
-        }
-
-        // Close the client.
-
-        error = client->close();
-        NTCCFG_TEST_OK(error);
-
-        // Close the server.
-
-        error = server->close();
-        NTCCFG_TEST_OK(error);
-
-        // Close the listener.
-
-        error = listener->close();
-        NTCCFG_TEST_OK(error);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-// PART 2
-
-NTCCFG_TEST_CASE(7)
-{
     // Concern: Simulate blocking IPv4 datagram sockets, automatically stepping
-    //          the simulated machine in a background thread.
-    // Plan:
+    // the simulated machine in a background thread.
+    static void verifyBackgroundBlockingDatagramSockets();
 
-    ntccfg::TestAllocator ta;
-    {
-        NTCI_LOG_CONTEXT();
-        NTCI_LOG_CONTEXT_GUARD_OWNER("main");
-
-        ntsa::Error error;
-
-        // Create a machine.
-
-        bsl::shared_ptr<ntcd::Machine> machine;
-        machine.createInplace(&ta, &ta);
-
-        // Run the machine.
-
-        error = machine->run();
-        NTCCFG_TEST_OK(error);
-
-        // Create a client.
-
-        bsl::shared_ptr<ntcd::Session> client = machine->createSession(&ta);
-
-        // Open the client as an IPv4 datagram socket.
-
-        error = client->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-        NTCCFG_TEST_OK(error);
-
-        // Bind the client to any port on the IPv4 loopback address.
-
-        error = client->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the client.
-
-        ntsa::Endpoint clientSourceEndpoint;
-        error = client->sourceEndpoint(&clientSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Client source endpoint = " << clientSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the client is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(clientSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
-
-        // Create a server.
-
-        bsl::shared_ptr<ntcd::Session> server = machine->createSession(&ta);
-
-        // Open the server as an IPv4 datagram socket.
-
-        error = server->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-        NTCCFG_TEST_OK(error);
-
-        // Bind the server to any port on the IPv4 loopback address.
-
-        error = server->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the server.
-
-        ntsa::Endpoint serverSourceEndpoint;
-        error = server->sourceEndpoint(&serverSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Server source endpoint = " << serverSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the server is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(serverSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
-
-        // Ensure the source endpoint of the client is different than the
-        // source endpoint of the server.
-
-        NTCCFG_TEST_NE(clientSourceEndpoint, serverSourceEndpoint);
-
-        // Send data from the client to the server.
-
-        const char CLIENT_DATA = 'C';
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            options.setEndpoint(serverSourceEndpoint);
-
-            error = client->send(&context, data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesSendable(), 1);
-            NTCCFG_TEST_EQ(context.bytesSent(), 1);
-        }
-
-        // Receive data at the server.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = server->receive(&context, &data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesReceivable(), 1);
-            NTCCFG_TEST_EQ(context.bytesReceived(), 1);
-
-            NTCCFG_TEST_EQ(remoteData, CLIENT_DATA);
-
-            NTCCFG_TEST_FALSE(context.endpoint().isNull());
-            NTCCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
-        }
-
-        // Send data from the server to the client.
-
-        const char SERVER_DATA = 'S';
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            options.setEndpoint(clientSourceEndpoint);
-
-            error = server->send(&context, data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesSendable(), 1);
-            NTCCFG_TEST_EQ(context.bytesSent(), 1);
-        }
-
-        // Receive data at the client.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = client->receive(&context, &data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesReceivable(), 1);
-            NTCCFG_TEST_EQ(context.bytesReceived(), 1);
-
-            NTCCFG_TEST_EQ(remoteData, SERVER_DATA);
-
-            NTCCFG_TEST_FALSE(context.endpoint().isNull());
-            NTCCFG_TEST_EQ(context.endpoint().value(), serverSourceEndpoint);
-        }
-
-        // Close the client.
-
-        error = client->close();
-        NTCCFG_TEST_OK(error);
-
-        // Close the server.
-
-        error = server->close();
-        NTCCFG_TEST_OK(error);
-
-        // Stop the machine.
-
-        machine->stop();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(8)
-{
     // Concern: Simulate blocking one-way connected IPv4 datagram sockets,
-    //          automatically stepping the simulated machine in a background
-    //          thread.
-    // Plan:
+    // automatically stepping the simulated machine in a background
+    // thread.
+    static void verifyBackgroundBlockingDatagramSocketsConnectedOneWay();
 
-    ntccfg::TestAllocator ta;
-    {
-        NTCI_LOG_CONTEXT();
-        NTCI_LOG_CONTEXT_GUARD_OWNER("main");
-
-        ntsa::Error error;
-
-        // Create a machine.
-
-        bsl::shared_ptr<ntcd::Machine> machine;
-        machine.createInplace(&ta, &ta);
-
-        // Run the machine.
-
-        error = machine->run();
-        NTCCFG_TEST_OK(error);
-
-        // Create a client.
-
-        bsl::shared_ptr<ntcd::Session> client = machine->createSession(&ta);
-
-        // Open the client as an IPv4 datagram socket.
-
-        error = client->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-        NTCCFG_TEST_OK(error);
-
-        // Bind the client to any port on the IPv4 loopback address.
-
-        error = client->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the client.
-
-        ntsa::Endpoint clientSourceEndpoint;
-        error = client->sourceEndpoint(&clientSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Client source endpoint = " << clientSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the client is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(clientSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
-
-        // Create a server.
-
-        bsl::shared_ptr<ntcd::Session> server = machine->createSession(&ta);
-
-        // Open the server as an IPv4 datagram socket.
-
-        error = server->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-        NTCCFG_TEST_OK(error);
-
-        // Bind the server to any port on the IPv4 loopback address.
-
-        error = server->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the server.
-
-        ntsa::Endpoint serverSourceEndpoint;
-        error = server->sourceEndpoint(&serverSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Server source endpoint = " << serverSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the server is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(serverSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
-
-        // Ensure the source endpoint of the client is different than the
-        // source endpoint of the server.
-
-        NTCCFG_TEST_NE(clientSourceEndpoint, serverSourceEndpoint);
-
-        // Connect the client to the server.
-
-        error = client->connect(serverSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        // Send data from the client to the server.
-
-        const char CLIENT_DATA = 'C';
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            error = client->send(&context, data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesSendable(), 1);
-            NTCCFG_TEST_EQ(context.bytesSent(), 1);
-        }
-
-        // Receive data at the server.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = server->receive(&context, &data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesReceivable(), 1);
-            NTCCFG_TEST_EQ(context.bytesReceived(), 1);
-
-            NTCCFG_TEST_EQ(remoteData, CLIENT_DATA);
-
-            NTCCFG_TEST_FALSE(context.endpoint().isNull());
-            NTCCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
-        }
-
-        // Send data from the server to the client.
-
-        const char SERVER_DATA = 'S';
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            options.setEndpoint(clientSourceEndpoint);
-
-            error = server->send(&context, data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesSendable(), 1);
-            NTCCFG_TEST_EQ(context.bytesSent(), 1);
-        }
-
-        // Receive data at the client.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = client->receive(&context, &data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesReceivable(), 1);
-            NTCCFG_TEST_EQ(context.bytesReceived(), 1);
-
-            NTCCFG_TEST_EQ(remoteData, SERVER_DATA);
-
-            NTCCFG_TEST_FALSE(context.endpoint().isNull());
-            NTCCFG_TEST_EQ(context.endpoint().value(), serverSourceEndpoint);
-        }
-
-        // Close the client.
-
-        error = client->close();
-        NTCCFG_TEST_OK(error);
-
-        // Close the server.
-
-        error = server->close();
-        NTCCFG_TEST_OK(error);
-
-        // Stop the machine.
-
-        machine->stop();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(9)
-{
     // Concern: Simulate blocking two-way connected IPv4 datagram sockets,
-    //          automatically stepping the simulated machine in a background
-    //          thread.
-    // Plan:
+    // automatically stepping the simulated machine in a background
+    // thread.
+    static void verifyBackgroundBlockingDatagramSocketsConnectedTwoWay();
 
-    ntccfg::TestAllocator ta;
-    {
-        NTCI_LOG_CONTEXT();
-        NTCI_LOG_CONTEXT_GUARD_OWNER("main");
-
-        ntsa::Error error;
-
-        // Create a machine.
-
-        bsl::shared_ptr<ntcd::Machine> machine;
-        machine.createInplace(&ta, &ta);
-
-        // Run the machine.
-
-        error = machine->run();
-        NTCCFG_TEST_OK(error);
-
-        // Create a client.
-
-        bsl::shared_ptr<ntcd::Session> client = machine->createSession(&ta);
-
-        // Open the client as an IPv4 datagram socket.
-
-        error = client->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-        NTCCFG_TEST_OK(error);
-
-        // Bind the client to any port on the IPv4 loopback address.
-
-        error = client->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the client.
-
-        ntsa::Endpoint clientSourceEndpoint;
-        error = client->sourceEndpoint(&clientSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Client source endpoint = " << clientSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the client is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(clientSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
-
-        // Create a server.
-
-        bsl::shared_ptr<ntcd::Session> server = machine->createSession(&ta);
-
-        // Open the server as an IPv4 datagram socket.
-
-        error = server->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-        NTCCFG_TEST_OK(error);
-
-        // Bind the server to any port on the IPv4 loopback address.
-
-        error = server->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the server.
-
-        ntsa::Endpoint serverSourceEndpoint;
-        error = server->sourceEndpoint(&serverSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Server source endpoint = " << serverSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the server is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(serverSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
-
-        // Ensure the source endpoint of the client is different than the
-        // source endpoint of the server.
-
-        NTCCFG_TEST_NE(clientSourceEndpoint, serverSourceEndpoint);
-
-        // Connect the client to the server.
-
-        error = client->connect(serverSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        // Connect the server to the client.
-
-        error = server->connect(clientSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        // Send data from the client to the server.
-
-        const char CLIENT_DATA = 'C';
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            error = client->send(&context, data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesSendable(), 1);
-            NTCCFG_TEST_EQ(context.bytesSent(), 1);
-        }
-
-        // Receive data at the server.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = server->receive(&context, &data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesReceivable(), 1);
-            NTCCFG_TEST_EQ(context.bytesReceived(), 1);
-
-            NTCCFG_TEST_EQ(remoteData, CLIENT_DATA);
-
-            NTCCFG_TEST_FALSE(context.endpoint().isNull());
-            NTCCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
-        }
-
-        // Send data from the server to the client.
-
-        const char SERVER_DATA = 'S';
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            error = server->send(&context, data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesSendable(), 1);
-            NTCCFG_TEST_EQ(context.bytesSent(), 1);
-        }
-
-        // Receive data at the client.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = client->receive(&context, &data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesReceivable(), 1);
-            NTCCFG_TEST_EQ(context.bytesReceived(), 1);
-
-            NTCCFG_TEST_EQ(remoteData, SERVER_DATA);
-
-            NTCCFG_TEST_FALSE(context.endpoint().isNull());
-            NTCCFG_TEST_EQ(context.endpoint().value(), serverSourceEndpoint);
-        }
-
-        // Close the client.
-
-        error = client->close();
-        NTCCFG_TEST_OK(error);
-
-        // Close the server.
-
-        error = server->close();
-        NTCCFG_TEST_OK(error);
-
-        // Stop the machine.
-
-        machine->stop();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(10)
-{
     // Concern: Simulate blocking IPv4 stream sockets, automatically stepping
-    //          the simulated machine in a background thread.
-    // Plan:
+    // the simulated machine in a background thread.
+    static void verifyBackgroundBlockingStreamSockets();
 
-    ntccfg::TestAllocator ta;
-    {
-        NTCI_LOG_CONTEXT();
-        NTCI_LOG_CONTEXT_GUARD_OWNER("main");
-
-        ntsa::Error error;
-
-        // Create a machine.
-
-        bsl::shared_ptr<ntcd::Machine> machine;
-        machine.createInplace(&ta, &ta);
-
-        // Run the machine.
-
-        error = machine->run();
-        NTCCFG_TEST_OK(error);
-
-        // Create a listener.
-
-        bsl::shared_ptr<ntcd::Session> listener = machine->createSession(&ta);
-
-        // Open the listener for IPv4 stream sockets.
-
-        error = error = listener->open(ntsa::Transport::e_TCP_IPV4_STREAM);
-        NTCCFG_TEST_OK(error);
-
-        // Bind the listener to any port on the IPv4 loopback address.
-
-        error = listener->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the listener.
-
-        ntsa::Endpoint listenerSourceEndpoint;
-        error = listener->sourceEndpoint(&listenerSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Listener source endpoint = " << listenerSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the listener is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(listenerSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(listenerSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(listenerSourceEndpoint.ip().port(), 0);
-
-        // Begin listening for connections.
-
-        error = listener->listen(0);
-        NTCCFG_TEST_OK(error);
-
-        // Create a client.
-
-        bsl::shared_ptr<ntcd::Session> client = machine->createSession(&ta);
-
-        // Open the client as an IPv4 stream socket.
-
-        error = client->open(ntsa::Transport::e_TCP_IPV4_STREAM);
-        NTCCFG_TEST_OK(error);
-
-        // Connect the client to the listener.
-
-        error = client->connect(listenerSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the client.
-
-        ntsa::Endpoint clientSourceEndpoint;
-        error = client->sourceEndpoint(&clientSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Client source endpoint = " << clientSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Get the remote endpoint of the client.
-
-        ntsa::Endpoint clientRemoteEndpoint;
-        error = client->remoteEndpoint(&clientRemoteEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Client remote endpoint = " << clientRemoteEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the client is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(clientSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
-
-        // Accept a server from the listener.
-
-        bsl::shared_ptr<ntcd::Session> server;
-        error = listener->accept(&server);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the server.
-
-        ntsa::Endpoint serverSourceEndpoint;
-        error = server->sourceEndpoint(&serverSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Server source endpoint = " << serverSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Get the remote endpoint of the server.
-
-        ntsa::Endpoint serverRemoteEndpoint;
-        error = server->remoteEndpoint(&serverRemoteEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Server remote endpoint = " << serverRemoteEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the server is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(serverSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
-
-        // Ensure the remote endpoint of the client is the source endpoint of
-        // the server.
-
-        NTCCFG_TEST_EQ(clientRemoteEndpoint, serverSourceEndpoint);
-
-        // Ensure the remote endpoint of the server is the source endpoint of
-        // the client.
-
-        NTCCFG_TEST_EQ(serverRemoteEndpoint, clientSourceEndpoint);
-
-        // Send data from the client to the server.
-
-        const char CLIENT_DATA = 'C';
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            error = client->send(&context, data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesSendable(), 1);
-            NTCCFG_TEST_EQ(context.bytesSent(), 1);
-        }
-
-        // Receive data at the server.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = server->receive(&context, &data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesReceivable(), 1);
-            NTCCFG_TEST_EQ(context.bytesReceived(), 1);
-
-            NTCCFG_TEST_EQ(remoteData, CLIENT_DATA);
-
-            NTCCFG_TEST_FALSE(context.endpoint().isNull());
-            NTCCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
-        }
-
-        // Send data from the server to the client.
-
-        const char SERVER_DATA = 'S';
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            error = server->send(&context, data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesSendable(), 1);
-            NTCCFG_TEST_EQ(context.bytesSent(), 1);
-        }
-
-        // Receive data at the client.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = client->receive(&context, &data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesReceivable(), 1);
-            NTCCFG_TEST_EQ(context.bytesReceived(), 1);
-
-            NTCCFG_TEST_EQ(remoteData, SERVER_DATA);
-
-            NTCCFG_TEST_FALSE(context.endpoint().isNull());
-            NTCCFG_TEST_EQ(context.endpoint().value(), serverSourceEndpoint);
-        }
-
-        // Shutdown the client.
-
-        error = client->shutdown(ntsa::ShutdownType::e_SEND);
-        NTCCFG_TEST_OK(error);
-
-        // Receive data at the server.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = server->receive(&context, &data, options);
-            NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_EOF));
-            NTCCFG_TEST_EQ(context.bytesReceived(), 0);
-        }
-
-        // Shutdown the server.
-
-        error = server->shutdown(ntsa::ShutdownType::e_SEND);
-        NTCCFG_TEST_OK(error);
-
-        // Receive data at the client.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = client->receive(&context, &data, options);
-            NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_EOF));
-            NTCCFG_TEST_EQ(context.bytesReceived(), 0);
-        }
-
-        // Try to send data from the client to the server and ensure the
-        // operation fails because the client has been shutdown for sending.
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            error = client->send(&context, data, options);
-            NTCCFG_TEST_TRUE(error);
-
-            NTCCFG_TEST_EQ(context.bytesSent(), 0);
-        }
-
-        // Try to send data from the server to the client and ensure the
-        // operation fails because the server has been shutdown for sending.
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            error = server->send(&context, data, options);
-            NTCCFG_TEST_TRUE(error);
-
-            NTCCFG_TEST_EQ(context.bytesSent(), 0);
-        }
-
-        // Close the client.
-
-        error = client->close();
-        NTCCFG_TEST_OK(error);
-
-        // Close the server.
-
-        error = server->close();
-        NTCCFG_TEST_OK(error);
-
-        // Close the listener.
-
-        error = listener->close();
-        NTCCFG_TEST_OK(error);
-
-        // Stop the machine.
-
-        machine->stop();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-// PART 3
-
-NTCCFG_TEST_CASE(11)
-{
     // Concern: Simulate non-blocking IPv4 datagram sockets, automatically
-    //          stepping the simulated machine in a background thread.
-    // Plan:
+    // stepping the simulated machine in a background thread.
+    static void verifyBackgroundNonblockingDatagramSockets();
 
-    ntccfg::TestAllocator ta;
-    {
-        NTCI_LOG_CONTEXT();
-        NTCI_LOG_CONTEXT_GUARD_OWNER("main");
-
-        ntsa::Error error;
-
-        // Create a machine.
-
-        bsl::shared_ptr<ntcd::Machine> machine;
-        machine.createInplace(&ta, &ta);
-
-        // Run the machine.
-
-        error = machine->run();
-        NTCCFG_TEST_OK(error);
-
-        // Create a monitor.
-
-        bsl::shared_ptr<ntcd::Monitor> monitor = machine->createMonitor(&ta);
-
-        // Create a client.
-
-        bsl::shared_ptr<ntcd::Session> client = machine->createSession(&ta);
-
-        // Open the client as an IPv4 datagram socket.
-
-        error = client->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-        NTCCFG_TEST_OK(error);
-
-        error = client->setBlocking(false);
-        NTCCFG_TEST_OK(error);
-
-        // Bind the client to any port on the IPv4 loopback address.
-
-        error = client->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the client.
-
-        ntsa::Endpoint clientSourceEndpoint;
-        error = client->sourceEndpoint(&clientSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Client source endpoint = " << clientSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the client is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(clientSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
-
-        // Create a server.
-
-        bsl::shared_ptr<ntcd::Session> server = machine->createSession(&ta);
-
-        // Open the server as an IPv4 datagram socket.
-
-        error = server->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-        NTCCFG_TEST_OK(error);
-
-        error = server->setBlocking(false);
-        NTCCFG_TEST_OK(error);
-
-        // Bind the server to any port on the IPv4 loopback address.
-
-        error = server->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the server.
-
-        ntsa::Endpoint serverSourceEndpoint;
-        error = server->sourceEndpoint(&serverSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Server source endpoint = " << serverSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the server is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(serverSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
-
-        // Ensure the source endpoint of the client is different than the
-        // source endpoint of the server.
-
-        NTCCFG_TEST_NE(clientSourceEndpoint, serverSourceEndpoint);
-
-        // Add the client to the monitor.
-
-        error = monitor->add(client);
-        NTCCFG_TEST_OK(error);
-
-        // Add the server to the monitor.
-
-        error = monitor->add(server);
-        NTCCFG_TEST_OK(error);
-
-        // Gain interest in writability for the client.
-
-        error = monitor->show(client, ntca::ReactorEventType::e_WRITABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Block until the client is writable.
-
-        while (true) {
-            bsl::vector<ntca::ReactorEvent> events;
-            error = monitor->dequeue(&events);
-            NTCCFG_TEST_OK(error);
-
-            bool satisfied = false;
-            for (bsl::size_t i = 0; i < events.size(); ++i) {
-                const ntca::ReactorEvent& event = events[i];
-
-                if (event.handle() == client->handle() && event.isWritable()) {
-                    satisfied = true;
-                    break;
-                }
-            }
-
-            if (satisfied) {
-                break;
-            }
-        }
-
-        // Send data from the client to the server.
-
-        const char CLIENT_DATA = 'C';
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            options.setEndpoint(serverSourceEndpoint);
-
-            error = client->send(&context, data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesSendable(), 1);
-            NTCCFG_TEST_EQ(context.bytesSent(), 1);
-        }
-
-        // Lose interest in writability for the client.
-
-        error = monitor->hide(client, ntca::ReactorEventType::e_WRITABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Gain interest in readability for the server.
-
-        error = monitor->show(server, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Block until the server is readable.
-
-        while (true) {
-            bsl::vector<ntca::ReactorEvent> events;
-            error = monitor->dequeue(&events);
-            NTCCFG_TEST_OK(error);
-
-            bool satisfied = false;
-            for (bsl::size_t i = 0; i < events.size(); ++i) {
-                const ntca::ReactorEvent& event = events[i];
-
-                if (event.handle() == server->handle() && event.isReadable()) {
-                    satisfied = true;
-                    break;
-                }
-            }
-
-            if (satisfied) {
-                break;
-            }
-        }
-
-        // Receive data at the server.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = server->receive(&context, &data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesReceivable(), 1);
-            NTCCFG_TEST_EQ(context.bytesReceived(), 1);
-
-            NTCCFG_TEST_EQ(remoteData, CLIENT_DATA);
-
-            NTCCFG_TEST_FALSE(context.endpoint().isNull());
-            NTCCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
-        }
-
-        // Lose interest in readability for the server.
-
-        error = monitor->hide(server, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Gain interest in writability for the server.
-
-        error = monitor->show(server, ntca::ReactorEventType::e_WRITABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Block until the server is writable.
-
-        while (true) {
-            bsl::vector<ntca::ReactorEvent> events;
-            error = monitor->dequeue(&events);
-            NTCCFG_TEST_OK(error);
-
-            bool satisfied = false;
-            for (bsl::size_t i = 0; i < events.size(); ++i) {
-                const ntca::ReactorEvent& event = events[i];
-
-                if (event.handle() == server->handle() && event.isWritable()) {
-                    satisfied = true;
-                    break;
-                }
-            }
-
-            if (satisfied) {
-                break;
-            }
-        }
-
-        // Send data from the server to the client.
-
-        const char SERVER_DATA = 'S';
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            options.setEndpoint(clientSourceEndpoint);
-
-            error = server->send(&context, data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesSendable(), 1);
-            NTCCFG_TEST_EQ(context.bytesSent(), 1);
-        }
-
-        // Lose interest in writability for the server.
-
-        error = monitor->hide(server, ntca::ReactorEventType::e_WRITABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Gain interest in readability for the client.
-
-        error = monitor->show(client, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Block until the client is readable.
-
-        while (true) {
-            bsl::vector<ntca::ReactorEvent> events;
-            error = monitor->dequeue(&events);
-            NTCCFG_TEST_OK(error);
-
-            bool satisfied = false;
-            for (bsl::size_t i = 0; i < events.size(); ++i) {
-                const ntca::ReactorEvent& event = events[i];
-
-                if (event.handle() == client->handle() && event.isReadable()) {
-                    satisfied = true;
-                    break;
-                }
-            }
-
-            if (satisfied) {
-                break;
-            }
-        }
-
-        // Receive data at the client.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = client->receive(&context, &data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesReceivable(), 1);
-            NTCCFG_TEST_EQ(context.bytesReceived(), 1);
-
-            NTCCFG_TEST_EQ(remoteData, SERVER_DATA);
-
-            NTCCFG_TEST_FALSE(context.endpoint().isNull());
-            NTCCFG_TEST_EQ(context.endpoint().value(), serverSourceEndpoint);
-        }
-
-        // Lose interest in readabilty for the client.
-
-        error = monitor->hide(client, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Remove the client from the monitor.
-
-        error = monitor->remove(client);
-        NTCCFG_TEST_OK(error);
-
-        // Remove the server from the monitor.
-
-        error = monitor->remove(server);
-        NTCCFG_TEST_OK(error);
-
-        // Close the client.
-
-        error = client->close();
-        NTCCFG_TEST_OK(error);
-
-        // Close the server.
-
-        error = server->close();
-        NTCCFG_TEST_OK(error);
-
-        // Stop the machine.
-
-        machine->stop();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(12)
-{
     // Concern: Simulate non-blocking one-way connected IPv4 datagram sockets,
-    //          automatically stepping the simulated machine in a background
-    //          thread.
-    // Plan:
+    // automatically stepping the simulated machine in a background
+    // thread.
+    static void verifyBackgroundNonblockingDatagramSocketsConnectedOneWay();
 
-    ntccfg::TestAllocator ta;
-    {
-        NTCI_LOG_CONTEXT();
-        NTCI_LOG_CONTEXT_GUARD_OWNER("main");
-
-        ntsa::Error error;
-
-        // Create a machine.
-
-        bsl::shared_ptr<ntcd::Machine> machine;
-        machine.createInplace(&ta, &ta);
-
-        // Run the machine.
-
-        error = machine->run();
-        NTCCFG_TEST_OK(error);
-
-        // Create a monitor.
-
-        bsl::shared_ptr<ntcd::Monitor> monitor = machine->createMonitor(&ta);
-
-        // Create a client.
-
-        bsl::shared_ptr<ntcd::Session> client = machine->createSession(&ta);
-
-        // Open the client as an IPv4 datagram socket.
-
-        error = client->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-        NTCCFG_TEST_OK(error);
-
-        error = client->setBlocking(false);
-        NTCCFG_TEST_OK(error);
-
-        // Bind the client to any port on the IPv4 loopback address.
-
-        error = client->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the client.
-
-        ntsa::Endpoint clientSourceEndpoint;
-        error = client->sourceEndpoint(&clientSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Client source endpoint = " << clientSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the client is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(clientSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
-
-        // Create a server.
-
-        bsl::shared_ptr<ntcd::Session> server = machine->createSession(&ta);
-
-        // Open the server as an IPv4 datagram socket.
-
-        error = server->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-        NTCCFG_TEST_OK(error);
-
-        error = server->setBlocking(false);
-        NTCCFG_TEST_OK(error);
-
-        // Bind the server to any port on the IPv4 loopback address.
-
-        error = server->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the server.
-
-        ntsa::Endpoint serverSourceEndpoint;
-        error = server->sourceEndpoint(&serverSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Server source endpoint = " << serverSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the server is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(serverSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
-
-        // Ensure the source endpoint of the client is different than the
-        // source endpoint of the server.
-
-        NTCCFG_TEST_NE(clientSourceEndpoint, serverSourceEndpoint);
-
-        // Connect the client to the server.
-
-        error = client->connect(serverSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        // Add the client to the monitor.
-
-        error = monitor->add(client);
-        NTCCFG_TEST_OK(error);
-
-        // Add the server to the monitor.
-
-        error = monitor->add(server);
-        NTCCFG_TEST_OK(error);
-
-        // Gain interest in writability for the client.
-
-        error = monitor->show(client, ntca::ReactorEventType::e_WRITABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Block until the client is writable.
-
-        while (true) {
-            bsl::vector<ntca::ReactorEvent> events;
-            error = monitor->dequeue(&events);
-            NTCCFG_TEST_OK(error);
-
-            bool satisfied = false;
-            for (bsl::size_t i = 0; i < events.size(); ++i) {
-                const ntca::ReactorEvent& event = events[i];
-
-                if (event.handle() == client->handle() && event.isWritable()) {
-                    satisfied = true;
-                    break;
-                }
-            }
-
-            if (satisfied) {
-                break;
-            }
-        }
-
-        // Send data from the client to the server.
-
-        const char CLIENT_DATA = 'C';
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            error = client->send(&context, data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesSendable(), 1);
-            NTCCFG_TEST_EQ(context.bytesSent(), 1);
-        }
-
-        // Lose interest in writability for the client.
-
-        error = monitor->hide(client, ntca::ReactorEventType::e_WRITABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Gain interest in readability for the server.
-
-        error = monitor->show(server, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Block until the server is readable.
-
-        while (true) {
-            bsl::vector<ntca::ReactorEvent> events;
-            error = monitor->dequeue(&events);
-            NTCCFG_TEST_OK(error);
-
-            bool satisfied = false;
-            for (bsl::size_t i = 0; i < events.size(); ++i) {
-                const ntca::ReactorEvent& event = events[i];
-
-                if (event.handle() == server->handle() && event.isReadable()) {
-                    satisfied = true;
-                    break;
-                }
-            }
-
-            if (satisfied) {
-                break;
-            }
-        }
-
-        // Receive data at the server.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = server->receive(&context, &data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesReceivable(), 1);
-            NTCCFG_TEST_EQ(context.bytesReceived(), 1);
-
-            NTCCFG_TEST_EQ(remoteData, CLIENT_DATA);
-
-            NTCCFG_TEST_FALSE(context.endpoint().isNull());
-            NTCCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
-        }
-
-        // Lose interest in readability for the server.
-
-        error = monitor->hide(server, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Gain interest in writability for the server.
-
-        error = monitor->show(server, ntca::ReactorEventType::e_WRITABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Block until the server is writable.
-
-        while (true) {
-            bsl::vector<ntca::ReactorEvent> events;
-            error = monitor->dequeue(&events);
-            NTCCFG_TEST_OK(error);
-
-            bool satisfied = false;
-            for (bsl::size_t i = 0; i < events.size(); ++i) {
-                const ntca::ReactorEvent& event = events[i];
-
-                if (event.handle() == server->handle() && event.isWritable()) {
-                    satisfied = true;
-                    break;
-                }
-            }
-
-            if (satisfied) {
-                break;
-            }
-        }
-
-        // Send data from the server to the client.
-
-        const char SERVER_DATA = 'S';
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            options.setEndpoint(clientSourceEndpoint);
-
-            error = server->send(&context, data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesSendable(), 1);
-            NTCCFG_TEST_EQ(context.bytesSent(), 1);
-        }
-
-        // Lose interest in writability for the server.
-
-        error = monitor->hide(server, ntca::ReactorEventType::e_WRITABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Gain interest in readability for the client.
-
-        error = monitor->show(client, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Block until the client is readable.
-
-        while (true) {
-            bsl::vector<ntca::ReactorEvent> events;
-            error = monitor->dequeue(&events);
-            NTCCFG_TEST_OK(error);
-
-            bool satisfied = false;
-            for (bsl::size_t i = 0; i < events.size(); ++i) {
-                const ntca::ReactorEvent& event = events[i];
-
-                if (event.handle() == client->handle() && event.isReadable()) {
-                    satisfied = true;
-                    break;
-                }
-            }
-
-            if (satisfied) {
-                break;
-            }
-        }
-
-        // Receive data at the client.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = client->receive(&context, &data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesReceivable(), 1);
-            NTCCFG_TEST_EQ(context.bytesReceived(), 1);
-
-            NTCCFG_TEST_EQ(remoteData, SERVER_DATA);
-
-            NTCCFG_TEST_FALSE(context.endpoint().isNull());
-            NTCCFG_TEST_EQ(context.endpoint().value(), serverSourceEndpoint);
-        }
-
-        // Lose interest in readabilty for the client.
-
-        error = monitor->hide(client, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Remove the client from the monitor.
-
-        error = monitor->remove(client);
-        NTCCFG_TEST_OK(error);
-
-        // Remove the server from the monitor.
-
-        error = monitor->remove(server);
-        NTCCFG_TEST_OK(error);
-
-        // Close the client.
-
-        error = client->close();
-        NTCCFG_TEST_OK(error);
-
-        // Close the server.
-
-        error = server->close();
-        NTCCFG_TEST_OK(error);
-
-        // Stop the machine.
-
-        machine->stop();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(13)
-{
     // Concern: Simulate non-blocking two-way connected IPv4 datagram sockets,
-    //          automatically stepping the simulated machine in a background
-    //          thread.
-    // Plan:
+    // automatically stepping the simulated machine in a background
+    // thread.
+    static void verifyBackgroundNonblockingDatagramSocketsConnectedTwoWay();
 
-    ntccfg::TestAllocator ta;
-    {
-        NTCI_LOG_CONTEXT();
-        NTCI_LOG_CONTEXT_GUARD_OWNER("main");
-
-        ntsa::Error error;
-
-        // Create a machine.
-
-        bsl::shared_ptr<ntcd::Machine> machine;
-        machine.createInplace(&ta, &ta);
-
-        // Run the machine.
-
-        error = machine->run();
-        NTCCFG_TEST_OK(error);
-
-        // Create a monitor.
-
-        bsl::shared_ptr<ntcd::Monitor> monitor = machine->createMonitor(&ta);
-
-        // Create a client.
-
-        bsl::shared_ptr<ntcd::Session> client = machine->createSession(&ta);
-
-        // Open the client as an IPv4 datagram socket.
-
-        error = client->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-        NTCCFG_TEST_OK(error);
-
-        error = client->setBlocking(false);
-        NTCCFG_TEST_OK(error);
-
-        // Bind the client to any port on the IPv4 loopback address.
-
-        error = client->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the client.
-
-        ntsa::Endpoint clientSourceEndpoint;
-        error = client->sourceEndpoint(&clientSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Client source endpoint = " << clientSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the client is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(clientSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
-
-        // Create a server.
-
-        bsl::shared_ptr<ntcd::Session> server = machine->createSession(&ta);
-
-        // Open the server as an IPv4 datagram socket.
-
-        error = server->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-        NTCCFG_TEST_OK(error);
-
-        error = server->setBlocking(false);
-        NTCCFG_TEST_OK(error);
-
-        // Bind the server to any port on the IPv4 loopback address.
-
-        error = server->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the server.
-
-        ntsa::Endpoint serverSourceEndpoint;
-        error = server->sourceEndpoint(&serverSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Server source endpoint = " << serverSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the server is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(serverSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
-
-        // Ensure the source endpoint of the client is different than the
-        // source endpoint of the server.
-
-        NTCCFG_TEST_NE(clientSourceEndpoint, serverSourceEndpoint);
-
-        // Connect the client to the server.
-
-        error = client->connect(serverSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        // Connect the server to the client.
-
-        error = server->connect(clientSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        // Add the client to the monitor.
-
-        error = monitor->add(client);
-        NTCCFG_TEST_OK(error);
-
-        // Add the server to the monitor.
-
-        error = monitor->add(server);
-        NTCCFG_TEST_OK(error);
-
-        // Gain interest in writability for the client.
-
-        error = monitor->show(client, ntca::ReactorEventType::e_WRITABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Block until the client is writable.
-
-        while (true) {
-            bsl::vector<ntca::ReactorEvent> events;
-            error = monitor->dequeue(&events);
-            NTCCFG_TEST_OK(error);
-
-            bool satisfied = false;
-            for (bsl::size_t i = 0; i < events.size(); ++i) {
-                const ntca::ReactorEvent& event = events[i];
-
-                if (event.handle() == client->handle() && event.isWritable()) {
-                    satisfied = true;
-                    break;
-                }
-            }
-
-            if (satisfied) {
-                break;
-            }
-        }
-
-        // Send data from the client to the server.
-
-        const char CLIENT_DATA = 'C';
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            error = client->send(&context, data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesSendable(), 1);
-            NTCCFG_TEST_EQ(context.bytesSent(), 1);
-        }
-
-        // Lose interest in writability for the client.
-
-        error = monitor->hide(client, ntca::ReactorEventType::e_WRITABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Gain interest in readability for the server.
-
-        error = monitor->show(server, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Block until the server is readable.
-
-        while (true) {
-            bsl::vector<ntca::ReactorEvent> events;
-            error = monitor->dequeue(&events);
-            NTCCFG_TEST_OK(error);
-
-            bool satisfied = false;
-            for (bsl::size_t i = 0; i < events.size(); ++i) {
-                const ntca::ReactorEvent& event = events[i];
-
-                if (event.handle() == server->handle() && event.isReadable()) {
-                    satisfied = true;
-                    break;
-                }
-            }
-
-            if (satisfied) {
-                break;
-            }
-        }
-
-        // Receive data at the server.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = server->receive(&context, &data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesReceivable(), 1);
-            NTCCFG_TEST_EQ(context.bytesReceived(), 1);
-
-            NTCCFG_TEST_EQ(remoteData, CLIENT_DATA);
-
-            NTCCFG_TEST_FALSE(context.endpoint().isNull());
-            NTCCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
-        }
-
-        // Lose interest in readability for the server.
-
-        error = monitor->hide(server, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Gain interest in writability for the server.
-
-        error = monitor->show(server, ntca::ReactorEventType::e_WRITABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Block until the server is writable.
-
-        while (true) {
-            bsl::vector<ntca::ReactorEvent> events;
-            error = monitor->dequeue(&events);
-            NTCCFG_TEST_OK(error);
-
-            bool satisfied = false;
-            for (bsl::size_t i = 0; i < events.size(); ++i) {
-                const ntca::ReactorEvent& event = events[i];
-
-                if (event.handle() == server->handle() && event.isWritable()) {
-                    satisfied = true;
-                    break;
-                }
-            }
-
-            if (satisfied) {
-                break;
-            }
-        }
-
-        // Send data from the server to the client.
-
-        const char SERVER_DATA = 'S';
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            error = server->send(&context, data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesSendable(), 1);
-            NTCCFG_TEST_EQ(context.bytesSent(), 1);
-        }
-
-        // Lose interest in writability for the server.
-
-        error = monitor->hide(server, ntca::ReactorEventType::e_WRITABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Gain interest in readability for the client.
-
-        error = monitor->show(client, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Block until the client is readable.
-
-        while (true) {
-            bsl::vector<ntca::ReactorEvent> events;
-            error = monitor->dequeue(&events);
-            NTCCFG_TEST_OK(error);
-
-            bool satisfied = false;
-            for (bsl::size_t i = 0; i < events.size(); ++i) {
-                const ntca::ReactorEvent& event = events[i];
-
-                if (event.handle() == client->handle() && event.isReadable()) {
-                    satisfied = true;
-                    break;
-                }
-            }
-
-            if (satisfied) {
-                break;
-            }
-        }
-
-        // Receive data at the client.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = client->receive(&context, &data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesReceivable(), 1);
-            NTCCFG_TEST_EQ(context.bytesReceived(), 1);
-
-            NTCCFG_TEST_EQ(remoteData, SERVER_DATA);
-
-            NTCCFG_TEST_FALSE(context.endpoint().isNull());
-            NTCCFG_TEST_EQ(context.endpoint().value(), serverSourceEndpoint);
-        }
-
-        // Lose interest in readabilty for the client.
-
-        error = monitor->hide(client, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Remove the client from the monitor.
-
-        error = monitor->remove(client);
-        NTCCFG_TEST_OK(error);
-
-        // Remove the server from the monitor.
-
-        error = monitor->remove(server);
-        NTCCFG_TEST_OK(error);
-
-        // Close the client.
-
-        error = client->close();
-        NTCCFG_TEST_OK(error);
-
-        // Close the server.
-
-        error = server->close();
-        NTCCFG_TEST_OK(error);
-
-        // Stop the machine.
-
-        machine->stop();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(14)
-{
     // Concern: Simulate non-blocking IPv4 stream sockets, automatically
-    //          stepping the simulated machine in a background thread.
-    // Plan:
+    // stepping the simulated machine in a background thread.
+    static void verifyBackgroundNonblockingStreamSockets();
 
-    ntccfg::TestAllocator ta;
-    {
-        NTCI_LOG_CONTEXT();
-        NTCI_LOG_CONTEXT_GUARD_OWNER("main");
+    // Concern: Sending and receiving data larger than socket buffer sizes.
+    static void verifySendBufferOverflow();
+};
 
-        ntsa::Error error;
+NTSCFG_TEST_FUNCTION(ntcd::MachineTest::verifyOpen)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_CONTEXT_GUARD_OWNER("main");
 
-        // Create a machine.
+    ntsa::Error error;
 
-        bsl::shared_ptr<ntcd::Machine> machine;
-        machine.createInplace(&ta, &ta);
+    // Create a machine.
 
-        // Run the machine.
+    bsl::shared_ptr<ntcd::Machine> machine;
+    machine.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-        error = machine->run();
-        NTCCFG_TEST_OK(error);
+    bsl::shared_ptr<ntcd::Session> sessionA =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+    bsl::shared_ptr<ntcd::Session> sessionB =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+    bsl::shared_ptr<ntcd::Session> sessionC =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
 
-        // Create a monitor.
+    const ntsa::Transport::Value transport =
+        ntsa::Transport::e_UDP_IPV4_DATAGRAM;
 
-        bsl::shared_ptr<ntcd::Monitor> monitor = machine->createMonitor(&ta);
+    // Open a session and ensure the session is assigned handle 3.
 
-        // Create a listener.
+    error = sessionA->open(transport);
+    NTSCFG_TEST_OK(error);
 
-        bsl::shared_ptr<ntcd::Session> listener = machine->createSession(&ta);
+    NTSCFG_TEST_EQ(sessionA->handle(), 3);
 
-        // Open the listener for IPv4 stream sockets.
+    // Close the session.
 
-        error = error = listener->open(ntsa::Transport::e_TCP_IPV4_STREAM);
-        NTCCFG_TEST_OK(error);
+    error = sessionA->close();
+    NTSCFG_TEST_OK(error);
 
-        error = listener->setBlocking(false);
-        NTCCFG_TEST_OK(error);
+    // Open the session and ensure the session is again assigned handle 3,
+    // the handle is immediately reused.
 
-        // Bind the listener to any port on the IPv4 loopback address.
+    error = sessionA->open(transport);
+    NTSCFG_TEST_OK(error);
 
-        error = listener->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_EQ(sessionA->handle(), 3);
 
-        // Get the source endpoint of the listener.
+    // Open another session and ensure the session is assigned handle 4.
 
-        ntsa::Endpoint listenerSourceEndpoint;
-        error = listener->sourceEndpoint(&listenerSourceEndpoint);
-        NTCCFG_TEST_OK(error);
+    error = sessionB->open(transport);
+    NTSCFG_TEST_OK(error);
 
-        NTCI_LOG_STREAM_DEBUG
-            << "Listener source endpoint = " << listenerSourceEndpoint
-            << NTCI_LOG_STREAM_END;
+    NTSCFG_TEST_EQ(sessionB->handle(), 4);
 
-        // Ensure the source endpoint of the listener is the IPv4 loopback
-        // address and a non-zero port.
+    // Open another session and ensure the session is assigned handle 5.
 
-        NTCCFG_TEST_TRUE(listenerSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(listenerSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(listenerSourceEndpoint.ip().port(), 0);
+    error = sessionC->open(transport);
+    NTSCFG_TEST_OK(error);
 
-        // Begin listening for connections.
+    NTSCFG_TEST_EQ(sessionC->handle(), 5);
 
-        error = listener->listen(0);
-        NTCCFG_TEST_OK(error);
+    // Close the session that has been assigned handle 4.
 
-        // Add the listener to the monitor.
+    error = sessionB->close();
+    NTSCFG_TEST_OK(error);
 
-        error = monitor->add(listener);
-        NTCCFG_TEST_OK(error);
+    // Open another session and ensure the session is again assigned handle
+    // 4, the handle is immediately reused despite being in the "gap"
+    // between the still-open handles 3 and 5.
 
-        // Create a client.
+    error = sessionB->open(transport);
+    NTSCFG_TEST_OK(error);
 
-        bsl::shared_ptr<ntcd::Session> client = machine->createSession(&ta);
+    NTSCFG_TEST_EQ(sessionB->handle(), 4);
 
-        // Open the client as an IPv4 stream socket.
+    // Close all sessions.
 
-        error = client->open(ntsa::Transport::e_TCP_IPV4_STREAM);
-        NTCCFG_TEST_OK(error);
+    error = sessionA->close();
+    NTSCFG_TEST_OK(error);
 
-        error = client->setBlocking(false);
-        NTCCFG_TEST_OK(error);
+    error = sessionB->close();
+    NTSCFG_TEST_OK(error);
 
-        // Connect the client to the listener.
-
-        error = client->connect(listenerSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        // Add the client to the monitor.
-
-        error = monitor->add(client);
-        NTCCFG_TEST_OK(error);
-
-        // Gain interest in writability for the client.
-
-        error = monitor->show(client, ntca::ReactorEventType::e_WRITABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Block until the client is writable.
-
-        while (true) {
-            bsl::vector<ntca::ReactorEvent> events;
-            error = monitor->dequeue(&events);
-            NTCCFG_TEST_OK(error);
-
-            bool satisfied = false;
-            for (bsl::size_t i = 0; i < events.size(); ++i) {
-                const ntca::ReactorEvent& event = events[i];
-
-                if (event.handle() == client->handle() && event.isWritable()) {
-                    satisfied = true;
-                    break;
-                }
-            }
-
-            if (satisfied) {
-                break;
-            }
-        }
-
-        // Lose interest in writability for the client.
-
-        error = monitor->hide(client, ntca::ReactorEventType::e_WRITABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the client.
-
-        ntsa::Endpoint clientSourceEndpoint;
-        error = client->sourceEndpoint(&clientSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Client source endpoint = " << clientSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Get the remote endpoint of the client.
-
-        ntsa::Endpoint clientRemoteEndpoint;
-        error = client->remoteEndpoint(&clientRemoteEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Client remote endpoint = " << clientRemoteEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the client is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(clientSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
-
-        // Gain interest in readability for the listener.
-
-        error = monitor->show(listener, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Block until the listener is readable.
-
-        while (true) {
-            bsl::vector<ntca::ReactorEvent> events;
-            error = monitor->dequeue(&events);
-            NTCCFG_TEST_OK(error);
-
-            bool satisfied = false;
-            for (bsl::size_t i = 0; i < events.size(); ++i) {
-                const ntca::ReactorEvent& event = events[i];
-
-                if (event.handle() == listener->handle() && event.isReadable())
-                {
-                    satisfied = true;
-                    break;
-                }
-            }
-
-            if (satisfied) {
-                break;
-            }
-        }
-
-        // Accept a server from the listener.
-
-        bsl::shared_ptr<ntcd::Session> server;
-        error = listener->accept(&server);
-        NTCCFG_TEST_OK(error);
-
-        error = server->setBlocking(false);
-        NTCCFG_TEST_OK(error);
-
-        // Lose interest in readability for the listener.
-
-        error = monitor->hide(listener, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Get the source endpoint of the server.
-
-        ntsa::Endpoint serverSourceEndpoint;
-        error = server->sourceEndpoint(&serverSourceEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Server source endpoint = " << serverSourceEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Get the remote endpoint of the server.
-
-        ntsa::Endpoint serverRemoteEndpoint;
-        error = server->remoteEndpoint(&serverRemoteEndpoint);
-        NTCCFG_TEST_OK(error);
-
-        NTCI_LOG_STREAM_DEBUG
-            << "Server remote endpoint = " << serverRemoteEndpoint
-            << NTCI_LOG_STREAM_END;
-
-        // Ensure the source endpoint of the server is the IPv4 loopback
-        // address and a non-zero port.
-
-        NTCCFG_TEST_TRUE(serverSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
-
-        // Ensure the remote endpoint of the client is the source endpoint of
-        // the server.
-
-        NTCCFG_TEST_EQ(clientRemoteEndpoint, serverSourceEndpoint);
-
-        // Ensure the remote endpoint of the server is the source endpoint of
-        // the client.
-
-        NTCCFG_TEST_EQ(serverRemoteEndpoint, clientSourceEndpoint);
-
-        // Add the server to the monitor.
-
-        error = monitor->add(server);
-        NTCCFG_TEST_OK(error);
-
-        // Gain interest in writability for the client.
-
-        error = monitor->show(client, ntca::ReactorEventType::e_WRITABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Block until the client is writable.
-
-        while (true) {
-            bsl::vector<ntca::ReactorEvent> events;
-            error = monitor->dequeue(&events);
-            NTCCFG_TEST_OK(error);
-
-            bool satisfied = false;
-            for (bsl::size_t i = 0; i < events.size(); ++i) {
-                const ntca::ReactorEvent& event = events[i];
-
-                if (event.handle() == client->handle() && event.isWritable()) {
-                    satisfied = true;
-                    break;
-                }
-            }
-
-            if (satisfied) {
-                break;
-            }
-        }
-
-        // Send data from the client to the server.
-
-        const char CLIENT_DATA = 'C';
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            error = client->send(&context, data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesSendable(), 1);
-            NTCCFG_TEST_EQ(context.bytesSent(), 1);
-        }
-
-        // Lose interest in writability for the client.
-
-        error = monitor->hide(client, ntca::ReactorEventType::e_WRITABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Gain interest in readability for the server.
-
-        error = monitor->show(server, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Block until the server is readable.
-
-        while (true) {
-            bsl::vector<ntca::ReactorEvent> events;
-            error = monitor->dequeue(&events);
-            NTCCFG_TEST_OK(error);
-
-            bool satisfied = false;
-            for (bsl::size_t i = 0; i < events.size(); ++i) {
-                const ntca::ReactorEvent& event = events[i];
-
-                if (event.handle() == server->handle() && event.isReadable()) {
-                    satisfied = true;
-                    break;
-                }
-            }
-
-            if (satisfied) {
-                break;
-            }
-        }
-
-        // Receive data at the server.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = server->receive(&context, &data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesReceivable(), 1);
-            NTCCFG_TEST_EQ(context.bytesReceived(), 1);
-
-            NTCCFG_TEST_EQ(remoteData, CLIENT_DATA);
-
-            NTCCFG_TEST_FALSE(context.endpoint().isNull());
-            NTCCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
-        }
-
-        // Lose interest in readability for the server.
-
-        error = monitor->hide(server, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Gain interest in writability for the server.
-
-        error = monitor->show(server, ntca::ReactorEventType::e_WRITABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Block until the server is writable.
-
-        while (true) {
-            bsl::vector<ntca::ReactorEvent> events;
-            error = monitor->dequeue(&events);
-            NTCCFG_TEST_OK(error);
-
-            bool satisfied = false;
-            for (bsl::size_t i = 0; i < events.size(); ++i) {
-                const ntca::ReactorEvent& event = events[i];
-
-                if (event.handle() == server->handle() && event.isWritable()) {
-                    satisfied = true;
-                    break;
-                }
-            }
-
-            if (satisfied) {
-                break;
-            }
-        }
-
-        // Send data from the server to the client.
-
-        const char SERVER_DATA = 'S';
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            error = server->send(&context, data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesSendable(), 1);
-            NTCCFG_TEST_EQ(context.bytesSent(), 1);
-        }
-
-        // Lose interest in writability for the server.
-
-        error = monitor->hide(server, ntca::ReactorEventType::e_WRITABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Gain interest in readability for the client.
-
-        error = monitor->show(client, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Block until the client is readable.
-
-        while (true) {
-            bsl::vector<ntca::ReactorEvent> events;
-            error = monitor->dequeue(&events);
-            NTCCFG_TEST_OK(error);
-
-            bool satisfied = false;
-            for (bsl::size_t i = 0; i < events.size(); ++i) {
-                const ntca::ReactorEvent& event = events[i];
-
-                if (event.handle() == client->handle() && event.isReadable()) {
-                    satisfied = true;
-                    break;
-                }
-            }
-
-            if (satisfied) {
-                break;
-            }
-        }
-
-        // Receive data at the client.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = client->receive(&context, &data, options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(context.bytesReceivable(), 1);
-            NTCCFG_TEST_EQ(context.bytesReceived(), 1);
-
-            NTCCFG_TEST_EQ(remoteData, SERVER_DATA);
-
-            NTCCFG_TEST_FALSE(context.endpoint().isNull());
-            NTCCFG_TEST_EQ(context.endpoint().value(), serverSourceEndpoint);
-        }
-
-        // Lose interest in readabilty for the client.
-
-        error = monitor->hide(client, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Shutdown the client.
-
-        error = client->shutdown(ntsa::ShutdownType::e_SEND);
-        NTCCFG_TEST_OK(error);
-
-        // Gain interest in readability for the server.
-
-        error = monitor->show(server, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Block until the server is readable.
-
-        while (true) {
-            bsl::vector<ntca::ReactorEvent> events;
-            error = monitor->dequeue(&events);
-            NTCCFG_TEST_OK(error);
-
-            bool satisfied = false;
-            for (bsl::size_t i = 0; i < events.size(); ++i) {
-                const ntca::ReactorEvent& event = events[i];
-
-                if (event.handle() == server->handle() && event.isReadable()) {
-                    satisfied = true;
-                    break;
-                }
-            }
-
-            if (satisfied) {
-                break;
-            }
-        }
-
-        // Receive data at the server.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = server->receive(&context, &data, options);
-            NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_EOF));
-            NTCCFG_TEST_EQ(context.bytesReceived(), 0);
-        }
-
-        // Lose interest in readability for the server.
-
-        error = monitor->hide(server, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Shutdown the server.
-
-        error = server->shutdown(ntsa::ShutdownType::e_SEND);
-        NTCCFG_TEST_OK(error);
-
-        // Gain interest in readability for the client.
-
-        error = monitor->show(client, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Block until the client is readable.
-
-        while (true) {
-            bsl::vector<ntca::ReactorEvent> events;
-            error = monitor->dequeue(&events);
-            NTCCFG_TEST_OK(error);
-
-            bool satisfied = false;
-            for (bsl::size_t i = 0; i < events.size(); ++i) {
-                const ntca::ReactorEvent& event = events[i];
-
-                if (event.handle() == client->handle() && event.isReadable()) {
-                    satisfied = true;
-                    break;
-                }
-            }
-
-            if (satisfied) {
-                break;
-            }
-        }
-
-        // Receive data at the client.
-
-        {
-            char remoteData = 0;
-
-            ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
-
-            ntsa::ReceiveContext context;
-            ntsa::ReceiveOptions options;
-
-            error = client->receive(&context, &data, options);
-            NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_EOF));
-            NTCCFG_TEST_EQ(context.bytesReceived(), 0);
-        }
-
-        // Lose interest in readabilty for the client.
-
-        error = monitor->hide(client, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Try to send data from the client to the server and ensure the
-        // operation fails because the client has been shutdown for sending.
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            error = client->send(&context, data, options);
-            NTCCFG_TEST_TRUE(error);
-
-            NTCCFG_TEST_EQ(context.bytesSent(), 0);
-        }
-
-        // Try to send data from the server to the client and ensure the
-        // operation fails because the server has been shutdown for sending.
-
-        {
-            ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
-
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-
-            error = server->send(&context, data, options);
-            NTCCFG_TEST_TRUE(error);
-
-            NTCCFG_TEST_EQ(context.bytesSent(), 0);
-        }
-
-        // Remove the client from the monitor.
-
-        error = monitor->remove(client);
-        NTCCFG_TEST_OK(error);
-
-        // Remove the server from the monitor.
-
-        error = monitor->remove(server);
-        NTCCFG_TEST_OK(error);
-
-        // Remove the listener from the monitor.
-
-        error = monitor->remove(listener);
-        NTCCFG_TEST_OK(error);
-
-        // Close the client.
-
-        error = client->close();
-        NTCCFG_TEST_OK(error);
-
-        // Close the server.
-
-        error = server->close();
-        NTCCFG_TEST_OK(error);
-
-        // Close the listener.
-
-        error = listener->close();
-        NTCCFG_TEST_OK(error);
-
-        // Stop the machine.
-
-        machine->stop();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    error = sessionC->close();
+    NTSCFG_TEST_OK(error);
 }
 
-NTCCFG_TEST_CASE(15)
+NTSCFG_TEST_FUNCTION(ntcd::MachineTest::verifyBind)
 {
-    // Concern: Sending and receiving data larger than socket buffer sizes.
-    // Plan:
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_CONTEXT_GUARD_OWNER("main");
 
-    ntccfg::TestAllocator ta;
+    ntsa::Error error;
+
+    // Create a machine.
+
+    bsl::shared_ptr<ntcd::Machine> machine;
+    machine.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+
+    bsl::shared_ptr<ntcd::Session> sessionA =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+    bsl::shared_ptr<ntcd::Session> sessionB =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+    bsl::shared_ptr<ntcd::Session> sessionC =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    ntsa::Endpoint sourceEndpointA;
+    ntsa::Endpoint sourceEndpointB;
+    ntsa::Endpoint sourceEndpointC;
+
+    const ntsa::Transport::Value transport =
+        ntsa::Transport::e_UDP_IPV4_DATAGRAM;
+
+    // Open a session.
+
+    error = sessionA->open(transport);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint and ensure the operation fails.
+
+    error = sessionA->sourceEndpoint(&sourceEndpointA);
+    NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+
+    // Bind the session to the loopback address and request that the
+    // assigned port is any available ephemeral port.
+
+    error = sessionA->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint and ensure the session was bound to the
+    // loopback address and the first available port in the ephemeral port
+    // range.
+
+    error = sessionA->sourceEndpoint(&sourceEndpointA);
+    NTSCFG_TEST_OK(error);
+
+    NTSCFG_TEST_TRUE(sourceEndpointA.isIp());
+    NTSCFG_TEST_EQ(sourceEndpointA.ip().host(),
+                   ntsa::IpAddress::loopbackIpv4());
+    NTSCFG_TEST_EQ(sourceEndpointA.ip().port(), 49152);
+
+    // Close the session.
+
+    error = sessionA->close();
+    NTSCFG_TEST_OK(error);
+
+    // Open the session again.
+
+    error = sessionA->open(transport);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint and ensure the operation fails.
+
+    error = sessionA->sourceEndpoint(&sourceEndpointA);
+    NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+
+    // Bind the session to the loopback address and request that the
+    // assigned port is any available ephemeral port.
+
+    error = sessionA->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint and ensure the session was again bound to
+    // the loopback address and the first available port in the ephemeral
+    // port range; the port is immediately reused.
+
+    error = sessionA->sourceEndpoint(&sourceEndpointA);
+    NTSCFG_TEST_OK(error);
+
+    NTSCFG_TEST_TRUE(sourceEndpointA.isIp());
+    NTSCFG_TEST_EQ(sourceEndpointA.ip().host(),
+                   ntsa::IpAddress::loopbackIpv4());
+    NTSCFG_TEST_EQ(sourceEndpointA.ip().port(), 49152);
+
+    // Open another session.
+
+    error = sessionB->open(transport);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint and ensure the operation fails.
+
+    error = sessionB->sourceEndpoint(&sourceEndpointB);
+    NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+
+    // Bind the session to the loopback address and request that the
+    // assigned port is any available ephemeral port.
+
+    error = sessionB->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint and ensure the session was bound to
+    // the loopback address and the second available port in the ephemeral
+    // port range.
+
+    error = sessionB->sourceEndpoint(&sourceEndpointB);
+    NTSCFG_TEST_OK(error);
+
+    NTSCFG_TEST_TRUE(sourceEndpointB.isIp());
+    NTSCFG_TEST_EQ(sourceEndpointB.ip().host(),
+                   ntsa::IpAddress::loopbackIpv4());
+    NTSCFG_TEST_EQ(sourceEndpointB.ip().port(), 49152 + 1);
+
+    // Open yet another session.
+
+    error = sessionC->open(transport);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint and ensure the operation fails.
+
+    error = sessionC->sourceEndpoint(&sourceEndpointC);
+    NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+
+    // Bind the session to the loopback address and request that the
+    // assigned port is any available ephemeral port.
+
+    error = sessionC->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint and ensure the session was bound to
+    // the loopback address and the second available port in the ephemeral
+    // port range.
+
+    error = sessionC->sourceEndpoint(&sourceEndpointC);
+    NTSCFG_TEST_OK(error);
+
+    NTSCFG_TEST_TRUE(sourceEndpointC.isIp());
+    NTSCFG_TEST_EQ(sourceEndpointC.ip().host(),
+                   ntsa::IpAddress::loopbackIpv4());
+    NTSCFG_TEST_EQ(sourceEndpointC.ip().port(), 49152 + 2);
+
+    // Close the second session.
+
+    error = sessionB->close();
+    NTSCFG_TEST_OK(error);
+
+    // Open the second session again.
+
+    error = sessionB->open(transport);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint and ensure the operation fails.
+
+    error = sessionB->sourceEndpoint(&sourceEndpointB);
+    NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+
+    // Bind the session to the loopback address and request that the
+    // assigned port is any available ephemeral port.
+
+    error = sessionB->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint and ensure the session was bound to
+    // the loopback address and the second available port in the ephemeral
+    // port range, the port is reused from the "gap".
+
+    error = sessionB->sourceEndpoint(&sourceEndpointB);
+    NTSCFG_TEST_OK(error);
+
+    NTSCFG_TEST_TRUE(sourceEndpointB.isIp());
+    NTSCFG_TEST_EQ(sourceEndpointB.ip().host(),
+                   ntsa::IpAddress::loopbackIpv4());
+    NTSCFG_TEST_EQ(sourceEndpointB.ip().port(), 49152 + 1);
+
+    // Close all sessions.
+
+    error = sessionA->close();
+    NTSCFG_TEST_OK(error);
+
+    error = sessionB->close();
+    NTSCFG_TEST_OK(error);
+
+    error = sessionC->close();
+    NTSCFG_TEST_OK(error);
+}
+
+NTSCFG_TEST_FUNCTION(
+    ntcd::MachineTest::verifyForegroundBlockingDatagramSockets)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_CONTEXT_GUARD_OWNER("main");
+
+    ntsa::Error error;
+
+    // Create a machine.
+
+    bsl::shared_ptr<ntcd::Machine> machine;
+    machine.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+
+    // Create a client.
+
+    bsl::shared_ptr<ntcd::Session> client =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the client as an IPv4 datagram socket.
+
+    error = client->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+    NTSCFG_TEST_OK(error);
+
+    // Bind the client to any port on the IPv4 loopback address.
+
+    error = client->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the client.
+
+    ntsa::Endpoint clientSourceEndpoint;
+    error = client->sourceEndpoint(&clientSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Client source endpoint = "
+                          << clientSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the client is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(clientSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
+
+    // Create a server.
+
+    bsl::shared_ptr<ntcd::Session> server =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the server as an IPv4 datagram socket.
+
+    error = server->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+    NTSCFG_TEST_OK(error);
+
+    // Bind the server to any port on the IPv4 loopback address.
+
+    error = server->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the server.
+
+    ntsa::Endpoint serverSourceEndpoint;
+    error = server->sourceEndpoint(&serverSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Server source endpoint = "
+                          << serverSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the server is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(serverSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
+
+    // Ensure the source endpoint of the client is different than the
+    // source endpoint of the server.
+
+    NTSCFG_TEST_NE(clientSourceEndpoint, serverSourceEndpoint);
+
+    // Send data from the client to the server.
+
+    const char CLIENT_DATA = 'C';
+
     {
-        NTCI_LOG_CONTEXT();
-        NTCI_LOG_CONTEXT_GUARD_OWNER("main");
+        ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
 
-        const bsl::size_t DATA_SIZE           = 1024 * 1024;
-        const bsl::size_t SEND_BUFFER_SIZE    = 1024 * 256;
-        const bsl::size_t RECEIVE_BUFFER_SIZE = 1024 * 64;
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
 
-        ntsa::Error error;
+        options.setEndpoint(serverSourceEndpoint);
 
-        // Create a blob buffer factory.
+        error = client->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
 
-        bdlbb::PooledBlobBufferFactory blobBufferFactory(1024, &ta);
+        NTSCFG_TEST_EQ(context.bytesSendable(), 1);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
 
-        // Create a machine.
+    // Advance the simulation.
 
-        bsl::shared_ptr<ntcd::Machine> machine;
-        machine.createInplace(&ta, &ta);
+    error = machine->step(false);
+    NTSCFG_TEST_OK(error);
 
-        // Run the machine.
+    // Receive data at the server.
 
-        error = machine->run();
-        NTCCFG_TEST_OK(error);
+    {
+        char remoteData = 0;
 
-        // Create a monitor.
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
 
-        bsl::shared_ptr<ntcd::Monitor> monitor = machine->createMonitor(&ta);
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
 
-        // Create a listener.
+        error = server->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
 
-        bsl::shared_ptr<ntcd::Session> listener = machine->createSession(&ta);
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
 
-        // Open the listener for IPv4 stream sockets.
+        NTSCFG_TEST_EQ(remoteData, CLIENT_DATA);
 
-        error = error = listener->open(ntsa::Transport::e_TCP_IPV4_STREAM);
-        NTCCFG_TEST_OK(error);
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
+    }
 
-        error = listener->setBlocking(false);
-        NTCCFG_TEST_OK(error);
+    // Send data from the server to the client.
 
-        // Bind the listener to any port on the IPv4 loopback address.
+    const char SERVER_DATA = 'S';
 
-        error = listener->bind(
-            ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
-            false);
-        NTCCFG_TEST_OK(error);
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
 
-        // Get the source endpoint of the listener.
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
 
-        ntsa::Endpoint listenerSourceEndpoint;
-        error = listener->sourceEndpoint(&listenerSourceEndpoint);
-        NTCCFG_TEST_OK(error);
+        options.setEndpoint(clientSourceEndpoint);
 
-        NTCI_LOG_STREAM_DEBUG
-            << "Listener source endpoint = " << listenerSourceEndpoint
-            << NTCI_LOG_STREAM_END;
+        error = server->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
 
-        // Ensure the source endpoint of the listener is the IPv4 loopback
-        // address and a non-zero port.
+        NTSCFG_TEST_EQ(context.bytesSendable(), 1);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
 
-        NTCCFG_TEST_TRUE(listenerSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(listenerSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(listenerSourceEndpoint.ip().port(), 0);
+    // Advance the simulation.
 
-        // Begin listening for connections.
+    error = machine->step(false);
+    NTSCFG_TEST_OK(error);
 
-        error = listener->listen(0);
-        NTCCFG_TEST_OK(error);
+    // Receive data at the client.
 
-        // Add the listener to the monitor.
+    {
+        char remoteData = 0;
 
-        error = monitor->add(listener);
-        NTCCFG_TEST_OK(error);
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
 
-        // Create a client.
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
 
-        bsl::shared_ptr<ntcd::Session> client = machine->createSession(&ta);
+        error = client->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
 
-        // Open the client as an IPv4 stream socket.
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
 
-        error = client->open(ntsa::Transport::e_TCP_IPV4_STREAM);
-        NTCCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(remoteData, SERVER_DATA);
 
-        error = client->setBlocking(false);
-        NTCCFG_TEST_OK(error);
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), serverSourceEndpoint);
+    }
 
-        // Connect the client to the listener.
+    // Close the client.
 
-        error = client->connect(listenerSourceEndpoint);
-        NTCCFG_TEST_OK(error);
+    error = client->close();
+    NTSCFG_TEST_OK(error);
 
-        // Add the client to the monitor.
+    // Close the server.
 
-        error = monitor->add(client);
-        NTCCFG_TEST_OK(error);
+    error = server->close();
+    NTSCFG_TEST_OK(error);
+}
 
-        // Gain interest in writability for the client.
+NTSCFG_TEST_FUNCTION(
+    ntcd::MachineTest::verifyForegroundBlockingDatagramSocketsConnectedOneWay)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_CONTEXT_GUARD_OWNER("main");
 
-        error = monitor->show(client, ntca::ReactorEventType::e_WRITABLE);
-        NTCCFG_TEST_OK(error);
+    ntsa::Error error;
 
-        // Block until the client is writable.
+    // Create a machine.
 
-        while (true) {
-            bsl::vector<ntca::ReactorEvent> events;
-            error = monitor->dequeue(&events);
-            NTCCFG_TEST_OK(error);
+    bsl::shared_ptr<ntcd::Machine> machine;
+    machine.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-            bool satisfied = false;
-            for (bsl::size_t i = 0; i < events.size(); ++i) {
-                const ntca::ReactorEvent& event = events[i];
+    // Create a client.
 
-                if (event.handle() == client->handle() && event.isWritable()) {
-                    satisfied = true;
-                    break;
-                }
-            }
+    bsl::shared_ptr<ntcd::Session> client =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
 
-            if (satisfied) {
+    // Open the client as an IPv4 datagram socket.
+
+    error = client->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+    NTSCFG_TEST_OK(error);
+
+    // Bind the client to any port on the IPv4 loopback address.
+
+    error = client->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the client.
+
+    ntsa::Endpoint clientSourceEndpoint;
+    error = client->sourceEndpoint(&clientSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Client source endpoint = "
+                          << clientSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the client is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(clientSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
+
+    // Create a server.
+
+    bsl::shared_ptr<ntcd::Session> server =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the server as an IPv4 datagram socket.
+
+    error = server->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+    NTSCFG_TEST_OK(error);
+
+    // Bind the server to any port on the IPv4 loopback address.
+
+    error = server->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the server.
+
+    ntsa::Endpoint serverSourceEndpoint;
+    error = server->sourceEndpoint(&serverSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Server source endpoint = "
+                          << serverSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the server is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(serverSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
+
+    // Ensure the source endpoint of the client is different than the
+    // source endpoint of the server.
+
+    NTSCFG_TEST_NE(clientSourceEndpoint, serverSourceEndpoint);
+
+    // Connect the client to the server.
+
+    error = client->connect(serverSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    // Advance the simulation.
+
+    error = machine->step(false);
+    NTSCFG_TEST_OK(error);
+
+    // Send data from the client to the server.
+
+    const char CLIENT_DATA = 'C';
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        error = client->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSendable(), 1);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
+
+    // Advance the simulation.
+
+    error = machine->step(false);
+    NTSCFG_TEST_OK(error);
+
+    // Receive data at the server.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = server->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
+
+        NTSCFG_TEST_EQ(remoteData, CLIENT_DATA);
+
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
+    }
+
+    // Send data from the server to the client.
+
+    const char SERVER_DATA = 'S';
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        options.setEndpoint(clientSourceEndpoint);
+
+        error = server->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSendable(), 1);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
+
+    // Advance the simulation.
+
+    error = machine->step(false);
+    NTSCFG_TEST_OK(error);
+
+    // Receive data at the client.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = client->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
+
+        NTSCFG_TEST_EQ(remoteData, SERVER_DATA);
+
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), serverSourceEndpoint);
+    }
+
+    // Close the client.
+
+    error = client->close();
+    NTSCFG_TEST_OK(error);
+
+    // Close the server.
+
+    error = server->close();
+    NTSCFG_TEST_OK(error);
+}
+
+NTSCFG_TEST_FUNCTION(
+    ntcd::MachineTest::verifyForegroundBlockingDatagramSocketsConnectedTwoWay)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_CONTEXT_GUARD_OWNER("main");
+
+    ntsa::Error error;
+
+    // Create a machine.
+
+    bsl::shared_ptr<ntcd::Machine> machine;
+    machine.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+
+    // Create a client.
+
+    bsl::shared_ptr<ntcd::Session> client =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the client as an IPv4 datagram socket.
+
+    error = client->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+    NTSCFG_TEST_OK(error);
+
+    // Bind the client to any port on the IPv4 loopback address.
+
+    error = client->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the client.
+
+    ntsa::Endpoint clientSourceEndpoint;
+    error = client->sourceEndpoint(&clientSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Client source endpoint = "
+                          << clientSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the client is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(clientSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
+
+    // Create a server.
+
+    bsl::shared_ptr<ntcd::Session> server =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the server as an IPv4 datagram socket.
+
+    error = server->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+    NTSCFG_TEST_OK(error);
+
+    // Bind the server to any port on the IPv4 loopback address.
+
+    error = server->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the server.
+
+    ntsa::Endpoint serverSourceEndpoint;
+    error = server->sourceEndpoint(&serverSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Server source endpoint = "
+                          << serverSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the server is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(serverSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
+
+    // Ensure the source endpoint of the client is different than the
+    // source endpoint of the server.
+
+    NTSCFG_TEST_NE(clientSourceEndpoint, serverSourceEndpoint);
+
+    // Connect the client to the server.
+
+    error = client->connect(serverSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    // Connect the server to the client.
+
+    error = server->connect(clientSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    // Advance the simulation.
+
+    error = machine->step(false);
+    NTSCFG_TEST_OK(error);
+
+    // Send data from the client to the server.
+
+    const char CLIENT_DATA = 'C';
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        error = client->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSendable(), 1);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
+
+    // Advance the simulation.
+
+    error = machine->step(false);
+    NTSCFG_TEST_OK(error);
+
+    // Receive data at the server.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = server->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
+
+        NTSCFG_TEST_EQ(remoteData, CLIENT_DATA);
+
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
+    }
+
+    // Send data from the server to the client.
+
+    const char SERVER_DATA = 'S';
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        error = server->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSendable(), 1);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
+
+    // Advance the simulation.
+
+    error = machine->step(false);
+    NTSCFG_TEST_OK(error);
+
+    // Receive data at the client.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = client->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
+
+        NTSCFG_TEST_EQ(remoteData, SERVER_DATA);
+
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), serverSourceEndpoint);
+    }
+
+    // Close the client.
+
+    error = client->close();
+    NTSCFG_TEST_OK(error);
+
+    // Close the server.
+
+    error = server->close();
+    NTSCFG_TEST_OK(error);
+}
+
+NTSCFG_TEST_FUNCTION(ntcd::MachineTest::verifyForegroundBlockingStreamSockets)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_CONTEXT_GUARD_OWNER("main");
+
+    ntsa::Error error;
+
+    // Create a machine.
+
+    bsl::shared_ptr<ntcd::Machine> machine;
+    machine.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+
+    // Create a listener.
+
+    bsl::shared_ptr<ntcd::Session> listener =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the listener for IPv4 stream sockets.
+
+    error = error = listener->open(ntsa::Transport::e_TCP_IPV4_STREAM);
+    NTSCFG_TEST_OK(error);
+
+    // Bind the listener to any port on the IPv4 loopback address.
+
+    error = listener->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the listener.
+
+    ntsa::Endpoint listenerSourceEndpoint;
+    error = listener->sourceEndpoint(&listenerSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Listener source endpoint = "
+                          << listenerSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the listener is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(listenerSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(listenerSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(listenerSourceEndpoint.ip().port(), 0);
+
+    // Begin listening for connections.
+
+    error = listener->listen(0);
+    NTSCFG_TEST_OK(error);
+
+    // Create a client.
+
+    bsl::shared_ptr<ntcd::Session> client =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the client as an IPv4 stream socket.
+
+    error = client->open(ntsa::Transport::e_TCP_IPV4_STREAM);
+    NTSCFG_TEST_OK(error);
+
+    // Connect the client to the listener.
+
+    error = client->connect(listenerSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    // Advance the simulation.
+
+    error = machine->step(false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the client.
+
+    ntsa::Endpoint clientSourceEndpoint;
+    error = client->sourceEndpoint(&clientSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Client source endpoint = "
+                          << clientSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Get the remote endpoint of the client.
+
+    ntsa::Endpoint clientRemoteEndpoint;
+    error = client->remoteEndpoint(&clientRemoteEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Client remote endpoint = "
+                          << clientRemoteEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the client is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(clientSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
+
+    // Accept a server from the listener.
+
+    bsl::shared_ptr<ntcd::Session> server;
+    error = listener->accept(&server);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the server.
+
+    ntsa::Endpoint serverSourceEndpoint;
+    error = server->sourceEndpoint(&serverSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Server source endpoint = "
+                          << serverSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Get the remote endpoint of the server.
+
+    ntsa::Endpoint serverRemoteEndpoint;
+    error = server->remoteEndpoint(&serverRemoteEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Server remote endpoint = "
+                          << serverRemoteEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the server is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(serverSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
+
+    // Ensure the remote endpoint of the client is the source endpoint of
+    // the server.
+
+    NTSCFG_TEST_EQ(clientRemoteEndpoint, serverSourceEndpoint);
+
+    // Ensure the remote endpoint of the server is the source endpoint of
+    // the client.
+
+    NTSCFG_TEST_EQ(serverRemoteEndpoint, clientSourceEndpoint);
+
+    // Send data from the client to the server.
+
+    const char CLIENT_DATA = 'C';
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        error = client->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSendable(), 1);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
+
+    // Advance the simulation.
+
+    error = machine->step(false);
+    NTSCFG_TEST_OK(error);
+
+    // Receive data at the server.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = server->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
+
+        NTSCFG_TEST_EQ(remoteData, CLIENT_DATA);
+
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
+    }
+
+    // Send data from the server to the client.
+
+    const char SERVER_DATA = 'S';
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        error = server->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSendable(), 1);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
+
+    // Advance the simulation.
+
+    error = machine->step(false);
+    NTSCFG_TEST_OK(error);
+
+    // Receive data at the client.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = client->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
+
+        NTSCFG_TEST_EQ(remoteData, SERVER_DATA);
+
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), serverSourceEndpoint);
+    }
+
+    // Shutdown the client.
+
+    error = client->shutdown(ntsa::ShutdownType::e_SEND);
+    NTSCFG_TEST_OK(error);
+
+    // Advance the simulation.
+
+    error = machine->step(false);
+    NTSCFG_TEST_OK(error);
+
+    // Receive data at the server.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = server->receive(&context, &data, options);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_EOF));
+        NTSCFG_TEST_EQ(context.bytesReceived(), 0);
+    }
+
+    // Shutdown the server.
+
+    error = server->shutdown(ntsa::ShutdownType::e_SEND);
+    NTSCFG_TEST_OK(error);
+
+    // Advance the simulation.
+
+    error = machine->step(false);
+    NTSCFG_TEST_OK(error);
+
+    // Receive data at the client.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = client->receive(&context, &data, options);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_EOF));
+        NTSCFG_TEST_EQ(context.bytesReceived(), 0);
+    }
+
+    // Try to send data from the client to the server and ensure the
+    // operation fails because the client has been shutdown for sending.
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        error = client->send(&context, data, options);
+        NTSCFG_TEST_TRUE(error);
+
+        NTSCFG_TEST_EQ(context.bytesSent(), 0);
+    }
+
+    // Try to send data from the server to the client and ensure the
+    // operation fails because the server has been shutdown for sending.
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        error = server->send(&context, data, options);
+        NTSCFG_TEST_TRUE(error);
+
+        NTSCFG_TEST_EQ(context.bytesSent(), 0);
+    }
+
+    // Close the client.
+
+    error = client->close();
+    NTSCFG_TEST_OK(error);
+
+    // Close the server.
+
+    error = server->close();
+    NTSCFG_TEST_OK(error);
+
+    // Close the listener.
+
+    error = listener->close();
+    NTSCFG_TEST_OK(error);
+}
+
+NTSCFG_TEST_FUNCTION(
+    ntcd::MachineTest::verifyBackgroundBlockingDatagramSockets)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_CONTEXT_GUARD_OWNER("main");
+
+    ntsa::Error error;
+
+    // Create a machine.
+
+    bsl::shared_ptr<ntcd::Machine> machine;
+    machine.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+
+    // Run the machine.
+
+    error = machine->run();
+    NTSCFG_TEST_OK(error);
+
+    // Create a client.
+
+    bsl::shared_ptr<ntcd::Session> client =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the client as an IPv4 datagram socket.
+
+    error = client->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+    NTSCFG_TEST_OK(error);
+
+    // Bind the client to any port on the IPv4 loopback address.
+
+    error = client->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the client.
+
+    ntsa::Endpoint clientSourceEndpoint;
+    error = client->sourceEndpoint(&clientSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Client source endpoint = "
+                          << clientSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the client is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(clientSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
+
+    // Create a server.
+
+    bsl::shared_ptr<ntcd::Session> server =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the server as an IPv4 datagram socket.
+
+    error = server->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+    NTSCFG_TEST_OK(error);
+
+    // Bind the server to any port on the IPv4 loopback address.
+
+    error = server->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the server.
+
+    ntsa::Endpoint serverSourceEndpoint;
+    error = server->sourceEndpoint(&serverSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Server source endpoint = "
+                          << serverSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the server is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(serverSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
+
+    // Ensure the source endpoint of the client is different than the
+    // source endpoint of the server.
+
+    NTSCFG_TEST_NE(clientSourceEndpoint, serverSourceEndpoint);
+
+    // Send data from the client to the server.
+
+    const char CLIENT_DATA = 'C';
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        options.setEndpoint(serverSourceEndpoint);
+
+        error = client->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSendable(), 1);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
+
+    // Receive data at the server.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = server->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
+
+        NTSCFG_TEST_EQ(remoteData, CLIENT_DATA);
+
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
+    }
+
+    // Send data from the server to the client.
+
+    const char SERVER_DATA = 'S';
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        options.setEndpoint(clientSourceEndpoint);
+
+        error = server->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSendable(), 1);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
+
+    // Receive data at the client.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = client->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
+
+        NTSCFG_TEST_EQ(remoteData, SERVER_DATA);
+
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), serverSourceEndpoint);
+    }
+
+    // Close the client.
+
+    error = client->close();
+    NTSCFG_TEST_OK(error);
+
+    // Close the server.
+
+    error = server->close();
+    NTSCFG_TEST_OK(error);
+
+    // Stop the machine.
+
+    machine->stop();
+}
+
+NTSCFG_TEST_FUNCTION(
+    ntcd::MachineTest::verifyBackgroundBlockingDatagramSocketsConnectedOneWay)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_CONTEXT_GUARD_OWNER("main");
+
+    ntsa::Error error;
+
+    // Create a machine.
+
+    bsl::shared_ptr<ntcd::Machine> machine;
+    machine.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+
+    // Run the machine.
+
+    error = machine->run();
+    NTSCFG_TEST_OK(error);
+
+    // Create a client.
+
+    bsl::shared_ptr<ntcd::Session> client =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the client as an IPv4 datagram socket.
+
+    error = client->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+    NTSCFG_TEST_OK(error);
+
+    // Bind the client to any port on the IPv4 loopback address.
+
+    error = client->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the client.
+
+    ntsa::Endpoint clientSourceEndpoint;
+    error = client->sourceEndpoint(&clientSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Client source endpoint = "
+                          << clientSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the client is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(clientSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
+
+    // Create a server.
+
+    bsl::shared_ptr<ntcd::Session> server =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the server as an IPv4 datagram socket.
+
+    error = server->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+    NTSCFG_TEST_OK(error);
+
+    // Bind the server to any port on the IPv4 loopback address.
+
+    error = server->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the server.
+
+    ntsa::Endpoint serverSourceEndpoint;
+    error = server->sourceEndpoint(&serverSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Server source endpoint = "
+                          << serverSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the server is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(serverSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
+
+    // Ensure the source endpoint of the client is different than the
+    // source endpoint of the server.
+
+    NTSCFG_TEST_NE(clientSourceEndpoint, serverSourceEndpoint);
+
+    // Connect the client to the server.
+
+    error = client->connect(serverSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    // Send data from the client to the server.
+
+    const char CLIENT_DATA = 'C';
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        error = client->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSendable(), 1);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
+
+    // Receive data at the server.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = server->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
+
+        NTSCFG_TEST_EQ(remoteData, CLIENT_DATA);
+
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
+    }
+
+    // Send data from the server to the client.
+
+    const char SERVER_DATA = 'S';
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        options.setEndpoint(clientSourceEndpoint);
+
+        error = server->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSendable(), 1);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
+
+    // Receive data at the client.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = client->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
+
+        NTSCFG_TEST_EQ(remoteData, SERVER_DATA);
+
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), serverSourceEndpoint);
+    }
+
+    // Close the client.
+
+    error = client->close();
+    NTSCFG_TEST_OK(error);
+
+    // Close the server.
+
+    error = server->close();
+    NTSCFG_TEST_OK(error);
+
+    // Stop the machine.
+
+    machine->stop();
+}
+
+NTSCFG_TEST_FUNCTION(
+    ntcd::MachineTest::verifyBackgroundBlockingDatagramSocketsConnectedTwoWay)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_CONTEXT_GUARD_OWNER("main");
+
+    ntsa::Error error;
+
+    // Create a machine.
+
+    bsl::shared_ptr<ntcd::Machine> machine;
+    machine.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+
+    // Run the machine.
+
+    error = machine->run();
+    NTSCFG_TEST_OK(error);
+
+    // Create a client.
+
+    bsl::shared_ptr<ntcd::Session> client =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the client as an IPv4 datagram socket.
+
+    error = client->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+    NTSCFG_TEST_OK(error);
+
+    // Bind the client to any port on the IPv4 loopback address.
+
+    error = client->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the client.
+
+    ntsa::Endpoint clientSourceEndpoint;
+    error = client->sourceEndpoint(&clientSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Client source endpoint = "
+                          << clientSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the client is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(clientSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
+
+    // Create a server.
+
+    bsl::shared_ptr<ntcd::Session> server =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the server as an IPv4 datagram socket.
+
+    error = server->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+    NTSCFG_TEST_OK(error);
+
+    // Bind the server to any port on the IPv4 loopback address.
+
+    error = server->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the server.
+
+    ntsa::Endpoint serverSourceEndpoint;
+    error = server->sourceEndpoint(&serverSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Server source endpoint = "
+                          << serverSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the server is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(serverSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
+
+    // Ensure the source endpoint of the client is different than the
+    // source endpoint of the server.
+
+    NTSCFG_TEST_NE(clientSourceEndpoint, serverSourceEndpoint);
+
+    // Connect the client to the server.
+
+    error = client->connect(serverSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    // Connect the server to the client.
+
+    error = server->connect(clientSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    // Send data from the client to the server.
+
+    const char CLIENT_DATA = 'C';
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        error = client->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSendable(), 1);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
+
+    // Receive data at the server.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = server->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
+
+        NTSCFG_TEST_EQ(remoteData, CLIENT_DATA);
+
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
+    }
+
+    // Send data from the server to the client.
+
+    const char SERVER_DATA = 'S';
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        error = server->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSendable(), 1);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
+
+    // Receive data at the client.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = client->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
+
+        NTSCFG_TEST_EQ(remoteData, SERVER_DATA);
+
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), serverSourceEndpoint);
+    }
+
+    // Close the client.
+
+    error = client->close();
+    NTSCFG_TEST_OK(error);
+
+    // Close the server.
+
+    error = server->close();
+    NTSCFG_TEST_OK(error);
+
+    // Stop the machine.
+
+    machine->stop();
+}
+
+NTSCFG_TEST_FUNCTION(ntcd::MachineTest::verifyBackgroundBlockingStreamSockets)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_CONTEXT_GUARD_OWNER("main");
+
+    ntsa::Error error;
+
+    // Create a machine.
+
+    bsl::shared_ptr<ntcd::Machine> machine;
+    machine.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+
+    // Run the machine.
+
+    error = machine->run();
+    NTSCFG_TEST_OK(error);
+
+    // Create a listener.
+
+    bsl::shared_ptr<ntcd::Session> listener =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the listener for IPv4 stream sockets.
+
+    error = error = listener->open(ntsa::Transport::e_TCP_IPV4_STREAM);
+    NTSCFG_TEST_OK(error);
+
+    // Bind the listener to any port on the IPv4 loopback address.
+
+    error = listener->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the listener.
+
+    ntsa::Endpoint listenerSourceEndpoint;
+    error = listener->sourceEndpoint(&listenerSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Listener source endpoint = "
+                          << listenerSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the listener is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(listenerSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(listenerSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(listenerSourceEndpoint.ip().port(), 0);
+
+    // Begin listening for connections.
+
+    error = listener->listen(0);
+    NTSCFG_TEST_OK(error);
+
+    // Create a client.
+
+    bsl::shared_ptr<ntcd::Session> client =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the client as an IPv4 stream socket.
+
+    error = client->open(ntsa::Transport::e_TCP_IPV4_STREAM);
+    NTSCFG_TEST_OK(error);
+
+    // Connect the client to the listener.
+
+    error = client->connect(listenerSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the client.
+
+    ntsa::Endpoint clientSourceEndpoint;
+    error = client->sourceEndpoint(&clientSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Client source endpoint = "
+                          << clientSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Get the remote endpoint of the client.
+
+    ntsa::Endpoint clientRemoteEndpoint;
+    error = client->remoteEndpoint(&clientRemoteEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Client remote endpoint = "
+                          << clientRemoteEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the client is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(clientSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
+
+    // Accept a server from the listener.
+
+    bsl::shared_ptr<ntcd::Session> server;
+    error = listener->accept(&server);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the server.
+
+    ntsa::Endpoint serverSourceEndpoint;
+    error = server->sourceEndpoint(&serverSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Server source endpoint = "
+                          << serverSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Get the remote endpoint of the server.
+
+    ntsa::Endpoint serverRemoteEndpoint;
+    error = server->remoteEndpoint(&serverRemoteEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Server remote endpoint = "
+                          << serverRemoteEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the server is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(serverSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
+
+    // Ensure the remote endpoint of the client is the source endpoint of
+    // the server.
+
+    NTSCFG_TEST_EQ(clientRemoteEndpoint, serverSourceEndpoint);
+
+    // Ensure the remote endpoint of the server is the source endpoint of
+    // the client.
+
+    NTSCFG_TEST_EQ(serverRemoteEndpoint, clientSourceEndpoint);
+
+    // Send data from the client to the server.
+
+    const char CLIENT_DATA = 'C';
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        error = client->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSendable(), 1);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
+
+    // Receive data at the server.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = server->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
+
+        NTSCFG_TEST_EQ(remoteData, CLIENT_DATA);
+
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
+    }
+
+    // Send data from the server to the client.
+
+    const char SERVER_DATA = 'S';
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        error = server->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSendable(), 1);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
+
+    // Receive data at the client.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = client->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
+
+        NTSCFG_TEST_EQ(remoteData, SERVER_DATA);
+
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), serverSourceEndpoint);
+    }
+
+    // Shutdown the client.
+
+    error = client->shutdown(ntsa::ShutdownType::e_SEND);
+    NTSCFG_TEST_OK(error);
+
+    // Receive data at the server.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = server->receive(&context, &data, options);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_EOF));
+        NTSCFG_TEST_EQ(context.bytesReceived(), 0);
+    }
+
+    // Shutdown the server.
+
+    error = server->shutdown(ntsa::ShutdownType::e_SEND);
+    NTSCFG_TEST_OK(error);
+
+    // Receive data at the client.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = client->receive(&context, &data, options);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_EOF));
+        NTSCFG_TEST_EQ(context.bytesReceived(), 0);
+    }
+
+    // Try to send data from the client to the server and ensure the
+    // operation fails because the client has been shutdown for sending.
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        error = client->send(&context, data, options);
+        NTSCFG_TEST_TRUE(error);
+
+        NTSCFG_TEST_EQ(context.bytesSent(), 0);
+    }
+
+    // Try to send data from the server to the client and ensure the
+    // operation fails because the server has been shutdown for sending.
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        error = server->send(&context, data, options);
+        NTSCFG_TEST_TRUE(error);
+
+        NTSCFG_TEST_EQ(context.bytesSent(), 0);
+    }
+
+    // Close the client.
+
+    error = client->close();
+    NTSCFG_TEST_OK(error);
+
+    // Close the server.
+
+    error = server->close();
+    NTSCFG_TEST_OK(error);
+
+    // Close the listener.
+
+    error = listener->close();
+    NTSCFG_TEST_OK(error);
+
+    // Stop the machine.
+
+    machine->stop();
+}
+
+NTSCFG_TEST_FUNCTION(
+    ntcd::MachineTest::verifyBackgroundNonblockingDatagramSockets)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_CONTEXT_GUARD_OWNER("main");
+
+    ntsa::Error error;
+
+    // Create a machine.
+
+    bsl::shared_ptr<ntcd::Machine> machine;
+    machine.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+
+    // Run the machine.
+
+    error = machine->run();
+    NTSCFG_TEST_OK(error);
+
+    // Create a monitor.
+
+    bsl::shared_ptr<ntcd::Monitor> monitor =
+        machine->createMonitor(NTSCFG_TEST_ALLOCATOR);
+
+    // Create a client.
+
+    bsl::shared_ptr<ntcd::Session> client =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the client as an IPv4 datagram socket.
+
+    error = client->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+    NTSCFG_TEST_OK(error);
+
+    error = client->setBlocking(false);
+    NTSCFG_TEST_OK(error);
+
+    // Bind the client to any port on the IPv4 loopback address.
+
+    error = client->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the client.
+
+    ntsa::Endpoint clientSourceEndpoint;
+    error = client->sourceEndpoint(&clientSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Client source endpoint = "
+                          << clientSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the client is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(clientSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
+
+    // Create a server.
+
+    bsl::shared_ptr<ntcd::Session> server =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the server as an IPv4 datagram socket.
+
+    error = server->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+    NTSCFG_TEST_OK(error);
+
+    error = server->setBlocking(false);
+    NTSCFG_TEST_OK(error);
+
+    // Bind the server to any port on the IPv4 loopback address.
+
+    error = server->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the server.
+
+    ntsa::Endpoint serverSourceEndpoint;
+    error = server->sourceEndpoint(&serverSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Server source endpoint = "
+                          << serverSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the server is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(serverSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
+
+    // Ensure the source endpoint of the client is different than the
+    // source endpoint of the server.
+
+    NTSCFG_TEST_NE(clientSourceEndpoint, serverSourceEndpoint);
+
+    // Add the client to the monitor.
+
+    error = monitor->add(client);
+    NTSCFG_TEST_OK(error);
+
+    // Add the server to the monitor.
+
+    error = monitor->add(server);
+    NTSCFG_TEST_OK(error);
+
+    // Gain interest in writability for the client.
+
+    error = monitor->show(client, ntca::ReactorEventType::e_WRITABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Block until the client is writable.
+
+    while (true) {
+        bsl::vector<ntca::ReactorEvent> events;
+        error = monitor->dequeue(&events);
+        NTSCFG_TEST_OK(error);
+
+        bool satisfied = false;
+        for (bsl::size_t i = 0; i < events.size(); ++i) {
+            const ntca::ReactorEvent& event = events[i];
+
+            if (event.handle() == client->handle() && event.isWritable()) {
+                satisfied = true;
                 break;
             }
         }
 
-        // Lose interest in writability for the client.
+        if (satisfied) {
+            break;
+        }
+    }
 
-        error = monitor->hide(client, ntca::ReactorEventType::e_WRITABLE);
-        NTCCFG_TEST_OK(error);
+    // Send data from the client to the server.
 
-        // Get the source endpoint of the client.
+    const char CLIENT_DATA = 'C';
 
-        ntsa::Endpoint clientSourceEndpoint;
-        error = client->sourceEndpoint(&clientSourceEndpoint);
-        NTCCFG_TEST_OK(error);
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
 
-        NTCI_LOG_STREAM_DEBUG
-            << "Client source endpoint = " << clientSourceEndpoint
-            << NTCI_LOG_STREAM_END;
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
 
-        // Get the remote endpoint of the client.
+        options.setEndpoint(serverSourceEndpoint);
 
-        ntsa::Endpoint clientRemoteEndpoint;
-        error = client->remoteEndpoint(&clientRemoteEndpoint);
-        NTCCFG_TEST_OK(error);
+        error = client->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
 
-        NTCI_LOG_STREAM_DEBUG
-            << "Client remote endpoint = " << clientRemoteEndpoint
-            << NTCI_LOG_STREAM_END;
+        NTSCFG_TEST_EQ(context.bytesSendable(), 1);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
 
-        // Ensure the source endpoint of the client is the IPv4 loopback
-        // address and a non-zero port.
+    // Lose interest in writability for the client.
 
-        NTCCFG_TEST_TRUE(clientSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
+    error = monitor->hide(client, ntca::ReactorEventType::e_WRITABLE);
+    NTSCFG_TEST_OK(error);
 
-        // Gain interest in readability for the listener.
+    // Gain interest in readability for the server.
 
-        error = monitor->show(listener, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
+    error = monitor->show(server, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
 
-        // Block until the listener is readable.
+    // Block until the server is readable.
 
-        while (true) {
-            bsl::vector<ntca::ReactorEvent> events;
-            error = monitor->dequeue(&events);
-            NTCCFG_TEST_OK(error);
+    while (true) {
+        bsl::vector<ntca::ReactorEvent> events;
+        error = monitor->dequeue(&events);
+        NTSCFG_TEST_OK(error);
 
-            bool satisfied = false;
-            for (bsl::size_t i = 0; i < events.size(); ++i) {
-                const ntca::ReactorEvent& event = events[i];
+        bool satisfied = false;
+        for (bsl::size_t i = 0; i < events.size(); ++i) {
+            const ntca::ReactorEvent& event = events[i];
 
-                if (event.handle() == listener->handle() && event.isReadable())
-                {
-                    satisfied = true;
-                    break;
-                }
-            }
-
-            if (satisfied) {
+            if (event.handle() == server->handle() && event.isReadable()) {
+                satisfied = true;
                 break;
             }
         }
 
-        // Accept a server from the listener.
+        if (satisfied) {
+            break;
+        }
+    }
 
-        bsl::shared_ptr<ntcd::Session> server;
-        error = listener->accept(&server);
-        NTCCFG_TEST_OK(error);
+    // Receive data at the server.
 
-        error = server->setBlocking(false);
-        NTCCFG_TEST_OK(error);
+    {
+        char remoteData = 0;
 
-        // Lose interest in readability for the listener.
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
 
-        error = monitor->hide(listener, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
 
-        // Get the source endpoint of the server.
+        error = server->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
 
-        ntsa::Endpoint serverSourceEndpoint;
-        error = server->sourceEndpoint(&serverSourceEndpoint);
-        NTCCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
 
-        NTCI_LOG_STREAM_DEBUG
-            << "Server source endpoint = " << serverSourceEndpoint
-            << NTCI_LOG_STREAM_END;
+        NTSCFG_TEST_EQ(remoteData, CLIENT_DATA);
 
-        // Get the remote endpoint of the server.
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
+    }
 
-        ntsa::Endpoint serverRemoteEndpoint;
-        error = server->remoteEndpoint(&serverRemoteEndpoint);
-        NTCCFG_TEST_OK(error);
+    // Lose interest in readability for the server.
 
-        NTCI_LOG_STREAM_DEBUG
-            << "Server remote endpoint = " << serverRemoteEndpoint
-            << NTCI_LOG_STREAM_END;
+    error = monitor->hide(server, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
 
-        // Ensure the source endpoint of the server is the IPv4 loopback
-        // address and a non-zero port.
+    // Gain interest in writability for the server.
 
-        NTCCFG_TEST_TRUE(serverSourceEndpoint.isIp());
-        NTCCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
-                       ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
-        NTCCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
+    error = monitor->show(server, ntca::ReactorEventType::e_WRITABLE);
+    NTSCFG_TEST_OK(error);
 
-        // Ensure the remote endpoint of the client is the source endpoint of
-        // the server.
+    // Block until the server is writable.
 
-        NTCCFG_TEST_EQ(clientRemoteEndpoint, serverSourceEndpoint);
+    while (true) {
+        bsl::vector<ntca::ReactorEvent> events;
+        error = monitor->dequeue(&events);
+        NTSCFG_TEST_OK(error);
 
-        // Ensure the remote endpoint of the server is the source endpoint of
-        // the client.
+        bool satisfied = false;
+        for (bsl::size_t i = 0; i < events.size(); ++i) {
+            const ntca::ReactorEvent& event = events[i];
 
-        NTCCFG_TEST_EQ(serverRemoteEndpoint, clientSourceEndpoint);
-
-        // Add the server to the monitor.
-
-        error = monitor->add(server);
-        NTCCFG_TEST_OK(error);
-
-        // Gain interest in writability for the client.
-
-        error = monitor->show(client, ntca::ReactorEventType::e_WRITABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Gain interest in readability for the server.
-
-        error = monitor->show(server, ntca::ReactorEventType::e_READABLE);
-        NTCCFG_TEST_OK(error);
-
-        // Define the data to be sent by the client and received by the server.
-
-        bdlbb::Blob clientData(&blobBufferFactory);
-        bdlbb::Blob serverData(&blobBufferFactory);
-
-        bdlbb::Blob clientDataRemaining(&blobBufferFactory);
-
-        ntcd::DataUtil::generateData(&clientData, DATA_SIZE);
-        clientDataRemaining = clientData;
-
-        // Set the send buffer size for the client.
-
-        {
-            ntsa::SocketOption option;
-            option.makeSendBufferSize(SEND_BUFFER_SIZE);
-
-            error = client->setOption(option);
-            NTCCFG_TEST_OK(error);
+            if (event.handle() == server->handle() && event.isWritable()) {
+                satisfied = true;
+                break;
+            }
         }
 
-        // Set the receive buffer size for the server.
+        if (satisfied) {
+            break;
+        }
+    }
 
-        {
-            ntsa::SocketOption option;
-            option.makeReceiveBufferSize(RECEIVE_BUFFER_SIZE);
+    // Send data from the server to the client.
 
-            error = server->setOption(option);
-            NTCCFG_TEST_OK(error);
+    const char SERVER_DATA = 'S';
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        options.setEndpoint(clientSourceEndpoint);
+
+        error = server->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSendable(), 1);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
+
+    // Lose interest in writability for the server.
+
+    error = monitor->hide(server, ntca::ReactorEventType::e_WRITABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Gain interest in readability for the client.
+
+    error = monitor->show(client, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Block until the client is readable.
+
+    while (true) {
+        bsl::vector<ntca::ReactorEvent> events;
+        error = monitor->dequeue(&events);
+        NTSCFG_TEST_OK(error);
+
+        bool satisfied = false;
+        for (bsl::size_t i = 0; i < events.size(); ++i) {
+            const ntca::ReactorEvent& event = events[i];
+
+            if (event.handle() == client->handle() && event.isReadable()) {
+                satisfied = true;
+                break;
+            }
         }
 
-        // Send data from the client when the client is writable and receive
-        // data at the server when the server is readable, until the client
-        // has sent all data and the server has received all data.
+        if (satisfied) {
+            break;
+        }
+    }
 
-        bool clientDone = false;
-        bool serverDone = false;
+    // Receive data at the client.
 
-        while (!clientDone || !serverDone) {
-            bsl::vector<ntca::ReactorEvent> events;
-            error = monitor->dequeue(&events);
-            NTCCFG_TEST_OK(error);
+    {
+        char remoteData = 0;
 
-            for (bsl::size_t i = 0; i < events.size(); ++i) {
-                const ntca::ReactorEvent& event = events[i];
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
 
-                if (event.handle() == client->handle()) {
-                    NTCCFG_TEST_TRUE(event.isWritable());
-                    NTCCFG_TEST_FALSE(clientDone);
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
 
-                    ntsa::SendContext context;
-                    ntsa::SendOptions options;
+        error = client->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
 
-                    error =
-                        client->send(&context, clientDataRemaining, options);
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
 
-                    if (error) {
-                        NTCCFG_TEST_EQ(
-                            error,
-                            ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
+        NTSCFG_TEST_EQ(remoteData, SERVER_DATA);
 
-                        NTCI_LOG_STREAM_INFO << "Client would block"
-                                             << NTCI_LOG_STREAM_END;
-                    }
-                    else {
-                        NTCCFG_TEST_OK(error);
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), serverSourceEndpoint);
+    }
 
-                        NTCCFG_TEST_EQ(context.bytesSendable(),
-                                       clientDataRemaining.length());
+    // Lose interest in readabilty for the client.
 
-                        NTCCFG_TEST_GT(context.bytesSent(), 0);
+    error = monitor->hide(client, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
 
-                        NTCI_LOG_STREAM_INFO << "Client sent "
-                                             << context.bytesSent() << " bytes"
-                                             << NTCI_LOG_STREAM_END;
+    // Remove the client from the monitor.
 
-                        bdlbb::BlobUtil::erase(
-                            &clientDataRemaining,
-                            0,
-                            NTCCFG_WARNING_NARROW(int, context.bytesSent()));
+    error = monitor->remove(client);
+    NTSCFG_TEST_OK(error);
 
-                        if (clientDataRemaining.length() == 0) {
-                            NTCI_LOG_STREAM_INFO << "Client is done"
-                                                 << NTCI_LOG_STREAM_END;
+    // Remove the server from the monitor.
 
-                            error = monitor->hide(
-                                client,
-                                ntca::ReactorEventType::e_WRITABLE);
-                            NTCCFG_TEST_OK(error);
+    error = monitor->remove(server);
+    NTSCFG_TEST_OK(error);
 
-                            clientDone = true;
-                        }
-                    }
-                }
-                else if (event.handle() == server->handle()) {
-                    NTCCFG_TEST_TRUE(event.isReadable());
-                    NTCCFG_TEST_FALSE(serverDone);
+    // Close the client.
 
-                    int size     = serverData.length();
-                    int capacity = serverData.totalSize();
+    error = client->close();
+    NTSCFG_TEST_OK(error);
 
-                    if (capacity == size) {
-                        serverData.setLength(size + RECEIVE_BUFFER_SIZE);
-                        serverData.setLength(size);
+    // Close the server.
 
-                        capacity = serverData.totalSize();
-                    }
+    error = server->close();
+    NTSCFG_TEST_OK(error);
 
-                    ntsa::ReceiveContext context;
-                    ntsa::ReceiveOptions options;
+    // Stop the machine.
 
-                    error = server->receive(&context, &serverData, options);
-                    if (error) {
-                        NTCCFG_TEST_EQ(
-                            error,
-                            ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
+    machine->stop();
+}
 
-                        NTCI_LOG_STREAM_INFO << "Server would block"
-                                             << NTCI_LOG_STREAM_END;
-                    }
-                    else {
-                        NTCCFG_TEST_OK(error);
-                        NTCCFG_TEST_GT(context.bytesReceivable(), 0);
-                        NTCCFG_TEST_GT(context.bytesReceived(), 0);
+NTSCFG_TEST_FUNCTION(
+    ntcd::MachineTest::
+        verifyBackgroundNonblockingDatagramSocketsConnectedOneWay)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_CONTEXT_GUARD_OWNER("main");
 
-                        NTCI_LOG_STREAM_INFO
-                            << "Server received " << context.bytesReceived()
-                            << " bytes" << NTCI_LOG_STREAM_END;
+    ntsa::Error error;
 
-                        if (serverData.length() == DATA_SIZE) {
-                            NTCI_LOG_STREAM_INFO << "Server is done"
-                                                 << NTCI_LOG_STREAM_END;
+    // Create a machine.
 
-                            error = monitor->hide(
-                                server,
-                                ntca::ReactorEventType::e_READABLE);
-                            NTCCFG_TEST_OK(error);
+    bsl::shared_ptr<ntcd::Machine> machine;
+    machine.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-                            serverDone = true;
-                        }
-                    }
+    // Run the machine.
+
+    error = machine->run();
+    NTSCFG_TEST_OK(error);
+
+    // Create a monitor.
+
+    bsl::shared_ptr<ntcd::Monitor> monitor =
+        machine->createMonitor(NTSCFG_TEST_ALLOCATOR);
+
+    // Create a client.
+
+    bsl::shared_ptr<ntcd::Session> client =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the client as an IPv4 datagram socket.
+
+    error = client->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+    NTSCFG_TEST_OK(error);
+
+    error = client->setBlocking(false);
+    NTSCFG_TEST_OK(error);
+
+    // Bind the client to any port on the IPv4 loopback address.
+
+    error = client->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the client.
+
+    ntsa::Endpoint clientSourceEndpoint;
+    error = client->sourceEndpoint(&clientSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Client source endpoint = "
+                          << clientSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the client is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(clientSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
+
+    // Create a server.
+
+    bsl::shared_ptr<ntcd::Session> server =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the server as an IPv4 datagram socket.
+
+    error = server->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+    NTSCFG_TEST_OK(error);
+
+    error = server->setBlocking(false);
+    NTSCFG_TEST_OK(error);
+
+    // Bind the server to any port on the IPv4 loopback address.
+
+    error = server->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the server.
+
+    ntsa::Endpoint serverSourceEndpoint;
+    error = server->sourceEndpoint(&serverSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Server source endpoint = "
+                          << serverSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the server is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(serverSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
+
+    // Ensure the source endpoint of the client is different than the
+    // source endpoint of the server.
+
+    NTSCFG_TEST_NE(clientSourceEndpoint, serverSourceEndpoint);
+
+    // Connect the client to the server.
+
+    error = client->connect(serverSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    // Add the client to the monitor.
+
+    error = monitor->add(client);
+    NTSCFG_TEST_OK(error);
+
+    // Add the server to the monitor.
+
+    error = monitor->add(server);
+    NTSCFG_TEST_OK(error);
+
+    // Gain interest in writability for the client.
+
+    error = monitor->show(client, ntca::ReactorEventType::e_WRITABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Block until the client is writable.
+
+    while (true) {
+        bsl::vector<ntca::ReactorEvent> events;
+        error = monitor->dequeue(&events);
+        NTSCFG_TEST_OK(error);
+
+        bool satisfied = false;
+        for (bsl::size_t i = 0; i < events.size(); ++i) {
+            const ntca::ReactorEvent& event = events[i];
+
+            if (event.handle() == client->handle() && event.isWritable()) {
+                satisfied = true;
+                break;
+            }
+        }
+
+        if (satisfied) {
+            break;
+        }
+    }
+
+    // Send data from the client to the server.
+
+    const char CLIENT_DATA = 'C';
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        error = client->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSendable(), 1);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
+
+    // Lose interest in writability for the client.
+
+    error = monitor->hide(client, ntca::ReactorEventType::e_WRITABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Gain interest in readability for the server.
+
+    error = monitor->show(server, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Block until the server is readable.
+
+    while (true) {
+        bsl::vector<ntca::ReactorEvent> events;
+        error = monitor->dequeue(&events);
+        NTSCFG_TEST_OK(error);
+
+        bool satisfied = false;
+        for (bsl::size_t i = 0; i < events.size(); ++i) {
+            const ntca::ReactorEvent& event = events[i];
+
+            if (event.handle() == server->handle() && event.isReadable()) {
+                satisfied = true;
+                break;
+            }
+        }
+
+        if (satisfied) {
+            break;
+        }
+    }
+
+    // Receive data at the server.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = server->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
+
+        NTSCFG_TEST_EQ(remoteData, CLIENT_DATA);
+
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
+    }
+
+    // Lose interest in readability for the server.
+
+    error = monitor->hide(server, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Gain interest in writability for the server.
+
+    error = monitor->show(server, ntca::ReactorEventType::e_WRITABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Block until the server is writable.
+
+    while (true) {
+        bsl::vector<ntca::ReactorEvent> events;
+        error = monitor->dequeue(&events);
+        NTSCFG_TEST_OK(error);
+
+        bool satisfied = false;
+        for (bsl::size_t i = 0; i < events.size(); ++i) {
+            const ntca::ReactorEvent& event = events[i];
+
+            if (event.handle() == server->handle() && event.isWritable()) {
+                satisfied = true;
+                break;
+            }
+        }
+
+        if (satisfied) {
+            break;
+        }
+    }
+
+    // Send data from the server to the client.
+
+    const char SERVER_DATA = 'S';
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        options.setEndpoint(clientSourceEndpoint);
+
+        error = server->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSendable(), 1);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
+
+    // Lose interest in writability for the server.
+
+    error = monitor->hide(server, ntca::ReactorEventType::e_WRITABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Gain interest in readability for the client.
+
+    error = monitor->show(client, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Block until the client is readable.
+
+    while (true) {
+        bsl::vector<ntca::ReactorEvent> events;
+        error = monitor->dequeue(&events);
+        NTSCFG_TEST_OK(error);
+
+        bool satisfied = false;
+        for (bsl::size_t i = 0; i < events.size(); ++i) {
+            const ntca::ReactorEvent& event = events[i];
+
+            if (event.handle() == client->handle() && event.isReadable()) {
+                satisfied = true;
+                break;
+            }
+        }
+
+        if (satisfied) {
+            break;
+        }
+    }
+
+    // Receive data at the client.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = client->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
+
+        NTSCFG_TEST_EQ(remoteData, SERVER_DATA);
+
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), serverSourceEndpoint);
+    }
+
+    // Lose interest in readabilty for the client.
+
+    error = monitor->hide(client, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Remove the client from the monitor.
+
+    error = monitor->remove(client);
+    NTSCFG_TEST_OK(error);
+
+    // Remove the server from the monitor.
+
+    error = monitor->remove(server);
+    NTSCFG_TEST_OK(error);
+
+    // Close the client.
+
+    error = client->close();
+    NTSCFG_TEST_OK(error);
+
+    // Close the server.
+
+    error = server->close();
+    NTSCFG_TEST_OK(error);
+
+    // Stop the machine.
+
+    machine->stop();
+}
+
+NTSCFG_TEST_FUNCTION(
+    ntcd::MachineTest::
+        verifyBackgroundNonblockingDatagramSocketsConnectedTwoWay)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_CONTEXT_GUARD_OWNER("main");
+
+    ntsa::Error error;
+
+    // Create a machine.
+
+    bsl::shared_ptr<ntcd::Machine> machine;
+    machine.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+
+    // Run the machine.
+
+    error = machine->run();
+    NTSCFG_TEST_OK(error);
+
+    // Create a monitor.
+
+    bsl::shared_ptr<ntcd::Monitor> monitor =
+        machine->createMonitor(NTSCFG_TEST_ALLOCATOR);
+
+    // Create a client.
+
+    bsl::shared_ptr<ntcd::Session> client =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the client as an IPv4 datagram socket.
+
+    error = client->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+    NTSCFG_TEST_OK(error);
+
+    error = client->setBlocking(false);
+    NTSCFG_TEST_OK(error);
+
+    // Bind the client to any port on the IPv4 loopback address.
+
+    error = client->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the client.
+
+    ntsa::Endpoint clientSourceEndpoint;
+    error = client->sourceEndpoint(&clientSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Client source endpoint = "
+                          << clientSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the client is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(clientSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
+
+    // Create a server.
+
+    bsl::shared_ptr<ntcd::Session> server =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the server as an IPv4 datagram socket.
+
+    error = server->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+    NTSCFG_TEST_OK(error);
+
+    error = server->setBlocking(false);
+    NTSCFG_TEST_OK(error);
+
+    // Bind the server to any port on the IPv4 loopback address.
+
+    error = server->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the server.
+
+    ntsa::Endpoint serverSourceEndpoint;
+    error = server->sourceEndpoint(&serverSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Server source endpoint = "
+                          << serverSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the server is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(serverSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
+
+    // Ensure the source endpoint of the client is different than the
+    // source endpoint of the server.
+
+    NTSCFG_TEST_NE(clientSourceEndpoint, serverSourceEndpoint);
+
+    // Connect the client to the server.
+
+    error = client->connect(serverSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    // Connect the server to the client.
+
+    error = server->connect(clientSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    // Add the client to the monitor.
+
+    error = monitor->add(client);
+    NTSCFG_TEST_OK(error);
+
+    // Add the server to the monitor.
+
+    error = monitor->add(server);
+    NTSCFG_TEST_OK(error);
+
+    // Gain interest in writability for the client.
+
+    error = monitor->show(client, ntca::ReactorEventType::e_WRITABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Block until the client is writable.
+
+    while (true) {
+        bsl::vector<ntca::ReactorEvent> events;
+        error = monitor->dequeue(&events);
+        NTSCFG_TEST_OK(error);
+
+        bool satisfied = false;
+        for (bsl::size_t i = 0; i < events.size(); ++i) {
+            const ntca::ReactorEvent& event = events[i];
+
+            if (event.handle() == client->handle() && event.isWritable()) {
+                satisfied = true;
+                break;
+            }
+        }
+
+        if (satisfied) {
+            break;
+        }
+    }
+
+    // Send data from the client to the server.
+
+    const char CLIENT_DATA = 'C';
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        error = client->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSendable(), 1);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
+
+    // Lose interest in writability for the client.
+
+    error = monitor->hide(client, ntca::ReactorEventType::e_WRITABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Gain interest in readability for the server.
+
+    error = monitor->show(server, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Block until the server is readable.
+
+    while (true) {
+        bsl::vector<ntca::ReactorEvent> events;
+        error = monitor->dequeue(&events);
+        NTSCFG_TEST_OK(error);
+
+        bool satisfied = false;
+        for (bsl::size_t i = 0; i < events.size(); ++i) {
+            const ntca::ReactorEvent& event = events[i];
+
+            if (event.handle() == server->handle() && event.isReadable()) {
+                satisfied = true;
+                break;
+            }
+        }
+
+        if (satisfied) {
+            break;
+        }
+    }
+
+    // Receive data at the server.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = server->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
+
+        NTSCFG_TEST_EQ(remoteData, CLIENT_DATA);
+
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
+    }
+
+    // Lose interest in readability for the server.
+
+    error = monitor->hide(server, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Gain interest in writability for the server.
+
+    error = monitor->show(server, ntca::ReactorEventType::e_WRITABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Block until the server is writable.
+
+    while (true) {
+        bsl::vector<ntca::ReactorEvent> events;
+        error = monitor->dequeue(&events);
+        NTSCFG_TEST_OK(error);
+
+        bool satisfied = false;
+        for (bsl::size_t i = 0; i < events.size(); ++i) {
+            const ntca::ReactorEvent& event = events[i];
+
+            if (event.handle() == server->handle() && event.isWritable()) {
+                satisfied = true;
+                break;
+            }
+        }
+
+        if (satisfied) {
+            break;
+        }
+    }
+
+    // Send data from the server to the client.
+
+    const char SERVER_DATA = 'S';
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        error = server->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSendable(), 1);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
+
+    // Lose interest in writability for the server.
+
+    error = monitor->hide(server, ntca::ReactorEventType::e_WRITABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Gain interest in readability for the client.
+
+    error = monitor->show(client, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Block until the client is readable.
+
+    while (true) {
+        bsl::vector<ntca::ReactorEvent> events;
+        error = monitor->dequeue(&events);
+        NTSCFG_TEST_OK(error);
+
+        bool satisfied = false;
+        for (bsl::size_t i = 0; i < events.size(); ++i) {
+            const ntca::ReactorEvent& event = events[i];
+
+            if (event.handle() == client->handle() && event.isReadable()) {
+                satisfied = true;
+                break;
+            }
+        }
+
+        if (satisfied) {
+            break;
+        }
+    }
+
+    // Receive data at the client.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = client->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
+
+        NTSCFG_TEST_EQ(remoteData, SERVER_DATA);
+
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), serverSourceEndpoint);
+    }
+
+    // Lose interest in readabilty for the client.
+
+    error = monitor->hide(client, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Remove the client from the monitor.
+
+    error = monitor->remove(client);
+    NTSCFG_TEST_OK(error);
+
+    // Remove the server from the monitor.
+
+    error = monitor->remove(server);
+    NTSCFG_TEST_OK(error);
+
+    // Close the client.
+
+    error = client->close();
+    NTSCFG_TEST_OK(error);
+
+    // Close the server.
+
+    error = server->close();
+    NTSCFG_TEST_OK(error);
+
+    // Stop the machine.
+
+    machine->stop();
+}
+
+NTSCFG_TEST_FUNCTION(
+    ntcd::MachineTest::verifyBackgroundNonblockingStreamSockets)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_CONTEXT_GUARD_OWNER("main");
+
+    ntsa::Error error;
+
+    // Create a machine.
+
+    bsl::shared_ptr<ntcd::Machine> machine;
+    machine.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+
+    // Run the machine.
+
+    error = machine->run();
+    NTSCFG_TEST_OK(error);
+
+    // Create a monitor.
+
+    bsl::shared_ptr<ntcd::Monitor> monitor =
+        machine->createMonitor(NTSCFG_TEST_ALLOCATOR);
+
+    // Create a listener.
+
+    bsl::shared_ptr<ntcd::Session> listener =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the listener for IPv4 stream sockets.
+
+    error = error = listener->open(ntsa::Transport::e_TCP_IPV4_STREAM);
+    NTSCFG_TEST_OK(error);
+
+    error = listener->setBlocking(false);
+    NTSCFG_TEST_OK(error);
+
+    // Bind the listener to any port on the IPv4 loopback address.
+
+    error = listener->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the listener.
+
+    ntsa::Endpoint listenerSourceEndpoint;
+    error = listener->sourceEndpoint(&listenerSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Listener source endpoint = "
+                          << listenerSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the listener is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(listenerSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(listenerSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(listenerSourceEndpoint.ip().port(), 0);
+
+    // Begin listening for connections.
+
+    error = listener->listen(0);
+    NTSCFG_TEST_OK(error);
+
+    // Add the listener to the monitor.
+
+    error = monitor->add(listener);
+    NTSCFG_TEST_OK(error);
+
+    // Create a client.
+
+    bsl::shared_ptr<ntcd::Session> client =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the client as an IPv4 stream socket.
+
+    error = client->open(ntsa::Transport::e_TCP_IPV4_STREAM);
+    NTSCFG_TEST_OK(error);
+
+    error = client->setBlocking(false);
+    NTSCFG_TEST_OK(error);
+
+    // Connect the client to the listener.
+
+    error = client->connect(listenerSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    // Add the client to the monitor.
+
+    error = monitor->add(client);
+    NTSCFG_TEST_OK(error);
+
+    // Gain interest in writability for the client.
+
+    error = monitor->show(client, ntca::ReactorEventType::e_WRITABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Block until the client is writable.
+
+    while (true) {
+        bsl::vector<ntca::ReactorEvent> events;
+        error = monitor->dequeue(&events);
+        NTSCFG_TEST_OK(error);
+
+        bool satisfied = false;
+        for (bsl::size_t i = 0; i < events.size(); ++i) {
+            const ntca::ReactorEvent& event = events[i];
+
+            if (event.handle() == client->handle() && event.isWritable()) {
+                satisfied = true;
+                break;
+            }
+        }
+
+        if (satisfied) {
+            break;
+        }
+    }
+
+    // Lose interest in writability for the client.
+
+    error = monitor->hide(client, ntca::ReactorEventType::e_WRITABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the client.
+
+    ntsa::Endpoint clientSourceEndpoint;
+    error = client->sourceEndpoint(&clientSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Client source endpoint = "
+                          << clientSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Get the remote endpoint of the client.
+
+    ntsa::Endpoint clientRemoteEndpoint;
+    error = client->remoteEndpoint(&clientRemoteEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Client remote endpoint = "
+                          << clientRemoteEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the client is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(clientSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
+
+    // Gain interest in readability for the listener.
+
+    error = monitor->show(listener, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Block until the listener is readable.
+
+    while (true) {
+        bsl::vector<ntca::ReactorEvent> events;
+        error = monitor->dequeue(&events);
+        NTSCFG_TEST_OK(error);
+
+        bool satisfied = false;
+        for (bsl::size_t i = 0; i < events.size(); ++i) {
+            const ntca::ReactorEvent& event = events[i];
+
+            if (event.handle() == listener->handle() && event.isReadable()) {
+                satisfied = true;
+                break;
+            }
+        }
+
+        if (satisfied) {
+            break;
+        }
+    }
+
+    // Accept a server from the listener.
+
+    bsl::shared_ptr<ntcd::Session> server;
+    error = listener->accept(&server);
+    NTSCFG_TEST_OK(error);
+
+    error = server->setBlocking(false);
+    NTSCFG_TEST_OK(error);
+
+    // Lose interest in readability for the listener.
+
+    error = monitor->hide(listener, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the server.
+
+    ntsa::Endpoint serverSourceEndpoint;
+    error = server->sourceEndpoint(&serverSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Server source endpoint = "
+                          << serverSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Get the remote endpoint of the server.
+
+    ntsa::Endpoint serverRemoteEndpoint;
+    error = server->remoteEndpoint(&serverRemoteEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Server remote endpoint = "
+                          << serverRemoteEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the server is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(serverSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
+
+    // Ensure the remote endpoint of the client is the source endpoint of
+    // the server.
+
+    NTSCFG_TEST_EQ(clientRemoteEndpoint, serverSourceEndpoint);
+
+    // Ensure the remote endpoint of the server is the source endpoint of
+    // the client.
+
+    NTSCFG_TEST_EQ(serverRemoteEndpoint, clientSourceEndpoint);
+
+    // Add the server to the monitor.
+
+    error = monitor->add(server);
+    NTSCFG_TEST_OK(error);
+
+    // Gain interest in writability for the client.
+
+    error = monitor->show(client, ntca::ReactorEventType::e_WRITABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Block until the client is writable.
+
+    while (true) {
+        bsl::vector<ntca::ReactorEvent> events;
+        error = monitor->dequeue(&events);
+        NTSCFG_TEST_OK(error);
+
+        bool satisfied = false;
+        for (bsl::size_t i = 0; i < events.size(); ++i) {
+            const ntca::ReactorEvent& event = events[i];
+
+            if (event.handle() == client->handle() && event.isWritable()) {
+                satisfied = true;
+                break;
+            }
+        }
+
+        if (satisfied) {
+            break;
+        }
+    }
+
+    // Send data from the client to the server.
+
+    const char CLIENT_DATA = 'C';
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        error = client->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSendable(), 1);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
+
+    // Lose interest in writability for the client.
+
+    error = monitor->hide(client, ntca::ReactorEventType::e_WRITABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Gain interest in readability for the server.
+
+    error = monitor->show(server, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Block until the server is readable.
+
+    while (true) {
+        bsl::vector<ntca::ReactorEvent> events;
+        error = monitor->dequeue(&events);
+        NTSCFG_TEST_OK(error);
+
+        bool satisfied = false;
+        for (bsl::size_t i = 0; i < events.size(); ++i) {
+            const ntca::ReactorEvent& event = events[i];
+
+            if (event.handle() == server->handle() && event.isReadable()) {
+                satisfied = true;
+                break;
+            }
+        }
+
+        if (satisfied) {
+            break;
+        }
+    }
+
+    // Receive data at the server.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = server->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
+
+        NTSCFG_TEST_EQ(remoteData, CLIENT_DATA);
+
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
+    }
+
+    // Lose interest in readability for the server.
+
+    error = monitor->hide(server, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Gain interest in writability for the server.
+
+    error = monitor->show(server, ntca::ReactorEventType::e_WRITABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Block until the server is writable.
+
+    while (true) {
+        bsl::vector<ntca::ReactorEvent> events;
+        error = monitor->dequeue(&events);
+        NTSCFG_TEST_OK(error);
+
+        bool satisfied = false;
+        for (bsl::size_t i = 0; i < events.size(); ++i) {
+            const ntca::ReactorEvent& event = events[i];
+
+            if (event.handle() == server->handle() && event.isWritable()) {
+                satisfied = true;
+                break;
+            }
+        }
+
+        if (satisfied) {
+            break;
+        }
+    }
+
+    // Send data from the server to the client.
+
+    const char SERVER_DATA = 'S';
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        error = server->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSendable(), 1);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
+
+    // Lose interest in writability for the server.
+
+    error = monitor->hide(server, ntca::ReactorEventType::e_WRITABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Gain interest in readability for the client.
+
+    error = monitor->show(client, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Block until the client is readable.
+
+    while (true) {
+        bsl::vector<ntca::ReactorEvent> events;
+        error = monitor->dequeue(&events);
+        NTSCFG_TEST_OK(error);
+
+        bool satisfied = false;
+        for (bsl::size_t i = 0; i < events.size(); ++i) {
+            const ntca::ReactorEvent& event = events[i];
+
+            if (event.handle() == client->handle() && event.isReadable()) {
+                satisfied = true;
+                break;
+            }
+        }
+
+        if (satisfied) {
+            break;
+        }
+    }
+
+    // Receive data at the client.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = client->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
+
+        NTSCFG_TEST_EQ(remoteData, SERVER_DATA);
+
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), serverSourceEndpoint);
+    }
+
+    // Lose interest in readabilty for the client.
+
+    error = monitor->hide(client, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Shutdown the client.
+
+    error = client->shutdown(ntsa::ShutdownType::e_SEND);
+    NTSCFG_TEST_OK(error);
+
+    // Gain interest in readability for the server.
+
+    error = monitor->show(server, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Block until the server is readable.
+
+    while (true) {
+        bsl::vector<ntca::ReactorEvent> events;
+        error = monitor->dequeue(&events);
+        NTSCFG_TEST_OK(error);
+
+        bool satisfied = false;
+        for (bsl::size_t i = 0; i < events.size(); ++i) {
+            const ntca::ReactorEvent& event = events[i];
+
+            if (event.handle() == server->handle() && event.isReadable()) {
+                satisfied = true;
+                break;
+            }
+        }
+
+        if (satisfied) {
+            break;
+        }
+    }
+
+    // Receive data at the server.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = server->receive(&context, &data, options);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_EOF));
+        NTSCFG_TEST_EQ(context.bytesReceived(), 0);
+    }
+
+    // Lose interest in readability for the server.
+
+    error = monitor->hide(server, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Shutdown the server.
+
+    error = server->shutdown(ntsa::ShutdownType::e_SEND);
+    NTSCFG_TEST_OK(error);
+
+    // Gain interest in readability for the client.
+
+    error = monitor->show(client, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Block until the client is readable.
+
+    while (true) {
+        bsl::vector<ntca::ReactorEvent> events;
+        error = monitor->dequeue(&events);
+        NTSCFG_TEST_OK(error);
+
+        bool satisfied = false;
+        for (bsl::size_t i = 0; i < events.size(); ++i) {
+            const ntca::ReactorEvent& event = events[i];
+
+            if (event.handle() == client->handle() && event.isReadable()) {
+                satisfied = true;
+                break;
+            }
+        }
+
+        if (satisfied) {
+            break;
+        }
+    }
+
+    // Receive data at the client.
+
+    {
+        char remoteData = 0;
+
+        ntsa::Data data(ntsa::MutableBuffer(&remoteData, 1));
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = client->receive(&context, &data, options);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_EOF));
+        NTSCFG_TEST_EQ(context.bytesReceived(), 0);
+    }
+
+    // Lose interest in readabilty for the client.
+
+    error = monitor->hide(client, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Try to send data from the client to the server and ensure the
+    // operation fails because the client has been shutdown for sending.
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&CLIENT_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        error = client->send(&context, data, options);
+        NTSCFG_TEST_TRUE(error);
+
+        NTSCFG_TEST_EQ(context.bytesSent(), 0);
+    }
+
+    // Try to send data from the server to the client and ensure the
+    // operation fails because the server has been shutdown for sending.
+
+    {
+        ntsa::Data data(ntsa::ConstBuffer(&SERVER_DATA, 1));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        error = server->send(&context, data, options);
+        NTSCFG_TEST_TRUE(error);
+
+        NTSCFG_TEST_EQ(context.bytesSent(), 0);
+    }
+
+    // Remove the client from the monitor.
+
+    error = monitor->remove(client);
+    NTSCFG_TEST_OK(error);
+
+    // Remove the server from the monitor.
+
+    error = monitor->remove(server);
+    NTSCFG_TEST_OK(error);
+
+    // Remove the listener from the monitor.
+
+    error = monitor->remove(listener);
+    NTSCFG_TEST_OK(error);
+
+    // Close the client.
+
+    error = client->close();
+    NTSCFG_TEST_OK(error);
+
+    // Close the server.
+
+    error = server->close();
+    NTSCFG_TEST_OK(error);
+
+    // Close the listener.
+
+    error = listener->close();
+    NTSCFG_TEST_OK(error);
+
+    // Stop the machine.
+
+    machine->stop();
+}
+
+NTSCFG_TEST_FUNCTION(ntcd::MachineTest::verifySendBufferOverflow)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_CONTEXT_GUARD_OWNER("main");
+
+    const bsl::size_t DATA_SIZE           = 1024 * 1024;
+    const bsl::size_t SEND_BUFFER_SIZE    = 1024 * 256;
+    const bsl::size_t RECEIVE_BUFFER_SIZE = 1024 * 64;
+
+    ntsa::Error error;
+
+    // Create a blob buffer factory.
+
+    bdlbb::PooledBlobBufferFactory blobBufferFactory(1024,
+                                                     NTSCFG_TEST_ALLOCATOR);
+
+    // Create a machine.
+
+    bsl::shared_ptr<ntcd::Machine> machine;
+    machine.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+
+    // Run the machine.
+
+    error = machine->run();
+    NTSCFG_TEST_OK(error);
+
+    // Create a monitor.
+
+    bsl::shared_ptr<ntcd::Monitor> monitor =
+        machine->createMonitor(NTSCFG_TEST_ALLOCATOR);
+
+    // Create a listener.
+
+    bsl::shared_ptr<ntcd::Session> listener =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the listener for IPv4 stream sockets.
+
+    error = error = listener->open(ntsa::Transport::e_TCP_IPV4_STREAM);
+    NTSCFG_TEST_OK(error);
+
+    error = listener->setBlocking(false);
+    NTSCFG_TEST_OK(error);
+
+    // Bind the listener to any port on the IPv4 loopback address.
+
+    error = listener->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the listener.
+
+    ntsa::Endpoint listenerSourceEndpoint;
+    error = listener->sourceEndpoint(&listenerSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Listener source endpoint = "
+                          << listenerSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the listener is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(listenerSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(listenerSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(listenerSourceEndpoint.ip().port(), 0);
+
+    // Begin listening for connections.
+
+    error = listener->listen(0);
+    NTSCFG_TEST_OK(error);
+
+    // Add the listener to the monitor.
+
+    error = monitor->add(listener);
+    NTSCFG_TEST_OK(error);
+
+    // Create a client.
+
+    bsl::shared_ptr<ntcd::Session> client =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the client as an IPv4 stream socket.
+
+    error = client->open(ntsa::Transport::e_TCP_IPV4_STREAM);
+    NTSCFG_TEST_OK(error);
+
+    error = client->setBlocking(false);
+    NTSCFG_TEST_OK(error);
+
+    // Connect the client to the listener.
+
+    error = client->connect(listenerSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    // Add the client to the monitor.
+
+    error = monitor->add(client);
+    NTSCFG_TEST_OK(error);
+
+    // Gain interest in writability for the client.
+
+    error = monitor->show(client, ntca::ReactorEventType::e_WRITABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Block until the client is writable.
+
+    while (true) {
+        bsl::vector<ntca::ReactorEvent> events;
+        error = monitor->dequeue(&events);
+        NTSCFG_TEST_OK(error);
+
+        bool satisfied = false;
+        for (bsl::size_t i = 0; i < events.size(); ++i) {
+            const ntca::ReactorEvent& event = events[i];
+
+            if (event.handle() == client->handle() && event.isWritable()) {
+                satisfied = true;
+                break;
+            }
+        }
+
+        if (satisfied) {
+            break;
+        }
+    }
+
+    // Lose interest in writability for the client.
+
+    error = monitor->hide(client, ntca::ReactorEventType::e_WRITABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the client.
+
+    ntsa::Endpoint clientSourceEndpoint;
+    error = client->sourceEndpoint(&clientSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Client source endpoint = "
+                          << clientSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Get the remote endpoint of the client.
+
+    ntsa::Endpoint clientRemoteEndpoint;
+    error = client->remoteEndpoint(&clientRemoteEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Client remote endpoint = "
+                          << clientRemoteEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the client is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(clientSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(clientSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(clientSourceEndpoint.ip().port(), 0);
+
+    // Gain interest in readability for the listener.
+
+    error = monitor->show(listener, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Block until the listener is readable.
+
+    while (true) {
+        bsl::vector<ntca::ReactorEvent> events;
+        error = monitor->dequeue(&events);
+        NTSCFG_TEST_OK(error);
+
+        bool satisfied = false;
+        for (bsl::size_t i = 0; i < events.size(); ++i) {
+            const ntca::ReactorEvent& event = events[i];
+
+            if (event.handle() == listener->handle() && event.isReadable()) {
+                satisfied = true;
+                break;
+            }
+        }
+
+        if (satisfied) {
+            break;
+        }
+    }
+
+    // Accept a server from the listener.
+
+    bsl::shared_ptr<ntcd::Session> server;
+    error = listener->accept(&server);
+    NTSCFG_TEST_OK(error);
+
+    error = server->setBlocking(false);
+    NTSCFG_TEST_OK(error);
+
+    // Lose interest in readability for the listener.
+
+    error = monitor->hide(listener, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the server.
+
+    ntsa::Endpoint serverSourceEndpoint;
+    error = server->sourceEndpoint(&serverSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Server source endpoint = "
+                          << serverSourceEndpoint << NTCI_LOG_STREAM_END;
+
+    // Get the remote endpoint of the server.
+
+    ntsa::Endpoint serverRemoteEndpoint;
+    error = server->remoteEndpoint(&serverRemoteEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTCI_LOG_STREAM_DEBUG << "Server remote endpoint = "
+                          << serverRemoteEndpoint << NTCI_LOG_STREAM_END;
+
+    // Ensure the source endpoint of the server is the IPv4 loopback
+    // address and a non-zero port.
+
+    NTSCFG_TEST_TRUE(serverSourceEndpoint.isIp());
+    NTSCFG_TEST_EQ(serverSourceEndpoint.ip().host(),
+                   ntsa::IpAddress(ntsa::Ipv4Address::loopback()));
+    NTSCFG_TEST_NE(serverSourceEndpoint.ip().port(), 0);
+
+    // Ensure the remote endpoint of the client is the source endpoint of
+    // the server.
+
+    NTSCFG_TEST_EQ(clientRemoteEndpoint, serverSourceEndpoint);
+
+    // Ensure the remote endpoint of the server is the source endpoint of
+    // the client.
+
+    NTSCFG_TEST_EQ(serverRemoteEndpoint, clientSourceEndpoint);
+
+    // Add the server to the monitor.
+
+    error = monitor->add(server);
+    NTSCFG_TEST_OK(error);
+
+    // Gain interest in writability for the client.
+
+    error = monitor->show(client, ntca::ReactorEventType::e_WRITABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Gain interest in readability for the server.
+
+    error = monitor->show(server, ntca::ReactorEventType::e_READABLE);
+    NTSCFG_TEST_OK(error);
+
+    // Define the data to be sent by the client and received by the server.
+
+    bdlbb::Blob clientData(&blobBufferFactory);
+    bdlbb::Blob serverData(&blobBufferFactory);
+
+    bdlbb::Blob clientDataRemaining(&blobBufferFactory);
+
+    ntcd::DataUtil::generateData(&clientData, DATA_SIZE);
+    clientDataRemaining = clientData;
+
+    // Set the send buffer size for the client.
+
+    {
+        ntsa::SocketOption option;
+        option.makeSendBufferSize(SEND_BUFFER_SIZE);
+
+        error = client->setOption(option);
+        NTSCFG_TEST_OK(error);
+    }
+
+    // Set the receive buffer size for the server.
+
+    {
+        ntsa::SocketOption option;
+        option.makeReceiveBufferSize(RECEIVE_BUFFER_SIZE);
+
+        error = server->setOption(option);
+        NTSCFG_TEST_OK(error);
+    }
+
+    // Send data from the client when the client is writable and receive
+    // data at the server when the server is readable, until the client
+    // has sent all data and the server has received all data.
+
+    bool clientDone = false;
+    bool serverDone = false;
+
+    while (!clientDone || !serverDone) {
+        bsl::vector<ntca::ReactorEvent> events;
+        error = monitor->dequeue(&events);
+        NTSCFG_TEST_OK(error);
+
+        for (bsl::size_t i = 0; i < events.size(); ++i) {
+            const ntca::ReactorEvent& event = events[i];
+
+            if (event.handle() == client->handle()) {
+                NTSCFG_TEST_TRUE(event.isWritable());
+                NTSCFG_TEST_FALSE(clientDone);
+
+                ntsa::SendContext context;
+                ntsa::SendOptions options;
+
+                error = client->send(&context, clientDataRemaining, options);
+
+                if (error) {
+                    NTSCFG_TEST_EQ(error,
+                                   ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
+
+                    NTCI_LOG_STREAM_INFO << "Client would block"
+                                         << NTCI_LOG_STREAM_END;
                 }
                 else {
-                    NTCCFG_TEST_FALSE(true);
+                    NTSCFG_TEST_OK(error);
+
+                    NTSCFG_TEST_EQ(context.bytesSendable(),
+                                   clientDataRemaining.length());
+
+                    NTSCFG_TEST_GT(context.bytesSent(), 0);
+
+                    NTCI_LOG_STREAM_INFO << "Client sent "
+                                         << context.bytesSent() << " bytes"
+                                         << NTCI_LOG_STREAM_END;
+
+                    bdlbb::BlobUtil::erase(
+                        &clientDataRemaining,
+                        0,
+                        NTCCFG_WARNING_NARROW(int, context.bytesSent()));
+
+                    if (clientDataRemaining.length() == 0) {
+                        NTCI_LOG_STREAM_INFO << "Client is done"
+                                             << NTCI_LOG_STREAM_END;
+
+                        error =
+                            monitor->hide(client,
+                                          ntca::ReactorEventType::e_WRITABLE);
+                        NTSCFG_TEST_OK(error);
+
+                        clientDone = true;
+                    }
                 }
             }
+            else if (event.handle() == server->handle()) {
+                NTSCFG_TEST_TRUE(event.isReadable());
+                NTSCFG_TEST_FALSE(serverDone);
+
+                int size     = serverData.length();
+                int capacity = serverData.totalSize();
+
+                if (capacity == size) {
+                    serverData.setLength(size + RECEIVE_BUFFER_SIZE);
+                    serverData.setLength(size);
+
+                    capacity = serverData.totalSize();
+                }
+
+                ntsa::ReceiveContext context;
+                ntsa::ReceiveOptions options;
+
+                error = server->receive(&context, &serverData, options);
+                if (error) {
+                    NTSCFG_TEST_EQ(error,
+                                   ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
+
+                    NTCI_LOG_STREAM_INFO << "Server would block"
+                                         << NTCI_LOG_STREAM_END;
+                }
+                else {
+                    NTSCFG_TEST_OK(error);
+                    NTSCFG_TEST_GT(context.bytesReceivable(), 0);
+                    NTSCFG_TEST_GT(context.bytesReceived(), 0);
+
+                    NTCI_LOG_STREAM_INFO << "Server received "
+                                         << context.bytesReceived() << " bytes"
+                                         << NTCI_LOG_STREAM_END;
+
+                    if (serverData.length() == DATA_SIZE) {
+                        NTCI_LOG_STREAM_INFO << "Server is done"
+                                             << NTCI_LOG_STREAM_END;
+
+                        error =
+                            monitor->hide(server,
+                                          ntca::ReactorEventType::e_READABLE);
+                        NTSCFG_TEST_OK(error);
+
+                        serverDone = true;
+                    }
+                }
+            }
+            else {
+                NTSCFG_TEST_FALSE(true);
+            }
         }
-
-        NTCCFG_TEST_TRUE(clientDone);
-        NTCCFG_TEST_TRUE(serverDone);
-
-        NTCCFG_TEST_EQ(clientDataRemaining.length(), 0);
-        NTCCFG_TEST_EQ(clientData.length(), DATA_SIZE);
-        NTCCFG_TEST_EQ(serverData.length(), DATA_SIZE);
-
-        int compareResult = bdlbb::BlobUtil::compare(clientData, serverData);
-        NTCCFG_TEST_EQ(compareResult, 0);
-
-        // Remove the client from the monitor.
-
-        error = monitor->remove(client);
-        NTCCFG_TEST_OK(error);
-
-        // Remove the server from the monitor.
-
-        error = monitor->remove(server);
-        NTCCFG_TEST_OK(error);
-
-        // Remove the listener from the monitor.
-
-        error = monitor->remove(listener);
-        NTCCFG_TEST_OK(error);
-
-        // Close the client.
-
-        error = client->close();
-        NTCCFG_TEST_OK(error);
-
-        // Close the server.
-
-        error = server->close();
-        NTCCFG_TEST_OK(error);
-
-        // Close the listener.
-
-        error = listener->close();
-        NTCCFG_TEST_OK(error);
-
-        // Stop the machine.
-
-        machine->stop();
     }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    NTSCFG_TEST_TRUE(clientDone);
+    NTSCFG_TEST_TRUE(serverDone);
+
+    NTSCFG_TEST_EQ(clientDataRemaining.length(), 0);
+    NTSCFG_TEST_EQ(clientData.length(), DATA_SIZE);
+    NTSCFG_TEST_EQ(serverData.length(), DATA_SIZE);
+
+    int compareResult = bdlbb::BlobUtil::compare(clientData, serverData);
+    NTSCFG_TEST_EQ(compareResult, 0);
+
+    // Remove the client from the monitor.
+
+    error = monitor->remove(client);
+    NTSCFG_TEST_OK(error);
+
+    // Remove the server from the monitor.
+
+    error = monitor->remove(server);
+    NTSCFG_TEST_OK(error);
+
+    // Remove the listener from the monitor.
+
+    error = monitor->remove(listener);
+    NTSCFG_TEST_OK(error);
+
+    // Close the client.
+
+    error = client->close();
+    NTSCFG_TEST_OK(error);
+
+    // Close the server.
+
+    error = server->close();
+    NTSCFG_TEST_OK(error);
+
+    // Close the listener.
+
+    error = listener->close();
+    NTSCFG_TEST_OK(error);
+
+    // Stop the machine.
+
+    machine->stop();
 }
 
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-    NTCCFG_TEST_REGISTER(2);
-    NTCCFG_TEST_REGISTER(3);
-    NTCCFG_TEST_REGISTER(4);
-    NTCCFG_TEST_REGISTER(5);
-    NTCCFG_TEST_REGISTER(6);
-    NTCCFG_TEST_REGISTER(7);
-    NTCCFG_TEST_REGISTER(8);
-    NTCCFG_TEST_REGISTER(9);
-    NTCCFG_TEST_REGISTER(10);
-    NTCCFG_TEST_REGISTER(11);
-    NTCCFG_TEST_REGISTER(12);
-    NTCCFG_TEST_REGISTER(13);
-    NTCCFG_TEST_REGISTER(14);
-
-    NTCCFG_TEST_REGISTER(15);
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntcd
+}  // close namespace BloombergLP

@@ -6,7 +6,9 @@ BSLS_IDENT("$Id: $")
 
 #include <ntscfg_platform.h>
 #include <bdlb_chartype.h>
+#include <bdld_manageddatum.h>
 #include <bdlb_nullablevalue.h>
+#include <bdlb_random.h>
 #include <bdlb_string.h>
 #include <bdlb_stringrefutil.h>
 #include <bdlbb_blob.h>
@@ -17,6 +19,9 @@ BSLS_IDENT("$Id: $")
 #include <bdlf_bind.h>
 #include <bdlf_memfn.h>
 #include <bdlf_placeholder.h>
+#include <bdlma_bufferedsequentialallocator.h>
+#include <bdlma_concurrentmultipoolallocator.h>
+#include <bdlmt_eventscheduler.h>
 #include <bdls_filesystemutil.h>
 #include <bdls_pathutil.h>
 #include <bdls_processutil.h>
@@ -32,17 +37,22 @@ BSLS_IDENT("$Id: $")
 #include <bslmf_assert.h>
 #include <bslmt_barrier.h>
 #include <bslmt_condition.h>
+#include <bslmt_latch.h>
 #include <bslmt_lockguard.h>
 #include <bslmt_mutex.h>
 #include <bslmt_semaphore.h>
 #include <bslmt_threadgroup.h>
 #include <bslmt_threadutil.h>
+#include <bslmt_turnstile.h>
+#include <bsls_alignedbuffer.h>
 #include <bsls_assert.h>
 #include <bsls_atomic.h>
 #include <bsls_log.h>
 #include <bsls_logseverity.h>
 #include <bsls_platform.h>
+#include <bsls_stopwatch.h>
 #include <bsls_timeinterval.h>
+#include <bsls_timeutil.h>
 #include <bsls_types.h>
 #include <bsl_algorithm.h>
 #include <bsl_array.h>
