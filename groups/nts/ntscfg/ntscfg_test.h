@@ -833,6 +833,7 @@ int main(int argc, char** argv)
                     BloombergLP::ntscfg::TestUtil::help();
                     return 1;
                 }
+                arg = argv[i];
 
                 int level;
                 if (BloombergLP::ntscfg::TestUtil::parseInt(&level, arg)) {
@@ -854,7 +855,10 @@ int main(int argc, char** argv)
                     BloombergLP::ntscfg::TestUtil::help();
                     return 1;
                 }
+                arg = argv[i];
+
                 concern.makeValue(bsl::string(arg));
+                
                 ++i;
                 continue;
             }

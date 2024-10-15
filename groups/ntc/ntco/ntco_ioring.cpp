@@ -46,8 +46,7 @@ BSLS_IDENT_RCSID(ntco_ioring_cpp, "$Id$ $CSID$")
 #include <ntcp_listenersocket.h>
 #include <ntcp_streamsocket.h>
 
-#include <ntcm_monitorableregistry.h>
-#include <ntcm_monitorableutil.h>
+#include <ntcm_monitorable.h>
 
 #include <ntci_log.h>
 #include <ntci_mutex.h>

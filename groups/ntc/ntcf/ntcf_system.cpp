@@ -22,7 +22,7 @@ BSLS_IDENT_RCSID(ntcf_system_cpp, "$Id$ $CSID$")
 #include <ntccfg_tune.h>
 #include <ntci_log.h>
 #include <ntci_monitorable.h>
-#include <ntcm_monitorableutil.h>
+#include <ntcm_monitorable.h>
 #include <ntcs_authorization.h>
 #include <ntcs_compat.h>
 #include <ntcs_datapool.h>

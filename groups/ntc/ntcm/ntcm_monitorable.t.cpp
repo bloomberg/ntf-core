@@ -16,21 +16,27 @@
 #include <ntscfg_test.h>
 
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntci_monitorable_t_cpp, "$Id$ $CSID$")
+BSLS_IDENT_RCSID(ntcm_monitorable_t_cpp, "$Id$ $CSID$")
 
-#include <ntci_monitorable.h>
+#include <ntcm_monitorable.h>
 
 using namespace BloombergLP;
 
 namespace BloombergLP {
-namespace ntci {
+namespace ntcm {
 
-// Provide tests for 'ntci::Monitorable'.
+// Provide tests for 'ntcm::Monitorable'.
 class MonitorableTest
 {
   public:
     // TODO
-    static void verify();
+    static void verifyForegroundCollection();
+
+    // TODO
+    static void verifyBackgroundCollection();
+
+    // TODO
+    static void verifyUsage();
 
   private:
     /// This struct describes a statistic measured by an object in this
@@ -530,10 +536,213 @@ void MonitorableTest::ObjectUtil::getStats(bsl::int64_t             result[4],
     }
 }
 
-NTSCFG_TEST_FUNCTION(ntci::MonitorableTest::verify)
+NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyForegroundCollection)
 {
-    // TESTING STATISTICS MEASUREMENT, THROTTLING, AND QUERYING
+    // Concerns:
+    //   The statistics measured by registered monitorable objects are
+    //   published through publishers registered with a collector.
     //
+    // Plan:
+    //   First, create the monitorable object registry and set it as the
+    //   default monitorable registry. This registery tracks the currently
+    //   alive monitorable objects in the process. Second, create a rate
+    //   limited measurement control and use it as the default control for
+    //   subsequently registered monitorable objects. Without a control
+    //   monitorable objects are, contractually speaking, not permitted
+    //   to perform an measurements. Third, create a number of monitorable
+    //   objects and register them with the default monitorable registry.
+    //   Fourth, create a monitorable object statistics collector and a
+    //   test publisher and register that publisher with the collector.
+    //   Setup for the test is now complete. Now, instruct each test
+    //   object to "perform work". During the performance of this work,
+    //   the test objects measure statistics about the duration of the
+    //   work they perform. Next, collect and publish statistics from these
+    //   objects. Ensure that the expected number of publications occur.
+    //   Finally, deregister each test object from the default monitorable
+    //   object registery and deregister the registry itself.
+
+    const int NUM_OBJECTS    = 3;
+    const int NUM_ITERATIONS = 3;
+
+    // Create the monitorable object registry and set it as the
+    // default monitorable registry.
+
+    bsl::shared_ptr<ntcm::MonitorableRegistry> monitorableRegistry;
+    monitorableRegistry.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+
+    // Create a number of monitorable objects and register them with
+    // the default monitorable registry.
+
+    typedef bsl::vector<bsl::shared_ptr<MonitorableTest::Object> > ObjectVector;
+    ObjectVector                                        objects;
+
+    for (int i = 0; i < NUM_OBJECTS; ++i) {
+        bsl::shared_ptr<MonitorableTest::Object> object;
+        object.createInplace(NTSCFG_TEST_ALLOCATOR);
+
+        monitorableRegistry->registerMonitorable(object);
+
+        objects.push_back(object);
+    }
+
+    // Create a monitorable object statistics collector.
+
+    ntcm::Collector::LoadCallback loadCallback =
+        bdlf::MemFnUtil::memFn(
+            &ntcm::MonitorableRegistry::loadRegisteredObjects,
+            monitorableRegistry);
+
+    ntcm::Collector collector(loadCallback, NTSCFG_TEST_ALLOCATOR);
+
+    // Create and register a test publisher with the collector.
+
+    bsl::shared_ptr<ntcm::MonitorableLog> publisher;
+    publisher.createInplace(
+        NTSCFG_TEST_ALLOCATOR,
+        NTSCFG_TEST_ALLOCATOR);
+
+    collector.registerPublisher(publisher);
+
+    // Perform work.
+
+    for (ObjectVector::const_iterator it = objects.begin();
+            it != objects.end();
+            ++it)
+    {
+        const bsl::shared_ptr<MonitorableTest::Object> object = *it;
+        for (int i = 0; i < NUM_ITERATIONS; ++i) {
+            object->execute();
+        }
+    }
+
+    // Collect and publish metrics.
+
+    collector.collect();
+    NTSCFG_TEST_EQ(publisher->numPublications(), NUM_OBJECTS);
+
+    // Deregister all the monitorable objects.
+
+    for (ObjectVector::const_iterator it = objects.begin();
+            it != objects.end();
+            ++it)
+    {
+        const bsl::shared_ptr<MonitorableTest::Object> object = *it;
+        monitorableRegistry->deregisterMonitorable(object);
+    }   
+}
+
+NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyBackgroundCollection)
+{
+    // Concerns:
+    //   The statistics measured by registered monitorable objects are
+    //   published through publishers registered with a collector.
+    //
+    // Plan:
+    //   First, create the monitorable object registry and set it as the
+    //   default monitorable registry. This registery tracks the currently
+    //   alive monitorable objects in the process. Second, create a rate
+    //   limited measurement control and use it as the default control for
+    //   subsequently registered monitorable objects. Without a control
+    //   monitorable objects are, contractually speaking, not permitted
+    //   to perform an measurements. Third, create a number of monitorable
+    //   objects and register them with the default monitorable registry.
+    //   Fourth, create a monitorable object statistics collector and a
+    //   test publisher and register that publisher with the collector.
+    //   Setup for the test is now complete. Now, instruct each test
+    //   object to "perform work". During the performance of this work,
+    //   the test objects measure statistics about the duration of the
+    //   work they perform. Next, collect and publish statistics from these
+    //   objects. Ensure that the expected number of publications occur.
+    //   Finally, deregister each test object from the default monitorable
+    //   object registery and deregister the registry itself.
+
+    const int NUM_OBJECTS    = 3;
+    const int NUM_ITERATIONS = 3;
+
+    // Create the monitorable object registry and set it as the
+    // default monitorable registry.
+
+    bsl::shared_ptr<ntcm::MonitorableRegistry> monitorableRegistry;
+    monitorableRegistry.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+
+    // Create a number of monitorable objects and register them with
+    // the default monitorable registry.
+
+    typedef bsl::vector<bsl::shared_ptr<MonitorableTest::Object> > ObjectVector;
+    ObjectVector                                        objects;
+
+    for (int i = 0; i < NUM_OBJECTS; ++i) {
+        bsl::shared_ptr<MonitorableTest::Object> object;
+        object.createInplace(NTSCFG_TEST_ALLOCATOR);
+
+        monitorableRegistry->registerMonitorable(object);
+
+        objects.push_back(object);
+    }
+
+    // Create a monitorable object statistics collector.
+
+    ntca::MonitorableCollectorConfig collectorConfig;
+    collectorConfig.setThreadName("metrics");
+    collectorConfig.setPeriod(3);
+
+    ntcm::PeriodicCollector::LoadCallback loadCallback =
+        bdlf::MemFnUtil::memFn(
+            &ntcm::MonitorableRegistry::loadRegisteredObjects,
+            monitorableRegistry);
+
+    ntcm::PeriodicCollector collector(collectorConfig,
+                                        loadCallback,
+                                        NTSCFG_TEST_ALLOCATOR);
+
+    // Create and register a test publisher with the collector.
+
+    bsl::shared_ptr<ntcm::MonitorableLog> publisher;
+    publisher.createInplace(
+        NTSCFG_TEST_ALLOCATOR,
+        NTSCFG_TEST_ALLOCATOR);
+
+    collector.registerPublisher(publisher);
+
+    // Perform work.
+
+    for (ObjectVector::const_iterator it = objects.begin();
+            it != objects.end();
+            ++it)
+    {
+        const bsl::shared_ptr<MonitorableTest::Object> object = *it;
+        for (int i = 0; i < NUM_ITERATIONS; ++i) {
+            object->execute();
+        }
+    }
+
+    // Start the periodic collector and wait until metrics have
+    // been collected and published.
+
+    collector.start();
+    
+    while (true) {
+        bslmt::ThreadUtil::sleep(bsls::TimeInterval(1));
+        if (publisher->numPublications() == NUM_OBJECTS) {
+            break;
+        }
+    }
+
+    collector.stop();
+
+    // Deregister all the monitorable objects.
+
+    for (ObjectVector::const_iterator it = objects.begin();
+            it != objects.end();
+            ++it)
+    {
+        const bsl::shared_ptr<MonitorableTest::Object> object = *it;
+        monitorableRegistry->deregisterMonitorable(object);
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyUsage)
+{
     // Concerns:
     //   Monitorable objects measure statistics governed by a control
     //   mechanism that limits the rate at which the measurements may be
@@ -558,20 +767,24 @@ NTSCFG_TEST_FUNCTION(ntci::MonitorableTest::verify)
     bsl::shared_ptr<MonitorableTest::ObjectRegistry> objectRegistry;
     objectRegistry.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
+    ntcm::MonitorableUtil::enableMonitorableRegistry(objectRegistry);
+
     // Create a monitorable object and register it with the default
     // monitorable registry.
 
     bsl::shared_ptr<MonitorableTest::Object> object;
     object.createInplace(NTSCFG_TEST_ALLOCATOR);
 
-    objectRegistry->registerMonitorable(object);
+    ntcm::MonitorableUtil::registerMonitorable(object);
 
     // Ensure the registry is tracking this monitorable object.
 
     {
-        bsl::vector<bsl::shared_ptr<ntci::Monitorable> > registeredObjects;
+        bsl::vector<bsl::shared_ptr<ntci::Monitorable> >
+            registeredObjects;
 
-        objectRegistry->loadRegisteredObjects(&registeredObjects);
+        ntcm::MonitorableUtil::loadRegisteredObjects(
+            &registeredObjects);
 
         NTSCFG_TEST_EQ(registeredObjects.size(), 1);
         NTSCFG_TEST_EQ(registeredObjects[0], object);
@@ -580,7 +793,7 @@ NTSCFG_TEST_FUNCTION(ntci::MonitorableTest::verify)
     // Test three measurement intervals...
 
     for (bsl::int64_t currentInterval = 0; currentInterval < 3;
-         ++currentInterval)
+            ++currentInterval)
     {
         // Advance to the next measurment interval.
 
@@ -603,10 +816,10 @@ NTSCFG_TEST_FUNCTION(ntci::MonitorableTest::verify)
         NTSCFG_TEST_GT(stats1[MonitorableTest::Object::STATISTIC_TOTAL], 0);
 
         NTSCFG_TEST_NE(stats1[MonitorableTest::Object::STATISTIC_MIN],
-                       bsl::numeric_limits<bsl::int64_t>::max());
+                bsl::numeric_limits<bsl::int64_t>::max());
 
         NTSCFG_TEST_NE(stats1[MonitorableTest::Object::STATISTIC_MAX],
-                       bsl::numeric_limits<bsl::int64_t>::min());
+                bsl::numeric_limits<bsl::int64_t>::min());
 
         // Get the internal snapshot statistics measured by the
         // monitorable object since they were last reset, and reset
@@ -619,26 +832,32 @@ NTSCFG_TEST_FUNCTION(ntci::MonitorableTest::verify)
         NTSCFG_TEST_EQ(stats2[MonitorableTest::Object::STATISTIC_COUNT], 0);
         NTSCFG_TEST_EQ(stats2[MonitorableTest::Object::STATISTIC_TOTAL], 0);
         NTSCFG_TEST_EQ(stats2[MonitorableTest::Object::STATISTIC_MIN],
-                       bsl::numeric_limits<bsl::int64_t>::max());
+                bsl::numeric_limits<bsl::int64_t>::max());
         NTSCFG_TEST_EQ(stats2[MonitorableTest::Object::STATISTIC_MAX],
-                       bsl::numeric_limits<bsl::int64_t>::min());
+                bsl::numeric_limits<bsl::int64_t>::min());
     }
 
     // Deregister the monitorable object.
 
-    objectRegistry->deregisterMonitorable(object);
+    ntcm::MonitorableUtil::deregisterMonitorable(object);
 
     // Ensure the registry is no longer tracking this monitorable
     // object.
 
     {
-        bsl::vector<bsl::shared_ptr<ntci::Monitorable> > registeredObjects;
+        bsl::vector<bsl::shared_ptr<ntci::Monitorable> >
+            registeredObjects;
 
-        objectRegistry->loadRegisteredObjects(&registeredObjects);
+        ntcm::MonitorableUtil::loadRegisteredObjects(
+            &registeredObjects);
 
         NTSCFG_TEST_EQ(registeredObjects.size(), 0);
     }
+
+    // Reset the default monitorable object registry.
+
+    ntcm::MonitorableUtil::disableMonitorableRegistry();
 }
 
-}  // close namespace ntci
+}  // close namespace ntcm
 }  // close namespace BloombergLP

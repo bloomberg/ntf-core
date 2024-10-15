@@ -16,24 +16,24 @@
 #include <ntscfg_test.h>
 
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntcq_connect_t_cpp, "$Id$ $CSID$")
+BSLS_IDENT_RCSID(ntcq_bind_t_cpp, "$Id$ $CSID$")
 
-#include <ntcq_connect.h>
+#include <ntcq_bind.h>
 
 using namespace BloombergLP;
 
 namespace BloombergLP {
 namespace ntcq {
 
-// Provide tests for 'ntcq::ConnectQueue'.
-class ConnectQueueTest
+// Provide tests for 'ntcq::BindQueue'.
+class BindQueueTest
 {
   public:
     // TODO
     static void verify();
 };
 
-NTSCFG_TEST_FUNCTION(ntcq::ConnectQueueTest::verify)
+NTSCFG_TEST_FUNCTION(ntcq::BindQueueTest::verify)
 {
 }
 

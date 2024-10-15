@@ -22,8 +22,7 @@ BSLS_IDENT_RCSID(ntcp_thread_cpp, "$Id$ $CSID$")
 
 #include <ntccfg_limits.h>
 #include <ntcdns_resolver.h>
-#include <ntcm_monitorableregistry.h>
-#include <ntcm_monitorableutil.h>
+#include <ntcm_monitorable.h>
 #include <ntcp_datagramsocket.h>
 #include <ntcp_listenersocket.h>
 #include <ntcp_streamsocket.h>

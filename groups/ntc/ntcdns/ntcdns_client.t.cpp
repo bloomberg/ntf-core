@@ -34,20 +34,21 @@ namespace ntcdns {
 class ClientTest
 {
     static void processGetIpAddressResult(
-                         const bsl::shared_ptr<ntci::Resolver>&  resolver,
-                         const bsl::vector<ntsa::IpAddress>&     ipAddressList,
-                         const ntca::GetIpAddressEvent&          event,
-                         bslmt::Semaphore                       *semaphore);
+        const bsl::shared_ptr<ntci::Resolver>& resolver,
+        const bsl::vector<ntsa::IpAddress>&    ipAddressList,
+        const ntca::GetIpAddressEvent&         event,
+        bslmt::Semaphore*                      semaphore);
+
   public:
     // TODO
     static void verify();
 };
 
 void ClientTest::processGetIpAddressResult(
-                         const bsl::shared_ptr<ntci::Resolver>&  resolver,
-                         const bsl::vector<ntsa::IpAddress>&     ipAddressList,
-                         const ntca::GetIpAddressEvent&          event,
-                         bslmt::Semaphore                       *semaphore)
+    const bsl::shared_ptr<ntci::Resolver>& resolver,
+    const bsl::vector<ntsa::IpAddress>&    ipAddressList,
+    const ntca::GetIpAddressEvent&         event,
+    bslmt::Semaphore*                      semaphore)
 {
     NTCI_LOG_CONTEXT();
 

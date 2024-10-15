@@ -631,11 +631,7 @@ if (${NTF_BUILD_WITH_NTC})
         PRIVATE
     )
 
-    ntf_component(NAME ntcm_collector)
-    ntf_component(NAME ntcm_logpublisher)
-    ntf_component(NAME ntcm_monitorableregistry)
-    ntf_component(NAME ntcm_monitorableutil)
-    ntf_component(NAME ntcm_periodiccollector)
+    ntf_component(NAME ntcm_monitorable)
 
     ntf_package_end(NAME ntcm)
 

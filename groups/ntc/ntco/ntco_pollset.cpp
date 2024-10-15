@@ -25,8 +25,7 @@ BSLS_IDENT_RCSID(ntco_pollset_cpp, "$Id$ $CSID$")
 #include <ntcr_listenersocket.h>
 #include <ntcr_streamsocket.h>
 
-#include <ntcm_monitorableregistry.h>
-#include <ntcm_monitorableutil.h>
+#include <ntcm_monitorable.h>
 
 #include <ntci_log.h>
 #include <ntci_mutex.h>

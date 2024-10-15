@@ -1539,8 +1539,7 @@ ntsa::Error ClientNameServer::initiate(
     d_operationQueue.push(operation);
 
     {
-        LockGuard datagramSocketLock(
-            &d_datagramSocketMutex);
+        LockGuard datagramSocketLock(&d_datagramSocketMutex);
 
         if (!d_datagramSocket_sp) {
             error = this->createDatagramSocket();

@@ -20,7 +20,7 @@ BSLS_IDENT_RCSID(ntcd_reactor_cpp, "$Id$ $CSID$")
 
 #include <ntccfg_limits.h>
 #include <ntci_log.h>
-#include <ntcm_monitorableutil.h>
+#include <ntcm_monitorable.h>
 #include <ntcs_datapool.h>
 #include <ntcs_nomenclature.h>
 #include <ntcs_reactormetrics.h>
