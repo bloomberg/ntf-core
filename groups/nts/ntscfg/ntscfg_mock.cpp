@@ -13,29 +13,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntscfg_test.h>
-
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntcu_datagramsocketutil_t_cpp, "$Id$ $CSID$")
-
-#include <ntcu_datagramsocketutil.h>
-
-using namespace BloombergLP;
-
-namespace BloombergLP {
-namespace ntcu {
-
-// Provide tests for 'ntcu::DatagramSocketUtil'.
-class DatagramSocketUtilTest
-{
-  public:
-    // TODO
-    static void verify();
-};
-
-NTSCFG_TEST_FUNCTION(ntcu::DatagramSocketUtilTest::verify)
-{
-}
-
-}  // close namespace ntcu
-}  // close namespace BloombergLP
+BSLS_IDENT_RCSID(ntscfg_mock_cpp, "$Id$ $CSID$")

@@ -90,6 +90,7 @@ if (${NTF_BUILD_WITH_NTS})
 
     ntf_component(PATH ${CMAKE_BINARY_DIR}/ntscfg_config.cpp)
     ntf_component(NAME ntscfg_limits)
+    ntf_component(NAME ntscfg_mock)
     ntf_component(NAME ntscfg_platform)
     ntf_component(NAME ntscfg_test)
 

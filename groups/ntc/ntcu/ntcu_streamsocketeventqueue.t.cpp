@@ -16,24 +16,24 @@
 #include <ntscfg_test.h>
 
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntcu_datagramsocketutil_t_cpp, "$Id$ $CSID$")
+BSLS_IDENT_RCSID(ntcu_streamsocketeventqueue_t_cpp, "$Id$ $CSID$")
 
-#include <ntcu_datagramsocketutil.h>
+#include <ntcu_streamsocketeventqueue.h>
 
 using namespace BloombergLP;
 
 namespace BloombergLP {
 namespace ntcu {
 
-// Provide tests for 'ntcu::DatagramSocketUtil'.
-class DatagramSocketUtilTest
+// Provide tests for 'ntcu::StreamSocketEventQueue'.
+class StreamSocketEventQueueTest
 {
   public:
     // TODO
     static void verify();
 };
 
-NTSCFG_TEST_FUNCTION(ntcu::DatagramSocketUtilTest::verify)
+NTSCFG_TEST_FUNCTION(ntcu::StreamSocketEventQueueTest::verify)
 {
 }
 
