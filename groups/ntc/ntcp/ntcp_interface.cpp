@@ -451,14 +451,13 @@ bsl::shared_ptr<ntci::Proactor> Interface::acquireProactorWithLeastLoad(
     return result;
 }
 
-
 void Interface::interruptOne()
 {
     LockGuard lock(&d_mutex);
 
-    for (ProactorVector::iterator it  = d_proactorVector.begin();
-                                  it != d_proactorVector.end();
-                                ++it)
+    for (ProactorVector::iterator it = d_proactorVector.begin();
+         it != d_proactorVector.end();
+         ++it)
     {
         const bsl::shared_ptr<ntci::Proactor>& proactor = *it;
         proactor->interruptOne();
@@ -469,9 +468,9 @@ void Interface::interruptAll()
 {
     LockGuard lock(&d_mutex);
 
-    for (ProactorVector::iterator it  = d_proactorVector.begin();
-                                  it != d_proactorVector.end();
-                                ++it)
+    for (ProactorVector::iterator it = d_proactorVector.begin();
+         it != d_proactorVector.end();
+         ++it)
     {
         const bsl::shared_ptr<ntci::Proactor>& proactor = *it;
         proactor->interruptAll();
@@ -555,9 +554,8 @@ Interface::Interface(
     }
 
     BSLS_ASSERT_OPT(!d_config.dynamicLoadBalancing().isNull());
-    
-    if (d_config.maxThreads() > 1 && 
-        !d_config.dynamicLoadBalancing().value()) 
+
+    if (d_config.maxThreads() > 1 && !d_config.dynamicLoadBalancing().value())
     {
         d_chronology_sp.createInplace(d_allocator_p, this, d_allocator_p);
         d_user_sp->setChronology(d_chronology_sp);
@@ -1099,11 +1097,11 @@ ntsa::Error Interface::createEncryptionResource(
 }
 
 ntsa::Error Interface::generateCertificate(
-    ntca::EncryptionCertificate*                  result,
-    const ntsa::DistinguishedName&                subjectIdentity,
-    const ntca::EncryptionKey&                    subjectPrivateKey,
-    const ntca::EncryptionCertificateOptions&     options,
-    bslma::Allocator*                             basicAllocator) 
+    ntca::EncryptionCertificate*              result,
+    const ntsa::DistinguishedName&            subjectIdentity,
+    const ntca::EncryptionKey&                subjectPrivateKey,
+    const ntca::EncryptionCertificateOptions& options,
+    bslma::Allocator*                         basicAllocator)
 {
     NTCI_LOG_CONTEXT();
 
@@ -1131,7 +1129,7 @@ ntsa::Error Interface::generateCertificate(
     const ntca::EncryptionCertificate&        issuerCertificate,
     const ntca::EncryptionKey&                issuerPrivateKey,
     const ntca::EncryptionCertificateOptions& options,
-    bslma::Allocator*                         basicAllocator) 
+    bslma::Allocator*                         basicAllocator)
 {
     NTCI_LOG_CONTEXT();
 
@@ -1284,10 +1282,9 @@ ntsa::Error Interface::decodeCertificate(
                                                basicAllocator);
 }
 
-ntsa::Error Interface::generateKey(
-    ntca::EncryptionKey*                  result,
-    const ntca::EncryptionKeyOptions&     options,
-    bslma::Allocator*                     basicAllocator)
+ntsa::Error Interface::generateKey(ntca::EncryptionKey*              result,
+                                   const ntca::EncryptionKeyOptions& options,
+                                   bslma::Allocator* basicAllocator)
 {
     NTCI_LOG_CONTEXT();
 

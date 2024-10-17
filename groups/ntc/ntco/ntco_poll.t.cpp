@@ -18,8 +18,8 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntco_poll_t_cpp, "$Id$ $CSID$")
 
-#include <ntco_test.h>
 #include <ntco_poll.h>
+#include <ntco_test.h>
 
 using namespace BloombergLP;
 
@@ -70,4 +70,3 @@ NTSCFG_TEST_FUNCTION(ntco::PollTest::verifyFunctions)
 
 }  // close namespace ntco
 }  // close namespace BloombergLP
-

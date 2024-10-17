@@ -18,36 +18,27 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntcm_monitorable_cpp, "$Id$ $CSID$")
 
-#include <bdld_manageddatum.h>
-#include <bdlma_bufferedsequentialallocator.h>
-#include <bdlt_currenttime.h>
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bslmt_lockguard.h>
-#include <bsls_assert.h>
-#include <bsls_timeinterval.h>
-#include <bsl_vector.h>
-#include <ntci_log.h>
-#include <bdlf_memfn.h>
 #include <ntci_log.h>
 #include <bdld_datum.h>
+#include <bdld_manageddatum.h>
+#include <bdlf_memfn.h>
+#include <bdlma_bufferedsequentialallocator.h>
 #include <bdlsb_memoutstreambuf.h>
+#include <bdlt_currenttime.h>
 #include <bdlt_epochutil.h>
-#include <bslmt_lockguard.h>
 #include <bslma_allocator.h>
 #include <bslma_default.h>
+#include <bslmt_lockguard.h>
+#include <bslmt_mutex.h>
 #include <bsls_assert.h>
 #include <bsls_log.h>
+#include <bsls_timeinterval.h>
 #include <bsl_algorithm.h>
 #include <bsl_cstdio.h>
 #include <bsl_iomanip.h>
 #include <bsl_sstream.h>
-#include <bslmt_lockguard.h>
-#include <bslmt_mutex.h>
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bsls_assert.h>
 #include <bsl_unordered_map.h>
+#include <bsl_vector.h>
 
 #define NTCM_LOGPUBLISHER_FULL 0
 #define NTCM_LOGPUBLISHER_SORTED 1
@@ -174,8 +165,9 @@ MonitorableLogRecord::MonitorableLogRecord(bslma::Allocator* basicAllocator)
 {
 }
 
-MonitorableLogRecord::MonitorableLogRecord(const MonitorableLogRecord& original,
-                                       bslma::Allocator* basicAllocator)
+MonitorableLogRecord::MonitorableLogRecord(
+    const MonitorableLogRecord& original,
+    bslma::Allocator*           basicAllocator)
 : d_guid(original.d_guid, basicAllocator)
 , d_objectId(original.d_objectId, basicAllocator)
 , d_objectName(original.d_objectName, basicAllocator)
@@ -288,7 +280,8 @@ ntci::Monitorable::StatisticType MonitorableLogRecord::type() const
     return d_type;
 }
 
-bool operator==(const MonitorableLogRecord& lhs, const MonitorableLogRecord& rhs)
+bool operator==(const MonitorableLogRecord& lhs,
+                const MonitorableLogRecord& rhs)
 {
     return lhs.guid() == rhs.guid() && lhs.objectId() == rhs.objectId() &&
            lhs.objectName() == rhs.objectName() &&
@@ -297,7 +290,8 @@ bool operator==(const MonitorableLogRecord& lhs, const MonitorableLogRecord& rhs
            lhs.value() == rhs.value() && lhs.type() == rhs.type();
 }
 
-bool operator!=(const MonitorableLogRecord& lhs, const MonitorableLogRecord& rhs)
+bool operator!=(const MonitorableLogRecord& lhs,
+                const MonitorableLogRecord& rhs)
 {
     return !operator==(lhs, rhs);
 }
@@ -312,7 +306,7 @@ MonitorableLog::MonitorableLog(bslma::Allocator* basicAllocator)
 }
 
 MonitorableLog::MonitorableLog(bsls::LogSeverity::Enum severityLevel,
-                           bslma::Allocator*       basicAllocator)
+                               bslma::Allocator*       basicAllocator)
 : d_mutex()
 , d_records(basicAllocator)
 , d_severityLevel(static_cast<int>(severityLevel))

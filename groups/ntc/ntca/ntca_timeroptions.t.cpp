@@ -520,7 +520,7 @@ NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifyShowEvent)
 
 NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifyEquals)
 {
-     {
+    {
         ntca::TimerOptions timerOptions;
         ntca::TimerOptions otherTimerOptions;
 
@@ -727,7 +727,7 @@ NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifyPrint)
     }
 }
 
-const void* TimerOptionsTest::k_HANDLE = 
+const void* TimerOptionsTest::k_HANDLE =
     reinterpret_cast<void*>(static_cast<bsl::intptr_t>(1));
 
 const int  TimerOptionsTest::k_ID       = 2;

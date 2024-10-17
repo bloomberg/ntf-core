@@ -532,59 +532,64 @@ void ListenerSocketTest::Framework::execute(
     bsl::size_t            numThreads,
     const ExecuteCallback& executeCallback)
 {
-        ntsa::Error error;
+    ntsa::Error error;
 
-        BSLS_LOG_INFO("Testing transport %s numThreads %d",
-                      ntsa::Transport::toString(transport),
-                      (int)(numThreads));
+    BSLS_LOG_INFO("Testing transport %s numThreads %d",
+                  ntsa::Transport::toString(transport),
+                  (int)(numThreads));
 
-        bsl::shared_ptr<ntcd::Simulation> simulation;
-        simulation.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+    bsl::shared_ptr<ntcd::Simulation> simulation;
+    simulation.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-        error = simulation->run();
-        NTSCFG_TEST_OK(error);
+    error = simulation->run();
+    NTSCFG_TEST_OK(error);
 
-        const bsl::size_t BLOB_BUFFER_SIZE = 4096;
+    const bsl::size_t BLOB_BUFFER_SIZE = 4096;
 
-        bsl::shared_ptr<ntcs::DataPool> dataPool;
-        dataPool.createInplace(NTSCFG_TEST_ALLOCATOR, BLOB_BUFFER_SIZE, BLOB_BUFFER_SIZE, NTSCFG_TEST_ALLOCATOR);
+    bsl::shared_ptr<ntcs::DataPool> dataPool;
+    dataPool.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           BLOB_BUFFER_SIZE,
+                           BLOB_BUFFER_SIZE,
+                           NTSCFG_TEST_ALLOCATOR);
 
-        bsl::shared_ptr<ntcs::User> user;
-        user.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+    bsl::shared_ptr<ntcs::User> user;
+    user.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-        user->setDataPool(dataPool);
+    user->setDataPool(dataPool);
 
-        ntca::ReactorConfig reactorConfig;
-        reactorConfig.setMetricName("test");
-        reactorConfig.setMinThreads(numThreads);
-        reactorConfig.setMaxThreads(numThreads);
-        reactorConfig.setAutoAttach(false);
-        reactorConfig.setAutoDetach(false);
-        reactorConfig.setOneShot(numThreads > 1);
+    ntca::ReactorConfig reactorConfig;
+    reactorConfig.setMetricName("test");
+    reactorConfig.setMinThreads(numThreads);
+    reactorConfig.setMaxThreads(numThreads);
+    reactorConfig.setAutoAttach(false);
+    reactorConfig.setAutoDetach(false);
+    reactorConfig.setOneShot(numThreads > 1);
 
-        bsl::shared_ptr<ntcd::Reactor> reactor;
-        reactor.createInplace(NTSCFG_TEST_ALLOCATOR, reactorConfig, user, NTSCFG_TEST_ALLOCATOR);
+    bsl::shared_ptr<ntcd::Reactor> reactor;
+    reactor.createInplace(NTSCFG_TEST_ALLOCATOR,
+                          reactorConfig,
+                          user,
+                          NTSCFG_TEST_ALLOCATOR);
 
-        bslmt::Barrier threadGroupBarrier(numThreads + 1);
+    bslmt::Barrier threadGroupBarrier(numThreads + 1);
 
-        bslmt::ThreadGroup threadGroup(NTSCFG_TEST_ALLOCATOR);
+    bslmt::ThreadGroup threadGroup(NTSCFG_TEST_ALLOCATOR);
 
-        for (bsl::size_t threadIndex = 0; threadIndex < numThreads;
-             ++threadIndex)
-        {
-            threadGroup.addThread(NTCCFG_BIND(&Framework::runReactor,
-                                              reactor,
-                                              &threadGroupBarrier,
-                                              threadIndex));
-        }
+    for (bsl::size_t threadIndex = 0; threadIndex < numThreads; ++threadIndex)
+    {
+        threadGroup.addThread(NTCCFG_BIND(&Framework::runReactor,
+                                          reactor,
+                                          &threadGroupBarrier,
+                                          threadIndex));
+    }
 
-        threadGroupBarrier.wait();
+    threadGroupBarrier.wait();
 
-        executeCallback(transport, reactor, NTSCFG_TEST_ALLOCATOR);
+    executeCallback(transport, reactor, NTSCFG_TEST_ALLOCATOR);
 
-        threadGroup.joinAll();
+    threadGroup.joinAll();
 
-        simulation->stop();
+    simulation->stop();
 }
 
 void ListenerSocketTest::ListenerSocketApplication::

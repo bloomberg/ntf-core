@@ -263,12 +263,12 @@ class AsyncTimer : public ntci::Timer
     bool oneShot() const BSLS_KEYWORD_OVERRIDE;
 
     /// Return the deadline, or null if no deadline is scheduled.
-    bdlb::NullableValue<bsls::TimeInterval> deadline() const 
-    BSLS_KEYWORD_OVERRIDE;
+    bdlb::NullableValue<bsls::TimeInterval> deadline() const
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Return the period, or null if the timer is not periodic.
-    bdlb::NullableValue<bsls::TimeInterval> period() const 
-    BSLS_KEYWORD_OVERRIDE;
+    bdlb::NullableValue<bsls::TimeInterval> period() const
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Return the handle of the thread that manages this socket, or
     /// the default value if no such thread has been set.

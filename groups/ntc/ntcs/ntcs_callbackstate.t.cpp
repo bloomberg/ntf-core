@@ -60,5 +60,3 @@ NTSCFG_TEST_FUNCTION(ntcs::CallbackStateTest::verify)
 
 }  // close namespace ntcs
 }  // close namespace BloombergLP
-
-

@@ -61,26 +61,26 @@ class DatagramSocketTest
     // Execute the concern with the specified 'parameters' for the specified
     // 'transport' using the specified 'proactor'.
     static void verifyGenericVariation(
-        ntsa::Transport::Value                transport,
+        ntsa::Transport::Value                 transport,
         const bsl::shared_ptr<ntci::Proactor>& proactor,
-        const DatagramSocketTest::Parameters& parameters,
-        bslma::Allocator*                     allocator);
+        const DatagramSocketTest::Parameters&  parameters,
+        bslma::Allocator*                      allocator);
 
     // Execute the concern with the specified 'parameters' for the specified
     // 'transport' using the specified 'proactor'.
     static void verifyReceiveDeadlineVariation(
-        ntsa::Transport::Value                transport,
+        ntsa::Transport::Value                 transport,
         const bsl::shared_ptr<ntci::Proactor>& proactor,
-        const DatagramSocketTest::Parameters& parameters,
-        bslma::Allocator*                     allocator);
+        const DatagramSocketTest::Parameters&  parameters,
+        bslma::Allocator*                      allocator);
 
     // Execute the concern with the specified 'parameters' for the specified
     // 'transport' using the specified 'proactor'.
     static void verifyReceiveCancellationVariation(
-        ntsa::Transport::Value                transport,
+        ntsa::Transport::Value                 transport,
         const bsl::shared_ptr<ntci::Proactor>& proactor,
-        const DatagramSocketTest::Parameters& parameters,
-        bslma::Allocator*                     allocator);
+        const DatagramSocketTest::Parameters&  parameters,
+        bslma::Allocator*                      allocator);
 
     /// Return an endpoint representing a suitable address to which to
     /// bind a socket of the specified 'transport' type for use by this
@@ -141,13 +141,13 @@ class DatagramSocketTest::Framework
     /// on the specified 'barrier' then drives the specified 'proactor' until
     /// it is stopped.
     static void runProactor(const bsl::shared_ptr<ntci::Proactor>& proactor,
-                           bslmt::Barrier*                       barrier,
-                           bsl::size_t                           threadIndex);
+                            bslmt::Barrier*                        barrier,
+                            bsl::size_t threadIndex);
 
   public:
     /// Define a type alias for the function implementing a
     /// test case driven by this test framework.
-    typedef NTCCFG_FUNCTION(ntsa::Transport::Value                transport,
+    typedef NTCCFG_FUNCTION(ntsa::Transport::Value                 transport,
                             const bsl::shared_ptr<ntci::Proactor>& proactor,
                             bslma::Allocator* allocator) ExecuteCallback;
 
@@ -315,15 +315,15 @@ class DatagramSocketTest::DatagramSocketManager
     /// Define a type alias for a mutex lock guard.
     typedef ntccfg::LockGuard LockGuard;
 
-    ntccfg::Object                 d_object;
+    ntccfg::Object                  d_object;
     bsl::shared_ptr<ntci::Proactor> d_proactor_sp;
-    bsl::shared_ptr<ntcs::Metrics> d_metrics_sp;
-    Mutex                          d_socketMapMutex;
-    DatagramSocketApplicationMap   d_socketMap;
-    bslmt::Latch                   d_socketsEstablished;
-    bslmt::Latch                   d_socketsClosed;
-    DatagramSocketTest::Parameters d_parameters;
-    bslma::Allocator*              d_allocator_p;
+    bsl::shared_ptr<ntcs::Metrics>  d_metrics_sp;
+    Mutex                           d_socketMapMutex;
+    DatagramSocketApplicationMap    d_socketMap;
+    bslmt::Latch                    d_socketsEstablished;
+    bslmt::Latch                    d_socketsClosed;
+    DatagramSocketTest::Parameters  d_parameters;
+    bslma::Allocator*               d_allocator_p;
 
   private:
     DatagramSocketManager(const DatagramSocketManager&) BSLS_KEYWORD_DELETED;
@@ -348,7 +348,7 @@ class DatagramSocketTest::DatagramSocketManager
     /// supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
     DatagramSocketManager(const bsl::shared_ptr<ntci::Proactor>& proactor,
-                          const DatagramSocketTest::Parameters& parameters,
+                          const DatagramSocketTest::Parameters&  parameters,
                           bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
@@ -361,8 +361,8 @@ class DatagramSocketTest::DatagramSocketManager
 
 void DatagramSocketTest::Framework::runProactor(
     const bsl::shared_ptr<ntci::Proactor>& proactor,
-    bslmt::Barrier*                       barrier,
-    bsl::size_t                           threadIndex)
+    bslmt::Barrier*                        barrier,
+    bsl::size_t                            threadIndex)
 {
     const char* threadNamePrefix = "test";
 
@@ -440,56 +440,61 @@ void DatagramSocketTest::Framework::execute(
     bsl::size_t            numThreads,
     const ExecuteCallback& executeCallback)
 {
-        ntsa::Error error;
+    ntsa::Error error;
 
-        BSLS_LOG_INFO("Testing transport %s numThreads %d",
-                      ntsa::Transport::toString(transport),
-                      (int)(numThreads));
+    BSLS_LOG_INFO("Testing transport %s numThreads %d",
+                  ntsa::Transport::toString(transport),
+                  (int)(numThreads));
 
-        bsl::shared_ptr<ntcd::Simulation> simulation;
-        simulation.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+    bsl::shared_ptr<ntcd::Simulation> simulation;
+    simulation.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-        error = simulation->run();
-        NTSCFG_TEST_OK(error);
+    error = simulation->run();
+    NTSCFG_TEST_OK(error);
 
-        const bsl::size_t BLOB_BUFFER_SIZE = 4096;
+    const bsl::size_t BLOB_BUFFER_SIZE = 4096;
 
-        bsl::shared_ptr<ntcs::DataPool> dataPool;
-        dataPool.createInplace(NTSCFG_TEST_ALLOCATOR, BLOB_BUFFER_SIZE, BLOB_BUFFER_SIZE, NTSCFG_TEST_ALLOCATOR);
+    bsl::shared_ptr<ntcs::DataPool> dataPool;
+    dataPool.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           BLOB_BUFFER_SIZE,
+                           BLOB_BUFFER_SIZE,
+                           NTSCFG_TEST_ALLOCATOR);
 
-        bsl::shared_ptr<ntcs::User> user;
-        user.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+    bsl::shared_ptr<ntcs::User> user;
+    user.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-        user->setDataPool(dataPool);
+    user->setDataPool(dataPool);
 
-        ntca::ProactorConfig proactorConfig;
-        proactorConfig.setMetricName("test");
-        proactorConfig.setMinThreads(numThreads);
-        proactorConfig.setMaxThreads(numThreads);
+    ntca::ProactorConfig proactorConfig;
+    proactorConfig.setMetricName("test");
+    proactorConfig.setMinThreads(numThreads);
+    proactorConfig.setMaxThreads(numThreads);
 
-        bsl::shared_ptr<ntcd::Proactor> proactor;
-        proactor.createInplace(NTSCFG_TEST_ALLOCATOR, proactorConfig, user, NTSCFG_TEST_ALLOCATOR);
+    bsl::shared_ptr<ntcd::Proactor> proactor;
+    proactor.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           proactorConfig,
+                           user,
+                           NTSCFG_TEST_ALLOCATOR);
 
-        bslmt::Barrier threadGroupBarrier(numThreads + 1);
+    bslmt::Barrier threadGroupBarrier(numThreads + 1);
 
-        bslmt::ThreadGroup threadGroup(NTSCFG_TEST_ALLOCATOR);
+    bslmt::ThreadGroup threadGroup(NTSCFG_TEST_ALLOCATOR);
 
-        for (bsl::size_t threadIndex = 0; threadIndex < numThreads;
-             ++threadIndex)
-        {
-            threadGroup.addThread(NTCCFG_BIND(&Framework::runProactor,
-                                              proactor,
-                                              &threadGroupBarrier,
-                                              threadIndex));
-        }
+    for (bsl::size_t threadIndex = 0; threadIndex < numThreads; ++threadIndex)
+    {
+        threadGroup.addThread(NTCCFG_BIND(&Framework::runProactor,
+                                          proactor,
+                                          &threadGroupBarrier,
+                                          threadIndex));
+    }
 
-        threadGroupBarrier.wait();
+    threadGroupBarrier.wait();
 
-        executeCallback(transport, proactor, NTSCFG_TEST_ALLOCATOR);
+    executeCallback(transport, proactor, NTSCFG_TEST_ALLOCATOR);
 
-        threadGroup.joinAll();
+    threadGroup.joinAll();
 
-        simulation->stop();
+    simulation->stop();
 }
 
 void DatagramSocketTest::DatagramSocketSession::processReadQueueLowWatermark(
@@ -1029,8 +1034,8 @@ void DatagramSocketTest::DatagramSocketManager::processDatagramSocketClosed(
 
 DatagramSocketTest::DatagramSocketManager::DatagramSocketManager(
     const bsl::shared_ptr<ntci::Proactor>& proactor,
-    const DatagramSocketTest::Parameters& parameters,
-    bslma::Allocator*                     basicAllocator)
+    const DatagramSocketTest::Parameters&  parameters,
+    bslma::Allocator*                      basicAllocator)
 : d_object("DatagramSocketTest::DatagramSocketManager")
 , d_proactor_sp(proactor)
 , d_metrics_sp()
@@ -1398,10 +1403,10 @@ void DatagramSocketTest::DatagramSocketManager::run()
 }
 
 void DatagramSocketTest::verifyGenericVariation(
-    ntsa::Transport::Value                transport,
+    ntsa::Transport::Value                 transport,
     const bsl::shared_ptr<ntci::Proactor>& proactor,
-    const DatagramSocketTest::Parameters& parameters,
-    bslma::Allocator*                     allocator)
+    const DatagramSocketTest::Parameters&  parameters,
+    bslma::Allocator*                      allocator)
 {
     NTCI_LOG_CONTEXT();
 
@@ -1426,10 +1431,10 @@ void DatagramSocketTest::verifyGenericVariation(
 }
 
 void DatagramSocketTest::verifyReceiveDeadlineVariation(
-    ntsa::Transport::Value                transport,
+    ntsa::Transport::Value                 transport,
     const bsl::shared_ptr<ntci::Proactor>& proactor,
-    const DatagramSocketTest::Parameters& parameters,
-    bslma::Allocator*                     allocator)
+    const DatagramSocketTest::Parameters&  parameters,
+    bslma::Allocator*                      allocator)
 {
     // Concern: Receive deadlines.
 
@@ -1498,10 +1503,10 @@ void DatagramSocketTest::verifyReceiveDeadlineVariation(
 }
 
 void DatagramSocketTest::verifyReceiveCancellationVariation(
-    ntsa::Transport::Value                transport,
+    ntsa::Transport::Value                 transport,
     const bsl::shared_ptr<ntci::Proactor>& proactor,
-    const DatagramSocketTest::Parameters& parameters,
-    bslma::Allocator*                     allocator)
+    const DatagramSocketTest::Parameters&  parameters,
+    bslma::Allocator*                      allocator)
 {
     // Concern: Receive cancellation.
 

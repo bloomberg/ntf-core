@@ -13,13 +13,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntcs_proactordetachcontext.h>
+#include <ntscfg_test.h>
 
-#include <ntccfg_test.h>
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntcs_proactordetachcontext_t_cpp, "$Id$ $CSID$")
+
+#include <ntcs_proactordetachcontext.h>
 
 using namespace BloombergLP;
 
-NTCCFG_TEST_CASE(1)
+namespace BloombergLP {
+namespace ntcs {
+
+// Provide tests for 'ntcs::ProactorDetachContext'.
+class ProactorDetachContextTest
+{
+  public:
+    // TODO
+    static void verifyCase1();
+
+    // TODO
+    static void verifyCase2();
+
+    // TODO
+    static void verifyCase3();
+
+    // TODO
+    static void verifyCase4();
+};
+
+NTSCFG_TEST_FUNCTION(ntcs::ProactorDetachContextTest::verifyCase1)
 {
     ntsa::Error error;
     bool        result;
@@ -28,19 +51,19 @@ NTCCFG_TEST_CASE(1)
 
     ntcs::ProactorDetachContext context;
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 0);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+    NTSCFG_TEST_EQ(context.numProcessors(), 0);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
 
     // Detach (complete).
 
     error = context.detach();
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 0);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHED);
+    NTSCFG_TEST_EQ(context.numProcessors(), 0);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHED);
 }
 
-NTCCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntcs::ProactorDetachContextTest::verifyCase2)
 {
     ntsa::Error error;
     bool        result;
@@ -49,37 +72,37 @@ NTCCFG_TEST_CASE(2)
 
     ntcs::ProactorDetachContext context;
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 0);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+    NTSCFG_TEST_EQ(context.numProcessors(), 0);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
 
     // Acquire lease (n = 1).
 
     result = context.incrementReference();
 
-    NTCCFG_TEST_TRUE(result);
+    NTSCFG_TEST_TRUE(result);
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 1);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+    NTSCFG_TEST_EQ(context.numProcessors(), 1);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
 
     // Release lease (n = 0).
 
     result = context.decrementReference();
 
-    NTCCFG_TEST_FALSE(result);
+    NTSCFG_TEST_FALSE(result);
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 0);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+    NTSCFG_TEST_EQ(context.numProcessors(), 0);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
 
     // Detach (complete).
 
     error = context.detach();
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 0);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHED);
+    NTSCFG_TEST_EQ(context.numProcessors(), 0);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHED);
 }
 
-NTCCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntcs::ProactorDetachContextTest::verifyCase3)
 {
     ntsa::Error error;
     bool        result;
@@ -88,37 +111,37 @@ NTCCFG_TEST_CASE(3)
 
     ntcs::ProactorDetachContext context;
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 0);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+    NTSCFG_TEST_EQ(context.numProcessors(), 0);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
 
     // Acquire lease (n = 1).
 
     result = context.incrementReference();
 
-    NTCCFG_TEST_TRUE(result);
+    NTSCFG_TEST_TRUE(result);
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 1);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+    NTSCFG_TEST_EQ(context.numProcessors(), 1);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
 
     // Detach (pending).
 
     error = context.detach();
-    NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
+    NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 1);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHING);
+    NTSCFG_TEST_EQ(context.numProcessors(), 1);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHING);
 
     // Release lease (n = 0, complete).
 
     result = context.decrementReference();
 
-    NTCCFG_TEST_TRUE(result);
+    NTSCFG_TEST_TRUE(result);
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 0);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHED);
+    NTSCFG_TEST_EQ(context.numProcessors(), 0);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHED);
 }
 
-NTCCFG_TEST_CASE(4)
+NTSCFG_TEST_FUNCTION(ntcs::ProactorDetachContextTest::verifyCase4)
 {
     ntsa::Error error;
     bool        result;
@@ -127,147 +150,141 @@ NTCCFG_TEST_CASE(4)
 
     ntcs::ProactorDetachContext context;
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 0);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+    NTSCFG_TEST_EQ(context.numProcessors(), 0);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
 
     // Acquire lease (n = 1).
 
     result = context.incrementReference();
 
-    NTCCFG_TEST_TRUE(result);
+    NTSCFG_TEST_TRUE(result);
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 1);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+    NTSCFG_TEST_EQ(context.numProcessors(), 1);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
 
     // Release lease (n = 0).
 
     result = context.decrementReference();
 
-    NTCCFG_TEST_FALSE(result);
+    NTSCFG_TEST_FALSE(result);
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 0);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+    NTSCFG_TEST_EQ(context.numProcessors(), 0);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
 
     // Acquire lease (n = 1).
 
     result = context.incrementReference();
 
-    NTCCFG_TEST_TRUE(result);
+    NTSCFG_TEST_TRUE(result);
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 1);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+    NTSCFG_TEST_EQ(context.numProcessors(), 1);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
 
     // Acquire lease (n = 2).
 
     result = context.incrementReference();
 
-    NTCCFG_TEST_TRUE(result);
+    NTSCFG_TEST_TRUE(result);
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 2);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+    NTSCFG_TEST_EQ(context.numProcessors(), 2);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
 
     // Release lease (n = 1).
 
     result = context.decrementReference();
 
-    NTCCFG_TEST_FALSE(result);
+    NTSCFG_TEST_FALSE(result);
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 1);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+    NTSCFG_TEST_EQ(context.numProcessors(), 1);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
 
     // Release lease (n = 0).
 
     result = context.decrementReference();
 
-    NTCCFG_TEST_FALSE(result);
+    NTSCFG_TEST_FALSE(result);
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 0);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+    NTSCFG_TEST_EQ(context.numProcessors(), 0);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
 
     // Acquire lease (n = 1).
 
     result = context.incrementReference();
 
-    NTCCFG_TEST_TRUE(result);
+    NTSCFG_TEST_TRUE(result);
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 1);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+    NTSCFG_TEST_EQ(context.numProcessors(), 1);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
 
     // Acquire lease (n = 2).
 
     result = context.incrementReference();
 
-    NTCCFG_TEST_TRUE(result);
+    NTSCFG_TEST_TRUE(result);
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 2);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
+    NTSCFG_TEST_EQ(context.numProcessors(), 2);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_ATTACHED);
 
     // Detach (pending).
 
     error = context.detach();
-    NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
+    NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 2);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHING);
+    NTSCFG_TEST_EQ(context.numProcessors(), 2);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHING);
 
     // Detach (pending, failed).
 
     error = context.detach();
-    NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+    NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 2);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHING);
+    NTSCFG_TEST_EQ(context.numProcessors(), 2);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHING);
 
     // Acquire lease (n = 2, failed).
 
     result = context.incrementReference();
 
-    NTCCFG_TEST_FALSE(result);
+    NTSCFG_TEST_FALSE(result);
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 2);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHING);
+    NTSCFG_TEST_EQ(context.numProcessors(), 2);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHING);
 
     // Release lease (n = 1).
 
     result = context.decrementReference();
 
-    NTCCFG_TEST_FALSE(result);
+    NTSCFG_TEST_FALSE(result);
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 1);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHING);
+    NTSCFG_TEST_EQ(context.numProcessors(), 1);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHING);
 
     // Release lease (n = 0, complete).
 
     result = context.decrementReference();
 
-    NTCCFG_TEST_TRUE(result);
+    NTSCFG_TEST_TRUE(result);
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 0);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHED);
+    NTSCFG_TEST_EQ(context.numProcessors(), 0);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHED);
 
     // Acquire lease (n = 0, failed).
 
     result = context.incrementReference();
 
-    NTCCFG_TEST_FALSE(result);
+    NTSCFG_TEST_FALSE(result);
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 0);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHED);
+    NTSCFG_TEST_EQ(context.numProcessors(), 0);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHED);
 
     // Detach (complete, failed).
 
     error = context.detach();
-    NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+    NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
 
-    NTCCFG_TEST_EQ(context.numProcessors(), 0);
-    NTCCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHED);
+    NTSCFG_TEST_EQ(context.numProcessors(), 0);
+    NTSCFG_TEST_EQ(context.state(), ntcs::ProactorDetachState::e_DETACHED);
 }
 
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-    NTCCFG_TEST_REGISTER(2);
-    NTCCFG_TEST_REGISTER(3);
-    NTCCFG_TEST_REGISTER(4);
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntcs
+}  // close namespace BloombergLP

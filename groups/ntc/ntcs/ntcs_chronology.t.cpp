@@ -185,8 +185,9 @@ const int ChronologyTest::k_TIMER_ID_3   = 158;
 const int ChronologyTest::k_TIMER_ID_4   = 8;
 const int ChronologyTest::k_TIMER_ID_5   = 751;
 
-class ChronologyTest::TimerCallbackCollector {
-public:
+class ChronologyTest::TimerCallbackCollector
+{
+  public:
     TimerCallbackCollector(bslma::Allocator* basicAllocator)
     : d_events(basicAllocator)
     {
@@ -317,11 +318,11 @@ class ChronologyTest::StrandMock : public ntci::Strand
     }
     // mocking base class method
 
-    void execute(const Functor& functor) BSLS_KEYWORD_OVERRIDE {};
+    void execute(const Functor& functor) BSLS_KEYWORD_OVERRIDE{};
     // mocking base class method
 
     void moveAndExecute(FunctorSequence* functorSequence,
-                        const Functor&   functor) BSLS_KEYWORD_OVERRIDE {};
+                        const Functor&   functor) BSLS_KEYWORD_OVERRIDE{};
     // mocking base class method
 };
 
@@ -450,12 +451,15 @@ class ChronologyTest::TestSuite
     ntci::TimerCallback                     timerCallback;
 
     bsl::shared_ptr<ChronologyTest::DriverMock> driver;
-    bsl::shared_ptr<ntcs::Chronology> chronology;
+    bsl::shared_ptr<ntcs::Chronology>           chronology;
 };
 
-const bsls::TimeInterval ChronologyTest::TestSuite::oneSecond = bsls::TimeInterval(1, 0);
-const bsls::TimeInterval ChronologyTest::TestSuite::oneMinute = bsls::TimeInterval(60, 0);
-const bsls::TimeInterval ChronologyTest::TestSuite::oneHour   = bsls::TimeInterval(3600, 0);
+const bsls::TimeInterval ChronologyTest::TestSuite::oneSecond =
+    bsls::TimeInterval(1, 0);
+const bsls::TimeInterval ChronologyTest::TestSuite::oneMinute =
+    bsls::TimeInterval(60, 0);
+const bsls::TimeInterval ChronologyTest::TestSuite::oneHour =
+    bsls::TimeInterval(3600, 0);
 
 ChronologyTest::TestSuite::TestSuite()
 {
@@ -492,8 +496,9 @@ ChronologyTest::TestSuite::~TestSuite()
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-void ChronologyTest::TestSuite::validateRegisteredAndScheduled(int registered,
-                                               int scheduled) const
+void ChronologyTest::TestSuite::validateRegisteredAndScheduled(
+    int registered,
+    int scheduled) const
 {
     NTSCFG_TEST_EQ(chronology->numRegistered(), registered);
     NTSCFG_TEST_EQ(chronology->numScheduled(), scheduled);
@@ -583,7 +588,8 @@ bsl::size_t ChronologyTest::DriverMock::maxSockets() const
     return 0;
 }
 
-bsls::TimeInterval ChronologyTest::TestClock::s_currentTime = bsls::TimeInterval();
+bsls::TimeInterval ChronologyTest::TestClock::s_currentTime =
+    bsls::TimeInterval();
 
 ChronologyTest::TestClock::TestClock()
 : d_previousCallback(bdlt::CurrentTime::currentTimeCallback())
@@ -607,8 +613,8 @@ void ChronologyTest::TestClock::advance(const bsls::TimeInterval& timePassed)
 
 /// Multithreaded test driver.
 class ChronologyTest::MtDriver : public ntcs::Driver,
-                 public ntci::Executor,
-                 public ntccfg::Shared<ntci::Executor>
+                                 public ntci::Executor,
+                                 public ntccfg::Shared<ntci::Executor>
 {
   private:
     MtDriver(const MtDriver&) BSLS_KEYWORD_DELETED;
@@ -812,7 +818,8 @@ class ChronologyTest::MtTestSuite
             attributes.setThreadName("consumer-" + bsl::to_string(i));
 
             int rc = d_consumers->addThread(
-                NTCCFG_BIND(&ChronologyTest::MtTestSuite::consumerThread, d_driver),
+                NTCCFG_BIND(&ChronologyTest::MtTestSuite::consumerThread,
+                            d_driver),
                 attributes);
             NTSCFG_TEST_EQ(rc, 0);
         }
@@ -825,7 +832,8 @@ class ChronologyTest::MtTestSuite
             attributes.setThreadName("producer-" + bsl::to_string(i));
 
             int rc = d_producers->addThread(
-                NTCCFG_BIND(&ChronologyTest::MtTestSuite::producerThread, this),
+                NTCCFG_BIND(&ChronologyTest::MtTestSuite::producerThread,
+                            this),
                 attributes);
             NTSCFG_TEST_EQ(rc, 0);
         }
@@ -838,15 +846,17 @@ class ChronologyTest::MtTestSuite
             attributes.setThreadName("producer-" + bsl::to_string(i));
 
             int rc = d_producers->addThread(
-                NTCCFG_BIND(&ChronologyTest::MtTestSuite::producerThreadWithStrand,
-                            this,
-                            i % d_strands.size()),
+                NTCCFG_BIND(
+                    &ChronologyTest::MtTestSuite::producerThreadWithStrand,
+                    this,
+                    i % d_strands.size()),
                 attributes);
             NTSCFG_TEST_EQ(rc, 0);
         }
     }
 
-    static void consumerThread(const bsl::shared_ptr<ChronologyTest::MtDriver>& driver)
+    static void consumerThread(
+        const bsl::shared_ptr<ChronologyTest::MtDriver>& driver)
     {
         NTCI_LOG_CONTEXT();
         NTCI_LOG_DEBUG("Starting consumer thread");
@@ -3171,9 +3181,9 @@ NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase34)
         const int numProducers = (numThreads + 1) / 2;
         const int iterations   = numThreads * 100 * 1000;
 #else
-        const int numConsumers = 8;
-        const int numProducers = 8;
-        const int iterations   = 1000000;
+        const int numConsumers      = 8;
+        const int numProducers      = 8;
+        const int iterations        = 1000000;
 #endif
 
         ts.d_numOneShotTimersToConsume = iterations;
@@ -3288,9 +3298,9 @@ NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase36)
         const int numProducers = (numThreads + 1) / 2;
         const int iterations   = 1000 * 1000;
 #else
-        const int numConsumers = 8;
-        const int numProducers = 8;
-        const int iterations   = 1000000;
+        const int numConsumers      = 8;
+        const int numProducers      = 8;
+        const int iterations        = 1000000;
 #endif
 
         ts.d_numOneShotTimersToConsume = iterations;

@@ -50,86 +50,86 @@ NTSCFG_TEST_FUNCTION(ntcs::AuthorizationTest::verifyCase1)
     // Concern: Basic authorization
     // Plan:
 
-        ntsa::Error                    error;
-        ntcs::Authorization::CountType count;
+    ntsa::Error                    error;
+    ntcs::Authorization::CountType count;
 
-        ntcs::Authorization authorization;
+    ntcs::Authorization authorization;
 
-        // The initial authorization count is zero.
+    // The initial authorization count is zero.
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, 0);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, 0);
 
-        // Releasing an authorization fails when there are no previously
-        // acquired authorizations.
+    // Releasing an authorization fails when there are no previously
+    // acquired authorizations.
 
-        error = authorization.release();
-        NTSCFG_TEST_EQ(error, ntsa::Error::e_INVALID);
+    error = authorization.release();
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_INVALID);
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, 0);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, 0);
 
-        // Acquire an authorization.
+    // Acquire an authorization.
 
-        error = authorization.acquire();
-        NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+    error = authorization.acquire();
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, 1);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, 1);
 
-        // Release an authorization.
+    // Release an authorization.
 
-        error = authorization.release();
-        NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+    error = authorization.release();
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, 0);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, 0);
 
-        // Releasing an authorization fails when there are no previously
-        // acquired authorizations.
+    // Releasing an authorization fails when there are no previously
+    // acquired authorizations.
 
-        error = authorization.release();
-        NTSCFG_TEST_EQ(error, ntsa::Error::e_INVALID);
+    error = authorization.release();
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_INVALID);
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, 0);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, 0);
 
-        // Acquire two authorizations.
+    // Acquire two authorizations.
 
-        error = authorization.acquire();
-        NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+    error = authorization.acquire();
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, 1);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, 1);
 
-        error = authorization.acquire();
-        NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+    error = authorization.acquire();
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, 2);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, 2);
 
-        // Release two authorizations.
+    // Release two authorizations.
 
-        error = authorization.release();
-        NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+    error = authorization.release();
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, 1);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, 1);
 
-        error = authorization.release();
-        NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+    error = authorization.release();
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, 0);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, 0);
 
-        // Releasing an authorization fails when there are no previously
-        // acquired authorizations.
+    // Releasing an authorization fails when there are no previously
+    // acquired authorizations.
 
-        error = authorization.release();
-        NTSCFG_TEST_EQ(error, ntsa::Error::e_INVALID);
+    error = authorization.release();
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_INVALID);
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, 0);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, 0);
 }
 
 NTSCFG_TEST_FUNCTION(ntcs::AuthorizationTest::verifyCase2)
@@ -137,51 +137,50 @@ NTSCFG_TEST_FUNCTION(ntcs::AuthorizationTest::verifyCase2)
     // Concern: Cancellation: acquire/cancel(fails)/acquire/release/release
     // Plan:
 
+    ntsa::Error                    error;
+    ntcs::Authorization::CountType count;
 
-        ntsa::Error                    error;
-        ntcs::Authorization::CountType count;
+    ntcs::Authorization authorization;
 
-        ntcs::Authorization authorization;
+    // Acquire an authorization.
 
-        // Acquire an authorization.
+    error = authorization.acquire();
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
 
-        error = authorization.acquire();
-        NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, 1);
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, 1);
+    // Cancel authorization.
 
-        // Cancel authorization.
+    bool canceled = authorization.abort();
+    NTSCFG_TEST_FALSE(canceled);
 
-        bool canceled = authorization.abort();
-        NTSCFG_TEST_FALSE(canceled);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, 1);
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, 1);
+    // Acquire an authorization.
 
-        // Acquire an authorization.
+    error = authorization.acquire();
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
 
-        error = authorization.acquire();
-        NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, 2);
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, 2);
+    // Release an authorization.
 
-        // Release an authorization.
+    error = authorization.release();
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
 
-        error = authorization.release();
-        NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, 1);
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, 1);
+    // Release an authorization.
 
-        // Release an authorization.
+    error = authorization.release();
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
 
-        error = authorization.release();
-        NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
-
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, 0);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, 0);
 }
 
 NTSCFG_TEST_FUNCTION(ntcs::AuthorizationTest::verifyCase3)
@@ -189,50 +188,50 @@ NTSCFG_TEST_FUNCTION(ntcs::AuthorizationTest::verifyCase3)
     // Concern: Cancellation: acquire/cancel(fails)/release/acquire/release
     // Plan:
 
-        ntsa::Error                    error;
-        ntcs::Authorization::CountType count;
+    ntsa::Error                    error;
+    ntcs::Authorization::CountType count;
 
-        ntcs::Authorization authorization;
+    ntcs::Authorization authorization;
 
-        // Acquire an authorization.
+    // Acquire an authorization.
 
-        error = authorization.acquire();
-        NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+    error = authorization.acquire();
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, 1);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, 1);
 
-        // Cancel authorization.
+    // Cancel authorization.
 
-        bool canceled = authorization.abort();
-        NTSCFG_TEST_FALSE(canceled);
+    bool canceled = authorization.abort();
+    NTSCFG_TEST_FALSE(canceled);
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, 1);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, 1);
 
-        // Release an authorization.
+    // Release an authorization.
 
-        error = authorization.release();
-        NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+    error = authorization.release();
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, 0);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, 0);
 
-        // Acquire an authorization.
+    // Acquire an authorization.
 
-        error = authorization.acquire();
-        NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+    error = authorization.acquire();
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, 1);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, 1);
 
-        // Release an authorization.
+    // Release an authorization.
 
-        error = authorization.release();
-        NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+    error = authorization.release();
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, 0);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, 0);
 }
 
 NTSCFG_TEST_FUNCTION(ntcs::AuthorizationTest::verifyCase4)
@@ -240,34 +239,34 @@ NTSCFG_TEST_FUNCTION(ntcs::AuthorizationTest::verifyCase4)
     // Concern: Cancellation: cancel/acquire(fails)
     // Plan:
 
-        ntsa::Error                    error;
-        ntcs::Authorization::CountType count;
+    ntsa::Error                    error;
+    ntcs::Authorization::CountType count;
 
-        ntcs::Authorization authorization;
+    ntcs::Authorization authorization;
 
-        // Cancel authorization.
+    // Cancel authorization.
 
-        bool canceled = authorization.abort();
-        NTSCFG_TEST_TRUE(canceled);
+    bool canceled = authorization.abort();
+    NTSCFG_TEST_TRUE(canceled);
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, -1);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, -1);
 
-        // Acquire an authorization.
+    // Acquire an authorization.
 
-        error = authorization.acquire();
-        NTSCFG_TEST_EQ(error, ntsa::Error::e_CANCELLED);
+    error = authorization.acquire();
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_CANCELLED);
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, -1);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, -1);
 
-        // Release an authorization.
+    // Release an authorization.
 
-        error = authorization.release();
-        NTSCFG_TEST_EQ(error, ntsa::Error::e_CANCELLED);
+    error = authorization.release();
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_CANCELLED);
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, -1);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, -1);
 }
 
 NTSCFG_TEST_FUNCTION(ntcs::AuthorizationTest::verifyCase5)
@@ -275,35 +274,35 @@ NTSCFG_TEST_FUNCTION(ntcs::AuthorizationTest::verifyCase5)
     // Concern: Basic authorization
     // Plan:
 
-        ntsa::Error                    error;
-        ntcs::Authorization::CountType count;
+    ntsa::Error                    error;
+    ntcs::Authorization::CountType count;
 
-        ntcs::Authorization authorization(1);
+    ntcs::Authorization authorization(1);
 
-        // Acquire an authorization.
+    // Acquire an authorization.
 
-        error = authorization.acquire();
-        NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+    error = authorization.acquire();
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, 1);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, 1);
 
-        // Acquire an authorization beyond the limit and ensure authorization
-        // fails.
+    // Acquire an authorization beyond the limit and ensure authorization
+    // fails.
 
-        error = authorization.acquire();
-        NTSCFG_TEST_EQ(error, ntsa::Error::e_LIMIT);
+    error = authorization.acquire();
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_LIMIT);
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, 1);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, 1);
 
-        // Release an authorization.
+    // Release an authorization.
 
-        error = authorization.release();
-        NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
+    error = authorization.release();
+    NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
 
-        count = authorization.count();
-        NTSCFG_TEST_EQ(count, 0);
+    count = authorization.count();
+    NTSCFG_TEST_EQ(count, 0);
 }
 
 }  // close namespace ntcs

@@ -8416,20 +8416,19 @@ bool EncryptionCertificateExtensionList::matchesIssuerIpAddress(
 }
 
 bool EncryptionCertificateExtensionList::allowsKeyUsage(
-        ntca::EncryptionCertificateSubjectKeyUsageType::Value usage) const
+    ntca::EncryptionCertificateSubjectKeyUsageType::Value usage) const
 {
     const ntca::EncryptionCertificateExtensionIdentifierType::Value
-        k_KEY_USAGE =
-            ntca::EncryptionCertificateExtensionIdentifierType::
-                e_SUBJECT_KEY_USAGE;
+        k_KEY_USAGE = ntca::EncryptionCertificateExtensionIdentifierType::
+            e_SUBJECT_KEY_USAGE;
 
     for (bsl::size_t i = 0; i < d_container.size(); ++i) {
         const EncryptionCertificateExtension& element = d_container[i];
 
         if (element.attribute().equals(k_KEY_USAGE)) {
             if (element.value().isSubjectKeyUsage()) {
-                const EncryptionCertificateSubjectKeyUsage&
-                    subjectKeyUsage = element.value().subjectKeyUsage();
+                const EncryptionCertificateSubjectKeyUsage& subjectKeyUsage =
+                    element.value().subjectKeyUsage();
 
                 if (subjectKeyUsage.allows(usage)) {
                     return true;
@@ -8442,8 +8441,7 @@ bool EncryptionCertificateExtensionList::allowsKeyUsage(
 }
 
 bool EncryptionCertificateExtensionList::allowsKeyUsage(
-        ntca::EncryptionCertificateSubjectKeyUsageExtendedType::Value usage) 
-        const
+    ntca::EncryptionCertificateSubjectKeyUsageExtendedType::Value usage) const
 {
     const ntca::EncryptionCertificateExtensionIdentifierType::Value
         k_KEY_USAGE_EXTENDED =
@@ -8456,7 +8454,7 @@ bool EncryptionCertificateExtensionList::allowsKeyUsage(
         if (element.attribute().equals(k_KEY_USAGE_EXTENDED)) {
             if (element.value().isSubjectKeyUsageExtended()) {
                 const EncryptionCertificateSubjectKeyUsageExtended&
-                    subjectKeyUsageExtended = 
+                    subjectKeyUsageExtended =
                         element.value().subjectKeyUsageExtended();
 
                 if (subjectKeyUsageExtended.allows(usage)) {
@@ -8985,8 +8983,7 @@ bool EncryptionCertificateEntity::allowsKeyUsage(
 }
 
 bool EncryptionCertificateEntity::allowsKeyUsage(
-    ntca::EncryptionCertificateSubjectKeyUsageExtendedType::Value usage) 
-    const
+    ntca::EncryptionCertificateSubjectKeyUsageExtendedType::Value usage) const
 {
     if (!d_extensionList.isNull()) {
         return d_extensionList.value().allowsKeyUsage(usage);
@@ -9342,8 +9339,7 @@ bool EncryptionCertificate::allowsKeyUsage(
 }
 
 bool EncryptionCertificate::allowsKeyUsage(
-    ntca::EncryptionCertificateSubjectKeyUsageExtendedType::Value usage) 
-    const
+    ntca::EncryptionCertificateSubjectKeyUsageExtendedType::Value usage) const
 {
     return d_entity.allowsKeyUsage(usage);
 }
@@ -9351,25 +9347,25 @@ bool EncryptionCertificate::allowsKeyUsage(
 bool EncryptionCertificate::usesSubjectPublicKeyAlgorithm(
     ntca::EncryptionKeyAlgorithmIdentifierType::Value algorithm) const
 {
-    const ntca::EncryptionKeyAlgorithm& publicKeyAlgorithm = 
+    const ntca::EncryptionKeyAlgorithm& publicKeyAlgorithm =
         d_entity.subjectPublicKeyInfo().algorithm();
 
     return publicKeyAlgorithm.identifier().equals(algorithm);
 }
 
 bool EncryptionCertificate::usesSubjectPublicKeyAlgorithmParameters(
-    ntca::EncryptionKeyEllipticCurveParametersIdentifierType::Value 
-    parameters) const
+    ntca::EncryptionKeyEllipticCurveParametersIdentifierType::Value parameters)
+    const
 {
-    const ntca::EncryptionKeyAlgorithm& publicKeyAlgorithm = 
+    const ntca::EncryptionKeyAlgorithm& publicKeyAlgorithm =
         d_entity.subjectPublicKeyInfo().algorithm();
 
     if (publicKeyAlgorithm.parameters().isNull()) {
         return false;
     }
 
-    const ntca::EncryptionKeyAlgorithmParameters& 
-    algorithmParameters = publicKeyAlgorithm.parameters().value();
+    const ntca::EncryptionKeyAlgorithmParameters& algorithmParameters =
+        publicKeyAlgorithm.parameters().value();
 
     if (!algorithmParameters.isEllipticCurve()) {
         return false;

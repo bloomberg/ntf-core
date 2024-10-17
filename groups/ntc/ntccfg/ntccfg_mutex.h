@@ -27,8 +27,8 @@ BSLS_IDENT("$Id: $")
 #include <bslmt_mutex.h>
 #include <bslmt_recursivemutex.h>
 #include <bsls_atomic.h>
-#include <bsls_spinlock.h>
 #include <bsls_platform.h>
+#include <bsls_spinlock.h>
 
 #if defined(BSLS_PLATFORM_OS_LINUX) &&                                        \
     (defined(BSLS_PLATFORM_CMP_GNU) || defined(BSLS_PLATFORM_CMP_CLANG))
@@ -148,7 +148,7 @@ void Futex::unlock()
 #pragma GCC diagnostic pop
 #endif
 
-#endif // NTCCFG_FUTEX_ENABLED
+#endif  // NTCCFG_FUTEX_ENABLED
 
 /// @internal @brief
 /// Provide a synchronization primitive for mutually-exclusive access
@@ -382,21 +382,21 @@ typedef bslmt::UnLockGuard<ntccfg::Futex> UnLockGuard;
 typedef bslmt::Condition Condition;
 
 /// @internal @brief
-/// Define a type alias for a mutex to lock the state associated with a 
+/// Define a type alias for a mutex to lock the state associated with a
 /// condition variable.
 ///
 /// @ingroup module_ntccfg
 typedef bslmt::Mutex ConditionMutex;
 
 /// @internal @brief
-/// Define a type alias for a guard to lock and unlock a condition variable 
+/// Define a type alias for a guard to lock and unlock a condition variable
 /// mutex.
 ///
 /// @ingroup module_ntccfg
 typedef bslmt::LockGuard<bslmt::Mutex> ConditionMutexGuard;
 
 /// @internal @brief
-/// Define a type alias for a guard to unlock and lock a condition variable 
+/// Define a type alias for a guard to unlock and lock a condition variable
 /// mutex.
 ///
 /// @ingroup module_ntccfg

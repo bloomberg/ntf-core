@@ -13,21 +13,55 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntcs_event_t_cpp, "$Id$ $CSID$")
+
 #include <ntcs_event.h>
-
-#include <ntccfg_test.h>
-
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bsls_assert.h>
 
 using namespace BloombergLP;
 
-namespace test {
+namespace BloombergLP {
+namespace ntcs {
+
+// Provide tests for 'ntcs::Event'.
+class EventTest
+{
+    // Provide an implementation of the 'ntci::ProactorSocket' interface for
+    // use by this test driver.
+    class ProactorSocket;
+
+    // Provide an implementation of the 'ntcs::ProactorDetachContext' interface
+    // for use by this test driver.
+    class ProactorSocketContext;
+
+    // Define a type alias the proactor detachment state.
+    typedef ntcs::ProactorDetachState State;
+
+    static const ntsa::Handle k_SOCKET_HANDLE;
+    static const bsl::string  k_SOCKET_NAME;
+
+  public:
+    // TODO
+    static void verifyCase1();
+
+    // TODO
+    static void verifyCase2();
+
+    // TODO
+    static void verifyCase3();
+
+    // TODO
+    static void verifyCase4();
+};
+
+const ntsa::Handle EventTest::k_SOCKET_HANDLE = 100;
+const bsl::string  EventTest::k_SOCKET_NAME   = "default";
 
 // Provide an implementation of the 'ntci::ProactorSocket' interface for use
 // by this test driver.
-class ProactorSocket : public ntci::ProactorSocket
+class EventTest::ProactorSocket : public ntci::ProactorSocket
 {
     ntsa::Handle      d_handle;
     const bsl::string d_name;
@@ -67,9 +101,9 @@ class ProactorSocket : public ntci::ProactorSocket
     bool isDetached() const;
 };
 
-// Provide a proactor context for an implementation of the 'ntci::Proactor'
-// interface implemented using the I/O completion port API.
-class ProactorSocketContext : public ntcs::ProactorDetachContext
+// Provide an implementation of the 'ntcs::ProactorDetachContext' interface
+// for use by this test driver.
+class EventTest::ProactorSocketContext : public ntcs::ProactorDetachContext
 {
   private:
     ProactorSocketContext(const ProactorSocketContext&) BSLS_KEYWORD_DELETED;
@@ -84,9 +118,9 @@ class ProactorSocketContext : public ntcs::ProactorDetachContext
     ~ProactorSocketContext();
 };
 
-ProactorSocket::ProactorSocket(ntsa::Handle       handle,
-                               const bsl::string& name,
-                               bslma::Allocator*  basicAllocator)
+EventTest::ProactorSocket::ProactorSocket(ntsa::Handle       handle,
+                                          const bsl::string& name,
+                                          bslma::Allocator*  basicAllocator)
 : d_handle(handle)
 , d_name(name, basicAllocator)
 , d_detached(false)
@@ -94,420 +128,379 @@ ProactorSocket::ProactorSocket(ntsa::Handle       handle,
 {
 }
 
-ProactorSocket::~ProactorSocket()
+EventTest::ProactorSocket::~ProactorSocket()
 {
 }
 
-void ProactorSocket::processSocketDetached()
+void EventTest::ProactorSocket::processSocketDetached()
 {
-    NTCCFG_TEST_FALSE(d_detached);
+    NTSCFG_TEST_FALSE(d_detached);
     d_detached = true;
 }
 
-void ProactorSocket::close()
+void EventTest::ProactorSocket::close()
 {
 }
 
-ntsa::Handle ProactorSocket::handle() const
+ntsa::Handle EventTest::ProactorSocket::handle() const
 {
     return d_handle;
 }
 
-const bsl::string& ProactorSocket::name() const
+const bsl::string& EventTest::ProactorSocket::name() const
 {
     return d_name;
 }
 
-bool ProactorSocket::isDetached() const
+bool EventTest::ProactorSocket::isDetached() const
 {
     return d_detached;
 }
 
-ProactorSocketContext::ProactorSocketContext()
+EventTest::ProactorSocketContext::ProactorSocketContext()
 : ntcs::ProactorDetachContext()
 {
 }
 
-ProactorSocketContext::~ProactorSocketContext()
+EventTest::ProactorSocketContext::~ProactorSocketContext()
 {
 }
 
-const ntsa::Handle k_SOCKET_HANDLE = 100;
-const bsl::string  k_SOCKET_NAME   = "default";
-
-typedef ntcs::ProactorDetachState State;
-
-}  // close namespace test
-
-NTCCFG_TEST_CASE(1)
+NTSCFG_TEST_FUNCTION(ntcs::EventTest::verifyCase1)
 {
-    // Concern:
-    // Plan:
+    ntsa::Error error;
+    bool        result;
 
-    ntccfg::TestAllocator ta;
-    {
-        ntsa::Error error;
-        bool        result;
+    // Create the context.
 
-        // Create the context.
+    ntcs::EventPool eventPool(NTSCFG_TEST_ALLOCATOR);
 
-        ntcs::EventPool eventPool(&ta);
+    bsl::shared_ptr<EventTest::ProactorSocketContext> context;
+    context.createInplace(NTSCFG_TEST_ALLOCATOR);
 
-        bsl::shared_ptr<test::ProactorSocketContext> context;
-        context.createInplace(&ta);
+    bsl::shared_ptr<EventTest::ProactorSocket> socket;
+    socket.createInplace(NTSCFG_TEST_ALLOCATOR,
+                         EventTest::k_SOCKET_HANDLE,
+                         EventTest::k_SOCKET_NAME,
+                         NTSCFG_TEST_ALLOCATOR);
 
-        bsl::shared_ptr<test::ProactorSocket> socket;
-        socket.createInplace(&ta,
-                             test::k_SOCKET_HANDLE,
-                             test::k_SOCKET_NAME,
-                             &ta);
+    socket->setProactorContext(context);
 
-        socket->setProactorContext(context);
+    NTSCFG_TEST_EQ(context->numProcessors(), 0);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_ATTACHED);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 0);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_ATTACHED);
+    NTSCFG_TEST_FALSE(socket->isDetached());
 
-        NTCCFG_TEST_FALSE(socket->isDetached());
+    // Detach (complete).
 
-        // Detach (complete).
+    error = context->detach();
+    NTSCFG_TEST_OK(error);
 
-        error = context->detach();
-        NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_EQ(context->numProcessors(), 0);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_DETACHED);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 0);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_DETACHED);
+    socket->processSocketDetached();
 
-        socket->processSocketDetached();
-
-        NTCCFG_TEST_TRUE(socket->isDetached());
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_TRUE(socket->isDetached());
 }
 
-NTCCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntcs::EventTest::verifyCase2)
 {
-    // Concern:
-    // Plan:
+    ntsa::Error error;
+    bool        result;
 
-    ntccfg::TestAllocator ta;
-    {
-        ntsa::Error error;
-        bool        result;
+    // Create the context.
 
-        // Create the context.
+    ntcs::EventPool eventPool(NTSCFG_TEST_ALLOCATOR);
 
-        ntcs::EventPool eventPool(&ta);
+    bsl::shared_ptr<EventTest::ProactorSocketContext> context;
+    context.createInplace(NTSCFG_TEST_ALLOCATOR);
 
-        bsl::shared_ptr<test::ProactorSocketContext> context;
-        context.createInplace(&ta);
+    bsl::shared_ptr<EventTest::ProactorSocket> socket;
+    socket.createInplace(NTSCFG_TEST_ALLOCATOR,
+                         EventTest::k_SOCKET_HANDLE,
+                         EventTest::k_SOCKET_NAME,
+                         NTSCFG_TEST_ALLOCATOR);
 
-        bsl::shared_ptr<test::ProactorSocket> socket;
-        socket.createInplace(&ta,
-                             test::k_SOCKET_HANDLE,
-                             test::k_SOCKET_NAME,
-                             &ta);
+    socket->setProactorContext(context);
 
-        socket->setProactorContext(context);
+    NTSCFG_TEST_EQ(context->numProcessors(), 0);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_ATTACHED);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 0);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_ATTACHED);
+    NTSCFG_TEST_FALSE(socket->isDetached());
 
-        NTCCFG_TEST_FALSE(socket->isDetached());
+    // Acquire lease (n = 1).
 
-        // Acquire lease (n = 1).
+    bslma::ManagedPtr<ntcs::Event> event =
+        eventPool.getManagedObject(socket, context);
 
-        bslma::ManagedPtr<ntcs::Event> event =
-            eventPool.getManagedObject(socket, context);
+    NTSCFG_TEST_TRUE(event);
 
-        NTCCFG_TEST_TRUE(event);
+    NTSCFG_TEST_EQ(event->d_socket, socket);
+    NTSCFG_TEST_EQ(event->d_context, context);
 
-        NTCCFG_TEST_EQ(event->d_socket, socket);
-        NTCCFG_TEST_EQ(event->d_context, context);
+    NTSCFG_TEST_EQ(context->numProcessors(), 1);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_ATTACHED);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 1);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_ATTACHED);
+    // Release lease (n = 0).
 
-        // Release lease (n = 0).
+    event.reset();
 
-        event.reset();
+    NTSCFG_TEST_EQ(context->numProcessors(), 0);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_ATTACHED);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 0);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_ATTACHED);
+    NTSCFG_TEST_FALSE(socket->isDetached());
 
-        NTCCFG_TEST_FALSE(socket->isDetached());
+    // Detach (complete).
 
-        // Detach (complete).
+    error = context->detach();
+    NTSCFG_TEST_OK(error);
 
-        error = context->detach();
-        NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_EQ(context->numProcessors(), 0);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_DETACHED);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 0);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_DETACHED);
+    socket->processSocketDetached();
 
-        socket->processSocketDetached();
-
-        NTCCFG_TEST_TRUE(socket->isDetached());
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_TRUE(socket->isDetached());
 }
 
-NTCCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntcs::EventTest::verifyCase3)
 {
-    // Concern:
-    // Plan:
+    ntsa::Error error;
+    bool        result;
 
-    ntccfg::TestAllocator ta;
-    {
-        ntsa::Error error;
-        bool        result;
+    // Create the context.
 
-        // Create the context.
+    ntcs::EventPool eventPool(NTSCFG_TEST_ALLOCATOR);
 
-        ntcs::EventPool eventPool(&ta);
+    bsl::shared_ptr<EventTest::ProactorSocketContext> context;
+    context.createInplace(NTSCFG_TEST_ALLOCATOR);
 
-        bsl::shared_ptr<test::ProactorSocketContext> context;
-        context.createInplace(&ta);
+    bsl::shared_ptr<EventTest::ProactorSocket> socket;
+    socket.createInplace(NTSCFG_TEST_ALLOCATOR,
+                         EventTest::k_SOCKET_HANDLE,
+                         EventTest::k_SOCKET_NAME,
+                         NTSCFG_TEST_ALLOCATOR);
 
-        bsl::shared_ptr<test::ProactorSocket> socket;
-        socket.createInplace(&ta,
-                             test::k_SOCKET_HANDLE,
-                             test::k_SOCKET_NAME,
-                             &ta);
+    socket->setProactorContext(context);
 
-        socket->setProactorContext(context);
+    NTSCFG_TEST_EQ(context->numProcessors(), 0);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_ATTACHED);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 0);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_ATTACHED);
+    NTSCFG_TEST_FALSE(socket->isDetached());
 
-        NTCCFG_TEST_FALSE(socket->isDetached());
+    // Acquire lease (n = 1).
 
-        // Acquire lease (n = 1).
+    bslma::ManagedPtr<ntcs::Event> event =
+        eventPool.getManagedObject(socket, context);
 
-        bslma::ManagedPtr<ntcs::Event> event =
-            eventPool.getManagedObject(socket, context);
+    NTSCFG_TEST_TRUE(event);
 
-        NTCCFG_TEST_TRUE(event);
+    NTSCFG_TEST_EQ(event->d_socket, socket);
+    NTSCFG_TEST_EQ(event->d_context, context);
 
-        NTCCFG_TEST_EQ(event->d_socket, socket);
-        NTCCFG_TEST_EQ(event->d_context, context);
+    NTSCFG_TEST_EQ(context->numProcessors(), 1);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_ATTACHED);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 1);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_ATTACHED);
+    // Detach (pending).
 
-        // Detach (pending).
+    error = context->detach();
+    NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
 
-        error = context->detach();
-        NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
+    NTSCFG_TEST_EQ(context->numProcessors(), 1);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_DETACHING);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 1);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_DETACHING);
+    NTSCFG_TEST_FALSE(socket->isDetached());
 
-        NTCCFG_TEST_FALSE(socket->isDetached());
+    // Release lease (n = 0, complete).
 
-        // Release lease (n = 0, complete).
+    event.reset();
 
-        event.reset();
+    NTSCFG_TEST_EQ(context->numProcessors(), 0);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_DETACHED);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 0);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_DETACHED);
-
-        NTCCFG_TEST_TRUE(socket->isDetached());
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_TRUE(socket->isDetached());
 }
 
-NTCCFG_TEST_CASE(4)
+NTSCFG_TEST_FUNCTION(ntcs::EventTest::verifyCase4)
 {
-    // Concern:
-    // Plan:
+    ntsa::Error error;
+    bool        result;
 
-    ntccfg::TestAllocator ta;
-    {
-        ntsa::Error error;
-        bool        result;
+    // Create the context.
 
-        // Create the context.
+    ntcs::EventPool eventPool(NTSCFG_TEST_ALLOCATOR);
 
-        ntcs::EventPool eventPool(&ta);
+    bslma::ManagedPtr<ntcs::Event> event1;
+    bslma::ManagedPtr<ntcs::Event> event2;
+    bslma::ManagedPtr<ntcs::Event> event3;
 
-        bslma::ManagedPtr<ntcs::Event> event1;
-        bslma::ManagedPtr<ntcs::Event> event2;
-        bslma::ManagedPtr<ntcs::Event> event3;
+    bsl::shared_ptr<EventTest::ProactorSocketContext> context;
+    context.createInplace(NTSCFG_TEST_ALLOCATOR);
 
-        bsl::shared_ptr<test::ProactorSocketContext> context;
-        context.createInplace(&ta);
+    bsl::shared_ptr<EventTest::ProactorSocket> socket;
+    socket.createInplace(NTSCFG_TEST_ALLOCATOR,
+                         EventTest::k_SOCKET_HANDLE,
+                         EventTest::k_SOCKET_NAME,
+                         NTSCFG_TEST_ALLOCATOR);
 
-        bsl::shared_ptr<test::ProactorSocket> socket;
-        socket.createInplace(&ta,
-                             test::k_SOCKET_HANDLE,
-                             test::k_SOCKET_NAME,
-                             &ta);
+    socket->setProactorContext(context);
 
-        socket->setProactorContext(context);
+    NTSCFG_TEST_EQ(context->numProcessors(), 0);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_ATTACHED);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 0);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_ATTACHED);
+    NTSCFG_TEST_FALSE(socket->isDetached());
 
-        NTCCFG_TEST_FALSE(socket->isDetached());
+    // Acquire lease (n = 1).
 
-        // Acquire lease (n = 1).
+    event1 = eventPool.getManagedObject(socket, context);
 
-        event1 = eventPool.getManagedObject(socket, context);
+    NTSCFG_TEST_TRUE(event1);
 
-        NTCCFG_TEST_TRUE(event1);
+    NTSCFG_TEST_EQ(event1->d_socket, socket);
+    NTSCFG_TEST_EQ(event1->d_context, context);
 
-        NTCCFG_TEST_EQ(event1->d_socket, socket);
-        NTCCFG_TEST_EQ(event1->d_context, context);
+    NTSCFG_TEST_EQ(context->numProcessors(), 1);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_ATTACHED);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 1);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_ATTACHED);
+    // Release lease (n = 0).
 
-        // Release lease (n = 0).
+    event1.reset();
 
-        event1.reset();
+    NTSCFG_TEST_EQ(context->numProcessors(), 0);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_ATTACHED);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 0);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_ATTACHED);
+    NTSCFG_TEST_FALSE(socket->isDetached());
 
-        NTCCFG_TEST_FALSE(socket->isDetached());
+    // Acquire lease (n = 1).
 
-        // Acquire lease (n = 1).
+    event1 = eventPool.getManagedObject(socket, context);
 
-        event1 = eventPool.getManagedObject(socket, context);
+    NTSCFG_TEST_TRUE(event1);
 
-        NTCCFG_TEST_TRUE(event1);
+    NTSCFG_TEST_EQ(context->numProcessors(), 1);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_ATTACHED);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 1);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_ATTACHED);
+    // Acquire lease (n = 2).
 
-        // Acquire lease (n = 2).
+    event2 = eventPool.getManagedObject(socket, context);
 
-        event2 = eventPool.getManagedObject(socket, context);
+    NTSCFG_TEST_TRUE(event2);
 
-        NTCCFG_TEST_TRUE(event2);
+    NTSCFG_TEST_EQ(event2->d_socket, socket);
+    NTSCFG_TEST_EQ(event2->d_context, context);
 
-        NTCCFG_TEST_EQ(event2->d_socket, socket);
-        NTCCFG_TEST_EQ(event2->d_context, context);
+    NTSCFG_TEST_EQ(context->numProcessors(), 2);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_ATTACHED);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 2);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_ATTACHED);
+    // Release lease (n = 1).
 
-        // Release lease (n = 1).
+    event1.reset();
 
-        event1.reset();
+    NTSCFG_TEST_EQ(context->numProcessors(), 1);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_ATTACHED);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 1);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_ATTACHED);
+    NTSCFG_TEST_FALSE(socket->isDetached());
 
-        NTCCFG_TEST_FALSE(socket->isDetached());
+    // Release lease (n = 0).
 
-        // Release lease (n = 0).
+    event2.reset();
 
-        event2.reset();
+    NTSCFG_TEST_EQ(context->numProcessors(), 0);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_ATTACHED);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 0);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_ATTACHED);
+    NTSCFG_TEST_FALSE(socket->isDetached());
 
-        NTCCFG_TEST_FALSE(socket->isDetached());
+    // Acquire lease (n = 1).
 
-        // Acquire lease (n = 1).
+    event1 = eventPool.getManagedObject(socket, context);
 
-        event1 = eventPool.getManagedObject(socket, context);
+    NTSCFG_TEST_TRUE(event1);
 
-        NTCCFG_TEST_TRUE(event1);
+    NTSCFG_TEST_EQ(event1->d_socket, socket);
+    NTSCFG_TEST_EQ(event1->d_context, context);
 
-        NTCCFG_TEST_EQ(event1->d_socket, socket);
-        NTCCFG_TEST_EQ(event1->d_context, context);
+    NTSCFG_TEST_EQ(context->numProcessors(), 1);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_ATTACHED);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 1);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_ATTACHED);
+    // Acquire lease (n = 2).
 
-        // Acquire lease (n = 2).
+    event2 = eventPool.getManagedObject(socket, context);
 
-        event2 = eventPool.getManagedObject(socket, context);
+    NTSCFG_TEST_TRUE(event2);
 
-        NTCCFG_TEST_TRUE(event2);
+    NTSCFG_TEST_EQ(event2->d_socket, socket);
+    NTSCFG_TEST_EQ(event2->d_context, context);
 
-        NTCCFG_TEST_EQ(event2->d_socket, socket);
-        NTCCFG_TEST_EQ(event2->d_context, context);
+    NTSCFG_TEST_EQ(context->numProcessors(), 2);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_ATTACHED);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 2);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_ATTACHED);
+    // Detach (pending).
 
-        // Detach (pending).
+    error = context->detach();
+    NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
 
-        error = context->detach();
-        NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
+    NTSCFG_TEST_EQ(context->numProcessors(), 2);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_DETACHING);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 2);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_DETACHING);
+    NTSCFG_TEST_FALSE(socket->isDetached());
 
-        NTCCFG_TEST_FALSE(socket->isDetached());
+    // Detach (pending, failed).
 
-        // Detach (pending, failed).
+    error = context->detach();
+    NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
 
-        error = context->detach();
-        NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+    NTSCFG_TEST_EQ(context->numProcessors(), 2);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_DETACHING);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 2);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_DETACHING);
+    NTSCFG_TEST_FALSE(socket->isDetached());
 
-        NTCCFG_TEST_FALSE(socket->isDetached());
+    // Acquire lease (n = 2, failed).
 
-        // Acquire lease (n = 2, failed).
+    event3 = eventPool.getManagedObject(socket, context);
 
-        event3 = eventPool.getManagedObject(socket, context);
+    NTSCFG_TEST_FALSE(event3);
 
-        NTCCFG_TEST_FALSE(event3);
+    NTSCFG_TEST_EQ(context->numProcessors(), 2);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_DETACHING);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 2);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_DETACHING);
+    NTSCFG_TEST_FALSE(socket->isDetached());
 
-        NTCCFG_TEST_FALSE(socket->isDetached());
+    // Release lease (n = 1).
 
-        // Release lease (n = 1).
+    event1.reset();
 
-        event1.reset();
+    NTSCFG_TEST_EQ(context->numProcessors(), 1);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_DETACHING);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 1);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_DETACHING);
+    NTSCFG_TEST_FALSE(socket->isDetached());
 
-        NTCCFG_TEST_FALSE(socket->isDetached());
+    // Release lease (n = 0, complete).
 
-        // Release lease (n = 0, complete).
+    event2.reset();
 
-        event2.reset();
+    NTSCFG_TEST_EQ(context->numProcessors(), 0);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_DETACHED);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 0);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_DETACHED);
+    NTSCFG_TEST_TRUE(socket->isDetached());
 
-        NTCCFG_TEST_TRUE(socket->isDetached());
+    // Acquire lease (n = 0, failed).
 
-        // Acquire lease (n = 0, failed).
+    event3 = eventPool.getManagedObject(socket, context);
 
-        event3 = eventPool.getManagedObject(socket, context);
+    NTSCFG_TEST_FALSE(event3);
 
-        NTCCFG_TEST_FALSE(event3);
+    NTSCFG_TEST_EQ(context->numProcessors(), 0);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_DETACHED);
 
-        NTCCFG_TEST_EQ(context->numProcessors(), 0);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_DETACHED);
+    // Detach (complete, failed).
 
-        // Detach (complete, failed).
+    error = context->detach();
+    NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
 
-        error = context->detach();
-        NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
-
-        NTCCFG_TEST_EQ(context->numProcessors(), 0);
-        NTCCFG_TEST_EQ(context->state(), test::State::e_DETACHED);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_EQ(context->numProcessors(), 0);
+    NTSCFG_TEST_EQ(context->state(), EventTest::State::e_DETACHED);
 }
 
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-    NTCCFG_TEST_REGISTER(2);
-    NTCCFG_TEST_REGISTER(3);
-    NTCCFG_TEST_REGISTER(4);
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntcs
+}  // close namespace BloombergLP

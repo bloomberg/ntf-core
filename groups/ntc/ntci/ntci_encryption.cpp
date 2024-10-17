@@ -25,16 +25,15 @@ Encryption::~Encryption()
 {
 }
 
-ntsa::Error Encryption::initiateHandshake(
-        const HandshakeCallback& callback)
+ntsa::Error Encryption::initiateHandshake(const HandshakeCallback& callback)
 {
     NTCCFG_WARNING_UNUSED(callback);
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error Encryption::initiateHandshake(
-        const ntca::UpgradeOptions& upgradeOptions,
-        const HandshakeCallback&    callback)
+    const ntca::UpgradeOptions& upgradeOptions,
+    const HandshakeCallback&    callback)
 {
     NTCCFG_WARNING_UNUSED(upgradeOptions);
     NTCCFG_WARNING_UNUSED(callback);
@@ -93,28 +92,28 @@ bool Encryption::hasOutgoingCipherText() const
 }
 
 bool Encryption::getSourceCertificate(
-        ntca::EncryptionCertificate* result) const
+    ntca::EncryptionCertificate* result) const
 {
     result->reset();
     return false;
 }
 
 bool Encryption::getSourceCertificate(
-        bsl::shared_ptr<ntci::EncryptionCertificate>* result) const
+    bsl::shared_ptr<ntci::EncryptionCertificate>* result) const
 {
     result->reset();
     return false;
 }
 
 bool Encryption::getRemoteCertificate(
-        ntca::EncryptionCertificate* result) const
+    ntca::EncryptionCertificate* result) const
 {
     result->reset();
     return false;
 }
 
 bool Encryption::getRemoteCertificate(
-        bsl::shared_ptr<ntci::EncryptionCertificate>* result) const
+    bsl::shared_ptr<ntci::EncryptionCertificate>* result) const
 {
     result->reset();
     return false;
@@ -147,13 +146,13 @@ bool Encryption::isShutdownFinished() const
 }
 
 bsl::shared_ptr<ntci::EncryptionCertificate> Encryption::sourceCertificate()
-        const
+    const
 {
     return bsl::shared_ptr<ntci::EncryptionCertificate>();
 }
 
 bsl::shared_ptr<ntci::EncryptionCertificate> Encryption::remoteCertificate()
-        const
+    const
 {
     return bsl::shared_ptr<ntci::EncryptionCertificate>();
 }

@@ -39,7 +39,6 @@ class IdentifiableTest
     };
 };
 
-
 NTSCFG_TEST_FUNCTION(ntci::IdentifiableTest::verify)
 {
     Object object1;

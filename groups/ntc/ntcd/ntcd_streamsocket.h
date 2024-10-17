@@ -23,8 +23,8 @@ BSLS_IDENT("$Id: $")
 #include <ntcd_machine.h>
 #include <ntci_streamsocketfactory.h>
 #include <ntcscm_version.h>
-#include <ntsi_streamsocket.h>
 #include <ntscfg_mock.h>
+#include <ntsi_streamsocket.h>
 #include <bsl_memory.h>
 #include <bsl_string.h>
 #include <bsl_vector.h>

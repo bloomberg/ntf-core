@@ -19,8 +19,8 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <bdlbb_blob.h>
 #include <ntscfg_mock.h>
+#include <bdlbb_blob.h>
 
 namespace BloombergLP {
 namespace ntcd {

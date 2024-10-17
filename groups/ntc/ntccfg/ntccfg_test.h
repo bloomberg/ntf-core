@@ -762,7 +762,7 @@ struct TestMock {
     struct ProcessInterface {
         typedef typename bsl::remove_reference<ARG>::type ARGtype;
         virtual void process(const ARGtype& arg) = 0;
-        virtual ~    ProcessInterface()
+        virtual ~ProcessInterface()
         {
         }
     };
@@ -770,7 +770,7 @@ struct TestMock {
     template <class ARG>
     struct SetterInterface {
         virtual void process(typename PassTraits<ARG>::PassType arg) = 0;
-        virtual ~    SetterInterface()
+        virtual ~SetterInterface()
         {
         }
     };
@@ -1544,7 +1544,7 @@ struct TestMock {
         InvocationDataStorage<InvocationDataT, METHOD_INFO> d_storage;
 
       private:
-                    Invocation(const Invocation&);
+        Invocation(const Invocation&);
         Invocation& operator=(const Invocation&);
 
         InvocationImpl<METHOD_INFO, RESULT, ARG_LIST> d_impl;
@@ -1608,7 +1608,7 @@ struct TestMock {
         }
 
       private:
-                    Invocation(const Invocation&);
+        Invocation(const Invocation&);
         Invocation& operator=(const Invocation&);
 
         InvocationDataStorage<InvocationDataT, METHOD_INFO> d_storage;
@@ -1795,7 +1795,7 @@ struct TestMock::InvocationResult<void> {
       public:                                                                 \
         struct MockInfo {                                                     \
             const char* mockName;                                             \
-                        MockInfo()                                            \
+            MockInfo()                                                        \
             : mockName(#MOCK_NAME)                                            \
             {                                                                 \
             }                                                                 \

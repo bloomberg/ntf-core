@@ -20,51 +20,24 @@
 BSLS_IDENT("$Id: $")
 
 #include <ntca_monitorablecollectorconfig.h>
-#include <ntccfg_platform.h>
-#include <ntci_monitorable.h>
-#include <ntcscm_version.h>
-#include <bdlma_concurrentmultipoolallocator.h>
-#include <bslmt_mutex.h>
-#include <bsl_memory.h>
-#include <bsl_string.h>
-#include <bsl_unordered_set.h>
-#include <ntca_monitorablecollectorconfig.h>
-#include <ntci_monitorable.h>
-#include <ntcscm_version.h>
-#include <bdlmt_eventscheduler.h>
-#include <bsls_keyword.h>
-#include <bsls_timeinterval.h>
-#include <bsl_memory.h>
-#include <bsl_string.h>
-#include <bsl_vector.h>
-#include <ntci_monitorable.h>
-#include <ntcscm_version.h>
-#include <bslmt_mutex.h>
-#include <bsls_atomic.h>
-#include <bsls_keyword.h>
-#include <bsls_timeinterval.h>
-#include <bsls_types.h>
-#include <bsl_memory.h>
-#include <bsl_string.h>
-#include <bsl_vector.h>
-#include <ntca_monitorableregistryconfig.h>
-#include <ntci_monitorable.h>
-#include <ntcscm_version.h>
-#include <bslmt_mutex.h>
-#include <bsls_keyword.h>
-#include <bsl_memory.h>
-#include <bsl_unordered_map.h>
-#include <bsl_vector.h>
-#include <ntca_monitorablecollectorconfig.h>
 #include <ntca_monitorableregistryconfig.h>
 #include <ntccfg_platform.h>
 #include <ntci_identifiable.h>
 #include <ntci_monitorable.h>
 #include <ntcscm_version.h>
 #include <bdld_manageddatum.h>
+#include <bdlma_concurrentmultipoolallocator.h>
+#include <bdlmt_eventscheduler.h>
+#include <bslmt_mutex.h>
+#include <bsls_atomic.h>
+#include <bsls_keyword.h>
 #include <bsls_spinlock.h>
+#include <bsls_timeinterval.h>
+#include <bsls_types.h>
 #include <bsl_memory.h>
 #include <bsl_string.h>
+#include <bsl_unordered_map.h>
+#include <bsl_unordered_set.h>
 #include <bsl_vector.h>
 
 namespace BloombergLP {
@@ -100,7 +73,7 @@ class MonitorableLogRecord
     /// used to supply memory. If 'basicAllocator' is 0, the currently
     /// installed default allocator is used.
     MonitorableLogRecord(const MonitorableLogRecord& original,
-                       bslma::Allocator*         basicAllocator = 0);
+                         bslma::Allocator*           basicAllocator = 0);
 
     /// Destroy this object.
     ~MonitorableLogRecord();
@@ -168,13 +141,15 @@ class MonitorableLogRecord
 /// 'rhs', otherwise return false.
 ///
 /// @related ntcm::MonitorableLogRecord
-bool operator==(const MonitorableLogRecord& lhs, const MonitorableLogRecord& rhs);
+bool operator==(const MonitorableLogRecord& lhs,
+                const MonitorableLogRecord& rhs);
 
 /// Return true if the specified 'lhs' does not have the same value as the
 /// specified 'rhs', otherwise return false.
 ///
 /// @related ntcm::MonitorableLogRecord
-bool operator!=(const MonitorableLogRecord& lhs, const MonitorableLogRecord& rhs);
+bool operator!=(const MonitorableLogRecord& lhs,
+                const MonitorableLogRecord& rhs);
 
 /// @internal @brief
 /// Provide a metrics publisher to the application log.
@@ -217,7 +192,7 @@ class MonitorableLog : public ntci::MonitorablePublisher
     /// supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
     explicit MonitorableLog(bsls::LogSeverity::Enum severityLevel,
-                          bslma::Allocator*       basicAllocator = 0);
+                            bslma::Allocator*       basicAllocator = 0);
 
     /// Destroy this object.
     virtual ~MonitorableLog();
@@ -346,9 +321,7 @@ class Collector : public ntci::MonitorableCollector
 /// @ingroup module_ntcm
 class PeriodicCollector : public ntci::MonitorableCollector
 {
-    enum Constants {
-        k_DEFAULT_INTERVAL = 30
-    };
+    enum Constants { k_DEFAULT_INTERVAL = 30 };
 
     bdlmt::EventScheduler                       d_scheduler;
     bdlmt::EventScheduler::RecurringEventHandle d_event;

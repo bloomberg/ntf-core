@@ -61,7 +61,7 @@ class BindTest
     // TODO
     static void verifyWeakMemberFunctionFromSharedSelf4();
 
-private:
+  private:
     static const int k_VALUE;
 
     static const int k_A;
@@ -88,7 +88,6 @@ const int BindTest::k_A = 1;
 const int BindTest::k_B = 2;
 const int BindTest::k_C = 3;
 const int BindTest::k_D = 4;
-
 
 /// Provide global state used by the test process.
 class BindTest::State
@@ -225,7 +224,8 @@ void BindTest::State::assertCalledMemberFunction4(bool value)
 }
 
 // Provide a mechanism used by the test process.
-class BindTest::Mechanism : public bsl::enable_shared_from_this<BindTest::Mechanism>
+class BindTest::Mechanism
+: public bsl::enable_shared_from_this<BindTest::Mechanism>
 {
     int d_value;
 

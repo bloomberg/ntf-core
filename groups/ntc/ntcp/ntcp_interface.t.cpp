@@ -205,7 +205,8 @@ NTSCFG_TEST_FUNCTION(ntcp::InterfaceTest::verifyCase1)
     // Create the proactor factory.
 
     bsl::shared_ptr<ntcd::ProactorFactory> proactorFactory;
-    proactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+    proactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR,
+                                  NTSCFG_TEST_ALLOCATOR);
 
     // Create the interface.
 
@@ -282,7 +283,8 @@ NTSCFG_TEST_FUNCTION(ntcp::InterfaceTest::verifyCase2)
     // Create the proactor factory.
 
     bsl::shared_ptr<ntcd::ProactorFactory> proactorFactory;
-    proactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+    proactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR,
+                                  NTSCFG_TEST_ALLOCATOR);
 
     for (bsl::size_t dynamicLoadBalancingIndex = 0;
          dynamicLoadBalancingIndex < 2;
@@ -334,37 +336,36 @@ NTSCFG_TEST_FUNCTION(ntcp::InterfaceTest::verifyCase2)
             {
                 BSLS_LOG_INFO("Testing %d threads", (int)(numThreads));
 
-                    ntca::InterfaceConfig interfaceConfig;
-                    interfaceConfig.setMetricName("test");
+                ntca::InterfaceConfig interfaceConfig;
+                interfaceConfig.setMetricName("test");
 
-                    if (dynamicThreadCount) {
-                        interfaceConfig.setMinThreads(1);
-                    }
-                    else {
-                        interfaceConfig.setMinThreads(numThreads);
-                    }
+                if (dynamicThreadCount) {
+                    interfaceConfig.setMinThreads(1);
+                }
+                else {
+                    interfaceConfig.setMinThreads(numThreads);
+                }
 
-                    interfaceConfig.setMaxThreads(numThreads);
-                    interfaceConfig.setDynamicLoadBalancing(
-                        dynamicLoadBalancing);
+                interfaceConfig.setMaxThreads(numThreads);
+                interfaceConfig.setDynamicLoadBalancing(dynamicLoadBalancing);
 
-                    bsl::shared_ptr<ntcp::Interface> interface;
-                    interface.createInplace(NTSCFG_TEST_ALLOCATOR,
-                                            interfaceConfig,
-                                            dataPool,
-                                            proactorFactory,
-                                            NTSCFG_TEST_ALLOCATOR);
+                bsl::shared_ptr<ntcp::Interface> interface;
+                interface.createInplace(NTSCFG_TEST_ALLOCATOR,
+                                        interfaceConfig,
+                                        dataPool,
+                                        proactorFactory,
+                                        NTSCFG_TEST_ALLOCATOR);
 
-                    for (bsl::size_t restartIteration = 0;
-                         restartIteration < NUM_RESTARTS;
-                         ++restartIteration)
-                    {
-                        InterfaceTest::run(interface,
-                                           numThreads,
-                                           restartIteration,
-                                           dynamicLoadBalancing,
-                                           dynamicThreadCount);
-                    }
+                for (bsl::size_t restartIteration = 0;
+                     restartIteration < NUM_RESTARTS;
+                     ++restartIteration)
+                {
+                    InterfaceTest::run(interface,
+                                       numThreads,
+                                       restartIteration,
+                                       dynamicLoadBalancing,
+                                       dynamicThreadCount);
+                }
             }
         }
     }

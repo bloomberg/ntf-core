@@ -52,18 +52,18 @@ NTSCFG_TEST_FUNCTION(ntci::LogTest::verifyCase1)
     logContext.d_sourceEndpoint   = ntsa::Endpoint("127.0.0.1:12345");
 
     ntci::Log::write(0,
-                        bsls::LogSeverity::e_INFO,
-                        __FILE__,
-                        __LINE__,
-                        "Object received %d bytes",
-                        84730);
+                     bsls::LogSeverity::e_INFO,
+                     __FILE__,
+                     __LINE__,
+                     "Object received %d bytes",
+                     84730);
 
     ntci::Log::write(&logContext,
-                        bsls::LogSeverity::e_INFO,
-                        __FILE__,
-                        __LINE__,
-                        "Object received %d bytes",
-                        84730);
+                     bsls::LogSeverity::e_INFO,
+                     __FILE__,
+                     __LINE__,
+                     "Object received %d bytes",
+                     84730);
 
     ntci::Log::flush();
     ntci::Log::exit();
@@ -94,11 +94,11 @@ NTSCFG_TEST_FUNCTION(ntci::LogTest::verifyCase2)
     options.setMaxBuffers(456);
 
     NTCI_LOG_STREAM_INFO << "Log stream at INFO object = " << options
-                            << NTCI_LOG_STREAM_END;
+                         << NTCI_LOG_STREAM_END;
     NTCI_LOG_STREAM_DEBUG << "Log stream at DEBUG object = " << options
-                            << NTCI_LOG_STREAM_END;
+                          << NTCI_LOG_STREAM_END;
     NTCI_LOG_STREAM_TRACE << "Log stream at TRACE object = " << options
-                            << NTCI_LOG_STREAM_END;
+                          << NTCI_LOG_STREAM_END;
 
     bsl::string data(NTSCFG_TEST_ALLOCATOR);
     data.resize(8192, 'X');
@@ -108,6 +108,3 @@ NTSCFG_TEST_FUNCTION(ntci::LogTest::verifyCase2)
 
 }  // close namespace ntci
 }  // close namespace BloombergLP
-
-
-

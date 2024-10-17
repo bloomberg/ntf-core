@@ -568,13 +568,15 @@ NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyForegroundCollection)
     // default monitorable registry.
 
     bsl::shared_ptr<ntcm::MonitorableRegistry> monitorableRegistry;
-    monitorableRegistry.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+    monitorableRegistry.createInplace(NTSCFG_TEST_ALLOCATOR,
+                                      NTSCFG_TEST_ALLOCATOR);
 
     // Create a number of monitorable objects and register them with
     // the default monitorable registry.
 
-    typedef bsl::vector<bsl::shared_ptr<MonitorableTest::Object> > ObjectVector;
-    ObjectVector                                        objects;
+    typedef bsl::vector<bsl::shared_ptr<MonitorableTest::Object> >
+                 ObjectVector;
+    ObjectVector objects;
 
     for (int i = 0; i < NUM_OBJECTS; ++i) {
         bsl::shared_ptr<MonitorableTest::Object> object;
@@ -587,27 +589,24 @@ NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyForegroundCollection)
 
     // Create a monitorable object statistics collector.
 
-    ntcm::Collector::LoadCallback loadCallback =
-        bdlf::MemFnUtil::memFn(
-            &ntcm::MonitorableRegistry::loadRegisteredObjects,
-            monitorableRegistry);
+    ntcm::Collector::LoadCallback loadCallback = bdlf::MemFnUtil::memFn(
+        &ntcm::MonitorableRegistry::loadRegisteredObjects,
+        monitorableRegistry);
 
     ntcm::Collector collector(loadCallback, NTSCFG_TEST_ALLOCATOR);
 
     // Create and register a test publisher with the collector.
 
     bsl::shared_ptr<ntcm::MonitorableLog> publisher;
-    publisher.createInplace(
-        NTSCFG_TEST_ALLOCATOR,
-        NTSCFG_TEST_ALLOCATOR);
+    publisher.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     collector.registerPublisher(publisher);
 
     // Perform work.
 
     for (ObjectVector::const_iterator it = objects.begin();
-            it != objects.end();
-            ++it)
+         it != objects.end();
+         ++it)
     {
         const bsl::shared_ptr<MonitorableTest::Object> object = *it;
         for (int i = 0; i < NUM_ITERATIONS; ++i) {
@@ -623,12 +622,12 @@ NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyForegroundCollection)
     // Deregister all the monitorable objects.
 
     for (ObjectVector::const_iterator it = objects.begin();
-            it != objects.end();
-            ++it)
+         it != objects.end();
+         ++it)
     {
         const bsl::shared_ptr<MonitorableTest::Object> object = *it;
         monitorableRegistry->deregisterMonitorable(object);
-    }   
+    }
 }
 
 NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyBackgroundCollection)
@@ -663,13 +662,15 @@ NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyBackgroundCollection)
     // default monitorable registry.
 
     bsl::shared_ptr<ntcm::MonitorableRegistry> monitorableRegistry;
-    monitorableRegistry.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+    monitorableRegistry.createInplace(NTSCFG_TEST_ALLOCATOR,
+                                      NTSCFG_TEST_ALLOCATOR);
 
     // Create a number of monitorable objects and register them with
     // the default monitorable registry.
 
-    typedef bsl::vector<bsl::shared_ptr<MonitorableTest::Object> > ObjectVector;
-    ObjectVector                                        objects;
+    typedef bsl::vector<bsl::shared_ptr<MonitorableTest::Object> >
+                 ObjectVector;
+    ObjectVector objects;
 
     for (int i = 0; i < NUM_OBJECTS; ++i) {
         bsl::shared_ptr<MonitorableTest::Object> object;
@@ -692,23 +693,21 @@ NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyBackgroundCollection)
             monitorableRegistry);
 
     ntcm::PeriodicCollector collector(collectorConfig,
-                                        loadCallback,
-                                        NTSCFG_TEST_ALLOCATOR);
+                                      loadCallback,
+                                      NTSCFG_TEST_ALLOCATOR);
 
     // Create and register a test publisher with the collector.
 
     bsl::shared_ptr<ntcm::MonitorableLog> publisher;
-    publisher.createInplace(
-        NTSCFG_TEST_ALLOCATOR,
-        NTSCFG_TEST_ALLOCATOR);
+    publisher.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     collector.registerPublisher(publisher);
 
     // Perform work.
 
     for (ObjectVector::const_iterator it = objects.begin();
-            it != objects.end();
-            ++it)
+         it != objects.end();
+         ++it)
     {
         const bsl::shared_ptr<MonitorableTest::Object> object = *it;
         for (int i = 0; i < NUM_ITERATIONS; ++i) {
@@ -720,7 +719,7 @@ NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyBackgroundCollection)
     // been collected and published.
 
     collector.start();
-    
+
     while (true) {
         bslmt::ThreadUtil::sleep(bsls::TimeInterval(1));
         if (publisher->numPublications() == NUM_OBJECTS) {
@@ -733,8 +732,8 @@ NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyBackgroundCollection)
     // Deregister all the monitorable objects.
 
     for (ObjectVector::const_iterator it = objects.begin();
-            it != objects.end();
-            ++it)
+         it != objects.end();
+         ++it)
     {
         const bsl::shared_ptr<MonitorableTest::Object> object = *it;
         monitorableRegistry->deregisterMonitorable(object);
@@ -780,11 +779,9 @@ NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyUsage)
     // Ensure the registry is tracking this monitorable object.
 
     {
-        bsl::vector<bsl::shared_ptr<ntci::Monitorable> >
-            registeredObjects;
+        bsl::vector<bsl::shared_ptr<ntci::Monitorable> > registeredObjects;
 
-        ntcm::MonitorableUtil::loadRegisteredObjects(
-            &registeredObjects);
+        ntcm::MonitorableUtil::loadRegisteredObjects(&registeredObjects);
 
         NTSCFG_TEST_EQ(registeredObjects.size(), 1);
         NTSCFG_TEST_EQ(registeredObjects[0], object);
@@ -793,7 +790,7 @@ NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyUsage)
     // Test three measurement intervals...
 
     for (bsl::int64_t currentInterval = 0; currentInterval < 3;
-            ++currentInterval)
+         ++currentInterval)
     {
         // Advance to the next measurment interval.
 
@@ -816,10 +813,10 @@ NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyUsage)
         NTSCFG_TEST_GT(stats1[MonitorableTest::Object::STATISTIC_TOTAL], 0);
 
         NTSCFG_TEST_NE(stats1[MonitorableTest::Object::STATISTIC_MIN],
-                bsl::numeric_limits<bsl::int64_t>::max());
+                       bsl::numeric_limits<bsl::int64_t>::max());
 
         NTSCFG_TEST_NE(stats1[MonitorableTest::Object::STATISTIC_MAX],
-                bsl::numeric_limits<bsl::int64_t>::min());
+                       bsl::numeric_limits<bsl::int64_t>::min());
 
         // Get the internal snapshot statistics measured by the
         // monitorable object since they were last reset, and reset
@@ -832,9 +829,9 @@ NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyUsage)
         NTSCFG_TEST_EQ(stats2[MonitorableTest::Object::STATISTIC_COUNT], 0);
         NTSCFG_TEST_EQ(stats2[MonitorableTest::Object::STATISTIC_TOTAL], 0);
         NTSCFG_TEST_EQ(stats2[MonitorableTest::Object::STATISTIC_MIN],
-                bsl::numeric_limits<bsl::int64_t>::max());
+                       bsl::numeric_limits<bsl::int64_t>::max());
         NTSCFG_TEST_EQ(stats2[MonitorableTest::Object::STATISTIC_MAX],
-                bsl::numeric_limits<bsl::int64_t>::min());
+                       bsl::numeric_limits<bsl::int64_t>::min());
     }
 
     // Deregister the monitorable object.
@@ -845,11 +842,9 @@ NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyUsage)
     // object.
 
     {
-        bsl::vector<bsl::shared_ptr<ntci::Monitorable> >
-            registeredObjects;
+        bsl::vector<bsl::shared_ptr<ntci::Monitorable> > registeredObjects;
 
-        ntcm::MonitorableUtil::loadRegisteredObjects(
-            &registeredObjects);
+        ntcm::MonitorableUtil::loadRegisteredObjects(&registeredObjects);
 
         NTSCFG_TEST_EQ(registeredObjects.size(), 0);
     }

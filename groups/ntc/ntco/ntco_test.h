@@ -19,17 +19,17 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <ntca_reactorconfig.h>
 #include <ntca_proactorconfig.h>
+#include <ntca_reactorconfig.h>
 #include <ntccfg_platform.h>
+#include <ntcd_datautil.h>
 #include <ntci_log.h>
-#include <ntci_reactor.h>
-#include <ntci_reactorfactory.h>
 #include <ntci_proactor.h>
 #include <ntci_proactorfactory.h>
+#include <ntci_reactor.h>
+#include <ntci_reactorfactory.h>
 #include <ntci_user.h>
 #include <ntcs_strand.h>
-#include <ntcd_datautil.h>
 #include <ntcscm_version.h>
 #include <ntsf_system.h>
 #include <bsl_memory.h>
@@ -54,23 +54,22 @@ class Test
     static void processSocketDetached(bool* flag);
 
     // Process the specified 'event' then arrive at the specified 'latch'.
-    static ntsa::Error processDescriptorEvent(
-        bslmt::Latch*             latch,
-        const ntca::ReactorEvent& event);
+    static ntsa::Error processDescriptorEvent(bslmt::Latch*             latch,
+                                              const ntca::ReactorEvent& event);
 
     static void verifyReactorSocketsParams(
         const bsl::shared_ptr<ntci::ReactorFactory>& reactorFactory,
-        bool autoManage);
+        bool                                         autoManage);
 
     static void verifyReactorTimersParams(
         const bsl::shared_ptr<ntci::ReactorFactory>& reactorFactory,
-        bsl::size_t       maskInterestCase,
-        bsl::size_t       oneShotCase);
+        bsl::size_t                                  maskInterestCase,
+        bsl::size_t                                  oneShotCase);
 
     static void verifyReactorFunctionsParams(
         const bsl::shared_ptr<ntci::ReactorFactory>& reactorFactory);
 
-public:
+  public:
     static void verifyReactorSockets(
         const bsl::shared_ptr<ntci::ReactorFactory>& reactorFactory);
 
@@ -192,7 +191,7 @@ const bsl::shared_ptr<ntci::Strand>& Test::TimerSession::strand() const
 }
 
 Test::TimerSession::TimerSession(const bsl::string& name,
-                           bslma::Allocator*  basicAllocator)
+                                 bslma::Allocator*  basicAllocator)
 : d_name(name, basicAllocator)
 , d_deadline(1)
 , d_cancelled(1)
@@ -254,7 +253,8 @@ bool Test::TimerSession::has(ntca::TimerEventType::Value timerEventType)
     }
 }
 
-bsl::size_t Test::TimerSession::count(ntca::TimerEventType::Value timerEventType)
+bsl::size_t Test::TimerSession::count(
+    ntca::TimerEventType::Value timerEventType)
 {
     if (timerEventType == ntca::TimerEventType::e_DEADLINE) {
         return 1 - d_deadline.currentCount();
@@ -293,7 +293,7 @@ ntsa::Error Test::processDescriptorEvent(bslmt::Latch*             latch,
 }
 
 void Test::verifyReactorSocketsParams(
-    const bsl::shared_ptr<ntci::ReactorFactory>& reactorFactory, 
+    const bsl::shared_ptr<ntci::ReactorFactory>& reactorFactory,
     bool                                         autoManage)
 {
     NTSCFG_TEST_LOG_WARN << "==================" << NTSCFG_TEST_LOG_END;
@@ -335,7 +335,9 @@ void Test::verifyReactorSocketsParams(
     }
 
     bsl::shared_ptr<ntci::Reactor> reactor =
-        reactorFactory->createReactor(reactorConfig, user, NTSCFG_TEST_ALLOCATOR);
+        reactorFactory->createReactor(reactorConfig,
+                                      user,
+                                      NTSCFG_TEST_ALLOCATOR);
 
     // The reactor is initialize not managing any sockets.
 
@@ -404,12 +406,12 @@ void Test::verifyReactorSocketsParams(
     // Become interested when the client is writable, that is, it has
     // connected to its peer.
 
-    reactor->showWritable(client->handle(),
-                          ntca::ReactorEventOptions(),
-                          ntci::ReactorEventCallback(
-                              NTCCFG_BIND(&Test::processDescriptorEvent,
-                                          &clientConnected,
-                                          NTCCFG_BIND_PLACEHOLDER_1)));
+    reactor->showWritable(
+        client->handle(),
+        ntca::ReactorEventOptions(),
+        ntci::ReactorEventCallback(NTCCFG_BIND(&Test::processDescriptorEvent,
+                                               &clientConnected,
+                                               NTCCFG_BIND_PLACEHOLDER_1)));
 
     if (autoManage) {
         NTSCFG_TEST_EQ(reactor->numSockets(), 1);
@@ -433,12 +435,12 @@ void Test::verifyReactorSocketsParams(
     // Become interested when the listener is readable, that is, it has
     // a connection available to be accepted.
 
-    reactor->showReadable(listener->handle(),
-                          ntca::ReactorEventOptions(),
-                          ntci::ReactorEventCallback(
-                              NTCCFG_BIND(&Test::processDescriptorEvent,
-                                          &listenerAcceptable,
-                                          NTCCFG_BIND_PLACEHOLDER_1)));
+    reactor->showReadable(
+        listener->handle(),
+        ntca::ReactorEventOptions(),
+        ntci::ReactorEventCallback(NTCCFG_BIND(&Test::processDescriptorEvent,
+                                               &listenerAcceptable,
+                                               NTCCFG_BIND_PLACEHOLDER_1)));
 
     if (autoManage) {
         NTSCFG_TEST_EQ(reactor->numSockets(), 1);
@@ -497,12 +499,12 @@ void Test::verifyReactorSocketsParams(
 
     // Become interested in the readability of the server.
 
-    reactor->showReadable(server->handle(),
-                          ntca::ReactorEventOptions(),
-                          ntci::ReactorEventCallback(
-                              NTCCFG_BIND(&Test::processDescriptorEvent,
-                                          &serverReadable,
-                                          NTCCFG_BIND_PLACEHOLDER_1)));
+    reactor->showReadable(
+        server->handle(),
+        ntca::ReactorEventOptions(),
+        ntci::ReactorEventCallback(NTCCFG_BIND(&Test::processDescriptorEvent,
+                                               &serverReadable,
+                                               NTCCFG_BIND_PLACEHOLDER_1)));
 
     if (autoManage) {
         NTSCFG_TEST_EQ(reactor->numSockets(), 1);
@@ -925,9 +927,9 @@ void Test::verifyReactorSocketsParams(
 }
 
 void Test::verifyReactorTimersParams(
-        const bsl::shared_ptr<ntci::ReactorFactory>& reactorFactory,
-        bsl::size_t       maskInterestCase,
-        bsl::size_t       oneShotCase)
+    const bsl::shared_ptr<ntci::ReactorFactory>& reactorFactory,
+    bsl::size_t                                  maskInterestCase,
+    bsl::size_t                                  oneShotCase)
 {
     ntca::TimerOptions timerOptions;
 
@@ -979,7 +981,9 @@ void Test::verifyReactorTimersParams(
     reactorConfig.setMaxThreads(1);
 
     bsl::shared_ptr<ntci::Reactor> reactor =
-        reactorFactory->createReactor(reactorConfig, user, NTSCFG_TEST_ALLOCATOR);
+        reactorFactory->createReactor(reactorConfig,
+                                      user,
+                                      NTSCFG_TEST_ALLOCATOR);
 
     // Register this thread as a thread that will wait on the reactor.
 
@@ -990,13 +994,19 @@ void Test::verifyReactorTimersParams(
     // at t2.
 
     bsl::shared_ptr<Test::TimerSession> timerSession1;
-    timerSession1.createInplace(NTSCFG_TEST_ALLOCATOR, "timer1", NTSCFG_TEST_ALLOCATOR);
+    timerSession1.createInplace(NTSCFG_TEST_ALLOCATOR,
+                                "timer1",
+                                NTSCFG_TEST_ALLOCATOR);
 
     bsl::shared_ptr<Test::TimerSession> timerSession2;
-    timerSession2.createInplace(NTSCFG_TEST_ALLOCATOR, "timer2", NTSCFG_TEST_ALLOCATOR);
+    timerSession2.createInplace(NTSCFG_TEST_ALLOCATOR,
+                                "timer2",
+                                NTSCFG_TEST_ALLOCATOR);
 
     bsl::shared_ptr<Test::TimerSession> timerSession3;
-    timerSession3.createInplace(NTSCFG_TEST_ALLOCATOR, "timer3", NTSCFG_TEST_ALLOCATOR);
+    timerSession3.createInplace(NTSCFG_TEST_ALLOCATOR,
+                                "timer3",
+                                NTSCFG_TEST_ALLOCATOR);
 
     bsl::shared_ptr<ntci::Timer> timer1 = reactor->createTimer(
         timerOptions,
@@ -1121,7 +1131,7 @@ void Test::verifyReactorTimersParams(
 }
 
 void Test::verifyReactorFunctionsParams(
-        const bsl::shared_ptr<ntci::ReactorFactory>& reactorFactory)
+    const bsl::shared_ptr<ntci::ReactorFactory>& reactorFactory)
 {
     ntsa::Error error;
 
@@ -1138,7 +1148,9 @@ void Test::verifyReactorFunctionsParams(
     reactorConfig.setMaxThreads(1);
 
     bsl::shared_ptr<ntci::Reactor> reactor =
-        reactorFactory->createReactor(reactorConfig, user, NTSCFG_TEST_ALLOCATOR);
+        reactorFactory->createReactor(reactorConfig,
+                                      user,
+                                      NTSCFG_TEST_ALLOCATOR);
 
     // Register this thread as a thread that will wait on the reactor.
 
@@ -1159,7 +1171,7 @@ void Test::verifyReactorFunctionsParams(
 }
 
 void Test::verifyReactorSockets(
-        const bsl::shared_ptr<ntci::ReactorFactory>& reactorFactory)
+    const bsl::shared_ptr<ntci::ReactorFactory>& reactorFactory)
 {
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
@@ -1169,7 +1181,7 @@ void Test::verifyReactorSockets(
 }
 
 void Test::verifyReactorTimers(
-        const bsl::shared_ptr<ntci::ReactorFactory>& reactorFactory)
+    const bsl::shared_ptr<ntci::ReactorFactory>& reactorFactory)
 {
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
@@ -1178,14 +1190,15 @@ void Test::verifyReactorTimers(
          ++maskInterestCase)
     {
         for (bsl::size_t oneShotCase = 0; oneShotCase < 2; ++oneShotCase) {
-            Test::verifyReactorTimersParams(
-                reactorFactory, maskInterestCase, oneShotCase);
+            Test::verifyReactorTimersParams(reactorFactory,
+                                            maskInterestCase,
+                                            oneShotCase);
         }
     }
 }
 
 void Test::verifyReactorFunctions(
-        const bsl::shared_ptr<ntci::ReactorFactory>& reactorFactory)
+    const bsl::shared_ptr<ntci::ReactorFactory>& reactorFactory)
 {
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
@@ -1193,6 +1206,6 @@ void Test::verifyReactorFunctions(
     Test::verifyReactorFunctionsParams(reactorFactory);
 }
 
-} // close namespace ntco
-} // close namespace BloombergLP
+}  // close namespace ntco
+}  // close namespace BloombergLP
 #endif

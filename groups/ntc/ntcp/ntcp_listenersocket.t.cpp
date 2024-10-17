@@ -63,26 +63,26 @@ class ListenerSocketTest
     // Execute the concern with the specified 'parameters' for the specified
     // 'transport' using the specified 'proactor'.
     static void verifyGenericVariation(
-        ntsa::Transport::Value                transport,
+        ntsa::Transport::Value                 transport,
         const bsl::shared_ptr<ntci::Proactor>& proactor,
-        const ListenerSocketTest::Parameters& parameters,
-        bslma::Allocator*                     allocator);
+        const ListenerSocketTest::Parameters&  parameters,
+        bslma::Allocator*                      allocator);
 
     // Execute the concern with the specified 'parameters' for the specified
     // 'transport' using the specified 'proactor'.
     static void verifyAcceptDeadlineVariation(
-        ntsa::Transport::Value                transport,
+        ntsa::Transport::Value                 transport,
         const bsl::shared_ptr<ntci::Proactor>& proactor,
-        const ListenerSocketTest::Parameters& parameters,
-        bslma::Allocator*                     allocator);
+        const ListenerSocketTest::Parameters&  parameters,
+        bslma::Allocator*                      allocator);
 
     // Execute the concern with the specified 'parameters' for the specified
     // 'transport' using the specified 'proactor'.
     static void verifyAcceptCancellationVariation(
-        ntsa::Transport::Value                transport,
+        ntsa::Transport::Value                 transport,
         const bsl::shared_ptr<ntci::Proactor>& proactor,
-        const ListenerSocketTest::Parameters& parameters,
-        bslma::Allocator*                     allocator);
+        const ListenerSocketTest::Parameters&  parameters,
+        bslma::Allocator*                      allocator);
 
     // Cancel the accept operation on the specified 'listenerSocket' identified
     // by the specified 'token'.
@@ -139,13 +139,13 @@ class ListenerSocketTest::Framework
     /// on the specified 'barrier' then drives the specified 'proactor' until
     /// it is stopped.
     static void runProactor(const bsl::shared_ptr<ntci::Proactor>& proactor,
-                           bslmt::Barrier*                       barrier,
-                           bsl::size_t                           threadIndex);
+                            bslmt::Barrier*                        barrier,
+                            bsl::size_t threadIndex);
 
   public:
     /// Define a type alias for the function implementing a
     /// test case driven by this test framework.
-    typedef NTCCFG_FUNCTION(ntsa::Transport::Value                transport,
+    typedef NTCCFG_FUNCTION(ntsa::Transport::Value                 transport,
                             const bsl::shared_ptr<ntci::Proactor>& proactor,
                             bslma::Allocator* allocator) ExecuteCallback;
 
@@ -386,20 +386,20 @@ class ListenerSocketTest::StreamSocketManager
     /// Define a type alias for a mutex lock guard.
     typedef ntccfg::LockGuard LockGuard;
 
-    ntccfg::Object                 d_object;
+    ntccfg::Object                  d_object;
     bsl::shared_ptr<ntci::Proactor> d_proactor_sp;
-    bsl::shared_ptr<ntcs::Metrics> d_metrics_sp;
-    Mutex                          d_listenerSocketMapMutex;
-    ListenerSocketApplicationMap   d_listenerSocketMap;
-    bslmt::Latch                   d_listenerSocketsEstablished;
-    bslmt::Latch                   d_listenerSocketsClosed;
-    Mutex                          d_streamSocketMapMutex;
-    StreamSocketApplicationMap     d_streamSocketMap;
-    bslmt::Latch                   d_streamSocketsConnected;
-    bslmt::Latch                   d_streamSocketsEstablished;
-    bslmt::Latch                   d_streamSocketsClosed;
-    ListenerSocketTest::Parameters d_parameters;
-    bslma::Allocator*              d_allocator_p;
+    bsl::shared_ptr<ntcs::Metrics>  d_metrics_sp;
+    Mutex                           d_listenerSocketMapMutex;
+    ListenerSocketApplicationMap    d_listenerSocketMap;
+    bslmt::Latch                    d_listenerSocketsEstablished;
+    bslmt::Latch                    d_listenerSocketsClosed;
+    Mutex                           d_streamSocketMapMutex;
+    StreamSocketApplicationMap      d_streamSocketMap;
+    bslmt::Latch                    d_streamSocketsConnected;
+    bslmt::Latch                    d_streamSocketsEstablished;
+    bslmt::Latch                    d_streamSocketsClosed;
+    ListenerSocketTest::Parameters  d_parameters;
+    bslma::Allocator*               d_allocator_p;
 
   private:
     StreamSocketManager(const StreamSocketManager&) BSLS_KEYWORD_DELETED;
@@ -440,7 +440,7 @@ class ListenerSocketTest::StreamSocketManager
     /// supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
     StreamSocketManager(const bsl::shared_ptr<ntci::Proactor>& proactor,
-                        const ListenerSocketTest::Parameters& parameters,
+                        const ListenerSocketTest::Parameters&  parameters,
                         bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
@@ -453,8 +453,8 @@ class ListenerSocketTest::StreamSocketManager
 
 void ListenerSocketTest::Framework::runProactor(
     const bsl::shared_ptr<ntci::Proactor>& proactor,
-    bslmt::Barrier*                       barrier,
-    bsl::size_t                           threadIndex)
+    bslmt::Barrier*                        barrier,
+    bsl::size_t                            threadIndex)
 {
     const char* threadNamePrefix = "test";
 
@@ -532,56 +532,61 @@ void ListenerSocketTest::Framework::execute(
     bsl::size_t            numThreads,
     const ExecuteCallback& executeCallback)
 {
-        ntsa::Error error;
+    ntsa::Error error;
 
-        BSLS_LOG_INFO("Testing transport %s numThreads %d",
-                      ntsa::Transport::toString(transport),
-                      (int)(numThreads));
+    BSLS_LOG_INFO("Testing transport %s numThreads %d",
+                  ntsa::Transport::toString(transport),
+                  (int)(numThreads));
 
-        bsl::shared_ptr<ntcd::Simulation> simulation;
-        simulation.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+    bsl::shared_ptr<ntcd::Simulation> simulation;
+    simulation.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-        error = simulation->run();
-        NTSCFG_TEST_OK(error);
+    error = simulation->run();
+    NTSCFG_TEST_OK(error);
 
-        const bsl::size_t BLOB_BUFFER_SIZE = 4096;
+    const bsl::size_t BLOB_BUFFER_SIZE = 4096;
 
-        bsl::shared_ptr<ntcs::DataPool> dataPool;
-        dataPool.createInplace(NTSCFG_TEST_ALLOCATOR, BLOB_BUFFER_SIZE, BLOB_BUFFER_SIZE, NTSCFG_TEST_ALLOCATOR);
+    bsl::shared_ptr<ntcs::DataPool> dataPool;
+    dataPool.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           BLOB_BUFFER_SIZE,
+                           BLOB_BUFFER_SIZE,
+                           NTSCFG_TEST_ALLOCATOR);
 
-        bsl::shared_ptr<ntcs::User> user;
-        user.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+    bsl::shared_ptr<ntcs::User> user;
+    user.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-        user->setDataPool(dataPool);
+    user->setDataPool(dataPool);
 
-        ntca::ProactorConfig proactorConfig;
-        proactorConfig.setMetricName("test");
-        proactorConfig.setMinThreads(numThreads);
-        proactorConfig.setMaxThreads(numThreads);
+    ntca::ProactorConfig proactorConfig;
+    proactorConfig.setMetricName("test");
+    proactorConfig.setMinThreads(numThreads);
+    proactorConfig.setMaxThreads(numThreads);
 
-        bsl::shared_ptr<ntcd::Proactor> proactor;
-        proactor.createInplace(NTSCFG_TEST_ALLOCATOR, proactorConfig, user, NTSCFG_TEST_ALLOCATOR);
+    bsl::shared_ptr<ntcd::Proactor> proactor;
+    proactor.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           proactorConfig,
+                           user,
+                           NTSCFG_TEST_ALLOCATOR);
 
-        bslmt::Barrier threadGroupBarrier(numThreads + 1);
+    bslmt::Barrier threadGroupBarrier(numThreads + 1);
 
-        bslmt::ThreadGroup threadGroup(NTSCFG_TEST_ALLOCATOR);
+    bslmt::ThreadGroup threadGroup(NTSCFG_TEST_ALLOCATOR);
 
-        for (bsl::size_t threadIndex = 0; threadIndex < numThreads;
-             ++threadIndex)
-        {
-            threadGroup.addThread(NTCCFG_BIND(&Framework::runProactor,
-                                              proactor,
-                                              &threadGroupBarrier,
-                                              threadIndex));
-        }
+    for (bsl::size_t threadIndex = 0; threadIndex < numThreads; ++threadIndex)
+    {
+        threadGroup.addThread(NTCCFG_BIND(&Framework::runProactor,
+                                          proactor,
+                                          &threadGroupBarrier,
+                                          threadIndex));
+    }
 
-        threadGroupBarrier.wait();
+    threadGroupBarrier.wait();
 
-        executeCallback(transport, proactor, NTSCFG_TEST_ALLOCATOR);
+    executeCallback(transport, proactor, NTSCFG_TEST_ALLOCATOR);
 
-        threadGroup.joinAll();
+    threadGroup.joinAll();
 
-        simulation->stop();
+    simulation->stop();
 }
 
 void ListenerSocketTest::ListenerSocketApplication::
@@ -1354,8 +1359,8 @@ void ListenerSocketTest::StreamSocketManager::processConnect(
 
 ListenerSocketTest::StreamSocketManager::StreamSocketManager(
     const bsl::shared_ptr<ntci::Proactor>& proactor,
-    const ListenerSocketTest::Parameters& parameters,
-    bslma::Allocator*                     basicAllocator)
+    const ListenerSocketTest::Parameters&  parameters,
+    bslma::Allocator*                      basicAllocator)
 : d_object("ListenerSocketTest::StreamSocketManager")
 , d_proactor_sp(proactor)
 , d_metrics_sp()
@@ -1690,10 +1695,10 @@ void ListenerSocketTest::StreamSocketManager::run()
 }
 
 void ListenerSocketTest::verifyGenericVariation(
-    ntsa::Transport::Value                transport,
+    ntsa::Transport::Value                 transport,
     const bsl::shared_ptr<ntci::Proactor>& proactor,
-    const ListenerSocketTest::Parameters& parameters,
-    bslma::Allocator*                     allocator)
+    const ListenerSocketTest::Parameters&  parameters,
+    bslma::Allocator*                      allocator)
 {
     // Test accepting using asynchronous accept callbacks and reading data
     // using asynchronous read callbacks.
@@ -1721,10 +1726,10 @@ void ListenerSocketTest::verifyGenericVariation(
 }
 
 void ListenerSocketTest::verifyAcceptDeadlineVariation(
-    ntsa::Transport::Value                transport,
+    ntsa::Transport::Value                 transport,
     const bsl::shared_ptr<ntci::Proactor>& proactor,
-    const ListenerSocketTest::Parameters& parameters,
-    bslma::Allocator*                     allocator)
+    const ListenerSocketTest::Parameters&  parameters,
+    bslma::Allocator*                      allocator)
 {
     // Concern: Accept deadlines.
 
@@ -1796,10 +1801,10 @@ void ListenerSocketTest::verifyAcceptDeadlineVariation(
 }
 
 void ListenerSocketTest::verifyAcceptCancellationVariation(
-    ntsa::Transport::Value                transport,
+    ntsa::Transport::Value                 transport,
     const bsl::shared_ptr<ntci::Proactor>& proactor,
-    const ListenerSocketTest::Parameters& parameters,
-    bslma::Allocator*                     allocator)
+    const ListenerSocketTest::Parameters&  parameters,
+    bslma::Allocator*                      allocator)
 {
     // Concern: Accept cancellation.
 

@@ -59,7 +59,7 @@ BSLS_IDENT("$Id: $")
     do {                                                                      \
         if (__LOG_CONTEXT__) {                                                \
             if (NTCCFG_UNLIKELY((severity) <=                                 \
-                BloombergLP::bsls::Log::severityThreshold()))                 \
+                                BloombergLP::bsls::Log::severityThreshold())) \
             {                                                                 \
                 BloombergLP::ntci::Log::write(__LOG_CONTEXT__,                \
                                               (severity),                     \
@@ -78,7 +78,7 @@ BSLS_IDENT("$Id: $")
     do {                                                                      \
         if (__LOG_CONTEXT__) {                                                \
             if (NTCCFG_UNLIKELY((severity) <=                                 \
-                BloombergLP::bsls::Log::severityThreshold()))                 \
+                                BloombergLP::bsls::Log::severityThreshold())) \
             {                                                                 \
                 BloombergLP::ntci::Log::writeRaw(__LOG_CONTEXT__,             \
                                                  (severity),                  \

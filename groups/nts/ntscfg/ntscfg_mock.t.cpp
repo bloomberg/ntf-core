@@ -61,7 +61,6 @@ class MockTest
 
     NTF_MOCK_CLASS_END;
 
-
   public:
     // TODO
     static void verifyCase1();
@@ -167,9 +166,7 @@ NTSCFG_TEST_FUNCTION(ntscfg::MockTest::verifyCase4)
     {
         // an argument can be saved to external variable to later used
         int storage = 0;
-        NTF_EXPECT(mock, f2, IGNORE_ARG)
-            .ONCE()
-            .SAVE_ARG_1(Mock::TO(&storage));
+        NTF_EXPECT(mock, f2, IGNORE_ARG).ONCE().SAVE_ARG_1(Mock::TO(&storage));
 
         int val = 22;
         mock.f2(val);
@@ -197,9 +194,7 @@ NTSCFG_TEST_FUNCTION(ntscfg::MockTest::verifyCase4)
     {
         //the same can be done with references
         int storage = 0;
-        NTF_EXPECT(mock, f4, IGNORE_ARG)
-            .ONCE()
-            .SAVE_ARG_1(Mock::TO(&storage));
+        NTF_EXPECT(mock, f4, IGNORE_ARG).ONCE().SAVE_ARG_1(Mock::TO(&storage));
 
         int val = 7;
         mock.f4(val);
@@ -242,7 +237,7 @@ NTSCFG_TEST_FUNCTION(ntscfg::MockTest::verifyCase6)
         bsl::shared_ptr<int> sptr;
         sptr.createInplace(NTSCFG_TEST_ALLOCATOR);
         *sptr = 14;
-        
+
         const bsl::shared_ptr<int>& sptrRef = sptr;
 
         int    expectedInt    = 22;

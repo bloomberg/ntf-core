@@ -19,27 +19,27 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <ntcd_encryption.h>
-#include <ntcd_datautil.h>
-#include <ntcd_simulation.h>
-#include <ntcd_reactor.h>
-#include <ntcd_proactor.h>
-#include <ntcm_monitorable.h>
-#include <ntca_reactorconfig.h>
 #include <ntca_proactorconfig.h>
+#include <ntca_reactorconfig.h>
 #include <ntccfg_platform.h>
+#include <ntcd_datautil.h>
+#include <ntcd_encryption.h>
+#include <ntcd_proactor.h>
+#include <ntcd_reactor.h>
+#include <ntcd_simulation.h>
 #include <ntci_log.h>
-#include <ntci_reactor.h>
-#include <ntci_reactorfactory.h>
 #include <ntci_proactor.h>
 #include <ntci_proactorfactory.h>
+#include <ntci_reactor.h>
+#include <ntci_reactorfactory.h>
 #include <ntci_user.h>
+#include <ntcm_monitorable.h>
 #include <ntcs_datapool.h>
 #include <ntcs_strand.h>
 #include <ntcs_user.h>
 #include <ntcscm_version.h>
-#include <ntsf_system.h>
 #include <ntscfg_test.h>
+#include <ntsf_system.h>
 #include <bsl_memory.h>
 
 namespace BloombergLP {
@@ -51,16 +51,16 @@ namespace ntcd {
 /// Provide a test case execution framework.
 class TestFramework
 {
- public:
+  public:
     /// Define a type alias for the function implementing a test case driven by
     /// this test framework.
-    typedef NTCCFG_FUNCTION(const bsl::shared_ptr<ntci::Reactor>& reactor) 
-                            ReactorTestCallback;
+    typedef NTCCFG_FUNCTION(const bsl::shared_ptr<ntci::Reactor>& reactor)
+        ReactorTestCallback;
 
     /// Define a type alias for the function implementing a test case driven by
     /// this test framework.
-    typedef NTCCFG_FUNCTION(const bsl::shared_ptr<ntci::Proactor>& proactor) 
-                            ProactorTestCallback;
+    typedef NTCCFG_FUNCTION(const bsl::shared_ptr<ntci::Proactor>& proactor)
+        ProactorTestCallback;
 
   private:
     /// Run a thread identified by the specified 'threadIndex' that waits
@@ -77,7 +77,7 @@ class TestFramework
                             bslmt::Barrier*                        barrier,
                             bsl::size_t threadIndex);
 
-public:
+  public:
     /// Execute the specified 'callback' implementing a test case, varying the
     /// test configuration and machinery by driver type, and number
     /// of threads.
@@ -88,7 +88,6 @@ public:
     /// of threads.
     static void verifyProactor(const ProactorTestCallback& callback);
 
-
     /// Return an endpoint representing a suitable address to which to
     /// bind a socket of the specified 'transport' type for use by this
     /// test driver.
@@ -97,7 +96,7 @@ public:
 
 void TestFramework::runReactor(const bsl::shared_ptr<ntci::Reactor>& reactor,
                                bslmt::Barrier*                       barrier,
-                               bsl::size_t                           threadIndex)
+                               bsl::size_t threadIndex)
 {
     const char* threadNamePrefix = "test";
 
@@ -131,9 +130,10 @@ void TestFramework::runReactor(const bsl::shared_ptr<ntci::Reactor>& reactor,
     reactor->deregisterWaiter(waiter);
 }
 
-void TestFramework::runProactor(const bsl::shared_ptr<ntci::Proactor>& proactor,
-                            bslmt::Barrier*                        barrier,
-                            bsl::size_t                            threadIndex)
+void TestFramework::runProactor(
+    const bsl::shared_ptr<ntci::Proactor>& proactor,
+    bslmt::Barrier*                        barrier,
+    bsl::size_t                            threadIndex)
 {
     const char* threadNamePrefix = "test";
 
@@ -200,16 +200,15 @@ void TestFramework::verifyReactor(const ReactorTestCallback& callback)
         simulation.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
         error = simulation->run();
-        NTCCFG_TEST_OK(error);
+        NTSCFG_TEST_OK(error);
 
         const bsl::size_t k_BLOB_BUFFER_SIZE = 4096;
 
         bsl::shared_ptr<ntcs::DataPool> dataPool;
-        dataPool.createInplace(
-            NTSCFG_TEST_ALLOCATOR, 
-            k_BLOB_BUFFER_SIZE, 
-            k_BLOB_BUFFER_SIZE, 
-            NTSCFG_TEST_ALLOCATOR);
+        dataPool.createInplace(NTSCFG_TEST_ALLOCATOR,
+                               k_BLOB_BUFFER_SIZE,
+                               k_BLOB_BUFFER_SIZE,
+                               NTSCFG_TEST_ALLOCATOR);
 
         bsl::shared_ptr<ntcs::User> user;
         user.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
@@ -225,20 +224,22 @@ void TestFramework::verifyReactor(const ReactorTestCallback& callback)
         reactorConfig.setOneShot(numThreads > 1);
 
         bsl::shared_ptr<ntcd::Reactor> reactor;
-        reactor.createInplace(
-            NTSCFG_TEST_ALLOCATOR, reactorConfig, user, NTSCFG_TEST_ALLOCATOR);
+        reactor.createInplace(NTSCFG_TEST_ALLOCATOR,
+                              reactorConfig,
+                              user,
+                              NTSCFG_TEST_ALLOCATOR);
 
         bslmt::Barrier threadGroupBarrier(numThreads + 1);
 
         bslmt::ThreadGroup threadGroup(NTSCFG_TEST_ALLOCATOR);
 
         for (bsl::size_t threadIndex = 0; threadIndex < numThreads;
-                ++threadIndex)
+             ++threadIndex)
         {
             threadGroup.addThread(NTCCFG_BIND(&TestFramework::runReactor,
-                                                reactor,
-                                                &threadGroupBarrier,
-                                                threadIndex));
+                                              reactor,
+                                              &threadGroupBarrier,
+                                              threadIndex));
         }
 
         threadGroupBarrier.wait();
@@ -287,16 +288,15 @@ void TestFramework::verifyProactor(const ProactorTestCallback& callback)
         simulation.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
         error = simulation->run();
-        NTCCFG_TEST_OK(error);
+        NTSCFG_TEST_OK(error);
 
         const bsl::size_t k_BLOB_BUFFER_SIZE = 4096;
 
         bsl::shared_ptr<ntcs::DataPool> dataPool;
-        dataPool.createInplace(
-            NTSCFG_TEST_ALLOCATOR, 
-            k_BLOB_BUFFER_SIZE, 
-            k_BLOB_BUFFER_SIZE, 
-            NTSCFG_TEST_ALLOCATOR);
+        dataPool.createInplace(NTSCFG_TEST_ALLOCATOR,
+                               k_BLOB_BUFFER_SIZE,
+                               k_BLOB_BUFFER_SIZE,
+                               NTSCFG_TEST_ALLOCATOR);
 
         bsl::shared_ptr<ntcs::User> user;
         user.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
@@ -309,11 +309,10 @@ void TestFramework::verifyProactor(const ProactorTestCallback& callback)
         proactorConfig.setMaxThreads(numThreads);
 
         bsl::shared_ptr<ntcd::Proactor> proactor;
-        proactor.createInplace(
-            NTSCFG_TEST_ALLOCATOR, 
-            proactorConfig, 
-            user, 
-            NTSCFG_TEST_ALLOCATOR);
+        proactor.createInplace(NTSCFG_TEST_ALLOCATOR,
+                               proactorConfig,
+                               user,
+                               NTSCFG_TEST_ALLOCATOR);
 
         bslmt::Barrier threadGroupBarrier(numThreads + 1);
 
@@ -368,6 +367,6 @@ ntsa::Endpoint TestFramework::any(ntsa::Transport::Value transport)
     return endpoint;
 }
 
-} // close namespace ntcd
-} // close namespace BloombergLP
+}  // close namespace ntcd
+}  // close namespace BloombergLP
 #endif

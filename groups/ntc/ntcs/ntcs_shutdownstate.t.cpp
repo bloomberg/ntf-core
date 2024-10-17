@@ -13,15 +13,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntcs_shutdownstate_t_cpp, "$Id$ $CSID$")
+
 #include <ntcs_shutdownstate.h>
 
-#include <ntccfg_test.h>
 #include <ntci_log.h>
-#include <bsl_iostream.h>
 
 using namespace BloombergLP;
 
-NTCCFG_TEST_CASE(1)
+namespace BloombergLP {
+namespace ntcs {
+
+// Provide tests for 'ntcs::ShutdownState'.
+class ShutdownStateTest
+{
+  public:
+    // TODO
+    static void verifyCase1();
+
+    // TODO
+    static void verifyCase2();
+
+    // TODO
+    static void verifyCase3();
+};
+
+NTSCFG_TEST_FUNCTION(ntcs::ShutdownStateTest::verifyCase1)
 {
     // Test shutdown sequence with half-open sockets.
     //
@@ -42,10 +62,10 @@ NTCCFG_TEST_CASE(1)
     {
         ntcs::ShutdownState state;
 
-        NTCCFG_TEST_FALSE(state.initiated());
-        NTCCFG_TEST_TRUE(state.canSend());
-        NTCCFG_TEST_TRUE(state.canReceive());
-        NTCCFG_TEST_FALSE(state.completed());
+        NTSCFG_TEST_FALSE(state.initiated());
+        NTSCFG_TEST_TRUE(state.canSend());
+        NTSCFG_TEST_TRUE(state.canReceive());
+        NTSCFG_TEST_FALSE(state.completed());
     }
 
     // Test case 1:
@@ -62,11 +82,11 @@ NTCCFG_TEST_CASE(1)
         {
             bool result = state.tryShutdownSend(&context, true);
 
-            NTCCFG_TEST_TRUE(result);
-            NTCCFG_TEST_TRUE(context.shutdownInitiated());
-            NTCCFG_TEST_TRUE(context.shutdownSend());
-            NTCCFG_TEST_FALSE(context.shutdownReceive());
-            NTCCFG_TEST_FALSE(context.shutdownCompleted());
+            NTSCFG_TEST_TRUE(result);
+            NTSCFG_TEST_TRUE(context.shutdownInitiated());
+            NTSCFG_TEST_TRUE(context.shutdownSend());
+            NTSCFG_TEST_FALSE(context.shutdownReceive());
+            NTSCFG_TEST_FALSE(context.shutdownCompleted());
         }
 
         // shutdown(RECEIVE, PEER)
@@ -77,17 +97,17 @@ NTCCFG_TEST_CASE(1)
                                          true,
                                          ntsa::ShutdownOrigin::e_REMOTE);
 
-            NTCCFG_TEST_TRUE(result);
-            NTCCFG_TEST_FALSE(context.shutdownInitiated());
-            NTCCFG_TEST_FALSE(context.shutdownSend());
-            NTCCFG_TEST_TRUE(context.shutdownReceive());
-            NTCCFG_TEST_TRUE(context.shutdownCompleted());
+            NTSCFG_TEST_TRUE(result);
+            NTSCFG_TEST_FALSE(context.shutdownInitiated());
+            NTSCFG_TEST_FALSE(context.shutdownSend());
+            NTSCFG_TEST_TRUE(context.shutdownReceive());
+            NTSCFG_TEST_TRUE(context.shutdownCompleted());
         }
 
-        NTCCFG_TEST_TRUE(state.initiated());
-        NTCCFG_TEST_FALSE(state.canSend());
-        NTCCFG_TEST_FALSE(state.canReceive());
-        NTCCFG_TEST_TRUE(state.completed());
+        NTSCFG_TEST_TRUE(state.initiated());
+        NTSCFG_TEST_FALSE(state.canSend());
+        NTSCFG_TEST_FALSE(state.canReceive());
+        NTSCFG_TEST_TRUE(state.completed());
     }
 
     // Test case 2:
@@ -104,11 +124,11 @@ NTCCFG_TEST_CASE(1)
         {
             bool result = state.tryShutdownSend(&context, true);
 
-            NTCCFG_TEST_TRUE(result);
-            NTCCFG_TEST_TRUE(context.shutdownInitiated());
-            NTCCFG_TEST_TRUE(context.shutdownSend());
-            NTCCFG_TEST_FALSE(context.shutdownReceive());
-            NTCCFG_TEST_FALSE(context.shutdownCompleted());
+            NTSCFG_TEST_TRUE(result);
+            NTSCFG_TEST_TRUE(context.shutdownInitiated());
+            NTSCFG_TEST_TRUE(context.shutdownSend());
+            NTSCFG_TEST_FALSE(context.shutdownReceive());
+            NTSCFG_TEST_FALSE(context.shutdownCompleted());
         }
 
         // shutdown(RECEIVE, LOCAL)
@@ -119,17 +139,17 @@ NTCCFG_TEST_CASE(1)
                                          true,
                                          ntsa::ShutdownOrigin::e_SOURCE);
 
-            NTCCFG_TEST_TRUE(result);
-            NTCCFG_TEST_FALSE(context.shutdownInitiated());
-            NTCCFG_TEST_FALSE(context.shutdownSend());
-            NTCCFG_TEST_TRUE(context.shutdownReceive());
-            NTCCFG_TEST_TRUE(context.shutdownCompleted());
+            NTSCFG_TEST_TRUE(result);
+            NTSCFG_TEST_FALSE(context.shutdownInitiated());
+            NTSCFG_TEST_FALSE(context.shutdownSend());
+            NTSCFG_TEST_TRUE(context.shutdownReceive());
+            NTSCFG_TEST_TRUE(context.shutdownCompleted());
         }
 
-        NTCCFG_TEST_TRUE(state.initiated());
-        NTCCFG_TEST_FALSE(state.canSend());
-        NTCCFG_TEST_FALSE(state.canReceive());
-        NTCCFG_TEST_TRUE(state.completed());
+        NTSCFG_TEST_TRUE(state.initiated());
+        NTSCFG_TEST_FALSE(state.canSend());
+        NTSCFG_TEST_FALSE(state.canReceive());
+        NTSCFG_TEST_TRUE(state.completed());
     }
 
     // Test case 3:
@@ -149,11 +169,11 @@ NTCCFG_TEST_CASE(1)
                                          true,
                                          ntsa::ShutdownOrigin::e_REMOTE);
 
-            NTCCFG_TEST_TRUE(result);
-            NTCCFG_TEST_TRUE(context.shutdownInitiated());
-            NTCCFG_TEST_FALSE(context.shutdownSend());
-            NTCCFG_TEST_TRUE(context.shutdownReceive());
-            NTCCFG_TEST_FALSE(context.shutdownCompleted());
+            NTSCFG_TEST_TRUE(result);
+            NTSCFG_TEST_TRUE(context.shutdownInitiated());
+            NTSCFG_TEST_FALSE(context.shutdownSend());
+            NTSCFG_TEST_TRUE(context.shutdownReceive());
+            NTSCFG_TEST_FALSE(context.shutdownCompleted());
         }
 
         // shutdown(SEND)
@@ -161,17 +181,17 @@ NTCCFG_TEST_CASE(1)
         {
             bool result = state.tryShutdownSend(&context, true);
 
-            NTCCFG_TEST_TRUE(result);
-            NTCCFG_TEST_FALSE(context.shutdownInitiated());
-            NTCCFG_TEST_TRUE(context.shutdownSend());
-            NTCCFG_TEST_FALSE(context.shutdownReceive());
-            NTCCFG_TEST_TRUE(context.shutdownCompleted());
+            NTSCFG_TEST_TRUE(result);
+            NTSCFG_TEST_FALSE(context.shutdownInitiated());
+            NTSCFG_TEST_TRUE(context.shutdownSend());
+            NTSCFG_TEST_FALSE(context.shutdownReceive());
+            NTSCFG_TEST_TRUE(context.shutdownCompleted());
         }
 
-        NTCCFG_TEST_TRUE(state.initiated());
-        NTCCFG_TEST_FALSE(state.canSend());
-        NTCCFG_TEST_FALSE(state.canReceive());
-        NTCCFG_TEST_TRUE(state.completed());
+        NTSCFG_TEST_TRUE(state.initiated());
+        NTSCFG_TEST_FALSE(state.canSend());
+        NTSCFG_TEST_FALSE(state.canReceive());
+        NTSCFG_TEST_TRUE(state.completed());
     }
 
     // Test case 4:
@@ -191,11 +211,11 @@ NTCCFG_TEST_CASE(1)
                                          true,
                                          ntsa::ShutdownOrigin::e_SOURCE);
 
-            NTCCFG_TEST_TRUE(result);
-            NTCCFG_TEST_FALSE(context.shutdownInitiated());
-            NTCCFG_TEST_FALSE(context.shutdownSend());
-            NTCCFG_TEST_TRUE(context.shutdownReceive());
-            NTCCFG_TEST_FALSE(context.shutdownCompleted());
+            NTSCFG_TEST_TRUE(result);
+            NTSCFG_TEST_FALSE(context.shutdownInitiated());
+            NTSCFG_TEST_FALSE(context.shutdownSend());
+            NTSCFG_TEST_TRUE(context.shutdownReceive());
+            NTSCFG_TEST_FALSE(context.shutdownCompleted());
         }
 
         // shutdown(SEND)
@@ -203,21 +223,21 @@ NTCCFG_TEST_CASE(1)
         {
             bool result = state.tryShutdownSend(&context, true);
 
-            NTCCFG_TEST_TRUE(result);
-            NTCCFG_TEST_TRUE(context.shutdownInitiated());
-            NTCCFG_TEST_TRUE(context.shutdownSend());
-            NTCCFG_TEST_FALSE(context.shutdownReceive());
-            NTCCFG_TEST_TRUE(context.shutdownCompleted());
+            NTSCFG_TEST_TRUE(result);
+            NTSCFG_TEST_TRUE(context.shutdownInitiated());
+            NTSCFG_TEST_TRUE(context.shutdownSend());
+            NTSCFG_TEST_FALSE(context.shutdownReceive());
+            NTSCFG_TEST_TRUE(context.shutdownCompleted());
         }
 
-        NTCCFG_TEST_TRUE(state.initiated());
-        NTCCFG_TEST_FALSE(state.canSend());
-        NTCCFG_TEST_FALSE(state.canReceive());
-        NTCCFG_TEST_TRUE(state.completed());
+        NTSCFG_TEST_TRUE(state.initiated());
+        NTSCFG_TEST_FALSE(state.canSend());
+        NTSCFG_TEST_FALSE(state.canReceive());
+        NTSCFG_TEST_TRUE(state.completed());
     }
 }
 
-NTCCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntcs::ShutdownStateTest::verifyCase2)
 {
     // Test shutdown sequence with automatically-closed (i.e., non-half-open)
     // sockets.
@@ -233,10 +253,10 @@ NTCCFG_TEST_CASE(2)
     {
         ntcs::ShutdownState state;
 
-        NTCCFG_TEST_FALSE(state.initiated());
-        NTCCFG_TEST_TRUE(state.canSend());
-        NTCCFG_TEST_TRUE(state.canReceive());
-        NTCCFG_TEST_FALSE(state.completed());
+        NTSCFG_TEST_FALSE(state.initiated());
+        NTSCFG_TEST_TRUE(state.canSend());
+        NTSCFG_TEST_TRUE(state.canReceive());
+        NTSCFG_TEST_FALSE(state.completed());
     }
 
     // Test case 1:
@@ -252,17 +272,17 @@ NTCCFG_TEST_CASE(2)
         {
             bool result = state.tryShutdownSend(&context, false);
 
-            NTCCFG_TEST_TRUE(result);
-            NTCCFG_TEST_TRUE(context.shutdownInitiated());
-            NTCCFG_TEST_TRUE(context.shutdownSend());
-            NTCCFG_TEST_TRUE(context.shutdownReceive());
-            NTCCFG_TEST_TRUE(context.shutdownCompleted());
+            NTSCFG_TEST_TRUE(result);
+            NTSCFG_TEST_TRUE(context.shutdownInitiated());
+            NTSCFG_TEST_TRUE(context.shutdownSend());
+            NTSCFG_TEST_TRUE(context.shutdownReceive());
+            NTSCFG_TEST_TRUE(context.shutdownCompleted());
         }
 
-        NTCCFG_TEST_TRUE(state.initiated());
-        NTCCFG_TEST_FALSE(state.canSend());
-        NTCCFG_TEST_FALSE(state.canReceive());
-        NTCCFG_TEST_TRUE(state.completed());
+        NTSCFG_TEST_TRUE(state.initiated());
+        NTSCFG_TEST_FALSE(state.canSend());
+        NTSCFG_TEST_FALSE(state.canReceive());
+        NTSCFG_TEST_TRUE(state.completed());
     }
 
     // Test case 2:
@@ -281,17 +301,17 @@ NTCCFG_TEST_CASE(2)
                                          false,
                                          ntsa::ShutdownOrigin::e_SOURCE);
 
-            NTCCFG_TEST_TRUE(result);
-            NTCCFG_TEST_TRUE(context.shutdownInitiated());
-            NTCCFG_TEST_TRUE(context.shutdownSend());
-            NTCCFG_TEST_TRUE(context.shutdownReceive());
-            NTCCFG_TEST_TRUE(context.shutdownCompleted());
+            NTSCFG_TEST_TRUE(result);
+            NTSCFG_TEST_TRUE(context.shutdownInitiated());
+            NTSCFG_TEST_TRUE(context.shutdownSend());
+            NTSCFG_TEST_TRUE(context.shutdownReceive());
+            NTSCFG_TEST_TRUE(context.shutdownCompleted());
         }
 
-        NTCCFG_TEST_TRUE(state.initiated());
-        NTCCFG_TEST_FALSE(state.canSend());
-        NTCCFG_TEST_FALSE(state.canReceive());
-        NTCCFG_TEST_TRUE(state.completed());
+        NTSCFG_TEST_TRUE(state.initiated());
+        NTSCFG_TEST_FALSE(state.canSend());
+        NTSCFG_TEST_FALSE(state.canReceive());
+        NTSCFG_TEST_TRUE(state.completed());
     }
 
     // Test case 3:
@@ -310,21 +330,21 @@ NTCCFG_TEST_CASE(2)
                                          false,
                                          ntsa::ShutdownOrigin::e_REMOTE);
 
-            NTCCFG_TEST_TRUE(result);
-            NTCCFG_TEST_TRUE(context.shutdownInitiated());
-            NTCCFG_TEST_TRUE(context.shutdownSend());
-            NTCCFG_TEST_TRUE(context.shutdownReceive());
-            NTCCFG_TEST_TRUE(context.shutdownCompleted());
+            NTSCFG_TEST_TRUE(result);
+            NTSCFG_TEST_TRUE(context.shutdownInitiated());
+            NTSCFG_TEST_TRUE(context.shutdownSend());
+            NTSCFG_TEST_TRUE(context.shutdownReceive());
+            NTSCFG_TEST_TRUE(context.shutdownCompleted());
         }
 
-        NTCCFG_TEST_TRUE(state.initiated());
-        NTCCFG_TEST_FALSE(state.canSend());
-        NTCCFG_TEST_FALSE(state.canReceive());
-        NTCCFG_TEST_TRUE(state.completed());
+        NTSCFG_TEST_TRUE(state.initiated());
+        NTSCFG_TEST_FALSE(state.canSend());
+        NTSCFG_TEST_FALSE(state.canReceive());
+        NTSCFG_TEST_TRUE(state.completed());
     }
 }
 
-NTCCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntcs::ShutdownStateTest::verifyCase3)
 {
     // Test shutdown sequence on already closed socket.
     //
@@ -339,10 +359,10 @@ NTCCFG_TEST_CASE(3)
     {
         ntcs::ShutdownState state;
 
-        NTCCFG_TEST_FALSE(state.initiated());
-        NTCCFG_TEST_TRUE(state.canSend());
-        NTCCFG_TEST_TRUE(state.canReceive());
-        NTCCFG_TEST_FALSE(state.completed());
+        NTSCFG_TEST_FALSE(state.initiated());
+        NTSCFG_TEST_TRUE(state.canSend());
+        NTSCFG_TEST_TRUE(state.canReceive());
+        NTSCFG_TEST_FALSE(state.completed());
     }
 
     // Test case 1:
@@ -358,53 +378,53 @@ NTCCFG_TEST_CASE(3)
         {
             bool result = state.tryShutdownSend(&context, false);
 
-            NTCCFG_TEST_TRUE(result);
-            NTCCFG_TEST_TRUE(context.shutdownInitiated());
-            NTCCFG_TEST_TRUE(context.shutdownSend());
-            NTCCFG_TEST_TRUE(context.shutdownReceive());
-            NTCCFG_TEST_TRUE(context.shutdownCompleted());
+            NTSCFG_TEST_TRUE(result);
+            NTSCFG_TEST_TRUE(context.shutdownInitiated());
+            NTSCFG_TEST_TRUE(context.shutdownSend());
+            NTSCFG_TEST_TRUE(context.shutdownReceive());
+            NTSCFG_TEST_TRUE(context.shutdownCompleted());
         }
 
-        NTCCFG_TEST_TRUE(state.initiated());
-        NTCCFG_TEST_FALSE(state.canSend());
-        NTCCFG_TEST_FALSE(state.canReceive());
-        NTCCFG_TEST_TRUE(state.completed());
+        NTSCFG_TEST_TRUE(state.initiated());
+        NTSCFG_TEST_FALSE(state.canSend());
+        NTSCFG_TEST_FALSE(state.canReceive());
+        NTSCFG_TEST_TRUE(state.completed());
 
         {
             bool result = state.tryShutdownSend(&context, false);
-            NTCCFG_TEST_FALSE(result);
+            NTSCFG_TEST_FALSE(result);
         }
 
-        NTCCFG_TEST_TRUE(state.initiated());
-        NTCCFG_TEST_FALSE(state.canSend());
-        NTCCFG_TEST_FALSE(state.canReceive());
-        NTCCFG_TEST_TRUE(state.completed());
+        NTSCFG_TEST_TRUE(state.initiated());
+        NTSCFG_TEST_FALSE(state.canSend());
+        NTSCFG_TEST_FALSE(state.canReceive());
+        NTSCFG_TEST_TRUE(state.completed());
 
         {
             bool result =
                 state.tryShutdownReceive(&context,
                                          false,
                                          ntsa::ShutdownOrigin::e_SOURCE);
-            NTCCFG_TEST_FALSE(result);
+            NTSCFG_TEST_FALSE(result);
         }
 
-        NTCCFG_TEST_TRUE(state.initiated());
-        NTCCFG_TEST_FALSE(state.canSend());
-        NTCCFG_TEST_FALSE(state.canReceive());
-        NTCCFG_TEST_TRUE(state.completed());
+        NTSCFG_TEST_TRUE(state.initiated());
+        NTSCFG_TEST_FALSE(state.canSend());
+        NTSCFG_TEST_FALSE(state.canReceive());
+        NTSCFG_TEST_TRUE(state.completed());
 
         {
             bool result =
                 state.tryShutdownReceive(&context,
                                          false,
                                          ntsa::ShutdownOrigin::e_REMOTE);
-            NTCCFG_TEST_FALSE(result);
+            NTSCFG_TEST_FALSE(result);
         }
 
-        NTCCFG_TEST_TRUE(state.initiated());
-        NTCCFG_TEST_FALSE(state.canSend());
-        NTCCFG_TEST_FALSE(state.canReceive());
-        NTCCFG_TEST_TRUE(state.completed());
+        NTSCFG_TEST_TRUE(state.initiated());
+        NTSCFG_TEST_FALSE(state.canSend());
+        NTSCFG_TEST_FALSE(state.canReceive());
+        NTSCFG_TEST_TRUE(state.completed());
     }
 
     // Test case 2:
@@ -423,28 +443,28 @@ NTCCFG_TEST_CASE(3)
                                          false,
                                          ntsa::ShutdownOrigin::e_SOURCE);
 
-            NTCCFG_TEST_TRUE(result);
-            NTCCFG_TEST_TRUE(context.shutdownInitiated());
-            NTCCFG_TEST_TRUE(context.shutdownSend());
-            NTCCFG_TEST_TRUE(context.shutdownReceive());
-            NTCCFG_TEST_TRUE(context.shutdownCompleted());
+            NTSCFG_TEST_TRUE(result);
+            NTSCFG_TEST_TRUE(context.shutdownInitiated());
+            NTSCFG_TEST_TRUE(context.shutdownSend());
+            NTSCFG_TEST_TRUE(context.shutdownReceive());
+            NTSCFG_TEST_TRUE(context.shutdownCompleted());
         }
 
-        NTCCFG_TEST_TRUE(state.initiated());
-        NTCCFG_TEST_FALSE(state.canSend());
-        NTCCFG_TEST_FALSE(state.canReceive());
-        NTCCFG_TEST_TRUE(state.completed());
+        NTSCFG_TEST_TRUE(state.initiated());
+        NTSCFG_TEST_FALSE(state.canSend());
+        NTSCFG_TEST_FALSE(state.canReceive());
+        NTSCFG_TEST_TRUE(state.completed());
 
         {
             bool result = state.tryShutdownSend(&context, false);
 
-            NTCCFG_TEST_FALSE(result);
+            NTSCFG_TEST_FALSE(result);
         }
 
-        NTCCFG_TEST_TRUE(state.initiated());
-        NTCCFG_TEST_FALSE(state.canSend());
-        NTCCFG_TEST_FALSE(state.canReceive());
-        NTCCFG_TEST_TRUE(state.completed());
+        NTSCFG_TEST_TRUE(state.initiated());
+        NTSCFG_TEST_FALSE(state.canSend());
+        NTSCFG_TEST_FALSE(state.canReceive());
+        NTSCFG_TEST_TRUE(state.completed());
     }
 
     // Test case 3:
@@ -463,35 +483,30 @@ NTCCFG_TEST_CASE(3)
                                          false,
                                          ntsa::ShutdownOrigin::e_REMOTE);
 
-            NTCCFG_TEST_TRUE(result);
-            NTCCFG_TEST_TRUE(context.shutdownInitiated());
-            NTCCFG_TEST_TRUE(context.shutdownSend());
-            NTCCFG_TEST_TRUE(context.shutdownReceive());
-            NTCCFG_TEST_TRUE(context.shutdownCompleted());
+            NTSCFG_TEST_TRUE(result);
+            NTSCFG_TEST_TRUE(context.shutdownInitiated());
+            NTSCFG_TEST_TRUE(context.shutdownSend());
+            NTSCFG_TEST_TRUE(context.shutdownReceive());
+            NTSCFG_TEST_TRUE(context.shutdownCompleted());
         }
 
-        NTCCFG_TEST_TRUE(state.initiated());
-        NTCCFG_TEST_FALSE(state.canSend());
-        NTCCFG_TEST_FALSE(state.canReceive());
-        NTCCFG_TEST_TRUE(state.completed());
+        NTSCFG_TEST_TRUE(state.initiated());
+        NTSCFG_TEST_FALSE(state.canSend());
+        NTSCFG_TEST_FALSE(state.canReceive());
+        NTSCFG_TEST_TRUE(state.completed());
 
         {
             bool result = state.tryShutdownSend(&context, false);
 
-            NTCCFG_TEST_FALSE(result);
+            NTSCFG_TEST_FALSE(result);
         }
 
-        NTCCFG_TEST_TRUE(state.initiated());
-        NTCCFG_TEST_FALSE(state.canSend());
-        NTCCFG_TEST_FALSE(state.canReceive());
-        NTCCFG_TEST_TRUE(state.completed());
+        NTSCFG_TEST_TRUE(state.initiated());
+        NTSCFG_TEST_FALSE(state.canSend());
+        NTSCFG_TEST_FALSE(state.canReceive());
+        NTSCFG_TEST_TRUE(state.completed());
     }
 }
 
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-    NTCCFG_TEST_REGISTER(2);
-    NTCCFG_TEST_REGISTER(3);
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntcs
+}  // close namespace BloombergLP

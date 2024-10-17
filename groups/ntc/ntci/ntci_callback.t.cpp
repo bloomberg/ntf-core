@@ -20,8 +20,6 @@ BSLS_IDENT_RCSID(ntci_callback_t_cpp, "$Id$ $CSID$")
 
 #include <ntci_callback.h>
 
-
-
 using namespace BloombergLP;
 
 namespace BloombergLP {
@@ -190,7 +188,8 @@ class CallbackTest::Authorization : public ntci::Authorization
 
 /// Provide an interface to guarantee sequential, non-concurrent
 /// execution.
-class CallbackTest::Executor : public ntci::Executor, public ntccfg::Shared<Executor>
+class CallbackTest::Executor : public ntci::Executor,
+                               public ntccfg::Shared<Executor>
 {
     /// Define a type alias for a queue of callbacks to execute on this thread.
     typedef ntci::Executor::FunctorSequence FunctorQueue;
@@ -414,7 +413,8 @@ bool CallbackTest::Authorization::abort()
     return true;
 }
 
-CallbackTest::Authorization::CountType CallbackTest::Authorization::count() const
+CallbackTest::Authorization::CountType CallbackTest::Authorization::count()
+    const
 {
     return d_count.load();
 }
@@ -443,8 +443,9 @@ bsl::shared_ptr<ntci::Authorization> CallbackTest::Authorization::create(
     bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
 
     bsl::shared_ptr<CallbackTest::Authorization> result;
-    result.createInplace(allocator,
-                         static_cast<CallbackTest::Authorization::CountType>(limit));
+    result.createInplace(
+        allocator,
+        static_cast<CallbackTest::Authorization::CountType>(limit));
 
     return result;
 }
@@ -470,7 +471,7 @@ void CallbackTest::Executor::execute(const Functor& function)
 }
 
 void CallbackTest::Executor::moveAndExecute(FunctorSequence* functorSequence,
-                              const Functor&   functor)
+                                            const Functor&   functor)
 {
     LockGuard lock(&d_functorQueueMutex);
 
@@ -535,7 +536,7 @@ void CallbackTest::Strand::execute(const Functor& function)
 }
 
 void CallbackTest::Strand::moveAndExecute(FunctorSequence* functorSequence,
-                            const Functor&   functor)
+                                          const Functor&   functor)
 {
     LockGuard lock(&d_functorQueueMutex);
 
@@ -578,7 +579,8 @@ bool CallbackTest::Strand::isRunningInCurrentThread() const
     return (current == this);
 }
 
-bsl::shared_ptr<ntci::Strand> CallbackTest::Strand::create(bslma::Allocator* basicAllocator)
+bsl::shared_ptr<ntci::Strand> CallbackTest::Strand::create(
+    bslma::Allocator* basicAllocator)
 {
     bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
 
@@ -604,7 +606,8 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase1)
     {
         CallbackTest::callsToTargetFunctionArg0 = 0;
 
-        CallbackArg0 callback(&CallbackTest::targetFunctionArg0, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg0 callback(&CallbackTest::targetFunctionArg0,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.execute(ntci::Strand::unknown());
 
@@ -617,9 +620,11 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase1)
     {
         CallbackTest::callsToTargetFunctionArg0 = 0;
 
-        bsl::shared_ptr<ntci::Strand> strand = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg0 callback(&CallbackTest::targetFunctionArg0, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg0 callback(&CallbackTest::targetFunctionArg0,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.execute(strand);
 
@@ -632,9 +637,12 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase1)
     {
         CallbackTest::callsToTargetFunctionArg0 = 0;
 
-        bsl::shared_ptr<ntci::Strand> strand = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg0 callback(&CallbackTest::targetFunctionArg0, strand, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg0 callback(&CallbackTest::targetFunctionArg0,
+                              strand,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.execute(ntci::Strand::unknown());
 
@@ -652,9 +660,12 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase1)
     {
         CallbackTest::callsToTargetFunctionArg0 = 0;
 
-        bsl::shared_ptr<ntci::Strand> strand = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg0 callback(&CallbackTest::targetFunctionArg0, strand, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg0 callback(&CallbackTest::targetFunctionArg0,
+                              strand,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.execute(strand);
 
@@ -667,11 +678,15 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase1)
     {
         CallbackTest::callsToTargetFunctionArg0 = 0;
 
-        bsl::shared_ptr<ntci::Strand> strand1 = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand1 =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
-        bsl::shared_ptr<ntci::Strand> strand2 = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand2 =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg0 callback(&CallbackTest::targetFunctionArg0, strand1, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg0 callback(&CallbackTest::targetFunctionArg0,
+                              strand1,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.execute(strand2);
 
@@ -693,8 +708,8 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase1)
             CallbackTest::Authorization::create(NTSCFG_TEST_ALLOCATOR);
 
         CallbackArg0 callback(&CallbackTest::targetFunctionArg0,
-                                authorization,
-                                NTSCFG_TEST_ALLOCATOR);
+                              authorization,
+                              NTSCFG_TEST_ALLOCATOR);
 
         bool canceled = callback.abort();
         NTSCFG_TEST_TRUE(canceled);
@@ -713,12 +728,13 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase1)
         bsl::shared_ptr<ntci::Authorization> authorization =
             CallbackTest::Authorization::create(NTSCFG_TEST_ALLOCATOR);
 
-        bsl::shared_ptr<ntci::Strand> strand = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
         CallbackArg0 callback(&CallbackTest::targetFunctionArg0,
-                                authorization,
-                                strand,
-                                NTSCFG_TEST_ALLOCATOR);
+                              authorization,
+                              strand,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.execute(ntci::Strand::unknown());
 
@@ -750,7 +766,8 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase2)
     {
         CallbackTest::callsToTargetFunctionArg1 = 0;
 
-        CallbackArg1 callback(&CallbackTest::targetFunctionArg1, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg1 callback(&CallbackTest::targetFunctionArg1,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.execute(CallbackTest::ARG1, ntci::Strand::unknown());
 
@@ -763,9 +780,11 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase2)
     {
         CallbackTest::callsToTargetFunctionArg1 = 0;
 
-        bsl::shared_ptr<ntci::Strand> strand = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg1 callback(&CallbackTest::targetFunctionArg1, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg1 callback(&CallbackTest::targetFunctionArg1,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.execute(CallbackTest::ARG1, strand);
 
@@ -778,9 +797,12 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase2)
     {
         CallbackTest::callsToTargetFunctionArg1 = 0;
 
-        bsl::shared_ptr<ntci::Strand> strand = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg1 callback(&CallbackTest::targetFunctionArg1, strand, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg1 callback(&CallbackTest::targetFunctionArg1,
+                              strand,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.execute(CallbackTest::ARG1, ntci::Strand::unknown());
 
@@ -798,9 +820,12 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase2)
     {
         CallbackTest::callsToTargetFunctionArg1 = 0;
 
-        bsl::shared_ptr<ntci::Strand> strand = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg1 callback(&CallbackTest::targetFunctionArg1, strand, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg1 callback(&CallbackTest::targetFunctionArg1,
+                              strand,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.execute(CallbackTest::ARG1, strand);
 
@@ -813,11 +838,15 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase2)
     {
         CallbackTest::callsToTargetFunctionArg1 = 0;
 
-        bsl::shared_ptr<ntci::Strand> strand1 = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand1 =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
-        bsl::shared_ptr<ntci::Strand> strand2 = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand2 =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg1 callback(&CallbackTest::targetFunctionArg1, strand1, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg1 callback(&CallbackTest::targetFunctionArg1,
+                              strand1,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.execute(CallbackTest::ARG1, strand2);
 
@@ -839,8 +868,8 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase2)
             CallbackTest::Authorization::create(NTSCFG_TEST_ALLOCATOR);
 
         CallbackArg1 callback(&CallbackTest::targetFunctionArg1,
-                                authorization,
-                                NTSCFG_TEST_ALLOCATOR);
+                              authorization,
+                              NTSCFG_TEST_ALLOCATOR);
 
         bool canceled = callback.abort();
         NTSCFG_TEST_TRUE(canceled);
@@ -859,12 +888,13 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase2)
         bsl::shared_ptr<ntci::Authorization> authorization =
             CallbackTest::Authorization::create(NTSCFG_TEST_ALLOCATOR);
 
-        bsl::shared_ptr<ntci::Strand> strand = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
         CallbackArg1 callback(&CallbackTest::targetFunctionArg1,
-                                authorization,
-                                strand,
-                                NTSCFG_TEST_ALLOCATOR);
+                              authorization,
+                              strand,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.execute(CallbackTest::ARG1, ntci::Strand::unknown());
 
@@ -896,11 +926,12 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase3)
     {
         CallbackTest::callsToTargetFunctionArg2 = 0;
 
-        CallbackArg2 callback(&CallbackTest::targetFunctionArg2, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg2 callback(&CallbackTest::targetFunctionArg2,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.execute(CallbackTest::ARG1,
-                                    CallbackTest::ARG2,
-                                    ntci::Strand::unknown());
+                                 CallbackTest::ARG2,
+                                 ntci::Strand::unknown());
 
         NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
         NTSCFG_TEST_EQ(CallbackTest::callsToTargetFunctionArg2, 1);
@@ -911,11 +942,14 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase3)
     {
         CallbackTest::callsToTargetFunctionArg2 = 0;
 
-        bsl::shared_ptr<ntci::Strand> strand = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg2 callback(&CallbackTest::targetFunctionArg2, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg2 callback(&CallbackTest::targetFunctionArg2,
+                              NTSCFG_TEST_ALLOCATOR);
 
-        error = callback.execute(CallbackTest::ARG1, CallbackTest::ARG2, strand);
+        error =
+            callback.execute(CallbackTest::ARG1, CallbackTest::ARG2, strand);
 
         NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
         NTSCFG_TEST_EQ(CallbackTest::callsToTargetFunctionArg2, 1);
@@ -926,13 +960,16 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase3)
     {
         CallbackTest::callsToTargetFunctionArg2 = 0;
 
-        bsl::shared_ptr<ntci::Strand> strand = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg2 callback(&CallbackTest::targetFunctionArg2, strand, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg2 callback(&CallbackTest::targetFunctionArg2,
+                              strand,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.execute(CallbackTest::ARG1,
-                                    CallbackTest::ARG2,
-                                    ntci::Strand::unknown());
+                                 CallbackTest::ARG2,
+                                 ntci::Strand::unknown());
 
         NTSCFG_TEST_EQ(error, ntsa::Error::e_PENDING);
         NTSCFG_TEST_EQ(CallbackTest::callsToTargetFunctionArg2, 0);
@@ -948,11 +985,15 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase3)
     {
         CallbackTest::callsToTargetFunctionArg2 = 0;
 
-        bsl::shared_ptr<ntci::Strand> strand = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg2 callback(&CallbackTest::targetFunctionArg2, strand, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg2 callback(&CallbackTest::targetFunctionArg2,
+                              strand,
+                              NTSCFG_TEST_ALLOCATOR);
 
-        error = callback.execute(CallbackTest::ARG1, CallbackTest::ARG2, strand);
+        error =
+            callback.execute(CallbackTest::ARG1, CallbackTest::ARG2, strand);
 
         NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
         NTSCFG_TEST_EQ(CallbackTest::callsToTargetFunctionArg2, 1);
@@ -963,13 +1004,18 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase3)
     {
         CallbackTest::callsToTargetFunctionArg2 = 0;
 
-        bsl::shared_ptr<ntci::Strand> strand1 = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand1 =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
-        bsl::shared_ptr<ntci::Strand> strand2 = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand2 =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg2 callback(&CallbackTest::targetFunctionArg2, strand1, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg2 callback(&CallbackTest::targetFunctionArg2,
+                              strand1,
+                              NTSCFG_TEST_ALLOCATOR);
 
-        error = callback.execute(CallbackTest::ARG1, CallbackTest::ARG2, strand2);
+        error =
+            callback.execute(CallbackTest::ARG1, CallbackTest::ARG2, strand2);
 
         NTSCFG_TEST_EQ(error, ntsa::Error::e_PENDING);
         NTSCFG_TEST_EQ(CallbackTest::callsToTargetFunctionArg2, 0);
@@ -989,15 +1035,15 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase3)
             CallbackTest::Authorization::create(NTSCFG_TEST_ALLOCATOR);
 
         CallbackArg2 callback(&CallbackTest::targetFunctionArg2,
-                                authorization,
-                                NTSCFG_TEST_ALLOCATOR);
+                              authorization,
+                              NTSCFG_TEST_ALLOCATOR);
 
         bool canceled = callback.abort();
         NTSCFG_TEST_TRUE(canceled);
 
         error = callback.execute(CallbackTest::ARG1,
-                                    CallbackTest::ARG2,
-                                    ntci::Strand::unknown());
+                                 CallbackTest::ARG2,
+                                 ntci::Strand::unknown());
 
         NTSCFG_TEST_EQ(error, ntsa::Error::e_CANCELLED);
         NTSCFG_TEST_EQ(CallbackTest::callsToTargetFunctionArg2, 0);
@@ -1011,16 +1057,17 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase3)
         bsl::shared_ptr<ntci::Authorization> authorization =
             CallbackTest::Authorization::create(NTSCFG_TEST_ALLOCATOR);
 
-        bsl::shared_ptr<ntci::Strand> strand = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
         CallbackArg2 callback(&CallbackTest::targetFunctionArg2,
-                                authorization,
-                                strand,
-                                NTSCFG_TEST_ALLOCATOR);
+                              authorization,
+                              strand,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.execute(CallbackTest::ARG1,
-                                    CallbackTest::ARG2,
-                                    ntci::Strand::unknown());
+                                 CallbackTest::ARG2,
+                                 ntci::Strand::unknown());
 
         NTSCFG_TEST_EQ(error, ntsa::Error::e_PENDING);
         NTSCFG_TEST_EQ(CallbackTest::callsToTargetFunctionArg2, 0);
@@ -1050,12 +1097,13 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase4)
     {
         CallbackTest::callsToTargetFunctionArg3 = 0;
 
-        CallbackArg3 callback(&CallbackTest::targetFunctionArg3, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg3 callback(&CallbackTest::targetFunctionArg3,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.execute(CallbackTest::ARG1,
-                                    CallbackTest::ARG2,
-                                    CallbackTest::ARG3,
-                                    ntci::Strand::unknown());
+                                 CallbackTest::ARG2,
+                                 CallbackTest::ARG3,
+                                 ntci::Strand::unknown());
 
         NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
         NTSCFG_TEST_EQ(CallbackTest::callsToTargetFunctionArg3, 1);
@@ -1066,12 +1114,16 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase4)
     {
         CallbackTest::callsToTargetFunctionArg3 = 0;
 
-        bsl::shared_ptr<ntci::Strand> strand = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg3 callback(&CallbackTest::targetFunctionArg3, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg3 callback(&CallbackTest::targetFunctionArg3,
+                              NTSCFG_TEST_ALLOCATOR);
 
-        error =
-            callback.execute(CallbackTest::ARG1, CallbackTest::ARG2, CallbackTest::ARG3, strand);
+        error = callback.execute(CallbackTest::ARG1,
+                                 CallbackTest::ARG2,
+                                 CallbackTest::ARG3,
+                                 strand);
 
         NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
         NTSCFG_TEST_EQ(CallbackTest::callsToTargetFunctionArg3, 1);
@@ -1082,14 +1134,17 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase4)
     {
         CallbackTest::callsToTargetFunctionArg3 = 0;
 
-        bsl::shared_ptr<ntci::Strand> strand = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg3 callback(&CallbackTest::targetFunctionArg3, strand, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg3 callback(&CallbackTest::targetFunctionArg3,
+                              strand,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.execute(CallbackTest::ARG1,
-                                    CallbackTest::ARG2,
-                                    CallbackTest::ARG3,
-                                    ntci::Strand::unknown());
+                                 CallbackTest::ARG2,
+                                 CallbackTest::ARG3,
+                                 ntci::Strand::unknown());
 
         NTSCFG_TEST_EQ(error, ntsa::Error::e_PENDING);
         NTSCFG_TEST_EQ(CallbackTest::callsToTargetFunctionArg3, 0);
@@ -1105,15 +1160,18 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase4)
     {
         CallbackTest::callsToTargetFunctionArg3 = 0;
 
-        bsl::shared_ptr<ntci::Strand> strand = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
         ntci::Callback<void(int arg1, int arg2, int arg3)> callback(
             &CallbackTest::targetFunctionArg3,
             strand,
             NTSCFG_TEST_ALLOCATOR);
 
-        error =
-            callback.execute(CallbackTest::ARG1, CallbackTest::ARG2, CallbackTest::ARG3, strand);
+        error = callback.execute(CallbackTest::ARG1,
+                                 CallbackTest::ARG2,
+                                 CallbackTest::ARG3,
+                                 strand);
 
         NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
         NTSCFG_TEST_EQ(CallbackTest::callsToTargetFunctionArg3, 1);
@@ -1124,14 +1182,20 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase4)
     {
         CallbackTest::callsToTargetFunctionArg3 = 0;
 
-        bsl::shared_ptr<ntci::Strand> strand1 = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand1 =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
-        bsl::shared_ptr<ntci::Strand> strand2 = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand2 =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg3 callback(&CallbackTest::targetFunctionArg3, strand1, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg3 callback(&CallbackTest::targetFunctionArg3,
+                              strand1,
+                              NTSCFG_TEST_ALLOCATOR);
 
-        error =
-            callback.execute(CallbackTest::ARG1, CallbackTest::ARG2, CallbackTest::ARG3, strand2);
+        error = callback.execute(CallbackTest::ARG1,
+                                 CallbackTest::ARG2,
+                                 CallbackTest::ARG3,
+                                 strand2);
 
         NTSCFG_TEST_EQ(error, ntsa::Error::e_PENDING);
         NTSCFG_TEST_EQ(CallbackTest::callsToTargetFunctionArg3, 0);
@@ -1151,16 +1215,16 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase4)
             CallbackTest::Authorization::create(NTSCFG_TEST_ALLOCATOR);
 
         CallbackArg3 callback(&CallbackTest::targetFunctionArg3,
-                                authorization,
-                                NTSCFG_TEST_ALLOCATOR);
+                              authorization,
+                              NTSCFG_TEST_ALLOCATOR);
 
         bool canceled = callback.abort();
         NTSCFG_TEST_TRUE(canceled);
 
         error = callback.execute(CallbackTest::ARG1,
-                                    CallbackTest::ARG2,
-                                    CallbackTest::ARG3,
-                                    ntci::Strand::unknown());
+                                 CallbackTest::ARG2,
+                                 CallbackTest::ARG3,
+                                 ntci::Strand::unknown());
 
         NTSCFG_TEST_EQ(error, ntsa::Error::e_CANCELLED);
         NTSCFG_TEST_EQ(CallbackTest::callsToTargetFunctionArg3, 0);
@@ -1174,17 +1238,18 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase4)
         bsl::shared_ptr<ntci::Authorization> authorization =
             CallbackTest::Authorization::create(NTSCFG_TEST_ALLOCATOR);
 
-        bsl::shared_ptr<ntci::Strand> strand = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
         CallbackArg3 callback(&CallbackTest::targetFunctionArg3,
-                                authorization,
-                                strand,
-                                NTSCFG_TEST_ALLOCATOR);
+                              authorization,
+                              strand,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.execute(CallbackTest::ARG1,
-                                    CallbackTest::ARG2,
-                                    CallbackTest::ARG3,
-                                    ntci::Strand::unknown());
+                                 CallbackTest::ARG2,
+                                 CallbackTest::ARG3,
+                                 ntci::Strand::unknown());
 
         NTSCFG_TEST_EQ(error, ntsa::Error::e_PENDING);
         NTSCFG_TEST_EQ(CallbackTest::callsToTargetFunctionArg3, 0);
@@ -1220,12 +1285,13 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase5)
         bsl::shared_ptr<ntci::Executor> executor =
             CallbackTest::Executor::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg0 callback(&CallbackTest::targetFunctionArg0, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg0 callback(&CallbackTest::targetFunctionArg0,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.dispatch(ntci::Strand::unknown(),
-                                    executor,
-                                    false,
-                                    &mutex);
+                                  executor,
+                                  false,
+                                  &mutex);
 
         NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
         NTSCFG_TEST_EQ(CallbackTest::callsToTargetFunctionArg0, 1);
@@ -1239,12 +1305,11 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase5)
         bsl::shared_ptr<CallbackTest::Executor> executor =
             CallbackTest::Executor::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg0 callback(&CallbackTest::targetFunctionArg0, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg0 callback(&CallbackTest::targetFunctionArg0,
+                              NTSCFG_TEST_ALLOCATOR);
 
-        error = callback.dispatch(ntci::Strand::unknown(),
-                                    executor,
-                                    true,
-                                    &mutex);
+        error =
+            callback.dispatch(ntci::Strand::unknown(), executor, true, &mutex);
 
         NTSCFG_TEST_EQ(error, ntsa::Error::e_PENDING);
         NTSCFG_TEST_EQ(CallbackTest::callsToTargetFunctionArg0, 0);
@@ -1260,11 +1325,13 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase5)
     {
         CallbackTest::callsToTargetFunctionArg0 = 0;
 
-        bsl::shared_ptr<ntci::Strand>   strand = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
         bsl::shared_ptr<CallbackTest::Executor> executor =
             CallbackTest::Executor::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg0 callback(&CallbackTest::targetFunctionArg0, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg0 callback(&CallbackTest::targetFunctionArg0,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.dispatch(strand, executor, false, &mutex);
 
@@ -1277,11 +1344,13 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase5)
     {
         CallbackTest::callsToTargetFunctionArg0 = 0;
 
-        bsl::shared_ptr<ntci::Strand>   strand = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
         bsl::shared_ptr<CallbackTest::Executor> executor =
             CallbackTest::Executor::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg0 callback(&CallbackTest::targetFunctionArg0, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg0 callback(&CallbackTest::targetFunctionArg0,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.dispatch(strand, executor, true, &mutex);
 
@@ -1303,16 +1372,19 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase5)
     {
         CallbackTest::callsToTargetFunctionArg0 = 0;
 
-        bsl::shared_ptr<ntci::Strand>   strand = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
         bsl::shared_ptr<CallbackTest::Executor> executor =
             CallbackTest::Executor::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg0 callback(&CallbackTest::targetFunctionArg0, strand, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg0 callback(&CallbackTest::targetFunctionArg0,
+                              strand,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.dispatch(ntci::Strand::unknown(),
-                                    executor,
-                                    false,
-                                    &mutex);
+                                  executor,
+                                  false,
+                                  &mutex);
 
         NTSCFG_TEST_EQ(error, ntsa::Error::e_PENDING);
         NTSCFG_TEST_EQ(CallbackTest::callsToTargetFunctionArg0, 0);
@@ -1328,16 +1400,17 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase5)
     {
         CallbackTest::callsToTargetFunctionArg0 = 0;
 
-        bsl::shared_ptr<ntci::Strand>   strand = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
         bsl::shared_ptr<CallbackTest::Executor> executor =
             CallbackTest::Executor::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg0 callback(&CallbackTest::targetFunctionArg0, strand, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg0 callback(&CallbackTest::targetFunctionArg0,
+                              strand,
+                              NTSCFG_TEST_ALLOCATOR);
 
-        error = callback.dispatch(ntci::Strand::unknown(),
-                                    executor,
-                                    true,
-                                    &mutex);
+        error =
+            callback.dispatch(ntci::Strand::unknown(), executor, true, &mutex);
 
         NTSCFG_TEST_EQ(error, ntsa::Error::e_PENDING);
         NTSCFG_TEST_EQ(CallbackTest::callsToTargetFunctionArg0, 0);
@@ -1357,11 +1430,14 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase5)
     {
         CallbackTest::callsToTargetFunctionArg0 = 0;
 
-        bsl::shared_ptr<ntci::Strand>   strand = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
         bsl::shared_ptr<CallbackTest::Executor> executor =
             CallbackTest::Executor::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg0 callback(&CallbackTest::targetFunctionArg0, strand, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg0 callback(&CallbackTest::targetFunctionArg0,
+                              strand,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.dispatch(strand, executor, false, &mutex);
 
@@ -1374,11 +1450,14 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase5)
     {
         CallbackTest::callsToTargetFunctionArg0 = 0;
 
-        bsl::shared_ptr<ntci::Strand>   strand = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
         bsl::shared_ptr<CallbackTest::Executor> executor =
             CallbackTest::Executor::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg0 callback(&CallbackTest::targetFunctionArg0, strand, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg0 callback(&CallbackTest::targetFunctionArg0,
+                              strand,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.dispatch(strand, executor, true, &mutex);
 
@@ -1400,13 +1479,17 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase5)
     {
         CallbackTest::callsToTargetFunctionArg0 = 0;
 
-        bsl::shared_ptr<ntci::Strand> strand1 = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
-        bsl::shared_ptr<ntci::Strand> strand2 = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand1 =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand2 =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
         bsl::shared_ptr<CallbackTest::Executor> executor =
             CallbackTest::Executor::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg0 callback(&CallbackTest::targetFunctionArg0, strand1, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg0 callback(&CallbackTest::targetFunctionArg0,
+                              strand1,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.dispatch(strand2, executor, false, &mutex);
 
@@ -1424,13 +1507,17 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase5)
     {
         CallbackTest::callsToTargetFunctionArg0 = 0;
 
-        bsl::shared_ptr<ntci::Strand> strand1 = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
-        bsl::shared_ptr<ntci::Strand> strand2 = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand1 =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand2 =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
         bsl::shared_ptr<CallbackTest::Executor> executor =
             CallbackTest::Executor::create(NTSCFG_TEST_ALLOCATOR);
 
-        CallbackArg0 callback(&CallbackTest::targetFunctionArg0, strand1, NTSCFG_TEST_ALLOCATOR);
+        CallbackArg0 callback(&CallbackTest::targetFunctionArg0,
+                              strand1,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.dispatch(strand2, executor, true, &mutex);
 
@@ -1464,16 +1551,16 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase5)
             CallbackTest::Authorization::create(NTSCFG_TEST_ALLOCATOR);
 
         CallbackArg0 callback(&CallbackTest::targetFunctionArg0,
-                                authorization,
-                                NTSCFG_TEST_ALLOCATOR);
+                              authorization,
+                              NTSCFG_TEST_ALLOCATOR);
 
         bool canceled = callback.abort();
         NTSCFG_TEST_TRUE(canceled);
 
         error = callback.dispatch(ntci::Strand::unknown(),
-                                    executor,
-                                    false,
-                                    &mutex);
+                                  executor,
+                                  false,
+                                  &mutex);
 
         NTSCFG_TEST_EQ(error, ntsa::Error::e_CANCELLED);
         NTSCFG_TEST_EQ(CallbackTest::callsToTargetFunctionArg0, 0);
@@ -1487,20 +1574,21 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase5)
         bsl::shared_ptr<ntci::Authorization> authorization =
             CallbackTest::Authorization::create(NTSCFG_TEST_ALLOCATOR);
 
-        bsl::shared_ptr<ntci::Strand> strand = CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
+        bsl::shared_ptr<ntci::Strand> strand =
+            CallbackTest::Strand::create(NTSCFG_TEST_ALLOCATOR);
 
         bsl::shared_ptr<CallbackTest::Executor> executor =
             CallbackTest::Executor::create(NTSCFG_TEST_ALLOCATOR);
 
         CallbackArg0 callback(&CallbackTest::targetFunctionArg0,
-                                authorization,
-                                strand,
-                                NTSCFG_TEST_ALLOCATOR);
+                              authorization,
+                              strand,
+                              NTSCFG_TEST_ALLOCATOR);
 
         error = callback.dispatch(ntci::Strand::unknown(),
-                                    executor,
-                                    false,
-                                    &mutex);
+                                  executor,
+                                  false,
+                                  &mutex);
 
         NTSCFG_TEST_EQ(error, ntsa::Error::e_PENDING);
         NTSCFG_TEST_EQ(CallbackTest::callsToTargetFunctionArg0, 0);
@@ -1522,7 +1610,8 @@ NTSCFG_TEST_FUNCTION(ntci::CallbackTest::verifyCase6)
 
     CallbackTest::callsToTargetFunctionArg0 = 0;
 
-    CallbackArg0 callback(&CallbackTest::targetFunctionArg0, NTSCFG_TEST_ALLOCATOR);
+    CallbackArg0 callback(&CallbackTest::targetFunctionArg0,
+                          NTSCFG_TEST_ALLOCATOR);
 
     error = callback.execute(ntci::Strand::unknown());
 

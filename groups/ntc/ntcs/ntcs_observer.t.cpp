@@ -13,33 +13,52 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntcs_observer_t_cpp, "$Id$ $CSID$")
+
 #include <ntcs_observer.h>
-
-#include <ntccfg_test.h>
-
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bsls_assert.h>
 
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntcs {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
+// Provide tests for 'ntcs::Observer'.
+class ObserverTest
+{
+    /// Provide a test object for use by this test driver.
+    class Object;
 
-namespace test {
+    /// The null object.
+    static Object* const s_NULL_OBJECT;
+
+  public:
+    // TODO
+    static void verifyCase1();
+
+    // TODO
+    static void verifyCase2();
+
+    // TODO
+    static void verifyCase3();
+
+    // TODO
+    static void verifyCase4();
+
+    // TODO
+    static void verifyCase5();
+
+    // TODO
+    static void verifyCase6();
+
+    // TODO
+    static void verifyCase7();
+};
 
 /// Provide a test object for use by this test driver.
-class Object
+class ObserverTest::Object
 {
     bsl::string       d_name;
     bslma::Allocator* d_allocator_p;
@@ -67,348 +86,302 @@ class Object
     const bsl::string& name() const;
 };
 
-Object::Object(bslma::Allocator* basicAllocator)
+ObserverTest::Object::Object(bslma::Allocator* basicAllocator)
 : d_name(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-Object::Object(const bsl::string& name, bslma::Allocator* basicAllocator)
+ObserverTest::Object::Object(const bsl::string& name,
+                             bslma::Allocator*  basicAllocator)
 : d_name(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
-Object::~Object()
+ObserverTest::Object::~Object()
 {
 }
 
-const bsl::string& Object::name() const
+const bsl::string& ObserverTest::Object::name() const
 {
     return d_name;
 }
 
-Object* s_NULL_OBJECT = 0;
+ObserverTest::Object* const ObserverTest::s_NULL_OBJECT = 0;
 
-}  // close namespace 'test'
-
-NTCCFG_TEST_CASE(1)
+NTSCFG_TEST_FUNCTION(ntcs::ObserverTest::verifyCase1)
 {
     // Concern: Default construction.
     // Plan:
 
-    ntccfg::TestAllocator ta;
-    {
-        ntcs::Observer<test::Object> observer;
+    ntcs::Observer<ObserverTest::Object> observer;
 
-        NTCCFG_TEST_TRUE(observer.isRaw());
-        NTCCFG_TEST_EQ(observer.raw(), test::s_NULL_OBJECT);
+    NTSCFG_TEST_TRUE(observer.isRaw());
+    NTSCFG_TEST_EQ(observer.raw(), ObserverTest::s_NULL_OBJECT);
 
-        ntcs::ObserverRef<test::Object> observerRef(&observer);
+    ntcs::ObserverRef<ObserverTest::Object> observerRef(&observer);
 
-        bool isNull = observerRef.isNull();
-        NTCCFG_TEST_TRUE(isNull);
+    bool isNull = observerRef.isNull();
+    NTSCFG_TEST_TRUE(isNull);
 
-        bool isDefined = observerRef.isDefined();
-        NTCCFG_TEST_FALSE(isDefined);
+    bool isDefined = observerRef.isDefined();
+    NTSCFG_TEST_FALSE(isDefined);
 
-        bool truthiness = static_cast<bool>(observerRef);
-        NTCCFG_TEST_FALSE(truthiness);
+    bool truthiness = static_cast<bool>(observerRef);
+    NTSCFG_TEST_FALSE(truthiness);
 
-        test::Object* object_p = observerRef.get();
-        NTCCFG_TEST_EQ(object_p, test::s_NULL_OBJECT);
+    ObserverTest::Object* object_p = observerRef.get();
+    NTSCFG_TEST_EQ(object_p, ObserverTest::s_NULL_OBJECT);
 
-        const bsl::shared_ptr<test::Object>& object_sp1 =
-            observerRef.getShared();
+    const bsl::shared_ptr<ObserverTest::Object>& object_sp1 =
+        observerRef.getShared();
 
-        const bsl::shared_ptr<test::Object>& object_sp2 =
-            observerRef.getShared();
+    const bsl::shared_ptr<ObserverTest::Object>& object_sp2 =
+        observerRef.getShared();
 
-        NTCCFG_TEST_EQ(object_sp1.get(), test::s_NULL_OBJECT);
-        NTCCFG_TEST_EQ(object_sp2.get(), test::s_NULL_OBJECT);
+    NTSCFG_TEST_EQ(object_sp1.get(), ObserverTest::s_NULL_OBJECT);
+    NTSCFG_TEST_EQ(object_sp2.get(), ObserverTest::s_NULL_OBJECT);
 
-        NTCCFG_TEST_EQ(&object_sp1, &object_sp2);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_EQ(&object_sp1, &object_sp2);
 }
 
-NTCCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntcs::ObserverTest::verifyCase2)
 {
     // Concern: Null raw pointer.
     // Plan:
 
-    ntccfg::TestAllocator ta;
-    {
-        ntcs::Observer<test::Object> observer;
+    ntcs::Observer<ObserverTest::Object> observer;
 
-        NTCCFG_TEST_TRUE(observer.isRaw());
-        NTCCFG_TEST_EQ(observer.raw(), test::s_NULL_OBJECT);
+    NTSCFG_TEST_TRUE(observer.isRaw());
+    NTSCFG_TEST_EQ(observer.raw(), ObserverTest::s_NULL_OBJECT);
 
-        ntcs::ObserverRef<test::Object> observerRef(&observer);
+    ntcs::ObserverRef<ObserverTest::Object> observerRef(&observer);
 
-        bool isNull = observerRef.isNull();
-        NTCCFG_TEST_TRUE(isNull);
+    bool isNull = observerRef.isNull();
+    NTSCFG_TEST_TRUE(isNull);
 
-        bool isDefined = observerRef.isDefined();
-        NTCCFG_TEST_FALSE(isDefined);
+    bool isDefined = observerRef.isDefined();
+    NTSCFG_TEST_FALSE(isDefined);
 
-        bool truthiness = static_cast<bool>(observerRef);
-        NTCCFG_TEST_FALSE(truthiness);
+    bool truthiness = static_cast<bool>(observerRef);
+    NTSCFG_TEST_FALSE(truthiness);
 
-        test::Object* object_p = observerRef.get();
-        NTCCFG_TEST_EQ(object_p, test::s_NULL_OBJECT);
+    ObserverTest::Object* object_p = observerRef.get();
+    NTSCFG_TEST_EQ(object_p, ObserverTest::s_NULL_OBJECT);
 
-        const bsl::shared_ptr<test::Object>& object_sp1 =
-            observerRef.getShared();
+    const bsl::shared_ptr<ObserverTest::Object>& object_sp1 =
+        observerRef.getShared();
 
-        const bsl::shared_ptr<test::Object>& object_sp2 =
-            observerRef.getShared();
+    const bsl::shared_ptr<ObserverTest::Object>& object_sp2 =
+        observerRef.getShared();
 
-        NTCCFG_TEST_EQ(object_sp1.get(), test::s_NULL_OBJECT);
-        NTCCFG_TEST_EQ(object_sp2.get(), test::s_NULL_OBJECT);
+    NTSCFG_TEST_EQ(object_sp1.get(), ObserverTest::s_NULL_OBJECT);
+    NTSCFG_TEST_EQ(object_sp2.get(), ObserverTest::s_NULL_OBJECT);
 
-        NTCCFG_TEST_EQ(&object_sp1, &object_sp2);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_EQ(&object_sp1, &object_sp2);
 }
 
-NTCCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntcs::ObserverTest::verifyCase3)
 {
     // Concern: Defined raw pointer.
     // Plan:
 
-    ntccfg::TestAllocator ta;
-    {
-        test::Object target("test");
+    ObserverTest::Object target("test");
 
-        ntcs::Observer<test::Object> observer(&target);
+    ntcs::Observer<ObserverTest::Object> observer(&target);
 
-        NTCCFG_TEST_TRUE(observer.isRaw());
-        NTCCFG_TEST_EQ(observer.raw(), &target);
+    NTSCFG_TEST_TRUE(observer.isRaw());
+    NTSCFG_TEST_EQ(observer.raw(), &target);
 
-        ntcs::ObserverRef<test::Object> observerRef(&observer);
+    ntcs::ObserverRef<ObserverTest::Object> observerRef(&observer);
 
-        bool isNull = observerRef.isNull();
-        NTCCFG_TEST_FALSE(isNull);
+    bool isNull = observerRef.isNull();
+    NTSCFG_TEST_FALSE(isNull);
 
-        bool isDefined = observerRef.isDefined();
-        NTCCFG_TEST_TRUE(isDefined);
+    bool isDefined = observerRef.isDefined();
+    NTSCFG_TEST_TRUE(isDefined);
 
-        bool truthiness = static_cast<bool>(observerRef);
-        NTCCFG_TEST_TRUE(truthiness);
+    bool truthiness = static_cast<bool>(observerRef);
+    NTSCFG_TEST_TRUE(truthiness);
 
-        test::Object* object_p = observerRef.get();
-        NTCCFG_TEST_EQ(object_p, &target);
+    ObserverTest::Object* object_p = observerRef.get();
+    NTSCFG_TEST_EQ(object_p, &target);
 
-        const bsl::shared_ptr<test::Object>& object_sp1 =
-            observerRef.getShared();
+    const bsl::shared_ptr<ObserverTest::Object>& object_sp1 =
+        observerRef.getShared();
 
-        const bsl::shared_ptr<test::Object>& object_sp2 =
-            observerRef.getShared();
+    const bsl::shared_ptr<ObserverTest::Object>& object_sp2 =
+        observerRef.getShared();
 
-        NTCCFG_TEST_EQ(object_sp1.get(), &target);
-        NTCCFG_TEST_EQ(object_sp2.get(), &target);
+    NTSCFG_TEST_EQ(object_sp1.get(), &target);
+    NTSCFG_TEST_EQ(object_sp2.get(), &target);
 
-        NTCCFG_TEST_EQ(&object_sp1, &object_sp2);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_EQ(&object_sp1, &object_sp2);
 }
 
-NTCCFG_TEST_CASE(4)
+NTSCFG_TEST_FUNCTION(ntcs::ObserverTest::verifyCase4)
 {
     // Concern: Null weak pointer.
     // Plan:
 
-    ntccfg::TestAllocator ta;
-    {
-        bsl::shared_ptr<test::Object> target_sp;
-        bsl::weak_ptr<test::Object>   target_wp = target_sp;
+    bsl::shared_ptr<ObserverTest::Object> target_sp;
+    bsl::weak_ptr<ObserverTest::Object>   target_wp = target_sp;
 
-        ntcs::Observer<test::Object> observer(target_wp);
+    ntcs::Observer<ObserverTest::Object> observer(target_wp);
 
-        NTCCFG_TEST_TRUE(observer.isWeak());
-        // MRM: NTCCFG_TEST_EQ(observer.weak(), target_wp);
+    NTSCFG_TEST_TRUE(observer.isWeak());
+    // MRM: NTSCFG_TEST_EQ(observer.weak(), target_wp);
 
-        ntcs::ObserverRef<test::Object> observerRef(&observer);
+    ntcs::ObserverRef<ObserverTest::Object> observerRef(&observer);
 
-        bool isNull = observerRef.isNull();
-        NTCCFG_TEST_TRUE(isNull);
+    bool isNull = observerRef.isNull();
+    NTSCFG_TEST_TRUE(isNull);
 
-        bool isDefined = observerRef.isDefined();
-        NTCCFG_TEST_FALSE(isDefined);
+    bool isDefined = observerRef.isDefined();
+    NTSCFG_TEST_FALSE(isDefined);
 
-        bool truthiness = static_cast<bool>(observerRef);
-        NTCCFG_TEST_FALSE(truthiness);
+    bool truthiness = static_cast<bool>(observerRef);
+    NTSCFG_TEST_FALSE(truthiness);
 
-        test::Object* object_p = observerRef.get();
-        NTCCFG_TEST_EQ(object_p, test::s_NULL_OBJECT);
+    ObserverTest::Object* object_p = observerRef.get();
+    NTSCFG_TEST_EQ(object_p, ObserverTest::s_NULL_OBJECT);
 
-        const bsl::shared_ptr<test::Object>& object_sp1 =
-            observerRef.getShared();
+    const bsl::shared_ptr<ObserverTest::Object>& object_sp1 =
+        observerRef.getShared();
 
-        const bsl::shared_ptr<test::Object>& object_sp2 =
-            observerRef.getShared();
+    const bsl::shared_ptr<ObserverTest::Object>& object_sp2 =
+        observerRef.getShared();
 
-        NTCCFG_TEST_EQ(object_sp1.get(), test::s_NULL_OBJECT);
-        NTCCFG_TEST_EQ(object_sp2.get(), test::s_NULL_OBJECT);
+    NTSCFG_TEST_EQ(object_sp1.get(), ObserverTest::s_NULL_OBJECT);
+    NTSCFG_TEST_EQ(object_sp2.get(), ObserverTest::s_NULL_OBJECT);
 
-        NTCCFG_TEST_EQ(&object_sp1, &object_sp2);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_EQ(&object_sp1, &object_sp2);
 }
 
-NTCCFG_TEST_CASE(5)
+NTSCFG_TEST_FUNCTION(ntcs::ObserverTest::verifyCase5)
 {
     // Concern: Defined weak pointer.
     // Plan:
 
-    ntccfg::TestAllocator ta;
-    {
-        bsl::shared_ptr<test::Object> target_sp;
-        target_sp.createInplace(&ta, "test", &ta);
+    bsl::shared_ptr<ObserverTest::Object> target_sp;
+    target_sp.createInplace(NTSCFG_TEST_ALLOCATOR,
+                            "test",
+                            NTSCFG_TEST_ALLOCATOR);
 
-        bsl::weak_ptr<test::Object> target_wp = target_sp;
+    bsl::weak_ptr<ObserverTest::Object> target_wp = target_sp;
 
-        ntcs::Observer<test::Object> observer(target_wp);
+    ntcs::Observer<ObserverTest::Object> observer(target_wp);
 
-        NTCCFG_TEST_TRUE(observer.isWeak());
-        // MRM: NTCCFG_TEST_EQ(observer.weak(), target_wp);
+    NTSCFG_TEST_TRUE(observer.isWeak());
+    // MRM: NTSCFG_TEST_EQ(observer.weak(), target_wp);
 
-        ntcs::ObserverRef<test::Object> observerRef(&observer);
+    ntcs::ObserverRef<ObserverTest::Object> observerRef(&observer);
 
-        bool isNull = observerRef.isNull();
-        NTCCFG_TEST_FALSE(isNull);
+    bool isNull = observerRef.isNull();
+    NTSCFG_TEST_FALSE(isNull);
 
-        bool isDefined = observerRef.isDefined();
-        NTCCFG_TEST_TRUE(isDefined);
+    bool isDefined = observerRef.isDefined();
+    NTSCFG_TEST_TRUE(isDefined);
 
-        bool truthiness = static_cast<bool>(observerRef);
-        NTCCFG_TEST_TRUE(truthiness);
+    bool truthiness = static_cast<bool>(observerRef);
+    NTSCFG_TEST_TRUE(truthiness);
 
-        test::Object* object_p = observerRef.get();
-        NTCCFG_TEST_EQ(object_p, target_sp.get());
+    ObserverTest::Object* object_p = observerRef.get();
+    NTSCFG_TEST_EQ(object_p, target_sp.get());
 
-        const bsl::shared_ptr<test::Object>& object_sp1 =
-            observerRef.getShared();
+    const bsl::shared_ptr<ObserverTest::Object>& object_sp1 =
+        observerRef.getShared();
 
-        const bsl::shared_ptr<test::Object>& object_sp2 =
-            observerRef.getShared();
+    const bsl::shared_ptr<ObserverTest::Object>& object_sp2 =
+        observerRef.getShared();
 
-        NTCCFG_TEST_EQ(object_sp1.get(), target_sp.get());
-        NTCCFG_TEST_EQ(object_sp2.get(), target_sp.get());
+    NTSCFG_TEST_EQ(object_sp1.get(), target_sp.get());
+    NTSCFG_TEST_EQ(object_sp2.get(), target_sp.get());
 
-        NTCCFG_TEST_EQ(&object_sp1, &object_sp2);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_EQ(&object_sp1, &object_sp2);
 }
 
-NTCCFG_TEST_CASE(6)
+NTSCFG_TEST_FUNCTION(ntcs::ObserverTest::verifyCase6)
 {
     // Concern: Null shared pointer.
     // Plan:
 
-    ntccfg::TestAllocator ta;
-    {
-        bsl::shared_ptr<test::Object> target_sp;
+    bsl::shared_ptr<ObserverTest::Object> target_sp;
 
-        ntcs::Observer<test::Object> observer(target_sp);
+    ntcs::Observer<ObserverTest::Object> observer(target_sp);
 
-        NTCCFG_TEST_TRUE(observer.isShared());
-        NTCCFG_TEST_EQ(observer.shared(), target_sp);
+    NTSCFG_TEST_TRUE(observer.isShared());
+    NTSCFG_TEST_EQ(observer.shared(), target_sp);
 
-        ntcs::ObserverRef<test::Object> observerRef(&observer);
+    ntcs::ObserverRef<ObserverTest::Object> observerRef(&observer);
 
-        bool isNull = observerRef.isNull();
-        NTCCFG_TEST_TRUE(isNull);
+    bool isNull = observerRef.isNull();
+    NTSCFG_TEST_TRUE(isNull);
 
-        bool isDefined = observerRef.isDefined();
-        NTCCFG_TEST_FALSE(isDefined);
+    bool isDefined = observerRef.isDefined();
+    NTSCFG_TEST_FALSE(isDefined);
 
-        bool truthiness = static_cast<bool>(observerRef);
-        NTCCFG_TEST_FALSE(truthiness);
+    bool truthiness = static_cast<bool>(observerRef);
+    NTSCFG_TEST_FALSE(truthiness);
 
-        test::Object* object_p = observerRef.get();
-        NTCCFG_TEST_EQ(object_p, test::s_NULL_OBJECT);
+    ObserverTest::Object* object_p = observerRef.get();
+    NTSCFG_TEST_EQ(object_p, ObserverTest::s_NULL_OBJECT);
 
-        const bsl::shared_ptr<test::Object>& object_sp1 =
-            observerRef.getShared();
+    const bsl::shared_ptr<ObserverTest::Object>& object_sp1 =
+        observerRef.getShared();
 
-        const bsl::shared_ptr<test::Object>& object_sp2 =
-            observerRef.getShared();
+    const bsl::shared_ptr<ObserverTest::Object>& object_sp2 =
+        observerRef.getShared();
 
-        NTCCFG_TEST_EQ(object_sp1.get(), test::s_NULL_OBJECT);
-        NTCCFG_TEST_EQ(object_sp2.get(), test::s_NULL_OBJECT);
+    NTSCFG_TEST_EQ(object_sp1.get(), ObserverTest::s_NULL_OBJECT);
+    NTSCFG_TEST_EQ(object_sp2.get(), ObserverTest::s_NULL_OBJECT);
 
-        NTCCFG_TEST_EQ(&object_sp1, &object_sp2);
-        NTCCFG_TEST_NE(&object_sp1, &target_sp);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_EQ(&object_sp1, &object_sp2);
+    NTSCFG_TEST_NE(&object_sp1, &target_sp);
 }
 
-NTCCFG_TEST_CASE(7)
+NTSCFG_TEST_FUNCTION(ntcs::ObserverTest::verifyCase7)
 {
     // Concern: Defined shared pointer.
     // Plan:
 
-    ntccfg::TestAllocator ta;
-    {
-        bsl::shared_ptr<test::Object> target_sp;
-        target_sp.createInplace(&ta, "test", &ta);
+    bsl::shared_ptr<ObserverTest::Object> target_sp;
+    target_sp.createInplace(NTSCFG_TEST_ALLOCATOR,
+                            "test",
+                            NTSCFG_TEST_ALLOCATOR);
 
-        ntcs::Observer<test::Object> observer(target_sp);
+    ntcs::Observer<ObserverTest::Object> observer(target_sp);
 
-        NTCCFG_TEST_TRUE(observer.isShared());
-        NTCCFG_TEST_EQ(observer.shared(), target_sp);
+    NTSCFG_TEST_TRUE(observer.isShared());
+    NTSCFG_TEST_EQ(observer.shared(), target_sp);
 
-        ntcs::ObserverRef<test::Object> observerRef(&observer);
+    ntcs::ObserverRef<ObserverTest::Object> observerRef(&observer);
 
-        bool isNull = observerRef.isNull();
-        NTCCFG_TEST_FALSE(isNull);
+    bool isNull = observerRef.isNull();
+    NTSCFG_TEST_FALSE(isNull);
 
-        bool isDefined = observerRef.isDefined();
-        NTCCFG_TEST_TRUE(isDefined);
+    bool isDefined = observerRef.isDefined();
+    NTSCFG_TEST_TRUE(isDefined);
 
-        bool truthiness = static_cast<bool>(observerRef);
-        NTCCFG_TEST_TRUE(truthiness);
+    bool truthiness = static_cast<bool>(observerRef);
+    NTSCFG_TEST_TRUE(truthiness);
 
-        test::Object* object_p = observerRef.get();
-        NTCCFG_TEST_EQ(object_p, target_sp.get());
+    ObserverTest::Object* object_p = observerRef.get();
+    NTSCFG_TEST_EQ(object_p, target_sp.get());
 
-        const bsl::shared_ptr<test::Object>& object_sp1 =
-            observerRef.getShared();
+    const bsl::shared_ptr<ObserverTest::Object>& object_sp1 =
+        observerRef.getShared();
 
-        const bsl::shared_ptr<test::Object>& object_sp2 =
-            observerRef.getShared();
+    const bsl::shared_ptr<ObserverTest::Object>& object_sp2 =
+        observerRef.getShared();
 
-        NTCCFG_TEST_EQ(object_sp1.get(), target_sp.get());
-        NTCCFG_TEST_EQ(object_sp2.get(), target_sp.get());
+    NTSCFG_TEST_EQ(object_sp1.get(), target_sp.get());
+    NTSCFG_TEST_EQ(object_sp2.get(), target_sp.get());
 
-        NTCCFG_TEST_EQ(&object_sp1, &object_sp2);
-        NTCCFG_TEST_NE(&object_sp1, &target_sp);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_EQ(&object_sp1, &object_sp2);
+    NTSCFG_TEST_NE(&object_sp1, &target_sp);
 }
 
-NTCCFG_TEST_CASE(8)
-{
-    // Concern:
-    // Plan:
-
-    ntccfg::TestAllocator ta;
-    {
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-    NTCCFG_TEST_REGISTER(2);
-    NTCCFG_TEST_REGISTER(3);
-    NTCCFG_TEST_REGISTER(4);
-    NTCCFG_TEST_REGISTER(5);
-    NTCCFG_TEST_REGISTER(6);
-    NTCCFG_TEST_REGISTER(7);
-    NTCCFG_TEST_REGISTER(8);
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntcs
+}  // close namespace BloombergLP

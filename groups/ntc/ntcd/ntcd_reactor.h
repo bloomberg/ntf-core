@@ -21,7 +21,6 @@ BSLS_IDENT("$Id: $")
 
 #include <ntca_reactorconfig.h>
 #include <ntccfg_platform.h>
-#include <ntscfg_mock.h>
 #include <ntcd_datagramsocket.h>
 #include <ntcd_listenersocket.h>
 #include <ntcd_streamsocket.h>
@@ -41,6 +40,7 @@ BSLS_IDENT("$Id: $")
 #include <ntcs_driver.h>
 #include <ntcs_registry.h>
 #include <ntcscm_version.h>
+#include <ntscfg_mock.h>
 #include <bsl_memory.h>
 #include <bsl_string.h>
 #include <bsl_vector.h>

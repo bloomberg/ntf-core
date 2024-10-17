@@ -110,12 +110,12 @@ NTSCFG_TEST_FUNCTION(ntci::AcceptCallbackTest::verifyCase4)
 {
     bslmt::Semaphore semaphore;
 
-    ntci::AcceptCallback acceptCallback = ntci::AcceptCallback(
-        NTCCFG_BIND(&AcceptCallbackTest::processSemaphore,
-                    NTCCFG_BIND_PLACEHOLDER_1,
-                    NTCCFG_BIND_PLACEHOLDER_2,
-                    NTCCFG_BIND_PLACEHOLDER_3,
-                    &semaphore));
+    ntci::AcceptCallback acceptCallback =
+        ntci::AcceptCallback(NTCCFG_BIND(&AcceptCallbackTest::processSemaphore,
+                                         NTCCFG_BIND_PLACEHOLDER_1,
+                                         NTCCFG_BIND_PLACEHOLDER_2,
+                                         NTCCFG_BIND_PLACEHOLDER_3,
+                                         &semaphore));
 
     AcceptCallbackTest::invoke(acceptCallback);
     semaphore.wait();

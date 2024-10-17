@@ -1992,8 +1992,8 @@ void Kqueue::run(ntci::Waiter waiter)
             NTCO_KQUEUE_LOG_WAIT_INDEFINITE();
         }
 
-        if (tsPtr && tsPtr->tv_sec == 0 && tsPtr->tv_nsec == 0 && 
-            this->numSockets() == 0) 
+        if (tsPtr && tsPtr->tv_sec == 0 && tsPtr->tv_nsec == 0 &&
+            this->numSockets() == 0)
         {
             rc = 0;
         }
@@ -2195,8 +2195,8 @@ void Kqueue::poll(ntci::Waiter waiter)
         NTCO_KQUEUE_LOG_WAIT_INDEFINITE();
     }
 
-    if (tsPtr && tsPtr->tv_sec == 0 && tsPtr->tv_nsec == 0 && 
-        this->numSockets() == 0) 
+    if (tsPtr && tsPtr->tv_sec == 0 && tsPtr->tv_nsec == 0 &&
+        this->numSockets() == 0)
     {
         rc = 0;
     }

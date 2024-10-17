@@ -315,7 +315,7 @@ ntsa::Error Chronology::Timer::schedule(const bsls::TimeInterval& deadline,
                                                   deadlineInMicroseconds,
                                                   &newFrontFlag);
         }
-        else { 
+        else {
             if (deadlineInMicroseconds == 0) {
                 d_deadlineMapHandle = d_chronology_p->d_deadlineMap.addL(
                     deadlineInMicroseconds,
@@ -407,8 +407,7 @@ ntsa::Error Chronology::Timer::cancel()
             if (rawHandle) {
                 d_chronology_p->d_deadlineMapEarliest = rawHandle->key();
             }
-            else
-            {
+            else {
                 d_chronology_p->d_deadlineMapEmpty    = true;
                 d_chronology_p->d_deadlineMapEarliest = 0;
             }
@@ -498,8 +497,7 @@ ntsa::Error Chronology::Timer::close()
             if (rawHandle) {
                 d_chronology_p->d_deadlineMapEarliest = rawHandle->key();
             }
-            else
-            {
+            else {
                 d_chronology_p->d_deadlineMapEmpty    = true;
                 d_chronology_p->d_deadlineMapEarliest = 0;
             }
@@ -663,12 +661,11 @@ bdlb::NullableValue<bsls::TimeInterval> Chronology::Timer::deadline() const
         LockGuard lock(&d_chronology_p->d_mutex);
 
         if (d_deadlineMapHandle != 0) {
-            Microseconds timerDeadlineInMicroseconds = 
+            Microseconds timerDeadlineInMicroseconds =
                 d_deadlineMapHandle->key();
 
             bsls::TimeInterval timerDeadline;
-            timerDeadline.setTotalMicroseconds(
-                timerDeadlineInMicroseconds);
+            timerDeadline.setTotalMicroseconds(timerDeadlineInMicroseconds);
 
             result = timerDeadline;
         }
@@ -840,14 +837,15 @@ bsl::string Chronology::convertToDateTime(Microseconds timeInMicroseconds)
     return bsl::string(buffer);
 }
 
-Chronology::Chronology(ntcs::Interruptor* interruptor, 
+Chronology::Chronology(ntcs::Interruptor* interruptor,
                        bslma::Allocator*  basicAllocator)
 : d_object("ntcs::Chronology")
 , d_mutex(NTCCFG_LOCK_INIT)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
-, d_interruptor_sp(bsl::shared_ptr<ntcs::Interruptor>(interruptor,
-                                            bslstl::SharedPtrNilDeleter(),
-                                            basicAllocator))
+, d_interruptor_sp(
+      bsl::shared_ptr<ntcs::Interruptor>(interruptor,
+                                         bslstl::SharedPtrNilDeleter(),
+                                         basicAllocator))
 , d_parent_sp()
 , d_nodePool(sizeof(TimerNode), d_allocator_p)
 , d_nodeArray(d_allocator_p)
@@ -865,9 +863,8 @@ Chronology::Chronology(ntcs::Interruptor* interruptor,
 {
 }
 
-Chronology::Chronology(
-    const bsl::shared_ptr<ntcs::Interruptor>& interruptor,
-    bslma::Allocator*                         basicAllocator)
+Chronology::Chronology(const bsl::shared_ptr<ntcs::Interruptor>& interruptor,
+                       bslma::Allocator* basicAllocator)
 : d_object("ntcs::Chronology")
 , d_mutex(NTCCFG_LOCK_INIT)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
@@ -889,16 +886,16 @@ Chronology::Chronology(
 {
 }
 
-Chronology::Chronology(
-    ntcs::Interruptor*                       interruptor, 
-    const bsl::shared_ptr<ntci::Chronology>& parent,
-    bslma::Allocator*                        basicAllocator)
+Chronology::Chronology(ntcs::Interruptor*                       interruptor,
+                       const bsl::shared_ptr<ntci::Chronology>& parent,
+                       bslma::Allocator*                        basicAllocator)
 : d_object("ntcs::Chronology")
 , d_mutex(NTCCFG_LOCK_INIT)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
-, d_interruptor_sp(bsl::shared_ptr<ntcs::Interruptor>(interruptor,
-                                            bslstl::SharedPtrNilDeleter(),
-                                            basicAllocator))
+, d_interruptor_sp(
+      bsl::shared_ptr<ntcs::Interruptor>(interruptor,
+                                         bslstl::SharedPtrNilDeleter(),
+                                         basicAllocator))
 , d_parent_sp(parent)
 , d_nodePool(sizeof(TimerNode), d_allocator_p)
 , d_nodeArray(d_allocator_p)
@@ -916,10 +913,9 @@ Chronology::Chronology(
 {
 }
 
-Chronology::Chronology(
-    const bsl::shared_ptr<ntcs::Interruptor>& interruptor,
-    const bsl::shared_ptr<ntci::Chronology>&  parent,
-    bslma::Allocator*                         basicAllocator)
+Chronology::Chronology(const bsl::shared_ptr<ntcs::Interruptor>& interruptor,
+                       const bsl::shared_ptr<ntci::Chronology>&  parent,
+                       bslma::Allocator* basicAllocator)
 : d_object("ntcs::Chronology")
 , d_mutex(NTCCFG_LOCK_INIT)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
@@ -1150,8 +1146,7 @@ void Chronology::announce(bool single)
             }
             else {
                 functorsDue.makeValue().resize(1);
-                functorsDue.value().front().swap(
-                    d_functorQueue.front());
+                functorsDue.value().front().swap(d_functorQueue.front());
                 d_functorQueue.erase(d_functorQueue.begin());
                 if (d_functorQueue.empty()) {
                     d_functorQueueEmpty = true;
@@ -1237,7 +1232,6 @@ void Chronology::announce(bool single)
                     d_deadlineMap.remove(timer->d_deadlineMapHandle);
                     timer->d_deadlineMapHandle = 0;
                 }
-
             }
 
             if (d_deadlineMap.isEmpty()) {
@@ -1383,10 +1377,9 @@ void Chronology::load(TimerVector* result) const
             Timer*    timer    = timerRep->getObject();
             timerRep->acquireRef();
 
-            result->push_back(
-                bsl::shared_ptr<ntci::Timer>(
-                              static_cast<ntci::Timer*>(timer),
-                              static_cast<bslma::SharedPtrRep*>(timerRep)));
+            result->push_back(bsl::shared_ptr<ntci::Timer>(
+                static_cast<ntci::Timer*>(timer),
+                static_cast<bslma::SharedPtrRep*>(timerRep)));
 
             d_deadlineMap.skipForward(&rawHandle);
         }
@@ -1470,8 +1463,8 @@ void Chronology::moveAndExecute(
 #if NTCS_CHRONOLOGY_USE_FUNCTOR_QUEUE_VECTOR
 
         d_functorQueue.insert(d_functorQueue.end(),
-                            functorSequence->begin(),
-                            functorSequence->end());
+                              functorSequence->begin(),
+                              functorSequence->end());
         if (functor) {
             d_functorQueue.push_back(functor);
         }
@@ -1501,7 +1494,7 @@ bdlb::NullableValue<bsls::TimeInterval> Chronology::earliest() const
     if (d_parent_sp) {
         parentEarliest = d_parent_sp->earliest();
     }
-    
+
     bdlb::NullableValue<bsls::TimeInterval> thisEarliest;
     if (!d_deadlineMapEmpty) {
         this->findEarliest(&thisEarliest);
@@ -1546,15 +1539,16 @@ int Chronology::timeoutInMilliseconds() const
 {
     int timeout = -1;
 
-    const bdlb::NullableValue<bsls::TimeInterval> timeoutDuration = 
+    const bdlb::NullableValue<bsls::TimeInterval> timeoutDuration =
         this->timeoutInterval();
 
     if (timeoutDuration.has_value()) {
-        const bsls::Types::Int64 totalMilliseconds = 
+        const bsls::Types::Int64 totalMilliseconds =
             timeoutDuration.value().totalMilliseconds();
 
         if (NTCCFG_LIKELY(totalMilliseconds <=
-            static_cast<bsls::Types::Int64>(bsl::numeric_limits<int>::max())))
+                          static_cast<bsls::Types::Int64>(
+                              bsl::numeric_limits<int>::max())))
         {
             timeout = static_cast<int>(totalMilliseconds);
         }
@@ -1589,8 +1583,8 @@ bool Chronology::hasAnyDeferred() const
 bool Chronology::hasAnyScheduledOrDeferred() const
 {
     if (d_parent_sp) {
-        return !d_deadlineMapEmpty || !d_functorQueueEmpty || 
-                d_parent_sp->hasAnyScheduledOrDeferred();
+        return !d_deadlineMapEmpty || !d_functorQueueEmpty ||
+               d_parent_sp->hasAnyScheduledOrDeferred();
     }
     else {
         return !d_deadlineMapEmpty || !d_functorQueueEmpty;

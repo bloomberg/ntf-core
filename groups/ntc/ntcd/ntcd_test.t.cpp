@@ -41,19 +41,18 @@ class SampleTest
 };
 
 void SampleTest::verifyReactorConfig(
-        const bsl::shared_ptr<ntci::Reactor>& reactor)
+    const bsl::shared_ptr<ntci::Reactor>& reactor)
 {
 }
 
 void SampleTest::verifyProactorConfig(
-        const bsl::shared_ptr<ntci::Proactor>& proactor)
+    const bsl::shared_ptr<ntci::Proactor>& proactor)
 {
 }
 
 NTSCFG_TEST_FUNCTION(ntcd::SampleTest::verifyReactor)
 {
-    ntcd::TestFramework::verifyReactor(
-        &ntcd::SampleTest::verifyReactorConfig);
+    ntcd::TestFramework::verifyReactor(&ntcd::SampleTest::verifyReactorConfig);
 }
 
 NTSCFG_TEST_FUNCTION(ntcd::SampleTest::verifyProactor)

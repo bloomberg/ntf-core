@@ -281,15 +281,15 @@ struct Platform {
     /// dynamically loading the functions defined within in, or 0 on error.
     static void* getDynamicObjectHandle();
 
-    /// Return the handle to the executable or dynamic shared object (DSO, 
-    /// a.k.a Dynamic Link Library or DLL) for the purposes of dynamically 
+    /// Return the handle to the executable or dynamic shared object (DSO,
+    /// a.k.a Dynamic Link Library or DLL) for the purposes of dynamically
     /// loading the functions defined within in, or 0 on error.
     static void* getDynamicObjectHandle(const bsl::string& path);
 
     /// Return the address of the symbol having the specified 'name' exported
     /// by the executable or dynamic shared object (DSO, a.k.a Dynamic Link
     /// Library or DLL) identified by the specified 'module', or 0 on error.
-    static void* getDynamicObjectFunction(void*              module, 
+    static void* getDynamicObjectFunction(void*              module,
                                           const bsl::string& name);
 
     /// Release the resources necessary for this library's implementation.

@@ -20,8 +20,8 @@
 BSLS_IDENT("$Id: $")
 
 #include <ntccfg_platform.h>
-#include <ntci_datapool.h>
 #include <ntci_chronology.h>
+#include <ntci_datapool.h>
 #include <ntci_proactormetrics.h>
 #include <ntci_reactormetrics.h>
 #include <ntci_reservation.h>

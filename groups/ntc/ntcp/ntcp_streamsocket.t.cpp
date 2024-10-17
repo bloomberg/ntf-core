@@ -66,42 +66,42 @@ class StreamSocketTest
     // Execute the concern with the specified 'parameters' for the specified
     // 'transport' using the specified 'proactor'.
     static void verifyGenericVariation(
-        ntsa::Transport::Value                transport,
+        ntsa::Transport::Value                 transport,
         const bsl::shared_ptr<ntci::Proactor>& proactor,
-        const StreamSocketTest::Parameters&   parameters,
-        bslma::Allocator*                     allocator);
+        const StreamSocketTest::Parameters&    parameters,
+        bslma::Allocator*                      allocator);
 
     // Execute the concern with the specified 'parameters' for the specified
     // 'transport' using the specified 'proactor'.
     static void verifySendDeadlineVariation(
-        ntsa::Transport::Value                transport,
+        ntsa::Transport::Value                 transport,
         const bsl::shared_ptr<ntci::Proactor>& proactor,
-        const StreamSocketTest::Parameters&   parameters,
-        bslma::Allocator*                     allocator);
+        const StreamSocketTest::Parameters&    parameters,
+        bslma::Allocator*                      allocator);
 
     // Execute the concern with the specified 'parameters' for the specified
     // 'transport' using the specified 'proactor'.
     static void verifySendCancellationVariation(
-        ntsa::Transport::Value                transport,
+        ntsa::Transport::Value                 transport,
         const bsl::shared_ptr<ntci::Proactor>& proactor,
-        const StreamSocketTest::Parameters&   parameters,
-        bslma::Allocator*                     allocator);
+        const StreamSocketTest::Parameters&    parameters,
+        bslma::Allocator*                      allocator);
 
     // Execute the concern with the specified 'parameters' for the specified
     // 'transport' using the specified 'proactor'.
     static void verifyReceiveDeadlineVariation(
-        ntsa::Transport::Value                transport,
+        ntsa::Transport::Value                 transport,
         const bsl::shared_ptr<ntci::Proactor>& proactor,
-        const StreamSocketTest::Parameters&   parameters,
-        bslma::Allocator*                     allocator);
+        const StreamSocketTest::Parameters&    parameters,
+        bslma::Allocator*                      allocator);
 
     // Execute the concern with the specified 'parameters' for the specified
     // 'transport' using the specified 'proactor'.
     static void verifyReceiveCancellationVariation(
-        ntsa::Transport::Value                transport,
+        ntsa::Transport::Value                 transport,
         const bsl::shared_ptr<ntci::Proactor>& proactor,
-        const StreamSocketTest::Parameters&   parameters,
-        bslma::Allocator*                     allocator);
+        const StreamSocketTest::Parameters&    parameters,
+        bslma::Allocator*                      allocator);
 
     // Process the expected send timeout.
     static void processSendTimeout(
@@ -259,13 +259,13 @@ class StreamSocketTest::Framework
     /// on the specified 'barrier' then drives the specified 'proactor' until
     /// it is stopped.
     static void runProactor(const bsl::shared_ptr<ntci::Proactor>& proactor,
-                           bslmt::Barrier*                       barrier,
-                           bsl::size_t                           threadIndex);
+                            bslmt::Barrier*                        barrier,
+                            bsl::size_t threadIndex);
 
   public:
     /// Define a type alias for the function implementing a
     /// test case driven by this test framework.
-    typedef NTCCFG_FUNCTION(ntsa::Transport::Value                transport,
+    typedef NTCCFG_FUNCTION(ntsa::Transport::Value                 transport,
                             const bsl::shared_ptr<ntci::Proactor>& proactor,
                             bslma::Allocator* allocator) ExecuteCallback;
 
@@ -435,15 +435,15 @@ class StreamSocketTest::StreamSocketManager
     /// Define a type alias for a mutex lock guard.
     typedef ntccfg::LockGuard LockGuard;
 
-    ntccfg::Object                 d_object;
+    ntccfg::Object                  d_object;
     bsl::shared_ptr<ntci::Proactor> d_proactor_sp;
-    bsl::shared_ptr<ntcs::Metrics> d_metrics_sp;
-    Mutex                          d_socketMapMutex;
-    StreamSocketApplicationMap     d_socketMap;
-    bslmt::Latch                   d_socketsEstablished;
-    bslmt::Latch                   d_socketsClosed;
-    StreamSocketTest::Parameters   d_parameters;
-    bslma::Allocator*              d_allocator_p;
+    bsl::shared_ptr<ntcs::Metrics>  d_metrics_sp;
+    Mutex                           d_socketMapMutex;
+    StreamSocketApplicationMap      d_socketMap;
+    bslmt::Latch                    d_socketsEstablished;
+    bslmt::Latch                    d_socketsClosed;
+    StreamSocketTest::Parameters    d_parameters;
+    bslma::Allocator*               d_allocator_p;
 
   private:
     StreamSocketManager(const StreamSocketManager&) BSLS_KEYWORD_DELETED;
@@ -467,7 +467,7 @@ class StreamSocketTest::StreamSocketManager
     /// supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
     StreamSocketManager(const bsl::shared_ptr<ntci::Proactor>& proactor,
-                        const StreamSocketTest::Parameters&   parameters,
+                        const StreamSocketTest::Parameters&    parameters,
                         bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
@@ -480,8 +480,8 @@ class StreamSocketTest::StreamSocketManager
 
 void StreamSocketTest::Framework::runProactor(
     const bsl::shared_ptr<ntci::Proactor>& proactor,
-    bslmt::Barrier*                       barrier,
-    bsl::size_t                           threadIndex)
+    bslmt::Barrier*                        barrier,
+    bsl::size_t                            threadIndex)
 {
     const char* threadNamePrefix = "test";
 
@@ -591,9 +591,9 @@ void StreamSocketTest::Framework::execute(
 
     bsl::shared_ptr<ntcd::Proactor> proactor;
     proactor.createInplace(NTSCFG_TEST_ALLOCATOR,
-                          proactorConfig,
-                          user,
-                          NTSCFG_TEST_ALLOCATOR);
+                           proactorConfig,
+                           user,
+                           NTSCFG_TEST_ALLOCATOR);
 
     bslmt::Barrier threadGroupBarrier(numThreads + 1);
 
@@ -1107,8 +1107,8 @@ void StreamSocketTest::StreamSocketManager::processStreamSocketClosed(
 
 StreamSocketTest::StreamSocketManager::StreamSocketManager(
     const bsl::shared_ptr<ntci::Proactor>& proactor,
-    const StreamSocketTest::Parameters&   parameters,
-    bslma::Allocator*                     basicAllocator)
+    const StreamSocketTest::Parameters&    parameters,
+    bslma::Allocator*                      basicAllocator)
 : d_object("StreamSocketTest::StreamSocketManager")
 , d_proactor_sp(proactor)
 , d_metrics_sp()
@@ -1472,10 +1472,10 @@ void StreamSocketTest::StreamSocketManager::run()
 }
 
 void StreamSocketTest::verifyGenericVariation(
-    ntsa::Transport::Value                transport,
+    ntsa::Transport::Value                 transport,
     const bsl::shared_ptr<ntci::Proactor>& proactor,
-    const StreamSocketTest::Parameters&   parameters,
-    bslma::Allocator*                     allocator)
+    const StreamSocketTest::Parameters&    parameters,
+    bslma::Allocator*                      allocator)
 {
     NTCI_LOG_CONTEXT();
 
@@ -1499,10 +1499,10 @@ void StreamSocketTest::verifyGenericVariation(
 }
 
 void StreamSocketTest::verifySendDeadlineVariation(
-    ntsa::Transport::Value                transport,
+    ntsa::Transport::Value                 transport,
     const bsl::shared_ptr<ntci::Proactor>& proactor,
-    const StreamSocketTest::Parameters&   parameters,
-    bslma::Allocator*                     allocator)
+    const StreamSocketTest::Parameters&    parameters,
+    bslma::Allocator*                      allocator)
 {
     // Concern: Send deadlines.
 
@@ -1695,10 +1695,10 @@ void StreamSocketTest::verifySendDeadlineVariation(
 }
 
 void StreamSocketTest::verifySendCancellationVariation(
-    ntsa::Transport::Value                transport,
+    ntsa::Transport::Value                 transport,
     const bsl::shared_ptr<ntci::Proactor>& proactor,
-    const StreamSocketTest::Parameters&   parameters,
-    bslma::Allocator*                     allocator)
+    const StreamSocketTest::Parameters&    parameters,
+    bslma::Allocator*                      allocator)
 {
     // Concern: Send cancellation.
 
@@ -1917,10 +1917,10 @@ void StreamSocketTest::verifySendCancellationVariation(
 }
 
 void StreamSocketTest::verifyReceiveDeadlineVariation(
-    ntsa::Transport::Value                transport,
+    ntsa::Transport::Value                 transport,
     const bsl::shared_ptr<ntci::Proactor>& proactor,
-    const StreamSocketTest::Parameters&   parameters,
-    bslma::Allocator*                     allocator)
+    const StreamSocketTest::Parameters&    parameters,
+    bslma::Allocator*                      allocator)
 {
     // Concern: Receive deadlines.
 
@@ -2010,10 +2010,10 @@ void StreamSocketTest::verifyReceiveDeadlineVariation(
 }
 
 void StreamSocketTest::verifyReceiveCancellationVariation(
-    ntsa::Transport::Value                transport,
+    ntsa::Transport::Value                 transport,
     const bsl::shared_ptr<ntci::Proactor>& proactor,
-    const StreamSocketTest::Parameters&   parameters,
-    bslma::Allocator*                     allocator)
+    const StreamSocketTest::Parameters&    parameters,
+    bslma::Allocator*                      allocator)
 {
     // Concern: Receive cancellation.
 

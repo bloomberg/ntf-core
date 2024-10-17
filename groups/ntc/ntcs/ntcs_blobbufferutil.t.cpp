@@ -30,9 +30,7 @@ namespace ntcs {
 // Provide tests for 'ntcs::BlobBufferUtil'.
 class BlobBufferUtilTest
 {
-    enum Constant {
-        k_DEFAULT_MAX_RECEIVE_SIZE = 1024 * 1024 * 32
-    };
+    enum Constant { k_DEFAULT_MAX_RECEIVE_SIZE = 1024 * 1024 * 32 };
 
   public:
     // TODO

@@ -865,8 +865,8 @@ void DatagramSocketManager::processDatagramSocketClosed(
                    (int)(datagramSocket->handle()));
 
     {
-        LockGuard guard(&d_socketMapMutex);
-        bsl::size_t                    n = d_socketMap.erase(datagramSocket);
+        LockGuard   guard(&d_socketMapMutex);
+        bsl::size_t n = d_socketMap.erase(datagramSocket);
         NTCCFG_TEST_EQ(n, 1);
     }
 
@@ -2041,7 +2041,7 @@ void StreamSocketManager::processListenerSocketClosed(
                    (int)(listenerSocket->handle()));
 
     {
-        LockGuard guard(&d_listenerSocketMapMutex);
+        LockGuard   guard(&d_listenerSocketMapMutex);
         bsl::size_t n = d_listenerSocketMap.erase(listenerSocket);
         NTCCFG_TEST_EQ(n, 1);
     }
@@ -2115,7 +2115,7 @@ void StreamSocketManager::processStreamSocketClosed(
     NTCI_LOG_DEBUG("Stream socket %d closed", (int)(streamSocket->handle()));
 
     {
-        LockGuard guard(&d_streamSocketMapMutex);
+        LockGuard   guard(&d_streamSocketMapMutex);
         bsl::size_t n = d_streamSocketMap.erase(streamSocket);
         NTCCFG_TEST_EQ(n, 1);
     }
@@ -3330,8 +3330,8 @@ void TransferClient::processStreamSocketClosed(
                          << NTCCFG_TEST_LOG_END;
 
     {
-        LockGuard lockGuard(&d_mutex);
-        bsl::size_t                    n = d_streamSockets.erase(streamSocket);
+        LockGuard   lockGuard(&d_mutex);
+        bsl::size_t n = d_streamSockets.erase(streamSocket);
         NTCCFG_TEST_EQ(n, 1);
     }
 
@@ -3923,7 +3923,7 @@ void TransferServer::processListenerSocketClosed(
                          << NTCCFG_TEST_LOG_END;
 
     {
-        LockGuard lockGuard(&d_mutex);
+        LockGuard   lockGuard(&d_mutex);
         bsl::size_t n = d_listenerSockets.erase(listenerSocket);
         NTCCFG_TEST_EQ(n, 1);
     }
@@ -3974,8 +3974,8 @@ void TransferServer::processStreamSocketClosed(
                          << NTCCFG_TEST_LOG_END;
 
     {
-        LockGuard lockGuard(&d_mutex);
-        bsl::size_t                    n = d_streamSockets.erase(streamSocket);
+        LockGuard   lockGuard(&d_mutex);
+        bsl::size_t n = d_streamSockets.erase(streamSocket);
         NTCCFG_TEST_EQ(n, 1);
     }
 
@@ -7135,8 +7135,8 @@ void concernConnectAndShutdown(
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
 #endif
 
-    const int         k_TIMEOUT_MICROSEC        = 100;
-    const char*       address                   = "127.0.0.1:51";
+    const int   k_TIMEOUT_MICROSEC = 100;
+    const char* address            = "127.0.0.1:51";
 
     NTCI_LOG_CONTEXT();
 
@@ -12414,8 +12414,8 @@ void concernStreamSocketConnectDeadlineTimerClose(
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 60;
 #endif
 
-    const int         k_DEADLINE_INTERVAL_HOURS = 1;
-    const int         k_RETRY_INTERVAL_MINUTES  = 1;
+    const int k_DEADLINE_INTERVAL_HOURS = 1;
+    const int k_RETRY_INTERVAL_MINUTES  = 1;
 
     NTCI_LOG_CONTEXT();
 
@@ -13157,7 +13157,7 @@ void concernInterfaceFunctionAndTimerDistribution(
     const bsl::size_t minThreads = schedulerConfig.minThreads();
     const bsl::size_t maxThreads = schedulerConfig.maxThreads();
 
-    // This test assumes that there are a fixed number of threads run by 
+    // This test assumes that there are a fixed number of threads run by
     // the scheduler.
 
     NTCCFG_TEST_EQ(minThreads, maxThreads);
@@ -13167,15 +13167,13 @@ void concernInterfaceFunctionAndTimerDistribution(
         bslmt::Barrier suspendBarrier(numThreads + 1);
         bslmt::Barrier releaseBarrier(numThreads + 1);
 
-        for (bsl::size_t threadIndex = 0; 
-                         threadIndex < numThreads; 
-                       ++threadIndex) 
+        for (bsl::size_t threadIndex = 0; threadIndex < numThreads;
+             ++threadIndex)
         {
-            scheduler->execute(
-                NTCCFG_BIND(&distributedFunction,
-                            &suspendBarrier,
-                            &releaseBarrier,
-                            threadIndex));
+            scheduler->execute(NTCCFG_BIND(&distributedFunction,
+                                           &suspendBarrier,
+                                           &releaseBarrier,
+                                           threadIndex));
         }
 
         suspendBarrier.wait();

@@ -13,41 +13,50 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntcs_controller_t_cpp, "$Id$ $CSID$")
+
 #include <ntcs_controller.h>
 
-#include <ntccfg_test.h>
 #include <ntsf_system.h>
 #include <ntsi_reactor.h>
 #include <ntsu_socketoptionutil.h>
 
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntcs {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
+// Provide tests for 'ntcs::Controller'.
+class ControllerTest
+{
+    static const char* k_TEMP_DIR;
 
-namespace {
+    static void pollAndTest(const bsl::shared_ptr<ntsi::Reactor>& reactor,
+                            ntcs::Controller*                     controller,
+                            bool readableExpected);
+
+  public:
+    // TODO
+    static void verifyCase1();
+
+    // TODO
+    static void verifyCase2();
+};
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
-const char* k_TEMP_DIR = "TMPDIR";
+const char* ControllerTest::k_TEMP_DIR = "TMPDIR";
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
-const char* k_TEMP_DIR = "TMP";
+const char* ControllerTest::k_TEMP_DIR = "TMP";
 #else
 #error Not implemented
 #endif
 
-void pollAndTest(const bsl::shared_ptr<ntsi::Reactor>& reactor,
-                 ntcs::Controller*                     controller,
-                 bool                                  readableExpected)
+void ControllerTest::pollAndTest(const bsl::shared_ptr<ntsi::Reactor>& reactor,
+                                 ntcs::Controller* controller,
+                                 bool              readableExpected)
 {
     ntsa::Error error;
 
@@ -72,176 +81,154 @@ void pollAndTest(const bsl::shared_ptr<ntsi::Reactor>& reactor,
             }
         }
 
-        NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
 #else
-        NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
 #endif
     }
     else {
-        NTCCFG_TEST_OK(error);
+        NTSCFG_TEST_OK(error);
     }
 
     const bool readableFound = eventSet.isReadable(controller->handle());
-    NTCCFG_TEST_EQ(readableFound, readableExpected);
+    NTSCFG_TEST_EQ(readableFound, readableExpected);
 }
 
-}  // close unnamed namespace
-
-NTCCFG_TEST_CASE(1)
+NTSCFG_TEST_FUNCTION(ntcs::ControllerTest::verifyCase1)
 {
-    // Concern: Test interruption, pollability and acknowledgement.
+    ntsa::Error error;
 
-    ntccfg::TestAllocator ta;
-    {
-        ntsa::Error error;
-
-        ntcs::Controller controller;
+    ntcs::Controller controller;
 
 #if defined(BSLS_PLATFORM_OS_SOLARIS)
 
-        ntsa::ReactorConfig reactorConfig;
-        reactorConfig.setDriverName("eventport");
+    ntsa::ReactorConfig reactorConfig;
+    reactorConfig.setDriverName("eventport");
 
-        bsl::shared_ptr<ntsi::Reactor> reactor =
-            ntsf::System::createReactor(reactorConfig, &ta);
+    bsl::shared_ptr<ntsi::Reactor> reactor =
+        ntsf::System::createReactor(reactorConfig, NTSCFG_TEST_ALLOCATOR);
 
 #else
 
-        bsl::shared_ptr<ntsi::Reactor> reactor =
-            ntsf::System::createReactor(&ta);
+    bsl::shared_ptr<ntsi::Reactor> reactor =
+        ntsf::System::createReactor(NTSCFG_TEST_ALLOCATOR);
 
 #endif
 
+    error = reactor->attachSocket(controller.handle());
+    NTSCFG_TEST_OK(error);
+
+    error = reactor->showReadable(controller.handle());
+    NTSCFG_TEST_OK(error);
+
+    pollAndTest(reactor, &controller, false);
+
+    error = controller.acknowledge();
+    NTSCFG_TEST_OK(error);
+    pollAndTest(reactor, &controller, false);
+
+    controller.interrupt(2);
+    pollAndTest(reactor, &controller, true);
+    error = controller.acknowledge();
+    NTSCFG_TEST_OK(error);
+
+    pollAndTest(reactor, &controller, true);
+    error = controller.acknowledge();
+    NTSCFG_TEST_OK(error);
+    pollAndTest(reactor, &controller, false);
+
+    controller.interrupt(1);
+    pollAndTest(reactor, &controller, true);
+    error = controller.acknowledge();
+    NTSCFG_TEST_OK(error);
+    pollAndTest(reactor, &controller, false);
+
+    error = reactor->detachSocket(controller.handle());
+    NTSCFG_TEST_OK(error);
+}
+
+NTSCFG_TEST_FUNCTION(ntcs::ControllerTest::verifyCase2)
+{
+    ntsa::Error error;
+    int         rc;
+
+    // Test if Unix domain sockets are used by default.
+
+    bool isLocalDefault = false;
+    {
+        ntcs::Controller controller;
+
+        error = ntsu::SocketOptionUtil::isLocal(&isLocalDefault,
+                                                controller.handle());
+#if defined(BSLS_PLATFORM_OS_WINDOWS)
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_TRUE(isLocalDefault);
+#endif
+    }
+
+    // Test that the implementation falls back to using TCP sockets when
+    // Unix domain sockets may not be used.
+
+    if (isLocalDefault) {
+        // Save the old environment variable value.
+
+        bsl::string tempDirOld;
+        rc = ntccfg::Platform::getEnvironmentVariable(&tempDirOld, k_TEMP_DIR);
+        NTSCFG_TEST_EQ(rc, 0);
+        NTSCFG_TEST_FALSE(tempDirOld.empty());
+
+        // Modify the environment variable that defines the path to the
+        // user's temporary directory so that it describes a path longer
+        // than may be stored in a Unix domain address. In such cases, the
+        // implementation must detect that Unix domain sockets cannot be
+        // used, and fall back to using TCP.
+
+        {
+            bsl::string tempDirNew;
+            for (bsl::size_t i = 0; i < ntsa::LocalName::k_MAX_PATH_LENGTH;
+                 ++i)
+            {
+                const char c = 'a' + (bsl::rand() % ('z' - 'a'));
+                tempDirNew.append(1, c);
+            }
+
+            rc = ntccfg::Platform::setEnvironmentVariable(k_TEMP_DIR,
+                                                          tempDirNew);
+            NTSCFG_TEST_EQ(rc, 0);
+        }
+
+        ntcs::Controller controller;
+
+        bool isLocal = true;
+        error = ntsu::SocketOptionUtil::isLocal(&isLocal, controller.handle());
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_FALSE(isLocal);
+
+        // Attach the socket to a reactor and ensure that it becomes
+        // readable after it has been interrupted, and is not readable
+        // after the interruption has been acknowledged.
+
+        bsl::shared_ptr<ntsi::Reactor> reactor =
+            ntsf::System::createReactor(NTSCFG_TEST_ALLOCATOR);
+
         error = reactor->attachSocket(controller.handle());
-        NTCCFG_TEST_OK(error);
+        NTSCFG_TEST_OK(error);
 
         error = reactor->showReadable(controller.handle());
-        NTCCFG_TEST_OK(error);
-
-        pollAndTest(reactor, &controller, false);
-
-        error = controller.acknowledge();
-        NTCCFG_TEST_OK(error);
-        pollAndTest(reactor, &controller, false);
-
-        controller.interrupt(2);
-        pollAndTest(reactor, &controller, true);
-        error = controller.acknowledge();
-        NTCCFG_TEST_OK(error);
-
-        pollAndTest(reactor, &controller, true);
-        error = controller.acknowledge();
-        NTCCFG_TEST_OK(error);
-        pollAndTest(reactor, &controller, false);
+        NTSCFG_TEST_OK(error);
 
         controller.interrupt(1);
         pollAndTest(reactor, &controller, true);
-        error = controller.acknowledge();
-        NTCCFG_TEST_OK(error);
+        NTSCFG_TEST_OK(controller.acknowledge());
         pollAndTest(reactor, &controller, false);
 
         error = reactor->detachSocket(controller.handle());
-        NTCCFG_TEST_OK(error);
+        NTSCFG_TEST_OK(error);
+
+        rc = ntccfg::Platform::setEnvironmentVariable(k_TEMP_DIR, tempDirOld);
+        NTSCFG_TEST_EQ(rc, 0);
     }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTCCFG_TEST_CASE(2)
-{
-    // Concern: Test that control channel can fallback to another
-    // implementation on Windows.
-
-    ntccfg::TestAllocator ta;
-    {
-        ntsa::Error error;
-        int         rc;
-
-        // Test if Unix domain sockets are used by default.
-
-        bool isLocalDefault = false;
-        {
-            ntcs::Controller controller;
-
-            error = ntsu::SocketOptionUtil::isLocal(&isLocalDefault,
-                                                    controller.handle());
-#if defined(BSLS_PLATFORM_OS_WINDOWS)
-            NTCCFG_TEST_OK(error);
-            NTCCFG_TEST_TRUE(isLocalDefault);
-#endif
-        }
-
-        // Test that the implementation falls back to using TCP sockets when
-        // Unix domain sockets may not be used.
-
-        if (isLocalDefault) {
-            // Save the old environment variable value.
-
-            bsl::string tempDirOld;
-            rc = ntccfg::Platform::getEnvironmentVariable(&tempDirOld,
-                                                          k_TEMP_DIR);
-            NTCCFG_TEST_EQ(rc, 0);
-            NTCCFG_TEST_FALSE(tempDirOld.empty());
-
-            // Modify the environment variable that defines the path to the
-            // user's temporary directory so that it describes a path longer
-            // than may be stored in a Unix domain address. In such cases, the
-            // implementation must detect that Unix domain sockets cannot be
-            // used, and fall back to using TCP.
-
-            {
-                bsl::string tempDirNew;
-                for (bsl::size_t i = 0; i < ntsa::LocalName::k_MAX_PATH_LENGTH;
-                     ++i)
-                {
-                    const char c = 'a' + (bsl::rand() % ('z' - 'a'));
-                    tempDirNew.append(1, c);
-                }
-
-                rc = ntccfg::Platform::setEnvironmentVariable(k_TEMP_DIR,
-                                                              tempDirNew);
-                NTCCFG_TEST_EQ(rc, 0);
-            }
-
-            ntcs::Controller controller;
-
-            bool isLocal = true;
-            error =
-                ntsu::SocketOptionUtil::isLocal(&isLocal, controller.handle());
-            NTCCFG_TEST_OK(error);
-            NTCCFG_TEST_FALSE(isLocal);
-
-            // Attach the socket to a reactor and ensure that it becomes
-            // readable after it has been interrupted, and is not readable
-            // after the interruption has been acknowledged.
-
-            bsl::shared_ptr<ntsi::Reactor> reactor =
-                ntsf::System::createReactor(&ta);
-
-            error = reactor->attachSocket(controller.handle());
-            NTCCFG_TEST_OK(error);
-
-            error = reactor->showReadable(controller.handle());
-            NTCCFG_TEST_OK(error);
-
-            controller.interrupt(1);
-            pollAndTest(reactor, &controller, true);
-            NTCCFG_TEST_OK(controller.acknowledge());
-            pollAndTest(reactor, &controller, false);
-
-            error = reactor->detachSocket(controller.handle());
-            NTCCFG_TEST_OK(error);
-
-            rc = ntccfg::Platform::setEnvironmentVariable(k_TEMP_DIR,
-                                                          tempDirOld);
-            NTCCFG_TEST_EQ(rc, 0);
-        }
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-    NTCCFG_TEST_REGISTER(2);
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntcs
+}  // close namespace BloombergLP

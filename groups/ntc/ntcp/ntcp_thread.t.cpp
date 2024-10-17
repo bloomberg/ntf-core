@@ -70,7 +70,7 @@ NTSCFG_TEST_FUNCTION(ntcp::ThreadTest::verifyCase1)
     {
         bsl::shared_ptr<ntcd::ProactorFactory> concreteProactorFactory;
         concreteProactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR,
-                                             NTSCFG_TEST_ALLOCATOR);
+                                              NTSCFG_TEST_ALLOCATOR);
 
         proactorFactory = concreteProactorFactory;
     }
@@ -140,7 +140,8 @@ NTSCFG_TEST_FUNCTION(ntcp::ThreadTest::verifyCase2)
     // Create the proactor factory.
 
     bsl::shared_ptr<ntcd::ProactorFactory> proactorFactory;
-    proactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+    proactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR,
+                                  NTSCFG_TEST_ALLOCATOR);
 
     // Create the proactor.
 
@@ -151,8 +152,8 @@ NTSCFG_TEST_FUNCTION(ntcp::ThreadTest::verifyCase2)
 
     bsl::shared_ptr<ntci::Proactor> proactor =
         proactorFactory->createProactor(proactorConfig,
-                                      bsl::shared_ptr<ntci::User>(),
-                                      NTSCFG_TEST_ALLOCATOR);
+                                        bsl::shared_ptr<ntci::User>(),
+                                        NTSCFG_TEST_ALLOCATOR);
 
     // Create the thread.
 
