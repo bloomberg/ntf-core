@@ -62,52 +62,52 @@ void InterfaceTest::run(const bsl::shared_ptr<ntcr::Interface>& interface,
     BSLS_LOG_INFO("Testing restart iteration %d", (int)(restartIteration));
 
     if (restartIteration == 0) {
-        NTCCFG_TEST_EQ(interface->numReactors(), 0);
+        NTSCFG_TEST_EQ(interface->numReactors(), 0);
     }
     else {
         if (dynamicLoadBalancing) {
-            NTCCFG_TEST_EQ(interface->numReactors(), 1);
+            NTSCFG_TEST_EQ(interface->numReactors(), 1);
         }
         else {
-            NTCCFG_TEST_EQ(interface->numReactors(), numThreads);
+            NTSCFG_TEST_EQ(interface->numReactors(), numThreads);
         }
     }
 
-    NTCCFG_TEST_EQ(interface->numThreads(), 0);
+    NTSCFG_TEST_EQ(interface->numThreads(), 0);
 
     if (dynamicThreadCount) {
-        NTCCFG_TEST_EQ(interface->minThreads(), 1);
+        NTSCFG_TEST_EQ(interface->minThreads(), 1);
     }
     else {
-        NTCCFG_TEST_EQ(interface->minThreads(), numThreads);
+        NTSCFG_TEST_EQ(interface->minThreads(), numThreads);
     }
 
-    NTCCFG_TEST_EQ(interface->maxThreads(), numThreads);
+    NTSCFG_TEST_EQ(interface->maxThreads(), numThreads);
 
     interface->start();
 
     if (dynamicThreadCount) {
         if (restartIteration == 0) {
-            NTCCFG_TEST_EQ(interface->numReactors(), 1);
+            NTSCFG_TEST_EQ(interface->numReactors(), 1);
         }
         else {
             if (dynamicLoadBalancing) {
-                NTCCFG_TEST_EQ(interface->numReactors(), 1);
+                NTSCFG_TEST_EQ(interface->numReactors(), 1);
             }
             else {
-                NTCCFG_TEST_EQ(interface->numReactors(), numThreads);
+                NTSCFG_TEST_EQ(interface->numReactors(), numThreads);
             }
         }
 
         if (restartIteration == 0) {
-            NTCCFG_TEST_EQ(interface->numThreads(), 1);
+            NTSCFG_TEST_EQ(interface->numThreads(), 1);
         }
         else {
-            NTCCFG_TEST_EQ(interface->numThreads(), numThreads);
+            NTSCFG_TEST_EQ(interface->numThreads(), numThreads);
         }
 
-        NTCCFG_TEST_EQ(interface->minThreads(), 1);
-        NTCCFG_TEST_EQ(interface->maxThreads(), numThreads);
+        NTSCFG_TEST_EQ(interface->minThreads(), 1);
+        NTSCFG_TEST_EQ(interface->maxThreads(), numThreads);
 
         if (restartIteration == 0) {
             for (bsl::size_t newNumThreads = 2;
@@ -115,74 +115,74 @@ void InterfaceTest::run(const bsl::shared_ptr<ntcr::Interface>& interface,
                  ++newNumThreads)
             {
                 bool grew = interface->expand();
-                NTCCFG_TEST_TRUE(grew);
+                NTSCFG_TEST_TRUE(grew);
 
                 if (dynamicLoadBalancing) {
-                    NTCCFG_TEST_EQ(interface->numReactors(), 1);
+                    NTSCFG_TEST_EQ(interface->numReactors(), 1);
                 }
                 else {
-                    NTCCFG_TEST_EQ(interface->numReactors(), newNumThreads);
+                    NTSCFG_TEST_EQ(interface->numReactors(), newNumThreads);
                 }
 
-                NTCCFG_TEST_EQ(interface->numThreads(), newNumThreads);
-                NTCCFG_TEST_EQ(interface->minThreads(), 1);
-                NTCCFG_TEST_EQ(interface->maxThreads(), numThreads);
+                NTSCFG_TEST_EQ(interface->numThreads(), newNumThreads);
+                NTSCFG_TEST_EQ(interface->minThreads(), 1);
+                NTSCFG_TEST_EQ(interface->maxThreads(), numThreads);
             }
 
             {
                 bool grew = interface->expand();
-                NTCCFG_TEST_FALSE(grew);
+                NTSCFG_TEST_FALSE(grew);
             }
         }
         else {
             bool grew = interface->expand();
-            NTCCFG_TEST_FALSE(grew);
+            NTSCFG_TEST_FALSE(grew);
         }
 
         if (dynamicLoadBalancing) {
-            NTCCFG_TEST_EQ(interface->numReactors(), 1);
+            NTSCFG_TEST_EQ(interface->numReactors(), 1);
         }
         else {
-            NTCCFG_TEST_EQ(interface->numReactors(), numThreads);
+            NTSCFG_TEST_EQ(interface->numReactors(), numThreads);
         }
 
-        NTCCFG_TEST_EQ(interface->numThreads(), numThreads);
-        NTCCFG_TEST_EQ(interface->minThreads(), 1);
-        NTCCFG_TEST_EQ(interface->maxThreads(), numThreads);
+        NTSCFG_TEST_EQ(interface->numThreads(), numThreads);
+        NTSCFG_TEST_EQ(interface->minThreads(), 1);
+        NTSCFG_TEST_EQ(interface->maxThreads(), numThreads);
     }
     else {
         if (dynamicLoadBalancing) {
-            NTCCFG_TEST_EQ(interface->numReactors(), 1);
+            NTSCFG_TEST_EQ(interface->numReactors(), 1);
         }
         else {
-            NTCCFG_TEST_EQ(interface->numReactors(), numThreads);
+            NTSCFG_TEST_EQ(interface->numReactors(), numThreads);
         }
 
-        NTCCFG_TEST_EQ(interface->numThreads(), numThreads);
-        NTCCFG_TEST_EQ(interface->minThreads(), numThreads);
-        NTCCFG_TEST_EQ(interface->maxThreads(), numThreads);
+        NTSCFG_TEST_EQ(interface->numThreads(), numThreads);
+        NTSCFG_TEST_EQ(interface->minThreads(), numThreads);
+        NTSCFG_TEST_EQ(interface->maxThreads(), numThreads);
     }
 
     interface->shutdown();
     interface->linger();
 
     if (dynamicLoadBalancing) {
-        NTCCFG_TEST_EQ(interface->numReactors(), 1);
+        NTSCFG_TEST_EQ(interface->numReactors(), 1);
     }
     else {
-        NTCCFG_TEST_EQ(interface->numReactors(), numThreads);
+        NTSCFG_TEST_EQ(interface->numReactors(), numThreads);
     }
 
-    NTCCFG_TEST_EQ(interface->numThreads(), 0);
+    NTSCFG_TEST_EQ(interface->numThreads(), 0);
 
     if (dynamicThreadCount) {
-        NTCCFG_TEST_EQ(interface->minThreads(), 1);
+        NTSCFG_TEST_EQ(interface->minThreads(), 1);
     }
     else {
-        NTCCFG_TEST_EQ(interface->minThreads(), numThreads);
+        NTSCFG_TEST_EQ(interface->minThreads(), numThreads);
     }
 
-    NTCCFG_TEST_EQ(interface->maxThreads(), numThreads);
+    NTSCFG_TEST_EQ(interface->maxThreads(), numThreads);
 }
 
 NTSCFG_TEST_FUNCTION(ntcr::InterfaceTest::verifyCase1)
@@ -195,7 +195,7 @@ NTSCFG_TEST_FUNCTION(ntcr::InterfaceTest::verifyCase1)
     simulation.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     error = simulation->run();
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
     // Create the data pool.
 
@@ -222,12 +222,12 @@ NTSCFG_TEST_FUNCTION(ntcr::InterfaceTest::verifyCase1)
                             NTSCFG_TEST_ALLOCATOR);
 
     error = interface->start();
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
     // Ensure the interface has created one reactor run by one thread.
 
-    NTCCFG_TEST_EQ(interface->numReactors(), 1);
-    NTCCFG_TEST_EQ(interface->numThreads(), 1);
+    NTSCFG_TEST_EQ(interface->numReactors(), 1);
+    NTSCFG_TEST_EQ(interface->numThreads(), 1);
 
     // Stop the interface.
 
@@ -237,8 +237,8 @@ NTSCFG_TEST_FUNCTION(ntcr::InterfaceTest::verifyCase1)
     // Ensure the interface is no longer running any threads but the
     // original reactor still exists.
 
-    NTCCFG_TEST_EQ(interface->numReactors(), 1);
-    NTCCFG_TEST_EQ(interface->numThreads(), 0);
+    NTSCFG_TEST_EQ(interface->numReactors(), 1);
+    NTSCFG_TEST_EQ(interface->numThreads(), 0);
 
     // Stop the simulation.
 
@@ -272,7 +272,7 @@ NTSCFG_TEST_FUNCTION(ntcr::InterfaceTest::verifyCase2)
     simulation.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     error = simulation->run();
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
     // Create the data pool.
 
@@ -334,41 +334,36 @@ NTSCFG_TEST_FUNCTION(ntcr::InterfaceTest::verifyCase2)
             {
                 BSLS_LOG_INFO("Testing %d threads", (int)(numThreads));
 
-                ntccfg::TestAllocator ta;
-                {
-                    ntca::InterfaceConfig interfaceConfig;
-                    interfaceConfig.setMetricName("test");
+                ntca::InterfaceConfig interfaceConfig;
+                interfaceConfig.setMetricName("test");
 
-                    if (dynamicThreadCount) {
-                        interfaceConfig.setMinThreads(1);
-                    }
-                    else {
-                        interfaceConfig.setMinThreads(numThreads);
-                    }
-
-                    interfaceConfig.setMaxThreads(numThreads);
-                    interfaceConfig.setDynamicLoadBalancing(
-                        dynamicLoadBalancing);
-
-                    bsl::shared_ptr<ntcr::Interface> interface;
-                    interface.createInplace(NTSCFG_TEST_ALLOCATOR,
-                                            interfaceConfig,
-                                            dataPool,
-                                            reactorFactory,
-                                            NTSCFG_TEST_ALLOCATOR);
-
-                    for (bsl::size_t restartIteration = 0;
-                         restartIteration < NUM_RESTARTS;
-                         ++restartIteration)
-                    {
-                        InterfaceTest::run(interface,
-                                           numThreads,
-                                           restartIteration,
-                                           dynamicLoadBalancing,
-                                           dynamicThreadCount);
-                    }
+                if (dynamicThreadCount) {
+                    interfaceConfig.setMinThreads(1);
                 }
-                NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+                else {
+                    interfaceConfig.setMinThreads(numThreads);
+                }
+
+                interfaceConfig.setMaxThreads(numThreads);
+                interfaceConfig.setDynamicLoadBalancing(dynamicLoadBalancing);
+
+                bsl::shared_ptr<ntcr::Interface> interface;
+                interface.createInplace(NTSCFG_TEST_ALLOCATOR,
+                                        interfaceConfig,
+                                        dataPool,
+                                        reactorFactory,
+                                        NTSCFG_TEST_ALLOCATOR);
+
+                for (bsl::size_t restartIteration = 0;
+                     restartIteration < NUM_RESTARTS;
+                     ++restartIteration)
+                {
+                    InterfaceTest::run(interface,
+                                       numThreads,
+                                       restartIteration,
+                                       dynamicLoadBalancing,
+                                       dynamicThreadCount);
+                }
             }
         }
     }
