@@ -5258,8 +5258,9 @@ ntsa::Error StreamSocket::upgrade(
     ntsa::Error error;
 
     bsl::shared_ptr<ntci::Encryption> encryption;
-    error = encryptionClient->createEncryption(
-        &encryption, d_dataPool_sp, d_allocator_p);
+    error = encryptionClient->createEncryption(&encryption,
+                                               d_dataPool_sp,
+                                               d_allocator_p);
     if (error) {
         return error;
     }
@@ -5285,8 +5286,9 @@ ntsa::Error StreamSocket::upgrade(
     ntsa::Error error;
 
     bsl::shared_ptr<ntci::Encryption> encryption;
-    error = encryptionServer->createEncryption(
-        &encryption, d_dataPool_sp, d_allocator_p);
+    error = encryptionServer->createEncryption(&encryption,
+                                               d_dataPool_sp,
+                                               d_allocator_p);
     if (error) {
         return error;
     }
